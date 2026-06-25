@@ -1,0 +1,4 @@
+#ifndef MAC_TOOLS_MACFASTCOPY_H_H
+#define MAC_TOOLS_MACFASTCOPY_H_H
+
+#endif

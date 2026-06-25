@@ -1,0 +1,2060 @@
+/* Auto-generated import pointer wrappers */
+/* Each imp_X is a 4-byte pointer to the target symbol */
+.data
+
+.globl _imp_Com_Error
+_imp_Com_Error: .long _Com_Error
+.globl _imp_FS_FreeFile
+_imp_FS_FreeFile: .long _FS_FreeFile
+.globl _imp_FS_FreeFileList
+_imp_FS_FreeFileList: .long _FS_FreeFileList
+.globl _imp_FS_ListFiles
+_imp_FS_ListFiles: .long _FS_ListFiles
+.globl _imp_FS_ReadFile
+_imp_FS_ReadFile: .long _FS_ReadFile
+.globl _imp_Hunk_AllocateTempMemoryHighInternal
+_imp_Hunk_AllocateTempMemoryHighInternal: .long _Hunk_AllocateTempMemoryHighInternal
+.globl _imp_Hunk_AllocateTempMemoryInternal
+_imp_Hunk_AllocateTempMemoryInternal: .long _Hunk_AllocateTempMemoryInternal
+.globl _imp_Hunk_ClearTempMemory
+_imp_Hunk_ClearTempMemory: .long _Hunk_ClearTempMemory
+.globl _imp_Hunk_ClearTempMemoryHigh
+_imp_Hunk_ClearTempMemoryHigh: .long _Hunk_ClearTempMemoryHigh
+.globl _imp_Hunk_FreeTempMemory
+_imp_Hunk_FreeTempMemory: .long _Hunk_FreeTempMemory
+.globl _imp_Hunk_OverrideDataForFile
+_imp_Hunk_OverrideDataForFile: .long _Hunk_OverrideDataForFile
+.globl _imp_I_strcmp
+_imp_I_strcmp: .long _I_strcmp
+.globl _imp_I_stricmp
+_imp_I_stricmp: .long _I_stricmp
+.globl _imp_Z_FreeInternal
+_imp_Z_FreeInternal: .long _Z_FreeInternal
+.globl _imp_Z_MallocInternal
+_imp_Z_MallocInternal: .long _Z_MallocInternal
+.globl _imp_Z_VirtualCommitInternal
+_imp_Z_VirtualCommitInternal: .long _Z_VirtualCommitInternal
+.globl _imp_Z_VirtualDecommitInternal
+_imp_Z_VirtualDecommitInternal: .long _Z_VirtualDecommitInternal
+.globl _imp_Z_VirtualFreeInternal
+_imp_Z_VirtualFreeInternal: .long _Z_VirtualFreeInternal
+.globl _imp_Z_VirtualReserveInternal
+_imp_Z_VirtualReserveInternal: .long _Z_VirtualReserveInternal
+.globl _imp_Com_GetBsp
+_imp_Com_GetBsp: .long _Com_GetBsp
+.globl _imp_DObjCreate
+_imp_DObjCreate: .long _DObjCreate
+.globl _imp_Dvar_Reset
+_imp_Dvar_Reset: .long _Dvar_Reset
+.globl _imp_R_AddPlume
+_imp_R_AddPlume: .long _R_AddPlume
+.globl _imp_R_DrawText
+_imp_R_DrawText: .long _R_DrawText
+.globl _imp_R_EndFrame
+_imp_R_EndFrame: .long _R_EndFrame
+.globl _imp_CM_BoxTrace
+_imp_CM_BoxTrace: .long _CM_BoxTrace
+.globl _imp_CM_SaveLump
+_imp_CM_SaveLump: .long _CM_SaveLump
+.globl _imp_Dvar_GetInt
+_imp_Dvar_GetInt: .long _Dvar_GetInt
+.globl _imp_Dvar_SetInt
+_imp_Dvar_SetInt: .long _Dvar_SetInt
+.globl _imp_R_ClearFogs
+_imp_R_ClearFogs: .long _R_ClearFogs
+.globl _imp_R_LoadWorld
+_imp_R_LoadWorld: .long _R_LoadWorld
+.globl _imp_R_SwitchFog
+_imp_R_SwitchFog: .long _R_SwitchFog
+.globl _imp_R_TextWidth
+_imp_R_TextWidth: .long _R_TextWidth
+.globl _imp_CL_Connect_f
+_imp_CL_Connect_f: .long _CL_Connect_f
+.globl _imp_DObjCalcAnim
+_imp_DObjCalcAnim: .long _DObjCalcAnim
+.globl _imp_DObjCalcSkel
+_imp_DObjCalcSkel: .long _DObjCalcSkel
+.globl _imp_DObjGetModel
+_imp_DObjGetModel: .long _DObjGetModel
+.globl _imp_DObjNumBones
+_imp_DObjNumBones: .long _DObjNumBones
+.globl _imp_DObjSetModel
+_imp_DObjSetModel: .long _DObjSetModel
+.globl _imp_Dvar_GetBool
+_imp_Dvar_GetBool: .long _Dvar_GetBool
+.globl _imp_Dvar_SetBool
+_imp_Dvar_SetBool: .long _Dvar_SetBool
+.globl _imp_Dvar_SetVec2
+_imp_Dvar_SetVec2: .long _Dvar_SetVec2
+.globl _imp_Dvar_SetVec3
+_imp_Dvar_SetVec3: .long _Dvar_SetVec3
+.globl _imp_Dvar_SetVec4
+_imp_Dvar_SetVec4: .long _Dvar_SetVec4
+.globl _imp_FS_WriteFile
+_imp_FS_WriteFile: .long _FS_WriteFile
+.globl _imp_G_FreeEntity
+_imp_G_FreeEntity: .long _G_FreeEntity
+.globl _imp_RB_GpuWaited
+_imp_RB_GpuWaited: .long _RB_GpuWaited
+.globl _imp_R_BeginFrame
+_imp_R_BeginFrame: .long _R_BeginFrame
+.globl _imp_R_ClearScene
+_imp_R_ClearScene: .long _R_ClearScene
+.globl _imp_R_TextHeight
+_imp_R_TextHeight: .long _R_TextHeight
+.globl _imp_SV_XModelGet
+_imp_SV_XModelGet: .long _SV_XModelGet
+.globl _imp_DObjGetBounds
+_imp_DObjGetBounds: .long _DObjGetBounds
+.globl _imp_Dvar_GetFloat
+_imp_Dvar_GetFloat: .long _Dvar_GetFloat
+.globl _imp_Dvar_SetColor
+_imp_Dvar_SetColor: .long _Dvar_SetColor
+.globl _imp_Dvar_SetFloat
+_imp_Dvar_SetFloat: .long _Dvar_SetFloat
+.globl _imp_FS_FCloseFile
+_imp_FS_FCloseFile: .long _FS_FCloseFile
+.globl _imp_FS_FileExists
+_imp_FS_FileExists: .long _FS_FileExists
+.globl _imp_FS_FullPath_f
+_imp_FS_FullPath_f: .long _FS_FullPath_f
+.globl _imp_R_ClearFlares
+_imp_R_ClearFlares: .long _R_ClearFlares
+.globl _imp_R_Cmd_LoadSun
+_imp_R_Cmd_LoadSun: .long _R_Cmd_LoadSun
+.globl _imp_R_Cmd_SaveSun
+_imp_R_Cmd_SaveSun: .long _R_Cmd_SaveSun
+.globl _imp_R_ImageList_f
+_imp_R_ImageList_f: .long _R_ImageList_f
+.globl _imp_R_ModelBounds
+_imp_R_ModelBounds: .long _R_ModelBounds
+.globl _imp_R_RenderScene
+_imp_R_RenderScene: .long _R_RenderScene
+.globl _imp_R_SetCullDist
+_imp_R_SetCullDist: .long _R_SetCullDist
+.globl _imp_UI_OpenMenu_f
+_imp_UI_OpenMenu_f: .long _UI_OpenMenu_f
+.globl _imp_XModelGetName
+_imp_XModelGetName: .long _XModelGetName
+.globl _imp_Cmd_AddCommand
+_imp_Cmd_AddCommand: .long _Cmd_AddCommand
+.globl _imp_DObjCreateSkel
+_imp_DObjCreateSkel: .long _DObjCreateSkel
+.globl _imp_DObjGetSurface
+_imp_DObjGetSurface: .long _DObjGetSurface
+.globl _imp_Dvar_GetString
+_imp_Dvar_GetString: .long _Dvar_GetString
+.globl _imp_Dvar_SetString
+_imp_Dvar_SetString: .long _Dvar_SetString
+.globl _imp_RB_UpdateColor
+_imp_RB_UpdateColor: .long _RB_UpdateColor
+.globl _imp_R_PickMaterial
+_imp_R_PickMaterial: .long _R_PickMaterial
+.globl _imp_R_RegisterFont
+_imp_R_RegisterFont: .long _R_RegisterFont
+.globl _imp_R_SetLodOrigin
+_imp_R_SetLodOrigin: .long _R_SetLodOrigin
+.globl _imp_UI_CloseMenu_f
+_imp_UI_CloseMenu_f: .long _UI_CloseMenu_f
+.globl _imp_XModelGetFlags
+_imp_XModelGetFlags: .long _XModelGetFlags
+.globl _imp_XModelGetSkins
+_imp_XModelGetSkins: .long _XModelGetSkins
+.globl _imp_XModelNumBones
+_imp_XModelNumBones: .long _XModelNumBones
+.globl _imp_XModelPrecache
+_imp_XModelPrecache: .long _XModelPrecache
+.globl _imp_CG_DObjCalcPose
+_imp_CG_DObjCalcPose: .long _CG_DObjCalcPose
+.globl _imp_DObjGetBoneInfo
+_imp_DObjGetBoneInfo: .long _DObjGetBoneInfo
+.globl _imp_DObjGetSurfaces
+_imp_DObjGetSurfaces: .long _DObjGetSurfaces
+.globl _imp_R_DuplicateFont
+_imp_R_DuplicateFont: .long _R_DuplicateFont
+.globl _imp_R_EndDebugFrame
+_imp_R_EndDebugFrame: .long _R_EndDebugFrame
+.globl _imp_R_MarkFragments
+_imp_R_MarkFragments: .long _R_MarkFragments
+.globl _imp_R_ParseSunLight
+_imp_R_ParseSunLight: .long _R_ParseSunLight
+.globl _imp_R_RegisterModel
+_imp_R_RegisterModel: .long _R_RegisterModel
+.globl _imp_R_ShutdownDebug
+_imp_R_ShutdownDebug: .long _R_ShutdownDebug
+.globl _imp_StatMon_Warning
+_imp_StatMon_Warning: .long _StatMon_Warning
+.globl _imp_CIN_RunCinematic
+_imp_CIN_RunCinematic: .long _CIN_RunCinematic
+.globl _imp_CL_CubemapShot_f
+_imp_CL_CubemapShot_f: .long _CL_CubemapShot_f
+.globl _imp_CM_BoxSightTrace
+_imp_CM_BoxSightTrace: .long _CM_BoxSightTrace
+.globl _imp_Cbuf_ExecuteText
+_imp_Cbuf_ExecuteText: .long _Cbuf_ExecuteText
+.globl _imp_DObjGetMatOffset
+_imp_DObjGetMatOffset: .long _DObjGetMatOffset
+.globl _imp_DObjGetNumModels
+_imp_DObjGetNumModels: .long _DObjGetNumModels
+.globl _imp_Dvar_RegisterInt
+_imp_Dvar_RegisterInt: .long _Dvar_RegisterInt
+.globl _imp_Dvar_SetModified
+_imp_Dvar_SetModified: .long _Dvar_SetModified
+.globl _imp_FS_FOpenFileRead
+_imp_FS_FOpenFileRead: .long _FS_FOpenFileRead
+.globl _imp_G_RegisterWeapon
+_imp_G_RegisterWeapon: .long _G_RegisterWeapon
+.globl _imp_R_AddPolyToScene
+_imp_R_AddPolyToScene: .long _R_AddPolyToScene
+.globl _imp_R_EndCubemapShot
+_imp_R_EndCubemapShot: .long _R_EndCubemapShot
+.globl _imp_R_GetWorldBounds
+_imp_R_GetWorldBounds: .long _R_GetWorldBounds
+.globl _imp_SCR_UpdateScreen
+_imp_SCR_UpdateScreen: .long _SCR_UpdateScreen
+.globl _imp_XModelGetLodName
+_imp_XModelGetLodName: .long _XModelGetLodName
+.globl _imp_XModelGetNumLods
+_imp_XModelGetNumLods: .long _XModelGetNumLods
+.globl _imp_CIN_PlayCinematic
+_imp_CIN_PlayCinematic: .long _CIN_PlayCinematic
+.globl _imp_CL_ServerStatus_f
+_imp_CL_ServerStatus_f: .long _CL_ServerStatus_f
+.globl _imp_Cmd_RemoveCommand
+_imp_Cmd_RemoveCommand: .long _Cmd_RemoveCommand
+.globl _imp_DObjGetLodForDist
+_imp_DObjGetLodForDist: .long _DObjGetLodForDist
+.globl _imp_DObjGetLodOutDist
+_imp_DObjGetLodOutDist: .long _DObjGetLodOutDist
+.globl _imp_Dvar_EnumToString
+_imp_Dvar_EnumToString: .long _Dvar_EnumToString
+.globl _imp_Dvar_RegisterBool
+_imp_Dvar_RegisterBool: .long _Dvar_RegisterBool
+.globl _imp_Dvar_RegisterEnum
+_imp_Dvar_RegisterEnum: .long _Dvar_RegisterEnum
+.globl _imp_Dvar_RegisterVec2
+_imp_Dvar_RegisterVec2: .long _Dvar_RegisterVec2
+.globl _imp_Dvar_RegisterVec3
+_imp_Dvar_RegisterVec3: .long _Dvar_RegisterVec3
+.globl _imp_Dvar_RegisterVec4
+_imp_Dvar_RegisterVec4: .long _Dvar_RegisterVec4
+.globl _imp_Dvar_SetIntByName
+_imp_Dvar_SetIntByName: .long _Dvar_SetIntByName
+.globl _imp_G_AnimScriptSound
+_imp_G_AnimScriptSound: .long _G_AnimScriptSound
+.globl _imp_R_AddLightToScene
+_imp_R_AddLightToScene: .long _R_AddLightToScene
+.globl _imp_R_ArchiveFogState
+_imp_R_ArchiveFogState: .long _R_ArchiveFogState
+.globl _imp_R_BeginDebugFrame
+_imp_R_BeginDebugFrame: .long _R_BeginDebugFrame
+.globl _imp_R_DrawConsoleText
+_imp_R_DrawConsoleText: .long _R_DrawConsoleText
+.globl _imp_R_GetFarPlaneDist
+_imp_R_GetFarPlaneDist: .long _R_GetFarPlaneDist
+.globl _imp_R_GetMaterialName
+_imp_R_GetMaterialName: .long _R_GetMaterialName
+.globl _imp_R_SaveCubemapShot
+_imp_R_SaveCubemapShot: .long _R_SaveCubemapShot
+.globl _imp_XModelGetBasePose
+_imp_XModelGetBasePose: .long _XModelGetBasePose
+.globl _imp_XModelGetMemUsage
+_imp_XModelGetMemUsage: .long _XModelGetMemUsage
+.globl _imp_XModelGetSurfaces
+_imp_XModelGetSurfaces: .long _XModelGetSurfaces
+.globl _imp_XModelSetTestLods
+_imp_XModelSetTestLods: .long _XModelSetTestLods
+.globl _imp_CL_GlobalServers_f
+_imp_CL_GlobalServers_f: .long _CL_GlobalServers_f
+.globl _imp_CL_PlayCinematic_f
+_imp_CL_PlayCinematic_f: .long _CL_PlayCinematic_f
+.globl _imp_Com_FindSoundAlias
+_imp_Com_FindSoundAlias: .long _Com_FindSoundAlias
+.globl _imp_DObjGetNumSurfaces
+_imp_DObjGetNumSurfaces: .long _DObjGetNumSurfaces
+.globl _imp_DObjGetSurfaceName
+_imp_DObjGetSurfaceName: .long _DObjGetSurfaceName
+.globl _imp_Dvar_ClearModified
+_imp_Dvar_ClearModified: .long _Dvar_ClearModified
+.globl _imp_Dvar_RegisterColor
+_imp_Dvar_RegisterColor: .long _Dvar_RegisterColor
+.globl _imp_Dvar_RegisterFloat
+_imp_Dvar_RegisterFloat: .long _Dvar_RegisterFloat
+.globl _imp_Dvar_SetBoolByName
+_imp_Dvar_SetBoolByName: .long _Dvar_SetBoolByName
+.globl _imp_Dvar_SetFromString
+_imp_Dvar_SetFromString: .long _Dvar_SetFromString
+.globl _imp_Dvar_SetVec2ByName
+_imp_Dvar_SetVec2ByName: .long _Dvar_SetVec2ByName
+.globl _imp_Dvar_SetVec3ByName
+_imp_Dvar_SetVec3ByName: .long _Dvar_SetVec3ByName
+.globl _imp_Dvar_SetVec4ByName
+_imp_Dvar_SetVec4ByName: .long _Dvar_SetVec4ByName
+.globl _imp_FS_FOpenFileByMode
+_imp_FS_FOpenFileByMode: .long _FS_FOpenFileByMode
+.globl _imp_Hunk_AllocInternal
+_imp_Hunk_AllocInternal: .long _Hunk_AllocInternal
+.globl _imp_Material_Duplicate
+_imp_Material_Duplicate: .long _Material_Duplicate
+.globl _imp_Material_IsDefault
+_imp_Material_IsDefault: .long _Material_IsDefault
+.globl _imp_R_AddCmdDrawSprite
+_imp_R_AddCmdDrawSprite: .long _R_AddCmdDrawSprite
+.globl _imp_R_AddCmdSaveScreen
+_imp_R_AddCmdSaveScreen: .long _R_AddCmdSaveScreen
+.globl _imp_R_BeginCubemapShot
+_imp_R_BeginCubemapShot: .long _R_BeginCubemapShot
+.globl _imp_R_ConsoleTextWidth
+_imp_R_ConsoleTextWidth: .long _R_ConsoleTextWidth
+.globl _imp_R_LocateDebugLines
+_imp_R_LocateDebugLines: .long _R_LocateDebugLines
+.globl _imp_R_RegisterRawImage
+_imp_R_RegisterRawImage: .long _R_RegisterRawImage
+.globl _imp_R_SyncRenderThread
+_imp_R_SyncRenderThread: .long _R_SyncRenderThread
+.globl _imp_CIN_UploadCinematic
+_imp_CIN_UploadCinematic: .long _CIN_UploadCinematic
+.globl _imp_Dvar_RegisterString
+_imp_Dvar_RegisterString: .long _Dvar_RegisterString
+.globl _imp_Dvar_SetColorByName
+_imp_Dvar_SetColorByName: .long _Dvar_SetColorByName
+.globl _imp_Dvar_SetFloatByName
+_imp_Dvar_SetFloatByName: .long _Dvar_SetFloatByName
+.globl _imp_R_AddCmdClearScreen
+_imp_R_AddCmdClearScreen: .long _R_AddCmdClearScreen
+.globl _imp_R_AddCmdDrawQuadPic
+_imp_R_AddCmdDrawQuadPic: .long _R_AddCmdDrawQuadPic
+.globl _imp_R_AddCmdSetViewport
+_imp_R_AddCmdSetViewport: .long _R_AddCmdSetViewport
+.globl _imp_R_EndDelayedDrawing
+_imp_R_EndDelayedDrawing: .long _R_EndDelayedDrawing
+.globl _imp_XModelGetLodForDist
+_imp_XModelGetLodForDist: .long _XModelGetLodForDist
+.globl _imp_XModelGetLodOutDist
+_imp_XModelGetLodOutDist: .long _XModelGetLodOutDist
+.globl _imp_DObjGetAllocSkelSize
+_imp_DObjGetAllocSkelSize: .long _DObjGetAllocSkelSize
+.globl _imp_DObjGetRotTransArray
+_imp_DObjGetRotTransArray: .long _DObjGetRotTransArray
+.globl _imp_Dvar_SetStringByName
+_imp_Dvar_SetStringByName: .long _Dvar_SetStringByName
+.globl _imp_R_LocateDebugStrings
+_imp_R_LocateDebugStrings: .long _R_LocateDebugStrings
+.globl _imp_Sys_HideSplashWindow
+_imp_Sys_HideSplashWindow: .long _Sys_HideSplashWindow
+.globl _imp_Sys_LoadingKeepAlive
+_imp_Sys_LoadingKeepAlive: .long _Sys_LoadingKeepAlive
+.globl _imp_Sys_ShowSplashWindow
+_imp_Sys_ShowSplashWindow: .long _Sys_ShowSplashWindow
+.globl _imp_XModelGetSurfaceName
+_imp_XModelGetSurfaceName: .long _XModelGetSurfaceName
+.globl _imp_noise_codebook_quant
+_imp_noise_codebook_quant: .long _noise_codebook_quant
+.globl _imp_Com_SaveDvarsToBuffer
+_imp_Com_SaveDvarsToBuffer: .long _Com_SaveDvarsToBuffer
+.globl _imp_Dvar_ChangeResetValue
+_imp_Dvar_ChangeResetValue: .long _Dvar_ChangeResetValue
+.globl _imp_Dvar_GetVariantString
+_imp_Dvar_GetVariantString: .long _Dvar_GetVariantString
+.globl _imp_Dvar_IsAtDefaultValue
+_imp_Dvar_IsAtDefaultValue: .long _Dvar_IsAtDefaultValue
+.globl _imp_Dvar_UnregisterSystem
+_imp_Dvar_UnregisterSystem: .long _Dvar_UnregisterSystem
+.globl _imp_Dvar_UpdateEnumDomain
+_imp_Dvar_UpdateEnumDomain: .long _Dvar_UpdateEnumDomain
+.globl _imp_Hunk_AllocXAnimClient
+_imp_Hunk_AllocXAnimClient: .long _Hunk_AllocXAnimClient
+.globl _imp_RB_IsGpuFenceFinished
+_imp_RB_IsGpuFenceFinished: .long _RB_IsGpuFenceFinished
+.globl _imp_R_AbortRenderCommands
+_imp_R_AbortRenderCommands: .long _R_AbortRenderCommands
+.globl _imp_R_BeginDelayedDrawing
+_imp_R_BeginDelayedDrawing: .long _R_BeginDelayedDrawing
+.globl _imp_R_DObjReplaceMaterial
+_imp_R_DObjReplaceMaterial: .long _R_DObjReplaceMaterial
+.globl _imp_R_DefaultVertexFrames
+_imp_R_DefaultVertexFrames: .long _R_DefaultVertexFrames
+.globl _imp_R_FinishLoadingModels
+_imp_R_FinishLoadingModels: .long _R_FinishLoadingModels
+.globl _imp_R_IssueDelayedDrawing
+_imp_R_IssueDelayedDrawing: .long _R_IssueDelayedDrawing
+.globl _imp_R_NormalizedTextScale
+_imp_R_NormalizedTextScale: .long _R_NormalizedTextScale
+.globl _imp_R_RegisterInlineModel
+_imp_R_RegisterInlineModel: .long _R_RegisterInlineModel
+.globl _imp_R_SetSunLightOverride
+_imp_R_SetSunLightOverride: .long _R_SetSunLightOverride
+.globl _imp_Sys_DirectXFatalError
+_imp_Sys_DirectXFatalError: .long _Sys_DirectXFatalError
+.globl _imp_XModelGetBasePoseBone
+_imp_XModelGetBasePoseBone: .long _XModelGetBasePoseBone
+.globl _imp_Com_SafeClientDObjFree
+_imp_Com_SafeClientDObjFree: .long _Com_SafeClientDObjFree
+.globl _imp_Com_SafeServerDObjFree
+_imp_Com_SafeServerDObjFree: .long _Com_SafeServerDObjFree
+.globl _imp_RB_AdaptiveGpuSyncWait
+_imp_RB_AdaptiveGpuSyncWait: .long _RB_AdaptiveGpuSyncWait
+.globl _imp_R_AddCmdDrawStretchPic
+_imp_R_AddCmdDrawStretchPic: .long _R_AddCmdDrawStretchPic
+.globl _imp_R_AddCmdDrawStretchRaw
+_imp_R_AddCmdDrawStretchRaw: .long _R_AddCmdDrawStretchRaw
+.globl _imp_R_DObjGetSurfMaterials
+_imp_R_DObjGetSurfMaterials: .long _R_DObjGetSurfMaterials
+.globl _imp_R_FreeImageAllocations
+_imp_R_FreeImageAllocations: .long _R_FreeImageAllocations
+.globl _imp_R_IsMaterialRefractive
+_imp_R_IsMaterialRefractive: .long _R_IsMaterialRefractive
+.globl _imp_SEH_ReadCharFromString
+_imp_SEH_ReadCharFromString: .long _SEH_ReadCharFromString
+.globl _imp_CL_UpdateLevelHunkUsage
+_imp_CL_UpdateLevelHunkUsage: .long _CL_UpdateLevelHunkUsage
+.globl _imp_Com_LoadDvarsFromBuffer
+_imp_Com_LoadDvarsFromBuffer: .long _Com_LoadDvarsFromBuffer
+.globl _imp_Hunk_AllocAlignInternal
+_imp_Hunk_AllocAlignInternal: .long _Hunk_AllocAlignInternal
+.globl _imp_Hunk_AllocXAnimPrecache
+_imp_Hunk_AllocXAnimPrecache: .long _Hunk_AllocXAnimPrecache
+.globl _imp_Material_RegisterHandle
+_imp_Material_RegisterHandle: .long _Material_RegisterHandle
+.globl _imp_R_AddCmdDrawTextInSpace
+_imp_R_AddCmdDrawTextInSpace: .long _R_AddCmdDrawTextInSpace
+.globl _imp_R_GetMinSpecImageMemory
+_imp_R_GetMinSpecImageMemory: .long _R_GetMinSpecImageMemory
+.globl _imp_R_ResetImageAllocations
+_imp_R_ResetImageAllocations: .long _R_ResetImageAllocations
+.globl _imp_R_ResetSunLightOverride
+_imp_R_ResetSunLightOverride: .long _R_ResetSunLightOverride
+.globl _imp_DObjSkelAreBonesUpToDate
+_imp_DObjSkelAreBonesUpToDate: .long _DObjSkelAreBonesUpToDate
+.globl _imp_Dvar_SetFromStringByName
+_imp_Dvar_SetFromStringByName: .long _Dvar_SetFromStringByName
+.globl _imp_R_AddCmdBlendSavedScreen
+_imp_R_AddCmdBlendSavedScreen: .long _R_AddCmdBlendSavedScreen
+.globl _imp_R_AddCmdSetMaterialColor
+_imp_R_AddCmdSetMaterialColor: .long _R_AddCmdSetMaterialColor
+.globl _imp_DObjCompleteHierarchyBits
+_imp_DObjCompleteHierarchyBits: .long _DObjCompleteHierarchyBits
+.globl _imp_R_GetIgnorePrecacheErrors
+_imp_R_GetIgnorePrecacheErrors: .long _R_GetIgnorePrecacheErrors
+.globl _imp_R_SetIgnorePrecacheErrors
+_imp_R_SetIgnorePrecacheErrors: .long _R_SetIgnorePrecacheErrors
+.globl _imp_R_StaticModelCacheFlush_f
+_imp_R_StaticModelCacheFlush_f: .long _R_StaticModelCacheFlush_f
+.globl _imp_R_StaticModelCacheStats_f
+_imp_R_StaticModelCacheStats_f: .long _R_StaticModelCacheStats_f
+.globl _imp_R_AddCmdDrawTextWithCursor
+_imp_R_AddCmdDrawTextWithCursor: .long _R_AddCmdDrawTextWithCursor
+.globl _imp_R_GetMaterialSubimageCount
+_imp_R_GetMaterialSubimageCount: .long _R_GetMaterialSubimageCount
+.globl _imp_R_LightingFromCubemapShots
+_imp_R_LightingFromCubemapShots: .long _R_LightingFromCubemapShots
+.globl _imp_R_ResetSunLightParseParams
+_imp_R_ResetSunLightParseParams: .long _R_ResetSunLightParseParams
+.globl _imp_speex_default_user_handler
+_imp_speex_default_user_handler: .long _speex_default_user_handler
+.globl _imp_CL_GetHudMsgIconMaterialName
+_imp_CL_GetHudMsgIconMaterialName: .long _CL_GetHudMsgIconMaterialName
+.globl _imp_R_AddCmdDrawStretchPicRotate
+_imp_R_AddCmdDrawStretchPicRotate: .long _R_AddCmdDrawStretchPicRotate
+.globl _imp_R_Cmd_ReloadMaterialTextures
+_imp_R_Cmd_ReloadMaterialTextures: .long _R_Cmd_ReloadMaterialTextures
+.globl _imp_R_InterpretSunLightParseParams
+_imp_R_InterpretSunLightParseParams: .long _R_InterpretSunLightParseParams
+.globl _imp_Com_WriteLocalizedSoundAliasFiles
+_imp_Com_WriteLocalizedSoundAliasFiles: .long _Com_WriteLocalizedSoundAliasFiles
+.globl _imp_DObjBad
+_imp_DObjBad: .long _DObjBad
+.globl _imp_FS_Read
+_imp_FS_Read: .long _FS_Read
+.globl _imp_MT_Free
+_imp_MT_Free: .long _MT_Free
+.globl _imp_Cmd_Argc
+_imp_Cmd_Argc: .long _Cmd_Argc
+.globl _imp_Cmd_Argv
+_imp_Cmd_Argv: .long _Cmd_Argv
+.globl _imp_FS_Write
+_imp_FS_Write: .long _FS_Write
+.globl _imp_R_SetFog
+_imp_R_SetFog: .long _R_SetFog
+.globl _imp_CL_Ping_f
+_imp_CL_Ping_f: .long _CL_Ping_f
+.globl _imp_CL_Rcon_f
+_imp_CL_Rcon_f: .long _CL_Rcon_f
+.globl _imp_FS_Path_f
+_imp_FS_Path_f: .long _FS_Path_f
+.globl _imp_XModelBad
+_imp_XModelBad: .long _XModelBad
+.globl _imp___ZN10CVAOPacket10sVAOStatusE
+_imp___ZN10CVAOPacket10sVAOStatusE: .long __ZN10CVAOPacket10sVAOStatusE
+.globl _imp___ZN10CVAOPacket14sCurrentPacketE
+_imp___ZN10CVAOPacket14sCurrentPacketE: .long __ZN10CVAOPacket14sCurrentPacketE
+.globl _imp___ZN10CVAOPacket14sGenericPacketE
+_imp___ZN10CVAOPacket14sGenericPacketE: .long __ZN10CVAOPacket14sGenericPacketE
+.globl _imp___ZN13COpenGLMatrix9sIdentityE
+_imp___ZN13COpenGLMatrix9sIdentityE: .long __ZN13COpenGLMatrix9sIdentityE
+.globl _imp___ZN15CDirect3DDevice28mNeedsVertexShaderValidationE
+_imp___ZN15CDirect3DDevice28mNeedsVertexShaderValidationE: .long __ZN15CDirect3DDevice28mNeedsVertexShaderValidationE
+.globl _imp___ZN15CDirect3DDevice29mNeedsRasterizationValidationE
+_imp___ZN15CDirect3DDevice29mNeedsRasterizationValidationE: .long __ZN15CDirect3DDevice29mNeedsRasterizationValidationE
+.globl _imp___ZN15CDirect3DDevice30mNeedsTransformationValidationE
+_imp___ZN15CDirect3DDevice30mNeedsTransformationValidationE: .long __ZN15CDirect3DDevice30mNeedsTransformationValidationE
+.globl _imp___ZN6CFence15sUnusedFenceIDsE
+_imp___ZN6CFence15sUnusedFenceIDsE: .long __ZN6CFence15sUnusedFenceIDsE
+.globl _imp___ZN7COpenGL11sFrameCountE
+_imp___ZN7COpenGL11sFrameCountE: .long __ZN7COpenGL11sFrameCountE
+.globl _imp___ZN7COpenGL14sShowTextureIDE
+_imp___ZN7COpenGL14sShowTextureIDE: .long __ZN7COpenGL14sShowTextureIDE
+.globl _imp___ZN7COpenGL7sOpenGLE
+_imp___ZN7COpenGL7sOpenGLE: .long __ZN7COpenGL7sOpenGLE
+.globl _imp___ZN7COpenGL9sDrawFlagE
+_imp___ZN7COpenGL9sDrawFlagE: .long __ZN7COpenGL9sDrawFlagE
+.globl _imp___ZTI14COpenGLTexture
+_imp___ZTI14COpenGLTexture: .long __ZTI14COpenGLTexture
+.globl _imp___ZTI17IDirect3DTexture9
+_imp___ZTI17IDirect3DTexture9: .long __ZTI17IDirect3DTexture9
+.globl _imp___ZTV10COpenGLVAO
+_imp___ZTV10COpenGLVAO: .long __ZTV10COpenGLVAO
+.globl _imp___ZTV11CColorArray
+_imp___ZTV11CColorArray: .long __ZTV11CColorArray
+.globl _imp___ZTV12CNormalArray
+_imp___ZTV12CNormalArray: .long __ZTV12CNormalArray
+.globl _imp___ZTV12CVertexArray
+_imp___ZTV12CVertexArray: .long __ZTV12CVertexArray
+.globl _imp___ZTV14COpenGLTexture
+_imp___ZTV14COpenGLTexture: .long __ZTV14COpenGLTexture
+.globl _imp___ZTV14CTexCoordArray
+_imp___ZTV14CTexCoordArray: .long __ZTV14CTexCoordArray
+.globl _imp___ZTV15CCacheInfoBlock
+_imp___ZTV15CCacheInfoBlock: .long __ZTV15CCacheInfoBlock
+.globl _imp___ZTV15CColorConverter
+_imp___ZTV15CColorConverter: .long __ZTV15CColorConverter
+.globl _imp___ZTV17IDirect3DTexture9
+_imp___ZTV17IDirect3DTexture9: .long __ZTV17IDirect3DTexture9
+.globl _imp___ZTV18IDirect3DResource9
+_imp___ZTV18IDirect3DResource9: .long __ZTV18IDirect3DResource9
+.globl _imp___ZTV20CSecondaryColorArray
+_imp___ZTV20CSecondaryColorArray: .long __ZTV20CSecondaryColorArray
+.globl _imp___ZTV21IDirect3DBaseTexture9
+_imp___ZTV21IDirect3DBaseTexture9: .long __ZTV21IDirect3DBaseTexture9
+.globl _imp___ZTV21IDirect3DCubeTexture9
+_imp___ZTV21IDirect3DCubeTexture9: .long __ZTV21IDirect3DCubeTexture9
+.globl _imp___ZTV22CVAOPacketProgrammable
+_imp___ZTV22CVAOPacketProgrammable: .long __ZTV22CVAOPacketProgrammable
+.globl _imp___ZTV22IDirect3DVertexShader9
+_imp___ZTV22IDirect3DVertexShader9: .long __ZTV22IDirect3DVertexShader9
+.globl _imp___ZTV23CVAOPacketFixedFunction
+_imp___ZTV23CVAOPacketFixedFunction: .long __ZTV23CVAOPacketFixedFunction
+.globl _imp___ZTV23IDirect3DVolumeTexture9
+_imp___ZTV23IDirect3DVolumeTexture9: .long __ZTV23IDirect3DVolumeTexture9
+.globl _imp___ZTV5Flash
+_imp___ZTV5Flash: .long __ZTV5Flash
+.globl _imp___ZTV7CBaseVA
+_imp___ZTV7CBaseVA: .long __ZTV7CBaseVA
+.globl _imp___ZTV8IUnknown
+_imp___ZTV8IUnknown: .long __ZTV8IUnknown
+.globl _imp_alwaysfails
+_imp_alwaysfails: .long _alwaysfails
+.globl _imp_backEnd
+_imp_backEnd: .long _backEnd
+.globl _imp_backEndData
+_imp_backEndData: .long _backEndData
+.globl _imp_bg_aimSpreadMoveSpeedThreshold
+_imp_bg_aimSpreadMoveSpeedThreshold: .long _bg_aimSpreadMoveSpeedThreshold
+.globl _imp_bg_bobAmplitudeDucked
+_imp_bg_bobAmplitudeDucked: .long _bg_bobAmplitudeDucked
+.globl _imp_bg_bobAmplitudeProne
+_imp_bg_bobAmplitudeProne: .long _bg_bobAmplitudeProne
+.globl _imp_bg_bobAmplitudeStanding
+_imp_bg_bobAmplitudeStanding: .long _bg_bobAmplitudeStanding
+.globl _imp_bg_bobMax
+_imp_bg_bobMax: .long _bg_bobMax
+.set _g_bobMax_ptr, _imp_bg_bobMax
+.globl _g_bobMax_ptr
+.globl _imp_bg_fallDamageMaxHeight
+_imp_bg_fallDamageMaxHeight: .long _bg_fallDamageMaxHeight
+.globl _cg_dvar_shellshock_max
+.set _cg_dvar_shellshock_max, _imp_bg_fallDamageMaxHeight
+.globl _imp_bg_fallDamageMinHeight
+_imp_bg_fallDamageMinHeight: .long _bg_fallDamageMinHeight
+.globl _cg_dvar_shellshock_min
+.set _cg_dvar_shellshock_min, _imp_bg_fallDamageMinHeight
+.globl _imp_bg_foliagesnd_fastinterval
+_imp_bg_foliagesnd_fastinterval: .long _bg_foliagesnd_fastinterval
+.globl _imp_bg_foliagesnd_maxspeed
+_imp_bg_foliagesnd_maxspeed: .long _bg_foliagesnd_maxspeed
+.globl _imp_bg_foliagesnd_minspeed
+_imp_bg_foliagesnd_minspeed: .long _bg_foliagesnd_minspeed
+.globl _imp_bg_foliagesnd_resetinterval
+_imp_bg_foliagesnd_resetinterval: .long _bg_foliagesnd_resetinterval
+.globl _imp_bg_foliagesnd_slowinterval
+_imp_bg_foliagesnd_slowinterval: .long _bg_foliagesnd_slowinterval
+.globl _imp_bg_iNumWeapons
+_imp_bg_iNumWeapons: .long _bg_iNumWeapons
+.globl _imp_bg_itemlist
+_imp_bg_itemlist: .long _bg_itemlist
+.globl _imp_bg_ladder_yawcap
+_imp_bg_ladder_yawcap: .long _bg_ladder_yawcap
+.globl _imp_bg_numItems
+_imp_bg_numItems: .long _bg_numItems
+.globl _imp_bg_prone_yawcap
+_imp_bg_prone_yawcap: .long _bg_prone_yawcap
+.globl _imp_bg_swingSpeed
+_imp_bg_swingSpeed: .long _bg_swingSpeed
+.globl _imp_bgs
+_imp_bgs: .long _bgs
+.globl _imp_bulletPriorityMap
+_imp_bulletPriorityMap: .long _bulletPriorityMap
+.globl _imp_cg
+_imp_cg: .long _cg
+.globl _cg_glob
+.set _cg_glob, _imp_cg
+.globl _cg_ptr
+.set _cg_ptr, _imp_cg
+.globl __cg_p
+.set __cg_p, _imp_cg
+.globl _imp_cgDC
+_imp_cgDC: .long _cgDC
+.globl _imp_cg_blood
+_imp_cg_blood: .long _cg_blood
+.globl _imp_cg_brass
+_imp_cg_brass: .long _cg_brass
+.globl _imp_cg_centerPrintY
+_imp_cg_centerPrintY: .long _cg_centerPrintY
+.globl _imp_cg_centertime
+_imp_cg_centertime: .long _cg_centertime
+.globl _imp_cg_chatHeight
+_imp_cg_chatHeight: .long _cg_chatHeight
+.globl _imp_cg_chatTime
+_imp_cg_chatTime: .long _cg_chatTime
+.globl _imp_cg_connectionIconSize
+_imp_cg_connectionIconSize: .long _cg_connectionIconSize
+.globl _imp_cg_constantSizeHeadIcons
+_imp_cg_constantSizeHeadIcons: .long _cg_constantSizeHeadIcons
+.globl _imp_cg_crosshairAlpha
+_imp_cg_crosshairAlpha: .long _cg_crosshairAlpha
+.globl _imp_cg_crosshairAlphaMin
+_imp_cg_crosshairAlphaMin: .long _cg_crosshairAlphaMin
+.globl _imp_cg_crosshairDynamic
+_imp_cg_crosshairDynamic: .long _cg_crosshairDynamic
+.globl _imp_cg_crosshairEnemyColor
+_imp_cg_crosshairEnemyColor: .long _cg_crosshairEnemyColor
+.globl _imp_cg_cursorHints
+_imp_cg_cursorHints: .long _cg_cursorHints
+.globl _imp_cg_debugEvents
+_imp_cg_debugEvents: .long _cg_debugEvents
+.globl _cg_dvar_debug
+.set _cg_dvar_debug, _imp_cg_debugEvents
+.globl _imp_cg_debugPosition
+_imp_cg_debugPosition: .long _cg_debugPosition
+.globl _imp_cg_descriptiveText
+_imp_cg_descriptiveText: .long _cg_descriptiveText
+.globl _imp_cg_draw2D
+_imp_cg_draw2D: .long _cg_draw2D
+.globl _imp_cg_drawBreathHint
+_imp_cg_drawBreathHint: .long _cg_drawBreathHint
+.globl _imp_cg_drawCrosshair
+_imp_cg_drawCrosshair: .long _cg_drawCrosshair
+.globl _imp_cg_drawCrosshairNames
+_imp_cg_drawCrosshairNames: .long _cg_drawCrosshairNames
+.globl _imp_cg_drawCrosshairNamesPosX
+_imp_cg_drawCrosshairNamesPosX: .long _cg_drawCrosshairNamesPosX
+.globl _imp_cg_drawCrosshairNamesPosY
+_imp_cg_drawCrosshairNamesPosY: .long _cg_drawCrosshairNamesPosY
+.globl _imp_cg_drawFPS
+_imp_cg_drawFPS: .long _cg_drawFPS
+.globl _imp_cg_drawGameMessages
+_imp_cg_drawGameMessages: .long _cg_drawGameMessages
+.globl _imp_cg_drawGun
+_imp_cg_drawGun: .long _cg_drawGun
+.globl _imp_cg_drawHealth
+_imp_cg_drawHealth: .long _cg_drawHealth
+.globl _imp_cg_drawLagometer
+_imp_cg_drawLagometer: .long _cg_drawLagometer
+.globl _imp_cg_drawMantleHint
+_imp_cg_drawMantleHint: .long _cg_drawMantleHint
+.globl _imp_cg_drawMaterial
+_imp_cg_drawMaterial: .long _cg_drawMaterial
+.globl _imp_cg_drawScriptUsage
+_imp_cg_drawScriptUsage: .long _cg_drawScriptUsage
+.globl _imp_cg_drawSnapshot
+_imp_cg_drawSnapshot: .long _cg_drawSnapshot
+.globl _imp_cg_drawSoundOverlay
+_imp_cg_drawSoundOverlay: .long _cg_drawSoundOverlay
+.globl _imp_cg_drawTurretCrosshair
+_imp_cg_drawTurretCrosshair: .long _cg_drawTurretCrosshair
+.globl _imp_cg_dumpAnims
+_imp_cg_dumpAnims: .long _cg_dumpAnims
+.globl _imp_cg_entities
+_imp_cg_entities: .long _cg_entities
+.globl _cg_entities_glob
+.set _cg_entities_glob, _imp_cg_entities
+.globl _cg_entities_ptr
+.set _cg_entities_ptr, _imp_cg_entities
+.globl _imp_cg_errorDecay
+_imp_cg_errorDecay: .long _cg_errorDecay
+.globl _dvar_errorDecay
+.set _dvar_errorDecay, _imp_cg_errorDecay
+.globl _imp_cg_footsteps
+_imp_cg_footsteps: .long _cg_footsteps
+.globl _cg_dvar_footsteps
+.set _cg_dvar_footsteps, _imp_cg_footsteps
+.globl _imp_cg_fov
+_imp_cg_fov: .long _cg_fov
+.globl _imp_cg_fovMin
+_imp_cg_fovMin: .long _cg_fovMin
+.globl _imp_cg_fovScale
+_imp_cg_fovScale: .long _cg_fovScale
+.globl _imp_cg_gun_move_f
+_imp_cg_gun_move_f: .long _cg_gun_move_f
+.globl _imp_cg_gun_move_minspeed
+_imp_cg_gun_move_minspeed: .long _cg_gun_move_minspeed
+.globl _imp_cg_gun_move_r
+_imp_cg_gun_move_r: .long _cg_gun_move_r
+.globl _imp_cg_gun_move_rate
+_imp_cg_gun_move_rate: .long _cg_gun_move_rate
+.globl _imp_cg_gun_move_u
+_imp_cg_gun_move_u: .long _cg_gun_move_u
+.globl _imp_cg_gun_ofs_f
+_imp_cg_gun_ofs_f: .long _cg_gun_ofs_f
+.globl _imp_cg_gun_ofs_r
+_imp_cg_gun_ofs_r: .long _cg_gun_ofs_r
+.globl _imp_cg_gun_ofs_u
+_imp_cg_gun_ofs_u: .long _cg_gun_ofs_u
+.globl _imp_cg_gun_x
+_imp_cg_gun_x: .long _cg_gun_x
+.globl _imp_cg_gun_y
+_imp_cg_gun_y: .long _cg_gun_y
+.globl _imp_cg_gun_z
+_imp_cg_gun_z: .long _cg_gun_z
+.globl _imp_cg_headIconMinScreenRadius
+_imp_cg_headIconMinScreenRadius: .long _cg_headIconMinScreenRadius
+.globl _imp_cg_hintFadeTime
+_imp_cg_hintFadeTime: .long _cg_hintFadeTime
+.globl _imp_cg_hudChatPosition
+_imp_cg_hudChatPosition: .long _cg_hudChatPosition
+.globl _imp_cg_hudCompassMaxRange
+_imp_cg_hudCompassMaxRange: .long _cg_hudCompassMaxRange
+.globl _dvar_compassMaxRange
+.set _dvar_compassMaxRange, _imp_cg_hudCompassMaxRange
+.globl _imp_cg_hudCompassMinRadius
+_imp_cg_hudCompassMinRadius: .long _cg_hudCompassMinRadius
+.globl _dvar_compassMinSaturation
+.set _dvar_compassMinSaturation, _imp_cg_hudCompassMinRadius
+.globl _imp_cg_hudCompassMinRange
+_imp_cg_hudCompassMinRange: .long _cg_hudCompassMinRange
+.globl _dvar_compassMinRange
+.set _dvar_compassMinRange, _imp_cg_hudCompassMinRange
+.globl _imp_cg_hudCompassSize
+_imp_cg_hudCompassSize: .long _cg_hudCompassSize
+.globl _dvar_compassSize
+.set _dvar_compassSize, _imp_cg_hudCompassSize
+.globl _imp_cg_hudCompassSoundPingFadeTime
+_imp_cg_hudCompassSoundPingFadeTime: .long _cg_hudCompassSoundPingFadeTime
+.globl _dvar_compassPingFadeTime
+.set _dvar_compassPingFadeTime, _imp_cg_hudCompassSoundPingFadeTime
+.globl _imp_cg_hudCompassSpringyPointers
+_imp_cg_hudCompassSpringyPointers: .long _cg_hudCompassSpringyPointers
+.globl _compPointerConfig
+.set _compPointerConfig, _imp_cg_hudCompassSpringyPointers
+.globl _imp_cg_hudDamageIconHeight
+_imp_cg_hudDamageIconHeight: .long _cg_hudDamageIconHeight
+.globl _imp_cg_hudDamageIconInScope
+_imp_cg_hudDamageIconInScope: .long _cg_hudDamageIconInScope
+.globl _imp_cg_hudDamageIconOffset
+_imp_cg_hudDamageIconOffset: .long _cg_hudDamageIconOffset
+.globl _imp_cg_hudDamageIconTime
+_imp_cg_hudDamageIconTime: .long _cg_hudDamageIconTime
+.globl _imp_cg_hudDamageIconWidth
+_imp_cg_hudDamageIconWidth: .long _cg_hudDamageIconWidth
+.globl _imp_cg_hudGrenadeIconHeight
+_imp_cg_hudGrenadeIconHeight: .long _cg_hudGrenadeIconHeight
+.globl _imp_cg_hudGrenadeIconInScope
+_imp_cg_hudGrenadeIconInScope: .long _cg_hudGrenadeIconInScope
+.globl _imp_cg_hudGrenadeIconMaxHeight
+_imp_cg_hudGrenadeIconMaxHeight: .long _cg_hudGrenadeIconMaxHeight
+.globl _imp_cg_hudGrenadeIconMaxRange
+_imp_cg_hudGrenadeIconMaxRange: .long _cg_hudGrenadeIconMaxRange
+.globl _imp_cg_hudGrenadeIconOffset
+_imp_cg_hudGrenadeIconOffset: .long _cg_hudGrenadeIconOffset
+.globl _imp_cg_hudGrenadeIconWidth
+_imp_cg_hudGrenadeIconWidth: .long _cg_hudGrenadeIconWidth
+.globl _imp_cg_hudGrenadePointerHeight
+_imp_cg_hudGrenadePointerHeight: .long _cg_hudGrenadePointerHeight
+.globl _imp_cg_hudGrenadePointerPivot
+_imp_cg_hudGrenadePointerPivot: .long _cg_hudGrenadePointerPivot
+.globl _imp_cg_hudGrenadePointerPulseFreq
+_imp_cg_hudGrenadePointerPulseFreq: .long _cg_hudGrenadePointerPulseFreq
+.globl _imp_cg_hudGrenadePointerPulseMax
+_imp_cg_hudGrenadePointerPulseMax: .long _cg_hudGrenadePointerPulseMax
+.globl _imp_cg_hudGrenadePointerPulseMin
+_imp_cg_hudGrenadePointerPulseMin: .long _cg_hudGrenadePointerPulseMin
+.globl _imp_cg_hudGrenadePointerWidth
+_imp_cg_hudGrenadePointerWidth: .long _cg_hudGrenadePointerWidth
+.globl _imp_cg_hudObjectiveMaxRange
+_imp_cg_hudObjectiveMaxRange: .long _cg_hudObjectiveMaxRange
+.globl _dvar_compassClampDist
+.set _dvar_compassClampDist, _imp_cg_hudObjectiveMaxRange
+.globl _imp_cg_hudObjectiveMinAlpha
+_imp_cg_hudObjectiveMinAlpha: .long _cg_hudObjectiveMinAlpha
+.globl _dvar_compassClampSaturation
+.set _dvar_compassClampSaturation, _imp_cg_hudObjectiveMinAlpha
+.globl _imp_cg_hudProneY
+_imp_cg_hudProneY: .long _cg_hudProneY
+.globl _imp_cg_hudSayPosition
+_imp_cg_hudSayPosition: .long _cg_hudSayPosition
+.globl _imp_cg_hudStanceFlash
+_imp_cg_hudStanceFlash: .long _cg_hudStanceFlash
+.globl _imp_cg_hudStanceHintPrints
+_imp_cg_hudStanceHintPrints: .long _cg_hudStanceHintPrints
+.globl _imp_cg_items
+_imp_cg_items: .long _cg_items
+.globl _imp_cg_marks
+_imp_cg_marks: .long _cg_marks
+.globl _imp_cg_marksLimit
+_imp_cg_marksLimit: .long _cg_marksLimit
+.globl _imp_cg_minicon
+_imp_cg_minicon: .long _cg_minicon
+.globl _imp_cg_nopredict
+_imp_cg_nopredict: .long _cg_nopredict
+.globl _dvar_nopredict
+.set _dvar_nopredict, _imp_cg_nopredict
+.globl _cg_dvar1
+.set _cg_dvar1, _imp_cg_nopredict
+.globl _imp_cg_paused
+_imp_cg_paused: .long _cg_paused
+.globl _imp_cg_predictItems
+_imp_cg_predictItems: .long _cg_predictItems
+.globl _dvar_autoPickup
+.set _dvar_autoPickup, _imp_cg_predictItems
+.globl _imp_cg_scoreboardBannerHeight
+_imp_cg_scoreboardBannerHeight: .long _cg_scoreboardBannerHeight
+.globl _imp_cg_scoreboardScrollStep
+_imp_cg_scoreboardScrollStep: .long _cg_scoreboardScrollStep
+.globl _imp_cg_scriptIconSize
+_imp_cg_scriptIconSize: .long _cg_scriptIconSize
+.globl _imp_cg_shock_mouse
+_imp_cg_shock_mouse: .long _cg_shock_mouse
+.globl _imp_cg_shock_mouse_fadeTime
+_imp_cg_shock_mouse_fadeTime: .long _cg_shock_mouse_fadeTime
+.globl _imp_cg_shock_mouse_maxpitchspeed
+_imp_cg_shock_mouse_maxpitchspeed: .long _cg_shock_mouse_maxpitchspeed
+.globl _imp_cg_shock_mouse_maxyawspeed
+_imp_cg_shock_mouse_maxyawspeed: .long _cg_shock_mouse_maxyawspeed
+.globl _imp_cg_shock_mouse_sensitivityscale
+_imp_cg_shock_mouse_sensitivityscale: .long _cg_shock_mouse_sensitivityscale
+.globl _imp_cg_shock_screenBlendFadeTime
+_imp_cg_shock_screenBlendFadeTime: .long _cg_shock_screenBlendFadeTime
+.globl _imp_cg_shock_screenBlendTime
+_imp_cg_shock_screenBlendTime: .long _cg_shock_screenBlendTime
+.globl _imp_cg_shock_sound
+_imp_cg_shock_sound: .long _cg_shock_sound
+.globl _imp_cg_shock_soundDryLevel
+_imp_cg_shock_soundDryLevel: .long _cg_shock_soundDryLevel
+.globl _imp_cg_shock_soundFadeInTime
+_imp_cg_shock_soundFadeInTime: .long _cg_shock_soundFadeInTime
+.globl _imp_cg_shock_soundFadeOutTime
+_imp_cg_shock_soundFadeOutTime: .long _cg_shock_soundFadeOutTime
+.globl _imp_cg_shock_soundLoopEndDelay
+_imp_cg_shock_soundLoopEndDelay: .long _cg_shock_soundLoopEndDelay
+.globl _imp_cg_shock_soundLoopFadeTime
+_imp_cg_shock_soundLoopFadeTime: .long _cg_shock_soundLoopFadeTime
+.globl _imp_cg_shock_soundModEndDelay
+_imp_cg_shock_soundModEndDelay: .long _cg_shock_soundModEndDelay
+.globl _imp_cg_shock_soundRoomType
+_imp_cg_shock_soundRoomType: .long _cg_shock_soundRoomType
+.globl _imp_cg_shock_soundWetLevel
+_imp_cg_shock_soundWetLevel: .long _cg_shock_soundWetLevel
+.globl _imp_cg_shock_viewKickPeriod
+_imp_cg_shock_viewKickPeriod: .long _cg_shock_viewKickPeriod
+.globl _imp_cg_shock_viewKickRadius
+_imp_cg_shock_viewKickRadius: .long _cg_shock_viewKickRadius
+.globl _imp_cg_shock_volume_announcer
+_imp_cg_shock_volume_announcer: .long _cg_shock_volume_announcer
+.globl _imp_cg_shock_volume_auto
+_imp_cg_shock_volume_auto: .long _cg_shock_volume_auto
+.globl _imp_cg_shock_volume_auto2d
+_imp_cg_shock_volume_auto2d: .long _cg_shock_volume_auto2d
+.globl _imp_cg_shock_volume_body
+_imp_cg_shock_volume_body: .long _cg_shock_volume_body
+.globl _imp_cg_shock_volume_item
+_imp_cg_shock_volume_item: .long _cg_shock_volume_item
+.globl _imp_cg_shock_volume_local
+_imp_cg_shock_volume_local: .long _cg_shock_volume_local
+.globl _imp_cg_shock_volume_menu
+_imp_cg_shock_volume_menu: .long _cg_shock_volume_menu
+.globl _imp_cg_shock_volume_music
+_imp_cg_shock_volume_music: .long _cg_shock_volume_music
+.globl _imp_cg_shock_volume_shellshock
+_imp_cg_shock_volume_shellshock: .long _cg_shock_volume_shellshock
+.globl _imp_cg_shock_volume_voice
+_imp_cg_shock_volume_voice: .long _cg_shock_volume_voice
+.globl _imp_cg_shock_volume_weapon
+_imp_cg_shock_volume_weapon: .long _cg_shock_volume_weapon
+/* shellshock dvar import pointer aliases (fix #123) */
+.globl __dvar_shellshock_fadein
+.set __dvar_shellshock_fadein, _imp_cg_shock_screenBlendFadeTime
+.globl __dvar_shellshock_fadeout
+.set __dvar_shellshock_fadeout, _imp_cg_shock_screenBlendTime
+.globl __dvar_shellshock_screenblend
+.set __dvar_shellshock_screenblend, _imp_cg_shock_viewKickPeriod
+.globl __dvar_shellshock_screentype
+.set __dvar_shellshock_screentype, _imp_cg_shock_viewKickRadius
+.globl __dvar_shellshock_screenenabled
+.set __dvar_shellshock_screenenabled, _imp_cg_shock_sound
+.globl __dvar_shellshock_soundfadein
+.set __dvar_shellshock_soundfadein, _imp_cg_shock_soundFadeInTime
+.globl __dvar_shellshock_soundfadeout
+.set __dvar_shellshock_soundfadeout, _imp_cg_shock_soundFadeOutTime
+.globl __dvar_shellshock_loopfadein
+.set __dvar_shellshock_loopfadein, _imp_cg_shock_soundLoopFadeTime
+.globl __dvar_shellshock_loopfadeout
+.set __dvar_shellshock_loopfadeout, _imp_cg_shock_soundLoopEndDelay
+.globl __dvar_shellshock_looptype
+.set __dvar_shellshock_looptype, _imp_cg_shock_soundRoomType
+.globl __dvar_shellshock_sounddrylevellooptype
+.set __dvar_shellshock_sounddrylevellooptype, _imp_cg_shock_soundDryLevel
+.globl __dvar_shellshock_soundwetlevellooptype
+.set __dvar_shellshock_soundwetlevellooptype, _imp_cg_shock_soundWetLevel
+.globl __dvar_shellshock_soundloopsilent
+.set __dvar_shellshock_soundloopsilent, _imp_cg_shock_soundModEndDelay
+.globl __dvar_shellshock_viewkickfadein
+.set __dvar_shellshock_viewkickfadein, _imp_cg_shock_volume_auto
+.globl __dvar_shellshock_viewkickperiod
+.set __dvar_shellshock_viewkickperiod, _imp_cg_shock_volume_auto2d
+.globl __dvar_shellshock_viewkickradius
+.set __dvar_shellshock_viewkickradius, _imp_cg_shock_volume_menu
+.globl __dvar_shellshock_viewkickpitch
+.set __dvar_shellshock_viewkickpitch, _imp_cg_shock_volume_weapon
+.globl __dvar_shellshock_viewkickyaw
+.set __dvar_shellshock_viewkickyaw, _imp_cg_shock_volume_voice
+.globl __dvar_shellshock_soundroomtype
+.set __dvar_shellshock_soundroomtype, _imp_cg_shock_volume_item
+.globl __dvar_shellshock_sounddrylevel
+.set __dvar_shellshock_sounddrylevel, _imp_cg_shock_volume_body
+.globl __dvar_shellshock_soundwetlevel
+.set __dvar_shellshock_soundwetlevel, _imp_cg_shock_volume_local
+.globl __dvar_shellshock_soundmodenddelay
+.set __dvar_shellshock_soundmodenddelay, _imp_cg_shock_volume_music
+.globl __dvar_shellshock_soundendduration
+.set __dvar_shellshock_soundendduration, _imp_cg_shock_volume_announcer
+.globl __dvar_shellshock_soundfade
+.set __dvar_shellshock_soundfade, _imp_cg_shock_volume_shellshock
+.globl __dvar_shellshock_mouseenable
+.set __dvar_shellshock_mouseenable, _imp_cg_shock_mouse
+.globl __dvar_shellshock_mousefadein
+.set __dvar_shellshock_mousefadein, _imp_cg_shock_mouse_fadeTime
+.globl __dvar_shellshock_mouseturnrate
+.set __dvar_shellshock_mouseturnrate, _imp_cg_shock_mouse_maxpitchspeed
+.globl __dvar_shellshock_mousereducemax
+.set __dvar_shellshock_mousereducemax, _imp_cg_shock_mouse_maxyawspeed
+.globl __dvar_shellshock_mousesensitivity
+.set __dvar_shellshock_mousesensitivity, _imp_cg_shock_mouse_sensitivityscale
+.globl _imp_cg_showmiss
+_imp_cg_showmiss: .long _cg_showmiss
+.globl _dvar_developer
+.set _dvar_developer, _imp_cg_showmiss
+.globl _imp_cg_subtitleCharHeight
+_imp_cg_subtitleCharHeight: .long _cg_subtitleCharHeight
+.globl _imp_cg_subtitlePosX
+_imp_cg_subtitlePosX: .long _cg_subtitlePosX
+.globl _imp_cg_subtitlePosY
+_imp_cg_subtitlePosY: .long _cg_subtitlePosY
+.globl _imp_cg_subtitles
+_imp_cg_subtitles: .long _cg_subtitles
+.globl _imp_cg_synchronousClients
+_imp_cg_synchronousClients: .long _cg_synchronousClients
+.globl _dvar_synchronous
+.set _dvar_synchronous, _imp_cg_synchronousClients
+.globl _cg_dvar2
+.set _cg_dvar2, _imp_cg_synchronousClients
+.globl _imp_cg_teamChatsOnly
+_imp_cg_teamChatsOnly: .long _cg_teamChatsOnly
+.globl _imp_cg_thirdPerson
+_imp_cg_thirdPerson: .long _cg_thirdPerson
+.globl _imp_cg_thirdPersonAngle
+_imp_cg_thirdPersonAngle: .long _cg_thirdPersonAngle
+.globl _imp_cg_thirdPersonRange
+_imp_cg_thirdPersonRange: .long _cg_thirdPersonRange
+.globl _imp_cg_tracerChance
+_imp_cg_tracerChance: .long _cg_tracerChance
+.globl _imp_cg_tracerLength
+_imp_cg_tracerLength: .long _cg_tracerLength
+.globl _imp_cg_tracerScale
+_imp_cg_tracerScale: .long _cg_tracerScale
+.globl _imp_cg_tracerScaleDistRange
+_imp_cg_tracerScaleDistRange: .long _cg_tracerScaleDistRange
+.globl _imp_cg_tracerScaleMinDist
+_imp_cg_tracerScaleMinDist: .long _cg_tracerScaleMinDist
+.globl _imp_cg_tracerSpeed
+_imp_cg_tracerSpeed: .long _cg_tracerSpeed
+.globl _imp_cg_tracerWidth
+_imp_cg_tracerWidth: .long _cg_tracerWidth
+.globl _imp_cg_viewsize
+_imp_cg_viewsize: .long _cg_viewsize
+.globl _imp_cg_voiceIconSize
+_imp_cg_voiceIconSize: .long _cg_voiceIconSize
+.globl _imp_cg_weaponCycleDelay
+_imp_cg_weaponCycleDelay: .long _cg_weaponCycleDelay
+.globl _imp_cg_weapons
+_imp_cg_weapons: .long _cg_weapons
+.globl _imp_cg_youInKillCamSize
+_imp_cg_youInKillCamSize: .long _cg_youInKillCamSize
+.globl _imp_cgs
+_imp_cgs: .long _cgs
+.globl _cgs_glob
+.set _cgs_glob, _imp_cgs
+.globl _cgs_ptr
+.set _cgs_ptr, _imp_cgs
+.globl _imp_chatField
+_imp_chatField: .long _chatField
+.globl _imp_chat_team
+_imp_chat_team: .long _chat_team
+.globl _imp_cl
+_imp_cl: .long _cl
+.set _cl_ptr, _imp_cl
+.globl _cl_ptr
+.globl _imp_cl_activeAction
+_imp_cl_activeAction: .long _cl_activeAction
+.globl _imp_cl_anglespeedkey
+_imp_cl_anglespeedkey: .long _cl_anglespeedkey
+.globl _imp_cl_bypassMouseInput
+_imp_cl_bypassMouseInput: .long _cl_bypassMouseInput
+.globl _imp_cl_cdkey
+_imp_cl_cdkey: .long _cl_cdkey
+.globl _imp_cl_cdkeychecksum
+_imp_cl_cdkeychecksum: .long _cl_cdkeychecksum
+.globl _imp_cl_connectedToPureServer
+_imp_cl_connectedToPureServer: .long _cl_connectedToPureServer
+.globl _imp_cl_freelook
+_imp_cl_freelook: .long _cl_freelook
+.globl _imp_cl_freezeDemo
+_imp_cl_freezeDemo: .long _cl_freezeDemo
+.globl _imp_cl_inGameVideo
+_imp_cl_inGameVideo: .long _cl_inGameVideo
+.globl _imp_cl_maxpackets
+_imp_cl_maxpackets: .long _cl_maxpackets
+.globl _imp_cl_mouseAccel
+_imp_cl_mouseAccel: .long _cl_mouseAccel
+.globl _imp_cl_nodelta
+_imp_cl_nodelta: .long _cl_nodelta
+.globl _imp_cl_noprint
+_imp_cl_noprint: .long _cl_noprint
+.globl _imp_cl_packetdup
+_imp_cl_packetdup: .long _cl_packetdup
+.globl _imp_cl_paused
+_imp_cl_paused: .long _cl_paused
+.globl _imp_cl_pinglist
+_imp_cl_pinglist: .long _cl_pinglist
+.globl _imp_cl_pitchspeed
+_imp_cl_pitchspeed: .long _cl_pitchspeed
+.globl _imp_cl_sensitivity
+_imp_cl_sensitivity: .long _cl_sensitivity
+.globl _imp_cl_serverStatusResendTime
+_imp_cl_serverStatusResendTime: .long _cl_serverStatusResendTime
+.globl _imp_cl_showMouseRate
+_imp_cl_showMouseRate: .long _cl_showMouseRate
+.globl _imp_cl_showSend
+_imp_cl_showSend: .long _cl_showSend
+.globl _imp_cl_showServerCommands
+_imp_cl_showServerCommands: .long _cl_showServerCommands
+.globl _imp_cl_showTimeDelta
+_imp_cl_showTimeDelta: .long _cl_showTimeDelta
+.globl _imp_cl_shownet
+_imp_cl_shownet: .long _cl_shownet
+.globl _imp_cl_shownuments
+_imp_cl_shownuments: .long _cl_shownuments
+.globl _cl_showPackets
+.set _cl_showPackets, _imp_cl_shownuments
+.globl _imp_cl_talking
+_imp_cl_talking: .long _cl_talking
+.globl _imp_cl_voice
+_imp_cl_voice: .long _cl_voice
+.globl _imp_cl_yawspeed
+_imp_cl_yawspeed: .long _cl_yawspeed
+.globl _imp_clc
+_imp_clc: .long _clc
+.set _clc_ptr, _imp_clc
+.globl _clc_ptr
+.set _clc_ptr_195ee8c, _imp_clc
+.globl _clc_ptr_195ee8c
+.globl _imp_clients
+_imp_clients: .long _clients
+.globl _imp_cls
+_imp_cls: .long _cls
+.set _cls_ptr, _imp_cls
+.globl _cls_ptr
+.globl _imp_cm
+_imp_cm: .long _cm
+.globl _imp_colorBlack
+_imp_colorBlack: .long _colorBlack
+.globl _imp_colorBlue
+_imp_colorBlue: .long _colorBlue
+.globl _imp_colorCyan
+_imp_colorCyan: .long _colorCyan
+.globl _imp_colorGreen
+_imp_colorGreen: .long _colorGreen
+.globl _imp_colorLtCyan
+_imp_colorLtCyan: .long _colorLtCyan
+.globl _imp_colorLtGrey
+_imp_colorLtGrey: .long _colorLtGrey
+.globl _imp_colorLtYellow
+_imp_colorLtYellow: .long _colorLtYellow
+.globl _imp_colorMagenta
+_imp_colorMagenta: .long _colorMagenta
+.globl _imp_colorMdCyan
+_imp_colorMdCyan: .long _colorMdCyan
+.globl _imp_colorRed
+_imp_colorRed: .long _colorRed
+.globl _imp_colorWhite
+_imp_colorWhite: .long _colorWhite
+.globl _imp_colorYellow
+_imp_colorYellow: .long _colorYellow
+.globl _imp_com_dedicated
+_imp_com_dedicated: .long _com_dedicated
+.set _sv_dedicated_dvar, _imp_com_dedicated
+.globl _sv_dedicated_dvar
+.globl _imp_com_developer
+_imp_com_developer: .long _com_developer
+.globl _imp_com_errorEntered
+_imp_com_errorEntered: .long _com_errorEntered
+.globl _imp_com_expectedHunkUsage
+_imp_com_expectedHunkUsage: .long _com_expectedHunkUsage
+.set _sv_expectedHunkUsage_dvar, _imp_com_expectedHunkUsage
+.globl _sv_expectedHunkUsage_dvar
+.globl _imp_com_fileAccessed
+_imp_com_fileAccessed: .long _com_fileAccessed
+.globl _imp_com_fixedConsolePosition
+_imp_com_fixedConsolePosition: .long _com_fixedConsolePosition
+.globl _imp_com_frameTime
+_imp_com_frameTime: .long _com_frameTime
+.globl _imp_com_logfile
+_imp_com_logfile: .long _com_logfile
+.globl _imp_com_playerProfile
+_imp_com_playerProfile: .long _com_playerProfile
+.globl _imp_com_statmon
+_imp_com_statmon: .long _com_statmon
+.set _sm_dvar_ptr, _imp_com_statmon
+.globl _sm_dvar_ptr
+.globl _imp_com_sv_running
+_imp_com_sv_running: .long _com_sv_running
+.set _sv_running_dvar, _imp_com_sv_running
+.globl _sv_running_dvar
+.globl _imp_com_timescaleValue
+_imp_com_timescaleValue: .long _com_timescaleValue
+.globl _imp_com_viewlog
+_imp_com_viewlog: .long _com_viewlog
+.globl _imp_current_audioCallback
+_imp_current_audioCallback: .long _current_audioCallback
+.globl _imp_developer
+_imp_developer: .long _developer
+.globl _imp_dvarCount
+_imp_dvarCount: .long _dvarCount
+.globl _imp_dvar_modifiedFlags
+_imp_dvar_modifiedFlags: .long _dvar_modifiedFlags
+.set _com_dvarflags_ptr, _imp_dvar_modifiedFlags
+.globl _com_dvarflags_ptr
+.globl _imp_dx
+_imp_dx: .long _dx
+.globl _imp_dxState
+_imp_dxState: .long _dxState
+.globl _imp_effectActiveCountBolt
+_imp_effectActiveCountBolt: .long _effectActiveCountBolt
+.globl _imp_effectActiveCountNonBolt
+_imp_effectActiveCountNonBolt: .long _effectActiveCountNonBolt
+.globl _imp_entityHandlers
+_imp_entityHandlers: .long _entityHandlers
+.globl _imp_eventnames
+_imp_eventnames: .long _eventnames
+.globl _imp_frame_msec
+_imp_frame_msec: .long _frame_msec
+.globl _imp_friction
+_imp_friction: .long _friction
+.globl _imp_frontEndDataOut
+_imp_frontEndDataOut: .long _frontEndDataOut
+.globl _imp_fs_basepath
+_imp_fs_basepath: .long _fs_basepath
+.globl _imp_fs_cdpath
+_imp_fs_cdpath: .long _fs_cdpath
+.globl _imp_fs_checksumFeed
+_imp_fs_checksumFeed: .long _fs_checksumFeed
+.globl _imp_fs_copyfiles
+_imp_fs_copyfiles: .long _fs_copyfiles
+.globl _imp_fs_debug
+_imp_fs_debug: .long _fs_debug
+.globl _imp_fs_fakeChkSum
+_imp_fs_fakeChkSum: .long _fs_fakeChkSum
+.globl _imp_fs_gamedir
+_imp_fs_gamedir: .long _fs_gamedir
+.globl _imp_fs_homepath
+_imp_fs_homepath: .long _fs_homepath
+.globl _imp_fs_ignoreLocalized
+_imp_fs_ignoreLocalized: .long _fs_ignoreLocalized
+.globl _imp_fs_numServerIwds
+_imp_fs_numServerIwds: .long _fs_numServerIwds
+.globl _imp_fs_numServerReferencedIwds
+_imp_fs_numServerReferencedIwds: .long _fs_numServerReferencedIwds
+.globl _imp_fs_restrict
+_imp_fs_restrict: .long _fs_restrict
+.globl _imp_fs_searchpaths
+_imp_fs_searchpaths: .long _fs_searchpaths
+.globl _imp_fs_serverIwdNames
+_imp_fs_serverIwdNames: .long _fs_serverIwdNames
+.globl _imp_fs_serverIwds
+_imp_fs_serverIwds: .long _fs_serverIwds
+.globl _imp_fs_serverReferencedIwdNames
+_imp_fs_serverReferencedIwdNames: .long _fs_serverReferencedIwdNames
+.globl _imp_fs_serverReferencedIwds
+_imp_fs_serverReferencedIwds: .long _fs_serverReferencedIwds
+.globl _imp_fsh
+_imp_fsh: .long _fsh
+.globl _imp_fxSchedulers
+_imp_fxSchedulers: .long _fxSchedulers
+.globl _imp_fx_camera_valid
+_imp_fx_camera_valid: .long _fx_camera_valid
+.globl _imp_fx_count
+_imp_fx_count: .long _fx_count
+.globl _imp_fx_cull
+_imp_fx_cull: .long _fx_cull
+.globl _imp_fx_debug
+_imp_fx_debug: .long _fx_debug
+.globl _imp_fx_debugBolt
+_imp_fx_debugBolt: .long _fx_debugBolt
+.globl _imp_fx_draw
+_imp_fx_draw: .long _fx_draw
+.globl _imp_fx_enable
+_imp_fx_enable: .long _fx_enable
+.globl _imp_fx_freeze
+_imp_fx_freeze: .long _fx_freeze
+.globl _imp_fx_sort
+_imp_fx_sort: .long _fx_sort
+.globl _imp_fx_visMinTraceDist
+_imp_fx_visMinTraceDist: .long _fx_visMinTraceDist
+.globl _imp_gConsoleRunning
+_imp_gConsoleRunning: .long _gConsoleRunning
+.globl _imp_g_CurrentGenericPacket
+_imp_g_CurrentGenericPacket: .long _g_CurrentGenericPacket
+.globl _imp_g_EndPos
+_imp_g_EndPos: .long _g_EndPos
+.globl _imp_g_InhibitCopy
+_imp_g_InhibitCopy: .long _g_InhibitCopy
+.globl _imp_g_InhibitOpenGLErrors
+_imp_g_InhibitOpenGLErrors: .long _g_InhibitOpenGLErrors
+.globl _imp_g_NoScriptSpam
+_imp_g_NoScriptSpam: .long _g_NoScriptSpam
+.globl _imp_g_NoTextureID
+_imp_g_NoTextureID: .long _g_NoTextureID
+.globl _imp_g_RenderToShadowCookie
+_imp_g_RenderToShadowCookie: .long _g_RenderToShadowCookie
+.globl _imp_g_TotalFilterPasses
+_imp_g_TotalFilterPasses: .long _g_TotalFilterPasses
+.globl _imp_g_VAOID
+_imp_g_VAOID: .long _g_VAOID
+.globl _imp_g_WarmOff
+_imp_g_WarmOff: .long _g_WarmOff
+.globl _imp_g_allowVote
+_imp_g_allowVote: .long _g_allowVote
+.globl _imp_g_antilag
+_imp_g_antilag: .long _g_antilag
+.globl _imp_g_banIPs
+_imp_g_banIPs: .long _g_banIPs
+.globl _imp_g_cheats
+_imp_g_cheats: .long _g_cheats
+.globl _imp_g_clonePlayerMaxVelocity
+_imp_g_clonePlayerMaxVelocity: .long _g_clonePlayerMaxVelocity
+.globl _imp_g_consoleField
+_imp_g_consoleField: .long _g_consoleField
+.globl _imp_g_console_char_height
+_imp_g_console_char_height: .long _g_console_char_height
+.globl _imp_g_console_field_width
+_imp_g_console_field_width: .long _g_console_field_width
+.globl _imp_g_current_bandwidth_setting
+_imp_g_current_bandwidth_setting: .long _g_current_bandwidth_setting
+.globl _imp_g_deadChat
+_imp_g_deadChat: .long _g_deadChat
+.globl _imp_g_debugDamage
+_imp_g_debugDamage: .long _g_debugDamage
+.set _g_debug_damage_ptr, _imp_g_debugDamage
+.globl _g_debug_damage_ptr
+.globl _imp_g_debugLocDamage
+_imp_g_debugLocDamage: .long _g_debugLocDamage
+.globl _imp_g_dedicated
+_imp_g_dedicated: .long _g_dedicated
+.globl _imp_g_disableRendering
+_imp_g_disableRendering: .long _g_disableRendering
+.globl _imp_g_dropForwardSpeed
+_imp_g_dropForwardSpeed: .long _g_dropForwardSpeed
+.globl _imp_g_dropUpSpeedBase
+_imp_g_dropUpSpeedBase: .long _g_dropUpSpeedBase
+.globl _imp_g_dropUpSpeedRand
+_imp_g_dropUpSpeedRand: .long _g_dropUpSpeedRand
+.globl _imp_g_editingField
+_imp_g_editingField: .long _g_editingField
+.globl _imp_g_effectVisArray
+_imp_g_effectVisArray: .long _g_effectVisArray
+.globl _imp_g_effectVisArrayCount
+_imp_g_effectVisArrayCount: .long _g_effectVisArrayCount
+.globl _imp_g_encoder_samplerate
+_imp_g_encoder_samplerate: .long _g_encoder_samplerate
+.globl _imp_g_entities
+_imp_g_entities: .long _g_entities
+.globl _imp_g_frame_size
+_imp_g_frame_size: .long _g_frame_size
+.globl _imp_g_friendlyNameDist
+_imp_g_friendlyNameDist: .long _g_friendlyNameDist
+.globl _imp_g_friendlyfireDist
+_imp_g_friendlyfireDist: .long _g_friendlyfireDist
+.globl _imp_g_gametype
+_imp_g_gametype: .long _g_gametype
+.globl _imp_g_gravity
+_imp_g_gravity: .long _g_gravity
+.globl _imp_g_hudelems
+_imp_g_hudelems: .long _g_hudelems
+.globl _imp_g_inactivity
+_imp_g_inactivity: .long _g_inactivity
+.globl _imp_g_knockback
+_imp_g_knockback: .long _g_knockback
+.globl _imp_g_mantleBlockTimeBuffer
+_imp_g_mantleBlockTimeBuffer: .long _g_mantleBlockTimeBuffer
+.globl _imp_g_maxDroppedWeapons
+_imp_g_maxDroppedWeapons: .long _g_maxDroppedWeapons
+.globl _imp_g_maxclients
+_imp_g_maxclients: .long _g_maxclients
+.globl _imp_g_motd
+_imp_g_motd: .long _g_motd
+.globl _imp_g_oldVoting
+_imp_g_oldVoting: .long _g_oldVoting
+.globl _imp_g_password
+_imp_g_password: .long _g_password
+.set _g_password_ptr, _imp_g_password
+.globl _g_password_ptr
+.globl _imp_g_playerCollisionEjectSpeed
+_imp_g_playerCollisionEjectSpeed: .long _g_playerCollisionEjectSpeed
+.globl _imp_g_qport
+_imp_g_qport: .long _g_qport
+.globl _imp_g_rendererExists
+_imp_g_rendererExists: .long _g_rendererExists
+.globl _fx_developer_check_ptr
+.set _fx_developer_check_ptr, _imp_g_rendererExists
+.globl _imp_g_scr_data
+_imp_g_scr_data: .long _g_scr_data
+.globl _imp_g_skinBuffers
+_imp_g_skinBuffers: .long _g_skinBuffers
+.globl _imp_g_smoothClients
+_imp_g_smoothClients: .long _g_smoothClients
+.globl _imp_g_snd
+_imp_g_snd: .long _g_snd
+.globl _imp_g_special
+_imp_g_special: .long _g_special
+.globl _imp_g_speed
+_imp_g_speed: .long _g_speed
+.globl _imp_g_synchronousClients
+_imp_g_synchronousClients: .long _g_synchronousClients
+.globl _imp_g_traceThreadInfo
+_imp_g_traceThreadInfo: .long _g_traceThreadInfo
+.globl _imp_g_useholdspawndelay
+_imp_g_useholdspawndelay: .long _g_useholdspawndelay
+.globl _imp_g_useholdtime
+_imp_g_useholdtime: .long _g_useholdtime
+.globl _imp_g_voiceChatTalkingDuration
+_imp_g_voiceChatTalkingDuration: .long _g_voiceChatTalkingDuration
+.globl _imp_g_waitingForServer
+_imp_g_waitingForServer: .long _g_waitingForServer
+.globl _imp_g_weaponAmmoPools
+_imp_g_weaponAmmoPools: .long _g_weaponAmmoPools
+.globl _imp_g_wv
+_imp_g_wv: .long _g_wv
+.globl _imp_gameInitialized
+_imp_gameInitialized: .long _gameInitialized
+.globl _imp_hintStrings
+_imp_hintStrings: .long _hintStrings
+.globl _imp_historyEditLines
+_imp_historyEditLines: .long _historyEditLines
+.globl _imp_hud_fade_ammodisplay
+_imp_hud_fade_ammodisplay: .long _hud_fade_ammodisplay
+.globl _imp_hud_fade_compass
+_imp_hud_fade_compass: .long _hud_fade_compass
+.globl _dvar_compassFade
+.set _dvar_compassFade, _imp_hud_fade_compass
+.globl _imp_hud_fade_healthbar
+_imp_hud_fade_healthbar: .long _hud_fade_healthbar
+.globl _imp_hud_fade_offhand
+_imp_hud_fade_offhand: .long _hud_fade_offhand
+.globl _imp_hud_fade_stance
+_imp_hud_fade_stance: .long _hud_fade_stance
+.globl _imp_hud_health_startpulse_injured
+_imp_hud_health_startpulse_injured: .long _hud_health_startpulse_injured
+.globl _imp_inertiaAngle
+_imp_inertiaAngle: .long _inertiaAngle
+.globl _imp_inertiaDebug
+_imp_inertiaDebug: .long _inertiaDebug
+.globl _imp_inertiaMax
+_imp_inertiaMax: .long _inertiaMax
+.globl _imp_infoParms
+_imp_infoParms: .long _infoParms
+.globl _imp_keys
+_imp_keys: .long _keys
+.globl _imp_legacyHacks
+_imp_legacyHacks: .long _legacyHacks
+.globl _imp_legacyHacksArray
+_imp_legacyHacksArray: .long _legacyHacksArray
+.globl _imp_level
+_imp_level: .long _level
+.globl _imp_level_bgs
+_imp_level_bgs: .long _level_bgs
+.globl _imp_loc_language
+_imp_loc_language: .long _loc_language
+.globl _imp_loc_warnings
+_imp_loc_warnings: .long _loc_warnings
+.globl _imp_loc_warningsAsErrors
+_imp_loc_warningsAsErrors: .long _loc_warningsAsErrors
+.globl _imp_m_filter
+_imp_m_filter: .long _m_filter
+.globl _imp_m_forward
+_imp_m_forward: .long _m_forward
+.globl _imp_m_pitch
+_imp_m_pitch: .long _m_pitch
+.globl _imp_m_side
+_imp_m_side: .long _m_side
+.globl _imp_m_yaw
+_imp_m_yaw: .long _m_yaw
+.globl _imp_modNames
+_imp_modNames: .long _modNames
+.globl _imp_net_lanauthorize
+_imp_net_lanauthorize: .long _net_lanauthorize
+.globl _imp_net_profile
+_imp_net_profile: .long _net_profile
+.set _net_profile_dvar, _imp_net_profile
+.globl _net_profile_dvar
+.globl _imp_net_showprofile
+_imp_net_showprofile: .long _net_showprofile
+.globl _imp_nextdemo
+_imp_nextdemo: .long _nextdemo
+.globl _imp_nextmap
+_imp_nextmap: .long _nextmap
+.set _nextmap_dvar, _imp_nextmap
+.globl _nextmap_dvar
+.globl _imp_playerMaxs
+_imp_playerMaxs: .long _playerMaxs
+.globl _imp_playerMins
+_imp_playerMins: .long _playerMins
+.globl _imp_player_adsExitDelay
+_imp_player_adsExitDelay: .long _player_adsExitDelay
+.globl _imp_player_backSpeedScale
+_imp_player_backSpeedScale: .long _player_backSpeedScale
+.globl _imp_player_breath_fire_delay
+_imp_player_breath_fire_delay: .long _player_breath_fire_delay
+.globl _imp_player_breath_gasp_lerp
+_imp_player_breath_gasp_lerp: .long _player_breath_gasp_lerp
+.globl _imp_player_breath_gasp_scale
+_imp_player_breath_gasp_scale: .long _player_breath_gasp_scale
+.globl _imp_player_breath_gasp_time
+_imp_player_breath_gasp_time: .long _player_breath_gasp_time
+.globl _imp_player_breath_hold_lerp
+_imp_player_breath_hold_lerp: .long _player_breath_hold_lerp
+.globl _imp_player_breath_hold_time
+_imp_player_breath_hold_time: .long _player_breath_hold_time
+.globl _imp_player_breath_snd_delay
+_imp_player_breath_snd_delay: .long _player_breath_snd_delay
+.globl _imp_player_breath_snd_lerp
+_imp_player_breath_snd_lerp: .long _player_breath_snd_lerp
+.globl _imp_player_dmgtimer_maxTime
+_imp_player_dmgtimer_maxTime: .long _player_dmgtimer_maxTime
+.globl _imp_player_dmgtimer_minScale
+_imp_player_dmgtimer_minScale: .long _player_dmgtimer_minScale
+.globl _imp_player_dmgtimer_stumbleTime
+_imp_player_dmgtimer_stumbleTime: .long _player_dmgtimer_stumbleTime
+.globl _imp_player_dmgtimer_timePerPoint
+_imp_player_dmgtimer_timePerPoint: .long _player_dmgtimer_timePerPoint
+.globl _imp_player_footstepsThreshhold
+_imp_player_footstepsThreshhold: .long _player_footstepsThreshhold
+.globl _imp_player_meleeHeight
+_imp_player_meleeHeight: .long _player_meleeHeight
+.globl _imp_player_meleeRange
+_imp_player_meleeRange: .long _player_meleeRange
+.globl _imp_player_meleeWidth
+_imp_player_meleeWidth: .long _player_meleeWidth
+.globl _imp_player_moveThreshhold
+_imp_player_moveThreshhold: .long _player_moveThreshhold
+.globl _imp_player_scopeExitOnDamage
+_imp_player_scopeExitOnDamage: .long _player_scopeExitOnDamage
+.globl _imp_player_spectateSpeedScale
+_imp_player_spectateSpeedScale: .long _player_spectateSpeedScale
+.globl _imp_player_strafeSpeedScale
+_imp_player_strafeSpeedScale: .long _player_strafeSpeedScale
+.globl _imp_player_toggleBinoculars
+_imp_player_toggleBinoculars: .long _player_toggleBinoculars
+.globl _imp_player_turnAnims
+_imp_player_turnAnims: .long _player_turnAnims
+.globl _imp_player_view_pitch_down
+_imp_player_view_pitch_down: .long _player_view_pitch_down
+.globl _imp_player_view_pitch_up
+_imp_player_view_pitch_up: .long _player_view_pitch_up
+.globl _imp_pmoveHandlers
+_imp_pmoveHandlers: .long _pmoveHandlers
+.globl _imp_privateEffectActiveCountBolt
+_imp_privateEffectActiveCountBolt: .long _privateEffectActiveCountBolt
+.globl _imp_privateEffectActiveCountNonBolt
+_imp_privateEffectActiveCountNonBolt: .long _privateEffectActiveCountNonBolt
+.globl _imp_r_aaAlpha
+_imp_r_aaAlpha: .long _r_aaAlpha
+.globl _imp_r_aaSamples
+_imp_r_aaSamples: .long _r_aaSamples
+.globl _imp_r_anisotropy
+_imp_r_anisotropy: .long _r_anisotropy
+.globl _imp_r_aspectRatio
+_imp_r_aspectRatio: .long _r_aspectRatio
+.globl _imp_r_blur
+_imp_r_blur: .long _r_blur
+.globl _imp_r_clearColor
+_imp_r_clearColor: .long _r_clearColor
+.globl _imp_r_colorMap
+_imp_r_colorMap: .long _r_colorMap
+.globl _imp_r_cosinePowerMapShift
+_imp_r_cosinePowerMapShift: .long _r_cosinePowerMapShift
+.globl _imp_r_debugEntCounts
+_imp_r_debugEntCounts: .long _r_debugEntCounts
+.globl _imp_r_debugShader
+_imp_r_debugShader: .long _r_debugShader
+.globl _imp_r_depthPrepassModels
+_imp_r_depthPrepassModels: .long _r_depthPrepassModels
+.globl _imp_r_displayRefresh
+_imp_r_displayRefresh: .long _r_displayRefresh
+.globl _imp_r_distortion
+_imp_r_distortion: .long _r_distortion
+.globl _imp_r_dlightLimit
+_imp_r_dlightLimit: .long _r_dlightLimit
+.globl _imp_r_drawBModels
+_imp_r_drawBModels: .long _r_drawBModels
+.globl _imp_r_drawDecals
+_imp_r_drawDecals: .long _r_drawDecals
+.globl _imp_r_drawEntities
+_imp_r_drawEntities: .long _r_drawEntities
+.globl _imp_r_drawPrimCap
+_imp_r_drawPrimCap: .long _r_drawPrimCap
+.globl _imp_r_drawPrimFloor
+_imp_r_drawPrimFloor: .long _r_drawPrimFloor
+.globl _imp_r_drawSModels
+_imp_r_drawSModels: .long _r_drawSModels
+.globl _imp_r_drawSun
+_imp_r_drawSun: .long _r_drawSun
+.globl _imp_r_drawWater
+_imp_r_drawWater: .long _r_drawWater
+.globl _imp_r_drawWorld
+_imp_r_drawWorld: .long _r_drawWorld
+.globl _imp_r_drawXModels
+_imp_r_drawXModels: .long _r_drawXModels
+.globl _imp_r_fog
+_imp_r_fog: .long _r_fog
+.globl _imp_r_forceLod
+_imp_r_forceLod: .long _r_forceLod
+.globl _imp_r_fullbright
+_imp_r_fullbright: .long _r_fullbright
+.globl _imp_r_gamma
+_imp_r_gamma: .long _r_gamma
+.globl _imp_r_glow
+_imp_r_glow: .long _r_glow
+.globl _imp_r_glowBloomCutoff
+_imp_r_glowBloomCutoff: .long _r_glowBloomCutoff
+.globl _imp_r_glowBloomDesaturation
+_imp_r_glowBloomDesaturation: .long _r_glowBloomDesaturation
+.globl _imp_r_glowBloomIntensity
+_imp_r_glowBloomIntensity: .long _r_glowBloomIntensity
+.globl _imp_r_glowRadius
+_imp_r_glowRadius: .long _r_glowRadius
+.globl _imp_r_glowSkyBleedIntensity
+_imp_r_glowSkyBleedIntensity: .long _r_glowSkyBleedIntensity
+.globl _imp_r_gpuSync
+_imp_r_gpuSync: .long _r_gpuSync
+.globl _imp_r_highLodDist
+_imp_r_highLodDist: .long _r_highLodDist
+.globl _imp_r_ignoreHwGamma
+_imp_r_ignoreHwGamma: .long _r_ignoreHwGamma
+.globl _imp_r_lightMap
+_imp_r_lightMap: .long _r_lightMap
+.globl _imp_r_lightTweakAmbient
+_imp_r_lightTweakAmbient: .long _r_lightTweakAmbient
+.globl _imp_r_lightTweakAmbientColor
+_imp_r_lightTweakAmbientColor: .long _r_lightTweakAmbientColor
+.globl _imp_r_lightTweakDiffuseFraction
+_imp_r_lightTweakDiffuseFraction: .long _r_lightTweakDiffuseFraction
+.globl _imp_r_lightTweakSunColor
+_imp_r_lightTweakSunColor: .long _r_lightTweakSunColor
+.globl _imp_r_lightTweakSunDiffuseColor
+_imp_r_lightTweakSunDiffuseColor: .long _r_lightTweakSunDiffuseColor
+.globl _imp_r_lightTweakSunDirection
+_imp_r_lightTweakSunDirection: .long _r_lightTweakSunDirection
+.globl _imp_r_lightTweakSunLight
+_imp_r_lightTweakSunLight: .long _r_lightTweakSunLight
+.globl _imp_r_lockPvs
+_imp_r_lockPvs: .long _r_lockPvs
+.globl _imp_r_lodBias
+_imp_r_lodBias: .long _r_lodBias
+.globl _imp_r_lodScale
+_imp_r_lodScale: .long _r_lodScale
+.globl _imp_r_logFile
+_imp_r_logFile: .long _r_logFile
+.globl _imp_r_lowLodDist
+_imp_r_lowLodDist: .long _r_lowLodDist
+.globl _imp_r_lowestLodDist
+_imp_r_lowestLodDist: .long _r_lowestLodDist
+.globl _imp_r_mediumLodDist
+_imp_r_mediumLodDist: .long _r_mediumLodDist
+.globl _imp_r_mode
+_imp_r_mode: .long _r_mode
+.globl _imp_r_multiGpu
+_imp_r_multiGpu: .long _r_multiGpu
+.globl _imp_r_norefresh
+_imp_r_norefresh: .long _r_norefresh
+.globl _imp_r_normalMap
+_imp_r_normalMap: .long _r_normalMap
+.globl _imp_r_objectiveColorDx7Max
+_imp_r_objectiveColorDx7Max: .long _r_objectiveColorDx7Max
+.globl _imp_r_objectiveColorDx7Min
+_imp_r_objectiveColorDx7Min: .long _r_objectiveColorDx7Min
+.globl _imp_r_optimizeLightmaps
+_imp_r_optimizeLightmaps: .long _r_optimizeLightmaps
+.globl _imp_r_optimizeXModels
+_imp_r_optimizeXModels: .long _r_optimizeXModels
+.globl _imp_r_outdoorAwayBias
+_imp_r_outdoorAwayBias: .long _r_outdoorAwayBias
+.globl _imp_r_outdoorDownBias
+_imp_r_outdoorDownBias: .long _r_outdoorDownBias
+.globl _imp_r_outdoorFeather
+_imp_r_outdoorFeather: .long _r_outdoorFeather
+.globl _imp_r_overbrightBits
+_imp_r_overbrightBits: .long _r_overbrightBits
+.globl _imp_r_picmip
+_imp_r_picmip: .long _r_picmip
+.globl _imp_r_picmip_bump
+_imp_r_picmip_bump: .long _r_picmip_bump
+.globl _imp_r_picmip_manual
+_imp_r_picmip_manual: .long _r_picmip_manual
+.globl _imp_r_picmip_spec
+_imp_r_picmip_spec: .long _r_picmip_spec
+.globl _imp_r_polygonOffsetBias
+_imp_r_polygonOffsetBias: .long _r_polygonOffsetBias
+.globl _imp_r_polygonOffsetScale
+_imp_r_polygonOffsetScale: .long _r_polygonOffsetScale
+.globl _imp_r_portalBevels
+_imp_r_portalBevels: .long _r_portalBevels
+.globl _imp_r_portalBevelsOnly
+_imp_r_portalBevelsOnly: .long _r_portalBevelsOnly
+.globl _imp_r_portalFineCull
+_imp_r_portalFineCull: .long _r_portalFineCull
+.globl _imp_r_portalMinClipArea
+_imp_r_portalMinClipArea: .long _r_portalMinClipArea
+.globl _imp_r_portalWalkLimit
+_imp_r_portalWalkLimit: .long _r_portalWalkLimit
+.globl _imp_r_railCoreWidth
+_imp_r_railCoreWidth: .long _r_railCoreWidth
+.globl _imp_r_rendererInUse
+_imp_r_rendererInUse: .long _r_rendererInUse
+.globl _imp_r_rendererPreference
+_imp_r_rendererPreference: .long _r_rendererPreference
+.globl _imp_r_showFbColorDebug
+_imp_r_showFbColorDebug: .long _r_showFbColorDebug
+.globl _imp_r_showGroundLit
+_imp_r_showGroundLit: .long _r_showGroundLit
+.globl _imp_r_showLightGrid
+_imp_r_showLightGrid: .long _r_showLightGrid
+.globl _imp_r_showMissingLightGrid
+_imp_r_showMissingLightGrid: .long _r_showMissingLightGrid
+.globl _imp_r_showPortals
+_imp_r_showPortals: .long _r_showPortals
+.globl _imp_r_showSModelNames
+_imp_r_showSModelNames: .long _r_showSModelNames
+.globl _imp_r_showSurfCounts
+_imp_r_showSurfCounts: .long _r_showSurfCounts
+.globl _imp_r_showTriCounts
+_imp_r_showTriCounts: .long _r_showTriCounts
+.globl _imp_r_showTris
+_imp_r_showTris: .long _r_showTris
+.globl _imp_r_showVertCounts
+_imp_r_showVertCounts: .long _r_showVertCounts
+.globl _imp_r_singleCell
+_imp_r_singleCell: .long _r_singleCell
+.globl _imp_r_skinCache
+_imp_r_skinCache: .long _r_skinCache
+.globl _imp_r_skipBackEnd
+_imp_r_skipBackEnd: .long _r_skipBackEnd
+.globl _imp_r_skipPvs
+_imp_r_skipPvs: .long _r_skipPvs
+.globl _imp_r_smc_enable
+_imp_r_smc_enable: .long _r_smc_enable
+.globl _imp_r_specularColorScale
+_imp_r_specularColorScale: .long _r_specularColorScale
+.globl _imp_r_specularMap
+_imp_r_specularMap: .long _r_specularMap
+.globl _imp_r_sun_from_dvars
+_imp_r_sun_from_dvars: .long _r_sun_from_dvars
+.globl _imp_r_swapInterval
+_imp_r_swapInterval: .long _r_swapInterval
+.globl _imp_r_testFill
+_imp_r_testFill: .long _r_testFill
+.globl _imp_r_testFillEnable
+_imp_r_testFillEnable: .long _r_testFillEnable
+.globl _imp_r_testTransform
+_imp_r_testTransform: .long _r_testTransform
+.globl _imp_r_textureMode
+_imp_r_textureMode: .long _r_textureMode
+.globl _imp_r_vc_makelog
+_imp_r_vc_makelog: .long _r_vc_makelog
+.globl _r_lightGridContrast
+.set _r_lightGridContrast, _imp_r_vc_makelog
+.globl _imp_r_vc_showlog
+_imp_r_vc_showlog: .long _r_vc_showlog
+.globl _imp_r_xdebug
+_imp_r_xdebug: .long _r_xdebug
+.globl _imp_r_zfar
+_imp_r_zfar: .long _r_zfar
+.globl _imp_r_znear
+_imp_r_znear: .long _r_znear
+.globl _imp_r_znear_depthhack
+_imp_r_znear_depthhack: .long _r_znear_depthhack
+.globl _imp_rcon_password
+_imp_rcon_password: .long _rcon_password
+.globl _imp_re
+_imp_re: .long _re
+.globl _imp_rg
+_imp_rg: .long _rg
+.globl _imp_rgp
+_imp_rgp: .long _rgp
+.globl _imp_ri
+_imp_ri: .long _ri
+.globl _imp_riflePriorityMap
+_imp_riflePriorityMap: .long _riflePriorityMap
+.globl _imp_s_sundvars
+_imp_s_sundvars: .long _s_sundvars
+.globl _imp_sc_blur
+_imp_sc_blur: .long _sc_blur
+.globl _imp_sc_enable
+_imp_sc_enable: .long _sc_enable
+.globl _imp_sc_showDebug
+_imp_sc_showDebug: .long _sc_showDebug
+.globl _imp_scene
+_imp_scene: .long _scene
+.globl _imp_scrAnimPub
+_imp_scrAnimPub: .long _scrAnimPub
+.globl _imp_scrCompileGlob
+_imp_scrCompileGlob: .long _scrCompileGlob
+.globl _imp_scrCompilePub
+_imp_scrCompilePub: .long _scrCompilePub
+.globl _imp_scrMemTreePub
+_imp_scrMemTreePub: .long _scrMemTreePub
+.globl _imp_scrParserPub
+_imp_scrParserPub: .long _scrParserPub
+.globl _imp_scrVarPub
+_imp_scrVarPub: .long _scrVarPub
+.globl _imp_scrVmPub
+_imp_scrVmPub: .long _scrVmPub
+.globl _imp_scr_const
+_imp_scr_const: .long _scr_const
+.globl _imp_sharedUiInfo
+_imp_sharedUiInfo: .long _sharedUiInfo
+.globl _imp_singleClientEvents
+_imp_singleClientEvents: .long _singleClientEvents
+.globl _imp_snd_bits
+_imp_snd_bits: .long _snd_bits
+.globl _imp_snd_enableReverb
+_imp_snd_enableReverb: .long _snd_enableReverb
+.globl _imp_snd_errorOnMissing
+_imp_snd_errorOnMissing: .long _snd_errorOnMissing
+.globl _imp_snd_khz
+_imp_snd_khz: .long _snd_khz
+.globl _imp_snd_roomStrings
+_imp_snd_roomStrings: .long _snd_roomStrings
+.globl _imp_snd_stereo
+_imp_snd_stereo: .long _snd_stereo
+.globl _imp_snd_touchStreamFilesOnLoad
+_imp_snd_touchStreamFilesOnLoad: .long _snd_touchStreamFilesOnLoad
+.globl _imp_sortedDvars
+_imp_sortedDvars: .long _sortedDvars
+.globl _imp_speex_nb_mode
+_imp_speex_nb_mode: .long _speex_nb_mode
+.globl _imp_speex_uwb_mode
+_imp_speex_uwb_mode: .long _speex_uwb_mode
+.globl _imp_speex_wb_mode
+_imp_speex_wb_mode: .long _speex_wb_mode
+.globl _imp_stopspeed
+_imp_stopspeed: .long _stopspeed
+.globl _imp_sunFlareArray
+_imp_sunFlareArray: .long _sunFlareArray
+.globl _imp_sv
+_imp_sv: .long _sv
+.globl _imp_sv_allowAnonymous
+_imp_sv_allowAnonymous: .long _sv_allowAnonymous
+.set _sv_allowAnonymous_dvar, _imp_sv_allowAnonymous
+.globl _sv_allowAnonymous_dvar
+.globl _imp_sv_allowDownload
+_imp_sv_allowDownload: .long _sv_allowDownload
+.set _sv_allowDownload_dvar, _imp_sv_allowDownload
+.globl _sv_allowDownload_dvar
+.globl _imp_sv_allowedClan1
+_imp_sv_allowedClan1: .long _sv_allowedClan1
+.set _sv_allowedClan1_dvar, _imp_sv_allowedClan1
+.globl _sv_allowedClan1_dvar
+.globl _imp_sv_allowedClan2
+_imp_sv_allowedClan2: .long _sv_allowedClan2
+.set _sv_allowedClan2_dvar, _imp_sv_allowedClan2
+.globl _sv_allowedClan2_dvar
+.globl _imp_sv_cheats
+_imp_sv_cheats: .long _sv_cheats
+.set _sv_cheats_dvar, _imp_sv_cheats
+.globl _sv_cheats_dvar
+.globl _imp_sv_debugRate
+_imp_sv_debugRate: .long _sv_debugRate
+.set _sv_debugRate_dvar, _imp_sv_debugRate
+.globl _sv_debugRate_dvar
+.globl _imp_sv_debugReliableCmds
+_imp_sv_debugReliableCmds: .long _sv_debugReliableCmds
+.set _sv_debugReliableCmds_dvar, _imp_sv_debugReliableCmds
+.globl _sv_debugReliableCmds_dvar
+.globl _imp_sv_disableClientConsole
+_imp_sv_disableClientConsole: .long _sv_disableClientConsole
+.set _sv_disableClientConsole_dvar, _imp_sv_disableClientConsole
+.globl _sv_disableClientConsole_dvar
+.globl _imp_sv_floodProtect
+_imp_sv_floodProtect: .long _sv_floodProtect
+.set _sv_floodProtect_dvar, _imp_sv_floodProtect
+.globl _sv_floodProtect_dvar
+.globl _imp_sv_fps
+_imp_sv_fps: .long _sv_fps
+.set _sv_fps_dvar, _imp_sv_fps
+.globl _sv_fps_dvar
+.globl _imp_sv_gametype
+_imp_sv_gametype: .long _sv_gametype
+.set _sv_gametype_dvar, _imp_sv_gametype
+.globl _sv_gametype_dvar
+.globl _imp_sv_hostname
+_imp_sv_hostname: .long _sv_hostname
+.set _sv_hostname_dvar, _imp_sv_hostname
+.globl _sv_hostname_dvar
+.globl _imp_sv_iwdNames
+_imp_sv_iwdNames: .long _sv_iwdNames
+.set _sv_iwdNames_dvar, _imp_sv_iwdNames
+.globl _sv_iwdNames_dvar
+.globl _imp_sv_iwds
+_imp_sv_iwds: .long _sv_iwds
+.set _sv_iwds_dvar, _imp_sv_iwds
+.globl _sv_iwds_dvar
+.globl _imp_sv_kickBanTime
+_imp_sv_kickBanTime: .long _sv_kickBanTime
+.set _sv_kickBanTime_dvar, _imp_sv_kickBanTime
+.globl _sv_kickBanTime_dvar
+.globl _imp_sv_mapRotation
+_imp_sv_mapRotation: .long _sv_mapRotation
+.set _sv_mapRotation_dvar, _imp_sv_mapRotation
+.globl _sv_mapRotation_dvar
+.globl _imp_sv_mapRotationCurrent
+_imp_sv_mapRotationCurrent: .long _sv_mapRotationCurrent
+.set _sv_mapRotationCurrent_dvar, _imp_sv_mapRotationCurrent
+.globl _sv_mapRotationCurrent_dvar
+.globl _imp_sv_mapname
+_imp_sv_mapname: .long _sv_mapname
+.set _sv_mapname_dvar, _imp_sv_mapname
+.globl _sv_mapname_dvar
+.globl _imp_sv_maxPing
+_imp_sv_maxPing: .long _sv_maxPing
+.set _sv_maxPing_dvar, _imp_sv_maxPing
+.globl _sv_maxPing_dvar
+.globl _imp_sv_maxRate
+_imp_sv_maxRate: .long _sv_maxRate
+.set _sv_maxRate_dvar, _imp_sv_maxRate
+.globl _sv_maxRate_dvar
+.set _sv_minPingRate_dvar, _imp_sv_maxRate
+.globl _sv_minPingRate_dvar
+.globl _imp_sv_maxclients
+_imp_sv_maxclients: .long _sv_maxclients
+.set _sv_maxclients_dvar, _imp_sv_maxclients
+.globl _sv_maxclients_dvar
+.globl _imp_sv_minPing
+_imp_sv_minPing: .long _sv_minPing
+.set _sv_minPing_dvar, _imp_sv_minPing
+.globl _sv_minPing_dvar
+.globl _imp_showpackets
+_imp_showpackets: .long _showpackets
+.set _showpackets_dvar, _imp_showpackets
+.globl _showpackets_dvar
+.globl _imp_sv_packet_info
+_imp_sv_packet_info: .long _sv_packet_info
+.set _sv_packet_info_dvar, _imp_sv_packet_info
+.globl _sv_packet_info_dvar
+.globl _imp_sv_padPackets
+_imp_sv_padPackets: .long _sv_padPackets
+.set _sv_padPackets_dvar, _imp_sv_padPackets
+.globl _sv_padPackets_dvar
+.globl _imp_sv_paused
+_imp_sv_paused: .long _sv_paused
+.globl _imp_sv_privateClients
+_imp_sv_privateClients: .long _sv_privateClients
+.set _sv_privateClients_dvar, _imp_sv_privateClients
+.globl _sv_privateClients_dvar
+.globl _imp_sv_privatePassword
+_imp_sv_privatePassword: .long _sv_privatePassword
+.globl _imp_sv_pure
+_imp_sv_pure: .long _sv_pure
+.set _sv_pure_dvar, _imp_sv_pure
+.globl _sv_pure_dvar
+.globl _imp_sv_reconnectlimit
+_imp_sv_reconnectlimit: .long _sv_reconnectlimit
+.set _sv_reconnectlimit_dvar, _imp_sv_reconnectlimit
+.globl _sv_reconnectlimit_dvar
+.globl _imp_sv_referencedIwdNames
+_imp_sv_referencedIwdNames: .long _sv_referencedIwdNames
+.set _sv_referencedIwdNames_dvar, _imp_sv_referencedIwdNames
+.globl _sv_referencedIwdNames_dvar
+.globl _imp_sv_referencedIwds
+_imp_sv_referencedIwds: .long _sv_referencedIwds
+.set _sv_referencedIwds_dvar, _imp_sv_referencedIwds
+.globl _sv_referencedIwds_dvar
+.globl _imp_sv_serverId_value
+_imp_sv_serverId_value: .long _sv_serverId_value
+.globl _imp_sv_serverid
+_imp_sv_serverid: .long _sv_serverid
+.set _sv_serverid_dvar, _imp_sv_serverid
+.globl _sv_serverid_dvar
+.globl _imp_sv_showAverageBPS
+_imp_sv_showAverageBPS: .long _sv_showAverageBPS
+.set _sv_showAverageBPS_dvar, _imp_sv_showAverageBPS
+.globl _sv_showAverageBPS_dvar
+.globl _imp_sv_showCommands
+_imp_sv_showCommands: .long _sv_showCommands
+.set _sv_showCommands_dvar, _imp_sv_showCommands
+.globl _sv_showCommands_dvar
+.globl _imp_sv_timeout
+_imp_sv_timeout: .long _sv_timeout
+.set _sv_timeout_dvar, _imp_sv_timeout
+.globl _sv_timeout_dvar
+.globl _imp_sv_voice
+_imp_sv_voice: .long _sv_voice
+.set _sv_voice_dvar, _imp_sv_voice
+.globl _sv_voice_dvar
+.globl _imp_sv_voiceQuality
+_imp_sv_voiceQuality: .long _sv_voiceQuality
+.set _sv_voiceQuality_dvar, _imp_sv_voiceQuality
+.globl _sv_voiceQuality_dvar
+.globl _imp_sv_zombietime
+_imp_sv_zombietime: .long _sv_zombietime
+.set _sv_zombietime_dvar, _imp_sv_zombietime
+.globl _sv_zombietime_dvar
+.globl _imp_svs
+_imp_svs: .long _svs
+.globl _imp_tess
+_imp_tess: .long _tess
+.globl _imp_theFxHelper
+_imp_theFxHelper: .long _theFxHelper
+.set _fx_helper_ptr, _imp_theFxHelper
+.globl _fx_helper_ptr
+.globl _imp_theFxScheduler
+_imp_theFxScheduler: .long _theFxScheduler
+.set _fx_scheduler_ptr, _imp_theFxScheduler
+.globl _fx_scheduler_ptr
+.globl _imp_updateScreenCalled
+_imp_updateScreenCalled: .long _updateScreenCalled
+.globl _imp_var_typename
+_imp_var_typename: .long _var_typename
+.globl _imp_vbr_nb_thresh
+_imp_vbr_nb_thresh: .long _vbr_nb_thresh
+.globl _imp_vec3_colorintensity
+_imp_vec3_colorintensity: .long _vec3_colorintensity
+.globl _imp_vec3_origin
+_imp_vec3_origin: .long _vec3_origin
+.set _trace_mins, _imp_vec3_origin
+.globl _trace_mins
+.globl _imp_vidConfig
+_imp_vidConfig: .long _vidConfig
+.globl _imp_vid_xpos
+_imp_vid_xpos: .long _vid_xpos
+.globl _imp_vid_ypos
+_imp_vid_ypos: .long _vid_ypos
+.globl _imp_voice_current_scaler
+_imp_voice_current_scaler: .long _voice_current_scaler
+.globl _imp_voice_current_voicelevel
+_imp_voice_current_voicelevel: .long _voice_current_voicelevel
+.globl _imp_voice_deadChat
+_imp_voice_deadChat: .long _voice_deadChat
+.globl _imp_voice_global
+_imp_voice_global: .long _voice_global
+.globl _imp_voice_localEcho
+_imp_voice_localEcho: .long _voice_localEcho
+.globl _imp_zcalloc
+_imp_zcalloc: .long _zcalloc
+.globl _imp_zcfree
+_imp_zcfree: .long _zcfree
+
+/* Decompiler alias → import pointer mappings
+ * Double-deref vars (extern void **X; *(byte**)X): store ADDRESS of import pointer
+ * Single-deref vars (extern void *X; (char*)X): alias directly to import pointer
+ */
+.globl _g_drawSurf
+_g_drawSurf: .long _imp_tess
+.globl _g_viewParms
+_g_viewParms: .long _imp_backEndData
+.globl _g_viewInfo
+_g_viewInfo: .long _imp_r_zfar
+.globl _g_backEndData
+_g_backEndData: .long _imp_dxState
+.globl _g_renderState
+_g_renderState: .long _imp_r_fog
+.globl _gfx_buf
+.set _gfx_buf, _imp_tess
+.globl _gfxScene
+.set _gfxScene, _imp_scene
+
+/* Fix #109: Renderer import pointer aliases */
+.globl _dx_device_ptr
+.set _dx_device_ptr, _imp_dx
+.globl _dx_fence
+.set _dx_fence, _imp_alwaysfails
+.globl _r_glob
+.set _r_glob, _imp_rgp
+.globl _r_glob_ptr
+.set _r_glob_ptr, _imp_rgp
+.globl _r_frontEndDataOut
+.set _r_frontEndDataOut, _imp_backEnd
+.globl _r_dvar_sunEnable
+.set _r_dvar_sunEnable, _imp_r_drawSun
+.globl _r_defaultColor
+.set _r_defaultColor, _imp_colorWhite
+.globl _r_videoConfig
+.set _r_videoConfig, _imp_vidConfig
+.globl _r_phys
+.set _r_phys, _imp_ri
+.globl _r_contentmask
+.set _r_contentmask, _imp_vec3_origin
+.globl _r_vtable_ptr
+.set _r_vtable_ptr, _imp_ri
+.globl _r_world_ptr
+.set _r_world_ptr, _imp_vec3_origin
+.globl _r_surftype_table_ptr
+.set _r_surftype_table_ptr, _imp_infoParms
+.globl _r_dvar_ef30
+.set _r_dvar_ef30, _imp_r_lightTweakSunColor
+.globl _r_dvar_ef34
+.set _r_dvar_ef34, _imp_r_lightTweakDiffuseFraction
+.globl _r_dvar_ef38
+.set _r_dvar_ef38, _imp_r_lightTweakAmbient
+.globl _r_dvar_ef3c
+.set _r_dvar_ef3c, _imp_r_lightTweakAmbientColor
+.globl _r_dvar_ef44
+.set _r_dvar_ef44, _imp_r_lightTweakSunDiffuseColor
+.globl _r_dvar_ef48
+.set _r_dvar_ef48, _imp_r_lightTweakSunLight
+.globl _r_dvar_ef4c
+.set _r_dvar_ef4c, _imp_r_lightTweakSunDirection
+.globl _r_lightGridSunDir
+.set _r_lightGridSunDir, _imp_vec3_colorintensity
+.globl _r_lightGridEnableTweaks
+.set _r_lightGridEnableTweaks, _imp_r_showLightGrid
+.globl _r_lightGridSpread
+.set _r_lightGridSpread, _imp_r_vc_showlog
+.globl _r_lightGridUseTweakedValues
+.set _r_lightGridUseTweakedValues, _imp_r_showMissingLightGrid
+.globl _r_sunFlareState
+.set _r_sunFlareState, _imp_sunFlareArray
+.globl _r_sundvar_table
+.set _r_sundvar_table, _imp_s_sundvars
+.globl _sm_mtl_init
+.set _sm_mtl_init, _imp_cls
+.globl _sm_mtl_vtable
+.set _sm_mtl_vtable, _imp_re
