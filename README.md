@@ -66,6 +66,21 @@ cmake --build build-win32 -j
 Add `-DCOD2_WIN32_CLIENT=ON` for the SDL2/GL client (supply SDL2 dev libs under
 `src/win32/sdl2/lib/`; the dedicated server needs none).
 
+#### Swap-in renderer DLL (optional, experimental)
+
+The renderer can be built as a separate swap-in DLL — it exports `GetRefAPI`
+and talks to the engine only through the `ri`/`re` tables. With the client
+configured, run the `gfxdll` target:
+
+```sh
+cmake --build build-win32 --target gfxdll
+# -> build-win32/gfx_d3d_mp_x86_s.dll   (renderer DLL)
+# -> build-win32/cod2_win32_gfxdll.exe  (engine that loads it at runtime)
+```
+
+The renderer↔engine bridge is pre-generated and committed under `build/gfxdll/`;
+the build is pure compile+link. Experimental — not exhaustively tested.
+
 ## Running
 
 This reconstructs the engine, not the content. Point it at data from a copy of
