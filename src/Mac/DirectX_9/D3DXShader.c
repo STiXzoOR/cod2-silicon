@@ -526,8 +526,16 @@ HRESULT D3DXCompileShader(
         static PFN_D3DXCompile s_real;
         static int s_tried;
         if (!s_tried) {
-            const char *libs[] = { "d3dx9_43.dll", "d3dx9_42.dll", "d3dx9_41.dll", "d3dx9_40.dll",
-                                   "d3dx9_39.dll", "d3dx9_36.dll", "d3dx9_24.dll", "d3dx9.dll", 0 };
+            /* Try every shipped d3dx9 version (24..43) plus the generic name, so we
+             * find whatever is on the box -- CoD2 itself ships an early one
+             * (d3dx9_2x), while the DX redist installs the later d3dx9_4x. A too-short
+             * list here means no real compiler -> null shaders -> black screen. */
+            const char *libs[] = {
+                "d3dx9_43.dll", "d3dx9_42.dll", "d3dx9_41.dll", "d3dx9_40.dll", "d3dx9_39.dll",
+                "d3dx9_38.dll", "d3dx9_37.dll", "d3dx9_36.dll", "d3dx9_35.dll", "d3dx9_34.dll",
+                "d3dx9_33.dll", "d3dx9_32.dll", "d3dx9_31.dll", "d3dx9_30.dll", "d3dx9_29.dll",
+                "d3dx9_28.dll", "d3dx9_27.dll", "d3dx9_26.dll", "d3dx9_25.dll", "d3dx9_24.dll",
+                "d3dx9.dll", 0 };
             int li;
             s_tried = 1;
             for (li = 0; libs[li]; li++) {

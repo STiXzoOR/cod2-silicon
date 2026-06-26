@@ -756,8 +756,12 @@ int D3DXGetShaderConstantTable(const void *function, void **constantTable)
         static PFN_GetCT s_real;
         static int s_tried;
         if (!s_tried) {
-            const char *libs[] = { "d3dx9_43.dll", "d3dx9_42.dll", "d3dx9_41.dll",
-                                   "d3dx9_40.dll", "d3dx9_36.dll", "d3dx9.dll", 0 };
+            const char *libs[] = {
+                "d3dx9_43.dll", "d3dx9_42.dll", "d3dx9_41.dll", "d3dx9_40.dll", "d3dx9_39.dll",
+                "d3dx9_38.dll", "d3dx9_37.dll", "d3dx9_36.dll", "d3dx9_35.dll", "d3dx9_34.dll",
+                "d3dx9_33.dll", "d3dx9_32.dll", "d3dx9_31.dll", "d3dx9_30.dll", "d3dx9_29.dll",
+                "d3dx9_28.dll", "d3dx9_27.dll", "d3dx9_26.dll", "d3dx9_25.dll", "d3dx9_24.dll",
+                "d3dx9.dll", 0 };
             int li;
             s_tried = 1;
             for (li = 0; libs[li]; li++) {

@@ -844,8 +844,10 @@ static void RB_StretchRawCmd(GfxRenderCommandExecState *execState)
 
     device = *(void **)((char *)imp_dx + 8);
     devVtable = *(void ***)device;
+    /* D3DUSAGE_DYNAMIC (0x200): this texture is locked with D3DLOCK_DISCARD below,
+     * which real D3D9 only permits on dynamic textures (Wine ignores the rule). */
     hr = ((HRESULT(D3DVTCC *)(void *, UINT, UINT, UINT, DWORD, DWORD, DWORD, void **, void *))(devVtable[0x5C / 4]))(
-        device, (UINT)cols, (UINT)rows, 1, 0, 0x16, 0, &rawTexture, NULL);
+        device, (UINT)cols, (UINT)rows, 1, 0x200, 0x16, 0, &rawTexture, NULL);
 
     if (hr >= 0) {
 

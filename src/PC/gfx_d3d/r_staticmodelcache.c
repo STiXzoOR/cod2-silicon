@@ -81,8 +81,12 @@ void R_InitStaticModelCache(void)
     do {
         device = *(void **)((byte *)imp_dx + 8);
         vtable = *(void ***)device;
+        /* usage = D3DUSAGE_DYNAMIC|D3DUSAGE_WRITEONLY (0x208). NOT 0x400208: the
+         * 0x400000 bit is not a valid D3DUSAGE, and real D3D9 fails the whole
+         * CreateVertexBuffer on it (Wine ignores it) -> smodelCacheVb stays NULL
+         * -> NULL-deref on the first static-model skin. */
         ((HRESULT(D3DVTCC *)(void *, int, int, int, int, void **, void *))vtable[0x68 / 4])(
-            device, size, 0x400208, 0, 0, vbOut, NULL);
+            device, size, 0x208, 0, 0, vbOut, NULL);
     } while (*retryFlag != 0);
 
     memset(&s_cache, 0, sizeof(s_cache));
