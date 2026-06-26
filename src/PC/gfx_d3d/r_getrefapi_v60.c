@@ -55,18 +55,6 @@ DIAG(23) DIAG(24) DIAG(26) DIAG(27) DIAG(87) DIAG(88) DIAG(89)
     int *dst;
     int i, k;
 
-    {
-        extern void *R_LoadXModelSurfsSurface(void *, void *, int **, void *(*)(int));
-        FILE *fp = fopen("Z:\\tmp\\v60ver.txt", "w");
-        if (fp) {
-            char buf[160];
-            sprintf(buf, "v60 c75a4e6; GetRefAPI_v60_adapt=%p R_LoadXModelSurfsSurface=%p\n",
-                    (void *)&GetRefAPI_v60_adapt, (void *)&R_LoadXModelSurfsSurface);
-            fputs(buf, fp);
-            fclose(fp);
-        }
-    }
-
     memset(&ri_v59, 0, sizeof(ri_v59));
     src = (const int *)rimp_v60;
     dst = (int *)&ri_v59;
@@ -78,6 +66,14 @@ DIAG(23) DIAG(24) DIAG(26) DIAG(27) DIAG(87) DIAG(88) DIAG(89)
     dst[21] = src[22];
     dst[107] = src[111];
     dst[135] = src[159];
+
+    /* Sun/dvar members used at map load (retail v60 idx -> our v59 idx; a clean +2).
+     * With these bridged, R_LoadWorld pushes the BSP sun into the r_lightTweak* dvars
+     * and the optional sun-dvar file loads correctly under the retail engine. */
+    dst[39] = src[41];   /* Dvar_SetFloat */
+    dst[41] = src[43];   /* Dvar_SetColor */
+    dst[43] = src[45];   /* Dvar_SetVec3 */
+    dst[68] = src[70];   /* Com_LoadDvarsFromBuffer */
 
     re59 = GetRefAPI(59, &ri_v59);
     if (!re59)
