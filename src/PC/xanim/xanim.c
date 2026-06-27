@@ -94,7 +94,7 @@ static void *Hunk_AllocXAnimPrecache(int size);
 Bool XAnimIsPrimitive(XAnim *anims, unsigned int animIndex);
 void XAnimSetTime(XAnimTree *tree, unsigned int animIndex, float time);
 void XAnimSetAnimRate(XAnimTree *tree, unsigned int animIndex, float rate);
-Bool XAnimIsLooped(const XAnim *anims, unsigned int animIndex);
+int XAnimIsLooped(const XAnim *anims, unsigned int animIndex);
 Bool XAnimNotetrackExists(const XAnim *anims, unsigned int animIndex, unsigned int name);
 static void __attribute_regparm__(3) Z18XAnim_GetTimeIndexIhEvPK9XAnimTimePK19XAnimDynamicIndicesiPiPf(const XAnimTime *animTime, const XAnimDynamicIndices *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac);
 static void __attribute_regparm__(3) Z28XAnim_GetTimeIndexCompressedItEvPK9XAnimTimePKT_iPiPf(const XAnimTime *animTime, const unsigned short *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac);
@@ -382,7 +382,12 @@ void XAnimSetAnimRate(XAnimTree *tree, unsigned int animIndex, float rate)
     g_xAnimInfo[index].s.rate = rate;
 }
 
-Bool XAnimIsLooped(const XAnim *anims, unsigned int animIndex)
+/* Returns int (not Bool): several callers declare it `extern int` and read the
+ * full eax. A char/Bool return only sets al and leaves eax's upper bits dirty
+ * (UB the GCC build tolerated, MSVC does not) -> a not-looped anim read as
+ * "looped" and spuriously failed CG_RegisterWeapon's ADS check. int forces the
+ * compiler to zero-extend into eax; the value logic is unchanged. */
+int XAnimIsLooped(const XAnim *anims, unsigned int animIndex)
 {
     char *entry = (char *)anims + animIndex * 8 + 0xc;
     if (*(unsigned short *)entry != 0)

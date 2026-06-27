@@ -164,7 +164,7 @@ void CG_AddLagometerFrameInfo(void);
 void CG_AddLagometerSnapshotInfo(snapshot_t *snap);
 static void CG_DrawDisconnect(void);
 void CG_PriorityCenterPrint(const char *str, float charWidth, int priority);
-Bool CG_GetWeapReticleZoom(float *pfZoom);
+qboolean CG_GetWeapReticleZoom(float *pfZoom);
 void CG_DrawFrameOverlay(float innerLeft, float innerRight, float innerTop, float innerBottom, const vec_t *color, MaterialHandle material);
 static unsigned int CG_DrawCrosshairNames(void);
 unsigned int CG_CheckTimedMenus(void);
@@ -397,7 +397,11 @@ void CG_PriorityCenterPrint(const char *str, float charWidth, int priority)
     }
 }
 
-Bool CG_GetWeapReticleZoom(float *pfZoom)
+/* qboolean (int), not Bool: callers (cg_weapons.c, cg_predict_mp.c) declare it
+ * `extern qboolean` and read full eax; a 1-byte Bool return leaves eax's upper
+ * bytes dirty under MSVC -> garbage non-zero -> !CG_GetWeapReticleZoom() == 0 ->
+ * drawGun never set -> the viewmodel was hidden even when spawned. */
+qboolean CG_GetWeapReticleZoom(float *pfZoom)
 {
     byte *weaponDef;
     float zoom;

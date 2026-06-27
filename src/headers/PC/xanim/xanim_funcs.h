@@ -69,7 +69,7 @@ int DObjGetClientNotifyList(XAnimNotify **notifyList);
 Bool XAnimIsPrimitive(XAnim *anims, unsigned int animIndex);
 void XAnimSetTime(XAnimTree *tree, unsigned int animIndex, float time);
 void XAnimSetAnimRate(XAnimTree *tree, unsigned int animIndex, float rate);
-Bool XAnimIsLooped(const XAnim *anims, unsigned int animIndex);
+int XAnimIsLooped(const XAnim *anims, unsigned int animIndex);  /* int, not Bool: callers read full eax (see xanim.c) */
 Bool XAnimNotetrackExists(const XAnim *anims, unsigned int animIndex, unsigned int name);
 const char *XAnimGetAnimDebugName(const XAnim *anims, unsigned int animIndex);
 XAnimTree *XAnimCreateTree(XAnim *anims, Alloc_t Alloc);

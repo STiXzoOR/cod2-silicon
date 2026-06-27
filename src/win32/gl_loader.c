@@ -220,19 +220,17 @@ GLW_VOID(glCombinerStageParameterfvNV,
     (GLenum stage, GLenum pname, const GLfloat *params),
     (stage, pname, params))
 
-GLW_VOID(glGenFencesAPPLE, (GLsizei n, GLuint *fences), (n, fences))
-GLW_VOID(glDeleteFencesAPPLE, (GLsizei n, const GLuint *fences), (n, fences))
-GLW_VOID(glSetFenceAPPLE, (GLuint fence), (fence))
-
-typedef GLboolean(__stdcall *PFN_glTestFenceAPPLE)(GLuint fence);
-GLboolean glTestFenceAPPLE(GLuint fence) {
-    static PFN_glTestFenceAPPLE p;
-    static int resolved;
-    if (!resolved) { p = (PFN_glTestFenceAPPLE)gl_resolve("glTestFenceAPPLE"); resolved = 1; }
-    if (p) return p(fence);
-    return (GLboolean)1;
-}
-GLW_VOID(glFinishFenceAPPLE, (GLuint fence), (fence))
+/* GL_APPLE_fence is a macOS-only GPU-sync extension. On Windows OpenGL it is
+ * either absent or the driver's stub busy-waits forever -> hang on map load
+ * (RB_ExecuteRenderCommands spins in glSetFenceAPPLE -> ZwYieldExecution). No-op
+ * it: the driver synchronizes implicitly on buffer reuse / SwapBuffers, and
+ * glTestFenceAPPLE always reports "complete" so the engine's GPU-wait loops exit.
+ * (Drops the CPU/GPU-throttle optimization only; safe.) */
+void glGenFencesAPPLE(GLsizei n, GLuint *fences) { GLsizei i; for (i = 0; i < n; i++) fences[i] = 1; }
+void glDeleteFencesAPPLE(GLsizei n, const GLuint *fences) { (void)n; (void)fences; }
+void glSetFenceAPPLE(GLuint fence) { (void)fence; }
+GLboolean glTestFenceAPPLE(GLuint fence) { (void)fence; return (GLboolean)1; }
+void glFinishFenceAPPLE(GLuint fence) { (void)fence; }
 
 GLW_VOID(glBindVertexArrayAPPLE, (GLuint array), (array))
 GLW_VOID(glGenVertexArraysAPPLE, (GLsizei n, GLuint *arrays), (n, arrays))

@@ -912,8 +912,10 @@ void SL_Init(void)
                         } else {
                             unsigned int ebx3w = (unsigned int)(ecx3_hash[0] & 0x3fff);
                             unsigned short *ecx3w = (unsigned short *)((char *)&scrStringGlob + ebx3w * 4);
+                            int sl_guard = 0x4000;   /* chain <= table size; bound it to avoid an infinite spin on a corrupt/cyclic chain (map-load restart-rehash hang) */
                             esi3_prev = esi3_chain;
                             while (ecx3w[1] != (unsigned short)sv2) {
+                                if (--sl_guard < 0) break;
                                 esi3_prev = ebx3w;
                                 ebx3w = (unsigned int)(ecx3w[0] & 0x3fff);
                                 ecx3w = (unsigned short *)((char *)&scrStringGlob + ebx3w * 4);
