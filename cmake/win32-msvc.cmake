@@ -32,13 +32,37 @@ foreach(cfg "" _DEBUG _RELWITHDEBINFO)
   string(REGEX REPLACE "/RTC[1csu]+" "" CMAKE_CXX_FLAGS${cfg} "${CMAKE_CXX_FLAGS${cfg}}")
 endforeach()
 
+# -DCOD2_SDL2_STATIC=ON -> a fully self-contained exe: SDL2 linked statically (no
+# SDL2.dll) AND the CRT linked statically (no VCRUNTIME140*/ucrtbase* DLLs).
+# Default OFF = dynamic SDL2 + dynamic CRT. The SDL2-static.lib you supply must
+# be built with the MATCHING static CRT (SDL2's -DSDL_FORCE_STATIC_VCRT=ON), else
+# the link warns LNK4098. Must select the runtime before any target is created.
+option(COD2_SDL2_STATIC "Fully static, standalone exe: static SDL2 + static CRT (needs a self-built static SDL2-static.lib)" OFF)
+if(COD2_SDL2_STATIC)
+  # CMP0091 NEW (CMake >= 3.15): pick the static runtime via the abstraction.
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  # Fallback when CMP0091 is OLD: the CRT flag is baked into CMAKE_*_FLAGS_*.
+  foreach(cfg "" _DEBUG _RELWITHDEBINFO _RELEASE)
+    string(REGEX REPLACE "/MD" "/MT" CMAKE_C_FLAGS${cfg}   "${CMAKE_C_FLAGS${cfg}}")
+    string(REGEX REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS${cfg} "${CMAKE_CXX_FLAGS${cfg}}")
+  endforeach()
+  message(STATUS "MSVC client: static CRT (/MTd) -- standalone exe")
+endif()
+
 # --- include search path -----------------------------------------------------
+# SDL2 (user-supplied) lives in third_party/SDL2-* (preferred) or the legacy
+# src/win32/sdl2; collect its include + x86 lib dirs for use below.
+file(GLOB COD2_SDL2_INC_DIRS ${CMAKE_SOURCE_DIR}/third_party/SDL2-*/include)
+file(GLOB COD2_SDL2_LIB_DIRS ${CMAKE_SOURCE_DIR}/third_party/SDL2-*/lib/x86)
+list(APPEND COD2_SDL2_INC_DIRS ${COD2_SRC_DIR}/win32/sdl2/include)
+list(APPEND COD2_SDL2_LIB_DIRS ${COD2_SRC_DIR}/win32/sdl2/lib)
+
 # shims-msvc FIRST so the MSVC POSIX shims win over anything else; the shared
 # win32/shims provides the socket/net headers used by both win toolchains.
 include_directories(
   ${COD2_SRC_DIR}/win32/shims-msvc
   ${COD2_SRC_DIR}/PC/speex ${COD2_SRC_DIR} ${COD2_SRC_DIR}/headers
-  ${COD2_SRC_DIR}/win32/shims ${COD2_SRC_DIR}/win32/sdl2/include ${CMAKE_SOURCE_DIR})
+  ${COD2_SRC_DIR}/win32/shims ${COD2_SDL2_INC_DIRS} ${CMAKE_SOURCE_DIR})
 
 # --- compile options ---------------------------------------------------------
 # /FI win32_compat.h mirrors gcc's -include. /w matches the engine's -w (the
@@ -79,12 +103,30 @@ list(FILTER MSVC_C EXCLUDE REGEX "^src/(data|import_pointers|literals)\\.c$")
 list(FILTER MSVC_C EXCLUDE REGEX "^src/stubs/(cpp_trampoline|agl_stubs|zlib_alloc)\\.c$")
 list(APPEND MSVC_C src/blobs/bss.c src/unix/sysdiff_statehash.c src/unix/linux_input.c)
 
-# When a real MSVC SDL2.lib is supplied, drop the name-only stub (else the stub
-# would win under /FORCE:MULTIPLE and SDL calls would be no-ops).
-find_library(COD2_SDL2_LIB SDL2 PATHS ${COD2_SRC_DIR}/win32/sdl2/lib NO_DEFAULT_PATH)
-if(COD2_SDL2_LIB)
+# SDL2 (user-supplied; see README). Default links the dynamic SDL2 import lib
+# (SDL2.lib + SDL2.dll beside the exe). With COD2_SDL2_STATIC=ON (declared above,
+# where it also selects the static CRT) the static SDL2-static.lib is linked
+# instead. Either way the name-only sdl2_stub.c is dropped so it doesn't
+# duplicate the real library.
+# Distinct cache vars per lib so toggling COD2_SDL2_STATIC re-resolves the right
+# one (a shared find_library var would stick to whichever was found first).
+if(COD2_SDL2_STATIC)
+  find_library(COD2_SDL2_STATIC_LIB NAMES SDL2-static PATHS ${COD2_SDL2_LIB_DIRS} NO_DEFAULT_PATH)
+  if(NOT COD2_SDL2_STATIC_LIB)
+    message(FATAL_ERROR "COD2_SDL2_STATIC=ON but no SDL2-static.lib found under: ${COD2_SDL2_LIB_DIRS}. "
+                        "Build SDL2 as a static lib (see README) or configure with -DCOD2_SDL2_STATIC=OFF.")
+  endif()
+  set(COD2_SDL2_LIB ${COD2_SDL2_STATIC_LIB})
+  set(COD2_SDL2_STATIC_DEPS uuid dinput8)  # static-only deps from sdl2.pc Libs.private
   list(FILTER MSVC_C EXCLUDE REGEX "shims-msvc/sdl2_stub\\.c$")
-  message(STATUS "MSVC client: using real SDL2 (${COD2_SDL2_LIB})")
+  message(STATUS "MSVC client: STATIC SDL2 (${COD2_SDL2_LIB}) -- no SDL2.dll needed")
+else()
+  find_library(COD2_SDL2_IMPORT_LIB NAMES SDL2 PATHS ${COD2_SDL2_LIB_DIRS} NO_DEFAULT_PATH)
+  if(COD2_SDL2_IMPORT_LIB)
+    set(COD2_SDL2_LIB ${COD2_SDL2_IMPORT_LIB})
+    list(FILTER MSVC_C EXCLUDE REGEX "shims-msvc/sdl2_stub\\.c$")
+    message(STATUS "MSVC client: dynamic SDL2 (${COD2_SDL2_LIB}) -- copy SDL2.dll beside the exe")
+  endif()
 endif()
 
 # The engine object set (all ~410 TUs compile clean under cl).
@@ -123,6 +165,7 @@ target_link_options(cod2_win32 PRIVATE
   /SAFESEH:NO /SUBSYSTEM:WINDOWS /MAP /INCREMENTAL:NO)
 target_link_libraries(cod2_win32 PRIVATE
   $<$<BOOL:${COD2_SDL2_LIB}>:${COD2_SDL2_LIB}>
+  ${COD2_SDL2_STATIC_DEPS}
   opengl32
   ws2_32 winmm dbghelp user32 gdi32 advapi32 shell32 ole32 oleaut32
   imm32 version setupapi)

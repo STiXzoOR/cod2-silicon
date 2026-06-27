@@ -4,7 +4,7 @@
   "configurePresets": [
     {
       "name": "msvc-client",
-      "displayName": "Windows MSVC client (x86, Ninja)",
+      "displayName": "Windows MSVC client (x86, Ninja, Debug)",
       "description": "Native Windows cod2_win32.exe via cl.exe. Run from an x86 Native Tools for VS command prompt.",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/msvc",
@@ -14,9 +14,20 @@
         "CMAKE_CXX_COMPILER": "cl",
         "CMAKE_BUILD_TYPE": "Debug"
       }
+    },
+    {
+      "name": "msvc-client-release",
+      "displayName": "Windows MSVC client (x86, Ninja, Release /O2)",
+      "description": "Optimized native Windows cod2_win32.exe. Add -DCOD2_SDL2_STATIC=ON for an optimized standalone exe. NOTE: /O2 on decompiler-faithful code is less battle-tested than the Debug build. Run from an x86 Native Tools for VS command prompt.",
+      "inherits": "msvc-client",
+      "binaryDir": "${sourceDir}/build/msvc-release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
     }
   ],
   "buildPresets": [
-    { "name": "msvc-client", "configurePreset": "msvc-client" }
+    { "name": "msvc-client", "configurePreset": "msvc-client" },
+    { "name": "msvc-client-release", "configurePreset": "msvc-client-release" }
   ]
 }

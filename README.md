@@ -98,9 +98,52 @@ cmake --build build/msvc --target cod2_win32
 :: -> build/msvc/cod2_win32.exe   (full client)
 ```
 
-SDL2 is user-supplied (same location as the MinGW client): place a 32-bit MSVC
-`SDL2.lib` under `src/win32/sdl2/lib/` and copy `SDL2.dll` next to the built exe
-in `build/msvc/`. Without it the link falls back to a stub and no window opens.
+There is also an optimized **Release** preset (`/O2`, its own `build/msvc-release`):
+
+```bat
+cmake --preset msvc-client-release
+cmake --build build/msvc-release --target cod2_win32
+:: -> build/msvc-release/cod2_win32.exe
+```
+
+> [!NOTE]
+> Release applies `/O2` to decompiler-faithful C, which is less battle-tested
+> than the Debug build — if something misbehaves only in Release, suspect the
+> optimizer. (MSVC doesn't assume strict aliasing, so the code's heavy
+> type-punning is comparatively safe.)
+
+SDL2 is user-supplied (never committed). Drop the 32-bit MSVC SDL2 dev package
+under `third_party/SDL2-<version>/` (or the legacy `src/win32/sdl2/`); the build
+finds the headers and `lib/x86` automatically.
+
+- **Default — dynamic.** Uses the import `SDL2.lib`; copy `SDL2.dll` next to the
+  built exe in `build/msvc/`.
+- **Optional — fully static / standalone** (`-DCOD2_SDL2_STATIC=ON`, on either
+  preset). Produces a single self-contained exe that imports **only Windows
+  system DLLs** — no `SDL2.dll`, no VC runtime DLLs. This one flag statically
+  links **both** SDL2 **and** the CRT (`/MTd` Debug, `/MT` Release). You supply a
+  static `SDL2-static.lib` you build yourself from the SDL2 source, in the
+  **same config** as the engine:
+
+  ```bat
+  :: match the engine: -DCMAKE_BUILD_TYPE=Debug for msvc-client, =Release for -release
+  cmake -S SDL2-2.32.10 -B sdl2-build -DCMAKE_BUILD_TYPE=Debug ^
+        -DSDL_STATIC=ON -DSDL_SHARED=OFF -DSDL_RENDER=OFF -DSDL_FORCE_STATIC_VCRT=ON
+  cmake --build sdl2-build
+  :: copy the resulting SDL2-static*.lib -> third_party/SDL2-*/lib/x86/SDL2-static.lib
+  ```
+
+  - **Config must match** — a `/MTd` (Debug) SDL2 lib against a `/MT` (Release)
+    engine, or vice-versa, fails with `LNK4098`. `SDL_FORCE_STATIC_VCRT=ON` gives
+    the static CRT; the SDL2 build's `CMAKE_BUILD_TYPE` picks `/MTd` vs `/MT`.
+  - `SDL_RENDER=OFF` — the engine uses SDL only for window/GL/input, and SDL's
+    render backend exports a `MatrixMultiply` that otherwise collides with the
+    engine's own.
+
+  The extra system deps (`uuid`, `dinput8`) are linked for you. Most people
+  won't need this.
+
+With no SDL2 lib at all, the link falls back to a stub and no window opens.
 
 This target compiles all TUs, links with no unresolved or duplicate symbols,
 boots, renders the menu, and can load maps — but the same work-in-progress
