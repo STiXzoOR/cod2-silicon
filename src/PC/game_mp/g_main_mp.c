@@ -45,7 +45,7 @@ static const char str_dbg_ff_agv[] = "";
 static const char str_dbg_ff_gls[] = "";
 static const char str_dbg_endload[] = "";
 
-#ifndef __EMSCRIPTEN__
+#if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER)
 __asm__(".Lginit_fmt: .asciz \"\"\n");
 #endif
 void G_InitDbgPrint(const char *fmt, void *ptr)

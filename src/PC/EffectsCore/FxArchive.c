@@ -310,7 +310,7 @@ void FxArchive_ArchiveFxBoltInfo(const FxArchive *_this, FxBoltInfo *bolt)
 void FxArchive_ArchiveFxGfxEntity(const FxArchive *_this, FxGfxEntity *entity)
 {
     char isReading;
-    byte temp[0x68] BM_ALIGNED(4);
+    BM_ALIGNED(4) byte temp[0x68];   /* leading: valid for both gcc and MSVC __declspec(align) */
 
     isReading = _this->isReading;
 

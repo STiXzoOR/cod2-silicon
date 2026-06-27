@@ -122,7 +122,11 @@ void *___sF[3] = { 0, 0, 0 };
 
 void *__DefaultRuneLocale;
 
+#ifdef _MSC_VER
+COD2_CONSTRUCTOR(init_rune_locale)
+#else
 __attribute__((constructor)) static void init_rune_locale(void)
+#endif
 {
     unsigned int *rt = &bsd_rune_data[13];
     int i;
@@ -197,7 +201,11 @@ static const char dummy_gl_extensions[] = "";
 
 static unsigned char dummy_display_entry[100];
 
+#ifdef _MSC_VER
+COD2_CONSTRUCTOR(init_display_list)
+#else
 __attribute__((constructor)) static void init_display_list(void)
+#endif
 {
     int i;
     int num_modes = sizeof(dummy_modes) / sizeof(dummy_modes[0]);

@@ -3052,7 +3052,7 @@ struct __attribute__((packed)) _d32_fixed_bl {
 
 extern struct _d32_NXArgc NXArgc;
 extern struct _d32_NXArgv NXArgv;
-extern struct _d32_environ environ;
+extern struct _d32_environ cod2_d32_environ;   /* renamed from Darwin `environ` (collides with MSVC CRT) */
 extern struct _d32____progname ___progname;
 extern struct _d32_g_InhibitOpenGLErrors g_InhibitOpenGLErrors;
 extern struct _d32___ZZN7WinIconC4EvE7sNextID __ZZN7WinIconC4EvE7sNextID;
@@ -3177,7 +3177,7 @@ struct _d32_NXArgc __attribute__((aligned(4))) NXArgc = {
 struct _d32_NXArgv __attribute__((aligned(4))) NXArgv = {
     { 0, 0, 0, 0 }
 };
-struct _d32_environ __attribute__((aligned(4))) environ = {
+struct _d32_environ __attribute__((aligned(4))) cod2_d32_environ = {
     { 0, 0, 0, 0 }
 };
 struct _d32____progname __attribute__((aligned(4))) ___progname = {

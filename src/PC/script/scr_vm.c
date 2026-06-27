@@ -8018,8 +8018,15 @@ void Scr_IncTime(void)
     svp->time = (svp->time + 1) & 0x00FFFFFF;
 }
 
+#if defined(_MSC_VER)
+/* VM_ExecuteExtCall is the C++-mangled VM_Execute; cl can't rename, so bind the
+ * call site to the mangled symbol via /alternatename (regparm no-ops on MSVC). */
+extern unsigned int VM_ExecuteExtCall(unsigned int threadId, const char *pos, unsigned int paramcount);
+#pragma comment(linker, "/alternatename:_VM_ExecuteExtCall=__Z10VM_ExecutejPKcj")
+#else
 extern unsigned int __attribute_regparm__(3)
     VM_ExecuteExtCall(unsigned int threadId, const char *pos, unsigned int paramcount) __asm__("_Z10VM_ExecutejPKcj");
+#endif
 
 __attribute__((noinline)) unsigned int __attribute_regparm__(3)
     VM_ExecuteExtCall(unsigned int threadId, const char *pos, unsigned int paramcount)

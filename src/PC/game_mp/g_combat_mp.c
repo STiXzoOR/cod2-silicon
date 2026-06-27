@@ -705,18 +705,18 @@ after_yaw:
     self->handler = 11;
 }
 
-const char _s_str_002b64e0[] __asm__("str_002b64e0") = "MOD_UNKNOWN";
-const char _s_str_002b64ec[] __asm__("str_002b64ec") = "MOD_PISTOL_BULLET";
-const char _s_str_002b6500[] __asm__("str_002b6500") = "MOD_RIFLE_BULLET";
-const char _s_str_002b6514[] __asm__("str_002b6514") = "MOD_GRENADE";
-const char _s_str_002b6520[] __asm__("str_002b6520") = "MOD_GRENADE_SPLASH";
-const char _s_str_002b6534[] __asm__("str_002b6534") = "MOD_PROJECTILE";
-const char _s_str_002b6544[] __asm__("str_002b6544") = "MOD_PROJECTILE_SPLASH";
-const char _s_str_002b655c[] __asm__("str_002b655c") = "MOD_MELEE";
-const char _s_str_002b6568[] __asm__("str_002b6568") = "MOD_HEAD_SHOT";
-const char _s_str_002b6578[] __asm__("str_002b6578") = "MOD_CRUSH";
-const char _s_str_002b6584[] __asm__("str_002b6584") = "MOD_TELEFRAG";
-const char _s_str_002b6594[] __asm__("str_002b6594") = "MOD_FALLING";
-const char _s_str_002b65a0[] __asm__("str_002b65a0") = "MOD_SUICIDE";
-const char _s_str_002b65ac[] __asm__("str_002b65ac") = "MOD_TRIGGER_HURT";
-const char _s_str_002b65c0[] __asm__("str_002b65c0") = "MOD_EXPLOSIVE";
+const char str_002b64e0[] = "MOD_UNKNOWN";
+const char str_002b64ec[] = "MOD_PISTOL_BULLET";
+const char str_002b6500[] = "MOD_RIFLE_BULLET";
+const char str_002b6514[] = "MOD_GRENADE";
+const char str_002b6520[] = "MOD_GRENADE_SPLASH";
+const char str_002b6534[] = "MOD_PROJECTILE";
+const char str_002b6544[] = "MOD_PROJECTILE_SPLASH";
+const char str_002b655c[] = "MOD_MELEE";
+const char str_002b6568[] = "MOD_HEAD_SHOT";
+const char str_002b6578[] = "MOD_CRUSH";
+const char str_002b6584[] = "MOD_TELEFRAG";
+const char str_002b6594[] = "MOD_FALLING";
+const char str_002b65a0[] = "MOD_SUICIDE";
+const char str_002b65ac[] = "MOD_TRIGGER_HURT";
+const char str_002b65c0[] = "MOD_EXPLOSIVE";

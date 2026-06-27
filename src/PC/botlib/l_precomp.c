@@ -2257,18 +2257,18 @@ directive_t dollardirectives[20] = {
     { 0, 0 }
 };
 
-const char _s_str_002168a4[] __asm__("str_002168a4") = "error";
-const char _s_str_00219df4[] __asm__("str_00219df4") = "line";
-const char _s_str_00222044[] __asm__("str_00222044") = "evalint";
-const char _s_str_0022204c[] __asm__("str_0022204c") = "evalfloat";
-const char _s_str_00222058[] __asm__("str_00222058") = "if";
-const char _s_str_0022205c[] __asm__("str_0022205c") = "ifdef";
-const char _s_str_00222064[] __asm__("str_00222064") = "ifndef";
-const char _s_str_0022206c[] __asm__("str_0022206c") = "elif";
-const char _s_str_00222074[] __asm__("str_00222074") = "else";
-const char _s_str_0022207c[] __asm__("str_0022207c") = "endif";
-const char _s_str_00222084[] __asm__("str_00222084") = "include";
-const char _s_str_0022208c[] __asm__("str_0022208c") = "define";
-const char _s_str_00222094[] __asm__("str_00222094") = "undef";
-const char _s_str_0022209c[] __asm__("str_0022209c") = "pragma";
-const char _s_str_002220a4[] __asm__("str_002220a4") = "eval";
+const char str_002168a4[] = "error";
+const char str_00219df4[] = "line";
+const char str_00222044[] = "evalint";
+const char str_0022204c[] = "evalfloat";
+const char str_00222058[] = "if";
+const char str_0022205c[] = "ifdef";
+const char str_00222064[] = "ifndef";
+const char str_0022206c[] = "elif";
+const char str_00222074[] = "else";
+const char str_0022207c[] = "endif";
+const char str_00222084[] = "include";
+const char str_0022208c[] = "define";
+const char str_00222094[] = "undef";
+const char str_0022209c[] = "pragma";
+const char str_002220a4[] = "eval";

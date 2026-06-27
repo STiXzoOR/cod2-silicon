@@ -313,7 +313,11 @@ static void GLOBAL__D__ZN7COpenGL7sOpenGLE(void)
 
 }
 
+#ifdef _MSC_VER
+COD2_CONSTRUCTOR(GLOBAL__I__ZN7COpenGL7sOpenGLE)
+#else
 __attribute__((constructor)) void GLOBAL__I__ZN7COpenGL7sOpenGLE(void)
+#endif
 {
 
     COpenGL_COpenGL((const COpenGL *)COpenGL_sOpenGL);

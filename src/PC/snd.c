@@ -829,20 +829,20 @@ scan_replace:
 
     for (i = 0x23; i < index; i++) {
         if (entchannel < g_snd.chaninfo[i].entchannel)
-            goto next;
+            goto snd_next;
 
         if (channel < 0) {
             channel = i;
-            goto next;
+            goto snd_next;
         }
 
         if (g_snd.chaninfo[i].entnum != g_snd.chaninfo[channel].entnum) {
             if (entnum == g_snd.chaninfo[i].entnum) {
                 channel = i;
-                goto next;
+                goto snd_next;
             }
             if (entnum == g_snd.chaninfo[channel].entnum)
-                goto next;
+                goto snd_next;
         }
 
         if (g_snd.chaninfo[channel].entchannel != g_snd.chaninfo[i].entchannel) {
@@ -850,12 +850,12 @@ scan_replace:
         } else if (g_snd.chaninfo[channel].endtime != g_snd.chaninfo[i].endtime) {
             diff = g_snd.chaninfo[channel].endtime - g_snd.chaninfo[i].endtime;
         } else {
-            goto next;
+            goto snd_next;
         }
 
         if (diff < 0)
             channel = i;
-    next:;
+    snd_next:;
     }
 
     if (channel < 0)

@@ -6035,11 +6035,17 @@ struct VariableValue_s {
     int type;
 };
 
+#ifdef _MSC_VER
+#pragma pack(push, 1)
+#endif
 struct VoicePacket_t {
     byte talker;
     byte data[256];
     int dataSize;
 } __attribute__((__packed__));
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 
 struct VolumeModGroup {
     char name[64];

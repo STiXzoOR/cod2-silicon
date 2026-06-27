@@ -453,7 +453,7 @@ void SV_SetConfigstring(const int index, const char *val)
         serverStatic_t *svsPtr = (serverStatic_t *)imp_svs;
         for (i = 0; i < (*(dvar_t **)imp_sv_maxclients)->current.integer; i++) {
             if (svsPtr->clients[i].state <= 2)
-                goto next;
+                goto sv_next;
 
             if (len <= maxChunk) {
                 SV_SendServerCommand(&svsPtr->clients[i], 1, "%c %i %s", 'd', index, val);
@@ -473,7 +473,7 @@ void SV_SetConfigstring(const int index, const char *val)
                     }
                 }
             }
-        next:;
+        sv_next:;
         }
     }
 }

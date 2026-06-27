@@ -730,6 +730,11 @@ extern unsigned char __ZN12UI_Component1gE[];
 #ifdef __EMSCRIPTEN__
 
 unsigned char UI_Component_g[224] __attribute__((alias("__ZN12UI_Component1gE")));
+#elif defined(_MSC_VER)
+/* alias UI_Component_g -> the C++ member symbol. The C identifier
+ * __ZN12UI_Component1gE emits MSVC symbol ___ZN12UI_Component1gE (one extra
+ * leading underscore on x86). */
+#pragma comment(linker, "/alternatename:_UI_Component_g=___ZN12UI_Component1gE")
 #else
 __asm__(".globl UI_Component_g\n.set UI_Component_g, __ZN12UI_Component1gE");
 #endif

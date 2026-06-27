@@ -926,15 +926,15 @@ void GScr_NewTeamHudElem(void)
         Scr_AddHudElem(hud);
 }
 
-const char _s_str_00227904[] __asm__("str_00227904") = "left";
-const char _s_str_002b4cd8[] __asm__("str_002b4cd8") = "subtop";
-const char _s_str_002b4ce0[] __asm__("str_002b4ce0") = "top";
-const char _s_str_002b4ce4[] __asm__("str_002b4ce4") = "middle";
-const char _s_str_002b4cec[] __asm__("str_002b4cec") = "bottom";
-const char _s_str_002b4cf4[] __asm__("str_002b4cf4") = "noscale";
-const char _s_str_002b4cfc[] __asm__("str_002b4cfc") = "alignto480";
-const char _s_str_002b4d08[] __asm__("str_002b4d08") = "center_safearea";
-const char _s_str_002b4d18[] __asm__("str_002b4d18") = "subleft";
-const char _s_str_002b4d20[] __asm__("str_002b4d20") = "center";
-const char _s_str_002b4d28[] __asm__("str_002b4d28") = "right";
-const char _s_str_002b4d30[] __asm__("str_002b4d30") = "alignto640";
+const char str_00227904[] = "left";
+const char str_002b4cd8[] = "subtop";
+const char str_002b4ce0[] = "top";
+const char str_002b4ce4[] = "middle";
+const char str_002b4cec[] = "bottom";
+const char str_002b4cf4[] = "noscale";
+const char str_002b4cfc[] = "alignto480";
+const char str_002b4d08[] = "center_safearea";
+const char str_002b4d18[] = "subleft";
+const char str_002b4d20[] = "center";
+const char str_002b4d28[] = "right";
+const char str_002b4d30[] = "alignto640";

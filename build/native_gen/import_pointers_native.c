@@ -1902,8 +1902,25 @@ extern void * const sm_mtl_vtable __attribute__((alias("imp_re")));
 /* --- ARCH64 labeled pointer slots (from `X: .long imp_Y`) --- */
 /* A real pointer-sized global whose value is the imp_Y slot (one less
    indirection than an alias). C code dereferences these as `*(T**)X`. */
+#if defined(_MSC_VER)
+/* MSVC can't statically initialize a pointer from another global's VALUE (only
+ * address constants). The imp_* slots are loader-relocated before CRT init, so
+ * copy their values in a .CRT$XCU startup initializer. */
+void *g_drawSurf, *g_viewParms, *g_viewInfo, *g_backEndData, *g_renderState;
+static void cod2_init_imp_value_ptrs(void)
+{
+    g_drawSurf    = imp_tess;
+    g_viewParms   = imp_backEndData;
+    g_viewInfo    = imp_r_zfar;
+    g_backEndData = imp_dxState;
+    g_renderState = imp_r_fog;
+}
+#pragma section(".CRT$XCU", read)
+__declspec(allocate(".CRT$XCU")) static void (*cod2_imp_init_p)(void) = cod2_init_imp_value_ptrs;
+#else
 void *g_drawSurf = (void *)imp_tess;
 void *g_viewParms = (void *)imp_backEndData;
 void *g_viewInfo = (void *)imp_r_zfar;
 void *g_backEndData = (void *)imp_dxState;
 void *g_renderState = (void *)imp_r_fog;
+#endif

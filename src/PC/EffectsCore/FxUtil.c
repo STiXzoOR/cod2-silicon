@@ -182,7 +182,11 @@ void FX_SetSortGroup(Effect *fx)
     }
 }
 
+#ifdef _MSC_VER
+COD2_CONSTRUCTOR(GLOBAL__I_effectClusters)
+#else
 static void __attribute__((constructor)) GLOBAL__I_effectClusters(void)
+#endif
 {
     FxHelper_FxHelper(theFxHelpers);
 }

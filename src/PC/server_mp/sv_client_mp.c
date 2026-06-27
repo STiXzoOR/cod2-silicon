@@ -132,16 +132,16 @@ static inline __attribute__((always_inline)) void SV_CloseDownload(client_t *cl)
     }
 }
 
-#ifndef __EMSCRIPTEN__
+#if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER)
 __asm__(".Lsvexec_fmt: .asciz \"\"\n");
 #endif
-#ifndef __EMSCRIPTEN__
+#if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER)
 __asm__(".Lsvexec_msgtype_fmt: .asciz \"\"\n");
 #endif
-#ifndef __EMSCRIPTEN__
+#if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER)
 __asm__(".Lsvexec_clicmd_fmt: .asciz \"\"\n");
 #endif
-#ifndef __EMSCRIPTEN__
+#if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER)
 __asm__(".Lsvexec_drop_fmt: .asciz \"\"\n");
 #endif
 void SV_ExecDbg(const char *fmt, int clSid, int svSid, int clState)
@@ -1778,14 +1778,14 @@ ucmd_t ucmds[12] = {
     { 0, 0 }
 };
 
-const char _s_str_00228e90[] __asm__("str_00228e90") = "disconnect";
-const char _s_str_002a96d4[] __asm__("str_002a96d4") = "vdr";
-const char _s_str_002a98b0[] __asm__("str_002a98b0") = "donedl";
-const char _s_str_002adea0[] __asm__("str_002adea0") = "userinfo";
-const char _s_str_002adeac[] __asm__("str_002adeac") = "cp";
-const char _s_str_002adeb0[] __asm__("str_002adeb0") = "download";
-const char _s_str_002adebc[] __asm__("str_002adebc") = "nextdl";
-const char _s_str_002adec4[] __asm__("str_002adec4") = "stopdl";
-const char _s_str_002adecc[] __asm__("str_002adecc") = "retransdl";
-const char _s_str_002aded8[] __asm__("str_002aded8") = "muteplayer";
-const char _s_str_002adee4[] __asm__("str_002adee4") = "unmuteplayer";
+const char str_00228e90[] = "disconnect";
+const char str_002a96d4[] = "vdr";
+const char str_002a98b0[] = "donedl";
+const char str_002adea0[] = "userinfo";
+const char str_002adeac[] = "cp";
+const char str_002adeb0[] = "download";
+const char str_002adebc[] = "nextdl";
+const char str_002adec4[] = "stopdl";
+const char str_002adecc[] = "retransdl";
+const char str_002aded8[] = "muteplayer";
+const char str_002adee4[] = "unmuteplayer";

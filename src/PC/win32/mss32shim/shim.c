@@ -180,6 +180,26 @@ __attribute__((used)) void __cdecl LogSurfsCtx(DWORD surfsCtx, DWORD eax, DWORD 
             surfsCtx == g_flakXModel, (unsigned)retaddr);
     }
 }
+#if defined(_MSC_VER)
+/* MSVC port of the GCC naked AT&T trampoline: log the loader's surface ctx then
+ * tail-jump to the real loader. __declspec(naked) + Intel __asm{} 1:1. */
+__declspec(naked) static void MyLoader(void)
+{
+    __asm {
+        pushad
+        mov eax, [esp+0x2c]
+        mov edx, [esp+0x20]
+        mov ecx, [esp+0x1c]
+        push edx
+        push ecx
+        push eax
+        call LogSurfsCtx
+        add esp, 12
+        popad
+        jmp dword ptr [g_realLoader]
+    }
+}
+#else
 __attribute__((naked)) static void MyLoader(void)
 {
 
@@ -196,6 +216,7 @@ __attribute__((naked)) static void MyLoader(void)
         "popal\n\t"
         "jmp *_g_realLoader\n\t");
 }
+#endif
 
 static int WINAPI MyMessageBoxA(HWND h, LPCSTR text, LPCSTR caption, UINT type)
 {

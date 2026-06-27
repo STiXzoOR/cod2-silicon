@@ -481,7 +481,11 @@ void ZN22ATI4CompsConverterABGRD0Ev(ATI4CompsConverterABGR *_this)
     __ZdlPv(_this);
 }
 
+#ifdef _MSC_VER
+COD2_CONSTRUCTOR(_ctor_CColorConverter)
+#else
 __attribute__((constructor)) static void _ctor_CColorConverter(void)
+#endif
 {
     GLOBAL__I__ZN15CColorConverter17GetColorConverterENS_6FormatE();
 }

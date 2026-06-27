@@ -3,9 +3,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _MSC_VER
+#pragma pack(push, 1)
+#endif
 struct __attribute__((packed)) _d32_g_CurrentGenericPacket {
     unsigned char f0[12];
 };
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 
 struct _d32_g_CurrentGenericPacket __attribute__((aligned(4))) g_CurrentGenericPacket = {
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
