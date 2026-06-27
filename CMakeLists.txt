@@ -19,15 +19,26 @@
 # =============================================================================
 cmake_minimum_required(VERSION 3.16)
 
+# Native-Windows MSVC client build (cl.exe). Set by the msvc-client preset;
+# selects the cmake/win32-msvc.cmake path and suppresses the GCC-only -m32 seed
+# and the global GAS ASM language (MSVC's blobs become C, not MASM).
+option(COD2_WIN_MSVC "Native Windows build with MSVC/cl instead of MinGW" OFF)
+
 # -m32 must be in effect when the native compiler is probed (multilib link
 # tests). Seed it ONLY for the plain native build — the MinGW (i686) and
-# Emscripten toolchains are 32-bit/wasm already and must not see -m32.
-if(NOT CMAKE_TOOLCHAIN_FILE)
+# Emscripten toolchains are 32-bit/wasm already and must not see -m32, and MSVC
+# rejects it outright.
+if(NOT CMAKE_TOOLCHAIN_FILE AND NOT COD2_WIN_MSVC)
   set(CMAKE_C_FLAGS_INIT   "-m32")
   set(CMAKE_ASM_FLAGS_INIT "-m32")
 endif()
 
-project(cod2 LANGUAGES C ASM)
+# The GAS .S blobs are a GNU-toolchain concern; the MSVC path uses C data.
+if(COD2_WIN_MSVC)
+  project(cod2 LANGUAGES C CXX)
+else()
+  project(cod2 LANGUAGES C ASM)
+endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_STANDARD 99)
@@ -112,6 +123,14 @@ set_target_properties(cod2 PROPERTIES SUFFIX ".html"
 # the browser-side loader sits next to cod2.html (shell.html loads it as a sibling).
 add_custom_command(TARGET cod2 POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy ${COD2_SRC_DIR}/web/cod2_fs.js ${CMAKE_BINARY_DIR}/cod2_fs.js)
+
+# =============================================================================
+elseif(WIN32 AND MSVC)
+# ----------------------------------------------------------------------------
+# WINDOWS / MSVC (cl.exe) -- additive native-Windows client build.
+# Self-contained in cmake/win32-msvc.cmake so the MinGW path below is untouched.
+# ----------------------------------------------------------------------------
+include(${CMAKE_SOURCE_DIR}/cmake/win32-msvc.cmake)
 
 # =============================================================================
 elseif(WIN32)

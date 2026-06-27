@@ -1,7 +1,11 @@
 #ifndef WIN32_SHIM_SYS_SOCKET_H
 #define WIN32_SHIM_SYS_SOCKET_H
 #ifdef _WIN32
+#if defined(_MSC_VER)
+#define COD2_WINAPI __stdcall      /* MSVC no-ops __attribute__; need real stdcall to match ws2_32 (_bind@12) */
+#else
 #define COD2_WINAPI __attribute__((__stdcall__))
+#endif
 #ifndef _COD2_SOCKET_T
 #define _COD2_SOCKET_T
 typedef unsigned int SOCKET;
