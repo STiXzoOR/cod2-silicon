@@ -81,6 +81,31 @@ cmake --build build-win32 --target gfxdll
 The renderer↔engine bridge is pre-generated and committed under `build/gfxdll/`;
 the build is pure compile+link. Experimental — not exhaustively tested.
 
+### Windows (MSVC, native — `cod2_win32.exe`)
+
+A native Windows build of the full SDL2/GL client with the Microsoft C/C++
+compiler (`cl.exe`) — no cross-compiler required. It is **additive**: it does not
+touch the MinGW path above (everything MSVC-specific is gated behind the
+`COD2_WIN_MSVC` CMake option).
+
+Requires Visual Studio 2022 or newer with the **x86 MSVC toolset**. The binary is
+32-bit, so configure and build from an **"x86 Native Tools for VS" command
+prompt** (it puts the x86 `cl` plus the bundled CMake and Ninja on `PATH`):
+
+```bat
+cmake --preset msvc-client
+cmake --build build/msvc --target cod2_win32
+:: -> build/msvc/cod2_win32.exe   (full client)
+```
+
+SDL2 is user-supplied (same location as the MinGW client): place a 32-bit MSVC
+`SDL2.lib` under `src/win32/sdl2/lib/` and copy `SDL2.dll` next to the built exe
+in `build/msvc/`. Without it the link falls back to a stub and no window opens.
+
+This target compiles all TUs, links with no unresolved or duplicate symbols,
+boots, renders the menu, and can load maps — but the same work-in-progress
+caveats above apply.
+
 ## Running
 
 This reconstructs the engine, not the content. Point it at data from a copy of
@@ -88,6 +113,12 @@ the game you legally own:
 
 ```sh
 ./build-native/cod2_linux +set fs_basepath /path/to/your/game
+```
+
+On Windows (native MSVC client):
+
+```bat
+build\msvc\cod2_win32.exe +set fs_basepath "C:\path\to\your\game"
 ```
 
 Without legally-obtained data the build runs but has nothing to load.
