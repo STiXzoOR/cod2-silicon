@@ -16,6 +16,9 @@ __declspec(align(4096)) char __mh_execute_header[0x10000];
  * (no-op'd by the GCC-compat shim, so otherwise unresolved). */
 #include "msvc_alias_pragmas.h"
 
+/* Engine-global seam aliases (the GNU build's --defsym engine seams). */
+#include "msvc_seam_aliases.h"
+
 /* --wrap,R_Error: the engine references __real_R_Error (the un-wrapped original).
  * Without the wrap we just bind it straight to R_Error. */
 #pragma comment(linker, "/alternatename:___real_R_Error=_R_Error")

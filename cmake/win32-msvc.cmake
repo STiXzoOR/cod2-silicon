@@ -98,30 +98,11 @@ set(MSVC_BLOBS
 add_library(cod2_msvc_blobs OBJECT ${MSVC_BLOBS})
 target_compile_options(cod2_msvc_blobs PRIVATE /Zp1)
 
-# --- seam aliases (Stage 6) --------------------------------------------------
-# MSVC /alternatename replaces the GNU build's --defsym engine-seam aliases:
-# the engine references `<x>_ptr` which aliases the real `<x>` symbol. x86 C
-# symbols carry one leading '_'.
-set(MSVC_SEAM_ALIASES
-  "/alternatename:_level_ptr=_level"
-  "/alternatename:_g_entities_ptr=_g_entities"
-  "/alternatename:_scr_const_ptr=_scr_const"
-  "/alternatename:_playerCorpseInfo_ptr=_g_scr_data"
-  "/alternatename:_g_renderer_ptr=_re"
-  "/alternatename:_scrAnimPub_ptr=_scrAnimPub"
-  "/alternatename:_scrCompPub_ptr=_scrCompilePub"
-  "/alternatename:_scrParserPub_ptr=_scrParserPub"
-  "/alternatename:_r_frontEndData_ptr=_rg"
-  "/alternatename:_r_sys_ptr=_ri"
-  "/alternatename:_r_limits_ptr=_vidConfig"
-  "/alternatename:_sv_ptr=_sv"
-  "/alternatename:_svs_ptr=_svs"
-  "/alternatename:_cg_globUI=_legacyHacks"
-  "/alternatename:_g_time=_imp_level_bgs"
-  "/alternatename:_g_time_ptr=_imp_bgs"
-  "/alternatename:_methods=_methods_003138c0")
-
 # --- executable (Stage 6, first link) ----------------------------------------
+# Engine-global seam aliases (the GNU build's --defsym engine seams) now live in
+# source as #pragma comment(linker, "/alternatename:..") in
+# src/win32/shims-msvc/msvc_seam_aliases.h, alongside the blob alias pragmas --
+# so every /alternatename binding is in one place, not split with the build.
 # /FORCE:MULTIPLE stands in for GNU --allow-multiple-definition (the blob and
 # bss/home-.c overlap on some tentative defs). This is a FIRST link to surface
 # the unresolved-symbol set; libs/wrap/boot are iterated from there.
@@ -132,7 +113,7 @@ add_executable(cod2_win32
 # SDL2 is a user-supplied external (README); COD2_SDL2_LIB (found above) links a
 # real MSVC SDL2.lib when present, else sdl2_stub.c lets the exe link.
 target_link_options(cod2_win32 PRIVATE
-  /FORCE:MULTIPLE /SAFESEH:NO /SUBSYSTEM:WINDOWS /MAP ${MSVC_SEAM_ALIASES})
+  /FORCE:MULTIPLE /SAFESEH:NO /SUBSYSTEM:WINDOWS /MAP)
 target_link_libraries(cod2_win32 PRIVATE
   $<$<BOOL:${COD2_SDL2_LIB}>:${COD2_SDL2_LIB}>
   opengl32
