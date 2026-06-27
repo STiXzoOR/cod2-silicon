@@ -89,24 +89,9 @@ unsigned char OTCompareAndSwap32(int oldVal, int newVal, volatile int *addr)
     return cod2_sync_bool_compare_and_swap_i32(addr, oldVal, newVal);
 }
 
-#if defined(_WIN32)
-#    undef InterlockedExchangeAdd
-#    undef InterlockedExchange
-#    undef InterlockedCompareExchange
-long InterlockedExchangeAdd(volatile long *Addend, long Value)
-{
-    return (long)cod2_sync_fetch_and_add_i32((volatile int *)Addend, (int)Value);
-}
-long InterlockedExchange(volatile long *Target, long Value)
-{
-    return (long)cod2_sync_lock_test_and_set_i32((volatile int *)Target, (int)Value);
-}
-long InterlockedCompareExchange(volatile long *Destination, long Exchange, long Comperand)
-{
-    return (long)cod2_sync_val_compare_and_swap_i32((volatile int *)Destination,
-                                                    (int)Comperand, (int)Exchange);
-}
-#endif
+/* InterlockedExchangeAdd/Exchange/CompareExchange have real (identical,
+ * cod2_sync_*-backed) defs in Mac/Tools/MacWin32.c; defining them here too is
+ * what required /FORCE:MULTIPLE, so they're dropped. */
 
 int ___isnanf(float f)
 {

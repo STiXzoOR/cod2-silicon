@@ -72,7 +72,11 @@ set(MSVC_C ${M_PC_C} ${M_MAC_C} ${M_STUBS_C} ${M_WIN_C} ${M_ROOT_C})
 # native-asm data .c and cpp_trampoline/agl_stubs excluded as on MinGW. The
 # bundled zlib IS kept (MinGW used -lz; MSVC has no system zlib, so compile it).
 list(FILTER MSVC_C EXCLUDE REGEX "^src/(data|import_pointers|literals)\\.c$")
-list(FILTER MSVC_C EXCLUDE REGEX "^src/stubs/(cpp_trampoline|agl_stubs)\\.c$")
+# zlib_alloc.c (zcalloc/zcfree -> Z_MallocInternal) duplicates the stock zlib
+# zutil.c, which already defines them; excluded so the link needs no
+# /FORCE:MULTIPLE. (zutil.c == current behavior; routing zlib through the engine
+# hunk would be a deliberate behavior change, not done here.)
+list(FILTER MSVC_C EXCLUDE REGEX "^src/stubs/(cpp_trampoline|agl_stubs|zlib_alloc)\\.c$")
 list(APPEND MSVC_C src/blobs/bss.c src/unix/sysdiff_statehash.c src/unix/linux_input.c)
 
 # When a real MSVC SDL2.lib is supplied, drop the name-only stub (else the stub
@@ -108,12 +112,15 @@ target_compile_options(cod2_msvc_blobs PRIVATE /Zp1)
 # the unresolved-symbol set; libs/wrap/boot are iterated from there.
 add_executable(cod2_win32
   $<TARGET_OBJECTS:cod2_msvc_objs> $<TARGET_OBJECTS:cod2_msvc_blobs>)
-# WinMain (mac_main.c) is the entry -> Windows subsystem. /FORCE:MULTIPLE ~=
-# GNU --allow-multiple-definition (blob vs home-.c tentative-def overlap).
+# WinMain (mac_main.c) is the entry -> Windows subsystem. The link is now
+# duplicate-free (no /FORCE:MULTIPLE) -- the redundant stub defs that needed it
+# were removed (win32_stubs.c destructors/Mac stubs, macos_compat.c Interlocked,
+# the zlib_alloc.c zcalloc/zcfree dupe of zutil.c). /INCREMENTAL:NO keeps the
+# exe lean+deterministic (dropping /FORCE re-enables the Debug incremental link).
 # SDL2 is a user-supplied external (README); COD2_SDL2_LIB (found above) links a
 # real MSVC SDL2.lib when present, else sdl2_stub.c lets the exe link.
 target_link_options(cod2_win32 PRIVATE
-  /FORCE:MULTIPLE /SAFESEH:NO /SUBSYSTEM:WINDOWS /MAP)
+  /SAFESEH:NO /SUBSYSTEM:WINDOWS /MAP /INCREMENTAL:NO)
 target_link_libraries(cod2_win32 PRIVATE
   $<$<BOOL:${COD2_SDL2_LIB}>:${COD2_SDL2_LIB}>
   opengl32

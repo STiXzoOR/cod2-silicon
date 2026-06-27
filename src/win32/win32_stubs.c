@@ -5,7 +5,6 @@ int g_dip_is_tri;
 int g_dip_numelems_zero;
 int g_fp_enable_count;
 
-void AddDurationToAbsolute(void) {}
 void CMacGameEngine_DrawSplashScreen(void) {}
 #ifdef W32_CLIENT
 
@@ -13,17 +12,11 @@ int Linux_PollInputEvent(void *event) { (void)event; return 0; }
 #else
 void IN_Frame(void) {}
 #endif
-void MPDelayUntil(void) {}
-void MacDisplay_CreateScreenContext(void) {}
-void SDL_GL_SwapWindowDirect(void) {}
-void UpTime(void) {}
+/* AddDurationToAbsolute/MPDelayUntil/MacDisplay_CreateScreenContext/
+ * SDL_GL_SwapWindowDirect/UpTime have real defs in macos_compat.c; the
+ * CDirect3D*D0Ev/D1Ev destructors in the reconstructed CDirect3D*.c -- stubbing
+ * them here is what required /FORCE:MULTIPLE, so they're dropped. */
 void UpdateSystemActivity(void) {}
-void ZN16CDirect3DTextureD0Ev(void) {}
-void ZN16CDirect3DTextureD1Ev(void) {}
-void ZN20CDirect3DCubeTextureD0Ev(void) {}
-void ZN20CDirect3DCubeTextureD1Ev(void) {}
-void ZN21CDirect3DVertexShaderD0Ev(void) {}
-void ZN21CDirect3DVertexShaderD1Ev(void) {}
 void __ZNSs4_Rep11_S_terminalE(void) {}
 void __ZNSs6appendEPKcm(void) {}
 void __ZNSs6assignEPKcm(void) {}
@@ -33,7 +26,7 @@ void __ZNSt15_List_node_base6unhookEv(void) {}
 void __ZSt18_Rb_tree_incrementPSt18_Rb_tree_node_base(void) {}
 void __ZSt28_Rb_tree_rebalance_for_erasePSt18_Rb_tree_node_baseRS_(void) {}
 void __ZTIl(void) {}
-void ___toupper(void) {}
+/* ___toupper has a real def in macos_compat.c */
 
 void aglDestroyContext(void) {}
 void aglSetCurrentContext(void) {}
