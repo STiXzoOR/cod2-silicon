@@ -1066,23 +1066,24 @@ void G_ShutdownGame(qboolean freeScripts)
         GScr_FreeScripts();
         Scr_FreeScripts(1);
 
-        for (ptr = (char *)&level_bgs; ptr != (char *)((char *)&level_bgs + 77312); ptr += 0x4b8) {
-            struct XAnimTree_s *tree = ((bgs_t *)ptr)->clientinfo[0].pXAnimTree;
-            if (tree) {
+        for (i = 0; i < 64; i++) {
+            struct XAnimTree_s *tree = level_bgs.clientinfo[i].pXAnimTree;
+            if (tree && (((uintptr_t)tree & (sizeof(void *) - 1)) == 0)) {
                 XAnimFreeTree(tree, 0);
-                ((bgs_t *)ptr)->clientinfo[0].pXAnimTree = NULL;
             }
+            level_bgs.clientinfo[i].pXAnimTree = NULL;
         }
 
         {
-            char *clients_base = (char *)imp_g_scr_data;
-            char *clients_end = clients_base + sizeof(((scr_data_t *)0)->playerCorpseInfo);
-            for (ptr = clients_base; ptr != clients_end; ptr += 0x4c8) {
-                struct XAnimTree_s *tree = (*(struct XAnimTree_s **)&((bgs_t *)ptr)->animScriptData.animations[44].name[56]);
-                if (tree) {
+            scr_data_t *scrData = (scr_data_t *)imp_g_scr_data;
+            for (i = 0; i < 8; i++) {
+                corpseInfo_t *corpse = &scrData->playerCorpseInfo[i];
+                struct XAnimTree_s *tree = corpse->ci.pXAnimTree;
+                if (tree && (((uintptr_t)tree & (sizeof(void *) - 1)) == 0)) {
                     XAnimFreeTree(tree, 0);
-                    (*(struct XAnimTree_s **)&((bgs_t *)ptr)->animScriptData.animations[44].name[56]) = NULL;
                 }
+                corpse->ci.pXAnimTree = NULL;
+                corpse->tree = NULL;
             }
         }
 
@@ -1313,7 +1314,7 @@ int G_RunFrame(int levelTime)
                 i, g_entities[i-1].s.eType, SL_ConvertToString((unsigned short)g_entities[i-1].classname)); } }
         entPtr = &g_entities[i];
         if (entPtr->r.inuse) {
-            tagInfo_t *tagInfo = (tagInfo_t *)entPtr->tagInfo;
+            tagInfo_t *tagInfo = COD2_TagInfoFromHandle(entPtr->tagInfo);
             if (tagInfo) {
                 gentity_t *parent = tagInfo->parent;
                 G_RunFrameForEntity(parent);

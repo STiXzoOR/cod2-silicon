@@ -208,7 +208,7 @@ void G_ExplodeMissile(gentity_t *ent)
 
     if (weapDef->iExplosionRadius > 0) {
         int splashMod = HANDLER_SPLASHMOD((_ENT(ent)->handler));
-        G_RadiusDamage((_ENT(ent)->r.currentOrigin), ent, (gentity_t *)(_ENT(ent)->parent),
+        G_RadiusDamage((_ENT(ent)->r.currentOrigin), ent, COD2_GEntityFromHandle(_ENT(ent)->parent),
                        (float)weapDef->iExplosionRadius,
                        (float)weapDef->iExplosionOuterDamage,
                        (float)weapDef->iExplosionInnerDamage,
@@ -253,7 +253,7 @@ gentity_t *fire_grenade(gentity_t *self, vec_t *start, vec_t *dir, int grenadeWP
 
     (_ENT(bolt)->r.ownerNum) = (_ENT(self)->s.number);
 
-    (_ENT(bolt)->parent) = (int)self;
+    (_ENT(bolt)->parent) = COD2_GEntityHandle(self);
 
     weapDef = BG_GetWeaponDef(grenadeWPID);
 
@@ -323,7 +323,7 @@ gentity_t *fire_rocket(gentity_t *self, vec_t *start, vec_t *dir)
 
     (_ENT(bolt)->r.ownerNum) = (_ENT(self)->s.number);
 
-    (_ENT(bolt)->parent) = (int)self;
+    (_ENT(bolt)->parent) = COD2_GEntityHandle(self);
 
     (_ENT(bolt)->damage) = weapDef->damage;
 
@@ -854,7 +854,7 @@ after_trace:
 
             if (hitWeapDef->iExplosionRadius > 0) {
                 int splashMod = HANDLER_SPLASHMOD((_ENT(ent)->handler));
-                G_RadiusDamage(endpos, ent, (gentity_t *)(_ENT(ent)->parent),
+                G_RadiusDamage(endpos, ent, COD2_GEntityFromHandle(_ENT(ent)->parent),
                                (float)hitWeapDef->iExplosionRadius,
                                (float)hitWeapDef->iExplosionOuterDamage,
                                (float)hitWeapDef->iExplosionInnerDamage,

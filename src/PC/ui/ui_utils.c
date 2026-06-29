@@ -159,7 +159,7 @@ void *UI_Alloc(int size, int alignment)
 
 void String_Init(void)
 {
-    memset(g_strHandle, 0, 0x2000);
+    memset(g_strHandle, 0, sizeof(g_strHandle));
 }
 
 qboolean Int_Parse(const char **p, int *i)

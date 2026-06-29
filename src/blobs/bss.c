@@ -1241,7 +1241,7 @@ unsigned char g_gametype_017e1a58[40];
    to hold all 1024 entity slots (indices up to 0x3FF incl. the world entity 1022) -- otherwise high
    indices overflow into adjacent BSS. BSS, so re-sizing is binary-compatible. */
 #if defined(COD2_X64) || defined(__x86_64__)
-unsigned char g_entities[1024 * sizeof(struct gentity_s)];
+struct gentity_s g_entities[1024];
 #else
 unsigned char g_entities[573440];
 #endif

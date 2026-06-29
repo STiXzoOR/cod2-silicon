@@ -15231,6 +15231,11 @@ struct gentity_s {
     int nextFree;
 };
 
+int COD2_GEntityHandle(const gentity_t *ent);
+gentity_t *COD2_GEntityFromHandle(int handle);
+int COD2_TagInfoHandle(const tagInfo_t *tagInfo);
+tagInfo_t *COD2_TagInfoFromHandle(int handle);
+
 struct trigger_info_t {
     short unsigned int entnum;
     short unsigned int otherEntnum;

@@ -76,6 +76,50 @@ extern struct scr_data_t g_scr_data;
 #define LEVEL_DROPPED_WEAPON_CUE (LEVEL_PTR->droppedWeaponCue)
 #define LEVEL_CLONEIDX (LEVEL_PTR->currentPlayerClone)
 
+int COD2_GEntityHandle(const gentity_t *ent)
+{
+#if defined(COD2_X64) || defined(__x86_64__) || defined(_M_X64)
+    return ent ? (int)(ent - (const gentity_t *)imp_g_entities) + 1 : 0;
+#else
+    return (int)(uintptr_t)ent;
+#endif
+}
+
+gentity_t *COD2_GEntityFromHandle(int handle)
+{
+#if defined(COD2_X64) || defined(__x86_64__) || defined(_M_X64)
+    if (handle <= 0 || handle > 1024)
+        return NULL;
+    return handle ? &((gentity_t *)imp_g_entities)[handle - 1] : NULL;
+#else
+    return (gentity_t *)(uintptr_t)handle;
+#endif
+}
+
+int COD2_TagInfoHandle(const tagInfo_t *tagInfo)
+{
+#if defined(COD2_X64) || defined(__x86_64__) || defined(_M_X64)
+    return tagInfo ? (int)SCR_ARENA_ENC(tagInfo) + 1 : 0;
+#else
+    return (int)(uintptr_t)tagInfo;
+#endif
+}
+
+tagInfo_t *COD2_TagInfoFromHandle(int handle)
+{
+#if defined(COD2_X64) || defined(__x86_64__) || defined(_M_X64)
+    unsigned int off;
+    if (handle <= 0)
+        return NULL;
+    off = (unsigned int)(handle - 1);
+    if (off >= 0x80330)
+        return NULL;
+    return (tagInfo_t *)SCR_ARENA_PTR(off);
+#else
+    return (tagInfo_t *)(uintptr_t)handle;
+#endif
+}
+
 #define GUTILS_PLAYER_CLONE_BASE 64
 #define GUTILS_DYNAMIC_ENTITY_START 72
 
@@ -330,7 +374,7 @@ DObjAnimMat_s *G_DObjGetLocalTagMatrix(gentity_t *ent, unsigned int tagName)
 
 static inline __attribute__((always_inline)) void G_InitGentity_core(gentity_t *e)
 {
-    (_ENT(e)->nextFree = (int)(uintptr_t)(NULL));
+    (_ENT(e)->nextFree = COD2_GEntityHandle(NULL));
     (_ENT(e)->r.inuse) = 1;
     Scr_SetString(&e->classname, SCR_CONST()->noclass);
     (_ENT(e)->s.number) = (int)(e - (gentity_t *)imp_g_entities);
@@ -528,9 +572,15 @@ int G_AnimScriptSound(int client, snd_alias_list_t *aliasList)
 
 unsigned char G_CalcTagParentAxis(gentity_t *ent, vec3_t *parentAxis)
 {
-    tagInfo_t *tagInfo = ((tagInfo_t *)(uintptr_t)_ENT(ent)->tagInfo);
-    gentity_t *parent = ((tagInfo)->parent);
-    int boneIndex = ((tagInfo)->index);
+    tagInfo_t *tagInfo = COD2_TagInfoFromHandle(_ENT(ent)->tagInfo);
+    gentity_t *parent;
+    int boneIndex;
+
+    if (!tagInfo || !tagInfo->parent)
+        return 0;
+
+    parent = ((tagInfo)->parent);
+    boneIndex = ((tagInfo)->index);
 
     if (boneIndex < 0) {
 
@@ -585,8 +635,13 @@ unsigned char G_SetFixedLink(gentity_t *ent, int eAngles)
     tagInfo_t *tagInfo;
     vec3_t axis[4];
 
+    tagInfo = COD2_TagInfoFromHandle(_ENT(ent)->tagInfo);
+    if (!tagInfo || !tagInfo->parent) {
+        _ENT(ent)->tagInfo = COD2_TagInfoHandle(NULL);
+        return 0;
+    }
+
     G_CalcTagParentAxis(ent, parentAxis);
-    tagInfo = ((tagInfo_t *)(uintptr_t)_ENT(ent)->tagInfo);
 
     switch (eAngles) {
     case 0:
@@ -613,9 +668,14 @@ unsigned char G_CalcTagAxis(gentity_t *ent, qboolean bAnglesOnly)
     tagInfo_t *tagInfo;
     vec3_t invParentAxis[4];
 
+    tagInfo = COD2_TagInfoFromHandle(_ENT(ent)->tagInfo);
+    if (!tagInfo || !tagInfo->parent) {
+        _ENT(ent)->tagInfo = COD2_TagInfoHandle(NULL);
+        return 0;
+    }
+
     G_CalcTagParentAxis(ent, parentAxis);
     AnglesToAxis((_ENT(ent)->r.currentAngles), (vec_t *)axis);
-    tagInfo = ((tagInfo_t *)(uintptr_t)_ENT(ent)->tagInfo);
 
     if (bAnglesOnly) {
         MatrixTranspose((vec_t *)parentAxis, (vec_t *)invParentAxis);
@@ -630,7 +690,7 @@ unsigned char G_CalcTagAxis(gentity_t *ent, qboolean bAnglesOnly)
 
 unsigned char G_EntUnlink(gentity_t *ent)
 {
-    tagInfo_t *tagInfo = ((tagInfo_t *)(uintptr_t)_ENT(ent)->tagInfo);
+    tagInfo_t *tagInfo = COD2_TagInfoFromHandle(_ENT(ent)->tagInfo);
     if (!tagInfo) {
         return 0;
     }
@@ -658,15 +718,15 @@ unsigned char G_EntUnlink(gentity_t *ent)
 
     {
         gentity_t *parent = ((tagInfo)->parent);
-        gentity_t *child = ((gentity_t *)(uintptr_t)_ENT(parent)->tagChildren);
+        gentity_t *child = COD2_GEntityFromHandle(_ENT(parent)->tagChildren);
 
         if (child == ent) {
 
-            (_ENT(parent)->tagChildren = (int)(uintptr_t)(((tagInfo)->next)));
+            (_ENT(parent)->tagChildren = COD2_GEntityHandle(tagInfo->next));
         } else {
 
             while (child) {
-                tagInfo_t *childTag = ((tagInfo_t *)(uintptr_t)_ENT(child)->tagInfo);
+                tagInfo_t *childTag = COD2_TagInfoFromHandle(_ENT(child)->tagInfo);
                 gentity_t *next = ((childTag)->next);
                 if (next == ent) {
                     ((childTag)->next) = ((tagInfo)->next);
@@ -677,7 +737,7 @@ unsigned char G_EntUnlink(gentity_t *ent)
         }
     }
 
-    (_ENT(ent)->tagInfo = (int)(uintptr_t)(NULL));
+    (_ENT(ent)->tagInfo = COD2_TagInfoHandle(NULL));
     Scr_SetString(&((tagInfo)->name), 0);
     MT_Free((unsigned int *)tagInfo, 0x70);
 }
@@ -703,12 +763,12 @@ static qboolean G_EntLinkToInternal(gentity_t *ent, gentity_t *parent, unsigned 
         index = -1;
     }
 
-    for (checkEnt = parent;; checkEnt = ((((tagInfo_t *)(uintptr_t)_ENT(checkEnt)->tagInfo))->parent)) {
+    for (checkEnt = parent;; checkEnt = COD2_TagInfoFromHandle(_ENT(checkEnt)->tagInfo)->parent) {
         if (checkEnt == ent) {
             return 0;
         }
 
-        if (!((tagInfo_t *)(uintptr_t)_ENT(checkEnt)->tagInfo)) {
+        if (!COD2_TagInfoFromHandle(_ENT(checkEnt)->tagInfo)) {
             break;
         }
     }
@@ -717,11 +777,11 @@ static qboolean G_EntLinkToInternal(gentity_t *ent, gentity_t *parent, unsigned 
     tagInfo->parent = parent;
     tagInfo->name = 0;
     Scr_SetString(&tagInfo->name, tagName);
-    tagInfo->next = ((gentity_t *)(uintptr_t)_ENT(parent)->tagChildren);
+    tagInfo->next = COD2_GEntityFromHandle(_ENT(parent)->tagChildren);
     tagInfo->index = index;
     memset(tagInfo->axis, 0, sizeof(tagInfo->axis));
-    (_ENT(parent)->tagChildren = (int)(uintptr_t)(ent));
-    (_ENT(ent)->tagInfo = (int)(uintptr_t)(tagInfo));
+    (_ENT(parent)->tagChildren = COD2_GEntityHandle(ent));
+    (_ENT(ent)->tagInfo = COD2_TagInfoHandle(tagInfo));
     memset(tagInfo->parentInvAxis, 0, sizeof(tagInfo->parentInvAxis));
     return 1;
 }
@@ -734,7 +794,7 @@ qboolean G_EntLinkToWithOffset(gentity_t *ent, gentity_t *parent, unsigned int t
         return 0;
     }
 
-    tagInfo = ((tagInfo_t *)(uintptr_t)_ENT(ent)->tagInfo);
+    tagInfo = COD2_TagInfoFromHandle(_ENT(ent)->tagInfo);
     AnglesToAxis(anglesOffset, (vec_t *)tagInfo->axis);
     {
         float *d = tagInfo->axis[3];
@@ -758,6 +818,14 @@ qboolean G_EntLinkTo(gentity_t *ent, gentity_t *parent, unsigned int tagName)
 void G_GeneralLink(gentity_t *ent)
 {
     float *p;
+
+    {
+        tagInfo_t *tagInfo = COD2_TagInfoFromHandle(_ENT(ent)->tagInfo);
+        if (!tagInfo || !tagInfo->parent) {
+            _ENT(ent)->tagInfo = COD2_TagInfoHandle(NULL);
+            return;
+        }
+    }
 
     G_SetFixedLink(ent, 0);
 
@@ -797,8 +865,8 @@ unsigned char G_FreeEntity(gentity_t *ed)
 
     G_EntUnlink(ed);
 
-    while (((gentity_t *)(uintptr_t)_ENT(ed)->tagChildren)) {
-        G_EntUnlink(((gentity_t *)(uintptr_t)_ENT(ed)->tagChildren));
+    while (COD2_GEntityFromHandle(_ENT(ed)->tagChildren)) {
+        G_EntUnlink(COD2_GEntityFromHandle(_ENT(ed)->tagChildren));
     }
 
     SV_UnlinkEntity(ed);
@@ -819,8 +887,8 @@ unsigned char G_FreeEntity(gentity_t *ed)
         if (!(_ENT(ent)->r.inuse)) {
             continue;
         }
-        if (((gentity_t *)(uintptr_t)_ENT(ent)->parent) == ed) {
-            (_ENT(ent)->parent = (int)(uintptr_t)(NULL));
+        if (COD2_GEntityFromHandle(_ENT(ent)->parent) == ed) {
+            (_ENT(ent)->parent = COD2_GEntityHandle(NULL));
         }
         if ((_ENT(ent)->r.ownerNum) == entnum) {
             (_ENT(ent)->r.ownerNum) = 0x3FF;
@@ -879,12 +947,12 @@ unsigned char G_FreeEntity(gentity_t *ed)
         if (ed >= &LEVEL_GENTITIES[GUTILS_DYNAMIC_ENTITY_START]) {
 
             if (LEVEL_LASTFREEENT) {
-                (_ENT(LEVEL_LASTFREEENT)->nextFree = (int)(uintptr_t)(ed));
+                (_ENT(LEVEL_LASTFREEENT)->nextFree = COD2_GEntityHandle(ed));
             } else {
                 LEVEL_FIRSTFREEENT = ed;
             }
             LEVEL_LASTFREEENT = ed;
-            (_ENT(ed)->nextFree = (int)(uintptr_t)(NULL));
+            (_ENT(ed)->nextFree = COD2_GEntityHandle(NULL));
         }
 
         (_ENT(ed)->useCount) = useCount + 1;
@@ -968,9 +1036,9 @@ void G_DObjUpdate(gentity_t *ent)
 
     if (!(_ENT(ent)->model)) {
 
-        gentity_t *child = ((gentity_t *)(uintptr_t)_ENT(ent)->tagChildren);
+        gentity_t *child = COD2_GEntityFromHandle(_ENT(ent)->tagChildren);
         while (child) {
-            tagInfo_t *childTag = ((tagInfo_t *)(uintptr_t)_ENT(child)->tagInfo);
+            tagInfo_t *childTag = COD2_TagInfoFromHandle(_ENT(child)->tagInfo);
             gentity_t *next = ((childTag)->next);
             if (!((childTag)->name)) {
                 ((childTag)->index) = -1;
@@ -1005,9 +1073,9 @@ void G_DObjUpdate(gentity_t *ent)
     Com_ServerDObjCreate(dobjModels, numModels, 0, (_ENT(ent)->s.number));
 
     {
-        gentity_t *child = ((gentity_t *)(uintptr_t)_ENT(ent)->tagChildren);
+        gentity_t *child = COD2_GEntityFromHandle(_ENT(ent)->tagChildren);
         while (child) {
-            tagInfo_t *childTag = ((tagInfo_t *)(uintptr_t)_ENT(child)->tagInfo);
+            tagInfo_t *childTag = COD2_TagInfoFromHandle(_ENT(child)->tagInfo);
             gentity_t *next = ((childTag)->next);
             if (!((childTag)->name)) {
                 ((childTag)->index) = -1;
@@ -1121,11 +1189,11 @@ gentity_t *G_Spawn(void)
     e = LEVEL_FIRSTFREEENT;
     if (e) {
         if (LEVEL_TIME - (_ENT(e)->eventTime) > 499 || LEVEL_NUMENTS > 0x3FD) {
-            LEVEL_FIRSTFREEENT = ((gentity_t *)(uintptr_t)_ENT(e)->nextFree);
-            if (!((gentity_t *)(uintptr_t)_ENT(e)->nextFree)) {
+            LEVEL_FIRSTFREEENT = COD2_GEntityFromHandle(_ENT(e)->nextFree);
+            if (!COD2_GEntityFromHandle(_ENT(e)->nextFree)) {
                 LEVEL_LASTFREEENT = 0;
             }
-            (_ENT(e)->nextFree = (int)(uintptr_t)(NULL));
+            (_ENT(e)->nextFree = COD2_GEntityHandle(NULL));
             goto init;
         }
     }

@@ -1026,7 +1026,7 @@ void ClientThink_real(gentity_t *ent, usercmd_t *ucmd)
 
         owner = &g_entities[pm.ps->clientNum];
         blocker = G_Spawn();
-        blocker->parent = (int)(uintptr_t)owner;
+        blocker->parent = COD2_GEntityHandle(owner);
         blocker->r.ownerNum = pm.ps->clientNum;
         blocker->r.contents = 0x10000;
         blocker->clipmask = 0x10000;
