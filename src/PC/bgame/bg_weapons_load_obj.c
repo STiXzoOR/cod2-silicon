@@ -83,7 +83,7 @@ char *szWeapTypeNames[] = {
     NULL,
 };
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
 
 __attribute__((used))
 cspField_t weaponDefFields[] = {

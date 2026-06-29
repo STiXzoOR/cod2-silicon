@@ -11,6 +11,53 @@ extern void Com_Memset(void *dest, int val, int count);
 extern void Sys_OutOfMemErrorInternal(const char *filename, int line);
 extern void *VirtualAlloc(void *lpAddress, int dwSize, int flAllocationType, int flProtect);
 extern int VirtualFree(void *lpAddress, int dwSize, int dwFreeType);
+
+#if defined(COD2_X64) && defined(COD2_GUARDHEAP)
+/* DIAGNOSTIC guard-page allocator: each block's END butts against a no-access page so a heap
+   overrun faults exactly at the bad write (caught by the SEH handler). Base ptr is stored 16
+   bytes before the user ptr for Z_FreeInternal. Enable with -DCOD2_GUARDHEAP. */
+/* NOTE: in this build VirtualAlloc/VirtualFree are REDEFINED in MacWin32.c as calloc/free (CRT
+   heap, not OS pages).  We need the REAL kernel32 functions for guard pages, via GetProcAddress. */
+extern void *__stdcall GetModuleHandleA(const char *);
+extern void *__stdcall GetProcAddress(void *, const char *);
+typedef void *(__stdcall *gp_VA_t)(void *, unsigned long long, unsigned long, unsigned long);
+typedef int(__stdcall *gp_VP_t)(void *, unsigned long long, unsigned long, unsigned long *);
+typedef int(__stdcall *gp_VF_t)(void *, unsigned long long, unsigned long);
+static gp_VA_t gp_realVA;
+static gp_VP_t gp_realVP;
+gp_VF_t gp_realVF; /* used by Z_FreeInternal */
+#define GP_PAGE 4096
+#define GP_MAGIC ((void *)0x4755415244504721ull) /* "GUARDP!" */
+static void gp_init(void)
+{
+    void *k = GetModuleHandleA("kernel32.dll");
+    gp_realVA = (gp_VA_t)GetProcAddress(k, "VirtualAlloc");
+    gp_realVP = (gp_VP_t)GetProcAddress(k, "VirtualProtect");
+    gp_realVF = (gp_VF_t)GetProcAddress(k, "VirtualFree");
+}
+static void *gp_alloc(int size, int zero)
+{
+    int need = (size <= 0) ? 16 : ((size + 15) & ~15);
+    int nbytes = ((need + 32 + GP_PAGE - 1) / GP_PAGE) * GP_PAGE;
+    unsigned long oldp;
+    char *base;
+    char *user;
+    if (!gp_realVA)
+        gp_init();
+    base = (char *)gp_realVA(0, (unsigned long long)(nbytes + GP_PAGE), 0x3000 /*COMMIT|RESERVE*/, 4 /*RW*/);
+    if (!base) {
+        user = (char *)malloc(need);
+        if (user && zero) Com_Memset(user, 0, size);
+        return user;
+    }
+    gp_realVP(base + nbytes, GP_PAGE, 1 /*PAGE_NOACCESS*/, &oldp);
+    user = base + nbytes - need;
+    *(void **)(user - 16) = base;
+    *(void **)(user - 8) = GP_MAGIC;
+    if (zero) Com_Memset(user, 0, size);
+    return user;
+}
+#endif
 extern int FS_HashFileName(const char *fname, int hashSize);
 extern int FS_LoadStack(void);
 extern int stricmp(const char *s1, const char *s2);
@@ -72,7 +119,17 @@ static void Hunk_ClearFileData(fileData_t **pFileData, byte *low, byte *high)
 
 void Z_FreeInternal(void *ptr)
 {
+#if defined(COD2_X64) && defined(COD2_GUARDHEAP)
+    extern gp_VF_t gp_realVF;
+    if (ptr) {
+        if (*(void **)((char *)ptr - 8) == GP_MAGIC && gp_realVF)
+            gp_realVF(*(void **)((char *)ptr - 16), 0, 0x8000 /*MEM_RELEASE*/);
+        else
+            free(ptr); /* malloc fallback block */
+    }
+#else
     free(ptr);
+#endif
 }
 
 void Z_VirtualFreeInternal(void *ptr)
@@ -88,7 +145,9 @@ void Z_VirtualDecommitInternal(void *ptr, int size)
 void *Z_TryMallocInternal(int size)
 {
     void *buf;
-
+#if defined(COD2_X64) && defined(COD2_GUARDHEAP)
+    return gp_alloc(size, 1);
+#endif
     buf = malloc(size);
     if (buf) {
         Com_Memset(buf, 0, size);
@@ -99,7 +158,9 @@ void *Z_TryMallocInternal(int size)
 void *Z_MallocInternal(int size)
 {
     void *buf;
-
+#if defined(COD2_X64) && defined(COD2_GUARDHEAP)
+    return gp_alloc(size, 1);
+#endif
     buf = malloc(size);
     if (buf) {
         Com_Memset(buf, 0, size);
@@ -112,7 +173,9 @@ void *Z_MallocInternal(int size)
 void *Z_MallocGarbageInternal(int size)
 {
     void *buf;
-
+#if defined(COD2_X64) && defined(COD2_GUARDHEAP)
+    return gp_alloc(size, 0);
+#endif
     buf = malloc(size);
     if (!buf) {
         Sys_OutOfMemErrorInternal(__FILE__, __LINE__);
@@ -316,11 +379,7 @@ const char *Hunk_SetDataForFile(int type, const char *name, void *data, Alloc_t 
     fd->data = data;
     fd->type = (byte)type;
     strcpy(fd->name, name);
-#if defined(__x86_64__)
-    fd->next = (long)com_fileDataHashTable[hash];
-#else
-    fd->next = (int)com_fileDataHashTable[hash];
-#endif
+    fd->next = (intptr_t)com_fileDataHashTable[hash];
     com_fileDataHashTable[hash] = fd;
 
     return fd->name;
@@ -333,11 +392,7 @@ void Hunk_AddData(int type, void *data, Alloc_t alloc)
     fd = (fileData_t *)alloc(9);
     fd->data = data;
     fd->type = (byte)type;
-#if defined(__x86_64__)
-    fd->next = (long)com_hunkData;
-#else
-    fd->next = (int)com_hunkData;
-#endif
+    fd->next = (intptr_t)com_hunkData;
     com_hunkData = fd;
 }
 
@@ -607,7 +662,7 @@ void Hunk_FreeTempMemory(void *buf)
     byte *hd = s_hunkData;
 
     if (!hd) {
-        free(buf);
+        Z_FreeInternal(buf); /* matches Hunk_AllocateTempMemoryInternal's Z_MallocInternal path */
         return;
     }
 

@@ -101,14 +101,12 @@ static void MT_ListRemove(int b, int size)
 }
 
 static void MT_AddMemoryNode(int newNode, int size)
-{
-    MT_ListAdd(newNode, size);
+{    MT_ListAdd(newNode, size);
 }
 
 static void MT_RemoveHeadMemoryNode(int size)
 {
-    int b = (MEMTREE_GLOB->head[(unsigned)(size)]);
-    if (b)
+    int b = (MEMTREE_GLOB->head[(unsigned)(size)]);    if (b)
         MT_ListRemove(b, size);
 }
 
@@ -117,8 +115,7 @@ static int MT_RemoveMemoryNode(int target, int size)
     if (target <= 0 || target >= MEMORY_NODE_COUNT)
         return 0;
     if (mt_size[target] != (unsigned char)(size + 1))
-        return 0;
-    MT_ListRemove(target, size);
+        return 0;    MT_ListRemove(target, size);
     return 1;
 }
 
@@ -252,7 +249,6 @@ void MT_FreeIndex(unsigned int nodeNum, int numBytes)
     int size, lowBit;
 
     size = MT_GetSize(numBytes);
-
     TOTAL_ALLOC--;
     TOTAL_ALLOC_BUCKETS -= 1 << size;
 

@@ -239,17 +239,17 @@ static inline __attribute__((always_inline)) GfxCmdCall *R_AllocDelayedCall(shor
         *marker = used;
     }
 
-    if (0x30000 - used <= 7) {
+    if (0x30000 - used <= (int)sizeof(GfxCmdCall) - 1) {
         cl->lastCmd = NULL;
         return NULL;
     }
 
     cmd = (GfxCmdCall *)((char *)cl + used);
-    cl->usedTotal = used + 8;
-    cl->usedCritical += 8;
+    cl->usedTotal = used + (int)sizeof(GfxCmdCall);      /* x86 was 8; GfxCmdCall is 16 on x64 (header+pad+8B ptr) */
+    cl->usedCritical += (int)sizeof(GfxCmdCall);
     cl->lastCmd = &cmd->header;
     cmd->header.id = id;
-    cmd->header.byteCount = 8;
+    cmd->header.byteCount = (unsigned short)sizeof(GfxCmdCall);
     return cmd;
 }
 
@@ -571,7 +571,7 @@ void R_AddCmdDrawSurfs(GfxDrawSurf *drawSurfs, int drawSurfCount, MaterialTechni
 {
     GfxCmdDrawSurfs *cmd;
 
-    cmd = (GfxCmdDrawSurfs *)R_AllocCmd(0x14, 0, 0x17);
+    cmd = (GfxCmdDrawSurfs *)R_AllocCmd((int)sizeof(GfxCmdDrawSurfs), 0, 0x17);
     if (cmd == NULL) {
         return;
     }
@@ -607,7 +607,8 @@ void R_EndDelayedDrawing(int marker)
     } else {
         cl->lastCmd = NULL;
     }
-    *(int *)((char *)cl + 4 + marker) = (int)((char *)cl + used);
+    /* x86 wrote a 4-byte subCmd at marker+4; on x64 subCmd is an 8-byte ptr at offsetof(GfxCmdCall,subCmd) */
+    *(const void **)((char *)cl + marker + __builtin_offsetof(GfxCmdCall, subCmd)) = (const void *)((char *)cl + used);
 }
 
 void R_IssueDelayedDrawing(int marker)
@@ -615,14 +616,15 @@ void R_IssueDelayedDrawing(int marker)
     GfxCmdCall *cmd;
 
     cmd = R_AllocDelayedCall(2, NULL);
-    cmd->subCmd = (char *)s_cmdList + marker + 8;
+    cmd->subCmd = (char *)s_cmdList + marker + (int)sizeof(GfxCmdCall);   /* x86 was +8 (goto cmd size) */
 }
 
 void R_AddCmdDrawStretchPic(float x, float y, float w, float h, float s0, float t0, float s1, float t1, const vec_t *color, MaterialHandle material)
 {
     GfxCmdStretchPic *cmd;
 
-    cmd = (GfxCmdStretchPic *)R_AllocCmd(0x2c, 0, 0xf);
+    { extern int g_q_stretchpic; extern void Com_Printf(const char *, ...); g_q_stretchpic++; if (g_q_stretchpic <= 4) Com_Printf("[qsp] #%d material=%p\n", g_q_stretchpic, (void *)material); }
+    cmd = (GfxCmdStretchPic *)R_AllocCmd((int)sizeof(GfxCmdStretchPic), 0, 0xf);
     if (cmd == NULL) {
         return;
     }
@@ -643,7 +645,7 @@ void R_AddCmdDrawStretchPicRotate(float x, float y, float w, float h, float s0, 
 {
     GfxCmdStretchPicRotate *cmd;
 
-    cmd = (GfxCmdStretchPicRotate *)R_AllocCmd(0x30, 0, 0x10);
+    cmd = (GfxCmdStretchPicRotate *)R_AllocCmd((int)sizeof(GfxCmdStretchPicRotate), 0, 0x10);
     if (cmd == NULL) {
         return;
     }
@@ -665,7 +667,7 @@ void R_AddCmdDrawStretchRaw(int x, int y, int w, int h, int cols, int rows, cons
 {
     GfxCmdStretchRaw *cmd;
 
-    cmd = (GfxCmdStretchRaw *)R_AllocCmd(0x28, 0, 0x11);
+    cmd = (GfxCmdStretchRaw *)R_AllocCmd((int)sizeof(GfxCmdStretchRaw), 0, 0x11);
     if (cmd == NULL) {
         return;
     }
@@ -695,7 +697,7 @@ void R_AddCmdDrawTextWithCursor(const char *text, int maxChars, FontHandle font,
 
     len = strlen(text);
 
-    byteCount = (len + 0x31) & ~3;
+    byteCount = (int)((__builtin_offsetof(GfxCmdDrawText, text) + (unsigned)len + 1 + 3) & ~3u);   /* 0x31 was x86 (font ptr) */
     cmd = (GfxCmdDrawText *)R_AllocCmd(byteCount, 0, 0x15);
     if (cmd == NULL) {
         return;
@@ -742,7 +744,7 @@ void R_AddCmdDrawTextInSpace(const char *text, FontHandle font, const vec_t *org
 
     len = strlen(text);
 
-    byteCount = (len + 0x34) & ~3;
+    byteCount = (int)((__builtin_offsetof(GfxCmdDrawTextInSpace, text) + (unsigned)len + 1 + 3) & ~3u);   /* 0x34 was x86 (font ptr) */
     cmd = (GfxCmdDrawTextInSpace *)R_AllocCmd(byteCount, 0, 0x16);
     if (cmd == NULL) {
         return;
@@ -770,7 +772,7 @@ void R_AddCmdDrawQuadPic(vec2_t *verts, const vec_t *color, MaterialHandle mater
     int cornerIndex;
     GfxCmdDrawQuadPic *cmd;
 
-    cmd = (GfxCmdDrawQuadPic *)R_AllocCmd(0x2c, 0, 0x12);
+    cmd = (GfxCmdDrawQuadPic *)R_AllocCmd((int)sizeof(GfxCmdDrawQuadPic), 0, 0x12);
     if (cmd == NULL) {
         return;
     }
@@ -787,7 +789,7 @@ void R_AddCmdDrawSprite(MaterialHandle material, const byte *rgbaColor, const ve
 {
     GfxCmdDrawSprite *cmd;
 
-    cmd = (GfxCmdDrawSprite *)R_AllocCmd(0x24, 0, 0x13);
+    cmd = (GfxCmdDrawSprite *)R_AllocCmd((int)sizeof(GfxCmdDrawSprite), 0, 0x13);
     if (cmd == NULL) {
         return;
     }
@@ -806,7 +808,7 @@ void R_AddCmdDrawFullScreenColoredQuad(float s0, float t0, float s1, float t1, c
 {
     GfxCmdDrawFullScreenColoredQuad *cmd;
 
-    cmd = (GfxCmdDrawFullScreenColoredQuad *)R_AllocCmd(0x1c, 0, 0x14);
+    cmd = (GfxCmdDrawFullScreenColoredQuad *)R_AllocCmd((int)sizeof(GfxCmdDrawFullScreenColoredQuad), 0, 0x14);
     if (cmd == NULL) {
         return;
     }
@@ -998,7 +1000,7 @@ void R_AddCmdBlendSavedScreen(int fadeMsec)
         return;
     }
 
-    cmd = (GfxCmdBlendSavedScreen *)R_AllocCmd(0xc, 0, 0x1d);
+    cmd = (GfxCmdBlendSavedScreen *)R_AllocCmd((int)sizeof(GfxCmdBlendSavedScreen), 0, 0x1d);
     if (cmd == NULL) {
         return;
     }

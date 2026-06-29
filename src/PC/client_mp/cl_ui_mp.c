@@ -430,9 +430,13 @@ qboolean CL_ShutdownUI(void)
 
 void CL_InitUI(void)
 {
+    extern void Com_Printf(const char *, ...);
+    extern int g_disableRendering;
     cls.uiStarted = 1;
     CL_SwitchToLocalClient(0);
+    Com_Printf("[disrend] CL_InitUI before UI_Init = %d\n", g_disableRendering);
     UI_Init();
+    Com_Printf("[disrend] CL_InitUI after UI_Init = %d\n", g_disableRendering);
     CL_SwitchToLocalClient(0);
     UI_Component_Init();
 }

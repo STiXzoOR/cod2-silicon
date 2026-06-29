@@ -140,7 +140,9 @@ void SV_Netchan_AddOOBProfilePacket(int iLength)
 {
     netProfileInfo_t *pOOBProf;
 
-    if (*(int *)(*(byte **)net_profile_dvar + 8) == 0)
+    /* +8 was the x86 offset of dvar->current; on x64 the name pointer + alignment move current to
+       16, so the hardcoded read got garbage and skipped the disabled-profiling early-out. */
+    if ((*(const dvar_t **)net_profile_dvar)->current.integer == 0)
         return;
 
     {

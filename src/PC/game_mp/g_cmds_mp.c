@@ -7,7 +7,12 @@ extern void Com_Error(int code, const char *fmt, ...);
 COD2_ASSERT_FIELD(gclient_t, sess.sessionState, 0x26a8);
 
 static char line[1024];
-extern char *gc_orders[7];
+/* gc_orders: migrated from the ILP32 data blob to typed C (re-lays-out per
+ * target; trailing blob bytes were inter-symbol padding). (x64 port Stage 2.) */
+char *gc_orders[7] = {
+    "GAME_GC_HOLDYOURPOSITION", "GAME_GC_HOLDTHISPOSITION", "GAME_GC_COMEHERE", "GAME_GC_COVERME",
+    "GAME_GC_GUARDLOCATION", "GAME_GC_SEARCHDESTROY", "GAME_GC_REPORT",
+};
 extern level_locals_t level;
 
 #define g_entities ((gentity_t *)imp_g_entities)

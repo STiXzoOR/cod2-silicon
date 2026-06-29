@@ -27,7 +27,16 @@ extern entityHandler_t entityHandlers[20];
 
 #define VectorCopy(a, b) ((b)[0] = (a)[0], (b)[1] = (a)[1], (b)[2] = (a)[2])
 
-extern char *hintStrings[6];
+/* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
+char *hintStrings[6] = {
+    "",
+    "HINT_NONE",
+    "HINT_ACTIVATE",
+    "HINT_HEALTH",
+    "HINT_FRIENDLY",
+    NULL,
+};
+
 static pushed_t pushed[1024];
 static pushed_t *pushed_p;
 
@@ -360,6 +369,10 @@ void G_MoverTeam(gentity_t *ent)
 
     pushed_p = pushed;
 
+    { extern const char *SL_ConvertToString(unsigned int); extern void Com_Printf(const char *, ...);
+      Com_Printf("[mover] num=%d eType=%d posTr=%d aposTr=%d class=%s\n",
+                 _ENT(ent)->s.number, _ENT(ent)->s.eType, _ENT(ent)->s.pos.trType, _ENT(ent)->s.apos.trType,
+                 SL_ConvertToString((unsigned int)_ENT(ent)->classname)); }
     BG_EvaluateTrajectory((&_ENT(ent)->s.pos), LEVEL_TIME, origin);
     BG_EvaluateTrajectory((&_ENT(ent)->s.apos), LEVEL_TIME, angles);
 

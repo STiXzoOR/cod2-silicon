@@ -81,7 +81,7 @@ static int unzlocal_ReadShort(FILE *file, uLong *value)
 
 static int unzlocal_ReadLong(FILE *file, uLong *value)
 {
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
     /* The ZIP central-directory "long" is a fixed 32-bit field on disk. uLong is
      * `unsigned long` = 8 bytes under LP64, so reading sizeof(uLong) would
      * consume 8 bytes and desync the parse. Read exactly 4 bytes. */

@@ -78,13 +78,32 @@ static long g_interlock;
 static long g_misc;
 static LPTHREAD_START_ROUTINE g_proc[8];
 
+extern void *__stdcall GetModuleHandleA(const char *);
+extern void Com_Printf(const char *, ...);
+static void *g_gfx_rip;
+static unsigned long g_gfx_code;
+static int gfx_seh_filt(void *ep_v)
+{
+    void **ep = (void **)ep_v;       /* EXCEPTION_POINTERS: [0]=ExceptionRecord [1]=ContextRecord */
+    void **rec = (void **)ep[0];     /* EXCEPTION_RECORD: code@0, flags@4, nested@8, address@16 */
+    g_gfx_code = *(unsigned long *)rec;
+    g_gfx_rip = rec[2];
+    return 1; /* EXCEPTION_EXECUTE_HANDLER */
+}
+
 static DWORD __stdcall gfxv60_trampoline(LPVOID arg)
 {
     int slot = (int)(long)arg;
 
     Com_InitThreadData(1);
-    if (g_proc[slot])
-        g_proc[slot]((LPVOID)0);
+    __try {
+        if (g_proc[slot])
+            g_proc[slot]((LPVOID)0);
+    } __except (gfx_seh_filt(_exception_info())) {
+        Com_Printf("[GFXCRASH] render-thread fault code=0x%lx rip=%p rva=0x%llx\n",
+                   g_gfx_code, g_gfx_rip,
+                   (unsigned long long)((char *)g_gfx_rip - (char *)GetModuleHandleA(0)));
+    }
     return 0;
 }
 

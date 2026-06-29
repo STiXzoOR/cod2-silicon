@@ -10,7 +10,19 @@ extern int I_stricmp(const char *s1, const char *s2);
 extern qboolean String_Parse(const char **p, char *out, int outSize);
 extern const char *Com_ParseOnLine(const char **p);
 extern void *Hunk_AllocAlignInternal(int size, int alignment);
+extern void *Hunk_AllocLowAlignInternal(int size, int alignment);
 extern void Com_Printf(const char *fmt, ...);
+
+/* The menu string pool must persist for the whole UI lifetime. On x64 it was
+ * being allocated from the HIGH hunk, which the menu-load path churns (temp
+ * allocations / mark rollbacks), so freshly-added stringDef nodes had their
+ * 8-byte str field clobbered and later lookups crashed. Put the pool in the
+ * LOW permanent hunk on x64 (x86 keeps its original high-hunk behavior). */
+#if defined(COD2_X64)
+#define STRPOOL_ALLOC(sz, al) Hunk_AllocLowAlignInternal((sz), (al))
+#else
+#define STRPOOL_ALLOC(sz, al) Hunk_AllocAlignInternal((sz), (al))
+#endif
 
 __attribute__((used, packed, aligned(4)))
 const char *staticNULL[] = {
@@ -368,30 +380,30 @@ const char *String_Alloc(const char *p)
 
     s = g_strHandle[hash];
     while (s != NULL) {
-        if (strcmp(p, *(char **)((byte *)s + 4)) == 0) {
-            return *(char **)((byte *)s + 4);
+        if (strcmp(p, s->str) == 0) {   /* was *(char**)(s+4): x86 stringDef_t.str offset */
+            return s->str;
         }
-        s = *(stringDef_t **)s;
+        s = (stringDef_t *)s->next;
     }
 
-    str = (char *)Hunk_AllocAlignInternal(strlen(p) + 1, 1);
+    str = (char *)STRPOOL_ALLOC(strlen(p) + 1, 1);
     strcpy(str, p);
 
     last = g_strHandle[hash];
     if (last != NULL) {
-        stringDef_t *next = *(stringDef_t **)last;
+        stringDef_t *next = (stringDef_t *)last->next;
         while (next != NULL) {
             last = next;
-            next = *(stringDef_t **)next;
+            next = (stringDef_t *)next->next;
         }
     }
 
-    newDef = (stringDef_t *)Hunk_AllocAlignInternal(8, 4);
-    *(int *)newDef = 0;
-    *(char **)((byte *)newDef + 4) = str;
+    newDef = (stringDef_t *)STRPOOL_ALLOC((int)sizeof(stringDef_t), 8);   /* 8-byte align for x64 ptr fields */
+    newDef->next = 0;
+    newDef->str = str;
 
     if (last != NULL) {
-        *(stringDef_t **)last = newDef;
+        last->next = (intptr_t)newDef;
     } else {
         g_strHandle[hash] = newDef;
     }

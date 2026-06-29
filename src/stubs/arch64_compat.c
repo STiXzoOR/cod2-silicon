@@ -1,3 +1,8 @@
+/* x86_64 (LP64) compatibility shims. On the GCC/Linux x64 path the data blob is
+ * leaner and does not provide these symbols, so define them here. The MSVC x64
+ * build links the full reconstructed blob (data32.c/literals32.c) + win32_stubs.c
+ * which already define all of them, so this TU stays inactive there (guarded on
+ * __x86_64__ only, NOT _M_X64) to avoid LNK2005 duplicates. (x64 port Stage 4.) */
 #if defined(__x86_64__)
 
 #    include "common_types.h"

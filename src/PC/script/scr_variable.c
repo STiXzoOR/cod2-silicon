@@ -798,10 +798,13 @@ static inline __attribute__((always_inline)) void AddRefToValue_core(int type, V
     case 3:
         SL_AddRefToString(u.intValue);
         break;
-    case 4:
-        if (*((byte *)u.intValue - 1) == 0)
-            *(unsigned short *)((byte *)u.intValue - 4) += 1;
+    case 4: {
+        /* vectors are tagged offsets on x64 (SCR_VEC_TAG_PROG|...) -> decode, don't deref raw */
+        const byte *vp = (const byte *)SCR_VEC_PTR(u);
+        if (vp[-1] == 0)
+            *(unsigned short *)(vp - 4) += 1;
         break;
+    }
     }
 }
 

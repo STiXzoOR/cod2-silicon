@@ -487,13 +487,13 @@ static void RB_SetEntityHwLightsDx7_impl(vec4_t *colorForDir, float sunVisibilit
     for (i = 0; i < lightCount; i++) {
 
         do {
-            device = *(void **)((char *)imp_dx + 8);
+            device = ((DxGlobals *)imp_dx)->device;
             vtable = *(void ***)device;
             ((HRESULT(D3DVTCC *)(void *, DWORD, BOOL))(vtable[0xD4 / 4]))(device, (DWORD)i, 1);
         } while (*(volatile int *)&alwaysfails);
 
         do {
-            device = *(void **)((char *)imp_dx + 8);
+            device = ((DxGlobals *)imp_dx)->device;
             vtable = *(void ***)device;
             ((HRESULT(D3DVTCC *)(void *, DWORD, const D3DLIGHT9 *))(vtable[0xCC / 4]))(device, (DWORD)i, &lights[i]);
         } while (*(volatile int *)&alwaysfails);
@@ -501,7 +501,7 @@ static void RB_SetEntityHwLightsDx7_impl(vec4_t *colorForDir, float sunVisibilit
 
     for (i = (lightCount > 0) ? lightCount : 0; (unsigned)i <= 7; i++) {
         do {
-            device = *(void **)((char *)imp_dx + 8);
+            device = ((DxGlobals *)imp_dx)->device;
             vtable = *(void ***)device;
             ((HRESULT(D3DVTCC *)(void *, DWORD, BOOL))(vtable[0xD4 / 4]))(device, (DWORD)i, 0);
         } while (*(volatile int *)&alwaysfails);
@@ -1022,8 +1022,8 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
     r_backEndGlobals_t *backEnd;
 
     {
-        byte *techSet = (byte *)material->techniqueSet;
-        technique = *(byte **)(techSet + 4 + techType * 4);
+        /* was techSet + 4 + techType*4 (x86 ptr stride) */
+        technique = (byte *)((MaterialTechniqueSet *)material->techniqueSet)->techniques[techType];
     }
 
     if (vertDeclType == 0x21) {
@@ -1039,7 +1039,7 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
         *g_special = (args == (const GfxDrawPrimArgs *)3) ? 1 : 0;
     }
 
-    passCount = *(unsigned short *)(technique + 6);
+    passCount = ((MaterialTechnique *)technique)->passCount;   /* was technique + 6 (x86) */
     if (passCount == 0)
         goto done;
 
@@ -1051,13 +1051,11 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
         int stateBits[2];
 
         if (isDx7) {
-
-            int passOffset = passIndex * 92;
-            pass = technique + 8 + passOffset;
+            /* was technique + 8 + passIndex*92 (x86) */
+            pass = (byte *)&((MaterialTechnique *)technique)->passArray.dx7[passIndex];
         } else {
-
-            int passOffset = passIndex * 28;
-            pass = technique + 8 + passOffset;
+            /* was technique + 8 + passIndex*28 (x86); MaterialPassDx9 is 56B on x64 */
+            pass = (byte *)&((MaterialTechnique *)technique)->passArray.dx9[passIndex];
         }
 
         if (isDx7) {
@@ -1076,10 +1074,10 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
             stateBits[1] = *(int *)(refStateBits + 4);
 
             {
-                byte *rsp = stateMap;
                 int rsi;
                 for (rsi = 0; rsi < 11; rsi++) {
-                    byte *ruleSet = *(byte **)(rsp + 4);
+                    /* was rsp+4 start + rsp+=4 stride (x86 4-byte ptrs) */
+                    const byte *ruleSet = (const byte *)((MaterialStateMap *)stateMap)->ruleSet[rsi];
                     int rc = *(int *)ruleSet;
                     int ri2;
                     int matched = 0;
@@ -1107,8 +1105,6 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                         R_Error(0, "No rule in stateMap '%s' rule set %i matched the current mat",
                                 *(char **)stateMap, rsi, mat2->info.name);
                     }
-
-                    rsp += 4;
                 }
             }
 
@@ -1254,10 +1250,8 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
             byte *textureRouting;
             byte *constantRouting;
 
-            {
-                int passOff = passIndex * 28;
-                pass = technique + 8 + passOff;
-            }
+            /* was technique + 8 + passIndex*28 (x86) */
+            pass = (byte *)&((MaterialTechnique *)technique)->passArray.dx9[passIndex];
 
             {
                 MaterialVertexDeclaration *declArray = ((MaterialPassDx9 *)pass)->vertexDecl;
@@ -1294,16 +1288,15 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                 const Material *tessMat = ((materialCommands_t *)tess)->material;
                 refStateBits = (byte *)tessMat->stateBits;
             }
-            stateMap = (byte *)((MaterialPassDx9 *)pass)->stateMap;
-
+            stateMap = (byte *)((MaterialPassDx9 *)pass)->stateMap;
             stateBits[0] = *(int *)(refStateBits + 0);
             stateBits[1] = *(int *)(refStateBits + 4);
 
             {
-                byte *rsp = stateMap;
                 int rsi;
                 for (rsi = 0; rsi < 11; rsi++) {
-                    byte *ruleSet = *(byte **)(rsp + 4);
+                    /* was rsp+4 start + rsp+=4 stride (x86 4-byte ptrs) */
+                    const byte *ruleSet = (const byte *)((MaterialStateMap *)stateMap)->ruleSet[rsi];
                     int rc = *(int *)ruleSet;
                     int ri2;
                     int matched = 0;
@@ -1331,8 +1324,6 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                         R_Error(0, "No rule in stateMap '%s' rule set %i matched the current mat",
                                 *(char **)stateMap, rsi, mat4->info.name);
                     }
-
-                    rsp += 4;
                 }
             }
 
@@ -1712,7 +1703,7 @@ void RB_DrawTechnique(MaterialVertexDeclType vertDeclType, const GfxDrawPrimArgs
         stateOverride = &overrideEnableRenormalize;
 
     RB_DrawSingleTechnique(
-        *(MaterialTechniqueType *)(RB_TessBase() + 0x5a7c0),
+        (*(MaterialTechniqueType *)&((materialCommands_t *)RB_TessBase())->techType),   /* was tess + 0x5a7c0 (x86) */
         vertDeclType, args, stateOverride);
 }
 
@@ -1765,7 +1756,7 @@ void RB_EndSurface(void)
     }
 
     {
-        unsigned int ts = (unsigned int)material->techniqueSet;
+        uintptr_t ts = (uintptr_t)material->techniqueSet;   /* was unsigned int -> truncated ptr on x64 */
         if (!ts || ts < 0x08000000u) {
             g_rb_endsurface_notechnique++;
             goto cleanup;
@@ -1895,14 +1886,15 @@ void RB_EndSurface(void)
                 int textureIndex;
 
                 for (textureIndex = 0; textureIndex < texCount; ++textureIndex) {
-                    byte *texEntry = textures + textureIndex * 0xc;
-                    byte semantic = texEntry[5];
+                    /* was x86 stride 0xc + offsets 5/8; MaterialTextureDef is bigger on x64 */
+                    MaterialTextureDef *texEntry = &((MaterialTextureDef *)textures)[textureIndex];
+                    byte semantic = (byte)texEntry->semantic;
                     void *candidate;
 
                     if (semantic == 5)
                         continue;
 
-                    candidate = *(void **)(texEntry + 8);
+                    candidate = (void *)texEntry->u.image;
                     if (!candidate)
                         continue;
 
@@ -1920,7 +1912,7 @@ void RB_EndSurface(void)
                     void *d3dTexture = (void *)((GfxImage *)image)->texture.basemap;
                     if (d3dTexture) {
 
-                        void *device = *(void **)((byte *)imp_dx + 8);
+                        void *device = ((DxGlobals *)imp_dx)->device;
                         void **vtable = *(void ***)device;
                         ((void(D3DVTCC *)(void *, int, void *))vtable[0x104 / 4])(device, 0, d3dTexture);
 

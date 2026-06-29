@@ -13,6 +13,7 @@ toolchain/
 /build-native/
 /build-web/
 /build-win32/
+/build/msvc-x64
 build/cmake/
 build/msvc/
 build/msvc-release/

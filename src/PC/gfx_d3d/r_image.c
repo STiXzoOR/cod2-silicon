@@ -5,8 +5,30 @@ extern int alwaysfails;
 extern DxGlobals dx;
 extern refimport_t ri;
 
-extern const char *g_platform_name[2];
+/* g_platform_name: migrated from the ILP32 data blob to typed C (re-lays-out per
+ * target; trailing blob bytes were inter-symbol padding). (x64 port Stage 2.) */
+const char *g_platform_name[2] = {
+    "current", " min_pc",
+};
+/* Image registry: x86 packs a GfxImage* hash table [0..2047] + scalar fields
+ * (picmip/cardMemory) [2048..] into an int[2064] (4-byte slots). On x64 the
+ * pointer table must widen, so it's a typed struct (runtime, layout-free).
+ * Access via IG_* (x64 typed, x86 byte-identical raw). */
+#if defined(COD2_X64)
+struct ImageGlobals {
+    GfxImage *hashTable[2048];
+    int scalars[16];           /* old indices 2048..2063 */
+};
+static struct ImageGlobals imageGlobalsS;
+#define IG_HASH(h)     (imageGlobalsS.hashTable[h])
+#define IG_SCALAR(i)   (imageGlobalsS.scalars[(i) - 2048])
+#define IG_CLEARHASH() memset(imageGlobalsS.hashTable, 0, sizeof(imageGlobalsS.hashTable))
+#else
 static int imageGlobals[2064];
+#define IG_HASH(h)     (*(GfxImage **)&imageGlobals[h])
+#define IG_SCALAR(i)   (imageGlobals[i])
+#define IG_CLEARHASH() memset(imageGlobals, 0, 0x2000)
+#endif
 static GfxImage g_imageProgs[12];
 
 __attribute__((used, packed, aligned(4)))
@@ -88,10 +110,8 @@ void ZSt16__introsort_loopIPP8GfxImageiPFiS1_S1_EEvT_S5_T0_T1_(GfxImage **first,
 
 static void R_AddImageToList(union XAssetHeader header, void *data)
 {
-    int *list = (int *)data;
-    int count = list[0];
-    list[1 + count] = (int)header.data;
-    list[0] = count + 1;
+    ImageList *list = (ImageList *)data;
+    list->image[list->count++] = (GfxImage *)header.data;
 }
 
 void R_GetImageList(ImageList *imageList)
@@ -102,7 +122,7 @@ void R_GetImageList(ImageList *imageList)
 
 int R_GetMinSpecImageMemory(void)
 {
-    return imageGlobals[2052];
+    return IG_SCALAR(2052);
 }
 
 void R_ResetImageAllocations(void)
@@ -225,13 +245,13 @@ void Image_PicmipForSemantic(unsigned char semantic, Picmip *picmip)
     switch (s) {
     case 2:
     case 5:
-        val = imageGlobals[2048];
+        val = IG_SCALAR(2048);
         break;
     case 3:
-        val = imageGlobals[2049];
+        val = IG_SCALAR(2049);
         break;
     case 4:
-        val = imageGlobals[2050];
+        val = IG_SCALAR(2050);
         break;
     default:
         *(unsigned short *)picmip = 0;
@@ -277,34 +297,34 @@ void R_SetPicmip(void)
 
     if ((*(const dvar_t **)imp_r_picmip_manual)->current.enabled) {
         ri_Printf(0, "Using manual picmip settings\n");
-        imageGlobals[2048] = (*(const dvar_t **)imp_r_picmip)->current.integer;
-        imageGlobals[2049] = (*(const dvar_t **)imp_r_picmip_bump)->current.integer;
-        imageGlobals[2050] = (*(const dvar_t **)imp_r_picmip_spec)->current.integer;
+        IG_SCALAR(2048) = (*(const dvar_t **)imp_r_picmip)->current.integer;
+        IG_SCALAR(2049) = (*(const dvar_t **)imp_r_picmip_bump)->current.integer;
+        IG_SCALAR(2050) = (*(const dvar_t **)imp_r_picmip_spec)->current.integer;
     } else if (r_rendererInUse->current.integer == 2) {
 
         ri_Printf(0, "Dx7 renderer: using low-res textures\n");
         if (texMemInMegs > 128) {
-            imageGlobals[2048] = 1;
-            imageGlobals[2049] = 1;
-            imageGlobals[2050] = 1;
+            IG_SCALAR(2048) = 1;
+            IG_SCALAR(2049) = 1;
+            IG_SCALAR(2050) = 1;
         } else {
-            imageGlobals[2048] = 2;
-            imageGlobals[2049] = 2;
-            imageGlobals[2050] = 2;
+            IG_SCALAR(2048) = 2;
+            IG_SCALAR(2049) = 2;
+            IG_SCALAR(2050) = 2;
         }
 
         if (sysMemInMegs <= 383) {
             changed = 0;
-            if (imageGlobals[2048] < 1) {
-                imageGlobals[2048] = 1;
+            if (IG_SCALAR(2048) < 1) {
+                IG_SCALAR(2048) = 1;
                 changed = 1;
             }
-            if (imageGlobals[2049] < 1) {
-                imageGlobals[2049] = 1;
+            if (IG_SCALAR(2049) < 1) {
+                IG_SCALAR(2049) = 1;
                 changed = 1;
             }
-            if (imageGlobals[2050] < 1) {
-                imageGlobals[2050] = 1;
+            if (IG_SCALAR(2050) < 1) {
+                IG_SCALAR(2050) = 1;
                 changed = 1;
             }
             if (changed)
@@ -314,9 +334,9 @@ void R_SetPicmip(void)
 
         ri_Printf(0, "Using non-Dx7 renderer\n");
 
-        imageGlobals[2048] = 2;
-        imageGlobals[2049] = 2;
-        imageGlobals[2050] = 2;
+        IG_SCALAR(2048) = 2;
+        IG_SCALAR(2049) = 2;
+        IG_SCALAR(2050) = 2;
 
         if (sysMemInMegs <= 383) {
             if (sysMemInMegs <= 479) {
@@ -327,16 +347,16 @@ void R_SetPicmip(void)
             minPicmip = 2;
         apply_sysmem:
             changed = 0;
-            if (imageGlobals[2048] < minPicmip) {
-                imageGlobals[2048] = minPicmip;
+            if (IG_SCALAR(2048) < minPicmip) {
+                IG_SCALAR(2048) = minPicmip;
                 changed = 1;
             }
-            if (imageGlobals[2049] < minPicmip) {
-                imageGlobals[2049] = minPicmip;
+            if (IG_SCALAR(2049) < minPicmip) {
+                IG_SCALAR(2049) = minPicmip;
                 changed = 1;
             }
-            if (imageGlobals[2050] < minPicmip) {
-                imageGlobals[2050] = minPicmip;
+            if (IG_SCALAR(2050) < minPicmip) {
+                IG_SCALAR(2050) = minPicmip;
                 changed = 1;
             } else if (!changed) {
                 goto set_cvars;
@@ -349,11 +369,11 @@ set_cvars:
 
     Cvar_SetValue = (void (*)(void *, int))ri.Dvar_SetInt;
     ri_Printf = *(void (**)(int, const char *, ...))&ri;
-    Cvar_SetValue(*(const dvar_t **)imp_r_picmip, imageGlobals[2048]);
-    Cvar_SetValue(*(const dvar_t **)imp_r_picmip_bump, imageGlobals[2049]);
-    Cvar_SetValue(*(const dvar_t **)imp_r_picmip_spec, imageGlobals[2050]);
+    Cvar_SetValue(*(const dvar_t **)imp_r_picmip, IG_SCALAR(2048));
+    Cvar_SetValue(*(const dvar_t **)imp_r_picmip_bump, IG_SCALAR(2049));
+    Cvar_SetValue(*(const dvar_t **)imp_r_picmip_spec, IG_SCALAR(2050));
     ri_Printf(0, "Using picmip %i on most textures, %i on normal maps, and %i on spec maps",
-              imageGlobals[2048], imageGlobals[2049], imageGlobals[2050]);
+              IG_SCALAR(2048), IG_SCALAR(2049), IG_SCALAR(2050));
 }
 
 static int imagecompare(GfxImage *image1, GfxImage *image2)
@@ -465,7 +485,7 @@ static inline __attribute__((always_inline)) void Image_Release_core(GfxImage *i
         !((1 << *(signed char *)&image->track) & 0x13)) {
 
         for (i = 0; i < 2; i++) {
-            imageGlobals[0x200c / 4 + i] -= image->cardMemory.platform[i];
+            IG_SCALAR(0x200c / 4 + i) -= image->cardMemory.platform[i];
         }
     }
 
@@ -495,7 +515,7 @@ void R_ReloadLostImages(void)
     int i;
 
     for (i = 0; i < 2048; i++) {
-        GfxImage *image = (GfxImage *)imageGlobals[i];
+        GfxImage *image = IG_HASH(i);
         byte category;
         int isProg;
 
@@ -510,7 +530,7 @@ void R_ReloadLostImages(void)
             continue;
 
         isProg = ((char *)image >= (char *)g_imageProgs &&
-                  (char *)image < (char *)g_imageProgs + 432);
+                  (char *)image < (char *)g_imageProgs + sizeof(g_imageProgs));
 
         if (isProg)
             continue;
@@ -552,7 +572,7 @@ void Image_TrackTexture(GfxImage *image, int imageFlags, D3DFORMAT format, int w
             image->cardMemory.platform[i] = amount;
 
             if (needsGlobalAccounting)
-                imageGlobals[0x200c / 4 + i] += amount;
+                IG_SCALAR(0x200c / 4 + i) += amount;
         }
     } else {
 
@@ -561,7 +581,7 @@ void Image_TrackTexture(GfxImage *image, int imageFlags, D3DFORMAT format, int w
             image->cardMemory.platform[i] = amount;
 
             if (needsGlobalAccounting)
-                imageGlobals[0x200c / 4 + i] += amount;
+                IG_SCALAR(0x200c / 4 + i) += amount;
         }
     }
 }
@@ -599,7 +619,7 @@ void Image_TrackFullscreenTexture(GfxImage *image, int picmip, D3DFORMAT format)
         image->cardMemory.platform[platform] += amount;
 
         if (needsGlobalAccounting)
-            imageGlobals[0x200c / 4 + platform] += amount;
+            IG_SCALAR(0x200c / 4 + platform) += amount;
     }
 }
 
@@ -618,10 +638,10 @@ GfxImage *Image_AllocProg(int imageProgType, int category)
     image->track = 0;
 
     hash = R_HashAssetName(name) & 0x7ff;
-    while (imageGlobals[hash] != 0) {
+    while (IG_HASH(hash) != 0) {
         hash = (hash + 1) & 0x7ff;
     }
-    imageGlobals[hash] = (int)image;
+    IG_HASH(hash) = image;
 
     return image;
 }
@@ -645,10 +665,10 @@ GfxImage *Image_Alloc(const char *name, int category, int semantic, int imageTra
     ((GfxImage *)image)->track = (byte)imageTrack;
 
     hash = R_HashAssetName(name) & 0x7ff;
-    while (imageGlobals[hash] != 0) {
+    while (IG_HASH(hash) != 0) {
         hash = (hash + 1) & 0x7ff;
     }
-    imageGlobals[hash] = (int)image;
+    IG_HASH(hash) = image;
 
     return (GfxImage *)image;
 }
@@ -665,7 +685,7 @@ void R_ImageList_f(void)
     CmdArgcFunc Cmd_Argc = (CmdArgcFunc)ri.Cmd_Argc;
     CmdArgvFunc Cmd_Argv = (CmdArgvFunc)ri.Cmd_Argv;
 
-    int imageListBuf[2049];
+    ImageList imageListBuf;
     int imageTrack[20];
     int total[2];
     byte listAllImages;
@@ -683,25 +703,25 @@ void R_ImageList_f(void)
     total[1] = 0;
     memset(imageTrack, 0, sizeof(imageTrack));
 
-    imageListBuf[0] = 0;
-    DB_EnumXAssets(3, R_AddImageToList, imageListBuf, 1);
+    imageListBuf.count = 0;
+    DB_EnumXAssets(3, R_AddImageToList, &imageListBuf, 1);
 
     if (listAllImages) {
         int count;
         for (j = 0; j < 12; j++) {
-            count = imageListBuf[0];
+            count = imageListBuf.count;
             if ((unsigned int)count > 0x7ff)
                 break;
             if (g_imageProgs[j].mapType != 0) {
-                imageListBuf[1 + count] = (int)&g_imageProgs[j];
-                imageListBuf[0] = count + 1;
+                imageListBuf.image[count] = &g_imageProgs[j];
+                imageListBuf.count = count + 1;
             }
         }
     }
 
     {
-        int count = imageListBuf[0];
-        GfxImage **first = (GfxImage **)&imageListBuf[1];
+        int count = imageListBuf.count;
+        GfxImage **first = imageListBuf.image;
         GfxImage **last = first + count;
 
         if (first != last) {
@@ -876,17 +896,17 @@ GfxImage *Image_Register(const char *imageName, int semantic, int imageTrack)
     int isProg;
 
     hash = R_HashAssetName(imageName) & 0x7ff;
-    image = (GfxImage *)imageGlobals[hash];
+    image = IG_HASH(hash);
 
     while (image) {
         if (strcmp(imageName, image->name) == 0)
             break;
         hash = (hash + 1) & 0x7ff;
-        image = (GfxImage *)imageGlobals[hash];
+        image = IG_HASH(hash);
     }
 
     isProg = ((char *)image >= (char *)g_imageProgs &&
-              (char *)image < (char *)g_imageProgs + 432);
+              (char *)image < (char *)g_imageProgs + sizeof(g_imageProgs));
 
     if (!isProg && image)
         return image;
@@ -939,9 +959,9 @@ void R_InitImages(void)
     rawImage->track = 0;
 
     hash = R_HashAssetName(g_imageProgNames[11]) & 0x7ff;
-    while (imageGlobals[hash] != 0)
+    while (IG_HASH(hash) != 0)
         hash = (hash + 1) & 0x7ff;
-    imageGlobals[hash] = (int)rawImage;
+    IG_HASH(hash) = rawImage;
 
     rgp = (r_global_permanent_t *)imp_rgp;
     rgp->rawImage = rawImage;
@@ -1057,14 +1077,14 @@ void R_ShutdownImages(void)
     RB_UnbindAllImages();
 
     for (i = 0; i < 2048; i++) {
-        GfxImage *image = (GfxImage *)imageGlobals[i];
+        GfxImage *image = IG_HASH(i);
         int isProg;
 
         if (!image)
             continue;
 
         isProg = ((char *)image >= (char *)g_imageProgs) &
-                 ((char *)image < (char *)g_imageProgs + 432);
+                 ((char *)image < (char *)g_imageProgs + sizeof(g_imageProgs));
 
         if (isProg) {
 
@@ -1075,16 +1095,16 @@ void R_ShutdownImages(void)
         Image_Release_core(image);
     }
 
-    memset(imageGlobals, 0, 0x2000);
+    IG_CLEARHASH();
 
     for (i = 0; i < savedImageCount; i++) {
         GfxImage *image = savedImages[i];
         const char *name = image->name;
 
         hash = R_HashAssetName(name) & 0x7ff;
-        while (imageGlobals[hash] != 0)
+        while (IG_HASH(hash) != 0)
             hash = (hash + 1) & 0x7ff;
-        imageGlobals[hash] = (int)image;
+        IG_HASH(hash) = image;
     }
 }
 
@@ -1093,7 +1113,7 @@ void R_ReleaseLostImages(void)
     int i;
 
     for (i = 0; i < 2048; i++) {
-        GfxImage *image = (GfxImage *)imageGlobals[i];
+        GfxImage *image = IG_HASH(i);
 
         if (!image)
             continue;

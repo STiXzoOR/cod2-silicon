@@ -71,7 +71,7 @@ void CM_LoadStaticModels(void)
     if (numStaticModels == 0)
         return;
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
 
     cm->staticModelList = (cStaticModel_t *)CM_Hunk_Alloc(numStaticModels * (int)sizeof(cStaticModel_t), "CM_CreateStaticModel", 0x19);
 #else

@@ -19,24 +19,23 @@
 #ifdef _MSC_VER
 
 /* game: level_locals + entity array bases (used as `<x>_ptr + n*stride`) */
-#pragma comment(linker, "/alternatename:_level_ptr=_level")
-#pragma comment(linker, "/alternatename:_g_entities_ptr=_g_entities")
-#pragma comment(linker, "/alternatename:_g_time=_imp_level_bgs")
-#pragma comment(linker, "/alternatename:_g_time_ptr=_imp_bgs")
+COD2_ALT("level_ptr", "level")
+COD2_ALT("g_entities_ptr", "g_entities")
+COD2_ALT("g_time", "imp_level_bgs")
+COD2_ALT("g_time_ptr", "imp_bgs")
 
 /* server globals */
-#pragma comment(linker, "/alternatename:_sv_ptr=_sv")
-#pragma comment(linker, "/alternatename:_svs_ptr=_svs")
+COD2_ALT("sv_ptr", "sv")
+COD2_ALT("svs_ptr", "svs")
 
 /* script VM */
-#pragma comment(linker, "/alternatename:_scr_const_ptr=_scr_const")
+COD2_ALT("scr_const_ptr", "scr_const")
 
 /* renderer globals (rg = frontend data, vidConfig = limits) */
-#pragma comment(linker, "/alternatename:_r_frontEndData_ptr=_rg")
-#pragma comment(linker, "/alternatename:_r_limits_ptr=_vidConfig")
+COD2_ALT("r_frontEndData_ptr", "rg")
+COD2_ALT("r_limits_ptr", "vidConfig")
 
 /* cgame UI globals; builtin-method table (address-suffixed blob symbol) */
-#pragma comment(linker, "/alternatename:_cg_globUI=_legacyHacks")
-#pragma comment(linker, "/alternatename:_methods=_methods_003138c0")
+COD2_ALT("cg_globUI", "legacyHacks")
 
 #endif /* _MSC_VER */

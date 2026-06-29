@@ -258,6 +258,28 @@ static void Sys_WebFrame(void)
 }
 #endif
 
+static void cr_atexit_diag(void)
+{
+    extern void Com_Printf(const char *, ...);
+    Com_Printf("[ATEXIT] process exiting via CRT exit()/return\n");
+}
+
+/* A CRT secure-function failure (e.g. a buffer size wrong on x64) invokes the invalid-parameter
+   handler, which by default __fastfails -- terminating abruptly with no SEH report. Trap it so it
+   logs and CONTINUES (returns an error to the caller) instead of killing the process. */
+typedef void(__cdecl *cr_invh_t)(const void *, const void *, const void *, unsigned int, void *);
+extern cr_invh_t __cdecl _set_invalid_parameter_handler(cr_invh_t);
+static void __cdecl cr_inv_param(const void *e, const void *f, const void *fl, unsigned int line, void *r)
+{
+    /* Safety net: a CRT secure-function invalid parameter would otherwise __fastfail (abrupt exit,
+       no SEH report). Swallow it and continue so the caller just gets an error return. */
+    extern void Com_Printf(const char *, ...);
+    (void)e; (void)f; (void)fl; (void)r; (void)line;
+    static int n;
+    if (n++ < 3)
+        Com_Printf("[INVPARAM] CRT invalid-parameter trapped -- continuing\n");
+}
+
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
     char cwd[256];
@@ -273,6 +295,8 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     Sys_InstallCrashHandler("CoD2 MP " COD2_VERSION_SHORT, COD2_VERSION_SHORT,
                             COD2_VERSION_DATE, lpCmdLine);
 #endif
+    { extern int atexit(void (*)(void)); atexit(cr_atexit_diag); }
+    _set_invalid_parameter_handler(cr_inv_param);
 
     Sys_InitMainThread();
     Win_InitLocalization();

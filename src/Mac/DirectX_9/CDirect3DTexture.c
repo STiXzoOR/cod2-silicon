@@ -288,7 +288,11 @@ void CDirect3DTexture_CDirect3DTexture(const CDirect3DTexture *_this, UINT32 Wid
         CDirect3DSurface_CDirect3DSurface((CDirect3DSurface *)surf, 0, 0, i,
                                           levelW, levelH, Format, tex->pixelData + offset, NULL);
 
-        *(void **)((byte *)surf + 40) = tex;
+        {   /* set surface->owner = tex via typed setter (was surf+40, an x86
+             * offset; on x64 that's surfaceMemory -> corrupted the pixel ptr). */
+            extern void CDirect3DSurface_SetOwner(void *surf, void *owner);
+            CDirect3DSurface_SetOwner(surf, tex);
+        }
         tex->surfaces[i] = surf;
 
         if (createGL)

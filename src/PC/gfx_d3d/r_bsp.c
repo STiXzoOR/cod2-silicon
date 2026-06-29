@@ -217,10 +217,10 @@ void R_UpdateLightsFromDvars(void)
         *(int *)(sunParse + 0x7c) = *(int *)(src + 2);
     }
 
-    {
-        R_InterpretSunLightParseParamsIntoLights(sunParse, (*(byte **)&rgp.world) + 0xb4);
+    world = (*(byte **)&rgp.world);
+    if (world) {   /* no world (e.g. main menu, no map loaded) -> nothing to update */
+        R_InterpretSunLightParseParamsIntoLights(sunParse, world + 0xb4);
 
-        world = (*(byte **)&rgp.world);
         {
             vec_t *dst = (vec_t *)&((GfxWorld *)world)->sunColorFromBsp[0];
             const vec_t *src = (const vec_t *)&((GfxWorld *)world)->sunLight.color[0];

@@ -14,7 +14,12 @@ typedef int(__attribute__((cdecl)) * vtable_func_t)();
 #define VTABLE_CALL(obj, off, ...) (VTABLE(obj)[(off) / sizeof(vtable_func_t *)](__VA_ARGS__))
 
 typedef int(__attribute__((cdecl)) * flat_func_t)();
+#if defined(_M_X64) || defined(__x86_64__)
+/* &ri is a uniform pointer-slot table; x86 byte offsets double on x64 (8-byte slots) */
+#define FLAT_CALL(base, off, ...) ((*(flat_func_t *)((base) + (off) * 2))(__VA_ARGS__))
+#else
 #define FLAT_CALL(base, off, ...) ((*(flat_func_t *)((base) + (off)))(__VA_ARGS__))
+#endif
 
 extern void R_FinishStaticVertexBuffer(IDirect3DVertexBuffer9 *vb);
 extern dvar_t *r_rendererInUse;

@@ -12,6 +12,18 @@ extern unsigned int SL_GetStringOfLen(const char *str, unsigned int user, unsign
 
 XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc);
 
+/* The XAnim*Part data unions are pointer-aligned, so on x64 their indices/frame0 members sit at
+   larger byte offsets than the x86 layout the original Alloc()/memcpy magic numbers (8/10/12/14/16)
+   assumed. offsetof/sizeof yield the correct value on both ABIs. */
+#define DQ_IDX  ((int)offsetof(XAnimDeltaPartQuat,  u.frames.indices))
+#define DQ_F0   ((int)(offsetof(XAnimDeltaPartQuat,  u.frame0)  + sizeof(XQuat2)))
+#define DT_IDX  ((int)offsetof(XAnimDeltaPartTrans, u.frames.indices))
+#define DT_F0   ((int)(offsetof(XAnimDeltaPartTrans, u.frame0)  + sizeof(vec3_t)))
+#define PQ_IDX  ((int)offsetof(XAnimPartQuat,  u.frames.indices))
+#define PQ_F0   ((int)(offsetof(XAnimPartQuat,  u.frame0)  + sizeof(XQuat)))
+#define PT_IDX  ((int)offsetof(XAnimPartTrans, u.frames.indices))
+#define PT_F0   ((int)(offsetof(XAnimPartTrans, u.frame0)  + sizeof(vec3_t)))
+
 static short int ConsumeShort(const char **pos)
 {
     short int val = *(short int *)(*pos);
@@ -151,7 +163,7 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
 
     sQ2 = ConsumeShort(&pos);
 
-    parts = (XAnimParts *)Alloc(0x2c);
+    parts = (XAnimParts *)Alloc((int)sizeof(XAnimParts));   /* was 0x2c (x86); XAnimParts is larger on x64 */
 
     parts->boneCount = (short int)numBoneCount;
 
@@ -181,7 +193,7 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
 
     if (bDelta) {
 
-        deltaPart = (XAnimDeltaPart *)Alloc(8);
+        deltaPart = (XAnimDeltaPart *)Alloc((int)sizeof(XAnimDeltaPart));   /* was 8 (x86); 16B on x64 */
         parts->deltaPart = deltaPart;
 
         sQ2 = (short int)ConsumeUShort(&pos);
@@ -199,7 +211,7 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
             rem = 0x3fff0001 - (int)dq0 * (int)dq0;
             quat[1] = QuatSqrt(rem);
 
-            deltaPart->quat = (XAnimDeltaPartQuat *)Alloc(8);
+            deltaPart->quat = (XAnimDeltaPartQuat *)Alloc(DQ_F0);
             deltaPart->quat->size = 0;
 
             deltaPart->quat->u.frame0[0] = quat[0];
@@ -210,21 +222,21 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
             int numFrames;
             if (sQ2 >= (short int)numloopframes) {
 
-                deltaPart->quat = (XAnimDeltaPartQuat *)Alloc(8);
+                deltaPart->quat = (XAnimDeltaPartQuat *)Alloc(DQ_IDX);
                 numFrames = (int)(unsigned short int)sQ2;
             } else if (bSmallIndices) {
 
                 numFrames = (int)(unsigned short int)sQ2;
-                deltaPart->quat = (XAnimDeltaPartQuat *)Alloc(14 + 2 * numFrames);
-                memcpy(((char *)deltaPart->quat) + 8, pos, numFrames);
+                deltaPart->quat = (XAnimDeltaPartQuat *)Alloc(DQ_IDX + 2 * numFrames);
+                memcpy(((char *)deltaPart->quat) + DQ_IDX, pos, numFrames);
                 pos += numFrames;
             } else {
 
                 numFrames = (int)(unsigned short int)sQ2;
                 {
                     int idxBytes = numFrames * 2;
-                    deltaPart->quat = (XAnimDeltaPartQuat *)Alloc(14 + idxBytes);
-                    memcpy(((char *)deltaPart->quat) + 8, pos, idxBytes);
+                    deltaPart->quat = (XAnimDeltaPartQuat *)Alloc(DQ_IDX + idxBytes);
+                    memcpy(((char *)deltaPart->quat) + DQ_IDX, pos, idxBytes);
                     pos += idxBytes;
                 }
             }
@@ -275,7 +287,7 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
             v2 = *(int *)(pos);
             pos += 4;
 
-            deltaPart->trans = (XAnimDeltaPartTrans *)Alloc(16);
+            deltaPart->trans = (XAnimDeltaPartTrans *)Alloc(DT_F0);
             deltaPart->trans->size = 0;
 
             {
@@ -289,21 +301,21 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
             int numFrames;
             if (sQ2 >= (short int)numloopframes) {
 
-                deltaPart->trans = (XAnimDeltaPartTrans *)Alloc(8);
+                deltaPart->trans = (XAnimDeltaPartTrans *)Alloc(DT_IDX);
                 numFrames = (int)(unsigned short int)sQ2;
             } else if (bSmallIndices) {
 
                 numFrames = (int)(unsigned short int)sQ2;
-                deltaPart->trans = (XAnimDeltaPartTrans *)Alloc(10 + 2 * numFrames);
-                memcpy(((char *)deltaPart->trans) + 8, pos, numFrames);
+                deltaPart->trans = (XAnimDeltaPartTrans *)Alloc(DT_IDX + 2 * numFrames);
+                memcpy(((char *)deltaPart->trans) + DT_IDX, pos, numFrames);
                 pos += numFrames;
             } else {
 
                 numFrames = (int)(unsigned short int)sQ2;
                 {
                     int idxBytes = numFrames * 2;
-                    deltaPart->trans = (XAnimDeltaPartTrans *)Alloc(10 + idxBytes);
-                    memcpy(((char *)deltaPart->trans) + 8, pos, idxBytes);
+                    deltaPart->trans = (XAnimDeltaPartTrans *)Alloc(DT_IDX + idxBytes);
+                    memcpy(((char *)deltaPart->trans) + DT_IDX, pos, idxBytes);
                     pos += idxBytes;
                 }
             }
@@ -341,7 +353,7 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
 
         parts->simpleQuatBits = simpleQuatBits;
 
-        parts->parts = (XAnimPart *)Alloc((int)(short int)numBoneCount * 8);
+        parts->parts = (XAnimPart *)Alloc((int)(short int)numBoneCount * (int)sizeof(XAnimPart));   /* was *8 (x86); XAnimPart is 16B on x64 */
     } else {
         flipQuatBits = (const char *)0;
         simpleQuatBits = (char *)0;
@@ -412,7 +424,7 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
                         quat[3] = -quat[3];
                     }
 
-                    partQuatAlloc = (XAnimPartQuat *)Alloc(12);
+                    partQuatAlloc = (XAnimPartQuat *)Alloc(PQ_F0);
                     part->quat = partQuatAlloc;
 
                     partQuatAlloc->u.frame0[0] = quat[0];
@@ -429,21 +441,21 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
                 if (numQuatIndices >= numloopframes) {
 
                     if (isSimpleQuat) {
-                        part->quat = (XAnimPartQuat *)Alloc(8);
+                        part->quat = (XAnimPartQuat *)Alloc(PQ_IDX);
                     } else {
-                        part->quat = (XAnimPartQuat *)Alloc(8);
+                        part->quat = (XAnimPartQuat *)Alloc(PQ_IDX);
                     }
                     numQFrames = (int)numQuatIndices;
                 } else if (bSmallIndices) {
 
-                    part->quat = (XAnimPartQuat *)Alloc(10 + 2 * numQFrames);
-                    memcpy(((char *)part->quat) + 8, pos, numQFrames);
+                    part->quat = (XAnimPartQuat *)Alloc(PQ_IDX + 2 * numQFrames);
+                    memcpy(((char *)part->quat) + PQ_IDX, pos, numQFrames);
                     pos += numQFrames;
                 } else {
 
                     int idxBytes = numQFrames * 2;
-                    part->quat = (XAnimPartQuat *)Alloc(10 + idxBytes);
-                    memcpy(((char *)part->quat) + 8, pos, idxBytes);
+                    part->quat = (XAnimPartQuat *)Alloc(PQ_IDX + idxBytes);
+                    memcpy(((char *)part->quat) + PQ_IDX, pos, idxBytes);
                     pos += idxBytes;
                 }
 
@@ -540,7 +552,7 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
                     v1 = ConsumeInt(&pos);
                     v2 = ConsumeInt(&pos);
 
-                    part->trans = (XAnimPartTrans *)Alloc(16);
+                    part->trans = (XAnimPartTrans *)Alloc(PT_F0);
                     part->trans->size = 0;
 
                     {
@@ -555,17 +567,17 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
 
                     if (numTransIndices >= numloopframes) {
 
-                        part->trans = (XAnimPartTrans *)Alloc(8);
+                        part->trans = (XAnimPartTrans *)Alloc(PT_IDX);
                     } else if (bSmallIndices) {
 
-                        part->trans = (XAnimPartTrans *)Alloc(14 + 2 * numTFrames);
-                        memcpy(((char *)part->trans) + 8, pos, numTFrames);
+                        part->trans = (XAnimPartTrans *)Alloc(PT_IDX + 2 * numTFrames);
+                        memcpy(((char *)part->trans) + PT_IDX, pos, numTFrames);
                         pos += numTFrames;
                     } else {
 
                         int idxBytes = numTFrames * 2;
-                        part->trans = (XAnimPartTrans *)Alloc(14 + idxBytes);
-                        memcpy(((char *)part->trans) + 8, pos, idxBytes);
+                        part->trans = (XAnimPartTrans *)Alloc(PT_IDX + idxBytes);
+                        memcpy(((char *)part->trans) + PT_IDX, pos, idxBytes);
                         pos += idxBytes;
                     }
 

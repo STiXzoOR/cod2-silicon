@@ -36,7 +36,7 @@ extern void *memcpy(void *dest, const void *src, unsigned int n);
 #if !defined(__EMSCRIPTEN__) && !defined(__x86_64__)
 extern void *memset(void *s, int c, unsigned int n);
 #endif
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
 #    include <string.h>
 #endif
 extern void CL_TrackStatistics(trStatistics_t *pStats);
@@ -282,9 +282,57 @@ static cg_weaponsArray_t cg_weaponsArray;
 static cg_itemsArray_t cg_itemsArray;
 static Bool g_ambientStarted;
 static Bool g_mapLoaded;
-extern const char *cg_soundRoomTypes[27];
-extern const char *cg_drawSoundOverlayStrings[5];
-extern const char *cg_drawFpsNames[5];
+/* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
+const char *cg_soundRoomTypes[27] = {
+    "generic",
+    "paddedcell",
+    "room",
+    "bathroom",
+    "livingroom",
+    "stoneroom",
+    "auditorium",
+    "concerthall",
+    "cave",
+    "arena",
+    "hangar",
+    "carpetedhallway",
+    "hallway",
+    "stonecorridor",
+    "alley",
+    "forest",
+    "city",
+    "mountains",
+    "quarry",
+    "plain",
+    "parkinglot",
+    "sewerpipe",
+    "underwater",
+    "drugged",
+    "dizzy",
+    "psychotic",
+    NULL,
+};
+
+/* cg_drawSoundOverlayStrings: migrated from the ILP32 data blob to typed C
+ * (re-lays-out per target; 4 entries + [4]=NULL; trailing blob bytes were
+ * inter-symbol padding). (x64 port Stage 2.) */
+const char *cg_drawSoundOverlayStrings[5] = {
+    "None", "3D",
+    "Stream", "2D",
+    /* [4] = NULL */
+};
+
+/* cg_drawFpsNames: migrated from the ILP32 data blob to typed C (re-lays-out per
+ * target). 4 live entries + [4]=NULL; blob's extra trailing bytes were
+ * inter-symbol padding (next symbol cl_shownet distinct). Targets are the
+ * reconstructed literals in common.c. (x64 port Stage 2.) */
+const char *cg_drawFpsNames[5] = {
+    "Off",  /* "Off"     */
+    "Simple",  /* "Simple"  */
+    "Verbose",
+    "Time",  /* "Time"    */
+    /* [4] = NULL */
+};
 
 void CG_GetEntityOrientation(int entnum, vec_t *origin_out, vec3_t *axis_out);
 int CG_CrosshairPlayer(void);

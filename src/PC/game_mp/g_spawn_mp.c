@@ -87,17 +87,20 @@ extern void Dvar_SetFloat(const dvar_t *dvar, float value);
 extern const dvar_t *g_gravity;
 extern const dvar_t *g_motd;
 
+/* offsets must track the real gentity_s layout; the literals were the x86 ABI and are wrong on x64
+   (entityShared r + the client/pTurretInfo pointers shift everything after entityState). offsetof
+   reproduces the exact x86 numbers and is correct on x64. */
 static const ent_field_t fields[11] = {
-    { "classname", 0x168, F_STRING, NULL },
-    { "origin", 0x138, F_VECTOR, NULL },
-    { "model", 0x164, F_MODEL, NULL },
-    { "spawnflags", 0x170, F_INT, NULL },
-    { "target", 0x16a, F_STRING, NULL },
-    { "targetname", 0x16c, F_STRING, NULL },
-    { "count", 0x1a0, F_INT, NULL },
-    { "health", 0x194, F_INT, NULL },
-    { "dmg", 0x19c, F_INT, NULL },
-    { "angles", 0x144, F_VECTOR, NULL },
+    { "classname", (int)offsetof(struct gentity_s, classname), F_STRING, NULL },
+    { "origin", (int)offsetof(struct gentity_s, r.currentOrigin), F_VECTOR, NULL },
+    { "model", (int)offsetof(struct gentity_s, model), F_MODEL, NULL },
+    { "spawnflags", (int)offsetof(struct gentity_s, spawnflags), F_INT, NULL },
+    { "target", (int)offsetof(struct gentity_s, target), F_STRING, NULL },
+    { "targetname", (int)offsetof(struct gentity_s, targetname), F_STRING, NULL },
+    { "count", (int)offsetof(struct gentity_s, count), F_INT, NULL },
+    { "health", (int)offsetof(struct gentity_s, health), F_INT, NULL },
+    { "dmg", (int)offsetof(struct gentity_s, damage), F_INT, NULL },
+    { "angles", (int)offsetof(struct gentity_s, r.currentAngles), F_VECTOR, NULL },
     { NULL, 0, F_INT, NULL }
 };
 

@@ -55,8 +55,8 @@ extern void SetNewVariableValue(unsigned int id, VariableValue *value);
 extern unsigned char scrCompileGlob[];
 extern unsigned char scrVarGlob[];
 extern void DumpCompiledObject(const char *label, unsigned int compiledObj);
-extern int Scr_GetFunction(const char **pName, int *type);
-extern int Scr_GetMethod(const char **pName, int *type);
+extern intptr_t Scr_GetFunction(const char **pName, int *type);   /* returns a function pointer; int truncated it on x64 */
+extern intptr_t Scr_GetMethod(const char **pName, int *type);
 extern void Scr_EmitAnimation(char *pos, unsigned int animName, unsigned int sourcePos);
 static const char str_dbg_before_lt[] = "before-LinkThread";
 
@@ -224,8 +224,10 @@ int CompareCaseInfo(const unsigned int *elem1, const unsigned int *elem2)
 void Scr_CompileShutdown(void)
 {
     void *node;
-    while ((node = *(void **)((char *)&scrCompileGlob + 88)) != 0) {
-        *(void **)((char *)&scrCompileGlob + 88) = *(void **)((char *)node + 8);
+    /* x86 offset 88 = precachescriptListHead; on x64 it's at offsetof (struct grew) */
+    void **pHead = (void **)((char *)&scrCompileGlob + __builtin_offsetof(struct scrCompileGlob_t, precachescriptListHead));
+    while ((node = *pHead) != 0) {
+        *pHead = *(void **)((char *)node + 8);
         Z_FreeInternal(node);
     }
 }
@@ -1697,7 +1699,7 @@ static unsigned int __attribute_regparm__(2)
     statement = (ContinueStatementInfo *)Hunk_AllocateTempMemoryHighInternal(sizeof(*statement));
     statement->codePos = (const char *)SCRCG->codePos;
     statement->nextCodePos = TempMalloc(0);
-    statement->next = (int)SCRCG->currentContinueStatement;
+    statement->next = SCRCG->currentContinueStatement;
     SCRCG->currentContinueStatement = statement;
 
     return 0;
@@ -1732,7 +1734,7 @@ static unsigned int __attribute_regparm__(2)
     statement = (BreakStatementInfo *)Hunk_AllocateTempMemoryHighInternal(sizeof(*statement));
     statement->codePos = (const char *)SCRCG->codePos;
     statement->nextCodePos = TempMalloc(0);
-    statement->next = (int)SCRCG->currentBreakStatement;
+    statement->next = SCRCG->currentBreakStatement;
     SCRCG->currentBreakStatement = statement;
 
     return 0;
@@ -1938,12 +1940,15 @@ static void __attribute_regparm__(1)
 }
 
 static int __attribute_regparm__(1)
-    EmitFunctionTableIndex(int func)
+    EmitFunctionTableIndex(intptr_t func)
 {
     int i;
 
+    /* Dedup by the low 32 bits: a builtin cached in a 4-byte script-variable value comes back
+       truncated on x64, but its low bits still uniquely identify the (single-module) function,
+       so it matches the full pointer already stored here. */
     for (i = 0; i < scrCompilePub.func_table_size; ++i) {
-        if (scrCompilePub.func_table[i] == func) {
+        if ((unsigned int)scrCompilePub.func_table[i] == (unsigned int)func) {
             return i;
         }
     }
@@ -1994,7 +1999,7 @@ static void __attribute_regparm__(2)
 }
 
 static void __attribute_regparm__(3)
-    EmitBuiltinFunctionOpcode(int param_count, unsigned int sourcePos, int func)
+    EmitBuiltinFunctionOpcode(int param_count, unsigned int sourcePos, intptr_t func)
 {
     int opcode;
     int index;
@@ -2025,7 +2030,7 @@ static void __attribute_regparm__(3)
 }
 
 static void __attribute_regparm__(3)
-    EmitBuiltinMethodOpcode(int param_count, unsigned int sourcePos, int meth)
+    EmitBuiltinMethodOpcode(int param_count, unsigned int sourcePos, intptr_t meth)
 {
     int opcode;
     int index;
@@ -2076,7 +2081,7 @@ static unsigned int __attribute_regparm__(3)
                 VariableValue value;
                 unsigned int varId;
                 int type;
-                int func;
+                intptr_t func;
                 char *savedPos = 0;
 
                 if (!name) {
@@ -2161,7 +2166,7 @@ static unsigned int __attribute_regparm__(3)
                 VariableValue value;
                 unsigned int varId;
                 int type;
-                int meth;
+                intptr_t meth;
                 char *savedPos = 0;
 
                 if (!name) {
@@ -4538,7 +4543,7 @@ static unsigned int __attribute_regparm__(3)
     nextCodePos = TempMalloc(0);
     for (continueStatement = SCRCG->currentContinueStatement;
          continueStatement;
-         continueStatement = *(ContinueStatementInfo **)&continueStatement->next) {
+         continueStatement = continueStatement->next) {
         *(int *)continueStatement->codePos = (int)(nextCodePos - continueStatement->nextCodePos);
     }
 
@@ -4559,7 +4564,7 @@ static unsigned int __attribute_regparm__(3)
     nextCodePos = TempMalloc(0);
     for (breakStatement = SCRCG->currentBreakStatement;
          breakStatement;
-         breakStatement = *(BreakStatementInfo **)&breakStatement->next) {
+         breakStatement = breakStatement->next) {
         *(int *)breakStatement->codePos = (int)(nextCodePos - breakStatement->nextCodePos);
     }
 
@@ -4710,7 +4715,7 @@ static unsigned int __attribute_regparm__(3)
     nextCodePos = TempMalloc(0);
     for (continueStatement = SCRCG->currentContinueStatement;
          continueStatement;
-         continueStatement = *(ContinueStatementInfo **)&continueStatement->next) {
+         continueStatement = continueStatement->next) {
         *(int *)continueStatement->codePos = (int)(nextCodePos - continueStatement->nextCodePos);
     }
 
@@ -4737,7 +4742,7 @@ static unsigned int __attribute_regparm__(3)
     nextCodePos = TempMalloc(0);
     for (breakStatement = SCRCG->currentBreakStatement;
          breakStatement;
-         breakStatement = *(BreakStatementInfo **)&breakStatement->next) {
+         breakStatement = breakStatement->next) {
         *(int *)breakStatement->codePos = (int)(nextCodePos - breakStatement->nextCodePos);
     }
 
@@ -4872,7 +4877,7 @@ static unsigned int __attribute_regparm__(3)
                     caseStatement->name = value;
                     caseStatement->codePos = TempMalloc(0);
                     caseStatement->sourcePos = caseSourcePos;
-                    caseStatement->next = (int)SCRCG->currentCaseStatement;
+                    caseStatement->next = SCRCG->currentCaseStatement;
                     SCRCG->currentCaseStatement = caseStatement;
                 }
             } else {
@@ -4882,7 +4887,7 @@ static unsigned int __attribute_regparm__(3)
                     caseStatement->name = 0;
                     caseStatement->codePos = TempMalloc(0);
                     caseStatement->sourcePos = stmt[1].sourcePosValue;
-                    caseStatement->next = (int)SCRCG->currentCaseStatement;
+                    caseStatement->next = SCRCG->currentCaseStatement;
                     SCRCG->currentCaseStatement = caseStatement;
                 }
                 hasDefault = 1;
@@ -4969,9 +4974,15 @@ emit_switch_table:
     numCases = 0;
     for (caseStatement = SCRCG->currentCaseStatement;
          caseStatement;
-         caseStatement = *(CaseStatementInfo **)&caseStatement->next) {
+         caseStatement = caseStatement->next) {
         *(unsigned int *)TempMallocAlign(4) = caseStatement->name;
+#if defined(_M_X64) || defined(__x86_64__)
+        /* store a program-buffer offset: the runtime (VM_CandidateHandleSwitch) decodes the
+           case codepos with SCR_CODEPOS_PTR. A truncated raw pointer would jump to garbage. */
+        *(unsigned int *)TempMallocAlign(4) = SCR_CODEPOS_ENC(caseStatement->codePos);
+#else
         *(unsigned int *)TempMallocAlign(4) = (unsigned int)(uintptr_t)caseStatement->codePos;
+#endif
         ++numCases;
     }
 
@@ -4984,7 +4995,7 @@ emit_switch_table:
             if (value == caseTable[i + 1][0] && value != 0) {
                 for (caseStatement = SCRCG->currentCaseStatement;
                      caseStatement;
-                     caseStatement = *(CaseStatementInfo **)&caseStatement->next) {
+                     caseStatement = caseStatement->next) {
                     if (caseStatement->name == value) {
                         CompileError(caseStatement->sourcePos, "duplicate case expression");
                         return 0;
@@ -4997,7 +5008,7 @@ emit_switch_table:
     nextCodePos = TempMalloc(0);
     for (breakStatement = SCRCG->currentBreakStatement;
          breakStatement;
-         breakStatement = *(BreakStatementInfo **)&breakStatement->next) {
+         breakStatement = breakStatement->next) {
         *(int *)breakStatement->codePos = (int)(nextCodePos - breakStatement->nextCodePos);
     }
 
@@ -5515,7 +5526,7 @@ void ScriptCompile(sval_t val, unsigned int fileId, unsigned int scriptId)
     SCRCG->precachescriptList = precachescriptList;
 
     if (precachescriptList) {
-        precachescriptList->next = (int)(intptr_t)SCRCG->precachescriptListHead;
+        precachescriptList->next = SCRCG->precachescriptListHead;
         SCRCG->precachescriptListHead = precachescriptList;
     }
 
@@ -5589,7 +5600,7 @@ void ScriptCompile(sval_t val, unsigned int fileId, unsigned int scriptId)
     }
 
     if (precachescriptList) {
-        SCRCG->precachescriptListHead = (PrecacheEntry *)(intptr_t)precachescriptList->next;
+        SCRCG->precachescriptListHead = precachescriptList->next;
         Z_FreeInternal(precachescriptList);
     }
 

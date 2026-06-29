@@ -45,7 +45,7 @@ struct commandDef_t {
 struct keywordHash_s {
     char *keyword;
     qboolean (*func)();
-    int next;
+    intptr_t next;       /* pointer-as-int -> truncated on x64 (intptr_t==int on x86) */
 };
 
 struct loadAssets_t {
@@ -112,7 +112,7 @@ struct sharedUiInfo_t {
 };
 
 struct stringDef_s {
-    int next;
+    intptr_t next;   /* linked-list ptr (was int -> truncated on x64; intptr_t==int on x86) */
     const char *str;
 };
 

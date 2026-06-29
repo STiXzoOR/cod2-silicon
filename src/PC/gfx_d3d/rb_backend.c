@@ -35,6 +35,9 @@ int g_rb_tess_type_idxzero[8];
 int g_rb_last_tess_type = 0;
 int g_tess_since_begin = 0;
 int g_rb_endsurface_count = 0;
+int g_rb_stretchpic_calls = 0;
+int g_q_stretchpic = 0;
+int g_disp_stretchpic = 0;
 int g_rb_endsurface_draw = 0;
 int g_rb_endsurface_nomaterial = 0;
 int g_rb_endsurface_notechnique = 0;
@@ -349,6 +352,20 @@ void RB_GpuWaited(int ticks);
 static void RB_EndFrame_real(void);
 void RB_EndFrame(void)
 {
+    {
+        extern int g_rb_endsurface_count, g_rb_endsurface_nomaterial, g_rb_endsurface_notechnique,
+                   g_rb_endsurface_dxstate, g_rb_endsurface_draw, g_rb_endsurface_flag1skip,
+                   g_rb_endsurface_flag2skip, g_rb_endsurface_idxzero;
+        extern void Com_Printf(const char *, ...);
+        extern int g_rb_stretchpic_calls, g_q_stretchpic, g_disp_stretchpic;
+        static int fc;
+        if (++fc == 120)
+            Com_Printf("[rbdiag] q=%d disp=%d stretchpic=%d count=%d draw=%d nomat=%d notech=%d dxstate=%d f1=%d f2=%d idx0=%d\n",
+                       g_q_stretchpic, g_disp_stretchpic, g_rb_stretchpic_calls,
+                       g_rb_endsurface_count, g_rb_endsurface_draw, g_rb_endsurface_nomaterial,
+                       g_rb_endsurface_notechnique, g_rb_endsurface_dxstate, g_rb_endsurface_flag1skip,
+                       g_rb_endsurface_flag2skip, g_rb_endsurface_idxzero);
+    }
     RB_EndFrame_real();
 }
 void RB_InitBackendGlobalStructs(void);
@@ -454,7 +471,7 @@ static void RB_GotoCmd(GfxRenderCommandExecState *execState)
 {
     const byte *base = backEndData ? backEndData->commands.cmds : NULL;
     const byte *cmd = (const byte *)execState->cmd;
-    const void *target = *(const void **)(cmd + 4);
+    const void *target = ((const GfxCmdCall *)cmd)->subCmd;   /* x86 was cmd+4 */
     static int traceCount;
 
     if (base && traceCount < 120) {
@@ -492,7 +509,7 @@ void RB_SetGammaRamp(const GfxGammaRamp *gammaTable)
     }
 
     dx = (byte *)imp_dx;
-    dev = *(void **)(dx + 8);
+    dev = ((DxGlobals *)dx)->device;
     vt = *(void ***)dev;
     ((void(D3DVTCC *)(void *, int, int, void *))vt[0x54 / 4])(dev, ((DxGlobals *)dx)->targetWindowIndex, 0, d3dGammaRamp);
 }
@@ -549,7 +566,7 @@ static void RB_EndFrame_real(void)
     char *r_gamma_cvar;
     char *r_ignoreHwGamma_cvar;
 
-    device = *(void **)(dx + 8);
+    device = ((DxGlobals *)dx)->device;
     vtable = *(void ***)device;
 #ifdef GFX_REAL_D3D9
     if (getenv("REALD3D9_RDSL")) {
@@ -700,7 +717,8 @@ static void RB_EndFrame_real(void)
     }
 
     dx = (char *)imp_dx;
-    *(int *)((DxGlobals *)dx)->dynamicIndexBuffer = 0;
+    if (((DxGlobals *)dx)->dynamicIndexBuffer)   /* lazily set; NULL if no indexed draw this frame */
+        *(int *)((DxGlobals *)dx)->dynamicIndexBuffer = 0;
 
     backEnd.projection2D = 0;
 
@@ -758,7 +776,7 @@ static void RB_CallCmd(GfxRenderCommandExecState *execState)
 {
     const GfxCmdHeader *cmd = (const GfxCmdHeader *)execState->cmd;
     const byte *base = backEndData ? backEndData->commands.cmds : NULL;
-    const void *target = *(const void **)((byte *)cmd + 4);
+    const void *target = ((const GfxCmdCall *)cmd)->subCmd;   /* x86 was cmd+4 */
     static int traceCount;
     int idx = execState->stackPos;
 
@@ -792,7 +810,7 @@ static void RB_SetClipPlanesCmd(GfxRenderCommandExecState *execState)
     if (planeCount != dxs->clipPlaneCount) {
 
         do {
-            device = *(void **)((char *)imp_dx + 8);
+            device = ((DxGlobals *)imp_dx)->device;
             vtable = *(void ***)device;
             ((HRESULT(D3DVTCC *)(void *, DWORD, DWORD))(vtable[0xE4 / 4]))(
                 device, 0x98, (DWORD)((1 << planeCount) - 1));
@@ -806,7 +824,7 @@ static void RB_SetClipPlanesCmd(GfxRenderCommandExecState *execState)
         for (i = 0; i < planeCount; i++) {
 
             do {
-                device = *(void **)((char *)imp_dx + 8);
+                device = ((DxGlobals *)imp_dx)->device;
                 vtable = *(void ***)device;
                 ((HRESULT(D3DVTCC *)(void *, DWORD, const float *))(vtable[0xDC / 4]))(
                     device, (DWORD)i, (const float *)planeData);
@@ -842,7 +860,7 @@ static void RB_StretchRawCmd(GfxRenderCommandExecState *execState)
     int rowBytes;
     int i;
 
-    device = *(void **)((char *)imp_dx + 8);
+    device = ((DxGlobals *)imp_dx)->device;
     devVtable = *(void ***)device;
     /* D3DUSAGE_DYNAMIC (0x200): this texture is locked with D3DLOCK_DISCARD below,
      * which real D3D9 only permits on dynamic textures (Wine ignores the rule). */
@@ -883,7 +901,7 @@ static void RB_StretchRawCmd(GfxRenderCommandExecState *execState)
         {
             char *dx = (char *)imp_dx;
             void *backBuffer = ((DxGlobals *)dx)->renderTargets[0].colorSurface;
-            device = *(void **)(dx + 8);
+            device = ((DxGlobals *)dx)->device;
             devVtable = *(void ***)device;
             ((HRESULT(D3DVTCC *)(void *, void *, void *, void *, void *, DWORD))(devVtable[0x88 / 4]))(
                 device, surface, NULL, backBuffer, dstRect, 2);
@@ -945,7 +963,7 @@ void RB_ClearScreen(int whichToClear, const vec_t *color, float depth, int stenc
 #endif
 
     do {
-        device = *(void **)((char *)imp_dx + 8);
+        device = ((DxGlobals *)imp_dx)->device;
         vtable = *(void ***)device;
 #ifdef GFX_REAL_D3D9
         if (getenv("REALD3D9_CLEARRT") && (clearFlags & 1)) {
@@ -1077,7 +1095,7 @@ static void RB_BACKEND_REGPARM1_ABI RB_EndBenchmarkGpu_impl(void *time)
 
     do {
         dx = (byte *)imp_dx;
-        device = *(void **)(dx + 8);
+        device = ((DxGlobals *)dx)->device;
         vtable = *(void ***)device;
         ((HRESULT(D3DVTCC *)(void *))(vtable[0xA8 / 4]))(device);
     } while (*(volatile int *)&alwaysfails);
@@ -1161,7 +1179,7 @@ static void RB_BACKEND_REGPARM1_ABI RB_BeginBenchmarkGpu_impl(void *time)
 
     do {
         dx = (byte *)imp_dx;
-        device = *(void **)(dx + 8);
+        device = ((DxGlobals *)dx)->device;
         vtable = *(void ***)device;
         ((HRESULT(D3DVTCC *)(void *))(vtable[0xA4 / 4]))(device);
     } while (*(volatile int *)&alwaysfails);
@@ -1281,7 +1299,7 @@ static void RB_SetStencilRefValueCmd(GfxRenderCommandExecState *execState)
     if (dxs->stencilRefValue != stencilRef) {
 
         do {
-            void *dev = *(void **)((byte *)imp_dx + 8);
+            void *dev = ((DxGlobals *)imp_dx)->device;
             void **vt = *(void ***)dev;
             ((int(D3DVTCC *)(void *, int, int))vt[0xe4 / 4])(dev, 0x39, stencilRef);
         } while (*(int *)&alwaysfails);
@@ -1924,19 +1942,19 @@ static void RB_Set2D(void)
         char *dx = (char *)imp_dx;
 
         do {
-            void *device = *(void **)(dx + 8);
+            void *device = ((DxGlobals *)dx)->device;
             void **vtable = *(void ***)device;
             ((int(__attribute__((stdcall)) *)(void *, int, const void *))vtable[0xb0 / 4])(
                 device, 0x100, identity);
         } while (*(int *)&alwaysfails);
         do {
-            void *device = *(void **)(dx + 8);
+            void *device = ((DxGlobals *)dx)->device;
             void **vtable = *(void ***)device;
             ((int(__attribute__((stdcall)) *)(void *, int, const void *))vtable[0xb0 / 4])(
                 device, 2, identity);
         } while (*(int *)&alwaysfails);
         do {
-            void *device = *(void **)(dx + 8);
+            void *device = ((DxGlobals *)dx)->device;
             void **vtable = *(void ***)device;
             ((int(__attribute__((stdcall)) *)(void *, int, const void *))vtable[0xb0 / 4])(
                 device, 3, transform);
@@ -2103,7 +2121,7 @@ static void RB_SaveScreenCmd(GfxRenderCommandExecState *execState)
     imageSurface = Image_GetSurface(((DxGlobals *)dx)->renderTargets[7].image);
 
     do {
-        void *device = *(void **)(dx + 8);
+        void *device = ((DxGlobals *)dx)->device;
         void **vtable = *(void ***)device;
         void *backBuffer = dxs->renderTargetSurface;
         ((int(__attribute__((stdcall)) *)(void *, void *, void *, void *, void *, int))vtable[0x88 / 4])(
@@ -2149,7 +2167,7 @@ static void RB_ApplyEarlyPostEffectsCmd(GfxRenderCommandExecState *execState)
         void *imageSurface = Image_GetSurface(((DxGlobals *)dx)->renderTargets[1].image);
 
         do {
-            void *device = *(void **)(dx + 8);
+            void *device = ((DxGlobals *)dx)->device;
             void **vtable = *(void ***)device;
             void *backBuffer = dxs->renderTargetSurface;
             ((int(__attribute__((stdcall)) *)(void *, void *, void *, void *, void *, int))vtable[0x88 / 4])(
@@ -2663,6 +2681,10 @@ void RB_DrawStretchPic(const Material *material, float x, float y, float w, floa
 
     (void)statsTarget;
 
+    {
+        extern int g_rb_stretchpic_calls;
+        g_rb_stretchpic_calls++;
+    }
     if (!material)
         return;
 
@@ -2839,6 +2861,7 @@ static void RB_StretchPicCmd(GfxRenderCommandExecState *execState)
     byte *cmd = (byte *)execState->cmd;
     unsigned int byteCount;
 
+    g_disp_stretchpic++;
     RB_DrawStretchPic(
         ((GfxCmdStretchPic *)cmd)->material,
         ((GfxCmdStretchPic *)cmd)->x,
@@ -2914,13 +2937,24 @@ void RB_ExecuteRenderCommands(const void *data)
 
     backEndData = 0;
 
+    {
+        extern void Com_Printf(const char *, ...);
+        extern int g_disableRendering;
+        static int once;
+        if (!once) { once = 1;
+            Com_Printf("[rbexec] *imp=%d &direct=%p direct=%d imp=%p\n",
+                       *(int *)imp_g_disableRendering, (void *)&g_disableRendering,
+                       g_disableRendering, imp_g_disableRendering);
+        }
+    }
+
     if (*(int *)imp_g_disableRendering)
         goto done;
 
     dx = (char *)imp_dx;
 
     if (!((DxGlobals *)dx)->deviceLost) {
-        void *device = *(void **)(dx + 8);
+        void *device = ((DxGlobals *)dx)->device;
         void **vtable = *(void ***)device;
         HRESULT hr = ((HRESULT(__attribute__((stdcall)) *)(void *))(vtable[0x0c / 4]))(device);
         if ((unsigned int)(hr + 0x7789f798u) <= 1)
@@ -3010,7 +3044,7 @@ void RB_ExecuteRenderCommands(const void *data)
     dx = (char *)imp_dx;
     ((DxGlobals *)dx)->inScene = 1;
     do {
-        void *device = *(void **)(dx + 8);
+        void *device = ((DxGlobals *)dx)->device;
         void **vtable = *(void ***)device;
         ((HRESULT(__attribute__((stdcall)) *)(void *))(vtable[0xa4 / 4]))(device);
     } while (*(volatile int *)&alwaysfails);
@@ -3032,15 +3066,18 @@ void RB_ExecuteRenderCommands(const void *data)
 
         cmd = *(unsigned short *)cmdBuf;
 
+        if (execTraceCount < 1) {
+            extern void Com_Printf(const char *, ...);
+            Com_Printf("[cmdexec] backEndData=%p cmds=%p first_id=%u\n",
+                       (void *)backEndData, (void *)cmdBuf, cmd);
+        }
+
         while (cmd != 0) {
-            if (execTraceCount < 260) {
-                int off = (int)((const byte *)execState.cmd - cmdBuf);
-                if (off >= 900 && off <= 2420) {
-                    const GfxCmdHeader *h = (const GfxCmdHeader *)execState.cmd;
-                    if (getenv("DBGSPAM"))
-                        printf("[cmdexec] off=%d id=%u bytes=%u\n", off, h->id, h->byteCount);
-                    ++execTraceCount;
-                }
+            if (execTraceCount < 40) {
+                extern void Com_Printf(const char *, ...);
+                const GfxCmdHeader *h = (const GfxCmdHeader *)execState.cmd;
+                Com_Printf("[cmdexec] #%d id=%u bytes=%u\n", execTraceCount, h->id, h->byteCount);
+                ++execTraceCount;
             }
             RB_RenderCommandTable[cmd](&execState);
             cmd = *(unsigned short *)execState.cmd;
@@ -3071,7 +3108,7 @@ post_render:
 #endif
         do {
             dx = (char *)imp_dx;
-            void *device = *(void **)(dx + 8);
+            void *device = ((DxGlobals *)dx)->device;
             void **vtable = *(void ***)device;
             ((HRESULT(D3DVTCC *)(void *, DWORD, void *, DWORD, DWORD, float, DWORD))(vtable[0xac / 4]))(device, 0, NULL, 1, 0x00000000u, 0.0f, 0);
         } while (*(volatile int *)&alwaysfails);
@@ -3084,7 +3121,7 @@ post_render:
 
     dx = (char *)imp_dx;
     do {
-        void *device = *(void **)(dx + 8);
+        void *device = ((DxGlobals *)dx)->device;
         void **vtable = *(void ***)device;
         ((HRESULT(__attribute__((stdcall)) *)(void *))(vtable[0xa8 / 4]))(device);
     } while (*(volatile int *)&alwaysfails);
@@ -3335,7 +3372,7 @@ static void RB_CopyBackBufferToSurface(void *image)
     void *imageSurface = Image_GetSurface(image);
 
     do {
-        void *device = *(void **)(dx + 8);
+        void *device = ((DxGlobals *)dx)->device;
         void **vtable = *(void ***)device;
         void *backBuffer = dxs->renderTargetSurface;
         ((int(__attribute__((stdcall)) *)(void *, void *, void *, void *, void *, int))vtable[0x88 / 4])(
@@ -3575,7 +3612,7 @@ static void RB_DrawTextCmd(GfxRenderCommandExecState *execState)
 
     const char *text = cmd->text;
     int maxChars = cmd->maxChars;
-    int font = *(int *)&cmd->font;
+    FontHandle font = cmd->font;   /* was int -> truncated the 8-byte FontHandle on x64 */
     float x = cmd->x;
     float y = cmd->y;
     float xScale = cmd->xScale;
@@ -3597,7 +3634,7 @@ static void RB_DrawTextCmd(GfxRenderCommandExecState *execState)
                cmd->font);
     }
 
-    RB_DrawTextWithCursor_impl(text, maxChars, (FontHandle)(intptr_t)font, x, y, xScale, yScale, *(GfxColor *)&style, color, cursorPos, cursor);
+    RB_DrawTextWithCursor_impl(text, maxChars, font, x, y, xScale, yScale, *(GfxColor *)&style, color, cursorPos, cursor);
 
     const byte *cmdBytes = (const byte *)execState->cmd;
     execState->cmd = (const void *)(cmdBytes + *(unsigned short *)(cmdBytes + 2));
@@ -3646,7 +3683,7 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
         void *imageSurface = Image_GetSurface(offscreenImage);
 
         do {
-            void *device = *(void **)(dx + 8);
+            void *device = ((DxGlobals *)dx)->device;
             void **vtable = *(void ***)device;
             void *backBuffer = dxs->renderTargetSurface;
             ((HRESULT(__attribute__((stdcall)) *)(void *, void *, void *, void *, void *, int))

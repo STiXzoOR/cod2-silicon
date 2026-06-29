@@ -226,7 +226,10 @@ static Bool R_DisplayModeLess(const _D3DDISPLAYMODE *mode0, const _D3DDISPLAYMOD
 
 static HRESULT R_CreateDevice_impl(HWND hwnd, DWORD behavior, void *d3dpp)
 {
-    byte *d = (byte *)&dx;
+    /* Typed field access: the original used (byte*)&dx + 12 (adapterIndex) and
+     * + 8 (device-out), which are x86 offsets -- on x64 dx.device is at 16 and
+     * adapterIndex at 24 (the leading pointers grew), so the device wrote over
+     * dx.d3d9 and dx.device stayed NULL -> texture creation crashed. */
     HRESULT hr;
     int attempt;
 
@@ -239,7 +242,7 @@ static HRESULT R_CreateDevice_impl(HWND hwnd, DWORD behavior, void *d3dpp)
             void *d3d9 = (void *)dx.d3d9;
             void **vtable = *(void ***)d3d9;
             hr = ((HRESULT(__attribute__((stdcall)) *)(void *, int, int, HWND, DWORD, void *, void **))
-                      vtable[0x40 / 4])(d3d9, *(int *)(d + 12), 1, hwnd, behavior, d3dpp, (void **)(d + 8));
+                      vtable[0x40 / 4])(d3d9, dx.adapterIndex, 1, hwnd, behavior, d3dpp, (void **)&dx.device);
 
             if (hr >= 0)
                 return hr;
@@ -247,10 +250,10 @@ static HRESULT R_CreateDevice_impl(HWND hwnd, DWORD behavior, void *d3dpp)
             WinSleep(100);
         }
 
-        if (*(int *)(d + 12) == 0)
+        if (dx.adapterIndex == 0)
             return hr;
 
-        *(int *)(d + 12) = 0;
+        dx.adapterIndex = 0;
     }
 }
 
@@ -310,7 +313,17 @@ refexport_t *GetRefAPI(int apiVersion, refimport_t *rimp)
     }
 
     byte *r = (byte *)&re;
-#define RE(off, fn) *(void **)(r + off) = (void *)(fn)
+/* The offsets below are x86 byte offsets into refexport_t (4-byte pointer slots).
+ * On x64 every slot is 8 bytes, so slot N sits at off*2. refexport_t is a uniform
+ * array of pointer-sized slots (its lone bool member is slot-padded), so doubling
+ * the x86 offset yields the correct x64 offset. Without this, re is built with
+ * every function pointer at half its real offset -> garbage (re.BeginRegistration
+ * faulted at CL_InitRenderer). (x64 port Stage 4.) */
+#if defined(_M_X64) || defined(__x86_64__)
+#define RE(off, fn) *(void **)(r + (off) * 2) = (void *)(fn)
+#else
+#define RE(off, fn) *(void **)(r + (off)) = (void *)(fn)
+#endif
 
     RE(0, R_Shutdown);
     RE(4, R_BeginRegistration);
@@ -579,58 +592,56 @@ static Bool R_CreateForInitOrReset(void)
     R_InitRenderTargets();
     ((ri_fn)ri.Printf)(0, "R_InitStaticModelCache");
     R_InitStaticModelCache();
+    { extern void Com_Printf(const char *, ...); Com_Printf("[dr] after staticmodelcache=%d\n", g_disableRendering); }
     ((ri_fn)ri.Printf)(0, "Dynamic buffers");
 
+    /* Dynamic buffer pools: were hardcoded x86 DxGlobals byte offsets (dxp+116xx);
+     * r_ib_state_t/r_vb_state_t are 16B on x64 (8B buffer ptr) so use typed fields. */
     int isDx7 = (r_rendererInUse->current.integer == 2);
     int vbSize = isDx7 ? 0x120000 : 0x200000;
-
-    *(int *)(dxp + 11688) = 0;
-    *(int *)(dxp + 11692) = vbSize;
-    void *d3dDevice = (void *)dx.device;
-    void **vtable = *(void ***)d3dDevice;
+    void *d3dDevice;
+    void **vtable;
+    HRESULT hr;
     typedef HRESULT(D3DVTCC * CreateVB_fn)(void *, int, int, int, int, void **, void *);
-    HRESULT hr = ((CreateVB_fn)vtable[26])(d3dDevice, vbSize, 0x208, 0, 0, (void **)(dxp + 11696), NULL);
-    if (hr < 0)
-        R_DxFatalError("Couldn't create a %i-byte dynamic vertex buffer: %s", vbSize, hr);
+    typedef HRESULT(D3DVTCC * CreateIB_fn)(void *, int, int, int, int, void **, void *);
 
-    *(int *)(dxp + 11700) = (int)(intptr_t)(dxp + 11688);
-
-    int loopVbSize = isDx7 ? 0x480000 : 0x800000;
-    int offset = 0x2d90;
-    byte *vbOut = dxp + 11672;
-    for (i = 0; i < 2; i++) {
-        isDx7 = (r_rendererInUse->current.integer == 2);
-        loopVbSize = isDx7 ? 0x480000 : 0x800000;
-        *(int *)(dxp + offset) = 0;
-        *(int *)(dxp + offset + 4) = loopVbSize;
-        d3dDevice = (void *)dx.device;
-        vtable = *(void ***)d3dDevice;
-        hr = ((CreateVB_fn)vtable[26])(d3dDevice, loopVbSize, 0x208, 0, 0, (void **)vbOut, NULL);
-        if (hr < 0)
-            R_DxFatalError("Couldn't create a %i-byte dynamic vertex buffer: %s", loopVbSize, hr);
-        offset += 0xc;
-        vbOut += 0xc;
-    }
-
-    *(int *)(dxp + 11648) = 0;
-    *(int *)(dxp + 11652) = 0x200000;
+    dx.dynamicVertexBufferPool[0].used = 0;
+    dx.dynamicVertexBufferPool[0].total = vbSize;
     d3dDevice = (void *)dx.device;
     vtable = *(void ***)d3dDevice;
-    typedef HRESULT(D3DVTCC * CreateIB_fn)(void *, int, int, int, int, void **, void *);
-    hr = ((CreateIB_fn)vtable[27])(d3dDevice, 0x200000, 0x208, 0x65, 0, (void **)(dxp + 11656), NULL);
+    hr = ((CreateVB_fn)vtable[26])(d3dDevice, vbSize, 0x208, 0, 0, (void **)&dx.dynamicVertexBufferPool[0].buffer, NULL);
+    if (hr < 0)
+        R_DxFatalError("Couldn't create a %i-byte dynamic vertex buffer: %s", vbSize, hr);
+    dx.dynamicVertexBuffer = &dx.dynamicVertexBufferPool[0];
+
+    for (i = 0; i < 2; i++) {
+        int loopVbSize = (r_rendererInUse->current.integer == 2) ? 0x480000 : 0x800000;
+        dx.skinnedCacheVbPool[i].used = 0;
+        dx.skinnedCacheVbPool[i].total = loopVbSize;
+        d3dDevice = (void *)dx.device;
+        vtable = *(void ***)d3dDevice;
+        hr = ((CreateVB_fn)vtable[26])(d3dDevice, loopVbSize, 0x208, 0, 0, (void **)&dx.skinnedCacheVbPool[i].buffer, NULL);
+        if (hr < 0)
+            R_DxFatalError("Couldn't create a %i-byte dynamic vertex buffer: %s", loopVbSize, hr);
+    }
+
+    dx.dynamicIndexBufferPool[0].used = 0;
+    dx.dynamicIndexBufferPool[0].total = 0x200000;
+    d3dDevice = (void *)dx.device;
+    vtable = *(void ***)d3dDevice;
+    hr = ((CreateIB_fn)vtable[27])(d3dDevice, 0x200000, 0x208, 0x65, 0, (void **)&dx.dynamicIndexBufferPool[0].buffer, NULL);
     if (hr < 0)
         R_DxFatalError("Couldn't create a %i-byte dynamic index buffer: %s", 0x200000, hr);
+    dx.dynamicIndexBuffer = &dx.dynamicIndexBufferPool[0];
 
-    *(int *)(dxp + 11660) = (int)(intptr_t)(dxp + 11648);
-
-    *(void **)(dxp + 11728) = ((void *(*)(int))ri.Z_VirtualReserveInternal)(0xa00000);
+    dx.tempSkinBuf = (byte *)((void *(*)(int))ri.Z_VirtualReserveInternal)(0xa00000);
 
     ((ri_fn)ri.Printf)(0, "Particle cloud");
     R_CreateParticleCloudBuffer();
     ((ri_fn)ri.Printf)(0, "State");
 
-    *(byte *)(dxp + 11624) = 0;
-    *(int *)(dxp + 11612) = 0;
+    dx.tempSkinPos = 0;
+    dx.dynamicBufferFrame = 0;
 
     byte *sunFlares = (byte *)imp_sunFlareArray;
     for (i = 0; i < 4; i++) {
@@ -638,8 +649,10 @@ static Bool R_CreateForInitOrReset(void)
         sunFlares[i * 0x30 + 0x2d] = 0;
     }
 
+    { extern void Com_Printf(const char *, ...); Com_Printf("[dr] after stateblock=%d\n", g_disableRendering); }
     ((ri_fn)ri.Printf)(0, "Initial state");
     RB_SetInitialState();
+    { extern void Com_Printf(const char *, ...); Com_Printf("[dr] after setinitialstate=%d\n", g_disableRendering); }
     return 1;
 }
 
@@ -650,7 +663,7 @@ extern void R_InitBackendData(void);
 extern void R_InitDrawGroups(void);
 extern void R_InitSystems(void);
 extern void FFT_Init(void *sinTable, void *workspace);
-extern int Direct3DCreate9(int sdkVersion);
+extern void *Direct3DCreate9(int sdkVersion);  /* returns a pointer; `int` truncated it on x64 */
 extern double sin(double);
 static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
 {
@@ -682,6 +695,7 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
     }
     R_InitBackendData();
     R_InitDrawGroups();
+    { extern void Com_Printf(const char *, ...); Com_Printf("[disrend] after R_InitDrawGroups = %d\n", g_disableRendering); }
 
     if (dx.device) {
 
@@ -784,6 +798,7 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
     }
 
     memcpy(vidConfigOut, imp_vidConfig, 44);
+    { extern void Com_Printf(const char *, ...); Com_Printf("[disrend] R_Init end = %d\n", g_disableRendering); }
 }
 
 void R_BeginRegistration(vidConfig_t *vidConfigOut)

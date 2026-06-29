@@ -1264,9 +1264,12 @@ void COD2_FORCE_ALIGN_ARG_POINTER RB_SetInitialState(void)
     D3DMATERIAL9 material;
     int stageIndex;
 
+    { extern void Com_Printf(const char *, ...); extern int g_disableRendering; Com_Printf("[dr] SIS entry=%d sizeof(dxState)=%d\n", g_disableRendering, (int)sizeof(dxState)); }
     memset(&dxState, 0, sizeof(dxState));
+    { extern void Com_Printf(const char *, ...); extern int g_disableRendering; Com_Printf("[dr] SIS after memset=%d\n", g_disableRendering); }
     RB_DecideDefaultSamplerState_core();
     RB_SetAnisotropy_core();
+    { extern void Com_Printf(const char *, ...); extern int g_disableRendering; Com_Printf("[dr] SIS after sampler=%d\n", g_disableRendering); }
 
     vidConfig = (const vidConfig_t *)imp_vidConfig;
     dxState.refStateBits[0] = 0x18128812;
@@ -1289,6 +1292,7 @@ void COD2_FORCE_ALIGN_ARG_POINTER RB_SetInitialState(void)
 
     dxState.renderTargetId = R_RENDERTARGET_NONE;
     RB_SetRenderTarget(R_RENDERTARGET_FRAME_BUFFER);
+    { extern void Com_Printf(const char *, ...); extern int g_disableRendering; Com_Printf("[dr] SIS after setrendertarget=%d\n", g_disableRendering); }
     dxState.viewportIsNull = 0;
 
     dxState.fog.end = 1.0f;

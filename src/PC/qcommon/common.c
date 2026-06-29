@@ -327,6 +327,7 @@ void Com_Error(errorParm_t code, const char *fmt, ...)
     extern char *cls;
     va_list argptr;
 
+
     if (com_errorEntered) {
         Sys_Error("recursive error after: %s", com_errorMessage);
     }
@@ -1440,10 +1441,13 @@ int Com_EventLoop(void)
 
         switch (evType) {
         case 0:
+            { static int c0; if (c0++ < 3) Com_Printf("[cnx] evloop case0 sv_running=%d\n", com_sv_running->current.enabled); }
             while (NET_GetLoopPacket(0, &evFrom, &buf)) {
+                Com_Printf("[cnx] loop0 packet (server->client)\n");
                 CL_PacketEvent(evFrom, &buf, evTime);
             }
             while (NET_GetLoopPacket(1, &evFrom, &buf)) {
+                Com_Printf("[cnx] loop1 packet (client->server) sv_running=%d\n", com_sv_running->current.enabled);
                 CL_SwitchToLocalClient(0);
                 if (com_sv_running->current.enabled) {
                     SV_PacketEvent(evFrom, &buf);
@@ -2137,6 +2141,7 @@ void Com_Init(char *commandLine)
         return;
     }
 
+    Com_Printf("[REALERROR] %s\n", com_errorMessage);
     Sys_Error(va("Error during initialization:\n%s\n", com_errorMessage));
 }
 

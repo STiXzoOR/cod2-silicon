@@ -40,7 +40,7 @@ static int Player_GetUseList(gentity_t *ent, useList_t *useList) BM_REGPARM(0);
 void Player_UpdateCursorHints(gentity_t *ent);
 void Player_UpdateLookAtEntity(gentity_t *ent);
 
-#define GENTITY_SIZE 0x230
+#define GENTITY_SIZE sizeof(gentity_s) /* was 0x230 = x86 sizeof(gentity_s); wrong on x64 */
 
 #define SCR_CONST() ((const scr_const_t *)scr_const_ptr)
 

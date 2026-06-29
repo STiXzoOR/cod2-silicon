@@ -32,7 +32,7 @@ cmodel_t *CM_ClipHandleToModel(clipHandle_t handle)
     if (handle < cm->numSubModels) {
         return &cm->cmodels[handle];
     }
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
 
     return ((struct TraceThreadInfo *)Sys_GetValue(3))->box_model;
 #else

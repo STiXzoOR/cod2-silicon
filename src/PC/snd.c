@@ -13,7 +13,42 @@ extern const dvar_t *snd_slaveFadeTime;
 extern const dvar_t *snd_enable2D;
 extern const dvar_t *snd_enable3D;
 extern const dvar_t *snd_enableStream;
-extern const char *snd_roomStrings[];
+/* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
+const char *snd_roomStrings[32] = {
+    "generic",
+    "paddedcell",
+    "room",
+    "bathroom",
+    "livingroom",
+    "stoneroom",
+    "auditorium",
+    "concerthall",
+    "cave",
+    "arena",
+    "hangar",
+    "carpetedhallway",
+    "hallway",
+    "stonecorridor",
+    "alley",
+    "forest",
+    "city",
+    "mountains",
+    "quarry",
+    "plain",
+    "parkinglot",
+    "sewerpipe",
+    "underwater",
+    "drugged",
+    "dizzy",
+    "psychotic",
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+};
+
 
 float Com_GetVolumeFalloffCurveValue(SndCurve *volumeFalloffCurve, float fraction);
 int stricmp(const char *str1, const char *str2);

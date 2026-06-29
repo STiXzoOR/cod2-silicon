@@ -8,9 +8,9 @@
 #define NODE_PREV(n) ((node_t *)(n)->prev)
 #define NODE_HEAD(n) ((node_t **)(n)->head)
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
 
-#    define NODE_PTR_CAST (long)(intptr_t)
+#    define NODE_PTR_CAST (intptr_t)  /* NOT (long): long is 4 bytes on Win64 (LLP64) and truncates */
 #else
 #    define NODE_PTR_CAST (int)
 #endif

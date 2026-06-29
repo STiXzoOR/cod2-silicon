@@ -29,7 +29,10 @@ extern int stricmp(const char *s1, const char *s2);
 extern byte *fx_developer_check_ptr;
 
 extern FxScheduler *theFxScheduler;
-extern EffectTemplate *defaultEffect;
+/* defaultEffect: migrated from the ILP32 data blob (4-byte NULL) to a typed
+ * pointer so it re-lays-out per target (4 B x86 / 8 B x64). Assigned at runtime
+ * by FX_InitSystem. (x64 port Stage 2.) */
+EffectTemplate *defaultEffect = NULL;
 
 void FX_CleanTemplate(EffectTemplate *fx);
 void FX_CreateDefaultEffect(void);

@@ -269,7 +269,7 @@ fileHandle_t FS_HandleForFile(qboolean streamThread)
 
 FILE *FS_FileForHandle(fileHandle_t f)
 {
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
 
     return (FILE *)fsh[f].handleFiles.file.o;
 #else
@@ -406,7 +406,7 @@ Bool FS_RegisterDvars(void)
 
     homePath = Sys_DefaultHomePath();
     if (!homePath || !homePath[0]) {
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
 
         homePath = fs_basepath->current.string;
 #else
@@ -474,7 +474,7 @@ int FS_filelength(fileHandle_t f)
 #endif
 
     if (entry->zipFile)
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
 
         return (int)((unz_s *)entry->handleFiles.file.z)->cur_file_info.uncompressed_size;
 #else
@@ -740,7 +740,7 @@ int FS_FTell(fileHandle_t f)
 
 void FS_Flush(fileHandle_t f)
 {
-#    if defined(__x86_64__)
+#    if defined(__x86_64__) || defined(_M_X64)
 
     fflush((FILE *)fsh[f].handleFiles.file.o);
 #    else
@@ -1481,11 +1481,7 @@ static void FS_AddSearchPathIwd(searchpath_t *search)
     searchpath_t **insert;
 
     if (!search->bLocalized) {
-#    if defined(__x86_64__)
-        search->next = (long)fs_searchpaths;
-#    else
-        search->next = (int)fs_searchpaths;
-#    endif
+        search->next = (intptr_t)fs_searchpaths;
         fs_searchpaths = search;
         return;
     }
@@ -1495,11 +1491,7 @@ static void FS_AddSearchPathIwd(searchpath_t *search)
         insert = (searchpath_t **)&(*insert)->next;
     }
 
-#    if defined(__x86_64__)
-    search->next = (long)*insert;
-#    else
-    search->next = (int)*insert;
-#    endif
+    search->next = (intptr_t)*insert;
     *insert = search;
 }
 
@@ -1612,11 +1604,7 @@ static pack_t *FS_LoadIwd(const char *iwdfile, const char *basename, const char 
         unzGetCurrentFileInfoPosition(uf, &file->pos);
 
         hashSize = FS_HashFileName(filename_inzip, iwd->hashSize);
-#    if defined(__x86_64__)
-        file->next = (long)iwd->hashTable[hashSize];
-#    else
-        file->next = (int)iwd->hashTable[hashSize];
-#    endif
+        file->next = (intptr_t)iwd->hashTable[hashSize];
         iwd->hashTable[hashSize] = file;
 
         unzGoToNextFile(uf);
@@ -1767,11 +1755,7 @@ static void __attribute_regparm__(3)
         insert = &fs_searchpaths;
     }
 
-#    if defined(__x86_64__)
-    search->next = (long)*insert;
-#    else
-    search->next = (int)*insert;
-#    endif
+    search->next = (intptr_t)*insert;
     *insert = search;
 
     FS_AddIwdFilesForGameDirectory(path, szGameFolder);
@@ -2735,11 +2719,7 @@ static void FS_WebAddLanguageSearchPath(int language)
 
     search = (searchpath_t *)Z_MallocInternal(sizeof(*search));
     Com_Memset(search, 0, sizeof(*search));
-#    if defined(__x86_64__)
-    search->next = (long)(uintptr_t)fs_searchpaths;
-#    else
-    search->next = (int)(uintptr_t)fs_searchpaths;
-#    endif
+    search->next = (intptr_t)(uintptr_t)fs_searchpaths;
     search->bLocalized = 1;
     search->language = language;
     fs_searchpaths = search;

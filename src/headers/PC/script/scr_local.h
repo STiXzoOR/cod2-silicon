@@ -40,20 +40,20 @@ struct stype_t {
 struct BreakStatementInfo {
     const char *codePos;
     const char *nextCodePos;
-    int next;
+    struct BreakStatementInfo *next;   /* compile-time temp list; was int -> truncated the pointer on x64 */
 };
 
 struct CaseStatementInfo {
     unsigned int name;
     const char *codePos;
     unsigned int sourcePos;
-    int next;
+    struct CaseStatementInfo *next;   /* compile-time temp list; was int -> truncated the pointer on x64 */
 };
 
 struct ContinueStatementInfo {
     const char *codePos;
     const char *nextCodePos;
-    int next;
+    struct ContinueStatementInfo *next;   /* compile-time temp list; was int -> truncated the pointer on x64 */
 };
 
 struct OpcodeLookup {
@@ -68,7 +68,7 @@ struct PrecacheEntry {
     scr_string_t filename;
     Bool include;
     unsigned int sourcePos;
-    int next;
+    struct PrecacheEntry *next;   /* links per-file precache arrays; was int -> truncated the pointer on x64 */
 };
 
 struct SaveSourceBufferInfo {
@@ -137,7 +137,7 @@ struct scrCompilePub_t {
     byte *opcodePos;
     int programLen;
     int func_table_size;
-    int func_table[1024];
+    intptr_t func_table[1024];   /* holds BuiltinFunction/BuiltinMethod pointers; was int -> truncated on x64 */
 };
 
 struct scrMemTreeGlob_t {

@@ -68,7 +68,20 @@ extern field_t historyEditLines[32];
 extern field_t g_consoleField;
 extern int nextHistoryLine;
 extern int historyLine;
-extern char *frenchNumberKeysMap[10];
+/* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
+char *frenchNumberKeysMap[10] = {
+    "\xff" "fd",
+    "&",
+    "\xff" "fd",
+    "\"",
+    "'",
+    "(",
+    "-",
+    "\xff" "fd",
+    "_",
+    "\xff" "fd",
+};
+
 static char tinystr[5];
 static const char *completionString;
 static Bool hasExactMatch;
@@ -393,7 +406,7 @@ static inline __attribute__((always_inline)) void Key_SetBindingInternal(int key
 {
     if (keynum == -1)
         return;
-    ReplaceStringInternal((char **)((byte *)keys + keynum * 12 + 8), binding);
+    ReplaceStringInternal((char **)&keys[keynum].binding, binding);   /* was keynum*12+8 (x86 qkey_t stride) */
     *(int *)imp_dvar_modifiedFlags |= 1;
 }
 
@@ -555,7 +568,7 @@ void Key_Unbindall_f(void)
 
     for (keynum = 0; keynum < 256; ++keynum) {
         if (keys[keynum].binding != NULL && keynum != -1) {
-            ReplaceStringInternal((char **)((byte *)keys + keynum * 12 + 8), "");
+            ReplaceStringInternal((char **)&keys[keynum].binding, "");   /* was keynum*12+8 (x86 qkey_t stride) */
             *modifiedFlags |= 1;
         }
     }

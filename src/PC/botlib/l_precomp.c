@@ -603,7 +603,7 @@ int PC_Directive_else(source_t *source)
     indent->script = source->scriptstack;
     indent->skip = !skip;
     source->skip += indent->skip;
-    indent->next = (int)source->indentstack;
+    indent->next = (intptr_t)source->indentstack;
     source->indentstack = indent;
 
     return 1;
@@ -1587,7 +1587,7 @@ int PC_Directive_if_def(source_t *source, int type)
     indent->skip = skip;
     indent->script = source->scriptstack;
     source->skip += skip;
-    indent->next = (int)source->indentstack;
+    indent->next = (intptr_t)source->indentstack;
     source->indentstack = indent;
 
     return 1;
@@ -1836,7 +1836,7 @@ int PC_Directive_define(source_t *source)
     strcpy(define->name, token.string);
 
     hash = PC_DefineHash(define->name);
-    define->hashnext = (int)(uintptr_t)source->definehash[hash];
+    define->hashnext = (intptr_t)(uintptr_t)source->definehash[hash];
     source->definehash[hash] = define;
 
     if (!PC_ReadLine(source, &token)) {
@@ -1989,7 +1989,7 @@ source_t * LoadSourceFile(const char *filename)
         define_t *copy = PC_CopyDefine(source, define);
 
         hash = PC_DefineHash(copy->name);
-        copy->hashnext = (int)(uintptr_t)source->definehash[hash];
+        copy->hashnext = (intptr_t)(uintptr_t)source->definehash[hash];
         source->definehash[hash] = copy;
     }
 
@@ -2090,7 +2090,7 @@ int PC_Directive_if(source_t *source)
     indent->script = source->scriptstack;
     indent->skip = skip;
     source->skip += skip;
-    indent->next = (int)source->indentstack;
+    indent->next = (intptr_t)source->indentstack;
     source->indentstack = indent;
 
     return 1;
@@ -2128,7 +2128,7 @@ int PC_Directive_elif(source_t *source)
     indent->script = source->scriptstack;
     indent->skip = skip;
     source->skip += skip;
-    indent->next = (int)source->indentstack;
+    indent->next = (intptr_t)source->indentstack;
     source->indentstack = indent;
 
     return 1;

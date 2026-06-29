@@ -31,9 +31,9 @@ extern bool g_NoTextureID;
 extern bool CDirect3DDevice_mNeedsVertexShaderValidation;
 extern bool CDirect3DDevice_mNeedsTransformationValidation;
 extern bool CDirect3DDevice_mNeedsRasterizationValidation;
-#pragma comment(linker, "/alternatename:_CDirect3DDevice_mNeedsVertexShaderValidation=___ZN15CDirect3DDevice28mNeedsVertexShaderValidationE")
-#pragma comment(linker, "/alternatename:_CDirect3DDevice_mNeedsTransformationValidation=___ZN15CDirect3DDevice30mNeedsTransformationValidationE")
-#pragma comment(linker, "/alternatename:_CDirect3DDevice_mNeedsRasterizationValidation=___ZN15CDirect3DDevice29mNeedsRasterizationValidationE")
+COD2_ALT("CDirect3DDevice_mNeedsVertexShaderValidation", "__ZN15CDirect3DDevice28mNeedsVertexShaderValidationE")
+COD2_ALT("CDirect3DDevice_mNeedsTransformationValidation", "__ZN15CDirect3DDevice30mNeedsTransformationValidationE")
+COD2_ALT("CDirect3DDevice_mNeedsRasterizationValidation", "__ZN15CDirect3DDevice29mNeedsRasterizationValidationE")
 #else
 #ifdef _WIN32
 #define COD2_COFF_ASM_PREFIX "_"
@@ -584,9 +584,11 @@ static GLenum CDirect3DDevice_MapBlendFunc(DWORD blend)
 
 static unsigned int CDirect3DDevice_GetTextureGLId(IDirect3DBaseTexture9 *texture)
 {
-    if (!texture || (unsigned int)texture <= 0x08000000u)
+    if (!texture || (uintptr_t)texture <= 0x08000000u)
         return 0;
-    return *(unsigned int *)((byte *)texture + 0x54);
+    /* CDirect3DTexture.texIDStorage: 3 ptrs (2 vtbl + mpTexID) + 16 int fields(64B) +
+       2 ptrs (surfaces,pixelData) => 5*sizeof(void*)+64. x86=0x54, x64=0x68. */
+    return *(unsigned int *)((byte *)texture + 5 * sizeof(void *) + 64);
 }
 
 static GLenum CDirect3DDevice_GetTextureTarget(IDirect3DBaseTexture9 *texture)
@@ -1028,7 +1030,7 @@ HRESULT CDirect3DDevice_CreateTexture(const CDirect3DDevice *_this, UINT Width, 
     (void)_this;
     (void)Pool;
     (void)pSharedHandle;
-    tex = malloc(0x68);
+    tex = malloc(((0x68) + (sizeof(void*)>4 ? 0x100 : 0)));
     CDirect3DTexture_CDirect3DTexture((const CDirect3DTexture *)tex, Width, Height, Levels, Usage, Format);
     *ppTexture = (IDirect3DTexture9 *)tex;
     return 0;
@@ -1042,7 +1044,7 @@ HRESULT CDirect3DDevice_CreateVolumeTexture(const CDirect3DDevice *_this, UINT W
     (void)_this;
     (void)Pool;
     (void)pSharedHandle;
-    tex = malloc(0x6c);
+    tex = malloc(((0x6c) + (sizeof(void*)>4 ? 0x100 : 0)));
     CDirect3DVolumeTexture_CDirect3DVolumeTexture((const CDirect3DVolumeTexture *)tex, Width, Height, Depth, Levels, Usage, Format);
     *ppVolumeTexture = (IDirect3DVolumeTexture9 *)tex;
     return 0;
@@ -1056,7 +1058,7 @@ HRESULT CDirect3DDevice_CreateCubeTexture(const CDirect3DDevice *_this, UINT Edg
     (void)_this;
     (void)Pool;
     (void)pSharedHandle;
-    tex = malloc(0x7c);
+    tex = malloc(((0x7c) + (sizeof(void*)>4 ? 0x100 : 0)));
     CDirect3DCubeTexture_CDirect3DCubeTexture((const CDirect3DCubeTexture *)tex, EdgeLength, Levels, Usage, Format);
     *ppCubeTexture = (IDirect3DCubeTexture9 *)tex;
     return 0;
@@ -1069,7 +1071,7 @@ HRESULT CreateVolumeTexture(UINT Width, UINT Height, UINT Depth, UINT Levels,
     void *tex;
     (void)Pool;
     (void)pSharedHandle;
-    tex = malloc(0x6c);
+    tex = malloc(((0x6c) + (sizeof(void*)>4 ? 0x100 : 0)));
     CDirect3DVolumeTexture_CDirect3DVolumeTexture((const CDirect3DVolumeTexture *)tex, Width, Height, Depth, Levels, Usage, Format);
     *ppVolumeTexture = (IDirect3DVolumeTexture9 *)tex;
     return 0;
@@ -1083,7 +1085,7 @@ HRESULT CDirect3DDevice_CreateVertexBuffer(const CDirect3DDevice *_this, UINT Le
     (void)_this;
     (void)FVF;
     (void)pSharedHandle;
-    vb = malloc(0x3c);
+    vb = malloc(((0x3c) + (sizeof(void*)>4 ? 0x100 : 0)));
     CDirect3DVertexBuffer_CDirect3DVertexBuffer((const CDirect3DVertexBuffer *)vb, Length, Usage, Pool);
     *ppVertexBuffer = (IDirect3DVertexBuffer9 *)vb;
     return 0;
@@ -1096,7 +1098,7 @@ HRESULT CDirect3DDevice_CreateIndexBuffer(const CDirect3DDevice *_this, UINT Len
     void *ib;
     (void)_this;
     (void)pSharedHandle;
-    ib = malloc(0x34);
+    ib = malloc(((0x34) + (sizeof(void*)>4 ? 0x100 : 0)));
     CDirect3DIndexBuffer_CDirect3DIndexBuffer((const CDirect3DIndexBuffer *)ib, Length, Format, Usage, Pool);
     *ppIndexBuffer = (IDirect3DIndexBuffer9 *)ib;
     return 0;
@@ -1107,7 +1109,7 @@ HRESULT CDirect3DDevice_CreateVertexDeclaration(const CDirect3DDevice *_this,
 {
     void *decl;
     (void)_this;
-    decl = malloc(0x10);
+    decl = malloc(((0x10) + (sizeof(void*)>4 ? 0x100 : 0)));
     CDirect3DVertexDeclaration_CDirect3DVertexDeclaration((const CDirect3DVertexDeclaration *)decl, pVertexElements);
     *ppDecl = (IDirect3DVertexDeclaration9 *)decl;
     return 0;
@@ -1119,7 +1121,7 @@ HRESULT CDirect3DDevice_CreateVertexShader(const CDirect3DDevice *_this,
     void *shader;
     int errorPos;
     (void)_this;
-    shader = malloc(0x19c);
+    shader = malloc(((0x19c) + (sizeof(void*)>4 ? 0x100 : 0)));
     memset(shader, 0, 0x19c);
     CDirect3DVertexShader_CDirect3DVertexShader((const CDirect3DVertexShader *)shader, (const char *)pFunction);
     *ppShader = (IDirect3DVertexShader9 *)shader;
@@ -1139,7 +1141,7 @@ HRESULT CDirect3DDevice_CreatePixelShader(const CDirect3DDevice *_this,
         const char *src = (const char *)pFunction;
         if (src[0] == '!' && src[1] == '!') {
 
-            void *program = calloc(1, 0x20);
+            void *program = calloc(1, 0x80);   /* 0x20 was x86 size; over-allocate for x64 COpenGLARBFragmentProgram */
             const char *codePtr = src;
             COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(
                 (const COpenGLARBFragmentProgram *)program, NULL, (const string *)&codePtr);
@@ -1168,7 +1170,7 @@ HRESULT CDirect3DDevice_CreatePixelShaderOpenGL(const CDirect3DDevice *_this,
     if (pSrcData) {
         const char *src = (const char *)pSrcData;
         if (src[0] == '!' && src[1] == '!') {
-            void *program = calloc(1, 0x20);
+            void *program = calloc(1, 0x80);   /* 0x20 was x86 size; over-allocate for x64 COpenGLARBFragmentProgram */
             const char *codePtr = src;
             COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(
                 (const COpenGLARBFragmentProgram *)program, NULL, (const string *)&codePtr);
@@ -1213,7 +1215,7 @@ HRESULT CDirect3DDevice_CreateDepthStencilSurface(const CDirect3DDevice *_this,
     }
 
     glGetIntegerv(0x8069, &currentTexture);
-    surf = malloc(0x3c);
+    surf = malloc(((0x3c) + (sizeof(void*)>4 ? 0x100 : 0)));
     CDirect3DSurface_CDirect3DSurface((const CDirect3DSurface *)surf, 0, 0, 0, Width, Height, Format, surfMem, 0);
     *ppSurface = (IDirect3DSurface9 *)surf;
     glBindTexture(0xde1, currentTexture);
@@ -1246,7 +1248,7 @@ HRESULT CDirect3DDevice_CreateRenderTarget(const CDirect3DDevice *_this,
     }
 
     glGetIntegerv(0x8069, &currentTexture);
-    surf = malloc(0x3c);
+    surf = malloc(((0x3c) + (sizeof(void*)>4 ? 0x100 : 0)));
     CDirect3DSurface_CDirect3DSurface((const CDirect3DSurface *)surf, 0, 0, 0, Width, Height, Format, surfMem, 0);
     *ppSurface = (IDirect3DSurface9 *)surf;
     glBindTexture(0xde1, currentTexture);
@@ -1299,7 +1301,7 @@ HRESULT CDirect3DDevice_CreateOffscreenPlainSurface(const CDirect3DDevice *_this
         surfaceMemory = malloc(imageSize);
     }
 
-    surface = (CDirect3DSurface *)malloc(0x3c);
+    surface = (CDirect3DSurface *)malloc(0x80);   /* 0x3c was x86 sizeof(CDirect3DSurfaceImpl); x64 is 0x50 */
     CDirect3DSurface_CDirect3DSurface(surface, 0, 0, 0, Width, Height, Format, surfaceMemory, 0);
 
     if (ppSurface != NULL) {
@@ -1589,7 +1591,7 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
     if (!dev->streams[0] || !dev->indexBuffer)
         return 0;
 
-    vbData = *(byte **)((byte *)dev->streams[0] + 12);
+    vbData = *(byte **)((byte *)dev->streams[0] + sizeof(void *) + 8);   /* VB.data: vtable+refCount+lengthBytes (x86 was +12) */
     if (!vbData)
         return 0;
     offset = dev->streamOffsets[0];
@@ -1643,7 +1645,7 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
     else
         colorByteOrder = COLOR_BYTES_BGRA;
 
-    ibData = *(byte **)((byte *)dev->indexBuffer + 12);
+    ibData = *(byte **)((byte *)dev->indexBuffer + sizeof(void *) + 8);   /* IB.data (x86 was +12) */
     if (!ibData)
         return 0;
 

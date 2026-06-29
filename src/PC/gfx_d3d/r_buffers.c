@@ -30,7 +30,7 @@ void *R_AllocStaticVertexBuffer(IDirect3DVertexBuffer9 **vb, int sizeInBytes)
     HRESULT hr;
 
     dxPtr = (byte *)imp_dx;
-    device = *(void **)(dxPtr + 8);
+    device = (void *)((DxGlobals *)dxPtr)->device;   /* was *(void**)(dxPtr+8): x86 device offset */
     vtable = VTABLE(device);
 
     hr = ((CreateVertexBufferFn)vtable[0x68 / 4])(device, sizeInBytes, 8, 0, 0, vb, NULL);
@@ -72,7 +72,7 @@ void *R_AllocStaticIndexBuffer(IDirect3DIndexBuffer9 **ib, int sizeInBytes)
     HRESULT hr;
 
     dxPtr = (byte *)imp_dx;
-    device = *(void **)(dxPtr + 8);
+    device = (void *)((DxGlobals *)dxPtr)->device;   /* was *(void**)(dxPtr+8): x86 device offset */
     devVtable = VTABLE(device);
 
     hr = ((CreateIndexBufferFn)devVtable[0x6c / 4])(device, sizeInBytes, 8, 0x65, 0, ib, NULL);

@@ -93,7 +93,40 @@ static inline int float_seconds_to_ms(float val)
     return (int)floorf(val * 1000.0f + 0.5f);
 }
 
-extern const char *cg_shock_dvar_names[30];
+/* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
+const char *cg_shock_dvar_names[30] = {
+    "cg_shock_screenBlendTime",
+    "cg_shock_screenBlendFadeTime",
+    "cg_shock_viewKickPeriod",
+    "cg_shock_viewKickRadius",
+    "cg_shock_viewKickFadeTime",
+    "cg_shock_sound",
+    "cg_shock_soundFadeInTime",
+    "cg_shock_soundFadeOutTime",
+    "cg_shock_soundLoopFadeTime",
+    "cg_shock_soundLoopEndDelay",
+    "cg_shock_soundRoomType",
+    "cg_shock_soundDryLevel",
+    "cg_shock_soundWetLevel",
+    "cg_shock_soundModEndDelay",
+    "cg_shock_volume_auto",
+    "cg_shock_volume_auto2d",
+    "cg_shock_volume_menu",
+    "cg_shock_volume_weapon",
+    "cg_shock_volume_voice",
+    "cg_shock_volume_item",
+    "cg_shock_volume_body",
+    "cg_shock_volume_local",
+    "cg_shock_volume_music",
+    "cg_shock_volume_announcer",
+    "cg_shock_volume_shellshock",
+    "cg_shock_mouse",
+    "cg_shock_mouse_maxpitchspeed",
+    "cg_shock_mouse_maxyawspeed",
+    "cg_shock_mouse_sensitivityscale",
+    "cg_shock_mouse_fadeTime",
+};
+
 static vec2_t cg_perturbations[131];
 
 void CG_PerturbCamera(void);

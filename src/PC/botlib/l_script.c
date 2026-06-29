@@ -129,43 +129,38 @@ void PS_CreatePunctuationTable(script_t *script, punctuation_t *punctuations) {
     byte *p;
     int i;
 
+    /* x64: typed punctuation_t access (was x86 stride 0xc, next@+8, table 256*4). */
     if (!script->punctuationtable) {
-        script->punctuationtable = GetMemory(0x400);
+        script->punctuationtable = GetMemory(256 * (int)sizeof(punctuation_t *));
     }
 
-    table = (int **)script->punctuationtable;
-    memset(table, 0, 0x400);
+    {
+        punctuation_t **tbl = (punctuation_t **)script->punctuationtable;
+        punctuation_t *pp;
+        (void)table; (void)p; (void)i;
+        memset(tbl, 0, 256 * sizeof(punctuation_t *));
 
-    for (p = (byte *)punctuations; *(char **)p; p += 0xc) {
-        char *newStr = *(char **)p;
-        int firstChar = (signed char)newStr[0];
-        byte *existing = (byte *)table[firstChar];
-        int newLen;
-
-        if (!existing) {
-
-            *(void **)(p + 8) = 0;
-            table[firstChar] = (int *)p;
-        } else {
-
-            newLen = strlen(newStr);
-            byte *prev = NULL;
-            byte *cur = existing;
-
-            while (cur) {
-                int curLen = strlen(*(char **)cur);
-                if (curLen < newLen) {
-                    break;
-                }
-                prev = cur;
-                cur = *(byte **)(cur + 8);
-            }
-
-            *(void **)(p + 8) = cur;
-            if (prev) {
-                *(byte **)(prev + 8) = p;
+        for (pp = punctuations; pp->p; pp++) {
+            int firstChar = (signed char)pp->p[0];
+            punctuation_t *existing = tbl[firstChar];
+            if (!existing) {
+                pp->next = 0;
+                tbl[firstChar] = pp;
             } else {
-                table[firstChar] = (int *)p;
+                int newLen = (int)strlen(pp->p);
+                punctuation_t *prev = NULL;
+                punctuation_t *cur = existing;
+                while (cur) {
+                    if ((int)strlen(cur->p) < newLen)
+                        break;
+                    prev = cur;
+                    cur = (punctuation_t *)cur->next;
+                }
+                pp->next = (intptr_t)cur;
+                if (prev)
+                    prev->next = (intptr_t)pp;
+                else
+                    tbl[firstChar] = pp;
             }
         }
     }
@@ -467,13 +462,15 @@ void StripDoubleQuotes(char *string)
 
 int EndOfScript(script_t *script)
 {
-    return *(unsigned int *)((byte *)script + 0x44) >= *(unsigned int *)((byte *)script + 0x48);
+    /* was x86 offsets 0x44/0x48 (script_p/end_p) */
+    return script->script_p >= script->end_p;
 }
 
 void FreeScript(script_t *script)
 {
-    if (*(void **)((char *)script + 0x70))
-        FreeMemory(*(void **)((char *)script + 0x70));
+    /* was x86 offset 0x70 (punctuationtable) */
+    if (script->punctuationtable)
+        FreeMemory(script->punctuationtable);
     FreeMemory(script);
 }
 
@@ -489,14 +486,14 @@ script_t * LoadScriptFile(const char *filename)
     if (!fp)
         return (script_t *)0;
 
-    script = GetClearedMemory(length + 0x4d1);
+    script = GetClearedMemory(length + (int)sizeof(*script) + 1);   /* 0x4d1 was x86 sizeof(script_s)+1 */
     if (!script) {
         FS_FCloseFile(fp);
         return (script_t *)0;
     }
 
     strcpy(script->filename, filename);
-    script->buffer = (char *)script + 0x4d0;
+    script->buffer = (char *)script + sizeof(*script);   /* 0x4d0 was x86 sizeof(script_s) */
     script->buffer[length] = '\0';
     script->length = length;
     script->script_p = script->buffer;

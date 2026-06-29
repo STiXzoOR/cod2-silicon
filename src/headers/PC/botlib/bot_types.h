@@ -17,8 +17,8 @@ struct define_s {
     int numparms;
     token_t *parms;
     token_t *tokens;
-    int next;
-    int hashnext;
+    intptr_t next;       /* pointer-as-int -> truncated on x64 (intptr_t==int on x86) */
+    intptr_t hashnext;
 };
 
 struct directive_t {
@@ -30,13 +30,13 @@ struct indent_s {
     int type;
     int skip;
     script_t *script;
-    int next;
+    intptr_t next;       /* pointer-as-int -> truncated on x64 (intptr_t==int on x86) */
 };
 
 struct punctuation_s {
     char *p;
     int n;
-    int next;
+    intptr_t next;   /* linked-list ptr (was int -> truncated on x64; intptr_t==int on x86) */
 };
 
 struct script_s {

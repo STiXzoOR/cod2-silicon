@@ -2,6 +2,7 @@
 #include "imports.h"
 #include "bytematch.h"
 #include <string.h>
+#include <stddef.h>
 
 extern const dvar_t *com_developer;
 
@@ -219,7 +220,9 @@ void XAnimBlend(XAnim *anims, unsigned int animIndex, const char *name, unsigned
 
 XAnim *XAnimCreateAnims(const char *debugName, int size, Alloc_t Alloc)
 {
-    XAnim *anims = (XAnim *)Alloc(0xc + size * 8);
+    /* 0xc + size*8 was the x86 layout (header 12, XAnimEntry 8). On x64 the union pointer grows
+       both; size by offsetof/sizeof so it is correct on each arch. */
+    XAnim *anims = (XAnim *)Alloc((int)(offsetof(XAnim, entries) + (size_t)size * sizeof(XAnimEntry)));
     anims->size = size;
 
     if (g_anim_developer) {
@@ -227,7 +230,8 @@ XAnim *XAnimCreateAnims(const char *debugName, int size, Alloc_t Alloc)
         char *nameCopy = (char *)Z_MallocInternal(len);
         strcpy(nameCopy, debugName);
         anims->debugName = nameCopy;
-        anims->debugAnimNames = (const char **)Z_MallocInternal(size * 4);
+        /* size*4 assumed 4-byte pointers; on x64 these are 8 bytes. */
+        anims->debugAnimNames = (const char **)Z_MallocInternal((int)((size_t)size * sizeof(char *)));
     }
 
     if (Hunk_DataOnHunk(anims)) {
@@ -389,10 +393,12 @@ void XAnimSetAnimRate(XAnimTree *tree, unsigned int animIndex, float rate)
  * compiler to zero-extend into eax; the value logic is unchanged. */
 int XAnimIsLooped(const XAnim *anims, unsigned int animIndex)
 {
-    char *entry = (char *)anims + animIndex * 8 + 0xc;
-    if (*(unsigned short *)entry != 0)
-        return *(unsigned short *)(entry + 4) & 1;
-    return *(unsigned char *)(*(char **)(entry + 4) + 2);
+    /* was hardcoded x86 layout (entries at +0xc, 8-byte stride, union at +4); on x64 XAnimEntry
+       is 16B with the union at +8 and entries[] at +24 -> use the typed struct (correct on both). */
+    const XAnimEntry *e = &anims->entries[animIndex];
+    if (e->numAnims != 0)
+        return e->u.s.flags & 1;
+    return e->u.parts->bLoop;
 }
 
 Bool XAnimNotetrackExists(const XAnim *anims, unsigned int animIndex, unsigned int name)

@@ -94,7 +94,9 @@ int Scr_IsInOpcodeMemory(const char *pos)
     struct scrVarPub_t *scrVarPub = (struct scrVarPub_t *)imp_scrVarPub;
     struct scrCompilePub_t *scrCompPub = (struct scrCompilePub_t *)imp_scrCompilePub;
 
-    return (unsigned int)(pos - scrVarPub->programBuffer) < (unsigned int)scrCompPub->programLen;
+    /* was (unsigned int)(pos - programBuffer): the 64-bit ptr diff truncated to 32 bits on
+       x64, giving false positives for out-of-range pos. Use uintptr_t. */
+    return (uintptr_t)(pos - scrVarPub->programBuffer) < (uintptr_t)(unsigned int)scrCompPub->programLen;
 }
 
 Bool Scr_IsIdentifier(const char *token)
@@ -429,7 +431,14 @@ scr_func_t Scr_GetFunctionHandle(const char *filename, const char *name)
     codePos = (unsigned int)Scr_EvalVariable(codeVar);
 
     scrVarPub = (struct scrVarPub_t *)imp_scrVarPub;
+#if !defined(_M_X64) && !defined(__x86_64__)
+    /* x86: code positions are stored as absolute pointers -> convert to a program-buffer
+       offset. On x64 they are already stored as offsets (SCR_CODEPOS_ENC), so subtracting
+       the buffer base would underflow and wrongly fail every lookup. */
     codePos -= (unsigned int)(size_t)scrVarPub->programBuffer;
+#else
+    (void)scrVarPub;
+#endif
     if (codePos >= (unsigned int)scrCompPub->programLen)
         return 0;
 

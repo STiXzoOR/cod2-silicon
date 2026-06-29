@@ -13,7 +13,11 @@ const char *g_he_vertalign[8] = { (const char *)&str_002b4cd8, (const char *)&st
 
 extern game_hudelem_t g_hudelems[1024];
 static const game_hudelem_field_t fields[16];
-extern const char *g_he_font[3];
+/* g_he_font: migrated from the ILP32 data blob to typed C (re-lays-out per
+ * target; trailing blob bytes were inter-symbol padding). (x64 port Stage 2.) */
+const char *g_he_font[3] = {
+    "default", "bigfixed", "smallfixed",
+};
 extern const char *g_he_alignx[3];
 extern const char *g_he_aligny[3];
 extern const char *g_he_horzalign[8];
@@ -320,17 +324,13 @@ void GScr_AddFieldsForHudElems(void)
     int fieldIndex;
 
     for (fieldIndex = 0; fields[fieldIndex].name; ++fieldIndex) {
-        unsigned int idx = (unsigned int)(fieldIndex * (int)(sizeof(game_hudelem_field_t) / sizeof(int)));
-        unsigned int encodedValue;
-        unsigned short encoded;
-
-        encodedValue = idx + idx * 8;
-        encodedValue += encodedValue << 6;
-        encodedValue = idx + encodedValue * 8;
-        encodedValue += encodedValue << 15;
-        encodedValue = idx + encodedValue * 8;
-        encoded = (unsigned short)(-encodedValue);
-        Scr_AddClassField(1, fields[fieldIndex].name, encoded);
+        /* The original encodes the offset as idx*stride*inv(stride) == fieldIndex via a hash,
+           where stride = sizeof(game_hudelem_field_t)/sizeof(int). On x64 the struct's 3 pointers
+           make that stride even (10), which has no inverse mod 2^16, so the hash no longer recovers
+           the index and Scr_SetHudElemField indexes the wrong field ("string is not a float" on
+           level.clock.vertAlign). The decode (fields[offset]) just wants the field index, so store
+           it directly -- identical to what the hash yields on x86. */
+        Scr_AddClassField(1, fields[fieldIndex].name, (unsigned short)fieldIndex);
     }
 }
 

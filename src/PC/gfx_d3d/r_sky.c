@@ -21,7 +21,31 @@ extern const dvar_t *r_sunglare_max_angle;
 extern const dvar_t *r_sunglare_max_lighten;
 extern const dvar_t *r_sunglare_fadein;
 extern const dvar_t *r_sunglare_fadeout;
-extern const char *s_sundvars[21];
+/* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
+const char *s_sundvars[21] = {
+    "r_sunsprite_shader",
+    "r_sunsprite_size",
+    "r_sunflare_shader",
+    "r_sunflare_min_size",
+    "r_sunflare_min_angle",
+    "r_sunflare_max_size",
+    "r_sunflare_max_angle",
+    "r_sunflare_max_alpha",
+    "r_sunflare_fadein",
+    "r_sunflare_fadeout",
+    "r_sunblind_min_angle",
+    "r_sunblind_max_angle",
+    "r_sunblind_max_darken",
+    "r_sunblind_fadein",
+    "r_sunblind_fadeout",
+    "r_sunglare_min_angle",
+    "r_sunglare_max_angle",
+    "r_sunglare_max_lighten",
+    "r_sunglare_fadein",
+    "r_sunglare_fadeout",
+    "r_sun_fx_position",
+};
+
 extern const dvar_t *r_sun_fx_position;
 
 extern refimport_t ri;

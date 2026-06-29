@@ -134,5 +134,18 @@ long _InterlockedCompareExchange(long volatile *, long, long);
 #define S_ISREG(m) (((m) & 0xF000) == 0x8000)
 #endif
 
+/* COD2_ALT(lhs, rhs): emit a linker /alternatename directive from UNDECORATED C
+ * symbol names. x86 cl prefixes C symbols with one leading '_'; x64 cl uses no
+ * prefix. The alias-seam lists (msvc_alias_pragmas.h, msvc_seam_aliases.h,
+ * msvc_link_glue.c) pass bare names so this adds the right decoration per arch.
+ * (Adjacent string-literal concatenation inside __pragma is well-defined.) */
+#if defined(_M_X64) || defined(_M_ARM64)
+#define COD2_ALT_U_ ""
+#else
+#define COD2_ALT_U_ "_"
+#endif
+#define COD2_ALT(lhs, rhs) \
+    __pragma(comment(linker, "/alternatename:" COD2_ALT_U_ lhs "=" COD2_ALT_U_ rhs))
+
 #endif /* _MSC_VER */
 #endif /* COD2_MSVC_GCC_COMPAT_H */

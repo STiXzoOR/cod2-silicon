@@ -12,6 +12,25 @@ extern unsigned char scrStringGlob[];
 #define SG_INIT_FLAG (*(unsigned char *)((char *)&scrStringGlob + 65536))
 #define SG_RESTART (*(void **)((char *)&scrStringGlob + 65540))
 
+/* x64 workaround: the hash-chain unlink can leave a freed string's bucket in the
+   chain (a reconstruction bug in the bucket-recycling logic). Re-finding such a
+   stale bucket and ref-adding it writes a refcount into a now-FREE memory-tree
+   node, corrupting the buddy free-list. SL_NODE_DEAD() reports whether a string
+   node is currently free per the buddy allocator (MT_IsNodeCovered), so ref-add
+   paths can refuse to touch dead nodes. */
+extern int MT_IsNodeCovered(int);
+/* Guard used ONLY in the find match-and-return paths: when the hash chain still references a
+   node the buddy allocator considers FREE (an x64 reconstruction artifact), returning it is
+   fine for identity but ref-adding it would corrupt the buddy free-list -> later id collisions
+   ("X already defined"). It must NOT gate the direct ref-add functions (SL_AddRefToString /
+   Scr_SetString / SL_TransferRefToUser) -- those run for live nodes (e.g. a function name like
+   'main' at registration) and skipping them frees a live string -> "could not find main". */
+#if defined(_M_X64) || defined(__x86_64__)
+#define SL_NODE_DEAD(n) (MT_IsNodeCovered((int)(n)))
+#else
+#define SL_NODE_DEAD(n) (0)   /* x86 string table is unaffected; keep original behavior */
+#endif
+
 extern void MT_Init(void);
 extern byte *MT_InitForceAlloc(void);
 extern unsigned short MT_AllocIndex(int numBytes, int type);
@@ -144,12 +163,59 @@ void SL_RemoveRefToStringOfLen(unsigned int stringValue, unsigned int len)
     if (ref != 0)
         return;
 
+#if defined(_M_X64) || defined(__x86_64__)
+    /* x64: do NOT reclaim a string node whose refcount reached zero. The free path (hash-chain
+       unlink + buddy MT_FreeIndex) has an x64 reconstruction corruption: freed nodes linger in
+       the hash chain and get re-found (colliding ids -> "X already defined" / "unknown
+       function"), and live function names ('main') get dropped between compile and runtime
+       lookup. Leaking zero-ref nodes for the session sidesteps the whole corruption: the node
+       stays valid and correctly findable. The pool is ~64K nodes; a single map load/compile
+       stays well within it. (x86 keeps the original reclaiming behavior below.) */
+    return;
+#endif
+
     esi = compute_hash_slot((const char *)(entry + 4), len);
 
     newEntry_offset = esi * 4;
     edi = (unsigned short *)((char *)&scrStringGlob + newEntry_offset);
 
     MT_FreeIndex(stringValue, len + 4);
+
+#if defined(_M_X64) || defined(__x86_64__)
+    /* x64: the original chain unlink (below) leaves freed strings findable in the hash
+       chain on x64 (a reconstruction bug in the bucket recycling) -> they get re-found and
+       ref-added, corrupting the buddy free-list. Do a robust brute-force removal instead:
+       drop every bucket that references the freed string from its chain. */
+    {
+        unsigned int b;
+        for (b = 1; b < 0x4000; b++) {
+            if ((SG_W0(b) & 0xc000) == 0)
+                continue;                                   /* empty bucket */
+            if (SG_W1(b) != (unsigned short)stringValue)
+                continue;                                   /* not this string */
+
+            if (SG_W0(b) & 0x8000) {                        /* chain HEAD at slot b */
+                unsigned int nxt = SG_W0(b) & 0x3fff;
+                if (nxt == b) {                             /* single element -> empty + recycle */
+                    unsigned short oh = SG_W0(0);
+                    SG_W0(b) = oh; SG_W1(b) = 0;
+                    SG_W1((unsigned int)oh) = (unsigned short)b; SG_W0(0) = (unsigned short)b;
+                } else {                                    /* pull the next bucket up into the head */
+                    unsigned short oh;
+                    SG_W1(b) = SG_W1(nxt);
+                    SG_W0(b) = (unsigned short)(0x8000 | (SG_W0(nxt) & 0x3fff));
+                    oh = SG_W0(0);
+                    SG_W0(nxt) = oh; SG_W1(nxt) = 0;
+                    SG_W1((unsigned int)oh) = (unsigned short)nxt; SG_W0(0) = (unsigned short)nxt;
+                }
+            } else {                                        /* chained bucket -> neutralize (find skips SG_W1==0) */
+                SG_W1(b) = 0;
+            }
+        }
+        (void)edi; (void)esi; (void)adr0;
+        return;
+    }
+#endif
 
     chain_next_idx = (unsigned int)(SG_W0(esi) & 0x3fff);
     hash_ptr = (unsigned short *)((char *)&scrStringGlob + chain_next_idx * 4);
@@ -274,7 +340,7 @@ unsigned int SL_FindStringOfLen(const char *str, unsigned int len)
 
     {
         byte *refEntry = base + stringValue * 8;
-        if ((unsigned char)refEntry[0] == (unsigned char)byteLen) {
+        if ((unsigned char)refEntry[0] == (unsigned char)byteLen && stringValue != 0xFFFF) {
 
             if (memcmp(str, refEntry + 4, len) == 0) {
 
@@ -306,7 +372,7 @@ unsigned int SL_FindStringOfLen(const char *str, unsigned int len)
                 sv2 = (unsigned int)newEntry_ptr[1];
                 e2 = base + sv2 * 8;
 
-                if ((unsigned char)e2[0] == (unsigned char)byteLen) {
+                if ((unsigned char)e2[0] == (unsigned char)byteLen && sv2 != 0xFFFF) {
                     if (memcmp(str, e2 + 4, len) == 0) {
                         {
                             unsigned short pf = SG_W0(prev_idx) & 0xc000;
@@ -398,11 +464,12 @@ loop_top: {
                 unsigned int sv_head = sw1_val;
                 byte *refEntry = base + sv_head * 8;
 
-                if ((unsigned char)refEntry[0] == (unsigned char)byteLen) {
+                if ((unsigned char)refEntry[0] == (unsigned char)byteLen && sv_head != 0xFFFF) {
 
                     if (memcmp(str, refEntry + 4, len) == 0) {
-
-                        if (!((unsigned char)refEntry[1] & (unsigned char)user)) {
+                        /* return the matched id (identity preserved) but never ref-add a
+                           node the buddy considers FREE -- that write corrupts the free-list */
+                        if (!((unsigned char)refEntry[1] & (unsigned char)user) && !SL_NODE_DEAD(sv_head)) {
                             refEntry[1] |= (unsigned char)user;
                             *(unsigned short *)(refEntry + 2) += 1;
 
@@ -440,7 +507,7 @@ loop_top: {
                         node_sv = (unsigned int)cur_ptr[1];
                         node_entry = base + node_sv * 8;
 
-                        if ((unsigned char)node_entry[0] == (unsigned char)byteLen) {
+                        if ((unsigned char)node_entry[0] == (unsigned char)byteLen && node_sv != 0xFFFF) {
                             byte *cmp_ptr = node_entry + 4;
                             if (memcmp(str, cmp_ptr, len) == 0) {
 
@@ -464,7 +531,7 @@ loop_top: {
                                     entry_ptr[1] = (unsigned short)node_sv;
                                 }
 
-                                if (!((unsigned char)node_entry[1] & (unsigned char)user)) {
+                                if (!((unsigned char)node_entry[1] & (unsigned char)user) && !SL_NODE_DEAD(node_sv)) {
                                     node_entry[1] |= (unsigned char)user;
                                     *(unsigned short *)(node_entry + 2) += 1;
                                 }

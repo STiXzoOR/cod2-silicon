@@ -11,7 +11,16 @@ extern const dvar_t *showpackets;
 extern const dvar_t *showdrop;
 extern const dvar_t *packetDebug;
 static char s[64];
-extern char *netsrcString[2];
+
+/* netsrcString: netsrc -> name. Migrated from the ILP32 data blob to typed C so
+ * it re-lays-out per target (2 char* = 8 B on x86, 16 B on x64). The blob's
+ * 28-byte extent was 8 B of pointers + 20 B of inter-symbol padding (next symbol
+ * g_console_field_width is distinct; nothing reads netsrcString past [1]) -- the
+ * padding is dropped. (x64 port Stage 2.) */
+char *netsrcString[2] = {
+    "client1",
+    "server",
+};
 static int net_iProfilingOn;
 extern loopback_t loopbacks[2];
 

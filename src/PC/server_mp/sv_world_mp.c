@@ -38,7 +38,7 @@ extern void MatrixTransposeTransformVector43(const vec_t *in, const float *mat, 
 extern void MatrixTransformVector(const vec_t *in, const float (*axis)[3], vec_t *out);
 extern void DObjGeomTraceline(void *obj, const vec_t *start, const vec_t *end, int contentmask, void *objTrace);
 extern void DObjTraceline(void *obj, const vec_t *start, const vec_t *end, unsigned char *priorityMap, void *objTrace);
-extern int SV_SvEntityForGentity(const gentity_t *gEnt);
+extern byte *SV_SvEntityForGentity(const gentity_t *gEnt);
 
 extern vec3_t actorLocationalMins;
 extern vec3_t actorLocationalMaxs;

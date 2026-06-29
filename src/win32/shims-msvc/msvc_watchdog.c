@@ -15,6 +15,19 @@
 #include <stdio.h>
 #pragma comment(lib, "dbghelp.lib")
 
+/* CONTEXT register names and the StackWalk image type differ by arch. */
+#if defined(_M_X64)
+#define WD_PC       Rip
+#define WD_FRAME    Rbp
+#define WD_STACK    Rsp
+#define WD_MACHINE  IMAGE_FILE_MACHINE_AMD64
+#else
+#define WD_PC       Eip
+#define WD_FRAME    Ebp
+#define WD_STACK    Esp
+#define WD_MACHINE  IMAGE_FILE_MACHINE_I386
+#endif
+
 static DWORD g_main_tid;
 
 static DWORD WINAPI cod2_watchdog(LPVOID unused)
@@ -40,19 +53,20 @@ static DWORD WINAPI cod2_watchdog(LPVOID unused)
         if (!GetThreadContext(main, &ctx)) { ResumeThread(main); continue; }
 
         memset(&sf, 0, sizeof(sf));
-        sf.AddrPC.Offset    = ctx.Eip; sf.AddrPC.Mode    = AddrModeFlat;
-        sf.AddrFrame.Offset = ctx.Ebp; sf.AddrFrame.Mode = AddrModeFlat;
-        sf.AddrStack.Offset = ctx.Esp; sf.AddrStack.Mode = AddrModeFlat;
+        sf.AddrPC.Offset    = ctx.WD_PC;    sf.AddrPC.Mode    = AddrModeFlat;
+        sf.AddrFrame.Offset = ctx.WD_FRAME; sf.AddrFrame.Mode = AddrModeFlat;
+        sf.AddrStack.Offset = ctx.WD_STACK; sf.AddrStack.Mode = AddrModeFlat;
 
         f = fopen("cod2_msvc_freeze.txt", "w");
         if (f) {
-            fprintf(f, "main-thread stack (tid %lu) eip=%08lx\n", g_main_tid, ctx.Eip);
+            fprintf(f, "main-thread stack (tid %lu) pc=%p\n",
+                    g_main_tid, (void *)(DWORD_PTR)ctx.WD_PC);
             for (i = 0; i < 48; i++) {
                 char b[sizeof(SYMBOL_INFO) + 260];
                 SYMBOL_INFO *si = (SYMBOL_INFO *)b;
                 DWORD64 disp = 0;
                 IMAGEHLP_LINE64 line; DWORD ld = 0;
-                if (!StackWalk64(IMAGE_FILE_MACHINE_I386, proc, main, &sf, &ctx, NULL,
+                if (!StackWalk64(WD_MACHINE, proc, main, &sf, &ctx, NULL,
                                  SymFunctionTableAccess64, SymGetModuleBase64, NULL))
                     break;
                 if (!sf.AddrPC.Offset) break;

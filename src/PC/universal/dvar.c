@@ -38,7 +38,15 @@ enum {
 static const char dvarDigitStrings[10][2] = {
     "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"
 };
-extern const char *dvarOnOffStrings[2];
+/* dvarOnOffStrings: migrated from the ILP32 data blob to typed C (re-lays-out
+ * per target). Blob extent was 8 B of pointers + 24 B inter-symbol padding (next
+ * symbol theFxHelper distinct; only [0]/[1] read) -- padding dropped. Targets are
+ * the reconstructed literals in common.c. (x64 port Stage 2.) */
+extern const char str_00219524[], str_00219528[];
+const char *dvarOnOffStrings[2] = {
+    (const char *)str_00219524,  /* "off" */
+    (const char *)str_00219528,  /* "on"  */
+};
 static Bool isDvarSystemActive;
 static Bool isLoadingAutoExecGlobalFlag;
 
@@ -1729,11 +1737,7 @@ static void Dvar_InsertSorted(dvar_t *dvar)
         link = (dvar_t **)&(*link)->next;
     }
 
-#if defined(__x86_64__)
-    dvar->next = (long)(uintptr_t)*link;
-#else
-    dvar->next = (int)(uintptr_t)*link;
-#endif
+    dvar->next = (intptr_t)(uintptr_t)*link;
     *link = dvar;
 }
 
@@ -1816,11 +1820,7 @@ static const dvar_t *Dvar_RegisterVariant_impl(
     dvar->modified = 0;
     Dvar_InsertSorted(dvar);
     dvar->flags = newFlags;
-#if defined(__x86_64__)
-    dvar->hashNext = (long)(uintptr_t)dvarHashTable[hash];
-#else
-    dvar->hashNext = (int)(uintptr_t)dvarHashTable[hash];
-#endif
+    dvar->hashNext = (intptr_t)(uintptr_t)dvarHashTable[hash];
     dvarHashTable[hash] = dvar;
 
     return dvar;

@@ -674,6 +674,7 @@ void SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
     c = MSG_ReadStringLine(msg);
     SV_Cmd_TokenizeString(c);
     c = SV_Cmd_Argv(0);
+    Com_Printf("[cnx] SV_ConnectionlessPacket cmd='%s'\n", c);
 
 #if COD2_IS_PATCH_13
 

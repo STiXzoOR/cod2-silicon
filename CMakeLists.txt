@@ -24,11 +24,19 @@ cmake_minimum_required(VERSION 3.16)
 # and the global GAS ASM language (MSVC's blobs become C, not MASM).
 option(COD2_WIN_MSVC "Native Windows build with MSVC/cl instead of MinGW" OFF)
 
+# x86_64 (LP64) target. OFF (default) = the original ILP32/x86 reconstruction
+# (4-byte pointers, the committed 32-bit data blobs). ON is an IN-PROGRESS port:
+# it suppresses the -m32 seed and the 32-bit-only asserts/lib paths so an x64
+# toolchain can configure and COMPILE the source set (to measure the x64 error
+# surface). It does NOT link/run yet — the typed-data migration (Stage 2) is the
+# prerequisite. Additive: every 32-bit path below is preserved as the default.
+option(COD2_X64 "Target x86_64/LP64 instead of the original ILP32/x86 (port in progress)" OFF)
+
 # -m32 must be in effect when the native compiler is probed (multilib link
-# tests). Seed it ONLY for the plain native build — the MinGW (i686) and
-# Emscripten toolchains are 32-bit/wasm already and must not see -m32, and MSVC
-# rejects it outright.
-if(NOT CMAKE_TOOLCHAIN_FILE AND NOT COD2_WIN_MSVC)
+# tests). Seed it ONLY for the plain native 32-bit build — the MinGW (i686) and
+# Emscripten toolchains are 32-bit/wasm already and must not see -m32, MSVC
+# rejects it outright, and the x64 port wants the native 64-bit ABI.
+if(NOT CMAKE_TOOLCHAIN_FILE AND NOT COD2_WIN_MSVC AND NOT COD2_X64)
   set(CMAKE_C_FLAGS_INIT   "-m32")
   set(CMAKE_ASM_FLAGS_INIT "-m32")
 endif()
@@ -57,6 +65,15 @@ set(COD2_WNO
   -Wno-error=implicit-int -Wno-error=int-conversion -Wno-error=return-mismatch)
 
 set(COD2_SRC_DIR ${CMAKE_SOURCE_DIR}/src)
+
+# x64 port: expose COD2_X64 to the source so the ILP32 layout pins
+# (COD2_ASSERT_FIELD/SIZE in cod2_defs.h) and other arch-specific code can adapt.
+# Global so every target/branch below inherits it. No-op for the default 32-bit
+# build. Placed before any target is created.
+if(COD2_X64)
+  add_compile_definitions(COD2_X64=1)
+  # add_compile_definitions(COD2_GUARDHEAP=1)  # DIAGNOSTIC: guard-page Z_Malloc to catch heap overruns
+endif()
 
 # =============================================================================
 if(EMSCRIPTEN)
@@ -313,7 +330,22 @@ else()
 option(COD2_DEBUG "-O0, no hardening (gdb / canary-UB work; mirrors DEBUG=1)" OFF)
 set(COD2_FEATURE_CFLAGS "" CACHE STRING "Pass-through feature gates, e.g. -DCOD2_PATCH_13=1")
 set(COD2_WWWDL_LIBS "-l:libcurl.so.4" CACHE STRING "1.3 redirected-download backend lib")
-set(COD2_LIBSTDCPP "/usr/lib32/libstdc++.so.6" CACHE STRING "32-bit libstdc++")
+
+# Architecture seam (COD2_X64): the original build is ILP32/x86 (-m32, /usr/lib32,
+# 4-byte-stack-boundary). The x64 port uses the native LP64 ABI instead. Every
+# value below defaults to the original 32-bit one so existing builds are byte-for-
+# byte unchanged when COD2_X64=OFF.
+if(COD2_X64)
+  set(COD2_ARCH_CFLAGS "")                                 # native x86_64
+  set(COD2_ARCH_LDFLAGS "")
+  set(COD2_LIBSTDCPP "stdc++" CACHE STRING "C++ runtime")  # native libstdc++
+  set(COD2_ARCH_LIBDIRS "")
+else()
+  set(COD2_ARCH_CFLAGS -m32 -mincoming-stack-boundary=2)
+  set(COD2_ARCH_LDFLAGS -m32)
+  set(COD2_LIBSTDCPP "/usr/lib32/libstdc++.so.6" CACHE STRING "32-bit libstdc++")
+  set(COD2_ARCH_LIBDIRS -L/usr/lib32 -L/usr/lib/i386-linux-gnu)
+endif()
 
 find_package(PkgConfig QUIET)
 if(PkgConfig_FOUND)
@@ -331,7 +363,7 @@ if(COD2_DEBUG)
 else()
   set(COD2_OPT_FLAGS
       -O2 -fno-strict-aliasing -fwrapv -fno-strict-overflow
-      -fno-delete-null-pointer-checks -mincoming-stack-boundary=2 -D_FORTIFY_SOURCE=2)
+      -fno-delete-null-pointer-checks -D_FORTIFY_SOURCE=2)
   set(COD2_HARDEN_CFLAGS -fstack-protector-strong -fstack-clash-protection)
   set(COD2_HARDEN_LDFLAGS -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack)
 endif()
@@ -339,7 +371,7 @@ endif()
 separate_arguments(COD2_FEATURE_LIST UNIX_COMMAND "${COD2_FEATURE_CFLAGS}")
 
 add_compile_options(
-  "$<$<COMPILE_LANGUAGE:C>:-m32;-fno-pie;-no-pie;-w;-g;-msse;-fno-omit-frame-pointer>"
+  "$<$<COMPILE_LANGUAGE:C>:${COD2_ARCH_CFLAGS};-fno-pie;-no-pie;-w;-g;-msse;-fno-omit-frame-pointer>"
   "$<$<COMPILE_LANGUAGE:C>:-DSDL_DISABLE_IMMINTRIN_H>"
   "$<$<COMPILE_LANGUAGE:C>:${SDL2_CFLAGS_OTHER}>"
   "$<$<COMPILE_LANGUAGE:C>:${COD2_OPT_FLAGS}>"
@@ -349,7 +381,7 @@ add_compile_options(
 )
 include_directories(${COD2_SRC_DIR}/PC/speex ${COD2_SRC_DIR} ${COD2_SRC_DIR}/headers ${CMAKE_SOURCE_DIR} ${SDL2_INCLUDE_DIRS})
 
-add_link_options(-m32 -no-pie -L/usr/lib32 -L/usr/lib/i386-linux-gnu -rdynamic ${COD2_HARDEN_LDFLAGS})
+add_link_options(${COD2_ARCH_LDFLAGS} -no-pie ${COD2_ARCH_LIBDIRS} -rdynamic ${COD2_HARDEN_LDFLAGS})
 
 set(COD2_LINK_EXTRA
   -Wl,--wrap,R_Error
@@ -369,8 +401,7 @@ set(COD2_LINK_EXTRA
   -Wl,--defsym,svs_ptr=svs
   -Wl,--defsym,cg_globUI=legacyHacks
   -Wl,--defsym,g_time=imp_level_bgs
-  -Wl,--defsym,g_time_ptr=imp_bgs
-  -Wl,--defsym,methods=methods_003138c0)
+  -Wl,--defsym,g_time_ptr=imp_bgs)
 
 set(COD2_LIBS GL X11 m pthread dl z ${COD2_LIBSTDCPP} ${SDL2_LIBRARIES})
 if(COD2_WWWDL_LIBS)

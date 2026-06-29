@@ -155,7 +155,7 @@ __attribute__((constructor)) static void init_rune_locale(void)
         rt[i] = 0x2000 | 0x0800 | 0x40000 | 0x10;
 }
 
-extern unsigned char sDisplayList[12];
+extern void *sDisplayList[3];   /* matches the real def (void*[3]); was [12] (x86 4-byte slots) */
 extern int sInWindowMode;
 
 struct DisplayMode {
@@ -215,9 +215,12 @@ __attribute__((constructor)) static void init_display_list(void)
 
     sInWindowMode = 1;
 
-    *(void **)&sDisplayList[0] = dummy_display_entry;
-    *(void **)&sDisplayList[4] = dummy_display_entry + 100;
-    *(void **)&sDisplayList[8] = dummy_display_entry + 100;
+    /* array indexing -> arch-correct slot offsets (0/8/16 on x64, 0/4/8 on x86);
+     * the old &sDisplayList[0/4/8] wrote 8-byte pointers at 4-byte spacing on x64
+     * and corrupted each other -> sDisplayList[0] read back as garbage. */
+    sDisplayList[0] = dummy_display_entry;
+    sDisplayList[1] = dummy_display_entry + 100;
+    sDisplayList[2] = dummy_display_entry + 100;
 }
 
 #if !defined(_WIN32) || defined(W32_CLIENT)
@@ -654,17 +657,23 @@ ContextRef MacDisplay_CreateScreenContext(int inDepthSize, int inUseStencil,
         SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &got_depth);
         SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &got_stencil);
         SDL_GL_GetAttribute(SDL_GL_DOUBLEBUFFER, &got_db);
+        extern void Com_Printf(const char *fmt, ...);
+        /* glGetString returns a pointer; without a prototype it defaults to int
+         * return -> the 8-byte pointer is truncated to 32 bits on x64. */
+        extern const unsigned char *glGetString(unsigned int name);
         glver = (const char *)glGetString(0x1F02 );
         glrend = (const char *)glGetString(0x1F01 );
-        fprintf(stderr,
-                "GL context: requested depth=%d stencil=%d -> got depth=%d stencil=%d doublebuf=%d\n",
+        (void)got_db; (void)glver; (void)glrend;
+        /* These GL-info diagnostics go to stderr, which is NULL/unconnected in the
+         * GUI-subsystem x64 build (no console) -> fprintf derefs a NULL FILE*. Use
+         * Com_Printf (the engine console) instead, which is always valid. */
+        Com_Printf("GL context: requested depth=%d stencil=%d -> got depth=%d stencil=%d doublebuf=%d\n",
                 inDepthSize ? inDepthSize : 24, inUseStencil ? 8 : 0,
                 got_depth, got_stencil, got_db);
-        fprintf(stderr, "GL_VERSION=%s GL_RENDERER=%s\n",
+        Com_Printf("GL_VERSION=%s GL_RENDERER=%s\n",
                 glver ? glver : "(null)", glrend ? glrend : "(null)");
         if (got_depth > 0 && got_depth < 24)
-            fprintf(stderr,
-                    "WARNING: depth buffer is only %d bits -- expect z-fighting\n",
+            Com_Printf("WARNING: depth buffer is only %d bits -- expect z-fighting\n",
                     got_depth);
     }
 

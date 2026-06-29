@@ -41,6 +41,7 @@ BOOL QueryPerformanceFrequency(void *lpFrequency)
     return 1;
 }
 
+#if !defined(_M_X64)  /* x64: use real Win32 (Mac/POSIX emulation collides by name) */
 BOOL QueryPerformanceCounter(void *lpPerformanceCount)
 {
     struct timeval tv;
@@ -49,7 +50,9 @@ BOOL QueryPerformanceCounter(void *lpPerformanceCount)
     *counter = (long long)tv.tv_sec * 1000000LL + tv.tv_usec;
     return 1;
 }
+#endif
 
+#if !defined(_M_X64)  /* x64: use real Win32 (Mac/POSIX emulation collides by name) */
 int MessageBoxA(void *hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
 {
     (void)hWnd;
@@ -71,6 +74,7 @@ int MessageBoxA(void *hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
     }
     return 1;
 }
+#endif
 
 BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
 {
@@ -92,11 +96,13 @@ BOOL SetThreadPriority(HANDLE hThread, int nPriority)
     return 1;
 }
 
+#if !defined(_M_X64)  /* x64: use real Win32 (Mac/POSIX emulation collides by name) */
 DWORD GetCurrentThreadId(void)
 {
 
     return (DWORD)pthread_main_np();
 }
+#endif
 
 void WinSleep(DWORD dwMilliseconds)
 {
@@ -199,6 +205,7 @@ typedef struct {
     int find_dirs;
 } FFState;
 
+#if !defined(_M_X64)  /* x64: use real Win32 (Mac/POSIX emulation collides by name) */
 HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 {
     FFState *state;
@@ -257,7 +264,9 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
     free(state);
     return (HANDLE)-1;
 }
+#endif
 
+#if !defined(_M_X64)  /* x64: use real Win32 (Mac/POSIX emulation collides by name) */
 BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 {
     FFState *state = (FFState *)hFindFile;
@@ -291,6 +300,7 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
     }
     return 0;
 }
+#endif
 
 void ZNSt6vectorI6FFItemSaIS0_EE13_M_insert_auxEN9__gnu_cxx17__normal_iteratorIPS0_S2_EERKS0_(void)
 {

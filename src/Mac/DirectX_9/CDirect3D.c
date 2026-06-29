@@ -224,14 +224,26 @@ HRESULT CDirect3D_CreateDevice(const void *_this, UINT Adapter, int DeviceType, 
         sdl_gl_height = height;
     }
     ctx = MacDisplay_CreateScreenContext(24, 1, 0, 0, 0, NULL);
+    /* DeviceImpl field offsets differ on x64 (8-byte ptrs): context@16 renderTarget@32
+     * backBuffer@48 (x86: 0x08/0x14/0x1C). GetBackBuffer reads the typed backBuffer
+     * field, so these must land at the right offset or it returns NULL. */
+#if defined(COD2_X64)
+    *(void **)(deviceMem + 16) = ctx;            /* context */
+#else
     *(void **)(deviceMem + 0x008) = ctx;
+#endif
 
     {
-        void *bbSurf = calloc(1, 0x3c);
+        void *bbSurf = calloc(1, 0x80);   /* 0x3c was x86 sizeof(CDirect3DSurfaceImpl); x64 is 0x50 */
 
         CDirect3DSurface_CDirect3DSurface(bbSurf, 0, 0, 0, width, height, 0x16, NULL, NULL);
+#if defined(COD2_X64)
+        *(void **)(deviceMem + 48) = bbSurf;     /* backBuffer */
+        *(void **)(deviceMem + 32) = bbSurf;     /* renderTarget */
+#else
         *(void **)(deviceMem + 0x01C) = bbSurf;
         *(void **)(deviceMem + 0x014) = bbSurf;
+#endif
     }
 
     *ppReturnedDeviceInterface = deviceMem;
@@ -247,12 +259,14 @@ void ZN9CDirect3DD0Ev(const void *_this)
     (void)_this;
 }
 
-int Direct3DCreate9(int sdkVersion)
+void *Direct3DCreate9(int sdkVersion)
 {
     (void)sdkVersion;
     sDirect3DInterface.vtable = vtbl_CDirect3D;
     sDirect3DInterface.refCount = 1;
-    return (int)(unsigned long)&sDirect3DInterface;
+    /* returns a pointer -- was `int`/`(int)(unsigned long)` which truncated the
+     * 8-byte CDirect3D address on x64 (int and Win64 long are both 4 bytes). */
+    return (void *)&sDirect3DInterface;
 }
 
 fnptr_t vtbl_CDirect3D[] = { (fnptr_t)CDirect3D_QueryInterface, (fnptr_t)CDirect3D_AddRef, (fnptr_t)CDirect3D_Release, (fnptr_t)CDirect3D_RegisterSoftwareDevice, (fnptr_t)CDirect3D_GetAdapterCount, (fnptr_t)CDirect3D_GetAdapterIdentifier, (fnptr_t)CDirect3D_GetAdapterModeCount, (fnptr_t)CDirect3D_EnumAdapterModes, (fnptr_t)CDirect3D_GetAdapterDisplayMode, (fnptr_t)CDirect3D_CheckDeviceType, (fnptr_t)CDirect3D_CheckDeviceFormat, (fnptr_t)CDirect3D_CheckDeviceMultiSampleType, (fnptr_t)CDirect3D_CheckDepthStencilMatch, (fnptr_t)CDirect3D_CheckDeviceFormatConversion, (fnptr_t)CDirect3D_GetDeviceCaps, (fnptr_t)CDirect3D_GetAdapterMonitor, (fnptr_t)CDirect3D_CreateDevice, (fnptr_t)ZN9CDirect3DD1Ev, (fnptr_t)ZN9CDirect3DD0Ev };

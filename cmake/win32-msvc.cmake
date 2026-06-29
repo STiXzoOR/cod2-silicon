@@ -14,11 +14,24 @@
 #     cmake --build --preset msvc-client
 # =============================================================================
 
-if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4)
+# Pointer width must match the selected arch. The default (32-bit) reconstruction
+# is ILP32; COD2_X64 is the in-progress LP64 port (see root CMakeLists / Stage 2).
+if(COD2_X64)
+  if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+    message(FATAL_ERROR
+      "COD2_X64=ON needs the x64 cl (8-byte pointers). Use `vcvarsall.bat x64` "
+      "(Hostx64/x64). Got ${CMAKE_SIZEOF_VOID_P}-byte pointers.")
+  endif()
+  message(WARNING
+    "COD2_X64 MSVC build is IN PROGRESS: it compiles the source set to measure "
+    "the x64 error surface but does NOT link/run yet (the ILP32 data blobs are "
+    "not x64-portable -- Stage 2). Building cod2_msvc_objs only.")
+elseif(NOT CMAKE_SIZEOF_VOID_P EQUAL 4)
   message(FATAL_ERROR
     "MSVC build must be 32-bit: the reconstructed data layout is ILP32 "
     "(4-byte pointers, hardcoded sizes). Use the x86 cl (Hostx64/x86 or "
-    "Hostx86/x86), e.g. `vcvarsall.bat x86`. Got ${CMAKE_SIZEOF_VOID_P}-byte pointers.")
+    "Hostx86/x86), e.g. `vcvarsall.bat x86`. Got ${CMAKE_SIZEOF_VOID_P}-byte pointers. "
+    "(For the x64 port pass -DCOD2_X64=ON.)")
 endif()
 
 enable_language(CXX)   # full client pulls in the C++ renderer/UI surface
@@ -51,9 +64,14 @@ endif()
 
 # --- include search path -----------------------------------------------------
 # SDL2 (user-supplied) lives in third_party/SDL2-* (preferred) or the legacy
-# src/win32/sdl2; collect its include + x86 lib dirs for use below.
+# src/win32/sdl2; collect its include + arch lib dirs for use below.
+if(COD2_X64)
+  set(COD2_SDL2_ARCH x64)
+else()
+  set(COD2_SDL2_ARCH x86)
+endif()
 file(GLOB COD2_SDL2_INC_DIRS ${CMAKE_SOURCE_DIR}/third_party/SDL2-*/include)
-file(GLOB COD2_SDL2_LIB_DIRS ${CMAKE_SOURCE_DIR}/third_party/SDL2-*/lib/x86)
+file(GLOB COD2_SDL2_LIB_DIRS ${CMAKE_SOURCE_DIR}/third_party/SDL2-*/lib/${COD2_SDL2_ARCH})
 list(APPEND COD2_SDL2_INC_DIRS ${COD2_SRC_DIR}/win32/sdl2/include)
 list(APPEND COD2_SDL2_LIB_DIRS ${COD2_SRC_DIR}/win32/sdl2/lib)
 
@@ -129,9 +147,18 @@ else()
   endif()
 endif()
 
-# The engine object set (all ~410 TUs compile clean under cl).
+# The engine object set (all ~410 TUs compile clean under cl on x86).
 add_library(cod2_msvc_objs OBJECT ${MSVC_C})
 set_target_properties(cod2_msvc_objs PROPERTIES LINKER_LANGUAGE CXX)
+
+# x64 port: Stage 2 migrated all pointer-bearing data out of the blob into typed
+# C, so data32.c is now a pure-scalar/single-pointer image that lays out
+# correctly on LP64. We now attempt the full link (Stage 4) to surface the x64
+# link surface (notably: x64 has NO leading-underscore symbol decoration, so the
+# /alternatename seams need regenerating). Still iterating; `cmake --build ...`.
+if(COD2_X64)
+  message(STATUS "MSVC client (x64 port): Stage 4 link attempt -- iterating.")
+endif()
 
 # --- data blobs (Stage 6) ----------------------------------------------------
 # The reconstructed .data/.rodata, as portable C (the native_gen variants, which
@@ -161,8 +188,10 @@ add_executable(cod2_win32
 # exe lean+deterministic (dropping /FORCE re-enables the Debug incremental link).
 # SDL2 is a user-supplied external (README); COD2_SDL2_LIB (found above) links a
 # real MSVC SDL2.lib when present, else sdl2_stub.c lets the exe link.
+# /SAFESEH is an x86-only concept (x64 has no SAFESEH); only pass it on x86.
 target_link_options(cod2_win32 PRIVATE
-  /SAFESEH:NO /SUBSYSTEM:WINDOWS /MAP /INCREMENTAL:NO)
+  $<$<NOT:$<BOOL:${COD2_X64}>>:/SAFESEH:NO>
+  /SUBSYSTEM:WINDOWS /MAP /INCREMENTAL:NO)
 target_link_libraries(cod2_win32 PRIVATE
   $<$<BOOL:${COD2_SDL2_LIB}>:${COD2_SDL2_LIB}>
   ${COD2_SDL2_STATIC_DEPS}

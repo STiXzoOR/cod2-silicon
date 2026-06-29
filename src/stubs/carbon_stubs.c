@@ -94,9 +94,11 @@ void HideWindow(WindowRef window)
 {
 }
 
+#if !defined(_M_X64)  /* x64: real user32 ShowWindow (Mac Carbon stub collides by name) */
 void ShowWindow(WindowRef window)
 {
 }
+#endif
 
 void DisposeWindow(WindowRef window)
 {
@@ -257,9 +259,11 @@ OSStatus CreateNewWindow(unsigned int wClass, unsigned int attrs, const Rect *bo
     return 0;
 }
 
+#if !defined(_M_X64)  /* x64: real user32 MoveWindow (Mac Carbon stub collides by name) */
 void MoveWindow(WindowRef window, short h, short v, Boolean front)
 {
 }
+#endif
 
 void SetWindowContentColor(WindowRef window, const void *color)
 {

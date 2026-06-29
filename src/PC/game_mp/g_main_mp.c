@@ -37,9 +37,9 @@ static const char str_dbg_spawn[] = "";
 static const char str_dbg_load[] = "";
 static const char str_dbg_vmtop_fmt[] = "";
 static const char str_dbg_vmtop2_fmt[] = "";
-static const char str_dbg_ff_before[] = "";
-static const char str_dbg_ff_after_load[] = "";
-static const char str_dbg_ff_after_startup[] = "";
+static const char str_dbg_ff_before[] = "[ckpt] after Scr_LoadLevel ff=%p\n";
+static const char str_dbg_ff_after_load[] = "[ckpt] after Scr_LoadGameType ff=%p\n";
+static const char str_dbg_ff_after_startup[] = "[ckpt] after Scr_StartupGameType ff=%p\n";
 static const char str_dbg_ff_trace[] = "";
 static const char str_dbg_ff_agv[] = "";
 static const char str_dbg_ff_gls[] = "";
@@ -188,6 +188,90 @@ void G_AddDebugString(const vec_t *xyz, const vec_t *color, float scale, const c
 void G_ShutdownGame(qboolean freeScripts);
 static void __attribute_regparm__(1) G_RunFrameForEntity(gentity_t *ent);
 int G_RunFrame(int levelTime);
+
+extern const char *SL_ConvertToString(unsigned int index);
+void dbg_scan_ents(const char *where)
+{
+    int i;
+    for (i = 0; i < level.num_entities; i++) {
+        gentity_t *e = &g_entities[i];
+        if (!e->r.inuse)
+            continue;
+        if ((unsigned int)e->s.pos.trType > 20u) {
+            Com_Printf("[scan@%s] CORRUPT ent#%d eType=%d trType=0x%x class=%s\n", where, i,
+                       e->s.eType, (unsigned int)e->s.pos.trType,
+                       SL_ConvertToString((unsigned short)e->classname));
+            return;
+        }
+    }
+    Com_Printf("[scan@%s] clean (num=%d)\n", where, level.num_entities);
+}
+
+unsigned int g_dbg_lastBuiltin;
+void *g_dbg_lastBuiltinFn;
+unsigned int g_lastop_dbg;
+/* write-watchpoint: make ent#439's page read-only so the corrupting write faults with an exact rip */
+void dbg_protect_439(void)
+{
+    static int done;
+    void *__stdcall GetModuleHandleA(const char *);
+    void *__stdcall GetProcAddress(void *, const char *);
+    typedef int(__stdcall * VPt)(void *, unsigned long long, unsigned long, unsigned long *);
+    static VPt vp;
+    char *base;
+    unsigned long long page;
+    unsigned long oldp;
+    if (done)
+        return;
+    done = 1;
+    if (!vp) {
+        void *k = GetModuleHandleA("kernel32.dll");
+        vp = (VPt)GetProcAddress(k, "VirtualProtect");
+    }
+    base = (char *)&g_entities[439];
+    page = ((unsigned long long)(uintptr_t)base) & ~0xFFFull;
+    if (vp) {
+        vp((void *)(uintptr_t)page, 0x1000, 2 /*PAGE_READONLY*/, &oldp);
+        Com_Printf("[wp] protected ent#439 page %p (ent at %p)\n", (void *)(uintptr_t)page, (void *)base);
+    }
+}
+void dbg_end_probe(int step)
+{
+    static int rep;
+    if (!rep && (unsigned int)g_entities[439].s.pos.trType > 20u) {
+        rep = 1;
+        Com_Printf("[end-probe] ent#439 corrupt at End step=%d trType=0x%x\n",
+                   step, (unsigned int)g_entities[439].s.pos.trType);
+    }
+}
+void dbg_check439_op(unsigned int lastop)
+{
+    static int rep;
+    if (!rep && (unsigned int)g_entities[439].s.pos.trType > 20u) {
+        rep = 1;
+        Com_Printf("[op-corruptor] ent#439 corrupt AFTER opcode=0x%x trType=0x%x\n",
+                   lastop, (unsigned int)g_entities[439].s.pos.trType);
+    }
+}
+void dbg_check439_pre(unsigned int idx)
+{
+    static int rep;
+    if (!rep && (unsigned int)g_entities[439].s.pos.trType > 20u) {
+        rep = 1;
+        Com_Printf("[pre] ent#439 ALREADY corrupt BEFORE builtinIndex=%u (so a prior opcode wrote it)\n", idx);
+    }
+}
+void dbg_check439(void)
+{
+    static int rep;
+    if (!rep && (unsigned int)g_entities[439].s.pos.trType > 20u) {
+        void *__stdcall GetModuleHandleA(const char *);
+        rep = 1;
+        Com_Printf("[corruptor] ent#439 trType=0x%x after builtinIndex=%u fn_rva=0x%llx\n",
+                   (unsigned int)g_entities[439].s.pos.trType, g_dbg_lastBuiltin,
+                   (unsigned long long)((char *)g_dbg_lastBuiltinFn - (char *)GetModuleHandleA(0)));
+    }
+}
 
 int G_GetSavePersist(void)
 {
@@ -460,7 +544,7 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     level_bgs.AllocXAnim   = (void *(*)())Hunk_AllocXAnimServer;
     level_bgs.anim_user    = 1;
 
-    logFile = (const char *)g_log->current.integer;
+    logFile = g_log->current.string;
     if (*logFile != '\0') {
 
         FS_FOpenFileByMode(logFile, &level.logFile, g_logSync->current.integer ? 3 : 2);
@@ -469,7 +553,7 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
             G_LogPrintf("------------------------------------------------------------\n");
             G_LogPrintf("InitGame: %s\n", info);
         } else {
-            Com_Printf("WARNING: Couldn't open logfile: %s\n", g_log->current.integer);
+            Com_Printf("WARNING: Couldn't open logfile: %s\n", g_log->current.string);
         }
     } else {
         Com_Printf("Not logging to disk.\n");
@@ -558,14 +642,17 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     }
 
     if (g_dedicated->current.integer > 0) {
-        const char *pw = (const char *)g_password->current.integer;
+        const char *pw = g_password->current.string;
         if (*pw != '\0') {
             Com_sprintf(info, sizeof(info), "password: %s\n", pw);
         }
     }
 
+    Com_Printf("[ckpt] before CalculateRanks\n");
     CalculateRanks();
     level.initializing = 0;
+    Com_Printf("[ckpt] G_InitGame END\n");
+    dbg_scan_ents("G_InitGame_end");
 
     return;
 }
@@ -736,7 +823,7 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     level_bgs.AllocXAnim   = (void *(*)())Hunk_AllocXAnimServer;
     level_bgs.anim_user    = 1;
 
-    logFile = (const char *)g_log->current.integer;
+    logFile = g_log->current.string;
     if (*logFile != '\0') {
 
         FS_FOpenFileByMode(logFile, &level.logFile, g_logSync->current.integer ? 3 : 2);
@@ -745,7 +832,7 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
             G_LogPrintf("------------------------------------------------------------\n");
             G_LogPrintf("InitGame: %s\n", info);
         } else {
-            Com_Printf("WARNING: Couldn't open logfile: %s\n", g_log->current.integer);
+            Com_Printf("WARNING: Couldn't open logfile: %s\n", g_log->current.string);
         }
     } else {
         Com_Printf("Not logging to disk.\n");
@@ -834,7 +921,7 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     }
 
     if (g_dedicated->current.integer > 0) {
-        const char *pw = (const char *)g_password->current.integer;
+        const char *pw = g_password->current.string;
         if (*pw != '\0') {
             Com_sprintf(info, sizeof(info), "password: %s\n", pw);
         }
@@ -1118,6 +1205,7 @@ int G_RunFrame(int levelTime)
 
     *(void **)imp_bgs = (void *)&level_bgs;
 
+    { static int sc; if (sc++ < 1) dbg_scan_ents("RunFrame0_start"); }
     for (i = 0; i < level.num_entities; i++) {
         entPtr = &g_entities[i];
         if (entPtr->r.inuse) {
@@ -1192,7 +1280,10 @@ int G_RunFrame(int levelTime)
         }
 
         Scr_RunCurrentThreads();
+        Com_Printf("[ckpt] G_RunFrame trigger round index=%d size=%d more=%d\n", index, level.currentTriggerListSize, bMoreTriggered);
     } while (bMoreTriggered);
+    Com_Printf("[ckpt] G_RunFrame trigger loop DONE\n");
+    { static int s; if (s++ < 1) dbg_scan_ents("after_triggers"); }
 
     for (i = 0; i < level.num_entities; i++) {
         entPtr = &g_entities[i];
@@ -1211,13 +1302,17 @@ int G_RunFrame(int levelTime)
         }
     }
 
+    Com_Printf("[ckpt] G_RunFrame DObj-update loop DONE\n");
     Scr_IncTime();
+    Com_Printf("[ckpt] G_RunFrame Scr_IncTime DONE num_entities=%d\n", level.num_entities);
 
     level.currentEntityThink = 0;
     for (i = 0; i < level.num_entities; i++) {
+        { static int rep; if (!rep && i < level.num_entities && (unsigned int)g_entities[439].s.pos.trType > 20u) {
+            rep = 1; Com_Printf("[corrupt] ent#439 trType went bad BEFORE think i=%d (prev ent eType=%d class=%s)\n",
+                i, g_entities[i-1].s.eType, SL_ConvertToString((unsigned short)g_entities[i-1].classname)); } }
         entPtr = &g_entities[i];
         if (entPtr->r.inuse) {
-
             tagInfo_t *tagInfo = (tagInfo_t *)entPtr->tagInfo;
             if (tagInfo) {
                 gentity_t *parent = tagInfo->parent;
@@ -1227,6 +1322,7 @@ int G_RunFrame(int levelTime)
         }
         level.currentEntityThink = i + 1;
     }
+    Com_Printf("[ckpt] G_RunFrame think loop DONE\n");
     level.currentEntityThink = -1;
 
     {

@@ -143,8 +143,8 @@ extern const char *Cmd_Args(int startIndex);
 static void UI_DrawCenteredText(const char *text, FontHandle font, float scale, float y, const vec_t *color, int style);
 extern Bool IsTalking(void);
 
-extern int CL_RegisterMaterialNoMip(const char *name, int flags);
-extern int CL_RegisterFont(const char *name, int flags);
+extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int flags);   /* was int -> truncated MaterialHandle on x64 */
+extern FontHandle CL_RegisterFont(const char *name, int flags);   /* was int -> truncated FontHandle on x64 */
 extern int Com_FindSoundAlias(const char *name);
 extern void CL_DrawStretchPic(float x, float y, float w, float h, int horzAlign, int vertAlign, float s0, float t0, float s1, float t1, const vec_t *color, MaterialHandle material);
 extern float CL_NormalizedTextScale(FontHandle font, float scale);
@@ -168,8 +168,8 @@ extern int FS_FOpenFileByMode(const char *name, int *f, int mode);
 extern int FS_Read(void *buf, int len, int f);
 extern void FS_FCloseFile(fileHandle_t f);
 extern void Com_Printf(const char *fmt, ...);
-extern int UI_LoadMenu(const char *name, int imageTrack);
-extern void UI_AddMenuList(uiInfo_t *info, int menuList);
+extern MenuList *UI_LoadMenu(const char *name, int imageTrack);
+extern void UI_AddMenuList(uiInfo_t *info, MenuList *menuList);
 extern void UI_MapLoadInfo(const char *csv);
 extern void UI_FillRect(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color);
 extern void *Menus_FindByName(uiInfo_t *info, const char *name);
@@ -210,7 +210,7 @@ extern int CIN_PlayCinematic(const char *name, int x, int y, int w, int h, int f
 extern int CIN_RunCinematic(int handle);
 extern void CIN_SetExtents(int handle, int x, int y, int w, int h);
 extern void CIN_DrawCinematic(int handle);
-extern void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, int material);
+extern void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle material);
 extern void Key_SetCatcher(int catcher);
 extern int Key_GetCatcher(void);
 extern void Key_ClearStates(void);
@@ -218,7 +218,7 @@ extern int Menu_Count(uiInfo_t *info);
 extern void *Menu_GetFocused(uiInfo_t *info);
 extern void Menu_HandleKey(uiInfo_t *info, void *menu, int key, int down);
 extern void Menu_PaintAll(uiInfo_t *info);
-extern void Menu_SetFeederSelection(uiInfo_t *info, int feederID, int feederId2, int index, const char *name);
+extern void Menu_SetFeederSelection(uiInfo_t *info, menuDef_t *menu, int feeder, int index, const char *name);
 extern void Menu_Setup(uiInfo_t *info);
 extern qboolean Display_MouseMove(uiInfo_t *info, void *capture, int x, int y);
 extern int Display_KeyBindPending(void);
@@ -236,7 +236,7 @@ extern const void *Dvar_RegisterFloat(const char *name, float value, float min, 
 extern const void *Dvar_RegisterBool_mac(const char *name, int value, int flags);
 extern const void *Dvar_RegisterString_mac(const char *name, const char *value, int flags);
 extern void UI_LoadArenas(void);
-extern int UI_LoadMenus(const char *name, int imageTrack);
+extern MenuList *UI_LoadMenus(const char *name, int imageTrack);
 extern void UI_LoadSoundAliases(void);
 extern void Controls_SetDefaults(void);
 extern void Controls_GetConfig(void);
@@ -470,7 +470,7 @@ char *GetMenuBuffer(const char *filename)
 qboolean Load_ScriptMenu(const char *pszMenu, int imageTrack)
 {
     char szMenuFile[256];
-    int menuList;
+    MenuList *menuList;
 
     strcpy(szMenuFile, "ui_mp/scriptmenus/");
 
@@ -605,7 +605,7 @@ void UI_DrawMapLevelshot(void)
 #ifndef __EMSCRIPTEN__
 void UI_LoadIngameMenus(void)
 {
-    int menuList;
+    MenuList *menuList;
 
     if (g_ingameMenusLoaded)
         return;
@@ -1229,7 +1229,7 @@ void UI_Init(void)
 {
     byte *legacyBase;
     int width, height;
-    int menuList;
+    MenuList *menuList;
     int netGameTypeIdx;
     float mPitch;
 
@@ -2687,9 +2687,9 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
 
     case 221:
     {
-        int lsHandle = sharedUiInfo.serverStatus.currentServerPreview;
+        MaterialHandle lsHandle = sharedUiInfo.serverStatus.currentServerPreview;
         if (!lsHandle) {
-            lsHandle = (int)CL_RegisterMaterialNoMip("menu/art/unknownmap", 3);
+            lsHandle = CL_RegisterMaterialNoMip("menu/art/unknownmap", 3);
         }
         UI_DrawHandlePic(rect[0], rect[1], rect[2], rect[3], *(int *)&rect[4], *(int *)&rect[5], color, lsHandle);
         return;
@@ -2742,9 +2742,9 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
             int cinHandle = sharedUiInfo.serverStatus.currentServerCinematic;
             if (cinHandle < 0) {
 
-                int img = sharedUiInfo.serverStatus.currentServerPreview;
+                MaterialHandle img = sharedUiInfo.serverStatus.currentServerPreview;
                 if (!img) {
-                    img = (int)CL_RegisterMaterialNoMip("menu/art/unknownmap", 3);
+                    img = CL_RegisterMaterialNoMip("menu/art/unknownmap", 3);
                 }
                 UI_DrawHandlePic(rect[0], rect[1], rect[2], rect[3], *(int *)&rect[4], *(int *)&rect[5], color, img);
             } else {
@@ -2891,7 +2891,7 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         if (!IsTalking())
             return;
         {
-            int voiceMat = (int)CL_RegisterMaterialNoMip("voice_on", 7);
+            MaterialHandle voiceMat = CL_RegisterMaterialNoMip("voice_on", 7);
             UI_DrawHandlePic(rect[0], rect[1], rect[2], rect[3], *(int *)&rect[4], *(int *)&rect[5], color, voiceMat);
         }
         return;
@@ -2925,7 +2925,7 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
             clientNum = -1;
 
         {
-            int voiceMat;
+            MaterialHandle voiceMat;
             float actualScale;
             int textHeight;
             int num;
@@ -2939,7 +2939,7 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
             if (num >= 64)
                 num = -1;
 
-            voiceMat = (int)CL_RegisterMaterialNoMip("voice_on", 7);
+            voiceMat = CL_RegisterMaterialNoMip("voice_on", 7);
             actualScale = CL_NormalizedTextScale(font, scale);
             textHeight = CL_TextHeight(font);
 
@@ -3561,7 +3561,7 @@ void UI_RunMenuScript(const char **args)
                     for (i = numMenus - 1; i >= 0; i--) {
                         menuDef_t *menu = uiInfo->uiDC.menuStack[i];
                         if (*(byte *)&menu->window.dynamicFlags[0] & 4) {
-                            Menu_SetFeederSelection(uiInfo, (int)menu, 0x18, 0, 0);
+                            Menu_SetFeederSelection(uiInfo, menu, 0x18, 0, 0);
                         }
                     }
                 }
@@ -3590,7 +3590,7 @@ void UI_RunMenuScript(const char **args)
                     for (i = numMenus - 1; i >= 0; i--) {
                         menuDef_t *menu = uiInfo->uiDC.menuStack[i];
                         if (*(byte *)&menu->window.dynamicFlags[0] & 4) {
-                            Menu_SetFeederSelection(uiInfo, (int)menu, 0x18, 0, 0);
+                            Menu_SetFeederSelection(uiInfo, menu, 0x18, 0, 0);
                         }
                     }
                 }
@@ -3622,7 +3622,7 @@ void UI_RunMenuScript(const char **args)
             for (i = numMenus - 1; i >= 0; i--) {
                 menuDef_t *menu = uiInfo->uiDC.menuStack[i];
                 if (*(byte *)&menu->window.dynamicFlags[0] & 4) {
-                    Menu_SetFeederSelection(uiInfo, (int)menu, 0x18, found, 0);
+                    Menu_SetFeederSelection(uiInfo, menu, 0x18, found, 0);
                 }
             }
         }
@@ -3690,7 +3690,7 @@ void UI_RunMenuScript(const char **args)
                 for (i = numMenus - 1; i >= 0; i--) {
                     menuDef_t *menu = uiInfo->uiDC.menuStack[i];
                     if (*(byte *)&menu->window.dynamicFlags[0] & 4) {
-                        Menu_SetFeederSelection(uiInfo, (int)menu, 0x18, found, 0);
+                        Menu_SetFeederSelection(uiInfo, menu, 0x18, found, 0);
                     }
                 }
             }
@@ -3751,7 +3751,7 @@ void UI_RunMenuScript(const char **args)
                     for (i = numMenus - 1; i >= 0; i--) {
                         menuDef_t *menu = uiInfo->uiDC.menuStack[i];
                         if (*(byte *)&menu->window.dynamicFlags[0] & 4) {
-                            Menu_SetFeederSelection(uiInfo, (int)menu, 0x18, found, 0);
+                            Menu_SetFeederSelection(uiInfo, menu, 0x18, found, 0);
                         }
                     }
                 }
@@ -4422,7 +4422,7 @@ void UI_DrawConnectScreen(void)
             int gi;
             byte *base = (byte *)&sharedUiInfo;
             for (gi = 0; gi < numGameTypes; gi++) {
-                if (I_stricmp(g_gametype, *(const char **)(base + 0x114c + gi * 8)) == 0) {
+                if (I_stricmp(g_gametype, sharedUiInfo.gameTypes[gi].gameTypeName) == 0) {   /* was base+0x114c+gi*8 (x86) */
                     pszGameType = sharedUiInfo.gameTypes[gi].gameTypeName;
                     break;
                 }
@@ -4436,8 +4436,7 @@ void UI_DrawConnectScreen(void)
             int mi;
             mapDisplayName = g_mapname;
             for (mi = 0; mi < numMaps; mi++) {
-                byte *entry = (byte *)&sharedUiInfo + mi * 0xa4;
-                if (I_stricmp(g_mapname, *(const char **)(entry + 0x1358)) == 0)
+                if (I_stricmp(g_mapname, sharedUiInfo.mapList[mi].mapName) == 0)   /* was &sharedUiInfo+mi*0xa4+0x1358 (x86) */
                     break;
             }
         }
@@ -4914,7 +4913,7 @@ void UI_Init(void)
 {
     byte *legacyBase;
     int width, height;
-    int menuList;
+    MenuList *menuList;
     int netGameTypeIdx;
     float mPitch;
 

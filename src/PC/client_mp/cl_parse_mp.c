@@ -22,7 +22,24 @@ extern int CL_ClearStaticDownload(void);
 #endif
 
 extern int cl_connectedToPureServer;
-extern char *svc_strings[256];
+
+/* svc_strings: server-command name table. Migrated from the ILP32 data blob
+ * (build/native_gen/data32.c) to a typed C definition so it re-lays-out per
+ * target -- 256 char* is 1024 B on x86 (byte-identical to the old blob) and
+ * 2048 B on x64. The 8 live entries point at the reconstructed string literals
+ * in common.c; entries [8..255] are NULL. (x64 port Stage 2 pilot; cf. the
+ * noticeErrors / holdrand typed-data migrations.) */
+char *svc_strings[256] = {
+    "svc_nop",
+    "svc_gamestate",
+    "svc_configstring",
+    "svc_baseline",
+    "svc_serverCommand",
+    "svc_download",
+    "svc_snapshot",
+    "svc_EOF",
+    /* [8 .. 255] implicitly NULL */
+};
 
 extern void *cl;
 extern byte cls_ptr[];

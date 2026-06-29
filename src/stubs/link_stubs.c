@@ -539,11 +539,13 @@ char g_deadChat_ptr[64] __attribute__((aligned(4))) = { 0 };
 char g_enemylookDist[64] __attribute__((aligned(4))) = { 0 };
 
 char GetComponentVersion[64] __attribute__((aligned(4))) = { 0 };
+#if !defined(_M_X64)  /* x64: real kernel32 GetCurrentProcess (Mac PSN stub collides by name) */
 int GetCurrentProcess(void *psn)
 {
     (void)psn;
     return 0;
 }
+#endif
 char GetCursor[64] __attribute__((aligned(4))) = { 0 };
 char GetGlobalMouse[64] __attribute__((aligned(4))) = { 0 };
 char GetGWorldPixMap[64] __attribute__((aligned(4))) = { 0 };
@@ -734,7 +736,7 @@ unsigned char UI_Component_g[224] __attribute__((alias("__ZN12UI_Component1gE"))
 /* alias UI_Component_g -> the C++ member symbol. The C identifier
  * __ZN12UI_Component1gE emits MSVC symbol ___ZN12UI_Component1gE (one extra
  * leading underscore on x86). */
-#pragma comment(linker, "/alternatename:_UI_Component_g=___ZN12UI_Component1gE")
+COD2_ALT("UI_Component_g", "__ZN12UI_Component1gE")
 #else
 __asm__(".globl UI_Component_g\n.set UI_Component_g, __ZN12UI_Component1gE");
 #endif
@@ -785,7 +787,7 @@ int D3DXGetShaderConstantTable(const void *function, void **constantTable)
     (void)function;
     if (constantTable) {
 
-        void **ct = (void **)calloc(1, 16);
+        void **ct = (void **)calloc(1, 4 * sizeof(void *));   /* 16 was x86 (4*4); x64 needs 4*8 */
         ct[0] = vtbl_CD3DXConstantTable;
         ct[1] = (void *)1;
         ct[2] = calloc(1, 32);

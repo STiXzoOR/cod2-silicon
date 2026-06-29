@@ -1787,6 +1787,7 @@ void CL_CheckForResend(void)
 
     conn->connectTime = cls.realtime;
     conn->connectPacketCount++;
+    Com_Printf("[cnx] CL_CheckForResend state=%d count=%d realtime=%d\n", conn->state, conn->connectPacketCount, cls.realtime);
 
     if (conn->state == CA_CONNECTING) {
         const dvar_t *lanAuthorize = *(const dvar_t **)imp_net_lanauthorize;
@@ -2080,6 +2081,7 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
 
     Cmd_TokenizeString(MSG_ReadStringLine(msg));
     cmd = Cmd_Argv(0);
+    Com_Printf("[cnx] CL_ConnectionlessPacket cmd='%s' state=%d\n", cmd, conn->state);
 
 #if COD2_IS_PATCH_13
 

@@ -38,6 +38,7 @@ void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int ver
         t1 = 1.0f;
     }
 
+    { extern void Com_Printf(const char *, ...); static int n; if (n++ < 4) Com_Printf("[uidhp] #%d hMaterial=%p\n", n, (void *)hMaterial); }
     CL_DrawStretchPic(x, y, w, h, horzAlign, vertAlign, s0, t0, s1, t1, color, hMaterial);
 }
 

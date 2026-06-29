@@ -21,7 +21,9 @@ extern OSStatus MacFiles_RemoveDirectoryA(const char *inPath);
 
 void Sys_Mkdir(const char *path)
 {
-    if (access(path, 7) != 0) {
+    /* mode 7 (R|W|X_OK) is invalid for Windows _access (X_OK unsupported) -> CRT
+       invalid-parameter -> __fastfail/abrupt process exit. We only need an existence check. */
+    if (access(path, 0) != 0) {
         mkdir(path, 0777);
     }
 }
@@ -126,7 +128,7 @@ char **Sys_ListFiles(const char *directory, const char *extension, const char *f
         if (nfiles == 0)
             return NULL;
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
         listCopy = (char **)Z_MallocInternal((nfiles + 1) * sizeof(char *));
 #else
         listCopy = (char **)Z_MallocInternal((nfiles + 1) * 4);
@@ -200,7 +202,7 @@ char **Sys_ListFiles(const char *directory, const char *extension, const char *f
     if (nfiles == 0)
         return NULL;
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
     listCopy = (char **)Z_MallocInternal((nfiles + 1) * sizeof(char *));
 #else
     listCopy = (char **)Z_MallocInternal((nfiles + 1) * 4);

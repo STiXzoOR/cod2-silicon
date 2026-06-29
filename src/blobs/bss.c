@@ -1,10 +1,11 @@
 #include "common_types.h"
 
-#if defined(__x86_64__)
-typedef long BSSINT;
-#else
-typedef int BSSINT;
-#endif
+/* BSSINT: a BSS slot the reconstruction declared `int` but which frequently
+ * holds a POINTER (fs_basepath, sMainWindow, ...). It must be pointer-sized.
+ * `long` is 8 bytes on LP64 (Linux x64) but only 4 on LLP64 (Windows x64), so
+ * it truncated pointers there. intptr_t is pointer-sized on every arch
+ * (4 on x86, 8 on both LP64 and LLP64). (x64 port Stage 4.) */
+typedef intptr_t BSSINT;
 
 BSSINT sBuilderProcPtr;
 BSSINT sControlValidationUPP;
@@ -170,7 +171,11 @@ unsigned char bg_sharedAmmoCaps[512];
 unsigned char bg_iNumWeapClips[32];
 unsigned char bg_weapClips[544];
 unsigned char scrVmGlob[8320];
+#if defined(_M_X64) || defined(__x86_64__)
+struct scrCompileGlob_t scrCompileGlob;   /* x86 was unsigned char[512]; x64 struct is ~920B (value_start[32] grows) -> blob overflowed */
+#else
 unsigned char scrCompileGlob[512];
+#endif
 unsigned char scrAnimGlob[640];
 BSSINT jump_height;
 BSSINT jump_spreadAdd;
@@ -229,13 +234,32 @@ unsigned char s_cmdList[128];
 unsigned char s_debugFrameGlob[2399616];
 unsigned char s_backEndData[2399596];
 unsigned char g_dummyBuf[20];
-unsigned char re[384];
+refexport_t re;
 BSSINT warnCount_00c85b00;
 BSSINT warnCount_00c85b04;
 BSSINT warnCount_00c85b08;
 BSSINT warnCount_00c85b0c;
 unsigned char warnCount_00c85b10[112];
+#if defined(COD2_X64)
+/* x64-relaid material registry (must match the definition in r_material.c). */
+struct MaterialGlobals {
+    int vertexDeclCount;
+    struct MaterialVertexDeclaration vertexDecls[32];
+    struct MaterialTechniqueSet *techSetTable[1024];
+    int techCount;
+    struct MaterialTechnique *techTable[1024];
+    int literalCount;
+    float literals[64];
+    struct MaterialStateMap *stateMapTable[32];
+    int stringCount;
+    const char *stringTable[64];
+    int shaderCount;
+    struct MaterialShader *shaderTable[256];
+};
+struct MaterialGlobals materialGlobals;
+#else
 unsigned char materialGlobals[10752];
+#endif
 unsigned char s_cache[50304];
 unsigned char g_imageProgs[448];
 unsigned char imageGlobals[8256];
@@ -338,7 +362,7 @@ unsigned char rect_00f00744[24];
 unsigned char inHandleKey[36];
 unsigned char initialized_00f00780[128];
 unsigned char msgInit[32];
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
 
 struct huffman_t msgHuff;
 #else
@@ -494,7 +518,7 @@ unsigned char fs_serverReferencedIwds[4096];
 unsigned char fs_numServerReferencedIwds[32];
 unsigned char fs_serverIwdNames[4096];
 unsigned char fs_serverIwds[4096];
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
 
 fileHandleData_t fsh[74];
 #else
@@ -529,7 +553,7 @@ BSSINT snd_stereo;
 BSSINT snd_bits;
 BSSINT snd_khz;
 unsigned char snd_errorOnMissing[84];
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
 
 struct snd_local_t g_snd;
 #else
@@ -612,11 +636,19 @@ unsigned char g_script_error_level[32];
 unsigned char g_script_error[2400];
 unsigned char scrVarPub[262240];
 unsigned char scrVarGlob[1048608];
+#if defined(__x86_64__) || defined(_M_X64)
+struct scrCompilePub_t scrCompilePub;   /* typed so the x64-wider func_table (intptr_t) is sized correctly */
+#else
 unsigned char scrCompilePub[65592];
+#endif
 unsigned char scrParserPub[28];
 unsigned char scrParserGlob[128];
+#if defined(__x86_64__) || defined(_M_X64)
+struct scrAnimPub_t scrAnimPub;   /* typed: xanim_lookup[2][128] of scr_animtree_t grows on x64 (blob was x86-sized 1152) */
+#else
 unsigned char scrAnimPub[1152];
-#if defined(__x86_64__)
+#endif
+#if defined(__x86_64__) || defined(_M_X64)
 
 struct g_sa_type g_sa;
 #else
@@ -768,16 +800,16 @@ BSSINT r_ignoreHwGamma;
 BSSINT r_gamma;
 BSSINT r_overbrightBits;
 unsigned char r_ignore[120];
-unsigned char dx[11744];
+struct DxGlobals dx;
 unsigned char vidConfig[64];
-unsigned char ri[576];
-unsigned char rg[12800];
-unsigned char rgp[4336];
+refimport_t ri;
+r_globals_t rg;
+r_global_permanent_t rgp;
 unsigned char g_disableRendering[16];
-unsigned char dxState[8580];
+struct DxState dxState;   /* was unsigned char[8580] (x86 size); x64 sizeof is larger -> overflowed into g_disableRendering */
 unsigned char g_FenceID[124];
-unsigned char tess[370688];
-unsigned char backEnd[224912];
+materialCommands_t tess;
+r_backEndGlobals_t backEnd;
 unsigned char backEndData[16];
 unsigned char sunFlareArray[228];
 unsigned char rgl[28];
@@ -815,7 +847,14 @@ unsigned char com_playerProfile[124];
 unsigned char __ZN10CVAOPacket14sGenericPacketE[688];
 unsigned char __ZN10CVAOPacket11sAllPacketsE[80];
 unsigned char __ZN12CStreamSound10sQTStreamsE[128];
+#if defined(COD2_X64)
+/* PlayerKeyState: keys[256] of qkey_t (16B on x64 vs 12B x86) -> 292 + 256*16 = 4388.
+ * The 3392 was the x86 size; the data.c `keys=playerKeys+292` byte offsets are
+ * arch-neutral, but the array must be big enough for the x64 qkey_t stride. */
+unsigned char playerKeys[4416];
+#else
 unsigned char playerKeys[3392];
+#endif
 unsigned char g_consoleField[280];
 BSSINT historyLine;
 BSSINT nextHistoryLine;
@@ -1097,7 +1136,7 @@ BSSINT rcon_password;
 BSSINT sv_zombietime;
 BSSINT sv_timeout;
 unsigned char sv_fps[108];
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
 
 server_t sv;
 serverStatic_t svs;
@@ -1162,7 +1201,7 @@ extern int g_banIPs_dvar __attribute__((alias("g_banIPs")));
 #elif defined(_MSC_VER)
 /* MSVC equivalent of the GAS .set alias: resolve the (otherwise undefined)
  * alias to the target at link. x86 C symbols carry one leading underscore. */
-#pragma comment(linker, "/alternatename:_g_banIPs_dvar=_g_banIPs")
+COD2_ALT("g_banIPs_dvar", "g_banIPs")
 #else
 __asm__(".globl g_banIPs_dvar\n.set g_banIPs_dvar, g_banIPs\n");
 #endif
@@ -1198,7 +1237,14 @@ BSSINT g_dedicated;
 BSSINT g_maxclients;
 BSSINT g_password;
 unsigned char g_gametype_017e1a58[40];
+/* 573440 = 1024 * 560 (x86 sizeof(gentity_s)). On x64 the struct is larger, so the blob must grow
+   to hold all 1024 entity slots (indices up to 0x3FF incl. the world entity 1022) -- otherwise high
+   indices overflow into adjacent BSS. BSS, so re-sizing is binary-compatible. */
+#if defined(COD2_X64) || defined(__x86_64__)
+unsigned char g_entities[1024 * sizeof(struct gentity_s)];
+#else
 unsigned char g_entities[573440];
+#endif
 unsigned char level_bgs[813568];
 unsigned char level[13952];
 unsigned char itemRegistered[1024];

@@ -31,7 +31,15 @@ extern byte *cg_weapons;
 extern void *imp_cg_weapons;
 extern const dvar_t *hud_fade_offhand;
 
-extern const char *offhandStrings[3];
+/* offhandStrings: migrated from the ILP32 data blob to typed C (re-lays-out per
+ * target). Blob extent was 12 B of pointers + 20 B inter-symbol padding (next
+ * symbol hintStrings distinct; indexed [weaponType] in 0..2). [0] is the empty
+ * literal (literals32.c); the other two are in common.c. (x64 port Stage 2.) */
+const char *offhandStrings[3] = {
+    "",
+    "WEAPON_FRAGGRENADE",
+    "WEAPON_SMOKEGRENADE",
+};
 static const dvar_t *hud_flash_time_offhand;
 static const dvar_t *hud_flash_period_offhand;
 

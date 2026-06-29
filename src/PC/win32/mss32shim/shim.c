@@ -4,6 +4,21 @@
 #include <stdarg.h>
 #include <string.h>
 
+#if defined(_M_X64)
+/* x86-only debug interposer: it single-steps the 32-bit binary at hardcoded
+ * absolute EIPs (0x44e783, ...), reads x86 CONTEXT registers (Esi/Edi/Ebp/Eip)
+ * and tail-jumps through a naked x86 __asm trampoline -- none of which is
+ * meaningful, or even expressible, on x64 (no __asm, different register file,
+ * those addresses don't exist). The engine exe references nothing here but
+ * DllMain, so compile to a no-op DLL stub on x64. A real x64 interposer would
+ * be a from-scratch effort. */
+BOOL WINAPI DllMain(HINSTANCE h, DWORD r, LPVOID x)
+{
+    (void)h; (void)r; (void)x;
+    return TRUE;
+}
+#else
+
 static void LOG(const char *fmt, ...)
 {
     char buf[600];
@@ -414,4 +429,5 @@ BOOL WINAPI DllMain(HINSTANCE h, DWORD r, LPVOID x)
     }
     return TRUE;
 }
+#endif /* _M_X64 */
 #endif

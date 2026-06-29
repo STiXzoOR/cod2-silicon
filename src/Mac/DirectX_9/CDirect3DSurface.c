@@ -40,6 +40,14 @@ typedef struct {
     GLenum openGLElementType;
 } CDirect3DSurfaceImpl;
 
+/* Typed owner setter: CDirect3DTexture set surface->owner via a hardcoded x86
+ * offset (surf+40), which on x64 is surfaceMemory (owner is at 56) -> corrupted
+ * the pixel pointer. (x64 port Stage 4.) */
+void CDirect3DSurface_SetOwner(void *surf, void *owner)
+{
+    ((CDirect3DSurfaceImpl *)surf)->owner = owner;
+}
+
 ULONG CDirect3DSurface_AddRef(const CDirect3DSurface *_this);
 void CDirect3DSurface_UpdateOpenGLSurfaceObject(const CDirect3DSurface *_this, int bRecreateSurface);
 void ZN16CDirect3DSurfaceD0Ev(const CDirect3DSurface *_this);

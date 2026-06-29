@@ -42,8 +42,13 @@ const char *XModelGetSurfaceName(const XModel *model, int subMatIndex, int lod)
 int XModelGetSurfaces(const XModel *model, struct XSurface_s ***surfaces, int lod, int **partBits)
 {
     XModelSurfs *surfData = model->lodInfo[lod].surfs;
+    if (surfData == NULL) {   /* partially/unloaded model (e.g. during error shutdown) */
+        *surfaces = NULL;
+        *partBits = NULL;
+        return 0;
+    }
     *surfaces = *(struct XSurface_s ***)(surfData);
-    *partBits = (int *)((byte *)surfData + 4);
+    *partBits = (int *)((byte *)surfData + sizeof(void *));   /* x86 was +4 */
     return model->lodInfo[lod].numsurfs;
 }
 

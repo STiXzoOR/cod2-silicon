@@ -10,7 +10,7 @@ extern void _Unwind_Resume(void);
 extern void _ZdaPv(void *ptr);
 extern void _ZdlPv(void *ptr);
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
 #    define SZ_SUF(j, m) m
 extern void _Znam(void);
 extern void _Znwm(void);
@@ -113,7 +113,7 @@ void __ZNSs6appendERKSs(void)
 {
     _ZNSs6appendERKSs();
 }
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
 void *__ZNSs6assignEPKcm(void *str, const char *src, unsigned long len)
 {
     return _ZNSs6assignEPKcj(str, src, len);

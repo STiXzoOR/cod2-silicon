@@ -39,7 +39,15 @@ typedef void (*re_draw_string_func)(const char *, int, int, float, float, float,
 typedef void (*re_draw_console_func)(const short int *, int, int, float, float, float, float, const float *, int);
 typedef void (*re_write_cubemap_func)(const char *, int, float, float);
 
+/* The offsets are x86 byte offsets into refexport_t's function-pointer table
+ * (field index * 4). On x64 the pointers are 8 bytes, so the same field lives at
+ * field index * 8 == double the x86 byte offset. refexport_t is a pure vtable
+ * (all function pointers) so the doubling is exact. */
+#if defined(COD2_X64)
+#define RE_FUNC(re, offset, type) ((type)(*(void **)((byte *)(re) + (offset) * 2)))
+#else
 #define RE_FUNC(re, offset, type) ((type)(*(void **)((byte *)(re) + (offset))))
+#endif
 
 extern void Com_Printf(const char *fmt, ...);
 extern void Com_Error(int code, const char *fmt, ...);
@@ -280,15 +288,23 @@ static void SCR_UpdateFrame(void)
     byte *cls = cls_ptr_195ecac;
     int gameLoaded = (((clientStatic_t *)(cls))->uiStarted);
 
+    {
+        static int diagOnce2;
+        if (!diagOnce2) {
+            diagOnce2 = 1;
+            Com_Printf("[diag] SCR_UpdateFrame REACHED gameLoaded(uiStarted)=%d\n", gameLoaded);
+        }
+    }
+
     if (!gameLoaded) {
-        RE_FUNC(re, 0xc8, re_int4_func)(1, (int)(unsigned int)ptr_195f58c, 0, 0);
+        re->ClearScreen(1, (const vec_t *)ptr_195f58c, 0.0f, 0);
         goto end_frame;
     }
 
     clientConnection_t *clc = *(clientConnection_t **)clc_ptr_195ee8c;
     int connstate = clc->state;
     if (connstate != 8 && connstate != 1) {
-        RE_FUNC(re, 0xc8, re_int4_func)(1, (int)(unsigned int)ptr_195f58c, 0, 0);
+        re->ClearScreen(1, (const vec_t *)ptr_195f58c, 0.0f, 0);
     }
 
     UI_UpdateTime((((clientStatic_t *)(cls))->realtime));
@@ -414,6 +430,16 @@ check_ui:
         clientActive_t *dv = *(clientActive_t **)dvar_ptr_195ee78;
         static int uiTraceCount;
         int activeMenu = UI_GetActiveMenu();
+
+        {
+            static int diagOnce;
+            if (!diagOnce) {
+                diagOnce = 1;
+                Com_Printf("[diag] check_ui REACHED state=%d activeMenu=%d keyCatchers=0x%x displayHUD=%d\n",
+                           (*(clientConnection_t **)clc_ptr_195ee8c)->state, activeMenu,
+                           dv->keyCatchers, dv->displayHUDWithKeycatchUI);
+            }
+        }
 
         if (uiTraceCount < 80 && (activeMenu || (dv->keyCatchers & 8) || dv->displayHUDWithKeycatchUI)) {
             if (getenv("MTRACE"))

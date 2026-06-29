@@ -1,6 +1,6 @@
 #include "common_types.h"
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
 #    define COD2_SUBTABLE_PTR(p) ((intptr_t)(p))
 #else
 #    define COD2_SUBTABLE_PTR(p) ((int)(p))

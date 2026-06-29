@@ -194,6 +194,44 @@ static void cr_win_regs(int fd, CONTEXT *c)
             (unsigned long long)c->Rax, (unsigned long long)c->Rbx, (unsigned long long)c->Rcx, (unsigned long long)c->Rdx);
     cr_emit(fd, "  rsi=%016llx rdi=%016llx r8 =%016llx r9 =%016llx\n",
             (unsigned long long)c->Rsi, (unsigned long long)c->Rdi, (unsigned long long)c->R8, (unsigned long long)c->R9);
+    {   /* exe base + rip-relative offset, so the crash site is symbolizable from
+         * the .map even when StackWalk yields no frames. */
+        HMODULE hm = GetModuleHandleA(NULL);
+        cr_emit(fd, "  exe_base=%016llx  rip_rel=0x%llx\n",
+                (unsigned long long)(uintptr_t)hm,
+                (unsigned long long)((uintptr_t)c->Rip - (uintptr_t)hm));
+    }
+    {   /* Identify the module holding rip (usually a system DLL when StackWalk
+         * fails) and the faulting thread, to tell main-thread init from a worker. */
+        HMODULE hmod = NULL;
+        char modName[MAX_PATH] = "?";
+        if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                               (LPCSTR)(uintptr_t)c->Rip, &hmod) && hmod) {
+            GetModuleFileNameA(hmod, modName, sizeof(modName));
+            cr_emit(fd, "  rip module=%s +0x%llx\n", modName,
+                    (unsigned long long)((uintptr_t)c->Rip - (uintptr_t)hmod));
+        } else {
+            cr_emit(fd, "  rip module=<unknown>\n");
+        }
+        cr_emit(fd, "  thread=%lu\n", (unsigned long)GetCurrentThreadId());
+    }
+    {   /* Raw stack words near rsp: lets the call chain be read by eye when the
+         * unwinder fails (e.g. fault in a DLL with no frame info). */
+        uintptr_t sp = (uintptr_t)c->Rsp;
+        int i;
+        cr_emit(fd, "  stack@rsp:");
+        for (i = 0; i < 24; i++) {
+            uintptr_t a = sp + (uintptr_t)i * sizeof(uintptr_t);
+            if (IsBadReadPtr((void *)a, sizeof(uintptr_t))) {
+                cr_emit(fd, " <unmapped@+0x%x>", (unsigned)(i * (int)sizeof(uintptr_t)));
+                break;
+            }
+            if ((i & 3) == 0)
+                cr_emit(fd, "\n   +0x%03x:", (unsigned)(i * (int)sizeof(uintptr_t)));
+            cr_emit(fd, " %016llx", (unsigned long long)*(uintptr_t *)a);
+        }
+        cr_emit(fd, "\n");
+    }
 #    else
     cr_emit(fd, "registers:\n");
     cr_emit(fd, "  eip=%08lx esp=%08lx ebp=%08lx eflags=%08lx\n",
@@ -240,9 +278,24 @@ static void cr_win_backtrace(int fd, CONTEXT *ctxIn)
     frame.AddrFrame.Mode = AddrModeFlat;
     frame.AddrStack.Mode = AddrModeFlat;
 
-#    if !defined(_WIN64)
-
+    /* call-through-NULL (or into an unmapped page): rip/eip is bogus and the
+     * frame pointer is gone, so a normal StackWalk yields nothing. The failed
+     * CALL pushed the return address, so [rsp]/[esp] is the caller -- recover it
+     * so the backtrace at least shows the call site. */
     if ((frame.AddrPC.Offset == 0 || SymGetModuleBase64(proc, frame.AddrPC.Offset) == 0) && frame.AddrStack.Offset) {
+#    if defined(_WIN64)
+        if (!IsBadReadPtr((void *)(uintptr_t)frame.AddrStack.Offset, 8)) {
+            DWORD64 ret = *(DWORD64 *)(uintptr_t)frame.AddrStack.Offset;
+            cr_emit(fd, "  (bad-call rip=0x%llx) return address [rsp] = 0x%llx\n",
+                    (unsigned long long)frame.AddrPC.Offset, (unsigned long long)ret);
+            if (ret) {
+                frame.AddrPC.Offset = ret;
+                frame.AddrStack.Offset += 8;
+                ctx.Rip = ret;
+                ctx.Rsp = frame.AddrStack.Offset;
+            }
+        }
+#    else
         DWORD ret = 0;
         if (!IsBadReadPtr((void *)(uintptr_t)frame.AddrStack.Offset, 4)) {
             ret = *(DWORD *)(uintptr_t)frame.AddrStack.Offset;
@@ -255,10 +308,40 @@ static void cr_win_backtrace(int fd, CONTEXT *ctxIn)
             ctx.Eip = ret;
             ctx.Esp = frame.AddrStack.Offset;
         }
-    }
 #    endif
+    }
 
     cr_emit(fd, "backtrace (most recent first):\n");
+    {
+        /* Always symbolize the faulting instruction directly: on x64 StackWalk64 can produce
+           zero frames when unwind info is unavailable (rbp=0), leaving no source line at all. */
+#    if defined(_WIN64)
+        DWORD64 fpc = (DWORD64)ctx.Rip;
+#    else
+        DWORD64 fpc = (DWORD64)ctx.Eip;
+#    endif
+        DWORD64 fdisp = 0, fmod = SymGetModuleBase64(proc, fpc);
+        char fmodName[MAX_PATH] = "?";
+        IMAGEHLP_LINE64 fline;
+        DWORD flineDisp = 0;
+        const char *fname = "??";
+        if (fmod)
+            GetModuleFileNameA((HMODULE)(uintptr_t)fmod, fmodName, sizeof(fmodName));
+        memset(sym, 0, sizeof(symbuf));
+        sym->SizeOfStruct = sizeof(SYMBOL_INFO);
+        sym->MaxNameLen = 500;
+        if (SymFromAddr(proc, fpc, &fdisp, sym))
+            fname = sym->Name;
+        memset(&fline, 0, sizeof(fline));
+        fline.SizeOfStruct = sizeof(fline);
+        if (SymGetLineFromAddr64(proc, fpc, &flineDisp, &fline))
+            cr_emit(fd, "  [faulting rip] %s+0x%llx  (%s:%lu)\n", fname,
+                    (unsigned long long)fdisp, fline.FileName, (unsigned long)fline.LineNumber);
+        else
+            cr_emit(fd, "  [faulting rip] %s+0x%llx  [%s+0x%llx]\n", fname,
+                    (unsigned long long)fdisp, fmodName,
+                    (unsigned long long)(fmod ? fpc - fmod : 0));
+    }
     while (depth < 64 && StackWalk64(machine, proc, thread, &frame, &ctx, NULL,
                                      SymFunctionTableAccess64, SymGetModuleBase64, NULL)) {
         DWORD64 pc = frame.AddrPC.Offset;
@@ -296,6 +379,38 @@ static void cr_win_backtrace(int fd, CONTEXT *ctxIn)
         depth++;
     }
     cr_emit(fd, "\n");
+
+    /* Stack-scan fallback: when the fault is in a system DLL (StackWalk yields no
+     * usable frames), scan the stack for values that land in our exe -- likely
+     * return addresses -- and print exe-relative offsets so cod2_win32.map can
+     * localize the caller. */
+    {
+        uintptr_t base = (uintptr_t)GetModuleHandleA(NULL);
+        uintptr_t lo = base, hi = base + 0x900000; /* generous exe span */
+#if defined(_WIN64)
+        uintptr_t sp = (uintptr_t)ctx.Rsp;
+#else
+        uintptr_t sp = (uintptr_t)ctx.Esp;
+#endif
+        uintptr_t cur;
+        int found = 0;
+        cr_emit(fd, "stack scan (exe-range return-address candidates):\n");
+        for (cur = sp; cur < sp + 0x6000 && found < 48; cur += sizeof(uintptr_t)) {
+            uintptr_t v;
+            if (IsBadReadPtr((void *)cur, sizeof(v)))
+                break;
+            v = *(uintptr_t *)cur;
+            if (v >= lo && v < hi) {
+                cr_emit(fd, "  [rsp+0x%04llx] 0x%016llx  rel=0x%llx\n",
+                        (unsigned long long)(cur - sp), (unsigned long long)v,
+                        (unsigned long long)(v - base));
+                found++;
+            }
+        }
+        if (!found)
+            cr_emit(fd, "  (none found)\n");
+        cr_emit(fd, "\n");
+    }
     SymCleanup(proc);
 }
 
@@ -400,6 +515,13 @@ void Sys_InstallCrashHandler(const char *appName, const char *version,
         snprintf(cr_cmdline, sizeof(cr_cmdline), "%s", cmdline);
     GetModuleFileNameA(NULL, cr_exePath, sizeof(cr_exePath));
 
+    /* Reserve guard-stack space so the SEH filter can still run (and write a report) on a
+       stack overflow -- otherwise the process dies silently with no crash file. */
+    {
+        ULONG guarantee = 65536;
+        SetThreadStackGuarantee(&guarantee);
+    }
+
     SetUnhandledExceptionFilter(cr_seh_filter);
     signal(SIGABRT, cr_abort_handler);
 }
@@ -455,7 +577,7 @@ static void cr_posix_regs(int fd, void *ucontext)
     ucontext_t *uc = (ucontext_t *)ucontext;
     if (!uc)
         return;
-#    if defined(__x86_64__)
+#    if defined(__x86_64__) || defined(_M_X64)
     {
         greg_t *r = uc->uc_mcontext.gregs;
         cr_emit(fd, "registers:\n");

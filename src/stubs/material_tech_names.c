@@ -43,8 +43,8 @@ extern const char *const s_techniqueTypeNames[34] __attribute__((alias("Material
 /* original symbol name was the bare "string"; keep a natural C name and alias
  * so blob references to `string` still resolve at link. */
 char material_tech_string[1024] = { 0 };
-#pragma comment(linker, "/alternatename:_string=_material_tech_string")
-#pragma comment(linker, "/alternatename:_s_techniqueTypeNames=_Material_TechniqueNames")
+COD2_ALT("string", "material_tech_string")
+COD2_ALT("s_techniqueTypeNames", "Material_TechniqueNames")
 #else
 char material_tech_string[1024] __asm__("string") = { 0 };
 #endif

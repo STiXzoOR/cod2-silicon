@@ -125,7 +125,7 @@ void CL_Netchan_AddOOBProfilePacket(int iLength)
     byte *clc_base;
     netProfileInfo_t *pOOBProf;
 
-    if (*(int *)(*(byte **)net_profile_dvar + 8) == 0)
+    if (((const dvar_t *)*(byte **)net_profile_dvar)->current.integer == 0)   /* was dvar+8 (x86 current offset; x64 is 16) */
         return;
 
     clc_base = *(byte **)clc_ptr;
@@ -147,7 +147,7 @@ void CL_Netchan_SendOOBPacket(int iLength, const void *pData, netadr_t to)
 
     NET_SendPacket(NS_CLIENT1, iLength, pData, to);
 
-    if (*(int *)(*(byte **)net_profile_dvar + 8) == 0)
+    if (((const dvar_t *)*(byte **)net_profile_dvar)->current.integer == 0)   /* was dvar+8 (x86 current offset; x64 is 16) */
         return;
 
     NetProf_PrepProfiling(&((clientConnection_t *)clc_base)->pOOBProf);

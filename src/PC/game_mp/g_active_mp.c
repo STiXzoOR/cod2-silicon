@@ -480,6 +480,10 @@ void G_TouchTriggers(gentity_t *ent)
         if (!hitTouch && !entTouch)
             continue;
 
+        if (hit->s.eType == 3) {
+            Com_Printf("[touch] num=%d i=%d touch[i]=%d hit#=%d eType=%d posTr=%d\n",
+                       num, i, touch[i], hit->s.number, hit->s.eType, hit->s.pos.trType);
+        }
         if (hit->s.eType == 3 && !BG_PlayerTouchesItem(&client->ps, &hit->s, level.time))
             continue;
 

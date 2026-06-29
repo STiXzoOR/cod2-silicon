@@ -31,7 +31,7 @@ extern byte level_ptr[];
 extern byte g_entities_ptr[];
 extern byte *g_trace_zero_ptr;
 
-#define ENTITY_STRIDE 560
+#define ENTITY_STRIDE sizeof(gentity_s) /* was hardcoded 560 = x86 sizeof; wrong on x64 */
 
 #define LEVEL ((level_locals_t *)imp_level)
 #define G_ENTITIES ((gentity_t *)imp_g_entities)

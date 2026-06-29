@@ -12,8 +12,62 @@ extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern const char *R_ErrorDescription(int hr);
 
 extern const D3DVERTEXELEMENT9 declEnd;
-extern unsigned char materialGlobals[];
 extern const stream_source_info_t s_streamSourceInfo[];
+
+/* x64 material registry: the x86 build packs these tables into a 10752-byte blob
+ * (materialGlobals) at hardcoded offsets assuming 4-byte pointers. On x64 the
+ * pointer tables widen, so the registry is re-laid-out as this struct (runtime
+ * BSS, not an asset/wire format -> layout is free). Defined here (and identically
+ * in bss.c) rather than common_types.h. */
+struct MaterialGlobals {
+    int vertexDeclCount;
+    struct MaterialVertexDeclaration vertexDecls[32];
+    struct MaterialTechniqueSet *techSetTable[1024];
+    int techCount;
+    struct MaterialTechnique *techTable[1024];
+    int literalCount;
+    float literals[64];
+    struct MaterialStateMap *stateMapTable[32];
+    int stringCount;
+    const char *stringTable[64];
+    int shaderCount;
+    struct MaterialShader *shaderTable[256];
+};
+
+/* ---- material registry access ----
+ * x64 uses the typed struct; x86 keeps the exact byte-offset layout (binary-
+ * identical). All registry access in this file goes through these MG_* names. */
+#if defined(COD2_X64)
+extern struct MaterialGlobals materialGlobals;
+#define MG_VDECLCOUNT  (materialGlobals.vertexDeclCount)
+#define MG_VDECL(h)    (&materialGlobals.vertexDecls[h])
+#define MG_TECHSET     (materialGlobals.techSetTable)
+#define MG_TECH        (materialGlobals.techTable)
+#define MG_TECHCOUNT   (materialGlobals.techCount)
+#define MG_LITCOUNT    (materialGlobals.literalCount)
+#define MG_LITERALS    (materialGlobals.literals)
+#define MG_STATEMAP    (materialGlobals.stateMapTable)
+#define MG_STRING      (materialGlobals.stringTable)
+#define MG_STRINGCOUNT (materialGlobals.stringCount)
+#define MG_SHADER      (materialGlobals.shaderTable)
+#define MG_SHADERCOUNT (materialGlobals.shaderCount)
+#define MG_CLEAR()     memset(&materialGlobals, 0, sizeof(materialGlobals))
+#else
+extern unsigned char materialGlobals[];
+#define MG_VDECLCOUNT  (*(int *)materialGlobals)
+#define MG_VDECL(h)    ((MaterialVertexDeclaration *)&materialGlobals[(h) * 24 + 4])
+#define MG_TECHSET     ((MaterialTechniqueSet **)(materialGlobals + 0x308))
+#define MG_TECH        ((MaterialTechnique **)(materialGlobals + 0x130C))
+#define MG_TECHCOUNT   (*(int *)(materialGlobals + 0x1308))
+#define MG_LITCOUNT    (*(int *)(materialGlobals + 0x230C))
+#define MG_LITERALS    ((float *)(materialGlobals + 0x2310))
+#define MG_STATEMAP    ((MaterialStateMap **)(materialGlobals + 0x2414))
+#define MG_STRING      ((const char **)(materialGlobals + 0x2498))
+#define MG_STRINGCOUNT (*(int *)(materialGlobals + 0x2494))
+#define MG_SHADER      ((MaterialShader **)(materialGlobals + 0x259C))
+#define MG_SHADERCOUNT (*(int *)(materialGlobals + 0x2598))
+#define MG_CLEAR()     memset(materialGlobals, 0, 0x299c)
+#endif
 extern const stream_dest_info_t s_streamDestInfo[];
 extern r_global_permanent_t rgp;
 
@@ -164,8 +218,8 @@ void *Material_Alloc(int size)
 
 const float *Material_RegisterLiteral(const vec_t *literal)
 {
-    int literalCount = *(int *)(materialGlobals + 0x230c);
-    float *literals = (float *)(materialGlobals + 0x2310);
+    int literalCount = MG_LITCOUNT;
+    float *literals = MG_LITERALS;
     int i;
     float *dest;
 
@@ -205,25 +259,23 @@ static Bool Material_Compare(const Material *mtl0, const Material *mtl1)
 
 void Material_SetTechnique(const char *name, MaterialTechnique *technique)
 {
-    if (*(int *)(materialGlobals + 0x1308) == 0x3ff) {
+    if (MG_TECHCOUNT == 0x3ff) {
         R_Error(1, "More than %i techniques in use", 0x3ff);
     }
 
     int hash = R_HashAssetName(name) & 0x3ff;
     MaterialTechnique *entry;
 
-    char *techniqueTable = (char *)(materialGlobals + 0x1300);
-
-    entry = ((MaterialTechnique **)(materialGlobals + 0x130C))[hash];
+    entry = MG_TECH[hash];
     while (entry != NULL) {
         if (stricmp(entry->name, name) == 0)
             break;
         hash = (hash + 1) & 0x3ff;
-        entry = ((MaterialTechnique **)(materialGlobals + 0x130C))[hash];
+        entry = MG_TECH[hash];
     }
 
-    (*(int *)(materialGlobals + 0x1308))++;
-    *(MaterialTechnique **)(techniqueTable + 0xc + hash * 4) = technique;
+    (MG_TECHCOUNT)++;
+    MG_TECH[hash] = technique;
 }
 
 void Material_SetTechniqueSet(const char *name, MaterialTechniqueSet *techniqueSet)
@@ -231,17 +283,15 @@ void Material_SetTechniqueSet(const char *name, MaterialTechniqueSet *techniqueS
     int hash = R_HashAssetName(name) & 0x3ff;
     MaterialTechniqueSet *entry;
 
-    char *techSetTable = (char *)(materialGlobals + 0x300);
-
-    entry = ((MaterialTechniqueSet **)(materialGlobals + 0x308))[hash];
+    entry = MG_TECHSET[hash];
     while (entry != NULL) {
         if (stricmp(entry->name, name) == 0)
             break;
         hash = (hash + 1) & 0x3ff;
-        entry = ((MaterialTechniqueSet **)(materialGlobals + 0x308))[hash];
+        entry = MG_TECHSET[hash];
     }
 
-    *(MaterialTechniqueSet **)(techSetTable + 8 + hash * 4) = techniqueSet;
+    MG_TECHSET[hash] = techniqueSet;
 }
 
 void Material_SetStateMap(const char *name, MaterialStateMap *stateMap)
@@ -249,42 +299,38 @@ void Material_SetStateMap(const char *name, MaterialStateMap *stateMap)
     int hash = R_HashAssetName(name) & 0x1f;
     MaterialStateMap *entry;
 
-    char *stateMapTable = (char *)(materialGlobals + 0x2410);
-
-    entry = ((MaterialStateMap **)(materialGlobals + 0x2414))[hash];
+    entry = MG_STATEMAP[hash];
     while (entry != NULL) {
         if (strcmp(entry->name, name) == 0)
             break;
         hash = (hash + 1) & 0x1f;
-        entry = ((MaterialStateMap **)(materialGlobals + 0x2414))[hash];
+        entry = MG_STATEMAP[hash];
     }
 
-    *(MaterialStateMap **)(stateMapTable + 4 + hash * 4) = stateMap;
+    MG_STATEMAP[hash] = stateMap;
 }
 
 void Material_SetShader(const char *shaderName, MaterialShaderType shaderType, int shaderVersion, MaterialShader *mtlShader)
 {
-    (*(int *)(materialGlobals + 0x2598))++;
-    if (*(int *)(materialGlobals + 0x2598) == 0x100) {
+    (MG_SHADERCOUNT)++;
+    if (MG_SHADERCOUNT == 0x100) {
         R_Error(1, "More than %i unique pixel and vertex shaders", 0xff);
     }
 
     int hash = R_HashAssetName(shaderName);
     hash = (hash + (int)shaderType * 97 + shaderVersion) & 0xff;
 
-    char *shaderTable = (char *)(materialGlobals + 0x2590);
-
-    MaterialShader *entry = ((MaterialShader **)(materialGlobals + 0x259C))[hash];
+    MaterialShader *entry = MG_SHADER[hash];
     while (entry != NULL) {
         if ((int)entry->shaderType == (int)shaderType &&
             (int)entry->shaderVersion == shaderVersion &&
             strcmp(entry->name, shaderName) == 0)
             break;
         hash = (hash + 1) & 0xff;
-        entry = ((MaterialShader **)(materialGlobals + 0x259C))[hash];
+        entry = MG_SHADER[hash];
     }
 
-    *(MaterialShader **)(shaderTable + 0xc + hash * 4) = mtlShader;
+    MG_SHADER[hash] = mtlShader;
 }
 
 Bool Material_IsDefault(const Material *material)
@@ -321,15 +367,14 @@ extern void RB_ReleaseVertexDecl(void);
 
 void Material_ReleaseAll(void)
 {
-    byte *outer;
-    int j;
+    int i, j;
 
     RB_ReleaseVertexDecl();
 
-    for (outer = materialGlobals + 4; outer != materialGlobals + 0x304; outer += 0x18) {
-        byte *slot = outer;
-        for (j = 4; j != 0; j--) {
-            void **pObj = (void **)(slot + 8);
+    for (i = 0; i < 32; i++) {
+        MaterialVertexDeclaration *vd = MG_VDECL(i);
+        for (j = 0; j < 4; j++) {
+            void **pObj = (void **)&vd->decl[j];
             if (*pObj) {
                 do {
                     void *obj = *pObj;
@@ -338,19 +383,15 @@ void Material_ReleaseAll(void)
                     *pObj = NULL;
                 } while (*(int *)&alwaysfails);
             }
-            slot += 4;
         }
     }
 
-    {
-        byte *sh;
-        for (sh = materialGlobals; sh != materialGlobals + 0x400; sh += 4) {
-            void *shader = *(void **)(sh + 0x259c);
-            if (shader) {
-                void *obj = *(void **)((char *)shader + 0xc);
-                void **vtable = *(void ***)obj;
-                ((void (*)(void *))vtable[2])(obj);
-            }
+    for (i = 0; i < 256; i++) {
+        void *shader = MG_SHADER[i];
+        if (shader) {
+            void *obj = *(void **)&((MaterialShader *)shader)->u;
+            void **vtable = *(void ***)obj;
+            ((void (*)(void *))vtable[2])(obj);
         }
     }
 }
@@ -483,16 +524,16 @@ const char *Material_RegisterString(const char *string)
     void *(*hunkAlloc)(int);
     char *copy;
 
-    existing = ((const char **)(materialGlobals + 0x2498))[hash];
+    existing = MG_STRING[hash];
     while (existing) {
         if (strcmp(existing, string) == 0)
             return existing;
         hash = (hash + 1) & 0x3f;
-        existing = ((const char **)(materialGlobals + 0x2498))[hash];
+        existing = MG_STRING[hash];
     }
 
-    count = *(int *)(materialGlobals + 0x2494) + 1;
-    *(int *)(materialGlobals + 0x2494) = count;
+    count = MG_STRINGCOUNT + 1;
+    MG_STRINGCOUNT = count;
     if (count == 64) {
         R_Error(1, "More than %i string identifiers used by shaders", 63);
     }
@@ -502,10 +543,7 @@ const char *Material_RegisterString(const char *string)
     copy = (char *)hunkAlloc(nameLen);
     memcpy(copy, string, nameLen);
 
-    {
-        char *stringIdentTable = (char *)(materialGlobals + 0x2490);
-        *(const char **)(stringIdentTable + 8 + hash * 4) = copy;
-    }
+    MG_STRING[hash] = copy;
 
     return copy;
 }
@@ -516,7 +554,7 @@ MaterialVertexDeclaration *Material_AllocVertexDecl(MaterialStreamRouting *routi
     int hash = 0;
     int i;
     byte *routingBytes = (byte *)routingData;
-    byte *mvd;
+    MaterialVertexDeclaration *mvd;
     byte *data;
     void *(*hunkAlloc)(int);
 
@@ -526,44 +564,44 @@ MaterialVertexDeclaration *Material_AllocVertexDecl(MaterialStreamRouting *routi
     hash &= 0x1f;
 
     for (;;) {
-        mvd = (byte *)&materialGlobals[hash * 24 + 4];
-        data = *(byte **)mvd;
+        mvd = MG_VDECL(hash);
+        data = (byte *)mvd->data;
 
         if (!data)
             break;
 
-        if (*(int *)(mvd + 4) == streamCount &&
+        if (mvd->streamCount == streamCount &&
             memcmp(data, routingData, dataSize) == 0) {
             *existing = 1;
-            return (MaterialVertexDeclaration *)mvd;
+            return mvd;
         }
 
         hash = (hash + 1) & 0x1f;
     }
 
-    if (*(int *)materialGlobals == 0x1f) {
+    if (MG_VDECLCOUNT == 0x1f) {
         R_Error(1, "More than %i vertex declarations in use", 31);
     }
-    (*(int *)materialGlobals)++;
+    MG_VDECLCOUNT++;
 
     hunkAlloc = ri.Hunk_AllocInternal;
     data = (byte *)hunkAlloc(dataSize);
     memcpy(data, routingData, dataSize);
 
-    memset(mvd, 0, 24);
-    *(byte **)(mvd + 0) = data;
-    *(int *)(mvd + 4) = streamCount;
+    memset(mvd, 0, sizeof(*mvd));
+    mvd->data = (MaterialStreamRouting *)data;
+    mvd->streamCount = streamCount;
 
     *existing = 0;
-    return (MaterialVertexDeclaration *)mvd;
+    return mvd;
 }
 
 MaterialStateMap *Material_FindStateMap(const char *name)
 {
     int hash = R_HashAssetName(name) & 0x1f;
-    while (((MaterialStateMap **)(materialGlobals + 0x2414))[hash]) {
-        if (strcmp(((MaterialStateMap **)(materialGlobals + 0x2414))[hash]->name, name) == 0)
-            return ((MaterialStateMap **)(materialGlobals + 0x2414))[hash];
+    while (MG_STATEMAP[hash]) {
+        if (strcmp(MG_STATEMAP[hash]->name, name) == 0)
+            return MG_STATEMAP[hash];
         hash = (hash + 1) & 0x1f;
     }
     return NULL;
@@ -572,9 +610,9 @@ MaterialStateMap *Material_FindStateMap(const char *name)
 MaterialTechniqueSet *Material_FindTechniqueSet(const char *name)
 {
     int hash = R_HashAssetName(name) & 0x3ff;
-    while (((MaterialTechniqueSet **)(materialGlobals + 0x308))[hash]) {
-        if (stricmp(((MaterialTechniqueSet **)(materialGlobals + 0x308))[hash]->name, name) == 0)
-            return ((MaterialTechniqueSet **)(materialGlobals + 0x308))[hash];
+    while (MG_TECHSET[hash]) {
+        if (stricmp(MG_TECHSET[hash]->name, name) == 0)
+            return MG_TECHSET[hash];
         hash = (hash + 1) & 0x3ff;
     }
     return NULL;
@@ -583,9 +621,9 @@ MaterialTechniqueSet *Material_FindTechniqueSet(const char *name)
 MaterialTechnique *Material_FindTechnique(const char *name)
 {
     int hash = R_HashAssetName(name) & 0x3ff;
-    while (((MaterialTechnique **)(materialGlobals + 0x130C))[hash]) {
-        if (stricmp(((MaterialTechnique **)(materialGlobals + 0x130C))[hash]->name, name) == 0)
-            return ((MaterialTechnique **)(materialGlobals + 0x130C))[hash];
+    while (MG_TECH[hash]) {
+        if (stricmp(MG_TECH[hash]->name, name) == 0)
+            return MG_TECH[hash];
         hash = (hash + 1) & 0x3ff;
     }
     return NULL;
@@ -594,10 +632,10 @@ MaterialTechnique *Material_FindTechnique(const char *name)
 MaterialShader *Material_FindShader(const char *shaderName, MaterialShaderType shaderType, int shaderVersion)
 {
     int hash = (R_HashAssetName(shaderName) + shaderType * 97 + shaderVersion) & 0xff;
-    while (((MaterialShader **)(materialGlobals + 0x259C))[hash]) {
-        MaterialShader *entry = ((MaterialShader **)(materialGlobals + 0x259C))[hash];
+    while (MG_SHADER[hash]) {
+        MaterialShader *entry = MG_SHADER[hash];
         if (entry->shaderType == shaderType && entry->shaderVersion == shaderVersion && strcmp(entry->name, shaderName) == 0)
-            return ((MaterialShader **)(materialGlobals + 0x259C))[hash];
+            return MG_SHADER[hash];
         hash = (hash + 1) & 0xff;
     }
     return NULL;
@@ -605,22 +643,17 @@ MaterialShader *Material_FindShader(const char *shaderName, MaterialShaderType s
 
 void Material_Shutdown(void)
 {
-    byte *outer;
-    int j;
-    byte *p;
+    int i, j;
 
     RB_ReleaseVertexDecl();
 
-    for (outer = materialGlobals + 4; outer != materialGlobals + 0x304; outer += 0x18) {
-        byte *slot = outer;
+    for (i = 0; i < 32; i++) {
+        MaterialVertexDeclaration *vd = MG_VDECL(i);
         for (j = 0; j < 4; j++) {
-            void **pObj = (void **)(slot + 8);
+            void **pObj = (void **)&vd->decl[j];
 #ifdef GFX_REAL_D3D9
-
             *pObj = NULL;
-            slot += 4;
-            continue;
-#endif
+#else
             if (*pObj) {
                 do {
                     void *obj = *pObj;
@@ -629,54 +662,23 @@ void Material_Shutdown(void)
                     *pObj = NULL;
                 } while (*(int *)&alwaysfails);
             }
-            slot += 4;
+#endif
         }
     }
 
-    memset(materialGlobals + 4, 0, 0x300);
-    *(int *)materialGlobals = 0;
-
-    for (p = materialGlobals; p != materialGlobals + 0x400; p += 4) {
-        void *shader = *(void **)(p + 0x259c);
-#ifdef GFX_REAL_D3D9
-
-        (void)shader;
-        continue;
-#else
+#ifndef GFX_REAL_D3D9
+    for (i = 0; i < 256; i++) {
+        void *shader = MG_SHADER[i];
         if (shader) {
-            void *obj = *(void **)((char *)shader + 0xc);
+            void *obj = *(void **)&((MaterialShader *)shader)->u;
             void **vtable = *(void ***)obj;
             ((void (*)(void *))vtable[2])(obj);
         }
+    }
 #endif
-    }
 
-    for (p = materialGlobals; p != materialGlobals + 0x400; p += 4)
-        *(void **)(p + 0x259c) = NULL;
-
-    *(int *)(materialGlobals + 0x230C) = 0;
-
-    for (p = materialGlobals; p != materialGlobals + 0x100; p += 4) {
-        if (*(void **)(p + 0x2498))
-            *(void **)(p + 0x2498) = NULL;
-    }
-
-    for (p = materialGlobals; p != materialGlobals + 0x80; p += 4) {
-        if (*(void **)(p + 0x2414))
-            *(void **)(p + 0x2414) = NULL;
-    }
-
-    for (p = materialGlobals; p != materialGlobals + 0x1000; p += 4) {
-        if (*(void **)(p + 0x130c))
-            *(void **)(p + 0x130c) = NULL;
-    }
-
-    for (p = materialGlobals; p != materialGlobals + 0x1000; p += 4) {
-        if (*(void **)(p + 0x308))
-            *(void **)(p + 0x308) = NULL;
-    }
-
-    memset(materialGlobals, 0, 0x299c);
+    /* Zero the whole registry (clears every table + count + vertexDecls). */
+    MG_CLEAR();
     memset(rg.materialHashTable, 0, sizeof(rg.materialHashTable));
     rgp.materialCount = 0;
 }
@@ -710,21 +712,19 @@ void Material_ReloadAll(void)
 {
     char *dx = (char *)imp_dx;
 
-    byte *vertDeclPtr = materialGlobals + 4;
-    byte *routingPtr = materialGlobals + 8;
     int i;
 
-    while (vertDeclPtr < materialGlobals + 772) {
-        int routingCount = *(int *)(routingPtr - 4);
-        if (routingCount != 0) {
+    for (i = 0; i < 32; i++) {
+        MaterialVertexDeclaration *vd = MG_VDECL(i);
+        if (vd->data != NULL) {
 
             const byte *sourceInfoBase = (const byte *)s_streamSourceInfo;
             int vertDeclType;
 
             for (vertDeclType = 0; vertDeclType < 4; vertDeclType++) {
                 const byte *sourceInfo = sourceInfoBase;
-                int elemCount = *(int *)(routingPtr);
-                const byte *routingData = *(const byte **)(routingPtr - 4);
+                int elemCount = vd->streamCount;
+                const byte *routingData = (const byte *)vd->data;
                 D3DVERTEXELEMENT9 elemTable[256];
                 void *decl = NULL;
                 int numElems = 0;
@@ -782,23 +782,19 @@ void Material_ReloadAll(void)
                 } while (*(int *)&alwaysfails);
 
             storeDecl2:
-                *(void **)(vertDeclPtr + 8 + vertDeclType * 4) = decl;
+                *(void **)&vd->decl[vertDeclType] = decl;
                 sourceInfoBase += 21;
             }
         }
-
-        vertDeclPtr += 0x18;
-        routingPtr += 0x18;
     }
 
     {
-        byte *matSlot = materialGlobals;
-        byte *matEnd = materialGlobals + 1020;
+        int mi;
         void (*ri_Printf)(int, const char *, ...) = (void (*)(int, const char *, ...))ri.Error;
 
-        for (; matSlot < matEnd; matSlot += 4) {
+        for (mi = 0; mi < 255; mi++) {
 
-            byte *shader = *(byte **)(matSlot + 0x259c);
+            byte *shader = (byte *)MG_SHADER[mi];
             int hr;
 
             if (!shader)
@@ -1013,7 +1009,7 @@ MaterialHandle Material_Duplicate(MaterialHandle mtlCopy, const char *name)
 
     nameLen = strlen(name) + 1;
     hunkAlloc = ri.Hunk_AllocInternal;
-    material = (byte *)hunkAlloc(0x44 + nameLen);
+    material = (byte *)hunkAlloc((int)sizeof(Material) + nameLen);   /* 0x44 was x86 sizeof(Material) */
 
     memcpy(material, (void *)mtlCopy, sizeof(Material));
 
@@ -1107,7 +1103,7 @@ void Material_Init(void)
 {
     byte *rgp_ptr = (byte *)imp_rgp;
 
-    memset(materialGlobals, 0, 0x299c);
+    MG_CLEAR();
     Material_PreLoadAllShaderText();
 
     BuiltInMaterialTable *entry;
@@ -1286,7 +1282,7 @@ const stream_source_info_t s_streamSourceInfo[28] = { { 0, 0, 3 }, { 0, 16, 2 },
 const stream_dest_info_t s_streamDestInfo[12] = { { 0, 0 }, { 3, 0 }, { 10, 0 }, { 10, 1 }, { 5, 0 }, { 5, 1 }, { 5, 2 }, { 5, 3 }, { 5, 4 }, { 5, 5 }, { 5, 6 }, { 5, 7 } };
 
 #if defined(_MSC_VER)
-#pragma comment(linker, "/alternatename:_declEnd=_declEnd_131795")
+COD2_ALT("declEnd", "declEnd_131795")
 const unsigned char declEnd_131795[20] = {
 #else
 const unsigned char declEnd_131795[20] __asm__("declEnd") = {

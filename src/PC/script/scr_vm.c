@@ -289,7 +289,7 @@ extern void ClearObject(unsigned int parentId);
 extern void Scr_FreeObjects(void);
 extern unsigned int Scr_GetEntityIdRef(unsigned int entId);
 
-#define VM_STACKBUF_HEADER_SIZE 0x0b
+#define VM_STACKBUF_HEADER_SIZE ((unsigned)offsetof(VariableStackBuffer, buf)) /* 0x0b on x86; 0x0f on x64 (pos is 8 bytes) */
 #define VM_STACKBUF_VALUE_SIZE 5
 #define VM_LOCAL_ARCHIVE_SLOTS 256u
 #define VM_LOCAL_ARCHIVE_MAX_LOCALS 64u
@@ -760,7 +760,7 @@ void Scr_CancelNotifyList(unsigned int notifyListOwnerId)
         if (GetVarType(selfStartLocalId) == 10) {
             VariableStackBuffer *stackValue;
 
-            stackValue = GetVariableValueAddress(selfStartLocalId)->stackValue;
+            stackValue = SCR_STACK_PTR(*GetVariableValueAddress(selfStartLocalId));
             Scr_CancelWaittill(startLocalId);
             VM_TrimStack(startLocalId, stackValue, 0);
             continue;
@@ -775,7 +775,7 @@ void Scr_CancelNotifyList(unsigned int notifyListOwnerId)
             if (stackId) {
                 VariableStackBuffer *stackValue;
 
-                stackValue = GetVariableValueAddress(stackId)->stackValue;
+                stackValue = SCR_STACK_PTR(*GetVariableValueAddress(stackId));
                 VM_TrimStack(selfStartLocalId, stackValue, 1);
             }
         }
@@ -832,7 +832,7 @@ void Scr_ShutdownSystem(int sys, int bComplete)
         AddRefToObject(timeId);
         while ((stackId = FindNextSibling(timeId)) != 0) {
             unsigned int startLocalId = GetVariableKeyObject(stackId);
-            VariableStackBuffer *stackValue = GetVariableValueAddress(stackId)->stackValue;
+            VariableStackBuffer *stackValue = SCR_STACK_PTR(*GetVariableValueAddress(stackId));
 
             RemoveObjectVariable(timeId, startLocalId);
             Scr_ClearWaitTime(startLocalId);
@@ -1452,7 +1452,7 @@ static VariableStackBuffer *VM_NotifyRemoveStackFromWait(unsigned int selfId, un
 
     if (!waitString) {
         unsigned int stackId = FindVariable(startLocalId, 0x1ffff);
-        stackValue = GetVariableValueAddress(stackId)->stackValue;
+        stackValue = SCR_STACK_PTR(*GetVariableValueAddress(stackId));
         RemoveVariable(startLocalId, 0x1ffff);
         return stackValue;
     }
@@ -1465,7 +1465,7 @@ static VariableStackBuffer *VM_NotifyRemoveStackFromWait(unsigned int selfId, un
         unsigned int notifyNameListId = FindObject(FindVariable(notifyListId, waitString));
         unsigned int stackId = FindObjectVariable(notifyNameListId, startLocalId);
 
-        stackValue = GetVariableValueAddress(stackId)->stackValue;
+        stackValue = SCR_STACK_PTR(*GetVariableValueAddress(stackId));
         VM_CancelNotifyInternal(notifyListOwnerId, startLocalId, notifyListId, notifyNameListId, waitString);
         RemoveObjectVariable(selfNameId, startLocalId);
         if (!GetArraySize(selfNameId)) {
@@ -1491,7 +1491,7 @@ static void VM_NotifyTerminatePausedStack(unsigned int selfId, unsigned int star
 
     Scr_ClearWaitTime(startLocalId);
     id = FindObject(FindVariable(varPub->pauseArrayId, time));
-    stackValue = GetVariableValueAddress(FindObjectVariable(id, startLocalId))->stackValue;
+    stackValue = SCR_STACK_PTR(*GetVariableValueAddress(FindObjectVariable(id, startLocalId)));
     RemoveObjectVariable(id, startLocalId);
 
     if (!GetArraySize(id) && time != (unsigned int)varPub->time) {
@@ -1591,7 +1591,7 @@ static void VM_NotifyAppendStackParams(VariableUnion *stackRef, VariableStackBuf
         newStackValue->time = stackValue->time;
         memcpy(newStackValue->buf, stackValue->buf, oldBytes);
         MT_Free(stackValue, stackValue->bufLen);
-        stackRef->stackValue = newStackValue;
+        stackRef->stackValue = SCR_STACK_ENC(newStackValue);
         stackValue = newStackValue;
         *pStackValue = newStackValue;
     }
@@ -1734,7 +1734,7 @@ static void __attribute_regparm__(3)
 
         {
             VariableUnion *stackRef = GetVariableValueAddress(scanId);
-            VariableStackBuffer *stackValue = stackRef->stackValue;
+            VariableStackBuffer *stackValue = SCR_STACK_PTR(*stackRef);
             Bool noStack;
 
             if (stackValue->pos[-1] == 0x77) {
@@ -6424,7 +6424,11 @@ static void VM_CandidateCallBuiltin(const char **pos, VariableValue **top, unsig
     }
 
     func = (BuiltinFunction)(uintptr_t)compilePub->func_table[builtinIndex];
+    { extern void dbg_check439_pre(unsigned int); dbg_check439_pre(builtinIndex); }
+    { extern unsigned int g_dbg_lastBuiltin; extern void *g_dbg_lastBuiltinFn;
+      g_dbg_lastBuiltin = builtinIndex; g_dbg_lastBuiltinFn = (void *)func; }
     func();
+    { extern void dbg_check439(void); dbg_check439(); }
     VM_CandidateCompleteCall(pos, top);
 }
 
@@ -6464,7 +6468,9 @@ static void VM_CandidateCallBuiltinMethod(const char **pos, VariableValue **top,
     }
 
     method = (BuiltinMethod)(uintptr_t)compilePub->func_table[builtinIndex];
+    { extern unsigned int g_dbg_lastBuiltin; g_dbg_lastBuiltin = builtinIndex | 0x10000; }
     ((void (*)(scr_entref_t))method)(entref);
+    { extern void dbg_check439(void); dbg_check439(); }
     VM_CandidateCompleteCall(pos, top);
 }
 
@@ -6506,18 +6512,24 @@ static int VM_CandidateHandleEnd(const char **pos, unsigned int *localId,
                                  unsigned int *threadCount)
 {
     unsigned int parentLocalId = GetSafeParentLocalId(*localId);
+    extern void dbg_end_probe(int);
 
+    dbg_end_probe(0);
     Scr_KillThread(*localId);
+    dbg_end_probe(1);
     scrVmPub.localVars -= *localVarCount;
     VM_CandidatePopToFrameSentinel(top);
+    dbg_end_probe(2);
 
     scrVmPub.function_count--;
     scrVmPub.function_frame--;
 
     if (parentLocalId == 0) {
 
-        return VM_CandidateThreadSuspendReturn(pos, localId, localVarCount, top,
+        int r = VM_CandidateThreadSuspendReturn(pos, localId, localVarCount, top,
                                                startTop, resultLocalId, threadCount);
+        dbg_end_probe(3);
+        return r;
     }
 
     (*top)->type = VAR_UNDEFINED;
@@ -7087,8 +7099,10 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
     }
 
     for (;;) {
+        { extern void dbg_check439_op(unsigned int); extern unsigned int g_lastop_dbg; dbg_check439_op(g_lastop_dbg); }
         const char *opcodePos = pos;
         unsigned int opcode = *(const unsigned char *)pos++;
+        { extern unsigned int g_lastop_dbg; g_lastop_dbg = opcode; }
 
         VM_DebugRecordOpcode(opcodePos, opcode);
 
@@ -7877,7 +7891,7 @@ static void VM_Resume(unsigned int timeId)
         unsigned int endLocalId;
 
         startLocalId = GetVariableKeyObject(stackId);
-        stackValue = GetVariableValueAddress(stackId)->stackValue;
+        stackValue = SCR_STACK_PTR(*GetVariableValueAddress(stackId));
         if (traceCount < 64) {
             if (getenv("DBGSPAM"))
                 Com_Printf("[team-trace] resume bucket=%u local=%u time=%u archivedTime=%u pos=%p size=%u\n",
@@ -8022,7 +8036,7 @@ void Scr_IncTime(void)
 /* VM_ExecuteExtCall is the C++-mangled VM_Execute; cl can't rename, so bind the
  * call site to the mangled symbol via /alternatename (regparm no-ops on MSVC). */
 extern unsigned int VM_ExecuteExtCall(unsigned int threadId, const char *pos, unsigned int paramcount);
-#pragma comment(linker, "/alternatename:_VM_ExecuteExtCall=__Z10VM_ExecutejPKcj")
+COD2_ALT("VM_ExecuteExtCall", "_Z10VM_ExecutejPKcj")
 #else
 extern unsigned int __attribute_regparm__(3)
     VM_ExecuteExtCall(unsigned int threadId, const char *pos, unsigned int paramcount) __asm__("_Z10VM_ExecutejPKcj");

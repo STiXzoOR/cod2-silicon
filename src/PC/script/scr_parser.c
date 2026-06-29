@@ -56,7 +56,9 @@ void Scr_InitOpcodeLookup(void)
     scrParserGlob.currentSourcePosCount = 0;
     scrParserGlob.sourceBufferLookupMaxLen = 0x10;
     scrParserPub.sourceBufferLookupLen = 0;
-    scrParserPub.sourceBufferLookup = Z_MallocInternal(0x180);
+    /* 0x180 was 16 * 24 (the x86 struct size); on x64 the 3 pointers grow it, so size by sizeof. */
+    scrParserPub.sourceBufferLookup =
+        Z_MallocInternal((int)(scrParserGlob.sourceBufferLookupMaxLen * sizeof(*scrParserPub.sourceBufferLookup)));
 }
 
 void Scr_ShutdownOpcodeLookup(void)
@@ -541,6 +543,18 @@ void Scr_PrintPrevCodePos(print_msg_type_t type, const char *codePos, unsigned i
         Com_PrintMessage(type, "<removed thread>\n");
         return;
     }
+
+#if defined(_M_X64) || defined(__x86_64__)
+    {   /* x64: the link phase can hand CompileError2 a TRUNCATED codePos (high 32 bits
+           zero) -> the va("%s") below would crash. Guard it so the real compile error
+           surfaces instead of crashing the error printer. */
+        if ((!varPub->programBuffer || !Scr_IsInOpcodeMemory(codePos)) &&
+            ((unsigned long long)(uintptr_t)codePos >> 32) == 0) {
+            Com_PrintMessage(type, "<bad codepos>\n\n");
+            return;
+        }
+    }
+#endif
 
     if (!varPub->developer) {
         if (Scr_IsInOpcodeMemory(codePos - 1))

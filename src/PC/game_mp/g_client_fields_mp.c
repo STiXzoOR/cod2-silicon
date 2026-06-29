@@ -341,20 +341,17 @@ void GScr_AddFieldsForClient(void)
     }
 
     name = fields[0].name;
-    byteOffset = 0;
+    byteOffset = 0;   /* reused as the field index */
     next = &fields[1];
 
     while (name) {
-        int idx = byteOffset >> 2;
-        int mult = idx * 3;
-        mult = mult + (mult << 4);
-        mult = mult + (mult << 8);
-        mult = mult + (mult << 16);
-
-        Scr_AddClassField(0, name, (unsigned short)((idx + mult * 4) | 0xc000));
+        /* same x64 fix as hudelem: the original hash encodes (fieldIndex | 0xc000) via a stride
+           = sizeof(client_fields_t)/4 that is even on x64 (no inverse mod 2^16) -> the index isn't
+           recovered. Store the index directly (identical to the x86 hash result). */
+        Scr_AddClassField(0, name, (unsigned short)(byteOffset | 0xc000));
 
         name = next->name;
-        byteOffset += (int)sizeof(client_fields_t);
+        byteOffset++;
         next = (const client_fields_t *)((const char *)next + sizeof(client_fields_t));
     }
 }

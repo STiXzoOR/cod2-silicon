@@ -25,9 +25,10 @@ extern void Image_TrackTexture(GfxImage *image, int imageFlags, D3DFORMAT format
 #define DX_PTR() (&dx)
 #define VIDCONFIG() (&vidConfig)
 
-#define DX_RT_IMAGE(rt) (*(GfxImage **)((rt) + 0))
-#define DX_RT_COLOR_SURFACE(rt) (*(IDirect3DSurface9 **)((rt) + 4))
-#define DX_RT_DEPTH_SURFACE(rt) (*(IDirect3DSurface9 **)((rt) + 8))
+/* offsets must follow the real GfxRenderTarget layout (8-byte pointers on x64), not hardcoded x86 +4/+8. */
+#define DX_RT_IMAGE(rt) (*(GfxImage **)((rt) + offsetof(GfxRenderTarget, image)))
+#define DX_RT_COLOR_SURFACE(rt) (*(IDirect3DSurface9 **)((rt) + offsetof(GfxRenderTarget, colorSurface)))
+#define DX_RT_DEPTH_SURFACE(rt) (*(IDirect3DSurface9 **)((rt) + offsetof(GfxRenderTarget, depthStencilSurface)))
 #define DX_RT_WIDTH(rt) (*(int *)((rt) + 12))
 #define DX_RT_HEIGHT(rt) (*(int *)((rt) + 16))
 

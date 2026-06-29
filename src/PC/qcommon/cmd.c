@@ -444,17 +444,10 @@ void Cmd_AddCommand(const char *cmdName, xcommand_t function)
         }
     }
 
-#if defined(__x86_64__)
     cmd = (cmd_function_t *)Z_MallocInternal(sizeof(cmd_function_t));
     cmd->name = CopyStringInternal(cmdName);
     cmd->function = function;
-    cmd->next = (long)cmd_functions;
-#else
-    cmd = (cmd_function_t *)Z_MallocInternal(0x14);
-    cmd->name = CopyStringInternal(cmdName);
-    cmd->function = function;
-    cmd->next = (int)cmd_functions;
-#endif
+    cmd->next = (intptr_t)cmd_functions;  /* pointer-sized; (int)/(long) truncated on x64 */
     cmd_functions = cmd;
 }
 
@@ -546,11 +539,7 @@ void Cmd_ExecuteString(const char *text)
         if (!I_stricmp(cmd_argv[0], cmd->name)) {
 
             *prev = *(cmd_function_t **)&cmd->next;
-#if defined(__x86_64__)
-            cmd->next = (long)cmd_functions;
-#else
-            cmd->next = (int)cmd_functions;
-#endif
+            cmd->next = (intptr_t)cmd_functions;
             cmd_functions = cmd;
 
             if (cmd->function) {

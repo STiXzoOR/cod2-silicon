@@ -84,7 +84,7 @@ static char *g_sv_skel_memory_start;
 
 gentity_t *SV_GentityNum(int num);
 playerState_t *SV_GameClientNum(int num);
-int SV_SvEntityForGentity(const gentity_t *gEnt);
+byte *SV_SvEntityForGentity(const gentity_t *gEnt);
 void SV_GameSendServerCommand(int clientNum, svscmd_type type, const char *text);
 void SV_GameDropClient(int clientNum, const char *reason);
 void SV_GetServerinfo(char *buffer, int bufferSize);
@@ -138,7 +138,7 @@ playerState_t *SV_GameClientNum(int num)
     return (playerState_t *)((char *)sv->gameClients + num * sv->gameClientSize);
 }
 
-int SV_SvEntityForGentity(const gentity_t *gEnt)
+byte *SV_SvEntityForGentity(const gentity_t *gEnt)
 {
     int number;
 
@@ -147,7 +147,8 @@ int SV_SvEntityForGentity(const gentity_t *gEnt)
     }
     number = gEnt->s.number;
 
-    return (int)((char *)((server_t *)imp_sv) + number * (int)sizeof(svEntity_t)) + (int)__builtin_offsetof(server_t, svEntities);
+    /* was cast to (int) -> truncated the 8-byte svEntity pointer on x64 */
+    return (byte *)((char *)((server_t *)imp_sv) + __builtin_offsetof(server_t, svEntities) + (size_t)number * sizeof(svEntity_t));
 }
 
 void SV_GameSendServerCommand(int clientNum, svscmd_type type, const char *text)
@@ -242,7 +243,7 @@ void SV_ResetSkeletonCache(void)
     if (incd != 0)
         idx = incd;
     sv->skelTimeStamp = idx;
-    g_sv_skel_memory_start = (char *)((((unsigned int)g_sv_skel_memory) + 0xf) & ~0xfu);
+    g_sv_skel_memory_start = (char *)((((uintptr_t)g_sv_skel_memory) + 0xf) & ~(uintptr_t)0xf);
     sv->skelMemPos = 0;
 }
 
@@ -322,7 +323,7 @@ qboolean SV_MapExists(const char *name)
 void SV_ResetEntityParsePoint(void)
 {
 
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
 
     const char *parse_point = CM_EntityString();
 #else
@@ -737,11 +738,13 @@ qboolean SV_DObjCreateSkelForBone(gentity_t *ent, int boneIndex)
 
     allocSize = DObjGetAllocSkelSize(obj);
     alignedSize = (allocSize + 15) & ~15;
+    Com_Printf("[ckpt] skel obj=%p allocSize=%d aligned=%d numBones~=%d memPos=%d\n",
+               obj, allocSize, alignedSize, (allocSize - 0x30) >> 5, sv->skelMemPos);
     buf = g_sv_skel_memory_start + sv->skelMemPos;
     sv->skelMemPos += alignedSize;
 
     if (sv->skelMemPos > 0x3fff0) {
-        buf = (char *)(((unsigned int)g_sv_skel_memory + 15) & ~15u);
+        buf = (char *)(((uintptr_t)g_sv_skel_memory + 15) & ~(uintptr_t)15);
 
         do {
             timestamp = sv->skelTimeStamp;
@@ -785,7 +788,7 @@ qboolean SV_DObjCreateSkelForBones(gentity_t *ent, int *partBits)
     sv->skelMemPos += alignedSize;
 
     if (sv->skelMemPos > 0x3fff0) {
-        buf = (char *)(((unsigned int)g_sv_skel_memory + 15) & ~15u);
+        buf = (char *)(((uintptr_t)g_sv_skel_memory + 15) & ~(uintptr_t)15);
 
         do {
             timestamp = sv->skelTimeStamp;

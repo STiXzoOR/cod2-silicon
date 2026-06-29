@@ -24,10 +24,21 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "msvc-client-x64",
+      "displayName": "Windows MSVC client (x64 port, Ninja, Debug) -- COMPILE ONLY",
+      "description": "IN-PROGRESS x86_64 port. Compiles the engine source set (cod2_msvc_objs) under the x64 cl to measure the x64 error surface; does NOT link/run yet (needs the Stage 2 typed-data migration). Run from an x64 Native Tools for VS command prompt.",
+      "inherits": "msvc-client",
+      "binaryDir": "${sourceDir}/build/msvc-x64",
+      "cacheVariables": {
+        "COD2_X64": "ON"
+      }
     }
   ],
   "buildPresets": [
     { "name": "msvc-client", "configurePreset": "msvc-client" },
-    { "name": "msvc-client-release", "configurePreset": "msvc-client-release" }
+    { "name": "msvc-client-release", "configurePreset": "msvc-client-release" },
+    { "name": "msvc-client-x64", "configurePreset": "msvc-client-x64", "targets": ["cod2_msvc_objs"] }
   ]
 }

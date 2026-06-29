@@ -56,10 +56,10 @@ void R_UsedCachedStaticModelSurface(GfxStaticModelSurfaceCached *surf)
     ((static_model_tree_list_t *)tree->usedlist.next)->prev = tree->usedlist.prev;
     ((static_model_tree_list_t *)tree->usedlist.prev)->next = tree->usedlist.next;
 
-    tree->usedlist.prev = (int)&s_cache.usedlist;
+    tree->usedlist.prev = (intptr_t)&s_cache.usedlist;
     tree->usedlist.next = s_cache.usedlist.next;
-    s_cache.usedlist.next = (int)&tree->usedlist;
-    ((static_model_tree_list_t *)tree->usedlist.next)->prev = (int)&tree->usedlist;
+    s_cache.usedlist.next = (intptr_t)&tree->usedlist;
+    ((static_model_tree_list_t *)tree->usedlist.next)->prev = (intptr_t)&tree->usedlist;
 }
 
 void R_InitStaticModelCache(void)
@@ -79,7 +79,7 @@ void R_InitStaticModelCache(void)
     retryFlag = (volatile int *)&alwaysfails;
 
     do {
-        device = *(void **)((byte *)imp_dx + 8);
+        device = ((DxGlobals *)imp_dx)->device;
         vtable = *(void ***)device;
         /* usage = D3DUSAGE_DYNAMIC|D3DUSAGE_WRITEONLY (0x208). NOT 0x400208: the
          * 0x400000 bit is not a valid D3DUSAGE, and real D3D9 fails the whole
@@ -91,20 +91,20 @@ void R_InitStaticModelCache(void)
 
     memset(&s_cache, 0, sizeof(s_cache));
 
-    s_cache.usedlist.prev = (int)&s_cache.usedlist;
-    s_cache.usedlist.next = (int)&s_cache.usedlist;
+    s_cache.usedlist.prev = (intptr_t)&s_cache.usedlist;
+    s_cache.usedlist.next = (intptr_t)&s_cache.usedlist;
 
     for (i = 0; i < 5; i++) {
-        s_cache.freelist[i].prev = (int)&s_cache.freelist[i];
-        s_cache.freelist[i].next = (int)&s_cache.freelist[i];
+        s_cache.freelist[i].prev = (intptr_t)&s_cache.freelist[i];
+        s_cache.freelist[i].next = (intptr_t)&s_cache.freelist[i];
     }
 
     for (i = 0; i < 128; i++) {
         freenode = &s_cache.trees[i].leafs[0].freenode;
-        freenode->prev = (int)&s_cache.freelist[0];
+        freenode->prev = (intptr_t)&s_cache.freelist[0];
         freenode->next = s_cache.freelist[0].next;
-        s_cache.freelist[0].next = (int)freenode;
-        ((static_model_node_list_t *)freenode->next)->prev = (int)freenode;
+        s_cache.freelist[0].next = (intptr_t)freenode;
+        ((static_model_node_list_t *)freenode->next)->prev = (intptr_t)freenode;
     }
 }
 
@@ -169,7 +169,7 @@ void R_StaticModelCacheFlush_f(void)
     if (!tree)
         return;
 
-    while ((int)tree != (int)&s_cache.usedlist) {
+    while ((intptr_t)tree != (intptr_t)&s_cache.usedlist) {
         freenode = &tree->leafs[0].freenode;
         leaf = &tree->leafs[0].surf;
 
@@ -209,30 +209,30 @@ void R_StaticModelCacheFlush_f(void)
         ((static_model_tree_list_t *)node->next)->prev = node->prev;
         ((static_model_tree_list_t *)node->prev)->next = node->next;
 
-        freenode->prev = (int)&s_cache.freelist[0];
+        freenode->prev = (intptr_t)&s_cache.freelist[0];
         freenode->next = s_cache.freelist[0].next;
-        s_cache.freelist[0].next = (int)freenode;
-        ((static_model_node_list_t *)freenode->next)->prev = (int)freenode;
+        s_cache.freelist[0].next = (intptr_t)freenode;
+        ((static_model_node_list_t *)freenode->next)->prev = (intptr_t)freenode;
 
         tree = (static_model_tree_t *)s_cache.usedlist.next;
     }
 
     memset(&s_cache, 0, sizeof(s_cache));
 
-    s_cache.usedlist.prev = (int)&s_cache.usedlist;
-    s_cache.usedlist.next = (int)&s_cache.usedlist;
+    s_cache.usedlist.prev = (intptr_t)&s_cache.usedlist;
+    s_cache.usedlist.next = (intptr_t)&s_cache.usedlist;
 
     for (i = 0; i < 5; i++) {
-        s_cache.freelist[i].prev = (int)&s_cache.freelist[i];
-        s_cache.freelist[i].next = (int)&s_cache.freelist[i];
+        s_cache.freelist[i].prev = (intptr_t)&s_cache.freelist[i];
+        s_cache.freelist[i].next = (intptr_t)&s_cache.freelist[i];
     }
 
     for (i = 0; i < 128; i++) {
         freenode = &s_cache.trees[i].leafs[0].freenode;
-        freenode->prev = (int)&s_cache.freelist[0];
+        freenode->prev = (intptr_t)&s_cache.freelist[0];
         freenode->next = s_cache.freelist[0].next;
-        s_cache.freelist[0].next = (int)freenode;
-        ((static_model_node_list_t *)freenode->next)->prev = (int)freenode;
+        s_cache.freelist[0].next = (intptr_t)freenode;
+        ((static_model_node_list_t *)freenode->next)->prev = (intptr_t)freenode;
     }
 }
 
@@ -252,7 +252,7 @@ void R_ShutdownStaticModelCache(void)
     if (!tree)
         goto release_vb;
 
-    while ((int)tree != (int)&s_cache.usedlist) {
+    while ((intptr_t)tree != (intptr_t)&s_cache.usedlist) {
         freenode = &tree->leafs[0].freenode;
         leaf = &tree->leafs[0].surf;
 
@@ -292,30 +292,30 @@ void R_ShutdownStaticModelCache(void)
         ((static_model_tree_list_t *)node->next)->prev = node->prev;
         ((static_model_tree_list_t *)node->prev)->next = node->next;
 
-        freenode->prev = (int)&s_cache.freelist[0];
+        freenode->prev = (intptr_t)&s_cache.freelist[0];
         freenode->next = s_cache.freelist[0].next;
-        s_cache.freelist[0].next = (int)freenode;
-        ((static_model_node_list_t *)freenode->next)->prev = (int)freenode;
+        s_cache.freelist[0].next = (intptr_t)freenode;
+        ((static_model_node_list_t *)freenode->next)->prev = (intptr_t)freenode;
 
         tree = (static_model_tree_t *)s_cache.usedlist.next;
     }
 
     memset(&s_cache, 0, sizeof(s_cache));
 
-    s_cache.usedlist.prev = (int)&s_cache.usedlist;
-    s_cache.usedlist.next = (int)&s_cache.usedlist;
+    s_cache.usedlist.prev = (intptr_t)&s_cache.usedlist;
+    s_cache.usedlist.next = (intptr_t)&s_cache.usedlist;
 
     for (i = 0; i < 5; i++) {
-        s_cache.freelist[i].prev = (int)&s_cache.freelist[i];
-        s_cache.freelist[i].next = (int)&s_cache.freelist[i];
+        s_cache.freelist[i].prev = (intptr_t)&s_cache.freelist[i];
+        s_cache.freelist[i].next = (intptr_t)&s_cache.freelist[i];
     }
 
     for (i = 0; i < 128; i++) {
         freenode = &s_cache.trees[i].leafs[0].freenode;
-        freenode->prev = (int)&s_cache.freelist[0];
+        freenode->prev = (intptr_t)&s_cache.freelist[0];
         freenode->next = s_cache.freelist[0].next;
-        s_cache.freelist[0].next = (int)freenode;
-        ((static_model_node_list_t *)freenode->next)->prev = (int)freenode;
+        s_cache.freelist[0].next = (intptr_t)freenode;
+        ((static_model_node_list_t *)freenode->next)->prev = (intptr_t)freenode;
     }
 
 release_vb:
@@ -393,17 +393,17 @@ static __attribute_regparm__(2)
         ((static_model_tree_list_t *)tree->usedlist.prev)->next = tree->usedlist.next;
 
         list = &cache->freelist[0];
-        freenode->prev = (int)list;
+        freenode->prev = (intptr_t)list;
         freenode->next = list->next;
-        list->next = (int)freenode;
-        ((static_model_node_list_t *)freenode->next)->prev = (int)freenode;
+        list->next = (intptr_t)freenode;
+        ((static_model_node_list_t *)freenode->next)->prev = (intptr_t)freenode;
 
         return (Bool)1;
     }
 
     parentListIndex = listIndex - 1;
 
-    if (cache->freelist[parentListIndex].next == (int)&cache->freelist[parentListIndex]) {
+    if (cache->freelist[parentListIndex].next == (intptr_t)&cache->freelist[parentListIndex]) {
 
         if (!SMC_GetFreeBlockOfSize(cache, parentListIndex))
             return 0;
@@ -418,26 +418,26 @@ static __attribute_regparm__(2)
     tree = &cache->trees[treeIndex];
 
     if (listIndex == 1) {
-        tree->usedlist.prev = (int)&cache->usedlist;
+        tree->usedlist.prev = (intptr_t)&cache->usedlist;
         tree->usedlist.next = cache->usedlist.next;
-        cache->usedlist.next = (int)&tree->usedlist;
-        ((static_model_tree_list_t *)tree->usedlist.next)->prev = (int)&tree->usedlist;
+        cache->usedlist.next = (intptr_t)&tree->usedlist;
+        ((static_model_tree_list_t *)tree->usedlist.next)->prev = (intptr_t)&tree->usedlist;
     }
 
     list = &cache->freelist[listIndex];
-    block->prev = (int)list;
+    block->prev = (intptr_t)list;
     block->next = list->next;
-    list->next = (int)block;
-    ((static_model_node_list_t *)block->next)->prev = (int)block;
+    list->next = (intptr_t)block;
+    ((static_model_node_list_t *)block->next)->prev = (intptr_t)block;
 
     leafIndex = (unsigned int)((char *)block - (char *)&tree->leafs[0]) >> 4;
     buddyLeafIndex = leafIndex + (1 << (4 - listIndex));
     buddyFreenode = &tree->leafs[buddyLeafIndex].freenode;
 
-    buddyFreenode->prev = (int)list;
-    buddyFreenode->next = (int)block;
-    list->next = (int)buddyFreenode;
-    ((static_model_node_list_t *)buddyFreenode->next)->prev = (int)buddyFreenode;
+    buddyFreenode->prev = (intptr_t)list;
+    buddyFreenode->next = (intptr_t)block;
+    list->next = (intptr_t)buddyFreenode;
+    ((static_model_node_list_t *)buddyFreenode->next)->prev = (intptr_t)buddyFreenode;
 
     return 1;
 }
@@ -479,7 +479,7 @@ GfxStaticModelSurfaceCached *R_CacheStaticModelSurface(GfxStaticSurface *staticS
         listIndex = 9 - bitCount;
     }
 
-    if (s_cache.freelist[listIndex].next == (int)&s_cache.freelist[listIndex]) {
+    if (s_cache.freelist[listIndex].next == (intptr_t)&s_cache.freelist[listIndex]) {
         if (!SMC_GetFreeBlockOfSize(&s_cache, listIndex))
             return NULL;
     }
@@ -493,10 +493,10 @@ GfxStaticModelSurfaceCached *R_CacheStaticModelSurface(GfxStaticSurface *staticS
     tree = &s_cache.trees[treeIndex];
 
     if (listIndex == 0) {
-        tree->usedlist.prev = (int)&s_cache.usedlist;
+        tree->usedlist.prev = (intptr_t)&s_cache.usedlist;
         tree->usedlist.next = s_cache.usedlist.next;
-        s_cache.usedlist.next = (int)&tree->usedlist;
-        ((static_model_tree_list_t *)tree->usedlist.next)->prev = (int)&tree->usedlist;
+        s_cache.usedlist.next = (intptr_t)&tree->usedlist;
+        ((static_model_tree_list_t *)tree->usedlist.next)->prev = (intptr_t)&tree->usedlist;
     }
 
     leafIndex = (unsigned int)((char *)block - (char *)&tree->leafs[0]) / 16;
@@ -541,7 +541,7 @@ GfxStaticModelSurfaceCached *R_CacheStaticModelSurface(GfxStaticSurface *staticS
 
     twoBaseOffsets = (baseVertIndex << 16) | (baseVertIndex & 0xFFFF);
     twoSrcIndices = (int *)xsurf->triIndices;
-    twoDstIndices = (int *)((int)dx.smodelCacheIndices + baseVertIndex * 12);
+    twoDstIndices = (int *)((intptr_t)dx.smodelCacheIndices + baseVertIndex * 12);
     numTriPairs = (short)((xsurf->triCount + (((unsigned short)xsurf->triCount) >> 15)) >> 1);
 
     for (i = 0; i < numTriPairs; i++) {
@@ -569,7 +569,7 @@ void R_FlushStaticModelCache(void)
     if (!tree)
         return;
 
-    while ((int)tree != (int)&s_cache.usedlist) {
+    while ((intptr_t)tree != (intptr_t)&s_cache.usedlist) {
         freenode = &tree->leafs[0].freenode;
         leaf = &tree->leafs[0].surf;
 
@@ -609,30 +609,30 @@ void R_FlushStaticModelCache(void)
         ((static_model_tree_list_t *)node->next)->prev = node->prev;
         ((static_model_tree_list_t *)node->prev)->next = node->next;
 
-        freenode->prev = (int)&s_cache.freelist[0];
+        freenode->prev = (intptr_t)&s_cache.freelist[0];
         freenode->next = s_cache.freelist[0].next;
-        s_cache.freelist[0].next = (int)freenode;
-        ((static_model_node_list_t *)freenode->next)->prev = (int)freenode;
+        s_cache.freelist[0].next = (intptr_t)freenode;
+        ((static_model_node_list_t *)freenode->next)->prev = (intptr_t)freenode;
 
         tree = (static_model_tree_t *)s_cache.usedlist.next;
     }
 
     memset(&s_cache, 0, sizeof(s_cache));
 
-    s_cache.usedlist.prev = (int)&s_cache.usedlist;
-    s_cache.usedlist.next = (int)&s_cache.usedlist;
+    s_cache.usedlist.prev = (intptr_t)&s_cache.usedlist;
+    s_cache.usedlist.next = (intptr_t)&s_cache.usedlist;
 
     for (i = 0; i < 5; i++) {
-        s_cache.freelist[i].prev = (int)&s_cache.freelist[i];
-        s_cache.freelist[i].next = (int)&s_cache.freelist[i];
+        s_cache.freelist[i].prev = (intptr_t)&s_cache.freelist[i];
+        s_cache.freelist[i].next = (intptr_t)&s_cache.freelist[i];
     }
 
     for (i = 0; i < 128; i++) {
         freenode = &s_cache.trees[i].leafs[0].freenode;
-        freenode->prev = (int)&s_cache.freelist[0];
+        freenode->prev = (intptr_t)&s_cache.freelist[0];
         freenode->next = s_cache.freelist[0].next;
-        s_cache.freelist[0].next = (int)freenode;
-        ((static_model_node_list_t *)freenode->next)->prev = (int)freenode;
+        s_cache.freelist[0].next = (intptr_t)freenode;
+        ((static_model_node_list_t *)freenode->next)->prev = (intptr_t)freenode;
     }
 }
 
@@ -762,9 +762,9 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
             float val;
 
             val = blc[0] * 32768.0f + 0.5f;
-            baseLightingCoords[0] = (short)(int)floorf(val);
+            baseLightingCoords[0] = (short)(intptr_t)floorf(val);
             val = blc[1] * 32768.0f + 0.5f;
-            baseLightingCoords[1] = (short)(int)floorf(val);
+            baseLightingCoords[1] = (short)(intptr_t)floorf(val);
         }
 
         if (vertCount > 0) {
@@ -942,28 +942,28 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
                         float oneOver255 = 0.003921568859368563f;
                         int ch;
 
-                        ch = (int)floorf(r * (float)srcColor[2] * oneOver255 * 255.0f + 0.5f);
+                        ch = (intptr_t)floorf(r * (float)srcColor[2] * oneOver255 * 255.0f + 0.5f);
                         if (ch > 255)
                             ch = 255;
                         if (ch < 0)
                             ch = 0;
                         dstColor[0] = (byte)ch;
 
-                        ch = (int)floorf(b * (float)srcColor[1] * oneOver255 * 255.0f + 0.5f);
+                        ch = (intptr_t)floorf(b * (float)srcColor[1] * oneOver255 * 255.0f + 0.5f);
                         if (ch > 255)
                             ch = 255;
                         if (ch < 0)
                             ch = 0;
                         dstColor[1] = (byte)ch;
 
-                        ch = (int)floorf(g * (float)srcColor[0] * oneOver255 * 255.0f + 0.5f);
+                        ch = (intptr_t)floorf(g * (float)srcColor[0] * oneOver255 * 255.0f + 0.5f);
                         if (ch > 255)
                             ch = 255;
                         if (ch < 0)
                             ch = 0;
                         dstColor[2] = (byte)ch;
 
-                        ch = (int)floorf((float)srcColor[3] * oneOver255 * 255.0f + 0.5f);
+                        ch = (intptr_t)floorf((float)srcColor[3] * oneOver255 * 255.0f + 0.5f);
                         if (ch > 255)
                             ch = 255;
                         if (ch < 0)

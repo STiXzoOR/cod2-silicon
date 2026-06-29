@@ -4797,7 +4797,11 @@ typedef my_post_controller * my_post_ptr;
 typedef my_prep_controller * my_prep_ptr;
 typedef int (*my_src_ptr)();
 typedef my_upsampler * my_upsample_ptr;
+#if defined(COD2_X64) || defined(__x86_64__)
+typedef char objBufEntry[160]; /* x64 DObj_s is 152 B; 100 (x86 size) overlaps pool slots */
+#else
 typedef char objBufEntry[100];
+#endif
 typedef phuff_entropy_decoder * phuff_entropy_ptr;
 typedef void (*pmove_PlayerEvent)();
 typedef int (*pmove_pointcontents)();
@@ -5122,7 +5126,7 @@ struct AudioStreamPacketDescription {
 struct BreakStatementInfo {
     const char *codePos;
     const char *nextCodePos;
-    int next;
+    struct BreakStatementInfo *next;   /* compile-time temp list; was int -> truncated the pointer on x64 */
 };
 
 struct BuiltInMaterialTable {
@@ -5483,7 +5487,7 @@ struct CaseStatementInfo {
     unsigned int name;
     const char *codePos;
     unsigned int sourcePos;
-    int next;
+    struct CaseStatementInfo *next;   /* compile-time temp list; was int -> truncated the pointer on x64 */
 };
 
 struct CatPositionRec {
@@ -5499,12 +5503,7 @@ struct ClientVoicePacket_t {
 struct CodeConstantSource {
     const char *name;
     MaterialConstantSource source;
-#if defined(__x86_64__)
     intptr_t subtable;
-
-#else
-    int subtable;
-#endif
     int arrayCount;
     int arrayStride;
 };
@@ -5512,11 +5511,7 @@ struct CodeConstantSource {
 struct CodeSamplerSource {
     const char *name;
     MaterialTextureSource source;
-#if defined(__x86_64__)
     intptr_t subtable;
-#else
-    int subtable;
-#endif
     int arrayCount;
     int arrayStride;
 };
@@ -5613,7 +5608,7 @@ struct ConDrawInputGlob {
 struct ContinueStatementInfo {
     const char *codePos;
     const char *nextCodePos;
-    int next;
+    struct ContinueStatementInfo *next;   /* compile-time temp list; was int -> truncated the pointer on x64 */
 };
 
 struct ControlEditTextSelectionRec {
@@ -7689,6 +7684,7 @@ struct MaterialVertexDeclaration {
     void (*decl[4])();
 };
 
+
 struct MaterialWaterDef {
     int textureWidth;
     float horizontalWorldLength;
@@ -8021,7 +8017,7 @@ struct PrecacheEntry {
     scr_string_t filename;
     Bool include;
     unsigned int sourcePos;
-    int next;
+    struct PrecacheEntry *next;   /* links per-file precache arrays; was int -> truncated the pointer on x64 */
 };
 
 struct ProcessSerialNumber {
@@ -11171,12 +11167,11 @@ struct client_fields_s {
 };
 
 struct cmd_function_s {
-#if defined(__x86_64__)
-
-    long next;
-#else
-    int next;
-#endif
+    /* really a cmd_function_t*; the reconstruction kept it in an int-typed field
+     * accessed via *(cmd_function_t**)&next. Use a pointer-sized int so it
+     * survives LP64/LLP64 (4 on x86, 8 on x64). The old `int` truncated the
+     * next-pointer on MSVC x64 -> crash in Cmd_AddCommand. */
+    intptr_t next;
     char *name;
     const char *autoCompleteDir;
     const char *autoCompleteExt;
@@ -11342,8 +11337,8 @@ struct define_s {
     int numparms;
     token_t *parms;
     token_t *tokens;
-    int next;
-    int hashnext;
+    intptr_t next;       /* pointer-as-int -> truncated on x64 (intptr_t==int on x86) */
+    intptr_t hashnext;
 };
 
 struct directive_s {
@@ -11441,14 +11436,8 @@ struct dvar_s {
     DvarValue latched;
     DvarValue reset;
     union DvarLimits domain;
-#if defined(__x86_64__)
-
-    long next;
-    long hashNext;
-#else
-    int next;
-    int hashNext;
-#endif
+    intptr_t next;
+    intptr_t hashNext;
 };
 
 struct editFieldDef_s {
@@ -11505,12 +11494,7 @@ struct field_t {
 
 struct fileData_s {
     void *data;
-#if defined(__x86_64__)
-
-    long next;
-#else
-    int next;
-#endif
+    intptr_t next;
     byte type;
     char name[1];
 };
@@ -11518,12 +11502,7 @@ struct fileData_s {
 struct fileInPack_s {
     long unsigned int pos;
     char *name;
-#if defined(__x86_64__)
-
-    long next;
-#else
-    int next;
-#endif
+    intptr_t next;
 };
 
 struct forward_iterator_tag {
@@ -11659,7 +11638,7 @@ struct indent_s {
     int type;
     int skip;
     script_t *script;
-    int next;
+    intptr_t next;       /* pointer-as-int -> truncated on x64 (intptr_t==int on x86) */
 };
 
 struct inflate_blocks_state {
@@ -12261,7 +12240,7 @@ struct keyname_t {
 struct keywordHash_s {
     char *keyword;
     qboolean (*func)();
-    int next;
+    intptr_t next;       /* pointer-as-int -> truncated on x64 (intptr_t==int on x86) */
 };
 
 struct lagometer_t {
@@ -12866,26 +12845,14 @@ struct new_allocator_float {
 };
 
 struct nodetype {
-#if defined(__x86_64__)
-
-    long left;
-    long right;
-    long parent;
-    long next;
-    long prev;
-    long head;
+    intptr_t left;
+    intptr_t right;
+    intptr_t parent;
+    intptr_t next;
+    intptr_t prev;
+    intptr_t head;
     int weight;
     int symbol;
-#else
-    int left;
-    int right;
-    int parent;
-    int next;
-    int prev;
-    int head;
-    int weight;
-    int symbol;
-#endif
 };
 
 struct huff_t {
@@ -13181,7 +13148,7 @@ struct pointtrace_t {
 struct punctuation_s {
     char *p;
     int n;
-    int next;
+    intptr_t next;   /* linked-list ptr (was int -> truncated on x64; intptr_t==int on x86) */
 };
 
 struct pushed_t {
@@ -13808,7 +13775,7 @@ struct scrCompilePub_t {
     byte *opcodePos;
     int programLen;
     int func_table_size;
-    int func_table[1024];
+    intptr_t func_table[1024];   /* holds BuiltinFunction/BuiltinMethod pointers; was int -> truncated on x64 */
 };
 
 struct scrMemTreeGlob_t {
@@ -14113,12 +14080,7 @@ struct scrollInfo_s {
 };
 
 struct searchpath_s {
-#if defined(__x86_64__)
-
-    long next;
-#else
-    int next;
-#endif
+    intptr_t next;
     pack_t *pack;
     directory_t *dir;
     qboolean bLocalized;
@@ -14361,26 +14323,15 @@ struct snd_alias_build_s {
     byte bNoWetLevel;
     Bool error;
     Bool keep;
-#if defined(__x86_64__)
-
     intptr_t pSameSoundFile;
     intptr_t pNext;
-#else
-    int pSameSoundFile;
-    int pNext;
-#endif
 };
 
 struct snd_alias_list_t {
     const char *aliasName;
     snd_alias_t *head;
     int count;
-#if defined(__x86_64__)
-
     intptr_t pHashNext;
-#else
-    int pHashNext;
-#endif
 };
 
 struct g_sa_type {
@@ -14588,8 +14539,8 @@ struct srfTriangles_t {
 };
 
 struct static_model_node_list_t {
-    int prev;
-    int next;
+    intptr_t prev;   /* hold pointers (was int -> truncated on x64; intptr_t==int on x86) */
+    intptr_t next;
 };
 
 union static_model_leaf_t {
@@ -14604,8 +14555,8 @@ struct static_model_node_t {
 };
 
 struct static_model_tree_list_t {
-    int prev;
-    int next;
+    intptr_t prev;   /* hold pointers (was int -> truncated on x64; intptr_t==int on x86) */
+    intptr_t next;
 };
 
 struct static_model_tree_t {
@@ -14644,7 +14595,7 @@ struct stream_source_info_t {
 };
 
 struct stringDef_s {
-    int next;
+    intptr_t next;   /* linked-list ptr (was int -> truncated on x64; intptr_t==int on x86) */
     const char *str;
 };
 

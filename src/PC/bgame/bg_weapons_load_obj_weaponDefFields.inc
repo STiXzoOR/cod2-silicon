@@ -3,7 +3,7 @@
  * MUST stay byte-identical for the 32-bit byte-match. The x64 branch
  * replaces each baked 32-bit member offset with offsetof(WeaponDef,..)
  * so the same field is targeted under LP64 (pointer members widen). */
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(_M_X64)
     (UInt32)str_0022028c, offsetof(WeaponDef, szDisplayName), 0x00000000, (UInt32)str_00220298, offsetof(WeaponDef, szOverlayName), 0x00000000,
     (UInt32)str_002202b0, offsetof(WeaponDef, szModeName), 0x00000000, (UInt32)str_002202bc, offsetof(WeaponDef, playerAnimType), 0x0000000f,
     (UInt32)str_002202cc, offsetof(WeaponDef, szGunXModel), 0x00000000, (UInt32)str_002202d8, offsetof(WeaponDef, szHandXModel), 0x00000000,

@@ -5,10 +5,24 @@
 #include <stddef.h>
 #define COD2_ASSERT_CAT_(a, b) a##b
 #define COD2_ASSERT_CAT(a, b) COD2_ASSERT_CAT_(a, b)
+#if defined(COD2_X64)
+/* x86_64/LP64 port: the field-offset and size pins encode the ORIGINAL 32-bit
+ * binary's ABI (pointers 4 bytes, specific padding). On x64 there is no
+ * original binary to match -- pointers are 8 bytes and the (properly typed)
+ * structs re-lay-out naturally -- so the 32-bit numbers have no ground truth.
+ * Keep the asserts as field/struct EXISTENCE checks (so renamed/removed members
+ * still fail the build) but drop the ILP32 numeric pin. The matching x64 data
+ * layout is produced by the typed-data migration, not by these macros. */
+#define COD2_ASSERT_FIELD(T, field, off) \
+    typedef char COD2_ASSERT_CAT(cod2_off_assert_, __LINE__)[(offsetof(T, field) == offsetof(T, field)) ? 1 : -1]
+#define COD2_ASSERT_SIZE(T, size) \
+    typedef char COD2_ASSERT_CAT(cod2_size_assert_, __LINE__)[(sizeof(T) == sizeof(T)) ? 1 : -1]
+#else
 #define COD2_ASSERT_FIELD(T, field, off) \
     typedef char COD2_ASSERT_CAT(cod2_off_assert_, __LINE__)[(offsetof(T, field) == (off)) ? 1 : -1]
 #define COD2_ASSERT_SIZE(T, size) \
     typedef char COD2_ASSERT_CAT(cod2_size_assert_, __LINE__)[(sizeof(T) == (size)) ? 1 : -1]
+#endif
 
 typedef int BOOL;
 
@@ -3270,7 +3284,15 @@ typedef my_post_controller * my_post_ptr;
 typedef my_prep_controller * my_prep_ptr;
 typedef int (*my_src_ptr)();
 typedef my_upsampler * my_upsample_ptr;
+/* 100 = x86 sizeof(DObj_s). On x64 DObj_s grows to 152 (8-byte ptrs in models[8]); a 100-byte
+   slot makes adjacent server DObjs overlap and clobber modelParents/matOffset (-> infinite bone-
+   hierarchy loop in DObjGetHierarchyBits). 160 fits the x64 struct and stays 16-aligned. objBuf is
+   runtime BSS, so re-sizing it is binary-compatible. */
+#if defined(COD2_X64) || defined(__x86_64__)
+typedef char objBufEntry[160];
+#else
 typedef char objBufEntry[100];
+#endif
 typedef phuff_entropy_decoder * phuff_entropy_ptr;
 
 typedef void (*pmove_PlayerEvent)();
@@ -3673,12 +3695,7 @@ struct ClientVoicePacket_t {
 struct CodeConstantSource {
     const char *name;
     MaterialConstantSource source;
-#if defined(__x86_64__)
     intptr_t subtable;
-
-#else
-    int subtable;
-#endif
     int arrayCount;
     int arrayStride;
 };
@@ -3686,11 +3703,7 @@ struct CodeConstantSource {
 struct CodeSamplerSource {
     const char *name;
     MaterialTextureSource source;
-#if defined(__x86_64__)
     intptr_t subtable;
-#else
-    int subtable;
-#endif
     int arrayCount;
     int arrayStride;
 };
@@ -7357,12 +7370,11 @@ struct clientState_s {
 };
 
 struct cmd_function_s {
-#if defined(__x86_64__)
-
-    long next;
-#else
-    int next;
-#endif
+    /* really a cmd_function_t*; the reconstruction kept it in an int-typed field
+     * accessed via *(cmd_function_t**)&next. Use a pointer-sized int so it
+     * survives LP64/LLP64 (4 on x86, 8 on x64). The old `int` truncated the
+     * next-pointer on MSVC x64 -> crash in Cmd_AddCommand. */
+    intptr_t next;
     char *name;
     const char *autoCompleteDir;
     const char *autoCompleteExt;
@@ -7513,14 +7525,8 @@ struct dvar_s {
     DvarValue latched;
     DvarValue reset;
     union DvarLimits domain;
-#if defined(__x86_64__)
-
-    long next;
-    long hashNext;
-#else
-    int next;
-    int hashNext;
-#endif
+    intptr_t next;
+    intptr_t hashNext;
 };
 
 struct editFieldDef_s {
@@ -7564,12 +7570,7 @@ struct field_t {
 
 struct fileData_s {
     void *data;
-#if defined(__x86_64__)
-
-    long next;
-#else
-    int next;
-#endif
+    intptr_t next;
     byte type;
     char name[1];
 };
@@ -7577,12 +7578,7 @@ struct fileData_s {
 struct fileInPack_s {
     long unsigned int pos;
     char *name;
-#if defined(__x86_64__)
-
-    long next;
-#else
-    int next;
-#endif
+    intptr_t next;
 };
 
 struct forward_iterator_tag {
@@ -8684,26 +8680,14 @@ struct new_allocator_float {
 };
 
 struct nodetype {
-#if defined(__x86_64__)
-
-    long left;
-    long right;
-    long parent;
-    long next;
-    long prev;
-    long head;
+    intptr_t left;
+    intptr_t right;
+    intptr_t parent;
+    intptr_t next;
+    intptr_t prev;
+    intptr_t head;
     int weight;
     int symbol;
-#else
-    int left;
-    int right;
-    int parent;
-    int next;
-    int prev;
-    int head;
-    int weight;
-    int symbol;
-#endif
 };
 
 struct huff_t {
@@ -9340,12 +9324,7 @@ struct scr_localVar_t {
 };
 
 struct searchpath_s {
-#if defined(__x86_64__)
-
-    long next;
-#else
-    int next;
-#endif
+    intptr_t next;
     pack_t *pack;
     directory_t *dir;
     qboolean bLocalized;
@@ -9481,26 +9460,15 @@ struct snd_alias_build_s {
     byte bNoWetLevel;
     Bool error;
     Bool keep;
-#if defined(__x86_64__)
-
     intptr_t pSameSoundFile;
     intptr_t pNext;
-#else
-    int pSameSoundFile;
-    int pNext;
-#endif
 };
 
 struct snd_alias_list_t {
     const char *aliasName;
     snd_alias_t *head;
     int count;
-#if defined(__x86_64__)
-
     intptr_t pHashNext;
-#else
-    int pHashNext;
-#endif
 };
 
 struct snd_alias_t {
@@ -9644,8 +9612,8 @@ struct GfxBackEndData {
 };
 
 struct static_model_node_list_t {
-    int prev;
-    int next;
+    intptr_t prev;   /* hold pointers (was int -> truncated on x64; intptr_t==int on x86) */
+    intptr_t next;
 };
 
 union static_model_leaf_t {
@@ -9660,8 +9628,8 @@ struct static_model_node_t {
 };
 
 struct static_model_tree_list_t {
-    int prev;
-    int next;
+    intptr_t prev;   /* hold pointers (was int -> truncated on x64; intptr_t==int on x86) */
+    intptr_t next;
 };
 
 struct static_model_tree_t {

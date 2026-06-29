@@ -21,7 +21,7 @@ __declspec(align(4096)) char __mh_execute_header[0x10000];
 
 /* --wrap,R_Error: the engine references __real_R_Error (the un-wrapped original).
  * Without the wrap we just bind it straight to R_Error. */
-#pragma comment(linker, "/alternatename:___real_R_Error=_R_Error")
+COD2_ALT("__real_R_Error", "R_Error")
 
 /* --- runtime diagnostics --------------------------------------------------
  * The CRT "Visual C++ Runtime Library" dialog (pure-virtual R6025, invalid
