@@ -40,7 +40,7 @@
 #define __alignof__(x)  __alignof(x)
 
 /* --- builtins -------------------------------------------------------------
- * Map the GCC builtins the reconstruction uses onto MSVC/CRT equivalents.
+ * Map the GCC builtins this tree uses onto MSVC/CRT equivalents.
  * IMPORTANT: leaving the float math builtins (__builtin_sqrtf/__builtin_fabsf)
  * unmapped makes cl's *backend* (p2) ICE during codegen, not just warn -- so
  * these must be real libc calls. */

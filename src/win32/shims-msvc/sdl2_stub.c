@@ -3,7 +3,7 @@
  * SDL2 is a USER-SUPPLIED external dependency (see README: drop SDL2 dev libs
  * under src/win32/sdl2/lib/). The repo ships none, and the bundled .a libs are
  * MinGW-format anyway. These cdecl stubs let cod2_win32.exe LINK end-to-end so
- * the reconstruction's own symbols are proven resolved; replace with a real
+ * the engine's own symbols are proven resolved; replace with a real
  * MSVC SDL2.lib for a runnable client (the build drops these when SDL2 is found).
  *
  * Link only matches the (cdecl) symbol name, so bodyless stubs suffice; they are

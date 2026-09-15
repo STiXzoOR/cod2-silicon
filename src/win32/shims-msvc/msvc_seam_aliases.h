@@ -1,7 +1,7 @@
 /* =============================================================================
  * msvc_seam_aliases.h -- engine-global seam aliases for the MSVC build
  *
- * The reconstruction reaches some engine globals through a second name (usually
+ * Some engine globals are reached through a second name (usually
  * an `<x>_ptr` byte-array base) that must resolve to the real symbol. The GNU /
  * web build binds these with linker `--defsym` (see the alias list in
  * src/blobs/literals.S); `/alternatename` is the exact MSVC equivalent. A
