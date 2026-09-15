@@ -183,7 +183,16 @@ extern void FxArchive_ReadData(const FxArchive *arch, void *data, int size);
 extern void FxArchive_WriteData(const FxArchive *arch, const void *data, int size);
 extern void FxArchive_ArchiveChannelInstance(const FxArchive *arch, FxChannelInstance *channelInst);
 extern byte *__ZN11FxBoltFrame12g_mFrameListE;
-extern byte __ZTV6Effect[];
+extern void *__ZTV6Effect[];
+extern void *__ZTV8Particle[];
+extern void *__ZTV16OrientedParticle[];
+extern void *__ZTV5Cloud[];
+extern void *__ZTV4Line[];
+extern void *__ZTV4Tail[];
+extern void *__ZTV8Cylinder[];
+extern void *__ZTV7Emitter[];
+extern void *__ZTV5Light[];
+extern void *__ZTV5Flash[];
 static inline __attribute__((always_inline)) void FxBoltFrame_ReleaseHelper(byte *boltFrame)
 {
     if (!boltFrame)
@@ -1130,7 +1139,7 @@ void Light_UpdateRGB(const Light *_this, const Light *_this_1)
 static inline __attribute__((always_inline)) void ZN6EffectD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN6EffectD1Ev(void *_this)
@@ -1192,7 +1201,7 @@ void FxBoltFramePtr_Archive(const FxBoltFramePtr *_this, FxArchive *arch)
 static inline __attribute__((always_inline)) void ZN6EffectD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -1401,7 +1410,7 @@ void Particle_Particle(const Particle *_this)
     int *p;
     int zero = 0;
     ((struct Effect *)_this)->mBolt.value = 0;
-    *(int *)_this = 0x32ffc8;
+    *(void **)_this = (byte *)__ZTV8Particle + (2 * (int)sizeof(void *));
     p = (int *)((byte *)_this + 0xc4);
     p[0] = zero;
     p[1] = zero;
@@ -1411,7 +1420,7 @@ void Particle_Particle(const Particle *_this)
 static inline __attribute__((always_inline)) void ZN8ParticleD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN8ParticleD1Ev(void *_this)
@@ -1422,7 +1431,7 @@ void ZN8ParticleD1Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN8ParticleD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -1435,13 +1444,13 @@ void ZN8ParticleD0Ev(void *_this)
 void Light_Light(const Light *_this)
 {
     ((struct Effect *)_this)->mBolt.value = 0;
-    *(int *)_this = 0x330188;
+    *(void **)_this = (byte *)__ZTV5Light + (2 * (int)sizeof(void *));
 }
 
 static inline __attribute__((always_inline)) void ZN5LightD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN5LightD1Ev(void *_this)
@@ -1452,7 +1461,7 @@ void ZN5LightD1Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN5LightD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -2844,7 +2853,7 @@ void Emitter_Archive(const Emitter *_this, FxArchive *arch)
 static inline __attribute__((always_inline)) void ZN8CylinderD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -2857,7 +2866,7 @@ void ZN8CylinderD0Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN8CylinderD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN8CylinderD1Ev(void *_this)
@@ -2867,22 +2876,20 @@ void ZN8CylinderD1Ev(void *_this)
 
 void Cylinder_Cylinder(const Cylinder *_this)
 {
-    extern void *__ZTV8Cylinder;
     Particle_Particle((const Particle *)_this);
-    *(void **)_this = (byte *)&__ZTV8Cylinder + (2 * (int)sizeof(void *));
+    *(void **)_this = (byte *)__ZTV8Cylinder + (2 * (int)sizeof(void *));
 }
 
 void OrientedParticle_OrientedParticle(const OrientedParticle *_this)
 {
-    extern void *__ZTV16OrientedParticle;
     Particle_Particle((const Particle *)_this);
-    *(void **)_this = (byte *)&__ZTV16OrientedParticle + (2 * (int)sizeof(void *));
+    *(void **)_this = (byte *)__ZTV16OrientedParticle + (2 * (int)sizeof(void *));
 }
 
 static inline __attribute__((always_inline)) void ZN16OrientedParticleD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN16OrientedParticleD1Ev(void *_this)
@@ -2893,7 +2900,7 @@ void ZN16OrientedParticleD1Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN16OrientedParticleD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -2906,14 +2913,13 @@ void ZN16OrientedParticleD0Ev(void *_this)
 extern const vec_t Vec3Normalize(vec_t *v);
 void Cloud_Cloud(const Cloud *_this, const Cloud *_this_1)
 {
-    extern void *__ZTV5Cloud;
     extern float flrand(float min, float max);
     byte *p = (byte *)_this;
     float *dir = (float *)&((Cloud *)p)->randomDirection[0];
     int attempts = 4;
     (void)_this_1;
     Particle_Particle((const Particle *)_this);
-    *(void **)p = (byte *)&__ZTV5Cloud + (2 * (int)sizeof(void *));
+    *(void **)p = (byte *)__ZTV5Cloud + (2 * (int)sizeof(void *));
 
     do {
         byte *q = p;
@@ -2937,7 +2943,7 @@ void Cloud_Cloud(const Cloud *_this, const Cloud *_this_1)
 static inline __attribute__((always_inline)) void ZN5CloudD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN5CloudD1Ev(void *_this)
@@ -2948,7 +2954,7 @@ void ZN5CloudD1Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN5CloudD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -2960,15 +2966,14 @@ void ZN5CloudD0Ev(void *_this)
 
 void Line_Line(const Line *_this)
 {
-    extern void *__ZTV4Line;
     Particle_Particle((const Particle *)_this);
-    *(void **)_this = (byte *)&__ZTV4Line + (2 * (int)sizeof(void *));
+    *(void **)_this = (byte *)__ZTV4Line + (2 * (int)sizeof(void *));
 }
 
 static inline __attribute__((always_inline)) void ZN4LineD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN4LineD1Ev(void *_this)
@@ -2979,7 +2984,7 @@ void ZN4LineD1Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN4LineD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -2991,15 +2996,14 @@ void ZN4LineD0Ev(void *_this)
 
 void Tail_Tail(const Tail *_this)
 {
-    extern void *__ZTV4Tail;
     Particle_Particle((const Particle *)_this);
-    *(void **)_this = (byte *)&__ZTV4Tail + (2 * (int)sizeof(void *));
+    *(void **)_this = (byte *)__ZTV4Tail + (2 * (int)sizeof(void *));
 }
 
 static inline __attribute__((always_inline)) void ZN4TailD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN4TailD1Ev(void *_this)
@@ -3010,7 +3014,7 @@ void ZN4TailD1Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN4TailD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -3022,15 +3026,14 @@ void ZN4TailD0Ev(void *_this)
 
 void Emitter_Emitter(const Emitter *_this)
 {
-    extern void *__ZTV7Emitter;
     Particle_Particle((const Particle *)_this);
-    *(void **)_this = (byte *)&__ZTV7Emitter + (2 * (int)sizeof(void *));
+    *(void **)_this = (byte *)__ZTV7Emitter + (2 * (int)sizeof(void *));
 }
 
 static inline __attribute__((always_inline)) void ZN7EmitterD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN7EmitterD1Ev(void *_this)
@@ -3041,7 +3044,7 @@ void ZN7EmitterD1Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN7EmitterD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -3068,7 +3071,7 @@ Bool Flash_Cull(const Flash *_this)
 static inline __attribute__((always_inline)) void ZN5FlashD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -3081,10 +3084,201 @@ void ZN5FlashD0Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN5FlashD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
+    *(void **)self = (byte *)__ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN5FlashD1Ev(void *_this)
 {
     ZN5FlashD1Ev_impl(_this);
 }
+
+/* Itanium C++ ABI virtual tables for Effect and its subclasses.
+ * Layout:
+ *   [0] = offset-to-top (0)
+ *   [1] = RTTI typeinfo (0)
+ *   [2] = complete destructor (~D1)
+ *   [3] = deleting destructor (~D0)
+ *   [4] = Die
+ *   [5] = Update
+ *   [6] = Cull
+ *   [7] = Draw
+ *   [8] = GetVisibility
+ *   [9] = AddVisibility
+ *   [10] = CreateChannelInstances
+ *   [11] = TypeID
+ *   [12] = Archive
+ *   [13] = FixupArchiveLoad
+ *
+ * Object vptr points to &vtable[2] (i.e. (byte *)vtable + 2 * sizeof(void *)).
+ */
+
+void *__ZTV6Effect[14] = {
+    (void *)0,
+    (void *)0,
+    (void *)&ZN6EffectD1Ev,
+    (void *)&ZN6EffectD0Ev,
+    (void *)&Effect_Die,
+    (void *)&Effect_Update,
+    (void *)&Effect_Cull,
+    (void *)&Effect_Draw,
+    (void *)&Effect_GetVisibility,
+    (void *)&Effect_AddVisibility,
+    (void *)0,
+    (void *)&Effect_TypeID,
+    (void *)&Effect_Archive,
+    (void *)&Effect_FixupArchiveLoad
+};
+
+void *__ZTV8Particle[14] = {
+    (void *)0,
+    (void *)0,
+    (void *)&ZN8ParticleD1Ev,
+    (void *)&ZN8ParticleD0Ev,
+    (void *)&Particle_Die,
+    (void *)&Particle_Update,
+    (void *)&Particle_Cull,
+    (void *)&Particle_Draw,
+    (void *)&Particle_GetVisibility,
+    (void *)&Particle_AddVisibility,
+    (void *)&Particle_CreateChannelInstances,
+    (void *)&Particle_TypeID,
+    (void *)&Particle_Archive,
+    (void *)&Particle_FixupArchiveLoad
+};
+
+void *__ZTV16OrientedParticle[14] = {
+    (void *)0,
+    (void *)0,
+    (void *)&ZN16OrientedParticleD1Ev,
+    (void *)&ZN16OrientedParticleD0Ev,
+    (void *)&Particle_Die,
+    (void *)&OrientedParticle_Update,
+    (void *)&OrientedParticle_Cull,
+    (void *)&OrientedParticle_Draw,
+    (void *)&Particle_GetVisibility,
+    (void *)&Particle_AddVisibility,
+    (void *)&Particle_CreateChannelInstances,
+    (void *)&OrientedParticle_TypeID,
+    (void *)&OrientedParticle_Archive,
+    (void *)&Particle_FixupArchiveLoad
+};
+
+void *__ZTV5Cloud[14] = {
+    (void *)0,
+    (void *)0,
+    (void *)&ZN5CloudD1Ev,
+    (void *)&ZN5CloudD0Ev,
+    (void *)&Cloud_Die,
+    (void *)&Cloud_Update,
+    (void *)&Cloud_Cull,
+    (void *)&Cloud_Draw,
+    (void *)&Particle_GetVisibility,
+    (void *)&Particle_AddVisibility,
+    (void *)&Cloud_CreateChannelInstances,
+    (void *)&Cloud_TypeID,
+    (void *)&Cloud_Archive,
+    (void *)&Cloud_FixupArchiveLoad
+};
+
+void *__ZTV4Line[14] = {
+    (void *)0,
+    (void *)0,
+    (void *)&ZN4LineD1Ev,
+    (void *)&ZN4LineD0Ev,
+    (void *)&Line_Die,
+    (void *)&Line_Update,
+    (void *)&Line_Cull,
+    (void *)&Line_Draw,
+    (void *)&Particle_GetVisibility,
+    (void *)&Particle_AddVisibility,
+    (void *)&Particle_CreateChannelInstances,
+    (void *)&Line_TypeID,
+    (void *)&Line_Archive,
+    (void *)&Particle_FixupArchiveLoad
+};
+
+void *__ZTV4Tail[14] = {
+    (void *)0,
+    (void *)0,
+    (void *)&ZN4TailD1Ev,
+    (void *)&ZN4TailD0Ev,
+    (void *)&Particle_Die,
+    (void *)&Tail_Update,
+    (void *)&Tail_Cull,
+    (void *)&Tail_Draw,
+    (void *)&Particle_GetVisibility,
+    (void *)&Particle_AddVisibility,
+    (void *)&Tail_CreateChannelInstances,
+    (void *)&Tail_TypeID,
+    (void *)&Tail_Archive,
+    (void *)&Tail_FixupArchiveLoad
+};
+
+void *__ZTV8Cylinder[14] = {
+    (void *)0,
+    (void *)0,
+    (void *)&ZN8CylinderD1Ev,
+    (void *)&ZN8CylinderD0Ev,
+    (void *)&Particle_Die,
+    (void *)&Cylinder_Update,
+    (void *)&Cylinder_Cull,
+    (void *)&Cylinder_Draw,
+    (void *)&Particle_GetVisibility,
+    (void *)&Particle_AddVisibility,
+    (void *)&Particle_CreateChannelInstances,
+    (void *)&Cylinder_TypeID,
+    (void *)&Cylinder_Archive,
+    (void *)&Particle_FixupArchiveLoad
+};
+
+void *__ZTV7Emitter[14] = {
+    (void *)0,
+    (void *)0,
+    (void *)&ZN7EmitterD1Ev,
+    (void *)&ZN7EmitterD0Ev,
+    (void *)&Particle_Die,
+    (void *)&Emitter_Update,
+    (void *)&Emitter_Cull,
+    (void *)&Emitter_Draw,
+    (void *)&Particle_GetVisibility,
+    (void *)&Particle_AddVisibility,
+    (void *)&Particle_CreateChannelInstances,
+    (void *)&Emitter_TypeID,
+    (void *)&Emitter_Archive,
+    (void *)&Particle_FixupArchiveLoad
+};
+
+void *__ZTV5Light[14] = {
+    (void *)0,
+    (void *)0,
+    (void *)&ZN5LightD1Ev,
+    (void *)&ZN5LightD0Ev,
+    (void *)&Effect_Die,
+    (void *)&Light_Update,
+    (void *)&Light_Cull,
+    (void *)&Light_Draw,
+    (void *)&Effect_GetVisibility,
+    (void *)&Effect_AddVisibility,
+    (void *)&Light_CreateChannelInstances,
+    (void *)&Light_TypeID,
+    (void *)&Light_Archive,
+    (void *)&Light_FixupArchiveLoad
+};
+
+void *__ZTV5Flash[14] = {
+    (void *)0,
+    (void *)0,
+    (void *)&ZN5FlashD1Ev,
+    (void *)&ZN5FlashD0Ev,
+    (void *)&Effect_Die,
+    (void *)&Flash_Update,
+    (void *)&Flash_Cull,
+    (void *)&Flash_Draw,
+    (void *)&Effect_GetVisibility,
+    (void *)&Effect_AddVisibility,
+    (void *)&Light_CreateChannelInstances,
+    (void *)&Flash_TypeID,
+    (void *)&Flash_Archive,
+    (void *)&Light_FixupArchiveLoad
+};
+

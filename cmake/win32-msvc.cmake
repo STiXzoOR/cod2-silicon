@@ -169,7 +169,6 @@ set(MSVC_BLOBS
   ${CMAKE_SOURCE_DIR}/build/native_gen/literals32.c
   ${CMAKE_SOURCE_DIR}/build/native_gen/import_pointers_native.c)
 add_library(cod2_msvc_blobs OBJECT ${MSVC_BLOBS})
-target_compile_options(cod2_msvc_blobs PRIVATE /Zp1)
 
 # --- executable (Stage 6, first link) ----------------------------------------
 # Engine-global seam aliases (the GNU build's --defsym engine seams) now live in

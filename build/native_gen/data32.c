@@ -826,6 +826,8 @@ extern char str_cg_shock_viewKickFadeTime[];
 extern char theFxHelpers[];
 extern char uiInfoArray[];
 
+#pragma pack(push, 1)
+
 struct __attribute__((packed)) _d32_NXArgc {
     unsigned char f0[4]; 
 };
@@ -1651,3 +1653,5 @@ struct _d32_fixed_bd __attribute__((aligned(4))) fixed_bd = {
 struct _d32_fixed_bl __attribute__((aligned(4))) fixed_bl = {
     { 9, 0, 0, 0 }
 };
+
+#pragma pack(pop)

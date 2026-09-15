@@ -999,7 +999,7 @@ void FX_AddCloud(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const i
     ((Cloud *)p)->useLengthFlag = ((PrimitiveTemplate *)primTemp)->useLength;
 }
 
-extern void *imp___ZTV5Flash;
+extern void *__ZTV5Flash[];
 extern void Flash_Init(const Flash *flash);
 void FX_AddFlash(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
 {
@@ -1011,7 +1011,7 @@ void FX_AddFlash(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const i
         memset(p, 0, sizeof(Light));
     Light_Light( (const Light *)(p));
 
-    *(void **)p = (byte *)imp___ZTV5Flash + (2 * (int)sizeof(void *));
+    *(void **)p = (byte *)__ZTV5Flash + (2 * (int)sizeof(void *));
 
     int added = FX_AddPrimitive(prim, p, origin);
     if (!(byte)added) {

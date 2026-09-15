@@ -566,7 +566,7 @@ extern unsigned char __ZTV14COpenGLTexture[1];
 extern struct _d32___ZTV14CTexCoordArray __ZTV14CTexCoordArray;
 extern struct _d32___ZTV15CCacheInfoBlock __ZTV15CCacheInfoBlock;
 extern unsigned char __ZTV15CColorConverter[1];
-extern unsigned char __ZTV16OrientedParticle[1];
+/* extern unsigned char __ZTV16OrientedParticle[1]; */
 extern unsigned char __ZTV17IDirect3DTexture9[1];
 extern unsigned char __ZTV18IDirect3DResource9[1];
 extern struct _d32___ZTV20CSecondaryColorArray __ZTV20CSecondaryColorArray;
@@ -576,16 +576,16 @@ extern struct _d32___ZTV22CVAOPacketProgrammable __ZTV22CVAOPacketProgrammable;
 extern unsigned char __ZTV22IDirect3DVertexShader9[1];
 extern struct _d32___ZTV23CVAOPacketFixedFunction __ZTV23CVAOPacketFixedFunction;
 extern unsigned char __ZTV23IDirect3DVolumeTexture9[1];
-extern unsigned char __ZTV4Line[1];
-extern unsigned char __ZTV4Tail[1];
-extern unsigned char __ZTV5Cloud[1];
-extern unsigned char __ZTV5Flash[1];
-extern unsigned char __ZTV6Effect[1];
+/* extern unsigned char __ZTV4Line[1]; */
+/* extern unsigned char __ZTV4Tail[1]; */
+/* extern unsigned char __ZTV5Cloud[1]; */
+/* extern unsigned char __ZTV5Flash[1]; */
+/* extern unsigned char __ZTV6Effect[1]; */
 extern struct _d32___ZTV7CBaseVA __ZTV7CBaseVA;
-extern unsigned char __ZTV7Emitter[1];
-extern unsigned char __ZTV8Cylinder[1];
+/* extern unsigned char __ZTV7Emitter[1]; */
+/* extern unsigned char __ZTV8Cylinder[1]; */
 extern unsigned char __ZTV8IUnknown[1];
-extern unsigned char imp__ZTV5Flash[1];
+/* extern unsigned char imp__ZTV5Flash[1]; */
 extern unsigned char color[1];
 extern unsigned char sse_float_abs_mask[1];
 extern unsigned char sse_float_sign_mask[1];
@@ -1090,7 +1090,7 @@ struct _d32___ZTV15CCacheInfoBlock __attribute__((aligned(4))) __ZTV15CCacheInfo
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 unsigned char __ZTV15CColorConverter[1] = {0};
-unsigned char __ZTV16OrientedParticle[1] = {0};
+/* unsigned char __ZTV16OrientedParticle[1] = {0}; */
 unsigned char __ZTV17IDirect3DTexture9[1] = {0};
 unsigned char __ZTV18IDirect3DResource9[1] = {0};
 struct _d32___ZTV20CSecondaryColorArray __attribute__((aligned(4))) __ZTV20CSecondaryColorArray = {
@@ -1119,21 +1119,21 @@ struct _d32___ZTV23CVAOPacketFixedFunction __attribute__((aligned(4))) __ZTV23CV
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 unsigned char __ZTV23IDirect3DVolumeTexture9[1] = {0};
-unsigned char __ZTV4Line[1] = {0};
-unsigned char __ZTV4Tail[1] = {0};
-unsigned char __ZTV5Cloud[1] = {0};
-unsigned char __ZTV5Flash[1] = {0};
-unsigned char __ZTV6Effect[1] = {0};
+/* unsigned char __ZTV4Line[1] = {0}; */
+/* unsigned char __ZTV4Tail[1] = {0}; */
+/* unsigned char __ZTV5Cloud[1] = {0}; */
+/* unsigned char __ZTV5Flash[1] = {0}; */
+/* unsigned char __ZTV6Effect[1] = {0}; */
 struct _d32___ZTV7CBaseVA __attribute__((aligned(4))) __ZTV7CBaseVA = {
     { 0, 0, 0, 0, 0, 0, 0, 0 },
     (void *)&ZN7CBaseVAD1Ev,
     (void *)&ZN7CBaseVAD0Ev,
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
-unsigned char __ZTV7Emitter[1] = {0};
-unsigned char __ZTV8Cylinder[1] = {0};
+/* unsigned char __ZTV7Emitter[1] = {0}; */
+/* unsigned char __ZTV8Cylinder[1] = {0}; */
 unsigned char __ZTV8IUnknown[1] = {0};
-unsigned char imp__ZTV5Flash[1] = {0};
+/* unsigned char imp__ZTV5Flash[1] = {0}; */
 unsigned char color[1] = {0};
 unsigned char sse_float_abs_mask[1] = {0};
 unsigned char sse_float_sign_mask[1] = {0};

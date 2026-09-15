@@ -1,3 +1,5 @@
+#if !defined(_WIN32)
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -90,3 +92,5 @@ void Sys_SetErrorText(const char *buf)
 {
     fprintf(stderr, "ERROR: %s\n", buf);
 }
+
+#endif // !_WIN32

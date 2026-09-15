@@ -8,6 +8,7 @@
 #    include "common_types.h"
 
 #    define ARCH64_VTABLE(sym) unsigned char sym[256] __attribute__((aligned(16))) = { 0 }
+/* Effect vtables are implemented with real function pointers in FxPrimitives.c:
 ARCH64_VTABLE(__ZTV6Effect);
 ARCH64_VTABLE(__ZTV16OrientedParticle);
 ARCH64_VTABLE(__ZTV4Line);
@@ -15,6 +16,7 @@ ARCH64_VTABLE(__ZTV4Tail);
 ARCH64_VTABLE(__ZTV5Cloud);
 ARCH64_VTABLE(__ZTV7Emitter);
 ARCH64_VTABLE(__ZTV8Cylinder);
+*/
 ARCH64_VTABLE(__ZTV12IncludeClass);
 #    undef ARCH64_VTABLE
 

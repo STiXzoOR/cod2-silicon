@@ -90,20 +90,22 @@ touch the MinGW path above (everything MSVC-specific is gated behind the
 
 Requires Visual Studio 2022 or newer with the **x86 MSVC toolset**. The binary is
 32-bit, so configure and build from an **"x86 Native Tools for VS" command
-prompt** (it puts the x86 `cl` plus the bundled CMake and Ninja on `PATH`):
+prompt** (or run `call "<VS_INSTALL_DIR>\VC\Auxiliary\Build\vcvars32.bat"` to put the x86 `cl`, CMake, and Ninja on `PATH`):
+
+**Debug build:**
 
 ```bat
 cmake --preset msvc-client
 cmake --build build/msvc --target cod2_win32
-:: -> build/msvc/cod2_win32.exe   (full client)
+:: -> build/msvc/cod2_win32.exe   (full client, ~2.7 MB)
 ```
 
-There is also an optimized **Release** preset (`/O2`, its own `build/msvc-release`):
+**Optimized Release build (`/O2`):**
 
 ```bat
 cmake --preset msvc-client-release
 cmake --build build/msvc-release --target cod2_win32
-:: -> build/msvc-release/cod2_win32.exe
+:: -> build/msvc-release/cod2_win32.exe   (~1.9 MB)
 ```
 
 > [!NOTE]
@@ -116,8 +118,8 @@ SDL2 is user-supplied (never committed). Drop the 32-bit MSVC SDL2 dev package
 under `third_party/SDL2-<version>/` (or the legacy `src/win32/sdl2/`); the build
 finds the headers and `lib/x86` automatically.
 
-- **Default — dynamic.** Uses the import `SDL2.lib`; copy `SDL2.dll` next to the
-  built exe in `build/msvc/`.
+- **Default — dynamic.** Uses the import `SDL2.lib`; copy the 32-bit `SDL2.dll` next to the
+  built exe in `build/msvc/` (or `build/msvc-release/`).
 - **Optional — fully static / standalone** (`-DCOD2_SDL2_STATIC=ON`, on either
   preset). Produces a single self-contained exe that imports **only Windows
   system DLLs** — no `SDL2.dll`, no VC runtime DLLs. This one flag statically
@@ -161,7 +163,11 @@ the game you legally own:
 On Windows (native MSVC client):
 
 ```bat
+:: Debug
 build\msvc\cod2_win32.exe +set fs_basepath "C:\path\to\your\game"
+
+:: Release
+build\msvc-release\cod2_win32.exe +set fs_basepath "C:\path\to\your\game"
 ```
 
 Without legally-obtained data the build runs but has nothing to load.
