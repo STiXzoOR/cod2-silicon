@@ -410,6 +410,54 @@ static void cr_win_backtrace(int fd, CONTEXT *ctxIn)
         if (!found)
             cr_emit(fd, "  (none found)\n");
         cr_emit(fd, "\n");
+
+        /* Second pass: resolve EVERY code-like stack value to its module (any DLL),
+         * so a fault inside a system DLL callback shows the caller chain. */
+        cr_emit(fd, "stack scan (all module-resolved code addresses):\n");
+        {
+            int shown = 0;
+            for (cur = sp; cur < sp + 0x2000 && shown < 40; cur += sizeof(uintptr_t)) {
+                uintptr_t v;
+                HMODULE hm2 = NULL;
+                char mn[MAX_PATH];
+                const char *bn;
+                if (IsBadReadPtr((void *)cur, sizeof(v)))
+                    break;
+                v = *(uintptr_t *)cur;
+                if (v < 0x10000)
+                    continue;
+                if (!GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                                        (LPCSTR)v, &hm2) || !hm2)
+                    continue;
+                if (!GetModuleFileNameA(hm2, mn, sizeof(mn)))
+                    continue;
+                bn = mn;
+                { const char *p; for (p = mn; *p; p++) if (*p == '\\' || *p == '/') bn = p + 1; }
+                cr_emit(fd, "  [rsp+0x%04llx] 0x%016llx  %s+0x%llx\n",
+                        (unsigned long long)(cur - sp), (unsigned long long)v,
+                        bn, (unsigned long long)(v - (uintptr_t)hm2));
+                shown++;
+            }
+            if (!shown)
+                cr_emit(fd, "  (none found)\n");
+        }
+        cr_emit(fd, "\n");
+    }
+
+    /* last surface dispatched by the render backend (helps localize model/tess
+     * faults that land in D3D/heap code with no exe frames). */
+    {
+        extern volatile struct RbDrawDbg {
+            int type; const void *surface; int entityIndex; const void *material;
+            int iteration; int drawSurfCount; unsigned int sort;
+        } g_rb_draw_dbg;
+        cr_emit(fd, "last RB draw surface: type=%d surface=%p entityIndex=%d material=%p iter=%d/%d sort=%x\n",
+                g_rb_draw_dbg.type, g_rb_draw_dbg.surface, g_rb_draw_dbg.entityIndex,
+                g_rb_draw_dbg.material, g_rb_draw_dbg.iteration, g_rb_draw_dbg.drawSurfCount,
+                g_rb_draw_dbg.sort);
+        { extern volatile int g_rigid_step; cr_emit(fd, "rigid draw step=%d (1=strm 2=push 3=wmtx 4=drawtech 5=done)\n", g_rigid_step); }
+        { extern volatile int g_lastdraw[6]; cr_emit(fd, "last DrawIndexedPrim: baseVertex=%d minIndex=%d numVerts=%d startIndex=%d primCount=%d (#%d)\n\n",
+                g_lastdraw[0], g_lastdraw[1], g_lastdraw[2], g_lastdraw[3], g_lastdraw[4], g_lastdraw[5]); }
     }
     SymCleanup(proc);
 }
