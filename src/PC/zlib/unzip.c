@@ -28,9 +28,16 @@ extern FILE *FS_FileOpen(const char *filename, const char *mode);
 extern size_t FS_FileRead(void *ptr, size_t size, size_t nitems, FILE *stream);
 extern int FS_FileClose(FILE *stream);
 extern int FS_FileSeek(FILE *file, long int offset, int whence);
+#ifdef __cplusplus
+extern "C" {
+#endif
 extern int inflate(z_streamp strm, int flush);
 extern int inflateEnd(z_streamp strm);
 extern int inflateInit2_(z_streamp strm, int windowBits, const char *version, int stream_size);
+extern const char *zlibVersion(void);
+#ifdef __cplusplus
+}
+#endif
 
 #ifdef COD2_FEATURE_MODERN_LIBS
 /* Hardened .iwd reader: bind inflate to whatever system zlib is actually linked
@@ -38,7 +45,6 @@ extern int inflateInit2_(z_streamp strm, int windowBits, const char *version, in
  * bundled z_stream layout in common_types.h is ABI-identical to system zlib's,
  * so we only need the runtime version string for inflateInit2_'s compat check
  * instead of the hardcoded "1.1.4" the bundled 1998-era headers assumed. */
-extern const char *zlibVersion(void);
 #define UNZ_ZLIB_VERSION (zlibVersion())
 #else
 #define UNZ_ZLIB_VERSION "1.1.4"

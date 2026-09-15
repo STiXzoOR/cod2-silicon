@@ -2,7 +2,7 @@
 #include "imports.h"
 #include "bytematch.h"
 
-extern int XModelGetLodForDist(XModel *model, float dist);
+extern int XModelGetLodForDist(const XModel *model, float dist);
 extern float XModelGetLodOutDist(const XModel *model);
 extern int XModelBad(const XModel *model);
 extern const char *XModelGetName(const XModel *model);
@@ -14,9 +14,9 @@ extern void XModelGetBounds(const XModel *model, vec_t *mins, vec_t *maxs);
 extern unsigned int SL_FindString(const char *str);
 extern const char *SL_ConvertToString(unsigned int stringValue);
 extern void SL_RemoveRefToStringOfLen(unsigned int stringValue, unsigned int len);
-extern unsigned int SL_GetStringOfLen(void *duplicatePartBits, int user, int len, int flag);
+extern unsigned int SL_GetStringOfLen(const char *str, unsigned int user, unsigned int len, int flag);
 extern void Com_Printf(const char *fmt, ...);
-extern void Com_Error(int code, const char *fmt, ...);
+extern void Com_Error(errorParm_t code, const char *fmt, ...);
 extern float sinf(float x);
 extern float cosf(float x);
 extern float sqrtf(float x);
@@ -94,7 +94,7 @@ void DObjInit(void)
     duplicatePartBits[2] = 0;
     duplicatePartBits[3] = 0;
     duplicatePartBits[4] = 0;
-    g_empty = SL_GetStringOfLen(dp, 0, 0x11, 0xc);
+    g_empty = SL_GetStringOfLen((const char *)dp, 0, 0x11, 0xc);
 }
 
 void DObjShutdown(void)
@@ -155,11 +155,11 @@ int DObjGetAllocSkelSize(const DObj *obj)
 
 qboolean DObjSkelExists(const DObj *obj, int timeStamp)
 {
-    if (obj->timeStamp != timeStamp) {
-        ((DObj *)obj)->skel = NULL;
-        return 0;
-    }
-    return obj->skel != NULL;
+    if (obj->timeStamp == timeStamp)
+        return obj->skel != NULL;
+
+    ((DObj *)obj)->skel = NULL;
+    return 0;
 }
 
 void DObjSkelClear(const DObj *obj)
@@ -209,7 +209,9 @@ void DObjGetBoneInfo(const DObj *obj, XBoneInfo **boneInfo)
     int j, i;
     for (j = 0; j < obj->numModels; j++) {
         XModel *model = obj->models[j];
-        int size = *(short *)(*(int *)model);
+        /* model's first field is the XModelParts* 'parts'; *(int*)model truncated
+         * it to 32 bits on x64. Read the full pointer, then its numBones short. */
+        int size = *(short *)(*(void **)model);
         for (i = 0; i < size; i++) {
             *boneInfo++ = &model->boneInfo[i];
         }
@@ -225,7 +227,7 @@ int DObjGetNumSurfaces(const DObj *obj, char *lods)
         signed char lod = lods[i];
         if (lod >= 0) {
             XModel *model = obj->models[i];
-            XModelLodInfo *lodInfo = &model->lodInfo[(unsigned char)lod];
+            XModelLodInfo *lodInfo = &model->lodInfo[lod];
             if (lodInfo->surfs) {
                 numSurfaces += lodInfo->numsurfs;
             }
@@ -238,8 +240,11 @@ struct XSurface_s *DObjGetSurface(const DObj *obj, int modelIndex, int subMatInd
 {
     XModel *model = obj->models[modelIndex];
     XModelSurfs *surfs = model->lodInfo[lod].surfs;
-    int *surfList = *(int **)surfs;
-    return (struct XSurface_s *)*(int *)(surfList + subMatIndex);
+    /* surfs->surfs is an array of XSurface* (8-byte entries on x64). The old
+     * `int *surfList; *(int*)(surfList+subMatIndex)` used a 4-byte stride AND
+     * truncated the returned pointer to 32 bits. */
+    struct XSurface_s **surfList = (struct XSurface_s **)surfs->surfs;
+    return surfList[subMatIndex];
 }
 
 const char *DObjGetSurfaceName(DObj *obj, int modelIndex, int subMatIndex, int lod)
@@ -397,14 +402,16 @@ void DObjGeomTraceline(DObj *obj, vec_t *localStart, vec_t *localEnd, int conten
 int DObjGetSurfaces(const DObj *obj, DSurface *surfaces, int *partBits, char *lods)
 {
     int modelIndex;
+    int numModels;
     int surfaceCount = 0;
 
     partBits[0] = 0;
     partBits[1] = 0;
     partBits[2] = 0;
     partBits[3] = 0;
+    numModels = obj->numModels;
 
-    for (modelIndex = 0; modelIndex < obj->numModels; ++modelIndex) {
+    for (modelIndex = 0; modelIndex < numModels; ++modelIndex) {
         signed char lod = (signed char)lods[modelIndex];
         XModel *model;
         XModelLodInfo *lodInfo;
@@ -433,7 +440,7 @@ int DObjGetSurfaces(const DObj *obj, DSurface *surfaces, int *partBits, char *lo
 
         if (surfaceCount + numsurfs > 64) {
             Com_Printf("ERROR: models with more than %i total surfaces\n", 64);
-            for (surfIndex = 0; surfIndex < obj->numModels; ++surfIndex) {
+            for (surfIndex = 0; surfIndex < numModels; ++surfIndex) {
                 struct XSurface_s **debugSurfs;
                 int *debugPartBits;
                 int debugLod = (signed char)lods[surfIndex];
@@ -442,7 +449,7 @@ int DObjGetSurfaces(const DObj *obj, DSurface *surfaces, int *partBits, char *lo
                 Com_Printf("  model '%s' lod %i has %i surfaces\n",
                            XModelGetName(obj->models[surfIndex]), debugLod, debugCount);
             }
-            Com_Error(1, "Max surfs exceeded - see console for details");
+            Com_Error(ERR_DROP, "Max surfs exceeded - see console for details");
         }
 
         for (surfIndex = 0; surfIndex < numsurfs; ++surfIndex) {
@@ -546,7 +553,7 @@ static void __attribute_regparm__(1) DObjCreateDuplicateParts(const DObj *obj)
     if (duplicatePartByteCount) {
         data.duplicateParts[duplicatePartByteCount] = 0;
         ((DObj *)obj)->duplicateParts = (unsigned short)SL_GetStringOfLen(
-            &data,
+            (const char *)&data,
             0,
             duplicatePartByteCount + 0x11,
             0xc);
@@ -896,7 +903,7 @@ void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tr
     obj->duplicateParts = 0;
     obj->ignoreCollision = 0;
 
-    obj->tree = tree;
+    obj->tree = (XAnimTree *)(tree);
     if (tree) {
         int animCount = tree->anims->size;
         int animBytes = 2 * animCount;
@@ -961,7 +968,7 @@ void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tr
             if (model) {
                 boneIndex += ((XModelParts *)model->parts)->numBones;
                 if (boneIndex > 0x7f) {
-                    Com_Error(1, "\x15"
+                    Com_Error(ERR_DROP, "\x15"
                                  "dobj for xmodel '%s' has more than %d bones",
                               obj->models[0]->name, 0x7f);
                     break;

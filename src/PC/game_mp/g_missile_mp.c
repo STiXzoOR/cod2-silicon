@@ -40,33 +40,33 @@ static qboolean G_BounceMissile(gentity_t *ent, trace_t *trace);
 void G_RunMissile(gentity_t *ent);
 
 extern WeaponDef *BG_GetWeaponDef(int weaponIndex);
-extern void BG_EvaluateTrajectory(trajectory_t *tr, int atTime, vec_t *result);
-extern void BG_EvaluateTrajectoryDelta(trajectory_t *tr, int atTime, vec_t *result);
-extern unsigned char G_SetOrigin(gentity_t *ent, const vec_t *origin);
-extern void G_SetAngle(gentity_t *ent, vec_t *angles);
-extern void G_TraceCapsule(trace_t *result, vec_t *start, vec_t *mins, vec_t *maxs, vec_t *end, int skipNumber, int mask);
-extern int DirToByte(vec_t *dir);
-extern unsigned char G_AddEvent(gentity_t *ent, int event, int eventParm);
-extern int SV_PointContents(vec_t *point, int passEntityNum, int contentMask);
+extern void BG_EvaluateTrajectory(const trajectory_t *tr, int atTime, vec_t *result);
+extern void BG_EvaluateTrajectoryDelta(const trajectory_t *tr, int atTime, vec_t *result);
+extern void G_SetOrigin(gentity_t *ent, const vec_t *origin);
+extern void G_SetAngle(gentity_t *ent, const vec_t *angle);
+extern void G_TraceCapsule(trace_t *results, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int contentmask);
+extern const byte DirToByte(const vec_t *dir);
+extern void G_AddEvent(gentity_t *ent, int event, int eventParm);
+extern int SV_PointContents(const vec_t *p, int passEntityNum, int contentmask);
 extern void SV_LinkEntity(gentity_t *ent);
-extern qboolean G_RadiusDamage(vec_t *origin, gentity_t *ent, gentity_t *attacker, float radius, float outerDamage, float innerDamage, gentity_t *inflictor, int splashMod);
+extern qboolean G_RadiusDamage(const vec_t *origin, gentity_t *inflictor, gentity_t *attacker, float fInnerDamage, float fOuterDamage, float radius, gentity_t *ignore, int mod);
 extern void Server_SwitchToValidFxScheduler(void);
 extern int FX_RegisterEffect(const char *name);
 extern float FX_GetEffectLength(int handle);
 extern gentity_t *G_Spawn(void);
 extern void Scr_SetString(scr_string_t *dst, unsigned int str);
-extern void vectoangles(vec_t *dir, vec_t *angles);
-extern float AngleNormalize360(float angle);
-extern float AngleNormalize180(float angle);
-extern float AngleSubtract(float a, float b);
-extern float PitchForYawOnNormal(float yaw, vec_t *normal);
+extern void vectoangles(const vec_t *vec, vec_t *angles);
+extern const float AngleNormalize360(const float angle);
+extern const float AngleNormalize180(const float angle);
+extern const float AngleSubtract(const float a1, const float a2);
+extern float PitchForYawOnNormal(const float fYaw, const vec_t *normal);
 extern float flrand(float min, float max);
 extern float randomf(void);
-extern float Vec3Normalize(vec_t *v);
-extern float Vec3NormalizeTo(vec_t *v, vec_t *out);
-extern void G_LocationalTrace(trace_t *result, vec_t *start, vec_t *end, int skipNumber, int mask, byte *priorityMap);
-extern gentity_t *G_TempEntity(vec_t *origin, int event);
-extern unsigned char G_FreeEntity(gentity_t *ent);
+extern const vec_t Vec3Normalize(vec_t *v);
+extern const vec_t Vec3NormalizeTo(const vec_t *v, vec_t *out);
+extern void G_LocationalTrace(trace_t *result, const vec_t *start, const vec_t *end, int skipNumber, int mask, byte *priorityMap);
+extern gentity_t * G_TempEntity(const vec_t *origin, int event);
+extern void G_FreeEntity(gentity_t *ent);
 extern int G_RunThink(gentity_t *ent);
 extern int LogAccuracyHit(gentity_t *target, gentity_t *attacker);
 extern void G_Damage(gentity_t *target, gentity_t *inflictor, gentity_t *attacker, vec_t *dir, vec_t *point, int damage, int dflags, int mod, int hitClient, int hitLoc);
@@ -267,7 +267,7 @@ gentity_t *fire_grenade(gentity_t *self, vec_t *start, vec_t *dir, int grenadeWP
 
     (_ENT(bolt)->s.time) = LEVEL_TIME + 50;
 
-    (&_ENT(bolt)->s.pos)->trType = 5;
+    (&_ENT(bolt)->s.pos)->trType = (trType_t)(5);
 
     (&_ENT(bolt)->s.pos)->trTime = LEVEL_TIME;
 
@@ -277,7 +277,7 @@ gentity_t *fire_grenade(gentity_t *self, vec_t *start, vec_t *dir, int grenadeWP
 
     SnapVector((&_ENT(bolt)->s.pos)->trDelta);
 
-    (&_ENT(bolt)->s.apos)->trType = 2;
+    (&_ENT(bolt)->s.apos)->trType = (trType_t)(2);
 
     (&_ENT(bolt)->s.apos)->trTime = LEVEL_TIME;
 
@@ -331,7 +331,7 @@ gentity_t *fire_rocket(gentity_t *self, vec_t *start, vec_t *dir)
 
     (_ENT(bolt)->s.time) = LEVEL_TIME + 50;
 
-    (&_ENT(bolt)->s.pos)->trType = 2;
+    (&_ENT(bolt)->s.pos)->trType = (trType_t)(2);
 
     (&_ENT(bolt)->s.pos)->trTime = LEVEL_TIME - 50;
 
@@ -539,7 +539,7 @@ void G_RunMissile(gentity_t *ent)
 
         if (tr.fraction == 1.0f) {
 
-            (&_ENT(ent)->s.pos)->trType = 5;
+            (&_ENT(ent)->s.pos)->trType = (trType_t)(5);
             (&_ENT(ent)->s.pos)->trTime = LEVEL_TIME;
             (&_ENT(ent)->s.pos)->trDuration = 0;
             VectorCopy((_ENT(ent)->r.currentOrigin), (&_ENT(ent)->s.pos)->trBase);

@@ -23,7 +23,7 @@ extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern int Com_SurfaceTypeFromName(const char *name);
 extern const char *Com_SurfaceTypeToName(int type);
 extern int stricmp(const char *s1, const char *s2);
-extern void *FX_RegisterEffect(const char *name);
+extern EffectTemplate * FX_RegisterEffect(const char *fileName);
 
 static const char *g_TypeName[11] = {
     "bullet_small_normal",

@@ -2,8 +2,17 @@
 #include "imports.h"
 extern clientStatic_t cls;
 
+/* imp_clc holds the address of the `clc` POINTER, not of the connection itself, so
+   reaching the connection state needs two indirections -- the same form the rest of the
+   client code uses (`*(clientConnection_t **)imp_clc`). Treating imp_clc as if it pointed
+   straight at the connection would read and, worse, WRITE the clc pointer itself. */
+#define CLC_CONN ((clientConnection_t *)*(void **)imp_clc)
+
+extern const dvar_t *nextmap;
+extern const dvar_t *cl_inGameVideo;
+
 extern void Com_DPrintf(const char *fmt, ...);
-extern void SND_StopSounds(int);
+extern void SND_StopSounds(snd_stopsounds_arg_t);
 extern void SND_EndRawSamples(void);
 extern void Sys_EndStreamedFile(fileHandle_t);
 extern void Sys_BeginStreamedFile(fileHandle_t, int);
@@ -12,7 +21,7 @@ extern void FS_FCloseFile(fileHandle_t);
 extern int FS_FOpenFileRead(const char *, fileHandle_t *, int);
 extern char *va(const char *fmt, ...);
 extern void Cbuf_ExecuteText(int, const char *);
-extern void Dvar_SetString(void *, const char *);
+extern void Dvar_SetString(const dvar_t *, const char *);
 extern qboolean UI_SetActiveMenu(int);
 extern int CL_ScaledMilliseconds(void);
 extern char *Cmd_Argv(int);
@@ -23,6 +32,11 @@ extern float floorf(float);
 extern float ceilf(float);
 
 static Boolean sAspyrIntroPlayed;
+/* The ROQ colour tables are 6-bit fixed point (ROQ_YY_tab[i] == i*64), so a converted
+   sample must be shifted back down by 6 and clamped before it becomes a byte. Casting
+   the raw sum to byte wraps it modulo 256 and turns every frame into colour noise. */
+#define ROQ_SAMPLE(v) ((byte)((v) < 0 ? 0 : (((v) >> 6) > 255 ? 255 : ((v) >> 6))))
+
 extern long int ROQ_YY_tab[256];
 extern long int ROQ_UB_tab[256];
 extern long int ROQ_UG_tab[256];
@@ -186,11 +200,11 @@ static void RoQShutdown(void)
         }
 
         if (cinTable[currentHandle].alterGameState) {
-            clcState = (int *)(void *)imp_clc;
+            clcState = (int *)&CLC_CONN->state;
             *clcState = cinTable[currentHandle].previousGameState;
             CL_handle = -1;
             if (*clcState == 0) {
-                nextMapStr = (*(dvar_t **)imp_nextmap)->current.string;
+                nextMapStr = (char *)(nextmap->current.string);
                 if (*nextMapStr != '\0') {
                     if (!sAspyrIntroPlayed) {
                         if (strstr(nextMapStr, "IW_logo")) {
@@ -198,11 +212,11 @@ static void RoQShutdown(void)
                             sAspyrIntroPlayed = 1;
                         } else {
                             Cbuf_ExecuteText(2, va("%s\n", nextMapStr));
-                            Dvar_SetString(*(dvar_t **)imp_nextmap, "");
+                            Dvar_SetString(nextmap, "");
                         }
                     } else {
                         Cbuf_ExecuteText(2, va("%s\n", nextMapStr));
-                        Dvar_SetString(*(dvar_t **)imp_nextmap, "");
+                        Dvar_SetString(nextmap, "");
                     }
                     UI_SetActiveMenu(1);
                 } else {
@@ -234,7 +248,7 @@ e_status ROQ_StopCinematicFromHandle(int handle)
         return FMV_EOF;
     }
     if (cinTable[currentHandle].alterGameState) {
-        if (*(int *)(void *)imp_clc != 1) {
+        if (CLC_CONN->state != 1) {
             return cinTable[currentHandle].status;
         }
     }
@@ -266,7 +280,7 @@ void ROQ_UploadCinematicFromHandle(int handle)
                 cinTable[handle].dirty = 0;
             }
         }
-        if (!(*(dvar_t **)imp_cl_inGameVideo)->current.enabled) {
+        if (!cl_inGameVideo->current.enabled) {
             if (cinTable[handle].playonwalls == 1) {
                 cinTable[handle].playonwalls = 0;
             }
@@ -545,7 +559,7 @@ static void blitVQQuad32fs(byte **status, unsigned char *data)
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern int I_stricmp(const char *s1, const char *s2);
 extern void Com_Error(int level, const char *fmt, ...);
-extern void Com_Memset(void *dest, int val, int count);
+extern void Com_Memset(void *dest, const int val, int count);
 extern int FS_Read(void *buffer, int len, fileHandle_t f);
 extern void SND_RawSamples(int samples, int rate, int width, int channels, const byte *data);
 extern void Con_Close(void);
@@ -626,7 +640,7 @@ int ROQ_PlayCinematic(const char *arg, int x, int y, int w, int h, int systemBit
             UI_SetActiveMenu(0);
         }
     } else {
-        cinTable[handle].playonwalls = (*(dvar_t **)imp_cl_inGameVideo)->current.enabled != 0;
+        cinTable[handle].playonwalls = cl_inGameVideo->current.enabled != 0;
     }
 
     if (handle >= 0) {
@@ -690,7 +704,7 @@ int ROQ_PlayCinematic(const char *arg, int x, int y, int w, int h, int systemBit
     Com_DPrintf("trFMV::play(), playing %s\n", arg);
 
     if (cinTable[currentHandle].alterGameState) {
-        int *clcState = (int *)(void *)imp_clc;
+        int *clcState = (int *)&CLC_CONN->state;
         cinTable[currentHandle].previousGameState = (connstate_t)*clcState;
         *clcState = 1;
     }
@@ -755,7 +769,7 @@ void ROQ_DrawCinematicFromHandle(int handle)
         y = 0;
     }
 
-    re = (refexport_t *)(void *)imp_re;
+        re = (refexport_t *)(void *)imp_re;
     ((void (*)(int, const vec_t *, float, int))re->ClearScreen)(1, clearColor, 0.0f, 0);
 
     ((void (*)(int, int, int, int, int, int, byte *, int, int))re->DrawStretchRaw)(
@@ -770,7 +784,7 @@ void ROQ_DrawCinematicFromHandle(int handle)
         barSizeCeil = (int)ceilf(barSize);
         xf = (float)x;
         wf = (float)w;
-        material = cls->whiteMaterial;
+        material = (int)(cls->whiteMaterial);
 
         re = (refexport_t *)(void *)imp_re;
         ((void (*)(float, float, float, float, float, float, float, float, const vec_t *, int))re->DrawStretchPic)(
@@ -842,7 +856,7 @@ void ROQ_CloseAllVideos(void)
         if (!cinTable[currentHandle].buf) {
             continue;
         }
-        if (!cinTable[currentHandle].alterGameState || *(int *)(void *)imp_clc == 1) {
+        if (!cinTable[currentHandle].alterGameState || CLC_CONN->state == 1) {
             cinTable[currentHandle].status = FMV_EOF;
             RoQShutdown();
         }
@@ -859,13 +873,13 @@ void ROQ_StopCinematic(void)
             currentHandle = h;
             Com_DPrintf("trFMV::stop(), closing %s\n", cinTable[currentHandle].fileName);
             if (cinTable[currentHandle].buf) {
-                if (!cinTable[currentHandle].alterGameState || *(int *)(void *)imp_clc == 1) {
+                if (!cinTable[currentHandle].alterGameState || CLC_CONN->state == 1) {
                     cinTable[currentHandle].status = FMV_EOF;
                     RoQShutdown();
                 }
             }
         }
-        SND_StopSounds(0);
+        SND_StopSounds((snd_stopsounds_arg_t)0);
         CL_handle = -1;
     }
 }
@@ -899,7 +913,7 @@ e_status ROQ_RunCinematicFromHandle(int handle)
     currentHandle = handle;
 
     if (cinTable[handle].alterGameState) {
-        if (*(int *)(void *)imp_clc != 1) {
+        if (CLC_CONN->state != 1) {
             return cinTable[handle].status;
         }
     }
@@ -1249,18 +1263,18 @@ parse_roq:
                             unsigned char crv = *input++;
 
                             {
-                                byte c0 = (byte)(ROQ_YY_tab[y0] + ROQ_UB_tab[cbv]);
-                                byte c1 = (byte)(ROQ_YY_tab[y0] + ROQ_UG_tab[cbv] + ROQ_VG_tab[crv]);
-                                byte c2 = (byte)(ROQ_YY_tab[y0] + ROQ_VR_tab[crv]);
-                                byte c3 = (byte)(ROQ_YY_tab[y1] + ROQ_UB_tab[cbv]);
-                                byte c4 = (byte)(ROQ_YY_tab[y1] + ROQ_UG_tab[cbv] + ROQ_VG_tab[crv]);
-                                byte c5 = (byte)(ROQ_YY_tab[y1] + ROQ_VR_tab[crv]);
-                                byte c6 = (byte)(ROQ_YY_tab[y2] + ROQ_UB_tab[cbv]);
-                                byte c7 = (byte)(ROQ_YY_tab[y2] + ROQ_UG_tab[cbv] + ROQ_VG_tab[crv]);
-                                byte c8 = (byte)(ROQ_YY_tab[y2] + ROQ_VR_tab[crv]);
-                                byte c9 = (byte)(ROQ_YY_tab[y3] + ROQ_UB_tab[cbv]);
-                                byte ca = (byte)(ROQ_YY_tab[y3] + ROQ_UG_tab[cbv] + ROQ_VG_tab[crv]);
-                                byte cb2 = (byte)(ROQ_YY_tab[y3] + ROQ_VR_tab[crv]);
+                                byte c0 = ROQ_SAMPLE(ROQ_YY_tab[y0] + ROQ_UB_tab[cbv]);
+                                byte c1 = ROQ_SAMPLE(ROQ_YY_tab[y0] + ROQ_UG_tab[cbv] + ROQ_VG_tab[crv]);
+                                byte c2 = ROQ_SAMPLE(ROQ_YY_tab[y0] + ROQ_VR_tab[crv]);
+                                byte c3 = ROQ_SAMPLE(ROQ_YY_tab[y1] + ROQ_UB_tab[cbv]);
+                                byte c4 = ROQ_SAMPLE(ROQ_YY_tab[y1] + ROQ_UG_tab[cbv] + ROQ_VG_tab[crv]);
+                                byte c5 = ROQ_SAMPLE(ROQ_YY_tab[y1] + ROQ_VR_tab[crv]);
+                                byte c6 = ROQ_SAMPLE(ROQ_YY_tab[y2] + ROQ_UB_tab[cbv]);
+                                byte c7 = ROQ_SAMPLE(ROQ_YY_tab[y2] + ROQ_UG_tab[cbv] + ROQ_VG_tab[crv]);
+                                byte c8 = ROQ_SAMPLE(ROQ_YY_tab[y2] + ROQ_VR_tab[crv]);
+                                byte c9 = ROQ_SAMPLE(ROQ_YY_tab[y3] + ROQ_UB_tab[cbv]);
+                                byte ca = ROQ_SAMPLE(ROQ_YY_tab[y3] + ROQ_UG_tab[cbv] + ROQ_VG_tab[crv]);
+                                byte cb2 = ROQ_SAMPLE(ROQ_YY_tab[y3] + ROQ_VR_tab[crv]);
                                 ((byte *)vq2p)[0] = c0;
                                 ((byte *)vq2p)[1] = c1;
                                 ((byte *)vq2p)[2] = c2;
@@ -1379,7 +1393,21 @@ frame_done:
 void ROQ_RunCinematic(void)
 {
     if ((unsigned int)CL_handle <= 0xf) {
-        ROQ_RunCinematicFromHandle(CL_handle);
+        if (ROQ_RunCinematicFromHandle(CL_handle) == FMV_EOF) {
+            /* Playback reached its natural end. Nothing used to act on that, so the
+               shutdown never ran and the start-up chain (atvi -> IW_logo -> cod_intro ->
+               main menu) stalled on a black screen. ROQ_StopCinematic cannot be used
+               here: it skips the shutdown when the status is already FMV_EOF. */
+            int h = CL_handle;
+
+            if (cinTable[h].buf && cinTable[h].status != FMV_IDLE &&
+                (!cinTable[h].alterGameState || CLC_CONN->state == 1)) {
+                currentHandle = h;
+                RoQShutdown();
+            }
+            SND_StopSounds((snd_stopsounds_arg_t)0);
+            CL_handle = -1;
+        }
     }
 }
 
@@ -1392,7 +1420,7 @@ void ROQ_PlayCinematic_f(void)
     int h;
 
     Com_DPrintf("CL_PlayCinematic_f\n");
-    argc = *(int *)(void *)imp_clc;
+    argc = CLC_CONN->state;
 
     if (argc == 1) {
 
@@ -1402,13 +1430,13 @@ void ROQ_PlayCinematic_f(void)
                 currentHandle = h;
                 Com_DPrintf("trFMV::stop(), closing %s\n", cinTable[currentHandle].fileName);
                 if (cinTable[currentHandle].buf) {
-                    if (!cinTable[currentHandle].alterGameState || *(int *)(void *)imp_clc == 1) {
+                    if (!cinTable[currentHandle].alterGameState || CLC_CONN->state == 1) {
                         cinTable[currentHandle].status = FMV_EOF;
                         RoQShutdown();
                     }
                 }
             }
-            SND_StopSounds(0);
+            SND_StopSounds((snd_stopsounds_arg_t)0);
             CL_handle = -1;
         }
     } else if (argc == 2) {
@@ -1443,7 +1471,7 @@ void ROQ_PlayCinematic_f(void)
     }
 
     if (CL_handle >= 0) {
-        SND_StopSounds(0);
+        SND_StopSounds((snd_stopsounds_arg_t)0);
         SND_FadeAllSounds(1.0f, 0);
         do {
             if ((unsigned int)CL_handle <= 0xf) {

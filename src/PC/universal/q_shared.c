@@ -33,13 +33,13 @@ static int valueindex;
 static va_info_t va_info[1];
 static jmp_buf g_com_error[1];
 static char value1[2][8192];
-static short int (*LittleShort)();
-static int (*LittleLong)();
-static long long unsigned int (*LittleLong64)();
-static float (*LittleFloatRead)();
-static int (*LittleFloatWrite)();
+static short int (*LittleShort)(int);
+static int (*LittleLong)(int);
+static long long unsigned int (*LittleLong64)(long long unsigned int);
+static float (*LittleFloatRead)(int);
+static int (*LittleFloatWrite)(float);
 
-unsigned char ColorIndex(int c);
+int ColorIndex(int c);
 char *Com_SkipPath(char *pathname);
 const char *Com_GetExtensionSubString(const char *filename);
 short int ShortSwap(int l);
@@ -59,7 +59,7 @@ void I_strncpyz(char *dest, const char *src, int destsize);
 int I_strncmp(const char *s0, const char *s1, int n);
 int I_DrawStrlen(const char *str);
 char *I_CleanStr(char *string);
-char I_CleanChar(char character);
+int I_CleanChar(char character);
 int Com_sprintf(char *dest, int size, const char *fmt, ...);
 char *va(const char *format, ...);
 void Com_InitThreadData(int threadContext);
@@ -82,14 +82,14 @@ void AddLeanToPosition(vec_t *position, const float fViewYaw, const float fLeanF
 void Swap_Init(void);
 int I_strcmp(const char *s0, const char *s1);
 void Com_StripExtension(const char *in, char *out);
-Bool I_isforfilename(int c);
+int I_isforfilename(int c);
 char *Info_ValueForKey(const char *s, const char *key);
 int I_stricmp(const char *s0, const char *s1);
 void Com_DefaultExtension(char *path, int maxSize, const char *extension);
 void I_strncat(char *dest, int size, const char *src);
-qboolean ParseConfigStringToStruct(byte *pStruct, const cspField_t *pFieldList, const int iNumFields, const char *pszBuffer, const int iMaxFieldTypes, qboolean (*parseSpecialFieldType)(), void (*parseStrcpy)());
+qboolean ParseConfigStringToStruct(byte *pStruct, const cspField_t *pFieldList, const int iNumFields, const char *pszBuffer, const int iMaxFieldTypes, qboolean (*parseSpecialFieldType)(byte *, const char *, const int), void (*parseStrcpy)(byte *, const char *));
 
-unsigned char ColorIndex(int c)
+int ColorIndex(int c)
 {
     unsigned char index = (unsigned char)(c - '0');
     if (index > 9)
@@ -305,7 +305,7 @@ char *I_CleanStr(char *string)
     return string;
 }
 
-char I_CleanChar(char character)
+int I_CleanChar(char character)
 {
     if ((unsigned char)character == 0x92)
         return '\'';
@@ -708,7 +708,7 @@ char *I_strlwr(char *s)
     char *p = s;
     while (*p) {
         int c = (signed char)*p;
-        if ((unsigned)(c - 'A') <= 25)
+        if (c >= 'A' && c <= 'Z')
             *p += 32;
         p++;
     }
@@ -747,14 +747,14 @@ void Swap_Init(void)
         LittleLong = LongNoSwap;
         LittleLong64 = Long64NoSwap;
         LittleFloatRead = FloatReadNoSwap;
-        LittleFloatWrite = (int (*)())FloatWriteNoSwap;
+        LittleFloatWrite = FloatWriteNoSwap;
     } else {
 
         LittleShort = ShortSwap;
         LittleLong = LongSwap;
         LittleLong64 = Long64Swap;
         LittleFloatRead = FloatReadSwap;
-        LittleFloatWrite = (int (*)())FloatWriteSwap;
+        LittleFloatWrite = FloatWriteSwap;
     }
 }
 
@@ -791,12 +791,12 @@ void Com_StripExtension(const char *in, char *out)
     if (!dot)
         dot = s;
 
-    while (in < dot)
+    while (in != dot)
         *out++ = *in++;
     *out = '\0';
 }
 
-Bool I_isforfilename(int c)
+int I_isforfilename(int c)
 {
     if ((unsigned)(c - 'a') <= 25 || (unsigned)(c - 'A') <= 25 || (unsigned)(c - '0') <= 9 || c == '_' || c == '-')
         return 1;
@@ -890,7 +890,7 @@ void I_strncat(char *dest, int size, const char *src)
     I_strncpyz_core(dest + destLen, src, size - destLen);
 }
 
-qboolean ParseConfigStringToStruct(byte *pStruct, const cspField_t *pFieldList, const int iNumFields, const char *pszBuffer, const int iMaxFieldTypes, qboolean (*parseSpecialFieldType)(), void (*parseStrcpy)())
+qboolean ParseConfigStringToStruct(byte *pStruct, const cspField_t *pFieldList, const int iNumFields, const char *pszBuffer, const int iMaxFieldTypes, qboolean (*parseSpecialFieldType)(byte *, const char *, const int), void (*parseStrcpy)(byte *, const char *))
 {
     int iField;
     const cspField_t *pField;

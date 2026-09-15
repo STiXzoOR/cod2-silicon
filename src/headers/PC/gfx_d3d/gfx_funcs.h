@@ -112,7 +112,7 @@ void R_ArchiveFogState(MemoryFile *memFile);
 const Glyph *R_GetCharacterGlyph(FontHandle font, unsigned int letter);
 FontHandle R_RegisterFont(const char *fontName, int imageTrack);
 int R_DuplicateFont(FontHandle fontCopy, const char *name);
-int R_InitFonts(void);
+void R_InitFonts(void);
 void R_ShutdownFonts(void);
 float R_NormalizedTextScale(FontHandle font, float scale);
 int R_TextHeight(FontHandle font);
@@ -364,12 +364,12 @@ void R_IssueDrawGroups(void);
 
 void R_InitStaticModelDynamicData(int smodelIndex);
 
-int R_ScaleStaticModelLighting(float directLightScale, float indirectLightScale, float *sunVisibility, vec4_t *colorForDir);
+void R_ScaleStaticModelLighting(float directLightScale, float indirectLightScale, float *sunVisibility, vec4_t *colorForDir);
 void R_GetStaticModelLightingFromGrid(const GfxWorld *world, GfxStaticModelInstance *smodelInst, float *sunVisibility, vec4_t *colorForDir);
-int R_PrepareStaticModelLightingCache(GfxWorld *world, int smodelCount);
+void R_PrepareStaticModelLightingCache(GfxWorld *world, int smodelCount);
 Bool R_ValidateStaticModel(struct XModel *model);
-int R_FinishStaticModelLightingCache(GfxWorld *world);
-int R_GetStaticModelLightingFromGround(const vec_t *groundLight, float *sunVisibility, vec4_t *colorForDir);
+void R_FinishStaticModelLightingCache(GfxWorld *world);
+void R_GetStaticModelLightingFromGround(const vec_t *groundLight, float *sunVisibility, vec4_t *colorForDir);
 void R_CreateStaticModel(GfxWorld *world, struct XModel *model, const vec_t *origin, const vec_t *angles, vec_t scale, GfxStaticModelInstance *smodelInst);
 void R_CacheStaticModelLighting(const GfxWorld *world, GfxStaticModelInstance *smodelInst, float sunVisibility, vec4_t *colorForDir);
 int R_SortGfxAabbTree(GfxWorld *world, GfxAabbTree *tree);
@@ -416,7 +416,7 @@ XVertexInfo *XSurfaceGetVertexInfoArray(const XSurface *surf);
 int XSurfaceGetBoneOffset(const XSurface *surf);
 void XSurfaceTransferDx7(const XVertexBuffer *surfVerts, GfxVertexDx7 *verts, int vertCount);
 void XSurfaceTransfer(const XVertexBuffer *surfVerts, GfxVertex *verts, int vertCount);
-long unsigned int XSurfaceGetVerts(const XSurface *surf, DObjSkelMat *boneMatrix, float *pVert, float *pTexCoord, float *pNormal);
+void XSurfaceGetVerts(const XSurface *surf, DObjSkelMat *boneMatrix, float *pVert, float *pTexCoord, float *pNormal);
 
 XSurface *XModelReadSurface(XModel *model, int *partBits, const byte **pos, Alloc_t Alloc);
 

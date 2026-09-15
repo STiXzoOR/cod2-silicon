@@ -11,7 +11,7 @@ extern const char *CL_GetConfigString(int index);
 extern void CL_SubtitlePrint(const char *pszText, int iDuration, int iLineWidth);
 extern int atoi(const char *nptr);
 extern int sprintf(char *str, const char *format, ...);
-extern const char *Info_ValueForKey(const char *s, const char *key);
+extern char *Info_ValueForKey(const char *s, const char *key);
 extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context, int errType);
 extern void SND_PlayAmbientAlias(const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system);
 extern int SND_PlaySoundAliasAsMaster(const snd_alias_t *pAlias, int entnum, const vec_t *org, int timeshift, snd_alias_system_t system);
@@ -54,23 +54,23 @@ extern void SCR_UpdateScreen(void);
 extern void Com_Printf(const char *fmt, ...);
 extern int FX_InitSystem(int maxEffects);
 extern void FX_CreateDefaultEffect(void);
-extern float FX_GetEffectLength(void *fx);
+extern float FX_GetEffectLength(EffectTemplate *fx);
 extern void FX_Rewind(int time);
 extern void FX_WarpTime(int time);
-extern void FX_PlayEffect(void *fx, const vec_t *org, const vec_t *fwd);
+extern void FX_PlayEffect(EffectTemplate *fx, const vec_t *org, const vec_t *fwd);
 extern void CG_LoadingString(const char *str);
-extern int CL_RegisterMaterial(const char *name, int flags);
-extern int CL_RegisterMaterialNoMip(const char *name, int flags);
+extern MaterialHandle CL_RegisterMaterial(const char *name, int flags);
+extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int flags);
 extern void CG_RegisterScoreboardGraphics(void);
 extern void CG_RegisterItems(void);
 extern int CM_NumInlineModels(void);
 extern int CL_RegisterInlineModel(int index);
 extern void CL_ModelBounds(int model, float *mins, float *maxs);
-extern int FX_RegisterEffect(const char *name);
-extern void CG_SetShellShockParmsFromDvars(byte *parms);
+extern EffectTemplate * FX_RegisterEffect(const char *fileName);
+extern void CG_SetShellShockParmsFromDvars(shellshock_parms_t *parms);
 extern int CG_LoadShellShockDvars(const char *name);
 extern void Com_Error(int code, const char *fmt, ...);
-extern int CG_RegisterImpactEffects(const char *mapname);
+extern FxImpactTable *CG_RegisterImpactEffects(const char *mapname);
 extern void Controls_GetConfig(void);
 extern int GetKeyBindingLocalizedString(const char *binding, char *buf);
 extern const char *UI_SafeTranslateString(const char *key);
@@ -89,7 +89,7 @@ extern void BG_RegisterDvars(void);
 extern void CG_ParseServerinfo(void);
 extern void CG_ParseCodinfo(void);
 extern void UI_LoadIngameMenus(void);
-extern int CL_RegisterFont(const char *fontName, int imageTrack);
+extern FontHandle CL_RegisterFont(const char *fontName, int imageTrack);
 extern void CG_AntiBurnInHUD_RegisterDvars(void);
 extern void CG_InitConsoleCommands(void);
 extern void CL_GetScreenDimensions(int *width, int *height, float *aspect);
@@ -100,7 +100,7 @@ extern void BG_FillInAmmoItems(BG_RegisterWeapon regWeap);
 extern void CG_SetupWeaponDef(void);
 extern void CGScr_LoadAnimTrees(void);
 extern void BG_LoadAnim();
-extern void *XAnimCreateTree(void *anims, void *Alloc);
+extern XAnimTree *XAnimCreateTree(XAnim *anims, Alloc_t Alloc);
 extern void GScr_LoadConsts(void);
 extern void CL_CM_LoadMap(const char *mapname);
 extern void Menu_Setup(displayContextDef_t *dc);
@@ -113,11 +113,14 @@ extern void CG_SetConfigValues(void);
 extern void CG_NorthDirectionChanged(void);
 extern void CL_FinishLoadingModels(void);
 extern void CG_ParseFog(void);
-extern void SND_StopSounds(int which);
+extern void SND_StopSounds(snd_stopsounds_arg_t which);
 extern unsigned char scrMemTreeGlob[];
 
 extern const weaponInfo_t *cg_weapons;
 extern const itemInfo_t *cg_items;
+
+#define CG_MAX_ITEMS 256
+#define CG_MAX_WEAPONS 128
 
 extern const dvar_t *cg_centertime;
 extern const dvar_t *cg_drawFPS;
@@ -166,6 +169,7 @@ extern const dvar_t *cg_drawHealth;
 extern const dvar_t *cg_drawBreathHint;
 extern const dvar_t *cg_drawMantleHint;
 extern const dvar_t *cg_draw2D;
+extern bgs_t *bgs;
 extern const dvar_t *cg_debugEvents;
 extern const dvar_t *cg_errorDecay;
 extern const dvar_t *cg_nopredict;
@@ -275,10 +279,12 @@ extern const dvar_t *cg_drawLagometer;
 extern const dvar_t *cg_weaponleftbone;
 extern const dvar_t *cg_weaponrightbone;
 static char buffer[1024];
-static cg_t cgArray[1];
-static cgs_t cgsArray[1];
+extern cg_t cgArray[1];
+/* removed `static cgs_t cgsArray[1];` -- it was DEAD (declared, never referenced; this file
+ * uses `cgs->` instead) and it collided with the real shared object in bss.c, which is what
+ * `cgs` must bind to. See cg_local.h. */
 static centityArray_t cg_entitiesArray[1];
-static cg_weaponsArray_t cg_weaponsArray;
+extern weaponInfo_t cg_weaponsArray[CG_MAX_WEAPONS];
 static cg_itemsArray_t cg_itemsArray;
 static Bool g_ambientStarted;
 static Bool g_mapLoaded;
@@ -384,12 +390,12 @@ int CG_CrosshairPlayer(void)
 
 void CG_GameMessage(const char *msg)
 {
-    CL_ConsolePrint(1, msg, 0, *(int *)(*(int *)&cg_gameMessageWidth + 8));
+    CL_ConsolePrint(1, msg, 0, cg_gameMessageWidth->current.integer);
 }
 
 void CG_BoldGameMessage(const char *msg)
 {
-    CL_ConsolePrint(2, msg, 0, *(int *)(*(int *)&cg_gameBoldMessageWidth + 8));
+    CL_ConsolePrint(2, msg, 0, cg_gameBoldMessageWidth->current.integer);
 }
 
 const char *CG_Argv(int arg)
@@ -411,7 +417,7 @@ void CG_StartAmbient(void)
     diff = fadeTime - cg->time;
     if (diff < 0 || cg->time == 0)
         diff = 0;
-    SND_PlayAmbientAlias(alias, diff, 1);
+    SND_PlayAmbientAlias(alias, diff, (snd_alias_system_t)(1));
 }
 
 Bool CG_PlaySoundOnFirstClient(void)
@@ -436,7 +442,6 @@ static Bool CG_ReplaceDirective(int *searchPos, int *dstLen, char *dstString)
     int newStringLen;
     int beginLen;
     int endLen;
-    char *dst;
 
     memcpy(srcString, dstString, *dstLen);
     srcString[*dstLen] = '\0';
@@ -467,18 +472,18 @@ static Bool CG_ReplaceDirective(int *searchPos, int *dstLen, char *dstString)
 
     newStringLen = *dstLen - directiveLen + bindingLen - 4;
 
-    if (*dstLen - directiveLen + bindingLen - 3 > 0x100)
+    if (newStringLen + 1 > 0x100)
         return 0;
 
     beginLen = (int)(pFound - srcString);
 
-    dst = dstString + beginLen;
-    memcpy(dst, keyBinding, bindingLen);
-    dst += bindingLen;
+    dstString += beginLen;
+    memcpy(dstString, keyBinding, bindingLen);
+    dstString += bindingLen;
 
     endLen = newStringLen - beginLen - bindingLen;
-    memcpy(dst, pEnd + 2, endLen);
-    dst[endLen] = '\0';
+    memcpy(dstString, pEnd + 2, endLen);
+    dstString[endLen] = '\0';
 
     *searchPos = bindingLen + beginLen;
 
@@ -496,7 +501,7 @@ static inline __attribute__((always_inline)) void CG_LocalizeHudElemString(const
     localizedString = SEH_LocalizeTextMessage(message, messageType, 0);
     stringLen = (int)strlen(localizedString);
 
-    if (stringLen >= 0x100) {
+    if (stringLen + 1 > 0x100) {
         return;
     }
 
@@ -556,7 +561,7 @@ static void CG_CreateDObj(DObjModel_s *dobjModels, unsigned short numModels, str
 
     weaponNum = ci->iDObjWeapon;
     if (weaponNum) {
-        weaponModel = cg_weapons[weaponNum].worldSurfModel;
+        weaponModel = cg_weaponsArray[weaponNum].worldSurfModel;
         if (weaponModel) {
             dobjModels[numModels].model = weaponModel;
             dobjModels[numModels].boneName = ci->leftHandGun ? cg_weaponleftbone->current.string : cg_weaponrightbone->current.string;
@@ -581,8 +586,8 @@ void CG_FreeWeapons(void)
         }
     }
 
-    memset((void *)cg_items, 0, 0x2400);
-    memset((void *)cg_weapons, 0, 0xda00);
+    memset((void *)cg_items, 0, CG_MAX_ITEMS * sizeof(itemInfo_t));
+    memset((void *)cg_weapons, 0, CG_MAX_WEAPONS * sizeof(weaponInfo_t));
 }
 
 void CG_Shutdown(void)
@@ -733,7 +738,7 @@ static inline __attribute__((always_inline)) byte *CG_FindSmokeGrenadeEntityStat
     int i;
 
     for (i = 0; i < entityCount; i++) {
-        byte *es = ((char *)snap + offsetof(snapshot_t, entities[0].number)) + i * 0xf0;
+        byte *es = (byte *)(((char *)snap + offsetof(snapshot_t, entities[0].number)) + i * 0xf0);
         int eventTime;
 
         if ((*(byte *)(es + 0xa) & 1) == 0)
@@ -759,13 +764,13 @@ static inline __attribute__((always_inline)) byte *CG_FindSmokeGrenadeEntityStat
     if (!found)
         return NULL;
 
-    return ((char *)snap + offsetof(snapshot_t, entities[0].number)) + bestIndex * 0xf0;
+    return (byte *)(((char *)snap + offsetof(snapshot_t, entities[0].number)) + bestIndex * 0xf0);
 }
 
 void CG_PlaySmokeGrenadesAtTime(int gametime)
 {
     vec3_t up = { 0.0f, 0.0f, 1.0f };
-    void *smokeFx = cgs->smokeGrenadeFx;
+    EffectTemplate *smokeFx = (EffectTemplate *)cgs->smokeGrenadeFx;
     int minTime;
     byte *smokeGrenadeES;
 
@@ -1084,15 +1089,15 @@ static inline __attribute__((always_inline)) void CG_InitXAnimTrees(void)
     byte *cgBase = (byte *)cg;
     byte *cgsBase = (byte *)cgs;
     void *anims = (*(void **)&((cg_t *)cgBase)->bgs.generic_human.tree.anims);
-    byte *clientTree = ((char *)cgBase + offsetof(cg_t, bgs.clientinfo[0].pXAnimTree));
-    byte *cgsTree = ((char *)cgsBase + offsetof(cgs_t, corpseinfo[0].pXAnimTree));
+    byte *clientTree = (byte *)(((char *)cgBase + offsetof(cg_t, bgs.clientinfo[0].pXAnimTree)));
+    byte *cgsTree = (byte *)(((char *)cgsBase + offsetof(cgs_t, corpseinfo[0].pXAnimTree)));
     int i;
 
     for (i = 0; i < 64; i++, clientTree += 0x4b8)
-        *(void **)clientTree = XAnimCreateTree(anims, (void *)Hunk_AllocXAnimClient);
+        *(void **)clientTree = XAnimCreateTree((XAnim *)anims, (Alloc_t)Hunk_AllocXAnimClient);
 
     for (i = 0; i < 8; i++, cgsTree += 0x4b8)
-        *(void **)cgsTree = XAnimCreateTree(anims, (void *)Hunk_AllocXAnimClient);
+        *(void **)cgsTree = XAnimCreateTree((XAnim *)anims, (Alloc_t)Hunk_AllocXAnimClient);
 }
 
 static inline __attribute__((always_inline)) void CG_ClearEntityDObjHandles(void)
@@ -1117,8 +1122,8 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
     memset((void *)cg, 0, sizeof(cg_t));
     memset(&cgDC, 0, sizeof(displayContextDef_t));
     memset((void *)cg_entities, 0, 0x89000);
-    memset((void *)cg_weapons, 0, 0xda00);
-    memset((void *)cg_items, 0, 0x2400);
+    memset((void *)cg_weapons, 0, CG_MAX_WEAPONS * sizeof(weaponInfo_t));
+    memset((void *)cg_items, 0, CG_MAX_ITEMS * sizeof(itemInfo_t));
 
     CG_RegisterDvars();
 
@@ -1143,11 +1148,11 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
     UI_LoadIngameMenus();
     SCR_UpdateScreen();
 
-    (*(int *)&((cgs_t *)cgsBase)->media.whiteMaterial) = CL_RegisterMaterial("white", 7);
-    (*(int *)&((cgs_t *)cgsBase)->media.softLineMaterial) = CL_RegisterMaterial("hudsoftline", 7);
-    (*(int *)&((cgs_t *)cgsBase)->media.softLineHMaterial) = CL_RegisterMaterial("hudsoftlineh", 7);
-    (*(int *)&((cgs_t *)cgsBase)->media.smallDevFont) = CL_RegisterFont("fonts/smallDevFont", 1);
-    (*(int *)&((cgs_t *)cgsBase)->media.bigDevFont) = CL_RegisterFont("fonts/bigDevFont", 1);
+    ((cgs_t *)cgsBase)->media.whiteMaterial = CL_RegisterMaterial("white", 7);
+    ((cgs_t *)cgsBase)->media.softLineMaterial = CL_RegisterMaterial("hudsoftline", 7);
+    ((cgs_t *)cgsBase)->media.softLineHMaterial = CL_RegisterMaterial("hudsoftlineh", 7);
+    ((cgs_t *)cgsBase)->media.smallDevFont = CL_RegisterFont("fonts/smallDevFont", 1);
+    ((cgs_t *)cgsBase)->media.bigDevFont = CL_RegisterFont("fonts/bigDevFont", 1);
     CL_RegisterMaterial("net_disconnect", 7);
     CL_RegisterMaterial("killicondied", 7);
     CL_RegisterMaterial("killiconcrush", 7);
@@ -1185,7 +1190,7 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
     CGScr_LoadAnimTrees();
     Com_Printf("", *(int *)(scrMemTreeGlob + 525092), *(int *)(scrMemTreeGlob + 525096));
 
-    *(void **)imp_bgs = ((char *)cgBase + offsetof(cg_t, bgs.animScriptData.animations[0].name[0]));
+    bgs = (bgs_t *)((char *)cgBase + offsetof(cg_t, bgs.animScriptData.animations[0].name[0]));
     BG_LoadAnim();
     CG_InitXAnimTrees();
 
@@ -1225,7 +1230,7 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
     CL_FinishLoadingModels();
 
     if (!g_mapLoaded)
-        SND_StopSounds(0);
+        SND_StopSounds((snd_stopsounds_arg_t)0);
 
     CG_ParseFog();
     if (!g_ambientStarted) {
@@ -1235,7 +1240,7 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
 
     CL_SetADS(0);
     CG_InitVote();
-    *(void **)imp_bgs = 0;
+    bgs = 0;
 #    undef cgBase
 #    undef cgsBase
 }

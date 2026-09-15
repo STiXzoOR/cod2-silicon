@@ -136,7 +136,7 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole);
 void SV_UpdateServerCommandsToClient(client_t *client, msg_t *msg);
 void SV_ArchiveSnapshot(void);
 void SV_SendMessageToClient(msg_t *msg, client_t *client);
-qboolean SV_GetArchivedClientInfo(int clientNum, int *pArchiveTime, int (*ps)[4], void (*cs)());
+qboolean SV_GetArchivedClientInfo(int clientNum, int *pArchiveTime, int (*ps)[4], void *cs);
 Bool SV_GetClientPositionAtTime(int clientNum, int gametime, vec_t *pos);
 void SV_SendClientSnapshot(client_t *client);
 void SV_SendClientMessages(void);

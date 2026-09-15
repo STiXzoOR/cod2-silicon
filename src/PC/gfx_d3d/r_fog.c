@@ -25,12 +25,12 @@ void R_SetFog(int fogvar, float start, float end, int r, int g, int b, float den
     fog->fogEnd = end;
 
     if (density >= 1.0f) {
-        fog->techniqueOffset = 1;
+        fog->techniqueOffset = (GfxFogOffset)(1);
         fog->drawSky = 1;
         fog->clearScreen = 0;
         fog->density = 1.0f;
     } else {
-        fog->techniqueOffset = 2;
+        fog->techniqueOffset = (GfxFogOffset)(2);
         fog->drawSky = 1;
         fog->clearScreen = 0;
         fog->density = density;

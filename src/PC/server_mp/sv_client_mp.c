@@ -5,6 +5,7 @@
 #include "PC/qcommon/net_hardening.h"
 #include <stddef.h>
 #include <string.h>
+extern const dvar_t *sv_maxclients;
 
 extern ucmd_t ucmds[12];
 
@@ -34,13 +35,13 @@ extern char *Info_ValueForKey(const char *s, const char *key);
 extern qboolean Sys_IsLANAddress(netadr_t adr);
 extern void *imp_com_dedicated;
 extern int strnicmp(const char *s1, const char *s2, size_t n);
-extern int FS_WriteFile(const char *qpath, const void *buffer, int size);
+extern qboolean FS_WriteFile(const char *qpath, const void *buffer, int size);
 extern const char *FS_LoadedIwdPureChecksums(void);
 
 extern float FX_GetServerVisibility(const vec_t *start, const vec_t *end);
 extern void Com_DPrintf(const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
-extern const char *SV_Cmd_Argv(int arg);
+extern char *SV_Cmd_Argv(int arg);
 extern int SV_Cmd_Argc(void);
 extern int atoi(const char *s);
 extern const dvar_t *Dvar_RegisterString(const char *dvarName, const char *defaultValue, int flags);
@@ -73,8 +74,8 @@ extern gentity_t *SV_GentityNum(int num);
 extern playerState_t *SV_GameClientNum(int num);
 extern void ClientBegin(int clientNum);
 extern int sprintf(char *str, const char *format, ...);
-extern void LargeLocal_LargeLocal(LargeLocal *ll, int size);
-extern void *LargeLocal_GetBuf(LargeLocal *ll);
+extern void LargeLocal_LargeLocal(const LargeLocal *_this, int size);
+extern void * LargeLocal_GetBuf(const LargeLocal *_this);
 extern void ZN10LargeLocalD1Ev(LargeLocal *ll);
 extern void MSG_Init(msg_t *buf, byte *data, int length);
 extern void MSG_WriteByte(msg_t *msg, int c);
@@ -206,10 +207,8 @@ void SV_AuthorizeRequest(struct netadr_t from, int challenge)
 #endif
 {
     char game[0x400];
-    extern void *imp_svs;
-    serverStatic_t *svsPtr = (serverStatic_t *)imp_svs;
 
-    if (svsPtr->authorizeAddress.type == 1) {
+    if (svs.authorizeAddress.type == 1) {
         return;
     }
 
@@ -249,7 +248,7 @@ void SV_AuthorizeRequest(struct netadr_t from, int challenge)
                        game, (int)(unsigned char)allowAnon);
 #endif
 
-    NET_OutOfBandPrint(1, svsPtr->authorizeAddress, s);
+    NET_OutOfBandPrint( (netsrc_t)(1), svs.authorizeAddress, s);
 }
 
 static qboolean __attribute_regparm__(1) SV_IsBannedGuid(int guid)
@@ -373,14 +372,13 @@ void SV_UnbanClient(const char *name)
 
 void SV_AuthorizeIpPacket(netadr_t from)
 {
-    serverStatic_t *svsPtr = (serverStatic_t *)imp_svs;
     int challenge;
     int i;
     const char *status;
     const char *reason;
     challenge_t *challengeInfo;
 
-    if (!NET_CompareBaseAdr(from, svsPtr->authorizeAddress)) {
+    if (!NET_CompareBaseAdr(from, svs.authorizeAddress)) {
         Com_Printf("SV_AuthorizeIpPacket: not from authorize server\n");
         return;
     }
@@ -388,7 +386,7 @@ void SV_AuthorizeIpPacket(netadr_t from)
     challenge = atoi(SV_Cmd_Argv(1));
 
     for (i = 0; i < 1024; ++i) {
-        if (svsPtr->challenges[i].challenge == challenge) {
+        if (svs.challenges[i].challenge == challenge) {
             break;
         }
     }
@@ -398,8 +396,8 @@ void SV_AuthorizeIpPacket(netadr_t from)
         return;
     }
 
-    challengeInfo = &svsPtr->challenges[i];
-    challengeInfo->pingTime = svsPtr->time;
+    challengeInfo = &svs.challenges[i];
+    challengeInfo->pingTime = svs.time;
 
     status = SV_Cmd_Argv(2);
     reason = SV_Cmd_Argv(3);
@@ -430,10 +428,10 @@ void SV_AuthorizeIpPacket(netadr_t from)
         if (challengeInfo->guid) {
             tempBanSlot_t *ban;
             tempBanSlot_t *banEnd;
-            int now = svsPtr->time;
+            int now = svs.time;
             float kickBanTime = (*(const dvar_t **)imp_sv_kickBanTime)->current.value * 1000.0f;
 
-            for (ban = svsPtr->tempBans, banEnd = svsPtr->tempBans + 16; ban != banEnd; ++ban) {
+            for (ban = svs.tempBans, banEnd = svs.tempBans + 16; ban != banEnd; ++ban) {
                 if (ban->guid == challengeInfo->guid && (float)(now - ban->banTime) <= kickBanTime) {
                     Com_Printf("rejected connection from temporarily banned GUID %i\n", challengeInfo->guid);
                     NET_OutOfBandPrint(NS_SERVER, challengeInfo->adr, "error\n\x15You are temporarily banned from this server");
@@ -538,9 +536,8 @@ void SV_UserinfoChanged(client_t *cl)
 
 void SV_FreeClientScriptPers(void)
 {
-    serverStatic_t *svs = (serverStatic_t *)imp_svs;
-    client_t *cl = svs->clients;
-    int maxClients = (*(const dvar_t **)imp_sv_maxclients)->current.integer;
+    client_t *cl = svs.clients;
+    int maxClients = (sv_maxclients)->current.integer;
     int i;
 
     for (i = 0; i < maxClients; i++, cl++) {
@@ -566,7 +563,6 @@ void SV_SendClientGameState(client_t *client)
     byte *msgBuffer;
     msg_t msg;
     entityState_t nullstate;
-    server_t *sv;
     serverStatic_t *svs;
     int i;
     int clientNum;
@@ -594,21 +590,19 @@ void SV_SendClientGameState(client_t *client)
     MSG_WriteLong(&msg, client->reliableSequence);
 
     {
-        server_t *svcfg = (server_t *)imp_sv;
         for (i = 0; i < 2048; ++i) {
-            if (svcfg->configstrings[i][0]) {
+            if (sv.configstrings[i][0]) {
                 MSG_WriteByte(&msg, 2);
                 MSG_WriteShort(&msg, i);
-                MSG_WriteBigString(&msg, svcfg->configstrings[i], NULL, 0, 0, 0);
+                MSG_WriteBigString(&msg, sv.configstrings[i], NULL, 0, 0, 0);
             }
         }
     }
 
     memset(&nullstate, 0, sizeof(nullstate));
 
-    sv = (server_t *)imp_sv;
     for (i = 0; i < 1024; ++i) {
-        entityState_t *baseline = (entityState_t *)&sv->svEntities[i].baseline;
+        entityState_t *baseline = (entityState_t *)&sv.svEntities[i].baseline;
 
         if (baseline->number) {
             MSG_WriteByte(&msg, 3);
@@ -621,7 +615,7 @@ void SV_SendClientGameState(client_t *client)
     svs = (serverStatic_t *)imp_svs;
     clientNum = client - svs->clients;
     MSG_WriteLong(&msg, clientNum);
-    MSG_WriteLong(&msg, sv->checksumFeed);
+    MSG_WriteLong(&msg, sv.checksumFeed);
     MSG_WriteByte(&msg, 7);
 
     Com_DPrintf("Sending %i bytes in gamestate to client: %i\n", msg.cursize, clientNum);
@@ -643,12 +637,9 @@ void SV_ClientEnterWorld(client_t *client, const dvar_t *(*cmd)[4])
     ent->s.number = clientNum;
     client->gentity = (unsigned char *(*)[16])ent;
     client->deltaMessage = -1;
-    {
-        serverStatic_t *svs = (serverStatic_t *)imp_svs;
-        client->nextSnapshotTime = svs->time;
-        client->lastUsercmd = *(usercmd_t *)cmd;
-        ClientBegin(client - svs->clients);
-    }
+    client->nextSnapshotTime = svs.time;
+    client->lastUsercmd = *(usercmd_t *)cmd;
+    ClientBegin(client - svs.clients);
 }
 
 void SV_DoneDownload_f(client_t *cl)
@@ -666,7 +657,6 @@ void SV_RetransmitDownload_f(client_t *cl)
 
 void SV_WriteDownloadToClient(client_t *cl, msg_t *msg)
 {
-    serverStatic_t *svs = (serverStatic_t *)imp_svs;
     char errorMessage[1024];
     int rate;
     int maxRate;
@@ -782,7 +772,7 @@ void SV_WriteDownloadToClient(client_t *cl, msg_t *msg)
     sent = 0;
     while (cl->downloadClientBlock != cl->downloadCurrentBlock) {
         if (cl->downloadCurrentBlock == cl->downloadXmitBlock) {
-            if (svs->time - cl->downloadSendTime <= 1000)
+            if (svs.time - cl->downloadSendTime <= 1000)
                 return;
             cl->downloadXmitBlock = cl->downloadClientBlock;
         }
@@ -799,7 +789,7 @@ void SV_WriteDownloadToClient(client_t *cl, msg_t *msg)
 
         Com_DPrintf("clientDownload: %d : writing block %d\n", SV_ClientNumForClient(cl), cl->downloadXmitBlock);
         cl->downloadXmitBlock++;
-        cl->downloadSendTime = svs->time;
+        cl->downloadSendTime = svs.time;
 
         ++sent;
         if (sent >= blocksThisFrame)
@@ -1172,7 +1162,7 @@ void SV_DropClient(client_t *drop, const char *reason)
     SV_SendServerCommand(NULL, SV_CMD_RELIABLE, "%c %d", 0x4a, clientNum);
     SV_SendServerCommand(drop, SV_CMD_RELIABLE, "%c \"%s\"", 0x77, reason);
 
-    maxClients = (*(const dvar_t **)imp_sv_maxclients)->current.integer;
+    maxClients = (sv_maxclients)->current.integer;
     if (maxClients > 0) {
         for (i = 0; i < maxClients; ++i) {
             if (svsPtr->clients[i].state > 1)
@@ -1195,7 +1185,7 @@ void SV_BanClient(client_t *cl)
     char cleanName[64];
 
     if (cl->netchan.remoteAddress.type == NA_LOOPBACK) {
-        SV_SendServerCommand(NULL, 0, "%c \"EXE_CANNOTKICKHOSTPLAYER\"", 0x65);
+        SV_SendServerCommand(NULL, (svscmd_type)(0), "%c \"EXE_CANNOTKICKHOSTPLAYER\"", 0x65);
         return;
     }
 
@@ -1209,7 +1199,7 @@ void SV_BanClient(client_t *cl)
         return;
     }
 
-    if (FS_FOpenFileByMode("ban.txt", &file, 2) < 0) {
+    if (FS_FOpenFileByMode("ban.txt", &file, (fsMode_t)(2)) < 0) {
         return;
     }
 
@@ -1253,7 +1243,7 @@ void SV_DirectConnect(netadr_t from)
     challenge = atoi(Info_ValueForKey(userinfo, "challenge"));
     qport = atoi(Info_ValueForKey(userinfo, "qport"));
 
-    maxClients = (*(const dvar_t **)imp_sv_maxclients)->current.integer;
+    maxClients = (sv_maxclients)->current.integer;
     for (clientNum = 0, cl = svs->clients; clientNum < maxClients; ++clientNum, ++cl) {
         if (NET_CompareBaseAdr(from, cl->netchan.remoteAddress) &&
             (qport == cl->netchan.qport || from.port == cl->netchan.remoteAddress.port)) {
@@ -1403,9 +1393,7 @@ setup_client:
 
 void SV_FreeClients(void)
 {
-    serverStatic_t *svs = (serverStatic_t *)imp_svs;
-    client_t *cl = svs->clients;
-    const dvar_t *sv_maxclients = *(const dvar_t **)imp_sv_maxclients;
+    client_t *cl = svs.clients;
     int i;
 
     for (i = 0; i < sv_maxclients->current.integer; i++, cl++) {
@@ -1414,7 +1402,7 @@ void SV_FreeClients(void)
         }
     }
 
-    Z_VirtualFreeInternal(svs->clients);
+    Z_VirtualFreeInternal(svs.clients);
 }
 
 void SV_StopDownload_f(client_t *cl)
@@ -1472,7 +1460,6 @@ void SV_BeginDownload_f(client_t *cl)
 void SV_UserMove(client_t *cl, msg_t *msg, qboolean delta)
 {
     serverStatic_t *svs = (serverStatic_t *)imp_svs;
-    server_t *sv = (server_t *)imp_sv;
     int clientNum;
     int cmdCount;
     int key;
@@ -1504,7 +1491,7 @@ void SV_UserMove(client_t *cl, msg_t *msg, qboolean delta)
         return;
     }
 
-    key = cl->messageAcknowledge ^ sv->checksumFeed;
+    key = cl->messageAcknowledge ^ sv.checksumFeed;
     key ^= Com_HashKey(cl->reliableCommandInfo[cl->reliableAcknowledge & 127].cmd, 32);
 
     clientNum = SV_ClientNumForClient(cl);
@@ -1549,6 +1536,7 @@ void SV_UserMove(client_t *cl, msg_t *msg, qboolean delta)
     }
 
     newestServerTime = cmds[cmdCount - 1].serverTime;
+    int _dbgThinks = 0;
     for (i = 0; i < cmdCount; ++i) {
         cmd = &cmds[i];
 
@@ -1563,7 +1551,15 @@ void SV_UserMove(client_t *cl, msg_t *msg, qboolean delta)
         if (cl->state == 4) {
             G_SetLastServerTime(clientNum, cmd->serverTime);
             ClientThink(clientNum);
+            _dbgThinks++;
         }
+    }
+    if (getenv("COD2_MOVEDIAG")) {
+        static int c;
+        if ((c++ & 0x3f) == 0)
+            Com_Printf("[movediag] state=%d cmdCount=%d cmd0.st=%d newest.st=%d lastUsercmd.st=%d thinks=%d ps.cmdTime=%d\n",
+                       cl->state, cmdCount, cmds[0].serverTime, newestServerTime,
+                       cl->lastUsercmd.serverTime, _dbgThinks, ps->commandTime);
     }
 }
 
@@ -1705,7 +1701,7 @@ void SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
 gentity_t *SV_AddTestClient(void)
 {
     serverStatic_t *svsPtr = (serverStatic_t *)imp_svs;
-    int maxClients = (*(const dvar_t **)imp_sv_maxclients)->current.integer;
+    int maxClients = (sv_maxclients)->current.integer;
     char userinfo[1024];
     usercmd_t nullcmd;
     netadr_t adr;
@@ -1734,7 +1730,7 @@ gentity_t *SV_AddTestClient(void)
 
     SV_DirectConnect(adr);
 
-    maxClients = (*(const dvar_t **)imp_sv_maxclients)->current.integer;
+    maxClients = (sv_maxclients)->current.integer;
     for (clientNum = 0, cl = svsPtr->clients; clientNum < maxClients; ++clientNum, ++cl) {
         if (cl->state && NET_CompareBaseAdr(adr, cl->netchan.remoteAddress))
             break;
@@ -1764,17 +1760,17 @@ gentity_t *SV_AddTestClient(void)
 }
 
 ucmd_t ucmds[12] = {
-    { (char *)&str_002adea0, &SV_UpdateUserinfo_f },
-    { (char *)&str_00228e90, &SV_Disconnect_f },
-    { (char *)&str_002adeac, &SV_VerifyIwds_f },
-    { (char *)&str_002a96d4, &SV_ResetPureClient_f },
-    { (char *)&str_002adeb0, &SV_BeginDownload_f },
-    { (char *)&str_002adebc, &SV_NextDownload_f },
-    { (char *)&str_002adec4, &SV_StopDownload_f },
-    { (char *)&str_002a98b0, &SV_DoneDownload_f },
-    { (char *)&str_002adecc, &SV_RetransmitDownload_f },
-    { (char *)&str_002aded8, &SV_MutePlayer_f },
-    { (char *)&str_002adee4, &SV_UnmutePlayer_f },
+    { (char *)&str_002adea0, (void (*)())&SV_UpdateUserinfo_f },
+    { (char *)&str_00228e90, (void (*)())&SV_Disconnect_f },
+    { (char *)&str_002adeac, (void (*)())&SV_VerifyIwds_f },
+    { (char *)&str_002a96d4, (void (*)())&SV_ResetPureClient_f },
+    { (char *)&str_002adeb0, (void (*)())&SV_BeginDownload_f },
+    { (char *)&str_002adebc, (void (*)())&SV_NextDownload_f },
+    { (char *)&str_002adec4, (void (*)())&SV_StopDownload_f },
+    { (char *)&str_002a98b0, (void (*)())&SV_DoneDownload_f },
+    { (char *)&str_002adecc, (void (*)())&SV_RetransmitDownload_f },
+    { (char *)&str_002aded8, (void (*)())&SV_MutePlayer_f },
+    { (char *)&str_002adee4, (void (*)())&SV_UnmutePlayer_f },
     { 0, 0 }
 };
 

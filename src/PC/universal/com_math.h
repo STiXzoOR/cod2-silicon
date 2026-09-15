@@ -39,7 +39,6 @@ struct XAnimPartTrans;
 union XAnimPartTransData;
 struct XAnimPartTransFrames;
 struct XAnimParts_s;
-struct XAnimTree;
 struct XAnimTree_s;
 struct XAnim_s;
 struct animation_s;
@@ -187,8 +186,8 @@ struct GfxViewport {
 };
 
 struct MarkPoly {
-    int prevMark;
-    int nextMark;
+    struct MarkPoly *prevMark;
+    struct MarkPoly *nextMark;
     int lastFrameDrawn;
     vec3_t origin;
     float radius;
@@ -342,16 +341,6 @@ struct XAnimParts_s {
     XAnimDeltaPart *deltaPart;
     const char *name;
     Bool isDefault;
-};
-
-struct XAnimTree {
-    DSkel **reset_marker_reader;
-    const XAnimTime read_markers;
-    const int read_restart_marker;
-    const XAnimParts_s *saw_SOI;
-    const XAnimParts_s *saw_SOF;
-    XAnimPart next_restart_num;
-    float discarded_bytes;
 };
 
 struct XAnimTree_s {

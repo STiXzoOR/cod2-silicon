@@ -402,7 +402,7 @@ char *TextPool_AllocText(const TextPool *_this, char *text, unsigned char addNUL
 
         initSize = pool->capacity;
 
-        newPool = (TextPool *)Z_MallocInternal(0x10);
+        newPool = (TextPool *)Z_MallocInternal((int)sizeof(TextPool));
 
         newPool->next = NULL;
         newPool->capacity = initSize;
@@ -428,7 +428,7 @@ GPGroup *GPGroup_AddGroup(const GPGroup *_this, const char *name, TextPool **tex
         allocName = TextPool_AllocText(*textPool, (char *)name, 1, textPool);
     }
 
-    newGroup = (GPGroup *)Z_MallocInternal(0x30);
+    newGroup = (GPGroup *)Z_MallocInternal((int)sizeof(GPGroup));
 
     newGroup->name = allocName;
     newGroup->nextUnsorted = NULL;
@@ -466,7 +466,7 @@ void GPValue_AddValue(const GPValue *_this, const char *newValue, TextPool **tex
 
     if (gpv->valueList) {
 
-        newNode = (GPValue *)Z_MallocInternal(0x10);
+        newNode = (GPValue *)Z_MallocInternal((int)sizeof(GPValue));
         newNode->name = allocValue;
         ((GPObject *)newNode)->next = NULL;
         ((GPObject *)newNode)->sortedNext = NULL;
@@ -480,7 +480,7 @@ void GPValue_AddValue(const GPValue *_this, const char *newValue, TextPool **tex
         }
     } else {
 
-        newNode = (GPValue *)Z_MallocInternal(0x10);
+        newNode = (GPValue *)Z_MallocInternal((int)sizeof(GPValue));
         newNode->name = allocValue;
         ((GPObject *)newNode)->next = NULL;
         ((GPObject *)newNode)->sortedPrev = NULL;
@@ -503,7 +503,7 @@ GPValue *GPGroup_AddPair(const GPGroup *_this, const char *name, const char *val
         }
     }
 
-    newPair = (GPValue *)Z_MallocInternal(0x14);
+    newPair = (GPValue *)Z_MallocInternal((int)sizeof(GPValue));
     newPair->name = allocName;
     ((GPObject *)newPair)->next = NULL;
     ((GPObject *)newPair)->sortedNext = NULL;
@@ -646,7 +646,7 @@ Bool GenericParser2_Parse(const GenericParser2 *_this, char **dataPtr, int clean
     }
 
     if (gp->textPoolList == NULL) {
-        TextPool *newPool = (TextPool *)Z_MallocInternal(0x10);
+        TextPool *newPool = (TextPool *)Z_MallocInternal((int)sizeof(TextPool));
         newPool->next = NULL;
         newPool->capacity = 0x2800;
         newPool->used = 0;

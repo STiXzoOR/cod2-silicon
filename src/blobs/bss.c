@@ -1,6 +1,9 @@
 #include "common_types.h"
+#if defined(COD2_X64) || defined(__x86_64__)
+#include <setjmp.h>   /* x64: g_script_error is a real jmp_buf[] array */
+#endif
 
-/* BSSINT: a BSS slot the reconstruction declared `int` but which frequently
+/* BSSINT: a BSS slot originally declared `int` but which frequently
  * holds a POINTER (fs_basepath, sMainWindow, ...). It must be pointer-sized.
  * `long` is 8 bytes on LP64 (Linux x64) but only 4 on LLP64 (Windows x64), so
  * it truncated pointers there. intptr_t is pointer-sized on every arch
@@ -176,7 +179,7 @@ struct scrCompileGlob_t scrCompileGlob;   /* x86 was unsigned char[512]; x64 str
 #else
 unsigned char scrCompileGlob[512];
 #endif
-unsigned char scrAnimGlob[640];
+struct scrAnimGlob_t scrAnimGlob;
 BSSINT jump_height;
 BSSINT jump_spreadAdd;
 BSSINT jump_slowdownEnable;
@@ -194,20 +197,28 @@ unsigned char statCount[32];
 unsigned char stats[96];
 unsigned char initialized[128];
 unsigned char cm_world[24704];
-unsigned char cinTable[7360];
-unsigned char cin[2426400];
-unsigned char ROQ_YY_tab[1024];
-unsigned char ROQ_VG_tab[1024];
-unsigned char ROQ_UG_tab[1024];
-unsigned char ROQ_VR_tab[1024];
-unsigned char ROQ_UB_tab[1024];
-unsigned char vq2[32768];
-unsigned char vq4[131072];
-unsigned char vq8[524288];
+#if defined(COD2_X64) || defined(__x86_64__)
+cin_cache cinTable[16];   /* x86 blob 7360 (460*16); x64 cin_cache=496 -> 7936 > 7360 overflow */
+#else
+cin_cache cinTable[16];
+#endif
+#if defined(COD2_X64) || defined(__x86_64__)
+cinematics_t cin;   /* x86 blob 2426400; x64 sizeof(cinematics_t)=2688536 -> overflow */
+#else
+struct cinematics_t cin;
+#endif
+long int ROQ_YY_tab[256];
+long int ROQ_VG_tab[256];
+long int ROQ_UG_tab[256];
+long int ROQ_VR_tab[256];
+long int ROQ_UB_tab[256];
+short unsigned int vq2[16384];
+short unsigned int vq4[65536];
+short unsigned int vq8[262144];
 unsigned char sAspyrIntroPlayed[32];
 unsigned char g_testLods[128];
 unsigned char szReference[1024];
-unsigned char currentPos[128];
+int currentPos;
 unsigned char bg_defaultWeaponDefs[1568];
 unsigned char g_playerAnimTypeNames[256];
 unsigned char g_playerAnimTypeNamesCount[96];
@@ -230,8 +241,12 @@ unsigned char cwd[256];
 unsigned char lockPvsViewParms[332];
 BSSINT warnCount;
 unsigned char warnCount_007f1dd0[48];
-unsigned char s_cmdList[128];
+GfxCmdArray *s_cmdList;   /* was unsigned char[128] blob; consumers use it as a GfxCmdArray* (assigned &commands, deref'd) */
+#if defined(COD2_X64) || defined(__x86_64__)
+struct GfxDebugFrameGlob s_debugFrameGlob;   /* x86 blob 2399616; x64 sizeof 3054928 (pointer fields grow) */
+#else
 unsigned char s_debugFrameGlob[2399616];
+#endif
 unsigned char s_backEndData[2399596];
 unsigned char g_dummyBuf[20];
 refexport_t re;
@@ -270,7 +285,15 @@ unsigned char registeredFontCount[32];
 unsigned char registeredFont[96];
 unsigned char debugGlobals[128];
 unsigned char dpvsConfig[32];
+/* x86 sizeof(DpvsGlobals)=224; on x64 its ~8 pointer fields (clipPlanes/occluderList/
+   portalQueue/portalPool/...) grow it well past 224, so the r_dpvs.c
+   `(DpvsGlobals*)&dpvsGlob` access overflowed into dpvsScene (model cull data) ->
+   XModels got culled out / mis-drawn. Over-size the blob so the x64 struct fits. */
+#if defined(COD2_X64)
+unsigned char dpvsGlob[512];
+#else
 unsigned char dpvsGlob[224];
+#endif
 unsigned char dpvsScene[131200];
 unsigned char shadowCookieGlob[128];
 unsigned char waterGlob[196608];
@@ -279,20 +302,20 @@ unsigned char mtlLoadGlob[128];
 unsigned char smodelLoadGlob[128];
 unsigned char outdoorGlob[128];
 unsigned char sOldButtonState[128];
-BSSINT yaccResult;
+sval_t yaccResult;
 BSSINT yy_start;
-unsigned char yy_current_buffer[24];
-unsigned char ch_buf[16388];
-BSSINT g_dummyVal;
-BSSINT g_parse_user;
-BSSINT g_sourcePos;
-BSSINT g_out_pos;
-BSSINT yy_hold_char;
-BSSINT yy_c_buf_p;
+YY_BUFFER_STATE yy_current_buffer;
+char ch_buf[16388];
+sval_t g_dummyVal;
+unsigned char g_parse_user;
+unsigned int g_sourcePos;
+unsigned int g_out_pos;
+char yy_hold_char;
+char *yy_c_buf_p;
 BSSINT yy_n_chars;
 BSSINT yy_did_buffer_switch_on_eof;
-BSSINT yy_last_accepting_cpos;
-unsigned char yy_last_accepting_state[56];
+char *yy_last_accepting_cpos;
+yy_state_type yy_last_accepting_state;
 BSSINT sSoundEngine;
 unsigned char sHighQualityEngine[124];
 unsigned char comBspGlob[128];
@@ -306,12 +329,12 @@ unsigned char shortestMatch[1024];
 BSSINT matchCount;
 BSSINT completionString;
 unsigned char tinystr[120];
-unsigned char cg_itemsArray[9216];
-unsigned char cg_weaponsArray[55808];
+itemInfo_t cg_itemsArray[256];
+weaponInfo_t cg_weaponsArray[128];
 unsigned char cg_entitiesArray[561152];
 
 unsigned char cgsArray[sizeof(cgs_t)];
-unsigned char cgArray[997788];
+cg_t cgArray[1];
 unsigned char g_mapLoaded[1];
 unsigned char g_ambientStarted[3];
 unsigned char buffer_00e86a20[1120];
@@ -321,7 +344,7 @@ unsigned char recursive[96];
 unsigned char g_sv_skel_memory_start[128];
 unsigned char g_sv_skel_memory[262144];
 unsigned char warnCount_00ec7000[128];
-unsigned char g_gametype[64];
+const dvar_t *g_gametype;
 unsigned char g_mapname[64];
 BSSINT g_ingameMenusLoaded;
 unsigned char ui_serverFilterType[28];
@@ -336,7 +359,7 @@ unsigned char info_00ecf960[1024];
 BSSINT numTimeOuts;
 BSSINT numFound;
 unsigned char tleIndex[24];
-unsigned char loopbacks[45072];
+loopback_t loopbacks[2];
 unsigned char net_iProfilingOn[16];
 unsigned char s[96];
 unsigned char string_00edae00[1024];
@@ -421,7 +444,7 @@ unsigned char hud_flash_time_offhand[124];
 unsigned char cached_models[1024];
 unsigned char pushed[32768];
 unsigned char pushed_p[128];
-unsigned char turretInfo[2176];
+turretInfo_s turretInfo[32];
 unsigned char g_HitLocConstNames[128];
 unsigned char numIPFilters[32];
 unsigned char ipFilters[8288];
@@ -436,7 +459,7 @@ unsigned char cg_numTriggerEntities[8];
 unsigned char cg_triggerEntities[1024];
 unsigned char cg_numSolidEntities[128];
 unsigned char cg_solidEntities[1024];
-unsigned char cg_eachClientLocalEntities[24064];
+localEntity_t cg_eachClientLocalEntities[128];
 BSSINT ip_socket;
 unsigned char winsockInitialized[28];
 unsigned char winsockdata[400];
@@ -478,97 +501,120 @@ unsigned char g_NoTextureID[127];
 unsigned char __ZN6CFence15sUnusedFenceIDsE[128];
 unsigned char __ZN13CMemoryBuffer20sDelayedFreeRequestsE[128];
 unsigned char __ZN7COpenGL7sOpenGLE[4096];
+#if defined(COD2_X64) || defined(__x86_64__)
+TraceThreadInfo g_traceThreadInfo[1];   /* x86 blob 28; x64 sizeof 48 (pointer fields grow) */
+#else
 unsigned char g_traceThreadInfo[28];
-unsigned char com_consoleLines[128];
-unsigned char com_numConsoleLines[8];
-BSSINT ui_errorTitle;
-BSSINT ui_errorMessage;
+#endif
+/* consumer char *com_consoleLines[32]: x86-sized pointer-array blob, too small on x64 */
+#if defined(COD2_X64) || defined(__x86_64__)
+char *com_consoleLines[32];
+#else
+char *com_consoleLines[32];
+#endif
+int com_numConsoleLines;
+const dvar_t *ui_errorTitle;
+const dvar_t *ui_errorMessage;
 BSSINT com_fixedConsolePosition;
 BSSINT com_errorEntered;
 BSSINT com_frameNumber;
 BSSINT com_frameTime;
-BSSINT com_animCheck;
-BSSINT com_recommendedSet;
-BSSINT sv_paused;
-BSSINT com_expectedHunkUsage;
+const dvar_t *com_animCheck;
+const dvar_t *com_recommendedSet;
+const dvar_t *sv_paused;
+const dvar_t *com_expectedHunkUsage;
 BSSINT nextmap;
-BSSINT cl_paused;
-BSSINT com_introPlayed;
-BSSINT shortversion;
+const dvar_t *cl_paused;
+const dvar_t *com_introPlayed;
+const dvar_t *shortversion;
 BSSINT version_00ff3f60;
-BSSINT com_logfile;
-BSSINT com_sv_running;
-BSSINT com_maxfps;
-BSSINT com_fixedtime;
-BSSINT com_timescaleValue;
-BSSINT com_timescale;
-BSSINT com_statmon;
-BSSINT com_developer_script;
-BSSINT com_developer;
-unsigned char com_viewlog[120];
-BSSINT loc_warningsAsErrors;
-BSSINT loc_warnings;
-BSSINT loc_translate;
-BSSINT loc_forceEnglish;
-unsigned char loc_language[16];
-unsigned char lastValidGame[256];
-unsigned char lastValidBase[256];
-unsigned char fs_serverReferencedIwdNames[4096];
+const dvar_t *com_logfile;
+const dvar_t *com_sv_running;
+const dvar_t *com_maxfps;
+const dvar_t *com_fixedtime;
+float com_timescaleValue;
+const dvar_t *com_timescale;
+const dvar_t *com_statmon;
+const dvar_t *com_developer_script;
+const dvar_t *com_developer;
+const dvar_t *com_viewlog;
+const dvar_t *loc_warningsAsErrors;
+const dvar_t *loc_warnings;
+const dvar_t *loc_translate;
+const dvar_t *loc_forceEnglish;
+const dvar_t *loc_language;
+char lastValidGame[256];
+char lastValidBase[256];
+/* consumer char *fs_serverReferencedIwdNames[1024]: x86-sized pointer-array blob, too small on x64 */
+#if defined(COD2_X64) || defined(__x86_64__)
+char *fs_serverReferencedIwdNames[1024];
+#else
+char *fs_serverReferencedIwdNames[1024];
+#endif
 unsigned char fs_serverReferencedIwds[4096];
-unsigned char fs_numServerReferencedIwds[32];
-unsigned char fs_serverIwdNames[4096];
-unsigned char fs_serverIwds[4096];
+int fs_numServerReferencedIwds;
+/* consumer char *fs_serverIwdNames[1024]: x86-sized pointer-array blob, too small on x64 */
+#if defined(COD2_X64) || defined(__x86_64__)
+char *fs_serverIwdNames[1024];
+#else
+char *fs_serverIwdNames[1024];
+#endif
+int fs_serverIwds[1024];
 #if defined(__x86_64__) || defined(_M_X64)
 
 fileHandleData_t fsh[74];
 #else
-unsigned char fsh[21016];
+fileHandleData_t fsh[74];
 #endif
 BSSINT fs_checksumFeed;
 BSSINT fs_fakeChkSum;
-BSSINT fs_ignoreLocalized;
-BSSINT fs_restrict;
-BSSINT fs_gameDirVar;
-BSSINT fs_copyfiles;
-BSSINT fs_cdpath;
-BSSINT fs_useOldAssets;
-BSSINT fs_basegame;
-BSSINT fs_basepath;
-BSSINT fs_homepath;
-unsigned char fs_debug[28];
-unsigned char fs_gamedir[256];
+const dvar_t *fs_ignoreLocalized;
+const dvar_t *fs_restrict;
+const dvar_t *fs_gameDirVar;
+const dvar_t *fs_copyfiles;
+const dvar_t *fs_cdpath;
+const dvar_t *fs_useOldAssets;
+const dvar_t *fs_basegame;
+const dvar_t *fs_basepath;
+const dvar_t *fs_homepath;
+const dvar_t *fs_debug;
+char fs_gamedir[256];
 BSSINT fs_loadStack;
 unsigned char com_fileAccessed[96];
-unsigned char com_dedicated[128];
-unsigned char scrMemTreePub[28];
-unsigned char g_default[228];
-BSSINT snd_touchStreamFilesOnLoad;
-BSSINT snd_enableReverb;
-BSSINT snd_enableStream;
-BSSINT snd_enable3D;
-BSSINT snd_enable2D;
-BSSINT snd_slaveFadeTime;
-BSSINT snd_volume;
-BSSINT snd_stereo;
-BSSINT snd_bits;
-BSSINT snd_khz;
-unsigned char snd_errorOnMissing[84];
+dvar_t *com_dedicated;   /* dvar pointer-blob retype */
+struct scrMemTreePub_t scrMemTreePub;
+struct XModelDefault g_default;
+const dvar_t *snd_touchStreamFilesOnLoad;
+const dvar_t *snd_enableReverb;
+const dvar_t *snd_enableStream;
+const dvar_t *snd_enable3D;
+const dvar_t *snd_enable2D;
+const dvar_t *snd_slaveFadeTime;
+const dvar_t *snd_volume;
+const dvar_t *snd_stereo;
+const dvar_t *snd_bits;
+const dvar_t *snd_khz;
+const dvar_t *snd_errorOnMissing;
 #if defined(__x86_64__) || defined(_M_X64)
 
 struct snd_local_t g_snd;
 #else
-unsigned char g_snd[5124];
+struct snd_local_t g_snd;
 #endif
+#if defined(COD2_X64) || defined(__x86_64__)
+cmd_t cmd_texts[1];   /* x86 blob 12; x64 sizeof 16 (cmd_t data pointer grows) */
+#else
 unsigned char cmd_texts[12];
-unsigned char cmd_wait[116];
+#endif
+int cmd_wait;
 BSSINT dvarCount;
 BSSINT dvar_modifiedFlags;
-unsigned char sortedDvars[116];
+dvar_t *sortedDvars;   /* was unsigned char[116] blob; consumer uses it as dvar_t* (dvar=sortedDvars) -- pointer retype */
 BSSINT mss_q3fs;
-unsigned char mss_3d_provider[128];
+const dvar_t *mss_3d_provider;   /* dvar pointer-blob retype */
 BSSINT visibleEffectCountBolt;
-unsigned char visibleEffectCountNonBolt[24];
-unsigned char theFxHelpers[252];
+int visibleEffectCountNonBolt;
+FxHelper theFxHelpers[1];
 BSSINT effectBlockSightCount;
 BSSINT cullEffectCountNonBolt;
 BSSINT cullEffectCountBolt;
@@ -578,41 +624,41 @@ BSSINT privateEffectActiveCountNonBolt;
 BSSINT privateEffectActiveCountBolt;
 BSSINT effectActiveCount;
 BSSINT effectActiveCountNonBolt;
-unsigned char effectActiveCountBolt[64];
-unsigned char g_effectVisArray[36000];
+int effectActiveCountBolt;
+EffectVisInfo g_effectVisArray[1800];
 BSSINT g_effectVisArrayCount;
-BSSINT clusterSort;
-unsigned char effectClusterCount[92];
-unsigned char fx_camera_valid[128];
+int *clusterSort;
+int effectClusterCount;
+volatile qboolean fx_camera_valid;
 unsigned char fxSchedulers[128];
-BSSINT player_dmgtimer_flinchTime;
-BSSINT player_dmgtimer_stumbleTime;
-BSSINT player_dmgtimer_minScale;
-BSSINT player_dmgtimer_maxTime;
-BSSINT player_dmgtimer_timePerPoint;
-BSSINT player_turnAnims;
+const dvar_t *player_dmgtimer_flinchTime;
+const dvar_t *player_dmgtimer_stumbleTime;
+const dvar_t *player_dmgtimer_minScale;
+const dvar_t *player_dmgtimer_maxTime;
+const dvar_t *player_dmgtimer_timePerPoint;
+const dvar_t *player_turnAnims;
 BSSINT player_spectateSpeedScale;
-BSSINT player_backSpeedScale;
-BSSINT player_strafeSpeedScale;
+const dvar_t *player_backSpeedScale;
+const dvar_t *player_strafeSpeedScale;
 BSSINT player_footstepsThreshhold;
-BSSINT player_moveThreshhold;
-BSSINT player_adsExitDelay;
-BSSINT player_scopeExitOnDamage;
-BSSINT player_toggleBinoculars;
-BSSINT player_breath_snd_delay;
-BSSINT player_breath_snd_lerp;
-BSSINT player_breath_gasp_lerp;
-BSSINT player_breath_hold_lerp;
-BSSINT player_breath_gasp_scale;
-BSSINT player_breath_fire_delay;
-BSSINT player_breath_gasp_time;
-BSSINT player_breath_hold_time;
-BSSINT bg_aimSpreadMoveSpeedThreshold;
-BSSINT bg_bobMax;
-BSSINT bg_bobAmplitudeProne;
-BSSINT bg_bobAmplitudeDucked;
-BSSINT bg_bobAmplitudeStanding;
-BSSINT bg_swingSpeed;
+const dvar_t *player_moveThreshhold;
+const dvar_t *player_adsExitDelay;
+const dvar_t *player_scopeExitOnDamage;
+const dvar_t *player_toggleBinoculars;
+const dvar_t *player_breath_snd_delay;
+const dvar_t *player_breath_snd_lerp;
+const dvar_t *player_breath_gasp_lerp;
+const dvar_t *player_breath_hold_lerp;
+const dvar_t *player_breath_gasp_scale;
+const dvar_t *player_breath_fire_delay;
+const dvar_t *player_breath_gasp_time;
+const dvar_t *player_breath_hold_time;
+const dvar_t *bg_aimSpreadMoveSpeedThreshold;
+const dvar_t *bg_bobMax;
+const dvar_t *bg_bobAmplitudeProne;
+const dvar_t *bg_bobAmplitudeDucked;
+const dvar_t *bg_bobAmplitudeStanding;
+const dvar_t *bg_swingSpeed;
 BSSINT friction;
 BSSINT stopspeed;
 BSSINT inertiaAngle;
@@ -620,230 +666,307 @@ BSSINT inertiaDebug;
 BSSINT inertiaMax;
 BSSINT bg_fallDamageMaxHeight;
 BSSINT bg_fallDamageMinHeight;
-BSSINT bg_foliagesnd_resetinterval;
-BSSINT bg_foliagesnd_fastinterval;
-BSSINT bg_foliagesnd_slowinterval;
-BSSINT bg_foliagesnd_maxspeed;
-BSSINT bg_foliagesnd_minspeed;
+const dvar_t *bg_foliagesnd_resetinterval;
+const dvar_t *bg_foliagesnd_fastinterval;
+const dvar_t *bg_foliagesnd_slowinterval;
+const dvar_t *bg_foliagesnd_maxspeed;
+const dvar_t *bg_foliagesnd_minspeed;
 BSSINT bg_prone_yawcap;
 BSSINT bg_ladder_yawcap;
 BSSINT player_view_pitch_down;
-unsigned char player_view_pitch_up[112];
-unsigned char cm[384];
-unsigned char bg_weaponDefs[608];
+const dvar_t *player_view_pitch_up;   /* dvar pointer-blob retype */
+#if defined(COD2_X64)
+/* x86 sizeof(clipMap_t)=384; on x64 its many pointer fields grow so the struct is
+   larger -> the byte blob put nodes/planes/leafs at wrong offsets and overflowed
+   adjacent bss. Retype so the compiler sizes/lays it out for x64. */
+clipMap_t cm;
+#else
+struct clipMap_t cm;
+#endif
+/* Consumer is `WeaponDef *bg_weaponDefs[128]` (bg_weapons.c). As a fixed 608-byte
+   blob that holds only 76 pointers on x64 (8 bytes each), high weapon indices read
+   past it into adjacent BSS -> garbage WeaponDef* -> crash in BG_FindWeaponIndexForName
+   on maps that load many weapons (e.g. mp_breakout). Retype so it holds all 128. */
+/* Typed on BOTH arches so this storage and the consumer's declaration agree; 128 slots
+   is what the consumer declares and exceeds x86's need (was 608B/152 slots). */
+struct WeaponDef *bg_weaponDefs[128];
+/* Consumer is `struct scrVmPub_t scrVmPub` (scr_vm.c). On x86 sizeof==17184 (exact
+   fit: 32 header + function_frame_t[32]*24 + VariableValue[2048]*8). On x64 it is
+   17720 -- 536 bytes larger (the 4 leading pointers grow 4->8 and function_frame_t
+   grows 24->40). As a fixed x86-sized blob, the script VM's typed writes to its high
+   fields (the tail of stack[2048], reached on script-heavy maps) overflow the blob
+   into the immediately-following bg_weaponDefs, NULLing every WeaponDef* -> NULL
+   deref in BG_FindWeaponIndexForName during script precache on mp_breakout/mp_rhine.
+   Retype so the compiler sizes it for the arch. BSS, so binary-compatible on x86. */
+#if defined(COD2_X64) || defined(__x86_64__)
+struct scrVmPub_t scrVmPub;
+#else
 unsigned char scrVmPub[17184];
-unsigned char g_script_error_level[32];
-unsigned char g_script_error[2400];
+#endif
+int g_script_error_level;
+#if defined(COD2_X64) || defined(__x86_64__)
+jmp_buf g_script_error[33];   /* x86 blob 2400 (72B jmp_buf); x64 sizeof jmp_buf 256 -> 8448; setjmp/longjmp(g_script_error[level]) overflowed the blob at nesting >=9 */
+#else
+jmp_buf g_script_error[33];
+#endif
 unsigned char scrVarPub[262240];
 unsigned char scrVarGlob[1048608];
 #if defined(__x86_64__) || defined(_M_X64)
 struct scrCompilePub_t scrCompilePub;   /* typed so the x64-wider func_table (intptr_t) is sized correctly */
 #else
-unsigned char scrCompilePub[65592];
+struct scrCompilePub_t scrCompilePub;
 #endif
-unsigned char scrParserPub[28];
-unsigned char scrParserGlob[128];
+#if defined(COD2_X64) || defined(__x86_64__)
+scrParserPub_t scrParserPub;   /* x86 blob 28; x64 sizeof(scrParserPub_t)=32 -> overflow */
+#else
+struct scrParserPub_t scrParserPub;
+#endif
+struct scrParserGlob_t scrParserGlob;
 #if defined(__x86_64__) || defined(_M_X64)
 struct scrAnimPub_t scrAnimPub;   /* typed: xanim_lookup[2][128] of scr_animtree_t grows on x64 (blob was x86-sized 1152) */
 #else
-unsigned char scrAnimPub[1152];
+struct scrAnimPub_t scrAnimPub;
 #endif
 #if defined(__x86_64__) || defined(_M_X64)
 
 struct g_sa_type g_sa;
 #else
-unsigned char g_sa[6500];
+struct g_sa_type g_sa;
 #endif
-unsigned char sys_timeBase[28];
+int sys_timeBase;
 unsigned char legacyHacksArray[1792];
-unsigned char saLoadObjGlob[2272];
-unsigned char giFilesFound[32];
-unsigned char sourceFiles[256];
-BSSINT globaldefines;
-unsigned char numtokens[92];
+struct saLoadObjGlob_type saLoadObjGlob;
+int giFilesFound;
+/* consumer source_t *sourceFiles[64]: x86-sized pointer-array blob, too small on x64 */
+#if defined(COD2_X64) || defined(__x86_64__)
+source_t *sourceFiles[64];
+#else
+source_t * sourceFiles[64];
+#endif
+define_t *globaldefines;
+int numtokens;
+#if defined(COD2_X64) || defined(__x86_64__)
+WinVars_t g_wv;   /* x86 blob 32; x64 sizeof(WinVars_t)=48 -> overflow */
+#else
 unsigned char g_wv[32];
+#endif
 unsigned char sys_packetReceived[16480];
-unsigned char scene[124292];
-unsigned char frontEndDataOut[124];
-unsigned char g_skinBuffers[40964];
-BSSINT r_aspectRatio;
+#if defined(COD2_X64)
+/* x86 sizeof(GfxScene)=124292; on x64 the GfxEntity/GfxSceneEntity arrays + pointer
+   fields grow so the struct is larger -> the byte blob put def.entityCount / sceneEnts /
+   def.entities at wrong offsets and R_AddRefEntityToScene's memcpy overflowed adjacent
+   bss -> dynamic models (viewmodel/players) never rendered. Retype for x64. */
+struct GfxScene scene;
+#else
+GfxScene scene;
+#endif
+GfxBackEndData *frontEndDataOut;
+SkinBuffers g_skinBuffers[1];
+const dvar_t *r_aspectRatio;
 BSSINT r_rendererInUse;
-BSSINT r_rendererPreference;
-BSSINT r_displayRefresh;
-BSSINT r_mode;
-BSSINT r_monitor;
-BSSINT r_fullscreen;
-BSSINT r_sse_skinning;
-BSSINT sys_SSE;
-BSSINT developer;
-BSSINT vid_ypos;
-BSSINT vid_xpos;
-BSSINT r_testFillEnable;
-BSSINT r_testFill;
-BSSINT r_testTransform;
-BSSINT r_sun_from_dvars;
-BSSINT r_outdoorFeather;
-BSSINT r_outdoorDownBias;
-BSSINT r_outdoorAwayBias;
-BSSINT r_glowBloomDesaturation;
-BSSINT r_glowBloomCutoff;
-unsigned char r_glowBloomIntensity[8];
-unsigned char r_glowSkyBleedIntensity[8];
-unsigned char r_glowRadius[8];
-BSSINT r_glow;
-BSSINT r_distortion;
-BSSINT r_blur;
-BSSINT sc_offscreenCasterLodScale;
-BSSINT sc_offscreenCasterLodBias;
-BSSINT sc_length;
-BSSINT sc_shadowOutRate;
-BSSINT sc_shadowInRate;
-BSSINT sc_fadeRange;
-BSSINT sc_wantCountMargin;
-BSSINT sc_wantCount;
-BSSINT sc_showDebug;
-BSSINT sc_showOverlay;
-BSSINT sc_debugReceiverCount;
-BSSINT sc_debugCasterCount;
-BSSINT sc_count;
-BSSINT sc_blur;
-BSSINT sc_enable;
-BSSINT r_forceLod;
-BSSINT r_lowestLodDist;
-BSSINT r_lowLodDist;
-BSSINT r_mediumLodDist;
-BSSINT r_highLodDist;
-BSSINT r_showGroundLit;
-BSSINT r_showFloatZDebug;
-BSSINT r_showFbColorDebug;
-BSSINT r_showSModelNames;
-BSSINT r_showPortals;
-BSSINT r_portalMinClipArea;
-BSSINT r_portalWalkLimit;
-BSSINT r_singleCell;
-BSSINT r_portalBevelsOnly;
-BSSINT r_portalBevels;
-BSSINT r_portalFineCull;
-BSSINT r_pvsStats;
-BSSINT r_skipPvs;
-BSSINT r_lockPvs;
-BSSINT r_depthPrepassModels;
-BSSINT r_drawWater;
-BSSINT r_drawPrimFloor;
-BSSINT r_drawPrimCap;
-unsigned char r_dlightLimit[8];
-BSSINT r_drawXModels;
-BSSINT r_drawSModels;
-BSSINT r_drawBModels;
-BSSINT r_drawEntities;
-BSSINT r_drawDecals;
-BSSINT r_drawWorld;
-BSSINT r_drawSun;
-BSSINT r_clearColor2;
-BSSINT r_clearColor;
-BSSINT r_aaSamples;
-BSSINT r_aaAlpha;
-BSSINT r_swapInterval;
-BSSINT r_norefresh;
-BSSINT r_skipBackEnd;
-BSSINT r_logFile;
-BSSINT r_objectiveColorDx7Max;
-BSSINT r_objectiveColorDx7Min;
-BSSINT r_lightTweakSunDirection;
-BSSINT r_lightTweakSunDiffuseColor;
-BSSINT r_lightTweakSunColor;
-BSSINT r_lightTweakAmbientColor;
-BSSINT r_lightTweakSunLight;
-BSSINT r_lightTweakDiffuseFraction;
-BSSINT r_lightTweakAmbient;
-BSSINT r_showMissingLightGrid;
-BSSINT r_showLightGrid;
-BSSINT r_vc_showlog;
-BSSINT r_vc_makelog;
-BSSINT r_railCoreWidth;
-BSSINT r_xdebug;
-BSSINT r_showVertCounts;
-BSSINT r_showSurfCounts;
-BSSINT r_showTriCounts;
-BSSINT r_showTris;
-BSSINT r_cosinePowerMapShift;
-BSSINT r_specularColorScale;
-BSSINT r_specularMap;
-BSSINT r_normalMap;
-BSSINT r_colorMap;
-BSSINT r_lightMap;
-BSSINT r_picmip_spec;
-BSSINT r_picmip_bump;
-BSSINT r_picmip;
-BSSINT r_picmip_manual;
-BSSINT r_polygonOffsetBias;
-BSSINT r_polygonOffsetScale;
-BSSINT r_fog;
-BSSINT r_zfar;
-BSSINT r_znear_depthhack;
-BSSINT r_znear;
-BSSINT r_lodBias;
-BSSINT r_lodScale;
-BSSINT r_smc_enable;
-BSSINT r_skinCache;
-BSSINT r_multiGpu;
-BSSINT r_gpuSync;
-BSSINT r_optimizeXModels;
-BSSINT r_optimizeLightmaps;
-BSSINT r_optimize;
-BSSINT r_debugEntCounts;
-BSSINT r_debugShader;
-BSSINT r_fullbright;
-BSSINT r_anisotropy;
-BSSINT r_textureMode;
-BSSINT r_ignoreHwGamma;
-BSSINT r_gamma;
-BSSINT r_overbrightBits;
-unsigned char r_ignore[120];
+const dvar_t *r_rendererPreference;
+const dvar_t *r_displayRefresh;
+const dvar_t *r_mode;
+const dvar_t *r_monitor;
+const dvar_t *r_fullscreen;
+const dvar_t *r_sse_skinning;
+const dvar_t *sys_SSE;
+const dvar_t *developer;
+const dvar_t *vid_ypos;
+const dvar_t *vid_xpos;
+const dvar_t *r_testFillEnable;
+const dvar_t *r_testFill;
+const dvar_t *r_testTransform;
+const dvar_t *r_sun_from_dvars;
+const dvar_t *r_outdoorFeather;
+const dvar_t *r_outdoorDownBias;
+const dvar_t *r_outdoorAwayBias;
+const dvar_t *r_glowBloomDesaturation;
+const dvar_t *r_glowBloomCutoff;
+/* consumers const dvar_t *NAME[2]: x86-sized pointer-array blobs, too small on x64 */
+#if defined(COD2_X64) || defined(__x86_64__)
+const dvar_t *r_glowBloomIntensity[2];
+const dvar_t *r_glowSkyBleedIntensity[2];
+const dvar_t *r_glowRadius[2];
+#else
+const dvar_t *r_glowBloomIntensity[2];
+const dvar_t *r_glowSkyBleedIntensity[2];
+const dvar_t *r_glowRadius[2];
+#endif
+const dvar_t *r_glow;
+const dvar_t *r_distortion;
+const dvar_t *r_blur;
+const dvar_t *sc_offscreenCasterLodScale;
+const dvar_t *sc_offscreenCasterLodBias;
+const dvar_t *sc_length;
+const dvar_t *sc_shadowOutRate;
+const dvar_t *sc_shadowInRate;
+const dvar_t *sc_fadeRange;
+const dvar_t *sc_wantCountMargin;
+const dvar_t *sc_wantCount;
+const dvar_t *sc_showDebug;
+const dvar_t *sc_showOverlay;
+const dvar_t *sc_debugReceiverCount;
+const dvar_t *sc_debugCasterCount;
+const dvar_t *sc_count;
+const dvar_t *sc_blur;
+const dvar_t *sc_enable;
+const dvar_t *r_forceLod;
+const dvar_t *r_lowestLodDist;
+const dvar_t *r_lowLodDist;
+const dvar_t *r_mediumLodDist;
+const dvar_t *r_highLodDist;
+const dvar_t *r_showGroundLit;
+const dvar_t *r_showFloatZDebug;
+const dvar_t *r_showFbColorDebug;
+const dvar_t *r_showSModelNames;
+const dvar_t *r_showPortals;
+const dvar_t *r_portalMinClipArea;
+const dvar_t *r_portalWalkLimit;
+const dvar_t *r_singleCell;
+const dvar_t *r_portalBevelsOnly;
+const dvar_t *r_portalBevels;
+const dvar_t *r_portalFineCull;
+const dvar_t *r_pvsStats;
+const dvar_t *r_skipPvs;
+const dvar_t *r_lockPvs;
+const dvar_t *r_depthPrepassModels;
+const dvar_t *r_drawWater;
+const dvar_t *r_drawPrimFloor;
+const dvar_t *r_drawPrimCap;
+const dvar_t *r_dlightLimit;
+const dvar_t *r_drawXModels;
+const dvar_t *r_drawSModels;
+const dvar_t *r_drawBModels;
+const dvar_t *r_drawEntities;
+const dvar_t *r_drawDecals;
+const dvar_t *r_drawWorld;
+const dvar_t *r_drawSun;
+const dvar_t *r_clearColor2;
+const dvar_t *r_clearColor;
+const dvar_t *r_aaSamples;
+const dvar_t *r_aaAlpha;
+const dvar_t *r_swapInterval;
+const dvar_t *r_norefresh;
+const dvar_t *r_skipBackEnd;
+const dvar_t *r_logFile;
+const dvar_t *r_objectiveColorDx7Max;
+const dvar_t *r_objectiveColorDx7Min;
+const dvar_t *r_lightTweakSunDirection;
+const dvar_t *r_lightTweakSunDiffuseColor;
+const dvar_t *r_lightTweakSunColor;
+const dvar_t *r_lightTweakAmbientColor;
+const dvar_t *r_lightTweakSunLight;
+const dvar_t *r_lightTweakDiffuseFraction;
+const dvar_t *r_lightTweakAmbient;
+const dvar_t *r_showMissingLightGrid;
+const dvar_t *r_showLightGrid;
+const dvar_t *r_vc_showlog;
+const dvar_t *r_vc_makelog;
+const dvar_t *r_railCoreWidth;
+const dvar_t *r_xdebug;
+const dvar_t *r_showVertCounts;
+const dvar_t *r_showSurfCounts;
+const dvar_t *r_showTriCounts;
+const dvar_t *r_showTris;
+const dvar_t *r_cosinePowerMapShift;
+const dvar_t *r_specularColorScale;
+const dvar_t *r_specularMap;
+const dvar_t *r_normalMap;
+const dvar_t *r_colorMap;
+const dvar_t *r_lightMap;
+const dvar_t *r_picmip_spec;
+const dvar_t *r_picmip_bump;
+const dvar_t *r_picmip;
+const dvar_t *r_picmip_manual;
+const dvar_t *r_polygonOffsetBias;
+const dvar_t *r_polygonOffsetScale;
+const dvar_t *r_fog;
+const dvar_t *r_zfar;
+const dvar_t *r_znear_depthhack;
+const dvar_t *r_znear;
+const dvar_t *r_lodBias;
+const dvar_t *r_lodScale;
+const dvar_t *r_smc_enable;
+const dvar_t *r_skinCache;
+const dvar_t *r_multiGpu;
+const dvar_t *r_gpuSync;
+const dvar_t *r_optimizeXModels;
+const dvar_t *r_optimizeLightmaps;
+const dvar_t *r_optimize;
+const dvar_t *r_debugEntCounts;
+const dvar_t *r_debugShader;
+const dvar_t *r_fullbright;
+const dvar_t *r_anisotropy;
+const dvar_t *r_textureMode;
+const dvar_t *r_ignoreHwGamma;
+const dvar_t *r_gamma;
+const dvar_t *r_overbrightBits;
+const dvar_t *r_ignore;
 struct DxGlobals dx;
 unsigned char vidConfig[64];
 refimport_t ri;
 r_globals_t rg;
 r_global_permanent_t rgp;
-unsigned char g_disableRendering[16];
+int g_disableRendering;
 struct DxState dxState;   /* was unsigned char[8580] (x86 size); x64 sizeof is larger -> overflowed into g_disableRendering */
-unsigned char g_FenceID[124];
+GLuint g_FenceID;
 materialCommands_t tess;
 r_backEndGlobals_t backEnd;
-unsigned char backEndData[16];
-unsigned char sunFlareArray[228];
-unsigned char rgl[28];
-unsigned char s_world[640];
-unsigned char lightGlob[352];
-unsigned char delayedGroup[260];
-BSSINT r_sun_fx_position;
-BSSINT r_sunglare_fadeout;
-BSSINT r_sunglare_fadein;
-BSSINT r_sunglare_max_lighten;
-BSSINT r_sunglare_max_angle;
-BSSINT r_sunglare_min_angle;
-BSSINT r_sunblind_fadeout;
-BSSINT r_sunblind_fadein;
-BSSINT r_sunblind_max_darken;
-BSSINT r_sunblind_max_angle;
-BSSINT r_sunblind_min_angle;
-BSSINT r_sunflare_fadeout;
-BSSINT r_sunflare_fadein;
-BSSINT r_sunflare_max_alpha;
-BSSINT r_sunflare_max_angle;
-BSSINT r_sunflare_max_size;
-BSSINT r_sunflare_min_angle;
-BSSINT r_sunflare_min_size;
-BSSINT r_sunflare_shader;
-BSSINT r_sunsprite_size;
-unsigned char r_sunsprite_shader[44];
-BSSINT yytext;
+GfxBackEndData *backEndData;   /* pointer-blob retype */
+#if defined(COD2_X64) || defined(__x86_64__)
+SunFlareDynamic sunFlareArray[4];   /* x86 blob 228; x64 SunFlareDynamic=64 -> 4*64=256 > 228 overflow */
+#else
+SunFlareDynamic sunFlareArray[4];
+#endif
+#if defined(COD2_X64) || defined(__x86_64__)
+r_globals_load_t rgl;   /* x86 blob 28; x64 sizeof(r_globals_load_t)=48 -> overflow */
+#else
+struct r_globals_load_t rgl;
+#endif
+#if defined(COD2_X64) || defined(__x86_64__)
+GfxWorld s_world;   /* x86 blob 640; x64 sizeof(GfxWorld)=656 -> overflow */
+#else
+GfxWorld s_world;
+#endif
+#if defined(COD2_X64) || defined(__x86_64__)
+lightGlob_type lightGlob;   /* x86 blob 352; x64 sizeof(lightGlob_type)=520 -> overflow */
+#else
+struct lightGlob_type lightGlob;
+#endif
+GfxDrawGroupCommands delayedGroup[5];
+const dvar_t *r_sun_fx_position;
+const dvar_t *r_sunglare_fadeout;
+const dvar_t *r_sunglare_fadein;
+const dvar_t *r_sunglare_max_lighten;
+const dvar_t *r_sunglare_max_angle;
+const dvar_t *r_sunglare_min_angle;
+const dvar_t *r_sunblind_fadeout;
+const dvar_t *r_sunblind_fadein;
+const dvar_t *r_sunblind_max_darken;
+const dvar_t *r_sunblind_max_angle;
+const dvar_t *r_sunblind_min_angle;
+const dvar_t *r_sunflare_fadeout;
+const dvar_t *r_sunflare_fadein;
+const dvar_t *r_sunflare_max_alpha;
+const dvar_t *r_sunflare_max_angle;
+const dvar_t *r_sunflare_max_size;
+const dvar_t *r_sunflare_min_angle;
+const dvar_t *r_sunflare_min_size;
+const dvar_t *r_sunflare_shader;
+const dvar_t *r_sunsprite_size;
+const dvar_t *r_sunsprite_shader;
+char *yytext;
 BSSINT yyleng;
 BSSINT yynerrs;
-unsigned char yylval[8];
-unsigned char yychar[108];
-BSSINT ui_playerProfileAlreadyChosen;
-unsigned char com_playerProfile[124];
+#if defined(COD2_X64) || defined(__x86_64__)
+stype_t yylval;   /* x86 blob 8; x64 sizeof(stype_t)=16 -> overflow */
+#else
+stype_t yylval;
+#endif
+int yychar;
+const dvar_t *ui_playerProfileAlreadyChosen;
+const dvar_t *com_playerProfile;
 unsigned char __ZN10CVAOPacket14sGenericPacketE[688];
 unsigned char __ZN10CVAOPacket11sAllPacketsE[80];
 unsigned char __ZN12CStreamSound10sQTStreamsE[128];
@@ -855,346 +978,391 @@ unsigned char playerKeys[4416];
 #else
 unsigned char playerKeys[3392];
 #endif
-unsigned char g_consoleField[280];
+field_t g_consoleField;
 BSSINT historyLine;
 BSSINT nextHistoryLine;
-unsigned char historyEditLines[8992];
-BSSINT cg_weaponrightbone;
-BSSINT cg_weaponleftbone;
-BSSINT cg_blood;
-BSSINT cg_headIconMinScreenRadius;
-BSSINT cg_constantSizeHeadIcons;
-BSSINT cg_voiceIconSize;
-BSSINT cg_connectionIconSize;
-BSSINT cg_scriptIconSize;
-BSSINT cg_youInKillCamSize;
-BSSINT cg_shock_mouse_fadeTime;
-BSSINT cg_shock_mouse_sensitivityscale;
-BSSINT cg_shock_mouse_maxyawspeed;
-BSSINT cg_shock_mouse_maxpitchspeed;
-BSSINT cg_shock_mouse;
-BSSINT cg_shock_volume_shellshock;
-BSSINT cg_shock_volume_announcer;
-BSSINT cg_shock_volume_music;
-BSSINT cg_shock_volume_local;
-BSSINT cg_shock_volume_body;
-BSSINT cg_shock_volume_item;
-BSSINT cg_shock_volume_voice;
-BSSINT cg_shock_volume_weapon;
-BSSINT cg_shock_volume_menu;
-BSSINT cg_shock_volume_auto2d;
-BSSINT cg_shock_volume_auto;
-BSSINT cg_shock_soundModEndDelay;
-BSSINT cg_shock_soundWetLevel;
-BSSINT cg_shock_soundDryLevel;
-BSSINT cg_shock_soundRoomType;
-BSSINT cg_shock_soundLoopEndDelay;
-BSSINT cg_shock_soundLoopFadeTime;
-BSSINT cg_shock_soundFadeOutTime;
-BSSINT cg_shock_soundFadeInTime;
-BSSINT cg_shock_sound;
-BSSINT cg_shock_viewKickRadius;
-BSSINT cg_shock_viewKickFadeTime;
-BSSINT cg_shock_viewKickPeriod;
-BSSINT cg_shock_screenBlendFadeTime;
-BSSINT cg_shock_screenBlendTime;
-BSSINT cg_scoreboardItemHeight;
-BSSINT cg_scoreboardBannerHeight;
-BSSINT cg_scoreboardScrollStep;
-BSSINT cg_drawGameMessages;
-BSSINT cg_gameBoldMessageWidth;
-BSSINT cg_gameMessageWidth;
-BSSINT cg_subtitleCharHeight;
-BSSINT cg_subtitlePosY;
-BSSINT cg_subtitlePosX;
-BSSINT cg_subtitleWidthWidescreen;
-BSSINT cg_subtitleWidthStandard;
-BSSINT cg_subtitleMinTime;
-BSSINT cg_subtitles;
-BSSINT cg_minicon;
-BSSINT cg_developer;
-BSSINT cg_dumpAnims;
-BSSINT cg_descriptiveText;
-BSSINT cg_voiceSpriteTime;
-BSSINT cg_noTaunt;
-BSSINT cg_predictItems;
-BSSINT cg_paused;
-BSSINT cg_chatHeight;
-BSSINT cg_chatTime;
-BSSINT cg_synchronousClients;
-BSSINT cg_thirdPersonAngle;
-BSSINT cg_thirdPersonRange;
-BSSINT cg_thirdPerson;
-BSSINT cg_fovMin;
-BSSINT cg_fovScale;
-BSSINT cg_fov;
-BSSINT cg_tracerScaleDistRange;
-BSSINT cg_tracerScaleMinDist;
-BSSINT cg_tracerScale;
-BSSINT cg_tracerSpeed;
-BSSINT cg_tracerLength;
-BSSINT cg_tracerWidth;
-BSSINT cg_tracerChance;
-BSSINT cg_gun_move_minspeed;
-BSSINT cg_gun_move_rate;
-BSSINT cg_gun_ofs_u;
-BSSINT cg_gun_ofs_r;
-BSSINT cg_gun_ofs_f;
-BSSINT cg_gun_move_u;
-BSSINT cg_gun_move_r;
-BSSINT cg_gun_move_f;
-BSSINT cg_gun_z;
-BSSINT cg_gun_y;
-BSSINT cg_gun_x;
-BSSINT cg_hintFadeTime;
-BSSINT cg_cursorHints;
-BSSINT cg_drawGun;
+field_t historyEditLines[32];
+const dvar_t *cg_weaponrightbone;
+const dvar_t *cg_weaponleftbone;
+const dvar_t *cg_blood;
+const dvar_t *cg_headIconMinScreenRadius;
+const dvar_t *cg_constantSizeHeadIcons;
+const dvar_t *cg_voiceIconSize;
+const dvar_t *cg_connectionIconSize;
+const dvar_t *cg_scriptIconSize;
+const dvar_t *cg_youInKillCamSize;
+const dvar_t *cg_shock_mouse_fadeTime;
+const dvar_t *cg_shock_mouse_sensitivityscale;
+const dvar_t *cg_shock_mouse_maxyawspeed;
+const dvar_t *cg_shock_mouse_maxpitchspeed;
+const dvar_t *cg_shock_mouse;
+const dvar_t *cg_shock_volume_shellshock;
+const dvar_t *cg_shock_volume_announcer;
+const dvar_t *cg_shock_volume_music;
+const dvar_t *cg_shock_volume_local;
+const dvar_t *cg_shock_volume_body;
+const dvar_t *cg_shock_volume_item;
+const dvar_t *cg_shock_volume_voice;
+const dvar_t *cg_shock_volume_weapon;
+const dvar_t *cg_shock_volume_menu;
+const dvar_t *cg_shock_volume_auto2d;
+const dvar_t *cg_shock_volume_auto;
+const dvar_t *cg_shock_soundModEndDelay;
+const dvar_t *cg_shock_soundWetLevel;
+const dvar_t *cg_shock_soundDryLevel;
+const dvar_t *cg_shock_soundRoomType;
+const dvar_t *cg_shock_soundLoopEndDelay;
+const dvar_t *cg_shock_soundLoopFadeTime;
+const dvar_t *cg_shock_soundFadeOutTime;
+const dvar_t *cg_shock_soundFadeInTime;
+const dvar_t *cg_shock_sound;
+const dvar_t *cg_shock_viewKickRadius;
+const dvar_t *cg_shock_viewKickFadeTime;
+const dvar_t *cg_shock_viewKickPeriod;
+const dvar_t *cg_shock_screenBlendFadeTime;
+const dvar_t *cg_shock_screenBlendTime;
+const dvar_t *cg_scoreboardItemHeight;
+const dvar_t *cg_scoreboardBannerHeight;
+const dvar_t *cg_scoreboardScrollStep;
+const dvar_t *cg_drawGameMessages;
+const dvar_t *cg_gameBoldMessageWidth;
+const dvar_t *cg_gameMessageWidth;
+const dvar_t *cg_subtitleCharHeight;
+const dvar_t *cg_subtitlePosY;
+const dvar_t *cg_subtitlePosX;
+const dvar_t *cg_subtitleWidthWidescreen;
+const dvar_t *cg_subtitleWidthStandard;
+const dvar_t *cg_subtitleMinTime;
+const dvar_t *cg_subtitles;
+const dvar_t *cg_minicon;
+const dvar_t *cg_developer;
+const dvar_t *cg_dumpAnims;
+const dvar_t *cg_descriptiveText;
+const dvar_t *cg_voiceSpriteTime;
+const dvar_t *cg_noTaunt;
+const dvar_t *cg_predictItems;
+const dvar_t *cg_paused;
+const dvar_t *cg_chatHeight;
+const dvar_t *cg_chatTime;
+const dvar_t *cg_synchronousClients;
+const dvar_t *cg_thirdPersonAngle;
+const dvar_t *cg_thirdPersonRange;
+const dvar_t *cg_thirdPerson;
+const dvar_t *cg_fovMin;
+const dvar_t *cg_fovScale;
+const dvar_t *cg_fov;
+const dvar_t *cg_tracerScaleDistRange;
+const dvar_t *cg_tracerScaleMinDist;
+const dvar_t *cg_tracerScale;
+const dvar_t *cg_tracerSpeed;
+const dvar_t *cg_tracerLength;
+const dvar_t *cg_tracerWidth;
+const dvar_t *cg_tracerChance;
+const dvar_t *cg_gun_move_minspeed;
+const dvar_t *cg_gun_move_rate;
+const dvar_t *cg_gun_ofs_u;
+const dvar_t *cg_gun_ofs_r;
+const dvar_t *cg_gun_ofs_f;
+const dvar_t *cg_gun_move_u;
+const dvar_t *cg_gun_move_r;
+const dvar_t *cg_gun_move_f;
+const dvar_t *cg_gun_z;
+const dvar_t *cg_gun_y;
+const dvar_t *cg_gun_x;
+const dvar_t *cg_hintFadeTime;
+const dvar_t *cg_cursorHints;
+const dvar_t *cg_drawGun;
 BSSINT cg_viewsize;
-BSSINT cg_brass;
-BSSINT cg_marksLimit;
-BSSINT cg_marks;
-BSSINT cg_footsteps;
-BSSINT cg_showmiss;
-BSSINT cg_nopredict;
-BSSINT cg_errorDecay;
-BSSINT cg_debugEvents;
-BSSINT cg_debugPosition;
-BSSINT cg_drawMantleHint;
-BSSINT cg_drawBreathHint;
-BSSINT cg_drawHealth;
-BSSINT cg_teamChatsOnly;
-BSSINT cg_draw2D;
-BSSINT cg_crosshairEnemyColor;
-BSSINT cg_crosshairDynamic;
-BSSINT cg_crosshairAlphaMin;
-BSSINT cg_crosshairAlpha;
-BSSINT cg_weaponCycleDelay;
-BSSINT cg_drawLagometer;
-BSSINT cg_hudProneY;
-BSSINT cg_centerPrintY;
-BSSINT cg_hudSayPosition;
-BSSINT cg_hudChatPosition;
-BSSINT cg_hudGrenadePointerPulseMin;
-BSSINT cg_hudGrenadePointerPulseMax;
-BSSINT cg_hudGrenadePointerPulseFreq;
-BSSINT cg_hudGrenadePointerPivot;
-BSSINT cg_hudGrenadePointerWidth;
-BSSINT cg_hudGrenadePointerHeight;
-BSSINT cg_hudGrenadeIconWidth;
-BSSINT cg_hudGrenadeIconHeight;
-BSSINT cg_hudGrenadeIconOffset;
-BSSINT cg_hudGrenadeIconMaxHeight;
-BSSINT cg_hudGrenadeIconMaxRange;
-BSSINT cg_hudGrenadeIconInScope;
-BSSINT cg_hudDamageIconInScope;
-BSSINT cg_hudDamageIconTime;
-BSSINT cg_hudDamageIconOffset;
-BSSINT cg_hudDamageIconHeight;
-BSSINT cg_hudDamageIconWidth;
-BSSINT cg_hudStanceHintPrints;
-BSSINT cg_hudStanceFlash;
-BSSINT cg_hudObjectiveMinAlpha;
-BSSINT cg_hudObjectiveMaxRange;
-BSSINT cg_hudObjectiveMinHeight;
-BSSINT cg_hudCompassSoundPingFadeTime;
-BSSINT cg_hudCompassSpringyPointers;
-BSSINT cg_hudCompassMinRadius;
-BSSINT cg_hudCompassMinRange;
-BSSINT cg_hudCompassMaxRange;
-BSSINT cg_hudCompassSize;
-BSSINT cg_drawCrosshairNamesPosY;
-BSSINT cg_drawCrosshairNamesPosX;
-BSSINT cg_drawCrosshairNames;
-BSSINT cg_drawTurretCrosshair;
-BSSINT cg_drawCrosshair;
-BSSINT cg_drawSnapshot;
-BSSINT cg_drawScriptUsage;
-BSSINT cg_drawSoundOverlay;
-BSSINT cg_drawMaterial;
-BSSINT cg_drawFPS;
-unsigned char cg_centertime[32];
-unsigned char cgDC[640];
+const dvar_t *cg_brass;
+const dvar_t *cg_marksLimit;
+const dvar_t *cg_marks;
+const dvar_t *cg_footsteps;
+const dvar_t *cg_showmiss;
+const dvar_t *cg_nopredict;
+const dvar_t *cg_errorDecay;
+const dvar_t *cg_debugEvents;
+const dvar_t *cg_debugPosition;
+const dvar_t *cg_drawMantleHint;
+const dvar_t *cg_drawBreathHint;
+const dvar_t *cg_drawHealth;
+const dvar_t *cg_teamChatsOnly;
+const dvar_t *cg_draw2D;
+const dvar_t *cg_crosshairEnemyColor;
+const dvar_t *cg_crosshairDynamic;
+const dvar_t *cg_crosshairAlphaMin;
+const dvar_t *cg_crosshairAlpha;
+const dvar_t *cg_weaponCycleDelay;
+const dvar_t *cg_drawLagometer;
+const dvar_t *cg_hudProneY;
+const dvar_t *cg_centerPrintY;
+const dvar_t *cg_hudSayPosition;
+const dvar_t *cg_hudChatPosition;
+const dvar_t *cg_hudGrenadePointerPulseMin;
+const dvar_t *cg_hudGrenadePointerPulseMax;
+const dvar_t *cg_hudGrenadePointerPulseFreq;
+const dvar_t *cg_hudGrenadePointerPivot;
+const dvar_t *cg_hudGrenadePointerWidth;
+const dvar_t *cg_hudGrenadePointerHeight;
+const dvar_t *cg_hudGrenadeIconWidth;
+const dvar_t *cg_hudGrenadeIconHeight;
+const dvar_t *cg_hudGrenadeIconOffset;
+const dvar_t *cg_hudGrenadeIconMaxHeight;
+const dvar_t *cg_hudGrenadeIconMaxRange;
+const dvar_t *cg_hudGrenadeIconInScope;
+const dvar_t *cg_hudDamageIconInScope;
+const dvar_t *cg_hudDamageIconTime;
+const dvar_t *cg_hudDamageIconOffset;
+const dvar_t *cg_hudDamageIconHeight;
+const dvar_t *cg_hudDamageIconWidth;
+const dvar_t *cg_hudStanceHintPrints;
+const dvar_t *cg_hudStanceFlash;
+const dvar_t *cg_hudObjectiveMinAlpha;
+const dvar_t *cg_hudObjectiveMaxRange;
+const dvar_t *cg_hudObjectiveMinHeight;
+const dvar_t *cg_hudCompassSoundPingFadeTime;
+const dvar_t *cg_hudCompassSpringyPointers;
+const dvar_t *cg_hudCompassMinRadius;
+const dvar_t *cg_hudCompassMinRange;
+const dvar_t *cg_hudCompassMaxRange;
+const dvar_t *cg_hudCompassSize;
+const dvar_t *cg_drawCrosshairNamesPosY;
+const dvar_t *cg_drawCrosshairNamesPosX;
+const dvar_t *cg_drawCrosshairNames;
+const dvar_t *cg_drawTurretCrosshair;
+const dvar_t *cg_drawCrosshair;
+const dvar_t *cg_drawSnapshot;
+const dvar_t *cg_drawScriptUsage;
+const dvar_t *cg_drawSoundOverlay;
+const dvar_t *cg_drawMaterial;
+const dvar_t *cg_drawFPS;
+const dvar_t *cg_centertime;
+#if defined(COD2_X64)
+/* x86 sizeof(displayContextDef_t)=640; on x64 the Menus[128]/menuStack[16] pointer
+   arrays grow so the struct is ~1216 -> the byte blob put menuCount/Menus at the
+   wrong offsets (garbage menuCount). Retype so the compiler sizes it for x64. */
+displayContextDef_t cgDC;
+#else
+displayContextDef_t cgDC;
+#endif
 BSSINT old_com_frameTime;
-unsigned char frame_msec[28];
+unsigned int frame_msec;
 unsigned char re_0121c6a0[352];
+#if COD2_IS_PATCH_13
+ping_t cl_pinglist[16];
+#else
 unsigned char cl_pinglist[16704];
-unsigned char g_waitingForServer[32];
+#endif
+Bool g_waitingForServer;
+#if defined(COD2_X64) || defined(__x86_64__)
+clientStatic_t cls;   /* x86 blob 2755264; x64 sizeof(clientStatic_t)=2756928 -> overflow */
+#elif COD2_IS_PATCH_13
+unsigned char cls[0x2c8a18];
+#else
 unsigned char cls[2755264];
+#endif
 
 unsigned char clientConnections[sizeof(clientConnection_t)];
 
+#if defined(COD2_X64) || defined(__x86_64__)
+clientActive_t clients[1];   /* x86 blob 1662356; x64 sizeof(clientActive_t)=1662368 -> overflow */
+#else
 unsigned char clients[1662356];
-BSSINT cl_voice;
+#endif
+const dvar_t *cl_voice;
 BSSINT name_01683858;
-BSSINT nextdemo;
-BSSINT cl_ingame;
-BSSINT fx_profile;
-BSSINT fx_visMinTraceDist;
-BSSINT fx_count;
-BSSINT fx_freeze;
-BSSINT fx_debugBolt;
-BSSINT fx_debug;
-BSSINT fx_sort;
-BSSINT fx_cull;
-BSSINT fx_draw;
-BSSINT fx_enable;
-BSSINT cl_serverStatusResendTime;
-unsigned char cl_inGameVideo[8];
-BSSINT cl_allowDownload;
-BSSINT cl_motdString;
-BSSINT cl_activeAction;
-BSSINT m_filter;
-BSSINT m_side;
-BSSINT m_forward;
-BSSINT m_yaw;
-BSSINT m_pitch;
-BSSINT cl_showMouseRate;
-BSSINT cl_mouseAccel;
-BSSINT cl_sensitivity;
-BSSINT cl_freelook;
-BSSINT cl_forceavidemo;
-BSSINT cl_avidemo;
-BSSINT cl_showServerCommands;
-BSSINT cl_showSend;
-BSSINT cl_shownuments;
-BSSINT cl_freezeDemo;
-BSSINT cl_showTimeDelta;
-BSSINT cl_packetdup;
-BSSINT cl_maxpackets;
-BSSINT cl_connectTimeout;
-BSSINT cl_timeout;
-BSSINT cl_noprint;
-unsigned char cl_nodelta[8];
-unsigned char gameInitialized[128];
-BSSINT ui_playerProfileNameNew;
-BSSINT ui_playerProfileSelected;
-BSSINT ui_playerProfileCount;
-BSSINT ui_serverStatusTimeOut;
-BSSINT ui_currentMap;
-BSSINT ui_browserKillcam;
-BSSINT ui_browserFriendlyfire;
-BSSINT ui_browserMod;
-BSSINT ui_browserShowDedicated;
-BSSINT ui_browserShowPure;
-BSSINT ui_browserShowNoPassword;
-BSSINT ui_browserShowPassword;
-BSSINT ui_browserShowEmpty;
-BSSINT ui_browserShowFull;
-BSSINT ui_currentNetMap;
-BSSINT ui_dedicated;
-BSSINT ui_joinGameType;
-BSSINT ui_netGameTypeName;
-BSSINT ui_netGameType;
-unsigned char ui_netSource[8];
-BSSINT ui_extraBigFont;
-BSSINT ui_bigFont;
-BSSINT ui_smallFont;
-unsigned char ui_gametype[32];
+const dvar_t *nextdemo;
+const dvar_t *cl_ingame;
+const dvar_t *fx_profile;
+const dvar_t *fx_visMinTraceDist;
+const dvar_t *fx_count;
+const dvar_t *fx_freeze;
+const dvar_t *fx_debugBolt;
+const dvar_t *fx_debug;
+const dvar_t *fx_sort;
+const dvar_t *fx_cull;
+const dvar_t *fx_draw;
+const dvar_t *fx_enable;
+const dvar_t *cl_serverStatusResendTime;
+const dvar_t *cl_inGameVideo;
+const dvar_t *cl_allowDownload;
+const dvar_t *cl_motdString;
+const dvar_t *cl_activeAction;
+const dvar_t *m_filter;
+const dvar_t *m_side;
+const dvar_t *m_forward;
+const dvar_t *m_yaw;
+const dvar_t *m_pitch;
+const dvar_t *cl_showMouseRate;
+const dvar_t *cl_mouseAccel;
+const dvar_t *cl_sensitivity;
+const dvar_t *cl_freelook;
+const dvar_t *cl_forceavidemo;
+const dvar_t *cl_avidemo;
+const dvar_t *cl_showServerCommands;
+const dvar_t *cl_showSend;
+const dvar_t *cl_shownuments;
+const dvar_t *cl_freezeDemo;
+const dvar_t *cl_showTimeDelta;
+const dvar_t *cl_packetdup;
+const dvar_t *cl_maxpackets;
+const dvar_t *cl_connectTimeout;
+const dvar_t *cl_timeout;
+const dvar_t *cl_noprint;
+const dvar_t *cl_nodelta;
+qboolean gameInitialized;
+const dvar_t *ui_playerProfileNameNew;
+const dvar_t *ui_playerProfileSelected;
+const dvar_t *ui_playerProfileCount;
+const dvar_t *ui_serverStatusTimeOut;
+const dvar_t *ui_currentMap;
+const dvar_t *ui_browserKillcam;
+const dvar_t *ui_browserFriendlyfire;
+const dvar_t *ui_browserMod;
+const dvar_t *ui_browserShowDedicated;
+const dvar_t *ui_browserShowPure;
+const dvar_t *ui_browserShowNoPassword;
+const dvar_t *ui_browserShowPassword;
+const dvar_t *ui_browserShowEmpty;
+const dvar_t *ui_browserShowFull;
+const dvar_t *ui_currentNetMap;
+const dvar_t *ui_dedicated;
+const dvar_t *ui_joinGameType;
+const dvar_t *ui_netGameTypeName;
+const dvar_t *ui_netGameType;
+const dvar_t *ui_netSource;
+const dvar_t *ui_extraBigFont;
+const dvar_t *ui_bigFont;
+const dvar_t *ui_smallFont;
+const dvar_t *ui_gametype;
+#if defined(COD2_X64) || defined(__x86_64__)
+uiInfo_t uiInfoArray[1];   /* x86 blob 4288; x64 sizeof(uiInfo_t)=5112 -> overflow */
+#else
 unsigned char uiInfoArray[4288];
-unsigned char sharedUiInfo[115392];
-BSSINT net_lanauthorize;
-BSSINT net_showprofile;
-BSSINT net_profile;
-BSSINT packetDebug;
-BSSINT showdrop;
-unsigned char showpackets[108];
-BSSINT sv_allowedClan2;
-BSSINT sv_allowedClan1;
-BSSINT sv_referencedIwdNames;
-BSSINT sv_referencedIwds;
-BSSINT sv_iwdNames;
-BSSINT sv_iwds;
-BSSINT sv_voiceQuality;
-BSSINT sv_voice;
+#endif
+#if defined(COD2_X64) || defined(__x86_64__)
+sharedUiInfo_t sharedUiInfo;   /* x86 blob 115392; x64 sizeof(sharedUiInfo_t)=123184 -> overflow */
+#else
+sharedUiInfo_t sharedUiInfo;
+#endif
+const dvar_t *net_lanauthorize;
+const dvar_t *net_showprofile;
+const dvar_t *net_profile;
+const dvar_t *packetDebug;
+const dvar_t *showdrop;
+const dvar_t *showpackets;
+const dvar_t *sv_allowedClan2;
+const dvar_t *sv_allowedClan1;
+const dvar_t *sv_referencedIwdNames;
+const dvar_t *sv_referencedIwds;
+const dvar_t *sv_iwdNames;
+const dvar_t *sv_iwds;
+const dvar_t *sv_voiceQuality;
+const dvar_t *sv_voice;
 BSSINT sv_disableClientConsole;
-BSSINT sv_kickBanTime;
-BSSINT sv_mapRotationCurrent;
-BSSINT sv_mapRotation;
-BSSINT sv_showAverageBPS;
-BSSINT sv_packet_info;
-BSSINT sv_showCommands;
-BSSINT sv_allowAnonymous;
-BSSINT sv_cheats;
-BSSINT sv_floodProtect;
-BSSINT sv_pure;
-BSSINT sv_debugReliableCmds;
-BSSINT sv_debugRate;
-BSSINT sv_gametype;
-BSSINT sv_maxPing;
-BSSINT sv_minPing;
-BSSINT sv_maxRate;
-BSSINT sv_serverid;
-BSSINT sv_mapname;
-BSSINT sv_padPackets;
-BSSINT sv_reconnectlimit;
-BSSINT sv_hostname;
-BSSINT sv_privateClients;
+const dvar_t *sv_kickBanTime;
+const dvar_t *sv_mapRotationCurrent;
+const dvar_t *sv_mapRotation;
+const dvar_t *sv_showAverageBPS;
+const dvar_t *sv_packet_info;
+const dvar_t *sv_showCommands;
+const dvar_t *sv_allowAnonymous;
+const dvar_t *sv_cheats;
+const dvar_t *sv_floodProtect;
+const dvar_t *sv_pure;
+const dvar_t *sv_debugReliableCmds;
+const dvar_t *sv_debugRate;
+const dvar_t *sv_gametype;
+const dvar_t *sv_maxPing;
+const dvar_t *sv_minPing;
+const dvar_t *sv_maxRate;
+const dvar_t *sv_serverid;
+const dvar_t *sv_mapname;
+const dvar_t *sv_padPackets;
+const dvar_t *sv_reconnectlimit;
+const dvar_t *sv_hostname;
+const dvar_t *sv_privateClients;
 BSSINT sv_maxclients;
-BSSINT sv_allowDownload;
-BSSINT sv_privatePassword;
-BSSINT rcon_password;
-BSSINT sv_zombietime;
-BSSINT sv_timeout;
-unsigned char sv_fps[108];
+const dvar_t *sv_allowDownload;
+const dvar_t *sv_privatePassword;
+const dvar_t *rcon_password;
+const dvar_t *sv_zombietime;
+const dvar_t *sv_timeout;
+const dvar_t *sv_fps;
 #if defined(__x86_64__) || defined(_M_X64)
 
+server_t sv;
+serverStatic_t svs;
+#elif COD2_IS_PATCH_13
 server_t sv;
 serverStatic_t svs;
 #else
 unsigned char sv[390528];
 unsigned char svs[41216];
 #endif
-BSSINT con_restricted;
-BSSINT con_miniconlines;
-BSSINT con_minicontime;
-BSSINT con_boldgamemessagetime;
-unsigned char con_gamemessagetime[16];
+const dvar_t *con_restricted;
+const dvar_t *con_miniconlines;
+const dvar_t *con_minicontime;
+const dvar_t *con_boldgamemessagetime;
+const dvar_t *con_gamemessagetime;
+#if COD2_IS_PATCH_13
+unsigned char cl_serverStatusList[0x20280];
+#else
 unsigned char cl_serverStatusList[131680];
-unsigned char scr_initialized[128];
-unsigned char markVerts[69632];
-unsigned char cg_markPolys[663552];
-unsigned char cg_freeMarkPolys[128];
+#endif
+qboolean scr_initialized;
+MarkVertAssemblyBuffer markVerts;
+MarkPoly cg_markPolys[1024];
+MarkPoly *cg_freeMarkPolys;
 unsigned char buf_017dd900[128];
-BSSINT cl_bypassMouseInput;
-BSSINT cl_talking;
-BSSINT cl_anglespeedkey;
-BSSINT cl_pitchspeed;
-unsigned char cl_yawspeed[16];
-BSSINT cl_stanceHoldTime;
-unsigned char cl_analog_attack_threshold[92];
-BSSINT hud_deathQuoteFadeTime;
-BSSINT hud_health_pulserate_critical;
-BSSINT hud_health_pulserate_injured;
-BSSINT hud_health_startpulse_critical;
-BSSINT hud_health_startpulse_injured;
-BSSINT hud_fade_offhand;
-BSSINT hud_fade_stance;
-BSSINT hud_fade_compass;
-BSSINT hud_fade_healthbar;
-unsigned char hud_fade_ammodisplay[92];
-unsigned char g_scr_data[14080];
-unsigned char itemParseKeywordHash[2048];
-BSSINT g_dumpAnims;
-BSSINT g_voteAbstainWeight;
-BSSINT g_oldVoting;
-BSSINT g_antilag;
-BSSINT player_meleeHeight;
-BSSINT player_meleeWidth;
-BSSINT player_meleeRange;
-BSSINT g_friendlyNameDist;
-BSSINT g_friendlyfireDist;
-BSSINT g_debugLocDamage;
-BSSINT g_NoScriptSpam;
-BSSINT g_TeamColor_Axis;
-BSSINT g_TeamColor_Allies;
-BSSINT g_TeamName_Axis;
-BSSINT g_TeamName_Allies;
-BSSINT g_ScoresBanner_Spectators;
-BSSINT g_ScoresBanner_None;
-BSSINT g_ScoresBanner_Axis;
-BSSINT g_ScoresBanner_Allies;
-unsigned char g_smoothClients[8];
-int g_banIPs = 0;
+const dvar_t *cl_bypassMouseInput;
+const dvar_t *cl_talking;
+const dvar_t *cl_anglespeedkey;
+const dvar_t *cl_pitchspeed;
+const dvar_t *cl_yawspeed;
+const dvar_t *cl_stanceHoldTime;
+const dvar_t *cl_analog_attack_threshold;
+const dvar_t *hud_deathQuoteFadeTime;
+const dvar_t *hud_health_pulserate_critical;
+const dvar_t *hud_health_pulserate_injured;
+const dvar_t *hud_health_startpulse_critical;
+const dvar_t *hud_health_startpulse_injured;
+const dvar_t *hud_fade_offhand;
+const dvar_t *hud_fade_stance;
+const dvar_t *hud_fade_compass;
+const dvar_t *hud_fade_healthbar;
+const dvar_t *hud_fade_ammodisplay;
+#if defined(COD2_X64) || defined(__x86_64__)
+scr_data_t g_scr_data;   /* x86 blob 14080; x64 sizeof(scr_data_t)=14328 -> overflow */
+#else
+scr_data_t g_scr_data;
+#endif
+/* consumer keywordHash_t *itemParseKeywordHash[512]: x86-sized pointer-array blob, too small on x64 */
+#if defined(COD2_X64) || defined(__x86_64__)
+keywordHash_t *itemParseKeywordHash[512];
+#else
+keywordHash_t *itemParseKeywordHash[512];
+#endif
+const dvar_t *g_dumpAnims;
+const dvar_t *g_voteAbstainWeight;
+const dvar_t *g_oldVoting;
+const dvar_t *g_antilag;
+const dvar_t *player_meleeHeight;
+const dvar_t *player_meleeWidth;
+const dvar_t *player_meleeRange;
+const dvar_t *g_friendlyNameDist;
+const dvar_t *g_friendlyfireDist;
+const dvar_t *g_debugLocDamage;
+const dvar_t *g_NoScriptSpam;
+const dvar_t *g_TeamColor_Axis;
+const dvar_t *g_TeamColor_Allies;
+const dvar_t *g_TeamName_Axis;
+const dvar_t *g_TeamName_Allies;
+const dvar_t *g_ScoresBanner_Spectators;
+const dvar_t *g_ScoresBanner_None;
+const dvar_t *g_ScoresBanner_Axis;
+const dvar_t *g_ScoresBanner_Allies;
+const dvar_t *g_smoothClients;
+const dvar_t *g_banIPs;
 #ifdef __EMSCRIPTEN__
 
 extern int g_banIPs_dvar __attribute__((alias("g_banIPs")));
@@ -1205,37 +1373,37 @@ COD2_ALT("g_banIPs_dvar", "g_banIPs")
 #else
 __asm__(".globl g_banIPs_dvar\n.set g_banIPs_dvar, g_banIPs\n");
 #endif
-BSSINT g_listEntity;
-unsigned char g_deadChat[8];
-BSSINT g_allowVote;
-BSSINT g_logSync;
-BSSINT g_log;
-BSSINT g_voiceChatTalkingDuration;
-BSSINT voice_deadChat;
-BSSINT voice_global;
-BSSINT voice_localEcho;
-BSSINT g_mantleBlockTimeBuffer;
-BSSINT g_clonePlayerMaxVelocity;
-BSSINT g_dropUpSpeedRand;
-BSSINT g_dropUpSpeedBase;
-BSSINT g_dropForwardSpeed;
-BSSINT g_playerCollisionEjectSpeed;
-BSSINT g_synchronousClients;
-BSSINT g_motd;
-BSSINT g_maxDroppedWeapons;
-BSSINT g_weaponAmmoPools;
-BSSINT g_debugBullets;
-BSSINT g_debugDamage;
-BSSINT g_inactivity;
-BSSINT g_useholdspawndelay;
-BSSINT g_useholdtime;
-BSSINT g_knockback;
-BSSINT g_cheats;
-BSSINT g_gravity;
-BSSINT g_speed;
-BSSINT g_dedicated;
-BSSINT g_maxclients;
-BSSINT g_password;
+const dvar_t *g_listEntity;
+const dvar_t *g_deadChat;
+const dvar_t *g_allowVote;
+const dvar_t *g_logSync;
+const dvar_t *g_log;
+const dvar_t *g_voiceChatTalkingDuration;
+const dvar_t *voice_deadChat;
+const dvar_t *voice_global;
+const dvar_t *voice_localEcho;
+const dvar_t *g_mantleBlockTimeBuffer;
+const dvar_t *g_clonePlayerMaxVelocity;
+const dvar_t *g_dropUpSpeedRand;
+const dvar_t *g_dropUpSpeedBase;
+const dvar_t *g_dropForwardSpeed;
+const dvar_t *g_playerCollisionEjectSpeed;
+const dvar_t *g_synchronousClients;
+const dvar_t *g_motd;
+const dvar_t *g_maxDroppedWeapons;
+const dvar_t *g_weaponAmmoPools;
+const dvar_t *g_debugBullets;
+const dvar_t *g_debugDamage;
+const dvar_t *g_inactivity;
+const dvar_t *g_useholdspawndelay;
+const dvar_t *g_useholdtime;
+const dvar_t *g_knockback;
+const dvar_t *g_cheats;
+const dvar_t *g_gravity;
+const dvar_t *g_speed;
+const dvar_t *g_dedicated;
+const dvar_t *g_maxclients;
+const dvar_t *g_password;
 unsigned char g_gametype_017e1a58[40];
 /* 573440 = 1024 * 560 (x86 sizeof(gentity_s)). On x64 the struct is larger, so the blob must grow
    to hold all 1024 entity slots (indices up to 0x3FF incl. the world entity 1022) -- otherwise high
@@ -1245,32 +1413,57 @@ struct gentity_s g_entities[1024];
 #else
 unsigned char g_entities[573440];
 #endif
-unsigned char level_bgs[813568];
-unsigned char level[13952];
-unsigned char itemRegistered[1024];
-unsigned char g_hudelems[143392];
+/* 817664 = x86 sizeof(bgs_t). On x64 bgs_t is larger (embedded animScriptData and
+   clientinfo[] hold pointers that grow 4->8), so as a fixed x86-sized blob its high
+   fields (AllocXAnim @ +1062856, clientinfo[]) overflow into the adjacent BSS global:
+   G_FreeEntity's memset of an entity slot was landing on level_bgs.AllocXAnim, NULLing
+   it and crashing anim-tree precache on any map with a misc_model (e.g. mp_carentan).
+   Retype so the compiler sizes it for the arch. BSS, so binary-compatible on x86. */
+#if defined(COD2_X64) || defined(__x86_64__)
+struct bgs_t level_bgs;
+#else
+bgs_t level_bgs;
+#endif
+/* 13952 = the original 32-bit symbol size (MSVC x86 sizeof(level_locals_t)=13860
+   fits with tail slack). On x64 sizeof(level_locals_t)=14544 -- 592 bytes larger
+   as its pointer/pointer-array fields grow (clients/gentities/firstFreeEnt/
+   lastFreeEnt, droppedWeaponCue[32], openScriptIOFileBuffers[1], plus embedded
+   SpawnVar.spawnVars[64][2]). As a fixed x86-sized blob, G_InitGame's
+   `memset(&level,0,sizeof(level))` and the per-trigger writes into
+   level.currentTriggerList[256] overflow the blob's 592-byte tail into the
+   adjacent BSS symbol (level_bgs in the current link) -- a latent corruption of
+   the same class as the level_bgs->g_entities bug. (This is NOT the mp_breakout/
+   mp_rhine weapon-precache crash; that is scrVmPub->bg_weaponDefs above.) Retype so
+   the compiler sizes it for the arch. BSS, so binary-compatible on x86. */
+#if defined(COD2_X64) || defined(__x86_64__)
+struct level_locals_t level;
+#else
+struct level_locals_t level;
+#endif
+qboolean itemRegistered[256];
+game_hudelem_t g_hudelems[1024];
 unsigned char __ZN12UI_Component1gE[224];
-unsigned char g_fHitLocDamageMult[128];
-unsigned char scr_const[256];
-unsigned char lagometer[1664];
-unsigned char cl_connectedToPureServer[128];
+float g_fHitLocDamageMult[19];
+scr_const_t scr_const;
+struct lagometer_t lagometer;
+int cl_connectedToPureServer;
 BSSINT removeMeWhenMPStopsCrashingInHere;
-unsigned char ejectBrassCasingOrigin[124];
-BSSINT cg_freeLocalEntities;
+vec3_t ejectBrassCasingOrigin;
+localEntity_t *cg_freeLocalEntities;
 unsigned char cg_eachClientFreeLocalEntities[28];
-unsigned char cg_eachClientActiveLocalEntities[224];
-unsigned char levelSamples[24];
-unsigned char voice_current_voicelevel[8];
-unsigned char old_rec_source[256];
+localEntity_t cg_eachClientActiveLocalEntities[1];
+float levelSamples[6];
+float voice_current_voicelevel;
+char old_rec_source[256];
 BSSINT mic_current_reclevel;
 BSSINT mic_old_reclevel;
-unsigned char winvoice_mic_scaler[8];
-BSSINT winvoice_save_voice;
-BSSINT winvoice_mic_reclevel;
-unsigned char winvoice_mic_mute[72];
-unsigned char partial_audio_buffer[1280];
-unsigned char enc_buffer[4096];
-unsigned char g_decode_frame_size[128];
+const dvar_t *winvoice_mic_scaler;
+const dvar_t *winvoice_save_voice;
+const dvar_t *winvoice_mic_reclevel;
+const dvar_t *winvoice_mic_mute;
+short int partial_audio_buffer[640];
+char enc_buffer[4096];
+int g_decode_frame_size;
 unsigned char current_audioCallback[128];
 BSSINT catch_exception_raise;
 BSSINT catch_exception_raise_state;

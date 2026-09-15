@@ -367,7 +367,7 @@ void UI_MapLoadInfo(const char *filename)
         tokenLen = strlen(token);
         if (tokenLen + 1 > 255) {
             Com_EndParseSession();
-            Com_Error(1, (const char *)"key '%s' is %i > %i characters long", key, tokenLen, 255);
+            Com_Error( (errorParm_t)(1), (const char *)"key '%s' is %i > %i characters long", key, tokenLen, 255);
         }
 
         memcpy(key, token, tokenLen + 1);
@@ -375,7 +375,7 @@ void UI_MapLoadInfo(const char *filename)
         value = Com_ParseOnLine(&parse);
         if (!value[0]) {
             Com_EndParseSession();
-            Com_Error(1, (const char *)"key '%s' missing value in '%s'\n", key, filename);
+            Com_Error( (errorParm_t)(1), (const char *)"key '%s' missing value in '%s'\n", key, filename);
         }
 
         material = (MaterialHandle)CL_RegisterMaterialNoMip(value, 3);
@@ -493,7 +493,7 @@ void __attribute_regparm__(2) Item_ValidateTypeData(itemDef_t *item, int handle)
 
     switch (item->type) {
     case 6:
-        item->typeData.listBox = UI_Alloc(sizeof(listBoxDef_t), 4);
+        item->typeData.listBox = (listBoxDef_t *)(UI_Alloc(sizeof(listBoxDef_t), 4));
         return;
 
     case 4:
@@ -505,7 +505,7 @@ void __attribute_regparm__(2) Item_ValidateTypeData(itemDef_t *item, int handle)
     case 0xa:
     case 0:
     case 0x11:
-        item->typeData.editField = UI_Alloc(sizeof(editFieldDef_t), 4);
+        item->typeData.editField = (editFieldDef_t *)(UI_Alloc(sizeof(editFieldDef_t), 4));
         if (item->type != 4 && item->type != 0x10 && item->type != 9 &&
             item->type != 0x12 && item->type != 0x11) {
             return;
@@ -518,7 +518,7 @@ void __attribute_regparm__(2) Item_ValidateTypeData(itemDef_t *item, int handle)
         return;
 
     case 0xc:
-        item->typeData.multi = UI_Alloc(sizeof(multiDef_t), 4);
+        item->typeData.multi = (multiDef_t *)(UI_Alloc(sizeof(multiDef_t), 4));
         return;
     }
 }
@@ -811,7 +811,7 @@ qboolean MenuParse_execKey(const char (*item)[4], int handle)
         handler = (ItemKeyHandler *)UI_Alloc(sizeof(ItemKeyHandler), 4);
         handler->key = keyindex;
         handler->action = action;
-        handler->next = (int)menu->onKey;
+        handler->next = (intptr_t)menu->onKey;
         menu->onKey = handler;
         return 1;
     }
@@ -834,7 +834,7 @@ qboolean ItemParse_execKey(const char (*item)[4], int handle)
         handler = (ItemKeyHandler *)UI_Alloc(sizeof(ItemKeyHandler), 4);
         handler->key = keyindex;
         handler->action = action;
-        handler->next = (int)itemDef->onKey;
+        handler->next = (intptr_t)itemDef->onKey;
         itemDef->onKey = handler;
         return 1;
     }
@@ -1510,7 +1510,7 @@ qboolean MenuParse_execKeyInt(const char (*item)[4], int handle)
     handler = (ItemKeyHandler *)UI_Alloc(sizeof(ItemKeyHandler), 4);
     handler->key = keyname;
     handler->action = action;
-    handler->next = (int)menu->onKey;
+    handler->next = (intptr_t)menu->onKey;
     menu->onKey = handler;
     return 1;
 }
@@ -1722,7 +1722,7 @@ qboolean ItemParse_execKeyInt(const char (*item)[4], int handle)
     handler = (ItemKeyHandler *)UI_Alloc(sizeof(ItemKeyHandler), 4);
     handler->key = keyname;
     handler->action = action;
-    handler->next = (int)itemDef->onKey;
+    handler->next = (intptr_t)itemDef->onKey;
     itemDef->onKey = handler;
     return 1;
 }
@@ -1937,107 +1937,107 @@ MenuList *UI_LoadMenu(const char *menuFile, int imageTrack)
 }
 
 keywordHash_t itemParseKeywords[67] = {
-    { (char *)&str_002194b4, &ItemParse_name, 0x0 },
-    { (char *)&str_002ace30, &ItemParse_text, 0x0 },
-    { (char *)&str_002b3cb8, &ItemParse_textfile, 0x0 },
-    { (char *)&str_002b3cc4, &ItemParse_textsavegame, 0x0 },
-    { (char *)&str_002b3cd4, &ItemParse_group, 0x0 },
-    { (char *)&str_002b3cdc, &ItemParse_rect, 0x0 },
-    { (char *)&str_0021a570, &ItemParse_origin, 0x0 },
-    { (char *)&str_002b3ce4, &ItemParse_style, 0x0 },
-    { (char *)&str_002b3cec, &ItemParse_decoration, 0x0 },
-    { (char *)&str_002b3cf8, &ItemParse_notselectable, 0x0 },
-    { (char *)&str_002b3d08, &ItemParse_noScrollBars, 0x0 },
-    { (char *)&str_002b3d18, &ItemParse_wrapped, 0x0 },
-    { (char *)&str_002b3d20, &ItemParse_autowrapped, 0x0 },
-    { (char *)&str_002b3d2c, &ItemParse_horizontalscroll, 0x0 },
-    { (char *)&str_0021eb5c, &ItemParse_type, 0x0 },
-    { (char *)&str_002b3d40, &ItemParse_elementwidth, 0x0 },
-    { (char *)&str_002b3d50, &ItemParse_elementheight, 0x0 },
-    { (char *)&str_002b3d60, &ItemParse_feeder, 0x0 },
-    { (char *)&str_002b3d68, &ItemParse_elementtype, 0x0 },
-    { (char *)&str_002b3d74, &ItemParse_columns, 0x0 },
-    { (char *)&str_002b3d7c, &ItemParse_border, 0x0 },
-    { (char *)&str_002b3d84, &ItemParse_bordersize, 0x0 },
-    { (char *)&str_002b3d90, &ItemParse_visible, 0x0 },
-    { (char *)&str_002b3d98, &ItemParse_ownerdraw, 0x0 },
-    { (char *)&str_002b3da4, &ItemParse_align, 0x0 },
-    { (char *)&str_002b3dac, &ItemParse_textalign, 0x0 },
-    { (char *)&str_002b3db8, &ItemParse_textalignx, 0x0 },
-    { (char *)&str_002b3dc4, &ItemParse_textaligny, 0x0 },
-    { (char *)&str_002b3dd0, &ItemParse_textscale, 0x0 },
-    { (char *)&str_002b3ddc, &ItemParse_textstyle, 0x0 },
-    { (char *)&str_002b3de8, &ItemParse_textfont, 0x0 },
-    { (char *)&str_002ac220, &ItemParse_backcolor, 0x0 },
-    { (char *)&str_002ac22c, &ItemParse_forecolor, 0x0 },
-    { (char *)&str_002ac238, &ItemParse_bordercolor, 0x0 },
-    { (char *)&str_002b3df4, &ItemParse_outlinecolor, 0x0 },
-    { (char *)&str_002b3e04, &ItemParse_background, 0x0 },
-    { (char *)&str_002b3e10, &ItemParse_onFocus, 0x0 },
-    { (char *)&str_002b3e18, &ItemParse_leaveFocus, 0x0 },
-    { (char *)&str_002b3e24, &ItemParse_mouseEnter, 0x0 },
-    { (char *)&str_002b3e30, &ItemParse_mouseExit, 0x0 },
-    { (char *)&str_002b3e3c, &ItemParse_mouseEnterText, 0x0 },
-    { (char *)&str_002b3e4c, &ItemParse_mouseExitText, 0x0 },
-    { (char *)&str_002b3e5c, &ItemParse_action, 0x0 },
-    { (char *)&str_002ae014, &ItemParse_accept, 0x0 },
-    { (char *)&str_002b3e64, &ItemParse_special, 0x0 },
-    { (char *)&str_002b3e6c, &ItemParse_dvar, 0x0 },
-    { (char *)&str_002b3e74, &ItemParse_maxChars, 0x0 },
-    { (char *)&str_002b3e80, &Item_Parse_maxCharsGotoNext, 0x0 },
-    { (char *)&str_002b3e94, &ItemParse_maxPaintChars, 0x0 },
-    { (char *)&str_002b3ea4, &ItemParse_focusSound, 0x0 },
-    { (char *)&str_002b3eb0, &ItemParse_dvarFloat, 0x0 },
-    { (char *)&str_002b3ebc, &ItemParse_dvarStrList, 0x0 },
-    { (char *)&str_002b3ec8, &ItemParse_dvarFloatList, 0x0 },
-    { (char *)&str_002b3ed8, &ItemParse_dvarEnumList, 0x0 },
-    { (char *)&str_002b3ee8, &ItemParse_ownerdrawFlag, 0x0 },
-    { (char *)&str_002b3ef8, &ItemParse_enableDvar, 0x0 },
-    { (char *)&str_002b3f04, &ItemParse_dvarTest, 0x0 },
-    { (char *)&str_002b3f10, &ItemParse_disableDvar, 0x0 },
-    { (char *)&str_002b3f1c, &ItemParse_showDvar, 0x0 },
-    { (char *)&str_002b3f28, &ItemParse_hideDvar, 0x0 },
-    { (char *)&str_002b3f34, &ItemParse_focusDvar, 0x0 },
-    { (char *)&str_002a90a4, &ItemParse_cinematic, 0x0 },
-    { (char *)&str_002b3f40, &ItemParse_doubleClick, 0x0 },
-    { (char *)&str_002b3f4c, &ItemParse_execKey, 0x0 },
-    { (char *)&str_002b3f54, &ItemParse_execKeyInt, 0x0 },
+    { (char *)&str_002194b4, (qboolean(*)())&ItemParse_name, 0x0 },
+    { (char *)&str_002ace30, (qboolean(*)())&ItemParse_text, 0x0 },
+    { (char *)&str_002b3cb8, (qboolean(*)())&ItemParse_textfile, 0x0 },
+    { (char *)&str_002b3cc4, (qboolean(*)())&ItemParse_textsavegame, 0x0 },
+    { (char *)&str_002b3cd4, (qboolean(*)())&ItemParse_group, 0x0 },
+    { (char *)&str_002b3cdc, (qboolean(*)())&ItemParse_rect, 0x0 },
+    { (char *)&str_0021a570, (qboolean(*)())&ItemParse_origin, 0x0 },
+    { (char *)&str_002b3ce4, (qboolean(*)())&ItemParse_style, 0x0 },
+    { (char *)&str_002b3cec, (qboolean(*)())&ItemParse_decoration, 0x0 },
+    { (char *)&str_002b3cf8, (qboolean(*)())&ItemParse_notselectable, 0x0 },
+    { (char *)&str_002b3d08, (qboolean(*)())&ItemParse_noScrollBars, 0x0 },
+    { (char *)&str_002b3d18, (qboolean(*)())&ItemParse_wrapped, 0x0 },
+    { (char *)&str_002b3d20, (qboolean(*)())&ItemParse_autowrapped, 0x0 },
+    { (char *)&str_002b3d2c, (qboolean(*)())&ItemParse_horizontalscroll, 0x0 },
+    { (char *)&str_0021eb5c, (qboolean(*)())&ItemParse_type, 0x0 },
+    { (char *)&str_002b3d40, (qboolean(*)())&ItemParse_elementwidth, 0x0 },
+    { (char *)&str_002b3d50, (qboolean(*)())&ItemParse_elementheight, 0x0 },
+    { (char *)&str_002b3d60, (qboolean(*)())&ItemParse_feeder, 0x0 },
+    { (char *)&str_002b3d68, (qboolean(*)())&ItemParse_elementtype, 0x0 },
+    { (char *)&str_002b3d74, (qboolean(*)())&ItemParse_columns, 0x0 },
+    { (char *)&str_002b3d7c, (qboolean(*)())&ItemParse_border, 0x0 },
+    { (char *)&str_002b3d84, (qboolean(*)())&ItemParse_bordersize, 0x0 },
+    { (char *)&str_002b3d90, (qboolean(*)())&ItemParse_visible, 0x0 },
+    { (char *)&str_002b3d98, (qboolean(*)())&ItemParse_ownerdraw, 0x0 },
+    { (char *)&str_002b3da4, (qboolean(*)())&ItemParse_align, 0x0 },
+    { (char *)&str_002b3dac, (qboolean(*)())&ItemParse_textalign, 0x0 },
+    { (char *)&str_002b3db8, (qboolean(*)())&ItemParse_textalignx, 0x0 },
+    { (char *)&str_002b3dc4, (qboolean(*)())&ItemParse_textaligny, 0x0 },
+    { (char *)&str_002b3dd0, (qboolean(*)())&ItemParse_textscale, 0x0 },
+    { (char *)&str_002b3ddc, (qboolean(*)())&ItemParse_textstyle, 0x0 },
+    { (char *)&str_002b3de8, (qboolean(*)())&ItemParse_textfont, 0x0 },
+    { (char *)&str_002ac220, (qboolean(*)())&ItemParse_backcolor, 0x0 },
+    { (char *)&str_002ac22c, (qboolean(*)())&ItemParse_forecolor, 0x0 },
+    { (char *)&str_002ac238, (qboolean(*)())&ItemParse_bordercolor, 0x0 },
+    { (char *)&str_002b3df4, (qboolean(*)())&ItemParse_outlinecolor, 0x0 },
+    { (char *)&str_002b3e04, (qboolean(*)())&ItemParse_background, 0x0 },
+    { (char *)&str_002b3e10, (qboolean(*)())&ItemParse_onFocus, 0x0 },
+    { (char *)&str_002b3e18, (qboolean(*)())&ItemParse_leaveFocus, 0x0 },
+    { (char *)&str_002b3e24, (qboolean(*)())&ItemParse_mouseEnter, 0x0 },
+    { (char *)&str_002b3e30, (qboolean(*)())&ItemParse_mouseExit, 0x0 },
+    { (char *)&str_002b3e3c, (qboolean(*)())&ItemParse_mouseEnterText, 0x0 },
+    { (char *)&str_002b3e4c, (qboolean(*)())&ItemParse_mouseExitText, 0x0 },
+    { (char *)&str_002b3e5c, (qboolean(*)())&ItemParse_action, 0x0 },
+    { (char *)&str_002ae014, (qboolean(*)())&ItemParse_accept, 0x0 },
+    { (char *)&str_002b3e64, (qboolean(*)())&ItemParse_special, 0x0 },
+    { (char *)&str_002b3e6c, (qboolean(*)())&ItemParse_dvar, 0x0 },
+    { (char *)&str_002b3e74, (qboolean(*)())&ItemParse_maxChars, 0x0 },
+    { (char *)&str_002b3e80, (qboolean(*)())&Item_Parse_maxCharsGotoNext, 0x0 },
+    { (char *)&str_002b3e94, (qboolean(*)())&ItemParse_maxPaintChars, 0x0 },
+    { (char *)&str_002b3ea4, (qboolean(*)())&ItemParse_focusSound, 0x0 },
+    { (char *)&str_002b3eb0, (qboolean(*)())&ItemParse_dvarFloat, 0x0 },
+    { (char *)&str_002b3ebc, (qboolean(*)())&ItemParse_dvarStrList, 0x0 },
+    { (char *)&str_002b3ec8, (qboolean(*)())&ItemParse_dvarFloatList, 0x0 },
+    { (char *)&str_002b3ed8, (qboolean(*)())&ItemParse_dvarEnumList, 0x0 },
+    { (char *)&str_002b3ee8, (qboolean(*)())&ItemParse_ownerdrawFlag, 0x0 },
+    { (char *)&str_002b3ef8, (qboolean(*)())&ItemParse_enableDvar, 0x0 },
+    { (char *)&str_002b3f04, (qboolean(*)())&ItemParse_dvarTest, 0x0 },
+    { (char *)&str_002b3f10, (qboolean(*)())&ItemParse_disableDvar, 0x0 },
+    { (char *)&str_002b3f1c, (qboolean(*)())&ItemParse_showDvar, 0x0 },
+    { (char *)&str_002b3f28, (qboolean(*)())&ItemParse_hideDvar, 0x0 },
+    { (char *)&str_002b3f34, (qboolean(*)())&ItemParse_focusDvar, 0x0 },
+    { (char *)&str_002a90a4, (qboolean(*)())&ItemParse_cinematic, 0x0 },
+    { (char *)&str_002b3f40, (qboolean(*)())&ItemParse_doubleClick, 0x0 },
+    { (char *)&str_002b3f4c, (qboolean(*)())&ItemParse_execKey, 0x0 },
+    { (char *)&str_002b3f54, (qboolean(*)())&ItemParse_execKeyInt, 0x0 },
     { 0, 0, 0x0 },
     { 0 }
 };
 keywordHash_t menuParseKeywords[35] = {
-    { (char *)&str_002194b4, &MenuParse_name, 0x0 },
-    { (char *)&str_002b3f60, &MenuParse_fullscreen, 0x0 },
-    { (char *)&str_002b3cdc, &MenuParse_rect, 0x0 },
-    { (char *)&str_002b3ce4, &MenuParse_style, 0x0 },
-    { (char *)&str_002b3d90, &MenuParse_visible, 0x0 },
-    { (char *)&str_002b3f6c, &MenuParse_onOpen, 0x0 },
-    { (char *)&str_002b3f74, &MenuParse_onClose, 0x0 },
-    { (char *)&str_002b3f7c, &MenuParse_onESC, 0x0 },
-    { (char *)&str_002b3d7c, &MenuParse_border, 0x0 },
-    { (char *)&str_002b3f84, &MenuParse_borderSize, 0x0 },
-    { (char *)&str_002ac220, &MenuParse_backcolor, 0x0 },
-    { (char *)&str_002ac22c, &MenuParse_forecolor, 0x0 },
-    { (char *)&str_002ac238, &MenuParse_bordercolor, 0x0 },
-    { (char *)&str_002b3f90, &MenuParse_focuscolor, 0x0 },
-    { (char *)&str_002b3f9c, &MenuParse_disablecolor, 0x0 },
-    { (char *)&str_002b3df4, &MenuParse_outlinecolor, 0x0 },
-    { (char *)&str_002b3e04, &MenuParse_background, 0x0 },
-    { (char *)&str_002b3d98, &MenuParse_ownerdraw, 0x0 },
-    { (char *)&str_002b3ee8, &MenuParse_ownerdrawFlag, 0x0 },
-    { (char *)&str_002b3fac, &MenuParse_outOfBounds, 0x0 },
-    { (char *)&str_002b3fc0, &MenuParse_soundLoop, 0x0 },
-    { (char *)&str_002b3fcc, &MenuParse_itemDef, 0x0 },
-    { (char *)&str_002a90a4, &MenuParse_cinematic, 0x0 },
-    { (char *)&str_002b3fd4, &MenuParse_popup, 0x0 },
-    { (char *)&str_002b3fdc, &MenuParse_fadeClamp, 0x0 },
-    { (char *)&str_002b3fe8, &MenuParse_fadeCycle, 0x0 },
-    { (char *)&str_002b3ff4, &MenuParse_fadeAmount, 0x0 },
-    { (char *)&str_002b4000, &MenuParse_fadeInAmount, 0x0 },
-    { (char *)&str_002b3f4c, &MenuParse_execKey, 0x0 },
-    { (char *)&str_002b3f54, &MenuParse_execKeyInt, 0x0 },
-    { (char *)&str_002b4010, &MenuParse_blurWorld, 0x0 },
-    { (char *)&str_002b401c, &MenuParse_legacySplitScreenScale, 0x0 },
+    { (char *)&str_002194b4, (qboolean(*)())&MenuParse_name, 0x0 },
+    { (char *)&str_002b3f60, (qboolean(*)())&MenuParse_fullscreen, 0x0 },
+    { (char *)&str_002b3cdc, (qboolean(*)())&MenuParse_rect, 0x0 },
+    { (char *)&str_002b3ce4, (qboolean(*)())&MenuParse_style, 0x0 },
+    { (char *)&str_002b3d90, (qboolean(*)())&MenuParse_visible, 0x0 },
+    { (char *)&str_002b3f6c, (qboolean(*)())&MenuParse_onOpen, 0x0 },
+    { (char *)&str_002b3f74, (qboolean(*)())&MenuParse_onClose, 0x0 },
+    { (char *)&str_002b3f7c, (qboolean(*)())&MenuParse_onESC, 0x0 },
+    { (char *)&str_002b3d7c, (qboolean(*)())&MenuParse_border, 0x0 },
+    { (char *)&str_002b3f84, (qboolean(*)())&MenuParse_borderSize, 0x0 },
+    { (char *)&str_002ac220, (qboolean(*)())&MenuParse_backcolor, 0x0 },
+    { (char *)&str_002ac22c, (qboolean(*)())&MenuParse_forecolor, 0x0 },
+    { (char *)&str_002ac238, (qboolean(*)())&MenuParse_bordercolor, 0x0 },
+    { (char *)&str_002b3f90, (qboolean(*)())&MenuParse_focuscolor, 0x0 },
+    { (char *)&str_002b3f9c, (qboolean(*)())&MenuParse_disablecolor, 0x0 },
+    { (char *)&str_002b3df4, (qboolean(*)())&MenuParse_outlinecolor, 0x0 },
+    { (char *)&str_002b3e04, (qboolean(*)())&MenuParse_background, 0x0 },
+    { (char *)&str_002b3d98, (qboolean(*)())&MenuParse_ownerdraw, 0x0 },
+    { (char *)&str_002b3ee8, (qboolean(*)())&MenuParse_ownerdrawFlag, 0x0 },
+    { (char *)&str_002b3fac, (qboolean(*)())&MenuParse_outOfBounds, 0x0 },
+    { (char *)&str_002b3fc0, (qboolean(*)())&MenuParse_soundLoop, 0x0 },
+    { (char *)&str_002b3fcc, (qboolean(*)())&MenuParse_itemDef, 0x0 },
+    { (char *)&str_002a90a4, (qboolean(*)())&MenuParse_cinematic, 0x0 },
+    { (char *)&str_002b3fd4, (qboolean(*)())&MenuParse_popup, 0x0 },
+    { (char *)&str_002b3fdc, (qboolean(*)())&MenuParse_fadeClamp, 0x0 },
+    { (char *)&str_002b3fe8, (qboolean(*)())&MenuParse_fadeCycle, 0x0 },
+    { (char *)&str_002b3ff4, (qboolean(*)())&MenuParse_fadeAmount, 0x0 },
+    { (char *)&str_002b4000, (qboolean(*)())&MenuParse_fadeInAmount, 0x0 },
+    { (char *)&str_002b3f4c, (qboolean(*)())&MenuParse_execKey, 0x0 },
+    { (char *)&str_002b3f54, (qboolean(*)())&MenuParse_execKeyInt, 0x0 },
+    { (char *)&str_002b4010, (qboolean(*)())&MenuParse_blurWorld, 0x0 },
+    { (char *)&str_002b401c, (qboolean(*)())&MenuParse_legacySplitScreenScale, 0x0 },
     { 0, 0, 0x0 },
     { 0, 0, 0x0 },
     { 0 }

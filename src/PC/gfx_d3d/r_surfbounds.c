@@ -2,7 +2,7 @@
 #include "imports.h"
 extern GfxScene scene;
 
-extern void GetRotatedBounds(const vec_t *surfBounds, const vec_t *entityOrigin, const vec_t *entityAxis, vec_t *out);
+extern void GetRotatedBounds(vec3_t *baseBounds, const vec_t *origin, vec3_t *axis, vec3_t *rotatedBounds);
 
 /* R_BoundsForDrawSurfTable: migrated from the ILP32 data blob to typed C. The
  * blob laid the 4 live fn-pointers at byte offset 12 (NULL entries [0..2],[7]
@@ -32,7 +32,7 @@ const vec_t *R_BoundsForSurf_Triangles(const GfxDrawSurf *drawSurf, int entIndex
         return (const vec_t *)tri->bounds;
 
     GfxEntity *entity = &scene.def.entities[entIndex];
-    GetRotatedBounds((const vec_t *)tri->bounds, entity->origin, (const vec_t *)entity->axis, (vec_t *)surfBoundsGlob);
+    GetRotatedBounds( (vec3_t (*))((const vec_t *)tri->bounds), entity->origin, (vec3_t (*))((const vec_t *)entity->axis), (vec3_t (*))((vec_t *)surfBoundsGlob));
     return (const vec_t *)surfBoundsGlob;
 }
 
@@ -51,7 +51,8 @@ const vec_t *R_BoundsForSurf_StaticModelCached(const GfxDrawSurf *drawSurf, int 
 const vec_t *R_BoundsForDrawSurf(const GfxDrawSurf *surf)
 {
     int surfType = *surf->surface;
-    const vec_t *(*boundsFunc)() = R_BoundsForDrawSurfTable[surfType];
+    const vec_t *(*boundsFunc)(const GfxDrawSurf *, int) =
+        (const vec_t *(*)(const GfxDrawSurf *, int))R_BoundsForDrawSurfTable[surfType];
     int entIndex;
     int sortVal;
 

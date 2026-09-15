@@ -6,6 +6,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+extern cg_t cgArray[1];
+/* see cg_local.h: `cg` is a const pointer to the real object, so `cg->field` folds
+ * into a single absolute access. */
+static cg_t * const cg = &cgArray[0];
+extern LegacyHacks *legacyHacks;
+
+/* dvar globals */
+extern const dvar_t *cl_voice;
+extern const dvar_t *com_playerProfile;
+extern const dvar_t *sv_voice;
 
 extern serverStatusDvar_t serverStatusDvars[23];
 
@@ -114,9 +124,7 @@ static char info_00ecf960[1024];
 static char clientBuff[32];
 extern int lastColumn;
 static int lastTime;
-static char info_00ecf960[1024];
-static char info_00ecf960[1024];
-static char info_00ecf960[1024];
+/* 3 duplicate `static char info_00ecf960[1024];` removed (same name -> C++ C2086; only one is referenceable) */
 static int numFound;
 static int numTimeOuts;
 extern char dlText[16];
@@ -133,12 +141,12 @@ static const serverFilter_t serverFilters[1];
 static char menuBuf2[32768];
 static int ui_serverFilterType;
 
-extern void Menus_CloseAll(uiInfo_t *info);
-extern qboolean Menus_AnyFullScreenVisible(uiInfo_t *info);
+extern void Menus_CloseAll(displayContextDef_t *dc);
+extern qboolean Menus_AnyFullScreenVisible(displayContextDef_t *dc);
 extern void LAN_SaveServersToCache(void);
-extern qboolean Menus_OpenByName(uiInfo_t *info, const char *name);
-extern void Menus_CloseByName(uiInfo_t *info, const char *name);
-extern const char *Cmd_Args(int startIndex);
+extern qboolean Menus_OpenByName(displayContextDef_t *dc, const char *name);
+extern void Menus_CloseByName(displayContextDef_t *dc, const char *p);
+extern char *Cmd_Args(int startIndex);
 
 static void UI_DrawCenteredText(const char *text, FontHandle font, float scale, float y, const vec_t *color, int style);
 extern Bool IsTalking(void);
@@ -155,9 +163,9 @@ extern void CalcScreenPlacement(float *x, float *y, float *xScale, float *yScale
 extern void CalcSplitScreenTextOffset(FontHandle font, float *y);
 extern void CL_DrawTextPhysical(const char *text, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style);
 extern void CL_DrawTextPhysicalWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor);
-extern void GetClientState(void *cstate);
+extern void GetClientState(uiClientState_t *cstate);
 extern const char *CL_GetConfigString(int index);
-extern const char *Info_ValueForKey(const char *s, const char *key);
+extern char *Info_ValueForKey(const char *s, const char *key);
 extern int GetClientname(int index, char *name, int nameSize);
 extern void I_strncpyz(char *dest, const char *src, int len);
 extern char *I_CleanStr(char *str);
@@ -169,13 +177,13 @@ extern int FS_Read(void *buf, int len, int f);
 extern void FS_FCloseFile(fileHandle_t f);
 extern void Com_Printf(const char *fmt, ...);
 extern MenuList *UI_LoadMenu(const char *name, int imageTrack);
-extern void UI_AddMenuList(uiInfo_t *info, MenuList *menuList);
+extern void UI_AddMenuList(displayContextDef_t *dc, MenuList *menuList);
 extern void UI_MapLoadInfo(const char *csv);
 extern void UI_FillRect(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color);
-extern void *Menus_FindByName(uiInfo_t *info, const char *name);
-extern void Menu_Paint(uiInfo_t *info, void *menu, int full);
-extern void Dvar_SetInt(const void *dvar, int value);
-extern void Dvar_SetString(const void *dvar, const char *value);
+extern menuDef_t *Menus_FindByName(displayContextDef_t *dc, const char *name);
+extern void Menu_Paint(displayContextDef_t *dc, menuDef_t *menu, qboolean full);
+extern void Dvar_SetInt(const dvar_t *dvar, int value);
+extern void Dvar_SetString(const dvar_t *dvar, const char *value);
 extern void Dvar_SetIntByName(const char *name, int value);
 extern void Dvar_SetBoolByName(const char *name, int value);
 extern void Dvar_SetStringByName(const char *name, const char *value);
@@ -186,12 +194,12 @@ extern const char *Dvar_GetString(const char *name);
 extern const char *Dvar_GetVariantString(const char *name);
 extern void Dvar_SetFloatByName(const char *name, float value);
 extern const dvar_t *Dvar_SetFromStringByNameFromSource(const char *name, const char *value, int source);
-extern const void *Dvar_FindVar(const char *name);
+extern const dvar_t *Dvar_FindVar(const char *name);
 extern int SEH_VerifyLanguageSelection(int lang);
 extern const char *SEH_StringEd_GetString(const char *ref);
 extern void Com_Error(int level, const char *fmt, ...);
-extern int String_Parse(const char **args, char *buf, int bufSize);
-extern int LAN_GetServerStatus(const char *addr, char *info, int infoSize);
+extern qboolean String_Parse(const char **p, char *out, int len);
+extern int LAN_GetServerStatus(char *serverAddress, char *serverStatus, int maxLen);
 extern int LAN_AddServer(int source, const char *name, const char *addr);
 extern void LAN_GetServerInfo(int source, int index, char *info, int infoSize);
 extern int LAN_GetServerCount(int source);
@@ -202,25 +210,25 @@ extern int LAN_ServerIsDirty(int source, int index);
 extern int LAN_GetServerPing(int source, int index);
 extern void LAN_MarkServerDirty(int source, int index, int dirty);
 extern int LAN_UpdateDirtyPings(int source);
-extern int LAN_GetServerAddressString(int source, int index, char *addr, int addrSize);
-extern int LAN_RemoveServer(int source, const char *addr);
+extern void LAN_GetServerAddressString(int source, int index, char *addr, int addrSize);
+extern void LAN_RemoveServer(int source, const char *addr);
 extern int LAN_LoadCachedServers(void);
-extern int CIN_StopCinematic(int handle);
+extern e_status CIN_StopCinematic(int handle);
 extern int CIN_PlayCinematic(const char *name, int x, int y, int w, int h, int flags);
-extern int CIN_RunCinematic(int handle);
+extern e_status CIN_RunCinematic(int handle);
 extern void CIN_SetExtents(int handle, int x, int y, int w, int h);
 extern void CIN_DrawCinematic(int handle);
 extern void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle material);
 extern void Key_SetCatcher(int catcher);
 extern int Key_GetCatcher(void);
 extern void Key_ClearStates(void);
-extern int Menu_Count(uiInfo_t *info);
-extern void *Menu_GetFocused(uiInfo_t *info);
-extern void Menu_HandleKey(uiInfo_t *info, void *menu, int key, int down);
-extern void Menu_PaintAll(uiInfo_t *info);
-extern void Menu_SetFeederSelection(uiInfo_t *info, menuDef_t *menu, int feeder, int index, const char *name);
-extern void Menu_Setup(uiInfo_t *info);
-extern qboolean Display_MouseMove(uiInfo_t *info, void *capture, int x, int y);
+extern int Menu_Count(displayContextDef_t *dc);
+extern menuDef_t *Menu_GetFocused(displayContextDef_t *dc);
+extern void Menu_HandleKey(displayContextDef_t *dc, menuDef_t *menu, int key, qboolean down);
+extern void Menu_PaintAll(displayContextDef_t *dc);
+extern void Menu_SetFeederSelection(displayContextDef_t *dc, menuDef_t *menu, int feeder, int index, const char *name);
+extern void Menu_Setup(displayContextDef_t *dc);
+extern qboolean Display_MouseMove(displayContextDef_t *dc, void *capture, int x, int y);
 extern int Display_KeyBindPending(void);
 extern void SND_FadeAllSounds(float gain, int time);
 extern int Sys_Milliseconds(void);
@@ -231,8 +239,8 @@ extern const char *Com_Parse(const char **buf);
 extern const char *String_Alloc(const char *s);
 extern void String_Init(void);
 extern void CL_GetScreenDimensions(int *w, int *h, int *aspect);
-extern const void *Dvar_RegisterInt(const char *name, int value, int min, int max, int flags);
-extern const void *Dvar_RegisterFloat(const char *name, float value, float min, float max, int flags);
+extern const dvar_t *Dvar_RegisterInt(const char *name, int value, int min, int max, unsigned short flags);
+extern const dvar_t *Dvar_RegisterFloat(const char *name, float value, float min, float max, unsigned short flags);
 extern const void *Dvar_RegisterBool_mac(const char *name, int value, int flags);
 extern const void *Dvar_RegisterString_mac(const char *name, const char *value, int flags);
 extern void UI_LoadArenas(void);
@@ -241,30 +249,30 @@ extern void UI_LoadSoundAliases(void);
 extern void Controls_SetDefaults(void);
 extern void Controls_GetConfig(void);
 extern void Controls_SetConfig(int apply);
-extern void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, int font, float scale, vec_t *color, int material, int textStyle);
+extern void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, FontHandle font, float scale, vec_t *color, MaterialHandle material, int textStyle);
 extern const char *CG_GameTypeString(void);
 extern const char *CG_GetKillerText(void);
 extern const char *SEH_LocalizeTextMessage(const char *msg, const char *fmt, const char *ctx);
-extern void LerpColor(const vec_t *a, const vec_t *b, vec_t *c, float t);
-extern void Item_SetCursorPos(void *item, int pos);
-extern int Item_ListBox_MaxScroll(void *item);
-extern void ListBox_SetStartPos(void *listPtr, int pos);
-extern void ListBox_SetEndPos(void *listPtr, int pos);
-extern void ListBox_SetCursorPos(void *listPtr, int pos);
-extern int CL_IsPlayerTalking(int index);
-extern int CL_IsPlayerMuted(int index);
-extern int CL_MutePlayer(int index);
+extern void LerpColor(vec_t *a, vec_t *b, vec_t *c, float t);
+extern void Item_SetCursorPos(itemDef_t *item, int pos);
+extern int Item_ListBox_MaxScroll(itemDef_t *item);
+extern void ListBox_SetStartPos(listBoxDef_t *listPtr, int pos);
+extern void ListBox_SetEndPos(listBoxDef_t *listPtr, int pos);
+extern void ListBox_SetCursorPos(listBoxDef_t *listPtr, int pos);
+extern Bool CL_IsPlayerTalking(int clientIndex);
+extern Bool CL_IsPlayerMuted(int clientIndex);
+extern void CL_MutePlayer(int clientIndex);
 extern int Int_Parse(const char **args, int *out);
 extern void CLUI_GetCDKey(char *buf, int bufSize, char *checksum, int checksumSize);
 extern void CLUI_SetCDKey(char *key, char *checksum);
 extern int CL_CDKeyValidate(const char *key1, const char *key2);
 extern void CG_DrawInformation(int loading);
 extern char **FS_ListFiles(const char *path, const char *ext, int flags, int *numFiles, int allocTrackType);
-extern void FS_FreeFileList(char **list, int allocTrackType);
+extern void FS_FreeFileList(const char **list, int allocTrackType);
 extern char *I_strupr(char *str);
 extern void Com_ChangePlayerProfile(const char *profileName);
-extern int Com_DeletePlayerProfile(const char *profileName);
-extern int Com_NewPlayerProfile(const char *name);
+extern unsigned char Com_DeletePlayerProfile(const char *profileName);
+extern unsigned char Com_NewPlayerProfile(const char *name);
 
 extern void Cbuf_ExecuteText(int execWhen, const char *text);
 extern int Com_sprintf(char *buf, int size, const char *fmt, ...);
@@ -441,7 +449,7 @@ void UI_UpdateTime(int realtime)
 
 void UI_Shutdown(void)
 {
-    Menus_CloseAll(uiInfo);
+    Menus_CloseAll(&uiInfo->uiDC);
     sharedUiInfo.assets.whiteMaterial = 0;
     LAN_SaveServersToCache();
 }
@@ -481,7 +489,7 @@ qboolean Load_ScriptMenu(const char *pszMenu, int imageTrack)
     if (!menuList)
         return 0;
 
-    UI_AddMenuList(uiInfo, menuList);
+    UI_AddMenuList(&uiInfo->uiDC, menuList);
     return 1;
 }
 
@@ -490,7 +498,7 @@ static void UI_DrawMapPreview(const rectDef_t *rect, const vec_t *color, int net
 {
     int map;
     int mapCount;
-    int material;
+    MaterialHandle material;
 
     if (net) {
         map = (ui_currentNetMap)->current.integer;
@@ -509,7 +517,7 @@ static void UI_DrawMapPreview(const rectDef_t *rect, const vec_t *color, int net
         map = 0;
     }
 
-    material = *(int *)((char *)&sharedUiInfo + 5104 + map * 164);
+    material = sharedUiInfo.mapList[map].levelShot;
 
     if (!material) {
         material = CL_RegisterMaterialNoMip("menu/art/unknownmap", 3);
@@ -566,7 +574,7 @@ void UI_BuildPlayerList(void)
     int count;
     int n;
 
-    GetClientState(cs);
+    GetClientState((uiClientState_t *)cs);
     count = atoi(Info_ValueForKey(CL_GetConfigString(0), "sv_maxclients"));
     memset(sharedUiInfo.playerClientNums, -1, 0x100);
     sharedUiInfo.playerCount = 0;
@@ -591,10 +599,10 @@ void UI_BuildPlayerList(void)
 void UI_DrawMapLevelshot(void)
 {
     if (g_mapname[0]) {
-        void *menu = Menus_FindByName(uiInfo, "connect");
+        menuDef_t *menu = Menus_FindByName(&uiInfo->uiDC, "connect");
         if (menu) {
             uiInfo->uiDC.blurRadiusOut = 0;
-            Menu_Paint(uiInfo, menu, 1);
+            Menu_Paint(&uiInfo->uiDC, menu, 1);
             return;
         }
     }
@@ -613,7 +621,7 @@ void UI_LoadIngameMenus(void)
     g_ingameMenusLoaded = 1;
 
     menuList = UI_LoadMenus("ui_mp/ingame.txt", 3);
-    UI_AddMenuList(uiInfo, menuList);
+    UI_AddMenuList(&uiInfo->uiDC, menuList);
 }
 #endif
 
@@ -689,7 +697,7 @@ static void UI_SelectCurrentMap(void)
     int i;
     int visibleIndex;
 
-    GetClientState(cstate);
+    GetClientState((uiClientState_t *)cstate);
     if (*(int *)cstate != 8)
         return;
 
@@ -711,7 +719,7 @@ static void UI_SelectCurrentMap(void)
             continue;
 
         if (I_stricmp(szMap, *(const char **)(entry + 0x1354)) == 0) {
-            Menu_SetFeederSelection(uiInfo, 0, 4, visibleIndex, "createserver_maps");
+            Menu_SetFeederSelection(&uiInfo->uiDC, 0, 4, visibleIndex, "createserver_maps");
             return;
         }
 
@@ -723,11 +731,11 @@ static void UI_SelectCurrentMap(void)
 qboolean UI_CheckExecKey(int key)
 {
     menuDef_t *menu;
-    int *node;
+    ItemKeyHandler *khNode;
 
-    menu = (menuDef_t *)Menu_GetFocused(uiInfo);
+    menu = Menu_GetFocused(&uiInfo->uiDC);
 
-    if (*(int *)imp_g_editingField)
+    if (g_editingField)
         return 1;
 
     if (key > 0x100)
@@ -743,11 +751,11 @@ qboolean UI_CheckExecKey(int key)
         return 1;
     }
 
-    node = (int *)menu->onKey;
-    while (node) {
-        if (*node == key)
+    khNode = menu->onKey;
+    while (khNode) {
+        if (khNode->key == key)
             return 1;
-        node = *(int **)((byte *)node + 8);
+        khNode = (ItemKeyHandler *)khNode->next;
     }
     return 0;
 }
@@ -910,14 +918,14 @@ static int __attribute_regparm__(2) UI_GetServerStatusInfo(const char *serverAdd
     int currentLine;
 
     if (!info) {
-        LAN_GetServerStatus(serverAddress, 0, 0);
+        LAN_GetServerStatus( (char *)(serverAddress), 0, 0);
         return 0;
     }
 
     memset(info, 0, sizeof(*info));
 
     p = info->text;
-    if (!LAN_GetServerStatus(serverAddress, p, sizeof(info->text)))
+    if (!LAN_GetServerStatus( (char *)(serverAddress), p, sizeof(info->text)))
         return 0;
 
     I_strncpyz(info->address, serverAddress, sizeof(info->address));
@@ -1213,14 +1221,14 @@ void UI_Pause(qboolean b)
 #ifndef __EMSCRIPTEN__
 void UI_OpenMenu_f(void)
 {
-    Menus_OpenByName(uiInfo, Cmd_Args(1));
+    Menus_OpenByName(&uiInfo->uiDC, Cmd_Args(1));
 }
 #endif
 
 #ifndef __EMSCRIPTEN__
 void UI_CloseMenu_f(void)
 {
-    Menus_CloseByName(uiInfo, Cmd_Args(1));
+    Menus_CloseByName(&uiInfo->uiDC, Cmd_Args(1));
 }
 #endif
 
@@ -1259,32 +1267,32 @@ void UI_Init(void)
     Dvar_RegisterString_mac("server15", "", 0x1001);
     Dvar_RegisterString_mac("server16", "", 0x1001);
 
-    ui_netSource = Dvar_RegisterInt("ui_netSource", 0, 0, 2, 0x1001);
-    ui_smallFont = Dvar_RegisterFloat("ui_smallFont", 0.25f, 0.0f, 1.0f, 0x1001);
-    ui_bigFont = Dvar_RegisterFloat("ui_bigFont", 0.4f, 0.0f, 1.0f, 0x1001);
-    ui_extraBigFont = Dvar_RegisterFloat("ui_extraBigFont", 0.55f, 0.0f, 1.0f, 0x1001);
-    ui_currentMap = Dvar_RegisterInt("ui_currentMap", 0, 0, 0x7fffffff, 0x1001);
-    ui_gametype = Dvar_RegisterInt("ui_gametype", 3, 0, 0x7fffffff, 0x1001);
-    ui_joinGameType = Dvar_RegisterInt("ui_joinGametype", 0, 0, 0x7fffffff, 0x1001);
-    ui_netGameTypeName = Dvar_RegisterString_mac("ui_netGametypeName", "", 0x1001);
-    ui_dedicated = Dvar_RegisterInt("ui_dedicated", 0, 0, 2, 0x1001);
-    ui_currentNetMap = Dvar_RegisterInt("ui_currentNetMap", 0, 0, 0x7fffffff, 0x1001);
-    ui_browserShowFull = Dvar_RegisterBool_mac("ui_browserShowFull", 1, 0x1001);
-    ui_browserShowEmpty = Dvar_RegisterBool_mac("ui_browserShowEmpty", 1, 0x1001);
-    ui_browserShowPassword = Dvar_RegisterBool_mac("ui_browserShowPassword", 1, 0x1001);
-    ui_browserShowNoPassword = Dvar_RegisterBool_mac("ui_browserShowNoPassword", 1, 0x1001);
-    ui_browserShowPure = Dvar_RegisterBool_mac("ui_browserShowPure", 1, 0x1001);
-    ui_browserShowDedicated = Dvar_RegisterBool_mac("ui_browserShowDedicated", 0, 0x1001);
+    ui_netSource = (const dvar_t *)(Dvar_RegisterInt("ui_netSource", 0, 0, 2, 0x1001));
+    ui_smallFont = (const dvar_t *)(Dvar_RegisterFloat("ui_smallFont", 0.25f, 0.0f, 1.0f, 0x1001));
+    ui_bigFont = (const dvar_t *)(Dvar_RegisterFloat("ui_bigFont", 0.4f, 0.0f, 1.0f, 0x1001));
+    ui_extraBigFont = (const dvar_t *)(Dvar_RegisterFloat("ui_extraBigFont", 0.55f, 0.0f, 1.0f, 0x1001));
+    ui_currentMap = (const dvar_t *)(Dvar_RegisterInt("ui_currentMap", 0, 0, 0x7fffffff, 0x1001));
+    ui_gametype = (const dvar_t *)(Dvar_RegisterInt("ui_gametype", 3, 0, 0x7fffffff, 0x1001));
+    ui_joinGameType = (const dvar_t *)(Dvar_RegisterInt("ui_joinGametype", 0, 0, 0x7fffffff, 0x1001));
+    ui_netGameTypeName = (const dvar_t *)(Dvar_RegisterString_mac("ui_netGametypeName", "", 0x1001));
+    ui_dedicated = (const dvar_t *)(Dvar_RegisterInt("ui_dedicated", 0, 0, 2, 0x1001));
+    ui_currentNetMap = (const dvar_t *)(Dvar_RegisterInt("ui_currentNetMap", 0, 0, 0x7fffffff, 0x1001));
+    ui_browserShowFull = (const dvar_t *)(Dvar_RegisterBool_mac("ui_browserShowFull", 1, 0x1001));
+    ui_browserShowEmpty = (const dvar_t *)(Dvar_RegisterBool_mac("ui_browserShowEmpty", 1, 0x1001));
+    ui_browserShowPassword = (const dvar_t *)(Dvar_RegisterBool_mac("ui_browserShowPassword", 1, 0x1001));
+    ui_browserShowNoPassword = (const dvar_t *)(Dvar_RegisterBool_mac("ui_browserShowNoPassword", 1, 0x1001));
+    ui_browserShowPure = (const dvar_t *)(Dvar_RegisterBool_mac("ui_browserShowPure", 1, 0x1001));
+    ui_browserShowDedicated = (const dvar_t *)(Dvar_RegisterBool_mac("ui_browserShowDedicated", 0, 0x1001));
 #    if COD2_IS_PATCH_13
-    ui_browserShowPunkBuster = Dvar_RegisterInt("ui_browserShowPunkBuster", -1, (int)0x80000000, 0x7fffffff, 0x1001);
+    ui_browserShowPunkBuster = (const dvar_t *)(Dvar_RegisterInt("ui_browserShowPunkBuster", -1, (int)0x80000000, 0x7fffffff, 0x1001));
 #    endif
-    ui_browserMod = Dvar_RegisterInt("ui_browserMod", -1, -1, 0x7fffffff, 0x1001);
-    ui_browserFriendlyfire = Dvar_RegisterInt("ui_browserFriendlyfire", -1, (int)0x80000000, 0x7fffffff, 0x1001);
-    ui_browserKillcam = Dvar_RegisterInt("ui_browserKillcam", -1, (int)0x80000000, 0x7fffffff, 0x1001);
-    ui_serverStatusTimeOut = Dvar_RegisterInt("ui_serverStatusTimeOut", 7000, 0, 0x7fffffff, 0x1001);
-    ui_playerProfileCount = Dvar_RegisterInt("ui_playerProfileCount", 0, (int)0x80000000, 0x7fffffff, 0x1040);
-    ui_playerProfileSelected = Dvar_RegisterString_mac("ui_playerProfileSelected", "", 0x1040);
-    ui_playerProfileNameNew = Dvar_RegisterString_mac("ui_playerProfileNameNew", "", 0x1000);
+    ui_browserMod = (const dvar_t *)(Dvar_RegisterInt("ui_browserMod", -1, -1, 0x7fffffff, 0x1001));
+    ui_browserFriendlyfire = (const dvar_t *)(Dvar_RegisterInt("ui_browserFriendlyfire", -1, (int)0x80000000, 0x7fffffff, 0x1001));
+    ui_browserKillcam = (const dvar_t *)(Dvar_RegisterInt("ui_browserKillcam", -1, (int)0x80000000, 0x7fffffff, 0x1001));
+    ui_serverStatusTimeOut = (const dvar_t *)(Dvar_RegisterInt("ui_serverStatusTimeOut", 7000, 0, 0x7fffffff, 0x1001));
+    ui_playerProfileCount = (const dvar_t *)(Dvar_RegisterInt("ui_playerProfileCount", 0, (int)0x80000000, 0x7fffffff, 0x1040));
+    ui_playerProfileSelected = (const dvar_t *)(Dvar_RegisterString_mac("ui_playerProfileSelected", "", 0x1040));
+    ui_playerProfileNameNew = (const dvar_t *)(Dvar_RegisterString_mac("ui_playerProfileNameNew", "", 0x1000));
 
     legacyBase = (byte *)imp_legacyHacksArray;
     (*(byte *)&((LegacyHacks *)legacyBase)->ui_newScriptMenu[0]) = 0;
@@ -1297,7 +1305,7 @@ void UI_Init(void)
     ((LegacyHacks *)legacyBase)->ui_waitingScriptMenuNoMouse = 0;
 
     String_Init();
-    Menu_Setup(uiInfo);
+    Menu_Setup(&uiInfo->uiDC);
 
     CL_GetScreenDimensions(&uiInfo->uiDC.screenWidth, &uiInfo->uiDC.screenHeight, (int *)&uiInfo->uiDC.screenAspect);
 
@@ -1314,12 +1322,12 @@ void UI_Init(void)
     Sys_Milliseconds();
     UI_GetGameTypesList();
 
-    ui_netGameType = Dvar_RegisterInt("ui_netGametype", 0, 0, sharedUiInfo.numGameTypes - 1, 0x1001);
+    ui_netGameType = (const dvar_t *)(Dvar_RegisterInt("ui_netGametype", 0, 0, sharedUiInfo.numGameTypes - 1, 0x1001));
 
     UI_LoadArenas();
 
     menuList = UI_LoadMenus("ui_mp/menus.txt", 3);
-    UI_AddMenuList(uiInfo, menuList);
+    UI_AddMenuList(&uiInfo->uiDC, menuList);
     UI_LoadIngameMenus();
 
     if (g_mapname[0] != '\0') {
@@ -1327,7 +1335,7 @@ void UI_Init(void)
     }
 
     UI_AssetCache();
-    Menus_CloseAll(uiInfo);
+    Menus_CloseAll(&uiInfo->uiDC);
 
     sharedUiInfo.serverHardwareIconList[0] = CL_RegisterMaterialNoMip("server_hardware_unknown", 3);
     sharedUiInfo.serverHardwareIconList[1] = CL_RegisterMaterialNoMip("server_hardware_linux_dedicated", 3);
@@ -1366,22 +1374,22 @@ static inline __attribute__((always_inline)) void UI_KeyEvent_impl(int key, qboo
 {
     menuDef_t *menu;
 
-    if (Menu_Count(uiInfo) <= 0)
+    if (Menu_Count(&uiInfo->uiDC) <= 0)
         return;
 
-    menu = (menuDef_t *)Menu_GetFocused(uiInfo);
+    menu = Menu_GetFocused(&uiInfo->uiDC);
     if (menu) {
         if (Dvar_GetBool("cl_bypassMouseInput"))
             bypassKeyClear = 1;
 
-        if (key == 0x1b && down && !Menus_AnyFullScreenVisible(uiInfo) && menu->onESC == 0) {
+        if (key == 0x1b && down && !Menus_AnyFullScreenVisible(&uiInfo->uiDC) && menu->onESC == 0) {
 
-            Menus_CloseAll(uiInfo);
+            Menus_CloseAll(&uiInfo->uiDC);
         } else {
-            Menu_HandleKey(uiInfo, menu, key, down);
+            Menu_HandleKey(&uiInfo->uiDC, menu, key, down);
         }
 
-        if (Menu_GetFocused(uiInfo))
+        if (Menu_GetFocused(&uiInfo->uiDC))
             return;
     }
 
@@ -1420,8 +1428,8 @@ void UI_MouseEvent(int dx, int dy)
     else if (*cursorY > 480)
         *cursorY = 480;
 
-    if (Menu_Count(uiInfo) > 0) {
-        Display_MouseMove(uiInfo, 0, *cursorX, *cursorY);
+    if (Menu_Count(&uiInfo->uiDC) > 0) {
+        Display_MouseMove(&uiInfo->uiDC, 0, *cursorX, *cursorY);
     }
 }
 #endif
@@ -1445,8 +1453,8 @@ void UI_MouseEventAbsolute(int x, int y)
     *cursorX = x;
     *cursorY = y;
 
-    if (Menu_Count(uiInfo) > 0)
-        Display_MouseMove(uiInfo, 0, *cursorX, *cursorY);
+    if (Menu_Count(&uiInfo->uiDC) > 0)
+        Display_MouseMove(&uiInfo->uiDC, 0, *cursorX, *cursorY);
 }
 #endif
 
@@ -1464,11 +1472,11 @@ qboolean UI_SetActiveMenu(int menu)
     menuDef_t *pFocus;
     const char *errorMsg;
 
-    if (Menu_Count(uiInfo) <= 0)
+    if (Menu_Count(&uiInfo->uiDC) <= 0)
         return 0;
 
     if (menu != 9 && menu != 10)
-        uiInfo->currentMenuType = menu;
+        uiInfo->currentMenuType = (uiMenuCommand_t)(menu);
 
     if ((unsigned)menu > 11)
         return 0;
@@ -1477,15 +1485,15 @@ qboolean UI_SetActiveMenu(int menu)
     case 0:
         Key_SetCatcher(Key_GetCatcher() & ~8);
         Dvar_SetIntByName("cl_paused", 0);
-        Menus_CloseAll(uiInfo);
+        Menus_CloseAll(&uiInfo->uiDC);
         return 1;
 
     case 1:
         Key_SetCatcher(8);
-        Menus_OpenByName(uiInfo, "main");
+        Menus_OpenByName(&uiInfo->uiDC, "main");
         errorMsg = Dvar_GetString("com_errorMessage");
         if (errorMsg[0] != '\0' && I_stricmp(errorMsg, ";") != 0) {
-            Menus_OpenByName(uiInfo, "error_popmenu");
+            Menus_OpenByName(&uiInfo->uiDC, "error_popmenu");
         }
         SND_FadeAllSounds(1.0f, 1000);
         return 1;
@@ -1493,29 +1501,29 @@ qboolean UI_SetActiveMenu(int menu)
     case 2:
     {
         int opened;
-        const char *cgMenuName = (*(cg_t **)imp_cg)->scriptMainMenu;
+        const char *cgMenuName = cg->scriptMainMenu;
         Key_SetCatcher(8);
-        Menus_CloseAll(uiInfo);
-        opened = Menus_OpenByName(uiInfo, cgMenuName);
+        Menus_CloseAll(&uiInfo->uiDC);
+        opened = Menus_OpenByName(&uiInfo->uiDC, cgMenuName);
         if (!opened) {
-            Menus_OpenByName(uiInfo, "main");
+            Menus_OpenByName(&uiInfo->uiDC, "main");
         }
     }
         return 1;
 
     case 3:
         Key_SetCatcher(8);
-        Menus_OpenByName(uiInfo, "needcd");
+        Menus_OpenByName(&uiInfo->uiDC, "needcd");
         return 1;
 
     case 4:
         Key_SetCatcher(8);
-        Menus_OpenByName(uiInfo, "badcd");
+        Menus_OpenByName(&uiInfo->uiDC, "badcd");
         return 1;
 
     case 5:
         Key_SetCatcher(8);
-        Menus_OpenByName(uiInfo, "team");
+        Menus_OpenByName(&uiInfo->uiDC, "team");
         return 1;
 
     case 6:
@@ -1527,13 +1535,13 @@ qboolean UI_SetActiveMenu(int menu)
         uiInfo->uiDC.cursory = 0x1df;
         Key_SetCatcher(8);
         (*(clientActive_t **)imp_cl)->displayHUDWithKeycatchUI = 1;
-        Menus_CloseAll(uiInfo);
-        Menus_OpenByName(uiInfo, "quickmessage");
+        Menus_CloseAll(&uiInfo->uiDC);
+        Menus_OpenByName(&uiInfo->uiDC, "quickmessage");
         return 1;
 
     case 9:
     case 10:
-        pFocus = (menuDef_t *)Menu_GetFocused(uiInfo);
+        pFocus = Menu_GetFocused(&uiInfo->uiDC);
         if (pFocus) {
             int activeMenu = uiInfo->currentMenuType;
             static int traceCount;
@@ -1541,13 +1549,13 @@ qboolean UI_SetActiveMenu(int menu)
                 if (getenv("MTRACE"))
                     Com_Printf("[menu-trace] UI popup guard focus='%s' flags=0x%x active=%d loaded=%d\n",
                                pFocus->window.name, pFocus->window.dynamicFlags[0],
-                               activeMenu, Menu_Count(uiInfo));
+                               activeMenu, Menu_Count(&uiInfo->uiDC));
             }
             if (activeMenu != 9 && activeMenu != 10)
                 return 0;
         }
 
-        legacyBase = *(byte **)imp_legacyHacks;
+        legacyBase = (byte *)legacyHacks;
 
         if (pFocus) {
 
@@ -1555,7 +1563,7 @@ qboolean UI_SetActiveMenu(int menu)
                 return 1;
         }
 
-        uiInfo->currentMenuType = 9;
+        uiInfo->currentMenuType = (uiMenuCommand_t)(9);
 
         if (menu == 10) {
             uiInfo->uiDC.cursorx = 0x27f;
@@ -1564,7 +1572,7 @@ qboolean UI_SetActiveMenu(int menu)
 
         Key_SetCatcher(8);
         (*(clientActive_t **)imp_cl)->displayHUDWithKeycatchUI = 1;
-        Menus_CloseAll(uiInfo);
+        Menus_CloseAll(&uiInfo->uiDC);
 
         strcpy(((LegacyHacks *)legacyBase)->ui_scriptMenu, ((LegacyHacks *)legacyBase)->ui_newScriptMenu);
         ((LegacyHacks *)legacyBase)->ui_scriptMenuIndex = ((LegacyHacks *)legacyBase)->ui_newScriptMenuIndex;
@@ -1576,12 +1584,12 @@ qboolean UI_SetActiveMenu(int menu)
                    Dvar_GetVariantString("ui_allow_joinauto"),
                    Dvar_GetVariantString("ui_allow_joinallies"),
                    Dvar_GetVariantString("ui_allow_joinaxis"));
-        Menus_OpenByName(uiInfo, ((LegacyHacks *)legacyBase)->ui_scriptMenu);
+        Menus_OpenByName(&uiInfo->uiDC, ((LegacyHacks *)legacyBase)->ui_scriptMenu);
         return 1;
 
     case 11:
         Key_SetCatcher(8);
-        Menus_OpenByName(uiInfo, "player_profile");
+        Menus_OpenByName(&uiInfo->uiDC, "player_profile");
         SND_FadeAllSounds(1.0f, 1000);
         return 1;
     }
@@ -1593,7 +1601,7 @@ qboolean UI_SetActiveMenu(int menu)
 #ifndef __EMSCRIPTEN__
 qboolean UI_IsFullscreen(void)
 {
-    return Menus_AnyFullScreenVisible(uiInfo);
+    return Menus_AnyFullScreenVisible(&uiInfo->uiDC);
 }
 #endif
 
@@ -1647,7 +1655,7 @@ float UI_GetBlurRadius(void)
 #ifndef __EMSCRIPTEN__
 qboolean UI_AnyFullScreenMenuVisible(void)
 {
-    return Menus_AnyFullScreenVisible(uiInfo);
+    return Menus_AnyFullScreenVisible(&uiInfo->uiDC);
 }
 #endif
 
@@ -1715,24 +1723,24 @@ const char *UI_ReplaceConversionString(const char *sourceString, const char *rep
 #ifndef __EMSCRIPTEN__
 void UI_CloseAll(void)
 {
-    Menus_CloseAll(uiInfo);
+    Menus_CloseAll(&uiInfo->uiDC);
 }
 #endif
 
 void UI_CloseFocusedMenu(void)
 {
-    if (Menu_Count(uiInfo) <= 0)
+    if (Menu_Count(&uiInfo->uiDC) <= 0)
         return;
 
-    if (!Menu_GetFocused(uiInfo)) {
+    if (!Menu_GetFocused(&uiInfo->uiDC)) {
         if (Key_GetCatcher() & 8) {
             Key_SetCatcher(Key_GetCatcher() & ~8);
         }
         return;
     }
 
-    if (!Menus_AnyFullScreenVisible(uiInfo)) {
-        Menus_CloseAll(uiInfo);
+    if (!Menus_AnyFullScreenVisible(&uiInfo->uiDC)) {
+        Menus_CloseAll(&uiInfo->uiDC);
     }
 }
 
@@ -1756,13 +1764,13 @@ void UI_OverrideCursorPos(rectDef_t (*item)[16])
         }
         visCount = 0;
     found:
-        Item_SetCursorPos(item, visCount);
+        Item_SetCursorPos((itemDef_t *)item, visCount);
     } else if (feederFloat == 2.0f) {
         byte *listPtr = (*(byte **)&((itemDef_t *)itemPtr)->typeData.listBox);
         int endPos = *(int *)(listPtr + 0x10);
 
         if (endPos == 0) {
-            Item_SetCursorPos(item, -1);
+            Item_SetCursorPos((itemDef_t *)item, -1);
         } else {
             int serverIndex = sharedUiInfo.serverStatus.currentServer;
             int cursorField = ((itemDef_t *)itemPtr)->cursorPos[0];
@@ -1778,17 +1786,17 @@ void UI_OverrideCursorPos(rectDef_t (*item)[16])
                 return;
 
             delta = serverIndex - cursorField;
-            ListBox_SetStartPos(listPtr, delta + startPos_val);
-            ListBox_SetEndPos(listPtr, delta + endPos);
-            ListBox_SetCursorPos(listPtr, delta + *(int *)(listPtr + 0x24));
-            Item_SetCursorPos(item, sharedUiInfo.serverStatus.currentServer);
+            ListBox_SetStartPos((listBoxDef_t *)listPtr, delta + startPos_val);
+            ListBox_SetEndPos((listBoxDef_t *)listPtr, delta + endPos);
+            ListBox_SetCursorPos((listBoxDef_t *)listPtr, delta + *(int *)(listPtr + 0x24));
+            Item_SetCursorPos((itemDef_t *)item, sharedUiInfo.serverStatus.currentServer);
 
-            maxScroll = Item_ListBox_MaxScroll(item);
+            maxScroll = Item_ListBox_MaxScroll((itemDef_t *)item);
             if (maxScroll < *(int *)listPtr) {
-                ListBox_SetStartPos(listPtr, maxScroll);
+                ListBox_SetStartPos((listBoxDef_t *)listPtr, maxScroll);
             }
             if (*(int *)listPtr < 0) {
-                ListBox_SetStartPos(listPtr, 0);
+                ListBox_SetStartPos((listBoxDef_t *)listPtr, 0);
             }
         }
     }
@@ -1824,8 +1832,7 @@ Bool UI_DrawRecordLevel(rectDef_t *rect)
 MaterialHandle UI_FeederItemImage(const float feederID, int index)
 {
     int numMaps, c, i, mapIndex;
-    int byteOff;
-    byte *base;
+    mapInfo *map;
 
     if (feederID != 4.0f)
         return 0;
@@ -1836,8 +1843,7 @@ MaterialHandle UI_FeederItemImage(const float feederID, int index)
     if (numMaps > 0) {
         c = 0;
         for (i = 0; i < numMaps; i++) {
-            byte *entry = (byte *)&sharedUiInfo + i * 0xa4;
-            if (*(int *)(entry + 0x13f4) != 0) {
+            if (sharedUiInfo.mapList[i].active) {
                 if (c == index) {
                     mapIndex = i;
                     break;
@@ -1853,15 +1859,12 @@ MaterialHandle UI_FeederItemImage(const float feederID, int index)
     if (numMaps <= mapIndex)
         return 0;
 
-    byteOff = mapIndex * 0xa4;
-
-    if (*(int *)((byte *)&sharedUiInfo + 5104 + byteOff) == 0) {
-
-        const char *name = *(const char **)((byte *)&sharedUiInfo + 4956 + byteOff);
-        *(int *)((byte *)&sharedUiInfo + 5104 + byteOff) = CL_RegisterMaterialNoMip(name, 3);
+    map = &sharedUiInfo.mapList[mapIndex];
+    if (!map->levelShot) {
+        map->levelShot = CL_RegisterMaterialNoMip(map->mapLoadName, 3);
     }
 
-    return *(MaterialHandle *)((byte *)&sharedUiInfo + 5104 + byteOff);
+    return map->levelShot;
 }
 
 #ifndef __EMSCRIPTEN__
@@ -2089,7 +2092,7 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
         sharedUiInfo.serverStatus.serverCount = LAN_GetServerCount(netSource);
 
         if (sharedUiInfo.serverStatus.currentServer >= 0) {
-            Menu_SetFeederSelection(uiInfo, 0, 2, 0, 0);
+            Menu_SetFeederSelection(&uiInfo->uiDC, 0, 2, 0, 0);
         }
 
         LAN_MarkServerDirty((ui_netSource)->current.integer, -1, 1);
@@ -2246,7 +2249,7 @@ static void UI_SelectFirstVisibleMap(int currentMapIdx)
             if (i >= numMaps)
                 listIdx = 0;
 
-            Menu_SetFeederSelection(uiInfo, 0, 4, listIdx, "createserver_maps");
+            Menu_SetFeederSelection(&uiInfo->uiDC, 0, 4, listIdx, "createserver_maps");
             UI_SelectCurrentMap();
             return;
         }
@@ -2266,7 +2269,7 @@ static void UI_SelectFirstVisibleMap(int currentMapIdx)
     }
 
     if (firstVisible >= 0) {
-        Menu_SetFeederSelection(uiInfo, 0, 4, 0, "createserver_maps");
+        Menu_SetFeederSelection(&uiInfo->uiDC, 0, 4, 0, "createserver_maps");
         Dvar_SetInt(ui_currentNetMap, firstVisible);
     }
 
@@ -2475,7 +2478,7 @@ const char *UI_FeederItemText(float feederID, int index, int column, MaterialHan
                 int hw = atoi(Info_ValueForKey(info, "hw"));
                 if ((unsigned)hw > 7)
                     return "";
-                *handle = *(MaterialHandle *)((byte *)&sharedUiInfo + 25940 + hw * 4);
+                *handle = sharedUiInfo.serverHardwareIconList[hw];
                 return "";
             }
             case 2:
@@ -2649,7 +2652,7 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
 
     clBase = *(clientActive_t **)imp_cl;
     if (clBase->cgameInitialized != 0) {
-        CG_OwnerDraw(x, y, w, h, horzAlign, vertAlign, text_x, text_y, ownerDraw, ownerDrawFlags, align, special, (int)font, scale, color, (int)material, textStyle);
+        CG_OwnerDraw(x, y, w, h, horzAlign, vertAlign, text_x, text_y, ownerDraw, ownerDrawFlags, align, special, font, scale, color, material, textStyle);
     }
 
     rect[0] = x + text_x;
@@ -2886,7 +2889,7 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
 
     case 264:
     {
-        if ((*(dvar_t **)imp_sv_voice)->current.enabled == 0 || (*(dvar_t **)imp_cl_voice)->current.enabled == 0)
+        if ((sv_voice)->current.enabled == 0 || (cl_voice)->current.enabled == 0)
             return;
         if (!IsTalking())
             return;
@@ -2986,7 +2989,7 @@ static int UI_StrContains(const char *str, const char *charset)
 static inline __attribute__((always_inline)) void UI_UpdateServerCount(void)
 {
     int serverCount = LAN_GetServerCount((ui_netSource)->current.integer);
-    if (serverCount != sharedUiInfo.serverStatus.serverCount) {
+    if (sharedUiInfo.serverStatus.serverCount != serverCount) {
         sharedUiInfo.serverStatus.serverCount = serverCount;
         if (sharedUiInfo.serverStatus.numDisplayServers != 0) {
             sharedUiInfo.serverStatus.currentServer = -1;
@@ -3147,7 +3150,7 @@ static void UI_BuildServerStatus_impl(int force)
 
     if (force) {
 
-        Menu_SetFeederSelection(uiInfo, 0, 0xd, 0, 0);
+        Menu_SetFeederSelection(&uiInfo->uiDC, 0, 0xd, 0, 0);
         sharedUiInfo.serverStatusInfo.numLines = 0;
         LAN_GetServerStatus(0, 0, 0);
     } else {
@@ -3209,9 +3212,30 @@ void UI_Refresh(void)
     int netSource;
     int needRebuild;
     static int refreshTraceCount;
+    static int fileTraceCount;
 
-    if (Menu_Count(uiInfo) <= 0)
+    if (Menu_Count(&uiInfo->uiDC) <= 0)
         return;
+
+    if (fileTraceCount < 40) {
+        FILE *f = fopen("x64_ui_trace.txt", fileTraceCount ? "a" : "w");
+        if (f) {
+            int i;
+            fprintf(f, "ui[%d] active=%d menuCount=%d openCount=%d keyCatchers=0x%x\n",
+                    fileTraceCount, uiInfo->currentMenuType, uiInfo->uiDC.menuCount,
+                    uiInfo->uiDC.openMenuCount, (*(clientActive_t **)imp_cl)->keyCatchers);
+            for (i = 0; i < uiInfo->uiDC.openMenuCount && i < 16; i++) {
+                menuDef_t *menu = uiInfo->uiDC.menuStack[i];
+                fprintf(f, "  stack[%d]=%s flags=0x%x full=%d\n",
+                        i,
+                        menu && menu->window.name ? menu->window.name : "<null>",
+                        menu ? menu->window.dynamicFlags[0] : 0,
+                        menu ? menu->fullScreen : 0);
+            }
+            fclose(f);
+        }
+        fileTraceCount++;
+    }
 
     if (refreshTraceCount < 80 && (uiInfo->currentMenuType || uiInfo->uiDC.openMenuCount > 0)) {
         int i;
@@ -3226,7 +3250,7 @@ void UI_Refresh(void)
         ++refreshTraceCount;
     }
 
-    Menu_PaintAll(uiInfo);
+    Menu_PaintAll(&uiInfo->uiDC);
 
     if (sharedUiInfo.serverStatus.refreshActive) {
         netSource = (ui_netSource)->current.integer;
@@ -3423,7 +3447,7 @@ void UI_RunMenuScript(const char **args)
             }
         }
 
-        Menu_SetFeederSelection(uiInfo, 0, 4, 0, "createserver_maps");
+        Menu_SetFeederSelection(&uiInfo->uiDC, 0, 4, 0, "createserver_maps");
         UI_SelectCurrentMap();
         return;
     }
@@ -3547,7 +3571,7 @@ void UI_RunMenuScript(const char **args)
             }
         }
 
-        FS_FreeFileList(fileList, 0);
+        FS_FreeFileList((const char **)fileList, 0);
 
         {
             int numProfiles = uiInfo->playerProfileCount;
@@ -3561,7 +3585,7 @@ void UI_RunMenuScript(const char **args)
                     for (i = numMenus - 1; i >= 0; i--) {
                         menuDef_t *menu = uiInfo->uiDC.menuStack[i];
                         if (*(byte *)&menu->window.dynamicFlags[0] & 4) {
-                            Menu_SetFeederSelection(uiInfo, menu, 0x18, 0, 0);
+                            Menu_SetFeederSelection(&uiInfo->uiDC, menu, 0x18, 0, 0);
                         }
                     }
                 }
@@ -3590,7 +3614,7 @@ void UI_RunMenuScript(const char **args)
                     for (i = numMenus - 1; i >= 0; i--) {
                         menuDef_t *menu = uiInfo->uiDC.menuStack[i];
                         if (*(byte *)&menu->window.dynamicFlags[0] & 4) {
-                            Menu_SetFeederSelection(uiInfo, menu, 0x18, 0, 0);
+                            Menu_SetFeederSelection(&uiInfo->uiDC, menu, 0x18, 0, 0);
                         }
                     }
                 }
@@ -3601,7 +3625,7 @@ void UI_RunMenuScript(const char **args)
 
     if (I_stricmp(name, "selectActivePlayerProfile") == 0) {
 
-        const char *curProfile = (*(dvar_t **)imp_com_playerProfile)->current.string;
+        const char *curProfile = (com_playerProfile)->current.string;
         int numProfiles = uiInfo->playerProfileCount;
         int i, found = -1;
 
@@ -3622,7 +3646,7 @@ void UI_RunMenuScript(const char **args)
             for (i = numMenus - 1; i >= 0; i--) {
                 menuDef_t *menu = uiInfo->uiDC.menuStack[i];
                 if (*(byte *)&menu->window.dynamicFlags[0] & 4) {
-                    Menu_SetFeederSelection(uiInfo, menu, 0x18, found, 0);
+                    Menu_SetFeederSelection(&uiInfo->uiDC, menu, 0x18, found, 0);
                 }
             }
         }
@@ -3641,19 +3665,19 @@ void UI_RunMenuScript(const char **args)
 
         numProfiles = uiInfo->playerProfileCount;
         if (numProfiles >= 64) {
-            Menus_OpenByName(uiInfo, "profile_create_too_many_popmenu");
+            Menus_OpenByName(&uiInfo->uiDC, "profile_create_too_many_popmenu");
             return;
         }
 
         for (i = 0; i < numProfiles; i++) {
             if (I_stricmp(out, uiInfo->playerProfileName[i]) == 0) {
-                Menus_OpenByName(uiInfo, "profile_exists_popmenu");
+                Menus_OpenByName(&uiInfo->uiDC, "profile_exists_popmenu");
                 return;
             }
         }
 
         if (!Com_NewPlayerProfile(out)) {
-            Menus_OpenByName(uiInfo, "profile_create_fail_popmenu");
+            Menus_OpenByName(&uiInfo->uiDC, "profile_create_fail_popmenu");
             return;
         }
 
@@ -3690,7 +3714,7 @@ void UI_RunMenuScript(const char **args)
                 for (i = numMenus - 1; i >= 0; i--) {
                     menuDef_t *menu = uiInfo->uiDC.menuStack[i];
                     if (*(byte *)&menu->window.dynamicFlags[0] & 4) {
-                        Menu_SetFeederSelection(uiInfo, menu, 0x18, found, 0);
+                        Menu_SetFeederSelection(&uiInfo->uiDC, menu, 0x18, found, 0);
                     }
                 }
             }
@@ -3708,7 +3732,7 @@ void UI_RunMenuScript(const char **args)
 
         selName = ui_playerProfileSelected->current.string;
         if (!Com_DeletePlayerProfile(selName)) {
-            Menus_OpenByName(uiInfo, "profile_delete_fail_popmenu");
+            Menus_OpenByName(&uiInfo->uiDC, "profile_delete_fail_popmenu");
             return;
         }
 
@@ -3751,7 +3775,7 @@ void UI_RunMenuScript(const char **args)
                     for (i = numMenus - 1; i >= 0; i--) {
                         menuDef_t *menu = uiInfo->uiDC.menuStack[i];
                         if (*(byte *)&menu->window.dynamicFlags[0] & 4) {
-                            Menu_SetFeederSelection(uiInfo, menu, 0x18, found, 0);
+                            Menu_SetFeederSelection(&uiInfo->uiDC, menu, 0x18, found, 0);
                         }
                     }
                 }
@@ -3838,8 +3862,8 @@ void UI_RunMenuScript(const char **args)
             uiInfo->nextFindPlayerRefresh = 0;
             UI_BuildServerDisplayList(1);
         } else {
-            Menus_CloseByName(uiInfo, "joinserver");
-            Menus_OpenByName(uiInfo, "main");
+            Menus_CloseByName(&uiInfo->uiDC, "joinserver");
+            Menus_OpenByName(&uiInfo->uiDC, "main");
         }
         return;
     }
@@ -3876,7 +3900,7 @@ void UI_RunMenuScript(const char **args)
                                        sharedUiInfo.serverStatus.displayServers[selectedServer],
                                        sharedUiInfo.serverStatusAddress, 0x40);
 #ifdef __EMSCRIPTEN__
-            Menu_SetFeederSelection(uiInfo, 0, 0xd, 0, 0);
+            Menu_SetFeederSelection(&uiInfo->uiDC, 0, 0xd, 0, 0);
             sharedUiInfo.serverStatusInfo.numLines = 0;
             sharedUiInfo.nextServerStatusRefresh = uiInfo->uiDC.realTime + 500;
 #else
@@ -3921,16 +3945,16 @@ void UI_RunMenuScript(const char **args)
     if (I_stricmp(name, "Controls") == 0) {
         Dvar_SetIntByName("cl_paused", 1);
         Key_SetCatcher(8);
-        Menus_CloseAll(uiInfo);
-        Menus_OpenByName(uiInfo, "setup_menu2");
+        Menus_CloseAll(&uiInfo->uiDC);
+        Menus_OpenByName(&uiInfo->uiDC, "setup_menu2");
         return;
     }
 
     if (I_stricmp(name, "Leave") == 0) {
         Cbuf_ExecuteText(2, "disconnect\n");
         Key_SetCatcher(8);
-        Menus_CloseAll(uiInfo);
-        Menus_OpenByName(uiInfo, "main");
+        Menus_CloseAll(&uiInfo->uiDC);
+        Menus_OpenByName(&uiInfo->uiDC, "main");
         return;
     }
 
@@ -3959,7 +3983,7 @@ void UI_RunMenuScript(const char **args)
         Key_SetCatcher(Key_GetCatcher() & ~8);
         Key_ClearStates();
         Dvar_SetIntByName("cl_paused", 0);
-        Menus_CloseAll(uiInfo);
+        Menus_CloseAll(&uiInfo->uiDC);
         return;
     }
 
@@ -4122,7 +4146,7 @@ void UI_RunMenuScript(const char **args)
         {
             int matches = (I_stricmp(testValue, Dvar_GetVariantString(dvarName)) == 0);
             if (matches == wantMatch) {
-                Menus_OpenByName(uiInfo, menuName);
+                Menus_OpenByName(&uiInfo->uiDC, menuName);
             }
         }
         return;
@@ -4141,7 +4165,7 @@ void UI_RunMenuScript(const char **args)
         {
             int matches = (I_stricmp(testValue, Dvar_GetVariantString(dvarName)) == 0);
             if (matches == wantMatch) {
-                Menus_CloseByName(uiInfo, menuName);
+                Menus_CloseByName(&uiInfo->uiDC, menuName);
             }
         }
         return;
@@ -4218,7 +4242,7 @@ static void UI_ReadableSize_wrap(char *buf, int bufsize, int value)
 
 static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, float yStart, FontHandle font, float scale)
 {
-    LegacyHacks *legacyBase = *(LegacyHacks **)imp_legacyHacks;
+    LegacyHacks *legacyBase = legacyHacks;
     int downloadSize = legacyBase->cl_downloadSize;
     int downloadCount = legacyBase->cl_downloadCount;
     int downloadTime = legacyBase->cl_downloadTime;
@@ -4395,7 +4419,7 @@ void UI_DrawConnectScreen(void)
     const char *mapDisplayName;
     const float connectScale = 0.5f;
 
-    legacyBase = *(byte **)imp_legacyHacks;
+    legacyBase = (byte *)legacyHacks;
     if (!legacyBase)
         return;
 
@@ -4497,7 +4521,7 @@ check_connection_state: {
         }
     } else if (cs == CA_CONNECTED) {
 
-        legacyBase = *(byte **)imp_legacyHacks;
+        legacyBase = (byte *)legacyHacks;
         if (!legacyBase || (*(unsigned char *)&((LegacyHacks *)legacyBase)->cl_downloadName[0]) == 0)
             return;
         UI_DisplayDownloadInfo(((LegacyHacks *)legacyBase)->cl_downloadName, 320.0f, 89.0f, font, connectScale);
@@ -4563,7 +4587,7 @@ static void UI_SelectCurrentMap(void)
     int i;
     int visibleIndex;
 
-    GetClientState(cstate);
+    GetClientState((uiClientState_t *)cstate);
     if (*(int *)cstate != 8)
         return;
 
@@ -4586,7 +4610,7 @@ static void UI_SelectCurrentMap(void)
             continue;
 
         if (I_stricmp(szMap, *(const char **)(entry + 0x1354)) == 0) {
-            Menu_SetFeederSelection(uiInfo, 0, 4, visibleIndex, "createserver_maps");
+            Menu_SetFeederSelection(&uiInfo->uiDC, 0, 4, visibleIndex, "createserver_maps");
             return;
         }
 
@@ -4981,7 +5005,7 @@ void UI_Init(void)
     ((LegacyHacks *)legacyBase)->ui_waitingScriptMenuNoMouse = 0;
 
     String_Init();
-    Menu_Setup(uiInfo);
+    Menu_Setup(&uiInfo->uiDC);
 
     CL_GetScreenDimensions(&uiInfo->uiDC.screenWidth, &uiInfo->uiDC.screenHeight, (int *)&uiInfo->uiDC.screenAspect);
 
@@ -5002,7 +5026,7 @@ void UI_Init(void)
     UI_LoadArenas();
 
     menuList = UI_LoadMenus("ui_mp/menus.txt", 3);
-    UI_AddMenuList(uiInfo, menuList);
+    UI_AddMenuList(&uiInfo->uiDC, menuList);
     UI_LoadIngameMenus();
 
     if (g_mapname[0] != '\0') {
@@ -5010,14 +5034,14 @@ void UI_Init(void)
     }
 
     UI_AssetCache();
-    Menus_CloseAll(uiInfo);
+    Menus_CloseAll(&uiInfo->uiDC);
 
-    *(int *)((byte *)&sharedUiInfo + 25940) = CL_RegisterMaterialNoMip("server_hardware_unknown", 3);
-    *(int *)((byte *)&sharedUiInfo + 25944) = CL_RegisterMaterialNoMip("server_hardware_linux_dedicated", 3);
-    *(int *)((byte *)&sharedUiInfo + 25948) = CL_RegisterMaterialNoMip("server_hardware_win_dedicated", 3);
-    *(int *)((byte *)&sharedUiInfo + 25952) = CL_RegisterMaterialNoMip("server_hardware_mac_dedicated", 3);
-    *(int *)((byte *)&sharedUiInfo + 25960) = CL_RegisterMaterialNoMip("server_hardware_win_listen", 3);
-    *(int *)((byte *)&sharedUiInfo + 25964) = CL_RegisterMaterialNoMip("server_hardware_mac_listen", 3);
+    sharedUiInfo.serverHardwareIconList[0] = CL_RegisterMaterialNoMip("server_hardware_unknown", 3);
+    sharedUiInfo.serverHardwareIconList[1] = CL_RegisterMaterialNoMip("server_hardware_linux_dedicated", 3);
+    sharedUiInfo.serverHardwareIconList[2] = CL_RegisterMaterialNoMip("server_hardware_win_dedicated", 3);
+    sharedUiInfo.serverHardwareIconList[3] = CL_RegisterMaterialNoMip("server_hardware_mac_dedicated", 3);
+    sharedUiInfo.serverHardwareIconList[5] = CL_RegisterMaterialNoMip("server_hardware_win_listen", 3);
+    sharedUiInfo.serverHardwareIconList[6] = CL_RegisterMaterialNoMip("server_hardware_mac_listen", 3);
 
     LAN_LoadCachedServers();
 
@@ -5050,7 +5074,7 @@ static void UI_BuildPlayerList(void)
     int count;
     int n;
 
-    GetClientState(cs);
+    GetClientState((uiClientState_t *)cs);
     count = atoi(Info_ValueForKey(CL_GetConfigString(0), "sv_maxclients"));
     memset(sharedUiInfo.playerClientNums, -1, 0x100);
     sharedUiInfo.playerCount = 0;
@@ -5231,7 +5255,7 @@ static void UI_BuildServerDisplayList(qboolean force)
         sharedUiInfo.serverStatus.serverCount = LAN_GetServerCount(netSource);
 
         if (sharedUiInfo.serverStatus.currentServer >= 0)
-            Menu_SetFeederSelection(uiInfo, 0, 2, 0, 0);
+            Menu_SetFeederSelection(&uiInfo->uiDC, 0, 2, 0, 0);
 
         LAN_MarkServerDirty((ui_netSource)->current.integer, -1, 1);
     }
@@ -5383,7 +5407,7 @@ static void UI_DrawMapPreview(const rectDef_t *rect, const vec_t *color, int net
 {
     int map;
     int mapCount;
-    int material;
+    MaterialHandle material;
 
     if (net) {
         map = (ui_currentNetMap)->current.integer;
@@ -5391,7 +5415,7 @@ static void UI_DrawMapPreview(const rectDef_t *rect, const vec_t *color, int net
         map = (ui_currentMap)->current.integer;
     }
 
-    mapCount = *(int *)((char *)&sharedUiInfo + 4944);
+    mapCount = sharedUiInfo.mapCount;
     if (map < 0 || map >= mapCount) {
 
         if (net) {
@@ -5402,7 +5426,7 @@ static void UI_DrawMapPreview(const rectDef_t *rect, const vec_t *color, int net
         map = 0;
     }
 
-    material = *(int *)((char *)&sharedUiInfo + 5104 + map * 164);
+    material = sharedUiInfo.mapList[map].levelShot;
 
     if (!material) {
         material = CL_RegisterMaterialNoMip("menu/art/unknownmap", 3);
@@ -5424,12 +5448,12 @@ void UI_SetMap(const char *mapname, const char *gametype)
 
 void UI_OpenMenu_f(void)
 {
-    Menus_OpenByName(uiInfo, Cmd_Args(1));
+    Menus_OpenByName(&uiInfo->uiDC, Cmd_Args(1));
 }
 
 void UI_CloseMenu_f(void)
 {
-    Menus_CloseByName(uiInfo, Cmd_Args(1));
+    Menus_CloseByName(&uiInfo->uiDC, Cmd_Args(1));
 }
 
 void UI_MouseEvent(int dx, int dy)
@@ -5449,8 +5473,8 @@ void UI_MouseEvent(int dx, int dy)
     else if (*cursorY > 480)
         *cursorY = 480;
 
-    if (Menu_Count(uiInfo) > 0) {
-        Display_MouseMove(uiInfo, 0, *cursorX, *cursorY);
+    if (Menu_Count(&uiInfo->uiDC) > 0) {
+        Display_MouseMove(&uiInfo->uiDC, 0, *cursorX, *cursorY);
     }
 }
 
@@ -5472,8 +5496,8 @@ void UI_MouseEventAbsolute(int x, int y)
     *cursorX = x;
     *cursorY = y;
 
-    if (Menu_Count(uiInfo) > 0)
-        Display_MouseMove(uiInfo, 0, *cursorX, *cursorY);
+    if (Menu_Count(&uiInfo->uiDC) > 0)
+        Display_MouseMove(&uiInfo->uiDC, 0, *cursorX, *cursorY);
 }
 
 uiMenuCommand_t UI_GetActiveMenu(void)
@@ -5487,7 +5511,7 @@ qboolean UI_SetActiveMenu(int menu)
     menuDef_t *pFocus;
     const char *errorMsg;
 
-    if (Menu_Count(uiInfo) <= 0)
+    if (Menu_Count(&uiInfo->uiDC) <= 0)
         return 0;
 
     if (menu != 9 && menu != 10)
@@ -5500,42 +5524,42 @@ qboolean UI_SetActiveMenu(int menu)
     case 0:
         Key_SetCatcher(Key_GetCatcher() & ~8);
         Dvar_SetIntByName("cl_paused", 0);
-        Menus_CloseAll(uiInfo);
+        Menus_CloseAll(&uiInfo->uiDC);
         return 1;
 
     case 1:
         Key_SetCatcher(8);
-        Menus_OpenByName(uiInfo, "main");
+        Menus_OpenByName(&uiInfo->uiDC, "main");
         errorMsg = Dvar_GetString("com_errorMessage");
         if (errorMsg[0] != '\0' && I_stricmp(errorMsg, ";") != 0) {
-            Menus_OpenByName(uiInfo, "error_popmenu");
+            Menus_OpenByName(&uiInfo->uiDC, "error_popmenu");
         }
         SND_FadeAllSounds(1.0f, 1000);
         return 1;
 
     case 2: {
-        const char *cgMenuName = (*(cg_t **)imp_cg)->scriptMainMenu;
+        const char *cgMenuName = cg->scriptMainMenu;
         Key_SetCatcher(8);
-        Menus_CloseAll(uiInfo);
-        if (!Menus_OpenByName(uiInfo, cgMenuName)) {
-            Menus_OpenByName(uiInfo, "main");
+        Menus_CloseAll(&uiInfo->uiDC);
+        if (!Menus_OpenByName(&uiInfo->uiDC, cgMenuName)) {
+            Menus_OpenByName(&uiInfo->uiDC, "main");
         }
         return 1;
     }
 
     case 3:
         Key_SetCatcher(8);
-        Menus_OpenByName(uiInfo, "needcd");
+        Menus_OpenByName(&uiInfo->uiDC, "needcd");
         return 1;
 
     case 4:
         Key_SetCatcher(8);
-        Menus_OpenByName(uiInfo, "badcd");
+        Menus_OpenByName(&uiInfo->uiDC, "badcd");
         return 1;
 
     case 5:
         Key_SetCatcher(8);
-        Menus_OpenByName(uiInfo, "team");
+        Menus_OpenByName(&uiInfo->uiDC, "team");
         return 1;
 
     case 6:
@@ -5547,20 +5571,20 @@ qboolean UI_SetActiveMenu(int menu)
         uiInfo->uiDC.cursory = 0x1df;
         Key_SetCatcher(8);
         (*(clientActive_t **)imp_cl)->displayHUDWithKeycatchUI = 1;
-        Menus_CloseAll(uiInfo);
-        Menus_OpenByName(uiInfo, "quickmessage");
+        Menus_CloseAll(&uiInfo->uiDC);
+        Menus_OpenByName(&uiInfo->uiDC, "quickmessage");
         return 1;
 
     case 9:
     case 10:
-        pFocus = (menuDef_t *)Menu_GetFocused(uiInfo);
+        pFocus = Menu_GetFocused(&uiInfo->uiDC);
         if (pFocus) {
             int activeMenu = uiInfo->currentMenuType;
             if (activeMenu != 9 && activeMenu != 10)
                 return 0;
         }
 
-        legacyBase = *(byte **)imp_legacyHacks;
+        legacyBase = (byte *)legacyHacks;
         if (pFocus) {
             if (I_stricmp(pFocus->window.name, ((LegacyHacks *)legacyBase)->ui_newScriptMenu) == 0)
                 return 1;
@@ -5574,17 +5598,17 @@ qboolean UI_SetActiveMenu(int menu)
         }
 
         Key_SetCatcher(8);
-        Menus_CloseAll(uiInfo);
+        Menus_CloseAll(&uiInfo->uiDC);
         strcpy(((LegacyHacks *)legacyBase)->ui_scriptMenu, ((LegacyHacks *)legacyBase)->ui_newScriptMenu);
         ((LegacyHacks *)legacyBase)->ui_scriptMenuIndex = ((LegacyHacks *)legacyBase)->ui_newScriptMenuIndex;
         (*(byte *)&((LegacyHacks *)legacyBase)->ui_newScriptMenu[0]) = 0;
         ((LegacyHacks *)legacyBase)->ui_newScriptMenuIndex = -1;
-        Menus_OpenByName(uiInfo, ((LegacyHacks *)legacyBase)->ui_scriptMenu);
+        Menus_OpenByName(&uiInfo->uiDC, ((LegacyHacks *)legacyBase)->ui_scriptMenu);
         return 1;
 
     case 11:
         Key_SetCatcher(8);
-        Menus_OpenByName(uiInfo, "player_profile");
+        Menus_OpenByName(&uiInfo->uiDC, "player_profile");
         SND_FadeAllSounds(1.0f, 1000);
         return 1;
     }
@@ -5594,17 +5618,17 @@ qboolean UI_SetActiveMenu(int menu)
 
 qboolean UI_IsFullscreen(void)
 {
-    return Menus_AnyFullScreenVisible(uiInfo);
+    return Menus_AnyFullScreenVisible(&uiInfo->uiDC);
 }
 
 qboolean UI_AnyFullScreenMenuVisible(void)
 {
-    return Menus_AnyFullScreenVisible(uiInfo);
+    return Menus_AnyFullScreenVisible(&uiInfo->uiDC);
 }
 
 void UI_CloseAll(void)
 {
-    Menus_CloseAll(uiInfo);
+    Menus_CloseAll(&uiInfo->uiDC);
 }
 
 void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style)
@@ -5627,29 +5651,29 @@ void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float
 #endif
 
 serverStatusDvar_t serverStatusDvars[23] = {
-    { (const char *)&str_002a714c, (const char *)&str_002a9ab8, 0x0 },
-    { (const char *)&str_002a9ad0, (const char *)&str_002a9ad8, 0x0 },
-    { (const char *)&str_002a9af0, (const char *)&str_002a9af8, 0x1 },
-    { (const char *)&str_002a9b10, (const char *)&str_002a9b1c, 0x0 },
-    { (const char *)&str_002a7100, (const char *)&str_002a9b34, 0x0 },
-    { (const char *)&str_002a71f0, (const char *)&str_002a9b4c, 0x1 },
-    { (const char *)&str_002a7124, (const char *)&str_002a9b60, 0x0 },
-    { (const char *)&str_002168fc, (const char *)&str_002a9b74, 0x0 },
-    { (const char *)&str_002a7118, (const char *)&str_002a9b8c, 0x0 },
-    { (const char *)&str_002a9ba4, (const char *)&str_002a9bb0, 0x0 },
-    { (const char *)&str_002a9bc8, (const char *)&str_002a9bd4, 0x0 },
-    { (const char *)&str_002a9bec, (const char *)&str_002a9bf8, 0x0 },
-    { (const char *)&str_002a9c10, (const char *)&str_002a9c20, 0x1 },
-    { (const char *)&str_002a9c3c, (const char *)&str_002a9c50, 0x0 },
-    { (const char *)&str_002a70dc, (const char *)&str_002a9c68, 0x0 },
-    { (const char *)&str_002a9c80, (const char *)&str_002a9c94, 0x0 },
-    { (const char *)&str_002a9cb0, (const char *)&str_002a9cc4, 0x0 },
-    { (const char *)&str_00216d64, (const char *)&str_002a9ce0, 0x0 },
-    { (const char *)&str_002a9cf4, (const char *)&str_002a9cf8, 0x1 },
-    { (const char *)&str_002a9d04, (const char *)&str_002a9d10, 0x1 },
-    { (const char *)&str_002a9d28, (const char *)&str_002a9d34, 0x1 },
-    { (const char *)&str_002a71c8, (const char *)&str_002a9d4c, 0x1 },
-    { 0, 0, 0x0 }
+    { (const char *)&str_002a714c, (const char *)&str_002a9ab8, (sscType_t)0x0 },
+    { (const char *)&str_002a9ad0, (const char *)&str_002a9ad8, (sscType_t)0x0 },
+    { (const char *)&str_002a9af0, (const char *)&str_002a9af8, (sscType_t)0x1 },
+    { (const char *)&str_002a9b10, (const char *)&str_002a9b1c, (sscType_t)0x0 },
+    { (const char *)&str_002a7100, (const char *)&str_002a9b34, (sscType_t)0x0 },
+    { (const char *)&str_002a71f0, (const char *)&str_002a9b4c, (sscType_t)0x1 },
+    { (const char *)&str_002a7124, (const char *)&str_002a9b60, (sscType_t)0x0 },
+    { (const char *)&str_002168fc, (const char *)&str_002a9b74, (sscType_t)0x0 },
+    { (const char *)&str_002a7118, (const char *)&str_002a9b8c, (sscType_t)0x0 },
+    { (const char *)&str_002a9ba4, (const char *)&str_002a9bb0, (sscType_t)0x0 },
+    { (const char *)&str_002a9bc8, (const char *)&str_002a9bd4, (sscType_t)0x0 },
+    { (const char *)&str_002a9bec, (const char *)&str_002a9bf8, (sscType_t)0x0 },
+    { (const char *)&str_002a9c10, (const char *)&str_002a9c20, (sscType_t)0x1 },
+    { (const char *)&str_002a9c3c, (const char *)&str_002a9c50, (sscType_t)0x0 },
+    { (const char *)&str_002a70dc, (const char *)&str_002a9c68, (sscType_t)0x0 },
+    { (const char *)&str_002a9c80, (const char *)&str_002a9c94, (sscType_t)0x0 },
+    { (const char *)&str_002a9cb0, (const char *)&str_002a9cc4, (sscType_t)0x0 },
+    { (const char *)&str_00216d64, (const char *)&str_002a9ce0, (sscType_t)0x0 },
+    { (const char *)&str_002a9cf4, (const char *)&str_002a9cf8, (sscType_t)0x1 },
+    { (const char *)&str_002a9d04, (const char *)&str_002a9d10, (sscType_t)0x1 },
+    { (const char *)&str_002a9d28, (const char *)&str_002a9d34, (sscType_t)0x1 },
+    { (const char *)&str_002a71c8, (const char *)&str_002a9d4c, (sscType_t)0x1 },
+    { 0, 0, (sscType_t)0x0 }
 };
 
 const char str_002168fc[] = "shortversion";

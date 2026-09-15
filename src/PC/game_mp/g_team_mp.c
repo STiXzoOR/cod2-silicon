@@ -1,11 +1,13 @@
 #include "common_types.h"
 #include "imports.h"
 #include <string.h>
+/* dvar globals */
+extern const dvar_t *g_maxclients;
 
-extern void G_GetPlayerViewOrigin(gentity_t *ent, vec3_t origin);
-extern void G_GetPlayerViewDirection(gentity_t *ent, vec3_t forward, vec3_t right, vec3_t up);
+extern void G_GetPlayerViewOrigin(gentity_t *ent, vec_t *origin);
+extern void G_GetPlayerViewDirection(gentity_t *ent, vec_t *forward, vec_t *right, vec_t *up);
 extern void G_TraceCapsule(trace_t *trace, vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int passEntityNum, int contentMask);
-extern int G_IsPlaying(gentity_t *ent);
+extern qboolean G_IsPlaying(gentity_t *ent);
 
 extern byte g_entities_ptr[];
 extern byte level_ptr[];
@@ -27,19 +29,14 @@ qboolean OnSameTeam(gentity_t *ent1, gentity_t *ent2)
     int team1;
 
     cl1 = ent1->client;
-    if (!cl1)
-        return 0;
-
-    cl2 = ent2->client;
-    if (!cl2)
-        return 0;
-
-    team1 = cl1->sess.cs.team;
-    if (team1 == 0)
-        return 0;
-
-    if (team1 == cl2->sess.cs.team)
-        return 1;
+    if (cl1) {
+        cl2 = ent2->client;
+        if (cl2) {
+            team1 = cl1->sess.cs.team;
+            if (team1)
+                return team1 == cl2->sess.cs.team;
+        }
+    }
 
     return 0;
 }
@@ -133,7 +130,7 @@ void CheckTeamStatus(void)
 
     level->lastTeammateHealthTime = time;
 
-    maxClients = (*(const dvar_t **)imp_g_maxclients)->current.integer;
+    maxClients = (g_maxclients)->current.integer;
     if (maxClients <= 0)
         return;
 

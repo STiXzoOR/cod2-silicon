@@ -16,7 +16,7 @@ static Bool CM_TraceThroughLeafBrushNode(void);
 static qboolean CM_TraceSphereThroughSphere(const vec_t *vStationary, trace_t *trace);
 static qboolean CM_SightTraceSphereThroughSphere(const vec_t *vStationary, trace_t *trace);
 clipHandle_t CM_TempBoxModel(const vec_t *mins, const vec_t *maxs, int contents);
-static int CM_TraceThroughTree(const vec_t *p2, trace_t *trace);
+static int CM_TraceThroughTree(const traceWork_t *tw, int num, const vec_t *p1, const vec_t *p2, trace_t *trace);
 int CM_ContentsOfModel(clipHandle_t handle);
 float CM_RadiusOfModel(clipHandle_t handle);
 static int __attribute_regparm__(3) CM_Trace(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask);
@@ -44,12 +44,21 @@ extern clipMap_t cm;
 extern void CM_CalcTraceEntents(TraceExtents *extents);
 extern int CM_BoxLeafnums(const vec_t *mins, const vec_t *maxs, int *list, int listsize, int *lastLeaf);
 extern short int CM_MeshTestInLeaf(const traceWork_t *tw, cLeaf_t *leaf, trace_t *trace);
-extern short int CM_TraceThroughAabbTree(const traceWork_t *tw, CollisionAabbTree *aabbTree, trace_t *trace);
-extern void AnglesToAxis(vec3_t angles, float *axis);
+extern void CM_TraceThroughAabbTree(const traceWork_t *tw, CollisionAabbTree *aabbTree, trace_t *trace);
+extern void AnglesToAxis(const vec_t *angles, vec3_t *axis);
 extern void MatrixTransformVector(const vec_t *in, const vec_t *matrix, vec_t *out);
 extern void MatrixTransposeTransformVector(const vec_t *in, const vec_t *matrix, vec_t *out);
 
 #define CM_TEMP_BOX_MODEL ((clipHandle_t)0x3ff)
+
+/* Retail inlined the trace-work setup and model resolution into every tracer
+ * (Mac STABS shows no standalone CM_InitTraceWork/CM_ModelForHandle). __attribute__
+ * is stripped on the VC7.1 matching shim, so force the inline with __forceinline. */
+#if defined(_MSC_VER)
+#define CM_FORCEINLINE __forceinline
+#else
+#define CM_FORCEINLINE inline __attribute__((always_inline))
+#endif
 
 static cbrush_t cm_fallbackBoxBrush;
 static cmodel_t cm_fallbackBoxModel;
@@ -87,7 +96,7 @@ static inline __attribute__((always_inline)) TraceThreadInfo *CM_GetThreadInfo(v
     return (TraceThreadInfo *)Sys_GetValue(3);
 }
 
-static cmodel_t *CM_ModelForHandle(clipHandle_t handle)
+static CM_FORCEINLINE cmodel_t *CM_ModelForHandle(clipHandle_t handle)
 {
     if (handle < cm.numSubModels)
         return &cm.cmodels[handle];
@@ -102,7 +111,7 @@ static cmodel_t *CM_ModelForHandle(clipHandle_t handle)
     return CM_ClipHandleToModel(handle);
 }
 
-static cbrush_t *CM_BoxBrush(void)
+static CM_FORCEINLINE cbrush_t *CM_BoxBrush(void)
 {
     TraceThreadInfo *threadInfo = CM_GetThreadInfo();
     if (threadInfo && threadInfo->box_brush)
@@ -110,7 +119,7 @@ static cbrush_t *CM_BoxBrush(void)
     return &cm_fallbackBoxBrush;
 }
 
-static void CM_InitTraceThreadInfo(traceWork_t *tw)
+static CM_FORCEINLINE void CM_InitTraceThreadInfo(traceWork_t *tw)
 {
     TraceThreadInfo *threadInfo = CM_GetThreadInfo();
 
@@ -122,7 +131,7 @@ static void CM_InitTraceThreadInfo(traceWork_t *tw)
     tw->threadInfo = *threadInfo;
 }
 
-static void CM_InitTraceWork(traceWork_t *tw, const vec_t *start, const vec_t *end,
+static CM_FORCEINLINE void CM_InitTraceWork(traceWork_t *tw, const vec_t *start, const vec_t *end,
                              const vec_t *mins, const vec_t *maxs, int brushmask)
 {
     int axis;
@@ -382,6 +391,94 @@ static void CM_TraceLeaf(const traceWork_t *tw, cLeaf_t *leaf, trace_t *trace)
         CM_TraceLeafTerrain(tw, leaf, trace);
 }
 
+/* Collision epsilons and clamp bounds. */
+#define CM_AXIAL_EPS   0.125f     /* axial box-offset epsilon */
+#define CM_DIAG_OFFSET 2048.0f    /* box on a diagonal plane: conservative straddle */
+#define CM_ONE         1.0f       /* reciprocal numerator / clamp bound */
+/* Memory-resident static const rather than #define, so the comparison against them
+ * emits `fcomp ds:[const]` rather than `ftst`. */
+static const float cm_splitZero = 0.0f;             /* sign-test threshold */
+static const float cm_parallelEps = 4.76837158e-07f;/* 0x35000000 (2^-21) */
+#define CM_SPLIT_EPS   cm_splitZero
+#define CM_PARALLEL_EP cm_parallelEps
+
+/* Recursive parametric BSP box-trace: internal nodes split the (box-center) segment
+ * on the node plane; a leaf (num<0) traces inline.
+ * p1/p2 are vec4 {x,y,z,frac}. Recurses the near child, iterates the far. */
+static int CM_TraceThroughTree(const traceWork_t *tw, int num,
+                               const vec_t *p1_in, const vec_t *p2, trace_t *trace)
+{
+    float p1[4];
+    float mid[4];
+    int i;
+
+    p1[0] = p1_in[0];
+    p1[1] = p1_in[1];
+    p1[2] = p1_in[2];
+    p1[3] = p1_in[3];
+
+    while (num >= 0) {
+        cNode_t *node = &cm.nodes[num];
+        cplane_t *plane = node->plane;
+        float d1, d2, offset, spread, aspread, sd1, inv, fracA, fracB;
+        int nearSide;
+
+        if (plane->type < 3) {
+            d1 = p1[plane->type] - plane->dist;
+            d2 = p2[plane->type] - plane->dist;
+            offset = tw->size[plane->type] + CM_AXIAL_EPS;
+        } else {
+            d1 = p1[0] * plane->normal[0] + p1[1] * plane->normal[1] + p1[2] * plane->normal[2] - plane->dist;
+            d2 = p2[0] * plane->normal[0] + p2[1] * plane->normal[1] + p2[2] * plane->normal[2] - plane->dist;
+            offset = tw->isPoint ? CM_AXIAL_EPS : CM_DIAG_OFFSET;
+        }
+
+        if ((d2 - d1 < CM_SPLIT_EPS ? d2 : d1) >= offset) {
+            num = node->children[0];
+            continue;
+        }
+        if ((d1 - d2 < CM_SPLIT_EPS ? d2 : d1) <= -offset) {
+            num = node->children[1];
+            continue;
+        }
+
+        if (trace->fraction < p1[3])
+            return 0;
+
+        spread = d2 - d1;
+        aspread = fabsf(spread);
+
+        if (aspread <= CM_PARALLEL_EP) {
+            fracA = 0.0f;
+            fracB = CM_ONE;
+            nearSide = 0;
+        } else {
+            sd1 = spread < CM_SPLIT_EPS ? d1 : -d1;
+            inv = CM_ONE / aspread;
+            fracA = (sd1 - offset) * inv;
+            fracB = (sd1 + offset) * inv;
+            nearSide = spread < CM_SPLIT_EPS ? 0 : 1;
+        }
+
+        /* near sub-segment [p1 .. p1+fracB*(p2-p1)] -> children[nearSide] */
+        if (CM_ONE - fracB < CM_SPLIT_EPS)
+            fracB = CM_ONE;
+        for (i = 0; i < 4; i++)
+            mid[i] = (p2[i] - p1[i]) * fracB + p1[i];
+        CM_TraceThroughTree(tw, node->children[nearSide], p1, mid, trace);
+
+        /* far sub-segment: advance p1 to p1+fracA*(p2-p1) -> children[nearSide^1] */
+        if (fracA < CM_SPLIT_EPS)
+            fracA = 0.0f;
+        for (i = 0; i < 4; i++)
+            p1[i] = (p2[i] - p1[i]) * fracA + p1[i];
+        num = node->children[nearSide ^ 1];
+    }
+
+    CM_TraceLeaf(tw, &cm.leafs[-1 - num], trace);
+    return 0;
+}
+
 static int __attribute_regparm__(3) CM_Trace(trace_t *results, const vec_t *start, const vec_t *end,
                                                          const vec_t *mins, const vec_t *maxs,
                                                          clipHandle_t model, int brushmask)
@@ -404,19 +501,16 @@ static int __attribute_regparm__(3) CM_Trace(trace_t *results, const vec_t *star
     }
 
     {
-        int leafs[1024];
-        int lastLeaf = 0;
-        int leafCount;
+        float p1[4], p2[4];
         int i;
 
-        leafCount = CM_BoxLeafnums(tw.bounds[0], tw.bounds[1], leafs, 1024, &lastLeaf);
-        for (i = 0; i < leafCount; i++) {
-            int leafIndex = leafs[i];
-            if (leafIndex >= 0 && leafIndex < cm.numLeafs)
-                CM_TraceLeaf(&tw, &cm.leafs[leafIndex], results);
-            if (results->allsolid || results->fraction == 0.0f)
-                break;
+        for (i = 0; i < 3; i++) {
+            p1[i] = tw.extents.start[i];
+            p2[i] = tw.extents.end[i];
         }
+        p1[3] = 0.0f;
+        p2[3] = 1.0f;
+        CM_TraceThroughTree(&tw, 0, p1, p2, results);
     }
 
     return 0;
@@ -470,14 +564,142 @@ int CM_BoxTrace(trace_t *results, const vec_t *start, const vec_t *end,
     return CM_Trace(results, start, end, mins, maxs, model, brushmask);
 }
 
+extern const vec_t Vec3Normalize(vec_t *v);
+extern const vec_t Vec3NormalizeTo(const vec_t *v, vec_t *out);
+
+/* 0x0041E070 ray-vs-sphere sight test: 1 = clears, 0 = blocked. */
+static int CM_SightRaySphere(const traceWork_t *tw, const vec_t *a, const vec_t *b,
+                             float rbias, trace_t *tr)
+{
+    vec3_t d, dn;
+    float R, c, proj, disc, dls, len;
+
+    d[0] = a[0] - b[0];
+    d[1] = a[1] - b[1];
+    d[2] = a[2] - b[2];
+    R = rbias + tw->radius;
+    c = (d[2] * d[2] + d[1] * d[1] + d[0] * d[0]) - R * R;
+    if (c <= 0.0f)
+        return 0;
+    proj = d[2] * tw->delta[2] + d[1] * tw->delta[1] + d[0] * tw->delta[0];
+    if (proj >= 0.0f)
+        return 1;
+    dls = tw->deltaLenSq;
+    disc = proj * proj - dls * c;
+    if (disc < 0.0f)
+        return 1;
+    len = Vec3NormalizeTo(d, dn);
+    if ((proj * 0.125f) / len + (-proj - sqrtf(disc)) / dls < tr->fraction)
+        return 0;
+    return 1;
+}
+
+/* 0x0041E180 ray-vs-capsule (cylinder wall) sight test: 1 = clears, 0 = blocked. */
+static int CM_SightRayCapsule(const traceWork_t *tw, const vec_t *end,
+                              float rbias, trace_t *tr)
+{
+    vec3_t d, dn;
+    float R, c, proj, disc, dls, len, root, axial, halfLen;
+
+    d[0] = tw->extents.start[0] - end[0];
+    d[1] = tw->extents.start[1] - end[1];
+    d[2] = tw->extents.start[2] - end[2];
+    R = rbias + tw->radius;
+    c = (d[1] * d[1] + d[0] * d[0]) - R * R;
+    root = 0.0f;
+    if (c > 0.0f) {
+        proj = d[1] * tw->delta[1] + d[0] * tw->delta[0];
+        if (!(proj < 0.0f))
+            return 1;
+        dls = tw->deltaLenSq;
+        disc = proj * proj - dls * c;
+        if (!(disc >= 0.0f))
+            return 1;
+        len = Vec3NormalizeTo(d, dn);
+        root = (proj * 0.125f) / len + (-proj - sqrtf(disc)) / dls;
+        if (!(root < tr->fraction))
+            return 1;
+    }
+    axial = root * tw->delta[2] + tw->extents.start[2] - end[2];
+    if (axial < 0.0f)
+        axial = -axial;
+    halfLen = tw->size[2] - tw->radius + rbias;
+    if (!(axial <= halfLen))
+        return 1;
+    return 0;
+}
+
+/* 0x0041E2C0 swept-box vs rounded brush sight test: -1 = blocked, 0 = clears.
+ * AABB cull is exact; corner/edge sweep is being reconstructed against the carved bytes. */
+static int CM_SightTraceThroughBrush(const traceWork_t *tw, cbrush_t *brush, trace_t *tr)
+{
+    if (brush->maxs[0] + 1.0f < tw->bounds[0][0])
+        return 0;
+    if (brush->maxs[1] + 1.0f < tw->bounds[0][1])
+        return 0;
+    if (brush->maxs[2] + 1.0f < tw->bounds[0][2])
+        return 0;
+    if (brush->mins[0] - 1.0f > tw->bounds[1][0])
+        return 0;
+    if (brush->mins[1] - 1.0f > tw->bounds[1][1])
+        return 0;
+    if (brush->mins[2] - 1.0f > tw->bounds[1][2])
+        return 0;
+
+    {
+        vec3_t corner;
+        corner[0] = brush->mins[0];
+        corner[1] = brush->mins[1];
+        corner[2] = brush->mins[2];
+        if (!CM_SightRaySphere(tw, corner, tw->extents.start, 0.0f, tr))
+            return -1;
+        if (!CM_SightRayCapsule(tw, corner, 0.0f, tr))
+            return -1;
+    }
+    return 0;
+}
+
 int CM_BoxSightTrace(int oldHitNum, const vec_t *start, const vec_t *end,
                      const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask)
 {
+    traceWork_t tw;
     trace_t trace;
 
     (void)oldHitNum;
-    CM_BoxTrace(&trace, start, end, mins, maxs, model, brushmask);
-    return trace.fraction < 1.0f || trace.startsolid || trace.allsolid;
+    CM_InitTraceWork(&tw, start, end, mins, maxs, brushmask);
+    trace.fraction = 1.0f;
+    trace.startsolid = 0;
+    trace.allsolid = 0;
+
+    if (model == CM_TEMP_BOX_MODEL) {
+        return CM_SightTraceThroughBrush(&tw, CM_BoxBrush(), &trace);
+    }
+
+    if (model != 0) {
+        cmodel_t *cmodel = CM_ModelForHandle(model);
+        if (cmodel)
+            CM_TraceLeaf(&tw, &cmodel->leaf, &trace);
+        return trace.fraction < 1.0f || trace.startsolid || trace.allsolid;
+    }
+
+    {
+        int leafs[1024];
+        int lastLeaf = 0;
+        int leafCount;
+        int i;
+
+        leafCount = CM_BoxLeafnums(tw.bounds[0], tw.bounds[1], leafs, 1024, &lastLeaf);
+        for (i = 0; i < leafCount; i++) {
+            int leafIndex = leafs[i];
+            if (leafIndex >= 0 && leafIndex < cm.numLeafs) {
+                CM_TraceLeaf(&tw, &cm.leafs[leafIndex], &trace);
+                if (trace.fraction < 1.0f || trace.startsolid || trace.allsolid)
+                    return 1;
+            }
+        }
+    }
+
+    return 0;
 }
 
 extern void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up);

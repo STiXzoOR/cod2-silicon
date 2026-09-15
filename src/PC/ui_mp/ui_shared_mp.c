@@ -53,7 +53,7 @@ extern int UI_PlayLocalSoundAliasByName(const char *name);
 extern void UI_RunMenuScript(const char **args);
 extern qboolean UI_ClientIsInGame(void);
 extern void UI_Pause(qboolean pause);
-extern float UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle material);
+extern void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle hMaterial);
 extern void UI_DrawRect(float x, float y, float w, float h, int horzAlign, int vertAlign, float size, const vec_t *color);
 extern float UI_FillRect(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color);
 extern void UI_DrawSides(float x, float y, float w, float h, int horzAlign, int vertAlign, float size, const vec_t *color);
@@ -67,7 +67,7 @@ extern qboolean UI_OwnerDrawVisible(int flags);
 extern void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, FontHandle font, float scale, vec_t *color, MaterialHandle shader, int textStyle);
 extern qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, int *special, int key);
 extern int UI_FeederCount(float feederID);
-extern MaterialHandle UI_FeederItemImage(float feederID, int index);
+extern MaterialHandle UI_FeederItemImage(const float feederID, int index);
 extern const char *UI_FeederItemText(float feederID, int index, int column, MaterialHandle *handle);
 extern void UI_FeederSelection(float feederID, int index);
 extern void UI_OverrideCursorPos(itemDef_t *item);
@@ -82,16 +82,16 @@ extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack)
 extern const char *CL_GetConfigString(int index);
 extern void CIN_DrawCinematic(int handle);
 extern int CIN_PlayCinematic(const char *name, int x, int y, int w, int h, int flags);
-extern int CIN_RunCinematic(int handle);
+extern e_status CIN_RunCinematic(int handle);
 extern void CIN_SetExtents(int handle, int x, int y, int w, int h);
-extern int CIN_StopCinematic(int handle);
+extern e_status CIN_StopCinematic(int handle);
 extern void Key_GetBindingBuf(int keynum, char *buf, int buflen);
 extern void Key_KeynumToStringBuf(int keynum, char *buf, int buflen);
 extern void Key_SetBinding(int keynum, const char *binding);
 extern void Key_SetOverstrikeMode(qboolean state);
 extern int Key_GetCatcher(void);
 extern void Key_SetCatcher(int catcher);
-extern qboolean Item_EnableShowViaDvar(itemDef_t *item, int flags);
+extern qboolean Item_EnableShowViaDvar(const itemDef_t *item, int flag);
 extern int Item_GetCursorPosOffset(const itemDef_t *item, const char *buff, int direction);
 extern struct listBoxDef_s *Item_GetListBoxDef(itemDef_t *item);
 extern struct multiDef_s *Item_GetMultiDef(itemDef_t *item);
@@ -109,12 +109,12 @@ extern void Menu_UpdatePosition(menuDef_t *menu);
 extern void Window_AddDynamicFlags(itemDef_t *item, int flags);
 extern void Window_RemoveDynamicFlags(itemDef_t *item, int flags);
 extern void Window_SetDynamicFlags(itemDef_t *item, int flags);
-extern void Window_SetOffsetTime(itemDef_t *item, int time);
-extern void Window_SetRect(void *item, const rectDef_t *rect);
-extern void Window_SetRectClient(void *item, const rectDef_t *rect);
-extern void Window_SetRectEffects0(void *item, const rectDef_t *rect);
-extern void Window_SetRectEffects1(void *item, const rectDef_t *rect);
-extern int I_isdigit(int c);
+extern void Window_SetOffsetTime(Window *w, int offsetTime);
+extern void Window_SetRect(Window *w, const UiRectangle *rect);
+extern void Window_SetRectClient(Window *w, const UiRectangle *rectClient);
+extern void Window_SetRectEffects0(Window *item, const rectDef_t *rect);
+extern void Window_SetRectEffects1(Window *item, const rectDef_t *rect);
+extern unsigned char I_isdigit(int c);
 extern int I_isforfilename(int c);
 extern int Sys_Milliseconds(void);
 extern char Com_GetDecimalDelimiter(void);
@@ -384,10 +384,10 @@ void Script_SetColor(displayContextDef_t *dc, itemDef_t *item, const char **args
 
     if (I_stricmp(name, "backcolor") == 0) {
         out = item->window.backColor;
-        Window_AddDynamicFlags((void *)item, 0x8000);
+        Window_AddDynamicFlags( (itemDef_t *)((void *)item), 0x8000);
     } else if (I_stricmp(name, "forecolor") == 0) {
         out = item->window.foreColor;
-        Window_AddDynamicFlags((void *)item, 0x10000);
+        Window_AddDynamicFlags( (itemDef_t *)((void *)item), 0x10000);
     } else if (I_stricmp(name, "bordercolor") == 0) {
         out = item->window.borderColor;
     }
@@ -422,9 +422,9 @@ void Menu_ShowItemByName(menuDef_t *menu, const char *p, qboolean bShow)
         if (!item)
             continue;
         if (bShow) {
-            Window_AddDynamicFlags((void *)item, 4);
+            Window_AddDynamicFlags( (itemDef_t *)((void *)item), 4);
         } else {
-            Window_RemoveDynamicFlags((void *)item, 4);
+            Window_RemoveDynamicFlags( (itemDef_t *)((void *)item), 4);
             int cinHandle = ((itemDef_t *)item)->window.cinematic;
             if (cinHandle >= 0) {
                 CIN_StopCinematic(cinHandle);
@@ -443,11 +443,11 @@ void Menu_FadeItemByName(menuDef_t *menu, const char *p, qboolean fadeOut)
         if (!item)
             continue;
         if (fadeOut) {
-            Window_AddDynamicFlags((void *)item, 0x14);
-            Window_RemoveDynamicFlags((void *)item, 0x20);
+            Window_AddDynamicFlags( (itemDef_t *)((void *)item), 0x14);
+            Window_RemoveDynamicFlags( (itemDef_t *)((void *)item), 0x20);
         } else {
-            Window_AddDynamicFlags((void *)item, 0x24);
-            Window_RemoveDynamicFlags((void *)item, 0x10);
+            Window_AddDynamicFlags( (itemDef_t *)((void *)item), 0x24);
+            Window_RemoveDynamicFlags( (itemDef_t *)((void *)item), 0x10);
         }
     }
 }
@@ -677,7 +677,7 @@ void Item_RunScript(displayContextDef_t *dc, itemDef_t *item, const char *s)
             const commandDef_t *cmd = commandList;
             for (i = 0; i < scriptCommandCount; i++, cmd++) {
                 if (I_stricmp(command, cmd->name) == 0) {
-                    commandList[i].handler(dc, item, &p);
+                    ((void (__cdecl *)(displayContextDef_t *, itemDef_t *, const char **))commandList[i].handler)(dc, item, &p);
                     goto next_command;
                 }
             }
@@ -891,11 +891,11 @@ void Item_MouseLeave(displayContextDef_t *dc, itemDef_t *item)
     if ((*(byte *)&((itemDef_t *)it)->window.dynamicFlags[0]) & 0x40) {
 
         Item_RunScript(dc, item, ((itemDef_t *)it)->mouseExitText);
-        Window_RemoveDynamicFlags((void *)item, 0x40);
+        Window_RemoveDynamicFlags( (itemDef_t *)((void *)item), 0x40);
     }
 
     Item_RunScript(dc, item, ((itemDef_t *)it)->mouseExit);
-    Window_RemoveDynamicFlags((void *)item, 0x300);
+    Window_RemoveDynamicFlags( (itemDef_t *)((void *)item), 0x300);
 }
 
 float Item_Slider_ThumbPosition(itemDef_t *item)
@@ -907,7 +907,7 @@ float Item_Slider_ThumbPosition(itemDef_t *item)
     if (!editDef)
         return 0.0f;
 
-    if ((*(int *)&((itemDef_t *)it)->text))
+    if (((itemDef_t *)it)->text)
         baseX = (((itemDef_s*)(it))->textRect[0].x) + (((itemDef_s*)(it))->textRect[0].w) + 8.0f;
     else
         baseX = (((rectDef_t*)(it))->x);
@@ -930,14 +930,20 @@ qboolean Menu_CheckOnKey(displayContextDef_t *dc, menuDef_t *menu, int key)
     byte tempItem[0x2a0];
     int i;
 
-    byte *node = (byte *)menu->onKey;
-    while (node) {
-        if (*(int *)node == key) {
+    if (getenv("COD2_KEYDIAG")) {
+        Com_Printf("[keydiag] menu=%p name=%s key=0x%x onKey(typed)=%p raw8@onKey=%016llx off=%lld\n",
+                   (void *)menu, menu->window.name ? menu->window.name : "(null)", key,
+                   (void *)menu->onKey, (unsigned long long)*(uintptr_t *)&menu->onKey,
+                   (long long)((char *)&menu->onKey - (char *)menu));
+    }
+    ItemKeyHandler *node = menu->onKey;
+    while (node && (uintptr_t)node > 0x10000) {
+        if (node->key == key) {
             *(void **)&(*(unsigned char *)&((itemDef_t *)tempItem)->parent) = menu;
-            Item_RunScript(dc, (itemDef_t *)tempItem, *(const char **)(node + 4));
+            Item_RunScript(dc, (itemDef_t *)tempItem, node->action);
             return 1;
         }
-        node = *(byte **)(node + 8);
+        node = (ItemKeyHandler *)node->next;
     }
 
     int itemCount = (((menuDef_t*)(m))->itemCount);
@@ -952,14 +958,14 @@ qboolean Menu_CheckOnKey(displayContextDef_t *dc, menuDef_t *menu, int key)
                 continue;
         }
 
-        node = (*(byte **)&((itemDef_t *)item)->onKey);
+        node = ((itemDef_t *)item)->onKey;
         while (node) {
-            if (*(int *)node == key) {
+            if (node->key == key) {
                 *(void **)&(*(unsigned char *)&((itemDef_t *)tempItem)->parent) = menu;
-                Item_RunScript(dc, (itemDef_t *)tempItem, *(const char **)(node + 4));
+                Item_RunScript(dc, (itemDef_t *)tempItem, node->action);
                 return 1;
             }
-            node = *(byte **)(node + 8);
+            node = (ItemKeyHandler *)node->next;
         }
     }
 
@@ -1079,7 +1085,7 @@ static void Scroll_Slider_SetThumbPos_impl(byte *dc, byte *item)
     if (!editDef)
         return;
 
-    if ((*(int *)&((itemDef_t *)item)->text))
+    if (((itemDef_t *)item)->text)
         rightEdge = (((itemDef_s*)(item))->textRect[0].x) + (((itemDef_s*)(item))->textRect[0].w) + 8.0f;
     else
         rightEdge = (((rectDef_t*)(item))->x);
@@ -1158,13 +1164,13 @@ void Menus_Close(displayContextDef_t *dc, menuDef_t *menu)
         for (i = menuNum; i >= 0; i--) {
             byte *m = *(byte **)((char *)&((displayContextDef_s *)d)->menuStack[i]);
             if ((*(byte *)&((menuDef_t *)m)->window.dynamicFlags[0]) & 4) {
-                Window_AddDynamicFlags((void *)m, 2);
+                Window_AddDynamicFlags( (itemDef_t *)((void *)m), 2);
                 break;
             }
         }
     }
 
-    Window_RemoveDynamicFlags((void *)menu, 6);
+    Window_RemoveDynamicFlags( (itemDef_t *)((void *)menu), 6);
 }
 
 void Menus_CloseAll(displayContextDef_t *dc)
@@ -1515,7 +1521,7 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
             thumbX, hy_bottom, 16.0f, 16.0f,
             horzAlign, vertAlign, 0, ((sharedUiInfo_t*)uiInfo)->assets.scrollBarThumb);
 
-        ListBox_SetEndPos((void *)listPtr, *(int *)listPtr);
+        ListBox_SetEndPos( (itemDef_t *)((void *)listPtr), *(int *)listPtr);
 
         float size = (((rectDef_t*)(it))->w) - 2.0f;
 
@@ -1554,7 +1560,7 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
             }
 
             x += (((listBoxDef_s*)(listPtr))->elementWidth);
-            ListBox_SetEndPos((void *)listPtr, (((listBoxDef_s*)(listPtr))->endPos[0]) + 1);
+            ListBox_SetEndPos( (itemDef_t *)((void *)listPtr), (((listBoxDef_s*)(listPtr))->endPos[0]) + 1);
             i++;
         }
         return;
@@ -1579,7 +1585,7 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
 
         float trackY = scrollY + 15.0f;
 
-        ListBox_SetEndPos((void *)listPtr, *(int *)listPtr);
+        ListBox_SetEndPos( (itemDef_t *)((void *)listPtr), *(int *)listPtr);
 
         float trackH = (((rectDef_t*)(it))->h) - 32.0f;
         UI_DrawHandlePic(
@@ -1635,7 +1641,7 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
                             ((itemDef_t *)it)->window.borderColor);
             }
 
-            ListBox_SetEndPos((void *)listPtr, (((listBoxDef_s*)(listPtr))->endPos[0]) + 1);
+            ListBox_SetEndPos( (itemDef_t *)((void *)listPtr), (((listBoxDef_s*)(listPtr))->endPos[0]) + 1);
             sizeH -= (((listBoxDef_s*)(listPtr))->elementWidth);
             if ((((listBoxDef_s*)(listPtr))->elementHeight) > sizeH) {
                 (((listBoxDef_s*)(listPtr))->drawPadding) = (int)((((listBoxDef_s*)(listPtr))->elementHeight) - sizeH);
@@ -1736,7 +1742,7 @@ void Item_ListBox_Paint(displayContextDef_t *dc, itemDef_t *item)
                 return;
             }
 
-            ListBox_SetEndPos((void *)listPtr, (((listBoxDef_s*)(listPtr))->endPos[0]) + 1);
+            ListBox_SetEndPos( (itemDef_t *)((void *)listPtr), (((listBoxDef_s*)(listPtr))->endPos[0]) + 1);
             y += (((listBoxDef_s*)(listPtr))->elementHeight);
 
             i++;
@@ -1778,7 +1784,7 @@ void Script_SetItemColor(displayContextDef_t *dc, itemDef_t *item, const char **
             out = (float *)(item2 + 0x1dc);
         } else if (I_stricmp(name, "forecolor") == 0) {
             out = (float *)(item2 + 0x1cc);
-            Window_AddDynamicFlags((void *)item2, 0x10000);
+            Window_AddDynamicFlags( (itemDef_t *)((void *)item2), 0x10000);
         } else if (I_stricmp(name, "bordercolor") == 0) {
             out = (float *)(item2 + 0x1ec);
         }
@@ -2086,10 +2092,10 @@ void Menu_TransitionItemByName(menuDef_t *menu, const char *p, rectDef_t rectFro
         if (!item)
             continue;
 
-        Window_AddDynamicFlags((void *)item, 0x84);
-        Window_SetOffsetTime((itemDef_t *)item, time);
-        Window_SetRectClient(item, &rectFrom);
-        Window_SetRectEffects0(item, &rectTo);
+        Window_AddDynamicFlags( (itemDef_t *)((void *)item), 0x84);
+        Window_SetOffsetTime( (Window *)((itemDef_t *)item), time);
+        Window_SetRectClient( (Window *)(item), &rectFrom);
+        Window_SetRectEffects0((Window *)item, &rectTo);
 
         rectDef_t newRect = (*(rectDef_t *)&((itemDef_t *)item)->window.rectEffects1[0].x);
         int dx = (int)(rectTo.x - rectFrom.x);
@@ -2101,7 +2107,7 @@ void Menu_TransitionItemByName(menuDef_t *menu, const char *p, rectDef_t rectFro
         int dh = (int)(rectTo.h - rectFrom.h);
         newRect.h = (float)(dh < 0 ? -dh : dh) / amt;
 
-        Window_SetRectEffects1(item, &newRect);
+        Window_SetRectEffects1((Window *)item, &newRect);
 
         byte *parent = (*(byte **)&((itemDef_t *)item)->parent);
         if (parent) {
@@ -2149,20 +2155,20 @@ void Menu_OrbitItemByName(menuDef_t *menu, const char *p, float x, float y, floa
         if (!item)
             continue;
 
-        Window_AddDynamicFlags((void *)item, 0x2004);
-        Window_SetOffsetTime((itemDef_t *)item, time);
+        Window_AddDynamicFlags( (itemDef_t *)((void *)item), 0x2004);
+        Window_SetOffsetTime( (Window *)((itemDef_t *)item), time);
 
         rectDef_t newRect;
         newRect = (*(rectDef_t *)&((itemDef_t *)item)->window.rectEffects0[0].x);
         newRect.x = cx;
         newRect.y = cy;
 
-        Window_SetRectEffects0(item, &newRect);
+        Window_SetRectEffects0((Window *)item, &newRect);
 
         newRect = (*(rectDef_t *)&((itemDef_t *)item)->window.rectClient[0].x);
         newRect.x = x;
         newRect.y = y;
-        Window_SetRectClient(item, &newRect);
+        Window_SetRectClient( (Window *)(item), &newRect);
 
         byte *parent = (*(byte **)&((itemDef_t *)item)->parent);
         if (parent) {
@@ -2240,7 +2246,7 @@ void Menus_Open(displayContextDef_t *dc, menuDef_t *menu)
 
     openCount = (((displayContextDef_s*)(d))->openMenuCount);
     for (i = openCount - 1; i >= 0; i--)
-        Window_RemoveDynamicFlags(*(void **)((char *)&((displayContextDef_s *)d)->menuStack[i]), 2);
+        Window_RemoveDynamicFlags( (itemDef_t *)(*(void **)((char *)&((displayContextDef_s *)d)->menuStack[i])), 2);
     openCount = (((displayContextDef_s*)(d))->openMenuCount);
 
     int removeIdx = -1;
@@ -2260,7 +2266,7 @@ void Menus_Open(displayContextDef_t *dc, menuDef_t *menu)
     int idx = (((displayContextDef_s*)(d))->openMenuCount);
     *(void **)((char *)&((displayContextDef_s *)d)->menuStack[idx]) = menu;
     (((displayContextDef_s*)(d))->openMenuCount) = idx + 1;
-    Window_AddDynamicFlags((void *)menu, 6);
+    Window_AddDynamicFlags( (itemDef_t *)((void *)menu), 6);
     if ((*(void **)&((menuDef_t *)m)->onOpen)) {
         *(void **)&(*(unsigned char *)&((itemDef_t *)tempItem)->parent) = menu;
         Item_RunScript(dc, (itemDef_t *)tempItem, ((menuDef_t *)m)->onOpen);
@@ -2343,7 +2349,7 @@ qboolean Display_MouseMove(displayContextDef_t *dc, void *p, int x, int y)
         rectDef_t newRect = *(rectDef_t *)menu;
         newRect.x += (float)x;
         newRect.y += (float)y;
-        Window_SetRect(p, &newRect);
+        Window_SetRect( (Window *)(p), &newRect);
         Menu_UpdatePosition((menuDef_t *)p);
         return 1;
     }
@@ -2912,7 +2918,7 @@ void Item_YesNo_Paint(displayContextDef_t *dc, itemDef_t *item)
     FontHandle font = UI_GetFontHandle(((itemDef_t *)it)->fontEnum, ((itemDef_t *)it)->textscale);
     float textX, textY;
 
-    if ((*(int *)&((itemDef_t *)it)->text)) {
+    if (((itemDef_t *)it)->text) {
 
         Item_Text_Paint(dc, item);
         textX = (((itemDef_s*)(it))->textRect[0].x) + (((itemDef_s*)(it))->textRect[0].w) + 8.0f;
@@ -2970,7 +2976,7 @@ void Item_Slider_Paint(displayContextDef_t *dc, itemDef_t *item)
 
     y = (((rectDef_t*)(it))->y);
 
-    if ((*(int *)&((itemDef_t *)it)->text)) {
+    if (((itemDef_t *)it)->text) {
 
         Item_Text_Paint(dc, item);
         x = (((itemDef_s*)(it))->textRect[0].x) + (((itemDef_s*)(it))->textRect[0].w) + 8.0f;
@@ -3053,7 +3059,7 @@ void Item_Bind_Paint(displayContextDef_t *dc, itemDef_t *item)
 draw:;
 
     byte *textRect = (byte *)((itemDef_t *)it)->textRect;
-    if ((*(int *)&((itemDef_t *)it)->text)) {
+    if (((itemDef_t *)it)->text) {
         Item_Text_Paint(dc, item);
 
         textX = (((itemDef_s*)(it))->textRect[0].x) + (((itemDef_s*)(it))->textRect[0].w) + 8.0f;
@@ -3161,7 +3167,7 @@ void Item_OwnerDraw_Paint(displayContextDef_t *dc, itemDef_t *item)
     MaterialHandle material = ((itemDef_t *)it)->window.background;
     FontHandle font = UI_GetFontHandle(((itemDef_t *)it)->fontEnum, scale);
 
-    if ((*(int *)&((itemDef_t *)it)->text) && ((const char *)(*(int *)&((itemDef_t *)it)->text))[0]) {
+    if (((itemDef_t *)it)->text && ((itemDef_t *)it)->text[0]) {
 
         Item_Text_Paint(dc, item);
         byte *textRect = (byte *)((itemDef_t *)it)->textRect;
@@ -3169,7 +3175,7 @@ void Item_OwnerDraw_Paint(displayContextDef_t *dc, itemDef_t *item)
         UI_OwnerDraw(ownerX, (((rectDef_t*)(it))->y), (((rectDef_t*)(it))->w), (((rectDef_t*)(it))->h),
                      (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign), 0.0f, (((itemDef_s*)(it))->textaligny),
                      ownerDraw, ownerDrawFlags, align, special, font, scale, color, (MaterialHandle)(intptr_t)material, style);
-    } else if ((*(int *)&((itemDef_t *)it)->text)) {
+    } else if (((itemDef_t *)it)->text) {
 
         byte *textRect = (byte *)((itemDef_t *)it)->textRect;
         float ownerX = (((itemDef_s*)(it))->textRect[0].x) + (((rectDef_t*)(textRect))->w);
@@ -3282,7 +3288,7 @@ qboolean Item_SetFocus(displayContextDef_t *dc, itemDef_t *item, float x, float 
     byte *d = (byte *)dc;
     int i;
 
-    snd_alias_list_t *defaultSound = *(snd_alias_list_t **)((byte *)imp_sharedUiInfo + 0x40);
+    snd_alias_list_t *defaultSound = ((sharedUiInfo_t *)imp_sharedUiInfo)->assets.itemFocusSound;
 
     if (!item)
         return 0;
@@ -3356,7 +3362,7 @@ check_dvar:;
             int sf = ((Window *)sibling)->dynamicFlags[0];
             if ((sf & 4) && (sf & 2))
                 oldFocus = sibling;
-            Window_RemoveDynamicFlags((void *)sibling, 2);
+            Window_RemoveDynamicFlags( (itemDef_t *)((void *)sibling), 2);
 
             byte *reloaded = *(byte **)((char *)&((menuDef_t *)menu)->items[i]);
             if (((itemDef_t *)reloaded)->leaveFocus)   /* was reloaded + 0x2bc (x86) */
@@ -3383,7 +3389,7 @@ check_dvar:;
         if (tcy < ty || tcy > ty + th)
             goto fail;
 
-        Window_AddDynamicFlags((void *)it, 2);
+        Window_AddDynamicFlags( (itemDef_t *)((void *)it), 2);
         snd_alias_list_t *itemSound = ((itemDef_t *)it)->focusSound;
         if (itemSound) {
             UI_PlayLocalSoundAlias(itemSound);
@@ -3393,7 +3399,7 @@ check_dvar:;
         goto set_cursor;
     }
 
-    Window_AddDynamicFlags((void *)it, 2);
+    Window_AddDynamicFlags( (itemDef_t *)((void *)it), 2);
 
     if ((*(void **)&((itemDef_t *)it)->onFocus))
         Item_RunScript(dc, item, ((itemDef_t *)it)->onFocus);
@@ -3409,9 +3415,8 @@ set_cursor:;
 
     if (menu) {
         int itemCount = (((menuDef_t*)(menu))->itemCount);
-        byte *items = (*(byte **)&((menuDef_t *)menu)->items);
         for (i = 0; i < itemCount; i++) {
-            if (*(void **)(items + i * 4) == item) {
+            if (((menuDef_t *)menu)->items[i] == item) {
                 Menu_SetCursorItem((menuDef_t *)menu, i);
                 return 1;
             }
@@ -3422,16 +3427,15 @@ set_cursor:;
 fail:
 
     if (oldFocus) {
-        Window_AddDynamicFlags(oldFocus, 2);
+        Window_AddDynamicFlags( (itemDef_t *)(oldFocus), 2);
         if ((*(void **)&((itemDef_t *)oldFocus)->onFocus))
             Item_RunScript(dc, (itemDef_t *)oldFocus, ((itemDef_t *)oldFocus)->onFocus);
     }
 
     if (menu) {
         int itemCount = (((menuDef_t*)(menu))->itemCount);
-        byte *items = (*(byte **)&((menuDef_t *)menu)->items);
         for (i = 0; i < itemCount; i++) {
-            if (*(void **)(items + i * 4) == item) {
+            if (((menuDef_t *)menu)->items[i] == item) {
                 Menu_SetCursorItem((menuDef_t *)menu, i);
                 return 1;
             }
@@ -4188,7 +4192,7 @@ qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qbool
                     scrollInfo.scrollDir = (overLB >> 8) & 1;
                     scrollInfo.item = item;
                     captureData = &scrollInfo;
-                    captureFunc = Scroll_ListBox_AutoFunc;
+                    captureFunc = (void (__cdecl *)(void))(Scroll_ListBox_AutoFunc);
                     itemCapture = item;
                 } else if (overLB & 0x400) {
 
@@ -4197,7 +4201,7 @@ qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qbool
                     scrollInfo.xStart = (float)((displayContextDef_t *)d)->cursorx;
                     scrollInfo.yStart = (float)(((displayContextDef_s*)(d))->cursory);
                     captureData = &scrollInfo;
-                    captureFunc = Scroll_ListBox_ThumbFunc;
+                    captureFunc = (void (__cdecl *)(void))(Scroll_ListBox_ThumbFunc);
                     itemCapture = item;
                 }
 
@@ -4224,7 +4228,7 @@ qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qbool
                     scrollInfo.xStart = (float)((displayContextDef_t *)d)->cursorx;
                     scrollInfo.yStart = (float)(((displayContextDef_s*)(d))->cursory);
                     captureData = &scrollInfo;
-                    captureFunc = Scroll_Slider_ThumbFunc;
+                    captureFunc = (void (__cdecl *)(void))(Scroll_Slider_ThumbFunc);
                     itemCapture = item;
                 }
 
@@ -4411,9 +4415,9 @@ void Item_ListBox_MouseEnter(itemDef_t *item, float x, float y)
     byte *listPtr = (byte *)Item_GetListBoxDef(item);
     if (!listPtr)
         return;
-    Window_RemoveDynamicFlags((void *)it, 0x1f00);
+    Window_RemoveDynamicFlags( (itemDef_t *)((void *)it), 0x1f00);
     int overLB = Item_ListBox_OverLB(item, x, y);
-    Window_AddDynamicFlags((void *)it, overLB);
+    Window_AddDynamicFlags( (itemDef_t *)((void *)it), overLB);
     int horzAlign = (((rectDef_t*)(it))->horzAlign);
     int vertAlign = (((rectDef_t*)(it))->vertAlign);
     if ((((Window *)it)->staticFlags & 0x200000)) {
@@ -4486,20 +4490,20 @@ void Item_MouseEnter(displayContextDef_t *dc, itemDef_t *item, float x, float y)
     if (inside) {
         if (!(flags & 0x40)) {
             Item_RunScript(dc, item, ((itemDef_t *)it)->mouseEnterText);
-            Window_AddDynamicFlags((void *)it, 0x40);
+            Window_AddDynamicFlags( (itemDef_t *)((void *)it), 0x40);
         }
         if (!(flags & 1)) {
             Item_RunScript(dc, item, ((itemDef_t *)it)->mouseEnter);
-            Window_AddDynamicFlags((void *)it, 1);
+            Window_AddDynamicFlags( (itemDef_t *)((void *)it), 1);
         }
     } else {
         if (flags & 0x40) {
             Item_RunScript(dc, item, ((itemDef_t *)it)->mouseExitText);
-            Window_RemoveDynamicFlags((void *)it, 0x40);
+            Window_RemoveDynamicFlags( (itemDef_t *)((void *)it), 0x40);
         }
         if (!(flags & 1)) {
             Item_RunScript(dc, item, ((itemDef_t *)it)->mouseEnter);
-            Window_AddDynamicFlags((void *)it, 1);
+            Window_AddDynamicFlags( (itemDef_t *)((void *)it), 1);
         }
     }
     if ((((itemDef_s*)(it))->type) == 6)
@@ -4563,7 +4567,7 @@ qboolean Menu_HandleMouseMove(displayContextDef_t *dc, menuDef_t *menu, float x,
                     Item_MouseLeave(dc, (itemDef_t *)orig);
                     orig = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
                     if (orig)
-                        Window_RemoveDynamicFlags((void *)orig, 1);
+                        Window_RemoveDynamicFlags( (itemDef_t *)((void *)orig), 1);
                 }
                 goto next_item;
             }
@@ -4571,7 +4575,7 @@ qboolean Menu_HandleMouseMove(displayContextDef_t *dc, menuDef_t *menu, float x,
             if (pass == 1) {
                 overItem = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
                 int itemType = (((itemDef_s*)(overItem))->type);
-                if (itemType == 0 && (*(int *)&((itemDef_t *)overItem)->text)) {
+                if (itemType == 0 && ((itemDef_t *)overItem)->text) {
                     int textBuf[6];
                     memset(textBuf, 0, 24);
                     textBuf[0] = (*(int*)&((itemDef_s*)(overItem))->textRect[0].x);
@@ -4617,7 +4621,7 @@ qboolean Menu_HandleMouseMove(displayContextDef_t *dc, menuDef_t *menu, float x,
             int itemCount = (((menuDef_t*)(m))->itemCount);
             for (i = 0; i < itemCount; i++) {
                 byte *it = *(byte **)((char *)&((menuDef_t *)m)->items[i]);
-                Window_RemoveDynamicFlags((void *)it, 2);
+                Window_RemoveDynamicFlags( (itemDef_t *)((void *)it), 2);
                 if ((*(void **)&((itemDef_t *)it)->leaveFocus))
                     Item_RunScript(dc, (itemDef_t *)it, ((itemDef_t *)it)->leaveFocus);
             }
@@ -5085,7 +5089,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
 
             newRect.y = rx * sin_a + ry * cos_a + ((itemDef_t *)it)->window.rectEffects0[0].y - h;
 
-            Window_SetRectClient(item, &newRect);
+            Window_SetRectClient( (Window *)(item), &newRect);
 
             byte *p = (*(byte **)&((itemDef_t *)it)->parent);
             if (p) {
@@ -5179,7 +5183,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
                 }
             }
 
-            Window_SetRectClient(item, &newRect);
+            Window_SetRectClient( (Window *)(item), &newRect);
 
             byte *p = (*(byte **)&((itemDef_t *)it)->parent);
             if (p) {
@@ -5250,7 +5254,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
         ((itemDef_t *)it)->window.background = CL_RegisterMaterialNoMip(dvarStr, 3);
     }
 
-    Window_Paint(dc, (void *)item,
+    Window_Paint(dc, (float (*)[4][32])item,
                  (((menuDef_t*)(parent))->fadeAmount), (((menuDef_t*)(parent))->fadeInAmount),
                  (((menuDef_t*)(parent))->fadeClamp), (float)(((menuDef_t*)(parent))->fadeCycle));
 
@@ -5443,7 +5447,7 @@ void Menu_Paint(displayContextDef_t *dc, menuDef_t *menu, qboolean forcePaint)
         goto paint_content;
     }
 
-    Window_AddDynamicFlags((void *)m, 0x4000);
+    Window_AddDynamicFlags( (itemDef_t *)((void *)m), 0x4000);
 
     byte *d = (byte *)dc;
     int openCount = (((displayContextDef_s*)(d))->openMenuCount);
@@ -5475,11 +5479,16 @@ paint_content:
             ((menuDef_t *)m)->window.background);
     }
 
-    Window_Paint(dc, (void *)m,
+    Window_Paint(dc, (float (*)[4][32])m,
                  (((menuDef_t*)(m))->fadeAmount), (((menuDef_t*)(m))->fadeInAmount),
                  (((menuDef_t*)(m))->fadeClamp), (float)(((menuDef_t*)(m))->fadeCycle));
 
     int itemCount = (((menuDef_t*)(m))->itemCount);
+    if (getenv("COD2_MENUDIAG") && itemCount != 0) {
+        Com_Printf("[itemdiag] menu=%p name=%p itemCount=%d items=%p\n",
+                   (void *)m, (void *)((menuDef_t *)m)->window.name, itemCount,
+                   (void *)((menuDef_t *)m)->items);
+    }
     if (itemCount > 0) {
         for (i = 0; i < itemCount; i++) {
             itemDef_t *item = *(itemDef_t **)((char *)&((menuDef_t *)m)->items[i]);
@@ -5502,13 +5511,20 @@ void Menu_PaintAll(displayContextDef_t *dc)
     (((displayContextDef_s*)(d))->blurRadiusOut) = 0.0f;
 
     if (captureFunc)
-        captureFunc(dc, captureData);
+        ((void (__cdecl *)(displayContextDef_t *, void *))captureFunc)(dc, captureData);
 
     int menuCount = ((displayContextDef_t *)d)->menuCount;
     int openCount = (((displayContextDef_s*)(d))->openMenuCount);
 
     for (i = 0; i < menuCount; i++) {
         void *menu = *(void **)((char *)&((displayContextDef_s *)d)->Menus[i]);
+
+        if (getenv("COD2_MENUDIAG")) {
+            const char *nm = menu ? ((menuDef_t *)menu)->window.name : (const char *)0;
+            Com_Printf("[menudiag] i=%d/%d menu=%p name=%p%s\n", i, menuCount, menu,
+                       (void *)nm,
+                       ((uintptr_t)nm > 0x10000) ? "" : " <BAD>");
+        }
 
         int isOpen = 0;
         for (j = openCount - 1; j >= 0; j--) {
@@ -5565,7 +5581,7 @@ void Menus_HandleOOBClick(displayContextDef_t *dc, menuDef_t *menu, int key, qbo
                 *(void **)&(*(unsigned char *)&((itemDef_t *)tempItem)->parent) = menu;
                 Item_RunScript(dc, (itemDef_t *)tempItem, ((menuDef_t *)m)->onClose);
             }
-            Window_RemoveDynamicFlags((void *)menu, 6);
+            Window_RemoveDynamicFlags( (itemDef_t *)((void *)menu), 6);
         }
 
     }
@@ -5612,7 +5628,7 @@ void Menus_HandleOOBClick(displayContextDef_t *dc, menuDef_t *menu, int key, qbo
                 continue;
 
             int itemType = (((itemDef_s*)(item))->type);
-            if (itemType != 0 && (*(int *)&((itemDef_t *)item)->text)) {
+            if (itemType != 0 && ((itemDef_t *)item)->text) {
 
                 int textBuf[6];
                 memset(textBuf, 0, 24);
@@ -5646,9 +5662,9 @@ found:;
 
     openCount = (((displayContextDef_s*)(d))->openMenuCount);
     for (i = openCount - 1; i >= 0; i--)
-        Window_RemoveDynamicFlags(*(void **)((char *)&((displayContextDef_s *)d)->menuStack[i]), 2);
+        Window_RemoveDynamicFlags( (itemDef_t *)(*(void **)((char *)&((displayContextDef_s *)d)->menuStack[i])), 2);
 
-    Window_AddDynamicFlags(*(void **)((char *)&((displayContextDef_s *)d)->menuStack[targetIdx]), 6);
+    Window_AddDynamicFlags( (itemDef_t *)(*(void **)((char *)&((displayContextDef_s *)d)->menuStack[targetIdx])), 6);
     Display_MouseMove(dc, NULL, ((displayContextDef_t *)d)->cursorx, (((displayContextDef_s*)(d))->cursory));
     Menu_HandleMouseMove(dc, *(menuDef_t **)((char *)&((displayContextDef_s *)d)->menuStack[targetIdx]), (float)((displayContextDef_t *)d)->cursorx, (float)(((displayContextDef_s*)(d))->cursory));
     Menu_HandleKey(dc, *(menuDef_t **)((char *)&((displayContextDef_s *)d)->menuStack[targetIdx]), key, down);
@@ -5701,34 +5717,34 @@ count_visible:;
 }
 
 commandDef_t commandList[28] = {
-    { (const char *)&str_002abdc4, &Script_FadeIn },
-    { (const char *)&str_002abdcc, &Script_FadeOut },
-    { (const char *)&str_002abdd4, &Script_Show },
-    { (const char *)&str_002abddc, &Script_Hide },
-    { (const char *)&str_002abde4, &Script_SetColor },
-    { (const char *)&str_002abdf0, &Script_Open },
-    { (const char *)&str_002abdf8, &Script_OpenForGameType },
-    { (const char *)&str_002abe08, &Script_CloseForGameType },
-    { (const char *)&str_002abe1c, &Script_Close },
-    { (const char *)&str_002abe24, &Script_InGameOpen },
-    { (const char *)&str_002abe30, &Script_InGameClose },
-    { (const char *)&str_002abe3c, &Script_SetBackground },
-    { (const char *)&str_002abe4c, &Script_SetItemColor },
-    { (const char *)&str_002abe5c, &Script_SetFocus },
-    { (const char *)&str_002abe68, &Script_SetFocusByDvar },
-    { (const char *)&str_002abe78, &Script_Transition },
-    { (const char *)&str_002abe84, &Script_SetDvar },
-    { (const char *)&str_00219060, &Script_Exec },
-    { (const char *)&str_002abe8c, &Script_ExecNow },
-    { (const char *)&str_002abe94, &Script_ExecOnDvarStringValue },
-    { (const char *)&str_002abeac, &Script_ExecOnDvarIntValue },
-    { (const char *)&str_002abec0, &Script_ExecOnDvarFloatValue },
-    { (const char *)&str_002abed8, &Script_ExecNowOnDvarStringValue },
-    { (const char *)&str_002abef4, &Script_ExecNowOnDvarIntValue },
-    { (const char *)&str_002abf0c, &Script_ExecNowOnDvarFloatValue },
-    { (const char *)&str_002abf24, &Script_Play },
-    { (const char *)&str_002abf2c, &Script_Orbit },
-    { (const char *)&str_002abf34, &Script_ScriptMenuResponse }
+    { (const char *)&str_002abdc4, (void (*)())&Script_FadeIn },
+    { (const char *)&str_002abdcc, (void (*)())&Script_FadeOut },
+    { (const char *)&str_002abdd4, (void (*)())&Script_Show },
+    { (const char *)&str_002abddc, (void (*)())&Script_Hide },
+    { (const char *)&str_002abde4, (void (*)())&Script_SetColor },
+    { (const char *)&str_002abdf0, (void (*)())&Script_Open },
+    { (const char *)&str_002abdf8, (void (*)())&Script_OpenForGameType },
+    { (const char *)&str_002abe08, (void (*)())&Script_CloseForGameType },
+    { (const char *)&str_002abe1c, (void (*)())&Script_Close },
+    { (const char *)&str_002abe24, (void (*)())&Script_InGameOpen },
+    { (const char *)&str_002abe30, (void (*)())&Script_InGameClose },
+    { (const char *)&str_002abe3c, (void (*)())&Script_SetBackground },
+    { (const char *)&str_002abe4c, (void (*)())&Script_SetItemColor },
+    { (const char *)&str_002abe5c, (void (*)())&Script_SetFocus },
+    { (const char *)&str_002abe68, (void (*)())&Script_SetFocusByDvar },
+    { (const char *)&str_002abe78, (void (*)())&Script_Transition },
+    { (const char *)&str_002abe84, (void (*)())&Script_SetDvar },
+    { (const char *)&str_00219060, (void (*)())&Script_Exec },
+    { (const char *)&str_002abe8c, (void (*)())&Script_ExecNow },
+    { (const char *)&str_002abe94, (void (*)())&Script_ExecOnDvarStringValue },
+    { (const char *)&str_002abeac, (void (*)())&Script_ExecOnDvarIntValue },
+    { (const char *)&str_002abec0, (void (*)())&Script_ExecOnDvarFloatValue },
+    { (const char *)&str_002abed8, (void (*)())&Script_ExecNowOnDvarStringValue },
+    { (const char *)&str_002abef4, (void (*)())&Script_ExecNowOnDvarIntValue },
+    { (const char *)&str_002abf0c, (void (*)())&Script_ExecNowOnDvarFloatValue },
+    { (const char *)&str_002abf24, (void (*)())&Script_Play },
+    { (const char *)&str_002abf2c, (void (*)())&Script_Orbit },
+    { (const char *)&str_002abf34, (void (*)())&Script_ScriptMenuResponse }
 };
 bind_t g_bindings[56] = {
     { (char *)&str_002abf48, 0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff },

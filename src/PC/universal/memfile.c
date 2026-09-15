@@ -9,7 +9,7 @@ static void MemFile_WriteDataForArchive(MemoryFile *memFile, int bytes, void *da
 
 void MemFile_InitForWriting(MemoryFile *memFile, int size, void *buffer, int errorOnOverflow)
 {
-    memFile->buffer = buffer;
+    memFile->buffer = (byte *)buffer;   /* explicit: C++ (matching build) rejects void*->byte* */
     memFile->bufferSize = size;
     memFile->bytesUsed = 0;
     memFile->errorOnOverflow = (Bool)errorOnOverflow;
@@ -19,7 +19,7 @@ void MemFile_InitForWriting(MemoryFile *memFile, int size, void *buffer, int err
 
 void MemFile_InitForReading(MemoryFile *memFile, int size, void *buffer)
 {
-    memFile->buffer = buffer;
+    memFile->buffer = (byte *)buffer;   /* explicit: C++ (matching build) rejects void*->byte* */
     memFile->bufferSize = size;
     memFile->bytesUsed = 0;
     memFile->errorOnOverflow = 1;

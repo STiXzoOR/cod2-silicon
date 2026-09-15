@@ -33,7 +33,7 @@ void R_InitDrawGroups(void)
 GfxDrawGroupGlueBehavior R_BeginDrawGroupSection(GfxDrawGroupType group)
 {
     if (delayedGroup[group].begin != -1) {
-        return 1;
+        return (GfxDrawGroupGlueBehavior)(1);
     }
 
     delayedGroup[group].isIssuingGlue = 1;
@@ -43,7 +43,7 @@ GfxDrawGroupGlueBehavior R_BeginDrawGroupSection(GfxDrawGroupType group)
             printf("[drawgroup] begin section group=%d marker=%d used=%d\n",
                    group, delayedGroup[group].begin, R_DrawGroupTraceUsed());
     }
-    return 0;
+    return (GfxDrawGroupGlueBehavior)(0);
 }
 
 void R_BeginDrawGroupLoop(GfxDrawGroupType group, int viewIndex)
@@ -77,7 +77,7 @@ GfxDrawGroupGlueBehavior R_EndDrawGroupLoop(GfxDrawGroupType group, int viewInde
     }
 
     if (delayedGroup[group].end != -1)
-        return 1;
+        return (GfxDrawGroupGlueBehavior)(1);
 
     delayedGroup[group].isIssuingGlue = 1;
     delayedGroup[group].end = R_BeginDelayedDrawing();
@@ -86,7 +86,7 @@ GfxDrawGroupGlueBehavior R_EndDrawGroupLoop(GfxDrawGroupType group, int viewInde
             printf("[drawgroup] begin end-glue group=%d marker=%d used=%d\n",
                    group, delayedGroup[group].end, R_DrawGroupTraceUsed());
     }
-    return 0;
+    return (GfxDrawGroupGlueBehavior)(0);
 }
 
 void R_EndDrawGroupSection(GfxDrawGroupType group)

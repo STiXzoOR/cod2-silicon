@@ -23,7 +23,7 @@ struct define_s {
 
 struct directive_t {
     char *name;
-    int (*func)();
+    int (*func)(struct source_s *);   /* real handler sig (PC_Directive_*); byte-neutral fn-ptr */
 };
 
 struct indent_s {

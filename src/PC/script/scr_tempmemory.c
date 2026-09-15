@@ -1,7 +1,7 @@
 #include "common_types.h"
 #include "imports.h"
 
-extern char *Hunk_ReallocateTempMemoryInternal(int minimumSize);
+extern void *Hunk_ReallocateTempMemoryInternal(int minimumSize);
 
 extern int currentPos;
 
@@ -16,7 +16,7 @@ char *TempMalloc(int len)
     char *base;
 
     newCurrentPos = currentPos + len;
-    base = Hunk_ReallocateTempMemoryInternal(newCurrentPos);
+    base = (char *)Hunk_ReallocateTempMemoryInternal(newCurrentPos);
     base += currentPos;
     currentPos = newCurrentPos;
     return base;
@@ -28,7 +28,7 @@ char *TempMallocAlign(int len)
     char *base;
 
     newCurrentPos = currentPos + len;
-    base = Hunk_ReallocateTempMemoryInternal(newCurrentPos);
+    base = (char *)Hunk_ReallocateTempMemoryInternal(newCurrentPos);
     base += currentPos;
     currentPos = newCurrentPos;
     return base;
@@ -40,7 +40,7 @@ char *TempMallocAlignStrict(int len)
     char *base;
 
     newCurrentPos = currentPos + len;
-    base = Hunk_ReallocateTempMemoryInternal(newCurrentPos);
+    base = (char *)Hunk_ReallocateTempMemoryInternal(newCurrentPos);
     base += currentPos;
     currentPos = newCurrentPos;
     return base;
@@ -50,7 +50,7 @@ void TempMemorySetPos(char *pos)
 {
     char *base;
 
-    base = Hunk_ReallocateTempMemoryInternal(currentPos);
+    base = (char *)Hunk_ReallocateTempMemoryInternal(currentPos);
     base += currentPos;
     currentPos -= (int)(base - pos);
     Hunk_ReallocateTempMemoryInternal(currentPos);

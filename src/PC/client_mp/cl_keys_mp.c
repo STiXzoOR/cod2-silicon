@@ -51,7 +51,7 @@ extern void SCR_UpdateScreen(void);
 extern Bool CL_AllLocalClientsDisconnected(void);
 
 extern FontHandle UI_GetFontHandle(int fontEnum, float scale);
-extern void CL_DrawTextWithCursor(const char *text, int maxChars, void *font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor);
+extern void CL_DrawTextWithCursor(const char *text, int maxChars, Font_s *font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor);
 extern float GetRealWidthFromVirtualWidth(float w);
 extern float GetRealHeightFromVirtualHeight(float h);
 extern float GetVirtualWidthFromRealWidth(float w);
@@ -363,7 +363,7 @@ static inline __attribute__((always_inline)) char *Key_KeynumToStringInternal(in
         return "<KEY NOT FOUND>";
     }
 
-    if ((unsigned int)keynum > 0xff) {
+    if (keynum < 0 || keynum > 0xff) {
         return "<OUT OF RANGE>";
     }
 
@@ -371,7 +371,7 @@ static inline __attribute__((always_inline)) char *Key_KeynumToStringInternal(in
         return frenchNumberKeysMap[keynum - '0'];
     }
 
-    if ((unsigned int)(keynum - 0x21) <= 0x5d && keynum != '"') {
+    if (keynum > 0x20 && keynum < 0x7f && keynum != '"') {
         tinystr[0] = toupper(keynum);
         tinystr[1] = '\0';
         if (keynum != ';' || translate) {
@@ -381,7 +381,7 @@ static inline __attribute__((always_inline)) char *Key_KeynumToStringInternal(in
 
     name = translate ? keynames_localized : keynames;
     while (name->name) {
-        if (name->keynum == keynum) {
+        if (keynum == name->keynum) {
             return name->name;
         }
         ++name;
@@ -537,7 +537,7 @@ void Field_Draw(field_t *edit, int x, int y, int horzAlign, int vertAlign, qbool
     if (drawWidth == 0)
         edit->drawWidth = 0x100;
 
-    CL_DrawTextWithCursor(str, edit->drawWidth, font,
+    CL_DrawTextWithCursor(str, edit->drawWidth, (Font_s *)font,
                           xAdj, yAdj, horzAlign, vertAlign,
                           xScale, yScale,
                           vColor, fontStyle, cursorPos, cursorChar);
@@ -691,25 +691,29 @@ void Field_CharEvent(field_t *edit, int ch)
         return;
     }
 
-    if (ch <= 31)
+    if (ch < 32)
         return;
 
     if (*key_overstrikeMode) {
         if (edit->cursor == 255)
             return;
-        edit->buffer[edit->cursor++] = (char)ch;
-        if (edit->cursor == len + 1)
-            edit->buffer[edit->cursor] = 0;
+
+        edit->buffer[edit->cursor] = (char)ch;
+        edit->cursor++;
     } else {
         if (len == 255)
             return;
+
         memmove(edit->buffer + edit->cursor + 1,
                 edit->buffer + edit->cursor,
                 (size_t)(len - edit->cursor + 1));
-        edit->buffer[edit->cursor++] = (char)ch;
-        if (edit->cursor == len + 1)
-            edit->buffer[edit->cursor] = 0;
+
+        edit->buffer[edit->cursor] = (char)ch;
+        edit->cursor++;
     }
+
+    if (edit->cursor == len + 1)
+        edit->buffer[edit->cursor] = 0;
 
     Field_AdjustScroll(edit);
 }

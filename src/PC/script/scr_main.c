@@ -30,7 +30,7 @@ extern unsigned int GetVariable(unsigned int parent, unsigned int name);
 extern unsigned int FindObject(unsigned int varId);
 extern unsigned int GetObjectA(unsigned int varId);
 extern unsigned int GetArray(unsigned int id);
-extern unsigned int GetVarType(unsigned int varId);
+extern int GetVarType(unsigned int varId);
 extern void ClearObject(unsigned int objId);
 extern void RemoveRefToObject(unsigned int objId);
 

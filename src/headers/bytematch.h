@@ -30,4 +30,9 @@
 #  define BM_ALIGNED(n)
 #endif
 
+/* Reinterpret a 32-bit pattern as float. Writing a float immediate as
+ * `*(float*)&(int){bits}` needs a C99 compound literal, which older C++ frontends
+ * cannot parse; BM_I2F(bits) is the equivalent that compiles everywhere. */
+static BM_ALWAYS_INLINE float BM_I2F(unsigned int b) { float f; *(unsigned int *)&f = b; return f; }
+
 #endif

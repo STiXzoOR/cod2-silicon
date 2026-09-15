@@ -6,10 +6,10 @@
 extern char **cg_dvar1;
 extern char **cg_dvar2;
 
-extern void BG_EvaluateTrajectory(void *traj, int time, float *result);
-extern void BG_PlayerStateToEntityState(void *ps, void *es, int extrapolate, int snap);
+extern void BG_EvaluateTrajectory(const trajectory_t *traj, int time, vec_t *result);
+extern void BG_PlayerStateToEntityState(playerState_t *ps, entityState_t *es, int extrapolate, int snap);
 extern void CG_ResetPlayerEntity(centity_t *cent);
-extern void XAnimCloneAnimTree(void *srcTree, void *destTree);
+extern void XAnimCloneAnimTree(const struct XAnimTree_s *srcTree, struct XAnimTree_s *destTree);
 extern int I_stricmp(const char *s1, const char *s2);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern void CL_ResetSkeletonCache(int val);
@@ -21,29 +21,29 @@ extern void CG_BuildSolidList(void);
 extern void CG_ClearSolidList(void);
 extern void CG_PlaySmokeGrenadesAtTime(int time);
 extern void CG_SetEquippedOffHand(int offHandIndex);
-extern void CG_TransitionPlayerState(void *newPs, void *oldPs);
-extern void CG_CheckEvents(void *cent);
-extern void CG_UpdatePlayerDObj(void *cent);
+extern void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops);
+extern void CG_CheckEvents(centity_t *cent);
+extern void CG_UpdatePlayerDObj(centity_t *cent);
 extern void CG_UpdateHandViewmodels(const char *configStr);
-extern void CG_AddLagometerSnapshotInfo(void *snap);
-extern int CL_GetSnapshot(int snapshotNumber, void *snap);
+extern void CG_AddLagometerSnapshotInfo(snapshot_t *snap);
+extern int CL_GetSnapshot(int snapshotNumber, snapshot_t *snap);
 extern void CL_GetCurrentSnapshotNumber(int *snapshotNumber, int *serverTime);
 extern const char *CL_GetConfigString(int index);
 extern void CG_GameMessage(const char *msg);
 extern void CG_SafeDObjFree(int entNum);
 extern void CG_InitView(void);
-extern void SND_SetListener(int clientNum, float *origin, float *axis);
+extern void SND_SetListener(int entnum, const vec_t *origin, vec3_t *axis);
 extern void SND_FadeAllSounds(float volume, int duration);
-extern void AnglesToAxis(float *angles, float *axis);
+extern void AnglesToAxis(const vec_t *angles, vec3_t *axis);
 extern const char *va(const char *fmt, ...);
 extern const char *UI_SafeTranslateString(const char *ref);
 extern void Com_Error(int level, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern int strcmp(const char *s1, const char *s2);
-extern void *XAnimGetAnims(void *tree);
-extern int XAnimIsLooped(void *anims, int animIndex);
-extern int XAnimGetNumChildren(void *anims, int animIndex);
-extern void XAnimSetTime(void *tree, int animIndex, float time);
+extern XAnim *XAnimGetAnims(const XAnimTree *tree);
+extern Bool XAnimIsLooped(const struct XAnim_s *anims, unsigned int animIndex);
+extern int XAnimGetNumChildren(const struct XAnim_s *anims, unsigned int animIndex);
+extern void XAnimSetTime(XAnimTree *tree, unsigned int animIndex, float time);
 
 #define CENT_STRIDE 0x224
 
@@ -139,9 +139,9 @@ static void CG_ResetEntity(char *cent)
     ((centity_t *)cent)->bTrailMade = 0;
     ((centity_t *)cent)->cullIn = 0;
 
-    BG_EvaluateTrajectory((char *)&((centity_t *)cent)->nextState.pos, cg->time, (float *)((char *)((centity_t *)cent)->lerpOrigin));
+    BG_EvaluateTrajectory(&((centity_t *)cent)->nextState.pos, cg->time, ((centity_t *)cent)->lerpOrigin);
 
-    BG_EvaluateTrajectory((char *)&((centity_t *)cent)->nextState.apos, cg->time, (float *)((char *)((centity_t *)cent)->lerpAngles));
+    BG_EvaluateTrajectory(&((centity_t *)cent)->nextState.apos, cg->time, ((centity_t *)cent)->lerpAngles);
 
     eType = ((centity_t *)cent)->nextState.eType;
 
@@ -219,9 +219,9 @@ static void CG_ResetEntity(char *cent)
                 }
             }
 
-            ((clientInfo_t *)corpseInfo)->pXAnimTree = pXAnimTree;
+            ((clientInfo_t *)corpseInfo)->pXAnimTree = (XAnimTree_s *)(pXAnimTree);
 
-            XAnimCloneAnimTree(((clientInfo_t *)ci)->pXAnimTree, pXAnimTree);
+            XAnimCloneAnimTree((const struct XAnimTree_s *)((clientInfo_t *)ci)->pXAnimTree, (struct XAnimTree_s *)pXAnimTree);
 
             ((centity_t *)cent)->previousEventSequence = 0;
         } else {
@@ -254,7 +254,7 @@ static void CG_ResetEntity(char *cent)
                     }
                 }
 
-                ((clientInfo_t *)corpseInfo)->pXAnimTree = pXAnimTree;
+                ((clientInfo_t *)corpseInfo)->pXAnimTree = (XAnimTree_s *)(pXAnimTree);
             }
             }
 
@@ -312,7 +312,7 @@ static inline __attribute__((always_inline)) void CG_TransitionSnapshot_Inline(v
 
             void *savedTree = ((clientInfo_t *)ci)->pXAnimTree;
             memset(ci, 0, CI_STRIDE);
-            ((clientInfo_t *)ci)->pXAnimTree = savedTree;
+            ((clientInfo_t *)ci)->pXAnimTree = (XAnimTree_s *)(savedTree);
             CG_SafeDObjFree(clientNum);
             continue;
         }
@@ -413,11 +413,11 @@ void CG_SetNextSnap(snapshot_t *snap_param)
                 else
                     modelIndex = ((clientInfo_t *)ci)->team;
 
-                ((clientInfo_t *)ci)->oldteam = modelIndex;
+                ((clientInfo_t *)ci)->oldteam = (team_t)(modelIndex);
                 ((clientInfo_t *)ci)->infoValid = 1;
                 ((clientInfo_t *)ci)->nextValid = 1;
                 ((clientInfo_t *)ci)->clientNum = *(int *)(clState + 0xc) ;
-                ((clientInfo_t *)ci)->team = *(int *)(clState + 0x10) ;
+                ((clientInfo_t *)ci)->team = (team_t)(*(int *)(clState + 0x10)) ;
 
                 {
                     char *ciName = ((clientInfo_t *)ci)->name;
@@ -499,7 +499,7 @@ void CG_SetNextSnap(snapshot_t *snap_param)
 
             ((centity_t *)playerEnt)->nextState.number = (unsigned short)entnum;
 
-            BG_PlayerStateToEntityState((char *)&((snapshot_t *)snap)->ps, playerEnt + ES_BINSIZE, 0, 0);
+            BG_PlayerStateToEntityState(&((snapshot_t *)snap)->ps, (entityState_t *)(playerEnt + ES_BINSIZE), 0, 0);
 
             ((centity_t *)playerEnt)->nextValid = 1;
 
@@ -576,7 +576,7 @@ void CG_SetNextSnap(snapshot_t *snap_param)
         for (i = 0; i < numClients; i++) {
             char *clState = (char *)snap + SNAP_CLIENTS + i * CLSTATE_STRIDE;
             int clientNum = *(int *)(clState + 0xc) ;
-            CG_UpdatePlayerDObj(CG_EntityPtr(clientNum));
+            CG_UpdatePlayerDObj( (centity_t *)(CG_EntityPtr(clientNum)));
         }
     }
 
@@ -636,7 +636,7 @@ void CG_SetNextSnap(snapshot_t *snap_param)
                             char *corpseBase = cgs_ptr + csNum * CI_STRIDE - 0x6bf0;
                             char *corpseCI = corpseBase + 4;
 
-                            void *savedTree = *(void **)(corpseCI + CI_PXANIMTREE);
+                            XAnimTree *savedTree = *(XAnimTree **)(corpseCI + CI_PXANIMTREE);
 
                             int animState = *(int *)(corpseCI + 0x390)  & ~0x200;
 
@@ -645,10 +645,10 @@ void CG_SetNextSnap(snapshot_t *snap_param)
                             if (animState == 0)
                                 continue;
 
-                            if (XAnimIsLooped(anims, animState))
+                            if (XAnimIsLooped((const struct XAnim_s *)anims, animState))
                                 continue;
 
-                            if (XAnimGetNumChildren(anims, animState) != 0)
+                            if (XAnimGetNumChildren((const struct XAnim_s *)anims, animState) != 0)
                                 continue;
 
                             XAnimSetTime(savedTree, animState, 1.0f);
@@ -664,7 +664,7 @@ void CG_SetNextSnap(snapshot_t *snap_param)
         for (i = 0; i < numEnts; i++) {
             char *snapEnt = (char *)&((snapshot_t *)snap)->entities[i];
             int entNum = ((entityState_t *)snapEnt)->number ;
-            CG_CheckEvents(CG_EntityPtr(entNum));
+            CG_CheckEvents( (centity_t *)(CG_EntityPtr(entNum)));
         }
     }
 
@@ -687,7 +687,7 @@ void CG_SetNextSnap(snapshot_t *snap_param)
         {
             char *oldSnap = (char *)cg->snap;
             char *newSnap = (char *)cg->nextSnap;
-            CG_TransitionPlayerState((char *)&((snapshot_t *)newSnap)->ps, (char *)&((snapshot_t *)oldSnap)->ps);
+            CG_TransitionPlayerState( (playerState_t *)((char *)&((snapshot_t *)newSnap)->ps), (playerState_t *)((char *)&((snapshot_t *)oldSnap)->ps));
         }
     }
 }
@@ -727,11 +727,11 @@ void CG_SetInitialSnapshot(snapshot_t *snap_param)
         }
     }
 
-    AnglesToAxis(((snapshot_t *)snap)->ps.viewangles, clientViewAxis);
+    AnglesToAxis(((snapshot_t *)snap)->ps.viewangles, (vec3_t *)clientViewAxis);
 
     {
         int clientNum = ((snapshot_t *)snap)->ps.clientNum;
-        SND_SetListener(clientNum, clientViewOrigin, clientViewAxis);
+        SND_SetListener(clientNum, clientViewOrigin, (vec3_t (*))(clientViewAxis));
     }
 
     SND_FadeAllSounds(1.0f, 0);
@@ -768,9 +768,9 @@ static inline __attribute__((always_inline)) char *CG_ReadNextSnapshot(void)
         snapshotNum++;
         cgs->processedSnapshotNum = snapshotNum;
 
-        if (CL_GetSnapshot(cgs->processedSnapshotNum, dest)) {
+        if (CL_GetSnapshot(cgs->processedSnapshotNum, (snapshot_t *)dest)) {
 
-            CG_AddLagometerSnapshotInfo(dest);
+            CG_AddLagometerSnapshotInfo( (snapshot_t *)(dest));
             return dest;
         }
 

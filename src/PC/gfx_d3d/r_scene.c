@@ -2,11 +2,43 @@
 extern dvar_t *r_rendererInUse;
 extern DxGlobals dx;
 #include "imports.h"
+/* dvar globals */
+extern const dvar_t *com_statmon;
+extern const dvar_t *fx_sort;
+extern const dvar_t *r_clearColor;
+extern const dvar_t *r_debugEntCounts;
+extern const dvar_t *r_debugShader;
+extern const dvar_t *r_drawBModels;
+extern const dvar_t *r_drawEntities;
+extern const dvar_t *r_fullbright;
+extern const dvar_t *r_lockPvs;
+extern const dvar_t *r_lodBias;
+extern const dvar_t *r_lodScale;
+extern const dvar_t *r_norefresh;
+extern const dvar_t *r_showSurfCounts;
+extern const dvar_t *r_showTriCounts;
+extern const dvar_t *r_showTris;
+extern const dvar_t *r_showVertCounts;
+extern const dvar_t *r_znear;
+extern const dvar_t *r_znear_depthhack;
 
 extern struct GfxScene scene;
 static int warnCount_007f1dcc;
 static int warnCount_007f1dd0;
 static GfxViewParms lockPvsViewParms;
+/* Per-surfType stride to walk GfxSceneEntity->surfs. MUST match the surface WRITE
+   side (R_PreSkinStaticSurface / R_PreSkinXSurface in r_model.c). x86 sizes:
+   skinned(3)=0x10, rigid(4)=0x38, SMC(5)=0x10. On x64 the structs grow (8-byte xsurf/
+   skinnedVert + alignment): skinned/SMC 0x10->0x20, rigid 0x38->0x40. */
+#if defined(COD2_X64)
+__attribute__((used)) byte s_XModelSurfaceSize[8] = {
+    0x00, 0x00, 0x00,
+    0x20, /* 3: skinned  */
+    0x40, /* 4: rigid    */
+    0x20, /* 5: SMC/cached */
+    0x00, 0x00,
+};
+#else
 __attribute__((used)) byte s_XModelSurfaceSize[8] = {
     0x00,
     0x00,
@@ -17,14 +49,15 @@ __attribute__((used)) byte s_XModelSurfaceSize[8] = {
     0x00,
     0x00,
 };
+#endif
 __attribute__((used, aligned(4)))
 surfaceType_t s_entitySurface[6] = {
-    2,
-    0,
-    0,
-    0,
-    0,
-    0,
+    (surfaceType_t)2,
+    (surfaceType_t)0,
+    (surfaceType_t)0,
+    (surfaceType_t)0,
+    (surfaceType_t)0,
+    (surfaceType_t)0,
 };
 
 #define s_entitySurface (s_entitySurface[0])
@@ -33,7 +66,7 @@ extern GfxBackEndData *frontEndDataOut;
 extern r_global_permanent_t rgp;
 extern r_globals_t rg;
 extern refimport_t ri;
-extern const dvar_t **r_dlightLimit;
+extern const dvar_t *r_dlightLimit;
 extern void qsort(void *base, unsigned int nmemb, unsigned int size, int (*compar)(const void *, const void *));
 
 extern const float *colorWhite;
@@ -47,8 +80,8 @@ void R_SkinSceneDObj(GfxSceneEntity *sceneEnt, GfxEntity *ent);
 void R_ClearDpvsScene(void);
 void R_DrawModel(int entIndex);
 void R_AddScaledDebugString(const char *pos, const char *tag, const char *origin, const char *color, const char *str);
-int XSurfaceGetNumTris(XSurface *xsurf);
-int XSurfaceGetNumVerts(XSurface *xsurf);
+int XSurfaceGetNumTris(const XSurface *xsurf);
+int XSurfaceGetNumVerts(const XSurface *xsurf);
 const char *XModelGetName(void *model);
 const char *DObjGetModel(void *dobj, int lod);
 void MatrixForViewer(float (*mtx)[4], const vec_t *origin, vec3_t *axis);
@@ -195,7 +228,7 @@ void R_AddLightToScene(const vec_t *org, float radius, float r, float g, float b
         return;
 
     dlightCount = scene.dlightCount;
-    if (dlightCount >= (*(const dvar_t **)imp_r_dlightLimit)->current.integer)
+    if (dlightCount >= (r_dlightLimit)->current.integer)
         return;
 
     light = &scene.dlights[dlightCount];
@@ -269,7 +302,7 @@ void R_AddXModelSurfaces(int entIndex)
         if (buf->drawSurfCount <= 0xffff) {
             drawSurf = &buf->drawSurfs[buf->drawSurfCount];
             surfType = modelSurf->surfType;
-            if (surfType == 2 && (*(const dvar_t **)imp_fx_sort)->current.enabled) {
+            if (surfType == 2 && (fx_sort)->current.enabled) {
                 sortValue = (unsigned int)((entIdx << 19) + (material->info.sortedIndex << 9) + 0x800001f2u);
             } else {
                 sortValue = (unsigned int)(surfType + (entIdx << 4) + (material->info.sortedIndex << 21) + 0x1f0000);
@@ -280,30 +313,30 @@ void R_AddXModelSurfaces(int entIndex)
             buf->drawSurfCount++;
         }
 
-        if ((*(const dvar_t **)imp_r_showTriCounts)->current.enabled)
+        if ((r_showTriCounts)->current.enabled)
             totalTriCount += XSurfaceGetNumTris(modelSurf->xsurf);
-        else if ((*(const dvar_t **)imp_r_showVertCounts)->current.enabled)
+        else if ((r_showVertCounts)->current.enabled)
             totalVertCount += XSurfaceGetNumVerts(modelSurf->xsurf);
 
         modelSurf = (GfxModelSurface *)((byte *)modelSurf + s_XModelSurfaceSize[modelSurf->surfType]);
     }
 
     rgg = &rg;
-    if ((*(const dvar_t **)imp_r_showTriCounts)->current.enabled) {
+    if ((r_showTriCounts)->current.enabled) {
         R_AddScaledDebugString(
             (char *)&frontEndDataOut->debugGlobals,
             (char *)rgg->debugViewParms,
             (const char *)&ent->origin,
             (const char *)imp_colorCyan,
             va("%i", totalTriCount));
-    } else if ((*(const dvar_t **)imp_r_showVertCounts)->current.enabled) {
+    } else if ((r_showVertCounts)->current.enabled) {
         R_AddScaledDebugString(
             (char *)&frontEndDataOut->debugGlobals,
             (char *)rgg->debugViewParms,
             (const char *)&ent->origin,
             (const char *)imp_colorCyan,
             va("%i", totalVertCount));
-    } else if ((*(const dvar_t **)imp_r_showSurfCounts)->current.enabled) {
+    } else if ((r_showSurfCounts)->current.enabled) {
         R_AddScaledDebugString(
             (char *)&frontEndDataOut->debugGlobals,
             (char *)rgg->debugViewParms,
@@ -329,7 +362,7 @@ void R_AddBModelSurfaces(GfxSceneEntity *sceneEnt, int entIndex)
 
     sceneEnt->cullState = 5;
 
-    dvarVal = (*(const dvar_t **)imp_r_drawBModels)->current.enabled;
+    dvarVal = (r_drawBModels)->current.enabled;
     if (!dvarVal)
         return;
 
@@ -350,7 +383,7 @@ void R_AddBModelSurfaces(GfxSceneEntity *sceneEnt, int entIndex)
         drawSurf = &buf->drawSurfs[buf->drawSurfCount];
         surfType = *surface;
 
-        if (surfType == 2 && (*(const dvar_t **)imp_fx_sort)->current.enabled) {
+        if (surfType == 2 && (fx_sort)->current.enabled) {
             sortValue = (material->info.sortedIndex << 9) + ((entIndex << 19) + 0x80000002) + (lmapIndex << 4);
         } else {
             sortValue = surfType + (entIndex << 4) + (material->info.sortedIndex << 21) + (lmapIndex << 16);
@@ -389,7 +422,7 @@ void R_AddPolyToScene(MaterialHandle materialHandle, int lmapIndex, int vertCoun
         return;
 
     poly = &buf->polys[buf->polyCount];
-    poly->surfaceType = 1;
+    poly->surfaceType = (surfaceType_t)(1);
     poly->material = materialHandle;
     poly->lmapIndex = (unsigned short)lmapIndex;
     poly->vertCount = (unsigned short)vertCount;
@@ -405,7 +438,7 @@ void R_AddPolyToScene(MaterialHandle materialHandle, int lmapIndex, int vertCoun
         drawSurf = &buf->drawSurfs[buf->drawSurfCount];
         surfType = poly->surfaceType;
 
-        if (surfType == 2 && (*(const dvar_t **)imp_fx_sort)->current.enabled) {
+        if (surfType == 2 && (fx_sort)->current.enabled) {
             sortValue = (entIndex << 19) + (materialHandle->info.sortedIndex << 9) + 0x80000002u + (lmapIndex << 4);
         } else {
             sortValue = surfType + (entIndex << 4) + (materialHandle->info.sortedIndex << 21) + (lmapIndex << 16);
@@ -450,7 +483,7 @@ void R_AddDrawSurfForSurface(GfxSurface *surf, int entIndex)
     drawSurf = &buf->drawSurfs[buf->drawSurfCount];
     surfType = *surface;
 
-    if (surfType == 2 && (*(const dvar_t **)imp_fx_sort)->current.enabled) {
+    if (surfType == 2 && (fx_sort)->current.enabled) {
         sortValue = (entIndex << 19) + (material->info.sortedIndex << 9) + 0x80000002u + (lmapIndex << 4);
     } else {
         sortValue = surfType + (entIndex << 4) + (material->info.sortedIndex << 21) + (lmapIndex << 16);
@@ -493,14 +526,14 @@ static void __attribute_regparm__(2)
 
     zNear = refdef->zNear;
     if (!(zNear > 0.0f)) {
-        zNear = (*(const dvar_t **)imp_r_znear)->current.value;
+        zNear = (r_znear)->current.value;
         if (zNear < 0.01f) {
             zNear = 0.01f;
         }
     }
 
     InfinitePerspectiveMatrix((float (*)[4]) & viewParms->projectionMatrix, refdef->fov_x, refdef->fov_y, zNear);
-    viewParms->depthHackNearClip = (*(const dvar_t **)imp_r_znear_depthhack)->current.value;
+    viewParms->depthHackNearClip = (r_znear_depthhack)->current.value;
 
     MatrixMultiply44(
         (const float (*)[4]) & viewParms->viewMatrix,
@@ -515,7 +548,7 @@ void R_SetLodOrigin(const refdef_t *refdef)
     float invFovScale;
     r_globals_t *rgg;
 
-    lockPvs = *(const dvar_t **)imp_r_lockPvs;
+    lockPvs = r_lockPvs;
     if (lockPvs->modified) {
         ri.Dvar_ClearModified(lockPvs);
         R_SetViewParmsForScene(refdef, &lockPvsViewParms);
@@ -532,8 +565,8 @@ void R_SetLodOrigin(const refdef_t *refdef)
         rgg->lodParms.origin[2] = refdef->vieworg[2];
     }
 
-    rgg->lodParms.scale = (*(const dvar_t **)imp_r_lodScale)->current.value;
-    rgg->lodParms.bias = (*(const dvar_t **)imp_r_lodBias)->current.value;
+    rgg->lodParms.scale = (r_lodScale)->current.value;
+    rgg->lodParms.bias = (r_lodBias)->current.value;
 
     if (refdef->fov_x != 80.0f) {
         invFovScale =
@@ -562,7 +595,7 @@ static void __attribute_regparm__(1)
         clearColor[1] = rgg->fogSettings[2].color.array[1] * inv255;
         clearColor[2] = rgg->fogSettings[2].color.array[0] * inv255;
     } else {
-        const byte *dvarColor = (*(const dvar_t **)imp_r_clearColor)->current.color;
+        const byte *dvarColor = (r_clearColor)->current.color;
 
         clearColor[0] = dvarColor[0] * inv255;
         clearColor[1] = dvarColor[1] * inv255;
@@ -587,25 +620,25 @@ static void R_WorldCheck_diag(void *rgp_field, void *cell_ptr, int cellIdx)
     (void)cellIdx;
 }
 
-extern void *R_AllocViewParms(void);
-extern int R_CellForPoint(const void *viewParms);
-extern void R_AddWorldSurfacesDpvs(const void *viewParms, int cellIdx);
+extern GfxViewParms *R_AllocViewParms(void);
+extern int R_CellForPoint(const vec_t *origin);
+extern void R_AddWorldSurfacesDpvs(const GfxViewParms *viewParms, int cameraCellIndex);
 extern void CG_AddMarks(void);
 extern void FX_DrawScheduledEffects(void);
 extern int R_BeginDrawGroupSection(int section);
-extern void R_BeginDrawGroupLoop(int section, int viewIndex);
+extern void R_BeginDrawGroupLoop(GfxDrawGroupType section, int viewIndex);
 extern int R_EndDrawGroupLoop(int section, int viewIndex);
 extern void R_EndDrawGroupSection(int section);
 extern void R_AddCmdBeginView(int entityCount, const GfxSceneDef *sceneDef, const GfxViewParms *viewParms, const GfxLodParms *lodParms);
-extern void R_AddCmdSetRenderTarget(int target);
-extern void R_AddCmdDrawSurfs(void *drawSurfs, int drawSurfCount, int techType);
+extern void R_AddCmdSetRenderTarget(GfxRenderTargetId target);
+extern void R_AddCmdDrawSurfs(GfxDrawSurf *drawSurfs, int drawSurfCount, MaterialTechniqueType techType);
 extern void R_AddCmdDrawSun(int viewIndex);
 extern void R_AddCmdDrawSunPostEffects(int viewIndex);
 extern void R_UnlockSkinnedCache(void);
 extern void R_AddCmdApplyEarlyPostEffects(void);
 extern void R_AddCmdApplyLatePostEffects(float blurRadius);
-extern int R_GetPointLightPartitions(void *drawSurfs, int drawSurfCount, void *partitions, int maxPartitions);
-extern void R_AddCmdLightProperties(int index, const void *light);
+extern int R_GetPointLightPartitions(const GfxDrawSurf *drawSurfs, int drawSurfCount, PointLightPartition *partitions, int maxPartitions);
+extern void R_AddCmdLightProperties(int lightIndex, const GfxLight *light);
 extern void R_AddCmdDrawFullScreenColoredQuad(float x, float y, float w, float h, const void *material, const float *color);
 extern void R_AddCmdSetViewport(int x, int y, int w, int h);
 extern void Com_Printf(const char *fmt, ...);
@@ -615,20 +648,21 @@ void R_RenderScene(const refdef_t *refdef)
     r_global_permanent_t *rgp_p = &rgp;
     void *viewParms;
     void *viewParmsDraw;
-    int drawSurfStart, drawSurfCount;
+    GfxDrawSurf *drawSurfStart;
+    int drawSurfCount;
     int viewIndex;
     float blurRadius;
     byte isSplitscreen;
-    int pointLightPartitions[256 * 3];
+    PointLightPartition pointLightPartitions[256];
     int pointLightCount;
     int debugEntIndices[2048];
 
-    R_RenderScene_diag(rg_p->registered, (*(const dvar_t **)imp_r_norefresh)->current.enabled,
+    R_RenderScene_diag(rg_p->registered, (r_norefresh)->current.enabled,
                        (int)rgp_p->world ? 1 : 0);
 
     if (!rg_p->registered)
         return;
-    if ((*(const dvar_t **)imp_r_norefresh)->current.enabled)
+    if ((r_norefresh)->current.enabled)
         return;
 
     drawSurfCount = 0;
@@ -661,7 +695,7 @@ void R_RenderScene(const refdef_t *refdef)
     }
 
     viewParmsDraw = viewParms;
-    if ((*(const dvar_t **)imp_r_lockPvs)->current.enabled)
+    if ((r_lockPvs)->current.enabled)
         viewParmsDraw = &lockPvsViewParms;
 
     {
@@ -715,7 +749,7 @@ void R_RenderScene(const refdef_t *refdef)
             memcpy(&fed->fogSettings, fogActive, sizeof(GfxFog));
         } else {
             GfxBackEndData *fed = frontEndDataOut;
-            fed->fogSettings.techniqueOffset = 0;
+            fed->fogSettings.techniqueOffset = (GfxFogOffset)(0);
         }
     }
 
@@ -724,11 +758,11 @@ void R_RenderScene(const refdef_t *refdef)
     {
         int cellIdx;
         R_WorldCheck_diag(rgp_p->world, NULL, 0);
-        cellIdx = R_CellForPoint(viewParmsDraw);
+        cellIdx = R_CellForPoint( (const vec_t *)(viewParmsDraw));
         {
             GfxWorld *world = rgp_p->world;
             if (world && world->cells) {
-                R_AddWorldSurfacesDpvs(viewParmsDraw, cellIdx);
+                R_AddWorldSurfacesDpvs( (const GfxViewParms *)(viewParmsDraw), cellIdx);
             }
         }
     }
@@ -736,15 +770,15 @@ void R_RenderScene(const refdef_t *refdef)
     CG_AddMarks();
     FX_DrawScheduledEffects();
 
-    drawSurfStart = (int)(intptr_t)scene.drawSurfs;
+    drawSurfStart = scene.drawSurfs;
     drawSurfCount = scene.drawSurfCount;
-    qsortDrawSurfs((GfxDrawSurf *)(intptr_t)drawSurfStart, drawSurfCount);
+    qsortDrawSurfs(drawSurfStart, drawSurfCount);
 
     {
         int isDx7 = (r_rendererInUse->current.integer == 2);
-        if (!isDx7 && (*(const dvar_t **)imp_r_dlightLimit)->current.integer) {
+        if (!isDx7 && (r_dlightLimit)->current.integer) {
             pointLightCount = R_GetPointLightPartitions(
-                (void *)(intptr_t)drawSurfStart, drawSurfCount,
+                drawSurfStart, drawSurfCount,
                 pointLightPartitions, 0x100);
         } else {
             pointLightCount = 0;
@@ -752,22 +786,22 @@ void R_RenderScene(const refdef_t *refdef)
     }
 
     {
-        int isFullbright = (*(const dvar_t **)imp_r_fullbright)->current.enabled;
+        int isFullbright = (r_fullbright)->current.enabled;
         int isDx7 = (r_rendererInUse->current.integer == 2);
         const GfxLodParms *lodParms = &rg_p->lodParms;
 
         if (isFullbright) {
 
             if (!R_BeginDrawGroupSection(3)) {
-                R_AddCmdSetRenderTarget(0);
+                R_AddCmdSetRenderTarget((GfxRenderTargetId)0);
                 {
                     R_AddCmdSetViewport(0, 0, ((const vidConfig_t *)imp_vidConfig)->width, ((const vidConfig_t *)imp_vidConfig)->height);
                 }
                 R_AddClearCommandsForFrameBuffer(0);
             }
-            R_BeginDrawGroupLoop(3, viewIndex);
-            R_AddCmdBeginView(scene.viewCount, &scene.def, viewParms, lodParms);
-            R_AddCmdDrawSurfs((void *)(intptr_t)drawSurfStart, drawSurfCount, 3);
+            R_BeginDrawGroupLoop((GfxDrawGroupType)3, viewIndex);
+            R_AddCmdBeginView(scene.viewCount, &scene.def, (const GfxViewParms *)(viewParms), lodParms);
+            R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)3);
             R_AddCmdDrawSun(viewIndex);
             R_EndDrawGroupLoop(3, viewIndex);
             R_EndDrawGroupSection(3);
@@ -775,44 +809,44 @@ void R_RenderScene(const refdef_t *refdef)
             if (!R_BeginDrawGroupSection(4)) {
                 R_AddCmdSetViewport(0, 0, ((const vidConfig_t *)imp_vidConfig)->width, ((const vidConfig_t *)imp_vidConfig)->height);
             }
-            R_BeginDrawGroupLoop(4, viewIndex);
-            R_AddCmdBeginView(scene.viewCount, &scene.def, viewParms, lodParms);
+            R_BeginDrawGroupLoop((GfxDrawGroupType)4, viewIndex);
+            R_AddCmdBeginView(scene.viewCount, &scene.def, (const GfxViewParms *)(viewParms), lodParms);
         } else if (isDx7) {
 
-            R_AddCmdBeginView(scene.viewCount, &scene.def, viewParms, lodParms);
-            R_AddCmdSetRenderTarget(0);
+            R_AddCmdBeginView(scene.viewCount, &scene.def, (const GfxViewParms *)(viewParms), lodParms);
+            R_AddCmdSetRenderTarget((GfxRenderTargetId)0);
             R_AddClearCommandsForFrameBuffer(0);
             {
                 GfxWorld *world = rgp_p->world;
-                R_AddCmdLightProperties(0, (char *)&world->sunLight);
+                R_AddCmdLightProperties(0, (const GfxLight *)((char *)&world->sunLight));
             }
-            R_AddCmdDrawSurfs((void *)(intptr_t)drawSurfStart, drawSurfCount, 1);
-            R_AddCmdDrawSurfs((void *)(intptr_t)drawSurfStart, drawSurfCount, 6);
+            R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)1);
+            R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)6);
             R_AddCmdDrawSun(viewIndex);
-            R_AddCmdDrawSurfs((void *)(intptr_t)drawSurfStart, drawSurfCount, 0x15);
-        } else if ((*(const dvar_t **)imp_r_debugShader)->current.integer) {
+            R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)0x15);
+        } else if ((r_debugShader)->current.integer) {
 
-            R_AddCmdBeginView(scene.viewCount, &scene.def, viewParms, lodParms);
-            R_AddCmdSetRenderTarget(0);
+            R_AddCmdBeginView(scene.viewCount, &scene.def, (const GfxViewParms *)(viewParms), lodParms);
+            R_AddCmdSetRenderTarget((GfxRenderTargetId)0);
             R_AddClearCommandsForFrameBuffer(0);
-            R_AddCmdDrawSurfs((void *)(intptr_t)drawSurfStart, drawSurfCount, 0x21);
+            R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)0x21);
         } else {
 
             if (!R_BeginDrawGroupSection(2)) {
-                R_AddCmdSetRenderTarget(0);
+                R_AddCmdSetRenderTarget((GfxRenderTargetId)0);
                 {
                     R_AddCmdSetViewport(0, 0, ((const vidConfig_t *)imp_vidConfig)->width, ((const vidConfig_t *)imp_vidConfig)->height);
                 }
                 R_AddClearCommandsForFrameBuffer(0);
                 {
                     GfxWorld *world = rgp_p->world;
-                    R_AddCmdLightProperties(0, (char *)&world->sunLight);
+                    R_AddCmdLightProperties(0, (const GfxLight *)((char *)&world->sunLight));
                 }
             }
-            R_BeginDrawGroupLoop(2, viewIndex);
-            R_AddCmdBeginView(scene.viewCount, &scene.def, viewParms, lodParms);
-            R_AddCmdDrawSurfs((void *)(intptr_t)drawSurfStart, drawSurfCount, 1);
-            R_AddCmdDrawSurfs((void *)(intptr_t)drawSurfStart, drawSurfCount, 6);
+            R_BeginDrawGroupLoop((GfxDrawGroupType)2, viewIndex);
+            R_AddCmdBeginView(scene.viewCount, &scene.def, (const GfxViewParms *)(viewParms), lodParms);
+            R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)1);
+            R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)6);
             R_AddCmdDrawSun(viewIndex);
             R_EndDrawGroupLoop(2, viewIndex);
             if (!isSplitscreen)
@@ -820,43 +854,43 @@ void R_RenderScene(const refdef_t *refdef)
             R_EndDrawGroupSection(2);
 
             R_BeginDrawGroupSection(3);
-            R_BeginDrawGroupLoop(3, viewIndex);
-            R_AddCmdBeginView(scene.viewCount, &scene.def, viewParms, lodParms);
+            R_BeginDrawGroupLoop((GfxDrawGroupType)3, viewIndex);
+            R_AddCmdBeginView(scene.viewCount, &scene.def, (const GfxViewParms *)(viewParms), lodParms);
 
             if (pointLightCount > 0) {
                 int p;
                 for (p = 0; p < pointLightCount; p++) {
-                    int *part = &pointLightPartitions[p * 3];
-                    void *light = (void *)(intptr_t)part[0];
-                    void *pDrawSurfs = (void *)((char *)scene.drawSurfs + part[1] * 8);
-                    int pDrawSurfCount = part[2];
+                    PointLightPartition *part = &pointLightPartitions[p];
+                    const GfxLight *light = part->light;
+                    GfxDrawSurf *pDrawSurfs = &scene.drawSurfs[part->firstDrawSurf];
+                    int pDrawSurfCount = part->drawSurfCount;
                     void *world = rgp_p->world;
                     R_AddCmdDrawFullScreenColoredQuad(0, 0, 1.0f, 1.0f, ((r_global_permanent_t *)rgp_p)->clearAlphaStencilMaterial, (const float *)imp_colorWhite);
                     R_AddCmdLightProperties(0, light);
-                    R_AddCmdDrawSurfs(pDrawSurfs, pDrawSurfCount, 0x12);
+                    R_AddCmdDrawSurfs(pDrawSurfs, pDrawSurfCount, (MaterialTechniqueType)0x12);
                 }
             }
 
-            R_AddCmdDrawSurfs((void *)(intptr_t)drawSurfStart, drawSurfCount, 0x15);
+            R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)0x15);
             R_EndDrawGroupLoop(3, viewIndex);
             R_EndDrawGroupSection(3);
 
             if (!R_BeginDrawGroupSection(4)) {
                 R_AddCmdSetViewport(0, 0, ((const vidConfig_t *)imp_vidConfig)->width, ((const vidConfig_t *)imp_vidConfig)->height);
             }
-            R_BeginDrawGroupLoop(4, viewIndex);
-            R_AddCmdBeginView(scene.viewCount, &scene.def, viewParms, lodParms);
+            R_BeginDrawGroupLoop((GfxDrawGroupType)4, viewIndex);
+            R_AddCmdBeginView(scene.viewCount, &scene.def, (const GfxViewParms *)(viewParms), lodParms);
             if (!isSplitscreen)
                 R_AddCmdApplyLatePostEffects(blurRadius);
             R_AddCmdDrawSunPostEffects(viewIndex);
         }
 
         {
-            int showTris = (*(const dvar_t **)imp_r_showTris)->current.integer;
+            int showTris = (r_showTris)->current.integer;
             if (showTris) {
                 if (showTris & 2)
                     R_AddCmdClearScreen(6, (const vec_t *)imp_colorWhite, 1.0f, 0);
-                R_AddCmdDrawSurfs((void *)(intptr_t)drawSurfStart, drawSurfCount, 0x1d);
+                R_AddCmdDrawSurfs(drawSurfStart, drawSurfCount, (MaterialTechniqueType)0x1d);
             }
         }
 
@@ -864,10 +898,10 @@ void R_RenderScene(const refdef_t *refdef)
     }
 
     {
-        int debugEntCounts = (*(const dvar_t **)imp_r_debugEntCounts)->current.integer;
+        int debugEntCounts = (r_debugEntCounts)->current.integer;
         if (debugEntCounts && debugEntCounts < scene.def.entityCount) {
 
-            ri.Dvar_SetInt(*(const dvar_t **)imp_r_debugEntCounts, 0);
+            ri.Dvar_SetInt(r_debugEntCounts, 0);
 
         }
     }
@@ -883,7 +917,7 @@ int R_AddStaticModelToScene(int smodelIndex)
     int entIndex;
     refimport_t *rii = &ri;
 
-    if (!(*(const dvar_t **)imp_r_drawEntities)->current.enabled)
+    if (!(r_drawEntities)->current.enabled)
         return -1;
 
     entIndex = scene.def.entityCount;
@@ -916,7 +950,7 @@ int R_AddStaticModelToScene(int smodelIndex)
     smodelInst = &world->smodelInsts[smodelIndex];
 
     memset(backEndRefEnt, 0, sizeof(GfxEntity));
-    backEndRefEnt->reType = 2;
+    backEndRefEnt->reType = (refEntityType_t)(2);
     backEndRefEnt->origin[0] = smodelInst->origin[0];
     backEndRefEnt->origin[1] = smodelInst->origin[1];
     backEndRefEnt->origin[2] = smodelInst->origin[2];
@@ -968,7 +1002,7 @@ GfxEntity *R_AddRefEntityToScene(const GfxEntity *refEnt, GfxModel sceneModel, c
 
         if ((int)refEnt->reType > 1) {
 
-            if ((*(const dvar_t **)imp_com_statmon)->current.enabled) {
+            if ((com_statmon)->current.enabled) {
                 if ((unsigned int)frontEndDataOut->entityCount > 0x1cc4)
                     ri.StatMon_Warning(5, 0xbb8, "gfx/2d/warning@models.jpg");
             }
@@ -985,7 +1019,7 @@ GfxEntity *R_AddRefEntityToScene(const GfxEntity *refEnt, GfxModel sceneModel, c
                 return NULL;
             }
 
-            if (!(*(const dvar_t **)imp_r_drawEntities)->current.enabled)
+            if (!(r_drawEntities)->current.enabled)
                 return NULL;
 
             entIndex = scene.def.entityCount;
@@ -1019,7 +1053,7 @@ GfxEntity *R_AddRefEntityToScene(const GfxEntity *refEnt, GfxModel sceneModel, c
                 if (buf->drawSurfCount <= 0xffff) {
                     drawSurf = &buf->drawSurfs[buf->drawSurfCount];
                     surfType = s_entitySurface;
-                    if (surfType == 2 && (*(const dvar_t **)imp_fx_sort)->current.enabled) {
+                    if (surfType == 2 && (fx_sort)->current.enabled) {
                         sortValue = (unsigned int)((entIndex << 19) + (material->info.sortedIndex << 9) + 0x800001f2u);
                     } else {
                         sortValue = (unsigned int)(surfType + (entIndex << 4) + (material->info.sortedIndex << 21) + 0x1f0000);
@@ -1034,7 +1068,7 @@ GfxEntity *R_AddRefEntityToScene(const GfxEntity *refEnt, GfxModel sceneModel, c
             }
         } else {
 
-            if (!(*(const dvar_t **)imp_r_drawEntities)->current.enabled)
+            if (!(r_drawEntities)->current.enabled)
                 return NULL;
 
             entIndex = scene.def.entityCount;

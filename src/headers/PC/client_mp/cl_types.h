@@ -92,6 +92,22 @@ struct clientConnection_t {
     netProfileInfo_t *pOOBProf;
 };
 
+COD2_ASSERT_FIELD(clientConnection_t, serverAddress, 0x14);
+COD2_ASSERT_FIELD(clientConnection_t, connectTime, 0x28);
+COD2_ASSERT_FIELD(clientConnection_t, challenge, 0x130);
+COD2_ASSERT_FIELD(clientConnection_t, reliableAcknowledge, 0x13c);
+COD2_ASSERT_FIELD(clientConnection_t, reliableCommands, 0x140);
+COD2_ASSERT_FIELD(clientConnection_t, serverMessageSequence, 0x20140);
+COD2_ASSERT_FIELD(clientConnection_t, serverCommands, 0x2014c);
+COD2_ASSERT_FIELD(clientConnection_t, netchan, 0x407d0);
+#if COD2_IS_PATCH_13
+COD2_ASSERT_FIELD(clientConnection_t, pOOBProf, 0x80810);
+COD2_ASSERT_SIZE(clientConnection_t, 0x80814);
+#else
+COD2_ASSERT_FIELD(clientConnection_t, pOOBProf, 0x48810);
+COD2_ASSERT_SIZE(clientConnection_t, 0x48814);
+#endif
+
 struct PlayerKeyState {
     field_t chatField;
     qboolean chat_team;

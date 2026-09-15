@@ -27,7 +27,7 @@
 
 static int bloc;
 
-extern void Com_Memset(void *dest, int val, int count);
+extern void Com_Memset(void *dest, const int val, int count);
 
 void Huff_Init(huffman_t *huff);
 void Huff_offsetReceive(node_t *node, int *ch, byte *fin, int *offset);

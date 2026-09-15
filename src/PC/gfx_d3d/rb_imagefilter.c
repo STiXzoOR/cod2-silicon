@@ -18,9 +18,9 @@ extern unsigned char vidConfig[];
 extern unsigned char backEnd[];
 
 extern void RB_SetRenderTarget(GfxRenderTargetId newTargetId);
-extern void RB_DrawStretchPic(MaterialHandle material, float x, float y, float w, float h,
+extern void RB_DrawStretchPic(const Material *material, float x, float y, float w, float h,
                               float s0, float t0, float s1, float t1,
-                              unsigned int color, int splitScreen);
+                              unsigned int color, GfxPrimStatsTarget splitScreen);
 extern void RB_EndSurface(void);
 
 static int RB_GaussianFilterPoints1D(float pixels, int srcRes, int dstRes, int tapLimit, float *tapOffsets, float *tapWeights);
@@ -346,12 +346,12 @@ static void RB_ApplyFilterPasses(GfxImageFilter *filter, int swapLastPass)
 
             RB_DrawStretchPic(pass->material, 0.0f, 0.0f, dstW, dstH,
                               0.0f, pass->srcHeight, pass->srcWidth, 0.0f,
-                              0xFFFFFFFF, 0xa);
+                              0xFFFFFFFF, (GfxPrimStatsTarget)0xa);
         } else {
 
             RB_DrawStretchPic(pass->material, 0.0f, 0.0f, dstW, dstH,
                               0.0f, 0.0f, pass->srcWidth, pass->srcHeight,
-                              0xFFFFFFFF, 0xa);
+                              0xFFFFFFFF, (GfxPrimStatsTarget)0xa);
         }
 
         RB_EndSurface();
@@ -581,12 +581,12 @@ void RB_GaussianFilterImage(float radius, GfxRenderTargetId renderTargetId)
 
             RB_DrawStretchPic(pass->material, 0.0f, 0.0f, dstW, dstH,
                               0.0f, pass->srcHeight, pass->srcWidth, 0.0f,
-                              0xFFFFFFFF, 0xa);
+                              0xFFFFFFFF, (GfxPrimStatsTarget)0xa);
         } else {
 
             RB_DrawStretchPic(pass->material, 0.0f, 0.0f, dstW, dstH,
                               0.0f, 0.0f, pass->srcWidth, pass->srcHeight,
-                              0xFFFFFFFF, 0xa);
+                              0xFFFFFFFF, (GfxPrimStatsTarget)0xa);
         }
 
         RB_EndSurface();

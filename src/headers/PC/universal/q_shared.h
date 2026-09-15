@@ -18,4 +18,10 @@ struct ping_t {
     int time;
     char info[1024];
 };
+
+COD2_ASSERT_FIELD(ping_t, adr, 0x0);
+COD2_ASSERT_FIELD(ping_t, start, 0x14);
+COD2_ASSERT_FIELD(ping_t, time, 0x18);
+COD2_ASSERT_FIELD(ping_t, info, 0x1c);
+COD2_ASSERT_SIZE(ping_t, 0x41c);
 #endif

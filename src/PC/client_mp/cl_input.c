@@ -3,6 +3,10 @@
 #include "bytematch.h"
 #include "cod2_feature_config.h"
 #include <math.h>
+/* dvar globals */
+extern LegacyHacks *legacyHacks;
+extern const dvar_t *cl_nodelta;
+extern const dvar_t *cl_packetdup;
 
 #if COD2_FEATURE_GAMEPAD
 extern void CL_Gamepad_Init(void);
@@ -30,7 +34,7 @@ extern const dvar_t *m_forward;
 extern const dvar_t *m_side;
 extern const dvar_t *m_filter;
 extern int atoi(const char *nptr);
-extern const char *Cmd_Argv(int arg);
+extern char *Cmd_Argv(int arg);
 extern void Com_Printf(const char *fmt, ...);
 extern void Cmd_AddCommand(const char *cmd, void (*func)(void));
 extern void Cmd_RemoveCommand(const char *cmd);
@@ -44,19 +48,19 @@ extern void MSG_WriteByte(msg_t *msg, int c);
 extern void MSG_WriteData(msg_t *buf, const void *data, int length);
 extern void MSG_WriteLong(msg_t *msg, int c);
 extern void MSG_WriteBits(msg_t *msg, int value, int bits);
-extern int MSG_WriteBitsCompress(const byte *datasrc, byte *buffdest, int bytecount);
-extern void MSG_SetDefaultUserCmd(void *from, void *to);
-extern void MSG_WriteDeltaUsercmdKey(msg_t *msg, int key, void *from, void *to);
-extern int Com_HashKey(const char *string, int maxlen);
-extern void CL_Netchan_Transmit(void *chan, byte *data, int length);
-extern void CL_Netchan_TransmitNextFragment(void *chan);
+extern int MSG_WriteBitsCompress(byte *from, byte *to, int size);
+extern void MSG_SetDefaultUserCmd(playerState_t *from, usercmd_t *to);
+extern void MSG_WriteDeltaUsercmdKey(msg_t *msg, int key, usercmd_t *from, usercmd_t *to);
+extern int Com_HashKey(char *string, int maxlen);
+extern void CL_Netchan_Transmit(netchan_t *chan, byte *data, int length);
+extern void CL_Netchan_TransmitNextFragment(netchan_t *chan);
 extern void NET_OutOfBandVoiceData(netsrc_t sock, netadr_t adr, byte *format, int len);
 extern void CL_SyncGpu(void);
 extern void CL_SendCmdInternal(void);
 extern Bool PM_IsBinocularsADS(const playerState_t *ps);
 extern const signed char ClampChar(const int i);
 extern float sqrtf(float x);
-extern qboolean Sys_IsLANAddress(int addr0, int addr1, int addr2);
+extern qboolean Sys_IsLANAddress(netadr_t adr);
 extern struct clientStatic_t cls;
 extern int com_frameTime;
 extern unsigned int frame_msec;
@@ -69,19 +73,7 @@ void CL_WritePacketDbg(const char *fmt, int serverId)
 extern void UI_MouseEvent(int dx, int dy);
 extern void UI_MouseEventAbsolute(int x, int y);
 static kbutton_t playersKb[1][28];
-__attribute__((used, packed, aligned(4)))
-UInt32 kb[8] = {
-    (UInt32)playersKb,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-};
-
-#define kb ((kbutton_t *)kb[0])
+static kbutton_t *kb = playersKb[0];
 
 typedef struct
 {
@@ -407,7 +399,7 @@ void IN_UpDown(void)
         return;
     }
 
-    stance = &(*(LegacyHacks **)imp_legacyHacks)->cl_stance;
+    stance = &legacyHacks->cl_stance;
     if (*stance > 1) {
         *stance = 1;
         return;
@@ -664,7 +656,6 @@ void IN_LeanRight_Up(void)
 void IN_Stance_Down(void)
 {
     clientActive_t *cl;
-    LegacyHacks **lh;
 
     if (kb[25].active || kb[11].active ) {
         return;
@@ -672,11 +663,10 @@ void IN_Stance_Down(void)
 
     cl = *(clientActive_t **)imp_cl;
     cl->stanceHeld = 1;
-    lh = (LegacyHacks **)imp_legacyHacks;
-    cl->stancePosition = (*lh)->cl_stance;
+    cl->stancePosition = legacyHacks->cl_stance;
     cl->stanceTime = *(int *)imp_com_frameTime;
     if (cl->stancePosition != 1) {
-        (*lh)->cl_stance = 1;
+        legacyHacks->cl_stance = 1;
     }
 }
 
@@ -689,7 +679,7 @@ void IN_Stance_Up(void)
     clp = (clientActive_t **)imp_cl;
     ptr = *clp;
     if (ptr->stanceHeld && ptr->stancePosition == 1) {
-        (*(LegacyHacks **)imp_legacyHacks)->cl_stance = 0;
+        legacyHacks->cl_stance = 0;
     }
     (*clp)->stanceHeld = 0;
 }
@@ -723,7 +713,7 @@ void IN_RaiseStance(void)
 {
     if (kb[25].active != 0 || kb[11].active != 0 )
         return;
-    int *stance = &(*(LegacyHacks **)imp_legacyHacks)->cl_stance;
+    int *stance = &legacyHacks->cl_stance;
     if (*stance > 1)
         *stance = 1;
     else if (*stance == 1)
@@ -734,7 +724,7 @@ void IN_ToggleCrouch(void)
 {
     if (kb[25].active != 0 || kb[11].active != 0 )
         return;
-    int *stance = &(*(LegacyHacks **)imp_legacyHacks)->cl_stance;
+    int *stance = &legacyHacks->cl_stance;
     *stance = (*stance != 1) ? 1 : 0;
 }
 
@@ -742,7 +732,7 @@ void IN_ToggleProne(void)
 {
     if (kb[25].active != 0 || kb[11].active != 0 )
         return;
-    int *stance = &(*(LegacyHacks **)imp_legacyHacks)->cl_stance;
+    int *stance = &legacyHacks->cl_stance;
     *stance = (*stance != 2) ? 2 : 0;
 }
 
@@ -750,14 +740,14 @@ void IN_GoProne(void)
 {
     if (kb[25].active != 0 || kb[11].active != 0 )
         return;
-    (*(LegacyHacks **)imp_legacyHacks)->cl_stance = 2;
+    legacyHacks->cl_stance = 2;
 }
 
 void IN_GoCrouch(void)
 {
     if (kb[25].active != 0 || kb[11].active != 0 )
         return;
-    (*(LegacyHacks **)imp_legacyHacks)->cl_stance = 1;
+    legacyHacks->cl_stance = 1;
 }
 
 void IN_GoStandDown(void)
@@ -765,7 +755,7 @@ void IN_GoStandDown(void)
     int *stance;
 
     IN_KeyDown(&kb[12]);
-    stance = &(*(LegacyHacks **)imp_legacyHacks)->cl_stance;
+    stance = &legacyHacks->cl_stance;
     if (!*stance) {
         IN_KeyDown(&kb[10]);
         return;
@@ -853,7 +843,7 @@ void CL_WriteVoicePacket(void)
         MSG_WriteData(&msg, cl->voicePackets[voicePacket].data, cl->voicePackets[voicePacket].dataSize);
     }
 
-    if ((*(const dvar_t **)imp_cl_showSend)->current.enabled) {
+    if ((cl_showSend)->current.enabled) {
         Com_Printf((const char *)"voice: %i\n", msg.cursize);
     }
 
@@ -883,7 +873,7 @@ void CL_WritePacket(void)
 
     cl_ptr = *(clientActive_t **)imp_cl;
 
-    MSG_SetDefaultUserCmd((void *)&cl_ptr->snap.ps, (void *)&nullcmd);
+    MSG_SetDefaultUserCmd(&cl_ptr->snap.ps, &nullcmd);
 
     MSG_Init(&buf, data, MAX_MSGLEN);
 
@@ -909,7 +899,7 @@ void CL_WritePacket(void)
 
     {
         clientActive_t *cl2 = *(clientActive_t **)imp_cl;
-        const dvar_t *packetdup = *(const dvar_t **)imp_cl_packetdup;
+        const dvar_t *packetdup = cl_packetdup;
         int cmdNum = clc_ptr->netchan.outgoingSequence;
         int dupIdx = (cmdNum - packetdup->current.integer - 1) & 0x1f;
         compressedSize = cl2->cmdNumber - cl2->outPackets[dupIdx].p_cmdNumber;
@@ -926,14 +916,14 @@ void CL_WritePacket(void)
     }
 
     {
-        const dvar_t *showSend = *(const dvar_t **)imp_cl_showSend;
+        const dvar_t *showSend = cl_showSend;
         if (showSend->current.enabled) {
             Com_Printf((const char *)"(%i)", compressedSize);
         }
     }
 
     {
-        const dvar_t *nodelta = *(const dvar_t **)imp_cl_nodelta;
+        const dvar_t *nodelta = cl_nodelta;
         clientActive_t *cl3 = *(clientActive_t **)imp_cl;
         int snap = cl3->snap.valid;
 
@@ -973,7 +963,7 @@ write_cmdcount:
             int idx = (cl4->cmdNumber - compressedSize + 1 + i) & 0x7f;
 
             usercmd_t *curCmd = &cl4->cmds[idx];
-            MSG_WriteDeltaUsercmdKey(&buf, key, (void *)prevCmd, (void *)curCmd);
+            MSG_WriteDeltaUsercmdKey(&buf, key, prevCmd, curCmd);
             prevCmd = curCmd;
         }
         lastCmd = prevCmd;
@@ -1002,17 +992,17 @@ write_footer:
         clc4->lastPacketSentTime = cls.realtime;
 
         {
-            const dvar_t *showSend2 = *(const dvar_t **)imp_cl_showSend;
+            const dvar_t *showSend2 = cl_showSend;
             if (showSend2->current.enabled) {
                 Com_Printf((const char *)"%i ", compressedSize);
             }
         }
 
-        CL_Netchan_Transmit((void *)&clc4->netchan, compressedBuf, compressedSize);
+        CL_Netchan_Transmit(&clc4->netchan, compressedBuf, compressedSize);
 
         if (clc4->netchan.unsentFragments) {
             do {
-                CL_Netchan_TransmitNextFragment((void *)&clc4->netchan);
+                CL_Netchan_TransmitNextFragment(&clc4->netchan);
             } while ((*(clientConnection_t **)imp_clc)->netchan.unsentFragments);
         }
     }
@@ -1094,7 +1084,7 @@ void CL_InitInput(void)
     cl_stanceHoldTime = Dvar_RegisterInt("cl_stanceHoldTime", 300, 0, 1000, 0x1000);
     {
         const dvar_t *nodelta = Dvar_RegisterBool_mac("cl_nodelta", 0, 0x1000);
-        *(const dvar_t **)imp_cl_nodelta = nodelta;
+        cl_nodelta = nodelta;
     }
 
 #if COD2_FEATURE_GAMEPAD
@@ -1182,38 +1172,36 @@ void CL_ShutdownInput(void)
 void CL_CmdButtons(usercmd_t *cmd)
 {
     clientActive_t **clp = (clientActive_t **)imp_cl;
-    byte *kbBase = (byte *)kb;
-
-#define KB_AT(offset) ((kbutton_t *)(kbBase + (offset)))
-#define CONSUME(offset, bit)                         \
+#define KB_AT(index) (&kb[(index)])
+#define CONSUME(index, bit)                          \
     do {                                             \
-        kbutton_t *b__ = KB_AT(offset);              \
+        kbutton_t *b__ = KB_AT(index);               \
         if (*(const unsigned short *)&b__->active) { \
             cmd->buttons |= (bit);                   \
             b__->wasPressed = 0;                     \
         }                                            \
     } while (0)
 
-    CONSUME(0x118, 0x1);
-    CONSUME(0x12c, 0x8000);
-    CONSUME(0x140, 0x10000);
-    CONSUME(0x154, 0x20000);
-    CONSUME(0x168, 0x4000);
-    CONSUME(0x17c, 0x4);
-    CONSUME(0x190, 0x8);
-    CONSUME(0x1a4, 0x10);
-    CONSUME(0x1b8, 0x20);
-    CONSUME(0x1cc, 0x40);
-    CONSUME(0x1e0, 0x80);
-    CONSUME(0x1f4, 0x100);
-    CONSUME(0x208, 0x200);
-    CONSUME(0xc8, 0x400);
+    CONSUME(14, 0x1);
+    CONSUME(15, 0x8000);
+    CONSUME(16, 0x10000);
+    CONSUME(17, 0x20000);
+    CONSUME(18, 0x4000);
+    CONSUME(19, 0x4);
+    CONSUME(20, 0x8);
+    CONSUME(21, 0x10);
+    CONSUME(22, 0x20);
+    CONSUME(23, 0x40);
+    CONSUME(24, 0x80);
+    CONSUME(25, 0x100);
+    CONSUME(26, 0x200);
+    CONSUME(10, 0x400);
 
     if ((*clp)->keyCatchers && !cl_bypassMouseInput->current.enabled) {
         cmd->buttons |= 0x40000;
     }
 
-    if ((int)((*clp)->snap.ps.pm_type - 2) <= 2 && CL_ConsumeButtonPress(KB_AT(0xf0))) {
+    if ((int)((*clp)->snap.ps.pm_type - 2) <= 2 && CL_ConsumeButtonPress(KB_AT(12))) {
         cmd->buttons |= 0x400;
     }
 
@@ -1239,7 +1227,7 @@ void CL_MouseMove(usercmd_t *cmd)
     float pitchDelta;
     int index;
 
-#define KB_AT(offset) ((kbutton_t *)((byte *)kb + (offset)))
+#define KB_AT(index) (&kb[(index)])
 
     cl = *(clientActive_t **)imp_cl;
     if (m_filter->current.enabled) {
@@ -1299,7 +1287,7 @@ void CL_MouseMove(usercmd_t *cmd)
         return;
     }
 
-    if (KB_AT(0xa0)->active) {
+    if (KB_AT(8)->active) {
         cmd->rightmove = ClampChar((int)cmd->rightmove + (int)(mx * CL_FiniteOrDefault(m_side->current.value, 0.25f)));
     } else {
         yawDelta = mx * CL_FiniteOrDefault(m_yaw->current.value, 0.022f);
@@ -1307,7 +1295,7 @@ void CL_MouseMove(usercmd_t *cmd)
         cl->viewangles[1] -= yawDelta;
     }
 
-    if ((KB_AT(0x104)->active || cl_freelook->current.enabled) && !KB_AT(0xa0)->active) {
+    if ((KB_AT(13)->active || cl_freelook->current.enabled) && !KB_AT(8)->active) {
         pitchDelta = my * CL_FiniteOrDefault(m_pitch->current.value, 0.022f);
         pitchDelta = CL_ClampMouseAxisDelta(pitchDelta, CL_FiniteOrDefault(cl->cgameMaxPitchSpeed, 0.0f));
         cl->viewangles[0] += pitchDelta;
@@ -1322,42 +1310,42 @@ void IN_DownDown(void)
 {
     IN_KeyDown(&kb[11]);
     if (kb[25].active || kb[11].active )
-        (*(LegacyHacks **)imp_legacyHacks)->cl_stanceTemp = 1;
+        legacyHacks->cl_stanceTemp = 1;
     else
-        (*(LegacyHacks **)imp_legacyHacks)->cl_stanceTemp = 0;
+        legacyHacks->cl_stanceTemp = 0;
 }
 
 void IN_DownUp(void)
 {
     IN_KeyUp(&kb[11]);
     if (kb[25].active || kb[11].active )
-        (*(LegacyHacks **)imp_legacyHacks)->cl_stanceTemp = 1;
+        legacyHacks->cl_stanceTemp = 1;
     else
-        (*(LegacyHacks **)imp_legacyHacks)->cl_stanceTemp = 0;
+        legacyHacks->cl_stanceTemp = 0;
 }
 
 void IN_Prone_Down(void)
 {
     IN_KeyDown(&kb[25]);
     if (kb[25].active || kb[11].active )
-        (*(LegacyHacks **)imp_legacyHacks)->cl_stanceTemp = 1;
+        legacyHacks->cl_stanceTemp = 1;
     else
-        (*(LegacyHacks **)imp_legacyHacks)->cl_stanceTemp = 0;
+        legacyHacks->cl_stanceTemp = 0;
 }
 
 void IN_Prone_Up(void)
 {
     IN_KeyUp(&kb[25]);
     if (kb[25].active || kb[11].active )
-        (*(LegacyHacks **)imp_legacyHacks)->cl_stanceTemp = 1;
+        legacyHacks->cl_stanceTemp = 1;
     else
-        (*(LegacyHacks **)imp_legacyHacks)->cl_stanceTemp = 0;
+        legacyHacks->cl_stanceTemp = 0;
 }
 
 void IN_MLookUp(void)
 {
     kb[13].active = 0;
-    if ((*(const dvar_t **)imp_cl_freelook)->current.enabled == 0) {
+    if ((cl_freelook)->current.enabled == 0) {
         clientActive_t *cl = *(clientActive_t **)imp_cl;
         cl->viewangles[0] = (float)cl->snap.ps.delta_angles[0] * -0.0054931640625f;
     }
@@ -1368,26 +1356,26 @@ void CL_AdjustAngles(void)
     clientActive_t *cl;
     float speed;
 
-#define KB_AT(offset) ((kbutton_t *)((byte *)kb + (offset)))
+#define KB_AT(index) (&kb[(index)])
 
     speed = (float)cls.frametime * 0.0010000000474974513f;
-    if (KB_AT(0xb4)->active) {
+    if (KB_AT(9)->active) {
         speed *= cl_anglespeedkey->current.value;
     }
 
-    if (!KB_AT(0xa0)->active) {
+    if (!KB_AT(8)->active) {
         cl = *(clientActive_t **)imp_cl;
-        cl->viewangles[1] -= CL_KeyState(KB_AT(0x14)) * (speed * cl_yawspeed->current.value);
+        cl->viewangles[1] -= CL_KeyState(KB_AT(1)) * (speed * cl_yawspeed->current.value);
 
         cl = *(clientActive_t **)imp_cl;
-        cl->viewangles[1] += CL_KeyState(KB_AT(0x00)) * (speed * cl_yawspeed->current.value);
+        cl->viewangles[1] += CL_KeyState(KB_AT(0)) * (speed * cl_yawspeed->current.value);
     }
 
     cl = *(clientActive_t **)imp_cl;
-    cl->viewangles[0] -= CL_KeyState(KB_AT(0x50)) * (speed * cl_pitchspeed->current.value);
+    cl->viewangles[0] -= CL_KeyState(KB_AT(4)) * (speed * cl_pitchspeed->current.value);
 
     cl = *(clientActive_t **)imp_cl;
-    cl->viewangles[0] += CL_KeyState(KB_AT(0x64)) * (speed * cl_pitchspeed->current.value);
+    cl->viewangles[0] += CL_KeyState(KB_AT(5)) * (speed * cl_pitchspeed->current.value);
 
 #undef KB_AT
 }
@@ -1399,36 +1387,36 @@ void CL_KeyMove(usercmd_t *cmd)
     int side;
     int forward;
 
-#define KB_AT(offset) ((kbutton_t *)((byte *)kb + (offset)))
+#define KB_AT(index) (&kb[(index)])
 
     cl = *(clientActive_t **)imp_cl;
 
     (void)cl;
 
     {
-        int clStance = (*(LegacyHacks **)imp_legacyHacks)->cl_stance;
+        int clStance = legacyHacks->cl_stance;
         if (clStance == 1)
             cmd->buttons |= 0x200;
         else if (clStance == 2)
             cmd->buttons |= 0x100;
     }
 
-    if (((KB_AT(0xb4)->active != 0) == (cl->usingAds == 0)) || PM_IsBinocularsADS(&cl->snap.ps)) {
+    if (((KB_AT(9)->active != 0) == (cl->usingAds == 0)) || PM_IsBinocularsADS(&cl->snap.ps)) {
         cmd->buttons |= 0x1000;
     } else {
         cmd->buttons &= ~0x1000;
     }
 
-    if (KB_AT(0xa0)->active) {
-        side = CL_KeyMoveValue(KB_AT(0x14)) - CL_KeyMoveValue(KB_AT(0x00));
+    if (KB_AT(8)->active) {
+        side = CL_KeyMoveValue(KB_AT(1)) - CL_KeyMoveValue(KB_AT(0));
     } else {
         side = 0;
     }
 
-    side += CL_KeyMoveValue(KB_AT(0x8c));
-    side -= CL_KeyMoveValue(KB_AT(0x78));
+    side += CL_KeyMoveValue(KB_AT(7));
+    side -= CL_KeyMoveValue(KB_AT(6));
 
-    forward = CL_KeyMoveValue(KB_AT(0x28)) - CL_KeyMoveValue(KB_AT(0x3c));
+    forward = CL_KeyMoveValue(KB_AT(2)) - CL_KeyMoveValue(KB_AT(3));
 
     cmd->forwardmove = ClampChar(forward);
     cmd->rightmove = ClampChar(side);
@@ -1489,7 +1477,6 @@ void CL_SendCmdInternal(void)
     clientConnection_t *clc;
     clientActive_t *cl;
     outPacket_t *outPacket;
-    const int *serverAddrWords;
     int connectElapsed;
 
     clc = *(clientConnection_t **)imp_clc;
@@ -1514,8 +1501,7 @@ void CL_SendCmdInternal(void)
             goto not_ready;
     }
 
-    serverAddrWords = (const int *)&clc->serverAddress;
-    if (clc->serverAddress.type == NA_LOOPBACK || Sys_IsLANAddress(serverAddrWords[0], serverAddrWords[1], serverAddrWords[2])) {
+    if (clc->serverAddress.type == NA_LOOPBACK || Sys_IsLANAddress(clc->serverAddress)) {
         CL_WritePacket();
         return;
     }

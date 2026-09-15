@@ -4,7 +4,7 @@
 extern struct scrMemTreePub_t scrMemTreePub;
 extern unsigned char scrMemTreeGlob[];
 
-extern byte *Z_VirtualAllocInternal(int size);
+extern void *Z_VirtualAllocInternal(int size);
 extern void Z_VirtualFreeInternal(void *ptr);
 extern void Com_Printf(const char *fmt, ...);
 extern void Scr_TerminalError(const char *msg);
@@ -155,7 +155,7 @@ byte *MT_InitForceAlloc(void)
 {
     TOTAL_ALLOC = 0;
     TOTAL_ALLOC_BUCKETS = 0;
-    return Z_VirtualAllocInternal(0x2000);
+    return (byte *)Z_VirtualAllocInternal(0x2000);
 }
 
 void MT_Init(void)

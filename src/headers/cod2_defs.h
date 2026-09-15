@@ -5,8 +5,15 @@
 #include <stddef.h>
 #define COD2_ASSERT_CAT_(a, b) a##b
 #define COD2_ASSERT_CAT(a, b) COD2_ASSERT_CAT_(a, b)
-#if defined(COD2_X64)
-/* x86_64/LP64 port: the field-offset and size pins encode the ORIGINAL 32-bit
+#if defined(COD2_X64) || defined(COD2_PACKED_BLOB_BUILD)
+/* Numeric ILP32 pins are dropped in two cases: (1) the x64/LP64 port (pointers
+ * 8 bytes, no original to match); (2) the packed data-blob TUs built with /Zp1
+ * -- their `_d32_` structs need the packed layout, but that same /Zp1 also strips
+ * padding from the REGULAR structs pulled in transitively (e.g. challenge_t's
+ * char[33] PBguid fields pad to 116 default but 114 packed), so the default-
+ * alignment pins can't hold there. Keep field/struct EXISTENCE checks in both.
+ *
+ * x86_64/LP64 port: the field-offset and size pins encode the ORIGINAL 32-bit
  * binary's ABI (pointers 4 bytes, specific padding). On x64 there is no
  * original binary to match -- pointers are 8 bytes and the (properly typed)
  * structs re-lay-out naturally -- so the 32-bit numbers have no ground truth.
@@ -2009,7 +2016,9 @@ typedef struct XAnimSimpleRotPos XAnimSimpleRotPos;
 typedef struct XAnimState XAnimState;
 typedef struct XAnimTime XAnimTime;
 typedef struct XAnimToXModel XAnimToXModel;
-typedef struct XAnimTree_s XAnimTree;
+#ifndef __cplusplus
+typedef struct XAnimTree_s XAnimTree;   /* C++: `struct XAnimTree` (cod2_fwd.h/common_types.h) is already the type -> C2371 */
+#endif
 typedef struct XAnim_s XAnim_s;
 
 typedef union XAssetHeader XAssetHeader;
@@ -3002,7 +3011,7 @@ typedef float FLOAT_MULT_TYPE;
 typedef void (*FSSpecPtr)();
 typedef float Float32;
 typedef double Float64;
-typedef void (*Free_t)();
+typedef void (*Free_t)(void *, int);   /* real Free(ptr,size) sig; byte-neutral fn-ptr */
 typedef GDevice * GDPtr;
 typedef long unsigned int GLbitfield;
 
@@ -3185,7 +3194,7 @@ typedef OpaqueWindowPtr * WindowPtr;
 
 typedef XAnimParts_s XAnimParts;
 
-typedef void (*XAssetEnum)();
+typedef void (*XAssetEnum)(void *, void *);   /* real func(data,inData) sig; byte-neutral fn-ptr */
 typedef int XPartBits[4];
 typedef short int XQuat[4];
 typedef short int XQuat2[2];
@@ -3238,7 +3247,7 @@ typedef float float16;
 typedef void (*float_DCT_method_ptr)();
 
 typedef int (*fn_think)();
-typedef void (*fn_touch)();
+typedef void (*fn_touch)(struct gentity_s *, struct gentity_s *, int);   /* real touch-handler sig (was unprototyped); unblocks C++ call sites */
 typedef unsigned int (*fn_use)();
 typedef void (*forward_DCT_method_ptr)();
 typedef double (*free_func)();
@@ -3297,7 +3306,7 @@ typedef phuff_entropy_decoder * phuff_entropy_ptr;
 
 typedef void (*pmove_PlayerEvent)();
 typedef int (*pmove_pointcontents)();
-typedef void (*pmove_trace)();
+typedef void (*pmove_trace)(struct trace_t *, const float *, const float *, const float *, const float *, int, int);   /* real PM_trace handler sig; byte-neutral fn-ptr */
 
 typedef jpeg_alloc * (*pthread_callback_type)();
 typedef int qhandle_t;
@@ -4434,7 +4443,7 @@ struct GfxSceneModelCellRef {
     int entIndex;
     vec3_t mins;
     vec3_t maxs;
-    int next;
+    intptr_t next;
 };
 
 struct GfxStaticModelSurfaceCached {
@@ -4820,8 +4829,8 @@ struct GfxEntity {
 };
 
 struct MarkPoly {
-    int prevMark;
-    int nextMark;
+    struct MarkPoly *prevMark;
+    struct MarkPoly *nextMark;
     int lastFrameDrawn;
     vec3_t origin;
     float radius;
@@ -7155,8 +7164,6 @@ struct animScript_t {
     int numItems;
     animScriptItem_t * items[128];
 };
-#pragma pack(push, 4)
-
 struct animation_s {
     char name[64];
     int initialLerp;
@@ -7167,7 +7174,6 @@ struct animation_s {
     long long int movetype;
     int noteType;
 };
-#pragma pack(pop)
 
 struct archivedEntityShared_t {
     int svFlags;
@@ -7370,7 +7376,7 @@ struct clientState_s {
 };
 
 struct cmd_function_s {
-    /* really a cmd_function_t*; the reconstruction kept it in an int-typed field
+    /* really a cmd_function_t*; kept in an int-typed field
      * accessed via *(cmd_function_t**)&next. Use a pointer-sized int so it
      * survives LP64/LLP64 (4 on x86, 8 on x64). The old `int` truncated the
      * next-pointer on MSVC x64 -> crash in Cmd_AddCommand. */
@@ -8563,8 +8569,15 @@ struct netProfileInfo_t {
 struct netadr_t {
     netadrtype_t type;
     byte ip[4];
+    byte ipx[10];
     short unsigned int port;
 };
+
+COD2_ASSERT_FIELD(netadr_t, type, 0x0);
+COD2_ASSERT_FIELD(netadr_t, ip, 0x4);
+COD2_ASSERT_FIELD(netadr_t, ipx, 0x8);
+COD2_ASSERT_FIELD(netadr_t, port, 0x12);
+COD2_ASSERT_SIZE(netadr_t, 0x14);
 
 struct challenge_t {
     netadr_t adr;
@@ -8575,7 +8588,22 @@ struct challenge_t {
     int firstPing;
     qboolean connected;
     int guid;
+#if COD2_IS_PATCH_13
+    char PBguid[33];
+    char clientPBguid[33];
+#endif
 };
+
+COD2_ASSERT_FIELD(challenge_t, adr, 0x0);
+COD2_ASSERT_FIELD(challenge_t, challenge, 0x14);
+COD2_ASSERT_FIELD(challenge_t, guid, 0x2c);
+#if COD2_IS_PATCH_13
+COD2_ASSERT_FIELD(challenge_t, PBguid, 0x30);
+COD2_ASSERT_FIELD(challenge_t, clientPBguid, 0x51);
+COD2_ASSERT_SIZE(challenge_t, 0x74);
+#else
+COD2_ASSERT_SIZE(challenge_t, 0x30);
+#endif
 
 struct netchan_t {
     int outgoingSequence;
@@ -8594,6 +8622,31 @@ struct netchan_t {
     byte unsentBuffer[MAX_MSGLEN];
     netProfileInfo_t *pProf;
 };
+
+COD2_ASSERT_FIELD(netchan_t, outgoingSequence, 0x0);
+COD2_ASSERT_FIELD(netchan_t, sock, 0x4);
+COD2_ASSERT_FIELD(netchan_t, incomingSequence, 0x8);
+COD2_ASSERT_FIELD(netchan_t, dropped, 0xc);
+COD2_ASSERT_FIELD(netchan_t, remoteAddress, 0x10);
+COD2_ASSERT_FIELD(netchan_t, qport, 0x24);
+COD2_ASSERT_FIELD(netchan_t, fragmentSequence, 0x28);
+COD2_ASSERT_FIELD(netchan_t, fragmentLength, 0x2c);
+COD2_ASSERT_FIELD(netchan_t, fragmentBuffer, 0x30);
+#if COD2_IS_PATCH_13
+COD2_ASSERT_FIELD(netchan_t, unsentFragments, 0x20030);
+COD2_ASSERT_FIELD(netchan_t, unsentFragmentStart, 0x20034);
+COD2_ASSERT_FIELD(netchan_t, unsentLength, 0x20038);
+COD2_ASSERT_FIELD(netchan_t, unsentBuffer, 0x2003c);
+COD2_ASSERT_FIELD(netchan_t, pProf, 0x4003c);
+COD2_ASSERT_SIZE(netchan_t, 0x40040);
+#else
+COD2_ASSERT_FIELD(netchan_t, unsentFragments, 0x4030);
+COD2_ASSERT_FIELD(netchan_t, unsentFragmentStart, 0x4034);
+COD2_ASSERT_FIELD(netchan_t, unsentLength, 0x4038);
+COD2_ASSERT_FIELD(netchan_t, unsentBuffer, 0x403c);
+COD2_ASSERT_FIELD(netchan_t, pProf, 0x803c);
+COD2_ASSERT_SIZE(netchan_t, 0x8040);
+#endif
 
 struct new_allocator_CCacheInfoBlock {
     int _placeholder;
@@ -9203,8 +9256,8 @@ struct animScriptData_t {
     short unsigned int torsoAnim;
     short unsigned int legsAnim;
     short unsigned int turningAnim;
-    snd_alias_list_t * (*soundAlias)();
-    int (*playSoundAlias)();
+    snd_alias_list_t * (*soundAlias)(const char *);                 /* real sigs; byte-neutral fn-ptrs */
+    int (*playSoundAlias)(int, snd_alias_list_t *);
 };
 
 struct bgs_t {
@@ -9214,9 +9267,9 @@ struct bgs_t {
     int latestSnapshotTime;
     int frametime;
     int anim_user;
-    struct XModel * (*GetXModel)();
-    void (*CreateDObj)();
-    void (*SafeDObjFree)();
+    struct XModel * (*GetXModel)(const char *);                                  /* real bgs handler sigs; byte-neutral fn-ptrs */
+    void (*CreateDObj)(void *, unsigned short, void *, int, void *);
+    void (*SafeDObjFree)(int);
     void * (*AllocXAnim)();
     clientInfo_t clientinfo[64];
 };
@@ -9360,6 +9413,14 @@ struct serverInfo_t {
     char game[24];
     char gameType[16];
 };
+
+COD2_ASSERT_FIELD(serverInfo_t, adr, 0x0);
+COD2_ASSERT_FIELD(serverInfo_t, netType, 0x14);
+COD2_ASSERT_FIELD(serverInfo_t, requestCount, 0x21);
+COD2_ASSERT_FIELD(serverInfo_t, minPing, 0x22);
+COD2_ASSERT_FIELD(serverInfo_t, hostName, 0x28);
+COD2_ASSERT_FIELD(serverInfo_t, gameType, 0x80);
+COD2_ASSERT_SIZE(serverInfo_t, 0x90);
 
 struct serverStatusInfo_t {
     char address[64];
@@ -9857,13 +9918,11 @@ struct token_s {
     long unsigned int intvalue;
     int _pad_fv;
     long double floatvalue;
-    int _pad_after_fv;
     char *whitespace_p;
     char *endwhitespace_p;
     int line;
     int linescrossed;
     struct token_s *next;
-    char _pad_token[12];
 };
 
 struct source_s {
@@ -9978,8 +10037,8 @@ struct centity_s {
 };
 
 struct localEntity_s {
-    int prev;
-    int next;
+    struct localEntity_s *prev;
+    struct localEntity_s *next;
     leType_t leType;
     int endTime;
     trajectory_t pos;
@@ -10339,6 +10398,15 @@ struct client_s {
     char clientPBguid[33];
 #endif
 };
+
+#if COD2_IS_PATCH_13
+COD2_ASSERT_FIELD(client_t, netchan, 0x6e6c4);
+COD2_ASSERT_FIELD(client_t, guid, 0xae704);
+COD2_ASSERT_FIELD(client_t, scriptId, 0xae708);
+COD2_ASSERT_FIELD(client_t, bIsTestClient, 0xae70c);
+COD2_ASSERT_FIELD(client_t, serverId, 0xae710);
+COD2_ASSERT_SIZE(client_t, 0xb1064);
+#endif
 #pragma pack(push, 4)
 
 struct value_s {
@@ -10404,6 +10472,16 @@ struct clientStatic_t {
     char downloadList[1024];
 #endif
 };
+
+COD2_ASSERT_FIELD(clientStatic_t, localServers, 0x13c);
+COD2_ASSERT_FIELD(clientStatic_t, globalServers, 0x4944);
+COD2_ASSERT_FIELD(clientStatic_t, favoriteServers, 0x2c3b48);
+COD2_ASSERT_FIELD(clientStatic_t, authorizeServer, 0x2c834c);
+#if COD2_IS_PATCH_13
+COD2_ASSERT_SIZE(clientStatic_t, 0x2c8a18);
+#else
+COD2_ASSERT_SIZE(clientStatic_t, 0x2c83bc);
+#endif
 
 struct viewDamage_t {
     int time;

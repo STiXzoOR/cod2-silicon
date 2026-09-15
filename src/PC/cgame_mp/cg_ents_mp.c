@@ -5,25 +5,28 @@
 #include <string.h>
 extern scr_const_t scr_const;
 
+/* File-scope alias: bound where no local can shadow `scr_const`, so uses below
+   always reach the global even inside functions that declare their own `scr_const`. */
+static scr_const_t * const scr_const_g = &scr_const;
 extern void DObjUpdateClientInfo(struct DObj_s *obj, float timescale);
-extern void *MT_Alloc(int size, int type);
-extern void *BG_GetWeaponDef(int weapIndex);
-extern void *XAnimCreateTree(void *anims, void *Alloc);
+extern unsigned int *MT_Alloc(int size, int type);
+extern WeaponDef * BG_GetWeaponDef(int iWeapon);
+extern XAnimTree *XAnimCreateTree(XAnim *anims, Alloc_t Alloc);
 extern struct XAnim_s *XAnimCreateAnims(const char *debugName, int size, void *Alloc);
-extern void XAnimBlend(struct XAnim_s *anims, unsigned int animIndex, const char *name, unsigned int children, unsigned int num, unsigned int flags);
+extern void XAnimBlend(XAnim *anims, unsigned int animIndex, const char *name, unsigned int children, unsigned int num, unsigned int flags);
 extern void XAnimPrecache(const char *name, void *Alloc);
 extern void XAnimCreate(struct XAnim_s *anims, unsigned int animIndex, const char *name);
-extern void *Com_GetClientDObj(int entityNum, int localClientNum);
+extern struct DObj_s * Com_GetClientDObj(int handle, int localClientNum);
 extern void Com_ClientDObjCreate(DObjModel_s *dobjModels, int numModels, struct XAnimTree_s *tree, int handle);
 extern qboolean CG_CheckDObjInfoMatches(int iEntNum, int iEntType, struct XModel *pXModel);
 extern void CG_SetDObjInfo(int iEntNum, int iEntType, struct XModel *pXModel);
 extern void CG_SafeDObjFree(int iEntNum);
 extern void CG_RegisterItemVisuals(int itemNum);
 extern void Com_Error(int code, const char *fmt, ...);
-extern float AngleSubtract(float a1, float a2);
-extern float LerpAngle(float from, float to, float frac);
-extern void DObjSetControlTagAngles(void *obj, int *partBits, unsigned int tagName, float *angles);
-extern void *DObjGetTree(void *obj);
+extern const float AngleSubtract(const float a1, const float a2);
+extern const float LerpAngle(const float from, const float to, const float frac);
+extern int DObjSetControlTagAngles(const struct DObj_s *obj, int *partBits, unsigned int tagName, float *angles);
+extern struct XAnimTree_s *DObjGetTree(const struct DObj_s *obj);
 extern void XAnimSetCompleteGoalWeightKnobAll(void *tree, int animIndex, float goalWeight, float goalTime, float rate, int notifyType, int notifyClient);
 extern void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es, int *partBits, clientInfo_t *ci, int frametime);
 extern int DObjGetClientNotifyList(XAnimNotify **notifyList);
@@ -38,20 +41,20 @@ extern void R_SkinGfxEntityDelayed(GfxEntity *ent);
 extern void BG_EvaluateTrajectory(const trajectory_t *tr, int atTime, vec_t *result);
 extern int CG_PlaySoundAliasByName(int entitynum, const vec_t *origin, const char *aliasname);
 extern void CL_AddLightToScene(const vec_t *org, float radius, float r, float g, float b);
-extern int DObjGetBoneIndex(const struct DObj_s *obj, unsigned int boneName);
+extern int DObjGetBoneIndex(const DObj *obj, unsigned int boneName);
 extern qboolean CL_DObjCreateSkelForBone(struct DObj_s *obj, int boneIndex, int localClientNum);
 extern qboolean CL_DObjCreateSkelForBones(const struct DObj_s *obj, int *partBits, int localClientNum);
 extern DObjAnimMat *DObjGetRotTransArray(const struct DObj_s *obj);
 extern void DObjGetHierarchyBits(struct DObj_s *obj, int boneIndex, int *partBits);
 extern void DObjCompleteHierarchyBits(const struct DObj_s *obj, int *partBits);
-extern void DObjCalcAnim(const struct DObj_s *obj, int *partBits);
-extern void DObjCalcSkel(const struct DObj_s *obj, int *partBits);
+extern void DObjCalcAnim(const DObj *obj, int *partBits);
+extern void DObjCalcSkel(const DObj *obj, int *partBits);
 extern void AxisCopy(vec3_t *in, vec3_t *out);
 extern void AnglesToAxis(const vec_t *angles, vec3_t *axis);
 extern void MatrixTransformVector43(const float *in1, const float (*in2)[3], float *out);
 extern int BG_GetNumWeapons(void);
 extern int CG_PlaySoundAlias(int entitynum, const vec_t *origin, snd_alias_list_t *aliasList);
-extern int FX_GetBoneIndex(int entNum, unsigned int bone);
+extern int FX_GetBoneIndex(const int entNum, unsigned int bone);
 extern void FX_PlayEntityEffect(EffectTemplate *fx, const vec_t *org, vec3_t *axis, const FxBoltInfo *bolt);
 extern void FX_PlayEffect(EffectTemplate *fx, const vec_t *org, const vec_t *fwd, ...);
 extern void FX_PlaySimpleEffect(EffectTemplate *fx, const vec_t *org);
@@ -106,17 +109,17 @@ struct XAnim_s *CG_GetMG42Anims(centity_t *cent)
     WeaponDef *weapDef;
     struct XAnim_s *pAnims;
 
-    weapDef = BG_GetWeaponDef(cent->nextState.weapon);
+    weapDef = (WeaponDef *)(BG_GetWeaponDef(cent->nextState.weapon));
 
-    pAnims = XAnimCreateAnims((const char *)"MG42", 3, (void *)*(int *)&imp_Hunk_AllocXAnimClient);
+    pAnims = XAnimCreateAnims((const char *)"MG42", 3, imp_Hunk_AllocXAnimClient);
 
     XAnimBlend(pAnims, 0, (const char *)"root", 1, 2, 0);
 
-    XAnimPrecache(weapDef->szXAnims[1], (void *)*(int *)&imp_Hunk_AllocXAnimPrecache);
+    XAnimPrecache(weapDef->szXAnims[1], imp_Hunk_AllocXAnimPrecache);
 
     XAnimCreate(pAnims, 1, weapDef->szXAnims[1]);
 
-    XAnimPrecache(weapDef->szXAnims[3], (void *)*(int *)&imp_Hunk_AllocXAnimPrecache);
+    XAnimPrecache(weapDef->szXAnims[3], imp_Hunk_AllocXAnimPrecache);
 
     XAnimCreate(pAnims, 2, weapDef->szXAnims[3]);
 
@@ -127,7 +130,7 @@ static void CG_mg42_DoControllers(const centity_t *cent, int *partBits)
 {
     playerState_t *ps;
     const entityState_t *s1;
-    void *obj;
+    struct DObj_s *obj;
     float angles[3];
     const scr_const_t *scr;
     struct XAnim_s *tree;
@@ -137,7 +140,7 @@ static void CG_mg42_DoControllers(const centity_t *cent, int *partBits)
 
     ps = &cg->predictedPlayerState;
 
-    obj = (byte *)Com_GetClientDObj(s1->number, cent->localClientNum);
+    obj = Com_GetClientDObj(s1->number, cent->localClientNum);
 
     if ((ps->eFlags & 0x300) && ps->viewlocked_entNum == s1->number) {
 
@@ -151,7 +154,7 @@ static void CG_mg42_DoControllers(const centity_t *cent, int *partBits)
         angles[2] = 0.0f;
     }
 
-    scr = (const scr_const_t *)imp_scr_const;
+    scr = (const scr_const_t *)scr_const_g;
     DObjSetControlTagAngles(obj, partBits, scr->tag_aim, angles);
 
     DObjSetControlTagAngles(obj, partBits, scr->tag_aim_animated, angles);
@@ -278,7 +281,7 @@ void CG_SoundBlend(centity_t *cent)
 
     lerp = cent->currentState.leanf +
            (nextState->leanf - cent->currentState.leanf) * cg->frameInterpolation;
-    SND_PlayBlendedSoundAliases(alias0, alias1, lerp, nextState->number, cent->lerpOrigin, 0, 1);
+    SND_PlayBlendedSoundAliases(alias0, alias1, lerp, nextState->number, cent->lerpOrigin, 0, (snd_alias_system_t)(1));
 }
 
 static long unsigned int *CG_AllocAnimTree(int size)
@@ -539,7 +542,7 @@ static struct DObj_s *CG_PreProcess_GetDObj(int iEntNum, int iEntType, struct XM
     if (iEntType == 9) {
         struct XAnim_s *anims = CG_GetMG42Anims(&(*(centity_t **)imp_cg_entities)[iEntNum]);
         if (anims)
-            tree = (struct XAnimTree_s *)XAnimCreateTree(anims, CG_AllocAnimTree);
+            tree = (struct XAnimTree_s *)XAnimCreateTree((XAnim *)anims, (Alloc_t)CG_AllocAnimTree);
     }
 
     (*(centity_t **)imp_cg_entities)[iEntNum].tree = tree;
@@ -634,7 +637,7 @@ void CG_General(centity_t *cent)
     ent.origin[1] = cent->lerpOrigin[1];
     ent.origin[2] = cent->lerpOrigin[2];
     AnglesToAxis(cent->lerpAngles, ent.axis);
-    ent.reType = 0;
+    ent.reType = (refEntityType_t)(0);
 
     if (s1->eFlags & 0x400) {
         if (cent->lightingOrigin[0] == 0.0f &&
@@ -694,7 +697,7 @@ void CG_Item(centity_t *cent)
     ent.origin[0] = cent->lerpOrigin[0];
     ent.origin[1] = cent->lerpOrigin[1];
     ent.origin[2] = cent->lerpOrigin[2];
-    ent.reType = 0;
+    ent.reType = (refEntityType_t)(0);
     CG_AddCEntityToScene(&ent, obj, cent);
 }
 
@@ -746,7 +749,7 @@ void CG_Missile(centity_t *cent)
     ent.origin[2] = cent->lerpOrigin[2];
     ent.renderFxFlags = weapInfo->missileRenderfx | 0x40;
     AnglesToAxis(cent->lerpAngles, ent.axis);
-    ent.reType = 0;
+    ent.reType = (refEntityType_t)(0);
     CG_AddCEntityToScene(&ent, obj, cent);
 }
 
@@ -768,7 +771,7 @@ void CG_ScriptMover(centity_t *cent)
     if (s1->constantLight == 0x00FFFFFF) {
         GfxModel model;
 
-        ent.reType = 3;
+        ent.reType = (refEntityType_t)(3);
         model.bmodel = cgs->inlineDrawModel[s1->index.brushmodel];
         R_AddRefEntityToScene(&ent, model, 0);
         return;
@@ -779,7 +782,7 @@ void CG_ScriptMover(centity_t *cent)
         if (!obj)
             return;
 
-        ent.reType = 0;
+        ent.reType = (refEntityType_t)(0);
         if (s1->eFlags & 0x400) {
             if (cent->lightingOrigin[0] == 0.0f &&
                 cent->lightingOrigin[1] == 0.0f &&
@@ -882,7 +885,7 @@ static void CG_Turret(centity_t *cent)
     ent.lighting.origin[2] = cent->lerpOrigin[2] + 32.0f;
     ent.renderFxFlags = 0x80;
     AnglesToAxis(cent->lerpAngles, ent.axis);
-    ent.reType = 0;
+    ent.reType = (refEntityType_t)(0);
     CG_AddCEntityToScene(&ent, obj, cent);
 }
 

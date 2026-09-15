@@ -10,8 +10,8 @@ extern int I_stricmp(const char *s1, const char *s2);
 
 extern qboolean CL_UpdateDirtyPings_f(int source);
 extern int CL_ServerStatus(char *serverAddress, char *serverStatus, int maxLen);
-extern int SND_PlayLocalSoundAlias(snd_alias_list_t *aliasList, int channel);
-extern int SND_PlayLocalSoundAliasByName(const char *aliasname, int channel);
+extern int SND_PlayLocalSoundAlias(snd_alias_list_t *aliasList, snd_alias_system_t channel);
+extern int SND_PlayLocalSoundAliasByName(const char *aliasname, snd_alias_system_t channel);
 extern void Com_LoadSoundAliases(const char *zone, const char *spec, snd_alias_system_t flags);
 extern qboolean UI_CheckExecKey(int key);
 extern void CL_SwitchToLocalClient(int localClientNum);
@@ -19,8 +19,8 @@ extern void UI_Init(void);
 extern void UI_Component_Init(void);
 extern qboolean UI_IsFullscreen(void);
 extern qboolean UI_SetActiveMenu(int menu);
-extern const char *Key_KeynumToString(int keynum, int translate);
-extern const char *Key_GetBinding(int keynum);
+extern char *Key_KeynumToString(int keynum, int translate);
+extern char *Key_GetBinding(int keynum);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern const dvar_t *Dvar_RegisterString(const char *dvarName, const char *value, unsigned int flags);
 extern void Com_WriteCDKey(void);
@@ -391,12 +391,12 @@ int GetClientname(int index, char *buf, int size)
 
 int UI_PlayLocalSoundAlias(snd_alias_list_t *aliasList)
 {
-    return SND_PlayLocalSoundAlias(aliasList, 0);
+    return SND_PlayLocalSoundAlias(aliasList, (snd_alias_system_t)0);
 }
 
 int UI_PlayLocalSoundAliasByName(const char *aliasname)
 {
-    return SND_PlayLocalSoundAliasByName(aliasname, 0);
+    return SND_PlayLocalSoundAliasByName(aliasname, (snd_alias_system_t)0);
 }
 
 qboolean UI_ClientIsInGame(void)
@@ -451,7 +451,7 @@ qboolean UI_checkKeyExec(int key)
 
 void UI_LoadSoundAliases(void)
 {
-    Com_LoadSoundAliases("menu", "all_mp", 0);
+    Com_LoadSoundAliases("menu", "all_mp", (snd_alias_system_t)(0));
 }
 
 int LAN_CompareHostname(const char *hostName1, const char *hostName2)

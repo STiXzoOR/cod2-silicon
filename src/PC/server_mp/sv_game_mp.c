@@ -1,6 +1,8 @@
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
+/* dvar globals */
+extern const dvar_t *sv_gametype;
 extern server_t sv;
 extern serverStatic_t svs;
 extern const dvar_t *sv_maxclients;
@@ -10,30 +12,30 @@ extern dvar_t *com_dedicated;
 
 extern void Com_Error(int code, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
-extern void SV_SendServerCommand(void *client, int type, const char *fmt, ...);
-extern void SV_DropClient(void *client, const char *reason);
+extern void SV_SendServerCommand(client_t *client, svscmd_type type, const char *fmt, ...);
+extern void SV_DropClient(client_t *client, const char *reason);
 extern const char *Dvar_InfoString(int flag);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern void *Hunk_AllocInternal(int size);
-extern Bool Com_ValidXModelName(const char *name);
+extern qboolean Com_ValidXModelName(const char *name);
 extern struct XModel *XModelPrecache(const char *name, void *alloc, void *allocColl);
-extern void *Com_GetServerDObj(int entityNum);
-extern void DObjDumpInfo(void *obj);
-extern qboolean DObjUpdateServerInfo(void *obj, float dtime, qboolean bNotify);
-extern void DObjInitServerTime(void *obj, float dtime);
-extern void DObjGetHierarchyBits(void *obj, int boneIndex, int *partBits);
-extern void DObjCalcAnim(void *obj, int *partBits);
-extern void DObjCalcSkel(void *obj, int *partBits);
-extern int DObjGetBoneIndex(void *obj, unsigned int boneName);
-extern DObjAnimMat_s *DObjGetRotTransArray(void *obj);
-extern void DObjDisplayAnim(void *obj);
-extern struct XAnimTree_s *DObjGetTree(void *obj);
+extern struct DObj_s * Com_GetServerDObj(int handle);
+extern void DObjDumpInfo(const struct DObj_s *obj);
+extern qboolean DObjUpdateServerInfo(struct DObj_s *obj, float dtime, qboolean bNotify);
+extern void DObjInitServerTime(struct DObj_s *obj, float dtime);
+extern void DObjGetHierarchyBits(struct DObj_s *obj, int boneIndex, int *partBits);
+extern void DObjCalcAnim(const DObj *obj, int *partBits);
+extern void DObjCalcSkel(const DObj *obj, int *partBits);
+extern int DObjGetBoneIndex(const DObj *obj, unsigned int boneName);
+extern DObjAnimMat *DObjGetRotTransArray(const DObj *obj);
+extern void DObjDisplayAnim(DObj *obj);
+extern struct XAnimTree_s *DObjGetTree(const struct DObj_s *obj);
 extern const char *SV_GetMapBaseName(const char *name);
 extern const char *GetBspExtension(void);
 extern const char *va(const char *fmt, ...);
-extern int FS_ReadFile(const char *path, void *buffer);
+extern int FS_ReadFile(const char *path, void **buffer);
 extern const char *CM_EntityString(void);
-extern const char *Com_Parse(char **data_p);
+extern const char *Com_Parse(const char **data_p);
 extern void Com_SetWeaponInfoMemory(int set);
 extern void G_ShutdownGame(int restart);
 extern void Com_FreeWeaponInfoMemory(int free_flag);
@@ -43,38 +45,38 @@ extern void SV_LinkEntity(gentity_t *ent);
 extern qboolean ConsoleCommand(void);
 extern qboolean NET_IsLocalAddress(netadr_t addr);
 extern dvar_t *Dvar_RegisterString(const char *dvarName, const char *defaultValue, int flags);
-extern void Dvar_SetString(dvar_t *dvar, const char *value);
+extern void Dvar_SetString(const dvar_t *dvar, const char *value);
 extern qboolean Scr_IsValidGameType(const char *gametype);
 extern int ___tolower(int c);
 extern void FX_InitServer(void);
 extern void G_InitGame(int svTime, int msecRaw, int restart, int savepersist);
 extern void Sys_LoadingKeepAlive(void);
 extern int Sys_MillisecondsRaw(void);
-extern void Com_DvarDump(int channel);
-extern void *G_GetSavePersist(void);
+extern void Com_DvarDump(print_msg_type_t channel);
+extern int G_GetSavePersist(void);
 extern int SV_ClipHandleForEntity(const gentity_t *gEnt);
-extern void CM_TransformedBoxTraceExternal(void *trace, const void *p1, const void *p2, const vec_t *mins, const vec_t *maxs, unsigned int model, int brushmask, const vec_t *origin, const vec_t *angles);
+extern int CM_TransformedBoxTraceExternal(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask, const vec_t *origin, const vec_t *angles);
 extern float Vec2DistanceSq(const float *p1, const float *p2);
 extern int CM_PointLeafnum(const vec_t *p);
 extern int CM_LeafCluster(int leafnum);
 extern byte *CM_ClusterPVS(int cluster);
 extern float G_GetFogOpaqueDistSqrd(void);
-extern qboolean BoxDistSqrdExceeds(const vec_t *absmin, const vec_t *absmax, const vec_t *origin, float distSqrd);
+extern qboolean BoxDistSqrdExceeds(const vec_t *absmin, const vec_t *absmax, const vec_t *org, const float fogOpaqueDistSqrd);
 extern void AnglesToAxis(const vec_t *angles, float (*axis)[3]);
-extern int DObjNumBones(void *obj);
-extern void DObjGetBoneInfo(void *obj, void *boneInfo);
-extern int DObjGetNumModels(void *obj);
-extern qboolean DObjIgnoreCollision(void *obj, int modelIndex);
-extern void *DObjGetModel(void *obj, int modelIndex);
-extern int XModelNumBones(void *model);
+extern int DObjNumBones(const struct DObj_s *obj);
+extern void DObjGetBoneInfo(const struct DObj_s *obj, struct XBoneInfo_s **boneInfo);
+extern int DObjGetNumModels(const struct DObj_s *obj);
+extern qboolean DObjIgnoreCollision(const struct DObj_s *obj, int modelIndex);
+extern struct XModel *DObjGetModel(const struct DObj_s *obj, int modelIndex);
+extern int XModelNumBones(const struct XModel *model);
 extern void MatrixTransformVector43(const vec_t *in, const float *mat, vec_t *out);
 extern void MatrixTransformVector(const vec_t *in, const float (*axis)[3], vec_t *out);
 extern void CL_AddDebugLine(const vec_t *start, const vec_t *end, const float *color, int depthTest, int outline, int duration);
-extern int DObjSkelExists(void *obj, int timeStamp);
-extern qboolean DObjSkelIsBoneUpToDate(void *obj, int boneIndex);
-extern qboolean DObjSkelAreBonesUpToDate(void *obj, int *partBits);
-extern int DObjGetAllocSkelSize(void *obj);
-extern void DObjCreateSkel(void *obj, char *buf, int timeStamp);
+extern int DObjSkelExists(const struct DObj_s *obj, int timeStamp);
+extern qboolean DObjSkelIsBoneUpToDate(struct DObj_s *obj, int boneIndex);
+extern qboolean DObjSkelAreBonesUpToDate(const struct DObj_s *obj, int *partBits);
+extern int DObjGetAllocSkelSize(const struct DObj_s *obj);
+extern void DObjCreateSkel(const struct DObj_s *obj, char *buf, int timeStamp);
 
 extern qboolean gameInitialized;
 static int warnCount;
@@ -128,27 +130,25 @@ qboolean SV_DObjCreateSkelForBones(gentity_t *ent, int *partBits);
 
 gentity_t *SV_GentityNum(int num)
 {
-    server_t *sv = (server_t *)imp_sv;
-    return (gentity_t *)((char *)sv->gentities + num * sv->gentitySize);
+    return (gentity_t *)((char *)sv.gentities + num * sv.gentitySize);
 }
 
 playerState_t *SV_GameClientNum(int num)
 {
-    server_t *sv = (server_t *)imp_sv;
-    return (playerState_t *)((char *)sv->gameClients + num * sv->gameClientSize);
+    return (playerState_t *)((char *)sv.gameClients + num * sv.gameClientSize);
 }
 
 byte *SV_SvEntityForGentity(const gentity_t *gEnt)
 {
     int number;
 
-    if (gEnt == NULL || gEnt->s.number < 0 || gEnt->s.number > 1023) {
+    if (gEnt == NULL || gEnt->s.number < 0 || gEnt->s.number >= 1024) {
         Com_Error(1, "SV_SvEntityForGentity: bad gEnt");
     }
     number = gEnt->s.number;
 
     /* was cast to (int) -> truncated the 8-byte svEntity pointer on x64 */
-    return (byte *)((char *)((server_t *)imp_sv) + __builtin_offsetof(server_t, svEntities) + (size_t)number * sizeof(svEntity_t));
+    return (byte *)((char *)(&sv) + __builtin_offsetof(server_t, svEntities) + (size_t)number * sizeof(svEntity_t));
 }
 
 void SV_GameSendServerCommand(int clientNum, svscmd_type type, const char *text)
@@ -158,12 +158,11 @@ void SV_GameSendServerCommand(int clientNum, svscmd_type type, const char *text)
     char *client;
 
     if (clientNum == -1) {
-        SV_SendServerCommand((void *)0, type, "%s", text);
+        SV_SendServerCommand(NULL, type, "%s", text);
     } else if (clientNum >= 0) {
         maxClients = sv_maxclients->current.integer;
         if (clientNum < maxClients) {
-            serverStatic_t *svs = (serverStatic_t *)imp_svs;
-            SV_SendServerCommand(&svs->clients[clientNum], type, "%s", text);
+            SV_SendServerCommand(&svs.clients[clientNum], type, "%s", text);
         }
     }
 }
@@ -182,7 +181,7 @@ void SV_GameDropClient(int clientNum, const char *reason)
 
 void SV_GetServerinfo(char *buffer, int bufferSize)
 {
-    if (bufferSize <= 0) {
+    if (bufferSize < 1) {
         Com_Error(1, "\025SV_GetServerinfo: bufferSize == %i", bufferSize);
     }
     I_strncpyz(buffer, Dvar_InfoString(0x404), bufferSize);
@@ -190,12 +189,11 @@ void SV_GetServerinfo(char *buffer, int bufferSize)
 
 void SV_LocateGameData(gentity_t *gEnts, int numGEntities, int sizeofGEntity_t, playerState_t *clients, int sizeofGameClient)
 {
-    server_t *sv = (server_t *)imp_sv;
-    sv->gentities = gEnts;
-    sv->gentitySize = sizeofGEntity_t;
-    sv->num_entities = numGEntities;
-    sv->gameClients = clients;
-    sv->gameClientSize = sizeofGameClient;
+    sv.gentities = gEnts;
+    sv.gentitySize = sizeofGEntity_t;
+    sv.num_entities = numGEntities;
+    sv.gameClients = clients;
+    sv.gameClientSize = sizeofGameClient;
 }
 
 void SV_GetUsercmd(int clientNum, usercmd_t *cmd)
@@ -206,25 +204,24 @@ void SV_GetUsercmd(int clientNum, usercmd_t *cmd)
 
 static long unsigned int *SV_AllocXModelPrecache(int size)
 {
-    return Hunk_AllocInternal(size);
+    return (unsigned long *)(Hunk_AllocInternal(size));
 }
 
 static long unsigned int *SV_AllocXModelPrecacheColl(int size)
 {
-    return Hunk_AllocInternal(size);
+    return (unsigned long *)(Hunk_AllocInternal(size));
 }
 
 struct XModel *SV_XModelGet(const char *name)
 {
-    if (!Com_ValidXModelName(name)) {
-        Com_Error(1, "\025bad model name '%s'", name);
-    }
+    if (!Com_ValidXModelName(name))
+        return NULL;
     return XModelPrecache(name + 7, SV_AllocXModelPrecache, SV_AllocXModelPrecacheColl);
 }
 
 void SV_DObjDumpInfo(gentity_t *ent)
 {
-    void *obj;
+    struct DObj_s *obj;
     if (com_developer->current.integer != 0) {
         obj = Com_GetServerDObj(ent->s.number);
         if (obj) {
@@ -237,19 +234,18 @@ void SV_DObjDumpInfo(gentity_t *ent)
 
 void SV_ResetSkeletonCache(void)
 {
-    server_t *sv = (server_t *)imp_sv;
     int idx = 1;
-    int incd = sv->skelTimeStamp + 1;
+    int incd = sv.skelTimeStamp + 1;
     if (incd != 0)
         idx = incd;
-    sv->skelTimeStamp = idx;
+    sv.skelTimeStamp = idx;
     g_sv_skel_memory_start = (char *)((((uintptr_t)g_sv_skel_memory) + 0xf) & ~(uintptr_t)0xf);
-    sv->skelMemPos = 0;
+    sv.skelMemPos = 0;
 }
 
 qboolean SV_DObjUpdateServerTime(gentity_t *ent, float dtime, qboolean bNotify)
 {
-    void *obj = Com_GetServerDObj(ent->s.number);
+    struct DObj_s *obj = Com_GetServerDObj(ent->s.number);
     if (obj) {
         return DObjUpdateServerInfo(obj, dtime, bNotify);
     }
@@ -258,7 +254,7 @@ qboolean SV_DObjUpdateServerTime(gentity_t *ent, float dtime, qboolean bNotify)
 
 void SV_DObjInitServerTime(gentity_t *ent, float dtime)
 {
-    void *obj = Com_GetServerDObj(ent->s.number);
+    struct DObj_s *obj = Com_GetServerDObj(ent->s.number);
     if (obj) {
         DObjInitServerTime(obj, dtime);
     }
@@ -266,47 +262,47 @@ void SV_DObjInitServerTime(gentity_t *ent, float dtime)
 
 void SV_DObjGetHierarchyBits(gentity_t *ent, int boneIndex, int *partBits)
 {
-    void *obj = Com_GetServerDObj(ent->s.number);
+    struct DObj_s *obj = Com_GetServerDObj(ent->s.number);
     DObjGetHierarchyBits(obj, boneIndex, partBits);
 }
 
 void SV_DObjCalcAnim(gentity_t *ent, int *partBits)
 {
-    void *obj = Com_GetServerDObj(ent->s.number);
-    DObjCalcAnim(obj, partBits);
+    struct DObj_s *obj = Com_GetServerDObj(ent->s.number);
+    DObjCalcAnim( (const DObj *)(obj), partBits);
 }
 
 void SV_DObjCalcSkel(gentity_t *ent, int *partBits)
 {
-    void *obj = Com_GetServerDObj(ent->s.number);
-    DObjCalcSkel(obj, partBits);
+    struct DObj_s *obj = Com_GetServerDObj(ent->s.number);
+    DObjCalcSkel( (const DObj *)(obj), partBits);
 }
 
 int SV_DObjGetBoneIndex(gentity_t *ent, unsigned int boneName)
 {
-    void *obj = Com_GetServerDObj(ent->s.number);
+    struct DObj_s *obj = Com_GetServerDObj(ent->s.number);
     if (!obj)
         return -1;
-    return DObjGetBoneIndex(obj, boneName);
+    return DObjGetBoneIndex( (const DObj *)(obj), boneName);
 }
 
 DObjAnimMat_s *SV_DObjGetMatrixArray(gentity_t *ent)
 {
-    void *obj = Com_GetServerDObj(ent->s.number);
+    DObj *obj = Com_GetServerDObj(ent->s.number);
     return DObjGetRotTransArray(obj);
 }
 
 void SV_DObjDisplayAnim(gentity_t *ent)
 {
-    void *obj = Com_GetServerDObj(ent->s.number);
+    struct DObj_s *obj = Com_GetServerDObj(ent->s.number);
     if (obj) {
-        DObjDisplayAnim(obj);
+        DObjDisplayAnim( (DObj *)(obj));
     }
 }
 
 struct XAnimTree_s *SV_DObjGetTree(gentity_t *ent)
 {
-    void *obj = Com_GetServerDObj(ent->s.number);
+    struct DObj_s *obj = Com_GetServerDObj(ent->s.number);
     if (!obj)
         return 0;
     return DObjGetTree(obj);
@@ -317,7 +313,7 @@ qboolean SV_MapExists(const char *name)
     const char *basename = SV_GetMapBaseName(name);
     const char *ext = GetBspExtension();
     const char *path = va("maps/mp/%s.%s", basename, ext);
-    return FS_ReadFile(path, (void *)0) >= 0;
+    return FS_ReadFile(path, (void **)0) >= 0;
 }
 
 void SV_ResetEntityParsePoint(void)
@@ -327,9 +323,9 @@ void SV_ResetEntityParsePoint(void)
 
     const char *parse_point = CM_EntityString();
 #else
-    int parse_point = CM_EntityString();
+    int parse_point = (int)(CM_EntityString());
 #endif
-    sv.entityParsePoint = parse_point;
+    sv.entityParsePoint = (const char *)(parse_point);
 }
 
 qboolean SV_DObjExists(gentity_t *ent)
@@ -344,10 +340,9 @@ void SV_SetWeaponInfoMemory(void)
 
 qboolean SV_GetEntityToken(char *buffer, int bufferSize)
 {
-    server_t *sv = (server_t *)imp_sv;
-    const char *s = Com_Parse((char **)&sv->entityParsePoint);
+    const char *s = Com_Parse((const char **)&sv.entityParsePoint);
     I_strncpyz(buffer, s, bufferSize);
-    if (sv->entityParsePoint || *s) {
+    if (sv.entityParsePoint || *s) {
         return 1;
     }
     return 0;
@@ -391,10 +386,9 @@ void SV_SetGametype(void)
     Dvar_RegisterString("g_gametype", "dm", 0x1024);
 
     if (com_sv_running->current.enabled && G_GetSavePersist()) {
-        server_t *sv = (server_t *)imp_sv;
-        I_strncpyz(gametype, sv->gametype, 64);
+        I_strncpyz(gametype, sv.gametype, 64);
     } else {
-        I_strncpyz(gametype, (*(dvar_t **)imp_sv_gametype)->current.string, 64);
+        I_strncpyz(gametype, (sv_gametype)->current.string, 64);
     }
 
     for (s = gametype; *s; s++) {
@@ -408,7 +402,7 @@ void SV_SetGametype(void)
         gametype[2] = '\0';
     }
 
-    Dvar_SetString(*(dvar_t **)imp_sv_gametype, gametype);
+    Dvar_SetString( (dvar_t *)(sv_gametype), gametype);
 }
 
 static void SV_InitGameVM(int restart, int savepersist)
@@ -434,7 +428,7 @@ static void SV_InitGameVM(int restart, int savepersist)
     }
 
     if (com_dedicated->current.integer) {
-        Com_DvarDump(4);
+        Com_DvarDump((print_msg_type_t)4);
     }
 }
 
@@ -453,8 +447,11 @@ void SV_InitGameProgs(qboolean savepersist)
 
 qboolean SV_GameCommand(void)
 {
-    server_t *sv = (server_t *)imp_sv;
-    if (sv->state != 2)
+#if defined(COD2_X64)
+    if (((server_t *)imp_sv)->state != 2)
+#else
+    if (sv.state != 2)
+#endif
         return 0;
     return ConsoleCommand();
 }
@@ -524,15 +521,13 @@ qboolean SV_EntityContact(const vec_t *mins, const vec_t *maxs, const gentity_t 
 
 gentity_t *SV_GEntityForSvEntity(svEntity_t *svEnt)
 {
-    server_t *sv = (server_t *)imp_sv;
-
-    int index = svEnt - sv->svEntities;
-    return (gentity_t *)((char *)sv->gentities + index * sv->gentitySize);
+    int index = svEnt - sv.svEntities;
+    return (gentity_t *)((char *)sv.gentities + index * sv.gentitySize);
 }
 
 void SV_XModelDebugBoxes(gentity_t *ent)
 {
-    void *obj;
+    DObj *obj;
     DObjAnimMat_s *boneMatrix;
     DObjAnimMat_s *mat;
     float *boneInfoArray[128];
@@ -550,7 +545,7 @@ void SV_XModelDebugBoxes(gentity_t *ent)
 
     obj = Com_GetServerDObj(ent->s.number);
     DObjNumBones(obj);
-    DObjGetBoneInfo(obj, boneInfoArray);
+    DObjGetBoneInfo(obj, (struct XBoneInfo_s **)boneInfoArray);
     boneMatrix = DObjGetRotTransArray(obj);
 
     color[0] = 1.0f;
@@ -630,7 +625,7 @@ void SV_XModelDebugBoxes(gentity_t *ent)
 
 void SV_ShutdownGameProgs(void)
 {
-    sv.state = 0;
+    sv.state = (serverState_t)(0);
     Com_UnloadSoundAliases(2);
     if (gameInitialized) {
         G_ShutdownGame(1);
@@ -641,7 +636,6 @@ void SV_ShutdownGameProgs(void)
 
 qboolean SV_inSnapshot(const vec_t *origin, int iEntityNum)
 {
-    server_t *sv;
     gentity_t *ent;
     svEntity_t *svEnt;
     int numClusters;
@@ -653,8 +647,7 @@ qboolean SV_inSnapshot(const vec_t *origin, int iEntityNum)
     int lastCluster;
     float fogDistSqrd;
 
-    sv = (server_t *)imp_sv;
-    ent = (gentity_t *)((char *)sv->gentities + iEntityNum * sv->gentitySize);
+    ent = (gentity_t *)((char *)sv.gentities + iEntityNum * sv.gentitySize);
 
     if (ent->r.linked == 0)
         return 0;
@@ -673,12 +666,11 @@ qboolean SV_inSnapshot(const vec_t *origin, int iEntityNum)
 
     {
         int number = ent->s.number;
-        if (ent == 0 || number < 0 || number > 1023) {
+        if (ent == 0 || number < 0 || number >= 1024) {
             Com_Error(1, "SV_SvEntityForGentity: bad gEnt");
-            sv = (server_t *)imp_sv;
             number = ent->s.number;
         }
-        svEnt = &sv->svEntities[number];
+        svEnt = &sv.svEntities[number];
     }
 
     cluster = CM_PointLeafnum(origin);
@@ -722,7 +714,7 @@ check_fog:
 
 qboolean SV_DObjCreateSkelForBone(gentity_t *ent, int boneIndex)
 {
-    void *obj;
+    struct DObj_s *obj;
     server_t *sv;
     int allocSize;
     int alignedSize;
@@ -768,7 +760,7 @@ qboolean SV_DObjCreateSkelForBone(gentity_t *ent, int boneIndex)
 
 qboolean SV_DObjCreateSkelForBones(gentity_t *ent, int *partBits)
 {
-    void *obj;
+    struct DObj_s *obj;
     server_t *sv;
     int allocSize;
     int alignedSize;

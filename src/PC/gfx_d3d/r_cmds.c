@@ -1,7 +1,7 @@
 #include "common_types.h"
 #include "imports.h"
 
-extern void R_ScreenshotCommand(int type);
+extern void R_ScreenshotCommand(GfxScreenshotType type);
 extern void Material_UpdatePicmipAll(void);
 
 extern refimport_t ri;
@@ -19,12 +19,12 @@ static void R_Cmd_ApplyPicmip(void)
 
 static void R_Cmd_Screenshot(void)
 {
-    R_ScreenshotCommand(1);
+    R_ScreenshotCommand((GfxScreenshotType)1);
 }
 
 static void R_Cmd_ScreenshotJpeg(void)
 {
-    R_ScreenshotCommand(0);
+    R_ScreenshotCommand((GfxScreenshotType)0);
 }
 
 void R_RegisterCmds(void)

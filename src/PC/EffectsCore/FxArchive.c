@@ -5,11 +5,11 @@
 
 extern void MemFile_ReadData(MemoryFile *memFile, int bytes, void *data);
 extern void MemFile_WriteData(MemoryFile *memFile, int bytes, const void *data);
-extern void *FX_RegisterEffect(const char *name);
+extern EffectTemplate * FX_RegisterEffect(const char *fileName);
 extern MaterialHandle FX_RegisterMaterial(const char *material);
 extern struct XModel *FX_ModelRegister(const char *name);
-extern const char *XModelGetName(const void *model);
-extern const char *FxHelper_GetMaterialName(const void *_this, MaterialHandle handle);
+extern const char *XModelGetName(const XModel *model);
+extern const char *FxHelper_GetMaterialName(const FxHelper *_this, MaterialHandle handle);
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern void *imp_theFxHelper;
 
@@ -212,7 +212,7 @@ void FxArchive_ArchiveMaterial(const FxArchive *_this, MaterialHandle *ph)
 
         if (*(MaterialHandle *)ph != (MaterialHandle)0) {
             void *fxHelper = *(void **)imp_theFxHelper;
-            materialName = FxHelper_GetMaterialName(fxHelper, *ph);
+            materialName = FxHelper_GetMaterialName((const FxHelper *)fxHelper, *ph);
         } else {
             materialName = "";
         }

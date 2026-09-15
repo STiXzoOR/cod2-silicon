@@ -1,5 +1,24 @@
 #include "common_types.h"
 #include "imports.h"
+#include <stdio.h>
+/* dvar globals */
+extern const dvar_t *r_forceLod;
+extern const dvar_t *r_gpuSync;
+extern const dvar_t *r_highLodDist;
+extern const dvar_t *r_lightTweakAmbient;
+extern const dvar_t *r_lightTweakAmbientColor;
+extern const dvar_t *r_lightTweakDiffuseFraction;
+extern const dvar_t *r_lightTweakSunColor;
+extern const dvar_t *r_lightTweakSunDiffuseColor;
+extern const dvar_t *r_lightTweakSunDirection;
+extern const dvar_t *r_lightTweakSunLight;
+extern const dvar_t *r_lowLodDist;
+extern const dvar_t *r_lowestLodDist;
+extern const dvar_t *r_mediumLodDist;
+extern const dvar_t *r_multiGpu;
+extern const dvar_t *r_skinCache;
+extern const dvar_t *r_specularColorScale;
+extern const dvar_t *r_sun_from_dvars;
 
 extern char *getenv(const char *name);
 
@@ -10,7 +29,7 @@ extern SkinBuffers g_skinBuffers[1];
 extern GfxBackEndData *frontEndDataOut;
 extern byte g_dummyBuf[];
 extern r_global_permanent_t rgp;
-extern void R_ShutdownDebugEntry(void *entry);
+extern void R_ShutdownDebugEntry(DebugGlobals *debugGlobalsEntry);
 extern void R_UnlockSkinnedCache(void);
 extern void R_UpdateGfxEntityBounds(GfxEntity *ent);
 extern void R_SkinGfxEntity(GfxEntity *ent);
@@ -23,7 +42,7 @@ extern const float AngleNormalize360(const float angle);
 extern void R_ConvertColorToBytes(const vec_t *colorFloat, byte *colorBytes);
 extern void RB_ExecuteRenderCommands(const void *data);
 extern void RB_EndFrame(void);
-extern void R_LockSkinnedCache(int lock);
+extern void R_LockSkinnedCache(GfxLockType lock);
 extern void R_InitDebugEntry(DebugGlobals *debugGlobalsEntry);
 extern void R_TransferDebugGlobals(DebugGlobals *debugGlobalsEntry);
 extern void R_UpdateGpuSyncType(void);
@@ -33,6 +52,31 @@ extern void RB_CreateDynamicBuffers(void);
 extern void RB_AdaptiveGpuSyncTarget(void);
 extern void Material_Sort(void);
 extern struct r_globals_t rg;
+
+static void R_X64TraceStretchPic(MaterialHandle material, float x, float y, float w, float h)
+{
+#if defined(COD2_X64)
+    static int traceCount;
+    FILE *f;
+
+    if (traceCount >= 4096)
+        return;
+
+    f = fopen("x64_stretchpic_trace.txt", traceCount ? "a" : "w");
+    if (f) {
+        fprintf(f, "stretch[%d] material=%p xywh=(%.1f,%.1f,%.1f,%.1f)\n",
+                traceCount, (void *)material, x, y, w, h);
+        fclose(f);
+    }
+    traceCount++;
+#else
+    (void)material;
+    (void)x;
+    (void)y;
+    (void)w;
+    (void)h;
+#endif
+}
 
 extern unsigned char s_backEndData[];
 extern GfxCmdArray *s_cmdList;
@@ -239,12 +283,12 @@ static inline __attribute__((always_inline)) GfxCmdCall *R_AllocDelayedCall(shor
         *marker = used;
     }
 
-    if (0x30000 - used <= (int)sizeof(GfxCmdCall) - 1) {
+    if ((int)sizeof(cl->cmds) - used <= (int)sizeof(GfxCmdCall) - 1) {
         cl->lastCmd = NULL;
         return NULL;
     }
 
-    cmd = (GfxCmdCall *)((char *)cl + used);
+    cmd = (GfxCmdCall *)((char *)cl->cmds + used);
     cl->usedTotal = used + (int)sizeof(GfxCmdCall);      /* x86 was 8; GfxCmdCall is 16 on x64 (header+pad+8B ptr) */
     cl->usedCritical += (int)sizeof(GfxCmdCall);
     cl->lastCmd = &cmd->header;
@@ -261,7 +305,7 @@ static inline __attribute__((always_inline)) void *R_AllocCmd(int byteCount, int
     GfxCmdHeader *cmd;
 
     usedBytes = cl->usedTotal;
-    availBytes = 0x30000 - usedBytes;
+    availBytes = (int)sizeof(cl->cmds) - usedBytes;
     availBytes += cl->usedCritical;
     availBytes -= 0x2000;
     if (availBytes <= byteCount - 1) {
@@ -269,7 +313,7 @@ static inline __attribute__((always_inline)) void *R_AllocCmd(int byteCount, int
         return NULL;
     }
 
-    cmd = (GfxCmdHeader *)((byte *)cl + usedBytes);
+    cmd = (GfxCmdHeader *)((byte *)cl->cmds + usedBytes);
     cl->usedTotal = usedBytes + byteCount;
     cl->usedCritical += criticalByteCount;
     cl->lastCmd = cmd;
@@ -285,12 +329,12 @@ static inline __attribute__((always_inline)) void *R_AllocCriticalCmd(int byteCo
     GfxCmdHeader *cmd;
 
     usedBytes = cl->usedTotal;
-    if (0x30000 - usedBytes <= byteCount - 1) {
+    if ((int)sizeof(cl->cmds) - usedBytes <= byteCount - 1) {
         cl->lastCmd = NULL;
         return NULL;
     }
 
-    cmd = (GfxCmdHeader *)((byte *)cl + usedBytes);
+    cmd = (GfxCmdHeader *)((byte *)cl->cmds + usedBytes);
     cl->usedTotal = usedBytes + byteCount;
     cl->usedCritical += byteCount;
     cl->lastCmd = cmd;
@@ -426,43 +470,43 @@ static void R_BeginFrame_impl(void)
     }
 
     if (rgp_p->world != NULL) {
-        lightsChanged = R_ClearModifiedDvar(*(const dvar_t **)imp_r_lightTweakAmbient);
-        lightsChanged |= R_ClearModifiedDvar(*(const dvar_t **)imp_r_lightTweakDiffuseFraction);
-        lightsChanged |= R_ClearModifiedDvar(*(const dvar_t **)imp_r_lightTweakSunLight);
-        lightsChanged |= R_ClearModifiedDvar(*(const dvar_t **)imp_r_lightTweakAmbientColor);
-        lightsChanged |= R_ClearModifiedDvar(*(const dvar_t **)imp_r_lightTweakSunColor);
-        lightsChanged |= R_ClearModifiedDvar(*(const dvar_t **)imp_r_lightTweakSunDiffuseColor);
-        lightsChanged |= R_ClearModifiedDvar(*(const dvar_t **)imp_r_lightTweakSunDirection);
+        lightsChanged = R_ClearModifiedDvar(r_lightTweakAmbient);
+        lightsChanged |= R_ClearModifiedDvar(r_lightTweakDiffuseFraction);
+        lightsChanged |= R_ClearModifiedDvar(r_lightTweakSunLight);
+        lightsChanged |= R_ClearModifiedDvar(r_lightTweakAmbientColor);
+        lightsChanged |= R_ClearModifiedDvar(r_lightTweakSunColor);
+        lightsChanged |= R_ClearModifiedDvar(r_lightTweakSunDiffuseColor);
+        lightsChanged |= R_ClearModifiedDvar(r_lightTweakSunDirection);
         if (lightsChanged) {
             R_UpdateLightsFromDvars();
         }
     }
 
-    if ((*(const dvar_t **)imp_r_sun_from_dvars)->current.enabled && rgp.world != NULL) {
+    if ((r_sun_from_dvars)->current.enabled && rgp.world != NULL) {
         R_SetSunFromDvars(&rgp.world->sun);
     }
 
-    gpuSyncChanged = R_ClearModifiedDvar(*(const dvar_t **)imp_r_gpuSync);
-    gpuSyncChanged |= R_ClearModifiedDvar(*(const dvar_t **)imp_r_multiGpu);
+    gpuSyncChanged = R_ClearModifiedDvar(r_gpuSync);
+    gpuSyncChanged |= R_ClearModifiedDvar(r_multiGpu);
     if (gpuSyncChanged) {
         R_UpdateGpuSyncType();
     }
 
-    forceLod = *(const dvar_t **)imp_r_forceLod;
+    forceLod = r_forceLod;
     if (forceLod->current.integer != forceLod->reset.integer) {
         for (lodIndex = 0; lodIndex < 4; ++lodIndex) {
-            ((void (*)(int, float))ri.XModelSetTestLods)(lodIndex, ((*(const dvar_t **)imp_r_forceLod)->current.integer == lodIndex) ? 0.0f : 0.001f);
+            ((void (*)(int, float))ri.XModelSetTestLods)(lodIndex, ((r_forceLod)->current.integer == lodIndex) ? 0.0f : 0.001f);
         }
     } else {
-        ((void (*)(int, float))ri.XModelSetTestLods)(0, (*(const dvar_t **)imp_r_highLodDist)->current.value);
-        ((void (*)(int, float))ri.XModelSetTestLods)(1, (*(const dvar_t **)imp_r_mediumLodDist)->current.value);
-        ((void (*)(int, float))ri.XModelSetTestLods)(2, (*(const dvar_t **)imp_r_lowLodDist)->current.value);
-        ((void (*)(int, float))ri.XModelSetTestLods)(3, (*(const dvar_t **)imp_r_lowestLodDist)->current.value);
+        ((void (*)(int, float))ri.XModelSetTestLods)(0, (r_highLodDist)->current.value);
+        ((void (*)(int, float))ri.XModelSetTestLods)(1, (r_mediumLodDist)->current.value);
+        ((void (*)(int, float))ri.XModelSetTestLods)(2, (r_lowLodDist)->current.value);
+        ((void (*)(int, float))ri.XModelSetTestLods)(3, (r_lowestLodDist)->current.value);
     }
 
     ((void (*)(qboolean))ri.CL_FlushDebugData)(0);
-    if ((*(const dvar_t **)imp_r_skinCache)->current.enabled) {
-        R_LockSkinnedCache(0);
+    if ((r_skinCache)->current.enabled) {
+        R_LockSkinnedCache((GfxLockType)0);
     }
 }
 
@@ -608,7 +652,7 @@ void R_EndDelayedDrawing(int marker)
         cl->lastCmd = NULL;
     }
     /* x86 wrote a 4-byte subCmd at marker+4; on x64 subCmd is an 8-byte ptr at offsetof(GfxCmdCall,subCmd) */
-    *(const void **)((char *)cl + marker + __builtin_offsetof(GfxCmdCall, subCmd)) = (const void *)((char *)cl + used);
+    *(const void **)((char *)cl->cmds + marker + __builtin_offsetof(GfxCmdCall, subCmd)) = (const void *)((char *)cl->cmds + used);
 }
 
 void R_IssueDelayedDrawing(int marker)
@@ -616,13 +660,14 @@ void R_IssueDelayedDrawing(int marker)
     GfxCmdCall *cmd;
 
     cmd = R_AllocDelayedCall(2, NULL);
-    cmd->subCmd = (char *)s_cmdList + marker + (int)sizeof(GfxCmdCall);   /* x86 was +8 (goto cmd size) */
+    cmd->subCmd = (char *)s_cmdList->cmds + marker + (int)sizeof(GfxCmdCall);   /* x86 was +8 (goto cmd size) */
 }
 
 void R_AddCmdDrawStretchPic(float x, float y, float w, float h, float s0, float t0, float s1, float t1, const vec_t *color, MaterialHandle material)
 {
     GfxCmdStretchPic *cmd;
 
+    R_X64TraceStretchPic(material, x, y, w, h);
     { extern int g_q_stretchpic; extern void Com_Printf(const char *, ...); g_q_stretchpic++; if (g_q_stretchpic <= 4) Com_Printf("[qsp] #%d material=%p\n", g_q_stretchpic, (void *)material); }
     cmd = (GfxCmdStretchPic *)R_AllocCmd((int)sizeof(GfxCmdStretchPic), 0, 0xf);
     if (cmd == NULL) {
@@ -863,7 +908,7 @@ void R_AddCmdLightProperties(int lightIndex, const GfxLight *light)
     cmd->color[2] = light->color[2];
     cmd->color[3] = 1.0f;
 
-    scale = (*(const dvar_t **)imp_r_specularColorScale)->current.value;
+    scale = (r_specularColorScale)->current.value;
     cmd->specular[0] = cmd->color[0] * scale;
     cmd->specular[1] = cmd->color[1] * scale;
     cmd->specular[2] = cmd->color[2] * scale;
@@ -932,7 +977,7 @@ void R_EndDebugFrame(void)
     frontEndDataOut = s_debugFrameGlob.restoreFrontEndDataOut;
     if (s_debugFrameGlob.restoreSkinnedCache) {
         s_debugFrameGlob.restoreSkinnedCache = 0;
-        R_LockSkinnedCache(1);
+        R_LockSkinnedCache((GfxLockType)1);
     }
 
     s_debugFrameGlob.restoreCmdList = NULL;

@@ -21,15 +21,15 @@ extern int R_InitFonts(void);
 extern void R_InitLightDefs(void);
 extern void R_ClearFogs(void);
 extern void R_InitDebug(void);
-extern void *R_AllocStaticVertexBuffer(void *outBuf, int size);
-extern void *R_AllocStaticIndexBuffer(void *outBuf, int size);
-extern void R_FinishStaticVertexBuffer(void *buf);
-extern void R_FinishStaticIndexBuffer(void *buf);
+extern void *R_AllocStaticVertexBuffer(IDirect3DVertexBuffer9 **outBuf, int size);
+extern void *R_AllocStaticIndexBuffer(IDirect3DIndexBuffer9 **outBuf, int size);
+extern void R_FinishStaticVertexBuffer(IDirect3DVertexBuffer9 *buf);
+extern void R_FinishStaticIndexBuffer(IDirect3DIndexBuffer9 *ib);
 extern int rand(void);
 extern void R_ShutdownRenderTargets(void);
 extern void R_ShutdownStaticModelCache(void);
-extern void R_FreeStaticVertexBuffer(void *buf);
-extern void R_FreeStaticIndexBuffer(void *buf);
+extern void R_FreeStaticVertexBuffer(IDirect3DVertexBuffer9 *buf);
+extern void R_FreeStaticIndexBuffer(IDirect3DIndexBuffer9 *ib);
 extern void WinSleep(int ms);
 extern void R_ShutdownBackendData(void);
 extern void R_ShutdownDebug(void);
@@ -48,11 +48,18 @@ extern void RB_ClearAllStreamSources(void);
 extern GfxDrawGroupGlueBehavior R_EndDrawGroupLoop(GfxDrawGroupType section, int viewIndex);
 extern Bool Sys_IsMainThread(void);
 extern void R_SyncRenderThread(void);
-extern void RB_SetGammaRamp(const void *gammaTable);
+extern void RB_SetGammaRamp(const GfxGammaRamp *gammaTable);
 extern double pow(double, double);
 extern float floorf(float);
 extern void R_EndDrawGroupSection(int section);
 extern void R_IssueDrawGroups(void);
+extern void R_AddCmdClearScreen(int whichToClear, const vec_t *color, float depth, int stencil);
+extern void R_AddCmdSetViewport(int x, int y, int width, int height);
+extern void R_AddCmdDrawStretchPic(float x, float y, float w, float h, float s0, float t0, float s1, float t1, const vec_t *color, MaterialHandle material);
+extern void R_AddCmdDrawStretchPicRotate(float x, float y, float w, float h, float s0, float t0, float s1, float t1, float angle, const vec_t *color, MaterialHandle material);
+extern void R_AddCmdDrawStretchRaw(int x, int y, int w, int h, int cols, int rows, const byte *data, int client, qboolean dirty);
+extern void R_AddCmdDrawQuadPic(vec2_t *verts, const vec_t *color, MaterialHandle material);
+extern void R_AddCmdDrawSprite(MaterialHandle material, const byte *rgbaColor, const vec_t *pos, float radius, float minScreenRadius, int renderFxFlags);
 
 static vec2_t cornerTexCoords[4];
 static const r_index_t quadIndices[6];
@@ -103,8 +110,8 @@ static void R_CreateParticleCloudBuffer(void)
     int xIter, yIter, zIter, corner;
     int vertexIndex = 0;
 
-    verts = R_AllocStaticVertexBuffer(&dx.particleCloudVertexBuffer, 0x14000);
-    indices = R_AllocStaticIndexBuffer(&dx.particleCloudIndexBuffer, 0x3000);
+    verts = (float *)(R_AllocStaticVertexBuffer(&dx.particleCloudVertexBuffer, 0x14000));
+    indices = (unsigned short *)(R_AllocStaticIndexBuffer(&dx.particleCloudIndexBuffer, 0x3000));
 
     for (xIter = 0; xIter < 8; xIter++) {
         float xBase = (float)xIter;
@@ -188,11 +195,11 @@ static void R_ReleaseForShutdownOrReset(void)
     }
 
     if (*(void **)(d + 11704)) {
-        R_FreeStaticVertexBuffer(*(void **)(d + 11704));
+        R_FreeStaticVertexBuffer(*(IDirect3DVertexBuffer9 **)(d + 11704));
         *(void **)(d + 11704) = NULL;
     }
     if (*(void **)(d + 11708)) {
-        R_FreeStaticIndexBuffer(*(void **)(d + 11708));
+        R_FreeStaticIndexBuffer( (IDirect3DIndexBuffer9 *)(*(void **)(d + 11708)));
         *(void **)(d + 11708) = NULL;
     }
 
@@ -280,7 +287,7 @@ void R_EndRegistration(void)
 
 static void R_EndView(int viewIndex)
 {
-    R_EndDrawGroupLoop(4, viewIndex);
+    R_EndDrawGroupLoop( (GfxDrawGroupType)(4), viewIndex);
     R_EndDrawGroupSection(4);
 }
 
@@ -351,8 +358,8 @@ refexport_t *GetRefAPI(int apiVersion, refimport_t *rimp)
     RE(188, R_DoneRenderingViews);
     RE(192, imp_R_AddCmdSaveScreen);
     RE(196, imp_R_AddCmdBlendSavedScreen);
-    RE(200, imp_R_AddCmdClearScreen);
-    RE(204, imp_R_AddCmdSetViewport);
+    RE(200, R_AddCmdClearScreen);
+    RE(204, R_AddCmdSetViewport);
     RE(208, imp_R_MarkFragments);
     RE(212, imp_R_ModelBounds);
     RE(72, imp_R_ClearScene);
@@ -373,11 +380,11 @@ refexport_t *GetRefAPI(int apiVersion, refimport_t *rimp)
     RE(132, imp_R_EndDelayedDrawing);
     RE(136, imp_R_IssueDelayedDrawing);
     RE(140, imp_R_ClearFlares);
-    RE(148, imp_R_AddCmdDrawStretchPic);
-    RE(152, imp_R_AddCmdDrawStretchPicRotate);
-    RE(156, imp_R_AddCmdDrawStretchRaw);
-    RE(160, imp_R_AddCmdDrawQuadPic);
-    RE(164, imp_R_AddCmdDrawSprite);
+    RE(148, R_AddCmdDrawStretchPic);
+    RE(152, R_AddCmdDrawStretchPicRotate);
+    RE(156, R_AddCmdDrawStretchRaw);
+    RE(160, R_AddCmdDrawQuadPic);
+    RE(164, R_AddCmdDrawSprite);
     RE(144, imp_R_AddCmdSetMaterialColor);
     RE(224, imp_R_RegisterFont);
     RE(228, imp_R_ResetImageAllocations);
@@ -406,7 +413,32 @@ refexport_t *GetRefAPI(int apiVersion, refimport_t *rimp)
     RE(312, imp_R_ParseSunLight);
     RE(316, imp_Material_Duplicate);
     RE(320, imp_R_DuplicateFont);
+    /* XModelAllowReadSurface: a bool that occupies a full pointer slot at x86
+     * offset 324. Like the RE() pointer slots it must be doubled on x64 (slot
+     * sits at 324*2=648); writing the raw 324 left the real field false AND
+     * corrupted the AddCmdDrawSprite pointer.
+     *
+     * Enabling it makes xmodels load their surfaces + skin materials, which is
+     * required for ALL XModel geometry to render: static models (misc_model),
+     * the viewmodel, and skinned player models. With it off, XModelGetSurfaces
+     * returns 0 surfaces so static-model bounds never compute (they stay cleared
+     * to +/-FLT_MAX and filter into solid leaves), and no dynamic model draws.
+     *
+     * This path exercises the DX9 material technique/pass/shader-argument data
+     * structures. That subsystem used to crash on x64 while marshalling foliage
+     * material techniques (the "data-blob wall"), so it was formerly gated behind
+     * COD2_XSURF (default off). Subsequent data-blob retyping fixed those crashes:
+     * validated crash-free with surfaces enabled across mp_toujane, mp_carentan,
+     * mp_dawnville, mp_harbor, mp_leningrad, mp_matmata, mp_railyard, mp_burgundy.
+     * Now default ON; set COD2_NOXSURF=1 to disable if a specific map regresses. */
+#if defined(_M_X64) || defined(__x86_64__)
+    {
+        extern char *getenv(const char *);
+        *(byte *)(r + 324 * 2) = getenv("COD2_NOXSURF") ? 0 : 1;
+    }
+#else
     *(byte *)(r + 324) = 1;
+#endif
     RE(328, imp_R_SyncRenderThread);
     RE(332, imp_R_AbortRenderCommands);
     RE(336, imp_RB_IsGpuFenceFinished);
@@ -560,7 +592,7 @@ void R_SetColorMappings(void)
             gammaRamp[i] = (unsigned short)(int)floorf((float)pow((double)(i / 255.0f), (double)invGamma) * 65535.0f + 0.5f);
     }
 
-    RB_SetGammaRamp(gammaRamp);
+    RB_SetGammaRamp( (const GfxGammaRamp *)(gammaRamp));
 }
 
 extern void R_InitRenderTargets(void);
@@ -662,7 +694,7 @@ extern void R_RegisterCmds(void);
 extern void R_InitBackendData(void);
 extern void R_InitDrawGroups(void);
 extern void R_InitSystems(void);
-extern void FFT_Init(void *sinTable, void *workspace);
+extern void FFT_Init(int *fftBitswap, complex_t *fftTrigTable);
 extern void *Direct3DCreate9(int sdkVersion);  /* returns a pointer; `int` truncated it on x64 */
 extern double sin(double);
 static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
@@ -859,7 +891,7 @@ Bool R_RecoverLostDevice(void)
         int qualityLevels;
         int testSamples = aaSamples;
         while (testSamples > 1) {
-            dx.multiSampleType = testSamples;
+            dx.multiSampleType = (D3DMULTISAMPLE_TYPE)(testSamples);
             hr = ((CheckMultiSample_fn)d3dVtable[11])(d3d, 0, 1, 0x15, !isFullscreen, testSamples, &qualityLevels);
             if (hr >= 0) {
                 dx.multiSampleQuality = qualityLevels - 1;
@@ -867,7 +899,7 @@ Bool R_RecoverLostDevice(void)
             }
             testSamples--;
         }
-        dx.multiSampleType = 0;
+        dx.multiSampleType = (D3DMULTISAMPLE_TYPE)(0);
         dx.multiSampleQuality = 0;
     }
 

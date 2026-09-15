@@ -112,8 +112,8 @@ struct cStaticModel_s {
 
 struct cbrush_t {
     vec3_t mins;
-    int contents;
     vec3_t maxs;
+    int contents;
     int numsides;
     cbrushside_t *sides;
     short int axialMaterialNum[2][3];

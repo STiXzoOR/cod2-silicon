@@ -1,14 +1,18 @@
 #include "common_types.h"
 #include "imports.h"
+extern int dvarCount;
+/* dvar globals */
+extern const dvar_t *com_logfile;
+extern const dvar_t *sortedDvars;
 
 extern int Cmd_Argc(void);
-extern const char *Cmd_Argv(int arg);
+extern char *Cmd_Argv(int arg);
 extern void Com_Printf(const char *fmt, ...);
-extern void Dvar_AddFlags(void *dvar, int flags);
+extern void Dvar_AddFlags(const dvar_t *dvar, int flags);
 extern void *Dvar_FindVar(const char *name);
-extern const char *Dvar_DisplayableValue(void *dvar);
+extern const char *Dvar_DisplayableValue(const dvar_t *dvar);
 extern void Dvar_SetCommand(const char *name, const char *value);
-extern void Dvar_Reset(void *dvar, int source);
+extern void Dvar_Reset(const dvar_t *dvar, DvarSetSource source);
 extern void Cmd_AddCommand(const char *name, void (*func)(void));
 
 extern int atoi(const char *s);
@@ -18,7 +22,7 @@ extern int stricmp(const char *s1, const char *s2);
 extern void I_strncat(char *dest, int maxLen, const char *src);
 extern void Com_PrintMessage(print_msg_type_t type, const char *msg);
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
-extern int Com_Filter(const char *filter, const char *name, int casesensitive);
+extern unsigned char Com_Filter(const char *filter, const char *name, int casesensitive);
 extern void FS_Printf(int f, const char *fmt, ...);
 extern void Info_SetValueForKey(char *s, const char *key, const char *value);
 extern void Info_SetValueForKey_Big(char *s, const char *key, const char *value);
@@ -69,7 +73,7 @@ void Dvar_AddCommands(void);
 void Dvar_ForEach(void (*callback)())
 {
     dvar_t *dvar;
-    dvar = *(dvar_t **)imp_sortedDvars;
+    dvar = (dvar_t *)(sortedDvars);
     if (!dvar)
         return;
     do {
@@ -300,7 +304,7 @@ void Dvar_TogglePrint_f(void)
         return;
     dvarName = Cmd_Argv(1);
     dvar = Dvar_FindVar(dvarName);
-    Com_Printf("%s toggled to %s\n", dvarName, Dvar_DisplayableValue(dvar));
+    Com_Printf("%s toggled to %s\n", dvarName, Dvar_DisplayableValue( (const dvar_t *)(dvar)));
 }
 
 void Dvar_Set_f(void)
@@ -455,7 +459,7 @@ void Dvar_SetU_f(void)
     Dvar_Set_f();
     dvar = Dvar_FindVar(Cmd_Argv(1));
     if (dvar)
-        Dvar_AddFlags(dvar, 2);
+        Dvar_AddFlags( (const dvar_t *)(dvar), 2);
 }
 
 void Dvar_SetS_f(void)
@@ -468,7 +472,7 @@ void Dvar_SetS_f(void)
     Dvar_Set_f();
     dvar = Dvar_FindVar(Cmd_Argv(1));
     if (dvar)
-        Dvar_AddFlags(dvar, 4);
+        Dvar_AddFlags( (const dvar_t *)(dvar), 4);
 }
 
 void Dvar_SetA_f(void)
@@ -481,7 +485,7 @@ void Dvar_SetA_f(void)
     Dvar_Set_f();
     dvar = Dvar_FindVar(Cmd_Argv(1));
     if (dvar)
-        Dvar_AddFlags(dvar, 1);
+        Dvar_AddFlags( (const dvar_t *)(dvar), 1);
 }
 
 void Dvar_SetFromDvar_f(void)
@@ -497,7 +501,7 @@ void Dvar_SetFromDvar_f(void)
         Com_Printf("dvar '%s' doesn't exist\n", Cmd_Argv(2));
         return;
     }
-    value = Dvar_DisplayableValue(dvar);
+    value = Dvar_DisplayableValue( (const dvar_t *)(dvar));
     Dvar_SetCommand(Cmd_Argv(1), value);
 }
 
@@ -510,14 +514,14 @@ void Dvar_Reset_f(void)
     }
     dvar = Dvar_FindVar(Cmd_Argv(1));
     if (dvar)
-        Dvar_Reset(dvar, 1);
+        Dvar_Reset((const dvar_t *)dvar, (DvarSetSource)1);
 }
 
 void Dvar_WriteVariables(fileHandle_t f)
 {
     dvar_t *dvar;
 
-    dvar = *(dvar_t **)imp_sortedDvars;
+    dvar = (dvar_t *)(sortedDvars);
     while (dvar) {
 
         if (I_stricmp(dvar->name, "cl_cdkey") != 0) {
@@ -536,7 +540,7 @@ void Dvar_WriteDefaults(fileHandle_t f)
 {
     dvar_t *dvar;
 
-    dvar = *(dvar_t **)imp_sortedDvars;
+    dvar = (dvar_t *)(sortedDvars);
     while (dvar) {
 
         if (I_stricmp(dvar->name, "cl_cdkey") != 0) {
@@ -562,7 +566,7 @@ void Dvar_List_f(void)
         match = NULL;
     }
 
-    dvar = *(dvar_t **)imp_sortedDvars;
+    dvar = (dvar_t *)(sortedDvars);
     while (dvar) {
 
         if (match) {
@@ -613,7 +617,7 @@ void Dvar_List_f(void)
         dvar = *(dvar_t **)&dvar->next;
     }
 
-    Com_Printf("\n%i total dvars\n", *(int *)imp_dvarCount);
+    Com_Printf("\n%i total dvars\n", dvarCount);
 }
 
 void Com_DvarDump(print_msg_type_t type)
@@ -630,14 +634,14 @@ void Com_DvarDump(print_msg_type_t type)
     }
 
     if (type == 0) {
-        dvar_t *logfile = *(dvar_t **)imp_com_logfile;
+        dvar_t *logfile = (dvar_t *)(com_logfile);
         if (!logfile || !logfile->current.integer)
             return;
     }
 
     Com_PrintMessage(type, "=============================== DVAR DUMP ========================================\n");
 
-    var = *(dvar_t **)imp_sortedDvars;
+    var = (dvar_t *)(sortedDvars);
     i = 0;
 
     if (!var) {
@@ -671,21 +675,21 @@ void Com_DvarDump(print_msg_type_t type)
 
 print_summary:
     Com_sprintf(message, 0x2000, "\n%i total dvars\n%i dvar indexes\n",
-                *(int *)imp_dvarCount, i);
+                dvarCount, i);
     Com_PrintMessage(type, message);
     Com_PrintMessage(type, "=============================== END DVAR DUMP =====================================\n");
 }
 
 void Dvar_Dump_f(void)
 {
-    Com_DvarDump(0);
+    Com_DvarDump( (print_msg_type_t)(0));
 }
 
 void SV_SetConfig(int start, int max, int bit)
 {
     dvar_t *dvar;
 
-    dvar = *(dvar_t **)imp_sortedDvars;
+    dvar = (dvar_t *)(sortedDvars);
     while (dvar) {
         if (dvar->flags & bit) {
             SV_SetConfigValueForKey(start, max,
@@ -702,7 +706,7 @@ char *Dvar_InfoString(int bit)
 
     info1[0] = '\0';
 
-    var = *(dvar_t **)imp_sortedDvars;
+    var = (dvar_t *)(sortedDvars);
     while (var) {
         if (var->flags & bit) {
             Info_SetValueForKey(info1, var->name, Dvar_DisplayableValue(var));
@@ -723,7 +727,7 @@ char *Dvar_InfoString_Big(int bit)
 
     info2[0] = '\0';
 
-    var = *(dvar_t **)imp_sortedDvars;
+    var = (dvar_t *)(sortedDvars);
     while (var) {
         if (var->flags & bit) {
             Info_SetValueForKey_Big(info2, var->name, Dvar_DisplayableValue(var));

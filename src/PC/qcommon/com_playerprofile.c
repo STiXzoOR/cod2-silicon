@@ -147,7 +147,7 @@ Bool Com_DeletePlayerProfile(const char *profileName)
 
     Com_BuildPlayerProfilePathForPlayer(profilePath, 64, profileName, "");
 
-    FS_BuildOSPath((*(const dvar_t **)imp_fs_basepath)->current.string, (const char *)imp_fs_gamedir, profilePath, osPath);
+    FS_BuildOSPath((fs_basepath)->current.string, (const char *)imp_fs_gamedir, profilePath, osPath);
 
     if (!Sys_RemoveDirTree(osPath)) {
         return 0;
@@ -252,7 +252,7 @@ Bool Com_NewPlayerProfile(const char *profileName)
 
     Com_BuildPlayerProfilePathForPlayer(profilePath, 64, profileName, "");
 
-    FS_BuildOSPath((*(const dvar_t **)imp_fs_basepath)->current.string, (const char *)imp_fs_gamedir, profilePath, osPath);
+    FS_BuildOSPath((fs_basepath)->current.string, (const char *)imp_fs_gamedir, profilePath, osPath);
 
     if (FS_CreatePath(osPath)) {
         Com_Printf("Unable to create new profile path: %s\n", osPath);

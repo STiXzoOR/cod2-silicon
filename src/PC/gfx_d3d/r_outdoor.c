@@ -2,12 +2,12 @@
 extern dvar_t *r_rendererInUse;
 #include "imports.h"
 
-extern void *Image_Register(const char *name, int trackType, int filter);
-extern void ClearBounds(vec3_t mins, vec3_t maxs);
-extern void ExpandBounds(vec3_t mins, vec3_t maxs, vec3_t boundsMin, vec3_t boundsMax);
-extern void MatrixIdentity44(float *matrix);
+extern GfxImage * Image_Register(const char *imageName, int semantic, int imageTrack);
+extern void ClearBounds(float *mins, float *maxs);
+extern void ExpandBounds(const vec_t *mins, const vec_t *maxs, vec_t *boundsMin, vec_t *boundsMax);
+extern void MatrixIdentity44(float (*out)[4]);
 extern float floorf(float);
-extern void Image_Generate2D(void *image, byte *data, int width, int height, int format);
+extern void Image_Generate2D(GfxImage *image, byte *pixels, int width, int height, int imageFormat);
 extern void *Hunk_AllocateTempMemoryInternal(int size);
 extern void Hunk_FreeTempMemory(void *buf);
 
@@ -29,18 +29,15 @@ void R_RegisterOutdoorImage(GfxWorld *world)
     ClearBounds(outdoorGlob.bbox[0], outdoorGlob.bbox[1]);
 
     int surfCount = world->surfaceCount;
-    byte *surfData = (byte *)world->surfaces;
-
     int i;
     for (i = 0; i < surfCount; i++) {
-        byte *surf = surfData + i * 12;
-        byte *material = *(byte **)surf;
+        const GfxSurface *surf = &world->surfaces[i];
+        const Material *material = surf->material;
 
-        if (((Material *)material)->info.gameFlags & 8)
+        if (material->info.gameFlags & 8)
             continue;
 
-        byte *bounds = *(byte **)(surf + 8);
-        ExpandBounds((float *)(bounds + 4), (float *)(bounds + 0x10),
+        ExpandBounds(surf->tris->bounds[0], surf->tris->bounds[1],
                      outdoorGlob.bbox[0], outdoorGlob.bbox[1]);
     }
 
@@ -75,7 +72,7 @@ void R_RegisterOutdoorImage(GfxWorld *world)
     }
 
     float *matrix = (float *)world->outdoorLookupMatrix;
-    MatrixIdentity44(matrix);
+    MatrixIdentity44( (float (*)[4])(matrix));
     matrix[0] = outdoorScale[0];
     matrix[5] = outdoorScale[1];
     matrix[10] = outdoorScale[2];

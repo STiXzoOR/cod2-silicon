@@ -6,20 +6,20 @@
 extern scr_const_t scr_const;
 
 extern const dvar_t *Dvar_RegisterFloat(const char *name, float defaultValue, float min, float max, int flags);
-extern int BG_GetFirstAvailableOffhand(void *ps, int weaponType);
-extern int BG_GetFirstEquippedOffhand(void *ps, int weaponType);
-extern float CG_FadeHudMenu(void *hud, int val, int time);
+extern int BG_GetFirstAvailableOffhand(const playerState_t *ps, int offhandClass);
+extern int BG_GetFirstEquippedOffhand(const playerState_t *ps, int offhandClass);
+extern float CG_FadeHudMenu(const dvar_t *fadeDvar, int displayStartTime, int duration);
 extern void UI_DrawText(const char *text, int maxChars, void *font, float x, float y, int horzAlign, int vertAlign, float scale, const float *color, int textStyle);
 extern const char *UI_SafeTranslateString(const char *str);
-extern void CG_PlayEntitySoundAlias(int entNum, int soundAlias);
-extern void CG_PlaySoundAlias(int entNum, float *origin, int soundAlias);
-extern qboolean CG_DObjGetWorldTagPos(void *cent, void *dobj, unsigned short tag, float *origin);
-extern int CG_DObjGetViewModelTagPos(void *dobj, unsigned short tag, float *origin);
-extern void BG_EvaluateTrajectory(void *trajectory, int time, float *result);
-extern void *BG_GetWeaponDef(int weaponIndex);
+extern int CG_PlayEntitySoundAlias(int entNum, snd_alias_list_t *aliasList);
+extern int CG_PlaySoundAlias(int entNum, const float *origin, snd_alias_list_t *aliasList);
+extern qboolean CG_DObjGetWorldTagPos(const centity_t *cent, struct DObj_s *dobj, unsigned int tag, float *origin);
+extern int CG_DObjGetViewModelTagPos(struct DObj_s *dobj, unsigned int tag, float *origin);
+extern void BG_EvaluateTrajectory(const trajectory_t *trajectory, int time, vec_t *result);
+extern WeaponDef * BG_GetWeaponDef(int iWeapon);
 extern int BG_GetNumWeapons(void);
 extern int BG_ClipForWeapon(int weaponIndex);
-extern void *Com_GetClientDObj(int clientNum, int lod);
+extern struct DObj_s * Com_GetClientDObj(int handle, int localClientNum);
 extern void CG_MenuShowNotify(int type);
 extern void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const float *color, MaterialHandle material);
 extern float floorf(float x);
@@ -74,9 +74,9 @@ void CG_DrawOffHandName(rectDef_s *rect, struct Font_s *font, float scale, vec_t
     if (cg->predictedPlayerState.pm_type > 5)
         return;
 
-    weapon = BG_GetFirstAvailableOffhand((void *)&cg->predictedPlayerState, weaponType);
+    weapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
     if (weapon == 0) {
-        weapon = BG_GetFirstEquippedOffhand((void *)&cg->predictedPlayerState, weaponType);
+        weapon = BG_GetFirstEquippedOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
         if (weapon == 0)
             return;
     }
@@ -84,7 +84,7 @@ void CG_DrawOffHandName(rectDef_s *rect, struct Font_s *font, float scale, vec_t
     hud = hud_fade_offhand;
 
     time = (int)floorf(hud->current.value * 1000.0f + 0.5f);
-    fade = CG_FadeHudMenu((void *)hud, cg->offhandFadeTime, time);
+    fade = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
 
     if (fade == 0.0f)
         return;
@@ -104,35 +104,37 @@ void CG_DrawOffHandName(rectDef_s *rect, struct Font_s *font, float scale, vec_t
 void CG_PrepOffHand(entityState_t *ent, int event, int eventParam)
 {
     weaponInfo_s *wi;
-    int soundAlias;
 
     wi = &((*(weaponInfo_s **)imp_cg_weapons))[eventParam];
-    soundAlias = (int)(intptr_t)wi->pullbackSound;
 
-    if (soundAlias != 0) {
-        CG_PlayEntitySoundAlias(ent->number, soundAlias);
+    /* pullbackSound is a snd_alias_list_t*; pass the whole pointer (see the note
+     * in CG_UseOffHand -- the `(int)(intptr_t)` truncation crashes on x64). */
+    if (wi->pullbackSound != NULL) {
+        CG_PlayEntitySoundAlias(ent->number, wi->pullbackSound);
     }
 }
 
 void CG_UseOffHand(centity_t *cent, int event, int eventParam)
 {
     weaponInfo_s *wi;
-    int soundAlias;
     int clientNum;
     float origin[3];
-    void *dobj;
+    struct DObj_s *dobj;
 
     wi = &((*(weaponInfo_s **)imp_cg_weapons))[eventParam];
-    soundAlias = (int)(intptr_t)wi->flashSound;
 
-    if (soundAlias == 0)
+    /* flashSound is a snd_alias_list_t* -- test the whole pointer (the decomp's
+     * `(int)(intptr_t)` truncated it to 32 bits, which both mis-detects NULL and,
+     * below, passed a truncated/garbage list pointer to CG_PlaySoundAlias -> crash
+     * in Com_PickSoundAliasFromList reading list->head on x64). */
+    if (wi->flashSound == NULL)
         return;
 
     clientNum = cent->nextState.number;
 
     if (clientNum == cg->snap->ps.clientNum) {
 
-        void *viewModel = wi->viewModelDObj;
+        struct DObj_s *viewModel = (struct DObj_s *)wi->viewModelDObj;
         if (viewModel != NULL) {
             if (CG_DObjGetViewModelTagPos(viewModel, scr_const.tag_flash, origin)) {
                 goto play_sound;
@@ -148,10 +150,10 @@ void CG_UseOffHand(centity_t *cent, int event, int eventParam)
         }
     }
 
-    BG_EvaluateTrajectory((void *)&cent->nextState.pos, cg->time, origin);
+    BG_EvaluateTrajectory(&cent->nextState.pos, cg->time, origin);
 
 play_sound:
-    CG_PlaySoundAlias(cent->nextState.number, origin, (int)(intptr_t)wi->flashSound);
+    CG_PlaySoundAlias(cent->nextState.number, origin, wi->flashSound);
 }
 
 void CG_SetEquippedOffHand(int offHandIndex)
@@ -172,7 +174,7 @@ void CG_SwitchOffHandCmd(void)
         return;
 
     weapDef = BG_GetWeaponDef(currentWeapon);
-    newWeapon = BG_GetFirstAvailableOffhand((void *)&cg->predictedPlayerState, ((WeaponDef *)weapDef)->offhandClass);
+    newWeapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), ((WeaponDef *)weapDef)->offhandClass);
 
     if (newWeapon == 0)
         return;
@@ -194,9 +196,9 @@ void CG_DrawOffHandIcon(rectDef_s *rect, float scale, vec_t *color, MaterialHand
     if (cg->predictedPlayerState.pm_type > 5)
         return;
 
-    weapon = BG_GetFirstAvailableOffhand((void *)&cg->predictedPlayerState, weaponType);
+    weapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
     if (weapon == 0) {
-        weapon = BG_GetFirstEquippedOffhand((void *)&cg->predictedPlayerState, weaponType);
+        weapon = BG_GetFirstEquippedOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
         if (weapon == 0)
             return;
     }
@@ -204,7 +206,7 @@ void CG_DrawOffHandIcon(rectDef_s *rect, float scale, vec_t *color, MaterialHand
     hud = hud_fade_offhand;
 
     time = (int)floorf(hud->current.value * 1000.0f + 0.5f);
-    fade = CG_FadeHudMenu((void *)hud, cg->offhandFadeTime, time);
+    fade = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
 
     if (fade == 0.0f)
         return;
@@ -224,9 +226,9 @@ void CG_DrawOffHandIcon(rectDef_s *rect, float scale, vec_t *color, MaterialHand
     }
 
 find_weapon:
-    weapon = BG_GetFirstAvailableOffhand((void *)&cg->predictedPlayerState, weaponType);
+    weapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
     if (weapon == 0) {
-        weapon = BG_GetFirstEquippedOffhand((void *)&cg->predictedPlayerState, weaponType);
+        weapon = BG_GetFirstEquippedOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
         if (weapon == 0)
             return;
     }
@@ -259,9 +261,9 @@ void CG_DrawOffHandHighlight(rectDef_s *rect, float scale, vec_t *color, Materia
     if (cg->predictedPlayerState.pm_type > 5)
         return;
 
-    weapon = BG_GetFirstAvailableOffhand((void *)&cg->predictedPlayerState, weaponType);
+    weapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
     if (weapon == 0) {
-        weapon = BG_GetFirstEquippedOffhand((void *)&cg->predictedPlayerState, weaponType);
+        weapon = BG_GetFirstEquippedOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
         if (weapon == 0)
             return;
     }
@@ -272,7 +274,7 @@ void CG_DrawOffHandHighlight(rectDef_s *rect, float scale, vec_t *color, Materia
     hud = hud_fade_offhand;
 
     time = (int)floorf(hud->current.value * 1000.0f + 0.5f);
-    fade = CG_FadeHudMenu((void *)hud, cg->offhandFadeTime, time);
+    fade = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
 
     if (fade == 0.0f)
         return;
@@ -336,9 +338,9 @@ void CG_DrawOffHandAmmo(rectDef_s *rect, struct Font_s *font, float scale, vec_t
     if (cg->predictedPlayerState.pm_type > 5)
         return;
 
-    weapon = BG_GetFirstAvailableOffhand((void *)&cg->predictedPlayerState, weaponType);
+    weapon = BG_GetFirstAvailableOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
     if (weapon == 0) {
-        weapon = BG_GetFirstEquippedOffhand((void *)&cg->predictedPlayerState, weaponType);
+        weapon = BG_GetFirstEquippedOffhand( (const playerState_t *)((void *)&cg->predictedPlayerState), weaponType);
         if (weapon == 0)
             return;
     }
@@ -346,7 +348,7 @@ void CG_DrawOffHandAmmo(rectDef_s *rect, struct Font_s *font, float scale, vec_t
     hud = hud_fade_offhand;
 
     time = (int)floorf(hud->current.value * 1000.0f + 0.5f);
-    fade = CG_FadeHudMenu((void *)hud, cg->offhandFadeTime, time);
+    fade = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
 
     if (fade == 0.0f)
         return;

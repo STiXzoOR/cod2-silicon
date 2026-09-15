@@ -1,5 +1,10 @@
 #include "common_types.h"
 #include "imports.h"
+/* dvar globals */
+extern const dvar_t *r_showLightGrid;
+extern const dvar_t *r_showMissingLightGrid;
+extern const dvar_t *r_vc_makelog;
+extern const dvar_t *r_vc_showlog;
 extern GfxBackEndData *backEndData;
 
 extern float floorf(float x);
@@ -26,11 +31,11 @@ extern void *Z_MallocInternal(int size);
 extern int FS_ReadFile(const char *path, void **buffer);
 extern void FS_FreeFile(void *buffer);
 extern void Com_Error(int level, const char *fmt, ...);
-extern float Vec3Normalize(vec3_t v);
+extern const vec_t Vec3Normalize(vec_t *v);
 extern int R_CullPointAndRadius(const vec_t *pt, float radius, const DpvsPlane *clipPlanes, int clipPlaneCount);
-extern void R_AddDebugString(void *debugGlobals, const vec_t *origin, const float *color, float scale, const char *text);
-extern void R_AddDebugBox(void *debugGlobals, const vec_t *mins, const vec_t *maxs, const float *color);
-extern int CM_BoxSightTrace(int oldHitNum, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, unsigned int brushmask, int zero);
+extern void R_AddDebugString(DebugGlobals *debugGlobals, const vec_t *origin, const float *color, float scale, const char *text);
+extern void R_AddDebugBox(DebugGlobals *debugGlobals, const vec_t *mins, const vec_t *maxs, const float *color);
+extern int CM_BoxSightTrace(int oldHitNum, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, int model, int brushmask);
 
 void RB_SaveLightVisHistory(void);
 int RB_DeriveEntityLights(vec4_t *colorForDir, float sunVisibility, const Material *material, D3DLIGHT9 *lights, int maxLights);
@@ -59,22 +64,22 @@ typedef struct {
 
 static inline __attribute__((always_inline)) const dvar_t *RB_LightGridContrastDvar(void)
 {
-    return *(const dvar_t **)imp_r_vc_makelog;
+    return r_vc_makelog;
 }
 
 static inline __attribute__((always_inline)) const dvar_t *RB_LightGridEnableTweaksDvar(void)
 {
-    return *(const dvar_t **)imp_r_showLightGrid;
+    return r_showLightGrid;
 }
 
 static inline __attribute__((always_inline)) const dvar_t *RB_LightGridSpreadDvar(void)
 {
-    return *(const dvar_t **)imp_r_vc_showlog;
+    return r_vc_showlog;
 }
 
 static inline __attribute__((always_inline)) const dvar_t *RB_LightGridUseTweakedValuesDvar(void)
 {
-    return *(const dvar_t **)imp_r_showMissingLightGrid;
+    return r_showMissingLightGrid;
 }
 
 static int VC_SearchLog(int gridX, int gridY, int gridZ, int *outMid)
@@ -159,7 +164,7 @@ static float VecDot(const vec3_t a, const vec3_t b)
 
 static void SetupDirectionalLight(D3DLIGHT9 *light, const float *ambient, const float *diffuse, const float *direction)
 {
-    light->Type = 3;
+    light->Type = (D3DLIGHTTYPE)(3);
     light->Ambient.r = ambient[0];
     light->Ambient.g = ambient[1];
     light->Ambient.b = ambient[2];
@@ -220,7 +225,7 @@ int RB_DeriveEntityLights(vec4_t *colorForDir, float sunVisibility, const Materi
             avgB += *chan2++;
         } while (chan1 != chan1End);
 
-        lights[0].Type = 3;
+        lights[0].Type = (D3DLIGHTTYPE)(3);
         lights[0].Ambient.r = avgR * 0.125f * 0.5f;
         lights[0].Ambient.g = avgG * 0.125f * 0.5f;
         lights[0].Ambient.b = avgB * 0.125f * 0.5f;
@@ -232,7 +237,7 @@ int RB_DeriveEntityLights(vec4_t *colorForDir, float sunVisibility, const Materi
         sunColorB = sunVisibility * world->sunLight.color[2] + world->sunLight.u.dir.ambientColor[2];
 
         light = &lights[1];
-        light->Type = 3;
+        light->Type = (D3DLIGHTTYPE)(3);
         light->Ambient.r = sunColorR * 0.5f;
         light->Ambient.g = sunColorG * 0.5f;
         light->Ambient.b = sunColorB * 0.5f;
@@ -377,7 +382,7 @@ fallback:
             }
         }
 
-        light->Type = 3;
+        light->Type = (D3DLIGHTTYPE)(3);
         light->Ambient.r = ambientR * 0.5f;
         light->Ambient.g = ambientG * 0.5f;
         light->Ambient.b = ambientH * 0.5f;
@@ -414,7 +419,7 @@ fallback:
 
         world = rgp.world;
 
-        sunLight->Type = 3;
+        sunLight->Type = (D3DLIGHTTYPE)(3);
         sunLight->Ambient.r = world->sunLight.u.dir.ambientColor[0] * 0.5f;
         sunLight->Ambient.g = world->sunLight.u.dir.ambientColor[1] * 0.5f;
         sunLight->Ambient.b = world->sunLight.u.dir.ambientColor[2] * 0.5f;
@@ -435,7 +440,7 @@ void RB_ShowLightVisCachePoints(const vec_t *viewOrigin, const DpvsPlane *clipPl
     int x, y, z;
     int dx, dy, dz;
     vec3_t origin;
-    void *debugGlobals;
+    DebugGlobals *debugGlobals;
     const float *debugColor;
 
     if (!s_vc_log)
@@ -609,7 +614,7 @@ float RB_GetLightingAtPoint(const GfxLightGrid *lightGrid, const vec_t *samplePo
     if (doDebug) {
         vec3_t boxMins, boxMaxs;
         vec3_t sampleBoxMins, sampleBoxMaxs;
-        void *debugGlobals;
+        DebugGlobals *debugGlobals;
 
         boxMins[0] = (float)(x0 * 32 - 0x20000);
         boxMins[1] = (float)(y0 * 32 - 0x20000);
@@ -963,18 +968,15 @@ void RB_InitLightVisHistory(const char *bspName)
     void *buffer;
     int fileLen;
     int copySize;
-    const dvar_t **contrastSlot;
 
     s_vc_log = 0;
     s_vc_logCount = 0;
-
-    contrastSlot = (const dvar_t **)imp_r_vc_makelog;
-    if (!(*contrastSlot)->current.integer)
+    if (!(r_vc_makelog)->current.integer)
         return;
 
     s_vc_log = (int)Z_MallocInternal(0x1800000);
 
-    if ((*contrastSlot)->current.integer != 2)
+    if ((r_vc_makelog)->current.integer != 2)
         return;
 
     BuildGridFilename(bspName, filename);

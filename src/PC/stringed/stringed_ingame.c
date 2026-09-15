@@ -5,6 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(_MSC_VER)
+#define STRINGED_NOINLINE __declspec(noinline)
+#else
+#define STRINGED_NOINLINE __attribute__((noinline))
+#endif
+
 extern CStringEdPackage *TheStringPackage;
 static char sString[64];
 static char sString_00482f80[64];
@@ -19,7 +25,7 @@ void CStringEdPackage_AddEntry(const CStringEdPackage *_this, const char *psLoca
 void CStringEdPackage_SetString(const CStringEdPackage *_this, const char *psLocalReference, const char *psNewString, qboolean bSentenceIsEnglish);
 const char *CStringEdPackage_ParseLine(const CStringEdPackage *_this, const char *psLine, int forceEnglish);
 const char *SE_Load(const char *psFileName, int forceEnglish);
-const char *SE_GetString(const char *psPackageAndStringReference);
+STRINGED_NOINLINE const char *SE_GetString(const char *psPackageAndStringReference);
 void CStringEdPackage_Clear(const CStringEdPackage *_this);
 const char *SE_LoadLanguage(int forceEnglish);
 void SE_Init(void);
@@ -535,7 +541,7 @@ const char *SE_Load(const char *psFileName, int forceEnglish)
     return psErrorMessage;
 }
 
-const char *SE_GetString(const char *psPackageAndStringReference)
+STRINGED_NOINLINE const char *SE_GetString(const char *psPackageAndStringReference)
 {
     WebStringEdEntry *entry;
 

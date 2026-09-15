@@ -4,10 +4,31 @@
 #include "cod2_feature_config.h"
 #include "pb_public.h"
 #include "www_download.h"
+extern LegacyHacks *legacyHacks;
+extern int com_frameTime;
+extern float com_timescaleValue;
+/* dvar globals */
+extern const dvar_t *cg_drawCrosshair;
+extern const dvar_t *cl_anglespeedkey;
+extern const dvar_t *cl_bypassMouseInput;
+extern const dvar_t *cl_paused;
+extern const dvar_t *cl_pitchspeed;
+extern const dvar_t *cl_talking;
+extern const dvar_t *cl_yawspeed;
+extern const dvar_t *com_expectedHunkUsage;
+extern const dvar_t *com_sv_running;
+extern const dvar_t *net_lanauthorize;
+extern const dvar_t *nextmap;
+extern const dvar_t *sv_disableClientConsole;
+extern const dvar_t *sv_paused;
+extern const dvar_t *sv_voice;
 
 extern const dvar_t *Dvar_RegisterBool(const char *dvarName, unsigned char value, unsigned short flags);
+extern int CM_BoxSightTrace(int oldHitNum, const vec_t *start, const vec_t *end,
+                            const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask);
 extern int I_strnicmp(const char *s0, const char *s1, size_t n);
 extern char *strupr(char *s);
+extern void *Hunk_AllocAlignInternal(int size, int alignment);
 
 COD2_ASSERT_FIELD(LegacyHacks, cl_running,                 0x4);
 COD2_ASSERT_FIELD(LegacyHacks, cl_stance,                  0x8);
@@ -68,13 +89,13 @@ extern void SetScreenScaling(float safeAreaH, float safeAreaV, int vpX, int vpY,
 extern void CalcSplitScreenTextOffset(FontHandle font, float *y);
 extern void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
 extern void SND_Init(void);
-extern void SND_StopSounds(int);
+extern void SND_StopSounds(snd_stopsounds_arg_t);
 extern void SND_FadeAllSounds(float, int);
 extern void SND_Shutdown(void);
-extern void SND_Save(void *memFile);
-extern void SND_Restore(void *memFile);
-extern void SND_SaveListeners(void *listeners);
-extern void SND_RestoreListeners(void *listeners);
+extern void SND_Save(MemoryFile *memFile);
+extern void SND_Restore(MemoryFile *memFile);
+extern void SND_SaveListeners(struct snd_listener *listeners);
+extern void SND_RestoreListeners(struct snd_listener *listeners);
 extern void SND_DisconnectListener(void);
 extern void CL_InitUI(void);
 extern void Sys_LoadingKeepAlive(void);
@@ -126,38 +147,38 @@ extern double atof(const char *);
 extern int I_stricmp(const char *a, const char *b);
 extern int I_strncmp(const char *a, const char *b, int n);
 extern void Info_SetValueForKey(char *s, const char *key, const char *value);
-extern const char *Info_ValueForKey(const char *s, const char *key);
-extern void Com_Memset(void *dest, int val, int count);
-extern int NET_CompareAdr(netadr_t a, netadr_t b);
+extern char *Info_ValueForKey(const char *s, const char *key);
+extern void Com_Memset(void *dest, const int val, int count);
+extern qboolean NET_CompareAdr(netadr_t a, netadr_t b);
 extern int NET_CompareBaseAdr(netadr_t a, netadr_t b);
 extern const char *NET_AdrToString(netadr_t a);
-extern int NET_StringToAdr(const char *s, void *a);
+extern qboolean NET_StringToAdr(const char *s, netadr_t *a);
 extern Bool NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *data);
-extern Bool NET_OutOfBandData(netsrc_t sock, netadr_t adr, const void *data, int len);
+extern Bool NET_OutOfBandData(netsrc_t sock, netadr_t adr, unsigned char *data, int len);
 extern int Sys_IsLANAddress(netadr_t adr);
 extern int Sys_Milliseconds(void);
 extern int Sys_MillisecondsRaw(void);
 extern void srand(unsigned int seed);
 extern int FS_FileExists(const char *path);
-extern int FS_FOpenFileWrite(const char *path);
+extern fileHandle_t FS_FOpenFileWrite(const char *filename);
 extern int FS_FOpenFileRead(const char *path, int *file, int uniqueFILE);
 extern int FS_Read(void *buffer, int len, int f);
-extern void FS_ConditionalRestart(int checksumFeed);
+extern qboolean FS_ConditionalRestart(int checksumFeed);
 extern void FS_Restart(int checksumFeed);
 extern const char *FS_ReferencedIwdPureChecksums(void);
 extern int FS_CompareIwds(char *buf, int bufLen, int flag);
 extern void FS_ShiftStr(const char *name, int shift);
-extern void MSG_Init(void *msg, void *data, int length);
-extern void MSG_WriteLong(void *msg, int value);
-extern void MSG_WriteShort(void *msg, int value);
-extern void MSG_WriteByte(void *msg, int value);
+extern void MSG_Init(msg_t *msg, byte *data, int length);
+extern void MSG_WriteLong(msg_t *msg, int value);
+extern void MSG_WriteShort(msg_t *msg, int value);
+extern void MSG_WriteByte(msg_t *msg, int value);
 extern void MSG_WriteBigString(void *msg, const char *s);
-extern void MSG_WriteDeltaEntity(void *msg, void *from, void *to, int force);
+extern void MSG_WriteDeltaEntity(msg_t *msg, entityState_t *from, entityState_t *to, int force);
 extern int MSG_ReadLong(msg_t *msg);
-extern const char *MSG_ReadStringLine(msg_t *msg);
-extern const char *MSG_ReadBigString(msg_t *msg);
+extern char *MSG_ReadStringLine(msg_t *msg);
+extern char *MSG_ReadBigString(msg_t *msg);
 extern void MSG_BeginReading(msg_t *msg);
-extern int MSG_WriteBitsCompress(void *src, void *dst, int len);
+extern int MSG_WriteBitsCompress(byte *src, byte *dst, int len);
 extern void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping);
 extern void Netchan_Setup(netsrc_t sock, netchan_t *chan, netadr_t adr, int qport);
 extern int Netchan_Process(netchan_t *chan, msg_t *msg);
@@ -165,15 +186,15 @@ extern void CL_Netchan_AddOOBProfilePacket(int size);
 extern void CL_Netchan_Decode(byte *data, int len);
 extern void CL_Netchan_SendOOBPacket(int len, const void *data, netadr_t to);
 extern int CL_CDKeyValidate(const char *cdkey, const char *checksum);
-extern int CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time);
-extern int CL_ServerStatusResponse(netadr_t from, msg_t *msg);
-extern int CL_ServersResponsePacket(netadr_t from, msg_t *msg);
+extern void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time);
+extern void CL_ServerStatusResponse(netadr_t from, msg_t *msg);
+extern void CL_ServersResponsePacket(netadr_t from, msg_t *msg);
 extern const char *CL_GetConfigString(int index);
 extern void CL_ParseServerMessage(msg_t *msg);
-extern void CL_ArchiveClientState(void *memFile);
-extern void LargeLocal_LargeLocal(void *ll, int size);
-extern void *LargeLocal_GetBuf(void *ll);
-extern void ZN10LargeLocalD1Ev(void *ll);
+extern void CL_ArchiveClientState(MemoryFile *memFile);
+extern void LargeLocal_LargeLocal(const LargeLocal *ll, int size);
+extern void *LargeLocal_GetBuf(const LargeLocal *ll);
+extern void ZN10LargeLocalD1Ev(LargeLocal *ll);
 extern void Cmd_TokenizeString(const char *text);
 extern refexport_t *GetRefAPI(int apiVersion, refimport_t *rimp);
 extern void MemFile_InitForWriting(MemoryFile *mf, int size, void *buf, int flag);
@@ -182,7 +203,7 @@ extern void *Z_MallocInternal(int size);
 extern void *Z_VirtualAllocInternal(int size);
 extern void Z_VirtualFreeInternal(void *ptr);
 extern void CG_CalculateFPS(void);
-extern void Voice_GetLocalVoiceData(void *dest);
+extern int Voice_GetLocalVoiceData(ClientVoicePacket_t *dest);
 extern void Voice_Playback(void);
 extern void SEH_UpdateLanguageInfo(void);
 extern const char *SEH_LocalizeTextMessage(const char *ref, const char *defaultText, int flags);
@@ -233,6 +254,10 @@ extern const dvar_t *cl_avidemo;
 extern const dvar_t *cl_forceavidemo;
 extern const dvar_t *cl_motdString;
 extern const dvar_t *cl_serverStatusResendTime;
+
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+int clc_x64_lastChallenge;
+#endif
 extern const dvar_t *cl_ingame;
 extern const dvar_t *name;
 extern const dvar_t *cl_voice;
@@ -251,7 +276,7 @@ void CL_SwitchToLocalClient(int clientNum);
 Bool CL_GetLocalClientActive(int clientNum);
 int CL_GetLocalClientActiveCount(void);
 Bool CL_AllLocalClientsDisconnected(void);
-Bool CL_AnyLocalClientChallenging(void);
+qboolean CL_AnyLocalClientChallenging(void);
 Bool CL_IsRenderingSplitScreen(void);
 const char *CL_GetUsernameForLocalClient(int controllerIndex);
 void CL_AddReliableCommand(const char *cmd);
@@ -271,7 +296,7 @@ void CL_VoicePacket(msg_t *msg);
 Bool CL_IsPlayerTalking(int clientIndex);
 void CL_SetupForNewServerMap(const char *pszMapName, const char *pszGametype);
 void CL_VoiceTransmit(void);
-Bool Voice_SendVoiceData(void);
+int Voice_SendVoiceData(void);
 void CL_SyncGpu(void);
 void CL_SetRecommended_f(void);
 void CL_RefPrintf(int print_level, const char *fmt, ...);
@@ -366,7 +391,7 @@ Bool CL_AllLocalClientsDisconnected(void)
     return 0;
 }
 
-Bool CL_AnyLocalClientChallenging(void)
+qboolean CL_AnyLocalClientChallenging(void)
 {
     if (*(byte *)&clients[0] != 0 && *(int *)&clientConnections[0] == 4)
         return 1;
@@ -445,7 +470,7 @@ char *CL_AllocSkelMemory(int localClientNum, unsigned int size)
 {
     clientActive_t *client = &clients[localClientNum];
     int pos = client->skelMemPos;
-    char *buf = (char *)(pos + (int)client->skelMemoryStart);
+    char *buf = (char *)((intptr_t)pos + (intptr_t)client->skelMemoryStart);
     int newPos = pos + ((size + 15) & ~15);
     client->skelMemPos = newPos;
     if (newPos >= 0x3fff1)
@@ -460,7 +485,7 @@ void CL_ResetSkeletonCache(int localClientNum)
     if (!count)
         count = 1;
     client->skelTimeStamp = count;
-    client->skelMemoryStart = (char *)(((int)client->skelMemory + 15) & ~15);
+    client->skelMemoryStart = (char *)(((intptr_t)client->skelMemory + 15) & ~(intptr_t)15);
     client->skelMemPos = 0;
 }
 
@@ -570,7 +595,7 @@ void CL_Clientinfo_f(void)
 {
 
     Com_Printf("--------- Client Information ---------\n");
-    Com_Printf("state: %i\n", *(int *)clc);
+    Com_Printf("state: %i\n", clientConnections[0].state);
     Com_Printf("Server: %s\n", cls.servername);
     Com_Printf("User info settings:\n");
     Info_Print(Dvar_InfoString(2));
@@ -629,8 +654,8 @@ void CL_SetupForNewServerMap(const char *pszMapName, const char *pszGametype)
     I_strncpyz(hacks->cl_serverloadgametype, pszGametype, 0x40);
     hacks->cl_serverloadwaiting = 0;
 
-    if (!(*(const dvar_t **)imp_com_sv_running)->current.enabled) {
-        Dvar_SetInt(*(const dvar_t **)imp_com_expectedHunkUsage, 0);
+    if (!(com_sv_running)->current.enabled) {
+        Dvar_SetInt(com_expectedHunkUsage, 0);
         g_waitingForServer = 1;
     }
 
@@ -657,10 +682,10 @@ void CL_VoiceTransmit(void)
 
 extern int Dvar_GetInt(const char *name);
 extern Bool IsTalking(void);
-Bool Voice_SendVoiceData(void)
+int Voice_SendVoiceData(void)
 {
 
-    if (!(*(const dvar_t **)imp_sv_voice)->current.enabled)
+    if (!(sv_voice)->current.enabled)
         return 0;
     if (!cl_voice->current.enabled)
         return 0;
@@ -671,7 +696,7 @@ Bool Voice_SendVoiceData(void)
     if (clc->state != 8)
         return 0;
 
-    if ((*(const dvar_t **)imp_cl_talking)->current.enabled)
+    if ((cl_talking)->current.enabled)
         return 1;
     if (IsTalking())
         return 1;
@@ -841,140 +866,140 @@ void CL_InitRef(void)
 
     Com_Printf("----- Initializing Renderer ----\n");
 
-    ri_local.Cmd_AddCommand = (void *)imp_Cmd_AddCommand;
-    ri_local.Cmd_RemoveCommand = (void *)imp_Cmd_RemoveCommand;
-    ri_local.Cmd_Argc = (void *)imp_Cmd_Argc;
-    ri_local.Cmd_Argv = (void *)imp_Cmd_Argv;
-    ri_local.Cbuf_ExecuteText = (void *)imp_Cbuf_ExecuteText;
-    ri_local.Printf = (void *)CL_RefPrintf;
-    ri_local.Error = (void *)imp_Com_Error;
-    ri_local.Milliseconds = (void *)CL_ScaledMilliseconds;
-    ri_local.Hunk_AllocInternal = (void *)imp_Hunk_AllocInternal;
-    ri_local.Hunk_AllocateTempMemoryInternal = (void *)imp_Hunk_AllocateTempMemoryInternal;
-    ri_local.Z_MallocInternal = (void *)imp_Z_MallocInternal;
-    ri_local.Z_FreeInternal = (void *)imp_Z_FreeInternal;
-    ri_local.Hunk_AllocAlignInternal = (void *)imp_Hunk_AllocAlignInternal;
-    ri_local.Z_VirtualReserveInternal = (void *)imp_Z_VirtualReserveInternal;
-    ri_local.Z_VirtualCommitInternal = (void *)imp_Z_VirtualCommitInternal;
-    ri_local.Z_VirtualDecommitInternal = (void *)imp_Z_VirtualDecommitInternal;
-    ri_local.Z_VirtualFreeInternal = (void *)imp_Z_VirtualFreeInternal;
-    ri_local.Hunk_FreeTempMemory = (void *)imp_Hunk_FreeTempMemory;
-    ri_local.Hunk_AllocateTempMemoryHighInternal = (void *)imp_Hunk_AllocateTempMemoryHighInternal;
-    ri_local.Hunk_ClearTempMemory = (void *)imp_Hunk_ClearTempMemory;
-    ri_local.Hunk_ClearTempMemoryHigh = (void *)imp_Hunk_ClearTempMemoryHigh;
-    ri_local.Sys_DirectXFatalError = (void *)imp_Sys_DirectXFatalError;
-    ri_local.Sys_ShowSplashWindow = (void *)imp_Sys_ShowSplashWindow;
-    ri_local.Sys_HideSplashWindow = (void *)imp_Sys_HideSplashWindow;
-    ri_local.Sys_LoadingKeepAlive = (void *)imp_Sys_LoadingKeepAlive;
-    ri_local.FS_ReadFile = (void *)imp_FS_ReadFile;
-    ri_local.FS_FreeFile = (void *)imp_FS_FreeFile;
-    ri_local.FS_FOpenFileRead = (void *)imp_FS_FOpenFileRead;
-    ri_local.FS_WriteFile = (void *)imp_FS_WriteFile;
-    ri_local.FS_FreeFileList = (void *)imp_FS_FreeFileList;
-    ri_local.FS_ListFiles = (void *)imp_FS_ListFiles;
-    ri_local.FS_FileExists = (void *)imp_FS_FileExists;
-    ri_local.FS_FOpenFileByMode = (void *)imp_FS_FOpenFileByMode;
-    ri_local.FS_FCloseFile = (void *)imp_FS_FCloseFile;
-    ri_local.FS_Read = (void *)imp_FS_Read;
-    ri_local.FS_Write = (void *)imp_FS_Write;
-    ri_local.CM_SaveLump = (void *)imp_CM_SaveLump;
-    ri_local.CM_BoxTrace = (void *)imp_CM_BoxTrace;
-    ri_local.CM_BoxSightTrace = (void *)imp_CM_BoxSightTrace;
-    ri_local.Dvar_RegisterBool = (void *)imp_Dvar_RegisterBool;
-    ri_local.Dvar_RegisterInt = (void *)imp_Dvar_RegisterInt;
-    ri_local.Dvar_RegisterFloat = (void *)imp_Dvar_RegisterFloat;
-    ri_local.Dvar_RegisterString = (void *)imp_Dvar_RegisterString;
-    ri_local.Dvar_RegisterEnum = (void *)imp_Dvar_RegisterEnum;
-    ri_local.Dvar_RegisterColor = (void *)imp_Dvar_RegisterColor;
-    ri_local.Dvar_RegisterVec2 = (void *)imp_Dvar_RegisterVec2;
-    ri_local.Dvar_RegisterVec3 = (void *)imp_Dvar_RegisterVec3;
-    ri_local.Dvar_RegisterVec4 = (void *)imp_Dvar_RegisterVec4;
-    ri_local.Dvar_ClearModified = (void *)imp_Dvar_ClearModified;
-    ri_local.Dvar_SetModified = (void *)imp_Dvar_SetModified;
-    ri_local.Dvar_UpdateEnumDomain = (void *)imp_Dvar_UpdateEnumDomain;
-    ri_local.Dvar_UnregisterSystem = (void *)imp_Dvar_UnregisterSystem;
-    ri_local.Dvar_ChangeResetValue = (void *)imp_Dvar_ChangeResetValue;
-    ri_local.Dvar_IsAtDefaultValue = (void *)imp_Dvar_IsAtDefaultValue;
-    ri_local.Dvar_SetBool = (void *)imp_Dvar_SetBool;
-    ri_local.Dvar_SetInt = (void *)imp_Dvar_SetInt;
-    ri_local.Dvar_SetFloat = (void *)imp_Dvar_SetFloat;
-    ri_local.Dvar_SetString = (void *)imp_Dvar_SetString;
-    ri_local.Dvar_SetColor = (void *)imp_Dvar_SetColor;
-    ri_local.Dvar_SetVec2 = (void *)imp_Dvar_SetVec2;
-    ri_local.Dvar_SetVec3 = (void *)imp_Dvar_SetVec3;
-    ri_local.Dvar_SetVec4 = (void *)imp_Dvar_SetVec4;
-    ri_local.Dvar_SetFromString = (void *)imp_Dvar_SetFromString;
-    ri_local.Dvar_SetBoolByName = (void *)imp_Dvar_SetBoolByName;
-    ri_local.Dvar_SetIntByName = (void *)imp_Dvar_SetIntByName;
-    ri_local.Dvar_SetFloatByName = (void *)imp_Dvar_SetFloatByName;
-    ri_local.Dvar_SetStringByName = (void *)imp_Dvar_SetStringByName;
-    ri_local.Dvar_SetColorByName = (void *)imp_Dvar_SetColorByName;
-    ri_local.Dvar_SetVec2ByName = (void *)imp_Dvar_SetVec2ByName;
-    ri_local.Dvar_SetVec3ByName = (void *)imp_Dvar_SetVec3ByName;
-    ri_local.Dvar_SetVec4ByName = (void *)imp_Dvar_SetVec4ByName;
-    ri_local.Dvar_SetFromStringByName = (void *)imp_Dvar_SetFromStringByName;
-    ri_local.Dvar_GetBool = (void *)imp_Dvar_GetBool;
-    ri_local.Dvar_GetInt = (void *)imp_Dvar_GetInt;
-    ri_local.Dvar_GetFloat = (void *)imp_Dvar_GetFloat;
-    ri_local.Dvar_GetString = (void *)imp_Dvar_GetString;
-    ri_local.Dvar_GetVariantString = (void *)imp_Dvar_GetVariantString;
-    ri_local.Dvar_EnumToString = (void *)imp_Dvar_EnumToString;
-    ri_local.Dvar_Reset = (void *)imp_Dvar_Reset;
-    ri_local.Com_SaveDvarsToBuffer = (void *)imp_Com_SaveDvarsToBuffer;
-    ri_local.Com_LoadDvarsFromBuffer = (void *)imp_Com_LoadDvarsFromBuffer;
-    ri_local.Com_GetBsp = (void *)imp_Com_GetBsp;
-    ri_local.SEH_ReadCharFromString = (void *)imp_SEH_ReadCharFromString;
-    ri_local.CL_UpdateDebugData = (void *)CL_UpdateDebugData;
-    ri_local.CL_FlushDebugData = (void *)CL_FlushDebugData;
-    ri_local.StatMon_Warning = (void *)imp_StatMon_Warning;
-    ri_local.XModelPrecache = (void *)imp_XModelPrecache;
-    ri_local.XModelGetSurfaces = (void *)imp_XModelGetSurfaces;
-    ri_local.XModelBad = (void *)imp_XModelBad;
-    ri_local.Hunk_OverrideDataForFile = (void *)imp_Hunk_OverrideDataForFile;
-    ri_local.XModelGetNumLods = (void *)imp_XModelGetNumLods;
-    ri_local.XModelSetTestLods = (void *)imp_XModelSetTestLods;
-    ri_local.XModelGetLodForDist = (void *)imp_XModelGetLodForDist;
-    ri_local.XModelGetLodOutDist = (void *)imp_XModelGetLodOutDist;
-    ri_local.XModelGetSurfaceName = (void *)imp_XModelGetSurfaceName;
-    ri_local.XModelGetName = (void *)imp_XModelGetName;
-    ri_local.XModelGetFlags = (void *)imp_XModelGetFlags;
-    ri_local.XModelNumBones = (void *)imp_XModelNumBones;
-    ri_local.XModelGetSkins = (void *)imp_XModelGetSkins;
-    ri_local.XModelGetMemUsage = (void *)imp_XModelGetMemUsage;
-    ri_local.XModelGetLodName = (void *)imp_XModelGetLodName;
-    ri_local.XModelGetBasePose = (void *)imp_XModelGetBasePose;
-    ri_local.XModelGetBasePoseBone = (void *)imp_XModelGetBasePoseBone;
-    ri_local.DObjBad = (void *)imp_DObjBad;
-    ri_local.DObjGetBounds = (void *)imp_DObjGetBounds;
-    ri_local.DObjGetSurface = (void *)imp_DObjGetSurface;
-    ri_local.DObjGetNumModels = (void *)imp_DObjGetNumModels;
-    ri_local.DObjGetNumSurfaces = (void *)imp_DObjGetNumSurfaces;
-    ri_local.DObjGetSurfaces = (void *)imp_DObjGetSurfaces;
-    ri_local.DObjGetModel = (void *)imp_DObjGetModel;
-    ri_local.DObjGetSurfaceName = (void *)imp_DObjGetSurfaceName;
-    ri_local.DObjCreate = (void *)imp_DObjCreate;
-    ri_local.DObjGetAllocSkelSize = (void *)imp_DObjGetAllocSkelSize;
-    ri_local.DObjCreateSkel = (void *)imp_DObjCreateSkel;
-    ri_local.DObjCalcAnim = (void *)imp_DObjCalcAnim;
-    ri_local.DObjCalcSkel = (void *)imp_DObjCalcSkel;
-    ri_local.DObjGetRotTransArray = (void *)imp_DObjGetRotTransArray;
-    ri_local.DObjSkelAreBonesUpToDate = (void *)imp_DObjSkelAreBonesUpToDate;
-    ri_local.DObjGetMatOffset = (void *)imp_DObjGetMatOffset;
-    ri_local.DObjNumBones = (void *)imp_DObjNumBones;
-    ri_local.DObjGetBoneInfo = (void *)imp_DObjGetBoneInfo;
-    ri_local.DObjGetLodForDist = (void *)imp_DObjGetLodForDist;
-    ri_local.DObjGetLodOutDist = (void *)imp_DObjGetLodOutDist;
-    ri_local.DObjCompleteHierarchyBits = (void *)imp_DObjCompleteHierarchyBits;
-    ri_local.DObjSetModel = (void *)imp_DObjSetModel;
-    ri_local.CIN_UploadCinematic = (void *)imp_CIN_UploadCinematic;
-    ri_local.CIN_PlayCinematic = (void *)imp_CIN_PlayCinematic;
-    ri_local.CIN_RunCinematic = (void *)imp_CIN_RunCinematic;
-    ri_local.CG_DObjCalcPose = (void *)imp_CG_DObjCalcPose;
-    ri_local.CL_GetHudMsgIconMaterialName = (void *)imp_CL_GetHudMsgIconMaterialName;
+    *(void **)&ri_local.Cmd_AddCommand = (void *)imp_Cmd_AddCommand;
+    *(void **)&ri_local.Cmd_RemoveCommand = (void *)imp_Cmd_RemoveCommand;
+    *(void **)&ri_local.Cmd_Argc = (void *)imp_Cmd_Argc;
+    *(void **)&ri_local.Cmd_Argv = (void *)imp_Cmd_Argv;
+    *(void **)&ri_local.Cbuf_ExecuteText = (void *)imp_Cbuf_ExecuteText;
+    *(void **)&ri_local.Printf = (void *)CL_RefPrintf;
+    *(void **)&ri_local.Error = (void *)imp_Com_Error;
+    *(void **)&ri_local.Milliseconds = (void *)CL_ScaledMilliseconds;
+    *(void **)&ri_local.Hunk_AllocInternal = (void *)imp_Hunk_AllocInternal;
+    *(void **)&ri_local.Hunk_AllocateTempMemoryInternal = (void *)imp_Hunk_AllocateTempMemoryInternal;
+    *(void **)&ri_local.Z_MallocInternal = (void *)imp_Z_MallocInternal;
+    *(void **)&ri_local.Z_FreeInternal = (void *)imp_Z_FreeInternal;
+    ri_local.Hunk_AllocAlignInternal = Hunk_AllocAlignInternal;
+    *(void **)&ri_local.Z_VirtualReserveInternal = (void *)imp_Z_VirtualReserveInternal;
+    *(void **)&ri_local.Z_VirtualCommitInternal = (void *)imp_Z_VirtualCommitInternal;
+    *(void **)&ri_local.Z_VirtualDecommitInternal = (void *)imp_Z_VirtualDecommitInternal;
+    *(void **)&ri_local.Z_VirtualFreeInternal = (void *)imp_Z_VirtualFreeInternal;
+    *(void **)&ri_local.Hunk_FreeTempMemory = (void *)imp_Hunk_FreeTempMemory;
+    *(void **)&ri_local.Hunk_AllocateTempMemoryHighInternal = (void *)imp_Hunk_AllocateTempMemoryHighInternal;
+    *(void **)&ri_local.Hunk_ClearTempMemory = (void *)imp_Hunk_ClearTempMemory;
+    *(void **)&ri_local.Hunk_ClearTempMemoryHigh = (void *)imp_Hunk_ClearTempMemoryHigh;
+    *(void **)&ri_local.Sys_DirectXFatalError = (void *)imp_Sys_DirectXFatalError;
+    *(void **)&ri_local.Sys_ShowSplashWindow = (void *)imp_Sys_ShowSplashWindow;
+    *(void **)&ri_local.Sys_HideSplashWindow = (void *)imp_Sys_HideSplashWindow;
+    *(void **)&ri_local.Sys_LoadingKeepAlive = (void *)imp_Sys_LoadingKeepAlive;
+    *(void **)&ri_local.FS_ReadFile = (void *)imp_FS_ReadFile;
+    *(void **)&ri_local.FS_FreeFile = (void *)imp_FS_FreeFile;
+    *(void **)&ri_local.FS_FOpenFileRead = (void *)imp_FS_FOpenFileRead;
+    *(void **)&ri_local.FS_WriteFile = (void *)imp_FS_WriteFile;
+    *(void **)&ri_local.FS_FreeFileList = (void *)imp_FS_FreeFileList;
+    *(void **)&ri_local.FS_ListFiles = (void *)imp_FS_ListFiles;
+    *(void **)&ri_local.FS_FileExists = (void *)imp_FS_FileExists;
+    *(void **)&ri_local.FS_FOpenFileByMode = (void *)imp_FS_FOpenFileByMode;
+    *(void **)&ri_local.FS_FCloseFile = (void *)imp_FS_FCloseFile;
+    *(void **)&ri_local.FS_Read = (void *)imp_FS_Read;
+    *(void **)&ri_local.FS_Write = (void *)imp_FS_Write;
+    *(void **)&ri_local.CM_SaveLump = (void *)imp_CM_SaveLump;
+    *(void **)&ri_local.CM_BoxTrace = (void *)imp_CM_BoxTrace;
+    ri_local.CM_BoxSightTrace = CM_BoxSightTrace;
+    *(void **)&ri_local.Dvar_RegisterBool = (void *)imp_Dvar_RegisterBool;
+    *(void **)&ri_local.Dvar_RegisterInt = (void *)imp_Dvar_RegisterInt;
+    *(void **)&ri_local.Dvar_RegisterFloat = (void *)imp_Dvar_RegisterFloat;
+    *(void **)&ri_local.Dvar_RegisterString = (void *)imp_Dvar_RegisterString;
+    *(void **)&ri_local.Dvar_RegisterEnum = (void *)imp_Dvar_RegisterEnum;
+    *(void **)&ri_local.Dvar_RegisterColor = (void *)imp_Dvar_RegisterColor;
+    *(void **)&ri_local.Dvar_RegisterVec2 = (void *)imp_Dvar_RegisterVec2;
+    *(void **)&ri_local.Dvar_RegisterVec3 = (void *)imp_Dvar_RegisterVec3;
+    *(void **)&ri_local.Dvar_RegisterVec4 = (void *)imp_Dvar_RegisterVec4;
+    *(void **)&ri_local.Dvar_ClearModified = (void *)imp_Dvar_ClearModified;
+    *(void **)&ri_local.Dvar_SetModified = (void *)imp_Dvar_SetModified;
+    *(void **)&ri_local.Dvar_UpdateEnumDomain = (void *)imp_Dvar_UpdateEnumDomain;
+    *(void **)&ri_local.Dvar_UnregisterSystem = (void *)imp_Dvar_UnregisterSystem;
+    *(void **)&ri_local.Dvar_ChangeResetValue = (void *)imp_Dvar_ChangeResetValue;
+    *(void **)&ri_local.Dvar_IsAtDefaultValue = (void *)imp_Dvar_IsAtDefaultValue;
+    *(void **)&ri_local.Dvar_SetBool = (void *)imp_Dvar_SetBool;
+    *(void **)&ri_local.Dvar_SetInt = (void *)imp_Dvar_SetInt;
+    *(void **)&ri_local.Dvar_SetFloat = (void *)imp_Dvar_SetFloat;
+    *(void **)&ri_local.Dvar_SetString = (void *)imp_Dvar_SetString;
+    *(void **)&ri_local.Dvar_SetColor = (void *)imp_Dvar_SetColor;
+    *(void **)&ri_local.Dvar_SetVec2 = (void *)imp_Dvar_SetVec2;
+    *(void **)&ri_local.Dvar_SetVec3 = (void *)imp_Dvar_SetVec3;
+    *(void **)&ri_local.Dvar_SetVec4 = (void *)imp_Dvar_SetVec4;
+    *(void **)&ri_local.Dvar_SetFromString = (void *)imp_Dvar_SetFromString;
+    *(void **)&ri_local.Dvar_SetBoolByName = (void *)imp_Dvar_SetBoolByName;
+    *(void **)&ri_local.Dvar_SetIntByName = (void *)imp_Dvar_SetIntByName;
+    *(void **)&ri_local.Dvar_SetFloatByName = (void *)imp_Dvar_SetFloatByName;
+    *(void **)&ri_local.Dvar_SetStringByName = (void *)imp_Dvar_SetStringByName;
+    *(void **)&ri_local.Dvar_SetColorByName = (void *)imp_Dvar_SetColorByName;
+    *(void **)&ri_local.Dvar_SetVec2ByName = (void *)imp_Dvar_SetVec2ByName;
+    *(void **)&ri_local.Dvar_SetVec3ByName = (void *)imp_Dvar_SetVec3ByName;
+    *(void **)&ri_local.Dvar_SetVec4ByName = (void *)imp_Dvar_SetVec4ByName;
+    *(void **)&ri_local.Dvar_SetFromStringByName = (void *)imp_Dvar_SetFromStringByName;
+    *(void **)&ri_local.Dvar_GetBool = (void *)imp_Dvar_GetBool;
+    *(void **)&ri_local.Dvar_GetInt = (void *)imp_Dvar_GetInt;
+    *(void **)&ri_local.Dvar_GetFloat = (void *)imp_Dvar_GetFloat;
+    *(void **)&ri_local.Dvar_GetString = (void *)imp_Dvar_GetString;
+    *(void **)&ri_local.Dvar_GetVariantString = (void *)imp_Dvar_GetVariantString;
+    *(void **)&ri_local.Dvar_EnumToString = (void *)imp_Dvar_EnumToString;
+    *(void **)&ri_local.Dvar_Reset = (void *)imp_Dvar_Reset;
+    *(void **)&ri_local.Com_SaveDvarsToBuffer = (void *)imp_Com_SaveDvarsToBuffer;
+    *(void **)&ri_local.Com_LoadDvarsFromBuffer = (void *)imp_Com_LoadDvarsFromBuffer;
+    *(void **)&ri_local.Com_GetBsp = (void *)imp_Com_GetBsp;
+    *(void **)&ri_local.SEH_ReadCharFromString = (void *)imp_SEH_ReadCharFromString;
+    *(void **)&ri_local.CL_UpdateDebugData = (void *)CL_UpdateDebugData;
+    *(void **)&ri_local.CL_FlushDebugData = (void *)CL_FlushDebugData;
+    *(void **)&ri_local.StatMon_Warning = (void *)imp_StatMon_Warning;
+    *(void **)&ri_local.XModelPrecache = (void *)imp_XModelPrecache;
+    *(void **)&ri_local.XModelGetSurfaces = (void *)imp_XModelGetSurfaces;
+    *(void **)&ri_local.XModelBad = (void *)imp_XModelBad;
+    *(void **)&ri_local.Hunk_OverrideDataForFile = (void *)imp_Hunk_OverrideDataForFile;
+    *(void **)&ri_local.XModelGetNumLods = (void *)imp_XModelGetNumLods;
+    *(void **)&ri_local.XModelSetTestLods = (void *)imp_XModelSetTestLods;
+    *(void **)&ri_local.XModelGetLodForDist = (void *)imp_XModelGetLodForDist;
+    *(void **)&ri_local.XModelGetLodOutDist = (void *)imp_XModelGetLodOutDist;
+    *(void **)&ri_local.XModelGetSurfaceName = (void *)imp_XModelGetSurfaceName;
+    *(void **)&ri_local.XModelGetName = (void *)imp_XModelGetName;
+    *(void **)&ri_local.XModelGetFlags = (void *)imp_XModelGetFlags;
+    *(void **)&ri_local.XModelNumBones = (void *)imp_XModelNumBones;
+    *(void **)&ri_local.XModelGetSkins = (void *)imp_XModelGetSkins;
+    *(void **)&ri_local.XModelGetMemUsage = (void *)imp_XModelGetMemUsage;
+    *(void **)&ri_local.XModelGetLodName = (void *)imp_XModelGetLodName;
+    *(void **)&ri_local.XModelGetBasePose = (void *)imp_XModelGetBasePose;
+    *(void **)&ri_local.XModelGetBasePoseBone = (void *)imp_XModelGetBasePoseBone;
+    *(void **)&ri_local.DObjBad = (void *)imp_DObjBad;
+    *(void **)&ri_local.DObjGetBounds = (void *)imp_DObjGetBounds;
+    *(void **)&ri_local.DObjGetSurface = (void *)imp_DObjGetSurface;
+    *(void **)&ri_local.DObjGetNumModels = (void *)imp_DObjGetNumModels;
+    *(void **)&ri_local.DObjGetNumSurfaces = (void *)imp_DObjGetNumSurfaces;
+    *(void **)&ri_local.DObjGetSurfaces = (void *)imp_DObjGetSurfaces;
+    *(void **)&ri_local.DObjGetModel = (void *)imp_DObjGetModel;
+    *(void **)&ri_local.DObjGetSurfaceName = (void *)imp_DObjGetSurfaceName;
+    *(void **)&ri_local.DObjCreate = (void *)imp_DObjCreate;
+    *(void **)&ri_local.DObjGetAllocSkelSize = (void *)imp_DObjGetAllocSkelSize;
+    *(void **)&ri_local.DObjCreateSkel = (void *)imp_DObjCreateSkel;
+    *(void **)&ri_local.DObjCalcAnim = (void *)imp_DObjCalcAnim;
+    *(void **)&ri_local.DObjCalcSkel = (void *)imp_DObjCalcSkel;
+    *(void **)&ri_local.DObjGetRotTransArray = (void *)imp_DObjGetRotTransArray;
+    *(void **)&ri_local.DObjSkelAreBonesUpToDate = (void *)imp_DObjSkelAreBonesUpToDate;
+    *(void **)&ri_local.DObjGetMatOffset = (void *)imp_DObjGetMatOffset;
+    *(void **)&ri_local.DObjNumBones = (void *)imp_DObjNumBones;
+    *(void **)&ri_local.DObjGetBoneInfo = (void *)imp_DObjGetBoneInfo;
+    *(void **)&ri_local.DObjGetLodForDist = (void *)imp_DObjGetLodForDist;
+    *(void **)&ri_local.DObjGetLodOutDist = (void *)imp_DObjGetLodOutDist;
+    *(void **)&ri_local.DObjCompleteHierarchyBits = (void *)imp_DObjCompleteHierarchyBits;
+    *(void **)&ri_local.DObjSetModel = (void *)imp_DObjSetModel;
+    *(void **)&ri_local.CIN_UploadCinematic = (void *)imp_CIN_UploadCinematic;
+    *(void **)&ri_local.CIN_PlayCinematic = (void *)imp_CIN_PlayCinematic;
+    *(void **)&ri_local.CIN_RunCinematic = (void *)imp_CIN_RunCinematic;
+    *(void **)&ri_local.CG_DObjCalcPose = (void *)imp_CG_DObjCalcPose;
+    *(void **)&ri_local.CL_GetHudMsgIconMaterialName = (void *)imp_CL_GetHudMsgIconMaterialName;
     {
 
-        extern void *CM_GetPlaneNum(int planeNum);
-        ri_local.CM_GetPlaneNum = (void *)CM_GetPlaneNum;
+        extern cplane_t * CM_GetPlaneNum(int planeNum);
+        *(void **)&ri_local.CM_GetPlaneNum = (void *)CM_GetPlaneNum;
     }
 
 #if defined(COD2_GFX_DLL) && defined(COD2_GFX_DLL_RETAIL_V60)
@@ -997,7 +1022,7 @@ void CL_InitRef(void)
     memcpy(&re, GetRefAPI(0x3b, &ri_local), sizeof(re));
 #endif
 
-    Dvar_SetInt(*(const dvar_t **)imp_cl_paused, 0);
+    Dvar_SetInt(cl_paused, 0);
 }
 
 void CL_startSingleplayer_f(void)
@@ -1012,7 +1037,7 @@ void CL_StopLogo(void)
 
 void CL_ToggleMenu_f(void)
 {
-    if (clientConnections[0].demoplaying != 0 || (*(LegacyHacks **)imp_legacyHacks)->cl_serverloadwaiting != 0) {
+    if (clientConnections[0].demoplaying != 0 || legacyHacks->cl_serverloadwaiting != 0) {
         UI_SetActiveMenu(1);
     } else {
         UI_SetActiveMenu(2);
@@ -1031,7 +1056,7 @@ void CL_OpenScriptMenu_f(void)
         return;
     }
 
-    if (!(*(LegacyHacks **)imp_legacyHacks)->ui_scriptMenuAllowResponse)
+    if (!legacyHacks->ui_scriptMenuAllowResponse)
         return;
     if (!cls.uiStarted)
         return;
@@ -1081,9 +1106,9 @@ void CL_InitOnceForAllClients(void)
             int i;
             float f;
         } flt_max = { 0x7f7fffff }, flt_nmax = { 0xff7fffff };
-        *(const dvar_t **)imp_cl_yawspeed = Dvar_RegisterFloat("cl_yawspeed", 140.0f, flt_nmax.f, flt_max.f, 0x1001);
-        *(const dvar_t **)imp_cl_pitchspeed = Dvar_RegisterFloat("cl_pitchspeed", 140.0f, flt_nmax.f, flt_max.f, 0x1001);
-        *(const dvar_t **)imp_cl_anglespeedkey = Dvar_RegisterFloat("cl_anglespeedkey", 1.5f, 0.0f, flt_max.f, 0);
+        cl_yawspeed = Dvar_RegisterFloat("cl_yawspeed", 140.0f, flt_nmax.f, flt_max.f, 0x1001);
+        cl_pitchspeed = Dvar_RegisterFloat("cl_pitchspeed", 140.0f, flt_nmax.f, flt_max.f, 0x1001);
+        cl_anglespeedkey = Dvar_RegisterFloat("cl_anglespeedkey", 1.5f, 0.0f, flt_max.f, 0);
     }
 
     cl_maxpackets = Dvar_RegisterInt("cl_maxpackets", 30, 15, 100, 0x1001);
@@ -1097,10 +1122,10 @@ void CL_InitOnceForAllClients(void)
     cl_wwwDownload = Dvar_RegisterBool("cl_wwwDownload", 1, 0x1003);
     cl_punkbuster = Dvar_RegisterBool("cl_punkbuster", 0, 0x1013);
 #endif
-    *(const dvar_t **)imp_cl_talking = Dvar_RegisterBool_mac("cl_talking", 0, 0);
+    cl_talking = Dvar_RegisterBool_mac("cl_talking", 0, 0);
     cl_inGameVideo = Dvar_RegisterBool_mac("r_inGameVideo", 1, 0x1001);
     cl_serverStatusResendTime = Dvar_RegisterInt("cl_serverStatusResendTime", 750, 0, 3600, 0);
-    *(const dvar_t **)imp_cl_bypassMouseInput = Dvar_RegisterBool_mac("cl_bypassMouseInput", 0, 0);
+    cl_bypassMouseInput = Dvar_RegisterBool_mac("cl_bypassMouseInput", 0, 0);
 
     m_pitch = Dvar_RegisterFloat("m_pitch", 0.022f, -1.0f, 1.0f, 0x1001);
     m_yaw = Dvar_RegisterFloat("m_yaw", 0.022f, -1.0f, 1.0f, 0x1001);
@@ -1108,7 +1133,7 @@ void CL_InitOnceForAllClients(void)
     m_side = Dvar_RegisterFloat("m_side", 0.25f, -1.0f, 1.0f, 0x1001);
     m_filter = Dvar_RegisterBool_mac("m_filter", 0, 0x1001);
     input_viewSensitivity = Dvar_RegisterFloat("input_viewSensitivity", 1.0f, 0.0001f, 5.0f, 0x1001);
-    *(const dvar_t **)imp_cg_drawCrosshair = Dvar_RegisterBool_mac("cg_drawCrosshair", 1, 0x1001);
+    cg_drawCrosshair = Dvar_RegisterBool_mac("cg_drawCrosshair", 1, 0x1001);
     cl_motdString = Dvar_RegisterString_mac("cl_motdString", "", 0x1040);
     cl_ingame = Dvar_RegisterBool_mac("cl_ingame", 0, 0x1040);
     Dvar_RegisterInt("cl_maxPing", 800, 20, 2000, 0x1001);
@@ -1245,16 +1270,18 @@ void CL_ShowIP_f(void)
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 const char *CL_GetServerIPAddress(void)
 {
-    byte *cc = (byte *)&clientConnections[0];
+    clientConnection_t *connection = &clientConnections[0];
+    netadr_t *serverAddress = &connection->serverAddress;
 
-    if (*(int *)cc <= 4) {
+    if (connection->state <= CA_CHALLENGING) {
         memset(szServerIPAddress, 0, 128);
     } else {
-
-        unsigned short port = *(unsigned short *)(cc + 28);
+        unsigned short port = serverAddress->port;
         port = (port >> 8) | (port << 8);
         Com_sprintf(szServerIPAddress, 128, "%i.%i.%i.%i:%i",
-                    cc[24], cc[25], cc[26], cc[27], (int)(short)port);
+                    serverAddress->ip[0], serverAddress->ip[1],
+                    serverAddress->ip[2], serverAddress->ip[3],
+                    (int)(short)port);
     }
 
     return szServerIPAddress;
@@ -1270,7 +1297,7 @@ void CL_FlushDebugData(qboolean fromServer)
     if (cls.debug.strings) {
         i = 0;
         while (i < cls.debug.numStrings) {
-            if (cls.debug.stringFromServer[i] == (byte)fromServer) {
+            if (cls.debug.stringFromServer[i] == fromServer) {
                 --cls.debug.numStrings;
                 cls.debug.stringFromServer[i] = cls.debug.stringFromServer[cls.debug.numStrings];
                 memcpy(&cls.debug.strings[i], &cls.debug.strings[cls.debug.numStrings], sizeof(cls.debug.strings[i]));
@@ -1285,7 +1312,7 @@ void CL_FlushDebugData(qboolean fromServer)
     if (cls.debug.lines) {
         i = 0;
         while (i < cls.debug.numLines) {
-            if (cls.debug.lineFromServer[i] == (byte)fromServer) {
+            if (cls.debug.lineFromServer[i] == fromServer) {
                 --cls.debug.lineDuration[i];
                 if (cls.debug.lineDuration[i] > 0) {
                     ++i;
@@ -1505,10 +1532,10 @@ void CL_InitLoad(const char *mapname, const char *gametype)
 {
     byte *cc;
 
-    if (!(*(LegacyHacks **)imp_legacyHacks)->cl_running)
+    if (!legacyHacks->cl_running)
         return;
 
-    Dvar_SetInt(*(const dvar_t **)imp_com_expectedHunkUsage, 0);
+    Dvar_SetInt(com_expectedHunkUsage, 0);
     UI_SetMap(mapname, gametype);
 
     cc = (byte *)clc;
@@ -1565,7 +1592,7 @@ void CL_StopLogoOrCinematic(void)
         *(int *)&clientConnections[0] = 0;
     }
 
-    SND_StopSounds(0);
+    SND_StopSounds((snd_stopsounds_arg_t)0);
 
     if (!*(int *)clc)
         UI_SetActiveMenu(1);
@@ -1588,9 +1615,9 @@ void CL_AddDebugLine(const vec_t *start, const vec_t *end, const vec_t *color, q
         return;
 
     if (!cls.debug.lines) {
-        cls.debug.lines = Z_MallocInternal(0x2c000);
-        cls.debug.lineFromServer = Z_MallocInternal(cls.debug.maxLines);
-        cls.debug.lineDuration = Z_MallocInternal(cls.debug.maxLines * sizeof(*cls.debug.lineDuration));
+        cls.debug.lines = (trDebugLine_t *)(Z_MallocInternal(0x2c000));
+        cls.debug.lineFromServer = (byte *)(Z_MallocInternal(cls.debug.maxLines));
+        cls.debug.lineDuration = (int *)(Z_MallocInternal(cls.debug.maxLines * sizeof(*cls.debug.lineDuration)));
         cls.debug.numLines = 0;
         lineIndex = 0;
     }
@@ -1628,8 +1655,8 @@ void CL_AddDebugString(const vec_t *xyz, const vec_t *color, float scale, const 
         return;
 
     if (!cls.debug.strings) {
-        cls.debug.strings = Z_MallocInternal(0x8000);
-        cls.debug.stringFromServer = Z_MallocInternal(cls.debug.maxStrings);
+        cls.debug.strings = (trDebugString_t *)(Z_MallocInternal(0x8000));
+        cls.debug.stringFromServer = (byte *)(Z_MallocInternal(cls.debug.maxStrings));
         cls.debug.numStrings = 0;
         stringIndex = 0;
     }
@@ -1790,7 +1817,7 @@ void CL_CheckForResend(void)
     Com_Printf("[cnx] CL_CheckForResend state=%d count=%d realtime=%d\n", conn->state, conn->connectPacketCount, cls.realtime);
 
     if (conn->state == CA_CONNECTING) {
-        const dvar_t *lanAuthorize = *(const dvar_t **)imp_net_lanauthorize;
+        const dvar_t *lanAuthorize = net_lanauthorize;
 
         if (lanAuthorize->current.enabled || !Sys_IsLANAddress(conn->serverAddress))
             CL_RequestAuthorization();
@@ -1824,7 +1851,7 @@ void CL_CheckForResend(void)
     data[9 + infoLen] = '"';
     data[10 + infoLen] = '\0';
 
-    NET_OutOfBandData(NS_CLIENT1, conn->serverAddress, data, infoLen + 10);
+    NET_OutOfBandData(NS_CLIENT1, conn->serverAddress, (unsigned char *)data, infoLen + 10);
     *(int *)imp_dvar_modifiedFlags &= ~2;
 }
 
@@ -1852,11 +1879,13 @@ void CL_LocalServers_f(void)
         for (port = 0x7120; port < 0x7124; ++port) {
             to.port = (unsigned short)(((port & 0xff) << 8) | ((port >> 8) & 0xff));
             to.type = NA_BROADCAST;
-            CL_Netchan_SendOOBPacket(0xf, (const void *)"\xff"
-                                                        "fd\xff"
-                                                        "fd\xff"
-                                                        "fd\xff"
-                                                        "fdgetinfo xxx",
+            /* Out-of-band packets start with four 0xFF bytes. This literal had been
+               mangled into "\xff" "fd" repeated, which put FF 66 64 FF ... on the wire
+               instead of FF FF FF FF -- CL_Netchan_SendOOBPacket rejected it as
+               "used to send non-OOB packet" and LAN server discovery never worked.
+               The length 0xf matches 4 marker bytes + "getinfo xxx" (11). */
+            CL_Netchan_SendOOBPacket(0xf, (const void *)"\xff\xff\xff\xff"
+                                                        "getinfo xxx",
                                      to);
         }
     }
@@ -1888,7 +1917,7 @@ void CL_PlayLogo_f(void)
     if (cls.uiStarted)
         UI_SetActiveMenu(0);
 
-    SND_StopSounds(0);
+    SND_StopSounds((snd_stopsounds_arg_t)0);
     SND_FadeAllSounds(1.0f, 0);
 
     name = Cmd_Argv(1);
@@ -2015,7 +2044,7 @@ void CL_RunOncePerClientFrame(int msec)
         if (clc->state == 8 || cl_forceavidemo->current.enabled) {
             Cbuf_ExecuteText(0, "screenshot silent\n");
         }
-        float timescale = *(float *)imp_com_timescaleValue;
+        float timescale = com_timescaleValue;
         msec = (int)(1000.0f / (float)avidemoVal * timescale);
         if (msec == 0)
             msec = 1;
@@ -2028,7 +2057,7 @@ void CL_RunOncePerClientFrame(int msec)
     cls.frametime = msec;
     cls.realtime += msec;
 
-    int curFrameTime = *(int *)imp_com_frameTime;
+    int curFrameTime = com_frameTime;
     int delta = curFrameTime - old_com_frameTime;
     frame_msec = (delta != 0) ? delta : 1;
     if (frame_msec > 200)
@@ -2105,6 +2134,9 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
         }
 
         conn->challenge = atoi(Cmd_Argv(1));
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+        clc_x64_lastChallenge = conn->challenge;
+#endif
         conn->state = CA_CHALLENGING;
         conn->connectPacketCount = 0;
         conn->connectTime = -99999;
@@ -2374,10 +2406,10 @@ void CL_Frame(int msec)
     int t;
     const char *info;
 
-    if ((*(LegacyHacks **)imp_legacyHacks)->cl_running == 0)
+    if (legacyHacks->cl_running == 0)
         return;
 
-    Voice_GetLocalVoiceData((void *)&clients[0]);
+    Voice_GetLocalVoiceData((ClientVoicePacket_t *)&clients[0]);
     Voice_Playback();
     CL_UpdateColor();
 
@@ -2386,10 +2418,10 @@ void CL_Frame(int msec)
     if (clc_p->state <= 3)
         goto Lc6;
 
-    clp = *(const dvar_t **)imp_cl_paused;
+    clp = cl_paused;
     if (!clp->current.enabled)
         goto L137;
-    if (!(*(const dvar_t **)imp_sv_paused)->current.enabled)
+    if (!(sv_paused)->current.enabled)
         goto Lc6;
     if ((unsigned)(clc_p->state - 3) <= 1)
         goto L183;
@@ -2466,7 +2498,7 @@ Ltail:
 
 void CL_Vid_Restart_f(void)
 {
-    const dvar_t *svRunning = *(const dvar_t **)imp_com_sv_running;
+    const dvar_t *svRunning = com_sv_running;
     clientConnection_t *conn = (clientConnection_t *)clc;
     clientActive_t *active = (clientActive_t *)cl;
     MemoryFile memFile;
@@ -2490,9 +2522,9 @@ void CL_Vid_Restart_f(void)
         Z_VirtualFreeInternal(memFile.buffer);
     }
 
-    Dvar_SetInt(*(const dvar_t **)imp_com_expectedHunkUsage, 0);
+    Dvar_SetInt(com_expectedHunkUsage, 0);
     g_waitingForServer = 0;
-    SND_StopSounds(1);
+    SND_StopSounds((snd_stopsounds_arg_t)1);
 
     CL_ShutdownHunkUsers();
     CL_ShutdownRef();
@@ -2507,7 +2539,7 @@ void CL_Vid_Restart_f(void)
 
     FS_ConditionalRestart(conn->checksumFeed);
     SEH_UpdateLanguageInfo();
-    Dvar_SetInt(*(const dvar_t **)imp_cl_paused, 0);
+    Dvar_SetInt(cl_paused, 0);
     CL_InitRef();
     CL_StartHunkUsers();
 
@@ -2528,7 +2560,7 @@ void CL_Vid_Restart_f(void)
 
 void CL_Snd_Restart_f(void)
 {
-    const dvar_t *svRunning = *(const dvar_t **)imp_com_sv_running;
+    const dvar_t *svRunning = com_sv_running;
     MemoryFile memFile;
     snd_listener listeners;
     void *tempBuf;
@@ -2619,7 +2651,7 @@ void CL_Disconnect(void)
     if (!CL_AllLocalClientsDisconnected())
         return;
 
-    Dvar_SetBool(*(const dvar_t **)imp_sv_disableClientConsole, 0);
+    Dvar_SetBool(sv_disableClientConsole, 0);
     *(int *)imp_cl_connectedToPureServer = 0;
     *(int *)imp_fs_checksumFeed = 0;
     *(void **)imp_bgs = 0;
@@ -2673,7 +2705,7 @@ void CL_Shutdown(void)
         memset(&cls, 0, sizeof(cls));
     }
 
-    (*(LegacyHacks **)imp_legacyHacks)->cl_running = 0;
+    legacyHacks->cl_running = 0;
     recursive = 0;
     Com_Printf((const char *)"-----------------------\n");
 }
@@ -2714,7 +2746,7 @@ void CL_MapLoading(const char *mapname)
         memset(&active->gameState, 0, sizeof(active->gameState));
         conn->lastPacketSentTime = -9999;
     } else {
-        Dvar_SetString(*(const dvar_t **)imp_nextmap, (const char *)"");
+        Dvar_SetString(nextmap, (const char *)"");
         CL_Disconnect();
         I_strncpyz(cls.servername, (const char *)"localhost", sizeof(cls.servername));
         UI_CloseAll();
@@ -2830,7 +2862,7 @@ void CL_PlayDemo_f(void)
         return;
     }
 
-    if ((*(const dvar_t **)imp_com_sv_running)->current.enabled) {
+    if ((com_sv_running)->current.enabled) {
         Com_Printf((const char *)"listen server cannot play a demo.\n");
         return;
     }
@@ -2951,7 +2983,7 @@ void CL_DownloadsComplete(void)
 
     clientConnections[0].state = CA_LOADING;
 
-    if (!(*(const dvar_t **)imp_com_sv_running)->current.enabled) {
+    if (!(com_sv_running)->current.enabled) {
         const char *info;
         char mapname[64];
         char gametype[64];
@@ -2989,9 +3021,9 @@ void CL_DownloadsComplete(void)
         return;
     }
 
-    Dvar_SetInt(*(const dvar_t **)imp_cl_paused, 1);
+    Dvar_SetInt(cl_paused, 1);
     CL_InitCGame();
-    Dvar_SetInt(*(const dvar_t **)imp_cl_paused, 0);
+    Dvar_SetInt(cl_paused, 0);
 
     {
         const char *checksums = FS_ReferencedIwdPureChecksums();
@@ -3018,10 +3050,10 @@ void CL_BeginDownload(const char *localName, const char *remoteName)
     I_strncpyz(conn->downloadName, localName, sizeof(conn->downloadName));
     Com_sprintf(conn->downloadTempName, sizeof(conn->downloadTempName), (const char *)"%s.tmp", localName);
 
-    I_strncpyz((*(LegacyHacks **)imp_legacyHacks)->cl_downloadName, remoteName, 0x40);
-    (*(LegacyHacks **)imp_legacyHacks)->cl_downloadSize = 0;
-    (*(LegacyHacks **)imp_legacyHacks)->cl_downloadCount = 0;
-    (*(LegacyHacks **)imp_legacyHacks)->cl_downloadTime = cls.realtime;
+    I_strncpyz(legacyHacks->cl_downloadName, remoteName, 0x40);
+    legacyHacks->cl_downloadSize = 0;
+    legacyHacks->cl_downloadCount = 0;
+    legacyHacks->cl_downloadTime = cls.realtime;
 
     ((clientConnection_t *)conn)->downloadBlock = 0;
     ((clientConnection_t *)conn)->downloadCount = 0;
@@ -3078,7 +3110,7 @@ void CL_InitDownloads(void)
 
     FS_ShiftStr((const char *)"ni]Zm^l", 7);
 
-    svRunning = *(const dvar_t **)imp_com_sv_running;
+    svRunning = com_sv_running;
     if (svRunning->current.enabled || !cl_allowDownload->current.enabled) {
         if (FS_CompareIwds(missingFiles, sizeof(missingFiles), 0))
             Com_Printf((const char *)"\nWARNING: You are missing some files referenced by the server:\n%sYou might not be able to join the game\nGo to the settings menu to turn on autodownload, or get the file elsewhere\n\n", missingFiles);

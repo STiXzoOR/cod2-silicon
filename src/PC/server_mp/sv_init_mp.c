@@ -4,6 +4,49 @@
 #include "cod2_feature_config.h"
 #include <string.h>
 #include <stdlib.h>
+/* dvar globals */
+extern const dvar_t *cl_paused;
+extern const dvar_t *com_dedicated;
+extern const dvar_t *com_expectedHunkUsage;
+extern const dvar_t *com_sv_running;
+extern const dvar_t *rcon_password;
+extern const dvar_t *sv_allowAnonymous;
+extern const dvar_t *sv_allowDownload;
+extern const dvar_t *sv_allowedClan1;
+extern const dvar_t *sv_allowedClan2;
+extern const dvar_t *sv_cheats;
+extern const dvar_t *sv_debugRate;
+extern const dvar_t *sv_debugReliableCmds;
+extern const dvar_t *sv_disableClientConsole;
+extern const dvar_t *sv_floodProtect;
+extern const dvar_t *sv_fps;
+extern const dvar_t *sv_gametype;
+extern const dvar_t *sv_hostname;
+extern const dvar_t *sv_iwdNames;
+extern const dvar_t *sv_iwds;
+extern const dvar_t *sv_kickBanTime;
+extern const dvar_t *sv_mapRotation;
+extern const dvar_t *sv_mapRotationCurrent;
+extern const dvar_t *sv_mapname;
+extern const dvar_t *sv_maxPing;
+extern const dvar_t *sv_maxRate;
+extern const dvar_t *sv_maxclients;
+extern const dvar_t *sv_minPing;
+extern const dvar_t *sv_packet_info;
+extern const dvar_t *sv_padPackets;
+extern const dvar_t *sv_privateClients;
+extern const dvar_t *sv_privatePassword;
+extern const dvar_t *sv_pure;
+extern const dvar_t *sv_reconnectlimit;
+extern const dvar_t *sv_referencedIwdNames;
+extern const dvar_t *sv_referencedIwds;
+extern const dvar_t *sv_serverid;
+extern const dvar_t *sv_showAverageBPS;
+extern const dvar_t *sv_showCommands;
+extern const dvar_t *sv_timeout;
+extern const dvar_t *sv_voice;
+extern const dvar_t *sv_voiceQuality;
+extern const dvar_t *sv_zombietime;
 
 extern int sv_serverId_value;
 
@@ -84,41 +127,41 @@ extern void FS_FCloseFile(fileHandle_t f);
 extern char *Com_Parse(const char **data_p);
 extern void ReplaceStringInternal(const char **dest, const char *src);
 extern char *CopyStringInternal(const char *in);
-extern void SV_SendServerCommand(void *client, int reliable, const char *fmt, ...);
+extern void SV_SendServerCommand(client_t *client, svscmd_type type, const char *fmt, ...);
 extern dvar_t *Dvar_RegisterString(const char *dvarName, const char *defaultValue, int flags);
 extern dvar_t *Dvar_RegisterInt(const char *dvarName, int defaultValue, int min, int max, int flags);
 extern dvar_t *Dvar_RegisterBool(const char *dvarName, qboolean defaultValue, int flags);
 extern dvar_t *Dvar_RegisterFloat(const char *dvarName, float defaultValue, float min, float max, int flags);
-extern void Dvar_SetInt(dvar_t *dvar, int value);
+extern void Dvar_SetInt(const dvar_t *dvar, int value);
 extern void Dvar_SetBool(dvar_t *dvar, int value);
-extern void Dvar_SetString(dvar_t *dvar, const char *value);
+extern void Dvar_SetString(const dvar_t *dvar, const char *value);
 extern void Dvar_SetStringByName(const char *dvarName, const char *value);
-extern void Dvar_ClearModified(dvar_t *dvar);
+extern void Dvar_ClearModified(const dvar_t *dvar);
 extern void Dvar_ResetScriptInfo(void);
 extern char *Dvar_InfoString(int bit);
 extern char *Dvar_InfoString_Big(int bit);
-extern const char *Info_ValueForKey(const char *s, const char *key);
-extern void Com_Memset(void *dest, int val, int count);
+extern char *Info_ValueForKey(const char *s, const char *key);
+extern void Com_Memset(void *dest, const int val, int count);
 extern void SV_AddOperatorCommands(void);
 extern void SV_RemoveOperatorCommands(void);
 extern void SV_MasterShutdown(void);
 extern void SV_ShutdownGameProgs(void);
 extern void SV_FreeClients(void);
-extern void SV_DropClient(void *client, const char *reason);
-extern void SV_SendClientSnapshot(void *client);
+extern void SV_DropClient(client_t *client, const char *reason);
+extern void SV_SendClientSnapshot(client_t *client);
 extern void SV_RunFrame(void);
 extern void SV_Heartbeat_f(void);
 extern void SV_MasterGameCompleteStatus(void);
 extern void SV_SetConfig(int start, int max, int count);
 extern void SV_SetGametype(void);
 extern void SV_InitGameProgs(int savepersist);
-extern void *SV_GentityNum(int num);
+extern gentity_t * SV_GentityNum(int num);
 extern void CL_InitLoad(const char *server, const char *gametype);
 extern void CL_MapLoading(const char *server);
 extern void CL_ShutdownAll(void);
 extern void CL_StartLoading(const char *server, const char *gametype);
 extern void CL_Disconnect(void);
-extern int CL_GetLocalClientActive(int localClientNum);
+extern unsigned char CL_GetLocalClientActive(int localClientNum);
 extern void UI_LoadIngameMenus(void);
 extern void Com_Restart(void);
 extern void Material_PreLoadAllShaderText(void);
@@ -169,6 +212,11 @@ COD2_ASSERT_FIELD(server_t, gametype,      0x5f4f4);
 #    define SV_CONFIGSTRING_SLOT(svbase, index) (*(const char **)((byte *)(svbase) + SV_CONFIGSTRINGS_OFF + (index) * 4))
 #endif
 
+/* Retail reads the server_t static global directly (compile-time address); routing
+ * through imp_sv adds a runtime pointer load. imp_sv == &sv, so &sv is equivalent
+ * and byte-correct (mirrors the imp_->direct-global dvar refactor). */
+extern server_t sv;
+
 Bool SV_Loaded(void);
 void SV_GetConfigstring(int index, char *buffer, int bufferSize);
 const char *SV_GetConfigstringConst(int index);
@@ -196,24 +244,21 @@ static void SV_SendMapChange(void);
 
 Bool SV_Loaded(void)
 {
-    server_t *sv = (server_t *)imp_sv;
-    return sv->state == 2;
+    return sv.state == 2;
 }
 
 void SV_GetConfigstring(int index, char *buffer, int bufferSize)
 {
-    byte *sv;
     const char *s;
 
-    if (bufferSize <= 0) {
+    if (bufferSize < 1) {
         Com_Error(1, "\025SV_GetConfigstring: bufferSize == %i", bufferSize);
     }
     if ((unsigned int)index > 0x7ff) {
         Com_Error(1, "\025SV_GetConfigstring: bad index %i\n", index);
     }
 
-    sv = (byte *)imp_sv;
-    s = SV_CONFIGSTRING_SLOT(sv, index);
+    s = SV_CONFIGSTRING_SLOT(&sv, index);
     if (!s) {
         *buffer = '\0';
         return;
@@ -241,7 +286,7 @@ void SV_SetUserinfo(int index, const char *val)
     byte *client;
     const char *name;
 
-    if (index < 0 || index >= (*(dvar_t **)imp_sv_maxclients)->current.integer) {
+    if (index < 0 || index >= (sv_maxclients)->current.integer) {
         Com_Error(1, "SV_SetUserinfo: bad index %i\n", index);
     }
 
@@ -265,7 +310,7 @@ void SV_GetUserinfo(int index, char *buffer, int bufferSize)
     if (bufferSize <= 0) {
         Com_Error(1, "\025SV_GetUserinfo: bufferSize == %i", bufferSize);
     }
-    if (index < 0 || index >= (*(dvar_t **)imp_sv_maxclients)->current.integer) {
+    if (index < 0 || index >= (sv_maxclients)->current.integer) {
         Com_Error(1, "\025SV_GetUserinfo: bad index %i\n", index);
     }
 
@@ -303,7 +348,7 @@ void SV_SetExpectedHunkUsage(char *mapname)
             token = Com_Parse((const char **)&buftrav);
             if (!token || *token == '\0')
                 continue;
-            Dvar_SetInt(*(dvar_t **)imp_com_expectedHunkUsage, atoi(token));
+            Dvar_SetInt( (dvar_t *)(com_expectedHunkUsage), atoi(token));
             Z_FreeInternal(buf);
             return;
         }
@@ -327,8 +372,8 @@ void SV_EnableArchivedSnapshot(qboolean bEnable)
     *(void **)&svs->cachedSnapshotEntities = Z_MallocInternal(0x450000);
     *(void **)&svs->cachedSnapshotClients = Z_MallocInternal(0x2708000);
     *(void **)&svs->archivedSnapshotFrames = Z_MallocInternal(0x2580);
-    svs->archivedSnapshotBuffer = Z_MallocInternal(0x2000000);
-    svs->cachedSnapshotFrames = Z_MallocInternal(0x3800);
+    svs->archivedSnapshotBuffer = (byte *)(Z_MallocInternal(0x2000000));
+    svs->cachedSnapshotFrames = (cachedSnapshot_t *)(Z_MallocInternal(0x3800));
 }
 
 void SV_InitArchivedSnapshot(void)
@@ -353,62 +398,62 @@ void SV_Init(void)
 {
     SV_AddOperatorCommands();
 
-    *(dvar_t **)imp_sv_gametype = Dvar_RegisterString("g_gametype", "dm", 0x1024);
+    sv_gametype = Dvar_RegisterString("g_gametype", "dm", 0x1024);
     Dvar_RegisterString("sv_keywords", "", 0x1004);
     Dvar_RegisterInt("protocol", 0x76, 0x76, 0x76, 0x1044);
-    *(dvar_t **)imp_sv_mapname = Dvar_RegisterString("mapname", "", 0x1044);
-    *(dvar_t **)imp_sv_privateClients = Dvar_RegisterInt("sv_privateClients", 0, 0, 0x40, 0x1004);
-    *(dvar_t **)imp_sv_maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, 0x40, 0x1025);
-    *(dvar_t **)imp_sv_hostname = Dvar_RegisterString("sv_hostname", "CoD2Host", 0x1005);
+    sv_mapname = Dvar_RegisterString("mapname", "", 0x1044);
+    sv_privateClients = Dvar_RegisterInt("sv_privateClients", 0, 0, 0x40, 0x1004);
+    sv_maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, 0x40, 0x1025);
+    sv_hostname = Dvar_RegisterString("sv_hostname", "CoD2Host", 0x1005);
 #if COD2_IS_PATCH_13
     sv_punkbuster = Dvar_RegisterBool("sv_punkbuster", 0, 0x1015);
 #endif
-    *(dvar_t **)imp_sv_maxRate = Dvar_RegisterInt("sv_maxRate", 0, 0, 25000, 0x1005);
-    *(dvar_t **)imp_sv_minPing = Dvar_RegisterInt("sv_minPing", 0, 0, 999, 0x1005);
-    *(dvar_t **)imp_sv_maxPing = Dvar_RegisterInt("sv_maxPing", 0, 0, 999, 0x1005);
-    *(dvar_t **)imp_sv_floodProtect = Dvar_RegisterBool("sv_floodProtect", 1, 0x1005);
-    *(dvar_t **)imp_sv_allowAnonymous = Dvar_RegisterBool("sv_allowAnonymous", 0, 0x1004);
-    *(dvar_t **)imp_sv_showCommands = Dvar_RegisterBool("sv_showCommands", 0, (int)&__mh_execute_header);
-    *(dvar_t **)imp_sv_disableClientConsole = Dvar_RegisterBool("sv_disableClientConsole", 0, 0x1008);
-    *(dvar_t **)imp_sv_voice = Dvar_RegisterBool("sv_voice", 0, 0x100d);
-    *(dvar_t **)imp_sv_voiceQuality = Dvar_RegisterInt("sv_voiceQuality", 1, 0, 9, 0x1008);
-    *(dvar_t **)imp_sv_cheats = Dvar_RegisterBool("sv_cheats", 0, 0x1018);
-    *(dvar_t **)imp_sv_serverid = Dvar_RegisterInt("sv_serverid", 0, (int)0x80000000, 0x7fffffff, 0x1048);
-    *(dvar_t **)imp_sv_pure = Dvar_RegisterBool("sv_pure", 1, 0x100c);
-    *(dvar_t **)imp_sv_iwds = Dvar_RegisterString("sv_iwds", "", 0x1048);
-    *(dvar_t **)imp_sv_iwdNames = Dvar_RegisterString("sv_iwdNames", "", 0x1048);
-    *(dvar_t **)imp_sv_referencedIwds = Dvar_RegisterString("sv_referencedIwds", "", 0x1048);
-    *(dvar_t **)imp_sv_referencedIwdNames = Dvar_RegisterString("sv_referencedIwdNames", "", 0x1048);
-    *(dvar_t **)imp_rcon_password = Dvar_RegisterString("rcon_password", "", (int)&__mh_execute_header);
-    *(dvar_t **)imp_sv_privatePassword = Dvar_RegisterString("sv_privatePassword", "", (int)&__mh_execute_header);
-    *(dvar_t **)imp_sv_fps = Dvar_RegisterInt("sv_fps", 20, 10, 1000, (int)&__mh_execute_header);
-    *(dvar_t **)imp_sv_timeout = Dvar_RegisterInt("sv_timeout", 240, 0, 1800, (int)&__mh_execute_header);
-    *(dvar_t **)imp_sv_zombietime = Dvar_RegisterInt("sv_zombietime", 2, 0, 1800, (int)&__mh_execute_header);
-    *(dvar_t **)imp_sv_allowDownload = Dvar_RegisterBool("sv_allowDownload", 1, 0x1001);
-    *(dvar_t **)imp_sv_reconnectlimit = Dvar_RegisterInt("sv_reconnectlimit", 3, 0, 1800, 0x1001);
-    *(dvar_t **)imp_sv_padPackets = Dvar_RegisterInt("sv_padPackets", 0, 0, 0x7fffffff, (int)&__mh_execute_header);
+    sv_maxRate = Dvar_RegisterInt("sv_maxRate", 0, 0, 25000, 0x1005);
+    sv_minPing = Dvar_RegisterInt("sv_minPing", 0, 0, 999, 0x1005);
+    sv_maxPing = Dvar_RegisterInt("sv_maxPing", 0, 0, 999, 0x1005);
+    sv_floodProtect = Dvar_RegisterBool("sv_floodProtect", 1, 0x1005);
+    sv_allowAnonymous = Dvar_RegisterBool("sv_allowAnonymous", 0, 0x1004);
+    sv_showCommands = Dvar_RegisterBool("sv_showCommands", 0, (int)&__mh_execute_header);
+    sv_disableClientConsole = Dvar_RegisterBool("sv_disableClientConsole", 0, 0x1008);
+    sv_voice = Dvar_RegisterBool("sv_voice", 0, 0x100d);
+    sv_voiceQuality = Dvar_RegisterInt("sv_voiceQuality", 1, 0, 9, 0x1008);
+    sv_cheats = Dvar_RegisterBool("sv_cheats", 0, 0x1018);
+    sv_serverid = Dvar_RegisterInt("sv_serverid", 0, (int)0x80000000, 0x7fffffff, 0x1048);
+    sv_pure = Dvar_RegisterBool("sv_pure", 1, 0x100c);
+    sv_iwds = Dvar_RegisterString("sv_iwds", "", 0x1048);
+    sv_iwdNames = Dvar_RegisterString("sv_iwdNames", "", 0x1048);
+    sv_referencedIwds = Dvar_RegisterString("sv_referencedIwds", "", 0x1048);
+    sv_referencedIwdNames = Dvar_RegisterString("sv_referencedIwdNames", "", 0x1048);
+    rcon_password = Dvar_RegisterString("rcon_password", "", (int)&__mh_execute_header);
+    sv_privatePassword = Dvar_RegisterString("sv_privatePassword", "", (int)&__mh_execute_header);
+    sv_fps = Dvar_RegisterInt("sv_fps", 20, 10, 1000, (int)&__mh_execute_header);
+    sv_timeout = Dvar_RegisterInt("sv_timeout", 240, 0, 1800, (int)&__mh_execute_header);
+    sv_zombietime = Dvar_RegisterInt("sv_zombietime", 2, 0, 1800, (int)&__mh_execute_header);
+    sv_allowDownload = Dvar_RegisterBool("sv_allowDownload", 1, 0x1001);
+    sv_reconnectlimit = Dvar_RegisterInt("sv_reconnectlimit", 3, 0, 1800, 0x1001);
+    sv_padPackets = Dvar_RegisterInt("sv_padPackets", 0, 0, 0x7fffffff, (int)&__mh_execute_header);
 
     {
 
         (*(LegacyHacks **)imp_legacyHacks)->sv_killserver = 0;
     }
 
-    *(dvar_t **)imp_sv_allowedClan1 = Dvar_RegisterString("sv_allowedClan1", "", (int)&__mh_execute_header);
-    *(dvar_t **)imp_sv_allowedClan2 = Dvar_RegisterString("sv_allowedClan2", "", (int)&__mh_execute_header);
-    *(dvar_t **)imp_sv_packet_info = Dvar_RegisterBool("sv_packet_info", 0, (int)&__mh_execute_header);
-    *(dvar_t **)imp_sv_showAverageBPS = Dvar_RegisterBool("sv_showAverageBPS", 0, (int)&__mh_execute_header);
-    *(dvar_t **)imp_sv_kickBanTime = Dvar_RegisterFloat("sv_kickBanTime", 300.0f, 0.0f, 3600.0f, (int)&__mh_execute_header);
-    *(dvar_t **)imp_sv_mapRotation = Dvar_RegisterString("sv_mapRotation", "", (int)&__mh_execute_header);
-    *(dvar_t **)imp_sv_mapRotationCurrent = Dvar_RegisterString("sv_mapRotationCurrent", "", (int)&__mh_execute_header);
-    *(dvar_t **)imp_sv_debugRate = Dvar_RegisterBool("sv_debugRate", 0, (int)&__mh_execute_header);
-    *(dvar_t **)imp_sv_debugReliableCmds = Dvar_RegisterBool("sv_debugReliableCmds", 0, (int)&__mh_execute_header);
+    sv_allowedClan1 = Dvar_RegisterString("sv_allowedClan1", "", (int)&__mh_execute_header);
+    sv_allowedClan2 = Dvar_RegisterString("sv_allowedClan2", "", (int)&__mh_execute_header);
+    sv_packet_info = Dvar_RegisterBool("sv_packet_info", 0, (int)&__mh_execute_header);
+    sv_showAverageBPS = Dvar_RegisterBool("sv_showAverageBPS", 0, (int)&__mh_execute_header);
+    sv_kickBanTime = Dvar_RegisterFloat("sv_kickBanTime", 300.0f, 0.0f, 3600.0f, (int)&__mh_execute_header);
+    sv_mapRotation = Dvar_RegisterString("sv_mapRotation", "", (int)&__mh_execute_header);
+    sv_mapRotationCurrent = Dvar_RegisterString("sv_mapRotationCurrent", "", (int)&__mh_execute_header);
+    sv_debugRate = Dvar_RegisterBool("sv_debugRate", 0, (int)&__mh_execute_header);
+    sv_debugReliableCmds = Dvar_RegisterBool("sv_debugReliableCmds", 0, (int)&__mh_execute_header);
 #if COD2_IS_PATCH_13
     sv_wwwDownload = Dvar_RegisterBool("sv_wwwDownload", 0, 0x1001);
     sv_wwwBaseURL = Dvar_RegisterString("sv_wwwBaseURL", "", 0x1001);
     sv_wwwDlDisconnected = Dvar_RegisterBool("sv_wwwDlDisconnected", 0, 0x1001);
 #endif
     *(dvar_t **)&nextmap = Dvar_RegisterString("nextmap", "", (int)&__mh_execute_header);
-    *(dvar_t **)imp_com_expectedHunkUsage = Dvar_RegisterInt("com_expectedHunkUsage", 0, 0, 0x7fffffff, 0x1040);
+    com_expectedHunkUsage = Dvar_RegisterInt("com_expectedHunkUsage", 0, 0, 0x7fffffff, 0x1040);
 }
 
 void SV_SetConfigstring(const int index, const char *val)
@@ -451,19 +496,19 @@ void SV_SetConfigstring(const int index, const char *val)
 
     {
         serverStatic_t *svsPtr = (serverStatic_t *)imp_svs;
-        for (i = 0; i < (*(dvar_t **)imp_sv_maxclients)->current.integer; i++) {
+        for (i = 0; i < (sv_maxclients)->current.integer; i++) {
             if (svsPtr->clients[i].state <= 2)
                 goto sv_next;
 
             if (len <= maxChunk) {
-                SV_SendServerCommand(&svsPtr->clients[i], 1, "%c %i %s", 'd', index, val);
+                SV_SendServerCommand(&svsPtr->clients[i], SV_CMD_RELIABLE, "%c %i %s", 'd', index, val);
             } else {
                 remaining = len;
                 sent = 0;
                 cmd = 'x';
                 while (remaining > 0) {
                     I_strncpyz(buf, val + sent, maxChunk + 1);
-                    SV_SendServerCommand(&svsPtr->clients[i], 1, "%c %i %s", cmd, index, buf);
+                    SV_SendServerCommand(&svsPtr->clients[i], SV_CMD_RELIABLE, "%c %i %s", cmd, index, buf);
                     sent += maxChunk;
                     remaining -= maxChunk;
                     if (remaining <= 0)
@@ -508,7 +553,7 @@ void SV_Shutdown(char *finalmsg)
     int maxclients;
 
     {
-        dvar_t *dvar = *(dvar_t **)imp_com_sv_running;
+        dvar_t *dvar = (dvar_t *)(com_sv_running);
         byte *dvarVal;
         if (!dvar)
             return;
@@ -524,14 +569,14 @@ void SV_Shutdown(char *finalmsg)
     svs = (serverStatic_t *)imp_svs;
     if (svs->clients) {
         for (j = 0; j < 2; j++) {
-            maxclients = (*(dvar_t **)imp_sv_maxclients)->current.integer;
+            maxclients = (sv_maxclients)->current.integer;
             for (i = 0; i < maxclients; i++) {
                 if (svs->clients[i].state <= 1)
                     goto next_client1;
 
                 if (svs->clients[i].netchan.remoteAddress.type != 2) {
-                    SV_SendServerCommand(&svs->clients[i], 0, "%c \"%s\"", 'e', finalmsg);
-                    SV_SendServerCommand(&svs->clients[i], 1, "%c \"%s\"", 'w', finalmsg);
+                    SV_SendServerCommand(&svs->clients[i], SV_CMD_CAN_IGNORE, "%c \"%s\"", 'e', finalmsg);
+                    SV_SendServerCommand(&svs->clients[i], SV_CMD_RELIABLE, "%c \"%s\"", 'w', finalmsg);
                 }
 
                 svs->clients[i].nextSnapshotTime = -1;
@@ -546,8 +591,8 @@ void SV_Shutdown(char *finalmsg)
     SV_ShutdownGameProgs();
 
     svs = (serverStatic_t *)imp_svs;
-    if (svs->clients != NULL && (*(dvar_t **)imp_sv_maxclients) != NULL) {
-        maxclients = (*(dvar_t **)imp_sv_maxclients)->current.integer;
+    if (svs->clients != NULL && (sv_maxclients) != NULL) {
+        maxclients = (sv_maxclients)->current.integer;
         for (i = 0; i < maxclients; i++) {
             if (svs->clients[i].state > 1) {
                 SV_DropClient(&svs->clients[i], "EXE_DISCONNECTED");
@@ -612,12 +657,12 @@ void SV_Shutdown(char *finalmsg)
     memset(svs, 0, sizeof(serverStatic_t));
 
     {
-        if ((*(dvar_t **)imp_com_dedicated)->current.integer) {
+        if ((com_dedicated)->current.integer) {
             FX_FreeSystem();
         }
     }
 
-    Dvar_SetBool(*(dvar_t **)imp_com_sv_running, 0);
+    Dvar_SetBool( (dvar_t *)(com_sv_running), 0);
     Com_Printf("---------------------------\n");
 
     if (CL_GetLocalClientActive(0)) {
@@ -646,23 +691,23 @@ void SV_Startup(void)
     }
 
     maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, 0x40, 0x1025);
-    *(dvar_t **)imp_sv_maxclients = maxclients;
+    sv_maxclients = maxclients;
     Dvar_ClearModified(maxclients);
 
-    maxclients = *(dvar_t **)imp_sv_maxclients;
+    maxclients = (dvar_t *)(sv_maxclients);
     if (maxclients->current.integer <= 0) {
         Dvar_SetInt(maxclients, 1);
-        maxclients = *(dvar_t **)imp_sv_maxclients;
+        maxclients = (dvar_t *)(sv_maxclients);
     }
 
     numClients = maxclients->current.integer;
-    svs->clients = Z_VirtualAllocInternal(numClients * sizeof(client_t));
+    svs->clients = (client_t *)(Z_VirtualAllocInternal(numClients * sizeof(client_t)));
     if (!svs->clients) {
         Com_Error(0, "SV_Startup: unable to allocate svs.clients");
     }
 
     isDedicated = *(int *)((byte *)(void *)imp_com_dedicated + 8);
-    maxclients = *(dvar_t **)imp_sv_maxclients;
+    maxclients = (dvar_t *)(sv_maxclients);
     numClients = maxclients->current.integer;
     if (isDedicated) {
         svs->numSnapshotEntities = numClients << 11;
@@ -673,7 +718,7 @@ void SV_Startup(void)
     }
 
     svs->initialized = 1;
-    Dvar_SetBool(*(dvar_t **)imp_com_sv_running, 1);
+    Dvar_SetBool( (dvar_t *)(com_sv_running), 1);
 }
 
 void SV_ChangeMaxClients(void)
@@ -687,7 +732,7 @@ void SV_ChangeMaxClients(void)
     int numClients;
     int isDedicated;
 
-    oldMaxClients = (*(dvar_t **)imp_sv_maxclients)->current.integer;
+    oldMaxClients = (sv_maxclients)->current.integer;
 
     if (oldMaxClients > 0) {
         svs = (serverStatic_t *)imp_svs;
@@ -704,12 +749,12 @@ void SV_ChangeMaxClients(void)
     }
 
     maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, 0x40, 0x1025);
-    *(dvar_t **)imp_sv_maxclients = maxclients;
+    sv_maxclients = maxclients;
     Dvar_ClearModified(maxclients);
-    maxclients = *(dvar_t **)imp_sv_maxclients;
+    maxclients = (dvar_t *)(sv_maxclients);
     if (maxclients->current.integer < minClients) {
         Dvar_SetInt(maxclients, minClients);
-        maxclients = *(dvar_t **)imp_sv_maxclients;
+        maxclients = (dvar_t *)(sv_maxclients);
     }
 
     if (maxclients->current.integer == oldMaxClients)
@@ -728,13 +773,13 @@ void SV_ChangeMaxClients(void)
     svs = (serverStatic_t *)imp_svs;
     Z_VirtualFreeInternal(svs->clients);
 
-    numClients = (*(dvar_t **)imp_sv_maxclients)->current.integer;
-    svs->clients = Z_VirtualAllocInternal(numClients * sizeof(client_t));
+    numClients = (sv_maxclients)->current.integer;
+    svs->clients = (client_t *)(Z_VirtualAllocInternal(numClients * sizeof(client_t)));
     if (!svs->clients) {
         Com_Error(0, "SV_Startup: unable to allocate svs.clients");
     }
 
-    numClients = (*(dvar_t **)imp_sv_maxclients)->current.integer;
+    numClients = (sv_maxclients)->current.integer;
     Com_Memset(svs->clients, 0, numClients * sizeof(client_t));
 
     for (i = 0; i < minClients; i++) {
@@ -747,7 +792,7 @@ void SV_ChangeMaxClients(void)
     Hunk_FreeTempMemory(oldClients);
 
     isDedicated = *(int *)((byte *)(void *)imp_com_dedicated + 8);
-    numClients = (*(dvar_t **)imp_sv_maxclients)->current.integer;
+    numClients = (sv_maxclients)->current.integer;
     svs = (serverStatic_t *)imp_svs;
     if (isDedicated) {
         svs->numSnapshotEntities = numClients << 11;
@@ -779,18 +824,18 @@ void SV_SpawnServer(const char *server)
     Scr_ParseGameTypeList();
     SV_SetGametype();
 
-    CL_InitLoad(server, (*(dvar_t **)imp_sv_gametype)->current.string);
+    CL_InitLoad(server, (sv_gametype)->current.string);
 
-    if ((*(dvar_t **)imp_com_sv_running)->current.enabled) {
+    if ((com_sv_running)->current.enabled) {
         savepersist = (int)G_GetSavePersist();
 
         {
             serverStatic_t *svsPtr = (serverStatic_t *)imp_svs;
-            maxclients = (*(dvar_t **)imp_sv_maxclients)->current.integer;
+            maxclients = (sv_maxclients)->current.integer;
             for (i = 0; i < maxclients; i++) {
                 if (svsPtr->clients[i].state > 2) {
                     Com_sprintf(filename, 64, "loadingnewmap\n%s\n%s",
-                                server, (*(dvar_t **)imp_sv_gametype)->current.string);
+                                server, (sv_gametype)->current.string);
                     addr = svsPtr->clients[i].netchan.remoteAddress;
                     NET_OutOfBandPrint(1, addr, filename);
                 }
@@ -844,14 +889,14 @@ void SV_SpawnServer(const char *server)
     FS_ClearIwdReferences();
     Com_Restart();
 
-    if ((*(dvar_t **)imp_com_sv_running)->current.enabled) {
+    if ((com_sv_running)->current.enabled) {
         SV_ChangeMaxClients();
     } else {
         SV_Startup();
     }
 
     I_strncpyz(svg->gametype,
-               (*(dvar_t **)imp_sv_gametype)->current.string, 64);
+               (sv_gametype)->current.string, 64);
 
     srand(Sys_MillisecondsRaw());
     {
@@ -900,7 +945,7 @@ void SV_SpawnServer(const char *server)
     {
         serverStatic_t *svsPtr = (serverStatic_t *)imp_svs;
         int numSnapEnts = svsPtr->numSnapshotEntities;
-        svsPtr->snapshotEntities = Hunk_AllocInternal((numSnapEnts * 256) - (numSnapEnts * 16));
+        svsPtr->snapshotEntities = (entityState_t *)(Hunk_AllocInternal((numSnapEnts * 256) - (numSnapEnts * 16)));
         svsPtr->nextSnapshotEntities = 0;
         {
             int numSnapClients = svsPtr->numSnapshotClients;
@@ -920,7 +965,7 @@ void SV_SpawnServer(const char *server)
 
     Dvar_SetString(*(dvar_t **)&nextmap, "map_restart");
 
-    Dvar_SetInt(*(dvar_t **)imp_cl_paused, 0);
+    Dvar_SetInt( (dvar_t *)(cl_paused), 0);
 
     {
         const char *ext = GetBspExtension();
@@ -942,7 +987,7 @@ void SV_SpawnServer(const char *server)
     sv_serverId_value = (sv_serverId_value + 16) & 0xff;
     if (!(sv_serverId_value & 0xf0))
         sv_serverId_value += 16;
-    Dvar_SetInt(*(dvar_t **)imp_sv_serverid, sv_serverId_value);
+    Dvar_SetInt( (dvar_t *)(sv_serverid), sv_serverId_value);
 
     sv = (byte *)imp_sv;
     *(int *)(sv + SV_CHECKSUM_OFF) = *(int *)imp_com_frameTime;
@@ -952,7 +997,7 @@ void SV_SpawnServer(const char *server)
         const char *ext = GetBspExtension();
         Com_sprintf(filename, 64, "maps/mp/%s.%s", server, ext);
     }
-    Com_LoadSoundAliases(filename, "all_mp", 2);
+    Com_LoadSoundAliases(filename, "all_mp", (snd_alias_system_t)(2));
 
     {
         extern void DBG_Hunk_PrintUsage(const char *);
@@ -1015,7 +1060,7 @@ void SV_SpawnServer(const char *server)
     Com_Printf("[ckpt] baseline done\n");
     {
         serverStatic_t *svsPtr = (serverStatic_t *)imp_svs;
-        maxclients = (*(dvar_t **)imp_sv_maxclients)->current.integer;
+        maxclients = (sv_maxclients)->current.integer;
         for (i = 0; i < maxclients; i++) {
             if (svsPtr->clients[i].state <= 1)
                 continue;
@@ -1029,23 +1074,23 @@ void SV_SpawnServer(const char *server)
         }
     }
 
-    if ((*(dvar_t **)imp_sv_pure)->current.enabled) {
+    if ((sv_pure)->current.enabled) {
         s = FS_LoadedIwdChecksums();
-        Dvar_SetString(*(dvar_t **)imp_sv_iwds, s);
+        Dvar_SetString( (dvar_t *)(sv_iwds), s);
         if (*s == '\0') {
             Com_Printf("WARNING: sv_pure set but no IWD files loaded\n");
         }
         s = FS_LoadedIwdNames();
-        Dvar_SetString(*(dvar_t **)imp_sv_iwdNames, s);
+        Dvar_SetString( (dvar_t *)(sv_iwdNames), s);
     } else {
-        Dvar_SetString(*(dvar_t **)imp_sv_iwds, "");
-        Dvar_SetString(*(dvar_t **)imp_sv_iwdNames, "");
+        Dvar_SetString( (dvar_t *)(sv_iwds), "");
+        Dvar_SetString( (dvar_t *)(sv_iwdNames), "");
     }
 
     s = FS_ReferencedIwdChecksums();
-    Dvar_SetString(*(dvar_t **)imp_sv_referencedIwds, s);
+    Dvar_SetString( (dvar_t *)(sv_referencedIwds), s);
     s = FS_ReferencedIwdNames();
-    Dvar_SetString(*(dvar_t **)imp_sv_referencedIwdNames, s);
+    Dvar_SetString( (dvar_t *)(sv_referencedIwdNames), s);
 
     {
         char *info = Dvar_InfoString_Big(8);
@@ -1059,7 +1104,7 @@ void SV_SpawnServer(const char *server)
         *(int *)imp_dvar_modifiedFlags &= ~0x100;
     }
 
-    svg->state = 2;
+    svg->state = (serverState_t)(2);
     SV_Heartbeat_f();
 
     Com_Printf("-----------------------------------\n");

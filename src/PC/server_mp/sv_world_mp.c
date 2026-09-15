@@ -5,39 +5,40 @@ vec3_t actorLocationalMaxs = { 64.0f, 64.0f, 72.0f };
 
 extern float floorf(float x);
 
+extern server_t sv;
 extern clipHandle_t CM_TempBoxModel(const vec_t *mins, const vec_t *maxs, int contents);
 extern void CM_UnlinkEntity(svEntity_t *svEntity);
 extern int CM_BoxSightTrace(int oldHitNum, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, int brushmask, int contentmask);
-extern int CM_PointSightTraceToEntities(const sightpointtrace_t *clip);
-extern int CM_ClipSightTraceToEntities(const sightclip_t *clip);
+extern int CM_PointSightTraceToEntities(sightpointtrace_t *clip);
+extern int CM_ClipSightTraceToEntities(sightclip_t *clip);
 extern void CM_BoxTrace(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, int brushmask, int contentmask);
 extern void CM_PointTraceStaticModels(trace_t *results, const vec_t *start, const vec_t *end, int contentmask);
-extern void CM_CalcTraceEntents(const void *extents);
-extern void CM_PointTraceToEntities(const pointtrace_t *clip, trace_t *results);
-extern void CM_ClipMoveToEntities(const moveclip_t *clip, trace_t *results);
+extern void CM_CalcTraceEntents(TraceExtents *extents);
+extern void CM_PointTraceToEntities(pointtrace_t *clip, trace_t *trace);
+extern void CM_ClipMoveToEntities(moveclip_t *clip, trace_t *trace);
 extern int CM_PointTraceStaticModelsComplete(const vec_t *start, const vec_t *end, int contentmask);
-extern float RadiusFromBounds(const vec_t *mins, const vec_t *maxs);
-extern float RadiusFromBounds2D(const vec_t *mins, const vec_t *maxs);
+extern const vec_t RadiusFromBounds(const vec_t *mins, const vec_t *maxs);
+extern const vec_t RadiusFromBounds2D(const vec_t *mins, const vec_t *maxs);
 extern int CM_BoxLeafnums(const vec_t *mins, const vec_t *maxs, int *leafs, int maxLeafs, int *lastLeaf);
 extern int CM_LeafCluster(int leafnum);
-extern void CM_LinkEntity(svEntity_t *svEntity, const vec_t *absmin, const vec_t *absmax, int clipHandle);
-extern int CM_TraceBox(const void *extents, const vec_t *absmin, const vec_t *absmax, float fraction);
-extern void CM_TransformedBoxTrace(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, int clipHandle, int contentmask, const vec_t *origin, const vec_t *angles);
+extern void CM_LinkEntity(svEntity_t *svEntity, vec_t *absmin, vec_t *absmax, clipHandle_t clipHandle);
+extern int CM_TraceBox(const TraceExtents *extents, const vec_t *absmin, const vec_t *absmax, float fraction);
+extern int CM_TransformedBoxTrace(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, int clipHandle, int contentmask, const vec_t *origin, const vec_t *angles);
 extern int CM_TransformedBoxSightTrace(int oldHitNum, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, int clipHandle, int contentmask, const vec_t *origin, const vec_t *angles);
 extern int CM_AreaEntities(const vec_t *mins, const vec_t *maxs, int *entityList, int maxcount, int contentmask);
 extern int CM_PointContents(const vec_t *p, int brushmask);
 extern int CM_TransformedPointContents(const vec_t *p, int clipHandle, const vec_t *origin, const vec_t *angles);
 extern void Com_Error(int code, const char *fmt, ...);
 extern gentity_t *SV_GentityNum(int num);
-extern void *Com_GetServerDObj(int entityNum);
-extern void DObjGetBounds(void *obj, vec_t *absmin, vec_t *absmax);
-extern int DObjHasContents(void *obj, int contentmask);
-extern void G_DObjCalcPose(gentity_t *ent);
+extern struct DObj_s * Com_GetServerDObj(int handle);
+extern void DObjGetBounds(const DObj *obj, vec_t *absmin, vec_t *absmax);
+extern int DObjHasContents(DObj *obj, int contentmask);
+extern int G_DObjCalcPose(gentity_t *ent);
 extern void AnglesToAxis(const vec_t *angles, float (*axis)[3]);
 extern void MatrixTransposeTransformVector43(const vec_t *in, const float *mat, vec_t *out);
 extern void MatrixTransformVector(const vec_t *in, const float (*axis)[3], vec_t *out);
-extern void DObjGeomTraceline(void *obj, const vec_t *start, const vec_t *end, int contentmask, void *objTrace);
-extern void DObjTraceline(void *obj, const vec_t *start, const vec_t *end, unsigned char *priorityMap, void *objTrace);
+extern void DObjGeomTraceline(DObj *obj, vec_t *start, vec_t *end, int contentmask, DObjTrace_s *objTrace);
+extern void DObjTraceline(DObj *obj, vec_t *start, vec_t *end, unsigned char *priorityMap, DObjTrace_s *objTrace);
 extern byte *SV_SvEntityForGentity(const gentity_t *gEnt);
 
 extern vec3_t actorLocationalMins;
@@ -173,7 +174,7 @@ void SV_Trace(trace_t *results, const vec_t *start, const vec_t *mins, const vec
             ((pointtrace_t *)clip)->extents.end[1] = end[1];
             ((pointtrace_t *)clip)->extents.end[2] = end[2];
 
-            CM_CalcTraceEntents((const void *)clip);
+            CM_CalcTraceEntents(&((pointtrace_t *)clip)->extents);
 
             ((pointtrace_t *)clip)->passEntityNum = passEntityNum;
 
@@ -193,7 +194,7 @@ void SV_Trace(trace_t *results, const vec_t *start, const vec_t *mins, const vec
 
             ((pointtrace_t *)clip)->contentmask = contentmask;
 
-            CM_PointTraceToEntities((const pointtrace_t *)clip, results);
+            CM_PointTraceToEntities( (pointtrace_t *)((const pointtrace_t *)clip), results);
         } else {
 
             byte clip[0x70];
@@ -271,8 +272,8 @@ qboolean SV_TracePassed(const vec_t *start, const vec_t *mins, const vec_t *maxs
         clip.end[1] = end[1];
         clip.end[2] = end[2];
         clip.passEntityNum[0] = passEntityNum0;
-        clip.passEntityNum[1] = passEntityNum1;
         clip.contentmask = contentmask;
+        clip.passEntityNum[1] = passEntityNum1;
         clip.locational = locational;
         return CM_PointSightTraceToEntities(&clip) == 0;
     } else {
@@ -319,7 +320,7 @@ void SV_LinkEntity(gentity_t *gEnt)
     int lastLeaf;
     int num_leafs;
     clipHandle_t clipHandle;
-    void *obj;
+    DObj *obj;
     int i;
 
     if (gEnt->r.bmodel) {
@@ -466,8 +467,7 @@ void SV_LinkEntity(gentity_t *gEnt)
 
 void SV_ClipMoveToEntity(const moveclip_t *clip, svEntity_t *check, trace_t *trace)
 {
-    server_t *sv = (server_t *)imp_sv;
-    int entityNum = (int)(check - sv->svEntities);
+    int entityNum = (int)(check - sv.svEntities);
     gentity_t *touch = SV_GentityNum(entityNum);
     int contentmask = clip->contentmask;
     vec3_t absmin;
@@ -518,8 +518,7 @@ void SV_ClipMoveToEntity(const moveclip_t *clip, svEntity_t *check, trace_t *tra
 
 void SV_PointTraceToEntity(const pointtrace_t *clip, svEntity_t *check, trace_t *trace)
 {
-    server_t *sv = (server_t *)imp_sv;
-    int entityNum = (int)(check - sv->svEntities);
+    int entityNum = (int)(check - sv.svEntities);
     gentity_t *touch = SV_GentityNum(entityNum);
     int contentmask = clip->contentmask;
     const vec_t *zero;
@@ -544,7 +543,7 @@ void SV_PointTraceToEntity(const pointtrace_t *clip, svEntity_t *check, trace_t 
     }
 
     if (clip->bLocational) {
-        void *obj = Com_GetServerDObj(touch->s.number);
+        DObj *obj = Com_GetServerDObj(touch->s.number);
 
         if (obj && (touch->r.svFlags & 6)) {
             vec3_t origin;
@@ -649,8 +648,7 @@ non_locational_trace:
 
 int SV_ClipSightToEntity(const sightclip_t *clip, svEntity_t *check)
 {
-    server_t *sv = (server_t *)imp_sv;
-    int entityNum = (int)(check - sv->svEntities);
+    int entityNum = (int)(check - sv.svEntities);
     gentity_t *touch = SV_GentityNum(entityNum);
     int contentmask = clip->contentmask;
     int passEntityNum;
@@ -688,8 +686,7 @@ int SV_ClipSightToEntity(const sightclip_t *clip, svEntity_t *check)
 
 int SV_PointSightTraceToEntity(const sightpointtrace_t *clip, svEntity_t *check)
 {
-    server_t *sv = (server_t *)imp_sv;
-    int entityNum = (int)(check - sv->svEntities);
+    int entityNum = (int)(check - sv.svEntities);
     gentity_t *touch = SV_GentityNum(entityNum);
     int contentmask = clip->contentmask;
     int passEntityNum;
@@ -716,7 +713,7 @@ int SV_PointSightTraceToEntity(const sightpointtrace_t *clip, svEntity_t *check)
     }
 
     if (clip->locational) {
-        void *obj = Com_GetServerDObj(touch->s.number);
+        DObj *obj = Com_GetServerDObj(touch->s.number);
 
         if (obj && (touch->r.svFlags & 4)) {
             vec3_t origin;

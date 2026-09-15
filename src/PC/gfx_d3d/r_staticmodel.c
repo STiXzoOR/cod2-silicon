@@ -1,8 +1,8 @@
 #include "common_types.h"
 #include "imports.h"
 
-extern int XModelGetNumLods(struct XModel *xmodel);
-extern int XModelGetSurfaces(struct XModel *xmodel, void *xsurfs, int lodIndex, void *partBits);
+extern int XModelGetNumLods(const XModel *model);
+extern int XModelGetSurfaces(const XModel *xmodel, XSurface ***xsurfs, int lodIndex, int **partBits);
 extern void *Hunk_AllocAlignInternal(int size, int alignment);
 
 extern r_globals_t rg;
@@ -10,8 +10,8 @@ extern r_global_permanent_t rgp;
 
 void R_InitStaticModelDynamicData(int smodelIndex)
 {
-    int xsurfs;
-    int partBits;
+    XSurface **xsurfs;
+    int *partBits;
     int lodIndex;
     int maxSurfs;
     int instanceSize;
@@ -30,7 +30,7 @@ void R_InitStaticModelDynamicData(int smodelIndex)
         }
     }
 
-    instanceSize = maxSurfs << 4;
+    instanceSize = maxSurfs * (int)sizeof(GfxStaticSurface);
     buffer = Hunk_AllocAlignInternal(instanceSize, 4);
     smodelDync->staticSurfs = (GfxStaticSurface *)buffer;
     memset(buffer, 0, instanceSize);

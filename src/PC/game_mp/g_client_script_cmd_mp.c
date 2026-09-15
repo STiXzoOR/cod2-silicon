@@ -3,6 +3,9 @@
 #include "bytematch.h"
 extern char *getenv(const char *name);
 extern scr_const_t scr_const;
+/* File-scope alias: bound where no local can shadow `scr_const`, so uses below
+   always reach the global even inside functions that declare their own `scr_const`. */
+static scr_const_t * const scr_const_g = &scr_const;
 extern scr_data_t g_scr_data;
 extern bgs_t level_bgs;
 extern level_locals_t level;
@@ -75,7 +78,7 @@ extern void Com_Printf(const char *fmt, ...);
 extern const char *va(const char *fmt, ...);
 extern const char *Scr_GetString(unsigned int index);
 extern int GScr_GetScriptMenuIndex(const char *menu);
-extern void SV_GameSendServerCommand(int clientNum, int type, const char *text);
+extern void SV_GameSendServerCommand(int clientNum, svscmd_type type, const char *text);
 extern int SV_GetGuid(int clientNum);
 extern unsigned int Scr_AddInt(int value);
 extern unsigned int Scr_AddFloat(float value);
@@ -84,7 +87,7 @@ extern void Scr_GetVector(unsigned int index, vec_t *value);
 extern unsigned int Scr_AddString(const char *value);
 extern unsigned int Scr_AddBool(int value);
 extern unsigned int Scr_AddConstString(unsigned int value);
-extern unsigned int Scr_AddEntity(gentity_t *ent);
+extern void Scr_AddEntity(gentity_t *ent);
 extern void Scr_ParamError(unsigned int index, const char *msg);
 extern unsigned int Scr_GetNumParam(void);
 extern int Scr_GetType(unsigned int index);
@@ -110,7 +113,7 @@ extern Bool BG_IsWeaponValid(const playerState_t *ps, int weaponIndex);
 extern qboolean G_GivePlayerWeapon(playerState_t *pPS, int iWeaponIndex);
 extern void G_SelectWeaponIndex(int clientNum, int iWeaponIndex);
 extern void G_SetEquippedOffHand(int clientNum, int offHandIndex);
-extern void BG_PlayerStateToEntityState(playerState_t *ps, gentity_t *ent, qboolean snap, qboolean forceSnap);
+extern void BG_PlayerStateToEntityState(playerState_t *ps, entityState_t *s, qboolean snap, int handler);
 extern void SetClientViewAngle(gentity_t *ent, const vec_t *angles);
 extern void Cmd_Score_f(gentity_t *ent);
 extern gentity_t *Drop_Weapon(gentity_t *pEnt, int iWeaponIndex, unsigned int tag);
@@ -119,7 +122,7 @@ extern gentity_t *Drop_Item(gentity_t *ent, const gitem_t *item, float angle, qb
 extern int Add_Ammo(gentity_t *ent, int weapon, int count, qboolean fillClip);
 extern unsigned int GScr_AddEntity(gentity_t *pEnt);
 extern void player_die(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath, int iWeapon, const vec_t *vDir, const hitLocation_t hitLoc, int psTimeOffset);
-extern unsigned int Scr_MakeGameMessage(int iClientNum, const char *pszCmd);
+extern void Scr_MakeGameMessage(int iClientNum, const char *pszCmd);
 extern void ClientSpawn(gentity_t *ent, const vec_t *spawn_origin, const vec_t *spawn_angles);
 extern int Scr_GetInt(unsigned int index);
 extern float Scr_GetFloat(unsigned int index);
@@ -129,9 +132,9 @@ extern gentity_t *Scr_GetEntity(unsigned int index);
 extern SoundAlias G_SoundAliasIndex(const char *name);
 extern unsigned int Scr_ConstructMessageString(int firstParmIndex, int lastParmIndex, const char *errorContext, char *string, int stringLimit);
 extern void G_Say(gentity_t *ent, gentity_t *target, int mode, const char *chatText);
-extern void Scr_Notify(gentity_t *ent, unsigned int stringValue, int paramCount);
+extern void Scr_Notify(gentity_t *ent, unsigned short stringValue, unsigned int paramCount);
 extern void SV_UnlinkEntity(gentity_t *gEnt);
-extern int SV_LinkEntity(gentity_t *gEnt);
+extern void SV_LinkEntity(gentity_t *gEnt);
 extern const char *SL_ConvertToString(unsigned int stringValue);
 extern const dvar_t *g_voiceChatTalkingDuration;
 extern Bool Dvar_IsValidName(const char *dvarName);
@@ -152,8 +155,8 @@ extern int G_GetFreePlayerCorpseIndex(void);
 extern DObj *Com_GetServerDObj(int entNum);
 extern XAnimTree *DObjGetTree(const DObj *obj);
 extern void XAnimCloneAnimTree(const XAnimTree *from, XAnimTree *to);
-extern unsigned char G_SetOrigin(gentity_t *ent, const vec_t *origin);
-extern unsigned char G_SetAngle(gentity_t *ent, const vec_t *angle);
+extern void G_SetOrigin(gentity_t *ent, const vec_t *origin);
+extern void G_SetAngle(gentity_t *ent, const vec_t *angle);
 
 static inline __attribute__((always_inline)) gentity_t *PlayerCmd_GetPlayerEntity(scr_entref_t entref)
 {
@@ -217,7 +220,7 @@ static inline __attribute__((always_inline)) int PlayerCmd_ClampAmmoCount(int va
 
 static inline __attribute__((always_inline)) int PlayerCmd_GetEnvEffectPriority(unsigned int paramIndex)
 {
-    const scr_const_t *scrConst = (const scr_const_t *)imp_scr_const;
+    const scr_const_t *scrConst = (const scr_const_t *)scr_const_g;
     scr_string_t priority = (scr_string_t)Scr_GetConstString(paramIndex);
 
     if (priority == scrConst->snd_enveffectsprio_level)
@@ -231,7 +234,7 @@ static inline __attribute__((always_inline)) int PlayerCmd_GetEnvEffectPriority(
 
 static inline __attribute__((always_inline)) int PlayerCmd_GetChannelVolPriority(unsigned int paramIndex)
 {
-    const scr_const_t *scrConst = (const scr_const_t *)imp_scr_const;
+    const scr_const_t *scrConst = (const scr_const_t *)scr_const_g;
     scr_string_t priority = (scr_string_t)Scr_GetConstString(paramIndex);
 
     if (priority == scrConst->snd_channelvolprio_holdbreath)
@@ -414,7 +417,7 @@ void PlayerCmd_setSpawnWeapon(scr_entref_t entref)
 unsigned int PlayerCmd_dropItem(scr_entref_t entref)
 {
     gentity_t *pSelf = PlayerCmd_GetPlayerEntity(entref);
-    const scr_const_t *scr_const = (const scr_const_t *)imp_scr_const;
+    const scr_const_t *scr_const = (const scr_const_t *)scr_const_g;
     const char *pszItemName;
     int iWeaponIndex;
     const gitem_t *item;
@@ -446,7 +449,7 @@ void PlayerCmd_Suicide(scr_entref_t entref)
     pSelf->flags &= ~3;
     pSelf->health = 0;
     pSelf->client->ps.stats[0] = 0;
-    player_die(pSelf, pSelf, pSelf, 100000, 12, 0, NULL, 0, 0);
+    player_die(pSelf, pSelf, pSelf, 100000, 12, 0, NULL, (const hitLocation_t)(0), 0);
 }
 
 unsigned int PlayerCmd_OpenMenu(scr_entref_t entref)
@@ -473,7 +476,7 @@ unsigned int PlayerCmd_OpenMenu(scr_entref_t entref)
             Com_Printf("[menu-trace] openMenu client=%u connected=%d menu='%s' index=%d send='t %d'\n",
                        entref.entnum, pSelf->client->sess.connected, menuName, menuIndex, menuIndex);
     }
-    SV_GameSendServerCommand(entref.entnum, 1, va("%c %i", 0x74, menuIndex));
+    SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i", 0x74, menuIndex));
     return Scr_AddInt(1);
 }
 
@@ -501,20 +504,20 @@ unsigned int PlayerCmd_OpenMenuNoMouse(scr_entref_t entref)
             Com_Printf("[menu-trace] openMenuNoMouse client=%u connected=%d menu='%s' index=%d send='t %d 1'\n",
                        entref.entnum, pSelf->client->sess.connected, menuName, menuIndex, menuIndex);
     }
-    SV_GameSendServerCommand(entref.entnum, 1, va("%c %i 1", 0x74, menuIndex));
+    SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i 1", 0x74, menuIndex));
     return Scr_AddInt(1);
 }
 
 void PlayerCmd_CloseMenu(scr_entref_t entref)
 {
     PlayerCmd_GetPlayerEntity(entref);
-    SV_GameSendServerCommand(entref.entnum, 1, va("%c", 0x75));
+    SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c", 0x75));
 }
 
 void PlayerCmd_CloseInGameMenu(scr_entref_t entref)
 {
     PlayerCmd_GetPlayerEntity(entref);
-    SV_GameSendServerCommand(entref.entnum, 1, va("%c", 0x4b));
+    SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c", 0x4b));
 }
 
 void PlayerCmd_SetWeaponSlotWeapon(scr_entref_t entref)
@@ -747,7 +750,7 @@ void PlayerCmd_SetClientDvar(scr_entref_t entref)
         Com_Printf("setClientCvar client=%u %s='%s'\n",
                    entref.entnum, pszDvar, szOutString);
     }
-    SV_GameSendServerCommand(entref.entnum, 1, va("%c %s \"%s\"", 0x76, pszDvar, szOutString));
+    SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %s \"%s\"", 0x76, pszDvar, szOutString));
 }
 
 void PlayerCmd_IsTalking(scr_entref_t entref)
@@ -809,7 +812,7 @@ void PlayerCmd_SetReverb(scr_entref_t entref)
 
     pszReverb = Scr_GetString(1);
     priority = PlayerCmd_GetEnvEffectPriority(0);
-    SV_GameSendServerCommand(entref.entnum, 1, va("%c %i \"%s\" %g %g %g", 'r', priority, pszReverb, drylevel, wetlevel, fadetime));
+    SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i \"%s\" %g %g %g", 'r', priority, pszReverb, drylevel, wetlevel, fadetime));
 }
 
 void PlayerCmd_DeactivateReverb(scr_entref_t entref)
@@ -830,7 +833,7 @@ void PlayerCmd_DeactivateReverb(scr_entref_t entref)
         fadetime = Scr_GetFloat(1);
 
     priority = PlayerCmd_GetEnvEffectPriority(0);
-    SV_GameSendServerCommand(entref.entnum, 1, va("%c %i %g", 'D', priority, fadetime));
+    SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i %g", 'D', priority, fadetime));
 }
 
 void PlayerCmd_SetChannelVolumes(scr_entref_t entref)
@@ -853,7 +856,7 @@ void PlayerCmd_SetChannelVolumes(scr_entref_t entref)
 
     shockIndex = G_FindConfigstringIndex(Scr_GetString(1), 0x48e, 0x10, 0, 0);
     priority = PlayerCmd_GetChannelVolPriority(0);
-    SV_GameSendServerCommand(entref.entnum, 1, va("%c %i %i %g", 'E', priority, shockIndex, fadetime));
+    SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i %i %g", 'E', priority, shockIndex, fadetime));
 }
 
 void PlayerCmd_DeactivateChannelVolumes(scr_entref_t entref)
@@ -874,7 +877,7 @@ void PlayerCmd_DeactivateChannelVolumes(scr_entref_t entref)
         fadetime = Scr_GetFloat(1);
 
     priority = PlayerCmd_GetChannelVolPriority(0);
-    SV_GameSendServerCommand(entref.entnum, 1, va("%c %i %g", 'F', priority, fadetime));
+    SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i %g", 'F', priority, fadetime));
 }
 
 void ScrCmd_IsLookingAt(scr_entref_t entref)
@@ -893,7 +896,7 @@ void ScrCmd_PlayLocalSound(scr_entref_t entref)
 
     PlayerCmd_GetPlayerEntity(entref);
     soundIndex = (byte)G_SoundAliasIndex(Scr_GetString(0));
-    SV_GameSendServerCommand(entref.entnum, 0, va("%c %i", 's', soundIndex));
+    SV_GameSendServerCommand(entref.entnum, SV_CMD_CAN_IGNORE, va("%c %i", 's', soundIndex));
 }
 
 void PlayerCmd_SayAll(scr_entref_t entref)
@@ -925,7 +928,7 @@ void PlayerCmd_SayTeam(scr_entref_t entref)
 void PlayerCmd_AllowSpectateTeam(scr_entref_t entref)
 {
     gentity_t *pSelf = PlayerCmd_GetPlayerEntity(entref);
-    const scr_const_t *scrConst = (const scr_const_t *)imp_scr_const;
+    const scr_const_t *scrConst = (const scr_const_t *)scr_const_g;
     scr_string_t team = (scr_string_t)Scr_GetConstString(0);
     int teamBit;
 
@@ -981,7 +984,7 @@ void PlayerCmd_giveWeapon(scr_entref_t entref)
     }
 
     if (G_GivePlayerWeapon(ps, weaponIndex))
-        SV_GameSendServerCommand(entref.entnum, 0, va("%c \"%i\"", 0x49, 1));
+        SV_GameSendServerCommand(entref.entnum, SV_CMD_CAN_IGNORE, va("%c \"%i\"", 0x49, 1));
 
     ammoToAdd = weapDef->iStartAmmo - ps->ammo[weapDef->iAmmoIndex];
     if (ammoToAdd > 0)
@@ -1139,7 +1142,7 @@ void PlayerCmd_setOrigin(scr_entref_t entref)
     ps->origin[2] = vNewOrigin[2] + 1.0f;
     ps->eFlags ^= 2;
 
-    BG_PlayerStateToEntityState(ps, pSelf, 1, 1);
+    BG_PlayerStateToEntityState(ps, &pSelf->s, 1, 1);
     pSelf->r.currentOrigin[0] = ps->origin[0];
     pSelf->r.currentOrigin[1] = ps->origin[1];
     pSelf->r.currentOrigin[2] = ps->origin[2];
@@ -1372,7 +1375,7 @@ void PlayerCmd_ClonePlayer(scr_entref_t entref)
     G_SetOrigin(body, client->ps.origin);
     G_SetAngle(body, pSelf->r.currentAngles);
 
-    body->s.pos.trType = 5;
+    body->s.pos.trType = (trType_t)(5);
     body->s.pos.trTime = levelTime;
     body->s.pos.trDelta[0] = client->ps.velocity[0];
     body->s.pos.trDelta[1] = client->ps.velocity[1];
@@ -1459,7 +1462,7 @@ void PlayerCmd_getCurrentOffhand(scr_entref_t entref)
 unsigned int PlayerCmd_GetWeaponSlotWeapon(scr_entref_t entref)
 {
     gentity_t *pSelf = PlayerCmd_GetPlayerEntity(entref);
-    const scr_const_t *scrConst = (const scr_const_t *)imp_scr_const;
+    const scr_const_t *scrConst = (const scr_const_t *)scr_const_g;
     int slot;
     int weaponIndex;
 

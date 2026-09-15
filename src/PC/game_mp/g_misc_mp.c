@@ -3,7 +3,7 @@
 #include "bytematch.h"
 
 extern void G_FreeEntity(gentity_t *ent);
-extern unsigned char G_SetOrigin(gentity_t *ent, const vec_t *origin);
+extern void G_SetOrigin(gentity_t *ent, const vec_t *origin);
 extern qboolean G_SpawnString(const char *key, const char *defaultString, const char **out);
 extern qboolean G_SpawnFloat(const char *key, const char *defaultString, float *out);
 extern qboolean G_SpawnInt(const char *key, const char *defaultString, int *out);
@@ -12,35 +12,35 @@ extern DObj_s *Com_GetServerDObj(int entNum);
 extern void DObjSetControlTagAngles(DObj_s *obj, int *partBits, unsigned short tag, vec_t *angles);
 extern void SV_UnlinkEntity(gentity_t *ent);
 extern void SV_LinkEntity(gentity_t *ent);
-extern void SetClientViewAngle(gentity_t *ent, vec_t *angles);
-extern void BG_PlayerStateToEntityState(playerState_t *ps, gentity_t *ent, qboolean snap, qboolean forceSnap);
-extern unsigned char G_AddEvent(gentity_t *ent, int event, int eventParm);
+extern void SetClientViewAngle(gentity_t *ent, const vec_t *angle);
+extern void BG_PlayerStateToEntityState(playerState_t *ps, entityState_t *s, qboolean snap, int handler);
+extern void G_AddEvent(gentity_t *ent, int event, int eventParm);
 extern WeaponDef *BG_GetWeaponDef(int iWeapon);
-extern float AngleSubtract(float a, float b);
+extern const float AngleSubtract(const float a1, const float a2);
 extern unsigned char G_PlaySoundAlias(gentity_t *ent, int index);
-extern float AngleNormalize180(float angle);
+extern const float AngleNormalize180(const float angle);
 extern void YawVectors(const vec_t yaw, vec_t *forward, vec_t *right);
-extern float Vec3Normalize(vec_t *v);
-extern float Q_acos(float x);
-extern unsigned char G_GeneralLink(gentity_t *ent);
+extern const vec_t Vec3Normalize(vec_t *v);
+extern const float Q_acos(const float c);
+extern void G_GeneralLink(gentity_t *ent);
 extern DObjAnimMat_s *G_DObjGetLocalTagMatrix(gentity_t *ent, unsigned int tagName);
-extern void AnglesToAxis(const vec_t *angles, vec_t *axis);
+extern void AnglesToAxis(const vec_t *angles, vec3_t *axis);
 extern void MatrixTransformVector(const vec_t *in1, const vec_t *in2, vec_t *out);
 extern void MatrixTransformVector43(const vec_t *in, const vec_t *mat, vec_t *out);
 extern void G_LocationalTrace(trace_t *results, const vec_t *start, const vec_t *end, int passEntityNum, int contentmask, unsigned char *priorityMap);
 extern unsigned char bulletPriorityMap[19];
-extern float AngleNormalize360Accurate(float angle);
+extern const float AngleNormalize360Accurate(float angle);
 extern int G_GetWeaponIndexForName(const char *name);
 extern void Scr_Error(const char *msg);
 extern const char *va(const char *fmt, ...);
-extern qboolean IsItemRegistered(unsigned int item);
+extern qboolean IsItemRegistered(int item);
 extern SoundAlias G_SoundAliasIndex(const char *name);
 extern void G_DObjUpdate(gentity_t *ent);
 extern void G_SetAngle(gentity_t *ent, const vec_t *angles);
 extern struct level_locals_t level;
 extern struct bgs_t level_bgs;
 
-#define g_entities ((gentity_t *)imp_g_entities)
+extern gentity_t g_entities[];   /* was a macro over imp_g_entities (extra load); use the real object like the rest of game_mp */
 extern void Com_Printf(const char *fmt, ...);
 extern qboolean G_DObjGetWorldTagMatrix(gentity_t *ent, unsigned int tagName, vec3_t *tagMat);
 extern void G_GetPlayerViewOrigin(const gentity_t *ent, vec_t *origin);
@@ -50,16 +50,16 @@ extern void Weapon_RocketLauncher_Fire(gentity_t *ent, float spread, weaponParms
 extern void Bullet_Fire(gentity_t *attacker, float spread, weaponParms *wp, gentity_t *weaponEnt, int gametime);
 extern const char *SL_ConvertToString(unsigned int stringValue);
 extern float vectosignedyaw(const vec3_t vec);
-extern void VectorAngleMultiply(vec3_t vec, float angle);
+extern void VectorAngleMultiply(float *vec, float angle);
 extern float RotationToYaw(const vec2_t rot);
 extern void YawToAxis(float yaw, vec3_t axis[3]);
-extern void MatrixMultiply43(const vec_t *in1, const vec_t *in2, vec_t *out);
-extern void AxisToAngles(const vec_t *axis, vec_t *angles);
+extern void MatrixMultiply43(const float (*in1)[3], const float (*in2)[3], float (*out)[3]);
+extern void AxisToAngles(vec3_t *axis, vec_t *angles);
 extern void ConvertQuatToMat(const DObjAnimMat *mat, float axis[3][3]);
 extern void XAnimClearTreeGoalWeightsStrict(XAnimTree_s *tree, unsigned int animIndex, float blendTime);
 extern int XAnimGetNumChildren(const XAnim_s *anims, unsigned int animIndex);
 extern unsigned int XAnimGetChildAt(const XAnim_s *anims, unsigned int animIndex, unsigned int childIndex);
-extern void XAnimSetGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, unsigned int notifyType, int bRestart);
+extern int XAnimSetGoalWeight(XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, unsigned int notifyType, int bRestart);
 extern void XAnimCalcAbsDelta(XAnimTree_s *tree, unsigned int animIndex, float *rot, float *trans);
 extern float XAnimGetWeight(const XAnimTree_s *tree, unsigned int animIndex);
 extern const char *XAnimGetAnimDebugName(const XAnim_s *anims, unsigned int animIndex);
@@ -101,7 +101,8 @@ enum {
 
 static const vec3_t g_misc_vec3_origin = { 0.0f, 0.0f, 0.0f };
 
-#define SCR_CONST() ((const scr_const_t *)imp_scr_const)
+extern scr_const_t scr_const;
+#define SCR_CONST() (&scr_const)   /* was an imp_ deref; use the real object like cgame does */
 
 static inline float GMisc_Fabs(float value)
 {
@@ -423,7 +424,7 @@ void TeleportPlayer(gentity_t *player, vec_t *origin, vec_t *angles)
 
     SetClientViewAngle(player, angles);
 
-    BG_PlayerStateToEntityState(&player->client->ps, player, 1, 1);
+    BG_PlayerStateToEntityState(&player->client->ps, &player->s, 1, 1);
 
     co = player->r.currentOrigin;
     ps = &player->client->ps;
@@ -517,7 +518,7 @@ void turret_think_init(gentity_t *self)
         return;
     }
 
-    AnglesToAxis(self->r.currentAngles, (vec_t *)baseMtx);
+    AnglesToAxis(self->r.currentAngles, baseMtx);
     baseMtx[3][0] = self->r.currentOrigin[0];
     baseMtx[3][1] = self->r.currentOrigin[1];
     baseMtx[3][2] = self->r.currentOrigin[2];
@@ -533,7 +534,7 @@ void turret_think_init(gentity_t *self)
         angles[1] = 0.0f;
         angles[2] = 0.0f;
 
-        AnglesToAxis(angles, (vec_t *)mtx);
+        AnglesToAxis(angles, mtx);
         MatrixTransformVector(dir, (vec_t *)mtx, transDir);
 
         transDir[0] += aimMtx->trans[0];
@@ -892,7 +893,7 @@ static void G_PlayerTurretPositionAndBlend(gentity_t *ent, gentity_t *pTurretEnt
     ConvertQuatToMat(tagMat, tagAxis);
     localYaw = vectosignedyaw(tagAxis[0]);
 
-    AnglesToAxis(pTurretEnt->r.currentAngles, (vec_t *)turretAxis);
+    AnglesToAxis(pTurretEnt->r.currentAngles, turretAxis);
     GMisc_VectorCopy(pTurretEnt->r.currentOrigin, turretAxis[3]);
     GMisc_VectorSubtract(ent->r.currentOrigin, turretAxis[3], vDelta);
 
@@ -983,7 +984,7 @@ static void G_PlayerTurretPositionAndBlend(gentity_t *ent, gentity_t *pTurretEnt
     localAxis[3][2] = tagHeight;
 
     YawToAxis(RotationToYaw(rot) + localYaw, localAxis);
-    MatrixMultiply43((vec_t *)localAxis, (vec_t *)turretAxis, (vec_t *)axis);
+    MatrixMultiply43(localAxis, turretAxis, axis);
 
     GMisc_VectorCopy(axis[3], ent->client->ps.origin);
     GMisc_VectorCopy(ent->client->ps.origin, start);
@@ -998,10 +999,10 @@ static void G_PlayerTurretPositionAndBlend(gentity_t *ent, gentity_t *pTurretEnt
         ent->client->ps.origin[2] = endPos[2];
     }
 
-    BG_PlayerStateToEntityState(&ent->client->ps, ent, 1, GMISC_PMOVE_HANDLER_SERVER);
+    BG_PlayerStateToEntityState(&ent->client->ps, &ent->s, 1, GMISC_PMOVE_HANDLER_SERVER);
     GMisc_VectorCopy(ent->client->ps.origin, ent->r.currentOrigin);
 
-    AxisToAngles((vec_t *)axis, ent->r.currentAngles);
+    AxisToAngles(axis, ent->r.currentAngles);
     SV_LinkEntity(ent);
 }
 

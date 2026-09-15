@@ -1,6 +1,12 @@
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
+/* dvar globals */
+extern const dvar_t *g_antilag;
+extern const dvar_t *player_meleeHeight;
+extern const dvar_t *player_meleeRange;
+extern const dvar_t *player_meleeWidth;
+extern const dvar_t *sv_fps;
 
 extern int rand(void);
 extern double tan(double x);
@@ -29,10 +35,10 @@ extern float ceilf(float x);
 extern char *va(const char *format, ...);
 extern void Com_DPrintf(const char *fmt, ...);
 extern void Com_Error(int code, const char *fmt, ...);
-extern void SV_GameSendServerCommand(int clientNum, int svscmd_type, const char *text);
+extern void SV_GameSendServerCommand(int clientNum, svscmd_type type, const char *text);
 extern int BG_FindWeaponIndexForName(const char *name);
 extern int BG_GetWeaponIndexForName(const char *name, void *weaponInfoMem);
-extern void *BG_GetWeaponDef(int weaponIndex);
+extern WeaponDef * BG_GetWeaponDef(int iWeapon);
 extern void BG_ClearWeaponDef(void);
 extern void BG_FillInAmmoItems(BG_RegisterWeapon regWeap);
 extern int BG_GetFirstAvailableOffhand(const playerState_t *ps, int offhandClass);
@@ -44,12 +50,12 @@ extern int BG_WeaponAmmo(const playerState_t *ps, int weapon);
 extern Bool SV_GetClientPositionAtTime(int clientNum, int gametime, vec_t *pos);
 extern void SV_LinkEntity(gentity_t *ent);
 extern void SV_UnlinkEntity(gentity_t *ent);
-extern void AngleVectors(vec_t *angles, vec_t *forward, vec_t *right, vec_t *up);
-extern void G_GetPlayerViewOrigin(gentity_t *ent, vec_t *origin);
+extern void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up);
+extern void G_GetPlayerViewOrigin(const gentity_t *ent, vec_t *origin);
 extern float randomf(void);
-extern void *fire_rocket(gentity_t *ent, vec_t *start, vec_t *dir);
-extern void *fire_grenade(gentity_t *ent, vec_t *start, vec_t *vel, int grenType, int fuseTime);
-extern float Vec3Normalize(vec3_t v);
+extern gentity_t *fire_rocket(gentity_t *ent, vec_t *start, vec_t *dir);
+extern gentity_t *fire_grenade(gentity_t *ent, vec_t *start, vec_t *vel, int grenType, int fuseTime);
+extern const vec_t Vec3Normalize(vec_t *v);
 extern void G_LocationalTrace(trace_t *results, const vec_t *start, const vec_t *end, int passEntityNum, int contentmask, unsigned char *priorityMap);
 extern void G_CheckHitTriggerDamage(gentity_t *attacker, vec_t *start, vec_t *end, int damage, int mod);
 extern qboolean OnSameTeam(gentity_t *ent1, gentity_t *ent2);
@@ -92,7 +98,7 @@ void SnapVectorTowards(vec_t *v, vec_t *to)
     int i;
 
     for (i = 0; i < 3; i++) {
-        if (v[i] >= to[i])
+        if (to[i] <= v[i])
             v[i] = floorf(v[i]);
         else
             v[i] = ceilf(v[i]);
@@ -109,7 +115,7 @@ qboolean LogAccuracyHit(gentity_t *target, gentity_t *attacker)
         return 0;
     if (!((attacker)->client))
         return 0;
-    if (((((target)->client))->ps.pm_type) > 5)
+    if (((((target)->client))->ps.pm_type) >= 6)
         return 0;
     if (OnSameTeam(target, attacker))
         return 0;
@@ -125,12 +131,12 @@ int G_GetWeaponIndexForName(const char *name)
 
 void G_SetEquippedOffHand(int clientNum, int offHandIndex)
 {
-    SV_GameSendServerCommand(clientNum, 1, va("%c %i", 0x43, offHandIndex));
+    SV_GameSendServerCommand(clientNum, SV_CMD_RELIABLE, va("%c %i", 0x43, offHandIndex));
 }
 
 void G_SelectWeaponIndex(int clientNum, int iWeaponIndex)
 {
-    SV_GameSendServerCommand(clientNum, 1, va("%c %i", 0x61, iWeaponIndex));
+    SV_GameSendServerCommand(clientNum, SV_CMD_RELIABLE, va("%c %i", 0x61, iWeaponIndex));
 }
 
 void Weapon_Melee(gentity_s (*ent)[16], weaponParms *wp, float range, float width, float height)
@@ -161,7 +167,7 @@ void Weapon_Melee(gentity_s (*ent)[16], weaponParms *wp, float range, float widt
         return;
 
     G_Damage(traceEnt, (gentity_t *)ent, (gentity_t *)ent, wp->forward, endpos,
-             damage + (rand() % 5), 7, 0, tr.partGroup, 0);
+             damage + (rand() % 5), 7, 0, (hitLocation_t)tr.partGroup, 0);
 }
 
 void FireWeaponMelee(gentity_s (*ent)[16])
@@ -179,9 +185,9 @@ void FireWeaponMelee(gentity_s (*ent)[16])
     G_GetPlayerViewOrigin(entity, wp.muzzleTrace);
     G_GetPlayerViewDirection(entity, wp.forward, wp.right, wp.up);
 
-    meleeRange = *(const dvar_t **)imp_player_meleeRange;
-    meleeWidth = *(const dvar_t **)imp_player_meleeWidth;
-    meleeHeight = *(const dvar_t **)imp_player_meleeHeight;
+    meleeRange = player_meleeRange;
+    meleeWidth = player_meleeWidth;
+    meleeHeight = player_meleeHeight;
     Weapon_Melee(ent, &wp, meleeRange->current.value,
                  meleeWidth->current.value, meleeHeight->current.value);
 }
@@ -270,7 +276,7 @@ void G_UseOffHand(gentity_t *ent)
     weaponParms wp;
     vec3_t viewang;
 
-    wp.weapDef = BG_GetWeaponDef(ent->client->ps.offHandIndex);
+    wp.weapDef = (WeaponDef *)(BG_GetWeaponDef(ent->client->ps.offHandIndex));
 
     viewang[0] = ent->client->ps.viewangles[0];
     viewang[1] = ent->client->ps.viewangles[1];
@@ -448,9 +454,9 @@ static void Bullet_Fire_Extended(const gentity_t *source, gentity_s (*attacker)[
         damage = weapDef->minDamage;
     }
 
-    G_Damage(traceEnt, attackerEnt, attackerEnt, (void *)wp, endpos,
+    G_Damage(traceEnt, attackerEnt, attackerEnt, (const vec_t *)wp, endpos,
              (int)((float)damage * damageMultiplier), dflags, iMOD,
-             tr.partGroup, level.time - gametime);
+             (hitLocation_t)tr.partGroup, level.time - gametime);
 
     if (traceEnt->client && (dflags & 0x20)) {
         if (Dvar_GetInt("scr_friendlyfire") || !OnSameTeam(traceEnt, attackerEnt)) {
@@ -480,7 +486,7 @@ void G_SetupWeaponDef(void)
     registerWeapon = (BG_RegisterWeapon)imp_G_RegisterWeapon;
     BG_FillInAmmoItems(registerWeapon);
 
-    if ((*(level_locals_t **)imp_level)->initializing)
+    if (level.initializing)
         BG_GetWeaponIndexForName("defaultweapon_mp", registerWeapon);
     else
         BG_FindWeaponIndexForName("defaultweapon_mp");
@@ -538,7 +544,7 @@ void Bullet_Fire(gentity_s (*attacker)[16], float spread, weaponParms *wp, genti
     const dvar_t *antilag;
     int clientNum;
 
-    antilag = *(const dvar_t **)imp_g_antilag;
+    antilag = g_antilag;
     memset(savedClientPositions, 0, sizeof(savedClientPositions));
     memset(movedClients, 0, sizeof(movedClients));
 
@@ -546,7 +552,7 @@ void Bullet_Fire(gentity_s (*attacker)[16], float spread, weaponParms *wp, genti
         const dvar_t *svFps;
         int frameMsec;
 
-        svFps = *(const dvar_t **)imp_sv_fps;
+        svFps = sv_fps;
         frameMsec = 1000 / svFps->current.integer;
 
         if (level.time - gametime > frameMsec) {
@@ -631,7 +637,7 @@ void FireWeaponAntiLag(gentity_s (*ent)[16], int gametime)
     if ((entity->client->ps.eFlags & 0x300) && entity->active)
         return;
 
-    weapDef = BG_GetWeaponDef(entity->s.weapon);
+    weapDef = (WeaponDef *)(BG_GetWeaponDef(entity->s.weapon));
     wp.weapDef = weapDef;
 
     {
@@ -686,7 +692,7 @@ qboolean G_GivePlayerWeapon(playerState_t *pPS, int iWeaponIndex)
     if ((pPS->weapons[weaponWord] >> weaponBitIndex) & 1)
         return 0;
 
-    weapDef = BG_GetWeaponDef(iWeaponIndex);
+    weapDef = (WeaponDef *)(BG_GetWeaponDef(iWeaponIndex));
     if (weapDef->weapClass == WEAPCLASS_TURRET ||
         weapDef->weapClass == WEAPCLASS_NON_PLAYER)
         return 0;
@@ -705,7 +711,7 @@ qboolean G_GivePlayerWeapon(playerState_t *pPS, int iWeaponIndex)
             WeaponDef *oldOffhandDef;
             int offhandIndex;
 
-            oldOffhandDef = BG_GetWeaponDef(pPS->offHandIndex);
+            oldOffhandDef = (WeaponDef *)(BG_GetWeaponDef(pPS->offHandIndex));
             offhandIndex = BG_GetFirstAvailableOffhand(
                 pPS, oldOffhandDef->offhandClass);
             if (!offhandIndex)
@@ -738,7 +744,7 @@ qboolean G_GivePlayerWeapon(playerState_t *pPS, int iWeaponIndex)
         pPS->weapons[altWeaponWord] |= altWeaponBit;
         pPS->weaponrechamber[weaponWord] &= ~weaponBit;
 
-        weapDef = BG_GetWeaponDef(altWeaponIndex);
+        weapDef = (WeaponDef *)(BG_GetWeaponDef(altWeaponIndex));
         altWeaponIndex = weapDef->iAltWeaponIndex;
     }
 

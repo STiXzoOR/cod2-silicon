@@ -15,7 +15,7 @@ extern int FS_FOpenFileRead(const char *filename, fileHandle_t *file, qboolean u
 extern int FS_FOpenFileByMode(const char *filename, fileHandle_t *file, int mode);
 extern int FS_Read(void *buffer, int len, fileHandle_t h);
 extern void FS_FCloseFile(fileHandle_t h);
-extern byte *TempMalloc(int size);
+extern char * TempMalloc(int len);
 extern void *Hunk_AllocateTempMemoryHighInternal(int size);
 
 void Scr_InitOpcodeLookup(void);
@@ -47,17 +47,17 @@ void Scr_InitOpcodeLookup(void)
     scrParserGlob.delayedSourceIndex = -1;
     scrParserGlob.opcodeLookupMaxLen = 0x10000;
     scrParserGlob.opcodeLookupLen = 0;
-    scrParserGlob.opcodeLookup = Z_MallocInternal(0x140000);
+    scrParserGlob.opcodeLookup = (OpcodeLookup *)(Z_MallocInternal(0x140000));
     memset(scrParserGlob.opcodeLookup, 0, scrParserGlob.opcodeLookupMaxLen * 20);
     scrParserGlob.sourcePosLookupMaxLen = 0x10000;
     scrParserGlob.sourcePosLookupLen = 0;
-    scrParserGlob.sourcePosLookup = Z_MallocInternal(0x80000);
+    scrParserGlob.sourcePosLookup = (SourceLookup *)(Z_MallocInternal(0x80000));
     scrParserGlob.currentCodePos = 0;
     scrParserGlob.currentSourcePosCount = 0;
     scrParserGlob.sourceBufferLookupMaxLen = 0x10;
     scrParserPub.sourceBufferLookupLen = 0;
     /* 0x180 was 16 * 24 (the x86 struct size); on x64 the 3 pointers grow it, so size by sizeof. */
-    scrParserPub.sourceBufferLookup =
+    scrParserPub.sourceBufferLookup = (SourceBufferInfo *)
         Z_MallocInternal((int)(scrParserGlob.sourceBufferLookupMaxLen * sizeof(*scrParserPub.sourceBufferLookup)));
 }
 
@@ -119,7 +119,7 @@ void AddOpcodePos(unsigned int sourcePos, int type)
         OpcodeLookup *newOpcodeLookup;
 
         scrParserGlob.opcodeLookupMaxLen = oldMaxLen * 2;
-        newOpcodeLookup = Z_MallocInternal((int)(scrParserGlob.opcodeLookupMaxLen * sizeof(*newOpcodeLookup)));
+        newOpcodeLookup = (OpcodeLookup *)(Z_MallocInternal((int)(scrParserGlob.opcodeLookupMaxLen * sizeof(*newOpcodeLookup))));
         memcpy(newOpcodeLookup, scrParserGlob.opcodeLookup, scrParserGlob.opcodeLookupLen * sizeof(*newOpcodeLookup));
         Z_FreeInternal(scrParserGlob.opcodeLookup);
         scrParserGlob.opcodeLookup = newOpcodeLookup;
@@ -130,7 +130,7 @@ void AddOpcodePos(unsigned int sourcePos, int type)
         SourceLookup *newSourcePosLookup;
 
         scrParserGlob.sourcePosLookupMaxLen = oldMaxLen * 2;
-        newSourcePosLookup = Z_MallocInternal((int)(scrParserGlob.sourcePosLookupMaxLen * sizeof(*newSourcePosLookup)));
+        newSourcePosLookup = (SourceLookup *)(Z_MallocInternal((int)(scrParserGlob.sourcePosLookupMaxLen * sizeof(*newSourcePosLookup))));
         memcpy(newSourcePosLookup, scrParserGlob.sourcePosLookup, scrParserGlob.sourcePosLookupLen * sizeof(*newSourcePosLookup));
         Z_FreeInternal(scrParserGlob.sourcePosLookup);
         scrParserGlob.sourcePosLookup = newSourcePosLookup;
@@ -239,7 +239,7 @@ static void Scr_AddSourceBufferInternal(const char *extFilename, const char *cod
     }
 
     filenameLen = strlen(extFilename) + 1;
-    buf = Z_MallocInternal((int)filenameLen + len + 1);
+    buf = (char *)(Z_MallocInternal((int)filenameLen + len + 1));
     strcpy(buf, extFilename);
 
     if (sourceBuf) {
@@ -268,7 +268,7 @@ static void Scr_AddSourceBufferInternal(const char *extFilename, const char *cod
         unsigned int oldMaxLen = scrParserGlob.sourceBufferLookupMaxLen;
 
         scrParserGlob.sourceBufferLookupMaxLen = oldMaxLen * 2;
-        sourceBuffer = Z_MallocInternal(scrParserGlob.sourceBufferLookupMaxLen * sizeof(*sourceBuffer));
+        sourceBuffer = (SourceBufferInfo *)(Z_MallocInternal(scrParserGlob.sourceBufferLookupMaxLen * sizeof(*sourceBuffer)));
         memcpy(sourceBuffer, scrParserPub.sourceBufferLookup, scrParserPub.sourceBufferLookupLen * sizeof(*sourceBuffer));
         Z_FreeInternal(scrParserPub.sourceBufferLookup);
         scrParserPub.sourceBufferLookup = sourceBuffer;
@@ -499,7 +499,7 @@ void CompileError(unsigned int sourcePos, const char *msg, ...)
         Com_Printf("%s\n", text);
     } else {
         Com_Printf("%s: ", text);
-        Scr_PrintSourcePos(0, scrParserPub.scriptfilename, scrParserPub.sourceBuf, sourcePos);
+        Scr_PrintSourcePos( (print_msg_type_t)(0), scrParserPub.scriptfilename, scrParserPub.sourceBuf, sourcePos);
     }
 
     Com_Printf("************************************\n");
@@ -679,7 +679,7 @@ void RuntimeError(const char *codePos, unsigned int index, const char *msg, cons
         int callerCount;
 
         shouldAbort = (vmPub->abort_on_error || vmPub->terminal_error);
-        type = shouldAbort ? 0 : 4;
+        type = (print_msg_type_t)(shouldAbort ? 0 : 4);
 
         Com_PrintMessage(type, va("\n******* script runtime error *******\n%s: ", msg));
         Scr_PrintPrevCodePos(type, codePos, index);
@@ -725,7 +725,7 @@ void CompileError2(const char *codePos, const char *msg, ...)
     va_end(argptr);
 
     Com_Printf("%s: ", text);
-    Scr_PrintPrevCodePos(0, codePos, 0);
+    Scr_PrintPrevCodePos( (print_msg_type_t)(0), codePos, 0);
     Com_Printf("************************************\n");
     Com_Error(5, "\x15script compile error\n(see console for details)");
 }

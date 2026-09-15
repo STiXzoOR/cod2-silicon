@@ -8,8 +8,8 @@ extern const dvar_t *Dvar_RegisterBool(const char *name, int value, int flags);
 extern int PM_GetEffectiveStance(playerState_t *ps);
 extern void PM_AddEvent(playerState_t *ps, int event);
 extern int PM_GroundSurfaceType(pml_t *pml);
-extern void BG_AnimScriptEvent(playerState_t *ps, int event, int isContinue, int force);
-extern float Vec3Normalize(vec_t *v);
+extern int BG_AnimScriptEvent(playerState_t *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force);
+extern const vec_t Vec3Normalize(vec_t *v);
 
 #define qtrue 1
 #define qfalse 0
@@ -42,19 +42,19 @@ void Jump_ClearState(playerState_t *ps)
 
 Bool Jump_GetStepHeight(playerState_t *ps, const vec_t *origin, float *stepSize)
 {
-    if (!(ps->jumpOriginZ + jump_height->current.value > origin[2])) {
-        return qfalse;
+    if (ps->jumpOriginZ + jump_height->current.value > origin[2]) {
+        *stepSize = jump_stepSize->current.value;
+
+        if (origin[2] + *stepSize > ps->jumpOriginZ + jump_height->current.value) {
+            *stepSize = ps->jumpOriginZ + jump_height->current.value - origin[2];
+        }
+        return qtrue;
     }
 
-    *stepSize = jump_stepSize->current.value;
-
-    if (origin[2] + *stepSize > ps->jumpOriginZ + jump_height->current.value) {
-        *stepSize = ps->jumpOriginZ + jump_height->current.value - origin[2];
-    }
-    return qtrue;
+    return qfalse;
 }
 
-Bool Jump_IsPlayerAboveMax(playerState_t *ps)
+qboolean Jump_IsPlayerAboveMax(playerState_t *ps)
 {
     return ps->origin[2] >= ps->jumpOriginZ + jump_height->current.value;
 }
@@ -69,7 +69,7 @@ void Jump_ActivateSlowdown(playerState_t *ps)
 
 void Jump_ApplySlowdown(playerState_t *ps)
 {
-    float scale;
+    float scale = 1.0f;
 
     if (ps->pm_time > 1800) {
         Jump_ClearState_core(ps);
@@ -82,8 +82,6 @@ void Jump_ApplySlowdown(playerState_t *ps)
             ps->pm_time = 1200;
             scale = 0.5f;
         }
-    } else {
-        scale = 1.0f;
     }
 
     if (!jump_slowdownEnable->current.enabled)
@@ -104,7 +102,7 @@ float Jump_ReduceFriction(playerState_t *ps)
     if (!jump_slowdownEnable->current.enabled)
         return 1.0f;
 
-    if (ps->pm_time > 1699)
+    if (ps->pm_time >= 1700)
         return 2.5f;
 
     return (float)ps->pm_time * 1.5f * 0.0005882352706976235f + 1.0f;
@@ -214,9 +212,9 @@ Bool Jump_Check(pmove_t *pm, pml_t *pml)
     }
 
     if (pm->cmd.forwardmove < 0) {
-        BG_AnimScriptEvent(ps, 4, 0, 1);
+        BG_AnimScriptEvent(ps, ANIM_ET_JUMPBK, 0, 1);
     } else {
-        BG_AnimScriptEvent(ps, 3, 0, 1);
+        BG_AnimScriptEvent(ps, ANIM_ET_JUMP, 0, 1);
     }
 
     return qtrue;
@@ -227,17 +225,16 @@ void Jump_ClampVelocity(playerState_t *ps, const vec_t *origin)
     float heightAboveStart, maxHeight, maxVel;
 
     heightAboveStart = ps->origin[2] - origin[2];
-    if (heightAboveStart <= 0.0f)
-        return;
+    if (heightAboveStart > 0.0f) {
+        maxHeight = ps->jumpOriginZ + jump_height->current.value - ps->origin[2];
 
-    maxHeight = ps->jumpOriginZ + jump_height->current.value - ps->origin[2];
+        if (maxHeight < 0.1f) {
+            ps->velocity[2] = 0.0f;
+            return;
+        }
 
-    if (maxHeight < 0.1f) {
-        ps->velocity[2] = 0.0f;
-        return;
+        maxVel = sqrtf((maxHeight + maxHeight) * (float)ps->gravity);
+        if (ps->velocity[2] > maxVel)
+            ps->velocity[2] = maxVel;
     }
-
-    maxVel = sqrtf(maxHeight * 2.0f * (float)ps->gravity);
-    if (ps->velocity[2] > maxVel)
-        ps->velocity[2] = maxVel;
 }

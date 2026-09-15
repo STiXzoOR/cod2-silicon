@@ -28,14 +28,18 @@ const char *szShotName[] = {
 #define ptr_195f58c ((byte *)imp_colorBlack)
 #define ptr_195f5e0 ((byte *)imp_net_showprofile)
 
+extern const dvar_t *net_showprofile;
+
 typedef void (*re_void_func)(void);
 typedef void (*re_int_func)(int);
 typedef void (*re_int2_func)(int, int);
 typedef void (*re_int4_func)(int, int, int, int);
 typedef void (*re_floatp_func)(float *);
-typedef float (*re_font_height_func)(int, float);
-typedef int (*re_font_iheight_func)(int);
-typedef void (*re_draw_string_func)(const char *, int, int, float, float, float, float, const float *, int);
+/* the font parameter is a FontHandle (pointer); the decomp typed it as int,
+ * which truncates the 8-byte handle on x64 -> R_TextHeight etc. deref garbage. */
+typedef float (*re_font_height_func)(FontHandle, float);
+typedef int (*re_font_iheight_func)(FontHandle);
+typedef void (*re_draw_string_func)(const char *, int, FontHandle, float, float, float, float, const float *, int);
 typedef void (*re_draw_console_func)(const short int *, int, int, float, float, float, float, const float *, int);
 typedef void (*re_write_cubemap_func)(const char *, int, float, float);
 
@@ -52,7 +56,7 @@ typedef void (*re_write_cubemap_func)(const char *, int, float, float);
 extern void Com_Printf(const char *fmt, ...);
 extern void Com_Error(int code, const char *fmt, ...);
 extern int Cmd_Argc(void);
-extern const char *Cmd_Argv(int arg);
+extern char *Cmd_Argv(int arg);
 extern const char *va(const char *fmt, ...);
 extern int CG_DrawActiveFrame(int serverTime, int needRender, int side, int size, int serverDemo);
 extern float UI_GetBlurRadius(void);
@@ -70,7 +74,7 @@ extern qboolean CL_AnyLocalClientChallenging(void);
 extern void CL_DrawLogo(void);
 extern void CL_LookupColor(int colorIndex, float *outColor);
 extern void Con_DrawConsole(void);
-extern void SND_StopSounds(int flags);
+extern void SND_StopSounds(snd_stopsounds_arg_t flags);
 extern void SCR_DrawCinematic(void);
 extern qboolean Sys_IsMainThread(void);
 extern void Sys_LoadingKeepAlive(void);
@@ -92,7 +96,7 @@ void SCR_DrawSmallStringExt(int x, int y, const char *string, const vec_t *setCo
 {
     refexport_t *re = re_ptr_195eca8;
     byte *cls = cls_ptr_195ecac;
-    int font = (((clientStatic_t *)(cls))->consoleFont);
+    FontHandle font = (((clientStatic_t *)(cls))->consoleFont);
 
     int fontHeight = RE_FUNC(re, 0x118, re_font_iheight_func)(font);
 
@@ -105,12 +109,12 @@ void SCR_DrawConsoleString(int x, int y, const short int *string, int maxChars, 
 {
     refexport_t *re = re_ptr_195eca8;
     byte *cls = cls_ptr_195ecac;
-    int font = (((clientStatic_t *)(cls))->consoleFont);
+    FontHandle font = (((clientStatic_t *)(cls))->consoleFont);
 
     int fontHeight = RE_FUNC(re, 0x118, re_font_iheight_func)(font);
 
     RE_FUNC(re, 0x128, re_draw_console_func)(
-        string, maxChars, font, (float)x, (float)y + (float)fontHeight,
+        string, maxChars, (int)font, (float)x, (float)y + (float)fontHeight,
         1.0f, 1.0f, setColor, 0);
 }
 
@@ -350,7 +354,7 @@ static void SCR_UpdateFrame(void)
 
         switch (connstate) {
         case 0:
-            SND_StopSounds(0);
+            SND_StopSounds((snd_stopsounds_arg_t)0);
             if (Sys_IsMainThread()) {
                 UI_SetActiveMenu(1);
             } else if (CL_AnyLocalClientChallenging()) {
@@ -403,7 +407,7 @@ static void SCR_UpdateFrame(void)
 
                 re = re_ptr_195eca8;
                 cls = cls_ptr_195ecac;
-                int font = (((clientStatic_t *)(cls))->consoleFont);
+                FontHandle font = (((clientStatic_t *)(cls))->consoleFont);
                 float fontH = RE_FUNC(re, 0x110, re_font_height_func)(font, 0.333333f);
                 float w = fontH;
                 float h = fontH;
@@ -453,7 +457,7 @@ check_ui:
             UI_Refresh();
     }
 
-    if ((*(dvar_t **)(imp_net_showprofile))->current.integer) {
+    if (net_showprofile->current.integer) {
         Net_DisplayProfile();
     }
 

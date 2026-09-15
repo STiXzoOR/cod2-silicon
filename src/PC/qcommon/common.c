@@ -4,6 +4,9 @@
 #include "cod2_feature_config.h"
 #include <stdarg.h>
 #include <ctype.h>
+#include <time.h>
+/* dvar globals */
+extern const dvar_t *loc_language;
 
 extern char cl_cdkey[52];
 extern char cl_cdkeychecksum[12];
@@ -66,7 +69,7 @@ static qboolean com_safemode;
 static int iWeaponInfoSource;
 static char *rd_buffer;
 static int rd_buffersize;
-static void (*rd_flush)();
+static void (*rd_flush)(char *);   /* real flush(buffer) sig; byte-neutral fn-ptr */
 
 __attribute__((used, packed, aligned(4)))
 const char *noticeErrors[] = {
@@ -89,6 +92,7 @@ extern void longjmp(jmp_buf env, int val);
 #endif
 extern dvar_t *com_dedicated;
 extern int dvar_modifiedFlags;
+extern Bool updateScreenCalled;
 extern int *com_fileAccessed;
 extern void Dvar_ClearModified(const dvar_t *dvar);
 extern void SetAnimCheck(int enabled);
@@ -118,11 +122,11 @@ extern qboolean UI_SetActiveMenu(int menu);
 extern int stricmp(const char *s1, const char *s2);
 extern void Z_FreeInternal(void *ptr);
 extern void FS_FCloseFile(fileHandle_t f);
-extern int FS_FOpenFileWrite(const char *filename);
+extern fileHandle_t FS_FOpenFileWrite(const char *filename);
 extern void FS_Printf(int f, const char *fmt, ...);
 extern void Key_WriteBindings(int f);
 extern void Dvar_WriteVariables(int f);
-void Com_BeginRedirect(char *buffer, int buffersize, void (*flush)());
+void Com_BeginRedirect(char *buffer, int buffersize, void (*flush)(char *));
 void Com_EndRedirect(void);
 void Com_Printf(const char *fmt, ...);
 void Com_PrintMessage(print_msg_type_t type, const char *msg);
@@ -171,7 +175,7 @@ static void Com_Freeze_f(void);
 void Com_Init_Try_Block_Function(char *commandLine);
 void Com_Init(char *commandLine);
 
-void Com_BeginRedirect(char *buffer, int buffersize, void (*flush)())
+void Com_BeginRedirect(char *buffer, int buffersize, void (*flush)(char *))
 {
     if (!buffer || !buffersize || !flush)
         return;
@@ -199,7 +203,8 @@ void Com_Printf(const char *fmt, ...)
     vsnprintf(msg, sizeof(msg), fmt, argptr);
     va_end(argptr);
 
-    Com_PrintMessage(0, msg);
+    msg[sizeof(msg) - 1] = 0;
+    Com_PrintMessage( (print_msg_type_t)(0), msg);
 }
 
 void Com_PrintMessage(print_msg_type_t type, const char *msg)
@@ -243,7 +248,7 @@ void Com_PrintMessage(print_msg_type_t type, const char *msg)
             return;
         opening_qconsole = 1;
         {
-            long aclock;
+            time_t aclock;
             time(&aclock);
             logfile = FS_FOpenTextFileWrite("qconsole_mp.log");
             Com_Printf("logfile opened on %s\n", asctime(localtime(&aclock)));
@@ -272,6 +277,7 @@ void Com_DPrintf(const char *fmt, ...)
     vsnprintf(msg, sizeof(msg), fmt, argptr);
     va_end(argptr);
 
+    msg[sizeof(msg) - 1] = 0;
     Com_Printf("%s", msg);
 }
 
@@ -359,12 +365,12 @@ void Com_Error(errorParm_t code, const char *fmt, ...)
                 }
             }
         }
-        code = 1;
+        code = (errorParm_t)(1);
     } else if (code == 5) {
 
         com_fixedConsolePosition = 1;
         CL_ConsoleFixPosition();
-        code = 1;
+        code = (errorParm_t)(1);
     } else {
         com_fixedConsolePosition = 0;
     }
@@ -376,7 +382,7 @@ void Com_Error(errorParm_t code, const char *fmt, ...)
 qboolean Com_SafeMode(void)
 {
     extern void Cmd_TokenizeString(const char *text);
-    extern const char *Cmd_Argv(int arg);
+    extern char *Cmd_Argv(int arg);
     extern int I_stricmp(const char *s1, const char *s2);
     int i;
 
@@ -394,7 +400,7 @@ qboolean Com_SafeMode(void)
 void Com_StartupVariable(const char *match)
 {
     extern void Cmd_TokenizeString(const char *text);
-    extern const char *Cmd_Argv(int arg);
+    extern char *Cmd_Argv(int arg);
     extern void Dvar_Set_f(void);
     extern void Dvar_SetA_f(void);
     int lineIndex;
@@ -422,7 +428,7 @@ void Com_StartupVariable(const char *match)
 static qboolean Com_HasStartupCommandsOtherThanSet(void)
 {
     extern void Cmd_TokenizeString(const char *text);
-    extern const char *Cmd_Argv(int arg);
+    extern char *Cmd_Argv(int arg);
     int lineIndex;
 
     for (lineIndex = 0; lineIndex < com_numConsoleLines; lineIndex++) {
@@ -445,8 +451,8 @@ static qboolean Com_HasStartupCommandsOtherThanSet(void)
 
 void Info_Print(const char *s)
 {
-    char key[0x208];
-    char value[0x208];
+    char key[0x200];
+    char value[0x200];
     char *keyp;
     int keylen;
 
@@ -460,16 +466,13 @@ void Info_Print(const char *s)
             *keyp++ = *s++;
         }
         keylen = (int)(keyp - key);
-        if (keylen > 0x13) {
-
-            *keyp = '\0';
-            Com_Printf("%s", key);
-        } else {
-
+        if (keylen < 0x14) {
             memset(keyp, ' ', 0x14 - keylen);
             key[0x14] = '\0';
-            Com_Printf("%s", key);
+        } else {
+            *keyp = '\0';
         }
+        Com_Printf("%s", key);
         if (*s == '\0') {
             Com_Printf("MISSING VALUE\n");
             return;
@@ -492,7 +495,7 @@ void Info_Print(const char *s)
 void Com_ShutdownEvents(void)
 {
     while (com_pushedEventsHead > com_pushedEventsTail) {
-        int idx = (unsigned char)com_pushedEventsTail;
+        int idx = com_pushedEventsTail & 0xFF;
         sysEvent_t *ev = &com_pushedEvents[idx];
         com_pushedEventsTail++;
         if (ev->evPtr) {
@@ -503,10 +506,10 @@ void Com_ShutdownEvents(void)
 
 static void Com_Error_f(void)
 {
-    if (Cmd_Argc() - 1 > 0)
-        Com_Error(1, "Testing drop error");
+    if (Cmd_Argc() > 1)
+        Com_Error( (errorParm_t)(1), "Testing drop error");
     else
-        Com_Error(0, "Testing fatal error");
+        Com_Error( (errorParm_t)(0), "Testing fatal error");
 }
 
 static void Com_Crash_f(void)
@@ -583,18 +586,18 @@ static int Com_GetConfigureDvarNames(const char **text, char *dvarNames)
     for (;;) {
         const char *token = Com_ParseOnLine(text);
         if (!*text)
-            Com_Error(0, "\x15"
+            Com_Error((errorParm_t)0, "\x15"
                          "configure_mp.csv: unexpected end-of-file");
         if (!*token)
             return dvarCount;
         {
             unsigned int len = (unsigned int)strlen(token);
             if (len > 0x1f)
-                Com_Error(0, "\x15"
+                Com_Error((errorParm_t)0, "\x15"
                              "configure_mp.csv: dvar name \"%s\" longer than %i\n",
                           token, 0x1f);
-            if (dvarCount > 0x3f)
-                Com_Error(0, "\x15"
+            if (dvarCount >= 0x40)
+                Com_Error((errorParm_t)0, "\x15"
                              "configure_mp.csv: more than %i dvars\n",
                           0x40);
             I_strncpyz(dvarNames + dvarCount * 0x20, token, 0x20);
@@ -614,7 +617,7 @@ static void Com_GetConfigureDvarValues(int dvarCount, const char **text, char *d
 
         const char *token = Com_ParseOnLine(text);
         if (*token)
-            Com_Error(0, "configure_mp.csv: extra dvar value column(s): value = %s\n", token);
+            Com_Error( (errorParm_t)(0), "configure_mp.csv: extra dvar value column(s): value = %s\n", token);
         return;
     }
 
@@ -623,20 +626,20 @@ static void Com_GetConfigureDvarValues(int dvarCount, const char **text, char *d
         for (dvarIndex = 0; dvarIndex < dvarCount; dvarIndex++) {
             const char *token = Com_ParseOnLine(text);
             if (!*text)
-                Com_Error(0, "configure_mp.csv: unexpected EOF");
+                Com_Error( (errorParm_t)(0), "configure_mp.csv: unexpected EOF");
             if (!*token)
-                Com_Error(0, "configure_mp.csv: missing entry in dvar value column %i\n", dvarIndex);
+                Com_Error( (errorParm_t)(0), "configure_mp.csv: missing entry in dvar value column %i\n", dvarIndex);
             {
                 int len = (int)strlen(token);
                 if (len > 0x1f)
-                    Com_Error(0, "configure_mp.csv: entry '%s' in dvar value column %i is longer than %i\n", token, dvarIndex, 0x1f);
+                    Com_Error( (errorParm_t)(0), "configure_mp.csv: entry '%s' in dvar value column %i is longer than %i\n", token, dvarIndex, 0x1f);
             }
         }
 
         {
             const char *token = Com_ParseOnLine(text);
             if (*token)
-                Com_Error(0, "configure_mp.csv: extra dvar value column(s): value = %s\n", token);
+                Com_Error( (errorParm_t)(0), "configure_mp.csv: extra dvar value column(s): value = %s\n", token);
         }
         return;
     }
@@ -645,13 +648,13 @@ static void Com_GetConfigureDvarValues(int dvarCount, const char **text, char *d
     for (dvarIndex = 0; dvarIndex < dvarCount; dvarIndex++) {
         const char *token = Com_ParseOnLine(text);
         if (!*text)
-            Com_Error(0, "configure_mp.csv: unexpected EOF");
+            Com_Error( (errorParm_t)(0), "configure_mp.csv: unexpected EOF");
         if (!*token)
-            Com_Error(0, "configure_mp.csv: missing entry in dvar value column %i\n", dvarIndex);
+            Com_Error( (errorParm_t)(0), "configure_mp.csv: missing entry in dvar value column %i\n", dvarIndex);
         {
             int len = (int)strlen(token);
             if (len > 0x1f)
-                Com_Error(0, "configure_mp.csv: entry '%s' in dvar value column %i is longer than %i\n", token, dvarIndex, 0x1f);
+                Com_Error( (errorParm_t)(0), "configure_mp.csv: entry '%s' in dvar value column %i is longer than %i\n", token, dvarIndex, 0x1f);
             I_strncpyz(curValues, token, 0x20);
             curValues += 0x20;
         }
@@ -660,7 +663,7 @@ static void Com_GetConfigureDvarValues(int dvarCount, const char **text, char *d
     {
         const char *token = Com_ParseOnLine(text);
         if (*token)
-            Com_Error(0, "configure_mp.csv: extra dvar value column(s): value = %s\n", token);
+            Com_Error( (errorParm_t)(0), "configure_mp.csv: extra dvar value column(s): value = %s\n", token);
     }
 }
 
@@ -716,7 +719,7 @@ void Com_WriteConfig_f(void)
 {
     extern void I_strncpyz(char *dest, const char *src, int destsize);
     extern void Com_DefaultExtension(char *path, int maxSize, const char *extension);
-    extern const char *Cmd_Argv(int arg);
+    extern char *Cmd_Argv(int arg);
     char filename[64];
 
     if (Cmd_Argc() != 2) {
@@ -841,7 +844,7 @@ int Com_AddToString(const char *add, char *msg, int len, int maxlen, qboolean ma
 
 char Com_GetDecimalDelimiter(void)
 {
-    int lang = (*(const dvar_t **)imp_loc_language)->current.integer;
+    int lang = (loc_language)->current.integer;
     if ((unsigned int)(lang - 1) <= 3 || lang == 6 || lang == 7)
         return ',';
     return '.';
@@ -897,7 +900,7 @@ void Com_SetRecommended(qboolean restart)
 
     filesize = FS_ReadFile("configure_mp.csv", &csv);
     if (filesize < 0)
-        Com_Error(0, "EXE_ERR_NOT_FOUND\x15"
+        Com_Error((errorParm_t)0, "EXE_ERR_NOT_FOUND\x15"
                      "configure_mp.csv");
 
     text = (const char *)csv;
@@ -932,12 +935,12 @@ void Com_SetRecommended(qboolean restart)
             const char *col2;
 
             if (stricmp(token, "cpu ghz") != 0)
-                Com_Error(0, "\x15"
+                Com_Error((errorParm_t)0, "\x15"
                              "configure_mp.csv: \"cpu ghz\" should be the first column\n");
 
             col2 = Com_ParseOnLine(&text);
             if (stricmp(col2, "sys mb") != 0)
-                Com_Error(0, "\x15"
+                Com_Error((errorParm_t)0, "\x15"
                              "configure_mp.csv: \"sys mb\" should be the second column\n");
 
             dvarCount = Com_GetConfigureDvarNames(&text, dvarNames);
@@ -954,12 +957,12 @@ void Com_SetRecommended(qboolean restart)
 
         rowGHz = atof(token);
         if (rowGHz < 0.0)
-            Com_Error(0, "configure_mp.csv: cpu ghz %g not allowed to be less than 0\n", rowGHz);
+            Com_Error( (errorParm_t)(0), "configure_mp.csv: cpu ghz %g not allowed to be less than 0\n", rowGHz);
 
         token = Com_ParseOnLine(&text);
         rowMB = atoi(token);
         if (rowMB <= 0x7f)
-            Com_Error(0, "configure_mp.csv: sys mb %i not allowed to be less than 128", rowMB);
+            Com_Error( (errorParm_t)(0), "configure_mp.csv: sys mb %i not allowed to be less than 128", rowMB);
 
         if (info.cpuGHz >= rowGHz && rowMB <= info.sysMB) {
             if (rowGHz > bestMHz || (rowGHz == bestMHz && rowMB > bestMB)) {
@@ -996,7 +999,7 @@ void Com_SetRecommended(qboolean restart)
     Com_SetConfigureDvars(dvarCount, dvarNames, best.dvarValues);
 
     if (!foundGpuSection)
-        Com_Error(0, "configure_mp.csv: EXE_ERR_COULDNT_CONFIGURE \"%s\"\n", info.gpuDescription);
+        Com_Error( (errorParm_t)(0), "configure_mp.csv: EXE_ERR_COULDNT_CONFIGURE \"%s\"\n", info.gpuDescription);
 
     for (;;) {
         const char *find;
@@ -1026,13 +1029,13 @@ void Com_SetRecommended(qboolean restart)
                         wildcardTemplate[wildcardLen] = c;
                         wildcardLen++;
                         if (wildcardLen >= 0x3ff)
-                            Com_Error(0, "configure_mp.csv: gpu template too long");
+                            Com_Error( (errorParm_t)(0), "configure_mp.csv: gpu template too long");
                     } else {
                         if (wildcardLen > 0 && wildcardTemplate[wildcardLen - 1] != ' ') {
                             wildcardTemplate[wildcardLen] = ' ';
                             wildcardLen++;
                             if (wildcardLen >= 0x3ff)
-                                Com_Error(0, "configure_mp.csv: gpu template too long");
+                                Com_Error( (errorParm_t)(0), "configure_mp.csv: gpu template too long");
                         }
                     }
                 }
@@ -1061,7 +1064,7 @@ void Com_SetRecommended(qboolean restart)
     }
 
     if (!foundGpuMatch)
-        Com_Error(0, "configure_mp.csv: EXE_ERR_COULDNT_CONFIGURE \"%s\"\n", info.gpuDescription);
+        Com_Error( (errorParm_t)(0), "configure_mp.csv: EXE_ERR_COULDNT_CONFIGURE \"%s\"\n", info.gpuDescription);
 
     Com_EndParseSession();
 
@@ -1095,7 +1098,7 @@ void Com_CheckSetRecommended(void)
         void *csv;
         int filesize = FS_ReadFile("configure_mp.csv", &csv);
         if (filesize < 0)
-            Com_Error(0, "EXE_ERR_NOT_FOUND\x15"
+            Com_Error((errorParm_t)0, "EXE_ERR_NOT_FOUND\x15"
                          "configure_mp.csv");
         {
             int checksum = 0;
@@ -1149,7 +1152,7 @@ void Com_LocalizedFloatToString(float f, char *buffer, unsigned int maxlen, unsi
     snprintf(buffer, maxlen - 1, "%.*f", numDecimalPlaces, (double)f);
     buffer[maxlen - 1] = '\0';
 
-    lang = (*(const dvar_t **)imp_loc_language)->current.integer;
+    lang = (loc_language)->current.integer;
     if ((unsigned int)(lang - 1) > 3 && lang != 6 && lang != 7)
         return;
 
@@ -1166,7 +1169,7 @@ void Com_Quit_f(void)
     extern void Hunk_ClearTempMemory(void);
     extern void Hunk_ClearTempMemoryHigh(void);
     extern void Sys_DestroySplashWindow(void);
-    extern void SV_Shutdown(const char *finalmsg);
+    extern void SV_Shutdown(char *finalmsg);
     extern void FS_Shutdown(int closemfp);
     extern void FS_ShutdownServerIwdNames(void);
     extern void FS_ShutdownServerReferencedIwds(void);
@@ -1234,7 +1237,7 @@ void Com_ShutdownInternal(char *finalmsg)
     extern void CL_Disconnect(void);
     extern void CL_ShutdownAll(void);
     extern void CL_ShutdownDemo(void);
-    extern void SV_Shutdown(const char *msg);
+    extern void SV_Shutdown(char *finalmsg);
 
     CL_SwitchToLocalClient(0);
     CL_Disconnect();
@@ -1333,7 +1336,7 @@ static BM_NOINLINE void Com_ErrorCleanup(void)
     if (now - lastErrorTime <= 99) {
         errorCount++;
         if (errorCount > 3)
-            errorcode = 0;
+            errorcode = (errorParm_t)(0);
     } else {
         errorCount = 0;
     }
@@ -1344,7 +1347,7 @@ static BM_NOINLINE void Com_ErrorCleanup(void)
         Sys_Error("%s", com_errorMessage);
     }
 
-    *(byte *)imp_updateScreenCalled = 0;
+    updateScreenCalled = 0;
 
     if (errorcode == 2) {
         Com_ShutdownInternal("Server fatal crashed: %s\n");
@@ -1390,14 +1393,14 @@ int Com_EventLoop(void)
 {
     extern void CL_KeyEvent(int key, int down, int time);
     extern void CL_CharEvent(int ch);
-    extern void CL_PacketEvent(netadr_t from, msg_t * msg, int time);
+    extern unsigned char CL_PacketEvent(netadr_t from, msg_t * msg, int time);
     extern void SV_PacketEvent(netadr_t from, msg_t * msg);
     extern void Cbuf_AddText(const char *text);
-    extern void LargeLocal_LargeLocal(LargeLocal * ll, int size);
-    extern void *LargeLocal_GetBuf(LargeLocal * ll);
+    extern void LargeLocal_LargeLocal(const LargeLocal *_this, int size);
+    extern void * LargeLocal_GetBuf(const LargeLocal *_this);
     extern void ZN10LargeLocalD1Ev(LargeLocal * ll);
     extern sysEvent_t Sys_GetEvent(void);
-    extern qboolean NET_GetLoopPacket(int sock, netadr_t *net_from, msg_t *msg);
+    extern qboolean NET_GetLoopPacket(netsrc_t sock, netadr_t *net_from, msg_t *msg);
     extern void MSG_Init(msg_t * buf, byte * data, int length);
 
     LargeLocal bufData_ll;
@@ -1435,18 +1438,18 @@ int Com_EventLoop(void)
         }
 
         if (evType > 5) {
-            Com_Error(0, "Com_EventLoop: bad event type %i", evType);
+            Com_Error( (errorParm_t)(0), "Com_EventLoop: bad event type %i", evType);
             continue;
         }
 
         switch (evType) {
         case 0:
             { static int c0; if (c0++ < 3) Com_Printf("[cnx] evloop case0 sv_running=%d\n", com_sv_running->current.enabled); }
-            while (NET_GetLoopPacket(0, &evFrom, &buf)) {
+            while (NET_GetLoopPacket((netsrc_t)0, &evFrom, &buf)) {
                 Com_Printf("[cnx] loop0 packet (server->client)\n");
                 CL_PacketEvent(evFrom, &buf, evTime);
             }
-            while (NET_GetLoopPacket(1, &evFrom, &buf)) {
+            while (NET_GetLoopPacket((netsrc_t)1, &evFrom, &buf)) {
                 Com_Printf("[cnx] loop1 packet (client->server) sv_running=%d\n", com_sv_running->current.enabled);
                 CL_SwitchToLocalClient(0);
                 if (com_sv_running->current.enabled) {
@@ -1550,7 +1553,7 @@ qboolean Debug_EventLoop(void)
             Z_FreeInternal(evPtr);
             break;
         default:
-            Com_Error(0, "Com_EventLoop: bad event type %i", evType);
+            Com_Error( (errorParm_t)(0), "Com_EventLoop: bad event type %i", evType);
             break;
         }
         newEvent = 1;
@@ -1643,9 +1646,9 @@ BM_NOINLINE void Com_Frame_Try_Block_Function(void)
 
     if (!(com_dedicated->flags & 0x40)) {
         if (com_dedicated->latched.integer != com_dedicated->current.integer) {
-            com_dedicated = Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1020);
+            com_dedicated = (dvar_t *)(Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1020));
             if (com_dedicated->current.integer) {
-                com_dedicated = Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1040);
+                com_dedicated = (dvar_t *)(Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1040));
             }
             Dvar_ClearModified(com_dedicated);
             CL_SwitchToLocalClient(0);
@@ -1732,11 +1735,19 @@ void Com_Frame(void)
         Com_ErrorCleanup();
         Com_StartHunkUsers();
     }
+
+    {
+        /* per-frame state-hash hook; a no-op unless SYSDIFF_STATEHASH is set in the
+         * environment.
+         * framenum-guarded, so the Mac main's extra call is harmless. */
+        extern void Sys_StateHashFrame(void);
+        Sys_StateHashFrame();
+    }
 }
 
 void Com_WriteDefaults_f(void)
 {
-    extern const char *Cmd_Argv(int arg);
+    extern char *Cmd_Argv(int arg);
     extern void I_strncpyz(char *dest, const char *src, int destsize);
     extern void Com_DefaultExtension(char *path, int maxSize, const char *extension);
     extern void Dvar_WriteDefaults(int f);
@@ -1827,7 +1838,7 @@ void Com_PumpMessageLoop(void)
 
 static void Com_Freeze_f(void)
 {
-    extern const char *Cmd_Argv(int arg);
+    extern char *Cmd_Argv(int arg);
     extern sysEvent_t Sys_GetEvent(void);
     extern double atof(const char *s);
     sysEvent_t ev;
@@ -1963,7 +1974,7 @@ void Com_Init_Try_Block_Function(char *commandLine)
 
     {
         int dedicated_val;
-        com_dedicated = Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1020);
+        com_dedicated = (dvar_t *)(Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1020));
         dedicated_val = com_dedicated->current.integer;
         if (dedicated_val) {
             Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1040);

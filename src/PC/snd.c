@@ -716,7 +716,79 @@ void SND_GetCurrent3DPosition(int entnum, const vec_t *offset, vec_t *pos_out)
     pos_out[2] = org[2] + scale * axis[2][2];
 }
 
-int SND_GetSoundOverlay(snd_overlay_type_t type, snd_overlay_info_t *info, int maxcount, int *cpu)
+static int SND_Get2DChannelOverlay(snd_overlay_info_t *info, int maxcount)
+{
+    float vol;
+    int rate;
+    int i;
+
+    if (maxcount > g_snd.max_2D_channels)
+        maxcount = g_snd.max_2D_channels;
+    if (maxcount <= 0)
+        return maxcount;
+    for (i = 0; i < maxcount; i++) {
+        if (SND_Is2DChannelFree(i + 45)) {
+            info[i].pszSampleName = NULL;
+        } else {
+            info[i].pszSampleName = Com_GetSoundFileName(g_snd.chaninfo[45 + i].pAlias0);
+
+            rate = SND_Get2DChannelPlaybackRate(i + 45);
+            if (rate == 0)
+                rate = g_snd.chaninfo[45 + i].baserate;
+            info[i].fPitch = (float)rate / (float)g_snd.chaninfo[45 + i].baserate;
+
+            info[i].fBaseVolume = g_snd.chaninfo[45 + i].basevolume;
+
+            vol = SND_Get2DChannelVolume(i + 45);
+            info[i].fCurVolume = vol;
+            if (g_snd.volume != 0.0f)
+                info[i].fCurVolume = vol / g_snd.volume;
+
+            info[i].dist = -1;
+        }
+    }
+    return maxcount;
+}
+
+static int SND_Get3DChannelOverlay(snd_overlay_info_t *info, int maxcount)
+{
+    vec3_t org;
+    float dist;
+    float vol;
+    int rate;
+    int i;
+
+    if (maxcount > g_snd.max_3D_channels)
+        maxcount = g_snd.max_3D_channels;
+    if (maxcount <= 0)
+        return maxcount;
+    for (i = 0; i < maxcount; i++) {
+        if (SND_Is3DChannelFree(i)) {
+            info[i].pszSampleName = NULL;
+        } else {
+            info[i].pszSampleName = Com_GetSoundFileName(g_snd.chaninfo[i].pAlias0);
+
+            rate = SND_Get3DChannelPlaybackRate(i);
+            if (rate == 0)
+                rate = g_snd.chaninfo[i].baserate;
+            info[i].fPitch = (float)rate / (float)g_snd.chaninfo[i].baserate;
+
+            info[i].fBaseVolume = g_snd.chaninfo[i].basevolume;
+
+            vol = SND_Get3DChannelVolume(i);
+            info[i].fCurVolume = vol;
+            if (g_snd.volume != 0.0f)
+                info[i].fCurVolume = vol / g_snd.volume;
+
+            SND_GetCurrent3DPosition(g_snd.chaninfo[i].entnum, g_snd.chaninfo[i].offset, org);
+            dist = Vec3Distance(org, g_snd.listeners[0].orient.origin);
+            info[i].dist = (int)dist;
+        }
+    }
+    return maxcount;
+}
+
+static int SND_GetStreamChannelOverlay(snd_overlay_info_t *info, int maxcount)
 {
     vec3_t org;
     float dist;
@@ -726,6 +798,42 @@ int SND_GetSoundOverlay(snd_overlay_type_t type, snd_overlay_info_t *info, int m
     int category;
     const snd_alias_t *pAlias;
 
+    if (maxcount > g_snd.max_stream_channels)
+        maxcount = g_snd.max_stream_channels;
+    if (maxcount <= 0)
+        return maxcount;
+    for (i = 0; i < maxcount; i++) {
+        if (SND_IsStreamChannelFree(i + 32)) {
+            info[i].pszSampleName = NULL;
+        } else {
+            info[i].pszSampleName = Com_GetSoundFileName(g_snd.chaninfo[32 + i].pAlias0);
+
+            rate = SND_GetStreamChannelPlaybackRate(i + 32);
+            info[i].fPitch = (float)rate / (float)g_snd.chaninfo[32 + i].baserate;
+
+            info[i].fBaseVolume = g_snd.chaninfo[32 + i].basevolume;
+
+            vol = SND_GetStreamChannelVolume(i + 32);
+            info[i].fCurVolume = vol;
+            if (g_snd.volume != 0.0f)
+                info[i].fCurVolume = vol / g_snd.volume;
+
+            pAlias = g_snd.chaninfo[32 + i].pAlias0;
+            category = (pAlias->flags & 0x780) >> 7;
+            if (category > 10 || !((1 << category) & 0x786)) {
+                SND_GetCurrent3DPosition(g_snd.chaninfo[32 + i].entnum, g_snd.chaninfo[32 + i].offset, org);
+                dist = Vec3Distance(org, g_snd.listeners[0].orient.origin);
+                info[i].dist = (int)dist;
+            } else {
+                info[i].dist = -1;
+            }
+        }
+    }
+    return maxcount;
+}
+
+int SND_GetSoundOverlay(snd_overlay_type_t type, snd_overlay_info_t *info, int maxcount, int *cpu)
+{
     if (!g_snd.Initialized2d)
         return 0;
 
@@ -733,97 +841,14 @@ int SND_GetSoundOverlay(snd_overlay_type_t type, snd_overlay_info_t *info, int m
         *cpu = g_snd.cpu;
 
     switch (type) {
-    case 2:
-        if (maxcount > g_snd.max_stream_channels)
-            maxcount = g_snd.max_stream_channels;
-        if (maxcount <= 0)
-            return maxcount;
-        for (i = 0; i < maxcount; i++) {
-            if (SND_IsStreamChannelFree(i + 32)) {
-                info[i].pszSampleName = NULL;
-            } else {
-                info[i].pszSampleName = Com_GetSoundFileName(g_snd.chaninfo[32 + i].pAlias0);
+    case SND_OVERLAY_3D:
+        return SND_Get3DChannelOverlay(info, maxcount);
 
-                rate = SND_GetStreamChannelPlaybackRate(i + 32);
-                info[i].fPitch = (float)rate / (float)g_snd.chaninfo[32 + i].baserate;
+    case SND_OVERLAY_STREAM:
+        return SND_GetStreamChannelOverlay(info, maxcount);
 
-                info[i].fBaseVolume = g_snd.chaninfo[32 + i].basevolume;
-
-                vol = SND_GetStreamChannelVolume(i + 32);
-                info[i].fCurVolume = vol;
-                if (g_snd.volume != 0.0f)
-                    info[i].fCurVolume = vol / g_snd.volume;
-
-                pAlias = g_snd.chaninfo[32 + i].pAlias0;
-                category = (pAlias->flags & 0x780) >> 7;
-                if (category > 10 || !((1 << category) & 0x786)) {
-                    SND_GetCurrent3DPosition(g_snd.chaninfo[32 + i].entnum, g_snd.chaninfo[32 + i].offset, org);
-                    dist = Vec3Distance(org, g_snd.listeners[0].orient.origin);
-                    info[i].dist = (int)dist;
-                } else {
-                    info[i].dist = -1;
-                }
-            }
-        }
-        return maxcount;
-
-    case 1:
-        if (maxcount > g_snd.max_3D_channels)
-            maxcount = g_snd.max_3D_channels;
-        if (maxcount <= 0)
-            return maxcount;
-        for (i = 0; i < maxcount; i++) {
-            if (SND_Is3DChannelFree(i)) {
-                info[i].pszSampleName = NULL;
-            } else {
-                info[i].pszSampleName = Com_GetSoundFileName(g_snd.chaninfo[i].pAlias0);
-
-                rate = SND_Get3DChannelPlaybackRate(i);
-                if (rate == 0)
-                    rate = g_snd.chaninfo[i].baserate;
-                info[i].fPitch = (float)rate / (float)g_snd.chaninfo[i].baserate;
-
-                info[i].fBaseVolume = g_snd.chaninfo[i].basevolume;
-
-                vol = SND_Get3DChannelVolume(i);
-                info[i].fCurVolume = vol;
-                if (g_snd.volume != 0.0f)
-                    info[i].fCurVolume = vol / g_snd.volume;
-
-                SND_GetCurrent3DPosition(g_snd.chaninfo[i].entnum, g_snd.chaninfo[i].offset, org);
-                dist = Vec3Distance(org, g_snd.listeners[0].orient.origin);
-                info[i].dist = (int)dist;
-            }
-        }
-        return maxcount;
-
-    case 3:
-        if (maxcount > g_snd.max_2D_channels)
-            maxcount = g_snd.max_2D_channels;
-        if (maxcount <= 0)
-            return maxcount;
-        for (i = 0; i < maxcount; i++) {
-            if (SND_Is2DChannelFree(i + 45)) {
-                info[i].pszSampleName = NULL;
-            } else {
-                info[i].pszSampleName = Com_GetSoundFileName(g_snd.chaninfo[45 + i].pAlias0);
-
-                rate = SND_Get2DChannelPlaybackRate(i + 45);
-                if (rate == 0)
-                    rate = g_snd.chaninfo[45 + i].baserate;
-                info[i].fPitch = (float)rate / (float)g_snd.chaninfo[45 + i].baserate;
-
-                info[i].fBaseVolume = g_snd.chaninfo[45 + i].basevolume;
-
-                vol = SND_Get2DChannelVolume(i + 45);
-                info[i].fCurVolume = vol;
-                if (g_snd.volume != 0.0f)
-                    info[i].fCurVolume = vol / g_snd.volume;
-
-                info[i].dist = -1;
-            }
-        }
-        return maxcount;
+    case SND_OVERLAY_2D:
+        return SND_Get2DChannelOverlay(info, maxcount);
 
     default:
         return 0;
@@ -1602,7 +1627,7 @@ void SND_StopSounds(snd_stopsounds_arg_t which)
 
 void SND_ShutdownChannels(void)
 {
-    SND_StopSounds(0);
+    SND_StopSounds( (snd_stopsounds_arg_t)(0));
     memset(g_snd.chaninfo, 0, sizeof(g_snd.chaninfo));
 }
 
@@ -1615,9 +1640,9 @@ void SND_Shutdown(void)
     if (!g_snd.Initialized2d) {
         return;
     }
-    SND_StopSounds(0);
-    Com_UnloadSoundAliases(1);
-    Com_UnloadSoundAliases(0);
+    SND_StopSounds( (snd_stopsounds_arg_t)(0));
+    Com_UnloadSoundAliases( (snd_alias_system_t)(1));
+    Com_UnloadSoundAliases( (snd_alias_system_t)(0));
     SND_ShutdownDriver();
     memset(&g_snd, 0, sizeof(g_snd));
     Cmd_RemoveCommand("snd_setEnvironmentEffects");
@@ -1631,7 +1656,7 @@ void SND_FadeAllSounds(float volume, int fadetime)
     if (fadetime != 0) {
         g_snd.mastervol.goalrate /= (float)fadetime;
     } else if (volume == 0.0f) {
-        SND_StopSounds(0);
+        SND_StopSounds( (snd_stopsounds_arg_t)(0));
     }
 }
 
@@ -1837,13 +1862,13 @@ static __attribute_regparm__(2)
 
     if (channel < 0) {
 
-        SND_StartAliasStream(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, (const vec_t *)&info[0x14], *(float *)&info[8], 1.0f, 0, *(float *)&info[0], 0, &channel, 1);
+        SND_StartAliasStream(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, (const vec_t *)&info[0x14], *(float *)&info[8], 1.0f, 0, *(float *)&info[0], 0, &channel, (snd_alias_system_t)(1));
     } else {
 
         if (!*(unsigned char *)((char *)snd_enableStream + 8))
             return 1;
 
-        SND_StartAliasStreamOnChannel(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, (const vec_t *)&info[0x14], *(float *)&info[8], 1.0f, 0, *(float *)&info[0], chaninfo.startDelay, chaninfo.master, channel, 1);
+        SND_StartAliasStreamOnChannel(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, (const vec_t *)&info[0x14], *(float *)&info[8], 1.0f, 0, *(float *)&info[0], chaninfo.startDelay, chaninfo.master, channel, (snd_alias_system_t)(1));
     }
 
     if (channel < 0)
@@ -1934,7 +1959,7 @@ void SND_Restore(MemoryFile *memFile)
         if (!*(unsigned char *)((char *)snd_enable3D + 8))
             continue;
 
-        SND_StartAlias3DSample(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, (const vec_t *)&info[0x0C], *(float *)&info[8], *(float *)&info[4], 0, *(float *)&info[0], chaninfo.startDelay, chaninfo.master, &channel, 1);
+        SND_StartAlias3DSample(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, (const vec_t *)&info[0x0C], *(float *)&info[8], *(float *)&info[4], 0, *(float *)&info[0], chaninfo.startDelay, chaninfo.master, &channel, (snd_alias_system_t)(1));
         if (channel < 0)
             continue;
 
@@ -1977,7 +2002,7 @@ void SND_Restore(MemoryFile *memFile)
         if (!*(unsigned char *)((char *)snd_enable2D + 8))
             continue;
 
-        SND_StartAlias2DSample(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, *(float *)&info[8], *(float *)&info[4], 0, *(float *)&info[0], chaninfo.startDelay, chaninfo.master, &channel, 1);
+        SND_StartAlias2DSample(pAlias0, pAlias1, chaninfo.lerp, chaninfo.entnum, *(float *)&info[8], *(float *)&info[4], 0, *(float *)&info[0], chaninfo.startDelay, chaninfo.master, &channel, (snd_alias_system_t)(1));
         if (channel < 0)
             continue;
 
@@ -2073,7 +2098,7 @@ void SND_Update(void)
         }
 
         if (g_snd.mastervol.volume == 0.0f && g_snd.mastervol.goalrate == 0.0f)
-            SND_StopSounds(0);
+            SND_StopSounds( (snd_stopsounds_arg_t)(0));
 
         Dvar_ClearModified(snd_volume);
         g_snd.volume = g_snd.mastervol.volume * *(float *)((char *)snd_volume + 8) * 0.75f;

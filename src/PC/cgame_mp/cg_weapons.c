@@ -21,29 +21,29 @@ extern scr_const_t scr_const;
 
 extern vec3_t ejectBrassCasingOrigin;
 extern int removeMeWhenMPStopsCrashingInHere;
-extern void *BG_GetWeaponDef(int weapIndex);
+extern WeaponDef * BG_GetWeaponDef(int iWeapon);
 extern void CG_SetWeaponDefToDefaultWeapon(int weaponNum);
 extern void SCR_UpdateScreen(void);
-extern struct XAnim_s *XAnimCreateAnims(const char *debugName, int size, void *Alloc);
-extern void XAnimBlend(struct XAnim_s *anims, unsigned int animIndex, const char *name, unsigned int children, unsigned int num, unsigned int flags);
-extern void XAnimPrecache(const char *name, void *Alloc);
+extern XAnim *XAnimCreateAnims(const char *debugName, int size, Alloc_t Alloc);
+extern void XAnimBlend(XAnim *anims, unsigned int animIndex, const char *name, unsigned int children, unsigned int num, unsigned int flags);
+extern XAnimParts *XAnimPrecache(const char *name, Alloc_t Alloc);
 extern void XAnimCreate(struct XAnim_s *anims, unsigned int animIndex, const char *name);
-extern void *XAnimCreateTree(void *anims, void *Alloc);
-extern void XAnimClearTreeGoalWeights(void *tree, int animIndex, int recursive);
-extern int XAnimSetGoalWeight(void *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, unsigned int notifyType, int bRestart);
-extern void XAnimSetTime(void *tree, int animIndex, float time);
-extern int XAnimIsLooped(struct XAnim_s *anims, int animIndex);
-extern int XAnimGetLengthMsec(struct XAnim_s *anims, int animIndex);
-extern int XModelBad(void *model);
-extern void *Com_GetClientDObj(int entityNum, int localClientNum);
+extern XAnimTree *XAnimCreateTree(XAnim *anims, Alloc_t Alloc);
+extern void XAnimClearTreeGoalWeights(XAnimTree *tree, unsigned int animIndex, float blendTime);
+extern int XAnimSetGoalWeight(XAnimTree *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, unsigned int notifyType, int bRestart);
+extern void XAnimSetTime(XAnimTree *tree, unsigned int animIndex, float time);
+extern Bool XAnimIsLooped(const XAnim *anims, unsigned int animIndex);
+extern int XAnimGetLengthMsec(const XAnim *anims, unsigned int animIndex);
+extern int XModelBad(const XModel *model);
+extern struct DObj_s * Com_GetClientDObj(int handle, int localClientNum);
 extern void DObjUpdateClientInfo(struct DObj_s *obj, float timescale);
-extern void Com_Error(int code, const char *fmt, ...);
+extern void Com_Error(errorParm_t code, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
-extern int CL_RegisterMaterial(const char *name, int flags);
-extern int CL_RegisterMaterialNoMip(const char *name, int flags);
+extern MaterialHandle CL_RegisterMaterial(const char *name, int imageTrack);
+extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
 extern struct XModel *CL_RegisterModel(const char *name);
-extern int FX_RegisterEffect(const char *name);
-extern void *Com_FindSoundAlias(const char *name);
+extern EffectTemplate * FX_RegisterEffect(const char *fileName);
+extern snd_alias_list_t *Com_FindSoundAlias(const char *name);
 extern const char *SEH_StringEd_GetString(const char *str);
 extern void Com_ClientDObjCreate(DObjModel_s *dobjModels, int numModels, struct XAnimTree_s *tree, int handle);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
@@ -66,11 +66,11 @@ extern int BG_GetStackSlotForWeapon(const playerState_t *pPS, int iWeaponIndex, 
 extern Bool BG_DoesWeaponNeedSlot(int weapIndex);
 extern int BG_WeaponAmmo(const playerState_t *ps, int weapon);
 extern qboolean BG_IsPlayerWeaponAnAlt(int iWeaponIndex, int iAltIndex);
-extern int FX_GetBoneIndex(int entNum, unsigned int bone);
-extern void FX_PlayEntityEffect(void *fx, const vec_t *org, vec3_t *axis, const int *bolt);
-extern void FX_PlayEffect(void *fx, const vec_t *org, const vec_t *fwd);
+extern int FX_GetBoneIndex(const int entNum, unsigned int bone);
+extern void FX_PlayEntityEffect(EffectTemplate *fx, const vec_t *org, vec3_t *axis, const FxBoltInfo *bolt);
+extern void FX_PlayEffect(EffectTemplate *fx, const vec_t *org, const vec_t *fwd);
 extern int strcmp(const char *s1, const char *s2);
-extern struct XAnimTree_s *DObjGetTree(void *obj);
+extern struct XAnimTree_s *DObjGetTree(const struct DObj_s *obj);
 extern void Com_SafeClientDObjFree(int handle);
 extern int BG_GetViewmodelWeaponIndex(const playerState_t *ps);
 extern Bool XAnimHasFinished(const struct XAnimTree_s *tree, unsigned int animIndex);
@@ -83,14 +83,15 @@ extern int rand(void);
 extern float sqrtf(float x);
 extern int CG_PlaySoundAlias(int entitynum, const vec_t *origin, snd_alias_list_t *aliasList);
 extern void CL_DefaultVertexFrames(int vertCount, GfxWorldVertex *verts);
-extern void CL_AddPolyToScene(MaterialHandle mtlHandle, int lmapIndex, int vertCount, const GfxWorldVertex *verts);
+extern void CL_AddPolyToScene(MaterialHandle mtlHandle, unsigned short lmapIndex,
+                              unsigned short vertCount, const GfxWorldVertex *verts);
 extern void BG_WeaponFireRecoil(const playerState_t *ps, vec_t *vGunSpeed, vec_t *kickAVel);
 extern qboolean CG_DObjGetViewModelTagPos(struct DObj_s *obj, unsigned int tagName, vec_t *pos);
 extern void BG_EvaluateTrajectory(const trajectory_t *tr, int atTime, vec_t *result);
 extern void CG_CompassAddWeaponPingInfo(centity_t *cent, const vec_t *origin, int msec);
 extern qboolean CL_DObjCreateSkelForBones(const struct DObj_s *obj, int *partBits, int localClientNum);
-extern void DObjCalcAnim(struct DObj_s *obj, int *partBits);
-extern void DObjCalcSkel(struct DObj_s *obj, int *partBits);
+extern void DObjCalcAnim(const DObj *obj, int *partBits);
+extern void DObjCalcSkel(const DObj *obj, int *partBits);
 extern int DObjGetClientNotifyList(XAnimNotify **notifyList);
 extern int CG_PlayClientSoundAlias(snd_alias_list_t *aliasList);
 extern int stricmp(const char *s1, const char *s2);
@@ -98,9 +99,9 @@ extern void AxisCopy(vec3_t *in, vec3_t *out);
 extern void AxisToAngles(vec3_t *axis, vec_t *angles);
 extern void AnglesToAxis(const vec_t *angles, vec3_t *axis);
 extern void MatrixMultiply(const float (*in1)[3], const float (*in2)[3], float (*out)[3]);
-extern void AddLeanToPosition(vec_t *position, float viewAngle, float leanFrac, float maxStand, float maxCrouch);
+extern void AddLeanToPosition(vec_t *position, const float fViewYaw, const float fLeanFrac, const float fViewRoll, const float fLeanDist);
 extern float DiffTrack(float tgt, float cur, float rate, float deltaTime);
-extern int DObjGetBoneIndex(void *obj, unsigned int boneName);
+extern int DObjGetBoneIndex(const DObj *obj, unsigned int boneName);
 extern DObjAnimMat *DObjGetRotTransArray(const struct DObj_s *obj);
 extern void MatrixTransformVector43(const float *in1, const float (*in2)[3], float *out);
 extern GfxEntity *R_AddRefEntityToScene(const GfxEntity *refEnt, GfxModel sceneModel, const centity_t *cent);
@@ -111,6 +112,11 @@ extern qboolean CG_GetWeapReticleZoom(float *fZoom);
 extern qboolean BG_IsAimDownSightWeapon(int iWeapon);
 extern void BG_CalculateWeaponPosition_Sway(playerState_t *ps, vec_t *swayViewAngles, vec_t *swayOffset, vec_t *swayAngles, float ssSwayScale, int frametime);
 extern void BG_CalculateWeaponAngles(weaponState_t *ws, vec_t *angles);
+extern void *Hunk_AllocXAnimPrecache(int size);
+extern void *Hunk_AllocXAnimClient(int size);
+extern itemInfo_t cg_itemsArray[];
+extern weaponInfo_t cg_weaponsArray[];
+extern gitem_t bg_itemlist[];
 static const int iSlotPreferenceOrder[2];
 extern weapSlot_t (*s_barrelTags[4])[64];
 
@@ -141,7 +147,7 @@ COD2_ASSERT_FIELD(itemInfo_t, ammoPickupSound,  0x20);
 COD2_ASSERT_FIELD(centity_t, localClientNum, 0x220);
 COD2_ASSERT_FIELD(centity_t, bMuzzleFlash,   0x1e2);
 
-static void __attribute_regparm__(3) CG_PlayADSAnim(void *unused, void *pAnimTree, int animIndex);
+static void __attribute_regparm__(3) CG_PlayADSAnim(int unusedWeapon, XAnimTree *pAnimTree, int animIndex);
 static inline __attribute__((always_inline)) qboolean CG_CanCycleWeapon(cg_t **cgOut, int *serverTimeOut);
 int CG_WeaponDObjHandle(int weaponNum);
 #ifndef __EMSCRIPTEN__
@@ -175,7 +181,7 @@ void CG_NextWeapon_f(void);
 void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo);
 void CG_UpdateViewWeaponAnim(playerState_t *ps);
 
-static void CG_PlayADSAnim_impl(void *pAnimTree, int animIndex)
+static void CG_PlayADSAnim_impl(XAnimTree *pAnimTree, int animIndex)
 {
     float adsProgress;
 
@@ -194,9 +200,9 @@ static void CG_PlayADSAnim_impl(void *pAnimTree, int animIndex)
     XAnimSetTime(pAnimTree, 0x16, 1.0f - adsProgress);
 }
 
-static void __attribute_regparm__(3) CG_PlayADSAnim(void *unused, void *pAnimTree, int animIndex)
+static void __attribute_regparm__(3) CG_PlayADSAnim(int unusedWeapon, XAnimTree *pAnimTree, int animIndex)
 {
-    (void)unused;
+    (void)unusedWeapon;
     CG_PlayADSAnim_impl(pAnimTree, animIndex);
 }
 
@@ -210,48 +216,22 @@ static inline __attribute__((always_inline)) qboolean CG_HasAssetName(const char
     return name && name[0];
 }
 
-static inline __attribute__((always_inline)) int CG_WeaponDefIntAt(const WeaponDef *weapDef, int offset)
-{
-    return *(const int *)((const byte *)weapDef + offset);
-}
-
 static inline __attribute__((always_inline)) float CG_WeaponAnimRate(struct XAnim_s *anims, int animIndex, int durationMsec)
 {
-    if (durationMsec <= 0)
-        return 0.0f;
+    float animRate = 0.0f;
 
-    return (float)XAnimGetLengthMsec(anims, animIndex) / (float)durationMsec;
-}
+    if (durationMsec > 0)
+        animRate = (float)XAnimGetLengthMsec(anims, animIndex) / (float)durationMsec;
 
-static const char *CG_TranslateWeaponString(const WeaponDef *weapDef, const char *text,
-                                            const char *errorFmt, const char *warningFmt)
-{
-    const char *translated;
-    const dvar_t *locWarnings;
-    const dvar_t *locWarningsAsErrors;
-
-    translated = SEH_StringEd_GetString(text);
-    if (translated)
-        return translated;
-
-    locWarnings = loc_warnings;
-    if (locWarnings && locWarnings->current.enabled) {
-        locWarningsAsErrors = loc_warningsAsErrors;
-        if (locWarningsAsErrors && locWarningsAsErrors->current.enabled)
-            Com_Error(6, errorFmt, weapDef->szInternalName, text);
-        else
-            Com_Printf(warningFmt, weapDef->szInternalName, text);
-    }
-
-    return text;
+    return animRate;
 }
 
 static snd_alias_list_t *CG_FindSoundAliasWithFallback(const char *name, const char *fallback)
 {
     snd_alias_list_t *alias;
 
-    alias = (snd_alias_list_t *)Com_FindSoundAlias(name);
-    return alias ? alias : (snd_alias_list_t *)Com_FindSoundAlias(fallback);
+    alias = Com_FindSoundAlias(name);
+    return alias ? alias : Com_FindSoundAlias(fallback);
 }
 
 static float CG_DvarValue(void *dvarImport)
@@ -348,7 +328,7 @@ void CG_Weapons_SetToDefault(int weaponNum, DObjModel_s *dobjModels)
 
     if (!weapDef->szGunXModel || !weapDef->szGunXModel[0] ||
         !weapDef->szHandXModel || !weapDef->szHandXModel[0])
-        Com_Error(1, "\x15"
+        Com_Error(ERR_DROP, "\x15"
                      "CG_RegisterWeapon: No gun and/or hand model specified for default weapon!");
 
     sprintf(modelFile, "%s%s", "xmodel/", weapDef->szHandXModel);
@@ -399,7 +379,7 @@ void CG_SetupWeaponDef(void)
         const char *name = pszFiles[i];
 
         if (BG_GetWeaponIndexForName(name, 0) != i + 1)
-            Com_Error(1, "Weapon index mismatch for '%s'", name);
+            Com_Error(ERR_DROP, "Weapon index mismatch for '%s'", name);
     }
 }
 
@@ -493,10 +473,10 @@ void CG_EjectWeaponBrass(entityState_t *ent, int event)
         return;
 
     if (weaponNum > BG_GetNumWeapons())
-        Com_Error(1, "\x15"
+        Com_Error(ERR_DROP, "\x15"
                      "CG_EjectWeaponBrass: ent->weapon > BG_GetNumWeapons()");
 
-    weapInfo = &(*(weaponInfo_t **)imp_cg_weapons)[weaponNum];
+    weapInfo = &cg_weaponsArray[weaponNum];
     effect = weapInfo->lastShotEjectEffect;
     if (event != 0xa0 || !effect) {
         effect = weapInfo->shellEjectEffect;
@@ -515,7 +495,7 @@ void CG_EjectWeaponBrass(entityState_t *ent, int event)
     if (bolt[1] < 0)
         return;
 
-    FX_PlayEntityEffect(effect, ejectBrassCasingOrigin, 0, bolt);
+    FX_PlayEntityEffect( (EffectTemplate *)(effect), ejectBrassCasingOrigin, 0, (const FxBoltInfo *)(bolt));
 }
 
 static qboolean CG_IsLocalClientEntity(cg_t *cg, entityState_t *ent)
@@ -544,7 +524,7 @@ static inline __attribute__((always_inline)) void CG_GetFireWeaponSoundOrigin(ce
         if (viewModel && CG_DObjGetViewModelTagPos(viewModel, tagFlash, origin))
             return;
     } else {
-        struct DObj_s *obj = Com_GetClientDObj(ent->number, cent->localClientNum);
+        struct DObj_s *obj = (DObj_s *)(Com_GetClientDObj(ent->number, cent->localClientNum));
 
         if (obj && CG_DObjGetWorldTagPos(cent, obj, tagFlash, origin))
             return;
@@ -570,7 +550,7 @@ static inline __attribute__((always_inline)) void CG_PlayFireWeaponEffect(centit
     if (!cg->renderingThirdPerson && (snap->ps.eFlags & 0x300) && snap->ps.viewlocked_entNum == ent->number)
         localTurret = 1;
 
-    weapInfo = &(*(weaponInfo_t **)imp_cg_weapons)[ent->weapon];
+    weapInfo = &cg_weaponsArray[ent->weapon];
     fx = (void *)(localTurret ? weapInfo->viewFlashEffect : weapInfo->worldFlashEffect);
     if (!fx)
         return;
@@ -581,7 +561,7 @@ static inline __attribute__((always_inline)) void CG_PlayFireWeaponEffect(centit
     if (bolt[1] < 0)
         return;
 
-    FX_PlayEntityEffect(fx, (vec_t *)&((centity_t *)cent)->lerpOrigin[0], 0, bolt);
+    FX_PlayEntityEffect( (EffectTemplate *)(fx), (vec_t *)&((centity_t *)cent)->lerpOrigin[0], 0, (const FxBoltInfo *)(bolt));
 }
 
 void CG_FireWeapon(centity_t *cent, int event, int barrel)
@@ -598,10 +578,10 @@ void CG_FireWeapon(centity_t *cent, int event, int barrel)
         return;
 
     if (ent->weapon > BG_GetNumWeapons())
-        Com_Error(1, "\x15"
+        Com_Error(ERR_DROP, "\x15"
                      "CG_FireWeapon: ent->weapon > BG_GetNumWeapons()");
 
-    weapInfo = &(*(weaponInfo_t **)imp_cg_weapons)[ent->weapon];
+    weapInfo = &cg_weaponsArray[ent->weapon];
     BG_GetWeaponDef(ent->weapon);
     cent->bMuzzleFlash = 1;
 
@@ -642,6 +622,7 @@ void CG_RegisterWeapon(int weaponNum)
     struct XAnimTree_s *pAnimTree;
     DObjModel_s dobjModels[2];
     char modelFile[64];
+    int dobjHandle;
     int i;
 
     removeMeWhenMPStopsCrashingInHere = weaponNum;
@@ -649,7 +630,7 @@ void CG_RegisterWeapon(int weaponNum)
     if (!weaponNum)
         return;
 
-    weapInfo = &(*(weaponInfo_t **)imp_cg_weapons)[weaponNum];
+    weapInfo = &cg_weaponsArray[weaponNum];
     weapDef = (WeaponDef *)BG_GetWeaponDef(weaponNum);
     if (weapInfo->registered)
         return;
@@ -658,14 +639,14 @@ void CG_RegisterWeapon(int weaponNum)
     memset(weapInfo, 0, sizeof(*weapInfo));
     weapInfo->registered = 1;
     weapInfo->item = &((gitem_t *)imp_bg_itemlist)[weaponNum];
-    itemInfo = &(*(itemInfo_t **)imp_cg_items)[weaponNum];
+    itemInfo = &cg_itemsArray[weaponNum];
 
     CG_RegisterItemVisuals(weaponNum);
     weapInfo->iPrevAnim = -1;
 
     if (weapDef->szGunXModel[0]) {
         if (!CG_HasAssetName(weapDef->szHandXModel))
-            Com_Error(1, "\x15"
+            Com_Error(ERR_DROP, "\x15"
                          "CG_RegisterWeapon: No hand model specified for [%s]",
                       weapDef->szDisplayName);
 
@@ -684,20 +665,24 @@ void CG_RegisterWeapon(int weaponNum)
             CG_Weapons_SetToDefault(weaponNum, dobjModels);
 
         if (!CG_HasAssetName(weapDef->szXAnims[1]))
-            Com_Error(1, "\x15"
+            Com_Error(ERR_DROP, "\x15"
                          "CG_RegisterWeapon: No idle anim specified for [%s]",
                       weapDef->szDisplayName);
 
-        pAnims = XAnimCreateAnims("VIEWMODEL", 0x17, imp_Hunk_AllocXAnimClient);
+        pAnims = XAnimCreateAnims("VIEWMODEL", 0x17, Hunk_AllocXAnimClient);
         XAnimBlend(pAnims, 0, "root", 1, 0x16, 0);
 
         for (i = 1; i < 0x17; i++) {
-            const char *animName = weapDef->szXAnims[i][0] ? weapDef->szXAnims[i] : weapDef->szXAnims[1];
-            XAnimPrecache(animName, imp_Hunk_AllocXAnimPrecache);
-            XAnimCreate(pAnims, i, animName);
+            if (weapDef->szXAnims[i][0]) {
+                XAnimPrecache(weapDef->szXAnims[i], Hunk_AllocXAnimPrecache);
+                XAnimCreate(pAnims, i, weapDef->szXAnims[i]);
+            } else {
+                XAnimPrecache(weapDef->szXAnims[1], Hunk_AllocXAnimPrecache);
+                XAnimCreate(pAnims, i, weapDef->szXAnims[1]);
+            }
         }
 
-        pAnimTree = (struct XAnimTree_s *)XAnimCreateTree(pAnims, imp_Hunk_AllocXAnimClient);
+        pAnimTree = (struct XAnimTree_s *)XAnimCreateTree(pAnims, Hunk_AllocXAnimClient);
         weapInfo->tree = pAnimTree;
 
         for (i = 0; i < 0x17; i++)
@@ -705,10 +690,10 @@ void CG_RegisterWeapon(int weaponNum)
 
         weapInfo->viewModelAnimRates[4] = CG_WeaponAnimRate(pAnims, 4, weapDef->iHoldFireTime);
         weapInfo->viewModelAnimRates[7] = CG_WeaponAnimRate(pAnims, 7, weapDef->iMeleeTime);
-        weapInfo->viewModelAnimRates[8] = CG_WeaponAnimRate(pAnims, 8, CG_WeaponDefIntAt(weapDef, 0x218));
+        weapInfo->viewModelAnimRates[8] = CG_WeaponAnimRate(pAnims, 8, weapDef->iReloadTime);
         weapInfo->viewModelAnimRates[9] = CG_WeaponAnimRate(pAnims, 9, weapDef->iReloadEmptyTime);
         weapInfo->viewModelAnimRates[10] = CG_WeaponAnimRate(pAnims, 10, weapDef->iReloadStartTime);
-        weapInfo->viewModelAnimRates[11] = CG_WeaponAnimRate(pAnims, 11, CG_WeaponDefIntAt(weapDef, 0x218));
+        weapInfo->viewModelAnimRates[11] = CG_WeaponAnimRate(pAnims, 11, weapDef->iReloadTime);
         weapInfo->viewModelAnimRates[12] = CG_WeaponAnimRate(pAnims, 12, weapDef->iRaiseTime);
         weapInfo->viewModelAnimRates[13] = CG_WeaponAnimRate(pAnims, 13, weapDef->iDropTime);
         weapInfo->viewModelAnimRates[14] = CG_WeaponAnimRate(pAnims, 14, weapDef->iAltRaiseTime);
@@ -717,25 +702,26 @@ void CG_RegisterWeapon(int weaponNum)
         weapInfo->viewModelAnimRates[17] = CG_WeaponAnimRate(pAnims, 17, weapDef->quickDropTime);
 
         if (weapDef->szXAnims[21][0] && XAnimIsLooped(pAnims, 0x15))
-            Com_Error(1, "\x15"
+            Com_Error(ERR_DROP, "\x15"
                          "CG_RegisterWeapon: ADS anim [%s] cannot be looping",
                       weapDef->szXAnims[21]);
 
         if (weapDef->szXAnims[22][0] && XAnimIsLooped(pAnims, 0x16))
-            Com_Error(1, "\x15"
+            Com_Error(ERR_DROP, "\x15"
                          "CG_RegisterWeapon: ADS anim [%s] cannot be looping",
                       weapDef->szXAnims[22]);
 
-        Com_ClientDObjCreate(dobjModels, 2, pAnimTree, CG_WeaponDObjHandle(weaponNum));
-        weapInfo->viewModelDObj = Com_GetClientDObj(CG_WeaponDObjHandle(weaponNum), 0);
+        dobjHandle = weaponNum + 0x400;
+        Com_ClientDObjCreate(dobjModels, 2, pAnimTree, dobjHandle);
+        weapInfo->viewModelDObj = (DObj_s *)(Com_GetClientDObj(dobjHandle, 0));
         I_strncpyz(weapInfo->handModel, weapDef->szHandXModel, sizeof(weapInfo->handModel));
 
         XAnimClearTreeGoalWeights(pAnimTree, 0, 0);
-        XAnimSetGoalWeight(pAnimTree, 0, 1.0f, 0.0f, weapInfo->viewModelAnimRates[0], 0, 0, 1);
-        XAnimSetGoalWeight(pAnimTree, 1, 1.0f, 0.0f, weapInfo->viewModelAnimRates[1], 0, 0, 1);
+        XAnimSetGoalWeight(pAnimTree, 0, 1.0f, 0.0f, weapInfo->viewModelAnimRates[0], 0, 1, 0);
+        XAnimSetGoalWeight(pAnimTree, 1, 1.0f, 0.0f, weapInfo->viewModelAnimRates[1], 0, 1, 0);
 
         if (weapDef->szXAnims[22][0]) {
-            XAnimSetGoalWeight(pAnimTree, 0x16, 1.0f, 0.0f, 0.0f, 0, 0, 1);
+            XAnimSetGoalWeight(pAnimTree, 0x16, 1.0f, 0.0f, 0.0f, 0, 1, 0);
             XAnimSetTime(pAnimTree, 0x16, 1.0f);
         }
 
@@ -763,33 +749,33 @@ void CG_RegisterWeapon(int weaponNum)
     if (weapDef->szWorldFlashEffect[0])
         weapInfo->worldFlashEffect = (struct EffectTemplate *)FX_RegisterEffect(weapDef->szWorldFlashEffect);
 
-    weapInfo->missileSound = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szProjectileSound);
-    weapInfo->pullbackSound = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szPullbackSound);
-    weapInfo->flashSound = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szFireSound);
-    weapInfo->flashSoundPlayer = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szFireSoundPlayer);
-    weapInfo->lastShotSound = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szFireLastSound);
-    weapInfo->lastShotSoundPlayer = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szFireLastSoundPlayer);
-    weapInfo->meleeSwipeSound = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->meleeSwipeSound);
-    weapInfo->rechamberSound = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szRechamberSound);
-    weapInfo->rechamberSoundPlayer = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szRechamberSoundPlayer);
-    weapInfo->reloadSound = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szReloadSound);
-    weapInfo->reloadSoundPlayer = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szReloadSoundPlayer);
-    weapInfo->reloadEmptySound = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szReloadEmptySound);
-    weapInfo->reloadEmptySoundPlayer = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szReloadEmptySoundPlayer);
-    weapInfo->reloadStartSound = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szReloadStartSound);
-    weapInfo->reloadStartSoundPlayer = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szReloadStartSoundPlayer);
-    weapInfo->reloadEndSound = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szReloadEndSound);
-    weapInfo->reloadEndSoundPlayer = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szReloadEndSoundPlayer);
+    weapInfo->missileSound = Com_FindSoundAlias(weapDef->szProjectileSound);
+    weapInfo->pullbackSound = Com_FindSoundAlias(weapDef->szPullbackSound);
+    weapInfo->flashSound = Com_FindSoundAlias(weapDef->szFireSound);
+    weapInfo->flashSoundPlayer = Com_FindSoundAlias(weapDef->szFireSoundPlayer);
+    weapInfo->lastShotSound = Com_FindSoundAlias(weapDef->szFireLastSound);
+    weapInfo->lastShotSoundPlayer = Com_FindSoundAlias(weapDef->szFireLastSoundPlayer);
+    weapInfo->meleeSwipeSound = Com_FindSoundAlias(weapDef->meleeSwipeSound);
+    weapInfo->rechamberSound = Com_FindSoundAlias(weapDef->szRechamberSound);
+    weapInfo->rechamberSoundPlayer = Com_FindSoundAlias(weapDef->szRechamberSoundPlayer);
+    weapInfo->reloadSound = Com_FindSoundAlias(weapDef->szReloadSound);
+    weapInfo->reloadSoundPlayer = Com_FindSoundAlias(weapDef->szReloadSoundPlayer);
+    weapInfo->reloadEmptySound = Com_FindSoundAlias(weapDef->szReloadEmptySound);
+    weapInfo->reloadEmptySoundPlayer = Com_FindSoundAlias(weapDef->szReloadEmptySoundPlayer);
+    weapInfo->reloadStartSound = Com_FindSoundAlias(weapDef->szReloadStartSound);
+    weapInfo->reloadStartSoundPlayer = Com_FindSoundAlias(weapDef->szReloadStartSoundPlayer);
+    weapInfo->reloadEndSound = Com_FindSoundAlias(weapDef->szReloadEndSound);
+    weapInfo->reloadEndSoundPlayer = Com_FindSoundAlias(weapDef->szReloadEndSoundPlayer);
     weapInfo->raiseSound = CG_FindSoundAliasWithFallback(weapDef->szRaiseSound, "weap_raise");
-    weapInfo->altSwitchSound = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szAltSwitchSound);
+    weapInfo->altSwitchSound = Com_FindSoundAlias(weapDef->szAltSwitchSound);
     weapInfo->putawaySound = CG_FindSoundAliasWithFallback(weapDef->szPutawaySound, "weap_putaway");
-    weapInfo->noteTrackSound[0] = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szNoteTrackSoundA);
-    weapInfo->noteTrackSound[1] = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szNoteTrackSoundB);
-    weapInfo->noteTrackSound[2] = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szNoteTrackSoundC);
-    weapInfo->noteTrackSound[3] = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szNoteTrackSoundD);
+    weapInfo->noteTrackSound[0] = Com_FindSoundAlias(weapDef->szNoteTrackSoundA);
+    weapInfo->noteTrackSound[1] = Com_FindSoundAlias(weapDef->szNoteTrackSoundB);
+    weapInfo->noteTrackSound[2] = Com_FindSoundAlias(weapDef->szNoteTrackSoundC);
+    weapInfo->noteTrackSound[3] = Com_FindSoundAlias(weapDef->szNoteTrackSoundD);
 
     if (!itemInfo->pickupSound)
-        itemInfo->pickupSound = (snd_alias_list_t *)Com_FindSoundAlias("weap_pickup");
+        itemInfo->pickupSound = Com_FindSoundAlias("weap_pickup");
 
     itemInfo->ammoPickupSound = CG_FindSoundAliasWithFallback(weapDef->szAmmoPickupSound, "weap_ammo_pickup");
 
@@ -804,13 +790,13 @@ void CG_RegisterWeapon(int weaponNum)
     if (weapDef->szProjectileModel[0]) {
         weapInfo->missileSurfModel = CL_RegisterModel(weapDef->szProjectileModel);
         if (!weapInfo->missileSurfModel)
-            Com_Error(1, "\x15Weapon %s does not specify a valid projectile model (%s)\n", weapDef->szInternalName, weapDef->szWorldModel);
+            Com_Error(ERR_DROP, "\x15Weapon %s does not specify a valid projectile model (%s)\n", weapDef->szInternalName, weapDef->szWorldModel);
     }
 
     if (weapDef->szProjExplosionEffect[0])
         weapInfo->projExplosionEffect = (struct EffectTemplate *)FX_RegisterEffect(weapDef->szProjExplosionEffect);
 
-    weapInfo->projExplosionSound = (snd_alias_list_t *)Com_FindSoundAlias(weapDef->szProjExplosionSound);
+    weapInfo->projExplosionSound = Com_FindSoundAlias(weapDef->szProjExplosionSound);
 
     if (weapDef->szProjTrailEffect[0])
         weapInfo->projTrailEffect = (struct EffectTemplate *)FX_RegisterEffect(weapDef->szProjTrailEffect);
@@ -832,12 +818,38 @@ void CG_RegisterWeapon(int weaponNum)
     if (weapDef->szModeIcon[0])
         weapInfo->hModeIcon = (MaterialHandle)CL_RegisterMaterial(weapDef->szModeIcon, 7);
 
-    weapInfo->pszTranslatedDisplayName = CG_TranslateWeaponString(weapDef, weapDef->szDisplayName,
-                                                                  "Weapon %s: Could not translate display name \"%s\"", "^3WARNING: Weapon %s: Could not translate display name \"%s\"\n");
-    weapInfo->pszTranslatedModename = CG_TranslateWeaponString(weapDef, weapDef->szModeName,
-                                                               "Weapon %s: Could not translate mode name \"%s\"", "^3WARNING: Weapon %s: Could not translate mode name \"%s\"\n");
-    weapInfo->pszTranslatedAIOverlayDescription = CG_TranslateWeaponString(weapDef, weapDef->szOverlayName,
-                                                                           "Weapon %s: Could not translate AI overlay description \"%s\"", "^3WARNING: Weapon %s: Could not translate AI overlay description \"%s\"\n");
+    weapInfo->pszTranslatedDisplayName = SEH_StringEd_GetString(weapDef->szDisplayName);
+    if (!weapInfo->pszTranslatedDisplayName) {
+        if (loc_warnings->current.enabled) {
+            if (loc_warningsAsErrors->current.enabled)
+                Com_Error(ERR_LOCALIZATION, "Weapon %s: Could not translate display name \"%s\"", weapDef->szInternalName, weapDef->szDisplayName);
+            else
+                Com_Printf("^3WARNING: Weapon %s: Could not translate display name \"%s\"\n", weapDef->szInternalName, weapDef->szDisplayName);
+        }
+        weapInfo->pszTranslatedDisplayName = weapDef->szDisplayName;
+    }
+
+    weapInfo->pszTranslatedModename = SEH_StringEd_GetString(weapDef->szModeName);
+    if (!weapInfo->pszTranslatedModename) {
+        if (loc_warnings->current.enabled) {
+            if (loc_warningsAsErrors->current.enabled)
+                Com_Error(ERR_LOCALIZATION, "Weapon %s: Could not translate mode name \"%s\"", weapDef->szInternalName, weapDef->szModeName);
+            else
+                Com_Printf("^3WARNING: Weapon %s: Could not translate mode name \"%s\"\n", weapDef->szInternalName, weapDef->szModeName);
+        }
+        weapInfo->pszTranslatedModename = weapDef->szModeName;
+    }
+
+    weapInfo->pszTranslatedAIOverlayDescription = SEH_StringEd_GetString(weapDef->szOverlayName);
+    if (!weapInfo->pszTranslatedAIOverlayDescription) {
+        if (loc_warnings->current.enabled) {
+            if (loc_warningsAsErrors->current.enabled)
+                Com_Error(ERR_LOCALIZATION, "Weapon %s: Could not translate AI overlay description \"%s\"", weapDef->szInternalName, weapDef->szOverlayName);
+            else
+                Com_Printf("^3WARNING: Weapon %s: Could not translate AI overlay description \"%s\"\n", weapDef->szInternalName, weapDef->szOverlayName);
+        }
+        weapInfo->pszTranslatedAIOverlayDescription = weapDef->szOverlayName;
+    }
 }
 
 void CG_RegisterItemVisuals(int itemNum)
@@ -845,34 +857,29 @@ void CG_RegisterItemVisuals(int itemNum)
     itemInfo_t *itemInfo;
     gitem_t *item;
     int i;
-    void *pickupSound;
 
-    itemInfo = &(*(itemInfo_t **)imp_cg_items)[itemNum];
+    itemInfo = &cg_itemsArray[itemNum];
     if (itemInfo->registered)
         return;
 
-    item = &((gitem_t *)imp_bg_itemlist)[itemNum];
+    item = &bg_itemlist[itemNum];
     itemInfo->registered = 0;
 
     for (i = 0; i < 2; i++) {
-        const char *modelName = *(const char **)((byte *)item + 8 + i * 4);
-        if (modelName && modelName[0]) {
+        if (item->world_model[i] && item->world_model[i][0]) {
             SCR_UpdateScreen();
-            *(struct XModel **)((byte *)itemInfo + 4 + i * 4) = CL_RegisterModel(modelName);
+            itemInfo->models[i] = CL_RegisterModel(item->world_model[i]);
         }
     }
 
     itemInfo->icons[0] = CL_RegisterMaterial(item->icon, 7);
 
-    if (item->pickup_sound) {
-        pickupSound = Com_FindSoundAlias(item->pickup_sound);
-        itemInfo->pickupSound = pickupSound;
-    } else {
-        pickupSound = itemInfo->pickupSound;
-    }
-    itemInfo->ammoPickupSound = pickupSound;
+    if (item->pickup_sound)
+        itemInfo->pickupSound = Com_FindSoundAlias(item->pickup_sound);
 
-    if (item->giType == 1)
+    itemInfo->ammoPickupSound = itemInfo->pickupSound;
+
+    if (item->giType == IT_WEAPON)
         CG_RegisterWeapon(item->giTag);
 
     itemInfo->registered = 1;
@@ -912,7 +919,7 @@ void CG_UpdateHandViewmodels(const char *handModel)
         int dobjHandle;
         char modelFile[64];
 
-        weapInfo = &(*(weaponInfo_t **)imp_cg_weapons)[weaponIdx];
+        weapInfo = &cg_weaponsArray[weaponIdx];
         if (!strcmp(weapInfo->handModel, handModel))
             continue;
 
@@ -943,7 +950,7 @@ void CG_UpdateHandViewmodels(const char *handModel)
             CG_Weapons_SetToDefault(weaponIdx, dobjModels);
 
         Com_ClientDObjCreate(dobjModels, 2, pAnimTree, dobjHandle);
-        weapInfo->viewModelDObj = Com_GetClientDObj(dobjHandle, 0);
+        weapInfo->viewModelDObj = (DObj_s *)(Com_GetClientDObj(dobjHandle, 0));
         I_strncpyz(weapInfo->handModel, handModel, 0x40);
         DObjUpdateClientInfo(weapInfo->viewModelDObj, 0.05f);
     }
@@ -1107,7 +1114,7 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
     if (ent->eFlags & 0x300)
         return;
 
-    weapInfo = &(*(weaponInfo_t **)imp_cg_weapons)[weaponNum];
+    weapInfo = &cg_weaponsArray[weaponNum];
 
     if (bViewModel) {
         if (bDrawGun) {
@@ -1211,7 +1218,7 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
         if (bolt[1] < 0)
             return;
 
-        FX_PlayEntityEffect(fx, origin, 0, bolt);
+        FX_PlayEntityEffect( (EffectTemplate *)(fx), origin, 0, (const FxBoltInfo *)(bolt));
     }
 }
 
@@ -1361,10 +1368,10 @@ void CG_BulletHitEvent(int sourceEntityNum, vec_t *position, vec_t *normal, vec_
     CG_PlaySoundAlias(0x3fe, position, alias);
 
     if (fxNormal)
-        FX_PlayEffect(fxNormal, position, normal);
+        FX_PlayEffect((EffectTemplate *)fxNormal, position, normal);
 
     if (fxReflect)
-        FX_PlayEffect(fxReflect, position, reflected);
+        FX_PlayEffect((EffectTemplate *)fxReflect, position, reflected);
 
     flashTag = *(unsigned short *)s_barrelTags[0];
     tracerChance = cg_tracerChance->current.value;
@@ -1507,6 +1514,7 @@ void CG_DrawTracer(vec_t *start, vec_t *finish)
 void CG_WeaponSlot_f(qboolean next, qboolean ignoreEmpty)
 {
     int serverTime;
+    cg_t *cgTmp;
     int slot;
     int weaponIndex;
     int oldWeaponIndex;
@@ -1515,7 +1523,7 @@ void CG_WeaponSlot_f(qboolean next, qboolean ignoreEmpty)
     (void)next;
     (void)ignoreEmpty;
 
-    if (!CG_CanCycleWeapon(&cg, &serverTime))
+    if (!CG_CanCycleWeapon(&cgTmp, &serverTime))
         return;
 
     cg->weaponSelectTime = serverTime;
@@ -1569,7 +1577,7 @@ qboolean CG_SelectFirstWeaponNotInSlot(qboolean bNext, qboolean bIgnoreEmpty)
         if (BG_IsPlayerWeaponInSlot(&cg->predictedPlayerState, weaponIndex, 1))
             continue;
 
-        if (BG_GetStackSlotForWeapon(&cg->predictedPlayerState, weaponIndex, 0))
+        if (BG_GetStackSlotForWeapon(&cg->predictedPlayerState, weaponIndex, (weapSlot_t)(0)))
             continue;
 
         if (!BG_DoesWeaponNeedSlot(weaponIndex))
@@ -1698,7 +1706,7 @@ static inline __attribute__((always_inline)) qboolean CG_SelectNextNonSlotWeapon
         if (BG_IsPlayerWeaponInSlot(ps, weaponIndex, 1))
             continue;
 
-        if (BG_GetStackSlotForWeapon(ps, weaponIndex, 0))
+        if (BG_GetStackSlotForWeapon(ps, weaponIndex, (weapSlot_t)(0)))
             continue;
 
         if (bIgnoreEmpty && !BG_WeaponAmmo(ps, weaponIndex))
@@ -1733,7 +1741,7 @@ void CG_CycleWeap(qboolean bNext, qboolean bIgnoreEmpty)
 
     currentSlot = BG_IsPlayerWeaponInSlot(ps, currentWeapon, 1);
     if (!currentSlot)
-        currentSlot = BG_GetStackSlotForWeapon(ps, currentWeapon, 0);
+        currentSlot = BG_GetStackSlotForWeapon(ps, currentWeapon, (weapSlot_t)(0));
 
     if (currentSlot) {
         if (CG_SelectOtherWeaponSlot(cg, ps, currentSlot, step, bNext ? 1 : 2, bIgnoreEmpty))
@@ -1844,13 +1852,14 @@ static inline __attribute__((always_inline)) qboolean CG_CanCycleWeapon(cg_t **c
 void CG_PrevWeapon_f(void)
 {
     int serverTime;
+    cg_t *cgTmp;
 
     if (CG_ScoreboardDisplayed()) {
         CG_ScrollScoreboardDown();
         return;
     }
 
-    if (!CG_CanCycleWeapon(&cg, &serverTime))
+    if (!CG_CanCycleWeapon(&cgTmp, &serverTime))
         return;
 
     cg->weaponSelectTime = serverTime;
@@ -1860,13 +1869,14 @@ void CG_PrevWeapon_f(void)
 void CG_NextWeapon_f(void)
 {
     int serverTime;
+    cg_t *cgTmp;
 
     if (CG_ScoreboardDisplayed()) {
         CG_ScrollScoreboardUp();
         return;
     }
 
-    if (!CG_CanCycleWeapon(&cg, &serverTime))
+    if (!CG_CanCycleWeapon(&cgTmp, &serverTime))
         return;
 
     cg->weaponSelectTime = serverTime;
@@ -1937,7 +1947,7 @@ void CG_WeaponRunXModelAnims(playerState_t *ps, weaponInfo_t *weapInfo)
         activeAnim = 1;
     }
 
-    CG_SetWeaponXAnimWeights(pAnimTree, &(*(weaponInfo_t **)imp_cg_weapons)[weaponIndex], activeAnim);
+    CG_SetWeaponXAnimWeights(pAnimTree, &cg_weaponsArray[weaponIndex], activeAnim);
 
     if (maskedAnim > 0x13)
         Com_Printf("CG_WeaponRunXModelAnims: Unknown weapon animation %i\n", maskedAnim);
@@ -2002,7 +2012,7 @@ void CG_UpdateViewWeaponAnim(playerState_t *ps)
 
     if (*(int *)(psBytes + 4) > 5) {
         for (weaponNum = 1; weaponNum <= BG_GetNumWeapons(); weaponNum++) {
-            weapInfo = &(*(weaponInfo_t **)imp_cg_weapons)[weaponNum];
+            weapInfo = &cg_weaponsArray[weaponNum];
             if (weapInfo->viewModelDObj)
                 CG_ResetViewWeaponAnimTree(psBytes, weaponNum, weapInfo);
         }
@@ -2014,7 +2024,7 @@ void CG_UpdateViewWeaponAnim(playerState_t *ps)
         return;
 
     CG_RegisterWeapon(weaponIndex);
-    weapInfoBase = *(weaponInfo_t **)imp_cg_weapons;
+    weapInfoBase = cg_weaponsArray;
     weapInfo = &weapInfoBase[weaponIndex];
     CG_WeaponRunXModelAnims(ps, weapInfo);
 
@@ -2054,11 +2064,11 @@ void CG_Weapons_SetToDefault(int weaponNum, weaponInfo_s (*dobjModels)[4])
 
     handModel = ((WeaponDef *)weapDef)->szGunXModel;
     if (!handModel || handModel[0] == '\0') {
-        Com_Error(1, "could not find default weapon model");
+        Com_Error(ERR_DROP, "could not find default weapon model");
     } else {
         viewModel = ((WeaponDef *)weapDef)->szHandXModel;
         if (!viewModel || viewModel[0] == '\0') {
-            Com_Error(1, "could not find default weapon model");
+            Com_Error(ERR_DROP, "could not find default weapon model");
         }
     }
 

@@ -8,7 +8,7 @@ XVertexInfo *XSurfaceGetVertexInfoArray(const XSurface *surf);
 int XSurfaceGetBoneOffset(const XSurface *surf);
 void XSurfaceTransferDx7(const XVertexBuffer *surfVerts, GfxVertexDx7 *verts, int vertCount);
 void XSurfaceTransfer(const XVertexBuffer *surfVerts, GfxVertex *verts, int vertCount);
-long unsigned int XSurfaceGetVerts(const XSurface *surf, DObjSkelMat *boneMatrix, float *pVert, float *pTexCoord, float *pNormal);
+void XSurfaceGetVerts(const XSurface *surf, DObjSkelMat *boneMatrix, float *pVert, float *pTexCoord, float *pNormal);
 
 int XSurfaceGetNumVerts(const XSurface *surface)
 {
@@ -143,7 +143,7 @@ static inline __attribute__((always_inline)) void XSurfaceTransformPosWeighted(c
     out[2] += (pos[0] * mat->axis[0][2] + pos[1] * mat->axis[1][2] + pos[2] * mat->axis[2][2] + mat->origin[2]) * scale;
 }
 
-long unsigned int XSurfaceGetVerts(const XSurface *surf, DObjSkelMat *boneMatrix, float *pVert, float *pTexCoord, float *pNormal)
+void XSurfaceGetVerts(const XSurface *surf, DObjSkelMat *boneMatrix, float *pVert, float *pTexCoord, float *pNormal)
 {
     XVertexInfo *vertInfo;
     int vertCount;

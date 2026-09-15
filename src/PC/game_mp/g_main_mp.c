@@ -4,34 +4,41 @@
 #include <stdarg.h>
 #include <float.h>
 
-extern void BodyEnd();
-extern void Die_trigger_damage();
-extern void DroppedItemClearOwner();
-extern void FinishSpawningItem();
-extern void G_ExplodeMissile();
-extern void G_PlayerController();
-extern void Pain_trigger_damage();
-extern void Reached_ScriptMover();
-extern void Touch_Item_Auto();
-extern void Touch_Multi();
-extern void Use_trigger_damage();
-extern void hurt_touch();
-extern void hurt_use();
-extern void player_die();
-extern void turret_controller();
-extern void turret_think();
-extern void turret_think_init();
-extern void turret_use();
-extern void use_trigger_use();
+extern void BodyEnd(gentity_t *ent);
+extern void Die_trigger_damage(gentity_t *self, gentity_t *inflictor, gentity_t *attacker,
+                               int damage, int meansOfDeath, int weapon,
+                               const vec_t *dir, const hitLocation_t hitLoc, int timeOffset);
+extern void DroppedItemClearOwner(gentity_t *ent);
+extern void FinishSpawningItem(gentity_t *ent);
+extern void G_ExplodeMissile(gentity_t *ent);
+extern void G_PlayerController(gentity_t *ent, int *partBits);
+extern void Pain_trigger_damage(gentity_t *self, gentity_t *attacker, int damage,
+                                const vec_t *point, const int meansOfDeath,
+                                const vec_t *dir, const hitLocation_t hitLoc);
+extern void Reached_ScriptMover(gentity_t *ent);
+extern void Touch_Item_Auto(gentity_t *ent, gentity_t *other, qboolean touched);
+extern void Touch_Multi(gentity_t *ent, gentity_t *other, qboolean touched);
+extern void Use_trigger_damage(gentity_t *ent, gentity_t *other, gentity_t *activator);
+extern void hurt_touch(gentity_t *ent, gentity_t *other, qboolean touched);
+extern void hurt_use(gentity_t *ent, gentity_t *other, gentity_t *activator);
+extern void player_die(gentity_t *self, gentity_t *inflictor, gentity_t *attacker,
+                       int damage, int meansOfDeath, int weapon,
+                       const vec_t *dir, const hitLocation_t hitLoc, int timeOffset);
+extern void turret_controller(gentity_t *ent, int *partBits);
+extern void turret_think(gentity_t *ent);
+extern void turret_think_init(gentity_t *ent);
+extern void turret_use(gentity_t *ent, gentity_t *owner, gentity_t *activator);
+extern void use_trigger_use(gentity_t *ent, gentity_t *other, gentity_t *activator);
 extern entityHandler_t entityHandlers[20];
 
-#define SCR_CONST() ((const scr_const_t *)imp_scr_const)
+extern scr_const_t scr_const;
+#define SCR_CONST() (&scr_const)   /* was an imp_ deref; use the real object like cgame does */
 
-COD2_ASSERT_FIELD(struct bgs_t, anim_user,    736232);
-COD2_ASSERT_FIELD(struct bgs_t, GetXModel,    736236);
-COD2_ASSERT_FIELD(struct bgs_t, CreateDObj,   736240);
-COD2_ASSERT_FIELD(struct bgs_t, SafeDObjFree, 736244);
-COD2_ASSERT_FIELD(struct bgs_t, AllocXAnim,   736248);
+COD2_ASSERT_FIELD(struct bgs_t, anim_user,    740328);
+COD2_ASSERT_FIELD(struct bgs_t, GetXModel,    740332);
+COD2_ASSERT_FIELD(struct bgs_t, CreateDObj,   740336);
+COD2_ASSERT_FIELD(struct bgs_t, SafeDObjFree, 740340);
+COD2_ASSERT_FIELD(struct bgs_t, AllocXAnim,   740344);
 
 static const char str_dbg_spawn[] = "";
 static const char str_dbg_load[] = "";
@@ -116,21 +123,21 @@ extern unsigned char g_clients[];
 
 extern float ceilf(float x);
 extern int Com_ServerDObjCreate(DObjModel_s *models, int numModels, struct XAnimTree_s *tree, int handle);
-extern int *Hunk_AllocLowInternal(int size);
-extern int SV_Trace(trace_t *results, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int contentmask, qboolean locational, unsigned char *priorityMap, qboolean staticmodels);
+extern void *Hunk_AllocLowInternal(int size);
+extern void SV_Trace(trace_t *results, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int contentmask, qboolean locational, unsigned char *priorityMap, qboolean staticmodels);
 extern qboolean SV_TracePassed(const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int passOwnerNum, int contentmask, int locational, int staticmodels);
 extern int SV_SightTrace(int *hitNum, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int passOwnerNum, int contentmask);
 extern void CL_AddDebugString(const vec_t *xyz, const vec_t *color, float scale, const char *pszText, int fromServer);
 extern void Cbuf_ExecuteText(int exec_when, const char *text);
-extern void SV_GameSendServerCommand(int clientNum, int svscmd_type, const char *text);
-extern void SV_SetConfigstring(int index, const char *val);
+extern void SV_GameSendServerCommand(int clientNum, svscmd_type type, const char *text);
+extern void SV_SetConfigstring(const int index, const char *val);
 extern char *va(const char *format, ...);
 extern void Com_Error(int code, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern int FS_Write(const void *buffer, int len, fileHandle_t h);
 extern void FS_FCloseFile(fileHandle_t f);
-extern unsigned char G_FreeEntity(gentity_t *ent);
+extern void G_FreeEntity(gentity_t *ent);
 extern void SV_UnlinkEntity(gentity_t *ent);
 extern void HudElem_DestroyAll(void);
 extern qboolean Scr_IsSystemActive(int inst);
@@ -147,7 +154,7 @@ extern void G_RunItem(gentity_t *ent);
 extern void G_RunCorpse(gentity_t *ent);
 extern void G_RunMover(gentity_t *ent);
 extern void G_RunClient(gentity_t *ent);
-extern unsigned char G_GeneralLink(gentity_t *ent);
+extern void G_GeneralLink(gentity_t *ent);
 
 static vec3_t vec3_zero = { 0.0f, 0.0f, 0.0f };
 
@@ -317,7 +324,7 @@ static int G_CreateDObj(DObjModel_s *dobjModels, int numModels, struct XAnimTree
 
 int *Hunk_AllocXAnimServer(int size)
 {
-    return Hunk_AllocLowInternal(size);
+    return (int *)Hunk_AllocLowInternal(size);
 }
 
 static int SortRanks(const int *a, const int *b)
@@ -456,7 +463,7 @@ extern void BG_RegisterDvars(void);
 extern void Rand_Init(int seed);
 extern int FS_FOpenFileByMode(const char *filename, int *handle, int mode);
 extern void SV_GetServerinfo(char *value, int size);
-extern void SV_LocateGameData(gentity_t *gEnts, int numGEntities, int sizeofGEntity, playerState_t *clients, int sizeofGameClient);
+extern void SV_LocateGameData(gentity_t *gEnts, int numGEntities, int sizeofGEntity_t, playerState_t *clients, int sizeofGameClient);
 extern void G_SpawnEntitiesFromString(void);
 extern void Scr_BeginLoadScripts(void);
 extern void Scr_PostCompileScripts(void);
@@ -497,12 +504,12 @@ extern void ClientEndFrame(gentity_t *ent);
 extern void HudElem_UpdateClient(gclient_t *client, int clientNum, int which);
 extern unsigned char scrVarPub[];
 extern unsigned char scrVmPub[];
-extern unsigned int Scr_AddEntity(void *ent);
-extern void Scr_Notify(void *ent, int stringValue, unsigned int paramcount);
+extern void Scr_AddEntity(gentity_t *ent);
+extern void Scr_Notify(gentity_t *ent, unsigned short stringValue, unsigned int paramcount);
 extern void BG_LoadAnim(void);
 extern int Com_FindSoundAlias(const char *name);
 extern int G_AnimScriptSound(int client, snd_alias_list_t *aliasList);
-extern void *XAnimCreateTree(void *anims, void *Alloc);
+extern XAnimTree *XAnimCreateTree(XAnim *anims, Alloc_t Alloc);
 
 #ifndef __EMSCRIPTEN__
 void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepersist)
@@ -528,6 +535,10 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
 
     G_InitDbgPrint("[G_InitGame] level.clients=%p\n", (void *)level.clients);
 
+    {
+        extern int Sys_DiffSeed(int fallback);   /* sysdiff_statehash.c */
+        randomSeed = Sys_DiffSeed(randomSeed);
+    }
     srand(randomSeed);
     Rand_Init(randomSeed);
     G_SetupWeaponDef();
@@ -538,9 +549,9 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
 
     G_ProcessIPBans();
 
-    level_bgs.GetXModel    = (struct XModel *(*)())imp_SV_XModelGet;
-    level_bgs.CreateDObj   = (void (*)())G_CreateDObj;
-    level_bgs.SafeDObjFree = (void (*)())imp_Com_SafeServerDObjFree;
+    level_bgs.GetXModel    = (XModel *(__cdecl *)(const char *))((struct XModel *(*)())imp_SV_XModelGet);
+    level_bgs.CreateDObj   = (void (__cdecl *)(void *,unsigned short,void *,int,void *))((void (*)())G_CreateDObj);
+    level_bgs.SafeDObjFree = (void (__cdecl *)(int))((void (*)())imp_Com_SafeServerDObjFree);
     level_bgs.AllocXAnim   = (void *(*)())Hunk_AllocXAnimServer;
     level_bgs.anim_user    = 1;
 
@@ -560,7 +571,7 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     }
 
     {
-        int *p = Hunk_AllocLowInternal(0);
+        int *p = (int *)Hunk_AllocLowInternal(0);
         *(void **)&scrVarPub = (void *)p;
         *(byte *)p = 0;
     }
@@ -570,8 +581,12 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
             (gclient_s *)((byte *)level.clients + (unsigned int)i * 0x28a4);
     }
     level.num_entities = 0x48;
-    *(int *)((char *)&level + 16) = 0;
-    *(int *)((char *)&level + 20) = 0;
+    /* Reset the free-entity list head/tail. The original used hardcoded x86
+     * byte offsets (&level+16 / +20) which on x64 land on gentitySize and
+     * num_entities instead (three pointers before num_entities grow 4->8),
+     * clobbering num_entities back to 0 and mis-indexing every entity. */
+    level.firstFreeEnt = NULL;
+    level.lastFreeEnt = NULL;
 
     SV_LocateGameData((gentity_t *)g_entities, 0x48, sizeof(gentity_t), (playerState_t *)g_clients, sizeof(gclient_t));
     G_SpawnEntitiesFromString();
@@ -592,17 +607,17 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     DBG_PrintFreeVars(str_dbg_endload);
 
     *(void **)imp_bgs = (void *)&level_bgs;
-    level_bgs.animScriptData.soundAlias = (snd_alias_list_t * (*)()) Com_FindSoundAlias;
-    level_bgs.animScriptData.playSoundAlias = (int (*)())G_AnimScriptSound;
+    level_bgs.animScriptData.soundAlias = (snd_alias_list_t *(__cdecl *)(const char *))((snd_alias_list_t * (*)()) Com_FindSoundAlias);
+    level_bgs.animScriptData.playSoundAlias = (int (__cdecl *)(int,snd_alias_list_t *))((int (*)())G_AnimScriptSound);
 
     if (!restart) {
         BG_LoadAnim();
 
         void *animTree = (void *)level_bgs.animScriptData.animTree.anims;
-        byte *clientTree = (byte *)&level_bgs + 0xb40a0;
         int t;
-        for (t = 0; t < 64; t++, clientTree += 0x4b8)
-            *(void **)clientTree = XAnimCreateTree(animTree, (void *)Hunk_AllocXAnimServer);
+        for (t = 0; t < 64; t++)
+            level_bgs.clientinfo[t].pXAnimTree =
+                (XAnimTree_s *)XAnimCreateTree((XAnim *)animTree, (Alloc_t)Hunk_AllocXAnimServer);
     }
 
     GScr_LoadConsts();
@@ -668,7 +683,7 @@ extern void BG_RegisterDvars(void);
 extern void Rand_Init(int seed);
 extern int FS_FOpenFileByMode(const char *filename, int *handle, int mode);
 extern void SV_GetServerinfo(char *value, int size);
-extern void SV_LocateGameData(gentity_t *gEnts, int numGEntities, int sizeofGEntity, playerState_t *clients, int sizeofGameClient);
+extern void SV_LocateGameData(gentity_t *gEnts, int numGEntities, int sizeofGEntity_t, playerState_t *clients, int sizeofGameClient);
 extern void G_SpawnEntitiesFromString(void);
 extern void Scr_BeginLoadScripts(void);
 extern void Scr_PostCompileScripts(void);
@@ -709,8 +724,8 @@ extern void ClientEndFrame(gentity_t *ent);
 extern void HudElem_UpdateClient(gclient_t *client, int clientNum, int which);
 extern unsigned char scrVarPub[];
 extern unsigned char scrVmPub[];
-extern unsigned int Scr_AddEntity(void *ent);
-extern void Scr_Notify(void *ent, int stringValue, unsigned int paramcount);
+extern void Scr_AddEntity(gentity_t *ent);
+extern void Scr_Notify(gentity_t *ent, unsigned short stringValue, unsigned int paramcount);
 
 static void G_RegisterDvars_impl(void)
 {
@@ -807,6 +822,10 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
 
     G_InitDbgPrint("[G_InitGame] level.clients=%p\n", (void *)level.clients);
 
+    {
+        extern int Sys_DiffSeed(int fallback);   /* sysdiff_statehash.c */
+        randomSeed = Sys_DiffSeed(randomSeed);
+    }
     srand(randomSeed);
     Rand_Init(randomSeed);
     G_SetupWeaponDef();
@@ -839,7 +858,7 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     }
 
     {
-        int *p = Hunk_AllocLowInternal(0);
+        int *p = (int *)Hunk_AllocLowInternal(0);
         *(void **)&scrVarPub = (void *)p;
         *(byte *)p = 0;
     }
@@ -849,8 +868,12 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
             (gclient_s *)((byte *)level.clients + (unsigned int)i * 0x28a4);
     }
     level.num_entities = 0x48;
-    *(int *)((char *)&level + 16) = 0;
-    *(int *)((char *)&level + 20) = 0;
+    /* Reset the free-entity list head/tail. The original used hardcoded x86
+     * byte offsets (&level+16 / +20) which on x64 land on gentitySize and
+     * num_entities instead (three pointers before num_entities grow 4->8),
+     * clobbering num_entities back to 0 and mis-indexing every entity. */
+    level.firstFreeEnt = NULL;
+    level.lastFreeEnt = NULL;
 
     SV_LocateGameData((gentity_t *)g_entities, 0x48, sizeof(gentity_t), (playerState_t *)g_clients, sizeof(gclient_t));
     G_SpawnEntitiesFromString();
@@ -878,10 +901,10 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
         BG_LoadAnim();
 
         void *animTree = (void *)level_bgs.animScriptData.animTree.anims;
-        byte *clientTree = (byte *)&level_bgs + 0xb40a0;
         int t;
-        for (t = 0; t < 64; t++, clientTree += 0x4b8)
-            *(void **)clientTree = XAnimCreateTree(animTree, (void *)Hunk_AllocXAnimServer);
+        for (t = 0; t < 64; t++)
+            level_bgs.clientinfo[t].pXAnimTree =
+                (XAnimTree_s *)XAnimCreateTree((XAnim *)animTree, (Alloc_t)Hunk_AllocXAnimServer);
     }
 
     GScr_LoadConsts();
@@ -1049,8 +1072,10 @@ void G_ShutdownGame(qboolean freeScripts)
         G_FreeEntity(&g_entities[1022]);
 
     level.num_entities = 0;
-    *(int *)((char *)&level + 16) = 0;
-    *(int *)((char *)&level + 20) = 0;
+    /* Clear the free-entity list head/tail (x64: the original &level+16/+20
+     * hit gentitySize/num_entities, leaving stale free-list pointers). */
+    level.firstFreeEnt = NULL;
+    level.lastFreeEnt = NULL;
 
     HudElem_DestroyAll();
 
@@ -1204,6 +1229,8 @@ int G_RunFrame(int levelTime)
     level_bgs.latestSnapshotTime = levelTime;
     level_bgs.frametime = level.frametime;
 
+    if (getenv("COD2_WP439")) { extern void dbg_protect_439(void); dbg_protect_439(); }
+
     *(void **)imp_bgs = (void *)&level_bgs;
 
     { static int sc; if (sc++ < 1) dbg_scan_ents("RunFrame0_start"); }
@@ -1263,7 +1290,7 @@ int G_RunFrame(int levelTime)
 
                             entIndex[entNum] = index;
                             Scr_AddEntity(otherEnt);
-                            Scr_Notify(entPtr, (int)SCR_CONST()->trigger, 1);
+                            Scr_Notify(entPtr, SCR_CONST()->trigger, 1);
 
                             {
                                 int last = level.currentTriggerListSize - 1;
@@ -1326,6 +1353,14 @@ int G_RunFrame(int levelTime)
     Com_Printf("[ckpt] G_RunFrame think loop DONE\n");
     level.currentEntityThink = -1;
 
+    if (getenv("COD2_CLAMP_TR")) {
+        int _e;
+        for (_e = 0; _e < level.num_entities; _e++) {
+            if ((unsigned int)g_entities[_e].s.pos.trType > 8u)  g_entities[_e].s.pos.trType = (trType_t)(0);
+            if ((unsigned int)g_entities[_e].s.apos.trType > 8u) g_entities[_e].s.apos.trType = (trType_t)(0);
+        }
+    }
+
     {
         int numClients = level.maxclients;
         for (i = 0; i < numClients; i++) {
@@ -1343,7 +1378,7 @@ int G_RunFrame(int levelTime)
                     if (srcObj->state != 0 && srcObj->teamNum == lastObjId) {
                         *dstObj = *srcObj;
                     } else {
-                        dstObj->state = 0;
+                        dstObj->state = (objectiveState_t)(0);
                     }
                 } else {
                     *dstObj = *srcObj;
@@ -1427,23 +1462,23 @@ int G_RunFrame(int levelTime)
 
 entityHandler_t entityHandlers[20] = {
     { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },
-    { 0x0, 0x0, 0x0, &Touch_Multi, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },
-    { 0x0, 0x0, 0x0, 0x0, &hurt_use, 0x0, 0x0, 0x0, 0x0, 0x0 },
-    { 0x0, 0x0, 0x0, &hurt_touch, &hurt_use, 0x0, 0x0, 0x0, 0x0, 0x0 },
-    { 0x0, 0x0, 0x0, 0x0, &Use_trigger_damage, &Pain_trigger_damage, &Die_trigger_damage, 0x0, 0x0, 0x0 },
-    { 0x0, &Reached_ScriptMover, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },
-    { 0x0, &Reached_ScriptMover, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },
-    { &G_ExplodeMissile, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3, 0x4 },
-    { &G_ExplodeMissile, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x5, 0x6 },
-    { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, &player_die, &G_PlayerController, 0x0, 0x0 },
-    { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, &player_die, 0x0, 0x0, 0x0 },
-    { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, &G_PlayerController, 0x0, 0x0 },
-    { &BodyEnd, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },
-    { &turret_think_init, 0x0, 0x0, 0x0, &turret_use, 0x0, 0x0, &turret_controller, 0x0, 0x0 },
-    { &turret_think, 0x0, 0x0, 0x0, &turret_use, 0x0, 0x0, &turret_controller, 0x0, 0x0 },
-    { &DroppedItemClearOwner, 0x0, 0x0, &Touch_Item_Auto, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },
-    { &FinishSpawningItem, 0x0, 0x0, &Touch_Item_Auto, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },
-    { 0x0, 0x0, 0x0, &Touch_Item_Auto, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },
-    { 0x0, 0x0, 0x0, 0x0, &use_trigger_use, 0x0, 0x0, 0x0, 0x0, 0x0 },
-    { &G_FreeEntity, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 }
+    { 0x0, 0x0, 0x0, (fn_touch)&Touch_Multi, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },
+    { 0x0, 0x0, 0x0, 0x0, (fn_use)&hurt_use, 0x0, 0x0, 0x0, 0x0, 0x0 },
+    { 0x0, 0x0, 0x0, (fn_touch)&hurt_touch, (fn_use)&hurt_use, 0x0, 0x0, 0x0, 0x0, 0x0 },
+    { 0x0, 0x0, 0x0, 0x0, (fn_use)&Use_trigger_damage, (fn_pain)&Pain_trigger_damage, (fn_die)&Die_trigger_damage, 0x0, 0x0, 0x0 },
+    { 0x0, (fn_reached)&Reached_ScriptMover, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },
+    { 0x0, (fn_reached)&Reached_ScriptMover, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },
+    { (fn_think)&G_ExplodeMissile, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3, 0x4 },
+    { (fn_think)&G_ExplodeMissile, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x5, 0x6 },
+    { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, (fn_die)&player_die, (fn_controller)&G_PlayerController, 0x0, 0x0 },
+    { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, (fn_die)&player_die, 0x0, 0x0, 0x0 },
+    { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, (fn_controller)&G_PlayerController, 0x0, 0x0 },
+    { (fn_think)&BodyEnd, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },
+    { (fn_think)&turret_think_init, 0x0, 0x0, 0x0, (fn_use)&turret_use, 0x0, 0x0, (fn_controller)&turret_controller, 0x0, 0x0 },
+    { (fn_think)&turret_think, 0x0, 0x0, 0x0, (fn_use)&turret_use, 0x0, 0x0, (fn_controller)&turret_controller, 0x0, 0x0 },
+    { (fn_think)&DroppedItemClearOwner, 0x0, 0x0, (fn_touch)&Touch_Item_Auto, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },
+    { (fn_think)&FinishSpawningItem, 0x0, 0x0, (fn_touch)&Touch_Item_Auto, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },
+    { 0x0, 0x0, 0x0, (fn_touch)&Touch_Item_Auto, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 },
+    { 0x0, 0x0, 0x0, 0x0, (fn_use)&use_trigger_use, 0x0, 0x0, 0x0, 0x0, 0x0 },
+    { (fn_think)&G_FreeEntity, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 }
 };

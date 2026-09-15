@@ -10,23 +10,24 @@ extern int CL_GetKeyCatchers(void);
 extern Bool CL_GetDisplayHUDWithKeycatchUI(void);
 extern float CL_NormalizedTextScale(FontHandle font, float fontScale);
 extern void CalcScreenPlacement(float *x, float *y, float *scaleX, float *scaleY, int vertAlign, int horzAlign);
-extern void CL_DrawTextPhysical(const char *text, int maxChars, FontHandle font, float x, float y, float scaleX, float scaleY, vec4_t *color, int style);
-extern void CL_DrawStretchPicPhysical(float x, float y, float w, float h, float s0, float t0, float s1, float t1, vec4_t *color, void *material);
-extern void CG_DrawRotatedPicPhysical(float x, float y, float w, float h, float angle, vec4_t *color, void *material);
+extern void CL_DrawTextPhysical(const char *text, int maxChars, FontHandle font, float x, float y, float scaleX, float scaleY, const float *color, int style);
+extern void CL_DrawStretchPicPhysical(float x, float y, float w, float h, float s0, float t0, float s1, float t1, const float *color, Material *material);
+extern void CG_DrawRotatedPicPhysical(float x, float y, float w, float h, float angle, const float *color, Material *material);
 
-extern void CL_DrawSprite(void *material, byte *rgbaColor, const vec_t *pos, float radius, float minScreenRadius, int renderFxFlags);
+extern void CL_DrawSprite(Material *material, const byte *rgbaColor, const vec_t *pos,
+                          float radius, float minScreenRadius, int renderFxFlags);
 extern FontHandle UI_GetFontHandle(int scriptIndex, float fontScale);
 extern int UI_TextWidth(const char *text, int maxChars, FontHandle font, float fontScale);
 extern int UI_TextHeight(FontHandle font, float fontScale);
 extern void CG_SafeTranslateHudElemString(int label, char *dst);
-extern int CG_ServerMaterialName(int materialIndex, char *buf, int bufSize);
-extern void *CL_RegisterMaterial(const char *name, int imageTrack);
-extern void *CL_RegisterMaterialNoMip(const char *name, int imageTrack);
+extern qboolean CG_ServerMaterialName(int index, char *materialName, int maxLen);
+extern MaterialHandle CL_RegisterMaterial(const char *name, int imageTrack);
+extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
 extern const char *CL_GetConfigString(int index);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern void I_strncat(char *dest, int maxlen, const char *src);
 extern const char *va(const char *format, ...);
-extern float AngleNormalize360(float angle);
+extern const float AngleNormalize360(const float angle);
 
 Bool CG_AreHudElemsHidden(void);
 float CG_AlignHudElemX(int alignOrg, float x, float width);
@@ -313,7 +314,7 @@ static void CG_DrawHudElemString(const char *text, const hudelem_t *elem, cg_hud
     float dy = cghe->fontHeight;
     CalcScreenPlacement(&dummyX, &dummyY, &dx, &dy, alignScreen & 7, (alignScreen >> 3) & 7);
 
-    CL_DrawTextPhysical(text, 0x7fffffff, cghe->font, cghe->x, yPos + dy, scaleX, scaleY, &cghe->color, 3);
+    CL_DrawTextPhysical(text, 0x7fffffff, cghe->font, cghe->x, yPos + dy, scaleX, scaleY, cghe->color, 3);
 }
 
 static void CG_GetHudElemInfo(const hudelem_t *elem, cg_hudelem_t *cghe, char *hudElemString)
@@ -668,7 +669,7 @@ void CG_Draw2dHudElems(qboolean foreground)
         }
     }
 
-    qsort(elems, elemCount, 4, (int (*)(const void *, const void *))compare_hudelems);
+    qsort(elems, elemCount, sizeof(void *), (int (*)(const void *, const void *))compare_hudelems);
 
     if (elemCount <= 0)
         return;
@@ -737,7 +738,7 @@ void CG_Draw2dHudElems(qboolean foreground)
                 int alignScreen = elem->alignScreen;
                 CalcScreenPlacement(&dummyX, &dummyY, &width, &height, alignScreen & 7, (alignScreen >> 3) & 7);
 
-                CL_DrawStretchPicPhysical(cghe.x, yPos, width, height, 0.0f, 0.0f, 1.0f, 1.0f, &cghe.color, material);
+                CL_DrawStretchPicPhysical(cghe.x, yPos, width, height, 0.0f, 0.0f, 1.0f, 1.0f, cghe.color, (Material *)material);
             } else if (typeMask & 0x1800) {
 
                 char materialName[64];
@@ -816,9 +817,9 @@ void CG_Draw2dHudElems(qboolean foreground)
                 int alignScreen2 = elem->alignScreen;
                 CalcScreenPlacement(&dummyY2, &dummyW, &width, &height, alignScreen2 & 7, (alignScreen2 >> 3) & 7);
 
-                CL_DrawStretchPicPhysical(cghe.x, yPos2, width, height, 0.0f, 0.0f, 1.0f, 1.0f, &cghe.color, faceMaterial);
+                CL_DrawStretchPicPhysical(cghe.x, yPos2, width, height, 0.0f, 0.0f, 1.0f, 1.0f, cghe.color, (Material *)faceMaterial);
 
-                CG_DrawRotatedPicPhysical(cghe.x, yPos2, width, height, angle, &cghe.color, handMaterial);
+                CG_DrawRotatedPicPhysical(cghe.x, yPos2, width, height, angle, cghe.color, (Material *)handMaterial);
             }
         }
     }
@@ -860,7 +861,7 @@ void CG_Draw3dHudElems(void)
         }
     }
 
-    qsort(elems, elemCount, 4, (int (*)(const void *, const void *))compare_hudelems);
+    qsort(elems, elemCount, sizeof(void *), (int (*)(const void *, const void *))compare_hudelems);
 
     if (elemCount <= 0)
         return;
@@ -915,7 +916,7 @@ void CG_Draw3dHudElems(void)
         rgbaColor[2] = 0xFF;
         rgbaColor[3] = (byte)(int)(floorf(alpha * 255.0f + 0.5f));
 
-        CL_DrawSprite(material, rgbaColor, pos, height, 0.0f, renderFxFlags);
+        CL_DrawSprite((Material *)material, rgbaColor, pos, height, 0.0f, renderFxFlags);
     }
 
     return;

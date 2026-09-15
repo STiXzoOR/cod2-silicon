@@ -57,32 +57,32 @@ void *R_LoadXModelSurfsSurface(void *surfsCtx, void *partBitsArg,
 
     for (vi = 0; vi < vertCount; vi++) {
 
-        *(unsigned int * *)((char *)v + offsetof(GfxVertex, xyzw[0])) = *(unsigned int *)c;
+        *(unsigned int *)((char *)v + offsetof(GfxVertex, xyzw[0])) = *(unsigned int *)c;
         c += 4;
-        *(unsigned int * *)((char *)v + offsetof(GfxVertex, xyzw[1])) = *(unsigned int *)c;
+        *(unsigned int *)((char *)v + offsetof(GfxVertex, xyzw[1])) = *(unsigned int *)c;
         c += 4;
-        *(unsigned int * *)((char *)v + offsetof(GfxVertex, xyzw[2])) = *(unsigned int *)c;
+        *(unsigned int *)((char *)v + offsetof(GfxVertex, xyzw[2])) = *(unsigned int *)c;
         c += 4;
         v[0x0c] = c[0];
         v[0x0d] = c[1];
         v[0x0e] = c[2];
         v[0x0f] = c[3];
         c += 4;
-        *(unsigned int * *)((char *)v + offsetof(GfxVertex, color.packed)) = *(unsigned int *)c;
+        *(unsigned int *)((char *)v + offsetof(GfxVertex, color.packed)) = *(unsigned int *)c;
         c += 4;
-        *(unsigned int * *)((char *)v + offsetof(GfxVertex, binormal[1])) = *(unsigned int *)c;
+        *(unsigned int *)((char *)v + offsetof(GfxVertex, binormal[1])) = *(unsigned int *)c;
         c += 4;
-        *(unsigned int * *)((char *)v + offsetof(GfxVertex, normal[0])) = *(unsigned int *)c;
+        *(unsigned int *)((char *)v + offsetof(GfxVertex, normal[0])) = *(unsigned int *)c;
         c += 4;
-        *(unsigned int * *)((char *)v + offsetof(GfxVertex, normal[1])) = *(unsigned int *)c;
+        *(unsigned int *)((char *)v + offsetof(GfxVertex, normal[1])) = *(unsigned int *)c;
         c += 4;
-        *(unsigned int * *)((char *)v + offsetof(GfxVertex, normal[2])) = *(unsigned int *)c;
+        *(unsigned int *)((char *)v + offsetof(GfxVertex, normal[2])) = *(unsigned int *)c;
         c += 4;
-        *(unsigned int * *)((char *)v + offsetof(GfxVertex, texCoord[0])) = *(unsigned int *)c;
+        *(unsigned int *)((char *)v + offsetof(GfxVertex, texCoord[0])) = *(unsigned int *)c;
         c += 4;
-        *(unsigned int * *)((char *)v + offsetof(GfxVertex, texCoord[1])) = *(unsigned int *)c;
+        *(unsigned int *)((char *)v + offsetof(GfxVertex, texCoord[1])) = *(unsigned int *)c;
         c += 4;
-        *(unsigned int * *)((char *)v + offsetof(GfxVertex, binormal[0])) = *(unsigned int *)c;
+        *(unsigned int *)((char *)v + offsetof(GfxVertex, binormal[0])) = *(unsigned int *)c;
         c += 4;
 
         if (skinned) {
@@ -93,11 +93,11 @@ void *R_LoadXModelSurfsSurface(void *surfsCtx, void *partBitsArg,
             c += 2;
             partBits[b0 >> 5] |= (1u << (b0 & 0x1f));
             *(unsigned short *)(v + 0x3e) = (unsigned short)(b0 << 6);
-            *(unsigned int * *)((char *)v + offsetof(GfxVertex, binormal[2])) = *(unsigned int *)c;
+            *(unsigned int *)((char *)v + offsetof(GfxVertex, binormal[2])) = *(unsigned int *)c;
             c += 4;
-            *(unsigned int * *)((char *)v + offsetof(GfxVertex, tangent[0])) = *(unsigned int *)c;
+            *(unsigned int *)((char *)v + offsetof(GfxVertex, tangent[0])) = *(unsigned int *)c;
             c += 4;
-            *(unsigned int * *)((char *)v + offsetof(GfxVertex, tangent[1])) = *(unsigned int *)c;
+            *(unsigned int *)((char *)v + offsetof(GfxVertex, tangent[1])) = *(unsigned int *)c;
             c += 4;
 
             if (numWeights != 0) {
@@ -124,11 +124,11 @@ void *R_LoadXModelSurfsSurface(void *surfsCtx, void *partBitsArg,
 
             v += 0x40 + numWeights * 0x10;
         } else {
-            *(unsigned int * *)((char *)v + offsetof(GfxVertex, binormal[2])) = *(unsigned int *)c;
+            *(unsigned int *)((char *)v + offsetof(GfxVertex, binormal[2])) = *(unsigned int *)c;
             c += 4;
-            *(unsigned int * *)((char *)v + offsetof(GfxVertex, tangent[0])) = *(unsigned int *)c;
+            *(unsigned int *)((char *)v + offsetof(GfxVertex, tangent[0])) = *(unsigned int *)c;
             c += 4;
-            *(unsigned int * *)((char *)v + offsetof(GfxVertex, tangent[1])) = *(unsigned int *)c;
+            *(unsigned int *)((char *)v + offsetof(GfxVertex, tangent[1])) = *(unsigned int *)c;
             c += 4;
             v += 0x40;
         }

@@ -5,7 +5,7 @@
 
 typedef struct XModelConfig XModelConfig;
 typedef struct DSurface_s DSurface;
-typedef void * (*Alloc_t)();
+typedef void * (*Alloc_t)(int);   /* real allocator(size) sig; matches common_types.h */
 
 typedef struct TestLod TestLod;
 typedef struct XAnimCalcAnimInfo XAnimCalcAnimInfo;

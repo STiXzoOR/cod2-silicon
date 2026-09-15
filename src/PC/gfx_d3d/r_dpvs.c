@@ -4,6 +4,23 @@ extern refimport_t ri;
 extern GfxScene scene;
 #include "imports.h"
 #include "bytematch.h"
+/* dvar globals */
+extern const dvar_t *r_drawBModels;
+extern const dvar_t *r_drawEntities;
+extern const dvar_t *r_drawSModels;
+extern const dvar_t *r_drawWorld;
+extern const dvar_t *r_drawXModels;
+extern const dvar_t *r_portalBevels;
+extern const dvar_t *r_portalBevelsOnly;
+extern const dvar_t *r_portalFineCull;
+extern const dvar_t *r_portalMinClipArea;
+extern const dvar_t *r_portalWalkLimit;
+extern const dvar_t *r_showPortals;
+extern const dvar_t *r_showSModelNames;
+extern const dvar_t *r_singleCell;
+extern const dvar_t *r_skipPvs;
+extern const dvar_t *r_vc_makelog;
+extern const dvar_t *r_zfar;
 
 COD2_ASSERT_FIELD(GfxScene, viewCount, 0x0);
 COD2_ASSERT_FIELD(GfxScene, def, 0x4);
@@ -16,6 +33,12 @@ static struct DpvsScene dpvsScene;
 extern unsigned char dpvsGlob[224];
 
 #define dpvsG (*(struct DpvsGlobals *)(void *)&dpvsGlob)
+#define DPVS_MAX_PORTAL_QUEUE 0x100
+
+typedef struct DpvsPortalQueueEntry {
+    GfxPortal *portal;
+    float priority;
+} DpvsPortalQueueEntry;
 
 extern const unsigned char standardFrustumSidePlanes[];
 
@@ -31,22 +54,22 @@ int R_AddVisSurf_diag_get(void)
     return c;
 }
 
-extern void R_UpdateXModelBounds(void *sceneEnt, void *ent);
-extern void R_SkinSceneEnt(void *sceneEnt, void *ent);
+extern void R_UpdateXModelBounds(GfxSceneEntity *sceneEnt, GfxEntity *ent);
+extern void R_SkinSceneEnt(GfxSceneEntity *sceneEnt, GfxEntity *ent);
 extern void R_AddXModelSurfaces(int entIndex);
 extern r_globals_t rg;
 extern r_global_permanent_t rgp;
 extern void R_Error(int level, const char *fmt, ...);
 extern void Vec3Cross(const vec_t *v0, const vec_t *v1, vec_t *cross);
-extern float Vec3Normalize(vec_t *v);
+extern const vec_t Vec3Normalize(vec_t *v);
 extern int BoxOnPlaneSide(const vec_t *emins, const vec_t *emaxs, const cplane_t *p);
 extern void ExpandBounds(const vec_t *addedmins, const vec_t *addedmaxs, vec_t *mins, vec_t *maxs);
-extern float Vec3Distance(const vec_t *v0, const vec_t *v1);
-extern const char *XModelGetName(void *model);
-extern void R_AddDebugString(void *debugGlobals, const vec_t *origin, const void *color, float scale, const char *text);
-extern void R_SkinStaticModel(void *sceneEnt, void *ent, int smodelIndex);
+extern const vec_t Vec3Distance(const vec_t *v1, const vec_t *v2);
+extern const char *XModelGetName(const XModel *model);
+extern void R_AddDebugString(DebugGlobals *debugGlobals, const vec_t *origin, const vec_t *color, float scale, const char *text);
+extern void R_SkinStaticModel(GfxSceneEntity *sceneEnt, GfxEntity *ent, int smodelIndex);
 extern int R_AddStaticModelToScene(int smodelIndex);
-extern void R_AddDrawSurfForSurface(void *surf, int entIndex);
+extern void R_AddDrawSurfForSurface(GfxSurface *surf, int entIndex);
 void R_DrawModel(int entIndex);
 float R_GetFarPlaneDist(void);
 void R_ClearDpvsScene(void);
@@ -140,7 +163,7 @@ static qboolean R_DpvsShouldFallbackAllCells(int cameraCellIndex)
 {
     if (cameraCellIndex < 0)
         return 0;
-    if (!(*(const dvar_t **)imp_r_drawWorld)->current.integer)
+    if (!(r_drawWorld)->current.integer)
         return 0;
     return *(int *)&dpvsG.farPlanePtr == 0;
 }
@@ -161,7 +184,7 @@ void R_DrawModel(int entIndex)
 
 float R_GetFarPlaneDist(void)
 {
-    float farPlaneDist = (*(const dvar_t **)imp_r_zfar)->current.value;
+    float farPlaneDist = (r_zfar)->current.value;
 
     if (farPlaneDist == 0.0f) {
         r_globals_t *rgg = (r_globals_t *)imp_rg;
@@ -271,7 +294,7 @@ static int R_DPVS_REGPARM3_ABI R_FilterEntityIntoCells_r_impl(mnode_t *node, int
     newRef->maxs[0] = maxs[0];
     newRef->maxs[1] = maxs[1];
     newRef->maxs[2] = maxs[2];
-    newRef->next = (int)(intptr_t)cell->modelRefs;
+    newRef->next = (intptr_t)cell->modelRefs;
     cell->modelRefs = newRef;
 
     return node->cellIndex;
@@ -453,10 +476,10 @@ static void R_DPVS_REGPARM3_ABI R_GetSidePlaneNormals(vec3_t *winding, int verte
 
 static void R_DPVS_REGPARM3_ABI R_AddStaticModelWithCull_impl(int smodelIndex, const DpvsPlane *planes, int planeCount, int stackLevel)
 {
-    int *smodelDync = (int *)((byte *)rg.smodelDyncs + smodelIndex * 8);
+    GfxStaticModelDynamic *smodelDync = &rg.smodelDyncs[smodelIndex];
     int viewCount = scene.viewCount;
 
-    if (smodelDync[0] == viewCount)
+    if (smodelDync->viewCount == viewCount)
         return;
 
     GfxStaticModelInstance *smodelInst = &rgp.world->smodelInsts[smodelIndex];
@@ -465,7 +488,7 @@ static void R_DPVS_REGPARM3_ABI R_AddStaticModelWithCull_impl(int smodelIndex, c
         float dist = Vec3Distance(smodelInst->origin, rg.lodParms.origin);
         float scaledDist = dist * rg.lodParms.scale + rg.lodParms.bias;
         if (scaledDist > smodelInst->cullDist) {
-            smodelDync[0] = viewCount;
+            smodelDync->viewCount = viewCount;
             return;
         }
     }
@@ -477,12 +500,12 @@ static void R_DPVS_REGPARM3_ABI R_AddStaticModelWithCull_impl(int smodelIndex, c
     if (!R_CullByOccluders(stackLevel, bounds))
         return;
 
-    smodelDync[0] = viewCount;
+    smodelDync->viewCount = viewCount;
 
-    if ((*(const dvar_t **)imp_r_showSModelNames)->current.enabled) {
+    if ((r_showSModelNames)->current.enabled) {
         const char *name = XModelGetName(smodelInst->model);
         DebugGlobals *debugGlobals = &frontEndDataOut->debugGlobals;
-        R_AddDebugString(debugGlobals, smodelInst->origin, (const void *)imp_colorWhite, 0.3f, name);
+        R_AddDebugString(debugGlobals, smodelInst->origin, (const vec_t *)imp_colorWhite, 0.3f, name);
     }
 
     int entIndex = R_AddStaticModelToScene(smodelIndex);
@@ -546,7 +569,7 @@ static void R_DPVS_REGPARM3_ABI R_AddWorldSurfaceWithCull_impl(int surfIndex, co
         return;
     }
 
-    if (planeCount > 0 && (*(const dvar_t **)imp_r_portalFineCull)->current.enabled) {
+    if (planeCount > 0 && (r_portalFineCull)->current.enabled) {
         const float *bounds = (const float *)tris->bounds;
         if (!R_CullByFrustumPlanes((DpvsPlane *)planes, planeCount, stackLevel, bounds))
             return;
@@ -568,12 +591,12 @@ static void R_DPVS_REGPARM3_ABI R_AddWorldSurfaceWithCull(int surfIndex, const D
 
 static void R_AddStaticModelDirect(int smodelIndex)
 {
-    int *smodelDync = (int *)((byte *)rg.smodelDyncs + smodelIndex * 8);
+    GfxStaticModelDynamic *smodelDync = &rg.smodelDyncs[smodelIndex];
     int viewCount = scene.viewCount;
 
-    if (smodelDync[0] == viewCount)
+    if (smodelDync->viewCount == viewCount)
         return;
-    smodelDync[0] = viewCount;
+    smodelDync->viewCount = viewCount;
 
     GfxStaticModelInstance *inst = &rgp.world->smodelInsts[smodelIndex];
 
@@ -584,10 +607,10 @@ static void R_AddStaticModelDirect(int smodelIndex)
             return;
     }
 
-    if ((*(const dvar_t **)imp_r_showSModelNames)->current.enabled) {
+    if ((r_showSModelNames)->current.enabled) {
         const char *name = XModelGetName(inst->model);
         DebugGlobals *debugGlobals = &frontEndDataOut->debugGlobals;
-        R_AddDebugString(debugGlobals, inst->origin, (const void *)imp_colorWhite, 0.3f, name);
+        R_AddDebugString(debugGlobals, inst->origin, (const vec_t *)imp_colorWhite, 0.3f, name);
     }
 
     int entIndex = R_AddStaticModelToScene(smodelIndex);
@@ -820,18 +843,18 @@ static int R_DPVS_REGPARM3_ABI R_GetFurtherCellList_r(const GfxCell *cell, const
     return R_GetFurtherCellList_r_impl(cell, parentPlane, planes, planeCount, v, list, count);
 }
 
-extern void CG_CullIn(void *poseCtx);
-extern void CG_UsedDObjCalcPose(void *poseCtx);
-extern void R_AddBModelSurfaces(void *sceneEnt, int entIndex);
-extern void R_SkinSceneEnt(void *sceneEnt, void *ent);
-extern void R_AddDebugBox(void *debugGlobals, const float *mins, const float *maxs, const float *color);
-extern void R_AddDebugLine(void *debugGlobals, const vec_t *start, const vec_t *end, const float *color);
-extern void R_AddDebugPolygon(void *debugGlobals, const float *color, int vertCount, const vec_t *verts);
-extern int Com_ConvexHull(const vec2_t *points, int maxPoints, vec2_t *hull);
-extern int WindingContainsCoplanarPoint(const vec3_t *verts, int vertCount, const vec_t *planeNormal, const vec_t *point);
+extern void CG_CullIn(const centity_t *cent);
+extern void CG_UsedDObjCalcPose(const centity_t *cent);
+extern void R_AddBModelSurfaces(GfxSceneEntity *sceneEnt, int entIndex);
+extern void R_SkinSceneEnt(GfxSceneEntity *sceneEnt, GfxEntity *ent);
+extern void R_AddDebugBox(DebugGlobals *debugGlobals, const float *mins, const float *maxs, const float *color);
+extern void R_AddDebugLine(DebugGlobals *debugGlobalsEntry, const vec_t *start, const vec_t *end, const vec_t *color);
+extern void R_AddDebugPolygon(DebugGlobals *debugGlobals, const float *color, int vertCount, vec3_t *verts);
+extern int Com_ConvexHull(vec2_t *points, int pointCount, vec2_t *hull);
+extern qboolean WindingContainsCoplanarPoint(vec3_t *verts, int vertCount, const vec_t *normal, const vec_t *point);
 extern int R_CullPointAndRadius(const vec_t *origin, float radius, const DpvsPlane *planes, int planeCount);
 extern void RB_ShowLightVisCachePoints(const GfxViewParms *viewParms, const DpvsPlane *planes, int planeCount);
-extern void *R_GetGfxEntityDObj(void *sceneEnt, void *ent);
+extern struct DObj_s *R_GetGfxEntityDObj(GfxSceneEntity *sceneEnt, GfxEntity *ent);
 extern void ClearBounds(vec_t *mins, vec_t *maxs);
 extern void AddPointToBounds(const vec_t *v, vec_t *mins, vec_t *maxs);
 extern void R_dpvs_diag_print(int cameraCellIndex, int drawWorld, const void *cellPtr);
@@ -847,7 +870,7 @@ static void R_DPVS_REGPARM3_ABI R_AddVisibleSurfacesInCell_impl(const GfxCell *c
         GfxAabbTree *tree = cell->aabbTree;
         if (tree && tree->childCount > 0) {
 
-            if ((*(const dvar_t **)imp_r_portalFineCull)->current.enabled) {
+            if ((r_portalFineCull)->current.enabled) {
                 for (i = 0; i < tree->childCount; i++) {
                     GfxAabbTree *child = (GfxAabbTree *)((byte *)(intptr_t)tree->children + i * sizeof(GfxAabbTree));
                     R_AddAabbTreeSurfaces_r_impl(child, (DpvsPlane *)planes, planeCount, 0);
@@ -904,11 +927,11 @@ static void R_DPVS_REGPARM3_ABI R_AddVisibleSurfacesInCell_impl(const GfxCell *c
                         if (!R_CullByOccluders(0, bounds))
                             goto next_modelref;
                     }
-                    CG_UsedDObjCalcPose((void *)sceneEnt2->cent);
+                    CG_UsedDObjCalcPose(sceneEnt2->cent);
                     R_UpdateXModelBounds(sceneEnt2, ent);
                 }
 
-                CG_CullIn((void *)sceneEnt2->cent);
+                CG_CullIn(sceneEnt2->cent);
                 R_SkinSceneEnt(sceneEnt2, ent);
                 sceneEnt2->cullState = 5;
                 R_AddXModelSurfaces(entIndex);
@@ -922,7 +945,7 @@ static void R_DPVS_REGPARM3_ABI R_AddVisibleSurfacesInCell_impl(const GfxCell *c
                     if (!R_CullByOccluders(0, bounds))
                         goto next_modelref;
 
-                    if ((*(const dvar_t **)imp_r_showPortals)->current.integer & 1) {
+                    if ((r_showPortals)->current.integer & 1) {
                         DebugGlobals *debugGlobals = &frontEndDataOut->debugGlobals;
                         R_AddDebugBox(debugGlobals, (float *)modelRef->mins, (float *)modelRef->maxs, (const float *)imp_colorLtYellow);
                     }
@@ -955,7 +978,7 @@ static void R_DPVS_REGPARM3_ABI R_AddVisibleSurfacesInCell_impl(const GfxCell *c
                 if (!R_CullByOccluders(0, bounds))
                     continue;
 
-                if ((*(const dvar_t **)imp_r_showPortals)->current.integer & 1) {
+                if ((r_showPortals)->current.integer & 1) {
                     DebugGlobals *debugGlobals = &frontEndDataOut->debugGlobals;
                     R_AddDebugBox(debugGlobals, cg->mins, cg->maxs, (const float *)imp_colorLtYellow);
                 }
@@ -1025,10 +1048,10 @@ static inline void R_ComputeOccluderEdgePlane(const vec3_t *v0, const vec3_t *v1
 static inline void R_PortalQueueInsert(GfxPortal *portal, float priority)
 {
     int count = dpvsG.portalQueueCount;
-    byte *queueBase = (byte *)dpvsG.portalQueue;
+    DpvsPortalQueueEntry *queue = (DpvsPortalQueueEntry *)dpvsG.portalQueue;
 
-    if (count > 0xFF) {
-        R_Error(1, "More than %i queued portals", 0x100);
+    if (count >= DPVS_MAX_PORTAL_QUEUE) {
+        R_Error(1, "More than %i queued portals", DPVS_MAX_PORTAL_QUEUE);
     }
 
     portal->writable.isQueued = 1;
@@ -1036,20 +1059,19 @@ static inline void R_PortalQueueInsert(GfxPortal *portal, float priority)
     int idx = count;
     int parent = (idx - 1) >> 1;
     while (parent >= 0) {
-        float parentPrio = *(float *)(queueBase + parent * 8 + 4);
+        float parentPrio = queue[parent].priority;
         if (priority >= parentPrio)
             break;
 
-        *(int *)(queueBase + idx * 8) = *(int *)(queueBase + parent * 8);
-        *(float *)(queueBase + idx * 8 + 4) = parentPrio;
+        queue[idx] = queue[parent];
         idx = parent;
         parent = (idx - 1) >> 1;
         if (idx <= 0)
             break;
     }
 
-    *(GfxPortal **)(queueBase + idx * 8) = portal;
-    *(float *)(queueBase + idx * 8 + 4) = priority;
+    queue[idx].portal = portal;
+    queue[idx].priority = priority;
     dpvsG.portalQueueCount = count + 1;
 }
 
@@ -1197,7 +1219,7 @@ static void R_DPVS_REGPARM3_ABI R_VisitPortalsForCell_impl(const GfxCell *cell, 
             if (plane0->u.frontal == plane1->u.frontal)
                 continue;
 
-            if ((*(const dvar_t **)imp_r_showPortals)->current.integer) {
+            if ((r_showPortals)->current.integer) {
                 DebugGlobals *debugGlobals = &frontEndDataOut->debugGlobals;
                 R_AddDebugLine(debugGlobals, (vec_t *)edge->vertex[0], (vec_t *)edge->vertex[1], (const float *)imp_colorMagenta);
             }
@@ -1412,8 +1434,8 @@ static void R_DPVS_REGPARM3_ABI R_VisitPortalsForCell(const GfxCell *cell, GfxPo
 
 static inline GfxPortal *R_PortalQueuePopMin(void)
 {
-    byte *queueBase = (byte *)dpvsG.portalQueue;
-    GfxPortal *top = *(GfxPortal **)queueBase;
+    DpvsPortalQueueEntry *queue = (DpvsPortalQueueEntry *)dpvsG.portalQueue;
+    GfxPortal *top = queue[0].portal;
     top->writable.isQueued = 0;
 
     int count = dpvsG.portalQueueCount - 1;
@@ -1424,11 +1446,11 @@ static inline GfxPortal *R_PortalQueuePopMin(void)
         int idx = 0;
         int child = 1;
         while (child < count) {
-            float childPrio = *(float *)(queueBase + child * 8 + 4);
+            float childPrio = queue[child].priority;
 
             int rightChild = child + 1;
             if (rightChild <= count) {
-                float rightPrio = *(float *)(queueBase + rightChild * 8 + 4);
+                float rightPrio = queue[rightChild].priority;
                 if (childPrio > rightPrio) {
 
                     child = rightChild;
@@ -1436,18 +1458,16 @@ static inline GfxPortal *R_PortalQueuePopMin(void)
                 }
             }
 
-            float lastPrio = *(float *)(queueBase + count * 8 + 4);
+            float lastPrio = queue[count].priority;
             if (lastPrio <= childPrio)
                 break;
 
-            *(int *)(queueBase + idx * 8) = *(int *)(queueBase + child * 8);
-            *(float *)(queueBase + idx * 8 + 4) = childPrio;
+            queue[idx] = queue[child];
             idx = child;
             child = idx * 2 + 1;
         }
 
-        *(int *)(queueBase + idx * 8) = *(int *)(queueBase + count * 8);
-        *(float *)(queueBase + idx * 8 + 4) = *(float *)(queueBase + count * 8 + 4);
+        queue[idx] = queue[count];
     }
 
     return top;
@@ -1462,7 +1482,7 @@ static inline float R_Polygon2DSignedArea(const vec2_t *pts, int count)
     return area * 0.125f;
 }
 
-extern void R_AddDebugPolygon(void *debugGlobals, const float *color, int vertCount, const vec_t *verts);
+extern void R_AddDebugPolygon(DebugGlobals *debugGlobals, const float *color, int vertCount, vec3_t *verts);
 
 static void R_VisitPortals_impl(const GfxCell *cell, const DpvsPlane *parentPlane, const DpvsPlane *planes, int planeCount)
 {
@@ -1473,7 +1493,7 @@ static void R_VisitPortals_impl(const GfxCell *cell, const DpvsPlane *parentPlan
     vec3_t bevelVerts[5];
     vec3_t bevelNormals[5];
     vec2_t hull[64];
-    byte portalQueue[3072];
+    DpvsPortalQueueEntry portalQueue[DPVS_MAX_PORTAL_QUEUE];
     int iteration, childPlaneCount, hullPointCount, i;
     float clipArea;
     int clipChildren;
@@ -1513,7 +1533,7 @@ static void R_VisitPortals_impl(const GfxCell *cell, const DpvsPlane *parentPlan
             continue;
 
         iteration++;
-        if (iteration == (*(const dvar_t **)imp_r_portalWalkLimit)->current.integer)
+        if (iteration == (r_portalWalkLimit)->current.integer)
             break;
 
         float nd = -portal->plane.coeffs[3];
@@ -1527,18 +1547,18 @@ static void R_VisitPortals_impl(const GfxCell *cell, const DpvsPlane *parentPlan
             portalVerts[i][2] = baseZ + hull[i][0] * portal->hullAxis[0][2] + hull[i][1] * portal->hullAxis[1][2];
         }
 
-        if ((*(const dvar_t **)imp_r_showPortals)->current.integer) {
-            if (!((*(const dvar_t **)imp_r_portalBevelsOnly)->current.enabled)) {
+        if ((r_showPortals)->current.integer) {
+            if (!((r_portalBevelsOnly)->current.enabled)) {
                 DebugGlobals *debugGlobals = &frontEndDataOut->debugGlobals;
-                R_AddDebugPolygon(debugGlobals, (const float *)&dpvsConfig, hullPointCount, (vec_t *)portalVerts);
+                R_AddDebugPolygon(debugGlobals, (const float *)&dpvsConfig, hullPointCount, (vec3_t *)portalVerts);
             }
         }
 
         int useNormalPlanes = (hullPointCount <= 10);
         int doBevels, forceBevels;
 
-        if (useNormalPlanes && !((*(const dvar_t **)imp_r_portalBevelsOnly)->current.enabled)) {
-            float bevelThreshold = (*(const dvar_t **)imp_r_portalBevels)->current.value;
+        if (useNormalPlanes && !((r_portalBevelsOnly)->current.enabled)) {
+            float bevelThreshold = (r_portalBevels)->current.value;
             if (bevelThreshold > 0.0f) {
                 doBevels = 1;
                 forceBevels = 0;
@@ -1555,7 +1575,7 @@ static void R_VisitPortals_impl(const GfxCell *cell, const DpvsPlane *parentPlan
         R_GetSidePlaneNormals((vec3_t *)portalVerts, hullPointCount, normals);
 
         if (!doBevels) {
-            float minClipArea = (*(const dvar_t **)imp_r_portalMinClipArea)->current.value;
+            float minClipArea = (r_portalMinClipArea)->current.value;
             if (minClipArea <= 0.0f) {
                 childPlaneCount = 0;
                 clipChildren = 1;
@@ -1620,7 +1640,7 @@ static void R_VisitPortals_impl(const GfxCell *cell, const DpvsPlane *parentPlan
                 float sizeX = maxX - minX;
                 float sizeY = maxY - minY;
                 float area = sizeX * sizeY * 0.25f;
-                float minClipArea = (*(const dvar_t **)imp_r_portalMinClipArea)->current.value;
+                float minClipArea = (r_portalMinClipArea)->current.value;
                 clipChildren = (minClipArea <= area) ? 0 : 1;
             }
 
@@ -1646,7 +1666,7 @@ static void R_VisitPortals_impl(const GfxCell *cell, const DpvsPlane *parentPlan
             }
         }
 
-        if ((*(const dvar_t **)imp_r_showPortals)->current.integer) {
+        if ((r_showPortals)->current.integer) {
 
         }
 
@@ -1748,9 +1768,7 @@ static inline int R_CullBoundsAgainstFrustumAndOccluders(const float *bounds, co
     return 1;
 }
 
-extern void R_AddBModelSurfaces(void *sceneEnt, int entIndex);
-extern int __mh_execute_header;
-
+extern void R_AddBModelSurfaces(GfxSceneEntity *sceneEnt, int entIndex);
 static void R_AddWorldSurfacesDpvs_impl(const GfxViewParms *viewParms, int cameraCellIndex)
 {
     LargeLocal activeOccluderBuffer_large_local;
@@ -1759,7 +1777,7 @@ static void R_AddWorldSurfacesDpvs_impl(const GfxViewParms *viewParms, int camer
     int frustumPlaneCount;
     int i;
 
-    LargeLocal_LargeLocal(&activeOccluderBuffer_large_local, (int)&__mh_execute_header);
+    LargeLocal_LargeLocal(&activeOccluderBuffer_large_local, 0x1000);
     byte *activeOccluderBuf = (byte *)LargeLocal_GetBuf(&activeOccluderBuffer_large_local);
     LargeLocal_LargeLocal(&occluderPlaneBuffer_large_local, 0x1e000);
     byte *occluderPlaneBuf = (byte *)LargeLocal_GetBuf(&occluderPlaneBuffer_large_local);
@@ -1767,15 +1785,15 @@ static void R_AddWorldSurfacesDpvs_impl(const GfxViewParms *viewParms, int camer
     dpvsG.occluderList = (GfxOccluder **)activeOccluderBuf;
     dpvsG.viewPlanes = (struct DpvsPlane *)occluderPlaneBuf;
 
-    byte drawWorld = (byte)(*(const dvar_t **)imp_r_drawWorld)->current.integer;
+    byte drawWorld = (byte)(r_drawWorld)->current.integer;
     dpvsG.drawWorld = drawWorld;
-    byte drawEntities = (byte)(*(const dvar_t **)imp_r_drawEntities)->current.integer;
+    byte drawEntities = (byte)(r_drawEntities)->current.integer;
     dpvsG.drawEntities = drawEntities;
-    byte drawBModels = ((*(const dvar_t **)imp_r_drawBModels)->current.integer && drawEntities) ? 1 : 0;
+    byte drawBModels = ((r_drawBModels)->current.integer && drawEntities) ? 1 : 0;
     dpvsG.drawBmodels = drawBModels;
-    byte drawSModels = ((*(const dvar_t **)imp_r_drawSModels)->current.integer && drawEntities) ? 1 : 0;
+    byte drawSModels = ((r_drawSModels)->current.integer && drawEntities) ? 1 : 0;
     dpvsG.drawSmodels = drawSModels;
-    byte drawXModels = ((*(const dvar_t **)imp_r_drawXModels)->current.integer && drawEntities) ? 1 : 0;
+    byte drawXModels = ((r_drawXModels)->current.integer && drawEntities) ? 1 : 0;
     dpvsG.drawXmodels = drawXModels;
 
     dpvsG.occluderCount = 0;
@@ -1830,7 +1848,7 @@ static void R_AddWorldSurfacesDpvs_impl(const GfxViewParms *viewParms, int camer
         dpvsG.clipPlanes = &dpvsG.eyePlane;
     }
 
-    float farPlaneDist = (*(const dvar_t **)imp_r_zfar)->current.value;
+    float farPlaneDist = (r_zfar)->current.value;
     if (farPlaneDist == 0.0f) {
         if (rg.fogIndex && rg.fogSettings[2].registered && rg.fogSettings[2].techniqueOffset == 1) {
             farPlaneDist = rg.fogSettings[2].fogEnd;
@@ -1929,7 +1947,7 @@ static void R_AddWorldSurfacesDpvs_impl(const GfxViewParms *viewParms, int camer
 
             entity_process:
                 R_UpdateXModelBounds(&scene.sceneEnts[i], ent);
-                CG_CullIn((void *)scene.sceneEnts[i].cent);
+                CG_CullIn(scene.sceneEnts[i].cent);
                 R_SkinSceneEnt(&scene.sceneEnts[i], ent);
                 scene.sceneEnts[i].cullState = 5;
                 R_AddXModelSurfaces(i);
@@ -1982,7 +2000,7 @@ static void R_AddWorldSurfacesDpvs_impl(const GfxViewParms *viewParms, int camer
         }
     }
 
-    if (!(*(const dvar_t **)imp_r_skipPvs)->current.enabled) {
+    if (!(r_skipPvs)->current.enabled) {
         GfxWorld *world = rgp.world;
         GfxCell *cells = world->cells;
 
@@ -1992,7 +2010,7 @@ static void R_AddWorldSurfacesDpvs_impl(const GfxViewParms *viewParms, int camer
                 R_AddVisibleSurfacesInCell_impl(&cells[i], frustumPlanes, frustumPlaneCount);
         } else {
             GfxCell *cameraCell = &cells[cameraCellIndex];
-            if ((*(const dvar_t **)imp_r_singleCell)->current.enabled) {
+            if ((r_singleCell)->current.enabled) {
                 dpvsG.farPlanePtr = 0;
                 R_AddVisibleSurfacesInCell_impl(cameraCell, frustumPlanes, frustumPlaneCount);
             } else {
@@ -2025,7 +2043,7 @@ static void R_AddWorldSurfacesDpvs_impl(const GfxViewParms *viewParms, int camer
         }
     }
 
-    if ((*(const dvar_t **)imp_r_vc_makelog)->current.integer)
+    if ((r_vc_makelog)->current.integer)
         RB_ShowLightVisCachePoints(viewParms, frustumPlanes, frustumPlaneCount);
 
     ZN10LargeLocalD1Ev(&occluderPlaneBuffer_large_local);

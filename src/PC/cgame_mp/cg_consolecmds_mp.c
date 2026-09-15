@@ -10,13 +10,13 @@ extern int CG_CrosshairPlayer(void);
 extern void Cmd_ArgvBuffer(int arg, char *buf, int bufSize);
 extern const char *va(const char *fmt, ...);
 extern void Cbuf_AddText(const char *text);
-extern void Dvar_SetInt(void *dvar, int value);
+extern void Dvar_SetInt(const dvar_t *dvar, int value);
 extern void Com_Printf(const char *fmt, ...);
 extern int CG_ScoreboardDisplayed(void);
 extern int Cmd_Argc(void);
-extern void CG_SetShellShockParmsFromDvars(byte *parms);
+extern void CG_SetShellShockParmsFromDvars(shellshock_parms_t *parms);
 extern int CG_LoadShellShockDvars(const char *name);
-extern void CG_SaveShellShockDvars(const char *name);
+extern qboolean CG_SaveShellShockDvars(const char *name);
 extern float floorf(float x);
 extern void Cmd_ArgsBuffer(char *buf, int bufSize);
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
@@ -24,7 +24,7 @@ extern void CL_AddReliableCommand(const char *cmd);
 extern const char *CG_Argv(int arg);
 extern int I_stricmp(const char *s1, const char *s2);
 extern void CL_AddCgameCommand(const char *cmdName);
-extern void CL_Popup(const char *name);
+extern qboolean CL_Popup(const char *menu);
 extern const char *UI_SafeTranslateString(const char *key);
 
 void CG_TargetCommand_f(void);
@@ -166,7 +166,7 @@ static void CG_ShellShock_f(void)
     Cmd_ArgvBuffer(1, arg, 256);
     duration = atof(arg);
 
-    CG_SetShellShockParmsFromDvars((byte *)cgs->shellshockParms);
+    CG_SetShellShockParmsFromDvars( (shellshock_parms_t *)((byte *)cgs->shellshockParms));
 
     cg->testShock.time = cg->time;
     cg->testShock.duration = (int)floorf((float)duration * 1000.0f + 0.5f);
@@ -233,7 +233,7 @@ static void CG_VoiceChat_f(void)
     if (Cmd_Argc() != 2)
         return;
 
-    nextSnap = cg->nextSnap;
+    nextSnap = cgArray[0].nextSnap;
 
     if (nextSnap != NULL && nextSnap->ps.pm_type != 5 && !(nextSnap->ps.pm_flags & 0x800000)) {
         Com_Printf("%s\n", UI_SafeTranslateString("CGAME_NOSPECTATORVOICECHAT"));
@@ -252,7 +252,7 @@ static void CG_TeamVoiceChat_f(void)
     if (Cmd_Argc() != 2)
         return;
 
-    nextSnap = cg->nextSnap;
+    nextSnap = cgArray[0].nextSnap;
 
     if (nextSnap != NULL && nextSnap->ps.pm_type != 5 && !(nextSnap->ps.pm_flags & 0x800000)) {
         Com_Printf("%s\n", UI_SafeTranslateString("CGAME_NOSPECTATORVOICECHAT"));

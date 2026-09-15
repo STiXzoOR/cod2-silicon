@@ -68,7 +68,7 @@ void AddPointToBounds(const vec_t *v, vec_t *mins, vec_t *maxs);
 void ExpandBounds(const vec_t *addedmins, const vec_t *addedmaxs, vec_t *mins, vec_t *maxs);
 void AxisTransformVector(vec3_t *axes, const vec_t x, const vec_t y, const vec_t z, vec_t *out);
 void ProjectPointOnPlane(const vec_t *p, const vec_t *normal, vec_t *dst);
-const int BoxOnPlaneSide(const vec_t *emins, const vec_t *emaxs, const cplane_s *p);
+int BoxOnPlaneSide(const vec_t *emins, const vec_t *emaxs, const cplane_s *p);
 void Rand_Init(int seed);
 float flrand(float min, float max);
 int irand(int min, int max);
@@ -624,7 +624,7 @@ void ProjectPointOnPlane(const vec_t *p, const vec_t *normal, vec_t *dst)
     dst[2] = p[2] + d * normal[2];
 }
 
-const int BoxOnPlaneSide(const vec_t *emins, const vec_t *emaxs, const cplane_s *p)
+int BoxOnPlaneSide(const vec_t *emins, const vec_t *emaxs, const cplane_s *p)
 {
     float dist1, dist2;
     int sides;

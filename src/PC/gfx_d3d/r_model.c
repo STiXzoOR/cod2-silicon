@@ -1,4 +1,8 @@
 #include "common_types.h"
+extern struct DxGlobals dx;
+/* File-scope alias: bound where no local can shadow `dx`, so uses below
+   always reach the global even inside functions that declare their own `dx`. */
+static struct DxGlobals * const dx_g = &dx;
 extern GfxBackEndData *frontEndDataOut;
 extern dvar_t *r_rendererInUse;
 #include "imports.h"
@@ -18,25 +22,17 @@ COD2_ASSERT_FIELD(DxGlobals, skinnedCacheLockAddr, 11712);
 
 static int warnCount;
 static int warnCount_00c85b04;
-static int warnCount_00c85b04;
-static int warnCount_00c85b04;
-static int warnCount_00c85b08;
-static int warnCount_00c85b08;
 static int warnCount_00c85b08;
 static int warnCount_00c85b0c;
-static int warnCount_00c85b0c;
-static int warnCount_00c85b0c;
-static int warnCount_00c85b10;
-static int warnCount_00c85b10;
 static int warnCount_00c85b10;
 extern void *Hunk_AllocInternal(int size);
 extern void DB_EnumXAssets(int type, void (*func)(XAssetHeader, void *), void *data, qboolean overrides);
 extern int XModelBad(union XAssetHeader header);
 extern void XModelUnoptimize(union XAssetHeader header);
-extern void XModelOptimize(union XAssetHeader header);
+extern void XModelOptimize(XModel *xmodel);
 extern float Vec3Distance(const void *a, const void *b);
-extern int DObjGetLodForDist(const void *obj, int modelIndex, float dist);
-extern void DObjSetModel(struct DObj_s *obj, void *model);
+extern int DObjGetLodForDist(const DObj *obj, int modelIndex, float dist);
+extern void DObjSetModel(DObj *obj, const XModel *model);
 extern int DObjGetNumModels(const struct DObj_s *obj);
 extern int DObjGetSurfaces(const struct DObj_s *obj, DSurface_s *surfaces, int *partBits, char *lods);
 extern struct XModel *DObjGetModel(const struct DObj_s *obj, int modelIndex);
@@ -51,7 +47,7 @@ long long g_smc_recache_ms;
 #endif
 #ifdef GFX_REAL_D3D9
 
-extern const char *XModelGetName(struct XModel *);
+extern const char *XModelGetName(const XModel *model);
 static void SMT_Log(const char *tag, struct XModel *mdl, GfxEntity *ent)
 {
     static const char *seen[512];
@@ -109,13 +105,13 @@ __attribute__((used)) const int boxVerts[24][3] = {
     { 1, 1, 1 },
 };
 extern const int s_streamSourceInfo[];
-extern int DObjNumBones(const void *obj);
-extern void DObjGetBoneInfo(const void *obj, void **boneInfoArray);
-extern void *DObjGetRotTransArray(const void *obj);
-extern void CG_DObjCalcPose(void *poseCtx, const void *obj, int *partBits);
-extern void MatrixTransformVectorQuatTrans(const vec_t *in, const void *quatTrans, vec_t *out);
+extern int DObjNumBones(const struct DObj_s *obj);
+extern void DObjGetBoneInfo(const struct DObj_s *obj, struct XBoneInfo_s **boneInfoArray);
+extern DObjAnimMat *DObjGetRotTransArray(const DObj *obj);
+extern void CG_DObjCalcPose(const centity_t *cent, const struct DObj_s *obj, int *partBits);
+extern void MatrixTransformVectorQuatTrans(const vec_t *in, const DObjAnimMat *mat, vec_t *out);
 extern void MatrixTransformVector(const vec_t *in, const void *matrix, vec_t *out);
-extern void R_AddDebugLine(void *debugGlobals, const vec_t *start, const vec_t *end, const vec_t *color);
+extern void R_AddDebugLine(DebugGlobals *debugGlobalsEntry, const vec_t *start, const vec_t *end, const vec_t *color);
 
 #define VTABLE(obj) (*(void ***)((void *)(obj)))
 
@@ -168,10 +164,10 @@ static void *Hunk_AllocXModelPrecacheColl(int size)
 struct XModel *R_RegisterModel(const char *name)
 {
     if (!R_ValidXModelName(name)) {
-        ri.Printf(2, "R_RegisterModel: Invalid model name '%s'\n", name);
+        ((void (*)(int, const char *, ...))ri.Printf)(2, "R_RegisterModel: Invalid model name '%s'\n", name);
         return NULL;
     }
-    return XModelPrecache(name + 7, Hunk_AllocXModelPrecache, Hunk_AllocXModelPrecacheColl);
+    return XModelPrecache(name + 7, (Alloc_t)Hunk_AllocXModelPrecache, (Alloc_t)Hunk_AllocXModelPrecacheColl);
 }
 
 GfxBrushModel *R_RegisterInlineModel(int modelIndex)
@@ -222,7 +218,7 @@ struct DObj_s *R_GetGfxEntityDObj(GfxSceneEntity *sceneEnt, GfxEntity *ent)
         obj = (struct DObj_s *)sceneEnt->u.obj;
     } else {
         obj = rgg->modelDObj;
-        DObjSetModel(obj, (void *)sceneEnt->u.data);
+        DObjSetModel(obj, (const XModel *)((void *)sceneEnt->u.data));
     }
     return obj;
 }
@@ -278,7 +274,7 @@ static void R_OptimizeModel(XAssetHeader header, void *data)
 {
     if (XModelBad(header))
         return;
-    XModelOptimize(header);
+    XModelOptimize(header.model);
 }
 
 void R_GetRigidTransform(const DObjSkelMat *bone, const vec_t *origin, vec3_t *axis, float scale, vec3_t *boneAxis)
@@ -400,7 +396,7 @@ static int R_GetSurfaceData_impl(const byte *ent, const void *obj, void *surface
     int modelCount, i;
     float dist, scale;
 
-    modelCount = DObjGetNumModels(obj);
+    modelCount = DObjGetNumModels((const DObj_s *)obj);
     scale = ((GfxEntity *)ent)->scale;
 
     dist = Vec3Distance(((GfxEntity *)ent)->origin, rg->lodParms.origin);
@@ -410,10 +406,10 @@ static int R_GetSurfaceData_impl(const byte *ent, const void *obj, void *surface
         dist /= scale;
 
     for (i = 0; i < modelCount; i++) {
-        lods[i] = (char)DObjGetLodForDist(obj, i, dist);
+        lods[i] = (char)DObjGetLodForDist( (const DObj *)(obj), i, dist);
     }
 
-    return DObjGetSurfaces(obj, surfaces, partBits, lods);
+    return DObjGetSurfaces((const DObj_s *)obj, (DSurface_s *)surfaces, partBits, lods);
 }
 
 static int R_GetSurfaceData(const byte *ent, const void *obj, void *surfaces, int *partBits, char *lods)
@@ -432,11 +428,11 @@ static void R_XModelDebugBoxes_impl(const byte *sceneEnt, const byte *ent, const
     R_GetSurfaceData_impl(ent, obj, surfaces, partBits, lods);
 
     if (*(void **)(sceneEnt + 8))
-        CG_DObjCalcPose(*(void **)(sceneEnt + 8), obj, partBits);
+        CG_DObjCalcPose( (const centity_t *)(*(void **)(sceneEnt + 8)), (const DObj_s *)(obj), partBits);
 
-    boneCount = DObjNumBones(obj);
-    DObjGetBoneInfo(obj, boneInfoArray);
-    byte *rotTransArray = (byte *)DObjGetRotTransArray(obj);
+    boneCount = DObjNumBones((const struct DObj_s *)obj);
+    DObjGetBoneInfo((const struct DObj_s *)obj, (struct XBoneInfo_s **)boneInfoArray);
+    byte *rotTransArray = (byte *)DObjGetRotTransArray((const DObj *)obj);
     if (!rotTransArray)
         return;
 
@@ -462,7 +458,7 @@ static void R_XModelDebugBoxes_impl(const byte *sceneEnt, const byte *ent, const
             org[0] = bi[sv[0] * 3 + 0];
             org[1] = bi[sv[1] * 3 + 1];
             org[2] = bi[sv[2] * 3 + 2];
-            MatrixTransformVectorQuatTrans(org, quatTrans, vec);
+            MatrixTransformVectorQuatTrans(org, (const DObjAnimMat *)(quatTrans), vec);
             MatrixTransformVector(vec, entMatrix, start);
             start[0] += entOrigin[0];
             start[1] += entOrigin[1];
@@ -472,7 +468,7 @@ static void R_XModelDebugBoxes_impl(const byte *sceneEnt, const byte *ent, const
             org[0] = bi[ev[0] * 3 + 0];
             org[1] = bi[ev[1] * 3 + 1];
             org[2] = bi[ev[2] * 3 + 2];
-            MatrixTransformVectorQuatTrans(org, quatTrans, vec);
+            MatrixTransformVectorQuatTrans(org, (const DObjAnimMat *)(quatTrans), vec);
             MatrixTransformVector(vec, entMatrix, end);
             end[0] += entOrigin[0];
             end[1] += entOrigin[1];
@@ -498,12 +494,12 @@ static void R_XModelDebugAxes_impl(const byte *sceneEnt, const byte *ent, const 
     R_GetSurfaceData_impl(ent, obj, surfaces, partBits, lods);
 
     if (*(void **)(sceneEnt + 8))
-        CG_DObjCalcPose(*(void **)(sceneEnt + 8), obj, partBits);
+        CG_DObjCalcPose( (const centity_t *)(*(void **)(sceneEnt + 8)), (const DObj_s *)(obj), partBits);
 
     vec3_t translation[3] = { { 6.0f, 0.0f, 0.0f }, { 0.0f, 6.0f, 0.0f }, { 0.0f, 0.0f, 6.0f } };
 
-    boneCount = DObjNumBones(obj);
-    byte *rotTransArray = (byte *)DObjGetRotTransArray(obj);
+    boneCount = DObjNumBones((const struct DObj_s *)obj);
+    byte *rotTransArray = (byte *)DObjGetRotTransArray((const DObj *)obj);
     if (!rotTransArray || boneCount <= 0)
         return;
 
@@ -523,14 +519,14 @@ static void R_XModelDebugAxes_impl(const byte *sceneEnt, const byte *ent, const 
             color[axis] = 1.0f;
 
             vec3_t vec, start;
-            MatrixTransformVectorQuatTrans((const vec_t *)imp_vec3_origin, quatTrans, vec);
+            MatrixTransformVectorQuatTrans((const vec_t *)imp_vec3_origin, (const DObjAnimMat *)(quatTrans), vec);
             MatrixTransformVector(vec, entMatrix, start);
             start[0] += entOrigin[0];
             start[1] += entOrigin[1];
             start[2] += entOrigin[2];
 
             vec3_t end;
-            MatrixTransformVectorQuatTrans(translation[axis], quatTrans, vec);
+            MatrixTransformVectorQuatTrans(translation[axis], (const DObjAnimMat *)(quatTrans), vec);
             MatrixTransformVector(vec, entMatrix, end);
             end[0] += entOrigin[0];
             end[1] += entOrigin[1];
@@ -546,14 +542,14 @@ static void R_XModelDebugAxes(const byte *sceneEnt, const byte *ent, const void 
     R_XModelDebugAxes_impl(sceneEnt, ent, obj);
 }
 
-extern int DObjBad(const void *obj);
-extern void *DObjGetSurface(const void *obj, int surfIdx, int xsurf, int lod);
-extern int XSurfaceGetNumVerts(void *xsurf);
+extern int DObjBad(const DObj *obj);
+extern struct XSurface_s *DObjGetSurface(const DObj *obj, int modelIndex, int subMatIndex, int lod);
+extern int XSurfaceGetNumVerts(const XSurface *surface);
 extern int InterlockedExchange(volatile int *dest, int value);
 extern int InterlockedExchangeAdd(volatile int *dest, int value);
-extern int XSurfaceGetBoneOffset(int xsurfIndex);
+extern int XSurfaceGetBoneOffset(const XSurface *surf);
 extern void ClearBounds(float *mins, float *maxs);
-extern void GetRotatedBounds(float *bounds, float *origin, float *axis, float *outBounds);
+extern void GetRotatedBounds(vec3_t *baseBounds, const vec_t *origin, vec3_t *axis, vec3_t *rotatedBounds);
 extern int InterlockedCompareExchange(volatile int *dest, int exchange, int comparand);
 void R_UpdateXModelBounds(GfxSceneEntity *sceneEnt, GfxEntity *ent)
 {
@@ -566,7 +562,13 @@ void R_UpdateXModelBounds(GfxSceneEntity *sceneEnt, GfxEntity *ent)
     short surfaces[67];
     char lods[8];
     float bounds[6];
-    int boneInfo[128];
+    /* DObjGetBoneInfo fills this with one XBoneInfo* per bone (8 bytes each on
+     * x64). The old `int boneInfo[128]` (512 B) held only 64 pointers, so a model
+     * with >64 bones overran the stack -- clobbering the return address, which on
+     * return jumped into heap garbage (rip in a heap page, no exe frames). Match
+     * the other callers' `void *[200]` (R_XModelDebugBoxes_impl, sv_game_mp.c) and
+     * dereference each entry below. */
+    void *boneInfo[200];
 
     if (((GfxSceneEntity *)se)->cullState > 3)
         return;
@@ -577,12 +579,12 @@ void R_UpdateXModelBounds(GfxSceneEntity *sceneEnt, GfxEntity *ent)
     if (((GfxEntity *)e)->reType != 0) {
         void *defaultModel = rgg->modelDObj;
         obj = (void *)((GfxSceneEntity *)se)->u.data;
-        DObjSetModel(defaultModel, obj);
+        DObjSetModel((DObj_s *)defaultModel, (const XModel *)(obj));
     } else {
         obj = (void *)((GfxSceneEntity *)se)->u.data;
     }
 
-    if (DObjBad(obj)) {
+    if (DObjBad( (const DObj *)(obj))) {
         if (developer->current.integer) {
             R_XModelDebugBoxes_impl((const byte *)sceneEnt, (const byte *)ent, obj);
             R_XModelDebugAxes_impl((const byte *)sceneEnt, (const byte *)ent, obj);
@@ -600,17 +602,17 @@ void R_UpdateXModelBounds(GfxSceneEntity *sceneEnt, GfxEntity *ent)
     {
         void *anim = (void *)((GfxSceneEntity *)se)->cent;
         if (anim)
-            CG_DObjCalcPose(anim, obj, partBits);
+            CG_DObjCalcPose( (const centity_t *)(anim), (const DObj_s *)(obj), partBits);
     }
 
     {
-        const DObjAnimMat *boneMatrix = (const DObjAnimMat *)DObjGetRotTransArray(obj);
+        const DObjAnimMat *boneMatrix = DObjGetRotTransArray((const DObj *)obj);
         if (!boneMatrix)
             goto set_origin_bounds;
 
         ClearBounds(&bounds[0], &bounds[3]);
-        DObjGetBoneInfo(obj, (void **)boneInfo);
-        boneCount = DObjNumBones(obj);
+        DObjGetBoneInfo((const struct DObj_s *)obj, (struct XBoneInfo_s **)boneInfo);
+        boneCount = DObjNumBones((const struct DObj_s *)obj);
 
         for (i = 0; i < boneCount; i++) {
             if (!(partBits[i >> 5] & (1 << (i & 0x1f))))
@@ -620,7 +622,10 @@ void R_UpdateXModelBounds(GfxSceneEntity *sceneEnt, GfxEntity *ent)
                 const float *q = boneMatrix[i].quat;
                 float w2 = boneMatrix[i].transWeight;
                 const float *trans = boneMatrix[i].trans;
-                const int *bi = &boneInfo[i * 4];
+                /* boneInfo[i] is a pointer to bone i's XBoneInfo floats. The
+                 * decomp read it inline as `&boneInfo[i*4]` (pointer bytes as
+                 * bounds); dereference like the debug-box path at R_XModelDebugBoxes_impl. */
+                const int *bi = (const int *)boneInfo[i];
 
                 float xx2 = w2 * q[0], yy2 = w2 * q[1], zz2 = w2 * q[2];
                 float xx = xx2 * q[0], xy = xx2 * q[1], xz = xx2 * q[2], xw = xx2 * q[3];
@@ -675,7 +680,7 @@ void R_UpdateXModelBounds(GfxSceneEntity *sceneEnt, GfxEntity *ent)
             }
         }
 
-        GetRotatedBounds(bounds, ((GfxEntity *)e)->origin, (float *)((GfxEntity *)e)->axis, ((GfxSceneEntity *)se)->curMins);
+        GetRotatedBounds( (vec3_t (*))(bounds), ((GfxEntity *)e)->origin, (vec3_t (*))((float *)((GfxEntity *)e)->axis), (vec3_t (*))(((GfxSceneEntity *)se)->curMins));
         ((GfxSceneEntity *)se)->cullState = 2;
         return;
     }
@@ -691,6 +696,26 @@ set_origin_bounds:
     ((GfxSceneEntity *)se)->cullState = 2;
 }
 
+/* GfxModel*Surface packing offsets/sizes for the surface WRITE path (R_PreSkinXSurface /
+   R_PreSkinStaticSurface). The reads (R_AddXModelSurfaces, R_SkinXSurfaceSkinned) use the
+   TYPED structs, so these must match: on x64 GfxModelSurface = {surfType@0; XSurface*
+   xsurf@8} (16B); skinned adds {int skinnedCachedOffset@16; union skinnedVert@24} (0x20);
+   rigid adds {vec3 boneAxis[4]@16} (0x40). Keep x86 byte-identical. MUST agree with
+   s_XModelSurfaceSize[] in r_scene.c. */
+#if defined(COD2_X64)
+#define PSK_XSURF   8
+#define PSK_F2      16
+#define PSK_F3      24
+#define PSK_SZ_SKIN 0x20
+#define PSK_SZ_RIGID 0x40
+#else
+#define PSK_XSURF   4
+#define PSK_F2      8
+#define PSK_F3      0xc
+#define PSK_SZ_SKIN 0x10
+#define PSK_SZ_RIGID 0x38
+#endif
+
 static int R_PreSkinXSurface(GfxSceneEntity *sceneEnt, const struct DObj_s *obj, const DSurface *surface, int surfaceIndex, char *lods, byte *surfPos)
 {
     int surfIdx = surface->modelIndex;
@@ -699,14 +724,15 @@ static int R_PreSkinXSurface(GfxSceneEntity *sceneEnt, const struct DObj_s *obj,
     void *material;
 
     model = DObjGetModel(obj, surfIdx);
-    skins = XModelGetSkins(model);
+    skins = (void *)XModelGetSkins((const XModel *)model);
     if (!skins)
         return 0;
 
     skinIndex = (signed char)lods[surfIdx];
     {
         int xsurfOfs = surface->subMatIndex;
-        material = *(void **)((char *)*(void **)((char *)skins + skinIndex * 4) + xsurfOfs * 4);
+        /* skins[skinIndex][xsurfOfs] -- pointer-of-pointers, strides are pointer-sized (was *4 = x86) */
+        material = *(void **)((char *)*(void **)((char *)skins + skinIndex * (int)sizeof(void *)) + xsurfOfs * (int)sizeof(void *));
     }
     xsurf = DObjGetSurface(obj, surfIdx, surface->subMatIndex, skinIndex);
 
@@ -715,16 +741,16 @@ static int R_PreSkinXSurface(GfxSceneEntity *sceneEnt, const struct DObj_s *obj,
     if (((XSurface *)xsurf)->surfRigid.vb) {
 
         *(int *)surfPos = 4;
-        *(void **)(surfPos + 4) = xsurf;
-        return 0x38;
+        *(void **)(surfPos + PSK_XSURF) = xsurf;
+        return PSK_SZ_RIGID;
     }
 
     if (r_skinCache->current.enabled && ((XSurface *)xsurf)->indexBuffer) {
-        *(int *)(surfPos + 0xc) = 0;
-        int vertCount = XSurfaceGetNumVerts(xsurf);
+        *(void **)(surfPos + PSK_F3) = 0;
+        int vertCount = XSurfaceGetNumVerts( (const XSurface *)(xsurf));
         int isDx7 = (r_rendererInUse->current.integer == 2);
         int stride = isDx7 ? 0x24 : 0x40;
-        char *dx = (char *)imp_dx;
+        char *dx = (char *)dx_g;
 
         if (((DxGlobals *)dx)->skinnedCacheLockAddr) {
 
@@ -742,26 +768,26 @@ static int R_PreSkinXSurface(GfxSceneEntity *sceneEnt, const struct DObj_s *obj,
                 }
                 offset = -1;
             }
-            *(int *)(surfPos + 8) = offset;
+            *(int *)(surfPos + PSK_F2) = offset;
             if (offset >= 0) {
                 void *basePtr = ((DxGlobals *)dx)->skinnedCacheLockAddr;
                 if ((char *)basePtr + *(int *)lockPtr) {
 
                     *(int *)surfPos = 3;
-                    *(void **)(surfPos + 4) = xsurf;
-                    return 0x10;
+                    *(void **)(surfPos + PSK_XSURF) = xsurf;
+                    return PSK_SZ_SKIN;
                 }
             }
         }
     }
 
-    *(int *)(surfPos + 8) = -1;
+    *(int *)(surfPos + PSK_F2) = -1;
     {
-        int vertCount = XSurfaceGetNumVerts(xsurf);
+        int vertCount = XSurfaceGetNumVerts( (const XSurface *)(xsurf));
         int isDx7 = (r_rendererInUse->current.integer == 2);
         int stride = isDx7 ? 0x24 : 0x40;
         int needed = vertCount * stride;
-        char *dx = (char *)imp_dx;
+        char *dx = (char *)dx_g;
         int current = ((DxGlobals *)dx)->tempSkinPos;
         if (current + needed > 0xa00000) {
             GfxBackEndData *fed = frontEndDataOut;
@@ -771,19 +797,19 @@ static int R_PreSkinXSurface(GfxSceneEntity *sceneEnt, const struct DObj_s *obj,
             }
             return 0;
         }
-        *(int *)(surfPos + 0xc) = (int)(uintptr_t)((DxGlobals *)dx)->tempSkinBuf + current;
+        *(void **)(surfPos + PSK_F3) = (char *)((DxGlobals *)dx)->tempSkinBuf + current; /* was (int)ptr -> truncated */
         ((DxGlobals *)dx)->tempSkinPos += needed;
 
-        ((void (*)(void *, int))ri.Z_VirtualCommitInternal)((void *)*(int *)(surfPos + 0xc), needed);
+        ((void (*)(void *, int))ri.Z_VirtualCommitInternal)(*(void **)(surfPos + PSK_F3), needed);
     }
     *(int *)surfPos = 3;
-    *(void **)(surfPos + 4) = xsurf;
-    return 0x10;
+    *(void **)(surfPos + PSK_XSURF) = xsurf;
+    return PSK_SZ_SKIN;
 }
 
 extern int InterlockedExchangeAdd(volatile int *dest, int value);
-extern void R_AddFrontendCmd(int cmdType, const void *cmd);
-extern int DObjGetMatOffset(const void *obj, int surfIndex);
+extern void R_AddFrontendCmd(int type, void *data);
+extern int DObjGetMatOffset(const DObj *obj, int modelIndex);
 void R_SkinSceneDObj(GfxSceneEntity *sceneEnt, GfxEntity *ent)
 {
     char *se = (char *)sceneEnt;
@@ -796,7 +822,11 @@ void R_SkinSceneDObj(GfxSceneEntity *sceneEnt, GfxEntity *ent)
     DSurface surfaces[64];
     int partBits[4];
     char lods[8];
+#if defined(COD2_X64)
+    byte surfBuf[7040]; /* x64: surfaces are ~2x (8-byte ptrs); double the x86 3520 */
+#else
     byte surfBuf[3520];
+#endif
 
     if (((GfxSceneEntity *)se)->cullState > 3)
         return;
@@ -804,7 +834,7 @@ void R_SkinSceneDObj(GfxSceneEntity *sceneEnt, GfxEntity *ent)
     if (InterlockedCompareExchange(&((GfxSceneEntity *)se)->cullState, 2, 3) != 2) {
     }
 
-    if (DObjBad(obj)) {
+    if (DObjBad( (const DObj *)(obj))) {
         if (developer->current.integer) {
             R_XModelDebugBoxes_impl((const byte *)sceneEnt, (const byte *)ent, obj);
             R_XModelDebugAxes_impl((const byte *)sceneEnt, (const byte *)ent, obj);
@@ -813,7 +843,7 @@ void R_SkinSceneDObj(GfxSceneEntity *sceneEnt, GfxEntity *ent)
         return;
     }
 
-    boneCount = DObjNumBones(obj);
+    boneCount = DObjNumBones((const struct DObj_s *)obj);
     {
         int sc;
         sc = R_GetSurfaceData_impl((const byte *)ent, obj, surfaces, partBits, lods);
@@ -824,7 +854,7 @@ void R_SkinSceneDObj(GfxSceneEntity *sceneEnt, GfxEntity *ent)
         return;
     }
 
-    boneMatrix = (const DObjAnimMat *)DObjGetRotTransArray(obj);
+    boneMatrix = DObjGetRotTransArray((const DObj *)obj);
     if (!boneMatrix) {
         ((GfxSceneEntity *)se)->cullState = 4;
         return;
@@ -833,8 +863,8 @@ void R_SkinSceneDObj(GfxSceneEntity *sceneEnt, GfxEntity *ent)
     {
         int startIndex = InterlockedExchangeAdd((volatile int *)&scene.sceneEntMaterialCount, surfaceCount);
         extern int __mh_execute_header;
-        if (startIndex + surfaceCount > (int)(unsigned int)&__mh_execute_header) {
-            scene.sceneEntMaterialCount = (int)(unsigned int)&__mh_execute_header;
+        if (startIndex + surfaceCount > 4096 /*MAX_SCENE_SURFS_PLUS_ENTITIES; was &__mh_execute_header magic (=0x1000 on Mac), garbage on x64*/) {
+            scene.sceneEntMaterialCount = 4096 /*MAX_SCENE_SURFS_PLUS_ENTITIES; was &__mh_execute_header magic (=0x1000 on Mac), garbage on x64*/;
             {
                 GfxBackEndData *fed = frontEndDataOut;
                 if (*(int *)fed != warnCount) {
@@ -922,7 +952,7 @@ void R_SkinSceneDObj(GfxSceneEntity *sceneEnt, GfxEntity *ent)
         memcpy(skinCmd.surfacePartBits, partBits, sizeof(skinCmd.surfacePartBits));
 
         for (i = 0; i < surfaceCount; i++) {
-            skinCmd.matOffset[i] = (byte)DObjGetMatOffset(obj, surfaces[i].modelIndex);
+            skinCmd.matOffset[i] = (byte)DObjGetMatOffset( (const DObj *)(obj), surfaces[i].modelIndex);
         }
 
         R_AddFrontendCmd(surfaceCount > 10 ? 7 : 6, &skinCmd);
@@ -931,25 +961,26 @@ void R_SkinSceneDObj(GfxSceneEntity *sceneEnt, GfxEntity *ent)
     ((GfxSceneEntity *)se)->cullState = 4;
 }
 
-extern void *R_CacheStaticModelSurface(void *staticSurf, void *xsurf, int smodelIndex, void *material);
-extern void R_UsedCachedStaticModelSurface(void *cached);
+extern GfxStaticModelSurfaceCached *R_CacheStaticModelSurface(GfxStaticSurface *staticSurf, const XSurface *xsurf, int smodelIndex, const Material *material);
+extern void R_UsedCachedStaticModelSurface(GfxStaticModelSurfaceCached *surf);
 static int R_PreSkinStaticSurface(GfxSceneEntity *sceneEnt, GfxEntity *ent, int smodelIndex,
                                   const struct XModel *model, XSurface *xsurf, int surfaceIndex, int lod,
                                   qboolean *needSkinningSurf, byte *surfPos)
 {
     r_globals_t *rgg = (r_globals_t *)imp_rg;
-    void *skins = XModelGetSkins((void *)model);
+    void *skins = (void *)XModelGetSkins((const XModel *)model);
     if (!skins)
         return 0;
 
     {
-        void *material = *(void **)((char *)*(void **)((char *)skins + lod * 4) + surfaceIndex * 4);
+        /* skins is XModel**[lod] of Material*[surf]; the strides are pointer-sized (was *4 = x86) */
+        void *material = *(void **)((char *)*(void **)((char *)skins + lod * (int)sizeof(void *)) + surfaceIndex * (int)sizeof(void *));
         ((GfxSceneEntity *)sceneEnt)->materials[surfaceIndex] = (const Material *)material;
     }
 
     if (ent->reType == 2 && r_smc_enable->current.enabled) {
         void *xsurfMat = (void *)xsurf;
-        if (XSurfaceGetBoneOffset((int)(intptr_t)xsurfMat) != -1) {
+        if (XSurfaceGetBoneOffset((const XSurface *)xsurfMat) != -1) { /* was (int)(intptr_t) -> truncated */
             int isDx7 = (r_rendererInUse->current.integer == 2);
             if (!isDx7) {
 
@@ -983,9 +1014,12 @@ static int R_PreSkinStaticSurface(GfxSceneEntity *sceneEnt, GfxEntity *ent, int 
                 }
             } else {
             try_smc: {
-                void *smcData = rgg->smodelDyncs;
-                char *staticSurf = (char *)*(void **)((char *)smcData + smodelIndex * 8 + 4) + surfaceIndex * 16;
-                void *cached = *(void **)(staticSurf + lod * 4);
+                /* was: smcData + smodelIndex*8+4 (x86 GfxStaticModelDynamic stride/staticSurfs
+                 * offset), surfaceIndex*16 (x86 GfxStaticSurface stride), lod*4 (x86 ptr). All
+                 * grow on x64 -> use typed access. */
+                GfxStaticModelDynamic *smcData = rgg->smodelDyncs;
+                GfxStaticSurface *staticSurf = &smcData[smodelIndex].staticSurfs[surfaceIndex];
+                GfxStaticModelSurfaceCached *cached = staticSurf->cachedLods[lod];
 #ifdef GFX_REAL_D3D9
                 if (getenv("REALD3D9_SMCHIT")) {
                     extern int g_smc_hit, g_smc_new;
@@ -1002,21 +1036,21 @@ static int R_PreSkinStaticSurface(GfxSceneEntity *sceneEnt, GfxEntity *ent, int 
                     extern long long QueryPerf(void);
                     long long _t0 = getenv("REALD3D9_SMCHIT") ? QueryPerf() : 0;
 #endif
-                    cached = R_CacheStaticModelSurface(staticSurf, xsurf, smodelIndex, mat);
+                    cached = (GfxStaticModelSurfaceCached *)R_CacheStaticModelSurface(staticSurf, xsurf, smodelIndex, (const Material *)(mat));
 #ifdef GFX_REAL_D3D9
                     if (_t0)
                         g_smc_recache_ms += QueryPerf() - _t0;
 #endif
-                    *(void **)(staticSurf + lod * 4) = cached;
+                    staticSurf->cachedLods[lod] = cached;
                     if (!cached)
                         goto no_smc;
                 }
                 R_UsedCachedStaticModelSurface(cached);
                 *(int *)surfPos = 5;
-                *(void **)(surfPos + 4) = xsurf;
-                *(void **)(surfPos + 8) = cached;
-                *(void **)(surfPos + 0xc) = ent;
-                return 0x10;
+                *(void **)(surfPos + PSK_XSURF) = xsurf;
+                *(void **)(surfPos + PSK_F2) = cached;
+                *(void **)(surfPos + PSK_F3) = ent;
+                return PSK_SZ_SKIN;
             }
             }
         }
@@ -1025,17 +1059,17 @@ no_smc:
 
     if (((XSurface *)xsurf)->surfRigid.vb) {
         *(int *)surfPos = 4;
-        *(void **)(surfPos + 4) = xsurf;
+        *(void **)(surfPos + PSK_XSURF) = xsurf;
         *needSkinningSurf = 1;
-        return 0x38;
+        return PSK_SZ_RIGID;
     }
 
     if (r_skinCache->current.enabled && ((XSurface *)xsurf)->indexBuffer) {
-        *(int *)(surfPos + 0xc) = 0;
+        *(void **)(surfPos + PSK_F3) = 0;
         int vertCount = XSurfaceGetNumVerts(xsurf);
         int isDx7 = (r_rendererInUse->current.integer == 2);
         int stride = isDx7 ? 0x24 : 0x40;
-        char *dx = (char *)imp_dx;
+        char *dx = (char *)dx_g;
         if (((DxGlobals *)dx)->skinnedCacheLockAddr) {
             GfxBackEndData *fed = frontEndDataOut;
             void *lockPtr = fed->skinnedCacheVb;
@@ -1049,22 +1083,22 @@ no_smc:
                 }
                 offset = -1;
             }
-            *(int *)(surfPos + 8) = offset;
+            *(int *)(surfPos + PSK_F2) = offset;
             if (offset >= 0 && (char *)((DxGlobals *)dx)->skinnedCacheLockAddr + *(int *)lockPtr) {
                 *(int *)surfPos = 3;
-                *(void **)(surfPos + 4) = xsurf;
+                *(void **)(surfPos + PSK_XSURF) = xsurf;
                 *needSkinningSurf = 1;
-                return 0x10;
+                return PSK_SZ_SKIN;
             }
         }
     }
-    *(int *)(surfPos + 8) = -1;
+    *(int *)(surfPos + PSK_F2) = -1;
     {
         int vertCount = XSurfaceGetNumVerts(xsurf);
         int isDx7 = (r_rendererInUse->current.integer == 2);
         int stride = isDx7 ? 0x24 : 0x40;
         int needed = vertCount * stride;
-        char *dx = (char *)imp_dx;
+        char *dx = (char *)dx_g;
         int current = ((DxGlobals *)dx)->tempSkinPos;
         if (current + needed > 0xa00000) {
             GfxBackEndData *fed = frontEndDataOut;
@@ -1074,34 +1108,38 @@ no_smc:
             }
             return 0;
         }
-        *(int *)(surfPos + 0xc) = (int)(uintptr_t)((DxGlobals *)dx)->tempSkinBuf + current;
+        *(void **)(surfPos + PSK_F3) = (char *)((DxGlobals *)dx)->tempSkinBuf + current; /* was (int)ptr -> truncated */
         ((DxGlobals *)dx)->tempSkinPos += needed;
-        ((void (*)(void *, int))ri.Z_VirtualCommitInternal)((void *)*(int *)(surfPos + 0xc), needed);
+        ((void (*)(void *, int))ri.Z_VirtualCommitInternal)(*(void **)(surfPos + PSK_F3), needed);
     }
     *(int *)surfPos = 3;
-    *(void **)(surfPos + 4) = xsurf;
+    *(void **)(surfPos + PSK_XSURF) = xsurf;
     *needSkinningSurf = 1;
-    return 0x10;
+    return PSK_SZ_SKIN;
 }
 
-extern int XModelNumBones(const void *model);
-extern int XModelGetSurfaces(const void *model, void **surfaces, int lod, int *partBits);
-extern int XModelGetLodForDist(const void *model, float dist);
-extern const DObjAnimMat *XModelGetBasePose(const void *model);
+extern int XModelNumBones(const struct XModel *model);
+extern int XModelGetSurfaces(const XModel *model, XSurface ***surfaces, int lod, int **partBits);
+extern int XModelGetLodForDist(const XModel *model, float dist);
+extern const DObjAnimMat *XModelGetBasePose(const struct XModel *model);
 void R_SkinXModel(GfxSceneEntity *sceneEnt, GfxEntity *ent, int smodelIndex)
 {
     r_globals_t *rgg = (r_globals_t *)imp_rg;
     char *se = (char *)sceneEnt;
     char *e = (char *)ent;
-    void *model = (void *)((GfxSceneEntity *)se)->u.data;
+    XModel *model = (XModel *)((GfxSceneEntity *)se)->u.data;
 #ifdef GFX_REAL_D3D9
     SMT_Log("STATIC", (struct XModel *)model, ent);
 #endif
     int boneCount, surfaceCount, lod;
-    void *surfacesPtr;
-    int partBits[4];
+    XSurface **surfacesPtr;
+    int *partBits;
     qboolean needSkinningSurf = 0;
+#if defined(COD2_X64)
+    byte surfBuf[7040]; /* x64: surfaces are ~2x (8-byte ptrs); double the x86 3520 */
+#else
     byte surfBuf[3520];
+#endif
 
     if (((GfxSceneEntity *)se)->cullState > 3)
         return;
@@ -1136,13 +1174,13 @@ void R_SkinXModel(GfxSceneEntity *sceneEnt, GfxEntity *ent, int smodelIndex)
         return;
     }
 
-    surfaceCount = XModelGetSurfaces(model, &surfacesPtr, lod, partBits);
+    surfaceCount = XModelGetSurfaces(model, &surfacesPtr, lod, &partBits);
 
     {
         int startIdx = InterlockedExchangeAdd((volatile int *)&scene.sceneEntMaterialCount, surfaceCount);
         extern int __mh_execute_header;
-        if (startIdx + surfaceCount > (int)(unsigned int)&__mh_execute_header) {
-            scene.sceneEntMaterialCount = (int)(unsigned int)&__mh_execute_header;
+        if (startIdx + surfaceCount > 4096 /*MAX_SCENE_SURFS_PLUS_ENTITIES; was &__mh_execute_header magic (=0x1000 on Mac), garbage on x64*/) {
+            scene.sceneEntMaterialCount = 4096 /*MAX_SCENE_SURFS_PLUS_ENTITIES; was &__mh_execute_header magic (=0x1000 on Mac), garbage on x64*/;
             GfxBackEndData *fed = frontEndDataOut;
             if (*(int *)fed != warnCount) {
                 warnCount = *(int *)fed;
@@ -1157,10 +1195,10 @@ void R_SkinXModel(GfxSceneEntity *sceneEnt, GfxEntity *ent, int smodelIndex)
     {
         byte *surfPtr = surfBuf;
         int i;
-        void **surfArray = (void **)surfacesPtr;
+        XSurface **surfArray = surfacesPtr;
         for (i = 0; i < surfaceCount; i++) {
             int result = R_PreSkinStaticSurface(sceneEnt, ent, smodelIndex,
-                                                (const struct XModel *)model, (XSurface *)surfArray[i], i, lod, &needSkinningSurf, surfPtr);
+                                                model, surfArray[i], i, lod, &needSkinningSurf, surfPtr);
             if (!result) {
                 ((GfxSceneEntity *)se)->cullState = 4;
                 return;
@@ -1273,16 +1311,16 @@ static void R_SkinXSurfaceSkinned(struct GfxModelSkinnedSurface *skinnedSurf,
     if (cachedOffset < 0)
         out = (char *)skinnedSurf->skinnedVert.variant;
     else
-        out = (char *)(cachedOffset + (int)dx.skinnedCacheLockAddr);
+        out = (char *)dx.skinnedCacheLockAddr + cachedOffset; /* was (int)ptr -> truncated on x64 */
 
-    boneOffset = XSurfaceGetBoneOffset((int)(intptr_t)xsurf);
+    boneOffset = XSurfaceGetBoneOffset(xsurf); /* was (int)(intptr_t)xsurf -> truncated the surface ptr */
 
     if (r_rendererInUse->current.integer == 2) {
 
         if (boneOffset == -1) {
 
             vi = XSurfaceGetVertexInfoArray(xsurf);
-            vertCount = XSurfaceGetNumVerts((void *)(intptr_t)xsurf);
+            vertCount = XSurfaceGetNumVerts( (const XSurface *)((void *)(intptr_t)xsurf));
             if (vertCount <= 0)
                 return;
             vp = (const char *)vi;
@@ -1335,7 +1373,7 @@ static void R_SkinXSurfaceSkinned(struct GfxModelSkinnedSurface *skinnedSurf,
         }
 
         vi = XSurfaceGetVertexInfoArray(xsurf);
-        vertCount = XSurfaceGetNumVerts((void *)(intptr_t)xsurf);
+        vertCount = XSurfaceGetNumVerts( (const XSurface *)((void *)(intptr_t)xsurf));
         {
             const DObjSkelMat *mat = (const DObjSkelMat *)((const char *)boneMatrix + boneOffset);
             if (vertCount <= 0)
@@ -1366,7 +1404,7 @@ static void R_SkinXSurfaceSkinned(struct GfxModelSkinnedSurface *skinnedSurf,
     if (boneOffset == -1) {
 
         vi = XSurfaceGetVertexInfoArray(xsurf);
-        vertCount = XSurfaceGetNumVerts((void *)(intptr_t)xsurf);
+        vertCount = XSurfaceGetNumVerts( (const XSurface *)((void *)(intptr_t)xsurf));
         if (vertCount <= 0)
             return;
         vp = (const char *)vi;
@@ -1432,7 +1470,7 @@ static void R_SkinXSurfaceSkinned(struct GfxModelSkinnedSurface *skinnedSurf,
     }
 
     vi = XSurfaceGetVertexInfoArray(xsurf);
-    vertCount = XSurfaceGetNumVerts((void *)(intptr_t)xsurf);
+    vertCount = XSurfaceGetNumVerts( (const XSurface *)((void *)(intptr_t)xsurf));
     {
         const DObjSkelMat *mat = (const DObjSkelMat *)((const char *)boneMatrix + boneOffset);
         if (vertCount <= 0)
@@ -1530,30 +1568,31 @@ void R_SkinXModelCmd(SkinXModelCmd *skinCmd, int context)
         if (surfType == 3) {
 
             R_SkinXSurfaceSkinned((struct GfxModelSkinnedSurface *)surfPos, boneMatrix);
-            surfPos = (const surfaceType_t *)((const byte *)surfPos + 16);
+            surfPos = (const surfaceType_t *)((const byte *)surfPos + PSK_SZ_SKIN);   /* was x86 16 */
         } else if (surfType == 5) {
 
-            surfPos = (const surfaceType_t *)((const byte *)surfPos + 16);
+            surfPos = (const surfaceType_t *)((const byte *)surfPos + PSK_SZ_SKIN);   /* was x86 16 */
         } else {
 
-            const byte *rigidSurf = (const byte *)surfPos;
-            surfPos = (const surfaceType_t *)(rigidSurf + 0x38);
+            const GfxModelRigidSurface *rigidSurf = (const GfxModelRigidSurface *)surfPos;
+            surfPos = (const surfaceType_t *)((const byte *)surfPos + PSK_SZ_RIGID);   /* was x86 0x38 */
             {
-                extern int XSurfaceGetBoneOffset(int xsurfIndex);
-                int boneOffset = XSurfaceGetBoneOffset(*(int *)(rigidSurf + 4));
+                extern int XSurfaceGetBoneOffset(const XSurface *surf);
+                /* was *(int*)(rigidSurf+4): x86 xsurf offset + truncated ptr; xsurf @8 on x64 */
+                int boneOffset = XSurfaceGetBoneOffset(rigidSurf->surf.xsurf);
                 GfxEntity *refEnt = skinCmd->e;
                 R_GetRigidTransform(
                     (const DObjSkelMat *)((const char *)boneMatrix + boneOffset),
                     refEnt->origin,
                     refEnt->axis,
                     refEnt->scale,
-                    (vec3_t *)(rigidSurf + 8));
+                    (vec3_t *)rigidSurf->boneAxis);   /* was rigidSurf+8 (x86 boneAxis offset) */
             }
         }
     }
 }
 
-extern int XSurfaceGetBoneOffset(int xsurfIndex);
+extern int XSurfaceGetBoneOffset(const XSurface *surf);
 
 void R_SkinRigidXModelCmd(SkinRigidXModelCmd *skinRigidCmd)
 {
@@ -1592,27 +1631,28 @@ void R_SkinRigidXModelCmd(SkinRigidXModelCmd *skinRigidCmd)
         int surfType = *(int *)surfPos;
 
         if (surfType == 5) {
-
-            surfPos += 0x10;
+            /* cached surface, same 0x20 packing as skinned (was x86 0x10) */
+            surfPos += PSK_SZ_SKIN;
             continue;
         }
 
         if (surfType == 4) {
 
-            byte *rigidSurf = surfPos;
-            surfPos += 0x38;
+            GfxModelRigidSurface *rigidSurf = (GfxModelRigidSurface *)surfPos;
+            surfPos += PSK_SZ_RIGID;   /* was x86 0x38 */
             float entScale = refEnt->scale;
-            int boneOffset = XSurfaceGetBoneOffset(*(int *)(rigidSurf + 4));
+            /* was *(int*)(rigidSurf+4): x86 xsurf offset + truncated ptr; xsurf is @8 on x64 */
+            int boneOffset = XSurfaceGetBoneOffset(rigidSurf->surf.xsurf);
             R_GetRigidTransform(
                 (const DObjSkelMat *)((byte *)mtx + boneOffset),
                 refEnt->origin,
                 refEnt->axis,
                 entScale,
-                (vec3_t *)(rigidSurf + 8));
+                (vec3_t *)rigidSurf->boneAxis);   /* was rigidSurf+8 (x86 boneAxis offset) */
         } else {
 
             byte *surf = surfPos;
-            surfPos += 0x10;
+            surfPos += PSK_SZ_SKIN;   /* was x86 0x10 */
             R_SkinXSurfaceSkinned((struct GfxModelSkinnedSurface *)surf, (const DObjSkelMat *)mtx);
         }
     }

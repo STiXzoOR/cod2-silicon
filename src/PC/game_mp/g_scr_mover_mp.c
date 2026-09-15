@@ -3,32 +3,33 @@
 #include <string.h>
 
 extern float Scr_GetFloat(int param);
-extern void Scr_GetVector(int param, vec3_t out);
+extern void Scr_GetVector(unsigned int param, vec_t *out);
 extern unsigned int Scr_GetNumParam(void);
 extern void Scr_ParamError(int param, const char *msg);
 extern void Scr_Error(const char *msg);
 extern void Scr_ObjectError(const char *msg);
-extern void Scr_Notify(gentity_t *ent, unsigned short name, int numArgs);
+extern void Scr_Notify(gentity_t *ent, unsigned short name, unsigned int numArgs);
 extern const char *va(const char *fmt, ...);
 extern void Com_DPrintf(const char *fmt, ...);
 extern void SV_LinkEntity(gentity_t *ent);
 extern void SV_SetBrushModel(gentity_t *ent);
 extern void G_DObjUpdate(gentity_t *ent);
 extern qboolean G_SpawnFloat(const char *key, const char *defaultValue, float *out);
-extern qboolean G_SpawnVector(const char *key, const char *defaultValue, vec3_t out);
-extern void BG_EvaluateTrajectory(trajectory_t *tr, int time, vec3_t result);
-extern float Vec3Normalize(vec3_t v);
-extern float Vec3NormalizeTo(const vec3_t v, vec3_t out);
-extern float AngleNormalize180(float angle);
-extern float AngleNormalize360(float angle);
-extern float AngleSubtract(float a, float b);
+extern qboolean G_SpawnVector(const char *key, const char *defaultValue, float *out);
+extern void BG_EvaluateTrajectory(const trajectory_t *tr, int time, vec_t *result);
+extern const vec_t Vec3Normalize(vec_t *v);
+extern const vec_t Vec3NormalizeTo(const vec_t *v, vec_t *out);
+extern const float AngleNormalize180(const float angle);
+extern const float AngleNormalize360(const float angle);
+extern const float AngleSubtract(const float a1, const float a2);
 
 extern int __mh_execute_header;
 
-#define g_entities ((gentity_t *)imp_g_entities)
+extern gentity_t g_entities[];   /* was a macro over imp_g_entities (extra load); use the real object like the rest of game_mp */
 extern level_locals_t level;
 
-#define SCR_CONST() ((const scr_const_t *)imp_scr_const)
+extern scr_const_t scr_const;
+#define SCR_CONST() (&scr_const)   /* was an imp_ deref; use the real object like cgame does */
 
 void ScriptEntCmd_MoveTo(scr_entref_t entref);
 void ScriptEntCmd_MoveX(scr_entref_t entref);

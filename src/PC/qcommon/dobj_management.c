@@ -1,11 +1,11 @@
 #include "common_types.h"
 #include "imports.h"
 
-extern void DObjSkelClear(struct DObj_s *dobj);
-extern void DObjCreate(DObjModel_s *models, int numModels, struct XAnimTree_s *tree, void *buf, int entNum);
+extern void DObjSkelClear(const struct DObj_s *dobj);
+extern void DObjCreate(DObjModel_s *models, unsigned int numModels, struct XAnimTree_s *tree, char *buf, unsigned int entNum);
 extern void DObjFree(struct DObj_s *dobj);
-extern void Com_Error(int level, const char *fmt, ...);
-extern void Com_Memset(void *dest, int val, int count);
+extern void Com_Error(errorParm_t level, const char *fmt, ...);
+extern void Com_Memset(void *dest, const int val, int count);
 
 static qboolean g_bDObjInited;
 static int com_lastDObjIndex;
@@ -30,7 +30,7 @@ static inline __attribute__((always_inline)) int Com_AllocDObj(void)
 {
     int idx = com_lastDObjIndex + 1;
 
-    while (idx <= 2047) {
+    while (idx < 2048) {
         if (!objAlloced[idx]) {
             com_lastDObjIndex = idx;
             objAlloced[idx] = 1;
@@ -40,14 +40,12 @@ static inline __attribute__((always_inline)) int Com_AllocDObj(void)
         idx++;
     }
 
-    if (com_lastDObjIndex > 0) {
-        for (idx = 1; idx <= com_lastDObjIndex; idx++) {
-            if (!objAlloced[idx]) {
-                com_lastDObjIndex = idx;
-                objAlloced[idx] = 1;
-                objFreeCount--;
-                return idx;
-            }
+    for (idx = 1; idx <= com_lastDObjIndex; idx++) {
+        if (!objAlloced[idx]) {
+            com_lastDObjIndex = idx;
+            objAlloced[idx] = 1;
+            objFreeCount--;
+            return idx;
         }
     }
 
@@ -89,10 +87,10 @@ void Com_ServerDObjCreate(DObjModel_s *dobjModels, int numModels, struct XAnimTr
     int idx = Com_AllocDObj();
 
     serverObjMap[handle] = (short)idx;
-    DObjCreate(dobjModels, nm, tree, (void *)&objBuf[idx], (unsigned short)(handle + 1));
+    DObjCreate(dobjModels, nm, tree, (char *)&objBuf[idx], (unsigned short)(handle + 1));
 
     if (objFreeCount == 0)
-        Com_Error(1, "exceeded maximum number of DObjs");
+        Com_Error(ERR_DROP, "exceeded maximum number of DObjs");
 }
 
 void Com_SafeClientDObjFree(int handle)
@@ -147,8 +145,8 @@ void Com_ClientDObjCreate(DObjModel_s *dobjModels, int numModels, struct XAnimTr
     int idx = Com_AllocDObj();
 
     clientObjMap[handle] = (short)idx;
-    DObjCreate(dobjModels, nm, tree, (void *)&objBuf[idx], 0);
+    DObjCreate(dobjModels, nm, tree, (char *)&objBuf[idx], 0);
 
     if (objFreeCount == 0)
-        Com_Error(1, "exceeded maximum number of DObjs");
+        Com_Error(ERR_DROP, "exceeded maximum number of DObjs");
 }

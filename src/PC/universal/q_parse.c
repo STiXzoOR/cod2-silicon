@@ -203,7 +203,7 @@ void Com_ScriptError(const char *msg, ...)
     pi = &g_parse[0].parseInfo[g_parse[0].parseInfoNum];
 
     va_start(argptr, msg);
-    vsprintf(string, msg, argptr);
+    vsnprintf(string, sizeof(string), msg, argptr);
     va_end(argptr);
 
     if (g_parse[0].parseInfoNum) {
@@ -222,7 +222,7 @@ void Com_ScriptWarning(const char *msg, ...)
     pi = &g_parse[0].parseInfo[g_parse[0].parseInfoNum];
 
     va_start(argptr, msg);
-    vsprintf(string, msg, argptr);
+    vsnprintf(string, sizeof(string), msg, argptr);
     va_end(argptr);
 
     if (g_parse[0].parseInfoNum) {

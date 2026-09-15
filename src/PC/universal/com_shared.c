@@ -182,7 +182,7 @@ Bool Com_Filter(const char *filter, const char *name, int casesensitive)
     }
 }
 
-Bool Com_FilterPath(const char *filter, const char *name, int casesensitive)
+qboolean Com_FilterPath(const char *filter, const char *name, int casesensitive)
 {
     char new_filter[64];
     char new_name[64];

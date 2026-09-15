@@ -26,7 +26,7 @@ struct ConversionArguments {
 struct ItemKeyHandler {
     int key;
     const char *action;
-    int next;
+    intptr_t next;
 };
 
 struct bind_t {
@@ -112,7 +112,7 @@ struct sharedUiInfo_t {
 };
 
 struct stringDef_s {
-    intptr_t next;   /* linked-list ptr (was int -> truncated on x64; intptr_t==int on x86) */
+    struct stringDef_s *next;
     const char *str;
 };
 

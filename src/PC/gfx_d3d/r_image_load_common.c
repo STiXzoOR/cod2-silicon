@@ -155,13 +155,13 @@ void Image_Setup(GfxImage *image, int width, int height, int depth, int imageFla
 
     if (imageFlags & 4) {
 
-        Image_CreateCubeTexture(image, w, mipmapCount, usage, imageFormat, 1);
+        Image_CreateCubeTexture(image, w, mipmapCount, usage, imageFormat, (D3DPOOL)(1));
     } else if (imageFlags & 8) {
 
-        Image_Create3DTexture(image, w, h, d, mipmapCount, usage, imageFormat, 1);
+        Image_Create3DTexture(image, w, h, d, mipmapCount, usage, imageFormat, (D3DPOOL)(1));
     } else {
 
-        Image_Create2DTexture(image, w, h, mipmapCount, usage, imageFormat, 1);
+        Image_Create2DTexture(image, w, h, mipmapCount, usage, imageFormat, (D3DPOOL)(1));
     }
 
     Image_TrackTexture(image, imageFlags, imageFormat, width, height, depth);

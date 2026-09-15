@@ -106,7 +106,7 @@ void Cmd_AddCommand(const char *cmdName, xcommand_t function);
 void Cmd_RemoveCommand(const char *cmdName);
 void Cmd_SetAutoComplete(const char *cmdName, const char *dir, const char *ext);
 void Cmd_Shutdown(void);
-void Cmd_ForEach(void (*callback)());
+void Cmd_ForEach(void (*callback)(const char *));
 const char **Cmd_GetAutoCompleteFileList(const char *cmdName, int *fileCount, int allocTrackType);
 void Cmd_ExecuteString(const char *text);
 void SV_Cmd_ExecuteString(const char *text);
@@ -134,7 +134,7 @@ Bool Com_NewPlayerProfile(const char *profileName);
 
 Bool Com_IsMapProfilerActive(void);
 
-void Com_BeginRedirect(char *buffer, int buffersize, void (*flush)());
+void Com_BeginRedirect(char *buffer, int buffersize, void (*flush)(char *));
 void Com_EndRedirect(void);
 void Com_Printf(const char *fmt, ...);
 void Com_PrintMessage(print_msg_type_t type, const char *msg);

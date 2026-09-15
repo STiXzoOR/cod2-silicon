@@ -1,19 +1,24 @@
 #include "common_types.h"
 #include "imports.h"
+#include <stddef.h>
+#include <stdio.h>
 
 extern byte *clc_ptr;
 extern byte *cl_ptr;
 extern byte *net_profile_dvar;
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+extern int clc_x64_lastChallenge;
+#endif
 
-#define CLC_CHALLENGE_OFF 0x128
-#define CLC_RELIABLEACK_OFF 0x134
-#define CLC_RELIABLECMDS_OFF 0x138
-#define CLC_SERVERMSGSEQ_OFF 0x20138
-#define CLC_SERVERCMDSEQ_OFF 0x2013c
-#define CLC_SERVERCMDS_OFF 0x20144
-#define CLC_NETCHAN_OFF 0x407c8
-#define CLC_NETCHAN_PPROF_OFF 0x487fc
-#define CLC_POOBPROF_OFF 0x48800
+#define CLC_CHALLENGE_OFF offsetof(clientConnection_t, challenge)
+#define CLC_RELIABLEACK_OFF offsetof(clientConnection_t, reliableAcknowledge)
+#define CLC_RELIABLECMDS_OFF offsetof(clientConnection_t, reliableCommands)
+#define CLC_SERVERMSGSEQ_OFF offsetof(clientConnection_t, serverMessageSequence)
+#define CLC_SERVERCMDSEQ_OFF offsetof(clientConnection_t, serverCommandSequence)
+#define CLC_SERVERCMDS_OFF offsetof(clientConnection_t, serverCommands)
+#define CLC_NETCHAN_OFF offsetof(clientConnection_t, netchan)
+#define CLC_NETCHAN_PPROF_OFF (offsetof(clientConnection_t, netchan) + offsetof(netchan_t, pProf))
+#define CLC_POOBPROF_OFF offsetof(clientConnection_t, pOOBProf)
 
 #define CL_SERVERID_OFF 0x8628
 
@@ -27,7 +32,7 @@ extern void NetProf_UpdateStatistics(netProfileStream_t *stream);
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern void CL_DrawString(int x, int y, const char *str, int color, int size);
-extern void NET_SendPacket(netsrc_t sock, int length, const void *data, netadr_t to);
+extern Bool NET_SendPacket(netsrc_t sock, int length, const void *data, netadr_t to);
 static int cl_decode_count = 0;
 
 void CL_Netchan_Decode(byte *data, int size);
@@ -43,8 +48,14 @@ void CL_Netchan_Decode(byte *data, int size)
     int reliableAcknowledge;
     const char *string;
     byte key;
+    int challenge;
     int index;
     int i;
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+    static int x64DecodeTraceCount;
+    byte beforeTrace[16];
+    int beforeTraceLen;
+#endif
 
     clc_base = *(byte **)clc_ptr;
 
@@ -52,9 +63,21 @@ void CL_Netchan_Decode(byte *data, int size)
     string = ((clientConnection_t *)clc_base)->reliableCommands[reliableAcknowledge & 0x7f];
 
     key = (byte)(((clientConnection_t *)clc_base)->serverMessageSequence);
-    key ^= (byte)(((clientConnection_t *)clc_base)->challenge);
+    challenge = ((clientConnection_t *)clc_base)->challenge;
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+    if (!challenge) {
+        challenge = clc_x64_lastChallenge;
+    }
+#endif
+    key ^= (byte)challenge;
 
     index = 0;
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+    beforeTraceLen = size < (int)sizeof(beforeTrace) ? size : (int)sizeof(beforeTrace);
+    for (i = 0; i < beforeTraceLen; ++i) {
+        beforeTrace[i] = data[i];
+    }
+#endif
     for (i = 0; i < size; i++) {
         byte ch;
 
@@ -70,6 +93,33 @@ void CL_Netchan_Decode(byte *data, int size)
 
         data[i] ^= key;
     }
+
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+    if (x64DecodeTraceCount < 12) {
+        FILE *f = fopen("x64_netchan_trace.txt", "a");
+        if (f) {
+            fprintf(f,
+                    "cldec[%d] size=%d relAck=%d seq=%d challenge=%d keyEnd=%02x string=\"%.48s\" before:",
+                    x64DecodeTraceCount,
+                    size,
+                    reliableAcknowledge,
+                    ((clientConnection_t *)clc_base)->serverMessageSequence,
+                    challenge,
+                    key,
+                    string);
+            for (i = 0; i < beforeTraceLen; ++i) {
+                fprintf(f, " %02x", beforeTrace[i]);
+            }
+            fprintf(f, " after:");
+            for (i = 0; i < beforeTraceLen; ++i) {
+                fprintf(f, " %02x", data[i]);
+            }
+            fprintf(f, "\n");
+            fclose(f);
+        }
+        x64DecodeTraceCount++;
+    }
+#endif
 }
 
 void CL_Netchan_TransmitNextFragment(netchan_t *chan)

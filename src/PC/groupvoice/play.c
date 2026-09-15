@@ -6,7 +6,7 @@ extern int DSound_UpdateSample(sample_t *sample, char *data, unsigned int data_l
 extern sample_t *DSound_NewSample(void);
 extern int Record_DestroySample(sample_t *sample);
 extern void DSound_Frame(void);
-extern void DSound_SampleFrame(sample_t *sample);
+extern void DSound_SampleFrame(void *sample);
 extern int DSound_Init(int numChannels, const unsigned char *handle);
 extern void DSound_Shutdown(void);
 

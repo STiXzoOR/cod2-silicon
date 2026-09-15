@@ -4,6 +4,13 @@
 #include "pb_public.h"
 #include "PC/qcommon/net_hardening.h"
 #include <stdarg.h>
+/* dvar globals */
+extern int dvar_modifiedFlags;
+extern qboolean gameInitialized;
+extern const dvar_t *cl_paused;
+extern const dvar_t *com_dedicated;
+extern const dvar_t *com_sv_running;
+extern const dvar_t *sv_paused;
 extern void SV_DelayDropClient(client_t *drop, const char *reason);
 extern void MSG_WriteReliableCommandToBuffer(const char *pszCommand, char *pszBuffer, int iBufferSize);
 extern int I_strnicmp(const char *s0, const char *s1, size_t n);
@@ -11,9 +18,9 @@ extern Bool NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *data);
 
 extern void Scr_FreeValue(int value);
 extern void SV_ResetSkeletonCache(void);
-extern void G_RunFrame(int levelTime);
-extern void LargeLocal_LargeLocal(LargeLocal *ll, int size);
-extern void *LargeLocal_GetBuf(LargeLocal *ll);
+extern int G_RunFrame(int levelTime);
+extern void LargeLocal_LargeLocal(const LargeLocal *_this, int size);
+extern void * LargeLocal_GetBuf(const LargeLocal *_this);
 extern void ZN10LargeLocalD1Ev(LargeLocal *ll);
 extern playerState_t *SV_GameClientNum(int num);
 extern int G_GetClientArchiveTime(int clientNum);
@@ -24,7 +31,7 @@ extern const char *Dvar_InfoString(int bit);
 extern Bool Dvar_GetBool(const char *dvarName);
 extern int Dvar_GetInt(const char *dvarName);
 extern const char *Dvar_GetString(const char *dvarName);
-extern const char *Info_ValueForKey(const char *s, const char *key);
+extern char *Info_ValueForKey(const char *s, const char *key);
 extern void Info_SetValueForKey(char *s, const char *key, const char *value);
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
@@ -35,7 +42,7 @@ extern void SV_Cmd_TokenizeString(const char *text_in);
 extern int SV_Cmd_Argc(void);
 extern char *SV_Cmd_Argv(int arg);
 extern const char *va(const char *fmt, ...);
-extern const char *MSG_ReadStringLine(msg_t *msg);
+extern char *MSG_ReadStringLine(msg_t *msg);
 extern void SV_Netchan_AddOOBProfilePacket(int iLength);
 extern const char *NET_AdrToString(netadr_t a);
 extern int I_stricmp(const char *s1, const char *s2);
@@ -45,7 +52,7 @@ extern void SV_DirectConnect(netadr_t from);
 extern void SV_AuthorizeIpPacket(netadr_t from);
 extern void SVC_RemoteCommand(netadr_t from, msg_t *msg);
 extern void Dvar_SetInt(const dvar_t *dvar, int value);
-extern void Com_Shutdown(const char *finalmsg);
+extern void Com_Shutdown(char *finalmsg);
 extern void Cbuf_AddText(const char *text);
 extern void CL_FlushDebugData(int fromServer);
 extern void Scr_SetLoading(int loading);
@@ -54,7 +61,7 @@ extern void SV_SendClientMessages(void);
 extern void SV_MasterHeartbeat(const char *heartbeat);
 extern void SV_SetConfig(int start, int max, int bit);
 extern const char *Dvar_InfoString_Big(int bit);
-extern void SV_SetConfigstring(int index, const char *val);
+extern void SV_SetConfigstring(const int index, const char *val);
 extern void SV_DropClient(client_t *drop, const char *reason);
 extern void Com_DPrintf(const char *fmt, ...);
 
@@ -334,13 +341,13 @@ void SV_AddServerCommand(client_t *client, svscmd_type type, const char *cmd)
 
         {
             netadr_t addr = client->netchan.remoteAddress;
-            NET_OutOfBandPrint(1, addr, "disconnect");
+            NET_OutOfBandPrint( (netsrc_t)(1), addr, "disconnect");
         }
 
         SV_DelayDropClient(client, "EXE_SERVERCOMMANDOVERFLOW");
 
         cmd = va("%c \"EXE_SERVERCOMMANDOVERFLOW\"", 0x77);
-        type = 1;
+        type = (svscmd_type)(1);
         i = client->reliableSequence;
     }
 
@@ -440,7 +447,7 @@ void SVC_Status(netadr_t from)
 
         SV_GameClientNum(i);
 
-        if (*(int *)imp_gameInitialized)
+        if (gameInitialized)
             G_GetClientScore((int)(cl - svs.clients));
 
         Com_sprintf(player, sizeof(player), "%i %i \"%s\"\n", 0, cl->ping, cl->name);
@@ -488,7 +495,7 @@ void SVC_Status(netadr_t from)
 
     Info_SetValueForKey(infostring, "mod", va("%i", mod));
     Com_sprintf(finalString, sizeof(finalString), "statusResponse\n%s\n%s", infostring, status);
-    NET_OutOfBandPrint(1, from, finalString);
+    NET_OutOfBandPrint( (netsrc_t)(1), from, finalString);
 
     ZN10LargeLocalD1Ev(&status_large_local);
 }
@@ -536,8 +543,8 @@ void SVC_GameCompleteStatus(netadr_t from)
         statusLength = newStatusLength;
     }
 
-    NET_OutOfBandPrint(1, from,
-                       va("gameCompleteStatus\n%s\n%s", infostring, status));
+    NET_OutOfBandPrint((netsrc_t)1, from,
+                       va( "gameCompleteStatus\n%s\n%s", infostring, status));
 
     ZN10LargeLocalD1Ev(&status_large_local);
 }
@@ -631,7 +638,7 @@ void SVC_Info(netadr_t from)
     if (value)
         Info_SetValueForKey(infostring, "kc", va("%i", value));
 
-    if (*(dvar_t **)imp_com_dedicated && (*(dvar_t **)imp_com_dedicated)->current.integer)
+    if (com_dedicated && (com_dedicated)->current.integer)
         hw = 2;
     else
         hw = 5;
@@ -660,7 +667,7 @@ void SVC_Info(netadr_t from)
 
     I_strncpyz(response, "infoResponse\n", sizeof(response));
     I_strncat(response, sizeof(response), infostring);
-    NET_OutOfBandPrint(1, from, response);
+    NET_OutOfBandPrint( (netsrc_t)(1), from, response);
 }
 
 void SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
@@ -755,7 +762,7 @@ void SV_PacketEvent(netadr_t from, msg_t *msg)
     }
 
     if (i >= sv_maxclients->current.integer) {
-        NET_OutOfBandPrint(1, from, "disconnect");
+        NET_OutOfBandPrint( (netsrc_t)(1), from, "disconnect");
         return;
     }
 
@@ -868,7 +875,7 @@ void SV_SendServerCommand(client_t *cl, svscmd_type type, const char *fmt, ...)
         return;
     }
 
-    if ((*(dvar_t **)imp_com_dedicated)->current.integer && strncmp(message, "print", 5) == 0) {
+    if ((com_dedicated)->current.integer && strncmp(message, "print", 5) == 0) {
         const char *src = message;
         int l = 0;
 
@@ -913,11 +920,11 @@ void SV_Frame(int msec)
         return;
     }
 
-    if (!(*(const dvar_t **)imp_com_sv_running)->current.enabled) {
+    if (!(com_sv_running)->current.enabled) {
         return;
     }
 
-    if ((*(const dvar_t **)imp_cl_paused)->current.integer) {
+    if ((cl_paused)->current.integer) {
         connectedCount = 0;
         cl = svs.clients;
 
@@ -928,11 +935,11 @@ void SV_Frame(int msec)
         }
 
         if (connectedCount - 1 <= 0) {
-            Dvar_SetInt(*(const dvar_t **)imp_sv_paused, 1);
+            Dvar_SetInt(sv_paused, 1);
             return;
         }
 
-        Dvar_SetInt(*(const dvar_t **)imp_sv_paused, 0);
+        Dvar_SetInt(sv_paused, 0);
     }
 
     frameMsec = 1000 / sv_fps->current.integer;
@@ -998,22 +1005,22 @@ void SV_Frame(int msec)
         return;
     }
 
-    dvarModifiedFlags = *(int *)imp_dvar_modifiedFlags;
+    dvarModifiedFlags = dvar_modifiedFlags;
     if (dvarModifiedFlags & 0x404) {
         SV_SetConfigstring(0, Dvar_InfoString(0x404));
-        *(int *)imp_dvar_modifiedFlags &= ~0x404;
-        dvarModifiedFlags = *(int *)imp_dvar_modifiedFlags;
+        dvar_modifiedFlags &= ~0x404;
+        dvarModifiedFlags = dvar_modifiedFlags;
     }
 
     if (dvarModifiedFlags & 8) {
         SV_SetConfigstring(1, Dvar_InfoString_Big(8));
-        *(int *)imp_dvar_modifiedFlags &= ~8;
-        dvarModifiedFlags = *(int *)imp_dvar_modifiedFlags;
+        dvar_modifiedFlags &= ~8;
+        dvarModifiedFlags = dvar_modifiedFlags;
     }
 
     if (dvarModifiedFlags & 0x100) {
         SV_SetConfig(0x8e, 0x60, 0x100);
-        *(int *)imp_dvar_modifiedFlags &= ~0x100;
+        dvar_modifiedFlags &= ~0x100;
     }
 
     SV_ResetSkeletonCache();

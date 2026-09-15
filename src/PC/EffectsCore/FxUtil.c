@@ -6,6 +6,9 @@ extern Bool g_rendererExists;
 #include "imports.h"
 #include "bytematch.h"
 #include <math.h>
+/* dvar globals */
+extern const dvar_t *fx_debugBolt;
+extern const dvar_t *fx_visMinTraceDist;
 
 #define PART_ANCHOR_X(p) (((Effect *)(p))->origin[0])
 #define PART_ANCHOR_Y(p) (((Effect *)(p))->origin[1])
@@ -64,45 +67,51 @@ static effectListArray_t effectListArrayNonBolt;
 static SortedEffect visibleEffectsNonBolt[1800];
 static SortedEffect visibleEffectsBolt[1800];
 
-extern Bool FxHelper_IsMaterialRefractive(FxHelper *helper, MaterialHandle material);
-extern void FxHelper_FxHelper(FxHelper *helper);
+static qboolean FX_DvarEnabled(void *dvarSlot)
+{
+    const dvar_t *dvar = *(const dvar_t **)dvarSlot;
+    return dvar && dvar->current.enabled;
+}
+
+extern Bool FxHelper_IsMaterialRefractive(const FxHelper *_this, MaterialHandle handle);
+extern void FxHelper_FxHelper(const FxHelper *_this);
 extern void Z_FreeInternal(void *ptr);
 extern void *Z_MallocInternal(int size);
 extern void __ZdaPv(void *ptr);
 extern void Rand_Init(int seed);
-extern void FxHelper_Trace(void *helper, void *trace, vec_t *start, vec_t *mins, vec_t *maxs, vec_t *end, int contents, int mask);
-extern void AxisCopy(const vec_t *src, vec_t *dst);
-extern void CG_GetDObjOrientation(int entityNum, void *axis);
-extern void *Com_GetClientDObj(int entityNum, int localClientNum);
-extern int DObjNumBones(void *dobj);
+extern void FxHelper_Trace(const FxHelper *_this, trace_t *tr, vec_t *start, const vec_t *min, const vec_t *max, vec_t *end, int skipEntNum, int flags);
+extern void AxisCopy(vec3_t *in, vec3_t *out);
+extern void CG_GetDObjOrientation(int entityNum, orientation_t *axis);
+extern struct DObj_s * Com_GetClientDObj(int handle, int localClientNum);
+extern int DObjNumBones(const struct DObj_s *dobj);
 extern void CG_DObjCalcBoneGeneric(int entityNum, int localClientNum, int boneIndex);
-extern void *DObjGetRotTransArray(void *dobj);
+extern DObjAnimMat *DObjGetRotTransArray(const DObj *dobj);
 extern void MatrixMultiply(void *a, void *b, void *out);
 extern void MatrixTransformVector43(void *trans, void *axis, void *out);
 extern void *imp_fx_debugBolt;
-extern void AxisTransformVector(void *axis, float x, float y, float z, vec_t *out);
+extern void AxisTransformVector(vec3_t *axes, const vec_t x, const vec_t y, const vec_t z, vec_t *out);
 extern void *imp_vec3_origin;
 extern void *__Znam(int size);
 extern float flrand(float min, float max);
-extern void Particle_Particle(void *particle);
-extern void Particle_IntegrateTotalVelocity(void *particle, int time, vec_t *velSum);
+extern void Particle_Particle(const Particle *particle);
+extern void Particle_IntegrateTotalVelocity(const Particle *particle, int time, vec_t *velSum);
 extern void Cloud_Cloud(void *cloud);
-extern void Cylinder_Cylinder(void *cyl);
-extern void Light_Light(void *light);
-extern void *FxBoltFrame_GetOrientation(void *boltFrame);
-extern void OrientationDirFromWorldDir(void *orient, vec_t *normal, vec_t *localNormal);
+extern void Cylinder_Cylinder(const Cylinder *_this);
+extern void Light_Light(const Light *_this);
+extern const orientation_t *FxBoltFrame_GetOrientation(const FxBoltFrame *_this);
+extern void OrientationDirFromWorldDir(const orientation_t *or_, const vec_t *dir, vec_t *out);
 extern void FxScheduler_Clean(void *scheduler, int bRemoveTemplates, int arg3);
 extern void *imp_fxSchedulers;
 extern void *imp_theFxScheduler;
-extern float Vec3DistanceSq(const vec_t *a, const vec_t *b);
-extern float FxRange_GetVal(void *range);
-extern void FxHelper_CameraShake(void *helper, vec_t *origin, float intensity, int duration, int fadeTime);
-extern void *MediaHandles_GetEffect(void *mediaHandles);
+extern const vec_t Vec3DistanceSq(const vec_t *p1, const vec_t *p2);
+extern float FxRange_GetVal(const FxRange *range);
+extern void FxHelper_CameraShake(const FxHelper *_this, vec_t *origin, float intensity, int radius, int time_);
+extern EffectTemplate *MediaHandles_GetEffect(const MediaHandles *mediaHandles);
 extern void FxScheduler_PlayEffect(void *scheduler, void *effectTemplate, vec_t *origin, vec3_t *ax, void *bolt);
 extern void FxScheduler_CreateDecalEffect(void *scheduler, void *primTemp, vec_t *origin, vec3_t *ax);
-extern void FxScheduler_FxScheduler(void *scheduler);
+extern void FxScheduler_FxScheduler(const FxScheduler *scheduler);
 extern void FX_InitTemplates(void);
-extern void FxHelper_Init(void *helper);
+extern void FxHelper_Init(const FxHelper *_this);
 extern void *imp_g_rendererExists;
 
 void FX_InitServer(void);
@@ -191,7 +200,7 @@ static void __attribute__((constructor)) GLOBAL__I_effectClusters(void)
     FxHelper_FxHelper(theFxHelpers);
 }
 
-extern float Vec3DistanceSq(const vec_t *a, const vec_t *b);
+extern const vec_t Vec3DistanceSq(const vec_t *p1, const vec_t *p2);
 static inline __attribute__((always_inline)) int FX_GetCluster_core(const vec_t *origin)
 {
     int i;
@@ -234,9 +243,9 @@ void FX_CalcOrigin2(const PrimitiveTemplate *primTemp, vec_t *org, vec_t *org2, 
 
         if (flags & 0x20) {
 
-            float z = FxRange_GetVal(pt + 0xe0);
-            float y = FxRange_GetVal(pt + 0xd8);
-            float x = FxRange_GetVal(pt + 0xd0);
+            float z = FxRange_GetVal((const FxRange *)(pt + 0xe0));
+            float y = FxRange_GetVal((const FxRange *)(pt + 0xd8));
+            float x = FxRange_GetVal((const FxRange *)(pt + 0xd0));
             if (flags & 0x80) {
 
                 org2[0] = x;
@@ -256,7 +265,7 @@ void FX_CalcOrigin2(const PrimitiveTemplate *primTemp, vec_t *org, vec_t *org2, 
         }
 
         byte trace[0x44];
-        FxHelper_Trace(*(FxHelper **)imp_theFxHelper, trace, org, (vec_t *)imp_vec3_origin, (vec_t *)imp_vec3_origin, temp, -1, 1);
+        FxHelper_Trace(*(FxHelper **)imp_theFxHelper, (trace_t *)(trace), org, (vec_t *)imp_vec3_origin, (vec_t *)imp_vec3_origin, temp, -1, 1);
         float fraction = *(float *)trace;
 
         org2[0] = org[0] + (temp[0] - org[0]) * fraction;
@@ -264,15 +273,15 @@ void FX_CalcOrigin2(const PrimitiveTemplate *primTemp, vec_t *org, vec_t *org2, 
         org2[2] = org[2] + (temp[2] - org[2]) * fraction;
 
         if (flags & 0x10) {
-            void *effect = MediaHandles_GetEffect(pt + 0x70);
+            void *effect = MediaHandles_GetEffect((const MediaHandles *)(pt + 0x70));
             vec_t *traceNormal = (vec_t *)(trace + 4);
             FxScheduler_PlayEffect(*(void **)imp_theFxScheduler, effect, org2, (vec3_t *)traceNormal, NULL);
         }
     } else {
 
-        float z = FxRange_GetVal(pt + 0xe0);
-        float y = FxRange_GetVal(pt + 0xd8);
-        float x = FxRange_GetVal(pt + 0xd0);
+        float z = FxRange_GetVal((const FxRange *)(pt + 0xe0));
+        float y = FxRange_GetVal((const FxRange *)(pt + 0xd8));
+        float x = FxRange_GetVal((const FxRange *)(pt + 0xd0));
 
         if (flags & 0x80) {
 
@@ -289,11 +298,11 @@ void FX_CalcOrigin2(const PrimitiveTemplate *primTemp, vec_t *org, vec_t *org2, 
     }
 }
 
-extern void CG_GetDObjOrientation(int entityNum, void *axis);
-extern void *Com_GetClientDObj(int entityNum, int localClientNum);
-extern int DObjNumBones(void *dobj);
+extern void CG_GetDObjOrientation(int entityNum, orientation_t *axis);
+extern struct DObj_s * Com_GetClientDObj(int handle, int localClientNum);
+extern int DObjNumBones(const struct DObj_s *dobj);
 extern void CG_DObjCalcBoneGeneric(int entityNum, int localClientNum, int boneIndex);
-extern void *DObjGetRotTransArray(void *dobj);
+extern DObjAnimMat *DObjGetRotTransArray(const DObj *dobj);
 extern void MatrixMultiply(void *a, void *b, void *out);
 extern void MatrixTransformVector43(void *trans, void *axis, void *out);
 extern void *imp_fx_debugBolt;
@@ -308,18 +317,21 @@ Bool FX_GetBoneOrientation(const FxBoltInfo *bolt, orientation_t *orient)
     int boneIndex = b->boneIndex;
 
     float axis[12];
-    CG_GetDObjOrientation(entityNum, axis);
+    /* NOTE: this caller reads the origin from axis[9..11] and the matrix from axis[0..8],
+       but orientation_t is {origin[0..2], axis[3..11]} -- a LATENT OFFSET BUG. The cast
+       keeps the existing behaviour deliberately unchanged. */
+    CG_GetDObjOrientation(entityNum, (orientation_t *)axis);
 
     if (boneIndex < 0) {
 
         orient->origin[0] = axis[9];
         orient->origin[1] = axis[10];
         orient->origin[2] = axis[11];
-        AxisCopy((vec_t *)axis, (vec_t *)orient->axis);
+        AxisCopy( (vec3_t (*))((vec_t *)axis), (vec3_t (*))((vec_t *)orient->axis));
         return 1;
     }
 
-    void *dobj = Com_GetClientDObj(entityNum, 0);
+    DObj *dobj = Com_GetClientDObj(entityNum, 0);
     if (!dobj)
         return 0;
 
@@ -364,7 +376,7 @@ Bool FX_GetBoneOrientation(const FxBoltInfo *bolt, orientation_t *orient)
 
     MatrixTransformVector43(mtx + 0x10, axis, orient);
 
-    float debugDist = (*(dvar_t **)imp_fx_debugBolt)->current.value;
+    float debugDist = (fx_debugBolt)->current.value;
     if (debugDist != 0.0f) {
         vec3_t endPt;
         endPt[0] = orient->origin[0] + orient->axis[0][0] * debugDist;
@@ -372,13 +384,13 @@ Bool FX_GetBoneOrientation(const FxBoltInfo *bolt, orientation_t *orient)
         endPt[2] = orient->origin[2] + orient->axis[0][2] * debugDist;
         CL_AddDebugLine(orient->origin, endPt, (const vec_t *)imp_colorRed, 1, 0, 0);
 
-        debugDist = (*(dvar_t **)imp_fx_debugBolt)->current.value;
+        debugDist = (fx_debugBolt)->current.value;
         endPt[0] = orient->origin[0] + orient->axis[1][0] * debugDist;
         endPt[1] = orient->origin[1] + orient->axis[1][1] * debugDist;
         endPt[2] = orient->origin[2] + orient->axis[1][2] * debugDist;
         CL_AddDebugLine(orient->origin, endPt, (const vec_t *)imp_colorGreen, 1, 0, 0);
 
-        debugDist = (*(dvar_t **)imp_fx_debugBolt)->current.value;
+        debugDist = (fx_debugBolt)->current.value;
         endPt[0] = orient->origin[0] + orient->axis[2][0] * debugDist;
         endPt[1] = orient->origin[1] + orient->axis[2][1] * debugDist;
         endPt[2] = orient->origin[2] + orient->axis[2][2] * debugDist;
@@ -394,7 +406,7 @@ void FX_AddScheduledEffects(const vec_t *start, const vec_t *end)
 {
     (void)start;
     (void)end;
-    if (!*(byte *)(*(int *)imp_fx_enable + 8))
+    if (!FX_DvarEnabled(imp_fx_enable))
         return;
 
     FxScheduler *scheduler = *(FxScheduler **)imp_theFxScheduler;
@@ -427,7 +439,7 @@ void FX_AddScheduledEffects(const vec_t *start, const vec_t *end)
         if (boltEntity >= 0) {
 
             orientation_t orient;
-            Bool ok = FX_GetBoneOrientation((void *)(scheduled + 0xc), &orient);
+            Bool ok = FX_GetBoneOrientation( (const FxBoltInfo *)((void *)(scheduled + 0xc)), &orient);
             if (ok) {
                 FxScheduler_CreateEffect(scheduler, fx, primTemp,
                                          scheduled + 0xc, &orient, orient.axis,
@@ -448,7 +460,7 @@ void FX_AddScheduledEffects(const vec_t *start, const vec_t *end)
 }
 
 extern void *imp_fx_visMinTraceDist;
-extern float Vec3Normalize(vec_t *v);
+extern const vec_t Vec3Normalize(vec_t *v);
 float FX_GetServerVisibility(const vec_t *start, const vec_t *end)
 {
     int count = g_effectVisArrayCount;
@@ -461,7 +473,7 @@ float FX_GetServerVisibility(const vec_t *start, const vec_t *end)
     dir[2] = end[2] - start[2];
     float len = Vec3Normalize(dir);
 
-    float minDist = (*(dvar_t **)imp_fx_visMinTraceDist)->current.value;
+    float minDist = (fx_visMinTraceDist)->current.value;
     if (len < minDist)
         return 1.0f;
 
@@ -501,11 +513,11 @@ float FX_GetServerVisibility(const vec_t *start, const vec_t *end)
 
 extern float sinf(float x);
 extern float cosf(float x);
-extern void RotatePointAroundVector(vec_t *dst, const vec_t *dir, const vec_t *point, float degrees);
+extern void RotatePointAroundVector(vec_t *dst, const vec_t *dir, const vec_t *point, const float degrees);
 extern void Vec3Cross(const vec_t *a, const vec_t *b, vec_t *out);
 extern void MakeNormalVectors(const vec_t *forward, vec_t *right, vec_t *up);
-extern void AxisTransformVector(void *axis, float x, float y, float z, vec_t *out);
-extern void OrientationPosFromWorldPos(void *orient, vec_t *worldPos, vec_t *localPos);
+extern void AxisTransformVector(vec3_t *axes, const vec_t x, const vec_t y, const vec_t z, vec_t *out);
+extern void OrientationPosFromWorldPos(const orientation_t *or_, const vec_t *pos, vec_t *out);
 static void FX_CalcOriginAndAxis_impl(byte *prim, vec_t *orgOut, vec3_t *ax)
 {
     byte *primTemp = *(byte **)(prim + 4);
@@ -517,17 +529,17 @@ static void FX_CalcOriginAndAxis_impl(byte *prim, vec_t *orgOut, vec3_t *ax)
 
     if (flags & 0x40) {
 
-        float z = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mOrigin1Z)));
-        float y = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mOrigin1Y)));
-        float x = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mOrigin1X)));
+        float z = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mOrigin1Z))));
+        float y = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mOrigin1Y))));
+        float x = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mOrigin1X))));
         org[0] = x;
         org[1] = y;
         org[2] = z;
     } else {
 
-        float z = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mOrigin1Z)));
-        float y = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mOrigin1Y)));
-        float x = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mOrigin1X)));
+        float z = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mOrigin1Z))));
+        float y = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mOrigin1Y))));
+        float x = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mOrigin1X))));
         AxisTransformVector(ax, x, y, z, org);
     }
 
@@ -543,8 +555,8 @@ static void FX_CalcOriginAndAxis_impl(byte *prim, vec_t *orgOut, vec3_t *ax)
         float theta = flrand(0.0f, 180.0f) * 0.017453292f;
         float sinTheta = sinf(theta);
         float cosTheta = cosf(theta);
-        float width = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mRadius)));
-        float height = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mHeight)));
+        float width = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mRadius))));
+        float height = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mHeight))));
         vec3_t pt;
         pt[0] = sinPhi * width * sinTheta;
         pt[1] = cosPhi * width * sinTheta;
@@ -572,8 +584,8 @@ static void FX_CalcOriginAndAxis_impl(byte *prim, vec_t *orgOut, vec3_t *ax)
     } else if (flags & 4) {
 
         float rndHeight = flrand(-0.5f, 0.5f);
-        float height = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mHeight)));
-        float width = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mRadius)));
+        float height = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mHeight))));
+        float width = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mRadius))));
 
         vec3_t pt;
         float *axf = (float *)ax;
@@ -617,7 +629,7 @@ static void FX_CalcOriginAndAxis_impl(byte *prim, vec_t *orgOut, vec3_t *ax)
 
     byte *bolt = *(byte **)(prim + 8);
     if (bolt) {
-        void *orient = FxBoltFrame_GetOrientation(bolt);
+        const orientation_t *orient = FxBoltFrame_GetOrientation((const FxBoltFrame *)(bolt));
         vec3_t localOrg;
         OrientationPosFromWorldPos(orient, orgOut, localOrg);
         orgOut[0] = localOrg[0];
@@ -631,11 +643,11 @@ static inline __attribute__((always_inline)) void FX_CalcOriginAndAxis(EffectPri
     FX_CalcOriginAndAxis_impl((byte *)prim, orgOut, ax);
 }
 
-extern void AxisTransformVector(void *axis, float x, float y, float z, vec_t *out);
-extern void OrientationPosFromWorldPos(void *orient, vec_t *worldPos, vec_t *localPos);
-extern void Particle_SetRandomVelocityWeights(void *particle, float w0, float w1, float w2);
-extern void Particle_SetRandomVelocity2Weights(void *particle, float w0, float w1, float w2);
-extern void Particle_SetAxis(void *particle, vec3_t *ax);
+extern void AxisTransformVector(vec3_t *axes, const vec_t x, const vec_t y, const vec_t z, vec_t *out);
+extern void OrientationPosFromWorldPos(const orientation_t *or_, const vec_t *pos, vec_t *out);
+extern void Particle_SetRandomVelocityWeights(const Particle *particle, float w0, float w1, float w2);
+extern void Particle_SetRandomVelocity2Weights(const Particle *particle, float w0, float w1, float w2);
+extern void Particle_SetAxis(const Particle *_this, vec3_t *ax);
 static void FX_InitParticle_impl(byte *prim, Effect *particle, vec_t *newOrigin, const vec_t *origin, vec3_t *ax, int indexInBatch)
 {
     (void)indexInBatch;
@@ -653,29 +665,29 @@ static void FX_InitParticle_impl(byte *prim, Effect *particle, vec_t *newOrigin,
     if (flags & 0x40000)
         (((Particle *)(particle))->blendWeight[4]) = flrand(0.0f, 1.0f);
     if (flags & 0x80000) {
-        Particle_SetRandomVelocityWeights(particle, flrand(0, 1), flrand(0, 1), flrand(0, 1));
+        Particle_SetRandomVelocityWeights((const Particle *)(particle), flrand(0, 1), flrand(0, 1), flrand(0, 1));
     }
     if (flags & 0x100000) {
-        Particle_SetRandomVelocity2Weights(particle, flrand(0, 1), flrand(0, 1), flrand(0, 1));
+        Particle_SetRandomVelocity2Weights((const Particle *)(particle), flrand(0, 1), flrand(0, 1), flrand(0, 1));
     }
 
-    (((Particle *)(particle))->gravity) = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mGravity)));
-    (((Particle *)(particle))->windModifier) = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mWindModifier)));
+    (((Particle *)(particle))->gravity) = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mGravity))));
+    (((Particle *)(particle))->windModifier) = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mWindModifier))));
 
     FX_CalcOriginAndAxis_impl(prim, newOrigin, ax);
-    Particle_SetAxis(particle, ax);
+    Particle_SetAxis( (const Particle *)(particle), ax);
 
     (((Particle *)(particle))->nonUniformScale) = ((PrimitiveTemplate *)primTemp)->mNonUniformScale;
-    (((Particle *)(particle))->elasticity) = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mElasticity)));
-    (((Effect *)(particle))->mRefEnt.rotation) = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mRotation)));
+    (((Particle *)(particle))->elasticity) = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mElasticity))));
+    (((Effect *)(particle))->mRefEnt.rotation) = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mRotation))));
 }
 static void FX_InitParticle(EffectPrimitive *prim, Particle *particle, vec_t *newOrigin, const vec_t *origin, vec3_t *ax, int indexInBatch)
 {
     FX_InitParticle_impl((byte *)prim, &particle->base, newOrigin, origin, ax, indexInBatch);
 }
 
-extern float FxRange_GetVal(void *range);
-extern void FxHelper_CameraShake(void *helper, vec_t *origin, float intensity, int duration, int fadeTime);
+extern float FxRange_GetVal(const FxRange *range);
+extern void FxHelper_CameraShake(const FxHelper *_this, vec_t *origin, float intensity, int radius, int time_);
 void FX_AddCameraShake(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
 {
     (void)origin;
@@ -684,13 +696,13 @@ void FX_AddCameraShake(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, c
     vec3_t newOrigin;
     FX_CalcOriginAndAxis(prim, newOrigin, ax);
     byte *primTemp = (byte *)prim->primTemp;
-    float duration = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mLife)));
-    float fadeTime = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mRadius)));
-    float intensity = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mElasticity)));
+    float duration = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mLife))));
+    float fadeTime = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mRadius))));
+    float intensity = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mElasticity))));
     FxHelper_CameraShake(theFxHelper, newOrigin, intensity, (int)duration, (int)fadeTime);
 }
 
-extern void *MediaHandles_GetEffect(void *mediaHandles);
+extern EffectTemplate *MediaHandles_GetEffect(const MediaHandles *mediaHandles);
 extern void FxScheduler_PlayEffect(void *scheduler, void *effectTemplate, vec_t *origin, vec3_t *ax, void *bolt);
 void FX_AddFxRunner(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
 {
@@ -701,7 +713,7 @@ void FX_AddFxRunner(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, cons
     FX_CalcOriginAndAxis(prim, newOrigin, ax);
     byte *primTemp = (byte *)prim->primTemp;
     void *bolt = (void *)prim->boltFrame.value;
-    void *effect = MediaHandles_GetEffect(((char *)primTemp + offsetof(PrimitiveTemplate, mPlayFxHandles)));
+    void *effect = MediaHandles_GetEffect((const MediaHandles *)(((char *)primTemp + offsetof(PrimitiveTemplate, mPlayFxHandles))));
     void *scheduler = *(void **)imp_theFxScheduler;
     if (bolt) {
         FxScheduler_PlayEffect(scheduler, effect, newOrigin, NULL, (byte *)bolt + 0x3c);
@@ -739,7 +751,7 @@ void FX_DrawAll(void)
     if (*(int *)imp_fx_camera_valid) {
         for (i = cullEffectCountNonBolt; i < privateEffectActiveCountNonBolt; i++) {
             Effect *eff = effectListNonBolt[i];
-            if (*(byte *)(*(int *)imp_fx_cull + 8)) {
+            if (FX_DvarEnabled(imp_fx_cull)) {
                 if (((CullFn)(*(void ***)eff)[4])(eff))
                     continue;
             }
@@ -754,7 +766,7 @@ void FX_DrawAll(void)
 
     for (i = cullEffectCountBolt; i < privateEffectActiveCountBolt; i++) {
         Effect *eff = effectListBolt[i];
-        if (*(byte *)(*(int *)imp_fx_cull + 8)) {
+        if (FX_DvarEnabled(imp_fx_cull)) {
             if (((CullFn)(*(void ***)eff)[4])(eff))
                 continue;
         }
@@ -787,7 +799,7 @@ void FX_DrawAll(void)
         }
     }
 
-    if (*(byte *)(*(int *)imp_fx_sort + 8)) {
+    if (FX_DvarEnabled(imp_fx_sort)) {
         int effectCount = visibleEffectCountNonBolt;
 
         byte sortedClusters[1800 * 8];
@@ -808,31 +820,31 @@ void FX_DrawAll(void)
         clusterSort = NULL;
     }
 
-    if (*(byte *)(*(int *)imp_fx_draw + 8)) {
+    if (FX_DvarEnabled(imp_fx_draw)) {
         for (i = 0; i < visibleEffectCountNonBolt; i++) {
             Effect *eff = visibleEffectsNonBolt[i].effect;
             ((DrawFn)(*(void ***)eff)[5])(eff);
         }
     }
 
-    if (*(byte *)(*(int *)imp_fx_debug + 8)) {
+    if (FX_DvarEnabled(imp_fx_debug)) {
         FX_Print("Active    FX: %i\n", effectActiveCount);
         FX_Print("Drawn     FX: %i\n", visibleEffectCountNonBolt);
         FX_Print("Scheduled FX: %i\n", (*(FxScheduler **)imp_theFxScheduler)->mScheduledCount);
     }
 }
 
-extern void *MediaHandles_GetHandle(void *mediaHandles);
-extern int FxHelper_GetMaterialSubimageCount(void *helper, void *material);
+extern void *MediaHandles_GetHandle(const MediaHandles *_this);
+extern int FxHelper_GetMaterialSubimageCount(const FxHelper *helper, Material *material);
 extern int irand(int min, int max);
 static void FX_SetMaterialAndSequenceParams_impl(byte *primTemp, Effect *particle, int killTime, int indexInBatch)
 {
-    void *material = MediaHandles_GetHandle(((char *)primTemp + offsetof(PrimitiveTemplate, mMediaHandles)));
+    void *material = MediaHandles_GetHandle( (const MediaHandles *)(((char *)primTemp + offsetof(PrimitiveTemplate, mMediaHandles))));
     int startFrame = 0;
     float frameRate = 0.0f;
 
     if (material) {
-        int subimageCount = FxHelper_GetMaterialSubimageCount(theFxHelper, material);
+        int subimageCount = FxHelper_GetMaterialSubimageCount(theFxHelper, (Material *)(material));
         if (subimageCount == 1) {
             startFrame = 0;
             frameRate = 0.0f;
@@ -876,8 +888,8 @@ static void FX_SetMaterialAndSequenceParams(byte *primTemp, Effect *particle, in
     FX_SetMaterialAndSequenceParams_impl(primTemp, particle, killTime, indexInBatch);
 }
 
-extern void Effect_SetTimeStartEnd(void *effect, int startTime, int endTime);
-extern void Effect_SetBoltFrame(const void *effect, const void *boltFramePtr);
+extern void Effect_SetTimeStartEnd(const Effect *effect, int startTime, int endTime);
+extern void Effect_SetBoltFrame(const Effect *_this, FxBoltFramePtr *boltFrame);
 static Bool FX_AddPrimitive_impl(byte *prim, Effect *particle, const vec_t *origin)
 {
     EffectPrimitive *ep = (EffectPrimitive *)prim;
@@ -920,9 +932,9 @@ static Bool FX_AddPrimitive_impl(byte *prim, Effect *particle, const vec_t *orig
     particle->mFlags = (((PrimitiveTemplate *)(primTemp))->mAttributeFlags);
 
     int curTime = theFxHelper->mTime;
-    float lifeRange = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mLife)));
+    float lifeRange = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mLife))));
     int endTime = curTime + (int)lifeRange;
-    Effect_SetTimeStartEnd(particle, curTime, endTime);
+    Effect_SetTimeStartEnd((const Effect *)(particle), curTime, endTime);
 
     (((Effect *)(particle))->impactEffect) = (struct Effect *)(uintptr_t)(int)ep->fx;
     (((Effect *)(particle))->field_0x38) = ((PrimitiveTemplate *)primTemp)->mParentPrimIndex;
@@ -935,8 +947,8 @@ static Bool FX_AddPrimitive_impl(byte *prim, Effect *particle, const vec_t *orig
     (((Effect *)(particle))->axis[1][1]) = ((PrimitiveTemplate *)primTemp)->mMax[1];
     (((Effect *)(particle))->axis[1][2]) = ((PrimitiveTemplate *)primTemp)->mMax[2];
 
-    (((Effect *)(particle))->emitEffect) = (struct Effect *)MediaHandles_GetEffect(((char *)primTemp + offsetof(PrimitiveTemplate, mDeathFxHandles)));
-    (((Effect *)(particle))->deathEffect) = (struct Effect *)MediaHandles_GetEffect(((char *)primTemp + offsetof(PrimitiveTemplate, mImpactFxHandles)));
+    (((Effect *)(particle))->emitEffect) = (struct Effect *)MediaHandles_GetEffect((const MediaHandles *)(((char *)primTemp + offsetof(PrimitiveTemplate, mDeathFxHandles))));
+    (((Effect *)(particle))->deathEffect) = (struct Effect *)MediaHandles_GetEffect((const MediaHandles *)(((char *)primTemp + offsetof(PrimitiveTemplate, mImpactFxHandles))));
 
     typedef void (*CreateChFn)(void *, void *);
     ((CreateChFn)(*(void ***)particle)[8])(particle, primTemp);
@@ -975,7 +987,7 @@ void FX_AddCloud(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const i
     if (lateTime > 0) {
         float dt = (float)lateTime * 0.001f;
         vec3_t velSum;
-        Particle_IntegrateTotalVelocity(p, lateTime, velSum);
+        Particle_IntegrateTotalVelocity((const Particle *)(p), lateTime, velSum);
         newOrigin[0] += velSum[0] * dt;
         newOrigin[1] += velSum[1] * dt;
         newOrigin[2] += velSum[2] * dt;
@@ -988,7 +1000,7 @@ void FX_AddCloud(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const i
 }
 
 extern void *imp___ZTV5Flash;
-extern void Flash_Init(void *flash);
+extern void Flash_Init(const Flash *flash);
 void FX_AddFlash(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
 {
     (void)ax;
@@ -997,9 +1009,9 @@ void FX_AddFlash(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const i
     Effect *p = (Effect *)__Znam(sizeof(Light));
     if (p)
         memset(p, 0, sizeof(Light));
-    Light_Light(p);
+    Light_Light( (const Light *)(p));
 
-    *(void **)p = (byte *)imp___ZTV5Flash + 8;
+    *(void **)p = (byte *)imp___ZTV5Flash + (2 * (int)sizeof(void *));
 
     int added = FX_AddPrimitive(prim, p, origin);
     if (!(byte)added) {
@@ -1010,7 +1022,7 @@ void FX_AddFlash(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const i
     }
 
     byte *primTemp = (byte *)prim->primTemp;
-    void *material = MediaHandles_GetHandle(((char *)primTemp + offsetof(PrimitiveTemplate, mMediaHandles)));
+    void *material = MediaHandles_GetHandle( (const MediaHandles *)(((char *)primTemp + offsetof(PrimitiveTemplate, mMediaHandles))));
 
     if (origin) {
         PART_ANCHOR_X(p) = origin[0];
@@ -1031,10 +1043,10 @@ void FX_AddFlash(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const i
     if (material && FxHelper_IsMaterialRefractive(theFxHelper, (MaterialHandle)material))
         ((Light *)p)->base.mSortGroup = -1;
 
-    Flash_Init(p);
+    Flash_Init((const Flash *)(p));
 }
 
-extern void Light_Light(void *light);
+extern void Light_Light(const Light *_this);
 extern float flrand(float min, float max);
 extern void *__Znam(int size);
 void FX_AddLight(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
@@ -1069,16 +1081,16 @@ void FX_AddLight(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const i
         light->sizeBlendFactor = flrand(0.0f, 1.0f);
 }
 
-extern void Cylinder_Cylinder(void *cyl);
-extern void *FxBoltFrame_GetOrientation(void *boltFrame);
-extern void OrientationDirFromWorldDir(void *orient, vec_t *normal, vec_t *localNormal);
+extern void Cylinder_Cylinder(const Cylinder *_this);
+extern const orientation_t *FxBoltFrame_GetOrientation(const FxBoltFrame *_this);
+extern void OrientationDirFromWorldDir(const orientation_t *or_, const vec_t *dir, vec_t *out);
 void FX_AddCylinder(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
 {
     (void)lateTime;
     Effect *p = (Effect *)__Znam(0x278);
     if (p)
         memset(p, 0, 0x278);
-    Cylinder_Cylinder(p);
+    Cylinder_Cylinder( (const Cylinder *)(p));
     if (!p)
         return;
     int added = FX_AddPrimitive(prim, p, origin);
@@ -1099,7 +1111,7 @@ void FX_AddCylinder(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, cons
     void *bolt = (void *)prim->boltFrame.value;
     if (bolt) {
 
-        void *orient = FxBoltFrame_GetOrientation(bolt);
+        const orientation_t *orient = FxBoltFrame_GetOrientation((const FxBoltFrame *)(bolt));
         vec3_t localNormal;
         OrientationDirFromWorldDir(orient, normal, localNormal);
 
@@ -1116,9 +1128,9 @@ void FX_AddCylinder(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, cons
     PART_ANCHOR_Z(p) = newOrigin[2];
 }
 
-extern void Line_Line(void *line);
-extern void Particle_SetAxis(void *particle, vec3_t *ax);
-extern void OrientationPosFromWorldPos(void *orient, vec_t *worldPos, vec_t *localPos);
+extern void Line_Line(const Line *_this);
+extern void Particle_SetAxis(const Particle *_this, vec3_t *ax);
+extern void OrientationPosFromWorldPos(const orientation_t *or_, const vec_t *pos, vec_t *out);
 void FX_AddLine(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
 {
     (void)lateTime;
@@ -1126,7 +1138,7 @@ void FX_AddLine(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const in
     Effect *p = (Effect *)__Znam(0x258);
     if (p)
         memset(p, 0, 0x258);
-    Line_Line(p);
+    Line_Line( (const Line *)(p));
     if (!p)
         return;
 
@@ -1142,7 +1154,7 @@ void FX_AddLine(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const in
     vec3_t worldEnd;
     FX_CalcOriginAndAxis(prim, newOrigin, ax);
 
-    Particle_SetAxis(p, ax);
+    Particle_SetAxis( (const Particle *)(p), ax);
 
     byte *primTemp = (byte *)prim->primTemp;
     FX_CalcOrigin2((const PrimitiveTemplate *)primTemp, newOrigin, org2, origin, ax);
@@ -1150,11 +1162,11 @@ void FX_AddLine(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const in
     worldEnd[1] = org2[1];
     worldEnd[2] = org2[2];
 
-    void *material = MediaHandles_GetHandle(((char *)primTemp + offsetof(PrimitiveTemplate, mMediaHandles)));
+    void *material = MediaHandles_GetHandle( (const MediaHandles *)(((char *)primTemp + offsetof(PrimitiveTemplate, mMediaHandles))));
 
     void *bolt = (void *)prim->boltFrame.value;
     if (bolt) {
-        void *orient = FxBoltFrame_GetOrientation(bolt);
+        const orientation_t *orient = FxBoltFrame_GetOrientation((const FxBoltFrame *)(bolt));
         vec3_t localEnd;
         OrientationPosFromWorldPos(orient, worldEnd, localEnd);
         (((Tail *)(p))->endpoint[0]) = localEnd[0];
@@ -1186,14 +1198,14 @@ void FX_AddLine(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const in
         *(int *)(p + 0xb0) = -1;
 }
 
-extern void Particle_Particle(void *particle);
-extern void Particle_IntegrateTotalVelocity(void *particle, int time, vec_t *velSum);
+extern void Particle_Particle(const Particle *particle);
+extern void Particle_IntegrateTotalVelocity(const Particle *particle, int time, vec_t *velSum);
 void FX_AddParticle(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
 {
     Particle *p = (Particle *)__Znam(sizeof(Particle));
     if (p)
         memset(p, 0, sizeof(Particle));
-    Particle_Particle(p);
+    Particle_Particle((const Particle *)(p));
     if (!p)
         return;
 
@@ -1213,7 +1225,7 @@ void FX_AddParticle(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, cons
     if (lateTime > 0) {
         float dt = (float)lateTime * 0.001f;
         vec3_t velSum;
-        Particle_IntegrateTotalVelocity(p, lateTime, velSum);
+        Particle_IntegrateTotalVelocity((const Particle *)(p), lateTime, velSum);
         newOrigin[0] += velSum[0] * dt;
         newOrigin[1] += velSum[1] * dt;
         newOrigin[2] += velSum[2] * dt;
@@ -1224,14 +1236,14 @@ void FX_AddParticle(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, cons
     PART_ANCHOR_Z(p) = newOrigin[2];
 }
 
-extern void Tail_Tail(void *tail);
-extern void Tail_InitEndPoint(void *tail);
+extern void Tail_Tail(const Tail *tail);
+extern void Tail_InitEndPoint(const Tail *_this);
 void FX_AddTail(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
 {
     Effect *p = (Effect *)__Znam(sizeof(Tail));
     if (p)
         memset(p, 0, sizeof(Tail));
-    Tail_Tail(p);
+    Tail_Tail((const Tail *)(p));
     if (!p)
         return;
     int added = FX_AddPrimitive(prim, p, origin);
@@ -1247,7 +1259,7 @@ void FX_AddTail(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const in
     if (lateTime > 0) {
         float dt = (float)lateTime * 0.001f;
         vec3_t velSum;
-        Particle_IntegrateTotalVelocity(p, lateTime, velSum);
+        Particle_IntegrateTotalVelocity((const Particle *)(p), lateTime, velSum);
         newOrigin[0] += velSum[0] * dt;
         newOrigin[1] += velSum[1] * dt;
         newOrigin[2] += velSum[2] * dt;
@@ -1263,19 +1275,19 @@ void FX_AddTail(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const in
     (((Tail *)(p))->endpoint[2]) = newOrigin[2] - ((float *)ax)[2];
 
     ((Tail *)p)->lengthBlendFactor = flrand(0.0f, 1.0f);
-    Tail_InitEndPoint(p);
+    Tail_InitEndPoint( (const Tail *)(p));
 }
 
-extern void Emitter_Emitter(void *emitter);
-extern void Particle_GetTotalVelocityAtTime0(void *particle, vec_t *outVector);
-extern void vectoangles(const vec_t *dir, vec_t *angles);
+extern void Emitter_Emitter(const Emitter *_this);
+extern void Particle_GetTotalVelocityAtTime0(const Particle *_this, vec_t *outVector);
+extern void vectoangles(const vec_t *vec, vec_t *angles);
 extern float crandom(void);
 void FX_AddEmitter(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
 {
     Effect *p = (Effect *)__Znam(0x29c);
     if (p)
         memset(p, 0, 0x29c);
-    Emitter_Emitter(p);
+    Emitter_Emitter( (const Emitter *)(p));
     if (!p)
         return;
     int added = FX_AddPrimitive(prim, p, origin);
@@ -1291,32 +1303,32 @@ void FX_AddEmitter(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const
     if (lateTime > 0) {
         float dt = (float)lateTime * 0.001f;
         vec3_t velSum;
-        Particle_IntegrateTotalVelocity(p, lateTime, velSum);
+        Particle_IntegrateTotalVelocity((const Particle *)(p), lateTime, velSum);
         newOrigin[0] += velSum[0] * dt;
         newOrigin[1] += velSum[1] * dt;
         newOrigin[2] += velSum[2] * dt;
     }
 
-    float ang0 = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle1)));
-    float ang1 = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle2)));
-    float ang2 = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle3)));
+    float ang0 = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle1))));
+    float ang1 = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle2))));
+    float ang2 = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle3))));
     vectoangles((const vec_t *)ax, vecAng);
     ang0 += vecAng[0];
     ang1 += vecAng[1];
     ang2 += vecAng[2];
 
-    float pos0 = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle1Delta)));
-    float pos1 = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle2Delta)));
-    float pos2 = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle3Delta)));
+    float pos0 = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle1Delta))));
+    float pos1 = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle2Delta))));
+    float pos2 = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle3Delta))));
 
-    void *material = MediaHandles_GetHandle(((char *)primTemp + offsetof(PrimitiveTemplate, mMediaHandles)));
-    void *effect = MediaHandles_GetEffect(((char *)primTemp + offsetof(PrimitiveTemplate, mEmitterFxHandles)));
-    float stepBase = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mDensity)));
-    float stepVar = FxRange_GetVal(((char *)primTemp + offsetof(PrimitiveTemplate, mVariance)));
+    void *material = MediaHandles_GetHandle( (const MediaHandles *)(((char *)primTemp + offsetof(PrimitiveTemplate, mMediaHandles))));
+    void *effect = MediaHandles_GetEffect((const MediaHandles *)(((char *)primTemp + offsetof(PrimitiveTemplate, mEmitterFxHandles))));
+    float stepBase = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mDensity))));
+    float stepVar = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mVariance))));
 
     byte *bolt = (byte *)prim->boltFrame.value;
     if (bolt) {
-        float *orient = (float *)FxBoltFrame_GetOrientation(bolt);
+        float *orient = (float *)FxBoltFrame_GetOrientation( (const FxBoltFrame *)(bolt));
         if (orient) {
             ((Emitter *)p)->velocityDelta[0] = orient[0];
             ((Emitter *)p)->velocityDelta[1] = orient[1];
@@ -1336,7 +1348,7 @@ void FX_AddEmitter(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const
         (*(int *)&((Emitter *)p)->_base[168]) &= ~0x10;
 
     vec3_t vel;
-    Particle_GetTotalVelocityAtTime0(p, vel);
+    Particle_GetTotalVelocityAtTime0( (const Particle *)(p), vel);
 
     PART_ANCHOR_X(p) = newOrigin[0];
     PART_ANCHOR_Y(p) = newOrigin[1];
@@ -1364,13 +1376,13 @@ void FX_AddEmitter(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const
     ((Emitter *)p)->emitStep = stepBase + crandom() * (*(float *)&((Emitter *)p)->_tail[0]);
 }
 
-extern void OrientedParticle_OrientedParticle(void *op);
+extern void OrientedParticle_OrientedParticle(const OrientedParticle *op);
 void FX_AddOrientedParticle(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
 {
     Effect *p = (Effect *)__Znam(0x258);
     if (p)
         memset(p, 0, 0x258);
-    OrientedParticle_OrientedParticle(p);
+    OrientedParticle_OrientedParticle((const OrientedParticle *)(p));
     if (!p)
         return;
     int added = FX_AddPrimitive(prim, p, origin);
@@ -1388,7 +1400,7 @@ void FX_AddOrientedParticle(EffectPrimitive *prim, vec3_t *ax, const vec_t *orig
     if (lateTime > 0) {
         float dt = (float)lateTime * 0.001f;
         vec3_t velSum;
-        Particle_IntegrateTotalVelocity(p, lateTime, velSum);
+        Particle_IntegrateTotalVelocity((const Particle *)(p), lateTime, velSum);
         newOrigin[0] += velSum[0] * dt;
         newOrigin[1] += velSum[1] * dt;
         newOrigin[2] += velSum[2] * dt;
@@ -1399,7 +1411,7 @@ void FX_AddOrientedParticle(EffectPrimitive *prim, vec3_t *ax, const vec_t *orig
     normal[2] = ((float *)ax)[2];
     void *bolt = (void *)prim->boltFrame.value;
     if (bolt) {
-        void *orient = FxBoltFrame_GetOrientation(bolt);
+        const orientation_t *orient = FxBoltFrame_GetOrientation((const FxBoltFrame *)(bolt));
         OrientationDirFromWorldDir(orient, normal, localNormal);
         (((Tail *)(p))->endpoint[0]) = localNormal[0];
         (((Tail *)(p))->endpoint[1]) = localNormal[1];
@@ -1423,7 +1435,7 @@ void FX_UpdateScheduledEffectsNonBolt(void)
     typedef Bool (*CullFn)(void *);
     int i;
 
-    if (!*(byte *)(*(int *)imp_fx_enable + 8))
+    if (!FX_DvarEnabled(imp_fx_enable))
         return;
 
     cullEffectCountNonBolt = 0;
@@ -1471,7 +1483,7 @@ void FX_UpdateScheduledEffectsNonBolt(void)
 
     for (i = cullEffectCountNonBolt; i < privateEffectActiveCountNonBolt; i++) {
         Effect *eff = effectListNonBolt[i];
-        if (*(byte *)(*(int *)imp_fx_cull + 8)) {
+        if (FX_DvarEnabled(imp_fx_cull)) {
             Bool culled = ((CullFn)(*(void ***)eff)[4])(eff);
             if (culled)
                 continue;
@@ -1491,7 +1503,7 @@ void FX_UpdateScheduledEffectsBolt(void)
     typedef Bool (*CullFn)(void *);
     int i, count;
 
-    if (!*(byte *)(*(int *)imp_fx_enable + 8))
+    if (!FX_DvarEnabled(imp_fx_enable))
         return;
 
     cullEffectCountBolt = 0;
@@ -1532,7 +1544,7 @@ void FX_UpdateScheduledEffectsBolt(void)
 
     for (i = cullEffectCountBolt; i < privateEffectActiveCountBolt; i++) {
         Effect *eff = effectListBolt[i];
-        if (*(byte *)(*(int *)imp_fx_cull + 8)) {
+        if (FX_DvarEnabled(imp_fx_cull)) {
             Bool culled = ((CullFn)(*(void ***)eff)[4])(eff);
             if (culled)
                 continue;
@@ -1760,7 +1772,7 @@ void FX_DrawScheduledEffects(void)
     typedef Bool (*UpdateFn)(void *);
     int i, count;
 
-    if (!*(byte *)(*(int *)imp_fx_enable + 8))
+    if (!FX_DvarEnabled(imp_fx_enable))
         return;
 
     count = privateEffectActiveCountNonBolt;
@@ -1858,14 +1870,14 @@ void FX_DrawScheduledEffects(void)
     }
 }
 
-extern void FxArchive_FxArchive(void *arch);
-extern void FxArchive_ReadData(void *arch, void *data, int size);
-extern void FxArchive_BeginReading(void *arch, void *memFile);
-extern void FxHelper_Archive(void *helper, void *arch);
-extern void FxScheduler_Archive(void *scheduler, void *arch);
-extern void Line_Line(void *line);
-extern void Tail_Tail(void *tail);
-extern void Emitter_Emitter(void *emitter);
+extern void FxArchive_FxArchive(const FxArchive *arch);
+extern void FxArchive_ReadData(const FxArchive *arch, void *data, int size);
+extern void FxArchive_BeginReading(const FxArchive *arch, MemoryFile *memFile);
+extern void FxHelper_Archive(const FxHelper *helper, FxArchive *arch);
+extern void FxScheduler_Archive(const FxScheduler *scheduler, FxArchive *arch);
+extern void Line_Line(const Line *_this);
+extern void Tail_Tail(const Tail *tail);
+extern void Emitter_Emitter(const Emitter *_this);
 int FX_Restore(MemoryFile *memFile)
 {
     typedef void (*VtFn)(void *);
@@ -1874,7 +1886,7 @@ int FX_Restore(MemoryFile *memFile)
     int i;
     byte arch[16];
 
-    FxArchive_FxArchive(arch);
+    FxArchive_FxArchive((const FxArchive *)arch);
 
     for (i = 0; i < effectActiveCountBolt; i++) {
         Effect *eff = effectListBolt[i];
@@ -1896,18 +1908,18 @@ int FX_Restore(MemoryFile *memFile)
     if (*schedulerPtr)
         FxScheduler_Clean(*schedulerPtr, 0, 0);
 
-    FxArchive_BeginReading(arch, memFile);
-    FxHelper_Archive(theFxHelper, arch);
-    FxScheduler_Archive(*schedulerPtr, arch);
+    FxArchive_BeginReading((const FxArchive *)arch, memFile);
+    FxHelper_Archive(theFxHelper, (FxArchive *)arch);
+    FxScheduler_Archive((const FxScheduler *)*schedulerPtr, (FxArchive *)arch);
 
     for (;;) {
         byte effectType;
-        FxArchive_ReadData(arch, &effectType, 1);
+        FxArchive_ReadData((const FxArchive *)arch, &effectType, 1);
         if (effectType == 0)
             break;
 
         int size;
-        FxArchive_ReadData(arch, &size, 4);
+        FxArchive_ReadData((const FxArchive *)arch, &size, 4);
 
         if (effectType > 12)
             continue;
@@ -1926,32 +1938,32 @@ int FX_Restore(MemoryFile *memFile)
 
         switch (effectType) {
         case 1:
-            Particle_Particle(eff);
+            Particle_Particle((const Particle *)(eff));
             break;
         case 2:
         case 12:
-            Light_Light(eff);
+            Light_Light( (const Light *)(eff));
             break;
         case 3:
         case 10:
-            Line_Line(eff);
+            Line_Line( (const Line *)(eff));
             break;
         case 4:
         case 8:
-            Tail_Tail(eff);
+            Tail_Tail((const Tail *)(eff));
             break;
         case 5:
         case 11:
-            Cylinder_Cylinder(eff);
+            Cylinder_Cylinder( (const Cylinder *)(eff));
             break;
         case 6:
             Cloud_Cloud(eff);
             break;
         case 7:
-            OrientedParticle_OrientedParticle(eff);
+            OrientedParticle_OrientedParticle((const OrientedParticle *)(eff));
             break;
         case 9:
-            Emitter_Emitter(eff);
+            Emitter_Emitter( (const Emitter *)(eff));
             break;
         }
 
@@ -1986,9 +1998,9 @@ int FX_Restore(MemoryFile *memFile)
 }
 
 extern void *Z_MallocInternal(int size);
-extern void FxScheduler_FxScheduler(void *scheduler);
+extern void FxScheduler_FxScheduler(const FxScheduler *scheduler);
 extern void FX_InitTemplates(void);
-extern void FxHelper_Init(void *helper);
+extern void FxHelper_Init(const FxHelper *_this);
 extern void *imp_g_rendererExists;
 int FX_Init(int rendererExists)
 {
@@ -2032,8 +2044,8 @@ int FX_Init(int rendererExists)
 
     g_rendererExists = rendererExists;
 
-    void *newScheduler = Z_MallocInternal(0xc);
-    FxScheduler_FxScheduler(newScheduler);
+    void *newScheduler = Z_MallocInternal(sizeof(FxScheduler)); /* 0xc = x86 sizeof; x64 is larger (8-byte mScheduledHead) -> under-alloc corrupted the heap */
+    FxScheduler_FxScheduler((const FxScheduler *)(newScheduler));
     *schedulerPtr = newScheduler;
 
     FX_InitTemplates();

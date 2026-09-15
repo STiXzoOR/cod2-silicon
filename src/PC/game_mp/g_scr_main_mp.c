@@ -3,8 +3,13 @@
 #include "bytematch.h"
 #include <stdlib.h>
 #include <string.h>
+/* dvar globals */
+extern const dvar_t *loc_warningsAsErrors;
 extern scr_const_t scr_const;
 
+/* File-scope alias: bound where no local can shadow `scr_const`, so uses below
+   always reach the global even inside functions that declare their own `scr_const`. */
+static scr_const_t * const scr_const_g = &scr_const;
 extern BuiltinMethod Player_GetMethod(const char **pName);
 extern BuiltinMethod ScriptEnt_GetMethod(const char **pName);
 extern BuiltinMethod HudElem_GetMethod(const char **pName);
@@ -17,16 +22,16 @@ extern unsigned int Scr_AddString(const char *s);
 extern unsigned int Scr_AddInt(int value);
 extern unsigned int Scr_AddArray(void);
 extern unsigned int Scr_MakeArray(void);
-extern unsigned int Scr_AddArrayStringIndexed(unsigned int stringValue);
+extern void Scr_AddArrayStringIndexed(unsigned int stringValue);
 extern int Scr_GetInt(int argIndex);
 extern void Scr_AddEntity(gentity_t *ent);
 extern void Scr_AddUndefined(void);
 extern void Scr_ObjectError(const char *error);
 extern int SV_AddTestClient(void);
 extern qboolean SV_MapExists(const char *name);
-extern float Vec3Normalize(vec3_t v);
+extern const vec_t Vec3Normalize(vec_t *v);
 extern void SV_EnableArchivedSnapshot(int enable);
-extern unsigned int Scr_Error(const char *msg);
+extern void Scr_Error(const char *msg);
 extern const char *va(const char *fmt, ...);
 extern const char *Scr_GetString(unsigned int index);
 extern int Scr_GetType(unsigned int index);
@@ -36,25 +41,25 @@ extern const char *Dvar_GetVariantString(const char *dvarName);
 extern dvar_t *Dvar_FindVar(const char *dvarName);
 extern void Dvar_AddFlags(const dvar_t *dvar, int flags);
 extern const dvar_t *Dvar_RegisterString_mac(const char *dvarName, const char *value, int flags);
-extern int Dvar_IsValidName(const char *dvarName);
+extern unsigned char Dvar_IsValidName(const char *dvarName);
 extern void Dvar_SetFromStringByName(const char *dvarName, const char *string);
 extern unsigned int Scr_AddFloat(float value);
 extern unsigned int Scr_AddBool(int value);
 extern const char *Scr_GetDebugString(unsigned int index);
 extern unsigned int Scr_GetAnim(unsigned int index, int treeIndex);
-extern void *Scr_GetAnims(unsigned int treeIndex);
-extern void XAnimGetRelDelta(const void *anims, unsigned int animIndex, vec_t *rot, vec_t *trans, float time1, float time2);
-extern Bool XAnimIsPrimitive(void *anims, unsigned int animIndex);
-extern float XAnimGetLength(void *anims, unsigned int animIndex);
+extern struct XAnim_s *Scr_GetAnims(int treeIndex);
+extern void XAnimGetRelDelta(const XAnim *anims, unsigned int animIndex, vec_t *rot, vec_t *trans, float time1, float time2);
+extern Bool XAnimIsPrimitive(struct XAnim_s *anims, unsigned int animIndex);
+extern float XAnimGetLength(const XAnim *anims, unsigned int animIndex);
 extern float RotationToYaw(const vec_t *rot);
 extern unsigned int Scr_ParamError(unsigned int index, const char *msg);
 extern unsigned int Scr_GetConstString(unsigned int index);
 extern unsigned int Scr_GetConstLowercaseString(unsigned int index);
-extern int XAnimNotetrackExists(void *anims, unsigned int animIndex, unsigned int notetrack);
+extern int XAnimNotetrackExists(const XAnim *anims, unsigned int animIndex, unsigned int name);
 extern int Com_FindSoundAlias(const char *name);
 extern int G_GetWeaponIndexForName(const char *name);
 extern int G_IndexForMeansOfDeath(const char *pszMOD);
-extern void *BG_GetWeaponDef(int weaponIndex);
+extern WeaponDef *BG_GetWeaponDef(int weaponIndex);
 extern scr_string_t G_GetHitLocationString(hitLocation_t hitLoc);
 extern int I_stricmp(const char *s1, const char *s2);
 extern char *strlwr(char *s);
@@ -88,7 +93,7 @@ extern void G_LogPrintf(const char *fmt, ...);
 extern float Scr_GetFloat(unsigned int index);
 extern float flrand(float min, float max);
 extern int irand(int min, int max);
-extern const char *Info_ValueForKey(const char *s, const char *key);
+extern char *Info_ValueForKey(const char *s, const char *key);
 extern void Info_SetValueForKey(char *s, const char *key, const char *value);
 extern double sin(double x);
 extern double cos(double x);
@@ -96,11 +101,11 @@ extern float floorf(float x);
 extern unsigned int Scr_ExecThread(unsigned int handle, int paramCount);
 extern void Scr_FreeThread(unsigned int threadId);
 extern scr_thread_t Scr_ExecEntThread(gentity_t *ent, scr_func_t handle, unsigned int paramcount);
-extern void SV_GameSendServerCommand(int clientnum, int type, const char *text);
+extern void SV_GameSendServerCommand(int clientnum, svscmd_type type, const char *text);
 extern void Scr_Notify(gentity_t *ent, unsigned short stringValue, unsigned int paramcount);
-extern void *SV_XModelGet(const char *name);
-extern int XModelNumBones(void *model);
-extern int XModelBoneNames(void *model);
+extern struct XModel *SV_XModelGet(const char *name);
+extern int XModelNumBones(const struct XModel *model);
+extern int XModelBoneNames(XModel *model);
 extern void G_AddDebugString(const vec_t *xyz, const vec_t *color, float scale, const char *pszText);
 extern void CL_AddDebugLine(const vec_t *start, const vec_t *end, const vec_t *color, int depthTest, int duration, int fromServer);
 extern int G_ModelIndex(const char *name);
@@ -116,15 +121,15 @@ extern float sinf(float x);
 extern float cosf(float x);
 extern int Scr_GetTypeName(int index);
 extern void Scr_GetVector(unsigned int index, float *out);
-extern unsigned char G_SetOrigin(gentity_t *ent, const vec_t *origin);
-extern unsigned char G_SetAngle(gentity_t *ent, const vec_t *angles);
+extern void G_SetOrigin(gentity_t *ent, const vec_t *origin);
+extern void G_SetAngle(gentity_t *ent, const vec_t *angles);
 extern void SV_LinkEntity(gentity_t *ent);
 extern float Vec3Distance(float *a, float *b);
 extern float Vec3DistanceSq(float *a, float *b);
-extern void vectoangles(float *vec, float *angles);
-extern unsigned int Scr_AddVector(float *vec);
+extern void vectoangles(const vec_t *vec, vec_t *angles);
+extern void Scr_AddVector(const float *value);
 extern unsigned int Scr_AddConstString(unsigned int value);
-extern void AngleVectors(float *angles, float *forward, float *right, float *up);
+extern void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up);
 extern void AnglesToAxis(const vec_t *angles, vec3_t *axis);
 extern void MatrixTransformVector(const vec_t *in1, const vec3_t *in2, vec_t *out);
 extern int G_ShellShockIndex(const char *name);
@@ -133,7 +138,7 @@ extern int G_LocalizedStringIndex(const char *name);
 extern const char *Scr_GetIString(unsigned int index);
 extern unsigned int Scr_GetNumParam(void);
 extern void SV_GetConfigstring(int index, char *buffer, int bufferSize);
-extern void SV_SetConfigstring(int index, const char *val);
+extern void SV_SetConfigstring(const int index, const char *val);
 extern void Cbuf_ExecuteText(int exec_when, const char *text);
 extern void SV_MatchEnd(void);
 extern void ExitLevel(void);
@@ -142,7 +147,7 @@ extern void G_setfog(const char *fogstring);
 extern int G_EffectIndex(const char *name);
 extern int G_FindConfigstringIndex(const char *name, int start, int max, qboolean create, const char *errormsg);
 extern const char *SL_ConvertToString(unsigned int stringValue);
-extern unsigned int G_EntDetachAll(gentity_t *ent);
+extern void G_EntDetachAll(gentity_t *ent);
 extern unsigned int G_EntUnlink(gentity_t *ent);
 extern qboolean G_EntDetach(gentity_t *ent, const char *modelName, unsigned int tagName);
 extern qboolean G_EntAttach(gentity_t *ent, const char *modelName, unsigned int tagName, qboolean ignoreCollision);
@@ -151,17 +156,17 @@ extern qboolean G_EntLinkToWithOffset(gentity_t *ent, gentity_t *parent, unsigne
 extern const char *G_ModelName(int index);
 extern SoundAlias G_SoundAliasIndex(const char *name);
 extern gentity_t *G_TempEntity(const vec_t *origin, int event);
-extern unsigned char DirToByte(vec_t *dir);
+extern const byte DirToByte(const vec_t *dir);
 extern void Vec3Cross(const vec_t *v0, const vec_t *v1, vec_t *cross);
-extern void AxisToAngles(const vec_t *axis, vec_t *angles);
+extern void AxisToAngles(vec3_t *axis, vec_t *angles);
 extern int SV_DObjGetBoneIndex(gentity_t *ent, unsigned int boneName);
 extern void SV_DObjDumpInfo(gentity_t *ent);
 extern qboolean SV_DObjExists(gentity_t *ent);
 extern qboolean SV_EntityContact(const vec_t *mins, const vec_t *maxs, const gentity_t *gEnt);
 extern void ExpandBoundsToWidth(vec_t *mins, vec_t *maxs);
-extern unsigned char G_AddEvent(gentity_t *ent, int event, int eventParm);
-extern unsigned char G_FreeEntity(gentity_t *ent);
-extern unsigned char G_SetModel(gentity_t *ent, const char *modelName);
+extern void G_AddEvent(gentity_t *ent, int event, int eventParm);
+extern void G_FreeEntity(gentity_t *ent);
+extern void G_SetModel(gentity_t *ent, const char *modelName);
 extern void G_DObjUpdate(gentity_t *ent);
 extern qboolean G_LocationalTracePassed(const vec_t *start, const vec_t *end, int passEntityNum, int contentmask);
 extern void G_LocationalTrace(trace_t *results, const vec_t *start, const vec_t *end, int passEntityNum, int contentmask, unsigned char *priorityMap);
@@ -170,7 +175,7 @@ extern float SV_FX_GetVisibility(const vec_t *start, const vec_t *end);
 extern void G_TraceCapsule(trace_t *results, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int contentmask);
 extern qboolean G_RadiusDamage(const vec_t *origin, gentity_t *inflictor, gentity_t *attacker, float fInnerDamage, float fOuterDamage, float radius, gentity_t *ignore, int mod);
 extern int CM_AreaEntities(const vec_t *mins, const vec_t *maxs, int *entityList, int maxcount, int contentmask);
-extern int BG_AnimScriptEvent(playerState_t *ps, int event, int isContinue, int force);
+extern int BG_AnimScriptEvent(playerState_t *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force);
 extern int BG_WeaponAmmo(const playerState_t *ps, int weapon);
 extern void ClientUserinfoChanged(int clientNum);
 extern vec3_t playerMins;
@@ -179,7 +184,7 @@ extern BuiltinFunctionDef functions[145];
 
 extern BuiltinMethodDef methods[];
 
-#define g_entities ((gentity_t *)imp_g_entities)
+extern gentity_t g_entities[];
 extern level_locals_t level;
 extern bgs_t level_bgs;
 extern bgs_t *bgs;
@@ -277,7 +282,7 @@ static inline __attribute__((always_inline)) void GScr_ClearObjectiveEntity(obje
 
 static inline __attribute__((always_inline)) objectiveState_t GScr_ObjectiveStateFromConst(unsigned int stateString)
 {
-    scr_const_t *scr_const = (scr_const_t *)imp_scr_const;
+    scr_const_t *scr_const = (scr_const_t *)scr_const_g;
 
     if (stateString == scr_const->empty)
         return OBJST_EMPTY;
@@ -301,7 +306,7 @@ static inline __attribute__((always_inline)) gentity_t *GScr_EntityFromEntRef(sc
 
 static inline __attribute__((always_inline)) qboolean GScr_IsUseTrigger(const gentity_t *ent)
 {
-    scr_const_t *scr_const = (scr_const_t *)imp_scr_const;
+    scr_const_t *scr_const = (scr_const_t *)scr_const_g;
 
     return ent->classname == scr_const->trigger_use ||
            ent->classname == scr_const->trigger_use_touch;
@@ -309,7 +314,7 @@ static inline __attribute__((always_inline)) qboolean GScr_IsUseTrigger(const ge
 
 static inline __attribute__((always_inline)) void GScr_UseTriggerError(const char *format)
 {
-    scr_const_t *scr_const = (scr_const_t *)imp_scr_const;
+    scr_const_t *scr_const = (scr_const_t *)scr_const_g;
     const char *triggerUseTouch = SL_ConvertToString(scr_const->trigger_use_touch);
     const char *triggerUse = SL_ConvertToString(scr_const->trigger_use);
 
@@ -457,7 +462,7 @@ void Scr_SoundFade(void);
 void Scr_PrecacheModel(void);
 void Scr_PrecacheShellShock(void);
 void Scr_PrecacheItem(void);
-unsigned int Scr_PrecacheShader(void);
+void Scr_PrecacheShader(void);
 void Scr_PrecacheString(void);
 void Scr_PrecacheRumble(void);
 void GScr_RadiusDamage(void);
@@ -472,19 +477,19 @@ void Scr_SetLinearFog(void);
 void Scr_SetExponentialFog(void);
 void GScr_IsPlayer(void);
 void GScr_IsPlayerNumber(void);
-unsigned int GScr_SetWinningPlayer(void);
+void GScr_SetWinningPlayer(void);
 unsigned int GScr_SetWinningTeam(void);
 void GScr_GetTeamScore(void);
-unsigned int GScr_SetTeamScore(void);
-unsigned int GScr_SetClientNameMode(void);
+void GScr_SetTeamScore(void);
+void GScr_SetClientNameMode(void);
 void GScr_UpdateClientNames(void);
 void GScr_GetTeamPlayersAlive(void);
 unsigned int GScr_GetNumParts(void);
 void GScr_GetPartName(void);
-unsigned int GScr_Earthquake(void);
+void GScr_Earthquake(void);
 void GScr_MapRestart(void);
 void GScr_LoadMap(void);
-unsigned int GScr_ExitLevel(void);
+void GScr_ExitLevel(void);
 void GScr_AddTestClient(void);
 void GScr_AllClientsPrint(void);
 void GScr_MapExists(void);
@@ -556,7 +561,7 @@ void Scr_PlayerDamage(gentity_t *self, gentity_t *inflictor, gentity_t *attacker
 void Scr_PlayerKilled(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath, int iWeapon, const vec_t *vDir, const hitLocation_t hitLoc, int psTimeOffset, int deathAnimDuration);
 void ScrCmd_Show(scr_entref_t entref);
 void ScrCmd_Hide(scr_entref_t entref);
-unsigned int ScrCmd_ShowToPlayer(scr_entref_t entref);
+void ScrCmd_ShowToPlayer(scr_entref_t entref);
 void GScr_EnableGrenadeTouchDamage(scr_entref_t entref);
 void GScr_DisableGrenadeTouchDamage(scr_entref_t entref);
 void GScr_EnableGrenadeBounce(scr_entref_t entref);
@@ -565,7 +570,7 @@ void GScr_EnableAimAssist(scr_entref_t entref);
 void GScr_DisableAimAssist(scr_entref_t entref);
 void ScrCmd_attach(scr_entref_t entref);
 void ScrCmd_detach(scr_entref_t entref);
-unsigned int ScrCmd_detachAll(scr_entref_t entref);
+void ScrCmd_detachAll(scr_entref_t entref);
 unsigned int ScrCmd_GetAttachSize(scr_entref_t entref);
 unsigned int ScrCmd_GetAttachModelName(scr_entref_t entref);
 unsigned int ScrCmd_GetAttachTagName(scr_entref_t entref);
@@ -578,11 +583,11 @@ void ScrCmd_GetEye(scr_entref_t entref);
 void ScrCmd_UseBy(scr_entref_t entref);
 void Scr_SetStableMissile(scr_entref_t entref);
 void ScrCmd_IsTouching(scr_entref_t entref);
-unsigned int ScrCmd_PlaySound(scr_entref_t entref);
-unsigned int ScrCmd_PlaySoundAsMaster(scr_entref_t entref);
+void ScrCmd_PlaySound(scr_entref_t entref);
+void ScrCmd_PlaySoundAsMaster(scr_entref_t entref);
 void ScrCmd_PlayLoopSound(scr_entref_t entref);
 void ScrCmd_StopLoopSound(scr_entref_t entref);
-unsigned int ScrCmd_Delete(scr_entref_t entref);
+void ScrCmd_Delete(scr_entref_t entref);
 void ScrCmd_SetModel(scr_entref_t entref);
 unsigned int ScrCmd_GetNormalHealth(scr_entref_t entref);
 void ScrCmd_SetNormalHealth(scr_entref_t entref);
@@ -595,10 +600,10 @@ void GScr_StopShellShock(scr_entref_t entref);
 void GScr_ShellShock(scr_entref_t entref);
 unsigned int GScr_GetAmmoCount(scr_entref_t entref);
 void GScr_LocalToWorldCoords(scr_entref_t entref);
-unsigned int GScr_SetRightArc(scr_entref_t entref);
-unsigned int GScr_SetLeftArc(scr_entref_t entref);
-unsigned int GScr_SetTopArc(scr_entref_t entref);
-unsigned int GScr_SetBottomArc(scr_entref_t entref);
+void GScr_SetRightArc(scr_entref_t entref);
+void GScr_SetLeftArc(scr_entref_t entref);
+void GScr_SetTopArc(scr_entref_t entref);
+void GScr_SetBottomArc(scr_entref_t entref);
 unsigned int GScr_GetEntityNumber(scr_entref_t entref);
 void GScr_PlaceSpawnPoint(scr_entref_t entref);
 void GScr_UpdateScores(scr_entref_t entref);
@@ -608,7 +613,7 @@ void GScr_ClientReleaseTrigger(scr_entref_t entref);
 void Scr_PlayFX(void);
 void iprintln(void);
 void iprintlnbold(void);
-unsigned int GScr_LoadGameTypeScript(void);
+void GScr_LoadGameTypeScript(void);
 void GScr_LoadScripts(int inst);
 
 unsigned int GScr_AllocString(const char *s)
@@ -665,7 +670,7 @@ void print(void)
     int num;
     int i;
 
-    if ((*(const dvar_t **)imp_g_NoScriptSpam)->current.enabled)
+    if ((g_NoScriptSpam)->current.enabled)
         return;
 
     num = Scr_GetNumParam();
@@ -763,7 +768,7 @@ void Scr_GetEntByNum(void)
 
     if (num > 0x3ff)
         return;
-    ent = (gentity_t *)((byte *)imp_g_entities + num * sizeof(gentity_s)); /* was 560 = x86 size */
+    ent = &g_entities[num];
     if (ent->r.inuse)
         Scr_AddEntity(ent);
 }
@@ -787,12 +792,12 @@ void Scr_GetWeaponModel(void)
 void GScr_GetAnimLength(void)
 {
     unsigned int anim = Scr_GetAnim(0, 0);
-    void *anims = Scr_GetAnims(anim >> 16);
+    struct XAnim_s *anims = Scr_GetAnims(anim >> 16);
     unsigned short animIndex = anim;
 
     if (!XAnimIsPrimitive(anims, animIndex))
         Scr_ParamError(0, (const char *)"non-primitive animation has no concept of length");
-    Scr_AddFloat(XAnimGetLength(anims, animIndex));
+    Scr_AddFloat(XAnimGetLength( (const XAnim *)(anims), animIndex));
 }
 
 void GScr_AnimHasNotetrack(void)
@@ -801,9 +806,9 @@ void GScr_AnimHasNotetrack(void)
     unsigned int treeIndex = anim >> 16;
     unsigned int animIndex = anim & 0xffff;
     unsigned int notetrack = Scr_GetConstString(1);
-    void *anims = Scr_GetAnims(treeIndex);
+    struct XAnim_s *anims = Scr_GetAnims(treeIndex);
 
-    Scr_AddBool(XAnimNotetrackExists(anims, animIndex, notetrack));
+    Scr_AddBool(XAnimNotetrackExists( (const XAnim *)(anims), animIndex, notetrack));
 }
 
 void GScr_PrecacheTurret(void)
@@ -953,7 +958,7 @@ void GScr_Objective_Team(void)
     int objIndex = Scr_GetInt(0);
     objective_t *obj;
     unsigned int team;
-    scr_const_t *scr_const = (scr_const_t *)imp_scr_const;
+    scr_const_t *scr_const = (scr_const_t *)scr_const_g;
 
     if ((unsigned int)objIndex > 0xf)
         Scr_ParamError(0, va("index %i is an illegal objective index. Valid indexes are 0 to %i\n", objIndex, 0xf));
@@ -1289,14 +1294,14 @@ void GScr_sin(void)
 {
     float val = Scr_GetFloat(0);
 
-    Scr_AddFloat((float)sin((double)val * 0.017453292519943295));
+    Scr_AddFloat((float)sin(val * 0.017453292519943295f));
 }
 
 void GScr_cos(void)
 {
     float val = Scr_GetFloat(0);
 
-    Scr_AddFloat((float)cos((double)val * 0.017453292519943295));
+    Scr_AddFloat((float)cos(val * 0.017453292519943295f));
 }
 
 void GScr_tan(void)
@@ -1316,7 +1321,7 @@ void GScr_asin(void)
 
     if (x < -1.0f || x > 1.0f)
         Scr_Error(va("%g out of range", (double)x));
-    Scr_AddFloat((float)((double)asinf(x) * 57.29577951308232));
+    Scr_AddFloat(asinf(x) * 57.29577951308232f);
 }
 
 void GScr_acos(void)
@@ -1325,14 +1330,14 @@ void GScr_acos(void)
     if (x < -1.0f || x > 1.0f) {
         Scr_Error(va("%g out of range", (double)x));
     }
-    Scr_AddFloat((float)((double)acosf(x) * 57.29577951308232));
+    Scr_AddFloat(acosf(x) * 57.29577951308232f);
     return;
 }
 
 void GScr_atan(void)
 {
     float val = Scr_GetFloat(0);
-    Scr_AddFloat((float)((double)atanf(val) * 57.29577951308232));
+    Scr_AddFloat(atanf(val) * 57.29577951308232f);
 }
 
 void GScr_CastInt(void)
@@ -1539,7 +1544,7 @@ unsigned int Scr_StrTok(void)
 
 void Scr_MusicPlay(void)
 {
-    SV_GameSendServerCommand(-1, 1, va("%c %s", 'o', Scr_GetString(0)));
+    SV_GameSendServerCommand(-1, SV_CMD_RELIABLE, va("%c %s", 'o', Scr_GetString(0)));
 }
 
 void Scr_SoundFade(void)
@@ -1549,7 +1554,7 @@ void Scr_SoundFade(void)
 
     if (Scr_GetNumParam() > 1)
         fadeTime = (int)(Scr_GetFloat(1) * 1000.0f);
-    SV_GameSendServerCommand(-1, 1, va("%c %f %i\n", 'q', (double)targetVol, fadeTime));
+    SV_GameSendServerCommand(-1, SV_CMD_RELIABLE, va("%c %f %i\n", 'q', (double)targetVol, fadeTime));
 }
 
 void Scr_PrecacheModel(void)
@@ -1587,7 +1592,7 @@ void Scr_PrecacheItem(void)
     return;
 }
 
-unsigned int Scr_PrecacheShader(void)
+void Scr_PrecacheShader(void)
 {
     const char *shaderName;
     if (!level.initializing)
@@ -1686,7 +1691,7 @@ void GScr_GetMoveDelta(void)
     GScr_GetAnimDeltaTimes(&startTime, &endTime);
 
     anim = Scr_GetAnim(0, 0);
-    XAnimGetRelDelta(Scr_GetAnims(anim >> 16), (unsigned short)anim, rot, trans, startTime, endTime);
+    XAnimGetRelDelta( (const XAnim *)(Scr_GetAnims(anim >> 16)), (unsigned short)anim, rot, trans, startTime, endTime);
     Scr_AddVector(trans);
     return;
 }
@@ -1702,7 +1707,7 @@ void GScr_GetAngleDelta(void)
     GScr_GetAnimDeltaTimes(&startTime, &endTime);
 
     anim = Scr_GetAnim(0, 0);
-    XAnimGetRelDelta(Scr_GetAnims(anim >> 16), (unsigned short)anim, rot, trans, startTime, endTime);
+    XAnimGetRelDelta( (const XAnim *)(Scr_GetAnims(anim >> 16)), (unsigned short)anim, rot, trans, startTime, endTime);
     Scr_AddFloat(RotationToYaw(rot));
     return;
 }
@@ -1848,7 +1853,7 @@ void GScr_IsPlayerNumber(void)
         Scr_AddInt(1);
 }
 
-unsigned int GScr_SetWinningPlayer(void)
+void GScr_SetWinningPlayer(void)
 {
     gentity_t *ent = Scr_GetEntity(0);
 
@@ -1875,7 +1880,7 @@ unsigned int GScr_SetWinningTeam(void)
 void GScr_GetTeamScore(void)
 {
     scr_string_t team = Scr_GetConstString(0);
-    scr_const_t *scr_const = (scr_const_t *)imp_scr_const;
+    scr_const_t *scr_const = (scr_const_t *)scr_const_g;
 
     if (team != scr_const->allies && team != scr_const->axis)
         Scr_Error(va("Illegal team string '%s'. Must be allies, or axis.", SL_ConvertToString(team)));
@@ -1886,7 +1891,7 @@ void GScr_GetTeamScore(void)
         Scr_AddInt(level.teamScores[TEAM_AXIS]);
 }
 
-unsigned int GScr_SetTeamScore(void)
+void GScr_SetTeamScore(void)
 {
     scr_string_t team = Scr_GetConstString(0);
     int score;
@@ -1897,16 +1902,16 @@ unsigned int GScr_SetTeamScore(void)
     score = Scr_GetInt(1);
     if (team == scr_const.allies) {
         level.teamScores[TEAM_ALLIES] = score;
-        SV_GameSendServerCommand(-1, 0, va("%c %i", 'H', score));
+        SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c %i", 'H', score));
     } else {
         level.teamScores[TEAM_AXIS] = score;
-        SV_GameSendServerCommand(-1, 0, va("%c %i", 'G', score));
+        SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c %i", 'G', score));
     }
 
     level.bUpdateScoresForIntermission = 1;
 }
 
-unsigned int GScr_SetClientNameMode(void)
+void GScr_SetClientNameMode(void)
 {
     scr_string_t mode = Scr_GetConstString(0);
 
@@ -1943,7 +1948,7 @@ void GScr_UpdateClientNames(void)
 
 void GScr_GetTeamPlayersAlive(void)
 {
-    scr_const_t *scr_const = (scr_const_t *)imp_scr_const;
+    scr_const_t *scr_const = (scr_const_t *)scr_const_g;
     unsigned int team = Scr_GetConstString(0);
     int teamNum;
     int livePlayers = 0;
@@ -1974,7 +1979,7 @@ unsigned int GScr_GetNumParts(void)
 
 void GScr_GetPartName(void)
 {
-    void *model = SV_XModelGet(Scr_GetString(0));
+    struct XModel *model = SV_XModelGet(Scr_GetString(0));
     int index = Scr_GetInt(1);
     int numBones = XModelNumBones(model);
     unsigned short name;
@@ -1982,14 +1987,14 @@ void GScr_GetPartName(void)
     if ((unsigned int)index >= (unsigned int)numBones)
         Scr_ParamError(1, va("index out of range (0 - %d)", numBones - 1));
 
-    name = ((unsigned short *)XModelBoneNames(model))[index];
+    name = ((unsigned short *)XModelBoneNames( (XModel *)(model)))[index];
     if (!name)
         Scr_ParamError(0, "bad model");
 
     Scr_AddConstString(name);
 }
 
-unsigned int GScr_Earthquake(void)
+void GScr_Earthquake(void)
 {
     float scale;
     int duration;
@@ -2055,7 +2060,7 @@ void GScr_LoadMap(void)
     return;
 }
 
-unsigned int GScr_ExitLevel(void)
+void GScr_ExitLevel(void)
 {
     level_locals_t *lvl = &level;
 
@@ -2075,7 +2080,7 @@ void GScr_AddTestClient(void)
 {
     void *ent = (void *)SV_AddTestClient();
     if (ent)
-        Scr_AddEntity(ent);
+        Scr_AddEntity((gentity_t *)ent);
 }
 
 void GScr_AllClientsPrint(void)
@@ -2083,7 +2088,7 @@ void GScr_AllClientsPrint(void)
     if (!Scr_GetNumParam())
         return;
     const char *msg = Scr_GetString(0);
-    SV_GameSendServerCommand(-1, 0, va("%c \"%s\"", 0x65, msg));
+    SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 0x65, msg));
 }
 
 void GScr_MapExists(void)
@@ -2160,7 +2165,7 @@ void GScr_ClientPrint(void)
         return;
 
     ent = Scr_GetEntity(0);
-    SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"%s\"", 'e', Scr_GetString(1)));
+    SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 'e', Scr_GetString(1)));
 }
 
 void GScr_OpenFile(void)
@@ -2436,7 +2441,7 @@ void GScr_ReleaseClaimedTrigger(scr_entref_t entref)
 }
 
 /* No-op for Xbox-360-only script builtins that stock PC scripts still reference inside dead
-   level.xenon branches (e.g. endparty() at maps/mp/gametypes/_menus.gsc:92). The retail PC
+   level.xenon branches (e.g. endparty() at maps/mp/gametypes/_menus.gsc:92). The PC
    engine registers these as no-ops so the scripts compile; without it the GSC compiler aborts
    with "unknown function" and the map never loads. */
 static unsigned int Scr_XenonStub(void)
@@ -2942,7 +2947,7 @@ void Scr_BulletTrace(void)
     trace_t trace;
     int iClipMask;
     int entityNum;
-    const scr_const_t *scr_const = (const scr_const_t *)imp_scr_const;
+    const scr_const_t *scr_const = (const scr_const_t *)scr_const_g;
 
     Scr_GetVector(0, vStart);
     Scr_GetVector(1, vEnd);
@@ -3046,7 +3051,7 @@ void Scr_Objective_State(void)
     obj = &level.objectives[objIndex];
     stateString = Scr_GetConstString(1);
     {
-        scr_const_t *scr_const = (scr_const_t *)imp_scr_const;
+        scr_const_t *scr_const = (scr_const_t *)scr_const_g;
 
         if (stateString == scr_const->empty) {
             state = OBJST_EMPTY;
@@ -3085,7 +3090,7 @@ void Scr_MusicStop(void)
         return;
     }
 
-    SV_GameSendServerCommand(-1, 1, va("%c %i", 'p', fadeTime));
+    SV_GameSendServerCommand(-1, SV_CMD_RELIABLE, va("%c %i", 'p', fadeTime));
     return;
 }
 
@@ -3263,7 +3268,7 @@ unsigned int Scr_ConstructMessageString(int firstParmIndex, int lastParmIndex, c
 
                 c = (signed char)token[charIndex];
                 if (GScr_MessageIsAlpha(c)) {
-                    const dvar_t *locWarningsAsErrors = *(const dvar_t **)imp_loc_warningsAsErrors;
+                    const dvar_t *locWarningsAsErrors = loc_warningsAsErrors;
 
                     if (locWarningsAsErrors->current.enabled) {
                         Com_Error(6, va("non-localized %s strings are not allowed to have letters in them: \"%s\"",
@@ -3326,7 +3331,7 @@ void GScr_ClientAnnouncement(void)
     int numParams = Scr_GetNumParam();
 
     Scr_ConstructMessageString(1, numParams - 1, "Announcement", string, sizeof(string));
-    SV_GameSendServerCommand(ent->s.number, 0, va("%c \"%s\" 2", 'c', string));
+    SV_GameSendServerCommand(ent->s.number, SV_CMD_CAN_IGNORE, va("%c \"%s\" 2", 'c', string));
 }
 
 void GScr_Announcement(void)
@@ -3334,7 +3339,7 @@ void GScr_Announcement(void)
     char string[0x400];
     int numParams = Scr_GetNumParam();
     Scr_ConstructMessageString(0, numParams - 1, "Announcement", string, 0x400);
-    SV_GameSendServerCommand(-1, 0, va("%c \"%s\" 2", 0x63, string));
+    SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c \"%s\" 2", 0x63, string));
 }
 
 void GScr_SetDvar(void)
@@ -3375,7 +3380,7 @@ static inline __attribute__((always_inline)) void Scr_MakeGameMessage_core(int i
     int numParams = Scr_GetNumParam();
 
     Scr_ConstructMessageString(0, numParams - 1, "Game Message", string, sizeof(string));
-    SV_GameSendServerCommand(iClientNum, 0, va("%s \"%s\"", pszCmd, string));
+    SV_GameSendServerCommand(iClientNum, SV_CMD_CAN_IGNORE, va("%s \"%s\"", pszCmd, string));
 }
 
 void Scr_MakeGameMessage(int iClientNum, const char *pszCmd)
@@ -3420,7 +3425,7 @@ void println(void)
     int num;
     int i;
 
-    if ((*(const dvar_t **)imp_g_NoScriptSpam)->current.enabled)
+    if ((g_NoScriptSpam)->current.enabled)
         return;
 
     num = Scr_GetNumParam();
@@ -3488,13 +3493,15 @@ void ScrCmd_Hide(scr_entref_t entref)
     ent->r.clientMask[1] = -1;
 }
 
-unsigned int ScrCmd_ShowToPlayer(scr_entref_t entref)
+void ScrCmd_ShowToPlayer(scr_entref_t entref)
 {
     gentity_t *ent = GScr_EntityFromEntRef(entref);
     gentity_t *clientEnt = Scr_GetEntity(0);
 
-    if (clientEnt->s.number > 63)
-        return Scr_Error("showToClient error: param must be a client entity\n");
+    if (clientEnt->s.number >= 64) {
+        Scr_Error("showToClient error: param must be a client entity\n");
+        return;
+    }
 
     ent->flags &= ~0x800;
     ent->r.clientMask[clientEnt->s.number >> 5] &= ~(1u << (clientEnt->s.number & 31));
@@ -3503,7 +3510,7 @@ unsigned int ScrCmd_ShowToPlayer(scr_entref_t entref)
 void GScr_EnableGrenadeTouchDamage(scr_entref_t entref)
 {
     gentity_t *ent = GScr_EntityFromEntRef(entref);
-    scr_const_t *scr_const = (scr_const_t *)imp_scr_const;
+    scr_const_t *scr_const = (scr_const_t *)scr_const_g;
 
     if (ent->classname != scr_const->trigger_damage)
         Scr_Error("Currently on supported on damage triggers");
@@ -3513,7 +3520,7 @@ void GScr_EnableGrenadeTouchDamage(scr_entref_t entref)
 void GScr_DisableGrenadeTouchDamage(scr_entref_t entref)
 {
     gentity_t *ent = GScr_EntityFromEntRef(entref);
-    scr_const_t *scr_const = (scr_const_t *)imp_scr_const;
+    scr_const_t *scr_const = (scr_const_t *)scr_const_g;
 
     if (ent->classname != scr_const->trigger_damage)
         Scr_Error("Currently on supported on damage triggers");
@@ -3555,7 +3562,7 @@ void GScr_DisableAimAssist(scr_entref_t entref)
 void ScrCmd_attach(scr_entref_t entref)
 {
     gentity_t *ent = GScr_EntityFromEntRef(entref);
-    const scr_const_t *scr_const = (const scr_const_t *)imp_scr_const;
+    const scr_const_t *scr_const = (const scr_const_t *)scr_const_g;
     const char *modelName = Scr_GetString(0);
     unsigned int tagName;
     qboolean ignoreCollision;
@@ -3583,7 +3590,7 @@ void ScrCmd_attach(scr_entref_t entref)
 void ScrCmd_detach(scr_entref_t entref)
 {
     gentity_t *ent = GScr_EntityFromEntRef(entref);
-    const scr_const_t *scr_const = (const scr_const_t *)imp_scr_const;
+    const scr_const_t *scr_const = (const scr_const_t *)scr_const_g;
     const char *modelName = Scr_GetString(0);
     unsigned int tagName;
     int i;
@@ -3609,7 +3616,7 @@ void ScrCmd_detach(scr_entref_t entref)
     return;
 }
 
-unsigned int ScrCmd_detachAll(scr_entref_t entref)
+void ScrCmd_detachAll(scr_entref_t entref)
 {
     return G_EntDetachAll(GScr_EntityFromEntRef(entref));
 }
@@ -3766,12 +3773,12 @@ void ScrCmd_UseBy(scr_entref_t entref)
     gentity_t *other = Scr_GetEntity(0);
 
     Scr_AddEntity(other);
-    Scr_Notify(ent, ((const scr_const_t *)imp_scr_const)->trigger, 1);
+    Scr_Notify(ent, ((const scr_const_t *)scr_const_g)->trigger, 1);
 
-    if ((*(entityHandler_t **)imp_entityHandlers)[ent->handler].use) {
-        void (*use)(gentity_t *, gentity_t *, gentity_t *) =
-            (void (*)(gentity_t *, gentity_t *, gentity_t *))(*(entityHandler_t **)imp_entityHandlers)[ent->handler].use;
-        use(ent, other, other);
+    {
+        fn_use useFn = ((entityHandler_t *)imp_entityHandlers)[ent->handler].use;
+        if (useFn)
+            ((void (*)(gentity_t *, gentity_t *, gentity_t *))useFn)(ent, other, other);
     }
 
     return;
@@ -3829,12 +3836,12 @@ void ScrCmd_IsTouching(scr_entref_t entref)
     return;
 }
 
-unsigned int ScrCmd_PlaySound(scr_entref_t entref)
+void ScrCmd_PlaySound(scr_entref_t entref)
 {
     ScrCmd_PlaySoundEvent(GScr_EntityFromEntRef(entref), 0xb3);
 }
 
-unsigned int ScrCmd_PlaySoundAsMaster(scr_entref_t entref)
+void ScrCmd_PlaySoundAsMaster(scr_entref_t entref)
 {
     ScrCmd_PlaySoundEvent(GScr_EntityFromEntRef(entref), 0xb4);
 }
@@ -3856,7 +3863,7 @@ void ScrCmd_StopLoopSound(scr_entref_t entref)
     ent->s.loopSound = 0;
 }
 
-unsigned int ScrCmd_Delete(scr_entref_t entref)
+void ScrCmd_Delete(scr_entref_t entref)
 {
     gentity_t *ent = GScr_EntityFromEntRef(entref);
 
@@ -3908,7 +3915,7 @@ void ScrCmd_SetNormalHealth(scr_entref_t entref)
 
     if (ent->client) {
         newHealth = (int)floorf((float)ent->client->sess.maxHealth * normalHealth + 0.5f);
-        SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"%i\"", 0x49, 0));
+        SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"%i\"", 0x49, 0));
     } else if (ent->maxHealth) {
         newHealth = (int)((float)ent->maxHealth * normalHealth);
     } else {
@@ -4103,7 +4110,7 @@ void GScr_ShellShock(scr_entref_t entref)
 
     if (ent->health > 0) {
         *(bgs_t **)imp_bgs = (bgs_t *)imp_level_bgs;
-        BG_AnimScriptEvent(&ent->client->ps, 0x12, 0, 1);
+        BG_AnimScriptEvent(&ent->client->ps, ANIM_ET_SHELLSHOCK, 0, 1);
     }
 
     return;
@@ -4141,7 +4148,7 @@ void GScr_LocalToWorldCoords(scr_entref_t entref)
     return;
 }
 
-unsigned int GScr_SetRightArc(scr_entref_t entref)
+void GScr_SetRightArc(scr_entref_t entref)
 {
     turretInfo_t *pTurretInfo = GScr_GetTurretInfo(GScr_EntityFromEntRef(entref));
 
@@ -4150,7 +4157,7 @@ unsigned int GScr_SetRightArc(scr_entref_t entref)
         pTurretInfo->arcmin[1] = 0.0f;
 }
 
-unsigned int GScr_SetLeftArc(scr_entref_t entref)
+void GScr_SetLeftArc(scr_entref_t entref)
 {
     turretInfo_t *pTurretInfo = GScr_GetTurretInfo(GScr_EntityFromEntRef(entref));
 
@@ -4159,7 +4166,7 @@ unsigned int GScr_SetLeftArc(scr_entref_t entref)
         pTurretInfo->arcmax[1] = 0.0f;
 }
 
-unsigned int GScr_SetTopArc(scr_entref_t entref)
+void GScr_SetTopArc(scr_entref_t entref)
 {
     turretInfo_t *pTurretInfo = GScr_GetTurretInfo(GScr_EntityFromEntRef(entref));
 
@@ -4168,7 +4175,7 @@ unsigned int GScr_SetTopArc(scr_entref_t entref)
         pTurretInfo->arcmin[0] = 0.0f;
 }
 
-unsigned int GScr_SetBottomArc(scr_entref_t entref)
+void GScr_SetBottomArc(scr_entref_t entref)
 {
     turretInfo_t *pTurretInfo = GScr_GetTurretInfo(GScr_EntityFromEntRef(entref));
 
@@ -4231,8 +4238,8 @@ void GScr_UpdateScores(scr_entref_t entref)
     gentity_t *ent = GScr_EntityFromEntRef(entref);
     int clientNum = ent - g_entities;
 
-    SV_GameSendServerCommand(clientNum, 0, va("%c %i", 0x48, level.teamScores[TEAM_ALLIES]));
-    SV_GameSendServerCommand(clientNum, 0, va("%c %i", 0x47, level.teamScores[TEAM_AXIS]));
+    SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE, va("%c %i", 0x48, level.teamScores[TEAM_ALLIES]));
+    SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE, va("%c %i", 0x47, level.teamScores[TEAM_AXIS]));
     return;
 }
 
@@ -4357,7 +4364,7 @@ void Scr_PlayFX(void)
     if (crossLen < 0.999f)
         Vec3Cross(axis[0], axis[1], axis[2]);
 
-    AxisToAngles((const vec_t *)axis, ent->s.apos.trBase);
+    AxisToAngles(axis, ent->s.apos.trBase);
     return;
 }
 
@@ -4371,19 +4378,19 @@ void iprintlnbold(void)
     Scr_MakeGameMessage_core(-1, va("%c", 0x67));
 }
 
-static inline __attribute__((always_inline)) scr_func_t GScr_LoadScriptFunction(const char *script, const char *label)
+static inline __attribute__((always_inline)) scr_func_t GScr_LoadScriptFunction(const char *script, const char *label, int errorIfMissing)
 {
     extern unsigned int Scr_LoadScript(const char *filename);
     extern scr_func_t Scr_GetFunctionHandle(const char *filename, const char *name);
     scr_func_t func;
 
-    if (!Scr_LoadScript(script))
+    if (!Scr_LoadScript(script) && errorIfMissing)
         Com_Error(1, "\x15"
                      "Could not find script '%s'",
                   script);
 
     func = Scr_GetFunctionHandle(script, label);
-    if (!func)
+    if (!func && errorIfMissing)
         Com_Error(1, "\x15"
                      "Could not find label '%s' in script '%s'",
                   label, script);
@@ -4391,21 +4398,21 @@ static inline __attribute__((always_inline)) scr_func_t GScr_LoadScriptFunction(
     return func;
 }
 
-unsigned int GScr_LoadGameTypeScript(void)
+extern const dvar_t *g_gametype;
+void GScr_LoadGameTypeScript(void)
 {
     extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
-    const dvar_t *g_gametype = *(const dvar_t **)imp_g_gametype;
     const char *callbackSetup = "maps/mp/gametypes/_callbacksetup";
     char filename[64];
 
     Com_sprintf(filename, sizeof(filename), "maps/mp/gametypes/%s", g_gametype->current.string);
 
-    g_scr_data.gametype.main = GScr_LoadScriptFunction(filename, "main");
-    g_scr_data.gametype.startupgametype = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_StartGameType");
-    g_scr_data.gametype.playerconnect = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_PlayerConnect");
-    g_scr_data.gametype.playerdisconnect = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_PlayerDisconnect");
-    g_scr_data.gametype.playerdamage = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_PlayerDamage");
-    return (g_scr_data.gametype.playerkilled = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_PlayerKilled"));
+    g_scr_data.gametype.main = GScr_LoadScriptFunction(filename, "main", 1);
+    g_scr_data.gametype.startupgametype = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_StartGameType", 1);
+    g_scr_data.gametype.playerconnect = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_PlayerConnect", 1);
+    g_scr_data.gametype.playerdisconnect = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_PlayerDisconnect", 1);
+    g_scr_data.gametype.playerdamage = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_PlayerDamage", 1);
+    g_scr_data.gametype.playerkilled = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_PlayerKilled", 1);
 }
 
 void GScr_LoadScripts(int inst)
@@ -4679,136 +4686,136 @@ BuiltinMethodDef methods[59] = {
  * diverges from the natural struct padding on x64). Mostly empty/runtime-filled;
  * only the two health pickups carry static data. (x64 port Stage 2.) */
 gitem_t bg_itemlist[132] = {
-    { NULL, NULL, { NULL, NULL }, NULL, NULL, 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { NULL, "", { "", "" }, "", "", 0, 0, 0, 0, 0 },
-    { "item_health_small", "health_pickup_small", { "xmodel/health_small", NULL }, "icons/iconh_small", "Small Health", 10, 3, 0, 0, 0 },
-    { "item_health_large", "health_pickup_large", { "xmodel/health_large", NULL }, "icons/iconh_large", "Large Health", 50, 3, 0, 0, 0 },
-    { NULL, NULL, { NULL, NULL }, NULL, NULL, 0, 0, 0, 0, 0 },
+    { NULL, NULL, { NULL, NULL }, NULL, NULL, 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { NULL, "", { "", "" }, "", "", 0, (itemType_t)0, 0, 0, 0 },
+    { "item_health_small", "health_pickup_small", { "xmodel/health_small", NULL }, "icons/iconh_small", "Small Health", 10, (itemType_t)3, 0, 0, 0 },
+    { "item_health_large", "health_pickup_large", { "xmodel/health_large", NULL }, "icons/iconh_large", "Large Health", 50, (itemType_t)3, 0, 0, 0 },
+    { NULL, NULL, { NULL, NULL }, NULL, NULL, 0, (itemType_t)0, 0, 0, 0 },
 };

@@ -4,6 +4,7 @@
 #include "headers/PC/cgame_mp/cg_local.h"
 
 extern const dvar_t *cg_marks;
+extern const dvar_t *cg_marksLimit;
 
 extern float floorf(float x);
 
@@ -16,11 +17,11 @@ extern void PerpendicularVector(const vec_t *src, vec_t *dst);
 extern void RotatePointAroundVector(vec_t *dst, const vec_t *dir, const vec_t *point, const float degrees);
 extern void Vec3Cross(const vec_t *v0, const vec_t *v1, vec_t *cross);
 extern Bool FxHelper_CullSphere(const FxHelper *_this, const vec_t *worldPos, float radius, int planeCount);
-extern void CL_AddPolyToScene(MaterialHandle mtlHandle, int lmapIndex, int vertCount, const GfxWorldVertex *verts);
+extern void CL_AddPolyToScene(MaterialHandle mtlHandle, unsigned short lmapIndex,
+                              unsigned short vertCount, const GfxWorldVertex *verts);
 extern int CL_MarkFragments(const vec3_t *points, const vec_t *origin, const vec3_t *axis, float radius, int maxPoints, GfxWorldVertex *verts, int maxFragments, GfxMarkFragment *fragmentBuffer, MaterialHandle markMaterial);
 extern void Com_Error(errorParm_t code, const char *fmt, ...);
 
-#define CG_MARKCOUNT_PTR (*(int **)(imp_cg_marksLimit))
 #define CG_MARKS_DVAR cg_marks
 #define FX_HELPER_PTR (*(FxHelper **)(imp_theFxHelper))
 
@@ -44,21 +45,21 @@ void CG_InitMarkPolys(void)
     int i;
     MarkPoly *sentinel;
 
-    lasttrav = CG_MARKCOUNT_PTR[2];
+    lasttrav = cg_marksLimit->current.integer;
 
     memset(cg_markPolys, 0, (size_t)lasttrav * sizeof(MarkPoly));
 
-    sentinel = &cg->activeMarkPolys;
-    cg->activeMarkPolys.nextMark = (int)(intptr_t)sentinel;
-    cg->activeMarkPolys.prevMark = (int)(intptr_t)sentinel;
+    sentinel = &cgArray[0].activeMarkPolys;
+    sentinel->nextMark = sentinel;
+    sentinel->prevMark = sentinel;
 
     cg_freeMarkPolys = &cg_markPolys[0];
 
     {
-        MarkPoly *cur = &cg_markPolys[0];
         MarkPoly *nxt = &cg_markPolys[1];
+        MarkPoly *cur = &cg_markPolys[0];
         for (i = 0; i < lasttrav - 1; i++) {
-            ((cur)->nextMark = (int)(intptr_t)(nxt));
+            cur->nextMark = nxt;
             cur = nxt;
             nxt = nxt + 1;
         }
@@ -73,7 +74,7 @@ void CG_AddMarks(void)
     if (!CG_MARKS_DVAR->current.enabled)
         return;
 
-    markPoly = (MarkPoly *)(intptr_t)cg->activeMarkPolys.nextMark;
+    markPoly = cg->activeMarkPolys.nextMark;
 
     if (markPoly == &cg->activeMarkPolys)
         return;
@@ -91,7 +92,7 @@ void CG_AddMarks(void)
                               (int)markPoly->vertCount, markPoly->verts);
         }
 
-        markPoly = ((MarkPoly *)(intptr_t)(markPoly)->nextMark);
+        markPoly = markPoly->nextMark;
     } while (markPoly != &cg->activeMarkPolys);
 }
 
@@ -163,7 +164,7 @@ void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t
         if (cg_freeMarkPolys == NULL) {
 
             sentinel = &cg->activeMarkPolys;
-            oldest = ((MarkPoly *)(intptr_t)(sentinel)->prevMark);
+            oldest = sentinel->prevMark;
 
             if (oldest != sentinel) {
                 current = oldest;
@@ -171,38 +172,38 @@ void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t
                     if (current->lastFrameDrawn < oldest->lastFrameDrawn) {
                         oldest = current;
                     }
-                    current = ((MarkPoly *)(intptr_t)(current)->prevMark);
+                    current = current->prevMark;
                     if (current == sentinel)
                         break;
                 }
             }
 
-            if (((MarkPoly *)(intptr_t)(oldest)->prevMark) == NULL) {
+            if (oldest->prevMark == NULL) {
                 Com_Error(ERR_DROP, "CG_FreeLocalEntity: not active");
 
             }
 
             {
-                MarkPoly *prev = ((MarkPoly *)(intptr_t)(oldest)->prevMark);
-                MarkPoly *next = ((MarkPoly *)(intptr_t)(oldest)->nextMark);
-                ((prev)->nextMark = (int)(intptr_t)(next));
-                ((next)->prevMark = (int)(intptr_t)(prev));
+                MarkPoly *prev = oldest->prevMark;
+                MarkPoly *next = oldest->nextMark;
+                prev->nextMark = next;
+                next->prevMark = prev;
             }
 
-            ((oldest)->nextMark = (int)(intptr_t)(cg_freeMarkPolys));
+            oldest->nextMark = cg_freeMarkPolys;
             cg_freeMarkPolys = oldest;
         }
 
         markPoly = cg_freeMarkPolys;
-        cg_freeMarkPolys = ((MarkPoly *)(intptr_t)(markPoly)->nextMark);
+        cg_freeMarkPolys = markPoly->nextMark;
 
         sentinel = &cg->activeMarkPolys;
         {
-            MarkPoly *oldFirst = ((MarkPoly *)(intptr_t)(sentinel)->nextMark);
-            ((markPoly)->nextMark = (int)(intptr_t)(oldFirst));
-            ((markPoly)->prevMark = (int)(intptr_t)(sentinel));
-            ((oldFirst)->prevMark = (int)(intptr_t)(markPoly));
-            ((sentinel)->nextMark = (int)(intptr_t)(markPoly));
+            MarkPoly *oldFirst = sentinel->nextMark;
+            markPoly->nextMark = oldFirst;
+            markPoly->prevMark = sentinel;
+            oldFirst->prevMark = markPoly;
+            sentinel->nextMark = markPoly;
         }
 
         markPoly->origin[0] = origin[0];

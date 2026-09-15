@@ -46,24 +46,24 @@ extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern int FX_RegisterEffect(const char *name);
 extern void FX_PlaySimpleEffect(int effectIndex, const vec_t *origin);
 extern double atof(const char *str);
-extern int BG_GetViewmodelWeaponIndex(void *ps);
+extern int BG_GetViewmodelWeaponIndex(const playerState_t *ps);
 extern int BG_GetNumWeapons(void);
 extern int CL_BeginDelayedDrawing(void);
-extern void *BG_GetWeaponDef(int weapIndex);
+extern WeaponDef *BG_GetWeaponDef(int weapIndex);
 extern int BG_IsAimDownSightWeapon(int weapIndex);
 extern float atanf(float x);
 extern float sinf(float x);
 extern double tan(double x);
 extern void CL_ResetSkeletonCache(int level);
-extern void CG_UpdateViewWeaponAnim(void *ps);
+extern void CG_UpdateViewWeaponAnim(playerState_t *ps);
 extern struct DObj_s *Com_GetClientDObj(int handle, int localClientNum);
 extern void CG_DObjUpdateInfo(struct DObj_s *obj);
 extern void CG_ProcessClientNoteTracks(int clientNum);
 extern void CG_CalcEntityLerpPositions(centity_t *cent);
 extern void CG_ProcessEntity(centity_t *cent);
-extern void DObjDisplayAnim(void *obj);
+extern void DObjDisplayAnim(DObj *obj);
 extern void R_UpdateEffectsBolt(void);
-extern void CL_FX_AdjustCamera(void *refdef);
+extern void CL_FX_AdjustCamera(refdef_t *refdef);
 extern void FX_AdjustTime(int serverTime);
 extern int CG_PointContents(const vec_t *point, int passEntityNum, int contentmask);
 extern void CG_PredictPlayerState(void);
@@ -71,15 +71,15 @@ extern void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_
 extern void CG_TraceCapsule(trace_t *result, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask);
 extern float CL_GetMenuBlurRadius(void);
 extern void SetScreenScaling(float scaleX, float scaleY, int x, int y, int w, int h);
-extern float BG_GetBobCycle(const void *ps);
-extern float BG_GetSpeed(const void *ps, int serverTime);
-extern float BG_GetVerticalBobFactor(const void *ps, float bobCycle, float xyspeed, float bobMax);
-extern float BG_GetHorizontalBobFactor(const void *ps, float bobCycle, float xyspeed, float bobMax);
+extern float BG_GetBobCycle(const playerState_t *ps);
+extern float BG_GetSpeed(const playerState_t *ps, int time);
+extern float BG_GetVerticalBobFactor(const playerState_t *ps, float cycle, float speed, float maxAmp);
+extern float BG_GetHorizontalBobFactor(const playerState_t *ps, float cycle, float speed, float maxAmp);
 extern void BG_CalculateViewAngles(viewState_t *vs, vec_t *angles);
-extern void AddLeanToPosition(vec_t *origin, float viewAngle, float leanFrac, float maxStand, float maxCrouch);
-extern void CG_ShakeCamera(void);
+extern void AddLeanToPosition(vec_t *position, const float fViewYaw, const float fLeanFrac, const float fViewRoll, const float fLeanDist);
+extern unsigned int CG_ShakeCamera(void);
 extern void CG_PerturbCamera(void);
-extern void AnglesToAxis(const vec_t *angles, void *axis);
+extern void AnglesToAxis(const vec_t *angles, vec3_t *axis);
 
 void CG_FxRestart(void);
 void CG_FxTest(void);
@@ -132,7 +132,7 @@ float CG_GetViewFov(void)
     float fov_x;
 
     {
-        weapIndex = BG_GetViewmodelWeaponIndex((void *)&cg->predictedPlayerState);
+        weapIndex = BG_GetViewmodelWeaponIndex( (const playerState_t *)((void *)&cg->predictedPlayerState));
         weapDef = (char *)BG_GetWeaponDef(weapIndex);
 
         if (cg->predictedPlayerState.pm_type == 5) {
@@ -264,7 +264,7 @@ static void CG_OffsetThirdPersonView(void)
         focusAngles[0] = 45.0f;
     }
 
-    AngleVectors(focusAngles, forward, (void *)0, (void *)0);
+    AngleVectors(focusAngles, forward, (vec_t *)0, (vec_t *)0);
 
     focusPoint[0] = forward[0] * 512.0f + *(float *)(origin + 0);
     focusPoint[1] = forward[1] * 512.0f + *(float *)(origin + 4);
@@ -481,7 +481,7 @@ static void CG_CalcViewValues(void)
         cg->refdefViewAngles[0] = cg->predictedPlayerState.viewangles[0];
         cg->refdefViewAngles[1] = cg->predictedPlayerState.viewangles[1];
         cg->refdefViewAngles[2] = cg->predictedPlayerState.viewangles[2];
-        AnglesToAxis(cg->refdefViewAngles, &cg->refdef.viewaxis);
+        AnglesToAxis(cg->refdefViewAngles, cg->refdef.viewaxis);
         CG_CalcFov();
         return;
     }
@@ -600,7 +600,7 @@ post_lean:
 
     CG_ShakeCamera();
 
-    AnglesToAxis(cg->refdefViewAngles, &cg->refdef.viewaxis);
+    AnglesToAxis(cg->refdefViewAngles, cg->refdef.viewaxis);
 
     cg->viewModelOrigin[0] = cg->refdef.vieworg[0];
     cg->viewModelOrigin[1] = cg->refdef.vieworg[1];
@@ -654,7 +654,7 @@ void CG_InitView(void)
 
     CG_UpdateViewWeaponAnim(&cg->predictedPlayerState);
     CG_CalcViewValues();
-    CL_FX_AdjustCamera((void *)&cg->refdef);
+    CL_FX_AdjustCamera( (refdef_t *)((void *)&cg->refdef));
     FX_AdjustTime(cg->time);
 }
 

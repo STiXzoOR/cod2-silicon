@@ -4,10 +4,11 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stddef.h>
 
 extern void Com_Printf(const char *fmt, ...);
 extern void Com_Error(int code, const char *fmt, ...);
-extern void Com_Memset(void *dest, int val, int count);
+extern void Com_Memset(void *dest, const int val, int count);
 extern void Sys_OutOfMemErrorInternal(const char *filename, int line);
 extern void *VirtualAlloc(void *lpAddress, int dwSize, int flAllocationType, int flProtect);
 extern int VirtualFree(void *lpAddress, int dwSize, int dwFreeType);
@@ -58,13 +59,13 @@ static void *gp_alloc(int size, int zero)
     return user;
 }
 #endif
-extern int FS_HashFileName(const char *fname, int hashSize);
+extern long FS_HashFileName(const char *fname, int hashSize);
 extern int FS_LoadStack(void);
 extern int stricmp(const char *s1, const char *s2);
-extern void XModelPartsFree(void *data);
-extern void XModelFree(void *data);
-extern void XAnimFree(void *data);
-extern void XAnimFreeList(void *data);
+extern void XModelPartsFree(XModelParts *model);
+extern void XModelFree(XModel *model);
+extern void XAnimFree(XAnimParts *parts);
+extern void XAnimFreeList(XAnim *anims);
 extern void Cmd_AddCommand(const char *cmdName, void (*function)());
 extern dvar_t *Dvar_RegisterInt(const char *dvarName, int value, int min, int max, int flags);
 extern int Sys_Milliseconds(void);
@@ -83,7 +84,7 @@ static int s_hunkTotal;
 static void Hunk_ClearData(void);
 static void Com_Meminfo_f(void);
 
-#define TO_MB(x) (((x) <= -1) ? (((x) + 0xfffff) >> 20) : ((x) >> 20))
+#define TO_MB(x) ((x) / (1024 * 1024))
 
 static void Hunk_ClearFileData(fileData_t **pFileData, byte *low, byte *high)
 {
@@ -100,16 +101,16 @@ static void Hunk_ClearFileData(fileData_t **pFileData, byte *low, byte *high)
 
         switch (fd->type) {
         case 3:
-            XModelPartsFree(data);
+            XModelPartsFree( (XModelParts *)(data));
             break;
         case 4:
-            XModelFree(data);
+            XModelFree( (XModel *)(data));
             break;
         case 5:
-            XAnimFree(data);
+            XAnimFree( (XAnimParts *)(data));
             break;
         case 6:
-            XAnimFreeList(data);
+            XAnimFreeList( (XAnim *)(data));
             break;
         default:
             break;
@@ -331,13 +332,13 @@ void Com_InitHunkMemory(void)
     Cmd_AddCommand("meminfo", Com_Meminfo_f);
 }
 
-static fileData_t *Hunk_FindFileData(int type, const char *name, int hash)
+static void *Hunk_FindFileData(int type, const char *name, int hash)
 {
     fileData_t *fd;
 
     for (fd = com_fileDataHashTable[hash]; fd; fd = *(fileData_t **)&fd->next) {
         if (fd->type == type && !stricmp(fd->name, name)) {
-            return fd;
+            return fd->data;
         }
     }
     return 0;
@@ -346,14 +347,9 @@ static fileData_t *Hunk_FindFileData(int type, const char *name, int hash)
 void *Hunk_FindDataForFile(int type, const char *name)
 {
     int hash;
-    fileData_t *fd;
 
     hash = FS_HashFileName(name, 0x400);
-    fd = Hunk_FindFileData(type, name, hash);
-    if (fd) {
-        return fd->data;
-    }
-    return 0;
+    return Hunk_FindFileData(type, name, hash);
 }
 
 qboolean Hunk_DataOnHunk(void *data)
@@ -375,7 +371,10 @@ const char *Hunk_SetDataForFile(int type, const char *name, void *data, Alloc_t 
 
     hash = FS_HashFileName(name, 0x400);
     nameLen = strlen(name) + 1;
-    fd = (fileData_t *)alloc(nameLen + 9);
+    /* header before name[]: x86 was 9 (data4+next4+type1); on x64 the two pointers
+     * grow it to offsetof(name)=17, so `+9` under-allocated and strcpy overran by 8
+     * -- hundreds of times (every file/model name), stomping adjacent hunk data. */
+    fd = (fileData_t *)alloc(nameLen + (int)offsetof(fileData_t, name));
     fd->data = data;
     fd->type = (byte)type;
     strcpy(fd->name, name);
@@ -389,7 +388,7 @@ void Hunk_AddData(int type, void *data, Alloc_t alloc)
 {
     fileData_t *fd;
 
-    fd = (fileData_t *)alloc(9);
+    fd = (fileData_t *)alloc((int)offsetof(fileData_t, name));   /* was 9 (x86 header); x64 header is 17 */
     fd->data = data;
     fd->type = (byte)type;
     fd->next = (intptr_t)com_hunkData;
@@ -481,12 +480,57 @@ void DBG_Hunk_PrintUsage(const char *label)
     (void)label;
 }
 
+/* ---- hunk overflow detector (env COD2_HUNKGUARD) ----
+   Each block gets a canary immediately after its requested size; the hunk grows
+   downward so an overflow past a block's end writes toward the previous (higher)
+   block and stomps that block's canary first. hunk_guard_check() reports the
+   overflowing block + its allocation-site return addresses (preferred-VA @
+   0x140000000 base, matches the .map / crash report). */
+#if defined(COD2_X64)
+extern unsigned short __stdcall RtlCaptureStackBackTrace(unsigned long, unsigned long, void **, unsigned long *);
+extern void *__stdcall GetModuleHandleA(const char *);
+#define HG_CANARY 0xA5A5A5A5A5A5A5A5ull
+#define HG_MAX 8192
+static struct { byte *end; int size; void *ra[4]; } hg_rec[HG_MAX];
+static int hg_count;
+static int hg_on = -1;
+static unsigned long long hg_base;
+static int hg_enabled(void) {
+    if (hg_on < 0) { hg_on = getenv("COD2_HUNKGUARD") ? 1 : 0; if (hg_on) hg_base = (unsigned long long)GetModuleHandleA((const char *)0); }
+    return hg_on;
+}
+void hunk_guard_check(const char *where)
+{
+    if (!hg_enabled()) return;
+    int i;
+    for (i = 0; i < hg_count; i++) {
+        if (*(unsigned long long *)hg_rec[i].end != HG_CANARY) {
+            unsigned long long b = hg_base;
+            Com_Printf("[HunkGuard@%s] OVERFLOW size=%d end=%p RA: %llx %llx %llx %llx\n",
+                       where, hg_rec[i].size, (void *)hg_rec[i].end,
+                       (unsigned long long)hg_rec[i].ra[0] - b + 0x140000000ull,
+                       (unsigned long long)hg_rec[i].ra[1] - b + 0x140000000ull,
+                       (unsigned long long)hg_rec[i].ra[2] - b + 0x140000000ull,
+                       (unsigned long long)hg_rec[i].ra[3] - b + 0x140000000ull);
+            *(unsigned long long *)hg_rec[i].end = HG_CANARY; /* re-arm to avoid spam */
+        }
+    }
+}
+#else
+void hunk_guard_check(const char *where) { (void)where; }
+#endif
+
 void *Hunk_AllocInternal(int size)
 {
     int newHighUsed;
     byte *buf;
+    int reqSize = size;
 
-    newHighUsed = (hunk_high.permanent + size + 31) & ~31;
+#if defined(COD2_X64)
+    if (hg_enabled()) reqSize = size + 16;
+#endif
+
+    newHighUsed = (hunk_high.permanent + reqSize + 31) & ~31;
     hunk_high.permanent = newHighUsed;
     buf = s_hunkData + s_hunkTotal - newHighUsed;
     hunk_high.temp = newHighUsed;
@@ -497,6 +541,15 @@ void *Hunk_AllocInternal(int size)
     }
 
     memset(buf, 0, size);
+#if defined(COD2_X64)
+    if (hg_enabled() && hg_count < HG_MAX) {
+        *(unsigned long long *)(buf + size) = HG_CANARY;
+        hg_rec[hg_count].end = buf + size;
+        hg_rec[hg_count].size = size;
+        RtlCaptureStackBackTrace(1, 4, hg_rec[hg_count].ra, (unsigned long *)0);
+        hg_count++;
+    }
+#endif
     return buf;
 }
 
@@ -584,7 +637,8 @@ void *Hunk_AllocLowAlignInternal(int size, int alignment)
     byte *buf;
     int newLow;
 
-    aligned = (hunk_low.permanent + alignment - 1) & ~(alignment - 1);
+    --alignment;
+    aligned = (hunk_low.permanent + alignment) & ~alignment;
     buf = s_hunkData + aligned;
     newLow = aligned + size;
     hunk_low.permanent = newLow;

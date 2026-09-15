@@ -1,6 +1,11 @@
 #include "common_types.h"
 #include "imports.h"
+#include <stddef.h>
 #include <string.h>
+/* dvar globals */
+extern const dvar_t *com_dedicated;
+extern const dvar_t *rcon_password;
+extern serverStatic_t svs;
 
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
@@ -15,17 +20,17 @@ extern void Com_BeginRedirect(char *buffer, int buffersize, void (*flush)(char *
 extern void Com_EndRedirect(void);
 extern int Com_AddToString(const char *add, char *msg, int len, int maxlen, qboolean mayAddQuotes);
 extern const char *va(const char *fmt, ...);
-extern long int SVC_Status(netadr_t from);
-extern long int SVC_GameCompleteStatus(netadr_t from);
+extern void SVC_Status(netadr_t from);
+extern void SVC_GameCompleteStatus(netadr_t from);
 
 extern byte svs_ptr[];
 extern const dvar_t *sv_dedicated_dvar;
 extern const dvar_t *rcon_password_dvar;
 
-#define SVS_TIME_OFF 0x4
-#define SVS_NEXTHEARTBEATTIME_OFF 0x54
-#define SVS_NEXTSTATUSRESPTIME_OFF 0x58
-#define SVS_REDIRECTADDR_OFF 0xa05c
+#define SVS_TIME_OFF ((int)offsetof(serverStatic_t, time))
+#define SVS_NEXTHEARTBEATTIME_OFF ((int)offsetof(serverStatic_t, nextHeartbeatTime))
+#define SVS_NEXTSTATUSRESPTIME_OFF ((int)offsetof(serverStatic_t, nextStatusResponseTime))
+#define SVS_REDIRECTADDR_OFF ((int)offsetof(serverStatic_t, redirectAddress))
 
 static int lasttime;
 static netadr_t adr;
@@ -45,9 +50,6 @@ void SV_FlushRedirect(char *outputbuf)
     char *ptr;
     char c;
     netadr_t addr;
-    byte *svs;
-
-    svs = (byte *)imp_svs;
 
     len = strlen(outputbuf);
 
@@ -58,7 +60,7 @@ void SV_FlushRedirect(char *outputbuf)
             ptr[0x50e] = '\0';
 
             Com_sprintf(buf, 0x514, "print\n%s", ptr);
-            addr = *(netadr_t *)(svs + SVS_REDIRECTADDR_OFF);
+            addr = *(netadr_t *)((byte *)&svs + SVS_REDIRECTADDR_OFF);
             NET_OutOfBandPrint(NS_SERVER, addr, buf);
 
             len -= 0x50e;
@@ -69,7 +71,7 @@ void SV_FlushRedirect(char *outputbuf)
     }
 
     Com_sprintf(buf, 0x514, "print\n%s", outputbuf);
-    addr = *(netadr_t *)(svs + SVS_REDIRECTADDR_OFF);
+    addr = *(netadr_t *)((byte *)&svs + SVS_REDIRECTADDR_OFF);
     NET_OutOfBandPrint(NS_SERVER, addr, buf);
 }
 
@@ -83,11 +85,8 @@ void SVC_RemoteCommand(struct netadr_t from, msg_t *msg)
     int time;
     int i;
     int len;
-    byte *svs;
     netadr_t addr;
     const dvar_t *rcon_dvar;
-
-    svs = (byte *)imp_svs;
 
     time = Com_Milliseconds();
 
@@ -99,7 +98,7 @@ void SVC_RemoteCommand(struct netadr_t from, msg_t *msg)
 
     password = SV_Cmd_Argv(1);
 
-    rcon_dvar = *(const dvar_t **)imp_rcon_password;
+    rcon_dvar = rcon_password;
     if (rcon_dvar->current.string[0] != '\0' && strcmp(password, rcon_dvar->current.string) == 0) {
 
         cmd = SV_Cmd_Argv(2);
@@ -112,11 +111,11 @@ void SVC_RemoteCommand(struct netadr_t from, msg_t *msg)
         valid = 0;
     }
 
-    *(netadr_t *)(svs + SVS_REDIRECTADDR_OFF) = from;
+    *(netadr_t *)((byte *)&svs + SVS_REDIRECTADDR_OFF) = from;
 
     Com_BeginRedirect(sv_outputbuf, 0x3ff0, SV_FlushRedirect);
 
-    rcon_dvar = *(const dvar_t **)imp_rcon_password;
+    rcon_dvar = rcon_password;
     if (rcon_dvar->current.string[0] == '\0') {
 
         Com_Printf("The server must set 'rcon_password' for clients to use 'rcon'.\n");
@@ -181,7 +180,7 @@ void SV_MasterGameCompleteStatus(void)
     const netadr_t *master;
     netadr_t addr;
 
-    dedicated = *(const dvar_t **)imp_com_dedicated;
+    dedicated = com_dedicated;
     if (!dedicated || dedicated->current.integer != 2) {
         return;
     }
@@ -247,10 +246,8 @@ void SV_MasterHeartbeat(const char *hbname)
 
 void SV_MasterShutdown(void)
 {
-    byte *svs;
 
-    svs = (byte *)imp_svs;
-    *(int *)(svs + SVS_NEXTHEARTBEATTIME_OFF) = (int)0x80000000;
+    *(int *)((byte *)&svs + SVS_NEXTHEARTBEATTIME_OFF) = (int)0x80000000;
 
     SV_MasterHeartbeat("flatline");
 }

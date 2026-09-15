@@ -14,7 +14,7 @@ extern void Cbuf_ExecuteText(int execWhen, const char *text);
 extern void Sys_OpenURL(const char *url, int activate);
 extern int FS_ReadFile(const char *qpath, void **buffer);
 extern void FS_FreeFile(void *buffer);
-extern void FS_CopyFile(const char *fromOSPath, const char *toOSPath);
+extern void FS_CopyFile(char *fromOSPath, char *toOSPath);
 extern void Dvar_SetStringByName(const char *dvarName, const char *value);
 void CL_WWWDownload(void);
 void CL_ParseWWWDownload(msg_t *msg);
@@ -60,7 +60,7 @@ void CL_ParseServerMessage(msg_t *msg);
 
 extern void LargeLocal_LargeLocal(const LargeLocal *_this, int size);
 extern void *LargeLocal_GetBuf(const LargeLocal *_this);
-extern void ZN10LargeLocalD1Ev(const LargeLocal *_this);
+extern void ZN10LargeLocalD1Ev(LargeLocal *_this);
 
 extern char *Info_ValueForKey(const char *s, const char *key);
 extern void Info_NextPair(const char **head, char *key, char *value);
@@ -69,12 +69,12 @@ extern void FS_PureServerSetReferencedIwds(const char *iwdSums, const char *iwdN
 extern void Dvar_SetFromStringByName(const char *dvarName, const char *string);
 extern Bool Dvar_GetBool(const char *dvarName);
 extern void Dvar_SetCheatState(void);
-extern void Dvar_SetInt(const void *dvar, int value);
+extern void Dvar_SetInt(const dvar_t *dvar, int value);
 extern void Con_Close(void);
 extern void CL_ClearState(void);
 extern void CL_SystemInfoChanged(void);
 extern qboolean FS_ConditionalRestart(int checksumFeed);
-extern qboolean Sys_IsLANAddress(int addr0, int addr1, int addr2);
+extern qboolean Sys_IsLANAddress(netadr_t adr);
 extern void CL_RequestAuthorization(void);
 extern void CL_InitDownloads(void);
 extern void CL_AddReliableCommand(const char *cmd);
@@ -270,7 +270,7 @@ void CL_ParseGamestate(msg_t *msg)
     FS_ConditionalRestart(clc->checksumFeed);
 
     if (net_lanauthorize->current.enabled == 0) {
-        if (Sys_IsLANAddress(*(int *)&clc->serverAddress, *(int *)((byte *)&clc->serverAddress + 4), *(int *)((byte *)&clc->serverAddress + 8))) {
+        if (Sys_IsLANAddress(clc->serverAddress)) {
 
             CL_InitDownloads();
             Dvar_SetInt(cl_paused, 0);
@@ -678,6 +678,14 @@ void CL_ParseSnapshot(msg_t *msg)
         MSG_ReadDeltaPlayerstate(msg, NULL, &newSnap->ps);
     }
 
+    if (getenv("COD2_SNAPDIAG")) {
+        static int c;
+        if ((c++ & 0x1f) == 0)
+            Com_Printf("[snapdiag] serverTime=%d valid=%d deltaNum=%d hasOld=%d newSnap.ps.commandTime=%d ps.origin=(%.0f %.0f %.0f)\n",
+                       newSnap->serverTime, newSnap->valid, newSnap->deltaNum, old ? 1 : 0,
+                       newSnap->ps.commandTime, newSnap->ps.origin[0], newSnap->ps.origin[1], newSnap->ps.origin[2]);
+    }
+
     if (CL_ShowNetValue() > 1) {
         Com_Printf("%3i:%s\n", msg->readcount - 1, "packet clients");
     }
@@ -983,6 +991,9 @@ void CL_ParseServerMessage(msg_t *msg)
     byte *msgCompressed_buf;
     msg_t msgCompressed;
     int cmd;
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+    static int x64TraceCount;
+#endif
 
     LargeLocal_LargeLocal(&msgCompressed_buf_large_local, MAX_MSG_DECOMPRESS_BYTES);
     msgCompressed_buf = (byte *)LargeLocal_GetBuf(&msgCompressed_buf_large_local);
@@ -1000,6 +1011,23 @@ void CL_ParseServerMessage(msg_t *msg)
     msgCompressed.cursize = MSG_ReadBitsCompress(msg->data + msg->readcount,
                                                  msgCompressed_buf,
                                                  msg->cursize - msg->readcount);
+
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+    if (x64TraceCount < 16) {
+        FILE *f = fopen("x64_msg_trace.txt", x64TraceCount ? "a" : "w");
+        if (f) {
+            int i;
+            fprintf(f, "msg[%d] srcSize=%d srcRead=%d decSize=%d first:",
+                    x64TraceCount, msg->cursize, msg->readcount, msgCompressed.cursize);
+            for (i = 0; i < msgCompressed.cursize && i < 32; i++) {
+                fprintf(f, " %02x", msgCompressed_buf[i]);
+            }
+            fprintf(f, "\n");
+            fclose(f);
+        }
+        x64TraceCount++;
+    }
+#endif
 
     while (!msgCompressed.overflowed) {
 

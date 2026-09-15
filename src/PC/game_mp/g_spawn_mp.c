@@ -1,39 +1,44 @@
 #include "common_types.h"
 #include "imports.h"
+extern scr_const_t scr_const;
 
-extern void G_FreeEntity();
-extern void SP_corona();
-extern void SP_info_notnull();
-extern void SP_info_null();
-extern void SP_light();
-extern void SP_misc_model();
-extern void SP_script_brushmodel();
-extern void SP_script_model();
-extern void SP_script_origin();
-extern void SP_trigger_damage();
-extern void SP_trigger_disk();
-extern void SP_trigger_hurt();
-extern void SP_trigger_lookat();
-extern void SP_trigger_multiple();
-extern void SP_trigger_once();
-extern void SP_trigger_radius();
-extern void SP_turret();
-extern void trigger_use();
-extern void trigger_use_touch();
+/* File-scope alias: bound where no local can shadow `scr_const`, so uses below
+   always reach the global even inside functions that declare their own `scr_const`. */
+static scr_const_t * const scr_const_g = &scr_const;
+extern void G_FreeEntity(gentity_t *ent);
+extern void SP_corona(gentity_t *ent);
+extern void SP_info_notnull(gentity_t *ent);
+extern void SP_info_null(gentity_t *ent);
+extern void SP_light(gentity_t *ent);
+extern void SP_misc_model(gentity_t *ent);
+extern void SP_script_brushmodel(gentity_t *ent);
+extern void SP_script_model(gentity_t *ent);
+extern void SP_script_origin(gentity_t *ent);
+extern void SP_trigger_damage(gentity_t *ent);
+extern void SP_trigger_disk(gentity_t *ent);
+extern void SP_trigger_hurt(gentity_t *ent);
+extern void SP_trigger_lookat(gentity_t *ent);
+extern void SP_trigger_multiple(gentity_t *ent);
+extern void SP_trigger_once(gentity_t *ent);
+extern void SP_trigger_radius(gentity_t *ent);
+extern void SP_turret(gentity_t *ent);
+extern void trigger_use(gentity_t *ent);
+extern void trigger_use_touch(gentity_t *ent);
 extern spawn_t spawns[24];
+extern level_locals_t level;
 
 extern void Scr_AddUndefined(void);
 extern qboolean G_SpawnStringInternal(SpawnVar *spawnVar, const char *key, const char *defaultString, const char **out);
 extern void Scr_AddFields(const char *name, const char *extension);
 extern void Scr_AddEntityNum(int entNum, int classnum);
-extern int Scr_ExecEntThreadNum(int entNum, int classnum, scr_func_t handle, unsigned int paramcount);
-extern void Scr_NotifyNum(int entNum, int classnum, int stringValue, unsigned int paramcount);
+extern unsigned short Scr_ExecEntThreadNum(int entNum, int classnum, scr_func_t handle, unsigned int paramcount);
+extern void Scr_NotifyNum(int entNum, int classnum, unsigned int stringValue, unsigned int paramcount);
 extern void Scr_Error(const char *msg);
 extern void Com_Printf(const char *fmt, ...);
 extern int atoi(const char *str);
 extern double atof(const char *str);
 extern unsigned int Scr_FindField(const char *name, int *type);
-extern unsigned int Scr_AddInt(int value);
+extern void Scr_AddInt(int value);
 extern unsigned int Scr_AddString(const char *value);
 extern unsigned int Scr_AddFloat(float value);
 extern unsigned int Scr_AddVector(const float *value);
@@ -42,7 +47,7 @@ extern unsigned int Scr_AddConstString(unsigned int value);
 extern void Scr_SetString(scr_string_t *to, unsigned int value);
 extern const char *SL_ConvertToString(unsigned int stringValue);
 extern int G_GetWeaponIndexForName(const char *name);
-extern void *BG_GetWeaponDef(int weaponIndex);
+extern WeaponDef * BG_GetWeaponDef(int iWeapon);
 extern const gitem_t *BG_FindItemForWeapon(int weaponIndex);
 extern void G_SpawnItem(gentity_t *ent, const gitem_t *item);
 extern void Scr_AddClassField(int classnum, const char *name, unsigned int offset);
@@ -54,7 +59,7 @@ extern void Scr_FreeEntityNum(int entnum, int classnum);
 extern void Scr_SetDynamicEntityField(int entnum, int classnum, unsigned int index);
 extern unsigned int G_NewString(const char *string);
 extern int I_stricmp(const char *s0, const char *s1);
-extern unsigned char G_SetModel(gentity_t *ent, const char *modelName);
+extern void G_SetModel(gentity_t *ent, const char *modelName);
 extern const char *G_ModelName(int index);
 extern unsigned int Scr_GetConstString(unsigned int index);
 extern const char *Scr_GetString(unsigned int index);
@@ -72,8 +77,8 @@ extern void Scr_SetClientField(gclient_t *client, int offset);
 extern void Scr_GetClientField(gclient_t *client, int offset);
 extern qboolean G_ParseSpawnVars(SpawnVar *spawnVar);
 extern gentity_t *G_Spawn(void);
-extern unsigned char G_SetOrigin(gentity_t *ent, const vec_t *origin);
-extern unsigned char G_SetAngle(gentity_t *ent, const vec_t *angle);
+extern void G_SetOrigin(gentity_t *ent, const vec_t *origin);
+extern void G_SetAngle(gentity_t *ent, const vec_t *angle);
 extern void Scr_AddExecThread(scr_func_t handle, unsigned int paramcount);
 extern unsigned int Scr_GetObject(unsigned int index);
 extern void Scr_SetStructField(unsigned int structId, unsigned int index);
@@ -81,7 +86,7 @@ extern scr_thread_t Scr_ExecThread(scr_func_t handle, unsigned int paramcount);
 extern void Scr_FreeThread(int handle);
 extern void SV_ResetEntityParsePoint(void);
 extern void Com_Error(int code, const char *fmt, ...);
-extern void SV_SetConfigstring(int index, const char *val);
+extern void SV_SetConfigstring(const int index, const char *val);
 extern char *va(const char *format, ...);
 extern void Dvar_SetFloat(const dvar_t *dvar, float value);
 extern const dvar_t *g_gravity;
@@ -146,7 +151,7 @@ void G_SpawnEntitiesFromString(void);
 
 static inline __attribute__((always_inline)) level_locals_t *G_Level(void)
 {
-    return (level_locals_t *)imp_level;
+    return &level;
 }
 
 static inline __attribute__((always_inline)) SpawnVar *G_LevelSpawnVar(void)
@@ -161,7 +166,7 @@ static inline __attribute__((always_inline)) scr_data_t *G_ScrData(void)
 
 static scr_const_t *G_ScrConst(void)
 {
-    return (scr_const_t *)imp_scr_const;
+    return (scr_const_t *)scr_const_g;
 }
 
 static inline __attribute__((always_inline)) gentity_t *G_Entities(void)
@@ -379,7 +384,7 @@ qboolean G_CallSpawnEntity(gentity_t *ent)
 {
     const char *classname;
     const gitem_t *item;
-    int i;
+    spawn_t *spawn;
 
     if (!ent->classname) {
         Com_Printf((const char *)"G_CallSpawnEntity: NULL classname\n");
@@ -393,9 +398,9 @@ qboolean G_CallSpawnEntity(gentity_t *ent)
         return 1;
     }
 
-    for (i = 0; spawns[i].name; ++i) {
-        if (!strcmp(spawns[i].name, classname)) {
-            ((void (*)(gentity_t *))spawns[i].spawn)(ent);
+    for (spawn = spawns; spawn->name; ++spawn) {
+        if (!strcmp(spawn->name, classname)) {
+            spawn->spawn(ent);
             return 1;
         }
     }
@@ -417,7 +422,7 @@ void GScr_AddFieldsForEntity(void)
 
 void GScr_AddFieldsForRadiant(void)
 {
-    Scr_AddFields("radiant", (const void *)"txt");
+    Scr_AddFields("radiant", (const char *)"txt");
 }
 
 void Scr_AddEntity(gentity_t *ent)
@@ -852,10 +857,10 @@ void G_CallSpawn(void)
         return;
     }
 
-    if ((void (*)(gentity_t *))spawn->spawn != (void (*)(gentity_t *))imp_G_FreeEntity) {
+    if (spawn->spawn != (void (*)(gentity_t *))imp_G_FreeEntity) {
         ent = G_Spawn();
         G_ParseEntityFields(ent);
-        ((void (*)(gentity_t *))spawn->spawn)(ent);
+        spawn->spawn(ent);
     }
 }
 

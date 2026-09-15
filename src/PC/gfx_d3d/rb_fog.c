@@ -1,7 +1,13 @@
 #include "common_types.h"
+extern materialCommands_t tess;
+/* File-scope alias: bound where no local can shadow `tess`, so uses below
+   always reach the global even inside functions that declare their own `tess`. */
+static materialCommands_t * const tess_g = &tess;
 extern GfxBackEndData *backEndData;
 extern dvar_t *r_rendererInUse;
 #include "imports.h"
+/* dvar globals */
+extern const dvar_t *r_fog;
 extern int alwaysfails;
 extern DxGlobals dx;
 
@@ -13,9 +19,9 @@ extern void **g_viewInfo;
 
 GfxFogOffset RB_FogOffset(void)
 {
-    const dvar_t *fogDvar = *(const dvar_t **)imp_r_fog;
+    const dvar_t *fogDvar = r_fog;
     if (fogDvar->current.enabled == 0) {
-        return 0;
+        return (GfxFogOffset)(0);
     }
 
     GfxFog *fog = &backEndData->fogSettings;
@@ -66,7 +72,7 @@ src_nonzero:
 
 void RB_SetIteratorFog(void)
 {
-    materialCommands_t *tess = (materialCommands_t *)imp_tess;
+    materialCommands_t *tess = (materialCommands_t *)tess_g;
     if (tess->techType == 3)
         return;
 
@@ -142,7 +148,7 @@ void RB_SetIteratorFog(void)
                 typedef int(D3DVTCC * SetRenderStateFn)(void *, int, int);
                 ((SetRenderStateFn)vtable[0xe4 / 4])(device, 0x8c, 1);
             } while (*(volatile int *)&alwaysfails != 0);
-            dxState.fog.mode = 1;
+            dxState.fog.mode = (D3DFOGMODE)(1);
         }
 
         if (dxState.fog.density != fog->density) {
@@ -166,7 +172,7 @@ void RB_SetIteratorFog(void)
                 typedef int(D3DVTCC * SetRenderStateFn)(void *, int, int);
                 ((SetRenderStateFn)vtable[0xe4 / 4])(device, 0x8c, 3);
             } while (*(volatile int *)&alwaysfails != 0);
-            dxState.fog.mode = 3;
+            dxState.fog.mode = (D3DFOGMODE)(3);
         }
 
         if (dxState.fog.start != fog->fogStart) {

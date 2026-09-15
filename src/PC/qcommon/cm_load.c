@@ -7,8 +7,8 @@ extern void CM_LoadMapFromBsp(const char *name, int flag);
 extern void CM_LoadStaticModels(void);
 extern void *Hunk_AllocInternal(int size);
 extern void Com_Error(int level, const char *fmt, ...);
-extern void Com_Memset(void *dest, int val, int count);
-extern void *CM_ClipHandleToModel(clipHandle_t handle);
+extern void Com_Memset(void *dest, const int val, int count);
+extern cmodel_t *CM_ClipHandleToModel(clipHandle_t handle);
 extern int FS_FOpenFileRead(const char *filename, int *file, int uniqueFile);
 extern int FS_Read(void *buffer, int len, int f);
 extern void FS_FCloseFile(fileHandle_t f);
@@ -17,7 +17,7 @@ extern int FS_OpenFileOverwrite(const char *filename);
 extern void *Z_MallocInternal(int size);
 extern void Z_FreeInternal(void *ptr);
 extern int FS_ReadFile(const char *filename, void **buffer);
-extern int Com_BlockChecksum(const void *buffer, int length);
+extern unsigned int Com_BlockChecksum(const void *buffer, int length);
 extern void FS_FreeFile(void *buffer);
 extern void *Hunk_AllocateTempMemoryHighInternal(int size);
 extern void Hunk_ClearTempMemory(void);
@@ -138,7 +138,7 @@ void CM_ModelBounds(clipHandle_t model, vec_t *mins, vec_t *maxs)
 {
     cmodel_t *cmod;
 
-    cmod = CM_ClipHandleToModel(model);
+    cmod = (cmodel_t *)(CM_ClipHandleToModel(model));
 
     *(int *)&mins[0] = *(int *)&cmod->mins[0];
     *(int *)&mins[1] = *(int *)&cmod->mins[1];

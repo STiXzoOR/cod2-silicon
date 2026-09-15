@@ -1,9 +1,12 @@
 #include "common_types.h"
 #include "imports.h"
+/* dvar globals */
+extern const dvar_t *com_sv_running;
+extern const dvar_t *snd_errorOnMissing;
 
 extern int stricmp(const char *s1, const char *s2);
 
-extern void *Hunk_AllocateTempMemoryInternal(int size, const char *name);
+extern void *Hunk_AllocateTempMemoryInternal(int size);
 extern void *Hunk_AllocInternal(int size);
 extern float GraphGetValueFromFraction(int knotCount, float *knots, float fraction);
 
@@ -27,19 +30,19 @@ extern char *strcpy(char *dest, const char *src);
 extern char *strlwr(char *s);
 extern void Com_StripExtension(const char *in, char *out);
 extern char **FS_ListFiles(const char *path, const char *extension, int behavior, int *numfiles, int allocTrackType);
-extern void FS_FreeFileList(char **list, int behavior);
-extern void *Hunk_HideTempMemory(void);
-extern void Hunk_ShowTempMemory(void *mark);
+extern void FS_FreeFileList(const char **list, int behavior);
+extern int Hunk_HideTempMemory(void);
+extern void Hunk_ShowTempMemory(int mark);
 extern void Hunk_ClearTempMemory(void);
 extern void Com_InitSoundAlias(void);
-extern void Com_MakeSoundAliasesPermanent(void *aliases, void *counts);
+extern void Com_MakeSoundAliasesPermanent(snd_alias_list_t *aliases, SoundFileInfo *counts);
 extern void Com_LoadSoundAliasFile(const char *trimspec, const char *loadspecCurGame, const char *fileName);
-extern int Com_LoadSoundAliasSounds(void *counts);
-extern void Com_InitDefaultSoundAliasVolumeFalloffCurve(void *curve);
-extern Bool Com_LoadVolumeFalloffCurve(const char *name, void *curve);
+extern int Com_LoadSoundAliasSounds(SoundFileInfo *counts);
+extern void Com_InitDefaultSoundAliasVolumeFalloffCurve(SndCurve *curve);
+extern Bool Com_LoadVolumeFalloffCurve(const char *name, SndCurve *curve);
 extern void Cmd_AddCommand(const char *cmdName, void (*function)(void));
 extern void Cmd_RemoveCommand(const char *cmdName);
-extern void SND_StopSounds(int which);
+extern void SND_StopSounds(snd_stopsounds_arg_t which);
 extern int SND_GetSoundFileSize(const void *pSoundFile);
 extern void Com_Printf(const char *fmt, ...);
 extern void Com_Error(int code, const char *fmt, ...);
@@ -86,7 +89,7 @@ static inline __attribute__((always_inline)) int Com_SoundAliasRandom(void)
 
     g_sa.randSeed = seed;
 
-    return (seed >> 16) & 0x7fff;
+    return ((unsigned int)seed >> 16) & 0x7fff;   /* unsigned: a logical shift, not arithmetic */
 }
 
 static inline __attribute__((always_inline)) Bool Com_SoundAliasShouldPick(float probability, float totalProbability)
@@ -134,7 +137,7 @@ void Com_LoadSoundAliases(const char *loadspec, const char *loadspecCurGame, snd
     char trimspec[0x44];
     int fileCount;
     char **fileNames;
-    void *mark;
+    int mark;
     int i;
     char **vfcurveFiles;
     int vfcurveCount;
@@ -179,14 +182,14 @@ void Com_LoadSoundAliases(const char *loadspec, const char *loadspecCurGame, snd
                     I_strncpyz(namePtr, fn, fnLen + 1);
                 }
 
-                if (!Com_LoadVolumeFalloffCurve(namePtr, curvePtr)) {
+                if (!Com_LoadVolumeFalloffCurve(namePtr, (SndCurve *)curvePtr)) {
 
                     Com_Error(0, "Failed to load sndcurve file '%s'", *(fptr - 1));
                 }
             }
         }
 
-        FS_FreeFileList(vfcurveFiles, 0xa);
+        FS_FreeFileList((const char **)vfcurveFiles, 0xa);
 
         g_sa.curvesInitialized = 1;
     }
@@ -212,7 +215,7 @@ void Com_LoadSoundAliases(const char *loadspec, const char *loadspecCurGame, snd
     }
 
     if (system == 1) {
-        const dvar_t *sv_running = *(const dvar_t **)imp_com_sv_running;
+        const dvar_t *sv_running = com_sv_running;
         if (sv_running->current.enabled != 0) {
 
             g_sa.aliasInfo[1].aliasName = g_sa.aliasInfo[2].aliasName;
@@ -256,15 +259,15 @@ void Com_LoadSoundAliases(const char *loadspec, const char *loadspecCurGame, snd
         (void *)&g_sa.aliasInfo[system],
         (void *)&g_sa.soundFileInfo[system]);
 #else
-        (void *)((byte *)&g_sa + 4104 + (int)system * 16),
-        (void *)((byte *)&g_sa + 4152 + (int)system * 8));
+        (snd_alias_list_t *)((byte *)&g_sa + 4104 + (int)system * 16),
+        (SoundFileInfo *)((byte *)&g_sa + 4152 + (int)system * 8));
 #endif
 
     Hunk_ClearTempMemory();
 
     Hunk_ShowTempMemory(mark);
 
-    FS_FreeFileList(fileNames, 0xa);
+    FS_FreeFileList((const char **)fileNames, 0xa);
 
 after_load:
 
@@ -286,11 +289,11 @@ after_load:
 #if defined(__x86_64__) || defined(_M_X64)
         int missCount = Com_LoadSoundAliasSounds((void *)&g_sa.soundFileInfo[system]);
 #else
-        int missCount = Com_LoadSoundAliasSounds((void *)((byte *)&g_sa + 4152 + (int)system * 8));
+        int missCount = Com_LoadSoundAliasSounds((SoundFileInfo *)((byte *)&g_sa + 4152 + (int)system * 8));
 #endif
 
         if (missCount != 0) {
-            const dvar_t *snd_errorOnMissing_dvar = *(const dvar_t **)imp_snd_errorOnMissing;
+            const dvar_t *snd_errorOnMissing_dvar = snd_errorOnMissing;
             if (snd_errorOnMissing_dvar->current.enabled != 0) {
 
                 int errCode = (system != 0) ? 1 : 0;
@@ -326,7 +329,7 @@ SndCurve *Com_GetDefaultSoundAliasVolumeFalloffCurve(void)
 
 void *Com_AllocateTempSoundMemory(int size, const char *name)
 {
-    return (void *)Hunk_AllocateTempMemoryInternal(size, name);
+    return (void *)Hunk_AllocateTempMemoryInternal(size);
 }
 
 void *Com_AllocSoundMemory(int size, const char *name, int type)
@@ -340,7 +343,7 @@ void Com_UnloadSoundAliasSounds(snd_alias_system_t system)
     int count;
     int index;
 
-    SND_StopSounds(0);
+    SND_StopSounds((snd_stopsounds_arg_t)0);
 
     head = g_sa.aliasInfo[system].head;
     count = g_sa.aliasInfo[system].count;
@@ -534,7 +537,7 @@ snd_alias_t *Com_PickSoundAliasFromList(snd_alias_list_t *aliasList)
     return Com_PickSoundAliasFromList_core(aliasList);
 }
 
-static inline __attribute__((always_inline)) snd_alias_list_t *Com_FindSoundAlias_core(const char *name)
+__forceinline snd_alias_list_t *Com_FindSoundAlias(const char *name)
 {
     snd_alias_list_t *aliasList;
 
@@ -550,11 +553,6 @@ static inline __attribute__((always_inline)) snd_alias_list_t *Com_FindSoundAlia
     }
 
     return NULL;
-}
-
-snd_alias_list_t *Com_FindSoundAlias(const char *name)
-{
-    return Com_FindSoundAlias_core(name);
 }
 
 Bool Com_AddAliasList(const char *name, snd_alias_list_t *aliasList)
@@ -595,10 +593,10 @@ void Com_DuplicateSoundAlias(snd_alias_list_t *aliasCopy, const char *name)
         }
     }
 
-    aliasList = Hunk_AllocInternal(sizeof(*aliasList));
+    aliasList = (snd_alias_list_t *)Hunk_AllocInternal(sizeof(*aliasList));   /* C++: no implicit void*-> */
     *aliasList = *aliasCopy;
     {
-        char *newName = Hunk_AllocInternal(strlen(name) + 1);
+        char *newName = (char *)Hunk_AllocInternal(strlen(name) + 1);
         strcpy(newName, name);
         aliasList->aliasName = newName;
     }
@@ -612,7 +610,7 @@ void Com_DuplicateSoundAlias(snd_alias_list_t *aliasCopy, const char *name)
 
 int SND_GetAliasOffset(const snd_alias_t *alias)
 {
-    snd_alias_list_t *aliasList = Com_FindSoundAlias_core(alias->pszAliasName);
+    snd_alias_list_t *aliasList = Com_FindSoundAlias(alias->pszAliasName);
     snd_alias_t *aliasIter = aliasList->head;
     int count = aliasList->count;
     int index;
@@ -639,7 +637,7 @@ int SND_GetAliasOffset(const snd_alias_t *alias)
 
 snd_alias_t *SND_GetAliasWithOffset(const char *name, int offset)
 {
-    snd_alias_list_t *aliasList = Com_FindSoundAlias_core(name);
+    snd_alias_list_t *aliasList = Com_FindSoundAlias(name);
     snd_alias_t *alias = aliasList->head;
     int count = aliasList->count;
     int index;
@@ -673,5 +671,5 @@ snd_alias_t *SND_GetAliasWithOffset(const char *name, int offset)
 
 snd_alias_t *Com_PickSoundAlias(const char *aliasname)
 {
-    return Com_PickSoundAliasFromList_core(Com_FindSoundAlias_core(aliasname));
+    return Com_PickSoundAliasFromList_core(Com_FindSoundAlias(aliasname));
 }

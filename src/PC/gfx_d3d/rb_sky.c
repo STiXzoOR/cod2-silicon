@@ -1,4 +1,5 @@
 #include "common_types.h"
+static GfxColor bm_color_from_bits(unsigned int b) { GfxColor c; *(unsigned int *)&c = b; return c; }
 extern dvar_t *r_rendererInUse;
 #include "imports.h"
 extern refimport_t ri;
@@ -26,12 +27,12 @@ extern void RB_BeginSurface(const Material *material, MaterialTechniqueType tech
 extern void RB_PushMatrixStack(void);
 extern void RB_PopMatrixStack(void);
 extern void RB_DrawFullScreenColoredQuad(const Material *material, float s0, float t0, float s1, float t1, D3DCOLOR color);
-extern void MatrixIdentity44(float *matrix);
-extern void RB_SetProjectionMatrix(const float *matrix);
-extern void RB_SetViewMatrix(const float *matrix);
+extern void MatrixIdentity44(float (*out)[4]);
+extern void RB_SetProjectionMatrix(const D3DMATRIX *matrix);
+extern void RB_SetViewMatrix(const D3DMATRIX *matrix);
 extern void RB_Set3D(void);
 extern void Vec3Cross(const vec_t *v0, const vec_t *v1, vec_t *cross);
-extern float Vec3Normalize(vec_t *v);
+extern const vec_t Vec3Normalize(vec_t *v);
 extern void RB_SetViewMatrixForWDx7(float w);
 extern void WinSleep(DWORD dwMilliseconds);
 extern float floorf(float x);
@@ -82,7 +83,7 @@ int RB_CalcSunSpriteSamples(void)
     {
         Material *mat;
         mat = rgp.whiteMaterial;
-        RB_DrawStretchPic(mat, 0.0f, 0.0f, 16.0f, 16.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0xffffffff, 10);
+        RB_DrawStretchPic(mat, 0.0f, 0.0f, 16.0f, 16.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0xffffffff, (GfxPrimStatsTarget)(10));
     }
     RB_EndSurface();
 
@@ -325,9 +326,9 @@ static void RB_TessSunBillboard(float widthInClipSpace, float heightInClipSpace)
         clipY *= scale;
         clipZ *= scale;
 
-        MatrixIdentity44(identity);
-        RB_SetProjectionMatrix(identity);
-        RB_SetViewMatrix(identity);
+        MatrixIdentity44( (float (*)[4])(identity));
+        RB_SetProjectionMatrix( (const D3DMATRIX *)(identity));
+        RB_SetViewMatrix( (const D3DMATRIX *)(identity));
 
         vertsDx7 = RB_SetTessQuadDx7(*(GfxColor *)&colorVal);
 
@@ -375,9 +376,9 @@ static void RB_TessSunBillboard(float widthInClipSpace, float heightInClipSpace)
         clipZ = sx * viewProjectionMatrix[2] + sy * viewProjectionMatrix[0x18 / 4] + sz * viewProjectionMatrix[0x28 / 4];
         clipW = sx * viewProjectionMatrix[3] + sy * viewProjectionMatrix[0x1c / 4] + sz * viewProjectionMatrix[0x2c / 4];
 
-        MatrixIdentity44(identity);
-        RB_SetProjectionMatrix(identity);
-        RB_SetViewMatrix(identity);
+        MatrixIdentity44( (float (*)[4])(identity));
+        RB_SetProjectionMatrix( (const D3DMATRIX *)(identity));
+        RB_SetViewMatrix( (const D3DMATRIX *)(identity));
 
         verts = RB_SetTessQuad(*(GfxColor *)&colorVal);
         nearClip = clipW * -0.001f;
@@ -463,7 +464,7 @@ void RB_DrawSunPostEffects(int viewIndex)
         return;
 
     {
-        Material *sunMaterial = FIELD(scene, 0x168, void *);
+        Material *sunMaterial = (Material *)(FIELD(scene, 0x168, void *));
         float sunFlareCosBegin, sunFlareCosEnd;
         float lastDot;
         float cosAngle;
@@ -515,7 +516,7 @@ void RB_DrawSunPostEffects(int viewIndex)
                     if (FIELD(tb, 0x5a7d0, int) != 0 || FIELD(tb, 0x5a7e0, int) != 0) {
                         RB_EndSurface();
                     }
-                    RB_BeginSurface(mat, 3, 0x1f);
+                    RB_BeginSurface(mat, (MaterialTechniqueType)(3), 0x1f);
                 }
             }
         }
@@ -771,7 +772,7 @@ void RB_DrawSun(int viewIndex)
                     if (FIELD(tb, 0x5a7d0, int) != 0 || FIELD(tb, 0x5a7e0, int) != 0) {
                         RB_EndSurface();
                     }
-                    RB_BeginSurface(occlusionMat, 3, 0x1f);
+                    RB_BeginSurface(occlusionMat, (MaterialTechniqueType)(3), 0x1f);
                 }
             }
 
@@ -911,7 +912,7 @@ after_sun_trace: {
                     if (FIELD(tb, 0x5a7d0, int) != 0 || FIELD(tb, 0x5a7e0, int) != 0) {
                         RB_EndSurface();
                     }
-                    RB_BeginSurface(sunMat, 1, 0x1f);
+                    RB_BeginSurface(sunMat, (MaterialTechniqueType)(1), 0x1f);
                 }
             }
 
@@ -923,7 +924,7 @@ after_sun_trace: {
                 vec3_t up;
                 float dxp1[3], dxp2[3], dxm1[3], dxm2[3];
 
-                vd = RB_SetTessQuadDx7(*(GfxColor *)&(D3DCOLOR){ 0xffffffff });
+                vd = RB_SetTessQuadDx7(bm_color_from_bits(0xffffffff));
 
                 halfSize = 0.0013110929867252707f;
                 halfSize *= FIELD(rgp.world, 0x16c, float);
@@ -994,7 +995,7 @@ after_sun_trace: {
                     if (FIELD(tb, 0x5a7d0, int) != 0 || FIELD(tb, 0x5a7e0, int) != 0) {
                         RB_EndSurface();
                     }
-                    RB_BeginSurface(sunMat, 1, 0x1f);
+                    RB_BeginSurface(sunMat, (MaterialTechniqueType)(1), 0x1f);
                 }
             }
 
@@ -1006,7 +1007,7 @@ after_sun_trace: {
                 vec3_t up;
                 float dxp1[3], dxp2[3], dxm1[3], dxm2[3];
 
-                v = RB_SetTessQuad(*(GfxColor *)&(D3DCOLOR){ 0xffffffff });
+                v = RB_SetTessQuad(bm_color_from_bits(0xffffffff));
 
                 halfSize = 0.0013110929867252707f;
                 halfSize *= FIELD(rgp.world, 0x16c, float);

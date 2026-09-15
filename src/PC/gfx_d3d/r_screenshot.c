@@ -40,7 +40,7 @@ extern void RB_SetRenderTarget(int target);
 extern void R_GammaCorrect(byte *buffer, int bufferSizeInBytes);
 extern void R_SaveJpg(const char *filename, int quality, int width, int height, byte *buffer);
 extern int Com_sprintf(char *dest, int size, const char *format, ...);
-extern float Vec3Normalize(vec3_t v);
+extern const vec_t Vec3Normalize(vec_t *v);
 extern float FresnelTerm(float n0, float n1, float cosAngle);
 extern int MacDisplay_GetCardType(void);
 extern int MacOpenGLUtils_GetPCPixelShaderVersion(void);
@@ -852,7 +852,7 @@ void R_CapturePendingScreenshotBeforePresent(void)
     pendingScreenshotSilent = 0;
     pendingScreenshotDelayFrames = 0;
 
-    R_CaptureScreenshotNow(type, filename, silent);
+    R_CaptureScreenshotNow( (GfxScreenshotType)(type), filename, silent);
 }
 
 int R_HasPendingScreenshot(void)

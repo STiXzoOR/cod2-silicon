@@ -131,7 +131,7 @@ void PS_CreatePunctuationTable(script_t *script, punctuation_t *punctuations) {
 
     /* x64: typed punctuation_t access (was x86 stride 0xc, next@+8, table 256*4). */
     if (!script->punctuationtable) {
-        script->punctuationtable = GetMemory(256 * (int)sizeof(punctuation_t *));
+        script->punctuationtable = (punctuation_t **)(GetMemory(256 * (int)sizeof(punctuation_t *)));
     }
 
     {
@@ -486,7 +486,7 @@ script_t * LoadScriptFile(const char *filename)
     if (!fp)
         return (script_t *)0;
 
-    script = GetClearedMemory(length + (int)sizeof(*script) + 1);   /* 0x4d1 was x86 sizeof(script_s)+1 */
+    script = (script_s *)(GetClearedMemory(length + (int)sizeof(*script) + 1));   /* 0x4d1 was x86 sizeof(script_s)+1 */
     if (!script) {
         FS_FCloseFile(fp);
         return (script_t *)0;

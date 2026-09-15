@@ -3,11 +3,11 @@
 #include "bytematch.h"
 #include <math.h>
 
-extern void CG_PointContents();
-extern void CG_TraceCapsule();
-extern void G_PlayerEvent();
-extern void G_TraceCapsule();
-extern void SV_PointContents();
+extern int CG_PointContents(const vec_t *point, int passEntityNum, int contentmask);
+extern void CG_TraceCapsule(trace_t *result, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask);
+extern void G_PlayerEvent(int clientNum, int event);
+extern void G_TraceCapsule(trace_t *result, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int contentmask);
+extern int SV_PointContents(const vec_t *point, int passEntityNum, int contentmask);
 extern pmoveHandler_t pmoveHandlers[2];
 extern viewLerpWaypoint_t viewLerp_CrouchProne[13];
 extern viewLerpWaypoint_t viewLerp_CrouchStand[10];
@@ -18,15 +18,15 @@ extern viewLerpWaypoint_t viewLerp_StandCrouch[10];
 #define PM_ACCELERATE_ABI COD2_REGPARM(3) COD2_SSEREGPARM
 #define PM_REGPARM2_ABI COD2_REGPARM(2) BM_NOINLINE
 
-extern float AngleDelta(float angle1, float angle2);
-extern float AngleNormalize360Accurate(float angle);
-extern float AngleNormalize180Accurate(float angle);
-extern float vectoyaw(float *v);
+extern const float AngleDelta(const float angle1, const float angle2);
+extern const float AngleNormalize360Accurate(float angle);
+extern const float AngleNormalize180Accurate(float angle);
+extern const float vectoyaw(const vec_t *vec);
 extern const dvar_t *bg_prone_yawcap;
 extern const dvar_t *bg_ladder_yawcap;
 extern qboolean BG_CheckProne(int passEntityNum, const vec_t *vPos, const float fSize, const float fHeight, const float fYaw, float *pfTorsoHeight, float *pfTorsoPitch, float *pfWaistPitch, const qboolean bAlreadyProne, const qboolean bOnGround, vec_t *vGroundNormal, int handler, proneCheckType_t proneCheckType, float prone_feet_dist);
-extern float Vec3Normalize(vec_t *v);
-extern float Vec2Normalize(vec_t *v);
+extern const vec_t Vec3Normalize(vec_t *v);
+extern const vec_t Vec2Normalize(vec_t *v);
 extern void Com_Printf(const char *fmt, ...);
 
 extern const dvar_t *friction;
@@ -104,7 +104,7 @@ extern void PM_UpdateAimDownSightLerp(pmove_t *pm, pml_t *pml);
 extern void PM_Weapon(pmove_t *pm, pml_t *pml);
 extern void PM_ResetWeaponState(playerState_t *ps);
 extern void BG_AnimUpdatePlayerStateConditions(pmove_t *pmove);
-extern int BG_AnimScriptEvent(playerState_t *ps, int event, int isContinue, int force);
+extern int BG_AnimScriptEvent(playerState_t *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force);
 extern Bool Jump_Check(pmove_t *pm, pml_t *pml);
 extern void Jump_ClearState(playerState_t *ps);
 extern float Jump_ReduceFriction(playerState_t *ps);
@@ -112,10 +112,10 @@ extern void Mantle_CapView(playerState_t *ps);
 extern void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up);
 extern void Sys_SnapVector(vec_t *v);
 
-extern int Jump_ActivateSlowdown(playerState_t *ps);
-extern int PM_ExitAimDownSight(playerState_t *ps);
-extern int BG_PlayAnim(playerState_t *ps, int animNum, int bodyPart, int forceDuration, qboolean setTimer, qboolean isContinue, qboolean force);
-extern float PitchForYawOnNormal(float fYaw, const vec_t *normal);
+extern void Jump_ActivateSlowdown(playerState_t *ps);
+extern void PM_ExitAimDownSight(playerState_t *ps);
+extern int BG_PlayAnim(playerState_t *ps, int animNum, animBodyPart_t bodyPart, int forceDuration, qboolean setTimer, qboolean isContinue, qboolean force);
+extern float PitchForYawOnNormal(const float fYaw, const vec_t *normal);
 extern const dvar_t *bg_fallDamageMinHeight;
 extern const dvar_t *bg_fallDamageMaxHeight;
 
@@ -169,7 +169,7 @@ int PM_GetEffectiveStance(playerState_t *ps)
 int PM_GroundSurfaceType(pml_t *pml)
 {
 
-    unsigned int val = pml->groundTrace.surfaceFlags;
+    int val = pml->groundTrace.surfaceFlags;
 
     if (val & 0x2000)
         return 0;
@@ -241,7 +241,7 @@ static qboolean BG_CheckProneTurned_impl(byte *ps_bytes, int handler, float newP
         ps->groundEntityNum != 0x3ff ? 1 : 0,
         NULL,
         (unsigned char)handler,
-        0,
+        (proneCheckType_t)0,
         proneFeetDist
     );
 }
@@ -269,7 +269,7 @@ qboolean PM_ShouldMakeFootsteps(pmove_t *pm)
         return 0;
 
     {
-        float threshold = (*(const dvar_t **)imp_player_footstepsThreshhold)->current.value;
+        float threshold = (player_footstepsThreshhold)->current.value;
         return pm->xyspeed >= threshold;
     }
 }
@@ -578,11 +578,11 @@ prone_check:
                     if (BG_CheckProne(ps->clientNum, ps->origin, ps->maxs[0],
                                       30.0f, ps->viewangles[1], 0, 0, 0, 1,
                                       ps->groundEntityNum != 0x3ff, 0, handler,
-                                      0, 45.0f)) {
+                                      (proneCheckType_t)0, 45.0f)) {
                         if (BG_CheckProne(ps->clientNum, ps->origin, ps->maxs[0],
                                           30.0f, newProneYaw, 0, 0, 0, 1,
                                           ps->groundEntityNum != 0x3ff, 0,
-                                          handler, 0, 45.0f))
+                                          handler, (proneCheckType_t)0, 45.0f))
                             ps->proneDirection = newProneYaw;
                         else
                             proneBlocked = 1;
@@ -620,7 +620,7 @@ prone_check:
                     bRetry = BG_CheckProne(ps->clientNum, ps->origin, ps->maxs[0],
                                            30.0f, runYaw, 0, 0, 0, 1,
                                            ps->groundEntityNum != 0x3ff, 0,
-                                           handler, 0, 45.0f);
+                                           handler, (proneCheckType_t)0, 45.0f);
                     if (bRetry) {
                         if (BG_CheckProneTurned((byte *)ps, handler, runYaw))
                             ps->proneDirection = runYaw;
@@ -724,7 +724,7 @@ type_check:
 
 do_lean:
 
-    PM_UpdateLean(ps, msec, cmd, pmoveHandlers[(unsigned char)handler].trace);
+    PM_UpdateLean(ps, msec, cmd, (void (__cdecl *)(void))(pmoveHandlers[(unsigned char)handler].trace));
 }
 
 void PM_playerTrace(pmove_t *pm, trace_t *results, const vec_t *start,
@@ -951,12 +951,12 @@ static void PM_REGPARM2_ABI PM_CheckDuck(pmove_t *pm, pml_t *pml)
         if (BG_CheckProne(ps->clientNum, ps->origin, pm->maxs[0],
                           30.0f, ps->viewangles[1],
                           &ps->fTorsoHeight, &ps->fTorsoPitch, &ps->fWaistPitch,
-                          0, 1, NULL, (unsigned char)pm->handler, 0, 66.0f))
+                          0, 1, NULL, (unsigned char)pm->handler, (proneCheckType_t)0, 66.0f))
             goto set_prone;
         if (ps->groundEntityNum != 0x3ff) {
             ps->pm_flags |= 0x10000;
             if (!(pm->cmd.buttons & 0x2000))
-                BG_AddPredictableEventToPlayerstate(140, 0, ps);
+                BG_AddPredictableEventToPlayerstate((ps->pm_flags & 0x2) ? 141 : 140, 0, ps);
         }
         goto compute_target;
     }
@@ -969,13 +969,13 @@ static void PM_REGPARM2_ABI PM_CheckDuck(pmove_t *pm, pml_t *pml)
             PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs,
                            ps->origin, ps->clientNum, pm->tracemask & ~0x02000000);
             if (!trace.allsolid) {
-                BG_AnimScriptEvent(ps, 12, 0, 0);
+                BG_AnimScriptEvent(ps, ANIM_ET_PRONE_TO_CROUCH, 0, 0);
                 ps->pm_flags = (ps->pm_flags & ~0x1) | 0x2;
             } else if (!(pm->cmd.buttons & 0x2000)) {
                 BG_AddPredictableEventToPlayerstate(142, 2, ps);
             }
         } else {
-            BG_AnimScriptEvent(ps, 13, 0, 0);
+            BG_AnimScriptEvent(ps, ANIM_ET_STAND_TO_CROUCH, 0, 0);
             ps->pm_flags |= 0x2;
         }
         goto compute_target;
@@ -987,7 +987,7 @@ static void PM_REGPARM2_ABI PM_CheckDuck(pmove_t *pm, pml_t *pml)
         PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs,
                        ps->origin, ps->clientNum, pm->tracemask & ~0x02000000);
         if (!trace.allsolid) {
-            BG_AnimScriptEvent(ps, 0x10, 0, 0);
+            BG_AnimScriptEvent(ps, ANIM_ET_PRONE_TO_STAND, 0, 0);
             ps->pm_flags &= ~0x3;
         } else {
             pm->maxs[2] = 50.0f;
@@ -1007,7 +1007,7 @@ static void PM_REGPARM2_ABI PM_CheckDuck(pmove_t *pm, pml_t *pml)
         PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs,
                        ps->origin, ps->clientNum, pm->tracemask & ~0x02000000);
         if (!trace.allsolid) {
-            BG_AnimScriptEvent(ps, 14, 0, 0);
+            BG_AnimScriptEvent(ps, ANIM_ET_CROUCH_TO_STAND, 0, 0);
             ps->pm_flags &= ~0x2;
         } else if (!(pm->cmd.buttons & 0x2000)) {
             BG_AddPredictableEventToPlayerstate(141, 1, ps);
@@ -1028,13 +1028,13 @@ compute_target:
             } else if (ps->viewHeightTarget != 11) {
                 ps->viewHeightTarget = 11;
                 pm->proneChange = 1;
-                BG_PlayAnim(ps, 0, 2, 0, 0, 1, 1);
+                BG_PlayAnim(ps, 0, ANIM_BP_TORSO, 0, 0, 1, 1);
                 Jump_ActivateSlowdown(ps);
             }
         } else if (ps->viewHeightTarget == 11) {
             ps->viewHeightTarget = 40;
             pm->proneChange = 1;
-            BG_PlayAnim(ps, 0, 2, 0, 0, 1, 1);
+            BG_PlayAnim(ps, 0, ANIM_BP_TORSO, 0, 0, 1, 1);
         } else {
 
             ps->viewHeightTarget = (ps->pm_flags & 0x2) ? 40 : 60;
@@ -1060,7 +1060,7 @@ compute_target:
     if (!(ps->pm_flags & 0x1) || wasCrouched != 0)
         return;
 
-    if (pm->cmd.forwardmove != 0) {
+    if (pm->cmd.forwardmove != 0 || pm->cmd.rightmove != 0) {
         ps->pm_flags &= ~0x8;
         PM_ExitAimDownSight(ps);
     }
@@ -1224,7 +1224,7 @@ static void PM_REGPARM2_ABI PM_AirMove(pmove_t *pm, pml_t *pml)
         else if (ps->pm_type == 3)
             scale *= 6.0f;
         else if (ps->pm_type == 4)
-            scale *= (*(const dvar_t **)imp_player_spectateSpeedScale)->current.value;
+            scale *= (player_spectateSpeedScale)->current.value;
     }
 
     pml->forward[2] = 0.0f;
@@ -1657,7 +1657,7 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
                            ps->clientNum, pm->tracemask);
 
             if (trace.fraction == 1.0f) {
-                BG_AnimScriptEvent(ps, pm->cmd.forwardmove < 0 ? 4 : 3, 0, 1);
+                BG_AnimScriptEvent(ps, pm->cmd.forwardmove < 0 ? ANIM_ET_JUMPBK : ANIM_ET_JUMP, 0, 1);
                 pml->almostGroundPlane = 0;
                 ps->groundEntityNum = ENTITYNUM_NONE;
                 pml->groundPlane = 0;
@@ -1678,7 +1678,7 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
         (ps->velocity[0] * trace.normal[0] +
          ps->velocity[1] * trace.normal[1] +
          ps->velocity[2] * trace.normal[2]) > 10.0f) {
-        BG_AnimScriptEvent(ps, pm->cmd.forwardmove < 0 ? 4 : 3, 0, 0);
+        BG_AnimScriptEvent(ps, pm->cmd.forwardmove < 0 ? ANIM_ET_JUMPBK : ANIM_ET_JUMP, 0, 0);
         pml->almostGroundPlane = 0;
         ps->groundEntityNum = ENTITYNUM_NONE;
         pml->groundPlane = 0;
@@ -1742,7 +1742,7 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
                 impactEvent = 0;
             } else {
                 int e = (int)((fallHeight - 12.0f) / 26.0f * 4.0f + 4.0f);
-                BG_AnimScriptEvent(ps, 5, 0, 1);
+                BG_AnimScriptEvent(ps, ANIM_ET_LAND, 0, 1);
                 impactEvent = e >= 25 ? 24 : e;
             }
 
@@ -1927,8 +1927,8 @@ void Pmove(pmove_t *pm)
 }
 
 pmoveHandler_t pmoveHandlers[2] = {
-    { &CG_TraceCapsule, &CG_PointContents, 0x0 },
-    { &G_TraceCapsule, &SV_PointContents, &G_PlayerEvent }
+    { (pmove_trace)&CG_TraceCapsule, (pmove_pointcontents)&CG_PointContents, 0x0 },
+    { (pmove_trace)&G_TraceCapsule, (pmove_pointcontents)&SV_PointContents, (pmove_PlayerEvent)&G_PlayerEvent }
 };
 viewLerpWaypoint_t viewLerp_CrouchProne[13] = {
     { 0x0, 40.0f, 0x0 },

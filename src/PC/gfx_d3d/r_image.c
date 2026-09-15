@@ -1,6 +1,11 @@
 #include "common_types.h"
 extern dvar_t *r_rendererInUse;
 #include "imports.h"
+/* dvar globals */
+extern const dvar_t *r_picmip;
+extern const dvar_t *r_picmip_bump;
+extern const dvar_t *r_picmip_manual;
+extern const dvar_t *r_picmip_spec;
 extern int alwaysfails;
 extern DxGlobals dx;
 extern refimport_t ri;
@@ -295,11 +300,11 @@ void R_SetPicmip(void)
     texMemInMegs = R_AvailableTextureMemory();
     sysMemInMegs = Cvar_VariableIntegerValue("sys_sysMB");
 
-    if ((*(const dvar_t **)imp_r_picmip_manual)->current.enabled) {
+    if ((r_picmip_manual)->current.enabled) {
         ri_Printf(0, "Using manual picmip settings\n");
-        IG_SCALAR(2048) = (*(const dvar_t **)imp_r_picmip)->current.integer;
-        IG_SCALAR(2049) = (*(const dvar_t **)imp_r_picmip_bump)->current.integer;
-        IG_SCALAR(2050) = (*(const dvar_t **)imp_r_picmip_spec)->current.integer;
+        IG_SCALAR(2048) = (r_picmip)->current.integer;
+        IG_SCALAR(2049) = (r_picmip_bump)->current.integer;
+        IG_SCALAR(2050) = (r_picmip_spec)->current.integer;
     } else if (r_rendererInUse->current.integer == 2) {
 
         ri_Printf(0, "Dx7 renderer: using low-res textures\n");
@@ -369,9 +374,9 @@ set_cvars:
 
     Cvar_SetValue = (void (*)(void *, int))ri.Dvar_SetInt;
     ri_Printf = *(void (**)(int, const char *, ...))&ri;
-    Cvar_SetValue(*(const dvar_t **)imp_r_picmip, IG_SCALAR(2048));
-    Cvar_SetValue(*(const dvar_t **)imp_r_picmip_bump, IG_SCALAR(2049));
-    Cvar_SetValue(*(const dvar_t **)imp_r_picmip_spec, IG_SCALAR(2050));
+    Cvar_SetValue( (void *)(r_picmip), IG_SCALAR(2048));
+    Cvar_SetValue( (void *)(r_picmip_bump), IG_SCALAR(2049));
+    Cvar_SetValue( (void *)(r_picmip_spec), IG_SCALAR(2050));
     ri_Printf(0, "Using picmip %i on most textures, %i on normal maps, and %i on spec maps",
               IG_SCALAR(2048), IG_SCALAR(2049), IG_SCALAR(2050));
 }
@@ -649,12 +654,16 @@ GfxImage *Image_AllocProg(int imageProgType, int category)
 GfxImage *Image_Alloc(const char *name, int category, int semantic, int imageTrack)
 {
     int nameLen = strlen(name) + 1;
-    void *(*hunkAlloc)(int) = ri.Hunk_AllocInternal;
+    void *(*hunkAlloc)(int) = (void *(__cdecl *)(int))(ri.Hunk_AllocInternal);
     byte *image;
     char *nameDst;
     int hash;
 
-    image = (byte *)hunkAlloc(0x24 + nameLen);
+    /* x86 sizeof(GfxImage) was 0x24; on x64 the pointer fields (name + COM/texture
+     * handles) grow it. The alloc must match where the name is appended below
+     * (image + sizeof(GfxImage)); the old 0x24 wrote the name past the block and
+     * corrupted the adjacent hunk allocation (material data). */
+    image = (byte *)hunkAlloc((int)sizeof(GfxImage) + nameLen);
 
     nameDst = (char *)(image + sizeof(GfxImage));
     ((GfxImage *)image)->name = nameDst;
@@ -668,7 +677,7 @@ GfxImage *Image_Alloc(const char *name, int category, int semantic, int imageTra
     while (IG_HASH(hash) != 0) {
         hash = (hash + 1) & 0x7ff;
     }
-    IG_HASH(hash) = image;
+    IG_HASH(hash) = (GfxImage *)(image);
 
     return (GfxImage *)image;
 }
@@ -1059,10 +1068,10 @@ void Image_RebuildCosinePowerMap(float shift)
     } while (*(volatile int *)&alwaysfails);
 
     image = rgp->specularityImage;
-    Image_Create2DTexture_core(image, 32, 256, 1, 0, 0x32, 1);
+    Image_Create2DTexture_core(image, 32, 256, 1, 0, (D3DFORMAT)(0x32), (D3DPOOL)(1));
 
     Image_BuildSpecularityMap(shift, pic);
-    Image_UploadData(rgp->specularityImage, 0x32, 0, 0, pic);
+    Image_UploadData(rgp->specularityImage, (D3DFORMAT)(0x32), 0, 0, pic);
 }
 
 extern void RB_UnbindAllImages(void);

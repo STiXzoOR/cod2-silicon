@@ -15,7 +15,7 @@ extern void UI_DrawHandlePic(float x, float y, float w, float h,
 extern void UI_DrawText(const char *text, int maxChars, FontHandle font,
                         float x, float y, int horzAlign, int vertAlign,
                         float scale, const vec_t *color, int style);
-extern int CL_RegisterMaterialNoMip(const char *name, int a);
+extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int a);
 
 extern void Cmd_AddCommand(const char *cmd, void (*func)(void));
 extern void Cbuf_AddText(const char *text);

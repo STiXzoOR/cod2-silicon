@@ -9,7 +9,7 @@ char *modNames[15] = { (char *)&str_002b64e0, (char *)&str_002b64ec, (char *)&st
 extern float sqrtf(float x);
 
 extern int I_stricmp(const char *s1, const char *s2);
-extern short Scr_AllocString(const char *str, int flag);
+extern unsigned int Scr_AllocString(const char *str, int flag);
 extern int FS_FOpenFileByMode(const char *filename, int *f, int mode);
 extern int FS_Read(void *buffer, int len, int f);
 extern void FS_FCloseFile(fileHandle_t f);
@@ -17,26 +17,26 @@ extern int Info_Validate(const char *s);
 extern int ParseConfigStringToStruct(float *dest, void *fields, int numFields, const char *buffer, int unused1, int unused2, void (*callback)(byte *, const char *));
 extern void Com_Error(int level, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
-extern void *BG_GetWeaponDef(int weapon);
-extern void G_GetPlayerViewOrigin(gentity_t *ent, vec_t *origin);
-extern float Vec3Normalize(vec_t *v);
-extern float Vec3NormalizeTo(const vec_t *v, vec_t *out);
+extern WeaponDef *BG_GetWeaponDef(int weapon);
+extern void G_GetPlayerViewOrigin(const gentity_t *ent, vec_t *origin);
+extern const vec_t Vec3Normalize(vec_t *v);
+extern const vec_t Vec3NormalizeTo(const vec_t *v, vec_t *out);
 extern int G_LocationalTracePassed(const vec_t *start, const vec_t *end, int entityNum, int contentmask);
-extern unsigned int Scr_AddEntity(gentity_t *ent);
+extern void Scr_AddEntity(gentity_t *ent);
 extern unsigned int Scr_AddInt(int value);
-extern void Scr_Notify(gentity_t *ent, int name, int numArgs);
+extern void Scr_Notify(gentity_t *ent, unsigned short name, unsigned int numArgs);
 extern int LogAccuracyHit(gentity_t *target, gentity_t *attacker);
 extern int CM_AreaEntities(const vec_t *mins, const vec_t *maxs, int *entityList, int maxcount, int areatype);
 extern void G_TraceCapsule(void *results, const vec_t *start, const vec_t *end, const vec_t *end2, const vec_t *mins, int passEntityNum, int contentmask);
-extern void Scr_PlayerDamage(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, int damage, int dflags, int mod, int weapon, const vec_t *dir, const vec_t *point, hitLocation_t hitLoc, int timeOffset);
+extern void Scr_PlayerDamage(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int dflags, int meansOfDeath, int iWeapon, const vec_t *vPoint, const vec_t *vDir, const hitLocation_t hitLoc, int timeOffset);
 extern int Com_GetServerDObj(int clientNum);
-extern int BG_AnimScriptEvent(void *ps, int event, int isContinue, int force);
+extern int BG_AnimScriptEvent(playerState_t *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force);
 extern void Scr_PlayerKilled(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath, int iWeapon, const vec_t *vDir, hitLocation_t hitLoc, int psTimeOffset);
 extern gentity_t *fire_grenade(gentity_t *self, vec_t *start, vec_t *dir, int grenadeWPID, int clientNum);
 extern void Cmd_Score_f(gentity_t *ent);
 extern void SV_UnlinkEntity(gentity_t *ent);
 extern void SV_LinkEntity(gentity_t *ent);
-extern float vectoyaw(const vec_t *vec);
+extern const float vectoyaw(const vec_t *vec);
 extern float crandom(void);
 extern float randomf(void);
 
@@ -74,9 +74,10 @@ const char *g_HitLocNames[] = {
 };
 
 static scr_string_t g_HitLocConstNames[19];
-#define SCR_CONST() ((const scr_const_t *)imp_scr_const)
+extern scr_const_t scr_const;
+#define SCR_CONST() (&scr_const)   /* was an imp_ deref; use the real object like cgame does */
 
-#define g_entities ((gentity_t *)imp_g_entities)
+extern gentity_t g_entities[];   /* was a macro over imp_g_entities (extra load); use the real object like the rest of game_mp */
 
 #define level (*(struct level_locals_t *)imp_level)
 extern bgs_t level_bgs;
@@ -94,7 +95,7 @@ static void G_HitLocStrcpy(byte *pMember, const char *pszKeyValue)
 
 void G_ParseHitLocDmgTable(void)
 {
-    struct {
+    struct hitLocDmgField_s {
         const char *name;
         int offset;
         int type;
@@ -106,7 +107,7 @@ void G_ParseHitLocDmgTable(void)
 
     {
 
-        __typeof__(&hitLocDmgFields[0]) pf = &hitLocDmgFields[0];
+        struct hitLocDmgField_s *pf = &hitLocDmgFields[0];   /* was __typeof__ (GCC ext); explicit type, same codegen */
         scr_string_t *pc = &g_HitLocConstNames[0];
         for (off = 0; off != 76; off += 4) {
             const char *name;
@@ -295,7 +296,10 @@ static float G_GetHitLocDamageMult(int weapon, hitLocation_t hitLoc)
     }
 
     weapDef = BG_GetWeaponDef(weapon);
-    if (weapDef == NULL || ((WeaponDef *)weapDef)->weapType == 0) {
+    /* Only BULLET weapons carry per-weapon location multipliers; everything else
+       (grenade/projectile/binoculars) falls back to the generic hit-location table.
+       Retail emits `test edx,edx; jne <generic>` here -- the sense was inverted. */
+    if (weapDef == NULL || ((WeaponDef *)weapDef)->weapType != WEAPTYPE_BULLET) {
         return g_fHitLocDamageMult[hitLoc];
     }
 
@@ -383,7 +387,7 @@ void G_Damage(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, const 
     }
 
     {
-        if ((*(const dvar_t **)imp_g_debugDamage)->current.enabled) {
+        if ((g_debugDamage)->current.enabled) {
             Com_Printf("target:%i health:%i damage:%i\n", targ->s.number, health, damage);
         }
     }
@@ -522,7 +526,7 @@ qboolean G_RadiusDamage(const vec_t *origin, gentity_t *inflictor, gentity_t *at
             dir[2] = ent->r.currentOrigin[2] - origin[2] + 24.0f;
 
             G_Damage(ent, inflictor, attacker, dir, origin,
-                     (int)(points * damageScale), 1, mod, 0, 0);
+                     (int)(points * damageScale), 1, mod, (hitLocation_t)0, 0);
         } else {
 
             dest[0] = (ent->r.absmin[0] + ent->r.absmax[0]) * 0.5f;
@@ -555,7 +559,7 @@ qboolean G_RadiusDamage(const vec_t *origin, gentity_t *inflictor, gentity_t *at
             dir[2] = ent->r.currentOrigin[2] - origin[2] + 24.0f;
 
             G_Damage(ent, inflictor, attacker, dir, origin,
-                     (int)(points * 0.1f), 1, mod, 0, 0);
+                     (int)(points * 0.1f), 1, mod, (hitLocation_t)0, 0);
         }
     }
 
@@ -645,7 +649,7 @@ void player_die(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int 
         cl->ps.pm_type = state + 6;
     }
 
-    animResult = BG_AnimScriptEvent(&cl->ps, 1, 0, 1);
+    animResult = BG_AnimScriptEvent(&cl->ps, ANIM_ET_DEATH, 0, 1);
 
     Scr_PlayerKilled(self, inflictor, attacker, damage, meansOfDeath,
                      iWeapon, vDir, hitLoc, psTimeOffset);

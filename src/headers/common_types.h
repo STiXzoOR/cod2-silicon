@@ -4497,7 +4497,7 @@ typedef long unsigned int (*AIL_file_open_callback)();
 typedef long unsigned int (*AIL_file_read_callback)();
 typedef long int (*AIL_file_seek_callback)();
 typedef OpaqueAUGraph * AUGraph;
-typedef void * (*Alloc_t)();
+typedef void * (*Alloc_t)(int);   /* allocator(size); was unprototyped -> C++ call sites failed */
 typedef OpaqueAudioConverter * AudioConverterRef;
 typedef void (*BG_RegisterWeapon)();
 typedef unsigned char BYTE;
@@ -4562,7 +4562,7 @@ typedef OpaqueFSIterator * FSIterator;
 typedef void (*FSSpecPtr)();
 typedef float Float32;
 typedef double Float64;
-typedef void (*Free_t)();
+typedef void (*Free_t)(void *, int);   /* real Free(ptr,size) sig; byte-neutral fn-ptr */
 typedef GDevice * GDPtr;
 typedef long unsigned int GLbitfield;
 typedef unsigned char GLboolean;
@@ -4696,7 +4696,7 @@ typedef wchar_t WCHAR;
 typedef short unsigned int WORD;
 typedef OpaqueWindowPtr * WindowPtr;
 typedef XAnimParts_s XAnimParts;
-typedef void (*XAssetEnum)();
+typedef void (*XAssetEnum)(void *, void *);   /* real func(data,inData) sig; byte-neutral fn-ptr */
 typedef int XPartBits[4];
 typedef short int XQuat[4];
 typedef short int XQuat2[2];
@@ -4749,7 +4749,7 @@ typedef int (*fn_die)();
 typedef int (*fn_pain)();
 typedef int (*fn_reached)();
 typedef int (*fn_think)();
-typedef void (*fn_touch)();
+typedef void (*fn_touch)(struct gentity_s *, struct gentity_s *, int);   /* real touch-handler sig (was unprototyped); unblocks C++ call sites */
 typedef unsigned int (*fn_use)();
 typedef void (*forward_DCT_method_ptr)();
 typedef double (*free_func)();
@@ -4805,7 +4805,7 @@ typedef char objBufEntry[100];
 typedef phuff_entropy_decoder * phuff_entropy_ptr;
 typedef void (*pmove_PlayerEvent)();
 typedef int (*pmove_pointcontents)();
-typedef void (*pmove_trace)();
+typedef void (*pmove_trace)(trace_t *, const vec_t *, const vec_t *, const vec_t *, const vec_t *, int, int);   /* real PM_trace handler sig; byte-neutral fn-ptr */
 typedef jpeg_alloc * (*pthread_callback_type)();
 typedef int qhandle_t;
 typedef short unsigned int r_index_t;
@@ -6318,7 +6318,7 @@ struct GfxAabbTree {
     int staticModelCount;
     int *staticModels;
     int childCount;
-    int children;
+    struct GfxAabbTree *children;
 };
 
 struct GfxBackEndLightSettings {
@@ -6848,7 +6848,7 @@ struct GfxSceneModelCellRef {
     int entIndex;
     vec3_t mins;
     vec3_t maxs;
-    int next;
+    intptr_t next;
 };
 
 struct DpvsScene {
@@ -7166,7 +7166,7 @@ struct IncludeClass {
 struct ItemKeyHandler {
     int key;
     const char *action;
-    int next;
+    intptr_t next;
 };
 
 struct JHUFF_TBL {
@@ -7534,8 +7534,8 @@ struct GfxMarkFragment {
 };
 
 struct MarkPoly {
-    int prevMark;
-    int nextMark;
+    struct MarkPoly *prevMark;
+    struct MarkPoly *nextMark;
     int lastFrameDrawn;
     vec3_t origin;
     float radius;
@@ -10798,7 +10798,6 @@ struct animStringItem_t {
     int hash;
 };
 
-#pragma pack(push, 4)
 struct animation_s {
     char name[64];
     int initialLerp;
@@ -10809,7 +10808,6 @@ struct animation_s {
     long long int movetype;
     int noteType;
 };
-#pragma pack(pop)
 
 struct archivedEntityShared_t {
     int svFlags;
@@ -10968,8 +10966,8 @@ struct cameraShake_t {
 
 struct cbrush_t {
     vec3_t mins;
-    int contents;
     vec3_t maxs;
+    int contents;
     int numsides;
     cbrushside_t *sides;
     short int axialMaterialNum[2][3];
@@ -11167,7 +11165,7 @@ struct client_fields_s {
 };
 
 struct cmd_function_s {
-    /* really a cmd_function_t*; the reconstruction kept it in an int-typed field
+    /* really a cmd_function_t*; kept in an int-typed field
      * accessed via *(cmd_function_t**)&next. Use a pointer-sized int so it
      * survives LP64/LLP64 (4 on x86, 8 on x64). The old `int` truncated the
      * next-pointer on MSVC x64 -> crash in Cmd_AddCommand. */
@@ -11348,7 +11346,7 @@ struct directive_s {
 
 struct directive_t {
     char *name;
-    int (*func)();
+    int (*func)(struct source_s *);   /* real handler sig (PC_Directive_*); byte-neutral fn-ptr */
 };
 
 struct directory_t {
@@ -13539,23 +13537,23 @@ struct refexport_t {
 };
 
 struct refimport_t {
-    void (*Printf)();
-    void (*Error)();
+    void (*Printf)(int print_level, const char *fmt, ...);
+    void (*Error)(errorParm_t code, const char *fmt, ...);
     int (*Milliseconds)();
-    void * (*Hunk_AllocInternal)();
-    void * (*Hunk_AllocateTempMemoryInternal)();
-    void * (*Z_MallocInternal)();
-    void (*Z_FreeInternal)();
-    void * (*Hunk_AllocAlignInternal)();
-    void * (*Z_VirtualReserveInternal)();
-    void (*Z_VirtualCommitInternal)();
-    void (*Z_VirtualDecommitInternal)();
-    void (*Z_VirtualFreeInternal)();
-    void (*Hunk_FreeTempMemory)();
+    void * (*Hunk_AllocInternal)(int size);
+    void * (*Hunk_AllocateTempMemoryInternal)(int size);
+    void * (*Z_MallocInternal)(int size);
+    void (*Z_FreeInternal)(void *ptr);
+    void * (*Hunk_AllocAlignInternal)(int size, int align);
+    void * (*Z_VirtualReserveInternal)(int size);
+    void (*Z_VirtualCommitInternal)(void *ptr, int size);
+    void (*Z_VirtualDecommitInternal)(void *ptr, int size);
+    void (*Z_VirtualFreeInternal)(void *ptr);
+    void (*Hunk_FreeTempMemory)(void *buf);
     void (*Hunk_ClearTempMemory)();
     int (*Hunk_HideTempMemory)();
-    void (*Hunk_ShowTempMemory)();
-    void * (*Hunk_AllocateTempMemoryHighInternal)();
+    void (*Hunk_ShowTempMemory)(void *mark);
+    void * (*Hunk_AllocateTempMemoryHighInternal)(int size);
     void (*Hunk_ClearTempMemoryHigh)();
     void (*Sys_DirectXFatalError)();
     void (*Sys_ShowSplashWindow)();
@@ -13571,7 +13569,7 @@ struct refimport_t {
     const dvar_t * (*Dvar_RegisterVec3)(const char *dvarName, float x, float y, float z, float min, float max, int flags);
     const dvar_t * (*Dvar_RegisterVec4)(const char *dvarName, float x, float y, float z, float w, float min, float max, int flags);
     void (*Dvar_UnregisterSystem)(int sysFlag);
-    void (*Dvar_ChangeResetValue)();
+    void (*Dvar_ChangeResetValue)(const dvar_t *dvar, DvarValue value);
     Bool (*Dvar_IsAtDefaultValue)(const dvar_t *dvar);
     void (*Dvar_ClearModified)(const dvar_t *dvar);
     void (*Dvar_SetModified)(const dvar_t *dvar);
@@ -13584,99 +13582,99 @@ struct refimport_t {
     void (*Dvar_SetVec2)(const dvar_t *dvar, float x, float y);
     void (*Dvar_SetVec3)(const dvar_t *dvar, float x, float y, float z);
     void (*Dvar_SetVec4)(const dvar_t *dvar, float x, float y, float z, float w);
-    void (*Dvar_SetFromString)();
-    void (*Dvar_SetBoolByName)();
-    void (*Dvar_SetIntByName)();
-    void (*Dvar_SetFloatByName)();
-    void (*Dvar_SetStringByName)();
-    void (*Dvar_SetColorByName)();
-    void (*Dvar_SetVec2ByName)();
-    void (*Dvar_SetVec3ByName)();
-    void (*Dvar_SetVec4ByName)();
-    void (*Dvar_SetFromStringByName)();
-    Bool (*Dvar_GetBool)();
-    int (*Dvar_GetInt)();
-    float (*Dvar_GetFloat)();
-    const char * (*Dvar_GetString)();
-    const char * (*Dvar_GetVariantString)();
-    const char * (*Dvar_EnumToString)();
-    void (*Dvar_Reset)();
-    void (*Cmd_AddCommand)();
-    void (*Cmd_RemoveCommand)();
+    void (*Dvar_SetFromString)(const dvar_t *dvar, const char *string);
+    void (*Dvar_SetBoolByName)(const char *name, int value);
+    void (*Dvar_SetIntByName)(const char *name, int value);
+    void (*Dvar_SetFloatByName)(const char *name, float value);
+    void (*Dvar_SetStringByName)(const char *dvarName, const char *value);
+    void (*Dvar_SetColorByName)(const char *dvarName, int r, int g, int b, int a);
+    void (*Dvar_SetVec2ByName)(const char *dvarName, float x, float y);
+    void (*Dvar_SetVec3ByName)(const char *dvarName, float x, float y, float z);
+    void (*Dvar_SetVec4ByName)(const char *dvarName, float x, float y, float z, float w);
+    void (*Dvar_SetFromStringByName)(const char *dvarName, const char *value);
+    Bool (*Dvar_GetBool)(const char *dvarName);
+    int (*Dvar_GetInt)(const char *dvarName);
+    float (*Dvar_GetFloat)(const char *name);
+    const char * (*Dvar_GetString)(const char *dvarName);
+    const char * (*Dvar_GetVariantString)(const char *dvarName);
+    const char * (*Dvar_EnumToString)(dvar_t *dvar);
+    void (*Dvar_Reset)(void *dvar, int source);
+    void (*Cmd_AddCommand)(const char *cmdName, xcommand_t function);
+    void (*Cmd_RemoveCommand)(const char *cmdName);
     int (*Cmd_Argc)();
-    char * (*Cmd_Argv)();
-    void (*Cbuf_ExecuteText)();
-    qboolean (*Com_SaveDvarsToBuffer)();
-    qboolean (*Com_LoadDvarsFromBuffer)();
-    const dheader_s * (*Com_GetBsp)();
-    unsigned int (*SEH_ReadCharFromString)();
+    char * (*Cmd_Argv)(int arg);
+    void (*Cbuf_ExecuteText)(int exec_when, const char *text);
+    qboolean (*Com_SaveDvarsToBuffer)(const char **dvar_names, int count, char *buf, int bufsize);
+    qboolean (*Com_LoadDvarsFromBuffer)(const char **dvar_names, int count, const char *buf, const char *path);
+    const dheader_s * (*Com_GetBsp)(int *fileSize, unsigned int *checksum);
+    unsigned int (*SEH_ReadCharFromString)(const char **ppsText, qboolean *pbIsTrailingPunctuation);
     void (*CL_UpdateDebugData)();
-    void (*CL_FlushDebugData)();
-    void (*StatMon_Warning)();
-    int (*FS_ReadFile)();
-    void (*FS_FreeFile)();
-    int (*FS_FOpenFileRead)();
-    const char * * (*FS_ListFiles)();
-    void (*FS_FreeFileList)();
-    qboolean (*FS_FileExists)();
-    qboolean (*FS_WriteFile)();
-    int (*FS_FOpenFileByMode)();
-    void (*FS_FCloseFile)();
-    int (*FS_Read)();
-    int (*FS_Write)();
-    void (*CM_SaveLump)();
-    void (*CM_BoxTrace)();
-    int (*CM_BoxSightTrace)();
+    void (*CL_FlushDebugData)(qboolean fromServer);
+    void (*StatMon_Warning)(int type, int duration, const char *materialName);
+    int (*FS_ReadFile)(const char *qpath, void **buffer);
+    void (*FS_FreeFile)(void *buffer);
+    int (*FS_FOpenFileRead)(const char *filename, fileHandle_t *file, qboolean uniqueFILE);
+    const char * * (*FS_ListFiles)(const char *dir, const char *ext, int flags, int *count, int);
+    void (*FS_FreeFileList)(const char **list, int count);
+    qboolean (*FS_FileExists)(const char *path);
+    qboolean (*FS_WriteFile)(const char *path, const void *buffer, int size);
+    int (*FS_FOpenFileByMode)(const char *qpath, fileHandle_t *f, fsMode_t mode);
+    void (*FS_FCloseFile)(fileHandle_t h);
+    int (*FS_Read)(void *buffer, int len, fileHandle_t h);
+    int (*FS_Write)(const void *buf, int len, int fh);
+    void (*CM_SaveLump)(int lumpnum, byte *newLump, int size, int *checksum);
+    void (*CM_BoxTrace)(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask);
+    int (*CM_BoxSightTrace)(int oldHitNum, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask);
     Bool (*CM_RayTriangleIntersect)();
-    struct XModel * (*XModelPrecache)();
-    int (*XModelGetSurfaces)();
-    int (*XModelBad)();
-    void (*Hunk_OverrideDataForFile)();
-    int (*XModelGetNumLods)();
-    void (*XModelSetTestLods)();
-    int (*XModelGetLodForDist)();
-    float (*XModelGetLodOutDist)();
-    const char * (*XModelGetSurfaceName)();
-    const char * (*XModelGetName)();
-    unsigned char (*XModelGetFlags)();
-    int (*XModelNumBones)();
-    const trXSkin_t * (*XModelGetSkins)();
-    int (*XModelGetMemUsage)();
-    const char * (*XModelGetLodName)();
-    const DObjAnimMat * (*XModelGetBasePose)();
-    const DObjAnimMat * (*XModelGetBasePoseBone)();
-    int (*DObjBad)();
-    void (*DB_EnumXAssets)();
-    void (*DObjGetBounds)();
-    XSurface * (*DObjGetSurface)();
-    int (*DObjGetNumModels)();
-    int (*DObjGetNumSurfaces)();
-    int (*DObjGetSurfaces)();
+    struct XModel * (*XModelPrecache)(const char *name, Alloc_t Alloc, Alloc_t AllocColl);
+    int (*XModelGetSurfaces)(const XModel *model, struct XSurface_s ***surfaces, int lod, int **partBits);
+    int (*XModelBad)(const XModel *model);
+    void (*Hunk_OverrideDataForFile)(int type, const char *name, void *data);
+    int (*XModelGetNumLods)(const XModel *model);
+    void (*XModelSetTestLods)(int lodLevel, float dist);
+    int (*XModelGetLodForDist)(const XModel *model, float dist);
+    float (*XModelGetLodOutDist)(const XModel *model);
+    const char * (*XModelGetSurfaceName)(const XModel *model, int subMatIndex, int lod);
+    const char * (*XModelGetName)(const XModel *model);
+    unsigned char (*XModelGetFlags)(const XModel *model);
+    int (*XModelNumBones)(const XModel *model);
+    const trXSkin_t * (*XModelGetSkins)(const XModel *model);
+    int (*XModelGetMemUsage)(const XModel *model);
+    const char * (*XModelGetLodName)(const XModel *model, int lod);
+    const DObjAnimMat * (*XModelGetBasePose)(const XModel *model);
+    const DObjAnimMat * (*XModelGetBasePoseBone)(const XModel *model, int skelMatBoneOffset);
+    int (*DObjBad)(const DObj *obj);
+    void (*DB_EnumXAssets)(int type, void (*func)(union XAssetHeader, void *), void *data, int overrides);
+    void (*DObjGetBounds)(const DObj *obj, vec_t *mins, vec_t *maxs);
+    XSurface * (*DObjGetSurface)(const DObj *obj, int modelIndex, int subMatIndex, int lod);
+    int (*DObjGetNumModels)(const DObj *obj);
+    int (*DObjGetNumSurfaces)(const DObj *obj, char *lods);
+    int (*DObjGetSurfaces)(const DObj *obj, DSurface *surfaces, int *partBits, char *lods);
     int * (*DObjGetPartBits)();
-    DObjAnimMat * (*DObjGetRotTransArray)();
-    int (*DObjSkelAreBonesUpToDate)();
-    int (*DObjGetMatOffset)();
-    struct XModel * (*DObjGetModel)();
-    const char * (*DObjGetSurfaceName)();
-    void (*DObjCreate)();
-    int (*DObjGetAllocSkelSize)();
-    void (*DObjCreateSkel)();
-    void (*DObjCalcAnim)();
-    void (*DObjCalcSkel)();
-    int (*DObjNumBones)();
-    void (*DObjGetBoneInfo)();
-    int (*DObjGetLodForDist)();
-    float (*DObjGetLodOutDist)();
-    void (*DObjCompleteHierarchyBits)();
-    void (*DObjSetModel)();
-    void (*CIN_UploadCinematic)();
-    int (*CIN_PlayCinematic)();
-    e_status (*CIN_RunCinematic)();
-    void (*CG_DObjCalcPose)();
-    const char * (*CL_GetHudMsgIconMaterialName)();
+    DObjAnimMat * (*DObjGetRotTransArray)(const DObj *obj);
+    int (*DObjSkelAreBonesUpToDate)(const DObj *obj, int *partBits);
+    int (*DObjGetMatOffset)(const DObj *obj, int modelIndex);
+    struct XModel * (*DObjGetModel)(const DObj *obj, int modelIndex);
+    const char * (*DObjGetSurfaceName)(DObj *obj, int modelIndex, int subMatIndex, int lod);
+    void (*DObjCreate)(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tree, char *buf, unsigned int entnum);
+    int (*DObjGetAllocSkelSize)(const DObj *obj);
+    void (*DObjCreateSkel)(const DObj *obj, char *buf, int timeStamp);
+    void (*DObjCalcAnim)(const DObj *obj, int *partBits);
+    void (*DObjCalcSkel)(const DObj *obj, int *partBits);
+    int (*DObjNumBones)(const DObj *obj);
+    void (*DObjGetBoneInfo)(const DObj *obj, XBoneInfo **boneInfo);
+    int (*DObjGetLodForDist)(const DObj *obj, int modelIndex, float dist);
+    float (*DObjGetLodOutDist)(const DObj *obj);
+    void (*DObjCompleteHierarchyBits)(const DObj *obj, int *partBits);
+    void (*DObjSetModel)(DObj *obj, const XModel *model);
+    void (*CIN_UploadCinematic)(int handle);
+    int (*CIN_PlayCinematic)(const char *arg, int x, int y, int w, int h, int systemBits);
+    e_status (*CIN_RunCinematic)(int handle);
+    void (*CG_DObjCalcPose)(const centity_t *cent, const struct DObj_s *obj, int *partBits);
+    const char * (*CL_GetHudMsgIconMaterialName)(int index);
 
 #ifndef COD2_BYTEMATCH
-    void * (*CM_GetPlaneNum)();
+    void * (*CM_GetPlaneNum)(int planeNum);
 #endif
 };
 
@@ -13912,8 +13910,8 @@ struct animScriptData_t {
     short unsigned int torsoAnim;
     short unsigned int legsAnim;
     short unsigned int turningAnim;
-    snd_alias_list_t * (*soundAlias)();
-    int (*playSoundAlias)();
+    snd_alias_list_t * (*soundAlias)(const char *);                 /* real sigs; byte-neutral fn-ptrs */
+    int (*playSoundAlias)(int, snd_alias_list_t *);
 };
 
 struct bgs_t {
@@ -13923,9 +13921,9 @@ struct bgs_t {
     int latestSnapshotTime;
     int frametime;
     int anim_user;
-    struct XModel * (*GetXModel)();
-    void (*CreateDObj)();
-    void (*SafeDObjFree)();
+    struct XModel * (*GetXModel)(const char *);                                  /* real bgs handler sigs; byte-neutral fn-ptrs */
+    void (*CreateDObj)(void *, unsigned short, void *, int, void *);
+    void (*SafeDObjFree)(int);
     void * (*AllocXAnim)();
     clientInfo_t clientinfo[64];
 };
@@ -14483,7 +14481,7 @@ struct snd_local_t {
 
 struct spawn_t {
     const char *name;
-    my_upsampler (*spawn)();
+    void (*spawn)(gentity_t *ent);
 };
 
 struct split_cb_params {
@@ -14931,13 +14929,11 @@ struct token_s {
     long unsigned int intvalue;
     int _pad_fv;
     long double floatvalue;
-    int _pad_after_fv;
     char *whitespace_p;
     char *endwhitespace_p;
     int line;
     int linescrossed;
     struct token_s *next;
-    char _pad_token[12];
 };
 
 struct script_s {
@@ -14955,7 +14951,6 @@ struct script_s {
     int flags;
     punctuation_t *punctuations;
     punctuation_t * *punctuationtable;
-    char _pad_token_base[12];
     token_t token;
     struct script_s *next;
 };
@@ -15121,8 +15116,8 @@ struct centity_s {
 };
 
 struct localEntity_s {
-    int prev;
-    int next;
+    struct localEntity_s *prev;
+    struct localEntity_s *next;
     leType_t leType;
     int endTime;
     trajectory_t pos;

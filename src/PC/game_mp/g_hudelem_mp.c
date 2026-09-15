@@ -2,6 +2,7 @@
 #include "imports.h"
 #include "bytematch.h"
 #include <math.h>
+extern scr_const_t scr_const;
 extern level_locals_t level;
 
 const char *g_he_alignx[3] = { (const char *)&str_00227904, (const char *)&str_002b4d20, (const char *)&str_002b4d28 };
@@ -12,7 +13,8 @@ const char *g_he_vertalign[8] = { (const char *)&str_002b4cd8, (const char *)&st
 #define ARRAY_COUNT(x) ((int)(sizeof(x) / sizeof((x)[0])))
 
 extern game_hudelem_t g_hudelems[1024];
-static const game_hudelem_field_t fields[16];
+/* forward decl of fields[] removed: unused before its definition below, and C++
+ * treats `static const T x[16];` as a (zero-init) definition -> C2086 redefinition. */
 /* g_he_font: migrated from the ILP32 data blob to typed C (re-lays-out per
  * target; trailing blob bytes were inter-symbol padding). (x64 port Stage 2.) */
 const char *g_he_font[3] = {
@@ -83,7 +85,7 @@ extern unsigned int Scr_GetNumParam(void);
 extern void Scr_ParamError(unsigned int index, const char *msg);
 extern const char *Scr_GetGameTypeNameForScript(const char *pszGameTypeScript);
 extern qboolean SV_MapExists(const char *name);
-extern void SV_SetConfigstring(int index, const char *val);
+extern void SV_SetConfigstring(const int index, const char *val);
 extern void Com_Printf(const char *fmt, ...);
 extern void Scr_SetString(scr_string_t *to, unsigned int from);
 
@@ -289,7 +291,7 @@ void Scr_GetHudElemField(int entnum, int offset)
     game_hudelem_t *hud = &g_hudelems[entnum];
 
     if (f->getter) {
-        f->getter(hud, offset);
+        ((void (*)(game_hudelem_t *, int))f->getter)(hud, offset);   /* ScriptCallbackHudElem unprototyped; cast to real sig */
         return;
     }
 
@@ -302,7 +304,7 @@ void Scr_SetHudElemField(int entnum, int offset)
     game_hudelem_t *hud = &g_hudelems[entnum];
 
     if (f->setter) {
-        f->setter(hud, offset);
+        ((void (*)(game_hudelem_t *, int))f->setter)(hud, offset);   /* ScriptCallbackHudElem unprototyped; cast to real sig */
         return;
     }
 
@@ -906,15 +908,14 @@ void GScr_NewClientHudElem(void)
 void GScr_NewTeamHudElem(void)
 {
     scr_string_t teamName = Scr_GetConstString(0);
-    scr_const_t *scrConst = (scr_const_t *)imp_scr_const;
     int team;
     game_hudelem_t *hud;
 
-    if (teamName == scrConst->allies) {
+    if (teamName == scr_const.allies) {
         team = TEAM_ALLIES;
-    } else if (teamName == scrConst->axis) {
+    } else if (teamName == scr_const.axis) {
         team = TEAM_AXIS;
-    } else if (teamName == scrConst->spectator) {
+    } else if (teamName == scr_const.spectator) {
         team = TEAM_SPECTATOR;
     } else {
         Scr_ParamError(0, va((const char *)"team \"%s\" should be \"allies\", \"axis\", or \"spectator\"", Scr_GetString(0)));

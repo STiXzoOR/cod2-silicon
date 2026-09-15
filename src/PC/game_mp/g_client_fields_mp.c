@@ -24,7 +24,8 @@ extern void SV_GetConfigstring(int index, char *buf, int bufSize);
 extern byte level_ptr[];
 extern byte g_entities_ptr[];
 
-#define SCR_CONST() ((const scr_const_t *)imp_scr_const)
+extern scr_const_t scr_const;
+#define SCR_CONST() (&scr_const)   /* was an imp_ deref; use the real object like cgame does */
 
 static void ClientScr_ReadOnly(gclient_t *pSelf, const client_fields_s *pField);
 static int ClientScr_SetSessionTeam(gclient_t *pSelf, const client_fields_s *pField);
@@ -91,13 +92,13 @@ static int ClientScr_SetSessionTeam(gclient_t *pSelf, const client_fields_s *pFi
     const scr_const_t *sc = SCR_CONST();
 
     if (str == sc->axis) {
-        client->sess.cs.team = 1;
+        client->sess.cs.team = (team_t)(1);
     } else if (str == sc->allies) {
-        client->sess.cs.team = 2;
+        client->sess.cs.team = (team_t)(2);
     } else if (str == sc->spectator) {
-        client->sess.cs.team = 3;
+        client->sess.cs.team = (team_t)(3);
     } else if (str == sc->none) {
-        client->sess.cs.team = 0;
+        client->sess.cs.team = (team_t)(0);
     } else {
         Scr_Error(va("'%s' is an illegal sessionteam string. Must be allies, axis, none, or spectator.", SL_ConvertToString((unsigned short)str)));
     }
@@ -132,14 +133,14 @@ static void ClientScr_SetSessionState(gclient_t *pSelf, const client_fields_s *p
     const scr_const_t *sc = SCR_CONST();
 
     if (str == sc->playing) {
-        client->sess.sessionState = 0;
+        client->sess.sessionState = (sessionState_t)(0);
     } else if (str == sc->dead) {
-        client->sess.sessionState = 1;
+        client->sess.sessionState = (sessionState_t)(1);
     } else if (str == sc->spectator) {
-        client->sess.sessionState = 2;
+        client->sess.sessionState = (sessionState_t)(2);
     } else if (str == sc->intermission) {
         ((gclient_t *)client)->ps.eFlags ^= 2;
-        client->sess.sessionState = 3;
+        client->sess.sessionState = (sessionState_t)(3);
     } else {
         Scr_Error(va("'%s' is an illegal sessionstate string. Must be playing, dead, spectator, or intermission.", SL_ConvertToString((unsigned short)str)));
     }

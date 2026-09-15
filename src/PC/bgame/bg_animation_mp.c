@@ -4,7 +4,11 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+extern scr_const_t scr_const;
 
+/* File-scope alias: bound where no local can shadow `scr_const`, so uses below
+   always reach the global even inside functions that declare their own `scr_const`. */
+static scr_const_t * const scr_const_g = &scr_const;
 extern animStringItem_t animBodyPartsStr[8];
 extern animStringItem_t animConditionMountedStr[5];
 extern animStringItem_t animConditionsStr[12];
@@ -61,33 +65,32 @@ extern void LargeLocal_LargeLocal(const LargeLocal *_this, int size);
 extern void *LargeLocal_GetBuf(const LargeLocal *_this);
 extern void ZN10LargeLocalD1Ev(LargeLocal *_this);
 extern unsigned char scrMemTreeGlob[];
-extern void XAnimClearTree(struct XAnimTree_s *tree);
+extern void XAnimClearTree(XAnimTree *tree);
 extern int BG_GetViewmodelWeaponIndex(const playerState_t *ps);
 extern WeaponDef *BG_GetWeaponDef(int weaponIndex);
-extern float AngleSubtract(float a1, float a2);
-extern float AngleMod(float angle);
-extern float AngleNormalize180(float angle);
-extern float GetLeanFraction(float fFrac);
+extern const float AngleSubtract(const float a1, const float a2);
+extern const float AngleMod(const float a);
+extern const float AngleNormalize180(const float angle);
+extern float GetLeanFraction(const float fFrac);
 extern void AnglesSubtract(const vec_t *v1, const vec_t *v2, vec_t *v3);
 extern qboolean DObjSetControlTagAngles(const struct DObj_s *obj, int *partBits, unsigned int tagName, vec_t *angles);
 extern qboolean DObjSetLocalTag(const struct DObj_s *obj, int *partBits, unsigned int tagName, const vec_t *trans, const vec_t *angles);
 extern float sinf(float);
 extern float cosf(float);
-extern void XAnimClearGoalWeight(void *tree, unsigned int animIndex, float blendTime);
-extern void XAnimSetCompleteGoalWeight(void *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, unsigned int notifyType, int bRestart);
-extern int XAnimSetCompleteGoalWeightKnobAll(void *tree, unsigned int animIndex, unsigned int rootIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, int bRestart);
-extern void XAnimSetAnimRate(void *tree, unsigned int animIndex, float rate);
-extern float XAnimGetWeight(const void *tree, unsigned int animIndex);
-extern float XAnimGetTime(const void *tree, unsigned int animIndex);
-extern void XAnimSetTime(void *tree, unsigned int animIndex, float time);
-extern Bool XAnimIsPrimitive(void *anims, unsigned int animIndex);
-extern Bool XAnimIsLooped(const void *anims, unsigned int animIndex);
-extern int XAnimGetLengthMsec(const void *anims, unsigned int animIndex);
-extern float Vec3Distance(const vec_t *a, const vec_t *b);
+extern void XAnimClearGoalWeight(struct XAnimTree_s *tree, unsigned int animIndex, float blendTime);
+extern void XAnimSetCompleteGoalWeight(struct XAnimTree_s *tree, unsigned int animIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, unsigned int notifyType, int bRestart);
+extern int XAnimSetCompleteGoalWeightKnobAll(struct XAnimTree_s *tree, unsigned int animIndex, unsigned int rootIndex, float goalWeight, float goalTime, float rate, unsigned int notifyName, int bRestart);
+extern void XAnimSetAnimRate(struct XAnimTree_s *tree, unsigned int animIndex, float rate);
+extern float XAnimGetWeight(const XAnimTree_s *tree, unsigned int animIndex);
+extern float XAnimGetTime(const struct XAnimTree_s *tree, unsigned int animIndex);
+extern void XAnimSetTime(XAnimTree *tree, unsigned int animIndex, float time);
+extern Bool XAnimIsPrimitive(struct XAnim_s *anims, unsigned int animIndex);
+extern Bool XAnimIsLooped(const struct XAnim_s *anims, unsigned int animIndex);
+extern int XAnimGetLengthMsec(const struct XAnim_s *anims, unsigned int animIndex);
+extern const vec_t Vec3Distance(const vec_t *v1, const vec_t *v2);
 extern const char *XAnimGetAnimName(const XAnim *anims, unsigned int animIndex);
 extern float XAnimGetLength(const XAnim *anims, unsigned int animIndex);
-extern void XAnimGetRelDelta(const XAnim *anims, unsigned int animIndex,
-                             vec_t *outAngle, vec_t *outPos, float startTime, float endTime);
+extern void XAnimGetRelDelta(const XAnim *anims, unsigned int animIndex, vec_t *rot, vec_t *trans, float time1, float time2);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern float sqrtf(float x);
 void BG_AnimParseError(const char *msg, ...);
@@ -279,7 +282,8 @@ void BG_LerpOffset(vec_t *offset_goal, float maxOffsetChange, vec_t *offset)
     delta[0] = offset_goal[0] - offset[0];
     delta[1] = offset_goal[1] - offset[1];
     delta[2] = offset_goal[2] - offset[2];
-    lenSq = delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2];
+    lenSq = delta[0] * delta[0] + delta[1] * delta[1];
+    lenSq += delta[2] * delta[2];
 
     if (lenSq == 0.0f) {
         return;
@@ -509,7 +513,7 @@ void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es
 
     BG_SmoothControllerAngles(ci->tag_origin_angles, goals[6], maxAngleChange);
     BG_LerpOffset(goals[7], (float)frametime * 0.10000000149011612f, ci->tag_origin_offset);
-    DObjSetLocalTag(pDObj, partBits, ((const scr_const_t *)imp_scr_const)->tag_origin,
+    DObjSetLocalTag(pDObj, partBits, ((const scr_const_t *)scr_const_g)->tag_origin,
                     ci->tag_origin_offset, ci->tag_origin_angles);
 }
 
@@ -558,8 +562,8 @@ static float BG_Fabsf(float value)
 
 static void __attribute_regparm__(3) BG_RunLerpFrameRate(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, entityState_t *es)
 {
-    void *pAnimTree;
-    void *pXAnims;
+    XAnimTree_s *pAnimTree;
+    struct XAnim_s *pXAnims;
     animation_t *oldAnimation;
     animation_t *anim;
     int oldAnimationNumber;
@@ -776,7 +780,7 @@ static void __attribute_regparm__(3) BG_RunLerpFrameRate(clientInfo_t *ci, lerpF
     }
 }
 
-static void BG_ClearFinishedLerpFrame(void *pAnimTree, lerpFrame_t *lf)
+static void BG_ClearFinishedLerpFrame(const XAnimTree_s *pAnimTree, lerpFrame_t *lf)
 {
     if (lf->animationNumber == 0) {
         return;
@@ -853,7 +857,7 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
     float legsSwingTolerance;
     float torsoPitchDest;
     float swingSpeed;
-    void *pAnimTree;
+    XAnimTree_s *pAnimTree;
     int eFlags;
 
     (void)pDObj;
@@ -886,7 +890,7 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
     }
 
     moveYaw = moveDir + playerYaw;
-    swingSpeed = (*(const dvar_t **)imp_bg_swingSpeed)->current.value;
+    swingSpeed = (bg_swingSpeed)->current.value;
 
     if ((eFlags & 0x20000) != 0) {
         torsoYawDest = playerYaw;
@@ -1413,7 +1417,7 @@ static void __attribute_regparm__(3)
 
     if (!bScriptFileLoaded) {
         fileHandle_t f;
-        int iLen = FS_FOpenFileByMode(globalFilename, &f, 0);
+        int iLen = FS_FOpenFileByMode(globalFilename, &f, (fsMode_t)(0));
 
         if (iLen < 0) {
             Com_Error(1, "\x15"
@@ -1469,7 +1473,7 @@ static void __attribute_regparm__(3)
                 BG_AnimParseError("BG_AnimParseAnimScript: unexpected '%s'", token);
             }
             parseMode = i;
-            parseMovetype = 0;
+            parseMovetype = (scriptAnimMoveTypes_t)(0);
             parseEvent = -1;
             continue;
         }
@@ -1582,7 +1586,7 @@ static void __attribute_regparm__(3)
                 indexes[1] = BG_IndexForString(token, animMoveTypesStr, 0);
                 if (parseMode == 1) {
                     currentScript = &scriptData->scriptAnims[indexes[0]][indexes[1]];
-                    parseMovetype = indexes[1];
+                    parseMovetype = (scriptAnimMoveTypes_t)(indexes[1]);
                 } else {
                     currentScript = &scriptData->scriptCannedAnims[indexes[0]][indexes[1]];
                 }
@@ -1787,7 +1791,7 @@ void BG_LoadAnim(void)
 
     BG_AnimParseAnimScript(&bgs->animScriptData, playerAnims, &iNumPlayerAnims);
 
-    Scr_PrecacheAnimTrees(bgs->AllocXAnim, bgs->anim_user);
+    Scr_PrecacheAnimTrees( (Alloc_t)(bgs->AllocXAnim), bgs->anim_user);
 
     anims = Scr_FindAnimTree("multiplayer").anims;
     if (!anims) {
@@ -1966,111 +1970,73 @@ int BG_ExecuteCommand(playerState_t *ps, animScriptCommand_t *scriptCommand, qbo
     return playedLegsAnim ? duration : -1;
 }
 
+static BM_NOINLINE qboolean BG_AnimScriptItemMatches(clientInfo_t *ci, animScriptItem_t *scriptItem)
+{
+    int conditionIndex;
+
+    for (conditionIndex = 0; conditionIndex < scriptItem->numConditions; ++conditionIndex) {
+        animScriptCondition_t *condition = &scriptItem->conditions[conditionIndex];
+        int conditionType = condition->index;
+        int testType = animConditionsTable[conditionType].type;
+
+        if (testType == 0) {
+            if ((ci->clientConditions[conditionType][0] & condition->value[0]) == 0 &&
+                (ci->clientConditions[conditionType][1] & condition->value[1]) == 0) {
+                return 0;
+            }
+        } else if (testType == 1 &&
+                   ci->clientConditions[conditionType][0] != condition->value[0]) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static BM_NOINLINE animScriptItem_t *BG_FirstValidAnimScriptItem(int client, animScript_t *script)
+{
+    clientInfo_t *ci = &bgs->clientinfo[client];
+    int itemIndex;
+
+    for (itemIndex = 0; itemIndex < script->numItems; ++itemIndex) {
+        animScriptItem_t *scriptItem = script->items[itemIndex];
+
+        if (BG_AnimScriptItemMatches(ci, scriptItem)) {
+            return scriptItem;
+        }
+    }
+
+    return NULL;
+}
+
 int BG_AnimScriptEvent(playerState_t *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force)
 {
     int client;
-    int numItems;
-    int i;
-    animScriptItem_t **ppScriptItem;
+    animScript_t *script;
+    animScriptItem_t *scriptItem;
+    int numCommands;
+    int randIdx;
 
     if ((int)event != 1) {
         if (ps->pm_type > 5)
             return -1;
     }
 
-    numItems = globalScriptData->scriptEvents[event].numItems;
-    if (numItems == 0)
+    script = &globalScriptData->scriptEvents[event];
+    if (script->numItems == 0)
         return -1;
 
     client = ps->clientNum;
+    scriptItem = BG_FirstValidAnimScriptItem(client, script);
+    if (!scriptItem)
+        return -1;
 
-    ppScriptItem = globalScriptData->scriptEvents[event].items;
+    numCommands = scriptItem->numCommands;
+    if (numCommands == 0)
+        return -1;
 
-    for (i = 0; i < numItems; i++) {
-        animScriptItem_t *scriptItem = ppScriptItem[i];
-        int numConds = scriptItem->numConditions;
-        animScriptCondition_t *cond = scriptItem->conditions;
-        int j;
-        int allMatch = 1;
-
-        for (j = 0; j < numConds; j++) {
-            animScriptCondition_t *condition = &cond[j];
-            int condType = condition->index;
-            int testType = animConditionsTable[condType].type;
-
-            if ((testType == 0 || testType == 1) &&
-                ((unsigned)condType >= 9u || (unsigned)client >= 64u)) {
-                static int animOobDbg;
-                if (animOobDbg < 16) {
-                    fprintf(stderr,
-                            "[anim-oob] event=%d client=%d condType=%d testType=%d "
-                            "numConds=%d itemIdx=%d cond=%p condIndexVal=%d\n",
-                            event, client, condType, testType, numConds, i,
-                            (void *)condition, condition->index);
-                    ++animOobDbg;
-                }
-                allMatch = 0;
-                break;
-            }
-
-            if ((testType == 0 || testType == 1)) {
-                static int animBgsDbg;
-                if (!bgs || animBgsDbg < 8) {
-                    if (animBgsDbg < 8) {
-                        if (getenv("DBGSPAM"))
-                            fprintf(stderr, "[anim-bgs] event=%d client=%d condType=%d testType=%d bgs=%p\n",
-                                    event, client, condType, testType, (void *)bgs);
-                        ++animBgsDbg;
-                    }
-                    if (!bgs) {
-                        allMatch = 0;
-                        break;
-                    }
-                }
-            }
-
-            if (testType == 0) {
-
-                int mask1 = bgs->clientinfo[client].clientConditions[condType][0];
-                if (mask1 & condition->value[0])
-                    continue;
-                {
-                    int mask2 = bgs->clientinfo[client].clientConditions[condType][1];
-                    if (mask2 & condition->value[1])
-                        continue;
-                }
-
-                allMatch = 0;
-                break;
-            } else if (testType == 1) {
-
-                int val = bgs->clientinfo[client].clientConditions[condType][0];
-                if (val == condition->value[0])
-                    continue;
-
-                allMatch = 0;
-                break;
-            }
-
-        }
-
-        if (!allMatch)
-            continue;
-
-        {
-            int numCommands = scriptItem->numCommands;
-            int randIdx;
-
-            if (numCommands == 0)
-                return -1;
-
-            randIdx = rand() % numCommands;
-
-            return BG_ExecuteCommand(ps, &scriptItem->commands[randIdx], 1, isContinue, force);
-        }
-    }
-
-    return -1;
+    randIdx = rand() % numCommands;
+    return BG_ExecuteCommand(ps, &scriptItem->commands[randIdx], 1, isContinue, force);
 }
 
 int BG_AnimScriptAnimation(playerState_t *ps, aistateEnum_t state, scriptAnimMoveTypes_t movetype, qboolean isContinue)
@@ -2134,7 +2100,7 @@ int BG_AnimScriptAnimation(playerState_t *ps, aistateEnum_t state, scriptAnimMov
             return BG_ExecuteCommand(ps, &scriptItem->commands[rand() % scriptItem->numCommands], 0, isContinue, 0) != -1;
         }
 
-        --state;
+        state = (aistateEnum_t)(state - 1);   /* VC7.1 C++: no -- on enum */
     }
 
     return -1;
@@ -2172,18 +2138,18 @@ animStringItem_t animConditionsStr[12] = {
     { 0, 0x0 }
 };
 animConditionTable_t animConditionsTable[12] = {
-    { 0x0, (animStringItem_t *)&weaponStrings },
-    { 0x0, (animStringItem_t *)&animWeaponClassStr },
-    { 0x1, (animStringItem_t *)&animConditionMountedStr },
-    { 0x0, (animStringItem_t *)&animMoveTypesStr },
-    { 0x1, 0 },
-    { 0x1, 0 },
-    { 0x1, 0 },
-    { 0x1, (animStringItem_t *)&animWeaponPositionStr },
-    { 0x1, (animStringItem_t *)&animStrafeStateStr },
-    { 0x0, 0 },
-    { 0x0, 0 },
-    { 0x0, 0 }
+    { (animScriptConditionTypes_t)0x0, (animStringItem_t *)&weaponStrings },
+    { (animScriptConditionTypes_t)0x0, (animStringItem_t *)&animWeaponClassStr },
+    { (animScriptConditionTypes_t)0x1, (animStringItem_t *)&animConditionMountedStr },
+    { (animScriptConditionTypes_t)0x0, (animStringItem_t *)&animMoveTypesStr },
+    { (animScriptConditionTypes_t)0x1, 0 },
+    { (animScriptConditionTypes_t)0x1, 0 },
+    { (animScriptConditionTypes_t)0x1, 0 },
+    { (animScriptConditionTypes_t)0x1, (animStringItem_t *)&animWeaponPositionStr },
+    { (animScriptConditionTypes_t)0x1, (animStringItem_t *)&animStrafeStateStr },
+    { (animScriptConditionTypes_t)0x0, 0 },
+    { (animScriptConditionTypes_t)0x0, 0 },
+    { (animScriptConditionTypes_t)0x0, 0 }
 };
 animStringItem_t animEventTypesStr[20] = {
     { (const char *)&str_002ae9fc, 0xffffffff },

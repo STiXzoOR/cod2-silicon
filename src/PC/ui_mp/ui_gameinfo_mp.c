@@ -13,7 +13,7 @@ extern int FS_GetFileList(const char *path, const char *extension, int flags, ch
 extern int FS_FOpenFileByMode(const char *filename, int *f, int mode);
 extern int FS_Read(void *buffer, int len, int f);
 extern void FS_FCloseFile(fileHandle_t f);
-extern const char *Info_ValueForKey(const char *s, const char *key);
+extern char *Info_ValueForKey(const char *s, const char *key);
 extern const char *String_Alloc(const char *str);
 extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int user);
 extern void Com_BeginParseSession(const char *name);

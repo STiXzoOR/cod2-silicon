@@ -62,6 +62,22 @@ struct serverStatic_t {
     tempBanSlot_t tempBans[16];
 };
 
+COD2_ASSERT_FIELD(serverStatic_t, clients, 0xc);
+COD2_ASSERT_FIELD(serverStatic_t, challenges, 0x5c);
+#if COD2_IS_PATCH_13
+COD2_ASSERT_FIELD(serverStatic_t, redirectAddress, 0x1d05c);
+COD2_ASSERT_FIELD(serverStatic_t, authorizeAddress, 0x1d070);
+COD2_ASSERT_FIELD(serverStatic_t, pOOBProf, 0x1d084);
+COD2_ASSERT_FIELD(serverStatic_t, tempBans, 0x1d088);
+COD2_ASSERT_SIZE(serverStatic_t, 0x1d108);
+#else
+COD2_ASSERT_FIELD(serverStatic_t, redirectAddress, 0xc05c);
+COD2_ASSERT_FIELD(serverStatic_t, authorizeAddress, 0xc070);
+COD2_ASSERT_FIELD(serverStatic_t, pOOBProf, 0xc084);
+COD2_ASSERT_FIELD(serverStatic_t, tempBans, 0xc088);
+COD2_ASSERT_SIZE(serverStatic_t, 0xc108);
+#endif
+
 struct ucmd_t {
     char *name;
     void (*func)();

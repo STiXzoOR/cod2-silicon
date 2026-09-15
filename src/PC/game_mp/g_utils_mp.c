@@ -4,7 +4,7 @@
 extern level_locals_t level;
 
 extern const char *SV_GetConfigstringConst(int index);
-extern void SV_SetConfigstring(int index, const char *val);
+extern void SV_SetConfigstring(const int index, const char *val);
 extern void Scr_Error(const char *msg);
 extern char *va(const char *format, ...);
 extern void Com_Error(int code, const char *fmt, ...);
@@ -20,35 +20,35 @@ extern void SV_DObjGetHierarchyBits(gentity_t *ent, int boneIndex, int *partBits
 extern void SV_DObjCalcAnim(gentity_t *ent, int *partBits);
 extern void SV_DObjCalcSkel(gentity_t *ent, int *partBits);
 extern int SV_DObjGetBoneIndex(gentity_t *ent, unsigned int tagName);
-extern void *SV_DObjGetMatrixArray(gentity_t *ent);
+extern DObjAnimMat_s *SV_DObjGetMatrixArray(gentity_t *ent);
 extern void Scr_SetString(scr_string_t *to, unsigned int value);
 extern unsigned int SL_GetString(const char *str, int type);
 extern const char *SL_ConvertToString(unsigned int id);
-extern void AnglesToAxis(const vec_t *angles, vec_t *axis);
-extern void AxisToAngles(const vec_t *axis, vec_t *angles);
-extern float vectoyaw(const vec_t *vec);
+extern void AnglesToAxis(const vec_t *angles, vec3_t *axis);
+extern void AxisToAngles(vec3_t *axis, vec_t *angles);
+extern const float vectoyaw(const vec_t *vec);
 extern void MatrixMultiply(const vec_t *in1, const vec_t *in2, vec_t *out);
-extern void MatrixMultiply43(const vec_t *in1, const vec_t *in2, vec_t *out);
+extern void MatrixMultiply43(const float (*in1)[3], const float (*in2)[3], float (*out)[3]);
 extern void MatrixTransformVector43(const vec_t *in, const vec_t *mat, vec_t *out);
-extern void MatrixTranspose(const vec_t *in, vec_t *out);
-extern void MatrixInverseOrthogonal43(const vec_t *in, vec_t *out);
+extern void MatrixTranspose(const float (*in)[3], float (*out)[3]);
+extern void MatrixInverseOrthogonal43(const float (*in)[3], float (*out)[3]);
 extern void SetClientViewAngle(gentity_t *ent, const vec_t *angles);
-extern void *MT_Alloc(int size, int type);
+extern unsigned int *MT_Alloc(int size, int type);
 extern void MT_Free(void *ptr, int size);
 extern void SV_LinkEntity(gentity_t *ent);
 extern void SV_UnlinkEntity(gentity_t *ent);
-extern void *SV_DObjGetTree(gentity_t *ent);
-extern void XAnimClearTree(void *tree);
+extern struct XAnimTree_s *SV_DObjGetTree(gentity_t *ent);
+extern void XAnimClearTree(XAnimTree *tree);
 extern void G_FreeTurret(gentity_t *ent);
 extern void Scr_FreeEntity(gentity_t *ent);
 extern unsigned int Scr_ExecEntThread(gentity_t *ent, int callback, int numArgs);
 extern void Scr_FreeThread(unsigned short thread);
-extern void BG_AddPredictableEventToPlayerstate(int event, int eventParm, void *ps);
+extern void BG_AddPredictableEventToPlayerstate(int newEvent, int eventParm, playerState_t *ps);
 extern qboolean XModelBad(struct XModel *model);
 extern void Hunk_OverrideDataForFile(int type, const char *name, void *data);
-extern float Vec3DistanceSq(const vec_t *a, const vec_t *b);
+extern const vec_t Vec3DistanceSq(const vec_t *p1, const vec_t *p2);
 extern void Com_ServerDObjCreate(DObjModel_s *dobjModels, int numModels, struct XAnimTree_s *tree, int handle);
-extern void SV_LocateGameData(void *gEnts, int numGEntities, int sizeofGEntity, void *clients, int sizeofGameClient);
+extern void SV_LocateGameData(gentity_t *gEnts, int numGEntities, int sizeofGEntity_t, playerState_t *clients, int sizeofGameClient);
 extern qboolean SV_DObjExists(gentity_t *ent);
 
 static struct XModel *cached_models[256];
@@ -58,14 +58,13 @@ static struct XModel *cached_models[256];
 #define ENTITY_STRIDE sizeof(gentity_s)
 
 extern byte level_ptr[];
-extern byte g_entities_ptr[];
+extern gentity_t g_entities[];
 extern byte scr_const_ptr[];
 extern entityHandler_t entityHandlers[20];
 extern struct scr_data_t g_scr_data;
 
 #define LEVEL_PTR (&level)
 #define LEVEL_GENTITIES (LEVEL_PTR->gentities)
-#define G_ENTITIES_DIRECT ((gentity_t *)imp_g_entities)
 #define LEVEL_CLIENTS (LEVEL_PTR->clients)
 #define LEVEL_NUMENTS (LEVEL_PTR->num_entities)
 #define LEVEL_FIRSTFREEENT (LEVEL_PTR->firstFreeEnt)
@@ -79,7 +78,7 @@ extern struct scr_data_t g_scr_data;
 int COD2_GEntityHandle(const gentity_t *ent)
 {
 #if defined(COD2_X64) || defined(__x86_64__) || defined(_M_X64)
-    return ent ? (int)(ent - (const gentity_t *)imp_g_entities) + 1 : 0;
+    return ent ? (int)(ent - g_entities) + 1 : 0;
 #else
     return (int)(uintptr_t)ent;
 #endif
@@ -90,7 +89,7 @@ gentity_t *COD2_GEntityFromHandle(int handle)
 #if defined(COD2_X64) || defined(__x86_64__) || defined(_M_X64)
     if (handle <= 0 || handle > 1024)
         return NULL;
-    return handle ? &((gentity_t *)imp_g_entities)[handle - 1] : NULL;
+    return handle ? &g_entities[handle - 1] : NULL;
 #else
     return (gentity_t *)(uintptr_t)handle;
 #endif
@@ -127,7 +126,8 @@ tagInfo_t *COD2_TagInfoFromHandle(int handle)
 
 #define CORPSE_ENTNUM(i) ((((struct scr_data_t *)imp_g_scr_data)->playerCorpseInfo[(i)]).entnum)
 #define CORPSE_CALLBACK() (g_scr_data.delete_)
-#define SCR_CONST() ((const scr_const_t *)imp_scr_const)
+extern scr_const_t scr_const;
+#define SCR_CONST() (&scr_const)   /* was an imp_ deref; use the real object like cgame does */
 
 #define VectorCopy(a, b) ((b)[0] = (a)[0], (b)[1] = (a)[1], (b)[2] = (a)[2])
 #define VectorClear(v) ((v)[0] = 0, (v)[1] = 0, (v)[2] = 0)
@@ -141,24 +141,24 @@ int G_TagIndex(const char *name);
 int G_EffectIndex(const char *name);
 int G_ShellShockIndex(const char *name);
 SoundAlias G_SoundAliasIndex(const char *name);
-unsigned char G_SetModel(gentity_t *ent, const char *modelName);
+void G_SetModel(gentity_t *ent, const char *modelName);
 void G_SafeDObjFree(gentity_t *ent);
 qboolean G_DObjUpdateServerTime(gentity_t *ent, qboolean bNotify);
 int G_DObjCalcPose(gentity_t *ent);
 int G_DObjCalcBone(gentity_t *ent, int boneIndex);
 DObjAnimMat_s *G_DObjGetLocalTagMatrix(gentity_t *ent, unsigned int tagName);
-unsigned char G_InitGentity(gentity_t *e);
-unsigned char G_PrintEntities(void);
+void G_InitGentity(gentity_t *e);
+void G_PrintEntities(void);
 int G_GetPlayerCorpseIndex(gentity_t *ent);
 void G_FreeEntityDelay(gentity_t *ed);
 void G_AddPredictableEvent(gentity_t *ent, int event, int eventParm);
-unsigned char G_AddEvent(gentity_t *ent, int event, int eventParm);
-unsigned char G_SetConstString(scr_string_t *to, const char *from);
-unsigned char G_SetAngle(gentity_t *ent, const vec_t *angle);
+void G_AddEvent(gentity_t *ent, int event, int eventParm);
+void G_SetConstString(scr_string_t *to, const char *from);
+void G_SetAngle(gentity_t *ent, const vec_t *angle);
 qboolean G_XModelBad(int index);
-unsigned char G_SetOrigin(gentity_t *ent, const vec_t *origin);
+void G_SetOrigin(gentity_t *ent, const vec_t *origin);
 unsigned char G_PlaySoundAlias(gentity_t *ent, int index);
-unsigned char G_OverrideModel(int modelindex, const char *defaultModelName);
+void G_OverrideModel(int modelindex, const char *defaultModelName);
 int G_AnimScriptSound(int client, snd_alias_list_t *aliasList);
 unsigned char G_CalcTagParentAxis(gentity_t *ent, vec3_t *parentAxis);
 unsigned char G_SetFixedLink(gentity_t *ent, int eAngles);
@@ -168,10 +168,10 @@ static qboolean G_EntLinkToInternal(gentity_t *ent, gentity_t *parent, unsigned 
 qboolean G_EntLinkToWithOffset(gentity_t *ent, gentity_t *parent, unsigned int tagName, const vec_t *originOffset, const vec_t *anglesOffset);
 qboolean G_EntLinkTo(gentity_t *ent, gentity_t *parent, unsigned int tagName);
 void G_GeneralLink(gentity_t *ent);
-unsigned char G_FreeEntity(gentity_t *ed);
+void G_FreeEntity(gentity_t *ed);
 int G_GetFreePlayerCorpseIndex(void);
 void G_DObjUpdate(gentity_t *ent);
-unsigned char G_EntDetachAll(gentity_t *ent);
+void G_EntDetachAll(gentity_t *ent);
 qboolean G_EntDetach(gentity_t *ent, const char *modelName, unsigned int tagName);
 qboolean G_EntAttach(gentity_t *ent, const char *modelName, unsigned int tagName, qboolean ignoreCollision);
 gentity_t *G_Spawn(void);
@@ -287,7 +287,7 @@ SoundAlias G_SoundAliasIndex(const char *name)
     return (SoundAlias)(unsigned char)G_FindConfigstringIndex(name, 0x24e, 0x100, 1, 0);
 }
 
-unsigned char G_SetModel(gentity_t *ent, const char *modelName)
+void G_SetModel(gentity_t *ent, const char *modelName)
 {
     if (!*modelName) {
         (_ENT(ent)->model) = 0;
@@ -377,21 +377,21 @@ static inline __attribute__((always_inline)) void G_InitGentity_core(gentity_t *
     (_ENT(e)->nextFree = COD2_GEntityHandle(NULL));
     (_ENT(e)->r.inuse) = 1;
     Scr_SetString(&e->classname, SCR_CONST()->noclass);
-    (_ENT(e)->s.number) = (int)(e - (gentity_t *)imp_g_entities);
+    (_ENT(e)->s.number) = (int)(e - g_entities);
     (_ENT(e)->r.ownerNum) = 0x3FF;
     (_ENT(e)->eventTime) = 0;
     (_ENT(e)->freeAfterEvent) = 0;
 }
 
-unsigned char G_InitGentity(gentity_t *e)
+void G_InitGentity(gentity_t *e)
 {
     G_InitGentity_core(e);
 }
 
-unsigned char G_PrintEntities(void)
+void G_PrintEntities(void)
 {
     int entityIndex;
-    gentity_t *ent = G_ENTITIES_DIRECT;
+    gentity_t *ent = g_entities;
 
     for (entityIndex = 0; entityIndex < LEVEL_NUMENTS; entityIndex++, ent++) {
         const char *classStr;
@@ -437,7 +437,7 @@ void G_AddPredictableEvent(gentity_t *ent, int event, int eventParm)
     }
 }
 
-unsigned char G_AddEvent(gentity_t *ent, int event, int eventParm)
+void G_AddEvent(gentity_t *ent, int event, int eventParm)
 {
     gclient_t *client = (_ENT(ent)->client);
 
@@ -457,19 +457,19 @@ unsigned char G_AddEvent(gentity_t *ent, int event, int eventParm)
     (_ENT(ent)->r.eventTime) = LEVEL_TIME;
 }
 
-unsigned char G_SetConstString(scr_string_t *to, const char *from)
+void G_SetConstString(scr_string_t *to, const char *from)
 {
     Scr_SetString(to, 0);
     *to = (scr_string_t)SL_GetString(from, 0);
 }
 
-unsigned char G_SetAngle(gentity_t *ent, const vec_t *angle)
+void G_SetAngle(gentity_t *ent, const vec_t *angle)
 {
     float *p = (_ENT(ent)->s.apos.trBase);
     p[0] = angle[0];
     p[1] = angle[1];
     p[2] = angle[2];
-    (_ENT(ent)->s.apos.trType) = 0;
+    (_ENT(ent)->s.apos.trType) = (trType_t)(0);
     (_ENT(ent)->s.apos.trTime) = 0;
     (_ENT(ent)->s.apos.trDuration) = 0;
     p = (_ENT(ent)->s.apos.trDelta);
@@ -487,13 +487,13 @@ qboolean G_XModelBad(int index)
     return XModelBad(cached_models[index]);
 }
 
-unsigned char G_SetOrigin(gentity_t *ent, const vec_t *origin)
+void G_SetOrigin(gentity_t *ent, const vec_t *origin)
 {
     float *p = (_ENT(ent)->s.pos.trBase);
     p[0] = origin[0];
     p[1] = origin[1];
     p[2] = origin[2];
-    (_ENT(ent)->s.pos.trType) = 0;
+    (_ENT(ent)->s.pos.trType) = (trType_t)(0);
     (_ENT(ent)->s.pos.trTime) = 0;
     (_ENT(ent)->s.pos.trDuration) = 0;
     p = (_ENT(ent)->s.pos.trDelta);
@@ -532,7 +532,7 @@ unsigned char G_PlaySoundAlias(gentity_t *ent, int index)
     (_ENT(ent)->r.eventTime) = LEVEL_TIME;
 }
 
-unsigned char G_OverrideModel(int modelindex, const char *defaultModelName)
+void G_OverrideModel(int modelindex, const char *defaultModelName)
 {
     const char *modelName = SV_GetConfigstringConst(0x14e + modelindex);
 
@@ -547,7 +547,7 @@ int G_AnimScriptSound(int client, snd_alias_list_t *aliasList)
 
     soundIndex = (byte)G_FindConfigstringIndex(*(const char **)aliasList, 0x24e, 0x100, 1, 0);
 
-    ent = &G_ENTITIES_DIRECT[client];
+    ent = &g_entities[client];
 
     if (soundIndex) {
         gclient_t *cl = (_ENT(ent)->client);
@@ -584,7 +584,7 @@ unsigned char G_CalcTagParentAxis(gentity_t *ent, vec3_t *parentAxis)
 
     if (boneIndex < 0) {
 
-        AnglesToAxis((_ENT(parent)->r.currentAngles), (vec_t *)parentAxis);
+        AnglesToAxis((_ENT(parent)->r.currentAngles), parentAxis);
         VectorCopy((_ENT(parent)->r.currentOrigin), ((vec_t *)parentAxis + 9));
     } else {
         vec3_t tempAxis[3];
@@ -592,7 +592,7 @@ unsigned char G_CalcTagParentAxis(gentity_t *ent, vec3_t *parentAxis)
         vec3_t origin;
         DObjAnimMat_s *mat;
 
-        AnglesToAxis((_ENT(parent)->r.currentAngles), (vec_t *)tempAxis);
+        AnglesToAxis((_ENT(parent)->r.currentAngles), tempAxis);
         VectorCopy((_ENT(parent)->r.currentOrigin), origin);
 
         G_DObjCalcBone(parent, boneIndex);
@@ -645,12 +645,12 @@ unsigned char G_SetFixedLink(gentity_t *ent, int eAngles)
 
     switch (eAngles) {
     case 0:
-        MatrixMultiply43(((vec_t *)(tagInfo)->axis), (vec_t *)parentAxis, (vec_t *)axis);
+        MatrixMultiply43(tagInfo->axis, parentAxis, axis);
         VectorCopy(((vec_t *)axis + 9), (_ENT(ent)->r.currentOrigin));
-        AxisToAngles((vec_t *)axis, (_ENT(ent)->r.currentAngles));
+        AxisToAngles(axis, (_ENT(ent)->r.currentAngles));
         break;
     case 1:
-        MatrixMultiply43(((vec_t *)(tagInfo)->axis), (vec_t *)parentAxis, (vec_t *)axis);
+        MatrixMultiply43(tagInfo->axis, parentAxis, axis);
         VectorCopy(((vec_t *)axis + 9), (_ENT(ent)->r.currentOrigin));
         (_ENT(ent)->r.currentAngles)
         [1] = vectoyaw((vec_t *)axis);
@@ -664,7 +664,7 @@ unsigned char G_SetFixedLink(gentity_t *ent, int eAngles)
 unsigned char G_CalcTagAxis(gentity_t *ent, qboolean bAnglesOnly)
 {
     vec3_t parentAxis[4];
-    vec3_t axis[3];
+    vec3_t axis[4];
     tagInfo_t *tagInfo;
     vec3_t invParentAxis[4];
 
@@ -675,16 +675,15 @@ unsigned char G_CalcTagAxis(gentity_t *ent, qboolean bAnglesOnly)
     }
 
     G_CalcTagParentAxis(ent, parentAxis);
-    AnglesToAxis((_ENT(ent)->r.currentAngles), (vec_t *)axis);
+    AnglesToAxis((_ENT(ent)->r.currentAngles), axis);
+    VectorCopy((_ENT(ent)->r.currentOrigin), axis[3]);
 
     if (bAnglesOnly) {
-        MatrixTranspose((vec_t *)parentAxis, (vec_t *)invParentAxis);
+        MatrixTranspose( (const float (*)[3])((vec_t *)parentAxis), (float (*)[3])((vec_t *)invParentAxis));
         MatrixMultiply((vec_t *)axis, (vec_t *)invParentAxis, ((vec_t *)(tagInfo)->axis));
     } else {
-        vec3_t origin;
-        MatrixInverseOrthogonal43((vec_t *)parentAxis, (vec_t *)invParentAxis);
-        VectorCopy((_ENT(ent)->r.currentOrigin), origin);
-        MatrixMultiply43((vec_t *)axis, (vec_t *)invParentAxis, ((vec_t *)(tagInfo)->axis));
+        MatrixInverseOrthogonal43( (const float (*)[3])((vec_t *)parentAxis), (float (*)[3])((vec_t *)invParentAxis));
+        MatrixMultiply43(axis, invParentAxis, tagInfo->axis);
     }
 }
 
@@ -696,13 +695,13 @@ unsigned char G_EntUnlink(gentity_t *ent)
     }
 
     VectorCopy((_ENT(ent)->r.currentOrigin), (_ENT(ent)->s.pos.trBase));
-    (_ENT(ent)->s.pos.trType) = 0;
+    (_ENT(ent)->s.pos.trType) = (trType_t)(0);
     (_ENT(ent)->s.pos.trTime) = 0;
     (_ENT(ent)->s.pos.trDuration) = 0;
     VectorClear((_ENT(ent)->s.pos.trDelta));
 
     VectorCopy((_ENT(ent)->r.currentAngles), (_ENT(ent)->s.apos.trBase));
-    (_ENT(ent)->s.apos.trType) = 0;
+    (_ENT(ent)->s.apos.trType) = (trType_t)(0);
     (_ENT(ent)->s.apos.trTime) = 0;
     (_ENT(ent)->s.apos.trDuration) = 0;
     VectorClear((_ENT(ent)->s.apos.trDelta));
@@ -795,7 +794,7 @@ qboolean G_EntLinkToWithOffset(gentity_t *ent, gentity_t *parent, unsigned int t
     }
 
     tagInfo = COD2_TagInfoFromHandle(_ENT(ent)->tagInfo);
-    AnglesToAxis(anglesOffset, (vec_t *)tagInfo->axis);
+    AnglesToAxis(anglesOffset, tagInfo->axis);
     {
         float *d = tagInfo->axis[3];
         d[0] = originOffset[0];
@@ -851,13 +850,13 @@ void G_GeneralLink(gentity_t *ent)
     p[1] = 0;
     p[2] = 0;
 
-    (_ENT(ent)->s.pos.trType) = 1;
-    (_ENT(ent)->s.apos.trType) = 1;
+    (_ENT(ent)->s.pos.trType) = (trType_t)(1);
+    (_ENT(ent)->s.apos.trType) = (trType_t)(1);
 
     SV_LinkEntity(ent);
 }
 
-unsigned char G_FreeEntity(gentity_t *ed)
+void G_FreeEntity(gentity_t *ed)
 {
     int entnum;
     int i;
@@ -874,7 +873,7 @@ unsigned char G_FreeEntity(gentity_t *ed)
     {
         void *tree = SV_DObjGetTree(ed);
         if (tree) {
-            XAnimClearTree(tree);
+            XAnimClearTree( (XAnimTree *)(tree));
         }
     }
 
@@ -970,8 +969,8 @@ int G_GetFreePlayerCorpseIndex(void)
     match = SCR_CONST()->player;
 
     {
-        gentity_t *ent = G_ENTITIES_DIRECT;
-        gentity_t *end = G_ENTITIES_DIRECT + LEVEL_NUMENTS;
+        gentity_t *ent = g_entities;
+        gentity_t *end = g_entities + LEVEL_NUMENTS;
         gentity_t *found = 0;
 
         while (ent < end) {
@@ -1091,7 +1090,7 @@ void G_DObjUpdate(gentity_t *ent)
     }
 }
 
-unsigned char G_EntDetachAll(gentity_t *ent)
+void G_EntDetachAll(gentity_t *ent)
 {
     int i;
 
@@ -1208,7 +1207,7 @@ gentity_t *G_Spawn(void)
         int num = LEVEL_NUMENTS;
         e = &LEVEL_GENTITIES[num];
         LEVEL_NUMENTS = num + 1;
-        SV_LocateGameData(LEVEL_GENTITIES, num + 1, ENTITY_STRIDE, LEVEL_CLIENTS, 0x28A4);
+        SV_LocateGameData(LEVEL_GENTITIES, num + 1, ENTITY_STRIDE, (playerState_t *)(LEVEL_CLIENTS), 0x28A4);
     }
 
 init:
@@ -1235,7 +1234,7 @@ gentity_t *G_TempEntity(const vec_t *origin, int event)
     snapped[2] = (float)(int)origin[2];
 
     VectorCopy(snapped, (_ENT(e)->s.pos.trBase));
-    (_ENT(e)->s.pos.trType) = 0;
+    (_ENT(e)->s.pos.trType) = (trType_t)(0);
     (_ENT(e)->s.pos.trTime) = 0;
     (_ENT(e)->s.pos.trDuration) = 0;
     VectorClear((_ENT(e)->s.pos.trDelta));
@@ -1292,7 +1291,7 @@ qboolean G_DObjGetWorldTagMatrix(gentity_t *ent, unsigned int tagName, vec3_t *t
         return 0;
     }
 
-    AnglesToAxis((_ENT(ent)->r.currentAngles), (vec_t *)ent_axis);
+    AnglesToAxis((_ENT(ent)->r.currentAngles), ent_axis);
     VectorCopy((_ENT(ent)->r.currentOrigin), origin);
 
     {
@@ -1344,7 +1343,7 @@ int G_DObjGetWorldTagPos(gentity_t *ent, unsigned int tagName, vec_t *pos)
         return 0;
     }
 
-    AnglesToAxis((_ENT(ent)->r.currentAngles), (vec_t *)ent_axis);
+    AnglesToAxis((_ENT(ent)->r.currentAngles), ent_axis);
     VectorCopy((_ENT(ent)->r.currentOrigin), origin);
 
     MatrixTransformVector43((vec_t *)&mat->trans, (vec_t *)ent_axis, pos);

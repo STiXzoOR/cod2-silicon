@@ -64,9 +64,9 @@ static void gfxV60_RegisterWindowClass(void)
 
 void gfxV60_LoadRetailRenderer(refimport_t *ri_local, refexport_t *out_re)
 {
-    static unsigned char ri_v60[768];
-    const int *src = (const int *)ri_local;
-    int *dst = (int *)ri_v60;
+    static intptr_t ri_v60[181];
+    const intptr_t *src = (const intptr_t *)ri_local;
+    intptr_t *dst = ri_v60;
     refexport_t *ret;
     int k;
 
@@ -84,47 +84,47 @@ void gfxV60_LoadRetailRenderer(refimport_t *ri_local, refexport_t *out_re)
     memset(ri_v60, 0, sizeof(ri_v60));
     for (k = 0; k < 181; k++)
         dst[k] = (kV60ToV59[k] >= 0) ? src[kV60ToV59[k]]
-                                     : (int)(intptr_t)gfxV60Thunks[k];
+                                     : (intptr_t)gfxV60Thunks[k];
 
-    dst[18] = (int)(intptr_t)gfxv60_HiAlloc;
-    dst[19] = (int)(intptr_t)gfxv60_HiSetOffset;
-    dst[20] = (int)(intptr_t)gfxv60_HiOffToPtr;
+    dst[18] = (intptr_t)gfxv60_HiAlloc;
+    dst[19] = (intptr_t)gfxv60_HiSetOffset;
+    dst[20] = (intptr_t)gfxv60_HiOffToPtr;
     dst[21] = src[18];
-    dst[22] = (int)(intptr_t)gfxv60_ShowWin;
-    dst[23] = (int)(intptr_t)gfxv60_HideWin;
-    dst[24] = (int)(intptr_t)gfxv60_PumpMsgs;
-    dst[25] = (int)(intptr_t)Dvar_FindVar;
+    dst[22] = (intptr_t)gfxv60_ShowWin;
+    dst[23] = (intptr_t)gfxv60_HideWin;
+    dst[24] = (intptr_t)gfxv60_PumpMsgs;
+    dst[25] = (intptr_t)Dvar_FindVar;
 
-    dst[112] = (int)(intptr_t)gfxv60_GetThreadData;
-    dst[113] = (int)(intptr_t)gfxv60_CurThreadId;
-    dst[114] = (int)(intptr_t)gfxv60_IsWorker;
-    dst[115] = (int)(intptr_t)gfxv60_ResumeWorker;
-    dst[116] = (int)(intptr_t)gfxv60_InitWorker;
-    dst[117] = (int)(intptr_t)gfxv60_m114;
-    dst[118] = (int)(intptr_t)gfxv60_m115;
-    dst[119] = (int)(intptr_t)gfxv60_m116;
-    dst[120] = (int)(intptr_t)gfxv60_m117;
-    dst[121] = (int)(intptr_t)gfxv60_m118;
-    dst[122] = (int)(intptr_t)gfxv60_m119;
-    dst[123] = (int)(intptr_t)gfxv60_m120;
-    dst[124] = (int)(intptr_t)gfxv60_m121;
-    dst[125] = (int)(intptr_t)gfxv60_m122;
+    dst[112] = (intptr_t)gfxv60_GetThreadData;
+    dst[113] = (intptr_t)gfxv60_CurThreadId;
+    dst[114] = (intptr_t)gfxv60_IsWorker;
+    dst[115] = (intptr_t)gfxv60_ResumeWorker;
+    dst[116] = (intptr_t)gfxv60_InitWorker;
+    dst[117] = (intptr_t)gfxv60_m114;
+    dst[118] = (intptr_t)gfxv60_m115;
+    dst[119] = (intptr_t)gfxv60_m116;
+    dst[120] = (intptr_t)gfxv60_m117;
+    dst[121] = (intptr_t)gfxv60_m118;
+    dst[122] = (intptr_t)gfxv60_m119;
+    dst[123] = (intptr_t)gfxv60_m120;
+    dst[124] = (intptr_t)gfxv60_m121;
+    dst[125] = (intptr_t)gfxv60_m122;
 
     dst[111] = src[107];
 
-    dst[159] = (int)(intptr_t)CM_GetPlaneNum;
+    dst[159] = (intptr_t)CM_GetPlaneNum;
 
     ret = CL_LoadRendererDll(0x3c, (refimport_t *)ri_v60);
 
     {
 #    include "PC/client_mp/gfx_dll_v60_re_map.h"
-        const int *rsrc = (const int *)ret;
-        int *rdst = (int *)out_re;
-        int n = (int)(sizeof(*out_re) / 4);
+        const intptr_t *rsrc = (const intptr_t *)ret;
+        intptr_t *rdst = (intptr_t *)out_re;
+        int n = (int)(sizeof(*out_re) / sizeof(*rdst));
         for (k = 0; k < n && k < (int)(sizeof(kReV60) / sizeof(kReV60[0])); k++)
             rdst[k] = (kReV60[k] >= 0) ? rsrc[kReV60[k]] : rsrc[k];
 
-        rdst[79] = (int)(intptr_t)gfxv60_MaterialDup;
+        rdst[79] = (intptr_t)gfxv60_MaterialDup;
 
         g_gfxV60AddRefEntity = (void *)rsrc[20];
     }

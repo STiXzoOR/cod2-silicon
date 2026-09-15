@@ -1,4 +1,5 @@
 #include "common_types.h"
+#include "bytematch.h"
 extern dvar_t *r_rendererInUse;
 #include "imports.h"
 extern r_global_permanent_t rgp;
@@ -7,15 +8,16 @@ extern void Image_Setup(GfxImage *image, int width, int height, int depth, int s
 extern int Image_CubemapFace(int face);
 extern void Image_UploadData(GfxImage *image, int imageFormat, int face, int mipLevel, byte *pixels);
 extern void Image_Create2DTexture(GfxImage *image, int width, int height, int depth, int flags, int format, int unused);
-extern float Vec3NormalizeTo(const vec_t *src, vec_t *dst);
-extern float Vec3Normalize(vec_t *v);
+extern const vec_t Vec3NormalizeTo(const vec_t *v, vec_t *out);
+extern const vec_t Vec3Normalize(vec_t *v);
 extern float floorf(float x);
 extern float FresnelTerm(float ior0, float ior1, float cosIncident);
-extern void AxisTransformVector(const void *matrix, float x, float y, float z, vec_t *out);
+extern void AxisTransformVector(vec3_t *axes, const vec_t x, const vec_t y, const vec_t z,
+                                vec_t *out);
 extern int Vec3MajorAxis(const vec_t *v);
 extern void *Hunk_AllocateTempMemoryInternal(int size);
 extern void Hunk_FreeTempMemory(void *buf);
-extern void R_LoadJpg(const char *filepath, void **file, byte **pic, int *width, int *height, int *imageFormat);
+extern void R_LoadJpg(const char *filepath, byte **file, byte **pic, int *width, int *height, D3DFORMAT *imageFormat);
 extern void R_GenerateOutdoorImage(GfxImage *image);
 extern void Image_BuildSpecularityMap(int unused, byte *pic);
 
@@ -79,8 +81,8 @@ void Image_BuildWaterMap(GfxImage *image)
 
 static void __attribute_regparm__(3) Image_LoadBitmap(GfxImage *image, const GfxImageFileHeader *fileHeader, const byte *data, D3DFORMAT format, int bytesPerPixel)
 {
-    byte *img = (byte *)image;
     int faceCount, mipLevel;
+    int picmip;
     byte *expandedData = NULL;
     const byte *srcPtr = data;
 
@@ -100,8 +102,10 @@ static void __attribute_regparm__(3) Image_LoadBitmap(GfxImage *image, const Gfx
         mipLevel = Image_ComputeMipCount(fileHeader->dimensions[0], fileHeader->dimensions[1], fileHeader->dimensions[2]);
     }
 
+    picmip = image->picmip.platform[0];
+
     while (1) {
-        if (mipLevel < img[8])
+        if (mipLevel < picmip)
             break;
 
         {
@@ -118,7 +122,7 @@ static void __attribute_regparm__(3) Image_LoadBitmap(GfxImage *image, const Gfx
             mipDataSize = mipPixels * bytesPerPixel;
 
             for (face = 0; face < faceCount; face++) {
-                int uploadMip = mipLevel - img[8];
+                int uploadMip = mipLevel - picmip;
 
                 if (format == 0x16) {
 
@@ -149,9 +153,9 @@ static void __attribute_regparm__(3) Image_LoadBitmap(GfxImage *image, const Gfx
 
 static void __attribute_regparm__(3) Image_LoadDxtc(GfxImage *image, const GfxImageFileHeader *fileHeader, const byte *data, D3DFORMAT format, int bytesPerBlock)
 {
-    byte *img = (byte *)image;
     const byte *hdr = (const byte *)fileHeader;
     int faceCount, mipLevel;
+    int picmip;
     const byte *srcPtr = data;
 
     Image_Setup(image, fileHeader->dimensions[0], fileHeader->dimensions[1], fileHeader->dimensions[2],
@@ -164,11 +168,13 @@ static void __attribute_regparm__(3) Image_LoadDxtc(GfxImage *image, const GfxIm
     else
         mipLevel = Image_ComputeMipCount(fileHeader->dimensions[0], fileHeader->dimensions[1], fileHeader->dimensions[2]);
 
+    picmip = image->picmip.platform[0];
+
     while (1) {
         int mipW, mipH, face, mipDataSize;
         int blocksW, blocksH;
 
-        if (mipLevel < img[8])
+        if (mipLevel < picmip)
             break;
 
         mipW = *(short *)(hdr + 6) >> mipLevel;
@@ -188,7 +194,7 @@ static void __attribute_regparm__(3) Image_LoadDxtc(GfxImage *image, const GfxIm
         mipDataSize = blocksW * blocksH * bytesPerBlock;
 
         for (face = 0; face < faceCount; face++) {
-            int uploadMip = mipLevel - img[8];
+            int uploadMip = mipLevel - picmip;
             Image_UploadData(image, format, Image_CubemapFace(face), uploadMip, (byte *)srcPtr);
             srcPtr += mipDataSize;
         }
@@ -196,7 +202,7 @@ static void __attribute_regparm__(3) Image_LoadDxtc(GfxImage *image, const GfxIm
     }
 }
 
-extern void Wavelet_DecompressLevel(const byte *src, byte *dst, void *decode);   /* was int offset -> truncated dst on x64 */
+extern void Wavelet_DecompressLevel(byte *src, byte *dst, WaveletDecode *decode);   /* was int offset -> truncated dst on x64 */
 extern int Image_CubemapFace(int faceIndex);
 extern void *__Znam(unsigned int size);
 extern void __ZdaPv(void *ptr);
@@ -273,6 +279,15 @@ static void __attribute_regparm__(3) Image_LoadWavelet(GfxImage *image, const by
             void *pTemp = __Znam(allocSize);
             memcpy(pTemp, newAddr, sizeForLevel);
 
+            /* Byte-order fixup for BIG-ENDIAN hosts only. The wavelet decoder already
+               emits pixels in A8R8G8B8 memory order ([B,G,R,A]), which is what the
+               texture upload expects on a little-endian machine. Running this swap
+               unconditionally -- a leftover from the PowerPC original -- reversed every
+               pixel to [A,R,G,B] and rotated the channels, so wavelet-coded art (the
+               menu logo among it) came out tinted while DXT art, which never takes this
+               path, looked correct. */
+#if defined(__BIG_ENDIAN__) || \
+    (defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
             {
                 unsigned int swapCount = (unsigned int)allocSize / 4;
                 unsigned int u;
@@ -282,9 +297,10 @@ static void __attribute_regparm__(3) Image_LoadWavelet(GfxImage *image, const by
                         (v >> 24) | (v << 24) | ((v << 8) & 0xff0000) | ((v >> 8) & 0xff00);
                 }
             }
+#endif
 
             int cubeFace = Image_CubemapFace(face);
-            Image_UploadData(image, format, cubeFace, level - picmip, (const byte *)pTemp);
+            Image_UploadData(image, format, cubeFace, level - picmip, (byte *)((const byte *)pTemp));
 
             if (pTemp)
                 __ZdaPv(pTemp);
@@ -309,43 +325,43 @@ void Image_LoadFromData(GfxImage *image, GfxImageFileHeader *fileHeader, const b
 
     switch (formatType) {
     case 1:
-        Image_LoadBitmap(image, fileHeader, srcData, 0x15, 4);
+        Image_LoadBitmap(image, fileHeader, srcData, (D3DFORMAT)(0x15), 4);
         break;
     case 2:
-        Image_LoadBitmap(image, fileHeader, srcData, 0x16, 3);
+        Image_LoadBitmap(image, fileHeader, srcData, (D3DFORMAT)(0x16), 3);
         break;
     case 3:
-        Image_LoadBitmap(image, fileHeader, srcData, 0x33, 2);
+        Image_LoadBitmap(image, fileHeader, srcData, (D3DFORMAT)(0x33), 2);
         break;
     case 4:
-        Image_LoadBitmap(image, fileHeader, srcData, 0x32, 1);
+        Image_LoadBitmap(image, fileHeader, srcData, (D3DFORMAT)(0x32), 1);
         break;
     case 5:
-        Image_LoadBitmap(image, fileHeader, srcData, 0x1c, 1);
+        Image_LoadBitmap(image, fileHeader, srcData, (D3DFORMAT)(0x1c), 1);
         break;
     case 6:
-        Image_LoadWavelet(image, (const byte *)fileHeader, srcData, 0x15, 4);
+        Image_LoadWavelet(image, (const byte *)fileHeader, srcData, (D3DFORMAT)(0x15), 4);
         break;
     case 7:
-        Image_LoadWavelet(image, (const byte *)fileHeader, srcData, 0x16, 3);
+        Image_LoadWavelet(image, (const byte *)fileHeader, srcData, (D3DFORMAT)(0x16), 3);
         break;
     case 8:
-        Image_LoadWavelet(image, (const byte *)fileHeader, srcData, 0x33, 2);
+        Image_LoadWavelet(image, (const byte *)fileHeader, srcData, (D3DFORMAT)(0x33), 2);
         break;
     case 9:
-        Image_LoadWavelet(image, (const byte *)fileHeader, srcData, 0x32, 1);
+        Image_LoadWavelet(image, (const byte *)fileHeader, srcData, (D3DFORMAT)(0x32), 1);
         break;
     case 10:
-        Image_LoadWavelet(image, (const byte *)fileHeader, srcData, 0x1c, 1);
+        Image_LoadWavelet(image, (const byte *)fileHeader, srcData, (D3DFORMAT)(0x1c), 1);
         break;
     case 11:
-        Image_LoadDxtc(image, fileHeader, srcData, 0x31545844, 8);
+        Image_LoadDxtc(image, fileHeader, srcData, (D3DFORMAT)(0x31545844), 8);
         break;
     case 12:
-        Image_LoadDxtc(image, fileHeader, srcData, 0x33545844, 16);
+        Image_LoadDxtc(image, fileHeader, srcData, (D3DFORMAT)(0x33545844), 16);
         break;
     case 13:
-        Image_LoadDxtc(image, fileHeader, srcData, 0x35545844, 16);
+        Image_LoadDxtc(image, fileHeader, srcData, (D3DFORMAT)(0x35545844), 16);
         break;
     default:
         break;
@@ -386,7 +402,7 @@ static void Image_GetWaterColorForVector(const vec_t *facePos, int packedColor, 
 
     Vec3NormalizeTo(facePos, dirFromEye);
 
-    fresnel = FresnelTerm(1.0f, *(float *)&(int){ 0x3faa9fbe }, *(float *)&dirFromEye[1]);
+    fresnel = FresnelTerm(1.0f, BM_I2F(0x3faa9fbe), *(float *)&dirFromEye[1]);
 
     color = packedColor;
 
@@ -417,7 +433,7 @@ static void Image_GetLightGridWeightsForVector(const vec_t *facePos, int subMap,
     float su, sv, sw;
     float w00, w01, w10, w11;
 
-    AxisTransformVector(lightGridLookupMatrix, facePos[0], facePos[1], facePos[2], transformedPos);
+    AxisTransformVector((vec3_t *)lightGridLookupMatrix, facePos[0], facePos[1], facePos[2], transformedPos);
 
     majorAxis = Vec3MajorAxis(transformedPos);
 
@@ -631,7 +647,7 @@ Bool Image_LoadRaw(GfxImage *image, const char *filepath, int imageTrack)
 
     (void)imageTrack;
 
-    R_LoadJpg(filepath, &file, &pic, &width, &height, &imageFormat);
+    R_LoadJpg(filepath, (byte **)(&file), &pic, &width, &height, (D3DFORMAT *)(&imageFormat));
 
     if (!pic)
         return 0;

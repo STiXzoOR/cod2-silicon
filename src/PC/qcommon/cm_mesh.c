@@ -8,7 +8,7 @@ extern float sqrtf(float x);
 extern clipMap_t cm;
 #define cm_ptr (&cm)
 
-extern float Vec3Normalize(vec3_t v);
+extern const vec_t Vec3Normalize(vec_t *v);
 
 #define CM_MESH_REGPARM3_ABI COD2_REGPARM(3)
 #define CM_MESH_REGPARM3_SSE_ABI COD2_REGPARM(3) COD2_SSEREGPARM
@@ -928,7 +928,7 @@ void CM_TraceThroughAabbTree(const traceWork_t *tw, CollisionAabbTree *aabbTree,
     oldFraction = trace->fraction;
     CM_TraceThroughAabbTree_r(tw, aabbTree, trace);
 
-    if (oldFraction > trace->fraction) {
+    if (trace->fraction < oldFraction) {
         trace->surfaceFlags = materialInfo->surfaceFlags;
         trace->contents = materialInfo->contentFlags;
         trace->material = (const char *)materialInfo;
@@ -948,7 +948,7 @@ void CM_SightTraceThroughAabbTree(const traceWork_t *tw, CollisionAabbTree *aabb
     oldFraction = trace->fraction;
     CM_TraceThroughAabbTree_r(tw, aabbTree, trace);
 
-    if (oldFraction > trace->fraction) {
+    if (trace->fraction < oldFraction) {
         trace->surfaceFlags = materialInfo->surfaceFlags;
         trace->contents = materialInfo->contentFlags;
         trace->material = (const char *)materialInfo;

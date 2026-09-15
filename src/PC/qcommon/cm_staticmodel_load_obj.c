@@ -1,25 +1,25 @@
 #include "common_types.h"
 #include "imports.h"
 #include <stdlib.h>
+extern clipMap_t cm;
 
 extern const char *Com_Parse(const char **buf);
 extern int stricmp(const char *s1, const char *s2);
-extern void *CM_XModelPrecache(const char *name);
-extern Bool Com_ValidXModelName(const char *name);
-extern void AnglesToAxis(vec3_t angles, float *axis);
+extern struct XModel * CM_XModelPrecache(const char *name);
+extern qboolean Com_ValidXModelName(const char *name);
+extern void AnglesToAxis(const vec_t *angles, vec3_t *axis);
 extern void MatrixInverse(float *src, float *dst);
-extern int XModelGetStaticBounds(void *model, float *axis, vec3_t outMins, vec3_t outMaxs);
+extern int XModelGetStaticBounds(const XModel *model, vec3_t *axis, vec_t *outMins, vec_t *outMaxs);
 extern void Com_Error(int level, const char *fmt, ...);
 extern void *CM_Hunk_Alloc(int size, const char *name, int align);
 extern int sscanf(const char *str, const char *fmt, ...);
 
 void CM_LoadStaticModels(void)
 {
-    clipMap_t *cm = (clipMap_t *)imp_cm;
-    const char *ptr = cm->entityString;
+    const char *ptr = cm.entityString;
 
-    cm->numStaticModels = 0;
-    cm->staticModelList = NULL;
+    cm.numStaticModels = 0;
+    cm.staticModelList = NULL;
 
     char modelName[64];
     char key[64];
@@ -64,21 +64,21 @@ void CM_LoadStaticModels(void)
         if (!Com_ValidXModelName(modelName))
             continue;
 
-        cm->numStaticModels += 1;
+        cm.numStaticModels += 1;
     }
 
-    int numStaticModels = cm->numStaticModels;
+    int numStaticModels = cm.numStaticModels;
     if (numStaticModels == 0)
         return;
 
 #if defined(__x86_64__) || defined(_M_X64)
 
-    cm->staticModelList = (cStaticModel_t *)CM_Hunk_Alloc(numStaticModels * (int)sizeof(cStaticModel_t), "CM_CreateStaticModel", 0x19);
+    cm.staticModelList = (cStaticModel_t *)CM_Hunk_Alloc(numStaticModels * (int)sizeof(cStaticModel_t), "CM_CreateStaticModel", 0x19);
 #else
-    cm->staticModelList = (cStaticModel_t *)CM_Hunk_Alloc(numStaticModels * 80, "CM_CreateStaticModel", 0x19);
+    cm.staticModelList = (cStaticModel_t *)CM_Hunk_Alloc(numStaticModels * 80, "CM_CreateStaticModel", 0x19);
 #endif
 
-    ptr = cm->entityString;
+    ptr = cm.entityString;
     int modelIdx = 0;
 
     for (;;) {
@@ -133,7 +133,7 @@ void CM_LoadStaticModels(void)
         if (!Com_ValidXModelName(modelName))
             continue;
 
-        cStaticModel_t *staticModel = &cm->staticModelList[modelIdx];
+        cStaticModel_t *staticModel = &cm.staticModelList[modelIdx];
 
         if (modelName[7] == '\0') {
             Com_Error(1, "CM_LoadStaticModels: empty model name");
@@ -151,7 +151,7 @@ void CM_LoadStaticModels(void)
 
         void *model = CM_XModelPrecache(modelName + 7);
         if (model == NULL) {
-            cm->numStaticModels -= 1;
+            cm.numStaticModels -= 1;
             continue;
         }
 
@@ -162,7 +162,7 @@ void CM_LoadStaticModels(void)
         staticModel->origin[2] = origin[2];
 
         float axis[9];
-        AnglesToAxis(angles, axis);
+        AnglesToAxis(angles, (vec3_t *)axis);
 
         axis[0] *= scale[0];
         axis[1] *= scale[0];
@@ -178,7 +178,7 @@ void CM_LoadStaticModels(void)
 
         MatrixInverse(axis, (float *)staticModel->invAxis);
 
-        if (XModelGetStaticBounds(model, axis, staticModel->absmin, staticModel->absmax)) {
+        if (XModelGetStaticBounds((const XModel *)model, (vec3_t *)axis, staticModel->absmin, staticModel->absmax)) {
 
             staticModel->absmin[0] += origin[0];
             staticModel->absmin[1] += origin[1];

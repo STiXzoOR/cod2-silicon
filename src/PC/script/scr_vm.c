@@ -181,7 +181,7 @@ typedef enum ScrVmOpcode_e {
 static const char *VM_OpcodeName(unsigned int opcode)
 {
     static const char *const names[0x87] = {
-        [0x00] = "End", [0x01] = "Return", [0x02] = "GetUndefined", [0x03] = "GetZero", [0x04] = "GetByte", [0x05] = "GetNegByte", [0x06] = "GetUnsignedShort", [0x07] = "GetNegUnsignedShort", [0x08] = "GetInteger", [0x09] = "GetFloat", [0x0a] = "GetString", [0x0b] = "GetIString", [0x0c] = "GetVector", [0x0d] = "GetLevelObject", [0x0e] = "GetAnimObject", [0x0f] = "GetSelf", [0x10] = "GetLevel", [0x11] = "GetGame", [0x12] = "GetAnim", [0x13] = "GetAnimation", [0x14] = "GetGameRef", [0x15] = "GetFunction", [0x16] = "CreateLocalVariable", [0x17] = "RemoveLocalVariables", [0x18] = "EvalLocalVariableCached0", [0x19] = "EvalLocalVariableCached1", [0x1a] = "EvalLocalVariableCached2", [0x1b] = "EvalLocalVariableCached3", [0x1c] = "EvalLocalVariableCached4", [0x1d] = "EvalLocalVariableCached5", [0x1e] = "EvalLocalVariable", [0x1f] = "EvalLocalArrayCached", [0x20] = "EvalArray", [0x21] = "EvalLocalVariableRefCached", [0x22] = "EvalArrayRefCached", [0x23] = "SetVariableField", [0x24] = "ClearArray", [0x25] = "EmptyArray", [0x26] = "IsDefinedSelfField", [0x27] = "IsDefinedLevelField", [0x28] = "IsDefinedAnimField", [0x29] = "EvalSelfFieldVariable", [0x2a] = "EvalFieldVariable", [0x2b] = "EvalLevelFieldVariable", [0x2c] = "EvalAnimFieldVariable", [0x2d] = "EvalSelfFieldVariableRef", [0x2e] = "EvalFieldVariableRef", [0x2f] = "ClearFieldVariable", [0x30] = "SafeCreateLocalVariables", [0x31] = "ClearParams", [0x32] = "CheckClearParams", [0x33] = "EvalLocalVariableRefCached0", [0x34] = "CheckClearParams2", [0x35] = "EndOn", [0x36] = "Notify", [0x37] = "EvalLocalVariableObject", [0x38] = "SetLevelFieldVariableField", [0x39] = "EvalLocalArrayRefCached0", [0x3a] = "SetAnimFieldVariableField", [0x3b] = "SetSelfFieldVariableField", [0x3c] = "SetLocalVariableFieldCached", [0x3d] = "SetLocalVariableField", [0x3e] = "CallBuiltin0", [0x3f] = "CallBuiltin1", [0x40] = "CallBuiltin2", [0x41] = "CallBuiltin3", [0x42] = "CallBuiltin4", [0x43] = "CallBuiltin5", [0x44] = "CallBuiltin", [0x45] = "CallBuiltinMethod0", [0x46] = "CallBuiltinMethod1", [0x47] = "CallBuiltinMethod2", [0x48] = "CallBuiltinMethod3", [0x49] = "CallBuiltinMethod4", [0x4a] = "CallBuiltinMethod5", [0x4b] = "CallBuiltinMethod", [0x4c] = "Wait", [0x4d] = "WaitTillFrameEnd", [0x4e] = "PreScriptCall", [0x4f] = "ScriptFunctionCallPointer", [0x50] = "ScriptFunctionCall", [0x51] = "ScriptFunctionCallExpr", [0x52] = "ScriptMethodCall", [0x53] = "ScriptMethodCallExpr", [0x54] = "ScriptThreadCall", [0x55] = "ScriptThreadCallExpr", [0x56] = "ScriptMethodThreadCall", [0x57] = "ScriptMethodThreadCallExpr", [0x58] = "DecTop", [0x59] = "EvalFieldObject", [0x5a] = "EvalLocalVariableObjectCached", [0x5b] = "CastBool", [0x5c] = "BoolNot", [0x5d] = "BoolComplement", [0x5e] = "JumpOnFalse", [0x5f] = "JumpOnTrue", [0x60] = "JumpOnFalseExpr", [0x61] = "JumpOnTrueExpr", [0x62] = "Jump", [0x63] = "JumpBack", [0x64] = "Inc", [0x65] = "Dec", [0x66] = "Bit_Or", [0x67] = "Bit_Xor", [0x68] = "Bit_And", [0x69] = "Equal", [0x6a] = "NotEqual", [0x6b] = "LessThan", [0x6c] = "GreaterThan", [0x6d] = "LessEqual", [0x6e] = "GreaterEqual", [0x6f] = "ShiftLeft", [0x70] = "ShiftRight", [0x71] = "Plus", [0x72] = "Minus", [0x73] = "Multiply", [0x74] = "Divide", [0x75] = "Mod", [0x76] = "SizeOf", [0x77] = "WaitTillMatch", [0x78] = "WaitTill", [0x79] = "NotifyCall", [0x7a] = "EndOnCallback", [0x7b] = "VoidCodepos", [0x7c] = "Switch", [0x7d] = "EndSwitch", [0x7e] = "Vector", [0x7f] = "Nop", [0x80] = "Abort", [0x81] = "Object", [0x82] = "ThreadObject", [0x83] = "EvalLevelFieldVariableRef", [0x84] = "EvalAnimFieldVariableRef", [0x85] = "DevblockBegin", [0x86] = "DevblockEnd"
+        "End", "Return", "GetUndefined", "GetZero", "GetByte", "GetNegByte", "GetUnsignedShort", "GetNegUnsignedShort", "GetInteger", "GetFloat", "GetString", "GetIString", "GetVector", "GetLevelObject", "GetAnimObject", "GetSelf", "GetLevel", "GetGame", "GetAnim", "GetAnimation", "GetGameRef", "GetFunction", "CreateLocalVariable", "RemoveLocalVariables", "EvalLocalVariableCached0", "EvalLocalVariableCached1", "EvalLocalVariableCached2", "EvalLocalVariableCached3", "EvalLocalVariableCached4", "EvalLocalVariableCached5", "EvalLocalVariable", "EvalLocalArrayCached", "EvalArray", "EvalLocalVariableRefCached", "EvalArrayRefCached", "SetVariableField", "ClearArray", "EmptyArray", "IsDefinedSelfField", "IsDefinedLevelField", "IsDefinedAnimField", "EvalSelfFieldVariable", "EvalFieldVariable", "EvalLevelFieldVariable", "EvalAnimFieldVariable", "EvalSelfFieldVariableRef", "EvalFieldVariableRef", "ClearFieldVariable", "SafeCreateLocalVariables", "ClearParams", "CheckClearParams", "EvalLocalVariableRefCached0", "CheckClearParams2", "EndOn", "Notify", "EvalLocalVariableObject", "SetLevelFieldVariableField", "EvalLocalArrayRefCached0", "SetAnimFieldVariableField", "SetSelfFieldVariableField", "SetLocalVariableFieldCached", "SetLocalVariableField", "CallBuiltin0", "CallBuiltin1", "CallBuiltin2", "CallBuiltin3", "CallBuiltin4", "CallBuiltin5", "CallBuiltin", "CallBuiltinMethod0", "CallBuiltinMethod1", "CallBuiltinMethod2", "CallBuiltinMethod3", "CallBuiltinMethod4", "CallBuiltinMethod5", "CallBuiltinMethod", "Wait", "WaitTillFrameEnd", "PreScriptCall", "ScriptFunctionCallPointer", "ScriptFunctionCall", "ScriptFunctionCallExpr", "ScriptMethodCall", "ScriptMethodCallExpr", "ScriptThreadCall", "ScriptThreadCallExpr", "ScriptMethodThreadCall", "ScriptMethodThreadCallExpr", "DecTop", "EvalFieldObject", "EvalLocalVariableObjectCached", "CastBool", "BoolNot", "BoolComplement", "JumpOnFalse", "JumpOnTrue", "JumpOnFalseExpr", "JumpOnTrueExpr", "Jump", "JumpBack", "Inc", "Dec", "Bit_Or", "Bit_Xor", "Bit_And", "Equal", "NotEqual", "LessThan", "GreaterThan", "LessEqual", "GreaterEqual", "ShiftLeft", "ShiftRight", "Plus", "Minus", "Multiply", "Divide", "Mod", "SizeOf", "WaitTillMatch", "WaitTill", "NotifyCall", "EndOnCallback", "VoidCodepos", "Switch", "EndSwitch", "Vector", "Nop", "Abort", "Object", "ThreadObject", "EvalLevelFieldVariableRef", "EvalAnimFieldVariableRef", "DevblockBegin", "DevblockEnd"
     };
 
     if (opcode < 0x87 && names[opcode]) {
@@ -193,7 +193,7 @@ static const char *VM_OpcodeName(unsigned int opcode)
 static unsigned int VM_OpcodeStaticLength(unsigned int opcode)
 {
     static const unsigned char lengths[0x87] = {
-        [0x00] = 1, [0x01] = 1, [0x02] = 1, [0x03] = 1, [0x04] = 2, [0x05] = 2, [0x06] = 3, [0x07] = 3, [0x08] = 5, [0x09] = 5, [0x0a] = 3, [0x0b] = 3, [0x0c] = 13, [0x0d] = 1, [0x0e] = 1, [0x0f] = 1, [0x10] = 1, [0x11] = 1, [0x12] = 1, [0x13] = 5, [0x14] = 1, [0x15] = 5, [0x16] = 3, [0x17] = 2, [0x18] = 1, [0x19] = 1, [0x1a] = 1, [0x1b] = 1, [0x1c] = 1, [0x1d] = 1, [0x1e] = 2, [0x1f] = 2, [0x20] = 1, [0x21] = 1, [0x22] = 2, [0x23] = 1, [0x24] = 1, [0x25] = 1, [0x26] = 1, [0x27] = 3, [0x28] = 3, [0x29] = 3, [0x2a] = 3, [0x2b] = 3, [0x2c] = 3, [0x2d] = 3, [0x2e] = 3, [0x2f] = 3, [0x30] = 3, [0x31] = 1, [0x32] = 2, [0x33] = 2, [0x34] = 1, [0x35] = 1, [0x36] = 1, [0x37] = 2, [0x38] = 3, [0x39] = 1, [0x3a] = 3, [0x3b] = 3, [0x3c] = 1, [0x3d] = 2, [0x3e] = 3, [0x3f] = 3, [0x40] = 3, [0x41] = 3, [0x42] = 3, [0x43] = 3, [0x44] = 4, [0x45] = 3, [0x46] = 3, [0x47] = 3, [0x48] = 3, [0x49] = 3, [0x4a] = 3, [0x4b] = 4, [0x4c] = 1, [0x4d] = 1, [0x4e] = 1, [0x4f] = 5, [0x50] = 5, [0x51] = 1, [0x52] = 5, [0x53] = 1, [0x54] = 9, [0x55] = 5, [0x56] = 9, [0x57] = 5, [0x58] = 1, [0x59] = 1, [0x5a] = 2, [0x5b] = 1, [0x5c] = 1, [0x5d] = 1, [0x5e] = 3, [0x5f] = 3, [0x60] = 3, [0x61] = 3, [0x62] = 5, [0x63] = 3, [0x64] = 1, [0x65] = 1, [0x66] = 1, [0x67] = 1, [0x68] = 1, [0x69] = 1, [0x6a] = 1, [0x6b] = 1, [0x6c] = 1, [0x6d] = 1, [0x6e] = 1, [0x6f] = 1, [0x70] = 1, [0x71] = 1, [0x72] = 1, [0x73] = 1, [0x74] = 1, [0x75] = 1, [0x76] = 1, [0x77] = 1, [0x78] = 1, [0x79] = 1, [0x7a] = 1, [0x7b] = 1, [0x7c] = 5, [0x7d] = 0, [0x7e] = 1, [0x7f] = 1, [0x80] = 1, [0x81] = 9, [0x82] = 3, [0x83] = 3, [0x84] = 3, [0x85] = 2, [0x86] = 2
+        1, 1, 1, 1, 2, 2, 3, 3, 5, 5, 3, 3, 13, 1, 1, 1, 1, 1, 1, 5, 1, 5, 3, 2, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 2, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 2, 2, 1, 1, 1, 2, 3, 1, 3, 3, 1, 2, 3, 3, 3, 3, 3, 3, 4, 3, 3, 3, 3, 3, 3, 4, 1, 1, 1, 5, 5, 1, 5, 1, 9, 5, 9, 5, 1, 1, 2, 1, 1, 1, 3, 3, 3, 3, 5, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 0, 1, 1, 1, 9, 3, 3, 3, 2, 2
     };
 
     if (opcode < 0x87) {
@@ -215,7 +215,7 @@ extern unsigned int FindObjectVariable(unsigned int parentId, unsigned int id);
 extern unsigned int Scr_GetSelf(unsigned int startLocalId);
 extern unsigned int FindVariable(unsigned int parentId, unsigned int value);
 extern unsigned int GetNewArrayVariable(unsigned int parentId, unsigned int unsignedValue);
-extern unsigned int Scr_GetThreadNotifyName(unsigned int startLocalId);
+extern unsigned short Scr_GetThreadNotifyName(unsigned int startLocalId);
 extern unsigned int Scr_GetEntityId(int entnum, int classnum);
 extern unsigned int FindEntityId(int entnum, int classnum);
 extern void Com_Error(int code, const char *fmt, ...);
@@ -225,7 +225,7 @@ extern Bool Scr_CastString(VariableValue *value);
 extern void Scr_CastDebugString(VariableValue *value);
 extern int GetVarType(unsigned int id);
 extern void Com_Printf(const char *fmt, ...);
-extern void Scr_PrintPrevCodePos(int type, const char *codePos, unsigned int index);
+extern void Scr_PrintPrevCodePos(print_msg_type_t type, const char *codePos, unsigned int index);
 extern void _exit(int status);
 extern qboolean Scr_SetObjectField(unsigned int classnum, int entnum, int offset);
 extern unsigned char scrVarGlob[];
@@ -246,7 +246,7 @@ extern void Scr_CastBool(VariableValue *value);
 extern Bool IsValidArrayIndex(unsigned int unsignedValue);
 extern unsigned int GetInternalVariableIndex(unsigned int unsignedValue);
 extern int Scr_IsInOpcodeMemory(const char *pos);
-extern void *MT_Alloc(int size, int type);
+extern unsigned int *MT_Alloc(int size, int type);
 extern void MT_Free(void *ptr, int size);
 extern int MT_Realloc(int oldNumBytes, int newNumbytes);
 extern unsigned int Scr_GetThreadWaitTime(unsigned int startLocalId);
@@ -271,7 +271,7 @@ extern unsigned int AllocChildThread(unsigned int self, unsigned int parentLocal
 extern Bool IsValidArrayIndex(unsigned int unsignedValue);
 extern unsigned int GetInternalVariableIndex(unsigned int unsignedValue);
 extern unsigned int GetNewVariable(unsigned int parentId, unsigned int name);
-extern void SetNewVariableValue(unsigned int id, const void *value);
+extern void SetNewVariableValue(unsigned int id, VariableValue *value);
 extern void Scr_KillThread(unsigned int parentId);
 extern void Scr_KillEndonThread(unsigned int threadId);
 extern void Scr_StopThread(unsigned int threadId);
@@ -279,7 +279,7 @@ extern void Scr_SetThreadWaitTime(unsigned int startLocalId, unsigned int waitTi
 extern void Scr_SetThreadNotifyName(unsigned int startLocalId, unsigned int stringValue);
 extern void RemoveRefToEmptyObject(unsigned int id);
 extern struct XAnim_s *Scr_GetAnims(int index);
-extern XAnim *XAnimGetAnims(const struct XAnimTree_s *tree);
+extern XAnim *XAnimGetAnims(const XAnimTree *tree);
 extern const char *XAnimGetAnimTreeDebugName(const XAnim *anims);
 extern const char *XAnimGetAnimDebugName(const XAnim *anims, unsigned int animIndex);
 extern unsigned int Scr_CompileShutdown(void);
@@ -919,12 +919,12 @@ void Scr_AddArrayStringIndexed(unsigned int stringValue)
     byte *top;
 
     top = (byte *)scrVmPub.top;
-    scrVmPub.top = (void *)(top - 8);
+    scrVmPub.top = (VariableValue *)((void *)(top - 8));
     scrVmPub.inparamcount--;
 
     parentId = *(unsigned int *)(top - 8);
     varId = GetNewVariable(parentId, stringValue);
-    SetNewVariableValue(varId, (byte *)scrVmPub.top + 8);
+    SetNewVariableValue(varId, (VariableValue *)((byte *)scrVmPub.top + 8));
 }
 
 extern void Scr_GetObjectField(unsigned int classnum, int entnum, int offset);
@@ -943,7 +943,7 @@ unsigned long long __attribute_regparm__(0)
 }
 
 extern unsigned int Scr_GetVariableField(unsigned int structId, unsigned int index);
-extern void SetVariableFieldValue(unsigned int id, const void *value);
+extern void SetVariableFieldValue(unsigned int id, VariableValue *value);
 void Scr_SetStructField(unsigned int structId, unsigned int index)
 {
     unsigned int varId;
@@ -6763,7 +6763,7 @@ static int VM_CandidateHandleWaitTill(const char **pos, unsigned int *localVarCo
                        (unsigned char)archivePos[12], (unsigned char)archivePos[13],
                        (unsigned char)archivePos[14], (unsigned char)archivePos[15]);
         if (getenv("DBGSPAM"))
-            Scr_PrintPrevCodePos(0, archivePos, 0);
+            Scr_PrintPrevCodePos((print_msg_type_t)0, archivePos, 0);
         ++traceCount;
     }
 

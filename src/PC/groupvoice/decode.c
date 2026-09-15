@@ -5,7 +5,10 @@
 
 int g_current_decode_bandwidth_setting = 0x0;
 
-extern void *speex_decoder_init(const void *mode);
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern void *speex_decoder_init(const SpeexMode *mode);
 extern int speex_decoder_ctl(void *state, int request, void *ptr);
 extern int speex_encoder_ctl(void *state, int request, void *ptr);
 extern void speex_decoder_destroy(void *state);
@@ -13,6 +16,9 @@ extern void speex_bits_init(SpeexBits *bits);
 extern void speex_bits_destroy(SpeexBits *bits);
 extern void speex_bits_read_from(SpeexBits *bits, char *buffer, int len);
 extern int speex_decode(void *state, SpeexBits *bits, float *out);
+#ifdef __cplusplus
+}
+#endif
 extern void Com_Printf(const char *fmt, ...);
 
 extern const void *speex_nb_mode_ptr;
@@ -45,7 +51,7 @@ Bool Decode_Init(int bandwidthEnum)
         return 0;
     }
 
-    g_decoder = speex_decoder_init(mode);
+    g_decoder = speex_decoder_init( (const SpeexMode *)(mode));
     speex_decoder_ctl(g_decoder, 0, &tmp);
     speex_decoder_ctl(g_decoder, 0x18, speex_quality_ptr);
     speex_encoder_ctl(g_decoder, 3, &g_decode_frame_size);

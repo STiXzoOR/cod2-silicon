@@ -1,6 +1,7 @@
 #include "common_types.h"
 #include "imports.h"
 #include <stddef.h>
+#include <stdio.h>
 
 COD2_ASSERT_FIELD(client_t, reliableAcknowledge,     0x20810);
 COD2_ASSERT_FIELD(client_t, messageAcknowledge,      0x20818);
@@ -27,11 +28,11 @@ extern byte svs_ptr[];
 extern byte sv_ptr[];
 extern byte *net_profile_dvar;
 
-#define SVS_CLIENTS_OFF 0xc
-#define SVS_POOBPROF_OFF 0xa074
+#define SVS_CLIENTS_OFF ((int)offsetof(serverStatic_t, clients))
+#define SVS_POOBPROF_OFF ((int)offsetof(serverStatic_t, pOOBProf))
 
 extern Bool Netchan_TransmitNextFragment(netchan_t *chan);
-extern Bool Netchan_Transmit(netchan_t *chan, int length, byte *data);
+extern Bool Netchan_Transmit(netchan_t *chan, int length, const byte *data);
 extern void NetProf_PrepProfiling(netProfileInfo_t *prof);
 extern void NetProf_AddPacket(netProfileStream_t *stream, int iLength, qboolean bFragment);
 extern void NetProf_UpdateStatistics(netProfileStream_t *stream);
@@ -57,19 +58,18 @@ static float _fmaxf(float a, float b)
 
 void SV_Netchan_Decode(client_t *client, byte *data, int size)
 {
-    byte *cl = (byte *)client;
     int reliableAcknowledge;
     const char *string;
     byte key;
     int index;
     int i;
 
-    reliableAcknowledge = *(int *)(cl + CLIENT_RELIABLEACK_OFF);
-    string = (const char *)(cl + CLIENT_RELCMDINFO_OFF + (reliableAcknowledge & 0x7f) * SVSCMD_SIZE);
+    reliableAcknowledge = client->reliableAcknowledge;
+    string = client->reliableCommandInfo[reliableAcknowledge & 0x7f].cmd;
 
-    key = (byte)(*(int *)(cl + CLIENT_SERVERID_OFF));
-    key ^= (byte)(*(int *)(cl + CLIENT_CHALLENGE_OFF));
-    key ^= (byte)(*(int *)(cl + CLIENT_MSGACK_OFF));
+    key = (byte)client->serverId;
+    key ^= (byte)client->challenge;
+    key ^= (byte)client->messageAcknowledge;
 
     index = 0;
     for (i = 0; i < size; i++) {
@@ -96,7 +96,6 @@ Bool SV_Netchan_TransmitNextFragment(netchan_t *chan)
 
 Bool SV_Netchan_Transmit(client_t *client, int length, byte *data)
 {
-    byte *cl = (byte *)client;
     int outgoingSequence;
     const char *string;
     byte key;
@@ -105,17 +104,28 @@ Bool SV_Netchan_Transmit(client_t *client, int length, byte *data)
     byte *encodeData;
     int i;
     netchan_t *netchan;
+#if defined(_M_X64) || defined(__x86_64__)
+    static int x64TraceCount;
+    byte beforeTrace[16];
+    int beforeTraceLen;
+#endif
 
     dataSize = length - 4;
     encodeData = data + 4;
 
-    string = (const char *)(cl + CLIENT_LASTCLIENTCMDSTR_OFF);
+    string = client->lastClientCommandString;
 
-    outgoingSequence = *(int *)(cl + CLIENT_NETCHAN_OFF);
-    key = (byte)(*(int *)(cl + CLIENT_CHALLENGE_OFF));
+    outgoingSequence = client->netchan.outgoingSequence;
+    key = (byte)client->challenge;
     key ^= (byte)outgoingSequence;
 
     index = 0;
+#if defined(_M_X64) || defined(__x86_64__)
+    beforeTraceLen = dataSize < (int)sizeof(beforeTrace) ? dataSize : (int)sizeof(beforeTrace);
+    for (i = 0; i < beforeTraceLen; ++i) {
+        beforeTrace[i] = encodeData[i];
+    }
+#endif
     for (i = 0; i < dataSize; i++) {
         byte ch;
 
@@ -132,7 +142,34 @@ Bool SV_Netchan_Transmit(client_t *client, int length, byte *data)
         encodeData[i] ^= key;
     }
 
-    netchan = (netchan_t *)(cl + CLIENT_NETCHAN_OFF);
+#if defined(_M_X64) || defined(__x86_64__)
+    if (x64TraceCount < 12) {
+        FILE *f = fopen("x64_netchan_trace.txt", x64TraceCount ? "a" : "w");
+        if (f) {
+            fprintf(f,
+                    "svenc[%d] len=%d dataSize=%d seq=%d challenge=%d keyEnd=%02x string=\"%.48s\" before:",
+                    x64TraceCount,
+                    length,
+                    dataSize,
+                    outgoingSequence,
+                    client->challenge,
+                    key,
+                    string);
+            for (i = 0; i < beforeTraceLen; ++i) {
+                fprintf(f, " %02x", beforeTrace[i]);
+            }
+            fprintf(f, " after:");
+            for (i = 0; i < beforeTraceLen; ++i) {
+                fprintf(f, " %02x", encodeData[i]);
+            }
+            fprintf(f, "\n");
+            fclose(f);
+        }
+        x64TraceCount++;
+    }
+#endif
+
+    netchan = &client->netchan;
     return Netchan_Transmit(netchan, length, data);
 }
 

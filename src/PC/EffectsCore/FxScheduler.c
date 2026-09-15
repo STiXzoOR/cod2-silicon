@@ -8,16 +8,21 @@ extern FxScheduler *fxSchedulers[1];
 static EffectTemplate *effectTemplateArray[256];
 static int effectTemplateArrayCount;
 
-extern void GenericParser2_GenericParser2(GenericParser2 *parser);
+static dvar_t *FxScheduler_GetDvar(void *dvarSlot)
+{
+    return *(dvar_t **)dvarSlot;
+}
+
+extern void GenericParser2_GenericParser2(const GenericParser2 *_this);
 extern void ZN14GenericParser2D1Ev(GenericParser2 *parser);
 extern EffectTemplate *FX_ParseEffect(GenericParser2 *parser, const char *name);
 extern void FX_Print(const char *msg, ...);
 extern void FxBoltFrame_Release(const FxBoltFrame *frame);
-extern const orientation_t *FxBoltFrame_GetOrientation(const FxBoltFrame *frame);
+extern const orientation_t *FxBoltFrame_GetOrientation(const FxBoltFrame *_this);
 extern const FxBoltFramePtr FxBoltFrame_Acquire(const FxBoltInfo *bolt);
-extern void AxisCopy(const vec_t *src, vec_t *dst);
+extern void AxisCopy(vec3_t *in, vec3_t *out);
 extern float flrand(float min, float max);
-extern void RotatePointAroundVector(vec_t *dst, const vec_t *src, const vec_t *dir, float degrees);
+extern void RotatePointAroundVector(vec_t *dst, const vec_t *dir, const vec_t *point, const float degrees);
 extern void Vec3Cross(const vec_t *a, const vec_t *b, vec_t *out);
 extern int FxHelper_GetSeed(const FxHelper *helper);
 extern void Rand_Init(int seed);
@@ -26,7 +31,7 @@ extern EffectTemplate *FX_RegisterEffect(const char *fileName);
 extern Bool FX_GetBoneOrientation(const FxBoltInfo *bolt, orientation_t *orient);
 extern Bool FxHelper_CullSpherePreviousFrame(const FxHelper *helper, const vec_t *worldPos, float radius);
 extern float FxRange_GetVal(const FxRange *range);
-extern float Vec3DistanceSq(const vec_t *a, const vec_t *b);
+extern const vec_t Vec3DistanceSq(const vec_t *p1, const vec_t *p2);
 extern void FxChannelInstance_Create(const FxChannel *master, FxChannelInstance *createe);
 extern void FX_CleanTemplate(EffectTemplate *fx);
 extern void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t *dir, float orientation, const vec_t *color, float radius);
@@ -205,7 +210,7 @@ void FxScheduler_CreateEffect(const FxScheduler *_this, const EffectTemplate *fx
 
     boltFrame._placeholder = 0;
 
-    AxisCopy((const vec_t *)axis, (vec_t *)ax);
+    AxisCopy( (vec3_t (*))((const vec_t *)axis), (vec3_t (*))((vec_t *)ax));
 
     if (primTemp->mSpawnFlags & 1) {
         vec3_t rotated;
@@ -225,6 +230,15 @@ void FxScheduler_CreateEffect(const FxScheduler *_this, const EffectTemplate *fx
     if (primType > 12) {
         goto cleanup;
     }
+
+#if defined(COD2_X64)
+    /* x64 TODO: the reconstructed C++ effect-class vtables (Particle/Light/Cloud/... in
+       FxPrimitives.c) still use x86 vtable addresses (e.g. Particle_Particle hardcodes
+       *(int*)this = 0x32ffc8) and 4-byte vtable entries, so the virtual create/update
+       dispatch in the FX_Add* creators faults. Skip particle-primitive creation until
+       those vtables are reconstructed for x64 -- effects are cosmetic; gameplay runs. */
+    goto cleanup;
+#endif
 
     switch (primType) {
     case 0:
@@ -305,8 +319,8 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
     }
 
     {
-        dvar_t *freezeDvar = *(dvar_t **)&imp_fx_freeze;
-        dvar_t *enableDvar = *(dvar_t **)&imp_fx_enable;
+        dvar_t *freezeDvar = FxScheduler_GetDvar(imp_fx_freeze);
+        dvar_t *enableDvar = FxScheduler_GetDvar(imp_fx_enable);
         if (freezeDvar->current.enabled != 0)
             return;
         if (enableDvar->current.enabled == 0)
@@ -330,11 +344,28 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
             or_.origin[1] = 0.0f;
             or_.origin[2] = 0.0f;
         }
-        AxisCopy((const vec_t *)axis, (vec_t *)ax);
+        if (axis) {
+            AxisCopy( (vec3_t (*))((const vec_t *)axis), (vec3_t (*))((vec_t *)ax));
+        } else {
+            /* identity axis when no orientation supplied (FX_PlaySimpleEffect) */
+            ax[0][0] = 1.0f; ax[0][1] = 0.0f; ax[0][2] = 0.0f;
+            ax[1][0] = 0.0f; ax[1][1] = 1.0f; ax[1][2] = 0.0f;
+            ax[2][0] = 0.0f; ax[2][1] = 0.0f; ax[2][2] = 1.0f;
+        }
     }
 
     numAdded = 0;
     seedOffset = 0;
+
+#if defined(COD2_X64)
+    /* x64: guard a corrupt/truncated fx (bullet impacts reach here via
+       CG_BulletHitEvent) before iterating fx->mPrimitives -- effects are cosmetically
+       skipped in FxScheduler_CreateEffect anyway (x64 C++ vtable TODO). */
+    if ((uintptr_t)fx + 0x100000000ULL < 0x200000000ULL ||
+        (uintptr_t)fx >= 0x800000000000ULL ||
+        (unsigned)fx->mPrimitiveCount > 64u)
+        return;
+#endif
 
     for (i = 0; i < fx->mPrimitiveCount; i++) {
         int count;
@@ -435,7 +466,7 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
                 sfx->mOrigin[1] = or_.origin[1];
                 sfx->mOrigin[2] = or_.origin[2];
 
-                AxisCopy((const vec_t *)ax, (vec_t *)sfx->mAxis);
+                AxisCopy( (vec3_t (*))((const vec_t *)ax), (vec3_t (*))((vec_t *)sfx->mAxis));
 
                 sfx->mScheduledNext = ((FxScheduler *)_this)->mScheduledCount;
                 ((FxScheduler *)_this)->mScheduledCount = (int)(size_t)sfx;
@@ -450,7 +481,7 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
     }
 
     if (numAdded) {
-        dvar_t *countDvar = *(dvar_t **)&imp_fx_count;
+        dvar_t *countDvar = FxScheduler_GetDvar(imp_fx_count);
         if (countDvar->current.enabled != 0) {
             re.AddPlume(or_.origin, numAdded, *(const vec_t **)&imp_colorYellow, 3000);
         }

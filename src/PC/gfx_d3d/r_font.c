@@ -6,7 +6,7 @@ extern void R_Error(int code, const char *fmt, ...);
 extern FontHandle R_LoadFont(const char *fontName, int imageTrack);
 extern void R_AddCmdDrawTextWithCursor(const char *text, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor);
 extern void R_AddCmdDrawStretchPic(float x, float y, float w, float h, float s0, float t0, float s1, float t1, const vec_t *color, MaterialHandle material);
-extern unsigned char ColorIndex(int c);
+extern int ColorIndex(int c);
 extern const char *CL_GetHudMsgIconMaterialName(int index);
 extern MaterialHandle Material_RegisterHandle(const char *name, int lightmapIndex, int imageTrack);
 extern refimport_t ri;
@@ -29,7 +29,7 @@ static FontHandle R_ResolveFont(FontHandle font)
 const Glyph *R_GetCharacterGlyph(FontHandle font, unsigned int letter);
 FontHandle R_RegisterFont(const char *fontName, int imageTrack);
 int R_DuplicateFont(FontHandle fontCopy, const char *name);
-int R_InitFonts(void);
+void R_InitFonts(void);
 void R_ShutdownFonts(void);
 float R_NormalizedTextScale(FontHandle font, float scale);
 int R_TextHeight(FontHandle font);
@@ -135,7 +135,7 @@ int R_DuplicateFont(FontHandle fontCopy, const char *name)
     }
 
     riPtr = &ri;
-    newFont = riPtr->Hunk_AllocInternal(0x14);
+    newFont = (FontHandle)(riPtr->Hunk_AllocInternal((int)sizeof(Font_s)));   /* was 0x14 (x86 sizeof(Font)); x64 Font_s is 32 -> memcpy overran */
     memcpy(newFont, fontCopy, sizeof(Font_s));
 
     nameCopy = (char *)riPtr->Hunk_AllocInternal(strlen(name) + 1);
@@ -148,7 +148,7 @@ int R_DuplicateFont(FontHandle fontCopy, const char *name)
     return 0;
 }
 
-int R_InitFonts(void)
+void R_InitFonts(void)
 {
 }
 

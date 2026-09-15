@@ -1,9 +1,15 @@
 #include "common_types.h"
+extern struct DxGlobals dx;
+/* File-scope alias: bound where no local can shadow `dx`, so uses below
+   always reach the global even inside functions that declare their own `dx`. */
+static struct DxGlobals * const dx_g = &dx;
 extern dvar_t *r_rendererInUse;
 extern r_globals_t rg;
 #include "imports.h"
 extern int alwaysfails;
 #include <string.h>
+/* dvar globals */
+extern const dvar_t *r_testFillEnable;
 extern DxGlobals dx;
 extern refimport_t ri;
 
@@ -710,7 +716,7 @@ MaterialHandle R_RegisterRawImage(const char *name, int baseImageFlags, int imag
 
 void Material_ReloadAll(void)
 {
-    char *dx = (char *)imp_dx;
+    char *dx = (char *)dx_g;
 
     int i;
 
@@ -1047,6 +1053,7 @@ MaterialHandle Material_Register(const char *name, int imageTrack)
     Material *material;
     int count;
 
+    { extern void hunk_guard_check(const char *); hunk_guard_check("MatReg"); }
     existing = (byte *)rgg->materialHashTable[hash];
     while (existing) {
         if (strcmp(*(const char **)existing, name) == 0) {
@@ -1113,7 +1120,7 @@ void Material_Init(void)
             Com_Error(0, "Could not find material '%s'", entry->name);
     }
 
-    if ((*(const dvar_t **)imp_r_testFillEnable)->current.enabled) {
+    if ((r_testFillEnable)->current.enabled) {
         for (entry = s_fillTestMaterials; entry < s_fillTestMaterials + ARRAY_COUNT(s_fillTestMaterials); entry++) {
             *(Material **)entry->material = Material_Register(entry->name, 0);
             if (!*(Material **)entry->material)

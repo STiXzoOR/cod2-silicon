@@ -7,7 +7,7 @@ extern struct scrCompilePub_t scrCompilePub;
 extern void Z_FreeInternal(void *ptr);
 extern void *Z_MallocInternal(int size);
 extern unsigned int FindVariable(unsigned int parentId, unsigned int value);
-extern int Scr_EvalVariable(unsigned int id);
+extern unsigned long long Scr_EvalVariable(unsigned int id);
 extern VariableUnion *GetVariableValueAddress(unsigned int id);
 extern void AddRefToValue(int type, VariableUnion u);
 extern void Scr_EvalBinaryOperator(int op, VariableValue *value1, VariableValue *value2);
@@ -156,7 +156,7 @@ static unsigned int __attribute_regparm__(3)
 
         if (pos->type == SCRCOMP_VAR_DEVELOPER_CODEPOS) {
             if (type == SCRCOMP_VAR_CODEPOS) {
-                CompileError2(codePtr, "normal script cannot reference a function in a /# ... #/ comment");
+                CompileError2( (int)(codePtr), "normal script cannot reference a function in a /# ... #/ comment");
                 continue;
             }
         } else {
@@ -165,7 +165,7 @@ static unsigned int __attribute_regparm__(3)
                 fprintf(stderr, "[UNKFN-LINKTHREAD-169 nodef] threadId=%u count=%d i=%d valueId=%u progoff=%d\n",
                         threadId, count, i, valueId, (int)(codePtr - SCRVP->programBuffer));
 #    endif
-                CompileError2(codePtr, "unknown function");
+                CompileError2( (int)(codePtr), "unknown function");
                 continue;
             }
 
@@ -174,7 +174,7 @@ static unsigned int __attribute_regparm__(3)
                 fprintf(stderr, "[UNKFN-LINKTHREAD-174 farcall] threadId=%u progoff=%d\n",
                         threadId, (int)(codePtr - SCRVP->programBuffer));
 #    endif
-                CompileError2(codePtr, "unknown function");
+                CompileError2( (int)(codePtr), "unknown function");
                 continue;
             }
         }
@@ -2802,17 +2802,23 @@ static Bool __attribute_regparm__(3)
 
                 for (i = 0; i < 3; ++i) {
                     VariableCompileValue *value = &SCRCG->value_start[first + i];
+                    float f;
 
                     if (value->value.type == 5) {
-                        vec[i] = value->value.u.floatValue;
+                        f = value->value.u.floatValue;
                     } else if (value->value.type == 6) {
-                        vec[i] = (float)value->value.u.intValue;
+                        f = (float)value->value.u.intValue;
                     } else {
                         CompileError(value->sourcePos.sourcePosValue,
                                      "type %s is not a float",
                                      ((const char *const *)imp_var_typename)[value->value.type]);
-                        vec[i] = 0.0f;
+                        f = 0.0f;
                     }
+                    /* value_start holds the 3 components in REVERSE source order,
+                     * so a forward vec[i]=... leaves vector constants transposed
+                     * (looping-FX origins came out X<->Z swapped).
+                     * Reverse the read-back to recover written order (a,b,c). */
+                    vec[2 - i] = f;
                 }
 
                 constValue->value.type = 4;

@@ -46,16 +46,16 @@ extern void SV_UnlinkEntity(gentity_t *ent);
 extern qboolean G_SpawnString(const char *key, const char *defaultString, const char **out);
 extern int I_stricmp(const char *s1, const char *s2);
 extern void SV_GetConfigstring(int index, char *buffer, int bufferSize);
-extern void SV_SetConfigstring(int index, const char *val);
+extern void SV_SetConfigstring(const int index, const char *val);
 extern void Com_Error(int code, const char *fmt, ...);
 extern void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up);
-extern void G_TraceCapsule(trace_t *result, vec_t *start, vec_t *mins, vec_t *maxs, vec_t *end, int skipNumber, int mask);
-extern float RadiusFromBounds(vec_t *mins, vec_t *maxs);
-extern int CM_AreaEntities(vec_t *mins, vec_t *maxs, int *entityList, int maxcount, int contentmask);
-extern void BG_EvaluateTrajectory(trajectory_t *tr, int atTime, vec_t *result);
+extern void G_TraceCapsule(trace_t *results, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int contentmask);
+extern const vec_t RadiusFromBounds(const vec_t *mins, const vec_t *maxs);
+extern int CM_AreaEntities(const vec_t *mins, const vec_t *maxs, int *entityList, int maxcount, int contentmask);
+extern void BG_EvaluateTrajectory(const trajectory_t *tr, int atTime, vec_t *result);
 extern void G_Damage(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, const vec_t *dir, const vec_t *point, int damage, int dflags, int mod, int hitLoc, int timeOffset);
 extern void G_GeneralLink(gentity_t *ent);
-extern void G_RunThink(gentity_t *ent);
+extern int G_RunThink(gentity_t *ent);
 
 void use_trigger_use(gentity_t *ent, gentity_t *other, gentity_t *activator);
 static void trigger_use_shared(gentity_t *ent);
@@ -105,7 +105,7 @@ static void trigger_use_shared(gentity_t *ent)
 
     ent->trigger.singleUserEntIndex = 0x3ff;
 
-    (_ENT(ent)->s.pos.trType) = 0;
+    (_ENT(ent)->s.pos.trType) = (trType_t)(0);
 
     VectorCopy((_ENT(ent)->r.currentOrigin), (_ENT(ent)->s.pos.trBase));
 

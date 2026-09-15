@@ -1,5 +1,9 @@
 #include "common_types.h"
 #include "imports.h"
+extern struct DxGlobals dx;
+/* File-scope alias: bound where no local can shadow `dx`, so uses below
+   always reach the global even inside functions that declare their own `dx`. */
+static struct DxGlobals * const dx_g = &dx;
 extern int alwaysfails;
 
 extern const char *va(const char *fmt, ...);
@@ -29,7 +33,7 @@ void *R_AllocStaticVertexBuffer(IDirect3DVertexBuffer9 **vb, int sizeInBytes)
     void **vtable;
     HRESULT hr;
 
-    dxPtr = (byte *)imp_dx;
+    dxPtr = (byte *)dx_g;
     device = (void *)((DxGlobals *)dxPtr)->device;   /* was *(void**)(dxPtr+8): x86 device offset */
     vtable = VTABLE(device);
 
@@ -71,7 +75,7 @@ void *R_AllocStaticIndexBuffer(IDirect3DIndexBuffer9 **ib, int sizeInBytes)
     void **devVtable;
     HRESULT hr;
 
-    dxPtr = (byte *)imp_dx;
+    dxPtr = (byte *)dx_g;
     device = (void *)((DxGlobals *)dxPtr)->device;   /* was *(void**)(dxPtr+8): x86 device offset */
     devVtable = VTABLE(device);
 

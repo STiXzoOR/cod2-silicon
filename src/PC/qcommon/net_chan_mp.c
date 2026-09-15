@@ -1,5 +1,7 @@
 #include "common_types.h"
 #include "imports.h"
+/* dvar globals */
+extern const dvar_t *com_sv_running;
 
 int g_qport = 0x0;
 
@@ -58,7 +60,7 @@ extern int MSG_ReadShort(msg_t *msg);
 extern void SV_Netchan_AddOOBProfilePacket(int size);
 extern void CL_Netchan_AddOOBProfilePacket(int size);
 extern void LargeLocal_LargeLocal(void *ll, int size);
-extern void *LargeLocal_GetBuf(void *ll);
+extern void *LargeLocal_GetBuf(const LargeLocal *ll);
 extern void ZN10LargeLocalD1Ev(void *ll);
 extern void *imp_com_sv_running;
 extern void *imp_legacyHacks;
@@ -102,7 +104,7 @@ void NetProf_PrepProfiling(netProfileInfo_t **pProf)
 
         {
 
-            int sv_running = (*(const dvar_t **)imp_com_sv_running)->current.integer;
+            int sv_running = (com_sv_running)->current.integer;
             if (sv_running != 0) {
 
                 int lh_field = (*(LegacyHacks **)imp_legacyHacks)->cl_running;
@@ -359,9 +361,9 @@ qboolean NET_StringToAdr(const char *s, netadr_t *a)
 
     if (memcmp(s, "loopback", 0xa) == 0 || memcmp(s, "localhost", 0xa) == 0) {
         a->port = 0;
-        a->type = 0;
+        a->type = (netadrtype_t)(0);
         *(int *)a->ip = 0;
-        a->type = 2;
+        a->type = (netadrtype_t)(2);
         return 1;
     }
 
@@ -373,13 +375,13 @@ qboolean NET_StringToAdr(const char *s, netadr_t *a)
     }
 
     if (!Sys_StringToAdr(base, a)) {
-        a->type = 1;
+        a->type = (netadrtype_t)(1);
         return 0;
     }
 
     if (*(int *)a->ip == -1) {
 
-        a->type = 1;
+        a->type = (netadrtype_t)(1);
         return 0;
     }
 
@@ -474,7 +476,7 @@ Bool NET_OutOfBandData(netsrc_t sock, netadr_t adr, byte *format, int len)
     Bool res;
 
     LargeLocal_LargeLocal(string_large_local, MAX_MSGLEN);
-    string = (byte *)LargeLocal_GetBuf(string_large_local);
+    string = (byte *)LargeLocal_GetBuf((const LargeLocal *)string_large_local);
     string[0] = 0xff;
     string[1] = 0xff;
     string[2] = 0xff;
@@ -509,7 +511,7 @@ Bool NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *data)
     Bool res;
 
     LargeLocal_LargeLocal(string_large_local, MAX_MSGLEN);
-    string = (byte *)LargeLocal_GetBuf(string_large_local);
+    string = (byte *)LargeLocal_GetBuf((const LargeLocal *)string_large_local);
     string[0] = 0xff;
     string[1] = 0xff;
     string[2] = 0xff;
@@ -621,7 +623,7 @@ qboolean NET_GetLoopPacket(netsrc_t sock, netadr_t *net_from, msg_t *net_message
 
         *(int *)net_from->ip = 0;
         *(int *)&net_from->port = 0;
-        net_from->type = 2;
+        net_from->type = (netadrtype_t)(2);
         net_from->port = (unsigned short)m->port;
         return 1;
     }

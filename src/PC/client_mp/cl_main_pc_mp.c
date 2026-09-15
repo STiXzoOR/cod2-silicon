@@ -1,5 +1,8 @@
 #include "common_types.h"
 #include "imports.h"
+/* dvar globals */
+extern const dvar_t *cl_serverStatusResendTime;
+extern const dvar_t *com_sv_running;
 extern clientStatic_t cls;
 
 typedef struct serverStatusRequest_s {
@@ -12,52 +15,65 @@ typedef struct serverStatusRequest_s {
     qboolean retrieved;
 } serverStatusRequest_t;
 
+COD2_ASSERT_FIELD(serverStatusRequest_t, address, 0x2000);
+COD2_ASSERT_FIELD(serverStatusRequest_t, time, 0x2014);
+COD2_ASSERT_FIELD(serverStatusRequest_t, retrieved, 0x2024);
+COD2_ASSERT_SIZE(serverStatusRequest_t, 0x2028);
+
 extern serverStatusRequest_t cl_serverStatusList[16];
 static Bool s_playerMute[64];
-extern int NET_CompareAdrSigned(const int *a, const int *b);
+extern int NET_CompareAdrSigned(netadr_t *a, netadr_t *b);
 extern qboolean NET_CompareAdr(netadr_t a, netadr_t b);
 extern void qsort(void *base, unsigned int nmemb, unsigned int size, int (*compar)(const void *, const void *));
 extern int atoi(const char *nptr);
-extern const char *Info_ValueForKey(const char *s, const char *key);
+extern char *Info_ValueForKey(const char *s, const char *key);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern const char *va(const char *format, ...);
 extern void Cbuf_ExecuteText(int exec_when, const char *text);
 extern void Com_PumpMessageLoop(void);
-extern const char *MSG_ReadString(msg_t *msg);
-extern const char *MSG_ReadStringLine(msg_t *msg);
+extern char *MSG_ReadString(msg_t *msg);
+extern char *MSG_ReadStringLine(msg_t *msg);
 extern void Com_DPrintf(const char *fmt, ...);
 extern const char *Dvar_GetString(const char *name);
 extern const char *NET_AdrToString(netadr_t adr);
-extern void Info_SetValueForKey(const char *s, const char *key, const char *value);
+extern void Info_SetValueForKey(char *s, const char *key, const char *value);
 extern int Cmd_Argc(void);
-extern const char *Cmd_Argv(int arg);
+extern char *Cmd_Argv(int arg);
 extern void Com_Printf(const char *fmt, ...);
 extern int I_stricmp(const char *s0, const char *s1);
 extern int I_strnicmp(const char *s0, const char *s1, size_t n);
 extern int Com_AddToString(const char *add, char *msg, int len, int maxlen, qboolean mayAddQuotes);
-extern void CL_Netchan_SendOOBPacket(int len, const char *data, int type, int addr0, int addr1);
-extern int NET_StringToAdr(const char *s, netadr_t *a);
-extern int NET_OutOfBandPrint(int type, int addr0, int addr1, int addr2, const char *data);
+extern void CL_Netchan_SendOOBPacket(int len, const void *data, netadr_t to);
+extern qboolean NET_StringToAdr(const char *s, netadr_t *a);
+extern Bool NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *data);
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern int Sys_Milliseconds(void);
 extern int sscanf(const char *str, const char *format, ...);
 extern char *strchr(const char *s, int c);
 extern Bool Dvar_GetBool(const char *name);
 extern int sprintf(char *str, const char *format, ...);
-extern void SND_StopSounds(int a);
+extern void SND_StopSounds(snd_stopsounds_arg_t a);
 extern void SV_Frame(int a);
 extern void CL_Disconnect(void);
 extern void Con_Close(void);
-extern qboolean NET_IsLocalAddress(int addr0, int addr1, int addr2);
+extern qboolean NET_IsLocalAddress(netadr_t adr);
 extern void UI_CloseAll(void);
 extern void SCR_UpdateScreen(void);
 extern void Com_Error(int level, const char *fmt, ...);
-extern void Com_Memset(void *dest, int val, int count);
+extern void Com_Memset(void *dest, const int val, int count);
 extern void Dvar_SetString(const dvar_t *dvar, const char *value);
 
-static byte rconGlob[40];
+typedef struct rconGlob_s {
+    char password[24];
+    netadr_t address;
+} rconGlob_t;
 
-static int CL_CompareAdrSigned(const int *a, const int *b);
+COD2_ASSERT_FIELD(rconGlob_t, address, 0x18);
+COD2_ASSERT_SIZE(rconGlob_t, 0x2c);
+
+static rconGlob_t rconGlob;
+
+static int CL_CompareAdrSigned(const void *a, const void *b);
 void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping);
 void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping);
 void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time);
@@ -77,9 +93,12 @@ void CL_Connect_f(void);
 int CL_ServerStatus(char *serverAddress, char *serverStatusString, int maxLen);
 void CL_ServerStatus_f(void);
 
-static int CL_CompareAdrSigned(const int *a, const int *b)
+static int CL_CompareAdrSigned(const void *a, const void *b)
 {
-    return NET_CompareAdrSigned(a, b);
+    serverInfo_t *serverA = (serverInfo_t *)a;
+    serverInfo_t *serverB = (serverInfo_t *)b;
+
+    return NET_CompareAdrSigned(&serverA->adr, &serverB->adr);
 }
 
 void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping)
@@ -135,7 +154,7 @@ void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
         low = 0;
         while (low < high) {
             mid = (low + high) / 2;
-            compare = NET_CompareAdrSigned((const int *)&from, (const int *)&cls->globalServers[mid].adr);
+            compare = NET_CompareAdrSigned(&from, &cls->globalServers[mid].adr);
             if (compare < 0) {
                 high = mid;
                 continue;
@@ -146,12 +165,12 @@ void CL_SetServerInfoByAddress(netadr_t from, const char *info, int ping)
                 continue;
             }
 
-            while (mid > 0 && NET_CompareAdrSigned((const int *)&from, (const int *)&cls->globalServers[mid - 1].adr) == 0) {
+            while (mid > 0 && NET_CompareAdrSigned(&from, &cls->globalServers[mid - 1].adr) == 0) {
                 --mid;
             }
 
             for (i = mid; i < cls->numglobalservers; ++i) {
-                if (NET_CompareAdrSigned((const int *)&from, (const int *)&cls->globalServers[i].adr) != 0) {
+                if (NET_CompareAdrSigned(&from, &cls->globalServers[i].adr) != 0) {
                     break;
                 }
 
@@ -309,13 +328,13 @@ void CL_SortGlobalServers(void)
 {
     clientStatic_t *cls = (clientStatic_t *)imp_cls;
     int count = cls->numglobalservers;
-    qsort(cls->globalServers, count, sizeof(serverInfo_t), (int (*)(const void *, const void *))CL_CompareAdrSigned);
+    qsort(cls->globalServers, count, sizeof(serverInfo_t), CL_CompareAdrSigned);
 }
 
 void CL_RconInit(void)
 {
-    rconGlob[0] = 0;
-    *(int *)(rconGlob + 24) = 1;
+    rconGlob.password[0] = '\0';
+    rconGlob.address.type = NA_BAD;
 }
 
 void CL_Rcon_f(void)
@@ -345,17 +364,17 @@ void CL_Rcon_f(void)
                 Com_Printf((const char *)"rcon password must be %i characters or less\n", 0x18);
                 return;
             }
-            memcpy(&rconGlob, pass, passLen + 1);
+            memcpy(rconGlob.password, pass, passLen + 1);
         }
         return;
     }
 
     if (I_stricmp(cmd, (const char *)"logout") == 0) {
-        if (!rconGlob[0]) {
+        if (!rconGlob.password[0]) {
             Com_Printf((const char *)"Not logged in\n");
             return;
         }
-        rconGlob[0] = 0;
+        rconGlob.password[0] = '\0';
         return;
     }
 
@@ -364,17 +383,17 @@ void CL_Rcon_f(void)
             Com_Printf((const char *)"USAGE: rcon host <address>\n");
             return;
         }
-        if (!NET_StringToAdr(Cmd_Argv(2), (netadr_t *)(rconGlob + 24))) {
+        if (!NET_StringToAdr(Cmd_Argv(2), &rconGlob.address)) {
             Com_Printf((const char *)"bad host address\n");
             return;
         }
-        if (*(unsigned short *)(rconGlob + 32) == 0) {
-            *(unsigned short *)(rconGlob + 32) = 0x2071;
+        if (rconGlob.address.port == 0) {
+            rconGlob.address.port = 0x2071;
         }
         return;
     }
 
-    if (!rconGlob[0]) {
+    if (!rconGlob.password[0]) {
         Com_Printf((const char *)"You need to log in with 'rcon login <password>' before using rcon.\n");
         return;
     }
@@ -386,7 +405,7 @@ void CL_Rcon_f(void)
     message[4] = '\0';
 
     offset = Com_AddToString((const char *)"rcon ", message, 4, 0x400, 0);
-    offset = Com_AddToString((char *)rconGlob, message, offset, 0x400, 0);
+    offset = Com_AddToString(rconGlob.password, message, offset, 0x400, 0);
 
     for (i = 1; i < Cmd_Argc(); i++) {
         offset = Com_AddToString((const char *)" ", message, offset, 0x400, 0);
@@ -404,22 +423,21 @@ void CL_Rcon_f(void)
         clientConnection_t *clcLocal = *(clientConnection_t **)imp_clc;
         if (clcLocal->state > 4) {
 
-            memcpy(&sendAdr, &clcLocal->netchan.remoteAddress, sizeof(netadr_t));
+            sendAdr = clcLocal->netchan.remoteAddress;
         } else {
-            int addrType = *(int *)(rconGlob + 24);
-            if (addrType == 1) {
+            if (rconGlob.address.type == NA_BAD) {
                 Com_Printf((const char *)"Can't determine rcon target.  You can fix this by either:\n");
                 Com_Printf((const char *)"1) Joining the server as a player.\n");
                 Com_Printf((const char *)"2) Setting the host server with 'rcon host <address>'.\n");
                 return;
             }
-            memcpy(&sendAdr, rconGlob + 24, sizeof(netadr_t));
+            sendAdr = rconGlob.address;
         }
     }
 
     {
         int msgLen = strlen(message);
-        CL_Netchan_SendOOBPacket(msgLen, message, sendAdr.type, *(int *)sendAdr.ip, *(int *)&sendAdr.port);
+        CL_Netchan_SendOOBPacket(msgLen, message, sendAdr);
     }
 }
 
@@ -567,16 +585,15 @@ void CL_GlobalServers_f(void)
     }
 
     {
-        clientStatic_t *cls = (clientStatic_t *)imp_cls;
-        int numglobal = cls->numglobalservers;
+        int numglobal = cls.numglobalservers;
 
         for (i = 0; i < numglobal; i++) {
-            byte rc = cls->globalServers[i].requestCount;
+            byte rc = cls.globalServers[i].requestCount;
             byte rc1 = (byte)(rc + 1);
             if (rc1 == 0)
-                cls->globalServers[i].requestCount = 0xFF;
+                cls.globalServers[i].requestCount = 0xFF;
             else
-                cls->globalServers[i].requestCount = rc1;
+                cls.globalServers[i].requestCount = rc1;
         }
     }
 
@@ -585,12 +602,11 @@ void CL_GlobalServers_f(void)
     NET_StringToAdr((const char *)"cod2master.activision.com", &to);
 
     {
-        clientStatic_t *cls = (clientStatic_t *)imp_cls;
-        cls->waitglobalserverresponse = 1;
-        cls->pingUpdateSource = 1;
+        cls.waitglobalserverresponse = 1;
+        cls.pingUpdateSource = 1;
     }
 
-    to.type = 4;
+    to.type = (netadrtype_t)(4);
     to.port = (unsigned short)0xe650;
 
     sprintf(command, (const char *)"getservers %s", Cmd_Argv(2));
@@ -611,7 +627,7 @@ void CL_GlobalServers_f(void)
         *(short *)(buffptr + 4) = 0x6f;
     }
 
-    NET_OutOfBandPrint(1, to.type, *(int *)to.ip, *(int *)&to.port, command);
+    NET_OutOfBandPrint(NS_SERVER, to, command);
 }
 
 void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
@@ -695,7 +711,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
         ip[3] = servers[i][3];
         port = *(unsigned short *)&servers[i][4];
 
-        adr.type = 4;
+        adr.type = (netadrtype_t)(4);
         adr.ip[0] = ip[0];
         adr.ip[1] = ip[1];
         adr.ip[2] = ip[2];
@@ -709,7 +725,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
             while (low < high) {
                 cls = (clientStatic_t *)imp_cls;
                 mid = (low + high) / 2;
-                compare = NET_CompareAdrSigned((const int *)&adr, (const int *)&cls->globalServers[mid]);
+                compare = NET_CompareAdrSigned(&adr, &cls->globalServers[mid].adr);
                 if (compare < 0) {
                     high = mid;
                 } else if (compare > 0) {
@@ -718,7 +734,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
 
                     int j = mid;
                     while (j - 1 >= 0) {
-                        if (NET_CompareAdrSigned((const int *)&adr, (const int *)&cls->globalServers[j - 1]) != 0)
+                        if (NET_CompareAdrSigned(&adr, &cls->globalServers[j - 1].adr) != 0)
                             break;
                         j--;
                     }
@@ -752,7 +768,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
                             j++;
                             if (j >= cls->numglobalservers)
                                 break;
-                            if (NET_CompareAdrSigned((const int *)&adr, (const int *)&clsStatic->globalServers[j]) != 0) {
+                            if (NET_CompareAdrSigned(&adr, &clsStatic->globalServers[j].adr) != 0) {
                                 cls = (clientStatic_t *)imp_cls;
                                 break;
                             }
@@ -766,7 +782,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
 
         {
             serverInfo_t *srv = &cls->globalServers[count];
-            srv->adr.type = 4;
+            srv->adr.type = (netadrtype_t)(4);
             srv->adr.ip[0] = ip[0];
             srv->adr.ip[1] = ip[1];
             srv->adr.ip[2] = ip[2];
@@ -792,7 +808,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
     }
 
     cls->numglobalservers = count;
-    qsort(cls->globalServers, count, sizeof(serverInfo_t), (int (*)(const void *, const void *))CL_CompareAdrSigned);
+    qsort(cls->globalServers, count, sizeof(serverInfo_t), CL_CompareAdrSigned);
 
     Com_Printf((const char *)"%d servers parsed (total %d)\n", numservers, count);
 
@@ -874,7 +890,7 @@ fill_slot:
         CL_SetServerInfoByAddress(entry->adr, NULL, 0);
     }
 
-    NET_OutOfBandPrint(0, to.type, *(int *)to.ip, *(int *)&to.port, (const char *)"getinfo xxx");
+    NET_OutOfBandPrint(NS_CLIENT1, to, (const char *)"getinfo xxx");
 
 }
 
@@ -889,7 +905,7 @@ void CL_Connect_f(void)
         return;
     }
 
-    SND_StopSounds(0);
+    SND_StopSounds((snd_stopsounds_arg_t)0);
 
     clc = *(clientConnection_t **)imp_clc;
     clc->serverMessage[0] = 0;
@@ -897,7 +913,7 @@ void CL_Connect_f(void)
     server = Cmd_Argv(1);
 
     {
-        dvar_t *sv_running = *(dvar_t **)imp_com_sv_running;
+        dvar_t *sv_running = (dvar_t *)(com_sv_running);
         if (sv_running->current.enabled != 0) {
 
             if (memcmp(server, (const char *)"localhost", 10) == 0)
@@ -928,7 +944,7 @@ void CL_Connect_f(void)
         clientConnection_t *clcConn = (clientConnection_t *)clc;
         if (!NET_StringToAdr((const char *)cls_servername, &clcConn->serverAddress)) {
             Com_Printf((const char *)"Bad server address\n");
-            clcConn->state = 0;
+            clcConn->state = (connstate_t)(0);
             return;
         }
 
@@ -950,7 +966,7 @@ void CL_Connect_f(void)
         }
     }
 
-    if (!NET_IsLocalAddress(*(int *)&clc->serverAddress, *(int *)clc->serverAddress.ip, *(int *)&clc->serverAddress.port)) {
+    if (!NET_IsLocalAddress(clc->serverAddress)) {
 
         unsigned int crc = 0;
         byte *cdkey = (byte *)imp_cl_cdkey;
@@ -985,11 +1001,11 @@ void CL_Connect_f(void)
         clc = *(clientConnection_t **)imp_clc;
         clcConn = (clientConnection_t *)clc;
 
-        if (NET_IsLocalAddress(*(int *)&clcConn->serverAddress, *(int *)clcConn->serverAddress.ip, *(int *)&clcConn->serverAddress.port)) {
-            clcConn->state = 4;
+        if (NET_IsLocalAddress(clcConn->serverAddress)) {
+            clcConn->state = (connstate_t)(4);
         } else {
             clcConn = *(clientConnection_t **)imp_clc;
-            clcConn->state = 3;
+            clcConn->state = (connstate_t)(3);
             clc = clcConn;
         }
     }
@@ -1087,7 +1103,7 @@ found_entry:
             {
                 int startTime = serverStatus->startTime;
                 int now = Sys_Milliseconds();
-                const dvar_t *resendDvar = *(const dvar_t **)imp_cl_serverStatusResendTime;
+                const dvar_t *resendDvar = cl_serverStatusResendTime;
                 int resendTime = resendDvar->current.integer;
                 if (startTime >= now - resendTime)
                     return 0;
@@ -1099,7 +1115,7 @@ found_entry:
             serverStatus->time = 0;
             serverStatus->startTime = Sys_Milliseconds();
 
-            NET_OutOfBandPrint(0, to.type, *(int *)to.ip, *(int *)&to.port, (const char *)"getstatus");
+            NET_OutOfBandPrint(NS_CLIENT1, to, (const char *)"getstatus");
             return 0;
         }
     }
@@ -1114,7 +1130,7 @@ found_entry:
     serverStatus->startTime = Sys_Milliseconds();
     serverStatus->time = 0;
 
-    NET_OutOfBandPrint(0, to.type, *(int *)to.ip, *(int *)&to.port, (const char *)"getstatus");
+    NET_OutOfBandPrint(NS_CLIENT1, to, (const char *)"getstatus");
     return 0;
 }
 
@@ -1144,7 +1160,7 @@ void CL_ServerStatus_f(void)
     if (!NET_StringToAdr(serverAddr, &to))
         return;
 
-    NET_OutOfBandPrint(0, to.type, *(int *)to.ip, *(int *)&to.port, (const char *)"getstatus");
+    NET_OutOfBandPrint(NS_CLIENT1, to, (const char *)"getstatus");
 
     {
         for (i = 0; i < 16; i++) {

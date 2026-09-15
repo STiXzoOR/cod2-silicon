@@ -249,7 +249,7 @@ void CL_VoicePacket(msg_t *msg);
 Bool CL_IsPlayerTalking(int clientIndex);
 void CL_SetupForNewServerMap(const char *pszMapName, const char *pszGametype);
 void CL_VoiceTransmit(void);
-Bool Voice_SendVoiceData(void);
+int Voice_SendVoiceData(void);
 void CL_SyncGpu(void);
 void CL_SetRecommended_f(void);
 void CL_RefPrintf(int print_level, const char *fmt, ...);

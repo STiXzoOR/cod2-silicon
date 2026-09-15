@@ -118,7 +118,7 @@ struct scr_data_t {
 
 struct spawn_t {
     const char *name;
-    my_upsampler (*spawn)();
+    void (*spawn)(gentity_t *ent);
 };
 
 struct tagInfo_s {

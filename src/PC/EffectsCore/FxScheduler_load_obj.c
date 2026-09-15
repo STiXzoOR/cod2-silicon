@@ -6,20 +6,20 @@
 
 extern char *strlwr(char *s);
 
-extern void PrimitiveTemplate_Shutdown(void *prim);
-extern void PrimitiveTemplate_Init(void *prim);
-extern int PrimitiveTemplate_ParsePrimitive(void *prim, void *group);
+extern void PrimitiveTemplate_Shutdown(const PrimitiveTemplate *prim);
+extern void PrimitiveTemplate_Init(const PrimitiveTemplate *prim);
+extern Bool PrimitiveTemplate_ParsePrimitive(const PrimitiveTemplate *prim, GPGroup *group);
 
 extern EffectTemplate *FX_TryRegisterEffect(const char *name);
 extern void Com_Error(int level, const char *fmt, ...);
 extern void Z_FreeInternal(void *ptr);
 extern void *Z_MallocInternal(int size);
-extern int FS_FOpenFileByMode(const char *filename, int *f, int mode);
+extern int FS_FOpenFileRead(const char *filename, fileHandle_t *f, qboolean uniqueFILE);
 extern int FS_Read(void *buffer, int len, int f);
 extern void FS_FCloseFile(fileHandle_t f);
 extern void *Hunk_AllocateTempMemoryInternal(int size);
 extern void Hunk_FreeTempMemory(void *buf);
-extern Bool GenericParser2_Parse(void *parser, void **bufPtr, int flag1, int flag2);
+extern Bool GenericParser2_Parse(const GenericParser2 *parser, char **bufPtr, int cleanFirst, int writeable);
 extern void *Hunk_AllocAlignInternal(int size, int align);
 extern void FX_Print(const char *fmt, ...);
 extern void Com_StripExtension(const char *in, char *out);
@@ -38,6 +38,7 @@ void FX_CleanTemplate(EffectTemplate *fx);
 void FX_CreateDefaultEffect(void);
 void MediaHandles_Shutdown(const MediaHandles *_this);
 void MediaHandles_AddHandle(const MediaHandles *_this, TMediaElement item);
+static Bool BM_NOINLINE FX_ParseEffectFile(const char *name, GenericParser2 *parser);
 EffectTemplate *FX_ParseEffect(GenericParser2 *parser, const char *name);
 EffectTemplate *FX_RegisterEffect(const char *fileName);
 void MediaHandles_AddEffect(const MediaHandles *_this, EffectTemplate *fx);
@@ -96,58 +97,62 @@ void MediaHandles_AddHandle(const MediaHandles *_this, TMediaElement item)
             memcpy(newElements, self->mMediaList.elements, self->mMediaList.size * 4);
             Z_FreeInternal(self->mMediaList.elements);
         }
-        self->mMediaList.elements = newElements;
+        self->mMediaList.elements = (TMediaElement *)(newElements);
     }
 
     ((void **)self->mMediaList.elements)[self->mMediaList.size] = item.data;
     self->mMediaList.size += 1;
 }
 
-EffectTemplate *FX_ParseEffect(GenericParser2 *parser, const char *name)
+static Bool BM_NOINLINE FX_ParseEffectFile(const char *name, GenericParser2 *parser)
 {
     char fileName[64];
-    int fileHandle;
-    void *buf;
-    void *bufParse;
-    EffectTemplate *effect;
-    int currentPrimitiveIndex;
-    void *primitiveGroup;
-    char *grpName;
-    int type;
-    void *prim;
+    fileHandle_t fileHandle;
     int fileLength;
-    int count;
-    int j;
-    char *nameBuf;
+    char *buf;
+    char *bufParse;
 
     sprintf(fileName, "fx/%s.efx", name);
-    fileLength = FS_FOpenFileByMode(fileName, &fileHandle, 0);
-
+    fileLength = FS_FOpenFileRead(fileName, &fileHandle, 0);
     if (fileLength < 0) {
         FX_Print("Effect file load failed: %s: file not found\n", fileName);
-        return NULL;
+        return 0;
     }
 
-    buf = Hunk_AllocateTempMemoryInternal(fileLength + 1);
+    buf = (char *)Hunk_AllocateTempMemoryInternal(fileLength + 1);
     FS_Read(buf, fileLength, fileHandle);
     FS_FCloseFile(fileHandle);
-    ((char *)buf)[fileLength] = '\0';
+    buf[fileLength] = '\0';
 
     bufParse = buf;
     GenericParser2_Parse(parser, &bufParse, 1, 0);
     Hunk_FreeTempMemory(buf);
+    return 1;
+}
 
-    effect = (EffectTemplate *)Hunk_AllocAlignInternal(0x68, 4);
+EffectTemplate *FX_ParseEffect(GenericParser2 *parser, const char *name)
+{
+    EffectTemplate *effect;
+    int currentPrimitiveIndex;
+    GPGroup *primitiveGroup;
+    char *grpName;
+    int type;
+    PrimitiveTemplate *prim;
+    int count;
 
-    nameBuf = (char *)Hunk_AllocAlignInternal(strlen(name) + 1, 4);
-    effect->mEffectName = nameBuf;
-    strcpy(nameBuf, name);
+    if (!FX_ParseEffectFile(name, parser)) {
+        return NULL;
+    }
 
-    primitiveGroup = (void *)((GPGroup *)parser)->subGroupList;
+    effect = (EffectTemplate *)Hunk_AllocAlignInternal(sizeof(EffectTemplate), 4);
+
+    effect->mEffectName = (char *)Hunk_AllocAlignInternal(strlen(name) + 1, 4);
+    strcpy((char *)effect->mEffectName, name);
+
+    primitiveGroup = parser->group.subGroupList;
+    currentPrimitiveIndex = 0;
     if (primitiveGroup == NULL)
         return effect;
-
-    currentPrimitiveIndex = 0;
 
     while (primitiveGroup != NULL) {
         grpName = *(char **)primitiveGroup;
@@ -158,66 +163,60 @@ EffectTemplate *FX_ParseEffect(GenericParser2 *parser, const char *name)
             type = 2;
         } else if (stricmp(grpName, "tail") == 0) {
             type = 3;
-        } else if (stricmp(grpName, "electricity") == 0) {
-            type = 4;
         } else if (stricmp(grpName, "cylinder") == 0) {
+            type = 4;
+        } else if (stricmp(grpName, "emitter") == 0) {
             type = 5;
-        } else if (stricmp(grpName, "light") == 0) {
-            type = 6;
-        } else if (stricmp(grpName, "sound") == 0) {
-            type = 7;
         } else if (stricmp(grpName, "decal") == 0) {
-            type = 8;
-        } else if (stricmp(grpName, "runner") == 0) {
-            type = 9;
+            type = 6;
+        } else if (stricmp(grpName, "orientedparticle") == 0) {
+            type = 7;
         } else if (stricmp(grpName, "fxrunner") == 0) {
+            type = 8;
+        } else if (stricmp(grpName, "light") == 0) {
+            type = 9;
+        } else if (stricmp(grpName, "cameraShake") == 0) {
             type = 10;
         } else if (stricmp(grpName, "flash") == 0) {
             type = 11;
-        } else if (stricmp(grpName, "spotLight") == 0) {
+        } else if (stricmp(grpName, "cloud") == 0) {
             type = 12;
         } else {
             goto next_group;
         }
 
-        prim = Hunk_AllocAlignInternal(0x2a4, 4);
+        prim = (PrimitiveTemplate *)Hunk_AllocAlignInternal(0x2a4, 4);
         PrimitiveTemplate_Init(prim);
-        ((PrimitiveTemplate *)prim)->mType = type;
-        ((PrimitiveTemplate *)prim)->mParentPrimIndex = currentPrimitiveIndex;
+        prim->mType = (PrimType)type;
+        prim->mParentPrimIndex = currentPrimitiveIndex;
 
-        if (!PrimitiveTemplate_ParsePrimitive(prim, primitiveGroup)) {
-            PrimitiveTemplate_Shutdown(prim);
-            count = effect->mPrimitiveCount;
-            for (j = 0; j < count; j++) {
-                PrimitiveTemplate_Shutdown(effect->mPrimitives[j]);
+        if (PrimitiveTemplate_ParsePrimitive(prim, primitiveGroup)) {
+            if (prim->mType == 1 || prim->mType == 7 || prim->mType == 3) {
+                if (*fx_developer_check_ptr != 0 && prim->mMediaHandles.mMediaList.size == 0) {
+                    FX_Print("^1FX Error, no materials defined for primitive template of type '%i'\n", prim->mType);
+                    PrimitiveTemplate_Shutdown(prim);
+                    FX_CleanTemplate(effect);
+                    FX_Print("^1FX Error, invalid primitive template for effect '%s'\n", name);
+                    return NULL;
+                }
             }
+
+            count = effect->mPrimitiveCount;
+            if (count >= 0x18) {
+                FX_Print("FxScheduler:  Error--too many primitives in an effect\n");
+            } else {
+                effect->mPrimitives[count] = prim;
+                effect->mPrimitiveCount++;
+            }
+        } else {
+            PrimitiveTemplate_Shutdown(prim);
+            FX_CleanTemplate(effect);
             FX_Print("^1FX Error while parsing segment type '%s'\n", *(char **)primitiveGroup);
             return NULL;
         }
 
-        if (type == 1 || type == 7 || type == 3) {
-            if (*fx_developer_check_ptr != 0 && ((PrimitiveTemplate *)prim)->mMediaHandles.mMediaList.size == 0) {
-                FX_Print("^1FX Error, no materials defined for primitive template of type %d\n", type);
-                PrimitiveTemplate_Shutdown(prim);
-                count = effect->mPrimitiveCount;
-                for (j = 0; j < count; j++) {
-                    PrimitiveTemplate_Shutdown(effect->mPrimitives[j]);
-                }
-                FX_Print("^1FX Error, invalid primitive template for effect '%s'\n", name);
-                return NULL;
-            }
-        }
-
-        count = effect->mPrimitiveCount;
-        if (count > 0x17) {
-            FX_Print("^1FX Error, too many primitives in effect\n");
-        } else {
-            effect->mPrimitives[count] = (PrimitiveTemplate *)prim;
-            effect->mPrimitiveCount = count + 1;
-        }
-
     next_group:
-        primitiveGroup = (void *)((GPObject *)primitiveGroup)->next;
+        primitiveGroup = (GPGroup *)primitiveGroup->nextUnsorted;
         currentPrimitiveIndex++;
     }
 
@@ -267,7 +266,7 @@ void MediaHandles_AddEffect(const MediaHandles *_this, EffectTemplate *fx)
             memcpy(newElements, self->mMediaList.elements, self->mMediaList.size * 4);
             Z_FreeInternal(self->mMediaList.elements);
         }
-        self->mMediaList.elements = newElements;
+        self->mMediaList.elements = (TMediaElement *)(newElements);
     }
 
     ((void **)self->mMediaList.elements)[self->mMediaList.size] = (void *)fx;

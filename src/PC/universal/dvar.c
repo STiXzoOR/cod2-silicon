@@ -86,7 +86,7 @@ static const char *Dvar_ValueToString_impl(const dvar_t *dvar, DvarValue value);
 const char *Dvar_DisplayableValue(const dvar_t *dvar);
 const char *Dvar_DisplayableResetValue(const dvar_t *dvar);
 const char *Dvar_DisplayableLatchedValue(const dvar_t *dvar);
-static Bool __attribute_regparm__(3) Dvar_ValuesEqual(int type, DvarValue val0, DvarValue val1);
+static Bool __attribute_regparm__(3) Dvar_ValuesEqual(byte type, DvarValue val0, DvarValue val1);
 Bool Dvar_HasLatchedValue(const dvar_t *dvar);
 Bool Dvar_IsAtDefaultValue(const dvar_t *dvar);
 void Dvar_ClearModified(const dvar_t *dvar);
@@ -98,12 +98,12 @@ static void __attribute_regparm__(2) Dvar_StringToColor(const char *string, byte
 static DvarValue Dvar_StringToValue_impl(int type, DvarLimits domain, const char *string);
 static DvarValue __attribute_regparm__(3) Dvar_StringToValue(
     int type, uint32_t domainLo, uint32_t domainHi, const char *string);
-void Dvar_GetUnpackedColor(const dvar_t *dvar, long unsigned int (*expandedColor)[16]);
+void Dvar_GetUnpackedColor(const dvar_t *dvar, vec_t *expandedColor);
 static void __attribute_regparm__(2) Dvar_SetLatchedValue(const dvar_t *dvar, DvarValue value);
 void Dvar_Shutdown(void);
 Bool Dvar_AnyLatchedValues(void);
 qboolean Com_SaveDvarsToBuffer(const char **dvarnames, int numDvars, char *buffer, int bufsize);
-void Dvar_GetUnpackedColorByName(const char *dvarName, long unsigned int (*expandedColor)[16]);
+void Dvar_GetUnpackedColorByName(const char *dvarName, vec_t *expandedColor);
 const char *Dvar_GetVariantString(const char *dvarName);
 const char *Dvar_GetString(const char *dvarName);
 float Dvar_GetFloat(const char *dvarName);
@@ -231,7 +231,6 @@ static inline __attribute__((always_inline)) unsigned int Dvar_GenerateHashValue
 
     if (!name) {
         Com_Error(1, "\x15null name in generateHashValue");
-        return 0;
     }
 
     hash = 0;
@@ -825,7 +824,7 @@ const char *Dvar_DisplayableLatchedValue(const dvar_t *dvar)
     return Dvar_ValueToString_impl(dvar, dvar->latched);
 }
 
-static Bool __attribute_regparm__(3) Dvar_ValuesEqual(int type, DvarValue val0, DvarValue val1)
+static Bool __attribute_regparm__(3) Dvar_ValuesEqual(byte type, DvarValue val0, DvarValue val1)
 {
     switch (type) {
     case DVAR_TYPE_BOOL:
@@ -894,7 +893,7 @@ const char *Dvar_IndexStringToEnumString(const dvar_t *dvar, const char *indexSt
 
     len = (int)strlen(indexString);
     for (i = 0; i < len; ++i) {
-        if (!isdigit((unsigned char)indexString[i])) {
+        if (!isdigit(indexString[i])) {
             return "";
         }
     }
@@ -982,10 +981,9 @@ static inline __attribute__((always_inline)) const dvar_t *Dvar_FindVar_inl(cons
     return 0;
 }
 
-static inline __attribute__((always_inline)) void Dvar_GetUnpackedColor_inl(const dvar_t *dvar, long unsigned int (*expandedColor)[16])
+static inline __attribute__((always_inline)) void Dvar_GetUnpackedColor_inl(const dvar_t *dvar, vec_t *expandedColor)
 {
     byte color[4];
-    float *expanded;
 
     if (dvar->type == DVAR_TYPE_COLOR) {
         *(int *)color = dvar->current.integer;
@@ -993,14 +991,13 @@ static inline __attribute__((always_inline)) void Dvar_GetUnpackedColor_inl(cons
         Dvar_StringToColor(dvar->current.string, color);
     }
 
-    expanded = (float *)expandedColor;
-    expanded[0] = (float)color[0] * (1.0f / 255.0f);
-    expanded[1] = (float)color[1] * (1.0f / 255.0f);
-    expanded[2] = (float)color[2] * (1.0f / 255.0f);
-    expanded[3] = (float)color[3] * (1.0f / 255.0f);
+    expandedColor[0] = (float)color[0] * (1.0f / 255.0f);
+    expandedColor[1] = (float)color[1] * (1.0f / 255.0f);
+    expandedColor[2] = (float)color[2] * (1.0f / 255.0f);
+    expandedColor[3] = (float)color[3] * (1.0f / 255.0f);
 }
 
-void Dvar_GetUnpackedColor(const dvar_t *dvar, long unsigned int (*expandedColor)[16])
+void Dvar_GetUnpackedColor(const dvar_t *dvar, vec_t *expandedColor)
 {
     Dvar_GetUnpackedColor_inl(dvar, expandedColor);
 }
@@ -1105,19 +1102,18 @@ qboolean Com_SaveDvarsToBuffer(const char **dvarnames, int numDvars, char *buffe
     return 1;
 }
 
-void Dvar_GetUnpackedColorByName(const char *dvarName, long unsigned int (*expandedColor)[16])
+void Dvar_GetUnpackedColorByName(const char *dvarName, vec_t *expandedColor)
 {
     const dvar_t *var;
 
     var = Dvar_FindVar_inl(dvarName);
     if (!var) {
         const float *white = (const float *)imp_colorWhite;
-        float *color = (float *)expandedColor;
 
-        color[0] = white[0];
-        color[1] = white[1];
-        color[2] = white[2];
-        color[3] = white[3];
+        expandedColor[0] = white[0];
+        expandedColor[1] = white[1];
+        expandedColor[2] = white[2];
+        expandedColor[3] = white[3];
         return;
     }
 
@@ -2404,5 +2400,5 @@ void Dvar_SetCommand(const char *dvarName, const char *string)
 
 void Dvar_SetFromStringByName(const char *dvarName, const char *string)
 {
-    Dvar_SetFromStringByNameFromSource(dvarName, string, 0);
+    Dvar_SetFromStringByNameFromSource(dvarName, string, (DvarSetSource)0);   /* C++ needs explicit int->enum */
 }

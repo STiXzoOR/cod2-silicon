@@ -296,7 +296,9 @@ int ZdlPv();
 int Znam();
 int Znwm();
 int CFConstantStringClassReference();
-int dynamic_cast();
+#ifndef __cplusplus
+int dynamic_cast();   /* C++ keyword; this Mac-import decl is only meaningful in C */
+#endif
 
 int keymgr_dwarf2_register_sections();
 int maskrune();

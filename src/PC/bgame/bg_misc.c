@@ -1,22 +1,22 @@
 #include "common_types.h"
 #include "imports.h"
 
-extern const dvar_t *player_view_pitch_up;
-extern const dvar_t *player_view_pitch_down;
-extern const dvar_t *bg_ladder_yawcap;
-extern const dvar_t *bg_prone_yawcap;
+const dvar_t *player_view_pitch_up;
+const dvar_t *player_view_pitch_down;
+const dvar_t *bg_ladder_yawcap;
+const dvar_t *bg_prone_yawcap;
 extern const dvar_t *bg_foliagesnd_minspeed;
 extern const dvar_t *bg_foliagesnd_maxspeed;
 extern const dvar_t *bg_foliagesnd_slowinterval;
 extern const dvar_t *bg_foliagesnd_fastinterval;
 extern const dvar_t *bg_foliagesnd_resetinterval;
-extern const dvar_t *bg_fallDamageMinHeight;
-extern const dvar_t *bg_fallDamageMaxHeight;
-extern const dvar_t *inertiaMax;
-extern const dvar_t *inertiaDebug;
-extern const dvar_t *inertiaAngle;
-extern const dvar_t *friction;
-extern const dvar_t *stopspeed;
+const dvar_t *bg_fallDamageMinHeight;
+const dvar_t *bg_fallDamageMaxHeight;
+const dvar_t *inertiaMax;
+const dvar_t *inertiaDebug;
+const dvar_t *inertiaAngle;
+const dvar_t *friction;
+const dvar_t *stopspeed;
 extern const dvar_t *bg_swingSpeed;
 extern const dvar_t *bg_bobAmplitudeStanding;
 extern const dvar_t *bg_bobAmplitudeDucked;
@@ -244,15 +244,15 @@ char *eventnames[199] = {
 
 extern const int singleClientEvents[7];
 extern const dvar_t *player_moveThreshhold;
-extern const dvar_t *player_footstepsThreshhold;
+const dvar_t *player_footstepsThreshhold;
 extern const dvar_t *player_strafeSpeedScale;
 extern const dvar_t *player_backSpeedScale;
-extern const dvar_t *player_spectateSpeedScale;
+const dvar_t *player_spectateSpeedScale;
 extern const dvar_t *player_turnAnims;
 
 extern int I_stricmp(const char *s1, const char *s2);
 extern int G_GetWeaponIndexForName(const char *name);
-extern qboolean BG_DoesWeaponNeedSlot(int weapon);
+extern Bool BG_DoesWeaponNeedSlot(int weapon);
 extern int BG_GetMaxPickupableAmmo(const playerState_t *ps, int weapon);
 extern qboolean BG_WeaponIsClipOnly(int weapon);
 extern void Com_Error(errorParm_t code, const char *fmt, ...);
@@ -270,9 +270,9 @@ void BG_RegisterDvars(void);
 const gitem_t *BG_FindItemForWeapon(int weapon);
 const gitem_t *G_FindItem(const char *pickupName);
 void BG_AddPredictableEventToPlayerstate(int newEvent, int eventParm, playerState_t *ps);
-extern int PM_GetEffectiveStance(void *ps);
-extern int PM_GetViewHeightLerpTime(void *ps, int current, int target);
-extern float AngleNormalize180(float angle);
+extern int PM_GetEffectiveStance(playerState_t *ps);
+extern int PM_GetViewHeightLerpTime(const playerState_t *ps, int current, int target);
+extern const float AngleNormalize180(const float angle);
 extern void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up);
 extern const vec_t Vec3Normalize(vec_t *v);
 extern const float vectopitch(const vec_t *vec);
@@ -433,7 +433,7 @@ void BG_PlayerStateToEntityState(playerState_t *ps, entityState_t *s, qboolean s
         s->eType = eType;
     }
 
-    s->pos.trType = 1;
+    s->pos.trType = (trType_t)(1);
 
     s->pos.trBase[0] = ps->origin[0];
     s->pos.trBase[1] = ps->origin[1];
@@ -446,7 +446,7 @@ void BG_PlayerStateToEntityState(playerState_t *ps, entityState_t *s, qboolean s
         s->pos.trBase[2] = (float)(int)s->pos.trBase[2];
     }
 
-    s->apos.trType = 1;
+    s->apos.trType = (trType_t)(1);
 
     s->apos.trBase[0] = ps->viewangles[0];
     s->apos.trBase[1] = ps->viewangles[1];
@@ -566,14 +566,14 @@ void BG_PlayerStateToEntityState(playerState_t *ps, entityState_t *s, qboolean s
     if (i != ps->eventSequence) {
         byte handlerIdx = (unsigned char)handler;
 
-        byte *handlerTable = (byte *)imp_pmoveHandlers + handlerIdx * 12;
+        pmoveHandler_t *handlerEntry = &((pmoveHandler_t *)imp_pmoveHandlers)[handlerIdx];
 
         while (i != ps->eventSequence) {
             int slot = i & 3;
             event = (unsigned char)ps->events[slot];
 
             {
-                void (*eventCallback)(int, int) = *(void (**)(int, int))(handlerTable + 8);
+                void (*eventCallback)(int, int) = (void (*)(int, int))handlerEntry->playerEvent;
                 if (eventCallback) {
                     eventCallback(s->number, event & 0xff);
                 }

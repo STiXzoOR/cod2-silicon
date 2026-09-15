@@ -13,11 +13,11 @@ static int v60_noop(void)
     return 0;
 }
 
-extern void XModelOptimize(void *xmodel);
+extern void XModelOptimize(XModel *xmodel);
 static void *gfxv60_XModelRegister(void *xmodel)
 {
     if (xmodel)
-        XModelOptimize(xmodel);
+        XModelOptimize((XModel *)xmodel);
     return xmodel;
 }
 
@@ -67,9 +67,9 @@ DIAG(23) DIAG(24) DIAG(26) DIAG(27) DIAG(87) DIAG(88) DIAG(89)
     dst[107] = src[111];
     dst[135] = src[159];
 
-    /* Sun/dvar members used at map load (retail v60 idx -> our v59 idx; a clean +2).
+    /* Sun/dvar members used at map load (v60 index -> v59 index; a clean +2).
      * With these bridged, R_LoadWorld pushes the BSP sun into the r_lightTweak* dvars
-     * and the optional sun-dvar file loads correctly under the retail engine. */
+     * and the optional sun-dvar file loads correctly. */
     dst[39] = src[41];   /* Dvar_SetFloat */
     dst[41] = src[43];   /* Dvar_SetColor */
     dst[43] = src[45];   /* Dvar_SetVec3 */

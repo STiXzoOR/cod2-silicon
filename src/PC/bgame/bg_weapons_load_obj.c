@@ -1,5 +1,6 @@
 #include "common_types.h"
 #include "imports.h"
+#include "bytematch.h"   /* BM_I2F: VC7.1 has no C99 hex-float literals */
 
 #include <string.h>
 #include <strings.h>
@@ -11,7 +12,7 @@ extern void Com_Error(int code, const char *fmt, ...);
 extern void FS_FCloseFile(fileHandle_t f);
 extern int FS_Read(void *buffer, int len, fileHandle_t f);
 extern void Com_BeginParseSession(const char *name);
-extern char *Com_Parse(char **data_p);
+extern const char *Com_Parse(const char **data_p);
 extern void Com_EndParseSession(void);
 extern void *Hunk_AllocLowInternal(int size);
 extern void *Hunk_AllocLowAlignInternal(int size, int align);
@@ -188,21 +189,21 @@ void BG_LoadPlayerAnimTypes(void)
     }
 
     FS_Read(buf, iLen, f);
-    buf[iLen] = '\0';
+    buf[iLen] = (char)((const char *)('\0'));
     FS_FCloseFile(f);
 
-    text_p = buf;
+    text_p = (char *)((const char *)(buf));
     Com_BeginParseSession("BG_AnimParseAnimScript");
 
     while (1) {
-        token = Com_Parse(&text_p);
+        token = (char *)((const char *)(Com_Parse((const char **)&text_p)));
         if (!token || *token == '\0') {
             break;
         }
         if (g_playerAnimTypeNamesCount > 63) {
             Com_Error(1, "\x15Player anim type array size exceeded");
         }
-        g_playerAnimTypeNames[g_playerAnimTypeNamesCount] = Hunk_AllocLowInternal(strlen(token) + 1);
+        g_playerAnimTypeNames[g_playerAnimTypeNamesCount] = (char *)((const char *)(Hunk_AllocLowInternal(strlen(token) + 1)));
         strcpy(g_playerAnimTypeNames[g_playerAnimTypeNamesCount], token);
         g_playerAnimTypeNamesCount++;
     }
@@ -219,9 +220,9 @@ static inline __attribute__((always_inline)) void SetConfigString_core(char **pp
         return;
     }
 
-    buf = Hunk_AllocLowAlignInternal(strlen(pszKeyValue) + 1, 1);
+    buf = (char *)((const char *)(Hunk_AllocLowAlignInternal(strlen(pszKeyValue) + 1, 1)));
     strcpy(buf, pszKeyValue);
-    *ppszConfigString = buf;
+    *ppszConfigString = (char *)((const char *)(buf));
 }
 
 void SetConfigString(char **ppszConfigString, const char *pszKeyValue)
@@ -238,7 +239,7 @@ static void SetConfigString2(byte *pMember, const char *pszKeyValue)
         return;
     }
 
-    buf = Hunk_AllocLowAlignInternal(strlen(pszKeyValue) + 1, 1);
+    buf = (char *)(Hunk_AllocLowAlignInternal(strlen(pszKeyValue) + 1, 1));
     strcpy(buf, pszKeyValue);
     *(char **)pMember = buf;
 }
@@ -268,7 +269,7 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
         if (arrayIndex < 0) {
             Com_Error(1, "Unknown weapon type \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
         }
-        wd->weapType = arrayIndex;
+        wd->weapType = (weapType_t)(arrayIndex);
         return 1;
 
     case 1:
@@ -276,7 +277,7 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
         if (arrayIndex < 0) {
             Com_Error(1, "Unknown weapon class \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
         }
-        wd->weapClass = arrayIndex;
+        wd->weapClass = (weapClass_t)(arrayIndex);
         return 1;
 
     case 2:
@@ -284,7 +285,7 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
         if (arrayIndex < 0) {
             Com_Error(1, "Unknown weapon overlay reticle \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
         }
-        wd->overlayReticle = arrayIndex;
+        wd->overlayReticle = (weapOverlayReticle_t)(arrayIndex);
         return 1;
 
     case 3:
@@ -292,7 +293,7 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
         if (arrayIndex < 0) {
             Com_Error(1, "Unknown weapon slot \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
         }
-        wd->weapSlot = arrayIndex;
+        wd->weapSlot = (weapSlot_t)(arrayIndex);
         return 1;
 
     case 4:
@@ -300,7 +301,7 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
         if (arrayIndex < 0) {
             Com_Error(1, "Unknown weapon stance \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
         }
-        wd->stance = arrayIndex;
+        wd->stance = (weapStance_t)(arrayIndex);
         return 1;
 
     case 5:
@@ -308,7 +309,7 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
         if (arrayIndex < 0) {
             Com_Error(1, "Unknown projectile explosion \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
         }
-        wd->projExplosion = arrayIndex;
+        wd->projExplosion = (weapProjExposion_t)(arrayIndex);
         return 1;
 
     case 6:
@@ -316,7 +317,7 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
         if (arrayIndex < 0) {
             Com_Error(1, "Unknown offhand class \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
         }
-        wd->offhandClass = arrayIndex;
+        wd->offhandClass = (OffhandClass)(arrayIndex);
         return 1;
 
     case 7:
@@ -342,7 +343,7 @@ WeaponDef *BG_LoadWeaponDefInternal(const char *folder, const char *name)
     char szFileName[64];
     char szBuffer[8192];
 
-    weapDef = Hunk_AllocLowInternal(sizeof(WeaponDef));
+    weapDef = (WeaponDef *)(Hunk_AllocLowInternal(sizeof(WeaponDef)));
 
     BG_InitWeaponDefStrings(weapDef);
 
@@ -391,21 +392,21 @@ WeaponDef *BG_LoadWeaponDefInternal(const char *folder, const char *name)
     if (weapDef->iFireTime > 0) {
         weapDef->fOOPosAnimLength[0] = 1.0f / (float)weapDef->iFireTime;
     } else {
-        weapDef->fOOPosAnimLength[0] = 0x1.b4e81cp-9f;
+        weapDef->fOOPosAnimLength[0] = BM_I2F(0x3b5a740e); /* was 0x1.b4e81cp-9f (C99 hex float) */
     }
 
     if (weapDef->iRechamberTime > 0) {
         weapDef->fOOPosAnimLength[1] = 1.0f / (float)weapDef->iRechamberTime;
     } else {
-        weapDef->fOOPosAnimLength[1] = 0x1.0624dep-9f;
+        weapDef->fOOPosAnimLength[1] = BM_I2F(0x3b03126f); /* was 0x1.0624dep-9f (C99 hex float) */
     }
 
     if (weapDef->destabilizationBaseTime <= 0.0f) {
-        weapDef->destabilizationBaseTime = 0x1.e847ep+19f;
+        weapDef->destabilizationBaseTime = BM_I2F(0x497423f0); /* was 0x1.e847ep+19f (C99 hex float) */
     }
 
     if (weapDef->destabilizationTimeReductionRatio <= 0.0f) {
-        weapDef->destabilizationTimeReductionRatio = 0x1.e847e4p+19f;
+        weapDef->destabilizationTimeReductionRatio = BM_I2F(0x497423f2); /* was 0x1.e847e4p+19f (C99 hex float) */
     }
 
     if (weapDef->enemyCrosshairRange > 15000.0f) {

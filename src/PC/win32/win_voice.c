@@ -10,15 +10,15 @@ extern const dvar_t *Dvar_RegisterFloat(const char *name, float defaultValue, fl
 extern int Record_Init(int callInit, const void *handle);
 extern void Sound_Init(int freq);
 extern Bool Encode_Init(int freq);
-extern void Decode_Init(int freq);
+extern unsigned char Decode_Init(int freq);
 extern void Record_Shutdown(void);
-extern void Encode_Shutdown(void);
+extern Bool Encode_Shutdown(void);
 extern void Decode_Shutdown(void);
 extern void Sound_Shutdown(void);
-extern void *Sound_NewSample(void);
-extern void Sound_SampleFrame(void *sample);
-extern int Sound_DestroySample(void *sample);
-extern void Sound_UpdateSample(void *sample, void *data, int size);
+extern dsound_sample_t *Sound_NewSample(void);
+extern void Sound_SampleFrame(dsound_sample_t *sample);
+extern int Sound_DestroySample(dsound_sample_t *sample);
+extern int Sound_UpdateSample(dsound_sample_t *sample, char *data, unsigned int size);
 extern void Sound_Frame(void);
 extern void Record_Frame(void);
 extern int Record_Start(recordingSample_t *sample);
@@ -31,7 +31,7 @@ extern int mixerGetRecordLevel(const char *source);
 extern void mixerSetRecordLevel(const char *source, int level);
 extern void mixerSetMicrophoneMute(int mute);
 extern int Sys_Milliseconds(void);
-extern int Decode_Sample(void *inData, int inSize, void *outData, int maxOutSize);
+extern int Decode_Sample(char *inData, int inSize, short *outData, int maxOutSize);
 
 extern byte *voice_freq_ptr;
 extern byte *voice_maxframe_ptr;
@@ -102,7 +102,7 @@ Bool Voice_Init(void)
     memset(s_clientTalkTime, 0, sizeof(s_clientTalkTime));
 
     for (i = 0; i < 64; i++) {
-        s_clientSamples[i] = Sound_NewSample();
+        s_clientSamples[i] = (unsigned short *(*)[4])(Sound_NewSample());
     }
 
     return 0;
@@ -146,7 +146,7 @@ void Voice_Playback(void)
     }
 
     for (i = 0; i < 64; i++) {
-        Sound_SampleFrame(s_clientSamples[i]);
+        Sound_SampleFrame((dsound_sample_t *)s_clientSamples[i]);
     }
 
     Sound_Frame();
@@ -178,9 +178,9 @@ void Voice_IncomingVoiceData(int talker, unsigned char *data, int packetDataSize
             remaining = packetDataSize - processedBytes;
             bytesToProcess = remaining < maxFrameSize ? remaining : maxFrameSize;
 
-            decodedLen = Decode_Sample(data + processedBytes, bytesToProcess, decodedData, maxFrameSize);
+            decodedLen = Decode_Sample((char *)(data + processedBytes), bytesToProcess, decodedData, maxFrameSize);
             if (decodedLen > 0) {
-                Sound_UpdateSample(s_clientSamples[talkerIdx], decodedData, decodedLen);
+                Sound_UpdateSample((dsound_sample_t *)s_clientSamples[talkerIdx], (char *)decodedData, decodedLen);
             }
             processedBytes += bytesToProcess;
         }
@@ -208,7 +208,7 @@ void Voice_Shutdown(void)
         return;
 
     for (i = 0; i < 64; i++) {
-        Sound_DestroySample(s_clientSamples[i]);
+        Sound_DestroySample((dsound_sample_t *)s_clientSamples[i]);
     }
 
     if (recording) {

@@ -3,6 +3,9 @@
 #include "imports.h"
 #include <string.h>
 #include <stdlib.h>
+/* dvar globals */
+extern const dvar_t *fs_copyfiles;
+extern const dvar_t *snd_touchStreamFilesOnLoad;
 
 #ifndef __EMSCRIPTEN__
 #    define COM_REGPARM3 __attribute__((regparm(3)))
@@ -75,7 +78,7 @@ extern void Com_Error(int code, const char *fmt, ...);
 extern int FS_Write(const void *buffer, int len, fileHandle_t h);
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern int FS_FOpenFileRead(const char *qpath, fileHandle_t *file, qboolean uniqueFILE);
-extern int FS_FOpenFileWrite(const char *filename);
+extern fileHandle_t FS_FOpenFileWrite(const char *filename);
 extern void Com_UngetToken(void);
 extern int FS_Read(void *buffer, int len, fileHandle_t h);
 extern void FS_FCloseFile(fileHandle_t h);
@@ -89,19 +92,19 @@ extern int sprintf(char *str, const char *format, ...);
 extern void *imp_fs_basepath;
 extern void *imp_fs_gamedir;
 extern void *imp_fs_homepath;
-extern char *FS_BuildOSPath(const char *base, const char *game, const char *qpath, char *ospath);
-extern void *FS_FileOpen(const char *path, const char *mode);
-extern void FS_FileClose(void *stream);
+extern void FS_BuildOSPath(const char *base, const char *game, const char *qpath, char *ospath);
+extern FILE *FS_FileOpen(const char *path, const char *mode);
+extern int FS_FileClose(FILE *stream);
 extern int FS_FileExists(const char *qpath);
-extern void FS_CopyFile(const char *fromOSPath, const char *toOSPath);
+extern void FS_CopyFile(char *fromOSPath, char *toOSPath);
 extern char **FS_ListFiles(const char *path, const char *extension, int behavior, int *numfiles, int wantsubs);
-extern void FS_FreeFileList(char **list, int allocTrackType);
+extern void FS_FreeFileList(const char **list, int allocTrackType);
 extern int Hunk_HideTempMemory(void);
 extern void Hunk_ShowTempMemory(int mark);
 extern void Hunk_ClearTempMemory(void);
-extern int FS_FileSeek(void *stream, int offset, int origin);
-extern int FS_FileRead(void *buffer, int size, int count, void *stream);
-extern int FS_FileWrite(const void *buffer, int size, int count, void *stream);
+extern int FS_FileSeek(FILE *stream, long offset, int origin);
+extern unsigned int FS_FileRead(void *buffer, unsigned int size, unsigned int count, FILE *stream);
+extern unsigned int FS_FileWrite(const void *buffer, unsigned int size, unsigned int count, FILE *stream);
 extern void FS_Remove(const char *osPath);
 extern void *malloc(size_t size);
 extern void free(void *ptr);
@@ -135,8 +138,8 @@ static inline __attribute__((always_inline)) const char *Com_ImportedDvarString(
 
 static void Com_CopyFinalStringEdFile(const char *stringEdFileName, const char *stringEdExternalFileName)
 {
-    void *in;
-    void *out;
+    FILE *in;
+    FILE *out;
     void *buffer;
     int length;
 
@@ -489,6 +492,7 @@ void Com_MakeSoundAliasesPermanent(snd_alias_list_t *aliasInfo, SoundFileInfo *s
 #    else
                 aliasList = (snd_alias_list_t *)Com_AllocSoundMemory(0x10, "Com_MakeSoundAliasesPermanent:aliasList", 0xe);
 #    endif
+                memset(aliasList, 0, sizeof(*aliasList));
                 if (!Com_AddAliasList(aliasName, aliasList)) {
                     Com_Printf("^1ERROR: alias '%s' already added - ignoring\n", aliasName);
                     nextStrings = stringsAfterSubtitle;
@@ -517,6 +521,7 @@ void Com_MakeSoundAliasesPermanent(snd_alias_list_t *aliasInfo, SoundFileInfo *s
 
             SA_PERM_SOUND(alias) = currentSound;
 
+            memset(permAlias, 0, sizeof(*permAlias));
             permAlias->pszAliasName = aliasName;
             if (SA_SECONDARY_NAME(alias)[0]) {
                 permAlias->pszSecondaryAliasName = (const char *)Com_AllocSoundMemory((int)strlen(SA_SECONDARY_NAME(alias)) + 1, "Com_AddSoundAlias", 0xe);
@@ -770,8 +775,8 @@ int Com_LoadSoundAliasSounds(SoundFileInfo *soundFileInfo)
             continue;
         }
 
-        if ((*(dvar_t **)imp_snd_touchStreamFilesOnLoad)->current.enabled ||
-            (*(dvar_t **)imp_fs_copyfiles)->current.enabled) {
+        if ((snd_touchStreamFilesOnLoad)->current.enabled ||
+            (fs_copyfiles)->current.enabled) {
             soundFile->isStreamFound = FS_TouchFile(va("sound/%s", soundFile->soundName));
         } else {
             soundFile->isStreamFound = 1;
@@ -1390,7 +1395,7 @@ void Com_ProcessSoundAliasFileLocalization(const char *sourceFile, const char *l
     int col;
     qboolean bHasName;
     qboolean bHasFile;
-    void *checkFile;
+    FILE *checkFile;
 
     Com_sprintf(soundAliasFile, sizeof(soundAliasFile), "soundaliases/%s", sourceFile);
     FS_BuildOSPath(Com_ImportedDvarString(imp_fs_basepath), (const char *)imp_fs_gamedir, soundAliasFile, szFullPath);
@@ -1801,7 +1806,7 @@ void Com_WriteLocalizedSoundAliasFiles(void)
     int fileCount;
     int mark;
     int i;
-    void *file;
+    FILE *file;
 
     FS_BuildOSPath(Com_ImportedDvarString(imp_fs_homepath), "../source_data/string_resources/subtitle.st", "", stringEdExternalFileName);
     stringEdExternalFileName[strlen(stringEdExternalFileName) - 1] = '\0';
@@ -1838,14 +1843,14 @@ void Com_WriteLocalizedSoundAliasFiles(void)
     }
 
     Hunk_ShowTempMemory(mark);
-    FS_FreeFileList(fileNames, 10);
+    FS_FreeFileList((const char **)fileNames, 10);
     Com_CopyFinalStringEdFile(stringEdFileName, stringEdExternalFileName);
 }
 
 void Com_LoadSoundAliasFile(const char *loadspec, const char *loadspecCurGame, const char *sourceFile)
 {
     char filename[64];
-    void *file;
+    void *file;   /* a FS_ReadFile BUFFER (void**), not a stream */
     const char *ptr;
     const char *token;
     snd_alias_members_t columnTypes[256];
@@ -2144,8 +2149,8 @@ int Com_LoadSoundAliasSounds(SoundFileInfo *soundFileInfo)
             continue;
         }
 
-        if ((*(dvar_t **)imp_snd_touchStreamFilesOnLoad)->current.enabled ||
-            (*(dvar_t **)imp_fs_copyfiles)->current.enabled) {
+        if ((snd_touchStreamFilesOnLoad)->current.enabled ||
+            (fs_copyfiles)->current.enabled) {
             soundFile->isStreamFound = FS_TouchFile(va("sound/%s", soundFile->soundName));
         } else {
             soundFile->isStreamFound = 1;

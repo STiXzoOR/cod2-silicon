@@ -8,17 +8,17 @@ extern int SV_Cmd_Argc(void);
 extern void SV_Cmd_ArgvBuffer(int arg, char *buffer, int bufferLength);
 extern void Com_Printf(const char *msg, ...);
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
-extern void Dvar_SetString(void *dvar, const char *value);
+extern void Dvar_SetString(const dvar_t *dvar, const char *value);
 extern int I_stricmp(const char *s1, const char *s2);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern const char *SL_ConvertToString(unsigned int stringValue);
 extern const char *va(const char *format, ...);
 extern char *ConcatArgs(int start);
-extern void SV_GameSendServerCommand(int clientNum, int type, const char *text);
+extern void SV_GameSendServerCommand(int clientNum, svscmd_type type, const char *text);
 extern void Cbuf_ExecuteText(int exec_when, const char *text);
 
 extern level_locals_t level;
-extern byte g_entities_ptr[];
+extern gentity_t g_entities[];
 extern byte level_ptr[];
 extern const dvar_t *g_banIPs;
 extern const dvar_t *g_cheats;
@@ -107,7 +107,7 @@ static void UpdateIPBans(void)
                     (compare >> 24) & 0xff);
     }
 
-    Dvar_SetString((void *)g_banIPs, iplist);
+    Dvar_SetString(g_banIPs, iplist);
 }
 
 static void AddIP(const char *str)
@@ -156,7 +156,7 @@ void Svcmd_RemoveIP_f(void)
     ipFilter_t f;
     int i;
 
-    if (SV_Cmd_Argc() <= 1) {
+    if (SV_Cmd_Argc() < 2) {
         Com_Printf("Usage: removeip <ip address>\n");
         return;
     }
@@ -189,7 +189,7 @@ void Svcmd_EntityList_f(void)
     numEntities = level.num_entities;
 
     for (e = 1; e < numEntities; e++) {
-        ent = &((gentity_t *)imp_g_entities)[e];
+        ent = &g_entities[e];
 
         if (ent->r.inuse == 0)
             continue;
@@ -241,7 +241,7 @@ void G_ProcessIPBans(void)
 
     numIPFilters = 0;
 
-    I_strncpyz(str, (*(const dvar_t **)imp_g_banIPs)->current.string, 0x400);
+    I_strncpyz(str, g_banIPs->current.string, 0x400);
 
     s = str;
     t = str;
@@ -301,7 +301,7 @@ qboolean ConsoleCommand(void)
         return 0;
 
     if (I_stricmp(cmd, "say") == 0) {
-        SV_GameSendServerCommand(-1, 0, va("%c \"%s\"", 'e', ConcatArgs(1)));
+        SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c \"%s\"", 'e', ConcatArgs(1)));
         return 1;
     }
 

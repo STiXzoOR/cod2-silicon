@@ -10,15 +10,15 @@ extern void Com_Printf(const char *msg, ...);
 extern void SCR_UpdateScreen(void);
 extern void CG_CloseScriptMenu(void);
 extern void CL_CloseAllMenus(void);
-extern void SND_StopSounds(int flags);
+extern void SND_StopSounds(snd_stopsounds_arg_t flags);
 extern const char *CL_GetConfigString(int index);
-extern const char *Info_ValueForKey(const char *s, const char *key);
+extern char *Info_ValueForKey(const char *s, const char *key);
 extern const char *Dvar_GetString(const char *dvarName);
 extern int Dvar_GetInt(const char *dvarName);
 extern void UI_DrawMapLevelshot(void);
 extern int Sys_Milliseconds(void);
-extern void *UI_GetFontHandle(int fontEnum, float scale);
-extern int UI_TextWidth(const char *text, int maxChars, void *font, float scale);
+extern FontHandle UI_GetFontHandle(int fontEnum, float scale);
+extern int UI_TextWidth(const char *text, int maxChars, struct Font_s *font, float scale);
 extern const char *UI_SafeTranslateString(const char *ref);
 extern void UI_DrawText(const char *text, int maxChars, void *font, float x, float y, int horzAlign, int vertAlign, float scale, const float *color, int style);
 extern void UI_DrawLoadBar(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle material);
@@ -85,7 +85,7 @@ void CG_DrawInformation(qboolean serverLoading)
 
             CL_CloseAllMenus();
 
-            SND_StopSounds(0);
+            SND_StopSounds((snd_stopsounds_arg_t)0);
 
             base = *lh;
             *(char *)(base + CG_FIELD_DC) = 1;
@@ -155,7 +155,7 @@ void CG_DrawInformation(qboolean serverLoading)
     }
 
     translated = UI_SafeTranslateString("CGAME_WAITINGFORSERVERLOAD");
-    textWidth = UI_TextWidth(translated, 0x7fffffff, font, 0.5f);
+    textWidth = UI_TextWidth(translated, 0x7fffffff, (struct Font_s *)font, 0.5f);
     x = (640.0f - (float)textWidth) * 0.5f;
     UI_DrawText(va("%s%s", translated, dots), 0x7fffffff, font, x, 452.0f, 0, 0, 0.5f, (const vec_t *)imp_colorWhite, 3);
 }

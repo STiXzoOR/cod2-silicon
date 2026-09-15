@@ -18,6 +18,7 @@
 #endif
 
 void BG_InitWeaponStrings(void);
+int BG_AnimScriptEvent(playerState_t *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force);
 int BG_PlayAnim(playerState_t *ps, int animNum, animBodyPart_t bodyPart, int forceDuration, qboolean setTimer, qboolean isContinue, qboolean force);
 void BG_UpdatePlayerDObj(struct DObj_s *pDObj, entityState_t *es, clientInfo_t *ci, int attachIgnoreCollision);
 void BG_LerpOffset(vec_t *offset_goal, float maxOffsetChange, vec_t *offset);
@@ -33,7 +34,7 @@ void BG_ParseCommands(const char **input, animScriptItem_t *scriptItem, animScri
 void Jump_RegisterDvars(void);
 void Jump_ClearState(playerState_t *ps);
 Bool Jump_GetStepHeight(playerState_t *ps, const vec_t *origin, float *stepSize);
-Bool Jump_IsPlayerAboveMax(playerState_t *ps);
+qboolean Jump_IsPlayerAboveMax(playerState_t *ps);
 void Jump_ActivateSlowdown(playerState_t *ps);
 void Jump_ApplySlowdown(playerState_t *ps);
 float Jump_ReduceFriction(playerState_t *ps);

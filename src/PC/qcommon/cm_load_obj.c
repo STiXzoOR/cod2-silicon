@@ -78,7 +78,7 @@ extern char *TempMalloc(int len);
 extern void TempMemoryReset(void);
 extern const dheader_t *Com_GetBsp(int *fileSize, unsigned int *checksum);
 extern void Com_Error(errorParm_t code, const char *fmt, ...);
-extern void Com_Memset(void *dest, int val, int count);
+extern void Com_Memset(void *dest, const int val, int count);
 extern void Com_Memcpy(void *dest, const void *src, int count);
 
 void CM_Cleanup(void)
@@ -411,16 +411,7 @@ static cLeafBrushNode_t *CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, 
                 childNode = CMod_PartionLeafBrushes_r(leafBrushes, numChildBrushes, childMins, childMaxs);
 
                 childOffset = (int)(childNode - node);
-
-                encoded = (int)((byte *)childNode - (byte *)node);
-                encoded >>= 2;
-                {
-                    int t = encoded * 3;
-                    t = t + (t << 4);
-                    t = t + (t << 8);
-                    t = t + (t << 16);
-                    encoded = encoded + t * 4;
-                }
+                encoded = childOffset;
                 node->data.children.childOffset[sideIdx] = (unsigned short)encoded;
                 if ((int)(unsigned short)encoded != encoded) {
                     Com_Error(ERR_DROP, "CMod_PartionLeafBrushes_r: childOffset overflows a short");
@@ -490,15 +481,7 @@ static void CMod_PartionLeafBrushes(unsigned short *leafBrushes, int numLeafBrus
 
     resultNode = CMod_PartionLeafBrushes_r(leafBrushes, numLeafBrushes, mins, maxs);
 
-    {
-        int byteOffset = (int)((byte *)resultNode - (byte *)cm_ptr->leafbrushNodes);
-        int dwordOffset = byteOffset >> 2;
-        int t = dwordOffset * 3;
-        t = t + (t << 4);
-        t = t + (t << 8);
-        t = t + (t << 16);
-        leaf->leafBrushNode = dwordOffset + t * 4;
-    }
+    leaf->leafBrushNode = (int)(resultNode - cm_ptr->leafbrushNodes);
 
     CM_Hunk_ClearTempMemoryHigh();
 }
@@ -537,7 +520,11 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
     usePvsFlag = (byte)usePvs;
 
     Com_Memset(cmLocal, 0, sizeof(clipMap_t));
-    Com_Memset(&cml, 0, 12);
+    /* Only cml's three live fields need clearing; 12 is their x86 size (int + 2 ptrs). On x64 the
+       pointers are 8 bytes, so 12 clears numPlanes + padding + only the LOW HALF of `planes`,
+       leaving its high bits and `base` stale from the previous map load. Clear up to _pad
+       instead -- same 12 bytes on x86, and correct on x64. */
+    Com_Memset(&cml, 0, (int)offsetof(cml_t, _pad));
 
     {
         int nameLen = strlen(name) + 1;
@@ -605,12 +592,12 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
         if (sideCount == 0) {
             outSides = (cbrushside_t *)0;
         } else {
-            outSides = (cbrushside_t *)CM_Hunk_Alloc(sideCount * 8, "CMod_LoadBrushSides", 0x18);
+            outSides = (cbrushside_t *)CM_Hunk_Alloc(sideCount * sizeof(cbrushside_t), "CMod_LoadBrushSides", 0x18);
         }
         cmLocal->brushsides = outSides;
         cmLocal->numBrushSides = sideCount;
 
-        outBrush = (cbrush_t *)CM_Hunk_Alloc((brushCount * 3 + 3) * 16, "CMod_LoadBrushes", 0x18);
+        outBrush = (cbrush_t *)CM_Hunk_Alloc((brushCount + 1) * sizeof(cbrush_t), "CMod_LoadBrushes", 0x18);
         cmLocal->brushes = outBrush;
         cmLocal->numBrushes = (unsigned short)brushCount;
         if ((int)(unsigned short)brushCount != brushCount) {
@@ -1033,15 +1020,7 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
 
         *(float *)&boxNode->data = -3.4028234663852886e+38f;
 
-        {
-            int byteOffset = (int)((byte *)boxNode - (byte *)cmLocal->leafbrushNodes);
-            int dwordOffset = byteOffset >> 2;
-            int t = dwordOffset * 3;
-            t = t + (t << 4);
-            t = t + (t << 8);
-            t = t + (t << 16);
-            cmLocal->box_model.leaf.leafBrushNode = dwordOffset + t * 4;
-        }
+        cmLocal->box_model.leaf.leafBrushNode = (int)(boxNode - cmLocal->leafbrushNodes);
 
         boxNode->leafBrushCount = 1;
 

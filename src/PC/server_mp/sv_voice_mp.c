@@ -2,8 +2,8 @@
 #include "imports.h"
 #include <string.h>
 
-extern void LargeLocal_LargeLocal(LargeLocal *ll, int size);
-extern void *LargeLocal_GetBuf(LargeLocal *ll);
+extern void LargeLocal_LargeLocal(const LargeLocal *_this, int size);
+extern void * LargeLocal_GetBuf(const LargeLocal *_this);
 extern void ZN10LargeLocalD1Ev(LargeLocal *ll);
 extern void MSG_Init(msg_t *msg, byte *data, int length);
 extern void MSG_WriteString(msg_t *msg, const char *s);
@@ -70,7 +70,7 @@ void SV_SendClientVoiceData(client_t *client)
     }
 
     adr = client->netchan.remoteAddress;
-    NET_OutOfBandVoiceData(1, adr, msg.data, msg.cursize);
+    NET_OutOfBandVoiceData( (netsrc_t)(1), adr, msg.data, msg.cursize);
 
     client->voicePacketCount = 0;
     ZN10LargeLocalD1Ev((LargeLocal *)_ll_buf);

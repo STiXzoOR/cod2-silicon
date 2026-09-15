@@ -1,5 +1,7 @@
 #include "common_types.h"
 #include "imports.h"
+/* dvar globals */
+extern const dvar_t *sv_cheats;
 
 extern const dvar_t *r_sunsprite_shader;
 extern const dvar_t *r_sunsprite_size;
@@ -122,7 +124,7 @@ void R_Cmd_LoadSun(void)
         return;
     }
 
-    if ((*(const dvar_t **)imp_sv_cheats)->current.enabled == 0) {
+    if ((sv_cheats)->current.enabled == 0) {
         r->Printf(0, "must be in a level to loadsun\n");
         return;
     }
@@ -155,7 +157,7 @@ void R_Cmd_SaveSun(void)
 
     if (r->Com_SaveDvarsToBuffer((const char **)s_sundvars, 0x15, szFileBuffer, 0x2000)) {
         const char *filename;
-        qboolean (*fsWriteFile)() = r->FS_WriteFile;
+        qboolean (*fsWriteFile)(const char *, const void *, int) = r->FS_WriteFile;
         len = strlen(szFileBuffer);
         filename = va("sun/%s.sun", sunName);
         fsWriteFile(filename, szFileBuffer, len);

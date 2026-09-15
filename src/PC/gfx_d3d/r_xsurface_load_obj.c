@@ -40,8 +40,12 @@ XSurface *XModelReadSurface(XModel *model, int *partBits, const byte **pos, Allo
     int size;
     short *triIndicesShort;
 
-    surface = (XSurface *)Alloc(0x18);
-    model->memUsage += 0x18;
+    /* x86 XSurface was 0x18; on x64 the three pointer fields (triIndices, verts,
+     * surfRigid.vb, indexBuffer) push it to sizeof(XSurface)=0x28. The old 0x18
+     * left surfRigid/indexBuffer outside the block, so later GPU-buffer setup
+     * wrote into the adjacent hunk allocation and corrupted it. */
+    surface = (XSurface *)Alloc((int)sizeof(XSurface));
+    model->memUsage += (int)sizeof(XSurface);
 
     surface->tileMode = ConsumeByte(pos);
 

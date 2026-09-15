@@ -7,14 +7,14 @@ extern const dvar_t *cg_scoreboardBannerHeight;
 
 extern const dvar_t *cg_paused;
 
-extern struct Material *CL_RegisterMaterialNoMip(const char *name, int imageTrack);
+extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
 extern const char *Dvar_GetString(const char *dvarName);
 extern void Dvar_GetUnpackedColorByName(const char *dvarName, vec_t *color);
-extern float UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle material);
+extern void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle hMaterial);
 extern void UI_DrawText(const char *text, int maxChars, void *font, float x, float y, int horzAlign, int vertAlign, float scale, float *color, int style);
-extern int UI_TextWidth(const char *text, int maxChars, void *font, float scale);
-extern int UI_TextHeight(void *font, float scale);
-extern void *UI_GetFontHandle(int fontEnum, float scale);
+extern int UI_TextWidth(const char *text, int maxChars, struct Font_s *font, float scale);
+extern int UI_TextHeight(struct Font_s *font, float scale);
+extern FontHandle UI_GetFontHandle(int fontEnum, float scale);
 extern const char *UI_GetGameTypeDisplayName(const char *gameType);
 extern const char *UI_GetMapDisplayName(const char *mapName);
 extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context, int errType);
@@ -30,6 +30,8 @@ extern const char *UI_SafeTranslateString(const char *key);
 extern void CL_AddReliableCommand(const char *cmd);
 extern float *CG_FadeColor(int startMsec, int totalMsec, int fadeMsec);
 extern const char *va(const char *format, ...);
+extern qboolean Language_IsAsian(void);
+extern unsigned int SEH_ReadCharFromString(const char **ppsText, qboolean *pbIsTrailingPunctuation);
 
 extern int lastLeadTeam;
 
@@ -213,13 +215,13 @@ static void CG_Scoreboard_DrawColumnString(const char *text, void *font, float x
         return;
 
     scale = 0.22f;
-    while ((float)UI_TextWidth(text, 0x7fffffff, font, scale) > columnWidth && scale > 0.02f)
+    while ((float)UI_TextWidth(text, 0x7fffffff, (struct Font_s *)font, scale) > columnWidth && scale > 0.02f)
         scale -= 0.02f;
 
     style = (scale >= 0.16f) ? 3 : 0;
     textX = x;
     if (column->iAlignment == 2)
-        textX += columnWidth - (float)UI_TextWidth(text, 0x7fffffff, font, scale);
+        textX += columnWidth - (float)UI_TextWidth(text, 0x7fffffff, (struct Font_s *)font, scale);
 
     CG_Scoreboard_SetColor(textColor, 1.0f, 1.0f, 1.0f, alpha);
     UI_DrawText(text, 0x7fffffff, font, textX, y + 10.08f, 0, 0, scale, textColor, style);
@@ -389,7 +391,7 @@ static float CG_DrawScoreboard_ListBanner(vec_t *color, float y, float listWidth
         if (text) {
             float textX = x;
             if (column->iAlignment == 2)
-                textX += columnWidth - (float)UI_TextWidth(text, 0, bannerFont, 0.32f);
+                textX += columnWidth - (float)UI_TextWidth(text, 0, (struct Font_s *)bannerFont, 0.32f);
             UI_DrawText(text, 0x7fffffff, bannerFont, textX, y + bannerLineHeight * 0.84f, 0, 0, 0.32f, teamColor, 3);
         }
 
@@ -399,81 +401,152 @@ static float CG_DrawScoreboard_ListBanner(vec_t *color, float y, float listWidth
     return y + h;
 }
 
-static float CG_Scoreboard_DrawObjective(cg_t *cg, vec_t *color)
+static float CG_Scoreboard_DrawObjective(vec_t *color, float y)
 {
-    char hudElemString[256];
-    const char *lineStart;
-    float y = 56.0f;
-    void *font;
-    MaterialHandle whiteMaterial;
+    const char *textStart;
+    const char *textEnd;
+    const char *whiteSpace;
+    MaterialHandle material;
     vec_t borderColor[4];
-    float dividerY;
+    FontHandle objectiveFont;
+    char hudElemString[256];
+    const char *text;
+    int lineCharacters;
+    unsigned int character;
+    unsigned int char2;
 
-    font = UI_GetFontHandle(0, 0.24f);
+    if (!cg->objectiveText[0])
+        return y;
+
+    y += 4.0f;
+    objectiveFont = UI_GetFontHandle(0, 0.24f);
     CG_TranslateHudElemMessage(cg->objectiveText, (const char *)"scoreboard objective info", hudElemString);
-    hudElemString[sizeof(hudElemString) - 1] = '\0';
 
-    lineStart = hudElemString;
-    while (*lineStart) {
-        const char *scan;
-        const char *lastSpace = 0;
-        const char *lineEnd = 0;
+    textStart = hudElemString;
+    textEnd = hudElemString;
 
-        while (*lineStart == ' ')
-            ++lineStart;
-        if (!*lineStart)
-            break;
+    if (Language_IsAsian()) {
+        lineCharacters = 0;
 
-        scan = lineStart;
-        while (*scan) {
-            const char *next;
+        while (*textStart && textEnd) {
+            text = textStart;
+            character = SEH_ReadCharFromString(&text, 0);
 
-            if (*scan == '\n') {
-                lineEnd = scan;
-                break;
-            }
-            if (*scan == '\\' && scan[1] == 'n') {
-                lineEnd = scan;
-                break;
+            if (character == ' ') {
+                textStart = text;
+                textEnd = text;
+                lineCharacters = 0;
+                continue;
             }
 
-            next = scan + 1;
-            if ((float)UI_TextWidth(lineStart, (int)(next - lineStart), font, 0.24f) > 374.0f) {
-                lineEnd = lastSpace ? lastSpace : scan;
-                if (lineEnd == lineStart)
-                    lineEnd = next;
+            char2 = *text ? SEH_ReadCharFromString(&text, 0) : 0;
+            if (character == '\n' || (character == '\\' && char2 == 'n')) {
+                SEH_ReadCharFromString(&textStart, 0);
+                if (character != '\n')
+                    SEH_ReadCharFromString(&textStart, 0);
+                textEnd = textStart;
+                lineCharacters = 0;
+                y += 12.0f;
+                continue;
+            }
+
+            if (!*textEnd) {
+                UI_DrawText(textStart, lineCharacters, objectiveFont, 129.0f, y + 10.08f, 0, 0, 0.24f, color, 3);
+                y += 12.0f;
                 break;
             }
 
-            if (*next == ' ')
-                lastSpace = next;
-            scan = next;
+            text = textEnd;
+            character = SEH_ReadCharFromString(&text, 0);
+            char2 = *text ? SEH_ReadCharFromString(&text, 0) : 0;
+
+            if (character == '\n' || (character == '\\' && char2 == 'n')) {
+                UI_DrawText(textStart, lineCharacters, objectiveFont, 129.0f, y + 10.08f, 0, 0, 0.24f, color, 3);
+                character = SEH_ReadCharFromString(&textEnd, 0);
+                if (character != '\n')
+                    SEH_ReadCharFromString(&textEnd, 0);
+                textStart = textEnd;
+                lineCharacters = 0;
+                y += 12.0f;
+                continue;
+            }
+
+            if ((float)UI_TextWidth(textStart, lineCharacters + 1, (struct Font_s *)objectiveFont, 0.24f) > 374.0f) {
+                UI_DrawText(textStart, lineCharacters, objectiveFont, 129.0f, y + 10.08f, 0, 0, 0.24f, color, 3);
+                textStart = textEnd;
+                lineCharacters = 0;
+                y += 12.0f;
+                continue;
+            }
+
+            SEH_ReadCharFromString(&textEnd, 0);
+            ++lineCharacters;
         }
+    } else {
+        whiteSpace = 0;
 
-        if (!lineEnd)
-            lineEnd = scan;
+        while (textEnd) {
+            if (*textStart == ' ') {
+                ++textStart;
+                textEnd = textStart;
+                whiteSpace = 0;
+                continue;
+            }
 
-        if (lineEnd > lineStart)
-            UI_DrawText(lineStart, (int)(lineEnd - lineStart), font, 129.0f, y + 10.08f, 0, 0, 0.24f, color, 3);
+            if (*textStart == '\n') {
+                ++textStart;
+                textEnd = textStart;
+                whiteSpace = 0;
+                y += 12.0f;
+                continue;
+            }
 
-        y += 12.0f;
+            if (*textStart == '\\' && textStart[1] == 'n') {
+                textStart += 2;
+                textEnd = textStart;
+                whiteSpace = 0;
+                y += 12.0f;
+                continue;
+            }
 
-        if (*lineEnd == '\\' && lineEnd[1] == 'n')
-            lineStart = lineEnd + 2;
-        else if (*lineEnd == '\n')
-            lineStart = lineEnd + 1;
-        else if (lastSpace && lineEnd == lastSpace)
-            lineStart = lineEnd + 1;
-        else
-            lineStart = lineEnd;
+            ++textEnd;
+            if (!*textEnd) {
+                UI_DrawText(textStart, (int)(textEnd - textStart), objectiveFont, 129.0f, y + 10.08f, 0, 0, 0.24f, color, 3);
+                y += 12.0f;
+                break;
+            }
+
+            if (*textEnd == '\n' || (*textEnd == '\\' && textEnd[1] == 'n')) {
+                UI_DrawText(textStart, (int)(textEnd - textStart), objectiveFont, 129.0f, y + 10.08f, 0, 0, 0.24f, color, 3);
+                textStart = *textEnd == '\n' ? textEnd + 1 : textEnd + 2;
+                textEnd = textStart;
+                whiteSpace = 0;
+                y += 12.0f;
+                continue;
+            }
+
+            if ((float)UI_TextWidth(textStart, (int)(textEnd - textStart), (struct Font_s *)objectiveFont, 0.24f) > 374.0f) {
+                const char *lineEnd = whiteSpace ? whiteSpace : textEnd - 1;
+
+                UI_DrawText(textStart, (int)(lineEnd - textStart), objectiveFont, 129.0f, y + 10.08f, 0, 0, 0.24f, color, 3);
+                textStart = whiteSpace ? whiteSpace + 1 : textEnd - 1;
+                textEnd = textStart;
+                whiteSpace = 0;
+                y += 12.0f;
+                continue;
+            }
+
+            if (*textEnd == ' ')
+                whiteSpace = textEnd;
+        }
     }
 
-    dividerY = y + 2.0f;
-    whiteMaterial = CL_RegisterMaterialNoMip((const char *)"white", 7);
+    y += 2.0f;
+    material = CL_RegisterMaterialNoMip((const char *)"white", 7);
     CG_Scoreboard_CopyColor(borderColor, color, color[3] * 0.1f);
-    UI_DrawHandlePic(125.0f, dividerY, 390.0f, 1.0f, 0, 0, borderColor, whiteMaterial);
+    UI_DrawHandlePic(125.0f, y, 390.0f, 1.0f, 0, 0, borderColor, material);
 
-    return dividerY + 1.0f;
+    return y + 1.0f;
 }
 
 static float CG_Scoreboard_DrawHeader(vec_t *color, float y, float listWidth)
@@ -493,7 +566,7 @@ static float CG_Scoreboard_DrawHeader(vec_t *color, float y, float listWidth)
             const char *translation = UI_SafeTranslateString(column->pszName);
             float textX = x;
             if (column->iAlignment == 2)
-                textX += columnWidth - (float)UI_TextWidth(translation, 0, font, 0.3f);
+                textX += columnWidth - (float)UI_TextWidth(translation, 0, (struct Font_s *)font, 0.3f);
             UI_DrawText(translation, 0x7fffffff, font, textX, y + 11.76f, 0, 0, 0.3f, color, 3);
         }
 
@@ -593,9 +666,7 @@ float CG_DrawScoreboard_ScoresList(float alpha)
 
     CG_Scoreboard_SetColor(color, 1.0f, 1.0f, 1.0f, alpha);
 
-    if (cg->objectiveText[0])
-        CG_Scoreboard_DrawObjective(cg, color);
-    y = 52.0f;
+    y = CG_Scoreboard_DrawObjective(color, 52.0f);
 
     bannerHeight = CG_ScoreboardBannerHeight();
     if (cg->teamPlayers[1] || cg->teamPlayers[2]) {
@@ -788,7 +859,7 @@ qboolean CG_DrawScoreboard(void)
             int textHeight;
             *(int *)&headerScale = 0x3ed1eb85;
             headerFont = UI_GetFontHandle(0, headerScale);
-            textHeight = UI_TextHeight(headerFont, headerScale);
+            textHeight = UI_TextHeight((struct Font_s *)headerFont, headerScale);
             {
                 float yPos = 51.0f + (float)(24 - textHeight) * -0.5f;
                 UI_DrawText(gameType, 0x7fffffff, headerFont, 129.0f, yPos, 0, 0, headerScale, color, 3);
@@ -846,8 +917,8 @@ qboolean CG_DrawScoreboard(void)
                 curFont = UI_GetFontHandle(0, curScale);
                 headerFont = curFont;
                 {
-                    int w1 = UI_TextWidth(gameType, 0, curFont, curScale);
-                    int w2 = UI_TextWidth(map, 0, curFont, curScale);
+                    int w1 = UI_TextWidth(gameType, 0, (struct Font_s *)curFont, curScale);
+                    int w2 = UI_TextWidth(map, 0, (struct Font_s *)curFont, curScale);
                     if ((float)(w1 + w2 + 4) <= 386.0f)
                         break;
                 }
@@ -858,8 +929,8 @@ qboolean CG_DrawScoreboard(void)
         }
 
         {
-            int mapWidth = UI_TextWidth(map, 0, headerFont, fontScale);
-            int textHeight2 = UI_TextHeight(headerFont, fontScale);
+            int mapWidth = UI_TextWidth(map, 0, (struct Font_s *)headerFont, fontScale);
+            int textHeight2 = UI_TextHeight((struct Font_s *)headerFont, fontScale);
             float yPos2 = 51.0f + (float)(24 - textHeight2) * -0.5f;
             float xPos = 511.0f - (float)(mapWidth + 4);
             UI_DrawText(map, 0x7fffffff, headerFont, xPos, yPos2, 0, 0, fontScale, color, 3);
@@ -889,8 +960,8 @@ qboolean CG_DrawScoreboard(void)
                 curFont = UI_GetFontHandle(0, curScale);
                 footerFont = curFont;
                 {
-                    int w1 = UI_TextWidth(serverName, 0, curFont, curScale);
-                    int w2 = UI_TextWidth(serverIP, 0, curFont, curScale);
+                    int w1 = UI_TextWidth(serverName, 0, (struct Font_s *)curFont, curScale);
+                    int w2 = UI_TextWidth(serverIP, 0, (struct Font_s *)curFont, curScale);
                     if ((float)(w1 + w2 + 4) <= 386.0f)
                         break;
                 }
@@ -901,14 +972,14 @@ qboolean CG_DrawScoreboard(void)
         }
 
         {
-            int textHeight3 = UI_TextHeight(footerFont, footerFontScale);
+            int textHeight3 = UI_TextHeight((struct Font_s *)footerFont, footerFontScale);
             y = 447.0f + (float)(14 - textHeight3) * -0.5f;
         }
 
         UI_DrawText(serverName, 0x7fffffff, footerFont, 129.0f, y, 0, 0, footerFontScale, color, 3);
 
         {
-            int ipWidth = UI_TextWidth(serverIP, 0, footerFont, footerFontScale);
+            int ipWidth = UI_TextWidth(serverIP, 0, (struct Font_s *)footerFont, footerFontScale);
             float xPos = 511.0f - (float)(ipWidth + 4);
             UI_DrawText(serverIP, 0x7fffffff, footerFont, xPos, y, 0, 0, footerFontScale, color, 3);
         }

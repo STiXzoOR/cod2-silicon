@@ -1,6 +1,12 @@
 #include "common_types.h"
 #include "imports.h"
 #include <string.h>
+#if defined(_MSC_VER)
+#define MSG_FORCEINLINE __forceinline
+#else
+#define MSG_FORCEINLINE inline __attribute__((always_inline))
+#endif
+extern const dvar_t *cl_shownet;
 
 extern NetField hudElemFields[32];
 extern NetField objectiveFields[8];
@@ -347,12 +353,12 @@ static inline __attribute__((always_inline)) void MSG_WriteBits_core(msg_t *msg,
 {
     int i, bit;
 
-    if (__builtin_expect(msg->maxsize - msg->cursize <= 3, 0)) {
+    if (__builtin_expect(msg->maxsize - msg->cursize < 4, 0)) {
         msg->overflowed = 1;
         return;
     }
 
-    for (i = 0; i < bits; i++) {
+    for (i = 0; i != bits; i++) {
         bit = msg->bit & 7;
         if (bit == 0) {
             msg->bit = msg->cursize * 8;
@@ -492,8 +498,8 @@ int MSG_ReadBits(msg_t *msg, int bits)
 
 static inline __attribute__((always_inline)) int MSG_ReadBit_core(msg_t *msg)
 {
-    int bit = msg->bit;
-    int rem = bit & 7;
+    int rem = msg->bit & 7;
+    int bit;
     int value;
 
     if (rem == 0) {
@@ -501,10 +507,10 @@ static inline __attribute__((always_inline)) int MSG_ReadBit_core(msg_t *msg)
             msg->overflowed = 1;
             return -1;
         }
-        bit = msg->readcount * 8;
-        msg->bit = bit;
+        msg->bit = msg->readcount * 8;
         msg->readcount++;
     }
+    bit = msg->bit;
     value = (msg->data[bit >> 3] >> rem) & 1;
     msg->bit = bit + 1;
     return value;
@@ -515,8 +521,8 @@ int MSG_ReadBit(msg_t *msg)
     return MSG_ReadBit_core(msg);
 }
 
-extern void Huff_offsetTransmit(void *huff, int ch, byte *fout, int *offset);
-extern void Huff_offsetReceive(void *node, int *ch, byte *fin, int *offset);
+extern void Huff_offsetTransmit(huff_t *huff, int ch, byte *fout, int *offset);
+extern void Huff_offsetReceive(nodetype *node, int *ch, byte *fin, int *offset);
 int MSG_WriteBitsCompress(byte *from, byte *to, int size)
 {
     int bit = 0;
@@ -527,7 +533,7 @@ int MSG_WriteBitsCompress(byte *from, byte *to, int size)
         p = from;
         end = from + size;
         do {
-            Huff_offsetTransmit(&msgHuff, *p, to, &bit);
+            Huff_offsetTransmit((huff_t *)&msgHuff, *p, to, &bit);
             p++;
         } while (p != end);
     }
@@ -545,7 +551,7 @@ int MSG_ReadBitsCompress(byte *from, byte *to, int size)
     if (__builtin_expect(bits > 0, 0)) {
         do {
 
-            Huff_offsetReceive((void *)msgHuff.decompressor.tree, &get, from, &bit);
+            Huff_offsetReceive((nodetype *)msgHuff.decompressor.tree, &get, from, &bit);
             *data++ = (byte)get;
         } while (bits > bit);
 
@@ -557,13 +563,13 @@ int MSG_ReadBitsCompress(byte *from, byte *to, int size)
 
 static inline __attribute__((always_inline)) void MSG_WriteByte_core(msg_t *msg, int c)
 {
-
-    if (__builtin_expect(msg->cursize >= msg->maxsize, 0)) {
-        msg->overflowed = 1;
+    if (msg->cursize < msg->maxsize) {
+        msg->data[msg->cursize] = (byte)c;
+        msg->cursize++;
         return;
     }
-    msg->data[msg->cursize] = (byte)c;
-    msg->cursize++;
+
+    msg->overflowed = 1;
 }
 
 void MSG_WriteByte(msg_t *msg, int c)
@@ -574,24 +580,25 @@ void MSG_WriteByte(msg_t *msg, int c)
 static inline __attribute__((always_inline)) void MSG_WriteData_core(msg_t *buf, const void *data, int length)
 {
     int newsize = buf->cursize + length;
-    if (newsize > buf->maxsize) {
-        buf->overflowed = 1;
+    if (newsize <= buf->maxsize) {
+        memcpy(buf->data + buf->cursize, data, length);
+        buf->cursize = newsize;
         return;
     }
-    memcpy(buf->data + buf->cursize, data, length);
-    buf->cursize = newsize;
+
+    buf->overflowed = 1;
 }
 
 void MSG_WriteData(msg_t *buf, const void *data, int length)
 {
-
     int newsize = buf->cursize + length;
-    if (newsize > buf->maxsize) {
-        buf->overflowed = 1;
+    if (newsize <= buf->maxsize) {
+        memcpy(buf->data + buf->cursize, data, length);
+        buf->cursize = newsize;
         return;
     }
-    memcpy(buf->data + buf->cursize, data, length);
-    buf->cursize = newsize;
+
+    buf->overflowed = 1;
 }
 
 static inline __attribute__((always_inline)) int MSG_ReadByte_core(msg_t *msg)
@@ -599,14 +606,14 @@ static inline __attribute__((always_inline)) int MSG_ReadByte_core(msg_t *msg)
     int readcount = msg->readcount;
     int result;
 
-    if (__builtin_expect(readcount >= msg->cursize, 0)) {
-        msg->overflowed = 1;
-        return -1;
+    if (readcount < msg->cursize) {
+        result = (unsigned char)msg->data[readcount];
+        msg->readcount = readcount + 1;
+        return result;
     }
 
-    result = (unsigned char)msg->data[readcount];
-    msg->readcount = readcount + 1;
-    return result;
+    msg->overflowed = 1;
+    return -1;
 }
 
 int MSG_ReadByte(msg_t *msg)
@@ -619,14 +626,14 @@ static inline __attribute__((always_inline)) int MSG_ReadShort_core(msg_t *msg)
     int readcount = msg->readcount;
     int next = readcount + 2;
     int result;
-    if (__builtin_expect(next > msg->cursize, 0)) {
-        msg->overflowed = 1;
-        return -1;
+    if (next <= msg->cursize) {
+        result = *(short *)(msg->data + readcount);
+        msg->readcount = next;
+        return result;
     }
 
-    result = *(short *)(msg->data + readcount);
-    msg->readcount = next;
-    return result;
+    msg->overflowed = 1;
+    return -1;
 }
 
 int MSG_ReadShort(msg_t *msg)
@@ -639,13 +646,14 @@ static inline __attribute__((always_inline)) int MSG_ReadLong_core(msg_t *msg)
     int readcount = msg->readcount;
     int next = readcount + 4;
     int result;
-    if (__builtin_expect(next > msg->cursize, 0)) {
-        msg->overflowed = 1;
-        return -1;
+    if (next <= msg->cursize) {
+        result = *(int *)(msg->data + readcount);
+        msg->readcount = next;
+        return result;
     }
-    result = *(int *)(msg->data + readcount);
-    msg->readcount = next;
-    return result;
+
+    msg->overflowed = 1;
+    return -1;
 }
 
 int MSG_ReadLong(msg_t *msg)
@@ -656,13 +664,14 @@ int MSG_ReadLong(msg_t *msg)
 void MSG_ReadData(msg_t *msg, void *data, int len)
 {
     int newcount = msg->readcount + len;
-    if (__builtin_expect(newcount > msg->cursize, 0)) {
-        msg->overflowed = 1;
-        memset(data, -1, len);
+    if (newcount <= msg->cursize) {
+        memcpy(data, msg->data + msg->readcount, len);
+        msg->readcount = newcount;
         return;
     }
-    memcpy(data, msg->data + msg->readcount, len);
-    msg->readcount = newcount;
+
+    msg->overflowed = 1;
+    memset(data, -1, len);
 }
 
 void MSG_WriteReliableCommandToBuffer(const char *pszCommand, char *pszBuffer, int iBufferSize)
@@ -816,51 +825,55 @@ static inline __attribute__((always_inline)) void MSG_WriteShort_core(msg_t *msg
 {
     int cursize = msg->cursize;
     int newsize = cursize + 2;
-    if (__builtin_expect(newsize > msg->maxsize, 0)) {
-        msg->overflowed = 1;
+    if (newsize <= msg->maxsize) {
+        *(short *)(msg->data + cursize) = (short)c;
+        msg->cursize = newsize;
         return;
     }
-    *(short *)(msg->data + cursize) = (short)c;
-    msg->cursize = newsize;
+
+    msg->overflowed = 1;
 }
 
 void MSG_WriteShort(msg_t *msg, int c)
 {
     int cursize = msg->cursize;
     int newsize = cursize + 2;
-    if (__builtin_expect(newsize > msg->maxsize, 0)) {
-        msg->overflowed = 1;
+    if (newsize <= msg->maxsize) {
+        *(short *)(msg->data + cursize) = (short)c;
+        msg->cursize = newsize;
         return;
     }
-    *(short *)(msg->data + cursize) = (short)c;
-    msg->cursize = newsize;
+
+    msg->overflowed = 1;
 }
 
 static inline __attribute__((always_inline)) void MSG_WriteLong_core(msg_t *msg, int c)
 {
     int cursize = msg->cursize;
     int newsize = cursize + 4;
-    if (__builtin_expect(newsize > msg->maxsize, 0)) {
-        msg->overflowed = 1;
+    if (newsize <= msg->maxsize) {
+        *(int *)(msg->data + cursize) = c;
+        msg->cursize = newsize;
         return;
     }
-    *(int *)(msg->data + cursize) = c;
-    msg->cursize = newsize;
+
+    msg->overflowed = 1;
 }
 
 void MSG_WriteLong(msg_t *msg, int c)
 {
     int cursize = msg->cursize;
     int newsize = cursize + 4;
-    if (__builtin_expect(newsize > msg->maxsize, 0)) {
-        msg->overflowed = 1;
+    if (newsize <= msg->maxsize) {
+        *(int *)(msg->data + cursize) = c;
+        msg->cursize = newsize;
         return;
     }
-    *(int *)(msg->data + cursize) = c;
-    msg->cursize = newsize;
+
+    msg->overflowed = 1;
 }
 
-extern void Huff_Init(void *huff);
+extern void Huff_Init(huffman_t *huff);
 extern void Huff_addRef(void *huff, int ch);
 void MSG_Init(msg_t *buf, byte *data, int length)
 {
@@ -889,7 +902,7 @@ void MSG_WriteString(msg_t *sb, const char *s)
     int l = strlen(s);
     int i;
 
-    if (l > 1023) {
+    if (l >= 1024) {
         Com_Printf("MSG_WriteString: MAX_STRING_CHARS");
         MSG_WriteByte_core(sb, 0);
         return;
@@ -1058,12 +1071,10 @@ static qboolean __attribute_regparm__(3)
     int lc;
     int i;
     qboolean print;
-    const dvar_t *cl_shownet;
 
     (void)indexBits;
 
     if (MSG_ReadBit_core(msg)) {
-        cl_shownet = *(const dvar_t **)imp_cl_shownet;
         if (cl_shownet && (cl_shownet->current.integer > 1 || cl_shownet->current.integer == -1))
             Com_Printf("%3i: #%-3i remove\n", msg->readcount, number);
         return 1;
@@ -1080,7 +1091,6 @@ static qboolean __attribute_regparm__(3)
         return 0;
     }
 
-    cl_shownet = *(const dvar_t **)imp_cl_shownet;
     print = (cl_shownet && (cl_shownet->current.integer > 1 || cl_shownet->current.integer == -1));
     if (print)
         Com_Printf("%3i: #%-3i ", msg->readcount, *(int *)to);
@@ -1148,23 +1158,19 @@ static void __attribute_regparm__(3)
     memset(&to[inuse], 0, (count - inuse) * sizeof(*to));
 }
 
-static inline __attribute__((always_inline)) qboolean MSG_PlayerstateDeltaPrint(void)
+static MSG_FORCEINLINE qboolean MSG_PlayerstateDeltaPrint(void)
 {
-    const dvar_t *cl_shownet;
 
-    cl_shownet = *(const dvar_t **)imp_cl_shownet;
     return cl_shownet && (cl_shownet->current.integer > 1 || cl_shownet->current.integer == -2);
 }
 
-static inline __attribute__((always_inline)) qboolean MSG_PlayerstateExtraPrint(void)
+static MSG_FORCEINLINE qboolean MSG_PlayerstateExtraPrint(void)
 {
-    const dvar_t *cl_shownet;
 
-    cl_shownet = *(const dvar_t **)imp_cl_shownet;
     return cl_shownet && cl_shownet->current.integer == 4;
 }
 
-static inline __attribute__((always_inline)) void MSG_ReadDeltaPlayerstateField(msg_t *msg, byte *from, byte *to, const NetField *field, qboolean print)
+static MSG_FORCEINLINE void MSG_ReadDeltaPlayerstateField(msg_t *msg, byte *from, byte *to, const NetField *field, qboolean print)
 {
     int *fromF;
     int *toF;
@@ -1240,7 +1246,7 @@ static inline __attribute__((always_inline)) void MSG_ReadDeltaPlayerstateField(
     }
 }
 
-static inline __attribute__((always_inline)) void MSG_ReadDeltaPlayerstateShortArray(msg_t *msg, int *values, int groupCount, const char *printName)
+static MSG_FORCEINLINE void MSG_ReadDeltaPlayerstateShortArray(msg_t *msg, int *values, int groupCount, const char *printName)
 {
     int group;
     int bit;
@@ -1266,7 +1272,7 @@ static inline __attribute__((always_inline)) void MSG_ReadDeltaPlayerstateShortA
     }
 }
 
-static inline __attribute__((always_inline)) void MSG_ReadDeltaPlayerstateShortArrayNoLead(msg_t *msg, int *values, int groupCount, const char *printName)
+static MSG_FORCEINLINE void MSG_ReadDeltaPlayerstateShortArrayNoLead(msg_t *msg, int *values, int groupCount, const char *printName)
 {
     int group;
     int bit;
@@ -1397,19 +1403,19 @@ static inline __attribute__((always_inline)) void MSG_UsercmdDecodeHorMove(userc
     }
 }
 
-static int MSG_UsercmdReadMoveBits(signed char forwardmove, signed char rightmove)
+static int MSG_UsercmdReadMoveBits(int forwardmove, int rightmove)
 {
     int bits = 0;
 
     if (forwardmove > 10) {
         bits = 1;
-    } else if (forwardmove <= -11) {
+    } else if (forwardmove < -10) {
         bits = 2;
     }
 
     if (rightmove > 10) {
         bits |= 4;
-    } else if (rightmove <= -11) {
+    } else if (rightmove < -10) {
         bits |= 8;
     }
 
@@ -1484,7 +1490,7 @@ static inline __attribute__((always_inline)) int MSG_UsercmdMoveBits(signed char
     return moveBits;
 }
 
-static inline __attribute__((always_inline)) void MSG_WriteDeltaKeyShort(msg_t *msg, int key, int oldV, int newV)
+static MSG_FORCEINLINE void MSG_WriteDeltaKeyShort(msg_t *msg, int key, int oldV, int newV)
 {
     if ((unsigned short)oldV == (unsigned short)newV) {
         MSG_WriteBit0_core(msg);
@@ -1494,7 +1500,7 @@ static inline __attribute__((always_inline)) void MSG_WriteDeltaKeyShort(msg_t *
     }
 }
 
-static inline __attribute__((always_inline)) void MSG_WriteDeltaKeyBits(msg_t *msg, int key, int oldV, int newV, int bits)
+static MSG_FORCEINLINE void MSG_WriteDeltaKeyBits(msg_t *msg, int key, int oldV, int newV, int bits)
 {
     if (oldV == newV) {
         MSG_WriteBit0_core(msg);
@@ -1688,7 +1694,7 @@ static void __attribute_regparm__(3)
     int lc;
 
     if (!to) {
-        if ((*(dvar_t **)imp_cl_shownet) && ((*(dvar_t **)imp_cl_shownet)->current.integer > 1 || (*(dvar_t **)imp_cl_shownet)->current.integer == -1)) {
+        if ((cl_shownet) && ((cl_shownet)->current.integer > 1 || (cl_shownet)->current.integer == -1)) {
             Com_Printf("W|%3i: #%-3i remove\n", msg->cursize, *(int *)from);
         }
 
@@ -1760,7 +1766,7 @@ void MSG_WriteDeltaEntity(msg_t *msg, entityState_s *from, entityState_s *to, qb
     MSG_WriteDeltaStruct(msg, (byte *)from, (byte *)to, force, 0x3b, 0xa, entityStateFields, 0);
 }
 
-static inline __attribute__((always_inline)) void MSG_WriteDeltaPlayerstateField(msg_t *msg, byte *from, byte *to, const NetField *field)
+static MSG_FORCEINLINE void MSG_WriteDeltaPlayerstateField(msg_t *msg, byte *from, byte *to, const NetField *field)
 {
     int *fromF;
     int *toF;
@@ -1831,7 +1837,7 @@ static inline __attribute__((always_inline)) void MSG_WriteDeltaPlayerstateField
     }
 }
 
-static inline __attribute__((always_inline)) void MSG_WriteDeltaPlayerstateStats(msg_t *msg, playerState_t *from, playerState_t *to)
+static MSG_FORCEINLINE void MSG_WriteDeltaPlayerstateStats(msg_t *msg, playerState_t *from, playerState_t *to)
 {
     int bits;
 
@@ -1882,7 +1888,7 @@ static inline __attribute__((always_inline)) void MSG_WriteDeltaPlayerstateStats
     }
 }
 
-static inline __attribute__((always_inline)) void MSG_WriteDeltaPlayerstateShortArray(msg_t *msg, int *from, int *to, int groupCount)
+static MSG_FORCEINLINE void MSG_WriteDeltaPlayerstateShortArray(msg_t *msg, int *from, int *to, int groupCount)
 {
     int groupMasks[4];
     int anyChanged;
@@ -1925,7 +1931,7 @@ static inline __attribute__((always_inline)) void MSG_WriteDeltaPlayerstateShort
     }
 }
 
-static inline __attribute__((always_inline)) void MSG_WriteDeltaPlayerstateShortArrayNoLead(msg_t *msg, int *from, int *to, int groupCount)
+static MSG_FORCEINLINE void MSG_WriteDeltaPlayerstateShortArrayNoLead(msg_t *msg, int *from, int *to, int groupCount)
 {
     int group;
     int bit;
@@ -1954,7 +1960,7 @@ static inline __attribute__((always_inline)) void MSG_WriteDeltaPlayerstateShort
     }
 }
 
-static inline __attribute__((always_inline)) qboolean MSG_PlayerstateObjectivesChanged(playerState_t *from, playerState_t *to)
+static MSG_FORCEINLINE qboolean MSG_PlayerstateObjectivesChanged(playerState_t *from, playerState_t *to)
 {
     int i;
     int j;
@@ -1974,7 +1980,7 @@ static inline __attribute__((always_inline)) qboolean MSG_PlayerstateObjectivesC
     return 0;
 }
 
-static inline __attribute__((always_inline)) void MSG_WriteDeltaPlayerstateObjectives(msg_t *msg, playerState_t *from, playerState_t *to)
+static MSG_FORCEINLINE void MSG_WriteDeltaPlayerstateObjectives(msg_t *msg, playerState_t *from, playerState_t *to)
 {
     int i;
     int j;
@@ -2028,6 +2034,13 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, playerState_s *from, playerState_s *t
         if (*(int *)((byte *)from + field->offset) != *(int *)((byte *)to + field->offset)) {
             lc = i + 1;
         }
+    }
+
+    if (getenv("COD2_PSWDIAG")) {
+        static int c;
+        if ((c++ & 0x3f) == 0)
+            Com_Printf("[pswdiag] lc=%d from.cmdTime=%d to.cmdTime=%d to.origin=(%.0f %.0f %.0f)\n",
+                       lc, from->commandTime, to->commandTime, to->origin[0], to->origin[1], to->origin[2]);
     }
 
     MSG_WriteByte_core(msg, lc);

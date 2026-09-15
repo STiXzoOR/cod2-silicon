@@ -3,6 +3,12 @@
 
 #include <string.h>
 
+#if defined(_MSC_VER)
+#define STRINGED_NOINLINE __declspec(noinline)
+#else
+#define STRINGED_NOINLINE __attribute__((noinline))
+#endif
+
 extern const dvar_t *loc_language;
 extern const dvar_t *loc_forceEnglish;
 extern const dvar_t *loc_translate;
@@ -39,9 +45,9 @@ extern byte *__DefaultRuneLocale;
 
 extern void SE_Init(void);
 extern void SE_ShutDown(void);
-extern const char *SE_GetString(const char *pszReference);
+extern STRINGED_NOINLINE const char *SE_GetString(const char *pszReference);
 extern const char *SE_LoadLanguage(int forceEnglish);
-extern int FS_LanguageHasAssets(int language);
+extern qboolean FS_LanguageHasAssets(int iLanguage);
 extern const dvar_t *Dvar_RegisterInt(const char *name, int value, int min, int max, unsigned int flags);
 extern const dvar_t *Dvar_RegisterBool(const char *name, qboolean value, unsigned int flags);
 extern void Dvar_SetInt(const dvar_t *dvar, int value);
@@ -62,6 +68,7 @@ qboolean SEH_GetLanguageIndexForName(const char *pszLanguageName, int *piLanguag
 void SEH_InitLanguage(void);
 static qboolean SEH_StringEd_SetLanguageStrings(int iLanguage);
 void SEH_UpdateLanguageInfo(void);
+qboolean Language_IsAsian(void);
 unsigned int SEH_ReadCharFromString(const char **ppsText, qboolean *pbIsTrailingPunctuation);
 int SEH_PrintStrlen(const char *string);
 const char *SEH_SafeTranslateString(const char *pszReference);
@@ -150,6 +157,11 @@ void SEH_InitLanguage(void)
     loc_warningsAsErrors = Dvar_RegisterBool("loc_warningsAsErrors", 0, (int)&__mh_execute_header);
 
     g_currentAsian = ((unsigned int)(loc_language->current.integer - 8) <= 4);
+}
+
+qboolean Language_IsAsian(void)
+{
+    return g_currentAsian;
 }
 
 static qboolean SEH_StringEd_SetLanguageStrings(int iLanguage)
@@ -499,7 +511,7 @@ const char *SEH_LocalizeTextMessage(const char *pszInputBuffer, const char *pszM
             }
 
             iLen = iTokenLen + outputLen;
-            if (iLen > 1023) {
+            if (iLen >= 1024) {
                 if (loc_warnings && loc_warnings->current.enabled &&
                     loc_warningsAsErrors && loc_warningsAsErrors->current.enabled) {
                     if (errType != LOCMSG_NOERR) {

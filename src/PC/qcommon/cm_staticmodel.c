@@ -3,11 +3,11 @@
 
 extern void *Hunk_AllocInternal(int size);
 extern struct XModel *XModelPrecache(const char *name, float *(*allocXModel)(int), float *(*allocXModelColl)(int));
-extern void *XModelGetBasePose(struct XModel *model);
-extern int XModelTraceLine(struct XModel *model, trace_t *results, void *basePose, const vec_t *localStart, const vec_t *localEnd, int contentmask);
+extern const DObjAnimMat *XModelGetBasePose(const struct XModel *model);
+extern int XModelTraceLine(const struct XModel *model, trace_t *results, const DObjAnimMat *basePose, vec_t *localStart, vec_t *localEnd, int contentmask);
 extern void MatrixTransformVector(const vec_t *in, const vec_t *matrix, vec_t *out);
 extern void MatrixTransposeTransformVector(const vec_t *in, const vec_t *matrix, vec_t *out);
-extern float Vec3Normalize(vec_t *v);
+extern const vec_t Vec3Normalize(vec_t *v);
 
 float *CM_Hunk_AllocXModel(int size)
 {
@@ -30,7 +30,7 @@ void CM_TraceStaticModel(cStaticModel_t *sm, trace_t *results, const vec_t *star
     vec3_t localStart;
     vec3_t localEnd;
     vec3_t normal;
-    void *basePose;
+    const DObjAnimMat *basePose;
     int hit;
 
     delta[0] = start[0] - sm->origin[0];
@@ -62,7 +62,7 @@ qboolean CM_TraceStaticModelComplete(cStaticModel_t *sm, const vec_t *start, con
     vec3_t localEnd;
     vec3_t localStart;
     vec3_t delta;
-    void *basePose;
+    const DObjAnimMat *basePose;
     int hit;
 
     delta[0] = start[0] - sm->origin[0];

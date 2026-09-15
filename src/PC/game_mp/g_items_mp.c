@@ -1,26 +1,32 @@
 #include "common_types.h"
 #include "imports.h"
 #include <string.h>
+/* dvar globals */
+extern const dvar_t *g_dropForwardSpeed;
+extern const dvar_t *g_dropUpSpeedBase;
+extern const dvar_t *g_dropUpSpeedRand;
+extern const dvar_t *g_maxDroppedWeapons;
+extern const dvar_t *g_weaponAmmoPools;
 extern scr_data_t g_scr_data;
 extern level_locals_t level;
 extern scr_const_t scr_const;
 
 extern qboolean itemRegistered[256];
+extern gitem_t bg_itemlist[];
 
 #define level (*&level)
 
-#define g_entities ((gentity_t *)imp_g_entities)
+extern gentity_t g_entities[];   /* was a macro over imp_g_entities (extra load); use the real object like the rest of game_mp */
 extern int BG_GetNumWeapons(void);
 extern WeaponDef *BG_GetWeaponDef(int weaponIndex);
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern unsigned char G_SetConstString(scr_string_t *to, const char *from);
 extern void I_strncat(char *dest, int size, const char *src);
-extern void SV_SetConfigstring(int index, const char *val);
+extern void SV_SetConfigstring(const int index, const char *val);
 extern void *imp_g_scr_data;
 extern int G_GetPlayerCorpseIndex(gentity_t *ent);
 extern struct DObj_s *Com_GetServerDObj(int entNum);
 extern int G_RunThink(gentity_t *ent);
-extern int __mh_execute_header;
 extern char *va(const char *format, ...);
 extern void Scr_Error(const char *error);
 extern int G_ModelIndex(const char *name);
@@ -40,49 +46,49 @@ extern int BG_ClipForWeapon(int weapon);
 extern qboolean BG_WeaponIsClipOnly(int weapon);
 extern int BG_GetAmmoTypeMax(int iAmmoIndex);
 extern int BG_GetAmmoClipSize(int iClipIndex);
-extern int BG_GetMaxPickupableAmmo(playerState_t *ps, int weapon);
+extern int BG_GetMaxPickupableAmmo(const playerState_t *ps, int weaponIndex);
 extern qboolean G_GivePlayerWeapon(playerState_t *pPS, int iWeaponIndex);
 extern qboolean BG_TakePlayerWeapon(playerState_t *pPS, int iWeaponIndex);
 extern void G_TraceCapsule(trace_t *results, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int contentmask);
-extern void BG_EvaluateTrajectory(trajectory_t *tr, int atTime, vec_t *result);
-extern float Vec3DistanceSq(const vec_t *a, const vec_t *b);
-extern int SV_PointContents(vec_t *point, int passEntityNum, int contentMask);
+extern void BG_EvaluateTrajectory(const trajectory_t *tr, int atTime, vec_t *result);
+extern const vec_t Vec3DistanceSq(const vec_t *p1, const vec_t *p2);
+extern int SV_PointContents(const vec_t *p, int passEntityNum, int contentmask);
 extern char *vtos(const vec_t *v);
 extern const char *SL_ConvertToString(unsigned int stringValue);
-extern unsigned char G_FreeEntity(gentity_t *ed);
+extern void G_FreeEntity(gentity_t *ed);
 extern gentity_t *G_Spawn(void);
 extern void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up);
 extern void Vec3Cross(const vec_t *v0, const vec_t *v1, vec_t *cross);
-extern void AxisToAngles(const vec_t *axis, vec_t *angles);
+extern void AxisToAngles(vec3_t *axis, vec_t *angles);
 extern void XAnimCalcDelta(XAnimTree *tree, unsigned int animIndex, vec_t *rot, vec_t *trans, int bUseGoalWeight);
 extern const vec_t Vec3Normalize(vec_t *v);
 extern qboolean G_TraceCapsuleComplete(const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int contentmask);
 
-#define g_maxDroppedWeapons (*(const dvar_t **)imp_g_maxDroppedWeapons)
-#define g_dropForwardSpeed (*(const dvar_t **)imp_g_dropForwardSpeed)
-#define g_dropUpSpeedBase (*(const dvar_t **)imp_g_dropUpSpeedBase)
-#define g_dropUpSpeedRand (*(const dvar_t **)imp_g_dropUpSpeedRand)
+#define g_maxDroppedWeapons (g_maxDroppedWeapons)
+#define g_dropForwardSpeed (g_dropForwardSpeed)
+#define g_dropUpSpeedBase (g_dropUpSpeedBase)
+#define g_dropUpSpeedRand (g_dropUpSpeedRand)
 extern float crandom(void);
 extern float randomf(void);
 extern float floorf(float);
 extern int rand(void);
 extern qboolean G_DObjGetWorldTagMatrix(gentity_t *ent, unsigned int tagName, vec3_t *tagMat);
 extern qboolean BG_CanItemBeGrabbed(const entityState_t *ent, const playerState_t *ps, qboolean bTouched);
-extern void SV_GameSendServerCommand(int clientNum, int type, const char *text);
+extern void SV_GameSendServerCommand(int clientNum, svscmd_type type, const char *text);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern char *I_CleanStr(char *str);
 extern int SV_GetGuid(int clientNum);
-extern int G_LogPrintf(const char *fmt, ...);
+extern void G_LogPrintf(const char *fmt, ...);
 extern Bool BG_DoesWeaponNeedSlot(int weapIndex);
 extern int BG_IsPlayerWeaponInSlot(const playerState_t *pPS, int iWeaponIndex, qboolean bAnyMode);
 extern int BG_GetEmptySlotForWeapon(const playerState_t *pPS, int iWeaponIndex);
 extern int BG_GetStackSlotForWeapon(const playerState_t *pPS, int iWeaponIndex, weapSlot_t preferredSlot);
 extern void G_SelectWeaponIndex(int clientNum, int iWeaponIndex);
-extern unsigned int Scr_AddEntity(gentity_t *ent);
+extern void Scr_AddEntity(gentity_t *ent);
 extern unsigned int Scr_AddUndefined(void);
-extern void Scr_Notify(gentity_t *ent, int stringValue, unsigned int paramcount);
+extern void Scr_Notify(gentity_t *ent, unsigned short stringValue, unsigned int paramcount);
 extern void G_AddPredictableEvent(gentity_t *ent, int event, int eventParm);
-extern unsigned char G_AddEvent(gentity_t *ent, int event, int eventParm);
+extern void G_AddEvent(gentity_t *ent, int event, int eventParm);
 extern void Com_Printf(const char *fmt, ...);
 
 #define _ENT(e) ((gentity_t *)(e))
@@ -370,7 +376,7 @@ void FinishSpawningItem(gentity_t *ent)
         AngleVectors(ent->r.currentAngles, axis[0], NULL, NULL);
         Vec3Cross(normal, axis[0], axis[1]);
         Vec3Cross(axis[1], normal, axis[0]);
-        AxisToAngles((const vec_t *)axis, angles);
+        AxisToAngles(axis, angles);
 
         if (((const gitem_t *)imp_bg_itemlist + ent->s.index.item)->giType == 1) {
             angles[2] += 90.0f;
@@ -400,7 +406,7 @@ void G_RunCorpseMove(gentity_t *ent)
 
     corpseInfo = &g_scr_data.playerCorpseInfo[G_GetPlayerCorpseIndex(ent)];
 
-    XAnimCalcDelta(corpseInfo->tree, 0, rot, deltaChange, 1);
+    XAnimCalcDelta( (XAnimTree *)(corpseInfo->tree), 0, rot, deltaChange, 1);
 
     if (corpseInfo->falling) {
         applyDelta = 0;
@@ -465,7 +471,7 @@ void G_RunCorpseMove(gentity_t *ent)
             return;
         }
 
-        ent->s.pos.trType = 1;
+        ent->s.pos.trType = (trType_t)(1);
         ent->s.pos.trBase[0] = endpos[0];
         ent->s.pos.trBase[1] = endpos[1];
         ent->s.pos.trBase[2] = endpos[2];
@@ -482,7 +488,7 @@ void G_RunCorpseMove(gentity_t *ent)
         }
 
         corpseInfo->falling = 1;
-        ent->s.pos.trType = 5;
+        ent->s.pos.trType = (trType_t)(5);
         ent->s.pos.trBase[0] = endpos[0];
         ent->s.pos.trBase[1] = endpos[1];
         ent->s.pos.trBase[2] = endpos[2];
@@ -544,7 +550,7 @@ void G_RunCorpseMove(gentity_t *ent)
     }
 
     corpseInfo->falling = 0;
-    ent->s.pos.trType = 1;
+    ent->s.pos.trType = (trType_t)(1);
     ent->s.pos.trBase[0] = endpos[0];
     ent->s.pos.trBase[1] = endpos[1];
     ent->s.pos.trBase[2] = endpos[2];
@@ -565,7 +571,7 @@ void G_RunCorpseMove(gentity_t *ent)
         AngleVectors(ent->r.currentAngles, axis[0], NULL, NULL);
         Vec3Cross(normal, axis[0], axis[1]);
         Vec3Cross(axis[1], normal, axis[0]);
-        AxisToAngles((const vec_t *)axis, rot);
+        AxisToAngles(axis, rot);
         G_SetAngle(ent, rot);
     }
 
@@ -602,7 +608,7 @@ void G_RunItem(gentity_t *ent)
 
     if (ent->s.groundEntityNum == 0x3ff || level.gentities[ent->s.groundEntityNum].s.pos.trType != 0) {
         if (ent->s.pos.trType != 5 && !(ent->spawnflags & 1)) {
-            ent->s.pos.trType = 5;
+            ent->s.pos.trType = (trType_t)(5);
             ent->s.pos.trTime = level.time;
             ent->s.pos.trBase[0] = ent->r.currentOrigin[0];
             ent->s.pos.trBase[1] = ent->r.currentOrigin[1];
@@ -647,7 +653,7 @@ void G_RunItem(gentity_t *ent)
                 endpos[2] += (origin[2] - endpos[2]) * tr.fraction;
             }
 
-            ent->s.pos.trType = 3;
+            ent->s.pos.trType = (trType_t)(3);
             ent->s.pos.trTime = level.time;
             ent->s.pos.trDuration = 50;
             ent->s.pos.trBase[0] = ent->r.currentOrigin[0];
@@ -681,7 +687,7 @@ void G_RunItem(gentity_t *ent)
             AngleVectors(ent->r.currentAngles, axis[0], NULL, NULL);
             Vec3Cross(normal, axis[0], axis[1]);
             Vec3Cross(axis[1], normal, axis[0]);
-            AxisToAngles((const vec_t *)axis, angles);
+            AxisToAngles(axis, angles);
 
             if (((const gitem_t *)imp_bg_itemlist + ent->s.index.item)->giType == 1)
                 angles[2] += 90.0f;
@@ -936,7 +942,7 @@ gentity_t *Drop_Weapon(gentity_t *pEnt, int iWeaponIndex, unsigned int tag)
             pDrop->r.currentOrigin[2] = endpos[2];
             pDrop->s.pos.trTime = level.time;
 
-            AxisToAngles((const vec_t *)tagMat, vAngles);
+            AxisToAngles(tagMat, vAngles);
         } else {
             vAngles[0] = pEnt->r.currentAngles[0];
             vAngles[1] = pEnt->r.currentAngles[1];
@@ -986,7 +992,7 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
             return;
 
         if (ps->weapons[item->giTag >> 5] & (1 << (item->giTag & 31))) {
-            SV_GameSendServerCommand(clientNum, 0,
+            SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE,
                                      va("%c \"GAME_PICKUP_CANTCARRYMOREAMMO\x14%s\"", 0x66, BG_GetWeaponDef(item->giTag)->szDisplayName));
             return;
         }
@@ -994,7 +1000,7 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
         switch (BG_GetWeaponDef(item->giTag)->weapSlot) {
         case WEAPSLOT_PRIMARY:
         case WEAPSLOT_PRIMARYB:
-            SV_GameSendServerCommand(clientNum, 0, va("%c \"GAME_CANT_GET_PRIMARY_WEAP_MESSAGE\"", 0x66));
+            SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE, va("%c \"GAME_CANT_GET_PRIMARY_WEAP_MESSAGE\"", 0x66));
             return;
         default:
             return;
@@ -1021,16 +1027,16 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
             return;
 
         if (BG_WeaponIsClipOnly(item->giTag)) {
-            SV_GameSendServerCommand(clientNum, 0,
+            SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE,
                                      va("%c \"GAME_PICKUP_CLIPONLY_AMMO\x14%s\"", 0x66, BG_GetWeaponDef(item->giTag)->szDisplayName));
         } else {
-            SV_GameSendServerCommand(clientNum, 0,
+            SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE,
                                      va("%c \"GAME_PICKUP_AMMO\x14%s\"", 0x66, BG_GetWeaponDef(item->giTag)->szDisplayName));
         }
 
         Scr_AddEntity(other);
         Scr_Notify(ent, scr_const.trigger, 1);
-        SV_GameSendServerCommand(clientNum, 0,
+        SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE,
                                  va("%c \"%i\"", 0x49, BG_GetWeaponDef(item->giTag)->bSlotStackable ? 4 : 1));
         eventParm = 0x90;
         break;
@@ -1070,8 +1076,8 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
 
         ps->stats[0] = other->health;
 
-        SV_GameSendServerCommand(clientNum, 0, va("%c \"GAME_PICKUP_HEALTH\x15%i\"", 0x66, quantity));
-        SV_GameSendServerCommand(clientNum, 0, va("%c \"%i\"", 0x49, 0));
+        SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE, va("%c \"GAME_PICKUP_HEALTH\x15%i\"", 0x66, quantity));
+        SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE, va("%c \"%i\"", 0x49, 0));
         Scr_AddEntity(other);
         Scr_Notify(ent, scr_const.trigger, 1);
         eventParm = 0x90;
@@ -1146,10 +1152,10 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
 
             if (added) {
                 if (BG_WeaponIsClipOnly(weapon)) {
-                    SV_GameSendServerCommand(clientNum, 0,
+                    SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE,
                                              va("%c \"GAME_PICKUP_CLIPONLY_AMMO\x14%s\"", 0x66, weapDef->szDisplayName));
                 } else {
-                    SV_GameSendServerCommand(clientNum, 0,
+                    SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE,
                                              va("%c \"GAME_PICKUP_AMMO\x14%s\"", 0x66, weapDef->szDisplayName));
                 }
             }
@@ -1164,7 +1170,7 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
                 }
 
                 if (ent->count > 0 || ent->chain > 0) {
-                    const dvar_t *weaponAmmoPools = *(const dvar_t **)imp_g_weaponAmmoPools;
+                    const dvar_t *weaponAmmoPools = g_weaponAmmoPools;
                     if (!weaponAmmoPools->current.enabled)
                         return;
                 }
@@ -1207,7 +1213,7 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
                         }
 
                         if (!dropped) {
-                            SV_GameSendServerCommand(clientNum, 0, va("%c \"GAME_CANT_GET_PRIMARY_WEAP_MESSAGE\"", 0x66));
+                            SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE, va("%c \"GAME_CANT_GET_PRIMARY_WEAP_MESSAGE\"", 0x66));
                             return;
                         }
                     }
@@ -1248,7 +1254,7 @@ void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched)
 
         Scr_AddEntity(other);
         Scr_Notify(ent, scr_const.trigger, 2);
-        SV_GameSendServerCommand(clientNum, 0,
+        SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE,
                                  va("%c \"%i\"", 0x49, weapDef->bSlotStackable ? 4 : 1));
         break;
     }
@@ -1275,7 +1281,7 @@ void G_SpawnItem(gentity_t *ent, const gitem_t *item)
 {
     int itemIndex;
 
-    itemIndex = (int)(item - (const gitem_t *)imp_bg_itemlist);
+    itemIndex = (int)(item - bg_itemlist);
     RegisterItem(itemIndex, 0);
 
     ent->item.index = (unsigned short)itemIndex;
@@ -1297,16 +1303,19 @@ void G_SpawnItem(gentity_t *ent, const gitem_t *item)
         ent->r.maxs[2] = 2.0f;
     }
 
-    ent->r.contents = (item->giType == IT_AMMO) ? 0x405c0108 : 0x407c0108;
+    ent->r.contents = 0x405c0108;
+    if (item->giType != IT_AMMO)
+        ent->r.contents = 0x407c0108;
+
+    ent->s.index.item = ent->item.index;
     ent->s.eType = 3;
-    ent->s.index.item = itemIndex;
 
     G_DObjUpdate(ent);
 
     ent->s.clientNum = 0x3fe;
-    ent->flags |= (int)&__mh_execute_header;
+    ent->flags |= 0x1000;
 
-    if (level.initializing) {
+    if (level.spawnVar.spawnVarsValid) {
         G_SetAngle(ent, ent->r.currentAngles);
         ent->nextthink = level.time + 100;
         ent->handler = 0x10;

@@ -2,19 +2,20 @@
 #include "imports.h"
 
 extern int Scr_IsSystemActive(int flag);
-extern unsigned int Scr_AddEntity(gentity_t *ent);
-extern void Scr_Notify(gentity_t *ent, unsigned int stringId, int numArgs);
-extern unsigned int Scr_AddInt(int value);
+extern void Scr_AddEntity(gentity_t *ent);
+extern void Scr_Notify(gentity_t *ent, unsigned short stringId, unsigned int numArgs);
+extern void Scr_AddInt(int value);
 extern unsigned int Scr_GetNumParam(void);
 extern float Scr_GetFloat(int param);
 extern void Scr_Error(const char *msg);
 
 extern void SV_SetBrushModel(gentity_t *ent);
 extern void SV_LinkEntity(gentity_t *ent);
-extern int SV_SightTraceToEntity(vec_t *start, vec_t *mins, vec_t *maxs, vec_t *end, int entityNum, int contentMask);
+extern int SV_SightTraceToEntity(const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end,
+                          int entityNum, int contentmask);
 
-extern int G_SpawnString(const char *key, const char *defaultValue, const char **out);
-extern int G_SpawnFloat(const char *key, const char *defaultValue, float *out);
+extern qboolean G_SpawnString(const char *key, const char *defaultString, const char **out);
+extern qboolean G_SpawnFloat(const char *key, const char *defaultString, float *out);
 extern qboolean G_SpawnInt(const char *key, const char *defaultValue, int *out);
 extern void G_Damage(gentity_t *target, gentity_t *inflictor, gentity_t *attacker,
                      const vec_t *dir, const vec_t *point, int damage, int dflags,
@@ -23,8 +24,8 @@ extern void G_FreeEntityDelay(gentity_t *ent);
 
 extern const char *va(const char *fmt, ...);
 extern void Com_Error(int code, const char *fmt, ...);
-extern void AddPointToBounds(vec_t *point, vec_t *mins, vec_t *maxs);
-extern int CM_AreaEntities(vec_t *mins, vec_t *maxs, int *list, int maxCount, int mask);
+extern void AddPointToBounds(const vec_t *point, vec_t *mins, vec_t *maxs);
+extern int CM_AreaEntities(const vec_t *mins, const vec_t *maxs, int *entityList, int maxcount, int contentmask);
 
 extern byte level_ptr[];
 
@@ -35,7 +36,8 @@ extern byte *g_trace_zero_ptr;
 
 #define LEVEL ((level_locals_t *)imp_level)
 #define G_ENTITIES ((gentity_t *)imp_g_entities)
-#define SCR_CONST() ((const scr_const_t *)imp_scr_const)
+extern scr_const_t scr_const;
+#define SCR_CONST() (&scr_const)   /* was an imp_ deref; use the real object like cgame does */
 
 void G_Trigger(gentity_t *self, gentity_t *other);
 void hurt_use(gentity_t *self, gentity_t *other, gentity_t *activator);
@@ -96,7 +98,7 @@ void hurt_use(gentity_t *self, gentity_t *other, gentity_t *activator)
 void SP_trigger_lookat(gentity_t *self)
 {
     SV_SetBrushModel(self);
-    self->r.contents = 0x20000000;
+    self->r.contents = 0x405c0008;
     self->r.svFlags = 1;
     self->s.eFlags |= 1;
     SV_LinkEntity(self);

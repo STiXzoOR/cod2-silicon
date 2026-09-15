@@ -1,6 +1,8 @@
 #include "common_types.h"
 #include "imports.h"
 #include <string.h>
+/* dvar globals */
+extern const dvar_t *g_playerCollisionEjectSpeed;
 extern bgs_t level_bgs;
 
 #ifndef qfalse
@@ -9,32 +11,33 @@ extern bgs_t level_bgs;
 #endif
 
 extern int Scr_IsSystemActive(int);
-extern unsigned int Scr_AddEntity(gentity_t *ent);
-extern void Scr_Notify(gentity_t *ent, int stringValue, unsigned int paramcount);
-extern void BG_WeaponFireRecoil(playerState_t *ps, float *kickAVel, float *kickAVel_out);
-extern void BG_Player_DoControllers(void *obj, gentity_t *self, int *partBits, clientInfo_t *ci, int serverTime);
-extern void *Com_GetServerDObj(int entityNum);
+extern void Scr_AddEntity(gentity_t *ent);
+extern void Scr_Notify(gentity_t *ent, unsigned short stringValue, unsigned int paramcount);
+extern void BG_WeaponFireRecoil(const playerState_t *ps, vec_t *vGunSpeed, vec_t *kickAVel);
+extern void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es,
+                                    int *partBits, clientInfo_t *ci, int frametime);
+extern struct DObj_s * Com_GetServerDObj(int handle);
 extern void SV_GetUsercmd(int clientNum, usercmd_t *ucmd);
 extern void ClientThink_real(gentity_t *ent, usercmd_t *ucmd);
-extern void G_SetFixedLink(gentity_t *ent, int mode);
-extern unsigned char G_SetOrigin(gentity_t *ent, const vec_t *origin);
+extern unsigned char G_SetFixedLink(gentity_t *ent, int mode);
+extern void G_SetOrigin(gentity_t *ent, const vec_t *origin);
 extern void G_SetAngle(gentity_t *ent, const vec_t *angles);
 extern void SV_LinkEntity(gentity_t *ent);
 extern void SV_UnlinkEntity(gentity_t *ent);
 extern void SV_GameDropClient(int clientNum, const char *reason);
-extern void SV_GameSendServerCommand(int clientNum, int type, const char *text);
+extern void SV_GameSendServerCommand(int clientNum, svscmd_type type, const char *text);
 extern const char *va(const char *fmt, ...);
 extern void Pmove(pmove_t *pm);
 extern int PM_GetEffectiveStance(playerState_t *ps);
 extern int PM_GetViewHeightLerpTime(const playerState_t *ps, int iTarget, qboolean bDown);
-extern float AngleNormalize180(float angle);
+extern const float AngleNormalize180(const float angle);
 extern qboolean Cmd_FollowCycle_f(gentity_t *ent, int dir);
 extern void StopFollowing(gentity_t *ent);
 extern int CM_AreaEntities(const vec_t *mins, const vec_t *maxs, int *entityList, int maxcount, int contentmask);
 extern void ShrinkBoundsToHeight(vec_t *mins, vec_t *maxs);
 extern qboolean SV_EntityContact(const vec_t *mins, const vec_t *maxs, const gentity_t *gEnt);
 extern qboolean BG_PlayerTouchesItem(playerState_t *ps, entityState_t *item, int atTime);
-extern void vectoangles(vec_t *dir, vec_t *angles);
+extern void vectoangles(const vec_t *vec, vec_t *angles);
 extern void AnglesToAxis(const vec_t *angles, vec3_t *axis);
 extern float sqrtf(float x);
 extern float crandom(void);
@@ -55,26 +58,26 @@ extern void Player_UpdateLookAtEntity(gentity_t *ent);
 extern void Player_UpdateCursorHints(gentity_t *ent);
 extern void G_GetPlayerViewOrigin(const gentity_t *ent, vec_t *origin);
 extern int G_GetNonPVSFriendlyInfo(gentity_t *pSelf, vec_t *vPosition, int iLastUpdateEnt);
-extern void BG_PlayerStateToEntityState(playerState_t *ps, gentity_t *ent, qboolean snap, qboolean forceSnap);
-extern float BG_GetSpeed(const playerState_t *ps, int serverTime);
+extern void BG_PlayerStateToEntityState(playerState_t *ps, entityState_t *s, qboolean snap, int handler);
+extern float BG_GetSpeed(const playerState_t *ps, int time);
 extern void BG_CalculateViewAngles(viewState_t *vs, vec_t *angles);
 extern void BG_CalculateWeaponPosition_Sway(playerState_t *ps, vec_t *swayViewAngles, vec_t *swayOffset, vec_t *swayAngles, float ssSwayScale, int frametime);
 extern WeaponDef *BG_GetWeaponDef(int iWeapon);
 extern qboolean BG_IsAimDownSightWeapon(int iWeapon);
 extern void BG_CalculateWeaponAngles(weaponState_t *ws, vec_t *angles);
 extern void MatrixMultiply(const vec_t *in1, const vec_t *in2, vec_t *out);
-extern void AxisToAngles(const vec_t *axis, vec_t *angles);
+extern void AxisToAngles(vec3_t *axis, vec_t *angles);
 extern gentity_t *G_Spawn(void);
 extern void BG_UpdatePlayerDObj(struct DObj_s *pDObj, entityState_t *es, clientInfo_t *ci, int attachIgnoreCollision);
 extern void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInfo_t *ci);
 extern void G_SafeDObjFree(gentity_t *ent);
 extern qboolean SV_DObjExists(gentity_t *ent);
-extern unsigned char G_DObjCalcPose(gentity_t *ent);
+extern int G_DObjCalcPose(gentity_t *ent);
 extern void SV_XModelDebugBoxes(gentity_t *ent);
 extern void turret_think_client(gentity_t *self);
-extern void SV_SetConfigstring(int index, const char *val);
+extern void SV_SetConfigstring(const int index, const char *val);
 
-#define g_entities ((gentity_t *)imp_g_entities)
+extern gentity_t g_entities[];
 extern struct level_locals_t level;
 extern const dvar_t *g_synchronousClients;
 extern const dvar_t *g_inactivity;
@@ -85,7 +88,8 @@ extern const dvar_t *g_debugLocDamage;
 extern const dvar_t *g_mantleBlockTimeBuffer;
 extern entityHandler_t entityHandlers[20];
 
-#define SCR_CONST() ((const scr_const_t *)imp_scr_const)
+extern scr_const_t scr_const;
+#define SCR_CONST() (&scr_const)   /* was an imp_ deref; use the real object like cgame does */
 
 COD2_ASSERT_FIELD(gclient_t, sess.sessionState, 0x26a8);
 COD2_ASSERT_FIELD(gclient_t, sess.noSpectate,   0x2740);
@@ -107,7 +111,7 @@ COD2_ASSERT_FIELD(gclient_t, buttonsSinceLastFrame, 0x27c8);
 
 static inline __attribute__((always_inline)) clientInfo_t *G_ClientInfoForEntity(const gentity_t *ent);
 static inline __attribute__((always_inline)) qboolean G_UpdateClientInfoModel(gentity_t *ent, gclient_t *client, clientInfo_t *ci);
-static void G_ClientEndFrameIntermission(gentity_t *ent, gclient_t *client);
+static void G_ClientEndFrameIntermission(gentity_t *ent);
 
 void ClientImpacts(gentity_t *ent, pmove_t *pm);
 void Player_UpdateActivate(gentity_t *ent);
@@ -140,7 +144,7 @@ void ClientImpacts(gentity_t *ent, pmove_t *pm)
     int entityNum;
     int duplicate;
 
-    entTouch = ((entityHandler_t *)imp_entityHandlers)[ent->handler].touch;
+    entTouch = (void (__cdecl *)(gentity_t *,gentity_t *,int))(((entityHandler_t *)imp_entityHandlers)[ent->handler].touch);
 
     numtouch = pm->numtouch;
     if (numtouch <= 0)
@@ -159,7 +163,7 @@ void ClientImpacts(gentity_t *ent, pmove_t *pm)
             Scr_Notify(other, SCR_CONST()->touch, 1);
         }
 
-        otherTouch = ((entityHandler_t *)imp_entityHandlers)[other->handler].touch;
+        otherTouch = (void (__cdecl *)(gentity_t *,gentity_t *,int))(((entityHandler_t *)imp_entityHandlers)[other->handler].touch);
         if (otherTouch) {
             otherTouch(other, ent, 1);
         }
@@ -197,7 +201,7 @@ qboolean G_ClientCanSpectateTeam(gclient_t *client, team_t team)
 
 qboolean ClientInactivityTimer(gclient_t *client)
 {
-    int inactivity = (*(const dvar_t **)imp_g_inactivity)->current.integer;
+    int inactivity = (g_inactivity)->current.integer;
     int clientNum;
 
     if (!inactivity) {
@@ -224,7 +228,7 @@ qboolean ClientInactivityTimer(gclient_t *client)
 
     if (((struct level_locals_t *)imp_level)->time > client->inactivityTime - 10000 && !client->inactivityWarning) {
         client->inactivityWarning = 1;
-        SV_GameSendServerCommand(clientNum, 0, va("%c \"GAME_INACTIVEDROPWARNING\"", 99));
+        SV_GameSendServerCommand(clientNum, SV_CMD_CAN_IGNORE, va("%c \"GAME_INACTIVEDROPWARNING\"", 99));
     }
 
     return 1;
@@ -285,7 +289,7 @@ void G_PlayerController(gentity_t *self, int *partBits)
     *(void **)imp_bgs = gameStatics;
     frametime = ((struct level_locals_t *)imp_level)->frametime;
     obj = Com_GetServerDObj(self->s.number);
-    BG_Player_DoControllers(obj, self, partBits, ci, frametime);
+    BG_Player_DoControllers((const struct DObj_s *)obj, &self->s, partBits, ci, frametime);
 }
 
 void G_PlayerEvent(int clientNum, int event)
@@ -449,7 +453,7 @@ void G_TouchTriggers(gentity_t *ent)
     int num;
     int i;
     gclient_t *client = ent->client;
-    fn_touch entTouch;
+    void (*entTouch)(gentity_t *, gentity_t *, int);   /* full sig (matches line 136) -> call compiles under C++; fn_touch is unprototyped */
 
     if (client->ps.pm_type > 1)
         return;
@@ -471,11 +475,11 @@ void G_TouchTriggers(gentity_t *ent)
     maxs[2] = client->ps.origin[2] + ent->r.maxs[2];
     ShrinkBoundsToHeight(mins, maxs);
 
-    entTouch = ((entityHandler_t *)imp_entityHandlers)[ent->handler].touch;
+    entTouch = (void (__cdecl *)(gentity_t *,gentity_t *,int))(((entityHandler_t *)imp_entityHandlers)[ent->handler].touch);
 
     for (i = 0; i < num; ++i) {
         gentity_t *hit = &g_entities[touch[i]];
-        fn_touch hitTouch = ((entityHandler_t *)imp_entityHandlers)[hit->handler].touch;
+        void (*hitTouch)(gentity_t *, gentity_t *, int) = (void (__cdecl *)(gentity_t *,gentity_t *,int))(((entityHandler_t *)imp_entityHandlers)[hit->handler].touch);
 
         if (!hitTouch && !entTouch)
             continue;
@@ -677,6 +681,8 @@ qboolean StuckInClient(gentity_t *self)
             continue;
 
         client = ent->client;
+        if (!client)
+            continue;
         if (!(client->ps.pm_flags & 0x800000))
             continue;
         if (client->sess.sessionState)
@@ -711,7 +717,7 @@ qboolean StuckInClient(gentity_t *self)
         vDelta[1] = ent->r.currentOrigin[1] - self->r.currentOrigin[1] + crandom();
         Vec2Normalize(vDelta);
 
-        ejectDvar = *(const dvar_t **)imp_g_playerCollisionEjectSpeed;
+        ejectDvar = g_playerCollisionEjectSpeed;
         ejectSpeed = (float)ejectDvar->current.integer;
 
         otherSpeed = sqrtf(client->ps.velocity[0] * client->ps.velocity[0] + client->ps.velocity[1] * client->ps.velocity[1]) > 0.0f ? ejectSpeed : 0.0f;
@@ -1001,7 +1007,7 @@ void ClientThink_real(gentity_t *ent, usercmd_t *ucmd)
         AnglesToAxis(angles, vAxis);
         AnglesToAxis(viewangles, vAxis2);
         MatrixMultiply((const vec_t *)vAxis, (const vec_t *)vAxis2, (vec_t *)vAxis3);
-        AxisToAngles((const vec_t *)vAxis3, viewangles);
+        AxisToAngles(vAxis3, viewangles);
     }
 
     client->vLastMoveAng[0] = ws.vLastMoveAng[0];
@@ -1056,7 +1062,7 @@ void ClientThink_real(gentity_t *ent, usercmd_t *ucmd)
     if (g_smoothClients->current.enabled) {
         G_PlayerStateToEntityStateExtrapolate(&client->ps, &ent->s, client->ps.commandTime, qtrue);
     } else {
-        BG_PlayerStateToEntityState(&client->ps, ent, qtrue, qtrue);
+        BG_PlayerStateToEntityState(&client->ps, &ent->s, qtrue, qtrue);
     }
 
     ent->r.currentOrigin[0] = ent->s.pos.trBase[0];
@@ -1200,16 +1206,18 @@ static inline __attribute__((always_inline)) qboolean G_UpdateClientInfoModel(ge
     return bChanged;
 }
 
-static void G_ClientEndFrameIntermission(gentity_t *ent, gclient_t *client)
+static void G_ClientEndFrameIntermission(gentity_t *ent)
 {
+    gclient_t *client = ent->client;
+
     ent->r.svFlags = (ent->r.svFlags & 0xfd) | 1;
-    ent->active = 0;
+    ent->takedamage = 0;
     ent->r.contents = 0;
 
     client->ps.pm_flags &= 0xfc7fffff;
     client->ps.pm_type = 5;
     client->ps.eFlags &= 0xffdfffbf;
-    client->ps.damageCount = 0;
+    client->ps.viewmodelIndex = 0;
     ent->s.eType = 5;
 
     SV_SetConfigstring(5, va("%i", level.teamScores[1]));
@@ -1240,7 +1248,7 @@ void ClientEndFrame(gentity_t *ent)
     }
 
     if (client->sess.sessionState == SESS_STATE_INTERMISSION) {
-        G_ClientEndFrameIntermission(ent, client);
+        G_ClientEndFrameIntermission(ent);
         client->buttonsSinceLastFrame = 0;
         return;
     }
@@ -1303,8 +1311,8 @@ void ClientEndFrame(gentity_t *ent)
     }
 #endif
 
-    client->ps.gravity = (int)(*(const dvar_t **)imp_g_gravity)->current.value;
-    client->ps.speed = (*(const dvar_t **)imp_g_speed)->current.integer;
+    client->ps.gravity = (int)(g_gravity)->current.value;
+    client->ps.speed = (g_speed)->current.integer;
     client->currentAimSpreadScale = client->ps.aimSpreadScale / 255.0f;
 
     Player_UpdateLookAtEntity(ent);
@@ -1323,7 +1331,7 @@ void ClientEndFrame(gentity_t *ent)
     if (g_smoothClients->current.enabled) {
         G_PlayerStateToEntityStateExtrapolate(&client->ps, &ent->s, client->ps.commandTime, qtrue);
     } else {
-        BG_PlayerStateToEntityState(&client->ps, ent, qtrue, qtrue);
+        BG_PlayerStateToEntityState(&client->ps, &ent->s, qtrue, qtrue);
     }
 
     if (ent->health > 0 && StuckInClient(ent)) {
@@ -1336,7 +1344,7 @@ void ClientEndFrame(gentity_t *ent)
     if (compassInfo) {
         compassEnt = compassInfo & 0x3f;
         client->iLastCompassFriendlyInfoEnt = compassEnt;
-        if (BYTE_AT((byte *)imp_g_entities + compassEnt * sizeof(gentity_t), 0x0a) & 0x40) {
+        if (BYTE_AT((byte *)g_entities + compassEnt * sizeof(gentity_t), 0x0a) & 0x40) {
             client->ps.eFlags |= 0x00800000;
         } else {
             client->ps.eFlags &= 0xff7fffff;

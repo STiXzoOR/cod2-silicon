@@ -1,5 +1,7 @@
 #include "common_types.h"
 #include "imports.h"
+/* dvar globals */
+extern const dvar_t *fs_restrict;
 
 static char buf[1024];
 static char fs_map_basename[64];
@@ -40,32 +42,32 @@ qboolean FS_CompareIwds(char *needediwds, int len, qboolean dlstring);
 extern void FS_CheckFileSystemStarted(void);
 extern void FS_BuildOSPath(const char *base, const char *game, const char *qpath, char *ospath);
 extern fileHandle_t FS_HandleForFile(int flags);
-extern int FS_CreatePath(const char *OSPath);
+extern qboolean FS_CreatePath(char *OSPath);
 extern void Com_DPrintf(const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern FILE *FS_FileOpen(const char *filename, const char *mode);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern int FS_filelength(fileHandle_t f);
 extern int I_stricmp(const char *s1, const char *s2);
-extern void FS_CopyFile(const char *from, const char *to);
+extern void FS_CopyFile(char *fromOSPath, char *toOSPath);
 extern void FS_Remove(const char *ospath);
 extern int Cmd_Argc(void);
 extern char *Cmd_Argv(int arg);
 extern char **FS_ListFiles(const char *path, const char *extension, int wantSubs, int *numfiles, int flags);
-extern void FS_FreeFileList(char **list, int flags);
+extern void FS_FreeFileList(const char **list, int flags);
 extern char **FS_ListFilteredFiles(void *searchPath, const char *path, const char *extension, const char *filter, int *numfiles, int flags);
-extern void FS_SortFileList(char **list, int numfiles);
+extern void FS_SortFileList(const char **list, int numfiles);
 extern void FS_ConvertPath(char *s);
 extern qboolean FS_TouchFile(const char *filename);
-extern void Cmd_AddCommand(const char *cmdName, void *function);
-extern void Dvar_SetBool(const void *dvar, int val);
+extern void Cmd_AddCommand(const char *cmdName, void (*function)(void));
+extern void Dvar_SetBool(const dvar_t *dvar, unsigned char val);
 extern void FS_Shutdown(int flags);
 extern void FS_Startup(const char *gameName);
-extern int FS_UseSearchPath(void *sp);
+extern int FS_UseSearchPath(const searchpath_t *sp);
 extern void Com_Error(int level, const char *fmt, ...);
 extern void I_strncat(char *dest, int destsize, const char *src);
 extern char *va(const char *fmt, ...);
-extern int FS_FilenameCompare(const char *s1, const char *s2);
+extern qboolean FS_FilenameCompare(const char *s1, const char *s2);
 extern char *strstr(const char *haystack, const char *needle);
 extern char *I_strlwr(char *s);
 extern void Cmd_TokenizeString(const char *text);
@@ -74,7 +76,7 @@ extern char *CopyStringInternal(const char *str);
 extern void Z_FreeInternal(void *ptr);
 extern void FS_ShutdownServerIwdNames(void);
 extern void Com_Memcpy(void *dest, const void *src, int count);
-extern void SND_StopSounds(int flags);
+extern void SND_StopSounds(snd_stopsounds_arg_t flags);
 extern void FS_ShutdownServerReferencedIwds(void);
 extern int I_strnicmp(const char *s1, const char *s2, size_t n);
 extern int stricmp(const char *s1, const char *s2);
@@ -83,9 +85,9 @@ extern char **Sys_ListFiles(const char *directory, const char *extension, const 
 extern void Sys_FreeFileList(char **list);
 extern void FS_FCloseFile(fileHandle_t f);
 extern FILE *FS_FileForHandle(fileHandle_t f);
-extern void Com_Memset(void *dest, int val, int count);
-extern int FS_FileRead(void *buf, int len, int count, FILE *f);
-extern FILE *FS_FileClose(FILE *f);
+extern void Com_Memset(void *dest, const int val, int count);
+extern unsigned int FS_FileRead(void *buf, unsigned int len, unsigned int count, FILE *f);
+extern int FS_FileClose(FILE *stream);
 extern int Com_sprintf(char *dest, int destsize, const char *fmt, ...);
 
 static inline __attribute__((always_inline)) void FS_SV_BuildOSPath(const char *base, const char *filename, char *ospath, size_t ospathSize)
@@ -104,7 +106,7 @@ fileHandle_t FS_SV_FOpenFileWrite(const char *filename)
     FS_CheckFileSystemStarted();
 
     {
-        const dvar_t *homepath_dvar = *(const dvar_t **)imp_fs_homepath;
+        const dvar_t *homepath_dvar = fs_homepath;
         FS_SV_BuildOSPath(homepath_dvar->current.string, filename, ospath, sizeof(ospath));
     }
 
@@ -113,7 +115,7 @@ fileHandle_t FS_SV_FOpenFileWrite(const char *filename)
     entry->zipFile = NULL;
 
     {
-        const dvar_t *debug_dvar = *(const dvar_t **)imp_fs_debug;
+        const dvar_t *debug_dvar = fs_debug;
         if (debug_dvar->current.integer) {
             Com_Printf("FS_SV_FOpenFileWrite: %s\n", ospath);
         }
@@ -155,12 +157,12 @@ int FS_SV_FOpenFileRead(const char *filename, fileHandle_t *fp)
     I_strncpyz(entry->name, filename, sizeof(entry->name));
 
     {
-        const dvar_t *homepath_dvar = *(const dvar_t **)imp_fs_homepath;
+        const dvar_t *homepath_dvar = fs_homepath;
         FS_SV_BuildOSPath(homepath_dvar->current.string, filename, ospath, sizeof(ospath));
     }
 
     {
-        const dvar_t *debug_dvar = *(const dvar_t **)imp_fs_debug;
+        const dvar_t *debug_dvar = fs_debug;
         if (debug_dvar->current.integer) {
             Com_Printf("FS_SV_FOpenFileRead (fs_homepath): %s\n", ospath);
         }
@@ -175,8 +177,8 @@ int FS_SV_FOpenFileRead(const char *filename, fileHandle_t *fp)
     }
 
     {
-        const dvar_t *basepath_dvar = *(const dvar_t **)imp_fs_basepath;
-        const dvar_t *homepath_dvar = *(const dvar_t **)imp_fs_homepath;
+        const dvar_t *basepath_dvar = fs_basepath;
+        const dvar_t *homepath_dvar = fs_homepath;
         const char *basepath_str = basepath_dvar->current.string;
         const char *homepath_str = homepath_dvar->current.string;
 
@@ -185,7 +187,7 @@ int FS_SV_FOpenFileRead(const char *filename, fileHandle_t *fp)
             FS_SV_BuildOSPath(basepath_str, filename, ospath, sizeof(ospath));
 
             {
-                const dvar_t *debug_dvar = *(const dvar_t **)imp_fs_debug;
+                const dvar_t *debug_dvar = fs_debug;
                 if (debug_dvar->current.integer) {
                     Com_Printf("FS_SV_FOpenFileRead (fs_basepath): %s\n", ospath);
                 }
@@ -206,12 +208,12 @@ int FS_SV_FOpenFileRead(const char *filename, fileHandle_t *fp)
     }
 
     {
-        const dvar_t *cdpath_dvar = *(const dvar_t **)imp_fs_cdpath;
+        const dvar_t *cdpath_dvar = fs_cdpath;
         FS_SV_BuildOSPath(cdpath_dvar->current.string, filename, ospath, sizeof(ospath));
     }
 
     {
-        const dvar_t *debug_dvar = *(const dvar_t **)imp_fs_debug;
+        const dvar_t *debug_dvar = fs_debug;
         if (debug_dvar->current.integer) {
             Com_Printf("FS_SV_FOpenFileRead (fs_cdpath) : %s\n", ospath);
         }
@@ -243,12 +245,12 @@ void FS_SV_Rename(const char *from, const char *to)
     FS_CheckFileSystemStarted();
 
     {
-        const dvar_t *homepath_dvar = *(const dvar_t **)imp_fs_homepath;
+        const dvar_t *homepath_dvar = fs_homepath;
         FS_BuildOSPath(homepath_dvar->current.string, from, "", from_ospath);
     }
 
     {
-        const dvar_t *homepath_dvar = *(const dvar_t **)imp_fs_homepath;
+        const dvar_t *homepath_dvar = fs_homepath;
         FS_BuildOSPath(homepath_dvar->current.string, to, "", to_ospath);
     }
 
@@ -256,7 +258,7 @@ void FS_SV_Rename(const char *from, const char *to)
     to_ospath[strlen(to_ospath) - 1] = '\0';
 
     {
-        const dvar_t *debug_dvar = *(const dvar_t **)imp_fs_debug;
+        const dvar_t *debug_dvar = fs_debug;
         if (debug_dvar->current.integer) {
             Com_Printf("FS_SV_Rename: %s --> %s\n", from_ospath, to_ospath);
         }
@@ -328,7 +330,7 @@ void FS_Dir_f(void)
         }
     }
 
-    FS_FreeFileList(dirnames, 10);
+    FS_FreeFileList((const char **)dirnames, 10);
 
     return;
 }
@@ -356,7 +358,7 @@ void FS_NewDir_f(void)
         dirnames = FS_ListFilteredFiles(searchpaths, "", "", filter, &ndirs, 10);
     }
 
-    FS_SortFileList(dirnames, ndirs);
+    FS_SortFileList((const char **)dirnames, ndirs);
 
     if (ndirs > 0) {
         for (i = 0; i < ndirs; i++) {
@@ -366,7 +368,7 @@ void FS_NewDir_f(void)
     }
 
     Com_Printf("%d files listed\n", ndirs);
-    FS_FreeFileList(dirnames, 10);
+    FS_FreeFileList((const char **)dirnames, 10);
 
     return;
 }
@@ -420,8 +422,8 @@ qboolean FS_iwIwd(char *iwd, char *base)
 
 void FS_AddCommands(void)
 {
-    Cmd_AddCommand("path", (void *)imp_FS_Path_f);
-    Cmd_AddCommand("fullpath", (void *)imp_FS_FullPath_f);
+    Cmd_AddCommand("path", (void (*)(void))imp_FS_Path_f);
+    Cmd_AddCommand("fullpath", (void (*)(void))imp_FS_FullPath_f);
     Cmd_AddCommand("dir", FS_Dir_f);
     Cmd_AddCommand("fdir", FS_NewDir_f);
     Cmd_AddCommand("touchFile", FS_TouchFile_f);
@@ -435,7 +437,7 @@ void FS_SetRestrictions(void)
     unsigned int checksum;
 
     {
-        const dvar_t *restrict_dvar = *(const dvar_t **)imp_fs_restrict;
+        const dvar_t *restrict_dvar = fs_restrict;
         if (restrict_dvar->current.enabled == 0) {
             return;
         }
@@ -451,7 +453,7 @@ void FS_SetRestrictions(void)
     path = *(void **)imp_fs_searchpaths;
     while (path != NULL) {
 
-        if (FS_UseSearchPath(path)) {
+        if (FS_UseSearchPath((const searchpath_t *)path)) {
             iwd = ((searchpath_t *)path)->pack;
             if (iwd != NULL) {
                 checksum = ((pack_t *)iwd)->checksum;
@@ -735,7 +737,7 @@ void FS_PureServerSetLoadedIwds(const char *iwdSums, const char *iwdNames)
 
 do_reload:
 
-    SND_StopSounds(8);
+    SND_StopSounds((snd_stopsounds_arg_t)8);
     FS_ShutdownServerIwdNames();
 
     {

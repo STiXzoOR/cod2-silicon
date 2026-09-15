@@ -5,24 +5,24 @@ extern refimport_t ri;
 #include "bytematch.h"
 #include <float.h>
 
-extern void qsort(void *base, int nmemb, int size, void *cmp);
+extern void qsort(void *base, unsigned int nmemb, unsigned int size, int (*compar)(const void *, const void *));
 
 extern unsigned char smodelLoadGlob[128];
 
 extern void *Hunk_AllocAlignInternal(int size, int alignment);
 extern GfxImage *Image_Alloc(const char *name, int category, int semantic, int imageTrack);
-extern void Image_Generate3D(GfxImage *image, byte *pixels, int width, int height, int depth, int imageFormat);
+extern void Image_Generate3D(GfxImage *image, byte *pixels, int width, int height, int depth, D3DFORMAT imageFormat);
 
 static int CompareStaticModels(const int *smodel0, const int *smodel1);
-int R_ScaleStaticModelLighting(float directLightScale, float indirectLightScale, float *sunVisibility, vec4_t *colorForDir);
+void R_ScaleStaticModelLighting(float directLightScale, float indirectLightScale, float *sunVisibility, vec4_t *colorForDir);
 void R_GetStaticModelLightingFromGrid(const GfxWorld *world, GfxStaticModelInstance *smodelInst, float *sunVisibility, vec4_t *colorForDir);
-int R_PrepareStaticModelLightingCache(GfxWorld *world, int smodelCount);
+void R_PrepareStaticModelLightingCache(GfxWorld *world, int smodelCount);
 Bool R_ValidateStaticModel(struct XModel *model);
 static int R_AddStaticModelToAabbTree_r_impl(byte *world, byte *tree, int smodelIndex);
 static int COD2_REGPARM(3) R_AddStaticModelToAabbTree_r(GfxWorld *world, GfxAabbTree *tree, int smodelIndex);
 static int COD2_REGPARM(3) R_FilterStaticModelIntoCells_r(GfxWorld *world, mnode_t *node, GfxStaticModelInstance *smodelInst, const vec_t *mins, const vec_t *maxs);
-int R_FinishStaticModelLightingCache(GfxWorld *world);
-int R_GetStaticModelLightingFromGround(const vec_t *groundLight, float *sunVisibility, vec4_t *colorForDir);
+void R_FinishStaticModelLightingCache(GfxWorld *world);
+void R_GetStaticModelLightingFromGround(const vec_t *groundLight, float *sunVisibility, vec4_t *colorForDir);
 void R_CreateStaticModel(GfxWorld *world, struct XModel *model, const vec_t *origin, const vec_t *angles, vec_t scale, GfxStaticModelInstance *smodelInst);
 void R_CacheStaticModelLighting(const GfxWorld *world, GfxStaticModelInstance *smodelInst, float sunVisibility, vec4_t *colorForDir);
 int R_SortGfxAabbTree(GfxWorld *world, GfxAabbTree *tree);
@@ -33,7 +33,7 @@ static int CompareStaticModels(const int *smodel0, const int *smodel1)
     return *smodel0 - *smodel1;
 }
 
-int R_ScaleStaticModelLighting(float directLightScale, float indirectLightScale, float *sunVisibility, vec4_t *colorForDir)
+void R_ScaleStaticModelLighting(float directLightScale, float indirectLightScale, float *sunVisibility, vec4_t *colorForDir)
 {
     int i = 6;
     *sunVisibility *= directLightScale;
@@ -47,7 +47,7 @@ int R_ScaleStaticModelLighting(float directLightScale, float indirectLightScale,
     } while (i);
 }
 
-extern float RB_GetLightingAtPoint(const void *lightGrid, const vec_t *samplePos, vec4_t *colorForDir);
+extern float RB_GetLightingAtPoint(const GfxLightGrid *lightGrid, const vec_t *samplePos, vec4_t *colorForDir);
 extern float floorf(float x);
 
 void R_GetStaticModelLightingFromGrid(const GfxWorld *world, GfxStaticModelInstance *smodelInst, float *sunVisibility, vec4_t *colorForDir)
@@ -65,7 +65,7 @@ void R_GetStaticModelLightingFromGrid(const GfxWorld *world, GfxStaticModelInsta
 
 extern void *Hunk_AllocateTempMemoryInternal(int size);
 
-int R_PrepareStaticModelLightingCache(GfxWorld *world, int smodelCount)
+void R_PrepareStaticModelLightingCache(GfxWorld *world, int smodelCount)
 {
     int rendererType = r_rendererInUse->current.integer;
 
@@ -97,25 +97,25 @@ int R_PrepareStaticModelLightingCache(GfxWorld *world, int smodelCount)
     }
 }
 
-extern int XModelGetNumLods(struct XModel *model);
+extern int XModelGetNumLods(const XModel *model);
 
-extern int XModelGetSurfaces(struct XModel *model, void *surfaces, int lodIndex, int **partBits);
-extern int XSurfaceGetBoneOffset(void *surface);
-extern const char *XModelGetName(struct XModel *model);
+extern int XModelGetSurfaces(const XModel *model, XSurface ***surfaces, int lodIndex, int **partBits);
+extern int XSurfaceGetBoneOffset(const XSurface *surf);
+extern const char *XModelGetName(const XModel *model);
 extern void Com_Printf(const char *fmt, ...);
 
 Bool R_ValidateStaticModel(struct XModel *model)
 {
     int lodCount = XModelGetNumLods(model);
     int lodIndex, surfIndex, surfCount;
-    void *surfaces;
+    XSurface **surfaces;
     int *partBits;
 
     for (lodIndex = 0; lodIndex < lodCount; lodIndex++) {
         surfCount = XModelGetSurfaces(model, &surfaces, lodIndex, &partBits);
 
         for (surfIndex = 0; surfIndex < surfCount; surfIndex++) {
-            void *surf = ((void **)surfaces)[surfIndex];
+            XSurface *surf = surfaces[surfIndex];
             if (XSurfaceGetBoneOffset(surf) == -1) {
                 Com_Printf("^1ERROR: model '%s' is not a valid static model, since lod %i surface %i has bone offsets\n",
                            XModelGetName(model), lodIndex, surfIndex);
@@ -134,7 +134,7 @@ static BM_ALWAYS_INLINE int R_AddStaticModelToAabbTree_r_impl(byte *world, byte 
     GfxAabbTree *aabb;
     int count;
 
-    smodelInstOffset = smodelIndex * 96;
+    smodelInstOffset = smodelIndex * (int)sizeof(GfxStaticModelInstance);   /* was hardcoded 96 = x86 sizeof; GfxStaticModelInstance grows on x64 (model XModel* + padding) */
 
 top:
     aabb = (GfxAabbTree *)tree;
@@ -223,7 +223,7 @@ top:
             int allocSize = (existingCount + 1) * sizeof(GfxAabbTree);
             byte *newChildren = (byte *)Hunk_AllocAlignInternal(allocSize, 4);
             memcpy(newChildren, (void *)(intptr_t)aabb->children, existingCount * sizeof(GfxAabbTree));
-            aabb->children = (int)(intptr_t)newChildren;
+            aabb->children = (GfxAabbTree *)newChildren;   /* was (int) -> truncated the 8-byte ptr on x64 */
 
             {
                 GfxAabbTree *newChild = (GfxAabbTree *)(newChildren + existingCount * sizeof(GfxAabbTree));
@@ -244,7 +244,7 @@ static BM_NOINLINE int COD2_REGPARM(3) R_AddStaticModelToAabbTree_r(GfxWorld *wo
     return R_AddStaticModelToAabbTree_r_impl((byte *)world, (byte *)tree, smodelIndex);
 }
 
-extern int BoxOnPlaneSide(const vec_t *mins, const vec_t *maxs, cplane_t *plane);
+extern int BoxOnPlaneSide(const vec_t *mins, const vec_t *maxs, const cplane_t *plane);
 
 static int COD2_REGPARM(3) R_FilterStaticModelIntoCells_r(GfxWorld *world, mnode_t *node,
                                                           GfxStaticModelInstance *smodelInst,
@@ -315,7 +315,7 @@ static int COD2_REGPARM(3) R_FilterStaticModelIntoCells_r(GfxWorld *world, mnode
     }
 }
 
-int R_FinishStaticModelLightingCache(GfxWorld *world)
+void R_FinishStaticModelLightingCache(GfxWorld *world)
 {
     if (r_rendererInUse->current.integer != 2) {
         GfxImage *image;
@@ -328,7 +328,7 @@ int R_FinishStaticModelLightingCache(GfxWorld *world)
                          ((int *)&smodelLoadGlob)[0] * 2,
                          ((int *)&smodelLoadGlob)[1] * 2,
                          2,
-                         21);
+                         (D3DFORMAT)21);
 
         {
             float scaleY = ((float *)&smodelLoadGlob)[3] * 0.5f;
@@ -345,7 +345,7 @@ int R_FinishStaticModelLightingCache(GfxWorld *world)
         ((int *)&smodelLoadGlob)[4] = 0;
     }
 }
-int R_GetStaticModelLightingFromGround(const vec_t *groundLight, float *sunVisibility, vec4_t *colorForDir)
+void R_GetStaticModelLightingFromGround(const vec_t *groundLight, float *sunVisibility, vec4_t *colorForDir)
 {
     float *base = (float *)colorForDir;
     int i;
@@ -372,7 +372,7 @@ extern void Hunk_FreeTempMemory(void *buf);
 extern int XModelNumBones(const struct XModel *model);
 extern const DObjAnimMat *XModelGetBasePose(const struct XModel *model);
 extern int XSurfaceGetNumVerts(const XSurface *surface);
-extern unsigned long XSurfaceGetVerts(const XSurface *surf, DObjSkelMat *boneMatrix,
+extern void XSurfaceGetVerts(const XSurface *surf, DObjSkelMat *boneMatrix,
                                       float *pVert, float *pTexCoord, float *pNormal);
 extern float XModelGetLodOutDist(const struct XModel *model);
 
@@ -654,7 +654,7 @@ top:
 
     total = qualifying + (tree->surfaceCount ? 1 : 0) + (remaining ? 1 : 0);
     children = (GfxAabbTree *)Hunk_AllocAlignInternal(total * (int)sizeof(GfxAabbTree), 4);
-    tree->children = (int)(intptr_t)children;
+    tree->children = children;   /* was (int) -> truncated the 8-byte ptr on x64 */
     tree->childCount = 0;
 
     if (tree->surfaceCount) {

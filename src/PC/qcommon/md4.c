@@ -3,7 +3,7 @@
 #include <string.h>
 
 extern void Com_Memcpy(void *dest, const void *src, int count);
-extern void Com_Memset(void *dest, int val, int count);
+extern void Com_Memset(void *dest, const int val, int count);
 
 __attribute__((used)) unsigned char PADDING[64] = {
     0x80,

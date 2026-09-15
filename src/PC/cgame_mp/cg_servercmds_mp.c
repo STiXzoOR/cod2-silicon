@@ -13,7 +13,7 @@ extern const dvar_t *cg_thirdPerson;
 extern float floorf(float x);
 
 extern const char *CL_GetConfigString(int index);
-extern const char *Info_ValueForKey(const char *s, const char *key);
+extern char *Info_ValueForKey(const char *s, const char *key);
 extern void Dvar_SetStringByName(const char *dvarName, const char *value);
 extern void Dvar_SetFromStringByName(const char *dvarName, const char *value);
 extern const char *GetBspExtension(void);
@@ -26,7 +26,7 @@ extern void Cbuf_AddText(const char *text);
 extern const char *va(const char *format, ...);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern int I_stricmp(const char *s1, const char *s2);
-extern int CL_Popup(const char *menuName);
+extern qboolean CL_Popup(const char *menu);
 extern void CL_ClosePopup(const char *menuName);
 extern const char *Com_Parse(const char **data_p);
 extern WeaponDef *BG_GetWeaponDef(int weaponIndex);
@@ -47,7 +47,7 @@ extern struct EffectTemplate *FX_RegisterEffect(const char *fileName);
 extern void CG_InitLocalEntities(void);
 extern void CG_InitMarkPolys(void);
 extern void FX_FreeActive(void);
-extern void SND_StopSounds(int mode);
+extern void SND_StopSounds(snd_stopsounds_arg_t mode);
 extern void CG_StartAmbient(void);
 extern void Dvar_SetBool(void *dvar, int value);
 extern void CL_SetADS(int value);
@@ -64,7 +64,7 @@ extern Bool CG_PlaySoundOnFirstClient(void);
 extern snd_alias_t *CL_PickSoundAlias(const char *aliasname);
 extern int CG_PlayClientSoundAliasByName(const char *aliasname);
 extern int CL_GetLocalClientActiveCount(void);
-extern void *Menus_FindByName(void *dc, const char *name);
+extern menuDef_t *Menus_FindByName(displayContextDef_t *dc, const char *name);
 extern void Window_AddDynamicFlags(void *window, int flags);
 extern void CG_SetEquippedOffHand(int offHandIndex);
 extern void CG_SelectWeaponIndex(int weaponIndex);
@@ -77,7 +77,15 @@ extern qboolean CG_LoadShellShockDvars(const char *name);
 extern void CG_SetShellShockParmsFromDvars(shellshock_parms_t *parms);
 extern const char *UI_GetMapDisplayNameFromPartialLoadNameMatch(const char *pszMap, int *mapLoadNameLen);
 
-#define CGUI_PTR ((char *)*(void **)imp_legacyHacks)
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern LegacyHacks *legacyHacks;
+#ifdef __cplusplus
+}
+#endif
+
+#define CGUI_PTR ((char *)legacyHacks)
 
 static qboolean CG_DvarCurrentBool(void *importPtr)
 {
@@ -368,19 +376,19 @@ void CG_CheckOpenWaitingScriptMenu(void)
 
 void CG_CloseScriptMenu(void)
 {
-    void **cguiSlot;
+    LegacyHacks *hacks;
 
     CL_ClosePopup((const char *)"UIMENU_SCRIPT_POPUP");
     CL_ClosePopup((const char *)"UIMENU_SCRIPT_POPUP_NO_MOUSE");
 
-    cguiSlot = (void **)imp_legacyHacks;
-    *(unsigned char *)((char *)*cguiSlot + 0x1de) = 0;
-    *(int *)((char *)*cguiSlot + 0x2e0) = -1;
-    *((char *)*cguiSlot + 0x2e4) = '\0';
-    *(int *)((char *)*cguiSlot + 0x3e4) = -1;
-    *((char *)*cguiSlot + 0x3e8) = '\0';
-    *(int *)((char *)*cguiSlot + 0x4e8) = -1;
-    *(unsigned char *)((char *)*cguiSlot + 0x4ec) = 0;
+    hacks = legacyHacks;
+    hacks->ui_scriptMenu[0] = '\0';
+    hacks->ui_scriptMenuIndex = -1;
+    hacks->ui_newScriptMenu[0] = '\0';
+    hacks->ui_newScriptMenuIndex = -1;
+    hacks->ui_waitingScriptMenu[0] = '\0';
+    hacks->ui_waitingScriptMenuIndex = -1;
+    hacks->ui_waitingScriptMenuNoMouse = 0;
 }
 
 void CG_MenuShowNotify(int menuToShow)
@@ -398,9 +406,9 @@ void CG_MenuShowNotify(int menuToShow)
         }
         cg->healthFadeTime = cg->time;
         if (CL_GetLocalClientActiveCount() == 1) {
-            menu = Menus_FindByName((void *)imp_cgDC, (const char *)"Health");
+            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"Health");
         } else {
-            menu = Menus_FindByName((void *)imp_cgDC, (const char *)"Health_mp");
+            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"Health_mp");
         }
         break;
     case 1:
@@ -410,9 +418,9 @@ void CG_MenuShowNotify(int menuToShow)
         }
         cg->ammoFadeTime = cg->time;
         if (CL_GetLocalClientActiveCount() == 1) {
-            menu = Menus_FindByName((void *)imp_cgDC, (const char *)"weaponinfo");
+            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"weaponinfo");
         } else {
-            menu = Menus_FindByName((void *)imp_cgDC, (const char *)"weaponinfo_mp");
+            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"weaponinfo_mp");
         }
         break;
     case 2:
@@ -421,9 +429,9 @@ void CG_MenuShowNotify(int menuToShow)
         }
         cg->compassFadeTime = cg->time;
         if (CL_GetLocalClientActiveCount() == 1) {
-            menu = Menus_FindByName((void *)imp_cgDC, (const char *)"Compass");
+            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"Compass");
         } else {
-            menu = Menus_FindByName((void *)imp_cgDC, (const char *)"Compass_mp");
+            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"Compass_mp");
         }
         break;
     case 3:
@@ -432,9 +440,9 @@ void CG_MenuShowNotify(int menuToShow)
         }
         cg->stanceFadeTime = cg->time;
         if (CL_GetLocalClientActiveCount() == 1) {
-            menu = Menus_FindByName((void *)imp_cgDC, (const char *)"stance");
+            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"stance");
         } else {
-            menu = Menus_FindByName((void *)imp_cgDC, (const char *)"stance_mp");
+            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"stance_mp");
         }
         break;
     case 4:
@@ -443,9 +451,9 @@ void CG_MenuShowNotify(int menuToShow)
         }
         cg->offhandFadeTime = cg->time;
         if (CL_GetLocalClientActiveCount() == 1) {
-            menu = Menus_FindByName((void *)imp_cgDC, (const char *)"offhandinfo");
+            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"offhandinfo");
         } else {
-            menu = Menus_FindByName((void *)imp_cgDC, (const char *)"offhandinfo_mp");
+            menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"offhandinfo_mp");
         }
         break;
     case 5:
@@ -453,7 +461,7 @@ void CG_MenuShowNotify(int menuToShow)
             return;
         }
         cg->scoreFadeTime = cg->time;
-        menu = Menus_FindByName((void *)imp_cgDC, (const char *)"objectiveinfo");
+        menu = Menus_FindByName((displayContextDef_t *)imp_cgDC,(const char *)"objectiveinfo");
         break;
     default:
         return;
@@ -639,7 +647,7 @@ void CG_MapRestart(qboolean savepersist)
 
     cg->mapRestart = 1;
 
-    SND_StopSounds(0);
+    SND_StopSounds((snd_stopsounds_arg_t)0);
     CG_StartAmbient();
 
     cg->latchVictorySound = 0;
@@ -652,7 +660,7 @@ void CG_MapRestart(qboolean savepersist)
     *(int *)&cg->fWeapSelectFrac[2] = 0;
     cg->iWeapSelectLastDrawTime = 0;
 
-    Dvar_SetBool(cg_thirdPerson, 0);
+    Dvar_SetBool( (void *)(cg_thirdPerson), 0);
 
     cgui = CGUI_PTR;
     *(int *)(cgui + 8) = 0;

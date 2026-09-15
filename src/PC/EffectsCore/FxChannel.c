@@ -2,8 +2,8 @@
 #include "imports.h"
 
 extern const FxCurve *FxCurve_AllocAndCreateWithKeys(const float *keyArray, int dimensionCount, int keyCount);
-extern void FxRange_SetRange(void *range, float min, float max);
-extern float FxRange_GetValPct(void *range, float pct);
+extern void FxRange_SetRange(const FxRange *_this, float min, float max);
+extern float FxRange_GetValPct(const FxRange *_this, float percent);
 extern float flrand(float min, float max);
 extern float cosf(float x);
 
@@ -52,8 +52,8 @@ void FxChannel_CreateViaMigration(const FxChannelBackwardCompatible *source, int
         scaleFactor = 1.0f;
     } else {
 
-        float valLT = FxRange_GetValPct((void *)&source->end[0], 0.5f);
-        float valStart = FxRange_GetValPct((void *)&source->start[0], 0.5f);
+        float valLT = FxRange_GetValPct( (const FxRange *)((void *)&source->end[0]), 0.5f);
+        float valStart = FxRange_GetValPct( (const FxRange *)((void *)&source->start[0]), 0.5f);
 
         float diff = valStart - valLT;
         float maxVal;
@@ -91,11 +91,11 @@ void FxChannel_CreateViaMigration(const FxChannelBackwardCompatible *source, int
         float lastParmVal = 0.0f;
         for (dimensionId = 0; dimensionId < dimensions; dimensionId++) {
 
-            startVals[dimensionId] = FxRange_GetValPct((void *)&startPtr[dimensionId], 0.5f) * scaleFactor;
+            startVals[dimensionId] = FxRange_GetValPct( (const FxRange *)((void *)&startPtr[dimensionId]), 0.5f) * scaleFactor;
 
-            endVals[dimensionId] = FxRange_GetValPct((void *)&endPtr[dimensionId], 0.5f) * scaleFactor;
+            endVals[dimensionId] = FxRange_GetValPct( (const FxRange *)((void *)&endPtr[dimensionId]), 0.5f) * scaleFactor;
 
-            lastParmVal = FxRange_GetValPct((void *)parmPtr, 0.5f) * scaleFactor;
+            lastParmVal = FxRange_GetValPct( (const FxRange *)((void *)parmPtr), 0.5f) * scaleFactor;
         }
         delayFraction = lastParmVal * 0.009999999776482582f;
         waveParm = lastParmVal * 0.0031415929552167654f;

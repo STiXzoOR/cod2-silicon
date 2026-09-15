@@ -18,11 +18,11 @@ typedef struct ClipPoint {
 extern r_global_permanent_t rgp;
 extern r_globals_t tr;
 
-extern int BoxOnPlaneSide(const vec_t *mins, const vec_t *maxs, cplane_t *plane);
+extern int BoxOnPlaneSide(const vec_t *mins, const vec_t *maxs, const cplane_t *plane);
 extern void ClearBounds(vec_t *mins, vec_t *maxs);
 extern void AddPointToBounds(const vec_t *point, vec_t *mins, vec_t *maxs);
 extern void Vec3Cross(const vec_t *a, const vec_t *b, vec_t *out);
-extern float Vec3Normalize(vec_t *v);
+extern const vec_t Vec3Normalize(vec_t *v);
 
 #define R_MARKS_REGPARM3_ABI COD2_REGPARM(3)
 

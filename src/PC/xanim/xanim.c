@@ -20,14 +20,14 @@ static int g_notifyListSize;
 static Bool g_anim_developer;
 
 extern void *Hunk_AllocAlignInternal(int size, int align);
-extern unsigned int SL_GetString_(const char *str, int user, int type);
+extern unsigned int SL_GetString_(const char *str, unsigned int user, int type);
 extern void SL_RemoveRefToStringOfLen(unsigned int stringValue, int len);
-extern unsigned int SL_GetStringOfLen(const void *str, int user, unsigned int len, int type);
+extern unsigned int SL_GetStringOfLen(const char *str, unsigned int user, unsigned int len, int type);
 extern int XModelGetBoneIndex(const XModel *model, unsigned int name);
 extern void *Z_MallocInternal(int size);
 extern void Z_FreeInternal(void *ptr);
 extern qboolean Hunk_DataOnHunk(void *data);
-extern void Hunk_AddData(int type, void *data, void *alloc);
+extern void Hunk_AddData(int type, void *data, Alloc_t alloc);
 extern const char *va(const char *format, ...);
 extern void *Hunk_FindDataForFile(int type, const char *name);
 extern void Com_Error(int code, const char *fmt, ...);
@@ -83,7 +83,7 @@ void XAnimFreeList(XAnim *anims);
 XAnim *XAnimGetAnims(const XAnimTree *tree);
 float XAnimGetLength(const XAnim *anims, unsigned int animIndex);
 float XAnimGetTime(const XAnimTree *tree, unsigned int animIndex);
-float XAnimGetWeight(const XAnimTree *tree, unsigned int animIndex);
+float XAnimGetWeight(const XAnimTree_s *tree, unsigned int animIndex);
 Bool XAnimHasFinished(const XAnimTree *tree, unsigned int animIndex);
 int XAnimGetNumChildren(const XAnim *anims, unsigned int animIndex);
 unsigned int XAnimGetChildAt(const XAnim *anims, unsigned int animIndex, unsigned int childIndex);
@@ -95,8 +95,8 @@ static void *Hunk_AllocXAnimPrecache(int size);
 Bool XAnimIsPrimitive(XAnim *anims, unsigned int animIndex);
 void XAnimSetTime(XAnimTree *tree, unsigned int animIndex, float time);
 void XAnimSetAnimRate(XAnimTree *tree, unsigned int animIndex, float rate);
-int XAnimIsLooped(const XAnim *anims, unsigned int animIndex);
-Bool XAnimNotetrackExists(const XAnim *anims, unsigned int animIndex, unsigned int name);
+Bool XAnimIsLooped(const XAnim *anims, unsigned int animIndex);
+int XAnimNotetrackExists(const XAnim *anims, unsigned int animIndex, unsigned int name);
 static void __attribute_regparm__(3) Z18XAnim_GetTimeIndexIhEvPK9XAnimTimePK19XAnimDynamicIndicesiPiPf(const XAnimTime *animTime, const XAnimDynamicIndices *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac);
 static void __attribute_regparm__(3) Z28XAnim_GetTimeIndexCompressedItEvPK9XAnimTimePKT_iPiPf(const XAnimTime *animTime, const unsigned short *indices, int tableSize, int *keyFrameIndex, float *keyFrameLerpFrac);
 const char *XAnimGetAnimDebugName(const XAnim *anims, unsigned int animIndex);
@@ -115,7 +115,7 @@ void __attribute_regparm__(3) __attribute_sseregparm__ XAnimCalcDeltaTree(const 
 void XAnimCalcAbsDelta(XAnimTree *tree, unsigned int animIndex, vec_t *rot, vec_t *trans);
 void XAnimCalcDelta(XAnimTree *tree, unsigned int animIndex, vec_t *rot, vec_t *trans, int bUseGoalWeight);
 static void __attribute_regparm__(2) XAnimResetTime(XAnimTree *tree, unsigned int animIndex);
-static void __attribute_regparm__(3) __attribute_sseregparm__ XAnimUpdateOldTime(XAnimTree *tree, unsigned int animIndex, XAnimState *syncState, Bool parentHadWeight, Bool *infoExistsForParent, Bool *childHadWeightForParent, float dtime);
+static void __attribute_regparm__(3) __attribute_sseregparm__ XAnimUpdateOldTime(XAnimTree *tree, unsigned int animIndex, XAnimState *syncState, float dtime, Bool parentHadWeight, Bool *infoExistsForParent, Bool *childHadWeightForParent);
 void DObjInitServerTime(DObj *obj, float dtime);
 static int __attribute_regparm__(3) __attribute_sseregparm__
     XAnimSetGoalWeightInternal(XAnimTree *tree, unsigned int animIndex, int bForce,
@@ -235,7 +235,7 @@ XAnim *XAnimCreateAnims(const char *debugName, int size, Alloc_t Alloc)
     }
 
     if (Hunk_DataOnHunk(anims)) {
-        Hunk_AddData(6, anims, (void *)Alloc);
+        Hunk_AddData(6, anims, Alloc);
     }
     return anims;
 }
@@ -281,9 +281,9 @@ float XAnimGetTime(const XAnimTree *tree, unsigned int animIndex)
     return g_xAnimInfo[info].s.time;
 }
 
-float XAnimGetWeight(const XAnimTree *tree, unsigned int animIndex)
+float XAnimGetWeight(const XAnimTree_s *tree, unsigned int animIndex)
 {
-    unsigned short info = ((const XAnimTree_s *)tree)->infoArray[animIndex];
+    unsigned short info = tree->infoArray[animIndex];
     if (!info)
         return 0.0f;
     return g_xAnimInfo[info].s.weight;
@@ -386,12 +386,7 @@ void XAnimSetAnimRate(XAnimTree *tree, unsigned int animIndex, float rate)
     g_xAnimInfo[index].s.rate = rate;
 }
 
-/* Returns int (not Bool): several callers declare it `extern int` and read the
- * full eax. A char/Bool return only sets al and leaves eax's upper bits dirty
- * (UB the GCC build tolerated, MSVC does not) -> a not-looped anim read as
- * "looped" and spuriously failed CG_RegisterWeapon's ADS check. int forces the
- * compiler to zero-extend into eax; the value logic is unchanged. */
-int XAnimIsLooped(const XAnim *anims, unsigned int animIndex)
+Bool XAnimIsLooped(const XAnim *anims, unsigned int animIndex)
 {
     /* was hardcoded x86 layout (entries at +0xc, 8-byte stride, union at +4); on x64 XAnimEntry
        is 16B with the union at +8 and entries[] at +24 -> use the typed struct (correct on both). */
@@ -401,7 +396,7 @@ int XAnimIsLooped(const XAnim *anims, unsigned int animIndex)
     return e->u.parts->bLoop;
 }
 
-Bool XAnimNotetrackExists(const XAnim *anims, unsigned int animIndex, unsigned int name)
+int XAnimNotetrackExists(const XAnim *anims, unsigned int animIndex, unsigned int name)
 {
     const XAnimParts *parts;
     const XAnimNotifyInfo *notify;
@@ -435,11 +430,14 @@ static void __attribute_regparm__(3)
     const int frameIndex = animTime->frameIndex;
     int index = (int)(animTime->time * (float)tableSize);
 
-    while (frameIndex < (int)frames[index]) {
+    /* x64: bound the search so a bad time/tableSize can't index the array OOB */
+    if (index < 0) index = 0;
+    if (index >= tableSize) index = tableSize - 1;
+    while (index > 0 && frameIndex < (int)frames[index]) {
         --index;
     }
 
-    while (frameIndex >= (int)frames[index + 1]) {
+    while (index < tableSize - 1 && frameIndex >= (int)frames[index + 1]) {
         ++index;
     }
 
@@ -453,11 +451,14 @@ static void __attribute_regparm__(3)
     const int frameIndex = animTime->frameIndex;
     int index = (int)(animTime->time * (float)tableSize);
 
-    while (frameIndex < (int)indices[index]) {
+    /* x64: bound the search so a bad time/tableSize can't index the array OOB */
+    if (index < 0) index = 0;
+    if (index >= tableSize) index = tableSize - 1;
+    while (index > 0 && frameIndex < (int)indices[index]) {
         --index;
     }
 
-    while (frameIndex >= (int)indices[index + 1]) {
+    while (index < tableSize - 1 && frameIndex >= (int)indices[index + 1]) {
         ++index;
     }
 
@@ -1244,8 +1245,8 @@ static inline __attribute__((always_inline)) void XAnimRestart(XAnimTree *tree, 
 
 static void __attribute_regparm__(3) __attribute_sseregparm__
     XAnimUpdateOldTime(XAnimTree *tree, unsigned int animIndex, XAnimState *syncState,
-                       Bool parentHadWeight, Bool *infoExistsForParent,
-                       Bool *childHadWeightForParent, float dtime)
+                       float dtime, Bool parentHadWeight, Bool *infoExistsForParent,
+                       Bool *childHadWeightForParent)
 {
     XAnimTree_s *tree_s = (XAnimTree_s *)tree;
     unsigned int infoIndex = tree_s->infoArray[animIndex];
@@ -1294,8 +1295,8 @@ static void __attribute_regparm__(3) __attribute_sseregparm__
             Bool childInfoExists = infoExists;
             unsigned int childIndex = anim->u.s.children + i;
 
-            XAnimUpdateOldTime(tree, childIndex, childSyncState, hadWeight,
-                               &childInfoExists, &childHadWeight, dtime);
+            XAnimUpdateOldTime(tree, childIndex, childSyncState, dtime, hadWeight,
+                               &childInfoExists, &childHadWeight);
             infoExists = childInfoExists;
         }
     }
@@ -1343,7 +1344,7 @@ void DObjInitServerTime(DObj *obj, float dtime)
 
         syncState.time = 0.0f;
         syncState.timeCount = 0;
-        XAnimUpdateOldTime(obj->tree, 0, &syncState, 1, &infoExists, &childHadWeight, dtime);
+        XAnimUpdateOldTime(obj->tree, 0, &syncState, dtime, 1, &infoExists, &childHadWeight);
     }
 }
 
@@ -1703,7 +1704,7 @@ static unsigned short XAnimCalcBuildAnimToModelLocal(const DObj *obj, const XAni
         }
     }
 
-    return (unsigned short)SL_GetStringOfLen(&animToModel, 0, (unsigned int)(storedBoneCount + 16), 11);
+    return (unsigned short)SL_GetStringOfLen((const char *)&animToModel, 0, (unsigned int)(storedBoneCount + 16), 11);
 }
 
 static const unsigned char *XAnimCalcGetAnimToModelLocal(const DObj *obj, const XAnimTree_s *tree,
@@ -1754,7 +1755,13 @@ static void XAnimCalcAccumulateFullQuatLocal(DObjAnimMat *mat, const XAnimPartQu
         float lerpFrac;
         const XQuat *frames = (const XQuat *)quat->u.frames.u.frames;
 
+        if ((unsigned)quat->size > 4096u ||
+            (uintptr_t)frames + 0x100000000ULL < 0x200000000ULL ||
+            (uintptr_t)frames >= 0x800000000000ULL)
+            return; /* x64 TODO: corrupt anim frame data (see XAnimCalcAccumulateTransLocal) */
+
         XAnimCalcGetFrameIndexLocal(animTime, &quat->u.frames.indices, quat->size, &frameIndex, &lerpFrac);
+        if (frameIndex < 0 || frameIndex >= (int)quat->size) { frameIndex = 0; lerpFrac = 0.0f; } /* x64: guard OOB frame index */
         mat->quat[0] += ((float)frames[frameIndex][0] + ((float)frames[frameIndex + 1][0] - (float)frames[frameIndex][0]) * lerpFrac) * scale;
         mat->quat[1] += ((float)frames[frameIndex][1] + ((float)frames[frameIndex + 1][1] - (float)frames[frameIndex][1]) * lerpFrac) * scale;
         mat->quat[2] += ((float)frames[frameIndex][2] + ((float)frames[frameIndex + 1][2] - (float)frames[frameIndex][2]) * lerpFrac) * scale;
@@ -1778,7 +1785,13 @@ static void XAnimCalcAccumulateSimpleQuatLocal(DObjAnimMat *mat, const XAnimPart
         float lerpFrac;
         const XQuat2 *frames = (const XQuat2 *)quat->u.frames.u.frames2;
 
+        if ((unsigned)quat->size > 4096u ||
+            (uintptr_t)frames + 0x100000000ULL < 0x200000000ULL ||
+            (uintptr_t)frames >= 0x800000000000ULL)
+            return; /* x64 TODO: corrupt anim frame data (see XAnimCalcAccumulateTransLocal) */
+
         XAnimCalcGetFrameIndexLocal(animTime, &quat->u.frames.indices, quat->size, &frameIndex, &lerpFrac);
+        if (frameIndex < 0 || frameIndex >= (int)quat->size) { frameIndex = 0; lerpFrac = 0.0f; } /* x64: guard OOB frame index */
         mat->quat[2] += ((float)frames[frameIndex][0] + ((float)frames[frameIndex + 1][0] - (float)frames[frameIndex][0]) * lerpFrac) * scale;
         mat->quat[3] += ((float)frames[frameIndex][1] + ((float)frames[frameIndex + 1][1] - (float)frames[frameIndex][1]) * lerpFrac) * scale;
     }
@@ -1797,7 +1810,20 @@ static void XAnimCalcAccumulateTransLocal(DObjAnimMat *mat, const XAnimPartTrans
             float lerpFrac;
             const vec3_t *frames = (const vec3_t *)trans->u.frames.frames;
 
+            /* x64 TODO(root not found): some XAnimPartTrans present corrupt data here --
+               a garbage size (>4096; no real anim has that many keyframes) and/or a bad
+               frames pointer (truncated OR mid-range non-canonical). The .xanim loader is
+               x64-correct, so the corruption is post-load (anim tree/DObj bone path).
+               Skip this bone's trans accumulation to avoid dereferencing bad data. */
+            if ((unsigned)trans->size > 4096u ||
+                (uintptr_t)frames + 0x100000000ULL < 0x200000000ULL ||
+                (uintptr_t)frames >= 0x800000000000ULL) {
+                mat->transWeight += weightScale;
+                return;
+            }
+
             XAnimCalcGetFrameIndexLocal(animTime, &trans->u.frames.indices, trans->size, &frameIndex, &lerpFrac);
+            if (frameIndex < 0 || frameIndex >= (int)trans->size) { frameIndex = 0; lerpFrac = 0.0f; } /* x64: guard OOB frame index */
             mat->trans[0] += (frames[frameIndex][0] + (frames[frameIndex + 1][0] - frames[frameIndex][0]) * lerpFrac) * weightScale;
             mat->trans[1] += (frames[frameIndex][1] + (frames[frameIndex + 1][1] - frames[frameIndex][1]) * lerpFrac) * weightScale;
             mat->trans[2] += (frames[frameIndex][2] + (frames[frameIndex + 1][2] - frames[frameIndex][2]) * lerpFrac) * weightScale;
@@ -3053,7 +3079,7 @@ void DObjUpdateClientInfo(DObj *obj, float dtime)
 
         syncState.time = 0.0f;
         syncState.timeCount = 0;
-        XAnimUpdateOldTime(obj->tree, 0, &syncState, 1, &infoExists, &childHadWeight, dtime);
+        XAnimUpdateOldTime(obj->tree, 0, &syncState, dtime, 1, &infoExists, &childHadWeight);
         XAnimUpdateInfoInternal(obj->tree, dtime, 0, 1);
     }
 }
@@ -3288,9 +3314,11 @@ static float XAnimFindServerNoteTrackInternal(const XAnimTree *tree, unsigned in
             return 1.0f;
         }
 
-        return XAnimGetNotifyFracServer(tree, info, anim, state,
-                                        &(XAnimState){ nextTime, state->time, (short)nextTimeCount, state->timeCount, 0.0f, 0.0f, 0.0f, 0.0f },
-                                        totalDtime);
+        {
+            /* VC7.1 has no C99 compound literals -> materialize the temp explicitly (byte-neutral) */
+            XAnimState _clNotify = { nextTime, state->time, (short)nextTimeCount, state->timeCount, 0.0f, 0.0f, 0.0f, 0.0f };
+            return XAnimGetNotifyFracServer(tree, info, anim, state, &_clNotify, totalDtime);
+        }
     }
 
     if (anim->u.s.flags & 3) {

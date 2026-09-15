@@ -1,7 +1,13 @@
 #include "common_types.h"
 #include "imports.h"
 
-extern int timeGetTime(void);
+#ifdef __cplusplus
+extern "C" {
+#endif
+__declspec(dllimport) DWORD __stdcall timeGetTime(void);
+#ifdef __cplusplus
+}
+#endif
 
 extern int sys_timeBase;
 static qboolean initialized;

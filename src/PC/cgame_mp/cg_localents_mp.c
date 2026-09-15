@@ -1,8 +1,10 @@
 #include "common_types.h"
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
+/* dvar globals */
+extern const dvar_t *cg_tracerLength;
 
-extern void BG_EvaluateTrajectory(void *traj, int time, float *result);
+extern void BG_EvaluateTrajectory(const trajectory_t *traj, int time, vec_t *result);
 extern const vec_t Vec3NormalizeTo(const vec_t *v, vec_t *out);
 extern void CG_DrawTracer(vec_t *start, vec_t *finish);
 extern void Com_Error(int code, const char *fmt, ...);
@@ -23,17 +25,17 @@ void CG_AddLocalEntities(void);
 
 static void CG_FreeLocalEntity(localEntity_t *le)
 {
-    localEntity_t *prev_ent = (localEntity_t *)(le->prev);
-    localEntity_t *next_ent = (localEntity_t *)(le->next);
+    localEntity_t *prev_ent = le->prev;
+    localEntity_t *next_ent = le->next;
 
     if (!prev_ent) {
         Com_Error(1, "CG_FreeLocalEntity: not active");
     }
 
-    next_ent->prev = (int)prev_ent;
-    prev_ent->next = (int)next_ent;
+    next_ent->prev = prev_ent;
+    prev_ent->next = next_ent;
 
-    le->next = (int)cg_freeLocalEntities;
+    le->next = cg_freeLocalEntities;
     cg_freeLocalEntities = le;
 }
 
@@ -41,14 +43,14 @@ void CG_InitLocalEntities(void)
 {
     int i;
 
-    memset(cg_localEntities, 0, 0x5e00);
+    memset(cg_localEntities, 0, 128 * sizeof(localEntity_t));
 
-    cg_activeLocalEntities->next = (int)cg_activeLocalEntities;
-    cg_activeLocalEntities->prev = (int)cg_activeLocalEntities;
+    cg_activeLocalEntities->next = cg_activeLocalEntities;
+    cg_activeLocalEntities->prev = cg_activeLocalEntities;
 
     cg_freeLocalEntities = cg_localEntities;
     for (i = 0; i < 127; i++) {
-        cg_localEntities[i].next = (int)&cg_localEntities[i + 1];
+        cg_localEntities[i].next = &cg_localEntities[i + 1];
     }
 }
 
@@ -70,7 +72,7 @@ void CG_AddMovingTracer(localEntity_t *le)
 
     dist = le->tracerClipDist - dot;
     {
-        float tracerLen = *(float *)((char *)(*(int *)imp_cg_tracerLength) + 8);
+        float tracerLen = (cg_tracerLength)->current.value;
         if (dist > tracerLen) {
             dist = tracerLen;
         }
@@ -100,20 +102,20 @@ localEntity_t *CG_AllocLocalEntity(void)
 
     if (!cg_freeLocalEntities) {
 
-        le = (localEntity_t *)(cg_activeLocalEntities->prev);
+        le = cg_activeLocalEntities->prev;
         CG_FreeLocalEntity(le);
     }
 
     le = cg_freeLocalEntities;
 
-    cg_freeLocalEntities = (localEntity_t *)(le->next);
+    cg_freeLocalEntities = le->next;
 
     memset(le, 0, sizeof(localEntity_t));
 
     le->next = cg_activeLocalEntities->next;
-    le->prev = (int)cg_activeLocalEntities;
-    ((localEntity_t *)(cg_activeLocalEntities->next))->prev = (int)le;
-    cg_activeLocalEntities->next = (int)le;
+    le->prev = cg_activeLocalEntities;
+    cg_activeLocalEntities->next->prev = le;
+    cg_activeLocalEntities->next = le;
 
     return le;
 }
@@ -124,10 +126,10 @@ void CG_AddLocalEntities(void)
     localEntity_t *next;
     int time;
 
-    le = (localEntity_t *)(cg_activeLocalEntities->prev);
+    le = cg_activeLocalEntities->prev;
 
     while (le != cg_activeLocalEntities) {
-        next = (localEntity_t *)(le->prev);
+        next = le->prev;
 
         time = cg->time;
 

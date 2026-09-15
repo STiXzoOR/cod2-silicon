@@ -1,7 +1,16 @@
 #include "common_types.h"
+extern struct DxGlobals dx;
+/* File-scope alias: bound where no local can shadow `dx`, so uses below
+   always reach the global even inside functions that declare their own `dx`. */
+static struct DxGlobals * const dx_g = &dx;
 extern dvar_t *r_rendererInUse;
 extern const dvar_t *r_objectiveColorDx7Min;
 extern const dvar_t *r_objectiveColorDx7Max;
+extern const dvar_t *r_outdoorAwayBias;
+extern const dvar_t *r_outdoorDownBias;
+extern const dvar_t *r_debugShader;
+extern const dvar_t *r_drawPrimFloor;
+extern const dvar_t *r_drawPrimCap;
 extern materialCommands_t tess;
 extern r_global_permanent_t rgp;
 extern struct DxState dxState;
@@ -34,11 +43,11 @@ extern void Com_Memcpy(void *dest, const void *src, int count);
 extern void RB_ChangeIndices(IDirect3DIndexBuffer9 *ib);
 extern void RB_ChangeStreamSource(int streamIndex, IDirect3DVertexBuffer9 *vb, int vertexOffset, int vertexStride);
 extern void *CColorConverter_GetColorConverter(int mode);
-extern void MatrixInverse44(const void *src, void *dst);
-extern void MatrixTranspose44(const void *src, void *dst);
-extern void MatrixMultiply44(const void *a, const void *b, void *out);
-extern void MatrixTransformVector44(const void *vec, const void *mat, void *out);
-extern Bool RB_GetViewport(void *viewport);
+extern void MatrixInverse44(const float *mat, float *dst);
+extern void MatrixTranspose44(const float *in, float *out);
+extern void MatrixMultiply44(const float (*a)[4], const float (*b)[4], float (*out)[4]);
+extern void MatrixTransformVector44(const float *vec, const float (*mat)[4], float *out);
+extern Bool RB_GetViewport(GfxViewport *viewport);
 extern void MacOpenGLUtils_ConvertD3DProjectionMatrixToOpenGL(void *proj, float width, float height);
 extern void RB_UpdateViewport(void);
 extern int RB_SetIteratorFog(void);
@@ -74,6 +83,143 @@ void RB_EndSurface(void);
 
 extern int g_tess_since_begin;
 int g_begin_surface_calls = 0;
+
+static int RB_MaterialNameContains(const Material *material, const char *needle)
+{
+    const char *name;
+    const char *hay;
+    const char *n;
+
+    if (!material || !needle || !*needle) {
+        return 0;
+    }
+
+    name = material->info.name;
+    if (!name) {
+        return 0;
+    }
+
+    for (hay = name; *hay; ++hay) {
+        n = needle;
+        while (*n && hay[n - needle] == *n) {
+            ++n;
+        }
+        if (!*n) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+static void RB_X64TraceEndSurface(const char *stage, const Material *material,
+                                  const MaterialTechnique *technique, const materialCommands_t *mc)
+{
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+    static int traceCount;
+    FILE *f;
+
+    if (traceCount >= 160 || !RB_MaterialNameContains(material, "fonts/gamefonts")) {
+        return;
+    }
+
+    f = fopen("x64_surface_trace.txt", traceCount ? "a" : "w");
+    if (!f) {
+        return;
+    }
+
+    {
+        const MaterialPassDx9 *pass = technique ? &technique->passArray.dx9[0] : NULL;
+        const MaterialTextureDef *tex = material && material->textureCount > 0 ? &material->textures[0] : NULL;
+        const GfxImage *image = tex && tex->semantic != 5 ? tex->u.image : NULL;
+
+        fprintf(f,
+                "surface[%d] %s mat=%p name=%s techType=%d tech=%p passCount=%u flags=0x%x idx=%d verts=%d optIdx=%d decl=%d viewportNull=%d texCount=%u tex0=%s texState=0x%x texSem=%d img=%p imgName=%s imgSem=%d imgSize=%ux%u imgTex=%p vArgs=%u pArgs=%u vs=%s ps=%s\n",
+                traceCount,
+                stage ? stage : "<null>",
+                (const void *)material,
+                material && material->info.name ? material->info.name : "<null>",
+                mc ? mc->techType : -1,
+                (const void *)technique,
+                technique ? (unsigned)technique->passCount : 0,
+                technique ? (unsigned)technique->flags : 0,
+                mc ? mc->indexCount : -1,
+                mc ? mc->vertexCount : -1,
+                mc ? mc->optimizedIndexCount : -1,
+                mc ? mc->declType : -1,
+                dxState.viewportIsNull,
+                material ? (unsigned)material->textureCount : 0,
+                tex && tex->name ? tex->name : "<null>",
+                tex ? (unsigned)tex->samplerState : 0,
+                tex ? (int)tex->semantic : -1,
+                (const void *)image,
+                image && image->name ? image->name : "<null>",
+                image ? (int)image->semantic : -1,
+                image ? image->width : 0,
+                image ? image->height : 0,
+                image ? (void *)image->texture.basemap : NULL,
+                pass ? (unsigned)pass->vertexArgCount : 0,
+                pass ? (unsigned)pass->pixelArgCount : 0,
+                pass && pass->vertexShader && pass->vertexShader->name ? pass->vertexShader->name : "<null>",
+                pass && pass->pixelShader && pass->pixelShader->name ? pass->pixelShader->name : "<null>");
+    }
+    fclose(f);
+    traceCount++;
+#else
+    (void)stage;
+    (void)material;
+    (void)technique;
+    (void)mc;
+#endif
+}
+
+static void RB_X64TraceSampler(const char *stage, const Material *material, int argType, int dest,
+                               const char *sourceName, int codeTexture, GfxImage *image, int samplerState)
+{
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+    static int traceCount;
+    FILE *f;
+
+    if (traceCount >= 80 || !RB_MaterialNameContains(material, "fonts/gamefonts")) {
+        return;
+    }
+
+    f = fopen("x64_sampler_trace.txt", traceCount ? "a" : "w");
+    if (!f) {
+        return;
+    }
+
+    fprintf(f,
+            "sampler[%d] %s mat=%s type=%d dest=%d source=%s code=%d state=0x%x image=%p imageName=%s mapType=%d semantic=%d size=%ux%u tex=%p\n",
+            traceCount,
+            stage ? stage : "<null>",
+            material && material->info.name ? material->info.name : "<null>",
+            argType,
+            dest,
+            sourceName ? sourceName : "<null>",
+            codeTexture,
+            samplerState,
+            (void *)image,
+            image && image->name ? image->name : "<null>",
+            image ? image->mapType : -1,
+            image ? image->semantic : -1,
+            image ? image->width : 0,
+            image ? image->height : 0,
+            image ? (void *)image->texture.basemap : NULL);
+    fclose(f);
+    traceCount++;
+#else
+    (void)stage;
+    (void)material;
+    (void)argType;
+    (void)dest;
+    (void)sourceName;
+    (void)codeTexture;
+    (void)image;
+    (void)samplerState;
+#endif
+}
+
 void RB_BeginSurface(const Material *material, MaterialTechniqueType techType, int lmapIndex)
 {
     char *tess = RB_TessBase();
@@ -90,7 +236,7 @@ void RB_BeginSurface(const Material *material, MaterialTechniqueType techType, i
 
 int RB_SetIndexData(const r_index_t *indices, int indexCount)
 {
-    char *dx = (char *)imp_dx;
+    char *dx = (char *)dx_g;
     int indexDataSize = indexCount * 2;
     char *lockState = (*(char **)&((DxGlobals *)dx)->dynamicIndexBuffer);
     Bool overflow;
@@ -273,6 +419,10 @@ void RB_DrawIndexedPrim(const GfxDrawPrimArgs *args, int primCount)
         }
     }
 #endif
+    { extern volatile int g_lastdraw[6];
+      g_lastdraw[0] = args->u.buf.baseVertex; g_lastdraw[1] = args->firstVertexFromBase;
+      g_lastdraw[2] = args->vertexCount; g_lastdraw[3] = args->u.buf.baseIndex;
+      g_lastdraw[4] = primCount; g_lastdraw[5] = g_lastdraw[5] + 1; }
     do {
         ((HRESULT(D3DVTCC *)(IDirect3DDevice9 *, D3DPRIMITIVETYPE, INT, UINT, UINT, UINT, UINT))
              vtable[0x148 / 4])(device,
@@ -290,7 +440,7 @@ static void RB_GetTextureFromCode_impl(int codeTexture, void **image, byte *samp
     char *rgp = (char *)imp_rgp;
     char *tess;
     r_backEndGlobals_t *backEnd = (r_backEndGlobals_t *)imp_backEnd;
-    char *dx = (char *)imp_dx;
+    char *dx = (char *)dx_g;
     int lmapIdx;
     char *drawSurfs;
     int idx;
@@ -656,7 +806,7 @@ static void RB_CopyVerticesWithColorConvert(const byte *src, byte *dst,
 
 void RB_SetVertexData(unsigned int streamIndex, const void *data, int vertexCount, int stride)
 {
-    char *dx = (char *)imp_dx;
+    char *dx = (char *)dx_g;
     int totalSize = stride * vertexCount;
     int *lockSlot = (*(int **)&((DxGlobals *)dx)->dynamicVertexBuffer);
     IDirect3DVertexBuffer9 *dxVb;
@@ -822,7 +972,7 @@ static const float *RB_GetCodeMatrix_impl(int source, int firstRow)
     case 0xC8:
         codeMatrix = ((char *)am + offsetof(GfxCodeMatrices, worldView));
         if (!((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 0]) {
-            MatrixMultiply44(((char *)am + offsetof(GfxCodeMatrices, world)), ((char *)am + offsetof(GfxCodeMatrices, view)), codeMatrix);
+            MatrixMultiply44((vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, world))), (vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, view))), (vec4_t *)(codeMatrix));
             ((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 0] = 1;
         }
         break;
@@ -832,10 +982,10 @@ static const float *RB_GetCodeMatrix_impl(int source, int firstRow)
         if (!((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 0]) {
             if (!*(byte *)((char *)am + offsetof(GfxCodeMatrices, worldView.valid[0]))) {
 
-                MatrixMultiply44(((char *)am + offsetof(GfxCodeMatrices, world)), ((char *)am + offsetof(GfxCodeMatrices, view)), ((char *)am + offsetof(GfxCodeMatrices, worldView)));
+                MatrixMultiply44((vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, world))), (vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, view))), (vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, worldView))));
                 *(byte *)((char *)am + offsetof(GfxCodeMatrices, worldView.valid[0])) = 1;
             }
-            MatrixMultiply44(((char *)am + offsetof(GfxCodeMatrices, worldView)), ((char *)am + offsetof(GfxCodeMatrices, projection)), codeMatrix);
+            MatrixMultiply44((vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, worldView))), (vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, projection))), (vec4_t *)(codeMatrix));
             ((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 0] = 1;
         }
         break;
@@ -844,17 +994,17 @@ static const float *RB_GetCodeMatrix_impl(int source, int firstRow)
         codeMatrix = ((char *)am + offsetof(GfxCodeMatrices, worldViewProjection));
         if (!((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 0]) {
             if (!*(byte *)((char *)am + offsetof(GfxCodeMatrices, worldView.valid[0]))) {
-                MatrixMultiply44(((char *)am + offsetof(GfxCodeMatrices, world)), ((char *)am + offsetof(GfxCodeMatrices, view)), ((char *)am + offsetof(GfxCodeMatrices, worldView)));
+                MatrixMultiply44((vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, world))), (vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, view))), (vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, worldView))));
                 *(byte *)((char *)am + offsetof(GfxCodeMatrices, worldView.valid[0])) = 1;
             }
-            MatrixMultiply44(((char *)am + offsetof(GfxCodeMatrices, worldView)), ((char *)am + offsetof(GfxCodeMatrices, projection)), codeMatrix);
+            MatrixMultiply44((vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, worldView))), (vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, projection))), (vec4_t *)(codeMatrix));
             ((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 0] = 1;
         }
         break;
 
     case 0xD4: {
         float OGLWorld[16], OGLView[16], OGLWorldView[16], OGLProjection[16];
-        int viewport[4];
+        GfxViewport viewport;
         codeMatrix = ((char *)am + offsetof(GfxCodeMatrices, OGLworldViewProjection));
 
         {
@@ -874,11 +1024,11 @@ static const float *RB_GetCodeMatrix_impl(int source, int firstRow)
         OGLView[6] = -OGLView[6];
         OGLView[10] = -OGLView[10];
         OGLView[14] = -OGLView[14];
-        MatrixMultiply44(OGLWorld, OGLView, OGLWorldView);
-        RB_GetViewport(viewport);
+        MatrixMultiply44((vec4_t *)(OGLWorld), (vec4_t *)(OGLView), (vec4_t *)(OGLWorldView));
+        RB_GetViewport(&viewport);
         MacOpenGLUtils_ConvertD3DProjectionMatrixToOpenGL(OGLProjection,
-                                                          (float)viewport[2], (float)viewport[3]);
-        MatrixMultiply44(OGLWorldView, OGLProjection, codeMatrix);
+                                                          (float)viewport.width, (float)viewport.height);
+        MatrixMultiply44((vec4_t *)(OGLWorldView), (vec4_t *)(OGLProjection), (vec4_t *)(codeMatrix));
         ((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 0] = 1;
         ((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 1] = 0;
         ((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 2] = 0;
@@ -920,7 +1070,7 @@ static const float *RB_GetCodeMatrix_impl(int source, int firstRow)
         codeMatrix = ((char *)am + offsetof(GfxCodeMatrices, shadowLookupMatrix));
         if (!((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 0]) {
             char *be = (char *)imp_backEnd;
-            MatrixMultiply44(((char *)am + offsetof(GfxCodeMatrices, world)), (char *)&((r_backEndGlobals_t *)be)->shadowLookupMatrix, codeMatrix);
+            MatrixMultiply44((vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, world))), (vec4_t *)((char *)&((r_backEndGlobals_t *)be)->shadowLookupMatrix), (vec4_t *)(codeMatrix));
             ((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 0] = 1;
         }
         break;
@@ -929,7 +1079,7 @@ static const float *RB_GetCodeMatrix_impl(int source, int firstRow)
         codeMatrix = ((char *)am + offsetof(GfxCodeMatrices, lightGridLookupMatrix));
         if (!((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 0]) {
             const float *vp = RB_GetCodeMatrix_impl(0xBF, 0);
-            MatrixMultiply44(vp, lightGridLookupMatrix, codeMatrix);
+            MatrixMultiply44((vec4_t *)(vp), (vec4_t *)(lightGridLookupMatrix), (vec4_t *)(codeMatrix));
             ((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 0] = 1;
         }
         break;
@@ -941,22 +1091,22 @@ static const float *RB_GetCodeMatrix_impl(int source, int firstRow)
             const float *worldMat = RB_GetCodeMatrix_impl(0xBC, 0);
             const float *viewProj = RB_GetCodeMatrix_impl(0xC1, 0);
             char *rgp = (char *)imp_rgp;
-            int awayBias = (*(dvar_t **)(imp_r_outdoorAwayBias))->current.integer;
-            float downBias = (*(dvar_t **)(imp_r_outdoorDownBias))->current.value;
+            int awayBias = r_outdoorAwayBias->current.integer;
+            float downBias = r_outdoorDownBias->current.value;
 
             biasVec[0] = 0.0f;
             biasVec[1] = 0.0f;
             biasVec[2] = -*(float *)&awayBias;
             biasVec[3] = 0.0f;
 
-            MatrixTransformVector44(biasVec, viewProj, biasWorld);
+            MatrixTransformVector44((float *)(biasVec), (vec4_t *)(viewProj), (float *)(biasWorld));
             biasWorld[1] += downBias;
 
-            MatrixTransformVector44(biasWorld,
-                                    (char *)(*(void **)&((r_global_permanent_t *)rgp)->world) + 0x1c0, biasResult);
+            MatrixTransformVector44((float *)(biasWorld),
+                                    (vec4_t *)((char *)(*(void **)&((r_global_permanent_t *)rgp)->world) + 0x1c0), (float *)(biasResult));
 
-            MatrixMultiply44(worldMat,
-                             (char *)(*(void **)&((r_global_permanent_t *)rgp)->world) + 0x1c0, codeMatrix);
+            MatrixMultiply44((vec4_t *)(worldMat),
+                             (vec4_t *)((char *)(*(void **)&((r_global_permanent_t *)rgp)->world) + 0x1c0), (vec4_t *)(codeMatrix));
 
             *(float *)((char *)am + offsetof(GfxCodeMatrices, worldOutdoorLookup.matrix[0].m[3][0])) += biasResult[0];
             *(float *)((char *)am + offsetof(GfxCodeMatrices, worldOutdoorLookup.matrix[0].m[3][1])) += biasResult[1];
@@ -975,25 +1125,25 @@ static const float *RB_GetCodeMatrix_impl(int source, int firstRow)
         transposeIndex = matrixIndex ^ 2;
         if (((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + transposeIndex]) {
 
-            MatrixTranspose44(codeMatrix + transposeIndex * 64, codeMatrix + matrixIndex * 64);
+            MatrixTranspose44( (float *)(codeMatrix + transposeIndex * 64), (float *)(codeMatrix + matrixIndex * 64));
             ((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + matrixIndex] = 1;
         } else {
             int inverseIndex = matrixIndex ^ 1;
             if (((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + inverseIndex]) {
 
-                MatrixInverse44(codeMatrix + inverseIndex * 64, codeMatrix + matrixIndex * 64);
+                MatrixInverse44( (float *)(codeMatrix + inverseIndex * 64), (float *)(codeMatrix + matrixIndex * 64));
                 ((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + matrixIndex] = 1;
             } else {
 
-                MatrixTranspose44(codeMatrix + (matrixIndex ^ 3) * 64, codeMatrix + transposeIndex * 64);
+                MatrixTranspose44( (float *)(codeMatrix + (matrixIndex ^ 3) * 64), (float *)(codeMatrix + transposeIndex * 64));
                 ((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + transposeIndex] = 1;
-                MatrixInverse44(codeMatrix + transposeIndex * 64, codeMatrix + matrixIndex * 64);
+                MatrixInverse44( (float *)(codeMatrix + transposeIndex * 64), (float *)(codeMatrix + matrixIndex * 64));
                 ((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + matrixIndex] = 1;
             }
         }
     }
 
-    return (const float *)(codeMatrix + (firstRow + matrixIndex * 4) * 16);
+    return (float *)(codeMatrix + (firstRow + matrixIndex * 4) * 16);
 }
 
 #ifdef __EMSCRIPTEN__
@@ -1028,7 +1178,7 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
 
     if (vertDeclType == 0x21) {
         byte *g_special = (byte *)imp_g_special;
-        int debugLevel = (*(dvar_t **)(imp_r_debugShader))->current.integer;
+        int debugLevel = r_debugShader->current.integer;
         byte *debugConst = (byte *)debugShaderConsts + debugLevel * 16;
         byte *backEndConst = (byte *)&((r_backEndGlobals_t *)imp_backEnd)->codeConsts[26][0];
         memcpy(backEndConst, debugConst, 16);
@@ -1131,16 +1281,16 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
 
             {
                 int fogSrc = (*(byte *)(pass + 8) == 1) ? 0 : 2;
-                RB_UpdateFogColor(fogSrc);
+                RB_UpdateFogColor( (FogColorSrcEnum)(fogSrc));
             }
 
             {
                 byte passNormalize = *(byte *)(pass + 4);
                 if (passNormalize != dxState.gridLighting) {
-                    byte *dx = (byte *)imp_dx;
+                    byte *dx = (byte *)dx_g;
                     volatile int *af = (volatile int *)&alwaysfails;
                     do {
-                        byte *dev = *(byte **)(dx + 8);
+                        byte *dev = (byte *)(((DxGlobals *)dx)->device /*was dx+8 (x86 device offset, x64 @16)*/);
                         void **vt = *(void ***)dev;
                         ((void(D3DVTCC *)(void *, int, int))vt[0xe4 / 4])(dev, 0x89,
                                                                           passNormalize ? 1 : 0);
@@ -1152,20 +1302,20 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
             {
                 DWORD fvf = s_fvfForVertDeclType[vertDeclType];
                 if (dxState.vertexDecl != NULL) {
-                    byte *dx = (byte *)imp_dx;
+                    byte *dx = (byte *)dx_g;
                     volatile int *af = (volatile int *)&alwaysfails;
                     do {
-                        byte *dev = *(byte **)(dx + 8);
+                        byte *dev = (byte *)(((DxGlobals *)dx)->device /*was dx+8 (x86 device offset, x64 @16)*/);
                         void **vt = *(void ***)dev;
                         ((void(D3DVTCC *)(void *, DWORD))vt[0x164 / 4])(dev, fvf);
                     } while (*af);
                     dxState.fvf = fvf;
                     dxState.vertexDecl = NULL;
                 } else if (fvf != dxState.fvf) {
-                    byte *dx = (byte *)imp_dx;
+                    byte *dx = (byte *)dx_g;
                     volatile int *af = (volatile int *)&alwaysfails;
                     do {
-                        byte *dev = *(byte **)(dx + 8);
+                        byte *dev = (byte *)(((DxGlobals *)dx)->device /*was dx+8 (x86 device offset, x64 @16)*/);
                         void **vt = *(void ***)dev;
                         ((void(D3DVTCC *)(void *, DWORD))vt[0x164 / 4])(dev, fvf);
                     } while (*af);
@@ -1217,7 +1367,7 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
             {
                 int samplerIndex;
                 for (samplerIndex = 0; samplerIndex < 2; samplerIndex++) {
-                    byte *samplerDef = ((char *)pass + offsetof(MaterialPassDx9, pixelShader)) + samplerIndex * 8;
+                    byte *samplerDef = (byte *)(((char *)pass + offsetof(MaterialPassDx9, pixelShader)) + samplerIndex * 8);
 
                 }
             }
@@ -1288,7 +1438,7 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                 const Material *tessMat = ((materialCommands_t *)tess)->material;
                 refStateBits = (byte *)tessMat->stateBits;
             }
-            stateMap = (byte *)((MaterialPassDx9 *)pass)->stateMap;
+            stateMap = (byte *)((MaterialPassDx9 *)pass)->stateMap;
             stateBits[0] = *(int *)(refStateBits + 0);
             stateBits[1] = *(int *)(refStateBits + 4);
 
@@ -1348,12 +1498,13 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                 dxState.refStateBits[1] = stateBits[1];
             }
 
-            RB_UpdateFogColor(0);
+            RB_UpdateFogColor( (FogColorSrcEnum)(0));
 
+            { extern volatile int g_rigid_step; g_rigid_step = 11; }
             RB_SetShaderAndDecl((const MaterialPassDx9 *)pass, vertDeclType, (byte *)&dxState);
+            { extern volatile int g_rigid_step; g_rigid_step = 12; }
 
             textureRoutingCount = ((MaterialPassDx9 *)pass)->vertexArgCount;
-            textureRouting = (byte *)((MaterialPassDx9 *)pass)->vertexArgs;
 #ifdef GFX_REAL_D3D9
             if (getenv("REALD3D9_ARGLOG")) {
                 static int al = 0;
@@ -1369,10 +1520,10 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
             {
                 int routingIndex;
                 for (routingIndex = 0; routingIndex < textureRoutingCount; routingIndex++) {
-                    byte *entry = textureRouting + routingIndex * 8;
-                    int type = *(unsigned short *)entry;
-                    int destIndex = *(unsigned short *)(entry + 2);
-                    void *data = *(void **)(entry + 4);
+                    MaterialShaderArgument *entry = &((MaterialPassDx9 *)pass)->vertexArgs[routingIndex];
+                    int type = entry->type;
+                    int destIndex = entry->dest;
+                    const void *data = entry->u.literalConst;
 
                     switch (type) {
                     case 0:
@@ -1383,13 +1534,13 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                             memcpy(cached, data, 16);
 
                             {
-                                byte *dx = (byte *)imp_dx;
+                                byte *dx = (byte *)dx_g;
                                 volatile int *af = (volatile int *)&alwaysfails;
                                 do {
-                                    byte *dev = *(byte **)(dx + 8);
+                                    byte *dev = (byte *)(((DxGlobals *)dx)->device /*was dx+8 (x86 device offset, x64 @16)*/);
                                     void **vt = *(void ***)dev;
                                     ((void(D3DVTCC *)(void *, int, void *, int))vt[0x178 / 4])(
-                                        dev, destIndex, data, 1);
+                                        dev, (int)destIndex, (void *)data, 1);
                                 } while (*af);
                             }
                         }
@@ -1397,13 +1548,13 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                     }
                     case 1:
                     {
-                        int codeIndex = *(unsigned short *)(entry + 4);
-                        int rowCount = *(byte *)(entry + 7);
-                        int firstRow = *(byte *)(entry + 6);
+                        int codeIndex = entry->u.codeConst.index;
+                        int rowCount = entry->u.codeConst.rowCount;
+                        int firstRow = entry->u.codeConst.firstRow;
                         const float *matrixData;
 
                         if (codeIndex <= 0xba) {
-                            matrixData = (const float *)((byte *)imp_backEnd - 0x800 + codeIndex * 16);
+                            matrixData = (float *)((byte *)imp_backEnd - 0x800 + codeIndex * 16);
                         } else {
                             matrixData = RB_GetCodeMatrix(codeIndex, firstRow);
                         }
@@ -1424,10 +1575,10 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
 #endif
                             if (memcmp(cached, matrixData, dataSize) != 0) {
                                 memcpy(cached, matrixData, dataSize);
-                                byte *dx = (byte *)imp_dx;
+                                byte *dx = (byte *)dx_g;
                                 volatile int *af = (volatile int *)&alwaysfails;
                                 do {
-                                    byte *dev = *(byte **)(dx + 8);
+                                    byte *dev = (byte *)(((DxGlobals *)dx)->device /*was dx+8 (x86 device offset, x64 @16)*/);
                                     void **vt = *(void ***)dev;
                                     ((void(D3DVTCC *)(void *, int, void *, int))vt[0x178 / 4])(
                                         dev, destIndex, (void *)matrixData, rowCount);
@@ -1438,7 +1589,7 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                     }
                     case 2:
                     {
-                        int literalName = (int)(intptr_t)data;
+                        const char *literalName = entry->u.name;
                         void *constData = NULL;
                         int rowCount2 = 1;
 
@@ -1446,11 +1597,11 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                             tess = RB_TessBase();
                             const Material *mat5 = ((materialCommands_t *)tess)->material;
                             int constCount = mat5->constantCount;
-                            byte *consts = (byte *)mat5->constants;
+                            MaterialConstantDef *consts = mat5->constants;
                             int ci;
                             for (ci = 0; ci < constCount; ci++) {
-                                if (*(int *)(consts + ci * 0x14) == literalName) {
-                                    constData = consts + ci * 0x14 + 4;
+                                if (consts[ci].name == literalName || strcmp(consts[ci].name, literalName) == 0) {
+                                    constData = consts[ci].literal;
                                     break;
                                 }
                             }
@@ -1461,10 +1612,10 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                             byte *cached = (byte *)&dxState + destIndex * 16;
                             if (memcmp(cached, constData, dataSize) != 0) {
                                 memcpy(cached, constData, dataSize);
-                                byte *dx = (byte *)imp_dx;
+                                byte *dx = (byte *)dx_g;
                                 volatile int *af = (volatile int *)&alwaysfails;
                                 do {
-                                    byte *dev = *(byte **)(dx + 8);
+                                    byte *dev = (byte *)(((DxGlobals *)dx)->device /*was dx+8 (x86 device offset, x64 @16)*/);
                                     void **vt = *(void ***)dev;
                                     ((void(D3DVTCC *)(void *, int, void *, int))vt[0x178 / 4])(
                                         dev, destIndex, constData, rowCount2);
@@ -1480,56 +1631,55 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
             }
 
             constantRoutingCount = ((MaterialPassDx9 *)pass)->pixelArgCount;
-            constantRouting = (byte *)((MaterialPassDx9 *)pass)->pixelArgs;
 
             {
                 int routingIndex;
                 for (routingIndex = 0; routingIndex < constantRoutingCount; routingIndex++) {
-                    byte *entry = constantRouting + routingIndex * 8;
-                    int type = *(unsigned short *)entry;
+                    MaterialShaderArgument *entry = &((MaterialPassDx9 *)pass)->pixelArgs[routingIndex];
+                    int type = entry->type;
 
                     switch (type) {
                     case 0:
                     {
-                        void *data = *(void **)(entry + 4);
-                        int destIdx = *(unsigned short *)(entry + 2);
+                        const void *data = entry->u.literalConst;
+                        int destIdx = entry->dest;
                         byte *cached = (byte *)&dxState.pixelShaderConsts[destIdx][0];
                         if (memcmp(cached, data, 16) != 0) {
                             memcpy(cached, data, 16);
-                            byte *dx = (byte *)imp_dx;
+                            byte *dx = (byte *)dx_g;
                             volatile int *af = (volatile int *)&alwaysfails;
                             do {
-                                byte *dev = *(byte **)(dx + 8);
+                                byte *dev = (byte *)(((DxGlobals *)dx)->device /*was dx+8 (x86 device offset, x64 @16)*/);
                                 void **vt = *(void ***)dev;
                                 ((void(D3DVTCC *)(void *, int, void *, int))vt[0x1b4 / 4])(
-                                    dev, destIdx, data, 1);
+                                    dev, (int)destIdx, (void *)data, 1);
                             } while (*af);
                         }
                         break;
                     }
                     case 1:
                     {
-                        int codeIndex = *(unsigned short *)(entry + 4);
-                        int rowCount = *(byte *)(entry + 7);
-                        int firstRow = *(byte *)(entry + 6);
+                        int codeIndex = entry->u.codeConst.index;
+                        int rowCount = entry->u.codeConst.rowCount;
+                        int firstRow = entry->u.codeConst.firstRow;
                         const float *matrixData;
 
                         if (codeIndex <= 0xba) {
-                            matrixData = (const float *)((byte *)imp_backEnd - 0x800 + codeIndex * 16);
+                            matrixData = (float *)((byte *)imp_backEnd - 0x800 + codeIndex * 16);
                         } else {
                             matrixData = RB_GetCodeMatrix(codeIndex, firstRow);
                         }
 
                         {
                             int dataSize = rowCount * 16;
-                            int destIdx = *(unsigned short *)(entry + 2);
+                            int destIdx = entry->dest;
                             byte *cached = (byte *)&dxState.pixelShaderConsts[destIdx][0];
                             if (memcmp(cached, matrixData, dataSize) != 0) {
                                 memcpy(cached, matrixData, dataSize);
-                                byte *dx = (byte *)imp_dx;
+                                byte *dx = (byte *)dx_g;
                                 volatile int *af = (volatile int *)&alwaysfails;
                                 do {
-                                    byte *dev = *(byte **)(dx + 8);
+                                    byte *dev = (byte *)(((DxGlobals *)dx)->device /*was dx+8 (x86 device offset, x64 @16)*/);
                                     void **vt = *(void ***)dev;
                                     ((void(D3DVTCC *)(void *, int, void *, int))vt[0x1b4 / 4])(
                                         dev, destIdx, (void *)matrixData, rowCount);
@@ -1540,7 +1690,7 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                     }
                     case 2:
                     {
-                        int literalName = *(int *)(entry + 4);
+                        const char *literalName = entry->u.name;
                         void *constData = NULL;
                         int rowCount2 = 1;
 
@@ -1548,26 +1698,26 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                             tess = RB_TessBase();
                             const Material *mat5 = ((materialCommands_t *)tess)->material;
                             int constCount = mat5->constantCount;
-                            byte *consts = (byte *)mat5->constants;
+                            MaterialConstantDef *consts = mat5->constants;
                             int ci;
                             for (ci = 0; ci < constCount; ci++) {
-                                if (*(int *)(consts + ci * 0x14) == literalName) {
-                                    constData = consts + ci * 0x14 + 4;
+                                if (consts[ci].name == literalName || strcmp(consts[ci].name, literalName) == 0) {
+                                    constData = consts[ci].literal;
                                     break;
                                 }
                             }
                         }
 
                         if (constData) {
-                            int destIdx = *(unsigned short *)(entry + 2);
+                            int destIdx = entry->dest;
                             int dataSize = rowCount2 * 16;
                             byte *cached = (byte *)&dxState.pixelShaderConsts[destIdx][0];
                             if (memcmp(cached, constData, dataSize) != 0) {
                                 memcpy(cached, constData, dataSize);
-                                byte *dx = (byte *)imp_dx;
+                                byte *dx = (byte *)dx_g;
                                 volatile int *af = (volatile int *)&alwaysfails;
                                 do {
-                                    byte *dev = *(byte **)(dx + 8);
+                                    byte *dev = (byte *)(((DxGlobals *)dx)->device /*was dx+8 (x86 device offset, x64 @16)*/);
                                     void **vt = *(void ***)dev;
                                     ((void(D3DVTCC *)(void *, int, void *, int))vt[0x1b4 / 4])(
                                         dev, destIdx, constData, rowCount2);
@@ -1578,11 +1728,13 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                     }
                     case 3:
                     {
-                        int codeTexture = *(int *)(entry + 4);
+                        int codeTexture = entry->u.codeSampler;
                         void *image = NULL;
                         byte samplerState = 0;
 
                         RB_GetTextureFromCode_impl(codeTexture, &image, &samplerState);
+                        RB_X64TraceSampler("code", ((materialCommands_t *)RB_TessBase())->material,
+                                           type, entry->dest, NULL, codeTexture, (GfxImage *)image, samplerState);
 #ifdef GFX_REAL_D3D9
                         if (getenv("REALD3D9_SAMPLOG")) {
                             static int spl = 0;
@@ -1590,19 +1742,19 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                                 spl++;
                                 void *tex = image ? (void *)((GfxImage *)image)->texture.map : NULL;
                                 fprintf(stderr, "[SAMPLOG] codeTex=%d -> dstSampler=s%d img=%p d3dtex=%p state=0x%x\n",
-                                        codeTexture, *(unsigned short *)(entry + 2), image, tex, samplerState);
+                                        codeTexture, entry->dest, image, tex, samplerState);
                             }
                         }
 #endif
-                        RB_SetSampler(*(unsigned short *)(entry + 2), samplerState, image);
+                        RB_SetSampler(entry->dest, samplerState, (GfxImage *)(image));
                         break;
                     }
                     case 4:
                     {
-                        int textureName = *(int *)(entry + 4);
+                        const char *textureName = entry->u.name;
                         void *image = NULL;
                         byte samplerState = 0;
-                        int destSampler = *(unsigned short *)(entry + 2);
+                        int destSampler = entry->dest;
 
                         {
                             tess = RB_TessBase();
@@ -1612,7 +1764,7 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                             int ti;
                             for (ti = 0; ti < texCount; ti++) {
                                 MaterialTextureDef *texDef = &textures[ti];
-                                if (*(int *)texDef == textureName) {
+                                if (texDef->name == textureName || strcmp(texDef->name, textureName) == 0) {
 
                                     byte semantic = texDef->semantic;
                                     if (semantic == 5) {
@@ -1635,7 +1787,12 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                         }
 
                         if (image) {
-                            RB_SetSampler(destSampler, samplerState, image);
+                            RB_X64TraceSampler("material", ((materialCommands_t *)RB_TessBase())->material,
+                                               type, destSampler, textureName, -1, (GfxImage *)image, samplerState);
+                            RB_SetSampler(destSampler, samplerState, (GfxImage *)(image));
+                        } else {
+                            RB_X64TraceSampler("material-null", ((materialCommands_t *)RB_TessBase())->material,
+                                               type, destSampler, textureName, -1, NULL, samplerState);
                         }
                         break;
                     }
@@ -1646,18 +1803,22 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
             }
         }
 
+        { extern volatile int g_rigid_step; g_rigid_step = 13; }
         if (!((r_backEndGlobals_t *)backEnd)->projection2D) {
             int primCount = args->primCount;
-            int drawPrimFloor = (*(dvar_t **)(imp_r_drawPrimFloor))->current.integer;
-            int drawPrimCap = (*(dvar_t **)(imp_r_drawPrimCap))->current.integer;
+            int drawPrimFloor = r_drawPrimFloor->current.integer;
+            int drawPrimCap = r_drawPrimCap->current.integer;
 
             if (primCount >= drawPrimFloor && (drawPrimCap == 0 || primCount <= drawPrimCap)) {
+                { extern volatile int g_rigid_step; g_rigid_step = 14; }
                 RB_DrawIndexedPrim(args, primCount);
             }
         } else {
 
+            { extern volatile int g_rigid_step; g_rigid_step = 14; }
             RB_DrawIndexedPrim(args, args->primCount);
         }
+        { extern volatile int g_rigid_step; g_rigid_step = 15; }
 
         if (isDx7) {
             if (((MaterialTechnique *)technique)->passArray.dx7[0].projectToInfinity) {
@@ -1755,18 +1916,38 @@ void RB_EndSurface(void)
         goto cleanup;
     }
 
+#if defined(COD2_X64)
+    /* x64 TODO: some fonts present a truncated (32-bit) Material* via font->material
+       (see the X64_FONT_WHITE workaround in RB_DrawTextWithCursor_impl). A truncated
+       ptr is either zero-extended (high32==0) or sign-extended (high32==0xffffffff);
+       `p + 0x1_0000_0000 < 0x2_0000_0000` catches both. Guard the deref so an editable
+       text field / chat draw doesn't crash on a bad material or techniqueSet. */
+    if ((uintptr_t)material + 0x100000000ULL < 0x200000000ULL) {
+        g_rb_endsurface_nomaterial++;
+        goto cleanup;
+    }
+#endif
+
     {
         uintptr_t ts = (uintptr_t)material->techniqueSet;   /* was unsigned int -> truncated ptr on x64 */
         if (!ts || ts < 0x08000000u) {
             g_rb_endsurface_notechnique++;
             goto cleanup;
         }
+#if defined(COD2_X64)
+        if (ts + 0x100000000ULL < 0x200000000ULL) {
+            g_rb_endsurface_notechnique++;
+            goto cleanup;
+        }
+#endif
     }
     technique = material->techniqueSet->techniques[(*(MaterialTechniqueType *)&((materialCommands_t *)tess)->techType)];
 
     g_rb_endsurface_count++;
+    RB_X64TraceEndSurface("loaded", material, technique, (const materialCommands_t *)tess);
 
     if (!technique) {
+        RB_X64TraceEndSurface("skip-notech", material, technique, (const materialCommands_t *)tess);
         g_rb_endsurface_notechnique++;
         goto cleanup;
     }
@@ -1776,6 +1957,7 @@ void RB_EndSurface(void)
         RB_UpdateViewport();
 
     if (dxState.viewportIsNull) {
+        RB_X64TraceEndSurface("skip-viewport", material, technique, (const materialCommands_t *)tess);
         g_rb_endsurface_dxstate++;
         goto cleanup;
     }
@@ -1784,12 +1966,14 @@ void RB_EndSurface(void)
     if (techFlags & 1) {
         if (backEnd->resolvedPostSunTarget == 0xe) {
             g_rb_endsurface_flag1skip++;
+            RB_X64TraceEndSurface("skip-flag1", material, technique, (const materialCommands_t *)tess);
             goto cleanup;
         }
     }
     if (techFlags & 2) {
         if (backEnd->resolvedSceneTarget == 0xe) {
             g_rb_endsurface_flag2skip++;
+            RB_X64TraceEndSurface("skip-flag2", material, technique, (const materialCommands_t *)tess);
             goto cleanup;
         }
     }
@@ -1827,7 +2011,7 @@ void RB_EndSurface(void)
 
         args.u.buf.baseVertex = ((materialCommands_t *)tess)->firstOptimizedVertex;
 
-        RB_DrawTechnique(cachedVertDeclType, &args);
+        RB_DrawTechnique( (MaterialVertexDeclType)(cachedVertDeclType), &args);
 
         tess = RB_TessBase();
         ((materialCommands_t *)tess)->optimizedIndexCount = 0;
@@ -1836,6 +2020,7 @@ void RB_EndSurface(void)
 
     indexCount = ((materialCommands_t *)tess)->indexCount;
     if (indexCount == 0) {
+        RB_X64TraceEndSurface("skip-index0", material, technique, (const materialCommands_t *)tess);
         g_rb_endsurface_idxzero++;
         g_rb_tess_type_idxzero[g_rb_last_tess_type]++;
         diag_idxzero(tess);
@@ -1856,7 +2041,7 @@ void RB_EndSurface(void)
         ((materialCommands_t *)tess)->indices, indexCount);
 
     {
-        char *dx = (char *)imp_dx;
+        char *dx = (char *)dx_g;
         int *lockSlot = (*(int **)&((DxGlobals *)dx)->dynamicVertexBuffer);
         if (!lockSlot) {
             static int lockslot_warn = 0;
@@ -1952,6 +2137,7 @@ void RB_EndSurface(void)
     }
 
     g_rb_endsurface_draw++;
+    RB_X64TraceEndSurface("draw", material, technique, (const materialCommands_t *)tess);
     RB_DrawTechnique((*(MaterialVertexDeclType *)&((materialCommands_t *)tess)->declType), &args);
 
     tess = RB_TessBase();

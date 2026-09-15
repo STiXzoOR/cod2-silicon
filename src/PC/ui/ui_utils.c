@@ -60,7 +60,7 @@ int Item_GetCursorPosOffset(const itemDef_t *item, const char *text, int delta);
 void ListBox_SetCursorPos(listBoxDef_t *listBox, int cursorPos);
 void ListBox_SetStartPos(listBoxDef_t *listBox, int startPos);
 void ListBox_SetEndPos(listBoxDef_t *listBox, int endPos);
-Bool ListBox_HasValidCursorPos(const listBoxDef_t *listBox);
+qboolean ListBox_HasValidCursorPos(const listBoxDef_t *listBox);
 void Window_AddDynamicFlags(Window *w, const int newFlags);
 void Window_RemoveDynamicFlags(Window *w, const int newFlags);
 editFieldDef_t *Item_GetEditFieldDef(itemDef_t *item);
@@ -68,6 +68,20 @@ const char *String_Alloc(const char *p);
 void Item_SetScreenCoords(itemDef_t *item, float x, float y, int horzAlign, int vertAlign);
 void Menu_UpdatePosition(menuDef_t *menu);
 qboolean Rect_Parse(const char **p, rectDef_t *r);
+
+static long hashForString(const char *str)
+{
+    int i;
+    int letter;
+    long hash = 0;
+
+    for (i = 0; str[i] != '\0'; ++i) {
+        letter = ___tolower(str[i]);
+        hash += (long)letter * (i + 119);
+    }
+
+    return hash & 2047;
+}
 
 void Window_SetStaticFlags(Window *w, const int flags)
 {
@@ -306,7 +320,7 @@ void ListBox_SetEndPos(listBoxDef_t *listBox, int endPos)
     listBox->endPos[0] = endPos;
 }
 
-Bool ListBox_HasValidCursorPos(const listBoxDef_t *listBox)
+qboolean ListBox_HasValidCursorPos(const listBoxDef_t *listBox)
 {
 
     int cursor = listBox->cursorPos[0];
@@ -357,8 +371,7 @@ editFieldDef_t *Item_GetEditFieldDef(itemDef_t *item)
 
 const char *String_Alloc(const char *p)
 {
-    int hash;
-    int i;
+    long hash;
     char *str;
     stringDef_t *s;
     stringDef_t *last;
@@ -370,40 +383,32 @@ const char *String_Alloc(const char *p)
     if (*p == '\0')
         return staticNULL;
 
-    hash = 0;
-    i = 0x77;
-    while (p[i - 0x77] != '\0') {
-        hash += ___tolower(p[i - 0x77]) * i;
-        i++;
-    }
-    hash &= 0x7ff;
+    hash = hashForString(p);
 
     s = g_strHandle[hash];
     while (s != NULL) {
         if (strcmp(p, s->str) == 0) {   /* was *(char**)(s+4): x86 stringDef_t.str offset */
             return s->str;
         }
-        s = (stringDef_t *)s->next;
+        s = s->next;
     }
 
     str = (char *)STRPOOL_ALLOC(strlen(p) + 1, 1);
     strcpy(str, p);
 
-    last = g_strHandle[hash];
-    if (last != NULL) {
-        stringDef_t *next = (stringDef_t *)last->next;
-        while (next != NULL) {
-            last = next;
-            next = (stringDef_t *)next->next;
-        }
+    s = g_strHandle[hash];
+    last = s;
+    while (s != NULL && s->next) {
+        last = s;
+        s = s->next;
     }
 
-    newDef = (stringDef_t *)STRPOOL_ALLOC((int)sizeof(stringDef_t), 8);   /* 8-byte align for x64 ptr fields */
+    newDef = (stringDef_t *)STRPOOL_ALLOC((int)sizeof(stringDef_t), (int)sizeof(void *));
     newDef->next = 0;
     newDef->str = str;
 
     if (last != NULL) {
-        last->next = (intptr_t)newDef;
+        last->next = newDef;
     } else {
         g_strHandle[hash] = newDef;
     }
@@ -472,13 +477,9 @@ void Menu_UpdatePosition(menuDef_t *menu)
     y = menu->window.rect[0].y;
 
     if (menu->window.border != 0) {
-        float offset = menu->window.borderSize;
-        x += offset;
-        y += offset;
+        x += menu->window.borderSize;
+        y += menu->window.borderSize;
     }
-
-    if (menu->itemCount <= 0)
-        return;
 
     for (i = 0; i < menu->itemCount; i++) {
         Item_SetScreenCoords(menu->items[i], x, y,

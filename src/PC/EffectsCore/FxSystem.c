@@ -1,5 +1,6 @@
 #include "common_types.h"
 #include "imports.h"
+extern const dvar_t *fx_freeze;   /* real global; imp_fx_freeze holds its value but is stubbed (import_pointers.c not in corpus) */
 
 #include <string.h>
 extern refexport_t re;
@@ -12,8 +13,8 @@ extern GfxEntity *R_AddRefEntityToScene(GfxEntity *ent, const struct XModel *mod
 extern void FX_AddScheduledEffects(void);
 extern void FX_UpdateAllNonBolt(void);
 extern void FX_UpdateAllBolt(void);
-extern void FxArchive_ReadData(FxArchive *arch, void *data, int size);
-extern void FxArchive_WriteData(FxArchive *arch, void *data, int size);
+extern void FxArchive_ReadData(const FxArchive *_this, void *p, int byteCount);
+extern void FxArchive_WriteData(const FxArchive *_this, const void *p, int byteCount);
 
 void FxHelper_FxHelper(const FxHelper *_this);
 void FxHelper_Init(const FxHelper *_this);
@@ -61,7 +62,7 @@ void FxHelper_Init(const FxHelper *_this)
 void FxHelper_AdjustTime(const FxHelper *_this, int intime)
 {
     FxHelper *self = (FxHelper *)_this;
-    char *frozenStruct = *(char **)(void *)imp_fx_freeze;
+    char *frozenStruct = (char *)fx_freeze;
 
     if (frozenStruct[8]) {
         self->mFrameTime = 0;
@@ -89,7 +90,7 @@ void FxHelper_AdjustTime(const FxHelper *_this, int intime)
 void FxHelper_WarpTime(const FxHelper *_this, int intime)
 {
     FxHelper *self = (FxHelper *)_this;
-    char *frozenStruct = *(char **)(void *)imp_fx_freeze;
+    char *frozenStruct = (char *)fx_freeze;
     int frameTime;
 
     if (frozenStruct[8] || self->time == 0) {

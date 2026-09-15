@@ -68,23 +68,24 @@ extern const dvar_t *Dvar_RegisterBool(const char *name, int value, int flags);
 extern const dvar_t *Dvar_RegisterFloat(const char *name, float value, float min, float max, int flags);
 extern void *Hunk_AllocAlignInternal(int size, int align);
 extern void *XAnimCreateAnims(const char *name, int count, void *allocFunc);
-extern void XAnimBlend(void *anims, unsigned int animIndex, const char *name, unsigned int children, unsigned int num, unsigned int flags);
+extern void XAnimBlend(XAnim *anims, unsigned int animIndex, const char *name, unsigned int children, unsigned int num, unsigned int flags);
 extern void XAnimPrecache(const char *name, void *allocFunc);
-extern void XAnimCreate(void *anims, int index, const char *name);
-extern void XAnimGetAbsDelta(void *anims, int animIndex, float *rot, float *delta, float frac);
-extern int XAnimGetLengthMsec(void *anims, int animIndex);
+extern void XAnimCreate(struct XAnim_s *anims, unsigned int index, const char *name);
+extern void XAnimGetAbsDelta(const struct XAnim_s *anims, unsigned int animIndex, float *rot, float *delta, float frac);
+extern int XAnimGetLengthMsec(const struct XAnim_s *anims, unsigned int animIndex);
 extern void Com_Error(int level, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
-extern float AngleDelta(float a, float b);
-extern float AngleNormalize360Accurate(float a);
+extern const float AngleDelta(const float angle1, const float angle2);
+extern const float AngleNormalize360Accurate(float a);
 extern void VectorAngleMultiply(float *trans, float yaw);
-extern void BG_AddPredictableEventToPlayerstate(int event, int param, playerState_t *ps);
-extern void BG_AnimScriptAnimation(playerState_t *ps, int anim, int moveType, int force);
-extern void BG_AnimScriptEvent(playerState_t *ps, int anim, int p3, int p4);
-extern void PM_trace(pmove_t *pm, void *trace, float *start, float *mins, float *maxs, float *end, int entityNum, int contentMask);
+extern void BG_AddPredictableEventToPlayerstate(int newEvent, int eventParm, playerState_t *ps);
+extern int BG_AnimScriptAnimation(playerState_t *ps, aistateEnum_t state,
+                                  scriptAnimMoveTypes_t movetype, int force);
+extern int BG_AnimScriptEvent(playerState_t *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force);
+extern void PM_trace(pmove_t *pm, trace_t *results, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int contentMask);
 extern const char *va(const char *fmt, ...);
-extern float Vec3Normalize(float *v);
-extern float vectoyaw(float *v);
+extern const vec_t Vec3Normalize(vec_t *v);
+extern const float vectoyaw(const vec_t *vec);
 extern double acos(double x);
 
 void Mantle_RegisterDvars(void);
@@ -188,19 +189,19 @@ void Mantle_CreateAnims(MantleAnimAlloc xanimAlloc)
     if (s_mantleAnims != 0)
         return;
 
-    s_mantleAnims = XAnimCreateAnims("PLAYER_MANTLE", 11, xanimAlloc);
-    XAnimBlend(s_mantleAnims, 0, s_mantleAnimNames[0], 1, 10, 0);
+    s_mantleAnims = (char (*)[64])(XAnimCreateAnims("PLAYER_MANTLE", 11, xanimAlloc));
+    XAnimBlend( (XAnim *)(s_mantleAnims), 0, s_mantleAnimNames[0], 1, 10, 0);
 
     for (i = 1; i < 11; i++) {
         XAnimPrecache(s_mantleAnimNames[i], MantleXAnimPrecacheAlloc);
-        XAnimCreate(s_mantleAnims, i, s_mantleAnimNames[i]);
+        XAnimCreate((struct XAnim_s *)s_mantleAnims, i, s_mantleAnimNames[i]);
     }
 
     for (i = 0; i < 7; i++) {
         int upAnimIdx = s_mantleTrans[i].upAnimIndex;
         int overAnimIdx = s_mantleTrans[i].overAnimIndex;
 
-        XAnimGetAbsDelta(s_mantleAnims, upAnimIdx, rot, delta, 1.0f);
+        XAnimGetAbsDelta((const struct XAnim_s *)s_mantleAnims, upAnimIdx, rot, delta, 1.0f);
         if (fabsf_local(delta[0] - 16.0f) > 1.0f)
             Com_Error(1, "Mantle anim [%s] has X translation %f, should be %f\n", s_mantleAnimNames[upAnimIdx], (double)delta[0], 16.0);
         if (fabsf_local(delta[1]) > 1.0f)
@@ -208,7 +209,7 @@ void Mantle_CreateAnims(MantleAnimAlloc xanimAlloc)
         if (fabsf_local(delta[2] - s_mantleTrans[i].height) > 1.0f)
             Com_Error(1, "Mantle anim [%s] has Z translation %f, should be %f\n", s_mantleAnimNames[upAnimIdx], (double)delta[2], (double)s_mantleTrans[i].height);
 
-        XAnimGetAbsDelta(s_mantleAnims, overAnimIdx, rot, delta, 1.0f);
+        XAnimGetAbsDelta((const struct XAnim_s *)s_mantleAnims, overAnimIdx, rot, delta, 1.0f);
         if (fabsf_local(delta[0] - 31.0f) > 1.0f)
             Com_Error(1, "Mantle anim [%s] has X translation %f, should be %f\n", s_mantleAnimNames[overAnimIdx], (double)delta[0], 31.0);
         if (fabsf_local(delta[1]) > 1.0f)
@@ -225,23 +226,23 @@ static void __attribute_regparm__(3) Mantle_GetAnimDelta(MantleState *mstate, in
     int upLen;
     int overLen = 0;
 
-    upLen = XAnimGetLengthMsec(s_mantleAnims, s_mantleTrans[mstate->transIndex].upAnimIndex);
+    upLen = XAnimGetLengthMsec((const struct XAnim_s *)s_mantleAnims, s_mantleTrans[mstate->transIndex].upAnimIndex);
 
     if (mstate->flags & 1) {
-        overLen = XAnimGetLengthMsec(s_mantleAnims, s_mantleTrans[mstate->transIndex].overAnimIndex);
+        overLen = XAnimGetLengthMsec((const struct XAnim_s *)s_mantleAnims, s_mantleTrans[mstate->transIndex].overAnimIndex);
     }
 
     if (upLen >= time) {
 
         float frac = (float)time / (float)upLen;
-        XAnimGetAbsDelta(s_mantleAnims, s_mantleTrans[mstate->transIndex].upAnimIndex, rot, delta, frac);
+        XAnimGetAbsDelta((const struct XAnim_s *)s_mantleAnims, s_mantleTrans[mstate->transIndex].upAnimIndex, rot, delta, frac);
     } else {
 
-        XAnimGetAbsDelta(s_mantleAnims, s_mantleTrans[mstate->transIndex].upAnimIndex, rot, trans, 1.0f);
+        XAnimGetAbsDelta((const struct XAnim_s *)s_mantleAnims, s_mantleTrans[mstate->transIndex].upAnimIndex, rot, trans, 1.0f);
 
         {
             float overFrac = (float)(time - upLen) / (float)overLen;
-            XAnimGetAbsDelta(s_mantleAnims, s_mantleTrans[mstate->transIndex].overAnimIndex, rot, delta, overFrac);
+            XAnimGetAbsDelta((const struct XAnim_s *)s_mantleAnims, s_mantleTrans[mstate->transIndex].overAnimIndex, rot, delta, overFrac);
         }
 
         delta[0] += trans[0];
@@ -276,14 +277,14 @@ void Mantle_Move(pmove_t *pm, playerState_t *ps, pml_t *pml)
 
     {
         int idx = mstate->transIndex;
-        upLen = XAnimGetLengthMsec(s_mantleAnims, s_mantleTrans[idx].upAnimIndex);
+        upLen = XAnimGetLengthMsec((const struct XAnim_s *)s_mantleAnims, s_mantleTrans[idx].upAnimIndex);
     }
 
     {
         int overLen = 0;
         if (mstate->flags & 1) {
             int idx = mstate->transIndex;
-            overLen = XAnimGetLengthMsec(s_mantleAnims, s_mantleTrans[idx].overAnimIndex);
+            overLen = XAnimGetLengthMsec((const struct XAnim_s *)s_mantleAnims, s_mantleTrans[idx].overAnimIndex);
         }
         mantleLength = upLen + overLen;
     }
@@ -306,9 +307,9 @@ void Mantle_Move(pmove_t *pm, playerState_t *ps, pml_t *pml)
         int currentUpLen;
         int moveType;
 
-        currentUpLen = XAnimGetLengthMsec(s_mantleAnims, s_mantleTrans[mstate->transIndex].upAnimIndex);
+        currentUpLen = XAnimGetLengthMsec((const struct XAnim_s *)s_mantleAnims, s_mantleTrans[mstate->transIndex].upAnimIndex);
         if (mstate->flags & 1) {
-            XAnimGetLengthMsec(s_mantleAnims, s_mantleTrans[mstate->transIndex].overAnimIndex);
+            XAnimGetLengthMsec((const struct XAnim_s *)s_mantleAnims, s_mantleTrans[mstate->transIndex].overAnimIndex);
         }
 
         if (currentUpLen < mstate->timer) {
@@ -317,7 +318,7 @@ void Mantle_Move(pmove_t *pm, playerState_t *ps, pml_t *pml)
             moveType = s_mantleTrans[mstate->transIndex].upAnimIndex + 20;
         }
 
-        BG_AnimScriptAnimation(ps, 3, moveType, 1);
+        BG_AnimScriptAnimation(ps, AISTATE_COMBAT, (scriptAnimMoveTypes_t)moveType, 1);
     }
 
     trans[0] -= prevTrans[0];
@@ -338,7 +339,7 @@ void Mantle_Move(pmove_t *pm, playerState_t *ps, pml_t *pml)
         pm->mantleStarted = 0;
 
         if (mstate->flags & 1) {
-            BG_AnimScriptEvent(ps, 3, 0, 1);
+            BG_AnimScriptEvent(ps, ANIM_ET_JUMP, 0, 1);
         }
 
         if (mstate->flags & 4) {
@@ -518,10 +519,10 @@ static Bool __attribute_regparm__(3) Mantle_CheckLedge(pmove_t *pm, pml_t *pml, 
 
         {
             int idx = bestTrans;
-            int upAnimLen = XAnimGetLengthMsec(s_mantleAnims, s_mantleTrans[idx].upAnimIndex);
+            int upAnimLen = XAnimGetLengthMsec((const struct XAnim_s *)s_mantleAnims, s_mantleTrans[idx].upAnimIndex);
             int overAnimLen = 0;
             if (mantleState->flags & 1) {
-                overAnimLen = XAnimGetLengthMsec(s_mantleAnims, s_mantleTrans[idx].overAnimIndex);
+                overAnimLen = XAnimGetLengthMsec((const struct XAnim_s *)s_mantleAnims, s_mantleTrans[idx].overAnimIndex);
             }
             mantleTime = upAnimLen + overAnimLen;
         }
@@ -634,7 +635,7 @@ void Mantle_Check(pmove_t *pm, pml_t *pml)
     tr = (trace_t *)trace;
     results = (MantleResults *)mresults;
 
-    PM_trace(pm, trace, start, mins, maxs, end, ps->clientNum, 0x1000000);
+    PM_trace(pm, (trace_t *)(trace), start, mins, maxs, end, ps->clientNum, 0x1000000);
 
     if (tr->allsolid == 0 && tr->startsolid == 0) {
         if (mantle_debug->current.enabled)

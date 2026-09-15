@@ -3,7 +3,7 @@
 
 #include <string.h>
 
-extern vec_t Vec2Normalize(vec_t *v);
+extern const vec_t Vec2Normalize(vec_t *v);   /* const matches com_math.c def (C++ mangling) */
 
 static void SwapVec2(vec2_t a, vec2_t b)
 {

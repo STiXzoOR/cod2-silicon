@@ -1,4 +1,8 @@
 #include "common_types.h"
+extern struct DxGlobals dx;
+/* File-scope alias: bound where no local can shadow `dx`, so uses below
+   always reach the global even inside functions that declare their own `dx`. */
+static struct DxGlobals * const dx_g = &dx;
 extern DxGlobals dx;
 extern GfxBackEndData *backEndData;
 extern dvar_t *r_rendererInUse;
@@ -24,10 +28,10 @@ extern void Com_Memcpy(void *dest, const void *src, int count);
 extern int XSurfaceGetNumVerts(const XSurface *surface);
 extern int XSurfaceGetNumTris(const XSurface *surface);
 extern long unsigned int XSurfaceGetTris(const XSurface *surface, r_index_t *dstIndices, int offset);
-extern float Vec3Normalize(vec3_t v);
-extern void Vec3Cross(const vec3_t v0, const vec3_t v1, vec3_t cross);
+extern const vec_t Vec3Normalize(vec_t *v);
+extern void Vec3Cross(const vec_t *v0, const vec_t *v1, vec_t *cross);
 extern int VecNCompareCustomEpsilon(const vec_t *v0, const vec_t *v1, float epsilon, int coordCount);
-extern void Vec3RotateTranspose(const vec_t *scaledWorldUp, const vec_t *viewAxis, vec_t *viewUp);
+extern void Vec3RotateTranspose(const vec_t *in, vec3_t *matrix, vec_t *out);
 extern void MakeNormalVectors(const vec_t *forward, vec_t *right, vec_t *up);
 extern float sinf(float x);
 extern float cosf(float x);
@@ -133,7 +137,7 @@ void RB_TessParticleCloud(const GfxEntity *re)
         localViewAxis[7] = camAxis[9];
         localViewAxis[8] = camAxis[10];
 
-        Vec3RotateTranspose(scaledWorldUp, localViewAxis, viewUp);
+        Vec3RotateTranspose(scaledWorldUp, (vec3_t (*))(localViewAxis), viewUp);
 
         if (viewUp[0] < 0.001f && viewUp[1] < 0.001f) {
 
@@ -176,7 +180,7 @@ void RB_TessParticleCloud(const GfxEntity *re)
     ((r_backEndGlobals_t *)backEnd)->codeConsts[48][2] = (float)re->materialRGBA[2] * oneOver255;
     ((r_backEndGlobals_t *)backEnd)->codeConsts[48][3] = (float)re->materialRGBA[3] * oneOver255;
 
-    dxGlobals = (char *)imp_dx;
+    dxGlobals = (char *)dx_g;
     ib = ((DxGlobals *)dxGlobals)->particleCloudIndexBuffer;
     if (ib != dxState.indexBuffer) {
         RB_ChangeIndices(ib);
@@ -189,9 +193,11 @@ void RB_TessParticleCloud(const GfxEntity *re)
         RB_ChangeStreamSource(0, vb, 0, 0x14);
     }
 
-    RB_DrawTechnique(2, &args);
+    RB_DrawTechnique( (MaterialVertexDeclType)(2), &args);
 }
 
+volatile int g_rigid_step = 0;
+volatile int g_lastdraw[6] = {0};
 void RB_TessXModelRigid(const surfaceType_t *surfType)
 {
     char *tess;
@@ -210,7 +216,7 @@ void RB_TessXModelRigid(const surfaceType_t *surfType)
         RB_EndSurface();
     }
 
-    xsurf = *(XSurface **)((byte *)surfType + 4);
+    xsurf = ((const GfxModelSurface *)surfType)->xsurf;   /* was surfType+4 (x86 xsurf @4; x64 @8) */
 
     args.firstVertexFromBase = 0;
     args.vertexCount = (int)xsurf->vertCount;
@@ -230,16 +236,18 @@ void RB_TessXModelRigid(const surfaceType_t *surfType)
         vertexStride = 0x40;
     }
 
+    g_rigid_step = 1;
     if (vb != dxState.streams[0].vb ||
         dxState.streams[0].offset != 0 ||
         dxState.streams[0].stride != vertexStride) {
         RB_ChangeStreamSource(0, vb, 0, vertexStride);
     }
 
+    g_rigid_step = 2;
     RB_PushMatrixStack();
 
     entity = (char *)((r_backEndGlobals_t *)imp_backEnd)->currentEntity;
-    boneAxis = (float *)((byte *)surfType + 8);
+    boneAxis = (float *)((const GfxModelRigidSurface *)surfType)->boneAxis;   /* was surfType+8 (x86 boneAxis @8; x64 @16) */
 
     worldMatrix = RB_GetActiveWorldMatrix();
 
@@ -263,9 +271,12 @@ void RB_TessXModelRigid(const surfaceType_t *surfType)
     ((float *)worldMatrix)[14] = boneAxis[11];
     ((float *)worldMatrix)[15] = 1.0f;
 
+    g_rigid_step = 3;
     RB_ChangedWorldMatrix(((GfxEntity *)entity)->scale);
 
-    RB_DrawTechnique(0, &args);
+    g_rigid_step = 4;
+    RB_DrawTechnique( (MaterialVertexDeclType)(0), &args);
+    g_rigid_step = 5;
     RB_PopMatrixStack();
 }
 
@@ -286,8 +297,8 @@ static void RB_TESS_REGPARM3_SSE_ABI RB_AddQuadStampDx7_impl(const vec_t *origin
         ((materialCommands_t *)tess)->indexCount + 6 > 0x100000) {
         savedMat = (*(void **)&((materialCommands_t *)tess)->declType);
         RB_EndSurface();
-        RB_BeginSurface((*(void **)&((materialCommands_t *)tess)->material),
-                        (*(int *)&((materialCommands_t *)tess)->techType),
+        RB_BeginSurface((const Material *)(*(void **)&((materialCommands_t *)tess)->material),
+                        (MaterialTechniqueType)(*(int *)&((materialCommands_t *)tess)->techType),
                         ((materialCommands_t *)tess)->lmapIndex);
         if ((*(void **)&((materialCommands_t *)tess)->declType) != savedMat) {
             if (((materialCommands_t *)tess)->indexCount != 0 || ((materialCommands_t *)tess)->optimizedIndexCount != 0)
@@ -407,8 +418,8 @@ static void RB_TESS_REGPARM3_SSE_ABI RB_AddQuadStamp_impl(const vec_t *origin, c
         ((materialCommands_t *)tess)->indexCount + 6 > 0x100000) {
         savedMat = (*(void **)&((materialCommands_t *)tess)->declType);
         RB_EndSurface();
-        RB_BeginSurface((*(void **)&((materialCommands_t *)tess)->material),
-                        (*(int *)&((materialCommands_t *)tess)->techType),
+        RB_BeginSurface((const Material *)(*(void **)&((materialCommands_t *)tess)->material),
+                        (MaterialTechniqueType)(*(int *)&((materialCommands_t *)tess)->techType),
                         ((materialCommands_t *)tess)->lmapIndex);
         if ((*(void **)&((materialCommands_t *)tess)->declType) != savedMat) {
             if (((materialCommands_t *)tess)->indexCount != 0 || ((materialCommands_t *)tess)->optimizedIndexCount != 0)
@@ -682,7 +693,7 @@ static void RB_TESS_REGPARM3_SSE_ABI RB_AddLineDx7_impl(const vec_t *start, cons
     if (((materialCommands_t *)tess)->vertexCount + 4 > 0x154a || ((materialCommands_t *)tess)->indexCount + 6 > 0x100000) {
         savedMat = (*(void **)&((materialCommands_t *)tess)->declType);
         RB_EndSurface();
-        RB_BeginSurface((*(void **)&((materialCommands_t *)tess)->material), (*(int *)&((materialCommands_t *)tess)->techType), ((materialCommands_t *)tess)->lmapIndex);
+        RB_BeginSurface( (const Material *)((*(void **)&((materialCommands_t *)tess)->material)), (MaterialTechniqueType)((*(int *)&((materialCommands_t *)tess)->techType)), ((materialCommands_t *)tess)->lmapIndex);
         if ((*(void **)&((materialCommands_t *)tess)->declType) != savedMat) {
             if (((materialCommands_t *)tess)->indexCount != 0 || ((materialCommands_t *)tess)->optimizedIndexCount != 0)
                 RB_EndSurface();
@@ -783,7 +794,7 @@ static void RB_TESS_REGPARM3_SSE_ABI RB_AddLine_impl(const vec_t *start, const v
         ((materialCommands_t *)tess)->indexCount + 6 > 0x100000) {
         savedMat = (*(void **)&((materialCommands_t *)tess)->declType);
         RB_EndSurface();
-        RB_BeginSurface((*(void **)&((materialCommands_t *)tess)->material), (*(int *)&((materialCommands_t *)tess)->techType), ((materialCommands_t *)tess)->lmapIndex);
+        RB_BeginSurface( (const Material *)((*(void **)&((materialCommands_t *)tess)->material)), (MaterialTechniqueType)((*(int *)&((materialCommands_t *)tess)->techType)), ((materialCommands_t *)tess)->lmapIndex);
         if ((*(void **)&((materialCommands_t *)tess)->declType) != savedMat) {
             if (((materialCommands_t *)tess)->indexCount != 0 || ((materialCommands_t *)tess)->optimizedIndexCount != 0)
                 RB_EndSurface();
@@ -948,7 +959,7 @@ void RB_TessPoly(const surfaceType_t *surfType)
         (*(int *)&((materialCommands_t *)tess)->declType) = 1;
     }
 
-    vertCount = (int)*(unsigned short *)((byte *)surfType + 0xa);
+    vertCount = (int)((const srfPoly_t *)surfType)->vertCount /*x86 was +0xa*/;
     indexCount = vertCount * 3 - 6;
 
     if (vertCount + ((materialCommands_t *)tess)->vertexCount > 0x154a ||
@@ -967,13 +978,13 @@ void RB_TessPoly(const surfaceType_t *surfType)
             }
             tess = RB_TessBase();
             (*(int *)&((materialCommands_t *)tess)->declType) = sortedIndex;
-            vertCount = (int)*(unsigned short *)((byte *)surfType + 0xa);
+            vertCount = (int)((const srfPoly_t *)surfType)->vertCount /*x86 was +0xa*/;
         }
     }
 
     if (r_rendererInUse->current.integer == 2) {
 
-        src = *(char **)((byte *)surfType + 0xc);
+        src = (char *)((const srfPoly_t *)surfType)->verts /*x86 was +0xc*/;
         for (i = 0; i < vertCount; i++) {
             char *srcVert = src + i * 0x44;
             tess = RB_TessBase();
@@ -997,7 +1008,7 @@ void RB_TessPoly(const surfaceType_t *surfType)
         tess = RB_TessBase();
         vertBase = ((materialCommands_t *)tess)->vertexCount;
         dest = tess + vertBase * 68;
-        src = *(char **)((byte *)surfType + 0xc);
+        src = (char *)((const srfPoly_t *)surfType)->verts /*x86 was +0xc*/;
         memcpy(dest, src, vertCount * 68);
     }
 
@@ -1016,7 +1027,7 @@ void RB_TessPoly(const surfaceType_t *surfType)
         }
     }
 
-    vertCount = (int)*(unsigned short *)((byte *)surfType + 0xa);
+    vertCount = (int)((const srfPoly_t *)surfType)->vertCount /*x86 was +0xa*/;
     tess = RB_TessBase();
     ((materialCommands_t *)tess)->vertexCount += vertCount;
 }
@@ -1030,7 +1041,9 @@ void RB_TessStaticModelCached(const surfaceType_t *surfType)
     char *dest;
     char *src;
 
-    triIndexCount = (int)(*(short *)((byte *)*(void **)((byte *)surfType + 4) + 4)) * 3;
+    /* type-5 packed surface: {surfType@0, xsurf@8, cached@16, ent@24} on x64
+     * (was xsurf@4, cached@8 on x86). xsurf->triCount is the short @+4. */
+    triIndexCount = (int)((const GfxModelSurface *)surfType)->xsurf->triCount * 3;
 
     tess = RB_TessBase();
 
@@ -1059,7 +1072,14 @@ void RB_TessStaticModelCached(const surfaceType_t *surfType)
     dest = (*(char **)&((materialCommands_t *)tess)->optimizedIndices) + baseVertIndex * 2;
     ((materialCommands_t *)tess)->optimizedIndexCount = baseVertIndex + triIndexCount;
 
-    src = (char *)dx.smodelCacheIndices + *(int *)(*(void **)((byte *)surfType + 8)) * 12;
+    {
+        /* {surfType@0, xsurf@1, cached@2, ent@3} in pointer-sized slots, so this is 8 on
+           x86 and 16 on x64. It was hardcoded to the x64 value, which made the 32-bit
+           build read a garbage pointer and fault as soon as a map drew static models. */
+        GfxStaticModelSurfaceCached *cached =
+            *(GfxStaticModelSurfaceCached **)((const byte *)surfType + 2 * sizeof(void *));
+        src = (char *)dx.smodelCacheIndices + cached->baseVertIndex * 12;
+    }
     Com_Memcpy(dest, src, triIndexCount * 2);
 }
 
@@ -1110,7 +1130,7 @@ void RB_TessXModelSkinned(const surfaceType_t *surfType)
             RB_ChangeStreamSource(0, vb, 0, vertexStride);
         }
 
-        RB_DrawTechnique(0, &args);
+        RB_DrawTechnique( (MaterialVertexDeclType)(0), &args);
     } else {
 
         vertexCount = XSurfaceGetNumVerts(xsurf);

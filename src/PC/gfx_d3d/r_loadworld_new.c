@@ -16,28 +16,28 @@ extern void *Hunk_AllocInternal(int size);
 extern void *Hunk_AllocateTempMemoryInternal(int size);
 extern void Hunk_FreeTempMemory(void *buf);
 extern dheader_t *Com_GetBsp(int *fileSize, unsigned int *checksum);
-extern const char *Com_SkipPath(const char *path);
+extern char * Com_SkipPath(char *pathname);
 extern void Com_StripExtension(const char *in, char *out);
 extern void I_strncpyz(char *dest, const char *src, int size);
-extern void Com_Memset(void *dest, int val, int count);
+extern void Com_Memset(void *dest, const int val, int count);
 extern void Com_Memcpy(void *dest, const void *src, int count);
 extern void Com_Printf(const char *fmt, ...);
 extern const char *va(const char *fmt, ...);
-extern void *Image_Alloc(const char *name, int type1, int type2, int type3);
-extern void Image_Generate2D(void *image, byte *data, int width, int height, int format);
+extern GfxImage *Image_Alloc(const char *name, int type1, int type2, int type3);
+extern void Image_Generate2D(GfxImage *image, byte *pixels, int width, int height, int imageFormat);
 extern const char *R_ParseSunLight(SunLightParseParams *params, const char *text);
 extern void R_InterpretSunLightParseParamsIntoLights(SunLightParseParams *sunParse, GfxLight *sunLight);
 extern void R_LoadSun(const char *name, sunflare_t *sun);
 extern void R_RegisterOutdoorImage(GfxWorld *world);
 
 extern void __attribute_regparm__(1) R_LoadSurfaces(GfxBspLoad *load);
-extern void R_LoadCullGroups(void);
-extern void R_LoadPortalVerts(void);
-extern void R_LoadOccluders(void);
-extern void R_LoadAabbTrees(void);
+extern void __attribute_regparm__(1) R_LoadCullGroups(GfxBspLoad *load);
+extern void __attribute_regparm__(1) R_LoadPortalVerts(GfxBspLoad *load);
+extern void __attribute_regparm__(1) R_LoadOccluders(GfxBspLoad *load);
+extern void __attribute_regparm__(1) R_LoadAabbTrees(GfxBspLoad *load);
 extern void R_LoadCells(GfxBspLoad *load);
-extern void R_LoadPortals(void);
-extern void R_LoadNodesAndLeafs(void);
+extern void __attribute_regparm__(1) R_LoadPortals(GfxBspLoad *load);
+extern void __attribute_regparm__(1) R_LoadNodesAndLeafs(GfxBspLoad *load);
 extern void __attribute_regparm__(1) R_LoadEntities(GfxBspLoad *load);
 
 typedef void (*loader_regparm_fn)(void *) __attribute_regparm__(1);
@@ -147,7 +147,7 @@ GfxWorld *R_LoadWorldInternal(const char *name)
     s_world.name = (const char *)Hunk_AllocInternal(nameLen);
     strcpy((char *)s_world.name, name);
 
-    I_strncpyz(baseName, Com_SkipPath(s_world.name), 64);
+    I_strncpyz(baseName, Com_SkipPath( (char *)(s_world.name)), 64);
     Com_StripExtension(baseName, baseName);
     nameLen = strlen(baseName) + 1;
     s_world.baseName = (const char *)Hunk_AllocInternal(nameLen);

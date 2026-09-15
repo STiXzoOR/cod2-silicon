@@ -1,5 +1,9 @@
 #include "common_types.h"
 #include "imports.h"
+/* dvar globals */
+extern const dvar_t *com_statmon;
+extern const dvar_t *fx_sort;
+extern const dvar_t *sv_cheats;
 
 extern const dvar_t *r_ignore;
 extern const dvar_t *r_overbrightBits;
@@ -492,7 +496,7 @@ void R_RegisterDvars(void)
 
     r_testFillEnable = ri.Dvar_RegisterBool("r_testFillEnable", 0, 0x2020);
 
-    *(const dvar_t **)imp_fx_sort = ri.Dvar_RegisterBool("fx_sort", 1, 0x2000);
+    fx_sort = ri.Dvar_RegisterBool("fx_sort", 1, 0x2000);
 
     vid_xpos = ri.Dvar_RegisterInt("vid_xpos", 3, (int)0xfffff000, 4096, 0x2001);
 
@@ -500,9 +504,9 @@ void R_RegisterDvars(void)
 
     developer = ri.Dvar_RegisterInt("developer", 0, 0, 2, 0x2000);
 
-    *(const dvar_t **)imp_sv_cheats = ri.Dvar_RegisterBool("sv_cheats", 0, 0x2048);
+    sv_cheats = ri.Dvar_RegisterBool("sv_cheats", 0, 0x2048);
 
-    *(const dvar_t **)imp_com_statmon = ri.Dvar_RegisterBool("com_statmon", 0, 0x2000);
+    com_statmon = ri.Dvar_RegisterBool("com_statmon", 0, 0x2000);
 
     sys_SSE = ri.Dvar_RegisterBool("sys_SSE", 0, 0x2000);
 

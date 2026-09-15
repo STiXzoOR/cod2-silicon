@@ -3,6 +3,12 @@ extern dvar_t *r_rendererInUse;
 extern Bool g_RenderToShadowCookie;
 extern Bool g_InhibitCopy;
 #include "imports.h"
+/* dvar globals */
+extern const dvar_t *r_aaAlpha;
+extern const dvar_t *r_anisotropy;
+extern const dvar_t *r_polygonOffsetBias;
+extern const dvar_t *r_polygonOffsetScale;
+extern const dvar_t *r_textureMode;
 extern int alwaysfails;
 extern vidConfig_t vidConfig;
 extern r_global_permanent_t rgp;
@@ -268,7 +274,7 @@ static inline __attribute__((always_inline)) void RB_FinalizeWorldMatrixChange(G
     RB_InvalidateCodeMatrix(&activeMatrices->OGLworldViewProjection);
 
     if (RB_UsingDx7Renderer()) {
-        RB_SetTransformDx7(0x100, &activeMatrices->world.matrix[0]);
+        RB_SetTransformDx7( (D3DTRANSFORMSTATETYPE)(0x100), &activeMatrices->world.matrix[0]);
     }
 }
 
@@ -365,7 +371,7 @@ void RB_ChangeStreamSource(int streamIndex, IDirect3DVertexBuffer9 *vb, int vert
 
 static inline __attribute__((always_inline)) void RB_DecideDefaultSamplerState_core(void)
 {
-    int idx = (*(const dvar_t **)imp_r_textureMode)->current.integer;
+    int idx = (r_textureMode)->current.integer;
     backEnd.defaultSamplerState = defaultSamplerStateTable[idx];
 }
 
@@ -378,7 +384,7 @@ static inline __attribute__((always_inline)) void RB_SetAnisotropy_core(void)
     int samplerCount;
     int samplerIndex;
 
-    anisotropyDvar = *(const dvar_t **)imp_r_anisotropy;
+    anisotropyDvar = r_anisotropy;
     dx = (DxGlobals *)imp_dx;
     dx->anisotropy = anisotropyDvar->current.integer;
     if (dx->anisotropy > dx->maxAnisotropy) {
@@ -423,7 +429,7 @@ void RB_SetAlphaAntiAliasingState(int stateBits0)
 
     if (stateBits0 & 0xf00) {
         aaAlphaFormat = 0;
-    } else if ((*(const dvar_t **)imp_r_aaAlpha)->current.integer == 2) {
+    } else if ((r_aaAlpha)->current.integer == 2) {
         aaAlphaFormat = 0x41415353;
     } else {
         aaAlphaFormat = 0x434f5441;
@@ -524,14 +530,14 @@ void RB_ChangeGenTexCoords(int samplerIndex, int genTexCoords)
         transform._43 = 0.0f;
         RB_SetTextureStageStateDx7(samplerIndex, D3DTSS_TEXCOORDINDEX, 0x20000);
         RB_SetTextureStageStateDx7(samplerIndex, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3);
-        RB_SetTransformDx7(D3DTS_TEXTURE0 + samplerIndex, &transform);
+        RB_SetTransformDx7( (D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0 + samplerIndex), &transform);
         break;
     case 2:
         MatrixIdentity44(transform.m);
         transform._32 = -backEnd.viewParms->depthHackNearClip;
         RB_SetTextureStageStateDx7(samplerIndex, D3DTSS_TEXCOORDINDEX, samplerIndex);
         RB_SetTextureStageStateDx7(samplerIndex, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3);
-        RB_SetTransformDx7(D3DTS_TEXTURE0 + samplerIndex, &transform);
+        RB_SetTransformDx7( (D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0 + samplerIndex), &transform);
         break;
     default:
         break;
@@ -643,7 +649,7 @@ void RB_PopMatrixStack(void)
         return;
     }
 
-    RB_SetTransformDx7(0x100, &RB_GetActiveCodeMatrices()->world.matrix[0]);
+    RB_SetTransformDx7( (D3DTRANSFORMSTATETYPE)(0x100), &RB_GetActiveCodeMatrices()->world.matrix[0]);
     RB_SetTransformDx7(D3DTS_VIEW, &RB_GetActiveCodeMatrices()->view.matrix[0]);
     RB_SetTransformDx7(D3DTS_PROJECTION, &RB_GetActiveCodeMatrices()->projection.matrix[0]);
 }
@@ -764,13 +770,13 @@ void RB_ChangeState_1(int stateBits1)
         float offsetUnits;
         float depthBias;
 
-        polygonOffsetBias = *(const dvar_t **)imp_r_polygonOffsetBias;
+        polygonOffsetBias = r_polygonOffsetBias;
         offsetUnits = (float)((stateBits1 & RB_STATE1_POLYGON_OFFSET_MASK) >> 4);
         depthBias = offsetUnits * polygonOffsetBias->current.value * 1.52587890625e-05f;
         if (RB_SupportsSlopeScaleDepthBias()) {
             const dvar_t *polygonOffsetScale;
 
-            polygonOffsetScale = *(const dvar_t **)imp_r_polygonOffsetScale;
+            polygonOffsetScale = r_polygonOffsetScale;
             RB_SetRenderStateFloatDx7(D3DRS_SLOPESCALEDEPTHBIAS, offsetUnits * polygonOffsetScale->current.value);
         } else {
             depthBias *= 2.0f;
@@ -895,7 +901,7 @@ void RB_BindDefaultImages(void)
     void *defaultImage = rgp.whiteImage;
 
     for (int i = 0; i < 16; i++) {
-        RB_SetSampler(i, dxState.samplerState[i], defaultImage);
+        RB_SetSampler(i, dxState.samplerState[i], (GfxImage *)(defaultImage));
     }
 }
 
@@ -1202,7 +1208,7 @@ void RB_ChangeState_0(int stateBits0)
     if (RB_SupportsAlphaToCoverage()) {
         const dvar_t *aaAlpha;
 
-        aaAlpha = *(const dvar_t **)imp_r_aaAlpha;
+        aaAlpha = r_aaAlpha;
         if (aaAlpha->current.integer != 0 && (changedBits & RB_STATE0_ALPHA_TEST_MASK)) {
             RB_SetAlphaAntiAliasingState(stateBits0);
         }
@@ -1341,11 +1347,14 @@ void RB_SetWorldMatrixForEntity(const GfxEntity *re)
     GfxCodeMatrices *activeMatrices;
 
     activeMatrices = RB_GetActiveCodeMatrices();
-    MatrixSet44(activeMatrices->world.matrix[0].m, re->origin, re->axis, re->scale);
+    MatrixSet44(activeMatrices->world.matrix[0].m, re->origin, (vec3_t (*))(re->axis), re->scale);
     RB_FinalizeWorldMatrixChange(activeMatrices, re->scale);
 }
 
-const GfxViewportBehavior s_viewportBehaviorForRenderTarget[12] = { 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1 };
+const GfxViewportBehavior s_viewportBehaviorForRenderTarget[12] = {
+    (GfxViewportBehavior)0, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)0,
+    (GfxViewportBehavior)0, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1,
+    (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1, (GfxViewportBehavior)1 };
 
 const byte s_filterTable[16] = { 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0, 0, 0 };
 
@@ -1357,11 +1366,11 @@ const DWORD s_textureArgTable[10] = { 0x00000006, 0x00000001, 0x00000000, 0x0000
 
 const DWORD s_stencilFuncTable[8] = { 0x00000001, 0x00000002, 0x00000003, 0x00000004, 0x00000005, 0x00000006, 0x00000007, 0x00000008 };
 
-const DxStencilDecode s_stencilFuncDecode[4] = { { 17, 56 }, { 29, 189 }, { 0, 0 }, { 0, 0 } };
+const DxStencilDecode s_stencilFuncDecode[4] = { { 17, (D3DRENDERSTATETYPE)56 }, { 29, (D3DRENDERSTATETYPE)189 }, { 0, (D3DRENDERSTATETYPE)0 }, { 0, (D3DRENDERSTATETYPE)0 } };
 
 const DWORD s_stencilOpTable[8] = { 0x00000001, 0x00000002, 0x00000003, 0x00000004, 0x00000005, 0x00000006, 0x00000007, 0x00000008 };
 
-const DxStencilDecode s_stencilOpDecode[8] = { { 8, 55 }, { 11, 53 }, { 14, 54 }, { 20, 188 }, { 23, 186 }, { 26, 187 }, { 0, 0 }, { 0, 0 } };
+const DxStencilDecode s_stencilOpDecode[8] = { { 8, (D3DRENDERSTATETYPE)55 }, { 11, (D3DRENDERSTATETYPE)53 }, { 14, (D3DRENDERSTATETYPE)54 }, { 20, (D3DRENDERSTATETYPE)188 }, { 23, (D3DRENDERSTATETYPE)186 }, { 26, (D3DRENDERSTATETYPE)187 }, { 0, (D3DRENDERSTATETYPE)0 }, { 0, (D3DRENDERSTATETYPE)0 } };
 
 const DWORD s_blendTable[13] = { 0x00000000, 0x00000001, 0x00000002, 0x00000003, 0x00000004, 0x00000005, 0x00000006, 0x00000007, 0x00000008, 0x00000009, 0x0000000A, 0x0000000E, 0x0000000F };
 

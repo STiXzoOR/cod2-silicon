@@ -5,6 +5,8 @@
 
 #define FXH_TIME(p) (((FxHelper *)(p))->mTime)
 
+extern FxHelper *theFxHelper;
+
 #define PART_ANCHOR_X(p) (((Effect *)(p))->origin[0])
 #define PART_ANCHOR_Y(p) (((Effect *)(p))->origin[1])
 #define PART_ANCHOR_Z(p) (((Effect *)(p))->origin[2])
@@ -174,12 +176,12 @@ void ZN5FlashD1Ev(void *_this);
 
 extern void __ZdaPv(void *ptr);
 extern void *__Znam(int size);
-extern void OrientationDirFromWorldDir(void *orient, vec_t *worldDir, vec_t *localDir);
-extern void OrientationPosToWorldPos(void *orient, vec_t *localPos, vec_t *worldPos);
-extern void AxisTransformVector(void *curve, float x, float y, float z, vec_t *out);
-extern void FxArchive_ReadData(void *arch, void *data, int size);
-extern void FxArchive_WriteData(void *arch, void *data, int size);
-extern void FxArchive_ArchiveChannelInstance(void *arch, void *channelInst);
+extern void OrientationDirFromWorldDir(const orientation_t *or_, const vec_t *dir, vec_t *out);
+extern void OrientationPosToWorldPos(const orientation_t *or_, const vec_t *pos, vec_t *out);
+extern void AxisTransformVector(vec3_t *axes, const vec_t x, const vec_t y, const vec_t z, vec_t *out);
+extern void FxArchive_ReadData(const FxArchive *arch, void *data, int size);
+extern void FxArchive_WriteData(const FxArchive *arch, const void *data, int size);
+extern void FxArchive_ArchiveChannelInstance(const FxArchive *arch, FxChannelInstance *channelInst);
 extern byte *__ZN11FxBoltFrame12g_mFrameListE;
 extern byte __ZTV6Effect[];
 static inline __attribute__((always_inline)) void FxBoltFrame_ReleaseHelper(byte *boltFrame)
@@ -245,7 +247,7 @@ const orientation_t *FxBoltFrame_GetOrientation(const FxBoltFrame *_this)
 
         (((FxBoltFrame *)(p))->cachedServerTime) = serverTime;
 
-        if (!FX_GetBoneOrientation(((void *)&((FxBoltFrame *)(p))->mBolt), orient)) {
+        if (!FX_GetBoneOrientation( (int *)(((void *)&((FxBoltFrame *)(p))->mBolt)), orient)) {
 
             (((FxBoltFrame *)(p))->mBolt.dobjHandle) = -1;
             (((FxBoltFrame *)(p))->mBolt.boneIndex) = -1;
@@ -294,14 +296,14 @@ void Effect_FixupArchiveLoad(const Effect *_this, const PrimitiveTemplate *primT
 {
 }
 
-extern void FxCurveIterator_Create(void *inst, void *curve);
-extern float FxRange_GetVal(void *range);
+extern void FxCurveIterator_Create(FxCurveIterator *inst, const FxCurve *curve);
+extern float FxRange_GetVal(const FxRange *range);
 void FxChannelInstance_Create(const FxChannel *master, FxChannelInstance *createe)
 {
 
-    FxCurveIterator_Create(createe, (void *)master->curve);
+    FxCurveIterator_Create((FxCurveIterator *)(createe), (const FxCurve *)((void *)master->curve));
 
-    createe->scale = FxRange_GetVal((void *)&master->scaleRange);
+    createe->scale = FxRange_GetVal((const FxRange *)((void *)&master->scaleRange));
 }
 
 void Particle_CreateChannelInstances(const Particle *_this, const PrimitiveTemplate *primTemp)
@@ -420,7 +422,7 @@ void Light_CreateChannelInstances(const Light *_this, const PrimitiveTemplate *p
     FxChannelInstance_Create((const FxChannel *)(p + 0x13c), (FxChannelInstance *)&((Light *)t)->sizeRandChannelInstance.curveIterator.master);
 }
 
-extern void FxHelper_AddLightToScene(void *helper, float *origin, float radius, float r, float g, float b);
+extern void FxHelper_AddLightToScene(const FxHelper *helper, float *origin, float radius, float r, float g, float b);
 void Light_Draw(const Light *_this)
 {
     byte *p = (byte *)_this;
@@ -439,7 +441,7 @@ unsigned char Light_TypeID(const Light *_this)
     return 9;
 }
 
-extern float Vec3Normalize(float *v);
+extern const vec_t Vec3Normalize(vec_t *v);
 void Flash_Init(const Flash *_this)
 {
     byte *p = (byte *)_this;
@@ -504,8 +506,8 @@ void Particle_AddVisibility(const Particle *_this)
     (((EffectVisInfo *)(entry))->vis) = alpha * (-0.003921568859368563f) + 1.0f;
 }
 
-extern void AxisCopy(const vec_t *src, vec_t *dst);
-extern void FxHelper_AddFxToScene(void *helper, void *ent, int sortGroup);
+extern void AxisCopy(vec3_t *in, vec3_t *out);
+extern void FxHelper_AddFxToScene(const FxHelper *helper, GfxEntity *ent, const XModel *model);
 static void FX_AddFxToScene_impl(byte *effect, int reType)
 {
     byte ent[0x74];
@@ -513,7 +515,7 @@ static void FX_AddFxToScene_impl(byte *effect, int reType)
     (*(int *)&((GfxEntity *)(ent))->reType) = reType;
     (*(int *)&((GfxEntity *)(ent))->customMaterial) = (*(int *)&((Effect *)(effect))->mRefEnt.customMaterial);
     (*(int *)&((GfxEntity *)(ent))->rotation) = (*(int *)&((Effect *)(effect))->mRefEnt.rotation);
-    AxisCopy(((vec_t *)((byte *)(effect) + offsetof(Effect, mRefEnt.axis))), ((vec_t *)((byte *)(ent) + offsetof(GfxEntity, axis))));
+    AxisCopy( (vec3_t (*))(((vec_t *)((byte *)(effect) + offsetof(Effect, mRefEnt.axis)))), (vec3_t (*))(((vec_t *)((byte *)(ent) + offsetof(GfxEntity, axis)))));
 
     (((GfxEntity *)(ent))->origin[0]) = (((Effect *)(effect))->mRefEnt.origin[0]);
     (((GfxEntity *)(ent))->origin[1]) = (((Effect *)(effect))->mRefEnt.origin[1]);
@@ -542,8 +544,8 @@ static void FX_AddFxToScene_impl(byte *effect, int reType)
         (((GfxEntity *)(ent))->renderFxFlags) |= 8;
     if (flags & 0x4000000)
         (((GfxEntity *)(ent))->renderFxFlags) |= 0x80;
-    FxHelper_AddFxToScene(*(void **)imp_theFxHelper, ent,
-                          *(int *)&((Effect *)effect)->mModelPtr);
+    FxHelper_AddFxToScene(*(FxHelper **)imp_theFxHelper, (GfxEntity *)ent,
+                          ((Effect *)effect)->mModelPtr);
 }
 
 void Emitter_Draw(const Emitter *_this)
@@ -598,7 +600,7 @@ void Particle_Draw(const Particle *_this)
 Bool Effect_Update(const Effect *_this)
 {
     byte *p = (byte *)_this;
-    FxHelper *helper = *(FxHelper **)imp_theFxHelper;
+    FxHelper *helper = theFxHelper;
     int startTime = ((Effect *)p)->mTimeStart;
     int curTime = FXH_TIME(helper);
     int endTime;
@@ -614,13 +616,13 @@ Bool Effect_Update(const Effect *_this)
     if (normDuration > 1.0f)
         ((Effect *)p)->normTime = 1.0f;
 
-    if (0.0f > ((Effect *)p)->normTime)
+    if (((Effect *)p)->normTime < 0.0f)
         ((Effect *)p)->normTime = 0.0f;
 
     return 1;
 }
 
-extern unsigned char FxHelper_CullSphere(void *helper, float *origin, float radius, int cullType);
+extern unsigned char FxHelper_CullSphere(const FxHelper *helper, const float *origin, float radius, int cullType);
 Bool Particle_Cull(const Particle *_this)
 {
     byte *p = (byte *)_this;
@@ -666,7 +668,7 @@ Bool Cloud_Cull(const Cloud *_this)
     return (Bool)FxHelper_CullSphere(helper, ((float *)((byte *)(p) + offsetof(Effect, mRefEnt.origin))), cullRadius, cullType);
 }
 
-extern unsigned char FxHelper_CullCylinder(void *helper, float *origin1, float *origin2, float radius1, float radius2, int cullType);
+extern unsigned char FxHelper_CullCylinder(const FxHelper *helper, const float *origin1, const float *origin2, float radius1, float radius2, int cullType);
 Bool Line_Cull(const Line *_this)
 {
     byte *p = (byte *)_this;
@@ -1013,7 +1015,7 @@ void Tail_CalcNewEndpoint(const Tail *_this, const orientation_t *or_)
         localPt[0] = newX;
         localPt[1] = newY;
         localPt[2] = newZ;
-        OrientationPosToWorldPos((void *)or_, localPt, (vec_t *)&((Tail *)self)->base.base.mRefEnt.endpos[0]);
+        OrientationPosToWorldPos(or_, localPt, (vec_t *)&((Tail *)self)->base.base.mRefEnt.endpos[0]);
     } else {
         ((Effect *)self)->mRefEnt.endpos[0] = newX;
         ((Effect *)self)->mRefEnt.endpos[1] = newY;
@@ -1108,8 +1110,8 @@ void Light_UpdateRGB(const Light *_this, const Light *_this_1)
 
         float blendFactor = ((Light *)self)->colorBlendFactor;
         float val0[3], val1[3];
-        EvalCurve3(((char *)self + offsetof(Light, colorChannelInstance.curveIterator.master)), normTime, val0);
-        EvalCurve3(((char *)self + offsetof(Light, colorRandChannelInstance.curveIterator.master)), normTime, val1);
+        EvalCurve3( (byte *)(((char *)self + offsetof(Light, colorChannelInstance.curveIterator.master))), normTime, val0);
+        EvalCurve3( (byte *)(((char *)self + offsetof(Light, colorRandChannelInstance.curveIterator.master))), normTime, val1);
         float scale = *(float *)(((char *)self + offsetof(Light, colorChannelInstance.curveIterator.master)) + 8);
         rgb[0] = (val0[0] + (val1[0] - val0[0]) * blendFactor) * scale;
         rgb[1] = (val0[1] + (val1[1] - val0[1]) * blendFactor) * scale;
@@ -1117,7 +1119,7 @@ void Light_UpdateRGB(const Light *_this, const Light *_this_1)
     } else {
 
         float val[3];
-        EvalCurve3(((char *)self + offsetof(Light, colorChannelInstance.curveIterator.master)), normTime, val);
+        EvalCurve3( (byte *)(((char *)self + offsetof(Light, colorChannelInstance.curveIterator.master))), normTime, val);
         float scale = *(float *)(((char *)self + offsetof(Light, colorChannelInstance.curveIterator.master)) + 8);
         rgb[0] = val[0] * scale;
         rgb[1] = val[1] * scale;
@@ -1128,7 +1130,7 @@ void Light_UpdateRGB(const Light *_this, const Light *_this_1)
 static inline __attribute__((always_inline)) void ZN6EffectD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN6EffectD1Ev(void *_this)
@@ -1145,7 +1147,7 @@ void FxBoltFramePtr_Archive(const FxBoltFramePtr *_this, FxArchive *arch)
 
         int tmp;
         FxBoltInfo boltInfo;
-        FxArchive_ReadData(arch, &tmp, 4);
+        FxArchive_ReadData((const FxArchive *)(arch), &tmp, 4);
         boltInfo.dobjHandle = tmp;
         if (tmp < 0) {
 
@@ -1153,7 +1155,7 @@ void FxBoltFramePtr_Archive(const FxBoltFramePtr *_this, FxArchive *arch)
             *(byte **)self = NULL;
             return;
         }
-        FxArchive_ReadData(arch, &tmp, 4);
+        FxArchive_ReadData((const FxArchive *)(arch), &tmp, 4);
         boltInfo.boneIndex = tmp;
 
         FxBoltFramePtr acquiredPtr = FxBoltFrame_Acquire(&boltInfo);
@@ -1177,12 +1179,12 @@ void FxBoltFramePtr_Archive(const FxBoltFramePtr *_this, FxArchive *arch)
         int tmp;
         if (!*(byte **)self) {
             tmp = -1;
-            FxArchive_WriteData(arch, &tmp, 4);
+            FxArchive_WriteData((const FxArchive *)(arch), &tmp, 4);
         } else {
             tmp = ((FxBoltFrame *)*(byte **)self)->mBolt.dobjHandle;
-            FxArchive_WriteData(arch, &tmp, 4);
+            FxArchive_WriteData((const FxArchive *)(arch), &tmp, 4);
             tmp = ((FxBoltFrame *)*(byte **)self)->mBolt.boneIndex;
-            FxArchive_WriteData(arch, &tmp, 4);
+            FxArchive_WriteData((const FxArchive *)(arch), &tmp, 4);
         }
     }
 }
@@ -1190,7 +1192,7 @@ void FxBoltFramePtr_Archive(const FxBoltFramePtr *_this, FxArchive *arch)
 static inline __attribute__((always_inline)) void ZN6EffectD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -1247,14 +1249,14 @@ void Particle_UpdateRGB(const Particle *_this)
 
         float blendFactor = (((Particle *)(self))->blendWeight[0]);
         float v0[3], v1[3];
-        EvalCurve3(((char *)self + offsetof(Particle, colorChannelInstance.curveIterator.master)), normTime, v0);
-        EvalCurve3(((char *)self + offsetof(Particle, colorRandChannelInstance.curveIterator.master)), normTime, v1);
+        EvalCurve3( (byte *)(((char *)self + offsetof(Particle, colorChannelInstance.curveIterator.master))), normTime, v0);
+        EvalCurve3( (byte *)(((char *)self + offsetof(Particle, colorRandChannelInstance.curveIterator.master))), normTime, v1);
         float scale = *(float *)(((char *)self + offsetof(Particle, colorChannelInstance.curveIterator.master)) + 8);
         rgb[0] = (v0[0] + (v1[0] - v0[0]) * blendFactor) * scale;
         rgb[1] = (v0[1] + (v1[1] - v0[1]) * blendFactor) * scale;
         rgb[2] = (v0[2] + (v1[2] - v0[2]) * blendFactor) * scale;
     } else {
-        EvalCurve3(((char *)self + offsetof(Particle, colorChannelInstance.curveIterator.master)), normTime, rgb);
+        EvalCurve3( (byte *)(((char *)self + offsetof(Particle, colorChannelInstance.curveIterator.master))), normTime, rgb);
         float scale = *(float *)(((char *)self + offsetof(Particle, colorChannelInstance.curveIterator.master)) + 8);
         rgb[0] *= scale;
         rgb[1] *= scale;
@@ -1295,16 +1297,16 @@ Bool Flash_Update(const Flash *_this)
     return 1;
 }
 
-extern float FxCurve_Integrate(void *curve, float normDuration);
+extern float FxCurve_Integrate(const FxCurve *curve, float normDuration);
 static inline __attribute__((always_inline)) float IntegrateChannel(byte *self, int curveOff, int blendCurveOff, float blendFactor, int scaleOff, float normDuration, int useBlend)
 {
     float val;
     if (useBlend) {
-        float v0 = FxCurve_Integrate(*(void **)(self + curveOff), normDuration);
-        float v1 = FxCurve_Integrate(*(void **)(self + blendCurveOff), normDuration);
+        float v0 = FxCurve_Integrate((const FxCurve *)(*(void **)(self + curveOff)), normDuration);
+        float v1 = FxCurve_Integrate((const FxCurve *)(*(void **)(self + blendCurveOff)), normDuration);
         val = v0 + (v1 - v0) * blendFactor;
     } else {
-        val = FxCurve_Integrate(*(void **)(self + curveOff), normDuration);
+        val = FxCurve_Integrate((const FxCurve *)(*(void **)(self + curveOff)), normDuration);
     }
     return val * *(float *)(self + scaleOff);
 }
@@ -1325,7 +1327,7 @@ void Particle_IntegrateVelocity(const Particle *_this, float normDuration, vec_t
     }
 
     if (!(*(byte *)(self + 0xaa) & 0x20)) {
-        AxisTransformVector(((char *)self + offsetof(Particle, displayAxis[0][0])), vx, vy, vz, outVector);
+        AxisTransformVector((vec3_t *)((char *)self + offsetof(Particle, displayAxis[0][0])), vx, vy, vz, outVector);
     } else {
         outVector[0] = vx;
         outVector[1] = vy;
@@ -1355,7 +1357,7 @@ void Particle_IntegrateVelocity2(const Particle *_this, float normDuration, vec_
     }
 
     if (!(*(byte *)(self + 0xaa) & 0x20)) {
-        AxisTransformVector(((char *)self + offsetof(Particle, displayAxis[0][0])), vx, vy, vz, outVector);
+        AxisTransformVector((vec3_t *)((char *)self + offsetof(Particle, displayAxis[0][0])), vx, vy, vz, outVector);
     } else {
         outVector[0] = vx;
         outVector[1] = vy;
@@ -1409,7 +1411,7 @@ void Particle_Particle(const Particle *_this)
 static inline __attribute__((always_inline)) void ZN8ParticleD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN8ParticleD1Ev(void *_this)
@@ -1420,7 +1422,7 @@ void ZN8ParticleD1Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN8ParticleD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -1439,7 +1441,7 @@ void Light_Light(const Light *_this)
 static inline __attribute__((always_inline)) void ZN5LightD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN5LightD1Ev(void *_this)
@@ -1450,7 +1452,7 @@ void ZN5LightD1Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN5LightD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -1468,11 +1470,11 @@ void Tail_InitEndPoint(const Tail *_this)
     float tailLen;
     if (*(byte *)(self + 0xaa) & 2) {
         float blendFactor = ((Tail *)self)->lengthBlendFactor;
-        float v0 = EvalCurve1(((char *)self + offsetof(Tail, lengthChannelInstance.curveIterator.master)), normTime);
-        float v1 = EvalCurve1(((char *)self + offsetof(Tail, lengthRandChannelInstance.curveIterator.master)), normTime);
+        float v0 = EvalCurve1( (byte *)(((char *)self + offsetof(Tail, lengthChannelInstance.curveIterator.master))), normTime);
+        float v1 = EvalCurve1( (byte *)(((char *)self + offsetof(Tail, lengthRandChannelInstance.curveIterator.master))), normTime);
         tailLen = (v0 + (v1 - v0) * blendFactor) * *(float *)(((char *)self + offsetof(Tail, lengthChannelInstance.curveIterator.master)) + 8);
     } else {
-        tailLen = EvalCurve1(((char *)self + offsetof(Tail, lengthChannelInstance.curveIterator.master)), normTime) * *(float *)(((char *)self + offsetof(Tail, lengthChannelInstance.curveIterator.master)) + 8);
+        tailLen = EvalCurve1( (byte *)(((char *)self + offsetof(Tail, lengthChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Tail, lengthChannelInstance.curveIterator.master)) + 8);
     }
     (((Tail *)(self))->tailLength) = tailLen;
 
@@ -1496,7 +1498,7 @@ Bool Light_Update(const Light *_this)
         ((Effect *)self)->normTime = 0.0f;
 
     byte *boltFrame = (*(byte **)&((Effect *)(self))->mBolt.value);
-    void *orient = NULL;
+    const orientation_t *orient = NULL;
     if (boltFrame) {
         int boneIdx = (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle);
         if (boneIdx < 0)
@@ -1504,7 +1506,7 @@ Bool Light_Update(const Light *_this)
         int clTime = (*(clientActive_t **)imp_cl)->skelTimeStamp;
         if ((((FxBoltFrame *)(boltFrame))->cachedServerTime) != clTime) {
             (((FxBoltFrame *)(boltFrame))->cachedServerTime) = clTime;
-            if (!FX_GetBoneOrientation(((void *)&((FxBoltFrame *)(boltFrame))->mBolt), ((void *)&((FxBoltFrame *)(boltFrame))->orientation))) {
+            if (!FX_GetBoneOrientation( (int *)(((void *)&((FxBoltFrame *)(boltFrame))->mBolt)), (orientation_t *)(((void *)&((FxBoltFrame *)(boltFrame))->orientation)))) {
                 (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle) = -1;
                 (((FxBoltFrame *)(boltFrame))->mBolt.boneIndex) = -1;
                 return 0;
@@ -1517,11 +1519,11 @@ Bool Light_Update(const Light *_this)
     float radius;
     if ((*(short *)&((Effect *)self)->mFlags) < 0) {
         float bf = ((Light *)self)->sizeBlendFactor;
-        float v0 = EvalCurve1(((char *)self + offsetof(Light, sizeChannelInstance.curveIterator.master)), normTime);
-        float v1 = EvalCurve1(((char *)self + offsetof(Light, sizeRandChannelInstance.curveIterator.master)), normTime);
+        float v0 = EvalCurve1( (byte *)(((char *)self + offsetof(Light, sizeChannelInstance.curveIterator.master))), normTime);
+        float v1 = EvalCurve1( (byte *)(((char *)self + offsetof(Light, sizeRandChannelInstance.curveIterator.master))), normTime);
         radius = (v0 + (v1 - v0) * bf) * *(float *)(((char *)self + offsetof(Light, sizeChannelInstance.curveIterator.master)) + 8);
     } else {
-        radius = EvalCurve1(((char *)self + offsetof(Light, sizeChannelInstance.curveIterator.master)), normTime) * *(float *)(((char *)self + offsetof(Light, sizeChannelInstance.curveIterator.master)) + 8);
+        radius = EvalCurve1( (byte *)(((char *)self + offsetof(Light, sizeChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Light, sizeChannelInstance.curveIterator.master)) + 8);
     }
     (((Effect *)(self))->mRefEnt.radius[0]) = radius;
 
@@ -1545,28 +1547,28 @@ void Particle_CalcVelocityValue(const Particle *_this, float normTime, vec_t *ou
     if (*(byte *)(self + 0xaa) & 8) {
 
         float bfx = (((Particle *)(self))->velocityWeightX);
-        float v0x = EvalCurve1(((char *)self + offsetof(Particle, velocityXChannelInstance.curveIterator.master)), normTime);
-        float v1x = EvalCurve1(((char *)self + offsetof(Particle, velocityXRandChannelInstance.curveIterator.master)), normTime);
+        float v0x = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocityXChannelInstance.curveIterator.master))), normTime);
+        float v1x = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocityXRandChannelInstance.curveIterator.master))), normTime);
         vx = (v0x + (v1x - v0x) * bfx) * *(float *)(((char *)self + offsetof(Particle, velocityXChannelInstance.curveIterator.master)) + 8);
 
         float bfy = (((Particle *)(self))->velocityWeightY);
-        float v0y = EvalCurve1(((char *)self + offsetof(Particle, velocityYChannelInstance.curveIterator.master)), normTime);
-        float v1y = EvalCurve1(((char *)self + offsetof(Particle, velocityYRandChannelInstance.curveIterator.master)), normTime);
+        float v0y = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocityYChannelInstance.curveIterator.master))), normTime);
+        float v1y = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocityYRandChannelInstance.curveIterator.master))), normTime);
         vy = (v0y + (v1y - v0y) * bfy) * *(float *)(((char *)self + offsetof(Particle, velocityYChannelInstance.curveIterator.master)) + 8);
 
         float bfz = (((Particle *)(self))->velocityWeightZ);
-        float v0z = EvalCurve1(((char *)self + offsetof(Particle, velocityZChannelInstance.curveIterator.master)), normTime);
-        float v1z = EvalCurve1(((char *)self + offsetof(Particle, velocityZRandChannelInstance.curveIterator.master)), normTime);
+        float v0z = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocityZChannelInstance.curveIterator.master))), normTime);
+        float v1z = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocityZRandChannelInstance.curveIterator.master))), normTime);
         vz = (v0z + (v1z - v0z) * bfz) * *(float *)(((char *)self + offsetof(Particle, velocityZChannelInstance.curveIterator.master)) + 8);
     } else {
 
-        vx = EvalCurve1(((char *)self + offsetof(Particle, velocityXChannelInstance.curveIterator.master)), normTime) * *(float *)(((char *)self + offsetof(Particle, velocityXChannelInstance.curveIterator.master)) + 8);
-        vy = EvalCurve1(((char *)self + offsetof(Particle, velocityYChannelInstance.curveIterator.master)), normTime) * *(float *)(((char *)self + offsetof(Particle, velocityYChannelInstance.curveIterator.master)) + 8);
-        vz = EvalCurve1(((char *)self + offsetof(Particle, velocityZChannelInstance.curveIterator.master)), normTime) * *(float *)(((char *)self + offsetof(Particle, velocityZChannelInstance.curveIterator.master)) + 8);
+        vx = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocityXChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Particle, velocityXChannelInstance.curveIterator.master)) + 8);
+        vy = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocityYChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Particle, velocityYChannelInstance.curveIterator.master)) + 8);
+        vz = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocityZChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Particle, velocityZChannelInstance.curveIterator.master)) + 8);
     }
 
     if (!(*(byte *)(self + 0xaa) & 0x20)) {
-        AxisTransformVector(((char *)self + offsetof(Particle, displayAxis[0][0])), vx, vy, vz, outVector);
+        AxisTransformVector((vec3_t *)((char *)self + offsetof(Particle, displayAxis[0][0])), vx, vy, vz, outVector);
     } else {
         outVector[0] = vx;
         outVector[1] = vy;
@@ -1582,27 +1584,27 @@ void Particle_CalcVelocity2Value(const Particle *_this, float normTime, vec_t *o
 
     if (*(byte *)(self + 0xaa) & 8) {
         float bfx = (((Particle *)(self))->velocity2WeightX);
-        float v0x = EvalCurve1(((char *)self + offsetof(Particle, velocity2XChannelInstance.curveIterator.master)), normTime);
-        float v1x = EvalCurve1(((char *)self + offsetof(Particle, velocity2XRandChannelInstance.curveIterator.master)), normTime);
+        float v0x = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocity2XChannelInstance.curveIterator.master))), normTime);
+        float v1x = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocity2XRandChannelInstance.curveIterator.master))), normTime);
         vx = (v0x + (v1x - v0x) * bfx) * *(float *)(((char *)self + offsetof(Particle, velocity2XChannelInstance.curveIterator.master)) + 8);
 
         float bfy = (((Particle *)(self))->velocity2WeightY);
-        float v0y = EvalCurve1(((char *)self + offsetof(Particle, velocity2YChannelInstance.curveIterator.master)), normTime);
-        float v1y = EvalCurve1(((char *)self + offsetof(Particle, velocity2YRandChannelInstance.curveIterator.master)), normTime);
+        float v0y = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocity2YChannelInstance.curveIterator.master))), normTime);
+        float v1y = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocity2YRandChannelInstance.curveIterator.master))), normTime);
         vy = (v0y + (v1y - v0y) * bfy) * *(float *)(((char *)self + offsetof(Particle, velocity2YChannelInstance.curveIterator.master)) + 8);
 
         float bfz = (((Particle *)(self))->velocity2WeightZ);
-        float v0z = EvalCurve1(((char *)self + offsetof(Particle, velocity2ZChannelInstance.curveIterator.master)), normTime);
-        float v1z = EvalCurve1(((char *)self + offsetof(Particle, velocity2ZRandChannelInstance.curveIterator.master)), normTime);
+        float v0z = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocity2ZChannelInstance.curveIterator.master))), normTime);
+        float v1z = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocity2ZRandChannelInstance.curveIterator.master))), normTime);
         vz = (v0z + (v1z - v0z) * bfz) * *(float *)(((char *)self + offsetof(Particle, velocity2ZChannelInstance.curveIterator.master)) + 8);
     } else {
-        vx = EvalCurve1(((char *)self + offsetof(Particle, velocity2XChannelInstance.curveIterator.master)), normTime) * *(float *)(((char *)self + offsetof(Particle, velocity2XChannelInstance.curveIterator.master)) + 8);
-        vy = EvalCurve1(((char *)self + offsetof(Particle, velocity2YChannelInstance.curveIterator.master)), normTime) * *(float *)(((char *)self + offsetof(Particle, velocity2YChannelInstance.curveIterator.master)) + 8);
-        vz = EvalCurve1(((char *)self + offsetof(Particle, velocity2ZChannelInstance.curveIterator.master)), normTime) * *(float *)(((char *)self + offsetof(Particle, velocity2ZChannelInstance.curveIterator.master)) + 8);
+        vx = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocity2XChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Particle, velocity2XChannelInstance.curveIterator.master)) + 8);
+        vy = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocity2YChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Particle, velocity2YChannelInstance.curveIterator.master)) + 8);
+        vz = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocity2ZChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Particle, velocity2ZChannelInstance.curveIterator.master)) + 8);
     }
 
     if (!(*(byte *)(self + 0xaa) & 0x20)) {
-        AxisTransformVector(((char *)self + offsetof(Particle, displayAxis[0][0])), vx, vy, vz, outVector);
+        AxisTransformVector((vec3_t *)((char *)self + offsetof(Particle, displayAxis[0][0])), vx, vy, vz, outVector);
     } else {
         outVector[0] = vx;
         outVector[1] = vy;
@@ -1628,7 +1630,7 @@ void Particle_GetTotalVelocity(const Particle *_this, float normTime, vec_t *out
 
     if (or_) {
 
-        OrientationDirFromWorldDir((void *)or_, worldGrav, gravityValue);
+        OrientationDirFromWorldDir(or_, worldGrav, gravityValue);
     } else {
         gravityValue[0] = 0.0f;
         gravityValue[1] = 0.0f;
@@ -1700,7 +1702,7 @@ void Emitter_UpdateEmitFx(const Emitter *_this, vec_t *bindVelocity, const orien
 
         vec3_t spawnPos;
         if (or_) {
-            OrientationPosToWorldPos((void *)or_, org, spawnPos);
+            OrientationPosToWorldPos(or_, org, spawnPos);
         } else {
             spawnPos[0] = org[0];
             spawnPos[1] = org[1];
@@ -1751,7 +1753,7 @@ void Particle_GetTotalVelocityAtTime0(const Particle *_this, vec_t *outVector)
 {
     byte *self = (byte *)_this;
     byte *boltFrame = (*(byte **)&((Effect *)(self))->mBolt.value);
-    void *orient = NULL;
+    const orientation_t *orient = NULL;
 
     if (boltFrame) {
         int boneIdx = (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle);
@@ -1764,7 +1766,7 @@ void Particle_GetTotalVelocityAtTime0(const Particle *_this, vec_t *outVector)
         int curTime = (*(clientActive_t **)imp_cl)->skelTimeStamp;
         if (curTime != (((FxBoltFrame *)(boltFrame))->cachedServerTime)) {
             (((FxBoltFrame *)(boltFrame))->cachedServerTime) = curTime;
-            Bool ok = FX_GetBoneOrientation(((void *)&((FxBoltFrame *)(boltFrame))->mBolt), ((void *)&((FxBoltFrame *)(boltFrame))->orientation));
+            Bool ok = FX_GetBoneOrientation( (int *)(((void *)&((FxBoltFrame *)(boltFrame))->mBolt)), (orientation_t *)(((void *)&((FxBoltFrame *)(boltFrame))->orientation)));
             if (!ok) {
                 (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle) = -1;
                 (((FxBoltFrame *)(boltFrame))->mBolt.boneIndex) = -1;
@@ -1808,7 +1810,7 @@ do_reflect:;
 
     vec3_t normal;
     if (or_) {
-        OrientationDirFromWorldDir((void *)or_, (vec_t *)traceNormal, normal);
+        OrientationDirFromWorldDir(or_, (vec_t *)traceNormal, normal);
     } else {
         normal[0] = traceNormal[0];
         normal[1] = traceNormal[1];
@@ -1838,7 +1840,7 @@ do_reflect:;
     (*(float *)&((Particle *)self)->subclassField2) += reflScale * normal[2];
 }
 
-extern void FxHelper_Trace(void *helper, void *trace, vec_t *start, vec_t *mins, vec_t *maxs, vec_t *end, int contents, int mask);
+extern void FxHelper_Trace(const FxHelper *_this, trace_t *tr, vec_t *start, const vec_t *min, const vec_t *max, vec_t *end, int skipEntNum, int flags);
 extern void *imp_vec3_origin;
 Bool Particle_UpdateOrigin(const Particle *_this, const orientation_t *or_)
 {
@@ -1874,8 +1876,8 @@ Bool Particle_UpdateOrigin(const Particle *_this, const orientation_t *or_)
         vec3_t start_pt, end_pt;
 
         if (or_) {
-            OrientationPosToWorldPos((void *)or_, origin, start_pt);
-            OrientationPosToWorldPos((void *)or_, new_origin, end_pt);
+            OrientationPosToWorldPos(or_, origin, start_pt);
+            OrientationPosToWorldPos(or_, new_origin, end_pt);
         } else {
             start_pt[0] = origin[0];
             start_pt[1] = origin[1];
@@ -1894,7 +1896,7 @@ Bool Particle_UpdateOrigin(const Particle *_this, const orientation_t *or_)
             mins = (vec3_t *)imp_vec3_origin;
             maxs = mins;
         }
-        FxHelper_Trace(helper, trace, start_pt, (vec_t *)mins, (vec_t *)maxs, end_pt, -1, 1);
+        FxHelper_Trace(helper, (trace_t *)(trace), start_pt, (vec_t *)mins, (vec_t *)maxs, end_pt, -1, 1);
 
         float fraction = *(float *)trace;
         if (trace[0x23] == 0 && trace[0x22] == 0 && fraction != 1.0f) {
@@ -1951,14 +1953,14 @@ Bool Emitter_Update(const Emitter *_this)
     normTime = ((Effect *)self)->normTime;
 
     byte *boltFrame = (*(byte **)&((Effect *)(self))->mBolt.value);
-    void *orient = NULL;
+    const orientation_t *orient = NULL;
     if (boltFrame) {
         int boneIdx = (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle);
         if (boneIdx >= 0) {
             int clTime = (*(clientActive_t **)imp_cl)->skelTimeStamp;
             if ((((FxBoltFrame *)(boltFrame))->cachedServerTime) != clTime) {
                 (((FxBoltFrame *)(boltFrame))->cachedServerTime) = clTime;
-                if (!FX_GetBoneOrientation(((void *)&((FxBoltFrame *)(boltFrame))->mBolt), ((void *)&((FxBoltFrame *)(boltFrame))->orientation))) {
+                if (!FX_GetBoneOrientation( (int *)(((void *)&((FxBoltFrame *)(boltFrame))->mBolt)), (orientation_t *)(((void *)&((FxBoltFrame *)(boltFrame))->orientation)))) {
                     (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle) = -1;
                     (((FxBoltFrame *)(boltFrame))->mBolt.boneIndex) = -1;
                 }
@@ -1998,11 +2000,11 @@ Bool Emitter_Update(const Emitter *_this)
     float radius;
     if ((*(short *)&((Effect *)self)->mFlags) < 0) {
         float bf = (((Particle *)(self))->blendWeight[2]);
-        float v0 = EvalCurve1(((char *)self + offsetof(Emitter, _base[372])), normTime);
-        float v1 = EvalCurve1(((char *)self + offsetof(Emitter, _base[384])), normTime);
+        float v0 = EvalCurve1( (byte *)(((char *)self + offsetof(Emitter, _base[372]))), normTime);
+        float v1 = EvalCurve1( (byte *)(((char *)self + offsetof(Emitter, _base[384]))), normTime);
         radius = (v0 + (v1 - v0) * bf) * *(float *)(((char *)self + offsetof(Emitter, _base[372])) + 8);
     } else {
-        radius = EvalCurve1(((char *)self + offsetof(Emitter, _base[372])), normTime) * *(float *)(((char *)self + offsetof(Emitter, _base[372])) + 8);
+        radius = EvalCurve1( (byte *)(((char *)self + offsetof(Emitter, _base[372]))), normTime) * *(float *)(((char *)self + offsetof(Emitter, _base[372])) + 8);
     }
     (((Effect *)(self))->mRefEnt.radius[0]) = radius;
 
@@ -2026,11 +2028,11 @@ void Particle_UpdateAlpha(const Particle *_this)
     if (*(byte *)(self + 0xa9) & 0x40) {
 
         float blendFactor = (((Particle *)(self))->blendWeight[1]);
-        float v0 = EvalCurve1(((char *)self + offsetof(Particle, alphaChannelInstance.curveIterator.master)), normTime);
-        float v1 = EvalCurve1(((char *)self + offsetof(Particle, alphaRandChannelInstance.curveIterator.master)), normTime);
+        float v0 = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, alphaChannelInstance.curveIterator.master))), normTime);
+        float v1 = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, alphaRandChannelInstance.curveIterator.master))), normTime);
         alpha = v0 + (v1 - v0) * blendFactor;
     } else {
-        alpha = EvalCurve1(((char *)self + offsetof(Particle, alphaChannelInstance.curveIterator.master)), normTime);
+        alpha = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, alphaChannelInstance.curveIterator.master))), normTime);
     }
     alpha *= *(float *)(((char *)self + offsetof(Particle, alphaChannelInstance.curveIterator.master)) + 8);
 
@@ -2075,14 +2077,14 @@ Bool Cylinder_Update(const Cylinder *_this)
     normTime = ((Effect *)self)->normTime;
 
     byte *boltFrame = (*(byte **)&((Effect *)(self))->mBolt.value);
-    void *orient = NULL;
+    const orientation_t *orient = NULL;
     if (boltFrame) {
         int boneIdx = (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle);
         if (boneIdx >= 0) {
             int clTime = (*(clientActive_t **)imp_cl)->skelTimeStamp;
             if ((((FxBoltFrame *)(boltFrame))->cachedServerTime) != clTime) {
                 (((FxBoltFrame *)(boltFrame))->cachedServerTime) = clTime;
-                if (!FX_GetBoneOrientation(((void *)&((FxBoltFrame *)(boltFrame))->mBolt), ((void *)&((FxBoltFrame *)(boltFrame))->orientation))) {
+                if (!FX_GetBoneOrientation( (int *)(((void *)&((FxBoltFrame *)(boltFrame))->mBolt)), (orientation_t *)(((void *)&((FxBoltFrame *)(boltFrame))->orientation)))) {
                     (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle) = -1;
                     (((FxBoltFrame *)(boltFrame))->mBolt.boneIndex) = -1;
                 }
@@ -2167,14 +2169,14 @@ Bool Tail_Update(const Tail *_this)
     normTime = ((Effect *)self)->normTime;
 
     byte *boltFrame = (*(byte **)&((Effect *)(self))->mBolt.value);
-    void *orient = NULL;
+    const orientation_t *orient = NULL;
     if (boltFrame) {
         int boneIdx = (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle);
         if (boneIdx >= 0) {
             int clTime = (*(clientActive_t **)imp_cl)->skelTimeStamp;
             if ((((FxBoltFrame *)(boltFrame))->cachedServerTime) != clTime) {
                 (((FxBoltFrame *)(boltFrame))->cachedServerTime) = clTime;
-                if (!FX_GetBoneOrientation(((void *)&((FxBoltFrame *)(boltFrame))->mBolt), ((void *)&((FxBoltFrame *)(boltFrame))->orientation))) {
+                if (!FX_GetBoneOrientation( (int *)(((void *)&((FxBoltFrame *)(boltFrame))->mBolt)), (orientation_t *)(((void *)&((FxBoltFrame *)(boltFrame))->orientation)))) {
                     (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle) = -1;
                     (((FxBoltFrame *)(boltFrame))->mBolt.boneIndex) = -1;
                 }
@@ -2198,11 +2200,11 @@ Bool Tail_Update(const Tail *_this)
     float tailLen;
     if (*(byte *)(self + 0xaa) & 2) {
         float bf = ((Tail *)self)->lengthBlendFactor;
-        float v0 = EvalCurve1(((char *)self + offsetof(Tail, lengthChannelInstance.curveIterator.master)), normTime);
-        float v1 = EvalCurve1(((char *)self + offsetof(Tail, lengthRandChannelInstance.curveIterator.master)), normTime);
+        float v0 = EvalCurve1( (byte *)(((char *)self + offsetof(Tail, lengthChannelInstance.curveIterator.master))), normTime);
+        float v1 = EvalCurve1( (byte *)(((char *)self + offsetof(Tail, lengthRandChannelInstance.curveIterator.master))), normTime);
         tailLen = (v0 + (v1 - v0) * bf) * *(float *)(((char *)self + offsetof(Tail, lengthChannelInstance.curveIterator.master)) + 8);
     } else {
-        tailLen = EvalCurve1(((char *)self + offsetof(Tail, lengthChannelInstance.curveIterator.master)), normTime) * *(float *)(((char *)self + offsetof(Tail, lengthChannelInstance.curveIterator.master)) + 8);
+        tailLen = EvalCurve1( (byte *)(((char *)self + offsetof(Tail, lengthChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Tail, lengthChannelInstance.curveIterator.master)) + 8);
     }
     (((Tail *)(self))->tailLength) = tailLen;
 
@@ -2214,9 +2216,9 @@ Bool Tail_Update(const Tail *_this)
     float radius;
     if ((*(short *)&((Effect *)self)->mFlags) < 0) {
         float bf = (((Particle *)(self))->blendWeight[2]);
-        radius = (EvalCurve1(((char *)self + offsetof(Tail, base.sizeChannelInstance.curveIterator.master)), normTime) + (EvalCurve1(((char *)self + offsetof(Tail, base.sizeRandChannelInstance.curveIterator.master)), normTime) - EvalCurve1(((char *)self + offsetof(Tail, base.sizeChannelInstance.curveIterator.master)), normTime)) * bf) * *(float *)(((char *)self + offsetof(Tail, base.sizeChannelInstance.curveIterator.master)) + 8);
+        radius = (EvalCurve1( (byte *)(((char *)self + offsetof(Tail, base.sizeChannelInstance.curveIterator.master))), normTime) + (EvalCurve1((byte *)((char *)self + offsetof(Tail, base.sizeRandChannelInstance.curveIterator.master)), normTime) - EvalCurve1((byte *)((char *)self + offsetof(Tail, base.sizeChannelInstance.curveIterator.master)), normTime)) * bf) * *(float *)(((char *)self + offsetof(Tail, base.sizeChannelInstance.curveIterator.master)) + 8);
     } else {
-        radius = EvalCurve1(((char *)self + offsetof(Tail, base.sizeChannelInstance.curveIterator.master)), normTime) * *(float *)(((char *)self + offsetof(Tail, base.sizeChannelInstance.curveIterator.master)) + 8);
+        radius = EvalCurve1( (byte *)(((char *)self + offsetof(Tail, base.sizeChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Tail, base.sizeChannelInstance.curveIterator.master)) + 8);
     }
     (((Effect *)(self))->mRefEnt.radius[0]) = radius;
     ((Effect *)self)->mRefEnt.radius[1] = radius;
@@ -2231,7 +2233,7 @@ Bool Tail_Update(const Tail *_this)
     return 1;
 }
 
-extern void OrientationPosToWorldPos(void *orient, vec_t *localPos, vec_t *worldPos);
+extern void OrientationPosToWorldPos(const orientation_t *or_, const vec_t *pos, vec_t *out);
 Bool Line_Update(const Line *_this)
 {
     byte *self = (byte *)_this;
@@ -2250,14 +2252,14 @@ Bool Line_Update(const Line *_this)
     normTime = ((Effect *)self)->normTime;
 
     byte *boltFrame = (*(byte **)&((Effect *)(self))->mBolt.value);
-    void *orient = NULL;
+    const orientation_t *orient = NULL;
     if (boltFrame) {
         int boneIdx = (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle);
         if (boneIdx >= 0) {
             int clTime = (*(clientActive_t **)imp_cl)->skelTimeStamp;
             if ((((FxBoltFrame *)(boltFrame))->cachedServerTime) != clTime) {
                 (((FxBoltFrame *)(boltFrame))->cachedServerTime) = clTime;
-                if (!FX_GetBoneOrientation(((void *)&((FxBoltFrame *)(boltFrame))->mBolt), ((void *)&((FxBoltFrame *)(boltFrame))->orientation))) {
+                if (!FX_GetBoneOrientation( (int *)(((void *)&((FxBoltFrame *)(boltFrame))->mBolt)), (orientation_t *)(((void *)&((FxBoltFrame *)(boltFrame))->orientation)))) {
                     (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle) = -1;
                     (((FxBoltFrame *)(boltFrame))->mBolt.boneIndex) = -1;
                 }
@@ -2289,9 +2291,9 @@ Bool Line_Update(const Line *_this)
     float radius;
     if ((*(short *)&((Effect *)self)->mFlags) < 0) {
         float bf = (((Particle *)(self))->blendWeight[2]);
-        radius = (EvalCurve1(((char *)self + offsetof(Line, _base[372])), normTime) + (EvalCurve1(((char *)self + offsetof(Line, _base[384])), normTime) - EvalCurve1(((char *)self + offsetof(Line, _base[372])), normTime)) * bf) * *(float *)(((char *)self + offsetof(Line, _base[372])) + 8);
+        radius = (EvalCurve1( (byte *)(((char *)self + offsetof(Line, _base[372]))), normTime) + (EvalCurve1((byte *)((char *)self + offsetof(Line, _base[384])), normTime) - EvalCurve1((byte *)((char *)self + offsetof(Line, _base[372])), normTime)) * bf) * *(float *)(((char *)self + offsetof(Line, _base[372])) + 8);
     } else {
-        radius = EvalCurve1(((char *)self + offsetof(Line, _base[372])), normTime) * *(float *)(((char *)self + offsetof(Line, _base[372])) + 8);
+        radius = EvalCurve1( (byte *)(((char *)self + offsetof(Line, _base[372]))), normTime) * *(float *)(((char *)self + offsetof(Line, _base[372])) + 8);
     }
     (((Effect *)(self))->mRefEnt.radius[0]) = radius;
     ((Effect *)self)->mRefEnt.radius[1] = radius;
@@ -2326,14 +2328,14 @@ Bool Cloud_Update(const Cloud *_this)
     normTime = ((Effect *)self)->normTime;
 
     byte *boltFrame = (*(byte **)&((Effect *)(self))->mBolt.value);
-    void *orient = NULL;
+    const orientation_t *orient = NULL;
     if (boltFrame) {
         int boneIdx = (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle);
         if (boneIdx >= 0) {
             int clTime = (*(clientActive_t **)imp_cl)->skelTimeStamp;
             if ((((FxBoltFrame *)(boltFrame))->cachedServerTime) != clTime) {
                 (((FxBoltFrame *)(boltFrame))->cachedServerTime) = clTime;
-                if (!FX_GetBoneOrientation(((void *)&((FxBoltFrame *)(boltFrame))->mBolt), ((void *)&((FxBoltFrame *)(boltFrame))->orientation))) {
+                if (!FX_GetBoneOrientation( (int *)(((void *)&((FxBoltFrame *)(boltFrame))->mBolt)), (orientation_t *)(((void *)&((FxBoltFrame *)(boltFrame))->orientation)))) {
                     (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle) = -1;
                     (((FxBoltFrame *)(boltFrame))->mBolt.boneIndex) = -1;
                 }
@@ -2357,9 +2359,9 @@ Bool Cloud_Update(const Cloud *_this)
     float radius;
     if ((*(short *)&((Effect *)self)->mFlags) < 0) {
         float bf = (((Particle *)(self))->blendWeight[2]);
-        radius = (EvalCurve1(((char *)self + offsetof(Cloud, base.sizeChannelInstance.curveIterator.master)), normTime) + (EvalCurve1(((char *)self + offsetof(Cloud, base.sizeRandChannelInstance.curveIterator.master)), normTime) - EvalCurve1(((char *)self + offsetof(Cloud, base.sizeChannelInstance.curveIterator.master)), normTime)) * bf) * *(float *)(((char *)self + offsetof(Cloud, base.sizeChannelInstance.curveIterator.master)) + 8);
+        radius = (EvalCurve1( (byte *)(((char *)self + offsetof(Cloud, base.sizeChannelInstance.curveIterator.master))), normTime) + (EvalCurve1((byte *)((char *)self + offsetof(Cloud, base.sizeRandChannelInstance.curveIterator.master)), normTime) - EvalCurve1((byte *)((char *)self + offsetof(Cloud, base.sizeChannelInstance.curveIterator.master)), normTime)) * bf) * *(float *)(((char *)self + offsetof(Cloud, base.sizeChannelInstance.curveIterator.master)) + 8);
     } else {
-        radius = EvalCurve1(((char *)self + offsetof(Cloud, base.sizeChannelInstance.curveIterator.master)), normTime) * *(float *)(((char *)self + offsetof(Cloud, base.sizeChannelInstance.curveIterator.master)) + 8);
+        radius = EvalCurve1( (byte *)(((char *)self + offsetof(Cloud, base.sizeChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Cloud, base.sizeChannelInstance.curveIterator.master)) + 8);
     }
     (((Effect *)(self))->mRefEnt.radius[0]) = radius;
     if (radius == 0.0f) {
@@ -2370,9 +2372,9 @@ Bool Cloud_Update(const Cloud *_this)
     float height;
     if (*(byte *)(self + 0xaa) & 2) {
         float bf = (*(float *)&((Cloud *)self)->useLengthFlag);
-        height = (EvalCurve1(((char *)self + offsetof(Cloud, heightChannel.curveIterator.master)), normTime) + (EvalCurve1(((char *)self + offsetof(Cloud, heightRandChannel.curveIterator.master)), normTime) - EvalCurve1(((char *)self + offsetof(Cloud, heightChannel.curveIterator.master)), normTime)) * bf) * *(float *)(((char *)self + offsetof(Cloud, heightChannel.curveIterator.master)) + 8);
+        height = (EvalCurve1( (byte *)(((char *)self + offsetof(Cloud, heightChannel.curveIterator.master))), normTime) + (EvalCurve1((byte *)((char *)self + offsetof(Cloud, heightRandChannel.curveIterator.master)), normTime) - EvalCurve1((byte *)((char *)self + offsetof(Cloud, heightChannel.curveIterator.master)), normTime)) * bf) * *(float *)(((char *)self + offsetof(Cloud, heightChannel.curveIterator.master)) + 8);
     } else {
-        height = EvalCurve1(((char *)self + offsetof(Cloud, heightChannel.curveIterator.master)), normTime) * *(float *)(((char *)self + offsetof(Cloud, heightChannel.curveIterator.master)) + 8);
+        height = EvalCurve1( (byte *)(((char *)self + offsetof(Cloud, heightChannel.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Cloud, heightChannel.curveIterator.master)) + 8);
     }
     ((Effect *)self)->mRefEnt.radius[1] = height;
     if (height == 0.0f) {
@@ -2384,9 +2386,9 @@ Bool Cloud_Update(const Cloud *_this)
         float rot;
         if (*(byte *)(self + 0xaa) & 0x10) {
             float bf = (((Particle *)(self))->blendWeight[4]);
-            rot = (EvalCurve1(((char *)self + offsetof(Cloud, base.size2ChannelInstance.curveIterator.master)), normTime) + (EvalCurve1(((char *)self + offsetof(Cloud, base.size2RandChannelInstance.curveIterator.master)), normTime) - EvalCurve1(((char *)self + offsetof(Cloud, base.size2ChannelInstance.curveIterator.master)), normTime)) * bf) * *(float *)(((char *)self + offsetof(Cloud, base.size2ChannelInstance.curveIterator.master)) + 8);
+            rot = (EvalCurve1( (byte *)(((char *)self + offsetof(Cloud, base.size2ChannelInstance.curveIterator.master))), normTime) + (EvalCurve1((byte *)((char *)self + offsetof(Cloud, base.size2RandChannelInstance.curveIterator.master)), normTime) - EvalCurve1((byte *)((char *)self + offsetof(Cloud, base.size2ChannelInstance.curveIterator.master)), normTime)) * bf) * *(float *)(((char *)self + offsetof(Cloud, base.size2ChannelInstance.curveIterator.master)) + 8);
         } else {
-            rot = EvalCurve1(((char *)self + offsetof(Cloud, base.size2ChannelInstance.curveIterator.master)), normTime) * *(float *)(((char *)self + offsetof(Cloud, base.size2ChannelInstance.curveIterator.master)) + 8);
+            rot = EvalCurve1( (byte *)(((char *)self + offsetof(Cloud, base.size2ChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Cloud, base.size2ChannelInstance.curveIterator.master)) + 8);
         }
         (*(float *)&((Effect *)(self))->mRefEnt.materialSubimageIndex) = rot;
     }
@@ -2415,14 +2417,14 @@ Bool OrientedParticle_Update(const OrientedParticle *_this)
     normTime = ((Effect *)self)->normTime;
 
     byte *boltFrame = (*(byte **)&((Effect *)(self))->mBolt.value);
-    void *orient = NULL;
+    const orientation_t *orient = NULL;
     if (boltFrame) {
         int boneIdx = (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle);
         if (boneIdx >= 0) {
             int clTime = (*(clientActive_t **)imp_cl)->skelTimeStamp;
             if ((((FxBoltFrame *)(boltFrame))->cachedServerTime) != clTime) {
                 (((FxBoltFrame *)(boltFrame))->cachedServerTime) = clTime;
-                if (!FX_GetBoneOrientation(((void *)&((FxBoltFrame *)(boltFrame))->mBolt), ((void *)&((FxBoltFrame *)(boltFrame))->orientation))) {
+                if (!FX_GetBoneOrientation( (int *)(((void *)&((FxBoltFrame *)(boltFrame))->mBolt)), (orientation_t *)(((void *)&((FxBoltFrame *)(boltFrame))->orientation)))) {
                     (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle) = -1;
                     (((FxBoltFrame *)(boltFrame))->mBolt.boneIndex) = -1;
                 }
@@ -2451,9 +2453,9 @@ Bool OrientedParticle_Update(const OrientedParticle *_this)
     float radius;
     if ((*(short *)&((Effect *)self)->mFlags) < 0) {
         float bf = (((Particle *)(self))->blendWeight[2]);
-        radius = (EvalCurve1(((char *)self + offsetof(OrientedParticle, _base[372])), normTime) + (EvalCurve1(((char *)self + offsetof(OrientedParticle, _base[384])), normTime) - EvalCurve1(((char *)self + offsetof(OrientedParticle, _base[372])), normTime)) * bf) * *(float *)(((char *)self + offsetof(OrientedParticle, _base[372])) + 8);
+        radius = (EvalCurve1( (byte *)(((char *)self + offsetof(OrientedParticle, _base[372]))), normTime) + (EvalCurve1((byte *)((char *)self + offsetof(OrientedParticle, _base[384])), normTime) - EvalCurve1((byte *)((char *)self + offsetof(OrientedParticle, _base[372])), normTime)) * bf) * *(float *)(((char *)self + offsetof(OrientedParticle, _base[372])) + 8);
     } else {
-        radius = EvalCurve1(((char *)self + offsetof(OrientedParticle, _base[372])), normTime) * *(float *)(((char *)self + offsetof(OrientedParticle, _base[372])) + 8);
+        radius = EvalCurve1( (byte *)(((char *)self + offsetof(OrientedParticle, _base[372]))), normTime) * *(float *)(((char *)self + offsetof(OrientedParticle, _base[372])) + 8);
     }
     (((Effect *)(self))->mRefEnt.radius[0]) = radius;
     if (radius == 0.0f) {
@@ -2465,9 +2467,9 @@ Bool OrientedParticle_Update(const OrientedParticle *_this)
         float rot;
         if ((*(byte *)&((OrientedParticle *)self)->_base[170]) & 0x10) {
             float bf = (((Particle *)(self))->blendWeight[4]);
-            rot = (EvalCurve1(((char *)self + offsetof(OrientedParticle, _base[396])), normTime) + (EvalCurve1(((char *)self + offsetof(OrientedParticle, _base[408])), normTime) - EvalCurve1(((char *)self + offsetof(OrientedParticle, _base[396])), normTime)) * bf) * *(float *)(((char *)self + offsetof(OrientedParticle, _base[396])) + 8);
+            rot = (EvalCurve1( (byte *)(((char *)self + offsetof(OrientedParticle, _base[396]))), normTime) + (EvalCurve1((byte *)((char *)self + offsetof(OrientedParticle, _base[408])), normTime) - EvalCurve1((byte *)((char *)self + offsetof(OrientedParticle, _base[396])), normTime)) * bf) * *(float *)(((char *)self + offsetof(OrientedParticle, _base[396])) + 8);
         } else {
-            rot = EvalCurve1(((char *)self + offsetof(OrientedParticle, _base[396])), normTime) * *(float *)(((char *)self + offsetof(OrientedParticle, _base[396])) + 8);
+            rot = EvalCurve1( (byte *)(((char *)self + offsetof(OrientedParticle, _base[396]))), normTime) * *(float *)(((char *)self + offsetof(OrientedParticle, _base[396])) + 8);
         }
         ((Effect *)self)->mRefEnt.radius[1] = rot;
     }
@@ -2477,7 +2479,7 @@ Bool OrientedParticle_Update(const OrientedParticle *_this)
     return 1;
 }
 
-extern void OrientationPosToWorldPos(void *orient, vec_t *localPos, vec_t *worldPos);
+extern void OrientationPosToWorldPos(const orientation_t *or_, const vec_t *pos, vec_t *out);
 Bool Particle_Update(const Particle *_this, const Particle *_this_1, const Cloud *_this_2)
 {
     (void)_this_1;
@@ -2498,7 +2500,7 @@ Bool Particle_Update(const Particle *_this, const Particle *_this_1, const Cloud
     normTime = ((Effect *)self)->normTime;
 
     byte *boltFrame = (*(byte **)&((Effect *)(self))->mBolt.value);
-    void *orient = NULL;
+    const orientation_t *orient = NULL;
     if (boltFrame) {
 
         int boneIdx = (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle);
@@ -2507,7 +2509,7 @@ Bool Particle_Update(const Particle *_this, const Particle *_this_1, const Cloud
             int clTime = (*(clientActive_t **)imp_cl)->skelTimeStamp;
             if (cachedTime != clTime) {
                 (((FxBoltFrame *)(boltFrame))->cachedServerTime) = clTime;
-                Bool ok = FX_GetBoneOrientation(((void *)&((FxBoltFrame *)(boltFrame))->mBolt), ((void *)&((FxBoltFrame *)(boltFrame))->orientation));
+                Bool ok = FX_GetBoneOrientation( (int *)(((void *)&((FxBoltFrame *)(boltFrame))->mBolt)), (orientation_t *)(((void *)&((FxBoltFrame *)(boltFrame))->orientation)));
                 if (!ok) {
                     (((FxBoltFrame *)(boltFrame))->mBolt.dobjHandle) = -1;
                     (((FxBoltFrame *)(boltFrame))->mBolt.boneIndex) = -1;
@@ -2537,11 +2539,11 @@ Bool Particle_Update(const Particle *_this, const Particle *_this_1, const Cloud
     if ((*(short *)&((Effect *)self)->mFlags) < 0) {
 
         float blendFactor = (((Particle *)(self))->blendWeight[2]);
-        float v0 = EvalCurve1(((char *)self + offsetof(Particle, sizeChannelInstance.curveIterator.master)), normTime);
-        float v1 = EvalCurve1(((char *)self + offsetof(Particle, sizeRandChannelInstance.curveIterator.master)), normTime);
+        float v0 = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, sizeChannelInstance.curveIterator.master))), normTime);
+        float v1 = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, sizeRandChannelInstance.curveIterator.master))), normTime);
         radius = (v0 + (v1 - v0) * blendFactor) * *(float *)(((char *)self + offsetof(Particle, sizeChannelInstance.curveIterator.master)) + 8);
     } else {
-        radius = EvalCurve1(((char *)self + offsetof(Particle, sizeChannelInstance.curveIterator.master)), normTime) * *(float *)(((char *)self + offsetof(Particle, sizeChannelInstance.curveIterator.master)) + 8);
+        radius = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, sizeChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Particle, sizeChannelInstance.curveIterator.master)) + 8);
     }
     (((Effect *)(self))->mRefEnt.radius[0]) = radius;
 
@@ -2558,7 +2560,7 @@ Bool Particle_Update(const Particle *_this, const Particle *_this_1, const Cloud
 
     float rotation;
     if (*(byte *)(self + 0xaa) & 1) {
-        rotation = EvalCurve1(((char *)self + offsetof(Particle, size2ChannelInstance.curveIterator.master)), normTime) * *(float *)(((char *)self + offsetof(Particle, size2ChannelInstance.curveIterator.master)) + 8);
+        rotation = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, size2ChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Particle, size2ChannelInstance.curveIterator.master)) + 8);
     } else {
         rotation = 0.0f;
     }
@@ -2570,11 +2572,11 @@ Bool Particle_Update(const Particle *_this, const Particle *_this_1, const Cloud
     return 1;
 }
 
-extern void FxArchive_ArchiveEffect(void *arch, void *effectPtr);
-extern void FxArchive_ArchiveMaterial(void *arch, void *materialPtr);
-extern void FxArchive_ArchiveModel(void *arch, void *modelPtr);
-extern void FxArchive_ArchiveFxGfxEntity(void *arch, void *entityPtr);
-extern void FX_SetSortGroup(void *effect);
+extern void FxArchive_ArchiveEffect(const FxArchive *arch, const EffectTemplate **effectPtr);
+extern void FxArchive_ArchiveMaterial(const FxArchive *arch, Material **materialPtr);
+extern void FxArchive_ArchiveModel(const FxArchive *arch, struct XModel **modelPtr);
+extern void FxArchive_ArchiveFxGfxEntity(const FxArchive *arch, FxGfxEntity *entityPtr);
+extern void FX_SetSortGroup(Effect *effect);
 extern int FX_GetCluster(const vec_t *origin);
 
 static inline __attribute__((always_inline)) void ArchiveInt(void *arch, byte *self, int offset)
@@ -2582,11 +2584,11 @@ static inline __attribute__((always_inline)) void ArchiveInt(void *arch, byte *s
     byte *a = (byte *)arch;
     if ((((FxArchive *)(a))->isReading)) {
         int v;
-        FxArchive_ReadData(arch, &v, 4);
+        FxArchive_ReadData((const FxArchive *)(arch), &v, 4);
         *(int *)(self + offset) = v;
     } else {
         int v = *(int *)(self + offset);
-        FxArchive_WriteData(arch, &v, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &v, 4);
     }
 }
 static inline __attribute__((always_inline)) void ArchiveByte(void *arch, byte *self, int offset)
@@ -2594,26 +2596,26 @@ static inline __attribute__((always_inline)) void ArchiveByte(void *arch, byte *
     byte *a = (byte *)arch;
     if ((((FxArchive *)(a))->isReading)) {
         byte v;
-        FxArchive_ReadData(arch, &v, 1);
+        FxArchive_ReadData((const FxArchive *)(arch), &v, 1);
         *(byte *)(self + offset) = v;
     } else {
         byte v = *(byte *)(self + offset);
-        FxArchive_WriteData(arch, &v, 1);
+        FxArchive_WriteData((const FxArchive *)(arch), &v, 1);
     }
 }
 static inline __attribute__((always_inline)) void ArchiveVec3(void *arch, byte *self, int offset)
 {
     byte *a = (byte *)arch;
     if ((((FxArchive *)(a))->isReading)) {
-        FxArchive_ReadData(arch, self + offset, 0xc);
+        FxArchive_ReadData((const FxArchive *)(arch), self + offset, 0xc);
     } else {
         float f;
         f = *(float *)(self + offset);
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
         f = *(float *)(self + offset + 4);
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
         f = *(float *)(self + offset + 8);
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
     }
 }
 
@@ -2629,18 +2631,18 @@ void Effect_Archive(const Effect *_this, FxArchive *arch)
     ArchiveInt(arch, self, 0x10);
     ArchiveVec3(arch, self, 0x14);
     ArchiveVec3(arch, self, 0x20);
-    FxArchive_ArchiveEffect(arch, ((char *)self + offsetof(Effect, deathEffect)));
-    FxArchive_ArchiveEffect(arch, ((char *)self + offsetof(Effect, emitEffect)));
-    FxArchive_ArchiveFxGfxEntity(arch, ((char *)self + offsetof(Effect, mRefEnt.customMaterial)));
-    FxArchive_ArchiveEffect(arch, ((char *)self + offsetof(Effect, impactEffect)));
+    FxArchive_ArchiveEffect((const FxArchive *)(arch), (const EffectTemplate **)(((char *)self + offsetof(Effect, deathEffect))));
+    FxArchive_ArchiveEffect((const FxArchive *)(arch), (const EffectTemplate **)(((char *)self + offsetof(Effect, emitEffect))));
+    FxArchive_ArchiveFxGfxEntity((const FxArchive *)(arch), (FxGfxEntity *)(((char *)self + offsetof(Effect, mRefEnt.customMaterial))));
+    FxArchive_ArchiveEffect((const FxArchive *)(arch), (const EffectTemplate **)(((char *)self + offsetof(Effect, impactEffect))));
     ArchiveInt(arch, self, 0x38);
-    FxArchive_ArchiveMaterial(arch, ((char *)self + offsetof(Effect, mRefEnt.customMaterial)));
-    FxArchive_ArchiveModel(arch, ((char *)self + offsetof(Effect, mModelPtr)));
+    FxArchive_ArchiveMaterial((const FxArchive *)(arch), (Material **)(((char *)self + offsetof(Effect, mRefEnt.customMaterial))));
+    FxArchive_ArchiveModel((const FxArchive *)(arch), (struct XModel **)(((char *)self + offsetof(Effect, mModelPtr))));
     FxBoltFramePtr_Archive((const FxBoltFramePtr *)&((Effect *)self)->mBolt.value, arch);
 
     if ((((FxArchive *)(a))->isReading)) {
         ((Effect *)self)->mClusterId = FX_GetCluster((vec_t *)&((Effect *)self)->mRefEnt.origin[0]);
-        FX_SetSortGroup(self);
+        FX_SetSortGroup((Effect *)(self));
     }
 }
 
@@ -2649,27 +2651,27 @@ void Light_Archive(const Light *_this, FxArchive *arch)
     byte *self = (byte *)_this;
     byte *a = (byte *)arch;
     Effect_Archive((const Effect *)_this, arch);
-    FxArchive_ArchiveChannelInstance(arch, ((char *)self + offsetof(Light, colorChannelInstance.curveIterator.master)));
-    FxArchive_ArchiveChannelInstance(arch, ((char *)self + offsetof(Light, colorRandChannelInstance.curveIterator.master)));
-    FxArchive_ArchiveChannelInstance(arch, ((char *)self + offsetof(Light, sizeChannelInstance.curveIterator.master)));
-    FxArchive_ArchiveChannelInstance(arch, ((char *)self + offsetof(Light, sizeRandChannelInstance.curveIterator.master)));
+    FxArchive_ArchiveChannelInstance((const FxArchive *)(arch), (FxChannelInstance *)(((char *)self + offsetof(Light, colorChannelInstance.curveIterator.master))));
+    FxArchive_ArchiveChannelInstance((const FxArchive *)(arch), (FxChannelInstance *)(((char *)self + offsetof(Light, colorRandChannelInstance.curveIterator.master))));
+    FxArchive_ArchiveChannelInstance((const FxArchive *)(arch), (FxChannelInstance *)(((char *)self + offsetof(Light, sizeChannelInstance.curveIterator.master))));
+    FxArchive_ArchiveChannelInstance((const FxArchive *)(arch), (FxChannelInstance *)(((char *)self + offsetof(Light, sizeRandChannelInstance.curveIterator.master))));
 
     if ((((FxArchive *)(a))->isReading)) {
         float f;
-        FxArchive_ReadData(arch, &f, 4);
+        FxArchive_ReadData((const FxArchive *)(arch), &f, 4);
         ((Light *)self)->colorBlendFactor = f;
     } else {
         float f = ((Light *)self)->colorBlendFactor;
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
     }
 
     if ((((FxArchive *)(a))->isReading)) {
         float f;
-        FxArchive_ReadData(arch, &f, 4);
+        FxArchive_ReadData((const FxArchive *)(arch), &f, 4);
         ((Light *)self)->sizeBlendFactor = f;
     } else {
         float f = ((Light *)self)->sizeBlendFactor;
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
     }
 }
 
@@ -2693,7 +2695,7 @@ void Particle_Archive(const Particle *_this, FxArchive *arch)
     ArchiveByte(arch, self, 0x104);
 
     for (i = 0; i < 22; i++)
-        FxArchive_ArchiveChannelInstance(arch, ((char *)self + offsetof(Particle, colorChannelInstance.curveIterator.master)) + i * 0xc);
+        FxArchive_ArchiveChannelInstance((const FxArchive *)(arch), (FxChannelInstance *)(((char *)self + offsetof(Particle, colorChannelInstance.curveIterator.master)) + i * 0xc));
 
     for (i = 0; i < 9; i++)
         ArchiveInt(arch, self, 0x108 + i * 4);
@@ -2702,8 +2704,8 @@ void Particle_Archive(const Particle *_this, FxArchive *arch)
     ArchiveVec3(arch, self, 0x138);
 }
 
-extern void FxArchive_ReadData(void *arch, void *data, int size);
-extern void FxArchive_WriteData(void *arch, void *data, int size);
+extern void FxArchive_ReadData(const FxArchive *arch, void *data, int size);
+extern void FxArchive_WriteData(const FxArchive *arch, const void *data, int size);
 void OrientedParticle_Archive(const OrientedParticle *_this, FxArchive *arch)
 {
     byte *self = (byte *)_this;
@@ -2712,15 +2714,15 @@ void OrientedParticle_Archive(const OrientedParticle *_this, FxArchive *arch)
     Particle_Archive((const Particle *)_this, arch);
     end_xyz = (float *)(self + 0x24c);
     if ((((FxArchive *)(a))->isReading)) {
-        FxArchive_ReadData(arch, self + 0x24c, 0xc);
+        FxArchive_ReadData((const FxArchive *)(arch), self + 0x24c, 0xc);
     } else {
         float f;
         f = end_xyz[0];
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
         f = end_xyz[1];
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
         f = end_xyz[2];
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
     }
 }
 
@@ -2731,36 +2733,36 @@ void Cloud_Archive(const Cloud *_this, FxArchive *arch)
     Particle_Archive((const Particle *)_this, arch);
 
     if ((((FxArchive *)(a))->isReading)) {
-        FxArchive_ReadData(arch, self + offsetof(Cloud, randomDirection), 0xc);
+        FxArchive_ReadData((const FxArchive *)(arch), self + offsetof(Cloud, randomDirection), 0xc);
     } else {
         float f;
         f = (((Cloud *)(self))->randomDirection[0]);
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
         f = (((Cloud *)(self))->randomDirection[1]);
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
         f = (((Cloud *)(self))->randomDirection[2]);
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
     }
 
-    FxArchive_ArchiveChannelInstance(arch, self + offsetof(Cloud, heightChannel));
-    FxArchive_ArchiveChannelInstance(arch, self + offsetof(Cloud, heightRandChannel));
+    FxArchive_ArchiveChannelInstance((const FxArchive *)(arch), (FxChannelInstance *)(self + offsetof(Cloud, heightChannel)));
+    FxArchive_ArchiveChannelInstance((const FxArchive *)(arch), (FxChannelInstance *)(self + offsetof(Cloud, heightRandChannel)));
 
     if ((((FxArchive *)(a))->isReading)) {
         float f;
-        FxArchive_ReadData(arch, &f, 4);
+        FxArchive_ReadData((const FxArchive *)(arch), &f, 4);
         (((Cloud *)(self))->randomLengthBlend) = f;
     } else {
         float f = (((Cloud *)(self))->randomLengthBlend);
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
     }
 
     if ((((FxArchive *)(a))->isReading)) {
         byte b;
-        FxArchive_ReadData(arch, &b, 1);
+        FxArchive_ReadData((const FxArchive *)(arch), &b, 1);
         (((Cloud *)(self))->useLengthFlag) = b;
     } else {
         byte b = (((Cloud *)(self))->useLengthFlag);
-        FxArchive_WriteData(arch, &b, 1);
+        FxArchive_WriteData((const FxArchive *)(arch), &b, 1);
     }
 }
 
@@ -2772,19 +2774,19 @@ void Line_Archive(const Line *_this, FxArchive *arch)
     Particle_Archive((const Particle *)_this, arch);
     end_xyz = (float *)(self + 0x24c);
     if ((((FxArchive *)(a))->isReading)) {
-        FxArchive_ReadData(arch, self + 0x24c, 0xc);
+        FxArchive_ReadData((const FxArchive *)(arch), self + 0x24c, 0xc);
     } else {
         float f;
         f = end_xyz[0];
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
         f = end_xyz[1];
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
         f = end_xyz[2];
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
     }
 }
 
-extern void FxArchive_ArchiveChannelInstance(void *arch, void *channelInst);
+extern void FxArchive_ArchiveChannelInstance(const FxArchive *arch, FxChannelInstance *channelInst);
 void Tail_Archive(const Tail *_this, FxArchive *arch)
 {
     byte *self = (byte *)_this;
@@ -2792,27 +2794,27 @@ void Tail_Archive(const Tail *_this, FxArchive *arch)
     Particle_Archive((const Particle *)_this, arch);
 
     if ((((FxArchive *)(a))->isReading)) {
-        FxArchive_ReadData(arch, ((char *)self + offsetof(Tail, endpoint[0])), 0xc);
+        FxArchive_ReadData((const FxArchive *)(arch), ((char *)self + offsetof(Tail, endpoint[0])), 0xc);
     } else {
         float f;
         f = (((Tail *)(self))->endpoint[0]);
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
         f = (((Tail *)(self))->endpoint[1]);
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
         f = (((Tail *)(self))->endpoint[2]);
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
     }
 
-    FxArchive_ArchiveChannelInstance(arch, ((char *)self + offsetof(Tail, lengthChannelInstance.curveIterator.master)));
-    FxArchive_ArchiveChannelInstance(arch, ((char *)self + offsetof(Tail, lengthRandChannelInstance.curveIterator.master)));
+    FxArchive_ArchiveChannelInstance((const FxArchive *)(arch), (FxChannelInstance *)(((char *)self + offsetof(Tail, lengthChannelInstance.curveIterator.master))));
+    FxArchive_ArchiveChannelInstance((const FxArchive *)(arch), (FxChannelInstance *)(((char *)self + offsetof(Tail, lengthRandChannelInstance.curveIterator.master))));
 
     if ((((FxArchive *)(a))->isReading)) {
         float f;
-        FxArchive_ReadData(arch, &f, 4);
+        FxArchive_ReadData((const FxArchive *)(arch), &f, 4);
         ((Tail *)self)->lengthBlendFactor = f;
     } else {
         float f = ((Tail *)self)->lengthBlendFactor;
-        FxArchive_WriteData(arch, &f, 4);
+        FxArchive_WriteData((const FxArchive *)(arch), &f, 4);
     }
 }
 
@@ -2832,7 +2834,7 @@ void Emitter_Archive(const Emitter *_this, FxArchive *arch)
     ArchiveInt(arch, self, 0x274);
     ArchiveVec3(arch, self, 0x278);
     ArchiveVec3(arch, self, 0x284);
-    FxArchive_ArchiveEffect(arch, ((char *)self + offsetof(Emitter, emitFx)));
+    FxArchive_ArchiveEffect((const FxArchive *)(arch), (const EffectTemplate **)(((char *)self + offsetof(Emitter, emitFx))));
     ArchiveInt(arch, self, 0x294);
     ArchiveInt(arch, self, 0x298);
     if ((*(int *)&((Effect *)self)->mModelPtr) == 0)
@@ -2842,7 +2844,7 @@ void Emitter_Archive(const Emitter *_this, FxArchive *arch)
 static inline __attribute__((always_inline)) void ZN8CylinderD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -2855,7 +2857,7 @@ void ZN8CylinderD0Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN8CylinderD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN8CylinderD1Ev(void *_this)
@@ -2867,20 +2869,20 @@ void Cylinder_Cylinder(const Cylinder *_this)
 {
     extern void *__ZTV8Cylinder;
     Particle_Particle((const Particle *)_this);
-    *(int *)_this = (int)&__ZTV8Cylinder + 8;
+    *(void **)_this = (byte *)&__ZTV8Cylinder + (2 * (int)sizeof(void *));
 }
 
 void OrientedParticle_OrientedParticle(const OrientedParticle *_this)
 {
     extern void *__ZTV16OrientedParticle;
     Particle_Particle((const Particle *)_this);
-    *(int *)_this = (int)&__ZTV16OrientedParticle + 8;
+    *(void **)_this = (byte *)&__ZTV16OrientedParticle + (2 * (int)sizeof(void *));
 }
 
 static inline __attribute__((always_inline)) void ZN16OrientedParticleD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN16OrientedParticleD1Ev(void *_this)
@@ -2891,7 +2893,7 @@ void ZN16OrientedParticleD1Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN16OrientedParticleD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -2901,7 +2903,7 @@ void ZN16OrientedParticleD0Ev(void *_this)
     ZN16OrientedParticleD0Ev_impl(_this);
 }
 
-extern float Vec3Normalize(float *v);
+extern const vec_t Vec3Normalize(vec_t *v);
 void Cloud_Cloud(const Cloud *_this, const Cloud *_this_1)
 {
     extern void *__ZTV5Cloud;
@@ -2911,7 +2913,7 @@ void Cloud_Cloud(const Cloud *_this, const Cloud *_this_1)
     int attempts = 4;
     (void)_this_1;
     Particle_Particle((const Particle *)_this);
-    *(int *)p = (int)&__ZTV5Cloud + 8;
+    *(void **)p = (byte *)&__ZTV5Cloud + (2 * (int)sizeof(void *));
 
     do {
         byte *q = p;
@@ -2935,7 +2937,7 @@ void Cloud_Cloud(const Cloud *_this, const Cloud *_this_1)
 static inline __attribute__((always_inline)) void ZN5CloudD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN5CloudD1Ev(void *_this)
@@ -2946,7 +2948,7 @@ void ZN5CloudD1Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN5CloudD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -2960,13 +2962,13 @@ void Line_Line(const Line *_this)
 {
     extern void *__ZTV4Line;
     Particle_Particle((const Particle *)_this);
-    *(int *)_this = (int)&__ZTV4Line + 8;
+    *(void **)_this = (byte *)&__ZTV4Line + (2 * (int)sizeof(void *));
 }
 
 static inline __attribute__((always_inline)) void ZN4LineD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN4LineD1Ev(void *_this)
@@ -2977,7 +2979,7 @@ void ZN4LineD1Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN4LineD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -2991,13 +2993,13 @@ void Tail_Tail(const Tail *_this)
 {
     extern void *__ZTV4Tail;
     Particle_Particle((const Particle *)_this);
-    *(int *)_this = (int)&__ZTV4Tail + 8;
+    *(void **)_this = (byte *)&__ZTV4Tail + (2 * (int)sizeof(void *));
 }
 
 static inline __attribute__((always_inline)) void ZN4TailD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN4TailD1Ev(void *_this)
@@ -3008,7 +3010,7 @@ void ZN4TailD1Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN4TailD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -3022,13 +3024,13 @@ void Emitter_Emitter(const Emitter *_this)
 {
     extern void *__ZTV7Emitter;
     Particle_Particle((const Particle *)_this);
-    *(int *)_this = (int)&__ZTV7Emitter + 8;
+    *(void **)_this = (byte *)&__ZTV7Emitter + (2 * (int)sizeof(void *));
 }
 
 static inline __attribute__((always_inline)) void ZN7EmitterD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN7EmitterD1Ev(void *_this)
@@ -3039,7 +3041,7 @@ void ZN7EmitterD1Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN7EmitterD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -3066,7 +3068,7 @@ Bool Flash_Cull(const Flash *_this)
 static inline __attribute__((always_inline)) void ZN5FlashD0Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
     if (self)
         __ZdaPv(self);
@@ -3079,7 +3081,7 @@ void ZN5FlashD0Ev(void *_this)
 static inline __attribute__((always_inline)) void ZN5FlashD1Ev_impl(void *_this)
 {
     byte *self = (byte *)_this;
-    *(void **)self = __ZTV6Effect + 8;
+    *(void **)self = __ZTV6Effect + (2 * (int)sizeof(void *));
     FxBoltFrame_ReleaseHelper((*(byte **)&((Effect *)(self))->mBolt.value));
 }
 void ZN5FlashD1Ev(void *_this)

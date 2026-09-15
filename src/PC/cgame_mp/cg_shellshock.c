@@ -38,9 +38,9 @@ extern const dvar_t *cg_shock_viewKickFadeTime;
 
 extern int _snd_local_listener;
 
-extern float Vec3Normalize(vec3_t v);
-extern void Vec3Cross(const vec3_t v1, const vec3_t v2, vec3_t out);
-extern void AxisCopy(const float (*src)[3], float (*dst)[3]);
+extern const vec_t Vec3Normalize(vec_t *v);
+extern void Vec3Cross(const vec_t *v1, const vec_t *v2, vec_t *out);
+extern void AxisCopy(vec3_t *in, vec3_t *out);
 extern void MatrixMultiply(const vec3_t axis, const float (*in1)[3], float (*out)[3]);
 extern qboolean Com_SaveDvarsToBuffer(const char **dvar_names, int count, char *buf, int bufsize);
 extern qboolean Com_LoadDvarsFromBuffer(const char **dvar_names, int count, const char *buf, const char *path);
@@ -54,15 +54,15 @@ extern void Z_FreeInternal(void *ptr);
 extern void Com_Printf(const char *fmt, ...);
 extern void CL_SaveScreen(void);
 extern void CL_BlendSavedScreen(int blend);
-extern const char *Dvar_EnumToString(dvar_t *dvar);
-extern void SND_SetChannelVolumes(int type, float *volumes, int flags);
+extern const char * Dvar_EnumToString(const dvar_t *dvar);
+extern void SND_SetChannelVolumes(int priority, const float *channelvolume, int fademsec);
 extern void SND_SetEnvironmentEffects(int type, const char *name, float drylevel, float wetlevel, int flags);
 extern void SND_DeactivateChannelVolumes(int type, int flags);
 extern void SND_DeactivateEnvironmentEffects(int type, int flags);
-extern void *CL_PickSoundAlias(const char *name);
+extern snd_alias_t * CL_PickSoundAlias(const char *aliasname);
 extern void SND_PlayBlendedSoundAliases(void *alias0, void *alias1, float fade, int channel, int entity, int flags, int loop);
 extern void SND_PlaySoundAlias(void *alias, int channel, int entity, int duration, int loop);
-extern void CL_CapTurnRate(int min_rate, int max_rate);
+extern void CL_CapTurnRate(float min_rate, float max_rate);
 extern void CL_SetUserCmdInShellshock(int inShellshock);
 
 static inline float dvar_get_float(byte *dvar_pp)
@@ -376,7 +376,7 @@ static inline __attribute__((always_inline)) void CG_ResetShellShockMotion(cg_t 
 
     cgp->shellshock.sensitivity = 1.0f;
 
-    CL_CapTurnRate(0, 0);
+    CL_CapTurnRate(0.0f, 0.0f);
 }
 
 void CG_UpdateShellShock(const shellshock_parms_t *parms, int start, int duration)
@@ -543,7 +543,7 @@ check_mouse: {
             cgp = cg;
             cgp->shellshock.sensitivity = parms->mouse.sensitivity;
 
-            CL_CapTurnRate(*(int *)&parms->mouse.maxPitchSpeed, *(int *)&parms->mouse.maxYawSpeed);
+            CL_CapTurnRate(parms->mouse.maxPitchSpeed, parms->mouse.maxYawSpeed);
         } else if (timeSinceStart2 <= 0) {
 
             cgp = cg;
@@ -556,7 +556,7 @@ check_mouse: {
 
                 cgp = cg;
                 cgp->shellshock.sensitivity = parms->mouse.sensitivity;
-                CL_CapTurnRate(*(int *)&parms->mouse.maxPitchSpeed, *(int *)&parms->mouse.maxYawSpeed);
+                CL_CapTurnRate(parms->mouse.maxPitchSpeed, parms->mouse.maxYawSpeed);
             } else {
 
                 cgp = cg;
@@ -565,7 +565,7 @@ check_mouse: {
 
                 float minRate = parms->mouse.maxPitchSpeed / t;
                 float maxRate = parms->mouse.maxYawSpeed / t;
-                CL_CapTurnRate(*(int *)&minRate, *(int *)&maxRate);
+                CL_CapTurnRate(minRate, maxRate);
             }
         }
     }

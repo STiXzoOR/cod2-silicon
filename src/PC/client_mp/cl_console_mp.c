@@ -1,6 +1,9 @@
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
+/* dvar globals */
+extern const dvar_t *cg_hudSayPosition;
+extern const dvar_t *cl_noprint;
 
 float g_console_char_height = 16.0f;
 
@@ -9,7 +12,7 @@ extern float floorf(float x);
 
 extern clientActive_t clients;
 
-extern void Field_Clear(void *field);
+extern void Field_Clear(field_t *field);
 extern Bool Dvar_GetBool(const char *dvarName);
 extern int g_console_field_width;
 extern float g_console_char_height;
@@ -21,11 +24,11 @@ extern const dvar_t *con_restricted;
 
 extern char *CopyStringInternal(const char *in);
 extern void Z_FreeInternal(void *ptr);
-extern unsigned char ColorIndex(int c);
+extern int ColorIndex(int c);
 extern int Cmd_Argc(void);
-extern const char *Cmd_Argv(int arg);
+extern char *Cmd_Argv(int arg);
 extern void Com_Printf(const char *fmt, ...);
-extern int FS_FOpenFileWrite(const char *filename);
+extern fileHandle_t FS_FOpenFileWrite(const char *filename);
 extern int FS_Write(const void *buffer, int len, int h);
 extern void FS_FCloseFile(fileHandle_t h);
 extern void I_strncat(char *dest, int size, const char *src);
@@ -40,7 +43,7 @@ extern const dvar_t *Dvar_RegisterFloat(const char *name, float value, float min
 extern const dvar_t *Dvar_RegisterInt(const char *name, int value, int min, int max, unsigned int flags);
 extern const dvar_t *Dvar_RegisterBool_mac(const char *name, int value, unsigned int flags);
 extern const dvar_t *Dvar_FindVar(const char *dvarName);
-extern int Dvar_HasLatchedValue(const dvar_t *dvar);
+extern Bool Dvar_HasLatchedValue(const dvar_t *dvar);
 extern const char *Dvar_DisplayableValue(const dvar_t *dvar);
 extern const char *Dvar_DisplayableLatchedValue(const dvar_t *dvar);
 extern const char *Dvar_DisplayableResetValue(const dvar_t *dvar);
@@ -49,11 +52,11 @@ extern void Dvar_DomainToString_GetLines(int type, int v0, int v1, char *outBuf,
 extern void CalcScreenPlacement(float *xAdj, float *yAdj, float *xScale, float *yScale, int horzAlign, int vertAlign);
 extern void CalcScreenX(float *x, int align);
 extern void CalcScreenY(float *y, int align);
-extern void *UI_GetFontHandle(int fontType, float scale);
+extern FontHandle UI_GetFontHandle(int fontEnum, float scale);
 extern const char *SEH_SafeTranslateString(const char *str);
 extern const char *va(const char *fmt, ...);
-extern void CL_DrawText(const char *text, int maxChars, void *font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const float *color, int style);
-extern void Field_Draw(void *field, int x, int y, int width, int horzAlign, int vertAlign);
+extern void CL_DrawText(const char *text, int maxChars, struct Font_s *font, float x, float y, int horzAlign, int vertAlign, float xScale, float yScale, const float *color, int style);
+extern void Field_Draw(field_t *field, int x, int y, int width, int horzAlign, int vertAlign);
 extern void CL_LookupColor(int colorIndex, float *color);
 extern void SCR_DrawSmallStringExt(int x, int y, const char *str, const float *color);
 extern void SCR_DrawConsoleString(int x, int y, const short int *text, int len, const float *color);
@@ -67,9 +70,9 @@ extern void qsort(void *base, int nmemb, int size, int (*compar)(const void *, c
 #endif
 extern const char **Cmd_GetAutoCompleteFileList(const char *cmd, int *fileCount, int maxCount);
 extern void FS_FreeFileList(const char **list, int count);
-extern void LargeLocal_LargeLocal(void *ll, int size);
-extern void *LargeLocal_GetBuf(void *ll);
-extern void ZN10LargeLocalD1Ev(void *ll);
+extern void LargeLocal_LargeLocal(const LargeLocal *ll, int size);
+extern void *LargeLocal_GetBuf(const LargeLocal *ll);
+extern void ZN10LargeLocalD1Ev(LargeLocal *ll);
 extern int ___maskrune(int c, unsigned long flags);
 extern int strnicmp(const char *s1, const char *s2, size_t n);
 extern void *__DefaultRuneLocale;
@@ -217,7 +220,7 @@ void Con_ToggleConsole_f(void)
     }
 toggle:
     field = (char *)imp_g_consoleField;
-    Field_Clear(field);
+    Field_Clear((field_t *)(field));
     ((field_t *)field)->widthInPixels = g_console_field_width;
     ((field_t *)field)->charHeight = g_console_char_height;
     ((field_t *)field)->fixedSize = 1;
@@ -231,7 +234,7 @@ static void Con_ChatModePublic_f(void)
 
     **(int **)imp_chat_team = 0;
     field = (field_t **)imp_chatField;
-    Field_Clear(*field);
+    Field_Clear((field_t *)(*field));
     (*field)->widthInPixels = 0x24c;
     (*field)->charHeight = 10.0f;
     (*field)->fixedSize = 0;
@@ -244,7 +247,7 @@ static void Con_ChatModeTeam_f(void)
 
     **(int **)imp_chat_team = 1;
     field = (field_t **)imp_chatField;
-    Field_Clear(*field);
+    Field_Clear((field_t *)(*field));
     (*field)->widthInPixels = 0x21f;
     (*field)->charHeight = 10.0f;
     (*field)->fixedSize = 0;
@@ -551,7 +554,7 @@ void Con_DrawSay(int y)
     string = va("%s: ", label);
     normalizedScale = re.NormalizedTextScale(font, fontScale);
 
-    hudSayPosition = *(const dvar_t **)imp_cg_hudSayPosition;
+    hudSayPosition = cg_hudSayPosition;
     x = (int)hudSayPosition->current.vector[0];
 
     fontHeight = re.TextHeight(font);
@@ -1277,7 +1280,7 @@ void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int l
     const dvar_t *noPrint;
     int color;
 
-    noPrint = *(const dvar_t **)imp_cl_noprint;
+    noPrint = cl_noprint;
     if (!noPrint)
         return;
     if (noPrint->current.enabled)
@@ -1351,7 +1354,7 @@ void Con_Close(void)
     if (!active)
         return;
 
-    Field_Clear(imp_g_consoleField);
+    Field_Clear((field_t *)(imp_g_consoleField));
     Con_ClearAllMessageWindows();
     clients.keyCatchers &= ~1;
 }
@@ -1604,14 +1607,14 @@ void Con_Init(void)
     con_restricted = Dvar_RegisterBool_mac("con_restricted", 0, 0x1001);
 
     consoleField = (field_t *)imp_g_consoleField;
-    Field_Clear(consoleField);
+    Field_Clear((field_t *)(consoleField));
     consoleField->widthInPixels = g_console_field_width;
     consoleField->charHeight = g_console_char_height;
     consoleField->fixedSize = 1;
 
     history = (field_t *)imp_historyEditLines;
     for (i = 0; i < 32; i++) {
-        Field_Clear(&history[i]);
+        Field_Clear((field_t *)(&history[i]));
         history[i].widthInPixels = g_console_field_width;
         history[i].charHeight = g_console_char_height;
         history[i].fixedSize = 1;
@@ -1718,7 +1721,7 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
     int duration;
     int defaultColor;
 
-    noPrint = *(const dvar_t **)imp_cl_noprint;
+    noPrint = cl_noprint;
     if (noPrint && noPrint->current.enabled)
         return;
 
@@ -2075,7 +2078,7 @@ void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int l
     const dvar_t *noPrint;
     int color;
 
-    noPrint = *(const dvar_t **)imp_cl_noprint;
+    noPrint = cl_noprint;
     if (!noPrint)
         return;
     if (noPrint->current.enabled)
@@ -2151,14 +2154,14 @@ void Con_Init(void)
     con_restricted = Dvar_RegisterBool_mac("con_restricted", 0, 0x1001);
 
     consoleField = (field_t *)imp_g_consoleField;
-    Field_Clear(consoleField);
+    Field_Clear((field_t *)(consoleField));
     consoleField->widthInPixels = g_console_field_width;
     consoleField->charHeight = g_console_char_height;
     consoleField->fixedSize = 1;
 
     history = (field_t *)imp_historyEditLines;
     for (i = 0; i < 32; i++) {
-        Field_Clear(&history[i]);
+        Field_Clear((field_t *)(&history[i]));
         history[i].widthInPixels = g_console_field_width;
         history[i].charHeight = g_console_char_height;
         history[i].fixedSize = 1;
@@ -2185,7 +2188,7 @@ void Con_Close(void)
     if (!legacyHacks[1])
         return;
 
-    Field_Clear(imp_g_consoleField);
+    Field_Clear((field_t *)(imp_g_consoleField));
     Con_ClearAllMessageWindows();
     Con_GetClientActive()->keyCatchers &= ~1;
 }

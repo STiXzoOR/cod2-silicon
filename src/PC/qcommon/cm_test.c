@@ -3,7 +3,7 @@
 
 extern clipMap_t cm;
 
-extern int BoxOnPlaneSide(const vec_t *mins, const vec_t *maxs, cplane_t *plane);
+extern int BoxOnPlaneSide(const vec_t *mins, const vec_t *maxs, const cplane_t *plane);
 extern cmodel_t *CM_ClipHandleToModel(clipHandle_t handle);
 extern void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up);
 

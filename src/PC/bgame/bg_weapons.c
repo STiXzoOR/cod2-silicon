@@ -1,6 +1,10 @@
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
+/* dvar globals */
+extern const dvar_t *bg_bobAmplitudeDucked;
+extern const dvar_t *bg_bobAmplitudeProne;
+extern const dvar_t *bg_bobAmplitudeStanding;
 
 extern int bg_iNumWeapons;
 extern WeaponDef *bg_weaponDefs[128];
@@ -14,7 +18,7 @@ static const char bg_emptyString[] = "";
 
 void BG_ShutdownWeaponDefFiles(void);
 WeaponDef *BG_GetWeaponDef(int iWeapon);
-extern void *BG_LoadDefaultWeaponDef(void);
+extern WeaponDef *BG_LoadDefaultWeaponDef(void);
 extern WeaponDef *BG_LoadWeaponDefInternal(const char *folder, const char *name);
 extern void BG_LoadPlayerAnimTypes(void);
 extern void BG_InitWeaponStrings(void);
@@ -23,7 +27,7 @@ extern void Com_Error(int code, const char *fmt, ...);
 extern void Com_DPrintf(const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
-extern int BG_AnimScriptEvent(playerState_t *ps, int event, int isContinue, int force);
+extern int BG_AnimScriptEvent(playerState_t *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force);
 extern void BG_UpdateConditionValue(int client, int condition, int value, qboolean checkConversion);
 extern void PM_SetProneMovementOverride(playerState_t *ps);
 extern qboolean Mantle_IsWeaponInactive(playerState_t *ps);
@@ -38,11 +42,11 @@ extern const dvar_t *player_breath_gasp_time;
 extern const dvar_t *player_breath_hold_lerp;
 extern const dvar_t *player_breath_hold_time;
 extern const dvar_t *player_toggleBinoculars;
-extern float AngleSubtract(float a1, float a2);
+extern const float AngleSubtract(const float a1, const float a2);
 extern void AnglesSubtract(const vec_t *v1, const vec_t *v2, vec_t *v3);
 extern float DiffTrack(float tgt, float cur, float rate, float deltaTime);
 extern float DiffTrackAngle(float tgt, float cur, float rate, float deltaTime, float f, float granularity, float epsilon);
-extern float GetLeanFraction(float fFrac);
+extern float GetLeanFraction(const float fFrac);
 extern float randomf(void);
 extern float sinf(float);
 extern double sin(double);
@@ -137,7 +141,7 @@ void BG_ClearWeaponDef(void)
 
     itemList = (gitem_t *)((void *)imp_bg_itemlist);
     for (i = 1; i <= 128; i++) {
-        itemList[i].giType = 0;
+        itemList[i].giType = (itemType_t)(0);
     }
 
     BG_LoadPlayerAnimTypes();
@@ -209,11 +213,11 @@ static BM_ALWAYS_INLINE float BG_GetBobAmplitude(const playerState_t *ps, float 
     float amplitude;
 
     if (ps->viewHeightTarget == 11)
-        dvar = *(const dvar_t **)imp_bg_bobAmplitudeProne;
+        dvar = bg_bobAmplitudeProne;
     else if (ps->viewHeightTarget == 40)
-        dvar = *(const dvar_t **)imp_bg_bobAmplitudeDucked;
+        dvar = bg_bobAmplitudeDucked;
     else
-        dvar = *(const dvar_t **)imp_bg_bobAmplitudeStanding;
+        dvar = bg_bobAmplitudeStanding;
 
     amplitude = speed * dvar->current.value;
     if (amplitude > maxAmp)
@@ -1169,7 +1173,7 @@ static BM_NOINLINE void __attribute_regparm__(2) PM_BeginWeaponChange(playerStat
         }
 
         if (!(ps->pm_flags & 4))
-            BG_AnimScriptEvent(ps, 6, 0, 0);
+            BG_AnimScriptEvent(ps, ANIM_ET_DROPWEAPON, 0, 0);
     }
 
     ps->weaponstate = 2;
@@ -1267,7 +1271,7 @@ static void __attribute_regparm__(1) PM_BeginWeaponReload(playerState_t *ps)
 
     weapDef = bg_weaponDefs[iWeapon];
     if (!weapDef->bClipOnly)
-        BG_AnimScriptEvent(ps, 0xa, 0, 1);
+        BG_AnimScriptEvent(ps, ANIM_ET_RELOAD, 0, 1);
 
     PM_AddEvent(ps, 0x95);
 
@@ -1456,13 +1460,13 @@ static qboolean PM_WeaponHasInventoryWeapon(const playerState_t *ps, int weapon)
 
 static void PM_WeaponSetAnim(playerState_t *ps, int anim)
 {
-    if (ps->pm_type <= 5)
+    if (ps->pm_type < 6)
         ps->weapAnim = ((ps->weapAnim & 0x200) ^ 0x200) | anim;
 }
 
 static void PM_WeaponClearAnim(playerState_t *ps)
 {
-    if (ps->pm_type <= 5)
+    if (ps->pm_type < 6)
         ps->weapAnim = (ps->weapAnim & 0x200) ^ 0x200;
 }
 
@@ -1714,7 +1718,7 @@ static void PM_FinishWeaponChange(pmove_t *pm)
         PM_AddEvent(ps, 0x9a);
 
     ps->weaponTime = weapDef->iRaiseTime;
-    BG_AnimScriptEvent(ps, 7, 0, 1);
+    BG_AnimScriptEvent(ps, ANIM_ET_RAISEWEAPON, 0, 1);
     ps->aimSpreadScale = 255.0f;
     PM_WeaponSetAnim(ps, 0x0a);
 }
@@ -1956,7 +1960,7 @@ static qboolean PM_StartMelee(playerState_t *ps, WeaponDef *weapDef)
         return 0;
 
     ps->pm_flags |= PM_WEAPON_FLAG_MELEE_HELD;
-    BG_AnimScriptEvent(ps, 0x11, 0, 1);
+    BG_AnimScriptEvent(ps, ANIM_ET_MELEEATTACK, 0, 1);
     PM_WeaponSetAnim(ps, 8);
     PM_AddEvent(ps, 0xa3);
 
@@ -2097,7 +2101,7 @@ static void PM_StartFireTimers(playerState_t *ps, WeaponDef *weapDef)
             ps->weaponDelay = (int)(fracLeft / weapDef->fOOPosAnimLength[0]);
     }
 
-    BG_AnimScriptEvent(ps, 2, 0, 1);
+    BG_AnimScriptEvent(ps, ANIM_ET_FIREWEAPON, 0, 1);
 
     if (weapDef->bBoltAction)
         PM_SetWeaponRechamberBit(ps, ps->weapon);
@@ -2276,7 +2280,7 @@ static void PM_RunOffhandState(pmove_t *pm)
         BG_AddPredictableEventToPlayerstate(0xa6, ps->offHandIndex, ps);
         if (!(ps->eFlags & 0x300))
             ps->ammoclip[weapDef->iClipIndex]--;
-        BG_AnimScriptEvent(ps, 2, 0, 1);
+        BG_AnimScriptEvent(ps, ANIM_ET_FIREWEAPON, 0, 1);
         if (!ps->ammoclip[weapDef->iClipIndex])
             PM_AddEvent(ps, 0x94);
         break;

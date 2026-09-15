@@ -63,22 +63,22 @@ extern unsigned int GetArrayVariable(unsigned int parentId, unsigned int unsigne
 extern unsigned int FindArrayVariable(unsigned int parentId, int intValue);
 extern void RemoveVariable(unsigned int parentId, unsigned int unsignedValue);
 extern void RemoveRefToObject(unsigned int objId);
-extern void *GetVariableValueAddress(unsigned int id);
-extern void SetVariableValue(unsigned int id, void *value);
+extern VariableUnion *GetVariableValueAddress(unsigned int id);
+extern void SetVariableValue(unsigned int id, VariableValue *value);
 extern void SL_RemoveRefToString(unsigned int stringValue);
 extern const char *SL_ConvertToString(unsigned int stringValue);
 extern unsigned int SL_GetLowercaseString_(const char *str, unsigned int user, int type);
 extern unsigned int SL_GetString_(const char *str, unsigned int user, int type);
 extern unsigned int Scr_CreateCanonicalFilename(const char *filename);
-extern int Scr_EvalVariable(unsigned int varId);
+extern unsigned long long Scr_EvalVariable(unsigned int id);
 extern int Scr_IsInOpcodeMemory(const char *pos);
 extern Bool Scr_IsIdentifier(const char *token);
-extern int Scr_AllocArray(void);
+extern unsigned int Scr_AllocArray(void);
 extern void *XAnimCreateAnims(const char *debugName, int size, Alloc_t Alloc);
-extern void XAnimBlend(void *anims, unsigned int animIndex, const char *name, unsigned int children, unsigned int num, unsigned int flags);
+extern void XAnimBlend(XAnim *anims, unsigned int animIndex, const char *name, unsigned int children, unsigned int num, unsigned int flags);
 extern void XAnimPrecache(const char *name, Alloc_t Alloc);
-extern void XAnimCreate(void *anims, unsigned int animIndex, const char *name);
-extern void XAnimSetupSyncNodes(void *anims);
+extern void XAnimCreate(struct XAnim_s *anims, unsigned int animIndex, const char *name);
+extern void XAnimSetupSyncNodes(XAnim *anims);
 extern byte *Scr_AddSourceBuffer(const char *filename, const char *extFilename, byte *oldFilename, int flag);
 extern void Com_BeginParseSession(const char *name);
 extern void Com_EndParseSession(void);
@@ -337,7 +337,7 @@ static void Scr_PrecacheAnimationTree(unsigned int parentNode)
             Scr_PrecacheAnimationTree(FindObject(node));
             continue;
         }
-        XAnimPrecache(SL_ConvertToString(name), Hunk_AllocXAnimTreePrecache);
+        XAnimPrecache(SL_ConvertToString(name), (Alloc_t)(Hunk_AllocXAnimTreePrecache));
     }
 }
 

@@ -6,9 +6,9 @@ extern const FxFlagEntry fxSpawnFlags[13];
 extern Bool g_rendererExists;
 
 extern MaterialHandle Material_RegisterHandle(const char *name, int imageTrack, int materialType);
-extern void MediaHandles_Shutdown(MediaHandles *handles);
+extern void MediaHandles_Shutdown(const MediaHandles *_this);
 extern void Com_Printf(const char *fmt, ...);
-extern Bool Com_ValidXModelName(const char *name);
+extern qboolean Com_ValidXModelName(const char *name);
 extern struct XModel *FX_XModelPrecache(const char *name);
 extern float flrand(float min, float max);
 
@@ -117,12 +117,12 @@ Bool PrimitiveTemplate_ParseAcceleration(const PrimitiveTemplate *_this, const c
 Bool PrimitiveTemplate_ParsePrimitiveInternal(const PrimitiveTemplate *_this, BackCompatibleParameters *backCompatibleParameters, GPGroup *grp);
 Bool PrimitiveTemplate_ParsePrimitive(const PrimitiveTemplate *_this, GPGroup *grp);
 
-#define GPV_STRING(v) (*(const char **)((byte *)(v)))
-#define GPV_NEXT(v) (*(GPValue **)((byte *)(v) + 4))
-#define GPV_LIST(v) (*(GPValue **)((byte *)(v) + 0x10))
+#define GPV_STRING(v) ((v)->name)
+#define GPV_NEXT(v) ((GPValue *)(v)->next)
+#define GPV_LIST(v) ((v)->valueList)
 
-#define GPG_PAIRS(g) (*(GPValue **)((byte *)(g) + 0x10))
-#define GPG_SUBGROUPS(g) (*(GPValue **)((byte *)(g) + 0x1c))
+#define GPG_PAIRS(g) ((g)->pairList)
+#define GPG_SUBGROUPS(g) ((GPValue *)(g)->subGroupList)
 
 static int ParseFloatRange(const char *val, float *outMin, float *outMax)
 {
@@ -266,11 +266,12 @@ float FxRange_GetValPct(const FxRange *_this, float percent)
 
 Bool PrimitiveTemplate_ParseGroupFlags(const PrimitiveTemplate *_this, const char *val, int *groupFlags)
 {
-    char flags_buf[0x80] = { [0x60] = '0' };
+    char flags_buf[0x80] = { 0 };   /* was C99 designated init { [0x60] = '0' } (VC7.1 rejects) */
     int count;
     int i;
     Bool result = 1;
 
+    flags_buf[0x60] = '0';
     (void)_this;
     count = sscanf(val, "%s %s %s %s", flags_buf, flags_buf + 0x20, flags_buf + 0x40, flags_buf + 0x60);
 
@@ -595,11 +596,11 @@ void PrimitiveTemplate_Init(const PrimitiveTemplate *_this)
     t->mDensity.mMin = 10.0f;
     t->mDensity.mMax = 10.0f;
 
-    t->mSequenceStartFrameMode = 0;
+    t->mSequenceStartFrameMode = (StartFrameMode)(0);
     t->mSequenceFixedFrameValue = 1;
-    t->mSequencePlayRateMode = 0;
+    t->mSequencePlayRateMode = (PlayRateMode)(0);
     t->mSequenceFixedFpsValue = 1.0f;
-    t->mSequenceLoopMode = 0;
+    t->mSequenceLoopMode = (LoopMode)(0);
     t->mSequenceLoopTimes = 1;
     t->spawnFrustumCullRadius = 0.0f;
 }
@@ -1049,7 +1050,7 @@ Bool PrimitiveTemplate_ParsePrimitiveInternal(const PrimitiveTemplate *_this, Ba
     float minV[3], maxV[3];
     int n;
 
-    pairs = GPV_LIST(grp);
+    pairs = GPG_PAIRS(grp);
 
     memset(backCompatibleParameters, 0, 0x600);
     {
@@ -1333,7 +1334,7 @@ Bool PrimitiveTemplate_ParsePrimitiveInternal(const PrimitiveTemplate *_this, Ba
             n = atoi(val);
             if ((unsigned int)n > 2)
                 goto error_key;
-            pt->mSequenceStartFrameMode = n;
+            pt->mSequenceStartFrameMode = (StartFrameMode)(n);
         }
 
         else if (stricmp(key, "sequenceFixedFrameValue") == 0) {
@@ -1347,7 +1348,7 @@ Bool PrimitiveTemplate_ParsePrimitiveInternal(const PrimitiveTemplate *_this, Ba
             n = atoi(val);
             if ((unsigned int)n > 1)
                 goto error_key;
-            pt->mSequencePlayRateMode = n;
+            pt->mSequencePlayRateMode = (PlayRateMode)(n);
         }
 
         else if (stricmp(key, "sequenceFixedFpsValue") == 0) {
@@ -1361,7 +1362,7 @@ Bool PrimitiveTemplate_ParsePrimitiveInternal(const PrimitiveTemplate *_this, Ba
             n = atoi(val);
             if ((unsigned int)n > 1)
                 goto error_key;
-            pt->mSequenceLoopMode = n;
+            pt->mSequenceLoopMode = (LoopMode)(n);
         }
 
         else if (stricmp(key, "sequenceLoopTimes") == 0) {
@@ -1379,77 +1380,77 @@ Bool PrimitiveTemplate_ParsePrimitiveInternal(const PrimitiveTemplate *_this, Ba
         }
 
         else if (stricmp(key, "rgb") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(0), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "rgb2") == 0 || stricmp(key, "rgbRand") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 1, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(1), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "alpha") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 2, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(2), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "alphaRand") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 3, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(3), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "size") == 0 || stricmp(key, "width") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 4, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(4), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "sizeRand") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 5, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(5), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "size2") == 0 || stricmp(key, "width2") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 6, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(6), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "size2Rand") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 7, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(7), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "length") == 0 || stricmp(key, "height") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 8, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(8), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "lengthRand") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 9, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(9), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "rotationDelta") == 0) {
 
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 10, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(10), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "rotationDeltaRand") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 11, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(11), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "velocityX") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 12, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(12), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "velocityY") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 13, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(13), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "velocityZ") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 14, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(14), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "velocityXRand") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 15, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(15), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "velocityYRand") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 16, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(16), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "velocityZRand") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 17, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(17), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "velocity2X") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 18, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(18), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "velocity2Y") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 19, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(19), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "velocity2Z") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 20, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(20), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "velocity2XRand") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 21, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(21), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "velocity2YRand") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 22, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(22), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else if (stricmp(key, "velocity2ZRand") == 0) {
-            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, 23, 0, 0, 0, 0, 0, 0, 0, 0))
+            if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)pairs, (FxChannelId)(23), 0, 0, 0, 0, 0, 0, 0, 0))
                 goto check_key_error;
         } else {
             FX_Print("Unknown key parsing an effect primitive: %s\n", key);
@@ -1482,7 +1483,7 @@ post_parse:
             const char *subKey = GPV_STRING(sub);
 
             if (stricmp(subKey, "rgb") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 0, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(0), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1490,7 +1491,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "rgb2") == 0 || stricmp(subKey, "rgbRand") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 1, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(1), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1498,7 +1499,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "alpha") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 2, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(2), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1506,7 +1507,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "alphaRand") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 3, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(3), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1514,7 +1515,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "size") == 0 || stricmp(subKey, "width") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 4, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(4), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1522,7 +1523,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "sizeRand") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 5, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(5), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1530,7 +1531,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "size2") == 0 || stricmp(subKey, "width2") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 6, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(6), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1538,7 +1539,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "size2Rand") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 7, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(7), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1546,7 +1547,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "length") == 0 || stricmp(subKey, "height") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 8, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(8), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1554,7 +1555,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "lengthRand") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 9, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(9), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1562,7 +1563,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "rotationDelta") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 10, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(10), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1570,7 +1571,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "rotationDeltaRand") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 11, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(11), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1578,7 +1579,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "velocityX") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 12, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(12), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1586,7 +1587,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "velocityY") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 13, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(13), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1594,7 +1595,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "velocityZ") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 14, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(14), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1602,7 +1603,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "velocityXRand") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 15, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(15), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1610,7 +1611,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "velocityYRand") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 16, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(16), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1618,7 +1619,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "velocityZRand") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 17, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(17), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1626,7 +1627,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "velocity2X") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 18, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(18), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1634,7 +1635,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "velocity2Y") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 19, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(19), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1642,7 +1643,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "velocity2Z") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 20, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(20), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1650,7 +1651,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "velocity2XRand") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 21, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(21), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1658,7 +1659,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "velocity2YRand") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 22, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(22), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;
@@ -1666,7 +1667,7 @@ post_parse:
                     goto do_migration;
                 }
             } else if (stricmp(subKey, "velocity2ZRand") == 0) {
-                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, 23, 0, 0, 0, 0, 0, 0, 0, 0)) {
+                if (!PrimitiveTemplate_ParseChannel(_this, backCompatibleParameters, (GPGroup *)sub, (FxChannelId)(23), 0, 0, 0, 0, 0, 0, 0, 0)) {
                     if (subKey) {
                         FX_Print("^1FX Error while parsing key '%s'\n", subKey);
                         return 0;

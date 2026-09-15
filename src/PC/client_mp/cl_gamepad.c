@@ -11,7 +11,7 @@
 
 extern void Sys_QueEvent(int time, sysEventType_t type, int value, int value2,
                          int ptrLength, void *ptr);
-extern void CL_MouseEvent(int dx, int dy);
+extern void CL_MouseEvent(const int dx_in, const int dy_in);
 extern void Cbuf_AddText(const char *text);
 extern const dvar_t *Dvar_RegisterBool_mac(const char *name, int value, int flags);
 extern const dvar_t *Dvar_RegisterFloat(const char *name, float value, float min, float max, int flags);

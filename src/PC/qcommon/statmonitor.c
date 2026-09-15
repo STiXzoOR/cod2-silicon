@@ -8,13 +8,13 @@ extern void Com_Error(int code, const char *fmt, ...);
 static statmonitor_t stats[7];
 static int statCount;
 
-extern char **sm_dvar_ptr;
+extern const dvar_t *com_statmon;
 extern char *sm_mtl_init;
 extern int (**sm_mtl_vtable)();
 
 void StatMon_Warning(int type, int duration, const char *materialName)
 {
-    if (!(*(dvar_t **)(sm_dvar_ptr))->current.enabled)
+    if (!com_statmon->current.enabled)
         return;
 
     if ((unsigned int)type > 6)

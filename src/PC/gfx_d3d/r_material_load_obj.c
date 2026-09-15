@@ -1,7 +1,11 @@
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
+extern struct DxGlobals dx;
 
+/* File-scope alias: bound where no local can shadow `dx`, so uses below
+   always reach the global even inside functions that declare their own `dx`. */
+static struct DxGlobals * const dx_g = &dx;
 #define MATERIAL_REGPARM2_ABI COD2_REGPARM(2)
 #define MATERIAL_REGPARM3_ABI COD2_REGPARM(3)
 
@@ -91,7 +95,7 @@ extern void Com_UngetToken(void);
 extern void *Material_Alloc(int size);
 extern const char *R_ErrorDescription(HRESULT hr);
 extern HRESULT D3DXGetShaderConstantTable(const void *function, void **constantTable);
-extern void *Material_RegisterLiteral(float *literal);
+extern const float *Material_RegisterLiteral(const vec_t *literal);
 extern void Com_SkipRestOfLine(const char **text);
 extern void Com_SetScriptWarningPrefix(const char *prefix);
 static Bool MATERIAL_REGPARM3_ABI Material_ParseVector_impl(const char **text, int elemCount, float *vector);
@@ -136,7 +140,7 @@ static Bool MATERIAL_REGPARM3_ABI Material_ValidatePassArguments_impl(const Mate
             byte *consts = (byte *)material->constants;
             int found = 0;
             for (j = 0; j < material->constantCount; j++) {
-                if (*(const char **)(consts + j * 0x14) == argName) {
+                if (*(const char **)(consts + j * (int)sizeof(MaterialConstantDef)) == argName) {
                     found = 1;
                     break;
                 }
@@ -152,7 +156,7 @@ static Bool MATERIAL_REGPARM3_ABI Material_ValidatePassArguments_impl(const Mate
             byte *texs = (byte *)material->textures;
             int found = 0;
             for (j = 0; j < material->textureCount; j++) {
-                if (*(const char **)(texs + j * 0x0c) == argName) {
+                if (*(const char **)(texs + j * (int)sizeof(MaterialTextureDef)) == argName) {
                     found = 1;
                     break;
                 }
@@ -243,7 +247,7 @@ HRESULT IncludeClass_Open(const IncludeClass *_this, D3DXINCLUDE_TYPE IncludeTyp
 }
 
 extern char **FS_ListFiles(const char *dir, const char *ext, int flags, int *count, int);
-extern void FS_FreeFileList(char **list, int allocTrackType);
+extern void FS_FreeFileList(const char **list, int allocTrackType);
 extern int FS_ReadFile(const char *path, void **buffer);
 extern void FS_FreeFile(void *buffer);
 extern void *Hunk_AllocInternal(int size);
@@ -353,8 +357,8 @@ void Material_PreLoadAllShaderText(void)
         }
     }
 
-    FS_FreeFileList(shaderListRoot, 0x14);
-    FS_FreeFileList(shaderListLib, 0x14);
+    FS_FreeFileList((const char **)shaderListRoot, 0x14);
+    FS_FreeFileList((const char **)shaderListLib, 0x14);
 }
 
 static Bool MATERIAL_REGPARM3_ABI Material_ParseCodeConstantSource_r_impl(const char **text, const byte *routing, int offset, const CodeConstantSource *sourceTable, byte *arg)
@@ -717,8 +721,17 @@ static Bool MATERIAL_REGPARM2_ABI Material_ParseSamplerSource(const char **text,
     return Material_ParseSamplerSource_impl(text, arg);
 }
 
+static int Material_FallbackSamplerDest(const char *name)
+{
+    if (strcmp(name, "colorMapSampler") == 0) {
+        return 0;
+    }
+
+    return -1;
+}
+
 extern HRESULT D3DXGetShaderConstantTable(const void *function, void **constantTable);
-extern void *Material_RegisterLiteral(float *literal);
+extern const float *Material_RegisterLiteral(const vec_t *literal);
 extern void Com_SkipRestOfLine(const char **text);
 extern int printf(const char *fmt, ...);
 
@@ -755,17 +768,49 @@ static Bool MATERIAL_REGPARM3_ABI Material_SetPassShaderArguments_impl(const cha
     *argCount = (unsigned short)constantCount;
 
     if (constantCount == 0) {
-        *args = NULL;
+        MaterialShaderArgument fallbackArgs[16];
+        int fallbackCount = 0;
 
         if (!Com_MatchToken(text, "{", 1))
             goto fail;
-        {
+        for (;;) {
+            MaterialShaderArgument arg;
             const char *tok;
-            for (;;) {
-                tok = Com_Parse(text);
-                if (tok[0] == '\0' || tok[0] == '}')
-                    break;
+            int dest;
+
+            tok = Com_Parse(text);
+            if (tok[0] == '\0')
+                goto fail;
+            if (tok[0] == '}')
+                break;
+
+            dest = Material_FallbackSamplerDest(tok);
+            if (!Com_MatchToken(text, "=", 1))
+                goto fail;
+
+            memset(&arg, 0, sizeof(arg));
+            if (!Material_ParseSamplerSource_impl(text, &arg))
+                goto fail;
+            if (!Com_MatchToken(text, ";", 1))
+                goto fail;
+
+            if (dest >= 0) {
+                if (fallbackCount >= 16) {
+                    Com_ScriptWarning("More than %i fallback sampler mappings\n", 16);
+                    goto fail;
+                }
+                arg.dest = (unsigned short)dest;
+                fallbackArgs[fallbackCount++] = arg;
             }
+        }
+
+        *argCount = (unsigned short)fallbackCount;
+        if (fallbackCount == 0) {
+            *args = NULL;
+        } else {
+            allocatedArgs = (MaterialShaderArgument *)Material_Alloc(fallbackCount * (int)sizeof(MaterialShaderArgument));
+            memcpy(allocatedArgs, fallbackArgs, fallbackCount * sizeof(MaterialShaderArgument));
+            *args = allocatedArgs;
         }
         goto succeed;
     }
@@ -1088,12 +1133,12 @@ static MtlParseSuccess MATERIAL_REGPARM3_ABI Material_ParseRuleSetConditionTest_
         if (strcmp(token, srcGroup[sourceIndex].name) == 0)
             goto foundSource;
     }
-    return 1;
+    return (MtlParseSuccess)(1);
 
 foundSource:
 
     if (!Com_MatchToken(text, "==", 1))
-        return 2;
+        return (MtlParseSuccess)(2);
 
     const MtlStateMapBitName *bitNames = srcGroup[sourceIndex].bitNames;
 
@@ -1104,7 +1149,7 @@ foundSource:
             goto foundValue;
     }
     Com_ScriptWarning("%s is not a valid state value\n", valueToken);
-    return 2;
+    return (MtlParseSuccess)(2);
 
 foundValue:;
     int destWordIndex = srcGroup[sourceIndex].stateBitsMask[0] ? 0 : 1;
@@ -1112,7 +1157,7 @@ foundValue:;
     rule->stateBitsMask[destWordIndex] |= srcGroup[sourceIndex].stateBitsMask[destWordIndex];
     rule->stateBitsValue[destWordIndex] |= bitNames[valueIndex].bits;
 
-    return 0;
+    return (MtlParseSuccess)(0);
 }
 
 static MtlParseSuccess MATERIAL_REGPARM3_ABI Material_ParseRuleSetConditionTest(const char **text, const char *token, MaterialStateMapRule *rule)
@@ -1293,8 +1338,8 @@ static Bool MATERIAL_REGPARM3_ABI Material_ParseRuleSet(const char **text, const
     return Material_ParseRuleSet_impl(text, ruleSetName, stateSet, ruleSet);
 }
 
-extern void *Material_FindStateMap(const char *name);
-extern void Material_SetStateMap(const char *name, void *stateMap);
+extern MaterialStateMap *Material_FindStateMap(const char *name);
+extern void Material_SetStateMap(const char *name, MaterialStateMap *stateMap);
 #ifndef MATERIAL_ALLOC_DECLARED
 #    define MATERIAL_ALLOC_DECLARED
 extern void *Material_Alloc(int size);
@@ -1348,7 +1393,7 @@ static Bool MATERIAL_REGPARM2_ABI Material_LoadPassStateMap_impl(const char **te
                                             &sm->ruleSet[1]))
                 goto sm_fail;
 
-            if (((byte *)imp_dx)[0x2d7c] == 0) {
+            if (((byte *)dx_g)[0x2d7c] == 0) {
                 byte *rs = (byte *)sm->ruleSet[1];
                 int rc = *(int *)rs;
                 byte *rule = rs;
@@ -1372,7 +1417,7 @@ static Bool MATERIAL_REGPARM2_ABI Material_LoadPassStateMap_impl(const char **te
 
             {
                 byte *alphaRS = (byte *)sm->ruleSet[2];
-                if (((byte *)imp_dx)[0x2d7d] == 0) {
+                if (((byte *)dx_g)[0x2d7d] == 0) {
 
                     *(int *)alphaRS = 1;
                     ((MaterialStateMapRule *)alphaRS)->stateBitsMask[1] = 0;
@@ -1384,7 +1429,7 @@ static Bool MATERIAL_REGPARM2_ABI Material_LoadPassStateMap_impl(const char **te
                         unsigned int v14 = *(unsigned int *)(alphaRS + 0x14);
                         *(unsigned int *)(alphaRS + 0x14) = (v14 & 0xf800ffff) | 0x120000;
                     }
-                } else if (((byte *)imp_dx)[0x2d7c] == 0) {
+                } else if (((byte *)dx_g)[0x2d7c] == 0) {
                     int rc = *(int *)alphaRS;
                     byte *rule = alphaRS;
                     int i;
@@ -1459,8 +1504,8 @@ static Bool MATERIAL_REGPARM2_ABI Material_LoadPassStateMap(const char **text, M
 
 extern float floorf(float x);
 extern void *Material_Alloc(int size);
-extern void *Material_FindShader(const char *name, int shaderType, int shaderVersion);
-extern void Material_SetShader(const char *name, int shaderType, int shaderVersion, void *shader);
+extern MaterialShader *Material_FindShader(const char *name, MaterialShaderType shaderType, int shaderVersion);
+extern void Material_SetShader(const char *name, MaterialShaderType shaderType, int shaderVersion, MaterialShader *shader);
 extern byte __ZTV12IncludeClass[];
 extern int stricmp(const char *s1, const char *s2);
 extern HRESULT D3DXCompileShader(const char *src, int srcLen, const void *defines, void *include,
@@ -1494,7 +1539,7 @@ static MaterialShader *MATERIAL_REGPARM2_ABI COD2_FORCE_ALIGN_ARG_POINTER Materi
 
     filename = Com_Parse(text);
 
-    mtlShader = (MaterialShader *)Material_FindShader(filename, shaderType, version);
+    mtlShader = Material_FindShader(filename, (MaterialShaderType)shaderType, version);
     if (mtlShader)
         return mtlShader;
 
@@ -1583,7 +1628,7 @@ static MaterialShader *MATERIAL_REGPARM2_ABI COD2_FORCE_ALIGN_ARG_POINTER Materi
             *(void **)includeObj = (void *)g_realIncludeVtbl;
         }
 #else
-        *(void **)includeObj = (void *)(__ZTV12IncludeClass + 8);
+        *(void **)includeObj = (void *)(__ZTV12IncludeClass + (2 * (int)sizeof(void *)));
 #endif
 
         shaderBlob = NULL;
@@ -1618,7 +1663,7 @@ static MaterialShader *MATERIAL_REGPARM2_ABI COD2_FORCE_ALIGN_ARG_POINTER Materi
         }
 #elif defined(COD2_X64)
         /* x64: pass the actual HLSL source (fileData/fileSize), not the name buffer
-         * -- the x86 reconstruction passed sourceName, which made hlsl_has scan a
+         * -- the x86 path passes sourceName, which made hlsl_has scan a
          * 256-byte stack buffer for `fileSize` bytes and run into the stack guard. */
         (void)sourceName;
         hr = D3DXCompileShader((const char *)fileData, fileSize, defines, includeObj,
@@ -1706,7 +1751,7 @@ static MaterialShader *MATERIAL_REGPARM2_ABI COD2_FORCE_ALIGN_ARG_POINTER Materi
     }
 
     if (mtlShader) {
-        Material_SetShader(filename, shaderType, version, mtlShader);
+        Material_SetShader(filename, (MaterialShaderType)shaderType, version, mtlShader);
     }
     return mtlShader;
 }
@@ -1716,14 +1761,14 @@ static MaterialShader *MATERIAL_REGPARM2_ABI Material_LoadPassShader(const char 
     return Material_LoadPassShader_impl(text, shaderType);
 }
 
-extern void *Material_FindTechniqueSet(const char *name);
-extern void Material_SetTechniqueSet(const char *name, void *techSet);
-extern void *Material_FindTechnique(const char *name);
-extern void Material_SetTechnique(const char *name, void *technique);
-extern void *Material_AllocVertexDecl(byte *routing, int routingCount, byte *existing);
-extern void Load_BuildVertexDecl(void *vertexDecl);
-extern void *Image_Register(const char *name, int semantic, int imageTrack);
-extern void *R_LoadWaterSetup(byte *setupData);
+extern MaterialTechniqueSet *Material_FindTechniqueSet(const char *name);
+extern void Material_SetTechniqueSet(const char *name, MaterialTechniqueSet *techniqueSet);
+extern MaterialTechnique *Material_FindTechnique(const char *name);
+extern void Material_SetTechnique(const char *name, MaterialTechnique *technique);
+extern MaterialVertexDeclaration *Material_AllocVertexDecl(MaterialStreamRouting *routingData, int streamCount, Bool *existing);
+extern void Load_BuildVertexDecl(MaterialVertexDeclaration **vertexDecl);
+extern GfxImage * Image_Register(const char *imageName, int semantic, int imageTrack);
+extern water_t *R_LoadWaterSetup(const water_t *water);
 extern void Com_SetKeepStringQuotes(int value);
 extern const byte s_techniqueTypeNames[];
 
@@ -1762,7 +1807,7 @@ static Bool MATERIAL_REGPARM2_ABI Material_FinishLoadingInstance_impl(MaterialOb
                 *(int *)(setup + 0x28) = ((GfxWorld *)wd)->skySurfCount;
                 *(int *)(setup + 0x2c) = (*(int *)&((GfxWorld *)wd)->nodes);
                 *(int *)(setup + 0x40) = 0;
-                int wres = (int)R_LoadWaterSetup(setup);
+                int wres = (int)R_LoadWaterSetup( (const water_t *)(setup));
                 (*(int *)&((GfxWorld *)wd)->skyStartSurfs) = wres;
                 if (!wres)
                     return 0;
@@ -1928,7 +1973,7 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                                 if (!Material_LoadPassStateMap_impl(&ttext, (MaterialStateMap **)cp)) {
                                     terr = 1;
                                     break;
-                                }
+                                }
                                 int rc = 0;
                                 byte rd[32];
                                 int rok = 1;
@@ -2046,7 +2091,7 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                                 }
                                 {
                                     byte ef = 0;
-                                    void *vd = Material_AllocVertexDecl(rd, rc, &ef);
+                                    void *vd = Material_AllocVertexDecl( (MaterialStreamRouting *)(rd), rc, &ef);
                                     ((MaterialPassDx9 *)cp)->vertexDecl = (MaterialVertexDeclaration *)vd;
                                     if (!ef)
                                         Load_BuildVertexDecl(&((MaterialPassDx9 *)cp)->vertexDecl);
@@ -2453,7 +2498,7 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                             return 0;
                 } else {
                     int pi;
-                    MaterialPassDx9 *passes = (MaterialPassDx9 *)&tech->passArray;                    for (pi = 0; pi < passCount; pi++) {
+                    MaterialPassDx9 *passes = (MaterialPassDx9 *)&tech->passArray;                    for (pi = 0; pi < passCount; pi++) {
                         MaterialPassDx9 *passBase = &passes[pi];
                         if (!Material_ValidatePassArguments_impl((const Material *)mtl, tsNameStr, tech->name,
                                                                  passBase->pixelArgCount, passBase->pixelArgs))
@@ -2533,7 +2578,7 @@ static Bool Material_ShouldPrintMissingMaterial(const char *name)
 
 #if defined(COD2_X64)
 /* ===== 32-bit .material on-disk layout (kept binary-compatible) =====
- * The retail .material file is a 32-bit memory image: "pointers" are 4-byte
+ * The .material file is a 32-bit memory image: "pointers" are 4-byte
  * blob-relative offsets. On x64 we cannot relocate those in place (an 8-byte
  * pointer can't fit a 4-byte slot), so we MARSHAL the 32-bit image into an
  * x64-laid-out Material. The file bytes are never modified. */

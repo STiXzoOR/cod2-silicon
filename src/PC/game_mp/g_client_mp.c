@@ -2,6 +2,8 @@
 #include "imports.h"
 #include <string.h>
 #include <stdlib.h>
+/* dvar globals */
+extern const dvar_t *g_inactivity;
 
 vec3_t playerMaxs = { 15.0f, 15.0f, 70.0f };
 
@@ -9,46 +11,46 @@ extern level_locals_t level;
 
 extern void Com_Printf(const char *fmt, ...);
 extern void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up);
-extern float AngleDelta(float a1, float a2);
-extern float AngleNormalize180(float angle);
-extern float AngleNormalize360(float angle);
+extern const float AngleDelta(const float angle1, const float angle2);
+extern const float AngleNormalize180(const float angle);
+extern const float AngleNormalize360(const float angle);
 extern int CalculateRanks(void);
-extern void Scr_Notify(gentity_t *ent, unsigned short name, int numArgs);
+extern void Scr_Notify(gentity_t *ent, unsigned short name, unsigned int numArgs);
 extern int Scr_IsSystemActive(int flag);
 extern unsigned int Scr_AddString(const char *str);
 extern void Scr_PlayerConnect(gentity_t *ent);
 extern void Scr_PlayerDisconnect(gentity_t *ent);
 extern void StopFollowing(gentity_t *ent);
 extern void HudElem_ClientDisconnect(gentity_t *ent);
-extern unsigned char G_FreeEntity(gentity_t *ent);
+extern void G_FreeEntity(gentity_t *ed);
 extern void G_InitGentity(gentity_t *ent);
 extern void G_EntUnlink(gentity_t *ent);
-extern unsigned char G_SetOrigin(gentity_t *ent, const vec_t *origin);
+extern void G_SetOrigin(gentity_t *ent, const vec_t *origin);
 extern void G_SetClientContents(gentity_t *ent);
 extern void G_ClientStopUsingTurret(gentity_t *ent);
 extern int G_DObjGetWorldTagPos(gentity_t *ent, unsigned short tag, vec_t *origin);
 extern void SV_UnlinkEntity(gentity_t *ent);
-extern int SV_inSnapshot(vec_t *vPosition, int clientNum);
+extern qboolean SV_inSnapshot(const vec_t *origin, int iEntityNum);
 extern int OnSameTeam(gentity_t *a, gentity_t *b);
-extern int SV_ClientHasClientMuted(int clientNum, int mutedClientNum);
-extern int SV_ClientWantsVoiceData(int clientNum);
+extern unsigned char SV_ClientHasClientMuted(int clientNum, int mutedClientNum);
+extern unsigned char SV_ClientWantsVoiceData(int clientNum);
 extern void SV_QueueVoicePacket(int talkerNum, int clientNum, VoicePacket_t *voicePacket);
 extern void SV_GetUserinfo(int clientNum, char *buffer, int bufSize);
 extern void SV_GetUsercmd(int clientNum, usercmd_t *dest);
 extern int SV_IsLocalClient(int clientNum);
 extern int Info_Validate(const char *s);
-extern const char *Info_ValueForKey(const char *s, const char *key);
+extern char *Info_ValueForKey(const char *s, const char *key);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern int I_stricmp(const char *s1, const char *s2);
 extern void Scr_SetString(scr_string_t *dest, unsigned int value);
 extern void ClientEndFrame(gentity_t *ent);
 extern void ClientThink_real(gentity_t *ent, usercmd_t *ucmd);
-extern void BG_PlayerStateToEntityState(playerState_t *ps, gentity_t *ent, int snap, int forceOverride);
+extern void BG_PlayerStateToEntityState(playerState_t *ps, entityState_t *s, qboolean snap, int handler);
 extern float BG_GetBobCycle(const playerState_t *ps);
-extern float BG_GetSpeed(const playerState_t *ps, int serverTime);
-extern float BG_GetVerticalBobFactor(const playerState_t *ps, float bobCycle, float xyspeed, float bobMax);
-extern float BG_GetHorizontalBobFactor(const playerState_t *ps, float bobCycle, float xyspeed, float bobMax);
-extern void AddLeanToPosition(vec_t *origin, float viewAngle, float leanFrac, float maxStand, float maxCrouch);
+extern float BG_GetSpeed(const playerState_t *ps, int time);
+extern float BG_GetVerticalBobFactor(const playerState_t *ps, float cycle, float speed, float maxAmp);
+extern float BG_GetHorizontalBobFactor(const playerState_t *ps, float cycle, float speed, float maxAmp);
+extern void AddLeanToPosition(vec_t *position, const float fViewYaw, const float fLeanFrac, const float fViewRoll, const float fLeanDist);
 extern int ColorIndex(int c);
 extern void Com_Error(int level, const char *fmt, ...);
 
@@ -56,7 +58,7 @@ extern vec3_t playerMins;
 extern vec3_t playerMaxs;
 extern const dvar_t *g_password;
 
-extern byte g_entities_ptr[];
+extern gentity_t g_entities[];
 extern byte level_ptr[];
 
 extern const dvar_t *voice_global;
@@ -78,7 +80,8 @@ char *ClientConnect(int clientNum, int scriptPersId);
 
 #define GENTITY_STRIDE sizeof(gentity_s)
 #define CLIENT_STRIDE sizeof(gclient_s)
-#define SCR_CONST() ((const scr_const_t *)imp_scr_const)
+extern scr_const_t scr_const;
+#define SCR_CONST() (&scr_const)   /* was an imp_ deref; use the real object like cgame does */
 
 static inline __attribute__((always_inline)) gclient_s *G_ClientForNum(int clientNum)
 {
@@ -86,7 +89,7 @@ static inline __attribute__((always_inline)) gclient_s *G_ClientForNum(int clien
 }
 static inline __attribute__((always_inline)) gentity_s *G_EntityForNum(int entNum)
 {
-    return &((gentity_s *)imp_g_entities)[entNum];
+    return &g_entities[entNum];
 }
 static inline __attribute__((always_inline)) level_locals_t *G_Level(void)
 {
@@ -105,7 +108,7 @@ void ClientBegin(int clientNum)
     gentity_s *ent = G_EntityForNum(clientNum);
     const scr_const_t *scr = SCR_CONST();
 
-    client->sess.connected = 2;
+    client->sess.connected = (clientConnected_t)(2);
     client->ps.pm_type = 4;
 
     CalculateRanks();
@@ -154,7 +157,7 @@ void ClientDisconnect(int clientNum)
 
     G_FreeEntity(ent);
 
-    client->sess.connected = 0;
+    client->sess.connected = (clientConnected_t)(0);
     memset(&client->sess.cs, 0, sizeof(clientState_t));
 
     CalculateRanks();
@@ -445,7 +448,7 @@ void ClientSpawn(gentity_t *ent, const vec_t *spawn_origin, const vec_t *spawn_a
     vec_t *pMins;
     vec_t *pMaxs;
 
-    clientNum = ent - (gentity_s *)imp_g_entities;
+    clientNum = ent - g_entities;
 
     client = ent->client;
     lev = G_Level();
@@ -538,7 +541,7 @@ void ClientSpawn(gentity_t *ent, const vec_t *spawn_origin, const vec_t *spawn_a
     SetClientViewAngle(ent, spawn_angles);
 
     {
-        int dvarVal = (*(const dvar_t **)imp_g_inactivity)->current.integer;
+        int dvarVal = (g_inactivity)->current.integer;
         int time = dvarVal * 5 * 5 * 5;
         client->inactivityTime = lev->time + time * 8;
     }
@@ -556,7 +559,7 @@ void ClientSpawn(gentity_t *ent, const vec_t *spawn_origin, const vec_t *spawn_a
 
         lev->clientIsSpawning = 0;
 
-        BG_PlayerStateToEntityState(&client->ps, ent, 1, 1);
+        BG_PlayerStateToEntityState(&client->ps, &ent->s, 1, 1);
     }
 }
 
@@ -845,7 +848,7 @@ char *ClientConnect(int clientNum, int scriptPersId)
     gentity_s *ent;
     gclient_s *client;
     clientInfo_t *ci;
-    int pXAnimTree;
+    XAnimTree_s *pXAnimTree;
     char userinfo[0x400];
 
     ent = G_EntityForNum(clientNum);
@@ -855,18 +858,18 @@ char *ClientConnect(int clientNum, int scriptPersId)
 
     ci = &level_bgs.clientinfo[clientNum];
 
-    pXAnimTree = (int)ci->pXAnimTree;
+    pXAnimTree = ci->pXAnimTree;
     memset(ci, 0, sizeof(*ci));
-    ci->pXAnimTree = (XAnimTree_s *)pXAnimTree;
+    ci->pXAnimTree = pXAnimTree;
 
     ci->infoValid = 1;
     ci->nextValid = 1;
 
-    client->sess.connected = 1;
+    client->sess.connected = (clientConnected_t)(1);
     client->sess.scriptPersId = (unsigned short)scriptPersId;
 
-    client->sess.cs.team = 3;
-    client->sess.sessionState = 2;
+    client->sess.cs.team = (team_t)(3);
+    client->sess.sessionState = (sessionState_t)(2);
     client->spectatorClient = -1;
     client->sess.forceSpectatorClient = -1;
 

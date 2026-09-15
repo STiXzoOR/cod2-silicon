@@ -5,20 +5,20 @@ extern refimport_t ri;
 #include "bytematch.h"
 #include <string.h>
 
-extern void R_FreeStaticVertexBuffer(void *vb);
-extern void *R_AllocStaticVertexBuffer(void *vb_out, int size);
-extern void R_FinishStaticVertexBuffer(void *vb);
+extern void R_FreeStaticVertexBuffer(IDirect3DVertexBuffer9 *vb);
+extern void *R_AllocStaticVertexBuffer(IDirect3DVertexBuffer9 **vb_out, int size);
+extern void R_FinishStaticVertexBuffer(IDirect3DVertexBuffer9 *vb);
 extern void Com_Memcpy(void *dest, const void *src, int count);
-extern void R_InterpretSunLightParseParamsIntoLights(void *sunParse, void *lights);
+extern void R_InterpretSunLightParseParamsIntoLights(SunLightParseParams *sunParse, GfxLight *lights);
 extern float ColorNormalize(float *in, float *out);
-extern void *R_LoadWorldInternal(const char *name);
+extern GfxWorld *R_LoadWorldInternal(const char *name);
 extern void RB_InitLightVisHistory(const char *name);
 extern void R_FlushSun(void);
 extern void R_ResetShadowCookies(void);
 extern void R_InitStaticModelIndexCache(void);
 extern void *Hunk_AllocInternal(int size);
 extern void R_InitStaticModelDynamicData(int index);
-extern void *Image_Register(const char *name, int flag1, int flag2);
+extern GfxImage * Image_Register(const char *imageName, int semantic, int imageTrack);
 
 extern r_global_permanent_t rgp;
 
@@ -58,7 +58,7 @@ void R_ReleaseWorld(void)
 {
 
     if (*(void **)((*(byte **)&rgp.world) + 0x30) != NULL) {
-        R_FreeStaticVertexBuffer(*(void **)((*(byte **)&rgp.world) + 0x30));
+        R_FreeStaticVertexBuffer(*(IDirect3DVertexBuffer9 **)((*(byte **)&rgp.world) + 0x30));
         *(void **)((*(byte **)&rgp.world) + 0x30) = NULL;
     }
 }
@@ -80,7 +80,7 @@ void R_GetWorldBounds(vec_t *min, vec_t *max)
 void R_InterpretSunLightParseParams(SunLightParseParams *sunParse)
 {
 
-    R_InterpretSunLightParseParamsIntoLights(sunParse, (*(byte **)&rgp.world) + 0xb4);
+    R_InterpretSunLightParseParamsIntoLights(sunParse, (GfxLight *)((*(byte **)&rgp.world) + 0xb4));
 
     {
         byte *world = (*(byte **)&rgp.world);
@@ -111,7 +111,7 @@ void R_SetSunLightOverride(const vec_t *sunColor)
 
 IDirect3DVertexBuffer9 *R_CreateWorldVertexBuffer(GfxWorldVertex *vertices, int vertexCount)
 {
-    void *worldVb;
+    IDirect3DVertexBuffer9 *worldVb;
     byte *dataPtr;
     int sizeVerts;
     int vertIndex;
@@ -165,7 +165,7 @@ void R_ShutdownWorld(void)
     {
         void *vb = (*(void **)&((GfxWorld *)world)->vd.worldVb);
         if (vb != NULL) {
-            R_FreeStaticVertexBuffer(vb);
+            R_FreeStaticVertexBuffer((IDirect3DVertexBuffer9 *)vb);
             *(void **)((*(byte **)&rgp.world) + 0x30) = NULL;
         }
     }
@@ -219,7 +219,7 @@ void R_UpdateLightsFromDvars(void)
 
     world = (*(byte **)&rgp.world);
     if (world) {   /* no world (e.g. main menu, no map loaded) -> nothing to update */
-        R_InterpretSunLightParseParamsIntoLights(sunParse, world + 0xb4);
+        R_InterpretSunLightParseParamsIntoLights((SunLightParseParams *)sunParse, (GfxLight *)(world + 0xb4));
 
         {
             vec_t *dst = (vec_t *)&((GfxWorld *)world)->sunColorFromBsp[0];
@@ -249,7 +249,7 @@ void R_LoadWorld(const char *name, int *checksum)
     }
 
     world = *(byte **)&rgp.world;
-    worldData = ((char *)world + offsetof(GfxWorld, sunParse.name[0]));
+    worldData = (byte *)(((char *)world + offsetof(GfxWorld, sunParse.name[0])));
 
     refimport = (refimport_t *)&ri;
 
@@ -294,11 +294,14 @@ void R_LoadWorld(const char *name, int *checksum)
     frontEnd = (byte *)imp_rg;
     world = (*(byte **)&rgp.world);
 
-    (*(void **)&((r_globals_t *)frontEnd)->smodelDyncs) = Hunk_AllocInternal(((GfxWorld *)world)->smodelCount * 8);
+    ((r_globals_t *)frontEnd)->smodelDyncs =
+        (GfxStaticModelDynamic *)Hunk_AllocInternal(((GfxWorld *)world)->smodelCount * (int)sizeof(GfxStaticModelDynamic));
     world = (*(byte **)&rgp.world);
-    (*(void **)&((r_globals_t *)frontEnd)->surfaces) = Hunk_AllocInternal(((GfxWorld *)world)->surfaceCount * 4);
+    ((r_globals_t *)frontEnd)->surfaces =
+        (GfxSurfaceDynamic *)Hunk_AllocInternal(((GfxWorld *)world)->surfaceCount * (int)sizeof(GfxSurfaceDynamic));
     world = (*(byte **)&rgp.world);
-    (*(void **)&((r_globals_t *)frontEnd)->cullGroups) = Hunk_AllocInternal(((GfxWorld *)world)->cullGroupCount * 4);
+    ((r_globals_t *)frontEnd)->cullGroups =
+        (GfxCullGroupDynamic *)Hunk_AllocInternal(((GfxWorld *)world)->cullGroupCount * (int)sizeof(GfxCullGroupDynamic));
 
     world = (*(byte **)&rgp.world);
     if (((GfxWorld *)world)->smodelCount > 0) {

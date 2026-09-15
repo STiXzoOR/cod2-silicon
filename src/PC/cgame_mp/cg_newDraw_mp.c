@@ -7,6 +7,8 @@
 
 extern const dvar_t *cg_drawHealth;
 extern const dvar_t *cg_hudCompassSize;
+extern const dvar_t *cg_hudProneY;
+extern const dvar_t *cg_hudStanceFlash;
 extern const dvar_t *cg_hudStanceHintPrints;
 
 extern const dvar_t *cg_cursorHints;
@@ -29,8 +31,7 @@ extern const dvar_t *hud_deathQuoteFadeTime;
 static vec4_t color;
 static char szErrorString[1024];
 static const float pulseMags[4];
-static vec4_t color_00302d80;
-static vec4_t color_00302d80;
+static vec4_t color_00302d80;   /* duplicate decl removed (C++ redefinition -> C2086) */
 static const dvar_t *hud_fadeout_speed;
 static const dvar_t *hud_enable;
 static const dvar_t *hud_healthOverlay_regenPauseTime;
@@ -53,11 +54,12 @@ extern void CL_DrawStretchPic(float x, float y, float w, float h, int horzAlign,
 extern const dvar_t *Dvar_RegisterBool_mac(const char *name, int value, int flags);
 extern const dvar_t *Dvar_RegisterFloat(const char *name, float value, float min, float max, int flags);
 extern const dvar_t *Dvar_RegisterInt(const char *name, int value, int min, int max, int flags);
+extern const dvar_t *Dvar_FindVar(const char *name);
 extern void Controls_GetConfig(void);
 extern int BG_GetNumWeapons(void);
 extern int GetKeyBindingLocalizedString(const char *command, char *keys);
-extern int BG_GetViewmodelWeaponIndex(void *ps);
-extern void *BG_GetWeaponDef(int weapIndex);
+extern int BG_GetViewmodelWeaponIndex(const playerState_t *ps);
+extern WeaponDef * BG_GetWeaponDef(int iWeapon);
 extern int BG_AmmoForWeapon(int weapon);
 extern int BG_GetTotalAmmoReserve(const playerState_t *ps, int weaponIndex);
 extern int BG_GetAmmoTypeMax(int iAmmoIndex);
@@ -75,14 +77,14 @@ extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern int UI_TextWidth(const char *text, int maxChars, FontHandle font, float fontScale);
 extern int UI_TextHeight(FontHandle font, float fontScale);
 extern void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float scale, const vec_t *color, int style);
-extern float UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle material);
+extern void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle hMaterial);
 extern const char *SEH_StringEd_GetString(const char *pszReference);
 extern void Com_Error(errorParm_t code, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern void I_strncat(char *dest, int maxlen, const char *src);
 extern qboolean CG_ScoreboardDisplayed(void);
-extern int CG_ScrollScoreboardUp(void);
-extern int CG_ScrollScoreboardDown(void);
+extern void CG_ScrollScoreboardUp(void);
+extern void CG_ScrollScoreboardDown(void);
 extern float *CG_FadeColor(int startMsec, int totalMsec, int fadeMsec);
 extern qboolean GetCommandHasBinding(const char *command);
 extern void Dvar_GetUnpackedColor(const dvar_t *dvar, vec_t *expandedColor);
@@ -94,7 +96,7 @@ extern void CG_DrawOffHandName(rectDef_s *rect, struct Font_s *font, float scale
 extern void CG_DrawOffHandIcon(rectDef_s *rect, float scale, vec_t *color, MaterialHandle material, int weaponType);
 extern void CG_DrawOffHandHighlight(rectDef_s *rect, float scale, vec_t *color, MaterialHandle material, int weaponType);
 extern void CG_DrawOffHandAmmo(rectDef_s *rect, struct Font_s *font, float scale, vec_t *color, int textStyle, int weaponType);
-extern unsigned int CG_DrawTeamBackground(float x, float y, float w, float h, float alpha, int team);
+extern void CG_DrawTeamBackground(float x, float y, float w, float h, float alpha, int team);
 
 enum {
     CG_PLAYER_AMMO_VALUE = 5,
@@ -166,6 +168,16 @@ COD2_ASSERT_FIELD(WeaponDef,     overlayReticle, 0x278);
 COD2_ASSERT_FIELD(WeaponDef,     bWideListIcon,  0x344);
 COD2_ASSERT_FIELD(playerState_t, fWeaponPosFrac, 0xdc);
 
+static qboolean CG_DrawHealthEnabled(void)
+{
+    const dvar_t *drawHealth = Dvar_FindVar("cg_drawHealth");
+
+    if (drawHealth)
+        cg_drawHealth = drawHealth;
+
+    return drawHealth && drawHealth->current.enabled;
+}
+
 void CG_AntiBurnInHUD_RegisterDvars(void)
 {
     hud_fadeout_speed = Dvar_RegisterFloat("hud_fadeout_speed", 0.1f, 0.0f, 1.0f, 0x1001);
@@ -217,7 +229,7 @@ float CG_CalcPlayerHealth(void)
     playerState_t *ps;
     float healthRatio;
 
-    ps = &cg->nextSnap->ps;
+    ps = &cgArray[0].nextSnap->ps;
     if (ps->stats[0] == 0 || ps->stats[2] == 0 || ps->pm_type == 6) {
         return 0.0f;
     }
@@ -273,7 +285,7 @@ const char *CG_GetUseString(void)
     const char *hintString;
     char binding[0x100];
 
-    hintString = CL_GetConfigString(cg->cursorHintString + 0x4fe);
+    hintString = CL_GetConfigString(cgArray[0].cursorHintString + 0x4fe);
     if (!hintString || !*hintString) {
         return 0;
     }
@@ -966,9 +978,6 @@ static inline __attribute__((always_inline)) float CG_HudFadeAlpha(const dvar_t 
 
 static inline __attribute__((always_inline)) qboolean CG_PlayerOwnsWeapon(const playerState_t *ps, int weaponIndex)
 {
-    if (!ps || weaponIndex <= 0 || weaponIndex >= BG_GetNumWeapons()) {
-        return 0;
-    }
     return (ps->weapons[weaponIndex >> 5] & (1 << (weaponIndex & 31))) != 0;
 }
 
@@ -977,18 +986,10 @@ static inline __attribute__((always_inline)) int CG_GetDrawWeaponIndex(void)
     playerState_t *ps;
     int weaponIndex;
 
-    if (!cg) {
-        return 0;
-    }
-
     ps = &cg->predictedPlayerState;
     weaponIndex = cg->weaponSelect;
-    if (!CG_PlayerOwnsWeapon(ps, weaponIndex)) {
+    if (weaponIndex < 0 || weaponIndex >= BG_GetNumWeapons() || !CG_PlayerOwnsWeapon(ps, weaponIndex)) {
         weaponIndex = ps->weapon;
-    }
-
-    if (weaponIndex <= 0 || weaponIndex >= BG_GetNumWeapons()) {
-        return 0;
     }
     return weaponIndex;
 }
@@ -1043,63 +1044,222 @@ static inline __attribute__((always_inline)) void CG_DrawHudPic(const rectDef_t 
     UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, material);
 }
 
+static inline __attribute__((always_inline)) int CG_RoundStanceFadeDuration(float value)
+{
+#if defined(_MSC_VER) && defined(_M_IX86)
+    int result;
+    const double roundEpsilon = 1.0 / 1073741824.0;
+
+    __asm fld value
+    __asm fadd roundEpsilon
+    __asm fistp result
+
+    return result;
+#else
+    return (int)floorf(value + 0.5f);
+#endif
+}
+
+static void CG_DrawStanceIcon(const rectDef_t *rect, vec_t *drawColor, float x, float y, float fadeAlpha)
+{
+    MaterialHandle icon;
+    float width;
+    float height;
+    float flashAlpha;
+
+    width = rect->w;
+    height = rect->h;
+
+    if (cg->lastStance & 1) {
+        icon = cgs->media.stanceMaterials[2];
+    } else if (cg->lastStance & 2) {
+        icon = cgs->media.stanceMaterials[1];
+    } else {
+        icon = cgs->media.stanceMaterials[0];
+    }
+
+    UI_DrawHandlePic(
+        x, y, width, height,
+        rect->horzAlign, rect->vertAlign,
+        drawColor, icon);
+
+    if (cg->lastStanceChangeTime + 1000 > cg->time) {
+        Dvar_GetUnpackedColor(cg_hudStanceFlash, drawColor);
+
+        flashAlpha = (float)(cg->lastStanceChangeTime - cg->time + 1000) / 1000.0f * 0.8f;
+        drawColor[3] = flashAlpha;
+        if (fadeAlpha < drawColor[3]) {
+            drawColor[3] = fadeAlpha;
+        }
+
+        UI_DrawHandlePic(
+            x, y, width, height,
+            rect->horzAlign, rect->vertAlign,
+            drawColor, cgs->media.stanceMaterials[3]);
+    }
+}
+
 static void CG_DrawPlayerStance(const rectDef_t *rect, vec_t *color, struct Font_s *font, float scale, int textStyle)
 {
-    const playerState_t *ps;
-    vec_t drawColor[4];
-    int stance;
-    float alpha;
-    float compassScale;
     float x;
-    const char *hintText;
+    float y;
+    float fadeAlpha;
+    vec4_t drawColor;
+    const char *proneStr;
+    int duration;
 
-    (void)font;
-    (void)scale;
-    (void)textStyle;
+    duration = CG_RoundStanceFadeDuration(1000.0f * hud_fade_stance->current.value);
+    fadeAlpha = CG_FadeHudMenu(hud_fade_stance, cg->stanceFadeTime, duration);
 
-    if (!rect) {
+    if (fadeAlpha == 0.0f) {
         return;
     }
 
-    if (!cg || !cgs) {
-        return;
-    }
-
-    ps = &cg->predictedPlayerState;
-    stance = 0;
-    if (ps->pm_flags & 1) {
-        stance = 2;
-    } else if (ps->pm_flags & 2) {
-        stance = 1;
-    }
-
-    if (cg->lastStance != stance) {
-        cg->lastStance = stance;
+    if (!cg_hudStanceHintPrints->current.enabled) {
+        cg->lastStanceChangeTime = 0;
+    } else if (cg->lastStance != (cg->predictedPlayerState.pm_flags & 3)) {
         cg->lastStanceChangeTime = cg->time;
-        cg->lastStanceFlashTime = cg->time + 1000;
     }
 
-    alpha = CG_HudFadeAlpha(hud_fade_stance, cg->stanceFadeTime);
-    if (alpha <= 0.0f) {
-        return;
+    cg->lastStance = cg->predictedPlayerState.pm_flags & 3;
+
+    x = rect->x + (cg_hudCompassSize->current.value - 1.0f) * cgs->compassWidth * 0.7f;
+    y = rect->y;
+
+    drawColor[0] = color[0];
+    drawColor[1] = color[1];
+    drawColor[2] = color[2];
+
+    if ((cg->predictedPlayerState.pm_flags & 0x10000) && cg->proneBlockedEndTime < cg->time) {
+        cg->proneBlockedEndTime = cg->time + 1500;
     }
 
-    CG_CopyColor(drawColor, color, alpha);
-    if ((ps->pm_flags & 1) && cg->proneBlockedEndTime > cg->time) {
-        drawColor[0] = 1.0f;
-        drawColor[1] = 0.18f;
-        drawColor[2] = 0.01f;
-    }
+    if (cg->proneBlockedEndTime > cg->time) {
+        int width;
+        float pulseDegrees;
 
-    compassScale = cg_hudCompassSize->current.value;
-    x = rect->x + (compassScale - 1.0f) * cgs->compassWidth * 0.7f;
-    UI_DrawHandlePic(x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, drawColor, cgs->media.stanceMaterials[stance]);
+        proneStr = UI_SafeTranslateString("CGAME_PRONE_BLOCKED");
+        width = UI_TextWidth(proneStr, 0, font, scale);
+        pulseDegrees = (float)(cg->proneBlockedEndTime - cg->time) / 1500.0f * 540.0f;
+        drawColor[3] = (float)fabs(sin((double)pulseDegrees * 0.017453292519943295));
+
+        UI_DrawText(
+            proneStr,
+            0x7fffffff,
+            font,
+            -(float)width * 0.5f,
+            cg_hudProneY->current.value,
+            7,
+            3,
+            scale,
+            drawColor,
+            textStyle);
+    }
 
     if (cg_hudStanceHintPrints->current.enabled && cg->lastStanceChangeTime + 3000 > cg->time) {
-        hintText = stance == 2 ? "PLATFORM_STANCEHINT_PRONE" : (stance == 1 ? "PLATFORM_STANCEHINT_CROUCH" : "PLATFORM_STANCEHINT_STAND");
-        UI_DrawText(UI_SafeTranslateString(hintText), 0x7fffffff, font, x + rect->w + 4.0f, rect->y + rect->h * 0.5f,
-                    rect->horzAlign, rect->vertAlign, scale, drawColor, textStyle);
+        int i;
+        int commandIndex;
+        int numHintLines;
+        float height;
+        float hintY;
+        const char *string;
+        const char *binding;
+        const char *hintLineCmds[3];
+        char keyBinding[256];
+        const char *standCmds[3][6] = {
+            { NULL, NULL, NULL, NULL, NULL, NULL },
+            { "gocrouch", "togglecrouch", "lowerstance", "+movedown", NULL, NULL },
+            { "goprone", "+prone", NULL, NULL, NULL, NULL }
+        };
+        const char *duckCmds[3][6] = {
+            { "+gostand", "raisestance", "+moveup", NULL, NULL, NULL },
+            { NULL, NULL, NULL, NULL, NULL, NULL },
+            { "goprone", "lowerstance", "toggleprone", "+prone", NULL, NULL }
+        };
+        const char *proneCmds[3][6] = {
+            { "+gostand", "toggleprone", NULL, NULL, NULL, NULL },
+            { "gocrouch", "togglecrouch", "raisestance", "+movedown", "+moveup", NULL },
+            { NULL, NULL, NULL, NULL, NULL, NULL }
+        };
+        const char *hintTypeStrings[3] = {
+            "PLATFORM_STANCEHINT_STAND",
+            "PLATFORM_STANCEHINT_CROUCH",
+            "PLATFORM_STANCEHINT_PRONE"
+        };
+
+        Controls_GetConfig();
+
+        if (cg->lastStanceChangeTime + 2000 > cg->time) {
+            drawColor[3] = 1.0f;
+        } else {
+            drawColor[3] = (float)(cg->lastStanceChangeTime - cg->time + 3000) / 1000.0f;
+        }
+
+        height = (float)UI_TextHeight(font, scale);
+        numHintLines = 0;
+
+        for (i = 0; i < 3; ++i) {
+            hintLineCmds[i] = NULL;
+
+            for (commandIndex = 0; commandIndex < 6; ++commandIndex) {
+                if (cg->lastStance & 1) {
+                    binding = proneCmds[i][commandIndex];
+                } else if (cg->lastStance & 2) {
+                    binding = duckCmds[i][commandIndex];
+                } else {
+                    binding = standCmds[i][commandIndex];
+                }
+
+                if (!binding) {
+                    break;
+                }
+
+                if (GetCommandHasBinding(binding)) {
+                    hintLineCmds[i] = binding;
+                    ++numHintLines;
+                    break;
+                }
+            }
+        }
+
+        hintY = rect->y + rect->h * 0.5f - 1.5f;
+
+        if (numHintLines == 1) {
+            hintY += height * 0.5f;
+        } else if (numHintLines == 3) {
+            hintY -= height * 0.5f + 1.5f;
+        }
+
+        if (fadeAlpha < drawColor[3]) {
+            drawColor[3] = fadeAlpha;
+        }
+
+        for (i = 0; i < 3; ++i) {
+            if (!hintLineCmds[i]) {
+                continue;
+            }
+
+            GetKeyBindingLocalizedString(hintLineCmds[i], keyBinding);
+            string = UI_ReplaceConversionString(UI_SafeTranslateString(hintTypeStrings[i]), keyBinding);
+
+            UI_DrawText(
+                string,
+                0x7fffffff,
+                font,
+                x + rect->w,
+                hintY,
+                rect->horzAlign,
+                rect->vertAlign,
+                scale,
+                drawColor,
+                textStyle);
+
+            hintY += height + 1.5f;
+        }
     }
+
+    drawColor[3] = fadeAlpha;
+    CG_DrawStanceIcon(rect, drawColor, x, y, fadeAlpha);
 }
 
 static void CG_DrawPlayerAmmoValue(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, MaterialHandle material, int textStyle, int type)
@@ -1338,7 +1498,7 @@ static void CG_DrawPlayerHealthBar(const rectDef_t *rect, MaterialHandle materia
     float health;
     float alpha;
 
-    if (!cg_drawHealth->current.enabled) {
+    if (!CG_DrawHealthEnabled()) {
         return;
     }
 
@@ -1367,7 +1527,7 @@ static void CG_DrawPlayerHealthBack(const rectDef_t *rect, MaterialHandle materi
     vec_t drawColor[4];
     float alpha;
 
-    if (!cg_drawHealth->current.enabled) {
+    if (!CG_DrawHealthEnabled()) {
         return;
     }
 
@@ -1391,7 +1551,7 @@ static inline __attribute__((always_inline)) void CG_DrawLowHealthOverlay(const 
     float alpha;
     int elapsed;
 
-    if (!cg_drawHealth->current.enabled) {
+    if (!CG_DrawHealthEnabled()) {
         return;
     }
 

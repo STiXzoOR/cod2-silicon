@@ -3,6 +3,8 @@
 
 #include <string.h>
 #include <stdlib.h>
+/* dvar globals */
+extern const dvar_t *com_sv_running;
 
 extern void Com_Printf(const char *fmt, ...);
 extern void Com_Error(int code, const char *fmt, ...);
@@ -19,7 +21,7 @@ extern void CL_ForwardCommandToServer(const char *text);
 extern const char **FS_ListFiles(const char *path, const char *extension, int behavior, int *numfiles, int allocTrackType);
 extern int FS_ReadFile(const char *qpath, void **buffer);
 extern void FS_FreeFile(void *buffer);
-extern int Com_Filter(const char *filter, const char *name, int casesensitive);
+extern unsigned char Com_Filter(const char *filter, const char *name, int casesensitive);
 extern void Com_DefaultExtension(char *path, int maxSize, const char *extension);
 extern dvar_t *Dvar_FindVar(const char *var_name);
 extern const char *va(const char *format, ...);
@@ -236,30 +238,28 @@ int SV_Cmd_Argc(void)
 
 char *Cmd_Argv(int arg)
 {
-    if (cmd_argc > arg) {
-        return cmd_argv[arg];
-    }
-    return (char *)"";
+    if ((unsigned int)arg >= (unsigned int)cmd_argc)
+        return (char *)"";
+    return cmd_argv[arg];
 }
 
 char *SV_Cmd_Argv(int arg)
 {
-    if (cmd_argc > arg) {
-        return cmd_argv[arg];
-    }
-    return (char *)"";
+    if ((unsigned int)arg >= (unsigned int)cmd_argc)
+        return (char *)"";
+    return cmd_argv[arg];
 }
 
 void Cmd_ArgvBuffer(int arg, char *buffer, int bufferLength)
 {
 
-    I_strncpyz(buffer, (cmd_argc > arg) ? cmd_argv[arg] : (char *)"", bufferLength);
+    I_strncpyz(buffer, Cmd_Argv(arg), bufferLength);
 }
 
 void SV_Cmd_ArgvBuffer(int arg, char *buffer, int bufferLength)
 {
 
-    I_strncpyz(buffer, (cmd_argc > arg) ? cmd_argv[arg] : (char *)"", bufferLength);
+    I_strncpyz(buffer, SV_Cmd_Argv(arg), bufferLength);
 }
 
 char *Cmd_Args(int start)
@@ -496,7 +496,7 @@ void Cmd_Shutdown(void)
     }
 }
 
-void Cmd_ForEach(void (*callback)())
+void Cmd_ForEach(void (*callback)(const char *))
 {
     cmd_function_t *cmd;
 
@@ -562,8 +562,8 @@ void Cmd_ExecuteString(const char *text)
         }
     }
 
-    if (*(const dvar_t **)imp_com_sv_running &&
-        (*(const dvar_t **)imp_com_sv_running)->current.enabled) {
+    if (com_sv_running &&
+        (com_sv_running)->current.enabled) {
         if (SV_GameCommand()) {
             return;
         }

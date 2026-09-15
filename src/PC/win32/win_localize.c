@@ -29,7 +29,7 @@ language_t Win_InitLocalization(void)
 
     fp = FS_FileOpen("localization.txt", "r");
     if (!fp)
-        return 0;
+        return (language_t)(0);
 
     FS_FileSeek(fp, 0, 2);
     size = (int)ftell(fp);
@@ -41,12 +41,12 @@ language_t Win_InitLocalization(void)
 
     if (!size) {
         localization = 0;
-        return 0;
+        return (language_t)(0);
     }
 
     localization[size] = '\0';
 
-    lang = 0;
+    lang = (language_t)(0);
     p = localization;
     while (*p) {
         if (*p == '\n') {

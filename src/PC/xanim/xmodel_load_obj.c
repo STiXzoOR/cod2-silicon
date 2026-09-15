@@ -385,7 +385,9 @@ XModel *XModelLoad(const char *name, Alloc_t Alloc, Alloc_t AllocColl)
                         model->memUsage += (int)(signed short)totalBones * 2;
 
                         {
-                            int hierSize = (int)(signed short)numRootBones + 7;
+                            /* x86: names(4) + parentList[numRootBones+3] = numRootBones+7.
+                             * On x64 the names pointer grows 4->8, so add that delta. */
+                            int hierSize = (int)(signed short)numRootBones + 7 + ((int)sizeof(void *) - 4);
                             hierarchy = (XBoneHierarchy *)Alloc(hierSize);
                             model->memUsage += hierSize;
                         }
@@ -393,7 +395,12 @@ XModel *XModelLoad(const char *name, Alloc_t Alloc, Alloc_t AllocColl)
                         hierarchy->names = boneNames;
 
                         {
-                            int partsSize = (int)(signed short)totalBones * 32 + 0x44;
+                            /* x86 header was 0x44 before the skel.mat[totalBones] array; on
+                             * x64 the four pointer fields push it to sizeof(XModelParts)-32.
+                             * Self-adjusting form (sizeof includes mat[1]) matches both ABIs.
+                             * The old 0x44 under-allocated 0x14 on x64 -> skel matrices
+                             * overflowed into adjacent hunk blocks (material data corruption). */
+                            int partsSize = (int)sizeof(XModelParts) + ((int)(signed short)totalBones - 1) * (int)sizeof(DObjAnimMat);
                             modelParts = (XModelParts *)Alloc(partsSize);
                             model->memUsage += partsSize;
                         }
@@ -680,17 +687,20 @@ XModel *XModelLoad(const char *name, Alloc_t Alloc, Alloc_t AllocColl)
                             }
 
                             {
-                                int surfsAllocSize = 0x14 + (int)(signed short)modelNumSurfs * 4;
+                                /* x86 header was 0x14 (surfs ptr + int[4] partBits) and the
+                                 * surf-pointer array used 4-byte slots. On x64 the header is
+                                 * sizeof(XModelSurfs) (0x18) and each XSurface* is 8 bytes. */
+                                int surfsAllocSize = (int)sizeof(XModelSurfs) + (int)(signed short)modelNumSurfs * (int)sizeof(XSurface *);
                                 XSurface **surfPtrs;
 
                                 modelSurfs = (XModelSurfs *)Alloc(surfsAllocSize);
                                 model->memUsage += surfsAllocSize;
 
-                                surfPtrs = (XSurface **)((byte *)modelSurfs + 0x14);
+                                surfPtrs = (XSurface **)((byte *)modelSurfs + sizeof(XModelSurfs));
                                 modelSurfs->surfs = surfPtrs;
 
                                 if ((int)(signed short)modelNumSurfs > 0) {
-                                    int *partBits = (int *)((byte *)modelSurfs + 4);
+                                    int *partBits = (int *)((byte *)&modelSurfs->partBits);
                                     for (j = 0; j < (int)(signed short)modelNumSurfs; j++) {
                                         surfPtrs[j] = XModelReadSurface(model, partBits, &surfsPos, Alloc);
                                     }

@@ -7,13 +7,13 @@ extern struct XModelDefault g_default;
 
 extern void SL_RemoveRefToString(unsigned int name);
 extern void *Hunk_FindDataForFile(int type, const char *name);
-extern void *Hunk_SetDataForFile(int type, const char *name, void *data, Alloc_t alloc);
+extern const char *Hunk_SetDataForFile(int type, const char *name, void *data, Alloc_t alloc);
 extern XModel *XModelLoad(const char *name, Alloc_t Alloc, Alloc_t AllocColl);
 extern int XModelNumBones(const XModel *model);
 extern void Com_Printf(const char *fmt, ...);
 extern int strnicmp(const char *s1, const char *s2, size_t n);
-extern void CM_CalcTraceEntents(vec_t *extents);
-extern int CM_TraceBox(vec_t *extents, const vec_t *mins, const vec_t *maxs, float fraction);
+extern void CM_CalcTraceEntents(TraceExtents *extents);
+extern qboolean CM_TraceBox(const TraceExtents *extents, const vec_t *mins, const vec_t *maxs, float fraction);
 
 int XModelBad(const XModel *model);
 void XModelPartsFree(XModelParts *model);
@@ -28,7 +28,7 @@ const char *XModelGetLodName(const XModel *model, int lod);
 int XModelGetContents(const XModel *model);
 const struct trXSkin_t *XModelGetSkins(const XModel *model);
 int XModelGetMemUsage(const XModel *model);
-Bool Com_ValidXModelName(const char *name);
+qboolean Com_ValidXModelName(const char *name);
 void XModelGetBounds(const XModel *model, vec_t *mins, vec_t *maxs);
 void XModelFree(XModel *model);
 int XModelTraceLine(const XModel *model, trace_t *results, const DObjAnimMat *boneMtxList, vec_t *localStart, vec_t *localEnd, int contentmask);
@@ -51,7 +51,7 @@ void XModelPartsFree(XModelParts *model)
 
 XModelParts *XModelPartsFindData(const char *name)
 {
-    return Hunk_FindDataForFile(3, name);
+    return (XModelParts *)(Hunk_FindDataForFile(3, name));
 }
 
 void XModelPartsSetData(const char *name, XModelParts *modelParts, Alloc_t Alloc)
@@ -61,7 +61,7 @@ void XModelPartsSetData(const char *name, XModelParts *modelParts, Alloc_t Alloc
 
 XModelSurfs *XModelSurfsFindData(const char *name)
 {
-    return Hunk_FindDataForFile(2, name);
+    return (XModelSurfs *)(Hunk_FindDataForFile(2, name));
 }
 
 void XModelSurfsSetData(const char *name, XModelSurfs *modelSurfs, Alloc_t Alloc)
@@ -74,19 +74,19 @@ XModel *XModelPrecache(const char *name, Alloc_t Alloc, Alloc_t AllocColl)
     XModel *model;
     int i;
 
-    model = Hunk_FindDataForFile(4, name);
+    model = (XModel *)(Hunk_FindDataForFile(4, name));
     if (model) {
         return model;
     }
 
     model = XModelLoad(name, Alloc, AllocColl);
     if (model) {
-        model->name = Hunk_SetDataForFile(4, name, model, Alloc);
+        model->name = (const char *)(Hunk_SetDataForFile(4, name, model, Alloc));
         return model;
     }
 
     Com_Printf("^1ERROR: Cannot find xmodel '%s'.\n", name);
-    model = Alloc(sizeof(XModel));
+    model = (XModel *)(Alloc(sizeof(XModel)));
     model->bad = 1;
 
     g_default.hierarchy.names = g_default.boneNames;
@@ -139,11 +139,17 @@ int XModelGetBoneIndex(const XModel *model, unsigned int name)
     unsigned short *boneNames = parts->hierarchy->names;
     int localBoneIndex;
 
-    for (localBoneIndex = (int)parts->numBones - 1; localBoneIndex >= 0; localBoneIndex--) {
-        if (boneNames[localBoneIndex] == name) {
+    localBoneIndex = (int)parts->numBones - 1;
+    if (localBoneIndex < 0) {
+        return localBoneIndex;
+    }
+
+    do {
+        if (name == boneNames[localBoneIndex]) {
             return localBoneIndex;
         }
-    }
+    } while (--localBoneIndex >= 0);
+
     return localBoneIndex;
 }
 
@@ -167,9 +173,9 @@ int XModelGetMemUsage(const XModel *model)
     return model->memUsage;
 }
 
-Bool Com_ValidXModelName(const char *name)
+qboolean Com_ValidXModelName(const char *name)
 {
-    return strnicmp(name, "xmodel", 6) == 0 && name[6] == '/';
+    return strnicmp(name, "xmodel", 6) == 0 && (name[6] == '/' || name[6] == '\\');
 }
 
 void XModelGetBounds(const XModel *model, vec_t *mins, vec_t *maxs)
@@ -275,8 +281,8 @@ int XModelTraceLine(const XModel *model, trace_t *results, const DObjAnimMat *bo
         bonePos[1][1] = m10 * endRel[0] + m11 * endRel[1] + m12 * endRel[2];
         bonePos[1][2] = m20 * endRel[0] + m21 * endRel[1] + m22 * endRel[2];
 
-        CM_CalcTraceEntents(bonePos[0]);
-        if (CM_TraceBox(bonePos[0], csurf->mins, csurf->maxs, results->fraction)) {
+        CM_CalcTraceEntents(&bonePosU.ext);
+        if (CM_TraceBox(&bonePosU.ext, csurf->mins, csurf->maxs, results->fraction)) {
             continue;
         }
 

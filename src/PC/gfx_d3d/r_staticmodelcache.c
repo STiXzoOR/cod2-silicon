@@ -1,4 +1,8 @@
 #include "common_types.h"
+extern struct DxGlobals dx;
+/* File-scope alias: bound where no local can shadow `dx`, so uses below
+   always reach the global even inside functions that declare their own `dx`. */
+static struct DxGlobals * const dx_g = &dx;
 extern dvar_t *r_rendererInUse;
 #include "imports.h"
 extern int alwaysfails;
@@ -30,7 +34,7 @@ void R_FlushStaticModelCache(void);
 void R_InitStaticModelIndexCache(void)
 {
     void *mem = ((void *(*)(int))(ri.Hunk_AllocInternal))(0xc0000);
-    dx.smodelCacheIndices = mem;
+    dx.smodelCacheIndices = (r_index_t *)(mem);
 }
 
 void R_StaticModelCacheStats_f(void)
@@ -636,12 +640,13 @@ void R_FlushStaticModelCache(void)
     }
 }
 
-extern void AxisTransformVector(const void *matrix, float x, float y, float z, vec_t *out);
-extern float Vec3NormalizeTo(const vec_t *v, vec_t *out);
+extern void AxisTransformVector(vec3_t *axes, const vec_t x, const vec_t y, const vec_t z,
+                                vec_t *out);
+extern const vec_t Vec3NormalizeTo(const vec_t *v, vec_t *out);
 extern int RB_DeriveEntityLights(vec4_t *colorForDir, float sunVisibility, const Material *material, D3DLIGHT9 *lights, int maxLights);
 extern void R_FatalLockError(HRESULT hr);
 extern void *CColorConverter_GetColorConverter(int mode);
-extern int XSurfaceGetBoneOffset(void *surface);
+extern int XSurfaceGetBoneOffset(const XSurface *surf);
 extern float floorf(float x);
 
 void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *skinBuffers)
@@ -665,14 +670,17 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
     int i;
     HRESULT hr;
 
-    cached = *(byte **)skinCmd;
+    cached = (byte *)skinCmd->cached;
     xsurf = *(byte **)(cached + 8);
-    smodelIndex = *((int *)skinCmd + 1);
+    /* was *((int*)skinCmd + 1): x86 laid smodelIndex right after a 4-byte cached ptr;
+     * on x64 cached is 8 bytes so smodelIndex is at +8 -> use the typed field. */
+    smodelIndex = skinCmd->smodelIndex;
 
     {
         byte *rgp = (byte *)imp_rgp;
         byte *world = (*(byte **)&((r_global_permanent_t *)rgp)->world);
-        smodelInst = (*(byte **)&((GfxWorld *)world)->smodelInsts) + smodelIndex * 96;
+        /* was smodelIndex*96 (x86 GfxStaticModelInstance stride); the model ptr grows on x64 */
+        smodelInst = (byte *)&((GfxWorld *)world)->smodelInsts[smodelIndex];
     }
 #ifdef GFX_REAL_D3D9
 
@@ -694,13 +702,15 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
 
     {
         byte *ri_ptr = (byte *)&ri;
-        void *(*getBoneData)(int, int);
+        void *(*getBoneData)(const struct XModel *, int);
         byte *boneData;
         int boneOffset;
 
-        getBoneData = (void *(*)(int, int))((refimport_t *)ri_ptr)->XModelGetBasePoseBone;
-        boneOffset = XSurfaceGetBoneOffset(xsurf);
-        boneData = (byte *)getBoneData((*(int *)&((GfxStaticModelInstance *)smodelInst)->model), boneOffset);
+        /* was: getBoneData((*(int*)&smodelInst->model), ...) which truncated the
+         * 8-byte XModel* to 32 bits on x64 -> pass the full pointer. */
+        getBoneData = (void *(*)(const struct XModel *, int))((refimport_t *)ri_ptr)->XModelGetBasePoseBone;
+        boneOffset = XSurfaceGetBoneOffset( (const XSurface *)(xsurf));
+        boneData = (byte *)getBoneData(((GfxStaticModelInstance *)smodelInst)->model, boneOffset);
 
         {
             float *q = (float *)boneData;
@@ -784,7 +794,7 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
                     float ny = *(float *)(skinVerts + i * 0x40 + 4);
                     float nz = *(float *)(skinVerts + i * 0x40 + 8);
                     float *dstNorm = (float *)(dst + i * 0x40 + 0xc);
-                    AxisTransformVector(normAxis, nx, ny, nz, dstNorm);
+                    AxisTransformVector((vec3_t *)normAxis, nx, ny, nz, dstNorm);
                 }
 
                 {
@@ -806,20 +816,20 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
                     float tx = *(float *)(skinVerts + i * 0x40 + 0x10);
                     float ty = *(float *)(skinVerts + i * 0x40 + 0x14);
                     float tz = *(float *)(skinVerts + i * 0x40 + 0x18);
-                    AxisTransformVector(normAxis, tx, ty, tz, (float *)(dst + i * 0x40 + 0x28));
+                    AxisTransformVector((vec3_t *)normAxis, tx, ty, tz, (float *)(dst + i * 0x40 + 0x28));
                 }
 
                 {
                     float bx = *(float *)(skinVerts + i * 0x40 + 0x20);
                     float by = *(float *)(skinVerts + i * 0x40 + 0x24);
                     float bz = *(float *)(skinVerts + i * 0x40 + 0x28);
-                    AxisTransformVector(normAxis, bx, by, bz, (float *)(dst + i * 0x40 + 0x34));
+                    AxisTransformVector((vec3_t *)normAxis, bx, by, bz, (float *)(dst + i * 0x40 + 0x34));
                 }
             }
         }
 
         {
-            byte *dx = (byte *)imp_dx;
+            byte *dx = (byte *)dx_g;
             byte *vb = (*(byte **)&((DxGlobals *)dx)->smodelCacheVb);
             void **vtable = *(void ***)vb;
             int lockSize = vertCount * 0x40;
@@ -906,7 +916,7 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
                     float nx = *(float *)(skinVerts + i * 0x40 + 0);
                     float ny = *(float *)(skinVerts + i * 0x40 + 4);
                     float nz = *(float *)(skinVerts + i * 0x40 + 8);
-                    AxisTransformVector(normAxis, nx, ny, nz, normal);
+                    AxisTransformVector((vec3_t *)normAxis, nx, ny, nz, normal);
                 }
 
                 *(int *)(pSrcDx7 + i * 0x18 + 4) = *(int *)(skinVerts + i * 0x40 + 0x1c);
@@ -975,7 +985,7 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
         }
 
         {
-            byte *dx = (byte *)imp_dx;
+            byte *dx = (byte *)dx_g;
             byte *vb = (*(byte **)&((DxGlobals *)dx)->smodelCacheVb);
             void **vtable = *(void ***)vb;
             int lockSize = vertCount * 0x18;

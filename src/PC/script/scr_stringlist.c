@@ -13,14 +13,14 @@ extern unsigned char scrStringGlob[];
 #define SG_RESTART (*(void **)((char *)&scrStringGlob + 65540))
 
 /* x64 workaround: the hash-chain unlink can leave a freed string's bucket in the
-   chain (a reconstruction bug in the bucket-recycling logic). Re-finding such a
+   chain (a bug in the bucket-recycling logic). Re-finding such a
    stale bucket and ref-adding it writes a refcount into a now-FREE memory-tree
    node, corrupting the buddy free-list. SL_NODE_DEAD() reports whether a string
    node is currently free per the buddy allocator (MT_IsNodeCovered), so ref-add
    paths can refuse to touch dead nodes. */
 extern int MT_IsNodeCovered(int);
 /* Guard used ONLY in the find match-and-return paths: when the hash chain still references a
-   node the buddy allocator considers FREE (an x64 reconstruction artifact), returning it is
+   node the buddy allocator considers FREE (an x64 artifact), returning it is
    fine for identity but ref-adding it would corrupt the buddy free-list -> later id collisions
    ("X already defined"). It must NOT gate the direct ref-add functions (SL_AddRefToString /
    Scr_SetString / SL_TransferRefToUser) -- those run for live nodes (e.g. a function name like
@@ -112,7 +112,7 @@ void SL_AddRefToString(unsigned int stringValue)
 static inline __attribute__((always_inline)) unsigned int compute_hash_slot(const char *str, unsigned int len)
 {
     unsigned int x;
-    if (len <= 0xff) {
+    if (len < 0x100) {
         if (len == 0)
             return 1;
 
@@ -165,7 +165,7 @@ void SL_RemoveRefToStringOfLen(unsigned int stringValue, unsigned int len)
 
 #if defined(_M_X64) || defined(__x86_64__)
     /* x64: do NOT reclaim a string node whose refcount reached zero. The free path (hash-chain
-       unlink + buddy MT_FreeIndex) has an x64 reconstruction corruption: freed nodes linger in
+       unlink + buddy MT_FreeIndex) has an x64 corruption bug: freed nodes linger in
        the hash chain and get re-found (colliding ids -> "X already defined" / "unknown
        function"), and live function names ('main') get dropped between compile and runtime
        lookup. Leaking zero-ref nodes for the session sidesteps the whole corruption: the node
@@ -183,7 +183,7 @@ void SL_RemoveRefToStringOfLen(unsigned int stringValue, unsigned int len)
 
 #if defined(_M_X64) || defined(__x86_64__)
     /* x64: the original chain unlink (below) leaves freed strings findable in the hash
-       chain on x64 (a reconstruction bug in the bucket recycling) -> they get re-found and
+       chain on x64 (a bug in the bucket recycling) -> they get re-found and
        ref-added, corrupting the buddy free-list. Do a robust brute-force removal instead:
        drop every bucket that references the freed string from its chain. */
     {

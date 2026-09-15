@@ -2,6 +2,7 @@
 #include "imports.h"
 extern refimport_t ri;
 extern int alwaysfails;
+extern DxGlobals dx;
 
 #define DX_DEVICE_WRAP ((void *)imp_dx)
 #define XMODEL_VTABLE ((char *)&ri)
@@ -11,15 +12,19 @@ extern int alwaysfails;
 
 typedef int(__attribute__((cdecl)) * vtable_func_t)();
 #define VTABLE(obj) (*(vtable_func_t **)((void *)(obj)))
-#define VTABLE_CALL(obj, off, ...) (VTABLE(obj)[(off) / sizeof(vtable_func_t *)](__VA_ARGS__))
+/* VTABLE_CALL removed: it was a variadic macro (unsupported by VC7.1) and unused. */
 
 typedef int(__attribute__((cdecl)) * flat_func_t)();
 #if defined(_M_X64) || defined(__x86_64__)
 /* &ri is a uniform pointer-slot table; x86 byte offsets double on x64 (8-byte slots) */
-#define FLAT_CALL(base, off, ...) ((*(flat_func_t *)((base) + (off) * 2))(__VA_ARGS__))
+#define FLAT_SLOT(base, off) (*(flat_func_t *)((base) + (off) * 2))
 #else
-#define FLAT_CALL(base, off, ...) ((*(flat_func_t *)((base) + (off)))(__VA_ARGS__))
+#define FLAT_SLOT(base, off) (*(flat_func_t *)((base) + (off)))
 #endif
+/* VC7.1 has no variadic macros -> fixed-arity wrappers. Cast the int(*)() slot to the
+ * real call signature (byte-identical to the original variadic call). */
+#define FLAT_CALL1(base, off, a) (((int(__cdecl *)(void *))FLAT_SLOT(base, off))(a))
+#define FLAT_CALL4(base, off, a, b, c, d) (((int(__cdecl *)(void *, void *, int, void *))FLAT_SLOT(base, off))(a, b, c, d))
 
 extern void R_FinishStaticVertexBuffer(IDirect3DVertexBuffer9 *vb);
 extern dvar_t *r_rendererInUse;
@@ -27,8 +32,8 @@ extern void *R_AllocStaticIndexBuffer(IDirect3DIndexBuffer9 **ib, int sizeInByte
 extern void R_FinishStaticIndexBuffer(IDirect3DIndexBuffer9 *ib);
 extern void R_FreeStaticIndexBuffer(IDirect3DIndexBuffer9 *ib);
 extern int XSurfaceGetBoneOffset(const XSurface *surf);
-extern unsigned long XSurfaceTransfer(const XVertexBuffer *surfVerts, void *verts, int vertCount);
-extern unsigned long XSurfaceTransferDx7(const XVertexBuffer *surfVerts, void *verts, int vertCount);
+extern void XSurfaceTransfer(const XVertexBuffer *surfVerts, GfxVertex *verts, int vertCount);
+extern void XSurfaceTransferDx7(const XVertexBuffer *surfVerts, GfxVertexDx7 *verts, int vertCount);
 extern void Com_Memcpy(void *dest, const void *src, int count);
 
 void XSurfaceOptimizeRigid(XModel *model, XSurface *surface, XVertexBuffer *surfVerts);
@@ -60,7 +65,8 @@ void XSurfaceOptimizeRigid(XModel *model, XSurface *surface, XVertexBuffer *surf
         vertexStride = 0x40;
 
     deviceWrapper = DX_DEVICE_WRAP;
-    device = DEREF_PTR(deviceWrapper, 8);
+    (void)deviceWrapper;
+    device = dx.device;   /* was DEREF_PTR(imp_dx,8): x86 device offset; x64 dx.device is @16 */
     deviceVtable = *(void ***)device;
 
     hr = ((int(__attribute__((cdecl)) *)(void *, int, int, int, int, void *, void *))deviceVtable[0x68 / 4])(device, vertCount * vertexStride, 8, 0, 0, surfRigid, 0);
@@ -84,10 +90,10 @@ void XSurfaceOptimizeRigid(XModel *model, XSurface *surface, XVertexBuffer *surf
 
     if (r_rendererInUse->current.integer == 2) {
 
-        XSurfaceTransferDx7(surfVerts, vertexBuffer, (int)surface->vertCount);
+        XSurfaceTransferDx7(surfVerts, (GfxVertexDx7 *)vertexBuffer, (int)surface->vertCount);
     } else {
 
-        XSurfaceTransfer(surfVerts, vertexBuffer, (int)surface->vertCount);
+        XSurfaceTransfer(surfVerts, (GfxVertex *)vertexBuffer, (int)surface->vertCount);
     }
 
     R_FinishStaticVertexBuffer(surface->surfRigid.vb);
@@ -109,13 +115,13 @@ void XModelOptimize(XModel *model)
 
     vtable = XMODEL_VTABLE;
 
-    lodCount = FLAT_CALL(vtable, 0x174, model);
+    lodCount = FLAT_CALL1(vtable, 0x174, model);
     if (lodCount <= 0)
         return;
 
     for (lodIndex = 0; lodIndex < lodCount; lodIndex++) {
 
-        surfCount = FLAT_CALL(vtable, 0x168, model, &surfaces, lodIndex, &partBits);
+        surfCount = FLAT_CALL4(vtable, 0x168, model, &surfaces, lodIndex, &partBits);
         if (surfCount <= 0)
             continue;
 
@@ -164,13 +170,13 @@ void XModelUnoptimize(XModel *model)
 
     vtable = XMODEL_VTABLE;
 
-    lodCount = FLAT_CALL(vtable, 0x174, model);
+    lodCount = FLAT_CALL1(vtable, 0x174, model);
     if (lodCount <= 0)
         return;
 
     for (lodIndex = 0; lodIndex < lodCount; lodIndex++) {
 
-        surfCount = FLAT_CALL(vtable, 0x168, model, &surfaces, lodIndex, &partBits);
+        surfCount = FLAT_CALL4(vtable, 0x168, model, &surfaces, lodIndex, &partBits);
         if (surfCount <= 0)
             continue;
 

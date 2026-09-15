@@ -221,7 +221,7 @@ struct GfxAabbTree {
     int staticModelCount;
     int *staticModels;
     int childCount;
-    int children;
+    struct GfxAabbTree *children;
 };
 
 struct GfxCachedShaderText {

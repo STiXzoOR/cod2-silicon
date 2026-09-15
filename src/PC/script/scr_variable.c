@@ -61,7 +61,7 @@ static const char str_dbg_site_gamvar2[] = "DBG exceeded at: Scr_AllocGameVariab
 static const char str_dbg_getvar_fmt[] = "DBG GetVariable #%d: parentId=%d name=%d freeHead=%d\n";
 int dbg_getvar_counter = 0;
 
-extern void *MT_Alloc(int size, int type);
+extern unsigned int *MT_Alloc(int size, int type);
 extern void MT_Free(void *ptr, int type);
 extern char *va(const char *format, ...);
 extern void Scr_Error(const char *msg);
@@ -490,7 +490,7 @@ void Var_Init(void)
 {
     int i;
     Var_ResetAll();
-    for (i = 0; i <= 3; i++) {
+    for (i = 0; i < 4; i++) {
         g_classMap[i].entArrayId = 0;
         g_classMap[i].id = 0;
     }
@@ -904,7 +904,7 @@ void Scr_AddFields(const char *path, const char *extension)
 
         len = FS_FOpenFileByMode(filename, &f, FS_READ);
         if (len < 0) {
-            Com_Error(1, va("\x15"
+            Com_Error((errorParm_t)1, va("\x15"
                             "cannot find '%s'",
                             filename));
         }
@@ -933,13 +933,13 @@ void Scr_AddFields(const char *path, const char *extension)
             } else if (!strcmp(token, "vector")) {
                 type = 4;
             } else {
-                Com_Error(1, va("\x15unknown type '%s' in '%s'", token, filename));
+                Com_Error( (errorParm_t)(1), va("\x15unknown type '%s' in '%s'", token, filename));
                 break;
             }
 
             fieldName = (char *)Com_Parse(&sourcePos);
             if (!sourcePos) {
-                Com_Error(1, va("\x15missing field name in '%s'", filename));
+                Com_Error( (errorParm_t)(1), va("\x15missing field name in '%s'", filename));
             }
 
             nameLen = strlen(fieldName);
@@ -955,7 +955,7 @@ void Scr_AddFields(const char *path, const char *extension)
 
                 if (!stricmp(fieldName, field)) {
                     if (*(const unsigned short *)(field + existingLen) != 0) {
-                        Com_Error(1, "\x15"
+                        Com_Error((errorParm_t)1, "\x15"
                                      "duplicate key '%s' in '%s'",
                                   fieldName, filename);
                     }
@@ -2023,8 +2023,17 @@ void RemoveNextVariable(unsigned int parentId)
 void RemoveVariable(unsigned int parentId, unsigned int unsignedValue)
 {
     unsigned int index = FindVariableIndexInternal(parentId, unsignedValue);
-    unsigned int id = VG_ID(index);
+    unsigned int id;
 
+    /* Removing a key that isn't present (e.g. GSC `arr[key] = undefined` on an
+     * unset key) is a legal no-op. When the lookup misses, index is 0 and
+     * VG_ID(0) is the free-list anchor id 0; freeing it (FreeChildValue_core)
+     * would zero the free-list head and corrupt the whole variable pool,
+     * eventually surfacing as "exceeded maximum number of script variables". */
+    if (index == 0)
+        return;
+
+    id = VG_ID(index);
     MakeVariableExternal(ScrVarEntry(index), ScrVarEntry(parentId));
     FreeChildValue_core(id);
 }

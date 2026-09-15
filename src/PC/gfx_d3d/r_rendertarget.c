@@ -1,4 +1,8 @@
 #include "common_types.h"
+extern struct DxGlobals dx;
+/* File-scope alias: bound where no local can shadow `dx`, so uses below
+   always reach the global even inside functions that declare their own `dx`. */
+static struct DxGlobals * const dx_g = &dx;
 extern Bool g_NoTextureID;
 #include "imports.h"
 extern vidConfig_t vidConfig;
@@ -21,7 +25,7 @@ extern void Image_Release(GfxImage *image);
 extern void Image_TrackFullscreenTexture(GfxImage *image, int picmip, D3DFORMAT format);
 extern void Image_TrackTexture(GfxImage *image, int imageFlags, D3DFORMAT format, int width, int height, int depth);
 
-#define DX() ((byte *)imp_dx)
+#define DX() ((byte *)dx_g)
 #define DX_PTR() (&dx)
 #define VIDCONFIG() (&vidConfig)
 
@@ -279,7 +283,7 @@ void R_InitRenderTargets(void)
     }
 
     {
-        void (*riPrintf)() = *(void (**)())&ri;
+        void (*riPrintf)(int, const char *, ...) = (void (*)(int, const char *, ...)) * (void (**)())&ri;
         riPrintf(0, "Requested frame buffer to be %s\n", "24-bit color with 8-bit alpha");
 
         dxPtr = DX();
@@ -292,7 +296,7 @@ void R_InitRenderTargets(void)
         surfaceFormat = desc.Format;
         ((DxGlobals *)dxPtr)->backBufferFormat = surfaceFormat;
 
-        riPrintf = *(void (**)())&ri;
+        riPrintf = (void (__cdecl *)(int,const char *,...))(*(void (**)())&ri);
         riPrintf(0, "DirectX returned a frame buffer that is %s\n", R_DescribeFormat(surfaceFormat));
     }
 

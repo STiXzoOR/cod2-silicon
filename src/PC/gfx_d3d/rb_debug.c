@@ -1,4 +1,8 @@
 #include "common_types.h"
+extern materialCommands_t tess;
+/* File-scope alias: bound where no local can shadow `tess`, so uses below
+   always reach the global even inside functions that declare their own `tess`. */
+static materialCommands_t * const tess_g = &tess;
 extern GfxBackEndData *backEndData;
 #include "imports.h"
 #include "bytematch.h"
@@ -100,7 +104,7 @@ static void RB_DrawDebugStrings(trDebugString_t *strings, int stringCount)
         }
     }
 
-    tess = (materialCommands_t *)imp_tess;
+    tess = (materialCommands_t *)tess_g;
     if (tess->indexCount != 0 || tess->optimizedIndexCount != 0) {
         RB_EndSurface();
     }
@@ -244,7 +248,7 @@ static void RB_DrawPolyInteriors(void)
     int polyCount;
     int polyIndex;
 
-    RB_BeginSurface(rgp.whiteMaterial, 3, 0);
+    RB_BeginSurface(rgp.whiteMaterial, (MaterialTechniqueType)(3), 0);
 
     data = backEndData;
     polyCount = data->debugGlobals.polyCount;
@@ -298,7 +302,7 @@ static void RB_DrawPolyInteriors(void)
                     }
                     drawSurf = (byte *)imp_tess;
                     tess = (materialCommands_t *)drawSurf;
-                    tess->declType = oldBatch;
+                    tess->declType = (MaterialVertexDeclType)(oldBatch);
                 }
             }
         }

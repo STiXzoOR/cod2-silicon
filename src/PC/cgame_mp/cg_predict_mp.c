@@ -17,28 +17,28 @@ extern int CM_PointContents(const vec_t *point, unsigned int model);
 extern int CM_TransformedPointContents(const vec_t *point, unsigned int model, const vec_t *origin, const vec_t *angles);
 extern int CM_ContentsOfModel(unsigned int model);
 extern void CM_BoxTrace(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, unsigned int model, int brushmask);
-extern unsigned int CM_TempBoxModel(const vec_t *mins, const vec_t *maxs, int capsule);
-extern void CM_TransformedBoxTraceExternal(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, unsigned int model, int brushmask, const vec_t *origin, const vec_t *angles);
+extern clipHandle_t CM_TempBoxModel(const vec_t *mins, const vec_t *maxs, int contents);
+extern int CM_TransformedBoxTraceExternal(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask, const vec_t *origin, const vec_t *angles);
 extern float CM_RadiusOfModel(unsigned int model);
 extern int CL_GetCurrentCmdNumber(void);
 extern qboolean CL_GetUserCmd(int cmdNumber, usercmd_t *ucmd);
 extern void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd, int, int);
-extern float LerpAngle(float from, float to, float frac);
+extern const float LerpAngle(const float from, const float to, const float frac);
 extern void Pmove(pmove_t *pm);
 extern void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops);
 extern void BG_PlayerStateToEntityState(playerState_t *ps, entityState_t *es, int, int);
-extern void BG_EvaluateTrajectory(trajectory_t *tr, int atTime, vec_t *result);
+extern void BG_EvaluateTrajectory(const trajectory_t *tr, int atTime, vec_t *result);
 extern WeaponDef *BG_GetWeaponDef(int weapon);
 extern qboolean CG_GetWeapReticleZoom(float *fZoom);
 extern float flrand(float min, float max);
 extern float randomf(void);
-extern float AngleNormalize360(float angle);
-extern qboolean BG_PlayerTouchesItem(playerState_t *ps, centity_t *item, int atTime);
-extern qboolean BG_CanItemBeGrabbed(centity_t *item, playerState_t *ps, int);
-extern void BG_AddPredictableEventToPlayerstate(int event, int eventParm, playerState_t *ps);
+extern const float AngleNormalize360(const float angle);
+extern qboolean BG_PlayerTouchesItem(playerState_t *ps, entityState_t *item, int atTime);
+extern qboolean BG_CanItemBeGrabbed(const entityState_t *ent, const playerState_t *ps, qboolean bTouched);
+extern void BG_AddPredictableEventToPlayerstate(int newEvent, int eventParm, playerState_t *ps);
 extern void CG_AdjustPositionForMover(const vec_t *in, int moverNum, int fromTime, int toTime, vec_t *out, vec_t *outDeltaAngles);
 extern void LargeLocal_LargeLocal(void *ll, int size);
-extern void *LargeLocal_GetBuf(void *ll);
+extern void *LargeLocal_GetBuf(const LargeLocal *ll);
 extern void ZN10LargeLocalD1Ev(void *ll);
 extern void Com_Printf(const char *fmt, ...);
 
@@ -185,7 +185,7 @@ void CG_PredictPlayerState(void)
     int cg_time;
 
     LargeLocal_LargeLocal(ll, REAL_PS_SIZE);
-    oldPlayerState = (byte *)LargeLocal_GetBuf(ll);
+    oldPlayerState = (byte *)LargeLocal_GetBuf((const LargeLocal *)ll);
 
     if (cg->demoType != 0) {
         CG_InterpolatePlayerState(0);
@@ -355,11 +355,11 @@ void CG_PredictPlayerState(void)
 
                             cg_time = cg->time;
 
-                            if (!BG_PlayerTouchesItem(ps, cent, cg_time))
+                            if (!BG_PlayerTouchesItem(ps, &cent->currentState, cg_time))
                                 continue;
                             if (cent->miscTime == cg_time)
                                 continue;
-                            if (!BG_CanItemBeGrabbed(cent, ps, 1))
+                            if (!BG_CanItemBeGrabbed(&cent->currentState, ps, 1))
                                 continue;
 
                             cent->nextState.eFlags |= 0x20;

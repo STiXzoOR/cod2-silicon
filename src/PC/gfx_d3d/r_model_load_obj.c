@@ -1,17 +1,17 @@
 #include "common_types.h"
 #include "imports.h"
 
-extern int XModelGetNumLods(struct XModel *model);
-extern int XModelGetSurfaces(struct XModel *model, XSurface **surfaces, int lodIndex, XPartBits *partBits);
-extern const char *XModelGetSurfaceName(struct XModel *model, int surfIndex, int lodIndex);
+extern int XModelGetNumLods(const XModel *model);
+extern int XModelGetSurfaces(const XModel *model, XSurface ***surfaces, int lodIndex, int **partBits);
+extern const char *XModelGetSurfaceName(const XModel *model, int subMatIndex, int lod);
 extern void *Model_Alloc(int size);
 extern MaterialHandle Material_RegisterHandle(const char *name, int imageTrack, int materialType);
 extern char *strlwr(char *);
 
 trXSkin_t *R_LoadXSkins(struct XModel *model)
 {
-    XSurface *surfaces;
-    XPartBits partBits;
+    XSurface **surfaces;
+    int *partBits;
     char materialName[64];
     int lodCount;
     int totalNumSurfaces;
@@ -24,8 +24,11 @@ trXSkin_t *R_LoadXSkins(struct XModel *model)
         totalNumSurfaces += XModelGetSurfaces(model, &surfaces, j, &partBits);
     }
 
-    trXSkin_t *skins = (trXSkin_t *)Model_Alloc((totalNumSurfaces + lodCount) * 4);
-    MaterialHandle *materialHandles = (MaterialHandle *)((char *)skins + lodCount * 4);
+    /* x86 packed lodCount trXSkin_t ptrs + totalNumSurfaces MaterialHandles at 4
+     * bytes each; on x64 both are 8-byte pointers, so the *4 sizing under-allocated
+     * by half and handles[j]= writes overflowed into adjacent material blocks. */
+    trXSkin_t *skins = (trXSkin_t *)Model_Alloc((int)((totalNumSurfaces * sizeof(MaterialHandle)) + (lodCount * sizeof(trXSkin_t))));
+    MaterialHandle *materialHandles = (MaterialHandle *)((char *)skins + lodCount * sizeof(trXSkin_t));
 
     if (lodCount <= 0)
         return skins;

@@ -1,7 +1,10 @@
 #include "common_types.h"
 #include "imports.h"
+#include <ctype.h>
 #include <stdarg.h>
 #include <string.h>
+/* dvar globals */
+extern const dvar_t *com_sv_running;
 
 extern int rand(void);
 extern int unzOpenCurrentFile(unzFile file);
@@ -12,10 +15,6 @@ extern long int unztell(unzFile file);
 
 int fs_numServerIwds = 0x0;
 int fs_packFiles = 0x0;
-
-#ifdef __EMSCRIPTEN__
-#    include <ctype.h>
-#endif
 
 extern char fs_gamedir[256];
 extern const dvar_t *fs_debug;
@@ -50,7 +49,7 @@ extern void Hunk_FreeTempMemory(void *buf);
 extern void *Hunk_AllocateTempMemoryInternal(int size);
 extern void FS_DisplayPath(qboolean bLanguageCull);
 extern int SEH_GetCurrentLanguage(void);
-extern const char *SEH_GetLanguageName(int iLanguage);
+extern const char * SEH_GetLanguageName(const int iLanguage);
 extern int FS_GetModList(char *listbuf, int bufsize);
 extern void *Z_MallocInternal(int size);
 extern const char *Dvar_GetString(const char *name);
@@ -94,11 +93,6 @@ extern int unzGoToNextFile(unzFile file);
 extern unsigned int Com_BlockChecksum(const void *buffer, int length);
 extern unsigned int Com_BlockChecksumKey(void *buffer, int length, int key);
 extern qboolean SEH_GetLanguageIndexForName(const char *pszLanguageName, int *piLanguageIndex);
-#ifdef __EMSCRIPTEN__
-#    include <ctype.h>
-#else
-extern int isalpha(int c);
-#endif
 extern void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *));
 
 extern size_t FS_FileRead(void *ptr, size_t size, size_t nitems, FILE *stream);
@@ -290,10 +284,10 @@ qboolean FS_CreatePath(char *OSPath)
     }
 
     for (ofs = OSPath + 1; *ofs; ofs++) {
-        if (*ofs == '/') {
+        if (*ofs == '\\') {   /* OSPath is Windows-native, so the separator is '\', not '/' */
             *ofs = '\0';
             Sys_Mkdir(OSPath);
-            *ofs = '/';
+            *ofs = '\\';
         }
     }
     return 0;
@@ -452,9 +446,12 @@ void FS_FreeFileList(const char **list, int allocTrackType)
     if (!list)
         return;
 
-    const char **p;
-    for (p = list; *p; p++) {
-        Z_FreeInternal((void *)*p);
+    if (*list) {
+        const char **p = list;
+        do {
+            Z_FreeInternal((void *)*p);
+            p++;
+        } while (*p);
     }
     Z_FreeInternal((void *)list);
     return;
@@ -494,8 +491,8 @@ extern void Sys_EndStreamedFile(fileHandle_t h);
 extern int unzCloseCurrentFile(unzFile file);
 extern int unzClose(unzFile file);
 extern void Com_Memcpy(void *dest, const void *src, int count);
-extern void Com_Memset(void *dest, int val, int count);
-extern void SND_StopSounds(int fadeTime);
+extern void Com_Memset(void *dest, const int val, int count);
+extern void SND_StopSounds(snd_stopsounds_arg_t fadeTime);
 extern void SEH_Shutdown_StringEd(void);
 extern void Cmd_RemoveCommand(const char *cmdName);
 void FS_FCloseFile(fileHandle_t h)
@@ -529,7 +526,7 @@ void FS_Shutdown(qboolean closemfp)
 
     (void)closemfp;
 
-    SND_StopSounds(8);
+    SND_StopSounds((snd_stopsounds_arg_t)8);
     SEH_Shutdown_StringEd();
 
     for (i = 1; i < 74; ++i) {
@@ -575,7 +572,7 @@ int FS_Read(void *buffer, int len, fileHandle_t h)
 
     entry = &fsh[h];
     if (entry->zipFile) {
-        return unzReadCurrentFile(entry->handleFiles.file.z, buffer, len);
+        return unzReadCurrentFile(entry->handleFiles.file.z, (voidp)(buffer), len);
     }
 
     file = entry->handleFiles.file.o;
@@ -2334,7 +2331,7 @@ static void FS_AddGameDirectoryAllLanguages(const char *path, const char *dir)
 {
     int i;
 
-    for (i = 13; i >= 0; --i) {
+    for (i = 14; i >= 0; --i) {
         FS_AddGameDirectory(path, dir, 1, i);
     }
     FS_AddGameDirectory(path, dir, 0, 0);
@@ -2476,7 +2473,7 @@ void FS_Restart(int checksumFeed)
 
 qboolean FS_ConditionalRestart(int checksumFeed)
 {
-    const dvar_t *sv_running = *(const dvar_t **)imp_com_sv_running;
+    const dvar_t *sv_running = com_sv_running;
 
     if (sv_running->current.enabled)
         return 0;
@@ -2538,11 +2535,6 @@ extern int unzGoToNextFile(unzFile file);
 extern unsigned int Com_BlockChecksum(const void *buffer, int length);
 extern unsigned int Com_BlockChecksumKey(void *buffer, int length, int key);
 extern qboolean SEH_GetLanguageIndexForName(const char *pszLanguageName, int *piLanguageIndex);
-#    ifdef __EMSCRIPTEN__
-#        include <ctype.h>
-#    else
-extern int isalpha(int c);
-#    endif
 extern void qsort(void *base, size_t nmemb, size_t size, int (*compar)(const void *, const void *));
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern size_t FS_FileWrite(const void *ptr, size_t size, size_t nitems, FILE *stream);

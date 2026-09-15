@@ -3,7 +3,7 @@
 
 extern void *Material_Alloc(int size);
 extern void GaussianRandom(float *real, float *imag);
-extern GfxImage *R_CreateWaterMap(const char *name, int M, int N);
+extern GfxImage * R_CreateWaterMap(char *name, int imageWidth, int imageHeight);
 extern const char *va(const char *fmt, ...);
 extern double exp(double x);
 extern float fabsf(float x);
@@ -123,5 +123,5 @@ void R_CreateWaterSetup(const water_t *source, int waterMapSetupIndex, water_t *
     }
 
     name = va("watersetup%i", waterMapSetupIndex);
-    destination->image = R_CreateWaterMap(name, (unsigned short)source->M, (unsigned short)source->N);
+    destination->image = R_CreateWaterMap( (char *)(name), (unsigned short)source->M, (unsigned short)source->N);
 }

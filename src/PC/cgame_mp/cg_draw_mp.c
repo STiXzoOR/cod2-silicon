@@ -3,6 +3,7 @@
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 
+extern clientStatic_t cls;
 extern const dvar_t *cg_centerPrintY;
 extern const dvar_t *cg_centertime;
 extern const dvar_t *cg_chatHeight;
@@ -56,6 +57,7 @@ extern void Con_DrawSay(int y);
 extern void Con_DrawSubtitles(int xPos, int yPos, int charHeight, float alpha, msgwnd_mode_t mode);
 extern void Menu_PaintAll(displayContextDef_t *dc);
 extern float floorf(float x);
+extern int stricmp(const char *s1, const char *s2);
 
 extern struct lagometer_t lagometer;
 static int previous;
@@ -79,10 +81,10 @@ extern int CL_GetCurrentCmdNumber(void);
 extern int CL_GetKeyCatchers(void);
 extern qboolean CL_GetUserCmd(int cmdNumber, usercmd_t *ucmd);
 extern Bool CL_IsRenderingSplitScreen(void);
-extern void CL_SetUserCmdAimValues(const vec_t *angles);
+extern void CL_SetUserCmdAimValues(vec_t *kickAngles);
 extern void CL_SetUserCmdValue(int weapon, int offHandIndex, float sensitivity);
-extern void CL_RenderScene(const void *refdef);
-extern void CG_DrawShellShockSavedScreenBlend(float r, float g, float b);
+extern void CL_RenderScene(const refdef_t *fd);
+extern qboolean CG_DrawShellShockSavedScreenBlend(const shellshock_parms_t *parms, int start, int duration);
 extern void CG_TileClear(void);
 extern const char *UI_SafeTranslateString(const char *ref);
 extern const char *UI_ReplaceConversionString(const char *sourceString, const char *replaceString);
@@ -94,8 +96,8 @@ extern void UI_DrawText(const char *text, int maxChars, FontHandle font, float x
 extern MaterialHandle CL_RegisterMaterial(const char *name, int flags);
 extern void CG_TranslateHudElemMessage(const char *message, const char *messageType, char *hudElemString);
 extern void CG_TraceCapsule(trace_t *result, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask);
-extern int BG_GetViewmodelWeaponIndex(void *ps);
-extern void *BG_GetWeaponDef(int weapIndex);
+extern int BG_GetViewmodelWeaponIndex(const playerState_t *ps);
+extern WeaponDef * BG_GetWeaponDef(int iWeapon);
 extern int BG_GetNumWeapons(void);
 extern void CL_DrawStretchPic(float x, float y, float w, float h, int horzAlign, int vertAlign, float s1, float t1, float s2, float t2, const vec_t *color, MaterialHandle material);
 extern void CL_DrawStretchPicPhysical(float x, float y, float w, float h, float s1, float t1, float s2, float t2, const vec_t *color, MaterialHandle material);
@@ -119,7 +121,7 @@ extern const char *Dvar_GetString(const char *dvarName);
 extern int Dvar_GetInt(const char *dvarName);
 extern Bool Dvar_GetBool(const char *dvarName);
 extern void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up);
-extern float Vec3Distance(const vec_t *v1, const vec_t *v2);
+extern const vec_t Vec3Distance(const vec_t *v1, const vec_t *v2);
 extern float crandom(void);
 extern double sin(double);
 extern double tan(double);
@@ -132,12 +134,12 @@ extern void BG_GetSpreadForWeapon(const playerState_t *ps, int weaponIndex, floa
 extern float CG_AlignHudElemX(int alignOrg, float x, float width);
 extern float CG_AlignHudElemY(int alignOrg, float y, float height);
 extern void UI_FillRectPhysical(float x, float y, float width, float height, const vec_t *color);
-extern void StatMon_GetStatsArray(const void **array, int *count);
+extern void StatMon_GetStatsArray(const statmonitor_t **array, int *count);
 extern void CL_CloseAllMenus(void);
 extern void CG_DrawRotatedQuadPic(float x, float y, vec2_t *verts, float angle, const vec_t *color, MaterialHandle material);
 extern void CL_DrawQuadPic(vec2_t *verts, const vec_t *color, MaterialHandle material);
 extern const float vectoyaw(const vec_t *vec);
-extern float AngleNormalize360(float angle);
+extern const float AngleNormalize360(const float angle);
 extern float sinf(float);
 extern float cosf(float);
 extern float fabsf(float);
@@ -147,9 +149,12 @@ extern const vec_t colorRed[4];
 extern const vec_t colorGreen[4];
 extern const vec_t colorBlue[4];
 
-extern void Menus_CloseByName(void *dc, const char *name);
-extern void *Menus_FindByName(void *dc, const char *name);
-extern void Window_AddDynamicFlags(void *window, int flags);
+extern void Menus_CloseByName(displayContextDef_t *dc, const char *p);
+extern menuDef_t *Menus_FindByName(displayContextDef_t *dc, const char *name);
+extern void Window_AddDynamicFlags(Window *window, int flags);
+/* Declared int here, but the real function returns void and takes a Window*. A caller
+   does `return Window_RemoveDynamicFlags(..)`, so correcting the signature would change
+   that caller's return value -- needs care. */
 extern int Window_RemoveDynamicFlags(void *window, int flags);
 extern void CG_MenuShowNotify(int menuToShow);
 extern float CG_CalcPlayerHealth(void);
@@ -168,7 +173,7 @@ qboolean CG_GetWeapReticleZoom(float *pfZoom);
 void CG_DrawFrameOverlay(float innerLeft, float innerRight, float innerTop, float innerBottom, const vec_t *color, MaterialHandle material);
 static unsigned int CG_DrawCrosshairNames(void);
 unsigned int CG_CheckTimedMenus(void);
-static unsigned int CG_DrawSoundOverlay(void);
+static void CG_DrawSoundOverlay(void);
 static unsigned int CG_DrawMaterial(void);
 unsigned int CG_ShakeCamera(void);
 static qboolean CG_DrawFollow(void);
@@ -326,6 +331,12 @@ void CG_DrawDisconnect(void)
 
     CL_GetUserCmd(CL_GetCurrentCmdNumber() - 127, &cmd);
     snap = cg->nextSnap;
+    if (getenv("COD2_CNXDIAG")) {
+        static int c;
+        if ((c++ & 0x3f) == 0)
+            Com_Printf("[cnxdiag] cmd.serverTime=%d snap->ps.commandTime=%d cg->time=%d cmdNum=%d\n",
+                       cmd.serverTime, snap->ps.commandTime, cg->time, CL_GetCurrentCmdNumber());
+    }
     if (cmd.serverTime <= snap->ps.commandTime || cmd.serverTime > cg->time) {
         return;
     }
@@ -347,15 +358,15 @@ void CG_PriorityCenterPrint(const char *str, float charWidth, int priority)
     int count;
     unsigned int letter;
 
-    if (cg->centerPrintTime && priority < cg->centerPrintPriority) {
+    if (cgArray[0].centerPrintTime && priority < cgArray[0].centerPrintPriority) {
         return;
     }
 
     CG_TranslateHudElemMessage(str, "Center Print", hudElemString);
-    I_strncpyz(cg->centerPrint, hudElemString, 0x100);
-    cg->centerPrintPriority = priority;
+    I_strncpyz(cgArray[0].centerPrint, hudElemString, 0x100);
+    cgArray[0].centerPrintPriority = priority;
 
-    s = cg->centerPrint;
+    s = cgArray[0].centerPrint;
     needNewline = 0;
     count = 0;
     while (*s) {
@@ -378,20 +389,20 @@ void CG_PriorityCenterPrint(const char *str, float charWidth, int priority)
         }
     }
 
-    cg->centerPrintTime = cg->time + 0x7d0;
-    cg->centerPrintCharWidth = (int)charWidth;
-    cg->centerPrintLines = 1;
+    cgArray[0].centerPrintTime = cgArray[0].time + 0x7d0;
+    cgArray[0].centerPrintCharWidth = (int)charWidth;
+    cgArray[0].centerPrintLines = 1;
 
-    s = cg->centerPrint;
+    s = cgArray[0].centerPrint;
     while (*s) {
         letter = SEH_ReadCharFromString(&s, 0);
         if (letter == '\n') {
-            ++cg->centerPrintLines;
+            ++cgArray[0].centerPrintLines;
             continue;
         }
 
         if (letter == '\\' && *s == 'n') {
-            ++cg->centerPrintLines;
+            ++cgArray[0].centerPrintLines;
             ++s;
         }
     }
@@ -403,15 +414,15 @@ void CG_PriorityCenterPrint(const char *str, float charWidth, int priority)
  * drawGun never set -> the viewmodel was hidden even when spawned. */
 qboolean CG_GetWeapReticleZoom(float *pfZoom)
 {
-    byte *weaponDef;
+    WeaponDef *weaponDef;
     float zoom;
     float zoomFrac;
 
-    weaponDef = (byte *)BG_GetWeaponDef(BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState));
+    weaponDef = (WeaponDef *)BG_GetWeaponDef(BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState));
     zoom = cg->predictedPlayerState.fWeaponPosFrac;
     *pfZoom = 0.0f;
 
-    if (!*(char *)((*(int *)&((WeaponDef *)weaponDef)->szOverlayMaterial)) && !(*(int *)&((WeaponDef *)weaponDef)->overlayReticle))
+    if ((!weaponDef->szOverlayMaterial || !weaponDef->szOverlayMaterial[0]) && !weaponDef->overlayReticle)
     {
         return 0;
     }
@@ -420,18 +431,18 @@ qboolean CG_GetWeapReticleZoom(float *pfZoom)
         return 0;
     }
 
-    if (*(int *)((byte *)&cg->playerEntity + 4) ) {
-        zoomFrac = zoom - (1.0f - ((WeaponDef *)weaponDef)->fAdsZoomInFrac );
+    if (cg->playerEntity.bPositionToADS) {
+        zoomFrac = zoom - (1.0f - weaponDef->fAdsZoomInFrac );
         *pfZoom = zoomFrac;
         if (zoomFrac > 0.0f) {
-            zoomFrac /= ((WeaponDef *)weaponDef)->fAdsZoomInFrac ;
+            zoomFrac /= weaponDef->fAdsZoomInFrac ;
             *pfZoom = zoomFrac;
         }
     } else {
-        zoomFrac = zoom - (1.0f - ((WeaponDef *)weaponDef)->fAdsZoomOutFrac );
+        zoomFrac = zoom - (1.0f - weaponDef->fAdsZoomOutFrac );
         *pfZoom = zoomFrac;
         if (zoomFrac > 0.0f) {
-            zoomFrac /= ((WeaponDef *)weaponDef)->fAdsZoomOutFrac ;
+            zoomFrac /= weaponDef->fAdsZoomOutFrac ;
             *pfZoom = zoomFrac;
         }
     }
@@ -449,19 +460,17 @@ qboolean CG_GetWeapReticleZoom(float *pfZoom)
 
 void CG_DrawFrameOverlay(float innerLeft, float innerRight, float innerTop, float innerBottom, const vec_t *color, MaterialHandle material)
 {
-    byte *cls;
     float screenWidth;
     float screenHeight;
 
-    cls = (byte *)imp_cls;
-    screenWidth = (float)((clientStatic_t *)cls)->vidConfig.width ;
-    screenHeight = (float)((clientStatic_t *)cls)->vidConfig.height ;
+    screenWidth = (float)cls.vidConfig.width ;
+    screenHeight = (float)cls.vidConfig.height ;
 
     if (innerLeft > 0.0f) {
         CL_DrawStretchPicPhysical(0.0f, 0.0f, innerLeft, screenHeight, 0.0f, 0.0f, 0.0f, 1.0f, color, material);
     }
 
-    if (screenWidth > innerRight) {
+    if (innerRight < screenWidth) {
         CL_DrawStretchPicPhysical(innerRight, 0.0f, screenWidth - innerRight, screenHeight, 0.0f, 0.0f, 0.0f, 1.0f, color, material);
     }
 
@@ -469,7 +478,7 @@ void CG_DrawFrameOverlay(float innerLeft, float innerRight, float innerTop, floa
         CL_DrawStretchPicPhysical(innerLeft, 0.0f, innerRight - innerLeft, innerTop, 0.0f, 0.0f, 1.0f, 0.0f, color, material);
     }
 
-    if (screenHeight > innerBottom) {
+    if (innerBottom < screenHeight) {
         CL_DrawStretchPicPhysical(innerLeft, innerBottom, innerRight - innerLeft, screenHeight - innerBottom, 0.0f, 0.0f, 1.0f, 0.0f, color, material);
     }
 }
@@ -537,7 +546,7 @@ unsigned int CG_DrawCrosshairNames(void)
         return 0;
     }
 
-    name = va("%s", targetClientInfo->name);
+    name = (char *)va("%s", targetClientInfo->name);
     if (!name || !name[0]) {
         return 0;
     }
@@ -596,7 +605,7 @@ unsigned int CG_CheckTimedMenus(void)
         serverTime = cg->time;
         if (serverTime - timedMenuTime > 2500) {
 
-            Menus_CloseByName((void *)imp_cgDC, (const char *)"voiceMenu");
+            Menus_CloseByName( (displayContextDef_t *)((void *)imp_cgDC), (const char *)"voiceMenu");
             cg->voiceTime = 0;
         }
     }
@@ -691,9 +700,9 @@ after_buttons:
             if ((float)(serverTime - showTime) > fadeVal * 1000.0f) {
 
                 if (CL_GetLocalClientActiveCount() == 1) {
-                    menu = Menus_FindByName((void *)imp_cgDC, (const char *)"Health");
+                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"Health");
                 } else {
-                    menu = Menus_FindByName((void *)imp_cgDC, (const char *)"Health_mp");
+                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"Health_mp");
                 }
 
                 if (menu)
@@ -717,9 +726,9 @@ after_buttons:
             if ((float)(serverTime - showTime) > fadeVal * 1000.0f) {
 
                 if (CL_GetLocalClientActiveCount() == 1) {
-                    menu = Menus_FindByName((void *)imp_cgDC, (const char *)"weaponinfo");
+                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"weaponinfo");
                 } else {
-                    menu = Menus_FindByName((void *)imp_cgDC, (const char *)"weaponinfo_mp");
+                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"weaponinfo_mp");
                 }
 
                 if (menu)
@@ -738,9 +747,9 @@ after_buttons:
             if ((float)(serverTime - showTime) > fadeVal * 1000.0f) {
 
                 if (CL_GetLocalClientActiveCount() == 1) {
-                    menu = Menus_FindByName((void *)imp_cgDC, (const char *)"Compass");
+                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"Compass");
                 } else {
-                    menu = Menus_FindByName((void *)imp_cgDC, (const char *)"Compass_mp");
+                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"Compass_mp");
                 }
 
                 if (menu)
@@ -770,9 +779,9 @@ after_buttons:
             if ((float)(serverTime - showTime) > fadeVal * 1000.0f) {
 
                 if (CL_GetLocalClientActiveCount() == 1) {
-                    menu = Menus_FindByName((void *)imp_cgDC, (const char *)"stance");
+                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"stance");
                 } else {
-                    menu = Menus_FindByName((void *)imp_cgDC, (const char *)"stance_mp");
+                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"stance_mp");
                 }
 
                 if (menu)
@@ -791,9 +800,9 @@ after_buttons:
             if ((float)(serverTime - showTime) > fadeVal * 1000.0f) {
 
                 if (CL_GetLocalClientActiveCount() == 1) {
-                    menu = Menus_FindByName((void *)imp_cgDC, (const char *)"offhandinfo");
+                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"offhandinfo");
                 } else {
-                    menu = Menus_FindByName((void *)imp_cgDC, (const char *)"offhandinfo_mp");
+                    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"offhandinfo_mp");
                 }
 
                 if (menu)
@@ -813,14 +822,14 @@ after_buttons:
         return serverTime;
     }
 
-    menu = Menus_FindByName((void *)imp_cgDC, (const char *)"objectiveinfo");
+    menu = Menus_FindByName((displayContextDef_t *)imp_cgDC, (const char *)"objectiveinfo");
     if (!menu) {
         return 0;
     }
     return Window_RemoveDynamicFlags(menu, 4);
 }
 
-static unsigned int CG_DrawSoundOverlay(void)
+static void CG_DrawSoundOverlay(void)
 {
     snd_overlay_info_t info[64];
     const char *provider;
@@ -838,9 +847,8 @@ static unsigned int CG_DrawSoundOverlay(void)
         info,
         (int)(sizeof(info) / sizeof(info[0])),
         &cpu);
-    if (count <= 0) {
-        return 0;
-    }
+    if (count <= 0)
+        return;
 
     provider = Dvar_GetString("mss_3d_provider");
     bits = Dvar_GetInt("snd_bits");
@@ -875,8 +883,6 @@ static unsigned int CG_DrawSoundOverlay(void)
         CG_DrawStringExt(2.0f, y, line, colorWhite, 0, 1, 10.0f, 0);
         y += 10.0f;
     }
-
-    return 0;
 }
 
 unsigned int CG_DrawMaterial(void)
@@ -1077,10 +1083,17 @@ void CG_DrawActive(void)
     CL_RenderScene(&cg->refdef);
 
     if (!CL_IsRenderingSplitScreen()) {
+        /* Pass parms/startTime/duration with their real types. The decomp emitted
+         * `*(float*)&field` reinterpretations here; on x86 they harmlessly launder
+         * the same 4 bytes, but on x64 (Win64 ABI) a float arg is passed in an xmm
+         * register while the pointer/int params are read from rcx/rdx/r8 -- so all
+         * three args arrived as garbage (and the parms pointer was truncated to 32
+         * bits), making the code see a bogus active shellshock and set
+         * hasSavedScreen=1 every frame, which suppressed the viewmodel. */
         CG_DrawShellShockSavedScreenBlend(
-            *(float *)&cg->shellshock.parms,
-            *(float *)&cg->shellshock.startTime,
-            *(float *)&cg->shellshock.duration);
+            cg->shellshock.parms,
+            cg->shellshock.startTime,
+            cg->shellshock.duration);
     }
 
     CG_TileClear();
@@ -1201,55 +1214,121 @@ static void __attribute_regparm__(2) CG_CalcCrosshairPosition(float *x, float *y
 }
 
 #ifndef __EMSCRIPTEN__
+static inline int CG_RoundFPS(float value)
+{
+#if defined(_MSC_VER) && defined(_M_IX86)
+    int result;
+    /* Break exact half-way ties upward before x87's round-to-nearest. */
+    const double roundEpsilon = 1.0 / 1073741824.0;
+
+    __asm fld value
+    __asm fadd roundEpsilon
+    __asm fistp result
+
+    return result;
+#else
+    return (int)floorf(value + 0.5f);
+#endif
+}
+
 static float CG_DrawFPS(float y)
 {
-    int i;
+    const char *s;
     int total = 0;
+    int fpsMin;
+    int fpsMax;
     int minTime = 0x7fffffff;
     int maxTime = 0;
-    int avgFps;
-    int minFps;
-    int maxFps;
-    const char *text;
+    float variance = 0.0f;
+    float average;
+    const float *color;
+    int i;
 
-    if (fps_index <= 31)
+    if (fps_index < 32)
         return y;
 
     for (i = 0; i < 32; ++i) {
-        int frameTime = fps_previousTimes[i];
-        total += frameTime;
-        if (frameTime < minTime)
-            minTime = frameTime;
-        if (frameTime > maxTime)
-            maxTime = frameTime;
+        total += fps_previousTimes[i];
+
+        if (fps_previousTimes[i] < minTime)
+            minTime = fps_previousTimes[i];
+
+        if (fps_previousTimes[i] > maxTime)
+            maxTime = fps_previousTimes[i];
     }
 
-    if (total <= 0)
-        return y;
+    average = (float)total * (1.0f / 32.0f);
+
+    for (i = 0; i < 32; ++i)
+        variance += fabsf((float)fps_previousTimes[i] - average);
+
+    variance *= 1.0f / 32.0f;
+
+    if (!total)
+        total = 1;
 
     if (minTime <= 0)
         minTime = 1;
-    if (maxTime <= 0)
-        maxTime = 1;
 
-    avgFps = (int)floorf(32000.0f / (float)total + 0.5f);
-    minFps = (int)floorf(1000.0f / (float)maxTime + 0.5f);
-    maxFps = (int)floorf(1000.0f / (float)minTime + 0.5f);
+    fpsMin = CG_RoundFPS(1000.0f / (float)maxTime);
+    fpsMax = CG_RoundFPS(1000.0f / (float)minTime);
 
     if (cg_drawFPS->current.integer > 2)
-        text = va("%1.2fmspf(%i-%i)", (float)total * 0.03125f, minTime, maxTime);
+        s = va("%1.2fmspf(%i-%i)", (float)total * (1.0f / 32.0f), minTime, maxTime);
     else
-        text = va("%ifps(%i-%i)", avgFps, minFps, maxFps);
+        s = va("%ifps(%i-%i,%i)", CG_RoundFPS(32000.0f / (float)total), fpsMin, fpsMax, CG_RoundFPS(variance));
 
-    y += (float)CG_DrawBigDevStringColor(620.0f, y, text, colorWhiteFaded, 6);
+    y += (float)CG_DrawBigDevStringColor(620.0f, y, s, colorWhiteFaded, 6);
 
-    if (cg_drawFPS->current.integer > 1) {
-        CL_TrackStatistics(&rendererStats);
-        y += (float)CG_DrawSmallDevStringColor(620.0f, y, "scene", colorGreenFaded, 6);
-        y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("verts %i", rendererStats.c_vertexes), colorWhiteFaded, 6);
-        y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("tris %i", rendererStats.c_indexes / 3), colorWhiteFaded, 6);
-        y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("batches %i", rendererStats.c_batches), colorWhiteFaded, 6);
+    if (cg_drawFPS->current.integer <= 1)
+        return y;
+
+    if (!stricmp(Dvar_GetString("gfx_driver"), "ogl")) {
+        y += (float)CG_DrawSmallDevStringColor(620.0f, y, "use d3d for stats", colorWhiteFaded, 6);
+        return y;
     }
+
+    CL_TrackStatistics(&rendererStats);
+    y += (float)CG_DrawSmallDevStringColor(620.0f, y, "scene", colorGreenFaded, 6);
+
+    CG_DrawSmallDevStringColor(620.0f, y, va("view tris          "), colorWhiteFaded, 6);
+    y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_viewIndexes / 3), colorWhiteFaded, 6);
+
+    if (rendererStats.c_shadowIndexes) {
+        CG_DrawSmallDevStringColor(620.0f, y, va("shadow tris          "), colorWhiteFaded, 6);
+        y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_shadowIndexes / 3), colorWhiteFaded, 6);
+    }
+
+    CG_DrawSmallDevStringColor(620.0f, y, va("raw geo tris          "), colorWhiteFaded, 6);
+    y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_indexes / 3), colorWhiteFaded, 6);
+
+    CG_DrawSmallDevStringColor(620.0f, y, va("raw fx tris          "), colorWhiteFaded, 6);
+    y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_fxIndexes / 3), colorWhiteFaded, 6);
+
+    CG_DrawSmallDevStringColor(620.0f, y, va("prim          "), colorWhiteFaded, 6);
+    y += (float)CG_DrawSmallDevStringColor(620.0f, y, va("%i", rendererStats.c_batches), colorWhiteFaded, 6);
+
+    y += (float)CG_DrawSmallDevStringColor(620.0f, y, "level", colorGreenFaded, 6);
+
+    CG_DrawSmallDevStringColor(620.0f, y, va("tex      "), colorWhiteFaded, 6);
+    y += (float)CG_DrawSmallDevStringColor(
+        620.0f, y, va("%d", rendererStats.c_imageUsage.total / (1024 * 1024)), colorWhiteFaded, 6);
+
+    if (rendererStats.c_imageUsage.minspec > 48 * 1024 * 1024) {
+        s = va("min pc tex (%g)      ", 48.0);
+        color = colorRedFaded;
+    } else {
+        s = va("min pc tex      ");
+        color = colorWhiteFaded;
+    }
+
+    CG_DrawSmallDevStringColor(620.0f, y, s, color, 6);
+    y += (float)CG_DrawSmallDevStringColor(
+        620.0f, y, va("%d", rendererStats.c_imageUsage.minspec / (1024 * 1024)), color, 6);
+
+    CG_DrawSmallDevStringColor(620.0f, y, va("lightmap      "), colorWhiteFaded, 6);
+    y += (float)CG_DrawSmallDevStringColor(
+        620.0f, y, va("%d", rendererStats.c_imageUsage.lightmap / (1024 * 1024)), colorWhiteFaded, 6);
 
     return y;
 }
@@ -1269,7 +1348,7 @@ float CG_DrawWeapReticle(void)
     vec2_t drawPos;
     vec2_t drawSize;
 
-    if (!weapDef->szOverlayMaterial[0] && !weapDef->overlayReticle)
+    if ((!weapDef->szOverlayMaterial || !weapDef->szOverlayMaterial[0]) && !weapDef->overlayReticle)
         return 1.0f;
 
     if (zoom == 0.0f)
@@ -1550,7 +1629,7 @@ static void CG_Draw2D_DrawBottomOverlays(cg_t *cg)
     if (cg_subtitles->current.enabled)
         Con_DrawSubtitles(cg_subtitlePosX->current.integer,
                           cg_subtitlePosY->current.integer,
-                          cg_subtitleCharHeight->current.integer, 1.0f, 2);
+                          cg_subtitleCharHeight->current.integer, 1.0f, (msgwnd_mode_t)2);
 
     Con_DrawSay((int)cg_hudSayPosition->current.vector[1] + 24);
     (void)cg;
@@ -1634,7 +1713,7 @@ unsigned int CG_Draw2D(void)
         if (drawHudElems)
             CG_Draw2dHudElems(0);
         if (drawHudMenus)
-            Menu_PaintAll((void *)imp_cgDC);
+            Menu_PaintAll((displayContextDef_t *)imp_cgDC);
         CG_Draw2dHudElems(1);
     }
 
@@ -1749,7 +1828,7 @@ unsigned int CG_Draw2D(void)
         int now = Sys_Milliseconds();
         const void *statsArray;
         int statsCount;
-        StatMon_GetStatsArray(&statsArray, &statsCount);
+        StatMon_GetStatsArray( (const statmonitor_t **)(&statsArray), &statsCount);
         if (statsCount > 0) {
             float y = 200.0f;
             int i;
@@ -1850,7 +1929,7 @@ unsigned int CG_Draw2D(void)
             }
             alpha = fade[3];
         }
-        Con_DrawNotify(6, (int)notifyY, alpha, 2);
+        Con_DrawNotify(6, (int)notifyY, alpha, (msgwnd_mode_t)2);
         CG_Draw2D_DrawBottomOverlays(cg);
     }
 

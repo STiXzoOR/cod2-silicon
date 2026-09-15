@@ -5,6 +5,12 @@
 #    include <mmintrin.h>
 #endif
 #include <string.h>
+extern const dvar_t *cl_activeAction;
+/* dvar globals */
+extern const dvar_t *cl_showServerCommands;
+extern const dvar_t *cl_showTimeDelta;
+extern const dvar_t *com_statmon;
+extern const dvar_t *com_sv_running;
 
 extern char *getenv(const char *name);
 
@@ -24,7 +30,7 @@ extern void Com_FreeWeaponInfoMemory(int mode);
 extern void Com_UnloadSoundAliases(int mode);
 extern void Com_LoadSoundAliases(const char *loadspec, const char *zone, snd_alias_system_t flag);
 extern snd_alias_t *Com_PickSoundAlias(const char *aliasname);
-extern const char *Cmd_Argv(int n);
+extern char *Cmd_Argv(int n);
 extern int Cmd_Argc(void);
 extern void Cmd_TokenizeString(const char *text);
 extern void Cmd_TokenizeString2(const char *text, int flags);
@@ -45,16 +51,16 @@ extern void CL_SystemInfoChanged(void);
 extern void CL_StartHunkUsers(void);
 extern void CL_ReadDemoMessage(void);
 extern int CL_GetSkelTimeStamp(int localClientNum);
-extern void *CL_AllocSkelMemory(int localClientNum, int size);
+extern char *CL_AllocSkelMemory(int localClientNum, unsigned int size);
 extern void CL_ConsolePrint(int channel, const char *text, int duration, int lineWidth);
 extern int DObjSkelExists(const struct DObj_s *obj, int timeStamp);
 extern qboolean DObjSkelIsBoneUpToDate(const struct DObj_s *obj, int boneIndex);
 extern qboolean DObjSkelAreBonesUpToDate(const struct DObj_s *obj, int *partBits);
 extern int DObjGetAllocSkelSize(const struct DObj_s *obj);
-extern void DObjCreateSkel(const struct DObj_s *obj, void *mem, int timeStamp);
-extern void FX_AdjustCamera(refdef_t *refdef, float zfar);
+extern void DObjCreateSkel(const struct DObj_s *obj, char *mem, int timeStamp);
+extern void FX_AdjustCamera(PrimType (*refdef)[256], float zfar);
 extern int FS_FOpenFileByMode(const char *filename, int *handle, int mode);
-extern int FS_FOpenFileWrite(const char *filename);
+extern fileHandle_t FS_FOpenFileWrite(const char *filename);
 extern int FS_Read(void *buffer, int len, int handle);
 extern int FS_Write(const void *buffer, int len, int handle);
 extern void FS_FCloseFile(fileHandle_t handle);
@@ -62,7 +68,7 @@ extern void FS_Printf(int handle, const char *fmt, ...);
 extern int Hunk_Used(void);
 extern void *Z_MallocInternal(int size);
 extern void Z_FreeInternal(void *ptr);
-extern const char *Info_ValueForKey(const char *s, const char *key);
+extern char *Info_ValueForKey(const char *s, const char *key);
 extern const char *GetBspExtension(void);
 extern int Sys_Milliseconds(void);
 extern void Con_Close(void);
@@ -77,9 +83,11 @@ extern qboolean UI_IsFullscreen(void);
 extern void UI_CloseFocusedMenu(void);
 extern void UI_KeyEvent(int key, int down);
 extern void SCR_UpdateScreenInternal(void);
+extern void R_AddCmdDrawStretchPic(float x, float y, float w, float h, float s0, float t0, float s1, float t1, const vec_t *color, MaterialHandle material);
+extern void R_AddCmdDrawQuadPic(vec2_t *verts, const vec_t *color, MaterialHandle material);
 extern void Cbuf_AddText(const char *text);
-extern void Dvar_SetString(void *dvar, const char *value);
-extern void Dvar_SetInt(void *dvar, int value);
+extern void Dvar_SetString(const dvar_t *dvar, const char *value);
+extern void Dvar_SetInt(const dvar_t *dvar, int value);
 extern int Dvar_GetInt(const char *name);
 extern void Dvar_GetUnpackedColorByName(const char *name, float *color);
 extern void CalcScreenPlacement(float *x, float *y, float *w, float *h, int horzAlign, int vertAlign);
@@ -94,6 +102,7 @@ static int warnCount;
 static int warnCount_00f13084;
 static char bigConfigString[8192];
 extern const vec4_t g_color_table[];
+extern clientActive_t clients[1];
 
 #define RE (&re)
 #define CLS ((clientStatic_t *)imp_cls)
@@ -205,7 +214,7 @@ static inline __attribute__((always_inline)) void CL_FirstSnapshot(void)
     clientActive_t *cl = CL_LOCAL;
     clientConnection_t *clui = CLUI_STATE;
 
-    clui->state = 8;
+    clui->state = (connstate_t)(8);
     int serverTime = cl->snap.serverTime;
     clientStatic_t *cls = CLS;
     cl->serverTimeDelta = serverTime - cls->realtime;
@@ -213,12 +222,11 @@ static inline __attribute__((always_inline)) void CL_FirstSnapshot(void)
     clui->timeDemoBaseTime = serverTime;
 
     {
-        const dvar_t **autorecDvarp = (const dvar_t **)imp_cl_activeAction;
-        const char *autorecStr = (*autorecDvarp)->current.string;
+        const char *autorecStr = (cl_activeAction)->current.string;
         if (*autorecStr) {
             Cbuf_AddText(autorecStr);
             Cbuf_AddText("\n");
-            Dvar_SetString((void *)*autorecDvarp, "");
+            Dvar_SetString(cl_activeAction, "");
         }
     }
 
@@ -301,7 +309,7 @@ qboolean CL_GetSnapshot(int snapshotNumber, snapshot_t *snapshot)
 
     count = clSnap->numEntities;
     if (count > 256) {
-        if ((*(const dvar_t **)imp_com_statmon)->current.enabled) {
+        if ((com_statmon)->current.enabled) {
             StatMon_Warning(4, 3000, "CL_GetSnapshot: truncated entities");
         } else {
             Com_DPrintf("CL_GetSnapshot: truncated %i entities to %i\n", count, 256);
@@ -440,7 +448,7 @@ qboolean CL_GetServerCommand(int serverCommandNumber)
     s = clui->serverCommands[serverCommandNumber & 0x7f];
     clui->lastExecutedServerCommand = serverCommandNumber;
 
-    if ((*(const dvar_t **)imp_cl_showServerCommands)->current.enabled) {
+    if ((cl_showServerCommands)->current.enabled) {
         Com_DPrintf("serverCommand: %i : %s\n", serverCommandNumber, s);
     }
 
@@ -542,7 +550,7 @@ void CL_SetExpectedHunkUsage(const char *mapname)
         if (!token || *token == '\0')
             continue;
 
-        Dvar_SetInt(*(void **)imp_com_expectedHunkUsage, atoi(token));
+        Dvar_SetInt( (const dvar_t *)(*(void **)imp_com_expectedHunkUsage), atoi(token));
         Z_FreeInternal(buf);
         return;
     }
@@ -550,7 +558,7 @@ void CL_SetExpectedHunkUsage(const char *mapname)
     Z_FreeInternal(buf);
 
 set_default:
-    Dvar_SetInt(*(void **)imp_com_expectedHunkUsage, 0);
+    Dvar_SetInt( (const dvar_t *)(*(void **)imp_com_expectedHunkUsage), 0);
 }
 
 void CL_CM_LoadMap(const char *mapname)
@@ -560,7 +568,7 @@ void CL_CM_LoadMap(const char *mapname)
     Com_LoadBsp(mapname);
     CM_LoadMap(mapname, &checksum);
 
-    if (!(*(const dvar_t **)imp_com_sv_running)->current.enabled) {
+    if (!(com_sv_running)->current.enabled) {
         CM_LinkWorld();
     }
 }
@@ -591,7 +599,7 @@ qboolean CL_DObjCreateSkelForBone(struct DObj_s *obj, int boneIndex, int localCl
 
     mem = CL_AllocSkelMemory(localClientNum, DObjGetAllocSkelSize(obj));
     if (mem) {
-        DObjCreateSkel(obj, mem, timeStamp);
+        DObjCreateSkel(obj, (char *)mem, timeStamp);
         return 0;
     }
 
@@ -615,7 +623,7 @@ qboolean CL_DObjCreateSkelForBones(const struct DObj_s *obj, int *partBits, int 
 
     mem = CL_AllocSkelMemory(localClientNum, DObjGetAllocSkelSize(obj));
     if (mem) {
-        DObjCreateSkel(obj, mem, timeStamp);
+        DObjCreateSkel(obj, (char *)mem, timeStamp);
         return 0;
     }
 
@@ -651,7 +659,7 @@ void CL_SubtitlePrint(const char *pszText, int iDuration, int iLineWidth)
 
 const char *CL_GetConfigString(int index)
 {
-    clientActive_t *cl = CL_LOCAL;
+    clientActive_t *cl = &clients[0];
     int offset = cl->gameState.stringOffsets[index];
     return cl->gameState.stringData + offset;
 }
@@ -764,12 +772,20 @@ void CL_BlendSavedScreen(int fadeMsec)
 
 void CL_DrawStretchPicPhysical(float x, float y, float w, float h, float s1, float t1, float s2, float t2, const vec_t *color, MaterialHandle material)
 {
+#if defined(COD2_X64) && !defined(COD2_GFX_DLL)
+    R_AddCmdDrawStretchPic(x, y, w, h, s1, t1, s2, t2, color, material);
+#else
     RE->DrawStretchPic(x, y, w, h, s1, t1, s2, t2, color, material);
+#endif
 }
 
 void CL_DrawQuadPic(int (*verts)[16][4], const vec_t *color, MaterialHandle material)
 {
+#if defined(COD2_X64) && !defined(COD2_GFX_DLL)
+    R_AddCmdDrawQuadPic((vec2_t *)verts, color, material);
+#else
     RE->DrawQuadPic(verts, color, material);
+#endif
 }
 
 void CL_DrawSprite(MaterialHandle material, const byte *rgbaColor, const vec_t *pos, float radius, float minScreenRadius, int renderFxFlags)
@@ -799,7 +815,7 @@ qboolean CL_PickMaterial(const vec_t *org, const vec_t *dir, char *pszName, char
 
 void CL_LoadSoundAliases(const char *loadspec)
 {
-    Com_LoadSoundAliases(loadspec, "all_mp", 1);
+    Com_LoadSoundAliases(loadspec, "all_mp", (snd_alias_system_t)(1));
 }
 
 qboolean CL_Popup(const char *menu)
@@ -888,7 +904,7 @@ void CL_FreeWeaponInfoMemory(void)
 void CL_FX_AdjustCamera(refdef_t *refdef)
 {
     float zfar = RE->GetFarPlaneDist();
-    FX_AdjustCamera(refdef, zfar);
+    FX_AdjustCamera( (PrimType (*)[256])(refdef), zfar);
 }
 
 void CL_CapTurnRate(float maxPitchSpeed, float maxYawSpeed)
@@ -1035,18 +1051,18 @@ void CL_InitCGame(void)
         Com_sprintf(cl->mapname, 64, "maps/mp/%s.%s", mapname, ext);
     }
 
-    if (!(*(const dvar_t **)imp_com_sv_running)->current.enabled) {
+    if (!(com_sv_running)->current.enabled) {
         Com_InitDObj();
         CL_SetExpectedHunkUsage(cl->mapname);
     }
 
     {
         clientConnection_t *clui = CLUI_STATE;
-        clui->state = 6;
+        clui->state = (connstate_t)(6);
         cl->cgameInitCalled = 1;
         CG_Init(clui->clientNum, clui->lastExecutedServerCommand, clui->serverMessageSequence);
         cl->cgameInitialized = 1;
-        clui->state = 7;
+        clui->state = (connstate_t)(7);
     }
 
     {
@@ -1108,7 +1124,7 @@ void CL_AdjustTimeDelta(void)
         cl = CL_LOCAL;
         cl->oldServerTime = cl->snap.serverTime;
         cl->serverTime = cl->snap.serverTime;
-        if ((*(const dvar_t **)imp_cl_showTimeDelta)->current.enabled) {
+        if ((cl_showTimeDelta)->current.enabled) {
             Com_Printf("cl_showTimeDelta: reset\n");
         }
         goto debug_print;
@@ -1116,7 +1132,7 @@ void CL_AdjustTimeDelta(void)
 
     if (deltaDiff > 100) {
 
-        if ((*(const dvar_t **)imp_cl_showTimeDelta)->current.enabled) {
+        if ((cl_showTimeDelta)->current.enabled) {
             Com_Printf("cl_showTimeDelta: average\n");
         }
         cl = CL_LOCAL;
@@ -1141,7 +1157,7 @@ smooth: {
     }
 
 debug_print:
-    if ((*(const dvar_t **)imp_cl_showTimeDelta)->current.enabled) {
+    if ((cl_showTimeDelta)->current.enabled) {
         cl = CL_LOCAL;
         {
             clientStatic_t *cls = CLS;
@@ -1240,7 +1256,11 @@ void CL_SetFullScreenViewport(void)
 void CL_DrawStretchPic(float x, float y, float w, float h, int horzAlign, int vertAlign, float s1, float t1, float s2, float t2, const vec_t *color, MaterialHandle material)
 {
     CalcScreenPlacement(&x, &y, &w, &h, horzAlign, vertAlign);
+#if defined(COD2_X64) && !defined(COD2_GFX_DLL)
+    R_AddCmdDrawStretchPic(x, y, w, h, s1, t1, s2, t2, color, material);
+#else
     RE->DrawStretchPic(x, y, w, h, s1, t1, s2, t2, color, material);
+#endif
 }
 
 void CL_SyncTimes(void)

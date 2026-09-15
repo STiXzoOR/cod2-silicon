@@ -12,19 +12,13 @@ extern void Com_Error(int code, const char *fmt, ...);
 extern void FreeMemory(void *ptr);
 extern void *GetMemory(unsigned long size);
 extern void *GetClearedMemory(unsigned long size);
-extern void FreeScript(void *script);
+extern void FreeScript(script_t *script);
 extern script_t *LoadScriptFile(const char *filename);
-extern int PS_ReadToken(void *script, token_t *token);
-extern int EndOfScript(void *script);
+extern int PS_ReadToken(script_t *script, token_t *token);
+extern int EndOfScript(script_t *script);
 extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 extern char *strncat(char *dest, const char *src, size_t count);
-#ifdef __EMSCRIPTEN__
-
 #include <time.h>
-#else
-extern long int time(long int *timer);
-extern char *ctime(const long int *timer);
-#endif
 extern void free(void *ptr);
 extern int I_stricmp(const char *s1, const char *s2);
 
@@ -598,7 +592,7 @@ int PC_Directive_else(source_t *source)
         return 0;
     }
 
-    indent = GetMemory(sizeof(*indent));
+    indent = (indent_t *)(GetMemory(sizeof(*indent)));
     indent->type = 2;
     indent->script = source->scriptstack;
     indent->skip = !skip;
@@ -1347,7 +1341,7 @@ int PC_ExpandBuiltinDefine(source_t *source, token_t *deftoken, define_t *define
         break;
 
     case 3: {
-        long int t;
+        time_t t;
         char *curtime;
         size_t len;
 
@@ -1369,7 +1363,7 @@ int PC_ExpandBuiltinDefine(source_t *source, token_t *deftoken, define_t *define
     }
 
     case 4: {
-        long int t;
+        time_t t;
         char *curtime;
         size_t len;
 
@@ -2085,7 +2079,7 @@ int PC_Directive_if(source_t *source)
     }
 
     skip = (value == 0);
-    indent = GetMemory(sizeof(*indent));
+    indent = (indent_t *)(GetMemory(sizeof(*indent)));
     indent->type = 1;
     indent->script = source->scriptstack;
     indent->skip = skip;
@@ -2123,7 +2117,7 @@ int PC_Directive_elif(source_t *source)
         return 0;
 
     skip = (value == 0);
-    indent = GetMemory(sizeof(*indent));
+    indent = (indent_t *)(GetMemory(sizeof(*indent)));
     indent->type = 4;
     indent->script = source->scriptstack;
     indent->skip = skip;

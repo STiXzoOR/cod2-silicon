@@ -1,7 +1,11 @@
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
+extern scr_const_t scr_const;
 
+/* File-scope alias: bound where no local can shadow `scr_const`, so uses below
+   always reach the global even inside functions that declare their own `scr_const`. */
+static scr_const_t * const scr_const_g = &scr_const;
 extern void Com_Error(int code, const char *fmt, ...);
 
 COD2_ASSERT_FIELD(gclient_t, sess.sessionState, 0x26a8);
@@ -15,7 +19,7 @@ char *gc_orders[7] = {
 };
 extern level_locals_t level;
 
-#define g_entities ((gentity_t *)imp_g_entities)
+extern gentity_t g_entities[];
 extern const dvar_t *g_cheats;
 extern const dvar_t *g_allowVote;
 extern const dvar_t *g_oldVoting;
@@ -25,11 +29,11 @@ extern const dvar_t *g_gametype;
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern char *va(const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
-extern int G_LogPrintf(const char *fmt, ...);
+extern void G_LogPrintf(const char *fmt, ...);
 extern int SV_GetClientPing(int clientNum);
 extern int SV_GetGuid(int clientNum);
-extern void SV_GameSendServerCommand(int clientNum, int type, const char *text);
-extern void SV_SetConfigstring(int index, const char *val);
+extern void SV_GameSendServerCommand(int clientNum, svscmd_type type, const char *text);
+extern void SV_SetConfigstring(const int index, const char *val);
 extern int SV_Cmd_Argc(void);
 extern void SV_Cmd_ArgvBuffer(int arg, char *buffer, int bufferLength);
 extern int I_stricmp(const char *s1, const char *s2);
@@ -44,18 +48,18 @@ extern void Cbuf_ExecuteText(int exec_when, const char *text);
 extern void SV_GetConfigstring(int index, char *buffer, int bufferLength);
 extern qboolean SV_MapExists(const char *name);
 extern unsigned int Scr_AddString(const char *value);
-extern void Scr_Notify(gentity_t *ent, unsigned short stringValue, int paramcount);
-extern unsigned int Scr_VoteCalled(gentity_t *self, char *command, char *param1, char *param2);
+extern void Scr_Notify(gentity_t *ent, unsigned short stringValue, unsigned int paramcount);
+extern void Scr_VoteCalled(gentity_t *self, char *command, char *param1, char *param2);
 extern qboolean Scr_IsValidGameType(const char *pszGameType);
 extern const char *Scr_GetGameTypeNameForScript(const char *pszGameTypeScript);
 extern void G_GetPlayerViewOrigin(const gentity_t *ent, vec_t *origin);
 extern void G_GetPlayerViewDirection(const gentity_t *ent, vec_t *forward, vec_t *right, vec_t *up);
 extern void G_TraceCapsule(trace_t *results, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int contentmask);
-extern unsigned char G_SetOrigin(gentity_t *ent, const vec_t *origin);
+extern void G_SetOrigin(gentity_t *ent, const vec_t *origin);
 extern void SetClientViewAngle(gentity_t *ent, const vec_t *angle);
 extern void TeleportPlayer(gentity_t *player, vec_t *origin, vec_t *angles);
 extern int BG_GetNumWeapons(void);
-extern qboolean BG_DoesWeaponRequireSlot(int weaponIndex);
+extern Bool BG_DoesWeaponRequireSlot(int weaponIndex);
 extern qboolean BG_IsAnyEmptyPrimaryWeaponSlot(const playerState_t *ps);
 extern qboolean BG_TakePlayerWeapon(playerState_t *pPS, int iWeaponIndex);
 extern int BG_AmmoForWeapon(int weapon);
@@ -67,7 +71,7 @@ extern gentity_t *G_Spawn(void);
 extern void G_GetItemClassname(const gitem_t *item, scr_string_t *out);
 extern void G_SpawnItem(gentity_t *ent, const gitem_t *item);
 extern void Touch_Item(gentity_t *ent, gentity_t *other, qboolean bTouched);
-extern unsigned char G_FreeEntity(gentity_t *ent);
+extern void G_FreeEntity(gentity_t *ed);
 extern void G_SelectWeaponIndex(int clientNum, int iWeaponIndex);
 extern qboolean G_ClientCanSpectateTeam(gclient_t *client, team_t team);
 extern qboolean SV_GetArchivedClientInfo(int clientNum, int *pArchiveTime, playerState_t *ps, clientState_t *cs);
@@ -76,7 +80,7 @@ extern char *vtos(const vec_t *v);
 extern unsigned char G_PrintEntities(void);
 extern double atof(const char *nptr);
 extern int atoi(const char *nptr);
-extern unsigned int Scr_PlayerVote(gentity_t *self, char *option);
+extern void Scr_PlayerVote(gentity_t *self, char *option);
 
 enum {
     GCMDS_MAX_CLIENTS = 64
@@ -158,7 +162,7 @@ void Cmd_Score_f(gentity_t *ent)
 
 qboolean CheatsOk(gentity_t *ent)
 {
-    if (!(*(const dvar_t **)imp_g_cheats)->current.enabled) {
+    if (!(g_cheats)->current.enabled) {
         SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE,
                                  va("%c \"GAME_CHEATSNOTENABLED\"", 101));
         return 0;
@@ -314,7 +318,7 @@ qboolean Cmd_FollowCycle_f(gentity_t *ent, int dir)
             if (G_ClientCanSpectateTeam(ent->client, cs.team)) {
 
                 ((gclient_t *)client)->spectatorClient = clientnum;
-                ((gclient_t *)client)->sess.sessionState = 2;
+                ((gclient_t *)client)->sess.sessionState = (sessionState_t)(2);
                 return 1;
             }
         }
@@ -344,13 +348,13 @@ void Cmd_CallVote_f(gentity_t *ent)
     int kicknum;
     int i;
 
-    if (!(*(const dvar_t **)imp_g_allowVote)->current.enabled) {
+    if (!(g_allowVote)->current.enabled) {
         SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE,
                                  va("%c \"GAME_VOTINGNOTENABLED\"", 101));
         return;
     }
 
-    if ((*(const dvar_t **)imp_g_oldVoting)->current.enabled) {
+    if ((g_oldVoting)->current.enabled) {
         if (lvl->voteTime) {
             SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE,
                                      va("%c \"GAME_VOTEALREADYINPROGRESS\"", 101));
@@ -380,7 +384,7 @@ void Cmd_CallVote_f(gentity_t *ent)
         return;
     }
 
-    if (!(*(const dvar_t **)imp_g_oldVoting)->current.enabled) {
+    if (!(g_oldVoting)->current.enabled) {
         Scr_VoteCalled(ent, arg1, arg2, arg3);
         return;
     }
@@ -405,7 +409,7 @@ void Cmd_CallVote_f(gentity_t *ent)
             return;
         }
 
-        if (!I_stricmp(arg2, (*(const dvar_t **)imp_g_gametype)->current.string))
+        if (!I_stricmp(arg2, (g_gametype)->current.string))
             arg2[0] = '\0';
 
         SV_Cmd_ArgvBuffer(3, arg3, sizeof(arg3));
@@ -527,7 +531,7 @@ void Cmd_Vote_f(gentity_t *ent)
     level_locals_t *lvl = &level;
     char msg[64];
 
-    if ((*(const dvar_t **)imp_g_oldVoting)->current.enabled) {
+    if ((g_oldVoting)->current.enabled) {
         if (!lvl->voteTime) {
             SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE,
                                      va("%c \"GAME_NOVOTEINPROGRESS\"", 101));
@@ -553,13 +557,13 @@ void Cmd_Vote_f(gentity_t *ent)
 
     SV_Cmd_ArgvBuffer(1, msg, sizeof(msg));
     if (msg[0] == 'y' || msg[1] == 'Y' || msg[1] == '1') {
-        if ((*(const dvar_t **)imp_g_oldVoting)->current.enabled) {
+        if ((g_oldVoting)->current.enabled) {
             ++lvl->voteYes;
             SV_SetConfigstring(0x11, va("%i", lvl->voteYes));
         } else {
             Scr_PlayerVote(ent, "yes");
         }
-    } else if ((*(const dvar_t **)imp_g_oldVoting)->current.enabled) {
+    } else if ((g_oldVoting)->current.enabled) {
         ++lvl->voteNo;
         SV_SetConfigstring(0x12, va("%i", lvl->voteNo));
     } else {
@@ -574,13 +578,13 @@ void Cmd_SetViewpos_f(gentity_t *ent)
     char buffer[1024];
     int i;
 
-    if (!(*(const dvar_t **)imp_g_cheats)->current.enabled) {
-        SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_CHEATSNOTENABLED\"", 101));
+    if (!(g_cheats)->current.enabled) {
+        SV_GameSendServerCommand(ent - g_entities, SV_CMD_RELIABLE, va("%c \"GAME_CHEATSNOTENABLED\"", 101));
         return;
     }
 
     if (SV_Cmd_Argc() != 5) {
-        SV_GameSendServerCommand(ent - g_entities, 0, va("%c \"GAME_USAGE\x15: setviewpos x y z yaw\"", 101));
+        SV_GameSendServerCommand(ent - g_entities, SV_CMD_RELIABLE, va("%c \"GAME_USAGE\x15: setviewpos x y z yaw\"", 101));
         return;
     }
 
@@ -625,7 +629,7 @@ void Cmd_MenuResponse_f(gentity_t *pEnt)
 
     Scr_AddString(szResponse);
     Scr_AddString(szMenuName);
-    Scr_Notify(pEnt, ((const scr_const_t *)imp_scr_const)->menuresponse, 2);
+    Scr_Notify(pEnt, ((const scr_const_t *)scr_const_g)->menuresponse, 2);
 }
 
 static void G_SayTo(gentity_t *ent, gentity_t *other, int mode, int color, const char *name, const char *message)
@@ -647,7 +651,7 @@ static void G_SayTo(gentity_t *ent, gentity_t *other, int mode, int color, const
     if (mode == 1 && !OnSameTeam(ent, other))
         return;
 
-    if (!(*(const dvar_t **)imp_g_deadChat)->current.enabled && ent->client->sess.sessionState != SESS_STATE_PLAYING && other->client->sess.sessionState == SESS_STATE_PLAYING) {
+    if (!(g_deadChat)->current.enabled && ent->client->sess.sessionState != SESS_STATE_PLAYING && other->client->sess.sessionState == SESS_STATE_PLAYING) {
         return;
     }
 
@@ -664,7 +668,6 @@ void G_Say(gentity_t *ent, gentity_t *target, int mode, const char *chatText)
     char text[150];
     const char *stateColor;
     const char *teamString;
-    int clientNum;
     int color;
     int j;
 
@@ -681,35 +684,35 @@ void G_Say(gentity_t *ent, gentity_t *target, int mode, const char *chatText)
     case TEAM_ALLIES:
         stateColor = "^8";
         break;
-    case TEAM_SPECTATOR:
-        Com_sprintf(szStateString, sizeof(szStateString), "\x15(\x14GAME_SPECTATOR\x15)");
-        goto state_ready;
     default:
         stateColor = "";
         break;
     }
 
-    if (ent->client->sess.sessionState) {
+    if (ent->client->sess.cs.team == TEAM_SPECTATOR) {
+        Com_sprintf(szStateString, sizeof(szStateString), "\x15(\x14GAME_SPECTATOR\x15)");
+    } else if (ent->client->sess.sessionState) {
         Com_sprintf(szStateString, sizeof(szStateString), "\x15%s(\x14GAME_DEAD\x15)", stateColor);
     } else {
         Com_sprintf(szStateString, sizeof(szStateString), "\x15%s", stateColor);
     }
 
-state_ready:
-    if (mode == 1) {
+    switch (mode) {
+    case 1:
         teamString = (ent->client->sess.cs.team == TEAM_AXIS) ? "GAME_AXIS" : "GAME_ALLIES";
-        clientNum = ent->s.number;
-        G_LogPrintf("sayteam;%d;%d;%s;%s\n", SV_GetGuid(clientNum), clientNum, cleanname, chatText);
+        G_LogPrintf("sayteam;%d;%d;%s;%s\n", SV_GetGuid(ent->s.number), ent->s.number, cleanname, chatText);
         Com_sprintf(name, sizeof(name), "%s(\x14%s\x15)%s%s: ", szStateString, teamString, cleanname, "^7");
         color = '5';
-    } else if (mode == 2) {
+        break;
+    case 2:
         Com_sprintf(name, sizeof(name), "%s[%s]%s: ", szStateString, cleanname, "^7");
         color = '3';
-    } else {
-        clientNum = ent->s.number;
-        G_LogPrintf("say;%d;%d;%s;%s\n", SV_GetGuid(clientNum), clientNum, cleanname, chatText);
+        break;
+    default:
+        G_LogPrintf("say;%d;%d;%s;%s\n", SV_GetGuid(ent->s.number), ent->s.number, cleanname, chatText);
         Com_sprintf(name, sizeof(name), "%s%s%s: ", szStateString, cleanname, "^7");
         color = '7';
+        break;
     }
 
     I_strncpyz(text, chatText, sizeof(text));
@@ -719,7 +722,7 @@ state_ready:
         return;
     }
 
-    if ((*(const dvar_t **)imp_g_dedicated)->current.integer)
+    if ((g_dedicated)->current.integer)
         Com_Printf("%s%s\n", name, text);
 
     for (j = 0; j < level.numConnectedClients; ++j)
@@ -740,7 +743,7 @@ void Cmd_GameCommand_f(gentity_t *ent)
     if ((unsigned int)player > 63 || (unsigned int)order > 6)
         return;
 
-    G_Say(ent, &((gentity_t *)imp_g_entities)[player], 2, gc_orders[order]);
+    G_Say(ent, &g_entities[player], 2, gc_orders[order]);
     G_Say(ent, ent, 2, gc_orders[order]);
 }
 
@@ -1209,7 +1212,7 @@ void ClientCommand(int clientNum)
     }
 
     if (!I_stricmp(cmd, "entitycount")) {
-        if ((*(const dvar_t **)imp_g_cheats)->current.enabled)
+        if ((g_cheats)->current.enabled)
             Com_Printf("entity count = %i\n", level.num_entities);
         return;
     }

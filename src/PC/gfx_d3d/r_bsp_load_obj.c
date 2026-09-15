@@ -43,7 +43,7 @@ static int R_FinishLoadingAabbTrees_r(byte *tree, int totalTreesUsed);
 const char *R_ParseSunLight(SunLightParseParams *params, const char *text);
 void R_InterpretSunLightParseParamsIntoLights(SunLightParseParams *sunParse, GfxLight *sunLight);
 #ifndef __EMSCRIPTEN__
-static Bool R_IsValidStaticModel(char *spawnVars, int spawnVarCount, struct XModel **model, vec_t *origin);
+static Bool R_IsValidStaticModel(char *spawnVars[64][2], int spawnVarCount, struct XModel **model, vec_t *origin);
 #endif
 #ifdef __EMSCRIPTEN__
 static void R_SetParentAndCell_r(mnode_t *node, int parent);
@@ -52,22 +52,22 @@ static void __attribute_regparm__(2) R_SetParentAndCell_r(mnode_t *node, int par
 #endif
 static void R_SetParentAndCell_r_impl(mnode_t *node, int parent);
 void __attribute_regparm__(1) R_LoadEntities(GfxBspLoad *load);
-void __attribute_regparm__(1) R_LoadNodesAndLeafs(const byte *loadState);
-static void R_LoadNodesAndLeafs_impl(const byte *loadState);
-void __attribute_regparm__(1) R_LoadPortals(const int *load);
-void __attribute_regparm__(1) R_LoadCells(const int *load);
-void __attribute_regparm__(1) R_LoadAabbTrees(const int *load);
-void __attribute_regparm__(1) R_LoadOccluders(const byte *loadState);
-static void R_LoadOccluders_impl(const byte *loadState);
-void __attribute_regparm__(1) R_LoadPortalVerts(const int *load);
-void __attribute_regparm__(1) R_LoadCullGroups(const int *load);
+void __attribute_regparm__(1) R_LoadNodesAndLeafs(GfxBspLoad *load);
+static void R_LoadNodesAndLeafs_impl(const GfxBspLoad *load);
+void __attribute_regparm__(1) R_LoadPortals(GfxBspLoad *load);
+void __attribute_regparm__(1) R_LoadCells(GfxBspLoad *load);
+void __attribute_regparm__(1) R_LoadAabbTrees(GfxBspLoad *load);
+void __attribute_regparm__(1) R_LoadOccluders(GfxBspLoad *load);
+static void R_LoadOccluders_impl(const GfxBspLoad *load);
+void __attribute_regparm__(1) R_LoadPortalVerts(GfxBspLoad *load);
+void __attribute_regparm__(1) R_LoadCullGroups(GfxBspLoad *load);
 void __attribute_regparm__(1) R_LoadSurfaces(GfxBspLoad *load);
 GfxWorld *R_LoadWorldInternal(const char *name);
 
 extern void R_Error(int level, const char *msg, ...);
-extern void ClearBounds(void *mins, void *maxs);
+extern void ClearBounds(float *mins, float *maxs);
 extern void AddPointToBounds(const vec_t *v, vec_t *mins, vec_t *maxs);
-extern void ExpandBounds(const void *mins, const void *maxs, void *dstMins, void *dstMaxs);
+extern void ExpandBounds(const float *mins, const float *maxs, float *dstMins, float *dstMaxs);
 extern const char *Com_Parse(const char **text);
 extern void I_strncpyz(char *dest, const char *src, int size);
 extern int I_stricmp(const char *a, const char *b);
@@ -81,14 +81,14 @@ extern MaterialHandle Material_Register(const char *name, int imageTrack);
 extern IDirect3DVertexBuffer9 *R_CreateWorldVertexBuffer(GfxWorldVertex *vertices, int vertexCount);
 extern void *CColorConverter_GetColorConverter(int mode);
 
-static int R_ValidateLump(const int *load, int lumpOfs, int elemSize, const byte **outData)
+static int R_ValidateLump(const GfxBspLoad *load, int lumpOfs, int elemSize, const byte **outData)
 {
-    const byte *header = (const byte *)load[0];
+    const byte *header = (const byte *)load->header;
     int lumpSize = *(int *)(header + lumpOfs);
     int lumpFileOfs = *(int *)(header + lumpOfs + 4);
     int count;
 
-    if (lumpFileOfs + lumpSize > load[2])
+    if (lumpFileOfs + lumpSize > load->fileSize)
         R_Error(1, "LoadMap: lump extends past end of file in %s", s_world.name);
     if (lumpFileOfs <= 3) {
 
@@ -107,19 +107,19 @@ static int R_ValidateLump(const int *load, int lumpOfs, int elemSize, const byte
         R_Error(1, "LoadMap: funny lump size in %s", s_world.name);
 
     if (outData)
-        *outData = (const byte *)load[1] + lumpFileOfs;
+        *outData = load->fileBase + lumpFileOfs;
     return count;
 }
 
-static inline __attribute__((always_inline)) int R_ValidateLumpInline(const int *load, int lumpOfs, int elemSize, const byte **outData)
+static inline __attribute__((always_inline)) int R_ValidateLumpInline(const GfxBspLoad *load, int lumpOfs, int elemSize, const byte **outData)
 {
-    const byte *header = (const byte *)load[0];
+    const byte *header = (const byte *)load->header;
     const int *lump = (const int *)(header + lumpOfs);
     int lumpFileOfs = lump[1];
     int lumpSize = lump[0];
     int count;
 
-    if (lumpFileOfs + lumpSize > load[2])
+    if (lumpFileOfs + lumpSize > load->fileSize)
         R_Error(1, "LoadMap: lump extends past end of file in %s", s_world.name);
     if (lumpFileOfs <= 3)
         R_Error(1, "LoadMap: funny lump offset in %s", s_world.name);
@@ -129,48 +129,46 @@ static inline __attribute__((always_inline)) int R_ValidateLumpInline(const int 
         R_Error(1, "LoadMap: funny lump size in %s", s_world.name);
 
     if (outData)
-        *outData = (const byte *)load[1] + lumpFileOfs;
+        *outData = load->fileBase + lumpFileOfs;
     return count;
 }
 extern void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up);
-extern void *R_RegisterModel(const char *name);
-extern int XModelBad(void *model);
+extern struct XModel * R_RegisterModel(const char *name);
+extern int XModelBad(const struct XModel *model);
 extern Bool R_ValidateStaticModel(struct XModel *model);
 extern int strnicmp(const char *a, const char *b, size_t n);
 extern int stricmp(const char *a, const char *b);
-extern void *CM_GetPlaneNum(int planeIndex);
-extern void PerpendicularVector(const void *plane, vec_t *perpOut);
-extern void Vec3Cross(const void *plane, const vec_t *perp, vec_t *crossOut);
+extern cplane_t * CM_GetPlaneNum(int planeNum);
+extern void PerpendicularVector(const float *plane, vec_t *perpOut);
+extern void Vec3Cross(const float *plane, const vec_t *perp, vec_t *crossOut);
 
-static int R_FinishLoadingAabbTrees_r_impl(byte *tree, int totalTreesUsed)
+static int R_FinishLoadingAabbTrees_r_impl(GfxAabbTree *tree, int totalTreesUsed)
 {
-    byte *treeMins = tree;
-    byte *treeMaxs = (byte *)((GfxAabbTree *)tree)->maxs;
+    byte *treeMins = (byte *)tree->mins;
+    byte *treeMaxs = (byte *)tree->maxs;
     int childCount, surfCount, i;
 
-    ClearBounds(treeMins, treeMaxs);
+    ClearBounds((float *)treeMins, (float *)treeMaxs);
 
-    childCount = ((GfxAabbTree *)tree)->childCount;
+    childCount = tree->childCount;
     if (childCount) {
 
-        (*(byte **)&((GfxAabbTree *)tree)->children) = (byte *)rgl.aabbTrees + totalTreesUsed * 48;
+        tree->children = rgl.aabbTrees + totalTreesUsed;
         totalTreesUsed += childCount;
 
         for (i = 0; i < childCount; i++) {
-            byte *child = (*(byte **)&((GfxAabbTree *)tree)->children) + i * 0x30;
+            GfxAabbTree *child = &tree->children[i];
             totalTreesUsed = R_FinishLoadingAabbTrees_r_impl(child, totalTreesUsed);
-            ExpandBounds(child, (byte *)((GfxAabbTree *)child)->maxs, treeMins, treeMaxs);
+            ExpandBounds(child->mins, child->maxs, (float *)treeMins, (float *)treeMaxs);
         }
     } else {
 
-        int firstSurf = ((GfxAabbTree *)tree)->startSurfIndex;
-        byte *surfPtr = (byte *)s_world.surfaces + firstSurf * 12;
-        surfCount = ((GfxAabbTree *)tree)->surfaceCount;
+        int firstSurf = tree->startSurfIndex;
+        surfCount = tree->surfaceCount;
 
         for (i = 0; i < surfCount; i++) {
-            byte *surfData = *(byte **)(surfPtr + 8);
-            ExpandBounds(surfData + 4, surfData + 0x10, treeMins, treeMaxs);
-            surfPtr += 0xc;
+            srfTriangles_t *tris = s_world.surfaces[firstSurf + i].tris;
+            ExpandBounds(tris->bounds[0], tris->bounds[1], (float *)treeMins, (float *)treeMaxs);
         }
     }
 
@@ -179,13 +177,13 @@ static int R_FinishLoadingAabbTrees_r_impl(byte *tree, int totalTreesUsed)
 
 #ifdef __EMSCRIPTEN__
 
-static int R_FinishLoadingAabbTrees_r(byte *tree, int totalTreesUsed)
+static int R_FinishLoadingAabbTrees_r(GfxAabbTree *tree, int totalTreesUsed)
 {
     return R_FinishLoadingAabbTrees_r_impl(tree, totalTreesUsed);
 }
 #else
 
-static int R_FinishLoadingAabbTrees_r(byte *tree, int totalTreesUsed)
+static int R_FinishLoadingAabbTrees_r(GfxAabbTree *tree, int totalTreesUsed)
 {
     return R_FinishLoadingAabbTrees_r_impl(tree, totalTreesUsed);
 }
@@ -333,9 +331,8 @@ void R_InterpretSunLightParseParamsIntoLights(SunLightParseParams *sunParse, Gfx
     }
 }
 
-static Bool R_IsValidStaticModel(char *spawnVars, int spawnVarCount, struct XModel **model, vec_t *origin)
+static Bool R_IsValidStaticModel(char *spawnVars[64][2], int spawnVarCount, struct XModel **model, vec_t *origin)
 {
-    byte *vars = (byte *)spawnVars;
     vec_t tempOrigin[3];
     const char *originStr;
     const char *modelName;
@@ -347,9 +344,8 @@ static Bool R_IsValidStaticModel(char *spawnVars, int spawnVarCount, struct XMod
     hasOrigin = 0;
     if (spawnVarCount - 1 > 0) {
         for (i = 1; i != spawnVarCount; i++) {
-            byte *entry = vars + i * 8;
-            if (stricmp(*(char **)(entry), "origin") == 0) {
-                const char *val = *(char **)(entry + 4);
+            if (stricmp(spawnVars[i][0], "origin") == 0) {
+                const char *val = spawnVars[i][1];
                 if (val != 0) {
                     originStr = val;
                     hasOrigin = 1;
@@ -370,9 +366,8 @@ static Bool R_IsValidStaticModel(char *spawnVars, int spawnVarCount, struct XMod
     modelName = 0;
     if (spawnVarCount > 1) {
         for (i = 1; i != spawnVarCount; i++) {
-            byte *entry = vars + i * 8;
-            if (stricmp(*(char **)(entry), "model") == 0) {
-                modelName = *(char **)(entry + 4);
+            if (stricmp(spawnVars[i][0], "model") == 0) {
+                modelName = spawnVars[i][1];
                 break;
             }
         }
@@ -450,13 +445,13 @@ snd_alias_list_t R_LoadEntities_stub(void)
 extern void *Hunk_AllocateTempMemoryInternal(int size);
 extern void Hunk_ClearTempMemory(void);
 extern int XModelGetFlags(struct XModel *model);
-extern int R_PrepareStaticModelLightingCache(GfxWorld *world, int smodelCount);
+extern void R_PrepareStaticModelLightingCache(GfxWorld *world, int smodelCount);
 extern void R_CreateStaticModel(GfxWorld *world, struct XModel *model, const vec_t *origin, const vec_t *angles, vec_t scale, GfxStaticModelInstance *smodelInst);
 extern void R_GetStaticModelLightingFromGrid(const GfxWorld *world, GfxStaticModelInstance *smodelInst, float *sunVisibility, vec4_t *colorForDir);
-extern int R_GetStaticModelLightingFromGround(const vec_t *groundLight, float *sunVisibility, vec4_t *colorForDir);
-extern int R_ScaleStaticModelLighting(float directLightScale, float indirectLightScale, float *sunVisibility, vec4_t *colorForDir);
+extern void R_GetStaticModelLightingFromGround(const vec_t *groundLight, float *sunVisibility, vec4_t *colorForDir);
+extern void R_ScaleStaticModelLighting(float directLightScale, float indirectLightScale, float *sunVisibility, vec4_t *colorForDir);
 extern void R_CacheStaticModelLighting(const GfxWorld *world, GfxStaticModelInstance *smodelInst, float sunVisibility, vec4_t *colorForDir);
-extern int R_FinishStaticModelLightingCache(GfxWorld *world);
+extern void R_FinishStaticModelLightingCache(GfxWorld *world);
 extern int R_AllocStaticModels(GfxAabbTree *tree);
 extern int R_SortGfxAabbTree(GfxWorld *world, GfxAabbTree *tree);
 
@@ -518,7 +513,7 @@ void __attribute_regparm__(1) R_LoadEntities(GfxBspLoad *load)
             R_Error(1, "\x15R_LoadEntities: entity without a classname\n");
 
         if (stricmp(spawnVars[0][1], "misc_model") == 0 &&
-            R_IsValidStaticModel((char *)spawnVars, spawnVarCount, 0, 0))
+            R_IsValidStaticModel(spawnVars, spawnVarCount, 0, 0))
             smodelCount++;
 
         token = Com_Parse(&text);
@@ -586,7 +581,7 @@ allocate:
             token = Com_Parse(&text);
             continue;
         }
-        if (!R_IsValidStaticModel((char *)spawnVars, spawnVarCount, &model, origin)) {
+        if (!R_IsValidStaticModel(spawnVars, spawnVarCount, &model, origin)) {
             token = Com_Parse(&text);
             continue;
         }
@@ -788,9 +783,8 @@ finish:
 
 #ifndef __EMSCRIPTEN__
 
-static void R_LoadNodesAndLeafs_impl(const byte *loadState)
+static void R_LoadNodesAndLeafs_impl(const GfxBspLoad *load)
 {
-    const int *load = (const int *)loadState;
     const byte *inNode;
     const byte *inLeaf;
     int i;
@@ -841,23 +835,23 @@ static void R_LoadNodesAndLeafs_impl(const byte *loadState)
     }
 }
 
-void __attribute_regparm__(1) R_LoadNodesAndLeafs(const byte *loadState)
+void __attribute_regparm__(1) R_LoadNodesAndLeafs(GfxBspLoad *load)
 {
-    R_LoadNodesAndLeafs_impl(loadState);
+    R_LoadNodesAndLeafs_impl(load);
 }
 
-static void R_LoadPortals_impl(const int *load)
+static void R_LoadPortals_impl(const GfxBspLoad *load)
 {
     const byte *srcData;
     int portalCount = R_ValidateLump(load, 0xc8, 16, &srcData);
     byte *dst;
     int i;
 
-    dst = (byte *)Hunk_AllocInternal(portalCount * 68);
+    dst = (byte *)Hunk_AllocInternal(portalCount * sizeof(GfxPortal));
 
     for (i = 0; i < portalCount; i++) {
         const int *src = (const int *)(srcData + i * 16);
-        byte *d = dst + i * 68;
+        byte *d = dst + i * sizeof(GfxPortal);
         const float *plane;
 
         plane = (const float *)CM_GetPlaneNum(src[0]);
@@ -874,7 +868,7 @@ static void R_LoadPortals_impl(const int *load)
 
         {
             int cellIdx = src[1];
-            (*(void **)&((GfxPortal *)d)->cell) = (byte *)s_world.cells + cellIdx * 60;
+            ((GfxPortal *)d)->cell = &s_world.cells[cellIdx];
         }
 
         {
@@ -884,7 +878,7 @@ static void R_LoadPortals_impl(const int *load)
 
         ((GfxPortal *)d)->vertexCount = (byte)src[3];
         ((GfxPortal *)d)->hullPointCount = 0;
-        (*(int *)&((GfxPortal *)d)->hullPoints) = 0;
+        ((GfxPortal *)d)->hullPoints = NULL;
 
         PerpendicularVector(plane, (vec_t *)&((GfxPortal *)d)->hullAxis[0][0]);
         Vec3Cross(plane, (vec_t *)&((GfxPortal *)d)->hullAxis[0][0], (vec_t *)&((GfxPortal *)d)->hullAxis[1][0]);
@@ -892,132 +886,132 @@ static void R_LoadPortals_impl(const int *load)
 
     {
         int cellCount = s_world.cellCount;
-        byte *cells = (byte *)s_world.cells;
+        GfxCell *cells = s_world.cells;
         for (i = 0; i < cellCount; i++) {
-            byte *cell = cells + i * 60;
-            int portalCountInCell = ((GfxCell *)cell)->portalCount;
+            GfxCell *cell = &cells[i];
+            int portalCountInCell = cell->portalCount;
             if (portalCountInCell != 0) {
 
-                (*(void **)&((GfxCell *)cell)->portals) = dst + (*(int *)&((GfxCell *)cell)->portals);
+                cell->portals = (GfxPortal *)(dst + (intptr_t)cell->portals);
             } else {
-                (*(void **)&((GfxCell *)cell)->portals) = NULL;
+                cell->portals = NULL;
             }
         }
     }
 }
 
-void __attribute_regparm__(1) R_LoadPortals(const int *load)
+void __attribute_regparm__(1) R_LoadPortals(GfxBspLoad *load)
 {
     R_LoadPortals_impl(load);
 }
 
-static void R_LoadCells_impl(const int *load)
+static void R_LoadCells_impl(const GfxBspLoad *load)
 {
     const byte *srcData;
     int cellCount = R_ValidateLumpInline(load, 0xc0, 52, &srcData);
-    byte *dst;
+    GfxCell *dst;
     int i;
 
-    dst = (byte *)Hunk_AllocInternal(cellCount * 60);
-    *(void **)((byte *)&s_world + 256) = dst;
-    *(int *)((byte *)&s_world + 252) = cellCount;
+    dst = (GfxCell *)Hunk_AllocInternal(cellCount * sizeof(GfxCell));
+    s_world.cells = dst;
+    s_world.cellCount = cellCount;
 
     for (i = 0; i < cellCount; i++) {
         const byte *src = srcData + i * 52;
-        byte *d = dst + i * 60;
-        int aabbTreeIdx, portalCountAndOfs, surfCount;
+        const dcell_ondisk_t *disk = (const dcell_ondisk_t *)src;
+        GfxCell *d = &dst[i];
+        int aabbTreeIdx, portalCountAndOfs;
         int occluderCount, reflectionProbeCount;
 
-        (*(int *)&((GfxCell *)d)->mins[0]) = (*(const int *)&(((const dcell_ondisk_t *)src)->mins[0]));
-        (*(int *)&((GfxCell *)d)->mins[1]) = (*(const int *)&(((const dcell_ondisk_t *)src)->mins[1]));
-        (*(int *)&((GfxCell *)d)->mins[2]) = (*(const int *)&(((const dcell_ondisk_t *)src)->mins[2]));
+        d->mins[0] = disk->mins[0];
+        d->mins[1] = disk->mins[1];
+        d->mins[2] = disk->mins[2];
 
-        (*(int *)&((GfxCell *)d)->maxs[0]) = (*(const int *)&(((const dcell_ondisk_t *)src)->maxs[0]));
-        (*(int *)&((GfxCell *)d)->maxs[1]) = (*(const int *)&(((const dcell_ondisk_t *)src)->maxs[1]));
-        (*(int *)&((GfxCell *)d)->maxs[2]) = (*(const int *)&(((const dcell_ondisk_t *)src)->maxs[2]));
+        d->maxs[0] = disk->maxs[0];
+        d->maxs[1] = disk->maxs[1];
+        d->maxs[2] = disk->maxs[2];
 
-        aabbTreeIdx = (*(const int *)&(((const dcell_ondisk_t *)src)->aabbTreeIndex));
-        (*(void **)&((GfxCell *)d)->aabbTree) = (byte *)*(void **)((byte *)&rgl + 16) + aabbTreeIdx * 48;
+        aabbTreeIdx = disk->aabbTreeIndex;
+        d->aabbTree = &rgl.aabbTrees[aabbTreeIdx];
 
-        portalCountAndOfs = (*(const int *)&(((const dcell_ondisk_t *)src)->firstPortal));
-        (*(int *)&((GfxCell *)d)->portals) = portalCountAndOfs * 68;
+        portalCountAndOfs = disk->firstPortal;
+        d->portals = (GfxPortal *)(intptr_t)(portalCountAndOfs * sizeof(GfxPortal));
 
-        ((GfxCell *)d)->portalCount = (*(const int *)&(((const dcell_ondisk_t *)src)->portalCount));
+        d->portalCount = disk->portalCount;
 
-        occluderCount = (*(const int *)&(((const dcell_ondisk_t *)src)->occluderCount));
+        occluderCount = disk->occluderCount;
         if (occluderCount != 0) {
-            int occluderOfs = (*(const int *)&(((const dcell_ondisk_t *)src)->firstOccluder));
-            (*(void **)&((GfxCell *)d)->cullGroups) = (byte *)*(void **)((byte *)&rgl + 4) + occluderOfs * 4;
+            int occluderOfs = disk->firstOccluder;
+            d->cullGroups = rgl.cullGroupIndices + occluderOfs;
         } else {
-            (*(void **)&((GfxCell *)d)->cullGroups) = NULL;
+            d->cullGroups = NULL;
         }
-        ((GfxCell *)d)->cullGroupCount = occluderCount;
+        d->cullGroupCount = occluderCount;
 
-        reflectionProbeCount = (*(const int *)&(((const dcell_ondisk_t *)src)->reflectionProbeCount));
+        reflectionProbeCount = disk->reflectionProbeCount;
         if (reflectionProbeCount != 0) {
-            int reflOfs = (*(const int *)&(((const dcell_ondisk_t *)src)->firstReflectionProbe));
-            (*(void **)&((GfxCell *)d)->occluders) = (byte *)*(void **)((byte *)&rgl) + reflOfs * 4;
+            int reflOfs = disk->firstReflectionProbe;
+            d->occluders = rgl.occluderIndices + reflOfs;
         } else {
-            (*(void **)&((GfxCell *)d)->occluders) = NULL;
+            d->occluders = NULL;
         }
-        ((GfxCell *)d)->occluderCount = reflectionProbeCount;
+        d->occluderCount = reflectionProbeCount;
     }
 }
 
-void __attribute_regparm__(1) R_LoadCells(const int *load)
+void __attribute_regparm__(1) R_LoadCells(GfxBspLoad *load)
 {
     R_LoadCells_impl(load);
 }
 
-static void R_LoadAabbTrees_impl(const int *load)
+static void R_LoadAabbTrees_impl(const GfxBspLoad *load)
 {
     const byte *srcData;
     int count = R_ValidateLumpInline(load, 0xb8, 12, &srcData);
-    byte *dst;
+    GfxAabbTree *dst;
     int i;
 
-    dst = (byte *)Hunk_AllocInternal(count * 48);
-    rgl.aabbTrees = (GfxAabbTree *)dst;
+    dst = (GfxAabbTree *)Hunk_AllocInternal(count * sizeof(GfxAabbTree));
+    rgl.aabbTrees = dst;
     rgl.aabbTreeCount = count;
 
     {
         const int *src = (const int *)srcData;
-        byte *d = dst;
+        GfxAabbTree *d = dst;
         for (i = 0; i < count; i++) {
             int childCount = src[1];
 
             if (childCount == 0) {
-                ((GfxAabbTree *)d)->startSurfIndex = -1;
-                ((GfxAabbTree *)d)->surfaceCount = childCount;
-                ((GfxAabbTree *)d)->childCount = src[2];
+                d->startSurfIndex = -1;
+                d->surfaceCount = childCount;
+                d->childCount = src[2];
             } else {
-                ((GfxAabbTree *)d)->startSurfIndex = src[0];
-                ((GfxAabbTree *)d)->surfaceCount = childCount;
-                ((GfxAabbTree *)d)->childCount = src[2];
+                d->startSurfIndex = src[0];
+                d->surfaceCount = childCount;
+                d->childCount = src[2];
             }
             src += 3;
-            d += 48;
+            d++;
         }
     }
 
     {
-        byte *trees = (byte *)rgl.aabbTrees;
         for (i = 0; i < count;) {
-            i = R_FinishLoadingAabbTrees_r(trees + i * 48, i + 1);
+            i = R_FinishLoadingAabbTrees_r(&rgl.aabbTrees[i], i + 1);
         }
     }
 }
 
-void __attribute_regparm__(1) R_LoadAabbTrees(const int *load)
+void __attribute_regparm__(1) R_LoadAabbTrees(GfxBspLoad *load)
 {
     R_LoadAabbTrees_impl(load);
 }
 
-static void R_LoadOccluders_impl(const byte *loadState)
+static void R_LoadOccluders_impl(const GfxBspLoad *load)
 {
-    const byte *bspHeader = *(const byte **)loadState;
-    const byte *bspData = *(const byte **)(loadState + 4);
-    int fileSize = *(int *)(loadState + 8);
+    const byte *bspHeader = (const byte *)load->header;
+    const byte *bspData = load->fileBase;
+    int fileSize = load->fileSize;
     int i, j;
 
     int occLumpSize = *(int *)(bspHeader + 0x98);
@@ -1108,12 +1102,12 @@ static void R_LoadOccluders_impl(const byte *loadState)
     }
 }
 
-void __attribute_regparm__(1) R_LoadOccluders(const byte *loadState)
+void __attribute_regparm__(1) R_LoadOccluders(GfxBspLoad *load)
 {
-    R_LoadOccluders_impl(loadState);
+    R_LoadOccluders_impl(load);
 }
 
-static void R_LoadPortalVerts_impl(const int *load)
+static void R_LoadPortalVerts_impl(const GfxBspLoad *load)
 {
     const byte *srcData;
     int vertCount = R_ValidateLumpInline(load, 0x90, 12, &srcData);
@@ -1131,12 +1125,12 @@ static void R_LoadPortalVerts_impl(const int *load)
     }
 }
 
-void __attribute_regparm__(1) R_LoadPortalVerts(const int *load)
+void __attribute_regparm__(1) R_LoadPortalVerts(GfxBspLoad *load)
 {
     R_LoadPortalVerts_impl(load);
 }
 
-static void R_LoadCullGroups_impl(const int *load)
+static void R_LoadCullGroups_impl(const GfxBspLoad *load)
 {
     const byte *srcData;
     int count = R_ValidateLumpInline(load, 0x58, 32, &srcData);
@@ -1176,7 +1170,7 @@ static void R_LoadCullGroups_impl(const int *load)
     }
 }
 
-void __attribute_regparm__(1) R_LoadCullGroups(const int *load)
+void __attribute_regparm__(1) R_LoadCullGroups(GfxBspLoad *load)
 {
     R_LoadCullGroups_impl(load);
 }

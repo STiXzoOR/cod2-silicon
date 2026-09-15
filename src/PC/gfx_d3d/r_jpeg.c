@@ -10,17 +10,17 @@ extern void jpeg_start_compress(j_compress_ptr cinfo, int write_all_tables);
 extern void jpeg_write_scanlines(j_compress_ptr cinfo, byte **scanlines, int num_lines);
 extern void jpeg_finish_compress(j_compress_ptr cinfo);
 extern void jpeg_destroy_compress(j_compress_ptr cinfo);
-extern void jpeg_CreateDecompress(void *cinfo, int version, int structsize);
+extern void jpeg_CreateDecompress(struct jpeg_decompress_struct *cinfo, int version, unsigned int structsize);
 extern void jpeg_memory_src(void *cinfo, byte *data, int size);
 #if COD2_FEATURE_MODERN_LIBS
 
 extern void jpeg_mem_src(void *cinfo, const unsigned char *data, unsigned long size);
 #endif
-extern int jpeg_read_header(void *cinfo, int require_image);
-extern void jpeg_start_decompress(void *cinfo);
-extern void jpeg_read_scanlines(void *cinfo, byte **scanlines, int num_lines);
-extern void jpeg_finish_decompress(void *cinfo);
-extern void jpeg_destroy_decompress(void *cinfo);
+extern int jpeg_read_header(struct jpeg_decompress_struct *cinfo, int require_image);
+extern int jpeg_start_decompress(struct jpeg_decompress_struct *cinfo);
+extern unsigned int jpeg_read_scanlines(struct jpeg_decompress_struct *cinfo, byte **scanlines, unsigned int num_lines);
+extern int jpeg_finish_decompress(struct jpeg_decompress_struct *cinfo);
+extern void jpeg_destroy_decompress(struct jpeg_decompress_struct *cinfo);
 
 extern byte r_limits_ptr[];
 extern refimport_t ri;
@@ -137,9 +137,9 @@ void R_SaveJpg(const char *filename, int quality, int image_width, int image_hei
     bufSize = image_width * image_height * 3;
     out = (byte *)ri.Hunk_AllocateTempMemoryInternal(bufSize);
 
-    dest.pub.init_destination = init_destination;
-    dest.pub.empty_output_buffer = empty_output_buffer;
-    dest.pub.term_destination = term_destination;
+    dest.pub.init_destination = (void (__cdecl *)(void))(init_destination);
+    dest.pub.empty_output_buffer = (boolean (__cdecl *)(void))(empty_output_buffer);
+    dest.pub.term_destination = (void (__cdecl *)(void))(term_destination);
     dest.buffer = out;
     dest.bufsize = (size_t)bufSize;
     *(jpeg_destination_mgr **)(cinfo + JPEG_C_DEST) = &dest.pub;
@@ -204,14 +204,14 @@ void R_LoadJpg(const char *filepath, byte **file, byte **pic, int *width, int *h
     *(void **)(cinfo + 0x1c) = Z_FreeJpeg;
 #endif
 
-    jpeg_CreateDecompress(cinfo, 0x3e, JPEG_D_STRUCT_SIZE);
+    jpeg_CreateDecompress((struct jpeg_decompress_struct *)cinfo, 0x3e, JPEG_D_STRUCT_SIZE);
 #if COD2_FEATURE_MODERN_LIBS
     jpeg_mem_src(cinfo, fbuffer, (unsigned long)filesize);
 #else
     jpeg_memory_src(cinfo, fbuffer, filesize);
 #endif
-    jpeg_read_header(cinfo, 1);
-    jpeg_start_decompress(cinfo);
+    jpeg_read_header((struct jpeg_decompress_struct *)cinfo, 1);
+    jpeg_start_decompress((struct jpeg_decompress_struct *)cinfo);
 
     output_width = *(int *)(cinfo + JPEG_D_OUTPUT_WIDTH);
     output_height = *(int *)(cinfo + JPEG_D_OUTPUT_HEIGHT);
@@ -219,7 +219,7 @@ void R_LoadJpg(const char *filepath, byte **file, byte **pic, int *width, int *h
     if (output_width <= 0 || output_height <= 0 ||
         (long long)output_width * (long long)output_height * 4LL > (long long)0x7fffffff) {
         ((refimport_t *)sys)->Printf(2, "WARNING: jpeg image '%s' has invalid dimensions\n", filepath);
-        jpeg_destroy_decompress(cinfo);
+        jpeg_destroy_decompress((struct jpeg_decompress_struct *)cinfo);
         ((refimport_t *)sys)->FS_FreeFile(fbuffer);
         return;
     }
@@ -228,7 +228,7 @@ void R_LoadJpg(const char *filepath, byte **file, byte **pic, int *width, int *h
     maxSize = vidCfg->maxTextureSize;
     if (output_width > maxSize || output_height > maxSize) {
         ((refimport_t *)sys)->Printf(2, "WARNING: image '%s' is larger than %i on at least one side\n", filepath, maxSize);
-        jpeg_destroy_decompress(cinfo);
+        jpeg_destroy_decompress((struct jpeg_decompress_struct *)cinfo);
         ((refimport_t *)sys)->FS_FreeFile(fbuffer);
         return;
     }
@@ -237,7 +237,7 @@ void R_LoadJpg(const char *filepath, byte **file, byte **pic, int *width, int *h
     if (num_components != 3) {
         refimport_t *ri2 = &ri;
         ri2->Printf(2, "WARNING: jpeg image '%s' is not RGB\n", filepath);
-        jpeg_destroy_decompress(cinfo);
+        jpeg_destroy_decompress((struct jpeg_decompress_struct *)cinfo);
         ri2->FS_FreeFile(fbuffer);
         return;
     }
@@ -255,7 +255,7 @@ void R_LoadJpg(const char *filepath, byte **file, byte **pic, int *width, int *h
 
     while (output_height > *(int *)(cinfo + JPEG_D_OUTPUT_SCANLINE)) {
         row_ptr = buf;
-        jpeg_read_scanlines(cinfo, &row_ptr, 1);
+        jpeg_read_scanlines((struct jpeg_decompress_struct *)cinfo, &row_ptr, 1);
 
         output_width = *(int *)(cinfo + JPEG_D_OUTPUT_WIDTH);
         for (x = output_width - 1; x >= 0; x--) {
@@ -269,6 +269,6 @@ void R_LoadJpg(const char *filepath, byte **file, byte **pic, int *width, int *h
         buf += row_stride;
     }
 
-    jpeg_finish_decompress(cinfo);
-    jpeg_destroy_decompress(cinfo);
+    jpeg_finish_decompress((struct jpeg_decompress_struct *)cinfo);
+    jpeg_destroy_decompress((struct jpeg_decompress_struct *)cinfo);
 }
