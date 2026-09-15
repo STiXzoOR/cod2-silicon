@@ -280,6 +280,83 @@ static void __cdecl cr_inv_param(const void *e, const void *f, const void *fl, u
         Com_Printf("[INVPARAM] CRT invalid-parameter trapped -- continuing\n");
 }
 
+#if defined(COD2_X64) && defined(_DEBUG)
+/* CRT debug-heap corruption diagnostic (x64): records each non-CRT allocation's
+   request#/size + up to 4 exe-range return addresses in a ring, and on the first
+   heap-check corruption report dumps the ring + the report to cod2_heapdiag.txt.
+   Match the corrupted block (#N in the report) to its allocator stack, symbolize
+   via the .map (secoff = rip_rel - 0x1000; imagebase 0x140000000). Enabled only in
+   the x64 debug build; gated behind env COD2_HEAPDIAG so normal runs are unaffected. */
+#include <crtdbg.h>
+extern unsigned short __stdcall RtlCaptureStackBackTrace(unsigned long, unsigned long, void **, unsigned long *);
+#define HD_RING 16384
+static struct hd_ent { long req; unsigned sz; void *fr[4]; } g_hdRing[HD_RING];
+static volatile long g_hdPos;
+static uintptr_t g_hdBase, g_hdLimit;
+static FILE *g_hdFile;
+static volatile long g_hdDumped;
+static _CRT_ALLOC_HOOK g_hdPrevAlloc;
+
+static int __cdecl hd_alloc_hook(int t, void *p, size_t sz, int bu, long req,
+                                 const unsigned char *fn, int ln)
+{
+    if (t == _HOOK_ALLOC && bu != _CRT_BLOCK) {
+        long idx = g_hdPos++;
+        struct hd_ent *e = &g_hdRing[idx & (HD_RING - 1)];
+        void *fr[16];
+        unsigned short n = RtlCaptureStackBackTrace(2, 16, fr, 0);
+        int k = 0;
+        e->req = req; e->sz = (unsigned)sz;
+        for (unsigned short j = 0; j < n && k < 4; j++) {
+            uintptr_t a = (uintptr_t)fr[j];
+            if (a >= g_hdBase && a < g_hdLimit) e->fr[k++] = fr[j];
+        }
+        while (k < 4) e->fr[k++] = 0;
+    }
+    return g_hdPrevAlloc ? g_hdPrevAlloc(t, p, sz, bu, req, fn, ln) : 1;
+}
+
+static int __cdecl hd_report_hook(int type, char *msg, int *ret)
+{
+    if (g_hdFile && msg &&
+        (strstr(msg, "DAMAGE") || strstr(msg, "corrupt") || strstr(msg, "CORRUPT"))) {
+        fprintf(g_hdFile, "%s", msg);
+        if (_InterlockedCompareExchange(&g_hdDumped, 1, 0) == 0) {
+            long pos = g_hdPos;
+            long start = pos > HD_RING ? pos - HD_RING : 0;
+            fprintf(g_hdFile, "\n==== ALLOC RING (base=%016llx) req start=%ld end=%ld ====\n",
+                    (unsigned long long)g_hdBase, start, pos);
+            for (long i = start; i < pos; i++) {
+                struct hd_ent *e = &g_hdRing[i & (HD_RING - 1)];
+                fprintf(g_hdFile, "req=%ld sz=%u fr= %llx %llx %llx %llx\n", e->req, e->sz,
+                        (unsigned long long)(uintptr_t)e->fr[0], (unsigned long long)(uintptr_t)e->fr[1],
+                        (unsigned long long)(uintptr_t)e->fr[2], (unsigned long long)(uintptr_t)e->fr[3]);
+            }
+            fprintf(g_hdFile, "==== END RING ====\n");
+        }
+        fflush(g_hdFile);
+    }
+    if (ret) *ret = 0; /* don't abort/break -- continue */
+    return 1;           /* handled */
+}
+
+static void cr_heapdiag_init(void)
+{
+    /* declare with the real prototype so the 8-byte HMODULE isn't truncated */
+    extern void *__stdcall GetModuleHandleA(const char *);
+    if (!getenv("COD2_HEAPDIAG")) return;
+    g_hdBase = (uintptr_t)GetModuleHandleA(NULL);
+    g_hdLimit = g_hdBase + 0x800000; /* ~8MB exe span */
+    g_hdFile = fopen("cod2_heapdiag.txt", "w");
+    if (g_hdFile) setvbuf(g_hdFile, NULL, _IONBF, 0);
+    _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_FILE | _CRTDBG_MODE_DEBUG);
+    _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_DEBUG);
+    _CrtSetReportHook(hd_report_hook);
+    g_hdPrevAlloc = _CrtSetAllocHook(hd_alloc_hook);
+    _CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_EVERY_128_DF);
+}
+#endif
+
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
     char cwd[256];
@@ -297,6 +374,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 #endif
     { extern int atexit(void (*)(void)); atexit(cr_atexit_diag); }
     _set_invalid_parameter_handler(cr_inv_param);
+#if defined(COD2_X64) && defined(_DEBUG)
+    cr_heapdiag_init();
+#endif
 
     Sys_InitMainThread();
     Win_InitLocalization();

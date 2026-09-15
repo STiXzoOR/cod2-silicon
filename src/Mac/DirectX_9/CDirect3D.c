@@ -23,6 +23,12 @@ extern void *vtbl_CDirect3DDevice[];
 
 void CDirect3DDevice_Init(void *device);
 
+/* Correct prototype must be in scope: on x64 (LLP64) an implicit int declaration
+ * (MSVC C4013) truncates the returned 64-bit context pointer to 32 bits and
+ * corrupts it. Matches CDirect3DDevice.c:105. */
+extern void *MacDisplay_CreateScreenContext(int depth, int windowed, int stencil,
+                                            int multiSample, int fsaa, int *hasAux);
+
 extern void CDirect3DSurface_CDirect3DSurface(const void *_this,
                                               int s, unsigned int CubemapID, unsigned int Level,
                                               unsigned int Width, unsigned int Height, int Format,

@@ -48,6 +48,28 @@ void CDirect3DSurface_SetOwner(void *surf, void *owner)
     ((CDirect3DSurfaceImpl *)surf)->owner = owner;
 }
 
+/* Blit source info for CDirect3DDevice_StretchRect: the GL texture backing this surface
+   plus its dimensions. The texIDStorage offset matches CDirect3DTexture's layout
+   (3 ptrs + 16 int fields + 2 ptrs), expressed portably rather than hardcoded to x86. */
+int CDirect3DSurface_GetGLBlitInfo(const void *surf, unsigned int *texId, unsigned int *width, unsigned int *height)
+{
+    const CDirect3DSurfaceImpl *s = (const CDirect3DSurfaceImpl *)surf;
+    unsigned int id;
+
+    if (!s || !s->owner)
+        return 0;
+    id = *(const unsigned int *)((const byte *)s->owner + 5 * sizeof(void *) + 64);
+    if (!id)
+        return 0;
+    if (texId)
+        *texId = id;
+    if (width)
+        *width = s->width;
+    if (height)
+        *height = s->height;
+    return 1;
+}
+
 ULONG CDirect3DSurface_AddRef(const CDirect3DSurface *_this);
 void CDirect3DSurface_UpdateOpenGLSurfaceObject(const CDirect3DSurface *_this, int bRecreateSurface);
 void ZN16CDirect3DSurfaceD0Ev(const CDirect3DSurface *_this);

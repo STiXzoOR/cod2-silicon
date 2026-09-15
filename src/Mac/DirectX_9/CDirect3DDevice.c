@@ -582,18 +582,35 @@ static GLenum CDirect3DDevice_MapBlendFunc(DWORD blend)
     }
 }
 
+/* A texture object is identified by its vtable, never by where the allocator happened to
+   put it. This used to be a `(uintptr_t)texture <= 0x08000000` range test, which rejected
+   perfectly valid textures whenever malloc returned a low address -- every lookup then
+   fell back to the prebind texture and the whole scene drew untextured.
+   The <64K test only rejects values that cannot be pointers at all (Windows reserves the
+   first 64K), so a stale handle is still safe to pass in. */
+static int CDirect3DDevice_IsRealTexture(IDirect3DBaseTexture9 *texture)
+{
+    void **vt;
+
+    if (!texture || (uintptr_t)texture < 0x10000u)
+        return 0;
+    vt = *(void ***)texture;
+    return vt == (void **)vtbl_CDirect3DTexture || vt == (void **)vtbl_CDirect3DCubeTexture;
+}
+
 static unsigned int CDirect3DDevice_GetTextureGLId(IDirect3DBaseTexture9 *texture)
 {
-    if (!texture || (uintptr_t)texture <= 0x08000000u)
+    if (!CDirect3DDevice_IsRealTexture(texture))
         return 0;
     /* CDirect3DTexture.texIDStorage: 3 ptrs (2 vtbl + mpTexID) + 16 int fields(64B) +
-       2 ptrs (surfaces,pixelData) => 5*sizeof(void*)+64. x86=0x54, x64=0x68. */
+       2 ptrs (surfaces,pixelData) => 5*sizeof(void*)+64. x86=0x54, x64=0x68.
+       CDirect3DCubeTexture has the same layout up to this field. */
     return *(unsigned int *)((byte *)texture + 5 * sizeof(void *) + 64);
 }
 
 static GLenum CDirect3DDevice_GetTextureTarget(IDirect3DBaseTexture9 *texture)
 {
-    if (!texture || (unsigned int)texture <= 0x08000000u)
+    if (!CDirect3DDevice_IsRealTexture(texture))
         return 0x0DE1;
     if (*(void ***)texture == vtbl_CDirect3DCubeTexture)
         return GL_TEXTURE_CUBE_MAP;
@@ -948,7 +965,7 @@ static void CDirect3DDevice_UpdateTextureIfNeeded(IDirect3DBaseTexture9 *texture
 {
     extern void CDirect3DTexture_UpdateOpenGLSurfaces(const CDirect3DTexture *_this);
 
-    if (!texture || (unsigned int)texture <= 0x08000000u)
+    if (!CDirect3DDevice_IsRealTexture(texture))
         return;
     if (*(void ***)texture == vtbl_CDirect3DTexture)
         CDirect3DTexture_UpdateOpenGLSurfaces((const CDirect3DTexture *)texture);
@@ -1804,7 +1821,8 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
 
             if (!is2D && stride != 0x44) {
                 extern void *imp_tess;
-                const Material *mmat = *(const Material **)((byte *)imp_tess + 0x5a7bc);
+                const materialCommands_t *tess = (const materialCommands_t *)imp_tess;
+                const Material *mmat = tess->material;
                 if (mmat) {
                     GfxImage *mimg = CDirect3DDevice_SelectMaterialColorImage(mmat);
                     unsigned int mtex = CDirect3DDevice_GetImageGLId(mimg);
@@ -1816,8 +1834,8 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
             }
             if (!glTexID && usesLightmap) {
                 extern void *imp_tess;
-                byte *tessBase = (byte *)imp_tess;
-                const Material *mat = *(const Material **)(tessBase + 0x5a7bc);
+                const materialCommands_t *tess = (const materialCommands_t *)imp_tess;
+                const Material *mat = tess->material;
                 materialImage = CDirect3DDevice_SelectMaterialColorImage(mat);
                 glTexID = CDirect3DDevice_GetImageGLId(materialImage);
                 stage0Target = CDirect3DDevice_GetImageTextureTarget(materialImage);
@@ -1832,8 +1850,8 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
                     {
                         extern void *imp_tess;
                         extern GfxWorld s_world;
-                        byte *tessBase = (byte *)imp_tess;
-                        int lmapIndex = *(int *)(tessBase + 0x5a7c4);
+                        const materialCommands_t *tess = (const materialCommands_t *)imp_tess;
+                        int lmapIndex = tess->lmapIndex;
                         int lmapAllowed = !dev->alphaBlendEnable || dev->destBlend == 6;
                         CDirect3DDevice_DisableExtraTextureUnits();
                         if (lmapAllowed && stage0Target != GL_TEXTURE_CUBE_MAP && lmapIndex >= 0 && lmapIndex < 31 && s_world.lightmaps) {
@@ -2649,15 +2667,94 @@ long unsigned int CDirect3DDevice_GetGammaRamp(const CDirect3DDevice *_this, UIN
     return 0;
 }
 
+/* Blit a source surface onto the current framebuffer as a textured quad.
+   This was an empty stub, which is why ROQ cinematics never appeared: the frame was
+   decoded and uploaded to a texture, then RB_StretchRawCmd asked StretchRect to put it
+   on the backbuffer and nothing happened -- leaving only the letterbox bars, i.e. a
+   black screen. Only the backbuffer destination used by the cinematic path is handled;
+   surface-to-surface copies still no-op. */
 HRESULT CDirect3DDevice_StretchRect(const CDirect3DDevice *_this, IDirect3DSurface9 *pSourceSurface,
                                     const RECT *pSourceRect, IDirect3DSurface9 *pDestSurface, const RECT *pDestRect, D3DTEXTUREFILTERTYPE Filter)
 {
+    extern int CDirect3DSurface_GetGLBlitInfo(const void *surf, unsigned int *texId,
+                                              unsigned int *width, unsigned int *height);
+    extern void glDrawElements(unsigned int, int, unsigned int, const void *);
+    static const unsigned short quadIdx[6] = { 0, 1, 2, 0, 2, 3 };
+    unsigned int srcTex = 0, srcW = 0, srcH = 0;
+    int vp[4] = { 0, 0, 640, 480 };
+    float x0, y0, x1, y1, u0, v0, u1, v1;
+    float pos[8], uv[8], ortho[16];
+
     (void)_this;
-    (void)pSourceSurface;
-    (void)pSourceRect;
     (void)pDestSurface;
-    (void)pDestRect;
     (void)Filter;
+
+    if (!CDirect3DSurface_GetGLBlitInfo(pSourceSurface, &srcTex, &srcW, &srcH))
+        return 0;
+
+    glGetIntegerv(0x0BA2 /*GL_VIEWPORT*/, vp);
+
+    if (pDestRect) {
+        x0 = (float)pDestRect->left;  y0 = (float)pDestRect->top;
+        x1 = (float)pDestRect->right; y1 = (float)pDestRect->bottom;
+    } else {
+        x0 = 0.0f; y0 = 0.0f; x1 = (float)vp[2]; y1 = (float)vp[3];
+    }
+
+    u0 = v0 = 0.0f;
+    u1 = v1 = 1.0f;
+    if (pSourceRect && srcW && srcH) {
+        u0 = (float)pSourceRect->left  / (float)srcW;
+        v0 = (float)pSourceRect->top   / (float)srcH;
+        u1 = (float)pSourceRect->right / (float)srcW;
+        v1 = (float)pSourceRect->bottom / (float)srcH;
+    }
+
+    /* same top-left-origin ortho the 2D path builds, so pDestRect is in screen pixels */
+    {
+        float w = vp[2] ? (float)vp[2] : 640.0f;
+        float h = vp[3] ? (float)vp[3] : 480.0f;
+        float m[16] = { 2.0f / w, 0, 0, 0,
+                        0, -2.0f / h, 0, 0,
+                        0, 0, -1.0f, 0,
+                        -1.0f, 1.0f, 0, 1.0f };
+        memcpy(ortho, m, sizeof(ortho));
+    }
+
+    pos[0] = x0; pos[1] = y0;   uv[0] = u0; uv[1] = v0;
+    pos[2] = x1; pos[3] = y0;   uv[2] = u1; uv[3] = v0;
+    pos[4] = x1; pos[5] = y1;   uv[4] = u1; uv[5] = v1;
+    pos[6] = x0; pos[7] = y1;   uv[6] = u0; uv[7] = v1;
+
+    glMatrixMode(0x1701 /*PROJECTION*/);
+    glLoadMatrixf(ortho);
+    glMatrixMode(0x1700 /*MODELVIEW*/);
+    glLoadIdentity();
+
+    glDisable(0x0B71 /*DEPTH_TEST*/);
+    glDepthMask(0);
+    glDisable(0x0BE2 /*BLEND*/);
+    glDisable(0x0BC0 /*ALPHA_TEST*/);
+    glDisable(0x0B44 /*CULL_FACE*/);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+    glActiveTextureARB(GL_TEXTURE0_ARB);
+    glClientActiveTextureARB(GL_TEXTURE0_ARB);
+    CDirect3DDevice_DisableExtraTextureUnits();
+    glEnable(0x0DE1 /*TEXTURE_2D*/);
+    glBindTexture(0x0DE1, srcTex);
+    glTexEnvi(0x2300 /*TEXTURE_ENV*/, 0x2200 /*TEXTURE_ENV_MODE*/, 0x1E01 /*REPLACE*/);
+
+    glDisableClientState(0x8076 /*COLOR_ARRAY*/);
+    glEnableClientState(0x8074 /*VERTEX_ARRAY*/);
+    glVertexPointer(2, 0x1406 /*FLOAT*/, 0, pos);
+    glEnableClientState(0x8078 /*TEXTURE_COORD_ARRAY*/);
+    glTexCoordPointer(2, 0x1406, 0, uv);
+
+    glDrawElements(0x0004 /*TRIANGLES*/, 6, 0x1403 /*UNSIGNED_SHORT*/, quadIdx);
+
+    glDisableClientState(0x8074);
+    glDisableClientState(0x8078);
     return 0;
 }
 

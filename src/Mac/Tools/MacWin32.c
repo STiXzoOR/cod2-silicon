@@ -15,6 +15,7 @@
 #include "imports.h"
 #include "stubs/gcc40_compat.h"
 
+#if !defined(_M_X64)  /* x64: use real Win32 (Mac/POSIX emulation collides by name) */
 MMRESULT timeBeginPeriod(int period)
 {
     (void)period;
@@ -33,6 +34,7 @@ DWORD timeGetTime(void)
     gettimeofday(&tv, NULL);
     return (DWORD)(tv.tv_sec * 1000 + tv.tv_usec / 1000);
 }
+#endif
 
 BOOL QueryPerformanceFrequency(void *lpFrequency)
 {
@@ -186,6 +188,7 @@ BOOL VirtualFree(LPVOID lpAddress, SIZE_T dwSize, DWORD dwFreeType)
     return 1;
 }
 
+#if !defined(_M_X64)  /* x64: use real Win32 (Mac/POSIX emulation collides by name) */
 int GetSystemMetrics(int nIndex)
 {
 
@@ -195,6 +198,7 @@ int GetSystemMetrics(int nIndex)
         return 768;
     return 0;
 }
+#endif
 
 BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData);
 
