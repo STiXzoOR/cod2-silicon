@@ -208,6 +208,7 @@ void FxScheduler_CreateEffect(const FxScheduler *_this, const EffectTemplate *fx
     EffectPrimitive prim;
     int primType;
 
+    memset(&prim, 0, sizeof(prim));
     boltFrame._placeholder = 0;
 
     AxisCopy( (vec3_t (*))((const vec_t *)axis), (vec3_t (*))((vec_t *)ax));
@@ -225,6 +226,7 @@ void FxScheduler_CreateEffect(const FxScheduler *_this, const EffectTemplate *fx
 
     prim.fx = fx;
     prim.primTemp = primTemp;
+    prim.boltFrame = boltFrame;
 
     primType = primTemp->mType;
     if (primType > 12) {

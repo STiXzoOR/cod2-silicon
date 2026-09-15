@@ -1215,7 +1215,7 @@ void Effect_SetBoltFrame(const Effect *_this, FxBoltFramePtr *boltFrame)
 {
     byte *self = (byte *)_this;
     byte **bfSlot = (byte **)(((char *)self + offsetof(Effect, mBolt.value)));
-    byte *newBf = *(byte **)boltFrame;
+    byte *newBf = boltFrame ? *(byte **)boltFrame : NULL;
     byte *oldBf = *bfSlot;
 
     if (oldBf == newBf)
