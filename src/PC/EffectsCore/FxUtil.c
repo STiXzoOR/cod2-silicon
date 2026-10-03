@@ -1996,6 +1996,9 @@ void FX_DrawScheduledEffects(void)
             count = privateEffectActiveCountBolt;
         }
     }
+#if COD2_X64
+    FX_DrawAll();
+#endif
 }
 
 extern void FxArchive_FxArchive(const FxArchive *arch);

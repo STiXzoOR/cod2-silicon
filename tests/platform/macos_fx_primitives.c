@@ -25,6 +25,9 @@ extern const FxBoltFramePtr FxBoltFrame_Acquire(const FxBoltInfo *);
 extern Bool FX_GetBoneOrientation(const FxBoltInfo *, orientation_t *);
 extern void FX_UpdateAllNonBolt(void);
 extern void FX_DrawAll(void);
+extern void FX_DrawScheduledEffects(void);
+extern void FX_UpdateScheduledEffectsNonBolt(void);
+extern void FX_UpdateScheduledEffectsBolt(void);
 extern void FX_AddScheduledEffects(const vec_t *, const vec_t *);
 
 FxHelper theFxHelpers[1];
@@ -172,7 +175,7 @@ int main(void)
     assert(effectActiveCountNonBolt == 1);
     assert(nonBoltList[0]->origin[0] == origin[0]);
     FX_UpdateAllNonBolt();
-    FX_DrawAll();
+    FX_DrawScheduledEffects();
     assert(draws == 1);
     assert(submitted.customMaterial == &material);
     assert(submitted.radius[0] == 12 && submitted.radius[1] == 12);
@@ -193,7 +196,7 @@ int main(void)
         FxScheduler_CreateEffect(&scheduler, &fx, &pt, NULL, origin, (MediaHandles *(*)[4])axes, 0, 0);
         assert(effectActiveCountNonBolt == 1);
         FX_UpdateAllNonBolt();
-        FX_DrawAll();
+        FX_DrawScheduledEffects();
         assert(renderTypes[i] == -1 ? lights == 1 : draws == 1);
         if (renderTypes[i] != -1) {
             assert(submitted.reType == renderTypes[i]);
@@ -312,6 +315,13 @@ int main(void)
     assert(effectActiveCountNonBolt == 4 && !globalScheduler.mScheduledCount && !globalScheduler.mScheduledHead);
     for (int i = 0; i < 4; ++i)
         assert(nonBoltList[i]->origin[0] == 17 && nonBoltList[i]->origin[1] == 29 && nonBoltList[i]->origin[2] == 41);
+    /* Use the actual frontend/update -> render/draw path, with stock sorting on. */
+    imp_fx_sort = &enabledPtr;
+    FX_UpdateScheduledEffectsNonBolt();
+    FX_UpdateScheduledEffectsBolt();
+    draws = 0;
+    FX_DrawScheduledEffects();
+    assert(draws == 4);
     theFxHelper->mTime = 6400;
     FX_UpdateAllNonBolt();
     assert(!effectActiveCount && !effectClusterCount);
@@ -332,6 +342,11 @@ int main(void)
     FX_UpdateAllBolt();
     assert(boltList[1]->mRefEnt.origin[0] == 10 && boltList[1]->mRefEnt.origin[1] == 22 && boltList[1]->mRefEnt.origin[2] == 30);
     assert(((FxBoltFrame *)__ZN11FxBoltFrame12g_mFrameListE)->refCount == 2);
+    FX_UpdateScheduledEffectsNonBolt();
+    FX_UpdateScheduledEffectsBolt();
+    draws = 0;
+    FX_DrawScheduledEffects();
+    assert(draws == 2);
     theFxHelper->mTime = 7400;
     FX_UpdateAllBolt();
     assert(!effectActiveCount && !effectClusterCount && !__ZN11FxBoltFrame12g_mFrameListE);
