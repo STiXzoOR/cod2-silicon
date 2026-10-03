@@ -625,6 +625,10 @@ XModel *XModelLoad(const char *name, Alloc_t Alloc, Alloc_t AllocColl)
         model->collLod = (short)config.collLod;
         model->flags = config.flags;
 
+#if COD2_APPLE_SDK && defined(DEDICATED)
+        /* Dedicated models keep CPU bones and collision, but never render surfaces. */
+        goto done;
+#else
         if (!re.XModelAllowReadSurface) {
             goto done;
         }
@@ -725,6 +729,7 @@ XModel *XModelLoad(const char *name, Alloc_t Alloc, Alloc_t AllocColl)
         }
 
         model->xskins = R_LoadXSkins(model);
+#endif
     }
 
 done:

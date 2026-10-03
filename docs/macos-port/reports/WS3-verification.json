@@ -1,0 +1,281 @@
+{
+  "status": "complete",
+  "plan_path": "docs/macos-port/PLAN.md",
+  "scope": "WS3 platform implementation and data-independent verification; integrated runtime awaits WS2/WS6",
+  "changed_files": [
+    "cmake/macos-arm64.cmake",
+    "docs/macos-port/reports/WS3-platform.md",
+    "docs/macos-port/reports/WS3-undefined-client.tsv",
+    "docs/macos-port/reports/WS3-undefined-dedicated.tsv",
+    "docs/macos-port/reports/WS3-verification.json",
+    "src/Mac/DirectX_9/CDirect3D.c",
+    "src/Mac/DirectX_9/CDirect3DDevice.c",
+    "src/Mac/DirectX_9/CDirect3DSurface.c",
+    "src/Mac/Main/mac_common.c",
+    "src/Mac/Main/mac_input.c",
+    "src/Mac/Main/mac_main.c",
+    "src/Mac/Tools/MacWin32.c",
+    "src/PC/EffectsCore/FxScheduler_load_obj.c",
+    "src/PC/EffectsCore/FxTemplate.c",
+    "src/PC/bgame/bg_misc.c",
+    "src/PC/bgame/bg_pmove.c",
+    "src/PC/cgame_mp/cg_draw_mp.c",
+    "src/PC/game_mp/g_active_mp.c",
+    "src/PC/game_mp/g_main_mp.c",
+    "src/PC/game_mp/g_missile_mp.c",
+    "src/PC/game_mp/g_scr_main_mp.c",
+    "src/PC/qcommon/cmd.c",
+    "src/PC/qcommon/common.c",
+    "src/PC/qcommon/crash_handler.c",
+    "src/PC/qcommon/dvar_cmds.c",
+    "src/PC/qcommon/files.c",
+    "src/PC/qcommon/msg_mp.c",
+    "src/PC/qcommon/net_chan_mp.c",
+    "src/PC/script/scr_yacc.c",
+    "src/PC/server_mp/sv_game_mp.c",
+    "src/PC/server_mp/sv_init_mp.c",
+    "src/PC/server_mp/sv_main_mp.c",
+    "src/PC/server_mp/sv_net_chan_mp.c",
+    "src/PC/server_mp/sv_snapshot_mp.c",
+    "src/PC/stringed/stringed_hooks.c",
+    "src/PC/stringed/stringed_interface.c",
+    "src/PC/ui_mp/ui_main_mp.c",
+    "src/PC/universal/com_files.c",
+    "src/PC/universal/com_memory.c",
+    "src/PC/universal/com_sndalias.c",
+    "src/PC/universal/com_sndalias_load_obj.c",
+    "src/PC/win32/snd_driver.c",
+    "src/PC/win32/win_net.c",
+    "src/PC/win32/win_shared.c",
+    "src/PC/win32/win_voice.c",
+    "src/PC/xanim/xmodel_load_obj.c",
+    "src/headers/Mac/mac_types.h",
+    "src/headers/cod2_defs.h",
+    "src/platform/macos_audio.c",
+    "src/platform/macos_audio.h",
+    "src/platform/macos_cpp_abi.cpp",
+    "src/platform/macos_cpp_abi.h",
+    "src/platform/macos_display.c",
+    "src/platform/macos_display.h",
+    "src/platform/macos_rawmouse.h",
+    "src/platform/macos_rawmouse.m",
+    "src/platform/macos_ring.c",
+    "src/platform/macos_system.c",
+    "src/platform/macos_system.h",
+    "src/platform/macos_threads.c",
+    "src/platform/macos_voice.c",
+    "src/stubs/link_stubs.c",
+    "src/stubs/macos_compat.c",
+    "src/unix/linux_input.c",
+    "tests/platform/CMakeLists.txt",
+    "tests/platform/audio_test.c",
+    "tests/platform/check_crash.py",
+    "tests/platform/cpp_abi.cpp",
+    "tests/platform/input.c",
+    "tests/platform/macos_crash.c",
+    "tests/platform/macos_dedicated_fx.c",
+    "tests/platform/macos_diagnostics.c",
+    "tests/platform/macos_system_network.c",
+    "tests/platform/run_dedicated_fx.sh",
+    "tests/platform/smoke.c",
+    "tests/platform/threads_ring.c",
+    "tests/platform/voice_test.c",
+    "tools/macos-port/check_legacy_guards.py",
+    "tools/macos-port/check_platform_link.py"
+  ],
+  "u_ids_attempted": [
+    "WS3.1",
+    "WS3.2",
+    "WS3.3",
+    "WS3.4",
+    "WS3.5",
+    "WS3.6"
+  ],
+  "u_ids_completed": [
+    "WS3.1",
+    "WS3.2",
+    "WS3.3",
+    "WS3.4",
+    "WS3.5",
+    "WS3.6"
+  ],
+  "verification_results": {
+    "ctest": {
+      "passed": 14,
+      "failed": 0
+    },
+    "asan_ubsan": {
+      "passed": 9,
+      "failed": 0
+    },
+    "legacy": {
+      "files": 46,
+      "inactive_configurations": 6,
+      "mismatches": 0
+    },
+    "client": {
+      "compile_errors": 0,
+      "undefined_data": 1275
+    },
+    "dedicated": {
+      "compile_errors": 0,
+      "undefined_data": 348
+    }
+  },
+  "verification_evidence": [
+    {
+      "unit": "WS3.1",
+      "behavior_changed": true,
+      "existing_tests_inspected": "No existing native platform smoke; WS1 display/AGL stubs characterized in source",
+      "tests_added_or_changed": [
+        "smoke.c"
+      ],
+      "tests_used_unchanged": [],
+      "red_or_characterization": "AUX test failed with GL error before attachment fix; initial exclusive mode failed at CGDisplaySwitchToMode; positive LP64 HRESULT confirmed by native long width",
+      "commands": [
+        "cmake -S tests/platform -B build-macos/platform-tests",
+        "cmake --build build-macos/platform-tests -j12",
+        "ctest --test-dir build-macos/platform-tests --output-on-failure"
+      ],
+      "result": "windowed, borderless, fullscreen fallback, AUX isolation, input inverse transform and resize pass",
+      "exception_reason": "Physical Retina display and successful exclusive mode switch not available on this display"
+    },
+    {
+      "unit": "WS3.2",
+      "behavior_changed": true,
+      "existing_tests_inspected": "SDL input path and Mac VK constants read",
+      "tests_added_or_changed": [
+        "input.c",
+        "smoke.c"
+      ],
+      "tests_used_unchanged": [],
+      "red_or_characterization": "Installed SDL cocoa3.4.16 source uses NSEvent deltas; SDL text injection crashed and was isolated to Event2to3 returning NULL; fixture feeds poll boundary",
+      "commands": [
+        "ctest --test-dir build-macos/platform-tests -R input --output-on-failure",
+        "build-macos/platform-tests/macos_platform_smoke"
+      ],
+      "result": "key/text/button/wheel/UI/relative fallback mapping passes; real capture ran3 seconds with0 devices/events",
+      "exception_reason": "No physical GCMouse device; acceleration independence not empirically measured"
+    },
+    {
+      "unit": "WS3.3",
+      "behavior_changed": true,
+      "existing_tests_inspected": "Legacy MacMSS/AUGraph sources and audio stubs read by delegated audio worker",
+      "tests_added_or_changed": [
+        "audio_test.c",
+        "voice_test.c",
+        "smoke.c"
+      ],
+      "tests_used_unchanged": [],
+      "red_or_characterization": "Legacy unavailable/fixed32 platform callback layouts characterized; real AudioUnit output callbacks checked",
+      "commands": [
+        "ctest --test-dir build-macos/platform-tests -R \"audio|voice\" --output-on-failure",
+        "UBSAN_OPTIONS=halt_on_error=1 ctest --test-dir build-macos/platform-asan --output-on-failure -E ^smoke_"
+      ],
+      "result": "audible tone callbacks, PCM conversion, IMA decode, loops, pause, buffer/file handoff and voice PCM pass",
+      "exception_reason": "Mic recording unsupported; spatial/reverb quality and authentic game streams not verified"
+    },
+    {
+      "unit": "WS3.4",
+      "behavior_changed": true,
+      "existing_tests_inspected": "Existing Unix/Apple UDP, timer, home and diagnostics sources inspected by system worker; old ring Write is empty",
+      "tests_added_or_changed": [
+        "macos_system_network.c",
+        "macos_crash.c",
+        "macos_diagnostics.c",
+        "threads_ring.c"
+      ],
+      "tests_used_unchanged": [],
+      "red_or_characterization": "Worker reported baseline socket adjacent-storage corruption, incorrect sender sockaddr, home path and fd0 failure; packet20-byte packing failed before fix",
+      "commands": [
+        "ctest --test-dir build-macos/platform-tests --output-on-failure"
+      ],
+      "result": "16 real UDP/event checks including fd0/noHOME, native SIGABRT registers/backtrace, guard-page fault, native IDs, virtual destructors, dual-stop joins and10000 ring bytes pass",
+      "exception_reason": "Crash recovery is best effort and signal-stack corruption unverified; SOCKS auth unverified"
+    },
+    {
+      "unit": "WS3.5",
+      "behavior_changed": true,
+      "existing_tests_inspected": "WS1 undefined inventories and old C++ shim layouts inspected; GCC4 COW representation used as ABI reference",
+      "tests_added_or_changed": [
+        "cpp_abi.cpp",
+        "check_platform_link.py"
+      ],
+      "tests_used_unchanged": [],
+      "red_or_characterization": "Old string/container layout and blanket ABI trampoline flaws characterized; reference nm establishes mh_execute_header absolute4096",
+      "commands": [
+        "ctest --test-dir build-macos/platform-tests -R cpp_abi --output-on-failure",
+        "python3 tools/macos-port/check_platform_link.py --client build-macos/ws3-client-final.log --dedicated build-macos/ws3-dedicated-final.log"
+      ],
+      "result": "differential strings, tree invariants/erase permutations, lists, exceptions/dynamic casts and actual StringEd builder pass; nondata link names closed",
+      "exception_reason": "WS2 globals/imports/vtables remain; preserved COW data exports must not be regenerated"
+    },
+    {
+      "unit": "WS3.6",
+      "behavior_changed": true,
+      "existing_tests_inspected": "WS1 build/guard harness reused; reverse server CPU prediction table reference verified",
+      "tests_added_or_changed": [
+        "macos_dedicated_fx.c",
+        "run_dedicated_fx.sh",
+        "tests/platform/CMakeLists.txt",
+        "check_crash.py"
+      ],
+      "tests_used_unchanged": [
+        "check_legacy_guards.py (new-file handling adjusted)"
+      ],
+      "red_or_characterization": "Worker ASan negative control of original0x2a4 primitive allocation detects heap overflow; corrected parser passes",
+      "commands": [
+        "sh tests/platform/run_dedicated_fx.sh",
+        "python3 tools/macos-port/check_legacy_guards.py --base bae83a6"
+      ],
+      "result": "CPU effects preserved, dedicated SDK zlib/libc++ only,46 existing C/header bodies match6 inactive configurations",
+      "exception_reason": "32-bit executable parity cannot be checked on this Mac; rerun data-root closure after WS2 merge"
+    }
+  ],
+  "implementation_engine_binding": null,
+  "requested_route": "native inline with scoped same-worktree subagents",
+  "actual_route": "native inline with scoped same-worktree subagents",
+  "requested_model": null,
+  "actual_model": "unverified",
+  "requested_effort": null,
+  "fallback_reason": null,
+  "run_id": null,
+  "source_kind": "plan",
+  "source_digest": "9933525287df157287dd97b89c8ecab21bde603decb98eadb23f112027683dee",
+  "unit_receipts": {
+    "audio": {
+      "verification": "root CTest and sanitizer suite rerun",
+      "canonical_commit": "e33ffdc",
+      "workspace": "same platform worktree",
+      "cleanup": "complete"
+    },
+    "system_link": {
+      "verification": "root CTest and sanitizer suite rerun",
+      "canonical_commit": "d8eaefc",
+      "workspace": "same platform worktree",
+      "cleanup": "complete"
+    },
+    "cpp_abi": {
+      "verification": "root CTest and sanitizer suite rerun",
+      "canonical_commit": "4b0be37",
+      "workspace": "same platform worktree",
+      "cleanup": "complete"
+    },
+    "headless": {
+      "verification": "root CTest and sanitizer suite rerun",
+      "canonical_commit": "db92422",
+      "workspace": "same platform worktree",
+      "cleanup": "complete"
+    }
+  },
+  "plan_checkpoint": null,
+  "blockers": [
+    "Integrated engine link/runtime awaits WS2 data and WS6 runtime fixes",
+    "Physical raw mouse verification awaits a connected GCMouse",
+    "32-bit binary identity verification needs the reference CI/toolchain"
+  ],
+  "recovery_path": null,
+  "settled_decision_conflicts": [],
+  "behavior_change": true,
+  "standalone_shipping_skipped": true
+}

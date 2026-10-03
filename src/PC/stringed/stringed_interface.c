@@ -9,6 +9,12 @@ extern void FS_FreeFile(void *buffer);
 extern const char **FS_ListFiles(const char *path, const char *extension, int behavior, int *numfiles, int allocTrackType);
 extern void FS_FreeFileList(const char **list, int allocTrackType);
 
+#if defined(__APPLE__) && defined(COD2_X64)
+#include "../../platform/macos_cpp_abi.h"
+#define STRINGED_STRING Cod2MacString
+#else
+#define STRINGED_STRING LocalizeString
+
 extern void *__ZNSs6appendEPKcm(void *_this, const char *s, unsigned int n);
 
 extern void __ZNSs7reserveEm(void *_this, unsigned int n);
@@ -16,11 +22,12 @@ extern void __ZNSs7reserveEm(void *_this, unsigned int n);
 extern void *__ZNSs6assignEPKcm(void *_this, const char *s, unsigned int n);
 
 extern char __ZNSs4_Rep11_S_terminalE;
+#endif
 
 unsigned char *SE_LoadFileData(const char *psFileName);
 void SE_FreeFileDataAfterLoad(unsigned char *psLoadedFile);
-static void SE_R_ListFiles(const char *psExtension, const char *psDir, LocalizeString *strResults) __attribute_regparm__(3);
-int SE_BuildFileList(const char *psStartDir, LocalizeString *strResults);
+static void SE_R_ListFiles(const char *psExtension, const char *psDir, STRINGED_STRING *strResults) __attribute_regparm__(3);
+int SE_BuildFileList(const char *psStartDir, STRINGED_STRING *strResults);
 
 unsigned char *SE_LoadFileData(const char *psFileName)
 {
@@ -38,7 +45,7 @@ void SE_FreeFileDataAfterLoad(unsigned char *psLoadedFile)
 }
 
 static void __attribute_regparm__(3)
-    SE_R_ListFiles(const char *psExtension, const char *psDir, LocalizeString *strResults)
+    SE_R_ListFiles(const char *psExtension, const char *psDir, STRINGED_STRING *strResults)
 {
     char sDirName[64];
     int numdirs;
@@ -60,13 +67,20 @@ static void __attribute_regparm__(3)
 
     sysFiles = FS_ListFiles(psDir, psExtension, 0, &numSysFiles, 10);
     for (j = 0; j < numSysFiles; j++) {
+#if !defined(__APPLE__) || !defined(COD2_X64)
         char *data;
         unsigned int size;
         unsigned int new_size;
+#endif
 
         sprintf(sDirName, "%s/%s", psDir, sysFiles[j]);
 
         __ZNSs6appendEPKcm(strResults, sDirName, strlen(sDirName));
+
+#if defined(__APPLE__) && defined(COD2_X64)
+        /* The native COW header uses size_t fields; don't edit i386 offsets. */
+        __ZNSs6appendEPKcm(strResults, ";", 1);
+#else
 
         data = *(char **)strResults;
         size = *(unsigned int *)(data - 12);
@@ -84,6 +98,7 @@ static void __attribute_regparm__(3)
         *(int *)(data - 4) = 0;
         *(unsigned int *)(data - 12) = new_size;
         data[new_size] = __ZNSs4_Rep11_S_terminalE;
+#endif
 
         giFilesFound++;
     }
@@ -92,7 +107,7 @@ static void __attribute_regparm__(3)
     FS_FreeFileList(dirFiles, 10);
 }
 
-int SE_BuildFileList(const char *psStartDir, LocalizeString *strResults)
+int SE_BuildFileList(const char *psStartDir, STRINGED_STRING *strResults)
 {
     giFilesFound = 0;
     __ZNSs6assignEPKcm(strResults, "", 0);

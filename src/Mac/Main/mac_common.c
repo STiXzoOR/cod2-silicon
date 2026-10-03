@@ -6,6 +6,9 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <string.h>
+#if COD2_APPLE_SDK
+#include "platform/macos_system.h"
+#endif
 
 static char cwd[256];
 
@@ -40,7 +43,11 @@ char *Sys_DefaultCDPath(void)
 
 char *Sys_DefaultHomePath(void)
 {
+#if COD2_APPLE_SDK
+    return MacSystem_HomePath();
+#else
     return NULL;
+#endif
 }
 
 char *Sys_DefaultInstallPath(void)

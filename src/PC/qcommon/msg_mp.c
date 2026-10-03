@@ -1,4 +1,9 @@
 #include "common_types.h"
+#if COD2_APPLE_SDK
+#define COD2_IMAGE_CONSTANT_4096 4096
+#else
+#define COD2_IMAGE_CONSTANT_4096 (int)&__mh_execute_header
+#endif
 #include "imports.h"
 #include <string.h>
 #if defined(_MSC_VER)
@@ -732,7 +737,7 @@ void MSG_SetDefaultUserCmd(playerState_t *ps, usercmd_t *cmd)
         }
 
         if (ps->fWeaponPosFrac != 0.0f) {
-            cmd->buttons |= (int)&__mh_execute_header;
+            cmd->buttons |= COD2_IMAGE_CONSTANT_4096;
         }
     }
 }

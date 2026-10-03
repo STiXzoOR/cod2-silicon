@@ -14,6 +14,11 @@
 #include "common_types.h"
 #include "imports.h"
 #include "stubs/gcc40_compat.h"
+#if COD2_APPLE_SDK
+#include "platform/macos_system.h"
+#include <errno.h>
+#include <time.h>
+#endif
 
 #if !defined(_M_X64)  /* x64: use real Win32 (Mac/POSIX emulation collides by name) */
 MMRESULT timeBeginPeriod(int period)
@@ -30,26 +35,38 @@ MMRESULT timeEndPeriod(int period)
 
 DWORD timeGetTime(void)
 {
+#if COD2_APPLE_SDK
+    return (uint32_t)(MacSystem_Nanoseconds() / 1000000);
+#else
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return (DWORD)(tv.tv_sec * 1000 + tv.tv_usec / 1000);
+#endif
 }
 #endif
 
 BOOL QueryPerformanceFrequency(void *lpFrequency)
 {
     long long *freq = (long long *)lpFrequency;
+#if COD2_APPLE_SDK
+    *freq = 1000000000LL;
+#else
     *freq = 1000000LL;
+#endif
     return 1;
 }
 
 #if !defined(_M_X64)  /* x64: use real Win32 (Mac/POSIX emulation collides by name) */
 BOOL QueryPerformanceCounter(void *lpPerformanceCount)
 {
+#if COD2_APPLE_SDK
+    *(long long *)lpPerformanceCount = (long long)MacSystem_Nanoseconds();
+#else
     struct timeval tv;
     gettimeofday(&tv, NULL);
     long long *counter = (long long *)lpPerformanceCount;
     *counter = (long long)tv.tv_sec * 1000000LL + tv.tv_usec;
+#endif
     return 1;
 }
 #endif
@@ -102,13 +119,25 @@ BOOL SetThreadPriority(HANDLE hThread, int nPriority)
 DWORD GetCurrentThreadId(void)
 {
 
+#if COD2_APPLE_SDK
+    return (DWORD)pthread_mach_thread_np(pthread_self());
+#else
     return (DWORD)pthread_main_np();
+#endif
 }
 #endif
 
 void WinSleep(DWORD dwMilliseconds)
 {
+#if COD2_APPLE_SDK
+    struct timespec remaining;
+    remaining.tv_sec = dwMilliseconds / 1000;
+    remaining.tv_nsec = (dwMilliseconds % 1000) * 1000000;
+    while (nanosleep(&remaining, &remaining) == -1 && errno == EINTR) {
+    }
+#else
     usleep(dwMilliseconds * 1000);
+#endif
 }
 
 LONG InterlockedExchangeAdd(volatile LONG *Addend, LONG Value)

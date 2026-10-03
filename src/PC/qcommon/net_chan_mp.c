@@ -259,7 +259,11 @@ void Net_DumpProfile_f(void)
         return;
     }
     if (net_iProfilingOn == 1) {
+#if COD2_APPLE_SDK && defined(DEDICATED)
+        Com_Printf("Client network profiling is unavailable on a dedicated server\n");
+#else
         CL_Netchan_PrintProfileStats(1);
+#endif
         return;
     }
     SV_Netchan_PrintProfileStats(1);
@@ -270,7 +274,11 @@ void Net_DisplayProfile(void)
     if (net_iProfilingOn == 0)
         return;
     if (net_iProfilingOn == 1) {
+#if COD2_APPLE_SDK && defined(DEDICATED)
+        Com_Printf("Client network profiling is unavailable on a dedicated server\n");
+#else
         CL_Netchan_PrintProfileStats(0);
+#endif
         return;
     }
     SV_Netchan_PrintProfileStats(0);
@@ -463,7 +471,9 @@ void NET_OutOfBandVoiceData(netsrc_t sock, netadr_t adr, byte *format, int len)
     if (sock == 1) {
         SV_Netchan_AddOOBProfilePacket(len);
     } else {
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
         CL_Netchan_AddOOBProfilePacket(len);
+#endif
     }
 }
 
@@ -495,7 +505,9 @@ Bool NET_OutOfBandData(netsrc_t sock, netadr_t adr, byte *format, int len)
     if (sock == 1) {
         SV_Netchan_AddOOBProfilePacket(len);
     } else {
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
         CL_Netchan_AddOOBProfilePacket(len);
+#endif
     }
 
     ZN10LargeLocalD1Ev(string_large_local);
@@ -536,7 +548,9 @@ Bool NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *data)
     if (sock == 1) {
         SV_Netchan_AddOOBProfilePacket(iLength);
     } else {
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
         CL_Netchan_AddOOBProfilePacket(iLength);
+#endif
     }
 
     res = res > 0 ? 1 : 0;

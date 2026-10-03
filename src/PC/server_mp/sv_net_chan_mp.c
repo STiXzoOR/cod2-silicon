@@ -213,6 +213,10 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
     char szClientName[17];
     int i;
 
+#if COD2_APPLE_SDK && defined(DEDICATED)
+    bPrintToConsole = 1;
+#endif
+
     clientBase = *(byte **)(svs_ptr + SVS_CLIENTS_OFF);
     if (clientBase == NULL)
         return;
@@ -244,7 +248,9 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
         Com_Printf("%s\n", szLine);
         iYPos = 0x50;
     } else {
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
         CL_DrawString(0x20, 0x5a, szLine, 0, 8);
+#endif
         iYPos = 0x5a;
     }
 
@@ -252,7 +258,9 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
     if (bPrintToConsole) {
         Com_Printf("%s\n\n", szLine);
     } else {
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
         CL_DrawString(0x20, iYPos + 0xa, szLine, 0, 8);
+#endif
         iYPos += 0x14;
     }
 
@@ -261,7 +269,9 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
     if (bPrintToConsole) {
         Com_Printf("%s\n", szLine);
     } else {
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
         CL_DrawString(0x20, iYPos + 0xa, szLine, 0, 8);
+#endif
         iYPos += 0xa;
     }
 
@@ -270,7 +280,9 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
     if (bPrintToConsole) {
         Com_Printf("%s\n", szLine);
     } else {
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
         CL_DrawString(0x20, iYPos + 0xa, szLine, 0, 8);
+#endif
         iYPos += 0xa;
     }
 
@@ -355,7 +367,9 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
     if (bPrintToConsole) {
         Com_Printf("%s\n", szLine);
     } else {
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
         CL_DrawString(0x20, iYPos + 0xa, szLine, 0, 8);
+#endif
         iYPos += 0xa;
     }
 
@@ -392,7 +406,9 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
     if (bPrintToConsole) {
         Com_Printf("%s\n", szLine);
     } else {
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
         CL_DrawString(0x20, iYPos + 0xa, szLine, 0, 8);
+#endif
         iYPos += 0xa;
     }
 
@@ -443,7 +459,9 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
         if (bPrintToConsole) {
             Com_Printf("%s\n", szLine);
         } else {
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
             CL_DrawString(0x20, iYPos + 0xa, szLine, 0, 8);
+#endif
             iYPos += 0xa;
         }
     }

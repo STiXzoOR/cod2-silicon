@@ -1,4 +1,9 @@
 #include "common_types.h"
+#if COD2_APPLE_SDK
+#define COD2_IMAGE_CONSTANT_4096 4096
+#else
+#define COD2_IMAGE_CONSTANT_4096 (int)&__mh_execute_header
+#endif
 #include "imports.h"
 #include "bytematch.h"
 #include "cod2_feature_config.h"
@@ -3799,7 +3804,7 @@ void UI_RunMenuScript(const char **args)
         char *filePtr;
         extern int __mh_execute_header;
 
-        numMovies = FS_GetFileList("video", "roq", 0, addr, (int)&__mh_execute_header);
+        numMovies = FS_GetFileList("video", "roq", 0, addr, COD2_IMAGE_CONSTANT_4096);
         sharedUiInfo.movieCount = numMovies;
         if (numMovies == 0)
             return;

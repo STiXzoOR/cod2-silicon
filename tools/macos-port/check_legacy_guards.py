@@ -34,7 +34,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--base', required=True, help='the pre-port commit in this checkout')
     args = parser.parse_args()
-    paths = subprocess.check_output(['git', 'diff', '--name-only', args.base], text=True).splitlines()
+    paths = subprocess.check_output(['git', 'diff', '--diff-filter=M', '--name-only', args.base], text=True).splitlines()
     paths = [p for p in paths if p.endswith(('.c', '.h'))]
     failures = []
     for path in paths:

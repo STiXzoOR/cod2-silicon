@@ -40,6 +40,16 @@ typedef struct {
     GLenum openGLElementType;
 } CDirect3DSurfaceImpl;
 
+#if COD2_APPLE_SDK
+void CDirect3DSurface_SetNativeDimensions(void *surface, UINT32 width, UINT32 height)
+{
+    if (surface) {
+        ((CDirect3DSurfaceImpl *)surface)->width = width;
+        ((CDirect3DSurfaceImpl *)surface)->height = height;
+    }
+}
+#endif
+
 /* Typed owner setter: CDirect3DTexture set surface->owner via a hardcoded x86
  * offset (surf+40), which on x64 is surfaceMemory (owner is at 56) -> corrupted
  * the pixel pointer. (x64 port Stage 4.) */

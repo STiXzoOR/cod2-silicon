@@ -1070,7 +1070,9 @@ void SV_Frame(int msec)
         sv.timeResidual -= frameMsec;
         svs.time += frameMsec;
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
         CL_FlushDebugData(1);
+#endif
         SV_ResetSkeletonCache();
         G_RunFrame(svs.time);
         Scr_SetLoading(0);

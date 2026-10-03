@@ -561,7 +561,12 @@ struct ProgrammableShaderType {
 };
 
 struct StThreadLock {
+#if COD2_APPLE_SDK
+    CThread *thread;
+    Boolean locked;
+#else
     int _placeholder;
+#endif
 };
 
 struct StdConverterABGR {
@@ -771,7 +776,11 @@ struct CDisplayInfo {
 };
 
 struct CMutex {
+#if COD2_APPLE_SDK
+    pthread_mutex_t mutex;
+#else
     int _placeholder;
+#endif
 };
 
 struct CSampleSound {
@@ -791,7 +800,17 @@ struct CStreamSound {
 };
 
 struct CThread {
+#if COD2_APPLE_SDK
+    void **vtable;
+    pthread_t thread;
+    void *argument;
+    CMutex mutex;
+    pthread_mutex_t lifecycleMutex;
+    int running;
+    int joinable;
+#else
     int _vptr$CThread;
+#endif
 };
 
 struct ControlID {
@@ -848,7 +867,12 @@ struct AudioTimeStamp {
 };
 
 struct StMutexLock {
+#if COD2_APPLE_SDK
+    CMutex *mutex;
+    Boolean locked;
+#else
     int _placeholder;
+#endif
 };
 
 struct StPortState {

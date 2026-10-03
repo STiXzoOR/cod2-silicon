@@ -36,6 +36,17 @@ extern int Decode_Sample(char *inData, int inSize, short *outData, int maxOutSiz
 extern byte *voice_freq_ptr;
 extern byte *voice_maxframe_ptr;
 
+#if COD2_APPLE_SDK
+const dvar_t *winvoice_mic_mute;
+const dvar_t *winvoice_mic_reclevel;
+const dvar_t *winvoice_save_voice;
+const dvar_t *winvoice_mic_scaler;
+int mic_old_reclevel;
+int mic_current_reclevel;
+char old_rec_source[256];
+float voice_current_voicelevel;
+float voice_current_scaler;
+#else
 extern const dvar_t *winvoice_mic_mute;
 extern const dvar_t *winvoice_mic_reclevel;
 extern const dvar_t *winvoice_save_voice;
@@ -45,9 +56,15 @@ extern int mic_current_reclevel;
 extern char old_rec_source[256];
 extern float voice_current_voicelevel;
 extern float voice_current_scaler;
+#endif
 extern int g_voice_initialized;
+#if COD2_APPLE_SDK
+float levelSamples[6];
+int sampleCount;
+#else
 extern float levelSamples[6];
 extern int sampleCount;
+#endif
 static int count;
 static Bool recording;
 static Bool playing;

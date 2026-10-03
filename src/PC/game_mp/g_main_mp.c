@@ -1,5 +1,10 @@
 #include "common_types.h"
 #include "imports.h"
+#if COD2_APPLE_SDK
+#include "platform/macos_system.h"
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
 #include <stdlib.h>
 #include <stdarg.h>
 #include <float.h>
@@ -221,6 +226,17 @@ unsigned int g_lastop_dbg;
 /* write-watchpoint: make ent#439's page read-only so the corrupting write faults with an exact rip */
 void dbg_protect_439(void)
 {
+#if COD2_APPLE_SDK
+    static int done;
+    uintptr_t page, address = (uintptr_t)&g_entities[439];
+    size_t pageSize = (size_t)getpagesize();
+    if (done)
+        return;
+    done = 1;
+    page = address & ~(uintptr_t)(pageSize - 1);
+    if (mprotect((void *)page, pageSize, PROT_READ) == 0)
+        Com_Printf("[wp] protected ent#439 page %p (ent at %p)\n", (void *)page, (void *)address);
+#else
     static int done;
     void *__stdcall GetModuleHandleA(const char *);
     void *__stdcall GetProcAddress(void *, const char *);
@@ -242,6 +258,7 @@ void dbg_protect_439(void)
         vp((void *)(uintptr_t)page, 0x1000, 2 /*PAGE_READONLY*/, &oldp);
         Com_Printf("[wp] protected ent#439 page %p (ent at %p)\n", (void *)(uintptr_t)page, (void *)base);
     }
+#endif
 }
 void dbg_end_probe(int step)
 {
@@ -273,11 +290,17 @@ void dbg_check439(void)
 {
     static int rep;
     if (!rep && (unsigned int)g_entities[439].s.pos.trType > 20u) {
+#if !COD2_APPLE_SDK
         void *__stdcall GetModuleHandleA(const char *);
+#endif
         rep = 1;
         Com_Printf("[corruptor] ent#439 trType=0x%x after builtinIndex=%u fn_rva=0x%llx\n",
                    (unsigned int)g_entities[439].s.pos.trType, g_dbg_lastBuiltin,
+#if COD2_APPLE_SDK
+                   (unsigned long long)MacSystem_ImageOffset(g_dbg_lastBuiltinFn));
+#else
                    (unsigned long long)((char *)g_dbg_lastBuiltinFn - (char *)GetModuleHandleA(0)));
+#endif
     }
 }
 
@@ -1048,10 +1071,12 @@ int G_SightTrace(int *hitNum, const vec_t *start, const vec_t *end, int passEnti
     return SV_SightTrace(hitNum, start, vec3_zero, vec3_zero, end, passEntityNum, 0x3ff, contentmask);
 }
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
 void G_AddDebugString(const vec_t *xyz, const vec_t *color, float scale, const char *pszText)
 {
     CL_AddDebugString(xyz, color, scale, pszText, 1);
 }
+#endif
 
 void G_ShutdownGame(qboolean freeScripts)
 {

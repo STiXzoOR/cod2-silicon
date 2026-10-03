@@ -5,6 +5,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stddef.h>
+#if COD2_APPLE_SDK
+#include "platform/macos_system.h"
+#include <malloc/malloc.h>
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
 
 extern void Com_Printf(const char *fmt, ...);
 extern void Com_Error(int code, const char *fmt, ...);
@@ -14,6 +20,29 @@ extern void *VirtualAlloc(void *lpAddress, int dwSize, int flAllocationType, int
 extern int VirtualFree(void *lpAddress, int dwSize, int dwFreeType);
 
 #if defined(COD2_X64) && defined(COD2_GUARDHEAP)
+#if COD2_APPLE_SDK
+static void *gp_alloc(int size, int zero)
+{
+    size_t pageSize = (size_t)getpagesize();
+    size_t need = size <= 0 ? 16 : ((size_t)size + 15) & ~(size_t)15;
+    size_t writable = (need + 16 + pageSize - 1) & ~(pageSize - 1);
+    size_t length = writable + pageSize;
+    char *base = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+    char *user;
+    if (base == MAP_FAILED)
+        return NULL;
+    if (mprotect(base + writable, pageSize, PROT_NONE) != 0) {
+        munmap(base, length);
+        return NULL;
+    }
+    user = base + writable - need;
+    *(void **)(user - 16) = base;
+    *(size_t *)(user - 8) = length;
+    if (zero && size > 0)
+        Com_Memset(user, 0, size);
+    return user;
+}
+#else
 /* DIAGNOSTIC guard-page allocator: each block's END butts against a no-access page so a heap
    overrun faults exactly at the bad write (caught by the SEH handler). Base ptr is stored 16
    bytes before the user ptr for Z_FreeInternal. Enable with -DCOD2_GUARDHEAP. */
@@ -58,6 +87,7 @@ static void *gp_alloc(int size, int zero)
     if (zero) Com_Memset(user, 0, size);
     return user;
 }
+#endif
 #endif
 extern long FS_HashFileName(const char *fname, int hashSize);
 extern int FS_LoadStack(void);
@@ -121,6 +151,14 @@ static void Hunk_ClearFileData(fileData_t **pFileData, byte *low, byte *high)
 void Z_FreeInternal(void *ptr)
 {
 #if defined(COD2_X64) && defined(COD2_GUARDHEAP)
+#if COD2_APPLE_SDK
+    if (ptr) {
+        if (malloc_zone_from_ptr(ptr))
+            free(ptr); /* CopyStringInternal and other ordinary malloc callers. */
+        else
+            munmap(*(void **)((char *)ptr - 16), *(size_t *)((char *)ptr - 8));
+    }
+#else
     extern gp_VF_t gp_realVF;
     if (ptr) {
         if (*(void **)((char *)ptr - 8) == GP_MAGIC && gp_realVF)
@@ -128,6 +166,7 @@ void Z_FreeInternal(void *ptr)
         else
             free(ptr); /* malloc fallback block */
     }
+#endif
 #else
     free(ptr);
 #endif
@@ -487,8 +526,10 @@ void DBG_Hunk_PrintUsage(const char *label)
    overflowing block + its allocation-site return addresses (preferred-VA @
    0x140000000 base, matches the .map / crash report). */
 #if defined(COD2_X64)
+#if !COD2_APPLE_SDK
 extern unsigned short __stdcall RtlCaptureStackBackTrace(unsigned long, unsigned long, void **, unsigned long *);
 extern void *__stdcall GetModuleHandleA(const char *);
+#endif
 #define HG_CANARY 0xA5A5A5A5A5A5A5A5ull
 #define HG_MAX 8192
 static struct { byte *end; int size; void *ra[4]; } hg_rec[HG_MAX];
@@ -496,7 +537,11 @@ static int hg_count;
 static int hg_on = -1;
 static unsigned long long hg_base;
 static int hg_enabled(void) {
+#if COD2_APPLE_SDK
+    if (hg_on < 0) hg_on = getenv("COD2_HUNKGUARD") ? 1 : 0;
+#else
     if (hg_on < 0) { hg_on = getenv("COD2_HUNKGUARD") ? 1 : 0; if (hg_on) hg_base = (unsigned long long)GetModuleHandleA((const char *)0); }
+#endif
     return hg_on;
 }
 void hunk_guard_check(const char *where)
@@ -508,10 +553,17 @@ void hunk_guard_check(const char *where)
             unsigned long long b = hg_base;
             Com_Printf("[HunkGuard@%s] OVERFLOW size=%d end=%p RA: %llx %llx %llx %llx\n",
                        where, hg_rec[i].size, (void *)hg_rec[i].end,
+#if COD2_APPLE_SDK
+                       (unsigned long long)MacSystem_ImageOffset(hg_rec[i].ra[0]),
+                       (unsigned long long)MacSystem_ImageOffset(hg_rec[i].ra[1]),
+                       (unsigned long long)MacSystem_ImageOffset(hg_rec[i].ra[2]),
+                       (unsigned long long)MacSystem_ImageOffset(hg_rec[i].ra[3]));
+#else
                        (unsigned long long)hg_rec[i].ra[0] - b + 0x140000000ull,
                        (unsigned long long)hg_rec[i].ra[1] - b + 0x140000000ull,
                        (unsigned long long)hg_rec[i].ra[2] - b + 0x140000000ull,
                        (unsigned long long)hg_rec[i].ra[3] - b + 0x140000000ull);
+#endif
             *(unsigned long long *)hg_rec[i].end = HG_CANARY; /* re-arm to avoid spam */
         }
     }
@@ -546,7 +598,11 @@ void *Hunk_AllocInternal(int size)
         *(unsigned long long *)(buf + size) = HG_CANARY;
         hg_rec[hg_count].end = buf + size;
         hg_rec[hg_count].size = size;
+#if COD2_APPLE_SDK
+        MacSystem_CaptureStack(hg_rec[hg_count].ra, 4, 1);
+#else
         RtlCaptureStackBackTrace(1, 4, hg_rec[hg_count].ra, (unsigned long *)0);
+#endif
         hg_count++;
     }
 #endif

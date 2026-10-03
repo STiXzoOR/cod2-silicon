@@ -2716,7 +2716,9 @@ void GScr_print3d(void)
 
     text = Scr_GetString(1);
     Scr_GetVector(0, origin);
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     G_AddDebugString(origin, color, scale, text);
+#endif
     return;
 }
 
@@ -2752,7 +2754,9 @@ void GScr_line(void)
 
     Scr_GetVector(1, end);
     Scr_GetVector(0, start);
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     CL_AddDebugLine(start, end, color, depthTest, 0, 1);
+#endif
     return;
 }
 

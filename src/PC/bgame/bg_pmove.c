@@ -1975,7 +1975,11 @@ void Pmove(pmove_t *pm)
 }
 
 pmoveHandler_t pmoveHandlers[2] = {
+#if COD2_APPLE_SDK && defined(DEDICATED)
+    { NULL, NULL, NULL },
+#else
     { (pmove_trace)&CG_TraceCapsule, (pmove_pointcontents)&CG_PointContents, 0x0 },
+#endif
     { (pmove_trace)&G_TraceCapsule, (pmove_pointcontents)&SV_PointContents, (pmove_PlayerEvent)&G_PlayerEvent }
 };
 viewLerpWaypoint_t viewLerp_CrouchProne[13] = {

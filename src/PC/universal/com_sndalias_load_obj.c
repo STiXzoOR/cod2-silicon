@@ -756,6 +756,7 @@ Bool Com_LoadVolumeFalloffCurve(const char *name, SndCurve *curve)
     return 1;
 }
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
 int Com_LoadSoundAliasSounds(SoundFileInfo *soundFileInfo)
 {
     int soundIndex;
@@ -791,6 +792,8 @@ int Com_LoadSoundAliasSounds(SoundFileInfo *soundFileInfo)
 
     return numMissing;
 }
+
+#endif
 
 void Com_InitDefaultSoundAliasVolumeFalloffCurve(SndCurve *sndCurve)
 {

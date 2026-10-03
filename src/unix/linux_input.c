@@ -6,6 +6,9 @@
 #define __m128 __m128_cod2
 #include "common_types.h"
 #undef __m128
+#if defined(__APPLE__) && defined(COD2_X64)
+#include "imports.h"
+#endif
 
 #include "cod2_feature_config.h"
 
@@ -76,6 +79,36 @@ extern int Linux_PollInputEvent(LinuxInputEvent *event);
 #define K_KP_STAR    0xc6
 #define K_KP_EQUALS  0xc7
 #define K_MOUSE1     0xc8
+#if defined(__APPLE__) && defined(COD2_X64)
+#define K_MWHEELDOWN 0xcd
+#define K_MWHEELUP   0xce
+#endif
+
+
+#if defined(__APPLE__) && defined(COD2_X64)
+#include "platform/macos_rawmouse.h"
+#include "platform/macos_display.h"
+extern dvar_t *in_rawmouse;
+extern dvar_t *in_mouse;
+extern void CL_MouseEvent(int dx, int dy);
+static int mac_relative;
+static int mac_use_raw;
+
+static unsigned int MacInput_DecodeUTF8(const unsigned char **cursor)
+{
+    const unsigned char *p = *cursor;
+    unsigned int value = *p++;
+    int trailing = value < 0x80 ? 0 : ((value & 0xe0) == 0xc0 ? 1 : ((value & 0xf0) == 0xe0 ? 2 : ((value & 0xf8) == 0xf0 ? 3 : -1)));
+    if (trailing < 0) { *cursor = p; return 0; }
+    value &= trailing == 0 ? 0x7f : ((1u << (6 - trailing)) - 1);
+    for (int i = 0; i < trailing; ++i) {
+        if ((*p & 0xc0) != 0x80) { *cursor = p; return 0; }
+        value = (value << 6) | (*p++ & 0x3f);
+    }
+    *cursor = p;
+    return value;
+}
+#endif
 
 static int sdl_to_keynum(SDL_Keycode sym)
 {
@@ -174,16 +207,43 @@ int SDL_PumpInputEvents(void)
     int inputEventCount = 0;
     static int textInputStarted;
 
+#if defined(__APPLE__) && defined(COD2_X64)
+    if (!SDL_IsTextInputActive()) {
+#else
     if (!textInputStarted && !SDL_IsTextInputActive()) {
+#endif
         SDL_StartTextInput();
         textInputStarted = 1;
     }
 
     for (eventCount = 0; eventCount < 256 && SDL_PollEvent(&ev); ++eventCount) {
         switch (ev.type) {
+#if defined(__APPLE__) && defined(COD2_X64)
+        case SDL_QUIT:
+            { extern void Cbuf_AddText(const char *text); Cbuf_AddText("quit\n"); }
+            break;
+        case SDL_WINDOWEVENT:
+            if (ev.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
+                extern void Key_ClearStates(void);
+                Key_ClearStates();
+                MacRawMouse_SetActive(0);
+            }
+            break;
+#endif
         case SDL_MOUSEMOTION: {
+#if defined(__APPLE__) && defined(COD2_X64)
+            if (mac_relative) {
+                if (!mac_use_raw)
+                    CL_MouseEvent(ev.motion.xrel, ev.motion.yrel);
+            } else {
+                int x, y;
+                MacPlatform_MapWindowPoint(ev.motion.x, ev.motion.y, &x, &y);
+                CL_MouseEventAbsolute(x, y, 0, 0);
+            }
+#else
             CL_MouseEventAbsolute(ev.motion.x, ev.motion.y,
                                   ev.motion.xrel, ev.motion.yrel);
+#endif
             ++inputEventCount;
             break;
         }
@@ -204,9 +264,21 @@ int SDL_PumpInputEvents(void)
             break;
         }
         case SDL_MOUSEWHEEL: {
+#if defined(__APPLE__) && defined(COD2_X64)
+            int delta = ev.wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -ev.wheel.y : ev.wheel.y;
+            int key = delta > 0 ? K_MWHEELUP : K_MWHEELDOWN;
+            int clicks = abs(delta);
+            /* Preserve individual wheel clicks in the engine key-event path. */
+            for (int i = 0; i < clicks; ++i) {
+                Sys_QueEvent(0, SE_KEY, key, 1, 0, NULL);
+                Sys_QueEvent(0, SE_KEY, key, 0, 0, NULL);
+                ++inputEventCount;
+            }
+#else
             Point point = { 0, 0 };
             CCallOfDutyEngine_DoMouseWheel(get_engine(), ev.wheel.y, point, 0);
             ++inputEventCount;
+#endif
             break;
         }
         case SDL_KEYDOWN: {
@@ -217,7 +289,11 @@ int SDL_PumpInputEvents(void)
             }
 
             if (ev.key.keysym.sym == SDLK_BACKSPACE) {
+#if defined(__APPLE__) && defined(COD2_X64)
+                Sys_QueEvent(0, SE_CHAR, 8, 0, 0, NULL);
+#else
                 CCallOfDutyEngine_DoTextInput(get_engine(), 8);
+#endif
                 ++inputEventCount;
             }
             break;
@@ -232,11 +308,21 @@ int SDL_PumpInputEvents(void)
         }
         case SDL_TEXTINPUT:
 
+#if defined(__APPLE__) && defined(COD2_X64)
+            for (const unsigned char *p = (const unsigned char *)ev.text.text; *p;) {
+                unsigned int character = MacInput_DecodeUTF8(&p);
+                if (character >= 0x20 && character != 0x7f) {
+                    Sys_QueEvent(0, SE_CHAR, (int)character, 0, 0, NULL);
+                    ++inputEventCount;
+                }
+            }
+#else
             if (ev.text.text[0]) {
                 CCallOfDutyEngine_DoTextInput(get_engine(),
                                               (unsigned char)ev.text.text[0]);
                 ++inputEventCount;
             }
+#endif
             break;
 #if COD2_FEATURE_GAMEPAD
         case SDL_CONTROLLERDEVICEADDED:
@@ -256,6 +342,27 @@ int SDL_PumpInputEvents(void)
 
 void IN_Frame(void)
 {
+#if defined(__APPLE__) && defined(COD2_X64)
+    extern SDL_Window *sdl_gl_window;
+    clientActive_t *client = imp_cl ? *(clientActive_t **)imp_cl : NULL;
+    int focused = sdl_gl_window && (SDL_GetWindowFlags(sdl_gl_window) & SDL_WINDOW_INPUT_FOCUS);
+    int wantRelative = focused && client && client->active && client->keyCatchers == 0 && in_mouse && in_mouse->current.enabled;
+    mac_relative = SDL_GetRelativeMouseMode() == SDL_TRUE;
+    if (wantRelative != mac_relative) {
+        SDL_SetWindowGrab(sdl_gl_window, wantRelative ? SDL_TRUE : SDL_FALSE);
+        SDL_SetRelativeMouseMode(wantRelative ? SDL_TRUE : SDL_FALSE);
+        mac_relative = SDL_GetRelativeMouseMode() == SDL_TRUE;
+    }
+    mac_use_raw = mac_relative && in_rawmouse && in_rawmouse->current.enabled && MacRawMouse_Available();
+    MacRawMouse_SetActive(mac_use_raw);
+    SDL_PumpInputEvents();
+    int dx, dy;
+    if (mac_use_raw && MacRawMouse_Read(&dx, &dy))
+        CL_MouseEvent(dx, dy);
+#if COD2_FEATURE_GAMEPAD
+    CL_Gamepad_Frame();
+#endif
+#else
     LinuxInputEvent event;
     int eventCount;
     static int suppressNativeInputFrames;
@@ -326,4 +433,5 @@ void IN_Frame(void)
         }
         }
     }
+#endif
 }

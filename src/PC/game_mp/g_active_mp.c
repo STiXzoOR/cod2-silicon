@@ -1379,10 +1379,12 @@ void ClientEndFrame(gentity_t *ent)
         turret_think_client(&level.gentities[client->ps.viewlocked_entNum]);
     }
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     if (g_debugLocDamage->current.enabled && SV_DObjExists(ent)) {
         G_DObjCalcPose(ent);
         SV_XModelDebugBoxes(ent);
     }
+#endif
 
     client->buttonsSinceLastFrame = 0;
 }

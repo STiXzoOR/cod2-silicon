@@ -1,8 +1,14 @@
-# Apple LP64 compile bring-up. The typed data migration supplies blobs later.
+# Native Apple platform. Typed engine data/import slots are supplied by WS2.
 set(CMAKE_OSX_ARCHITECTURES arm64)
+enable_language(CXX OBJC)
+find_library(COD2_AUDIO_FRAMEWORK AudioToolbox REQUIRED)
+find_library(COD2_COREAUDIO_FRAMEWORK CoreAudio REQUIRED)
+find_library(COD2_GAMECONTROLLER_FRAMEWORK GameController REQUIRED)
+find_library(COD2_FOUNDATION_FRAMEWORK Foundation REQUIRED)
 find_package(SDL2 CONFIG REQUIRED)
 find_library(COD2_OPENGL_FRAMEWORK OpenGL REQUIRED)
 find_package(ZLIB REQUIRED)
+find_library(COD2_CURL_LIBRARY curl REQUIRED)
 
 file(GLOB_RECURSE MACOS_PC_C CONFIGURE_DEPENDS "${COD2_SRC_DIR}/PC/*.c")
 file(GLOB_RECURSE MACOS_MAC_C CONFIGURE_DEPENDS "${COD2_SRC_DIR}/Mac/*.c")
@@ -12,15 +18,38 @@ set(MACOS_C ${MACOS_PC_C} ${MACOS_MAC_C} ${MACOS_STUBS_C} ${MACOS_ROOT_C})
 # Use the SDK zlib, as in the native Linux build. No 32-bit data generators or ASM.
 list(FILTER MACOS_C EXCLUDE REGEX "/PC/zlib/(inflate|infblock|infcodes|inffast|inftrees|infutil|adler32|zutil)\\.c$")
 list(FILTER MACOS_C EXCLUDE REGEX "/(data|import_pointers|literals)\\.c$")
-list(APPEND MACOS_C src/unix/linux_common.c src/unix/linux_net.c src/unix/sysdiff_statehash.c)
+# Native replacements own these platform APIs; legacy stubs never intercept SDK calls.
+list(FILTER MACOS_C EXCLUDE REGEX "/Mac/Tools/(MacDisplay|MacThreads|CCircularBuffer|CAudioRecorder|MacMSS[^/]*)\\.c$")
+list(FILTER MACOS_C EXCLUDE REGEX "/stubs/(agl_stubs|audio_stubs|cpp_compat|cpp_trampoline|fx_override)\\.c$")
+list(APPEND MACOS_C src/unix/linux_common.c src/unix/linux_net.c src/unix/sysdiff_statehash.c
+  src/platform/macos_system.c src/platform/macos_threads.c src/platform/macos_ring.c
+  src/platform/macos_cpp_abi.cpp)
+list(FILTER MACOS_C EXCLUDE REGEX "/Mac/Main/(mac_play_dsound|mac_record_dsound)\\.c$")
+list(FILTER MACOS_C EXCLUDE REGEX "/PC/groupvoice/record\\.c$")
+set(MACOS_DED_C ${MACOS_C})
+list(FILTER MACOS_DED_C EXCLUDE REGEX "/(Mac/DirectX_9|PC/gfx_d3d|PC/cgame|PC/cgame_mp|PC/ui|PC/ui_mp|PC/EffectsCore|PC/client_mp|PC/groupvoice)/")
+# Retain the CPU effect templates, lengths and server visibility implementation.
+foreach(unit FxUtil Fxexport FxScheduler FxScheduler_load_obj FxTemplate FxSystem
+    GenericParser2 FxChannel FxCurve FxCurve_load_obj FxMemMgr)
+  list(APPEND MACOS_DED_C "${COD2_SRC_DIR}/PC/EffectsCore/${unit}.c")
+endforeach()
+list(FILTER MACOS_DED_C EXCLUDE REGEX "/PC/(snd|win32/cinematics)\\.c$")
+list(FILTER MACOS_DED_C EXCLUDE REGEX "/Mac/Main/(mac_input|mac_decode|mac_sound)\\.c$")
+# A dedicated build never loads the client sound driver or group voice output.
+list(FILTER MACOS_DED_C EXCLUDE REGEX "/PC/win32/(snd_driver|win_voice)\\.c$")
 
 # Typed LP64 data generated from the Mac binary's STABS (WS2, tools/datagen).
 include(${CMAKE_SOURCE_DIR}/cmake/datagen.cmake)
 cod2_generate_typed_blobs(MACOS_GEN_C)
 list(APPEND MACOS_C ${MACOS_GEN_C})
+list(APPEND MACOS_DED_C ${MACOS_GEN_C})
 
 foreach(target cod2_macos cod2_macos_ded)
-  add_executable(${target} ${MACOS_C})
+  if(target STREQUAL "cod2_macos_ded")
+    add_executable(${target} ${MACOS_DED_C})
+  else()
+    add_executable(${target} ${MACOS_C})
+  endif()
   target_include_directories(${target} PRIVATE
     ${COD2_SRC_DIR}/PC/speex ${COD2_SRC_DIR} ${COD2_SRC_DIR}/headers ${CMAKE_SOURCE_DIR})
   target_compile_options(${target} PRIVATE -g -O0 -fcommon -ffp-contract=off
@@ -29,18 +58,28 @@ foreach(target cod2_macos cod2_macos_ded)
     -Wint-conversion -Wincompatible-pointer-types -Wvoid-pointer-to-int-cast
     -Wno-typedef-redefinition -Wno-duplicate-decl-specifier
     -ferror-limit=0)
-  target_link_libraries(${target} PRIVATE ZLIB::ZLIB ${COD2_OPENGL_FRAMEWORK})
+  target_link_libraries(${target} PRIVATE ZLIB::ZLIB c++)
+  target_compile_features(${target} PRIVATE cxx_std_17)
   # ld64 equivalents of the MinGW --defsym seam aliases in CMakeLists.txt.
   target_link_options(${target} PRIVATE
     "LINKER:-alias,_g_entities,_g_entities_ptr"
     "LINKER:-alias,_imp_bgs,_g_time_ptr"
-    "LINKER:-alias,_vidConfig,_r_limits_ptr"
     "LINKER:-alias,_scr_const,_scr_const_ptr"
     "LINKER:-alias,_sv,_sv_ptr"
     "LINKER:-alias,_svs,_svs_ptr")
 endforeach()
-target_sources(cod2_macos PRIVATE src/unix/linux_input.c)
-target_link_libraries(cod2_macos PRIVATE SDL2::SDL2)
+# vidConfig lives in the renderer, which the dedicated server does not build.
+target_link_options(cod2_macos PRIVATE "LINKER:-alias,_vidConfig,_r_limits_ptr")
+target_sources(cod2_macos PRIVATE src/unix/linux_input.c src/platform/macos_display.c
+  src/platform/macos_rawmouse.m src/platform/macos_audio.c src/platform/macos_voice.c)
+set_source_files_properties(src/platform/macos_rawmouse.m PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+# The renderer renders into the exact r_mode framebuffer; presentation scales it.
+set_source_files_properties(src/PC/gfx_d3d/rb_state.c src/PC/gfx_d3d/r_screenshot.c PROPERTIES
+  COMPILE_DEFINITIONS "glDrawBuffer=MacGL_DrawBuffer;glReadBuffer=MacGL_ReadBuffer")
+target_link_libraries(cod2_macos PRIVATE SDL2::SDL2 ${COD2_OPENGL_FRAMEWORK} ${COD2_CURL_LIBRARY}
+  ${COD2_AUDIO_FRAMEWORK} ${COD2_COREAUDIO_FRAMEWORK}
+  ${COD2_GAMECONTROLLER_FRAMEWORK} ${COD2_FOUNDATION_FRAMEWORK})
 target_compile_definitions(cod2_macos_ded PRIVATE DEDICATED)
+target_link_options(cod2_macos_ded PRIVATE -Wl,-dead_strip)
 set_source_files_properties(src/PC/qcommon/crash_handler.c PROPERTIES
   COMPILE_DEFINITIONS "COD2_GIT_HASH=\"${COD2_GIT_HASH}\"")

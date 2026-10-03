@@ -410,11 +410,19 @@ __attribute__((used)) static unsigned char virtualKeyConvert[320] = {
 };
 
 dvar_t *in_mouse;
+#if COD2_APPLE_SDK && !defined(DEDICATED)
+#include "platform/macos_rawmouse.h"
+dvar_t *in_rawmouse;
+#endif
 
 void IN_Init(void)
 {
     dvar_t *p = Dvar_RegisterBool("in_mouse", 1, 0x1021);
     in_mouse = p;
+#if COD2_APPLE_SDK && !defined(DEDICATED)
+    in_rawmouse = Dvar_RegisterBool("in_rawmouse", 1, 0x1001);
+    MacRawMouse_Init();
+#endif
     if (!p->current.enabled) {
         Com_Printf("Mouse control not active.\n");
         p = in_mouse;
@@ -424,6 +432,9 @@ void IN_Init(void)
 
 void IN_Shutdown(void)
 {
+#if COD2_APPLE_SDK && !defined(DEDICATED)
+    MacRawMouse_Shutdown();
+#endif
 }
 
 void CCallOfDutyEngine_DoMouseMoved(const CCallOfDutyEngine *_this,
