@@ -214,7 +214,11 @@ void R_ShutdownRenderTargets(void)
     }
 
     dxPtr = DX();
+#if defined(COD2_X64)
+    memset(((DxGlobals *)dxPtr)->renderTargets, 0, sizeof(((DxGlobals *)dxPtr)->renderTargets));
+#else
     memset(((char *)dxPtr + offsetof(DxGlobals, renderTargets[0].image)), 0, 0x104);
+#endif
 
     ((DxGlobals *)(dxPtr))->singleSampleDepthStencilSurface  = 0;
 }
@@ -305,6 +309,10 @@ void R_InitRenderTargets(void)
     R_InitFullscreenRenderTargetImage(0, 0, backBufferFormat, RENDERTARGET_USAGE_RENDER,
                                       &((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_DYNAMICSHADOWS]);
 
+#if defined(COD2_X64)
+    ((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_RESOLVED_POST_SUN] =
+        ((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_DYNAMICSHADOWS];
+#else
     {
         byte *rt3 = ((byte *)&((DxGlobals *)(dxPtr))->renderTargets[3]);
         byte *rt1 = ((byte *)&((DxGlobals *)(dxPtr))->renderTargets[1]);
@@ -314,11 +322,16 @@ void R_InitRenderTargets(void)
         *(int *)(rt1 + 12) = *(int *)(rt3 + 12);
         *(int *)(rt1 + 16) = *(int *)(rt3 + 16);
     }
+#endif
 
     backBufferFormat = ((DxGlobals *)(dxPtr))->backBufferFormat;
     R_InitFullscreenRenderTargetImage(9, 0, backBufferFormat, RENDERTARGET_USAGE_TEXTURE,
                                       &((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_RESOLVED_SCENE]);
 
+#if defined(COD2_X64)
+    ((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_SAVED_SCREEN] =
+        ((DxGlobals *)dxPtr)->renderTargets[R_RENDERTARGET_RESOLVED_POST_SUN];
+#else
     {
         byte *rt1 = ((byte *)&((DxGlobals *)(dxPtr))->renderTargets[1]);
         byte *rt7 = ((byte *)&((DxGlobals *)(dxPtr))->renderTargets[7]);
@@ -328,6 +341,7 @@ void R_InitRenderTargets(void)
         *(int *)(rt7 + 12) = *(int *)(rt1 + 12);
         *(int *)(rt7 + 16) = *(int *)(rt1 + 16);
     }
+#endif
 
     {
         GfxImage *image;
