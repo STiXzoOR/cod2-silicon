@@ -62,7 +62,7 @@ def function(path, name):
     raise ValueError('unterminated function')
 
 
-def run(name, generated, sources=()):
+def run(name, generated, sources=(), cases=((),)):
     if args.test and name not in args.test:
         return
     (out / f'{name}_source.h').write_text(generated)
@@ -79,7 +79,8 @@ def run(name, generated, sources=()):
     exe = out / name
     subprocess.run(['clang', '-arch', 'arm64', '-fsanitize=address', '-Wl,-dead_strip',
                     *objects, '-o', str(exe)], check=True)
-    subprocess.run([str(exe)], check=True)
+    for case in cases:
+        subprocess.run([str(exe), *case], check=True)
     print(f'PASS {name}', flush=True)
 
 
@@ -88,8 +89,8 @@ if not args.test or 'receive' in args.test:
 if not args.test or 'snapshot' in args.test:
     path = 'src/PC/server_mp/sv_snapshot_mp.c'
     run('snapshot', ''.join(function(path, n) for n in
-        ['SV_WriteOverflowRecoveryCommandsLocal', 'SV_SendClientSnapshot']))
-if args.test and 'abi' in args.test:
+        ['SV_WriteSnapshotToClientLocal', 'SV_WriteOverflowRecoveryCommandsLocal', 'SV_SendClientSnapshot']))
+if not args.test or 'abi' in args.test:
     for path in ABI_SOURCES:
         subprocess.run([*flags, '-include', 'stdlib.h', '-include', 'string.h',
                         '-fsyntax-only', str(ROOT / path)], check=True,
@@ -125,12 +126,12 @@ if not args.test or 'tables' in args.test:
             generated += f'void {name}(void) {{}}\n'
         generated += tables
     run('tables', generated)
-if args.test and 'hotpaths' in args.test:
+if not args.test or 'hotpaths' in args.test:
     for path in ['src/PC/game_mp/g_main_mp.c', 'src/PC/script/scr_vm.c',
                  'src/PC/gfx_d3d/rb_backend.c', 'src/PC/client_mp/cl_scrn_mp.c']:
         obj = out / (Path(path).stem + '_hot.o')
         with (out / (Path(path).stem + '_hot.log')).open('w') as log:
-            subprocess.run([*flags, '-c', str(ROOT / path), '-o', str(obj)],
+            subprocess.run([*flags, '-O0', '-c', str(ROOT / path), '-o', str(obj)],
                            check=True, stdout=log, stderr=log)
         symbols = subprocess.check_output(['nm', str(obj)], text=True)
         assert not re.search(r'\b(?:_getenv|_dbg_check439\w*|_dbg_protect_439|_dbg_end_probe|_g_lastop_dbg|_VM_DebugRecordOpcode)$', symbols, re.M), path
@@ -139,3 +140,12 @@ if not args.test or 'trajectory' in args.test:
     path = 'src/PC/bgame/bg_misc.c'
     run('trajectory', ''.join(function(path, n) for n in
         ['BG_Vec3Copy', 'BG_Vec3Mad', 'BG_EvaluateTrajectory']))
+if not args.test or 'timing' in args.test:
+    run('timing', function('src/PC/qcommon/cod2x_protocol.c', 'Cod2x_LimitedFPS') +
+        function('src/PC/qcommon/cod2x_runtime.c', 'Cod2x_FrameFPS') +
+        function('src/PC/qcommon/common.c', 'Com_Frame_Try_Block_Function') +
+        function('src/PC/client_mp/cl_input.c', 'CL_SendCmdInternal'))
+if not args.test or 'renderer_options' in args.test:
+    path = 'src/Mac/DirectX_9/CDirect3DDevice.c'
+    assert 'getenv(' not in function(path, 'CDirect3DDevice_DrawIndexedPrimitive')
+    run('renderer_options', function(path, 'CDirect3DDevice_UsePrograms'), cases=((), ('on',)))
