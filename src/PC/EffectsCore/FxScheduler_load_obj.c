@@ -92,13 +92,13 @@ void MediaHandles_AddHandle(const MediaHandles *_this, TMediaElement item)
         } else {
             self->mMediaList.maxSize = 4;
         }
-#if COD2_APPLE_SDK && defined(DEDICATED)
+#if COD2_APPLE_SDK
         newElements = Z_MallocInternal(self->mMediaList.maxSize * sizeof(TMediaElement));
 #else
         newElements = Z_MallocInternal(self->mMediaList.maxSize * 4);
 #endif
         if (self->mMediaList.elements != NULL) {
-#if COD2_APPLE_SDK && defined(DEDICATED)
+#if COD2_APPLE_SDK
             memcpy(newElements, self->mMediaList.elements, self->mMediaList.size * sizeof(TMediaElement));
 #else
             memcpy(newElements, self->mMediaList.elements, self->mMediaList.size * 4);
@@ -193,7 +193,7 @@ EffectTemplate *FX_ParseEffect(GenericParser2 *parser, const char *name)
             goto next_group;
         }
 
-#if COD2_APPLE_SDK && defined(DEDICATED)
+#if COD2_APPLE_SDK
         prim = (PrimitiveTemplate *)Hunk_AllocAlignInternal(sizeof(PrimitiveTemplate), sizeof(void *));
 #else
         prim = (PrimitiveTemplate *)Hunk_AllocAlignInternal(0x2a4, 4);
@@ -275,13 +275,13 @@ void MediaHandles_AddEffect(const MediaHandles *_this, EffectTemplate *fx)
         } else {
             self->mMediaList.maxSize = 4;
         }
-#if COD2_APPLE_SDK && defined(DEDICATED)
+#if COD2_APPLE_SDK
         newElements = Z_MallocInternal(self->mMediaList.maxSize * sizeof(TMediaElement));
 #else
         newElements = Z_MallocInternal(self->mMediaList.maxSize * 4);
 #endif
         if (self->mMediaList.elements != NULL) {
-#if COD2_APPLE_SDK && defined(DEDICATED)
+#if COD2_APPLE_SDK
             memcpy(newElements, self->mMediaList.elements, self->mMediaList.size * sizeof(TMediaElement));
 #else
             memcpy(newElements, self->mMediaList.elements, self->mMediaList.size * 4);
