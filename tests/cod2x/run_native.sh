@@ -22,6 +22,11 @@ compile -fobjc-arc -Isrc tests/cod2x/test_url_native.m src/platform/cod2x_native
     src/PC/qcommon/cod2x_url.c -framework AppKit -framework Foundation -o "$test_work/url_native"
 "$test_work/url_native"
 mkdir -p "$test_work/game/main" "$test_work/reports"
+index=0
+while [ "$index" -lt 16 ]; do
+    touch "$test_work/game/main/$(printf 'iw_%02d.iwd' "$index")"
+    index=$((index + 1))
+done
 python3 tools/cod2x/make_macos_app.py "$test_work/url_native" "$test_work/URLProbe.app" --game-dir "$test_work/game"
 plutil -lint "$test_work/URLProbe.app/Contents/Info.plist"
 expected_game=$(cd "$test_work/game" && pwd -P)

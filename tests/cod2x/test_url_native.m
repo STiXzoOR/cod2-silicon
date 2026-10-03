@@ -28,8 +28,14 @@ int main(void)
     @autoreleasepool {
         Cod2xNativeURL_SetupPaths();
         const char *expectedGame = getenv("WS10_EXPECT_GAME");
-        if (expectedGame)
-            assert(!strcmp(gamePath, expectedGame));
+        if (expectedGame) {
+            char arguments[4096];
+            assert(Cod2xNativeApp_Arguments(arguments, sizeof(arguments)) > 0);
+            assert(strstr(arguments, expectedGame));
+            assert(strstr(arguments, "CoD2x Native"));
+            assert(strstr(arguments, "+set com_maxfps 333"));
+            assert(!gamePath[0]); /* Explicit prepared launch paths win. */
+        }
         Cod2xNativeURL_Install();
         assert(Cod2xNativeURL_Queue("cod2x://%2Bconnect%20localhost/"));
         assert(!Cod2xNativeURL_Queue("cod2x://%2Bquit/"));
