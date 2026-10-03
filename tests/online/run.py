@@ -31,6 +31,8 @@ suites = [
     ('mantle', 'src/PC/bgame/bg_mantle.c', []),
     ('md4', 'src/PC/qcommon/md4.c', []),
     ('cdkey_hash', 'src/PC/client_mp/cl_main_mp.c', ['CL_BuildMd5StrFromCDKey']),
+    ('challenge_resend', 'src/PC/client_mp/cl_main_mp.c',
+     ['CL_BuildMd5StrFromCDKey', 'CL_CheckForResend']),
 ]
 if len(sys.argv) > 2:
     suites = [suite for suite in suites if suite[0] in sys.argv[2:]]
