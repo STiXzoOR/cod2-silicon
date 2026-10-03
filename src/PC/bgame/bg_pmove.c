@@ -1955,6 +1955,14 @@ void Pmove(pmove_t *pm)
         PM_CheckDuck(pm, &pml);
         PM_UpdateAimDownSightFlag(pm, &pml);
 
+#if defined(COD2_X64)
+        /* Mac 1.3 Pmove's case 2 is noclip, independent of ground contact. */
+        if (ps->pm_type == 2) {
+            ps->groundEntityNum = ENTITYNUM_NONE;
+            ps->viewHeightTarget = 60;
+            PM_NoclipMove(pm, &pml);
+        } else
+#endif
         if (ps->pm_type <= 5) {
             PM_GroundTrace(pm, &pml);
 
