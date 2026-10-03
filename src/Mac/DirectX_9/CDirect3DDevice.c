@@ -1753,8 +1753,7 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
     if (!dev->streams[0] || !dev->indexBuffer)
         return 0;
 #if COD2_APPLE_SDK
-    if (MacShader_DrawEnabled() && g_activeVertexShader && dev->pixelShader && g_activeVertexDeclaration &&
-        !((r_backEndGlobals_t *)imp_backEnd)->projection2D)
+    if (MacShader_DrawEnabled() && g_activeVertexShader && dev->pixelShader && g_activeVertexDeclaration)
         return MacShader_DrawIndexed(dev, BaseVertexIndex, MinVertexIndex, NumVertices, startIndex, primCount);
 #endif
 
