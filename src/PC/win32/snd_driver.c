@@ -661,7 +661,11 @@ void SND_RawSamples(int samples, int rate, int width, int s_channels, const byte
 int SND_GetSoundFileSize(const void *pSoundFile)
 {
     const MssSound *sound = (const MssSound *)pSoundFile;
+    #if COD2_APPLE_SDK
+    return (int)(sound->info.data_len + offsetof(MssSound, data));
+#else
     return (int)sound->info.data_len + 0x24;
+#endif
 }
 
 void SND_DriverPreUpdate(int frametime)
@@ -988,7 +992,11 @@ void SND_LoadSoundFile(SoundFile *soundFile)
     if (!AIL_WAV_info(buffer, &mixinfo)) {
         Com_Printf((const char *)"^1ERROR: Sound file '%s' is in an invalid or corrupted format\n", realname);
         sound = NULL;
+#if COD2_APPLE_SDK
+    } else if ((totalSize = (int)(mixinfo.Info.data_len + offsetof(MssSound, data))), mixinfo.Info.data_len == 0) {
+#else
     } else if ((totalSize = (int)mixinfo.Info.data_len + 0x24) == 0) {
+#endif
         Com_Printf((const char *)"^1ERROR: Sound file '%s' is zero length, invalid\n", realname);
         sound = NULL;
     } else if (mixinfo.Info.rate <= (unsigned long int)sndGlob->playback_rate &&
@@ -1012,7 +1020,9 @@ void SND_LoadSoundFile(SoundFile *soundFile)
         rate = (int)mixinfo.Info.rate;
         while ((unsigned int)rate > (unsigned int)sndGlob->playback_rate) {
             rate >>= 1;
+#if !COD2_APPLE_SDK
             mixinfo.Info.samples >>= 1;
+#endif
         }
 
         targetBits = (int)mixinfo.Info.bits;
@@ -1051,7 +1061,11 @@ void SND_LoadSoundFile(SoundFile *soundFile)
         }
 
         datasize = AIL_size_processed_digital_audio(rate, procFormat, 1, &mixinfo);
+#if COD2_APPLE_SDK
+        sound = (MssSound *)Hunk_AllocNoZeroInternal((int)(datasize + offsetof(MssSound, data)));
+#else
         sound = (MssSound *)Hunk_AllocNoZeroInternal(datasize + 0x24);
+#endif
 
         sound->info.format = mixinfo.Info.format;
         sound->info.data_ptr = sound->data;
@@ -1063,7 +1077,23 @@ void SND_LoadSoundFile(SoundFile *soundFile)
         sound->info.block_size = mixinfo.Info.block_size;
         sound->info.initial_ptr = sound->data;
 
+#if COD2_APPLE_SDK
+        if (AIL_process_digital_audio(sound->data, datasize, rate, procFormat, 1, &mixinfo) != datasize) {
+            Com_Printf("Native audio conversion failed: %s\n", AIL_last_error());
+            soundFile->fileMem = NULL;
+            FS_FreeFile(buffer);
+            return;
+        }
+#else
         AIL_process_digital_audio(sound->data, datasize, rate, procFormat, 1, &mixinfo);
+#endif
+#if COD2_APPLE_SDK
+        sound->info.format = 1;
+        sound->info.bits = (procFormat & 8) ? 32 : ((procFormat & 1) ? 16 : 8);
+        sound->info.channels = (procFormat & 2) ? 2 : 1;
+        sound->info.block_size = sound->info.channels * (sound->info.bits / 8);
+        sound->info.samples = datasize / sound->info.block_size;
+#endif
     }
 
     soundFile->fileMem = sound;
@@ -1349,7 +1379,11 @@ got_handle:
 
     milesGlob.handle_stream[streamIdx] = (HSTREAM)(handle);
 
-    AIL_stream_info(handle, &filetype, NULL, NULL, NULL);
+    #if COD2_APPLE_SDK
+        AIL_stream_info(handle, NULL, &filetype, NULL, NULL);
+#else
+        AIL_stream_info(handle, &filetype, NULL, NULL, NULL);
+#endif
     srcChannelCount = (filetype & 2) ? 2 : 1;
 
     baserate = AIL_stream_playback_rate(handle);
@@ -1656,7 +1690,11 @@ Bool SND_InitDriver(void)
     Com_Printf((const char *)"Attempting %i kHz %i bit %s sound\n", khz, bits, channelStr);
 
     AIL_set_preference(1, 0x35);
+#if COD2_APPLE_SDK
+    milesGlob.driver_2D = (HDIGDRIVER)(AIL_open_digital_driver(rate, bits, numChannels, 0));
+#else
     milesGlob.driver_2D = (HDIGDRIVER)(AIL_open_digital_driver(rate, bytes, numChannels, 0));
+#endif
 
     if (milesGlob.driver_2D == NULL) {
         Com_Printf((const char *)"couldn't initialize 2D provider: %s\n", AIL_last_error());
