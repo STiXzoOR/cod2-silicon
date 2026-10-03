@@ -9,7 +9,7 @@ import tempfile
 root = Path(__file__).resolve().parents[2]
 
 def function(source, name):
-    match = re.search(r'^(?:const FxBoltFramePtr |Bool |void )' + name + r'\([^;]*?\)\n\{', source, re.M)
+    match = re.search(r'^(?:static dvar_t \*|const FxBoltFramePtr |Bool |void )' + name + r'\([^;]*?\)\n\{', source, re.M)
     assert match, name
     depth = 0
     for token in re.finditer(r'/\*[\s\S]*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"|[{}]', source[match.start():]):
@@ -28,6 +28,10 @@ with tempfile.TemporaryDirectory(prefix='ws15-fx-') as tmp:
         'OrientationPosToWorldPos', 'OrientationDirToWorldDir', 'OrientationPosFromWorldPos', 'OrientationDirFromWorldDir']))
     scheduler = (root / 'src/PC/EffectsCore/FxScheduler.c').read_text()
     (out / 'fx_creation_source.h').write_text('\n'.join(function(scheduler, name) for name in ['FX_GetBoltingFrame', 'FxScheduler_CreateEffect']))
+    (out / 'fx_play_source.h').write_text(
+        function(scheduler, 'FxScheduler_GetDvar') + '\n' +
+        '#define FxScheduler_PlayEffect FxScheduler_PlayEffectUnderTest\n' +
+        function(scheduler, 'FxScheduler_PlayEffect') + '\n#undef FxScheduler_PlayEffect\n')
     command = ['clang', '-arch', 'arm64', '-std=gnu99', '-g', '-O0', '-fcommon', '-ffp-contract=off',
                '-DCOD2_X64=1', '-fsanitize=address,undefined', '-Wl,-dead_strip',
                '-Wno-typedef-redefinition', '-Wno-duplicate-decl-specifier',

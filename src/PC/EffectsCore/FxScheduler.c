@@ -359,6 +359,9 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
             return;
         if (!FX_GetBoneOrientation(bolt, &or_))
             return;
+#if defined(COD2_X64)
+        AxisCopy(or_.axis, ax);
+#endif
     } else {
 
         if (origin) {

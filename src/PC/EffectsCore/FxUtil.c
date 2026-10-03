@@ -482,7 +482,11 @@ void FX_AddScheduledEffects(const vec_t *start, const vec_t *end)
 
         byte *fx = SCH_FX(scheduled);
         int primIndex = SCH_PRIM_INDEX(scheduled);
+#if defined(COD2_X64)
+        byte *primTemp = (byte *)((const EffectTemplate *)fx)->mPrimitives[primIndex];
+#else
         byte *primTemp = *(byte **)(fx + 8 + primIndex * 4);
+#endif
 
         Rand_Init(SCH_RAND_SEED(scheduled));
 
@@ -496,17 +500,35 @@ void FX_AddScheduledEffects(const vec_t *start, const vec_t *end)
         if (boltEntity >= 0) {
 
             orientation_t orient;
+#if defined(COD2_X64)
+            ScheduledEffect *sfx = (ScheduledEffect *)scheduled;
+            Bool ok = FX_GetBoneOrientation(&sfx->mBolt, &orient);
+#else
             Bool ok = FX_GetBoneOrientation( (const FxBoltInfo *)((void *)(scheduled + 0xc)), &orient);
+#endif
             if (ok) {
+#if defined(COD2_X64)
+                FxScheduler_CreateEffect(scheduler, fx, primTemp,
+                                         &sfx->mBolt, orient.origin, orient.axis,
+                                         lateTime, indexInBatch);
+#else
                 FxScheduler_CreateEffect(scheduler, fx, primTemp,
                                          scheduled + 0xc, &orient, orient.axis,
                                          lateTime, indexInBatch);
+#endif
             }
         } else {
 
+#if defined(COD2_X64)
+            ScheduledEffect *sfx = (ScheduledEffect *)scheduled;
+            FxScheduler_CreateEffect(scheduler, fx, primTemp,
+                                     &sfx->mBolt, sfx->mOrigin, sfx->mAxis,
+                                     lateTime, indexInBatch);
+#else
             FxScheduler_CreateEffect(scheduler, fx, primTemp,
                                      scheduled + 0xc, scheduled + 0x14, scheduled + 0x20,
                                      lateTime, indexInBatch);
+#endif
         }
 
         if (scheduled)

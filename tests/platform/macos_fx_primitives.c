@@ -25,6 +25,7 @@ extern const FxBoltFramePtr FxBoltFrame_Acquire(const FxBoltInfo *);
 extern Bool FX_GetBoneOrientation(const FxBoltInfo *, orientation_t *);
 extern void FX_UpdateAllNonBolt(void);
 extern void FX_DrawAll(void);
+extern void FX_AddScheduledEffects(const vec_t *, const vec_t *);
 
 FxHelper theFxHelpers[1];
 FxHelper *theFxHelper = theFxHelpers;
@@ -52,6 +53,9 @@ void *imp_fx_camera_valid = &cameraValid;
 void *imp_fx_cull = &enabledPtr, *imp_fx_sort = &disabledPtr;
 void *imp_fx_draw = &enabledPtr, *imp_fx_enable = &enabledPtr;
 void *imp_fx_debug = &disabledPtr;
+void *imp_fx_freeze = &disabledPtr, *imp_fx_count = &disabledPtr;
+void *imp_colorYellow;
+refexport_t re;
 void *imp_g_effectVisArrayCount = &g_effectVisArrayCount;
 void *imp_g_effectVisArray = g_effectVisArray;
 static vec3_t zero;
@@ -116,6 +120,13 @@ extern float flrand(float, float);
 extern void RotatePointAroundVector(vec_t *, const vec_t *, const vec_t *, float);
 extern void Vec3Cross(const vec_t *, const vec_t *, vec_t *);
 #include "fx_creation_source.h"
+int FxHelper_GetSeed(const FxHelper *h) { (void)h; return 17; }
+void Rand_Init(int seed);
+void FxHelper_SetIgnorePrecacheErrors(const FxHelper *h, int ignore)
+{ (void)h; (void)ignore; abort(); }
+EffectTemplate *FX_RegisterEffect(const char *name) { (void)name; abort(); }
+Bool FxHelper_CullSpherePreviousFrame(const FxHelper *h, const vec_t *p, float r)
+{ (void)h; (void)p; (void)r; return 0; }
 
 static int draws, lights;
 void FxHelper_AddLightToScene(const FxHelper *h, float *origin, float radius, float r, float g, float b)
@@ -135,6 +146,8 @@ void FxHelper_AddFxToScene(const FxHelper *p, GfxEntity *ent, const XModel *mode
 void FX_Print(const char *fmt, ...) { (void)fmt; }
 void FxHelper_Trace(const FxHelper *p, trace_t *tr, vec_t *start, const vec_t *mins, const vec_t *maxs, vec_t *end, int skip, int flags)
 { (void)p; (void)start; (void)mins; (void)maxs; (void)end; (void)skip; (void)flags; memset(tr, 0, sizeof(*tr)); tr->fraction = simulateImpact ? .5f : 1.0f; tr->normal[2] = 1.0f; }
+extern const vec_t Vec3DistanceSq(const vec_t *, const vec_t *);
+#include "fx_play_source.h"
 
 static struct { int dimensions, keyCount; float keys[4]; } scalar = {1, 2, {0, 1, 1, 1}};
 static struct { int dimensions, keyCount; float keys[8]; } color = {3, 2, {0, .8f, .4f, .2f, 1, .8f, .4f, .2f}};
@@ -271,6 +284,57 @@ int main(void)
     theFxHelper->mTime = 5201;
     FX_UpdateAllNonBolt();
     assert(!effectActiveCount && !effectClusterCount);
+
+    /* Rifle smoke: four particles distributed over a 0..250 ms delay. */
+    pt.mType = 1;
+    pt.mAttributeFlags = 0x80;
+    pt.mSpawnFlags = 0x200;
+    pt.mSpawnCount.mMin = pt.mSpawnCount.mMax = 4;
+    pt.mSpawnDelay.mMin = 0;
+    pt.mSpawnDelay.mMax = 250;
+    fx.mPrimitiveCount = 2;
+    fx.mPrimitives[1] = &pt;
+    PrimitiveTemplate empty = {.mType = 0};
+    fx.mPrimitives[0] = &empty;
+    theFxHelper->mTime = 6000;
+    globalScheduler = (FxScheduler){0};
+    FxScheduler_PlayEffectUnderTest(&globalScheduler, &fx, origin, (MediaHandles *(*)[4])axes, NULL);
+    assert(effectActiveCountNonBolt == 1 && globalScheduler.mScheduledCount == 3);
+    theFxHelper->mTime = 6061;
+    FX_AddScheduledEffects(NULL, NULL);
+    assert(effectActiveCountNonBolt == 1 && globalScheduler.mScheduledCount == 3);
+    theFxHelper->mTime = 6062;
+    FX_AddScheduledEffects(NULL, NULL);
+    assert(effectActiveCountNonBolt == 2 && globalScheduler.mScheduledCount == 2);
+    assert(nonBoltList[1]->origin[0] == 17 && nonBoltList[1]->origin[1] == 29 && nonBoltList[1]->origin[2] == 41);
+    theFxHelper->mTime = 6188;
+    FX_AddScheduledEffects(NULL, NULL);
+    assert(effectActiveCountNonBolt == 4 && !globalScheduler.mScheduledCount && !globalScheduler.mScheduledHead);
+    for (int i = 0; i < 4; ++i)
+        assert(nonBoltList[i]->origin[0] == 17 && nonBoltList[i]->origin[1] == 29 && nonBoltList[i]->origin[2] == 41);
+    theFxHelper->mTime = 6400;
+    FX_UpdateAllNonBolt();
+    assert(!effectActiveCount && !effectClusterCount);
+
+    /* Delayed bolted particles use the current bone origin and rotated axis. */
+    pt.mAttributeFlags = 0x82;
+    pt.mSpawnCount.mMin = pt.mSpawnCount.mMax = 2;
+    pt.mOrigin1X.mMin = pt.mOrigin1X.mMax = 2;
+    theFxHelper->mTime = client.skelTimeStamp = 7000;
+    FxScheduler_PlayEffectUnderTest(&globalScheduler, &fx, origin, NULL, &boltInfo);
+    assert(effectActiveCountBolt == 1 && globalScheduler.mScheduledCount == 1);
+    assert(((Particle *)boltList[0])->displayAxis[0][0] == 0 && ((Particle *)boltList[0])->displayAxis[0][1] == 1);
+    FX_UpdateAllBolt();
+    assert(boltList[0]->mRefEnt.origin[0] == 10 && boltList[0]->mRefEnt.origin[1] == 22 && boltList[0]->mRefEnt.origin[2] == 30);
+    theFxHelper->mTime = client.skelTimeStamp = 7125;
+    FX_AddScheduledEffects(NULL, NULL);
+    assert(effectActiveCountBolt == 2 && !globalScheduler.mScheduledCount);
+    FX_UpdateAllBolt();
+    assert(boltList[1]->mRefEnt.origin[0] == 10 && boltList[1]->mRefEnt.origin[1] == 22 && boltList[1]->mRefEnt.origin[2] == 30);
+    assert(((FxBoltFrame *)__ZN11FxBoltFrame12g_mFrameListE)->refCount == 2);
+    theFxHelper->mTime = 7400;
+    FX_UpdateAllBolt();
+    assert(!effectActiveCount && !effectClusterCount && !__ZN11FxBoltFrame12g_mFrameListE);
     puts("native FX: nine primitive lifecycles, scheduler dispatch, bolting and impact axes passed");
     return 0;
 }
