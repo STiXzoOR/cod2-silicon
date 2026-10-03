@@ -1,5 +1,8 @@
 #include "common_types.h"
 #include "imports.h"
+#if COD2_APPLE_SDK
+#include "platform/macos_system.h"
+#endif
 
 const dvar_t *player_view_pitch_up;
 const dvar_t *player_view_pitch_down;
@@ -1116,16 +1119,24 @@ void BG_EvaluateTrajectory(const trajectory_t *tr, int atTime, vec_t *result)
         return;
 
     default: {
+#if COD2_APPLE_SDK
+        void *ra = __builtin_extract_return_addr(__builtin_return_address(0));
+#else
         void *_ReturnAddress(void);
         void *__stdcall GetModuleHandleA(const char *);
         void *ra = _ReturnAddress();
+#endif
         const int *es = (const int *)((const char *)tr - 12); /* &entityState (pos at +12) */
         char dump[64]; int k; const unsigned char *bp = (const unsigned char *)tr;
         for (k = 0; k < 48; k++) { unsigned char c = bp[k]; dump[k] = (c >= 32 && c < 127) ? (char)c : '.'; }
         dump[48] = 0;
         { static int once; if (once++ < 3)
             Com_Printf("[trajerr] number=%d eType=%d caller_rva=0x%llx bytes@pos='%s' (DEGRADING to stationary)\n",
+#if COD2_APPLE_SDK
+                       es[0], es[1], (unsigned long long)MacSystem_ImageOffset(ra), dump); }
+#else
                        es[0], es[1], (unsigned long long)((char *)ra - (char *)GetModuleHandleA(0)), dump); }
+#endif
         BG_Vec3Copy(tr->trBase, result); /* DIAGNOSTIC: don't ERR_DROP, treat unknown as stationary */
         return;
     }

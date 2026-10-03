@@ -6,6 +6,9 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <string.h>
+#if COD2_APPLE_SDK
+#include "platform/macos_system.h"
+#endif
 
 static char cwd[256];
 
@@ -40,7 +43,11 @@ char *Sys_DefaultCDPath(void)
 
 char *Sys_DefaultHomePath(void)
 {
+#if COD2_APPLE_SDK
+    return MacSystem_HomePath();
+#else
     return NULL;
+#endif
 }
 
 char *Sys_DefaultInstallPath(void)
@@ -128,7 +135,7 @@ char **Sys_ListFiles(const char *directory, const char *extension, const char *f
         if (nfiles == 0)
             return NULL;
 
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(_M_X64) || COD2_APPLE_SDK
         listCopy = (char **)Z_MallocInternal((nfiles + 1) * sizeof(char *));
 #else
         listCopy = (char **)Z_MallocInternal((nfiles + 1) * 4);
@@ -202,7 +209,7 @@ char **Sys_ListFiles(const char *directory, const char *extension, const char *f
     if (nfiles == 0)
         return NULL;
 
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(_M_X64) || COD2_APPLE_SDK
     listCopy = (char **)Z_MallocInternal((nfiles + 1) * sizeof(char *));
 #else
     listCopy = (char **)Z_MallocInternal((nfiles + 1) * 4);

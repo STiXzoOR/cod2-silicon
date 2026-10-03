@@ -593,8 +593,11 @@ void Sys_InstallCrashHandler(const char *appName, const char *version,
 #    include <sys/utsname.h>
 #    include <sys/wait.h>
 
-#    ifndef __APPLE__
+#    if !defined(__APPLE__) || defined(COD2_X64)
 #        include <execinfo.h>
+#    endif
+#    if defined(__APPLE__) && defined(COD2_X64)
+#        include <mach-o/dyld.h>
 #    endif
 #    define __USE_GNU
 #    if defined(__APPLE__) && defined(COD2_X64)
@@ -629,7 +632,20 @@ static void cr_posix_regs(int fd, void *ucontext)
     ucontext_t *uc = (ucontext_t *)ucontext;
     if (!uc)
         return;
-#    if defined(__x86_64__) || defined(_M_X64)
+#    if defined(__APPLE__) && defined(COD2_X64) && (defined(__arm64__) || defined(__aarch64__))
+    {
+        const _STRUCT_ARM_THREAD_STATE64 *r = &uc->uc_mcontext->__ss;
+        cr_emit(fd, "registers:\n");
+        cr_emit(fd, "  pc=%016llx sp=%016llx fp=%016llx lr=%016llx cpsr=%08x\n",
+                (unsigned long long)__darwin_arm_thread_state64_get_pc(*r),
+                (unsigned long long)__darwin_arm_thread_state64_get_sp(*r),
+                (unsigned long long)__darwin_arm_thread_state64_get_fp(*r),
+                (unsigned long long)__darwin_arm_thread_state64_get_lr(*r), r->__cpsr);
+        for (int i = 0; i < 29; i++)
+            cr_emit(fd, "  x%-2d=%016llx%s", i, (unsigned long long)r->__x[i], i % 3 == 2 ? "\n" : " ");
+        cr_emit(fd, "\n");
+    }
+#    elif defined(__x86_64__) || defined(_M_X64)
     {
         greg_t *r = uc->uc_mcontext.gregs;
         cr_emit(fd, "registers:\n");
@@ -661,7 +677,7 @@ static void cr_posix_regs(int fd, void *ucontext)
 
 static void cr_posix_backtrace(int fd)
 {
-#    ifndef __APPLE__
+#    if !defined(__APPLE__) || defined(COD2_X64)
     void *frames[64];
     int n = backtrace(frames, 64);
     Dl_info dli;
@@ -686,6 +702,7 @@ static void cr_posix_backtrace(int fd)
     }
     cr_emit(fd, "\n");
 
+#    if !defined(__APPLE__) || !defined(COD2_X64)
     if (cr_exePath[0] && n > 0) {
         char *argv[64 + 5];
         char addrbuf[64][20];
@@ -729,6 +746,9 @@ static void cr_posix_backtrace(int fd)
             cr_emit(fd, " 0x%lx", (unsigned long)frames[i]);
         cr_emit(fd, "\n\n");
     }
+#    else
+    cr_emit(fd, "module offsets above can be resolved with atos and the matching arm64 executable.\n\n");
+#    endif
     cr_emit(fd, "raw frames:\n");
     if (fd >= 0)
         backtrace_symbols_fd(frames, n, fd);
@@ -928,11 +948,19 @@ void Sys_InstallCrashHandler(const char *appName, const char *version,
         snprintf(cr_buildDate, sizeof(cr_buildDate), "%s", buildDate);
     if (cmdline)
         snprintf(cr_cmdline, sizeof(cr_cmdline), "%s", cmdline);
+#    if defined(__APPLE__) && defined(COD2_X64)
+    {
+        uint32_t size = sizeof(cr_exePath);
+        if (_NSGetExecutablePath(cr_exePath, &size) != 0)
+            cr_exePath[0] = '\0';
+    }
+#    else
     {
         ssize_t n = readlink("/proc/self/exe", cr_exePath, sizeof(cr_exePath) - 1);
         if (n > 0)
             cr_exePath[n] = '\0';
     }
+#    endif
 
     ss.ss_sp = altstack;
     ss.ss_size = sizeof(altstack);

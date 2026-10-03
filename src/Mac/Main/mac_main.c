@@ -152,9 +152,13 @@ void Sys_Error(const char *error, ...)
 
     Sys_DestroySplashWindow();
     timeEndPeriod(1);
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     IN_Shutdown();
+#endif
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     CL_ShutdownHunkUsers();
     CL_ShutdownRef();
+#endif
 
     Conbuf_AppendText(text);
     Conbuf_AppendText("\n");
@@ -219,8 +223,12 @@ void Sys_QueEvent(int time, sysEventType_t type, int value, int value2, int ptrL
 
 static void Sys_In_Restart_f(void)
 {
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     IN_Shutdown();
+#endif
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     IN_Init();
+#endif
 }
 
 static void Sys_Net_Restart_f(void)
@@ -232,7 +240,9 @@ void Sys_Init(void)
 {
     timeBeginPeriod(1);
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     Cmd_AddCommand("in_restart", Sys_In_Restart_f);
+#endif
     Cmd_AddCommand("net_restart", Sys_Net_Restart_f);
 
     Com_Printf("Measured CPU speed is %.2lf GHz\n", sys_info.cpuGHz);
@@ -240,7 +250,9 @@ void Sys_Init(void)
     Com_Printf("Video card is \"%s\"\n", sys_info.gpuDescription);
     Com_Printf("Streaming SIMD Extensions (SSE) %ssupported\n", sys_info.SSE ? "" : "not ");
     Com_Printf("\n");
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     IN_Init();
+#endif
 }
 
 void Sys_LoadingKeepAlive(void)
@@ -264,6 +276,7 @@ static void cr_atexit_diag(void)
     Com_Printf("[ATEXIT] process exiting via CRT exit()/return\n");
 }
 
+#if !COD2_APPLE_SDK
 /* A CRT secure-function failure (e.g. a buffer size wrong on x64) invokes the invalid-parameter
    handler, which by default __fastfails -- terminating abruptly with no SEH report. Trap it so it
    logs and CONTINUES (returns an error to the caller) instead of killing the process. */
@@ -357,6 +370,8 @@ static void cr_heapdiag_init(void)
 }
 #endif
 
+#endif
+
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
     char cwd[256];
@@ -373,8 +388,10 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
                             COD2_VERSION_DATE, lpCmdLine);
 #endif
     { extern int atexit(void (*)(void)); atexit(cr_atexit_diag); }
+#if !COD2_APPLE_SDK
     _set_invalid_parameter_handler(cr_inv_param);
-#if defined(COD2_X64) && defined(_DEBUG)
+#endif
+#if defined(COD2_X64) && defined(_DEBUG) && !COD2_APPLE_SDK
     cr_heapdiag_init();
 #endif
 
@@ -383,9 +400,15 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     Dvar_Init();
 
     {
+#if COD2_APPLE_SDK
+        extern const dvar_t *sv_disableClientConsole;
+        if (!sv_disableClientConsole)
+            sv_disableClientConsole = Dvar_RegisterBool("sv_disableClientConsole", 0, 0x1008);
+#else
         extern int sv_disableClientConsole;
         if (!sv_disableClientConsole)
             sv_disableClientConsole = (int)Dvar_RegisterBool("sv_disableClientConsole", 0, 0x1008);
+#endif
     }
 
     sys_info.cpuGHz = Sys_CpuGHz();
@@ -442,14 +465,20 @@ void Sys_Quit(void)
     sysEvent_t *ev;
 
     timeEndPeriod(1);
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     IN_Shutdown();
+#endif
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     Key_Shutdown();
+#endif
     Sys_DestroyConsole();
     Win_ShutdownLocalization();
     RefreshQuitOnErrorCondition();
     Dvar_Shutdown();
     Cmd_Shutdown();
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     Con_Shutdown();
+#endif
     Com_ShutdownEvents();
 
     while (eventHead > eventTail) {
@@ -473,8 +502,10 @@ sysEvent_t Sys_GetEvent(void)
     msg_t netmsg;
     netadr_t adr;
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     extern void IN_Frame(void);
     IN_Frame();
+#endif
 
     if (eventTail < eventHead) {
         int idx = eventTail & 0xFF;
@@ -491,11 +522,21 @@ sysEvent_t Sys_GetEvent(void)
     }
 
     MSG_Init(&netmsg, sys_packetReceived, 0x4000);
+#if COD2_APPLE_SDK
+    memset(&adr, 0, sizeof(adr));
+#endif
     if (NET_GetPacket(&adr, &netmsg)) {
+#if COD2_APPLE_SDK
+        len = netmsg.cursize - netmsg.readcount + (int)sizeof(netadr_t);
+        byte *buf = (byte *)Z_MallocInternal(len);
+        memcpy(buf, &adr, sizeof(netadr_t));
+        memcpy(buf + sizeof(netadr_t), netmsg.data + netmsg.readcount, netmsg.cursize - netmsg.readcount);
+#else
         len = netmsg.cursize - netmsg.readcount + 12;
         byte *buf = (byte *)Z_MallocInternal(len);
         memcpy(buf, &adr, 12);
         memcpy(buf + 12, netmsg.data + netmsg.readcount, netmsg.cursize - netmsg.readcount);
+#endif
         Sys_QueEventInternal(0, (sysEventType_t)5, 0, 0, len, buf);
     }
 

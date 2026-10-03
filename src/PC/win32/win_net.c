@@ -9,6 +9,7 @@
 #include <errno.h>
 #if COD2_APPLE_SDK
 #include <net/if.h>
+#include <ifaddrs.h>
 #endif
 
 static qboolean usingSocks;
@@ -21,13 +22,29 @@ static const dvar_t *net_socksPort;
 static const dvar_t *net_socksUsername;
 static const dvar_t *net_socksPassword;
 static struct sockaddr socksRelayAddr;
+#if COD2_APPLE_SDK
+static int ip_socket = -1;
+#else
 static int ip_socket;
+#endif
 static int numIP;
 static byte localIP[16][4];
+#if COD2_APPLE_SDK
+static WSADATA winsockdata;
+#else
 static char winsockdata[400];
+#endif
 static qboolean winsockInitialized;
+#if COD2_APPLE_SDK
+static int socks_socket = -1;
+#else
 static int socks_socket;
+#endif
+#if COD2_APPLE_SDK
+static int ipx_socket = -1;
+#else
 static int ipx_socket;
+#endif
 static char socksBuf[4096];
 
 extern void Com_Printf(const char *fmt, ...);
@@ -54,7 +71,11 @@ typedef struct {
     unsigned short sa_family;
 #endif
     unsigned short sa_port;
+#if COD2_APPLE_SDK
+    uint32_t sa_addr;
+#else
     unsigned long sa_addr;
+#endif
     unsigned char sa_zero[8];
 } sockaddr_gen;
 
@@ -175,10 +196,18 @@ void NET_Sleep(int msec)
     fd_set fdset;
     struct timeval timeout;
 
+#if COD2_APPLE_SDK
+    if (ip_socket < 0) {
+#else
     if (!ip_socket) {
+#endif
         return;
     }
 
+#if COD2_APPLE_SDK
+    FD_ZERO(&fdset);
+    FD_SET(ip_socket, &fdset);
+#else
     memset(&fdset, 0, 0x80);
 
 #ifdef _WIN32
@@ -189,6 +218,7 @@ void NET_Sleep(int msec)
     fdset.fds_bits[(unsigned)ip_socket >> 5] |= 1 << (ip_socket & 31);
 #endif
 
+#endif
     timeout.tv_sec = msec / 1000;
     timeout.tv_usec = (msec - timeout.tv_sec * 1000) * 1000;
 
@@ -201,6 +231,9 @@ qboolean Sys_StringToAdr(const char *s, netadr_t *a)
     struct hostent *h;
 
     memset(&sadr, 0, sizeof(sadr));
+#if COD2_APPLE_SDK
+    sadr.sin_len = sizeof(sadr);
+#endif
     sadr.sin_family = AF_INET;
     sadr.sin_port = 0;
 
@@ -211,7 +244,11 @@ qboolean Sys_StringToAdr(const char *s, netadr_t *a)
         if (!h) {
             return 0;
         }
+#if COD2_APPLE_SDK
+        memcpy(&sadr.sin_addr.s_addr, h->h_addr_list[0], sizeof(sadr.sin_addr.s_addr));
+#else
         sadr.sin_addr.s_addr = *(unsigned long *)h->h_addr_list[0];
+#endif
     }
 
     if (sadr.sin_family != AF_INET) {
@@ -219,7 +256,11 @@ qboolean Sys_StringToAdr(const char *s, netadr_t *a)
     }
 
     a->type = NA_IP;
+#if COD2_APPLE_SDK
+    memcpy(a->ip, &sadr.sin_addr.s_addr, sizeof(a->ip));
+#else
     *(unsigned long *)a->ip = sadr.sin_addr.s_addr;
+#endif
     a->port = sadr.sin_port;
 
     return 1;
@@ -241,7 +282,11 @@ qboolean Sys_GetPacket(netadr_t *net_from, msg_t *net_message)
             net_socket = ipx_socket;
         }
 
-        if (!net_socket) {
+    #if COD2_APPLE_SDK
+    if (net_socket < 0) {
+#else
+    if (!net_socket) {
+#endif
             continue;
         }
 
@@ -285,7 +330,11 @@ qboolean Sys_GetPacket(netadr_t *net_from, msg_t *net_message)
         if (((sockaddr_gen *)&from)->sa_family == AF_INET) {
             sockaddr_gen *from_in = (sockaddr_gen *)&from;
             net_from->type = NA_IP;
+#if COD2_APPLE_SDK
+            memcpy(net_from->ip, &from_in->sa_addr, sizeof(net_from->ip));
+#else
             *(unsigned long *)net_from->ip = from_in->sa_addr;
+#endif
             net_from->port = from_in->sa_port;
         }
 
@@ -321,11 +370,18 @@ void Sys_SendPacket(int length, const void *data, netadr_t to)
 
     net_socket = ip_socket;
 
+#if COD2_APPLE_SDK
+    if (net_socket < 0) {
+#else
     if (!net_socket) {
+#endif
         return;
     }
 
     memset(&addr, 0, sizeof(addr));
+#if COD2_APPLE_SDK
+    addr.sin_len = sizeof(addr);
+#endif
 
     if (to.type == NA_BROADCAST) {
         addr.sin_family = AF_INET;
@@ -333,7 +389,11 @@ void Sys_SendPacket(int length, const void *data, netadr_t to)
         addr.sin_addr.s_addr = 0xFFFFFFFF;
     } else if (to.type == NA_IP) {
         addr.sin_family = AF_INET;
+#if COD2_APPLE_SDK
+        memcpy(&addr.sin_addr.s_addr, to.ip, sizeof(to.ip));
+#else
         addr.sin_addr.s_addr = *(unsigned long *)to.ip;
+#endif
         addr.sin_port = to.port;
     }
 
@@ -342,7 +402,11 @@ void Sys_SendPacket(int length, const void *data, netadr_t to)
         socksBuf[1] = 0;
         socksBuf[2] = 0;
         socksBuf[3] = 1;
+#if COD2_APPLE_SDK
+        memcpy(socksBuf + 4, &addr.sin_addr.s_addr, sizeof(addr.sin_addr.s_addr));
+#else
         *(unsigned long *)(socksBuf + 4) = addr.sin_addr.s_addr;
+#endif
         *(unsigned short *)(socksBuf + 8) = addr.sin_port;
         memcpy(socksBuf + 10, data, length);
         ret = sendto(net_socket, socksBuf, length + 10, 0, (struct sockaddr *)&socksRelayAddr, 16);
@@ -401,23 +465,42 @@ void NET_OpenIP(void)
             err = WSAGetLastError();
             if (err != 10047) {
                 Com_Printf("WARNING: UDP_OpenSocket: socket: %s\n", strerror(errno));
+#if COD2_APPLE_SDK
+                ip_socket = -1;
+#else
                 ip_socket = 0;
+#endif
                 goto next_check;
             }
+#if COD2_APPLE_SDK
+            ip_socket = -1;
+#else
             ip_socket = 0;
+#endif
             goto next_check;
         }
 
         if (ioctlsocket(newsocket, 0x8004667e, (unsigned long *)&_true) == -1) {
             Com_Printf("WARNING: UDP_OpenSocket: ioctl FIONBIO: %s\n", strerror(errno));
+#if COD2_APPLE_SDK
+            closesocket(newsocket);
+#endif
+#if COD2_APPLE_SDK
+            ip_socket = -1;
+#else
             ip_socket = 0;
+#endif
             goto next_check;
         }
 
         if (setsockopt(newsocket, SOL_SOCKET, SO_BROADCAST, &sock_i, sizeof(sock_i)) == -1) {
             Com_Printf("WARNING: UDP_OpenSocket: setsockopt SO_BROADCAST: %s\n", strerror(errno));
             closesocket(newsocket);
+#if COD2_APPLE_SDK
+            ip_socket = -1;
+#else
             ip_socket = 0;
+#endif
             goto next_check;
         }
 
@@ -425,6 +508,9 @@ void NET_OpenIP(void)
             struct sockaddr_in address;
 
             memset(&address, 0, sizeof(address));
+#if COD2_APPLE_SDK
+            address.sin_len = sizeof(address);
+#endif
 
             if (s && s[0] && I_stricmp(s, "localhost") != 0) {
 
@@ -435,7 +521,11 @@ void NET_OpenIP(void)
                 } else {
                     struct hostent *h = gethostbyname(s);
                     if (h) {
+#if COD2_APPLE_SDK
+                        memcpy(&address.sin_addr.s_addr, h->h_addr_list[0], sizeof(address.sin_addr.s_addr));
+#else
                         address.sin_addr.s_addr = *(unsigned long *)h->h_addr_list[0];
+#endif
                     }
                 }
             } else {
@@ -452,7 +542,11 @@ void NET_OpenIP(void)
             if (bind(newsocket, (struct sockaddr *)&address, 16) == -1) {
                 Com_Printf("WARNING: UDP_OpenSocket: bind: %s\n", strerror(errno));
                 closesocket(newsocket);
+#if COD2_APPLE_SDK
+                ip_socket = -1;
+#else
                 ip_socket = 0;
+#endif
                 goto next_check;
             }
 
@@ -460,7 +554,11 @@ void NET_OpenIP(void)
         }
 
     next_check:
+#if COD2_APPLE_SDK
+        if (ip_socket >= 0) {
+#else
         if (ip_socket) {
+#endif
             Dvar_SetInt(port, i + port->current.integer);
 
             if (net_socksEnabled->current.enabled) {
@@ -498,8 +596,15 @@ void NET_OpenIP(void)
                         int useAuth;
 
                         memset(&saddr, 0, sizeof(saddr));
+#if COD2_APPLE_SDK
+                        saddr.sin_len = sizeof(saddr);
+#endif
                         saddr.sin_family = AF_INET;
+#if COD2_APPLE_SDK
+                        memcpy(&saddr.sin_addr.s_addr, hp->h_addr_list[0], sizeof(saddr.sin_addr.s_addr));
+#else
                         saddr.sin_addr.s_addr = *(unsigned long *)((struct hostent *)hp)->h_addr_list[0];
+#endif
                         saddr.sin_port = htons(net_socksPort->current.integer);
 
                         if (connect(socks_socket, (struct sockaddr *)&saddr, 16) == -1) {
@@ -585,7 +690,11 @@ void NET_OpenIP(void)
                         buf[1] = 3;
                         buf[2] = 0;
                         buf[3] = 1;
+#if COD2_APPLE_SDK
+                        memset(buf + 4, 0, 4);
+#else
                         *(unsigned long *)(buf + 4) = 0;
+#endif
                         {
                             unsigned short sp = (unsigned short)((sockPort >> 8) | (sockPort << 8));
                             *(unsigned short *)(buf + 8) = sp;
@@ -617,10 +726,26 @@ void NET_OpenIP(void)
                             goto do_local_address;
                         }
 
+#if COD2_APPLE_SDK
+                        if (rlen < 10) {
+                            Com_Printf("NET_OpenSocks: truncated relay response\n");
+                            goto do_local_address;
+                        }
+                        {
+                            struct sockaddr_in relay;
+                            memset(&relay, 0, sizeof(relay));
+                            relay.sin_len = sizeof(relay);
+                            relay.sin_family = AF_INET;
+                            memcpy(&relay.sin_addr.s_addr, buf + 4, 4);
+                            memcpy(&relay.sin_port, buf + 8, 2);
+                            memcpy(&socksRelayAddr, &relay, sizeof(relay));
+                        }
+#else
                         ((byte *)&socksRelayAddr)[1] = 2;
                         *(unsigned long *)(((byte *)&socksRelayAddr) + 4) = *(unsigned long *)(buf + 4);
                         *(unsigned short *)(((byte *)&socksRelayAddr) + 2) = *(unsigned short *)(buf + 8);
                         memset(((byte *)&socksRelayAddr) + 8, 0, 8);
+#endif
 
                         usingSocks = 1;
                     }
@@ -628,7 +753,34 @@ void NET_OpenIP(void)
             }
 
         do_local_address:
+#if COD2_APPLE_SDK
+            if (!usingSocks && socks_socket >= 0) {
+                closesocket(socks_socket);
+                socks_socket = -1;
+            }
+#endif
 
+#if COD2_APPLE_SDK
+            {
+                struct ifaddrs *interfaces, *entry;
+                numIP = 0;
+                if (getifaddrs(&interfaces) != 0) {
+                    Com_Printf("NET_GetLocalAddress: getifaddrs: %s\n", strerror(errno));
+                    return;
+                }
+                for (entry = interfaces; entry && numIP < 16; entry = entry->ifa_next) {
+                    const struct sockaddr_in *address;
+                    if (!entry->ifa_addr || entry->ifa_addr->sa_family != AF_INET || !(entry->ifa_flags & IFF_UP))
+                        continue;
+                    address = (const struct sockaddr_in *)entry->ifa_addr;
+                    memcpy(localIP[numIP], &address->sin_addr.s_addr, sizeof(localIP[numIP]));
+                    Com_Printf("IP: %i.%i.%i.%i (%s)\n", localIP[numIP][0], localIP[numIP][1],
+                               localIP[numIP][2], localIP[numIP][3], entry->ifa_name);
+                    numIP++;
+                }
+                freeifaddrs(interfaces);
+            }
+#else
             {
                 char hostname[512];
 #if COD2_APPLE_SDK
@@ -748,6 +900,7 @@ void NET_OpenIP(void)
                     close(tmpSocket);
                 }
             }
+#endif
             return;
         }
     }
@@ -790,17 +943,37 @@ void NET_Config(qboolean enableNetworking)
     }
 
 close_sockets:
+#if COD2_APPLE_SDK
+    if (ip_socket >= 0) {
+#else
     if (ip_socket && ip_socket != (SOCKET)-1) {
+#endif
         closesocket(ip_socket);
+#if COD2_APPLE_SDK
+        ip_socket = -1;
+#else
         ip_socket = 0;
+#endif
     }
 
+#if COD2_APPLE_SDK
+    if (socks_socket >= 0) {
+#else
     if (socks_socket && socks_socket != (SOCKET)-1) {
+#endif
         closesocket(socks_socket);
+#if COD2_APPLE_SDK
+        socks_socket = -1;
+#else
         socks_socket = 0;
+#endif
     }
 
 check_start:
+#if COD2_APPLE_SDK
+    if (start || stop)
+        usingSocks = 0;
+#endif
     if (!start) {
         return;
     }
