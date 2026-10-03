@@ -33,7 +33,14 @@ extern byte *net_profile_dvar;
 
 extern Bool Netchan_TransmitNextFragment(netchan_t *chan);
 extern Bool Netchan_Transmit(netchan_t *chan, int length, const byte *data);
+#if defined(COD2_X64)
+extern serverStatic_t svs;
+extern const dvar_t *sv_maxclients;
+extern const dvar_t *net_profile;
+extern void NetProf_PrepProfiling(netProfileInfo_t **prof);
+#else
 extern void NetProf_PrepProfiling(netProfileInfo_t *prof);
+#endif
 extern void NetProf_AddPacket(netProfileStream_t *stream, int iLength, qboolean bFragment);
 extern void NetProf_UpdateStatistics(netProfileStream_t *stream);
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
@@ -179,15 +186,25 @@ void SV_Netchan_AddOOBProfilePacket(int iLength)
 
     /* +8 was the x86 offset of dvar->current; on x64 the name pointer + alignment move current to
        16, so the hardcoded read got garbage and skipped the disabled-profiling early-out. */
+#if defined(COD2_X64)
+    if (!net_profile->current.integer)
+#else
     if ((*(const dvar_t **)net_profile_dvar)->current.integer == 0)
+#endif
         return;
 
+#if defined(COD2_X64)
+    NetProf_PrepProfiling(&svs.pOOBProf);
+    if (svs.pOOBProf)
+        NetProf_AddPacket(&svs.pOOBProf->send, iLength, 0);
+#else
     {
         byte *svs = (byte *)imp_svs;
         NetProf_PrepProfiling((netProfileInfo_t *)(svs + SVS_POOBPROF_OFF));
         pOOBProf = *(netProfileInfo_t **)(svs + SVS_POOBPROF_OFF);
         NetProf_AddPacket((netProfileStream_t *)pOOBProf, iLength, 0);
     }
+#endif
 }
 
 void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
@@ -207,28 +224,56 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
     int iFragmentTotal;
     netProfileInfo_t *pOOBProf;
     netProfileInfo_t *pProf;
+#if defined(COD2_X64)
+    client_t *clientBase;
+#else
     byte *clientBase;
+#endif
     int numClients;
     int totalPackets;
     char szClientName[17];
     int i;
 
+#if defined(COD2_X64)
+    clientBase = svs.clients;
+#else
     clientBase = *(byte **)(svs_ptr + SVS_CLIENTS_OFF);
+#endif
     if (clientBase == NULL)
         return;
 
+#if defined(COD2_X64)
+    pOOBProf = svs.pOOBProf;
+#else
     pOOBProf = *(netProfileInfo_t **)(svs_ptr + SVS_POOBPROF_OFF);
+#endif
     if (pOOBProf != NULL) {
         NetProf_UpdateStatistics(&pOOBProf->send);
         NetProf_UpdateStatistics(&pOOBProf->recieve);
     }
 
+#if defined(COD2_X64)
+    numClients = sv_maxclients->current.integer;
+#else
     numClients = *(int *)((byte *)sv_ptr + 8);
+#endif
     for (i = 0; i < numClients; i++) {
+#if defined(COD2_X64)
+        client_t *cl = &clientBase[i];
+#else
         byte *cl = clientBase + (long)i * CLIENT_STRIDE;
+#endif
+#if defined(COD2_X64)
+        if (!cl->state)
+#else
         if (*(int *)(cl + CLIENT_STATE_OFF) == 0)
+#endif
             continue;
+#if defined(COD2_X64)
+        pProf = cl->netchan.pProf;
+#else
         pProf = *(netProfileInfo_t **)(cl + CLIENT_NETCHAN_PPROF_OFF);
+#endif
         if (pProf == NULL)
             continue;
         NetProf_UpdateStatistics(&pProf->send);
@@ -274,7 +319,11 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
         iYPos += 0xa;
     }
 
+#if defined(COD2_X64)
+    pOOBProf = svs.pOOBProf;
+#else
     pOOBProf = *(netProfileInfo_t **)(svs_ptr + SVS_POOBPROF_OFF);
+#endif
     if (pOOBProf != NULL) {
         iTotalBPSSent = pOOBProf->send.iBytesPerSecond;
         iTotalPacketsSent = pOOBProf->send.iCountedPackets;
@@ -311,12 +360,28 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
         iTotalMinRecieved = 9999;
     }
 
+#if defined(COD2_X64)
+    numClients = sv_maxclients->current.integer;
+#else
     numClients = *(int *)((byte *)sv_ptr + 8);
+#endif
     for (i = 0; i < numClients; i++) {
+#if defined(COD2_X64)
+        client_t *cl = &clientBase[i];
+#else
         byte *cl = clientBase + (long)i * CLIENT_STRIDE;
+#endif
+#if defined(COD2_X64)
+        if (!cl->state)
+#else
         if (*(int *)(cl + CLIENT_STATE_OFF) == 0)
+#endif
             continue;
+#if defined(COD2_X64)
+        pProf = cl->netchan.pProf;
+#else
         pProf = *(netProfileInfo_t **)(cl + CLIENT_NETCHAN_PPROF_OFF);
+#endif
         if (pProf == NULL)
             continue;
 
@@ -349,8 +414,16 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
                 iTotalBPSSent, iTotalMaxSent, iTotalMinSent, 0,
                 iTotalBPSRecieved, iTotalMaxRecieved, iTotalMinRecieved, 0,
                 iTotalBPSSent + iTotalBPSRecieved,
+#if defined(COD2_X64)
+                (iTotalMaxSent > iTotalMaxRecieved ? iTotalMaxSent : iTotalMaxRecieved),
+#else
                 (double)_fmaxf((float)iTotalMaxSent, (float)iTotalMaxRecieved),
+#endif
+#if defined(COD2_X64)
+                (iTotalMinSent < iTotalMinRecieved ? iTotalMinSent : iTotalMinRecieved),
+#else
                 (double)_fminf((float)iTotalMinSent, (float)iTotalMinRecieved),
+#endif
                 iFragmentTotal);
     if (bPrintToConsole) {
         Com_Printf("%s\n", szLine);
@@ -359,7 +432,11 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
         iYPos += 0xa;
     }
 
+#if defined(COD2_X64)
+    pOOBProf = svs.pOOBProf;
+#else
     pOOBProf = *(netProfileInfo_t **)(svs_ptr + SVS_POOBPROF_OFF);
+#endif
     if (pOOBProf != NULL) {
         int oobTotalPackets;
         int oobFragPerc;
@@ -382,8 +459,16 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
                     pOOBProf->recieve.iSmallestPacket,
                     pOOBProf->recieve.iFragmentPercentage,
                     pOOBProf->send.iBytesPerSecond + pOOBProf->recieve.iBytesPerSecond,
+#if defined(COD2_X64)
+                    (pOOBProf->send.iLargestPacket > pOOBProf->recieve.iLargestPacket ? pOOBProf->send.iLargestPacket : pOOBProf->recieve.iLargestPacket),
+#else
                     (double)_fmaxf((float)pOOBProf->send.iLargestPacket, (float)pOOBProf->recieve.iLargestPacket),
+#endif
+#if defined(COD2_X64)
+                    (pOOBProf->send.iSmallestPacket < pOOBProf->recieve.iSmallestPacket ? pOOBProf->send.iSmallestPacket : pOOBProf->recieve.iSmallestPacket),
+#else
                     (double)_fminf((float)pOOBProf->send.iSmallestPacket, (float)pOOBProf->recieve.iSmallestPacket),
+#endif
                     oobFragPerc);
     } else {
         Com_sprintf(szLine, 1024,
@@ -396,17 +481,37 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
         iYPos += 0xa;
     }
 
+#if defined(COD2_X64)
+    numClients = sv_maxclients->current.integer;
+#else
     numClients = *(int *)((byte *)sv_ptr + 8);
+#endif
     for (i = 0; i < numClients; i++) {
+#if defined(COD2_X64)
+        client_t *cl = &clientBase[i];
+#else
         byte *cl = clientBase + (long)i * CLIENT_STRIDE;
+#endif
 
+#if defined(COD2_X64)
+        if (!cl->state)
+#else
         if (*(int *)(cl + CLIENT_STATE_OFF) == 0)
+#endif
             continue;
 
+#if defined(COD2_X64)
+        strncpy(szClientName, cl->name, sizeof(szClientName));
+#else
         strncpy(szClientName, (const char *)(cl + CLIENT_NAME_OFF), 0x11);
+#endif
         szClientName[16] = '\0';
 
+#if defined(COD2_X64)
+        pProf = cl->netchan.pProf;
+#else
         pProf = *(netProfileInfo_t **)(cl + CLIENT_NETCHAN_PPROF_OFF);
+#endif
         if (pProf == NULL) {
 
             Com_sprintf(szLine, 1024,
@@ -435,8 +540,16 @@ void SV_Netchan_PrintProfileStats(qboolean bPrintToConsole)
                         pProf->recieve.iSmallestPacket,
                         pProf->recieve.iFragmentPercentage,
                         pProf->send.iBytesPerSecond + pProf->recieve.iBytesPerSecond,
+#if defined(COD2_X64)
+                        (pProf->send.iLargestPacket > pProf->recieve.iLargestPacket ? pProf->send.iLargestPacket : pProf->recieve.iLargestPacket),
+#else
                         (double)_fmaxf((float)pProf->send.iLargestPacket, (float)pProf->recieve.iLargestPacket),
+#endif
+#if defined(COD2_X64)
+                        (pProf->send.iSmallestPacket < pProf->recieve.iSmallestPacket ? pProf->send.iSmallestPacket : pProf->recieve.iSmallestPacket),
+#else
                         (double)_fminf((float)pProf->send.iSmallestPacket, (float)pProf->recieve.iSmallestPacket),
+#endif
                         clFragPerc);
         }
 

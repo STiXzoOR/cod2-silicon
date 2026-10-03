@@ -35,7 +35,9 @@ def compile_source(source, name, baseline=False):
 
 
 for name, sources in [('startup', ['src/PC/server_mp/sv_init_mp.c']),
-                      ('script_api', ['src/PC/game_mp/g_scr_main_mp.c'])]:
+                      ('script_api', ['src/PC/game_mp/g_scr_main_mp.c']),
+                      ('snapshot', []),
+                      ('netchan', ['src/PC/server_mp/sv_net_chan_mp.c'])]:
     objects = [compile_source(s, Path(s).stem, True) for s in sources]
     objects.append(compile_source(f'tests/lp64/game/{name}.c', name))
     exe = output / name

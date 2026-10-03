@@ -29,6 +29,12 @@ extern byte *showpackets_dvar;
 extern byte *sv_maxRate_dvar;
 extern byte *sv_fps_dvar;
 extern int __mh_execute_header;
+#if defined(COD2_X64)
+/* Retail __mh_execute_header == 0x1000, the cached-client ring capacity. */
+#define SV_CACHED_CLIENT_COUNT 0x1000
+#else
+#define SV_CACHED_CLIENT_COUNT (int)&__mh_execute_header
+#endif
 
 #define CLIENT_RELIABLESEQUENCE 0x2080c
 #define CLIENT_RELIABLEACK 0x20810
@@ -56,6 +62,10 @@ extern int __mh_execute_header;
 #define CLIENT_CMDENTRY_SIZE 0x408
 #define CLIENT_CMDENTRY_STROFF 0x400
 #define CLIENT_CMDENTRY_MASK 0x7f
+#if defined(COD2_X64)
+#define CLIENT_STRIDE sizeof(client_t)
+#define CACHEDCLIENT_STRIDE sizeof(cachedClient_t)
+#else
 #define CLIENT_STRIDE 0x78f0c
 #define CLIENT_NETCHAN_SENDFRAG 0x725dc
 #define CLIENT_NETCHAN_SENDLEN 0x725e4
@@ -63,6 +73,7 @@ extern int __mh_execute_header;
 #define CLIENT_DOWNLOAD 0x20c68
 
 #define CACHEDCLIENT_STRIDE 9992
+#endif
 
 #define SVS_TIME 0x4
 #define SVS_FLAGS 0x8
@@ -211,7 +222,7 @@ static __attribute_regparm__(1)
                     cachedFrame = cf;
                     svs = (serverStatic_t *)imp_svs;
                     if (cf->first_entity >= svs->nextCachedSnapshotEntities - 0x4000) {
-                        if (cf->first_client >= svs->nextCachedSnapshotClients - (int)&__mh_execute_header) {
+                        if (cf->first_client >= svs->nextCachedSnapshotClients - SV_CACHED_CLIENT_COUNT) {
                             goto cleanup;
                         }
                     }
@@ -473,9 +484,19 @@ void SV_ArchiveSnapshot(void)
 {
     byte msg_buf_large_local[24];
     byte *msg_buf;
+#if defined(COD2_X64)
+    msg_t nativeMsg;
+    byte *msg = (byte *)&nativeMsg;
+#else
     byte msg[24];
+#endif
     byte ps[0x26a8];
+#if defined(COD2_X64)
+    archivedEntity_t nativeArchivedEnt;
+    byte *archivedEnt = (byte *)&nativeArchivedEnt;
+#else
     byte archivedEnt[0xf0];
+#endif
 
     LargeLocal_LargeLocal(msg_buf_large_local, 0x20000);
     msg_buf = (byte *)LargeLocal_GetBuf((const LargeLocal *)msg_buf_large_local);
@@ -515,7 +536,7 @@ void SV_ArchiveSnapshot(void)
 
                         if (((cachedSnapshot_t *)cf)->first_entity < svs.nextCachedSnapshotEntities - 0x4000)
                             break;
-                        if (((cachedSnapshot_t *)cf)->first_client < svs.nextCachedSnapshotClients - (int)&__mh_execute_header)
+                        if (((cachedSnapshot_t *)cf)->first_client < svs.nextCachedSnapshotClients - SV_CACHED_CLIENT_COUNT)
                             break;
 
                         MSG_WriteBit0((msg_t *)msg);
@@ -548,8 +569,11 @@ void SV_ArchiveSnapshot(void)
 
                                 {
                                     byte *clients = (byte *)svs.clients;
-
+#if defined(COD2_X64)
+                                    if (((client_t *)clients)[newIdx].state <= 1) {
+#else
                                     if (*(int *)(clients + (long)newIdx * 0x78f0c) <= 1) {
+#endif
                                         newIdx++;
                                         continue;
                                     }
@@ -723,11 +747,18 @@ void SV_ArchiveSnapshot(void)
             int c;
 
             maxclients_val = *(byte **)maxclients_dvar;
+#if defined(COD2_X64)
+            maxClients = sv_maxclients->current.integer;
+#else
             maxClients = *(int *)(maxclients_val + 8);
+#endif
 
             for (c = 0; c < maxClients; c++) {
-
+#if defined(COD2_X64)
+                if (((client_t *)clients)[c].state <= 1)
+#else
                 if (*(int *)(clients + (long)c * 0x78f0c) <= 1)
+#endif
                     continue;
 
                 {
@@ -904,7 +935,11 @@ write_frame:
 
             int firstPart = bufSize - remaining;
             byte *archBuf = svs.archivedSnapshotBuffer;
+#if defined(COD2_X64)
+            byte *msgData = ((msg_t *)msg)->data;
+#else
             byte *msgData = *(byte **)(msg + 4);
+#endif
 
             memcpy(archBuf + remaining, msgData, firstPart);
             memcpy(archBuf, msgData + firstPart, msgDataLen - firstPart);
@@ -1291,8 +1326,13 @@ Bool SV_GetClientPositionAtTime(int clientNum, int gametime, vec_t *pos)
 #    define SV_MAX_SNAPSHOT_ENTITIES 1024
 #    define SV_ENTITY_BASELINE_NUMBER 9999
 #    define SV_CLIENT_BASELINE_NUMBER 99999
+#if defined(COD2_X64)
+#    define SV_ARCHIVED_ENTITY_STRIDE sizeof(archivedEntity_t)
+#    define SV_CACHED_CLIENT_STRIDE sizeof(cachedClient_t)
+#else
 #    define SV_ARCHIVED_ENTITY_STRIDE 276
 #    define SV_CACHED_CLIENT_STRIDE 9992
+#endif
 
 static int SV_SignedModSnapshotEntLocal(int value, int modulus)
 {
@@ -1339,7 +1379,12 @@ static byte *SV_CachedClientLocal(serverStatic_t *svs, int index)
 static int SV_ClientIndexLocal(client_t *client)
 {
     serverStatic_t *svs = (serverStatic_t *)imp_svs;
+#if defined(COD2_X64)
+    /* At most 64 clients, so the array index fits the wire/client number. */
+    return (int)(client - svs->clients);
+#else
     return (int)(((byte *)client - (byte *)svs->clients) / CLIENT_STRIDE);
+#endif
 }
 
 static int SV_DvarIntLocal(byte *dvarStorage)
@@ -1501,7 +1546,11 @@ static void SV_CopyCurrentClientsToSnapshotLocal(clientSnapshot_t *frame)
     int clientNum;
 
     for (clientNum = 0; clientNum < maxClients; ++clientNum) {
+#if defined(COD2_X64)
+        client_t *client = &svs->clients[clientNum];
+#else
         client_t *client = (client_t *)((byte *)svs->clients + clientNum * CLIENT_STRIDE);
+#endif
         clientState_t *dst;
         clientState_t *src;
         if (client->state <= 1) {
@@ -1660,8 +1709,11 @@ static void SV_BuildClientSnapshotLocal(client_t *client)
     frame->num_clients = 0;
     frame->first_entity = svs->nextSnapshotEntities;
     frame->first_client = svs->nextSnapshotClients;
-
+#if defined(COD2_X64)
+    if (!client->gentity || client->state == 1 || sv.state != 2) {
+#else
     if (!*(int *)((byte *)client + CLIENT_OLDSERVERTIME) || client->state == 1 || sv.state != 2) {
+#endif
         return;
     }
 
@@ -2077,11 +2129,21 @@ void SV_ArchiveSnapshot(void)
 {
     byte msg_buf_large_local[24];
     byte *msg_buf;
+#if defined(COD2_X64)
+    msg_t nativeMsg;
+    byte *msg = (byte *)&nativeMsg;
+#else
     byte msg[24];
+#endif
     serverStatic_t *svs_p = (serverStatic_t *)imp_svs;
     server_t *sv_p = (server_t *)imp_sv;
     byte ps[0x26a8];
+#if defined(COD2_X64)
+    archivedEntity_t nativeArchivedEnt;
+    byte *archivedEnt = (byte *)&nativeArchivedEnt;
+#else
     byte archivedEnt[0xf0];
+#endif
 
     LargeLocal_LargeLocal(msg_buf_large_local, 0x20000);
     msg_buf = (byte *)LargeLocal_GetBuf((const LargeLocal *)msg_buf_large_local);
@@ -2122,7 +2184,7 @@ void SV_ArchiveSnapshot(void)
                         serverStatic_t *svs2 = (serverStatic_t *)imp_svs;
                         if (((cachedSnapshot_t *)cf)->first_entity < svs2->nextCachedSnapshotEntities - 0x4000)
                             break;
-                        if (((cachedSnapshot_t *)cf)->first_client < svs2->nextCachedSnapshotClients - (int)&__mh_execute_header)
+                        if (((cachedSnapshot_t *)cf)->first_client < svs2->nextCachedSnapshotClients - SV_CACHED_CLIENT_COUNT)
                             break;
 
                         MSG_WriteBit0((msg_t *)msg);
@@ -2157,8 +2219,11 @@ void SV_ArchiveSnapshot(void)
                                 {
                                     serverStatic_t *svs4 = (serverStatic_t *)imp_svs;
                                     byte *clients = (byte *)svs4->clients;
-
+#if defined(COD2_X64)
+                                    if (((client_t *)clients)[newIdx].state <= 1) {
+#else
                                     if (*(int *)(clients + (long)newIdx * 0x78f0c) <= 1) {
+#endif
                                         newIdx++;
                                         continue;
                                     }
@@ -2335,11 +2400,18 @@ void SV_ArchiveSnapshot(void)
             int c;
 
             maxclients_val = *(byte **)maxclients_dvar;
+#if defined(COD2_X64)
+            maxClients = sv_maxclients->current.integer;
+#else
             maxClients = *(int *)(maxclients_val + 8);
+#endif
 
             for (c = 0; c < maxClients; c++) {
-
+#if defined(COD2_X64)
+                if (((client_t *)clients)[c].state <= 1)
+#else
                 if (*(int *)(clients + (long)c * 0x78f0c) <= 1)
+#endif
                     continue;
 
                 {
@@ -2521,7 +2593,11 @@ write_frame:
 
             int firstPart = bufSize - remaining;
             byte *archBuf = svs2->archivedSnapshotBuffer;
+#if defined(COD2_X64)
+            byte *msgData = ((msg_t *)msg)->data;
+#else
             byte *msgData = *(byte **)(msg + 4);
+#endif
 
             memcpy(archBuf + remaining, msgData, firstPart);
             memcpy(archBuf, msgData + firstPart, msgDataLen - firstPart);
