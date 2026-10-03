@@ -560,10 +560,18 @@ void R_CacheStaticModelLighting(const GfxWorld *world, GfxStaticModelInstance *s
                 else if (bi <= 0)
                     bi = 0;
 
+#if defined(COD2_X64)
+                /* Native A8R8G8B8 uploads consume BGRA bytes. */
+                texel[0] = (byte)bi;
+                texel[1] = gByte;
+                texel[2] = rByte;
+                texel[3] = (byte)ai;
+#else
                 texel[0] = (byte)ai;
                 texel[1] = rByte;
                 texel[2] = gByte;
                 texel[3] = (byte)bi;
+#endif
                 c++;
             }
         }

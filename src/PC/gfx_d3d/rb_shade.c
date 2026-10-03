@@ -776,8 +776,13 @@ static void RB_SetupLighting_impl(void)
             backEnd->codeConsts[25][2] = smodel->smodelLightingLookupScale[2];
             backEnd->codeConsts[25][3] = 0.0f;
 
+#if defined(COD2_X64)
+            backEnd->codeConsts[24][0] = ((GfxEntity *)entity)->lighting.baseCoords[0];
+            backEnd->codeConsts[24][1] = ((GfxEntity *)entity)->lighting.baseCoords[1];
+#else
             backEnd->codeConsts[24][0] = (*(float *)&((GfxEntity *)entity)->lighting.dx7.colorForDir);
             backEnd->codeConsts[24][1] = ((GfxEntity *)entity)->lighting.dx7.sunVisibility;
+#endif
             backEnd->codeConsts[24][2] = ((GfxEntity *)entity)->lighting.baseCoords[2];
             backEnd->codeConsts[24][3] = 0.0f;
         }
