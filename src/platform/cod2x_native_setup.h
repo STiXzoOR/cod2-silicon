@@ -70,6 +70,12 @@ static void Cod2xSetupShaders(NSBundle *bundle)
         }
         NSTask *task = [[NSTask alloc] init];
         task.executableURL = [NSURL fileURLWithPath:python];
+        /* A client observer must not run in the extraction subprocess or
+         * overwrite the client's constructor-written ownership PID. */
+        NSMutableDictionary *environment = NSProcessInfo.processInfo.environment.mutableCopy;
+        for (NSString *key in @[@"DYLD_INSERT_LIBRARIES", @"COD2_FRAME_PID", @"COD2_FRAME_CSV", @"COD2_CPU_PROFILE"])
+            [environment removeObjectForKey:key];
+        task.environment = environment;
         task.arguments = @[script,
             [NSHomeDirectory() stringByAppendingPathComponent:@"Games/CoD2-mac-bin/Call of Duty 2.app/Contents/Call of Duty 2 Multiplayer.app/Contents/MacOS/Call of Duty 2 Multiplayer"],
             cache, @"--setup", @"--fallback",
