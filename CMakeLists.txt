@@ -78,6 +78,11 @@ else()
     src/PC/qcommon/cod2x_runtime.c PROPERTIES HEADER_FILE_ONLY TRUE)
 endif()
 
+# Full native client extensions never enter legacy object/debug inputs.
+if(NOT (COD2_X64 AND COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)"))
+  set_source_files_properties(src/PC/qcommon/cod2x_policy.c PROPERTIES HEADER_FILE_ONLY TRUE)
+endif()
+
 # x64 port: expose COD2_X64 to the source so the ILP32 layout pins
 # (COD2_ASSERT_FIELD/SIZE in cod2_defs.h) and other arch-specific code can adapt.
 # Global so every target/branch below inherits it. No-op for the default 32-bit

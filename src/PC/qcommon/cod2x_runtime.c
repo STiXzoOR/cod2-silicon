@@ -1,6 +1,9 @@
 #if defined(COD2_CODX) && COD2_CODX
 #include "common_types.h"
 #include "cod2x.h"
+#if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+#include "cod2x_policy.h"
+#endif
 #include <string.h>
 
 extern const dvar_t *Dvar_RegisterInt(const char *, int, int, int, unsigned short);
@@ -126,6 +129,9 @@ void Cod2x_Disconnect(void)
 {
     Cod2x_Frame(0, 0);
     Cod2x_ResetAnimation();
+#if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+    Cod2x_IwdSystemInfo("");
+#endif
     if (cod2x_game)
         Dvar_SetInt(cod2x_game, 0);
     if (cod2x_competitive)

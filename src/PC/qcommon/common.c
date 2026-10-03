@@ -727,6 +727,17 @@ static void Com_SkipConfigureBlankLines(const char **text)
 static void Com_WriteConfigToFile(const char *filename)
 {
     int f;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    extern const dvar_t *Dvar_FindVar(const char *);
+    const dvar_t *writeConfig = Dvar_FindVar("com_writeConfig");
+    static int wasEnabled;
+    if (writeConfig && !writeConfig->current.enabled) {
+        if (!wasEnabled) return;
+        wasEnabled = 0; /* Persist the switch itself once. */
+    } else {
+        wasEnabled = 1;
+    }
+#endif
 
     f = FS_FOpenFileWrite(filename);
     if (!f) {
@@ -2228,6 +2239,9 @@ void Com_Init_Try_Block_Function(char *commandLine)
     }
 
     com_maxfps = Dvar_RegisterInt("com_maxfps", 85, 0, 1000, 0x1001);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Dvar_RegisterBool("com_writeConfig", 1, 0x1001);
+#endif
     com_developer = Dvar_RegisterInt("developer", 0, 0, 2, 0x1000);
     com_developer_script = Dvar_RegisterBool("developer_script", 0, 0x1000);
     com_logfile = Dvar_RegisterInt("logfile", 0, 0, 2, 0x1000);

@@ -1,5 +1,12 @@
 #include "common_types.h"
 #include "imports.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "../qcommon/cod2x.h"
+#include "../qcommon/cod2x_policy.h"
+#ifndef DEDICATED
+extern clientConnection_t *clc;
+#endif
+#endif
 #include <ctype.h>
 #include <stdarg.h>
 #include <string.h>
@@ -810,6 +817,11 @@ static __attribute_regparm__(3) void FS_BuildOSPath_Internal(const char *base, c
     qboolean sawSlash;
 
     useGame = (game && game[0]) ? game : fs_gamedir;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    useGame = Cod2x_ConfigGame(useGame, qpath);
+    if (!I_stricmp(useGame, "main") && !strcmp(Cod2x_ConfigGame("", qpath), "main"))
+        qpath = "config_mp.cfg";
+#endif
     lenBase = strlen(base);
     lenGame = strlen(useGame);
     lenQpath = strlen(qpath);
@@ -1636,8 +1648,33 @@ static void FS_AddIwdFilesForGameDirectory(const char *path, const char *pszGame
         numfiles = 1024;
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        Cod2xIwdSelection selection = {COD2X_REVISION, 1, 0, 0, 0,
+            fs_gameDirVar->current.string, Cod2x_IwdNames()};
+        int write = 0;
+#ifndef DEDICATED
+        selection.dedicated = 0;
+        if (clc) {
+            selection.connecting = clc->state >= CA_CONNECTING;
+            selection.demo = clc->demoplaying;
+            selection.listen = com_sv_running && com_sv_running->current.enabled &&
+                               clc->state != CA_DISCONNECTED;
+            selection.version = Cod2x_GameVersion();
+        }
+#endif
+        for (i = 0; i < numfiles; ++i)
+            if (Cod2x_IwdAllowed(pszGameFolder, iwdfiles[i], (const char *const *)iwdfiles,
+                                numfiles, &selection))
+                sorted[write++] = iwdfiles[i];
+        numfiles = write;
+    }
+#endif
+
     for (i = 0; i < numfiles; i++) {
+#if !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
         sorted[i] = iwdfiles[i];
+#endif
         if (!I_strncmp(sorted[i], "localized_", 10)) {
             memset(sorted[i], ' ', 10);
         }
@@ -1811,13 +1848,22 @@ static __attribute_regparm__(3) int FS_FOpenFileRead_Internal(const char *filena
         return -1;
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (!strcmp(Cod2x_ConfigGame("", sanitizedName), "main"))
+        fsOnly = 1;
+#endif
+
     if (!file) {
         for (search = fs_searchpaths; search; search = (searchpath_t *)(uintptr_t)search->next) {
             if (!FS_UseSearchPath(search)) {
                 continue;
             }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            if (search->pack && strcmp(Cod2x_ConfigGame("", sanitizedName), "main")) {
+#else
             if (search->pack) {
+#endif
                 pack_t *iwd = search->pack;
                 fileInPack_t *iwdFile;
                 long hash = FS_HashFileName(sanitizedName, iwd->hashSize);
@@ -2388,6 +2434,12 @@ void FS_Startup(const char *gameName)
         FS_AddGameDirectoryAllLanguages(path, gameName);
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    path = fs_homepath->current.string;
+    if (*path && I_stricmp(path, fs_basepath->current.string))
+        FS_AddGameDirectoryAllLanguages(path, gameName);
+#endif
+
     dir = fs_basegame->current.string;
     if (*dir && !I_stricmp(gameName, "main") && I_stricmp(dir, gameName)) {
         path = fs_cdpath->current.string;
@@ -2428,6 +2480,15 @@ void FS_Startup(const char *gameName)
     Com_ReadCDKey();
 #endif
     FS_AddCommands();
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    if (clc && clc->demoplaying) {
+        FS_AddGameDirectoryAllLanguages(fs_basepath->current.string, "movie");
+        if (I_stricmp(fs_homepath->current.string, fs_basepath->current.string))
+            FS_AddGameDirectoryAllLanguages(fs_homepath->current.string, "movie");
+        I_strncpyz(fs_gamedir, fs_gameDirVar->current.string[0] ? fs_gameDirVar->current.string : "main", sizeof(fs_gamedir));
+    }
+    Cod2x_IwdDirty(1);
+#endif
     FS_DisplayPath(1);
     Dvar_ClearModified(fs_gameDirVar);
     Com_Printf("----------------------\n");
@@ -2481,6 +2542,13 @@ qboolean FS_ConditionalRestart(int checksumFeed)
 
     if (sv_running->current.enabled)
         return 0;
+
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (Cod2x_IwdDirty(0)) {
+        FS_Restart(checksumFeed);
+        return 1;
+    }
+#endif
 
     if (fs_gameDirVar->modified || fs_checksumFeed != checksumFeed) {
         FS_Restart(checksumFeed);
