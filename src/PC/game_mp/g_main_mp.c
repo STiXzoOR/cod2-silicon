@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 #if COD2_APPLE_SDK
@@ -213,6 +214,7 @@ static void __attribute_regparm__(1) G_RunFrameForEntity(gentity_t *ent);
 int G_RunFrame(int levelTime);
 
 extern const char *SL_ConvertToString(unsigned int index);
+#if COD2_PORT_DEBUG
 void dbg_scan_ents(const char *where)
 {
     int i;
@@ -313,6 +315,8 @@ void dbg_check439(void)
 #endif
     }
 }
+
+#endif
 
 int G_GetSavePersist(void)
 {
@@ -644,7 +648,7 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
 
     SV_LocateGameData((gentity_t *)g_entities, 0x48, sizeof(gentity_t), (playerState_t *)g_clients, sizeof(gclient_t));
     G_SpawnEntitiesFromString();
-    DBG_PrintFreeVars(str_dbg_spawn);
+    COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_spawn);)
     level.initializing = 0;
 
     G_LogPrintf("gametype: %s\n", g_gametype->current.string);
@@ -655,10 +659,10 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     G_SetupWeaponDef();
     Scr_BeginLoadScripts();
     GScr_LoadScripts(1);
-    DBG_PrintFreeVars(str_dbg_load);
+    COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_load);)
     Scr_PostCompileScripts();
     Scr_EndLoadScripts();
-    DBG_PrintFreeVars(str_dbg_endload);
+    COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_endload);)
 
     *(void **)imp_bgs = (void *)&level_bgs;
     level_bgs.animScriptData.soundAlias = (snd_alias_list_t *(__cdecl *)(const char *))((snd_alias_list_t * (*)()) Com_FindSoundAlias);
@@ -681,23 +685,23 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     Scr_EndLoadAnimScripts();
     G_RegisterDvars_impl();
 
-    Com_Printf(str_dbg_vmtop_fmt, G_VM_TOP);
+    COD2_DEBUG_ONLY(Com_Printf(str_dbg_vmtop_fmt, G_VM_TOP);)
     Scr_FreeEntityList();
     Scr_InitSystem(1);
-    Com_Printf(str_dbg_ff_trace, G_VM_FRAME);
+    COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_trace, G_VM_FRAME);)
     Scr_SetLoading(1);
     Scr_AllocGameVariable();
-    Com_Printf(str_dbg_ff_agv, G_VM_FRAME);
+    COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_agv, G_VM_FRAME);)
     G_LoadStructs();
-    Com_Printf(str_dbg_ff_gls, G_VM_FRAME);
+    COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_gls, G_VM_FRAME);)
 
     level.initializing = 1;
     Scr_LoadLevel();
-    Com_Printf(str_dbg_ff_before, G_VM_FRAME);
+    COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_before, G_VM_FRAME);)
     Scr_LoadGameType();
-    Com_Printf(str_dbg_ff_after_load, G_VM_FRAME);
+    COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_after_load, G_VM_FRAME);)
     Scr_StartupGameType();
-    Com_Printf(str_dbg_ff_after_startup, G_VM_FRAME);
+    COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_after_startup, G_VM_FRAME);)
 
     if (restart && !savepersist) {
         RestoreBody();
@@ -721,11 +725,11 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
         }
     }
 
-    Com_Printf("[ckpt] before CalculateRanks\n");
+    COD2_DEBUG_ONLY(Com_Printf("[ckpt] before CalculateRanks\n");)
     CalculateRanks();
     level.initializing = 0;
-    Com_Printf("[ckpt] G_InitGame END\n");
-    dbg_scan_ents("G_InitGame_end");
+    COD2_DEBUG_ONLY(Com_Printf("[ckpt] G_InitGame END\n");)
+    COD2_DEBUG_ONLY(dbg_scan_ents("G_InitGame_end");)
 
     return;
 }
@@ -951,7 +955,7 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
 
     SV_LocateGameData((gentity_t *)g_entities, 0x48, sizeof(gentity_t), (playerState_t *)g_clients, sizeof(gclient_t));
     G_SpawnEntitiesFromString();
-    DBG_PrintFreeVars(str_dbg_spawn);
+    COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_spawn);)
     level.initializing = 0;
 
     G_LogPrintf("gametype: %s\n", g_gametype->current.string);
@@ -962,10 +966,10 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     G_SetupWeaponDef();
     Scr_BeginLoadScripts();
     GScr_LoadScripts(1);
-    DBG_PrintFreeVars(str_dbg_load);
+    COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_load);)
     Scr_PostCompileScripts();
     Scr_EndLoadScripts();
-    DBG_PrintFreeVars(str_dbg_endload);
+    COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_endload);)
 
     *(void **)imp_bgs = (void *)&level_bgs;
     level_bgs.animScriptData.soundAlias = (snd_alias_list_t * (*)()) Com_FindSoundAlias;
@@ -988,23 +992,23 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     Scr_EndLoadAnimScripts();
     G_RegisterDvars_impl();
 
-    Com_Printf(str_dbg_vmtop_fmt, G_VM_TOP);
+    COD2_DEBUG_ONLY(Com_Printf(str_dbg_vmtop_fmt, G_VM_TOP);)
     Scr_FreeEntityList();
     Scr_InitSystem(1);
-    Com_Printf(str_dbg_ff_trace, G_VM_FRAME);
+    COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_trace, G_VM_FRAME);)
     Scr_SetLoading(1);
     Scr_AllocGameVariable();
-    Com_Printf(str_dbg_ff_agv, G_VM_FRAME);
+    COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_agv, G_VM_FRAME);)
     G_LoadStructs();
-    Com_Printf(str_dbg_ff_gls, G_VM_FRAME);
+    COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_gls, G_VM_FRAME);)
 
     level.initializing = 1;
     Scr_LoadLevel();
-    Com_Printf(str_dbg_ff_before, G_VM_FRAME);
+    COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_before, G_VM_FRAME);)
     Scr_LoadGameType();
-    Com_Printf(str_dbg_ff_after_load, G_VM_FRAME);
+    COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_after_load, G_VM_FRAME);)
     Scr_StartupGameType();
-    Com_Printf(str_dbg_ff_after_startup, G_VM_FRAME);
+    COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_after_startup, G_VM_FRAME);)
 
     if (restart && !savepersist) {
         RestoreBody();
@@ -1311,11 +1315,11 @@ int G_RunFrame(int levelTime)
     level_bgs.latestSnapshotTime = levelTime;
     level_bgs.frametime = level.frametime;
 
-    if (getenv("COD2_WP439")) { extern void dbg_protect_439(void); dbg_protect_439(); }
+    COD2_DEBUG_ONLY(if (COD2_DEBUG_ENV("COD2_WP439")) { extern void dbg_protect_439(void); dbg_protect_439(); })
 
     *(void **)imp_bgs = (void *)&level_bgs;
 
-    { static int sc; if (sc++ < 1) dbg_scan_ents("RunFrame0_start"); }
+    COD2_DEBUG_ONLY({ static int sc; if (sc++ < 1) dbg_scan_ents("RunFrame0_start"); })
     for (i = 0; i < level.num_entities; i++) {
         entPtr = &g_entities[i];
         if (entPtr->r.inuse) {
@@ -1390,10 +1394,10 @@ int G_RunFrame(int levelTime)
         }
 
         Scr_RunCurrentThreads();
-        Com_Printf("[ckpt] G_RunFrame trigger round index=%d size=%d more=%d\n", index, level.currentTriggerListSize, bMoreTriggered);
+        COD2_DEBUG_ONLY(Com_Printf("[ckpt] G_RunFrame trigger round index=%d size=%d more=%d\n", index, level.currentTriggerListSize, bMoreTriggered);)
     } while (bMoreTriggered);
-    Com_Printf("[ckpt] G_RunFrame trigger loop DONE\n");
-    { static int s; if (s++ < 1) dbg_scan_ents("after_triggers"); }
+    COD2_DEBUG_ONLY(Com_Printf("[ckpt] G_RunFrame trigger loop DONE\n");)
+    COD2_DEBUG_ONLY({ static int s; if (s++ < 1) dbg_scan_ents("after_triggers"); })
 
     for (i = 0; i < level.num_entities; i++) {
         entPtr = &g_entities[i];
@@ -1412,15 +1416,17 @@ int G_RunFrame(int levelTime)
         }
     }
 
-    Com_Printf("[ckpt] G_RunFrame DObj-update loop DONE\n");
+    COD2_DEBUG_ONLY(Com_Printf("[ckpt] G_RunFrame DObj-update loop DONE\n");)
     Scr_IncTime();
-    Com_Printf("[ckpt] G_RunFrame Scr_IncTime DONE num_entities=%d\n", level.num_entities);
+    COD2_DEBUG_ONLY(Com_Printf("[ckpt] G_RunFrame Scr_IncTime DONE num_entities=%d\n", level.num_entities);)
 
     level.currentEntityThink = 0;
     for (i = 0; i < level.num_entities; i++) {
+#if COD2_PORT_DEBUG
         { static int rep; if (!rep && i < level.num_entities && (unsigned int)g_entities[439].s.pos.trType > 20u) {
             rep = 1; Com_Printf("[corrupt] ent#439 trType went bad BEFORE think i=%d (prev ent eType=%d class=%s)\n",
                 i, g_entities[i-1].s.eType, SL_ConvertToString((unsigned short)g_entities[i-1].classname)); } }
+#endif
         entPtr = &g_entities[i];
         if (entPtr->r.inuse) {
             tagInfo_t *tagInfo = COD2_TagInfoFromHandle(entPtr->tagInfo);
@@ -1432,16 +1438,18 @@ int G_RunFrame(int levelTime)
         }
         level.currentEntityThink = i + 1;
     }
-    Com_Printf("[ckpt] G_RunFrame think loop DONE\n");
+    COD2_DEBUG_ONLY(Com_Printf("[ckpt] G_RunFrame think loop DONE\n");)
     level.currentEntityThink = -1;
 
-    if (getenv("COD2_CLAMP_TR")) {
+#if COD2_PORT_DEBUG
+    if (COD2_DEBUG_ENV("COD2_CLAMP_TR")) {
         int _e;
         for (_e = 0; _e < level.num_entities; _e++) {
             if ((unsigned int)g_entities[_e].s.pos.trType > 8u)  g_entities[_e].s.pos.trType = (trType_t)(0);
             if ((unsigned int)g_entities[_e].s.apos.trType > 8u) g_entities[_e].s.apos.trType = (trType_t)(0);
         }
     }
+#endif
 
     {
         int numClients = level.maxclients;

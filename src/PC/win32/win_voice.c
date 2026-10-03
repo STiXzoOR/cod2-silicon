@@ -93,7 +93,15 @@ Bool Voice_Init(void)
     winvoice_mic_scaler = Dvar_RegisterFloat("winvoice_mic_scaler", 1.0f, 0.25f, 2.0f, 0x1001);
 
     freq = *(int **)&voice_freq_ptr;
+#if COD2_APPLE_SDK
+    /* voice_freq_ptr is placeholder storage (link_stubs.c); the original reads
+     * a pointer from an unmodelled global (Mac 1.3 Voice_Init loads it from
+     * 0x1acd9fd). Skip the write until that global is reconstructed. */
+    if (freq)
+        *freq = 0;
+#else
     *freq = 0;
+#endif
 
     if (!Record_Init(0, 0))
         return 0;

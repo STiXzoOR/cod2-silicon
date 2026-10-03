@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 #include <string.h>
@@ -113,7 +114,7 @@ void ClientBegin(int clientNum)
 
     CalculateRanks();
 
-    if (getenv("DBGSPAM"))
+    if (COD2_DEBUG_ENV("DBGSPAM"))
         Com_Printf("[team-trace] ClientBegin client=%d ent=%p begin=%u\n",
                    clientNum, (void *)ent, (unsigned int)scr->begin);
     Scr_Notify(ent, scr->begin, 0);

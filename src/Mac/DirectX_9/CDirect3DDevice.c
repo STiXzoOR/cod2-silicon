@@ -903,6 +903,17 @@ static void CDirect3DDevice_ApplyTextureCombineAlpha(DWORD op, DWORD arg0, DWORD
                                           src0, src1, src2, 1);
 }
 
+#if defined(COD2_X64)
+/* A renderer feature option, sampled once instead of once per indexed draw. */
+static int CDirect3DDevice_UsePrograms(void)
+{
+    static int enabled = -1;
+    if (enabled < 0)
+        enabled = getenv("D3D_PROG") != NULL;
+    return enabled;
+}
+#endif
+
 static int CDirect3DDevice_LightmapScale(void)
 {
     static int scale = -1;
@@ -1720,7 +1731,11 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
             GLuint vsId = (!is2D && g_activeVertexShader)
                               ? *(GLuint *)((char *)g_activeVertexShader + 4)
                               : 0;
+#if defined(COD2_X64)
+            int useProg = vsId && dev->pixelShader && CDirect3DDevice_UsePrograms();
+#else
             int useProg = vsId && dev->pixelShader && getenv("D3D_PROG");
+#endif
             if (useProg) {
                 glEnable(0x8620 );
                 glBindProgramARB(0x8620, vsId);

@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 extern dvar_t *r_rendererInUse;
 extern Bool g_RenderToShadowCookie;
@@ -1135,9 +1136,9 @@ void RB_ChangeState_0(int stateBits0)
         DWORD cullVal = s_cullTable[((unsigned int)stateBits0 >> 14) & 3];
 #ifdef GFX_REAL_D3D9
 
-        if (getenv("REALD3D9_NOCULL"))
+        if (COD2_DEBUG_ENV("REALD3D9_NOCULL"))
             cullVal = 1;
-        else if (getenv("REALD3D9_FLIPCULL")) {
+        else if (COD2_DEBUG_ENV("REALD3D9_FLIPCULL")) {
             if (cullVal == 2)
                 cullVal = 3;
             else if (cullVal == 3)

@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 extern struct DxGlobals dx;
 /* File-scope alias: bound where no local can shadow `dx`, so uses below
@@ -56,7 +57,7 @@ static void SMT_Log(const char *tag, struct XModel *mdl, GfxEntity *ent)
     int i;
     float ox, oy, oz, sc;
     int bad;
-    if (!getenv("REALD3D9_SMTLOG") || !mdl || !ent)
+    if (!COD2_DEBUG_ENV("REALD3D9_SMTLOG") || !mdl || !ent)
         return;
     nm = XModelGetName(mdl);
     for (i = 0; i < nseen; i++)
@@ -988,7 +989,7 @@ static int R_PreSkinStaticSurface(GfxSceneEntity *sceneEnt, GfxEntity *ent, int 
                 void *techSet = (void *)((Material *)mat)->techniqueSet;
                 MaterialTechnique *tech34 = techSet ? ((MaterialTechniqueSet *)techSet)->techniques[12] : 0;
 #ifdef GFX_REAL_D3D9
-                if (getenv("REALD3D9_SMCLOG")) {
+                if (COD2_DEBUG_ENV("REALD3D9_SMCLOG")) {
                     static int sl;
                     static const char *seen[256];
                     static int ns;
@@ -1021,7 +1022,7 @@ static int R_PreSkinStaticSurface(GfxSceneEntity *sceneEnt, GfxEntity *ent, int 
                 GfxStaticSurface *staticSurf = &smcData[smodelIndex].staticSurfs[surfaceIndex];
                 GfxStaticModelSurfaceCached *cached = staticSurf->cachedLods[lod];
 #ifdef GFX_REAL_D3D9
-                if (getenv("REALD3D9_SMCHIT")) {
+                if (COD2_DEBUG_ENV("REALD3D9_SMCHIT")) {
                     extern int g_smc_hit, g_smc_new;
                     if (cached)
                         g_smc_hit++;
@@ -1034,7 +1035,7 @@ static int R_PreSkinStaticSurface(GfxSceneEntity *sceneEnt, GfxEntity *ent, int 
 #ifdef GFX_REAL_D3D9
                     extern long long g_smc_recache_ms;
                     extern long long QueryPerf(void);
-                    long long _t0 = getenv("REALD3D9_SMCHIT") ? QueryPerf() : 0;
+                    long long _t0 = COD2_DEBUG_ENV("REALD3D9_SMCHIT") ? QueryPerf() : 0;
 #endif
                     cached = (GfxStaticModelSurfaceCached *)R_CacheStaticModelSurface(staticSurf, xsurf, smodelIndex, (const Material *)(mat));
 #ifdef GFX_REAL_D3D9
@@ -1551,7 +1552,7 @@ void R_SkinXModelCmd(SkinXModelCmd *skinCmd, int context)
         const DObjSkelMat *boneMatrix = (const DObjSkelMat *)(matArray + skinCmd->matOffset[surfaceIndex] * 64);
 #ifdef GFX_REAL_D3D9
 
-        if (getenv("REALD3D9_STALECHK") && (surfType == 3 || surfType == 4)) {
+        if (COD2_DEBUG_ENV("REALD3D9_STALECHK") && (surfType == 3 || surfType == 4)) {
             int b = skinCmd->matOffset[surfaceIndex];
             int flagged = (skinCmd->surfacePartBits[b >> 5] >> (b & 0x1f)) & 1;
             if (!flagged) {

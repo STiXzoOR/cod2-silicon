@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 #include "cod2_feature_config.h"
 #include "scr_debugger_ui.h"
 
@@ -35,8 +38,10 @@ extern int I_stricmp(const char *a, const char *b);
 extern int I_strnicmp(const char *a, const char *b, int n);
 extern char *va(const char *fmt, ...);
 extern void Com_sprintf(char *dst, int size, const char *fmt, ...);
+#if !defined(COD2_X64)
 extern void qsort(void *base, int n, int size,
                   int (*cmp)(const void *, const void *));
+#endif
 
 extern void UI_Component_DrawPic(float x, float y, float w, float h,
                                  const float *color, MaterialHandle mat);

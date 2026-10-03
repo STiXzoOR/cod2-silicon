@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "PC/qcommon/cod2x_features.h"
@@ -1177,7 +1178,7 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
             {
                 static int apwTrace;
                 if (apwTrace < 8) {
-                    if (getenv("DBGSPAM"))
+                    if (COD2_DEBUG_ENV("DBGSPAM"))
                         fprintf(stderr, "[viewmodel] AddPlayerWeapon: dObj=%p skinEnt=%p gunOrg=(%.0f,%.0f,%.0f) lightOrg=(%.0f,%.0f,%.0f) registered=%d\n",
                                 (void *)weapInfo->viewModelDObj, (void *)skinEnt,
                                 gun.origin[0], gun.origin[1], gun.origin[2],
@@ -1354,7 +1355,7 @@ void CG_AddViewWeapon(playerState_t *ps)
     {
         static int vwTrace;
         if (vwTrace < 8) {
-            if (getenv("DBGSPAM"))
+            if (COD2_DEBUG_ENV("DBGSPAM"))
                 fprintf(stderr, "[viewmodel] AddViewWeapon: drawGun=%d weaponIdx=%d pm_type=%d eFlags=0x%x thirdPerson=%d org=(%.0f,%.0f,%.0f)\n",
                         drawGun, weaponIndex, playerState->pm_type, playerState->eFlags,
                         cg->renderingThirdPerson, cg->refdef.vieworg[0], cg->refdef.vieworg[1], cg->refdef.vieworg[2]);

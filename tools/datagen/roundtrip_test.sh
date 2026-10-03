@@ -4,6 +4,7 @@ set -eu
 repo=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 cd "$repo"
 binary=${1:-${COD2_STABS_BINARY:-$HOME/Projects/cod2-native-refs/macbin/cod2mp_mac_1.3_i386}}
+values_binary=${COD2_VALUES_BINARY:-$HOME/Games/CoD2-mac-bin/Call of Duty 2.app/Contents/Call of Duty 2 Multiplayer.app/Contents/MacOS/Call of Duty 2 Multiplayer}
 out=${2:-build/x64_gen}
 compiler=${CLANG:-clang}
 python=${PYTHON:-python3}
@@ -22,7 +23,7 @@ else
     exit 1
 fi
 "$python" -m unittest discover -s tools/datagen -v
-"$python" tools/datagen/generate.py --binary "$binary" --output "$out" --clang "$compiler"
+"$python" tools/datagen/generate.py --binary "$binary" --values-binary "$values_binary" --output "$out" --clang "$compiler"
 for group in data literals import_pointers; do
     "$compiler" -target i386-unknown-linux-gnu -ffreestanding -std=c11 -c "$out/$group.c" -o "$out/generated-$group.o"
     "$objdump" -s -r "$out/original-$group.o" > "$out/original-$group.objdump"
@@ -38,9 +39,9 @@ done
 for group in data literals; do
     "$compiler" -target arm64-apple-macos -ffreestanding -std=c11 -c "$out/reference-native-$group.c" -o "$out/arm64-reference-native-$group.o"
 done
-"$python" tools/datagen/arm64_test.py "$out"
+"$python" tools/datagen/arm64_test.py "$out" --values-binary "$values_binary"
 "$compiler" -target i386-unknown-linux-gnu -ffreestanding -std=c11 -c "$out/bss_probe.c" -o "$out/i386-bss_probe.o"
 "$compiler" -target arm64-apple-macos -ffreestanding -std=c11 -c "$out/bss_probe.c" -o "$out/arm64-bss_probe.o"
 # A second generation must leave all source/coverage outputs byte-identical.
-"$python" tools/datagen/determinism.py "$binary" "$out" "$compiler"
+"$python" tools/datagen/determinism.py "$binary" "$out" "$compiler" "$values_binary"
 echo 'PASS: i386 bytes/relocations/symbols, arm64 full/native and BSS probes, LP64 address points, determinism'

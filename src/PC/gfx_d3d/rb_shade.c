@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 extern struct DxGlobals dx;
 /* File-scope alias: bound where no local can shadow `dx`, so uses below
@@ -306,15 +307,15 @@ void RB_DrawIndexedPrim(const GfxDrawPrimArgs *args, int primCount)
         extern int g_rb_dip_calls;
         g_rb_dip_calls++;
     }
-    if (getenv("REALD3D9_NODRAW"))
+    if (COD2_DEBUG_ENV("REALD3D9_NODRAW"))
         return;
-    if (getenv("REALD3D9_SCENELOG")) {
+    if (COD2_DEBUG_ENV("REALD3D9_SCENELOG")) {
         static int sl = 0;
         if ((sl++ % 200) == 0)
             fprintf(stderr, "[SCENELOG] draw: inScene=%d\n", dx.inScene);
     }
 
-    if (getenv("REALD3D9_VPLOG") && args->vertexCount >= (getenv("REALD3D9_VPALL") ? 0u : 200u)) {
+    if (COD2_DEBUG_ENV("REALD3D9_VPLOG") && args->vertexCount >= (COD2_DEBUG_ENV("REALD3D9_VPALL") ? 0u : 200u)) {
         static int budget = 40;
         if (budget > 0) {
             budget--;
@@ -356,7 +357,7 @@ void RB_DrawIndexedPrim(const GfxDrawPrimArgs *args, int primCount)
             if (tex1)
                 ((HRESULT(D3DVTCC *)(void *))((*(void ***)tex1)[2]))(tex1);
 
-            if (getenv("REALD3D9_CONSTDUMP")) {
+            if (COD2_DEBUG_ENV("REALD3D9_CONSTDUMP")) {
                 static int cd2 = 0;
                 if (cd2 < 3) {
                     cd2++;
@@ -378,7 +379,7 @@ void RB_DrawIndexedPrim(const GfxDrawPrimArgs *args, int primCount)
                 }
             }
 
-            if (tex0 && getenv("REALD3D9_TEXDUMP")) {
+            if (tex0 && COD2_DEBUG_ENV("REALD3D9_TEXDUMP")) {
                 static int td = 0;
                 if (td < 4) {
                     td++;
@@ -1506,7 +1507,7 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
 
             textureRoutingCount = ((MaterialPassDx9 *)pass)->vertexArgCount;
 #ifdef GFX_REAL_D3D9
-            if (getenv("REALD3D9_ARGLOG")) {
+            if (COD2_DEBUG_ENV("REALD3D9_ARGLOG")) {
                 static int al = 0;
                 if (al < 6) {
                     al++;
@@ -1563,7 +1564,7 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                             int dataSize = rowCount * 16;
                             byte *cached = (byte *)&dxState + destIndex * 16;
 #ifdef GFX_REAL_D3D9
-                            if (getenv("REALD3D9_ARGLOG")) {
+                            if (COD2_DEBUG_ENV("REALD3D9_ARGLOG")) {
                                 static int cl = 0;
                                 if (cl < 8) {
                                     cl++;
@@ -1733,10 +1734,10 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                         byte samplerState = 0;
 
                         RB_GetTextureFromCode_impl(codeTexture, &image, &samplerState);
-                        RB_X64TraceSampler("code", ((materialCommands_t *)RB_TessBase())->material,
-                                           type, entry->dest, NULL, codeTexture, (GfxImage *)image, samplerState);
+                        COD2_DEBUG_ONLY(RB_X64TraceSampler("code", ((materialCommands_t *)RB_TessBase())->material,
+                                           type, entry->dest, NULL, codeTexture, (GfxImage *)image, samplerState);)
 #ifdef GFX_REAL_D3D9
-                        if (getenv("REALD3D9_SAMPLOG")) {
+                        if (COD2_DEBUG_ENV("REALD3D9_SAMPLOG")) {
                             static int spl = 0;
                             if (spl < 40) {
                                 spl++;
@@ -1787,12 +1788,12 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                         }
 
                         if (image) {
-                            RB_X64TraceSampler("material", ((materialCommands_t *)RB_TessBase())->material,
-                                               type, destSampler, textureName, -1, (GfxImage *)image, samplerState);
+                            COD2_DEBUG_ONLY(RB_X64TraceSampler("material", ((materialCommands_t *)RB_TessBase())->material,
+                                               type, destSampler, textureName, -1, (GfxImage *)image, samplerState);)
                             RB_SetSampler(destSampler, samplerState, (GfxImage *)(image));
                         } else {
-                            RB_X64TraceSampler("material-null", ((materialCommands_t *)RB_TessBase())->material,
-                                               type, destSampler, textureName, -1, NULL, samplerState);
+                            COD2_DEBUG_ONLY(RB_X64TraceSampler("material-null", ((materialCommands_t *)RB_TessBase())->material,
+                                               type, destSampler, textureName, -1, NULL, samplerState);)
                         }
                         break;
                     }
@@ -1907,12 +1908,12 @@ void RB_EndSurface(void)
     GfxDrawPrimArgs args;
     int vertexStride;
 
-    diag_endsurface_entry(tess);
+    COD2_DEBUG_ONLY(diag_endsurface_entry(tess);)
     tess = RB_TessBase();
 
     material = ((materialCommands_t *)tess)->material;
     if (!material) {
-        g_rb_endsurface_nomaterial++;
+        COD2_DEBUG_ONLY(g_rb_endsurface_nomaterial++;)
         goto cleanup;
     }
 
@@ -1923,7 +1924,7 @@ void RB_EndSurface(void)
        `p + 0x1_0000_0000 < 0x2_0000_0000` catches both. Guard the deref so an editable
        text field / chat draw doesn't crash on a bad material or techniqueSet. */
     if ((uintptr_t)material + 0x100000000ULL < 0x200000000ULL) {
-        g_rb_endsurface_nomaterial++;
+        COD2_DEBUG_ONLY(g_rb_endsurface_nomaterial++;)
         goto cleanup;
     }
 #endif
@@ -1931,24 +1932,24 @@ void RB_EndSurface(void)
     {
         uintptr_t ts = (uintptr_t)material->techniqueSet;   /* was unsigned int -> truncated ptr on x64 */
         if (!ts || ts < 0x08000000u) {
-            g_rb_endsurface_notechnique++;
+            COD2_DEBUG_ONLY(g_rb_endsurface_notechnique++;)
             goto cleanup;
         }
 #if defined(COD2_X64)
         if (ts + 0x100000000ULL < 0x200000000ULL) {
-            g_rb_endsurface_notechnique++;
+            COD2_DEBUG_ONLY(g_rb_endsurface_notechnique++;)
             goto cleanup;
         }
 #endif
     }
     technique = material->techniqueSet->techniques[(*(MaterialTechniqueType *)&((materialCommands_t *)tess)->techType)];
 
-    g_rb_endsurface_count++;
-    RB_X64TraceEndSurface("loaded", material, technique, (const materialCommands_t *)tess);
+    COD2_DEBUG_ONLY(g_rb_endsurface_count++;)
+    COD2_DEBUG_ONLY(RB_X64TraceEndSurface("loaded", material, technique, (const materialCommands_t *)tess);)
 
     if (!technique) {
-        RB_X64TraceEndSurface("skip-notech", material, technique, (const materialCommands_t *)tess);
-        g_rb_endsurface_notechnique++;
+        COD2_DEBUG_ONLY(RB_X64TraceEndSurface("skip-notech", material, technique, (const materialCommands_t *)tess);)
+        COD2_DEBUG_ONLY(g_rb_endsurface_notechnique++;)
         goto cleanup;
     }
 
@@ -1957,23 +1958,23 @@ void RB_EndSurface(void)
         RB_UpdateViewport();
 
     if (dxState.viewportIsNull) {
-        RB_X64TraceEndSurface("skip-viewport", material, technique, (const materialCommands_t *)tess);
-        g_rb_endsurface_dxstate++;
+        COD2_DEBUG_ONLY(RB_X64TraceEndSurface("skip-viewport", material, technique, (const materialCommands_t *)tess);)
+        COD2_DEBUG_ONLY(g_rb_endsurface_dxstate++;)
         goto cleanup;
     }
 
     techFlags = technique->flags;
     if (techFlags & 1) {
         if (backEnd->resolvedPostSunTarget == 0xe) {
-            g_rb_endsurface_flag1skip++;
-            RB_X64TraceEndSurface("skip-flag1", material, technique, (const materialCommands_t *)tess);
+            COD2_DEBUG_ONLY(g_rb_endsurface_flag1skip++;)
+            COD2_DEBUG_ONLY(RB_X64TraceEndSurface("skip-flag1", material, technique, (const materialCommands_t *)tess);)
             goto cleanup;
         }
     }
     if (techFlags & 2) {
         if (backEnd->resolvedSceneTarget == 0xe) {
-            g_rb_endsurface_flag2skip++;
-            RB_X64TraceEndSurface("skip-flag2", material, technique, (const materialCommands_t *)tess);
+            COD2_DEBUG_ONLY(g_rb_endsurface_flag2skip++;)
+            COD2_DEBUG_ONLY(RB_X64TraceEndSurface("skip-flag2", material, technique, (const materialCommands_t *)tess);)
             goto cleanup;
         }
     }
@@ -2020,10 +2021,10 @@ void RB_EndSurface(void)
 
     indexCount = ((materialCommands_t *)tess)->indexCount;
     if (indexCount == 0) {
-        RB_X64TraceEndSurface("skip-index0", material, technique, (const materialCommands_t *)tess);
-        g_rb_endsurface_idxzero++;
-        g_rb_tess_type_idxzero[g_rb_last_tess_type]++;
-        diag_idxzero(tess);
+        COD2_DEBUG_ONLY(RB_X64TraceEndSurface("skip-index0", material, technique, (const materialCommands_t *)tess);)
+        COD2_DEBUG_ONLY(g_rb_endsurface_idxzero++;)
+        COD2_DEBUG_ONLY(g_rb_tess_type_idxzero[g_rb_last_tess_type]++;)
+        COD2_DEBUG_ONLY(diag_idxzero(tess);)
         return;
     }
 
@@ -2136,8 +2137,8 @@ void RB_EndSurface(void)
 #undef RB_GL_TEXTURE_CUBE_MAP
     }
 
-    g_rb_endsurface_draw++;
-    RB_X64TraceEndSurface("draw", material, technique, (const materialCommands_t *)tess);
+    COD2_DEBUG_ONLY(g_rb_endsurface_draw++;)
+    COD2_DEBUG_ONLY(RB_X64TraceEndSurface("draw", material, technique, (const materialCommands_t *)tess);)
     RB_DrawTechnique((*(MaterialVertexDeclType *)&((materialCommands_t *)tess)->declType), &args);
 
     tess = RB_TessBase();

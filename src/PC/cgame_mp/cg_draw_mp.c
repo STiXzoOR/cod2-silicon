@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "PC/qcommon/cod2x_features.h"
@@ -341,7 +342,7 @@ void CG_DrawDisconnect(void)
 
     CL_GetUserCmd(CL_GetCurrentCmdNumber() - 127, &cmd);
     snap = cg->nextSnap;
-    if (getenv("COD2_CNXDIAG")) {
+    if (COD2_DEBUG_ENV("COD2_CNXDIAG")) {
         static int c;
         if ((c++ & 0x3f) == 0)
             Com_Printf("[cnxdiag] cmd.serverTime=%d snap->ps.commandTime=%d cg->time=%d cmdNum=%d\n",

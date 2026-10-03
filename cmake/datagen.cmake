@@ -8,10 +8,15 @@ function(cod2_generate_typed_blobs output_var)
   endif()
   set(COD2_STABS_BINARY "$ENV{HOME}/Projects/cod2-native-refs/macbin/cod2mp_mac_1.3_i386"
       CACHE FILEPATH "User-supplied i386 Mac binary with STABS (type information only)")
+  set(COD2_VALUES_BINARY "$ENV{HOME}/Games/CoD2-mac-bin/Call of Duty 2.app/Contents/Call of Duty 2 Multiplayer.app/Contents/MacOS/Call of Duty 2 Multiplayer"
+      CACHE FILEPATH "User-supplied Steam i386 Mac binary for verified LP64 scalar values")
   set(COD2_TYPED_DATA_DIR "${CMAKE_SOURCE_DIR}/build/x64_gen"
       CACHE PATH "Local generated architecture-neutral blobs")
   if(NOT EXISTS "${COD2_STABS_BINARY}")
     message(FATAL_ERROR "Typed data generation needs COD2_STABS_BINARY=${COD2_STABS_BINARY}")
+  endif()
+  if(NOT EXISTS "${COD2_VALUES_BINARY}")
+    message(FATAL_ERROR "Typed data generation needs COD2_VALUES_BINARY=${COD2_VALUES_BINARY}")
   endif()
   file(GLOB DATAGEN_SCRIPTS CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/tools/datagen/*.py")
   file(GLOB_RECURSE DATAGEN_HEADERS CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/headers/*.h")
@@ -24,8 +29,9 @@ function(cod2_generate_typed_blobs output_var)
     OUTPUT ${typed_c} "${COD2_TYPED_DATA_DIR}/typed_types.h" "${COD2_TYPED_DATA_DIR}/coverage.json"
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/datagen/generate.py"
             --binary "${COD2_STABS_BINARY}" --output "${COD2_TYPED_DATA_DIR}"
+            --values-binary "${COD2_VALUES_BINARY}"
             --clang "${COD2_DATAGEN_CLANG}"
-    DEPENDS ${DATAGEN_SCRIPTS} ${DATAGEN_HEADERS} "${COD2_STABS_BINARY}"
+    DEPENDS ${DATAGEN_SCRIPTS} ${DATAGEN_HEADERS} "${COD2_STABS_BINARY}" "${COD2_VALUES_BINARY}"
             "${CMAKE_SOURCE_DIR}/src/blobs/data.S"
             "${CMAKE_SOURCE_DIR}/src/blobs/literals.S"
             "${CMAKE_SOURCE_DIR}/src/blobs/import_pointers.S"

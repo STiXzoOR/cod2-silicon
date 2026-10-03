@@ -1,5 +1,9 @@
 # WS2 — typed data generator
 
+Current status: the follow-up section below records the corrected LP64 scalar
+output and successful integrated arm64 client link. The original report is
+retained as the initial coverage and migration record.
+
 Branch: `port/datagen`. Base: `1cb3516` (upstream `410342a`). Verified on
 2026-10-03 with Python 3.14.7 and Apple clang 21. No pushes, remote changes,
 package installations, or sibling-worktree access. Generated sources, objects,
@@ -301,3 +305,193 @@ Next work:
    when the verification environment has an i386 Linux libc sysroot.
 5. Run the existing normalized statehash/parity harness after linking. Passing
    object-layout checks alone does not prove engine runtime equivalence.
+
+## Follow-up — Steam scalar recovery and successful client link
+
+Merged `port/main` first, fast-forwarding to `5d5c331`. This includes WS1–WS5,
+the macOS generator hook, the `__aarch64__` guards, the Apple `infoParms`
+definition, Mach-O seam aliases, and the post-merge duplicate/link fixes. This
+section supersedes the earlier LP64 failure entries for the thirteen objects
+whose debug-declared scalar fields contained symbolic relocations. Their
+original i386 fallbacks remain deliberately unchanged.
+
+The requested `cod2_macos` build now links. Before this change, the same command
+failed at `_dlText+0xC`. After the changes below, it produces an arm64 Mach-O
+executable with `NOUNDEFS`. No client launch or runtime parity test was performed
+in this follow-up, and the dedicated import-pointer problem was not modified.
+
+### Reference decision and recovery rules
+
+The separate value source is the user's licensed Steam Mac executable:
+
+```text
+/Users/stix/Games/CoD2-mac-bin/Call of Duty 2.app/Contents/Call of Duty 2 Multiplayer.app/Contents/MacOS/Call of Duty 2 Multiplayer
+```
+
+Its SHA-256 is
+`a6aa70d4e2b0bf5f388b0653752847bddac95398ee0d860e757ec79e466f5d1b`.
+Direct `LC_SYMTAB` inspection confirms 10,243 non-STABS symbols and 33,586 STABS
+entries. These STABS entries have names/addresses but no usable type
+definitions: the existing parser obtains zero types and zero typed variables.
+Consequently `COD2_STABS_BINARY` remains the original full-debug reference. It
+was not silently switched to Steam. `COD2_VALUES_BINARY` is a new, independent
+CMake cache path; its default is the Steam path above under `$HOME`. The
+generator accepts `--values-binary`, and the round-trip script accepts the
+`COD2_VALUES_BINARY` environment variable. Both binaries are generation
+dependencies, and neither is copied into the repository.
+
+`macho32.py` reads `LC_SEGMENT` sections and the symbol table directly. Matching
+uses symbol names: the platform underscore, Itanium file-static `__ZL...`
+names, and unique function-static `__ZZ...E<length><name>` suffixes. Ambiguous
+matches fail. No old `str_XXXXXXXX` address is used to find a Steam object.
+Storage reads are bounded by the section and next symbol, with logical sizes
+from the full-debug STABS. The `infoParms` size additionally follows its
+existing engine definition of 54 entries, including two zero sentinels; the
+old debug entry describes only 53.
+
+For every recovered object, generation compares all nonzero, non-relocated
+source bytes against the corresponding Steam storage. Source-only tail padding
+must contain no nonzero unrelocated bytes. **No mismatches were found**, in
+either the full assembly or production artifact instances. Any mismatch,
+missing/ambiguous symbol, or incompatible extent fails generation rather than
+choosing a value silently.
+
+`recover.py` retains relocations only at debug-declared pointer fields. Scalar
+and byte-array data come from Steam; real pointers keep the repository's
+symbol/field references and addends, not Steam addresses. The generated source
+selects the original definition for `__SIZEOF_POINTER__ == 4` and the recovered
+definition for LP64. Remaining unknown fallback pointer storage is packed only
+on i386 and naturally aligned on LP64. The original blob sources and native
+artifacts were not edited.
+
+### Objects recovered
+
+| Object | Steam symbol/address | Value bytes | False relocations removed on LP64 |
+| --- | --- | ---: | ---: |
+| `sGerman_ISO_VK_Map` | `_sGerman_ISO_VK_Map`, `__DATA,__data` `0x375200` | 128 | 2 |
+| `sFrench_ISO_VK_Map` | `_sFrench_ISO_VK_Map`, `__DATA,__data` `0x375180` | 128 | 2 |
+| `sANSI_VK_Map` | `__ZL12sANSI_VK_Map`, `__DATA,__data` `0x375280` | 128 | 2 |
+| `FastTranslateTbl` | `__ZL16FastTranslateTbl`, `__TEXT,__const` `0x300090` | 8 | 1 |
+| `sD3DTextureOpToOpenGL` | `__ZL21sD3DTextureOpToOpenGL`, `__TEXT,__const` `0x300020` | 60 | 4 |
+| `infoParms` | `_infoParms`, `__DATA,__data` `0x37c4c0` | 1,080 | 10 |
+| `s_XModelSurfaceSize` | `__ZL19s_XModelSurfaceSize`, `__TEXT,__const` `0x301cb8` | 8 | 1 |
+| `virtualKeyConvert` | `__ZL17virtualKeyConvert`, `__TEXT,__const` `0x30ea60` | 292 | 8 |
+| `dlText` | `__ZZL22UI_DisplayDownloadInfoPKcffP6Font_sfE6dlText`, `__DATA,__data` `0x37e8e4` | 16 | 1 |
+| `g_encoder_samplerate` | `_g_encoder_samplerate`, `__DATA,__data` `0x3809e4` | 4 | 1 |
+| `g_sound_recordFrequency` | `_g_sound_recordFrequency`, `__DATA,__data` `0x3809ec` | 4 | 1 |
+| `inflate_mask` | `_inflate_mask`, `__DATA,__data` `0x381ce0` | 68 | 4 |
+| `fixed_td` | `_fixed_td`, `__DATA,__data` `0x382d40` | 256 | 8 |
+
+The addresses above document the lookup result; they are not hardcoded in the
+generator. `FastTranslateTbl` has eight logical debug bytes followed by zero
+blob padding; that padding is also cross-checked where reference storage exists.
+
+Notable true values:
+
+- Steam's complete `dlText[16]` is `EXE_DOWNLOADING` plus its terminating NUL.
+  The task's `EXE_DOWNLOAD` comes from the truncated `src/blobs/data.c`
+  reconstruction. The false relocation at byte 12 covers `ING\0`.
+- Both sample-rate globals contain integer `8192`, not a pointer to the Mach-O
+  header plus 4096.
+- The four falsely relocated final `inflate_mask` entries are `8191`, `16383`,
+  `32767`, and `65535`.
+- The eight falsely relocated `fixed_td` base fields are `4097`, `16385`,
+  `8193`, `24577`, `6145`, `24577`, `12289`, and `24577`.
+
+The production native object set contains only `dlText`, `g_encoder_samplerate`,
+and `fixed_td` from this category, so its ten false fixups are removed. The
+other ten definitions remain owned by their existing engine translation units
+or omitted as upstream intended. In particular, `infoParms` is still absent
+from `data_native.c`; `surfaceflags.c` owns its Apple definition. The full
+reference output has a corrected table for independent validation and is not
+linked into the engine.
+
+### Alignment and value checks
+
+`check_alignment.py` scans compiler-produced Mach-O relocations and rejects
+every eight-byte `ARM64_RELOC_UNSIGNED` fixup whose actual section address plus
+offset is not divisible by eight. It excludes DWARF/debug sections, whose
+address attributes are not runtime fixups. Generation automatically compiles
+and checks all six initialized output files and the zero-initialized BSS
+probe. It also checks the compiled scalar bytes against Steam, including all
+four integer fields in each of the 54 LP64 `infoParms` rows. A validation
+failure removes the custom command's primary production output so a failed
+generation is not cached as successful.
+
+The old packed native data compiled for arm64 has seven alignment candidates:
+`dlText+0xC`, `fixed_td+0x1C`, `fixed_td+0x64`, `fixed_td+0xAC`,
+`fixed_td+0xF4`, and the real pointer fields at the unaligned object addresses
+of `cmd_text` and `legacyHacks`. Correct scalar types remove the false fixups;
+the compiler's typed layouts/object alignment correctly place the real ones.
+No unaligned runtime pointer relocation remains in any generated output or
+in the four actual generated client build objects.
+
+| Generated arm64 output | Pointer relocations checked | Unaligned |
+| --- | ---: | ---: |
+| Full data | 3,023 | 0 |
+| Full literals | 31 | 0 |
+| Full imports | 880 | 0 |
+| Production data | 26 | 0 |
+| Production literals | 30 | 0 |
+| Production imports | 880 | 0 |
+| BSS probe / actual BSS object | 0 / 0 | 0 |
+
+There are 45 false fixups removed from the full LP64 data, and ten from the
+production data. Original i386 relocation counts remain 3,979 and 946.
+LP64 typed coverage is now 235/245 full data objects and 81/84 production data
+objects. The existing `typed`/`typed_relocations` coverage fields still describe
+the unchanged i386 input; new `lp64_typed`, recovery provenance/type, scalar
+verification, and alignment fields describe LP64. The fallback list marks
+these thirteen failures as **i386 only (LP64 recovered)**. Following the merged
+upstream BSS changes, its inventory is 903 retained declarations, 260 recovered
+raw arrays, and 31 remaining raw fallbacks (1,194 total).
+
+### Verification and handoff
+
+```sh
+./tools/datagen/roundtrip_test.sh
+```
+
+Passes all original i386 section-byte, relocation, and symbol comparisons for
+the full blobs and production artifacts; twelve tests now cover named scalar
+recovery, preservation of genuine pointer references, mismatch rejection,
+next-symbol bounds, and rejection of a compiled unaligned pointer while
+ignoring debug addresses. The two earlier LP64 address-point tests still pass.
+All sixteen recovered instances (thirteen full plus three production) have
+compiler-emitted scalar bytes identical to Steam, and all fourteen generated
+text files remain deterministic.
+
+```sh
+cmake -S . -B build-macos -DCOD2_X64=ON \
+  -DCOD2_STABS_BINARY=$HOME/Projects/cod2-native-refs/macbin/cod2mp_mac_1.3_i386
+cmake --build build-macos -j12 --target cod2_macos
+python3 tools/datagen/check_alignment.py \
+  build-macos/CMakeFiles/cod2_macos.dir/build/x64_gen/*_native.c.o
+file build-macos/cod2_macos
+xcrun llvm-objdump --macho --private-headers build-macos/cod2_macos
+```
+
+The client build reaches `[100%] Built target cod2_macos`. Actual generated
+objects contain 26 + 30 + 880 + 0 aligned pointer fixups. `file` reports
+`Mach-O 64-bit executable arm64`; the Mach-O header reports `EXECUTE` and
+`NOUNDEFS`. The link retains existing warnings for duplicate `-lc++` and the
+common-section alignment reduction; no data-generation link errors remain.
+Detailed local logs are `build/x64_gen/{client-before.log,client-after.log,followup-roundtrip.log}`.
+
+No shared engine/header definitions or original 32-bit blobs were changed in
+this follow-up. Merge `d4c00fb` (recovery/validation helpers), `d8a2bb2` (generator
+and isolated CMake integration), and this report commit onto the integrated `port/main`;
+the macOS hook is already wired. Keep the original `COD2_STABS_BINARY` and
+ensure the new `COD2_VALUES_BINARY` resolves to the owned Steam executable (or
+set the cache path explicitly). Only generator code, its isolated CMake
+module, tests, and documentation are committed; generated payloads remain
+ignored. A runtime smoke/parity check remains for the orchestrator and WS5.
+
+The dedicated target still receives the client's complete import-pointer
+table, including renderer/client functions excluded from its pruned source
+set. It was not built or changed here. Recommendation: generate a separate
+dedicated import set from its actual providers and required consumers, and
+fail on missing required imports; do not add renderer stubs merely to satisfy
+unused client slots. Remaining raw BSS/literal placeholders still need the
+owning subsystem's runtime migration, independently of this successful client
+link.

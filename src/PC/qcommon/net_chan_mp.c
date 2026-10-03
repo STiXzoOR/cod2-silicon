@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 #include "common_types.h"
 #include "imports.h"
 /* dvar globals */
@@ -41,7 +44,9 @@ extern qboolean Sys_StringToAdr(const char *s, netadr_t *a);
 extern Bool Sys_SendPacket(int length, const void *data, netadr_t to);
 extern int Sys_Milliseconds(void);
 #ifndef _WIN32
+#if !defined(COD2_X64)
 extern void *malloc(int size);
+#endif
 #endif
 extern void free(void *ptr);
 extern char *strchr(const char *s, int c);

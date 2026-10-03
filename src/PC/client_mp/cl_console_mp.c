@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 #include "common_types.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "PC/qcommon/cod2x_features.h"
@@ -76,7 +79,9 @@ extern int Sys_IsMainThread(void);
 extern int Sys_Milliseconds(void);
 extern void Com_StripExtension(const char *in, char *out);
 #ifndef _WIN32
+#if !defined(COD2_X64)
 extern void qsort(void *base, int nmemb, int size, int (*compar)(const void *, const void *));
+#endif
 #endif
 extern const char **Cmd_GetAutoCompleteFileList(const char *cmd, int *fileCount, int maxCount);
 extern void FS_FreeFileList(const char **list, int count);

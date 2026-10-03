@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #ifdef GFX_REAL_D3D9
 
 #    include <windows.h>
@@ -36,7 +37,7 @@ void *RealD3D9_CreateGameWindow(int w, int h)
     RECT r;
     const char *cls = "CoD2";
 
-    if (getenv("REALD3D9_GENERIC_WND") || !GetClassInfoExA(hInst, "CoD2", &wc)) {
+    if (COD2_DEBUG_ENV("REALD3D9_GENERIC_WND") || !GetClassInfoExA(hInst, "CoD2", &wc)) {
         WNDCLASSA gc;
         memset(&gc, 0, sizeof(gc));
         gc.lpfnWndProc = DefWindowProcA;

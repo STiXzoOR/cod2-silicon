@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -1795,7 +1796,7 @@ static MaterialShader *MATERIAL_REGPARM2_ABI COD2_FORCE_ALIGN_ARG_POINTER Materi
 
             DWORD compileFlags = 0x10;
             {
-                const char *mf = getenv("REALD3D9_MATFLAG");
+                const char *mf = COD2_DEBUG_ENV("REALD3D9_MATFLAG");
                 if (mf)
                     compileFlags = (DWORD)strtoul(mf, NULL, 16);
             }
@@ -1815,7 +1816,7 @@ static MaterialShader *MATERIAL_REGPARM2_ABI COD2_FORCE_ALIGN_ARG_POINTER Materi
 #endif
 
 #ifdef GFX_REAL_D3D9
-        if (getenv("REALD3D9_SHLOG"))
+        if (COD2_DEBUG_ENV("REALD3D9_SHLOG"))
             fprintf(stderr, "[SHLOG] %-44s %-8s hr=0x%08x %s\n", filename, target,
                     (unsigned)hr, (hr < 0) ? "FAIL" : "ok");
 #endif
@@ -1992,7 +1993,7 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
     {
         MaterialTechniqueSet *techSet = (MaterialTechniqueSet *)Material_FindTechniqueSet(tsName);
 #ifdef GFX_REAL_D3D9
-        if (getenv("REALD3D9_MATDIAG")) {
+        if (COD2_DEBUG_ENV("REALD3D9_MATDIAG")) {
             static int tl;
             if (tl++ < 20) {
                 fprintf(stderr, "[TSLOAD] mtl='%.24s' tsOff=%d tsName='%.32s' found=%p\n",
@@ -2008,7 +2009,7 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
             Com_sprintf(tsFile, 0x40, isDx7 ? "materials_dx7/techniquesets/%s.techset" : "materials/techniquesets/%s.techset", tsName);
             int frr = FS_ReadFile(tsFile, &tsData);
 #ifdef GFX_REAL_D3D9
-            if (getenv("REALD3D9_MATDIAG")) {
+            if (COD2_DEBUG_ENV("REALD3D9_MATDIAG")) {
                 static int fl;
                 if (fl++ < 20) {
                     fprintf(stderr, "[TSFILE] '%s' FS_ReadFile=%d\n", tsFile, frr);
@@ -2054,7 +2055,7 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                         break;
                     }
 #ifdef GFX_REAL_D3D9
-                    if (getenv("REALD3D9_MATDIAG")) {
+                    if (COD2_DEBUG_ENV("REALD3D9_MATDIAG")) {
                         static int tk;
                         if (tk++ < 80) {
                             fprintf(stderr, "[TTYPE] ts='%.20s' tok='%.20s' tt=%d use=%d ttn0='%.16s' ttn1='%.16s'\n",
@@ -2247,7 +2248,7 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
 #ifdef GFX_REAL_D3D9
 #    define D9DBG(tag)                                                              \
         do {                                                                        \
-            if (getenv("REALD3D9_MATDIAG")) {                                       \
+            if (COD2_DEBUG_ENV("REALD3D9_MATDIAG")) {                                       \
                 static int n;                                                       \
                 if (n++ < 12) {                                                     \
                     fprintf(stderr, "[PASSFAIL] %s tech='%.24s'\n", tag, techName); \
@@ -2330,7 +2331,7 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                                 memcpy((byte *)&technique->passArray, lpd, pds);
                             }
 #ifdef GFX_REAL_D3D9
-                            if (getenv("REALD3D9_MATDIAG")) {
+                            if (COD2_DEBUG_ENV("REALD3D9_MATDIAG")) {
                                 static int to;
                                 if (to++ < 16) {
                                     fprintf(stderr, "[TECHOK] ts='%.20s' tech='%.24s' passes=%d\n", techSet ? techSet->name : "?", techName, lpc);
@@ -2675,7 +2676,7 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                         techSet->techniques[ttSlots[ti]] = technique;
                 }
 #ifdef GFX_REAL_D3D9
-                if (getenv("REALD3D9_MATDIAG")) {
+                if (COD2_DEBUG_ENV("REALD3D9_MATDIAG")) {
                     static int pe;
                     if (pe++ < 400) {
                         fprintf(stderr, "[TSPARSE] ts='%.24s' techName='%.24s' technique=%p ttCount=%d ttUsing=%d\n",
@@ -2686,7 +2687,7 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
 #endif
                 if (!Com_MatchToken(&tsText, ";", 1)) {
 #ifdef GFX_REAL_D3D9
-                    if (getenv("REALD3D9_MATDIAG")) {
+                    if (COD2_DEBUG_ENV("REALD3D9_MATDIAG")) {
                         fprintf(stderr, "[TSPARSE] ';' match FAILED -> techSet=NULL\n");
                         fflush(stderr);
                     }
@@ -2699,7 +2700,7 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
             }
         endTsParse:
 #ifdef GFX_REAL_D3D9
-            if (getenv("REALD3D9_MATDIAG")) {
+            if (COD2_DEBUG_ENV("REALD3D9_MATDIAG")) {
                 static int es;
                 if (es++ < 16) {
                     fprintf(stderr, "[ENDTS] ts='%.24s' techSet=%p\n", tsName, (void *)techSet);
@@ -2714,7 +2715,7 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
         }
     storeTechSet:
 #ifdef GFX_REAL_D3D9
-        if (getenv("REALD3D9_MATDIAG")) {
+        if (COD2_DEBUG_ENV("REALD3D9_MATDIAG")) {
             static int ml;
             const char *mn = mtl ? *(const char **)mtl : "?";
             if (ml < 4000 && mn[0] != 0x24) {
