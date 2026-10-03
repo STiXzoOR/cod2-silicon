@@ -240,10 +240,12 @@ int CGLDestroyRendererInfo()
 {
     return 0;
 }
+#if !(defined(__APPLE__) && defined(COD2_X64))
 int CGLGetCurrentContext()
 {
     return 0;
 }
+#endif
 int CGLQueryRendererInfo()
 {
     return 0;

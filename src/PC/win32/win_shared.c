@@ -48,6 +48,23 @@ int Sys_MillisecondsRaw(void)
 #endif
 }
 
+#if COD2_APPLE_SDK
+#include "platform/macos_system.h"
+void Sys_WaitUntilMilliseconds(unsigned int target)
+{
+    uint64_t now = MacSystem_Nanoseconds();
+    uint64_t whole = now / 1000000;
+    int32_t remaining = (int32_t)(sys_timeBase + target - (uint32_t)whole);
+    if (remaining <= 0)
+        return;
+    uint64_t deadline = (whole + remaining) * 1000000;
+    /* Continue pumping input and packets at least every half millisecond. */
+    if (deadline > now + 500000)
+        deadline = now + 500000;
+    MacSystem_WaitUntil(deadline);
+}
+#endif
+
 void Sys_SnapVector(float *v)
 {
     v[0] = (float)(int)v[0];

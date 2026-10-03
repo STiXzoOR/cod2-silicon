@@ -7,6 +7,44 @@ of `main/`. All generated logs/configs/results default to ignored `output/`.
 
 ## Launch
 
+For fullscreen at the 333 cap, after building `build-macos/cod2_macos`:
+
+```sh
+tools/macos/fullscreen.sh
+COD2_RESOLUTION=3840x2160 tools/macos/fullscreen.sh
+COD2_BORDERLESS=1 tools/macos/fullscreen.sh
+```
+
+The default is exclusive 1920×1080, `com_maxfps 333`, `r_swapInterval 0`,
+raw mouse input, and `logfile 0`. The writable home is `output/fullscreen/home`;
+licensed data stays at `~/Games/CoD2`. Override `COD2_BINARY`, `COD2_DATA_DIR`,
+or `COD2_RUN_DIR` as needed. Extra engine arguments come last. The six explicit
+resolution choices run from 1080p through 6016×3384. A cap is a timing setting;
+it does not guarantee 333 FPS 1% lows (see the WS17 report).
+
+To build a signed local bundle that starts with those settings:
+
+```sh
+cmake -S . -B build-macos -DCOD2_X64=ON -DCMAKE_BUILD_TYPE=Release \
+  -DCOD2_FEATURE_CFLAGS=-DCOD2_CODX=1
+cmake --build build-macos --target cod2_macos -j8
+python3 tools/cod2x/make_macos_app.py build-macos/cod2_macos \
+  'output/CoD2x Native.app' --game-dir "$HOME/Games/CoD2"
+open 'output/CoD2x Native.app'
+```
+
+The bundle declares `public.app-category.action-games` and
+`LSSupportsGameMode=true`; game data remains outside it. `--resolution` chooses
+a different render size, `--borderless` selects desktop fullscreen, and
+`--no-game-mode` creates a control bundle for eligibility comparisons. Settings
+are stored as bundle launch arguments, before explicit caller arguments.
+The working fullscreen default disables Cocoa fullscreen Spaces before SDL
+video initialization. `SDL_VIDEO_MAC_FULLSCREEN_SPACES=1` opts into an
+experimental Space transition; this failed to remain fullscreen in WS17.
+Game Policy recognized the bundle, but active Game Mode and a performance
+benefit have not been verified. See [WS17](../../docs/macos-port/reports/WS17-fullscreen.md)
+for the measured modes, display-state limitations and remaining work.
+
 ```sh
 # Build with the integrated macOS CMake target; no system packages are installed.
 cmake -S . -B output/build-macos -DCOD2_X64=ON \
@@ -114,6 +152,20 @@ are checked once per second and included in `presentation_changes`; requested
 fullscreen settings alone do not prove the OS completed a mode transition.
 Capture is bounded
 to 60 seconds or 65,536 timestamps. CSV publication happens after capture.
+
+The observer uses `SIGUSR1` to begin capture (`SIGUSR2` is the CoD2x freeze
+diagnostic). In fixed-backing fullscreen it queries the CGL surface override;
+SDL's size query only describes the view's bounds. `actual_display` records
+both SDL bounds and the CoreGraphics mode/pixel sizes. The trace also records
+main-thread CPU time, texture uploads, ARB program uploads and buffer
+reallocations. `swap_ms` is the previous swap's wall time, which belongs to the
+current interval. These are CPU API timings, not GPU execution timings.
+
+Use `--app 'output/CoD2x Native.app'` to launch through LaunchServices instead
+of `--binary`. The tool uses an output-owned FIFO and the injected observer's
+PID file, and only kills that exact app PID. This allows normal bundle
+classification when checking Game Mode in system logs. It does not force Game
+Mode on, keep the app focused, or change system preferences.
 
 `--cpu-profile` enables a separate 1 ms main-thread signal/frame-pointer sampler
 and writes `cpu-stacks.csv`. It is a qualitative fallback when external
