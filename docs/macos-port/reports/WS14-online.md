@@ -73,7 +73,10 @@ python3 tools/macos-port/check_legacy_guards.py --base 5f1cbc7
 The previous agent's candidate lists (`evidence/candidate-status.json`,
 `cod2x-candidate-status.json`, `more-candidate-status.json`) were queried again
 with `qstatus.py`; every server above had 0–1 players when joined. Sessions were
-short and no chat or votes were sent.
+short and no chat or votes were sent. One lapse: a client from a failed lldb
+attempt (`s6-hrc-lldb`, stdin not connected) was orphaned when lldb exited and
+sat idle as a spectator on HRC for about 70 minutes before it was found and
+stopped; it was probably the one player HRC later reported.
 
 ## Root causes and fixes
 
