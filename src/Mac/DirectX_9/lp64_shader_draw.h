@@ -1,4 +1,5 @@
 #if COD2_APPLE_SDK
+#include "lp64_shader_state.h"
 extern GLuint CDirect3DVertexShader_GetProgramId(const CDirect3DVertexShader *shader);
 
 static int MacShader_Diagnostics(void)
@@ -190,7 +191,8 @@ static HRESULT MacShader_DrawIndexed(DeviceImpl *dev, INT baseVertex, UINT minVe
     }
     glDisable(GL_LIGHTING);
     glDisable(GL_FOG);
-    glDisable(GL_CULL_FACE);
+    MacShader_ApplyRasterEquations(dev->cullMode, dev->blendOp,
+                                  dev->separateAlphaBlendEnable ? dev->alphaSrcBlend : dev->blendOp);
     MacShader_CheckGL("render state");
     glDrawElements(GL_TRIANGLES, primitiveCount * 3, GL_UNSIGNED_SHORT,
                     indices->data + startIndex * 2);
