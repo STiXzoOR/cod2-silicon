@@ -120,6 +120,8 @@ with (out / 'console.log').open('w') as stream:
         raise RuntimeError(f'timeout waiting for {text}: {out}')
     try:
         wait_for('Going from CS_PRIMED to CS_ACTIVE')
+        if not (out / 'observer.pid').exists() or int((out / 'observer.pid').read_text()) != process.pid:
+            raise RuntimeError('frame observer was not loaded into the client; --binary must be the native executable')
         send('sv_serverId')
         send('configstrings')
         log = wait_for('1250: serverinfo_dm')
