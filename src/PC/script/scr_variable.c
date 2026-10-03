@@ -1389,7 +1389,11 @@ void Scr_DumpScriptThreads(void)
 #if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
         if (!VG_U32(id))
             continue;
+#if defined(COD2_X64)
         stackValue = SCR_STACK_PTR(*GetVariableValueAddress(id));
+#else
+        stackValue = (VariableStackBuffer *)(scrMemTreeGlob + VG_U32(id));
+#endif
 #else
         stackValue = (VariableStackBuffer *)VG_U32(id);
         if (!stackValue)
