@@ -5,12 +5,15 @@ The output contains licensed game assets. Keep it outside the repository.
 No shader programs or binary-derived payloads are distributed by this tool.
 """
 import argparse
+import fcntl
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import struct
 import sys
+import tempfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'datagen'))
 from macho32 import MachO32
@@ -82,24 +85,81 @@ def extract(binary):
     return assets
 
 
+def verify_cache(output, expected_count=834):
+    """Trust the cache only after checking every manifest entry's bytes."""
+    try:
+        manifest = json.loads((output / 'manifest.json').read_text())
+        assets = manifest['assets']
+        if not isinstance(assets, dict):
+            return False
+        if not re.fullmatch(r'[0-9a-f]{64}', manifest['binary_sha256']) or len(assets) != expected_count:
+            return False
+        for name, digest in assets.items():
+            if not re.fullmatch(r'[A-Za-z_0-9]+\.(vsa|pse|vc|pc)', name):
+                return False
+            if not re.fullmatch(r'[0-9a-f]{64}', digest):
+                return False
+            if hashlib.sha256((output / name).read_bytes()).hexdigest() != digest:
+                return False
+            if name.endswith(('.vsa', '.pse')) and name[:-2] + 'c' not in assets:
+                return False
+        return True
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
+
+
+def write_cache(binary, output):
+    print(f'CoD2x: extracting shaders from {binary}', flush=True)
+    assets = extract(binary)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix='shaders-', dir=output.parent) as directory:
+        staging = Path(directory)
+        for index, (name, data) in enumerate(sorted(assets.items()), 1):
+            (staging / name).write_bytes(data)
+            if index % 100 == 0 or index == len(assets):
+                print(f'CoD2x: shader setup {index}/{len(assets)}', flush=True)
+        manifest = dict(binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
+                        assets={name: hashlib.sha256(data).hexdigest() for name, data in sorted(assets.items())})
+        (staging / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+        if not verify_cache(staging):
+            raise ValueError('extracted shader manifest failed verification')
+        output.mkdir(parents=True, exist_ok=True)
+        for file in staging.iterdir():
+            os.replace(file, output / file.name)
+    print(f'CoD2x: verified {len(assets)} shader/constant files in {output}', flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('binary', type=Path)
     parser.add_argument('output', type=Path)
+    parser.add_argument('--verify', action='store_true', help='verify existing cache without extraction')
+    parser.add_argument('--setup', action='store_true', help='reuse a verified cache; extract once if absent or damaged')
+    parser.add_argument('--fallback', type=Path, help='alternate licensed binary if the primary cannot be extracted')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
     output = args.output.expanduser().resolve()
     if output == root or root in output.parents:
         parser.error('licensed shader cache must be outside the repository')
-    assets = extract(args.binary)
-    output.mkdir(parents=True, exist_ok=True)
-    for name, data in sorted(assets.items()):
-        (output / name).write_bytes(data)
-    manifest = dict(binary_sha256=hashlib.sha256(args.binary.read_bytes()).hexdigest(),
-                    assets={name: hashlib.sha256(data).hexdigest() for name, data in sorted(assets.items())})
-    (output / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
-    print(f'Extracted {len(assets)} shader/constant files to {output}')
+    if args.verify:
+        return 0 if verify_cache(output) else 1
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with (output.parent / '.shader-setup.lock').open('w') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if args.setup and verify_cache(output):
+            print(f'CoD2x: shader cache SHA-256 manifest verified: {output}', flush=True)
+            return 0
+        for binary in [args.binary, args.fallback]:
+            if binary is None:
+                continue
+            try:
+                write_cache(binary.expanduser(), output)
+                return 0
+            except (OSError, ValueError, StopIteration, struct.error) as error:
+                print(f'CoD2x: shader extraction unavailable from {binary}: {error}', file=sys.stderr, flush=True)
+        print('CoD2x: no verified shader cache; using approximation rendering.', file=sys.stderr)
+        return 1
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
