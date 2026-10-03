@@ -8,6 +8,9 @@ extern dvar_t *r_rendererInUse;
 #include "imports.h"
 /* dvar globals */
 extern const dvar_t *r_fog;
+#if defined(COD2_X64)
+extern const dvar_t *r_zfar;
+#endif
 extern int alwaysfails;
 extern DxGlobals dx;
 
@@ -120,8 +123,12 @@ void RB_SetIteratorFog(void)
     be->codeConsts[29][2] = fg;
     be->codeConsts[29][3] = fa;
 
+#if defined(COD2_X64)
+    float fogEnd = r_zfar->current.value;
+#else
     float *viewInfo = *(float **)g_viewInfo;
     float fogEnd = viewInfo[2];
+#endif
     if (fogEnd == 0.0f) {
         fogEnd = fog->fogEnd;
     }
@@ -132,8 +139,12 @@ void RB_SetIteratorFog(void)
     be->codeConsts[28][2] = -fog->density;
     be->codeConsts[28][3] = 0.0f;
 
+#if defined(COD2_X64)
+    if (r_rendererInUse->current.integer != 2)
+#else
     int *dxCaps = (int *)r_rendererInUse;
     if (dxCaps[2] != 2)
+#endif
         return;
 
     {
