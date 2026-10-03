@@ -573,6 +573,9 @@ extern unsigned int Scr_StartupGameType(void);
 extern void RestoreBody(void);
 extern void ClientUserinfoChanged(int clientNum);
 extern void G_InitTurrets(void);
+#if defined(COD2_X64)
+extern void G_ParseHitLocDmgTable(void);
+#endif
 extern int SV_GetBrushModelCount(void);
 extern void G_SpawnTriggerHurt(int numBrushModels);
 extern void GScr_PostResetTimeout(void);
@@ -706,13 +709,23 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     level.lastFreeEnt = NULL;
 
     SV_LocateGameData((gentity_t *)g_entities, 0x48, sizeof(gentity_t), (playerState_t *)g_clients, sizeof(gclient_t));
+#if defined(COD2_X64)
+    /* 1.3 loads the hit-location table (damage multipliers and the sHitLoc
+       strings passed to the damage/killed callbacks) and frees the turret
+       slots before spawning entities; clearing turrets afterwards released
+       the slots of the map's turrets. */
+    G_ParseHitLocDmgTable();
+    G_InitTurrets();
+#endif
     G_SpawnEntitiesFromString();
     COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_spawn);)
     level.initializing = 0;
 
     G_LogPrintf("gametype: %s\n", g_gametype->current.string);
 
+#if !defined(COD2_X64)
     G_InitTurrets();
+#endif
     G_SpawnTriggerHurt(SV_GetBrushModelCount() + 1);
     GScr_PostResetTimeout();
     G_SetupWeaponDef();
