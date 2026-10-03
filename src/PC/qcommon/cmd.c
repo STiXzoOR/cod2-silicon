@@ -1,5 +1,8 @@
 #if defined(COD2_CODX) && COD2_CODX
 #include "cod2x.h"
+#if defined(COD2_X64) && COD2_X64
+#include "cod2x_policy.h"
+#endif
 #endif
 #include "common_types.h"
 #include "imports.h"
@@ -309,6 +312,14 @@ void Cmd_ArgsBuffer(char *buffer, int bufferLength)
 
 static int Cmd_TokenizeStringInternal(const char *text_in, int max_tokens, char **argv, char *textOut)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    int count = Cod2x_Tokenize(text_in, max_tokens, argv, textOut, sizeof(cmd_tokenized));
+    if (count < 0) {
+        Com_Printf("Command tokens exceed the %u byte buffer.\n", (unsigned)sizeof(cmd_tokenized));
+        return 0;
+    }
+    return count;
+#else
     int argc;
     int tokens;
 
@@ -423,6 +434,7 @@ static int Cmd_TokenizeStringInternal(const char *text_in, int max_tokens, char 
     }
 
     return argc;
+#endif
 }
 
 void Cmd_TokenizeString2(const char *text_in, int max_tokens)

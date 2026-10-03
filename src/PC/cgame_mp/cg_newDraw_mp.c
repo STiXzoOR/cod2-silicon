@@ -1,4 +1,7 @@
 #include "common_types.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "PC/qcommon/cod2x_features.h"
+#endif
 #include "imports.h"
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
@@ -1705,15 +1708,30 @@ void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         CG_DrawPlayerWeaponModeIcon(&rect, material, color);
         break;
     case CG_PLAYER_COMPASS:
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        if (!Cod2x_DrawCompass())
+            break;
+        Cod2x_CompassOffset(&rect.x, &rect.y);
+#endif
         CG_DrawPlayerCompass(&rect, material, color);
         break;
     case CG_PLAYER_COMPASS_BACK:
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        if (!Cod2x_DrawCompass())
+            break;
+        Cod2x_CompassOffset(&rect.x, &rect.y);
+#endif
         CG_DrawPlayerCompassBack(&rect, material, color);
         break;
     case CG_PLAYER_COMPASS_POINTERS:
         CG_UpdateCompPointerOrientation();
         break;
     case CG_PLAYER_COMPASS_FRIENDS:
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        if (!Cod2x_DrawCompass())
+            break;
+        Cod2x_CompassOffset(&rect.x, &rect.y);
+#endif
         CG_DrawPlayerCompassFriendliesOwnerdraw(&rect, material, color);
         break;
     case CG_DRAW_SHADER:

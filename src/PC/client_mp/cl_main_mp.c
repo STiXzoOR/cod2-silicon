@@ -7,6 +7,22 @@
 #include "cod2_feature_config.h"
 #include "pb_public.h"
 #include "www_download.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "../qcommon/cod2x_demo.h"
+extern void Dvar_ClearModified(const dvar_t *);
+extern const dvar_t *Dvar_FindVar(const char *name);
+extern const dvar_t *fs_homepath;
+extern char fs_gamedir[256];
+extern void FS_BuildOSPath(const char *base, const char *game, const char *qpath, char *ospath);
+extern qboolean FS_WriteFile(const char *qpath, const void *buffer, int size);
+static const dvar_t *cod2x_demoName, *cod2x_demoURL, *cod2x_demoTimeout;
+static const char *cod2x_recordName;
+static int cod2x_stoppingRecord, cod2x_demoPlayback, cod2x_savedDeveloper, cod2x_savedCheats;
+static int cod2x_quitAfterUpload;
+static void Cod2x_DemoClientFrame(void);
+static void Cod2x_DemoPlayback(int playing);
+static void Cod2x_DemoClientDisconnect(void);
+#endif
 extern LegacyHacks *legacyHacks;
 extern int com_frameTime;
 extern float com_timescaleValue;
@@ -443,6 +459,12 @@ void CL_StopRecord_f(void)
     clientConnection_t *conn;
     int len;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (!cod2x_stoppingRecord && cod2x_demoName && *cod2x_demoName->current.string) {
+        Com_Printf("Auto demo recording is enabled; stoprecord ignored.\n");
+        return;
+    }
+#endif
     if (!cc->demorecording) {
         Com_Printf("Not recording a demo.\n");
         return;
@@ -462,6 +484,9 @@ void CL_ShutdownDemo(void)
 {
     clientConnection_t *conn;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Cod2x_DemoPlayback(0);
+#endif
     if (!clientConnections[0].demofile)
         return;
     FS_FCloseFile(clientConnections[0].demofile);
@@ -1108,6 +1133,11 @@ void CL_InitOnceForAllClients(void)
     cl_showSend = Dvar_RegisterBool_mac("cl_showSend", 0, 0);
     cl_showTimeDelta = Dvar_RegisterBool_mac("cl_showTimeDelta", 0, 0);
     cl_freezeDemo = Dvar_RegisterBool_mac("cl_freezeDemo", 0, 0);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    cod2x_demoName = Dvar_RegisterString_mac("cl_demoAutoRecordName", "", 0x1010);
+    cod2x_demoURL = Dvar_RegisterString_mac("cl_demoAutoRecordUploadUrl", "", 0x1010);
+    cod2x_demoTimeout = Dvar_RegisterInt("cl_demoAutoRecordUploadTimeout", 60, 10, 600, 0x1001);
+#endif
     cl_activeAction = Dvar_RegisterString_mac("activeAction", "", 0);
     cl_avidemo = Dvar_RegisterInt("cl_avidemo", 0, 0, 0x7fffffff, 0);
     cl_forceavidemo = Dvar_RegisterBool_mac("cl_forceavidemo", 0, 0);
@@ -1456,6 +1486,9 @@ void CL_Record_f(void)
     int compressedSize;
     int len;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (!cod2x_recordName)
+#endif
     if (Cmd_Argc() > 2) {
         Com_Printf((const char *)"record <demoname>\n");
         return;
@@ -1471,6 +1504,12 @@ void CL_Record_f(void)
         return;
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (cod2x_recordName) {
+        I_strncpyz(demoName, cod2x_recordName, sizeof(demoName));
+        Com_sprintf(name, sizeof(name), "demos/%s.dm_1", demoName);
+    } else
+#endif
     if (Cmd_Argc() == 2) {
         I_strncpyz(demoName, Cmd_Argv(1), sizeof(demoName));
         Com_sprintf(name, sizeof(name), (const char *)"demos/%s.dm_%d", demoName, 1);
@@ -2457,6 +2496,9 @@ void CL_Frame(int msec)
 #if defined(COD2_CODX) && COD2_CODX
     Cod2x_Frame(clc_p->state >= CA_PRIMED, clc_p->demoplaying);
 #endif
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Cod2x_DemoClientFrame();
+#endif
     Voice_GetLocalVoiceData((ClientVoicePacket_t *)&clients[0]);
     Voice_Playback();
     CL_UpdateColor();
@@ -2652,6 +2694,9 @@ void CL_Disconnect(void)
     Cod2x_Disconnect();
 #endif
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Cod2x_DemoClientDisconnect();
+#endif
     if (!legacy->cl_running)
         return;
 
@@ -2768,6 +2813,15 @@ void CL_Disconnect_f(void)
     SCR_StopCinematic();
     prevState = ((clientConnection_t *)clc)->state;
     CL_Disconnect();
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (prevState >= CA_CONNECTED) {
+        const dvar_t *game = Dvar_FindVar("fs_game");
+        if (game)
+            Dvar_SetString(game, "");
+        FS_Restart(0);
+        CL_ShutdownUI();
+    }
+#endif
 
     if (prevState <= CA_LOGO)
         return;
@@ -2940,6 +2994,9 @@ void CL_PlayDemo_f(void)
 
     conn->state = CA_CONNECTED;
     conn->demoplaying = 1;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Cod2x_DemoPlayback(1);
+#endif
     conn->isTimeDemo = I_stricmp(Cmd_Argv(0), (const char *)"timedemo") == 0;
     I_strncpyz(cls.servername, Cmd_Argv(1), sizeof(cls.servername));
 
@@ -3159,6 +3216,12 @@ void CL_InitDownloads(void)
     const dvar_t *svRunning;
     char missingFiles[1024];
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (((clientConnection_t *)clc)->demoplaying) {
+        CL_DownloadsComplete();
+        return;
+    }
+#endif
     FS_ShiftStr((const char *)"ni]Zm^l", 7);
 
     svRunning = com_sv_running;
@@ -3184,3 +3247,162 @@ void CL_InitDownloads(void)
     conn->state = CA_CONNECTED;
     CL_NextDownload();
 }
+
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static void Cod2x_DemoPlayback(int playing)
+{
+    const dvar_t *developer = Dvar_FindVar("developer");
+    const dvar_t *cheats = Dvar_FindVar("sv_cheats");
+    if (playing && !cod2x_demoPlayback) {
+        cod2x_savedDeveloper = developer ? developer->current.integer : 0;
+        cod2x_savedCheats = cheats ? cheats->current.enabled : 0;
+    }
+    if (playing) {
+        if (developer && developer->current.integer != 2)
+            Dvar_SetInt(developer, 2);
+        if (cheats && !cheats->current.enabled)
+            Dvar_SetBool(cheats, 1);
+    } else if (cod2x_demoPlayback) {
+        if (developer)
+            Dvar_SetInt(developer, cod2x_savedDeveloper);
+        if (cheats)
+            Dvar_SetBool(cheats, cod2x_savedCheats);
+    }
+    cod2x_demoPlayback = playing;
+}
+
+static void Cod2x_DemoClearAutoDvars(void)
+{
+    if (cod2x_demoName) {
+        if (*cod2x_demoName->current.string)
+            Dvar_SetString(cod2x_demoName, "");
+        Dvar_ClearModified(cod2x_demoName);
+    }
+    if (cod2x_demoURL) {
+        if (*cod2x_demoURL->current.string)
+            Dvar_SetString(cod2x_demoURL, "");
+        Dvar_ClearModified(cod2x_demoURL);
+    }
+}
+
+static void Cod2x_DemoDirectory(char directory[256])
+{
+    FS_BuildOSPath(fs_homepath->current.string, fs_gamedir, "demos", directory);
+}
+
+static void Cod2x_DemoClientDisconnect(void)
+{
+    char directory[256];
+    const dvar_t *gametype = Dvar_FindVar("ui_joinGametype");
+    if (fs_homepath) {
+        Cod2x_DemoDirectory(directory);
+        (void)Cod2x_DemoUploadsPending(directory);
+    }
+    Cod2x_DemoPlayback(0);
+    Cod2x_DemoClearAutoDvars();
+    if (gametype)
+        Dvar_SetInt(gametype, 0);
+}
+
+static void Cod2x_DemoStopRecording(void)
+{
+    if (((clientConnection_t *)clc)->demorecording) {
+        cod2x_stoppingRecord = 1;
+        CL_StopRecord_f();
+        cod2x_stoppingRecord = 0;
+    }
+}
+
+int Cod2x_DemoClientQuitRequested(void)
+{
+    char directory[256];
+    if (!cod2x_demoName || !fs_homepath)
+        return 0;
+    Cod2x_DemoStopRecording();
+    Dvar_SetString(cod2x_demoName, "");
+    Dvar_ClearModified(cod2x_demoName);
+    Cod2x_DemoDirectory(directory);
+    if (Cod2x_DemoUploadsPending(directory)) {
+        if (!cod2x_quitAfterUpload)
+            Com_Printf("CoD2x: the game will close after demo uploads finish.\n");
+        cod2x_quitAfterUpload = 1;
+        return 1;
+    }
+    Cod2x_DemoUploadShutdown();
+    return 0;
+}
+
+static int Cod2x_DemoUploadPaused(int state, int recording)
+{
+    return recording || (!cod2x_quitAfterUpload && state != CA_ACTIVE && state != CA_DISCONNECTED);
+}
+
+static void Cod2x_DemoClientFrame(void)
+{
+    clientConnection_t *conn = (clientConnection_t *)clc;
+    char directory[256];
+    const Cod2xDemoProgress *progress;
+    static int previousState = -1, previousAttempts = -1;
+    if (!cod2x_demoName || !fs_homepath)
+        return;
+    Cod2x_DemoPlayback(conn->demoplaying != 0);
+    if (cod2x_quitAfterUpload) {
+        Cod2x_DemoStopRecording();
+        Cod2x_DemoClearAutoDvars();
+    } else if (conn->demoplaying) {
+        Cod2x_DemoClearAutoDvars();
+    } else if (cod2x_demoName->modified &&
+               (!*cod2x_demoName->current.string || conn->state == CA_ACTIVE)) {
+        char requested[64], name[64], qpath[256], marker[256], url[1024];
+        unsigned suffix = 0;
+        I_strncpyz(requested, cod2x_demoName->current.string, sizeof(requested));
+        Dvar_ClearModified(cod2x_demoName);
+        Cod2x_DemoStopRecording();
+        if (*requested) {
+            do {
+                if (!Cod2x_DemoName(name, sizeof(name), requested, suffix++)) {
+                    name[0] = '\0';
+                    break;
+                }
+                Com_sprintf(qpath, sizeof(qpath), "demos/%s.dm_1", name);
+            } while (FS_FileExists(qpath));
+            Dvar_SetString(cod2x_demoName, name);
+            Dvar_ClearModified(cod2x_demoName);
+            if (*name) {
+                /* Call the recorder directly; server-supplied names never enter a command buffer. */
+                cod2x_recordName = name;
+                CL_Record_f();
+                cod2x_recordName = NULL;
+                if (conn->demorecording && *cod2x_demoURL->current.string) {
+                    if (Cod2x_DemoUploadURL(url, sizeof(url), cod2x_demoURL->current.string, name)) {
+                        Com_sprintf(marker, sizeof(marker), "%s.upload", qpath);
+                        if (!FS_WriteFile(marker, url, (int)strlen(url)))
+                            Com_Printf("CoD2x: couldn't create the demo upload marker.\n");
+                    } else {
+                        Com_Printf("CoD2x: demo upload URL must be HTTPS.\n");
+                    }
+                }
+            }
+        }
+    }
+    Cod2x_DemoDirectory(directory);
+    Cod2x_DemoUploadFrame(directory, cod2x_demoTimeout->current.integer,
+                          Cod2x_DemoUploadPaused(conn->state, conn->demorecording));
+    progress = Cod2x_DemoUploadProgress();
+    if (previousState != progress->state || previousAttempts != progress->attempts) {
+        if (progress->state == COD2X_DEMO_UPLOAD_ACTIVE)
+            Com_Printf("CoD2x: uploading demo %s.\n", progress->name);
+        else if (progress->state == COD2X_DEMO_UPLOAD_DONE)
+            Com_Printf("CoD2x: demo %s uploaded (HTTP %ld).\n", progress->name, progress->httpStatus);
+        else if (progress->state == COD2X_DEMO_UPLOAD_FAILED)
+            Com_Printf("CoD2x: demo %s upload failed (HTTP %ld, attempt %d/3); keeping the demo.\n",
+                       progress->name, progress->httpStatus, progress->attempts);
+        previousState = progress->state;
+        previousAttempts = progress->attempts;
+    }
+    if (cod2x_quitAfterUpload && !Cod2x_DemoUploadsPending(directory)) {
+        cod2x_quitAfterUpload = 0;
+        Cbuf_ExecuteText(2, "quit\n");
+    }
+}
+#endif

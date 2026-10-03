@@ -633,11 +633,23 @@ void CL_GlobalServers_f(void)
         cls.pingUpdateSource = 1;
         /* CoD2x src/mss32/master_server.cpp:41-69: query both protocols. */
         for (master = 0; master < sizeof(masters) / sizeof(masters[0]); ++master) {
+#if defined(COD2_X64) && COD2_X64
+            const char *host = master == 1 ? Dvar_GetString("cl_masterServer") : masters[master];
+            unsigned int port = master == 1 ? Dvar_GetInt("cl_masterPort") : 20710;
+            if (!host[0] || port == 0 || port > 65535) continue;
+            if (!NET_StringToAdr(host, &to)) {
+                Com_Printf("Couldn't resolve master %s\n", host);
+#else
             if (!NET_StringToAdr(masters[master], &to)) {
                 Com_Printf("Couldn't resolve master %s\n", masters[master]);
+#endif
                 continue;
             }
+#if defined(COD2_X64) && COD2_X64
+            to.port = (unsigned short)((port >> 8) | (port << 8));
+#else
             to.port = (unsigned short)0xe650; /* 20710, network byte order */
+#endif
             NET_OutOfBandPrint(NS_SERVER, to, "getservers 118 full empty");
             NET_OutOfBandPrint(NS_SERVER, to, "getservers 120 full empty");
         }

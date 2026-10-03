@@ -1,6 +1,9 @@
 #include "PC/qcommon/port_debug.h"
 #if defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x.h"
+#if defined(COD2_X64) && COD2_X64
+#include "../qcommon/cod2x_policy.h"
+#endif
 #endif
 #include "common_types.h"
 #include "imports.h"
@@ -143,6 +146,9 @@ void CL_SystemInfoChanged(void)
     Dvar_SetFromStringByName("g_cod2x", Info_ValueForKey(systemInfo, "g_cod2x"));
     Dvar_SetFromStringByName("g_competitive", Info_ValueForKey(systemInfo, "g_competitive"));
     Dvar_SetFromStringByName("com_maxfps_limit", Info_ValueForKey(systemInfo, "com_maxfps_limit"));
+#if defined(COD2_X64) && COD2_X64
+    Cod2x_IwdSystemInfo(Info_ValueForKey(systemInfo, "sv_iwdNames"));
+#endif
 #endif
 
     {
