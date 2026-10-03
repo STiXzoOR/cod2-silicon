@@ -94,12 +94,18 @@ static inline int float_seconds_to_ms(float val)
 }
 
 /* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
+#if defined(COD2_X64)
+const char *cg_shock_dvar_names[29] = {
+#else
 const char *cg_shock_dvar_names[30] = {
+#endif
     "cg_shock_screenBlendTime",
     "cg_shock_screenBlendFadeTime",
     "cg_shock_viewKickPeriod",
     "cg_shock_viewKickRadius",
+#if !defined(COD2_X64)
     "cg_shock_viewKickFadeTime",
+#endif
     "cg_shock_sound",
     "cg_shock_soundFadeInTime",
     "cg_shock_soundFadeOutTime",

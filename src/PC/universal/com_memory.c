@@ -104,7 +104,11 @@ extern const dvar_t *com_dedicated;
 static fileData_t *com_fileDataHashTable[1024];
 static fileData_t *com_hunkData;
 static int g_largeLocalPos;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+static byte g_largeLocalBuf[1048576];
+#else
 static byte g_largeLocalBuf[524288];
+#endif
 static struct hunkUsed_t hunk_low;
 static hunkUsed_t hunk_high;
 static byte *s_hunkData;

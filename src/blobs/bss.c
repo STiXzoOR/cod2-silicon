@@ -106,7 +106,11 @@ unsigned char iString[32];
 unsigned char szIwdLanguageName[128];
 unsigned char bLanguagesListed[96];
 unsigned char g_largeLocalPos[128];
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+unsigned char g_largeLocalBuf[1048576];
+#else
 unsigned char g_largeLocalBuf[524288];
+#endif
 unsigned char hunk_high[8];
 unsigned char hunk_low[8];
 BSSINT s_hunkData;

@@ -31,13 +31,21 @@ ABI_SOURCES = ['src/PC/script/scr_compiler.c', 'src/PC/client_mp/cl_main_pc_mp.c
                'src/PC/script/scr_debugger_ui_watch.c']
 
 
-def function(path, name):
+def active(path):
     if path not in preprocessed:
         source = subprocess.check_output(['git', 'show', f'{args.baseline}:{path}'], text=True, cwd=ROOT) if args.baseline else (ROOT / path).read_text()
         preprocessed[path] = subprocess.run(
             [*flags, '-iquote', str((ROOT / path).parent), '-E', '-P', '-x', 'c', '-'],
             input=source, capture_output=True, text=True, cwd=ROOT, check=True).stdout
-    source = preprocessed[path]
+    return preprocessed[path]
+
+
+def declaration(path, name):
+    return re.search(r'^(?!extern\b)[\w *]+\b' + name + r'\s*(?:\[[^]]*\])?\s*(?:=[\s\S]*?)?;', active(path), re.M)[0] + '\n'
+
+
+def function(path, name):
+    source = active(path)
     match = re.search(r'^.*\b' + name + r'\([^;{]*\)\s*\{', source, re.M)
     if not match:
         raise ValueError(f'function {name} missing in {path}')
@@ -100,3 +108,20 @@ static void check_cases(unsigned int (*caseTable)[2], int numCases)
     qsort(caseTable, numCases, 8, (int (*)(const void *, const void *))CompareCaseInfo);
 ''' + source[start:end].replace('return 0;', 'return;') + '}\n'
     run('switch', generated)
+if not args.test or 'storage' in args.test:
+    path = 'src/PC/universal/com_memory.c'
+    run('storage', declaration(path, 'g_largeLocalBuf') + ''.join(function(path, n) for n in
+        ['LargeLocal_LargeLocal', 'LargeLocal_GetBuf', 'ZN10LargeLocalD1Ev']))
+if not args.test or 'tables' in args.test:
+    generated = ''
+    for path, names in [('src/PC/server_mp/sv_client_mp.c', ['ucmds']),
+                        ('src/PC/ui_mp/ui_main_mp.c', ['serverStatusDvars']),
+                        ('src/PC/client_mp/cl_keys_mp.c', ['frenchNumberKeysMap', 'keynames_localized']),
+                        ('src/PC/cgame_mp/cg_shellshock.c', ['cg_shock_dvar_names'])]:
+        tables = ''.join(declaration(path, n) for n in names)
+        for label in sorted(set(re.findall(r'\bstr_[\w]+', tables))):
+            generated += declaration(path, label)
+        for name in sorted(set(re.findall(r'&?(SV_\w+)', tables))):
+            generated += f'void {name}(void) {{}}\n'
+        generated += tables
+    run('tables', generated)

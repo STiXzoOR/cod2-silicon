@@ -10,7 +10,11 @@
 #endif
 extern const dvar_t *sv_maxclients;
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+extern ucmd_t ucmds[13];
+#else
 extern ucmd_t ucmds[12];
+#endif
 
 extern char *ClientConnect(int clientNum, int scriptPersId);
 extern Bool Dvar_GetBool(const char *dvarName);
@@ -1024,7 +1028,7 @@ void SV_ExecuteClientCommand(client_t *cl, const char *s, qboolean clientOK)
 
     SV_Cmd_TokenizeString(s);
 
-#if COD2_IS_PATCH_13
+#if COD2_IS_PATCH_13 && !defined(COD2_X64)
 
     if (!strcmp(SV_Cmd_Argv(0), "wwwdl")) {
         SV_WWWDownload_f(cl);
@@ -1765,7 +1769,11 @@ gentity_t *SV_AddTestClient(void)
     return SV_GentityNum(clientNum);
 }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+ucmd_t ucmds[13] = {
+#else
 ucmd_t ucmds[12] = {
+#endif
     { (char *)&str_002adea0, (void (*)())&SV_UpdateUserinfo_f },
     { (char *)&str_00228e90, (void (*)())&SV_Disconnect_f },
     { (char *)&str_002adeac, (void (*)())&SV_VerifyIwds_f },
@@ -1775,6 +1783,9 @@ ucmd_t ucmds[12] = {
     { (char *)&str_002adec4, (void (*)())&SV_StopDownload_f },
     { (char *)&str_002a98b0, (void (*)())&SV_DoneDownload_f },
     { (char *)&str_002adecc, (void (*)())&SV_RetransmitDownload_f },
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    { "wwwdl", (void (*)())&SV_WWWDownload_f },
+#endif
     { (char *)&str_002aded8, (void (*)())&SV_MutePlayer_f },
     { (char *)&str_002adee4, (void (*)())&SV_UnmutePlayer_f },
     { 0, 0 }
