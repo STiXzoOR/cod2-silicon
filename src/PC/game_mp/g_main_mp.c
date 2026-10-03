@@ -100,6 +100,10 @@ extern const dvar_t *voice_deadChat;
 extern const dvar_t *g_voiceChatTalkingDuration;
 extern const dvar_t *g_deadChat;
 extern const dvar_t *g_banIPs;
+#if defined(__APPLE__) && defined(COD2_X64)
+/* The inherited BSS alias names its target without Darwin's C underscore. */
+__asm__(".globl g_banIPs\n.set g_banIPs, _g_banIPs\n");
+#endif
 extern const dvar_t *g_smoothClients;
 extern const dvar_t *g_NoScriptSpam;
 extern const dvar_t *g_debugLocDamage;
@@ -125,7 +129,13 @@ extern const dvar_t *g_TeamColor_Allies;
 extern const dvar_t *g_TeamColor_Axis;
 extern const dvar_t *g_voteAbstainWeight;
 extern const dvar_t *g_dumpAnims;
+#if defined(COD2_X64)
+/* Generated g_clients is still an i386 byte blob. Keep native clients in typed storage. */
+static gclient_t native_clients[64];
+#define g_clients native_clients
+#else
 extern unsigned char g_clients[];
+#endif
 
 extern float ceilf(float x);
 extern int Com_ServerDObjCreate(DObjModel_s *models, int numModels, struct XAnimTree_s *tree, int handle);
@@ -529,11 +539,23 @@ extern int stricmp(const char *s1, const char *s2);
 extern void ClientEndFrame(gentity_t *ent);
 extern void HudElem_UpdateClient(gclient_t *client, int clientNum, int which);
 extern unsigned char scrVarPub[];
+#if defined(COD2_X64)
+extern scrVmPub_t scrVmPub;
+#define G_VM_TOP scrVmPub.top
+#define G_VM_FRAME scrVmPub.function_frame
+#else
 extern unsigned char scrVmPub[];
+#define G_VM_TOP *(void **)((byte *)&scrVmPub + 16)
+#define G_VM_FRAME *(void **)((byte *)&scrVmPub + 12)
+#endif
 extern void Scr_AddEntity(gentity_t *ent);
 extern void Scr_Notify(gentity_t *ent, unsigned short stringValue, unsigned int paramcount);
 extern void BG_LoadAnim(void);
+#if defined(COD2_X64)
+extern snd_alias_list_t *Com_FindSoundAlias(const char *name);
+#else
 extern int Com_FindSoundAlias(const char *name);
+#endif
 extern int G_AnimScriptSound(int client, snd_alias_list_t *aliasList);
 extern XAnimTree *XAnimCreateTree(XAnim *anims, Alloc_t Alloc);
 
@@ -603,8 +625,12 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     }
 
     for (i = 0; i < level.maxclients; i++) {
+#if defined(COD2_X64)
+        g_entities[i].client = &level.clients[i];
+#else
         g_entities[i].client =
             (gclient_s *)((byte *)level.clients + (unsigned int)i * 0x28a4);
+#endif
     }
     level.num_entities = 0x48;
     /* Reset the free-entity list head/tail. The original used hardcoded x86
@@ -653,30 +679,34 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     Scr_EndLoadAnimScripts();
     G_RegisterDvars_impl();
 
-    Com_Printf(str_dbg_vmtop_fmt, *(void **)((byte *)&scrVmPub + 16));
+    Com_Printf(str_dbg_vmtop_fmt, G_VM_TOP);
     Scr_FreeEntityList();
     Scr_InitSystem(1);
-    Com_Printf(str_dbg_ff_trace, *(void **)((byte *)&scrVmPub + 12));
+    Com_Printf(str_dbg_ff_trace, G_VM_FRAME);
     Scr_SetLoading(1);
     Scr_AllocGameVariable();
-    Com_Printf(str_dbg_ff_agv, *(void **)((byte *)&scrVmPub + 12));
+    Com_Printf(str_dbg_ff_agv, G_VM_FRAME);
     G_LoadStructs();
-    Com_Printf(str_dbg_ff_gls, *(void **)((byte *)&scrVmPub + 12));
+    Com_Printf(str_dbg_ff_gls, G_VM_FRAME);
 
     level.initializing = 1;
     Scr_LoadLevel();
-    Com_Printf(str_dbg_ff_before, *(void **)((byte *)&scrVmPub + 12));
+    Com_Printf(str_dbg_ff_before, G_VM_FRAME);
     Scr_LoadGameType();
-    Com_Printf(str_dbg_ff_after_load, *(void **)((byte *)&scrVmPub + 12));
+    Com_Printf(str_dbg_ff_after_load, G_VM_FRAME);
     Scr_StartupGameType();
-    Com_Printf(str_dbg_ff_after_startup, *(void **)((byte *)&scrVmPub + 12));
+    Com_Printf(str_dbg_ff_after_startup, G_VM_FRAME);
 
     if (restart && !savepersist) {
         RestoreBody();
     }
 
     for (i = 0; i < g_maxclients->current.integer; i++) {
+#if defined(COD2_X64)
+        cl = &level.clients[i];
+#else
         cl = (gclient_t *)((byte *)level.clients + (unsigned int)i * 0x28a4);
+#endif
         if (cl->sess.connected == CON_CONNECTED) {
             ClientUserinfoChanged(i);
         }
@@ -751,7 +781,15 @@ extern int stricmp(const char *s1, const char *s2);
 extern void ClientEndFrame(gentity_t *ent);
 extern void HudElem_UpdateClient(gclient_t *client, int clientNum, int which);
 extern unsigned char scrVarPub[];
+#if defined(COD2_X64)
+extern scrVmPub_t scrVmPub;
+#define G_VM_TOP scrVmPub.top
+#define G_VM_FRAME scrVmPub.function_frame
+#else
 extern unsigned char scrVmPub[];
+#define G_VM_TOP *(void **)((byte *)&scrVmPub + 16)
+#define G_VM_FRAME *(void **)((byte *)&scrVmPub + 12)
+#endif
 extern void Scr_AddEntity(gentity_t *ent);
 extern void Scr_Notify(gentity_t *ent, unsigned short stringValue, unsigned int paramcount);
 
@@ -892,8 +930,12 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     }
 
     for (i = 0; i < level.maxclients; i++) {
+#if defined(COD2_X64)
+        g_entities[i].client = &level.clients[i];
+#else
         g_entities[i].client =
             (gclient_s *)((byte *)level.clients + (unsigned int)i * 0x28a4);
+#endif
     }
     level.num_entities = 0x48;
     /* Reset the free-entity list head/tail. The original used hardcoded x86
@@ -942,30 +984,34 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     Scr_EndLoadAnimScripts();
     G_RegisterDvars_impl();
 
-    Com_Printf(str_dbg_vmtop_fmt, *(void **)((byte *)&scrVmPub + 16));
+    Com_Printf(str_dbg_vmtop_fmt, G_VM_TOP);
     Scr_FreeEntityList();
     Scr_InitSystem(1);
-    Com_Printf(str_dbg_ff_trace, *(void **)((byte *)&scrVmPub + 12));
+    Com_Printf(str_dbg_ff_trace, G_VM_FRAME);
     Scr_SetLoading(1);
     Scr_AllocGameVariable();
-    Com_Printf(str_dbg_ff_agv, *(void **)((byte *)&scrVmPub + 12));
+    Com_Printf(str_dbg_ff_agv, G_VM_FRAME);
     G_LoadStructs();
-    Com_Printf(str_dbg_ff_gls, *(void **)((byte *)&scrVmPub + 12));
+    Com_Printf(str_dbg_ff_gls, G_VM_FRAME);
 
     level.initializing = 1;
     Scr_LoadLevel();
-    Com_Printf(str_dbg_ff_before, *(void **)((byte *)&scrVmPub + 12));
+    Com_Printf(str_dbg_ff_before, G_VM_FRAME);
     Scr_LoadGameType();
-    Com_Printf(str_dbg_ff_after_load, *(void **)((byte *)&scrVmPub + 12));
+    Com_Printf(str_dbg_ff_after_load, G_VM_FRAME);
     Scr_StartupGameType();
-    Com_Printf(str_dbg_ff_after_startup, *(void **)((byte *)&scrVmPub + 12));
+    Com_Printf(str_dbg_ff_after_startup, G_VM_FRAME);
 
     if (restart && !savepersist) {
         RestoreBody();
     }
 
     for (i = 0; i < g_maxclients->current.integer; i++) {
+#if defined(COD2_X64)
+        cl = &level.clients[i];
+#else
         cl = (gclient_t *)((byte *)level.clients + (unsigned int)i * 0x28a4);
+#endif
         if (cl->sess.connected == CON_CONNECTED) {
             ClientUserinfoChanged(i);
         }

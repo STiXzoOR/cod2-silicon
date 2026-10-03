@@ -18,6 +18,9 @@ extern void Com_Printf(const char *msg, ...);
 
 extern byte svs_ptr[];
 extern byte *sv_voice_dvar;
+#if defined(COD2_X64)
+extern const dvar_t *sv_voice;
+#endif
 
 void SV_SendClientVoiceData(client_t *client);
 Bool SV_ClientWantsVoiceData(int clientNum);
@@ -114,7 +117,11 @@ void SV_UserVoice(client_t *cl, msg_t *msg)
     int dataSize;
     int i;
 
+#if defined(COD2_X64)
+    if (!sv_voice->current.enabled)
+#else
     if (*(byte *)(*(int *)(*(int *)imp_sv_voice) + 8) == 0)
+#endif
         return;
 
     packetCount = MSG_ReadByte(msg);
@@ -149,7 +156,11 @@ void SV_PreGameUserVoice(client_t *cl, msg_t *msg)
     serverStatic_t *svs;
     client_t *otherCl;
 
+#if defined(COD2_X64)
+    if (!sv_voice->current.enabled)
+#else
     if (*(byte *)(*(int *)(*(int *)imp_sv_voice) + 8) == 0)
+#endif
         return;
 
     svs = (serverStatic_t *)imp_svs;

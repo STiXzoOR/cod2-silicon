@@ -791,7 +791,11 @@ void Scr_GetWeaponModel(void)
     int weaponIndex = G_GetWeaponIndexForName(pszWeaponName);
 
     if (weaponIndex) {
+#if defined(COD2_X64)
+        Scr_AddString(BG_GetWeaponDef(weaponIndex)->szWorldModel);
+#else
         Scr_AddString(*(const char **)((byte *)BG_GetWeaponDef(weaponIndex) + 0x1b4));
+#endif
     } else {
         if (pszWeaponName[0] && I_stricmp(pszWeaponName, "none") != 0) {
             Com_Printf(va("unknown weapon '%s' in getWeaponModel\n", pszWeaponName));
@@ -1999,7 +2003,12 @@ void GScr_GetPartName(void)
     if ((unsigned int)index >= (unsigned int)numBones)
         Scr_ParamError(1, va("index out of range (0 - %d)", numBones - 1));
 
+#if defined(COD2_X64)
+    /* XModelBoneNames still returns int in xanim; read the typed hierarchy until that ABI is migrated. */
+    name = ((XModelParts *)model->parts)->hierarchy->names[index];
+#else
     name = ((unsigned short *)XModelBoneNames( (XModel *)(model)))[index];
+#endif
     if (!name)
         Scr_ParamError(0, "bad model");
 

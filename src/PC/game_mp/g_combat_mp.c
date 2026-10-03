@@ -112,7 +112,11 @@ void G_ParseHitLocDmgTable(void)
         for (off = 0; off != 76; off += 4) {
             const char *name;
             *(float *)((char *)g_fHitLocDamageMult + off) = 1.0f;
+#if defined(COD2_X64)
+            name = g_HitLocNames[off / sizeof(float)];
+#else
             name = *(const char **)((char *)g_HitLocNames + off);
+#endif
             pf->name = name;
             pf->offset = off;
             pf->type = 6;

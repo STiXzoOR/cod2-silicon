@@ -125,6 +125,13 @@ static inline __attribute__((always_inline)) void BG_InitWeaponDefStrings(Weapon
     const int *pTypeEnd;
 
     weapDef->szInternalName = (char *)"";
+#if defined(COD2_X64)
+    for (const cspField_t *field = weaponDefFields;
+         field < weaponDefFields + sizeof(weaponDefFields) / sizeof(weaponDefFields[0]); field++) {
+        if (field->iFieldType == 0)
+            *(char **)((byte *)weapDef + field->iOffset) = (char *)"";
+    }
+#else
     pType = &weaponDefFields[0].iFieldType;
     pTypeEnd = &weaponDefFields[366].iFieldType;
     for (; pType != pTypeEnd; pType = (const int *)((const byte *)pType + sizeof(cspField_t))) {
@@ -132,6 +139,7 @@ static inline __attribute__((always_inline)) void BG_InitWeaponDefStrings(Weapon
             *(char **)((byte *)weapDef + pType[-1]) = (char *)"";
         }
     }
+#endif
 }
 
 int BG_GetWeaponSlotForName(const char *pszSlotName)

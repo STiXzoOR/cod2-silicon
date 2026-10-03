@@ -1091,7 +1091,11 @@ void SV_Frame(int msec)
             cl->lastPacketTime = svs.time;
         }
 
+#if defined(COD2_X64)
+        if (cl->bIsTestClient) {
+#else
         if (*(int *)((byte *)cl + 0x765f4)) {
+#endif
             continue;
         }
 
