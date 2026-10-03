@@ -493,7 +493,12 @@ const char *XAnimGetAnimDebugName(const XAnim *anims, unsigned int animIndex)
 
 XAnimTree *XAnimCreateTree(XAnim *anims, Alloc_t Alloc)
 {
+#if defined(COD2_X64)
+    /* Header, infoArray and animToModel slots, then the age table (count+1). */
+    unsigned int treeSize = (unsigned int)offsetof(XAnimTree_s, infoArray) + anims->size * 5 + 1;
+#else
     unsigned int treeSize = anims->size * 5 + 9;
+#endif
     XAnimTree_s *tree = (XAnimTree_s *)Alloc(treeSize);
 
     memset(tree, 0, treeSize);
@@ -529,7 +534,11 @@ XAnimParts *XAnimPrecache(const char *name, Alloc_t Alloc)
             Hunk_SetDataForFile(5, "void", defaultParts, Alloc);
         }
 
+#if defined(COD2_X64)
+        parts = (XAnimParts *)Alloc((int)sizeof(XAnimParts)); /* 0x2c on i386 */
+#else
         parts = (XAnimParts *)Alloc(0x2c);
+#endif
         *parts = *defaultParts;
 
         for (i = 0; i < parts->boneCount; ++i) {
@@ -1512,7 +1521,11 @@ void XAnimCloneAnimTree(const XAnimTree *from, XAnimTree *to)
 void XAnimFreeTree(XAnimTree *tree, Free_t Free)
 {
     XAnimTree_s *tree_s = (XAnimTree_s *)tree;
+#if defined(COD2_X64)
+    unsigned int treeSize = (unsigned int)offsetof(XAnimTree_s, infoArray) + tree_s->anims->size * 5 + 1;
+#else
     unsigned int treeSize = tree_s->anims->size * 5 + 9;
+#endif
 
     XAnimClearTree(tree);
 
