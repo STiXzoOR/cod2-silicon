@@ -214,6 +214,13 @@ typedef struct {
     GLuint texIDStorage;
 } CDirect3DVolumeTextureClean;
 
+#if COD2_APPLE_SDK
+GLuint CDirect3DVolumeTexture_GetGLName(const void *texture)
+{
+    return ((const CDirect3DVolumeTextureClean *)texture)->texIDStorage;
+}
+#endif
+
 ULONG CDirect3DVolumeTexture_AddRef(const CDirect3DVolumeTexture *_this);
 void ZN22CDirect3DVolumeTextureD0Ev(void *_this);
 void ZN22CDirect3DVolumeTextureD1Ev(void *_this);
@@ -394,6 +401,9 @@ void CDirect3DVolumeTexture_CDirect3DVolumeTexture(const CDirect3DVolumeTexture 
     glGetIntegerv(GL_TEXTURE_BINDING_3D, &prevTex);
     glBindTexture(GL_TEXTURE_3D, tex->texIDStorage);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+#if COD2_APPLE_SDK
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, tex->levelCount - 1);
+#endif
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     totalSize = 0;

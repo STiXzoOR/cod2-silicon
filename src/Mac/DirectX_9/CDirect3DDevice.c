@@ -20,6 +20,9 @@ typedef void (*fnptr_t)(void);
 extern fnptr_t vtbl_CDirect3DDevice[];
 extern void *vtbl_CDirect3DTexture[];
 extern void *vtbl_CDirect3DCubeTexture[];
+#if COD2_APPLE_SDK
+extern void *vtbl_CDirect3DVolumeTexture[];
+#endif
 extern void R_CapturePendingScreenshotBeforePresent(void);
 
 extern bool g_ShowShadowCookies;
@@ -414,6 +417,9 @@ unsigned int g_prebind_texID = 0;
 unsigned int g_prebind_texTarget = 0x0DE1;
 static byte *g_colorArrayScratch = NULL;
 static UINT g_colorArrayScratchCapacity = 0;
+#if COD2_APPLE_SDK
+static void MacTrace_Label(const void *shader, const char *source);
+#endif
 
 typedef struct {
     void **vtable;
@@ -658,6 +664,9 @@ static int CDirect3DDevice_IsRealTexture(IDirect3DBaseTexture9 *texture)
     if (!texture || (uintptr_t)texture < 0x10000u)
         return 0;
     vt = *(void ***)texture;
+#if COD2_APPLE_SDK
+    if (vt == vtbl_CDirect3DVolumeTexture) return 1;
+#endif
     return vt == (void **)vtbl_CDirect3DTexture || vt == (void **)vtbl_CDirect3DCubeTexture;
 }
 
@@ -671,6 +680,11 @@ static unsigned int CDirect3DDevice_GetTextureGLId(IDirect3DBaseTexture9 *textur
 #if defined(COD2_X64)
     extern GLuint CDirect3DTexture_GetGLName(const void *texture);
     extern GLuint CDirect3DCubeTexture_GetGLName(const void *texture);
+#if COD2_APPLE_SDK
+    extern GLuint CDirect3DVolumeTexture_GetGLName(const void *texture);
+    if (*(void ***)texture == vtbl_CDirect3DVolumeTexture)
+        return CDirect3DVolumeTexture_GetGLName(texture);
+#endif
     if (*(void ***)texture == vtbl_CDirect3DCubeTexture)
         return CDirect3DCubeTexture_GetGLName(texture);
     return CDirect3DTexture_GetGLName(texture);
@@ -683,6 +697,10 @@ static GLenum CDirect3DDevice_GetTextureTarget(IDirect3DBaseTexture9 *texture)
 {
     if (!CDirect3DDevice_IsRealTexture(texture))
         return 0x0DE1;
+#if COD2_APPLE_SDK
+    if (*(void ***)texture == vtbl_CDirect3DVolumeTexture)
+        return GL_TEXTURE_3D;
+#endif
     if (*(void ***)texture == vtbl_CDirect3DCubeTexture)
         return GL_TEXTURE_CUBE_MAP;
     return 0x0DE1;
@@ -1232,6 +1250,9 @@ HRESULT CDirect3DDevice_CreateVertexShader(const CDirect3DDevice *_this,
     memset(shader, 0, 0x19c);
     CDirect3DVertexShader_CDirect3DVertexShader((const CDirect3DVertexShader *)shader, (const char *)pFunction);
     *ppShader = (IDirect3DVertexShader9 *)shader;
+#if COD2_APPLE_SDK
+    MacTrace_Label(shader, (const char *)pFunction);
+#endif
     glGetIntegerv(0x864b, &errorPos);
     if (errorPos != -1) {
         return 0x8876086c;
@@ -1253,6 +1274,9 @@ HRESULT CDirect3DDevice_CreatePixelShader(const CDirect3DDevice *_this,
             COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(
                 (const COpenGLARBFragmentProgram *)program, NULL, (const string *)&codePtr);
             *ppShader = (IDirect3DPixelShader9 *)program;
+#if COD2_APPLE_SDK
+            MacTrace_Label(program, src);
+#endif
             return 0;
         }
     }
@@ -1282,6 +1306,9 @@ HRESULT CDirect3DDevice_CreatePixelShaderOpenGL(const CDirect3DDevice *_this,
             COpenGLARBFragmentProgram_COpenGLARBFragmentProgram(
                 (const COpenGLARBFragmentProgram *)program, NULL, (const string *)&codePtr);
             *ppShader = (IDirect3DPixelShader9 *)program;
+#if COD2_APPLE_SDK
+            MacTrace_Label(program, src);
+#endif
             return 0;
         }
     }
@@ -1577,9 +1604,14 @@ HRESULT CDirect3DDevice_GetBackBuffer(const CDirect3DDevice *_this, UINT iSwapCh
     return 0;
 }
 
+#include "lp64_draw_trace.h"
+
 HRESULT CDirect3DDevice_BeginScene(const CDirect3DDevice *_this)
 {
     (void)_this;
+#if COD2_APPLE_SDK
+    MacTrace_BeginFrame();
+#endif
     return 0;
 }
 
@@ -1654,6 +1686,9 @@ HRESULT CDirect3DDevice_Present(const CDirect3DDevice *_this, const RECT *pSourc
     (void)hDestWindowOverride;
     (void)pDirtyRegion;
     R_CapturePendingScreenshotBeforePresent();
+#if COD2_APPLE_SDK
+    MacTrace_EndFrame();
+#endif
     if (sdl_gl_window) {
         SDL_GL_SwapWindowDirect();
     }
@@ -1697,6 +1732,9 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
 
     (void)PrimitiveType;
 
+#if COD2_APPLE_SDK
+    MacTrace_Draw(dev, PrimitiveType, BaseVertexIndex, MinVertexIndex, NumVertices, startIndex, primCount);
+#endif
     if (!dev->streams[0] || !dev->indexBuffer)
         return 0;
 #if COD2_APPLE_SDK
@@ -2623,6 +2661,10 @@ HRESULT CDirect3DDevice_SetPixelShaderConstantF(const CDirect3DDevice *_this, UI
                                                 const float *pConstantData, UINT Vector4fCount)
 {
     DeviceImpl *dev = (DeviceImpl *)_this;
+#if COD2_APPLE_SDK
+    if (StartRegister <= 256 && Vector4fCount <= 256 - StartRegister)
+        memcpy(macPixelConstants[StartRegister], pConstantData, Vector4fCount * 16);
+#endif
     if (dev->pixelShader) {
         void **vtbl = *(void ***)dev->pixelShader;
 
