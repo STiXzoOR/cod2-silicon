@@ -622,7 +622,9 @@ char InstallEventLoopTimer[64] __attribute__((aligned(4))) = { 0 };
 char IOBSDNameMatching[64] __attribute__((aligned(4))) = { 0 };
 char IOObjectGetClass[64] __attribute__((aligned(4))) = { 0 };
 char IOObjectRetain[64] __attribute__((aligned(4))) = { 0 };
+#if !COD2_APPLE_SDK
 char IORegistryEntryCreateCFProperty[64] __attribute__((aligned(4))) = { 0 };
+#endif
 char IORegistryEntryCreateIterator[64] __attribute__((aligned(4))) = { 0 };
 char IsMovieDone[64] __attribute__((aligned(4))) = { 0 };
 char jpeg_memory_src[64] __attribute__((aligned(4))) = { 0 };

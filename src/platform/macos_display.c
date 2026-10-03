@@ -1,4 +1,5 @@
 #include "macos_display.h"
+#include "macos_system.h"
 #include <SDL2/SDL.h>
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
@@ -311,6 +312,31 @@ void MacPlatform_GetDrawableSize(int *width, int *height) { SDL_GL_GetDrawableSi
 uint16_t MacDisplay_GetCurrentDimensions(int *w, int *h) { MacPlatform_GetRenderSize(w, h); return 0; }
 int MacDisplay_GetCurrentDepth(void) { return 32; }
 int MacDisplay_GetNumModes(void) { MacDisplay_Initialize(); return modeCount; }
+const char **MacPlatform_ModeNames(void)
+{
+    static const char *names[128];
+    static char storage[127][32];
+    if (names[0])
+        return names;
+    const int defaults[][2] = { {640, 480}, {800, 600}, {1024, 768}, {1280, 720} };
+    int used = 0;
+    MacDisplay_Initialize();
+    for (int i = 0; i < 4 + modeCount && used < 127; ++i) {
+        int w = i < 4 ? defaults[i][0] : modes[i - 4].width;
+        int h = i < 4 ? defaults[i][1] : modes[i - 4].height;
+        char name[32];
+        snprintf(name, sizeof(name), "%dx%d", w, h);
+        int duplicate = 0;
+        for (int j = 0; j < used; ++j)
+            duplicate |= strcmp(name, names[j]) == 0;
+        if (!duplicate) {
+            strcpy(storage[used], name);
+            names[used] = storage[used];
+            ++used;
+        }
+    }
+    return names;
+}
 uint16_t MacDisplay_GetNthMode(int i, int *w, int *h, int *d, int *r)
 {
     if (MacDisplay_Initialize() != 0 || i < 0 || i >= modeCount)
@@ -380,7 +406,15 @@ int MacDisplay_IsGLExtensionSupported(const char *name)
     return 0;
 }
 int MacDisplay_GetCardType(void) { return 0; }
-void MacDisplay_GetVideoMemoryInfo(int *video, int *texture) { *video = *texture = 0; }
+void MacDisplay_GetVideoMemoryInfo(int *video, int *texture)
+{
+    /* Reserve 1/8 of unified memory, capped below the renderer's signed limit. */
+    uint64_t budget = MacSystem_MemoryBytes() / 8;
+    if (budget > 1024ULL * 1024 * 1024)
+        budget = 1024ULL * 1024 * 1024;
+    *video = (int)(budget >> 20);
+    *texture = (int)budget;
+}
 int MacDisplay_GetMaxTextureUnits(void) { GLint n = 0; glGetIntegerv(GL_MAX_TEXTURE_UNITS, &n); return n; }
 int MacDisplay_GetMaxTextureImageUnits(void) { GLint n = 0; glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &n); return n; }
 uint32_t MacDisplay_GetPCPixelShaderVersion(void) { return 0xffff0200u; }

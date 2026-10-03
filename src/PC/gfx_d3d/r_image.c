@@ -339,6 +339,12 @@ void R_SetPicmip(void)
 
         ri_Printf(0, "Using non-Dx7 renderer\n");
 
+#if COD2_APPLE_SDK
+        int nativePicmip = texMemInMegs >= 512 && sysMemInMegs >= 1024 ? 0 : texMemInMegs > 128 ? 1 : 2;
+        IG_SCALAR(2048) = nativePicmip;
+        IG_SCALAR(2049) = nativePicmip;
+        IG_SCALAR(2050) = nativePicmip;
+#else
         IG_SCALAR(2048) = 2;
         IG_SCALAR(2049) = 2;
         IG_SCALAR(2050) = 2;
@@ -368,6 +374,7 @@ void R_SetPicmip(void)
             }
             ri_Printf(0, "Reducing texture detail based on total system memory of %i M", sysMemInMegs);
         }
+#endif
     }
 
 set_cvars:

@@ -3308,7 +3308,15 @@ void CDirect3DDevice_Init(void *device)
     dev->viewportH = 480;
     dev->viewportMinZ = 0.0f;
     dev->viewportMaxZ = 1.0f;
+#if COD2_APPLE_SDK
+    int renderWidth, renderHeight;
+    MacPlatform_GetRenderSize(&renderWidth, &renderHeight);
+    dev->viewportW = renderWidth;
+    dev->viewportH = renderHeight;
+    glViewport(0, 0, renderWidth, renderHeight);
+#else
     glViewport(0, 0, 640, 480);
+#endif
     glDepthRange(0.0, 1.0);
     dev->zEnable = 1;
     dev->zWriteEnable = 1;

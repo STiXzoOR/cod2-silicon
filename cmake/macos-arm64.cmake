@@ -58,7 +58,7 @@ foreach(target cod2_macos cod2_macos_ded)
     -Wint-conversion -Wincompatible-pointer-types -Wvoid-pointer-to-int-cast
     -Wno-typedef-redefinition -Wno-duplicate-decl-specifier
     -ferror-limit=0)
-  target_link_libraries(${target} PRIVATE ZLIB::ZLIB c++)
+  target_link_libraries(${target} PRIVATE ZLIB::ZLIB c++ "-framework IOKit" "-framework CoreFoundation")
   target_compile_features(${target} PRIVATE cxx_std_17)
   # ld64 equivalents of the MinGW --defsym seam aliases in CMakeLists.txt.
   target_link_options(${target} PRIVATE
