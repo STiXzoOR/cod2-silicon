@@ -69,10 +69,43 @@ read-only: point `fs_homepath` somewhere else for configs and logs.
 - `macbin/cod2mp_mac_1.3_i386` — the Mac MP 1.3 binary, i386 slice, with full
   STABS debug info (≈397k stab entries, 465 source files, 6,511 functions,
   global variable types). Inspect with `nm -a`, `otool`, `llvm-objdump`.
-- `CoD2rev_Server/` — callofduty2x fork of voron00's reversed dedicated server;
-  it builds as x64 Linux, so it shows 64-bit-clean versions of the server,
-  script VM and qcommon code. Note it forces `-mfpmath=387` for bullet traces.
+- `CoD2rev_Server/` — callofduty2x fork of voron00's reversed dedicated server
+  (shallow, May x64 work + CoD2x protocol; lacks voron00's September LP64 fixes).
+  Prefer the full upstream clone in `research-clones/CoD2rev_Server-voron00`
+  (AGPL-3.0, Linux 1.0/protocol 115, 64-bit by default since 30 Sep 2026; its
+  LP64 approach: pointer-width script values, 32-bit bytecode offsets,
+  `offsetof`/`ptrdiff_t` field tables). Its `-mfpmath=387` (added 3 Oct) is for
+  x87 Linux parity and does not apply to us: the Mac original is SSE.
+- `research-clones/cod2engine` — nawaftahir's byte-identical rebuild of the
+  Linux dedicated server 1.0/1.2c/1.3 (server, game, bgame, script, qcommon,
+  xanim, EffectsCore; no client/renderer), names from the Mac 1.3 STABS. Its
+  1.3 target is the same `cod2_lnxded` CoD2x ships. **Use it as the reference
+  for server/game/script behaviour**: compare, then settle disagreements against
+  the Mac disassembly. No license and derived from AGPL code: read, don't paste.
+  32-bit only.
+- `research/` — in-depth reports on related projects
+  (`engine-server-reconstructions.md`, `mac-client-reconstructions.md`,
+  `tools-ecosystem.md`).
 - `xtnded-cod2/` — an older reconstruction from the Mac STABS; useful for types.
+
+## Known upstream opencod2 issues (verified against the Mac 1.3 disassembly)
+
+From `research/engine-server-reconstructions.md`; cod2engine matches the Mac
+binary in each case.
+
+- `SV_SendClientSnapshot` never sends download data to active clients (Mac
+  0x1964eb does).
+- The overflow-recovery size check uses `+5` where the original uses strlen+6.
+- The switch compiler has an extra `value != 0` test, so it accepts two
+  `default:` labels that stock 1.3 rejects.
+- Debug instrumentation in hot paths: `G_RunFrame` prints five `[ckpt]` lines
+  and calls `getenv` twice per server frame; the script VM runs a debug check on
+  every opcode; `BG_EvaluateTrajectory` hides bad trajectory types. Together they
+  mask an unresolved corruption of entity 439. Gate this before any 250 fps or
+  parity measurement.
+- Seven places hand-declare `qsort`/`memcpy`/`memset`/`malloc` with 32-bit size
+  parameters; use the system headers on LP64.
+- Good news: all six network field tables and the Huffman table match 1.3.
 
 ## Rules for every agent
 
