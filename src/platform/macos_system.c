@@ -30,6 +30,18 @@ uint64_t MacSystem_Nanoseconds(void)
     return (uint64_t)((__uint128_t)mach_absolute_time() * timebase.numer / timebase.denom);
 }
 
+void MacSystem_WaitUntil(uint64_t deadline)
+{
+    /* Leave 80 us for the final spin; mach_wait_until can wake late. */
+    uint64_t now = MacSystem_Nanoseconds();
+    if (deadline > now && deadline - now > 80000) {
+        uint64_t wake = deadline - 80000;
+        mach_wait_until((uint64_t)((__uint128_t)wake * timebase.denom / timebase.numer));
+    }
+    while (MacSystem_Nanoseconds() < deadline)
+        ;
+}
+
 static void MacSystem_InitHome(void)
 {
     const char *home = getenv("HOME");
