@@ -329,7 +329,11 @@ void MSG_WriteShort(msg_t *msg, int c);
 void MSG_WriteLong(msg_t *msg, int c);
 void MSG_Init(msg_t *buf, byte *data, int length);
 void MSG_WriteString(msg_t *sb, const char *s);
+#if defined(COD2_X64)
+void MSG_WriteBigString(msg_t *sb, const char *s);
+#else
 void MSG_WriteBigString(msg_t *sb, const char *s, msg_t *msg, int key, int oldV, int bits);
+#endif
 void MSG_ReadDeltaField(msg_t *msg, byte *from, byte *to, const NetField *field, qboolean print);
 static qboolean __attribute_regparm__(3) MSG_ReadDeltaStruct(msg_t *msg, byte *from, byte *to, unsigned int number, int numFields, int indexBits, const NetField *stateFields);
 qboolean MSG_ReadDeltaClient(msg_t *msg, clientState_t *from, clientState_t *to, int number);
@@ -921,16 +925,22 @@ void MSG_WriteString(msg_t *sb, const char *s)
     MSG_WriteData_core(sb, string, l + 1);
 }
 
+#if defined(COD2_X64)
+void MSG_WriteBigString(msg_t *sb, const char *s)
+#else
 void MSG_WriteBigString(msg_t *sb, const char *s, msg_t *msg, int key, int oldV, int bits)
+#endif
 {
     char string[8192];
     int l = strlen(s);
     int i;
 
+#if !defined(COD2_X64)
     (void)msg;
     (void)key;
     (void)oldV;
     (void)bits;
+#endif
 
     if (l > 8191) {
         Com_Printf("MSG_WriteString: BIG_INFO_STRING");

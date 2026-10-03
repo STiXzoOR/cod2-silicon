@@ -116,7 +116,11 @@ extern void Sys_ShowConsole(int visLevel, qboolean quitOnClose);
 extern void Sys_NormalExit(void);
 extern void SV_AddDedicatedCommands(void);
 extern qboolean Com_HasPlayerProfile(void);
+#if defined(COD2_X64)
+extern int Com_BuildPlayerProfilePath(char *, int, const char *, ...);
+#else
 extern void Com_BuildPlayerProfilePath(char *buf, int bufsize, const char *suffix);
+#endif
 
 extern const dvar_t *Dvar_RegisterInt(const char *name, int value, int min, int max, int flags);
 extern int Sys_Milliseconds(void);
@@ -544,7 +548,11 @@ static void Com_Crash_f(void)
 void Com_WriteCDKey(void)
 {
     extern qboolean CL_CDKeyValidate(const char *key, const char *checksum);
+#if defined(COD2_X64)
+    extern void MacPreferences_PutString(const char *, const char *);
+#else
     extern unsigned char MacPreferences_PutString(const char *key, const char *value);
+#endif
     char regkey[21];
 
     if (!CL_CDKeyValidate(cl_cdkey, cl_cdkeychecksum)) {
@@ -1162,7 +1170,11 @@ void Com_CheckSetRecommended(void)
 #if !(COD2_APPLE_SDK && defined(DEDICATED))
 void Com_ReadCDKey(void)
 {
+#if defined(COD2_X64)
+    extern unsigned char MacPreferences_GetString(const char *, char *, int, const char *);
+#else
     extern qboolean MacPreferences_GetString(const char *key, char *buf, int bufsize, int defaultVal);
+#endif
     extern qboolean CL_CDKeyValidate(const char *key, const char *checksum);
     char regkey[21];
 

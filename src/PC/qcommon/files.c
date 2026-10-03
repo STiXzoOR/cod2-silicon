@@ -55,7 +55,11 @@ extern int Cmd_Argc(void);
 extern char *Cmd_Argv(int arg);
 extern char **FS_ListFiles(const char *path, const char *extension, int wantSubs, int *numfiles, int flags);
 extern void FS_FreeFileList(const char **list, int flags);
+#if defined(COD2_X64)
+extern const char ** FS_ListFilteredFiles(searchpath_t *, const char *, const char *, const char *, FsListBehavior, int *, int);
+#else
 extern char **FS_ListFilteredFiles(void *searchPath, const char *path, const char *extension, const char *filter, int *numfiles, int flags);
+#endif
 extern void FS_SortFileList(const char **list, int numfiles);
 extern void FS_ConvertPath(char *s);
 extern qboolean FS_TouchFile(const char *filename);
@@ -86,7 +90,11 @@ extern void Sys_FreeFileList(char **list);
 extern void FS_FCloseFile(fileHandle_t f);
 extern FILE *FS_FileForHandle(fileHandle_t f);
 extern void Com_Memset(void *dest, const int val, int count);
+#if defined(COD2_X64)
+extern size_t FS_FileRead(void *, size_t, size_t, FILE *);
+#else
 extern unsigned int FS_FileRead(void *buf, unsigned int len, unsigned int count, FILE *f);
+#endif
 extern int FS_FileClose(FILE *stream);
 extern int Com_sprintf(char *dest, int destsize, const char *fmt, ...);
 
@@ -355,7 +363,12 @@ void FS_NewDir_f(void)
 
     {
         void *searchpaths = *(void **)imp_fs_searchpaths;
+
+#if defined(COD2_X64)
+        dirnames = (char **)FS_ListFilteredFiles(searchpaths, "", "", filter, FS_LIST_ALL, &ndirs, 10);
+#else
         dirnames = FS_ListFilteredFiles(searchpaths, "", "", filter, &ndirs, 10);
+#endif
     }
 
     FS_SortFileList((const char **)dirnames, ndirs);

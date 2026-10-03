@@ -1,4 +1,7 @@
 #include "common_types.h"
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 #include "imports.h"
 /* dvar globals */
 extern const dvar_t *com_sv_running;
@@ -26,6 +29,9 @@ char *netsrcString[2] = {
 static int net_iProfilingOn;
 extern loopback_t loopbacks[2];
 
+#if !defined(COD2_X64)
+#line 28
+#endif
 COD2_ASSERT_FIELD(dvar_t, current, 0x8);
 COD2_ASSERT_FIELD(LegacyHacks, cl_running, 0x4);
 
@@ -38,10 +44,16 @@ extern void SV_Netchan_PrintProfileStats(int bDumpRecvStats);
 extern void CL_Netchan_PrintProfileStats(int bDumpRecvStats);
 extern qboolean Sys_GetPacket(netadr_t *net_from, msg_t *net_message);
 extern qboolean Sys_StringToAdr(const char *s, netadr_t *a);
+#if defined(COD2_X64)
+extern void Sys_SendPacket(int, const void *, netadr_t);
+#else
 extern Bool Sys_SendPacket(int length, const void *data, netadr_t to);
+#endif
 extern int Sys_Milliseconds(void);
 #ifndef _WIN32
+#if !defined(COD2_X64)
 extern void *malloc(int size);
+#endif
 #endif
 extern void free(void *ptr);
 extern char *strchr(const char *s, int c);
@@ -451,7 +463,12 @@ Bool NET_SendPacket(netsrc_t sock, int length, const void *data, netadr_t to)
         return 0;
     } else {
 
+#if defined(COD2_X64)
+        Sys_SendPacket(length, data, to);
+        return 1;
+#else
         return Sys_SendPacket(length, data, to);
+#endif
     }
 }
 
