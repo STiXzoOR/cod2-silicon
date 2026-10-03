@@ -154,6 +154,14 @@ int main(int argc, char **argv)
 
     cmdLine[0] = '\0';
     offset = 0;
+#if defined(__APPLE__) && defined(COD2_X64) && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    extern int Cod2xNativeApp_Arguments(char *, int);
+    offset = Cod2xNativeApp_Arguments(cmdLine, sizeof(cmdLine));
+    if (offset < 0) {
+        fprintf(stderr, "CoD2-native bundle launch arguments exceed the command-line limit\n");
+        return 1;
+    }
+#endif
     for (i = 1; i < argc; i++) {
         int len = strlen(argv[i]);
         if (offset + len + 2 >= (int)sizeof(cmdLine))
