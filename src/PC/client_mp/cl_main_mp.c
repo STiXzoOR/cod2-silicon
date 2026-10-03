@@ -3183,6 +3183,12 @@ void CL_BeginDownload(const char *localName, const char *remoteName)
     conn = (clientConnection_t *)clc;
     I_strncpyz(conn->downloadName, localName, sizeof(conn->downloadName));
     Com_sprintf(conn->downloadTempName, sizeof(conn->downloadTempName), (const char *)"%s.tmp", localName);
+#if defined(COD2_X64) && COD2_FEATURE_WWW_DOWNLOAD
+    /* Mac 1.3 keeps these names in cls (CL_BeginDownload 0x14d668), where an
+       HTTP redirect (CL_ParseWWWDownload) reads them. */
+    I_strncpyz(cls.downloadName, localName, sizeof(cls.downloadName));
+    Com_sprintf(cls.downloadTempName, sizeof(cls.downloadTempName), "%s.tmp", localName);
+#endif
 
     I_strncpyz(legacyHacks->cl_downloadName, remoteName, 0x40);
     legacyHacks->cl_downloadSize = 0;
