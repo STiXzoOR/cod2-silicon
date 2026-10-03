@@ -22,11 +22,19 @@ extern vec3_t bytedirs[162];
 extern vec2_t vec2_origin;
 extern vec3_t vec3_origin;
 extern const float identityMatrix44[4][4];
+#if defined(COD2_X64)
+__attribute__((used)) uint32_t holdrand[2] = {
+#else
 __attribute__((used)) UInt32 holdrand[2] = {
+#endif
     0x89abcdef,
     0,
 };
+#if defined(COD2_X64)
+#define holdrand (*(uint32_t *)holdrand)
+#else
 #define holdrand (*(unsigned long *)holdrand)
+#endif
 
 const qboolean VecNCompareCustomEpsilon(const vec_t *v0, const vec_t *v1, vec_t epsilon, int coordCount);
 float randomf(void);
