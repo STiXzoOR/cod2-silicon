@@ -767,7 +767,11 @@ do_reload:
 
         Com_Memcpy(imp_fs_serverIwds, serverIwds, c * 4);
 
+#if defined(COD2_X64)
+        Com_Memcpy(imp_fs_serverIwdNames, serverIwdNames, c * sizeof(serverIwdNames[0]));
+#else
         Com_Memcpy(imp_fs_serverIwdNames, serverIwdNames, c * 4);
+#endif
 
         *(int *)imp_fs_fakeChkSum = 0;
     }

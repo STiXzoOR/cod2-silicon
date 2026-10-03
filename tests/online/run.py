@@ -20,14 +20,17 @@ suites = [
     ('ui_conversion', 'src/PC/ui_mp/ui_main_mp.c',
      ['UI_ReplaceConversions', 'UI_ReplaceConversionString']),
     ('infostring', 'src/PC/universal/q_shared.c', ['Info_RemoveKey', 'Info_RemoveKey_Big']),
+    ('pure_iwds', 'src/PC/qcommon/files.c', ['FS_PureServerSetLoadedIwds']),
 ]
+if len(sys.argv) > 2:
+    suites = [suite for suite in suites if suite[0] in sys.argv[2:]]
 with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
     out = Path(tmp)
     for name, path, names in suites:
         source = (root / path).read_text()
-        functions = []
+        functions = [] if names else [source]
         for function in names:
-            match = re.search(r'^(?:const char \*|void )' + function + r'\([^;]*?\)\n\{',
+            match = re.search(r'^(?:const char \*|(?:static )?void )' + function + r'\([^;]*?\)\n\{',
                               source, re.M)
             depth = 0
             for token in re.finditer(r'/\*[\s\S]*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"|[{}]',
