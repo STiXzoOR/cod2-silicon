@@ -3,7 +3,7 @@
 set -eu
 mkdir -p build-macos/ws6-tests
 for name in gl_buffers gl_state material_disk font_disk commands static_model_cache shader_arguments shader_cache bitmap_channels lighting_lookup wavelet_loading; do
-    clang -arch arm64 -std=c11 -DCOD2_X64=1 -DGL_SILENCE_DEPRECATION \
+    clang -arch arm64 -std=c11 -ffp-contract=off -DCOD2_X64=1 -DGL_SILENCE_DEPRECATION \
         -Isrc -Isrc/headers -Wno-deprecated-non-prototype \
         -Wno-incompatible-pointer-types -Wno-typedef-redefinition \
         -Wno-duplicate-decl-specifier -Wl,-dead_strip \
