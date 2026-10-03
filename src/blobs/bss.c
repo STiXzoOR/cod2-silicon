@@ -331,7 +331,11 @@ BSSINT completionString;
 unsigned char tinystr[120];
 itemInfo_t cg_itemsArray[256];
 weaponInfo_t cg_weaponsArray[128];
+#if defined(COD2_X64)
+centity_t cg_entitiesArray[1024];
+#else
 unsigned char cg_entitiesArray[561152];
+#endif
 
 unsigned char cgsArray[sizeof(cgs_t)];
 cg_t cgArray[1];

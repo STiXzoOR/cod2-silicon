@@ -379,7 +379,11 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum);
 
 void CG_GetEntityOrientation(int entnum, vec_t *origin_out, vec3_t *axis_out)
 {
+    #if defined(COD2_X64)
+    char *ent = (char *)&cg_entities[entnum];
+#else
     char *ent = (char *)cg_entities + entnum * 548;
+#endif
     vec_t *origin = (vec_t *)((centity_t *)ent)->lerpOrigin;
     origin_out[0] = origin[0];
     origin_out[1] = origin[1];
@@ -614,7 +618,13 @@ void CG_Shutdown(void)
     FX_FreeSystem();
 
     cgBase = (byte *)cg;
-    for (i = 0; i < 64; ++i, cgBase += 0x4b8) {
+    for (i = 0; i < 64; ++i, cgBase +=
+#if defined(COD2_X64)
+         sizeof(clientInfo_t)
+#else
+         0x4b8
+#endif
+    ) {
         struct XAnimTree_s *tree = ((cg_t *)cgBase)->bgs.clientinfo[0].pXAnimTree;
         if (tree) {
             XAnimFreeTree(tree, 0);
@@ -623,7 +633,13 @@ void CG_Shutdown(void)
     }
 
     cgsBase = (byte *)cgs;
-    for (i = 0; i < 8; ++i, cgsBase += 0x4b8) {
+    for (i = 0; i < 8; ++i, cgsBase +=
+#if defined(COD2_X64)
+         sizeof(clientInfo_t)
+#else
+         0x4b8
+#endif
+    ) {
         struct XAnimTree_s *tree = ((cgs_t *)cgsBase)->corpseinfo[0].pXAnimTree;
         if (tree) {
             XAnimFreeTree(tree, 0);
@@ -715,7 +731,11 @@ void CG_GetDObjOrientation(int dobjHandle, orientation_t *orient)
     const byte *cent;
 
     if ((unsigned int)dobjHandle <= 0x3ff) {
+        #if defined(COD2_X64)
+        cent = (const byte *)&cg_entities[dobjHandle];
+#else
         cent = (const byte *)cg_entities + dobjHandle * 548;
+#endif
         orient->origin[0] = ((centity_t *)cent)->lerpOrigin[0];
         orient->origin[1] = ((centity_t *)cent)->lerpOrigin[1];
         orient->origin[2] = ((centity_t *)cent)->lerpOrigin[2];
@@ -848,7 +868,11 @@ int CG_PlayEntitySoundAlias(int entitynum, snd_alias_list_t *aliasList)
 {
     const vec_t *origin;
 
+    #if defined(COD2_X64)
+    origin = cg_entities[entitynum].lerpOrigin;
+#else
     origin = (const vec_t *)((const byte *)cg_entities + entitynum * 548 + 0x108);
+#endif
     return CG_PlayPickedAlias(Com_PickSoundAliasFromList(aliasList), entitynum, origin, 0);
 }
 
@@ -868,8 +892,52 @@ static inline __attribute__((always_inline)) void CG_RegisterSoundAlias(byte *cg
     *(snd_alias_list_t **)(cgsBase + offset) = Com_FindSoundAlias(aliasName);
 }
 
+#if defined(COD2_X64)
+static void CG_RegisterNativeSurfaceSounds(snd_alias_list_t **sounds, const char *base)
+{
+    for (int surface = 0; surface < 23; ++surface) {
+        char aliasName[0x118];
+        snprintf(aliasName, sizeof(aliasName), "%s_%s", base, Com_SurfaceTypeToName(surface));
+        sounds[surface] = Com_FindSoundAlias(aliasName);
+    }
+}
+#endif
+
 static void CG_RegisterSounds(void)
 {
+#if defined(COD2_X64)
+    cgs->media.noAmmoSound = Com_FindSoundAlias("player_out_of_ammo");
+    cgs->media.landDmgSound = Com_FindSoundAlias("land_damage");
+    cgs->media.runningEquipmentSound = Com_FindSoundAlias("gear_rattle_run");
+    cgs->media.runningEquipmentSoundPlayer = Com_FindSoundAlias("gear_rattle_plr_run");
+    cgs->media.walkingEquipmentSound = Com_FindSoundAlias("gear_rattle_walk");
+    cgs->media.walkingEquipmentSoundPlayer = Com_FindSoundAlias("gear_rattle_plr_walk");
+    cgs->media.foliageMovement = Com_FindSoundAlias("movement_foliage");
+    cgs->media.bulletWhizby = Com_FindSoundAlias("whizby");
+    cgs->media.meleeSwingLarge = Com_FindSoundAlias("melee_swing_large");
+    cgs->media.meleeSwingSmall = Com_FindSoundAlias("melee_swing_small");
+    cgs->media.meleeHit = Com_FindSoundAlias("melee_hit");
+    cgs->media.meleeHitOther = Com_FindSoundAlias("melee_hit_other");
+    cgs->media.playerHeartBeatSound = Com_FindSoundAlias("weap_sniper_heartbeat");
+    cgs->media.playerBreathInSound = Com_FindSoundAlias("weap_sniper_breathin");
+    cgs->media.playerBreathOutSound = Com_FindSoundAlias("weap_sniper_breathout");
+    cgs->media.playerBreathGaspSound = Com_FindSoundAlias("weap_sniper_breathgasp");
+    cgs->media.playerSwapOffhand = Com_FindSoundAlias("weap_offhand_select");
+    CG_RegisterNativeSurfaceSounds(cgs->media.grenadeBounceSound, "grenade_bounce");
+    CG_RegisterNativeSurfaceSounds(cgs->media.grenadeExplodeSound, "grenade_explode");
+    CG_RegisterNativeSurfaceSounds(cgs->media.rocketExplodeSound, "rocket_explode");
+    CG_RegisterNativeSurfaceSounds(cgs->media.bulletHitSmallSound, "bullet_small");
+    CG_RegisterNativeSurfaceSounds(cgs->media.shotgunHitSound, "bulletspray_small");
+    CG_RegisterNativeSurfaceSounds(cgs->media.bulletHitLargeSound, "bullet_large");
+    CG_RegisterNativeSurfaceSounds(cgs->media.stepRunSound, "step_run");
+    CG_RegisterNativeSurfaceSounds(cgs->media.stepRunSoundPlayer, "step_run_plr");
+    CG_RegisterNativeSurfaceSounds(cgs->media.stepWalkSound, "step_walk");
+    CG_RegisterNativeSurfaceSounds(cgs->media.stepWalkSoundPlayer, "step_walk_plr");
+    CG_RegisterNativeSurfaceSounds(cgs->media.stepProneSound, "step_prone");
+    CG_RegisterNativeSurfaceSounds(cgs->media.stepProneSoundPlayer, "step_prone_plr");
+    CG_RegisterNativeSurfaceSounds(cgs->media.landSound, "land");
+    CG_RegisterNativeSurfaceSounds(cgs->media.landSoundPlayer, "land_plr");
+#else
     CG_RegisterSoundAlias((byte *)cgs, 0xbc84, "player_out_of_ammo");
     CG_RegisterSoundAlias((byte *)cgs, 0xbc88, "land_damage");
 
@@ -903,6 +971,7 @@ static void CG_RegisterSounds(void)
     CG_RegisterSoundAlias((byte *)cgs, 0xc1c8, "weap_sniper_breathout");
     CG_RegisterSoundAlias((byte *)cgs, 0xc1cc, "weap_sniper_breathgasp");
     CG_RegisterSoundAlias((byte *)cgs, 0xc1d0, "weap_offhand_select");
+#endif
 }
 
 static inline __attribute__((always_inline)) LegacyHacks *CG_LegacyHacks(void)
@@ -1099,20 +1168,37 @@ static inline __attribute__((always_inline)) void CG_InitXAnimTrees(void)
     byte *cgsTree = (byte *)(((char *)cgsBase + offsetof(cgs_t, corpseinfo[0].pXAnimTree)));
     int i;
 
-    for (i = 0; i < 64; i++, clientTree += 0x4b8)
+    for (i = 0; i < 64; i++, clientTree +=
+#if defined(COD2_X64)
+         sizeof(clientInfo_t)
+#else
+         0x4b8
+#endif
+    )
         *(void **)clientTree = XAnimCreateTree((XAnim *)anims, (Alloc_t)Hunk_AllocXAnimClient);
 
-    for (i = 0; i < 8; i++, cgsTree += 0x4b8)
+    for (i = 0; i < 8; i++, cgsTree +=
+#if defined(COD2_X64)
+         sizeof(clientInfo_t)
+#else
+         0x4b8
+#endif
+    )
         *(void **)cgsTree = XAnimCreateTree((XAnim *)anims, (Alloc_t)Hunk_AllocXAnimClient);
 }
 
 static inline __attribute__((always_inline)) void CG_ClearEntityDObjHandles(void)
 {
+#if defined(COD2_X64)
+    for (int i = 0; i < 1024; ++i)
+        cg_entities[i].localClientNum = 0;
+#else
     byte *ent = (byte *)cg_entities;
     int offset;
 
     for (offset = 0; offset < 0x89000; offset += 0x224)
         *(int *)(ent + offset + 0x220) = 0;
+#endif
 }
 
 void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
@@ -1127,7 +1213,11 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum)
 
     memset((void *)cg, 0, sizeof(cg_t));
     memset(&cgDC, 0, sizeof(displayContextDef_t));
+#if defined(COD2_X64)
+    memset(cg_entities, 0, 1024 * sizeof(*cg_entities));
+#else
     memset((void *)cg_entities, 0, 0x89000);
+#endif
     memset((void *)cg_weapons, 0, CG_MAX_WEAPONS * sizeof(weaponInfo_t));
     memset((void *)cg_items, 0, CG_MAX_ITEMS * sizeof(itemInfo_t));
 
