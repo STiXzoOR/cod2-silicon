@@ -383,7 +383,11 @@ const gitem_t *G_FindItem(const char *pickupName)
     base = (char *)imp_bg_itemlist;
 
     for (iIndex = 0x81; iIndex < count; iIndex++) {
+#if defined(COD2_X64)
+        char *it = base + iIndex * sizeof(gitem_t);
+#else
         char *it = base + iIndex * 44;
+#endif
         if (I_stricmp(((gitem_t *)it)->pickup_name, pickupName) == 0) {
             return (const gitem_t *)it;
         }
@@ -396,7 +400,11 @@ const gitem_t *G_FindItem(const char *pickupName)
     if (weaponIndex == 0) {
         return NULL;
     }
+#if defined(COD2_X64)
+    return (const gitem_t *)base + weaponIndex;
+#else
     return (const gitem_t *)(base + weaponIndex * 44);
+#endif
 }
 
 void BG_AddPredictableEventToPlayerstate(int newEvent, int eventParm, playerState_t *ps)
