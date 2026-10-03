@@ -34,3 +34,13 @@ subprocess.run(['clang', '-DCOD2_X64=1', '-O3', '-fsanitize=address,undefined',
                 '-I' + str(out), str(root / 'tests/perf/mantle.c'), '-o', str(out / 'mantle')], check=True)
 subprocess.run([str(out / 'mantle')], check=True)
 print('PASS native mantle transition table (O3, ASan/UBSan)')
+
+path = 'src/Mac/DirectX_9/CDirect3DDevice.c'
+source = subprocess.check_output(['git', 'show', f'{args.baseline}:{path}'], cwd=root, text=True) if args.baseline else (root / path).read_text()
+start = source.index('static const byte *CDirect3DDevice_ConvertColorArray(')
+end = source.index('\nstatic GLenum CDirect3DDevice_MapCompareFunc', start)
+(out / 'color_array.h').write_text(source[start:end])
+subprocess.run(['clang', '-DCOD2_X64=1', '-O3', '-fsanitize=address,undefined',
+                '-I' + str(out), str(root / 'tests/perf/colors.c'), '-o', str(out / 'colors')], check=True)
+subprocess.run([str(out / 'colors')], check=True)
+print('PASS native vertex color conversion (O3, ASan/UBSan)')

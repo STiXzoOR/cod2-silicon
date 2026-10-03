@@ -509,6 +509,12 @@ static const byte *CDirect3DDevice_ConvertColorArray(const byte *vertBase, UINT 
     if (colorOffset < 0 || vertexCount == 0)
         return NULL;
 
+#if defined(COD2_X64)
+    /* Callers already accept the original interleaved RGBA array on NULL. */
+    if (byteOrder == COLOR_BYTES_RGBA)
+        return NULL;
+#endif
+
     bytesNeeded = vertexCount * 4;
     if (bytesNeeded > g_colorArrayScratchCapacity) {
         byte *newScratch = (byte *)realloc(g_colorArrayScratch, bytesNeeded);
