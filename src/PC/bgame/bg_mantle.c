@@ -15,7 +15,11 @@ static const dvar_t *mantle_check_angle;
 static const dvar_t *mantle_view_yawcap;
 
 __attribute__((used, aligned(4)))
+#if defined(COD2_X64)
+uint32_t s_mantleTrans[24] = {
+#else
 UInt32 s_mantleTrans[24] = {
+#endif
     0x00000001,
     0x00000008,
     0x42640000,
