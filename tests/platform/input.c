@@ -13,6 +13,10 @@ static clientActive_t *client;
 void *imp_cl = &client;
 static struct { int type, value, value2; } events[64];
 static int count, absoluteX, absoluteY, relativeX, relativeY, cleared, quit;
+static int pumps;
+static Uint32 ticks = 1;
+void MacTest_PumpEvents(void) { ++pumps; }
+Uint32 MacTest_GetTicks(void) { return ticks; }
 /* Drive focus states explicitly: desktop focus belongs to the user/test runner. */
 Uint32 MacTest_GetWindowFlags(SDL_Window *window)
 {
@@ -43,6 +47,12 @@ int MacTest_PollEvent(SDL_Event *event)
     *event = pending[pendingTail++ % 64];
     return 1;
 }
+int MacTest_PeepEvents(SDL_Event *event, int numevents, SDL_eventaction action, Uint32 minType, Uint32 maxType)
+{
+    assert(numevents == 1 && action == SDL_GETEVENT);
+    assert(minType == SDL_FIRSTEVENT && maxType == SDL_LASTEVENT);
+    return MacTest_PollEvent(event);
+}
 static void push(SDL_Event *event) { assert(pendingHead - pendingTail < 64); pending[pendingHead++ % 64] = *event; }
 static void key(int type, SDL_Keycode code)
 {
@@ -51,6 +61,12 @@ static void key(int type, SDL_Keycode code)
 int main(void)
 {
     assert(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) == 0);
+    SDL_PumpInputEvents();
+    SDL_PumpInputEvents();
+    assert(pumps == 1);
+    ++ticks;
+    SDL_PumpInputEvents();
+    assert(pumps == 2);
     sdl_gl_window = SDL_CreateWindow("CoD2 input probe", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 320, 240, SDL_WINDOW_SHOWN);
     assert(sdl_gl_window);
     SDL_RaiseWindow(sdl_gl_window);
