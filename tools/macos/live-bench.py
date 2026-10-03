@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('data', type=Path)
 parser.add_argument('--binary', type=Path, default=ROOT / 'build-macos/cod2_macos')
+parser.add_argument('--app', type=Path, help='launch a bundle through LaunchServices, with an owned stdin FIFO')
 parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--resolution', default='1920x1080')
 parser.add_argument('--window-mode', choices=['windowed', 'fullscreen', 'borderless'], default='windowed')
@@ -28,6 +29,10 @@ parser.add_argument('--record', help='record a demo basename during the measurem
 parser.add_argument('--profile', choices=['sample', 'xctrace'])
 parser.add_argument('--cpu-profile', action='store_true', help='in-process main-thread sampler; FPS is perturbed')
 args = parser.parse_args()
+if args.app:
+    if args.app.suffix != '.app' or not args.app.is_dir():
+        parser.error('--app must name an existing .app')
+    args.binary = args.app / 'Contents/MacOS/cod2_macos'
 if not re.fullmatch(r'[1-9][0-9]{2,4}x[1-9][0-9]{2,4}', args.resolution):
     parser.error('resolution must be WIDTHxHEIGHT')
 if not 0 < args.seconds <= 60 or not 0 <= args.maxfps <= 1000:
@@ -50,8 +55,9 @@ probe = out / 'frame-probe.dylib'
 flags = subprocess.check_output(['sdl2-config', '--cflags', '--libs'], text=True).split()
 subprocess.run(['clang', '-dynamiclib', '-O2', '-Wno-deprecated-declarations', *flags,
                 str(ROOT / 'tools/macos/frame-probe.c'), str(ROOT / 'tools/macos/stack-probe.c'),
-                '-framework', 'OpenGL', '-o', str(probe)], check=True)
+                '-framework', 'OpenGL', '-framework', 'CoreGraphics', '-o', str(probe)], check=True)
 env = dict(os.environ, DYLD_INSERT_LIBRARIES=str(probe), COD2_FRAME_CSV=str(out / 'frames.csv'), COD2_FRAME_SECONDS=str(args.seconds))
+env['COD2_FRAME_PID'] = str(out / 'observer.pid')
 if args.cpu_profile:
     env['COD2_CPU_PROFILE'] = str(out / 'cpu-stacks.csv')
 command = [str(args.binary.resolve()), '+set', 'fs_basepath', '"' + str(args.data.resolve()) + '"',
@@ -66,8 +72,38 @@ if args.gpu_sync is not None:
     command[1:1] = ['+set', 'r_gpuSync', str(args.gpu_sync)]
 (out / 'launch.json').write_text(json.dumps(dict(command=command, metal_hud=env.get('MTL_HUD_ENABLED', '0')), indent=2) + '\n')
 with (out / 'console.log').open('w') as stream:
-    process = subprocess.Popen(command, env=env, stdin=subprocess.PIPE, stdout=stream,
-                               stderr=stream, text=True, cwd=out, start_new_session=True)
+    if args.app:
+        fifo = out / 'stdin.fifo'
+        os.mkfifo(fifo)
+        writer = os.fdopen(os.open(fifo, os.O_RDWR | os.O_NONBLOCK), 'w', buffering=1)
+        launch = ['open', '-n', '-a', str(args.app.resolve()), '--stdin', str(fifo),
+                  '--stdout', str(out / 'console.log'), '--stderr', str(out / 'console.log')]
+        for name in ['DYLD_INSERT_LIBRARIES', 'COD2_FRAME_CSV', 'COD2_FRAME_SECONDS', 'COD2_FRAME_PID', 'COD2_CPU_PROFILE', 'SDL_VIDEO_MAC_FULLSCREEN_SPACES', 'MTL_HUD_ENABLED']:
+            if name in env:
+                launch += ['--env', name + '=' + env[name]]
+        subprocess.run([*launch, '--args', *command[1:]], check=True, timeout=15)
+        deadline = time.monotonic() + 15
+        while not (out / 'observer.pid').exists():
+            if time.monotonic() > deadline:
+                writer.close()
+                raise RuntimeError('LaunchServices did not start the observer; no unowned process was killed')
+            time.sleep(.1)
+        class OwnedApp:
+            pid = int((out / 'observer.pid').read_text())
+            stdin = writer
+            returncode = None
+            def poll(self):
+                try:
+                    os.kill(self.pid, 0)
+                    return None
+                except ProcessLookupError:
+                    return -1
+            def wait(self):
+                self.stdin.close()
+        process = OwnedApp()
+    else:
+        process = subprocess.Popen(command, env=env, stdin=subprocess.PIPE, stdout=stream,
+                                   stderr=stream, text=True, cwd=out, start_new_session=True)
     (out / 'client.pid').write_text(str(process.pid))
     def send(text):
         process.stdin.write(text + '\n')
@@ -116,7 +152,7 @@ with (out / 'console.log').open('w') as stream:
         if args.record:
             send('record ' + args.record)
             time.sleep(1)
-        os.kill(process.pid, signal.SIGUSR2)
+        os.kill(process.pid, signal.SIGUSR1)
         wait_for('[frame-probe]')
         deadline = time.monotonic() + args.seconds + 10
         while not (out / 'frames.csv').exists():
@@ -130,7 +166,10 @@ with (out / 'console.log').open('w') as stream:
         time.sleep(1)
     finally:
         if process.poll() is None:
-            os.killpg(process.pid, signal.SIGKILL)
+            if args.app:
+                os.kill(process.pid, signal.SIGKILL)
+            else:
+                os.killpg(process.pid, signal.SIGKILL)
         process.wait()
 with (out / 'frames.csv').open() as stream:
     rows = list(csv.DictReader(stream))
@@ -146,14 +185,21 @@ result = dict(samples=len(values), fps=1000 / statistics.mean(values),
                                       for value in sorted({int(row['engine_ms']) for row in rows})},
               phases_ms={name: statistics.mean(float(row[name]) for row in rows)
                          for name in ['swap_ms', 'poll_ms', 'blit_ms', 'clear_ms', 'fence_ms']},
+              main_thread_cpu_ms=statistics.mean(float(row['cpu_ms']) for row in rows),
+              upload_calls=sum(int(row['upload_calls']) for row in rows),
+              program_calls=sum(int(row['program_calls']) for row in rows),
+              buffer_calls=sum(int(row['buffer_calls']) for row in rows),
               poll_calls_per_frame=statistics.mean(int(row['poll_calls']) for row in rows),
               resolution=args.resolution, window_mode=args.window_mode, maxfps=args.maxfps,
               requested_view_pos=args.view_pos,
               cpu_profile=args.cpu_profile,
+              app=str(args.app.resolve()) if args.app else None,
               shutdown='owned process killed; listen-server quit has a known hang')
 log = (out / 'console.log').read_text(errors='replace')
 match = re.search(r'\[frame-probe\] ([^\n]+)', log)
 result['actual_presentation'] = match.group(1) if match else None
+match = re.search(r'\[frame-probe-display\] ([^\n]+)', log)
+result['actual_display'] = match.group(1) if match else None
 match = re.search(r'^\(([^)]+)\) : ([^\n]+)', log, re.M)
 result['actual_view_pos'] = match.group(0) if match else None
 result['presentation_changes'] = re.findall(r'\[frame-probe-change\] ([^\n]+)', log)
