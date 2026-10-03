@@ -165,6 +165,35 @@ static inline void R_SafeRelease(void **objPtr)
 
 static void R_ReleaseForShutdownOrReset(void)
 {
+#if defined(COD2_X64)
+    int i, j;
+    SunFlareDynamic *flares = (SunFlareDynamic *)imp_sunFlareArray;
+    for (i = 0; i < dx.windowCount; ++i)
+        R_SafeRelease((void **)&dx.windows[i].swapChain);
+    R_ShutdownRenderTargets();
+    R_ShutdownStaticModelCache();
+    R_SafeRelease((void **)&dx.dynamicIndexBufferPool[0].buffer);
+    R_SafeRelease((void **)&dx.dynamicVertexBufferPool[0].buffer);
+    for (i = 0; i < 2; ++i)
+        R_SafeRelease((void **)&dx.skinnedCacheVbPool[i].buffer);
+    if (dx.tempSkinBuf) {
+        ri.Z_VirtualFreeInternal(dx.tempSkinBuf);
+        dx.tempSkinBuf = NULL;
+        dx.tempSkinPos = 0;
+    }
+    if (dx.particleCloudVertexBuffer) {
+        R_FreeStaticVertexBuffer(dx.particleCloudVertexBuffer);
+        dx.particleCloudVertexBuffer = NULL;
+    }
+    if (dx.particleCloudIndexBuffer) {
+        R_FreeStaticIndexBuffer(dx.particleCloudIndexBuffer);
+        dx.particleCloudIndexBuffer = NULL;
+    }
+    R_SafeRelease((void **)&dx.flushGpuQuery);
+    for (i = 0; i < 4; ++i)
+        for (j = 0; j < 2; ++j)
+            R_SafeRelease((void **)&flares[i].sunQuery[j]);
+#else
     byte *d = (byte *)&dx;
     int i;
 
@@ -216,6 +245,7 @@ static void R_ReleaseForShutdownOrReset(void)
             }
         }
     }
+#endif
 }
 
 static Bool R_DisplayModeLess(const _D3DDISPLAYMODE *mode0, const _D3DDISPLAYMODE *mode1)
@@ -271,12 +301,18 @@ static HRESULT R_CreateDevice(HWND hwnd, DWORD behavior, void *d3dpp)
 
 void R_UpdateGpuSyncType(void)
 {
+#if defined(COD2_X64)
+    dx.gpuSync = (*(const dvar_t **)imp_r_multiGpu)->current.enabled ? 0 :
+                 (*(const dvar_t **)imp_r_gpuSync)->current.integer;
+#else
+
     int v;
     if (!*(byte *)(*(int *)imp_r_multiGpu + 8))
         v = *(int *)(*(int *)imp_r_gpuSync + 8);
     else
         v = 0;
     dx.gpuSync = v;
+#endif
 }
 
 void R_EndRegistration(void)
@@ -485,7 +521,11 @@ void R_GammaCorrect(byte *buffer, int bufSize)
     float invGamma;
     int i;
 
+#if defined(COD2_X64)
+    invGamma = 1.0f / (*(const dvar_t **)imp_r_gamma)->current.value;
+#else
     invGamma = 1.0f / *(float *)(*(int *)imp_r_gamma + 8);
+#endif
 
     if (invGamma == 1.0f) {
 
@@ -550,13 +590,25 @@ static void R_Shutdown(qboolean destroyWindow)
     Material_Shutdown();
     R_ShutdownImages();
 
+#if defined(COD2_X64)
+    rgp.world = NULL;
+#else
     *(int *)((byte *)&rgp + 4252) = 0;
+#endif
     R_UnlockSkinnedCache();
     R_FlushStaticModelCache();
 
     if (destroyWindow) {
         R_ReleaseForShutdownOrReset();
 
+#if defined(COD2_X64)
+        while (dx.windowCount != 0) {
+            int idx = --dx.windowCount;
+            dx.windows[idx].swapChain = NULL;
+        }
+        R_SafeRelease((void **)&dx.device);
+        R_SafeRelease((void **)&dx.d3d9);
+#else
         while (*(int *)(d + 11592) != 0) {
             int idx = *(int *)(d + 11592) - 1;
             *(int *)(d + 11592) = idx;
@@ -566,6 +618,7 @@ static void R_Shutdown(qboolean destroyWindow)
         R_SafeRelease((void **)(d + 8));
 
         R_SafeRelease((void **)(d + 4));
+#endif
 
         R_UnregisterDvars();
     }
@@ -582,7 +635,11 @@ void R_SetColorMappings(void)
     if (!vidConfig.deviceSupportsGamma)
         return;
 
+#if defined(COD2_X64)
+    invGamma = 1.0f / (*(const dvar_t **)imp_r_gamma)->current.value;
+#else
     invGamma = 1.0f / *(float *)(*(int *)imp_r_gamma + 8);
+#endif
 
     if (invGamma == 1.0f) {
         for (i = 0; i < 256; i++)
@@ -675,11 +732,19 @@ static Bool R_CreateForInitOrReset(void)
     dx.tempSkinPos = 0;
     dx.dynamicBufferFrame = 0;
 
+#if defined(COD2_X64)
+    SunFlareDynamic *sunFlares = (SunFlareDynamic *)imp_sunFlareArray;
+    for (i = 0; i < 4; i++) {
+        sunFlares[i].sunQueryIssued[0] = 0;
+        sunFlares[i].sunQueryIssued[1] = 0;
+    }
+#else
     byte *sunFlares = (byte *)imp_sunFlareArray;
     for (i = 0; i < 4; i++) {
         sunFlares[i * 0x30 + 0x2c] = 0;
         sunFlares[i * 0x30 + 0x2d] = 0;
     }
+#endif
 
     { extern void Com_Printf(const char *, ...); Com_Printf("[dr] after stateblock=%d\n", g_disableRendering); }
     ((ri_fn)ri.Printf)(0, "Initial state");

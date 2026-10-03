@@ -12,7 +12,11 @@ void *R_LoadXModelSurfsSurface(void *surfsCtx, void *partBitsArg,
     unsigned char *ctx = (unsigned char *)surfsCtx;
 
     unsigned int *partBits = (unsigned int *)partBitsArg;
+#if defined(COD2_X64)
+    int *memUsage = &((XModel *)surfsCtx)->memUsage;
+#else
     int *memUsage = (int *)(ctx + 0x84);
+#endif
     unsigned char *surf;
     unsigned char *c;
     unsigned char *v;
@@ -22,9 +26,17 @@ void *R_LoadXModelSurfsSurface(void *surfsCtx, void *partBitsArg,
     int vi, idxCount, roundedIdx, ii;
     short *tris;
 
+#if defined(COD2_X64)
+    surf = (unsigned char *)alloc(sizeof(XSurface));
+#else
     surf = (unsigned char *)alloc(0x18);
+#endif
     c = (unsigned char *)*streamCursor;
+#if defined(COD2_X64)
+    *memUsage += sizeof(XSurface);
+#else
     *memUsage += 0x18;
+#endif
 
     ((XSurface *)surf)->tileMode = *c++;
     vertCount = *(unsigned short *)c;
@@ -200,7 +212,11 @@ void *R_RegisterXModelSurfs(void *xmodel)
         totalSurfs += getSurfCount(xmodel, &surfs, lod, &names);
     }
 
+#if defined(COD2_X64)
+    lodArray = (void **)alloc((totalSurfs + numLods) * sizeof(*lodArray));
+#else
     lodArray = (void **)alloc((totalSurfs + numLods) << 2);
+#endif
     pool = lodArray + numLods;
 
     for (lod = 0; lod < numLods; lod++) {

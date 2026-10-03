@@ -1958,7 +1958,11 @@ static void R_AddWorldSurfacesDpvs_impl(const GfxViewParms *viewParms, int camer
                 void *bmodel = (void *)sceneEnt->u.data;
                 vec3_t boundsMin, boundsMax, transformed;
 
+#if defined(COD2_X64)
+                if (!bmodel || (uintptr_t)bmodel < 0x1000)
+#else
                 if (!bmodel || (unsigned int)bmodel < 0x1000)
+#endif
                     continue;
 
                 ClearBounds(boundsMin, boundsMax);

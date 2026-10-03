@@ -131,6 +131,20 @@ static int R_CompareDumpSceneEntities(const void *e0, const void *e1)
     sceneEnt0 = &scene.sceneEnts[index0];
     sceneEnt1 = &scene.sceneEnts[index1];
 
+#if defined(COD2_X64)
+    uintptr_t key0, key1;
+    if (type == 0) {
+        key0 = (uintptr_t)DObjGetModel((void *)sceneEnt0->u.obj, 0);
+        key1 = (uintptr_t)DObjGetModel((void *)sceneEnt1->u.obj, 0);
+    } else if (type <= 3) {
+        key0 = (uintptr_t)sceneEnt0->u.data;
+        key1 = (uintptr_t)sceneEnt1->u.data;
+    } else {
+        key0 = (uintptr_t)ent0->customMaterial;
+        key1 = (uintptr_t)ent1->customMaterial;
+    }
+    return (key0 > key1) - (key0 < key1);
+#else
     switch (type) {
     case 0:
         return (int)DObjGetModel((void *)sceneEnt0->u.obj, 0) - (int)DObjGetModel((void *)sceneEnt1->u.obj, 0);
@@ -143,6 +157,7 @@ static int R_CompareDumpSceneEntities(const void *e0, const void *e1)
         diff = ((int)((byte *)ent0->customMaterial - (byte *)ent1->customMaterial)) >> 2;
         return -(diff * 0x0F0F0F0F);
     }
+#endif
 }
 
 void R_UpdateGfxEntityBounds(GfxEntity *ent)
@@ -657,8 +672,12 @@ void R_RenderScene(const refdef_t *refdef)
     int pointLightCount;
     int debugEntIndices[2048];
 
+#if defined(COD2_X64)
+    R_RenderScene_diag(rg_p->registered, (r_norefresh)->current.enabled, rgp_p->world != NULL);
+#else
     R_RenderScene_diag(rg_p->registered, (r_norefresh)->current.enabled,
                        (int)rgp_p->world ? 1 : 0);
+#endif
 
     if (!rg_p->registered)
         return;

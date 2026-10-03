@@ -312,6 +312,20 @@ void R_InterpretSunLightParseParamsIntoLights(SunLightParseParams *sunParse, Gfx
     diffG = scale * ((SunLightParseParams *)sp)->sunColor[1];
     diffB = scale * ((SunLightParseParams *)sp)->sunColor[2];
 
+#if defined(COD2_X64)
+    if (sunLight) {
+        sunLight->position[0] = sunDirection[0];
+        sunLight->position[1] = sunDirection[1];
+        sunLight->position[2] = sunDirection[2];
+        sunLight->position[3] = 0.0f;
+        sunLight->color[0] = diffR;
+        sunLight->color[1] = diffG;
+        sunLight->color[2] = diffB;
+        sunLight->u.dir.ambientColor[0] = ambientR;
+        sunLight->u.dir.ambientColor[1] = ambientG;
+        sunLight->u.dir.ambientColor[2] = ambientB;
+    }
+#else
     {
         static GfxLight sunLightScratch;
 
@@ -333,6 +347,7 @@ void R_InterpretSunLightParseParamsIntoLights(SunLightParseParams *sunParse, Gfx
         (*(float *)&((SunLightParseParams *)sl)->name[36]) = ambientG;
         (*(float *)&((SunLightParseParams *)sl)->name[40]) = ambientB;
     }
+#endif
 }
 
 static Bool R_IsValidStaticModel(char *spawnVars[64][2], int spawnVarCount, struct XModel **model, vec_t *origin)
