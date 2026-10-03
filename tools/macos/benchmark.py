@@ -161,7 +161,7 @@ def main():
     monitor = CompletionMonitor(out)
     with (out / 'wrapper.log').open('w') as stream:
         process = subprocess.Popen(command, env=env, stdout=stream, stderr=subprocess.STDOUT,
-                                   start_new_session=True)
+                                   start_new_session=True, cwd=out)
         completed = False
         try:
             while time.monotonic() < deadline:
