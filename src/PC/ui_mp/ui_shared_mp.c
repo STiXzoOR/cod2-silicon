@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -930,7 +931,7 @@ qboolean Menu_CheckOnKey(displayContextDef_t *dc, menuDef_t *menu, int key)
     byte tempItem[0x2a0];
     int i;
 
-    if (getenv("COD2_KEYDIAG")) {
+    if (COD2_DEBUG_ENV("COD2_KEYDIAG")) {
         Com_Printf("[keydiag] menu=%p name=%s key=0x%x onKey(typed)=%p raw8@onKey=%016llx off=%lld\n",
                    (void *)menu, menu->window.name ? menu->window.name : "(null)", key,
                    (void *)menu->onKey, (unsigned long long)*(uintptr_t *)&menu->onKey,
@@ -2617,7 +2618,7 @@ void Item_Text_Paint(displayContextDef_t *dc, itemDef_t *item)
     if (!textPtr) {
         if (!(*(void **)&((itemDef_t *)it)->dvar)) {
             if (traceText)
-                if (getenv("MTRACE"))
+                if (COD2_DEBUG_ENV("MTRACE"))
                     Com_Printf("[menu-trace] Item_Text_Paint no text parent=%s item=%s type=%d dvar=%s\n",
                                traceParent,
                                item->window.name ? item->window.name : "<null>",
@@ -2634,7 +2635,7 @@ void Item_Text_Paint(displayContextDef_t *dc, itemDef_t *item)
 
     if (textPtr[0] == '\0') {
         if (traceText)
-            if (getenv("MTRACE"))
+            if (COD2_DEBUG_ENV("MTRACE"))
                 Com_Printf("[menu-trace] Item_Text_Paint empty parent=%s item=%s type=%d dvar=%s\n",
                            traceParent,
                            item->window.name ? item->window.name : "<null>",
@@ -2649,7 +2650,7 @@ void Item_Text_Paint(displayContextDef_t *dc, itemDef_t *item)
     int staticFlags = ((itemDef_t *)it)->window.staticFlags;
     if (staticFlags & 0x400000) {
         if (traceText)
-            if (getenv("MTRACE"))
+            if (COD2_DEBUG_ENV("MTRACE"))
                 Com_Printf("[menu-trace] Item_Text_Paint wrapped parent=%s item=%s text='%.80s' tr=(%.1f %.1f %.1f %.1f) color=(%.2f %.2f %.2f %.2f) static=0x%x\n",
                            traceParent,
                            item->window.name ? item->window.name : "<null>",
@@ -2662,7 +2663,7 @@ void Item_Text_Paint(displayContextDef_t *dc, itemDef_t *item)
     }
     if (staticFlags & 0x800000) {
         if (traceText)
-            if (getenv("MTRACE"))
+            if (COD2_DEBUG_ENV("MTRACE"))
                 Com_Printf("[menu-trace] Item_Text_Paint autowrap parent=%s item=%s text='%.80s' tr=(%.1f %.1f %.1f %.1f) color=(%.2f %.2f %.2f %.2f) static=0x%x\n",
                            traceParent,
                            item->window.name ? item->window.name : "<null>",
@@ -2676,7 +2677,7 @@ void Item_Text_Paint(displayContextDef_t *dc, itemDef_t *item)
 
     FontHandle font = UI_GetFontHandle(((itemDef_t *)it)->fontEnum, ((itemDef_t *)it)->textscale);
     if (traceText)
-        if (getenv("MTRACE"))
+        if (COD2_DEBUG_ENV("MTRACE"))
             Com_Printf("[menu-trace] Item_Text_Paint draw parent=%s item=%s text='%.80s' tr=(%.1f %.1f %.1f %.1f) wh=(%d %d) rectAlign=(%d %d) scale=%.3f style=%d font=%p color=(%.2f %.2f %.2f %.2f) static=0x%x\n",
                        traceParent,
                        item->window.name ? item->window.name : "<null>",
@@ -2761,7 +2762,7 @@ void Item_TextField_Paint(displayContextDef_t *dc, itemDef_t *item)
     editPtr = Item_GetEditFieldDef(item);
     if (!editPtr) {
         if (traceTextField)
-            if (getenv("MTRACE"))
+            if (COD2_DEBUG_ENV("MTRACE"))
                 Com_Printf("[menu-trace] Item_TextField_Paint no edit parent=%s item=%s type=%d dvar=%s\n",
                            traceParent,
                            item->window.name ? item->window.name : "<null>",
@@ -2811,7 +2812,7 @@ void Item_TextField_Paint(displayContextDef_t *dc, itemDef_t *item)
     font = UI_GetFontHandle(item->fontEnum, item->textscale);
     if (!font) {
         if (traceTextField)
-            if (getenv("MTRACE"))
+            if (COD2_DEBUG_ENV("MTRACE"))
                 Com_Printf("[menu-trace] Item_TextField_Paint no font parent=%s item=%s text='%.80s' dvar=%s scale=%.3f\n",
                            traceParent,
                            item->window.name ? item->window.name : "<null>",
@@ -2822,7 +2823,7 @@ void Item_TextField_Paint(displayContextDef_t *dc, itemDef_t *item)
     }
 
     if (traceTextField)
-        if (getenv("MTRACE"))
+        if (COD2_DEBUG_ENV("MTRACE"))
             Com_Printf("[menu-trace] Item_TextField_Paint draw parent=%s item=%s text='%.80s' dvar=%s tr=(%.1f %.1f %.1f %.1f) x=%.1f max=%d offset=%d cursor=%d font=%p color=(%.2f %.2f %.2f %.2f)\n",
                        traceParent,
                        item->window.name ? item->window.name : "<null>",
@@ -5051,7 +5052,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
         static int itemTraceCount;
         if (itemTraceCount < 240) {
             traceScriptItem = 1;
-            if (getenv("MTRACE"))
+            if (COD2_DEBUG_ENV("MTRACE"))
                 Com_Printf("[menu-trace] Item_Paint parent=%s item=%s flags=0x%x type=%d owner=0x%x dvarFlags=0x%x dvar=%s enable=%s\n",
                            ((menuDef_t *)parent)->window.name,
                            item->window.name ? item->window.name : "<null>",
@@ -5208,7 +5209,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
         if (ownerDraw) {
             if (!UI_OwnerDrawVisible(ownerDraw)) {
                 if (traceScriptItem)
-                    if (getenv("MTRACE"))
+                    if (COD2_DEBUG_ENV("MTRACE"))
                         Com_Printf("[menu-trace] Item_Paint skip owner parent=%s item=%s owner=0x%x\n",
                                    ((menuDef_t *)parent)->window.name,
                                    item->window.name ? item->window.name : "<null>", ownerDraw);
@@ -5222,7 +5223,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
     if ((*(byte *)&((itemDef_t *)it)->dvarFlags) & 0xc) {
         if (!Item_EnableShowViaDvar(item, 4)) {
             if (traceScriptItem)
-                if (getenv("MTRACE"))
+                if (COD2_DEBUG_ENV("MTRACE"))
                     Com_Printf("[menu-trace] Item_Paint skip dvar parent=%s item=%s flagsByte=0x%x enable=%s dvar=%s\n",
                                ((menuDef_t *)parent)->window.name,
                                item->window.name ? item->window.name : "<null>",
@@ -5241,7 +5242,7 @@ void Item_Paint(displayContextDef_t *dc, itemDef_t *item)
 
     if (!((*(byte *)&((itemDef_t *)it)->window.dynamicFlags[0]) & 4)) {
         if (traceScriptItem)
-            if (getenv("MTRACE"))
+            if (COD2_DEBUG_ENV("MTRACE"))
                 Com_Printf("[menu-trace] Item_Paint skip invisible parent=%s item=%s flags=0x%x\n",
                            ((menuDef_t *)parent)->window.name,
                            item->window.name ? item->window.name : "<null>",
@@ -5404,7 +5405,7 @@ void Menu_Paint(displayContextDef_t *dc, menuDef_t *menu, qboolean forcePaint)
         static int paintTraceCount;
         if (paintTraceCount < 120) {
             traceScriptMenu = 1;
-            if (getenv("MTRACE"))
+            if (COD2_DEBUG_ENV("MTRACE"))
                 Com_Printf("[menu-trace] Menu_Paint name=%s force=%d flags=0x%x owner=0x%x items=%d fullscreen=%d openCount=%d\n",
                            menu->window.name, forcePaint, ((menuDef_t *)m)->window.dynamicFlags[0],
                            ((menuDef_t *)m)->window.ownerDrawFlags, (((menuDef_t*)(m))->itemCount), (((menuDef_t*)(m))->fullScreen),
@@ -5415,7 +5416,7 @@ void Menu_Paint(displayContextDef_t *dc, menuDef_t *menu, qboolean forcePaint)
 
     if (!((*(byte *)&((menuDef_t *)m)->window.dynamicFlags[0]) & 4)) {
         if (traceScriptMenu)
-            if (getenv("MTRACE"))
+            if (COD2_DEBUG_ENV("MTRACE"))
                 Com_Printf("[menu-trace] Menu_Paint skip invisible name=%s flags=0x%x\n",
                            menu->window.name, ((menuDef_t *)m)->window.dynamicFlags[0]);
         if (!forcePaint)
@@ -5426,7 +5427,7 @@ void Menu_Paint(displayContextDef_t *dc, menuDef_t *menu, qboolean forcePaint)
     if (ownerDrawFlags) {
         if (!UI_OwnerDrawVisible(ownerDrawFlags)) {
             if (traceScriptMenu)
-                if (getenv("MTRACE"))
+                if (COD2_DEBUG_ENV("MTRACE"))
                     Com_Printf("[menu-trace] Menu_Paint skip owner name=%s owner=0x%x\n",
                                menu->window.name, ownerDrawFlags);
             return;
@@ -5484,7 +5485,7 @@ paint_content:
                  (((menuDef_t*)(m))->fadeClamp), (float)(((menuDef_t*)(m))->fadeCycle));
 
     int itemCount = (((menuDef_t*)(m))->itemCount);
-    if (getenv("COD2_MENUDIAG") && itemCount != 0) {
+    if (COD2_DEBUG_ENV("COD2_MENUDIAG") && itemCount != 0) {
         Com_Printf("[itemdiag] menu=%p name=%p itemCount=%d items=%p\n",
                    (void *)m, (void *)((menuDef_t *)m)->window.name, itemCount,
                    (void *)((menuDef_t *)m)->items);
@@ -5519,7 +5520,7 @@ void Menu_PaintAll(displayContextDef_t *dc)
     for (i = 0; i < menuCount; i++) {
         void *menu = *(void **)((char *)&((displayContextDef_s *)d)->Menus[i]);
 
-        if (getenv("COD2_MENUDIAG")) {
+        if (COD2_DEBUG_ENV("COD2_MENUDIAG")) {
             const char *nm = menu ? ((menuDef_t *)menu)->window.name : (const char *)0;
             Com_Printf("[menudiag] i=%d/%d menu=%p name=%p%s\n", i, menuCount, menu,
                        (void *)nm,

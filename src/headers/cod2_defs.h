@@ -9463,6 +9463,9 @@ struct serverInfo_t {
     byte hardware;
     byte mod;
     byte voice;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    byte punkbuster;
+#endif
     byte requestCount;
     short int minPing;
     short int maxPing;

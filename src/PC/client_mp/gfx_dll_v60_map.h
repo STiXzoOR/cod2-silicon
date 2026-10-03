@@ -1,3 +1,5 @@
+#include "PC/qcommon/port_debug.h"
+
 static const short kV60ToV59[181] = {
     0,
     1,
@@ -185,9 +187,9 @@ extern void Com_Printf(const char *, ...);
 static int gfxV60Missing;
 static int gfxV60Report(int off)
 {
-    if (!getenv("NOMISS"))
+    COD2_DEBUG_ONLY(if (!COD2_DEBUG_ENV("NOMISS"))
         Com_Printf("[v60] UNMAPPED ri+0x%x (m%d)\n", off * 4, off);
-    gfxV60Missing = off;
+    gfxV60Missing = off;)
     return 0;
 }
 static int gfxV60T22(void)

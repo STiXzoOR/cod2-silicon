@@ -11,7 +11,11 @@
 #endif
 
 extern struct WinVars_t g_wv;
+#if defined(COD2_X64)
+extern byte sys_packetReceived[MAX_MSGLEN];
+#else
 extern byte sys_packetReceived[16384];
+#endif
 static SysInfo sys_info;
 static const dvar_t *sys_cpuGHz;
 static const dvar_t *sys_sysMB;
@@ -521,7 +525,11 @@ sysEvent_t Sys_GetEvent(void)
         Sys_QueEventInternal(0, (sysEventType_t)4, 0, 0, len + 1, b);
     }
 
+#if defined(COD2_X64)
+    MSG_Init(&netmsg, sys_packetReceived, MAX_MSGLEN);
+#else
     MSG_Init(&netmsg, sys_packetReceived, 0x4000);
+#endif
 #if COD2_APPLE_SDK
     memset(&adr, 0, sizeof(adr));
 #endif

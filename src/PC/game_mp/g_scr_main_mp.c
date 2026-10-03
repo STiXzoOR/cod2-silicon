@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -2679,7 +2680,7 @@ void Scr_StartupGameType(void)
 void Scr_PlayerConnect(gentity_t *self)
 {
     unsigned int threadId = Scr_ExecEntThread(self, g_scr_data.gametype.playerconnect, 0);
-    if (getenv("DBGSPAM"))
+    if (COD2_DEBUG_ENV("DBGSPAM"))
         Com_Printf("[team-trace] Scr_PlayerConnect ent=%p handle=%u thread=%u\n",
                    (void *)self, g_scr_data.gametype.playerconnect, threadId);
     Scr_FreeThread((unsigned short)threadId);

@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 #include <stdlib.h>
@@ -678,7 +679,7 @@ static int __attribute__((stdcall)) RealInclude_Open(void *_this, int IncludeTyp
         snprintf(path, sizeof(path), "materials/shaders/lib/%s", pFileName);
         len = FS_ReadFile(path, &data);
     }
-    if (getenv("REALD3D9_MATDIAG"))
+    if (COD2_DEBUG_ENV("REALD3D9_MATDIAG"))
         fprintf(stderr, "[INCLUDE] '%s' -> '%s' =%d\n", pFileName, path, len), fflush(stderr);
     if (len < 0 || !data) {
         *ppData = "";

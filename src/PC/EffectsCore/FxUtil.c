@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 #include "common_types.h"
 
 qboolean fxInitialized[1] = { 0x0 };
@@ -739,7 +742,9 @@ extern void *imp_fx_draw;
 extern void *imp_fx_debug;
 extern void FX_Print(const char *fmt, ...);
 #ifndef _WIN32
+#if !defined(COD2_X64)
 extern void qsort(void *base, int nmemb, int size, void *cmp);
+#endif
 #endif
 extern int CompareSortedClusters(const void *a, const void *b);
 void FX_DrawAll(void)

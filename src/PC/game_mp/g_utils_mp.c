@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 #include <stdint.h>
@@ -342,20 +343,20 @@ int G_DObjCalcBone(gentity_t *ent, int boneIndex)
         return created;
     }
 
-    Com_Printf("[ckpt] CalcBone before HierarchyBits\n");
+    COD2_DEBUG_ONLY(Com_Printf("[ckpt] CalcBone before HierarchyBits\n");)
     SV_DObjGetHierarchyBits(ent, boneIndex, partBits);
-    Com_Printf("[ckpt] CalcBone before CalcAnim\n");
+    COD2_DEBUG_ONLY(Com_Printf("[ckpt] CalcBone before CalcAnim\n");)
     SV_DObjCalcAnim(ent, partBits);
-    Com_Printf("[ckpt] CalcBone before calcPose\n");
+    COD2_DEBUG_ONLY(Com_Printf("[ckpt] CalcBone before calcPose\n");)
 
     calcPoseFunc = HANDLER_CALCPOSE((_ENT(ent)->handler));
     if (calcPoseFunc) {
         calcPoseFunc(ent, partBits);
     }
 
-    Com_Printf("[ckpt] CalcBone before CalcSkel\n");
+    COD2_DEBUG_ONLY(Com_Printf("[ckpt] CalcBone before CalcSkel\n");)
     SV_DObjCalcSkel(ent, partBits);
-    Com_Printf("[ckpt] CalcBone DONE\n");
+    COD2_DEBUG_ONLY(Com_Printf("[ckpt] CalcBone DONE\n");)
 }
 
 DObjAnimMat_s *G_DObjGetLocalTagMatrix(gentity_t *ent, unsigned int tagName)

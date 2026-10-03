@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -446,7 +447,7 @@ check_ui:
         }
 
         if (uiTraceCount < 80 && (activeMenu || (dv->keyCatchers & 8) || dv->displayHUDWithKeycatchUI)) {
-            if (getenv("MTRACE"))
+            if (COD2_DEBUG_ENV("MTRACE"))
                 Com_Printf("[menu-trace] SCR check_ui active=%d keyCatchers=0x%x displayHUD=%d state=%d\n",
                            activeMenu, dv->keyCatchers, dv->displayHUDWithKeycatchUI,
                            (*(clientConnection_t **)clc_ptr_195ee8c)->state);

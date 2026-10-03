@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #if COD2_APPLE_SDK
 #define COD2_IMAGE_CONSTANT_4096 4096
@@ -22,7 +23,11 @@ extern const dvar_t *cl_voice;
 extern const dvar_t *com_playerProfile;
 extern const dvar_t *sv_voice;
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+extern serverStatusDvar_t serverStatusDvars[24];
+#else
 extern serverStatusDvar_t serverStatusDvars[23];
+#endif
 
 char etaText[18] = { 0x45, 0x58, 0x45, 0x5f, 0x45, 0x53, 0x54, 0x5f, 0x54, 0x49, 0x4d, 0x45, 0x5f, 0x4c, 0x45, 0x46, 0x54, 0x0 };
 int tleEstimates[80] = { 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c, 0x3c };
@@ -1551,7 +1556,7 @@ qboolean UI_SetActiveMenu(int menu)
             int activeMenu = uiInfo->currentMenuType;
             static int traceCount;
             if (traceCount++ < 32) {
-                if (getenv("MTRACE"))
+                if (COD2_DEBUG_ENV("MTRACE"))
                     Com_Printf("[menu-trace] UI popup guard focus='%s' flags=0x%x active=%d loaded=%d\n",
                                pFocus->window.name, pFocus->window.dynamicFlags[0],
                                activeMenu, Menu_Count(&uiInfo->uiDC));
@@ -3244,7 +3249,7 @@ void UI_Refresh(void)
 
     if (refreshTraceCount < 80 && (uiInfo->currentMenuType || uiInfo->uiDC.openMenuCount > 0)) {
         int i;
-        if (getenv("MTRACE"))
+        if (COD2_DEBUG_ENV("MTRACE"))
             Com_Printf("[menu-trace] UI_Refresh active=%d menuCount=%d openCount=%d",
                        uiInfo->currentMenuType, uiInfo->uiDC.menuCount, uiInfo->uiDC.openMenuCount);
         for (i = 0; i < uiInfo->uiDC.openMenuCount && i < 16; ++i) {
@@ -5655,7 +5660,11 @@ void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float
 }
 #endif
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+serverStatusDvar_t serverStatusDvars[24] = {
+#else
 serverStatusDvar_t serverStatusDvars[23] = {
+#endif
     { (const char *)&str_002a714c, (const char *)&str_002a9ab8, (sscType_t)0x0 },
     { (const char *)&str_002a9ad0, (const char *)&str_002a9ad8, (sscType_t)0x0 },
     { (const char *)&str_002a9af0, (const char *)&str_002a9af8, (sscType_t)0x1 },
@@ -5678,6 +5687,9 @@ serverStatusDvar_t serverStatusDvars[23] = {
     { (const char *)&str_002a9d04, (const char *)&str_002a9d10, (sscType_t)0x1 },
     { (const char *)&str_002a9d28, (const char *)&str_002a9d34, (sscType_t)0x1 },
     { (const char *)&str_002a71c8, (const char *)&str_002a9d4c, (sscType_t)0x1 },
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    { "sv_punkbuster", "@MPUI_PUNKBUSTER", (sscType_t)0x1 },
+#endif
     { 0, 0, (sscType_t)0x0 }
 };
 

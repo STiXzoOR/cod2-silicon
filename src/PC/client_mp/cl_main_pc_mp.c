@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 #if defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x.h"
 #endif
@@ -27,7 +30,9 @@ extern serverStatusRequest_t cl_serverStatusList[16];
 static Bool s_playerMute[64];
 extern int NET_CompareAdrSigned(netadr_t *a, netadr_t *b);
 extern qboolean NET_CompareAdr(netadr_t a, netadr_t b);
+#if !defined(COD2_X64)
 extern void qsort(void *base, unsigned int nmemb, unsigned int size, int (*compar)(const void *, const void *));
+#endif
 extern int atoi(const char *nptr);
 extern char *Info_ValueForKey(const char *s, const char *key);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
@@ -131,6 +136,9 @@ void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping)
         server->hardware = (byte)atoi(Info_ValueForKey(info, "hw"));
         server->mod = (byte)atoi(Info_ValueForKey(info, "mod"));
         server->voice = (byte)atoi(Info_ValueForKey(info, "voice"));
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        server->punkbuster = (byte)atoi(Info_ValueForKey(info, "sv_punkbuster"));
+#endif
     }
 
     server->ping = (short)ping;

@@ -1888,9 +1888,11 @@ static void SV_WriteSnapshotToClientLocal(client_t *client, msg_t *msg)
         }
     }
 
+#if !defined(COD2_X64)
     if (client->download) {
         SV_WriteDownloadToClient(client, msg);
     }
+#endif
 }
 
 static void SV_WriteOverflowRecoveryCommandsLocal(client_t *client, msg_t *msg)
@@ -1907,11 +1909,19 @@ static void SV_WriteOverflowRecoveryCommandsLocal(client_t *client, msg_t *msg)
     Com_Printf("---------------------------------------------\n");
 
     reliableAck = client->reliableAcknowledge + 1;
+#if defined(COD2_X64)
+    reliableSent = client->reliableSequence;
+#else
     reliableSent = client->reliableSent;
+#endif
     for (i = reliableAck; i <= reliableSent; ++i) {
         int idx = i & CLIENT_CMDENTRY_MASK;
         const char *cmd = client->reliableCommandInfo[idx].cmd;
+#if defined(COD2_X64)
+        if (msg->cursize + (int)strlen(cmd) + 6 > 0x1ffff) {
+#else
         if (msg->cursize + (int)strlen(cmd) + 5 > 0x1ffff) {
+#endif
             break;
         }
         MSG_WriteByte(msg, SV_SVC_SERVERCOMMAND);
@@ -1949,7 +1959,12 @@ void SV_SendClientSnapshot(client_t *client)
     if (client->state == 4 || client->state == 1) {
         SV_UpdateServerCommandsToClient(client, &msg);
         SV_WriteSnapshotToClientLocal(client, &msg);
+#if defined(COD2_X64)
+    }
+    if (client->state != 1) {
+#else
     } else {
+#endif
         SV_WriteDownloadToClient(client, &msg);
     }
 

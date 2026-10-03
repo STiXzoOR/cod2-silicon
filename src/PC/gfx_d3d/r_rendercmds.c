@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 #include <stdio.h>
@@ -157,7 +158,7 @@ static int R_ShouldTraceTextCmd(const char *text)
 {
     static int enabled = -1;
     if (enabled < 0)
-        enabled = getenv("TEXTCMD_DBG") ? 1 : 0;
+        enabled = COD2_DEBUG_ENV("TEXTCMD_DBG") ? 1 : 0;
     if (!enabled)
         return 0;
     return R_TextTraceContains(text, "Deathmatch") ||
@@ -205,12 +206,12 @@ static void R_DumpCommandListForMenu(const GfxCmdArray *cl)
 
     dumped = 1;
     limit = cl->usedTotal;
-    if (getenv("DBGSPAM"))
+    if (COD2_DEBUG_ENV("DBGSPAM"))
         printf("[cmddump] used=%d critical=%d\n", cl->usedTotal, cl->usedCritical);
 
     for (off = 0, count = 0; off >= 0 && off + 4 <= limit && count < 120; ++count) {
         const GfxCmdHeader *h = (const GfxCmdHeader *)((const byte *)cl->cmds + off);
-        if (getenv("DBGSPAM"))
+        if (COD2_DEBUG_ENV("DBGSPAM"))
             printf("[cmddump] off=%d id=%u bytes=%u", off, h->id, h->byteCount);
         if ((h->id == 1 || h->id == 2) && h->byteCount >= 8) {
 #if defined(COD2_X64)
@@ -229,7 +230,7 @@ static void R_DumpCommandListForMenu(const GfxCmdArray *cl)
             break;
         }
         if (h->byteCount <= 0) {
-            if (getenv("DBGSPAM"))
+            if (COD2_DEBUG_ENV("DBGSPAM"))
                 printf("[cmddump] stop invalid byteCount at off=%d\n", off);
             break;
         }
@@ -692,8 +693,8 @@ void R_AddCmdDrawStretchPic(float x, float y, float w, float h, float s0, float 
 {
     GfxCmdStretchPic *cmd;
 
-    R_X64TraceStretchPic(material, x, y, w, h);
-    { extern int g_q_stretchpic; extern void Com_Printf(const char *, ...); g_q_stretchpic++; if (g_q_stretchpic <= 4) Com_Printf("[qsp] #%d material=%p\n", g_q_stretchpic, (void *)material); }
+    COD2_DEBUG_ONLY(R_X64TraceStretchPic(material, x, y, w, h);)
+    COD2_DEBUG_ONLY({ extern int g_q_stretchpic; extern void Com_Printf(const char *, ...); g_q_stretchpic++; if (g_q_stretchpic <= 4) Com_Printf("[qsp] #%d material=%p\n", g_q_stretchpic, (void *)material); })
     cmd = (GfxCmdStretchPic *)R_AllocCmd((int)sizeof(GfxCmdStretchPic), 0, 0xf);
     if (cmd == NULL) {
         return;

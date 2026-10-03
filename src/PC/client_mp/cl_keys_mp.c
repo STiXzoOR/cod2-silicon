@@ -69,6 +69,20 @@ extern field_t g_consoleField;
 extern int nextHistoryLine;
 extern int historyLine;
 /* migrated from the ILP32 data blob to typed C (x64 port Stage 2). */
+#if defined(COD2_X64)
+char *frenchNumberKeysMap[10] = {
+    "\xe0",
+    "&",
+    "\xe9",
+    "\"",
+    "'",
+    "(",
+    "-",
+    "\xe8",
+    "_",
+    "\xe7",
+};
+#else
 char *frenchNumberKeysMap[10] = {
     "\xff" "fd",
     "&",
@@ -81,6 +95,7 @@ char *frenchNumberKeysMap[10] = {
     "_",
     "\xff" "fd",
 };
+#endif
 
 static char tinystr[5];
 static const char *completionString;
@@ -1521,10 +1536,17 @@ keyname_t keynames_localized[100] = {
     { 0, 0x0 }
 };
 
+#if defined(COD2_X64)
+const char str_002a67f0[] = "\xe0";
+const char str_002a67f4[] = "\xe9";
+const char str_002a67fc[] = "\xe8";
+const char str_002a6804[] = "\xe7";
+#else
 const char str_002a67f0[] = "\xff" "fd";
 const char str_002a67f4[] = "\xff" "fd";
 const char str_002a67fc[] = "\xff" "fd";
 const char str_002a6804[] = "\xff" "fd";
+#endif
 const char str_002a6808[] = "KEY_TAB";
 const char str_002a6810[] = "KEY_ENTER";
 const char str_002a681c[] = "KEY_ESCAPE";
@@ -1603,6 +1625,24 @@ const char str_002a6b78[] = "KEY_KP_EQUALS";
 const char str_002a6b88[] = "KEY_PAUSE";
 const char str_002a6b94[] = "KEY_SEMICOLON";
 const char str_002a6ba4[] = "KEY_COMMAND";
+#if defined(COD2_X64)
+const char str_002a6bb0[] = "\xb5";
+const char str_002a6bb4[] = "\xbf";
+const char str_002a6bb8[] = "\xdf";
+const char str_002a6bbc[] = "\xe1";
+const char str_002a6bc0[] = "\xe4";
+const char str_002a6bc4[] = "\xe5";
+const char str_002a6bc8[] = "\xe6";
+const char str_002a6bcc[] = "\xec";
+const char str_002a6bd0[] = "\xf1";
+const char str_002a6bd4[] = "\xf2";
+const char str_002a6bd8[] = "\xf3";
+const char str_002a6bdc[] = "\xf6";
+const char str_002a6be0[] = "\xf8";
+const char str_002a6be4[] = "\xf9";
+const char str_002a6be8[] = "\xfa";
+const char str_002a6bec[] = "\xfc";
+#else
 const char str_002a6bb0[] = "\xff" "fd";
 const char str_002a6bb4[] = "\xff" "fd";
 const char str_002a6bb8[] = "\xff" "fd";
@@ -1619,6 +1659,7 @@ const char str_002a6be0[] = "\xff" "fd";
 const char str_002a6be4[] = "\xff" "fd";
 const char str_002a6be8[] = "\xff" "fd";
 const char str_002a6bec[] = "\xff" "fd";
+#endif
 const char str_002a6bf0[] = "TAB";
 const char str_002a6bf4[] = "ENTER";
 const char str_002a6bfc[] = "ESCAPE";

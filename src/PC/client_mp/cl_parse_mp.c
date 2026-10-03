@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #if defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x.h"
 #endif
@@ -687,7 +688,7 @@ void CL_ParseSnapshot(msg_t *msg)
         MSG_ReadDeltaPlayerstate(msg, NULL, &newSnap->ps);
     }
 
-    if (getenv("COD2_SNAPDIAG")) {
+    if (COD2_DEBUG_ENV("COD2_SNAPDIAG")) {
         static int c;
         if ((c++ & 0x1f) == 0)
             Com_Printf("[snapdiag] serverTime=%d valid=%d deltaNum=%d hasOld=%d newSnap.ps.commandTime=%d ps.origin=(%.0f %.0f %.0f)\n",

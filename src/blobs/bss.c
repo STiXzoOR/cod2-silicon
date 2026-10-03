@@ -106,7 +106,11 @@ unsigned char iString[32];
 unsigned char szIwdLanguageName[128];
 unsigned char bLanguagesListed[96];
 unsigned char g_largeLocalPos[128];
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+unsigned char g_largeLocalBuf[1048576];
+#else
 unsigned char g_largeLocalBuf[524288];
+#endif
 unsigned char hunk_high[8];
 unsigned char hunk_low[8];
 BSSINT s_hunkData;
@@ -750,7 +754,11 @@ WinVars_t g_wv;   /* x86 blob 32; x64 sizeof(WinVars_t)=48 -> overflow */
 #else
 unsigned char g_wv[32];
 #endif
+#if defined(COD2_X64)
+unsigned char sys_packetReceived[MAX_MSGLEN];
+#else
 unsigned char sys_packetReceived[16480];
+#endif
 #if defined(COD2_X64)
 /* x86 sizeof(GfxScene)=124292; on x64 the GfxEntity/GfxSceneEntity arrays + pointer
    fields grow so the struct is larger -> the byte blob put def.entityCount / sceneEnts /
