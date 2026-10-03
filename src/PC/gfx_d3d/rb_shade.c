@@ -484,7 +484,11 @@ static void RB_GetTextureFromCode_impl(int codeTexture, void **image, byte *samp
         char *surfs = (*(char **)&((r_global_permanent_t *)rgp)->world);
         if (!surfs || !(*(void **)&((GfxWorld *)surfs)->smodelLightingImage))
             Com_Error(1, "Sampler 'smodelLighting' is only valid in a map.\n");
+#if defined(COD2_X64)
+        *image = ((r_global_permanent_t *)rgp)->world->smodelLightingImage;
+#else
         *image = *(void **)((char *)(*(char **)&((r_global_permanent_t *)rgp)->world) + 0x10c);
+#endif
         *samplerState = 0x72;
         return;
     }
@@ -513,7 +517,11 @@ static void RB_GetTextureFromCode_impl(int codeTexture, void **image, byte *samp
             lmapIdx = ((materialCommands_t *)tess)->lmapIndex;
         }
         drawSurfs = (*(char **)&((r_global_permanent_t *)rgp)->world);
+#if defined(COD2_X64)
+        *image = ((GfxWorld *)drawSurfs)->lightmaps[lmapIdx][codeTexture - 8];
+#else
         *image = *(void **)((*(char **)&((GfxWorld *)drawSurfs)->lightmaps) + lmapIdx * 16 + codeTexture * 4 - 0x20);
+#endif
         *samplerState = 0x32;
 
         {
@@ -594,7 +602,11 @@ static void RB_GetTextureFromCode_impl(int codeTexture, void **image, byte *samp
         drawSurfs = (*(char **)&((r_global_permanent_t *)rgp)->world);
         if (!drawSurfs || !(*(void **)&((GfxWorld *)drawSurfs)->outdoorImage))
             R_Error(1, "Tried to use 'sampler.outdoor' when it isn't valid\n");
+#if defined(COD2_X64)
+        *image = ((r_global_permanent_t *)rgp)->world->outdoorImage;
+#else
         *image = *(void **)((char *)(*(char **)&((r_global_permanent_t *)rgp)->world) + 0x200);
+#endif
         *samplerState = 0x32;
         return;
     }
