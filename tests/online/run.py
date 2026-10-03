@@ -35,6 +35,7 @@ suites = [
      ['CL_BuildMd5StrFromCDKey', 'CL_CheckForResend']),
     ('stream_spatialize', 'src/PC/win32/snd_driver.c',
      ['MSS_SpatializeStreamImpl', 'SND_StartAliasStreamOnChannel']),
+    ('sprite_entity', 'src/PC/gfx_d3d/rb_tess.c', ['RB_TessEntity']),
 ]
 if len(sys.argv) > 2:
     suites = [suite for suite in suites if suite[0] in sys.argv[2:]]
