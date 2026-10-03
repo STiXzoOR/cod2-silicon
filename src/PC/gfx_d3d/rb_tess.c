@@ -104,11 +104,20 @@ void RB_TessParticleCloud(const GfxEntity *re)
         RB_EndSurface();
     }
 
+#if defined(COD2_X64)
+    args.vertexCount = 0x1000;
+    args.primCount = 0x800;
+#else
     args.vertexCount = 0;
     args.primCount = 0;
+#endif
     args.firstVertexFromBase = 0;
     args.u.buf.baseVertex = 0;
+#if defined(COD2_X64)
+    args.u.buf.baseIndex = 0;
+#else
     args.u.buf.baseIndex = 0x800;
+#endif
 
     if (re->radius[0] == re->radius[1] ||
         VecNCompareCustomEpsilon(re->origin, re->endpos, 0.001f, 3)) {

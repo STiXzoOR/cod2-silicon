@@ -66,8 +66,13 @@ extern void R_AddCmdDrawStretchRaw(int x, int y, int w, int h, int cols, int row
 extern void R_AddCmdDrawQuadPic(vec2_t *verts, const vec_t *color, MaterialHandle material);
 extern void R_AddCmdDrawSprite(MaterialHandle material, const byte *rgbaColor, const vec_t *pos, float radius, float minScreenRadius, int renderFxFlags);
 
+#if defined(COD2_X64)
+static vec2_t cornerTexCoords[4] = {{0, 0}, {0, 1}, {1, 0}, {1, 1}};
+static const r_index_t quadIndices[6] = {0, 1, 2, 2, 1, 3};
+#else
 static vec2_t cornerTexCoords[4];
 static const r_index_t quadIndices[6];
+#endif
 
 void R_FatalInitError(const char *msg);
 const char *R_ErrorDescription(HRESULT hr);
