@@ -390,7 +390,12 @@ qboolean NET_StringToAdr(const char *s, netadr_t *a)
     char base[0x400];
     char *port;
 
+#if defined(COD2_X64)
+    /* Exact matches; the fixed 10-byte compares read past "loopback". */
+    if (strcmp(s, "loopback") == 0 || strcmp(s, "localhost") == 0) {
+#else
     if (memcmp(s, "loopback", 0xa) == 0 || memcmp(s, "localhost", 0xa) == 0) {
+#endif
         a->port = 0;
         a->type = (netadrtype_t)(0);
         *(int *)a->ip = 0;
@@ -663,8 +668,14 @@ qboolean NET_GetLoopPacket(netsrc_t sock, netadr_t *net_from, msg_t *net_message
         memcpy(net_message->data, m, m->datalen);
         net_message->cursize = m->datalen;
 
+#if defined(COD2_X64)
+        /* The retail 12-byte netadr_t had padding after port; port ends the
+           native 20-byte struct, so the int store wrote past the caller's. */
+        memset(net_from, 0, sizeof(*net_from));
+#else
         *(int *)net_from->ip = 0;
         *(int *)&net_from->port = 0;
+#endif
         net_from->type = (netadrtype_t)(2);
         net_from->port = (unsigned short)m->port;
         return 1;

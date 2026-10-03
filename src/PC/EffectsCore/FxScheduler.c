@@ -1,6 +1,16 @@
 #include "common_types.h"
 #include "imports.h"
 
+#if defined(COD2_X64)
+/* Scheduled effects are 0x50 bytes with a 32-bit link at 0x4c on i386. The
+   native record is larger and its link widens into the tail padding, as
+   FxUtil's SCH_NEXT reads it. */
+#define SFX_NEXT(sfx) (*(ScheduledEffect **)&(sfx)->mScheduledNext)
+_Static_assert(offsetof(ScheduledEffect, mScheduledNext) % sizeof(void *) == 0 &&
+                   offsetof(ScheduledEffect, mScheduledNext) + sizeof(void *) <= sizeof(ScheduledEffect),
+               "scheduled-effect link fits the native record");
+#endif
+
 extern int irand(int min, int max);
 extern refexport_t re;
 
@@ -541,7 +551,11 @@ void FxScheduler_Clean(const FxScheduler *_this, unsigned char bRemoveTemplates,
     int foundTemplateToPreserve;
 
     while ((sfx = ((FxScheduler *)_this)->mScheduledHead) != NULL) {
+#if defined(COD2_X64)
+        ((FxScheduler *)_this)->mScheduledHead = SFX_NEXT(sfx);
+#else
         ((FxScheduler *)_this)->mScheduledHead = (ScheduledEffect *)(size_t)sfx->mScheduledNext;
+#endif
         __ZdaPv(sfx);
     }
     ((FxScheduler *)_this)->mScheduledCount = 0;
@@ -950,7 +964,11 @@ void FxScheduler_Archive(const FxScheduler *_this, FxArchive *arch)
             sfx = sched->mScheduledHead;
             while (sfx) {
                 ScheduledEffect_Archive(sfx, arch);
+#if defined(COD2_X64)
+                sfx = SFX_NEXT(sfx);
+#else
                 sfx = (ScheduledEffect *)(size_t)sfx->mScheduledNext;
+#endif
             }
         }
     }

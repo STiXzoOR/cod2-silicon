@@ -6072,10 +6072,15 @@ extern char g_EndPos;
 #endif
 #define SCR_VEC_TAG_PROG      0x80000000u
 #if defined(COD2_X64)
-#define SCR_VEC_ENC_FROM(p) \
-    ( (uintptr_t)(p) - (uintptr_t)scrMemTreeGlob < 0x80330u \
-        ? SCR_ARENA_ENC(p) \
-        : (SCR_VEC_TAG_PROG | SCR_CODEPOS_ENC(p)) )
+/* Evaluate p once. Callers pass allocating expressions such as
+   SCR_VEC_ENC(Scr_AllocVector(v)); naming p in both the range test and the
+   encoding allocated two vectors per call and leaked the first, which
+   exhausted the script memory tree after a few map changes. */
+#define SCR_VEC_ENC_FROM(p) __extension__ ({ \
+    const char *scrVecEncPtr_ = (const char *)(const void *)(p); \
+    (unsigned int)((uintptr_t)scrVecEncPtr_ - (uintptr_t)scrMemTreeGlob < 0x80330u \
+        ? SCR_ARENA_ENC(scrVecEncPtr_) \
+        : (SCR_VEC_TAG_PROG | SCR_CODEPOS_ENC(scrVecEncPtr_))); })
 #else
 #define SCR_VEC_ENC_FROM(p) \
     ( ((const unsigned char *)(const void *)(p) >= scrMemTreeGlob && \

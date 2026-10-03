@@ -23,6 +23,7 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc);
 #define PQ_F0   ((int)(offsetof(XAnimPartQuat,  u.frame0)  + sizeof(XQuat)))
 #define PT_IDX  ((int)offsetof(XAnimPartTrans, u.frames.indices))
 #define PT_F0   ((int)(offsetof(XAnimPartTrans, u.frame0)  + sizeof(vec3_t)))
+#define PQ_F02  ((int)(offsetof(XAnimPartQuat,  u.frame02) + sizeof(XQuat2)))
 
 static short int ConsumeShort(const char **pos)
 {
@@ -408,7 +409,15 @@ XAnimParts *XAnimLoadFile(const char *name, Alloc_t Alloc)
                         quat[1] = -quat[1];
                     }
 
+#if defined(COD2_X64)
+                    /* Was the i386 size 8: frame02 sits after the pointer-aligned
+                       union start natively, so its 4 bytes landed past the block,
+                       on the first float of the previous bone's translation frames
+                       (the hunk grows downward). */
+                    partQuatAlloc = (XAnimPartQuat *)Alloc(PQ_F02);
+#else
                     partQuatAlloc = (XAnimPartQuat *)Alloc(8);
+#endif
                     part->quat = partQuatAlloc;
 
                     partQuatAlloc->u.frame02[0] = quat[0];

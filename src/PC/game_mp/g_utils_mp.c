@@ -588,13 +588,22 @@ unsigned char G_CalcTagParentAxis(gentity_t *ent, vec3_t *parentAxis)
         AnglesToAxis((_ENT(parent)->r.currentAngles), parentAxis);
         VectorCopy((_ENT(parent)->r.currentOrigin), ((vec_t *)parentAxis + 9));
     } else {
+#if defined(COD2_X64)
+        vec3_t tempAxis[4]; /* row 3 is the origin read by MatrixTransformVector43 */
+        vec3_t axis[3];
+#else
         vec3_t tempAxis[3];
         vec3_t axis[3];
         vec3_t origin;
+#endif
         DObjAnimMat_s *mat;
 
         AnglesToAxis((_ENT(parent)->r.currentAngles), tempAxis);
+#if defined(COD2_X64)
+        VectorCopy((_ENT(parent)->r.currentOrigin), tempAxis[3]);
+#else
         VectorCopy((_ENT(parent)->r.currentOrigin), origin);
+#endif
 
         G_DObjCalcBone(parent, boneIndex);
         mat = &((DObjAnimMat_s *)SV_DObjGetMatrixArray(parent))[boneIndex];
@@ -1282,8 +1291,14 @@ qboolean G_DObjGetWorldTagMatrix(gentity_t *ent, unsigned int tagName, vec3_t *t
 {
     DObjAnimMat_s *mat;
     int boneIndex;
+#if defined(COD2_X64)
+    /* As in 1.3: rows 0-2 are the axis and row 3 the origin, which
+       MatrixTransformVector43 reads; a separate origin left row 3 unset. */
+    vec3_t ent_axis[4];
+#else
     vec3_t ent_axis[3];
     vec3_t origin;
+#endif
     vec3_t axis[3];
 
     boneIndex = SV_DObjGetBoneIndex(ent, tagName);
@@ -1297,7 +1312,11 @@ qboolean G_DObjGetWorldTagMatrix(gentity_t *ent, unsigned int tagName, vec3_t *t
     }
 
     AnglesToAxis((_ENT(ent)->r.currentAngles), ent_axis);
+#if defined(COD2_X64)
+    VectorCopy((_ENT(ent)->r.currentOrigin), ent_axis[3]);
+#else
     VectorCopy((_ENT(ent)->r.currentOrigin), origin);
+#endif
 
     {
         float scale = mat->transWeight;
@@ -1335,8 +1354,12 @@ int G_DObjGetWorldTagPos(gentity_t *ent, unsigned int tagName, vec_t *pos)
 {
     DObjAnimMat_s *mat;
     int boneIndex;
+#if defined(COD2_X64)
+    vec3_t ent_axis[4]; /* row 3 is the origin, as in G_DObjGetWorldTagMatrix */
+#else
     vec3_t ent_axis[3];
     vec3_t origin;
+#endif
 
     boneIndex = SV_DObjGetBoneIndex(ent, tagName);
     if (boneIndex < 0) {
@@ -1349,7 +1372,11 @@ int G_DObjGetWorldTagPos(gentity_t *ent, unsigned int tagName, vec_t *pos)
     }
 
     AnglesToAxis((_ENT(ent)->r.currentAngles), ent_axis);
+#if defined(COD2_X64)
+    VectorCopy((_ENT(ent)->r.currentOrigin), ent_axis[3]);
+#else
     VectorCopy((_ENT(ent)->r.currentOrigin), origin);
+#endif
 
     MatrixTransformVector43((vec_t *)&mat->trans, (vec_t *)ent_axis, pos);
 

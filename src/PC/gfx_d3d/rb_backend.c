@@ -1982,6 +1982,16 @@ static void RB_DrawSunPostEffectsCmd(GfxRenderCommandExecState *execState)
     }
 }
 
+#if defined(COD2_X64)
+/* GfxCodeMatrix is 0x110 bytes (16-byte aligned) in the Mac binary but
+   260 bytes natively; the retail sizes made these copies overlap the next
+   matrix and the 0x890 offset (normalizedWorldViewProjection) land inside
+   it, clobbering shadowLookupMatrix. */
+#define RB_CODE_MATRIX_SIZE sizeof(GfxCodeMatrix)
+#else
+#define RB_CODE_MATRIX_SIZE 0x110
+#endif
+
 static void RB_Set2D(void)
 {
     char *be = (char *)&backEnd;
@@ -2034,10 +2044,10 @@ static void RB_Set2D(void)
         }
     }
 
-    memcpy(((char *)am + offsetof(GfxCodeMatrices, view)), ((char *)am + offsetof(GfxCodeMatrices, world)), 0x110);
-    memcpy(((char *)am + offsetof(GfxCodeMatrices, worldView)), ((char *)am + offsetof(GfxCodeMatrices, world)), 0x110);
-    memcpy(((char *)am + offsetof(GfxCodeMatrices, viewProjection)), ((char *)am + offsetof(GfxCodeMatrices, projection)), 0x110);
-    memcpy(((char *)am + offsetof(GfxCodeMatrices, worldViewProjection)), ((char *)am + offsetof(GfxCodeMatrices, projection)), 0x110);
+    memcpy(((char *)am + offsetof(GfxCodeMatrices, view)), ((char *)am + offsetof(GfxCodeMatrices, world)), RB_CODE_MATRIX_SIZE);
+    memcpy(((char *)am + offsetof(GfxCodeMatrices, worldView)), ((char *)am + offsetof(GfxCodeMatrices, world)), RB_CODE_MATRIX_SIZE);
+    memcpy(((char *)am + offsetof(GfxCodeMatrices, viewProjection)), ((char *)am + offsetof(GfxCodeMatrices, projection)), RB_CODE_MATRIX_SIZE);
+    memcpy(((char *)am + offsetof(GfxCodeMatrices, worldViewProjection)), ((char *)am + offsetof(GfxCodeMatrices, projection)), RB_CODE_MATRIX_SIZE);
 
     {
         float OGLView[16], OGLProjection[16], OGLWorldView[16];
@@ -2058,9 +2068,14 @@ static void RB_Set2D(void)
 
         MatrixMultiply44((vec4_t *)(OGLWorldView), (vec4_t *)(OGLProjection), (vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, OGLworldViewProjection))));
 
-        memcpy(((char *)am + offsetof(GfxCodeMatrices, normalizedWorld)), ((char *)am + offsetof(GfxCodeMatrices, world)), 0x110);
-        memcpy(((char *)am + offsetof(GfxCodeMatrices, normalizedWorldView)), ((char *)am + offsetof(GfxCodeMatrices, worldView)), 0x110);
-        memcpy(am + 0x890, ((char *)am + offsetof(GfxCodeMatrices, worldView)), 0x110);
+        memcpy(((char *)am + offsetof(GfxCodeMatrices, normalizedWorld)), ((char *)am + offsetof(GfxCodeMatrices, world)), RB_CODE_MATRIX_SIZE);
+        memcpy(((char *)am + offsetof(GfxCodeMatrices, normalizedWorldView)), ((char *)am + offsetof(GfxCodeMatrices, worldView)), RB_CODE_MATRIX_SIZE);
+#if defined(COD2_X64)
+        memcpy(((char *)am + offsetof(GfxCodeMatrices, normalizedWorldViewProjection)),
+               ((char *)am + offsetof(GfxCodeMatrices, worldView)), RB_CODE_MATRIX_SIZE);
+#else
+        memcpy(am + 0x890, ((char *)am + offsetof(GfxCodeMatrices, worldView)), RB_CODE_MATRIX_SIZE);
+#endif
     }
 
     isDx7 = r_rendererInUse->current.integer == 2;

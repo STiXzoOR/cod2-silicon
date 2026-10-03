@@ -168,7 +168,12 @@ void SL_RemoveRefToStringOfLen(unsigned int stringValue, unsigned int len)
     if (ref != 0)
         return;
 
-#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+/* COD2_X64 reclaims as 1.3 does. The "already defined" / lost-name
+   corruption these workarounds hid came from IDs used after their level had
+   released them: scr_const loaded after spawning, entity slots not cleared
+   between levels (G_InitGame), and Scr_FreeScripts never releasing user-1
+   strings. Other 64-bit configurations keep the workarounds. */
+#if (defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)) && !defined(COD2_X64)
     /* x64: do NOT reclaim a string node whose refcount reached zero. The free path (hash-chain
        unlink + buddy MT_FreeIndex) has an x64 corruption bug: freed nodes linger in
        the hash chain and get re-found (colliding ids -> "X already defined" / "unknown
@@ -186,7 +191,7 @@ void SL_RemoveRefToStringOfLen(unsigned int stringValue, unsigned int len)
 
     MT_FreeIndex(stringValue, len + 4);
 
-#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#if (defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)) && !defined(COD2_X64)
     /* x64: the original chain unlink (below) leaves freed strings findable in the hash
        chain on x64 (a bug in the bucket recycling) -> they get re-found and
        ref-added, corrupting the buddy free-list. Do a robust brute-force removal instead:

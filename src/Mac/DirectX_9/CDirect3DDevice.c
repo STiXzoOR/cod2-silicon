@@ -22,14 +22,20 @@ extern void *vtbl_CDirect3DTexture[];
 extern void *vtbl_CDirect3DCubeTexture[];
 extern void R_CapturePendingScreenshotBeforePresent(void);
 
-extern bool g_ShowShadowCookies;
+#if defined(COD2_X64)
+/* C++ bool flags: one byte in the Mac binary and in the typed native data. */
+#define CXX_BOOL Bool
+#else
+#define CXX_BOOL bool
+#endif
+extern CXX_BOOL g_ShowShadowCookies;
 extern UINT32 g_NumBlurShadowPasses;
-extern bool g_RenderToShadowCookie;
+extern CXX_BOOL g_RenderToShadowCookie;
 extern UINT32 g_showtexid;
 extern float g_scale1;
 extern float g_scale2;
-extern bool g_InhibitCopy;
-extern bool g_NoTextureID;
+extern CXX_BOOL g_InhibitCopy;
+extern CXX_BOOL g_NoTextureID;
 
 #if defined(_MSC_VER)
 /* These C names alias the C++ static-member symbols (defined in the data blob /
@@ -48,9 +54,9 @@ COD2_ALT("CDirect3DDevice_mNeedsRasterizationValidation", "__ZN15CDirect3DDevice
 #else
 #define COD2_COFF_ASM_PREFIX ""
 #endif
-extern bool __attribute__((visibility("default"))) CDirect3DDevice_mNeedsVertexShaderValidation __asm__(COD2_COFF_ASM_PREFIX "__ZN15CDirect3DDevice28mNeedsVertexShaderValidationE");
-extern bool __attribute__((visibility("default"))) CDirect3DDevice_mNeedsTransformationValidation __asm__(COD2_COFF_ASM_PREFIX "__ZN15CDirect3DDevice30mNeedsTransformationValidationE");
-extern bool __attribute__((visibility("default"))) CDirect3DDevice_mNeedsRasterizationValidation __asm__(COD2_COFF_ASM_PREFIX "__ZN15CDirect3DDevice29mNeedsRasterizationValidationE");
+extern CXX_BOOL __attribute__((visibility("default"))) CDirect3DDevice_mNeedsVertexShaderValidation __asm__(COD2_COFF_ASM_PREFIX "__ZN15CDirect3DDevice28mNeedsVertexShaderValidationE");
+extern CXX_BOOL __attribute__((visibility("default"))) CDirect3DDevice_mNeedsTransformationValidation __asm__(COD2_COFF_ASM_PREFIX "__ZN15CDirect3DDevice30mNeedsTransformationValidationE");
+extern CXX_BOOL __attribute__((visibility("default"))) CDirect3DDevice_mNeedsRasterizationValidation __asm__(COD2_COFF_ASM_PREFIX "__ZN15CDirect3DDevice29mNeedsRasterizationValidationE");
 #undef COD2_COFF_ASM_PREFIX
 #endif
 

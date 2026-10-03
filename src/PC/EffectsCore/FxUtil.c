@@ -452,7 +452,17 @@ void FX_AddScheduledEffects(const vec_t *start, const vec_t *end)
 
         byte *fx = SCH_FX(scheduled);
         int primIndex = SCH_PRIM_INDEX(scheduled);
+#if defined(COD2_X64)
+        /* Typed record and template fields; the i386 offsets (primitives at
+           +8 with 4-byte slots, bolt/origin/axis at +0xc/+0x14/+0x20) do not
+           apply to the native layouts. */
+        byte *primTemp = (byte *)((EffectTemplate *)fx)->mPrimitives[primIndex];
+        byte *boltInfo = (byte *)&((ScheduledEffect *)scheduled)->mBolt;
+        byte *schedOrigin = (byte *)((ScheduledEffect *)scheduled)->mOrigin;
+        byte *schedAxis = (byte *)((ScheduledEffect *)scheduled)->mAxis;
+#else
         byte *primTemp = *(byte **)(fx + 8 + primIndex * 4);
+#endif
 
         Rand_Init(SCH_RAND_SEED(scheduled));
 
@@ -466,17 +476,32 @@ void FX_AddScheduledEffects(const vec_t *start, const vec_t *end)
         if (boltEntity >= 0) {
 
             orientation_t orient;
+#if defined(COD2_X64)
+            Bool ok = FX_GetBoneOrientation((const FxBoltInfo *)(void *)boltInfo, &orient);
+            if (ok) {
+                FxScheduler_CreateEffect(scheduler, fx, primTemp,
+                                         boltInfo, &orient, orient.axis,
+                                         lateTime, indexInBatch);
+            }
+#else
             Bool ok = FX_GetBoneOrientation( (const FxBoltInfo *)((void *)(scheduled + 0xc)), &orient);
             if (ok) {
                 FxScheduler_CreateEffect(scheduler, fx, primTemp,
                                          scheduled + 0xc, &orient, orient.axis,
                                          lateTime, indexInBatch);
             }
+#endif
         } else {
 
+#if defined(COD2_X64)
+            FxScheduler_CreateEffect(scheduler, fx, primTemp,
+                                     boltInfo, schedOrigin, schedAxis,
+                                     lateTime, indexInBatch);
+#else
             FxScheduler_CreateEffect(scheduler, fx, primTemp,
                                      scheduled + 0xc, scheduled + 0x14, scheduled + 0x20,
                                      lateTime, indexInBatch);
+#endif
         }
 
         if (scheduled)
@@ -969,7 +994,11 @@ static Bool FX_AddPrimitive_impl(byte *prim, Effect *particle, const vec_t *orig
     int endTime = curTime + (int)lifeRange;
     Effect_SetTimeStartEnd((const Effect *)(particle), curTime, endTime);
 
+#if defined(COD2_X64)
+    (((Effect *)(particle))->impactEffect) = (struct Effect *)(uintptr_t)ep->fx;
+#else
     (((Effect *)(particle))->impactEffect) = (struct Effect *)(uintptr_t)(int)ep->fx;
+#endif
     (((Effect *)(particle))->field_0x38) = ((PrimitiveTemplate *)primTemp)->mParentPrimIndex;
     (((Effect *)(particle))->field_0x10) = ((PrimitiveTemplate *)primTemp)->mGroupFlags;
 

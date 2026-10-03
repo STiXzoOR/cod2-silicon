@@ -16,6 +16,21 @@ extern void qsort(void *base, unsigned int nmemb, unsigned int size, int (*compa
 #endif
 
 extern unsigned char smodelLoadGlob[128];
+#if defined(COD2_X64)
+/* 1.3 static-model lighting load state (20 bytes on i386). The pixel
+   pointer follows four 32-bit fields; pointer index 4 was byte 32 natively,
+   past the object, and wrote into outdoorGlob. */
+typedef struct SModelLoadGlobNative {
+    int lightingEntryCols;
+    int lightingEntryRows;
+    float lightingEntryScaleX;
+    float lightingEntryScaleY;
+    byte *lightingImagePixels;
+} SModelLoadGlobNative;
+#define SMODEL_LIGHTING_PIXELS(type) (((SModelLoadGlobNative *)&smodelLoadGlob)->lightingImagePixels)
+#else
+#define SMODEL_LIGHTING_PIXELS(type) ((type **)&smodelLoadGlob)[4]
+#endif
 
 extern void *Hunk_AllocAlignInternal(int size, int alignment);
 extern GfxImage *Image_Alloc(const char *name, int category, int semantic, int imageTrack);
@@ -100,8 +115,8 @@ void R_PrepareStaticModelLightingCache(GfxWorld *world, int smodelCount)
         ((float *)&smodelLoadGlob)[3] = 1.0f / (float)(((int *)&smodelLoadGlob)[1] + ((int *)&smodelLoadGlob)[1]);
 
         size = ((int *)&smodelLoadGlob)[0] * ((int *)&smodelLoadGlob)[1] << 5;
-        ((void **)&smodelLoadGlob)[4] = Hunk_AllocateTempMemoryInternal(size);
-        memset(((void **)&smodelLoadGlob)[4], 0x80, size);
+        SMODEL_LIGHTING_PIXELS(void) = Hunk_AllocateTempMemoryInternal(size);
+        memset(SMODEL_LIGHTING_PIXELS(void), 0x80, size);
     }
 }
 
@@ -332,7 +347,7 @@ void R_FinishStaticModelLightingCache(GfxWorld *world)
         world->smodelLightingImage = image;
 
         Image_Generate3D(image,
-                         ((byte **)&smodelLoadGlob)[4],
+                         SMODEL_LIGHTING_PIXELS(byte),
                          ((int *)&smodelLoadGlob)[0] * 2,
                          ((int *)&smodelLoadGlob)[1] * 2,
                          2,
@@ -350,7 +365,11 @@ void R_FinishStaticModelLightingCache(GfxWorld *world)
         ((int *)&smodelLoadGlob)[1] = 0;
         ((int *)&smodelLoadGlob)[2] = 0;
         ((int *)&smodelLoadGlob)[3] = 0;
+#if defined(COD2_X64)
+        SMODEL_LIGHTING_PIXELS(byte) = NULL;
+#else
         ((int *)&smodelLoadGlob)[4] = 0;
+#endif
     }
 }
 void R_GetStaticModelLightingFromGround(const vec_t *groundLight, float *sunVisibility, vec4_t *colorForDir)
@@ -537,7 +556,7 @@ void R_CacheStaticModelLighting(const GfxWorld *world, GfxStaticModelInstance *s
             else if (ai <= 0)
                 ai = 0;
             for (x = x0; x < x0 + 2; x++) {
-                byte *texel = &((byte **)&smodelLoadGlob)[4][4 * (x + 2 * ((int *)&smodelLoadGlob)[0] * (y + 2 * (z * ((int *)&smodelLoadGlob)[1])))];
+                byte *texel = &SMODEL_LIGHTING_PIXELS(byte)[4 * (x + 2 * ((int *)&smodelLoadGlob)[0] * (y + 2 * (z * ((int *)&smodelLoadGlob)[1])))];
                 int ri = (int)floorf(cfd[c] * 255.0f + 0.5f);
                 int gi = (int)floorf(cfd[c + 8] * 255.0f + 0.5f);
                 int bi = (int)floorf(0.5f + 255.0f * cfd[c + 16]);

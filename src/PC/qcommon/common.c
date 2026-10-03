@@ -1126,7 +1126,13 @@ void Com_SetRecommended(qboolean restart)
         int i;
 
         for (i = 0; i < filesize; i++)
+#if defined(COD2_X64)
+            /* Same wrapped bits as i386, without signed-overflow UB. */
+            checksum = (int)((unsigned int)(int)((char *)csv)[i] +
+                             (unsigned int)checksum * 1000000007u);
+#else
             checksum = (int)((char *)csv)[i] + checksum * 1000000007;
+#endif
 
         checksum &= 0xfffffff;
         FS_FreeFile(csv);

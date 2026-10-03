@@ -446,7 +446,13 @@ unsigned char g_load[1600];
 unsigned char menuParseKeywordHash[2048];
 unsigned char menuBuf1[4096];
 unsigned char string_00f3b9c0[4160];
+#if defined(COD2_X64)
+/* 665856 = 64 * 0x28a4 (i386 sizeof(gclient_s)); the native record is
+   larger, so the last client ran past the byte blob into neighbouring BSS. */
+struct gclient_s g_clients[64];
+#else
 unsigned char g_clients[665856];
+#endif
 BSSINT hud_flash_period_offhand;
 unsigned char hud_flash_time_offhand[124];
 unsigned char cached_models[1024];

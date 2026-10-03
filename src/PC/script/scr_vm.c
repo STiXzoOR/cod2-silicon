@@ -570,10 +570,12 @@ static VariableStackBuffer *__attribute_regparm__(3)
     unsigned int localId = *pLocalId;
     char *record;
     int i;
+#if !defined(COD2_X64)
     unsigned int cacheLocalVarCount = VM_CurrentFrameLocalCacheCount();
 
     if (cacheLocalVarCount > localVarCount)
         cacheLocalVarCount = localVarCount;
+#endif
 
     stackValue->localId = (unsigned short)localId;
     stackValue->size = (unsigned short)size;
@@ -581,6 +583,11 @@ static VariableStackBuffer *__attribute_regparm__(3)
     stackValue->pos = pos;
     stackValue->time = (byte)svp->time;
 
+#if defined(COD2_X64)
+    /* As in 1.3, release every cached local of the suspended frames; VM_Resume
+       rebuilds the caches from the thread's local objects. */
+    scrVmPub.localVars -= localVarCount;
+#else
     {
         VM_LocalVarArchive *archive = NULL;
 
@@ -600,6 +607,7 @@ static VariableStackBuffer *__attribute_regparm__(3)
     }
 
     scrVmPub.localVars -= cacheLocalVarCount;
+#endif
 
     record = (char *)stackValue + VM_STACKBUF_HEADER_SIZE + valueBytes;
     for (i = 0; i < size; i++) {
@@ -8154,6 +8162,31 @@ static void VM_Resume(unsigned int timeId)
         localId = stackValue->localId;
         Scr_ClearWaitTime(startLocalId);
 
+#if defined(COD2_X64)
+        /* As VM_UnarchiveStack in 1.3: the resumed thread owns frames
+           1..function_count (deepest last; frame 0 is this caller), and each
+           caller frame rebuilds its local-variable cache from its local object.
+           Assigning frames 0..function_count-1 left the deepest frame with a
+           stale localId, which a later thread return resumed the caller with. */
+        {
+            int frameIndex = scrVmPub.function_count;
+            unsigned int frameLocalId = localId;
+
+            for (;;) {
+                scrVmPub.function_frame_start[frameIndex].fs.localId = frameLocalId;
+                if (!--frameIndex)
+                    break;
+                frameLocalId = GetParentLocalId(frameLocalId);
+            }
+
+            while (++frameIndex != scrVmPub.function_count) {
+                function_frame_t *frame = &scrVmPub.function_frame_start[frameIndex];
+                frame->fs.localVarCount = VM_RestoreLocalVarsFromSibling(frame->fs.localId);
+            }
+
+            localVarCount = VM_RestoreLocalVarsFromSibling(localId);
+        }
+#else
         if (scrVmPub.function_count > 0) {
             unsigned int frameIndex;
             unsigned int frameLocalId = localId;
@@ -8174,6 +8207,7 @@ static void VM_Resume(unsigned int timeId)
         } else {
             localVarCount = VM_RestoreArchivedLocalVars(stackValue);
         }
+#endif
 
         if ((byte)svp->time != stackValue->time) {
             Scr_ResetTimeout();

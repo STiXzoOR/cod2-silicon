@@ -451,6 +451,7 @@ void Info_RemoveKey(char *s, const char *key)
 
         if (!strcmp(key, pkey)) {
 #if defined(COD2_X64)
+            /* The tail overlaps start; fortified strcpy traps on overlap. */
             memmove(start, s, strlen(s) + 1);
 #else
             strcpy(start, s);
@@ -499,6 +500,7 @@ void Info_RemoveKey_Big(char *s, const char *key)
 
         if (!strcmp(key, pkey)) {
 #if defined(COD2_X64)
+            /* The tail overlaps start; fortified strcpy traps on overlap. */
             memmove(start, s, strlen(s) + 1);
 #else
             strcpy(start, s);
