@@ -8,6 +8,11 @@ if [ "${COD2X_SANITIZERS:-0}" = 1 ]; then
     flags="$flags -fsanitize=address,undefined -fno-omit-frame-pointer"
 fi
 sh tests/cod2x/run.sh
+clang $flags -Wno-deprecated-declarations tests/cod2x/test_cod2x.c tests/cod2x/test_identity_sdk.c \
+    src/PC/qcommon/cod2x_identity.c src/PC/qcommon/cod2x_protocol.c \
+    src/stubs/iokit_stubs.c src/stubs/carbon_stubs.c -framework IOKit \
+    -framework CoreFoundation -framework OpenGL -o "$work/identity-engine-stubs"
+"$work/identity-engine-stubs"
 for test in policy features mouse url dvar_pool info; do
     case "$test" in
         policy) source=src/PC/qcommon/cod2x_policy.c ;;
