@@ -1,4 +1,7 @@
 #include "common_types.h"
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 #include "imports.h"
 #include "bytematch.h"
 /* dvar globals */
@@ -48,7 +51,11 @@ extern const char *Dvar_DisplayableValue(const dvar_t *dvar);
 extern const char *Dvar_DisplayableLatchedValue(const dvar_t *dvar);
 extern const char *Dvar_DisplayableResetValue(const dvar_t *dvar);
 extern const char *Dvar_GetVariantString(const char *dvarName);
+#if defined(COD2_X64)
+extern const char * Dvar_DomainToString_GetLines(unsigned char, DvarLimits, char *, int, int *);
+#else
 extern void Dvar_DomainToString_GetLines(int type, int v0, int v1, char *outBuf, int outBufSize, int *outLineCount);
+#endif
 extern void CalcScreenPlacement(float *xAdj, float *yAdj, float *xScale, float *yScale, int horzAlign, int vertAlign);
 extern void CalcScreenX(float *x, int align);
 extern void CalcScreenY(float *y, int align);
@@ -66,7 +73,9 @@ extern int Sys_IsMainThread(void);
 extern int Sys_Milliseconds(void);
 extern void Com_StripExtension(const char *in, char *out);
 #ifndef _WIN32
+#if !defined(COD2_X64)
 extern void qsort(void *base, int nmemb, int size, int (*compar)(const void *, const void *));
+#endif
 #endif
 extern const char **Cmd_GetAutoCompleteFileList(const char *cmd, int *fileCount, int maxCount);
 extern void FS_FreeFileList(const char **list, int count);

@@ -1,4 +1,7 @@
 #if defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 #include "../qcommon/cod2x.h"
 #endif
 #include "common_types.h"
@@ -18,6 +21,9 @@ typedef struct serverStatusRequest_s {
     qboolean retrieved;
 } serverStatusRequest_t;
 
+#if !defined(COD2_X64)
+#line 20
+#endif
 COD2_ASSERT_FIELD(serverStatusRequest_t, address, 0x2000);
 COD2_ASSERT_FIELD(serverStatusRequest_t, time, 0x2014);
 COD2_ASSERT_FIELD(serverStatusRequest_t, retrieved, 0x2024);
@@ -27,7 +33,9 @@ extern serverStatusRequest_t cl_serverStatusList[16];
 static Bool s_playerMute[64];
 extern int NET_CompareAdrSigned(netadr_t *a, netadr_t *b);
 extern qboolean NET_CompareAdr(netadr_t a, netadr_t b);
+#if !defined(COD2_X64)
 extern void qsort(void *base, unsigned int nmemb, unsigned int size, int (*compar)(const void *, const void *));
+#endif
 extern int atoi(const char *nptr);
 extern char *Info_ValueForKey(const char *s, const char *key);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
@@ -73,6 +81,9 @@ typedef struct rconGlob_s {
     netadr_t address;
 } rconGlob_t;
 
+#if !defined(COD2_X64)
+#line 75
+#endif
 COD2_ASSERT_FIELD(rconGlob_t, address, 0x18);
 COD2_ASSERT_SIZE(rconGlob_t, 0x2c);
 
