@@ -692,6 +692,22 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
         *(byte *)p = 0;
     }
 
+#if defined(COD2_X64)
+    /* Mac 1.3 loads the constant strings before spawning (GScr_LoadConsts
+       precedes the clears below). Spawning first gave G_InitGentity the
+       previous level's scr_const IDs, which SL_ShutdownSystem(1) had already
+       released. A second call below only re-finds the same user-1 strings. */
+    GScr_LoadConsts();
+
+    /* Mac 1.3 clears every entity and client before the level spawns
+       (memset of 0x8c000 and 0xa2900 bytes before SV_LocateGameData). Stale
+       entity slots kept string-field IDs that the previous level's
+       SL_ShutdownSystem(1) had released; the next Scr_SetString on them
+       dropped a reference it did not own. */
+    memset(g_entities, 0, 1024 * sizeof(gentity_t));
+    memset(g_clients, 0, 64 * sizeof(gclient_t));
+#endif
+
     for (i = 0; i < level.maxclients; i++) {
 #if defined(COD2_X64)
         g_entities[i].client = &level.clients[i];
@@ -737,6 +753,13 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_endload);)
 
     *(void **)imp_bgs = (void *)&level_bgs;
+#if defined(COD2_X64)
+    /* 1.3 clears the anim script data before reloading it on a new level;
+       otherwise numScriptItems grows with every map until the parser fails
+       with "exceeded maximum global items (2048)". */
+    if (!restart)
+        memset(&level_bgs.animScriptData, 0, sizeof(level_bgs.animScriptData));
+#endif
     level_bgs.animScriptData.soundAlias = (snd_alias_list_t *(__cdecl *)(const char *))((snd_alias_list_t * (*)()) Com_FindSoundAlias);
     level_bgs.animScriptData.playSoundAlias = (int (__cdecl *)(int,snd_alias_list_t *))((int (*)())G_AnimScriptSound);
 
