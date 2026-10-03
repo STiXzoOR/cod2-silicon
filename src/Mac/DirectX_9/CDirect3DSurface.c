@@ -40,6 +40,19 @@ typedef struct {
     GLenum openGLElementType;
 } CDirect3DSurfaceImpl;
 
+#if defined(COD2_X64)
+extern void *vtbl_CDirect3DCubeTexture[];
+extern GLuint CDirect3DTexture_GetGLName(const void *texture);
+extern GLuint CDirect3DCubeTexture_GetGLName(const void *texture);
+
+static GLuint CDirect3DSurface_GetOwnerGLName(const CDirect3DSurfaceImpl *surface)
+{
+    if (*(void ***)surface->owner == vtbl_CDirect3DCubeTexture)
+        return CDirect3DCubeTexture_GetGLName(surface->owner);
+    return CDirect3DTexture_GetGLName(surface->owner);
+}
+#endif
+
 /* Typed owner setter: CDirect3DTexture set surface->owner via a hardcoded x86
  * offset (surf+40), which on x64 is surfaceMemory (owner is at 56) -> corrupted
  * the pixel pointer. (x64 port Stage 4.) */
@@ -58,7 +71,11 @@ int CDirect3DSurface_GetGLBlitInfo(const void *surf, unsigned int *texId, unsign
 
     if (!s || !s->owner)
         return 0;
+#if defined(COD2_X64)
+    id = CDirect3DSurface_GetOwnerGLName(s);
+#else
     id = *(const unsigned int *)((const byte *)s->owner + 5 * sizeof(void *) + 64);
+#endif
     if (!id)
         return 0;
     if (texId)
@@ -139,7 +156,11 @@ HRESULT CDirect3DSurface_LockRect(const CDirect3DSurface *_this, D3DLOCKED_RECT 
 
     (void)Flags;
 
+#if defined(COD2_X64)
+    if (!surface->surfaceMemory) {
+#else
     if (!surface->surfaceMemory || (unsigned int)surface->surfaceMemory >= 0xf0000000) {
+#endif
         static byte scratch[4 * 1024 * 1024];
         pLockedRect->pBits = scratch;
     } else {
@@ -172,7 +193,11 @@ HRESULT CDirect3DSurface_UnlockRect(const CDirect3DSurface *_this)
     CDirect3DSurfaceImpl *surface = (CDirect3DSurfaceImpl *)_this;
 
     if (surface->isDirty && surface->surfaceMemory && surface->owner) {
+#if defined(COD2_X64)
+        unsigned int texID = CDirect3DSurface_GetOwnerGLName(surface);
+#else
         unsigned int texID = *(unsigned int *)((byte *)surface->owner + 0x54);
+#endif
         if (texID) {
             int prevTex = 0;
             glGetIntegerv(0x8069 , &prevTex);

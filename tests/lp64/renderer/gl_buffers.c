@@ -10,6 +10,8 @@ _Static_assert(sizeof(GLint) == 4, "GL output integers have four-byte slots");
 _Static_assert(sizeof(GLenum) == 4 && sizeof(GLsizei) == 4, "GL scalar ABI");
 _Static_assert(sizeof(GLsizeiptr) == sizeof(void *), "GL buffer sizes retain pointer width");
 _Static_assert(sizeof(GLintptr) == sizeof(void *), "GL buffer offsets retain pointer width");
+_Static_assert(sizeof(DWORD) == 4 && sizeof(D3DCOLOR) == 4, "D3D words and packed vertex colors");
+_Static_assert(sizeof(ULONG) == 4 && sizeof(HRESULT) == 4, "D3D reference counts and signed results");
 
 #include "Mac/DirectX_9/CDirect3DVertexBuffer.c"
 #include "Mac/DirectX_9/CDirect3DIndexBuffer.c"

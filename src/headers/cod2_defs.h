@@ -3003,7 +3003,11 @@ typedef _D3DXSHADER_CONSTANTINFO D3DXSHADER_CONSTANTINFO;
 
 typedef int DCTELEM;
 
+#if COD2_APPLE_SDK
+typedef unsigned int DWORD;
+#else
 typedef long unsigned int DWORD;
+#endif
 typedef OpaqueDialogPtr * DialogPtr;
 
 typedef __EventLoopTimer * EventLoopTimerRef;
@@ -3084,7 +3088,11 @@ typedef boolean (*JSAMPARRAY)();
 typedef unsigned char JSAMPLE;
 typedef int LOCFSERROR;
 
+#if COD2_APPLE_SDK
+typedef int LONG;
+#else
 typedef long int LONG;
+#endif
 typedef long long int LONGLONG;
 
 typedef long int LONG_PTR;

@@ -609,7 +609,15 @@ static unsigned int CDirect3DDevice_GetTextureGLId(IDirect3DBaseTexture9 *textur
     /* CDirect3DTexture.texIDStorage: 3 ptrs (2 vtbl + mpTexID) + 16 int fields(64B) +
        2 ptrs (surfaces,pixelData) => 5*sizeof(void*)+64. x86=0x54, x64=0x68.
        CDirect3DCubeTexture has the same layout up to this field. */
+#if defined(COD2_X64)
+    extern GLuint CDirect3DTexture_GetGLName(const void *texture);
+    extern GLuint CDirect3DCubeTexture_GetGLName(const void *texture);
+    if (*(void ***)texture == vtbl_CDirect3DCubeTexture)
+        return CDirect3DCubeTexture_GetGLName(texture);
+    return CDirect3DTexture_GetGLName(texture);
+#else
     return *(unsigned int *)((byte *)texture + 5 * sizeof(void *) + 64);
+#endif
 }
 
 static GLenum CDirect3DDevice_GetTextureTarget(IDirect3DBaseTexture9 *texture)
