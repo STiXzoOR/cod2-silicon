@@ -1,7 +1,13 @@
 #ifndef IMPORTS_OPENGL_H
 #define IMPORTS_OPENGL_H
 
-#ifdef __EMSCRIPTEN__
+#if defined(__APPLE__) && defined(COD2_X64)
+
+#include <OpenGL/gl.h>
+#include <OpenGL/glext.h>
+#include <OpenGL/glu.h>
+
+#elif defined(__EMSCRIPTEN__)
 
 #include "web/webgl2_compat.h"
 

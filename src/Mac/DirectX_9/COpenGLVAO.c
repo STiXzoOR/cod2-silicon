@@ -87,7 +87,11 @@ void CBaseVA_CBaseVA(const CBaseVA *_this);
 
 static void **getVtblPtr(void *vtbl_ptr)
 {
+#if defined(COD2_X64)
+    return (void **)((unsigned char *)vtbl_ptr + 2 * sizeof(void *));
+#else
     return (void **)((unsigned char *)vtbl_ptr + 8);
+#endif
 }
 
 UINT32 COpenGLVAO_GetCode(const COpenGLVAO *_this)

@@ -2,6 +2,9 @@
 #include "imports.h"
 #include <stdlib.h>
 #include <string.h>
+#if defined(COD2_X64)
+#include "lp64_buffers.h"
+#endif
 
 float g_scale1 = 1.0f;
 float g_scale2 = 16777216.0f;
@@ -1103,7 +1106,11 @@ HRESULT CDirect3DDevice_CreateVertexBuffer(const CDirect3DDevice *_this, UINT Le
     (void)_this;
     (void)FVF;
     (void)pSharedHandle;
+#if defined(COD2_X64)
+    vb = malloc(sizeof(CDirect3DVertexBufferClean));
+#else
     vb = malloc(((0x3c) + (sizeof(void*)>4 ? 0x100 : 0)));
+#endif
     CDirect3DVertexBuffer_CDirect3DVertexBuffer((const CDirect3DVertexBuffer *)vb, Length, Usage, Pool);
     *ppVertexBuffer = (IDirect3DVertexBuffer9 *)vb;
     return 0;
@@ -1116,7 +1123,11 @@ HRESULT CDirect3DDevice_CreateIndexBuffer(const CDirect3DDevice *_this, UINT Len
     void *ib;
     (void)_this;
     (void)pSharedHandle;
+#if defined(COD2_X64)
+    ib = malloc(sizeof(CDirect3DIndexBufferClean));
+#else
     ib = malloc(((0x34) + (sizeof(void*)>4 ? 0x100 : 0)));
+#endif
     CDirect3DIndexBuffer_CDirect3DIndexBuffer((const CDirect3DIndexBuffer *)ib, Length, Format, Usage, Pool);
     *ppIndexBuffer = (IDirect3DIndexBuffer9 *)ib;
     return 0;
@@ -1609,7 +1620,11 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
     if (!dev->streams[0] || !dev->indexBuffer)
         return 0;
 
+#if defined(COD2_X64)
+    vbData = ((const CDirect3DVertexBufferClean *)dev->streams[0])->data;
+#else
     vbData = *(byte **)((byte *)dev->streams[0] + sizeof(void *) + 8);   /* VB.data: vtable+refCount+lengthBytes (x86 was +12) */
+#endif
     if (!vbData)
         return 0;
     offset = dev->streamOffsets[0];
@@ -1663,7 +1678,11 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
     else
         colorByteOrder = COLOR_BYTES_BGRA;
 
+#if defined(COD2_X64)
+    ibData = ((const CDirect3DIndexBufferClean *)dev->indexBuffer)->data;
+#else
     ibData = *(byte **)((byte *)dev->indexBuffer + sizeof(void *) + 8);   /* IB.data (x86 was +12) */
+#endif
     if (!ibData)
         return 0;
 

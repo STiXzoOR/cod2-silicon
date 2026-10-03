@@ -3019,6 +3019,10 @@ typedef float Float32;
 typedef double Float64;
 typedef void (*Free_t)(void *, int);   /* real Free(ptr,size) sig; byte-neutral fn-ptr */
 typedef GDevice * GDPtr;
+#if COD2_APPLE_SDK
+/* OpenGL scalars stay 32 bits on Darwin LP64; buffer sizes are pointer-sized. */
+#include <OpenGL/gl.h>
+#else
 typedef long unsigned int GLbitfield;
 
 typedef unsigned char GLboolean;
@@ -3027,6 +3031,7 @@ typedef float GLfloat;
 typedef long int GLint;
 typedef long int GLsizei;
 typedef long unsigned int GLuint;
+#endif
 
 typedef unsigned int GfxDrawSurfSort;
 
