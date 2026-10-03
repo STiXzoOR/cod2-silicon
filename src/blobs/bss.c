@@ -1370,6 +1370,9 @@ extern int g_banIPs_dvar __attribute__((alias("g_banIPs")));
 /* MSVC equivalent of the GAS .set alias: resolve the (otherwise undefined)
  * alias to the target at link. x86 C symbols carry one leading underscore. */
 COD2_ALT("g_banIPs_dvar", "g_banIPs")
+#elif defined(__APPLE__)
+/* Mach-O C symbols carry one leading underscore. */
+__asm__(".globl _g_banIPs_dvar\n.set _g_banIPs_dvar, _g_banIPs\n");
 #else
 __asm__(".globl g_banIPs_dvar\n.set g_banIPs_dvar, g_banIPs\n");
 #endif

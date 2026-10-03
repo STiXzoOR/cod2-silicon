@@ -17,15 +17,21 @@ ARCH64_VTABLE(__ZTV5Cloud);
 ARCH64_VTABLE(__ZTV7Emitter);
 ARCH64_VTABLE(__ZTV8Cylinder);
 */
+/* On Apple LP64 the typed data blobs (tools/datagen) define the IncludeClass
+ * vtable, TheStringPackage and the CSoundObject callbacks with real values. */
+#    if !defined(__APPLE__)
 ARCH64_VTABLE(__ZTV12IncludeClass);
+#    endif
 #    undef ARCH64_VTABLE
 
 void *__ZTIl = 0;
 
+#    if !defined(__APPLE__)
 void *TheStringPackage = 0;
 void *__ZN12CSoundObject13sReadCallbackE = 0;
 void *__ZN12CSoundObject13sSeekCallbackE = 0;
 void *__ZN12CSoundObject14sCloseCallbackE = 0;
 void *__ZN12CSoundObject13sOpenCallbackE = 0;
+#    endif
 
 #endif

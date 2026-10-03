@@ -23,7 +23,7 @@ list(FILTER MACOS_C EXCLUDE REGEX "/Mac/Tools/(MacDisplay|MacThreads|CCircularBu
 list(FILTER MACOS_C EXCLUDE REGEX "/stubs/(agl_stubs|audio_stubs|cpp_compat|cpp_trampoline|fx_override)\\.c$")
 list(APPEND MACOS_C src/unix/linux_common.c src/unix/linux_net.c src/unix/sysdiff_statehash.c
   src/platform/macos_system.c src/platform/macos_threads.c src/platform/macos_ring.c
-  src/platform/macos_cpp_abi.cpp)
+  src/platform/macos_cpp_abi.cpp src/platform/macos_abs_symbols.c)
 list(FILTER MACOS_C EXCLUDE REGEX "/Mac/Main/(mac_play_dsound|mac_record_dsound)\\.c$")
 list(FILTER MACOS_C EXCLUDE REGEX "/PC/groupvoice/record\\.c$")
 set(MACOS_DED_C ${MACOS_C})

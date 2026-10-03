@@ -20,7 +20,7 @@ YY_BUFFER_STATE yy_current_buffer;
 char yy_hold_char;
 int yy_n_chars;
 char *yy_c_buf_p;
-int yy_init = 1;
+extern int yy_init; /* initialized data (= 1), defined by the typed data blob */
 int yy_start;
 int yy_did_buffer_switch_on_eof;
 yy_state_type yy_last_accepting_state;
