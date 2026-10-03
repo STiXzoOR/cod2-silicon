@@ -18,10 +18,26 @@ extern const gitem_t *G_FindItem(const char *pickupName);
 
 extern struct scr_data_t g_scr_data;
 extern unsigned int Scr_AllocString(const char *s, int user);
+#if defined(COD2_X64)
+extern void Scr_AddString(const char *);
+#else
 extern unsigned int Scr_AddString(const char *s);
+#endif
+#if defined(COD2_X64)
+extern void Scr_AddInt(int);
+#else
 extern unsigned int Scr_AddInt(int value);
+#endif
+#if defined(COD2_X64)
+extern void Scr_AddArray(void);
+#else
 extern unsigned int Scr_AddArray(void);
+#endif
+#if defined(COD2_X64)
+extern void Scr_MakeArray(void);
+#else
 extern unsigned int Scr_MakeArray(void);
+#endif
 extern void Scr_AddArrayStringIndexed(unsigned int stringValue);
 extern int Scr_GetInt(int argIndex);
 extern void Scr_AddEntity(gentity_t *ent);
@@ -47,16 +63,32 @@ extern void Dvar_AddFlags(const dvar_t *dvar, int flags);
 extern const dvar_t *Dvar_RegisterString_mac(const char *dvarName, const char *value, int flags);
 extern unsigned char Dvar_IsValidName(const char *dvarName);
 extern void Dvar_SetFromStringByName(const char *dvarName, const char *string);
+#if defined(COD2_X64)
+extern void Scr_AddFloat(float);
+#else
 extern unsigned int Scr_AddFloat(float value);
+#endif
+#if defined(COD2_X64)
+extern void Scr_AddBool(int);
+#else
 extern unsigned int Scr_AddBool(int value);
+#endif
 extern const char *Scr_GetDebugString(unsigned int index);
+#if defined(COD2_X64)
+extern scr_anim_t Scr_GetAnim(unsigned int, struct XAnimTree_s *);
+#else
 extern unsigned int Scr_GetAnim(unsigned int index, int treeIndex);
+#endif
 extern struct XAnim_s *Scr_GetAnims(int treeIndex);
 extern void XAnimGetRelDelta(const XAnim *anims, unsigned int animIndex, vec_t *rot, vec_t *trans, float time1, float time2);
 extern Bool XAnimIsPrimitive(struct XAnim_s *anims, unsigned int animIndex);
 extern float XAnimGetLength(const XAnim *anims, unsigned int animIndex);
 extern float RotationToYaw(const vec_t *rot);
+#if defined(COD2_X64)
+extern void Scr_ParamError(unsigned int, const char *);
+#else
 extern unsigned int Scr_ParamError(unsigned int index, const char *msg);
+#endif
 extern unsigned int Scr_GetConstString(unsigned int index);
 extern unsigned int Scr_GetConstLowercaseString(unsigned int index);
 extern int XAnimNotetrackExists(const XAnim *anims, unsigned int animIndex, unsigned int name);
@@ -140,7 +172,11 @@ extern float Vec3Distance(float *a, float *b);
 extern float Vec3DistanceSq(float *a, float *b);
 extern void vectoangles(const vec_t *vec, vec_t *angles);
 extern void Scr_AddVector(const float *value);
+#if defined(COD2_X64)
+extern void Scr_AddConstString(unsigned int);
+#else
 extern unsigned int Scr_AddConstString(unsigned int value);
+#endif
 extern void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up);
 extern void AnglesToAxis(const vec_t *angles, vec3_t *axis);
 extern void MatrixTransformVector(const vec_t *in1, const vec3_t *in2, vec_t *out);
@@ -654,27 +690,47 @@ void GScr_FreeScripts(void)
 
 unsigned int ScrCmd_GetClanId(struct scr_entref_t entref)
 {
+#if defined(COD2_X64)
+    return (Scr_AddString("0"), 0);
+#else
     return Scr_AddString("0");
+#endif
 }
 
 unsigned int ScrCmd_GetClanName(scr_entref_t entref)
 {
+#if defined(COD2_X64)
+    return (Scr_AddString(""), 0);
+#else
     return Scr_AddString("");
+#endif
 }
 
 unsigned int ScrCmd_GetClanMotto(scr_entref_t entref)
 {
+#if defined(COD2_X64)
+    return (Scr_AddString(""), 0);
+#else
     return Scr_AddString("");
+#endif
 }
 
 unsigned int ScrCmd_GetClanDescription(scr_entref_t entref)
 {
+#if defined(COD2_X64)
+    return (Scr_AddString(""), 0);
+#else
     return Scr_AddString("");
+#endif
 }
 
 unsigned int ScrCmd_GetClanURL(scr_entref_t entref)
 {
+#if defined(COD2_X64)
+    return (Scr_AddString(""), 0);
+#else
     return Scr_AddString("");
+#endif
 }
 
 void print(void)
@@ -734,7 +790,11 @@ void GScr_IsDefined(void)
 
 unsigned int GScr_IsString(void)
 {
+#if defined(COD2_X64)
+    return (Scr_AddInt(Scr_GetType(0) == 2), 0);
+#else
     return Scr_AddInt(Scr_GetType(0) == 2);
+#endif
 }
 
 void GScr_IsAlive(void)
@@ -760,17 +820,29 @@ void GScr_GetDvar(void)
 
 unsigned int GScr_GetDvarInt(void)
 {
+#if defined(COD2_X64)
+    return (Scr_AddInt(atoi(Dvar_GetVariantString(Scr_GetString(0)))), 0);
+#else
     return Scr_AddInt(atoi(Dvar_GetVariantString(Scr_GetString(0))));
+#endif
 }
 
 unsigned int GScr_GetDvarFloat(void)
 {
+#if defined(COD2_X64)
+    return (Scr_AddFloat((float)atof(Dvar_GetVariantString(Scr_GetString(0)))), 0);
+#else
     return Scr_AddFloat((float)atof(Dvar_GetVariantString(Scr_GetString(0))));
+#endif
 }
 
 unsigned int GScr_GetTime(void)
 {
+#if defined(COD2_X64)
+    return (Scr_AddInt(level.time), 0);
+#else
     return Scr_AddInt(level.time);
+#endif
 }
 
 void Scr_GetEntByNum(void)
@@ -805,9 +877,21 @@ void Scr_GetWeaponModel(void)
     return;
 }
 
+#if defined(COD2_X64)
+static unsigned int GScr_GetPackedAnim(void)
+{
+    scr_anim_t anim = Scr_GetAnim(0, NULL);
+    return (unsigned int)anim.index | ((unsigned int)anim.tree << 16);
+}
+#endif
+
 void GScr_GetAnimLength(void)
 {
+#if defined(COD2_X64)
+    unsigned int anim = GScr_GetPackedAnim();
+#else
     unsigned int anim = Scr_GetAnim(0, 0);
+#endif
     struct XAnim_s *anims = Scr_GetAnims(anim >> 16);
     unsigned short animIndex = anim;
 
@@ -818,7 +902,11 @@ void GScr_GetAnimLength(void)
 
 void GScr_AnimHasNotetrack(void)
 {
+#if defined(COD2_X64)
+    unsigned int anim = GScr_GetPackedAnim();
+#else
     unsigned int anim = Scr_GetAnim(0, 0);
+#endif
     unsigned int treeIndex = anim >> 16;
     unsigned int animIndex = anim & 0xffff;
     unsigned int notetrack = Scr_GetConstString(1);
@@ -837,7 +925,11 @@ void GScr_PrecacheTurret(void)
 
 unsigned int ScrCmd_SoundExists(void)
 {
+#if defined(COD2_X64)
+    return (Scr_AddBool(Com_FindSoundAlias(Scr_GetString(0)) != 0), 0);
+#else
     return Scr_AddBool(Com_FindSoundAlias(Scr_GetString(0)) != 0);
+#endif
 }
 
 void ScrCmd_PlayRumble(scr_entref_t entref) {}
@@ -1021,7 +1113,11 @@ void GScr_LogPrint(void)
 
 unsigned int GScr_WorldEntNumber(void)
 {
+#if defined(COD2_X64)
+    return (Scr_AddInt(0x3fe), 0);
+#else
     return Scr_AddInt(0x3fe);
+#endif
 }
 
 void GScr_Obituary(void)
@@ -1054,7 +1150,11 @@ void GScr_Obituary(void)
 
 unsigned int GScr_getStartTime(void)
 {
+#if defined(COD2_X64)
+    return (Scr_AddInt(level.startTime), 0);
+#else
     return Scr_AddInt(level.startTime);
+#endif
 }
 
 void GScr_PrecacheMenu(void)
@@ -1480,7 +1580,11 @@ unsigned int Scr_GetSubStr(void)
     }
 
     tempString[dest] = '\0';
+#if defined(COD2_X64)
+    return (Scr_AddString(tempString), 0);
+#else
     return Scr_AddString(tempString);
+#endif
 }
 
 void Scr_ToLower(void)
@@ -1705,8 +1809,13 @@ void GScr_GetMoveDelta(void)
     vec3_t trans;
 
     GScr_GetAnimDeltaTimes(&startTime, &endTime);
+#if defined(COD2_X64)
+
+    anim = GScr_GetPackedAnim();
+#else
 
     anim = Scr_GetAnim(0, 0);
+#endif
     XAnimGetRelDelta( (const XAnim *)(Scr_GetAnims(anim >> 16)), (unsigned short)anim, rot, trans, startTime, endTime);
     Scr_AddVector(trans);
     return;
@@ -1721,8 +1830,13 @@ void GScr_GetAngleDelta(void)
     vec3_t trans;
 
     GScr_GetAnimDeltaTimes(&startTime, &endTime);
+#if defined(COD2_X64)
+
+    anim = GScr_GetPackedAnim();
+#else
 
     anim = Scr_GetAnim(0, 0);
+#endif
     XAnimGetRelDelta( (const XAnim *)(Scr_GetAnims(anim >> 16)), (unsigned short)anim, rot, trans, startTime, endTime);
     Scr_AddFloat(RotationToYaw(rot));
     return;
@@ -1888,7 +2002,11 @@ unsigned int GScr_SetWinningTeam(void)
     else if (team == scr_const.none)
         winner = 0;
     else
+#if defined(COD2_X64)
+        return (Scr_ParamError(0, va("Illegal team string '%s'. Must be allies, axis, or none.", SL_ConvertToString(team))), 0);
+#else
         return Scr_ParamError(0, va("Illegal team string '%s'. Must be allies, axis, or none.", SL_ConvertToString(team)));
+#endif
 
     GScr_UpdateWinnerConfig(winner);
 }
@@ -1990,7 +2108,11 @@ void GScr_GetTeamPlayersAlive(void)
 
 unsigned int GScr_GetNumParts(void)
 {
+#if defined(COD2_X64)
+    return (Scr_AddInt(XModelNumBones(SV_XModelGet(Scr_GetString(0)))), 0);
+#else
     return Scr_AddInt(XModelNumBones(SV_XModelGet(Scr_GetString(0))));
+#endif
 }
 
 void GScr_GetPartName(void)
@@ -2438,7 +2560,11 @@ void Scr_StopAllRumbles(void) {}
 
 unsigned int Scr_IsSplitscreen(void)
 {
+#if defined(COD2_X64)
+    return (Scr_AddInt(0), 0);
+#else
     return Scr_AddInt(0);
+#endif
 }
 
 void GScr_MatchEnd(void) {}
@@ -3656,7 +3782,11 @@ unsigned int ScrCmd_GetAttachSize(scr_entref_t entref)
             break;
     }
 
+#if defined(COD2_X64)
+    return (Scr_AddInt(i), 0);
+#else
     return Scr_AddInt(i);
+#endif
 }
 
 unsigned int ScrCmd_GetAttachModelName(scr_entref_t entref)
@@ -3667,7 +3797,11 @@ unsigned int ScrCmd_GetAttachModelName(scr_entref_t entref)
     if ((unsigned int)i > 6 || !ent->attachModelNames[i])
         Scr_ParamError(0, "bad index");
 
+#if defined(COD2_X64)
+    return (Scr_AddString(G_ModelName(ent->attachModelNames[i])), 0);
+#else
     return Scr_AddString(G_ModelName(ent->attachModelNames[i]));
+#endif
 }
 
 unsigned int ScrCmd_GetAttachTagName(scr_entref_t entref)
@@ -3678,7 +3812,11 @@ unsigned int ScrCmd_GetAttachTagName(scr_entref_t entref)
     if ((unsigned int)i > 6 || !ent->attachModelNames[i])
         Scr_ParamError(0, "bad index");
 
+#if defined(COD2_X64)
+    return (Scr_AddConstString(ent->attachTagNames[i]), 0);
+#else
     return Scr_AddConstString(ent->attachTagNames[i]);
+#endif
 }
 
 unsigned int ScrCmd_GetAttachIgnoreCollision(scr_entref_t entref)
@@ -3689,7 +3827,11 @@ unsigned int ScrCmd_GetAttachIgnoreCollision(scr_entref_t entref)
     if ((unsigned int)i > 6 || !ent->attachModelNames[i])
         Scr_ParamError(0, "bad index");
 
+#if defined(COD2_X64)
+    return (Scr_AddBool((ent->attachIgnoreCollision >> i) & 1), 0);
+#else
     return Scr_AddBool((ent->attachIgnoreCollision >> i) & 1);
+#endif
 }
 
 void ScrCmd_LinkTo(scr_entref_t entref)
@@ -3926,7 +4068,11 @@ unsigned int ScrCmd_GetNormalHealth(scr_entref_t entref)
         normalHealth = (float)ent->health;
     }
 
+#if defined(COD2_X64)
+    return (Scr_AddFloat(normalHealth), 0);
+#else
     return Scr_AddFloat(normalHealth);
+#endif
 }
 
 void ScrCmd_SetNormalHealth(scr_entref_t entref)
@@ -4148,8 +4294,16 @@ unsigned int GScr_GetAmmoCount(scr_entref_t entref)
 
     weaponIndex = G_GetWeaponIndexForName(Scr_GetString(0));
     if (!weaponIndex)
+#if defined(COD2_X64)
+        return (Scr_AddInt(0), 0);
+#else
         return Scr_AddInt(0);
+#endif
+#if defined(COD2_X64)
+    return (Scr_AddInt(BG_WeaponAmmo(&ent->client->ps, weaponIndex)), 0);
+#else
     return Scr_AddInt(BG_WeaponAmmo(&ent->client->ps, weaponIndex));
+#endif
 }
 
 void GScr_LocalToWorldCoords(scr_entref_t entref)
@@ -4211,7 +4365,11 @@ void GScr_SetBottomArc(scr_entref_t entref)
 
 unsigned int GScr_GetEntityNumber(scr_entref_t entref)
 {
+#if defined(COD2_X64)
+    return (Scr_AddInt(GScr_EntityFromEntRef(entref)->s.number), 0);
+#else
     return Scr_AddInt(GScr_EntityFromEntRef(entref)->s.number);
+#endif
 }
 
 void GScr_PlaceSpawnPoint(scr_entref_t entref)

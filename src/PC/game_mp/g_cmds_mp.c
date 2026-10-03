@@ -47,7 +47,11 @@ extern const dvar_t *Dvar_RegisterString_mac(const char *dvarName, const char *v
 extern void Cbuf_ExecuteText(int exec_when, const char *text);
 extern void SV_GetConfigstring(int index, char *buffer, int bufferLength);
 extern qboolean SV_MapExists(const char *name);
+#if defined(COD2_X64)
+extern void Scr_AddString(const char *);
+#else
 extern unsigned int Scr_AddString(const char *value);
+#endif
 extern void Scr_Notify(gentity_t *ent, unsigned short stringValue, unsigned int paramcount);
 extern void Scr_VoteCalled(gentity_t *self, char *command, char *param1, char *param2);
 extern qboolean Scr_IsValidGameType(const char *pszGameType);
@@ -77,7 +81,11 @@ extern qboolean G_ClientCanSpectateTeam(gclient_t *client, team_t team);
 extern qboolean SV_GetArchivedClientInfo(int clientNum, int *pArchiveTime, playerState_t *ps, clientState_t *cs);
 extern void player_die(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath, int iWeapon, const vec_t *vDir, const hitLocation_t hitLoc, int psTimeOffset);
 extern char *vtos(const vec_t *v);
+#if defined(COD2_X64)
+extern void G_PrintEntities(void);
+#else
 extern unsigned char G_PrintEntities(void);
+#endif
 extern double atof(const char *nptr);
 extern int atoi(const char *nptr);
 extern void Scr_PlayerVote(gentity_t *self, char *option);

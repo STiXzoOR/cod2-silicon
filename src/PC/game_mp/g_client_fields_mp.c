@@ -5,18 +5,38 @@ extern const char *va(const char *fmt, ...);
 extern void Scr_Error(const char *msg);
 extern unsigned short Scr_GetConstString(int index);
 extern const char *SL_ConvertToString(int stringId);
+#if defined(COD2_X64)
+extern void Scr_AddConstString(unsigned int);
+#else
 extern unsigned int Scr_AddConstString(int stringId);
+#endif
 extern int Scr_GetInt(int index);
 extern const char *Scr_GetString(int index);
 extern float Scr_GetFloat(int index);
+#if defined(COD2_X64)
+extern void Scr_AddFloat(float);
+#else
 extern unsigned int Scr_AddFloat(float value);
+#endif
+#if defined(COD2_X64)
+extern void Scr_AddInt(int);
+#else
 extern unsigned int Scr_AddInt(int value);
+#endif
+#if defined(COD2_X64)
+extern void Scr_AddString(const char *);
+#else
 extern unsigned int Scr_AddString(const char *str);
+#endif
 extern void Scr_AddClassField(int classnum, const char *name, unsigned int offset);
 extern void Scr_SetGenericField(gclient_t *client, int type, int offset);
 extern void Scr_GetGenericField(gclient_t *client, int type, int offset);
 extern void ClientUserinfoChanged(int clientNum);
+#if defined(COD2_X64)
+extern void CalculateRanks(void);
+#else
 extern int CalculateRanks(void);
+#endif
 extern int GScr_GetStatusIconIndex(const char *name);
 extern int GScr_GetHeadIconIndex(const char *name);
 extern void SV_GetConfigstring(int index, char *buf, int bufSize);
@@ -104,7 +124,11 @@ static int ClientScr_SetSessionTeam(gclient_t *pSelf, const client_fields_s *pFi
     }
 
     ClientUserinfoChanged(ClientNum(client));
+#if defined(COD2_X64)
+    return (CalculateRanks(), 0);
+#else
     return CalculateRanks();
+#endif
 }
 
 static unsigned int ClientScr_GetSessionTeam(gclient_t *pSelf, const client_fields_s *pField)
@@ -114,13 +138,29 @@ static unsigned int ClientScr_GetSessionTeam(gclient_t *pSelf, const client_fiel
 
     switch (team) {
     case 1:
+#if defined(COD2_X64)
+        return (Scr_AddConstString(SCR_CONST()->axis), 0);
+#else
         return Scr_AddConstString(SCR_CONST()->axis);
+#endif
     case 2:
+#if defined(COD2_X64)
+        return (Scr_AddConstString(SCR_CONST()->allies), 0);
+#else
         return Scr_AddConstString(SCR_CONST()->allies);
+#endif
     case 3:
+#if defined(COD2_X64)
+        return (Scr_AddConstString(SCR_CONST()->spectator), 0);
+#else
         return Scr_AddConstString(SCR_CONST()->spectator);
+#endif
     case 0:
+#if defined(COD2_X64)
+        return (Scr_AddConstString(SCR_CONST()->none), 0);
+#else
         return Scr_AddConstString(SCR_CONST()->none);
+#endif
     default:
         return team;
     }
@@ -153,13 +193,29 @@ static unsigned int ClientScr_GetSessionState(gclient_t *pSelf, const client_fie
 
     switch (state) {
     case 0:
+#if defined(COD2_X64)
+        return (Scr_AddConstString(SCR_CONST()->playing), 0);
+#else
         return Scr_AddConstString(SCR_CONST()->playing);
+#endif
     case 1:
+#if defined(COD2_X64)
+        return (Scr_AddConstString(SCR_CONST()->dead), 0);
+#else
         return Scr_AddConstString(SCR_CONST()->dead);
+#endif
     case 2:
+#if defined(COD2_X64)
+        return (Scr_AddConstString(SCR_CONST()->spectator), 0);
+#else
         return Scr_AddConstString(SCR_CONST()->spectator);
+#endif
     case 3:
+#if defined(COD2_X64)
+        return (Scr_AddConstString(SCR_CONST()->intermission), 0);
+#else
         return Scr_AddConstString(SCR_CONST()->intermission);
+#endif
     default:
         return state;
     }
@@ -195,7 +251,11 @@ static int ClientScr_SetScore(gclient_t *pSelf, const client_fields_s *pField)
 {
     gclient_s *client = (gclient_s *)pSelf;
     client->sess.score = Scr_GetInt(0);
+#if defined(COD2_X64)
+    return (CalculateRanks(), 0);
+#else
     return CalculateRanks();
+#endif
 }
 
 static void ClientScr_SetSpectatorClient(gclient_t *pSelf, const client_fields_s *pField)
@@ -284,13 +344,29 @@ static unsigned int ClientScr_GetHeadIconTeam(gclient_t *pSelf, const client_fie
 
     switch (team) {
     case 2:
+#if defined(COD2_X64)
+        return (Scr_AddConstString(sc->allies), 0);
+#else
         return Scr_AddConstString(sc->allies);
+#endif
     case 3:
+#if defined(COD2_X64)
+        return (Scr_AddConstString(sc->spectator), 0);
+#else
         return Scr_AddConstString(sc->spectator);
+#endif
     case 1:
+#if defined(COD2_X64)
+        return (Scr_AddConstString(sc->axis), 0);
+#else
         return Scr_AddConstString(sc->axis);
+#endif
     default:
+#if defined(COD2_X64)
+        return (Scr_AddConstString(sc->none), 0);
+#else
         return Scr_AddConstString(sc->none);
+#endif
     }
 }
 
@@ -303,7 +379,11 @@ static void ClientScr_SetArchiveTime(gclient_t *pSelf, const client_fields_s *pF
 static unsigned int ClientScr_GetArchiveTime(gclient_t *pSelf, const client_fields_s *pField)
 {
     gclient_s *client = (gclient_s *)pSelf;
+#if defined(COD2_X64)
+    return (Scr_AddFloat((float)client->sess.archiveTime * 0.001f), 0);
+#else
     return Scr_AddFloat((float)client->sess.archiveTime * 0.001f);
+#endif
 }
 
 static void ClientScr_SetPSOffsetTime(gclient_t *pSelf, const client_fields_s *pField)
@@ -315,7 +395,11 @@ static void ClientScr_SetPSOffsetTime(gclient_t *pSelf, const client_fields_s *p
 static unsigned int ClientScr_GetPSOffsetTime(gclient_t *pSelf, const client_fields_s *pField)
 {
     gclient_s *client = (gclient_s *)pSelf;
+#if defined(COD2_X64)
+    return (Scr_AddInt(client->sess.archiveTime), 0);
+#else
     return Scr_AddInt(client->sess.archiveTime);
+#endif
 }
 
 void GScr_AddFieldsForClient(void)
