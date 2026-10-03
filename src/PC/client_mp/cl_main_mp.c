@@ -2254,8 +2254,16 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
 
         Netchan_Setup(NS_CLIENT1, &conn->netchan, from, *(int *)imp_g_qport);
         conn->state = CA_CONNECTED;
+#if defined(COD2_X64)
+        /* Mac 1.3 stores realtime to lastPacketTime (clc+0x10) and -9999 to
+           lastPacketSentTime (clc+0xc), so the first packet goes out at once
+           and the timeout starts from the connect response. */
+        conn->lastPacketTime = cls.realtime;
+        conn->lastPacketSentTime = -9999;
+#else
         conn->lastPacketSentTime = cls.realtime;
         conn->lastPacketTime = -9999;
+#endif
         result = 1;
         goto finish;
     }
@@ -2524,7 +2532,13 @@ Lc6:
             goto L183;
         goto Lmain0;
     }
+#if defined(COD2_X64)
+    /* Mac 1.3 CL_Frame: cls.realtime - clc.lastPacketTime (clc+0x10). The
+       connect time made every session drop once it was cl_timeout old. */
+    t = cls.realtime - clc_p->lastPacketTime;
+#else
     t = cls.realtime - clc_p->connectTime;
+#endif
     if ((float)t <= cl_timeout->current.value * 1000.0f)
         goto Lmain0;
     cl_p->timeoutcount += 1;
@@ -2562,9 +2576,16 @@ L16e:
     goto Ltail;
 
 L183:
+#if defined(COD2_X64)
+    /* Mac 1.3 also times connecting states out on clc.lastPacketTime. */
+    if (clc_p->lastPacketTime <= 0)
+        goto Lmain0;
+    t = cls.realtime - clc_p->lastPacketTime;
+#else
     if (clc_p->connectTime <= 0)
         goto Lmain0;
     t = cls.realtime - clc_p->connectTime;
+#endif
     if ((float)t <= cl_connectTimeout->current.value * 1000.0f)
         goto Lmain0;
     Com_Error(1, "EXE_ERR_SERVER_TIMEOUT");
