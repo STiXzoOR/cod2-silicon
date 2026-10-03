@@ -450,7 +450,11 @@ void Info_RemoveKey(char *s, const char *key)
         *o = '\0';
 
         if (!strcmp(key, pkey)) {
+#if defined(COD2_X64)
+            memmove(start, s, strlen(s) + 1);
+#else
             strcpy(start, s);
+#endif
             return;
         }
 
@@ -494,7 +498,11 @@ void Info_RemoveKey_Big(char *s, const char *key)
         *o = '\0';
 
         if (!strcmp(key, pkey)) {
+#if defined(COD2_X64)
+            memmove(start, s, strlen(s) + 1);
+#else
             strcpy(start, s);
+#endif
             return;
         }
 

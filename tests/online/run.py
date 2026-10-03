@@ -16,28 +16,35 @@ entry = next(e for e in json.loads(database.read_text())
 flags = shlex.split(entry['command'])
 flags = flags[:flags.index('-o')]
 flags += ['-UNDEBUG', '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
-source = (root / 'src/PC/ui_mp/ui_main_mp.c').read_text()
+suites = [
+    ('ui_conversion', 'src/PC/ui_mp/ui_main_mp.c',
+     ['UI_ReplaceConversions', 'UI_ReplaceConversionString']),
+    ('infostring', 'src/PC/universal/q_shared.c', ['Info_RemoveKey', 'Info_RemoveKey_Big']),
+]
 with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
     out = Path(tmp)
-    functions = []
-    for name in ['UI_ReplaceConversions', 'UI_ReplaceConversionString']:
-        match = re.search(r'^const char \*' + name + r'\([^;]*?\)\n\{', source, re.M)
-        depth = 0
-        for token in re.finditer(r'/\*[\s\S]*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"|[{}]',
-                                 source[match.start():]):
-            if token[0] == '{':
-                depth += 1
-            elif token[0] == '}':
-                depth -= 1
-                if not depth:
-                    functions.append(source[match.start():match.start() + token.end()])
-                    break
-    (out / 'ui_conversion_source.h').write_text('\n'.join(functions))
-    obj = out / 'ui.o'
-    subprocess.run([*flags, '-I' + tmp, '-c', str(root / 'tests/online/ui_conversion.c'),
-                    '-o', str(obj)], check=True, cwd=root)
-    exe = out / 'ui'
-    subprocess.run(['clang', '-fsanitize=address,undefined', str(obj), '-o', str(exe)],
-                   check=True)
-    subprocess.run([str(exe)], check=True, timeout=20,
-                   env={**os.environ, 'ASAN_OPTIONS': 'symbolize=0'})
+    for name, path, names in suites:
+        source = (root / path).read_text()
+        functions = []
+        for function in names:
+            match = re.search(r'^(?:const char \*|void )' + function + r'\([^;]*?\)\n\{',
+                              source, re.M)
+            depth = 0
+            for token in re.finditer(r'/\*[\s\S]*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"|[{}]',
+                                     source[match.start():]):
+                if token[0] == '{':
+                    depth += 1
+                elif token[0] == '}':
+                    depth -= 1
+                    if not depth:
+                        functions.append(source[match.start():match.start() + token.end()])
+                        break
+        (out / (name + '_source.h')).write_text('\n'.join(functions))
+        obj = out / (name + '.o')
+        subprocess.run([*flags, '-I' + tmp, '-c', str(root / ('tests/online/' + name + '.c')),
+                        '-o', str(obj)], check=True, cwd=root)
+        exe = out / name
+        subprocess.run(['clang', '-fsanitize=address,undefined', str(obj), '-o', str(exe)],
+                       check=True)
+        subprocess.run([str(exe)], check=True, timeout=20,
+                       env={**os.environ, 'ASAN_OPTIONS': 'symbolize=0'})
