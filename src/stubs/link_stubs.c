@@ -778,6 +778,7 @@ int GetHighAndLowIndices(void)
     return 0;
 }
 extern void *vtbl_CD3DXConstantTable[];
+#if !COD2_APPLE_SDK
 int D3DXGetShaderConstantTable(const void *function, void **constantTable)
 {
 #ifdef GFX_REAL_D3D9
@@ -822,6 +823,8 @@ int D3DXGetShaderConstantTable(const void *function, void **constantTable)
     }
     return 0;
 }
+
+#endif
 
 int g_dip_vs_null = 0;
 int g_dip_vs_bound = 0;
