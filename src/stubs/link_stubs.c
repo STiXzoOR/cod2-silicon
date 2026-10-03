@@ -382,10 +382,12 @@ int GetControlReference()
 {
     return 0;
 }
+#if !COD2_APPLE_SDK
 int SND_SetChannelInfo()
 {
     return 0;
 }
+#endif
 int SND_SetEnvironmentEffects_f()
 {
     return 0;

@@ -716,6 +716,39 @@ void SND_GetCurrent3DPosition(int entnum, const vec_t *offset, vec_t *pos_out)
     pos_out[2] = org[2] + scale * axis[2][2];
 }
 
+#if COD2_APPLE_SDK
+void SND_SetChannelInfo(int index, int entnum, const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, const vec_t *origin, float volume, float pitch, int srcChannelCount, int baserate, int total_msec, int start_msec, int startDelay, int master, snd_alias_system_t system)
+{
+    snd_channel_info_t *info = &g_snd.chaninfo[index];
+    int channel = (pAlias0->flags >> 7) & 15;
+
+    memset(info->offset, 0, sizeof(info->offset));
+    if ((unsigned int)entnum <= 1023 && SND_IsAliasChannel3D(channel) && origin) {
+        vec3_t entityOrigin, axis[3], delta;
+        CG_GetEntityOrientation(entnum, entityOrigin, axis);
+        for (int i = 0; i < 3; ++i)
+            delta[i] = origin[i] - entityOrigin[i];
+        for (int i = 0; i < 3; ++i)
+            info->offset[i] = delta[0] * axis[i][0] + delta[1] * axis[i][1] + delta[2] * axis[i][2];
+    }
+    info->entnum = entnum;
+    info->entchannel = channel;
+    info->basevolume = volume;
+    info->pitch = pitch;
+    info->srcChannelCount = srcChannelCount;
+    info->baserate = baserate;
+    info->pAlias0 = pAlias0;
+    info->pAlias1 = pAlias1;
+    info->lerp = lerp;
+    info->startDelay = startDelay;
+    info->looptime = g_snd.looptime;
+    info->endtime = g_snd.time + total_msec - start_msec;
+    info->paused = g_snd.paused && g_snd.pauseSettings[channel];
+    info->master = master;
+    info->system = system;
+}
+#endif
+
 static int SND_Get2DChannelOverlay(snd_overlay_info_t *info, int maxcount)
 {
     float vol;
