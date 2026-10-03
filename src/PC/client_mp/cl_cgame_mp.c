@@ -1162,7 +1162,11 @@ void CL_AdjustTimeDelta(void)
             Com_Printf("cl_showTimeDelta: average\n");
         }
         cl = CL_LOCAL;
+#if defined(COD2_X64)
+        cl->serverTimeDelta = (int)(((int64_t)newDelta + cl->serverTimeDelta) >> 1);
+#else
         cl->serverTimeDelta = (newDelta + cl->serverTimeDelta) >> 1;
+#endif
         goto debug_print;
     }
 

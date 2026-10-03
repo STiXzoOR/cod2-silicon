@@ -26,6 +26,7 @@ suites = [
      ['FxScheduler_GetDvar', 'FxScheduler_PlayEffect', 'FxScheduler_Clean']),
     ('server_commands', 'src/PC/client_mp/cl_cgame_mp.c', ['CL_GetServerCommand']),
     ('master_response', 'src/PC/client_mp/cl_main_pc_mp.c', ['CL_ServersResponsePacket']),
+    ('time_delta', 'src/PC/client_mp/cl_cgame_mp.c', ['CL_AdjustTimeDelta']),
     ('mantle', 'src/PC/bgame/bg_mantle.c', []),
     ('md4', 'src/PC/qcommon/md4.c', []),
     ('cdkey_hash', 'src/PC/client_mp/cl_main_mp.c', ['CL_BuildMd5StrFromCDKey']),
