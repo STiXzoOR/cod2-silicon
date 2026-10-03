@@ -7,6 +7,11 @@ int main(void)
 {
     Cod2xURL parsed;
     char command[512];
+    assert(Cod2x_ParseURL("cod2x://connect/127.0.0.1:29999", &parsed));
+    assert(!strcmp(parsed.address, "127.0.0.1:29999"));
+    assert(Cod2x_ParseURL("cod2x://connect/game.example:28960/", &parsed));
+    assert(!Cod2x_ParseURL("cod2x://connect/127.0.0.1:0", &parsed));
+    assert(!Cod2x_ParseURL("cod2x://connect/localhost/quit", &parsed));
     assert(Cod2x_ParseURL("cod2x://%2Bconnect+88.198.58.188:27397/", &parsed));
     assert(!strcmp(parsed.address, "88.198.58.188:27397"));
     assert(!parsed.hasPassword);

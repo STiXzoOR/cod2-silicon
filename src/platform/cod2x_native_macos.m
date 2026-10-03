@@ -30,6 +30,8 @@ int Cod2xNativeApp_Arguments(char *buffer, int capacity)
     id arguments = [NSBundle.mainBundle objectForInfoDictionaryKey:@"CoD2LaunchArguments"];
     if (![arguments isKindOfClass:NSString.class])
         return 0;
+    /* First-launch setup pumps Cocoa events before WinMain installs handlers. */
+    Cod2xNativeURL_Install();
     if ([[NSBundle.mainBundle objectForInfoDictionaryKey:@"CoD2AutomaticShaderSetup"] boolValue])
         return Cod2xSetupAppArguments(NSBundle.mainBundle, arguments, buffer, capacity);
     int length = snprintf(buffer, capacity, "%s", [arguments UTF8String]);

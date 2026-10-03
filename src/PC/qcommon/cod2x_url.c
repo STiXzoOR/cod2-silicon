@@ -93,6 +93,9 @@ int Cod2x_ParseURL(const char *url, Cod2xURL *parsed)
     }
     if (length && decoded[length - 1] == '/') --length;
     decoded[length] = 0;
+    /* Also accept the app's simple server-link path alongside CoD2x's
+     * existing percent-encoded command links. Address validation is shared. */
+    if (!strncmp(decoded, "connect/", 8)) decoded[7] = ' ';
     cursor = decoded;
     while (*cursor) {
         char command[32], value[256];
