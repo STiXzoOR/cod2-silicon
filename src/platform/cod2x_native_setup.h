@@ -78,7 +78,7 @@ static void Cod2xSetupShaders(NSBundle *bundle)
         for (NSString *key in @[@"DYLD_INSERT_LIBRARIES", @"COD2_FRAME_PID", @"COD2_FRAME_CSV", @"COD2_CPU_PROFILE"])
             [environment removeObjectForKey:key];
         task.environment = environment;
-        task.arguments = @[script,
+        task.arguments = @[@"-B", script,
             [NSHomeDirectory() stringByAppendingPathComponent:@"Games/CoD2-mac-bin/Call of Duty 2.app/Contents/Call of Duty 2 Multiplayer.app/Contents/MacOS/Call of Duty 2 Multiplayer"],
             cache, @"--setup", @"--fallback",
             [NSHomeDirectory() stringByAppendingPathComponent:@"Projects/cod2-native-refs/macbin/cod2mp_mac_1.3_i386"]];

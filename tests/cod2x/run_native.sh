@@ -31,6 +31,7 @@ python3 tools/cod2x/make_macos_app.py "$test_work/url_native" "$test_work/URLPro
 plutil -lint "$test_work/URLProbe.app/Contents/Info.plist"
 expected_game=$(cd "$test_work/game" && pwd -P)
 WS10_EXPECT_GAME="$expected_game" "$test_work/URLProbe.app/Contents/MacOS/cod2_macos"
+codesign --verify --deep --strict "$test_work/URLProbe.app"
 compile -Wno-unused-function -Wno-typedef-redefinition -Wno-duplicate-decl-specifier -Isrc -Isrc/headers \
     tests/cod2x/test_native_freeze.c src/platform/cod2x_native.c src/PC/qcommon/crash_handler.c -o "$test_work/freeze"
 "$test_work/freeze" "$test_work/reports" > "$test_work/freeze.log" 2>&1
