@@ -24,6 +24,12 @@ void MT_FinishForceAlloc(byte *allocBits);
 #define MEMORY_NODE_BITS 16
 #define MEMORY_NODE_COUNT 0x10000
 
+#if defined(COD2_X64)
+_Static_assert(sizeof(MemoryNode) == 8, "script arena bucket width");
+_Static_assert(offsetof(scrMemTreeGlob_t, leftBits) == 0x80000, "script arena extent");
+_Static_assert(sizeof(scrMemTreeGlob_t) <= 0x80330, "script arena encoding bound");
+#endif
+
 #define NODE_PREV(i) (*(unsigned short *)(scrMemTreeGlob + (unsigned)(i) * 8))
 #define NODE_NEXT(i) (*(unsigned short *)(scrMemTreeGlob + (unsigned)(i) * 8 + 2))
 
@@ -265,7 +271,12 @@ void MT_FreeIndex(unsigned int nodeNum, int numBytes)
 
 void MT_Free(void *p, int numBytes)
 {
+#if defined(COD2_X64)
+    /* MT_Alloc returns a bucket within the fixed 512 KiB arena, not an address. */
+    unsigned int nodeIdx = SCR_ARENA_ENC(p) / sizeof(MemoryNode);
+#else
     unsigned int nodeIdx = ((unsigned char *)p - scrMemTreeGlob) / 8;
+#endif
     MT_FreeIndex(nodeIdx, numBytes);
 }
 

@@ -1389,7 +1389,7 @@ void Scr_DumpScriptThreads(void)
 #if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
         if (!VG_U32(id))
             continue;
-        stackValue = (VariableStackBuffer *)(scrMemTreeGlob + VG_U32(id));
+        stackValue = SCR_STACK_PTR(*GetVariableValueAddress(id));
 #else
         stackValue = (VariableStackBuffer *)VG_U32(id);
         if (!stackValue)
@@ -1569,11 +1569,17 @@ static void __attribute_regparm__(2)
         } else {
             VG_U32(newId) = VG_U32(id);
 
+#if defined(COD2_X64)
+            VariableUnion value;
+            value.intValue = VG_U32(id);
+            AddRefToValue_core(type, value);
+#else
             if (type == SCRVL_VAR_STRING || type == SCRVL_VAR_LOCALIZED_STRING) {
                 SL_AddRefToString(VG_U32(id));
             } else if (type == SCRVL_VAR_VECTOR && !*((const byte *)VG_U32(id) - 1)) {
                 (*(unsigned short *)((byte *)VG_U32(id) - 4))++;
             }
+#endif
         }
 
         id = ScrVar_NextSiblingId(id);

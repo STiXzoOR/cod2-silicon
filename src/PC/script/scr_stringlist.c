@@ -9,8 +9,13 @@ extern unsigned char scrStringGlob[];
 
 #define SG_W0(i) (*(unsigned short *)((char *)&scrStringGlob + (unsigned int)(i) * 4))
 #define SG_W1(i) (*(unsigned short *)((char *)&scrStringGlob + (unsigned int)(i) * 4 + 2))
+#if defined(COD2_X64)
+#define SG_INIT_FLAG (((scrStringGlob_t *)scrStringGlob)->inited)
+#define SG_RESTART (((scrStringGlob_t *)scrStringGlob)->nextFreeEntry)
+#else
 #define SG_INIT_FLAG (*(unsigned char *)((char *)&scrStringGlob + 65536))
 #define SG_RESTART (*(void **)((char *)&scrStringGlob + 65540))
+#endif
 
 /* x64 workaround: the hash-chain unlink can leave a freed string's bucket in the
    chain (a bug in the bucket-recycling logic). Re-finding such a
