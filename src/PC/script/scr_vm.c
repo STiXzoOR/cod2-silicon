@@ -483,7 +483,12 @@ void VM_CancelNotify(unsigned int notifyListOwnerId, unsigned int startLocalId)
 
 static unsigned int VM_CurrentFrameLocalCacheCount(void)
 {
+#if defined(COD2_X64)
+    /* localVars starts at the sentinel before the increment-before-store stack. */
+    unsigned int *base = ((scrVmGlob_t *)scrVmGlob)->localVarsStack - 1;
+#else
     unsigned int *base = (unsigned int *)(scrVmGlob + 24);
+#endif
     unsigned int previousFrameLocals = 0;
     unsigned int frameIndex;
     unsigned int *frameBase;
@@ -980,11 +985,19 @@ void Scr_Init(void)
     scrVmPub.top = scrVmPub.stack;
     scrVmPub.function_count = 0;
     scrVmPub.function_frame = scrVmPub.function_frame_start;
+#if defined(COD2_X64)
+    scrVmPub.localVars = ((scrVmGlob_t *)scrVmGlob)->localVarsStack - 1;
+#else
     scrVmPub.localVars = (unsigned int *)(scrVmGlob + 24);
+#endif
     varPub->evaluate = 0;
     scrVmPub.debugCode = 0;
     varPub->error_message = NULL;
+#if defined(COD2_X64)
+    ((scrVmGlob_t *)scrVmGlob)->dialog_error_message = NULL;
+#else
     *(int *)(scrVmGlob + 16) = 0;
+#endif
     varPub->error_index = 0;
     scrVmPub.terminal_error = 0;
     scrVmPub.outparamcount = 0;
@@ -998,7 +1011,11 @@ void Scr_Init(void)
     varPub->animId = 0;
     varPub->freeEntList = 0;
     scrVmPub.stack[0].type = 7;
+#if defined(COD2_X64)
+    ((scrVmGlob_t *)scrVmGlob)->loading = 0;
+#else
     *(int *)(scrVmGlob + 20) = 0;
+#endif
 
     compilePub = (struct scrCompilePub_t *)imp_scrCompilePub;
     compilePub->script_loading = 0;
@@ -1831,7 +1848,11 @@ static inline __attribute__((always_inline)) void Scr_SetErrorMessageAndJump(con
         return;
     }
 
+#if defined(COD2_X64)
+    if (varPub->developer && ((scrVmGlob_t *)scrVmGlob)->loading)
+#else
     if (varPub->developer && *(int *)(scrVmGlob + 20))
+#endif
         scrVmPub.terminal_error = 1;
 
     if (scrVmPub.function_count || scrVmPub.debugCode)
@@ -6574,14 +6595,22 @@ static int VM_CandidateHandleReturn(const char **pos, unsigned int *localId,
     return 0;
 }
 
+#if defined(COD2_X64)
+static VariableStackBuffer *VM_CandidateSuspendCurrentStack(const char *archivePos,
+#else
 static unsigned int VM_CandidateSuspendCurrentStack(const char *archivePos,
+#endif
                                                     unsigned int localVarCount,
                                                     VariableValue *top,
                                                     VariableValue *startTop,
                                                     unsigned int *localId)
 {
     int stackSize = (int)(top - startTop);
+#if defined(COD2_X64)
+    return VM_ArchiveStack(stackSize, archivePos, top, localVarCount, localId);
+#else
     return (unsigned int)(uintptr_t)VM_ArchiveStack(stackSize, archivePos, top, localVarCount, localId);
+#endif
 }
 
 static unsigned int VM_CandidateFinishSuspend(VariableValue *startTop, unsigned int localId)
@@ -6668,7 +6697,11 @@ static int VM_CandidateHandleWait(const char **pos, unsigned int *localVarCount,
     waitTime = (waitTime + (unsigned int)varPub->time) & 0x00ffffffu;
     --*top;
 
+#if defined(COD2_X64)
+    stackValue =
+#else
     stackValue = (VariableStackBuffer *)(uintptr_t)
+#endif
         VM_CandidateSuspendCurrentStack(archivePos, *localVarCount, *top, *startTop, localId);
     tempValue.u.stackValue = SCR_STACK_ENC(stackValue);
     tempValue.type = 10;
@@ -6694,7 +6727,11 @@ static int VM_CandidateHandleWaitTillFrameEnd(const char **pos, unsigned int *lo
     unsigned int stackId;
     const char *archivePos = *pos;
 
+#if defined(COD2_X64)
+    stackValue =
+#else
     stackValue = (VariableStackBuffer *)(uintptr_t)
+#endif
         VM_CandidateSuspendCurrentStack(archivePos, *localVarCount, *top, *startTop, localId);
     tempValue.u.stackValue = SCR_STACK_ENC(stackValue);
     tempValue.type = 10;
@@ -6739,7 +6776,11 @@ static int VM_CandidateHandleWaitTill(const char **pos, unsigned int *localVarCo
     stringValue = (*top)->u.stringValue;
     --*top;
 
+#if defined(COD2_X64)
+    stackValue =
+#else
     stackValue = (VariableStackBuffer *)(uintptr_t)
+#endif
         VM_CandidateSuspendCurrentStack(archivePos, *localVarCount, *top, *startTop, localId);
     tempValue.u.stackValue = SCR_STACK_ENC(stackValue);
     tempValue.type = 10;
@@ -7836,7 +7877,11 @@ static unsigned int VM_RestoreLocalVarsFromSibling(unsigned int localId)
 {
     unsigned int localVarCount = 0;
     unsigned int varId;
+#if defined(COD2_X64)
+    unsigned int *localVarLimit = ((scrVmGlob_t *)scrVmGlob)->localVarsStack + 2046;
+#else
     unsigned int *localVarLimit = (unsigned int *)(scrVmGlob + 24) + 2047;
+#endif
 
     if (localId <= 2)
         return 0;
