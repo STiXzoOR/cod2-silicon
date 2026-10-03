@@ -63,6 +63,21 @@ ninja. Native code cannot run 32-bit x86 at all.
   `scr_vm.c` incl. `rdtsc`, `src/PC/universal/com_sndalias_load_obj.c`, label
   emitters in `sv_client_mp.c`, `sv_main_mp.c`, `g_main_mp.c`).
 
+## Status (2026-10-03, afternoon)
+
+`port/main` builds a native arm64 `cod2_macos` that reaches the main menu,
+loads Toujane in a local listen server, and supports moving, firing,
+reloading and aiming (WS11). Merged so far: WS1–WS6, WS8 (Wine baseline:
+22–25 fps at best, so native is the only route to 333), WS9, WS11, WS12.
+`tools/abi/check.sh` must stay at 0 mismatches. The user's CoD2 CD key is
+stored locally in `~/.cod2/preferences` (`codkey=`); never print or commit it.
+
+Open problems (see `reports/WS11-bringup.md`): listen-server shutdown hangs in
+script cleanup (`VM_TrimStack -> Scr_KillThread -> MakeVariableExternal`),
+FX emitters reject their `flags` key, white sky and imperfect lighting from the
+generic ARB shader fallbacks, repeated HUD speaker icons, frame rate not yet
+measured, online play not yet tried.
+
 ## Game data (local, never commit)
 
 The user's licensed Steam copy (Windows depots 2631–2634, downloaded 2026-10-03)
