@@ -146,6 +146,7 @@ def main():
     env = dict(os.environ, COD2_RUN_DIR=str(out))
     command = [str(Path(__file__).with_name('run.sh')), str(data),
                '+set', 'com_maxfps', str(args.maxfps), '+set', 'r_swapInterval', '0',
+               '+set', 'logfile', '0',
                # Current reconstruction gates CSV/50ms stepping on this cvar.
                '+set', 'cl_freezeDemo', '1']
     if args.resolution:
