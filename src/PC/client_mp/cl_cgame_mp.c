@@ -465,7 +465,9 @@ restart:
     }
 
     switch (cmd[0]) {
+#if !defined(COD2_X64)
     case 'd':
+#endif
     case 'w':
         if (argc - 1 <= 0) {
             Com_Error(ERR_SERVERDISCONNECT, "EXE_DISCONNECTED");
@@ -477,7 +479,11 @@ restart:
             Com_Error(ERR_SERVERDISCONNECT, msg);
         }
 
+#if defined(COD2_X64)
+    case 'x':
+#else
     case 'B':
+#endif
         Cmd_TokenizeString2(s, 3);
         {
             const char *arg2 = Cmd_Argv(2);
@@ -485,7 +491,11 @@ restart:
             Com_sprintf(bigConfigString, 0x2000, "%c %s %s", 'd', arg1, arg2);
         }
         return 0;
+#if defined(COD2_X64)
+    case 'y':
+#else
     case 'b':
+#endif
         Cmd_TokenizeString2(s, 3);
         {
             const char *arg2 = Cmd_Argv(2);
@@ -495,7 +505,11 @@ restart:
             strcat(bigConfigString, arg2);
         }
         return 0;
+#if defined(COD2_X64)
+    case 'z':
+#else
     case 'c':
+#endif
         Cmd_TokenizeString2(s, 3);
         {
             const char *arg2 = Cmd_Argv(2);
@@ -506,13 +520,22 @@ restart:
         }
         s = bigConfigString;
         goto restart;
+#if defined(COD2_X64)
+    case 'B':
+    case 'n':
+#else
     case 'z':
+#endif
         Con_ClearNotify();
         Con_ClearSubtitles();
         memset(CL_LOCAL->cmds, 0, sizeof(CL_LOCAL->cmds));
         RE->ClearFlares();
         return 1;
+#if defined(COD2_X64)
+    case 'd':
+#else
     case 'C':
+#endif
         Cmd_TokenizeString2(s, 3);
         CL_ConfigstringModified();
         Cmd_TokenizeString2(s, 3);
@@ -1139,7 +1162,11 @@ void CL_AdjustTimeDelta(void)
             Com_Printf("cl_showTimeDelta: average\n");
         }
         cl = CL_LOCAL;
+#if defined(COD2_X64)
+        cl->serverTimeDelta = (int)(((int64_t)newDelta + cl->serverTimeDelta) >> 1);
+#else
         cl->serverTimeDelta = (newDelta + cl->serverTimeDelta) >> 1;
+#endif
         goto debug_print;
     }
 

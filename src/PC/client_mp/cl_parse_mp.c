@@ -555,7 +555,13 @@ void CL_WWWDownload(void)
         char toOSPath[256];
 
         cls.download = 0;
+#if defined(COD2_X64)
+        /* downloadName now holds the URL; Mac 1.3 (0x1625cc) installs the
+           file under the local name saved by CL_ParseWWWDownload. */
+        FS_BuildOSPath(fs_homepath, cls.originalDownloadName, "", toOSPath);
+#else
         FS_BuildOSPath(fs_homepath, cls.downloadName, "", toOSPath);
+#endif
         if (toOSPath[0])
             toOSPath[strlen(toOSPath) - 1] = '\0';
 

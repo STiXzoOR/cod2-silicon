@@ -8487,7 +8487,11 @@ struct ScheduledEffect {
     vec3_t mAxis[3];
     int mSeed;
     int mIndexInBatch;
+#if defined(COD2_X64)
+    ScheduledEffect *mScheduledNext;
+#else
     int mScheduledNext;
+#endif
 };
 
 struct Scr_SourcePos_t {

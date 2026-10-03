@@ -920,7 +920,11 @@ static void cr_posix_popup(const char *path, const char *desc)
 }
 
 static struct sigaction cr_old[8];
-static const int cr_sigs[] = { SIGSEGV, SIGABRT, SIGFPE, SIGILL, SIGBUS };
+static const int cr_sigs[] = { SIGSEGV, SIGABRT, SIGFPE, SIGILL, SIGBUS
+#if defined(COD2_X64) && defined(__APPLE__)
+    , SIGTRAP
+#endif
+};
 
 static void cr_posix_handler(int sig, siginfo_t *info, void *ucontext)
 {

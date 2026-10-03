@@ -69,8 +69,10 @@ OSStatus SetWindowGroupLevel(void *group, int level);
 void ShowCursor(void);
 void HideCursor(void);
 void ObscureCursor(void);
+#if !defined(__APPLE__) || !defined(COD2_X64)
 CFStringRef CFStringCreateWithCString(CFAllocatorRef alloc, const char *cStr, CFStringEncoding encoding);
 int CFStringGetCString(CFStringRef str, char *buffer, int bufferSize, CFStringEncoding encoding);
+#endif
 CFBundleRef CFBundleGetMainBundle(void);
 CFURLRef CFBundleCopyBundleURL(CFBundleRef bundle);
 int CFURLGetFileSystemRepresentation(CFURLRef url, int resolveAgainstBase, unsigned char *buffer, int maxBufLen);

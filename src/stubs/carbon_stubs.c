@@ -125,6 +125,7 @@ void ObscureCursor(void)
 {
 }
 
+#if !defined(__APPLE__) || !defined(COD2_X64)
 CFStringRef CFStringCreateWithCString(CFAllocatorRef alloc, const char *cStr, CFStringEncoding encoding)
 {
     return (CFStringRef)cStr;
@@ -134,6 +135,8 @@ int CFStringGetCString(CFStringRef str, char *buffer, int bufferSize, CFStringEn
 {
     return 0;
 }
+
+#endif
 
 CFBundleRef CFBundleGetMainBundle(void)
 {

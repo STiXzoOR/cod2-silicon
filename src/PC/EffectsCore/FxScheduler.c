@@ -475,7 +475,11 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
 
             if (delay > 0) {
 
+#if defined(COD2_X64)
+                ScheduledEffect *sfx = (ScheduledEffect *)__Znam(sizeof(ScheduledEffect));
+#else
                 ScheduledEffect *sfx = (ScheduledEffect *)__Znam(0x50);
+#endif
                 if (!sfx)
                     continue;
                 memset(sfx, 0, sizeof(ScheduledEffect));
@@ -504,8 +508,13 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
 
                 AxisCopy( (vec3_t (*))((const vec_t *)ax), (vec3_t (*))((vec_t *)sfx->mAxis));
 
+#if defined(COD2_X64)
+                sfx->mScheduledNext = ((FxScheduler *)_this)->mScheduledHead;
+                ((FxScheduler *)_this)->mScheduledHead = sfx;
+#else
                 sfx->mScheduledNext = ((FxScheduler *)_this)->mScheduledCount;
                 ((FxScheduler *)_this)->mScheduledCount = (int)(size_t)sfx;
+#endif
                 ((FxScheduler *)_this)->mScheduledCount += 1;
             } else {
 
@@ -900,7 +909,11 @@ void FxScheduler_Archive(const FxScheduler *_this, FxArchive *arch)
         FxArchive_ReadData(arch, &pendingCount, 4);
 
         for (i = 0; i < pendingCount; i++) {
+#if defined(COD2_X64)
+            ScheduledEffect *newSfx = (ScheduledEffect *)__Znam(sizeof(ScheduledEffect));
+#else
             ScheduledEffect *newSfx = (ScheduledEffect *)__Znam(0x50);
+#endif
             if (newSfx) {
                 memset(newSfx, 0, sizeof(ScheduledEffect));
             }
@@ -913,7 +926,11 @@ void FxScheduler_Archive(const FxScheduler *_this, FxArchive *arch)
                 if (fx && primIndex >= 0 && primIndex < fx->mPrimitiveCount &&
                     fx->mPrimitives[primIndex] != NULL) {
 
+#if defined(COD2_X64)
+                    newSfx->mScheduledNext = sched_self->mScheduledHead;
+#else
                     newSfx->mScheduledNext = (int)(size_t)sched_self->mScheduledHead;
+#endif
                     sched_self->mScheduledHead = newSfx;
                     sched_self->mScheduledCount += 1;
                 } else {

@@ -126,7 +126,10 @@ void MacPreferences_PutInteger(const char *inKey, int inNumber)
 void MacPreferences_Synchronize(void)
 {
 
+// Native file preferences are flushed and closed before the atomic rename.
+#if !defined(COD2_X64) || !defined(__APPLE__)
     CFPreferencesAppSynchronize(*kCFPreferencesCurrentApplication);
+#endif
 }
 
 unsigned char MacPreferences_PutRect(const char *inKey, const CGRect *inRect)

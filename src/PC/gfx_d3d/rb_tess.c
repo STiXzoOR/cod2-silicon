@@ -1276,7 +1276,12 @@ void RB_TessEntity(const GfxEntity *re)
     switch (reType) {
     case 4:
     {
+#if defined(COD2_X64)
+        /* The screen-height sprite path below fills three components. */
+        float worldRadius[3];
+#else
         float worldRadius[2];
+#endif
         float screenOffset[2];
 
         if (ent[5] & 0x20) {

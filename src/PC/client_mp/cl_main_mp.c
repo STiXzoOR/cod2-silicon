@@ -2,6 +2,9 @@
 #include "../qcommon/cod2x.h"
 #endif
 #include "common_types.h"
+#if COD2_APPLE_SDK
+#include "../qcommon/cdkey_hash.h"
+#endif
 #include "imports.h"
 #include "bytematch.h"
 #include "cod2_feature_config.h"
@@ -1744,6 +1747,12 @@ static const char cl_getKeyAuthorizeFmt_13[] = "getKeyAuthorize %i %s PB %s";
 
 static void CL_BuildMd5StrFromCDKey(char *md5Str)
 {
+#if COD2_APPLE_SDK
+/* Mac 1.3 (0x14a90a) scans min(strlen, 32) bytes, never past the NUL. */
+#    define CL_CDKEY_SCAN_LENGTH(len) ((len) > 32 ? 32 : (len))
+#else
+#    define CL_CDKEY_SCAN_LENGTH(len) 32
+#endif
     char nums[64];
     const char *key;
     int len, i, j;
@@ -1760,7 +1769,7 @@ static void CL_BuildMd5StrFromCDKey(char *md5Str)
     len = strlen(key);
     if (len > 0) {
         j = 0;
-        for (i = 0; i < 32; ++i) {
+        for (i = 0; i < CL_CDKEY_SCAN_LENGTH(len); ++i) {
             unsigned char ch = (unsigned char)key[i];
             if ((ch >= '0' && ch <= '9') ||
                 (ch >= 'a' && ch <= 'z') ||
@@ -1782,10 +1791,14 @@ static void CL_BuildMd5StrFromCDKey(char *md5Str)
         memmove(nums, p, (size_t)(e - p) + 1);
     strupr(nums);
 
+#if COD2_APPLE_SDK
+    Com_CDKeyHashBytes(nums, (unsigned int)strlen(nums), md5Str);
+#else
 #    if COD2_FEATURE_PUNKBUSTER
 
     md5Str[0] = '\0';
 #    endif
+#endif
 }
 #endif
 
@@ -1872,8 +1885,14 @@ void CL_CheckForResend(void)
     if (conn->state != CA_CONNECTING && conn->state != CA_CHALLENGING)
         return;
 
+#if COD2_APPLE_SDK && COD2_IS_PATCH_13
+    /* Mac 1.3 retransmits connection requests every 2000 ms (0x14ad5a). */
+    if (cls.realtime - conn->connectTime < 2000)
+        return;
+#else
     if (cls.realtime - conn->connectTime <= 2999)
         return;
+#endif
 
     conn->connectTime = cls.realtime;
     conn->connectPacketCount++;
@@ -1885,12 +1904,15 @@ void CL_CheckForResend(void)
         if (lanAuthorize->current.enabled || !Sys_IsLANAddress(conn->serverAddress))
             CL_RequestAuthorization();
 
-#if defined(COD2_CODX) && COD2_CODX && COD2_IS_PATCH_13
+#if COD2_IS_PATCH_13 && (COD2_APPLE_SDK || (defined(COD2_CODX) && COD2_CODX))
         {
             char hash[33];
             CL_BuildMd5StrFromCDKey(hash);
-            /* CoD2x src/shared/server.cpp:837 consumes argument 2 as CD-key hash. */
-            NET_OutOfBandPrint(NS_CLIENT1, conn->serverAddress, va("getchallenge 0 %s", hash));
+            /* Mac 1.3 CL_CheckForResend (0x14ad5a) sends the quoted CD-key digest
+               as token 2. The 1.3 server forwards it to the authorize server as
+               PB "<hash>" (SV_GetChallenge -> SV_AuthorizeRequest); CoD2x
+               src/shared/server.cpp:837 reads the same token. */
+            NET_OutOfBandPrint(NS_CLIENT1, conn->serverAddress, va("getchallenge 0 \"%s\"", hash));
         }
 #else
         NET_OutOfBandPrint(NS_CLIENT1, conn->serverAddress, (const char *)"getchallenge");
@@ -2524,7 +2546,11 @@ Lc6:
             goto L183;
         goto Lmain0;
     }
+#if defined(COD2_X64)
+    t = cls.realtime - clc_p->lastPacketTime;
+#else
     t = cls.realtime - clc_p->connectTime;
+#endif
     if ((float)t <= cl_timeout->current.value * 1000.0f)
         goto Lmain0;
     cl_p->timeoutcount += 1;
@@ -3157,6 +3183,12 @@ void CL_BeginDownload(const char *localName, const char *remoteName)
     conn = (clientConnection_t *)clc;
     I_strncpyz(conn->downloadName, localName, sizeof(conn->downloadName));
     Com_sprintf(conn->downloadTempName, sizeof(conn->downloadTempName), (const char *)"%s.tmp", localName);
+#if defined(COD2_X64) && COD2_FEATURE_WWW_DOWNLOAD
+    /* Mac 1.3 keeps these names in cls (CL_BeginDownload 0x14d668), where an
+       HTTP redirect (CL_ParseWWWDownload) reads them. */
+    I_strncpyz(cls.downloadName, localName, sizeof(cls.downloadName));
+    Com_sprintf(cls.downloadTempName, sizeof(cls.downloadTempName), "%s.tmp", localName);
+#endif
 
     I_strncpyz(legacyHacks->cl_downloadName, remoteName, 0x40);
     legacyHacks->cl_downloadSize = 0;
