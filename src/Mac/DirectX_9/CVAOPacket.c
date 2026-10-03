@@ -1,6 +1,9 @@
 #include "common_types.h"
 #include "imports.h"
 
+#if defined(COD2_X64)
+#include "lp64_gl_state.h"
+#else
 typedef struct {
     void **vtable;
     bool mEnabled;
@@ -11,6 +14,7 @@ typedef struct {
     GLsizei mStride;
     const void *mpStream;
 } CBaseVAImpl;
+#endif
 
 typedef struct {
     void **vtable;
@@ -22,7 +26,11 @@ typedef struct {
     CBaseVAImpl mNormalArray;
     CBaseVAImpl mVertexArray;
     CBaseVAImpl mTexCoordArrays[8];
+#if defined(COD2_X64)
+    VertexProgramStreamStateNative mGenericArrays[16];
+#else
     VertexProgramStreamState mGenericArrays[16];
+#endif
 } CVAOPacketImpl;
 
 typedef struct CVAOPacketRbTreeNodeBase {
@@ -46,7 +54,11 @@ typedef struct {
 typedef struct {
     int _M_key_compare_padding;
     CVAOPacketRbTreeNodeBase _M_header;
+#if defined(COD2_X64)
+    size_t _M_node_count;
+#else
     UINT32 _M_node_count;
+#endif
 } CVAOPacketRbTree;
 
 typedef struct {
@@ -55,11 +67,24 @@ typedef struct {
     bool (*isFixedFunction)(const CVAOPacket *);
 } CVAOPacketVTable;
 
+#if defined(COD2_X64)
+extern void *imp__ZN7COpenGL7sOpenGLE;
+#define COpenGL_sOpenGLE ((unsigned char *)imp__ZN7COpenGL7sOpenGLE)
+#else
 extern unsigned char COpenGL_sOpenGLE[];
+#endif
 extern VAOStatus CVAOPacket_sVAOStatus;
 extern UINT32 CVAOPacket_sCurrentPacket;
+#if defined(COD2_X64)
+/* The current-packet selector wraps at one. Stub globals have ILP32 storage. */
+static CVAOPacketImpl s_nativeGenericPacket[1];
+static CVAOPacketRbTree s_nativeAllPackets;
+#define CVAOPacket_sGenericPacket ((unsigned char *)s_nativeGenericPacket)
+#define CVAOPacket_sAllPackets ((unsigned char *)&s_nativeAllPackets)
+#else
 extern unsigned char CVAOPacket_sGenericPacket[];
 extern unsigned char CVAOPacket_sAllPackets[];
+#endif
 typedef void (*fnptr_t)(void);
 extern fnptr_t vtbl_CVAOPacket[];
 
@@ -237,7 +262,11 @@ static void CopyBaseVA(CBaseVAImpl *dst, const CBaseVAImpl *src)
     dst->mpStream = src->mpStream;
 }
 
+#if defined(COD2_X64)
+static void CopyGenericArray(VertexProgramStreamStateNative *dst, const VertexProgramStreamStateNative *src)
+#else
 static void CopyGenericArray(VertexProgramStreamState *dst, const VertexProgramStreamState *src)
+#endif
 {
     dst->mNeedsValidation = src->mNeedsValidation;
     dst->mEnabled = src->mEnabled;
@@ -310,8 +339,16 @@ void CVAOPacket_ReleaseBuffer(const void *p, UINT32 Length)
                 CVAOPacketRbTreeNodeBase *erased;
                 erased = (CVAOPacketRbTreeNodeBase *)__ZSt28_Rb_tree_rebalance_for_erasePSt18_Rb_tree_node_baseRS_(iter, header);
 
+#if defined(COD2_X64)
+                (&((CVAOPacketRbTreeNode *)erased)->second)->vtable = vtbl_CVAOPacket;
+#else
                 ((CVAOPacketImpl *)((unsigned char *)erased + 0x14))->vtable = vtbl_CVAOPacket;
+#endif
+#if defined(COD2_X64)
+                ZN10COpenGLVAOD2Ev((const COpenGLVAO *)&((CVAOPacketRbTreeNode *)erased)->second);
+#else
                 ZN10COpenGLVAOD2Ev((const COpenGLVAO *)((unsigned char *)erased + 0x14));
+#endif
 
                 __ZdlPv(erased);
             }
@@ -345,7 +382,11 @@ bool CVAOPacket_IsCached(CVAOPacket *v)
     for (iter = lower; iter != upper; iter = (CVAOPacketRbTreeNodeBase *)__ZSt18_Rb_tree_incrementPSt18_Rb_tree_node_base(iter)) {
         CVAOPacketImpl *cachedPacket;
 
+#if defined(COD2_X64)
+        cachedPacket = (&((CVAOPacketRbTreeNode *)iter)->second);
+#else
         cachedPacket = (CVAOPacketImpl *)((unsigned char *)iter + 0x14);
+#endif
 
         if (ZNK10COpenGLVAOeqERKS_((const COpenGLVAO *)cachedPacket, (const COpenGLVAO *)v)) {
             CVAOPacketImpl *vPacket;
@@ -379,8 +420,16 @@ bool CVAOPacket_IsCached(CVAOPacket *v)
                 CVAOPacketRbTreeNodeBase *erased;
                 erased = (CVAOPacketRbTreeNodeBase *)__ZSt28_Rb_tree_rebalance_for_erasePSt18_Rb_tree_node_baseRS_(iter, header);
 
+#if defined(COD2_X64)
+                (&((CVAOPacketRbTreeNode *)erased)->second)->vtable = vtbl_CVAOPacket;
+#else
                 ((CVAOPacketImpl *)((unsigned char *)erased + 0x14))->vtable = vtbl_CVAOPacket;
+#endif
+#if defined(COD2_X64)
+                ZN10COpenGLVAOD2Ev((const COpenGLVAO *)&((CVAOPacketRbTreeNode *)erased)->second);
+#else
                 ZN10COpenGLVAOD2Ev((const COpenGLVAO *)((unsigned char *)erased + 0x14));
+#endif
 
                 __ZdlPv(erased);
             }
@@ -398,21 +447,35 @@ void CVAOPacket_Cache(CVAOPacket *v)
 {
 
     UINT32 Code;
+#if defined(COD2_X64)
+    CVAOPacketKeyValue newValue, insertValue;
+    unsigned char *NewPacketBuf = (unsigned char *)&newValue;
+    unsigned char *InsertBuf = (unsigned char *)&insertValue;
+#else
     unsigned char NewPacketBuf[sizeof(CVAOPacketImpl) + 4];
     unsigned char InsertBuf[sizeof(CVAOPacketImpl) + 4];
+#endif
     CVAOPacketImpl *newPacket;
     CVAOPacketImpl *insertPacket;
     UINT32 *codePtr;
 
     Code = COpenGLVAO_GetCode((const COpenGLVAO *)v);
 
+#if defined(COD2_X64)
+    newPacket = &newValue.second;
+#else
     newPacket = (CVAOPacketImpl *)(NewPacketBuf + 4);
+#endif
     CVAOPacket_CVAOPacket((const CVAOPacket *)newPacket);
 
     codePtr = (UINT32 *)NewPacketBuf;
     *codePtr = Code;
 
+#if defined(COD2_X64)
+    insertPacket = &insertValue.second;
+#else
     insertPacket = (CVAOPacketImpl *)(InsertBuf + 4);
+#endif
     CVAOPacket_CVAOPacket((const CVAOPacket *)insertPacket);
 
     *(UINT32 *)InsertBuf = Code;
@@ -453,7 +516,11 @@ void CVAOPacket_Shutdown(void)
         left = root->_M_left;
 
         {
+#if defined(COD2_X64)
+            CVAOPacketImpl *packet = (&((CVAOPacketRbTreeNode *)root)->second);
+#else
             CVAOPacketImpl *packet = (CVAOPacketImpl *)((unsigned char *)root + 0x14);
+#endif
             packet->vtable = vtbl_CVAOPacket;
             ZN10COpenGLVAOD2Ev((const COpenGLVAO *)packet);
         }

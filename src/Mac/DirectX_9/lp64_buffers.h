@@ -1,6 +1,7 @@
 #ifndef COD2_LP64_BUFFERS_H
 #define COD2_LP64_BUFFERS_H
 
+#if defined(COD2_X64)
 /* Shared by resource constructors and draw consumers on the native path. */
 typedef struct {
     void **vtable;
@@ -22,4 +23,5 @@ typedef struct {
     unsigned char isLocked;
 } CDirect3DIndexBufferClean;
 
+#endif /* COD2_X64 */
 #endif

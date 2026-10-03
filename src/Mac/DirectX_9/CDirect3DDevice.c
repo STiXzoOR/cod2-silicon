@@ -4,6 +4,7 @@
 #include <string.h>
 #if defined(COD2_X64)
 #include "lp64_buffers.h"
+#include "lp64_gl_state.h"
 #endif
 
 float g_scale1 = 1.0f;
@@ -3110,6 +3111,12 @@ extern unsigned char *COpenGL_TexUnitBase(const COpenGL *_this, UINT32 Unit);
 #define CMB_OP1_ALPHA 0x8599
 #define CMB_OP2_ALPHA 0x859A
 
+#if defined(COD2_X64)
+#define CMB_OFFSET(field, legacyOffset) offsetof(CTexUnitNative, field)
+#else
+#define CMB_OFFSET(field, legacyOffset) legacyOffset
+#endif
+
 static inline void Cmb_SetI(const COpenGL *gl, UINT32 Unit, unsigned char *u,
                             int off, unsigned int glEnum, int val)
 {
@@ -3122,21 +3129,30 @@ static inline void Cmb_SetI(const COpenGL *gl, UINT32 Unit, unsigned char *u,
 static inline void Cmb_SetScale(const COpenGL *gl, UINT32 Unit, unsigned char *u,
                                 int off, unsigned int glEnum, float scale)
 {
+#if defined(COD2_X64)
+    GLfloat *cachedScale = (GLfloat *)(u + off);
+    if (scale != *cachedScale) {
+        COpenGL_SetActiveTexUnit(gl, Unit);
+        glTexEnvf(GL_TEXTURE_ENV_, glEnum, scale);
+        *cachedScale = scale;
+    }
+#else
     if (scale != (float)*(int *)(u + off)) {
         COpenGL_SetActiveTexUnit(gl, Unit);
         glTexEnvf(GL_TEXTURE_ENV_, glEnum, scale);
         *(int *)(u + off) = (int)scale;
     }
+#endif
 }
 
 long unsigned int COpenGL_SetTexCombinerRGB1(const COpenGL *_this, UINT32 Unit,
                                              GLenum ColorOp, GLenum Source0, GLenum Operand0, GLfloat Scale)
 {
     unsigned char *u = COpenGL_TexUnitBase(_this, Unit);
-    Cmb_SetI(_this, Unit, u, 112, CMB_COMBINE_RGB, ColorOp);
-    Cmb_SetScale(_this, Unit, u, 168, CMB_RGB_SCALE, Scale);
-    Cmb_SetI(_this, Unit, u, 116, CMB_SRC0_RGB, Source0);
-    Cmb_SetI(_this, Unit, u, 120, CMB_OP0_RGB, Operand0);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerColorOp, 112), CMB_COMBINE_RGB, ColorOp);
+    Cmb_SetScale(_this, Unit, u, CMB_OFFSET(mCombinerRGBScale, 168), CMB_RGB_SCALE, Scale);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerColorSource0, 116), CMB_SRC0_RGB, Source0);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerColorOperand0, 120), CMB_OP0_RGB, Operand0);
     return 0;
 }
 
@@ -3144,12 +3160,12 @@ long unsigned int COpenGL_SetTexCombinerRGB2(const COpenGL *_this, UINT32 Unit,
                                              GLenum ColorOp, GLenum Source0, GLenum Operand0, GLenum Source1, GLenum Operand1, GLfloat Scale)
 {
     unsigned char *u = COpenGL_TexUnitBase(_this, Unit);
-    Cmb_SetI(_this, Unit, u, 112, CMB_COMBINE_RGB, ColorOp);
-    Cmb_SetScale(_this, Unit, u, 168, CMB_RGB_SCALE, Scale);
-    Cmb_SetI(_this, Unit, u, 124, CMB_SRC1_RGB, Source1);
-    Cmb_SetI(_this, Unit, u, 128, CMB_OP1_RGB, Operand1);
-    Cmb_SetI(_this, Unit, u, 116, CMB_SRC0_RGB, Source0);
-    Cmb_SetI(_this, Unit, u, 120, CMB_OP0_RGB, Operand0);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerColorOp, 112), CMB_COMBINE_RGB, ColorOp);
+    Cmb_SetScale(_this, Unit, u, CMB_OFFSET(mCombinerRGBScale, 168), CMB_RGB_SCALE, Scale);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerColorSource1, 124), CMB_SRC1_RGB, Source1);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerColorOperand1, 128), CMB_OP1_RGB, Operand1);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerColorSource0, 116), CMB_SRC0_RGB, Source0);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerColorOperand0, 120), CMB_OP0_RGB, Operand0);
     return 0;
 }
 
@@ -3158,14 +3174,14 @@ long unsigned int COpenGL_SetTexCombinerRGB3(const COpenGL *_this, UINT32 Unit,
                                              GLenum Source2, GLenum Operand2, GLfloat Scale)
 {
     unsigned char *u = COpenGL_TexUnitBase(_this, Unit);
-    Cmb_SetI(_this, Unit, u, 112, CMB_COMBINE_RGB, ColorOp);
-    Cmb_SetScale(_this, Unit, u, 168, CMB_RGB_SCALE, Scale);
-    Cmb_SetI(_this, Unit, u, 132, CMB_SRC2_RGB, Source2);
-    Cmb_SetI(_this, Unit, u, 136, CMB_OP2_RGB, Operand2);
-    Cmb_SetI(_this, Unit, u, 124, CMB_SRC1_RGB, Source1);
-    Cmb_SetI(_this, Unit, u, 128, CMB_OP1_RGB, Operand1);
-    Cmb_SetI(_this, Unit, u, 116, CMB_SRC0_RGB, Source0);
-    Cmb_SetI(_this, Unit, u, 120, CMB_OP0_RGB, Operand0);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerColorOp, 112), CMB_COMBINE_RGB, ColorOp);
+    Cmb_SetScale(_this, Unit, u, CMB_OFFSET(mCombinerRGBScale, 168), CMB_RGB_SCALE, Scale);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerColorSource2, 132), CMB_SRC2_RGB, Source2);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerColorOperand2, 136), CMB_OP2_RGB, Operand2);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerColorSource1, 124), CMB_SRC1_RGB, Source1);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerColorOperand1, 128), CMB_OP1_RGB, Operand1);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerColorSource0, 116), CMB_SRC0_RGB, Source0);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerColorOperand0, 120), CMB_OP0_RGB, Operand0);
     return 0;
 }
 
@@ -3173,10 +3189,10 @@ long unsigned int COpenGL_SetTexCombinerAlpha1(const COpenGL *_this, UINT32 Unit
                                                GLenum AlphaOp, GLenum Source0, GLenum Operand0, float Scale)
 {
     unsigned char *u = COpenGL_TexUnitBase(_this, Unit);
-    Cmb_SetI(_this, Unit, u, 140, CMB_COMBINE_ALPHA, AlphaOp);
-    Cmb_SetScale(_this, Unit, u, 172, CMB_ALPHA_SCALE, Scale);
-    Cmb_SetI(_this, Unit, u, 144, CMB_SRC0_ALPHA, Source0);
-    Cmb_SetI(_this, Unit, u, 148, CMB_OP0_ALPHA, Operand0);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerAlphaOp, 140), CMB_COMBINE_ALPHA, AlphaOp);
+    Cmb_SetScale(_this, Unit, u, CMB_OFFSET(mCombinerAlphaScale, 172), CMB_ALPHA_SCALE, Scale);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerAlphaSource0, 144), CMB_SRC0_ALPHA, Source0);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerAlphaOperand0, 148), CMB_OP0_ALPHA, Operand0);
     return 0;
 }
 
@@ -3184,12 +3200,12 @@ long unsigned int COpenGL_SetTexCombinerAlpha2(const COpenGL *_this, UINT32 Unit
                                                GLenum AlphaOp, GLenum Source0, GLenum Operand0, GLenum Source1, GLenum Operand1, float Scale)
 {
     unsigned char *u = COpenGL_TexUnitBase(_this, Unit);
-    Cmb_SetI(_this, Unit, u, 140, CMB_COMBINE_ALPHA, AlphaOp);
-    Cmb_SetScale(_this, Unit, u, 172, CMB_ALPHA_SCALE, Scale);
-    Cmb_SetI(_this, Unit, u, 152, CMB_SRC1_ALPHA, Source1);
-    Cmb_SetI(_this, Unit, u, 156, CMB_OP1_ALPHA, Operand1);
-    Cmb_SetI(_this, Unit, u, 144, CMB_SRC0_ALPHA, Source0);
-    Cmb_SetI(_this, Unit, u, 148, CMB_OP0_ALPHA, Operand0);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerAlphaOp, 140), CMB_COMBINE_ALPHA, AlphaOp);
+    Cmb_SetScale(_this, Unit, u, CMB_OFFSET(mCombinerAlphaScale, 172), CMB_ALPHA_SCALE, Scale);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerAlphaSource1, 152), CMB_SRC1_ALPHA, Source1);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerAlphaOperand1, 156), CMB_OP1_ALPHA, Operand1);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerAlphaSource0, 144), CMB_SRC0_ALPHA, Source0);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerAlphaOperand0, 148), CMB_OP0_ALPHA, Operand0);
     return 0;
 }
 
@@ -3198,14 +3214,14 @@ long unsigned int COpenGL_SetTexCombinerAlpha3(const COpenGL *_this, UINT32 Unit
                                                GLenum Source2, GLenum Operand2, float Scale)
 {
     unsigned char *u = COpenGL_TexUnitBase(_this, Unit);
-    Cmb_SetI(_this, Unit, u, 140, CMB_COMBINE_ALPHA, AlphaOp);
-    Cmb_SetScale(_this, Unit, u, 172, CMB_ALPHA_SCALE, Scale);
-    Cmb_SetI(_this, Unit, u, 160, CMB_SRC2_ALPHA, Source2);
-    Cmb_SetI(_this, Unit, u, 164, CMB_OP2_ALPHA, Operand2);
-    Cmb_SetI(_this, Unit, u, 152, CMB_SRC1_ALPHA, Source1);
-    Cmb_SetI(_this, Unit, u, 156, CMB_OP1_ALPHA, Operand1);
-    Cmb_SetI(_this, Unit, u, 144, CMB_SRC0_ALPHA, Source0);
-    Cmb_SetI(_this, Unit, u, 148, CMB_OP0_ALPHA, Operand0);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerAlphaOp, 140), CMB_COMBINE_ALPHA, AlphaOp);
+    Cmb_SetScale(_this, Unit, u, CMB_OFFSET(mCombinerAlphaScale, 172), CMB_ALPHA_SCALE, Scale);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerAlphaSource2, 160), CMB_SRC2_ALPHA, Source2);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerAlphaOperand2, 164), CMB_OP2_ALPHA, Operand2);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerAlphaSource1, 152), CMB_SRC1_ALPHA, Source1);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerAlphaOperand1, 156), CMB_OP1_ALPHA, Operand1);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerAlphaSource0, 144), CMB_SRC0_ALPHA, Source0);
+    Cmb_SetI(_this, Unit, u, CMB_OFFSET(mCombinerAlphaOperand0, 148), CMB_OP0_ALPHA, Operand0);
     return 0;
 }
 
