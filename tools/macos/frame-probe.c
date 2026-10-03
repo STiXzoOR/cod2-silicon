@@ -292,9 +292,18 @@ TRACE_GL(glTexSubImage2D, upload,
 TRACE_GL(glCompressedTexImage2DARB, upload,
     (GLenum t, GLint l, GLenum f, GLsizei w, GLsizei h, GLint b, GLsizei n, const GLvoid *p),
     (t, l, f, w, h, b, n, p));
-TRACE_GL(glCompressedTexSubImage2DARB, upload,
+TRACE_GL(glCompressedTexSubImage2D, upload,
     (GLenum t, GLint l, GLint x, GLint y, GLsizei w, GLsizei h, GLenum f, GLsizei n, const GLvoid *p),
     (t, l, x, y, w, h, f, n, p));
+TRACE_GL(glTexImage3D, upload,
+    (GLenum t, GLint l, GLint f, GLsizei w, GLsizei h, GLsizei d, GLint b, GLenum format, GLenum type, const GLvoid *p),
+    (t, l, f, w, h, d, b, format, type, p));
+TRACE_GL(glTexSubImage3D, upload,
+    (GLenum t, GLint l, GLint x, GLint y, GLint z, GLsizei w, GLsizei h, GLsizei d, GLenum format, GLenum type, const GLvoid *p),
+    (t, l, x, y, z, w, h, d, format, type, p));
+TRACE_GL(glCompressedTexImage3DARB, upload,
+    (GLenum t, GLint l, GLenum f, GLsizei w, GLsizei h, GLsizei d, GLint b, GLsizei n, const GLvoid *p),
+    (t, l, f, w, h, d, b, n, p));
 TRACE_GL(glProgramStringARB, program,
     (GLenum t, GLenum f, GLsizei n, const GLvoid *p), (t, f, n, p));
 TRACE_GL(glBufferDataARB, buffer,
