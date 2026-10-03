@@ -86,7 +86,11 @@ qboolean PM_ShouldMakeFootsteps(pmove_t *pm);
 void PM_ClipVelocity(const vec_t *in, const vec_t *normal, vec_t *out);
 static void PM_ACCELERATE_ABI PM_Accelerate(playerState_t *ps, pml_t *pml, const vec_t *wishdir, float wishspeed, float accel);
 static void PM_REGPARM2_ABI PM_Friction(playerState_t *ps, pml_t *pml);
+#if defined(COD2_X64)
+void PM_UpdateLean(playerState_t *ps, float msec, usercmd_t *cmd, void (*capsuleTrace)(trace_t *, const vec_t *, const vec_t *, const vec_t *, const vec_t *, int, int));
+#else
 void PM_UpdateLean(playerState_t *ps, float msec, usercmd_t *cmd, void (*capsuleTrace)());
+#endif
 void PM_UpdateViewAngles(playerState_t *ps, float msec, usercmd_t *cmd, int handler);
 void PM_UpdatePronePitch(pmove_t *pm, pml_t *pml);
 void PM_playerTrace(pmove_t *pm, trace_t *results, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int contentMask);
@@ -441,7 +445,11 @@ static void PM_DropTimers(playerState_t *ps, int msec)
     }
 }
 
+#if defined(COD2_X64)
+void PM_UpdateLean(playerState_t *ps, float msec, usercmd_t *cmd, void (*capsuleTrace)(trace_t *, const vec_t *, const vec_t *, const vec_t *, const vec_t *, int, int))
+#else
 void PM_UpdateLean(playerState_t *ps, float msec, usercmd_t *cmd, void (*capsuleTrace)())
+#endif
 {
     (void)msec;
     (void)cmd;
@@ -729,7 +737,11 @@ type_check:
 
 do_lean:
 
+#if defined(COD2_X64)
+    PM_UpdateLean(ps, msec, cmd, pmoveHandlers[(unsigned char)handler].trace);
+#else
     PM_UpdateLean(ps, msec, cmd, (void (__cdecl *)(void))(pmoveHandlers[(unsigned char)handler].trace));
+#endif
 }
 
 void PM_playerTrace(pmove_t *pm, trace_t *results, const vec_t *start,
