@@ -646,6 +646,10 @@ void R_SetColorMappings(void)
 
 #if defined(COD2_X64)
     invGamma = 1.0f / (*(const dvar_t **)imp_r_gamma)->current.value;
+#if defined(__APPLE__)
+    if ((*(const dvar_t **)imp_r_ignoreHwGamma)->current.enabled)
+        invGamma = 1.0f;
+#endif
 #else
     invGamma = 1.0f / *(float *)(*(int *)imp_r_gamma + 8);
 #endif
@@ -884,6 +888,11 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
     if (!R_CreateForInitOrReset()) {
         ri_printf(0, "R_CreateForInitOrReset failed\n");
     }
+#if defined(COD2_X64) && defined(__APPLE__)
+    /* Gamma belongs to presentation, including windowed native rendering. */
+    vidConfig.deviceSupportsGamma = 1;
+    R_SetColorMappings();
+#endif
 
     {
         extern void RB_RegisterBackendAssets(void);

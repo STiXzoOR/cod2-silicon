@@ -843,10 +843,15 @@ static void RB_EndFrame_real(void)
         r_ignoreHwGamma_cvar = *(char **)imp_r_ignoreHwGamma;
         ri.Dvar_ClearModified((const dvar_t *)r_ignoreHwGamma_cvar);
 
+#if defined(COD2_X64) && defined(__APPLE__)
+        R_SetColorMappings();
+        return;
+#else
         if (!((const dvar_t *)r_ignoreHwGamma_cvar)->current.enabled) {
             R_SetColorMappings();
             return;
         }
+#endif
     }
 }
 

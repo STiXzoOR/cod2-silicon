@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#if defined(COD2_X64)
+#include "macos_gamma.h"
+#endif
 
 /* The first fields retain OpaqueContextRef's native layout. */
 typedef struct {
@@ -16,6 +19,9 @@ typedef struct {
     GLuint framebuffer, color[3], depth;
     int width, height;
     int depthBits, stencil;
+#if defined(COD2_X64)
+    MacPresentationGamma gamma;
+#endif
 } MacContext;
 
 typedef struct { int width, height, depth, refresh; } MacMode;
@@ -25,8 +31,10 @@ static int windowMode = MAC_WINDOWED;
 static int refreshRate;
 static int initialized;
 static MacContext *screenContext;
+#if !defined(COD2_X64)
 static unsigned short originalGamma[3][256];
 static int gammaSaved;
+#endif
 
 int g_dip_is_tri, g_dip_drawflag_zero, g_dip_numelems_zero, g_dip_gl_draw;
 int g_fp_enable_count, g_fp_bind_count;
@@ -255,7 +263,15 @@ void SDL_GL_SwapWindowDirect(void)
     GLint readBuffer, drawBuffer;
     glGetIntegerv(GL_READ_BUFFER, &readBuffer);
     glGetIntegerv(GL_DRAW_BUFFER, &drawBuffer);
+#if defined(COD2_X64)
+    GLint readFramebuffer, drawFramebuffer;
+    glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING_EXT, &readFramebuffer);
+    glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING_EXT, &drawFramebuffer);
+    glPushAttrib(presentationGammaIdentity ?
+                 GL_COLOR_BUFFER_BIT | GL_SCISSOR_BIT | GL_PIXEL_MODE_BIT : GL_ALL_ATTRIB_BITS);
+#else
     glPushAttrib(GL_COLOR_BUFFER_BIT | GL_SCISSOR_BIT | GL_PIXEL_MODE_BIT);
+#endif
     glDisable(GL_SCISSOR_TEST);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0);
@@ -264,9 +280,17 @@ void SDL_GL_SwapWindowDirect(void)
     glClear(GL_COLOR_BUFFER_BIT);
     glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, ctx->framebuffer);
     glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
-    glBlitFramebufferEXT(0, 0, ctx->width, ctx->height, x, y, x + destW, y + destH, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+#if defined(COD2_X64)
+    if (!GammaPresent(&ctx->gamma, ctx->width, ctx->height, x, y, destW, destH))
+#endif
+        glBlitFramebufferEXT(0, 0, ctx->width, ctx->height, x, y, x + destW, y + destH, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     SDL_GL_SwapWindow(sdl_gl_window);
+#if defined(COD2_X64)
+    glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, readFramebuffer);
+    glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, drawFramebuffer);
+#else
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, ctx->framebuffer);
+#endif
     glPopAttrib();
     glReadBuffer(readBuffer);
     glDrawBuffer(drawBuffer);
@@ -279,6 +303,9 @@ uint16_t MacDisplay_ReleaseContext(void **reference)
         return 0;
     if (ctx->context) {
         SDL_GL_MakeCurrent(sdl_gl_window, ctx->context);
+#if defined(COD2_X64)
+        GammaRelease(&ctx->gamma);
+#endif
         glDeleteFramebuffersEXT(1, &ctx->framebuffer);
         glDeleteRenderbuffersEXT(3, ctx->color);
         glDeleteRenderbuffersEXT(1, &ctx->depth);
@@ -294,9 +321,13 @@ uint16_t MacDisplay_ReleaseContext(void **reference)
 void MacDisplay_ReleaseDisplay(void)
 {
     MacDisplay_ReleaseContext((void **)&screenContext);
+#if defined(COD2_X64)
+    presentationGammaIdentity = 1;
+#else
     if (gammaSaved && sdl_gl_window)
         SDL_SetWindowGammaRamp(sdl_gl_window, originalGamma[0], originalGamma[1], originalGamma[2]);
     gammaSaved = 0;
+#endif
     if (sdl_gl_window)
         SDL_DestroyWindow(sdl_gl_window);
     sdl_gl_window = NULL;
@@ -432,11 +463,24 @@ uint16_t MacDisplay_GetAntiAliasingMultiSampleInfo(int *buffers, int *samples, u
 }
 uint16_t MacDisplay_SetGammaRamp(const unsigned short *ramp)
 {
+#if defined(COD2_X64)
+    if (!ramp)
+        return 1;
+    memcpy(presentationGammaRamp, ramp, sizeof(presentationGammaRamp));
+    presentationGammaIdentity = 1;
+    for (int channel = 0; channel < 3; ++channel)
+        for (int i = 0; i < 256; ++i)
+            if (ramp[channel * 256 + i] != i * 257)
+                presentationGammaIdentity = 0;
+    ++presentationGammaRevision;
+    return 0;
+#else
     if (!sdl_gl_window || windowMode == MAC_WINDOWED)
         return 0;
     if (!gammaSaved)
         gammaSaved = SDL_GetWindowGammaRamp(sdl_gl_window, originalGamma[0], originalGamma[1], originalGamma[2]) == 0;
     return (uint16_t)(SDL_SetWindowGammaRamp(sdl_gl_window, ramp, ramp + 256, ramp + 512) != 0);
+#endif
 }
 
 /* AGL entry points used by the reconstructed renderer, backed by SDL contexts. */
