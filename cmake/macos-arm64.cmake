@@ -14,6 +14,11 @@ list(FILTER MACOS_C EXCLUDE REGEX "/PC/zlib/(inflate|infblock|infcodes|inffast|i
 list(FILTER MACOS_C EXCLUDE REGEX "/(data|import_pointers|literals)\\.c$")
 list(APPEND MACOS_C src/unix/linux_common.c src/unix/linux_net.c src/unix/sysdiff_statehash.c)
 
+# Typed LP64 data generated from the Mac binary's STABS (WS2, tools/datagen).
+include(${CMAKE_SOURCE_DIR}/cmake/datagen.cmake)
+cod2_generate_typed_blobs(MACOS_GEN_C)
+list(APPEND MACOS_C ${MACOS_GEN_C})
+
 foreach(target cod2_macos cod2_macos_ded)
   add_executable(${target} ${MACOS_C})
   target_include_directories(${target} PRIVATE
