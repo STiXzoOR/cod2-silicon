@@ -52,6 +52,13 @@ Docker, no QEMU, no ninja. The machine cannot run 32-bit x86 code at all.
   `scr_vm.c` incl. `rdtsc`, `src/PC/universal/com_sndalias_load_obj.c`, label
   emitters in `sv_client_mp.c`, `sv_main_mp.c`, `g_main_mp.c`).
 
+## Game data (local, never commit)
+
+The user's licensed Steam copy (Windows depots 2631–2634, downloaded 2026-10-03)
+is at `~/Games/CoD2`. Use `+set fs_basepath ~/Games/CoD2` (expanded); `main/`
+holds `iw_00`–`iw_15.iwd` and `localized_english_iw00`–`iw11.iwd`. Treat it as
+read-only: point `fs_homepath` somewhere else for configs and logs.
+
 ## Reference material (read-only) — `~/Projects/cod2-native-refs/`
 
 - `CoD2x/` — the CoD2x patch source (v1.4.6.8). `src/shared` is server/client
