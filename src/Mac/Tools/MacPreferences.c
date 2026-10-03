@@ -125,8 +125,13 @@ void MacPreferences_PutInteger(const char *inKey, int inNumber)
 
 void MacPreferences_Synchronize(void)
 {
-
+#if COD2_APPLE_SDK
+    /* The SDK symbol is the CFStringRef itself (the i386 import slot pointed
+       to it); dereferencing it passed the string's class as the app ID. */
+    CFPreferencesAppSynchronize((void *)kCFPreferencesCurrentApplication);
+#else
     CFPreferencesAppSynchronize(*kCFPreferencesCurrentApplication);
+#endif
 }
 
 unsigned char MacPreferences_PutRect(const char *inKey, const CGRect *inRect)
