@@ -264,7 +264,22 @@ int SDL_PumpInputEvents(void)
         textInputStarted = 1;
     }
 
+#if defined(__APPLE__) && defined(COD2_X64)
+    /* Com_EventLoop also runs during the frame-cap wait. Pump Cocoa at most
+     * once per millisecond; peeping the queue never enters SDL's wait path. */
+    static Uint32 lastPump;
+    static int pumped;
+    Uint32 now = SDL_GetTicks();
+    if (!pumped || now != lastPump) {
+        SDL_PumpEvents();
+        lastPump = now;
+        pumped = 1;
+    }
+    for (eventCount = 0; eventCount < 256 &&
+         SDL_PeepEvents(&ev, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) > 0; ++eventCount) {
+#else
     for (eventCount = 0; eventCount < 256 && SDL_PollEvent(&ev); ++eventCount) {
+#endif
         switch (ev.type) {
 #if defined(__APPLE__) && defined(COD2_X64)
         case SDL_QUIT:

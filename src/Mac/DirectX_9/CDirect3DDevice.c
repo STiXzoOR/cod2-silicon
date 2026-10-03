@@ -500,14 +500,37 @@ static const D3DVERTEXELEMENT9 *CDirect3DDevice_FindVertexElement(
     return NULL;
 }
 
+#if defined(COD2_X64)
+static const byte *CDirect3DDevice_ConvertColorArray(const byte *vertBase, UINT stride,
+                                                     int colorOffset, UINT vertexCount, int byteOrder,
+                                                     const unsigned short *indices, UINT indexCount)
+#else
 static const byte *CDirect3DDevice_ConvertColorArray(const byte *vertBase, UINT stride,
                                                      int colorOffset, UINT vertexCount, int byteOrder)
+#endif
 {
     UINT i;
     UINT bytesNeeded;
 
     if (colorOffset < 0 || vertexCount == 0)
         return NULL;
+
+#if defined(COD2_X64)
+    /* Callers already accept the original interleaved RGBA array on NULL. */
+    if (byteOrder == COLOR_BYTES_RGBA)
+        return NULL;
+    if (!indexCount)
+        return NULL;
+    /* GL indexes every enabled client array with the same unsigned shorts.
+     * Keep scratch offsets unchanged, but convert only the indexed span. */
+    UINT firstVertex = vertexCount;
+    UINT lastVertex = 0;
+    for (UINT n = 0; n < indexCount; ++n) {
+        if (indices[n] < firstVertex) firstVertex = indices[n];
+        if (indices[n] > lastVertex) lastVertex = indices[n];
+    }
+    vertexCount = lastVertex + 1;
+#endif
 
     bytesNeeded = vertexCount * 4;
     if (bytesNeeded > g_colorArrayScratchCapacity) {
@@ -518,7 +541,11 @@ static const byte *CDirect3DDevice_ConvertColorArray(const byte *vertBase, UINT 
         g_colorArrayScratchCapacity = bytesNeeded;
     }
 
+#if defined(COD2_X64)
+    for (i = firstVertex; i < vertexCount; ++i) {
+#else
     for (i = 0; i < vertexCount; ++i) {
+#endif
         const byte *src = vertBase + i * stride + colorOffset;
         byte *dst = g_colorArrayScratch + i * 4;
 
@@ -1994,7 +2021,11 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
         if (usesLightmap) {
             const byte *colors = CDirect3DDevice_ConvertColorArray(
                 vertBase, stride, colorOffset, MinVertexIndex + NumVertices,
+#if defined(COD2_X64)
+                colorByteOrder, (const unsigned short *)(ibData + startIndex * 2), primCount * 3);
+#else
                 colorByteOrder);
+#endif
 
             glEnableClientState(0x8076);
             if (colors)
@@ -2013,7 +2044,11 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
         } else if (colorOffset >= 0) {
             const byte *colors = CDirect3DDevice_ConvertColorArray(
                 vertBase, stride, colorOffset, MinVertexIndex + NumVertices,
+#if defined(COD2_X64)
+                colorByteOrder, (const unsigned short *)(ibData + startIndex * 2), primCount * 3);
+#else
                 colorByteOrder);
+#endif
 
             glEnableClientState(0x8076);
             if (colors)

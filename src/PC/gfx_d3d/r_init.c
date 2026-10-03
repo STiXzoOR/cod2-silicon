@@ -866,7 +866,12 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
             vidConfig.width = width;
             vidConfig.height = height;
             vidConfig.displayFrequency = 60;
+#if COD2_APPLE_SDK
+            extern const dvar_t *r_fullscreen;
+            vidConfig.isFullscreen = r_fullscreen && r_fullscreen->current.enabled;
+#else
             vidConfig.isFullscreen = 0;
+#endif
             vidConfig.aspectRatioWindow = (float)width / (float)height;
             vidConfig.aspectRatioPixel = (float)height * vidConfig.aspectRatioWindow / (float)width;
 

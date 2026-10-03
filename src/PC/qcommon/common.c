@@ -5,6 +5,7 @@
 #include "imports.h"
 #include "bytematch.h"
 #include "cod2_feature_config.h"
+#include "port_debug.h"
 #include <stdarg.h>
 #include <ctype.h>
 #include <time.h>
@@ -1575,9 +1576,9 @@ int Com_EventLoop(void)
 
         switch (evType) {
         case 0:
-            { static int c0; if (c0++ < 3) Com_Printf("[cnx] evloop case0 sv_running=%d\n", com_sv_running->current.enabled); }
+            COD2_DEBUG_ONLY({ static int c0; if (c0++ < 3) Com_Printf("[cnx] evloop case0 sv_running=%d\n", com_sv_running->current.enabled); })
             while (NET_GetLoopPacket((netsrc_t)0, &evFrom, &buf)) {
-                Com_Printf("[cnx] loop0 packet (server->client)\n");
+                COD2_DEBUG_ONLY(Com_Printf("[cnx] loop0 packet (server->client)\n");)
 #if !(COD2_APPLE_SDK && defined(DEDICATED))
                 CL_PacketEvent(evFrom, &buf, evTime);
 #else
@@ -1585,7 +1586,7 @@ int Com_EventLoop(void)
 #endif
             }
             while (NET_GetLoopPacket((netsrc_t)1, &evFrom, &buf)) {
-                Com_Printf("[cnx] loop1 packet (client->server) sv_running=%d\n", com_sv_running->current.enabled);
+                COD2_DEBUG_ONLY(Com_Printf("[cnx] loop1 packet (client->server) sv_running=%d\n", com_sv_running->current.enabled);)
 #if !(COD2_APPLE_SDK && defined(DEDICATED))
                 CL_SwitchToLocalClient(0);
 #else

@@ -1,8 +1,7 @@
 # Run and measure the native Mac client
 
-These scripts are ready for the `cod2_macos` target after WS1/WS2 and runtime
-work are integrated. They have been exercised with synthetic engines, not a
-running game. Use the owned-data layout in
+These scripts run the native `cod2_macos` target. WS13 exercised them on a
+local Toujane listen server and a recorded demo. Use the owned-data layout in
 [game-data.md](../../docs/macos-port/game-data.md): the argument is the parent
 of `main/`. All generated logs/configs/results default to ignored `output/`.
 
@@ -11,7 +10,7 @@ of `main/`. All generated logs/configs/results default to ignored `output/`.
 ```sh
 # Build with the integrated macOS CMake target; no system packages are installed.
 cmake -S . -B output/build-macos -DCOD2_X64=ON \
-  -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_C_FLAGS=-ffp-contract=off
+  -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64
 cmake --build output/build-macos --parallel 3 --target cod2_macos
 
 tools/macos/run.sh '/path/to/CoD2 data' +set name native-test
@@ -44,13 +43,15 @@ tools/macos/bench.sh '/path/to/CoD2 data' example \
 tools/macos/bench.sh '/path/to/CoD2 data' example \
   --output output/bench-uncapped --timeout 180
 tools/macos/bench.sh '/path/to/CoD2 data' example \
-  --output output/bench-250 --maxfps 250 --timeout 180
+  --output output/bench-333 --maxfps 333 --resolution 1920x1080 \
+  --window-mode windowed --timeout 180
 ```
 
 Each invocation starts a new client and home directory. The first run warms
 OS file caches; repeat several runs and retain every result rather than
-cherry-picking. Apply identical graphics options in the base data's trusted
-config, or edit the wrapper invocation consistently for the experiment.
+cherry-picking. `--resolution WIDTHxHEIGHT` and `--window-mode
+windowed|fullscreen|borderless` write a config in the fresh home and set the
+latched renderer options before startup. Keep the licensed base data read-only.
 `--maxfps 0` removes the user FPS cap (the current frame loop still enforces a
 minimum 1 ms); `--maxfps 250` targets a minimum 4 ms interval. Neither proves
 steady 250 fps during live network play.
@@ -72,13 +73,56 @@ It never fabricates timing samples from average FPS. Logs, CSV,
 `benchmark.json` and `results.json` remain in the selected output directory.
 
 Results include engine FPS/seconds, mean/median/p95/p99/max milliseconds and
-sample count over 4 ms. Percentiles use nearest rank. The initial timestamp
+sample count over 4 ms. The 1% low is 1000 divided by the mean duration of the
+slowest ceil(N/100) frames. Percentiles use nearest rank. The initial timestamp
 frame is omitted by the engine, so N reported frames require N-1 samples.
 The engine clock has integer-millisecond precision and prints aggregate FPS
 rounded to one decimal: 0 ms samples are possible at high speed. This is not a
 submillisecond latency measurement. Look for 4 ms pacing and a low tail at the
 250 cap, then validate a full live round with the same settings. Loading,
 background activity, HUD/logging overhead and thermal state affect results.
+
+## Live local frame probe (native arm64 only)
+
+```sh
+python3 tools/macos/live-bench.py '/path/to/CoD2 data' \
+  --binary output/build-macos/cod2_macos --output output/live-1080-333 \
+  --resolution 1920x1080 --window-mode windowed --maxfps 333 --seconds 30 \
+  --record local_toujane
+# Separate CPU sampling run; these FPS values are perturbed:
+python3 tools/macos/live-bench.py '/path/to/CoD2 data' \
+  --binary output/build-macos/cod2_macos --output output/live-profile \
+  --maxfps 0 --seconds 5 --cpu-profile
+```
+
+The script builds an optional DYLD observer with installed clang and
+`sdl2-config`, launches one owned client, joins the local deathmatch server,
+selects an Enfield and positions the player at a stock Toujane spawn. It
+records `viewpos` and actual viewport/window/drawable sizes; inspect the saved
+JPEG before treating a new camera as a gameplay benchmark. `--view-pos X Y Z
+YAW` sets an alternative eye position. The native port currently reports a
+different yaw from the requested one.
+
+`frames.csv` contains mach-clock intervals immediately before successive
+swaps, integer `com_frameTime` differences, and CPU wall time in SDL input,
+GL clear/blit/fence and swap calls. These timings are not GPU execution times
+or display scanout intervals. The first timestamp-only frame is omitted.
+The observer adds clock-read overhead; compare runs using the same observer.
+`results.json` includes aggregate FPS, the slowest-1% mean reciprocal, p99,
+engine-millisecond histogram and presentation geometry. Geometry/focus changes
+are checked once per second and included in `presentation_changes`; requested
+fullscreen settings alone do not prove the OS completed a mode transition.
+Capture is bounded
+to 60 seconds or 65,536 timestamps. CSV publication happens after capture.
+
+`--cpu-profile` enables a separate 1 ms main-thread signal/frame-pointer sampler
+and writes `cpu-stacks.csv`. It is a qualitative fallback when external
+profiler attachment fails; signal delivery and process CPU timers introduce
+bias. Do not use its FPS for before/after comparisons. `--profile sample` or
+`--profile xctrace` attempts the installed macOS profiler with a 60-second
+completion limit. Every live run kills only its own process group after
+collecting results because listen-server shutdown currently hangs in VM
+cleanup. This does not verify clean shutdown or long-session stability.
 
 ## Competitive-play cvars verified in source
 
