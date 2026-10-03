@@ -42,10 +42,13 @@ For the full native-client workstream, run:
 ```sh
 sh tests/cod2x/run_full.sh
 COD2X_SANITIZERS=1 UBSAN_OPTIONS=halt_on_error=1 sh tests/cod2x/run_full.sh
-python3 tests/cod2x/check_inactive_gates.py --base 231d6be5d1f49864862a98a3e72d7b6ddbe840fa
+python3 tests/cod2x/check_inactive_gates.py --base b834082bc95cf5fdb44f62bffa0f31dad21a6592
 ```
 
-The full runner adds IWD/config selection, tokenizer and extraction fixtures;
+The full runner first repeats the identity test with the engine's SDK-named
+function/data stubs linked in (`test_identity_sdk.c`), checking that installed
+framework lookup survives those symbol collisions without changing the hash
+domain. It then adds IWD/config selection, tokenizer and extraction fixtures;
 4096 registrations and exhaustion through the production dvar allocator; the
 production big-info helper; visual commands, colors, orbit and radar geometry;
 production radar buffer ownership and cheat-protected pose controls; raw-input
@@ -56,8 +59,9 @@ persistent upload queues and deferred quit.
 It also posts owned fixture bytes to an ephemeral local HTTPS server using the
 production libcurl uploader. A test-only CA override trusts the fixture; a
 hostname mismatch must deliver no bytes. Nothing changes the system trust store.
-The extractor tests use synthetic archives. Licensed release validation, live
-server admission and physical input/rendering are separate checks in
+The extractor tests use synthetic archives. Licensed release validation and
+real-client startup/IWD/shared-config checks are recorded separately from live
+server admission and physical input/rendering in
 `docs/macos-port/reports/WS10-cod2x-full.md`.
 
 The normal runner exercises a real 12-second watchdog stall, disable/heartbeat
@@ -66,5 +70,5 @@ deliberate signal cases. Its added C fixtures use ASan/UBSan; the unchanged WS4
 runner and standalone HTTPS subprocess retain their original compile flags.
 The fixtures and temporary app bundles are created under the system temporary
 directory and removed on exit. The inactive-gate comparison checks preprocessed
-source bodies, including explicit zero-valued macros; it cannot prove byte-level
-32-bit binary parity.
+source bodies against integrated main, including explicit zero-valued macros;
+it cannot prove byte-level 32-bit binary parity.
