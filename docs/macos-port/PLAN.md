@@ -107,6 +107,26 @@ binary in each case.
   parameters; use the system headers on LP64.
 - Good news: all six network field tables and the Huffman table match 1.3.
 
+From `research/mac-client-reconstructions.md`:
+
+- **opencod2 was reconstructed from the Mac MP 1.0 binary** ("CoD2 MP 1.0
+  build crc6_v1 MacOSXS-i386 Apr 18 2006", 19,086,892 bytes, SHA-256
+  `eaf7fbc3…dc38`, `__cstring` at 0x002157b8, `__data` at 0x00308000,
+  protocol 115), with 1.3 behaviour added by hand. 1,804 of 1,824 `str_`
+  literals and 3,006 of 3,068 `data.S` relocations match it. Our 1.3 binaries
+  don't match its addresses, but constants are identical across builds, so the
+  Steam 1.3 binary recovers almost every false-relocation value; only genuine
+  pointers move. We do not have a licensed 1.0 binary (it shipped on the 2006
+  Aspyr retail DVD; Steam is 1.3 only). Don't fetch it from third-party git
+  history without the user's decision.
+- **Receive buffer**: `src/Mac/Main/mac_main.c` still calls
+  `MSG_Init(&netmsg, sys_packetReceived, 0x4000)` (1.0); the 1.3 Mac binary
+  uses 0x20000. Gamestates over 16 KB from 1.3/CoD2x servers will likely be
+  dropped. Other 1.0-sized storage (`svs`, `sys_packetReceived`,
+  `g_largeLocalBuf`, `cls`, `ucmds`) needs the same check against 1.3.
+- `cl_keys_mp.c`: 20 non-ASCII key names were garbled during extraction.
+  `cg_shock_dvar_names` has an inserted entry that no 1.3 binary contains.
+
 ## Rules for every agent
 
 1. Work only inside your own git worktree and branch. Do not touch other
