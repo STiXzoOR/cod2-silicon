@@ -433,6 +433,7 @@ enum {
     COLOR_BYTES_BGRA,
     COLOR_BYTES_ARGB
 };
+#include "lp64_color_order.h"
 
 #define GL_NEAREST 0x2600
 #define GL_LINEAR 0x2601
@@ -1808,12 +1809,16 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
     if (element)
         normalOffset = element->Offset;
 
+#if defined(COD2_X64)
+    colorByteOrder = MacShader_ColorByteOrder(stride, colorOffset, positionComponents);
+#else
     if (stride == 0x44 || stride == 0x20 || stride == 0x18)
         colorByteOrder = COLOR_BYTES_RGBA;
     else if (stride == 0x40 && positionComponents == 3)
         colorByteOrder = COLOR_BYTES_ARGB;
     else
         colorByteOrder = COLOR_BYTES_BGRA;
+#endif
 
 #if defined(COD2_X64)
     ibData = ((const CDirect3DIndexBufferClean *)dev->indexBuffer)->data;
