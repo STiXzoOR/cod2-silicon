@@ -28,13 +28,22 @@ typedef union TMediaElement TMediaElement;
 typedef struct PrimitiveTemplate PrimitiveTemplate;
 typedef struct TextPool TextPool;
 
+#if !defined(COD2_X64)
 struct Cylinder {
     int _placeholder;
 };
+#endif
 
 struct Emitter {
 
+#if defined(COD2_X64)
+    union {
+        struct Particle base;
+        char _base[sizeof(struct Particle)];
+    };
+#else
     char _base[0x24c];
+#endif
 
     vec3_t emitPos;
     vec3_t initialVel;
@@ -52,9 +61,11 @@ struct Emitter {
 
 };
 
+#if !defined(COD2_X64)
 struct Flash {
     int _placeholder;
 };
+#endif
 
 struct EffectPrimitive {
     const EffectTemplate *fx;
@@ -76,7 +87,14 @@ struct FxBoltFrame {
 
 struct Line {
 
+#if defined(COD2_X64)
+    union {
+        struct Particle base;
+        char _base[sizeof(struct Particle)];
+    };
+#else
     char _base[0x1C4];
+#endif
     vec3_t endpoint;
 };
 
@@ -91,9 +109,22 @@ struct Light {
 
 };
 
+#if defined(COD2_X64)
+struct Flash {
+    struct Light base;
+};
+#endif
+
 struct OrientedParticle {
 
+#if defined(COD2_X64)
+    union {
+        struct Particle base;
+        char _base[sizeof(struct Particle)];
+    };
+#else
     char _base[0x1C4];
+#endif
     vec3_t normal;
 };
 
@@ -120,6 +151,12 @@ struct Tail {
     FxChannelInstance lengthRandChannelInstance;
 
 };
+
+#if defined(COD2_X64)
+struct Cylinder {
+    struct Tail base;
+};
+#endif
 
 COD2_ASSERT_FIELD(struct Emitter, _base, 0x000);
 COD2_ASSERT_FIELD(struct Emitter, emitPos, 0x24c);

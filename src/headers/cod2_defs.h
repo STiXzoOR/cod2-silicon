@@ -4813,7 +4813,11 @@ struct FxGfxEntity {
 
 struct Effect {
 
+#if defined(COD2_X64)
+    void **_vptr$Effect;
+#else
     int _vptr$Effect;
+#endif
     vec3_t origin;
     int field_0x10;
     vec3_t axis[2];
