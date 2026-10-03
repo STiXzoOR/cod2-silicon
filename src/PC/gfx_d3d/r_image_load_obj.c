@@ -728,9 +728,12 @@ static void Image_LoadLightmapWeights(GfxImage *image)
     /* Mac 1.3's four weights partition unity; its byte order is part of the
        shader interface (BGRA upload), rather than an ordinary color. */
     for (t = 0; t < 32; ++t) {
+        float dir[2];
+        dir[1] = (t + 0.5f) / 16.0f - 1.0f;
         for (s = 0; s < 32; ++s) {
-            float dir[2] = {(s + 0.5f) / 16.0f - 1.0f, (t + 0.5f) / 16.0f - 1.0f};
-            float zSq = 1.0f - dir[0] * dir[0] - dir[1] * dir[1];
+            /* Both original clients retain normalized y for the rest of a row. */
+            dir[0] = (s + 0.5f) / 16.0f - 1.0f;
+            float zSq = 1.0f - (dir[0] * dir[0] + dir[1] * dir[1]);
             if (zSq < 0.0f) {
                 Vec2Normalize(dir);
                 zSq = 0.0f;

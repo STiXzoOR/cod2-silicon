@@ -42,12 +42,56 @@ void AxisTransformVector(vec3_t *axes, float x, float y, float z, float *out)
         out[i] = axes[0][i] * x + axes[1][i] * y + axes[2][i] * z;
 }
 
+/* Instruction model: Mac 1.3 0xfd152 and Windows 1.3 0x1000feb0 retain
+ * normalized y between texels; only the x coordinate is reset each time. */
+static void OriginalLightmapWeights(byte *pixels)
+{
+    for (int row = 0; row < 32; ++row) {
+        float y = (row + 0.5f) * 0.03125f * 2.0f - 1.0f;
+        for (int column = 0; column < 32; ++column) {
+            float x = (column + 0.5f) * 0.03125f * 2.0f - 1.0f;
+            float z = 1.0f - (x * x + y * y);
+            if (z < 0.0f) {
+                float length = sqrtf(x * x + y * y);
+                x /= length;
+                y /= length;
+                z = 0.0f;
+            }
+            float phase = (float)(atan2((double)y, (double)x) * 0.477464829275686 - 0.75);
+            if (phase < 0.0f) phase += 3.0f;
+            else if (phase > 3.0f) phase -= 3.0f;
+            float weights[4];
+            weights[0] = 1.0f + acosf(sqrtf(z)) / -0.9553166031837463f;
+            if (weights[0] < 0.0f) weights[0] = 0.0f;
+            if (weights[0] > 1.0f) weights[0] = 1.0f;
+            if (phase < 1.0f) {
+                weights[1] = 1.0f - phase; weights[2] = phase; weights[3] = 0.0f;
+            } else if (phase < 2.0f) {
+                weights[1] = 0.0f; weights[3] = phase - 1.0f; weights[2] = 1.0f - weights[3];
+            } else {
+                weights[1] = phase - 2.0f; weights[3] = 1.0f - weights[1]; weights[2] = 0.0f;
+            }
+            for (int channel = 0; channel < 4; ++channel) {
+                if (channel) weights[channel] *= 1.0f - weights[0];
+                pixels[(row * 32 + column) * 4 + channel] = (byte)(int)floorf(weights[channel] * 255.0f + 0.5f);
+            }
+        }
+    }
+}
+
 int main(void)
 {
     GfxImage image = {0};
     byte cube0[sizeof(uploaded)], cube1[sizeof(uploaded)];
+    byte originalWeights[sizeof(uploaded[0])];
     Image_LoadLightmapWeights(&image);
     assert(uploadCount == 1);
+    OriginalLightmapWeights(originalWeights);
+    assert(!memcmp(uploaded[0], originalWeights, sizeof(originalWeights)));
+    /* These off-center rows distinguish persistent normalization from a
+     * freshly reset direction, even though both tables partition unity. */
+    assert(!memcmp(uploaded[0] + (8 * 32 + 15) * 4, (byte[]){135, 0, 64, 56}, 4));
+    assert(!memcmp(uploaded[0] + (24 * 32 + 15) * 4, (byte[]){124, 126, 4, 0}, 4));
     int directional = 0;
     for (int i = 0; i < 32 * 32; ++i) {
         const byte *p = uploaded[0] + i * 4;
