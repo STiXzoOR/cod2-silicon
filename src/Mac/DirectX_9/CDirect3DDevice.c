@@ -1051,11 +1051,11 @@ static void CDirect3DDevice_ApplySamplerState(UINT sampler, GLenum target)
                     CDirect3DDevice_MapTextureAddress(addressU));
     glTexParameteri(target, 0x2803 ,
                     CDirect3DDevice_MapTextureAddress(addressV));
-    if (target == GL_TEXTURE_CUBE_MAP
 #if COD2_APPLE_SDK
-        || target == GL_TEXTURE_3D
+    if (target == GL_TEXTURE_CUBE_MAP || target == GL_TEXTURE_3D) {
+#else
+    if (target == GL_TEXTURE_CUBE_MAP) {
 #endif
-    ) {
         glTexParameteri(target, GL_TEXTURE_WRAP_R,
                         CDirect3DDevice_MapTextureAddress(addressW));
     }

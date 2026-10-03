@@ -1,77 +1,46 @@
 #include "common_types.h"
 #include "imports.h"
 #include <assert.h>
-#include <stdio.h>
-#include <string.h>
-
-#include "PC/gfx_d3d/r_image_load_common.c"
-
-DxGlobals dx;
-int alwaysfails;
-static byte destination[1024];
-static int rowPitch, slicePitch, expectedLevel, lockCount, unlockCount;
-
-static int LockBox(void *texture, int level, D3DLOCKED_BOX *locked, void *box, int flags)
-{
-    assert(texture && level == expectedLevel && !box && !flags);
-    locked->RowPitch = rowPitch;
-    locked->SlicePitch = slicePitch;
-    locked->pBits = destination;
-    ++lockCount;
-    return 0;
-}
-
-static int UnlockBox(void *texture, int level)
-{
-    assert(texture && level == expectedLevel);
-    ++unlockCount;
-    return 0;
-}
-
-static void CheckUpload(int width, int height, int depth, int mip, D3DFORMAT format,
-                        int sourceRowBytes, int sourceRows, int sourceDepth)
-{
-    void *vtable[21] = {0};
-    void **texture = vtable;
-    int device = 1;
-    GfxImage image = {0};
-    byte source[512], expected[sizeof(destination)];
-    int sourceSlice = sourceRowBytes * sourceRows;
-    int before = lockCount;
-
-    assert(sourceSlice * sourceDepth <= sizeof(source));
-    for (int index = 0; index < sizeof(source); ++index)
-        source[index] = (byte)(index * 13 + 7);
-    memset(destination, 0xcc, sizeof(destination));
-    memcpy(expected, destination, sizeof(expected));
-    rowPitch = sourceRowBytes + 8;
-    slicePitch = rowPitch * sourceRows + 12;
-    expectedLevel = mip;
-    for (int z = 0; z < sourceDepth; ++z)
-        for (int row = 0; row < sourceRows; ++row)
-            memcpy(expected + z * slicePitch + row * rowPitch,
-                   source + z * sourceSlice + row * sourceRowBytes, sourceRowBytes);
-    vtable[19] = (void *)LockBox;
-    vtable[20] = (void *)UnlockBox;
-    dx.device = (IDirect3DDevice9 *)&device;
-    image.mapType = 4;
-    image.texture.volmap = (IDirect3DVolumeTexture9 *)&texture;
-    image.width = width;
-    image.height = height;
-    image.depth = depth;
-    Image_UploadData(&image, format, 0, mip, source);
-    assert(lockCount == before + 1 && unlockCount == lockCount);
-    /* Distinct slices must survive both destination row and slice padding. */
-    assert(!memcmp(destination, expected, sizeof(destination)));
-}
-
+#include <stdlib.h>
+#include "Mac/DirectX_9/CDirect3DVolumeTexture.c"
+void __ZdlPv(void *p) { free(p); }
+int MacDisplay_GetCardType(void) { return 0; }
+int MacDisplay_IsGLExtensionSupported(const char *name) { (void)name; return 1; }
+UINT32 MacDisplay_GetPCPixelShaderVersion(void) { return 0; }
 int main(void)
 {
-    CheckUpload(4, 3, 2, 0, D3DFMT_A8R8G8B8, 16, 3, 2);
-    CheckUpload(8, 6, 4, 1, D3DFMT_X8R8G8B8, 16, 3, 2);
-    CheckUpload(5, 5, 3, 0, D3DFMT_DXT1, 16, 2, 3);
-    CheckUpload(5, 5, 3, 0, D3DFMT_DXT5, 32, 2, 3);
-    CheckUpload(2, 2, 2, 3, D3DFMT_A8R8G8B8, 4, 1, 1);
-    puts("native volume image upload: padded rows, slices, mips and DXT blocks passed");
-    return 0;
+    CGLPixelFormatAttribute attrs[] = {kCGLPFAAccelerated, 0};
+    CGLPixelFormatObj format; CGLContextObj context; GLint count;
+    assert(!CGLChoosePixelFormat(attrs, &format, &count));
+    assert(!CGLCreateContext(format, NULL, &context));
+    CGLDestroyPixelFormat(format); assert(!CGLSetCurrentContext(context));
+    CDirect3DVolumeTextureClean texture = {0};
+    CDirect3DVolumeTexture_CDirect3DVolumeTexture((void *)&texture, 2, 2, 2, 1, 0, D3DFMT_A8R8G8B8);
+    CDirect3DVolumeClean *volume;
+    assert(!CDirect3DVolumeTexture_GetVolumeLevel((void *)&texture, 0, (void **)&volume));
+    D3DLOCKED_BOX box;
+    assert(!CDirect3DVolume_LockBox(volume, &box, NULL, 0));
+    assert(box.RowPitch == 8 && box.SlicePitch == 16);
+    for (int i = 0; i < 8; ++i) {
+        byte color[] = {11, 37, 149, 255};
+        memcpy((byte *)box.pBits + i * 4, color, 4);
+    }
+    assert(!CDirect3DVolume_UnlockBox(volume));
+    assert(CDirect3DVolume_IsDirty(volume));
+    GLuint sentinel; glGenTextures(1, &sentinel); glBindTexture(GL_TEXTURE_3D, sentinel);
+    CDirect3DVolumeTexture_UpdateOpenGLSurfaces((void *)&texture);
+    GLint bound; glGetIntegerv(GL_TEXTURE_BINDING_3D, &bound); assert(bound == sentinel);
+    assert(!CDirect3DVolume_IsDirty(volume));
+    glBindTexture(GL_TEXTURE_3D, texture.texIDStorage);
+    byte pixels[32]; glGetTexImage(GL_TEXTURE_3D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    assert(!glGetError());
+    for (int i = 0; i < 8; ++i) {
+        assert(pixels[i * 4] == 149 && pixels[i * 4 + 1] == 37);
+        assert(pixels[i * 4 + 2] == 11 && pixels[i * 4 + 3] == 255);
+    }
+    CDirect3DVolume_Release(volume);
+    ZN22CDirect3DVolumeTextureD1Ev(&texture);
+    glDeleteTextures(1, &sentinel);
+    CGLSetCurrentContext(NULL); CGLDestroyContext(context);
+    puts("dirty native volume uploads and restored binding: passed");
 }

@@ -1,3 +1,4 @@
+#include <float.h>
 #if COD2_APPLE_SDK
 /* Request exactly one frame by writing its output filename into the external
  * COD2_MAC_DRAW_TRACE request file. Numeric state only; no shader/game payloads. */
@@ -48,7 +49,7 @@ static void MacTrace_Floats(const float *values, unsigned count)
     for (unsigned i = 0; i < count; ++i)
         {
             if (i) fputc(',', macDrawTrace);
-            if (__builtin_isfinite(values[i])) fprintf(macDrawTrace, "%.9g", values[i]);
+            if ((values[i] == values[i] && values[i] >= -FLT_MAX && values[i] <= FLT_MAX)) fprintf(macDrawTrace, "%.9g", values[i]);
             else fputs("null", macDrawTrace);
         }
     fputc(']', macDrawTrace);
