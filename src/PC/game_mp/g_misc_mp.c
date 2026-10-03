@@ -9,7 +9,11 @@ extern qboolean G_SpawnFloat(const char *key, const char *defaultString, float *
 extern qboolean G_SpawnInt(const char *key, const char *defaultString, int *out);
 extern void Com_Error(int code, const char *fmt, ...);
 extern DObj_s *Com_GetServerDObj(int entNum);
+#if defined(COD2_X64)
+extern qboolean DObjSetControlTagAngles(const DObj *, int *, unsigned int, vec_t *);
+#else
 extern void DObjSetControlTagAngles(DObj_s *obj, int *partBits, unsigned short tag, vec_t *angles);
+#endif
 extern void SV_UnlinkEntity(gentity_t *ent);
 extern void SV_LinkEntity(gentity_t *ent);
 extern void SetClientViewAngle(gentity_t *ent, const vec_t *angle);

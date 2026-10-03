@@ -107,6 +107,10 @@ COD2_ASSERT_FIELD(gclient_t, buttons,              0x27bc);
 COD2_ASSERT_FIELD(gclient_t, oldbuttons,           0x27c0);
 COD2_ASSERT_FIELD(gclient_t, buttonsSinceLastFrame, 0x27c8);
 
+#if defined(COD2_X64)
+extern void Com_Printf(const char *fmt, ...);
+#endif
+
 #define BYTE_AT(base, off) (*(byte *)((byte *)(base) + (off)))
 
 static inline __attribute__((always_inline)) clientInfo_t *G_ClientInfoForEntity(const gentity_t *ent);

@@ -14,7 +14,11 @@ extern int FS_FOpenFileByMode(const char *filename, int *f, int mode);
 extern int FS_Read(void *buffer, int len, int f);
 extern void FS_FCloseFile(fileHandle_t f);
 extern int Info_Validate(const char *s);
+#if defined(COD2_X64)
+extern qboolean ParseConfigStringToStruct(byte *, const cspField_t *, const int, const char *, const int, qboolean (*)(byte *, const char *, const int), void (*)(byte *, const char *));
+#else
 extern int ParseConfigStringToStruct(float *dest, void *fields, int numFields, const char *buffer, int unused1, int unused2, void (*callback)(byte *, const char *));
+#endif
 extern void Com_Error(int level, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern WeaponDef *BG_GetWeaponDef(int weapon);
@@ -23,15 +27,27 @@ extern const vec_t Vec3Normalize(vec_t *v);
 extern const vec_t Vec3NormalizeTo(const vec_t *v, vec_t *out);
 extern int G_LocationalTracePassed(const vec_t *start, const vec_t *end, int entityNum, int contentmask);
 extern void Scr_AddEntity(gentity_t *ent);
+#if defined(COD2_X64)
+extern void Scr_AddInt(int);
+#else
 extern unsigned int Scr_AddInt(int value);
+#endif
 extern void Scr_Notify(gentity_t *ent, unsigned short name, unsigned int numArgs);
 extern int LogAccuracyHit(gentity_t *target, gentity_t *attacker);
 extern int CM_AreaEntities(const vec_t *mins, const vec_t *maxs, int *entityList, int maxcount, int areatype);
 extern void G_TraceCapsule(void *results, const vec_t *start, const vec_t *end, const vec_t *end2, const vec_t *mins, int passEntityNum, int contentmask);
 extern void Scr_PlayerDamage(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int dflags, int meansOfDeath, int iWeapon, const vec_t *vPoint, const vec_t *vDir, const hitLocation_t hitLoc, int timeOffset);
+#if defined(COD2_X64)
+extern struct DObj_s * Com_GetServerDObj(int);
+#else
 extern int Com_GetServerDObj(int clientNum);
+#endif
 extern int BG_AnimScriptEvent(playerState_t *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force);
+#if defined(COD2_X64)
+extern void Scr_PlayerKilled(gentity_t *, gentity_t *, gentity_t *, int, int, int, const vec_t *, const hitLocation_t, int, int);
+#else
 extern void Scr_PlayerKilled(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath, int iWeapon, const vec_t *vDir, hitLocation_t hitLoc, int psTimeOffset);
+#endif
 extern gentity_t *fire_grenade(gentity_t *self, vec_t *start, vec_t *dir, int grenadeWPID, int clientNum);
 extern void Cmd_Score_f(gentity_t *ent);
 extern void SV_UnlinkEntity(gentity_t *ent);
@@ -153,7 +169,11 @@ void G_ParseHitLocDmgTable(void)
         Com_Error(1, "\"%s\" is not a valid hitloc damage table\n", "info/mp_lochit_dmgtable");
     }
 
+#if defined(COD2_X64)
+    if (!ParseConfigStringToStruct((byte *)g_fHitLocDamageMult, (const cspField_t *)hitLocDmgFields, 19, buffer, 0, NULL, G_HitLocStrcpy)) {
+#else
     if (!ParseConfigStringToStruct(g_fHitLocDamageMult, hitLocDmgFields, 19, buffer, 0, 0, G_HitLocStrcpy)) {
+#endif
         Com_Error(1, "Error parsing hitloc damage table %s\n", "info/mp_lochit_dmgtable");
     }
 }
@@ -406,11 +426,18 @@ void G_Damage(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, const 
 
     if (health > 0) {
 
+#if defined(COD2_X64)
+        fn_pain pain = ((entityHandler_t *)imp_entityHandlers)[targ->handler].pain;
+        if (pain != NULL) {
+            pain(targ, attacker, damage, point, mod, dir, hitLoc);
+        }
+#else
         void (*pain)(gentity_t *, gentity_t *, int, const vec_t *, int, hitLocation_t) =
             ((entityHandler_t *)imp_entityHandlers)[targ->handler].pain;
         if (pain != NULL) {
             pain(targ, attacker, damage, point, mod, hitLoc);
         }
+#endif
     } else {
 
         if (health < -999) {
@@ -538,7 +565,11 @@ qboolean G_RadiusDamage(const vec_t *origin, gentity_t *inflictor, gentity_t *at
             dest[2] = (ent->r.absmin[2] + ent->r.absmax[2]) * 0.5f;
 
             {
+#if defined(COD2_X64)
+                const byte *pw = (const byte *)imp_vec3_origin;
+#else
                 byte *pw = *(byte **)&g_phys_world;
+#endif
                 G_TraceCapsule(tr_buf, origin, (const vec_t *)pw, (const vec_t *)pw, dest, 0x3ff, 0x811);
             }
 
@@ -574,7 +605,11 @@ done:
 void player_die(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath, int iWeapon, const vec_t *vDir, const hitLocation_t hitLoc, int psTimeOffset)
 {
     gclient_t *cl;
+#if defined(COD2_X64)
+    struct DObj_s *dobj;
+#else
     int dobj;
+#endif
     vec3_t dir;
     vec3_t launchvel;
     vec3_t launchspot;
@@ -655,8 +690,13 @@ void player_die(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int 
 
     animResult = BG_AnimScriptEvent(&cl->ps, ANIM_ET_DEATH, 0, 1);
 
+#if defined(COD2_X64)
+    Scr_PlayerKilled(self, inflictor, attacker, damage, meansOfDeath,
+                     iWeapon, vDir, hitLoc, psTimeOffset, animResult);
+#else
     Scr_PlayerKilled(self, inflictor, attacker, damage, meansOfDeath,
                      iWeapon, vDir, hitLoc, psTimeOffset);
+#endif
 
     {
         int maxClients = level.maxclients;
