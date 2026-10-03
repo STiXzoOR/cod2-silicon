@@ -849,7 +849,11 @@ void RB_InitSceneViewport(void);
 
 void RB_InitBackendGlobalStructs(void)
 {
+#if defined(COD2_X64)
+    memset(&backEnd, 0, sizeof(backEnd));
+#else
     memset(&backEnd, 0, 0x36e90);
+#endif
     *(int *)&backEnd.worldEntity = 3;
     backEnd.resolvedPostSunTarget = (GfxRenderTargetId)(0xe);
     backEnd.resolvedSceneTarget = (GfxRenderTargetId)(0xe);
@@ -1372,7 +1376,11 @@ static void RB_SetLightPropertiesCmd(GfxRenderCommandExecState *execState)
     *(int *)&backEnd.light[idx].specular[2] = *(int *)&((GfxCmdSetLightProperties *)cmd)->specular[2];
     *(int *)&backEnd.light[idx].specular[3] = *(int *)&((GfxCmdSetLightProperties *)cmd)->specular[3];
 
+#if defined(COD2_X64)
+    backEnd.light[idx].def = ((GfxCmdSetLightProperties *)cmd)->lightDef;
+#else
     *(int *)&backEnd.light[idx].def = (int)(((GfxCmdSetLightProperties *)cmd)->lightDef);
+#endif
 
     *(int *)&backEnd.light[idx].position[0] = *(int *)&((GfxCmdSetLightProperties *)cmd)->position[0];
     *(int *)&backEnd.light[idx].position[1] = *(int *)&((GfxCmdSetLightProperties *)cmd)->position[1];
@@ -2303,7 +2311,12 @@ static void RB_DrawSpriteCmd(GfxRenderCommandExecState *execState)
     byte *cmd;
     const Material *spriteMaterial;
     char *t = (char *)&tess;
+#if defined(COD2_X64)
+    GfxEntity entityStorage;
+    byte *entity = (byte *)&entityStorage;
+#else
     byte entity[0x74];
+#endif
 
     cmd = (byte *)execState->cmd;
 
@@ -2328,7 +2341,11 @@ static void RB_DrawSpriteCmd(GfxRenderCommandExecState *execState)
     ((GfxEntity *)entity)->origin[1] = ((GfxCmdDrawSprite *)cmd)->pos[1];
     ((GfxEntity *)entity)->origin[2] = ((GfxCmdDrawSprite *)cmd)->pos[2];
 
+#if defined(COD2_X64)
+    ((GfxEntity *)entity)->customMaterial = ((GfxCmdDrawSprite *)cmd)->material;
+#else
     ((GfxEntity *)entity)->customMaterial = (MaterialHandle)((int)(uintptr_t)((GfxCmdDrawSprite *)cmd)->material);
+#endif
 
     ((GfxEntity *)entity)->reType = (refEntityType_t)(4);
 

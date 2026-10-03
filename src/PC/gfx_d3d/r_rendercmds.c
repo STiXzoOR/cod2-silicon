@@ -78,7 +78,12 @@ static void R_X64TraceStretchPic(MaterialHandle material, float x, float y, floa
 #endif
 }
 
+#if defined(COD2_X64)
+static GfxBackEndData s_nativeBackEndData;
+#define s_backEndData ((byte *)&s_nativeBackEndData)
+#else
 extern unsigned char s_backEndData[];
+#endif
 extern GfxCmdArray *s_cmdList;
 extern struct GfxDebugFrameGlob s_debugFrameGlob;
 extern int printf(const char *, ...);
@@ -208,7 +213,11 @@ static void R_DumpCommandListForMenu(const GfxCmdArray *cl)
         if (getenv("DBGSPAM"))
             printf("[cmddump] off=%d id=%u bytes=%u", off, h->id, h->byteCount);
         if ((h->id == 1 || h->id == 2) && h->byteCount >= 8) {
+#if defined(COD2_X64)
+            const void *target = h->byteCount >= sizeof(GfxCmdCall) ? ((const GfxCmdCall *)h)->subCmd : NULL;
+#else
             const void *target = *(const void **)((const byte *)h + 4);
+#endif
             printf(" target=%d", (int)((const byte *)target - (const byte *)cl->cmds));
         } else if (h->id == 21 && h->byteCount >= 48) {
             const GfxCmdDrawText *txt = (const GfxCmdDrawText *)h;
@@ -299,6 +308,12 @@ static inline __attribute__((always_inline)) GfxCmdCall *R_AllocDelayedCall(shor
 
 static inline __attribute__((always_inline)) void *R_AllocCmd(int byteCount, int criticalByteCount, unsigned short id)
 {
+#if defined(COD2_X64)
+    if (byteCount <= 0 || byteCount > 65528)
+        return NULL;
+    byteCount = (byteCount + 7) & ~7;
+#endif
+
     GfxCmdArray *cl = s_cmdList;
     int usedBytes;
     int availBytes;
@@ -324,6 +339,12 @@ static inline __attribute__((always_inline)) void *R_AllocCmd(int byteCount, int
 
 static inline __attribute__((always_inline)) void *R_AllocCriticalCmd(int byteCount, unsigned short id)
 {
+#if defined(COD2_X64)
+    if (byteCount <= 0 || byteCount > 65528)
+        return NULL;
+    byteCount = (byteCount + 7) & ~7;
+#endif
+
     GfxCmdArray *cl = s_cmdList;
     int usedBytes;
     GfxCmdHeader *cmd;
@@ -411,6 +432,9 @@ void R_BeginDebugFrame(void)
 
 void R_AddCmdTouchAllImages(void)
 {
+#if defined(COD2_X64)
+    R_AllocCmd(sizeof(GfxCmdHeader), 0, 0x21);
+#else
     GfxCmdArray *cl = s_cmdList;
     int usedBytes = cl->usedTotal;
     int availBytes = (int)sizeof(cl->cmds) - usedBytes;
@@ -425,6 +449,7 @@ void R_AddCmdTouchAllImages(void)
     cl->lastCmd = cmdBuf;
     cmdBuf->id = 0x21;
     cmdBuf->byteCount = 4;
+#endif
 }
 
 void R_AbortRenderCommands(void)
@@ -890,7 +915,11 @@ void R_AddCmdLightProperties(int lightIndex, const GfxLight *light)
     float scale;
     GfxCmdSetLightProperties *cmd;
 
+#if defined(COD2_X64)
+    cmd = (GfxCmdSetLightProperties *)R_AllocCriticalCmd(sizeof(GfxCmdSetLightProperties), 5);
+#else
     cmd = (GfxCmdSetLightProperties *)R_AllocCriticalCmd(0x4c, 5);
+#endif
 
     cmd->lightIndex = lightIndex;
     cmd->position[0] = light->position[0];
@@ -936,7 +965,11 @@ void R_AddCmdBeginView(int viewCount, const GfxSceneDef *sceneDef, const GfxView
 {
     GfxCmdBeginView *cmd;
 
+#if defined(COD2_X64)
+    cmd = (GfxCmdBeginView *)R_AllocCriticalCmd(sizeof(GfxCmdBeginView), 0xc);
+#else
     cmd = (GfxCmdBeginView *)R_AllocCriticalCmd(0x30, 0xc);
+#endif
 
     cmd->viewCount = viewCount;
     cmd->sceneDef = *sceneDef;
