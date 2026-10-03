@@ -5,6 +5,9 @@
 #include "PC/qcommon/net_hardening.h"
 #include <stddef.h>
 #include <string.h>
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 extern const dvar_t *sv_maxclients;
 
 extern ucmd_t ucmds[12];
