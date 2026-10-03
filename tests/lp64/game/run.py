@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 import shlex
+import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -14,6 +15,10 @@ args = parser.parse_args()
 build = args.build.resolve()
 output = build / ('ws6-test-baseline' if args.baseline else 'ws6-tests')
 output.mkdir(parents=True, exist_ok=True)
+# Field labels are opaque to this test; use empty definitions, never retail payloads.
+declarations = (ROOT / 'src/PC/bgame/bg_weapons_load_obj_weaponDefFields_decls.inc').read_text()
+symbols = re.findall(r'extern const char (\w+)\[\];', declarations)
+(output / 'ws6_weapon_symbols.h').write_text(''.join(f'const char {symbol}[] = "";\n' for symbol in symbols))
 entries = json.loads((build / 'compile_commands.json').read_text())
 
 
@@ -22,7 +27,7 @@ def compile_source(source, name, baseline=False):
     flags = shlex.split(entry['command'])
     flags = flags[:flags.index('-o')]
     flags += ['-ffunction-sections', '-fdata-sections', '-Wno-unused-parameter',
-              '-fsanitize=address', '-fno-omit-frame-pointer']
+              '-fsanitize=address', '-fno-omit-frame-pointer', '-I' + str(output)]
     if baseline and args.baseline:
         path = output / Path(source).name
         path.write_bytes(subprocess.check_output(['git', 'show', f'{args.baseline}:{source}'], cwd=ROOT))
@@ -37,7 +42,8 @@ def compile_source(source, name, baseline=False):
 for name, sources in [('startup', ['src/PC/server_mp/sv_init_mp.c']),
                       ('script_api', ['src/PC/game_mp/g_scr_main_mp.c']),
                       ('snapshot', []),
-                      ('netchan', ['src/PC/server_mp/sv_net_chan_mp.c'])]:
+                      ('netchan', ['src/PC/server_mp/sv_net_chan_mp.c']),
+                      ('weapon_fields', [])]:
     objects = [compile_source(s, Path(s).stem, True) for s in sources]
     objects.append(compile_source(f'tests/lp64/game/{name}.c', name))
     exe = output / name
