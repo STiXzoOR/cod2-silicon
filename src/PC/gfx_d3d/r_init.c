@@ -93,6 +93,18 @@ static void R_Shutdown(qboolean destroyWindow);
 void R_SetColorMappings(void);
 static Bool R_CreateForInitOrReset(void);
 void R_BeginRegistration(vidConfig_t *vidConfigOut);
+
+#if defined(COD2_X64)
+static void R_InitModelDObj(void)
+{
+    /* The original renderer reserved 100 bytes for an ILP32 DObj and passed
+     * a 12-byte model descriptor. Both contain pointers in the native ABI. */
+    static DObj modelDObj;
+    DObjModel model = {0};
+    ri.DObjCreate(&model, 1, NULL, (char *)&modelDObj, 0);
+    rg.modelDObj = &modelDObj;
+}
+#endif
 Bool R_RecoverLostDevice(void);
 typedef unsigned char (*D3DDispModeCompFunc)(const _D3DDISPLAYMODE *, const _D3DDISPLAYMODE *);
 void ZSt13__adjust_heapIP15_D3DDISPLAYMODEiS0_PFhRKS0_S3_EEvT_T0_S7_T1_T2_(_D3DDISPLAYMODE *first, int holeIndex, int len, _D3DDISPLAYMODE value, D3DDispModeCompFunc comp);
@@ -916,10 +928,14 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
     FFT_Init(rg.fftBitswap, rg.fftTrigTable);
 
     {
+#if defined(COD2_X64)
+        R_InitModelDObj();
+#else
         int args[3] = { 0, 0, 0 };
         ((void (*)(void *, int, void *, void *, int))ri.DObjCreate)(
             args, 1, NULL, rg.modelDObjBuf, 0);
         rg.modelDObj = (struct DObj_s *)rg.modelDObjBuf;
+#endif
     }
 
     {

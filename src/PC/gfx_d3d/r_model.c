@@ -601,9 +601,16 @@ void R_UpdateXModelBounds(GfxSceneEntity *sceneEnt, GfxEntity *ent)
     }
 
     if (((GfxEntity *)e)->reType != 0) {
+#if defined(COD2_X64)
+        /* A model entity carries an XModel; all following DObj operations
+         * use the renderer's single-model wrapper, as in the Mac original. */
+        obj = rgg->modelDObj;
+        DObjSetModel((DObj *)obj, sceneEnt->u.model);
+#else
         void *defaultModel = rgg->modelDObj;
         obj = (void *)((GfxSceneEntity *)se)->u.data;
         DObjSetModel((DObj_s *)defaultModel, (const XModel *)(obj));
+#endif
     } else {
         obj = (void *)((GfxSceneEntity *)se)->u.data;
     }
