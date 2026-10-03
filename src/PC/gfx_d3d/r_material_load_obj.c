@@ -2740,9 +2740,10 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                 isDx7 = (r_rendererInUse->current.integer == 2);
                 if (isDx7) {
 #if defined(COD2_X64)
+                    MaterialPassDx7 *passes = (MaterialPassDx7 *)&tech->passArray;
                     for (int pi = 0; pi < passCount; ++pi)
                         if (!Material_ValidatePassArguments_impl(mtlx, tsNameStr, tech->name,
-                                                                 2, tech->passArray.dx7[pi].samplers))
+                                                                 2, passes[pi].samplers))
                             return 0;
 #else
                     byte *pb = (byte *)tech + 8;
