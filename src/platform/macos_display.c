@@ -81,7 +81,13 @@ void MacPlatform_ConfigureWindow(int width, int height, int mode, int refresh)
 
 static int SetWindowMode(void)
 {
+#if defined(__APPLE__) && defined(COD2_X64)
+    /* Reset also runs at map load. Toggling out and immediately back into a
+     * Cocoa fullscreen Space can cancel its asynchronous transition. */
+    if (windowMode == MAC_WINDOWED && SDL_SetWindowFullscreen(sdl_gl_window, 0) != 0)
+#else
     if (SDL_SetWindowFullscreen(sdl_gl_window, 0) != 0)
+#endif
         return -1;
     if (windowMode == MAC_FULLSCREEN) {
         SDL_DisplayMode desired = { 0 }, closest;
