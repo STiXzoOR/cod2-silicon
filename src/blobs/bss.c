@@ -750,7 +750,11 @@ WinVars_t g_wv;   /* x86 blob 32; x64 sizeof(WinVars_t)=48 -> overflow */
 #else
 unsigned char g_wv[32];
 #endif
+#if defined(COD2_X64)
+unsigned char sys_packetReceived[MAX_MSGLEN];
+#else
 unsigned char sys_packetReceived[16480];
+#endif
 #if defined(COD2_X64)
 /* x86 sizeof(GfxScene)=124292; on x64 the GfxEntity/GfxSceneEntity arrays + pointer
    fields grow so the struct is larger -> the byte blob put def.entityCount / sceneEnts /
