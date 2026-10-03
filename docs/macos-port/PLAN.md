@@ -109,6 +109,14 @@ read-only: point `fs_homepath` somewhere else for configs and logs.
   for server/game/script behaviour**: compare, then settle disagreements against
   the Mac disassembly. No license and derived from AGPL code: read, don't paste.
   32-bit only.
+- `research-clones/KisakCOD` — SwagSoftware's fully buildable, readable
+  reimplementation of **Call of Duty 4** (GPL-3.0, Windows/MSVC, active). CoD4's
+  IW3 engine descends directly from CoD2's, so its renderer (`gfx_d3d/r_shade.cpp`
+  code constants, `r_sky.cpp`, `r_light.cpp`, `r_model_lighting.cpp`) and script
+  VM (`script/scr_variable.cpp`, `scr_vm.cpp`) explain how the equivalent CoD2
+  systems are meant to work. It's a different game and version, so use it to
+  understand intent, verify against the Mac 1.3 binary, and never paste code
+  (GPL-3.0).
 - `research/` — in-depth reports on related projects
   (`engine-server-reconstructions.md`, `mac-client-reconstructions.md`,
   `tools-ecosystem.md`).
