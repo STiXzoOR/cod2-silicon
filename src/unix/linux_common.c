@@ -8,6 +8,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#if defined(__APPLE__) && defined(COD2_X64) && !defined(DEDICATED)
+#include <pthread/qos.h>
+#endif
 #if !defined(__EMSCRIPTEN__) && defined(COD2_ENABLE_NULL_CALL_RECOVERY)
 #define __USE_GNU
 #include <ucontext.h>
@@ -140,12 +143,25 @@ void Sys_OpenURL(const char *url, int activate)
 
 int main(int argc, char **argv)
 {
+#if defined(__APPLE__) && defined(COD2_X64) && !defined(DEDICATED)
+    int qosError = pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
+    if (qosError)
+        fprintf(stderr, "CoD2-native main thread QoS failed: %d\n", qosError);
+#endif
     char cmdLine[4096];
     int i;
     int offset;
 
     cmdLine[0] = '\0';
     offset = 0;
+#if defined(__APPLE__) && defined(COD2_X64) && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    extern int Cod2xNativeApp_Arguments(char *, int);
+    offset = Cod2xNativeApp_Arguments(cmdLine, sizeof(cmdLine));
+    if (offset < 0) {
+        fprintf(stderr, "CoD2-native bundle launch arguments exceed the command-line limit\n");
+        return 1;
+    }
+#endif
     for (i = 1; i < argc; i++) {
         int len = strlen(argv[i]);
         if (offset + len + 2 >= (int)sizeof(cmdLine))

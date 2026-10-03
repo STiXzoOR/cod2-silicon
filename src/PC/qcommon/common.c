@@ -101,6 +101,9 @@ extern int *com_fileAccessed;
 extern void Dvar_ClearModified(const dvar_t *dvar);
 extern void SetAnimCheck(int enabled);
 extern void NET_Sleep(int msec);
+#if COD2_APPLE_SDK
+extern void Sys_WaitUntilMilliseconds(unsigned int target);
+#endif
 extern int Com_EventLoop(void);
 extern void Cbuf_Execute(void);
 extern void SV_Frame(int msec);
@@ -1126,7 +1129,13 @@ void Com_SetRecommended(qboolean restart)
         int i;
 
         for (i = 0; i < filesize; i++)
+#if defined(COD2_X64)
+            /* Same wrapped bits as i386, without signed-overflow UB. */
+            checksum = (int)((unsigned int)(int)((char *)csv)[i] +
+                             (unsigned int)checksum * 1000000007u);
+#else
             checksum = (int)((char *)csv)[i] + checksum * 1000000007;
+#endif
 
         checksum &= 0xfffffff;
         FS_FreeFile(csv);
@@ -1782,7 +1791,16 @@ BM_NOINLINE void Com_Frame_Try_Block_Function(void)
             com_lastFrameTime = com_frameTime;
         rawMsec = com_frameTime - com_lastFrameTime;
         if (rawMsec < minMsec)
+#if COD2_APPLE_SDK
+        {
+            if (!com_dedicated->current.integer && com_maxfps->current.integer > 0)
+                Sys_WaitUntilMilliseconds((unsigned int)com_lastFrameTime + minMsec);
+            else
+                NET_Sleep(0);
+        }
+#else
             NET_Sleep(0);
+#endif
     } while (rawMsec < minMsec);
 
     Cbuf_Execute();

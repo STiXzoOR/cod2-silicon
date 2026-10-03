@@ -633,7 +633,14 @@ void player_die(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int 
     }
 
     {
+#if defined(COD2_X64)
+        /* Mac 1.3 stores &level_bgs through the bgs slot here (bgs = &level_bgs,
+           as in the 1.3 server). Writing level_bgs.time left bgs pointing at a
+           time value, and the death animation lookup faulted through it. */
+        *(void **)imp_bgs = (void *)&level_bgs;
+#else
         **(int **)g_time_ptr = level_bgs.time;
+#endif
     }
 
     if (attacker->s.eType == 9) {

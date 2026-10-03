@@ -24,6 +24,15 @@ static char pendingURL[512];
 
 static Cod2xURLHandler *urlHandler;
 
+int Cod2xNativeApp_Arguments(char *buffer, int capacity)
+{
+    id arguments = [NSBundle.mainBundle objectForInfoDictionaryKey:@"CoD2LaunchArguments"];
+    if (![arguments isKindOfClass:NSString.class])
+        return 0;
+    int length = snprintf(buffer, capacity, "%s", [arguments UTF8String]);
+    return length >= 0 && length < capacity ? length : -1;
+}
+
 int Cod2xNativeURL_Queue(const char *url)
 {
     Cod2xURL parsed;

@@ -389,6 +389,21 @@ void Scr_FreeScripts(int sys)
         Scr_EndLoadAnimTrees();
     }
 
+#if defined(COD2_X64)
+    /* Mac 1.3 Scr_FreeScripts always releases the game strings (user 1) and
+       resets the program state. The sys == 0 test never matched the game's
+       Scr_FreeScripts(1), so each level's game strings stayed allocated into
+       the next level. */
+    (void)sys;
+    SL_ShutdownSystem(1);
+    Scr_ShutdownOpcodeLookup();
+
+    scrVarPub = (struct scrVarPub_t *)imp_scrVarPub;
+    scrVarPub->programBuffer = NULL;
+    scrCompPub->programLen = 0;
+    scrVarPub->endScriptBuffer = NULL;
+    scrVarPub->checksum = 0;
+#else
     if (sys == 0) {
         SL_ShutdownSystem(sys);
         Scr_ShutdownOpcodeLookup();
@@ -401,6 +416,7 @@ void Scr_FreeScripts(int sys)
         scrVarPub->endScriptBuffer = NULL;
         scrVarPub->checksum = 0;
     }
+#endif
 }
 
 scr_func_t Scr_GetFunctionHandle(const char *filename, const char *name)

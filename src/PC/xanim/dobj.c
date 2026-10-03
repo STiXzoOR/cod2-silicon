@@ -919,7 +919,14 @@ void DObjCreate(DObjModel_s *dobjModels, unsigned int numModels, XAnimTree_s *tr
         unsigned char *pAge;
         unsigned char nextAge;
 
+#if defined(COD2_X64)
+        /* The anim-to-model strings follow infoArray, which starts after the
+           native 12-byte header (8 on i386); the i386 offset made them
+           overwrite the last infoArray slots with string IDs. */
+        obj->animToModel = &tree->infoArray[animCount];
+#else
         obj->animToModel = (unsigned short *)((char *)tree + 8 + animBytes);
+#endif
         pAge = (unsigned char *)obj->animToModel + animBytes;
         nextAge = (unsigned char)(pAge[0] + 1);
         if (!nextAge) {
