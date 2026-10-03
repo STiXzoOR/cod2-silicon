@@ -3189,7 +3189,11 @@ typedef TrackType * * Track;
 typedef short unsigned int UINT16;
 typedef unsigned int UINT32;
 
+#if defined(COD2_X64)
+typedef unsigned int UINT4;
+#else
 typedef long unsigned int UINT4;
+#endif
 
 typedef unsigned char UINT8;
 
