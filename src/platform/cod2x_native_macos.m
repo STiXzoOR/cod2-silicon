@@ -4,6 +4,7 @@
 #include "PC/qcommon/cod2x_url.h"
 #include <string.h>
 #include <stdio.h>
+#include "cod2x_native_setup.h"
 
 extern void Cbuf_AddText(const char *text);
 extern void Dvar_SetStringByName(const char *name, const char *value);
@@ -29,6 +30,8 @@ int Cod2xNativeApp_Arguments(char *buffer, int capacity)
     id arguments = [NSBundle.mainBundle objectForInfoDictionaryKey:@"CoD2LaunchArguments"];
     if (![arguments isKindOfClass:NSString.class])
         return 0;
+    if ([[NSBundle.mainBundle objectForInfoDictionaryKey:@"CoD2AutomaticShaderSetup"] boolValue])
+        return Cod2xSetupAppArguments(NSBundle.mainBundle, arguments, buffer, capacity);
     int length = snprintf(buffer, capacity, "%s", [arguments UTF8String]);
     return length >= 0 && length < capacity ? length : -1;
 }
@@ -53,6 +56,8 @@ void Cod2xNativeURL_Install(void)
 
 void Cod2xNativeURL_SetupPaths(void)
 {
+    if ([[NSBundle.mainBundle objectForInfoDictionaryKey:@"CoD2AutomaticShaderSetup"] boolValue])
+        return; /* Prepared before Com_Init; explicit command-line paths win. */
     id path = [NSBundle.mainBundle objectForInfoDictionaryKey:@"CoD2GameDirectory"];
     if ([path isKindOfClass:NSString.class] && [path length])
         Dvar_SetStringByName("fs_basepath", [path UTF8String]);
