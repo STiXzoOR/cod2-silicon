@@ -35,7 +35,8 @@ COD2_ALT("CDirect3DDevice_mNeedsVertexShaderValidation", "__ZN15CDirect3DDevice2
 COD2_ALT("CDirect3DDevice_mNeedsTransformationValidation", "__ZN15CDirect3DDevice30mNeedsTransformationValidationE")
 COD2_ALT("CDirect3DDevice_mNeedsRasterizationValidation", "__ZN15CDirect3DDevice29mNeedsRasterizationValidationE")
 #else
-#ifdef _WIN32
+/* Reconstructed __ZN identifiers also receive the Mach-O C prefix. */
+#if defined(_WIN32) || (defined(__APPLE__) && defined(COD2_X64))
 #define COD2_COFF_ASM_PREFIX "_"
 #else
 #define COD2_COFF_ASM_PREFIX ""

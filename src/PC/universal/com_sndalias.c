@@ -26,7 +26,9 @@ COD2_ASSERT_SIZE(struct SoundFileInfo, 8);
 COD2_ASSERT_SIZE(struct SndCurve, 0x48);
 
 extern int strnicmp(const char *s1, const char *s2, size_t n);
+#if !COD2_APPLE_SDK
 extern char *strcpy(char *dest, const char *src);
+#endif
 extern char *strlwr(char *s);
 extern void Com_StripExtension(const char *in, char *out);
 extern char **FS_ListFiles(const char *path, const char *extension, int behavior, int *numfiles, int allocTrackType);
@@ -537,7 +539,11 @@ snd_alias_t *Com_PickSoundAliasFromList(snd_alias_list_t *aliasList)
     return Com_PickSoundAliasFromList_core(aliasList);
 }
 
+#if COD2_APPLE_SDK
+snd_alias_list_t *Com_FindSoundAlias(const char *name)
+#else
 __forceinline snd_alias_list_t *Com_FindSoundAlias(const char *name)
+#endif
 {
     snd_alias_list_t *aliasList;
 

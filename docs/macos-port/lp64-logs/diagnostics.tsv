@@ -1,0 +1,1142 @@
+file	line	column	severity	flag	message	occurrences
+src/Mac/DirectX_9/CColorConverter.c	349	54	warning	-Wincompatible-pointer-types	incompatible pointer types passing 'fnptr_t[]' (aka 'void (*[])(void)') to parameter of type 'void **'	2
+src/Mac/DirectX_9/CColorConverter.c	350	54	warning	-Wincompatible-pointer-types	incompatible pointer types passing 'fnptr_t[]' (aka 'void (*[])(void)') to parameter of type 'void **'	2
+src/Mac/DirectX_9/CColorConverter.c	351	60	warning	-Wincompatible-pointer-types	incompatible pointer types passing 'fnptr_t[]' (aka 'void (*[])(void)') to parameter of type 'void **'	2
+src/Mac/DirectX_9/CColorConverter.c	352	60	warning	-Wincompatible-pointer-types	incompatible pointer types passing 'fnptr_t[]' (aka 'void (*[])(void)') to parameter of type 'void **'	2
+src/Mac/DirectX_9/CColorConverter.c	438	38	warning	-Wincompatible-pointer-types	incompatible pointer types passing 'fnptr_t[]' (aka 'void (*[])(void)') to parameter of type 'void **'	2
+src/Mac/DirectX_9/CColorConverter.c	450	38	warning	-Wincompatible-pointer-types	incompatible pointer types passing 'fnptr_t[]' (aka 'void (*[])(void)') to parameter of type 'void **'	2
+src/Mac/DirectX_9/CColorConverter.c	462	38	warning	-Wincompatible-pointer-types	incompatible pointer types passing 'fnptr_t[]' (aka 'void (*[])(void)') to parameter of type 'void **'	2
+src/Mac/DirectX_9/CColorConverter.c	474	38	warning	-Wincompatible-pointer-types	incompatible pointer types passing 'fnptr_t[]' (aka 'void (*[])(void)') to parameter of type 'void **'	2
+src/Mac/DirectX_9/CDirect3D.c	271	31	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DCubeTexture.c	128	49	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DCubeTexture.c	198	24	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DCubeTexture.c	199	26	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DCubeTexture.c	211	29	warning	-Wincompatible-pointer-types	incompatible pointer types passing 'GLuint *' (aka 'unsigned long *') to parameter of type 'const unsigned int *'	2
+src/Mac/DirectX_9/CDirect3DCubeTexture.c	239	24	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DCubeTexture.c	240	26	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DCubeTexture.c	263	22	warning	-Wincompatible-pointer-types	incompatible pointer types passing 'GLuint *' (aka 'unsigned long *') to parameter of type 'unsigned int *'	2
+src/Mac/DirectX_9/CDirect3DCubeTexture.c	265	45	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	546	29	warning	-Wdeprecated-non-prototype	passing arguments to 'glClientActiveTextureARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	547	25	warning	-Wdeprecated-non-prototype	passing arguments to 'glDisableClientState' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	549	29	warning	-Wdeprecated-non-prototype	passing arguments to 'glClientActiveTextureARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	722	15	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvfv' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	735	14	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	736	14	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	737	14	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	738	14	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	739	14	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	740	14	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	807	14	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	808	14	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	879	14	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	880	14	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	925	14	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	951	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	952	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	953	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	954	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	956	25	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	957	25	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	959	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	960	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	961	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	962	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1524	23	warning	-Wdeprecated-non-prototype	passing arguments to 'glClearStencil' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1539	26	warning	-Wdeprecated-non-prototype	passing arguments to 'glStencilMask' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1541	17	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLbitfield' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1552	26	warning	-Wdeprecated-non-prototype	passing arguments to 'glStencilMask' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1677	29	warning	-Wdeprecated-non-prototype	passing arguments to 'glClientActiveTextureARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1691	33	warning	-Wdeprecated-non-prototype	passing arguments to 'glBindProgramARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1699	33	warning	-Wdeprecated-non-prototype	passing arguments to 'glBindProgramARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1701	33	warning	-Wdeprecated-non-prototype	passing arguments to 'glBindProgramARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1706	24	warning	-Wdeprecated-non-prototype	passing arguments to 'glDepthFunc' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1718	25	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1775	30	warning	-Wdeprecated-non-prototype	passing arguments to 'glLoadMatrixf' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1777	30	warning	-Wdeprecated-non-prototype	passing arguments to 'glLoadMatrixf' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1796	26	warning	-Wdeprecated-non-prototype	passing arguments to 'glLoadMatrixf' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1876	50	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1877	50	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1878	50	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1879	50	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1880	50	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1881	50	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1882	50	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1888	46	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1889	46	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1890	46	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1891	46	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1893	46	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1913	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1914	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1919	24	warning	-Wdeprecated-non-prototype	passing arguments to 'glEnableClientState' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1920	20	warning	-Wdeprecated-non-prototype	passing arguments to 'glVertexPointer' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1929	32	warning	-Wdeprecated-non-prototype	passing arguments to 'glEnableClientState' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1931	31	warning	-Wdeprecated-non-prototype	passing arguments to 'glColorPointer' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1933	31	warning	-Wdeprecated-non-prototype	passing arguments to 'glColorPointer' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1937	41	warning	-Wdeprecated-non-prototype	passing arguments to 'glClientActiveTextureARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1938	36	warning	-Wdeprecated-non-prototype	passing arguments to 'glEnableClientState' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1939	34	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexCoordPointer' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1941	41	warning	-Wdeprecated-non-prototype	passing arguments to 'glClientActiveTextureARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1948	32	warning	-Wdeprecated-non-prototype	passing arguments to 'glEnableClientState' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1950	31	warning	-Wdeprecated-non-prototype	passing arguments to 'glColorPointer' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1952	31	warning	-Wdeprecated-non-prototype	passing arguments to 'glColorPointer' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1955	32	warning	-Wdeprecated-non-prototype	passing arguments to 'glEnableClientState' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1958	38	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexCoordPointer' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1961	38	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexCoordPointer' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1963	34	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexCoordPointer' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1971	22	warning	-Wdeprecated-non-prototype	passing arguments to 'glLoadMatrixf' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1985	25	warning	-Wdeprecated-non-prototype	passing arguments to 'glDisableClientState' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1986	25	warning	-Wdeprecated-non-prototype	passing arguments to 'glDisableClientState' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	1987	25	warning	-Wdeprecated-non-prototype	passing arguments to 'glDisableClientState' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2091	16	warning	-Wdeprecated-non-prototype	passing arguments to 'glFogfv' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2286	33	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'const DWORD' (aka 'const unsigned long') to 'UINT32' (aka 'unsigned int')	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2287	33	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'const DWORD' (aka 'const unsigned long') to 'UINT32' (aka 'unsigned int')	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2288	33	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'const DWORD' (aka 'const unsigned long') to 'UINT32' (aka 'unsigned int')	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2289	33	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'const DWORD' (aka 'const unsigned long') to 'UINT32' (aka 'unsigned int')	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2293	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'const DWORD' (aka 'const unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2293	41	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'const DWORD' (aka 'const unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2293	55	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'const DWORD' (aka 'const unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2293	73	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'const DWORD' (aka 'const unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2480	36	warning	-Wdeprecated-non-prototype	passing arguments to 'glProgramEnvParameter4fvARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2731	18	warning	-Wdeprecated-non-prototype	passing arguments to 'glLoadMatrixf' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2743	29	warning	-Wdeprecated-non-prototype	passing arguments to 'glClientActiveTextureARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2747	14	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2749	25	warning	-Wdeprecated-non-prototype	passing arguments to 'glDisableClientState' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2750	24	warning	-Wdeprecated-non-prototype	passing arguments to 'glEnableClientState' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2751	20	warning	-Wdeprecated-non-prototype	passing arguments to 'glVertexPointer' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2752	24	warning	-Wdeprecated-non-prototype	passing arguments to 'glEnableClientState' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2753	22	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexCoordPointer' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2757	25	warning	-Wdeprecated-non-prototype	passing arguments to 'glDisableClientState' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	2758	25	warning	-Wdeprecated-non-prototype	passing arguments to 'glDisableClientState' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3091	18	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexEnvi' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3109	52	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3111	49	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3112	48	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3120	52	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3122	49	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3123	48	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3124	49	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3125	48	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3134	52	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3136	49	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3137	48	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3138	49	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3139	48	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3140	49	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3141	48	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3149	54	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3151	51	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3152	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3160	54	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3162	51	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3163	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3164	51	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3165	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3174	54	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3176	51	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3177	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3178	51	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3179	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3180	51	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3181	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3209	17	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3221	17	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DDevice.c	3281	17	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DIndexBuffer.c	51	16	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DIndexBuffer.c	94	16	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	129	20	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	148	5	warning	-Wreturn-mismatch	void function 'COpenGLATITextFragmentShader_Enable' should not return a value	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	155	5	warning	-Wreturn-mismatch	void function 'COpenGLATITextFragmentShader_Disable' should not return a value	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	166	5	warning	-Wreturn-mismatch	void function 'COpenGLATITextFragmentShader_SetConstants' should not return a value	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	176	20	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	181	5	warning	-Wreturn-mismatch	void function 'COpenGLATITextFragmentShader_COpenGLATITextFragmentShader' should not return a value	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	187	20	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	206	5	warning	-Wreturn-mismatch	void function 'COpenGLNVidiaRegisterCombinersProgram_Enable' should not return a value	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	213	5	warning	-Wreturn-mismatch	void function 'COpenGLNVidiaRegisterCombinersProgram_Disable' should not return a value	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	224	5	warning	-Wreturn-mismatch	void function 'COpenGLNVidiaRegisterCombinersProgram_SetConstants' should not return a value	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	232	21	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	237	5	warning	-Wreturn-mismatch	void function 'COpenGLNVidiaRegisterCombinersProgram_COpenGLNVidiaRegisterCombinersProgram' should not return a value	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	244	21	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	270	25	warning	-Wdeprecated-non-prototype	passing arguments to 'glBindProgramARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	272	5	warning	-Wreturn-mismatch	void function 'COpenGLARBFragmentProgram_Enable' should not return a value	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	279	21	warning	-Wdeprecated-non-prototype	passing arguments to 'glBindProgramARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	280	5	warning	-Wreturn-mismatch	void function 'COpenGLARBFragmentProgram_Disable' should not return a value	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	290	36	warning	-Wdeprecated-non-prototype	passing arguments to 'glProgramEnvParameter4fvARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	293	5	warning	-Wreturn-mismatch	void function 'COpenGLARBFragmentProgram_SetConstants' should not return a value	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	303	21	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	312	9	warning	-Wreturn-mismatch	void function 'COpenGLARBFragmentProgram_COpenGLARBFragmentProgram' should not return a value	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	314	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	331	21	warning	-Wdeprecated-non-prototype	passing arguments to 'glGenProgramsARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	332	21	warning	-Wdeprecated-non-prototype	passing arguments to 'glBindProgramARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	333	23	warning	-Wdeprecated-non-prototype	passing arguments to 'glProgramStringARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	341	31	warning	-Wformat	format specifies type 'unsigned int' but the argument has type 'GLuint' (aka 'unsigned long')	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	345	21	warning	-Wdeprecated-non-prototype	passing arguments to 'glBindProgramARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	347	5	warning	-Wreturn-mismatch	void function 'COpenGLARBFragmentProgram_COpenGLARBFragmentProgram' should not return a value	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	354	21	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DPixelShader.c	356	28	warning	-Wdeprecated-non-prototype	passing arguments to 'glDeleteProgramsARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DSurface.c	85	21	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DSurface.c	142	36	warning	-Wpointer-to-int-cast	cast to smaller integer type 'unsigned int' from 'byte *' (aka 'unsigned char *')	2
+src/Mac/DirectX_9/CDirect3DSurface.c	207	34	warning	-Wdeprecated-non-prototype	passing arguments to 'glCompressedTexImage2DARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DSurface.c	210	22	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DSurface.c	211	31	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/CDirect3DSurface.c	212	31	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DSurface.c	212	54	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DSurface.c	237	34	warning	-Wdeprecated-non-prototype	passing arguments to 'glCompressedTexSubImage2D' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DSurface.c	240	24	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexSubImage2D' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DSurface.c	265	21	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DSwapChain.c	36	23	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DSwapChain.c	127	23	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DSwapChain.c	130	12	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'const CDirect3DSwapChain *' (aka 'const struct CDirect3DSwapChain *')	2
+src/Mac/DirectX_9/CDirect3DTexture.c	130	43	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DTexture.c	191	24	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DTexture.c	204	29	warning	-Wincompatible-pointer-types	incompatible pointer types passing 'GLuint *' (aka 'unsigned long *') to parameter of type 'const unsigned int *'	2
+src/Mac/DirectX_9/CDirect3DTexture.c	235	24	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DTexture.c	261	22	warning	-Wincompatible-pointer-types	incompatible pointer types passing 'GLuint *' (aka 'unsigned long *') to parameter of type 'unsigned int *'	2
+src/Mac/DirectX_9/CDirect3DTexture.c	263	39	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DTexture.c	322	39	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DVertexBuffer.c	78	16	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DVertexBuffer.c	98	16	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DVertexDeclaration.c	120	25	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DVertexDeclaration.c	223	25	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DVertexShader.c	66	27	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DVertexShader.c	67	29	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DVertexShader.c	86	27	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DVertexShader.c	87	29	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CDirect3DVertexShader.c	107	82	warning	-Wincompatible-pointer-types	incompatible pointer types passing 'char *' to parameter of type 'const CDirect3DVertexShader *' (aka 'const struct CDirect3DVertexShader *')	2
+src/Mac/DirectX_9/CDirect3DVertexShader.c	108	82	warning	-Wincompatible-pointer-types	incompatible pointer types passing 'char *' to parameter of type 'const CDirect3DVertexShader *' (aka 'const struct CDirect3DVertexShader *')	2
+src/Mac/DirectX_9/CDirect3DVolumeTexture.c	122	34	warning	-Wdeprecated-non-prototype	passing arguments to 'glCompressedTexImage3DARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DVolumeTexture.c	125	21	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexImage3D' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DVolumeTexture.c	145	34	warning	-Wdeprecated-non-prototype	passing arguments to 'glCompressedTexSubImage3D' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DVolumeTexture.c	148	24	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexSubImage3D' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CDirect3DVolumeTexture.c	280	43	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/CDirect3DVolumeTexture.c	341	29	warning	-Wincompatible-pointer-types	incompatible pointer types passing 'GLuint *' (aka 'unsigned long *') to parameter of type 'const unsigned int *'	2
+src/Mac/DirectX_9/CDirect3DVolumeTexture.c	393	22	warning	-Wincompatible-pointer-types	incompatible pointer types passing 'GLuint *' (aka 'unsigned long *') to parameter of type 'unsigned int *'	2
+src/Mac/DirectX_9/CDirect3DVolumeTexture.c	395	39	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/COpenGL.c	65	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/COpenGL.c	66	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/COpenGL.c	67	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/COpenGL.c	68	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/COpenGL.c	69	27	warning	-Wdeprecated-non-prototype	passing arguments to 'glBlendFuncSeparateEXT' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/COpenGL.c	80	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/COpenGL.c	81	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'int'	2
+src/Mac/DirectX_9/COpenGL.c	82	17	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/COpenGL.c	82	31	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLenum' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/DirectX_9/COpenGL.c	337	19	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/Mac/DirectX_9/COpenGL.c	340	25	warning	-Wdeprecated-non-prototype	passing arguments to 'glGenProgramsARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/COpenGL.c	341	25	warning	-Wdeprecated-non-prototype	passing arguments to 'glBindProgramARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/COpenGL.c	342	27	warning	-Wdeprecated-non-prototype	passing arguments to 'glProgramStringARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/COpenGL.c	348	31	warning	-Wformat	format specifies type 'unsigned int' but the argument has type 'GLuint' (aka 'unsigned long')	2
+src/Mac/DirectX_9/COpenGL.c	351	25	warning	-Wdeprecated-non-prototype	passing arguments to 'glBindProgramARB' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/COpenGLVAO.c	112	27	warning	-Wdeprecated-non-prototype	passing arguments to 'glGenVertexArraysAPPLE' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CVAOPacket.c	138	20	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CVAOPacket.c	146	20	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CVAOPacket.c	227	33	warning	-Wdeprecated-non-prototype	passing arguments to 'glVertexArrayParameteriAPPLE' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CVAOPacket.c	313	78	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CVAOPacket.c	382	78	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CVAOPacket.c	427	26	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CVAOPacket.c	430	23	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CVAOPacket.c	457	28	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/CVertexArrays.c	80	24	warning	-Wdeprecated-non-prototype	passing arguments to 'glEnableClientState' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CVertexArrays.c	86	25	warning	-Wdeprecated-non-prototype	passing arguments to 'glDisableClientState' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CVertexArrays.c	116	19	warning	-Wdeprecated-non-prototype	passing arguments to 'glColorPointer' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CVertexArrays.c	140	20	warning	-Wdeprecated-non-prototype	passing arguments to 'glNormalPointer' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CVertexArrays.c	164	20	warning	-Wdeprecated-non-prototype	passing arguments to 'glVertexPointer' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/CVertexArrays.c	188	22	warning	-Wdeprecated-non-prototype	passing arguments to 'glTexCoordPointer' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/DirectX_9/D3DXMath.c	133	12	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'float (*)[10][16]'	2
+src/Mac/DirectX_9/D3DXShader.c	53	17	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/D3DXShader.c	67	17	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/D3DXShader.c	297	16	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/DirectX_9/D3DXShader.c	310	16	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/Mac/DirectX_9/D3DXShader.c	594	38	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/Mac/DirectX_9/D3DXShader.c	600	20	warning	-Wincompatible-pointer-types	incompatible pointer types assigning to 'void **' from 'fnptr_t[]' (aka 'void (*[])(void)')	2
+src/Mac/Main/mac_common.c	183	23	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/Mac/Main/mac_common.c	184	22	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/Mac/Main/mac_configure.c	29	5	warning	-Wreturn-mismatch	void function 'Sys_DetectVideoCard' should not return a value	2
+src/Mac/Main/mac_main.c	249	25	warning	-Wdeprecated-non-prototype	passing arguments to 'UpdateSystemActivity' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Main/mac_main.c	388	39	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'const dvar_t *' (aka 'const struct dvar_s *')	2
+src/Mac/Main/mac_main.c	487	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/Mac/Main/mac_record_dsound.c	152	55	warning	-Wpointer-sign	passing 'unsigned int *' to parameter of type 'int *' converts between pointers to integer types with different sign	2
+src/Mac/Main/mac_record_dsound.c	167	26	warning	-Wdeprecated-non-prototype	passing arguments to a function without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Main/mac_syscon.c	60	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'ssize_t' (aka 'long') to 'int'	2
+src/Mac/Tools/CAudioRecorder.c	63	42	warning	-Wdeprecated-non-prototype	passing arguments to 'AudioOutputUnitStart' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/CAudioRecorder.c	77	24	warning	-Wdeprecated-non-prototype	passing arguments to 'AudioOutputUnitStop' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/CCircularBuffer.c	62	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'UInt32' (aka 'unsigned long') to 'int'	2
+src/Mac/Tools/CCircularBuffer.c	86	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'UInt32' (aka 'unsigned long') to 'int'	2
+src/Mac/Tools/CCircularBuffer.c	119	21	warning	-Wvoid-pointer-to-int-cast	cast to smaller integer type 'int' from 'void *'	2
+src/Mac/Tools/CCircularBuffer.c	120	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'UInt32' (aka 'unsigned long') to 'int'	2
+src/Mac/Tools/MacAppleEvents.c	41	22	warning	-Wdeprecated-non-prototype	passing arguments to 'AEDisposeDesc' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacAppleEvents.c	63	12	warning	-Wincompatible-pointer-types	incompatible pointer types initializing 'Handle' (aka 'char **') with an expression of type 'AEDataStorage' (aka 'int **')	2
+src/Mac/Tools/MacAppleEvents.c	65	22	warning	-Wdeprecated-non-prototype	passing arguments to 'AEDisposeDesc' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacAppleEvents.c	74	12	warning	-Wincompatible-pointer-types	incompatible pointer types initializing 'Handle' (aka 'char **') with an expression of type 'AEDataStorage' (aka 'int **')	2
+src/Mac/Tools/MacAppleEvents.c	76	22	warning	-Wdeprecated-non-prototype	passing arguments to 'AEDisposeDesc' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacAppleEvents.c	92	38	warning	-Wdeprecated-non-prototype	passing arguments to 'AECreateDesc' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacAppleEvents.c	108	39	warning	-Wdeprecated-non-prototype	passing arguments to 'AEGetDescData' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacAppleEvents.c	114	34	warning	-Wdeprecated-non-prototype	passing arguments to 'AECoerceDesc' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacAppleEvents.c	116	39	warning	-Wdeprecated-non-prototype	passing arguments to 'AEGetDescData' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacAppleEvents.c	133	22	warning	-Wdeprecated-non-prototype	passing arguments to 'AEDisposeDesc' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacAppleEvents.c	138	38	warning	-Wdeprecated-non-prototype	passing arguments to 'AECreateDesc' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacAppleEvents.c	156	44	warning	-Wdeprecated-non-prototype	passing arguments to 'CreateObjSpecifier' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacAppleEvents.c	168	47	warning	-Wdeprecated-non-prototype	passing arguments to 'AEPutParamDesc' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacAppleEvents.c	182	12	warning	-Wincompatible-pointer-types	incompatible pointer types initializing 'Handle' (aka 'char **') with an expression of type 'AEDataStorage' (aka 'int **')	2
+src/Mac/Tools/MacAppleEvents.c	187	22	warning	-Wdeprecated-non-prototype	passing arguments to 'AEDisposeDesc' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacAppleEvents.c	192	44	warning	-Wdeprecated-non-prototype	passing arguments to 'AECreateAppleEvent' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacAppleEvents.c	212	28	warning	-Wdeprecated-non-prototype	passing arguments to 'AESend' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	38	12	warning	-Wdeprecated-non-prototype	passing arguments to 'GetPort' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	39	22	warning	-Wdeprecated-non-prototype	passing arguments to 'SetPortWindowPort' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	44	12	warning	-Wdeprecated-non-prototype	passing arguments to 'SetPort' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	50	21	warning	-Wdeprecated-non-prototype	passing arguments to 'GetControlBounds' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	51	20	warning	-Wdeprecated-non-prototype	passing arguments to 'PtInRect' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	62	15	warning	-Wdeprecated-non-prototype	passing arguments to 'ShowWindow' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	63	29	warning	-Wdeprecated-non-prototype	passing arguments to 'RunAppModalLoopForWindow' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	64	15	warning	-Wdeprecated-non-prototype	passing arguments to 'HideWindow' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	65	22	warning	-Wdeprecated-non-prototype	passing arguments to 'GetWRefCon' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	70	18	warning	-Wdeprecated-non-prototype	passing arguments to 'DisposeWindow' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	81	36	warning	-Wdeprecated-non-prototype	passing arguments to 'GetControlByID' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	90	1	warning	-Wreturn-type	non-void function does not return a value	2
+src/Mac/Tools/MacBuilder.c	104	1	warning	-Wreturn-type	non-void function does not return a value	2
+src/Mac/Tools/MacBuilder.c	116	36	warning	-Wdeprecated-non-prototype	passing arguments to 'GetControlByID' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	124	27	warning	-Wdeprecated-non-prototype	passing arguments to 'GetControlData' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	136	36	warning	-Wdeprecated-non-prototype	passing arguments to 'GetControlByID' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	143	19	warning	-Wdeprecated-non-prototype	passing arguments to 'SetControlData' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	153	36	warning	-Wdeprecated-non-prototype	passing arguments to 'GetControlByID' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	161	20	warning	-Wdeprecated-non-prototype	passing arguments to 'ShowControl' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	163	20	warning	-Wdeprecated-non-prototype	passing arguments to 'HideControl' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	173	36	warning	-Wdeprecated-non-prototype	passing arguments to 'GetControlByID' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	183	23	warning	-Wdeprecated-non-prototype	passing arguments to 'DisableControl' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	194	36	warning	-Wdeprecated-non-prototype	passing arguments to 'GetControlByID' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	205	24	warning	-Wdeprecated-non-prototype	passing arguments to 'SetControlFontStyle' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	216	36	warning	-Wdeprecated-non-prototype	passing arguments to 'GetControlByID' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	224	23	warning	-Wdeprecated-non-prototype	passing arguments to 'GetControlKind' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	240	36	warning	-Wdeprecated-non-prototype	passing arguments to 'GetControlByID' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	247	63	warning	-Wdeprecated-non-prototype	passing arguments to 'NewControlUserPaneDrawUPP' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	248	19	warning	-Wdeprecated-non-prototype	passing arguments to 'SetControlData' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	253	69	warning	-Wdeprecated-non-prototype	passing arguments to 'NewControlUserPaneHitTestUPP' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	254	19	warning	-Wdeprecated-non-prototype	passing arguments to 'SetControlData' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	256	75	warning	-Wdeprecated-non-prototype	passing arguments to 'NewControlUserPaneTrackingUPP' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	257	19	warning	-Wdeprecated-non-prototype	passing arguments to 'SetControlData' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacBuilder.c	262	1	warning	-Wreturn-type	non-void function does not return a value	2
+src/Mac/Tools/MacDisplay.c	153	12	warning	-Wint-to-pointer-cast	cast to 'CGrafPtr' (aka 'int *') from smaller integer type 'int'	2
+src/Mac/Tools/MacDisplay.c	153	35	warning	-Wdeprecated-non-prototype	passing arguments to 'GetWindowPort' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	171	24	warning	-Wdeprecated-non-prototype	passing arguments to 'GetWindowPortBounds' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	172	20	warning	-Wdeprecated-non-prototype	passing arguments to 'PtInRect' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	186	1	warning	-Wreturn-type	non-void function does not return a value	2
+src/Mac/Tools/MacDisplay.c	196	18	warning	-Wdeprecated-non-prototype	passing arguments to 'CGDisplayFade' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	197	36	warning	-Wdeprecated-non-prototype	passing arguments to 'CGReleaseDisplayFadeReservation' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	199	1	warning	-Wreturn-type	non-void function does not return a value in all control paths	2
+src/Mac/Tools/MacDisplay.c	210	28	warning	-Wdeprecated-non-prototype	passing arguments to 'GetWindowPortBounds' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	224	36	warning	-Wdeprecated-non-prototype	passing arguments to 'CGDisplayPixelsWide' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	225	37	warning	-Wdeprecated-non-prototype	passing arguments to 'CGDisplayPixelsHigh' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	226	1	warning	-Wreturn-type	non-void function does not return a value in all control paths	2
+src/Mac/Tools/MacDisplay.c	231	16	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'SInt32' (aka 'long') to 'int'	2
+src/Mac/Tools/MacDisplay.c	234	12	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'SInt32' (aka 'long') to 'int'	2
+src/Mac/Tools/MacDisplay.c	240	9	warning	-Wreturn-mismatch	non-void function 'MacDisplay_SwapContext' should return a value	2
+src/Mac/Tools/MacDisplay.c	242	19	warning	-Wdeprecated-non-prototype	passing arguments to 'aglSwapBuffers' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	244	1	warning	-Wreturn-type	non-void function does not return a value in all control paths	2
+src/Mac/Tools/MacDisplay.c	251	32	warning	-Wdeprecated-non-prototype	passing arguments to 'EndMediaEdits' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	253	46	warning	-Wdeprecated-non-prototype	passing arguments to 'GetMediaDuration' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	254	37	warning	-Wdeprecated-non-prototype	passing arguments to 'InsertMediaIntoTrack' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	261	19	warning	-Wdeprecated-non-prototype	passing arguments to 'CloseMovieFile' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	263	1	warning	-Wreturn-type	non-void function does not return a value in all control paths	2
+src/Mac/Tools/MacDisplay.c	284	18	warning	-Wint-to-pointer-cast	cast to 'char *' from smaller integer type 'int'	2
+src/Mac/Tools/MacDisplay.c	289	1	warning	-Wreturn-type	non-void function does not return a value	2
+src/Mac/Tools/MacDisplay.c	318	29	warning	-Wdeprecated-non-prototype	passing arguments to 'gluCheckExtension' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	348	1	warning	-Wreturn-type	non-void function does not return a value	2
+src/Mac/Tools/MacDisplay.c	384	36	warning	-Wdeprecated-non-prototype	passing arguments to 'CGGetDisplayTransferByTable' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	410	1	warning	-Wreturn-type	non-void function does not return a value in all control paths	2
+src/Mac/Tools/MacDisplay.c	417	16	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'AGLDrawable' (aka 'int *')	2
+src/Mac/Tools/MacDisplay.c	419	29	warning	-Wdeprecated-non-prototype	passing arguments to 'GetWindowPort' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	421	25	warning	-Wdeprecated-non-prototype	passing arguments to 'QDLocalToGlobalPoint' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	422	1	warning	-Wreturn-type	non-void function does not return a value	2
+src/Mac/Tools/MacDisplay.c	429	16	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'AGLDrawable' (aka 'int *')	2
+src/Mac/Tools/MacDisplay.c	431	29	warning	-Wdeprecated-non-prototype	passing arguments to 'GetWindowPort' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	433	25	warning	-Wdeprecated-non-prototype	passing arguments to 'QDGlobalToLocalPoint' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	434	1	warning	-Wreturn-type	non-void function does not return a value	2
+src/Mac/Tools/MacDisplay.c	460	23	warning	-Wdeprecated-non-prototype	passing arguments to 'aglSwapBuffers' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	464	25	warning	-Wdeprecated-non-prototype	passing arguments to 'aglSetCurrentContext' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	467	23	warning	-Wdeprecated-non-prototype	passing arguments to 'aglSetDrawable' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	469	22	warning	-Wdeprecated-non-prototype	passing arguments to 'aglDestroyContext' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	477	13	warning	-Wpointer-integer-compare	comparison between pointer and integer ('int' and 'ContextRef' (aka 'struct OpaqueContextRef *'))	2
+src/Mac/Tools/MacDisplay.c	481	34	warning	-Wint-to-pointer-cast	cast to 'char *' from smaller integer type 'int'	2
+src/Mac/Tools/MacDisplay.c	482	17	warning	-Wint-to-void-pointer-cast	cast to 'void *' from smaller integer type 'int'	2
+src/Mac/Tools/MacDisplay.c	485	1	warning	-Wreturn-type	non-void function does not return a value	2
+src/Mac/Tools/MacDisplay.c	514	22	warning	-Wdeprecated-non-prototype	passing arguments to 'DisposeWindow' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	520	24	warning	-Wdeprecated-non-prototype	passing arguments to 'SetSystemUIMode' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	533	28	warning	-Wdeprecated-non-prototype	passing arguments to 'GetWindowPortBounds' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	545	40	warning	-Wdeprecated-non-prototype	passing arguments to 'CGDisplayPixelsWide' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	546	41	warning	-Wdeprecated-non-prototype	passing arguments to 'CGDisplayPixelsHigh' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	551	17	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'SInt32' (aka 'long') to 'int'	2
+src/Mac/Tools/MacDisplay.c	554	44	warning	-Wdeprecated-non-prototype	passing arguments to 'CGDisplayCurrentMode' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacDisplay.c	558	24	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'SInt32' (aka 'long') to 'int'	2
+src/Mac/Tools/MacDisplay.c	562	23	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'SInt32' (aka 'long') to 'int'	2
+src/Mac/Tools/MacDisplay.c	563	1	warning	-Wreturn-type	non-void function does not return a value	2
+src/Mac/Tools/MacFolders.c	41	25	warning	-Wdeprecated-non-prototype	passing arguments to 'FSGetCatalogInfo' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacFolders.c	67	25	warning	-Wdeprecated-non-prototype	passing arguments to 'FSPathMakeRef' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacFolders.c	92	25	warning	-Wdeprecated-non-prototype	passing arguments to 'FSpMakeFSRef' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacFolders.c	96	26	warning	-Wdeprecated-non-prototype	passing arguments to 'FSRefMakePath' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacFolders.c	121	25	warning	-Wdeprecated-non-prototype	passing arguments to 'FSPathMakeRef' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacMSS_Engine.c	162	30	warning	-Wdeprecated-non-prototype	passing arguments to 'CStreamSound_CStreamSound' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacMSS_Object.c	83	23	warning	-Wvoid-pointer-to-int-cast	cast to smaller integer type 'int' from 'void *'	2
+src/Mac/Tools/MacMSS_Object.c	89	23	warning	-Wvoid-pointer-to-int-cast	cast to smaller integer type 'int' from 'void *'	2
+src/Mac/Tools/MacMSS_Object.c	95	23	warning	-Wvoid-pointer-to-int-cast	cast to smaller integer type 'int' from 'void *'	2
+src/Mac/Tools/MacMSS_Sample.c	37	56	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'UInt32' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/Tools/MacMSS_Sample.c	130	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'UInt32' (aka 'unsigned long') to 'unsigned int'	2
+src/Mac/Tools/MacPreferences.c	40	14	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/Mac/Tools/MacPreferences.c	77	14	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/Mac/Tools/MacPreferences.c	84	13	warning	-Wreturn-mismatch	void function 'MacPreferences_PutString' should not return a value	2
+src/Mac/Tools/MacPreferences.c	106	5	warning	-Wreturn-mismatch	void function 'MacPreferences_PutString' should not return a value	2
+src/Mac/Tools/MacPreferences.c	129	32	warning	-Wdeprecated-non-prototype	passing arguments to 'CFPreferencesAppSynchronize' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacResources.c	6	22	warning	-Wignored-attributes	'packed' attribute ignored	2
+src/Mac/Tools/MacResources.c	47	39	warning	-Wdeprecated-non-prototype	passing arguments to 'CFBundleCopyLocalizedString' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacResources.c	53	48	warning	-Wdeprecated-non-prototype	passing arguments to 'CFBundleCopyLocalizedString' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacResources.c	57	41	warning	-Wdeprecated-non-prototype	passing arguments to 'CFStringGetPascalString' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacResources.c	58	14	warning	-Wdeprecated-non-prototype	passing arguments to 'CFRelease' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacResources.c	68	42	warning	-Wdeprecated-non-prototype	passing arguments to 'CFBundleCopyLocalizedString' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacResources.c	78	42	warning	-Wdeprecated-non-prototype	passing arguments to 'CFBundleCopyLocalizedString' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacResources.c	98	42	warning	-Wdeprecated-non-prototype	passing arguments to 'CFBundleCopyLocalizedString' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacStrings.c	12	17	warning	-Wint-to-pointer-cast	cast to 'CFStringRef' (aka 'const int *') from smaller integer type 'int'	2
+src/Mac/Tools/MacStrings.c	12	58	warning	-Wdeprecated-non-prototype	passing arguments to 'CFStringCreateWithCharacters' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacStrings.c	16	23	warning	-Wdeprecated-non-prototype	passing arguments to 'CFStringGetCString' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacStrings.c	17	14	warning	-Wdeprecated-non-prototype	passing arguments to 'CFRelease' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacTools.c	62	48	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'UInt32' (aka 'unsigned long') to 'int'	2
+src/Mac/Tools/MacTools.c	63	17	warning	-Wdeprecated-non-prototype	passing arguments to 'MPDelayUntil' without a prototype is deprecated in all versions of C and is not supported in C23	2
+src/Mac/Tools/MacWin32.c	111	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'DWORD' (aka 'unsigned long') to 'useconds_t' (aka 'unsigned int')	2
+src/Mac/Tools/MacWin32.c	120	64	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'LONG' (aka 'long') to 'int'	2
+src/Mac/Tools/MacWin32.c	129	76	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'LONG' (aka 'long') to 'int'	2
+src/Mac/Tools/MacWin32.c	129	87	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'LONG' (aka 'long') to 'int'	2
+src/Mac/Tools/MacWin32.c	139	68	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'LONG' (aka 'long') to 'int'	2
+src/PC/EffectsCore/FxArchive.c	178	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/EffectsCore/FxArchive.c	220	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/EffectsCore/FxArchive.c	261	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/EffectsCore/FxArchive.c	322	9	warning	-Wbuiltin-memcpy-chk-size	'memcpy' will always overflow; destination buffer has size 104, but size argument is 112	2
+src/PC/EffectsCore/FxPrimitives.c	523	5	warning	-Wbuiltin-memcpy-chk-size	'memset' will always overflow; destination buffer has size 116, but size argument is 128	2
+src/PC/EffectsCore/FxScheduler_load_obj.c	149	72	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/EffectsCore/FxTemplate.c	709	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/EffectsCore/FxTemplate.c	722	22	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/EffectsCore/FxTemplate.c	945	19	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/EffectsCore/FxUtil.c	172	14	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'MaterialHandle' (aka 'struct Material *')	2
+src/PC/EffectsCore/FxUtil.c	172	49	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'MaterialHandle' (aka 'struct Material *')	2
+src/PC/EffectsCore/FxUtil.c	939	74	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'const EffectTemplate *' (aka 'const struct EffectTemplate *')	2
+src/PC/EffectsCore/GenericParser2.c	378	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/bgame/bg_animation_mp.c	1120	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/bgame/bg_animation_mp.c	1225	23	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/bgame/bg_animation_mp.c	1604	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/bgame/bg_animation_mp.c	1628	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/bgame/bg_animation_mp.c	1715	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/bgame/bg_animation_mp.c	1739	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/bgame/bg_misc.c	1120	15	warning	-Wignored-attributes	'__stdcall' calling convention is not supported for this target	2
+src/PC/bgame/bg_misc.c	1127	13	warning	-Wimplicit-function-declaration	call to undeclared function 'Com_Printf'; ISO C99 and later do not support implicit function declarations	2
+src/PC/bgame/bg_weapons_load_obj.c	52	22	warning	-Wignored-attributes	'packed' attribute ignored	2
+src/PC/bgame/bg_weapons_load_obj.c	77	22	warning	-Wignored-attributes	'packed' attribute ignored	2
+src/PC/bgame/bg_weapons_load_obj.c	94	22	warning	-Wignored-attributes	'packed' attribute ignored	2
+src/PC/bgame/bg_weapons_load_obj.c	192	17	warning	-Wpointer-to-int-cast	cast to smaller integer type 'char' from 'const char *'	2
+src/PC/bgame/bg_weapons_load_obj.c	206	121	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/bgame/bg_weapons_load_obj.c	223	82	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/bgame/bg_weapons_load_obj.c	242	67	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/botlib/l_memory.c	26	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/botlib/l_precomp.c	459	11	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/botlib/l_precomp.c	464	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/botlib/l_precomp.c	468	11	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/botlib/l_precomp.c	1342	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/botlib/l_precomp.c	1363	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/botlib/l_precomp.c	1384	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/botlib/l_precomp.c	1769	40	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/botlib/l_script.c	671	24	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/cgame/cg_effects_load_obj.c	44	20	warning	-Wint-to-pointer-cast	cast to 'const char *' from smaller integer type 'int'	2
+src/PC/cgame/cg_effects_load_obj.c	44	42	warning	-Wint-to-pointer-cast	cast to 'const char *' from smaller integer type 'int'	2
+src/PC/cgame/cg_effects_load_obj.c	124	28	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/cgame/cg_effects_load_obj.c	187	45	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'EffectTemplate *' (aka 'struct EffectTemplate *')	2
+src/PC/cgame_mp/cg_draw_mp.c	334	9	warning	-Wimplicit-function-declaration	call to undeclared function 'getenv'; ISO C99 and later do not support implicit function declarations	2
+src/PC/cgame_mp/cg_draw_mp.c	337	13	warning	-Wimplicit-function-declaration	call to undeclared function 'Com_Printf'; ISO C99 and later do not support implicit function declarations	2
+src/PC/cgame_mp/cg_draw_mp.c	895	133	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/cgame_mp/cg_draw_mp.c	1838	68	warning	-Wint-to-pointer-cast	cast to 'MaterialHandle' (aka 'struct Material *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	827	57	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	833	57	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	844	57	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	850	57	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	867	57	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	873	57	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	884	57	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	890	57	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	907	57	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	913	57	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	923	57	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	939	57	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	945	57	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	955	57	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	1015	53	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	1029	53	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	1043	53	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	1103	53	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	1126	57	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	1132	57	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	1142	57	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	1162	53	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	1305	56	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	1349	56	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	1395	56	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_event_mp.c	1438	52	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_scoreboard_mp.c	66	27	warning	-Wint-to-pointer-cast	cast to 'int *' from smaller integer type 'int'	2
+src/PC/cgame_mp/cg_scoreboard_mp.c	75	27	warning	-Wint-to-pointer-cast	cast to 'int *' from smaller integer type 'int'	2
+src/PC/client_mp/cl_cgame_mp.c	404	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_cgame_mp.c	994	22	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_cgame_mp.c	1015	22	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_console_mp.c	312	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_console_mp.c	448	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_console_mp.c	1404	17	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_console_mp.c	1419	34	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_console_mp.c	1562	37	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_main_mp.c	1697	11	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_main_mp.c	1772	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_main_mp.c	1840	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_main_mp.c	2874	14	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_main_mp.c	2875	14	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_main_pc_mp.c	287	19	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_main_pc_mp.c	364	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_main_pc_mp.c	441	22	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_main_pc_mp.c	495	25	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_main_pc_mp.c	512	33	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_main_pc_mp.c	538	25	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_main_pc_mp.c	662	12	warning	-Wpointer-to-int-cast	cast to smaller integer type 'unsigned int' from 'byte *' (aka 'unsigned char *')	2
+src/PC/client_mp/cl_main_pc_mp.c	662	42	warning	-Wpointer-to-int-cast	cast to smaller integer type 'unsigned int' from 'byte *' (aka 'unsigned char *')	2
+src/PC/client_mp/cl_main_pc_mp.c	668	12	warning	-Wpointer-to-int-cast	cast to smaller integer type 'unsigned int' from 'byte *' (aka 'unsigned char *')	2
+src/PC/client_mp/cl_main_pc_mp.c	668	42	warning	-Wpointer-to-int-cast	cast to smaller integer type 'unsigned int' from 'byte *' (aka 'unsigned char *')	2
+src/PC/client_mp/cl_parse_mp.c	230	19	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/client_mp/cl_scrn_mp.c	12	22	warning	-Wignored-attributes	'packed' attribute ignored	2
+src/PC/client_mp/cl_scrn_mp.c	117	27	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'FontHandle' (aka 'struct Font_s *')	2
+src/PC/game/g_load_utils.c	40	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/game/g_load_utils.c	117	13	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/game/g_load_utils.c	126	13	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/game/g_weapon_load_obj.c	14	22	warning	-Wignored-attributes	'packed' attribute ignored	2
+src/PC/game/g_weapon_load_obj.c	53	5	warning	-Warray-bounds	array index 14 is past the end of the array (that has type 'char[14]')	2
+src/PC/game_mp/g_active_mp.c	488	13	warning	-Wimplicit-function-declaration	call to undeclared function 'Com_Printf'; ISO C99 and later do not support implicit function declarations	2
+src/PC/game_mp/g_client_mp.c	451	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_client_mp.c	516	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	144	13	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	153	34	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	166	38	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	174	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	196	16	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	228	16	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	352	38	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	359	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	365	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	371	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	382	38	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	393	38	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	395	38	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	407	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	417	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	441	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	447	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	463	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	483	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	490	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	496	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	536	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	542	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	548	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	553	38	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	582	38	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	587	38	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	659	36	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	1111	38	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	1121	38	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	1131	38	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	1147	38	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	1163	38	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_cmds_mp.c	1189	38	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_combat_mp.c	48	22	warning	-Wignored-attributes	'packed' attribute ignored	2
+src/PC/game_mp/g_items_mp.c	144	18	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_main_mp.c	225	11	warning	-Wignored-attributes	'__stdcall' calling convention is not supported for this target	2
+src/PC/game_mp/g_main_mp.c	226	11	warning	-Wignored-attributes	'__stdcall' calling convention is not supported for this target	2
+src/PC/game_mp/g_main_mp.c	227	17	warning	-Wignored-attributes	'__stdcall' calling convention is not supported for this target	2
+src/PC/game_mp/g_main_mp.c	276	15	warning	-Wignored-attributes	'__stdcall' calling convention is not supported for this target	2
+src/PC/game_mp/g_main_mp.c	422	22	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/game_mp/g_main_mp.c	1465	12	warning	-Wvoid-pointer-to-int-cast	cast to smaller integer type 'int' from 'void *'	2
+src/PC/game_mp/g_scr_main_mp.c	1357	55	warning	-Wint-to-pointer-cast	cast to 'const char *' from smaller integer type 'int'	2
+src/PC/game_mp/g_scr_main_mp.c	1514	16	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/game_mp/g_scr_main_mp.c	1878	1	warning	-Wreturn-type	non-void function does not return a value in all control paths	2
+src/PC/game_mp/g_scr_main_mp.c	1990	13	warning	-Wint-to-pointer-cast	cast to 'unsigned short *' from smaller integer type 'int'	2
+src/PC/game_mp/g_scr_main_mp.c	2081	17	warning	-Wint-to-void-pointer-cast	cast to 'void *' from smaller integer type 'int'	2
+src/PC/game_mp/g_scr_main_mp.c	2168	34	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_scr_main_mp.c	2297	24	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/game_mp/g_scr_main_mp.c	2578	19	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/game_mp/g_scr_main_mp.c	3228	24	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/game_mp/g_scr_main_mp.c	3254	24	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/game_mp/g_scr_main_mp.c	3260	24	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/game_mp/g_scr_main_mp.c	3918	38	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_scr_main_mp.c	4239	25	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/game_mp/g_svcmds_mp.c	101	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/game_mp/g_utils_mp.c	101	27	warning	-Wimplicit-function-declaration	call to undeclared function 'SCR_ARENA_ENC'; ISO C99 and later do not support implicit function declarations	2
+src/PC/game_mp/g_utils_mp.c	116	12	warning	-Wint-to-pointer-cast	cast to 'tagInfo_t *' (aka 'struct tagInfo_s *') from smaller integer type 'int'	2
+src/PC/game_mp/g_utils_mp.c	116	25	warning	-Wimplicit-function-declaration	call to undeclared function 'SCR_ARENA_PTR'; ISO C99 and later do not support implicit function declarations	2
+src/PC/game_mp/g_utils_mp.c	333	1	warning	-Wreturn-type	non-void function does not return a value in all control paths	2
+src/PC/game_mp/g_utils_mp.c	359	1	warning	-Wreturn-type	non-void function does not return a value in all control paths	2
+src/PC/game_mp/g_utils_mp.c	533	1	warning	-Wreturn-type	non-void function does not return a value in all control paths	2
+src/PC/game_mp/g_utils_mp.c	630	1	warning	-Wreturn-type	non-void function does not return a value in all control paths	2
+src/PC/game_mp/g_utils_mp.c	662	1	warning	-Wreturn-type	non-void function does not return a value in all control paths	2
+src/PC/game_mp/g_utils_mp.c	688	1	warning	-Wreturn-type	non-void function does not return a value in all control paths	2
+src/PC/game_mp/g_utils_mp.c	742	1	warning	-Wreturn-type	non-void function does not return a value in all control paths	2
+src/PC/gfx_d3d/r_bsp_load_obj.c	318	13	warning	-Wpointer-to-int-cast	cast to smaller integer type 'unsigned int' from 'GfxLight *' (aka 'struct GfxLight *')	2
+src/PC/gfx_d3d/r_bsp_load_obj.c	319	14	warning	-Wpointer-to-int-cast	cast to smaller integer type 'unsigned int' from 'GfxLight *' (aka 'struct GfxLight *')	2
+src/PC/gfx_d3d/r_bsp_load_obj.c	319	54	warning	-Wpointer-to-int-cast	cast to smaller integer type 'unsigned int' from 'GfxLight *' (aka 'struct GfxLight *')	2
+src/PC/gfx_d3d/r_bsp_load_obj.c	505	31	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_bsp_load_obj.c	511	31	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_bsp_load_obj.c	570	31	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_bsp_load_obj.c	576	31	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_dpvs.c	1961	32	warning	-Wvoid-pointer-to-int-cast	cast to smaller integer type 'unsigned int' from 'void *'	2
+src/PC/gfx_d3d/r_dvars.c	156	22	warning	-Wignored-attributes	'packed' attribute ignored	2
+src/PC/gfx_d3d/r_font.c	141	63	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_image.c	39	22	warning	-Wignored-attributes	'packed' attribute ignored	2
+src/PC/gfx_d3d/r_image.c	58	22	warning	-Wignored-attributes	'packed' attribute ignored	2
+src/PC/gfx_d3d/r_image.c	656	32	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_image.c	691	36	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/r_init.c	251	43	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/r_init.c	275	11	warning	-Wint-to-pointer-cast	cast to 'byte *' (aka 'unsigned char *') from smaller integer type 'int'	2
+src/PC/gfx_d3d/r_init.c	276	14	warning	-Wint-to-pointer-cast	cast to 'int *' from smaller integer type 'int'	2
+src/PC/gfx_d3d/r_init.c	488	24	warning	-Wint-to-pointer-cast	cast to 'float *' from smaller integer type 'int'	2
+src/PC/gfx_d3d/r_init.c	585	24	warning	-Wint-to-pointer-cast	cast to 'float *' from smaller integer type 'int'	2
+src/PC/gfx_d3d/r_init.c	885	22	warning	-Wint-to-pointer-cast	cast to 'int *' from smaller integer type 'int'	2
+src/PC/gfx_d3d/r_init.c	915	19	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'DWORD' (aka 'unsigned long') to 'int'	2
+src/PC/gfx_d3d/r_init.c	919	25	warning	-Wint-to-pointer-cast	cast to 'byte *' (aka 'unsigned char *') from smaller integer type 'int'	2
+src/PC/gfx_d3d/r_light_load_obj.c	35	63	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_light_load_obj.c	42	24	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_loadworld_new.c	146	28	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_loadworld_new.c	152	32	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_marks.c	533	32	warning	-Warray-bounds	array index 3 is past the end of the array (that has type 'vec_t[3]' (aka 'float[3]'))	2
+src/PC/gfx_d3d/r_marks.c	533	50	warning	-Warray-bounds	array index 4 is past the end of the array (that has type 'vec_t[3]' (aka 'float[3]'))	2
+src/PC/gfx_d3d/r_marks.c	533	68	warning	-Warray-bounds	array index 5 is past the end of the array (that has type 'vec_t[3]' (aka 'float[3]'))	2
+src/PC/gfx_d3d/r_marks.c	536	32	warning	-Warray-bounds	array index 6 is past the end of the array (that has type 'vec_t[3]' (aka 'float[3]'))	2
+src/PC/gfx_d3d/r_marks.c	536	50	warning	-Warray-bounds	array index 7 is past the end of the array (that has type 'vec_t[3]' (aka 'float[3]'))	2
+src/PC/gfx_d3d/r_marks.c	536	68	warning	-Warray-bounds	array index 8 is past the end of the array (that has type 'vec_t[3]' (aka 'float[3]'))	2
+src/PC/gfx_d3d/r_material.c	260	18	warning	-Wpointer-to-int-cast	cast to smaller integer type 'unsigned int' from 'MaterialTechniqueSet *' (aka 'struct MaterialTechniqueSet *')	2
+src/PC/gfx_d3d/r_material.c	260	53	warning	-Wpointer-to-int-cast	cast to smaller integer type 'unsigned int' from 'MaterialTechniqueSet *' (aka 'struct MaterialTechniqueSet *')	2
+src/PC/gfx_d3d/r_material.c	457	13	warning	-Wint-to-pointer-cast	cast to 'const char **' from smaller integer type 'int'	2
+src/PC/gfx_d3d/r_material.c	547	30	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_material.c	972	21	warning	-Wpointer-to-int-cast	cast to smaller integer type 'unsigned int' from 'GfxImage *' (aka 'struct GfxImage *')	2
+src/PC/gfx_d3d/r_material.c	972	41	warning	-Wpointer-to-int-cast	cast to smaller integer type 'unsigned int' from 'GfxImage *' (aka 'struct GfxImage *')	2
+src/PC/gfx_d3d/r_material.c	976	21	warning	-Wpointer-to-int-cast	cast to smaller integer type 'unsigned int' from 'GfxImage *' (aka 'struct GfxImage *')	2
+src/PC/gfx_d3d/r_material.c	976	41	warning	-Wpointer-to-int-cast	cast to smaller integer type 'unsigned int' from 'GfxImage *' (aka 'struct GfxImage *')	2
+src/PC/gfx_d3d/r_material.c	977	21	warning	-Wpointer-to-int-cast	cast to smaller integer type 'unsigned int' from 'GfxImage *' (aka 'struct GfxImage *')	2
+src/PC/gfx_d3d/r_material.c	977	41	warning	-Wpointer-to-int-cast	cast to smaller integer type 'unsigned int' from 'GfxImage *' (aka 'struct GfxImage *')	2
+src/PC/gfx_d3d/r_material.c	1016	28	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_material_load_obj.c	187	66	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_material_load_obj.c	273	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'GfxCachedShaderText *' (aka 'struct GfxCachedShaderText *')	2
+src/PC/gfx_d3d/r_material_load_obj.c	755	10	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'HRESULT' (aka 'long') to 'int'	2
+src/PC/gfx_d3d/r_material_load_obj.c	1785	26	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'byte *' (aka 'unsigned char *')	2
+src/PC/gfx_d3d/r_material_load_obj.c	1786	26	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'byte *' (aka 'unsigned char *')	2
+src/PC/gfx_d3d/r_material_load_obj.c	1787	35	warning	-Wint-to-pointer-cast	cast to 'MaterialTextureDef *' (aka 'struct MaterialTextureDef *') from smaller integer type 'int'	2
+src/PC/gfx_d3d/r_material_load_obj.c	1787	58	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'MaterialTextureDef *' (aka 'struct MaterialTextureDef *')	2
+src/PC/gfx_d3d/r_material_load_obj.c	1787	93	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'byte *' (aka 'unsigned char *')	2
+src/PC/gfx_d3d/r_material_load_obj.c	1793	27	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'const char *'	2
+src/PC/gfx_d3d/r_material_load_obj.c	1793	56	warning	-Wint-to-pointer-cast	cast to 'const char *' from smaller integer type 'int'	2
+src/PC/gfx_d3d/r_material_load_obj.c	1793	71	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'byte *' (aka 'unsigned char *')	2
+src/PC/gfx_d3d/r_material_load_obj.c	1796	28	warning	-Wint-to-pointer-cast	cast to 'byte *' (aka 'unsigned char *') from smaller integer type 'int'	2
+src/PC/gfx_d3d/r_material_load_obj.c	1796	37	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'byte *' (aka 'unsigned char *')	2
+src/PC/gfx_d3d/r_material_load_obj.c	1797	37	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'byte *' (aka 'unsigned char *')	2
+src/PC/gfx_d3d/r_material_load_obj.c	1810	28	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'water_t *' (aka 'struct water_t *')	2
+src/PC/gfx_d3d/r_material_load_obj.c	1819	48	warning	-Wint-to-pointer-cast	cast to 'const char *' from smaller integer type 'int'	2
+src/PC/gfx_d3d/r_material_load_obj.c	1819	63	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'byte *' (aka 'unsigned char *')	2
+src/PC/gfx_d3d/r_material_load_obj.c	1820	41	warning	-Wvoid-pointer-to-int-cast	cast to smaller integer type 'int' from 'void *'	2
+src/PC/gfx_d3d/r_material_load_obj.c	1828	36	warning	-Wint-to-pointer-cast	cast to 'MaterialConstantDef *' (aka 'struct MaterialConstantDefObj *') from smaller integer type 'int'	2
+src/PC/gfx_d3d/r_material_load_obj.c	1828	60	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'MaterialConstantDef *' (aka 'struct MaterialConstantDefObj *')	2
+src/PC/gfx_d3d/r_material_load_obj.c	1828	96	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'byte *' (aka 'unsigned char *')	2
+src/PC/gfx_d3d/r_material_load_obj.c	1833	26	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'const char *'	2
+src/PC/gfx_d3d/r_material_load_obj.c	1833	55	warning	-Wint-to-pointer-cast	cast to 'const char *' from smaller integer type 'int'	2
+src/PC/gfx_d3d/r_material_load_obj.c	1833	70	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'byte *' (aka 'unsigned char *')	2
+src/PC/gfx_d3d/r_material_load_obj.c	2497	100	warning	-Wint-to-pointer-cast	cast to 'const char *' from smaller integer type 'int'	2
+src/PC/gfx_d3d/r_rendercmds.c	743	11	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_rendercmds.c	790	11	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_scene.c	136	16	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'const char *'	2
+src/PC/gfx_d3d/r_scene.c	136	65	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'const char *'	2
+src/PC/gfx_d3d/r_scene.c	152	20	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/gfx_d3d/r_scene.c	161	20	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/gfx_d3d/r_scene.c	661	24	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'GfxWorld *' (aka 'struct GfxWorld *')	2
+src/PC/gfx_d3d/r_screenshot.c	83	10	warning	-Wint-to-pointer-cast	cast to 'void (*)(void *, int, int, int, int, float, int)' from smaller integer type 'int'	2
+src/PC/gfx_d3d/r_sky.c	161	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_staticmodelcache.c	955	30	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'int'	2
+src/PC/gfx_d3d/r_staticmodelcache.c	962	30	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'int'	2
+src/PC/gfx_d3d/r_staticmodelcache.c	969	30	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'int'	2
+src/PC/gfx_d3d/r_staticmodelcache.c	976	30	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'int'	2
+src/PC/gfx_d3d/r_utils.c	130	23	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_utils.c	142	19	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_utils.c	154	51	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/r_utils.c	163	43	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/gfx_d3d/rb_backend.c	369	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	386	45	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	640	33	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	852	5	warning	-Wbuiltin-memcpy-chk-size	'memset' will always overflow; destination buffer has size 224464, but size argument is 224912	2
+src/PC/gfx_d3d/rb_backend.c	1138	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	1154	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	1183	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	1213	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	1224	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	1229	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	1255	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	1266	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	1271	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	1375	39	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'GfxLightDef *' (aka 'struct GfxLightDef *')	2
+src/PC/gfx_d3d/rb_backend.c	1468	44	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'const DWORD' (aka 'const unsigned long') to 'int'	2
+src/PC/gfx_d3d/rb_backend.c	1469	44	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'const DWORD' (aka 'const unsigned long') to 'int'	2
+src/PC/gfx_d3d/rb_backend.c	1470	48	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'const DWORD' (aka 'const unsigned long') to 'int'	2
+src/PC/gfx_d3d/rb_backend.c	1471	49	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'const DWORD' (aka 'const unsigned long') to 'int'	2
+src/PC/gfx_d3d/rb_backend.c	2060	34	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/rb_backend.c	2066	34	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/rb_backend.c	2072	34	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/rb_backend.c	2240	30	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/rb_backend.c	2245	30	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/rb_backend.c	2286	34	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/rb_backend.c	2291	34	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/rb_backend.c	2325	5	warning	-Wbuiltin-memcpy-chk-size	'memset' will always overflow; destination buffer has size 116, but size argument is 128	2
+src/PC/gfx_d3d/rb_backend.c	2331	45	warning	-Wint-to-pointer-cast	cast to 'MaterialHandle' (aka 'struct Material *') from smaller integer type 'int'	2
+src/PC/gfx_d3d/rb_backend.c	2361	45	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2373	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2464	45	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2476	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2649	45	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2660	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2681	45	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2692	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2707	45	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2718	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2739	45	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2750	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2859	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2869	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2879	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2889	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2906	43	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2923	43	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2940	43	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	2957	43	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	3072	47	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/rb_backend.c	3129	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	3141	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	3152	25	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	3162	34	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/rb_backend.c	3239	34	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/rb_backend.c	3326	25	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	3333	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	3347	54	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	3375	21	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'GLuint' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	3491	30	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/rb_backend.c	3496	30	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/rb_backend.c	3808	38	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/rb_backend.c	3813	38	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/rb_backend.c	4278	55	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4289	55	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4300	55	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4311	55	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4343	52	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4361	52	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4379	52	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4433	45	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4445	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4590	53	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4600	53	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4610	53	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4620	53	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4633	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4650	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4667	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4684	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4730	53	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4740	53	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4750	53	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4760	53	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4773	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4790	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4807	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_backend.c	4824	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_debug.c	330	58	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_debug.c	349	55	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/gfx_d3d/rb_light.c	52	28	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'unsigned int'	2
+src/PC/gfx_d3d/rb_light.c	89	31	warning	-Wint-to-pointer-cast	cast to 'vc_log_entry_t *' from smaller integer type 'int'	2
+src/PC/gfx_d3d/rb_light.c	121	31	warning	-Wint-to-pointer-cast	cast to 'vc_log_entry_t *' from smaller integer type 'int'	2
+src/PC/gfx_d3d/rb_light.c	147	28	warning	-Wint-to-void-pointer-cast	cast to 'void *' from smaller integer type 'int'	2
+src/PC/gfx_d3d/rb_light.c	148	20	warning	-Wint-to-void-pointer-cast	cast to 'void *' from smaller integer type 'int'	2
+src/PC/gfx_d3d/rb_light.c	483	47	warning	-Wint-to-pointer-cast	cast to 'vc_log_entry_t *' from smaller integer type 'int'	2
+src/PC/gfx_d3d/rb_light.c	661	39	warning	-Wint-to-pointer-cast	cast to 'vc_log_entry_t *' from smaller integer type 'int'	2
+src/PC/gfx_d3d/rb_light.c	977	16	warning	-Wvoid-pointer-to-int-cast	cast to smaller integer type 'int' from 'void *'	2
+src/PC/gfx_d3d/rb_light.c	992	16	warning	-Wint-to-void-pointer-cast	cast to 'void *' from smaller integer type 'int'	4
+src/PC/gfx_d3d/rb_shade.c	829	35	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/rb_shade.c	875	34	warning	-Wignored-attributes	'stdcall' calling convention is not supported for this target	2
+src/PC/gfx_d3d/rb_tess.c	746	53	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'int'	2
+src/PC/gfx_d3d/rb_tess.c	747	53	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'int'	2
+src/PC/gfx_d3d/rb_tess.c	748	53	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'int'	2
+src/PC/gfx_d3d/rb_tess.c	749	53	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'int'	2
+src/PC/gfx_d3d/rb_tess.c	873	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'int'	2
+src/PC/gfx_d3d/rb_tess.c	874	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'int'	2
+src/PC/gfx_d3d/rb_tess.c	875	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'int'	2
+src/PC/gfx_d3d/rb_tess.c	876	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'D3DCOLOR' (aka 'unsigned long') to 'int'	2
+src/PC/gfx_d3d/rb_tess.c	1282	30	warning	-Wint-to-pointer-cast	cast to 'int *' from smaller integer type 'int'	2
+src/PC/gfx_d3d/rb_tess.c	1282	38	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'const GfxViewParms *' (aka 'const struct GfxViewParms *')	2
+src/PC/gfx_d3d/rb_tess.c	1305	38	warning	-Warray-bounds	array index 2 is past the end of the array (that has type 'float[2]')	2
+src/PC/gfx_d3d/rb_tess.c	1322	30	warning	-Wint-to-pointer-cast	cast to 'int *' from smaller integer type 'int'	2
+src/PC/gfx_d3d/rb_tess.c	1322	38	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'const GfxViewParms *' (aka 'const struct GfxViewParms *')	2
+src/PC/jpeg-6/jdhuff.c	454	13	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdhuff.c	454	28	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdhuff.c	454	43	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdhuff.c	454	58	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdhuff.c	455	10	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdhuff.c	455	25	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdhuff.c	455	40	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdhuff.c	455	55	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdhuff.c	456	10	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdhuff.c	456	25	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdhuff.c	456	41	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdhuff.c	456	57	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdhuff.c	457	10	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdhuff.c	457	26	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdhuff.c	457	42	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdphuff.c	214	13	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdphuff.c	214	28	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdphuff.c	214	43	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdphuff.c	214	58	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdphuff.c	215	10	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdphuff.c	215	25	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdphuff.c	215	40	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdphuff.c	215	55	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdphuff.c	216	10	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdphuff.c	216	25	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdphuff.c	216	41	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdphuff.c	216	57	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdphuff.c	217	10	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdphuff.c	217	26	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/jpeg-6/jdphuff.c	217	42	warning	-Wshift-negative-value	shifting a negative signed value is undefined	2
+src/PC/qcommon/cm_load_obj.c	530	36	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/qcommon/cmd.c	67	14	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/qcommon/cmd.c	87	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/qcommon/com_playerprofile.c	182	52	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/qcommon/common.c	74	22	warning	-Wignored-attributes	'packed' attribute ignored	2
+src/PC/qcommon/common.c	261	19	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/qcommon/common.c	517	5	warning	-Wnull-dereference	indirection of non-volatile null pointer will be deleted, not trap	2
+src/PC/qcommon/huffman.c	83	13	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	85	13	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	93	13	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	95	13	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	101	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	102	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	110	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	111	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	114	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	115	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	118	9	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	121	9	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	124	9	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	127	9	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	130	9	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	133	9	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	162	9	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t **' (aka 'struct nodetype **')	2
+src/PC/qcommon/huffman.c	231	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	233	9	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	237	13	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t **' (aka 'struct nodetype **')	2
+src/PC/qcommon/huffman.c	241	9	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t **' (aka 'struct nodetype **')	2
+src/PC/qcommon/huffman.c	244	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	245	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	249	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	251	9	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	255	13	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t **' (aka 'struct nodetype **')	2
+src/PC/qcommon/huffman.c	259	9	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t **' (aka 'struct nodetype **')	2
+src/PC/qcommon/huffman.c	262	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	263	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	264	5	warning	-Wvoid-pointer-to-int-cast	cast to smaller integer type 'int' from 'void *'	2
+src/PC/qcommon/huffman.c	265	5	warning	-Wvoid-pointer-to-int-cast	cast to smaller integer type 'int' from 'void *'	2
+src/PC/qcommon/huffman.c	269	13	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	271	13	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	277	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	278	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	280	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	281	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	282	5	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'node_t *' (aka 'struct nodetype *')	2
+src/PC/qcommon/huffman.c	308	71	warning	-Wvoid-pointer-to-int-cast	cast to smaller integer type 'int' from 'void *'	2
+src/PC/qcommon/huffman.c	310	42	warning	-Wvoid-pointer-to-int-cast	cast to smaller integer type 'int' from 'void *'	2
+src/PC/qcommon/huffman.c	316	67	warning	-Wvoid-pointer-to-int-cast	cast to smaller integer type 'int' from 'void *'	2
+src/PC/qcommon/huffman.c	318	40	warning	-Wvoid-pointer-to-int-cast	cast to smaller integer type 'int' from 'void *'	2
+src/PC/qcommon/msg_mp.c	679	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/qcommon/msg_mp.c	735	29	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/qcommon/msg_mp.c	902	13	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/qcommon/msg_mp.c	922	13	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/qcommon/msg_mp.c	2039	9	warning	-Wimplicit-function-declaration	call to undeclared function 'getenv'; ISO C99 and later do not support implicit function declarations	2
+src/PC/qcommon/net_chan_mp.c	44	14	warning	-Wincompatible-library-redeclaration	incompatible redeclaration of library function 'malloc'	2
+src/PC/qcommon/net_chan_mp.c	524	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/qcommon/net_chan_mp.c	532	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/qcommon/statmonitor.c	26	36	warning	-Wint-to-pointer-cast	cast to 'MaterialHandle' (aka 'struct Material *') from smaller integer type 'int'	2
+src/PC/script/scr_animtree.c	242	13	warning	-Wint-to-pointer-cast	cast to 'struct XAnim_s **' from smaller integer type 'int'	2
+src/PC/script/scr_compiler.c	142	13	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long long' to 'int'	2
+src/PC/script/scr_compiler.c	159	32	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'char *'	2
+src/PC/script/scr_compiler.c	168	32	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'char *'	2
+src/PC/script/scr_compiler.c	177	32	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'char *'	2
+src/PC/script/scr_compiler.c	2105	40	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'int'	2
+src/PC/script/scr_compiler.c	2190	40	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'int'	2
+src/PC/script/scr_compiler.c	2906	23	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'int'	2
+src/PC/script/scr_compiler.c	2931	23	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'int'	2
+src/PC/script/scr_compiler.c	2956	23	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'int'	2
+src/PC/script/scr_compiler.c	5545	47	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/script/scr_memorytree.c	271	66	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'unsigned int'	2
+src/PC/script/scr_variable.c	757	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/script/scr_variable.c	945	23	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/script/scr_variable.c	950	23	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/script/scr_variable.c	954	49	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/script/scr_variable.c	1394	22	warning	-Wint-to-pointer-cast	cast to 'VariableStackBuffer *' (aka 'struct VariableStackBuffer *') from smaller integer type 'unsigned int'	2
+src/PC/script/scr_variable.c	1574	55	warning	-Wint-to-pointer-cast	cast to 'const byte *' (aka 'const unsigned char *') from smaller integer type 'unsigned int'	2
+src/PC/script/scr_variable.c	1575	38	warning	-Wint-to-pointer-cast	cast to 'byte *' (aka 'unsigned char *') from smaller integer type 'unsigned int'	2
+src/PC/script/scr_variable.c	1801	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/script/scr_variable.c	3085	29	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/script/yyparse_impl.h	720	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	720	57	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	720	86	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	726	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	726	57	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	726	86	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	732	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	738	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	744	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	750	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	756	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	762	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	768	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	774	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	780	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	786	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	792	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	798	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	804	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	810	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	816	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	822	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	840	74	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	844	74	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	848	74	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	854	74	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	859	74	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	866	74	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	890	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	890	57	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	949	74	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	963	74	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	969	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	969	57	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	975	74	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	980	74	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	990	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	990	56	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1001	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1001	57	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1012	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1017	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1022	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1027	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1032	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1037	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1042	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1047	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1052	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1057	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1062	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1062	57	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1067	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1067	57	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1075	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1075	57	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1080	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1080	57	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1111	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1111	56	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1120	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1120	57	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1125	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1125	57	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1130	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1130	57	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1175	74	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1180	74	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1188	74	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1218	76	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'intptr_t' (aka 'long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1219	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1219	56	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1224	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/script/yyparse_impl.h	1224	57	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uintptr_t' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/server_mp/sv_client_mp.c	334	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/server_mp/sv_client_mp.c	356	32	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/server_mp/sv_client_mp.c	357	57	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/server_mp/sv_client_mp.c	619	24	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/server_mp/sv_client_mp.c	638	24	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/server_mp/sv_client_mp.c	645	24	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/server_mp/sv_client_mp.c	1560	9	warning	-Wimplicit-function-declaration	call to undeclared function 'getenv'; ISO C99 and later do not support implicit function declarations	2
+src/PC/server_mp/sv_game_mp.c	326	23	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'const char *'	2
+src/PC/server_mp/sv_game_mp.c	328	27	warning	-Wint-to-pointer-cast	cast to 'const char *' from smaller integer type 'int'	2
+src/PC/server_mp/sv_game_mp.c	524	23	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/server_mp/sv_init_mp.c	416	63	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_init_mp.c	427	62	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_init_mp.c	428	72	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_init_mp.c	429	55	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_init_mp.c	430	63	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_init_mp.c	431	67	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_init_mp.c	434	73	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_init_mp.c	441	66	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_init_mp.c	442	66	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_init_mp.c	443	61	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_init_mp.c	444	67	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_init_mp.c	445	82	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_init_mp.c	446	64	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_init_mp.c	447	78	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_init_mp.c	448	57	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_init_mp.c	449	73	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_init_mp.c	455	63	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_init_mp.c	493	11	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/server_mp/sv_init_mp.c	495	22	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/server_mp/sv_init_mp.c	830	23	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_main_pc_mp.c	54	11	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/server_mp/sv_snapshot_mp.c	214	82	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_snapshot_mp.c	518	102	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/server_mp/sv_voice_mp.c	117	10	warning	-Wint-to-pointer-cast	cast to 'byte *' (aka 'unsigned char *') from smaller integer type 'int'	2
+src/PC/server_mp/sv_voice_mp.c	117	20	warning	-Wint-to-pointer-cast	cast to 'int *' from smaller integer type 'int'	2
+src/PC/server_mp/sv_voice_mp.c	152	10	warning	-Wint-to-pointer-cast	cast to 'byte *' (aka 'unsigned char *') from smaller integer type 'int'	2
+src/PC/server_mp/sv_voice_mp.c	152	20	warning	-Wint-to-pointer-cast	cast to 'int *' from smaller integer type 'int'	2
+src/PC/speex/ltp.c	257	25	warning	-Wabsolute-value	using floating point absolute value function 'fabs' when argument is of integer type	2
+src/PC/speex/misc.c	133	40	warning	-Wimplicit-const-int-float-conversion	implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648	2
+src/PC/speex/misc.c	138	35	warning	-Wimplicit-const-int-float-conversion	implicit conversion from 'int' to 'float' changes value from 2147483647 to 2147483648	2
+src/PC/stringed/stringed_hooks.c	21	22	warning	-Wignored-attributes	'packed' attribute ignored	2
+src/PC/stringed/stringed_hooks.c	156	57	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/stringed/stringed_hooks.c	157	73	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/stringed/stringed_hooks.c	471	31	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/stringed/stringed_hooks.c	510	29	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/stringed/stringed_ingame.c	51	30	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/stringed/stringed_ingame.c	67	11	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/stringed/stringed_ingame.c	97	19	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/stringed/stringed_ingame.c	139	24	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'unsigned int'	2
+src/PC/stringed/stringed_ingame.c	239	11	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'unsigned int'	2
+src/PC/stringed/stringed_ingame.c	377	46	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'unsigned int'	2
+src/PC/stringed/stringed_interface.c	69	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'unsigned int'	2
+src/PC/ui/ui_shared_obj.c	367	20	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/ui/ui_utils.c	27	22	warning	-Wignored-attributes	'packed' attribute ignored	2
+src/PC/ui/ui_utils.c	396	43	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/ui_mp/ui_gameinfo_mp.c	77	19	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/ui_mp/ui_gameinfo_mp.c	79	31	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/ui_mp/ui_gameinfo_mp.c	124	22	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/ui_mp/ui_main_mp.c	369	42	warning	-Wint-to-pointer-cast	cast to 'snd_alias_list_t *' (aka 'struct snd_alias_list_t *') from smaller integer type 'int'	2
+src/PC/ui_mp/ui_main_mp.c	548	19	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/ui_mp/ui_main_mp.c	1147	24	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/ui_mp/ui_main_mp.c	1627	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/ui_mp/ui_main_mp.c	1635	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/ui_mp/ui_main_mp.c	1672	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/ui_mp/ui_main_mp.c	1693	34	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/ui_mp/ui_main_mp.c	1719	19	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'const char *'	2
+src/PC/ui_mp/ui_main_mp.c	2073	19	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/ui_mp/ui_main_mp.c	2078	23	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/ui_mp/ui_main_mp.c	2806	35	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'char *'	2
+src/PC/ui_mp/ui_main_mp.c	2824	27	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'char *'	2
+src/PC/ui_mp/ui_main_mp.c	3802	61	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'int *'	2
+src/PC/ui_mp/ui_main_mp.c	4509	27	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'char *'	2
+src/PC/ui_mp/ui_main_mp.c	4546	27	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'char *'	2
+src/PC/universal/com_files.c	482	11	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/universal/com_files.c	484	11	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/universal/com_files.c	660	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/universal/com_files.c	691	23	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/universal/com_files.c	697	32	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/universal/com_files.c	699	24	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/universal/com_files.c	702	43	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/universal/com_files.c	715	24	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/universal/com_files.c	717	31	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/universal/com_files.c	732	16	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/universal/com_files.c	735	12	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/universal/com_files.c	811	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_files.c	812	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_files.c	813	16	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_files.c	1560	91	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_files.c	1562	62	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_files.c	1577	11	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_files.c	1583	24	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uLong' (aka 'unsigned long') to 'int'	2
+src/PC/universal/com_files.c	1594	61	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uLong' (aka 'unsigned long') to 'int'	2
+src/PC/universal/com_files.c	1603	20	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/universal/com_files.c	1774	11	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/universal/com_memory.c	215	22	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_memory.c	233	22	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_memory.c	238	18	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_memory.c	351	12	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/universal/com_memory.c	372	12	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/universal/com_memory.c	373	28	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_memory.c	403	12	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/universal/com_memory.c	490	23	warning	-Wignored-attributes	'__stdcall' calling convention is not supported for this target	2
+src/PC/universal/com_memory.c	491	14	warning	-Wignored-attributes	'__stdcall' calling convention is not supported for this target	2
+src/PC/universal/com_shared.c	79	23	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_shared.c	80	22	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_sndalias.c	179	44	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_sndalias.c	181	33	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_sndalias.c	605	65	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_sndalias_load_obj.c	151	18	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/universal/com_sndalias_load_obj.c	850	28	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_sndalias_load_obj.c	852	27	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_sndalias_load_obj.c	905	11	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_sndalias_load_obj.c	991	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_sndalias_load_obj.c	1210	20	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/com_sndalias_load_obj.c	1569	42	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/fft.c	30	19	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/fft.c	31	39	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'unsigned int'	2
+src/PC/universal/fft.c	87	48	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'unsigned int'	2
+src/PC/universal/fft.c	88	50	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'unsigned int'	2
+src/PC/universal/fft.c	97	32	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'unsigned int'	2
+src/PC/universal/memfile.c	110	30	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/q_parse.c	549	16	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/universal/q_shared.c	691	36	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'size_t' (aka 'unsigned long') to 'int'	2
+src/PC/universal/q_shared.c	885	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/win32/cinematics.c	180	75	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'unsigned int'	2
+src/PC/win32/cinematics.c	490	35	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/win32/cinematics.c	792	20	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'MaterialHandle' (aka 'struct Material *')	2
+src/PC/win32/cinematics.c	1091	40	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/win32/cinematics.c	1097	63	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/win32/cinematics.c	1200	39	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/win32/cinematics.c	1238	39	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/win32/cinematics.c	1253	39	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/win32/snd_driver.c	999	77	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/win32/snd_driver.c	1188	131	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'long' to 'int'	2
+src/PC/win32/snd_driver.c	1661	29	warning	-Wpointer-integer-compare	comparison between pointer and integer ('HDIGDRIVER' (aka 'unsigned long') and 'void *')	2
+src/PC/win32/snd_driver.c	1702	27	warning	-Wint-conversion	incompatible pointer to integer conversion assigning to 'HPROVIDER' (aka 'unsigned long') from 'void *'	2
+src/PC/win32/snd_driver.c	1713	31	warning	-Wpointer-integer-compare	comparison between pointer and integer ('HPROVIDER' (aka 'unsigned long') and 'void *')	2
+src/PC/win32/snd_driver.c	1729	35	warning	-Wpointer-integer-compare	comparison between pointer and integer ('HPROVIDER' (aka 'unsigned long') and 'void *')	2
+src/PC/win32/snd_driver.c	1735	35	warning	-Wpointer-integer-compare	comparison between pointer and integer ('HPROVIDER' (aka 'unsigned long') and 'void *')	2
+src/PC/win32/win_net.c	193	54	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: '__darwin_time_t' (aka 'long') to '__darwin_suseconds_t' (aka 'int')	2
+src/PC/win32/win_net.c	214	32	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'in_addr_t' (aka 'unsigned int')	2
+src/PC/win32/win_net.c	249	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'ssize_t' (aka 'long') to 'int'	2
+src/PC/win32/win_net.c	336	32	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'in_addr_t' (aka 'unsigned int')	2
+src/PC/win32/win_net.c	348	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'ssize_t' (aka 'long') to 'int'	2
+src/PC/win32/win_net.c	350	15	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'ssize_t' (aka 'long') to 'int'	2
+src/PC/win32/win_net.c	438	51	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'in_addr_t' (aka 'unsigned int')	2
+src/PC/win32/win_net.c	502	49	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'in_addr_t' (aka 'unsigned int')	2
+src/PC/win32/win_net.c	532	32	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'ssize_t' (aka 'long') to 'int'	2
+src/PC/win32/win_net.c	548	36	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/win32/win_net.c	549	36	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/win32/win_net.c	565	36	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'ssize_t' (aka 'long') to 'int'	2
+src/PC/win32/win_net.c	599	32	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'ssize_t' (aka 'long') to 'int'	2
+src/PC/win32/win_net.c	724	59	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'unsigned int'	2
+src/PC/win32/win_shared.c	22	24	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'DWORD' (aka 'unsigned long') to 'int'	2
+src/PC/win32/win_shared.c	25	26	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'DWORD' (aka 'unsigned long') to 'int'	2
+src/PC/win32/win_shared.c	30	12	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'DWORD' (aka 'unsigned long') to 'int'	2
+src/PC/xanim/dobj.c	144	40	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/xanim/dobj.c	339	17	warning	-Wint-to-pointer-cast	cast to 'DSkel *' (aka 'struct DSkel *') from smaller integer type 'int'	2
+src/PC/xanim/dobj.c	340	37	warning	-Wint-to-pointer-cast	cast to 'unsigned short *' from smaller integer type 'int'	2
+src/PC/xanim/dobj.c	1411	60	warning	-Wpointer-bool-conversion	address of array 'obj->skel->mat' will always evaluate to 'true'	2
+src/PC/xanim/xanim.c	214	32	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/xanim/xanim.c	229	37	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/xanim/xanim.c	566	64	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/xanim/xanim_load_obj.c	371	36	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/xanim/xmodel.c	133	12	warning	-Wpointer-to-int-cast	cast to smaller integer type 'int' from 'unsigned short *'	2
+src/PC/xanim/xmodel_load_obj.c	166	62	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/xanim/xmodel_load_obj.c	314	43	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/xanim/xmodel_load_obj.c	463	74	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2
+src/PC/zlib/unzip.c	316	48	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uLong' (aka 'unsigned long') to 'uInt' (aka 'unsigned int')	2
+src/PC/zlib/unzip.c	326	38	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uLong' (aka 'unsigned long') to 'unsigned int'	2
+src/PC/zlib/unzip.c	466	51	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'uLong' (aka 'unsigned long') to 'uInt' (aka 'unsigned int')	2
+src/imports/libc.h	258	5	warning	-Wdeprecated-non-prototype	a function declaration without a prototype is deprecated in all versions of C and is treated as a zero-parameter prototype in C23, conflicting with a subsequent definition	2
+src/stubs/link_stubs.c	792	30	warning	-Wimplicit-function-declaration	call to undeclared library function 'calloc' with type 'void *(unsigned long, unsigned long)'; ISO C99 and later do not support implicit function declarations	2
+src/stubs/macos_compat.c	682	31	warning	-Wdeprecated-declarations	'glGetString' is deprecated: first deprecated in macOS 10.14 - OpenGL API deprecated. (Define GL_SILENCE_DEPRECATION to silence these warnings)	1
+src/stubs/macos_compat.c	683	32	warning	-Wdeprecated-declarations	'glGetString' is deprecated: first deprecated in macOS 10.14 - OpenGL API deprecated. (Define GL_SILENCE_DEPRECATION to silence these warnings)	1
+src/stubs/macos_compat.c	698	5	warning	-Wdeprecated-declarations	'glClearColor' is deprecated: first deprecated in macOS 10.14 - OpenGL API deprecated. (Define GL_SILENCE_DEPRECATION to silence these warnings)	1
+src/stubs/macos_compat.c	699	5	warning	-Wdeprecated-declarations	'glClear' is deprecated: first deprecated in macOS 10.14 - OpenGL API deprecated. (Define GL_SILENCE_DEPRECATION to silence these warnings)	1
+src/stubs/macos_compat.c	706	9	warning	-Wdeprecated-declarations	'glFogfv' is deprecated: first deprecated in macOS 10.14 - OpenGL API deprecated. (Define GL_SILENCE_DEPRECATION to silence these warnings)	1
+src/stubs/macos_compat.c	707	9	warning	-Wdeprecated-declarations	'glFogi' is deprecated: first deprecated in macOS 10.14 - OpenGL API deprecated. (Define GL_SILENCE_DEPRECATION to silence these warnings)	1
+src/stubs/macos_compat.c	708	9	warning	-Wdeprecated-declarations	'glFogf' is deprecated: first deprecated in macOS 10.14 - OpenGL API deprecated. (Define GL_SILENCE_DEPRECATION to silence these warnings)	1
+src/stubs/macos_compat.c	709	9	warning	-Wdeprecated-declarations	'glFogf' is deprecated: first deprecated in macOS 10.14 - OpenGL API deprecated. (Define GL_SILENCE_DEPRECATION to silence these warnings)	1
+src/unix/linux_common.c	137	9	warning	-Wimplicit-function-declaration	call to undeclared function 'Com_Printf'; ISO C99 and later do not support implicit function declarations	2
+src/unix/linux_common.c	150	19	warning	-Wshorten-64-to-32	implicit conversion loses integer precision: 'unsigned long' to 'int'	2

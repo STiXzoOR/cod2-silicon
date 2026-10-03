@@ -54,7 +54,9 @@ extern void Com_Error(int code, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern int Com_GetCurrentParseLine(void);
 extern int ___tolower(int c);
+#if !COD2_APPLE_SDK
 extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
+#endif
 extern int I_stricmp(const char *s0, const char *s1);
 extern void Scr_FindAnim(const char *filename, const char *animName, scr_anim_t *anim, int user);
 extern void Scr_PrecacheAnimTrees(Alloc_t Alloc, int user);

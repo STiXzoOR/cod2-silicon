@@ -91,7 +91,9 @@ extern char *va(const char *format, ...);
 extern void CompileError(unsigned int sourcePos, const char *fmt, ...);
 extern void CompileError2(const char *codePos, const char *fmt, ...);
 extern void Com_Error(int code, const char *fmt, ...);
+#if !COD2_APPLE_SDK
 extern int sprintf(char *buf, const char *fmt, ...);
+#endif
 
 void SetAnimCheck(int bAnimCheck)
 {

@@ -142,6 +142,11 @@ add_custom_command(TARGET cod2 POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy ${COD2_SRC_DIR}/web/cod2_fs.js ${CMAKE_BINARY_DIR}/cod2_fs.js)
 
 # =============================================================================
+elseif(APPLE AND COD2_X64)
+# Native Apple LP64 build; all original platform paths remain unchanged.
+include(${CMAKE_SOURCE_DIR}/cmake/macos-arm64.cmake)
+
+# =============================================================================
 elseif(WIN32 AND MSVC)
 # ----------------------------------------------------------------------------
 # WINDOWS / MSVC (cl.exe) -- additive native-Windows client build.

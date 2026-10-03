@@ -65,7 +65,8 @@ extern void SV_SetConfigstring(const int index, const char *val);
 extern void SV_DropClient(client_t *drop, const char *reason);
 extern void Com_DPrintf(const char *fmt, ...);
 
-#if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER)
+/* Empty debug labels are referenced only by the original x86 assembly. */
+#if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER) && !(defined(__APPLE__) && defined(COD2_X64))
 __asm__(".Lsvpkt_fmt: .asciz \"\"\n");
 #endif
 void SV_PktEvtDbg(const char *fmt, int netchanResult, int clState, int serverId, int relAck)

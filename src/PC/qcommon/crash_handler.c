@@ -597,7 +597,11 @@ void Sys_InstallCrashHandler(const char *appName, const char *version,
 #        include <execinfo.h>
 #    endif
 #    define __USE_GNU
+#    if defined(__APPLE__) && defined(COD2_X64)
+#        include <sys/ucontext.h>
+#    else
 #    include <ucontext.h>
+#    endif
 #    include <dlfcn.h>
 
 static const char *cr_sig_name(int sig)

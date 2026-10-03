@@ -73,7 +73,9 @@ extern qboolean NET_CompareBaseAdr(netadr_t a, netadr_t b);
 extern gentity_t *SV_GentityNum(int num);
 extern playerState_t *SV_GameClientNum(int num);
 extern void ClientBegin(int clientNum);
+#if !defined(__APPLE__) || !defined(COD2_X64)
 extern int sprintf(char *str, const char *format, ...);
+#endif
 extern void LargeLocal_LargeLocal(const LargeLocal *_this, int size);
 extern void * LargeLocal_GetBuf(const LargeLocal *_this);
 extern void ZN10LargeLocalD1Ev(LargeLocal *ll);
@@ -133,16 +135,17 @@ static inline __attribute__((always_inline)) void SV_CloseDownload(client_t *cl)
     }
 }
 
-#if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER)
+/* Empty debug labels are referenced only by the original x86 assembly. */
+#if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER) && !(defined(__APPLE__) && defined(COD2_X64))
 __asm__(".Lsvexec_fmt: .asciz \"\"\n");
 #endif
-#if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER)
+#if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER) && !(defined(__APPLE__) && defined(COD2_X64))
 __asm__(".Lsvexec_msgtype_fmt: .asciz \"\"\n");
 #endif
-#if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER)
+#if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER) && !(defined(__APPLE__) && defined(COD2_X64))
 __asm__(".Lsvexec_clicmd_fmt: .asciz \"\"\n");
 #endif
-#if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER)
+#if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER) && !(defined(__APPLE__) && defined(COD2_X64))
 __asm__(".Lsvexec_drop_fmt: .asciz \"\"\n");
 #endif
 void SV_ExecDbg(const char *fmt, int clSid, int svSid, int clState)

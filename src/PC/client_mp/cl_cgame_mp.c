@@ -1,7 +1,7 @@
 #include "common_types.h"
 #include "imports.h"
 
-#ifndef __EMSCRIPTEN__
+#if !defined(__EMSCRIPTEN__) && !COD2_APPLE_SDK
 #    include <mmintrin.h>
 #endif
 #include <string.h>
@@ -96,7 +96,9 @@ extern void StatMon_Warning(int type, int threshold, const char *msg);
 extern const char *va(const char *fmt, ...);
 extern unsigned char ColorIndex(unsigned char c);
 extern int atoi(const char *str);
+#if !COD2_APPLE_SDK
 extern char *strcat(char *dest, const char *src);
+#endif
 
 static int warnCount;
 static int warnCount_00f13084;
