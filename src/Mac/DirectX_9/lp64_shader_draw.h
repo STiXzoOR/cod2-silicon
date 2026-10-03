@@ -104,9 +104,16 @@ static HRESULT MacShader_DrawIndexed(DeviceImpl *dev, INT baseVertex, UINT minVe
             if (element->Type == 4) {
                 int order = stride == 0x44 || stride == 0x20 || stride == 0x18 ? COLOR_BYTES_RGBA :
                             stride == 0x40 ? COLOR_BYTES_ARGB : COLOR_BYTES_BGRA;
-                pointer = CDirect3DDevice_ConvertColorArray(buffer->data + dev->streamOffsets[element->Stream] + baseVertex * stride,
-                                                           stride, element->Offset, minVertex + vertexCount, order);
-                stride = 0;
+                /* NULL means the interleaved array is already RGBA (or nothing is
+                 * indexed): keep the original pointer and stride. */
+                const byte *converted = CDirect3DDevice_ConvertColorArray(
+                    buffer->data + dev->streamOffsets[element->Stream] + baseVertex * stride,
+                    stride, element->Offset, minVertex + vertexCount, order,
+                    (const unsigned short *)((const byte *)indices->data + startIndex * 2), primitiveCount * 3);
+                if (converted) {
+                    pointer = converted;
+                    stride = 0;
+                }
             }
         } else if (element->Type == 6 || element->Type == 7 || element->Type == 9 || element->Type == 10) {
             components = element->Type == 6 || element->Type == 9 ? 2 : 4;
