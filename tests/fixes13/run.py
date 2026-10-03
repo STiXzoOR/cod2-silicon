@@ -157,7 +157,7 @@ if not args.test or 'timing' in args.test:
 if not args.test or 'renderer_options' in args.test:
     path = 'src/Mac/DirectX_9/CDirect3DDevice.c'
     assert 'getenv(' not in function(path, 'CDirect3DDevice_DrawIndexedPrimitive')
-    run('renderer_options', function(path, 'CDirect3DDevice_UsePrograms'), cases=((), ('on',)))
+    run('renderer_options', function(path, 'CDirect3DDevice_UsePrograms'), cases=((), ('on',), ('off',)))
 if args.test and 'debug_enabled' in args.test:
     checked = set()
     for entry in entries:

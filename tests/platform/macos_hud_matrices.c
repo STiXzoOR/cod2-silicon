@@ -56,8 +56,9 @@ static void checkViewport(int width, int height, int stack)
         for (int row = 0; row < 4; ++row)
             for (int column = 0; column < 4; ++column)
                 clip[row] += rows[row * 4 + column] * corners[vertex][column];
-        float expectedX = (vertex & 1 ? 1.0f : -1.0f) - .15f / width;
-        float expectedY = (vertex & 2 ? -1.0f : 1.0f) - .075f / height;
+        /* D3D9 integer centers map to GL half-integer centers. */
+        float expectedX = (vertex & 1 ? 1.0f : -1.0f) + 1.0f / width;
+        float expectedY = (vertex & 2 ? -1.0f : 1.0f) - 1.0f / height;
         assert(fabsf(clip[0] - expectedX) < .00001f);
         assert(fabsf(clip[1] - expectedY) < .00001f);
         assert(clip[2] == -1 && clip[3] == 1);

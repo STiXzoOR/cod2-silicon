@@ -47,8 +47,8 @@ int main(void)
     FxScheduler_PlayEffect(&scheduler, &effect, origin, NULL, NULL);
     assert(scheduler.mScheduledCount == 2 && scheduler.mScheduledHead);
     ScheduledEffect *first = scheduler.mScheduledHead;
-    ScheduledEffect *second = (ScheduledEffect *)(uintptr_t)first->mScheduledNext;
-    assert(second && !second->mScheduledNext);
+    ScheduledEffect *second = SFX_NEXT(first);
+    assert((uintptr_t)second > UINT32_MAX && !SFX_NEXT(second));
     assert(first->mFx == &effect && second->mFx == &effect);
     assert(first->mStartTime == 1100 && first->mOrigin[2] == 30);
     assert(first->mAxis[0][0] == 1 && first->mAxis[2][2] == 1);
