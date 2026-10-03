@@ -14,7 +14,11 @@ extern void Hunk_FreeTempMemory(void *buf);
 typedef int (*CM_BoxTraceFn)(trace_t *results, const vec_t *start, const vec_t *end,
                              const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask);
 
+#if defined(COD2_X64)
+static const int outdoorMapSize[3] = { 512, 512, 256 };
+#else
 static const int outdoorMapSize[3];
+#endif
 
 static OutdoorGlob outdoorGlob;
 
@@ -118,7 +122,11 @@ void R_GenerateOutdoorImage(GfxImage *outdoorImage)
             if (imp_CM_BoxTrace)
                 ((CM_BoxTraceFn)imp_CM_BoxTrace)(&trace, start, end, nullVec, nullVec, 0, 0x2001);
 
+#if defined(COD2_X64)
+            float hitZ = ceilZ + (floorZ - ceilZ) * trace.fraction;
+#else
             float hitZ = floorZ + (ceilZ - floorZ) * trace.fraction;
+#endif
             hitZ = hitZ * outdoorGlob.scale[2] + outdoorGlob.add[2];
 
             float fval = floorf(hitZ);

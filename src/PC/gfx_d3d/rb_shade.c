@@ -1116,23 +1116,40 @@ static const float *RB_GetCodeMatrix_impl(int source, int firstRow)
         if (!((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 0]) {
             const float *worldMat = RB_GetCodeMatrix_impl(0xBC, 0);
             const float *viewProj = RB_GetCodeMatrix_impl(0xC1, 0);
+#if defined(COD2_X64)
+            const vec4_t *outdoorMatrix = rgp.world->outdoorLookupMatrix;
+            float awayBias = r_outdoorAwayBias->current.value;
+#else
             char *rgp = (char *)imp_rgp;
             int awayBias = r_outdoorAwayBias->current.integer;
+#endif
             float downBias = r_outdoorDownBias->current.value;
 
             biasVec[0] = 0.0f;
             biasVec[1] = 0.0f;
+#if defined(COD2_X64)
+            biasVec[2] = -awayBias;
+#else
             biasVec[2] = -*(float *)&awayBias;
+#endif
             biasVec[3] = 0.0f;
 
             MatrixTransformVector44((float *)(biasVec), (vec4_t *)(viewProj), (float *)(biasWorld));
             biasWorld[1] += downBias;
 
             MatrixTransformVector44((float *)(biasWorld),
+#if defined(COD2_X64)
+                                    outdoorMatrix, (float *)(biasResult));
+#else
                                     (vec4_t *)((char *)(*(void **)&((r_global_permanent_t *)rgp)->world) + 0x1c0), (float *)(biasResult));
+#endif
 
             MatrixMultiply44((vec4_t *)(worldMat),
+#if defined(COD2_X64)
+                             outdoorMatrix, (vec4_t *)(codeMatrix));
+#else
                              (vec4_t *)((char *)(*(void **)&((r_global_permanent_t *)rgp)->world) + 0x1c0), (vec4_t *)(codeMatrix));
+#endif
 
             *(float *)((char *)am + offsetof(GfxCodeMatrices, worldOutdoorLookup.matrix[0].m[3][0])) += biasResult[0];
             *(float *)((char *)am + offsetof(GfxCodeMatrices, worldOutdoorLookup.matrix[0].m[3][1])) += biasResult[1];
