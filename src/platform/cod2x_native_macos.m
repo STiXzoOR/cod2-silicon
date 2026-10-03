@@ -50,8 +50,7 @@ int Cod2xNativeURL_Queue(const char *url)
 
 void Cod2xNativeURL_Install(void)
 {
-    if (urlHandler) return;
-    urlHandler = [[Cod2xURLHandler alloc] init];
+    if (!urlHandler) urlHandler = [[Cod2xURLHandler alloc] init];
     [NSAppleEventManager.sharedAppleEventManager setEventHandler:urlHandler andSelector:@selector(openURL:reply:)
         forEventClass:kInternetEventClass andEventID:kAEGetURL];
 }

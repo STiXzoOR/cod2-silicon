@@ -55,6 +55,8 @@ static void Cod2xSetupShaders(NSBundle *bundle)
     if (script && python) {
         if (![NSFileManager.defaultManager fileExistsAtPath:[cache stringByAppendingPathComponent:@"manifest.json"]]) {
             [NSApplication sharedApplication];
+            [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+            [NSApp finishLaunching];
             window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 440, 110)
                 styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO];
             window.title = @"CoD2x Native";
