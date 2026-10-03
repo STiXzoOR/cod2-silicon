@@ -54,6 +54,13 @@ typedef struct {
     UINT32 dirtyMask;
 } CDirect3DTextureClean;
 
+#if defined(COD2_X64)
+GLuint CDirect3DTexture_GetGLName(const void *texture)
+{
+    return ((const CDirect3DTextureClean *)texture)->texIDStorage;
+}
+#endif
+
 ULONG CDirect3DTexture_AddRef(const CDirect3DTexture *_this);
 void ZN16CDirect3DTextureD0Ev(void *_this);
 void ZN16CDirect3DTextureD1Ev(void *_this);

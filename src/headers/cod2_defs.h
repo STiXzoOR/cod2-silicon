@@ -3003,7 +3003,11 @@ typedef _D3DXSHADER_CONSTANTINFO D3DXSHADER_CONSTANTINFO;
 
 typedef int DCTELEM;
 
+#if COD2_APPLE_SDK
+typedef unsigned int DWORD;
+#else
 typedef long unsigned int DWORD;
+#endif
 typedef OpaqueDialogPtr * DialogPtr;
 
 typedef __EventLoopTimer * EventLoopTimerRef;
@@ -3020,13 +3024,8 @@ typedef double Float64;
 typedef void (*Free_t)(void *, int);   /* real Free(ptr,size) sig; byte-neutral fn-ptr */
 typedef GDevice * GDPtr;
 #if COD2_APPLE_SDK
-typedef unsigned int GLbitfield;
-typedef unsigned char GLboolean;
-typedef unsigned int GLenum;
-typedef float GLfloat;
-typedef int GLint;
-typedef int GLsizei;
-typedef unsigned int GLuint;
+/* OpenGL scalars stay 32 bits on Darwin LP64; buffer sizes are pointer-sized. */
+#include <OpenGL/gl.h>
 #else
 typedef long unsigned int GLbitfield;
 
@@ -3089,7 +3088,11 @@ typedef boolean (*JSAMPARRAY)();
 typedef unsigned char JSAMPLE;
 typedef int LOCFSERROR;
 
+#if COD2_APPLE_SDK
+typedef int LONG;
+#else
 typedef long int LONG;
+#endif
 typedef long long int LONGLONG;
 
 typedef long int LONG_PTR;

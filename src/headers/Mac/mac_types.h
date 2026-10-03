@@ -129,7 +129,11 @@ typedef unsigned char GLubyte;
 typedef HDC__ * HDC;
 typedef HMONITOR__ * HMONITOR;
 typedef short unsigned int * PUINT16;
+#if COD2_APPLE_SDK
+typedef unsigned int ULONG;
+#else
 typedef long unsigned int ULONG;
+#endif
 typedef unsigned long VAOSet;
 typedef long unsigned int __darwin_size_t;
 typedef int (*__vtbl_ptr_type)();

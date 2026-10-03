@@ -69,7 +69,11 @@ static Bool R_ReadbackIsAllBlack(const byte *buffer, int width, int height)
 void R_BeginCubemapShot(const int pixelWidthHeight, const int pixelBorder)
 {
     void *device;
+#if defined(COD2_X64)
+    void **vtable;
+#else
     int *vtable;
+#endif
 
     dx->cubemapShotRes = (short unsigned int)pixelWidthHeight;
     dx->cubemapShotPixelBorder = (short unsigned int)pixelBorder;
@@ -78,7 +82,11 @@ void R_BeginCubemapShot(const int pixelWidthHeight, const int pixelBorder)
 
     do {
         device = (void *)dx->device;
+#if defined(COD2_X64)
+        vtable = *(void ***)device;
+#else
         vtable = *(int **)device;
+#endif
 
         ((void(D3DVTCC *)(void *, int, int, int, int, float, int))vtable[0xAC / 4])(device, 0, 0, 7, 0xFFFF00FF, 1.0f, 0);
     } while (*(volatile int *)&alwaysfails != 0);

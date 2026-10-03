@@ -52,6 +52,13 @@ typedef struct {
     GLuint texIDStorage;
 } CDirect3DCubeTextureClean;
 
+#if defined(COD2_X64)
+GLuint CDirect3DCubeTexture_GetGLName(const void *texture)
+{
+    return ((const CDirect3DCubeTextureClean *)texture)->texIDStorage;
+}
+#endif
+
 ULONG CDirect3DCubeTexture_AddRef(const CDirect3DCubeTexture *_this);
 void ZN20CDirect3DCubeTextureD0Ev(void *_this);
 void ZN20CDirect3DCubeTextureD1Ev(void *_this);
@@ -179,8 +186,13 @@ void CDirect3DCubeTexture_GenerateMipSubLevels(const CDirect3DCubeTexture *_this
 void COpenGLTexture_UpdateOpenGLSurfaces(const COpenGLTexture *_this)
 {
 
+#if defined(COD2_X64)
+    byte *texBase = (byte *)_this - sizeof(void *);
+    unsigned int texID = CDirect3DCubeTexture_GetGLName(texBase);
+#else
     byte *texBase = (byte *)_this - 4;
     unsigned int texID = *(unsigned int *)(texBase + 0x54);
+#endif
     {
         static int uos = 0;
         if (uos++ < 10)

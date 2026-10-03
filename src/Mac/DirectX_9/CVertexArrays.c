@@ -43,7 +43,11 @@ static void CBaseVA_ResetState(CBaseVAImpl *base)
 
 static void **CBaseVA_GetBaseVTable(void)
 {
+#if defined(COD2_X64)
+    return (void **)((char *)imp___ZTV7CBaseVA + 2 * sizeof(void *));
+#else
     return (void **)((char *)imp___ZTV7CBaseVA + 8);
+#endif
 }
 
 void CBaseVA_CBaseVA(const CBaseVA *_this);

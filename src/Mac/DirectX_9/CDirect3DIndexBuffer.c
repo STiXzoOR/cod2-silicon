@@ -5,6 +5,9 @@
 typedef void (*fnptr_t)(void);
 extern fnptr_t vtbl_CDirect3DIndexBuffer[];
 
+#if defined(COD2_X64)
+#include "lp64_buffers.h"
+#else
 typedef struct {
     void **vtable;
     ULONG refCount;
@@ -16,6 +19,7 @@ typedef struct {
     UINT32 lockSize;
     unsigned char isLocked;
 } CDirect3DIndexBufferClean;
+#endif
 
 ULONG CDirect3DIndexBuffer_AddRef(const CDirect3DIndexBuffer *_this);
 void ZN20CDirect3DIndexBufferD0Ev(const CDirect3DIndexBuffer *_this);

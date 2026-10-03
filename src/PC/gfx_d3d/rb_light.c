@@ -10,7 +10,11 @@ extern GfxBackEndData *backEndData;
 extern float floorf(float x);
 
 static vec3_t gridBasisDirs[8];
+#if defined(COD2_X64)
+static void *s_vc_log;
+#else
 static int s_vc_log;
+#endif
 
 static int s_vc_logCount_00c96c84;
 #define s_vc_logCount s_vc_logCount_00c96c84
@@ -974,7 +978,11 @@ void RB_InitLightVisHistory(const char *bspName)
     if (!(r_vc_makelog)->current.integer)
         return;
 
+#if defined(COD2_X64)
+    s_vc_log = Z_MallocInternal(0x1800000);
+#else
     s_vc_log = (int)Z_MallocInternal(0x1800000);
+#endif
 
     if ((r_vc_makelog)->current.integer != 2)
         return;

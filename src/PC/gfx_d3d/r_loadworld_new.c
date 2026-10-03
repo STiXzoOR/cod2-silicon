@@ -135,7 +135,11 @@ GfxWorld *R_LoadWorldInternal(const char *name)
     int nameLen;
 
     memset(&s_world, 0, sizeof(GfxWorld));
+#if defined(COD2_X64)
+    memset(&rgl, 0, sizeof(rgl));
+#else
     memset(&rgl, 0, 6 * 4);
+#endif
 
     header = (const byte *)Com_GetBsp(&load.fileSize, &s_world.checksum);
     fileBase = (const byte *)header;
@@ -639,13 +643,21 @@ GfxWorld *R_LoadWorldInternal(const char *name)
                           &occIdxCount, &occIdxData);
 
         const short *srcOcc = (const short *)occIdxData;
+#if defined(COD2_X64)
+        GfxOccluder **dstOcc = (GfxOccluder **)Hunk_AllocInternal(occIdxCount * sizeof(*dstOcc));
+#else
         GfxOccluder **dstOcc = (GfxOccluder **)Hunk_AllocInternal(occIdxCount * 4);
+#endif
         rgl.occluderIndices = dstOcc;
 
         for (i = 0; i < occIdxCount; i++) {
             int idx = (int)(signed short)srcOcc[i];
 
+#if defined(COD2_X64)
+            dstOcc[i] = &rgl.occluders[idx];
+#else
             dstOcc[i] = (GfxOccluder *)((byte *)rgl.occluders + idx * 36);
+#endif
         }
     }
 
@@ -692,7 +704,11 @@ GfxWorld *R_LoadWorldInternal(const char *name)
     R_PrintLoadProgress("entities");
     R_LoadEntities(&load);
 
+#if defined(COD2_X64)
+    memset(&rgl, 0, sizeof(rgl));
+#else
     memset(&rgl, 0, 6 * 4);
+#endif
 
     R_LoadSun(name, &s_world.sun);
     R_RegisterOutdoorImage(&s_world);

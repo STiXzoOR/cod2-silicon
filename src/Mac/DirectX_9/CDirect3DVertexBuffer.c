@@ -7,6 +7,9 @@ extern fnptr_t vtbl_CDirect3DVertexBuffer[];
 extern fnptr_t vtbl_CStaticCacheInfo[];
 extern void *imp___ZTV15CCacheInfoBlock;
 
+#if defined(COD2_X64)
+#include "lp64_buffers.h"
+#else
 typedef struct {
     void **vtable;
     ULONG refCount;
@@ -14,6 +17,7 @@ typedef struct {
     byte *data;
     DWORD usage;
 } CDirect3DVertexBufferClean;
+#endif
 
 ULONG CDirect3DVertexBuffer_AddRef(const CDirect3DVertexBuffer *_this);
 void ZN21CDirect3DVertexBufferD0Ev(void *_this);

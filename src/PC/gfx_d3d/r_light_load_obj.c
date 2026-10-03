@@ -31,6 +31,17 @@ GfxLightDef *R_LoadLightDef(const char *name)
         return def;
     }
 
+#if defined(COD2_X64)
+    /* Disk record: type byte, sampler byte, NUL string, sampler byte, NUL string. */
+    const byte *end = (const byte *)file + fileLen;
+    const byte *cookieEnd = fileLen >= 3 ? memchr((byte *)file + 2, 0, fileLen - 2) : NULL;
+    if (!cookieEnd || end - cookieEnd < 3 ||
+        !memchr(cookieEnd + 2, 0, end - (cookieEnd + 2))) {
+        FS_FreeFile(file);
+        return NULL;
+    }
+#endif
+
     def = (GfxLightDef *)Hunk_AllocInternal(sizeof(GfxLightDef));
     def->name = (const char *)Hunk_AllocInternal(strlen(name) + 1);
 

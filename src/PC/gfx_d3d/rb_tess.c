@@ -1279,7 +1279,11 @@ void RB_TessEntity(const GfxEntity *re)
 
             float screenHeight = ((GfxEntity *)ent)->radius[1];
             byte *backEnd = (byte *)imp_backEnd;
+#if defined(COD2_X64)
+            const GfxViewParms *viewParms = ((r_backEndGlobals_t *)backEnd)->viewParms;
+#else
             int *viewParms = (int *)((int)((r_backEndGlobals_t *)backEnd)->viewParms);
+#endif
             float *projMatrix = (float *)&((GfxViewParms *)viewParms)->viewProjectionMatrix;
             float w;
 
@@ -1319,7 +1323,11 @@ void RB_TessEntity(const GfxEntity *re)
 
         if (((GfxEntity *)ent)->minScreenRadius > 0.0f) {
             byte *backEnd = (byte *)imp_backEnd;
+#if defined(COD2_X64)
+            const GfxViewParms *viewParms = ((r_backEndGlobals_t *)backEnd)->viewParms;
+#else
             int *viewParms = (int *)((int)((r_backEndGlobals_t *)backEnd)->viewParms);
+#endif
             float *projMatrix = (float *)&((GfxViewParms *)viewParms)->viewProjectionMatrix;
             float w;
 
@@ -1336,7 +1344,9 @@ void RB_TessEntity(const GfxEntity *re)
                 float *viewOrg = ((r_backEndGlobals_t *)backEnd)->lodParms.origin;
                 float sx, sy;
                 float scale;
+#if !defined(COD2_X64)
                 int *proj = viewParms;
+#endif
                 int k;
 
                 for (k = 0; k < 2; k++) {

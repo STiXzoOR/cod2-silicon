@@ -77,7 +77,11 @@ void R_InitStaticModelCache(void)
     void **vbOut;
     volatile int *retryFlag;
 
+#if defined(COD2_X64)
+    size = (r_rendererInUse->current.integer == 2) ? 0x240000 : 0x400000;
+#else
     size = (((int *)r_rendererInUse)[2] == 2) ? 0x240000 : 0x400000;
+#endif
 
     vbOut = (void **)&dx.smodelCacheVb;
     retryFlag = (volatile int *)&alwaysfails;
@@ -114,6 +118,34 @@ void R_InitStaticModelCache(void)
 
 static __attribute_regparm__(3) void SMC_FreeCachedSurface_r(static_model_cache_t *cache, void *tree, int nodeIndex, int levelsToLeaf)
 {
+#if defined(COD2_X64)
+    static_model_tree_t *t = tree;
+    static_model_node_t *node = &t->nodes[nodeIndex];
+    /* Heap node numbering: each node covers 2^levelsToLeaf of the 16 leaves. */
+    int leafIdx = ((nodeIndex + 1) << levelsToLeaf) - 16;
+    if (node->usedVerts == 0) {
+        static_model_node_list_t *freeNode = &t->leafs[leafIdx].freenode;
+        ((static_model_node_list_t *)freeNode->next)->prev = freeNode->prev;
+        ((static_model_node_list_t *)freeNode->prev)->next = freeNode->next;
+        return;
+    }
+    node->usedVerts = 0;
+    if (node->inuse) {
+        GfxStaticModelSurfaceCached *surf = &t->leafs[leafIdx].surf;
+        for (int lod = 0; lod < 4; ++lod) {
+            if (surf->surface->cachedLods[lod] == surf) {
+                surf->surface->cachedLods[lod] = NULL;
+                break;
+            }
+        }
+        cache->stats.allocatedVerts -= 1 << (levelsToLeaf + 5);
+        cache->stats.usedVerts -= surf->xsurf->vertCount;
+        node->inuse = 0;
+        return;
+    }
+    SMC_FreeCachedSurface_r(cache, tree, nodeIndex * 2 + 1, levelsToLeaf - 1);
+    SMC_FreeCachedSurface_r(cache, tree, nodeIndex * 2 + 2, levelsToLeaf - 1);
+#else
     char *t = (char *)tree;
 
     if (*(short *)(t + nodeIndex * 4 + 0xc) == 0) {
@@ -157,6 +189,7 @@ static __attribute_regparm__(3) void SMC_FreeCachedSurface_r(static_model_cache_
 
     SMC_FreeCachedSurface_r(cache, tree, nodeIndex * 2 + 1, levelsToLeaf - 1);
     SMC_FreeCachedSurface_r(cache, tree, nodeIndex * 2 + 2, levelsToLeaf - 1);
+#endif
 }
 
 void R_StaticModelCacheFlush_f(void)
@@ -434,7 +467,11 @@ static __attribute_regparm__(2)
     list->next = (intptr_t)block;
     ((static_model_node_list_t *)block->next)->prev = (intptr_t)block;
 
+#if defined(COD2_X64)
+    leafIndex = (int)(((char *)block - (char *)&tree->leafs[0]) / sizeof(tree->leafs[0]));
+#else
     leafIndex = (unsigned int)((char *)block - (char *)&tree->leafs[0]) >> 4;
+#endif
     buddyLeafIndex = leafIndex + (1 << (4 - listIndex));
     buddyFreenode = &tree->leafs[buddyLeafIndex].freenode;
 
@@ -503,7 +540,11 @@ GfxStaticModelSurfaceCached *R_CacheStaticModelSurface(GfxStaticSurface *staticS
         ((static_model_tree_list_t *)tree->usedlist.next)->prev = (intptr_t)&tree->usedlist;
     }
 
+#if defined(COD2_X64)
+    leafIndex = (int)(((char *)block - (char *)&tree->leafs[0]) / sizeof(tree->leafs[0]));
+#else
     leafIndex = (unsigned int)((char *)block - (char *)&tree->leafs[0]) / 16;
+#endif
 
     nodeIndex = ((leafIndex + 16) >> (4 - listIndex)) - 1;
 
@@ -743,8 +784,13 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
     {
         extern void R_GetRigidTransform(const float *boneMatrix, const float *origin,
                                         const float *axis, float scale, float *outAxis);
+#if defined(COD2_X64)
+        R_GetRigidTransform(boneMatrix, ((GfxStaticModelInstance *)smodelInst)->origin,
+                            (float *)&((GfxStaticModelInstance *)smodelInst)->axis[0][0], ((GfxStaticModelInstance *)smodelInst)->scale, useAxis);
+#else
         R_GetRigidTransform(boneMatrix, (float *)(smodelInst + 4),
                             (float *)&((GfxStaticModelInstance *)smodelInst)->axis[0][0], ((GfxStaticModelInstance *)smodelInst)->scale, useAxis);
+#endif
     }
 
     Vec3NormalizeTo(useAxis + 0, normAxis + 0);
@@ -768,7 +814,11 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
         {
             byte *rgp2 = (byte *)imp_rgp;
             byte *world2 = (*(byte **)&((r_global_permanent_t *)rgp2)->world);
+#if defined(COD2_X64)
+            float *blc = ((GfxWorld *)world2)->smodelInsts[smodelIndex].baseLightingCoords;
+#else
             float *blc = (float *)((*(byte **)&((GfxWorld *)world2)->smodelInsts) + smodelIndex * 96 + 0x54);
+#endif
             float val;
 
             val = blc[0] * 32768.0f + 0.5f;

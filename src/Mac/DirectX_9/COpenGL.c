@@ -7,6 +7,27 @@ typedef void (*fnptr_t)(void);
 extern fnptr_t vtbl_COpenGL[];
 extern fnptr_t vtbl_COpenGLVertexProgram[];
 
+#if defined(COD2_X64)
+#include "lp64_gl_state.h"
+static COpenGLNative s_nativeOpenGL;
+#define COpenGL_sOpenGL ((unsigned char *)&s_nativeOpenGL)
+void *imp__ZN7COpenGL7sOpenGLE = &s_nativeOpenGL;
+
+unsigned char *COpenGL_TexUnitBase(const COpenGL *_this, UINT32 Unit)
+{
+    return (unsigned char *)&((COpenGLNative *)_this)->texUnits[Unit];
+}
+
+void *COpenGL_GetVAOBindingList(const COpenGL *_this)
+{
+    COpenGLBindingList *head = &((COpenGLNative *)_this)->vaoBindings;
+    if (!head->next) {
+        head->next = head;
+        head->prev = head;
+    }
+    return head;
+}
+#else
 unsigned char __attribute__((visibility("default")))
 COpenGL_sOpenGL[4096] = { 0 };
 
@@ -25,6 +46,8 @@ unsigned char *COpenGL_TexUnitBase(const COpenGL *_this, UINT32 Unit)
     return (unsigned char *)(*(void **)(p + 1628)) + Unit * COPENGL_TEXUNIT_STRIDE;
 }
 
+#endif
+
 UINT32 COpenGL_sFrameCount = 0;
 bool COpenGL_sDrawFlag = 0;
 GLuint COpenGL_sShowTextureID = 0;
@@ -39,11 +62,19 @@ unsigned int COpenGL_SetColorMaterialEnable(const COpenGL *_this, int Value)
 
 unsigned int COpenGL_SetActiveTexUnit(const COpenGL *_this, UINT32 Unit)
 {
+#if defined(COD2_X64)
+    COpenGLNative *gl = (COpenGLNative *)_this;
+    if (gl->activeTexUnit != Unit) {
+        gl->activeTexUnit = Unit;
+        glActiveTextureARB(Unit + 0x84C0);
+    }
+#else
     unsigned char *p = (unsigned char *)_this;
     if (*(int *)(p + 4) != (int)Unit) {
         *(int *)(p + 4) = (int)Unit;
         glActiveTextureARB(Unit + 0x84C0 );
     }
+#endif
     return 0;
 }
 
@@ -57,6 +88,18 @@ unsigned int COpenGL_SetDither(const COpenGL *_this, int Value)
 unsigned int COpenGL_SetBlendEXT(const COpenGL *_this, int ForceValidation,
                                  GLenum SrcFactorRGB, GLenum DstFactorRGB, GLenum SrcFactorAlpha, GLenum DstFactorAlpha)
 {
+#if defined(COD2_X64)
+    COpenGLNative *gl = (COpenGLNative *)_this;
+    if (ForceValidation == 0 &&
+        SrcFactorRGB == gl->blendSrcRGB && DstFactorRGB == gl->blendDstRGB &&
+        SrcFactorAlpha == gl->blendSrcAlpha && DstFactorAlpha == gl->blendDstAlpha)
+        return 0;
+    gl->blendSrcRGB = SrcFactorRGB;
+    gl->blendDstRGB = DstFactorRGB;
+    gl->blendSrcAlpha = SrcFactorAlpha;
+    gl->blendDstAlpha = DstFactorAlpha;
+    glBlendFuncSeparateEXT(SrcFactorRGB, DstFactorRGB, SrcFactorAlpha, DstFactorAlpha);
+#else
     unsigned char *p = (unsigned char *)_this;
     if (ForceValidation == 0 &&
         SrcFactorRGB == *(int *)(p + 2084) && DstFactorRGB == *(int *)(p + 2088) &&
@@ -67,12 +110,22 @@ unsigned int COpenGL_SetBlendEXT(const COpenGL *_this, int ForceValidation,
     *(int *)(p + 2092) = SrcFactorAlpha;
     *(int *)(p + 2096) = DstFactorAlpha;
     glBlendFuncSeparateEXT(SrcFactorRGB, DstFactorRGB, SrcFactorAlpha, DstFactorAlpha);
+#endif
     return 0;
 }
 
 unsigned int COpenGL_SetBlend(const COpenGL *_this, int ForceValidation,
                               GLenum SrcFactorRGB, GLenum DstFactorRGB)
 {
+#if defined(COD2_X64)
+    COpenGLNative *gl = (COpenGLNative *)_this;
+    if (ForceValidation == 0 &&
+        SrcFactorRGB == gl->blendSrcRGB && DstFactorRGB == gl->blendDstRGB)
+        return 0;
+    gl->blendSrcRGB = SrcFactorRGB;
+    gl->blendDstRGB = DstFactorRGB;
+    glBlendFunc(SrcFactorRGB, DstFactorRGB);
+#else
     unsigned char *p = (unsigned char *)_this;
     if (ForceValidation == 0 &&
         SrcFactorRGB == *(int *)(p + 2084) && DstFactorRGB == *(int *)(p + 2088))
@@ -80,6 +133,7 @@ unsigned int COpenGL_SetBlend(const COpenGL *_this, int ForceValidation,
     *(int *)(p + 2084) = SrcFactorRGB;
     *(int *)(p + 2088) = DstFactorRGB;
     glBlendFunc(SrcFactorRGB, DstFactorRGB);
+#endif
     return 0;
 }
 

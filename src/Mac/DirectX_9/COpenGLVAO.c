@@ -1,6 +1,9 @@
 #include "common_types.h"
 #include "imports.h"
 
+#if defined(COD2_X64)
+#include "lp64_gl_state.h"
+#else
 typedef struct {
     void **vtable;
     bool mEnabled;
@@ -11,6 +14,7 @@ typedef struct {
     GLsizei mStride;
     const void *mpStream;
 } CBaseVAImpl;
+#endif
 
 typedef struct {
     void **vtable;
@@ -22,7 +26,11 @@ typedef struct {
     CBaseVAImpl mNormalArray;
     CBaseVAImpl mVertexArray;
     CBaseVAImpl mTexCoordArrays[8];
+#if defined(COD2_X64)
+    VertexProgramStreamStateNative mGenericArrays[16];
+#else
     VertexProgramStreamState mGenericArrays[16];
+#endif
 } COpenGLVAOImpl;
 
 typedef struct {
@@ -51,7 +59,12 @@ typedef struct COpenGLVAOBindingNode {
     GLuint *vaoId;
 } COpenGLVAOBindingNode;
 
+#if defined(COD2_X64)
+extern void *imp__ZN7COpenGL7sOpenGLE;
+#define COpenGL_sOpenGLE ((unsigned char *)imp__ZN7COpenGL7sOpenGLE)
+#else
 extern unsigned char COpenGL_sOpenGLE[];
+#endif
 
 void *__Znwm(size_t size);
 void __ZdlPv(void *ptr);
@@ -87,7 +100,11 @@ void CBaseVA_CBaseVA(const CBaseVA *_this);
 
 static void **getVtblPtr(void *vtbl_ptr)
 {
+#if defined(COD2_X64)
+    return (void **)((unsigned char *)vtbl_ptr + 2 * sizeof(void *));
+#else
     return (void **)((unsigned char *)vtbl_ptr + 8);
+#endif
 }
 
 UINT32 COpenGLVAO_GetCode(const COpenGLVAO *_this)
@@ -113,7 +130,11 @@ void COpenGLVAO_CreateNewBinding(const COpenGLVAO *_this)
 
     bindingNode = (COpenGLVAOBindingNode *)__Znwm(sizeof(*bindingNode));
     bindingNode->vaoId = vaoId;
+#if defined(COD2_X64)
+    bindingList = COpenGL_GetVAOBindingList((const COpenGL *)COpenGL_sOpenGLE);
+#else
     bindingList = (void *)(COpenGL_sOpenGLE + 0x674);
+#endif
     __ZNSt15_List_node_base4hookEPS_(bindingNode, bindingList);
 
     vao->mpVAOID = vaoId;

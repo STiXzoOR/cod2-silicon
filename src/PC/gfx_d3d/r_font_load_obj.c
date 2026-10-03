@@ -1,5 +1,8 @@
 #include "common_types.h"
 #include "imports.h"
+#if defined(COD2_X64)
+#include <limits.h>
+#endif
 
 extern int FS_FOpenFileRead(const char *filename, int *fileHandle, int uniqueFILE);
 extern int FS_Read(void *buffer, int len, int fileHandle);
@@ -41,17 +44,36 @@ Font *R_LoadFont(const char *fontName, int imageTrack)
      * truncates pointers, so load the file into a blob (x86 layout) and marshal into
      * a real x64 Font. */
     {
+        /* The old loader inserts a four-byte glyph-pointer slot after the
+         * disk header. Disk string offsets are relative to this expanded image. */
+        struct { unsigned int nameOffset; int pixelHeight, glyphCount;
+                 unsigned int materialOffset; } disk;
+        if (len > INT_MAX - 4) {
+            FS_FCloseFile(fileHandle);
+            return NULL;
+        }
         byte *blob = (byte *)Hunk_AllocInternal(len + 4);
-        Font *fx;
-        FS_Read(blob, 0x10, fileHandle);
-        FS_Read(blob + 0x14, len - 0x10, fileHandle);
+        if (FS_Read(blob, 16, fileHandle) != 16 ||
+            FS_Read(blob + 20, len - 16, fileHandle) != len - 16) {
+            FS_FCloseFile(fileHandle);
+            return NULL;
+        }
         FS_FCloseFile(fileHandle);
-        fx = (Font *)Hunk_AllocInternal((int)sizeof(Font));
-        fx->name = (const char *)(blob + 4 + *(unsigned int *)(blob + 0));
-        fx->pixelHeight = *(int *)(blob + 4);
-        fx->glyphCount = *(int *)(blob + 8);
-        fx->glyphs = (Glyph *)(blob + 0x14);
-        fx->material = Material_RegisterHandle((const char *)(blob + 4 + *(unsigned int *)(blob + 12)), 0, imageTrack);
+        memcpy(&disk, blob, sizeof(disk));
+        unsigned int imageSize = (unsigned int)len + 4;
+        if (disk.glyphCount < 0 || (unsigned int)disk.glyphCount >
+                (unsigned int)(len - 16) / sizeof(Glyph) ||
+            disk.nameOffset < 16 || disk.nameOffset >= imageSize - 4 ||
+            disk.materialOffset < 16 || disk.materialOffset >= imageSize - 4 ||
+            !memchr(blob + 4 + disk.nameOffset, 0, imageSize - 4 - disk.nameOffset) ||
+            !memchr(blob + 4 + disk.materialOffset, 0, imageSize - 4 - disk.materialOffset))
+            return NULL;
+        Font *fx = (Font *)Hunk_AllocInternal((int)sizeof(Font));
+        fx->name = (const char *)(blob + 4 + disk.nameOffset);
+        fx->pixelHeight = disk.pixelHeight;
+        fx->glyphCount = disk.glyphCount;
+        fx->glyphs = (Glyph *)(blob + 20);
+        fx->material = Material_RegisterHandle((const char *)(blob + 4 + disk.materialOffset), 0, imageTrack);
         return fx;
     }
 #else
