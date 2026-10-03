@@ -7,6 +7,7 @@
 
 unsigned char scrVmGlob[sizeof(scrVmGlob_t)] __attribute__((aligned(8)));
 unsigned char scrMemTreeGlob[0x80380] __attribute__((aligned(8)));
+char g_EndPos;
 scrMemTreePub_t scrMemTreePub;
 scrVmPub_t scrVmPub;
 scrVarPub_t scrVarPub;
@@ -68,6 +69,21 @@ int main(void)
         VariableUnion slot;
         slot.stackValue = SCR_STACK_ENC(archived);
         assert(SCR_STACK_PTR(slot) == archived);
+    }
+    MT_Free(archived, archived->bufLen);
+
+    /* Endon replaces frame positions with an external sentinel before archive. */
+    scrVmPub.function_count = 2;
+    scrVmPub.function_frame = scrVmPub.function_frame_start + 2;
+    scrVmPub.function_frame_start[1].fs.pos = &g_EndPos;
+    values[2].type = 7; /* VAR_CODEPOS */
+    archived = VM_ArchiveStack(1, program + 1, values + 2, 0, &localId);
+    {
+        unsigned int saved;
+        memcpy(&saved, archived->buf + 1, sizeof(saved));
+        assert(SCR_CODEPOS_PTR(saved) == &g_EndPos);
+        assert(SCR_CODEPOS_PTR(SCR_CODEPOS_ENC(NULL)) == NULL);
+        assert(SCR_CODEPOS_PTR(SCR_CODEPOS_ENC(program + 1)) == program + 1);
     }
     MT_Free(archived, archived->bufLen);
 
