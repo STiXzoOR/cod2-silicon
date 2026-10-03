@@ -1,6 +1,10 @@
 import tempfile
 import unittest
 from pathlib import Path
+import os
+import struct
+import subprocess
+from types import SimpleNamespace
 from stabs import Database, Grammar, Unsupported
 
 
@@ -65,6 +69,82 @@ class HeaderReuseTests(unittest.TestCase):
             (root / 'types.h').write_text('struct A { char *p[2]; };\nstruct B { unsigned char p[8]; };\n')
             index = Headers(root)
             self.assertFalse(equivalent(index.aggregate('struct A'), index.aggregate('struct B')))
+
+
+def synthetic_macho(path, values, symbols):
+    """Small original fixture, unrelated to any proprietary file."""
+    data_offset = 28 + 124 + 24
+    sym_offset = data_offset + len(values)
+    strings, nlist = b'\0', b''
+    for name, address in symbols:
+        nlist += struct.pack('<IBBHI', len(strings), 0xf, 1, 0, 0x2000 + address)
+        strings += name.encode() + b'\0'
+    header = struct.pack('<7I', 0xfeedface, 7, 3, 2, 2, 148, 0)
+    segment = struct.pack('<II16s8I', 1, 124, b'__DATA', 0x2000, len(values),
+                          data_offset, len(values), 3, 3, 1, 0)
+    section = struct.pack('<16s16s9I', b'__data', b'__DATA', 0x2000, len(values),
+                          data_offset, 2, 0, 0, 0, 0, 0)
+    symtab = struct.pack('<6I', 2, 24, sym_offset, len(symbols), sym_offset + len(nlist), len(strings))
+    path.write_bytes(header + segment + section + symtab + values + nlist + strings)
+
+
+class RecoveryTests(unittest.TestCase):
+    def test_real_pointer_survives_and_scalar_relocation_is_removed(self):
+        from elf32 import Object
+        from macho32 import MachO32
+        from recover import recover_object
+        from stabs import Type
+        integer = Type('builtin', ('unsigned int', 4))
+        debug = Type('struct', (8, (('pointer', Type('pointer', (integer,)), 0, 32),
+                                    ('flags', integer, 32, 32))))
+        source = Object('value', 0, bytes(8), {0: ('real_symbol', 0), 4: ('false_symbol', 17)}, '.data')
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'fixture'
+            synthetic_macho(path, struct.pack('<2I', 0x8040, 0x1234), [('__ZL5value', 0)])
+            fixed, ty, report = recover_object(source, Database(),
+                                               {'value': [SimpleNamespace(type=debug)]}, MachO32(path))
+            self.assertEqual(fixed.relocs, {0: ('real_symbol', 0)})
+            self.assertEqual(fixed.data, struct.pack('<2I', 0, 0x1234))
+            self.assertEqual(report['false_relocations'], [4])
+
+    def test_nonzero_nonrelocated_mismatch_fails(self):
+        from elf32 import Object
+        from macho32 import MachO32
+        from recover import recover_object
+        from stabs import Type
+        debug = Type('array', (Type('builtin', ('unsigned char', 1)), 0, 7))
+        source = Object('value', 0, b'\x01' + bytes(7), {4: ('false', 0)}, '.data')
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'fixture'
+            synthetic_macho(path, b'\x02' + bytes(7), [('_value', 0)])
+            with self.assertRaisesRegex(ValueError, 'nonzero non-relocated bytes disagree'):
+                recover_object(source, Database(), {'value': [SimpleNamespace(type=debug)]}, MachO32(path))
+
+    def test_function_static_name_and_next_symbol_bounds(self):
+        from macho32 import MachO32
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'fixture'
+            synthetic_macho(path, bytes(16), [('__ZZL4TestvE5value', 0), ('_next', 8)])
+            obj = MachO32(path)
+            self.assertEqual(obj.read_object('value', 8)[1]['next_symbol_extent'], 8)
+            with self.assertRaisesRegex(ValueError, 'exceeds next-symbol extent'):
+                obj.read_object('value', 12)
+
+    def test_compiled_unaligned_pointer_is_rejected(self):
+        from check_alignment import check_alignment
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'fixture.c'
+            path.write_text('extern char target[];\nstruct __attribute__((packed)) S { char b[4]; void *p; };\n'
+                            'struct S broken = {{0}, target};\nstruct { char b[8]; void *p; } valid = {{0}, target};\n')
+            obj = path.with_suffix('.o')
+            subprocess.run([os.environ.get('CLANG', 'clang'), '-target', 'arm64-apple-macos',
+                            '-ffreestanding', '-g', '-c', str(path), '-o', str(obj)], check=True)
+            with self.assertRaisesRegex(ValueError, r'_broken\+0x4'):
+                check_alignment(obj)
+            path.write_text('extern char target[];\nstruct { char b[8]; void *p; } valid = {{0}, target};\n')
+            subprocess.run([os.environ.get('CLANG', 'clang'), '-target', 'arm64-apple-macos',
+                            '-ffreestanding', '-g', '-c', str(path), '-o', str(obj)], check=True)
+            self.assertEqual(check_alignment(obj), 1)
 
 
 if __name__ == '__main__':
