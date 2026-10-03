@@ -3,8 +3,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(COD2_X64)
+/* C++ bool flags: one byte in the Mac binary and in the typed native data. */
+extern Bool g_NoTextureID;
+extern Bool g_WarmOff;
+#else
 extern bool g_NoTextureID;
 extern bool g_WarmOff;
+#endif
 typedef void (*fnptr_t)(void);
 extern fnptr_t vtbl_CDirect3DSurface[];
 

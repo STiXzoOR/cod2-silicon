@@ -7,9 +7,15 @@ extern float floorf(float);
 extern float expf(float);
 extern float sqrtf(float);
 
-extern bool g_LastGlowFilter;
+#if defined(COD2_X64)
+/* C++ bool flags: one byte in the Mac binary and in the typed native data. */
+#define CXX_BOOL Bool
+#else
+#define CXX_BOOL bool
+#endif
+extern CXX_BOOL g_LastGlowFilter;
 extern UINT32 g_TotalFilterPasses;
-extern bool g_ShowShadowCookies;
+extern CXX_BOOL g_ShowShadowCookies;
 extern UINT32 g_NumBlurShadowPasses;
 
 extern unsigned char rgp[];
