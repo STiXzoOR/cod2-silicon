@@ -7,10 +7,18 @@ extern void jpeg_CreateCompress(j_compress_ptr cinfo, int version, size_t struct
 extern void jpeg_set_defaults(j_compress_ptr cinfo);
 extern void jpeg_set_quality(j_compress_ptr cinfo, int quality, int force_baseline);
 extern void jpeg_start_compress(j_compress_ptr cinfo, int write_all_tables);
+#if defined(COD2_X64)
+extern JDIMENSION jpeg_write_scanlines(j_compress_ptr, JSAMPARRAY, JDIMENSION);
+#else
 extern void jpeg_write_scanlines(j_compress_ptr cinfo, byte **scanlines, int num_lines);
+#endif
 extern void jpeg_finish_compress(j_compress_ptr cinfo);
 extern void jpeg_destroy_compress(j_compress_ptr cinfo);
+#if defined(COD2_X64)
+extern void jpeg_CreateDecompress(j_decompress_ptr, int, size_t);
+#else
 extern void jpeg_CreateDecompress(struct jpeg_decompress_struct *cinfo, int version, unsigned int structsize);
+#endif
 extern void jpeg_memory_src(void *cinfo, byte *data, int size);
 #if COD2_FEATURE_MODERN_LIBS
 
@@ -92,23 +100,36 @@ static void term_destination(j_compress_ptr cinfo)
 
 static void *Z_MallocJpeg(size_t size)
 {
+#if defined(COD2_X64)
+    return ri.Z_MallocInternal((int)size);
+#else
     byte *sys = (byte *)&ri;
     void *(*mallocFunc)(size_t) = *(void *(**)(size_t))(sys + 0x14);
     return mallocFunc(size);
+#endif
 }
 
 static void Z_FreeJpeg(void *ptr, size_t size)
 {
+#if defined(COD2_X64)
+    (void)size;
+    ri.Z_FreeInternal(ptr);
+#else
     byte *sys = (byte *)&ri;
     void (*freeFunc)(void *, size_t) = *(void (**)(void *, size_t))(sys + 0x18);
     freeFunc(ptr, size);
+#endif
 }
 
 static void ExitJpeg(void)
 {
+#if defined(COD2_X64)
+    ri.Error(ERR_FATAL, "jpeg internal error");
+#else
     byte *sys = (byte *)&ri;
     void (*errFunc)(int, const char *) = *(void (**)(int, const char *))(sys + 4);
     errFunc(0, "jpeg internal error");
+#endif
 }
 
 static void PrintfJpeg(char *message)
@@ -137,9 +158,15 @@ void R_SaveJpg(const char *filename, int quality, int image_width, int image_hei
     bufSize = image_width * image_height * 3;
     out = (byte *)ri.Hunk_AllocateTempMemoryInternal(bufSize);
 
+#if defined(COD2_X64)
+    dest.pub.init_destination = init_destination;
+    dest.pub.empty_output_buffer = empty_output_buffer;
+    dest.pub.term_destination = term_destination;
+#else
     dest.pub.init_destination = (void (__cdecl *)(void))(init_destination);
     dest.pub.empty_output_buffer = (boolean (__cdecl *)(void))(empty_output_buffer);
     dest.pub.term_destination = (void (__cdecl *)(void))(term_destination);
+#endif
     dest.buffer = out;
     dest.bufsize = (size_t)bufSize;
     *(jpeg_destination_mgr **)(cinfo + JPEG_C_DEST) = &dest.pub;

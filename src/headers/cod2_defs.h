@@ -8009,9 +8009,15 @@ struct jpeg_decomp_master {
 struct jpeg_destination_mgr {
     JOCTET *next_output_byte;
     size_t free_in_buffer;
+#if defined(COD2_X64)
+    void (*init_destination)(j_compress_ptr);
+    boolean (*empty_output_buffer)(j_compress_ptr);
+    void (*term_destination)(j_compress_ptr);
+#else
     void (*init_destination)();
     boolean (*empty_output_buffer)();
     void (*term_destination)();
+#endif
 };
 
 struct jpeg_downsampler {

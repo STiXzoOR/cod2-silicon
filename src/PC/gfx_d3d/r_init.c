@@ -17,7 +17,11 @@ extern void Material_FinishLoading(void);
 extern void R_AddCmdTouchAllImages(void);
 extern void R_InitImages(void);
 extern void Material_Init(void);
+#if defined(COD2_X64)
+extern void R_InitFonts(void);
+#else
 extern int R_InitFonts(void);
+#endif
 extern void R_InitLightDefs(void);
 extern void R_ClearFogs(void);
 extern void R_InitDebug(void);
@@ -272,7 +276,11 @@ static HRESULT R_CreateDevice_impl(HWND hwnd, DWORD behavior, void *d3dpp)
 
     for (;;) {
 
+#if defined(COD2_X64)
+        ri.Printf(0, "Creating D3D device...\n");
+#else
         ((void (*)(int, const char *))ri.Printf)(0, "Creating D3D device...\n");
+#endif
 
         for (attempt = 0; attempt < 20; attempt++) {
 
