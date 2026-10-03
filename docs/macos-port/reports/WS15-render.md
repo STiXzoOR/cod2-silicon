@@ -1,5 +1,9 @@
 # WS15 — rendering parity
 
+**The follow-up section at the end supersedes the initial status below.** It
+contains matched Windows/native comparisons, the merged-tree colour regression,
+and the subsequent shader, lighting, HUD and gameplay fixes.
+
 2026-10-03. Worktree `/Users/stix/Projects/cod2-native-wt/render-parity`, branch
 `port/render-parity`, starting commit `4ddccfd`.
 
@@ -352,3 +356,206 @@ lightmap loader condition, image generation/loading, FX parser/scheduler, UI
 owner draws, and the two camera/command fixes. Preserve all OFF branches when
 resolving conflicts. No additional frameworks or system packages are needed.
 The external shader cache and evidence must remain outside the repository.
+
+## Follow-up: merged renderer regression and matched parity (2026-10-03)
+
+Started with `git merge port/main`, fast-forwarding this worktree to `88d2976`.
+This includes WS13, WS14 and the orchestrator's colour-converter adaptation.
+All subsequent work stayed on `port/render-parity`; no sibling worktree was
+accessed. The evidence abbreviations H/E/S above still apply.
+
+### Magenta regression: cause and automated check
+
+The regression came from directional lightmaps, not WS13's indexed colour
+conversion. The earlier Apple-specific image-loader change always retained four
+packed lightmap planes. The default approximation then sampled plane zero as
+RGB, although its channels encode directional coefficients. Keeping the four
+planes only for real ARB rendering restores the original RGB synthesis for the
+approximation. WS13's indexed-span conversion and NULL-for-RGBA contract remain
+intact.
+
+Built the merged baseline, a targeted rollback of WS13's colour conversion, and
+the lightmap-path fix. Baseline and colour-conversion rollback screenshots were
+pixel-identical (MAE 0); the lightmap-path change removed the pink surfaces.
+These controlled builds and images are outside git. The fixed intro check uses
+a stable world-only ROI and rejects excessive pixels whose red and blue both
+exceed green, as well as implausible mean RGB. It requires only Python and the
+macOS Swift SDK, not Pillow/NumPy or installed packages.
+
+```sh
+python3 tests/rendering/toujane_rgb.py build-macos-codx/cod2_macos \
+  --home "$HOME/Library/Application Support/CoD2-native-ws15/rgb-codx-final"
+COD2_MAC_SHADER_CACHE="$HOME/Library/Application Support/CoD2-native-ws15/shaders" \
+  python3 tests/rendering/toujane_rgb.py build-macos-codx/cod2_macos \
+  --home "$HOME/Library/Application Support/CoD2-native-ws15/rgb-arb-final"
+```
+
+The merged baseline fails: magenta fraction 0.456774, mean RGB
+`[41.72,27.55,40.93]`. Both final modes pass: default approximation fraction 0,
+mean `[52.82,48.49,39.43]`; real ARB fraction 0, mean `[43.86,42.49,38.47]`.
+Logs are `E/rgb-codx-final.log` and `E/rgb-arb-final.log`; each private test home
+contains its game-produced `main/screenshots/ws15-rgb-regression.jpg`.
+
+### Matched cameras, reference capture and measured result
+
+Both games use Toujane DM, 1280x720, `cg_fov 80`, `r_gamma 1`,
+`r_ignoreHwGamma 0`, `r_fog 1`, unchanged normal maps, `r_aaSamples 1`,
+`r_picmip_manual 1`, and all three picmip values 0. HUD and gun are hidden for
+the three comparisons. Noclip holds the pose; it is turned **off** for combat
+validation. The native noclip dispatch previously used the wrong movement
+case. Correct dispatch also makes the camera stable between capture frames.
+
+| View | `setviewpos` | Captured eye | Pitch |
+| --- | --- | --- | --- |
+| Courtyard | `2569 2274 181 180` | `2569 2274 182` | 0 |
+| Rooftop | `3051 2178 220 180` | `3051 2178 221` | 0 |
+| Sky up | `3051 2178 350 0`, then hold/release `+lookup` | `3051 2178 351` | clamped 85 |
+
+Sky projection/eye constants verify the matching pitch; an older Windows sky
+capture was only 67.3 degrees and is explicitly excluded. Another intermediate
+capture used Windows picmip 2 and is also excluded. The final files below use
+the matched camera and picmip settings. Screenshot JPEGs read the pre-gamma
+framebuffer on both paths, so gamma presentation has a separate GPU test.
+
+The Windows API trace uses the existing WS8 Wine prefix and WineD3D with
+`WINEDEBUG=fixme-all,+d3d9,+d3d_shader,+d3d`. WineD3D's GL presentation on this
+machine produces black/incorrectly occluded images, so the clean visual
+reference uses the same Windows 1.3 diagnostic executable and existing WS8
+D9VK DLL. No Wine components were installed. The launcher now supports a
+private `--desktop 1280x720`; this prevents host desktop sizing from silently
+changing the reference framebuffer. The precise reference launch was:
+
+```sh
+COD2_WINE_D3D9="$HOME/Library/Application Support/CoD2x-Wine/downloads/d9vk-macOS-async-v1.10.3-20250511/x32/d3d9.dll" \
+tools/wine/play-cod2x.sh --reference --renderer d9vk --desktop 1280x720 \
+  --resolution 1280x720 --dx9 --local --fullscreen --fps 60 -- \
+  +set in_mouse 0 +set net_port 29016 +set r_picmip 0 +set r_picmip_bump 0 \
+  +set r_picmip_spec 0 +set r_picmip_manual 1 +set r_aaSamples 1 \
+  +set r_gamma 1 +set r_ignoreHwGamma 0 +set cg_fov 80 +exec ws15-parity.cfg
+```
+
+`W/main/ws15-parity.cfg` contains menu responses, the poses above, released
+movement/look buttons, and cvar queries. `E/final-parity-views.py` drives the
+equivalent native console commands and traces. The final native images were
+captured with `build-macos-codx/cod2_macos`. Comparison uses all RGB pixels with
+no alignment, colour adjustment, crop or exclusion mask:
+
+| View | Before MAE /255 | Final MAE /255 | Final RMSE /255 | Before / after / reference panel |
+| --- | ---: | ---: | ---: | --- |
+| Courtyard | 13.7801 | **2.0050** | 3.8825 | `E/courtyard-final-parity-panels.png` |
+| Rooftop | 8.5242 | **1.8718** | 4.7761 | `E/rooftop-final-parity-panels.png` |
+| Sky up | 13.4085 | **0.5856** | 0.9951 | `E/sky-final-parity-panels.png` |
+
+Before: `S/ws15-volume-{courtyard,roof,sky}.jpg`, the first **matched ARB**
+baseline in this follow-up, not the earlier magenta intro. After:
+`S/ws15-parity-final-{courtyard,roof,sky}.jpg`. References:
+`E/followup-d9vk-parity-{courtyard,rooftop,sky}.jpg`. Each panel has labelled
+Before/After/Windows reference columns, with metrics saved beside it as
+`E/{courtyard,rooftop,sky}-final-parity-metrics.json`.
+
+```sh
+swift tools/macos-port/compare_images.swift --before-after-reference \
+  "$H/main/screenshots/ws15-volume-courtyard.jpg" \
+  "$H/main/screenshots/ws15-parity-final-courtyard.jpg" \
+  "$H/evidence/followup-d9vk-parity-courtyard.jpg" \
+  "$H/evidence/courtyard-final-parity-panels.png"
+```
+
+### Draw-call evidence and fixes
+
+`COD2_MAC_DRAW_TRACE` names a request file. Writing an external JSONL output
+path into it captures one complete native frame: geometry, material and shader
+labels, all float constants, D3D render/sampler/texture-stage states, texture
+objects and actual GL texture target types. It never saves shader bytecode.
+Final native traces are `E/native-parity-final-{courtyard,rooftop,sky}.jsonl`.
+The Wine reducer records constants at the **inner** Wine draw after its buffered
+state flush; recording at D3D9 API entry incorrectly reports stale constants.
+The reducer's thread/flush behaviour has an automated test.
+
+Wine raw log: `E/wine-parity-trace.log`. Reduced reference frames:
+`E/wine-parity-frames/{courtyard,rooftop,sky}.jsonl`, frames 536/581/714 with
+173/179/47 draws. Native has 117/118/4 draws. Windows performs a depth prepass,
+and the Mac renderer orders sky earlier, so blindly pairing draw indices is
+wrong. Correlating geometry gives 50/62/4 candidates; two model candidates are
+ambiguous. `E/matched-draw-semantic-diff.json` records the candidates and
+differences, including disabled-state exclusions and normalized projection
+registers. Unobserved zero Wine sampler entries are unknown, not evidence of
+an invalid driver state.
+
+The first common shaded world draw is `toujane_decal_rug1`: native draw 1 versus
+Windows 66 (courtyard) /67 (rooftop), not the repeated depth draw. Its native
+fog row was NaN, while Windows supplies `[-1,1,-0.00015,0]`. Typed dvar reads
+fix it; final fog and detail scale (`16,16,0,0`, Mac pixel c23 versus Windows
+c0) match exactly. Mac WVP c23..26 maps to Windows c0..3 after GL depth and
+pixel-centre normalization. Final courtyard/rooftop world matrix differences
+are at most about 0.0003 from float rounding.
+
+Other fixes are grounded in the Mac 1.3 binary and actual CPU/GPU tests:
+
+- **Sky:** Apple compiles the original ARB program but unused primary/secondary
+  colour OUTPUT aliases corrupt its cube texture coordinates to a constant.
+  Pruning only unused aliases restores all cloud/sky faces; no shader
+  instructions or licensed programs are committed. CGL checks reproduced the
+  failure across VBO/client arrays, filtering modes and extra attribute state.
+- **Lighting:** restore real volume `LockBox` dispatch (the COM vtable had six
+  extra slots), upload/copy dirty 3D slices, preserve static atlas coordinates
+  and BGRA lighting data, and bind typed 3D samplers. Real GL readback confirms
+  the production upload path. Match the original persistent lightmap-weight
+  row normalization and outdoor map dimensions/interpolation.
+- **Model colours:** the actual cached-model producer stores BGRA at offset 24;
+  skeletal offset-12 colours remain ARGB. Shared native order selection now
+  respects that distinction and keeps RGBA input untouched. A fixture calls
+  the real cached producer with distinct channels and alpha.
+- **Rasterization:** apply ARB cull and separate blend equations. Convert D3D9
+  integer pixel centres to GL half centres in projection; remove the legacy
+  device's subpixel quirk for native hardware. The CGL raster fixture checks
+  both windings, five blend operations and separate alpha.
+- **State/layout:** restore DPVS plane comparisons; use native matrix sizes for
+  2D HUD, typed shadow/lightmap settings, correctly sized render-target aliases
+  and shutdown clearing, and actual native NPOT texture extents for screen UV
+  constants. Every production change retains its old OFF path.
+- **Gamma:** `MacDisplay_SetGamma` stores the device ramp rather than modifying
+  desktop transfer tables. A 256-entry RGB16 LUT is applied in final FBO
+  presentation. Identity retains the blit; nonidentity uses a GLSL 1.20 pass
+  that preserves draw state. CGL ASan readback verifies independent R/G/B
+  ramps, gamma mapping and `r_ignoreHwGamma` identity.
+
+The real ARB path is now selected by default whenever a valid local
+`COD2_MAC_SHADER_CACHE` is configured. `D3D_PROG=0` explicitly selects the
+approximation; `D3D_PROG=1` is no longer needed. A missing licensed cache still
+uses the approximation and reports why. The 834-file local cache remains in
+`H/shaders`, outside git; the orchestrator must configure/extract it for users.
+
+### Gameplay, FX and HUD follow-up
+
+Restored native layouts, scene submissions and dispatch for nine FX primitive
+classes. Fixed delayed-effect template entries, bolt/origin/axis fields and
+local viewmodel camera origin. Particle clouds now initialize four corners,
+all 6,144 indices and real packet counts (4,096 vertices, 2,048 triangles);
+previous zero counts/UVs produced no smoke geometry. Dedicated FX continues
+to avoid client graphics work. Fixtures exercise actual create/play/update,
+delayed world/bolted scheduling, full primitive lifecycle and cloud buffers.
+
+Noclip deliberately skips weapon updates in the original Mac. Earlier runs
+that pressed attack while noclip was active therefore did **not** validate
+firing, and are superseded by the grounded checks. The first grounded shot
+reproduced the crash in `MacShader_DrawIndexed`: declaration pointers contained
+normal-vector float bits. `nm` locates `markVerts` at `0x102151db8`, followed
+only 16 bytes later by `materialGlobals`. The scratch buffer's reconstructed
+type was an `int`, although impacts advertised 1,024 `GfxWorldVertex` entries.
+A real native array and contiguous three-axis orientation fix both the global
+overwrite and a separately reproduced stack overread. The regression fixture
+fills all 1,024 vertices, copies the final nine, recycles the full mark pool
+through 1,100 impacts and checks actual scene submissions under ASan/UBSan.
+
+The zPAM white box is its mostly transparent 512x512 DXT5 compass face with
+only mip 0. Unrestricted GL mip levels made it incomplete and sampled white;
+the already-merged constructor fix bounds `GL_TEXTURE_MAX_LEVEL`. Production
+CGL tests cover one-level, two-level and full mip chains. The actual zPAM image
+was temporarily placed in the private home's **main** image search directory,
+then removed. `S/ws15-pam-final-hud.jpg` confirms transparent compass corners
+with real ARB HUD rendering; this is a local asset check, not a repeated online
+zPAM session. A raw-directory override sits below stock IWDs and is insufficient.
+
+Combat/event verification and final validation are recorded below after the
+remaining grenade-event check.
