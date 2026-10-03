@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 
 #include "common_types.h"
 #include "imports.h"
@@ -47,7 +50,9 @@ extern unsigned int SL_TransferToCanonicalString(unsigned int stringValue);
 extern Bool IsValidArrayIndex(unsigned int unsignedValue);
 extern unsigned int GetInternalVariableIndex(unsigned int unsignedValue);
 extern char *va(const char *format, ...);
+#if !defined(COD2_X64)
 extern void qsort(void *base, unsigned int nmemb, unsigned int size, int (*compar)(const void *, const void *));
+#endif
 extern void RemoveRefToVector(const float *vectorValue);
 extern void Scr_CastBool(VariableValue *value);
 extern const float *Scr_AllocVector(const float *v);
@@ -5065,7 +5070,11 @@ emit_switch_table:
     if (numCases > 1) {
         for (i = 0; i < numCases - 1; ++i) {
             unsigned int value = caseTable[i][0];
+#if defined(COD2_X64)
+            if (value == caseTable[i + 1][0]) {
+#else
             if (value == caseTable[i + 1][0] && value != 0) {
+#endif
                 for (caseStatement = SCRCG->currentCaseStatement;
                      caseStatement;
                      caseStatement = caseStatement->next) {

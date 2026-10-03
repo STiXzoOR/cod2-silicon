@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 #if defined(_WIN32) && defined(COD2_GFX_DLL_RETAIL_V60)
 
 typedef void *HANDLE;
@@ -207,7 +210,9 @@ void gfxv60_m122(void)
     SetEvent(g_ev[1]);
 }
 
+#if !defined(COD2_X64)
 extern void *malloc(unsigned int);
+#endif
 extern void Com_Error(int code, const char *fmt, ...);
 static unsigned char *g_v60HiArena;
 static unsigned g_v60HiOff;
