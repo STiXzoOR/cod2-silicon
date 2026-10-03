@@ -9,6 +9,10 @@ extern const dvar_t *r_objectiveColorDx7Min;
 extern const dvar_t *r_objectiveColorDx7Max;
 extern const dvar_t *r_outdoorAwayBias;
 extern const dvar_t *r_outdoorDownBias;
+#if defined(COD2_X64)
+extern const dvar_t *sc_enable;
+extern const dvar_t *r_lightMap;
+#endif
 extern const dvar_t *r_debugShader;
 extern const dvar_t *r_drawPrimFloor;
 extern const dvar_t *r_drawPrimCap;
@@ -525,7 +529,11 @@ static void RB_GetTextureFromCode_impl(int codeTexture, void **image, byte *samp
         *samplerState = 0x32;
 
         {
+#if defined(COD2_X64)
+            int mode = r_lightMap->current.integer;
+#else
             int mode = *(int *)((char *)*(void **)imp_r_lightMap + 8);
+#endif
             if (mode == 1) {
                 *image = (*(void **)&((r_global_permanent_t *)rgp)->whiteImage);
                 *samplerState = 1;
@@ -584,7 +592,11 @@ static void RB_GetTextureFromCode_impl(int codeTexture, void **image, byte *samp
     }
 
     case 19: {
+#if defined(COD2_X64)
+        int sc_on = sc_enable->current.enabled;
+#else
         int sc_on = *(byte *)((char *)*(void **)imp_sc_enable + 8);
+#endif
         if (sc_on) {
             char *entity = (char *)backEnd->currentEntity;
             if (*(int *)entity > 2 || (*(byte *)(entity + 5) & 1)) {
