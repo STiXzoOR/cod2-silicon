@@ -137,10 +137,12 @@ int CFBundleCopyLocalizedString(void *bundle, void *key, void *value, void *tabl
     (void)table;
     return 0;
 }
+#if !COD2_APPLE_SDK
 int CFDataGetBytePtr()
 {
     return 0;
 }
+#endif
 int CFStringCompare()
 {
     return 0;
