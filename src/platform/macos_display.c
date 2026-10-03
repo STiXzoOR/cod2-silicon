@@ -63,6 +63,11 @@ int MacDisplay_Initialize(void)
 #endif
     if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
         return -1;
+#if defined(__APPLE__) && defined(COD2_X64) && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    /* SDL's Cocoa app delegate installs its own URL drop handler at video
+     * initialization. Restore the validated CoD2x handler afterwards. */
+    { extern void Cod2xNativeURL_Install(void); Cod2xNativeURL_Install(); }
+#endif
     int count = SDL_GetNumDisplayModes(0);
     modes = calloc((size_t)(count > 0 ? count : 1), sizeof(*modes));
     if (!modes)

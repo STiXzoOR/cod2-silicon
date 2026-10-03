@@ -662,7 +662,11 @@ extern void R_AddCmdApplyEarlyPostEffects(void);
 extern void R_AddCmdApplyLatePostEffects(float blurRadius);
 extern int R_GetPointLightPartitions(const GfxDrawSurf *drawSurfs, int drawSurfCount, PointLightPartition *partitions, int maxPartitions);
 extern void R_AddCmdLightProperties(int lightIndex, const GfxLight *light);
+#if COD2_X64
+extern void R_AddCmdDrawFullScreenColoredQuad(float s0, float t0, float s1, float t1, const vec_t *color, MaterialHandle material);
+#else
 extern void R_AddCmdDrawFullScreenColoredQuad(float x, float y, float w, float h, const void *material, const float *color);
+#endif
 extern void R_AddCmdSetViewport(int x, int y, int w, int h);
 extern void Com_Printf(const char *fmt, ...);
 void R_RenderScene(const refdef_t *refdef)
@@ -892,7 +896,11 @@ void R_RenderScene(const refdef_t *refdef)
                     GfxDrawSurf *pDrawSurfs = &scene.drawSurfs[part->firstDrawSurf];
                     int pDrawSurfCount = part->drawSurfCount;
                     void *world = rgp_p->world;
+#if COD2_X64
+                    R_AddCmdDrawFullScreenColoredQuad(0, 0, 1.0f, 1.0f, (const vec_t *)imp_colorWhite, rgp_p->clearAlphaStencilMaterial);
+#else
                     R_AddCmdDrawFullScreenColoredQuad(0, 0, 1.0f, 1.0f, ((r_global_permanent_t *)rgp_p)->clearAlphaStencilMaterial, (const float *)imp_colorWhite);
+#endif
                     R_AddCmdLightProperties(0, light);
                     R_AddCmdDrawSurfs(pDrawSurfs, pDrawSurfCount, (MaterialTechniqueType)0x12);
                 }

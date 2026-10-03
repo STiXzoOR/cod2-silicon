@@ -4,6 +4,7 @@
 #include "PC/qcommon/cod2x_url.h"
 #include <string.h>
 #include <stdio.h>
+#include "cod2x_native_setup.h"
 
 extern void Cbuf_AddText(const char *text);
 extern void Dvar_SetStringByName(const char *name, const char *value);
@@ -29,6 +30,10 @@ int Cod2xNativeApp_Arguments(char *buffer, int capacity)
     id arguments = [NSBundle.mainBundle objectForInfoDictionaryKey:@"CoD2LaunchArguments"];
     if (![arguments isKindOfClass:NSString.class])
         return 0;
+    /* First-launch setup pumps Cocoa events before WinMain installs handlers. */
+    Cod2xNativeURL_Install();
+    if ([[NSBundle.mainBundle objectForInfoDictionaryKey:@"CoD2AutomaticShaderSetup"] boolValue])
+        return Cod2xSetupAppArguments(NSBundle.mainBundle, arguments, buffer, capacity);
     int length = snprintf(buffer, capacity, "%s", [arguments UTF8String]);
     return length >= 0 && length < capacity ? length : -1;
 }
@@ -45,14 +50,15 @@ int Cod2xNativeURL_Queue(const char *url)
 
 void Cod2xNativeURL_Install(void)
 {
-    if (urlHandler) return;
-    urlHandler = [[Cod2xURLHandler alloc] init];
+    if (!urlHandler) urlHandler = [[Cod2xURLHandler alloc] init];
     [NSAppleEventManager.sharedAppleEventManager setEventHandler:urlHandler andSelector:@selector(openURL:reply:)
         forEventClass:kInternetEventClass andEventID:kAEGetURL];
 }
 
 void Cod2xNativeURL_SetupPaths(void)
 {
+    if ([[NSBundle.mainBundle objectForInfoDictionaryKey:@"CoD2AutomaticShaderSetup"] boolValue])
+        return; /* Prepared before Com_Init; explicit command-line paths win. */
     id path = [NSBundle.mainBundle objectForInfoDictionaryKey:@"CoD2GameDirectory"];
     if ([path isKindOfClass:NSString.class] && [path length])
         Dvar_SetStringByName("fs_basepath", [path UTF8String]);

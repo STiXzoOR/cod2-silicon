@@ -24,7 +24,7 @@ static struct {
     uint64_t stamp, cpu, swap, poll, blit, clear, fence, upload, program, buffer;
     int engine;
     unsigned int polls, uploads, programs, buffers;
-} frames[65536];
+} frames[262144];
 static unsigned int count;
 static uint64_t pollTime, blitTime, clearTime, fenceTime, start, duration;
 static unsigned int polls;
@@ -184,7 +184,7 @@ static void probeSwap(SDL_Window *window)
     uploadTime = programTime = bufferTime = 0;
     uploads = programs = buffers = 0;
     polls = 0;
-    if (++count == 65536 || stamp - start >= duration)
+    if (++count == sizeof(frames) / sizeof(frames[0]) || stamp - start >= duration)
         save();
 }
 

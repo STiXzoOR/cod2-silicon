@@ -58,6 +58,14 @@ int Test_PollEvent(SDL_Event *event)
     event->motion.xrel = 7; event->motion.yrel = -4;
     return 1;
 }
+Uint32 SDL_GetTicks(void) { return (Uint32)(now / 1000000); }
+void SDL_PumpEvents(void) {}
+int SDL_PeepEvents(SDL_Event *events, int count, SDL_eventaction action, Uint32 min, Uint32 max)
+{
+    assert(count == 1 && action == SDL_GETEVENT);
+    (void)min; (void)max;
+    return Test_PollEvent(events);
+}
 
 int main(void)
 {

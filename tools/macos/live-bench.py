@@ -26,6 +26,7 @@ parser.add_argument('--gpu-sync', type=int, choices=range(4), default=None)
 parser.add_argument('--view-pos', type=float, nargs=4, default=[-299, 1001, 121, 90],
                     metavar=('X', 'Y', 'Z', 'YAW'), help='eye position and yaw (cheats)')
 parser.add_argument('--record', help='record a demo basename during the measurement')
+parser.add_argument('--combat', action='store_true', help='fire, reload, move and throw grenades throughout capture')
 parser.add_argument('--profile', choices=['sample', 'xctrace'])
 parser.add_argument('--cpu-profile', action='store_true', help='in-process main-thread sampler; FPS is perturbed')
 args = parser.parse_args()
@@ -35,8 +36,8 @@ if args.app:
     args.binary = args.app / 'Contents/MacOS/cod2_macos'
 if not re.fullmatch(r'[1-9][0-9]{2,4}x[1-9][0-9]{2,4}', args.resolution):
     parser.error('resolution must be WIDTHxHEIGHT')
-if not 0 < args.seconds <= 60 or not 0 <= args.maxfps <= 1000:
-    parser.error('seconds in (0,60] and maxfps in [0,1000] required')
+if not 0 < args.seconds <= 120 or not 0 <= args.maxfps <= 1000:
+    parser.error('seconds in (0,120] and maxfps in [0,1000] required')
 if not all(math.isfinite(value) for value in args.view_pos):
     parser.error('view position must be finite')
 if args.record and not re.fullmatch(r'[A-Za-z0-9_-]+', args.record):
@@ -78,7 +79,7 @@ with (out / 'console.log').open('w') as stream:
         writer = os.fdopen(os.open(fifo, os.O_RDWR | os.O_NONBLOCK), 'w', buffering=1)
         launch = ['open', '-n', '-a', str(args.app.resolve()), '--stdin', str(fifo),
                   '--stdout', str(out / 'console.log'), '--stderr', str(out / 'console.log')]
-        for name in ['DYLD_INSERT_LIBRARIES', 'COD2_FRAME_CSV', 'COD2_FRAME_SECONDS', 'COD2_FRAME_PID', 'COD2_CPU_PROFILE', 'SDL_VIDEO_MAC_FULLSCREEN_SPACES', 'MTL_HUD_ENABLED']:
+        for name in ['DYLD_INSERT_LIBRARIES', 'COD2_FRAME_CSV', 'COD2_FRAME_SECONDS', 'COD2_FRAME_PID', 'COD2_CPU_PROFILE', 'SDL_VIDEO_MAC_FULLSCREEN_SPACES', 'MTL_HUD_ENABLED', 'COD2_MAC_SHADER_CACHE', 'D3D_PROG', 'COD2_MAC_SHADER_DIAGNOSTICS']:
             if name in env:
                 launch += ['--env', name + '=' + env[name]]
         subprocess.run([*launch, '--args', *command[1:]], check=True, timeout=15)
@@ -140,6 +141,8 @@ with (out / 'console.log').open('w') as stream:
         # Toujane mp_dm_spawn at -299 1001 61, yaw 90, from the
         # stock BSP entity lump. setviewpos takes eye height (origin + 60).
         send('setviewpos ' + ' '.join(str(value) for value in args.view_pos))
+        if args.combat:
+            send('god')
         time.sleep(5)
         send('viewpos')
         if args.profile:
@@ -157,21 +160,47 @@ with (out / 'console.log').open('w') as stream:
         os.kill(process.pid, signal.SIGUSR1)
         wait_for('[frame-probe]')
         deadline = time.monotonic() + args.seconds + 10
+        started = time.monotonic()
+        actions = [(0, 'weaponslot primary'), (.1, '+attack'), (1.1, '-attack'),
+                   (2, '+attack'), (3, '-attack'), (4, '+reload'), (6, '-reload'),
+                   (7, '+forward'), (7.5, '-forward'), (8, '+back'), (8.5, '-back'),
+                   (9, 'give ammo'), (10, '+frag'), (10.6, '-frag'),
+                   (16, '+smoke'), (16.6, '-smoke')]
+        action = 0
         while not (out / 'frames.csv').exists():
             if process.poll() is not None or time.monotonic() > deadline:
                 raise RuntimeError('frame observer failed to complete')
+            if args.combat:
+                cycle, index = divmod(action, len(actions))
+                if time.monotonic() - started >= cycle * 30 + actions[index][0]:
+                    send(actions[index][1])
+                    action += 1
             time.sleep(.1)
+        if args.combat:
+            for button in ['attack', 'reload', 'forward', 'back', 'frag', 'smoke']:
+                send('-' + button)
         if args.record:
             send('stoprecord')
             time.sleep(1)
         send('screenshotJPEG ws13-live')
         time.sleep(1)
     finally:
+        shutdown = 'already exited'
         if process.poll() is None:
-            if args.app:
-                os.kill(process.pid, signal.SIGKILL)
-            else:
-                os.killpg(process.pid, signal.SIGKILL)
+            try:
+                send('quit')
+            except BrokenPipeError:
+                pass
+            deadline = time.monotonic() + 10
+            while process.poll() is None and time.monotonic() < deadline:
+                time.sleep(.1)
+            shutdown = 'quit'
+            if process.poll() is None:
+                if args.app:
+                    os.kill(process.pid, signal.SIGKILL)
+                else:
+                    os.killpg(process.pid, signal.SIGKILL)
+                shutdown = 'owned process killed after quit timeout'
         process.wait()
 with (out / 'frames.csv').open() as stream:
     rows = list(csv.DictReader(stream))
@@ -195,8 +224,9 @@ result = dict(samples=len(values), fps=1000 / statistics.mean(values),
               resolution=args.resolution, window_mode=args.window_mode, maxfps=args.maxfps,
               requested_view_pos=args.view_pos,
               cpu_profile=args.cpu_profile,
+              combat=args.combat, measured_seconds=sum(values) / 1000,
               app=str(args.app.resolve()) if args.app else None,
-              shutdown='owned process killed; listen-server quit has a known hang')
+              shutdown=shutdown)
 log = (out / 'console.log').read_text(errors='replace')
 match = re.search(r'\[frame-probe\] ([^\n]+)', log)
 result['actual_presentation'] = match.group(1) if match else None

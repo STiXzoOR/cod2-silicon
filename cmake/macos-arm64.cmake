@@ -87,11 +87,18 @@ target_link_libraries(cod2_macos PRIVATE SDL2::SDL2 ${COD2_OPENGL_FRAMEWORK} ${C
   ${COD2_GAMECONTROLLER_FRAMEWORK} ${COD2_FOUNDATION_FRAMEWORK}
   "-framework ImageIO" "-framework CoreGraphics")
 if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
   find_library(COD2_APPKIT_FRAMEWORK AppKit REQUIRED)
   target_sources(cod2_macos PRIVATE src/platform/cod2x_native.c
     src/platform/cod2x_native_mouse.c src/platform/cod2x_native_macos.m)
   set_source_files_properties(src/platform/cod2x_native_macos.m PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
   target_link_libraries(cod2_macos PRIVATE ${COD2_APPKIT_FRAMEWORK})
+  add_custom_target(cod2_macos_app
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/cod2x/make_macos_app.py"
+      "$<TARGET_FILE:cod2_macos>" "$ENV{HOME}/Applications/CoD2x Native.app" --replace
+    DEPENDS cod2_macos
+    COMMENT "Build and ad-hoc sign CoD2x Native.app in the user's Applications folder"
+    VERBATIM)
 endif()
 target_compile_definitions(cod2_macos_ded PRIVATE DEDICATED)
 target_link_options(cod2_macos_ded PRIVATE -Wl,-dead_strip)
