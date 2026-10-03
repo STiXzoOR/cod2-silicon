@@ -80,6 +80,13 @@ set_source_files_properties(src/PC/gfx_d3d/rb_state.c src/PC/gfx_d3d/r_screensho
 target_link_libraries(cod2_macos PRIVATE SDL2::SDL2 ${COD2_OPENGL_FRAMEWORK} ${COD2_CURL_LIBRARY}
   ${COD2_AUDIO_FRAMEWORK} ${COD2_COREAUDIO_FRAMEWORK}
   ${COD2_GAMECONTROLLER_FRAMEWORK} ${COD2_FOUNDATION_FRAMEWORK})
+if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
+  find_library(COD2_APPKIT_FRAMEWORK AppKit REQUIRED)
+  target_sources(cod2_macos PRIVATE src/platform/cod2x_native.c
+    src/platform/cod2x_native_mouse.c src/platform/cod2x_native_macos.m)
+  set_source_files_properties(src/platform/cod2x_native_macos.m PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+  target_link_libraries(cod2_macos PRIVATE ${COD2_APPKIT_FRAMEWORK})
+endif()
 target_compile_definitions(cod2_macos_ded PRIVATE DEDICATED)
 target_link_options(cod2_macos_ded PRIVATE -Wl,-dead_strip)
 set_source_files_properties(src/PC/qcommon/crash_handler.c PROPERTIES

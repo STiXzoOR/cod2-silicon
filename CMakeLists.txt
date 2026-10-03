@@ -82,7 +82,7 @@ endif()
 if(NOT (COD2_X64 AND COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)"))
   set_source_files_properties(
     src/PC/qcommon/cod2x_policy.c src/PC/qcommon/cod2x_features.c
-    src/PC/qcommon/cod2x_demo.c src/PC/qcommon/cod2x_pose.c
+    src/PC/qcommon/cod2x_demo.c src/PC/qcommon/cod2x_url.c src/PC/qcommon/cod2x_pose.c
     src/PC/cgame_mp/cg_cod2x_radar.c
     PROPERTIES HEADER_FILE_ONLY TRUE)
 endif()

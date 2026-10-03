@@ -6,6 +6,10 @@
 #include "imports.h"
 #include "cod2_feature_config.h"
 #include "PC/qcommon/crash_handler.h"
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+#include "platform/cod2x_native.h"
+#include <strings.h>
+#endif
 #ifdef __EMSCRIPTEN__
 #    include <emscripten/emscripten.h>
 #endif
@@ -150,6 +154,9 @@ void Sys_Error(const char *error, ...)
     vsnprintf(text, sizeof(text), error, argptr);
     va_end(argptr);
 
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    Cod2xNative_Shutdown();
+#endif
     Sys_DestroySplashWindow();
     timeEndPeriod(1);
 #if !COD2_APPLE_SDK || !defined(DEDICATED)
@@ -258,6 +265,9 @@ void Sys_Init(void)
 void Sys_LoadingKeepAlive(void)
 {
 
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    Cod2xNative_Heartbeat();
+#endif
     UpdateSystemActivity(0);
 }
 
@@ -384,8 +394,19 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
 #ifndef __EMSCRIPTEN__
 
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    Sys_InstallCrashHandler("opencod2 CoD2x native", "1.4.6.8 compatibility",
+                            COD2_VERSION_DATE, "native launch (command line omitted)");
+    Cod2xNativeURL_Install();
+    if (lpCmdLine && !strncasecmp(lpCmdLine, "cod2x://", 8)) {
+        if (!Cod2xNativeURL_Queue(lpCmdLine))
+            fprintf(stderr, "CoD2x: rejected launch link; only connect and password are accepted.\n");
+        lpCmdLine = "";
+    }
+#else
     Sys_InstallCrashHandler("CoD2 MP " COD2_VERSION_SHORT, COD2_VERSION_SHORT,
                             COD2_VERSION_DATE, lpCmdLine);
+#endif
 #endif
     { extern int atexit(void (*)(void)); atexit(cr_atexit_diag); }
 #if !COD2_APPLE_SDK
@@ -398,6 +419,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     Sys_InitMainThread();
     Win_InitLocalization();
     Dvar_Init();
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    Cod2xNativeURL_SetupPaths();
+#endif
 
     {
 #if COD2_APPLE_SDK
@@ -442,6 +466,10 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     Com_Init(lpCmdLine);
 #endif
 
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    Cod2xNative_Init();
+#endif
+
     getcwd(cwd, sizeof(cwd));
     Com_Printf("Working directory: %s\n", cwd);
 
@@ -451,6 +479,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 #else
 
     for (;;) {
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+        Cod2xNative_Frame();
+#endif
         Com_Frame();
         Sys_StateHashFrame();
     }
@@ -464,6 +495,9 @@ void Sys_Quit(void)
     int i;
     sysEvent_t *ev;
 
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    Cod2xNative_Shutdown();
+#endif
     timeEndPeriod(1);
 #if !COD2_APPLE_SDK || !defined(DEDICATED)
     IN_Shutdown();

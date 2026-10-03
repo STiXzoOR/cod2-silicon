@@ -10,6 +10,9 @@ static dispatch_queue_t mouseQueue;
 static double deltaX, deltaY;
 static uint64_t eventCount;
 static int active, deviceCount;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static int rawMode = 1;
+#endif
 
 static void AttachMouse(GCMouse *mouse)
 {
@@ -17,6 +20,10 @@ static void AttachMouse(GCMouse *mouse)
         return;
     [attached addObject:mouse];
     mouse.handlerQueue = mouseQueue;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (rawMode == 2)
+        mouse.handlerQueue = dispatch_get_main_queue();
+#endif
     mouse.mouseInput.mouseMovedHandler = ^(GCMouseInput *input, float x, float y) {
         (void)input;
         pthread_mutex_lock(&mouseLock);
@@ -104,3 +111,14 @@ uint64_t MacRawMouse_EventCount(void)
     pthread_mutex_unlock(&mouseLock);
     return count;
 }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+void MacRawMouse_SetMode(int mode)
+{
+    if (mode == rawMode)
+        return;
+    MacRawMouse_SetActive(0);
+    rawMode = mode;
+    for (GCMouse *mouse in attached)
+        mouse.handlerQueue = mode == 2 ? dispatch_get_main_queue() : mouseQueue;
+}
+#endif
