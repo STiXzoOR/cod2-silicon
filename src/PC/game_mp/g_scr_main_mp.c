@@ -27,7 +27,11 @@ extern int Scr_GetInt(int argIndex);
 extern void Scr_AddEntity(gentity_t *ent);
 extern void Scr_AddUndefined(void);
 extern void Scr_ObjectError(const char *error);
+#if defined(COD2_X64)
+extern gentity_t *SV_AddTestClient(void);
+#else
 extern int SV_AddTestClient(void);
+#endif
 extern qboolean SV_MapExists(const char *name);
 extern const vec_t Vec3Normalize(vec_t *v);
 extern void SV_EnableArchivedSnapshot(int enable);
@@ -56,7 +60,11 @@ extern unsigned int Scr_ParamError(unsigned int index, const char *msg);
 extern unsigned int Scr_GetConstString(unsigned int index);
 extern unsigned int Scr_GetConstLowercaseString(unsigned int index);
 extern int XAnimNotetrackExists(const XAnim *anims, unsigned int animIndex, unsigned int name);
+#if defined(COD2_X64)
+extern snd_alias_list_t *Com_FindSoundAlias(const char *name);
+#else
 extern int Com_FindSoundAlias(const char *name);
+#endif
 extern int G_GetWeaponIndexForName(const char *name);
 extern int G_IndexForMeansOfDeath(const char *pszMOD);
 extern WeaponDef *BG_GetWeaponDef(int weaponIndex);
@@ -119,7 +127,11 @@ extern float acosf(float x);
 extern float asinf(float x);
 extern float sinf(float x);
 extern float cosf(float x);
+#if defined(COD2_X64)
+extern const char *Scr_GetTypeName(unsigned int index);
+#else
 extern int Scr_GetTypeName(int index);
+#endif
 extern void Scr_GetVector(unsigned int index, float *out);
 extern void G_SetOrigin(gentity_t *ent, const vec_t *origin);
 extern void G_SetAngle(gentity_t *ent, const vec_t *angles);
