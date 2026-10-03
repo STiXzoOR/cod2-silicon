@@ -1,4 +1,9 @@
 #include "common_types.h"
+#if COD2_APPLE_SDK
+#define COD2_IMAGE_CONSTANT_4096 4096
+#else
+#define COD2_IMAGE_CONSTANT_4096 (int)&__mh_execute_header
+#endif
 #include "imports.h"
 #include "bytematch.h"
 #include <stdio.h>
@@ -211,7 +216,7 @@ static __attribute_regparm__(1)
                     cachedFrame = cf;
                     svs = (serverStatic_t *)imp_svs;
                     if (cf->first_entity >= svs->nextCachedSnapshotEntities - 0x4000) {
-                        if (cf->first_client >= svs->nextCachedSnapshotClients - (int)&__mh_execute_header) {
+                        if (cf->first_client >= svs->nextCachedSnapshotClients - COD2_IMAGE_CONSTANT_4096) {
                             goto cleanup;
                         }
                     }
@@ -515,7 +520,7 @@ void SV_ArchiveSnapshot(void)
 
                         if (((cachedSnapshot_t *)cf)->first_entity < svs.nextCachedSnapshotEntities - 0x4000)
                             break;
-                        if (((cachedSnapshot_t *)cf)->first_client < svs.nextCachedSnapshotClients - (int)&__mh_execute_header)
+                        if (((cachedSnapshot_t *)cf)->first_client < svs.nextCachedSnapshotClients - COD2_IMAGE_CONSTANT_4096)
                             break;
 
                         MSG_WriteBit0((msg_t *)msg);
@@ -2122,7 +2127,7 @@ void SV_ArchiveSnapshot(void)
                         serverStatic_t *svs2 = (serverStatic_t *)imp_svs;
                         if (((cachedSnapshot_t *)cf)->first_entity < svs2->nextCachedSnapshotEntities - 0x4000)
                             break;
-                        if (((cachedSnapshot_t *)cf)->first_client < svs2->nextCachedSnapshotClients - (int)&__mh_execute_header)
+                        if (((cachedSnapshot_t *)cf)->first_client < svs2->nextCachedSnapshotClients - COD2_IMAGE_CONSTANT_4096)
                             break;
 
                         MSG_WriteBit0((msg_t *)msg);

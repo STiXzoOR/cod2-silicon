@@ -1,4 +1,9 @@
 #include "common_types.h"
+#if COD2_APPLE_SDK
+#define COD2_IMAGE_CONSTANT_4096 4096
+#else
+#define COD2_IMAGE_CONSTANT_4096 (int)&__mh_execute_header
+#endif
 #include "imports.h"
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
@@ -892,7 +897,7 @@ unsigned int CG_DrawMaterial(void)
     char szContents[0x1000];
     float y;
 
-    if (!CL_PickMaterial((const vec_t *)cg->refdef.vieworg, (const vec_t *)cg->refdef.viewaxis, szName, szSurfaceFlags, szContents, (int)&__mh_execute_header)) {
+    if (!CL_PickMaterial((const vec_t *)cg->refdef.vieworg, (const vec_t *)cg->refdef.viewaxis, szName, szSurfaceFlags, szContents, COD2_IMAGE_CONSTANT_4096)) {
         return 0;
     }
 

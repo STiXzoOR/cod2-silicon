@@ -3,6 +3,29 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#if COD2_APPLE_SDK
+int yychar;
+stype_t yylval;
+int yynerrs;
+int yyleng;
+FILE *yyin;
+FILE *yyout;
+char *yytext;
+sval_t yaccResult;
+unsigned int g_out_pos;
+unsigned int g_sourcePos;
+unsigned char g_parse_user;
+sval_t g_dummyVal;
+YY_BUFFER_STATE yy_current_buffer;
+char yy_hold_char;
+int yy_n_chars;
+char *yy_c_buf_p;
+int yy_init = 1;
+int yy_start;
+int yy_did_buffer_switch_on_eof;
+yy_state_type yy_last_accepting_state;
+char *yy_last_accepting_cpos;
+#else
 extern int yychar;
 extern stype_t yylval;
 extern int yynerrs;
@@ -40,6 +63,25 @@ extern const unsigned char yy_nxt[];
 extern const unsigned char yy_chk[];
 extern yy_state_type yy_last_accepting_state;
 extern char *yy_last_accepting_cpos;
+#endif
+#if COD2_APPLE_SDK
+extern const unsigned char yytranslate[];
+extern const unsigned char yyr1[];
+extern const unsigned char yyr2[];
+extern const unsigned char yydefact[];
+extern const unsigned char yydefgoto[];
+extern const unsigned char yypact[];
+extern const unsigned char yypgoto[];
+extern const unsigned char yytable[];
+extern const unsigned char yycheck[];
+extern const unsigned char yy_accept[];
+extern const unsigned char yy_ec[];
+extern const unsigned char yy_meta[];
+extern const unsigned char yy_base[];
+extern const unsigned char yy_def[];
+extern const unsigned char yy_nxt[];
+extern const unsigned char yy_chk[];
+#endif
 extern char ch_buf[];
 
 YY_BUFFER_STATE yy_create_buffer(FILE *file, int size);
@@ -51,7 +93,11 @@ YY_BUFFER_STATE yy_create_buffer(FILE *file, int size)
     YY_BUFFER_STATE b;
     char *buf;
 
+#if COD2_APPLE_SDK
+    b = (YY_BUFFER_STATE)malloc(sizeof(*b));
+#else
     b = (YY_BUFFER_STATE)malloc(0x28);
+#endif
     if (!b) {
         fprintf(stderr, "%s\n", "fatal flex scanner internal error--no action found");
         exit(2);
