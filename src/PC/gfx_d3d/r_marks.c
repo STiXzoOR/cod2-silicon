@@ -16,7 +16,12 @@ typedef struct ClipPoint {
 } ClipPoint;
 
 extern r_global_permanent_t rgp;
+#if defined(COD2_X64)
+extern r_globals_t rg;
+#define tr rg
+#else
 extern r_globals_t tr;
+#endif
 
 extern int BoxOnPlaneSide(const vec_t *mins, const vec_t *maxs, const cplane_t *plane);
 extern void ClearBounds(vec_t *mins, vec_t *maxs);

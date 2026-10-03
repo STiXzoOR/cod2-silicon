@@ -6,11 +6,24 @@ extern void Material_UpdatePicmipAll(void);
 
 extern refimport_t ri;
 extern void R_ImageList_f(void);
+#if defined(COD2_X64)
+extern void R_Cmd_ReloadMaterialTextures(void);
+extern void R_Cmd_LoadSun(void);
+extern void R_Cmd_SaveSun(void);
+extern void R_StaticModelCacheStats_f(void);
+extern void R_StaticModelCacheFlush_f(void);
+#define R_ReloadMaterialTextures_f R_Cmd_ReloadMaterialTextures
+#define R_LoadSun_f R_Cmd_LoadSun
+#define R_SaveSun_f R_Cmd_SaveSun
+#define R_SmcStats_f R_StaticModelCacheStats_f
+#define R_SmcFlush_f R_StaticModelCacheFlush_f
+#else
 extern void (*R_ReloadMaterialTextures_f)(void);
 extern void (*R_LoadSun_f)(void);
 extern void (*R_SaveSun_f)(void);
 extern void (*R_SmcStats_f)(void);
 extern void (*R_SmcFlush_f)(void);
+#endif
 
 static void R_Cmd_ApplyPicmip(void)
 {

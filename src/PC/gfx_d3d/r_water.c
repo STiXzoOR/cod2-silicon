@@ -47,7 +47,11 @@ void RB_UploadWaterTexture(GfxImage *image, water_t *water)
 
     water->writable.frameCount = currentFrame;
 
+#if defined(COD2_X64)
+    if ((*(const dvar_t **)imp_r_drawWater)->current.enabled == 0) {
+#else
     if ((*(dvar_t **)(g_unknown_195f230))->current.enabled == 0) {
+#endif
         return;
     }
 
@@ -234,7 +238,11 @@ normalmap_path:
             }
         }
 
+#if defined(COD2_X64)
+        uploadFlag = (byte *)imp_g_WarmOff;
+#else
         uploadFlag = *(byte **)g_unknown_195f22c;
+#endif
         *uploadFlag = 1;
         Image_UploadData(image, D3DFMT_A8R8G8B8, 0, 0, waterGlob.pixels);
         *uploadFlag = 0;
@@ -247,7 +255,11 @@ upload_heightmap:
         int srcWidth, srcHeight, mipIndex;
         byte *uploadFlagPtr;
 
+#if defined(COD2_X64)
+        uploadFlagPtr = (byte *)imp_g_WarmOff;
+#else
         uploadFlagPtr = *(byte **)g_unknown_195f22c;
+#endif
         *uploadFlagPtr = 1;
 
         Image_UploadData(image, D3DFMT_L8, 0, 0, waterGlob.pixels);
