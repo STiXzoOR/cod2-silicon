@@ -58,6 +58,9 @@ struct serverStatic_t {
     challenge_t challenges[1024];
     netadr_t redirectAddress;
     netadr_t authorizeAddress;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    int sv_lastTimeMasterServerCommunicated; /* Present in the retail 1.3 STABS. */
+#endif
     netProfileInfo_t *pOOBProf;
     tempBanSlot_t tempBans[16];
 };
