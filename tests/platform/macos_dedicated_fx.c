@@ -1,0 +1,213 @@
+/* Synthetic fixtures exercise the real dedicated FX parser without game data. */
+#include "common_types.h"
+#include <assert.h>
+#include <ctype.h>
+#include <math.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <strings.h>
+
+extern void FX_InitTemplates(void);
+extern EffectTemplate *FX_RegisterEffect(const char *fileName);
+extern float FxScheduler_GetEffectLength(const FxScheduler *scheduler, EffectTemplate *fx);
+extern void FxScheduler_Clean(const FxScheduler *scheduler, unsigned char removeTemplates, EffectTemplate *preserve);
+extern void MediaHandles_AddHandle(const MediaHandles *media, TMediaElement item);
+extern void MediaHandles_AddEffect(const MediaHandles *media, EffectTemplate *fx);
+extern void MediaHandles_Shutdown(const MediaHandles *media);
+extern Bool PrimitiveTemplate_ParseMaterials(const PrimitiveTemplate *primitive, GPValue *group);
+
+const FxFlagEntry fxAttributeFlags[26] = { 0 };
+const FxFlagEntry fxSpawnFlags[13] = { 0 };
+Bool g_rendererExists = 0;
+
+static const char fixture[] =
+    "particle\n{\nlife 200\ndelay 50\nshader synthetic_material\n"
+    "velocity 1 2 3\nacceleration 4 5 6\n}\n"
+    "light\n{\nlife 300\ndelay 150\n}\n";
+
+typedef struct Allocation {
+    void *data;
+    struct Allocation *next;
+} Allocation;
+static Allocation *allocations;
+static int fileReads;
+
+void *Z_MallocInternal(int size)
+{
+    void *data = calloc(1, size);
+    assert(data);
+    return data;
+}
+
+void Z_FreeInternal(void *data)
+{
+    free(data);
+}
+
+void *__Znam(unsigned int size)
+{
+    return Z_MallocInternal(size);
+}
+
+void __ZdaPv(void *data)
+{
+    Z_FreeInternal(data);
+}
+
+void *Hunk_AllocAlignInternal(int size, int align)
+{
+    Allocation *allocation = malloc(sizeof(*allocation));
+    assert(allocation);
+    (void)align;
+    allocation->data = Z_MallocInternal(size);
+    allocation->next = allocations;
+    allocations = allocation;
+    return allocation->data;
+}
+
+void *Hunk_AllocInternal(int size)
+{
+    return Hunk_AllocAlignInternal(size, sizeof(void *));
+}
+
+void *Hunk_AllocateTempMemoryInternal(int size)
+{
+    return Z_MallocInternal(size);
+}
+
+void Hunk_FreeTempMemory(void *data)
+{
+    Z_FreeInternal(data);
+}
+
+int FS_FOpenFileRead(const char *name, fileHandle_t *file, qboolean unique)
+{
+    assert(!strcmp(name, "fx/synthetic.efx"));
+    (void)unique;
+    *file = 1;
+    ++fileReads;
+    return sizeof(fixture) - 1;
+}
+
+int FS_Read(void *data, int length, int file)
+{
+    assert(file == 1 && length == sizeof(fixture) - 1);
+    memcpy(data, fixture, length);
+    return length;
+}
+
+void FS_FCloseFile(fileHandle_t file)
+{
+    assert(file == 1);
+}
+
+void Com_Error(int code, const char *format, ...)
+{
+    (void)code;
+    (void)format;
+    abort();
+}
+
+void Com_Printf(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+}
+
+void I_strncpyz(char *dest, const char *src, int size)
+{
+    assert(size > 0);
+    snprintf(dest, size, "%s", src);
+}
+
+int I_stricmp(const char *a, const char *b) { return strcasecmp(a, b); }
+int stricmp(const char *a, const char *b) { return strcasecmp(a, b); }
+int strcmpi(const char *a, const char *b) { return strcasecmp(a, b); }
+int strnicmp(const char *a, const char *b, size_t n) { return strncasecmp(a, b, n); }
+
+char *strlwr(char *text)
+{
+    char *cursor;
+    for (cursor = text; *cursor; ++cursor)
+        *cursor = tolower((unsigned char)*cursor);
+    return text;
+}
+
+void Com_StripExtension(const char *name, char *dest)
+{
+    const char *dot = strrchr(name, '.');
+    size_t length = dot ? (size_t)(dot - name) : strlen(name);
+    memcpy(dest, name, length);
+    dest[length] = 0;
+}
+
+qboolean Com_ValidXModelName(const char *name)
+{
+    return !strncmp(name, "xmodel/", 7);
+}
+
+struct XModel *XModelPrecache(const char *name, Alloc_t alloc, Alloc_t allocColl)
+{
+    (void)name;
+    (void)alloc;
+    (void)allocColl;
+    assert(!"The synthetic effect does not load models");
+    return NULL;
+}
+
+float flrand(float low, float high)
+{
+    return (low + high) * 0.5f;
+}
+
+int main(void)
+{
+    EffectTemplate *effect;
+    FxScheduler scheduler = { 0 };
+    MediaHandles handles = { 0 };
+    GPValue emptyMaterial = { 0 };
+    int values[9];
+    int i;
+
+    FX_InitTemplates();
+    effect = FX_RegisterEffect("fx/synthetic.efx");
+    assert(effect && effect->mPrimitiveCount == 2);
+    assert(FxScheduler_GetEffectLength(&scheduler, effect) == 450.0f);
+    assert(effect->mPrimitives[0]->mMediaHandles.mMediaList.size == 0);
+    assert(!PrimitiveTemplate_ParseMaterials(effect->mPrimitives[0], &emptyMaterial));
+    for (i = 0; i < 24; ++i) {
+        const FxChannel *channel = &effect->mPrimitives[0]->mFxChannels[i];
+        assert(channel->curve && channel->curve->keyCount == 2);
+        assert(isfinite(channel->scaleRange.mMin));
+        assert(isfinite(channel->scaleRange.mMax));
+    }
+    assert(FX_RegisterEffect("fx/synthetic.efx") == effect && fileReads == 1);
+
+    for (i = 0; i < 9; ++i) {
+        TMediaElement media;
+        media.data = &values[i];
+        MediaHandles_AddHandle(&handles, media);
+    }
+    assert(handles.mMediaList.size == 9);
+    for (i = 0; i < 9; ++i)
+        assert(handles.mMediaList.elements[i].data == &values[i]);
+    MediaHandles_Shutdown(&handles);
+    for (i = 0; i < 9; ++i)
+        MediaHandles_AddEffect(&handles, effect);
+    for (i = 0; i < 9; ++i)
+        assert(handles.mMediaList.elements[i].data == effect);
+    MediaHandles_Shutdown(&handles);
+    FxScheduler_Clean(&scheduler, 1, NULL);
+
+    while (allocations) {
+        Allocation *allocation = allocations;
+        allocations = allocation->next;
+        free(allocation->data);
+        free(allocation);
+    }
+    puts("PASS: native dedicated FX parsing, 450 ms lifetime, cache, channels and media growth");
+    return 0;
+}

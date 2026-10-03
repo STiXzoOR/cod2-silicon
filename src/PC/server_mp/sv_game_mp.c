@@ -525,6 +525,7 @@ gentity_t *SV_GEntityForSvEntity(svEntity_t *svEnt)
     return (gentity_t *)((char *)sv.gentities + index * sv.gentitySize);
 }
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
 void SV_XModelDebugBoxes(gentity_t *ent)
 {
     DObj *obj;
@@ -622,6 +623,8 @@ void SV_XModelDebugBoxes(gentity_t *ent)
         boneMatrix = mat;
     }
 }
+
+#endif
 
 void SV_ShutdownGameProgs(void)
 {

@@ -1,4 +1,9 @@
 #include "common_types.h"
+#if COD2_APPLE_SDK
+#define COD2_IMAGE_CONSTANT_4096 4096
+#else
+#define COD2_IMAGE_CONSTANT_4096 (int)&__mh_execute_header
+#endif
 #include "imports.h"
 #include "bytematch.h"
 #include "cod2_feature_config.h"
@@ -413,7 +418,7 @@ void SV_Init(void)
     sv_maxPing = Dvar_RegisterInt("sv_maxPing", 0, 0, 999, 0x1005);
     sv_floodProtect = Dvar_RegisterBool("sv_floodProtect", 1, 0x1005);
     sv_allowAnonymous = Dvar_RegisterBool("sv_allowAnonymous", 0, 0x1004);
-    sv_showCommands = Dvar_RegisterBool("sv_showCommands", 0, (int)&__mh_execute_header);
+    sv_showCommands = Dvar_RegisterBool("sv_showCommands", 0, COD2_IMAGE_CONSTANT_4096);
     sv_disableClientConsole = Dvar_RegisterBool("sv_disableClientConsole", 0, 0x1008);
     sv_voice = Dvar_RegisterBool("sv_voice", 0, 0x100d);
     sv_voiceQuality = Dvar_RegisterInt("sv_voiceQuality", 1, 0, 9, 0x1008);
@@ -424,35 +429,35 @@ void SV_Init(void)
     sv_iwdNames = Dvar_RegisterString("sv_iwdNames", "", 0x1048);
     sv_referencedIwds = Dvar_RegisterString("sv_referencedIwds", "", 0x1048);
     sv_referencedIwdNames = Dvar_RegisterString("sv_referencedIwdNames", "", 0x1048);
-    rcon_password = Dvar_RegisterString("rcon_password", "", (int)&__mh_execute_header);
-    sv_privatePassword = Dvar_RegisterString("sv_privatePassword", "", (int)&__mh_execute_header);
-    sv_fps = Dvar_RegisterInt("sv_fps", 20, 10, 1000, (int)&__mh_execute_header);
-    sv_timeout = Dvar_RegisterInt("sv_timeout", 240, 0, 1800, (int)&__mh_execute_header);
-    sv_zombietime = Dvar_RegisterInt("sv_zombietime", 2, 0, 1800, (int)&__mh_execute_header);
+    rcon_password = Dvar_RegisterString("rcon_password", "", COD2_IMAGE_CONSTANT_4096);
+    sv_privatePassword = Dvar_RegisterString("sv_privatePassword", "", COD2_IMAGE_CONSTANT_4096);
+    sv_fps = Dvar_RegisterInt("sv_fps", 20, 10, 1000, COD2_IMAGE_CONSTANT_4096);
+    sv_timeout = Dvar_RegisterInt("sv_timeout", 240, 0, 1800, COD2_IMAGE_CONSTANT_4096);
+    sv_zombietime = Dvar_RegisterInt("sv_zombietime", 2, 0, 1800, COD2_IMAGE_CONSTANT_4096);
     sv_allowDownload = Dvar_RegisterBool("sv_allowDownload", 1, 0x1001);
     sv_reconnectlimit = Dvar_RegisterInt("sv_reconnectlimit", 3, 0, 1800, 0x1001);
-    sv_padPackets = Dvar_RegisterInt("sv_padPackets", 0, 0, 0x7fffffff, (int)&__mh_execute_header);
+    sv_padPackets = Dvar_RegisterInt("sv_padPackets", 0, 0, 0x7fffffff, COD2_IMAGE_CONSTANT_4096);
 
     {
 
         (*(LegacyHacks **)imp_legacyHacks)->sv_killserver = 0;
     }
 
-    sv_allowedClan1 = Dvar_RegisterString("sv_allowedClan1", "", (int)&__mh_execute_header);
-    sv_allowedClan2 = Dvar_RegisterString("sv_allowedClan2", "", (int)&__mh_execute_header);
-    sv_packet_info = Dvar_RegisterBool("sv_packet_info", 0, (int)&__mh_execute_header);
-    sv_showAverageBPS = Dvar_RegisterBool("sv_showAverageBPS", 0, (int)&__mh_execute_header);
-    sv_kickBanTime = Dvar_RegisterFloat("sv_kickBanTime", 300.0f, 0.0f, 3600.0f, (int)&__mh_execute_header);
-    sv_mapRotation = Dvar_RegisterString("sv_mapRotation", "", (int)&__mh_execute_header);
-    sv_mapRotationCurrent = Dvar_RegisterString("sv_mapRotationCurrent", "", (int)&__mh_execute_header);
-    sv_debugRate = Dvar_RegisterBool("sv_debugRate", 0, (int)&__mh_execute_header);
-    sv_debugReliableCmds = Dvar_RegisterBool("sv_debugReliableCmds", 0, (int)&__mh_execute_header);
+    sv_allowedClan1 = Dvar_RegisterString("sv_allowedClan1", "", COD2_IMAGE_CONSTANT_4096);
+    sv_allowedClan2 = Dvar_RegisterString("sv_allowedClan2", "", COD2_IMAGE_CONSTANT_4096);
+    sv_packet_info = Dvar_RegisterBool("sv_packet_info", 0, COD2_IMAGE_CONSTANT_4096);
+    sv_showAverageBPS = Dvar_RegisterBool("sv_showAverageBPS", 0, COD2_IMAGE_CONSTANT_4096);
+    sv_kickBanTime = Dvar_RegisterFloat("sv_kickBanTime", 300.0f, 0.0f, 3600.0f, COD2_IMAGE_CONSTANT_4096);
+    sv_mapRotation = Dvar_RegisterString("sv_mapRotation", "", COD2_IMAGE_CONSTANT_4096);
+    sv_mapRotationCurrent = Dvar_RegisterString("sv_mapRotationCurrent", "", COD2_IMAGE_CONSTANT_4096);
+    sv_debugRate = Dvar_RegisterBool("sv_debugRate", 0, COD2_IMAGE_CONSTANT_4096);
+    sv_debugReliableCmds = Dvar_RegisterBool("sv_debugReliableCmds", 0, COD2_IMAGE_CONSTANT_4096);
 #if COD2_IS_PATCH_13
     sv_wwwDownload = Dvar_RegisterBool("sv_wwwDownload", 0, 0x1001);
     sv_wwwBaseURL = Dvar_RegisterString("sv_wwwBaseURL", "", 0x1001);
     sv_wwwDlDisconnected = Dvar_RegisterBool("sv_wwwDlDisconnected", 0, 0x1001);
 #endif
-    *(dvar_t **)&nextmap = Dvar_RegisterString("nextmap", "", (int)&__mh_execute_header);
+    *(dvar_t **)&nextmap = Dvar_RegisterString("nextmap", "", COD2_IMAGE_CONSTANT_4096);
     com_expectedHunkUsage = Dvar_RegisterInt("com_expectedHunkUsage", 0, 0, 0x7fffffff, 0x1040);
 }
 
@@ -665,9 +670,11 @@ void SV_Shutdown(char *finalmsg)
     Dvar_SetBool( (dvar_t *)(com_sv_running), 0);
     Com_Printf("---------------------------\n");
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     if (CL_GetLocalClientActive(0)) {
         CL_Disconnect();
     }
+#endif
 
     if (savedState == 1) {
         Com_AbortDObj();
@@ -824,7 +831,9 @@ void SV_SpawnServer(const char *server)
     Scr_ParseGameTypeList();
     SV_SetGametype();
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     CL_InitLoad(server, (sv_gametype)->current.string);
+#endif
 
     if ((com_sv_running)->current.enabled) {
         savepersist = (int)G_GetSavePersist();
@@ -847,8 +856,10 @@ void SV_SpawnServer(const char *server)
     }
 
     Dvar_SetStringByName("mapname", server);
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     CL_MapLoading(server);
     CL_ShutdownAll();
+#endif
     SV_ShutdownGameProgs();
 
     Com_Printf("------ Server Initialization ------\n");
@@ -913,12 +924,18 @@ void SV_SpawnServer(const char *server)
         Com_sprintf(filename, 64, "maps/mp/%s.%s", server, ext);
     }
     SV_SetExpectedHunkUsage(filename);
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     CL_StartLoading(server, svg->gametype);
+#endif
 
     {
         extern unsigned char mtlLoadGlob[];
         if (*(int *)mtlLoadGlob == 0)
+#if !(COD2_APPLE_SDK && defined(DEDICATED))
             Material_PreLoadAllShaderText();
+#else
+    ;
+#endif
     }
 
     sv = (byte *)imp_sv;

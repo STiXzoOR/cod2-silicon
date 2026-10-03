@@ -714,9 +714,11 @@ char *Dvar_InfoString(int bit)
         var = *(dvar_t **)&var->next;
     }
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     if (bit & 2) {
         Info_SetValueForKey(info1, "name", CL_GetUsernameForLocalClient(0));
     }
+#endif
 
     return info1;
 }

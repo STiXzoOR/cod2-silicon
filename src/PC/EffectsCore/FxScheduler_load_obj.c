@@ -92,9 +92,17 @@ void MediaHandles_AddHandle(const MediaHandles *_this, TMediaElement item)
         } else {
             self->mMediaList.maxSize = 4;
         }
+#if COD2_APPLE_SDK && defined(DEDICATED)
+        newElements = Z_MallocInternal(self->mMediaList.maxSize * sizeof(TMediaElement));
+#else
         newElements = Z_MallocInternal(self->mMediaList.maxSize * 4);
+#endif
         if (self->mMediaList.elements != NULL) {
+#if COD2_APPLE_SDK && defined(DEDICATED)
+            memcpy(newElements, self->mMediaList.elements, self->mMediaList.size * sizeof(TMediaElement));
+#else
             memcpy(newElements, self->mMediaList.elements, self->mMediaList.size * 4);
+#endif
             Z_FreeInternal(self->mMediaList.elements);
         }
         self->mMediaList.elements = (TMediaElement *)(newElements);
@@ -185,12 +193,17 @@ EffectTemplate *FX_ParseEffect(GenericParser2 *parser, const char *name)
             goto next_group;
         }
 
+#if COD2_APPLE_SDK && defined(DEDICATED)
+        prim = (PrimitiveTemplate *)Hunk_AllocAlignInternal(sizeof(PrimitiveTemplate), sizeof(void *));
+#else
         prim = (PrimitiveTemplate *)Hunk_AllocAlignInternal(0x2a4, 4);
+#endif
         PrimitiveTemplate_Init(prim);
         prim->mType = (PrimType)type;
         prim->mParentPrimIndex = currentPrimitiveIndex;
 
         if (PrimitiveTemplate_ParsePrimitive(prim, primitiveGroup)) {
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
             if (prim->mType == 1 || prim->mType == 7 || prim->mType == 3) {
                 if (*fx_developer_check_ptr != 0 && prim->mMediaHandles.mMediaList.size == 0) {
                     FX_Print("^1FX Error, no materials defined for primitive template of type '%i'\n", prim->mType);
@@ -200,6 +213,7 @@ EffectTemplate *FX_ParseEffect(GenericParser2 *parser, const char *name)
                     return NULL;
                 }
             }
+#endif
 
             count = effect->mPrimitiveCount;
             if (count >= 0x18) {
@@ -261,9 +275,17 @@ void MediaHandles_AddEffect(const MediaHandles *_this, EffectTemplate *fx)
         } else {
             self->mMediaList.maxSize = 4;
         }
+#if COD2_APPLE_SDK && defined(DEDICATED)
+        newElements = Z_MallocInternal(self->mMediaList.maxSize * sizeof(TMediaElement));
+#else
         newElements = Z_MallocInternal(self->mMediaList.maxSize * 4);
+#endif
         if (self->mMediaList.elements != NULL) {
+#if COD2_APPLE_SDK && defined(DEDICATED)
+            memcpy(newElements, self->mMediaList.elements, self->mMediaList.size * sizeof(TMediaElement));
+#else
             memcpy(newElements, self->mMediaList.elements, self->mMediaList.size * 4);
+#endif
             Z_FreeInternal(self->mMediaList.elements);
         }
         self->mMediaList.elements = (TMediaElement *)(newElements);

@@ -737,7 +737,9 @@ void FS_PureServerSetLoadedIwds(const char *iwdSums, const char *iwdNames)
 
 do_reload:
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     SND_StopSounds((snd_stopsounds_arg_t)8);
+#endif
     FS_ShutdownServerIwdNames();
 
     {

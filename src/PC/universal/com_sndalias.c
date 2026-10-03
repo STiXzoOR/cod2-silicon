@@ -273,6 +273,7 @@ void Com_LoadSoundAliases(const char *loadspec, const char *loadspecCurGame, snd
 
 after_load:
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     if ((int)system <= 1) {
 #if defined(__x86_64__) || defined(_M_X64)
         if (g_sa.initialized[0] == 0 && g_sa.initialized[1] == 0) {
@@ -284,8 +285,11 @@ after_load:
         }
     }
 
+#endif
+
     g_sa.initialized[system] = 1;
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     if ((int)system <= 1) {
 
 #if defined(__x86_64__) || defined(_M_X64)
@@ -306,6 +310,7 @@ after_load:
             }
         }
     }
+#endif
 
 done:
     return;
@@ -345,7 +350,9 @@ void Com_UnloadSoundAliasSounds(snd_alias_system_t system)
     int count;
     int index;
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     SND_StopSounds((snd_stopsounds_arg_t)0);
+#endif
 
     head = g_sa.aliasInfo[system].head;
     count = g_sa.aliasInfo[system].count;

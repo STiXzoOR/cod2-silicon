@@ -526,7 +526,9 @@ void FS_Shutdown(qboolean closemfp)
 
     (void)closemfp;
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     SND_StopSounds((snd_stopsounds_arg_t)8);
+#endif
     SEH_Shutdown_StringEd();
 
     for (i = 1; i < 74; ++i) {
@@ -2422,7 +2424,9 @@ void FS_Startup(const char *gameName)
         }
     }
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     Com_ReadCDKey();
+#endif
     FS_AddCommands();
     FS_DisplayPath(1);
     Dvar_ClearModified(fs_gameDirVar);

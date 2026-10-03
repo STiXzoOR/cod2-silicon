@@ -556,11 +556,13 @@ void Cmd_ExecuteString(const char *text)
         return;
     }
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     if ((*(LegacyHacks **)imp_legacyHacks)->cl_running) {
         if (CL_GameCommand()) {
             return;
         }
     }
+#endif
 
     if (com_sv_running &&
         (com_sv_running)->current.enabled) {
@@ -569,7 +571,11 @@ void Cmd_ExecuteString(const char *text)
         }
     }
 
+#if COD2_APPLE_SDK && defined(DEDICATED)
+    Com_Printf("Unknown command \"%s\"\n", cmd_argv[0]);
+#else
     CL_ForwardCommandToServer(text);
+#endif
 }
 
 void SV_Cmd_ExecuteString(const char *text)
