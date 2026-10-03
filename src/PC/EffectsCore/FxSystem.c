@@ -8,9 +8,21 @@ extern refexport_t re;
 extern float sinf(float x);
 extern float cosf(float x);
 extern double tan(double x);
+#if defined(COD2_X64)
+extern int CM_BoxTrace(trace_t *, const vec_t *, const vec_t *, const vec_t *, const vec_t *, clipHandle_t, int);
+#else
 extern void CM_BoxTrace(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, unsigned int model, int brushmask);
+#endif
+#if defined(COD2_X64)
+extern GfxEntity * R_AddRefEntityToScene(const GfxEntity *, GfxModel, const struct centity_s *);
+#else
 extern GfxEntity *R_AddRefEntityToScene(GfxEntity *ent, const struct XModel *model, int unk);
+#endif
+#if defined(COD2_X64)
+extern void FX_AddScheduledEffects(const vec_t *, const vec_t *);
+#else
 extern void FX_AddScheduledEffects(void);
+#endif
 extern void FX_UpdateAllNonBolt(void);
 extern void FX_UpdateAllBolt(void);
 extern void FxArchive_ReadData(const FxArchive *_this, void *p, int byteCount);
@@ -113,7 +125,12 @@ void FxHelper_WarpTime(const FxHelper *_this, int intime)
 
     while (frameTime > 200) {
         self->mFrameTime = 200;
+
+#if defined(COD2_X64)
+        FX_AddScheduledEffects(NULL, NULL);
+#else
         FX_AddScheduledEffects();
+#endif
         FX_UpdateAllNonBolt();
         FX_UpdateAllBolt();
         self->mOldTime = self->mTime;
@@ -122,7 +139,12 @@ void FxHelper_WarpTime(const FxHelper *_this, int intime)
     }
 
     self->mFrameTime = frameTime;
+
+#if defined(COD2_X64)
+    FX_AddScheduledEffects(NULL, NULL);
+#else
     FX_AddScheduledEffects();
+#endif
     FX_UpdateAllNonBolt();
     FX_UpdateAllBolt();
     self->mTime += self->mFrameTime;
@@ -142,7 +164,12 @@ void FxHelper_Trace(const FxHelper *_this, trace_t *tr, vec_t *start, const vec_
 
 void FxHelper_AddFxToScene(const FxHelper *_this, GfxEntity *ent, const struct XModel *model)
 {
+
+#if defined(COD2_X64)
+    R_AddRefEntityToScene(ent, (GfxModel){ .model = model }, NULL);
+#else
     R_AddRefEntityToScene(ent, model, 0);
+#endif
 }
 
 void FxHelper_SetIgnorePrecacheErrors(const FxHelper *_this, int ignore)

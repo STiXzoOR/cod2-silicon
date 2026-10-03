@@ -1,4 +1,7 @@
 #include "common_types.h"
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 
 qboolean fxInitialized[1] = { 0x0 };
 
@@ -31,6 +34,9 @@ extern const dvar_t *fx_visMinTraceDist;
 #define SCHEDULER_FIRST_P(p) ((byte **)&((FxScheduler *)(p))->mScheduledHead)
 #define SCHEDULER_COUNT(p) (((FxScheduler *)(p))->mScheduledCount)
 
+#if !defined(COD2_X64)
+#line 33
+#endif
 COD2_ASSERT_FIELD(struct DObjAnimMat_s,   quat,            0x00);
 COD2_ASSERT_FIELD(struct DObjAnimMat_s,   transWeight,     0x1c);
 COD2_ASSERT_FIELD(struct ScheduledEffect, mBolt,           0x0c);
@@ -91,7 +97,11 @@ extern void MatrixTransformVector43(void *trans, void *axis, void *out);
 extern void *imp_fx_debugBolt;
 extern void AxisTransformVector(vec3_t *axes, const vec_t x, const vec_t y, const vec_t z, vec_t *out);
 extern void *imp_vec3_origin;
+#if defined(COD2_X64)
+extern void * __Znam(size_t);
+#else
 extern void *__Znam(int size);
+#endif
 extern float flrand(float min, float max);
 extern void Particle_Particle(const Particle *particle);
 extern void Particle_IntegrateTotalVelocity(const Particle *particle, int time, vec_t *velSum);
@@ -100,7 +110,11 @@ extern void Cylinder_Cylinder(const Cylinder *_this);
 extern void Light_Light(const Light *_this);
 extern const orientation_t *FxBoltFrame_GetOrientation(const FxBoltFrame *_this);
 extern void OrientationDirFromWorldDir(const orientation_t *or_, const vec_t *dir, vec_t *out);
+#if defined(COD2_X64)
+extern void FxScheduler_Clean(const FxScheduler *, unsigned char, EffectTemplate *);
+#else
 extern void FxScheduler_Clean(void *scheduler, int bRemoveTemplates, int arg3);
+#endif
 extern void *imp_fxSchedulers;
 extern void *imp_theFxScheduler;
 extern const vec_t Vec3DistanceSq(const vec_t *p1, const vec_t *p2);
@@ -169,11 +183,21 @@ static int CompareSortedEffects(const void *e0, const void *e1)
     if (result)
         return result;
 
+#if defined(COD2_X64)
+    result = ((uintptr_t)fx0->mRefEnt.customMaterial > (uintptr_t)fx1->mRefEnt.customMaterial) -
+             ((uintptr_t)fx0->mRefEnt.customMaterial < (uintptr_t)fx1->mRefEnt.customMaterial);
+#else
     result = (int)fx0->mRefEnt.customMaterial - (int)fx1->mRefEnt.customMaterial;
+#endif
     if (result)
         return result;
 
+#if defined(COD2_X64)
+    return (((const SortedEffect *)e1)->distSq > ((const SortedEffect *)e0)->distSq) -
+           (((const SortedEffect *)e1)->distSq < ((const SortedEffect *)e0)->distSq);
+#else
     return (*(float *)((byte *)e1 + 4) > *(float *)((byte *)e0 + 4)) ? 1 : -1;
+#endif
 }
 
 static int CompareSortedClusters(const void *e0, const void *e1)
@@ -739,7 +763,9 @@ extern void *imp_fx_draw;
 extern void *imp_fx_debug;
 extern void FX_Print(const char *fmt, ...);
 #ifndef _WIN32
+#if !defined(COD2_X64)
 extern void qsort(void *base, int nmemb, int size, void *cmp);
+#endif
 #endif
 extern int CompareSortedClusters(const void *a, const void *b);
 void FX_DrawAll(void)
@@ -816,7 +842,11 @@ void FX_DrawAll(void)
             sortOrder[cid] = i;
         }
         clusterSort = sortOrder;
+#if defined(COD2_X64)
+        qsort(visibleEffectsNonBolt, effectCount, sizeof(visibleEffectsNonBolt[0]), CompareSortedEffects);
+#else
         qsort(visibleEffectsNonBolt, effectCount, 8, CompareSortedEffects);
+#endif
         clusterSort = NULL;
     }
 
@@ -1048,7 +1078,11 @@ void FX_AddFlash(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const i
 
 extern void Light_Light(const Light *_this);
 extern float flrand(float min, float max);
+#if defined(COD2_X64)
+extern void * __Znam(size_t);
+#else
 extern void *__Znam(int size);
+#endif
 void FX_AddLight(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch)
 {
     (void)lateTime;
@@ -2057,7 +2091,11 @@ int FX_Init(int rendererExists)
 }
 
 extern void Z_FreeInternal(void *ptr);
+#if defined(COD2_X64)
+extern void FxScheduler_Clean(const FxScheduler *, unsigned char, EffectTemplate *);
+#else
 extern void FxScheduler_Clean(void *scheduler, int bRemoveTemplates, int arg3);
+#endif
 extern void *imp_fxSchedulers;
 void FX_Free(int bRemoveTemplates)
 {

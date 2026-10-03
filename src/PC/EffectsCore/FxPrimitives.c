@@ -139,7 +139,11 @@ Bool Tail_Update(const Tail *_this);
 Bool Line_Update(const Line *_this);
 Bool Cloud_Update(const Cloud *_this);
 Bool OrientedParticle_Update(const OrientedParticle *_this);
+#if defined(COD2_X64)
+Bool Particle_Update(const Particle *_this);
+#else
 Bool Particle_Update(const Particle *_this, const Particle *_this_1, const Cloud *_this_2);
+#endif
 void Effect_Archive(const Effect *_this, FxArchive *arch);
 void Light_Archive(const Light *_this, FxArchive *arch);
 void Flash_Archive(const Flash *_this, FxArchive *arch);
@@ -156,7 +160,11 @@ void Cylinder_Cylinder(const Cylinder *_this);
 void OrientedParticle_OrientedParticle(const OrientedParticle *_this);
 void ZN16OrientedParticleD1Ev(void *_this);
 void ZN16OrientedParticleD0Ev(void *_this);
+#if defined(COD2_X64)
+void Cloud_Cloud(const Cloud *_this);
+#else
 void Cloud_Cloud(const Cloud *_this, const Cloud *_this_1);
+#endif
 void ZN5CloudD1Ev(void *_this);
 void ZN5CloudD0Ev(void *_this);
 void Line_Line(const Line *_this);
@@ -175,7 +183,11 @@ void ZN5FlashD0Ev(void *_this);
 void ZN5FlashD1Ev(void *_this);
 
 extern void __ZdaPv(void *ptr);
+#if defined(COD2_X64)
+extern void * __Znam(size_t);
+#else
 extern void *__Znam(int size);
+#endif
 extern void OrientationDirFromWorldDir(const orientation_t *or_, const vec_t *dir, vec_t *out);
 extern void OrientationPosToWorldPos(const orientation_t *or_, const vec_t *pos, vec_t *out);
 extern void AxisTransformVector(vec3_t *axes, const vec_t x, const vec_t y, const vec_t z, vec_t *out);
@@ -951,7 +963,11 @@ const FxBoltFramePtr FxBoltFrame_Acquire(const FxBoltInfo *bolt)
 }
 
 extern float flrand(float min, float max);
+#if defined(COD2_X64)
+extern void FxScheduler_PlayEffect(const FxScheduler *, const EffectTemplate *, const vec_t *, MediaHandles *(*)[4], const FxBoltInfo *);
+#else
 extern void FxScheduler_PlayEffect(void *scheduler, void *fx, float *origin, float *dir);
+#endif
 void Particle_Die(const Particle *_this)
 {
     byte *p = (byte *)_this;
@@ -992,7 +1008,12 @@ void Particle_Die(const Particle *_this)
     }
 
     scheduler = *(void **)imp_theFxScheduler;
+
+#if defined(COD2_X64)
+    FxScheduler_PlayEffect(scheduler, (*(void **)&((Particle *)p)->base.emitEffect), (float *)(p + 4), (MediaHandles *(*)[4])norm, NULL);
+#else
     FxScheduler_PlayEffect(scheduler, (*(void **)&((Particle *)p)->base.emitEffect), (float *)(p + 4), norm);
+#endif
 }
 
 void Tail_CalcNewEndpoint(const Tail *_this, const orientation_t *or_)
@@ -1110,7 +1131,11 @@ static inline __attribute__((always_inline)) void EvalCurve3(byte *channelInst, 
 
 void Light_UpdateRGB(const Light *_this, const Light *_this_1)
 {
+#if defined(COD2_X64)
+    /* Mac Cloud::Cloud() has only the implicit this argument. */
+#else
     (void)_this_1;
+#endif
     byte *self = (byte *)_this;
     float normTime = ((Effect *)self)->normTime;
     float *rgb = (float *)&((Light *)self)->base.mRefEnt.dlightColor[0];
@@ -1723,7 +1748,12 @@ void Emitter_UpdateEmitFx(const Emitter *_this, vec_t *bindVelocity, const orien
             boltInfo = (byte *)((*(byte **)&((Effect *)(self))->mBolt.value)) + 0x3c;
 
         void *emitEffect = (((Emitter *)(self))->emitFx);
+
+#if defined(COD2_X64)
+        FxScheduler_PlayEffect(*(void **)imp_theFxScheduler, emitEffect, spawnPos, NULL, NULL);
+#else
         FxScheduler_PlayEffect(*(void **)imp_theFxScheduler, emitEffect, spawnPos, NULL);
+#endif
 
         float velLenSq = velocity[0] * velocity[0] + velocity[1] * velocity[1] + velocity[2] * velocity[2];
         float dF = (velLenSq + velLenSq) * ftime;
@@ -1916,7 +1946,12 @@ Bool Particle_UpdateOrigin(const Particle *_this, const orientation_t *or_)
                 endpos[0] = start_pt[0] + (end_pt[0] - start_pt[0]) * fraction;
                 endpos[1] = start_pt[1] + (end_pt[1] - start_pt[1]) * fraction;
                 endpos[2] = start_pt[2] + (end_pt[2] - start_pt[2]) * fraction;
+
+#if defined(COD2_X64)
+                FxScheduler_PlayEffect(*(void **)imp_theFxScheduler, (*(void **)&((Effect *)self)->deathEffect), endpos, (MediaHandles *(*)[4])(trace + 0x04), NULL);
+#else
                 FxScheduler_PlayEffect(*(void **)imp_theFxScheduler, (*(void **)&((Effect *)self)->deathEffect), endpos, (vec_t *)(trace + 0x04));
+#endif
             }
 
             if (flags & 0x400) {
@@ -2489,10 +2524,20 @@ Bool OrientedParticle_Update(const OrientedParticle *_this)
 }
 
 extern void OrientationPosToWorldPos(const orientation_t *or_, const vec_t *pos, vec_t *out);
+#if defined(COD2_X64)
+Bool Particle_Update(const Particle *_this)
+#else
 Bool Particle_Update(const Particle *_this, const Particle *_this_1, const Cloud *_this_2)
+#endif
 {
+#if !defined(COD2_X64)
+#if defined(COD2_X64)
+    /* Mac Cloud::Cloud() has only the implicit this argument. */
+#else
     (void)_this_1;
+#endif
     (void)_this_2;
+#endif
     byte *self = (byte *)_this;
     int startTime = (((Effect *)(self))->mTimeStart);
     int curTime = FXH_TIME(*(FxHelper **)imp_theFxHelper);
@@ -2911,13 +2956,21 @@ void ZN16OrientedParticleD0Ev(void *_this)
 }
 
 extern const vec_t Vec3Normalize(vec_t *v);
+#if defined(COD2_X64)
+void Cloud_Cloud(const Cloud *_this)
+#else
 void Cloud_Cloud(const Cloud *_this, const Cloud *_this_1)
+#endif
 {
     extern float flrand(float min, float max);
     byte *p = (byte *)_this;
     float *dir = (float *)&((Cloud *)p)->randomDirection[0];
     int attempts = 4;
+#if defined(COD2_X64)
+    /* Mac Cloud::Cloud() has only the implicit this argument. */
+#else
     (void)_this_1;
+#endif
     Particle_Particle((const Particle *)_this);
     *(void **)p = (byte *)__ZTV5Cloud + (2 * (int)sizeof(void *));
 
@@ -3281,4 +3334,3 @@ void *__ZTV5Flash[14] = {
     (void *)&Flash_Archive,
     (void *)&Light_FixupArchiveLoad
 };
-

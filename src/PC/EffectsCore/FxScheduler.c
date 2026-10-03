@@ -53,7 +53,11 @@ extern void FX_AddCameraShake(EffectPrimitive *prim, vec3_t *ax, const vec_t *or
 extern void FX_AddFlash(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch);
 extern void FX_AddCloud(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const int lateTime, const int indexInBatch);
 
+#if defined(COD2_X64)
+extern void * __Znam(size_t);
+#else
 extern void *__Znam(unsigned int size);
+#endif
 extern void __ZdaPv(void *ptr);
 
 void *MediaHandles_GetHandle(const MediaHandles *_this);
@@ -304,7 +308,11 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
     int rangeCheck;
     float culldist;
 
+#if defined(COD2_X64)
+    helper = *(FxHelper **)imp_theFxHelper;
+#else
     helper = *(FxHelper **)&imp_theFxHelper;
+#endif
 
     seed = FxHelper_GetSeed(helper);
     ((FxScheduler *)_this)->mSeed = seed;
