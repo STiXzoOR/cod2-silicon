@@ -195,7 +195,7 @@ static inline __attribute__((always_inline)) float AbsCeil(float val)
     return (float)iv;
 }
 
-#if COD2_APPLE_SDK && defined(DEDICATED)
+#if COD2_APPLE_SDK
 #define FX_PARSE_CHANNEL_OFFSET(offset) offsetof(PrimitiveTemplate, mFxChannels[((offset) - 0x100) / 0xc])
 #else
 #define FX_PARSE_CHANNEL_OFFSET(offset) offset
@@ -214,7 +214,7 @@ static inline __attribute__((always_inline)) void CreateTwoKeyCurve(byte *_this,
     keys[3] = keys[1];
 
     const FxCurve *curve = FxCurve_AllocAndCreateWithKeys(keys, 1, 2);
-#if COD2_APPLE_SDK && defined(DEDICATED)
+#if COD2_APPLE_SDK
     FxChannel *channel = (FxChannel *)(_this + channelOffset);
     channel->curve = curve;
     channel->scaleRange.mMin = maxRange;
@@ -242,7 +242,7 @@ static inline __attribute__((always_inline)) void CreateAccelCurve(byte *_this, 
     }
 
     const FxCurve *curve = FxCurve_AllocAndCreateWithKeys(keys, 1, 2);
-#if COD2_APPLE_SDK && defined(DEDICATED)
+#if COD2_APPLE_SDK
     FxChannel *channel = (FxChannel *)(_this + channelOffset);
     channel->curve = curve;
     channel->scaleRange.mMin = range;
@@ -269,7 +269,7 @@ static inline __attribute__((always_inline)) void CreateAccelCurveUnit(byte *_th
     }
 
     const FxCurve *curve = FxCurve_AllocAndCreateWithKeys(keys, 1, 2);
-#if COD2_APPLE_SDK && defined(DEDICATED)
+#if COD2_APPLE_SDK
     FxChannel *channel = (FxChannel *)(_this + channelOffset);
     channel->curve = curve;
     channel->scaleRange.mMin = 1.0f;
@@ -387,7 +387,11 @@ Bool PrimitiveTemplate_ParseMaterials(const PrimitiveTemplate *_this, GPValue *g
                 return 0;
 #else
             media.material = Material_RegisterHandle(GPV_STRING(p), 3, 6);
+            #if COD2_APPLE_SDK
+            MediaHandles_AddHandle(&((PrimitiveTemplate *)_this)->mMediaHandles, media);
+#else
             MediaHandles_AddHandle((MediaHandles *)((byte *)_this + 0x68), media);
+#endif
 #endif
         }
         return 1;
@@ -400,7 +404,11 @@ Bool PrimitiveTemplate_ParseMaterials(const PrimitiveTemplate *_this, GPValue *g
     }
 #if !COD2_APPLE_SDK || !defined(DEDICATED)
     media.material = Material_RegisterHandle(str, 3, 6);
+#if COD2_APPLE_SDK
+    MediaHandles_AddHandle(&((PrimitiveTemplate *)_this)->mMediaHandles, media);
+#else
     MediaHandles_AddHandle((MediaHandles *)((byte *)_this + 0x68), media);
+#endif
 #endif
     return 1;
 }
@@ -691,7 +699,7 @@ void PrimitiveTemplate_ParseChannelCurve(const PrimitiveTemplate *_this, GPValue
         keyCount = 0;
     }
 
-#if COD2_APPLE_SDK && defined(DEDICATED)
+#if COD2_APPLE_SDK
     ((PrimitiveTemplate *)thisPtr)->mFxChannels[channel].curve =
         FxCurve_AllocAndCreateWithKeys(keys, 1, keyCount);
 #else
@@ -746,7 +754,7 @@ void PrimitiveTemplate_CreateBackCompatibleRotationDeltaCurve(const PrimitiveTem
         }
     }
 
-#if COD2_APPLE_SDK && defined(DEDICATED)
+#if COD2_APPLE_SDK
     FxChannel *channel = &((PrimitiveTemplate *)thisPtr)->mFxChannels[channelId];
     channel->curve = FxCurve_AllocAndCreateWithKeys(keys, 1, 20);
     channel->scaleRange.mMin = graphScale;

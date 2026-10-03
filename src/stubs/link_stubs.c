@@ -137,10 +137,12 @@ int CFBundleCopyLocalizedString(void *bundle, void *key, void *value, void *tabl
     (void)table;
     return 0;
 }
+#if !COD2_APPLE_SDK
 int CFDataGetBytePtr()
 {
     return 0;
 }
+#endif
 int CFStringCompare()
 {
     return 0;
@@ -382,7 +384,9 @@ int GetControlReference()
 {
     return 0;
 }
-#if defined(COD2_X64)
+#if COD2_APPLE_SDK
+/* SND_SetChannelInfo is implemented natively in snd.c on Apple. */
+#elif defined(COD2_X64)
 void SND_SetChannelInfo(int index, int entnum, const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, const vec_t *origin, float volume, float pitch, int srcChannelCount, int baserate, int total_msec, int start_msec, int startDelay, int master, snd_alias_system_t system)
 {
     (void)index; (void)entnum; (void)pAlias0; (void)pAlias1; (void)lerp;
@@ -632,7 +636,9 @@ char InstallEventLoopTimer[64] __attribute__((aligned(4))) = { 0 };
 char IOBSDNameMatching[64] __attribute__((aligned(4))) = { 0 };
 char IOObjectGetClass[64] __attribute__((aligned(4))) = { 0 };
 char IOObjectRetain[64] __attribute__((aligned(4))) = { 0 };
+#if !COD2_APPLE_SDK
 char IORegistryEntryCreateCFProperty[64] __attribute__((aligned(4))) = { 0 };
+#endif
 char IORegistryEntryCreateIterator[64] __attribute__((aligned(4))) = { 0 };
 char IsMovieDone[64] __attribute__((aligned(4))) = { 0 };
 char jpeg_memory_src[64] __attribute__((aligned(4))) = { 0 };

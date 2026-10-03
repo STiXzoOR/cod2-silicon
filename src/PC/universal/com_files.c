@@ -284,11 +284,19 @@ qboolean FS_CreatePath(char *OSPath)
     }
 
     for (ofs = OSPath + 1; *ofs; ofs++) {
+#if COD2_APPLE_SDK
+        if (*ofs == '/') {
+            *ofs = '\0';
+            Sys_Mkdir(OSPath);
+            *ofs = '/';
+        }
+#else
         if (*ofs == '\\') {   /* OSPath is Windows-native, so the separator is '\', not '/' */
             *ofs = '\0';
             Sys_Mkdir(OSPath);
             *ofs = '\\';
         }
+#endif
     }
     return 0;
 }
@@ -727,7 +735,21 @@ int FS_Seek(fileHandle_t f, long int offset, int origin)
         }
     }
 
+#if COD2_APPLE_SDK
+    byte scratch[4096];
+    if (skip < 0)
+        return -1;
+    while (skip > 0) {
+        int chunk = skip > (int)sizeof(scratch) ? (int)sizeof(scratch) : skip;
+        int got = unzReadCurrentFile(entry->handleFiles.file.z, scratch, chunk);
+        if (got <= 0)
+            return -1;
+        skip -= got;
+    }
+    return 0;
+#else
     return unzReadCurrentFile(entry->handleFiles.file.z, NULL, skip) ? 0 : -1;
+#endif
 }
 
 int FS_FTell(fileHandle_t f)

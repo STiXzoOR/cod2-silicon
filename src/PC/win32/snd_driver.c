@@ -16,7 +16,11 @@ extern snd_local_t g_snd;
 extern float floorf(float x);
 
 extern void FS_FCloseFile(fileHandle_t f);
+#if COD2_APPLE_SDK
+extern int FS_FOpenFileReadStream(const char *filename, fileHandle_t *handle, int uniqueFILE);
+#else
 extern int FS_FOpenFileReadStream(const char *filename, long unsigned int *handle, int uniqueFILE);
+#endif
 extern int FS_Seek(int f, long int offset, int origin);
 extern int FS_FTell(int f);
 extern int FS_Read(void *buffer, int len, int f);
@@ -196,8 +200,14 @@ void SND_DriverPostUpdate(int frametime);
 
 static long unsigned int MSS_FileOpenCallback(const char *pszFilename, long unsigned int *phFileHandle)
 {
-
+#if COD2_APPLE_SDK
+    fileHandle_t handle = 0;
+    int length = FS_FOpenFileReadStream(pszFilename, &handle, 1);
+    *phFileHandle = (unsigned long)handle;
+    return length >= 0;
+#else
     return ((unsigned int)FS_FOpenFileReadStream(pszFilename, phFileHandle, 1) >> 31) ^ 1;
+#endif
 }
 
 static void MSS_FileCloseCallback(long unsigned int hFileHandle)

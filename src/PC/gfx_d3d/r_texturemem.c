@@ -14,7 +14,11 @@ unsigned int R_AvailableTextureMemory(void)
 
     MacDisplay_GetVideoMemoryInfo(&vidMem, &textureMemBytes);
 
+#if COD2_APPLE_SDK
+    char *device = (char *)((DxGlobals *)dx)->device;
+#else
     char *device = *(char **)(dx + 8);
+#endif
     void **vtable = *(void ***)device;
     texMemInMegs = ((unsigned int(D3DVTCC *)(void *))vtable[4])(device) >> 20;
 

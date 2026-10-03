@@ -890,6 +890,8 @@ void *AIL_open_stream(void *driver, const char *name, int memory)
 {
     (void)memory;
     size_t size = 0;
+    if (!name || !name[0])
+        return NULL;
     unsigned char *data = ReadStreamFile(name, &size);
     if (!data) {
         AudioError("Stream read failed", kAudioFileFileNotFoundError);

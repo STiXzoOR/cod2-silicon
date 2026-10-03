@@ -64,8 +64,9 @@ extern int BG_GetNumWeapons(void);
 extern int CG_PlaySoundAlias(int entitynum, const vec_t *origin, snd_alias_list_t *aliasList);
 extern int FX_GetBoneIndex(const int entNum, unsigned int bone);
 extern void FX_PlayEntityEffect(EffectTemplate *fx, const vec_t *org, vec3_t *axis, const FxBoltInfo *bolt);
-#if defined(COD2_X64)
-extern void FX_PlayEffect(EffectTemplate *, const vec_t *, const vec_t *);
+#if COD2_APPLE_SDK
+extern void FX_PlayEffect(EffectTemplate *fx, const vec_t *org, const vec_t *fwd);
+extern void FX_PlayOrientedEffect(EffectTemplate *fx, const vec_t *org, const vec_t *fwd, const vec_t *up);
 #else
 extern void FX_PlayEffect(EffectTemplate *fx, const vec_t *org, const vec_t *fwd, ...);
 #endif
@@ -874,8 +875,8 @@ static void CG_PlayLoopedFx(centity_t *cent)
             up[1] += scale * forward[1];
             up[2] += scale * forward[2];
             Vec3Normalize(up);
-#if defined(COD2_X64)
-            FX_PlayEffect(fx, cent->lerpOrigin, forward);
+#if COD2_APPLE_SDK
+            FX_PlayOrientedEffect(fx, cent->lerpOrigin, forward, up);
 #else
             FX_PlayEffect(fx, cent->lerpOrigin, forward, up);
 #endif

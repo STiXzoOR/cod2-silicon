@@ -847,6 +847,11 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
             int d3dpp[14];
             int width = 640, height = 480;
 
+#if COD2_APPLE_SDK
+            extern const dvar_t *r_mode;
+            if (r_mode && r_mode->current.integer >= 0 && r_mode->current.integer < r_mode->domain.enumeration.stringCount)
+                sscanf(r_mode->domain.enumeration.strings[r_mode->current.integer], "%dx%d", &width, &height);
+#endif
             memset(d3dpp, 0, sizeof(d3dpp));
             d3dpp[0] = width;
             d3dpp[1] = height;

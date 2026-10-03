@@ -96,7 +96,11 @@ int R_CheckDxCaps(const D3DCAPS9 *caps)
     MacDisplay_GetVideoMemoryInfo(&videoMemory, &textureMemory);
 
     allowedPaths = 4;
+#if COD2_APPLE_SDK
+    if (videoMemory > 64)
+#else
     if (videoMemory >= 0x4000001)
+#endif
         allowedPaths += 2;
 
     for (bit = s_capsCheckBits; bit != s_capsCheckBits + 36; bit++) {

@@ -19,7 +19,20 @@ extern Bool PrimitiveTemplate_ParseMaterials(const PrimitiveTemplate *primitive,
 
 const FxFlagEntry fxAttributeFlags[26] = { 0 };
 const FxFlagEntry fxSpawnFlags[13] = { 0 };
+#ifdef DEDICATED
 Bool g_rendererExists = 0;
+#else
+Bool g_rendererExists = 1;
+static byte developerCheck;
+byte *fx_developer_check_ptr = &developerCheck;
+MaterialHandle Material_RegisterHandle(const char *name, int track, int type)
+{
+    (void)track; (void)type;
+    assert(!strcmp(name, "synthetic_material"));
+    return (MaterialHandle)(uintptr_t)0x1234;
+}
+struct XModel *FX_XModelPrecache(const char *name) { (void)name; abort(); }
+#endif
 
 static const char fixture[] =
     "particle\n{\nlife 200\ndelay 50\nshader synthetic_material\n"
@@ -176,7 +189,12 @@ int main(void)
     effect = FX_RegisterEffect("fx/synthetic.efx");
     assert(effect && effect->mPrimitiveCount == 2);
     assert(FxScheduler_GetEffectLength(&scheduler, effect) == 450.0f);
+#ifdef DEDICATED
     assert(effect->mPrimitives[0]->mMediaHandles.mMediaList.size == 0);
+#else
+    assert(effect->mPrimitives[0]->mMediaHandles.mMediaList.size == 1);
+    assert(effect->mPrimitives[0]->mMediaHandles.mMediaList.elements[0].material == (MaterialHandle)(uintptr_t)0x1234);
+#endif
     assert(!PrimitiveTemplate_ParseMaterials(effect->mPrimitives[0], &emptyMaterial));
     for (i = 0; i < 24; ++i) {
         const FxChannel *channel = &effect->mPrimitives[0]->mFxChannels[i];
@@ -208,6 +226,6 @@ int main(void)
         free(allocation->data);
         free(allocation);
     }
-    puts("PASS: native dedicated FX parsing, 450 ms lifetime, cache, channels and media growth");
+    puts("PASS: native FX parsing, 450 ms lifetime, cache, channels and media growth");
     return 0;
 }

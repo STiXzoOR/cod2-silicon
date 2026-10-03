@@ -2,6 +2,46 @@
 #include "imports.h"
 #include "cod2_feature_config.h"
 
+#if COD2_APPLE_SDK
+#include "platform/macos_jpeg.h"
+#include <stdlib.h>
+extern refimport_t ri;
+extern byte r_limits_ptr[];
+
+void R_SaveJpg(const char *filename, int quality, int width, int height, byte *pixels)
+{
+    size_t size;
+    byte *data = MacJpeg_Encode(pixels, width, height, quality, &size);
+    if (data) {
+        ri.FS_WriteFile(filename, data, (int)size);
+        free(data);
+    } else {
+        ri.Printf(2, "WARNING: couldn't encode JPEG '%s'\n", filename);
+    }
+}
+
+void R_LoadJpg(const char *filepath, byte **file, byte **pic, int *width, int *height, D3DFORMAT *imageFormat)
+{
+    byte *data = NULL;
+    int size = ri.FS_ReadFile(filepath, (void **)&data);
+    *pic = NULL;
+    if (!data || size <= 0)
+        return;
+    byte *pixels = MacJpeg_Decode(data, (size_t)size, ((vidConfig_t *)r_limits_ptr)->maxTextureSize, width, height);
+    if (!pixels) {
+        ri.Printf(2, "WARNING: couldn't decode JPEG '%s'\n", filepath);
+        ri.FS_FreeFile(data);
+        return;
+    }
+    int bytes = *width * *height * 4;
+    *pic = ri.Z_MallocInternal(bytes);
+    memcpy(*pic, pixels, bytes);
+    free(pixels);
+    *file = data;
+    *imageFormat = (D3DFORMAT)0x15;
+}
+#else
+
 extern jpeg_error_mgr *jpeg_std_error(jpeg_error_mgr *jerr);
 extern void jpeg_CreateCompress(j_compress_ptr cinfo, int version, size_t structsize);
 extern void jpeg_set_defaults(j_compress_ptr cinfo);
@@ -299,3 +339,4 @@ void R_LoadJpg(const char *filepath, byte **file, byte **pic, int *width, int *h
     jpeg_finish_decompress((struct jpeg_decompress_struct *)cinfo);
     jpeg_destroy_decompress((struct jpeg_decompress_struct *)cinfo);
 }
+#endif

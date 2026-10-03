@@ -10,10 +10,12 @@ const void *CFArrayGetValueAtIndex(CFArrayRef array, CFIndex idx)
     return 0;
 }
 
+#if !defined(__APPLE__) || !defined(COD2_X64)
 CFNumberRef CFNumberCreate(CFAllocatorRef alloc, int theType, const void *valuePtr)
 {
     return (CFNumberRef)0;
 }
+#endif
 
 int CFNumberGetValue(CFNumberRef number, int theType, void *valuePtr)
 {

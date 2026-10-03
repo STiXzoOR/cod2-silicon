@@ -3,6 +3,9 @@
 #include <string.h>
 #include "common_types.h"
 #include "imports.h"
+#if COD2_APPLE_SDK
+#include "platform/macos_system.h"
+#endif
 
 SInt16 MacFeatures_GetSystemVersion(void)
 {
@@ -27,6 +30,9 @@ Boolean MacFeatures_IsAltiVecAvailable(UInt8 *outMajor, UInt8 *outMinor, UInt8 *
 
 float MacFeatures_GetCPUSpeedInGHz(void)
 {
+#if COD2_APPLE_SDK
+    return MacSystem_CPUFrequencyGHz();
+#else
     FILE *f = fopen("/proc/cpuinfo", "r");
     char line[256];
     float mhz = 800.0f;
@@ -44,10 +50,14 @@ float MacFeatures_GetCPUSpeedInGHz(void)
         fclose(f);
     }
     return mhz / 1000.0f;
+#endif
 }
 
 UInt32 MacFeatures_GetMemorySizeInMB(void)
 {
+#if COD2_APPLE_SDK
+    return (UInt32)(MacSystem_MemoryBytes() >> 20);
+#else
     FILE *f = fopen("/proc/meminfo", "r");
     char line[256];
     unsigned long kb = 128 * 1024;
@@ -62,4 +72,5 @@ UInt32 MacFeatures_GetMemorySizeInMB(void)
         fclose(f);
     }
     return (UInt32)(kb / 1024);
+#endif
 }

@@ -1351,18 +1351,42 @@ void CG_BulletHitEvent(int sourceEntityNum, vec_t *position, vec_t *normal, vec_
     if (event == 0xb6) {
         alias = cgs->media.bulletHitSmallSound[surfType];
         fxTable = cgs->media.fx ? (byte *)cgs->media.fx->table : NULL;
+#if COD2_APPLE_SDK
+        fxNormal = fxTable ? ((EffectTemplate **)fxTable)[0 + surfType] : NULL;
+#else
         fxNormal = fxTable ? *(void **)(fxTable + surfType * 4) : NULL;
+#endif
+#if COD2_APPLE_SDK
+        fxReflect = fxTable ? ((EffectTemplate **)fxTable)[23 + surfType] : NULL;
+#else
         fxReflect = fxTable ? *(void **)(fxTable + 0x5c + surfType * 4) : NULL;
+#endif
     } else if (event == 0xb7) {
         alias = cgs->media.bulletHitLargeSound[surfType];
         fxTable = cgs->media.fx ? (byte *)cgs->media.fx->table : NULL;
+#if COD2_APPLE_SDK
+        fxNormal = fxTable ? ((EffectTemplate **)fxTable)[46 + surfType] : NULL;
+#else
         fxNormal = fxTable ? *(void **)(fxTable + 0xb8 + surfType * 4) : NULL;
+#endif
+#if COD2_APPLE_SDK
+        fxReflect = fxTable ? ((EffectTemplate **)fxTable)[69 + surfType] : NULL;
+#else
         fxReflect = fxTable ? *(void **)(fxTable + 0x114 + surfType * 4) : NULL;
+#endif
     } else {
         alias = cgs->media.shotgunHitSound[surfType];
         fxTable = cgs->media.fx ? (byte *)cgs->media.fx->table : NULL;
+#if COD2_APPLE_SDK
+        fxNormal = fxTable ? ((EffectTemplate **)fxTable)[92 + surfType] : NULL;
+#else
         fxNormal = fxTable ? *(void **)(fxTable + 0x170 + surfType * 4) : NULL;
+#endif
+#if COD2_APPLE_SDK
+        fxReflect = fxTable ? ((EffectTemplate **)fxTable)[115 + surfType] : NULL;
+#else
         fxReflect = fxTable ? *(void **)(fxTable + 0x1cc + surfType * 4) : NULL;
+#endif
     }
 
     if (!cg_blood->current.enabled && surfType == 7) {

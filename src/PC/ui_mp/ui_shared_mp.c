@@ -7,6 +7,12 @@
 #include <string.h>
 #include <math.h>
 
+#if defined(COD2_X64)
+#define SCRIPT_ITEM_SIZE sizeof(itemDef_t)
+#else
+#define SCRIPT_ITEM_SIZE 0x2a0
+#endif
+
 extern commandDef_t commandList[28];
 extern bind_t g_bindings[56];
 
@@ -940,7 +946,7 @@ float Item_Slider_ThumbPosition(itemDef_t *item)
 qboolean Menu_CheckOnKey(displayContextDef_t *dc, menuDef_t *menu, int key)
 {
     byte *m = (byte *)menu;
-    byte tempItem[0x2a0];
+    byte tempItem[SCRIPT_ITEM_SIZE];
     int i;
 
     if (COD2_DEBUG_ENV("COD2_KEYDIAG")) {
@@ -1138,7 +1144,7 @@ void Menus_Close(displayContextDef_t *dc, menuDef_t *menu)
     byte *d = (byte *)dc;
     int openCount, i, menuIndex;
     qboolean wasVisible = 0;
-    byte tempItem[0x2a0];
+    byte tempItem[SCRIPT_ITEM_SIZE];
 
     openCount = (((displayContextDef_s*)(d))->openMenuCount);
     for (i = openCount - 1; i >= 0; i--) {
@@ -2260,7 +2266,7 @@ void Menus_Open(displayContextDef_t *dc, menuDef_t *menu)
     byte *d = (byte *)dc;
     byte *m = (byte *)menu;
     int openCount, i, j;
-    byte tempItem[0x2a0];
+    byte tempItem[SCRIPT_ITEM_SIZE];
 
     openCount = (((displayContextDef_s*)(d))->openMenuCount);
     for (i = openCount - 1; i >= 0; i--)
@@ -4970,7 +4976,7 @@ void Menu_HandleKey(displayContextDef_t *dc, menuDef_t *menu, int key, qboolean 
 
     if (key == 0x1b) {
         if (!g_waitingForKey && (*(void **)&((menuDef_t *)m)->onESC)) {
-            byte tempItem[0x2a0];
+            byte tempItem[SCRIPT_ITEM_SIZE];
             *(void **)&(*(unsigned char *)&((itemDef_t *)tempItem)->parent) = menu;
             Item_RunScript(dc, (itemDef_t *)tempItem, ((menuDef_t *)m)->onESC);
         }
@@ -5611,7 +5617,7 @@ void Menus_HandleOOBClick(displayContextDef_t *dc, menuDef_t *menu, int key, qbo
         if ((((Window *)m)->staticFlags & 0x2000000)) {
 
             if (((*(byte *)&((menuDef_t *)m)->window.dynamicFlags[0]) & 4) && (*(void **)&((menuDef_t *)m)->onClose)) {
-                byte tempItem[0x2a0];
+                byte tempItem[SCRIPT_ITEM_SIZE];
                 *(void **)&(*(unsigned char *)&((itemDef_t *)tempItem)->parent) = menu;
                 Item_RunScript(dc, (itemDef_t *)tempItem, ((menuDef_t *)m)->onClose);
             }

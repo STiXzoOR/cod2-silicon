@@ -22,6 +22,42 @@ void CG_Respawn(void);
 void CG_DamageFeedback(int yawByte, int pitchByte, int damage);
 void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops);
 
+#if defined(COD2_X64)
+#define CG_SNAP_PTR offsetof(cg_t, snap)
+#define CG_OFF_25BB0 offsetof(cg_t, time)
+#define CG_OFF_25BBC offsetof(cg_t, mapRestart)
+#define CG_OFF_25BC4 offsetof(cg_t, predictedPlayerState)
+#define CG_OFF_25C94 offsetof(cg_t, predictedPlayerState.offHandIndex)
+#define CG_OFF_25C98 offsetof(cg_t, predictedPlayerState.weapon)
+#define CG_OFF_28490 offsetof(cg_t, playerEntity)
+#define CG_OFF_284C4 offsetof(cg_t, predictedError)
+#define CG_OFF_285D4 offsetof(cg_t, swayViewAngles)
+#define CG_OFF_285E0 offsetof(cg_t, swayAngles)
+#define CG_OFF_285EC offsetof(cg_t, swayOffset)
+#define CG_OFF_28594 offsetof(cg_t, refdef.viewaxis[0])
+#define CG_OFF_285A0 offsetof(cg_t, refdef.viewaxis[1])
+#define CG_OFF_2826C offsetof(cg_t, predictedPlayerEntity)
+#define CG_OFF_2BDE8 offsetof(cg_t, cursorHintIcon)
+#define CG_OFF_2BDEC offsetof(cg_t, cursorHintTime)
+#define CG_OFF_2BE30 offsetof(cg_t, proneBlockedEndTime)
+#define CG_OFF_2BE48 offsetof(cg_t, attackerTime)
+#define CG_OFF_2BE50 offsetof(cg_t, weaponSelect)
+#define CG_OFF_2BE54 offsetof(cg_t, weaponSelectTime)
+#define CG_OFF_2BE70 offsetof(cg_t, equippedOffHand)
+#define CG_OFF_2BE74 offsetof(cg_t, viewDamage)
+#define CG_OFF_2BE80 offsetof(cg_t, viewDamage[1])
+#define CG_OFF_2BED4 offsetof(cg_t, damageTime)
+#define CG_OFF_2BF0C offsetof(cg_t, v_dmg_time)
+#define CG_OFF_2BF10 offsetof(cg_t, v_dmg_pitch)
+#define CG_OFF_2BF14 offsetof(cg_t, v_dmg_roll)
+#define CG_OFF_2BF1C offsetof(cg_t, xyspeed)
+#define CG_OFF_2C030 offsetof(cg_t, kickAVel)
+#define CG_OFF_2C03C offsetof(cg_t, kickAngles)
+#define CG_OFF_2C0A4 offsetof(cg_t, vGunOffset)
+#define CG_OFF_2C0B0 offsetof(cg_t, vGunSpeed)
+#define CG_OFF_2C50C offsetof(cg_t, cameraShake)
+#define CG_OFF_2CD10 offsetof(cg_t, adsViewErrorDone)
+#else
 #define CG_SNAP_PTR 0x20
 #define CG_OFF_25BB0 0x25bb0
 #define CG_OFF_25BBC 0x25bbc
@@ -56,6 +92,8 @@ void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops);
 #define CG_OFF_2C0B0 0x2c0b0
 #define CG_OFF_2C50C 0x2c50c
 #define CG_OFF_2CD10 0x2cd10
+
+#endif
 
 #define CENT_EVENT_PARM 0x190
 

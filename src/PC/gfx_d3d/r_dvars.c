@@ -1,5 +1,8 @@
 #include "common_types.h"
 #include "imports.h"
+#if COD2_APPLE_SDK
+#include "platform/macos_display.h"
+#endif
 /* dvar globals */
 extern const dvar_t *com_statmon;
 extern const dvar_t *fx_sort;
@@ -516,7 +519,11 @@ void R_RegisterDvars(void)
 
     r_monitor = ri.Dvar_RegisterInt("r_monitor", 0, 0, 8, 0x2021);
 
+#if COD2_APPLE_SDK
+    r_mode = ri.Dvar_RegisterEnum("r_mode", MacPlatform_ModeNames(), 0, 0x2021);
+#else
     r_mode = ri.Dvar_RegisterEnum("r_mode", s_displayModeNames, 0, 0x2021);
+#endif
 
     r_displayRefresh = ri.Dvar_RegisterEnum("r_displayRefresh", s_displayRefreshNames, 0, 0x2021);
 

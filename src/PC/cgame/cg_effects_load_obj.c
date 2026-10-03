@@ -172,7 +172,11 @@ FxImpactTable *CG_RegisterImpactEffects(const char *mapname)
         CG_RegisterImpactEffectsForDir(mapdir, (char *(*)[23])szEffectFile);
     }
 
+#if COD2_APPLE_SDK
+    FxImpactTable *fx = (FxImpactTable *)Hunk_AllocAlignInternal(sizeof(FxImpactTable), sizeof(void *));
+#else
     FxImpactTable *fx = (FxImpactTable *)Hunk_AllocAlignInternal(8, 4);
+#endif
     fx->table = (FxImpactEntry *)Hunk_AllocAlignInternal(sizeof(szEffectFile), 4);
 
     int typeIdx;
@@ -191,16 +195,32 @@ FxImpactTable *CG_RegisterImpactEffects(const char *mapname)
                 Com_Printf("no entry for effect type '%s' on surface type '%s'\n",
                            pszTypeName, Com_SurfaceTypeToName(surfIdx));
                 typeBadCount++;
+#if COD2_APPLE_SDK
+                ((EffectTemplate **)entries)[surfIdx] = NULL;
+#else
                 ((int *)entries)[surfIdx] = 0;
+#endif
             } else if (*effectFile == '\0') {
+#if COD2_APPLE_SDK
+                ((EffectTemplate **)entries)[surfIdx] = NULL;
+#else
                 ((int *)entries)[surfIdx] = 0;
+#endif
             } else {
+#if COD2_APPLE_SDK
+                ((EffectTemplate **)entries)[surfIdx] = FX_RegisterEffect(effectFile);
+#else
                 ((int *)entries)[surfIdx] = (int)FX_RegisterEffect(effectFile);
+#endif
             }
         }
 
         iBadCount += typeBadCount;
+#if COD2_APPLE_SDK
+        offset += 23 * sizeof(EffectTemplate *);
+#else
         offset += 23 * 4;
+#endif
     }
 
     if (iBadCount != 0) {

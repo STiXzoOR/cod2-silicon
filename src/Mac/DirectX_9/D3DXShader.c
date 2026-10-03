@@ -431,6 +431,17 @@ static const char *arb_ps_lightmap_alpha =
     "MOV oC0AfterFog.w, oC0.w;\n"
     "END\n";
 
+#if COD2_APPLE_SDK
+static const char *arb_ps_channel_mix =
+    "!!ARBfp1.0\n"
+    "TEMP sample, mixed;\n"
+    "TEX sample, fragment.texcoord[0], texture[0], 2D;\n"
+    "MUL mixed, sample, program.env[0];\n"
+    "MAD result.color.rgb, sample.a, program.env[0].a, mixed;\n"
+    "MOV result.color.a, sample.a;\n"
+    "END\n";
+#endif
+
 static const char *arb_ps_textured =
     "!!ARBfp1.0\n"
     "OPTION ARB_precision_hint_fastest;\n"
@@ -580,6 +591,11 @@ HRESULT D3DXCompileShader(
         }
     } else {
 
+#if COD2_APPLE_SDK
+        if (hlsl_has(pSrcData, len, "diffuseColor.a") && hlsl_has(pSrcData, len, "materialColor")) {
+            arbCode = arb_ps_channel_mix;
+        } else
+#endif
         if (hlsl_has(pSrcData, len, "texCUBE")) {
             arbCode = arb_ps_sky;
         } else if (hlsl_has(pSrcData, len, "lightmapSampler") || hlsl_has(pSrcData, len, "lmapCoords") || hlsl_has(pSrcData, len, "lightmap")) {

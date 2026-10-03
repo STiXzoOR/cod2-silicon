@@ -21,6 +21,9 @@ list(FILTER MACOS_C EXCLUDE REGEX "/(data|import_pointers|literals)\\.c$")
 # Native replacements own these platform APIs; legacy stubs never intercept SDK calls.
 list(FILTER MACOS_C EXCLUDE REGEX "/Mac/Tools/(MacDisplay|MacThreads|CCircularBuffer|CAudioRecorder|MacMSS[^/]*)\\.c$")
 list(FILTER MACOS_C EXCLUDE REGEX "/stubs/(agl_stubs|audio_stubs|cpp_compat|cpp_trampoline|fx_override)\\.c$")
+# The real CoreFoundation and IOKit must win: these stubs return 0 and would
+# shadow the frameworks for every call made from this binary.
+list(FILTER MACOS_C EXCLUDE REGEX "/stubs/(iokit_stubs|corefoundation_stubs)\\.c$")
 list(APPEND MACOS_C src/unix/linux_common.c src/unix/linux_net.c src/unix/sysdiff_statehash.c
   src/platform/macos_system.c src/platform/macos_threads.c src/platform/macos_ring.c
   src/platform/macos_cpp_abi.cpp src/platform/macos_abs_symbols.c)
@@ -59,7 +62,7 @@ foreach(target cod2_macos cod2_macos_ded)
     -Wint-conversion -Wincompatible-pointer-types -Wvoid-pointer-to-int-cast
     -Wno-typedef-redefinition -Wno-duplicate-decl-specifier
     -ferror-limit=0)
-  target_link_libraries(${target} PRIVATE ZLIB::ZLIB c++)
+  target_link_libraries(${target} PRIVATE ZLIB::ZLIB c++ "-framework IOKit" "-framework CoreFoundation")
   target_compile_features(${target} PRIVATE cxx_std_17)
   # ld64 equivalents of the MinGW --defsym seam aliases in CMakeLists.txt.
   target_link_options(${target} PRIVATE
@@ -72,14 +75,16 @@ endforeach()
 # vidConfig lives in the renderer, which the dedicated server does not build.
 target_link_options(cod2_macos PRIVATE "LINKER:-alias,_vidConfig,_r_limits_ptr")
 target_sources(cod2_macos PRIVATE src/unix/linux_input.c src/platform/macos_display.c
-  src/platform/macos_rawmouse.m src/platform/macos_audio.c src/platform/macos_voice.c)
+  src/platform/macos_rawmouse.m src/platform/macos_audio.c src/platform/macos_voice.c
+  src/platform/macos_jpeg.c)
 set_source_files_properties(src/platform/macos_rawmouse.m PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
 # The renderer renders into the exact r_mode framebuffer; presentation scales it.
 set_source_files_properties(src/PC/gfx_d3d/rb_state.c src/PC/gfx_d3d/r_screenshot.c PROPERTIES
   COMPILE_DEFINITIONS "glDrawBuffer=MacGL_DrawBuffer;glReadBuffer=MacGL_ReadBuffer")
 target_link_libraries(cod2_macos PRIVATE SDL2::SDL2 ${COD2_OPENGL_FRAMEWORK} ${COD2_CURL_LIBRARY}
   ${COD2_AUDIO_FRAMEWORK} ${COD2_COREAUDIO_FRAMEWORK}
-  ${COD2_GAMECONTROLLER_FRAMEWORK} ${COD2_FOUNDATION_FRAMEWORK})
+  ${COD2_GAMECONTROLLER_FRAMEWORK} ${COD2_FOUNDATION_FRAMEWORK}
+  "-framework ImageIO" "-framework CoreGraphics")
 target_compile_definitions(cod2_macos_ded PRIVATE DEDICATED)
 target_link_options(cod2_macos_ded PRIVATE -Wl,-dead_strip)
 set_source_files_properties(src/PC/qcommon/crash_handler.c PROPERTIES

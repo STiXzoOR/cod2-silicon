@@ -150,9 +150,11 @@ int CFURLGetFileSystemRepresentation(CFURLRef url, int resolveAgainstBase, unsig
     return 0;
 }
 
+#if !defined(__APPLE__) || !defined(COD2_X64)
 void CFRelease(CFTypeRef cf)
 {
 }
+#endif
 
 Boolean IsWindowVisible(WindowRef window)
 {

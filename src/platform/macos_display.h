@@ -2,6 +2,7 @@
 #define COD2_MACOS_DISPLAY_H
 
 #include <stdint.h>
+const char **MacPlatform_ModeNames(void);
 
 enum { MAC_WINDOWED, MAC_FULLSCREEN, MAC_BORDERLESS };
 void MacPlatform_ConfigureWindow(int width, int height, int mode, int refresh);

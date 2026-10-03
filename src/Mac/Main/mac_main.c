@@ -249,8 +249,13 @@ void Sys_Init(void)
 #endif
     Cmd_AddCommand("net_restart", Sys_Net_Restart_f);
 
+#if COD2_APPLE_SDK
+    Com_Printf("CPU maximum frequency is %.2lf GHz\n", sys_info.cpuGHz);
+    Com_Printf("System memory is %i MB\n", sys_info.sysMB);
+#else
     Com_Printf("Measured CPU speed is %.2lf GHz\n", sys_info.cpuGHz);
     Com_Printf("System memory is %i MB (capped at 1 GB)\n", sys_info.sysMB);
+#endif
     Com_Printf("Video card is \"%s\"\n", sys_info.gpuDescription);
     Com_Printf("Streaming SIMD Extensions (SSE) %ssupported\n", sys_info.SSE ? "" : "not ");
     Com_Printf("\n");

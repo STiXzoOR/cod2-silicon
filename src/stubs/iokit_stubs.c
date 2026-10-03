@@ -17,10 +17,12 @@ io_object_t IOIteratorNext(io_iterator_t iterator)
     return (io_object_t)0;
 }
 
+#if !defined(__APPLE__) || !defined(COD2_X64)
 int IOObjectRelease(io_object_t object)
 {
     return 0;
 }
+#endif
 
 int IORegistryEntryCreateCFProperties(io_object_t entry, void *properties, void *allocator, unsigned int options)
 {
