@@ -3426,8 +3426,10 @@ unsigned int Scr_ConstructMessageString(int firstParmIndex, int lastParmIndex, c
                         Com_Error(6, va("non-localized %s strings are not allowed to have letters in them: \"%s\"",
                                         errorContext, token));
                     } else {
+#if !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
                         Com_Printf("^3WARNING: Non-localized %s string is not allowed to have letters in it. Must be changed over to a localized string: \"%s\"\n",
                                    errorContext, token);
+#endif
                     }
 
                     break;

@@ -2,8 +2,15 @@
 #include <stdlib.h>
 #endif
 #include "common_types.h"
-#if defined(COD2_X64)
-#include <stdlib.h>
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "PC/qcommon/cod2x_features.h"
+#define COD2X_CON_NAME_CHARS 40
+#define COD2X_CON_VALUE_OFFSET 340.0f
+#define COD2X_CON_MATCHES 60
+#else
+#define COD2X_CON_NAME_CHARS 0x18
+#define COD2X_CON_VALUE_OFFSET 200.0f
+#define COD2X_CON_MATCHES 24
 #endif
 #include "imports.h"
 #include "bytematch.h"
@@ -967,8 +974,8 @@ static void ConDrawInput_DvarMatch(const char *str)
 
     cls_ = &cls;
 
-    re.DrawText(str, 0x18, cls_->consoleFont, conDrawInputGlob.x, conDrawInputGlob.y + conDrawInputGlob.fontHeight, 1.0f, 1.0f, con_inputDvarMatchColor, 0);
-    conDrawInputGlob.x += 200.0f;
+    re.DrawText(str, COD2X_CON_NAME_CHARS, cls_->consoleFont, conDrawInputGlob.x, conDrawInputGlob.y + conDrawInputGlob.fontHeight, 1.0f, 1.0f, con_inputDvarMatchColor, 0);
+    conDrawInputGlob.x += COD2X_CON_VALUE_OFFSET;
 
     value = Dvar_GetVariantString(str);
     re.DrawText(value, 0x28, cls_->consoleFont, conDrawInputGlob.x, conDrawInputGlob.y + conDrawInputGlob.fontHeight, 1.0f, 1.0f, con_inputDvarValueColor, 0);
@@ -1487,7 +1494,7 @@ static void ConDrawInput_DetailedDvarMatch(const char *str)
     lineCount = hasLatchedValue ? 4 : 3;
     ConDrawInput_DrawHintBox(lineCount, 0.0f);
 
-    ConDrawInput_DrawText(str, 0x18, con_inputDvarMatchColor);
+    ConDrawInput_DrawText(str, COD2X_CON_NAME_CHARS, con_inputDvarMatchColor);
     ConDrawInput_NextLine();
 
     ConDrawInput_DrawText(Dvar_DisplayableValue(dvar), 0x28, con_inputDvarValueColor);
@@ -1582,7 +1589,7 @@ static BM_NOINLINE void Con_DrawInput(void)
     if (!matchCount)
         return;
 
-    if (matchCount > 24) {
+    if (matchCount > COD2X_CON_MATCHES) {
         const char *tooMany = va("%i matches (too many to show)", matchCount);
         ConDrawInput_DrawHintBox(1, 0.0f);
         ConDrawInput_DrawText(tooMany, 0x7fffffff, con_inputDvarMatchColor);
@@ -1695,6 +1702,14 @@ static const char *CL_SkipConsoleColorCode(const char *text)
 
 static void CL_WriteDeathMessageText(const char *text, int color)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    int ch, currentColor = color < 0 ? 7 : color;
+    if (!text)
+        return;
+    while (con.lineOffset < con.linewidth &&
+           (ch = Cod2x_NextConsoleChar(&text, color, Cod2x_PrintDoubleColors(), &currentColor)) >= 0)
+        CL_WriteConsoleEncodedByte(currentColor, ch);
+#else
     const char *cursor;
 
     if (!text)
@@ -1715,6 +1730,7 @@ static void CL_WriteDeathMessageText(const char *text, int color)
 
         CL_WriteConsoleEncodedByte(color, ch);
     }
+#endif
 }
 
 static void CL_WriteDeathMessageIcon(const char *iconShader, float iconWidth, float iconHeight, int horzFlipIcon)

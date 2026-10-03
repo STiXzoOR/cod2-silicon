@@ -6,6 +6,41 @@
 #include "cdkey_hash.h"
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/IOKitLib.h>
+#if defined(COD2_X64) && COD2_X64
+#include <dlfcn.h>
+
+static int Cod2x_SDKMachineUUID(char uuid[64])
+{
+    /* Legacy engine stubs export these names. Resolve the installed SDK images
+       explicitly, without changing the original engine's import bindings. */
+    void *iokit = dlopen("/System/Library/Frameworks/IOKit.framework/IOKit", RTLD_LAZY | RTLD_LOCAL);
+    void *core = dlopen("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation", RTLD_LAZY | RTLD_LOCAL);
+    CFMutableDictionaryRef (*matching)(const char *) = iokit ? dlsym(iokit, "IOServiceMatching") : NULL;
+    CFTypeRef (*property)(io_registry_entry_t, CFStringRef, CFAllocatorRef, IOOptionBits) =
+        iokit ? dlsym(iokit, "IORegistryEntryCreateCFProperty") : NULL;
+    kern_return_t (*releaseObject)(io_object_t) = iokit ? dlsym(iokit, "IOObjectRelease") : NULL;
+    Boolean (*stringBytes)(CFStringRef, char *, CFIndex, CFStringEncoding) =
+        core ? dlsym(core, "CFStringGetCString") : NULL;
+    void (*releaseValue)(CFTypeRef) = core ? dlsym(core, "CFRelease") : NULL;
+    int ok = 0;
+    uuid[0] = '\0';
+    if (matching && property && releaseObject && stringBytes && releaseValue) {
+        io_service_t platform = IOServiceGetMatchingService(kIOMainPortDefault, matching("IOPlatformExpertDevice"));
+        if (platform) {
+            CFTypeRef value = property(platform, CFSTR("IOPlatformUUID"), NULL, 0);
+            releaseObject(platform);
+            if (value) {
+                if (CFGetTypeID(value) == CFStringGetTypeID())
+                    ok = stringBytes((CFStringRef)value, uuid, 64, kCFStringEncodingASCII);
+                releaseValue(value);
+            }
+        }
+    }
+    if (core) dlclose(core);
+    if (iokit) dlclose(iokit);
+    return ok;
+}
+#endif
 
 static void Cod2x_Hex(const unsigned char *bytes, char hex[33])
 {
@@ -60,7 +95,10 @@ int Cod2x_HwidFromUUID(const char *uuid, char id[33])
 int Cod2x_ReadMachineHwid(char id[33])
 {
     id[0] = '\0';
-#if defined(__APPLE__)
+#if defined(__APPLE__) && defined(COD2_X64) && COD2_X64
+    char uuid[64];
+    return Cod2x_SDKMachineUUID(uuid) && Cod2x_HwidFromUUID(uuid, id);
+#elif defined(__APPLE__)
     io_service_t platform;
     CFTypeRef value;
     char uuid[64];

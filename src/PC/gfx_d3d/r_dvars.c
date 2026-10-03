@@ -279,7 +279,11 @@ void R_RegisterDvars(void)
 
     r_smc_enable = ri.Dvar_RegisterBool("r_smc_enable", 1, 0x2000);
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    r_lodScale = ri.Dvar_RegisterFloat("r_lodScale", 1.0f, 0.0f, 1.0f, 0x2001);
+#else
     r_lodScale = ri.Dvar_RegisterFloat("r_lodScale", 1.0f, 1.0f, 4.0f, 0x2001);
+#endif
 
     r_lodBias = ri.Dvar_RegisterFloat("r_lodBias", 0.0f, -1000.0f, 0.0f, 0x2001);
 

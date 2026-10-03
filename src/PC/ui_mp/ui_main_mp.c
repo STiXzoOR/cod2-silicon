@@ -4282,6 +4282,9 @@ static void UI_ReadableSize_wrap(char *buf, int bufsize, int value)
 
 static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, float yStart, FontHandle font, float scale)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    scale = 0.35f;
+#endif
     LegacyHacks *legacyBase = legacyHacks;
     int downloadSize = legacyBase->cl_downloadSize;
     int downloadCount = legacyBase->cl_downloadCount;
@@ -4327,8 +4330,13 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
 
     {
         float yDl = yStart + 210.0f;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        float yEta = yStart + 230.0f;
+        float yXfer = yStart + 250.0f;
+#else
         float yEta = yStart + 235.0f;
         float yXfer = yStart + 260.0f;
+#endif
         const vec_t *ltGrey = (const vec_t *)imp_colorLtGrey;
 
         UI_DrawText(UI_SafeTranslateString(dlText), 64, font, 24.0f, yDl, 0, 0, scale, ltGrey, 3);

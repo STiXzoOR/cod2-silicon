@@ -614,7 +614,11 @@ void Info_SetValueForKey_Big(char *s, const char *key, const char *value)
         return;
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (strlen(newi) + strlen(s) >= sizeof(newi)) {
+#else
     if (strlen(newi) + strlen(s) > 1024) {
+#endif
         Com_Printf("Info string length exceeded\nkey: '%s'\nvalue: '%s'\nInfo string: '%s'\n", key, value, s);
         return;
     }

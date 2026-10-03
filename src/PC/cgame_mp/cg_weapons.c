@@ -1,5 +1,9 @@
 #include "PC/qcommon/port_debug.h"
 #include "common_types.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "PC/qcommon/cod2x_features.h"
+extern void CL_AddDebugLine(const vec_t *, const vec_t *, const vec_t *, qboolean, int, qboolean);
+#endif
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 
@@ -589,6 +593,9 @@ void CG_FireWeapon(centity_t *cent, int event, int barrel)
     weapInfo = &cg_weaponsArray[ent->weapon];
     BG_GetWeaponDef(ent->weapon);
     cent->bMuzzleFlash = 1;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    CG_Cod2xRadarFire(ent->number);
+#endif
 
     if (CG_IsLocalClientEntity_inl(cg, ent))
         BG_WeaponFireRecoil(&cg->predictedPlayerState, cg->vGunSpeed, cg->kickAVel);
@@ -1047,8 +1054,33 @@ void CG_WhizbySound(vec_t *vStart, vec_t *vEnd)
     CG_PlaySoundAlias(0x3fe, vProjPos, cgs->media.bulletWhizby);
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static void CG_Cod2xDebugBullet(int sourceEntityNum, const vec_t *position)
+{
+    static const vec4_t red = {1, 0, 0, 1}, yellow = {1, 1, 0, 1};
+    vec3_t muzzle, start, end;
+    int axis, i;
+    if (!Cod2x_DebugBullets())
+        return;
+    Com_Printf("Bullet impact: entity=%d end=(%.2f, %.2f, %.2f)\n", sourceEntityNum,
+               position[0], position[1], position[2]);
+    for (axis = 0; axis < 3; ++axis) {
+        for (i = 0; i < 3; ++i)
+            start[i] = end[i] = position[i];
+        start[axis] -= 3;
+        end[axis] += 3;
+        CL_AddDebugLine(start, end, red, 0, 1000, 0);
+    }
+    if (CG_CalcMuzzlePoint(sourceEntityNum, muzzle, *(unsigned short *)s_barrelTags[0]))
+        CL_AddDebugLine(muzzle, position, yellow, 0, 1000, 0);
+}
+#endif
+
 void CG_BulletHitClientEvent(int sourceEntityNum, vec_t *position, int surfType, int event)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    CG_Cod2xDebugBullet(sourceEntityNum, position);
+#endif
     snapshot_t *snap;
     snd_alias_list_t *alias;
     unsigned int flashTag;
@@ -1339,6 +1371,9 @@ void CG_AddViewWeapon(playerState_t *ps)
 
 void CG_BulletHitEvent(int sourceEntityNum, vec_t *position, vec_t *normal, vec_t *reflected, int surfType, int event)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    CG_Cod2xDebugBullet(sourceEntityNum, position);
+#endif
     byte *fxTable;
     snapshot_t *snap;
     snd_alias_list_t *alias;

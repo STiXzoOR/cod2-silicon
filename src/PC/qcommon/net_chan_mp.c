@@ -366,12 +366,20 @@ const char *NET_AdrToString(netadr_t a)
     } else if (a.type == 4) {
 
         unsigned short portHost = (a.port >> 8) | (a.port << 8);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        Com_sprintf(s, 0x40, "%i.%i.%i.%i:%u",
+#else
         Com_sprintf(s, 0x40, "%i.%i.%i.%i:%i",
+#endif
                     (int)a.ip[0],
                     (int)a.ip[1],
                     (int)a.ip[2],
                     (int)a.ip[3],
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+                    (unsigned int)portHost);
+#else
                     (int)(short)portHost);
+#endif
     }
 
     return s;

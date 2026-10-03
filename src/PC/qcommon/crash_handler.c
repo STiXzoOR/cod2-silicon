@@ -765,6 +765,33 @@ static void cr_posix_osinfo(int fd)
         cr_emit(fd, "os         : %s %s %s (%s)\n", u.sysname, u.release, u.version, u.machine);
 }
 
+#    if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static char cr_reportDirectory[1024] = ".";
+
+void Sys_CrashSetDirectory(const char *path)
+{
+    if (path && path[0])
+        snprintf(cr_reportDirectory, sizeof(cr_reportDirectory), "%s", path);
+}
+
+void Sys_CrashFreezeReport(void *context)
+{
+    char path[1200];
+    int fd;
+    snprintf(path, sizeof(path), "%s/cod2_freeze_%d.txt", cr_reportDirectory, (int)getpid());
+    fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+    cr_emit_common(fd, "main thread heartbeat stopped for more than 12 seconds (process still running)");
+    cr_posix_osinfo(fd);
+    cr_posix_regs(fd, context);
+    cr_posix_backtrace(fd);
+    cr_emit(fd, "================ END FREEZE REPORT ================\n");
+    if (fd >= 0) {
+        close(fd);
+        cr_emit(-1, "Native freeze diagnostic saved to %s\n", path);
+    }
+}
+#    endif
+
 #    if defined(__linux__)
 #        include <X11/Xlib.h>
 #        include <X11/keysym.h>
@@ -918,8 +945,13 @@ static void cr_posix_handler(int sig, siginfo_t *info, void *ucontext)
     else
         snprintf(desc, sizeof(desc), "%s", cr_sig_name(sig));
 
+#    if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    snprintf(path, sizeof(path), "%s/cod2_crash_%d.txt", cr_reportDirectory, (int)getpid());
+    fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+#    else
     snprintf(path, sizeof(path), "cod2_crash_%d.txt", (int)getpid());
     fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0644);
+#    endif
 
     cr_emit_common(fd, desc);
     cr_posix_osinfo(fd);

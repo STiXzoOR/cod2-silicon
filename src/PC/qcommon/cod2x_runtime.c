@@ -1,6 +1,10 @@
 #if defined(COD2_CODX) && COD2_CODX
 #include "common_types.h"
 #include "cod2x.h"
+#if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+#include "cod2x_features.h"
+#include "cod2x_policy.h"
+#endif
 #include <string.h>
 
 extern const dvar_t *Dvar_RegisterInt(const char *, int, int, int, unsigned short);
@@ -57,6 +61,11 @@ void Cod2x_Init(void)
     if (!Cod2x_ReadMachineHwid(cod2x_hwid))
         Com_Printf("CoD2x: machine identity unavailable; CoD2x servers will reject this client.\n");
     cod2x_identity = Dvar_RegisterString("cl_hwid2", cod2x_hwid, 0x42);
+#if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+    Dvar_RegisterString("cl_masterServer", "master.cod2x.me", 1);
+    Dvar_RegisterInt("cl_masterPort", 20710, 1, 65535, 1);
+    Cod2x_FeaturesInit();
+#endif
 }
 
 void Cod2x_PrepareConnect(void)
@@ -91,6 +100,9 @@ void Cod2x_Frame(int active, int demo)
     int competitive;
     cod2x_playing = active;
     cod2x_demo = demo;
+#if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+    Cod2x_FeaturesFrame(active, demo);
+#endif
     competitive = Cod2x_Competitive();
     /* CoD2x src/mss32/competitive.cpp:54-135. */
     for (i = 0; i < sizeof(cod2x_settings) / sizeof(cod2x_settings[0]); ++i) {
@@ -126,6 +138,9 @@ void Cod2x_Disconnect(void)
 {
     Cod2x_Frame(0, 0);
     Cod2x_ResetAnimation();
+#if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+    Cod2x_IwdSystemInfo("");
+#endif
     if (cod2x_game)
         Dvar_SetInt(cod2x_game, 0);
     if (cod2x_competitive)

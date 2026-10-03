@@ -3,6 +3,9 @@
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <math.h>
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "PC/qcommon/cod2x_features.h"
+#endif
 
 vec3_t maxs = { 4.0f, 4.0f, 4.0f };
 
@@ -240,6 +243,20 @@ void CG_FxSetTestPosition(void)
 
 static void CG_OffsetThirdPersonView(void)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (Cod2x_ThirdPersonMode() == 1) {
+        vec3_t head;
+        int i;
+        for (i = 0; i < 3; ++i)
+            head[i] = cg->refdef.vieworg[i];
+        head[2] += cg->predictedPlayerState.viewHeightCurrent;
+        if (cg->predictedPlayerState.pm_type > 5)
+            cg->refdefViewAngles[1] = (float)cg->predictedPlayerState.stats[1];
+        Cod2x_OrbitView(head, cg->refdefViewAngles, cg_thirdPersonRange->current.value,
+                       cg_thirdPersonAngle->current.value, cg->refdef.vieworg);
+        return;
+    }
+#endif
     byte *origin;
     byte *viewAngles;
     float focusAngles[3];

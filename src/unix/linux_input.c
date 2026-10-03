@@ -93,6 +93,54 @@ extern dvar_t *in_mouse;
 extern void CL_MouseEvent(int dx, int dy);
 static int mac_relative;
 static int mac_use_raw;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "platform/cod2x_native_mouse.h"
+#include "platform/macos_system.h"
+extern const dvar_t *Dvar_RegisterInt(const char *, int, int, int, unsigned short);
+extern void Dvar_SetInt(const dvar_t *, int);
+static const dvar_t *m_rinput, *m_rinput_hz, *m_rinput_max, *m_rinput_hz_max;
+static Cod2xMouseStats mouseStats;
+static int mouseStatsActive, mouseStatsMode = -1;
+
+static int MacInput_RawMode(void)
+{
+    if (!m_rinput) {
+        /* The native default retains WS3's raw-input preference. */
+        m_rinput = Dvar_RegisterInt("m_rinput", 1, 0, 2, 0x1021);
+        m_rinput_hz = Dvar_RegisterInt("m_rinput_hz", 0, 0, 0x7fffffff, 0x1040);
+        m_rinput_max = Dvar_RegisterInt("m_rinput_max", 0, 0, 0x7fffffff, 0x1040);
+        m_rinput_hz_max = Dvar_RegisterInt("m_rinput_hz_max", 0, 0, 0x7fffffff, 0x1040);
+    }
+    int mode = m_rinput->latched.integer;
+    if (mode != mouseStatsMode) {
+        Dvar_SetInt(m_rinput, mode);
+        MacRawMouse_SetMode(mode);
+        Cod2x_MouseStatsReset(&mouseStats, MacSystem_Nanoseconds(), MacRawMouse_EventCount());
+        Dvar_SetInt(m_rinput_hz, 0);
+        Dvar_SetInt(m_rinput_max, 0);
+        Dvar_SetInt(m_rinput_hz_max, 0);
+        mouseStatsMode = mode;
+    }
+    return mode;
+}
+
+static void MacInput_MeasureRaw(void)
+{
+    uint64_t now = MacSystem_Nanoseconds(), count = MacRawMouse_EventCount();
+    if (mac_use_raw != mouseStatsActive) {
+        int maximum = mouseStats.maxHz;
+        Cod2x_MouseStatsReset(&mouseStats, now, count);
+        mouseStats.maxHz = maximum;
+        mouseStatsActive = mac_use_raw;
+        Dvar_SetInt(m_rinput_hz, 0);
+    }
+    if (mac_use_raw && Cod2x_MouseStatsUpdate(&mouseStats, now, count)) {
+        Dvar_SetInt(m_rinput_hz, mouseStats.hz);
+        Dvar_SetInt(m_rinput_max, mouseStats.maxHz);
+        Dvar_SetInt(m_rinput_hz_max, mouseStats.maxHz);
+    }
+}
+#endif
 
 static unsigned int MacInput_DecodeUTF8(const unsigned char **cursor)
 {
@@ -353,12 +401,20 @@ void IN_Frame(void)
         SDL_SetRelativeMouseMode(wantRelative ? SDL_TRUE : SDL_FALSE);
         mac_relative = SDL_GetRelativeMouseMode() == SDL_TRUE;
     }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    int rawMode = MacInput_RawMode();
+    mac_use_raw = rawMode > 0 && mac_relative && in_rawmouse && in_rawmouse->current.enabled && MacRawMouse_Available();
+#else
     mac_use_raw = mac_relative && in_rawmouse && in_rawmouse->current.enabled && MacRawMouse_Available();
+#endif
     MacRawMouse_SetActive(mac_use_raw);
     SDL_PumpInputEvents();
     int dx, dy;
     if (mac_use_raw && MacRawMouse_Read(&dx, &dy))
         CL_MouseEvent(dx, dy);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    MacInput_MeasureRaw();
+#endif
 #if COD2_FEATURE_GAMEPAD
     CL_Gamepad_Frame();
 #endif

@@ -1,5 +1,9 @@
 #include "common_types.h"
 #include "imports.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "cod2x.h"
+#include "cod2x_policy.h"
+#endif
 /* dvar globals */
 extern const dvar_t *fs_restrict;
 
@@ -399,6 +403,9 @@ void FS_TouchFile_f(void)
 
 qboolean FS_iwIwd(char *iwd, char *base)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    return Cod2x_IwdStock(iwd, base, COD2X_REVISION);
+#else
     int i;
     char *p;
     char szFile[64];
@@ -431,6 +438,7 @@ qboolean FS_iwIwd(char *iwd, char *base)
     }
 
     return 0;
+#endif
 }
 
 void FS_AddCommands(void)
