@@ -28,7 +28,11 @@ def equivalent(a, b):
     if a['kind'] == 'pointer':
         return True
     if a['kind'] == 'scalar':
-        return a['ctype'] == b['ctype'] or (a.get('enum') and b.get('enum'))
+        integers = {'short', 'unsigned short', 'int', 'unsigned int', 'long', 'unsigned long',
+                    'long long', 'unsigned long long'}
+        same_integer = (a['ctype'] in integers and b['ctype'] in integers
+                        and a['ctype'].startswith('unsigned') == b['ctype'].startswith('unsigned'))
+        return a['ctype'] == b['ctype'] or same_integer or (a.get('enum') and b.get('enum'))
     if a['kind'] == 'array':
         return a['count'] == b['count'] and equivalent(a['child'], b['child'])
     return len(a['fields']) == len(b['fields']) and all(
@@ -40,6 +44,7 @@ class Headers:
         self.root = root
         self.aliases, self.tags, self.used = {}, {}, set()
         self.resolving = set()
+        self.field_index = None
         # The legacy common_types.h contains a disabled duplicate of the types.
         # Subsystem headers win over the older central cod2_defs.h definitions.
         paths = sorted(root.rglob('*.h'), key=lambda p: (p.name == 'cod2_defs.h', str(p)))
@@ -134,17 +139,38 @@ class Headers:
 
     def match(self, ty):
         name = ty.get('tag')
-        if not name or name not in self.tags:
-            return None
-        try:
-            if equivalent(ty, self.aggregate(name)):
-                # Rendering checks all syntactic dependencies, including function
-                # argument typedefs whose sizes do not contribute to the struct.
-                self.render({name})
-                self.used.add(name)
-                return name
-        except (Unsupported, RecursionError, ValueError):
-            pass
+        if self.field_index is None:
+            self.field_index = {}
+            for tag, (snippet, _) in self.tags.items():
+                if tag.startswith('enum '):
+                    continue
+                fields = []
+                for decl in snippet[snippet.index('{')+1:snippet.rindex('}')].split(';'):
+                    if not decl.strip():
+                        continue
+                    field = re.search(r'\(\s*\*\s*(\w+)\s*\)', decl)
+                    field = field or re.search(r'\b(\w+)\s*(?:\[[^]]*\])*\s*$', decl)
+                    fields.append(field[1] if field else None)
+                self.field_index.setdefault((tag.split()[0], tuple(fields)), []).append(tag)
+        candidates = self.field_index.get((ty['kind'], tuple(f[0] for f in ty.get('fields', ()))), [])
+        if name in self.tags:
+            candidates = [name] + [tag for tag in candidates if tag != name]
+        matches = []
+        for candidate in candidates:
+            try:
+                if equivalent(ty, self.aggregate(candidate)):
+                    # Rendering also checks function argument typedefs whose
+                    # sizes do not contribute to the aggregate layout.
+                    self.render({candidate})
+                    if candidate == name:
+                        self.used.add(candidate)
+                        return candidate
+                    matches.append(candidate)
+            except (Unsupported, RecursionError, ValueError):
+                pass
+        if len(matches) == 1:
+            self.used.add(matches[0])
+            return matches[0]
         return None
 
     def render(self, names=None):

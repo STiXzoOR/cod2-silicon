@@ -127,12 +127,22 @@ class Grammar:
         if c in 'su':
             size = self.number()
             members = []
-            # C++ inheritance, methods, and bitfields are retained as unsupported
-            # rather than guessed into an ABI-compatible C struct.
+            # Methods have no storage. Keep their nested type definitions while
+            # reading past overload metadata. Inheritance and unusual storage
+            # still fail the separate C field-offset/size validation.
             while self.text[self.pos:self.pos + 1] != ';':
                 name = self.until(':')
-                if self.text[self.pos:self.pos + 1] in ':/':
-                    raise Unsupported('C++ member metadata')
+                if self.text[self.pos:self.pos + 1] == ':':
+                    self.pos += 1
+                    while True:
+                        self.type(); self.take(':')
+                        self.until(';')  # linkage name
+                        self.until(';')  # access / virtual-method metadata
+                        if self.text[self.pos:self.pos + 1] not in ('(', '-') and not self.text[self.pos:self.pos + 1].isdigit():
+                            break
+                    continue
+                if self.text[self.pos:self.pos + 1] == '/':
+                    raise Unsupported('C++ access metadata')
                 ty = self.type(); self.take(','); bit = self.number(); self.take(',')
                 bits = self.number(); self.take(';')
                 members.append((name, ty, bit, bits))
@@ -160,6 +170,8 @@ class Database:
         self.files = {}
         self.tags = {}
         self.symbols = {}
+        self.named_symbols = []
+        self.functions = set()
         self.stab_counts = {}
 
     def key(self, scope, file, num):
@@ -171,6 +183,7 @@ class Database:
         for text, kind, section, desc, value in macho_symbols(path):
             if not kind & 0xe0:
                 self.symbols[text] = value
+                self.named_symbols.append((text, kind, section, value))
                 continue
             self.stab_counts[kind] = self.stab_counts.get(kind, 0) + 1
             if kind == 0x64 and text and not text.endswith('/'):
@@ -185,6 +198,8 @@ class Database:
                 pending += text[:-1]
                 continue
             text = pending + text; pending = ''
+            if kind == 0x24 and re.match(r'.*:[Ff]', text):
+                self.functions.add(text.split(':', 1)[0])
             # Parse every nested definition independently. An unsupported C++
             # class must not hide valid referenced types later in its record.
             for m in re.finditer(r'(\(-?\d+,-?\d+\)|(?<![\w])\d+)=', text):
@@ -200,6 +215,14 @@ class Database:
                             self.tags.setdefault((scope, named[1]), ref)
                 except (Unsupported, ValueError, RecursionError) as error:
                     self.errors.append((scope, str(error)))
+            named = re.match(r'([^:]+):[tT]t?(.*)', text)
+            if named:
+                try:
+                    ref = Grammar(self, scope, named[2]).type()
+                    if ref.kind == 'ref':
+                        self.names[ref.args[0]] = named[1]
+                except (Unsupported, ValueError, RecursionError):
+                    pass
             if kind in (0x20, 0x26, 0x28):
                 m = re.match(r'(.*):[GSV](.*)', text)
                 if m:
@@ -208,6 +231,15 @@ class Database:
                         self.variables.append(Variable(m[1], ty, value, source, kind))
                     except (Unsupported, ValueError) as error:
                         self.errors.append((scope, str(error)))
+        for key, name in self.names.items():
+            try:
+                node = self.resolve(Type('ref', (key,)))
+                if node.kind in ('struct', 'union', 'enum'):
+                    self.tags.setdefault((key[0][0], name), Type('ref', (key,)))
+                    if not node.name:
+                        node.name = name
+            except Unsupported:
+                pass
         return self
 
     def resolve(self, ty, seen=None):

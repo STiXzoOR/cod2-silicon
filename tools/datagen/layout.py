@@ -106,8 +106,9 @@ def shape(db, ty, active=()):
         if not fields or align_up(offset, align) != size:
             raise Unsupported('non-native i386 aggregate size')
         result = dict(kind=kind, fields=fields, size=size, align=align)
-        if names and re.fullmatch(r'[A-Za-z_]\w*', names[-1]):
-            result['tag'] = kind + ' ' + names[-1]
+        tag = node.name or (names[-1] if names else '')
+        if tag and re.fullmatch(r'[A-Za-z_]\w*', tag):
+            result['tag'] = kind + ' ' + tag
         return result
     raise Unsupported('unsupported value type ' + kind)
 

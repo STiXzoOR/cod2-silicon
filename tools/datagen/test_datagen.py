@@ -39,6 +39,13 @@ class GrammarTests(unittest.TestCase):
         with self.assertRaises(Unsupported):
             self.parse('Z')
 
+    def test_cpp_methods_do_not_hide_pod_storage(self):
+        self.parse('(0,1)=r(0,1);-2147483648;2147483647;')
+        node = self.db.resolve(self.parse('(0,2)=s4value:(0,1),0,32;operator=::(0,3)=#(0,2),(0,4)=*(0,2),(0,1);:_ZN4TestaSERKS_;2A.;;'))
+        self.assertEqual(node.kind, 'struct')
+        self.assertEqual([member[0] for member in node.args[1]], ['value'])
+
+
 class HeaderReuseTests(unittest.TestCase):
     def test_enum_typedef_has_complete_definition(self):
         from c_headers import Headers
