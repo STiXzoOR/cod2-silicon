@@ -1,6 +1,7 @@
 #include "common_types.h"
 extern dvar_t *r_rendererInUse;
 #include "imports.h"
+#include "Mac/DirectX_9/lp64_shader_options.h"
 
 #include <math.h>
 #include <string.h>
@@ -470,7 +471,7 @@ GfxWorld *R_LoadWorldInternal(const char *name)
                 /* Packed directional coefficients are only colors after the ARB
                  * shader combines all four planes. Keep the RGB approximation
                  * for the fixed-function draw path. */
-                if (!getenv("COD2_MAC_SHADER_CACHE") || !getenv("D3D_PROG")) {
+                if (!MacShader_UseCachePrograms()) {
 
 #else
                 if (rendererInUse != 2) {

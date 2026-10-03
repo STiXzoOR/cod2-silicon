@@ -972,13 +972,18 @@ static void CDirect3DDevice_ApplyTextureCombineAlpha(DWORD op, DWORD arg0, DWORD
                                           src0, src1, src2, 1);
 }
 
+#include "lp64_shader_options.h"
 #if defined(COD2_X64)
 /* A renderer feature option, sampled once instead of once per indexed draw. */
 static int CDirect3DDevice_UsePrograms(void)
 {
     static int enabled = -1;
     if (enabled < 0)
+#if COD2_APPLE_SDK
+        enabled = MacShader_UseCachePrograms();
+#else
         enabled = getenv("D3D_PROG") != NULL;
+#endif
     return enabled;
 }
 #endif
