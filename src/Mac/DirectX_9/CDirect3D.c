@@ -225,6 +225,26 @@ HRESULT CDirect3D_CreateDevice(const void *_this, UINT Adapter, int DeviceType, 
             height = pp[1];
     }
 
+#if COD2_APPLE_SDK
+    {
+        extern int sdl_gl_width, sdl_gl_height;
+        sdl_gl_width = width;
+        sdl_gl_height = height;
+    }
+    /* The original Mac build already had a current AGL context here, so
+     * CDirect3DDevice_Init could issue GL calls. The SDL display layer creates
+     * the context on demand, so create it before Init touches GL state. */
+    dvar_t *borderless = Dvar_RegisterBool("r_borderless", 0, 0x1001);
+    int fullscreen = r_fullscreen && r_fullscreen->current.enabled;
+    MacPlatform_ConfigureWindow(width, height, fullscreen ? (borderless->current.enabled ? MAC_BORDERLESS : MAC_FULLSCREEN) : MAC_WINDOWED, pp ? pp[12] : 0);
+    ctx = MacDisplay_CreateScreenContext(24, 1, 0, 0, 0, NULL);
+    if (!ctx)
+        return (HRESULT)(int32_t)0x8876086cu;
+
+    memset(deviceMem, 0, sizeof(deviceMem));
+    *(void ***)deviceMem = vtbl_CDirect3DDevice;
+    CDirect3DDevice_Init(deviceMem);
+#else
     memset(deviceMem, 0, sizeof(deviceMem));
     *(void ***)deviceMem = vtbl_CDirect3DDevice;
     CDirect3DDevice_Init(deviceMem);
@@ -234,14 +254,6 @@ HRESULT CDirect3D_CreateDevice(const void *_this, UINT Adapter, int DeviceType, 
         sdl_gl_width = width;
         sdl_gl_height = height;
     }
-#if COD2_APPLE_SDK
-    dvar_t *borderless = Dvar_RegisterBool("r_borderless", 0, 0x1001);
-    int fullscreen = r_fullscreen && r_fullscreen->current.enabled;
-    MacPlatform_ConfigureWindow(width, height, fullscreen ? (borderless->current.enabled ? MAC_BORDERLESS : MAC_FULLSCREEN) : MAC_WINDOWED, pp ? pp[12] : 0);
-    ctx = MacDisplay_CreateScreenContext(24, 1, 0, 0, 0, NULL);
-    if (!ctx)
-        return (HRESULT)(int32_t)0x8876086cu;
-#else
     ctx = MacDisplay_CreateScreenContext(24, 1, 0, 0, 0, NULL);
 #endif
     /* DeviceImpl field offsets differ on x64 (8-byte ptrs): context@16 renderTarget@32
