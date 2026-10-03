@@ -22,8 +22,18 @@ extern void R_GenerateOutdoorImage(GfxImage *image);
 extern void Image_BuildSpecularityMap(float shift, byte *pic);
 
 extern GfxImage *Image_Alloc(const char *name, int category, int semantic, int imageTrack);
+#if defined(COD2_X64)
+/* Mac 1.3 image-generator constants, distinct from the renderer's 4x4 matrix. */
+static vec3_t lightGridLookupMatrix[3] = {
+    {0.816496551f, -0.408248276f, -0.408248276f},
+    {0.0f, 0.707106769f, -0.707106769f},
+    {0.577350259f, 0.577350259f, 0.577350259f}
+};
+static const int faceAxis[6][3] = {{0, 5, 3}, {1, 4, 3}, {2, 0, 4}, {3, 0, 5}, {4, 0, 3}, {5, 1, 3}};
+#else
 static vec3_t lightGridLookupMatrix[3];
 static const int faceAxis[6][3];
+#endif
 
 void Image_Generate2D(GfxImage *image, byte *pixels, int width, int height, int imageFormat);
 void Image_Generate3D(GfxImage *image, byte *pixels, int width, int height, int depth, D3DFORMAT imageFormat);
@@ -130,10 +140,18 @@ static void __attribute_regparm__(3) Image_LoadBitmap(GfxImage *image, const Gfx
                     byte *dst = expandedData;
                     const byte *src = srcPtr;
                     for (p = 0; p < mipPixels; p++) {
+#if defined(COD2_X64)
+                        /* IWI RGB bytes are BGR; the native X8R8G8B8 upload is BGRA. */
+                        dst[0] = src[0];
+                        dst[1] = src[1];
+                        dst[2] = src[2];
+                        dst[3] = 0xFF;
+#else
                         dst[0] = 0xFF;
                         dst[1] = src[2];
                         dst[2] = src[1];
                         dst[3] = src[0];
+#endif
                         dst += 4;
                         src += 3;
                     }
@@ -687,6 +705,45 @@ static void Image_LoadLightmapWeights(GfxImage *image)
     byte pic[32 * 32 * 4];
     int t, s;
 
+#if defined(COD2_X64)
+    /* Mac 1.3's four weights partition unity; its byte order is part of the
+       shader interface (BGRA upload), rather than an ordinary color. */
+    for (t = 0; t < 32; ++t) {
+        for (s = 0; s < 32; ++s) {
+            float dir[2] = {(s + 0.5f) / 16.0f - 1.0f, (t + 0.5f) / 16.0f - 1.0f};
+            float zSq = 1.0f - dir[0] * dir[0] - dir[1] * dir[1];
+            if (zSq < 0.0f) {
+                Vec2Normalize(dir);
+                zSq = 0.0f;
+            }
+            float angle = (float)(atan2(dir[1], dir[0]) * 0.477464829275686 - 0.75);
+            if (angle < 0.0f) angle += 3.0f;
+            if (angle > 3.0f) angle -= 3.0f;
+            float first, second, third;
+            if (angle < 1.0f) {
+                first = 1.0f - angle;
+                second = angle;
+                third = 0.0f;
+            } else if (angle < 2.0f) {
+                first = 0.0f;
+                third = angle - 1.0f;
+                second = 1.0f - third;
+            } else {
+                first = angle - 2.0f;
+                third = 1.0f - first;
+                second = 0.0f;
+            }
+            float main = acosf(__builtin_sqrtf(zSq)) / -0.9553166031837463f + 1.0f;
+            if (main < 0.0f) main = 0.0f;
+            if (main > 1.0f) main = 1.0f;
+            byte *pixel = &pic[(t * 32 + s) * 4];
+            pixel[0] = (byte)(int)floorf(main * 255.0f + 0.5f);
+            pixel[1] = (byte)(int)floorf(first * (1.0f - main) * 255.0f + 0.5f);
+            pixel[2] = (byte)(int)floorf(second * (1.0f - main) * 255.0f + 0.5f);
+            pixel[3] = (byte)(int)floorf(third * (1.0f - main) * 255.0f + 0.5f);
+        }
+    }
+#else
     for (t = 0; t < 32; t++) {
         float tv = ((float)t + 0.5f) * (1.0f / 32.0f) * 2.0f - 1.0f;
 
@@ -761,6 +818,7 @@ static void Image_LoadLightmapWeights(GfxImage *image)
         }
     }
 
+#endif
     Image_Setup(image, 32, 32, 1, 3, 0, 0x15);
     int face = Image_CubemapFace(0);
     Image_UploadData(image, 0x15, face, 0, pic);
