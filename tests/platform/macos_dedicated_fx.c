@@ -35,7 +35,7 @@ struct XModel *FX_XModelPrecache(const char *name) { (void)name; abort(); }
 #endif
 
 static const char fixture[] =
-    "particle\n{\nlife 200\ndelay 50\nshader synthetic_material\n"
+    "particle\n{\nlife 200\ndelay 50\nflags depthHack useAlpha\nspawnFlags orgOnSphere\nshader synthetic_material\n"
     "velocity 1 2 3\nacceleration 4 5 6\n}\n"
     "light\n{\nlife 300\ndelay 150\n}\n";
 
@@ -188,6 +188,8 @@ int main(void)
     FX_InitTemplates();
     effect = FX_RegisterEffect("fx/synthetic.efx");
     assert(effect && effect->mPrimitiveCount == 2);
+    assert(effect->mPrimitives[0]->mAttributeFlags == 0x81);
+    assert(effect->mPrimitives[0]->mSpawnFlags == 1);
     assert(FxScheduler_GetEffectLength(&scheduler, effect) == 450.0f);
 #ifdef DEDICATED
     assert(effect->mPrimitives[0]->mMediaHandles.mMediaList.size == 0);
