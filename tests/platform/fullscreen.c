@@ -3,11 +3,27 @@
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
+#include <CoreGraphics/CoreGraphics.h>
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 extern SDL_Window *sdl_gl_window;
+
+static void CheckDisplay(CGDisplayModeRef actual, CGDisplayModeRef expected)
+{
+    printf("display=%zux%zu pixels=%zux%zu; expected=%zux%zu pixels=%zux%zu\n",
+           CGDisplayModeGetWidth(actual), CGDisplayModeGetHeight(actual),
+           CGDisplayModeGetPixelWidth(actual), CGDisplayModeGetPixelHeight(actual),
+           CGDisplayModeGetWidth(expected), CGDisplayModeGetHeight(expected),
+           CGDisplayModeGetPixelWidth(expected), CGDisplayModeGetPixelHeight(expected));
+    assert(CGDisplayModeGetWidth(actual) == CGDisplayModeGetWidth(expected));
+    assert(CGDisplayModeGetHeight(actual) == CGDisplayModeGetHeight(expected));
+    assert(CGDisplayModeGetPixelWidth(actual) == CGDisplayModeGetPixelWidth(expected));
+    assert(CGDisplayModeGetPixelHeight(actual) == CGDisplayModeGetPixelHeight(expected));
+    assert(fabs(CGDisplayModeGetRefreshRate(actual) - CGDisplayModeGetRefreshRate(expected)) < 0.1);
+}
 
 static void CheckBacking(int width, int height)
 {
@@ -46,18 +62,42 @@ int main(int argc, char **argv)
     }
     if (argc > 1 && !strcmp(argv[1], "--modes"))
         return 0;
+    CGDisplayModeRef original = CGDisplayCopyDisplayMode(CGMainDisplayID());
     int mode = argc > 1 && !strcmp(argv[1], "--exclusive") ? MAC_FULLSCREEN : MAC_BORDERLESS;
     MacPlatform_ConfigureWindow(1920, 1080, mode, 60);
     void *context = MacDisplay_CreateScreenContext(24, 1, 0, 0, 0, NULL);
     assert(context);
     SDL_Delay(1000); SDL_PumpEvents();
     CheckBacking(1920, 1080);
+    printf("fullscreen flags=0x%x\n", SDL_GetWindowFlags(sdl_gl_window));
+    assert(SDL_GetWindowFlags(sdl_gl_window) & SDL_WINDOW_FULLSCREEN);
+    if (mode == MAC_FULLSCREEN) {
+        SDL_MinimizeWindow(sdl_gl_window);
+        SDL_Delay(1000); SDL_PumpEvents();
+        CGDisplayModeRef minimized = CGDisplayCopyDisplayMode(CGMainDisplayID());
+        printf("minimized display=%zux%zu pixels=%zux%zu\n", CGDisplayModeGetWidth(minimized),
+               CGDisplayModeGetHeight(minimized), CGDisplayModeGetPixelWidth(minimized), CGDisplayModeGetPixelHeight(minimized));
+        CheckDisplay(minimized, original);
+        CGDisplayModeRelease(minimized);
+        SDL_RestoreWindow(sdl_gl_window); SDL_RaiseWindow(sdl_gl_window);
+        SDL_Delay(1000); SDL_PumpEvents();
+        CheckBacking(1920, 1080);
+    }
     assert(MacDisplay_SetMode(2560, 1440, 32, 60) == 0);
     SDL_Delay(1000); SDL_PumpEvents();
     CheckBacking(2560, 1440);
+    assert(SDL_GetWindowFlags(sdl_gl_window) & SDL_WINDOW_FULLSCREEN);
+    MacPlatform_ConfigureWindow(800, 600, MAC_WINDOWED, 60);
+    assert(MacDisplay_SetMode(800, 600, 32, 60) == 0);
+    GLint enabled = 1;
+    CGLIsEnabled(CGLGetCurrentContext(), kCGLCESurfaceBackingSize, &enabled);
+    assert(!enabled);
     MacDisplay_ReleaseContext(&context);
     assert(!(SDL_GetWindowFlags(sdl_gl_window) & SDL_WINDOW_FULLSCREEN));
     MacDisplay_ReleaseDisplay();
+    CGDisplayModeRef restored = CGDisplayCopyDisplayMode(CGMainDisplayID());
+    CheckDisplay(restored, original);
+    CGDisplayModeRelease(restored); CGDisplayModeRelease(original);
     puts("fixed fullscreen backing and display release: passed");
     return 0;
 }

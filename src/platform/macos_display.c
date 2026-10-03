@@ -48,6 +48,11 @@ int MacDisplay_Initialize(void)
     SDL_SetHint("SDL_MAC_USE_GCMOUSE", "0");
     SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0");
     SDL_SetHint("SDL_MOUSE_RELATIVE_SYSTEM_SCALE", "0");
+#if defined(__APPLE__) && defined(COD2_X64)
+    /* Cocoa reads this at video initialization, before mode enumeration.
+     * The environment can opt into Spaces for Game Mode experiments. */
+    SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
+#endif
     if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
         return -1;
     int count = SDL_GetNumDisplayModes(0);
@@ -84,6 +89,7 @@ static int SetWindowMode(void)
 #if defined(__APPLE__) && defined(COD2_X64)
     /* Reset also runs at map load. Toggling out and immediately back into a
      * Cocoa fullscreen Space can cancel its asynchronous transition. */
+    SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, windowMode == MAC_BORDERLESS ? "0" : "1");
     if (windowMode == MAC_WINDOWED && SDL_SetWindowFullscreen(sdl_gl_window, 0) != 0)
 #else
     if (SDL_SetWindowFullscreen(sdl_gl_window, 0) != 0)
@@ -107,6 +113,8 @@ static int SetWindowMode(void)
                 break;
             }
         }
+        if (!found)
+            SDL_SetError("no exact %dx%d display mode", desired.w, desired.h);
         if (!found || SDL_SetWindowDisplayMode(sdl_gl_window, &closest) != 0 ||
             SDL_SetWindowFullscreen(sdl_gl_window, SDL_WINDOW_FULLSCREEN) != 0)
 #else
@@ -116,6 +124,10 @@ static int SetWindowMode(void)
 #endif
         {
             fprintf(stderr, "CoD2-native exclusive fullscreen unavailable: %s; using desktop fullscreen\n", SDL_GetError());
+#if defined(__APPLE__) && defined(COD2_X64)
+            windowMode = MAC_BORDERLESS;
+            SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
+#endif
             if (SDL_SetWindowFullscreen(sdl_gl_window, SDL_WINDOW_FULLSCREEN_DESKTOP) != 0)
                 return -1;
         }
@@ -452,6 +464,8 @@ uint16_t MacDisplay_SetMode(int w, int h, int d, int r)
 #if defined(__APPLE__) && defined(COD2_X64)
     if (screenContext && windowMode != MAC_WINDOWED && SetSurfaceSize(w, h) != 0)
         return 1;
+    if (screenContext && windowMode == MAC_WINDOWED)
+        CGLDisable(CGLGetCurrentContext(), kCGLCESurfaceBackingSize);
 #endif
     if (screenContext && (screenContext->width != w || screenContext->height != h)) {
         MacContext replacement = { 0 };

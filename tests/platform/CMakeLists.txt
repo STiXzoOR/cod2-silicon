@@ -102,7 +102,7 @@ add_test(NAME smoke_borderless COMMAND macos_platform_smoke --borderless)
 add_test(NAME smoke_fullscreen COMMAND macos_platform_smoke --fullscreen)
 add_executable(macos_fullscreen_test fullscreen.c
   "${PORT_ROOT}/src/platform/macos_display.c" "${PORT_ROOT}/src/platform/macos_system.c")
-target_link_libraries(macos_fullscreen_test PRIVATE SDL2::SDL2 ${OPENGL_FRAMEWORK})
+target_link_libraries(macos_fullscreen_test PRIVATE SDL2::SDL2 ${OPENGL_FRAMEWORK} "-framework CoreGraphics")
 add_test(NAME fixed_borderless_backing COMMAND macos_fullscreen_test)
 add_test(NAME fixed_exclusive_backing COMMAND macos_fullscreen_test --exclusive)
 set_tests_properties(fixed_borderless_backing fixed_exclusive_backing PROPERTIES RUN_SERIAL TRUE)
