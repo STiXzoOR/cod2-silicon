@@ -1,3 +1,6 @@
+#if defined(COD2_CODX) && COD2_CODX
+#include "../qcommon/cod2x.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -1111,7 +1114,11 @@ void CL_InitOnceForAllClients(void)
         cl_anglespeedkey = Dvar_RegisterFloat("cl_anglespeedkey", 1.5f, 0.0f, flt_max.f, 0);
     }
 
+#if defined(COD2_CODX) && COD2_CODX
+    cl_maxpackets = Dvar_RegisterInt("cl_maxpackets", 125, 15, 125, 0x1001);
+#else
     cl_maxpackets = Dvar_RegisterInt("cl_maxpackets", 30, 15, 100, 0x1001);
+#endif
     cl_packetdup = Dvar_RegisterInt("cl_packetdup", 1, 0, 5, 0x1001);
     cl_sensitivity = Dvar_RegisterFloat("sensitivity", 5.0f, 0.01f, 100.0f, 0x1001);
     cl_mouseAccel = Dvar_RegisterFloat("cl_mouseAccel", 0.0f, 0.0f, 100.0f, 0x1001);
@@ -1139,7 +1146,12 @@ void CL_InitOnceForAllClients(void)
     Dvar_RegisterInt("cl_maxPing", 800, 20, 2000, 0x1001);
     name = Dvar_RegisterString_mac("name", "Unknown Soldier", 0x1003);
     Dvar_RegisterInt("rate", 5000, 1000, 25000, 0x1003);
+#if defined(COD2_CODX) && COD2_CODX
+    Dvar_RegisterInt("snaps", 40, 1, 40, 0x1003);
+    Cod2x_Init();
+#else
     Dvar_RegisterInt("snaps", 20, 1, 30, 0x1003);
+#endif
     Dvar_RegisterString_mac("password", "", 0x1002);
 
     fx_enable = Dvar_RegisterBool_mac("fx_enable", 1, 0x1080);
@@ -1690,6 +1702,10 @@ static void CL_BuildMd5StrFromCDKey(char *md5Str)
     int len, i, j;
     char *p, *e;
 
+#if defined(COD2_CODX) && COD2_CODX && defined(__APPLE__)
+    Cod2x_CDKeyHash((const char *)imp_cl_cdkey, md5Str);
+    return;
+#endif
     md5Str[0] = '\0';
     memset(nums, 0, sizeof(nums));
 
@@ -1822,7 +1838,16 @@ void CL_CheckForResend(void)
         if (lanAuthorize->current.enabled || !Sys_IsLANAddress(conn->serverAddress))
             CL_RequestAuthorization();
 
+#if defined(COD2_CODX) && COD2_CODX && COD2_IS_PATCH_13
+        {
+            char hash[33];
+            CL_BuildMd5StrFromCDKey(hash);
+            /* CoD2x src/shared/server.cpp:837 consumes argument 2 as CD-key hash. */
+            NET_OutOfBandPrint(NS_CLIENT1, conn->serverAddress, va("getchallenge 0 %s", hash));
+        }
+#else
         NET_OutOfBandPrint(NS_CLIENT1, conn->serverAddress, (const char *)"getchallenge");
+#endif
         return;
     }
 
@@ -1832,11 +1857,22 @@ void CL_CheckForResend(void)
         return;
     }
 
+#if defined(COD2_CODX) && COD2_CODX
+    Cod2x_PrepareConnect();
+#endif
     I_strncpyz(info, Dvar_InfoString(2), sizeof(info));
     Info_SetValueForKey(info, (const char *)"protocol", va((const char *)"%i", 0x76));
     Info_SetValueForKey(info, (const char *)"challenge", va((const char *)"%i", conn->challenge));
     Info_SetValueForKey(info, (const char *)"qport", va((const char *)"%i", conn->qport));
 
+#if defined(COD2_CODX) && COD2_CODX
+    infoLen = (int)Cod2x_EncodeConnect(data, sizeof(data), info);
+    if (!infoLen) {
+        Com_Error(1, "CoD2x: connect userinfo is too large");
+        return;
+    }
+    NET_OutOfBandData(NS_CLIENT1, conn->serverAddress, (unsigned char *)data, infoLen);
+#else
     infoLen = strlen(info);
     data[0] = 'c';
     data[1] = 'o';
@@ -1852,6 +1888,7 @@ void CL_CheckForResend(void)
     data[10 + infoLen] = '\0';
 
     NET_OutOfBandData(NS_CLIENT1, conn->serverAddress, (unsigned char *)data, infoLen + 10);
+#endif
     *(int *)imp_dvar_modifiedFlags &= ~2;
 }
 
@@ -2409,6 +2446,9 @@ void CL_Frame(int msec)
     if (legacyHacks->cl_running == 0)
         return;
 
+#if defined(COD2_CODX) && COD2_CODX
+    Cod2x_Frame(clc_p->state >= CA_PRIMED, clc_p->demoplaying);
+#endif
     Voice_GetLocalVoiceData((ClientVoicePacket_t *)&clients[0]);
     Voice_Playback();
     CL_UpdateColor();
@@ -2600,6 +2640,9 @@ void CL_Disconnect(void)
     clientActive_t *active = (clientActive_t *)cl;
     connstate_t oldState;
     int sequence;
+#if defined(COD2_CODX) && COD2_CODX
+    Cod2x_Disconnect();
+#endif
 
     if (!legacy->cl_running)
         return;

@@ -1,3 +1,6 @@
+#if defined(COD2_CODX) && COD2_CODX
+#include "cod2x.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -1583,8 +1586,13 @@ BM_NOINLINE void Com_Frame_Try_Block_Function(void)
 
     SetAnimCheck(com_animCheck->current.enabled);
 
+#if defined(COD2_CODX) && COD2_CODX
+    if (Cod2x_FrameFPS(com_maxfps->current.integer) > 0 && !com_dedicated->current.integer) {
+        minMsec = 1000 / Cod2x_FrameFPS(com_maxfps->current.integer);
+#else
     if (com_maxfps->current.integer > 0 && !com_dedicated->current.integer) {
         minMsec = 1000 / com_maxfps->current.integer;
+#endif
         if (minMsec == 0)
             minMsec = 1;
     } else {

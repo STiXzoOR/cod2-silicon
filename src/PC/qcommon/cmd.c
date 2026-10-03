@@ -1,3 +1,6 @@
+#if defined(COD2_CODX) && COD2_CODX
+#include "cod2x.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 
@@ -46,6 +49,12 @@ extern void *imp_com_sv_running;
 
 void Cmd_Wait_f(void)
 {
+#if defined(COD2_CODX) && COD2_CODX
+    if (Cod2x_Competitive()) {
+        Com_Printf("Wait command is disabled by this server.\n");
+        return;
+    }
+#endif
     if (cmd_argc == 2) {
         cmd_wait = atoi(cmd_argv[1]);
     } else {
