@@ -60,6 +60,10 @@ void Cod2x_Init(void)
     if (!Cod2x_ReadMachineHwid(cod2x_hwid))
         Com_Printf("CoD2x: machine identity unavailable; CoD2x servers will reject this client.\n");
     cod2x_identity = Dvar_RegisterString("cl_hwid2", cod2x_hwid, 0x42);
+#if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+    Dvar_RegisterString("cl_masterServer", "master.cod2x.me", 1);
+    Dvar_RegisterInt("cl_masterPort", 20710, 1, 65535, 1);
+#endif
 }
 
 void Cod2x_PrepareConnect(void)

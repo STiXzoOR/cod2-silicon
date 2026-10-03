@@ -2195,7 +2195,11 @@ void Com_Init_Try_Block_Function(char *commandLine)
     char *p;
     int i;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Com_Printf("%s — native macOS arm64 client; protocols 118 / 120\n", COD2X_VERSION);
+#else
     Com_Printf("%s %s build %s %s\n", "CoD2 MP", COD2_VERSION_SHORT, "MacOSXS-i386", COD2_VERSION_DATE);
+#endif
 
     memset(com_pushedEvents, 0, sizeof(com_pushedEvents));
     com_pushedEventsHead = 0;
@@ -2238,9 +2242,11 @@ void Com_Init_Try_Block_Function(char *commandLine)
         }
     }
 
-    com_maxfps = Dvar_RegisterInt("com_maxfps", 85, 0, 1000, 0x1001);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    com_maxfps = Dvar_RegisterInt("com_maxfps", 333, 0, 1000, 0x1001);
     Dvar_RegisterBool("com_writeConfig", 1, 0x1001);
+#else
+    com_maxfps = Dvar_RegisterInt("com_maxfps", 85, 0, 1000, 0x1001);
 #endif
     com_developer = Dvar_RegisterInt("developer", 0, 0, 2, 0x1000);
     com_developer_script = Dvar_RegisterBool("developer_script", 0, 0x1000);
@@ -2309,11 +2315,19 @@ void Com_Init_Try_Block_Function(char *commandLine)
     Cmd_AddCommand("writedefaults", Com_WriteDefaults_f);
 
     {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        char *s = va("%s build %s macOS-arm64", COD2X_VERSION, getBuildNumber());
+#else
         char *s = va("%s %s build %s %s", "CoD2 MP", COD2_VERSION_SHORT, getBuildNumber(), "MacOSXS-i386");
+#endif
         version = Dvar_RegisterString("version", "", 0x1040);
         Dvar_SetString(version, s);
     }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    shortversion = Dvar_RegisterString("shortversion", "1.4.6.8", 0x1044);
+#else
     shortversion = Dvar_RegisterString("shortversion", COD2_VERSION_SHORT, 0x1044);
+#endif
 
     FxMem_Init();
     Sys_Init();

@@ -346,7 +346,11 @@ void Com_InitHunkMemory(void)
         Com_Error(0, "Hunk initialization failed. File system load stack not zero");
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    cv = Dvar_RegisterInt("com_hunkMegs", 512, 512, 512, 0x1021);
+#else
     cv = Dvar_RegisterInt("com_hunkMegs", 0xa0, 1, 0x200, 0x1021);
+#endif
     nMegs = cv->current.integer;
     if (nMegs <= 0x4f) {
         Com_Printf("Minimum com_hunkMegs for a dedicated server is %i, allocating %i megs.\n", 0x50, 0x50);

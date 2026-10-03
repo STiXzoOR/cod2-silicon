@@ -8,7 +8,11 @@ extern int dvar_modifiedFlags;
 extern dvar_t *sortedDvars;
 extern int dvarCount;
 static const dvar_t *dvar_cheats;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static dvar_t dvarPool[4096];
+#else
 static dvar_t dvarPool[1280];
+#endif
 static dvar_t *dvarHashTable[256];
 static float dvarVectorPool[12];
 static int dvarVectorIndex;
@@ -31,7 +35,11 @@ enum {
     DVAR_FLAG_READONLY = 0x40,
     DVAR_FLAG_CHEAT = 0x80,
     DVAR_FLAG_EXTERNAL = 0x4000,
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    DVAR_MAX_COUNT = 4096,
+#else
     DVAR_MAX_COUNT = 0x500,
+#endif
     CON_CHANNEL_LOGFILEONLY = 4,
     DVAR_INVALID_ENUM_INDEX = -1337
 };
@@ -1803,7 +1811,11 @@ static const dvar_t *Dvar_RegisterVariant_impl(
     }
 
     if (dvarCount > DVAR_MAX_COUNT - 1) {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        Com_Error(0, "Dvar pool exhausted (%i): cannot create '%s'. Reduce the mod's dvars or restart the client.", DVAR_MAX_COUNT, dvarName);
+#else
         Com_Error(0, "Can't create dvar '%s': %i dvars already exist", dvarName, DVAR_MAX_COUNT);
+#endif
     }
 
     dvar = &dvarPool[dvarCount++];

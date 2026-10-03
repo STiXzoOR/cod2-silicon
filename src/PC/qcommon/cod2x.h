@@ -7,7 +7,11 @@
 #define COD2X_PROTOCOL 120
 #define COD2X_CONNECT_PROTOCOL 118
 #define COD2X_REVISION 6
+#if defined(COD2_X64) && COD2_X64
+#define COD2X_VERSION "opencod2-native-CoD2x-1.4.6.8"
+#else
 #define COD2X_VERSION "opencod2-cod2x-1.4.6"
+#endif
 
 int Cod2x_ConnectProtocol(int advertised);
 size_t Cod2x_EncodeConnect(char *packet, size_t capacity, const char *userinfo);
