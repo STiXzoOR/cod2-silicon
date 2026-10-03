@@ -109,7 +109,10 @@ GL clear/blit/fence and swap calls. These timings are not GPU execution times
 or display scanout intervals. The first timestamp-only frame is omitted.
 The observer adds clock-read overhead; compare runs using the same observer.
 `results.json` includes aggregate FPS, the slowest-1% mean reciprocal, p99,
-engine-millisecond histogram and presentation geometry. Capture is bounded
+engine-millisecond histogram and presentation geometry. Geometry/focus changes
+are checked once per second and included in `presentation_changes`; requested
+fullscreen settings alone do not prove the OS completed a mode transition.
+Capture is bounded
 to 60 seconds or 65,536 timestamps. CSV publication happens after capture.
 
 `--cpu-profile` enables a separate 1 ms main-thread signal/frame-pointer sampler

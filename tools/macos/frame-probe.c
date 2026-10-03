@@ -23,6 +23,9 @@ static volatile sig_atomic_t recording;
 static int finished;
 static int *frameTime;
 static const char *filename;
+static uint64_t geometryCheck;
+static int logicalWidth, logicalHeight, drawableWidth, drawableHeight;
+static Uint32 windowFlags;
 extern void MacProbe_BeginCPU(void);
 extern void MacProbe_SaveCPU(void);
 
@@ -89,10 +92,27 @@ static void probeSwap(SDL_Window *window)
         GLint viewport[4];
         SDL_GetWindowSize(window, &logicalW, &logicalH);
         SDL_GL_GetDrawableSize(window, &drawableW, &drawableH);
+        logicalWidth = logicalW; logicalHeight = logicalH;
+        drawableWidth = drawableW; drawableHeight = drawableH;
+        windowFlags = SDL_GetWindowFlags(window);
+        geometryCheck = stamp;
         glGetIntegerv(GL_VIEWPORT, viewport);
         fprintf(stderr, "[frame-probe] viewport=%dx%d window=%dx%d drawable=%dx%d swapInterval=%d windowFlags=0x%x engineClock=%s\n",
                 viewport[2], viewport[3], logicalW, logicalH, drawableW, drawableH,
-                SDL_GL_GetSwapInterval(), SDL_GetWindowFlags(window), frameTime ? "available" : "missing");
+                SDL_GL_GetSwapInterval(), windowFlags, frameTime ? "available" : "missing");
+    }
+    if (stamp - geometryCheck >= 1000000000ull) {
+        int lw, lh, dw, dh;
+        SDL_GetWindowSize(window, &lw, &lh);
+        SDL_GL_GetDrawableSize(window, &dw, &dh);
+        Uint32 flags = SDL_GetWindowFlags(window);
+        /* Focus changes are recorded too; callers decide comparability. */
+        if (lw != logicalWidth || lh != logicalHeight || dw != drawableWidth || dh != drawableHeight || flags != windowFlags) {
+            fprintf(stderr, "[frame-probe-change] window=%dx%d drawable=%dx%d windowFlags=0x%x\n", lw, lh, dw, dh, flags);
+            logicalWidth = lw; logicalHeight = lh;
+            drawableWidth = dw; drawableHeight = dh; windowFlags = flags;
+        }
+        geometryCheck = stamp;
     }
     frames[count].stamp = stamp;
     frames[count].swap = end - stamp;

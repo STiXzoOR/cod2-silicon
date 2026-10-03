@@ -97,6 +97,8 @@ with (out / 'console.log').open('w') as stream:
         send('developer 0')
         send('cg_drawFPS Simple')
         send('cg_drawFPS')
+        for cvar in ['r_mode', 'r_fullscreen', 'r_borderless', 'r_gpuSync']:
+            send(cvar)
         # Toujane mp_dm_spawn at -299 1001 61, yaw 90, from the
         # stock BSP entity lump. setviewpos takes eye height (origin + 60).
         send('setviewpos ' + ' '.join(str(value) for value in args.view_pos))
@@ -154,5 +156,6 @@ match = re.search(r'\[frame-probe\] ([^\n]+)', log)
 result['actual_presentation'] = match.group(1) if match else None
 match = re.search(r'^\(([^)]+)\) : ([^\n]+)', log, re.M)
 result['actual_view_pos'] = match.group(0) if match else None
+result['presentation_changes'] = re.findall(r'\[frame-probe-change\] ([^\n]+)', log)
 (out / 'results.json').write_text(json.dumps(result, indent=2) + '\n')
 print(json.dumps(result, indent=2))
