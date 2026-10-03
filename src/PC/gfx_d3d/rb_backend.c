@@ -2039,10 +2039,22 @@ static void RB_Set2D(void)
         }
     }
 
+#if defined(COD2_X64)
+    /* The native matrix records have no i386 alignment padding (260 rather
+     * than 272 bytes). A 0x110 copy from world into view corrupts projection. */
+    {
+        GfxCodeMatrices *matrices = (GfxCodeMatrices *)am;
+        matrices->view = matrices->world;
+        matrices->worldView = matrices->world;
+        matrices->viewProjection = matrices->projection;
+        matrices->worldViewProjection = matrices->projection;
+    }
+#else
     memcpy(((char *)am + offsetof(GfxCodeMatrices, view)), ((char *)am + offsetof(GfxCodeMatrices, world)), 0x110);
     memcpy(((char *)am + offsetof(GfxCodeMatrices, worldView)), ((char *)am + offsetof(GfxCodeMatrices, world)), 0x110);
     memcpy(((char *)am + offsetof(GfxCodeMatrices, viewProjection)), ((char *)am + offsetof(GfxCodeMatrices, projection)), 0x110);
     memcpy(((char *)am + offsetof(GfxCodeMatrices, worldViewProjection)), ((char *)am + offsetof(GfxCodeMatrices, projection)), 0x110);
+#endif
 
     {
         float OGLView[16], OGLProjection[16], OGLWorldView[16];
@@ -2063,9 +2075,18 @@ static void RB_Set2D(void)
 
         MatrixMultiply44((vec4_t *)(OGLWorldView), (vec4_t *)(OGLProjection), (vec4_t *)(((char *)am + offsetof(GfxCodeMatrices, OGLworldViewProjection))));
 
+#if defined(COD2_X64)
+        {
+            GfxCodeMatrices *matrices = (GfxCodeMatrices *)am;
+            matrices->normalizedWorld = matrices->world;
+            matrices->normalizedWorldView = matrices->worldView;
+            matrices->normalizedWorldViewProjection = matrices->worldView;
+        }
+#else
         memcpy(((char *)am + offsetof(GfxCodeMatrices, normalizedWorld)), ((char *)am + offsetof(GfxCodeMatrices, world)), 0x110);
         memcpy(((char *)am + offsetof(GfxCodeMatrices, normalizedWorldView)), ((char *)am + offsetof(GfxCodeMatrices, worldView)), 0x110);
         memcpy(am + 0x890, ((char *)am + offsetof(GfxCodeMatrices, worldView)), 0x110);
+#endif
     }
 
     isDx7 = r_rendererInUse->current.integer == 2;
