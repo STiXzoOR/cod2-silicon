@@ -40,6 +40,12 @@ typedef struct CVAOPacketRbTreeNodeBase {
     struct CVAOPacketRbTreeNodeBase *_M_right;
 } CVAOPacketRbTreeNodeBase;
 
+#if defined(COD2_X64)
+typedef struct {
+    CVAOPacketRbTreeNodeBase *_M_node;
+} CVAOPacketRbTreeIterator;
+#endif
+
 typedef struct {
     CVAOPacketRbTreeNodeBase _M_base;
     UINT32 first;
@@ -151,8 +157,13 @@ bool CVAOPacket_IsFixedFunction(const CVAOPacket *_this);
 CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_(const CVAOPacketRbTree *tree, const UINT32 *key);
 CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11upper_boundERS1_(const CVAOPacketRbTree *tree, const UINT32 *key);
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_(void);
+#if defined(COD2_X64)
+CVAOPacketRbTreeIterator ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_(CVAOPacketRbTree *tree, const CVAOPacketKeyValue *kv);
+void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(CVAOPacketRbTree *tree, CVAOPacketRbTreeNode *node);
+#else
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_(void);
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(void);
+#endif
 
 void CVAOPacket_CVAOPacket(const CVAOPacket *_this)
 {
@@ -482,9 +493,13 @@ void CVAOPacket_Cache(CVAOPacket *v)
 
     {
 
+#if defined(COD2_X64)
+        ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_(&s_nativeAllPackets, &insertValue);
+#else
         typedef void (*insert_equal_fn)(void *tree, void *kv);
         insert_equal_fn fn = (insert_equal_fn)ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_;
         fn(CVAOPacket_sAllPackets, InsertBuf);
+#endif
     }
 
     insertPacket->vtable = vtbl_CVAOPacket;
@@ -508,9 +523,13 @@ void CVAOPacket_Shutdown(void)
         CVAOPacketRbTreeNodeBase *left;
 
         {
+#if defined(COD2_X64)
+            ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(allPackets, (CVAOPacketRbTreeNode *)root->_M_right);
+#else
             typedef void (*erase_fn)(void *tree, void *node);
             erase_fn fn = (erase_fn)ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E;
             fn(CVAOPacket_sAllPackets, root->_M_right);
+#endif
         }
 
         left = root->_M_left;
@@ -639,16 +658,30 @@ void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE
     return;
 }
 
+#if defined(COD2_X64)
+CVAOPacketRbTreeIterator ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_(CVAOPacketRbTree *tree, const CVAOPacketKeyValue *kv)
+{
+    (void)tree;
+    (void)kv;
+    return (CVAOPacketRbTreeIterator){ NULL };
+}
+
+void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(CVAOPacketRbTree *tree, CVAOPacketRbTreeNode *node)
+{
+    (void)tree;
+    (void)node;
+}
+#else
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_(void)
 {
 
     return;
 }
-
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(void)
 {
 
     return;
 }
+#endif
 
 fnptr_t vtbl_CVAOPacket[] = { (fnptr_t)ZN10CVAOPacketD1Ev, (fnptr_t)ZN10CVAOPacketD0Ev, (fnptr_t)CVAOPacket_IsFixedFunction };
