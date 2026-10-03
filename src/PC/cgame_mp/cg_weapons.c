@@ -172,7 +172,11 @@ void CG_AddPlayerWeapon(GfxEntity *parent, playerState_t *ps, centity_t *cent, q
 void CG_AddViewWeapon(playerState_t *ps);
 void CG_BulletHitEvent(int sourceEntityNum, vec_t *position, vec_t *normal, vec_t *reflected, int surfType, int event);
 void CG_DrawTracer(vec_t *start, vec_t *finish);
+#if defined(COD2_X64)
+void CG_WeaponSlot_f(void);
+#else
 void CG_WeaponSlot_f(qboolean next, qboolean ignoreEmpty);
+#endif
 qboolean CG_SelectFirstWeaponNotInSlot(qboolean bNext, qboolean bIgnoreEmpty);
 void CG_CycleWeap(qboolean bNext, qboolean bIgnoreEmpty);
 void CG_OutOfAmmoChange(void);
@@ -1511,7 +1515,11 @@ void CG_DrawTracer(vec_t *start, vec_t *finish)
     CL_AddPolyToScene(cgs->media.tracerMaterial, 0x1f, 4, verts);
 }
 
+#if defined(COD2_X64)
+void CG_WeaponSlot_f(void)
+#else
 void CG_WeaponSlot_f(qboolean next, qboolean ignoreEmpty)
+#endif
 {
     int serverTime;
     cg_t *cgTmp;
@@ -1520,8 +1528,10 @@ void CG_WeaponSlot_f(qboolean next, qboolean ignoreEmpty)
     int oldWeaponIndex;
     int oldAltWeaponIndex;
 
+#if !defined(COD2_X64)
     (void)next;
     (void)ignoreEmpty;
+#endif
 
     if (!CG_CanCycleWeapon(&cgTmp, &serverTime))
         return;

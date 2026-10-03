@@ -43,8 +43,16 @@ extern int FX_InitSystem(int maxEffects);
 extern int Cmd_Argc(void);
 extern const char *CG_Argv(int arg);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
+#if defined(COD2_X64)
+extern EffectTemplate * FX_RegisterEffect(const char *);
+#else
 extern int FX_RegisterEffect(const char *name);
+#endif
+#if defined(COD2_X64)
+extern void FX_PlaySimpleEffect(EffectTemplate *, const vec_t *);
+#else
 extern void FX_PlaySimpleEffect(int effectIndex, const vec_t *origin);
+#endif
 extern double atof(const char *str);
 extern int BG_GetViewmodelWeaponIndex(const playerState_t *ps);
 extern int BG_GetNumWeapons(void);
@@ -101,7 +109,11 @@ void CG_FxRestart(void)
 void CG_FxTest(void)
 {
     char *fxName;
+#if defined(COD2_X64)
+    EffectTemplate *fx;
+#else
     int fx;
+#endif
 
     if (Cmd_Argc() - 1 <= 0) {
         Com_Printf((const char *)"Must supply filename from base path.  Optional restart time.\n");
