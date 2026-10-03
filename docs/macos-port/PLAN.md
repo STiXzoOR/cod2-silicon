@@ -127,6 +127,31 @@ From `research/mac-client-reconstructions.md`:
 - `cl_keys_mp.c`: 20 non-ASCII key names were garbled during extraction.
   `cg_shock_dvar_names` has an inserted entry that no 1.3 binary contains.
 
+## Ecosystem facts that affect testing (from `research/tools-ecosystem.md`)
+
+- **Test server binary**: the `cod2_lnxded` in the CoD2x 1.4.6.8 Linux zip is
+  official 1.3 (`pc_1.3_1_1 Jun 23 2006`, needs `libstdc++.so.5`), byte-identical
+  to zk_libcod's and the bgauduch Docker copy, and the file cod2engine rebuilds.
+  Also run it without `LD_PRELOAD` as a stock-1.3 control. Don't use Killtube's
+  patched variants under libCoD2x.
+- **CoD2x behaviour beyond `cod2x-compat.md`**:
+  - Clients and servers extract `iw_CoD2x_01.iwd` and treat it as a stock IWD,
+    which may matter on pure servers. The file comes from the user's own CoD2x
+    download; never commit it.
+  - Since 1.4.6.4, `fs_game` restricts file loading to that folder.
+  - Rate limiting on getinfo, getstatus and getchallenge.
+  - `sv_master3` is free for a local test master.
+  - Protocol 119 is the Game Pass 1.3 client: never advertise it.
+- **Asset formats**: the engine's on-disk BSP structs keep their sizes on arm64
+  (25 structs plus the 320-byte header, checked). All 54 stock maps pass a
+  lump-size audit. No community parser decodes wavelet IWIs (formats 6 and 7,
+  25 stock images, some on the menu path), so validate that decoder by i386
+  vs arm64 comparison. Check `Material_Marshal32To64` against all 3,535 binary
+  materials.
+- **Cross-references**: CoD2x `src/mss32/symbols_*.h` maps 1,242 Windows exe
+  functions (531 named as in opencod2) and 305 renderer DLL functions. The
+  renderer DLL is identical to the user's Steam copy.
+
 ## Rules for every agent
 
 1. Work only inside your own git worktree and branch. Do not touch other
