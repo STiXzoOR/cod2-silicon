@@ -15,7 +15,7 @@ int main(int argc, char **argv)
     long length = ftell(input);
     assert(length >= 28 && !fseek(input, 0, SEEK_SET));
     /* The 16-bit reservoir sits two bytes ahead; its refill reads another
-     * dword. The engine's file allocation has padding for this lookahead. */
+     * dword. The native image loader supplies six bytes for this lookahead. */
     byte *file = calloc(1, length + 6);
     assert(file && fread(file, 1, length, input) == length);
     fclose(input);

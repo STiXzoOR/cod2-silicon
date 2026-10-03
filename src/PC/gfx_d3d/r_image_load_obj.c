@@ -236,7 +236,11 @@ static void __attribute_regparm__(3) Image_LoadWavelet(GfxImage *image, const by
     int height = *(short *)(fileHeader + 8);
     int depth = *(short *)(fileHeader + 10);
     int mipmapCount = *(byte *)(fileHeader + 5);
+#if defined(COD2_X64)
+    int isCubemap = image->mapType == 5;
+#else
     int isCubemap = (*(int *)image == 5);
+#endif
     int faceCount = isCubemap ? 6 : 1;
     int pixelStride = (bytesPerPixel == 3) ? 4 : bytesPerPixel;
     int startLevel;
@@ -561,6 +565,21 @@ Bool Image_LoadFromFile(GfxImage *image)
         return 0;
     }
 
+#if defined(COD2_X64)
+    if (fileData[4] >= 6 && fileData[4] <= 10) {
+        /* The wavelet reservoir refills four bytes beyond its two-byte lead.
+           FS_ReadFile promises only one trailing NUL, not this lookahead. */
+        if (fileLen > 0x7ffffff9) {
+            FS_FreeFile(imageFile);
+            return 0;
+        }
+        byte *padded = Hunk_AllocateTempMemoryInternal(fileLen + 6);
+        memcpy(padded, fileData, fileLen);
+        memset(padded + fileLen, 0, 6);
+        Image_LoadFromData(image, (GfxImageFileHeader *)padded, padded + sizeof(GfxImageFileHeader));
+        Hunk_FreeTempMemory(padded);
+    } else
+#endif
     Image_LoadFromData(image, (GfxImageFileHeader *)fileData, fileData + sizeof(GfxImageFileHeader));
     FS_FreeFile(imageFile);
     return 1;
