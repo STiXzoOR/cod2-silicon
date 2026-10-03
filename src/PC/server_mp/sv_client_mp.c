@@ -98,7 +98,11 @@ extern int FS_SV_FOpenFileRead(const char *filename, fileHandle_t *fp);
 extern int FS_Read(void *buffer, int len, fileHandle_t f);
 extern void *Z_MallocInternal(int size);
 extern void Dvar_SetInt(const dvar_t *dvar, int value);
+#if defined(COD2_X64)
+extern void MSG_WriteBigString(msg_t *sb, const char *s);
+#else
 extern void MSG_WriteBigString(msg_t *sb, const char *s, msg_t *msg, int key, int oldV, int bits);
+#endif
 extern void MSG_WriteDeltaEntity(msg_t *msg, entityState_t *from, entityState_t *to, qboolean force);
 extern void SV_UpdateServerCommandsToClient(client_t *client, msg_t *msg);
 extern void SV_SendMessageToClient(msg_t *msg, client_t *client);
@@ -600,7 +604,11 @@ void SV_SendClientGameState(client_t *client)
             if (sv.configstrings[i][0]) {
                 MSG_WriteByte(&msg, 2);
                 MSG_WriteShort(&msg, i);
+#if defined(COD2_X64)
+                MSG_WriteBigString(&msg, sv.configstrings[i]);
+#else
                 MSG_WriteBigString(&msg, sv.configstrings[i], NULL, 0, 0, 0);
+#endif
             }
         }
     }

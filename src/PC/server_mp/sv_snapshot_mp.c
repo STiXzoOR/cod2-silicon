@@ -121,9 +121,17 @@ extern void MSG_WriteDeltaEntity(msg_t *msg, byte *from, byte *to, int force);
 extern void MSG_WriteDeltaClient(msg_t *msg, byte *from, byte *to, int force);
 extern void MSG_WriteDeltaPlayerstate(msg_t *msg, byte *from, byte *to);
 extern void MSG_WriteDeltaArchivedEntity(msg_t *msg, byte *from, byte *to, int force);
+#if defined(COD2_X64)
+extern qboolean MSG_ReadDeltaClient(msg_t *, clientState_t *, clientState_t *, int);
+#else
 extern void MSG_ReadDeltaClient(msg_t *msg, byte *from, byte *to, int clientNum);
+#endif
 extern void MSG_ReadDeltaPlayerstate(msg_t *msg, byte *from, byte *to);
+#if defined(COD2_X64)
+extern qboolean MSG_ReadDeltaArchivedEntity(msg_t *, archivedEntity_t *, archivedEntity_t *, int);
+#else
 extern void MSG_ReadDeltaArchivedEntity(msg_t *msg, byte *from, byte *to, int entNum);
+#endif
 extern void SV_DropClient(client_t *client, const char *reason);
 extern unsigned char SV_Netchan_Transmit(client_t *client, int length, byte *data);
 extern unsigned char SV_Netchan_TransmitNextFragment(netchan_t *chan);

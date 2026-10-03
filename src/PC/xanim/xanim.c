@@ -13,7 +13,11 @@ static unsigned int g_end;
 extern void SL_RemoveRefToString(unsigned int stringValue);
 extern void SL_AddRefToString(unsigned int stringValue);
 extern const char *SL_ConvertToString(unsigned int stringValue);
+#if defined(COD2_X64)
+extern void Scr_AddConstString(unsigned int);
+#else
 extern unsigned int Scr_AddConstString(unsigned int value);
+#endif
 extern void Scr_NotifyNum(int entnum, int classnum, unsigned int stringValue, unsigned int paramcount);
 static XAnimNotify g_notifyList[128];
 static int g_notifyListSize;

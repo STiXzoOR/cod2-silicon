@@ -285,7 +285,11 @@ extern struct XAnim_s *Scr_GetAnims(int index);
 extern XAnim *XAnimGetAnims(const XAnimTree *tree);
 extern const char *XAnimGetAnimTreeDebugName(const XAnim *anims);
 extern const char *XAnimGetAnimDebugName(const XAnim *anims, unsigned int animIndex);
+#if defined(COD2_X64)
+extern void Scr_CompileShutdown(void);
+#else
 extern unsigned int Scr_CompileShutdown(void);
+#endif
 extern void Scr_FreeEntityList(void);
 extern void Scr_FreeGameVariable(int bComplete);
 extern void ClearObject(unsigned int parentId);
@@ -325,7 +329,11 @@ static void __attribute_regparm__(3) VM_TrimStack(unsigned int startLocalId, Var
 static void __attribute_regparm__(1) Scr_CancelWaittill(unsigned int startLocalId);
 void Scr_CancelNotifyList(unsigned int notifyListOwnerId);
 void Scr_FreeThread(int handle);
+#if defined(COD2_X64)
+void Scr_InitSystem(int sys);
+#else
 void Scr_InitSystem(void);
+#endif
 void Scr_ShutdownSystem(int sys, int bComplete);
 int Scr_IsSystemActive(int sys);
 unsigned int Scr_GetNumParam(void);
@@ -810,8 +818,15 @@ void Scr_FreeThread(int handle)
     RemoveRefToObject((unsigned short)handle);
 }
 
+#if defined(COD2_X64)
+void Scr_InitSystem(int sys)
+#else
 void Scr_InitSystem(void)
+#endif
 {
+#if defined(COD2_X64)
+    (void)sys;
+#endif
     unsigned int timeArrayId = AllocObject();
     struct scrVarPub_t *p = (struct scrVarPub_t *)imp_scrVarPub;
 

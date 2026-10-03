@@ -47,7 +47,11 @@ extern unsigned int SL_TransferToCanonicalString(unsigned int stringValue);
 extern Bool IsValidArrayIndex(unsigned int unsignedValue);
 extern unsigned int GetInternalVariableIndex(unsigned int unsignedValue);
 extern char *va(const char *format, ...);
+#if defined(COD2_X64)
+#include <stdlib.h>
+#else
 extern void qsort(void *base, unsigned int nmemb, unsigned int size, int (*compar)(const void *, const void *));
+#endif
 extern void RemoveRefToVector(const float *vectorValue);
 extern void Scr_CastBool(VariableValue *value);
 extern const float *Scr_AllocVector(const float *v);
@@ -59,8 +63,16 @@ extern void SetNewVariableValue(unsigned int id, VariableValue *value);
 extern unsigned char scrCompileGlob[];
 extern unsigned char scrVarGlob[];
 extern void DumpCompiledObject(const char *label, unsigned int compiledObj);
+#if defined(COD2_X64)
+extern BuiltinFunction Scr_GetFunction(const char **, int *);
+#else
 extern intptr_t Scr_GetFunction(const char **pName, int *type);   /* returns a function pointer; int truncated it on x64 */
+#endif
+#if defined(COD2_X64)
+extern BuiltinMethod Scr_GetMethod(const char **, int *);
+#else
 extern intptr_t Scr_GetMethod(const char **pName, int *type);
+#endif
 extern void Scr_EmitAnimation(char *pos, unsigned int animName, unsigned int sourcePos);
 static const char str_dbg_before_lt[] = "before-LinkThread";
 
@@ -100,7 +112,11 @@ static unsigned int LinkThread(unsigned int threadId, VariableUnion (*pos)[16]);
 #endif
 static unsigned int SpecifyThreadPosition(unsigned int threadId, unsigned int name, unsigned int sourcePos, int type) __attribute_regparm__(3);
 static void Scr_EvalVariableValue(unsigned int id, VariableValue *value);
+#if defined(COD2_X64)
+int CompareCaseInfo(const void *a, const void *b);
+#else
 int CompareCaseInfo(const unsigned int *elem1, const unsigned int *elem2);
+#endif
 void Scr_CompileShutdown(void);
 static void Scr_BlockAddLocalVar(scr_block_t *block, unsigned int name);
 static unsigned int Scr_CalcLocalVarsVariableExpressionRef(sval_t expr, scr_block_t *block) __attribute_regparm__(2);
@@ -236,8 +252,16 @@ static unsigned int __attribute_regparm__(3)
     return posId;
 }
 
+#if defined(COD2_X64)
+int CompareCaseInfo(const void *a, const void *b)
+#else
 int CompareCaseInfo(const unsigned int *elem1, const unsigned int *elem2)
+#endif
 {
+#if defined(COD2_X64)
+    const unsigned int *elem1 = a;
+    const unsigned int *elem2 = b;
+#endif
     if (*elem1 > *elem2)
         return -1;
     return *elem1 < *elem2;
@@ -2154,7 +2178,11 @@ static unsigned int __attribute_regparm__(3)
                     unsigned int newId;
 
                     type = 0;
+#if defined(COD2_X64)
+                    func = (intptr_t)Scr_GetFunction(&pName, &type);
+#else
                     func = Scr_GetFunction(&pName, &type);
+#endif
                     newId = GetNewVariable(scrCompilePub.builtinFunc, name);
                     value.type = (type == 1) ? SCRCOMP_VAR_DEVELOPER_CODEPOS : SCRCOMP_VAR_CODEPOS;
 #if defined(COD2_X64) && (defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64))
@@ -2247,7 +2275,11 @@ static unsigned int __attribute_regparm__(3)
                     unsigned int newId;
 
                     type = 0;
+#if defined(COD2_X64)
+                    meth = (intptr_t)Scr_GetMethod(&pName, &type);
+#else
                     meth = Scr_GetMethod(&pName, &type);
+#endif
                     newId = GetNewVariable(scrCompilePub.builtinMeth, name);
                     value.type = (type == 1) ? SCRCOMP_VAR_DEVELOPER_CODEPOS : SCRCOMP_VAR_CODEPOS;
 #if defined(COD2_X64) && (defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64))
@@ -5060,7 +5092,11 @@ emit_switch_table:
     }
 
     *pos2 = (unsigned short)numCases;
+#if defined(COD2_X64)
+    qsort(caseTable, numCases, 8, CompareCaseInfo);
+#else
     qsort(caseTable, numCases, 8, (int (*)(const void *, const void *))CompareCaseInfo);
+#endif
 
     if (numCases > 1) {
         for (i = 0; i < numCases - 1; ++i) {

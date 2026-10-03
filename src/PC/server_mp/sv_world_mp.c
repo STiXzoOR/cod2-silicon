@@ -11,7 +11,11 @@ extern void CM_UnlinkEntity(svEntity_t *svEntity);
 extern int CM_BoxSightTrace(int oldHitNum, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, int brushmask, int contentmask);
 extern int CM_PointSightTraceToEntities(sightpointtrace_t *clip);
 extern int CM_ClipSightTraceToEntities(sightclip_t *clip);
+#if defined(COD2_X64)
+extern int CM_BoxTrace(trace_t *, const vec_t *, const vec_t *, const vec_t *, const vec_t *, clipHandle_t, int);
+#else
 extern void CM_BoxTrace(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, int brushmask, int contentmask);
+#endif
 extern void CM_PointTraceStaticModels(trace_t *results, const vec_t *start, const vec_t *end, int contentmask);
 extern void CM_CalcTraceEntents(TraceExtents *extents);
 extern void CM_PointTraceToEntities(pointtrace_t *clip, trace_t *trace);
