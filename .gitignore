@@ -56,3 +56,6 @@ src/win32/sdl2/lib/*.pdb
 
 # Local typed-data generation and verification outputs
 /build/x64_gen/
+
+# Native crash reports written to the working directory
+cod2_crash_*.txt
