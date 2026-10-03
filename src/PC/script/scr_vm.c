@@ -1,4 +1,7 @@
 #include "common_types.h"
+#if COD2_APPLE_SDK
+#include <time.h>
+#endif
 #include "imports.h"
 #include "scr_debugger.h"
 
@@ -441,6 +444,13 @@ static inline __attribute__((always_inline)) void Scr_ResetTimeout_core(void)
     __asm__ __volatile__("rdtsc" : "=a"(tsc_low_raw), "=d"(tsc_high_raw));
     tsc = (unsigned long long)tsc_low_raw;
     *(unsigned int *)(scrVmGlob + 24) = (unsigned int)(tsc >> 2);
+#elif COD2_APPLE_SDK
+    /* The portable VM has no TSC comparisons. Record monotonic milliseconds;
+     * any restored timeout checks must use this same clock and typed field. */
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    ((struct scrVmGlob_t *)scrVmGlob)->starttime =
+        (unsigned int)((uint64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000);
 #else
     *(unsigned int *)(scrVmGlob + 24) = 0;
 #endif
@@ -2075,7 +2085,7 @@ static void VM_DebugRecordOpcode(const char *pos, unsigned int opcode)
     dbg_op_ring_idx++;
 }
 
-#if !defined(VM_EXECUTE_USE_ASM_REFERENCE)
+#if !defined(VM_EXECUTE_USE_ASM_REFERENCE) || (defined(__APPLE__) && defined(COD2_X64))
 static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs);
 static unsigned int VM_Execute(struct function_stack_t fs)
 {
@@ -6208,7 +6218,7 @@ static __attribute__((naked)) unsigned int VM_Execute(struct function_stack_t fs
 }
 #endif
 
-#if !defined(VM_EXECUTE_USE_ASM_REFERENCE)
+#if !defined(VM_EXECUTE_USE_ASM_REFERENCE) || (defined(__APPLE__) && defined(COD2_X64))
 
 extern unsigned long long Scr_EvalVariable(unsigned int id);
 extern unsigned long long Scr_FindVariableField(unsigned int parentId, unsigned int name);
@@ -8037,6 +8047,10 @@ void Scr_IncTime(void)
  * call site to the mangled symbol via /alternatename (regparm no-ops on MSVC). */
 extern unsigned int VM_ExecuteExtCall(unsigned int threadId, const char *pos, unsigned int paramcount);
 COD2_ALT("VM_ExecuteExtCall", "_Z10VM_ExecutejPKcj")
+#elif defined(__APPLE__) && defined(COD2_X64)
+/* Explicit asm names bypass the Mach-O C symbol prefix. */
+extern unsigned int
+    VM_ExecuteExtCall(unsigned int threadId, const char *pos, unsigned int paramcount) __asm__("__Z10VM_ExecutejPKcj");
 #else
 extern unsigned int __attribute_regparm__(3)
     VM_ExecuteExtCall(unsigned int threadId, const char *pos, unsigned int paramcount) __asm__("_Z10VM_ExecutejPKcj");

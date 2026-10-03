@@ -37,7 +37,12 @@ const char *Material_TechniqueNames[] = {
     "\"debug bumpmap\""
 };
 
+#if defined(__APPLE__) && defined(COD2_X64)
+/* Darwin clang does not support the alias attribute. */
+__asm__(".globl _s_techniqueTypeNames\n.set _s_techniqueTypeNames, _Material_TechniqueNames");
+#else
 extern const char *const s_techniqueTypeNames[34] __attribute__((alias("Material_TechniqueNames")));
+#endif
 
 #if defined(_MSC_VER)
 /* original symbol name was the bare "string"; keep a natural C name and alias
@@ -45,6 +50,8 @@ extern const char *const s_techniqueTypeNames[34] __attribute__((alias("Material
 char material_tech_string[1024] = { 0 };
 COD2_ALT("string", "material_tech_string")
 COD2_ALT("s_techniqueTypeNames", "Material_TechniqueNames")
+#elif defined(__APPLE__) && defined(COD2_X64)
+char material_tech_string[1024] __asm__("_string") = { 0 };
 #else
 char material_tech_string[1024] __asm__("string") = { 0 };
 #endif

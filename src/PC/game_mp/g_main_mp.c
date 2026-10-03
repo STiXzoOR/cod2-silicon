@@ -52,7 +52,8 @@ static const char str_dbg_ff_agv[] = "";
 static const char str_dbg_ff_gls[] = "";
 static const char str_dbg_endload[] = "";
 
-#if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER)
+/* Empty debug labels are referenced only by the original x86 assembly. */
+#if !defined(__EMSCRIPTEN__) && !defined(_MSC_VER) && !(defined(__APPLE__) && defined(COD2_X64))
 __asm__(".Lginit_fmt: .asciz \"\"\n");
 #endif
 void G_InitDbgPrint(const char *fmt, void *ptr)
@@ -489,7 +490,9 @@ extern void G_SpawnTriggerHurt(int numBrushModels);
 extern void GScr_PostResetTimeout(void);
 extern short int CheckTeamStatus(void);
 extern void DeathmatchScoreboardMessage(gentity_t *ent);
+#if !defined(__APPLE__) || !defined(COD2_X64)
 extern const char *SL_ConvertToString(unsigned short index);
+#endif
 extern void Dvar_SetBool(const dvar_t *dvar, int value);
 extern void SaveRegisteredWeapons(void);
 extern void SaveRegisteredItems(void);
@@ -709,7 +712,9 @@ extern void G_SpawnTriggerHurt(int numBrushModels);
 extern void GScr_PostResetTimeout(void);
 extern short int CheckTeamStatus(void);
 extern void DeathmatchScoreboardMessage(gentity_t *ent);
+#if !defined(__APPLE__) || !defined(COD2_X64)
 extern const char *SL_ConvertToString(unsigned short index);
+#endif
 extern void Dvar_SetBool(const dvar_t *dvar, int value);
 extern void SaveRegisteredWeapons(void);
 extern void SaveRegisteredItems(void);

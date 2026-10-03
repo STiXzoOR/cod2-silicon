@@ -737,6 +737,8 @@ unsigned char UI_Component_g[224] __attribute__((alias("__ZN12UI_Component1gE"))
  * __ZN12UI_Component1gE emits MSVC symbol ___ZN12UI_Component1gE (one extra
  * leading underscore on x86). */
 COD2_ALT("UI_Component_g", "__ZN12UI_Component1gE")
+#elif defined(__APPLE__) && defined(COD2_X64)
+__asm__(".globl _UI_Component_g\n.set _UI_Component_g, ___ZN12UI_Component1gE");
 #else
 __asm__(".globl UI_Component_g\n.set UI_Component_g, __ZN12UI_Component1gE");
 #endif
