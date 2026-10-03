@@ -2,6 +2,7 @@
 #include "common_types.h"
 #include "cod2x.h"
 #if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+#include "cod2x_features.h"
 #include "cod2x_policy.h"
 #endif
 #include <string.h>
@@ -63,6 +64,7 @@ void Cod2x_Init(void)
 #if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
     Dvar_RegisterString("cl_masterServer", "master.cod2x.me", 1);
     Dvar_RegisterInt("cl_masterPort", 20710, 1, 65535, 1);
+    Cod2x_FeaturesInit();
 #endif
 }
 
@@ -98,6 +100,9 @@ void Cod2x_Frame(int active, int demo)
     int competitive;
     cod2x_playing = active;
     cod2x_demo = demo;
+#if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
+    Cod2x_FeaturesFrame(active, demo);
+#endif
     competitive = Cod2x_Competitive();
     /* CoD2x src/mss32/competitive.cpp:54-135. */
     for (i = 0; i < sizeof(cod2x_settings) / sizeof(cod2x_settings[0]); ++i) {

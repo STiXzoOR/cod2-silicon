@@ -1,4 +1,7 @@
 #include "common_types.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "PC/qcommon/cod2x_features.h"
+#endif
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <float.h>
@@ -921,6 +924,9 @@ static inline __attribute__((always_inline)) void CG_ResetLegacyHackLoadingFlags
 
 static inline __attribute__((always_inline)) void CG_RegisterDvars(void)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    CG_Cod2xRadarInit();
+#endif
     cg_drawGun = Dvar_RegisterBool_mac("cg_drawGun", 1, 0x1080);
     cg_cursorHints = Dvar_RegisterInt("cg_cursorHints", 4, 0, 4, 0x1001);
     cg_hintFadeTime = Dvar_RegisterInt("cg_hintFadeTime", 0x64, 0, 0x7fffffff, 0x1001);

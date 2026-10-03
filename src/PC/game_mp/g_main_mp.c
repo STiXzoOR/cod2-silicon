@@ -568,8 +568,10 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     gclient_t *cl;
 
     Com_Printf("------- Game Initialization -------\n");
+#if !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
     Com_Printf("gamename: %s\n", "Call of Duty 2");
     Com_Printf("gamedate: %s\n", __DATE__);
+#endif
 
     Swap_Init();
 
@@ -873,8 +875,10 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     gclient_t *cl;
 
     Com_Printf("------- Game Initialization -------\n");
+#if !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
     Com_Printf("gamename: %s\n", "Call of Duty 2");
     Com_Printf("gamedate: %s\n", __DATE__);
+#endif
 
     Swap_Init();
 
@@ -1129,7 +1133,9 @@ void G_ShutdownGame(qboolean freeScripts)
     int i;
     char *ptr;
 
+#if !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
     Com_Printf("==== ShutdownGame ====\n");
+#endif
 
     if (level.logFile) {
         G_LogPrintf("ShutdownGame:\n");

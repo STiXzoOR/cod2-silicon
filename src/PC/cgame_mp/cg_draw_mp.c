@@ -1,4 +1,9 @@
 #include "common_types.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "PC/qcommon/cod2x_features.h"
+#include <stdlib.h>
+extern void Com_Printf(const char *, ...);
+#endif
 #if COD2_APPLE_SDK
 #define COD2_IMAGE_CONSTANT_4096 4096
 #else
@@ -956,6 +961,10 @@ unsigned int CG_ShakeCamera(void)
 
 qboolean CG_DrawFollow(void)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (!Cod2x_DrawSpectatedName())
+        return 0;
+#endif
     clientInfo_t *clientInfo;
     const char *clientName;
     const char *followingString;
@@ -1656,6 +1665,9 @@ unsigned int CG_Draw2D(void)
 
     if (!cg_draw2D->current.enabled)
         return 0;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    CG_Cod2xRadarDraw();
+#endif
 
     if (cg->fadeRate != 0.0f) {
         int remaining = cg->fadeTime - cg->time;

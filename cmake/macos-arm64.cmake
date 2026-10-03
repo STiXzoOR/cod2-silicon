@@ -37,6 +37,7 @@ list(FILTER MACOS_DED_C EXCLUDE REGEX "/PC/(snd|win32/cinematics)\\.c$")
 list(FILTER MACOS_DED_C EXCLUDE REGEX "/Mac/Main/(mac_input|mac_decode|mac_sound)\\.c$")
 # A dedicated build never loads the client sound driver or group voice output.
 list(FILTER MACOS_DED_C EXCLUDE REGEX "/PC/win32/(snd_driver|win_voice)\\.c$")
+list(FILTER MACOS_DED_C EXCLUDE REGEX "/PC/qcommon/cod2x_(features|demo|url|pose)\\.c$")
 
 # Typed LP64 data generated from the Mac binary's STABS (WS2, tools/datagen).
 include(${CMAKE_SOURCE_DIR}/cmake/datagen.cmake)
