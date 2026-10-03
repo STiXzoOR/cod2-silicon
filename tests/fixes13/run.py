@@ -13,7 +13,11 @@ parser.add_argument('--build', type=Path, default=ROOT / 'build/ws9')
 parser.add_argument('--test', action='append')
 parser.add_argument('--baseline', help='extract production code from this local git commit')
 args = parser.parse_args()
-out = args.build.resolve() / 'fixes13-tests'
+suffix = ''
+if args.baseline:
+    suffix = '-baseline-' + subprocess.check_output(
+        ['git', 'rev-parse', '--short', args.baseline], cwd=ROOT, text=True).strip()
+out = args.build.resolve() / ('fixes13-tests' + suffix)
 out.mkdir(parents=True, exist_ok=True)
 entries = json.loads((args.build / 'compile_commands.json').read_text())
 entry = next(e for e in entries if e['file'].endswith('/src/PC/server_mp/sv_init_mp.c'))
@@ -128,14 +132,19 @@ if not args.test or 'tables' in args.test:
     run('tables', generated)
 if not args.test or 'hotpaths' in args.test:
     for path in ['src/PC/game_mp/g_main_mp.c', 'src/PC/script/scr_vm.c',
-                 'src/PC/gfx_d3d/rb_backend.c', 'src/PC/client_mp/cl_scrn_mp.c']:
+                 'src/PC/gfx_d3d/rb_backend.c', 'src/PC/client_mp/cl_scrn_mp.c',
+                 'src/PC/gfx_d3d/rb_shade.c', 'src/PC/gfx_d3d/r_rendercmds.c',
+                 'src/PC/gfx_d3d/r_getrefapi_v60.c']:
         obj = out / (Path(path).stem + '_hot.o')
         with (out / (Path(path).stem + '_hot.log')).open('w') as log:
             subprocess.run([*flags, '-O0', '-c', str(ROOT / path), '-o', str(obj)],
                            check=True, stdout=log, stderr=log)
         symbols = subprocess.check_output(['nm', str(obj)], text=True)
-        assert not re.search(r'\b(?:_getenv|_dbg_check439\w*|_dbg_protect_439|_dbg_end_probe|_g_lastop_dbg|_VM_DebugRecordOpcode)$', symbols, re.M), path
-    print('PASS hotpaths: no getenv or opcode-probe symbols in default O0 objects')
+        assert not re.search(r'\b(?:_getenv|_dbg_check439\w*|_dbg_protect_439|_dbg_end_probe|_g_lastop_dbg|_VM_DebugRecordOpcode|_RB_X64Trace\w+|_R_X64Trace\w+)$', symbols, re.M), path
+        relocations = subprocess.check_output(['otool', '-rv', str(obj)], text=True)
+        text_relocs = relocations.split('Relocation information (__TEXT,__text)', 1)[-1].split('Relocation information', 1)[0]
+        assert not re.search(r'\b_(?:g_rb_draw_dbg|g_rb_endsurface_\w+|g_rb_tess_type_\w+|g_rb_last_tess_type|g_tess_since_begin|g_rdsl_\w+|g_q_stretchpic|g_disp_stretchpic|g_rb_stretchpic_calls|diag_endsurface_entry|diag_idxzero)\b', text_relocs), path
+    print('PASS hotpaths: no getenv/opcode probes, renderer trace calls, or counter references at O0')
 if not args.test or 'trajectory' in args.test:
     path = 'src/PC/bgame/bg_misc.c'
     run('trajectory', ''.join(function(path, n) for n in
@@ -149,3 +158,20 @@ if not args.test or 'renderer_options' in args.test:
     path = 'src/Mac/DirectX_9/CDirect3DDevice.c'
     assert 'getenv(' not in function(path, 'CDirect3DDevice_DrawIndexedPrimitive')
     run('renderer_options', function(path, 'CDirect3DDevice_UsePrograms'), cases=((), ('on',)))
+if args.test and 'debug_enabled' in args.test:
+    checked = set()
+    for entry in entries:
+        path = Path(entry['file'])
+        if (path.suffix != '.c' or path in checked or
+                'cod2_macos.dir/' not in entry['command'] or
+                not any(name in path.read_text() for name in
+                        ('port_debug.h', 'gfx_dll_v60_map.h'))):
+            continue
+        options = shlex.split(entry['command'])
+        options = options[:options.index('-o')]
+        with (out / (path.stem + '_debug.log')).open('w') as log:
+            subprocess.run([*options, '-DCOD2_PORT_DEBUG=1', '-fsyntax-only', str(path)],
+                           check=True, stdout=log, stderr=log)
+        checked.add(path)
+    assert checked
+    print(f'PASS debug opt-in: {len(checked)} native translation units')

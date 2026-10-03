@@ -668,8 +668,8 @@ void R_AddCmdDrawStretchPic(float x, float y, float w, float h, float s0, float 
 {
     GfxCmdStretchPic *cmd;
 
-    R_X64TraceStretchPic(material, x, y, w, h);
-    { extern int g_q_stretchpic; extern void Com_Printf(const char *, ...); g_q_stretchpic++; if (g_q_stretchpic <= 4) Com_Printf("[qsp] #%d material=%p\n", g_q_stretchpic, (void *)material); }
+    COD2_DEBUG_ONLY(R_X64TraceStretchPic(material, x, y, w, h);)
+    COD2_DEBUG_ONLY({ extern int g_q_stretchpic; extern void Com_Printf(const char *, ...); g_q_stretchpic++; if (g_q_stretchpic <= 4) Com_Printf("[qsp] #%d material=%p\n", g_q_stretchpic, (void *)material); })
     cmd = (GfxCmdStretchPic *)R_AllocCmd((int)sizeof(GfxCmdStretchPic), 0, 0xf);
     if (cmd == NULL) {
         return;

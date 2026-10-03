@@ -258,15 +258,15 @@ extern int g_rb_first_cmd;
 static void diag_rb_frame_end(void)
 {
 
-    rb_rdsl_call_count = 0;
-    g_rb_endsurface_count = 0;
-    g_rb_endsurface_draw = 0;
-    g_rb_endsurface_nomaterial = 0;
-    g_rb_endsurface_notechnique = 0;
-    g_rb_endsurface_dxstate = 0;
-    g_rb_endsurface_idxzero = 0;
-    g_rb_endsurface_flag1skip = 0;
-    g_rb_endsurface_flag2skip = 0;
+    COD2_DEBUG_ONLY(rb_rdsl_call_count = 0;)
+    COD2_DEBUG_ONLY(g_rb_endsurface_count = 0;)
+    COD2_DEBUG_ONLY(g_rb_endsurface_draw = 0;)
+    COD2_DEBUG_ONLY(g_rb_endsurface_nomaterial = 0;)
+    COD2_DEBUG_ONLY(g_rb_endsurface_notechnique = 0;)
+    COD2_DEBUG_ONLY(g_rb_endsurface_dxstate = 0;)
+    COD2_DEBUG_ONLY(g_rb_endsurface_idxzero = 0;)
+    COD2_DEBUG_ONLY(g_rb_endsurface_flag1skip = 0;)
+    COD2_DEBUG_ONLY(g_rb_endsurface_flag2skip = 0;)
     g_dip_gl_draw = 0;
     g_dip_is_tri = 0;
     g_dip_drawflag_zero = 0;
@@ -274,17 +274,17 @@ static void diag_rb_frame_end(void)
     g_dip_vs_bound = 0;
     g_dip_vs_skip = 0;
     g_dip_numelems_zero = 0;
-    g_rdsl_ignore_technull = 0;
-    g_rdsl_ignore_decal = 0;
-    g_rdsl_ignore_techm1 = 0;
-    g_rdsl_noignore = 0;
-    g_rdsl_sortchange = 0;
-    g_rdsl_bf_entry = 0;
+    COD2_DEBUG_ONLY(g_rdsl_ignore_technull = 0;)
+    COD2_DEBUG_ONLY(g_rdsl_ignore_decal = 0;)
+    COD2_DEBUG_ONLY(g_rdsl_ignore_techm1 = 0;)
+    COD2_DEBUG_ONLY(g_rdsl_noignore = 0;)
+    COD2_DEBUG_ONLY(g_rdsl_sortchange = 0;)
+    COD2_DEBUG_ONLY(g_rdsl_bf_entry = 0;)
     rb_drawsurfscmd_count = 0;
     rb_drawsurfscmd_dxskip = 0;
-    g_technull_saved = 0;
-    memset(g_rb_tess_type_counts, 0, sizeof(int) * 8);
-    g_tess_since_begin = 0;
+    COD2_DEBUG_ONLY(g_technull_saved = 0;)
+    COD2_DEBUG_ONLY(memset(g_rb_tess_type_counts, 0, sizeof(int) * 8);)
+    COD2_DEBUG_ONLY(g_tess_since_begin = 0;)
 }
 
 extern struct materialCommands_t tess;
@@ -459,7 +459,7 @@ void RB_GpuWaited(int ticks);
 static void RB_EndFrame_real(void);
 void RB_EndFrame(void)
 {
-    {
+    COD2_DEBUG_ONLY({
         extern int g_rb_endsurface_count, g_rb_endsurface_nomaterial, g_rb_endsurface_notechnique,
                    g_rb_endsurface_dxstate, g_rb_endsurface_draw, g_rb_endsurface_flag1skip,
                    g_rb_endsurface_flag2skip, g_rb_endsurface_idxzero;
@@ -472,7 +472,7 @@ void RB_EndFrame(void)
                        g_rb_endsurface_count, g_rb_endsurface_draw, g_rb_endsurface_nomaterial,
                        g_rb_endsurface_notechnique, g_rb_endsurface_dxstate, g_rb_endsurface_flag1skip,
                        g_rb_endsurface_flag2skip, g_rb_endsurface_idxzero);
-    }
+    })
     RB_EndFrame_real();
 }
 void RB_InitBackendGlobalStructs(void);
@@ -782,7 +782,7 @@ static void RB_EndFrame_real(void)
             fflush(stderr);
             rb_drawsurfscmd_count = 0;
             for (k = 0; k < 8; k++)
-                g_rb_tess_type_counts[k] = 0;
+                COD2_DEBUG_ONLY(g_rb_tess_type_counts[k] = 0;)
         }
         g_rb_dip_calls = 0;
     }
@@ -1565,7 +1565,7 @@ static void RB_RenderDrawSurfList(GfxDrawSurf *drawSurfs, int drawSurfCount,
     float materialTime, materialTimePrev;
     GfxEntity *entities;
 
-    rb_rdsl_call_count++;
+    COD2_DEBUG_ONLY(rb_rdsl_call_count++;)
 
     backEnd.currentEntity = &backEnd.worldEntity;
     backEnd.currentEntityLighting = NULL;
@@ -1613,12 +1613,12 @@ advance:
         goto same_sort;
 
 sort_changed:
-    g_rdsl_sortchange++;
+    COD2_DEBUG_ONLY(g_rdsl_sortchange++;)
     prevSort = sortKey;
     R_DecomposeSort(sortKey, &entityIndex, &material, &lightmap);
 
     if (!material) {
-        g_rdsl_ignore_technull++;
+        COD2_DEBUG_ONLY(g_rdsl_ignore_technull++;)
         goto ignore_surf;
     }
 #ifdef GFX_REAL_D3D9
@@ -1684,18 +1684,18 @@ non_lightmap:
     }
 
 have_tech:
-    g_rdsl_bf_entry++;
+    COD2_DEBUG_ONLY(g_rdsl_bf_entry++;)
     material = material;
 
     if (!r_drawDecals->current.enabled) {
         if (*(byte *)&material->stateBits[1] & 0x30) {
-            g_rdsl_ignore_decal++;
+            COD2_DEBUG_ONLY(g_rdsl_ignore_decal++;)
             goto ignore_surf;
         }
     }
 
     if (actualTechType == (MaterialTechniqueType)-1) {
-        g_rdsl_ignore_techm1++;
+        COD2_DEBUG_ONLY(g_rdsl_ignore_techm1++;)
         goto ignore_surf;
     }
 
@@ -1703,10 +1703,10 @@ have_tech:
         MaterialTechniqueSet *techSet = material->techniqueSet;
         MaterialTechnique *technique;
         if (!techSet) {
-            g_rdsl_ignore_technull++;
+            COD2_DEBUG_ONLY(g_rdsl_ignore_technull++;)
 #    ifdef GFX_REAL_D3D9
             if (COD2_DEBUG_ENV("REALD3D9_RDSL") && g_technull_saved < 8) {
-                g_technull_saved++;
+                COD2_DEBUG_ONLY(g_technull_saved++;)
                 fprintf(stderr, "[TECHNULL] techSet==NULL mat='%s' type=%d\n",
                         material->info.name ? material->info.name : "?", actualTechType);
             }
@@ -1716,24 +1716,24 @@ have_tech:
         technique = techSet->techniques[actualTechType];
 #ifdef GFX_REAL_D3D9
         if (!technique && COD2_DEBUG_ENV("REALD3D9_RDSL") && g_technull_saved2 < 12) {
-            g_technull_saved2++;
+            COD2_DEBUG_ONLY(g_technull_saved2++;)
             fprintf(stderr, "[TECHNULL] tech[%d]==NULL mat='%s' techset='%s'\n",
                     actualTechType, material->info.name ? material->info.name : "?",
                     techSet->name ? techSet->name : "?");
         }
 #endif
         if (!technique) {
-            g_rdsl_ignore_technull++;
-            if (actualTechType == 6 && g_technull_saved < 30) {
+            COD2_DEBUG_ONLY(g_rdsl_ignore_technull++;)
+            COD2_DEBUG_ONLY(if (actualTechType == 6 && g_technull_saved < 30) {
                 g_technull_mat = (void *)material;
                 g_technull_type = actualTechType;
                 g_technull_saved++;
-            }
+            })
             goto ignore_surf;
         }
     }
 
-    g_rdsl_noignore++;
+    COD2_DEBUG_ONLY(g_rdsl_noignore++;)
     ignoreSurfs = 0;
     entities = backEnd.sceneDef.entities;
 
@@ -1882,16 +1882,16 @@ dispatch:
     {
         const surfaceType_t *surfType = drawSurf->surface;
         int type = *(const int *)surfType;
-        g_rb_tess_type_counts[type]++;
-        g_rb_last_tess_type = type;
-        g_tess_since_begin++;
-        g_rb_draw_dbg.type = type;
-        g_rb_draw_dbg.surface = surfType;
-        g_rb_draw_dbg.entityIndex = entityIndex;
-        g_rb_draw_dbg.material = material;
-        g_rb_draw_dbg.iteration = iteration;
-        g_rb_draw_dbg.drawSurfCount = drawSurfCount;
-        g_rb_draw_dbg.sort = drawSurf->sort;
+        COD2_DEBUG_ONLY(g_rb_tess_type_counts[type]++;)
+        COD2_DEBUG_ONLY(g_rb_last_tess_type = type;)
+        COD2_DEBUG_ONLY(g_tess_since_begin++;)
+        COD2_DEBUG_ONLY(g_rb_draw_dbg.type = type;)
+        COD2_DEBUG_ONLY(g_rb_draw_dbg.surface = surfType;)
+        COD2_DEBUG_ONLY(g_rb_draw_dbg.entityIndex = entityIndex;)
+        COD2_DEBUG_ONLY(g_rb_draw_dbg.material = material;)
+        COD2_DEBUG_ONLY(g_rb_draw_dbg.iteration = iteration;)
+        COD2_DEBUG_ONLY(g_rb_draw_dbg.drawSurfCount = drawSurfCount;)
+        COD2_DEBUG_ONLY(g_rb_draw_dbg.sort = drawSurf->sort;)
         rb_tessTable[type](surfType);
     }
     goto advance;
@@ -2797,7 +2797,7 @@ void RB_DrawStretchPic(const Material *material, float x, float y, float w, floa
 
     {
         extern int g_rb_stretchpic_calls;
-        g_rb_stretchpic_calls++;
+        COD2_DEBUG_ONLY(g_rb_stretchpic_calls++;)
     }
     if (!material)
         return;
@@ -2975,7 +2975,7 @@ static void RB_StretchPicCmd(GfxRenderCommandExecState *execState)
     byte *cmd = (byte *)execState->cmd;
     unsigned int byteCount;
 
-    g_disp_stretchpic++;
+    COD2_DEBUG_ONLY(g_disp_stretchpic++;)
     RB_DrawStretchPic(
         ((GfxCmdStretchPic *)cmd)->material,
         ((GfxCmdStretchPic *)cmd)->x,
@@ -3655,7 +3655,7 @@ static void RB_BACKEND_REGPARM3_SSE_ABI RB_DrawTextWithCursor_impl(const char *t
             h = (float)glyph->pixelHeight * yScale;
             w = (float)glyph->pixelWidth * xScale;
             if (count == 0) {
-                RB_X64TraceGlyph(text, ch, glyph, glyphX, glyphY, w, h, newColor);
+                COD2_DEBUG_ONLY(RB_X64TraceGlyph(text, ch, glyph, glyphX, glyphY, w, h, newColor);)
             }
             if (traceText && count == 0) {
                 printf("[textcmd-glyph0] ch=%d glyph=(%d,%d %dx%d) draw=(%.1f,%.1f %.1fx%.1f) st=(%.3f,%.3f %.3f,%.3f) color=0x%08x mat=%s\n",
@@ -3739,8 +3739,8 @@ static void RB_DrawTextCmd(GfxRenderCommandExecState *execState)
     int cursorPos = cmd->cursorPos;
     int cursor = (signed char)cmd->cursor;
 
-    RB_X64TraceText(text, font, font ? (const Material *)font->material : NULL,
-                    color, style, x, y, xScale, yScale);
+    COD2_DEBUG_ONLY(RB_X64TraceText(text, font, font ? (const Material *)font->material : NULL,
+                    color, style, x, y, xScale, yScale);)
 
     if (RB_ShouldTraceTextCmd(text)) {
         printf("[textcmd-back] cmd=%p bytes=%u text='%.96s' xy=(%.1f,%.1f) scale=(%.3f,%.3f) color=0x%08x bytes=(%u,%u,%u,%u) style=%d max=%d cursor=%d/%d font=%p\n",
