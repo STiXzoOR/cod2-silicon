@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #if COD2_APPLE_SDK
 #include <time.h>
@@ -1662,7 +1663,7 @@ static void VM_NotifySuspendStack(unsigned int notifyListOwnerId, unsigned int s
     SetNewVariableValue(stackId, &tempValue);
     stackRef = GetVariableValueAddress(stackId);
     if (traceCount < 32) {
-        if (getenv("DBGSPAM"))
+        if (COD2_DEBUG_ENV("DBGSPAM"))
             Com_Printf("[team-trace] notify queue local=%u time=%u pauseArray=%u bucket=%u stack=%u pos=%p\n",
                        startLocalId, (unsigned int)varPub->time, varPub->pauseArrayId,
                        waitArray, stackId, (const void *)stackValue->pos);
@@ -1695,7 +1696,7 @@ static void __attribute_regparm__(3)
 
     notifyListVar = FindVariable(notifyListOwnerId, 0x1fffe);
     if (traceCount < 64) {
-        if (getenv("DBGSPAM"))
+        if (COD2_DEBUG_ENV("DBGSPAM"))
             Com_Printf("[team-trace] notify owner=%u name=%u('%s') listvar=%u topType=%d\n",
                        notifyListOwnerId, stringValue, SL_ConvertToString(stringValue),
                        notifyListVar, top->type);
@@ -1708,7 +1709,7 @@ static void __attribute_regparm__(3)
     notifyListId = FindObject(notifyListVar);
     notifyNameListVar = FindVariable(notifyListId, stringValue);
     if (traceCount < 64) {
-        if (getenv("DBGSPAM"))
+        if (COD2_DEBUG_ENV("DBGSPAM"))
             Com_Printf("[team-trace] notify lookup list=%u namevar=%u\n",
                        notifyListId, notifyNameListVar);
         ++traceCount;
@@ -6416,7 +6417,7 @@ static void VM_CandidateDumpOpcodeRing(void)
 {
     int i;
 
-    Com_Printf(str_dbg_op_hdr);
+    COD2_DEBUG_ONLY(Com_Printf(str_dbg_op_hdr);)
     for (i = 0; i < 32; ++i) {
         unsigned int slot = (unsigned int)(dbg_op_ring_idx + i) & 31u;
         Com_Printf(str_dbg_op_dump, i, (void *)(uintptr_t)dbg_op_ring[slot * 2u],
@@ -6437,7 +6438,7 @@ static void VM_CandidateAbortBadBuiltinIndex(unsigned int builtinIndex)
 
 static void VM_CandidateAbortNullBuiltin(unsigned int builtinIndex, const char *pos)
 {
-    Com_Printf(str_dbg_null_builtin, builtinIndex, pos);
+    COD2_DEBUG_ONLY(Com_Printf(str_dbg_null_builtin, builtinIndex, pos);)
     VM_CandidateDumpOpcodeRing();
     _exit(1);
 }
@@ -6488,11 +6489,11 @@ static void VM_CandidateCallBuiltin(const char **pos, VariableValue **top, unsig
     }
 
     func = (BuiltinFunction)(uintptr_t)compilePub->func_table[builtinIndex];
-    { extern void dbg_check439_pre(unsigned int); dbg_check439_pre(builtinIndex); }
-    { extern unsigned int g_dbg_lastBuiltin; extern void *g_dbg_lastBuiltinFn;
-      g_dbg_lastBuiltin = builtinIndex; g_dbg_lastBuiltinFn = (void *)func; }
+    COD2_DEBUG_ONLY({ extern void dbg_check439_pre(unsigned int); dbg_check439_pre(builtinIndex); })
+    COD2_DEBUG_ONLY({ extern unsigned int g_dbg_lastBuiltin; extern void *g_dbg_lastBuiltinFn;
+      g_dbg_lastBuiltin = builtinIndex; g_dbg_lastBuiltinFn = (void *)func; })
     func();
-    { extern void dbg_check439(void); dbg_check439(); }
+    COD2_DEBUG_ONLY({ extern void dbg_check439(void); dbg_check439(); })
     VM_CandidateCompleteCall(pos, top);
 }
 
@@ -6532,9 +6533,9 @@ static void VM_CandidateCallBuiltinMethod(const char **pos, VariableValue **top,
     }
 
     method = (BuiltinMethod)(uintptr_t)compilePub->func_table[builtinIndex];
-    { extern unsigned int g_dbg_lastBuiltin; g_dbg_lastBuiltin = builtinIndex | 0x10000; }
+    COD2_DEBUG_ONLY({ extern unsigned int g_dbg_lastBuiltin; g_dbg_lastBuiltin = builtinIndex | 0x10000; })
     ((void (*)(scr_entref_t))method)(entref);
-    { extern void dbg_check439(void); dbg_check439(); }
+    COD2_DEBUG_ONLY({ extern void dbg_check439(void); dbg_check439(); })
     VM_CandidateCompleteCall(pos, top);
 }
 
@@ -6604,12 +6605,12 @@ static int VM_CandidateHandleEnd(const char **pos, unsigned int *localId,
     unsigned int parentLocalId = GetSafeParentLocalId(*localId);
     extern void dbg_end_probe(int);
 
-    dbg_end_probe(0);
+    COD2_DEBUG_ONLY(dbg_end_probe(0);)
     Scr_KillThread(*localId);
-    dbg_end_probe(1);
+    COD2_DEBUG_ONLY(dbg_end_probe(1);)
     scrVmPub.localVars -= *localVarCount;
     VM_CandidatePopToFrameSentinel(top);
-    dbg_end_probe(2);
+    COD2_DEBUG_ONLY(dbg_end_probe(2);)
 
     scrVmPub.function_count--;
     scrVmPub.function_frame--;
@@ -6618,7 +6619,7 @@ static int VM_CandidateHandleEnd(const char **pos, unsigned int *localId,
 
         int r = VM_CandidateThreadSuspendReturn(pos, localId, localVarCount, top,
                                                startTop, resultLocalId, threadCount);
-        dbg_end_probe(3);
+        COD2_DEBUG_ONLY(dbg_end_probe(3);)
         return r;
     }
 
@@ -6920,11 +6921,11 @@ static int VM_CandidateHandleWaitTill(const char **pos, unsigned int *localVarCo
     SetNewVariableValue(selfVarId, &tempValue);
     Scr_SetThreadNotifyName(*localId, stringValue);
     if (traceCount < 64) {
-        if (getenv("DBGSPAM"))
+        if (COD2_DEBUG_ENV("DBGSPAM"))
             Com_Printf("[team-trace] waittill owner=%u name=%u('%s') local=%u self=%u list=%u nameList=%u stack=%u pos=%p\n",
                        notifyListOwnerId, stringValue, SL_ConvertToString(stringValue), *localId, selfId,
                        notifyListId, notifyNameListId, stackId, (const void *)archivePos);
-        if (getenv("DBGSPAM"))
+        if (COD2_DEBUG_ENV("DBGSPAM"))
             Com_Printf("[team-trace] code %02x | %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
                        (unsigned char)archivePos[-1],
                        (unsigned char)archivePos[0], (unsigned char)archivePos[1],
@@ -6935,7 +6936,7 @@ static int VM_CandidateHandleWaitTill(const char **pos, unsigned int *localVarCo
                        (unsigned char)archivePos[10], (unsigned char)archivePos[11],
                        (unsigned char)archivePos[12], (unsigned char)archivePos[13],
                        (unsigned char)archivePos[14], (unsigned char)archivePos[15]);
-        if (getenv("DBGSPAM"))
+        if (COD2_DEBUG_ENV("DBGSPAM"))
             Scr_PrintPrevCodePos((print_msg_type_t)0, archivePos, 0);
         ++traceCount;
     }
@@ -7272,12 +7273,12 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
     }
 
     for (;;) {
-        { extern void dbg_check439_op(unsigned int); extern unsigned int g_lastop_dbg; dbg_check439_op(g_lastop_dbg); }
+        COD2_DEBUG_ONLY({ extern void dbg_check439_op(unsigned int); extern unsigned int g_lastop_dbg; dbg_check439_op(g_lastop_dbg); })
         const char *opcodePos = pos;
         unsigned int opcode = *(const unsigned char *)pos++;
-        { extern unsigned int g_lastop_dbg; g_lastop_dbg = opcode; }
-
-        VM_DebugRecordOpcode(opcodePos, opcode);
+        COD2_DEBUG_ONLY({ extern unsigned int g_lastop_dbg; g_lastop_dbg = opcode; }
+)
+        COD2_DEBUG_ONLY(VM_DebugRecordOpcode(opcodePos, opcode);)
 
 #    if COD2_FEATURE_SCRIPT_DEBUGGER
 
@@ -8082,7 +8083,7 @@ static void VM_Resume(unsigned int timeId)
         startLocalId = GetVariableKeyObject(stackId);
         stackValue = SCR_STACK_PTR(*GetVariableValueAddress(stackId));
         if (traceCount < 64) {
-            if (getenv("DBGSPAM"))
+            if (COD2_DEBUG_ENV("DBGSPAM"))
                 Com_Printf("[team-trace] resume bucket=%u local=%u time=%u archivedTime=%u pos=%p size=%u\n",
                            timeId, startLocalId, (unsigned int)svp->time,
                            (unsigned int)stackValue->time, (const void *)stackValue->pos,
@@ -8193,7 +8194,7 @@ static inline __attribute__((always_inline)) void Scr_RunPendingThreads(void)
         return;
 
     if (traceCount < 64) {
-        if (getenv("DBGSPAM"))
+        if (COD2_DEBUG_ENV("DBGSPAM"))
             Com_Printf("[team-trace] scheduler time=%u timeArray=%u var=%u bucket=%u\n",
                        (unsigned int)svp->time, notifyId, varId, FindObject(varId));
         ++traceCount;

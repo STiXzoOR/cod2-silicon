@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #if COD2_APPLE_SDK
 #define COD2_IMAGE_CONSTANT_4096 4096
@@ -2041,7 +2042,7 @@ void MSG_WriteDeltaPlayerstate(msg_t *msg, playerState_s *from, playerState_s *t
         }
     }
 
-    if (getenv("COD2_PSWDIAG")) {
+    if (COD2_DEBUG_ENV("COD2_PSWDIAG")) {
         static int c;
         if ((c++ & 0x3f) == 0)
             Com_Printf("[pswdiag] lc=%d from.cmdTime=%d to.cmdTime=%d to.origin=(%.0f %.0f %.0f)\n",

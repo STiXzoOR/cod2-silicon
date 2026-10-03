@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #if COD2_APPLE_SDK
 #define COD2_IMAGE_CONSTANT_4096 4096
@@ -1073,13 +1074,13 @@ void SV_SpawnServer(const char *server)
         FX_CreateDefaultEffect();
     }
 
-    Com_Printf("[ckpt] SV_RunFrame loop start\n");
+    COD2_DEBUG_ONLY(Com_Printf("[ckpt] SV_RunFrame loop start\n");)
     for (i = 0; i < 3; i++) {
         svsg->time += 100;
         SV_RunFrame();
-        Com_Printf("[ckpt] SV_RunFrame %d done\n", i);
+        COD2_DEBUG_ONLY(Com_Printf("[ckpt] SV_RunFrame %d done\n", i);)
     }
-    Com_Printf("[ckpt] SV_RunFrame loop done\n");
+    COD2_DEBUG_ONLY(Com_Printf("[ckpt] SV_RunFrame loop done\n");)
 
 #if defined(COD2_X64)
     for (i = 1; i < svg->num_entities; i++) {
@@ -1135,7 +1136,7 @@ void SV_SpawnServer(const char *server)
 
 #endif
 
-    Com_Printf("[ckpt] baseline done\n");
+    COD2_DEBUG_ONLY(Com_Printf("[ckpt] baseline done\n");)
     {
         serverStatic_t *svsPtr = (serverStatic_t *)imp_svs;
         maxclients = (sv_maxclients)->current.integer;

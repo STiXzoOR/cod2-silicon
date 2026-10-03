@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #if COD2_APPLE_SDK
 #define COD2_IMAGE_CONSTANT_4096 4096
@@ -1555,7 +1556,7 @@ qboolean UI_SetActiveMenu(int menu)
             int activeMenu = uiInfo->currentMenuType;
             static int traceCount;
             if (traceCount++ < 32) {
-                if (getenv("MTRACE"))
+                if (COD2_DEBUG_ENV("MTRACE"))
                     Com_Printf("[menu-trace] UI popup guard focus='%s' flags=0x%x active=%d loaded=%d\n",
                                pFocus->window.name, pFocus->window.dynamicFlags[0],
                                activeMenu, Menu_Count(&uiInfo->uiDC));
@@ -3248,7 +3249,7 @@ void UI_Refresh(void)
 
     if (refreshTraceCount < 80 && (uiInfo->currentMenuType || uiInfo->uiDC.openMenuCount > 0)) {
         int i;
-        if (getenv("MTRACE"))
+        if (COD2_DEBUG_ENV("MTRACE"))
             Com_Printf("[menu-trace] UI_Refresh active=%d menuCount=%d openCount=%d",
                        uiInfo->currentMenuType, uiInfo->uiDC.menuCount, uiInfo->uiDC.openMenuCount);
         for (i = 0; i < uiInfo->uiDC.openMenuCount && i < 16; ++i) {

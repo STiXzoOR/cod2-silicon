@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 extern struct DxGlobals dx;
 /* File-scope alias: bound where no local can shadow `dx`, so uses below
@@ -306,15 +307,15 @@ void RB_DrawIndexedPrim(const GfxDrawPrimArgs *args, int primCount)
         extern int g_rb_dip_calls;
         g_rb_dip_calls++;
     }
-    if (getenv("REALD3D9_NODRAW"))
+    if (COD2_DEBUG_ENV("REALD3D9_NODRAW"))
         return;
-    if (getenv("REALD3D9_SCENELOG")) {
+    if (COD2_DEBUG_ENV("REALD3D9_SCENELOG")) {
         static int sl = 0;
         if ((sl++ % 200) == 0)
             fprintf(stderr, "[SCENELOG] draw: inScene=%d\n", dx.inScene);
     }
 
-    if (getenv("REALD3D9_VPLOG") && args->vertexCount >= (getenv("REALD3D9_VPALL") ? 0u : 200u)) {
+    if (COD2_DEBUG_ENV("REALD3D9_VPLOG") && args->vertexCount >= (COD2_DEBUG_ENV("REALD3D9_VPALL") ? 0u : 200u)) {
         static int budget = 40;
         if (budget > 0) {
             budget--;
@@ -356,7 +357,7 @@ void RB_DrawIndexedPrim(const GfxDrawPrimArgs *args, int primCount)
             if (tex1)
                 ((HRESULT(D3DVTCC *)(void *))((*(void ***)tex1)[2]))(tex1);
 
-            if (getenv("REALD3D9_CONSTDUMP")) {
+            if (COD2_DEBUG_ENV("REALD3D9_CONSTDUMP")) {
                 static int cd2 = 0;
                 if (cd2 < 3) {
                     cd2++;
@@ -378,7 +379,7 @@ void RB_DrawIndexedPrim(const GfxDrawPrimArgs *args, int primCount)
                 }
             }
 
-            if (tex0 && getenv("REALD3D9_TEXDUMP")) {
+            if (tex0 && COD2_DEBUG_ENV("REALD3D9_TEXDUMP")) {
                 static int td = 0;
                 if (td < 4) {
                     td++;
@@ -1506,7 +1507,7 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
 
             textureRoutingCount = ((MaterialPassDx9 *)pass)->vertexArgCount;
 #ifdef GFX_REAL_D3D9
-            if (getenv("REALD3D9_ARGLOG")) {
+            if (COD2_DEBUG_ENV("REALD3D9_ARGLOG")) {
                 static int al = 0;
                 if (al < 6) {
                     al++;
@@ -1563,7 +1564,7 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                             int dataSize = rowCount * 16;
                             byte *cached = (byte *)&dxState + destIndex * 16;
 #ifdef GFX_REAL_D3D9
-                            if (getenv("REALD3D9_ARGLOG")) {
+                            if (COD2_DEBUG_ENV("REALD3D9_ARGLOG")) {
                                 static int cl = 0;
                                 if (cl < 8) {
                                     cl++;
@@ -1736,7 +1737,7 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                         RB_X64TraceSampler("code", ((materialCommands_t *)RB_TessBase())->material,
                                            type, entry->dest, NULL, codeTexture, (GfxImage *)image, samplerState);
 #ifdef GFX_REAL_D3D9
-                        if (getenv("REALD3D9_SAMPLOG")) {
+                        if (COD2_DEBUG_ENV("REALD3D9_SAMPLOG")) {
                             static int spl = 0;
                             if (spl < 40) {
                                 spl++;

@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 
@@ -828,7 +829,7 @@ qboolean CL_Popup(const char *menu)
     static int traceCount;
 
     if (traceCount++ < 32) {
-        if (getenv("MTRACE"))
+        if (COD2_DEBUG_ENV("MTRACE"))
             Com_Printf("[menu-trace] CL_Popup menu='%s' state=%d demo=%d fullscreen=%d active=%d\n",
                        menu, clui->state, clui->demoplaying, fullscreen, activeMenu);
     }

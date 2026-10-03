@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 #if COD2_APPLE_SDK
@@ -1119,6 +1120,10 @@ void BG_EvaluateTrajectory(const trajectory_t *tr, int atTime, vec_t *result)
         return;
 
     default: {
+#if defined(COD2_X64) && !COD2_PORT_DEBUG
+        Com_Error(ERR_DROP, "\x15" "BG_EvaluateTrajectory: unknown trType: %i", tr->trType);
+        return;
+#else
 #if COD2_APPLE_SDK
         void *ra = __builtin_extract_return_addr(__builtin_return_address(0));
 #else
@@ -1139,6 +1144,7 @@ void BG_EvaluateTrajectory(const trajectory_t *tr, int atTime, vec_t *result)
 #endif
         BG_Vec3Copy(tr->trBase, result); /* DIAGNOSTIC: don't ERR_DROP, treat unknown as stationary */
         return;
+#endif
     }
     }
 }

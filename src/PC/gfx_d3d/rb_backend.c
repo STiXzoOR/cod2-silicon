@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 extern struct DxGlobals dx;
@@ -202,7 +203,7 @@ static int RB_ShouldTraceTextCmd(const char *text)
 {
     static int enabled = -1;
     if (enabled < 0)
-        enabled = getenv("TEXTCMD_DBG") ? 1 : 0;
+        enabled = COD2_DEBUG_ENV("TEXTCMD_DBG") ? 1 : 0;
     if (!enabled)
         return 0;
     return RB_TextTraceContains(text, "Deathmatch") ||
@@ -584,7 +585,7 @@ static void RB_GotoCmd(GfxRenderCommandExecState *execState)
         int off = (int)(cmd - base);
         int targetOff = (int)((const byte *)target - base);
         if (off < 5000 || targetOff < 5000) {
-            if (getenv("DBGSPAM"))
+            if (COD2_DEBUG_ENV("DBGSPAM"))
                 printf("[cmdflow] goto off=%d target=%d\n", off, targetOff);
             ++traceCount;
         }
@@ -675,7 +676,7 @@ static void RB_EndFrame_real(void)
     device = ((DxGlobals *)dx)->device;
     vtable = *(void ***)device;
 #ifdef GFX_REAL_D3D9
-    if (getenv("REALD3D9_RDSL")) {
+    if (COD2_DEBUG_ENV("REALD3D9_RDSL")) {
         static int fc = 0;
         if ((fc++ % 30) == 0)
             fprintf(stderr, "[RDSL] bf_entry=%d noignore(drawn)=%d technull=%d decal=%d techm1=%d\n",
@@ -685,7 +686,7 @@ static void RB_EndFrame_real(void)
 #endif
 #ifdef GFX_REAL_D3D9
 
-    if (getenv("REALD3D9_BBREAD")) {
+    if (COD2_DEBUG_ENV("REALD3D9_BBREAD")) {
         static int bbr = 0;
         if (bbr < 40) {
             bbr++;
@@ -726,7 +727,7 @@ static void RB_EndFrame_real(void)
             }
         }
     }
-    if (getenv("REALD3D9_FRAMELOG")) {
+    if (COD2_DEBUG_ENV("REALD3D9_FRAMELOG")) {
         extern int g_rb_dip_calls;
         extern int rb_drawsurfscmd_count;
         static int fc2 = 0;
@@ -739,7 +740,7 @@ static void RB_EndFrame_real(void)
         }
     }
 
-    if (getenv("REALD3D9_CLEARTEST")) {
+    if (COD2_DEBUG_ENV("REALD3D9_CLEARTEST")) {
         extern int g_rb_dip_calls;
 
         IDirect3DSurface9 *bbSurf = ((DxGlobals *)dx)->renderTargets[0].colorSurface;
@@ -767,7 +768,7 @@ static void RB_EndFrame_real(void)
                 fflush(stderr);
             }
         }
-        if (getenv("REALD3D9_FORCEBB") && bbSurf) {
+        if (COD2_DEBUG_ENV("REALD3D9_FORCEBB") && bbSurf) {
             ((HRESULT(D3DVTCC *)(void *, DWORD, void *))(vtable[0x94 / 4]))(device, 0, bbSurf);
         }
         ((HRESULT(D3DVTCC *)(void *, DWORD, const void *, DWORD, D3DCOLOR, float, DWORD))(vtable[0xAC / 4]))(device, 0, NULL, 1 , 0xFFFF0000u, 1.0f, 0);
@@ -788,7 +789,7 @@ static void RB_EndFrame_real(void)
 #endif
 #ifdef GFX_REAL_D3D9
 
-    if (getenv("REALD3D9_PERFLOG")) {
+    if (COD2_DEBUG_ENV("REALD3D9_PERFLOG")) {
         extern long long QueryPerf(void);
         static long long lastFrameEnd;
         static int pc;
@@ -894,7 +895,7 @@ static void RB_CallCmd(GfxRenderCommandExecState *execState)
         int targetOff = (int)((const byte *)target - base);
         int retOff = (int)((const byte *)execState->retCmd[idx] - base);
         if (off < 5000 || targetOff < 5000) {
-            if (getenv("DBGSPAM"))
+            if (COD2_DEBUG_ENV("DBGSPAM"))
                 printf("[cmdflow] call off=%d target=%d ret=%d stack=%d\n",
                        off, targetOff, retOff, idx);
             ++traceCount;
@@ -1064,7 +1065,7 @@ void RB_ClearScreen(int whichToClear, const vec_t *color, float depth, int stenc
 
 #ifdef GFX_REAL_D3D9
 
-    if (getenv("REALD3D9_GREENCLEAR") && (clearFlags & 1))
+    if (COD2_DEBUG_ENV("REALD3D9_GREENCLEAR") && (clearFlags & 1))
         d3dColor = 0xFF00FF00u;
 #endif
 
@@ -1072,7 +1073,7 @@ void RB_ClearScreen(int whichToClear, const vec_t *color, float depth, int stenc
         device = ((DxGlobals *)imp_dx)->device;
         vtable = *(void ***)device;
 #ifdef GFX_REAL_D3D9
-        if (getenv("REALD3D9_CLEARRT") && (clearFlags & 1)) {
+        if (COD2_DEBUG_ENV("REALD3D9_CLEARRT") && (clearFlags & 1)) {
             static int cc = 0;
             if (cc++ < 8) {
                 IDirect3DSurface9 *crt = NULL;
@@ -1621,7 +1622,7 @@ sort_changed:
         goto ignore_surf;
     }
 #ifdef GFX_REAL_D3D9
-    if (getenv("REALD3D9_MATDIAG")) {
+    if (COD2_DEBUG_ENV("REALD3D9_MATDIAG")) {
         static int md;
         if (md < 30) {
             const char *nm = material ? *(const char **)material : "(nomat)";
@@ -1704,7 +1705,7 @@ have_tech:
         if (!techSet) {
             g_rdsl_ignore_technull++;
 #    ifdef GFX_REAL_D3D9
-            if (getenv("REALD3D9_RDSL") && g_technull_saved < 8) {
+            if (COD2_DEBUG_ENV("REALD3D9_RDSL") && g_technull_saved < 8) {
                 g_technull_saved++;
                 fprintf(stderr, "[TECHNULL] techSet==NULL mat='%s' type=%d\n",
                         material->info.name ? material->info.name : "?", actualTechType);
@@ -1714,7 +1715,7 @@ have_tech:
         }
         technique = techSet->techniques[actualTechType];
 #ifdef GFX_REAL_D3D9
-        if (!technique && getenv("REALD3D9_RDSL") && g_technull_saved2 < 12) {
+        if (!technique && COD2_DEBUG_ENV("REALD3D9_RDSL") && g_technull_saved2 < 12) {
             g_technull_saved2++;
             fprintf(stderr, "[TECHNULL] tech[%d]==NULL mat='%s' techset='%s'\n",
                     actualTechType, material->info.name ? material->info.name : "?",
@@ -3551,7 +3552,7 @@ static void RB_BACKEND_REGPARM3_SSE_ABI RB_DrawTextWithCursor_impl(const char *t
 {
     int (*Q_ReadToken)(const char **, int) = (int (*)(const char **, int))ri.SEH_ReadCharFromString;
     int (*Sys_Milliseconds)(void) = (int (*)(void))ri.Milliseconds;
-    const Material *material = getenv("X64_FONT_WHITE") ? rgp.whiteMaterial : (const Material *)font->material;
+    const Material *material = COD2_DEBUG_ENV("X64_FONT_WHITE") ? rgp.whiteMaterial : (const Material *)font->material;
     int traceText = RB_ShouldTraceTextCmd(text);
     GfxColor newColor = color;
     GfxColor newBlack;

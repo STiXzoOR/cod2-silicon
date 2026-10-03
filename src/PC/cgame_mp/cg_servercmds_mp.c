@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -262,7 +263,7 @@ static void CG_OpenScriptMenu(void)
 
     menuIndex = atoi(CG_Argv(1));
     if (traceCount < 16) {
-        if (getenv("MTRACE"))
+        if (COD2_DEBUG_ENV("MTRACE"))
             Com_Printf("[menu-trace] client open command indexArg='%s' arg2='%s' argc=%d\n",
                        CG_Argv(1), Cmd_Argc() > 2 ? CG_Argv(2) : "", Cmd_Argc());
     }
@@ -275,7 +276,7 @@ static void CG_OpenScriptMenu(void)
 
     pszMenu = CL_GetConfigString(menuIndex + 0x4de);
     if (traceCount < 16) {
-        if (getenv("MTRACE"))
+        if (COD2_DEBUG_ENV("MTRACE"))
             Com_Printf("[menu-trace] client menu index=%d configstring='%s'\n", menuIndex, pszMenu);
     }
 
@@ -307,7 +308,7 @@ static void CG_OpenScriptMenu(void)
         result = CL_Popup((const char *)"UIMENU_SCRIPT_POPUP");
     }
     if (traceCount++ < 16) {
-        if (getenv("MTRACE"))
+        if (COD2_DEBUG_ENV("MTRACE"))
             Com_Printf("[menu-trace] client popup menu='%s' noMouse=%u result=%d\n",
                        pszMenu, noMouseControl, result);
     }
@@ -355,7 +356,7 @@ void CG_CheckOpenWaitingScriptMenu(void)
         result = CL_Popup((const char *)"UIMENU_SCRIPT_POPUP");
     }
     if (traceCount++ < 32) {
-        if (getenv("MTRACE"))
+        if (COD2_DEBUG_ENV("MTRACE"))
             Com_Printf("[menu-trace] waiting popup menu='%s' index=%d noMouse=%u result=%d\n",
                        (char *)*cguiSlot + 0x3e8,
                        *(int *)((char *)*cguiSlot + 0x4e8),
@@ -1084,7 +1085,7 @@ void CG_ServerCommand(void)
         CG_LocalSoundCmd();
         return;
     case 't':
-        if (getenv("MTRACE"))
+        if (COD2_DEBUG_ENV("MTRACE"))
             Com_Printf("[menu-trace] client received server command '%s'\n", cmd);
         CG_OpenScriptMenu();
         return;

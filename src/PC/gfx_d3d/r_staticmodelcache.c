@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 extern struct DxGlobals dx;
 /* File-scope alias: bound where no local can shadow `dx`, so uses below
@@ -509,7 +510,7 @@ GfxStaticModelSurfaceCached *R_CacheStaticModelSurface(GfxStaticSurface *staticS
 
 #ifdef GFX_REAL_D3D9
 
-    if (getenv("REALD3D9_SMCOVL") && tree->nodes[nodeIndex].inuse) {
+    if (COD2_DEBUG_ENV("REALD3D9_SMCOVL") && tree->nodes[nodeIndex].inuse) {
         static int ov;
         if (ov++ < 30)
             fprintf(stderr, "[SMCOVL] DOUBLE-ALLOC tree=%d leaf=%d node=%d listIndex=%d smodel=%d vbIdx=%d  <<< overlap bug\n",
@@ -684,7 +685,7 @@ void R_SkinStaticModelCachedCmd(SkinStaticModelCachedCmd *skinCmd, SkinBuffers *
     }
 #ifdef GFX_REAL_D3D9
 
-    if (getenv("REALD3D9_SMILOG")) {
+    if (COD2_DEBUG_ENV("REALD3D9_SMILOG")) {
         static int seen[4096];
         static int budget = 60;
         if (budget > 0 && smodelIndex < 4096 && !seen[smodelIndex]) {

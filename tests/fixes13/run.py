@@ -125,3 +125,17 @@ if not args.test or 'tables' in args.test:
             generated += f'void {name}(void) {{}}\n'
         generated += tables
     run('tables', generated)
+if args.test and 'hotpaths' in args.test:
+    for path in ['src/PC/game_mp/g_main_mp.c', 'src/PC/script/scr_vm.c',
+                 'src/PC/gfx_d3d/rb_backend.c', 'src/PC/client_mp/cl_scrn_mp.c']:
+        obj = out / (Path(path).stem + '_hot.o')
+        with (out / (Path(path).stem + '_hot.log')).open('w') as log:
+            subprocess.run([*flags, '-c', str(ROOT / path), '-o', str(obj)],
+                           check=True, stdout=log, stderr=log)
+        symbols = subprocess.check_output(['nm', str(obj)], text=True)
+        assert not re.search(r'\b(?:_getenv|_dbg_check439\w*|_dbg_protect_439|_dbg_end_probe|_g_lastop_dbg|_VM_DebugRecordOpcode)$', symbols, re.M), path
+    print('PASS hotpaths: no getenv or opcode-probe symbols in default O0 objects')
+if not args.test or 'trajectory' in args.test:
+    path = 'src/PC/bgame/bg_misc.c'
+    run('trajectory', ''.join(function(path, n) for n in
+        ['BG_Vec3Copy', 'BG_Vec3Mad', 'BG_EvaluateTrajectory']))

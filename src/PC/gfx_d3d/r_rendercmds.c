@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 #include <stdio.h>
@@ -152,7 +153,7 @@ static int R_ShouldTraceTextCmd(const char *text)
 {
     static int enabled = -1;
     if (enabled < 0)
-        enabled = getenv("TEXTCMD_DBG") ? 1 : 0;
+        enabled = COD2_DEBUG_ENV("TEXTCMD_DBG") ? 1 : 0;
     if (!enabled)
         return 0;
     return R_TextTraceContains(text, "Deathmatch") ||
@@ -200,12 +201,12 @@ static void R_DumpCommandListForMenu(const GfxCmdArray *cl)
 
     dumped = 1;
     limit = cl->usedTotal;
-    if (getenv("DBGSPAM"))
+    if (COD2_DEBUG_ENV("DBGSPAM"))
         printf("[cmddump] used=%d critical=%d\n", cl->usedTotal, cl->usedCritical);
 
     for (off = 0, count = 0; off >= 0 && off + 4 <= limit && count < 120; ++count) {
         const GfxCmdHeader *h = (const GfxCmdHeader *)((const byte *)cl->cmds + off);
-        if (getenv("DBGSPAM"))
+        if (COD2_DEBUG_ENV("DBGSPAM"))
             printf("[cmddump] off=%d id=%u bytes=%u", off, h->id, h->byteCount);
         if ((h->id == 1 || h->id == 2) && h->byteCount >= 8) {
             const void *target = *(const void **)((const byte *)h + 4);
@@ -220,7 +221,7 @@ static void R_DumpCommandListForMenu(const GfxCmdArray *cl)
             break;
         }
         if (h->byteCount <= 0) {
-            if (getenv("DBGSPAM"))
+            if (COD2_DEBUG_ENV("DBGSPAM"))
                 printf("[cmddump] stop invalid byteCount at off=%d\n", off);
             break;
         }

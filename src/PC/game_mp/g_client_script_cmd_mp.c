@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -463,7 +464,7 @@ unsigned int PlayerCmd_OpenMenu(scr_entref_t entref)
     menuName = Scr_GetString(0);
     if (pSelf->client->sess.connected != CON_CONNECTED) {
         if (traceCount++ < 16) {
-            if (getenv("MTRACE"))
+            if (COD2_DEBUG_ENV("MTRACE"))
                 Com_Printf("[menu-trace] openMenu client=%u connected=%d menu='%s' rejected\n",
                            entref.entnum, pSelf->client->sess.connected, menuName);
         }
@@ -472,7 +473,7 @@ unsigned int PlayerCmd_OpenMenu(scr_entref_t entref)
 
     menuIndex = GScr_GetScriptMenuIndex(menuName);
     if (traceCount++ < 16) {
-        if (getenv("MTRACE"))
+        if (COD2_DEBUG_ENV("MTRACE"))
             Com_Printf("[menu-trace] openMenu client=%u connected=%d menu='%s' index=%d send='t %d'\n",
                        entref.entnum, pSelf->client->sess.connected, menuName, menuIndex, menuIndex);
     }
@@ -491,7 +492,7 @@ unsigned int PlayerCmd_OpenMenuNoMouse(scr_entref_t entref)
     menuName = Scr_GetString(0);
     if (pSelf->client->sess.connected != CON_CONNECTED) {
         if (traceCount++ < 16) {
-            if (getenv("MTRACE"))
+            if (COD2_DEBUG_ENV("MTRACE"))
                 Com_Printf("[menu-trace] openMenuNoMouse client=%u connected=%d menu='%s' rejected\n",
                            entref.entnum, pSelf->client->sess.connected, menuName);
         }
@@ -500,7 +501,7 @@ unsigned int PlayerCmd_OpenMenuNoMouse(scr_entref_t entref)
 
     menuIndex = GScr_GetScriptMenuIndex(menuName);
     if (traceCount++ < 16) {
-        if (getenv("MTRACE"))
+        if (COD2_DEBUG_ENV("MTRACE"))
             Com_Printf("[menu-trace] openMenuNoMouse client=%u connected=%d menu='%s' index=%d send='t %d 1'\n",
                        entref.entnum, pSelf->client->sess.connected, menuName, menuIndex, menuIndex);
     }

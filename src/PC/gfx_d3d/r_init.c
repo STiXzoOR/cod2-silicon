@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -525,7 +526,7 @@ static void R_Shutdown(qboolean destroyWindow)
     byte *d = (byte *)&dx;
 
 #ifdef GFX_REAL_D3D9
-    if (getenv("REALD3D9_MATDIAG")) {
+    if (COD2_DEBUG_ENV("REALD3D9_MATDIAG")) {
         fprintf(stderr, "[R_SHUTDOWN] destroyWindow=%d caller0=%p caller1=%p caller2=%p\n",
                 destroyWindow, __builtin_return_address(0),
                 __builtin_return_address(1), __builtin_return_address(2));
@@ -703,7 +704,7 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
     PrintFunc ri_printf = (PrintFunc)ri.Printf;
 
 #ifdef GFX_REAL_D3D9
-    if (getenv("REALD3D9_MATDIAG")) {
+    if (COD2_DEBUG_ENV("REALD3D9_MATDIAG")) {
         extern struct DxGlobals dx;
         fprintf(stderr, "[R_BEGINREG] called, dx.device=%p caller=%p\n",
                 (void *)dx.device, __builtin_return_address(0));

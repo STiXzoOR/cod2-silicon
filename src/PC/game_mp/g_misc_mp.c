@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -506,9 +507,9 @@ void turret_think_init(gentity_t *self)
     self->nextthink = level.time + 50;
 
     scr = SCR_CONST();
-    Com_Printf("[ckpt] turret_think_init before tag_aim\n");
+    COD2_DEBUG_ONLY(Com_Printf("[ckpt] turret_think_init before tag_aim\n");)
     aimMtx = G_DObjGetLocalTagMatrix(self, scr->tag_aim);
-    Com_Printf("[ckpt] turret_think_init after tag_aim aimMtx=%p\n", (void *)aimMtx);
+    COD2_DEBUG_ONLY(Com_Printf("[ckpt] turret_think_init after tag_aim aimMtx=%p\n", (void *)aimMtx);)
     if (!aimMtx) {
         return;
     }

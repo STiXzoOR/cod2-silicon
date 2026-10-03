@@ -1,3 +1,4 @@
+#include "PC/qcommon/port_debug.h"
 #include "common_types.h"
 #include "imports.h"
 #include "cod2_feature_config.h"
@@ -1564,7 +1565,7 @@ void SV_UserMove(client_t *cl, msg_t *msg, qboolean delta)
             _dbgThinks++;
         }
     }
-    if (getenv("COD2_MOVEDIAG")) {
+    if (COD2_DEBUG_ENV("COD2_MOVEDIAG")) {
         static int c;
         if ((c++ & 0x3f) == 0)
             Com_Printf("[movediag] state=%d cmdCount=%d cmd0.st=%d newest.st=%d lastUsercmd.st=%d thinks=%d ps.cmdTime=%d\n",
