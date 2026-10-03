@@ -670,12 +670,25 @@ void R_UpdateXModelBounds(GfxSceneEntity *sceneEnt, GfxEntity *ent)
                 float bmin, bmax;
                 const float *bif = (const float *)bi;
 
+#if defined(COD2_X64)
+/* Each matrix term multiplies the corresponding input axis of the bone
+ * bounds. The original Mac selects +0/+4/+8 in addition to min/max. */
+#define AXIS_CONTRIB(rot, biOfs)                                          \
+    do {                                                                 \
+        unsigned int rotBits;                                            \
+        memcpy(&rotBits, &(rot), sizeof(rotBits));                         \
+        int sel = (int)(rotBits >> 31) * 3;                               \
+        bmin += (rot) * bif[(biOfs) + sel];                               \
+        bmax += (rot) * bif[(biOfs) + 3 - sel];                           \
+    } while (0)
+#else
 #define AXIS_CONTRIB(rot, biOfs)                                         \
     do {                                                                 \
         int sel = (*(int *)&(rot)) >> 31 & 3;  \
         bmin += (rot) * bif[sel];                                        \
         bmax += (rot) * bif[3 - sel];                                    \
     } while (0)
+#endif
 
                 bmin = trans[0];
                 bmax = trans[0];
