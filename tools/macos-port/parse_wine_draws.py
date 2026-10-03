@@ -3,6 +3,8 @@
 
 Keep numeric constants/state and object identifiers, never shader bytecode.
 Select the last complete frame at each --eye x,y,z (sky eyePosition is c20).
+Constants are captured at Wine's inner draw after its stateblock is applied;
+the D3D9 DrawIndexedPrimitive entry log precedes the numeric constant flush.
 Output is external JSONL, one file per selected view.
 """
 import argparse
@@ -26,6 +28,8 @@ s = {'vs': None, 'ps': None, 'vs_constants': [0.] * 1024, 'ps_constants': [0.] *
      'states': {}, 'samplers': [[0] * 14 for _ in range(16)],
      'textures': [None] * 16, 'stages': [[0] * 33 for _ in range(8)]}
 frame = []
+pending = None
+api_thread = None
 selected = {}
 count = 0
 number = r'(0x[0-9a-f]+|\d+)'
@@ -36,16 +40,36 @@ sampler = re.compile(r'SetSamplerState iface \w+, sampler (\d+), state ' + numbe
 stage = re.compile(r'SetTextureStageState iface \w+, stage (\d+), state ' + number + r', value ' + number)
 texture = re.compile(r'SetTexture iface \w+, stage (\d+), texture (\w+)')
 shader = re.compile(r'Set(Vertex|Pixel)Shader iface \w+, shader (\w+)')
+inner_draw = re.compile(r'wined3d_device_context_draw_indexed context \w+, base_vertex_index (-?\d+), start_index (\d+), index_count (\d+)')
 with a.log.open(errors='replace') as f:
     for line in f:
+        thread = line.split(':', 1)[0]
         if 'wined3d_device_set_' in line and 's_consts_f Set vec4' in line:
             m = constant.search(line)
-            if m:
+            if m and thread == api_thread:
                 values = [float(v) for v in m[3].split(',')]
                 index = int(m[2]) * 4
                 s['vs_constants' if m[1] == 'v' else 'ps_constants'][index:index + 4] = values
+        elif 'wined3d_device_context_draw_indexed ' in line:
+            m = inner_draw.search(line)
+            if m and pending and thread == pending['thread']:
+                d = pending['draw']
+                base, first, indices = map(int, m.groups())
+                expected = {1: d['primitives'], 2: d['primitives'] * 2,
+                            3: d['primitives'] + 1, 4: d['primitives'] * 3,
+                            5: d['primitives'] + 2, 6: d['primitives'] + 2}[d['type']]
+                if (base, first, indices) != (d['base'], d['first'], expected):
+                    p.error('Wine inner draw does not match the pending D3D9 geometry')
+                d['vs_constants'] = s['vs_constants'][:]
+                d['ps_constants'] = s['ps_constants'][:]
+                d['state_capture'] = 'wined3d_device_context_draw_indexed'
+                frame.append(d)
+                pending = None
         elif ':d3d9:' in line:
+            api_thread = thread
             if 'd3d9_swapchain_Present iface' in line:
+                if pending:
+                    p.error('Missing Wine inner draw before Present; enable +d3d tracing')
                 count += 1
                 if frame:
                     eye = frame[-1]['vs_constants'][80:83]
@@ -55,11 +79,13 @@ with a.log.open(errors='replace') as f:
                 frame = []
                 continue
             if (m := draw.search(line)):
+                if pending:
+                    p.error('Missing Wine inner draw before next D3D9 draw; enable +d3d tracing')
                 d = copy.deepcopy(s)
                 d.update(zip(('type', 'base', 'min', 'vertices', 'first', 'primitives'),
                              (int(x, 0) for x in m.groups())))
                 d.update(draw=len(frame), frame=count)
-                frame.append(d)
+                pending = {'thread': thread, 'draw': d}
             elif (m := state.search(line)):
                 s['states'][str(int(m[1], 0))] = int(m[2], 0)
             elif (m := sampler.search(line)):
