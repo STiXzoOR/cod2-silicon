@@ -702,6 +702,17 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
 
     numservers = 0;
 
+#if defined(COD2_X64)
+    while (buffptr < buffend && *buffptr != '\\')
+        buffptr++;
+    while (buffend - buffptr >= 7 && numservers < 256) {
+        if (*buffptr != '\\' || memcmp(buffptr + 1, "EOT", 3) == 0)
+            break;
+        memcpy(servers[numservers], buffptr + 1, 6);
+        numservers++;
+        buffptr += 7;
+    }
+#else
     while ((unsigned int)(buffptr + 1) < (unsigned int)buffend) {
         if (*buffptr == '\\')
             break;
@@ -744,6 +755,7 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
 
         continue;
     }
+#endif
 
     cls = (clientStatic_t *)imp_cls;
     count = cls->numglobalservers;
