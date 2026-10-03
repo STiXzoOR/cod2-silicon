@@ -174,19 +174,32 @@ Bool FX_GetBoltingFrame(const PrimitiveTemplate *primTemp, const FxBoltInfo *bol
     }
 
     acquired = FxBoltFrame_Acquire(bolt);
+#if defined(COD2_X64)
+    newFrame = acquired.value;
+    oldFrame = boltFrame->value;
+#else
     newFrame = (FxBoltFrame *)(void *)(size_t)acquired._placeholder;
     oldFrame = (FxBoltFrame *)(void *)(size_t)boltFrame->_placeholder;
+#endif
 
     if (oldFrame != newFrame) {
 
         if (oldFrame) {
             FxBoltFrame_Release(oldFrame);
+#if defined(COD2_X64)
+            boltFrame->value = NULL;
+#else
             boltFrame->_placeholder = 0;
+#endif
         }
         if (newFrame) {
 
             newFrame->refCount += 1;
+#if defined(COD2_X64)
+            boltFrame->value = newFrame;
+#else
             boltFrame->_placeholder = (int)(size_t)(void *)newFrame;
+#endif
         }
     }
 
@@ -194,7 +207,11 @@ Bool FX_GetBoltingFrame(const PrimitiveTemplate *primTemp, const FxBoltInfo *bol
         FxBoltFrame_Release(newFrame);
     }
 
+#if defined(COD2_X64)
+    curFrame = boltFrame->value;
+#else
     curFrame = (FxBoltFrame *)(void *)(size_t)boltFrame->_placeholder;
+#endif
     if (!curFrame) {
         return 0;
     }
@@ -213,7 +230,11 @@ void FxScheduler_CreateEffect(const FxScheduler *_this, const EffectTemplate *fx
     int primType;
 
     memset(&prim, 0, sizeof(prim));
+#if defined(COD2_X64)
+    boltFrame.value = NULL;
+#else
     boltFrame._placeholder = 0;
+#endif
 
     AxisCopy( (vec3_t (*))((const vec_t *)axis), (vec3_t (*))((vec_t *)ax));
 
@@ -288,9 +309,14 @@ void FxScheduler_CreateEffect(const FxScheduler *_this, const EffectTemplate *fx
     }
 
 cleanup:
+#if defined(COD2_X64)
+    if (boltFrame.value)
+        FxBoltFrame_Release(boltFrame.value);
+#else
     if (boltFrame._placeholder) {
         FxBoltFrame_Release((FxBoltFrame *)(void *)(size_t)boltFrame._placeholder);
     }
+#endif
 }
 
 void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, const vec_t *origin, MediaHandles *(*axis)[4], const FxBoltInfo *bolt)

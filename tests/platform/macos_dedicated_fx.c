@@ -16,6 +16,28 @@ extern void MediaHandles_AddHandle(const MediaHandles *media, TMediaElement item
 extern void MediaHandles_AddEffect(const MediaHandles *media, EffectTemplate *fx);
 extern void MediaHandles_Shutdown(const MediaHandles *media);
 extern Bool PrimitiveTemplate_ParseMaterials(const PrimitiveTemplate *primitive, GPValue *group);
+extern Bool FX_GetBoltingFrame(const PrimitiveTemplate *, const FxBoltInfo *, FxBoltFramePtr *);
+
+static FxBoltFrame frame;
+static int acquireCalls;
+const FxBoltFramePtr FxBoltFrame_Acquire(const FxBoltInfo *bolt)
+{
+    FxBoltFramePtr result = { .value = &frame };
+    assert(bolt->dobjHandle == 1);
+    ++frame.refCount;
+    ++acquireCalls;
+    return result;
+}
+void FxBoltFrame_Release(const FxBoltFrame *value)
+{
+    assert(value == &frame && frame.refCount > 0);
+    --frame.refCount;
+}
+const orientation_t *FxBoltFrame_GetOrientation(const FxBoltFrame *value)
+{
+    assert(value == &frame);
+    return &frame.orientation;
+}
 
 const FxFlagEntry fxAttributeFlags[26] = { 0 };
 const FxFlagEntry fxSpawnFlags[13] = { 0 };
@@ -184,6 +206,16 @@ int main(void)
     GPValue emptyMaterial = { 0 };
     int values[9];
     int i;
+
+    PrimitiveTemplate bolted = { .mAttributeFlags = 2 };
+    FxBoltInfo bolt = { .dobjHandle = 1 };
+    FxBoltFramePtr framePtr = { .value = NULL };
+    assert((uintptr_t)&frame > UINT32_MAX);
+    assert(FX_GetBoltingFrame(&bolted, &bolt, &framePtr));
+    assert(framePtr.value == &frame && frame.refCount == 1);
+    assert(FX_GetBoltingFrame(&bolted, &bolt, &framePtr));
+    assert(framePtr.value == &frame && frame.refCount == 1 && acquireCalls == 2);
+    FxBoltFrame_Release(framePtr.value);
 
     FX_InitTemplates();
     effect = FX_RegisterEffect("fx/synthetic.efx");
