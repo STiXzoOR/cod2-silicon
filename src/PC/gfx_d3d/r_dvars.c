@@ -515,7 +515,11 @@ void R_RegisterDvars(void)
 
     r_sse_skinning = ri.Dvar_RegisterBool("r_sse_skinning", 1, 0x2000);
 
+#if COD2_APPLE_SDK
+    r_fullscreen = ri.Dvar_RegisterBool("r_fullscreen", 1, 0x2021);
+#else
     r_fullscreen = ri.Dvar_RegisterBool("r_fullscreen", 1, 0x2040);
+#endif
 
     r_monitor = ri.Dvar_RegisterInt("r_monitor", 0, 0, 8, 0x2021);
 

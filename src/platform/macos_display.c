@@ -100,7 +100,7 @@ static int SetWindowMode(void)
     } else {
         int logicalW, logicalH, pixelW, pixelH;
         SDL_GetWindowSize(sdl_gl_window, &logicalW, &logicalH);
-        SDL_GL_GetDrawableSize(sdl_gl_window, &pixelW, &pixelH);
+        SDL_GetWindowSizeInPixels(sdl_gl_window, &pixelW, &pixelH);
         double scaleX = logicalW > 0 ? (double)pixelW / logicalW : 1;
         double scaleY = logicalH > 0 ? (double)pixelH / logicalH : 1;
         SDL_SetWindowSize(sdl_gl_window, (int)(sdl_gl_width / scaleX), (int)(sdl_gl_height / scaleY));
