@@ -765,6 +765,12 @@ int AIL_WAV_info(const void *data, void *result)
             info.rate = Read32(chunk + 4);
             info.block_size = Read16(chunk + 12);
             info.bits = Read16(chunk + 14);
+            /* WAVE_FORMAT_EXTENSIBLE (used by some mod IWDs): the real format
+               is the first word of a KSDATAFORMAT_SUBTYPE GUID. */
+            static const unsigned char subtype_tail[14] = { 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x80,
+                                                            0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71 };
+            if (info.format == 0xfffe && bytes >= 40 && !memcmp(chunk + 26, subtype_tail, sizeof(subtype_tail)))
+                info.format = Read16(chunk + 24);
         } else if (!memcmp(wave + offset, "data", 4)) {
             info.data_ptr = info.initial_ptr = chunk;
             info.data_len = bytes;
