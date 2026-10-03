@@ -18,7 +18,10 @@ int main(void)
 {
     char root[] = "/tmp/cod2-shader-cache-XXXXXX";
     assert(mkdtemp(root) && !setenv("COD2_MAC_SHADER_CACHE", root, 1));
-    const char program[] = "!!ARBvp1.0\nMOV result.position, vertex.position;\nEND\n";
+    const char program[] = "!!ARBvp1.0\nOUTPUT unusedColor = result.color;\n"
+        "OUTPUT unusedSecondary = result.color.secondary;\n"
+        "OUTPUT coordinate = result.texcoord[0];\n"
+        "MOV result.position, vertex.position;\nMOV coordinate, vertex.position;\nEND\n";
     write_cache(root, "fixture.vsa", program, strlen(program));
     unsigned int header[7] = {28, 0, 0, 1, 28, 0, 0};
     unsigned char table[80] = {0};
@@ -38,6 +41,8 @@ int main(void)
     assert(shader && !messages);
     const char *code = CD3DXBuffer_GetBufferPointer(shader);
     assert(strstr(code, "#COD2CTAB:fixture.vc"));
+    assert(!strstr(code, "unusedColor") && !strstr(code, "unusedSecondary"));
+    assert(strstr(code, "OUTPUT coordinate") && strstr(code, "MOV coordinate"));
     assert(!D3DXGetShaderConstantTable(code, &constants));
     assert(CD3DXConstantTable_GetBufferSize(constants) == sizeof(table));
     assert(!memcmp(CD3DXConstantTable_GetBufferPointer(constants), table, sizeof(table)));

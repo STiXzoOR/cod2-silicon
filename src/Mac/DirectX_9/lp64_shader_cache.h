@@ -1,4 +1,37 @@
 #if COD2_APPLE_SDK
+static int MacShader_IdentifierChar(char c)
+{
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+           (c >= '0' && c <= '9') || c == '_';
+}
+
+/* Apple GL's ARB linker mishandles declared but unwritten color outputs:
+ * sky coordinates become constant, despite a successful compilation. Removing
+ * an unused alias preserves the program's instructions and output values. */
+static void MacShader_RemoveUnusedOutputs(char *code)
+{
+    char *declaration = code;
+    while ((declaration = strstr(declaration, "OUTPUT ")) != NULL) {
+        char *name = declaration + 7;
+        while (*name == ' ' || *name == '\t') ++name;
+        size_t length = 0;
+        while (MacShader_IdentifierChar(name[length])) ++length;
+        char *end = strchr(name, ';');
+        if (!length || !end) break;
+        int used = 0;
+        for (char *scan = code; *scan; ++scan) {
+            if (scan >= declaration && scan <= end) continue;
+            if ((scan == code || !MacShader_IdentifierChar(scan[-1])) &&
+                !strncmp(scan, name, length) && !MacShader_IdentifierChar(scan[length])) {
+                used = 1;
+                break;
+            }
+        }
+        if (used) declaration = end + 1;
+        else memmove(declaration, end + 1, strlen(end + 1) + 1);
+    }
+}
+
 /* Native cache generated locally by tools/macos-port/extract_shaders.py. */
 static void *MacShader_ReadCache(const char *name, UINT32 *size)
 {
@@ -71,6 +104,7 @@ HRESULT MacD3DXCompileShader(const char *name, const char *source, UINT length, 
     }
     memcpy(program, code, size);
     memcpy(program + size, marker, markerSize + 1);
+    if (vertex) MacShader_RemoveUnusedOutputs(program);
     *shader = CD3DXBuffer_Create(program, size + markerSize + 1);
     free(program);
     free(code);
