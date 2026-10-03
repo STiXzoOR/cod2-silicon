@@ -431,6 +431,11 @@ if(NOT EXISTS ${GEN_DIR}/import_pointers_native.c)
   message(FATAL_ERROR "missing ${GEN_DIR}/import_pointers_native.c (a prebuilt DATA_PORTABLE artifact)")
 endif()
 set(GEN_C ${GEN_DIR}/data32.c ${GEN_DIR}/literals32.c ${GEN_DIR}/import_pointers_native.c)
+if(COD2_X64)
+  include(cmake/datagen.cmake)
+  cod2_generate_typed_blobs(GEN_C)
+  list(REMOVE_ITEM ALL_C src/blobs/bss.c)
+endif()
 
 set_source_files_properties(src/PC/qcommon/crash_handler.c PROPERTIES
   COMPILE_DEFINITIONS "COD2_GIT_HASH=\"${COD2_GIT_HASH}\"")
