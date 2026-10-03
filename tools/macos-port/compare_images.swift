@@ -4,6 +4,7 @@ import Foundation
 import CoreGraphics
 import ImageIO
 import UniformTypeIdentifiers
+import CoreText
 
 func fail(_ message: String) -> Never {
     FileHandle.standardError.write(Data((message + "\n").utf8)); exit(1)
@@ -21,7 +22,55 @@ func read(_ path: String) -> (Int, Int, [UInt8]) {
     }
     return (image.width, image.height, pixels)
 }
-guard CommandLine.arguments.count == 4 else { fail("usage: compare_images.swift A.jpg B.jpg output.png") }
+// Optional matched-view triptych; retain the existing A/diff/B interface.
+if CommandLine.arguments.count == 6 && CommandLine.arguments[1] == "--before-after-reference" {
+    let inputs = Array(CommandLine.arguments[2...4]).map { read($0) }
+    let output = URL(fileURLWithPath: CommandLine.arguments[5]).standardizedFileURL
+    let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().standardizedFileURL
+    guard !output.path.hasPrefix(root.path + "/") else { fail("Store game imagery outside the repository") }
+    let width = inputs[0].0, height = inputs[0].1
+    guard inputs.allSatisfy({ $0.0 == width && $0.1 == height }) else { fail("Image dimensions differ") }
+    var panel = [UInt8](repeating: 255, count: width * 3 * (height + 32) * 4)
+    var results = [[String: Any]]()
+    for index in 0..<3 {
+        var absolute = 0.0, squared = 0.0
+        for y in 0..<height {
+            for x in 0..<width {
+                let source = (y * width + x) * 4
+                let destination = (y * width * 3 + index * width + x) * 4
+                for c in 0..<3 {
+                    panel[destination + c] = inputs[index].2[source + c]
+                    let difference = Double(abs(Int(inputs[index].2[source + c]) - Int(inputs[2].2[source + c])))
+                    absolute += difference; squared += difference * difference
+                }
+            }
+        }
+        if index < 2 {
+            let count = Double(width * height * 3)
+            results.append(["source": index == 0 ? "before" : "after", "rgb_mae_255": absolute / count, "rgb_rmse_255": sqrt(squared / count)])
+        }
+    }
+    panel.withUnsafeMutableBytes { bytes in
+        guard let context = CGContext(data: bytes.baseAddress, width: width * 3, height: height + 32,
+              bitsPerComponent: 8, bytesPerRow: width * 3 * 4, space: CGColorSpaceCreateDeviceRGB(),
+              bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { fail("Cannot create panel") }
+        let labels = ["Before", "After", "Windows reference"]
+        for index in 0..<3 {
+            let text = NSAttributedString(string: labels[index], attributes: [
+                NSAttributedString.Key(kCTFontAttributeName as String): CTFontCreateWithName("Helvetica" as CFString, 18, nil),
+                NSAttributedString.Key(kCTForegroundColorAttributeName as String): CGColor(gray: 0, alpha: 1)])
+            context.textPosition = CGPoint(x: index * width + 12, y: height + 9)
+            CTLineDraw(CTLineCreateWithAttributedString(text), context)
+        }
+        guard let image = context.makeImage(),
+              let destination = CGImageDestinationCreateWithURL(output as CFURL, UTType.png.identifier as CFString, 1, nil) else { fail("Cannot save panel") }
+        CGImageDestinationAddImage(destination, image, nil)
+        guard CGImageDestinationFinalize(destination) else { fail("Cannot save panel") }
+    }
+    print(String(data: try JSONSerialization.data(withJSONObject: ["width": width, "height": height, "comparisons_to_reference": results, "panel": output.path], options: [.sortedKeys]), encoding: .utf8)!)
+    exit(0)
+}
+guard CommandLine.arguments.count == 4 else { fail("usage: compare_images.swift A.jpg B.jpg output.png, or --before-after-reference before.jpg after.jpg reference.jpg output.png") }
 let a = read(CommandLine.arguments[1]), b = read(CommandLine.arguments[2])
 guard a.0 == b.0 && a.1 == b.1 else { fail("Image dimensions differ") }
 let output = URL(fileURLWithPath: CommandLine.arguments[3]).standardizedFileURL

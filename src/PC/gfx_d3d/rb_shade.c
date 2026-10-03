@@ -9,6 +9,10 @@ extern const dvar_t *r_objectiveColorDx7Min;
 extern const dvar_t *r_objectiveColorDx7Max;
 extern const dvar_t *r_outdoorAwayBias;
 extern const dvar_t *r_outdoorDownBias;
+#if defined(COD2_X64)
+extern const dvar_t *sc_enable;
+extern const dvar_t *r_lightMap;
+#endif
 extern const dvar_t *r_debugShader;
 extern const dvar_t *r_drawPrimFloor;
 extern const dvar_t *r_drawPrimCap;
@@ -525,7 +529,11 @@ static void RB_GetTextureFromCode_impl(int codeTexture, void **image, byte *samp
         *samplerState = 0x32;
 
         {
+#if defined(COD2_X64)
+            int mode = r_lightMap->current.integer;
+#else
             int mode = *(int *)((char *)*(void **)imp_r_lightMap + 8);
+#endif
             if (mode == 1) {
                 *image = (*(void **)&((r_global_permanent_t *)rgp)->whiteImage);
                 *samplerState = 1;
@@ -584,7 +592,11 @@ static void RB_GetTextureFromCode_impl(int codeTexture, void **image, byte *samp
     }
 
     case 19: {
+#if defined(COD2_X64)
+        int sc_on = sc_enable->current.enabled;
+#else
         int sc_on = *(byte *)((char *)*(void **)imp_sc_enable + 8);
+#endif
         if (sc_on) {
             char *entity = (char *)backEnd->currentEntity;
             if (*(int *)entity > 2 || (*(byte *)(entity + 5) & 1)) {
@@ -776,8 +788,13 @@ static void RB_SetupLighting_impl(void)
             backEnd->codeConsts[25][2] = smodel->smodelLightingLookupScale[2];
             backEnd->codeConsts[25][3] = 0.0f;
 
+#if defined(COD2_X64)
+            backEnd->codeConsts[24][0] = ((GfxEntity *)entity)->lighting.baseCoords[0];
+            backEnd->codeConsts[24][1] = ((GfxEntity *)entity)->lighting.baseCoords[1];
+#else
             backEnd->codeConsts[24][0] = (*(float *)&((GfxEntity *)entity)->lighting.dx7.colorForDir);
             backEnd->codeConsts[24][1] = ((GfxEntity *)entity)->lighting.dx7.sunVisibility;
+#endif
             backEnd->codeConsts[24][2] = ((GfxEntity *)entity)->lighting.baseCoords[2];
             backEnd->codeConsts[24][3] = 0.0f;
         }
@@ -1111,23 +1128,40 @@ static const float *RB_GetCodeMatrix_impl(int source, int firstRow)
         if (!((char *)codeMatrix)[offsetof(GfxCodeMatrix, valid) + 0]) {
             const float *worldMat = RB_GetCodeMatrix_impl(0xBC, 0);
             const float *viewProj = RB_GetCodeMatrix_impl(0xC1, 0);
+#if defined(COD2_X64)
+            const vec4_t *outdoorMatrix = rgp.world->outdoorLookupMatrix;
+            float awayBias = r_outdoorAwayBias->current.value;
+#else
             char *rgp = (char *)imp_rgp;
             int awayBias = r_outdoorAwayBias->current.integer;
+#endif
             float downBias = r_outdoorDownBias->current.value;
 
             biasVec[0] = 0.0f;
             biasVec[1] = 0.0f;
+#if defined(COD2_X64)
+            biasVec[2] = -awayBias;
+#else
             biasVec[2] = -*(float *)&awayBias;
+#endif
             biasVec[3] = 0.0f;
 
             MatrixTransformVector44((float *)(biasVec), (vec4_t *)(viewProj), (float *)(biasWorld));
             biasWorld[1] += downBias;
 
             MatrixTransformVector44((float *)(biasWorld),
+#if defined(COD2_X64)
+                                    outdoorMatrix, (float *)(biasResult));
+#else
                                     (vec4_t *)((char *)(*(void **)&((r_global_permanent_t *)rgp)->world) + 0x1c0), (float *)(biasResult));
+#endif
 
             MatrixMultiply44((vec4_t *)(worldMat),
+#if defined(COD2_X64)
+                             outdoorMatrix, (vec4_t *)(codeMatrix));
+#else
                              (vec4_t *)((char *)(*(void **)&((r_global_permanent_t *)rgp)->world) + 0x1c0), (vec4_t *)(codeMatrix));
+#endif
 
             *(float *)((char *)am + offsetof(GfxCodeMatrices, worldOutdoorLookup.matrix[0].m[3][0])) += biasResult[0];
             *(float *)((char *)am + offsetof(GfxCodeMatrices, worldOutdoorLookup.matrix[0].m[3][1])) += biasResult[1];

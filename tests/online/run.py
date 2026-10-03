@@ -48,6 +48,10 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
         if name == 'mantle':
             source = source[:source.index('extern const dvar_t *Dvar_RegisterBool')]
         functions = [] if names else [source]
+        if name == 'scheduled_fx':
+            # Keep the production native link accessor and its layout assertion.
+            functions.append(source[source.index('#if defined(COD2_X64)'):
+                                    source.index('extern int irand')])
         for function in names:
             match = re.search(r'^(?:static )?(?:const char \*|void |dvar_t \*|qboolean |int )' + function + r'\([^;]*?\)\n\{',
                               source, re.M)

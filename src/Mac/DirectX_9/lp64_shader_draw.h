@@ -1,4 +1,5 @@
 #if COD2_APPLE_SDK
+#include "lp64_shader_state.h"
 extern GLuint CDirect3DVertexShader_GetProgramId(const CDirect3DVertexShader *shader);
 
 static int MacShader_Diagnostics(void)
@@ -36,6 +37,7 @@ static UINT MacShader_Attribute(const D3DVERTEXELEMENT9 *element)
     case 4: return 4;
     case 5: return 8 + element->UsageIndex;
     case 6: return 7;
+    case 7: return 6;
     case 10: return 5 + element->UsageIndex;
     default: return 16;
     }
@@ -102,8 +104,8 @@ static HRESULT MacShader_DrawIndexed(DeviceImpl *dev, INT baseVertex, UINT minVe
             type = GL_UNSIGNED_BYTE;
             normalized = element->Type != 5;
             if (element->Type == 4) {
-                int order = stride == 0x44 || stride == 0x20 || stride == 0x18 ? COLOR_BYTES_RGBA :
-                            stride == 0x40 ? COLOR_BYTES_ARGB : COLOR_BYTES_BGRA;
+                const D3DVERTEXELEMENT9 *position = CDirect3DDevice_FindVertexElement(element->Stream, 0, 0);
+                int order = MacShader_ColorByteOrder(stride, element->Offset, position && position->Type == 3 ? 4 : 3);
                 /* NULL means the interleaved array is already RGBA (or nothing is
                  * indexed): keep the original pointer and stride. */
                 const byte *converted = CDirect3DDevice_ConvertColorArray(
@@ -189,7 +191,8 @@ static HRESULT MacShader_DrawIndexed(DeviceImpl *dev, INT baseVertex, UINT minVe
     }
     glDisable(GL_LIGHTING);
     glDisable(GL_FOG);
-    glDisable(GL_CULL_FACE);
+    MacShader_ApplyRasterEquations(dev->cullMode, dev->blendOp,
+                                  dev->separateAlphaBlendEnable ? dev->alphaSrcBlend : dev->blendOp);
     MacShader_CheckGL("render state");
     glDrawElements(GL_TRIANGLES, primitiveCount * 3, GL_UNSIGNED_SHORT,
                     indices->data + startIndex * 2);

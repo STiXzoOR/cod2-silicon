@@ -754,9 +754,13 @@ void CG_GetDObjOrientation(int dobjHandle, orientation_t *orient)
         return;
     }
 
+#if defined(COD2_X64)
+    memcpy(orient->origin, cg->refdef.vieworg, sizeof(orient->origin));
+#else
     orient->origin[0] = *(const float *)((const byte *)&cgArray + 180412);
     orient->origin[1] = *(const float *)((const byte *)&cgArray + 180416);
     orient->origin[2] = *(const float *)((const byte *)&cgArray + 180420);
+#endif
     AxisCopy((vec3_t *)&cg->viewModelAxis[0][0], orient->axis);
 }
 

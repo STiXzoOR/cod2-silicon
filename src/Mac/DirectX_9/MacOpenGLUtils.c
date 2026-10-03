@@ -289,6 +289,10 @@ int MacOpenGLUtils_GetDeclarationInfo(GLint *VSize, GLenum *VType, UINT32 *Compo
 
 int MacOpenGLUtils_GetSubPixelOffset(float *XOffset, float *YOffset)
 {
+#if COD2_APPLE_SDK
+    *XOffset = 0.0f;
+    *YOffset = 0.0f;
+#else
     if (MacDisplay_GetCardType() == 2) {
 
         *XOffset = -0.30000001192092896f;
@@ -299,6 +303,8 @@ int MacOpenGLUtils_GetSubPixelOffset(float *XOffset, float *YOffset)
 
         *YOffset = -0.07500000298023224f;
     }
+
+#endif
 
     return 0;
 }
@@ -451,6 +457,11 @@ int MacOpenGLUtils_ConvertD3DProjectionMatrixToOpenGL(float *m, float ViewportWi
     float x;
     float y;
 
+#if COD2_APPLE_SDK
+    /* D3D9 samples integer pixel centers; GL samples at half-integers. */
+    x = 1.0f;
+    y = -1.0f;
+#else
     if (MacDisplay_GetCardType() == 2) {
         x = -0.30000001192092896f;
         y = -0.30000001192092896f;
@@ -458,6 +469,8 @@ int MacOpenGLUtils_ConvertD3DProjectionMatrixToOpenGL(float *m, float ViewportWi
         x = -0.15000000596046448f;
         y = -0.07500000298023224f;
     }
+
+#endif
 
     x /= ViewportWidth;
     y /= ViewportHeight;

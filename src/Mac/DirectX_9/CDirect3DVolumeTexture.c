@@ -3,7 +3,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if COD2_APPLE_SDK
+extern void *vtbl_CDirect3DVolumeTexture[30];
+static void *vtbl_CDirect3DVolume[13];
+#else
 void *vtbl_CDirect3DVolumeTexture[30];
+#endif
 
 void __ZdlPv(void *ptr);
 UINT32 MacOpenGLUtils_GetLevelSizeInBytes(UINT32 Width, UINT32 Height, UINT32 Depth, const D3DFORMAT *f);
@@ -214,6 +219,13 @@ typedef struct {
     GLuint texIDStorage;
 } CDirect3DVolumeTextureClean;
 
+#if COD2_APPLE_SDK
+GLuint CDirect3DVolumeTexture_GetGLName(const void *texture)
+{
+    return ((const CDirect3DVolumeTextureClean *)texture)->texIDStorage;
+}
+#endif
+
 ULONG CDirect3DVolumeTexture_AddRef(const CDirect3DVolumeTexture *_this);
 void ZN22CDirect3DVolumeTextureD0Ev(void *_this);
 void ZN22CDirect3DVolumeTextureD1Ev(void *_this);
@@ -394,6 +406,9 @@ void CDirect3DVolumeTexture_CDirect3DVolumeTexture(const CDirect3DVolumeTexture 
     glGetIntegerv(GL_TEXTURE_BINDING_3D, &prevTex);
     glBindTexture(GL_TEXTURE_3D, tex->texIDStorage);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+#if COD2_APPLE_SDK
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, tex->levelCount - 1);
+#endif
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     totalSize = 0;
@@ -417,6 +432,9 @@ void CDirect3DVolumeTexture_CDirect3DVolumeTexture(const CDirect3DVolumeTexture 
         UINT32 lw = w ? w : 1, lh = h ? h : 1, ld = d ? d : 1;
         UINT32 levelSize = MacOpenGLUtils_GetLevelSizeInBytes(lw, lh, ld, &Format);
         CDirect3DVolumeClean *vol = (CDirect3DVolumeClean *)calloc(1, sizeof(CDirect3DVolumeClean));
+#if COD2_APPLE_SDK
+        vol->vtable = vtbl_CDirect3DVolume;
+#endif
         vol->refCount = 1;
         vol->level = i;
         vol->width = lw;
@@ -443,7 +461,20 @@ void CDirect3DVolumeTexture_CDirect3DVolumeTexture(const CDirect3DVolumeTexture 
 
 void CDirect3DVolumeTexture_UpdateOpenGLSurfaces(const CDirect3DVolumeTexture *_this)
 {
+#if COD2_APPLE_SDK
+    CDirect3DVolumeTextureClean *tex = (void *)_this;
+    GLint previous;
+    glGetIntegerv(GL_TEXTURE_BINDING_3D, &previous);
+    glBindTexture(GL_TEXTURE_3D, tex->texIDStorage);
+    for (UINT32 level = 0; level < tex->levelCount; ++level) {
+        CDirect3DVolumeClean *volume = tex->volumes[level];
+        if (volume->isDirty)
+            CDirect3DVolume_UpdateOpenGLSurfaceObject(volume, 0);
+    }
+    glBindTexture(GL_TEXTURE_3D, previous);
+#else
     (void)_this;
+#endif
 }
 
 HRESULT CDirect3DVolumeTexture_GetDevice(const CDirect3DVolumeTexture *t, void *p)
@@ -490,3 +521,48 @@ void CDirect3DVolumeTexture_PreLoad(const CDirect3DVolumeTexture *t)
 {
     (void)t;
 }
+
+#if COD2_APPLE_SDK
+/* D3D9 COM slots: the engine uploads through LockBox/UnlockBox, not direct calls. */
+void *vtbl_CDirect3DVolumeTexture[30] = {
+    (void *)CDirect3DVolumeTexture_QueryInterface,
+    (void *)CDirect3DVolumeTexture_AddRef,
+    (void *)CDirect3DVolumeTexture_Release,
+    (void *)CDirect3DVolumeTexture_GetDevice,
+    (void *)CDirect3DVolumeTexture_SetPrivateData,
+    (void *)CDirect3DVolumeTexture_GetPrivateData,
+    (void *)CDirect3DVolumeTexture_FreePrivateData,
+    (void *)CDirect3DVolumeTexture_SetPriority,
+    (void *)CDirect3DVolumeTexture_GetPriority,
+    (void *)CDirect3DVolumeTexture_PreLoad,
+    (void *)CDirect3DVolumeTexture_GetType,
+    (void *)CDirect3DVolumeTexture_SetLOD,
+    (void *)CDirect3DVolumeTexture_GetLOD,
+    (void *)CDirect3DVolumeTexture_GetLevelCount,
+    (void *)CDirect3DVolumeTexture_SetAutoGenFilterType,
+    (void *)CDirect3DVolumeTexture_GetAutoGenFilterType,
+    (void *)CDirect3DVolumeTexture_GenerateMipSubLevels,
+    (void *)CDirect3DVolumeTexture_GetLevelDesc,
+    (void *)CDirect3DVolumeTexture_GetVolumeLevel,
+    (void *)CDirect3DVolumeTexture_LockBox,
+    (void *)CDirect3DVolumeTexture_UnlockBox,
+    (void *)CDirect3DVolumeTexture_AddDirtyBox,
+    (void *)ZN22CDirect3DVolumeTextureD1Ev,
+    (void *)ZN22CDirect3DVolumeTextureD0Ev
+};
+static void *vtbl_CDirect3DVolume[13] = {
+    (void *)CDirect3DVolume_QueryInterface,
+    (void *)CDirect3DVolume_AddRef,
+    (void *)CDirect3DVolume_Release,
+    (void *)CDirect3DVolume_GetDevice,
+    (void *)CDirect3DVolume_SetPrivateData,
+    (void *)CDirect3DVolume_GetPrivateData,
+    (void *)CDirect3DVolume_FreePrivateData,
+    (void *)CDirect3DVolume_GetContainer,
+    (void *)CDirect3DVolume_GetDesc,
+    (void *)CDirect3DVolume_LockBox,
+    (void *)CDirect3DVolume_UnlockBox,
+    (void *)ZN15CDirect3DVolumeD1Ev,
+    (void *)ZN15CDirect3DVolumeD0Ev
+};
+#endif

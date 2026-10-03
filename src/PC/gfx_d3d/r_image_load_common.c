@@ -272,7 +272,30 @@ void Image_UploadData(GfxImage *image, D3DFORMAT format, int face, int mipLevel,
     }
 
     if (image->mapType == 4) {
-
+#if defined(COD2_X64)
+        srcWidth = Image_Max1(image->width >> mipLevel);
+        srcHeight = Image_Max1(image->height >> mipLevel);
+        srcDepth = Image_Max1(image->depth >> mipLevel);
+        Image_GetSrcStrideAndDy(format, srcWidth, &srcRowPitch, &dy);
+        if (!srcRowPitch || !dy)
+            return;
+        texture = (void *)image->texture.volmap;
+        if (!texture || !*(void **)texture)
+            return;
+        vtable = *(void ***)texture;
+        if (!vtable[VTABLE_LOCKRECT] || !vtable[VTABLE_UNLOCKRECT])
+            return;
+        if (((LockBoxFn)vtable[VTABLE_LOCKRECT])(texture, mipLevel, &lockedBox, NULL, 0))
+            return;
+        srcStride = srcRowPitch * (((srcHeight - 1) / dy) + 1);
+        dst = (byte *)lockedBox.pBits;
+        for (sliceIndex = 0; sliceIndex < srcDepth; ++sliceIndex) {
+            Image_CopyToLockedSurface(dst + sliceIndex * lockedBox.SlicePitch,
+                                      lockedBox.RowPitch, src + sliceIndex * srcStride,
+                                      srcRowPitch, dy, srcHeight);
+        }
+        ((UnlockBoxFn)vtable[VTABLE_UNLOCKRECT])(texture, mipLevel);
+#endif
         return;
     }
 

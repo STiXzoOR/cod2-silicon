@@ -10,7 +10,12 @@ extern float floorf(float x);
 
 extern MarkPoly cg_markPolys[1024];
 extern MarkPoly *cg_freeMarkPolys;
+#if COD2_X64
+/* The reconstructed MarkVertAssemblyBuffer typedef is only an int. */
+static GfxWorldVertex nativeMarkVerts[1024];
+#else
 extern MarkVertAssemblyBuffer markVerts;
+#endif
 
 extern const vec_t Vec3NormalizeTo(const vec_t *v, vec_t *out);
 extern void PerpendicularVector(const vec_t *src, vec_t *dst);
@@ -98,9 +103,16 @@ void CG_AddMarks(void)
 
 void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t *dir, float orientation, const vec_t *color, float radius)
 {
+#if COD2_X64
+    vec3_t axis[3];
+    vec_t *axisDir = axis[0];
+    vec_t *axisCross = axis[1];
+    vec_t *axisRight = axis[2];
+#else
     vec3_t axisRight;
     vec3_t axisCross;
     vec3_t axisDir;
+#endif
     vec3_t originalPoints[4];
     GfxMarkFragment markFragments[384];
     int fragmentCount;
@@ -136,10 +148,18 @@ void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t
     fragmentCount = CL_MarkFragments(
         originalPoints,
         origin,
+#if COD2_X64
+        axis,
+#else
         (const vec3_t *)axisDir,
+#endif
         radius,
         1024,
+#if COD2_X64
+        nativeMarkVerts,
+#else
         (GfxWorldVertex *)&markVerts,
+#endif
         384,
         markFragments,
         markMaterial);
@@ -154,7 +174,11 @@ void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t
 
     for (fragmentIndex = 0; fragmentIndex < fragmentCount; fragmentIndex++) {
         GfxMarkFragment *frag = &markFragments[fragmentIndex];
+#if COD2_X64
+        GfxWorldVertex *verts = &nativeMarkVerts[frag->firstPoint];
+#else
         GfxWorldVertex *verts = (GfxWorldVertex *)((char *)&markVerts + frag->firstPoint * (int)sizeof(GfxWorldVertex));
+#endif
         int vertCount = (int)frag->pointCount;
 
         for (j = 0; j < vertCount; j++) {

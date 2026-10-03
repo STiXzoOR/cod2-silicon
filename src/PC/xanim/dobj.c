@@ -337,8 +337,16 @@ int DObjHasContents(DObj *obj, int contentmask)
 
 void DObjSetModel(DObj *obj, const XModel *model)
 {
+#if defined(COD2_X64)
+    /* The original +0x14 is XModelParts.skel after four 32-bit pointers.
+     * Parts and its skeleton offset both widen in the native layout. */
+    XModelParts *parts = (XModelParts *)model->parts;
+    obj->skel = &parts->skel;
+    obj->numBones = (unsigned char)parts->numBones;
+#else
     obj->skel = (DSkel *)(*(int *)model + 0x14);
     obj->numBones = (unsigned char)*(unsigned short *)*(int *)model;
+#endif
     obj->models[0] = (XModel *)model;
 }
 

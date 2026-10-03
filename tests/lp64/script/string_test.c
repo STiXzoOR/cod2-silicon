@@ -36,9 +36,15 @@ int main(void)
     SL_RemoveRefToString(id);
     assert(strcmp(SL_ConvertToString(again), "lp64-script") == 0);
     SL_RemoveRefToString(again);
-    /* Upstream LP64 deliberately retains zero-ref strings; characterize that policy. */
-    assert(*(unsigned short *)(scrMemTreePub.mt_buffer + id * 8 + 2) == 0);
-    assert(SL_FindString("lp64-script") == id);
-    puts("string pointer layout and retained identity passed");
+    /* Native 1.3 semantics reclaim the final reference and unlink the name. */
+    assert(SL_FindString("lp64-script") == 0);
+    for (int i = 0; i < 100; ++i) {
+        id = SL_GetString_("lp64-script", 0, 1);
+        assert(id && strcmp(SL_ConvertToString(id), "lp64-script") == 0);
+        assert(SL_FindString("lp64-script") == id);
+        SL_RemoveRefToString(id);
+        assert(SL_FindString("lp64-script") == 0);
+    }
+    puts("string pointer layout, live identity and final-reference reclamation passed");
     return 0;
 }

@@ -267,16 +267,6 @@ void FxScheduler_CreateEffect(const FxScheduler *_this, const EffectTemplate *fx
     if (primType > 12) {
         goto cleanup;
     }
-
-#if defined(COD2_X64)
-    /* x64 TODO: the reconstructed C++ effect-class vtables (Particle/Light/Cloud/... in
-       FxPrimitives.c) still use x86 vtable addresses (e.g. Particle_Particle hardcodes
-       *(int*)this = 0x32ffc8) and 4-byte vtable entries, so the virtual create/update
-       dispatch in the FX_Add* creators faults. Skip particle-primitive creation until
-       those vtables are reconstructed for x64 -- effects are cosmetic; gameplay runs. */
-    goto cleanup;
-#endif
-
     switch (primType) {
     case 0:
         break;
@@ -379,6 +369,9 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
             return;
         if (!FX_GetBoneOrientation(bolt, &or_))
             return;
+#if defined(COD2_X64)
+        AxisCopy(or_.axis, ax);
+#endif
     } else {
 
         if (origin) {
@@ -405,11 +398,10 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
 
 #if defined(COD2_X64)
     /* x64: guard a corrupt/truncated fx (bullet impacts reach here via
-       CG_BulletHitEvent) before iterating fx->mPrimitives -- effects are cosmetically
-       skipped in FxScheduler_CreateEffect anyway (x64 C++ vtable TODO). */
+       CG_BulletHitEvent) before iterating fx->mPrimitives. */
     if ((uintptr_t)fx + 0x100000000ULL < 0x200000000ULL ||
         (uintptr_t)fx >= 0x800000000000ULL ||
-        (unsigned)fx->mPrimitiveCount > 64u)
+        (unsigned)fx->mPrimitiveCount > sizeof(fx->mPrimitives) / sizeof(fx->mPrimitives[0]))
         return;
 #endif
 
