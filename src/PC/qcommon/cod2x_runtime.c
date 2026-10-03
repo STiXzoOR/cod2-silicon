@@ -125,6 +125,7 @@ void Cod2x_Frame(int active, int demo)
 void Cod2x_Disconnect(void)
 {
     Cod2x_Frame(0, 0);
+    Cod2x_ResetAnimation();
     if (cod2x_game)
         Dvar_SetInt(cod2x_game, 0);
     if (cod2x_competitive)

@@ -1,3 +1,6 @@
+#if defined(COD2_CODX) && COD2_CODX
+#include "../qcommon/cod2x.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -1796,6 +1799,10 @@ static qboolean PM_TryStartOffhand(pmove_t *pm)
 
     offhandIndex = BG_GetFirstAvailableOffhand(ps, offhandClass);
     if (!offhandIndex) {
+#if defined(COD2_CODX) && COD2_CODX
+        /* CoD2x src/shared/server.cpp:1393: don't flood the four-event ring. */
+        if (!Cod2x_GameVersion())
+#endif
         PM_AddEvent(ps, 0x94);
         return 0;
     }

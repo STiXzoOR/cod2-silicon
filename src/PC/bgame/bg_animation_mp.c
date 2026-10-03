@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#if defined(COD2_CODX) && COD2_CODX
+#include "../qcommon/cod2x.h"
+#endif
 extern scr_const_t scr_const;
 
 /* File-scope alias: bound where no local can shadow `scr_const`, so uses below
@@ -360,6 +363,10 @@ static inline __attribute__((always_inline)) unsigned int BG_ControllerTagName(i
     return *(const unsigned short *)controller_names[controllerIndex];
 }
 
+#if defined(COD2_CODX) && COD2_CODX
+#include "cod2x_animation.h"
+#endif
+
 void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es, int *partBits, clientInfo_t *ci, int frametime)
 {
     vec3_t goals[8];
@@ -372,7 +379,11 @@ void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es
     float maxAngleChange;
     int i;
 
+#if defined(COD2_CODX) && COD2_CODX
+    if (Cod2x_GameVersion() >= 3 ? (es->eFlags & 0x300) != 0 : (es->eFlags & 0x3) != 0) {
+#else
     if ((es->eFlags & 0x3) != 0) {
+#endif
         memset(goals, 0, sizeof(goals));
     } else {
         tagOriginAngles[0] = 0.0f;
@@ -444,6 +455,11 @@ void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es
             goals[0][2] = torsoAngles[2] * 0.30000001192092896f;
 
             if (es->fTorsoPitch != 0.0f || es->fWaistPitch != 0.0f) {
+#if defined(COD2_CODX) && COD2_CODX
+                if (Cod2x_GameVersion() >= 3)
+                    goals[0][0] += AngleSubtract(es->fTorsoPitch, es->fWaistPitch);
+                else
+#endif
                 goals[0][0] += AngleSubtract(es->fWaistPitch, es->fTorsoPitch);
             }
 
@@ -469,6 +485,11 @@ void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es
             goals[0][2] = torsoAngles[2] * 0.5f;
 
             if (es->fTorsoPitch != 0.0f || es->fWaistPitch != 0.0f) {
+#if defined(COD2_CODX) && COD2_CODX
+                if (Cod2x_GameVersion() >= 3)
+                    goals[0][0] += AngleSubtract(es->fTorsoPitch, es->fWaistPitch);
+                else
+#endif
                 goals[0][0] += AngleSubtract(es->fWaistPitch, es->fTorsoPitch);
             }
 
@@ -503,6 +524,35 @@ void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es
         goals[6][1] = tagOriginAngles[1];
         goals[6][2] = tagOriginAngles[2];
     }
+
+#if defined(COD2_CODX) && COD2_CODX
+    if (Cod2x_GameVersion() >= 3) {
+        cod2xAnimationState_t *state = BG_Cod2xState(ci);
+        if (state) {
+            float fraction;
+            if (!(es->eFlags & 0x300))
+                BG_Cod2xControllerGoals(es, ci, goals, leanFrac, state);
+            fraction = state->movementDuration > 0 ?
+                (float)(bgs->time - state->movementStart) / (float)state->movementDuration : -1.0f;
+            for (i = 0; i < 8; ++i) {
+                float *current = BG_Cod2xController(ci, i);
+                if (fraction >= 0.0f && fraction <= 1.0f) {
+                    int axis;
+                    for (axis = 0; axis < 3; ++axis)
+                        current[axis] = state->start[i][axis] * (1.0f - fraction) + goals[i][axis] * fraction;
+                } else if (i == 7) {
+                    BG_LerpOffset(goals[i], (float)frametime * 0.1f, current);
+                } else {
+                    BG_SmoothControllerAngles(current, goals[i], (float)frametime * 0.36f);
+                }
+                if (i < 6)
+                    DObjSetControlTagAngles(pDObj, partBits, BG_ControllerTagName(i), current);
+            }
+            DObjSetLocalTag(pDObj, partBits, scr_const_g->tag_origin, ci->tag_origin_offset, ci->tag_origin_angles);
+            return;
+        }
+    }
+#endif
 
     maxAngleChange = (float)frametime * 0.36000001430511475f;
 
@@ -652,6 +702,11 @@ static void __attribute_regparm__(3) BG_RunLerpFrameRate(clientInfo_t *ci, lerpF
                 }
             }
         }
+
+#if defined(COD2_CODX) && COD2_CODX
+        if (Cod2x_GameVersion() >= 3)
+            BG_Cod2xBlendTime(ci, lf, oldAnimation, anim);
+#endif
 
         startTime = 0.0f;
         if (anim != NULL && anim->moveSpeed != 0.0f) {
@@ -868,7 +923,11 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
     playerYaw = AngleMod(ci->playerAngles[1]);
     eFlags = es->eFlags;
 
+#if defined(COD2_CODX) && COD2_CODX
+    if (Cod2x_GameVersion() >= 3 ? (eFlags & 0x300) != 0 : (eFlags & 0x3) != 0) {
+#else
     if ((eFlags & 0x3) != 0) {
+#endif
         ci->torso.yawing = 1;
         ci->torso.pitching = 1;
         ci->legs.yawing = 1;
@@ -891,6 +950,11 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
 
     moveYaw = moveDir + playerYaw;
     swingSpeed = (bg_swingSpeed)->current.value;
+#if defined(COD2_CODX) && COD2_CODX
+    /* CoD2x src/shared/animation.cpp:859-863. */
+    if (Cod2x_GameVersion() >= 3)
+        swingSpeed = 1.0f;
+#endif
 
     if ((eFlags & 0x20000) != 0) {
         torsoYawDest = playerYaw;
@@ -924,6 +988,16 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
         legsSwingTolerance = 40.0f;
     }
 
+#if defined(COD2_CODX) && COD2_CODX
+    /* CoD2x src/shared/animation.cpp:950-955, 1005-1008. */
+    if (Cod2x_GameVersion() >= 3) {
+        if (!(eFlags & (0x20000 | 0x4000 | 8 | 0x40000 | 0x40)) &&
+            !(ci->clientConditions[3][0] & 0xc0000))
+            torsoYawDest = playerYaw;
+        legsSwingTolerance = 0.0f;
+    }
+#endif
+
     BG_SwingAngles(&ci->torso.yawAngle, &ci->torso.yawing, 0.0f, torsoYawDest, torsoYawClamp, swingSpeed);
 
     if ((eFlags & 0x20000) != 0) {
@@ -931,6 +1005,11 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
     } else if ((eFlags & 8) != 0) {
         ci->legs.yawing = 0;
         ci->legs.yawAngle = moveYaw;
+#if defined(COD2_CODX) && COD2_CODX
+        /* CoD2x src/shared/animation.cpp:979-984: version 4 restored prone yaw. */
+        if (Cod2x_GameVersion() == 3)
+            ci->legs.yawAngle = playerYaw;
+#endif
     } else if ((bgs->animScriptData.animations[BG_AnimIndexNoToggle(es->legsAnim)].flags & 0x30) != 0) {
         ci->legs.yawing = 0;
         BG_SwingAngles(&ci->legs.yawAngle, &ci->legs.yawing, 0.0f, playerYaw, 150.0f, swingSpeed);
@@ -938,7 +1017,11 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
         BG_SwingAngles(&ci->legs.yawAngle, &ci->legs.yawing, legsSwingTolerance, legsYawDest, 150.0f, swingSpeed);
     }
 
+#if defined(COD2_CODX) && COD2_CODX
+    if (Cod2x_GameVersion() >= 3 ? (eFlags & 0x300) != 0 : (eFlags & 0x3) != 0) {
+#else
     if ((eFlags & 0x3) != 0) {
+#endif
         ci->torso.yawAngle = playerYaw;
         ci->legs.yawAngle = playerYaw;
     }
@@ -948,7 +1031,13 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
         ci->legs.yawAngle = moveYaw;
     }
 
+#if defined(COD2_CODX) && COD2_CODX
+    if ((eFlags & 0x20000) != 0 ||
+        (Cod2x_GameVersion() >= 3 ? (eFlags & 0x300) != 0 : (eFlags & 0x3) != 0) ||
+        (ci->clientConditions[3][0] & 0xc0000) != 0 || eFlags == 0x4000) {
+#else
     if ((eFlags & 0x20000) != 0 || (eFlags & 0x3) != 0 || (ci->clientConditions[3][0] & 0xc0000) != 0 || eFlags == 0x4000) {
+#endif
         torsoPitchDest = 0.0f;
     } else {
         torsoPitchDest = playerPitch;
@@ -958,6 +1047,11 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
         torsoPitchDest *= 0.6000000238418579f;
     }
 
+#if defined(COD2_CODX) && COD2_CODX
+    if (Cod2x_GameVersion() >= 3)
+        BG_SwingAngles(&ci->torso.pitchAngle, &ci->torso.pitching, 0.0f, torsoPitchDest, 45.0f, 1.0f);
+    else
+#endif
     BG_SwingAngles(&ci->torso.pitchAngle, &ci->torso.pitching, 0.0f, torsoPitchDest, 45.0f, 0.15000000596046448f);
 
     BG_UpdateEntityPlayerAnimConditions(es, ci);

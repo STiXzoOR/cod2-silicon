@@ -20,6 +20,7 @@ int Cod2x_LimitedFPS(int requested, int limited);
 void Cod2x_Init(void);
 void Cod2x_PrepareConnect(void);
 void Cod2x_Disconnect(void);
+void Cod2x_ResetAnimation(void);
 void Cod2x_Frame(int active, int demo);
 int Cod2x_GameVersion(void);
 int Cod2x_Competitive(void);

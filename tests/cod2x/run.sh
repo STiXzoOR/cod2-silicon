@@ -14,3 +14,6 @@ clang -std=c11 -Wall -Wextra -Werror -Wno-deprecated-declarations \
     src/PC/qcommon/cod2x_identity.c src/PC/qcommon/cod2x_protocol.c \
     -framework IOKit -framework CoreFoundation -o "$work/test_runtime"
 "$work/test_runtime"
+clang -std=c11 -Wall -Wextra -Werror -ffp-contract=off \
+    tests/cod2x/test_animation.c -o "$work/test_animation"
+"$work/test_animation"

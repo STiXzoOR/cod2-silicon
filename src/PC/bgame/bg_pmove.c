@@ -3,6 +3,11 @@
 #include "bytematch.h"
 #include <math.h>
 
+#if defined(COD2_CODX) && COD2_CODX
+#include "../qcommon/cod2x.h"
+extern const float AngleNormalize180(const float angle);
+#endif
+
 extern int CG_PointContents(const vec_t *point, int passEntityNum, int contentmask);
 extern void CG_TraceCapsule(trace_t *result, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask);
 extern void G_PlayerEvent(int clientNum, int event);
@@ -969,12 +974,20 @@ static void PM_REGPARM2_ABI PM_CheckDuck(pmove_t *pm, pml_t *pml)
             PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs,
                            ps->origin, ps->clientNum, pm->tracemask & ~0x02000000);
             if (!trace.allsolid) {
+                /* CoD2x animation.cpp:1389-1393 uses controller stance transitions. */
+#if defined(COD2_CODX) && COD2_CODX
+                if (Cod2x_GameVersion() < 3)
+#endif
                 BG_AnimScriptEvent(ps, ANIM_ET_PRONE_TO_CROUCH, 0, 0);
                 ps->pm_flags = (ps->pm_flags & ~0x1) | 0x2;
             } else if (!(pm->cmd.buttons & 0x2000)) {
                 BG_AddPredictableEventToPlayerstate(142, 2, ps);
             }
         } else {
+            /* CoD2x animation.cpp:1389-1393 uses controller stance transitions. */
+#if defined(COD2_CODX) && COD2_CODX
+            if (Cod2x_GameVersion() < 3)
+#endif
             BG_AnimScriptEvent(ps, ANIM_ET_STAND_TO_CROUCH, 0, 0);
             ps->pm_flags |= 0x2;
         }
@@ -987,6 +1000,10 @@ static void PM_REGPARM2_ABI PM_CheckDuck(pmove_t *pm, pml_t *pml)
         PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs,
                        ps->origin, ps->clientNum, pm->tracemask & ~0x02000000);
         if (!trace.allsolid) {
+            /* CoD2x animation.cpp:1389-1393 uses controller stance transitions. */
+#if defined(COD2_CODX) && COD2_CODX
+            if (Cod2x_GameVersion() < 3)
+#endif
             BG_AnimScriptEvent(ps, ANIM_ET_PRONE_TO_STAND, 0, 0);
             ps->pm_flags &= ~0x3;
         } else {
@@ -1007,6 +1024,10 @@ static void PM_REGPARM2_ABI PM_CheckDuck(pmove_t *pm, pml_t *pml)
         PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs,
                        ps->origin, ps->clientNum, pm->tracemask & ~0x02000000);
         if (!trace.allsolid) {
+            /* CoD2x animation.cpp:1389-1393 uses controller stance transitions. */
+#if defined(COD2_CODX) && COD2_CODX
+            if (Cod2x_GameVersion() < 3)
+#endif
             BG_AnimScriptEvent(ps, ANIM_ET_CROUCH_TO_STAND, 0, 0);
             ps->pm_flags &= ~0x2;
         } else if (!(pm->cmd.buttons & 0x2000)) {
@@ -1114,6 +1135,33 @@ static void PM_REGPARM2_ABI PM_SetMovementDir(pmove_t *pm, pml_t *pml)
     playerState_t *ps = pm->ps;
     int fmove = pm->cmd.forwardmove;
     int smove = pm->cmd.rightmove;
+
+#if defined(COD2_CODX) && COD2_CODX
+    /* CoD2x src/shared/animation.cpp:1308-1355. movementDir holds degrees. */
+    if (Cod2x_GameVersion() >= 3) {
+        float yaw = 0.0f;
+        if ((ps->pm_flags & 1) && !(ps->eFlags & 0x300)) {
+            yaw = AngleDelta(ps->proneDirection, ps->viewangles[1]);
+        } else if ((fmove || smove) && ps->groundEntityNum != 1023 && pml->frametime > 0.0f) {
+            vec3_t displacement;
+            float speedSquared = 0.0f;
+            int axis;
+            for (axis = 0; axis < 3; ++axis) {
+                displacement[axis] = ps->origin[axis] - pml->previous_origin[axis];
+                speedSquared += displacement[axis] * displacement[axis];
+            }
+            if (sqrtf(speedSquared) / pml->frametime > 5.0f) {
+                yaw = AngleDelta(vectoyaw(displacement), ps->viewangles[1]);
+                if (fmove < 0 && (yaw > 90.0f || yaw < -90.0f))
+                    yaw = AngleNormalize180(yaw + 180.0f);
+            }
+        }
+        if (yaw > 90.0f) yaw = 90.0f;
+        if (yaw < -90.0f) yaw = -90.0f;
+        ps->movementDir = (int)yaw;
+        return;
+    }
+#endif
 
     (void)pml;
 

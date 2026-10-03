@@ -6,6 +6,12 @@
 
 static dvar_t vars[32];
 static int count;
+static int animationResets;
+
+void Cod2x_ResetAnimation(void)
+{
+    ++animationResets;
+}
 
 const dvar_t *Dvar_FindVar(const char *name)
 {
@@ -137,6 +143,7 @@ int main(void)
     assert(integer("com_maxfps") == 250 && fps->domain.integer.max == 250);
     assert(Dvar_FindVar("rate")->domain.integer.min == 1000);
     Cod2x_Disconnect();
+    assert(animationResets == 1);
     assert(Cod2x_GameVersion() == 0 && !integer("g_competitive") && !integer("com_maxfps_limit"));
     assert(fps->domain.integer.max == 1000 && Cod2x_FrameFPS(333) == 333);
     puts("cod2x: runtime policy, demo, reconnect, immutable identity tests passed");
