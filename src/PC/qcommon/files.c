@@ -1137,7 +1137,11 @@ qboolean FS_CompareIwds(char *needediwds, int len, qboolean dlstring)
         if (!dlstring) {
 
             I_strncat(needediwds, len, iwdName);
+#if defined(COD2_X64)
+            I_strncat(needediwds, len, ".iwd");
+#else
             I_strncat(needediwds, len, " ");
+#endif
 
             {
                 char *iwdFile = va("%s.iwd", iwdName);
@@ -1160,7 +1164,11 @@ qboolean FS_CompareIwds(char *needediwds, int len, qboolean dlstring)
 
             I_strncat(needediwds, len, "@");
             I_strncat(needediwds, len, iwdName);
+#if defined(COD2_X64)
+            I_strncat(needediwds, len, ".iwd");
+#else
             I_strncat(needediwds, len, " ");
+#endif
 
             I_strncat(needediwds, len, "@");
 
@@ -1180,12 +1188,18 @@ qboolean FS_CompareIwds(char *needediwds, int len, qboolean dlstring)
                     } else {
 
                         I_strncat(needediwds, len, iwdName);
+#if defined(COD2_X64)
+                        I_strncat(needediwds, len, ".iwd");
+#else
                         I_strncat(needediwds, len, " ");
+#endif
                     }
                 }
             }
 
+#if !defined(COD2_X64)
             I_strncat(needediwds, len, " ");
+#endif
         }
 
     next_iwd:
