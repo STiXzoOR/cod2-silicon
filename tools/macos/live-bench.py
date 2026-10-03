@@ -79,7 +79,7 @@ with (out / 'console.log').open('w') as stream:
         writer = os.fdopen(os.open(fifo, os.O_RDWR | os.O_NONBLOCK), 'w', buffering=1)
         launch = ['open', '-n', '-a', str(args.app.resolve()), '--stdin', str(fifo),
                   '--stdout', str(out / 'console.log'), '--stderr', str(out / 'console.log')]
-        for name in ['DYLD_INSERT_LIBRARIES', 'COD2_FRAME_CSV', 'COD2_FRAME_SECONDS', 'COD2_FRAME_PID', 'COD2_CPU_PROFILE', 'SDL_VIDEO_MAC_FULLSCREEN_SPACES', 'MTL_HUD_ENABLED', 'COD2_MAC_SHADER_CACHE', 'COD2_D3D_PROG']:
+        for name in ['DYLD_INSERT_LIBRARIES', 'COD2_FRAME_CSV', 'COD2_FRAME_SECONDS', 'COD2_FRAME_PID', 'COD2_CPU_PROFILE', 'SDL_VIDEO_MAC_FULLSCREEN_SPACES', 'MTL_HUD_ENABLED', 'COD2_MAC_SHADER_CACHE', 'D3D_PROG', 'COD2_MAC_SHADER_DIAGNOSTICS']:
             if name in env:
                 launch += ['--env', name + '=' + env[name]]
         subprocess.run([*launch, '--args', *command[1:]], check=True, timeout=15)
