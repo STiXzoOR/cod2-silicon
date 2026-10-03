@@ -1,5 +1,7 @@
 #define _GNU_SOURCE
 
+/* Rendering entry points are intentionally absent from the Apple server. */
+#if !(defined(__APPLE__) && defined(COD2_X64) && defined(DEDICATED))
 #include "agl_stubs.h"
 #include <SDL2/SDL.h>
 
@@ -85,3 +87,14 @@ int aglGetInteger(AGLContext ctx, GLenum pname, GLint *params)
         *params = 0;
     return 1;
 }
+
+#if defined(__APPLE__) && defined(COD2_X64)
+/* Apple Silicon legacy GL lacks APPLE_vertex_array_range; the renderer only
+ * uses this extension to request cached vertex storage. */
+void glVertexArrayParameteriAPPLE(GLenum pname, GLint param)
+{
+    (void)pname;
+    (void)param;
+}
+#endif
+#endif

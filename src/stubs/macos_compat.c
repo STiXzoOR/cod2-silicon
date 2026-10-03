@@ -6,10 +6,14 @@
 #include <math.h>
 #include <stdio.h>
 
+#if !(defined(__APPLE__) && defined(COD2_X64) && defined(DEDICATED))
 #if !defined(_WIN32) || defined(W32_CLIENT)
 #    include <SDL2/SDL.h>
 #    ifdef __EMSCRIPTEN__
 #        include <GLES3/gl3.h>
+#    elif defined(__APPLE__) && defined(COD2_X64)
+#        include <OpenGL/gl.h>
+#        include <OpenGL/glext.h>
 #    elif defined(_WIN32)
 
 #        define GL_COLOR_BUFFER_BIT 0x00004000
@@ -22,6 +26,7 @@
 #        include <X11/Xutil.h>
 #        include <X11/keysym.h>
 #    endif
+#endif
 #endif
 #include "stubs/gcc40_compat.h"
 
@@ -223,6 +228,8 @@ __attribute__((constructor)) static void init_display_list(void)
     sDisplayList[2] = dummy_display_entry + 100;
 }
 
+/* The dedicated Apple target has no SDL window or GL context. */
+#if !(defined(__APPLE__) && defined(COD2_X64) && defined(DEDICATED))
 #if !defined(_WIN32) || defined(W32_CLIENT)
 SDL_Window *sdl_gl_window = NULL;
 int sdl_gl_width = 640;
@@ -306,6 +313,7 @@ static void Win32_BridgeInputToEngine(SDL_Window *win)
 }
 #    endif
 
+#    if !(defined(__APPLE__) && defined(COD2_X64))
 #    if !defined(__EMSCRIPTEN__) && !defined(_WIN32)
 typedef struct LinuxInputEvent {
     int type;
@@ -487,9 +495,14 @@ int Linux_PollInputEvent(LinuxInputEvent *out)
 }
 #    endif
 
+#    endif
+
 void SDL_GL_SwapWindowDirect(void)
 {
-#    if defined(__EMSCRIPTEN__) || defined(_WIN32)
+#    if defined(__APPLE__) && defined(COD2_X64)
+    if (sdl_gl_window)
+        SDL_GL_SwapWindow(sdl_gl_window);
+#    elif defined(__EMSCRIPTEN__) || defined(_WIN32)
     if (sdl_gl_window)
         SDL_GL_SwapWindow(sdl_gl_window);
 #    else
@@ -559,7 +572,12 @@ ContextRef MacDisplay_CreateScreenContext(int inDepthSize, int inUseStencil,
     if (outHasAuxBuffer)
         *outHasAuxBuffer = 0;
 
-#    ifdef __EMSCRIPTEN__
+#    if defined(__APPLE__) && defined(COD2_X64)
+    /* A zero profile mask requests Apple's legacy OpenGL 2.1 context. */
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, 0);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+#    elif defined(__EMSCRIPTEN__)
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
@@ -713,4 +731,5 @@ void MacDisplay_FadeOut(float duration)
 #    ifndef __EMSCRIPTEN__
 #    endif
 
+#endif
 #endif

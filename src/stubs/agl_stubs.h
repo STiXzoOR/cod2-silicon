@@ -1,7 +1,12 @@
 #ifndef STUBS_AGL_H
 #define STUBS_AGL_H
 
+#if defined(__APPLE__) && defined(COD2_X64)
+#    include <OpenGL/gl.h>
+#    include <OpenGL/glext.h>
+#else
 #include <GLES3/gl3.h>
+#endif
 
 typedef void *AGLContext;
 typedef void *AGLPixelFormat;
