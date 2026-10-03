@@ -971,10 +971,18 @@ void RB_UpdateViewportConstants(void)
     viewportCenterX += invRenderTargetWidth * xOffset;
     viewportCenterY += invRenderTargetHeight * yOffset;
 
+#if COD2_APPLE_SDK
+    /* Native screen textures use the target's exact extent without POT padding. */
+    potWidth = dxState.renderTargetWidth;
+    potHeight = dxState.renderTargetHeight;
+    horizontalScale = 1.0f;
+    verticalScale = 1.0f;
+#else
     potWidth = RB_NextPowerOfTwo(viewport.width);
     potHeight = RB_NextPowerOfTwo(viewport.height);
     horizontalScale = (float)viewport.width / potWidth;
     verticalScale = (float)viewport.height / potHeight;
+#endif
 
     RB_SetCodeConstant(0xab, ((float)viewport.width - 0.5f) / potWidth, ((float)viewport.height - 0.5f) / potHeight, invRenderTargetWidth, invRenderTargetHeight);
     RB_SetCodeConstant(0xae, halfViewportWidth * horizontalScale, halfViewportHeight * verticalScale, 0.0f, 1.0f);
