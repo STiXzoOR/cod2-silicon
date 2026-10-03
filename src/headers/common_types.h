@@ -4797,7 +4797,7 @@ typedef my_post_controller * my_post_ptr;
 typedef my_prep_controller * my_prep_ptr;
 typedef int (*my_src_ptr)();
 typedef my_upsampler * my_upsample_ptr;
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 typedef char objBufEntry[160]; /* x64 DObj_s is 152 B; 100 (x86 size) overlaps pool slots */
 #else
 typedef char objBufEntry[100];
@@ -9141,7 +9141,7 @@ union VariableUnion {
     int intValue;
     float floatValue;
     unsigned int stringValue;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
     unsigned int vectorValue;
     unsigned int codePosValue;
 #else
@@ -9149,7 +9149,7 @@ union VariableUnion {
     const char *codePosValue;
 #endif
     unsigned int pointerValue;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
     unsigned int stackValue;
 #else
     VariableStackBuffer *stackValue;
@@ -9161,7 +9161,7 @@ extern unsigned char scrMemTreeGlob[];
 
 extern void * const imp_scrVarPub;
 
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
 #define SCR_ARENA_PTR(off)    ((void *)(scrMemTreeGlob + (unsigned int)(off)))
 #define SCR_ARENA_ENC(ptr)    ((unsigned int)((const unsigned char *)(const void *)(ptr) - scrMemTreeGlob))

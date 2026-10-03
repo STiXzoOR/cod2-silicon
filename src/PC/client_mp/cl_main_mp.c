@@ -258,7 +258,7 @@ extern const dvar_t *cl_forceavidemo;
 extern const dvar_t *cl_motdString;
 extern const dvar_t *cl_serverStatusResendTime;
 
-#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
 int clc_x64_lastChallenge;
 #endif
 extern const dvar_t *cl_ingame;
@@ -2171,7 +2171,7 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
         }
 
         conn->challenge = atoi(Cmd_Argv(1));
-#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
         clc_x64_lastChallenge = conn->challenge;
 #endif
         conn->state = CA_CHALLENGING;

@@ -89,7 +89,7 @@ int rb_drawsurfscmd_dxskip = 0;
 static void RB_X64TraceText(const char *text, const Font *font, const Material *material,
                             GfxColor color, int style, float x, float y, float xScale, float yScale)
 {
-#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     static int traceCount;
     FILE *f;
 
@@ -130,7 +130,7 @@ static void RB_X64TraceText(const char *text, const Font *font, const Material *
 static void RB_X64TraceGlyph(const char *text, int ch, const Glyph *glyph,
                              float glyphX, float glyphY, float w, float h, GfxColor color)
 {
-#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     static int traceCount;
     FILE *f;
 

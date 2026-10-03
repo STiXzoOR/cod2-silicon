@@ -1000,7 +1000,7 @@ void CL_ParseServerMessage(msg_t *msg)
     byte *msgCompressed_buf;
     msg_t msgCompressed;
     int cmd;
-#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     static int x64TraceCount;
 #endif
 
@@ -1021,7 +1021,7 @@ void CL_ParseServerMessage(msg_t *msg)
                                                  msgCompressed_buf,
                                                  msg->cursize - msg->readcount);
 
-#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     if (x64TraceCount < 16) {
         FILE *f = fopen("x64_msg_trace.txt", x64TraceCount ? "a" : "w");
         if (f) {

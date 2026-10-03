@@ -104,7 +104,7 @@ Bool SV_Netchan_Transmit(client_t *client, int length, byte *data)
     byte *encodeData;
     int i;
     netchan_t *netchan;
-#if defined(_M_X64) || defined(__x86_64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     static int x64TraceCount;
     byte beforeTrace[16];
     int beforeTraceLen;
@@ -120,7 +120,7 @@ Bool SV_Netchan_Transmit(client_t *client, int length, byte *data)
     key ^= (byte)outgoingSequence;
 
     index = 0;
-#if defined(_M_X64) || defined(__x86_64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     beforeTraceLen = dataSize < (int)sizeof(beforeTrace) ? dataSize : (int)sizeof(beforeTrace);
     for (i = 0; i < beforeTraceLen; ++i) {
         beforeTrace[i] = encodeData[i];
@@ -142,7 +142,7 @@ Bool SV_Netchan_Transmit(client_t *client, int length, byte *data)
         encodeData[i] ^= key;
     }
 
-#if defined(_M_X64) || defined(__x86_64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     if (x64TraceCount < 12) {
         FILE *f = fopen("x64_netchan_trace.txt", x64TraceCount ? "a" : "w");
         if (f) {

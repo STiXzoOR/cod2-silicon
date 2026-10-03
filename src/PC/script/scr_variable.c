@@ -1386,7 +1386,7 @@ void Scr_DumpScriptThreads(void)
         if ((VG_STATUS(id) & SCRVL_VAR_MASK) != 0xa)
             continue;
 
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
         if (!VG_U32(id))
             continue;
         stackValue = (VariableStackBuffer *)(scrMemTreeGlob + VG_U32(id));

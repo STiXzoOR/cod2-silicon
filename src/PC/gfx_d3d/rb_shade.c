@@ -115,7 +115,7 @@ static int RB_MaterialNameContains(const Material *material, const char *needle)
 static void RB_X64TraceEndSurface(const char *stage, const Material *material,
                                   const MaterialTechnique *technique, const materialCommands_t *mc)
 {
-#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     static int traceCount;
     FILE *f;
 
@@ -176,7 +176,7 @@ static void RB_X64TraceEndSurface(const char *stage, const Material *material,
 static void RB_X64TraceSampler(const char *stage, const Material *material, int argType, int dest,
                                const char *sourceName, int codeTexture, GfxImage *image, int samplerState)
 {
-#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     static int traceCount;
     FILE *f;
 

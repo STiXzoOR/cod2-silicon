@@ -3,7 +3,7 @@
  * build links the full reconstructed blob (data32.c/literals32.c) + win32_stubs.c
  * which already define all of them, so this TU stays inactive there (guarded on
  * __x86_64__ only, NOT _M_X64) to avoid LNK2005 duplicates. (x64 port Stage 4.) */
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(__aarch64__)
 
 #    include "common_types.h"
 

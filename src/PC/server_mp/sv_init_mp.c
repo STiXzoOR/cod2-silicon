@@ -206,7 +206,7 @@ COD2_ASSERT_FIELD(server_t, configstrings, 0x418);
 COD2_ASSERT_FIELD(server_t, num_entities,  0x5f424);
 COD2_ASSERT_FIELD(server_t, gametype,      0x5f4f4);
 
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 #    define SV_CONFIGSTRING_SLOT(svbase, index) (((server_t *)(svbase))->configstrings[(index)])
 #else
 #    define SV_CONFIGSTRING_SLOT(svbase, index) (*(const char **)((byte *)(svbase) + SV_CONFIGSTRINGS_OFF + (index) * 4))
@@ -602,7 +602,7 @@ void SV_Shutdown(char *finalmsg)
 
     {
         byte *svLocal = (byte *)imp_sv;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
         {
             server_t *svc = (server_t *)svLocal;
@@ -856,7 +856,7 @@ void SV_SpawnServer(const char *server)
 
     sv = (byte *)imp_sv;
     {
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
         server_t *svc = (server_t *)sv;
         int csi;
@@ -923,7 +923,7 @@ void SV_SpawnServer(const char *server)
 
     sv = (byte *)imp_sv;
     {
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
         server_t *svc = (server_t *)sv;
         int csi;

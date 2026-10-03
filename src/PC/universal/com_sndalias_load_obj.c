@@ -453,7 +453,7 @@ void Com_MakeSoundAliasesPermanent(snd_alias_list_t *aliasInfo, SoundFileInfo *s
         }
     }
 
-#    if defined(__x86_64__) || defined(_M_X64)
+#    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
     aliasInfo->head = (snd_alias_t *)Com_AllocSoundMemory(saLoadObjGlob.tempAliasCount * (int)sizeof(snd_alias_t), "Com_MakeSoundAliasesPermanent:aliases", 0xe);
     soundFileInfo->files = (SoundFile *)Com_AllocSoundMemory(soundCount * (int)sizeof(SoundFile), "Com_MakeSoundAliasesPermanent:soundFiles", 0xe);
@@ -488,7 +488,7 @@ void Com_MakeSoundAliasesPermanent(snd_alias_list_t *aliasInfo, SoundFileInfo *s
             permAlias = &aliasInfo->head[aliasInfo->count];
 
             if (!aliasList || I_stricmp(aliasName, aliasList->head->pszAliasName)) {
-#    if defined(__x86_64__) || defined(_M_X64)
+#    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
                 aliasList = (snd_alias_list_t *)Com_AllocSoundMemory((int)sizeof(snd_alias_list_t), "Com_MakeSoundAliasesPermanent:aliasList", 0xe);
 #    else
@@ -2100,7 +2100,7 @@ void Com_LoadSoundAliasFile(const char *loadspec, const char *loadspecCurGame, c
 
                         aliasCopy = (snd_alias_build_t *)Com_AllocateTempSoundMemory(sizeof(alias), "Com_AddBuildSoundAlias");
                         memcpy(aliasCopy, &alias, sizeof(alias));
-#    if defined(__x86_64__) || defined(_M_X64)
+#    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
                         aliasCopy->pNext = (intptr_t)(uintptr_t)saLoadObjGlob.tempAliases;
 #    else
                         aliasCopy->pNext = (int)(uintptr_t)saLoadObjGlob.tempAliases;

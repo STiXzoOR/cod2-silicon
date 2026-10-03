@@ -649,7 +649,7 @@ struct dvar_s {
     DvarValue latched;
     DvarValue reset;
     union DvarLimits domain;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
     intptr_t next;
     intptr_t hashNext;

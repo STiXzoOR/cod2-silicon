@@ -148,7 +148,7 @@ static unsigned int __attribute_regparm__(3)
         int *value = (int *)GetVariableValueAddress(valueId);
         int type = GetVarType(valueId);
 
-#    if defined(__x86_64__) || defined(_M_X64)
+#    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
         char *codePtr = (char *)SCR_CODEPOS_PTR((unsigned int)*value);
 #    else
         char *codePtr = (char *)(intptr_t)*value;
@@ -4982,7 +4982,7 @@ emit_switch_table:
          caseStatement;
          caseStatement = caseStatement->next) {
         *(unsigned int *)TempMallocAlign(4) = caseStatement->name;
-#if defined(_M_X64) || defined(__x86_64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
         /* store a program-buffer offset: the runtime (VM_CandidateHandleSwitch) decodes the
            case codepos with SCR_CODEPOS_PTR. A truncated raw pointer would jump to garbage. */
         *(unsigned int *)TempMallocAlign(4) = SCR_CODEPOS_ENC(caseStatement->codePos);

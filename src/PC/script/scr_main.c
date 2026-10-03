@@ -431,7 +431,7 @@ scr_func_t Scr_GetFunctionHandle(const char *filename, const char *name)
     codePos = (unsigned int)Scr_EvalVariable(codeVar);
 
     scrVarPub = (struct scrVarPub_t *)imp_scrVarPub;
-#if !defined(_M_X64) && !defined(__x86_64__)
+#if !defined(_M_X64) && !defined(__x86_64__) && !defined(__aarch64__)
     /* x86: code positions are stored as absolute pointers -> convert to a program-buffer
        offset. On x64 they are already stored as offsets (SCR_CODEPOS_ENC), so subtracting
        the buffer base would underflow and wrongly fail every lookup. */

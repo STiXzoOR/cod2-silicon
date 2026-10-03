@@ -263,7 +263,7 @@ fileHandle_t FS_HandleForFile(qboolean streamThread)
 
 FILE *FS_FileForHandle(fileHandle_t f)
 {
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
     return (FILE *)fsh[f].handleFiles.file.o;
 #else
@@ -400,7 +400,7 @@ Bool FS_RegisterDvars(void)
 
     homePath = Sys_DefaultHomePath();
     if (!homePath || !homePath[0]) {
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
         homePath = fs_basepath->current.string;
 #else
@@ -471,7 +471,7 @@ int FS_filelength(fileHandle_t f)
 #endif
 
     if (entry->zipFile)
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
         return (int)((unz_s *)entry->handleFiles.file.z)->cur_file_info.uncompressed_size;
 #else
@@ -737,7 +737,7 @@ int FS_FTell(fileHandle_t f)
 
 void FS_Flush(fileHandle_t f)
 {
-#    if defined(__x86_64__) || defined(_M_X64)
+#    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
     fflush((FILE *)fsh[f].handleFiles.file.o);
 #    else

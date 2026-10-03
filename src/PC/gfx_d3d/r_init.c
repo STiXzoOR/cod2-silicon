@@ -326,7 +326,7 @@ refexport_t *GetRefAPI(int apiVersion, refimport_t *rimp)
  * the x86 offset yields the correct x64 offset. Without this, re is built with
  * every function pointer at half its real offset -> garbage (re.BeginRegistration
  * faulted at CL_InitRenderer). (x64 port Stage 4.) */
-#if defined(_M_X64) || defined(__x86_64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
 #define RE(off, fn) *(void **)(r + (off) * 2) = (void *)(fn)
 #else
 #define RE(off, fn) *(void **)(r + (off)) = (void *)(fn)
@@ -431,7 +431,7 @@ refexport_t *GetRefAPI(int apiVersion, refimport_t *rimp)
      * validated crash-free with surfaces enabled across mp_toujane, mp_carentan,
      * mp_dawnville, mp_harbor, mp_leningrad, mp_matmata, mp_railyard, mp_burgundy.
      * Now default ON; set COD2_NOXSURF=1 to disable if a specific map regresses. */
-#if defined(_M_X64) || defined(__x86_64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     {
         extern char *getenv(const char *);
         *(byte *)(r + 324 * 2) = getenv("COD2_NOXSURF") ? 0 : 1;

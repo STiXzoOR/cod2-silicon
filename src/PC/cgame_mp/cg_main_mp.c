@@ -32,17 +32,17 @@ extern void XAnimFreeTree(struct XAnimTree_s *tree, void *Free);
 extern int BG_GetNumWeapons(void);
 extern void AxisCopy(vec3_t *in, vec3_t *out);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
-#if !defined(__EMSCRIPTEN__) && !defined(__x86_64__)
+#if !defined(__EMSCRIPTEN__) && !defined(__x86_64__) && !defined(__aarch64__)
 #if !COD2_APPLE_SDK
 extern void *memcpy(void *dest, const void *src, unsigned int n);
 #endif
 #endif
-#if !defined(__EMSCRIPTEN__) && !defined(__x86_64__)
+#if !defined(__EMSCRIPTEN__) && !defined(__x86_64__) && !defined(__aarch64__)
 #if !COD2_APPLE_SDK
 extern void *memset(void *s, int c, unsigned int n);
 #endif
 #endif
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 #    include <string.h>
 #endif
 extern void CL_TrackStatistics(trStatistics_t *pStats);

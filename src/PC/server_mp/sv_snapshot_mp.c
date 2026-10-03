@@ -942,7 +942,7 @@ void SV_SendMessageToClient(msg_t *msg, client_t *client)
 
     compressedSize = MSG_WriteBitsCompress(msg->data + 4, compressedBuf + 4, msg->cursize - 4) + 4;
 
-#if defined(_M_X64) || defined(__x86_64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     {
         static int traceCount;
 

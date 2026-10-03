@@ -177,7 +177,7 @@ static qboolean SEH_StringEd_SetLanguageStrings(int iLanguage)
         return 1;
     }
 
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
     if (com_developer && com_developer->current.enabled) {
         return 0;

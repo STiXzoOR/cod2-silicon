@@ -77,7 +77,7 @@ extern struct scr_data_t g_scr_data;
 
 int COD2_GEntityHandle(const gentity_t *ent)
 {
-#if defined(COD2_X64) || defined(__x86_64__) || defined(_M_X64)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
     return ent ? (int)(ent - g_entities) + 1 : 0;
 #else
     return (int)(uintptr_t)ent;
@@ -86,7 +86,7 @@ int COD2_GEntityHandle(const gentity_t *ent)
 
 gentity_t *COD2_GEntityFromHandle(int handle)
 {
-#if defined(COD2_X64) || defined(__x86_64__) || defined(_M_X64)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
     if (handle <= 0 || handle > 1024)
         return NULL;
     return handle ? &g_entities[handle - 1] : NULL;
@@ -97,7 +97,7 @@ gentity_t *COD2_GEntityFromHandle(int handle)
 
 int COD2_TagInfoHandle(const tagInfo_t *tagInfo)
 {
-#if defined(COD2_X64) || defined(__x86_64__) || defined(_M_X64)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
     return tagInfo ? (int)SCR_ARENA_ENC(tagInfo) + 1 : 0;
 #else
     return (int)(uintptr_t)tagInfo;
@@ -106,7 +106,7 @@ int COD2_TagInfoHandle(const tagInfo_t *tagInfo)
 
 tagInfo_t *COD2_TagInfoFromHandle(int handle)
 {
-#if defined(COD2_X64) || defined(__x86_64__) || defined(_M_X64)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
     unsigned int off;
     if (handle <= 0)
         return NULL;

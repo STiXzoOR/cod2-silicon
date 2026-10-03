@@ -6,7 +6,7 @@
 extern byte *clc_ptr;
 extern byte *cl_ptr;
 extern byte *net_profile_dvar;
-#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
 extern int clc_x64_lastChallenge;
 #endif
 
@@ -51,7 +51,7 @@ void CL_Netchan_Decode(byte *data, int size)
     int challenge;
     int index;
     int i;
-#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     static int x64DecodeTraceCount;
     byte beforeTrace[16];
     int beforeTraceLen;
@@ -64,7 +64,7 @@ void CL_Netchan_Decode(byte *data, int size)
 
     key = (byte)(((clientConnection_t *)clc_base)->serverMessageSequence);
     challenge = ((clientConnection_t *)clc_base)->challenge;
-#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     if (!challenge) {
         challenge = clc_x64_lastChallenge;
     }
@@ -72,7 +72,7 @@ void CL_Netchan_Decode(byte *data, int size)
     key ^= (byte)challenge;
 
     index = 0;
-#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     beforeTraceLen = size < (int)sizeof(beforeTrace) ? size : (int)sizeof(beforeTrace);
     for (i = 0; i < beforeTraceLen; ++i) {
         beforeTrace[i] = data[i];
@@ -94,7 +94,7 @@ void CL_Netchan_Decode(byte *data, int size)
         data[i] ^= key;
     }
 
-#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     if (x64DecodeTraceCount < 12) {
         FILE *f = fopen("x64_netchan_trace.txt", "a");
         if (f) {

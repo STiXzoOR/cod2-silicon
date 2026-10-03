@@ -584,7 +584,7 @@ static VariableStackBuffer *__attribute_regparm__(3)
         if (value->type == 7) {
             scrVmPub.function_count--;
             scrVmPub.function_frame--;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
             *(unsigned int *)(record + 1) =
                 SCR_CODEPOS_ENC(scrVmPub.function_frame->fs.pos);
@@ -1195,7 +1195,7 @@ const char *Scr_GetNextCodepos(VariableValue *top, const char *pos, int opcode, 
             case 0x54:
                 if (scrVmPub.function_count <= 31) {
                     *localId = 0;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
                     return SCR_CODEPOS_PTR(*(const unsigned int *)next);
 #else
                     return *(const char *const *)next;
@@ -1215,7 +1215,7 @@ const char *Scr_GetNextCodepos(VariableValue *top, const char *pos, int opcode, 
             case 0x56:
                 if (top->type == 1 && scrVmPub.function_count <= 31) {
                     *localId = 0;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
                     return SCR_CODEPOS_PTR(*(const unsigned int *)next);
 #else
                     return *(const char *const *)next;
@@ -1380,7 +1380,7 @@ const char *Scr_GetNextCodepos(VariableValue *top, const char *pos, int opcode, 
 
             for (i = 0; i < caseCount; ++i) {
                 unsigned int switchValue = *(const unsigned int *)next;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
                 const char *caseCodePos = SCR_CODEPOS_PTR(*(const unsigned int *)(next + 4));
 #else
                 const char *caseCodePos = *(const char *const *)(next + 4);
@@ -6878,7 +6878,7 @@ static void VM_CandidateHandleSwitch(const char **pos, VariableValue **top)
 
     for (i = 0; i < caseCount; i++) {
         unsigned int currentCaseValue = *(const unsigned int *)*pos;
-#    if defined(__x86_64__) || defined(_M_X64)
+#    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
         const char *currentCodePos = SCR_CODEPOS_PTR(*(const unsigned int *)(*pos + 4));
 #    else
         const char *currentCodePos = *(const char *const *)(*pos + 4);
@@ -6949,7 +6949,7 @@ static void VM_CandidateCheckFrameDepth(void)
 
 static const char *VM_CandidateReadScriptCallTarget(const char **pos)
 {
-#    if defined(__x86_64__) || defined(_M_X64)
+#    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
     const char *target = SCR_CODEPOS_PTR(*(const unsigned int *)*pos);
 #    else
     const char *target = *(const char *const *)*pos;
@@ -7235,7 +7235,7 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
 
         case VMOP_GetFunction: {
             VariableValue *out = VM_PushValue(&top);
-#    if defined(__x86_64__) || defined(_M_X64)
+#    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
             out->u.codePosValue = *(const unsigned int *)pos;
 #    else
@@ -7931,7 +7931,7 @@ static void VM_Resume(unsigned int timeId)
                 top->type = type;
 
                 if (type == 7) {
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
                     scrVmPub.function_frame->fs.pos =
                         SCR_CODEPOS_PTR(*(unsigned int *)(record + 1));
 #else

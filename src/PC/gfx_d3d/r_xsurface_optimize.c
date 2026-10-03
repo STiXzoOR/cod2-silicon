@@ -15,7 +15,7 @@ typedef int(__attribute__((cdecl)) * vtable_func_t)();
 /* VTABLE_CALL removed: it was a variadic macro (unsupported by VC7.1) and unused. */
 
 typedef int(__attribute__((cdecl)) * flat_func_t)();
-#if defined(_M_X64) || defined(__x86_64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
 /* &ri is a uniform pointer-slot table; x86 byte offsets double on x64 (8-byte slots) */
 #define FLAT_SLOT(base, off) (*(flat_func_t *)((base) + (off) * 2))
 #else

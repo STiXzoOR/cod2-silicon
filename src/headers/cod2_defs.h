@@ -3305,7 +3305,7 @@ typedef my_upsampler * my_upsample_ptr;
    slot makes adjacent server DObjs overlap and clobber modelParents/matOffset (-> infinite bone-
    hierarchy loop in DObjGetHierarchyBits). 160 fits the x64 struct and stays 16-aligned. objBuf is
    runtime BSS, so re-sizing it is binary-compatible. */
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 typedef char objBufEntry[160];
 #else
 typedef char objBufEntry[100];
@@ -6005,7 +6005,7 @@ union VariableUnion {
     int intValue;
     float floatValue;
     unsigned int stringValue;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
     unsigned int vectorValue;
     unsigned int codePosValue;
 #else
@@ -6013,7 +6013,7 @@ union VariableUnion {
     const char *codePosValue;
 #endif
     unsigned int pointerValue;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
     unsigned int stackValue;
 #else
     VariableStackBuffer *stackValue;
@@ -6024,7 +6024,7 @@ union VariableUnion {
 extern unsigned char scrMemTreeGlob[];
 
 extern void * const imp_scrVarPub;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 #define SCR_ARENA_PTR(off)    ((void *)(scrMemTreeGlob + (unsigned int)(off)))
 #define SCR_ARENA_ENC(ptr)    ((unsigned int)((const unsigned char *)(const void *)(ptr) - scrMemTreeGlob))
 #define SCR_PROGBUF_BASE()    (((struct scrVarPub_t *)imp_scrVarPub)->programBuffer)

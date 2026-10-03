@@ -25,7 +25,7 @@ extern int MT_IsNodeCovered(int);
    ("X already defined"). It must NOT gate the direct ref-add functions (SL_AddRefToString /
    Scr_SetString / SL_TransferRefToUser) -- those run for live nodes (e.g. a function name like
    'main' at registration) and skipping them frees a live string -> "could not find main". */
-#if defined(_M_X64) || defined(__x86_64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
 #define SL_NODE_DEAD(n) (MT_IsNodeCovered((int)(n)))
 #else
 #define SL_NODE_DEAD(n) (0)   /* x86 string table is unaffected; keep original behavior */
@@ -163,7 +163,7 @@ void SL_RemoveRefToStringOfLen(unsigned int stringValue, unsigned int len)
     if (ref != 0)
         return;
 
-#if defined(_M_X64) || defined(__x86_64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     /* x64: do NOT reclaim a string node whose refcount reached zero. The free path (hash-chain
        unlink + buddy MT_FreeIndex) has an x64 corruption bug: freed nodes linger in
        the hash chain and get re-found (colliding ids -> "X already defined" / "unknown
@@ -181,7 +181,7 @@ void SL_RemoveRefToStringOfLen(unsigned int stringValue, unsigned int len)
 
     MT_FreeIndex(stringValue, len + 4);
 
-#if defined(_M_X64) || defined(__x86_64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     /* x64: the original chain unlink (below) leaves freed strings findable in the hash
        chain on x64 (a bug in the bucket recycling) -> they get re-found and
        ref-added, corrupting the buddy free-list. Do a robust brute-force removal instead:

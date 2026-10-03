@@ -1,6 +1,6 @@
 #include "common_types.h"
 
-#if defined(__x86_64__) || defined(_M_X64) || COD2_APPLE_SDK
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64) || COD2_APPLE_SDK
 #    define COD2_SUBTABLE_PTR(p) ((intptr_t)(p))
 #else
 #    define COD2_SUBTABLE_PTR(p) ((int)(p))

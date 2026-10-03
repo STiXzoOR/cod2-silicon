@@ -544,7 +544,7 @@ void Scr_PrintPrevCodePos(print_msg_type_t type, const char *codePos, unsigned i
         return;
     }
 
-#if defined(_M_X64) || defined(__x86_64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     {   /* x64: the link phase can hand CompileError2 a TRUNCATED codePos (high 32 bits
            zero) -> the va("%s") below would crash. Guard it so the real compile error
            surfaces instead of crashing the error printer. */

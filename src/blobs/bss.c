@@ -1,5 +1,5 @@
 #include "common_types.h"
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 #include <setjmp.h>   /* x64: g_script_error is a real jmp_buf[] array */
 #endif
 
@@ -174,7 +174,7 @@ unsigned char bg_sharedAmmoCaps[512];
 unsigned char bg_iNumWeapClips[32];
 unsigned char bg_weapClips[544];
 unsigned char scrVmGlob[8320];
-#if defined(_M_X64) || defined(__x86_64__)
+#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
 struct scrCompileGlob_t scrCompileGlob;   /* x86 was unsigned char[512]; x64 struct is ~920B (value_start[32] grows) -> blob overflowed */
 #else
 unsigned char scrCompileGlob[512];
@@ -197,12 +197,12 @@ unsigned char statCount[32];
 unsigned char stats[96];
 unsigned char initialized[128];
 unsigned char cm_world[24704];
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 cin_cache cinTable[16];   /* x86 blob 7360 (460*16); x64 cin_cache=496 -> 7936 > 7360 overflow */
 #else
 cin_cache cinTable[16];
 #endif
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 cinematics_t cin;   /* x86 blob 2426400; x64 sizeof(cinematics_t)=2688536 -> overflow */
 #else
 struct cinematics_t cin;
@@ -242,7 +242,7 @@ unsigned char lockPvsViewParms[332];
 BSSINT warnCount;
 unsigned char warnCount_007f1dd0[48];
 GfxCmdArray *s_cmdList;   /* was unsigned char[128] blob; consumers use it as a GfxCmdArray* (assigned &commands, deref'd) */
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 struct GfxDebugFrameGlob s_debugFrameGlob;   /* x86 blob 2399616; x64 sizeof 3054928 (pointer fields grow) */
 #else
 unsigned char s_debugFrameGlob[2399616];
@@ -385,7 +385,7 @@ unsigned char rect_00f00744[24];
 unsigned char inHandleKey[36];
 unsigned char initialized_00f00780[128];
 unsigned char msgInit[32];
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
 struct huffman_t msgHuff;
 #else
@@ -501,13 +501,13 @@ unsigned char g_NoTextureID[127];
 unsigned char __ZN6CFence15sUnusedFenceIDsE[128];
 unsigned char __ZN13CMemoryBuffer20sDelayedFreeRequestsE[128];
 unsigned char __ZN7COpenGL7sOpenGLE[4096];
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 TraceThreadInfo g_traceThreadInfo[1];   /* x86 blob 28; x64 sizeof 48 (pointer fields grow) */
 #else
 unsigned char g_traceThreadInfo[28];
 #endif
 /* consumer char *com_consoleLines[32]: x86-sized pointer-array blob, too small on x64 */
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 char *com_consoleLines[32];
 #else
 char *com_consoleLines[32];
@@ -546,7 +546,7 @@ const dvar_t *loc_language;
 char lastValidGame[256];
 char lastValidBase[256];
 /* consumer char *fs_serverReferencedIwdNames[1024]: x86-sized pointer-array blob, too small on x64 */
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 char *fs_serverReferencedIwdNames[1024];
 #else
 char *fs_serverReferencedIwdNames[1024];
@@ -554,13 +554,13 @@ char *fs_serverReferencedIwdNames[1024];
 unsigned char fs_serverReferencedIwds[4096];
 int fs_numServerReferencedIwds;
 /* consumer char *fs_serverIwdNames[1024]: x86-sized pointer-array blob, too small on x64 */
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 char *fs_serverIwdNames[1024];
 #else
 char *fs_serverIwdNames[1024];
 #endif
 int fs_serverIwds[1024];
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
 fileHandleData_t fsh[74];
 #else
@@ -595,13 +595,13 @@ const dvar_t *snd_stereo;
 const dvar_t *snd_bits;
 const dvar_t *snd_khz;
 const dvar_t *snd_errorOnMissing;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
 struct snd_local_t g_snd;
 #else
 struct snd_local_t g_snd;
 #endif
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 cmd_t cmd_texts[1];   /* x86 blob 12; x64 sizeof 16 (cmd_t data pointer grows) */
 #else
 unsigned char cmd_texts[12];
@@ -698,36 +698,36 @@ struct WeaponDef *bg_weaponDefs[128];
    into the immediately-following bg_weaponDefs, NULLing every WeaponDef* -> NULL
    deref in BG_FindWeaponIndexForName during script precache on mp_breakout/mp_rhine.
    Retype so the compiler sizes it for the arch. BSS, so binary-compatible on x86. */
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 struct scrVmPub_t scrVmPub;
 #else
 unsigned char scrVmPub[17184];
 #endif
 int g_script_error_level;
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 jmp_buf g_script_error[33];   /* x86 blob 2400 (72B jmp_buf); x64 sizeof jmp_buf 256 -> 8448; setjmp/longjmp(g_script_error[level]) overflowed the blob at nesting >=9 */
 #else
 jmp_buf g_script_error[33];
 #endif
 unsigned char scrVarPub[262240];
 unsigned char scrVarGlob[1048608];
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 struct scrCompilePub_t scrCompilePub;   /* typed so the x64-wider func_table (intptr_t) is sized correctly */
 #else
 struct scrCompilePub_t scrCompilePub;
 #endif
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 scrParserPub_t scrParserPub;   /* x86 blob 28; x64 sizeof(scrParserPub_t)=32 -> overflow */
 #else
 struct scrParserPub_t scrParserPub;
 #endif
 struct scrParserGlob_t scrParserGlob;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 struct scrAnimPub_t scrAnimPub;   /* typed: xanim_lookup[2][128] of scr_animtree_t grows on x64 (blob was x86-sized 1152) */
 #else
 struct scrAnimPub_t scrAnimPub;
 #endif
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
 struct g_sa_type g_sa;
 #else
@@ -738,14 +738,14 @@ unsigned char legacyHacksArray[1792];
 struct saLoadObjGlob_type saLoadObjGlob;
 int giFilesFound;
 /* consumer source_t *sourceFiles[64]: x86-sized pointer-array blob, too small on x64 */
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 source_t *sourceFiles[64];
 #else
 source_t * sourceFiles[64];
 #endif
 define_t *globaldefines;
 int numtokens;
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 WinVars_t g_wv;   /* x86 blob 32; x64 sizeof(WinVars_t)=48 -> overflow */
 #else
 unsigned char g_wv[32];
@@ -784,7 +784,7 @@ const dvar_t *r_outdoorAwayBias;
 const dvar_t *r_glowBloomDesaturation;
 const dvar_t *r_glowBloomCutoff;
 /* consumers const dvar_t *NAME[2]: x86-sized pointer-array blobs, too small on x64 */
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 const dvar_t *r_glowBloomIntensity[2];
 const dvar_t *r_glowSkyBleedIntensity[2];
 const dvar_t *r_glowRadius[2];
@@ -914,22 +914,22 @@ GLuint g_FenceID;
 materialCommands_t tess;
 r_backEndGlobals_t backEnd;
 GfxBackEndData *backEndData;   /* pointer-blob retype */
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 SunFlareDynamic sunFlareArray[4];   /* x86 blob 228; x64 SunFlareDynamic=64 -> 4*64=256 > 228 overflow */
 #else
 SunFlareDynamic sunFlareArray[4];
 #endif
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 r_globals_load_t rgl;   /* x86 blob 28; x64 sizeof(r_globals_load_t)=48 -> overflow */
 #else
 struct r_globals_load_t rgl;
 #endif
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 GfxWorld s_world;   /* x86 blob 640; x64 sizeof(GfxWorld)=656 -> overflow */
 #else
 GfxWorld s_world;
 #endif
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 lightGlob_type lightGlob;   /* x86 blob 352; x64 sizeof(lightGlob_type)=520 -> overflow */
 #else
 struct lightGlob_type lightGlob;
@@ -959,7 +959,7 @@ const dvar_t *r_sunsprite_shader;
 char *yytext;
 BSSINT yyleng;
 BSSINT yynerrs;
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 stype_t yylval;   /* x86 blob 8; x64 sizeof(stype_t)=16 -> overflow */
 #else
 stype_t yylval;
@@ -1153,7 +1153,7 @@ ping_t cl_pinglist[16];
 unsigned char cl_pinglist[16704];
 #endif
 Bool g_waitingForServer;
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 clientStatic_t cls;   /* x86 blob 2755264; x64 sizeof(clientStatic_t)=2756928 -> overflow */
 #elif COD2_IS_PATCH_13
 unsigned char cls[0x2c8a18];
@@ -1163,7 +1163,7 @@ unsigned char cls[2755264];
 
 unsigned char clientConnections[sizeof(clientConnection_t)];
 
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 clientActive_t clients[1];   /* x86 blob 1662356; x64 sizeof(clientActive_t)=1662368 -> overflow */
 #else
 unsigned char clients[1662356];
@@ -1234,12 +1234,12 @@ const dvar_t *ui_extraBigFont;
 const dvar_t *ui_bigFont;
 const dvar_t *ui_smallFont;
 const dvar_t *ui_gametype;
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 uiInfo_t uiInfoArray[1];   /* x86 blob 4288; x64 sizeof(uiInfo_t)=5112 -> overflow */
 #else
 unsigned char uiInfoArray[4288];
 #endif
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 sharedUiInfo_t sharedUiInfo;   /* x86 blob 115392; x64 sizeof(sharedUiInfo_t)=123184 -> overflow */
 #else
 sharedUiInfo_t sharedUiInfo;
@@ -1288,7 +1288,7 @@ const dvar_t *rcon_password;
 const dvar_t *sv_zombietime;
 const dvar_t *sv_timeout;
 const dvar_t *sv_fps;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
 server_t sv;
 serverStatic_t svs;
@@ -1331,13 +1331,13 @@ const dvar_t *hud_fade_stance;
 const dvar_t *hud_fade_compass;
 const dvar_t *hud_fade_healthbar;
 const dvar_t *hud_fade_ammodisplay;
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 scr_data_t g_scr_data;   /* x86 blob 14080; x64 sizeof(scr_data_t)=14328 -> overflow */
 #else
 scr_data_t g_scr_data;
 #endif
 /* consumer keywordHash_t *itemParseKeywordHash[512]: x86-sized pointer-array blob, too small on x64 */
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 keywordHash_t *itemParseKeywordHash[512];
 #else
 keywordHash_t *itemParseKeywordHash[512];
@@ -1408,7 +1408,7 @@ unsigned char g_gametype_017e1a58[40];
 /* 573440 = 1024 * 560 (x86 sizeof(gentity_s)). On x64 the struct is larger, so the blob must grow
    to hold all 1024 entity slots (indices up to 0x3FF incl. the world entity 1022) -- otherwise high
    indices overflow into adjacent BSS. BSS, so re-sizing is binary-compatible. */
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 struct gentity_s g_entities[1024];
 #else
 unsigned char g_entities[573440];
@@ -1419,7 +1419,7 @@ unsigned char g_entities[573440];
    G_FreeEntity's memset of an entity slot was landing on level_bgs.AllocXAnim, NULLing
    it and crashing anim-tree precache on any map with a misc_model (e.g. mp_carentan).
    Retype so the compiler sizes it for the arch. BSS, so binary-compatible on x86. */
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 struct bgs_t level_bgs;
 #else
 bgs_t level_bgs;
@@ -1435,7 +1435,7 @@ bgs_t level_bgs;
    the same class as the level_bgs->g_entities bug. (This is NOT the mp_breakout/
    mp_rhine weapon-precache crash; that is scrVmPub->bg_weaponDefs above.) Retype so
    the compiler sizes it for the arch. BSS, so binary-compatible on x86. */
-#if defined(COD2_X64) || defined(__x86_64__)
+#if defined(COD2_X64) || defined(__x86_64__) || defined(__aarch64__)
 struct level_locals_t level;
 #else
 struct level_locals_t level;
