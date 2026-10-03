@@ -36,7 +36,11 @@ extern byte *_dvar_shellshock_mousereducemax;
 extern byte *_dvar_shellshock_mousesensitivity;
 extern const dvar_t *cg_shock_viewKickFadeTime;
 
+#if defined(COD2_X64)
+#define _snd_local_listener ((const vec_t *)imp_vec3_origin)
+#else
 extern int _snd_local_listener;
+#endif
 
 extern const vec_t Vec3Normalize(vec_t *v);
 extern void Vec3Cross(const vec_t *v1, const vec_t *v2, vec_t *out);
@@ -60,8 +64,16 @@ extern void SND_SetEnvironmentEffects(int type, const char *name, float drylevel
 extern void SND_DeactivateChannelVolumes(int type, int flags);
 extern void SND_DeactivateEnvironmentEffects(int type, int flags);
 extern snd_alias_t * CL_PickSoundAlias(const char *aliasname);
+#if defined(COD2_X64)
+extern int SND_PlayBlendedSoundAliases(const snd_alias_t *, const snd_alias_t *, float, int, const vec_t *, int, snd_alias_system_t);
+#else
 extern void SND_PlayBlendedSoundAliases(void *alias0, void *alias1, float fade, int channel, int entity, int flags, int loop);
+#endif
+#if defined(COD2_X64)
+extern int SND_PlaySoundAlias(const snd_alias_t *, int, const vec_t *, int, snd_alias_system_t);
+#else
 extern void SND_PlaySoundAlias(void *alias, int channel, int entity, int duration, int loop);
+#endif
 extern void CL_CapTurnRate(float min_rate, float max_rate);
 extern void CL_SetUserCmdInShellshock(int inShellshock);
 

@@ -57,13 +57,25 @@ Bool Encode_Init(int bandwidthEnum)
 
     switch (bandwidthEnum) {
     case 0:
+#if defined(COD2_X64)
+        mode = imp_speex_nb_mode;
+#else
         mode = speex_nb_mode_ptr;
+#endif
         break;
     case 1:
+#if defined(COD2_X64)
+        mode = imp_speex_wb_mode;
+#else
         mode = speex_wb_mode_ptr;
+#endif
         break;
     case 2:
+#if defined(COD2_X64)
+        mode = imp_speex_uwb_mode;
+#else
         mode = speex_uwb_mode_ptr;
+#endif
         break;
     default:
         Com_Printf("Unknown bandwidth mode %i\n", bandwidthEnum);
@@ -101,7 +113,11 @@ int Encode_Sample(short *buffer_in, char *buffer_out, int maxLength)
 {
     int quality;
 
+#if defined(COD2_X64)
+    quality = (*(const dvar_t **)imp_sv_voiceQuality)->current.integer;
+#else
     quality = *(int *)((char *)*(void **)speex_quality_ptr + 8);
+#endif
     if (quality != g_encoder_quality) {
         g_encoder_quality = quality;
         speex_encoder_ctl(g_encoder, 4, &g_encoder_quality);

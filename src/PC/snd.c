@@ -56,7 +56,11 @@ void Com_Printf(const char *fmt, ...);
 void Com_DPrintf(const char *fmt, ...);
 void Z_FreeInternal(void *ptr);
 void AxisCopy(vec3_t *in, vec3_t *out);
+#if defined(COD2_X64)
+void Voice_Shutdown(void);
+#else
 unsigned int Voice_Shutdown(void);
+#endif
 void Com_UnloadSoundAliases(snd_alias_system_t system);
 void SND_ShutdownDriver(void);
 void Cmd_RemoveCommand(const char *cmdName);
@@ -70,7 +74,11 @@ const dvar_t *Dvar_RegisterFloat(const char *name, float defaultValue, float min
 Bool SND_InitDriver(void);
 int Sys_Milliseconds(void);
 void Cmd_AddCommand(const char *cmdName, void (*function)(void));
+#if defined(COD2_X64)
+Bool Voice_Init(void);
+#else
 void Voice_Init(void);
+#endif
 void CG_GetEntityOrientation(int entnum, vec_t *origin, vec3_t *axis);
 
 Bool SND_Is2DChannelFree(int index);
@@ -124,7 +132,11 @@ void SND_SetStreamChannelFromSaveInfo(int index, void *info);
 int SND_StartAlias2DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, float volume, float pitch, int timeshift, float fraction, int startDelay, int master, int *pChannel, snd_alias_system_t system);
 int SND_StartAlias3DSample(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, float volume, float pitch, int timeshift, float fraction, int startDelay, int master, int *pChannel, snd_alias_system_t system);
 int SND_StartAliasStreamOnChannel(const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, int entnum, const vec_t *org, float volume, float pitch, int timeshift, float fraction, int startDelay, int master, int index, snd_alias_system_t system);
+#if defined(COD2_X64)
+void *Com_GetSoundFileMem(const snd_alias_t *alias);
+#else
 int Com_GetSoundFileMem(const snd_alias_t *alias);
+#endif
 float randomf(void);
 void Dvar_ClearModified(const dvar_t *dvar);
 void SND_Update3DChannel(int index, int frametime);

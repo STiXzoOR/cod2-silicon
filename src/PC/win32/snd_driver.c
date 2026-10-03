@@ -73,7 +73,11 @@ extern void AIL_set_3D_sample_volume(void *S, float volume);
 extern void AIL_set_3D_sample_distances(void *S, float min_dist, float max_dist);
 extern void AIL_set_3D_sample_loop_count(void *S, int count);
 extern void AIL_set_3D_sample_effects_level(void *S, float level);
+#if defined(COD2_X64)
+extern int AIL_set_3D_sample_info(void *, const void *);
+#else
 extern void AIL_set_3D_sample_info(void *S, void *info);
+#endif
 extern void AIL_set_3D_sample_offset(void *S, int offset);
 extern void AIL_set_3D_position(void *S, float x, float y, float z);
 extern void AIL_set_3D_stream_position(void *S, float x, float y, float z);

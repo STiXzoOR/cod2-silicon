@@ -30,6 +30,10 @@ extern void Com_Printf(const char *msg, ...);
 extern byte *encode_vol_ptr;
 extern byte *voice_scale_ptr;
 extern byte *record_callback_ptr;
+#if defined(COD2_X64)
+extern float voice_current_voicelevel;
+extern float voice_current_scaler;
+#endif
 
 int Record_Start(recordingSample_t *sample);
 int Record_Stop(recordingSample_t *sample);
@@ -84,7 +88,11 @@ int Record_QueueAudioDataForEncoding(audioSample_t *sample)
     int channels;
     int partial;
 
+#if defined(COD2_X64)
+    p_vol = &voice_current_voicelevel;
+#else
     p_vol = *(float **)&encode_vol_ptr;
+#endif
     *p_vol = 0.0f;
 
     data = (short *)sample->buffer;
@@ -92,7 +100,11 @@ int Record_QueueAudioDataForEncoding(audioSample_t *sample)
     channels = sample->bytesPerSample;
 
     if (channels == 2 && numSamples > 0) {
+#if defined(COD2_X64)
+        float scale = voice_current_scaler;
+#else
         float scale = **(float **)&voice_scale_ptr;
+#endif
         for (ii = 0; ii < numSamples; ii++) {
             float fval = (float)data[ii] * scale;
             data[ii] = (short)(int)fval;
@@ -181,6 +193,10 @@ int Record_AudioCallback(audioSample_t *sample)
 
 int Record_Init(int callInit, const void *handle)
 {
+#if defined(COD2_X64)
+    *(int (**)(audioSample_t *))imp_current_audioCallback = Record_AudioCallback;
+#else
     *(void **)record_callback_ptr = (void *)Record_AudioCallback;
+#endif
     return DSOUNDRecord_Init(1, handle);
 }
