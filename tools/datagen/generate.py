@@ -14,6 +14,7 @@ import re
 import struct
 import subprocess
 
+from bss import generate_bss
 from c_headers import Headers
 from elf32 import ELF
 from layout import shape
@@ -30,6 +31,26 @@ def byte_init(data):
     return '{' + ','.join(str(b) for b in data) + '}' if any(data) else '{0}'
 
 
+def source_vtable(obj):
+    # literals.S documents the two header slots and function slots. The engine
+    # uses the same two-pointer address point in FxPrimitives.c. Zero-only tail
+    # slots preserve the assembly extent without keeping an ILP32 byte header.
+    if not obj.name.startswith('__ZTV') or len(obj.data) < 8 or len(obj.data) % 4:
+        return None
+    if any(pos < 4 or pos % 4 for pos in obj.relocs):
+        return None
+    for pos in range(4, len(obj.data), 4):
+        if pos not in obj.relocs and any(obj.data[pos:pos + 4]):
+            return None
+    pointer = dict(kind='pointer', ctype='dg_function', size=4, align=4)
+    fields = [('offset_to_top', 0, dict(kind='scalar', ctype='__PTRDIFF_TYPE__', size=4, align=4)),
+              ('type_info', 4, dict(kind='pointer', ctype='void *', size=4, align=4))]
+    count = (len(obj.data) - 8) // 4
+    if count:
+        fields.append(('slots', 8, dict(kind='array', child=pointer, count=count, size=count * 4, align=4)))
+    return dict(kind='struct', fields=fields, size=len(obj.data), align=4)
+
+
 class Emitter:
     def __init__(self, objects, headers, db, byname):
         self.objects = objects
@@ -39,6 +60,9 @@ class Emitter:
         self.cache = {}
         names = sorted({o.name for o in objects} | {name for o in objects for name, _ in o.relocs.values() if not name.startswith('.')})
         self.refs = {name: 'dg_ref_' + str(i) for i, name in enumerate(names)}
+        self.functions = {name for name in names if name in db.functions and re.fullmatch(r'[A-Za-z_]\w*', name)
+                          and name not in {o.name for o in objects}}
+        self.refs.update({name: name for name in self.functions})
         self.addends = {}
         self.address_types = {}
         self.translate_addresses = False
@@ -88,7 +112,7 @@ class Emitter:
         if not addend:
             return expr
         if not self.translate_addresses:
-            return expr + ' + (%d)' % addend
+            return '(unsigned char *)' + expr + ' + (%d)' % addend
         key = (Path(obj.origin).stem, obj.name, offset)
         try:
             if id(obj) not in self.trusted_objects:
@@ -107,7 +131,7 @@ class Emitter:
         except Unsupported as error:
             self.addends[key] = dict(object=obj.name, offset=offset, target=symbol, addend=addend,
                                      status='unresolved', reason=str(error))
-            return expr + ' + (%d)' % addend
+            return '(unsigned char *)' + expr + ' + (%d)' % addend
 
     def ctype(self, ty):
         if ty['kind'] in ('scalar', 'pointer'):
@@ -231,8 +255,8 @@ def generate(args):
         original = out / ('original-' + name + '.o')
         run(args.clang, '-target', 'i386-unknown-linux-gnu', '-c', str(ROOT / 'src/blobs' / (name + '.S')), '-o', str(original))
         groups[name] = ELF(original).objects()
-    # Preserve the current Stage 2 omissions, startup pointer repairs, aliases,
-    # and stub extents. These committed C artifacts are production's authority.
+    # Preserve the current Stage 2 omissions, initializers, aliases, and stub
+    # extents. These committed C artifacts are production's authority.
     native_sources = {'data': 'data32', 'literals': 'literals32',
                       'import_pointers': 'import_pointers_native'}
     for group, source in native_sources.items():
@@ -255,16 +279,39 @@ def generate(args):
     group_by_id = {id(o): group for group, objs in groups.items() for o in objs}
     for obj in objects:
         ty, record = choose_type(db, obj, byname, emitter)
+        vtable = source_vtable(obj)
+        if vtable:
+            ty = vtable
+            record = dict(status='typed', source='documented vtable header and pointer slots')
         # Import wrapper storage has an explicit pointer contract in the source.
         if group_by_id[id(obj)].startswith('import_pointers') and len(obj.data) == 4 and set(obj.relocs) == {0}:
             ty = dict(kind='pointer', ctype='void *', size=4, align=4)
             record = dict(status='typed', source='import pointer wrapper')
-        # Literal labels encode their width; integer bit patterns are deliberate.
+        if obj.name.startswith('imp_') and len(obj.data) == 4 and set(obj.relocs) == {0}:
+            ty = dict(kind='pointer', ctype='void *', size=4, align=4)
+            record = dict(status='typed', source='import pointer wrapper')
+        if obj.name.startswith('str_') and obj.section == '.rodata' and not obj.relocs:
+            child = dict(kind='scalar', ctype='char', size=1, align=1)
+            ty = dict(kind='array', child=child, count=len(obj.data), size=len(obj.data), align=1)
+            record = dict(status='typed', source='string literal storage')
+        if obj.name in ('sse_float_abs_mask', 'sse_float_sign_mask') and len(obj.data) == 16 and not obj.relocs:
+            child = dict(kind='scalar', ctype='unsigned int', size=4, align=4)
+            ty = dict(kind='array', child=child, count=4, size=16, align=4)
+            record = dict(status='typed', source='documented four-word SSE bit mask')
+        # Literal labels encode their floating-point width. Hexadecimal C
+        # literals preserve finite IEEE values, including negative zero.
         if re.fullmatch(r'lit[48]_[0-9a-f]+', obj.name) and not obj.relocs:
             width = int(obj.name[3])
             if len(obj.data) >= width:
-                ty = dict(kind='scalar', ctype='unsigned int' if width == 4 else 'unsigned long long', size=width, align=4)
-                record = dict(status='typed', source='literal bit pattern', trailing_bytes=len(obj.data)-width)
+                ty = dict(kind='scalar', ctype='float' if width == 4 else 'double', size=width, align=4)
+                try:
+                    emitter.initializer(obj, ty)
+                    record = dict(status='typed', source='floating-point literal', trailing_bytes=len(obj.data)-width)
+                except Unsupported:
+                    ty = emitter.fallback(obj)
+                    record = dict(status='fallback', reason='non-finite floating-point literal needs exact payload bytes')
+            elif group_by_id[id(obj)] == 'literals_native':
+                record = dict(status='fallback', reason='upstream one-byte literal placeholder')
         ctype = emitter.ctype(ty)
         selected[id(obj)] = ty
         record.update(name=obj.name, group=group_by_id[id(obj)], aliases=obj.aliases,
@@ -301,7 +348,8 @@ typedef void (*dg_function)(void);
             section = {'.rodata': 'DG_RODATA', '.data': 'DG_DATA', '.bss': 'DG_BSS',
                        '.data.rel.ro': 'DG_RELRO'}[obj.section]
             attr = '__attribute__((used, aligned(DG_ALIGN), section(%s)))' % section
-            text = '\n/* %s: %s */\n' % (obj.name, record.get('reason', record['status']))
+            description = ('DATAGEN_FALLBACK: ' + record['reason']) if record['status'] == 'fallback' else record.get('source', 'debug type')
+            text = '\n/* %s: %s */\n' % (obj.name, description)
             text += '%s%s dg_object_%d __asm__(DG_ASM("%s")) %s = %s;\n' % ('' if obj.global_symbol else 'static ', ctype, index, obj.name, attr, emitter.initializer(obj, ty))
             text += '#if __SIZEOF_POINTER__ == 4\n_Static_assert(sizeof(%s) == %d, "i386 size: %s");\n' % (ctype, ty['size'], obj.name)
             tail = obj.data[ty['size']:]
@@ -313,8 +361,11 @@ typedef void (*dg_function)(void);
             full.append(text)
         prefix = banner + '#include "typed_types.h"\n#if __SIZEOF_POINTER__ == 4\n#define DG_ALIGN 1\n#else\n#define DG_ALIGN 16\n#endif\n'
         (out / (group + '.c')).write_text(prefix + ''.join(full))
-    common += headers.render() + '\n' + '\n'.join(emitter.types) + '\n'
-    common += '\n'.join('extern unsigned char %s[] __asm__(DG_ASM("%s"));' % (ref, name) for name, ref in emitter.refs.items()) + '\n#endif\n'
+    bss = generate_bss(ROOT, out, args.clang, db, byname, emitter)
+    common += '#if defined(DG_ENGINE_HEADERS)\n#include \"common_types.h\"\n#else\n' + headers.render() + '#endif\n'
+    common += '\n'.join(emitter.types) + '\n'
+    common += '\n'.join(('extern void %s(void)' % ref if name in emitter.functions else 'extern unsigned char %s[]' % ref)
+                        + ' __asm__(DG_ASM("%s"));' % name for name, ref in emitter.refs.items()) + '\n#endif\n'
     (out / 'typed_types.h').write_text(common)
     summary = {}
     for group, objs in groups.items():
@@ -322,7 +373,10 @@ typedef void (*dg_function)(void);
         summary[group] = dict(objects=len(entries), typed=sum(r['status']=='typed' for r in entries),
                               relocations=sum(r['relocations'] for r in entries),
                               typed_relocations=sum(r['relocations'] for r in entries if r['status']=='typed'))
-    report = dict(format=1, binary_sha256=hashlib.sha256(args.binary.read_bytes()).hexdigest(),
+    summary['bss'] = dict(objects=len(bss), upstream_typed=sum(r['status']=='upstream_typed' for r in bss),
+                          typed=sum(r['status']=='typed' for r in bss),
+                          fallback=sum(r['status']=='fallback' for r in bss))
+    report = dict(format=1, bss=bss, binary_sha256=hashlib.sha256(args.binary.read_bytes()).hexdigest(),
                   stabs=dict(variables=len(db.variables), types=len(db.types), parse_failures=len(db.errors),
                              failure_reasons=dict(sorted(Counter(reason for _, reason in db.errors).items()))),
                   summary=summary, objects=records, omitted_native=sorted(omitted),
@@ -331,7 +385,9 @@ typedef void (*dg_function)(void);
                   relocation_addends=[dict(origin=key[0], **value) for key, value in sorted(emitter.addends.items())])
     (out / 'coverage.json').write_text(json.dumps(report, indent=2, sort_keys=True) + '\n')
     (out / 'fallbacks.txt').write_text(''.join(r['group'] + ':' + r['name'] + ': ' + r['reason'] + '\n'
-                                            for r in records if r['status']=='fallback'))
+                                            for r in records if r['status']=='fallback') +
+                                    ''.join('bss:' + r['name'] + ': ' + r['reason'] + '\n'
+                                            for r in bss if r['status']=='fallback'))
     print(json.dumps(summary, indent=2))
 
 

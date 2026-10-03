@@ -35,6 +35,12 @@ for group in data literals import_pointers; do
     "$objdump" -s -r "$out/generated-${group}_native.o" > "$out/generated-${group}_native.objdump"
     "$python" tools/datagen/compare.py "$out/reference-native-$group.o" "$out/generated-${group}_native.o"
 done
+for group in data literals; do
+    "$compiler" -target arm64-apple-macos -ffreestanding -std=c11 -c "$out/reference-native-$group.c" -o "$out/arm64-reference-native-$group.o"
+done
+"$python" tools/datagen/arm64_test.py "$out"
+"$compiler" -target i386-unknown-linux-gnu -ffreestanding -std=c11 -c "$out/bss_probe.c" -o "$out/i386-bss_probe.o"
+"$compiler" -target arm64-apple-macos -ffreestanding -std=c11 -c "$out/bss_probe.c" -o "$out/arm64-bss_probe.o"
 # A second generation must leave all source/coverage outputs byte-identical.
 "$python" tools/datagen/determinism.py "$binary" "$out" "$compiler"
-echo 'PASS: i386 bytes/relocations/symbols, arm64 full/native compiles, deterministic generation'
+echo 'PASS: i386 bytes/relocations/symbols, arm64 full/native and BSS probes, LP64 address points, determinism'
