@@ -7,8 +7,8 @@ Usage: play-cod2x.sh [options] [-- game arguments]
   --renderer gl|vulkan|d9vk|dxvk  Default: gl; WineD3D or legacy/modern DXVK
   --backend highball|wine11      Default: highball
   --resolution WIDTHxHEIGHT     Default: 2560x1440
-  --fullscreen                  Fullscreen (default)
-  --windowed                    Windowed (borderless at desktop size)
+  --fullscreen                  Fullscreen (black screenshot on tested runtime)
+  --windowed                    Windowed (default; borderless at desktop size)
   --fps NUMBER                  Default: 333; 0 means uncapped
   --dx9                         Use the game's DirectX 9 code path
   --dx7                         DirectX 7 fallback (default; fastest tested path)
@@ -32,7 +32,7 @@ fail() { printf 'CoD2x: %s\n' "$*" >&2; exit 1; }
 renderer=gl
 backend=highball
 resolution=2560x1440
-fullscreen=1
+fullscreen=0
 fps=333
 dx7=1
 local_map=0
