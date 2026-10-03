@@ -1364,7 +1364,11 @@ clamp_clip_chk:
     if (ps->ammoclip[clipIdx] > BG_GetAmmoClipSize(clipIdx))
         goto clamp_clip;
 wd_chk:
+#if defined(COD2_X64)
+    if (BG_GetWeaponDef(weapon)->iSharedAmmoCapIndex < 0)
+#else
     if (*(int *)((char *)BG_GetWeaponDef(weapon) + 0x1e4) < 0)
+#endif
         goto ret;
 pickup:
     ps = (playerState_t *)ent->client;
@@ -1383,7 +1387,11 @@ clamp_ammo:
 clamp_clip:
     ps = (playerState_t *)ent->client;
     ps->ammoclip[clipIdx] = BG_GetAmmoClipSize(clipIdx);
+#if defined(COD2_X64)
+    if (BG_GetWeaponDef(weapon)->iSharedAmmoCapIndex >= 0)
+#else
     if (*(int *)((char *)BG_GetWeaponDef(weapon) + 0x1e4) >= 0)
+#endif
         goto pickup;
     ps = (playerState_t *)ent->client;
     goto ret;

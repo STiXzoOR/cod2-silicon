@@ -49,7 +49,11 @@ static loadAnim_t *g_pLoadAnims;
 static int *g_piNumLoadAnims;
 static char input[100000];
 static qboolean bScriptFileLoaded;
+#if defined(COD2_X64)
+extern animStringItem_t weaponStrings[128];
+#else
 extern animStringItem_t weaponStrings[];
+#endif
 extern const dvar_t *bg_swingSpeed;
 extern void *(*controller_names[6])();
 
@@ -106,7 +110,11 @@ void BG_LoadWeaponStrings(void);
 
 void BG_InitWeaponStrings(void)
 {
+#if defined(COD2_X64)
+    memset(weaponStrings, 0, sizeof(weaponStrings));
+#else
     memset(weaponStrings, 0, 0x400);
+#endif
     BG_LoadWeaponStrings();
 }
 
@@ -1537,7 +1545,11 @@ static void __attribute_regparm__(3)
     g_pLoadAnims = pLoadAnims;
     g_piNumLoadAnims = piNumAnims;
 
+#if defined(COD2_X64)
+    memset(weaponStrings, 0, sizeof(weaponStrings));
+#else
     memset(weaponStrings, 0, 0x400);
+#endif
     BG_LoadWeaponStrings();
 
     memset(defineStr, 0, sizeof(defineStr));   /* was 0x480 (x86 size); x64 rows are wider */

@@ -27,7 +27,11 @@ extern int Scr_GetInt(int argIndex);
 extern void Scr_AddEntity(gentity_t *ent);
 extern void Scr_AddUndefined(void);
 extern void Scr_ObjectError(const char *error);
+#if defined(COD2_X64)
+extern gentity_t *SV_AddTestClient(void);
+#else
 extern int SV_AddTestClient(void);
+#endif
 extern qboolean SV_MapExists(const char *name);
 extern const vec_t Vec3Normalize(vec_t *v);
 extern void SV_EnableArchivedSnapshot(int enable);
@@ -119,7 +123,11 @@ extern float acosf(float x);
 extern float asinf(float x);
 extern float sinf(float x);
 extern float cosf(float x);
+#if defined(COD2_X64)
+extern const char *Scr_GetTypeName(unsigned int index);
+#else
 extern int Scr_GetTypeName(int index);
+#endif
 extern void Scr_GetVector(unsigned int index, float *out);
 extern void G_SetOrigin(gentity_t *ent, const vec_t *origin);
 extern void G_SetAngle(gentity_t *ent, const vec_t *angles);
@@ -779,7 +787,11 @@ void Scr_GetWeaponModel(void)
     int weaponIndex = G_GetWeaponIndexForName(pszWeaponName);
 
     if (weaponIndex) {
+#if defined(COD2_X64)
+        Scr_AddString(BG_GetWeaponDef(weaponIndex)->szWorldModel);
+#else
         Scr_AddString(*(const char **)((byte *)BG_GetWeaponDef(weaponIndex) + 0x1b4));
+#endif
     } else {
         if (pszWeaponName[0] && I_stricmp(pszWeaponName, "none") != 0) {
             Com_Printf(va("unknown weapon '%s' in getWeaponModel\n", pszWeaponName));
@@ -1987,7 +1999,12 @@ void GScr_GetPartName(void)
     if ((unsigned int)index >= (unsigned int)numBones)
         Scr_ParamError(1, va("index out of range (0 - %d)", numBones - 1));
 
+#if defined(COD2_X64)
+    /* XModelBoneNames still returns int in xanim; read the typed hierarchy until that ABI is migrated. */
+    name = ((XModelParts *)model->parts)->hierarchy->names[index];
+#else
     name = ((unsigned short *)XModelBoneNames( (XModel *)(model)))[index];
+#endif
     if (!name)
         Scr_ParamError(0, "bad model");
 

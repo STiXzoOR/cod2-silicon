@@ -21,7 +21,8 @@ def compile_source(source, name, baseline=False):
     entry = next(e for e in entries if e['file'].endswith('/src/PC/server_mp/sv_init_mp.c'))
     flags = shlex.split(entry['command'])
     flags = flags[:flags.index('-o')]
-    flags += ['-ffunction-sections', '-fdata-sections', '-Wno-unused-parameter']
+    flags += ['-ffunction-sections', '-fdata-sections', '-Wno-unused-parameter',
+              '-fsanitize=address', '-fno-omit-frame-pointer']
     if baseline and args.baseline:
         path = output / Path(source).name
         path.write_bytes(subprocess.check_output(['git', 'show', f'{args.baseline}:{source}'], cwd=ROOT))
@@ -33,9 +34,10 @@ def compile_source(source, name, baseline=False):
     return obj
 
 
-for name, sources in [('startup', ['src/PC/server_mp/sv_init_mp.c'])]:
+for name, sources in [('startup', ['src/PC/server_mp/sv_init_mp.c']),
+                      ('script_api', ['src/PC/game_mp/g_scr_main_mp.c'])]:
     objects = [compile_source(s, Path(s).stem, True) for s in sources]
     objects.append(compile_source(f'tests/lp64/game/{name}.c', name))
     exe = output / name
-    subprocess.run(['clang', '-arch', 'arm64', '-Wl,-dead_strip', *map(str, objects), '-o', str(exe)], check=True)
+    subprocess.run(['clang', '-arch', 'arm64', '-fsanitize=address', '-Wl,-dead_strip', *map(str, objects), '-o', str(exe)], check=True)
     subprocess.run([str(exe)], cwd=output, check=True)

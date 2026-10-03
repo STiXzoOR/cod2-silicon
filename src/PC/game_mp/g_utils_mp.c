@@ -1207,7 +1207,11 @@ gentity_t *G_Spawn(void)
         int num = LEVEL_NUMENTS;
         e = &LEVEL_GENTITIES[num];
         LEVEL_NUMENTS = num + 1;
+#if defined(COD2_X64)
+        SV_LocateGameData(LEVEL_GENTITIES, num + 1, sizeof(gentity_t), (playerState_t *)LEVEL_CLIENTS, sizeof(gclient_t));
+#else
         SV_LocateGameData(LEVEL_GENTITIES, num + 1, ENTITY_STRIDE, (playerState_t *)(LEVEL_CLIENTS), 0x28A4);
+#endif
     }
 
 init:
