@@ -7,6 +7,7 @@ Usage: play-cod2x.sh [options] [-- game arguments]
   --renderer gl|vulkan|d9vk|dxvk  Default: gl; WineD3D or legacy/modern DXVK
   --backend highball|wine11      Default: highball
   --resolution WIDTHxHEIGHT     Default: 2560x1440
+  --desktop WIDTHxHEIGHT        Private Wine virtual desktop (optional)
   --fullscreen                  Fullscreen (black screenshot on tested runtime)
   --windowed                    Windowed (default; borderless at desktop size)
   --fps NUMBER                  Default: 333; 0 means uncapped
@@ -32,6 +33,7 @@ fail() { printf 'CoD2x: %s\n' "$*" >&2; exit 1; }
 renderer=gl
 backend=highball
 resolution=2560x1440
+desktop=
 fullscreen=0
 fps=333
 dx7=1
@@ -43,12 +45,13 @@ hud=0
 dry_run=0
 while (($#)); do
     case "$1" in
-        --renderer|--backend|--resolution|--fps|--sync)
+        --renderer|--backend|--resolution|--desktop|--fps|--sync)
             (($# >= 2)) || fail "Missing value for $1"
             case "$1" in
                 --renderer) renderer=$2 ;;
                 --backend) backend=$2 ;;
                 --resolution) resolution=$2 ;;
+                --desktop) desktop=$2 ;;
                 --fps) fps=$2 ;;
                 --sync) sync=$2 ;;
             esac
@@ -71,6 +74,7 @@ case "$renderer" in gl|vulkan|d9vk|dxvk) ;; *) fail "Unknown renderer: $renderer
 case "$backend" in highball|wine11) ;; *) fail "Unknown backend: $backend" ;; esac
 case "$sync" in msync|none) ;; *) fail "Unknown sync mode: $sync" ;; esac
 [[ "$resolution" =~ ^[1-9][0-9]{2,4}x[1-9][0-9]{2,4}$ ]] || fail "Invalid resolution: $resolution"
+[[ -z "$desktop" || "$desktop" =~ ^[1-9][0-9]{2,4}x[1-9][0-9]{2,4}$ ]] || fail "Invalid desktop: $desktop"
 [[ "$fps" =~ ^[0-9]{1,4}$ ]] || fail "FPS must be 0..1000"
 ((10#$fps <= 1000)) || fail "FPS must be 0..1000"
 
@@ -125,8 +129,15 @@ fi
 printf 'Backend: %s; renderer: %s; %s; fullscreen=%s; maxfps=%s; sync=%s\n' \
     "$backend" "$renderer" "$resolution" "$fullscreen" "$fps" "$WINEMSYNC"
 printf 'Prefix: %s\nExecutable: %s\nConsole log: %s/main/console_mp.log\n' "$WINEPREFIX" "$exe" "$game"
+launch=("$wine" "$exe")
+if [[ -n "$desktop" ]]; then
+    desktop_exe=${exe#"$WINEPREFIX/drive_c/"}
+    desktop_exe="C:/$desktop_exe"
+    desktop_exe=${desktop_exe//\//\\}
+    launch=("$wine" explorer "/desktop=cod2x-reference,$desktop" "$desktop_exe")
+fi
 if ((dry_run)); then
-    printf 'Command:'; printf ' %q' "$wine" "$exe" "${args[@]}" "$@"; printf '\n'
+    printf 'Command:'; printf ' %q' "${launch[@]}" "${args[@]}" "$@"; printf '\n'
     exit 0
 fi
 
@@ -167,4 +178,4 @@ if ((!steam)); then
     esac
 fi
 cd "$(dirname "$exe")"
-exec "$wine" "$exe" "${args[@]}" "$@"
+exec "${launch[@]}" "${args[@]}" "$@"
