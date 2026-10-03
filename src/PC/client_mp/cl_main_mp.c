@@ -2,6 +2,9 @@
 #include "../qcommon/cod2x.h"
 #endif
 #include "common_types.h"
+#if COD2_APPLE_SDK
+#include "../qcommon/cdkey_hash.h"
+#endif
 #include "imports.h"
 #include "bytematch.h"
 #include "cod2_feature_config.h"
@@ -1743,10 +1746,14 @@ static void CL_BuildMd5StrFromCDKey(char *md5Str)
         memmove(nums, p, (size_t)(e - p) + 1);
     strupr(nums);
 
+#if COD2_APPLE_SDK
+    Com_CDKeyHashBytes(nums, (unsigned int)strlen(nums), md5Str);
+#else
 #    if COD2_FEATURE_PUNKBUSTER
 
     md5Str[0] = '\0';
 #    endif
+#endif
 }
 #endif
 

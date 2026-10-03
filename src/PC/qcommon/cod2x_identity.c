@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 #if defined(__APPLE__)
-#include <CommonCrypto/CommonDigest.h>
+#include "cdkey_hash.h"
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/IOKitLib.h>
 
@@ -88,8 +88,6 @@ int Cod2x_CDKeyHash(const char *key, char hash[33])
 #if defined(__APPLE__)
     char normalized[33];
     size_t i, n = 0;
-    unsigned char digest[CC_MD5_DIGEST_LENGTH];
-    CC_MD5_CTX context;
     if (!key)
         return 0;
     for (i = 0; key[i] && i < 32; ++i) {
@@ -101,16 +99,7 @@ int Cod2x_CDKeyHash(const char *key, char hash[33])
     }
     if (!n)
         return 0;
-    /* Stock CD-key auth uses seeded MD5, not the standard digest. Verified in
-       CoD2x src/other/CoD2MP_s.c:22160 and Mac MD5Init at :375944. */
-    CC_MD5_Init(&context);
-    context.A += 11u * 0xb684a3u;
-    context.B += 71u * 0xb684a3u;
-    context.C += 37u * 0xb684a3u;
-    context.D += 97u * 0xb684a3u;
-    CC_MD5_Update(&context, normalized, (CC_LONG)n);
-    CC_MD5_Final(digest, &context);
-    Cod2x_Hex(digest, hash);
+    Com_CDKeyHashBytes(normalized, (unsigned int)n, hash);
     return 1;
 #else
     (void)key;

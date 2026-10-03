@@ -22,6 +22,7 @@ suites = [
     ('infostring', 'src/PC/universal/q_shared.c', ['Info_RemoveKey', 'Info_RemoveKey_Big']),
     ('pure_iwds', 'src/PC/qcommon/files.c', ['FS_PureServerSetLoadedIwds']),
     ('md4', 'src/PC/qcommon/md4.c', []),
+    ('cdkey_hash', 'src/PC/client_mp/cl_main_mp.c', ['CL_BuildMd5StrFromCDKey']),
 ]
 if len(sys.argv) > 2:
     suites = [suite for suite in suites if suite[0] in sys.argv[2:]]
