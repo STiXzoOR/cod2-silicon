@@ -284,11 +284,19 @@ qboolean FS_CreatePath(char *OSPath)
     }
 
     for (ofs = OSPath + 1; *ofs; ofs++) {
+#if COD2_APPLE_SDK
+        if (*ofs == '/') {
+            *ofs = '\0';
+            Sys_Mkdir(OSPath);
+            *ofs = '/';
+        }
+#else
         if (*ofs == '\\') {   /* OSPath is Windows-native, so the separator is '\', not '/' */
             *ofs = '\0';
             Sys_Mkdir(OSPath);
             *ofs = '\\';
         }
+#endif
     }
     return 0;
 }
