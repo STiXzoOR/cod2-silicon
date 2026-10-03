@@ -5,7 +5,13 @@ extern volatile qboolean fx_camera_valid;
 
 extern struct DObj_s * Com_GetClientDObj(int handle, int localClientNum);
 extern int DObjGetBoneIndex(const DObj *obj, unsigned int boneName);
+#if COD2_APPLE_SDK
+extern void FxScheduler_PlayEffect(const FxScheduler *scheduler, const EffectTemplate *fx, const vec_t *org, MediaHandles *(*axis)[4], const FxBoltInfo *bolt);
+extern void MakeNormalVectors(const vec_t *forward, vec_t *right, vec_t *up);
+extern void Vec3Cross(const vec_t *a, const vec_t *b, vec_t *out);
+#else
 extern void FxScheduler_PlayEffect(void *scheduler, EffectTemplate *fx, const vec_t *org, ...);
+#endif
 extern int FX_Init(int rendererExists);
 extern void FX_Free(int freeAll);
 extern void FxHelper_AdjustCamera(const FxHelper *_this, refdef_t *refdef, float zfar);
@@ -51,9 +57,27 @@ void FX_PlaySimpleEffect(EffectTemplate *fx, const vec_t *org)
 
 void FX_PlayEffect(EffectTemplate *fx, const vec_t *org, const vec_t *fwd)
 {
+#if COD2_APPLE_SDK
+    vec3_t axis[3];
+    memcpy(axis[0], fwd, sizeof(vec3_t));
+    MakeNormalVectors(axis[0], axis[1], axis[2]);
+    FxScheduler_PlayEffect(*(void **)*(void **)&fx_scheduler_ptr, fx, org, (MediaHandles *(*)[4])axis, NULL);
+#else
     /* fwd used as the axis; no bolt -> pass explicit NULL bolt (x64: else garbage r9). */
     FxScheduler_PlayEffect(*(void **)*(void **)&fx_scheduler_ptr, fx, org, (MediaHandles *(*)[4])fwd, (const FxBoltInfo *)0);
+#endif
 }
+
+#if COD2_APPLE_SDK
+void FX_PlayOrientedEffect(EffectTemplate *fx, const vec_t *org, const vec_t *forward, const vec_t *up)
+{
+    vec3_t axis[3];
+    memcpy(axis[0], forward, sizeof(vec3_t));
+    memcpy(axis[2], up, sizeof(vec3_t));
+    Vec3Cross(axis[0], axis[2], axis[1]);
+    FxScheduler_PlayEffect(*(void **)*(void **)&fx_scheduler_ptr, fx, org, (MediaHandles *(*)[4])axis, NULL);
+}
+#endif
 
 void FX_PlayEntityEffect(EffectTemplate *fx, const vec_t *org, vec3_t *axis, const FxBoltInfo *bolt)
 {
