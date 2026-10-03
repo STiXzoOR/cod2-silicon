@@ -12,6 +12,14 @@
 #include <stdio.h>
 #include "cod2_feature_config.h"
 
+/* Native Apple LP64 uses SDK declarations, never the i386 STABS copies. */
+#if defined(__APPLE__) && defined(COD2_X64)
+#define COD2_APPLE_SDK 1
+#include <sys/resource.h>
+#else
+#define COD2_APPLE_SDK 0
+#endif
+
 #if defined(__i386__) && defined(__GNUC__) && !defined(__clang__) && !defined(__EMSCRIPTEN__)
 #define COD2_GCC_X86_ABI 1
 #else
@@ -24,7 +32,7 @@
 #define COD2_APPLE_GCC_X86_ABI 0
 #endif
 
-#ifdef __EMSCRIPTEN__
+#if defined(__EMSCRIPTEN__) || (defined(__APPLE__) && defined(COD2_X64))
 #define __attribute_regparm__(n)
 #define __attribute_sseregparm__
 #else

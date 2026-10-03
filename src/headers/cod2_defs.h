@@ -735,7 +735,9 @@ typedef enum D3DXPARAMETER_TYPE _D3DXPARAMETER_TYPE;
 
 typedef enum D3DXREGISTER_SET _D3DXREGISTER_SET;
 
+#if !COD2_APPLE_SDK
 typedef enum J_DITHER_MODE __darwin_suseconds_t;
+#endif
 
 enum animScriptConditionTypes_t {
     ANIM_CONDTYPE_BITFLAGS = 0,
@@ -2115,8 +2117,10 @@ typedef struct _SYSTEMTIME _SYSTEMTIME;
 typedef union _ULARGE_INTEGER _ULARGE_INTEGER;
 
 typedef struct _WIN32_FIND_DATAA _WIN32_FIND_DATAA;
+#if !COD2_APPLE_SDK
 typedef struct __darwin_pthread_handler_rec __darwin_pthread_handler_rec;
 typedef struct __darwin_pthread_mutex_t __darwin_pthread_mutex_t;
+#endif
 typedef struct __false_type __false_type;
 typedef struct __true_type __true_type;
 typedef struct _opaque_pthread_mutex_t _opaque_pthread_mutex_t;
@@ -2835,7 +2839,9 @@ typedef struct XSurface_s XSurface;
 typedef struct XVertexInfo_s XVertexInfo;
 
 typedef struct CResInfo _ValueType;
+#if !COD2_APPLE_SDK
 typedef struct _opaque_pthread_mutexattr_t __darwin_pthread_mutexattr_t;
+#endif
 
 typedef struct animation_s animation_t;
 
@@ -3210,11 +3216,13 @@ typedef CResInfo _ValueType2;
 #if !defined(__GNUC__) && !defined(__clang__)
 typedef char * __builtin_va_list;
 #endif
+#if !COD2_APPLE_SDK
 typedef int __darwin_ct_rune_t;
 typedef unsigned int __darwin_natural_t;
 typedef _opaque_pthread_t * __darwin_pthread_t;
 
 typedef long int __darwin_time_t;
+#endif
 typedef int __int32_t;
 #if defined(__linux__) && defined(__x86_64__)
 #else
@@ -3492,6 +3500,7 @@ typedef WindowPtr WindowRef;
 typedef __builtin_va_list __gnuc_va_list;
 #endif
 typedef __darwin_natural_t natural_t;
+#if !COD2_APPLE_SDK
 typedef __int32_t __darwin_blksize_t;
 typedef __int32_t __darwin_dev_t;
 typedef __int64_t __darwin_blkcnt_t;
@@ -3504,6 +3513,7 @@ typedef __uint32_t __darwin_gid_t;
 typedef __uint32_t __darwin_ino_t;
 typedef __uint32_t __darwin_socklen_t;
 typedef __uint32_t __darwin_uid_t;
+#endif
 typedef rectDef_t UiRectangle;
 typedef sample_t recordingSample_t;
 typedef uInt uIntf;
@@ -7009,6 +7019,7 @@ union _ULARGE_INTEGER {
     ULONGLONG QuadPart;
 };
 
+#if !COD2_APPLE_SDK
 struct __darwin_pthread_handler_rec {
     jpeg_alloc (*__routine)();
     jpeg_alloc *__arg;
@@ -7032,6 +7043,7 @@ struct DIR {
     struct __darwin_pthread_mutex_t dd_lock;
     _telldir *dd_td;
 };
+#endif
 
 struct __false_type {
     int _placeholder;
@@ -7041,6 +7053,7 @@ struct __true_type {
     int _placeholder;
 };
 
+#if !COD2_APPLE_SDK
 struct _opaque_pthread_mutex_t {
     long int __sig;
     char __opaque[40];
@@ -7056,6 +7069,7 @@ struct _opaque_pthread_t {
     __darwin_pthread_handler_rec *__cleanup_stack;
     char __opaque[596];
 };
+#endif
 
 struct allocator_CCacheInfoBlock {
     int _placeholder;
@@ -9159,10 +9173,12 @@ struct refdef_s {
     int viewIndex;
 };
 
+#if !COD2_APPLE_SDK
 struct rlimit {
     rlim_t rlim_cur;
     rlim_t rlim_max;
 };
+#endif
 
 struct savable_state {
     INT32 put_buffer;
