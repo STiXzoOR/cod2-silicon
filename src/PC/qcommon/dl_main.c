@@ -14,6 +14,10 @@ int FS_CreatePath(char *path);
 void FS_CreatePath(const char *path);
 #endif
 
+#if defined(__APPLE__) && defined(COD2_X64)
+/* The native CoD2x bundle links the SDK curl; use its exact API types. */
+#    include <curl/curl.h>
+#else
 typedef void CURL;
 typedef void CURLM;
 typedef int CURLcode;
@@ -57,6 +61,7 @@ typedef struct {
 } CURLMsg;
 #    define CURLMSG_DONE 1
 extern CURLMsg *curl_multi_info_read(CURLM *multi, int *msgs_in_queue);
+#endif
 
 static CURLM *dl_multi = 0;
 static CURL *dl_easy = 0;
