@@ -101,7 +101,11 @@ extern byte *sv_mapRotation_dvar;
 extern byte *sv_mapRotationCurrent_dvar;
 extern byte *sv_debugRate_dvar;
 extern byte *sv_debugReliableCmds_dvar;
+#if defined(COD2_X64)
+extern const dvar_t *nextmap;
+#else
 extern int nextmap;
+#endif
 extern byte *com_dvarflags_ptr;
 extern byte *com_checksumFeed_dvar;
 extern void *imp_com_errorEntered;
@@ -190,9 +194,20 @@ extern int Sys_Milliseconds(void);
 extern int Sys_MillisecondsRaw(void);
 extern void NET_Sleep(int msec);
 extern Bool NET_OutOfBandPrint(int sock, netadr_t adr, const char *data);
+#if defined(COD2_X64)
+extern int G_GetSavePersist(void);
+#else
 extern int *G_GetSavePersist(void);
+#endif
 extern const char *ClientConnect(int clientNum, unsigned short scriptId);
 extern int __mh_execute_header;
+
+#if defined(COD2_X64)
+/* The retail Mach header symbol has value 0x1000: this is a dvar flag, not an address. */
+#define SV_RESET_FLAGS 0x1000
+#else
+#define SV_RESET_FLAGS (int)&__mh_execute_header
+#endif
 
 #define SV_STATE_OFF 0x0
 #define SV_CHECKSUM_OFF 0x8
@@ -413,7 +428,7 @@ void SV_Init(void)
     sv_maxPing = Dvar_RegisterInt("sv_maxPing", 0, 0, 999, 0x1005);
     sv_floodProtect = Dvar_RegisterBool("sv_floodProtect", 1, 0x1005);
     sv_allowAnonymous = Dvar_RegisterBool("sv_allowAnonymous", 0, 0x1004);
-    sv_showCommands = Dvar_RegisterBool("sv_showCommands", 0, (int)&__mh_execute_header);
+    sv_showCommands = Dvar_RegisterBool("sv_showCommands", 0, SV_RESET_FLAGS);
     sv_disableClientConsole = Dvar_RegisterBool("sv_disableClientConsole", 0, 0x1008);
     sv_voice = Dvar_RegisterBool("sv_voice", 0, 0x100d);
     sv_voiceQuality = Dvar_RegisterInt("sv_voiceQuality", 1, 0, 9, 0x1008);
@@ -424,35 +439,39 @@ void SV_Init(void)
     sv_iwdNames = Dvar_RegisterString("sv_iwdNames", "", 0x1048);
     sv_referencedIwds = Dvar_RegisterString("sv_referencedIwds", "", 0x1048);
     sv_referencedIwdNames = Dvar_RegisterString("sv_referencedIwdNames", "", 0x1048);
-    rcon_password = Dvar_RegisterString("rcon_password", "", (int)&__mh_execute_header);
-    sv_privatePassword = Dvar_RegisterString("sv_privatePassword", "", (int)&__mh_execute_header);
-    sv_fps = Dvar_RegisterInt("sv_fps", 20, 10, 1000, (int)&__mh_execute_header);
-    sv_timeout = Dvar_RegisterInt("sv_timeout", 240, 0, 1800, (int)&__mh_execute_header);
-    sv_zombietime = Dvar_RegisterInt("sv_zombietime", 2, 0, 1800, (int)&__mh_execute_header);
+    rcon_password = Dvar_RegisterString("rcon_password", "", SV_RESET_FLAGS);
+    sv_privatePassword = Dvar_RegisterString("sv_privatePassword", "", SV_RESET_FLAGS);
+    sv_fps = Dvar_RegisterInt("sv_fps", 20, 10, 1000, SV_RESET_FLAGS);
+    sv_timeout = Dvar_RegisterInt("sv_timeout", 240, 0, 1800, SV_RESET_FLAGS);
+    sv_zombietime = Dvar_RegisterInt("sv_zombietime", 2, 0, 1800, SV_RESET_FLAGS);
     sv_allowDownload = Dvar_RegisterBool("sv_allowDownload", 1, 0x1001);
     sv_reconnectlimit = Dvar_RegisterInt("sv_reconnectlimit", 3, 0, 1800, 0x1001);
-    sv_padPackets = Dvar_RegisterInt("sv_padPackets", 0, 0, 0x7fffffff, (int)&__mh_execute_header);
+    sv_padPackets = Dvar_RegisterInt("sv_padPackets", 0, 0, 0x7fffffff, SV_RESET_FLAGS);
 
     {
 
         (*(LegacyHacks **)imp_legacyHacks)->sv_killserver = 0;
     }
 
-    sv_allowedClan1 = Dvar_RegisterString("sv_allowedClan1", "", (int)&__mh_execute_header);
-    sv_allowedClan2 = Dvar_RegisterString("sv_allowedClan2", "", (int)&__mh_execute_header);
-    sv_packet_info = Dvar_RegisterBool("sv_packet_info", 0, (int)&__mh_execute_header);
-    sv_showAverageBPS = Dvar_RegisterBool("sv_showAverageBPS", 0, (int)&__mh_execute_header);
-    sv_kickBanTime = Dvar_RegisterFloat("sv_kickBanTime", 300.0f, 0.0f, 3600.0f, (int)&__mh_execute_header);
-    sv_mapRotation = Dvar_RegisterString("sv_mapRotation", "", (int)&__mh_execute_header);
-    sv_mapRotationCurrent = Dvar_RegisterString("sv_mapRotationCurrent", "", (int)&__mh_execute_header);
-    sv_debugRate = Dvar_RegisterBool("sv_debugRate", 0, (int)&__mh_execute_header);
-    sv_debugReliableCmds = Dvar_RegisterBool("sv_debugReliableCmds", 0, (int)&__mh_execute_header);
+    sv_allowedClan1 = Dvar_RegisterString("sv_allowedClan1", "", SV_RESET_FLAGS);
+    sv_allowedClan2 = Dvar_RegisterString("sv_allowedClan2", "", SV_RESET_FLAGS);
+    sv_packet_info = Dvar_RegisterBool("sv_packet_info", 0, SV_RESET_FLAGS);
+    sv_showAverageBPS = Dvar_RegisterBool("sv_showAverageBPS", 0, SV_RESET_FLAGS);
+    sv_kickBanTime = Dvar_RegisterFloat("sv_kickBanTime", 300.0f, 0.0f, 3600.0f, SV_RESET_FLAGS);
+    sv_mapRotation = Dvar_RegisterString("sv_mapRotation", "", SV_RESET_FLAGS);
+    sv_mapRotationCurrent = Dvar_RegisterString("sv_mapRotationCurrent", "", SV_RESET_FLAGS);
+    sv_debugRate = Dvar_RegisterBool("sv_debugRate", 0, SV_RESET_FLAGS);
+    sv_debugReliableCmds = Dvar_RegisterBool("sv_debugReliableCmds", 0, SV_RESET_FLAGS);
 #if COD2_IS_PATCH_13
     sv_wwwDownload = Dvar_RegisterBool("sv_wwwDownload", 0, 0x1001);
     sv_wwwBaseURL = Dvar_RegisterString("sv_wwwBaseURL", "", 0x1001);
     sv_wwwDlDisconnected = Dvar_RegisterBool("sv_wwwDlDisconnected", 0, 0x1001);
 #endif
-    *(dvar_t **)&nextmap = Dvar_RegisterString("nextmap", "", (int)&__mh_execute_header);
+#if defined(COD2_X64)
+    nextmap = Dvar_RegisterString("nextmap", "", SV_RESET_FLAGS);
+#else
+    *(dvar_t **)&nextmap = Dvar_RegisterString("nextmap", "", SV_RESET_FLAGS);
+#endif
     com_expectedHunkUsage = Dvar_RegisterInt("com_expectedHunkUsage", 0, 0, 0x7fffffff, 0x1040);
 }
 
@@ -552,6 +571,10 @@ void SV_Shutdown(char *finalmsg)
     int i, j;
     int maxclients;
 
+#if defined(COD2_X64)
+    if (!com_sv_running || !com_sv_running->current.enabled)
+        return;
+#else
     {
         dvar_t *dvar = (dvar_t *)(com_sv_running);
         byte *dvarVal;
@@ -561,6 +584,8 @@ void SV_Shutdown(char *finalmsg)
         if (!dvarVal || *(char *)(dvarVal + 8) == 0)
             return;
     }
+
+#endif
 
     Com_Printf("----- Server Shutdown -----\n");
 
@@ -706,7 +731,11 @@ void SV_Startup(void)
         Com_Error(0, "SV_Startup: unable to allocate svs.clients");
     }
 
+#if defined(COD2_X64)
+    isDedicated = com_dedicated->current.integer;
+#else
     isDedicated = *(int *)((byte *)(void *)imp_com_dedicated + 8);
+#endif
     maxclients = (dvar_t *)(sv_maxclients);
     numClients = maxclients->current.integer;
     if (isDedicated) {
@@ -791,7 +820,11 @@ void SV_ChangeMaxClients(void)
 
     Hunk_FreeTempMemory(oldClients);
 
+#if defined(COD2_X64)
+    isDedicated = com_dedicated->current.integer;
+#else
     isDedicated = *(int *)((byte *)(void *)imp_com_dedicated + 8);
+#endif
     numClients = (sv_maxclients)->current.integer;
     svs = (serverStatic_t *)imp_svs;
     if (isDedicated) {
@@ -880,7 +913,11 @@ void SV_SpawnServer(const char *server)
 #endif
     }
 
+#if defined(COD2_X64)
+    isDedicated = com_dedicated->current.integer;
+#else
     isDedicated = *(int *)((byte *)(void *)imp_com_dedicated + 8);
+#endif
     if (isDedicated) {
         FX_FreeSystem();
     }
@@ -963,7 +1000,11 @@ void SV_SpawnServer(const char *server)
         svsPtr->snapFlagServerBit ^= 4;
     }
 
+#if defined(COD2_X64)
+    Dvar_SetString(nextmap, "map_restart");
+#else
     Dvar_SetString(*(dvar_t **)&nextmap, "map_restart");
+#endif
 
     Dvar_SetInt( (dvar_t *)(cl_paused), 0);
 
@@ -1005,7 +1046,11 @@ void SV_SpawnServer(const char *server)
     }
     SV_InitGameProgs(savepersist);
 
+#if defined(COD2_X64)
+    isDedicated = com_dedicated->current.integer;
+#else
     isDedicated = *(int *)((byte *)(void *)imp_com_dedicated + 8);
+#endif
     if (isDedicated) {
         FX_InitSystem(0);
         FX_CreateDefaultEffect();
@@ -1019,6 +1064,20 @@ void SV_SpawnServer(const char *server)
     }
     Com_Printf("[ckpt] SV_RunFrame loop done\n");
 
+#if defined(COD2_X64)
+    for (i = 1; i < svg->num_entities; i++) {
+        gentity_t *gent = SV_GentityNum(i);
+        archivedEntity_t *baseline = &svg->svEntities[i].baseline;
+        if (!gent->r.linked)
+            continue;
+        gent->s.number = i;
+        baseline->s = gent->s;
+        baseline->r.svFlags = (unsigned char)gent->r.svFlags;
+        memcpy(baseline->r.clientMask, gent->r.clientMask, sizeof(baseline->r.clientMask));
+        memcpy(baseline->r.absmin, gent->r.absmin, sizeof(baseline->r.absmin));
+        memcpy(baseline->r.absmax, gent->r.absmax, sizeof(baseline->r.absmax));
+    }
+#else
     sv = (byte *)imp_sv;
     if (*(int *)(sv + SV_NUMENTITIES_OFF) > 1) {
         byte *basePtr = sv;
@@ -1056,6 +1115,8 @@ void SV_SpawnServer(const char *server)
             basePtr += 0x174;
         }
     }
+
+#endif
 
     Com_Printf("[ckpt] baseline done\n");
     {

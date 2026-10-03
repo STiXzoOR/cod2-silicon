@@ -424,7 +424,11 @@ static void SV_InitGameVM(int restart, int savepersist)
     Sys_LoadingKeepAlive();
 
     for (i = 0; i < sv_maxclients->current.integer; i++) {
+#if defined(COD2_X64)
+        svs.clients[i].gentity = NULL;
+#else
         *(int *)((char *)&svs.clients[i] + 0x20c44) = 0;
+#endif
     }
 
     if (com_dedicated->current.integer) {
