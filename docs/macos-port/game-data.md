@@ -4,7 +4,27 @@ CoD2 is Steam app **2630**. Download it using your own account with a license
 for the game. Keep the downloaded game, credentials and Steam manifests outside
 this repository. The port contains reconstructed engine code, not game assets.
 
-## Download with SteamCMD on macOS
+## Recommended: DepotDownloader (native arm64)
+
+[DepotDownloader](https://github.com/SteamRE/DepotDownloader) 3.4.0 ships a
+native `macos-arm64` build, so it runs on this Mac without Rosetta. Checked on
+2026-10-03: the binary is `Mach-O 64-bit executable arm64` and prints its usage.
+It is kept outside the repository in `~/Projects/cod2-native-refs/tools/`.
+
+Run it yourself in a terminal. `-qr` shows a login QR code to scan with the
+Steam mobile app, so no password is typed or stored in a script:
+
+```bash
+~/Projects/cod2-native-refs/tools/DepotDownloader/DepotDownloader \
+  -app 2630 -os windows -language english -qr -remember-password \
+  -dir "$HOME/Games/CoD2"
+```
+
+`-os windows` picks the Windows depots, which put the IWDs directly in
+`main/`. Use `-os macos` instead to get the Mac depots. Either way, point
+`fs_basepath` at the directory that contains `main/`, as described below.
+
+## Alternative: SteamCMD
 
 These commands are for the user to run. No SteamCMD process or authenticated
 download was run while preparing this guide. The macOS bootstrap URL returned
