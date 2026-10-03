@@ -64,7 +64,11 @@ static const BuiltinMethodDef methods[] __attribute__((used)) = {
     { "destroy", (BuiltinMethod)HECmd_Destroy, 0 },
 };
 
+#if defined(COD2_X64)
+extern void Scr_AddFloat(float);
+#else
 extern unsigned int Scr_AddFloat(float value);
+#endif
 extern void Scr_GetVector(unsigned int index, float *vectorValue);
 extern void Scr_GetGenericField(byte *b, fieldtype_t type, int ofs);
 extern void Scr_SetGenericField(byte *b, fieldtype_t type, int ofs);
@@ -75,7 +79,11 @@ extern const char *Scr_GetIString(unsigned int index);
 extern unsigned int Scr_GetConstString(unsigned int index);
 extern int G_LocalizedStringIndex(const char *str);
 extern void Scr_AddHudElem(game_hudelem_t *hud);
+#if defined(COD2_X64)
+extern void Scr_AddVector(const float *);
+#else
 extern unsigned int Scr_AddVector(vec_t *vec);
+#endif
 extern void Scr_Error(const char *msg);
 extern const char *va(const char *fmt, ...);
 extern void Scr_ObjectError(const char *msg);
@@ -163,7 +171,11 @@ void GScr_NewTeamHudElem(void);
 
 extern const char *Scr_GetString(unsigned int index);
 extern int I_stricmp(const char *s1, const char *s2);
+#if defined(COD2_X64)
+extern void Scr_AddString(const char *);
+#else
 extern unsigned int Scr_AddString(const char *s);
+#endif
 extern int G_ShaderIndex(const char *name);
 
 static void HudElem_SetEnumString_impl(game_hudelem_t *hud_base, const game_hudelem_field_t *f, const char **names, int nameCount)

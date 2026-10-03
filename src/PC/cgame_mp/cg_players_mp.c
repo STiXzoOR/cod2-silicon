@@ -19,7 +19,11 @@ extern void XAnimSetCompleteGoalWeight(struct XAnimTree_s *pAnimTree, unsigned i
 extern void Com_Printf(const char *fmt, ...);
 extern void AnglesToAxis(const vec_t *angles, vec3_t *axis);
 extern void CG_AddCEntityToScene(const GfxEntity *body, const struct DObj_s *obj, const centity_t *cent);
+#if defined(COD2_X64)
+extern void CG_AddPlayerWeapon(GfxEntity *, playerState_t *, centity_t *, qboolean);
+#else
 extern void CG_AddPlayerWeapon(byte *body, int unused, centity_t *cent, int flag);
+#endif
 extern qboolean CG_DObjGetWorldTagPos(const centity_t *cent, struct DObj_s *obj, unsigned int tag, float *origin);
 extern void CL_DrawSprite(MaterialHandle material, const byte *rgbaColor, const float *origin,
                           float radius, float minScreenRadius, int flags);

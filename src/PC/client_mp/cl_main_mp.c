@@ -82,7 +82,11 @@ extern void FS_FCloseFile(fileHandle_t f);
 extern void MSG_WriteReliableCommandToBuffer(const char *cmd, char *buf, int bufSize);
 extern int FS_Write(const void *buffer, int len, int f);
 extern void CL_ShutdownCGame(void);
+#if defined(COD2_X64)
+extern qboolean CL_ShutdownUI(void);
+#else
 extern void CL_ShutdownUI(void);
+#endif
 extern void Dvar_SetInt(const dvar_t *dvar, int value);
 extern void Dvar_SetBool(const dvar_t *dvar, int value);
 extern void Dvar_SetString(const dvar_t *dvar, const char *value);
@@ -170,7 +174,11 @@ extern qboolean FS_ConditionalRestart(int checksumFeed);
 extern void FS_Restart(int checksumFeed);
 extern const char *FS_ReferencedIwdPureChecksums(void);
 extern int FS_CompareIwds(char *buf, int bufLen, int flag);
+#if defined(COD2_X64)
+extern char * FS_ShiftStr(const char *, int);
+#else
 extern void FS_ShiftStr(const char *name, int shift);
+#endif
 extern void MSG_Init(msg_t *msg, byte *data, int length);
 extern void MSG_WriteLong(msg_t *msg, int value);
 extern void MSG_WriteShort(msg_t *msg, int value);

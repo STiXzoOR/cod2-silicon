@@ -51,7 +51,7 @@ extern int SV_PointContents(const vec_t *p, int passEntityNum, int contentmask);
 extern void SV_LinkEntity(gentity_t *ent);
 extern qboolean G_RadiusDamage(const vec_t *origin, gentity_t *inflictor, gentity_t *attacker, float fInnerDamage, float fOuterDamage, float radius, gentity_t *ignore, int mod);
 extern void Server_SwitchToValidFxScheduler(void);
-#if COD2_APPLE_SDK && defined(DEDICATED)
+#if defined(COD2_X64) || (COD2_APPLE_SDK && defined(DEDICATED))
 extern EffectTemplate *FX_RegisterEffect(const char *name);
 extern float FX_GetEffectLength(EffectTemplate *handle);
 #else
@@ -202,7 +202,7 @@ void G_ExplodeMissile(gentity_t *ent)
 
         (_ENT(ent)->s.eFlags) |= 0x10000;
         Server_SwitchToValidFxScheduler();
-#if COD2_APPLE_SDK && defined(DEDICATED)
+#if defined(COD2_X64) || (COD2_APPLE_SDK && defined(DEDICATED))
         EffectTemplate *fxHandle = FX_RegisterEffect(weapDef->szProjExplosionEffect);
 #else
         int fxHandle = FX_RegisterEffect(weapDef->szProjExplosionEffect);

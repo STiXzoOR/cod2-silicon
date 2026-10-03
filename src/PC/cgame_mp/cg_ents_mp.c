@@ -14,7 +14,11 @@ extern WeaponDef * BG_GetWeaponDef(int iWeapon);
 extern XAnimTree *XAnimCreateTree(XAnim *anims, Alloc_t Alloc);
 extern struct XAnim_s *XAnimCreateAnims(const char *debugName, int size, void *Alloc);
 extern void XAnimBlend(XAnim *anims, unsigned int animIndex, const char *name, unsigned int children, unsigned int num, unsigned int flags);
+#if defined(COD2_X64)
+extern XAnimParts * XAnimPrecache(const char *, Alloc_t);
+#else
 extern void XAnimPrecache(const char *name, void *Alloc);
+#endif
 extern void XAnimCreate(struct XAnim_s *anims, unsigned int animIndex, const char *name);
 extern struct DObj_s * Com_GetClientDObj(int handle, int localClientNum);
 extern void Com_ClientDObjCreate(DObjModel_s *dobjModels, int numModels, struct XAnimTree_s *tree, int handle);
@@ -27,7 +31,11 @@ extern const float AngleSubtract(const float a1, const float a2);
 extern const float LerpAngle(const float from, const float to, const float frac);
 extern int DObjSetControlTagAngles(const struct DObj_s *obj, int *partBits, unsigned int tagName, float *angles);
 extern struct XAnimTree_s *DObjGetTree(const struct DObj_s *obj);
+#if defined(COD2_X64)
+extern int XAnimSetCompleteGoalWeightKnobAll(XAnimTree *, unsigned int, unsigned int, float, float, float, unsigned int, int);
+#else
 extern void XAnimSetCompleteGoalWeightKnobAll(void *tree, int animIndex, float goalWeight, float goalTime, float rate, int notifyType, int notifyClient);
+#endif
 extern void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es, int *partBits, clientInfo_t *ci, int frametime);
 extern int DObjGetClientNotifyList(XAnimNotify **notifyList);
 extern int stricmp(const char *s1, const char *s2);
@@ -56,7 +64,11 @@ extern int BG_GetNumWeapons(void);
 extern int CG_PlaySoundAlias(int entitynum, const vec_t *origin, snd_alias_list_t *aliasList);
 extern int FX_GetBoneIndex(const int entNum, unsigned int bone);
 extern void FX_PlayEntityEffect(EffectTemplate *fx, const vec_t *org, vec3_t *axis, const FxBoltInfo *bolt);
+#if defined(COD2_X64)
+extern void FX_PlayEffect(EffectTemplate *, const vec_t *, const vec_t *);
+#else
 extern void FX_PlayEffect(EffectTemplate *fx, const vec_t *org, const vec_t *fwd, ...);
+#endif
 extern void FX_PlaySimpleEffect(EffectTemplate *fx, const vec_t *org);
 extern void Com_Printf(const char *fmt, ...);
 extern void ByteToDir(const int b, vec_t *dir);
@@ -67,6 +79,9 @@ extern void CG_Corpse(centity_t *cent);
 
 extern const int boxVerts[24][3];
 
+#if !defined(COD2_X64)
+#line 69
+#endif
 COD2_ASSERT_FIELD(cg_t, rumbleScale, 0x2c5a0);
 
 #define CG_CORPSEINFO_BASE_ADJUST (-0x6bec)
@@ -188,7 +203,12 @@ static void CG_mg42_DoControllers(const centity_t *cent, int *partBits)
         float goalWeight = 1.0f;
         float goalTime = 0.1f;
         float rate = 1.0f;
+
+#if defined(COD2_X64)
+        XAnimSetCompleteGoalWeightKnobAll(tree, 0, animIndex, goalWeight, goalTime, rate, 0, 0);
+#else
         XAnimSetCompleteGoalWeightKnobAll(tree, animIndex, goalWeight, goalTime, rate, 0, 0);
+#endif
     }
 }
 
@@ -854,7 +874,11 @@ static void CG_PlayLoopedFx(centity_t *cent)
             up[1] += scale * forward[1];
             up[2] += scale * forward[2];
             Vec3Normalize(up);
+#if defined(COD2_X64)
+            FX_PlayEffect(fx, cent->lerpOrigin, forward);
+#else
             FX_PlayEffect(fx, cent->lerpOrigin, forward, up);
+#endif
         } else {
             FX_PlayEffect(fx, cent->lerpOrigin, forward);
         }

@@ -56,14 +56,22 @@ extern qboolean UI_ClientIsInGame(void);
 extern void UI_Pause(qboolean pause);
 extern void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle hMaterial);
 extern void UI_DrawRect(float x, float y, float w, float h, int horzAlign, int vertAlign, float size, const vec_t *color);
+#if defined(COD2_X64)
+extern void UI_FillRect(float, float, float, float, int, int, const vec_t *);
+#else
 extern float UI_FillRect(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color);
+#endif
 extern void UI_DrawSides(float x, float y, float w, float h, int horzAlign, int vertAlign, float size, const vec_t *color);
 extern void UI_DrawTopBottom(float x, float y, float w, float h, int horzAlign, int vertAlign, float size, const vec_t *color);
 extern void UI_DrawLoadBar(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle material);
 extern int UI_TextWidth(const char *text, int maxChars, FontHandle font, float scale);
 extern int UI_TextHeight(FontHandle font, float scale);
 extern const char *UI_SafeTranslateString(const char *key);
+#if defined(COD2_X64)
+extern int UI_OwnerDrawWidth(int, FontHandle, float);
+#else
 extern int UI_OwnerDrawWidth(int ownerDraw, float scale);
+#endif
 extern qboolean UI_OwnerDrawVisible(int flags);
 extern void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, FontHandle font, float scale, vec_t *color, MaterialHandle shader, int textStyle);
 extern qboolean UI_OwnerDrawHandleKey(int ownerDraw, int flags, int *special, int key);
@@ -142,7 +150,11 @@ extern int scriptCommandCount;
 static rectDef_t rect;
 static qboolean inHandleKey;
 static scrollInfo_t scrollInfo;
+#if defined(COD2_X64)
+static void (*captureFunc)(displayContextDef_t *, void *);
+#else
 static void (*captureFunc)();
+#endif
 static void *captureData;
 static itemDef_t *itemCapture;
 static itemDef_t *g_bindItem;
@@ -1222,7 +1234,12 @@ compute:;
     if (itemType == 8) {
         int alignment = (((itemDef_s*)(it))->textalignment);
         if (alignment == 1 || alignment == 2)
+
+#if defined(COD2_X64)
+            originalWidth += UI_OwnerDrawWidth(((itemDef_t *)it)->window.ownerDraw, font, scale);
+#else
             originalWidth += UI_OwnerDrawWidth(((itemDef_t *)it)->window.ownerDraw, scale);
+#endif
     } else if (itemType <= 0x12 && ((1 << itemType) & 0x70210)) {
         if ((((itemDef_s*)(it))->textalignment) == 1 && (*(void **)&((itemDef_t *)it)->dvar)) {
             originalWidth += UI_TextWidth(Dvar_GetVariantString(item->dvar), 0, font, scale);
@@ -4193,7 +4210,11 @@ qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qbool
                     scrollInfo.scrollDir = (overLB >> 8) & 1;
                     scrollInfo.item = item;
                     captureData = &scrollInfo;
+#if defined(COD2_X64)
+                    captureFunc = Scroll_ListBox_AutoFunc;
+#else
                     captureFunc = (void (__cdecl *)(void))(Scroll_ListBox_AutoFunc);
+#endif
                     itemCapture = item;
                 } else if (overLB & 0x400) {
 
@@ -4202,7 +4223,11 @@ qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qbool
                     scrollInfo.xStart = (float)((displayContextDef_t *)d)->cursorx;
                     scrollInfo.yStart = (float)(((displayContextDef_s*)(d))->cursory);
                     captureData = &scrollInfo;
+#if defined(COD2_X64)
+                    captureFunc = Scroll_ListBox_ThumbFunc;
+#else
                     captureFunc = (void (__cdecl *)(void))(Scroll_ListBox_ThumbFunc);
+#endif
                     itemCapture = item;
                 }
 
@@ -4229,7 +4254,11 @@ qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qbool
                     scrollInfo.xStart = (float)((displayContextDef_t *)d)->cursorx;
                     scrollInfo.yStart = (float)(((displayContextDef_s*)(d))->cursory);
                     captureData = &scrollInfo;
+#if defined(COD2_X64)
+                    captureFunc = Scroll_Slider_ThumbFunc;
+#else
                     captureFunc = (void (__cdecl *)(void))(Scroll_Slider_ThumbFunc);
+#endif
                     itemCapture = item;
                 }
 
@@ -5512,7 +5541,11 @@ void Menu_PaintAll(displayContextDef_t *dc)
     (((displayContextDef_s*)(d))->blurRadiusOut) = 0.0f;
 
     if (captureFunc)
+#if defined(COD2_X64)
+        captureFunc(dc, captureData);
+#else
         ((void (__cdecl *)(displayContextDef_t *, void *))captureFunc)(dc, captureData);
+#endif
 
     int menuCount = ((displayContextDef_t *)d)->menuCount;
     int openCount = (((displayContextDef_s*)(d))->openMenuCount);

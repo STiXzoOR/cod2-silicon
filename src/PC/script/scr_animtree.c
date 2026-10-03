@@ -76,7 +76,11 @@ extern Bool Scr_IsIdentifier(const char *token);
 extern unsigned int Scr_AllocArray(void);
 extern void *XAnimCreateAnims(const char *debugName, int size, Alloc_t Alloc);
 extern void XAnimBlend(XAnim *anims, unsigned int animIndex, const char *name, unsigned int children, unsigned int num, unsigned int flags);
+#if defined(COD2_X64)
+extern XAnimParts * XAnimPrecache(const char *, Alloc_t);
+#else
 extern void XAnimPrecache(const char *name, Alloc_t Alloc);
+#endif
 extern void XAnimCreate(struct XAnim_s *anims, unsigned int animIndex, const char *name);
 extern void XAnimSetupSyncNodes(XAnim *anims);
 extern byte *Scr_AddSourceBuffer(const char *filename, const char *extFilename, byte *oldFilename, int flag);

@@ -53,7 +53,11 @@ static Bool isLoadingAutoExecGlobalFlag;
 extern char *va(const char *format, ...);
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern byte *__DefaultRuneLocale;
+#if defined(COD2_X64)
+extern int ___maskrune(int, unsigned long);
+#else
 extern int ___maskrune(int ch, unsigned int mask);
+#endif
 extern int ___tolower(int c);
 extern void Com_BeginParseSession(const char *filename);
 extern void Com_EndParseSession(void);

@@ -16,7 +16,11 @@ extern void SND_StopSounds(snd_stopsounds_arg_t);
 extern void SND_EndRawSamples(void);
 extern void Sys_EndStreamedFile(fileHandle_t);
 extern void Sys_BeginStreamedFile(fileHandle_t, int);
+#if defined(COD2_X64)
+extern int Sys_StreamedRead(void *, int, int, fileHandle_t);
+#else
 extern void Sys_StreamedRead(void *, int, int, fileHandle_t);
+#endif
 extern void FS_FCloseFile(fileHandle_t);
 extern int FS_FOpenFileRead(const char *, fileHandle_t *, int);
 extern char *va(const char *fmt, ...);
@@ -732,7 +736,11 @@ void ROQ_DrawCinematicFromHandle(int handle)
     float barSize;
     int barSizeCeil;
     float xf, wf;
+#if defined(COD2_X64)
+    MaterialHandle material;
+#else
     int material;
+#endif
 
     if ((unsigned int)handle > 0xf || cinTable[handle].status == FMV_EOF) {
         goto done;
@@ -789,13 +797,25 @@ void ROQ_DrawCinematicFromHandle(int handle)
         barSizeCeil = (int)ceilf(barSize);
         xf = (float)x;
         wf = (float)w;
+#if defined(COD2_X64)
+        material = cls->whiteMaterial;
+#else
         material = (int)(cls->whiteMaterial);
+#endif
 
         re = (refexport_t *)(void *)imp_re;
+#if defined(COD2_X64)
+        re->DrawStretchPic(
+#else
         ((void (*)(float, float, float, float, float, float, float, float, const vec_t *, int))re->DrawStretchPic)(
+#endif
             xf, (float)y, wf, (float)(int)floorf(barSize),
             0.0f, 0.0f, 0.0f, 0.0f, clearColor, material);
+#if defined(COD2_X64)
+        re->DrawStretchPic(
+#else
         ((void (*)(float, float, float, float, float, float, float, float, const vec_t *, int))re->DrawStretchPic)(
+#endif
             xf, (float)(y + h - barSizeCeil), wf, (float)barSizeCeil,
             0.0f, 0.0f, 0.0f, 0.0f, clearColor, material);
     }

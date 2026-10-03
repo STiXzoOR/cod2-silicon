@@ -8,7 +8,11 @@
 
 void Com_Printf(const char *fmt, ...);
 void Com_DPrintf(const char *fmt, ...);
+#if defined(COD2_X64)
+int FS_CreatePath(char *path);
+#else
 void FS_CreatePath(const char *path);
+#endif
 
 typedef void CURL;
 typedef void CURLM;

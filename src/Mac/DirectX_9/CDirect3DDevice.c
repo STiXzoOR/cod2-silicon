@@ -108,12 +108,28 @@ extern int MacDisplay_GetMaxTextureUnits(void);
 #if !COD2_APPLE_SDK
 extern void MacDisplay_ReleaseContext(void *ctx);
 #endif
+#if defined(COD2_X64)
+extern uint16_t MacDisplay_SetGammaRamp(const unsigned short *);
+#else
 extern void MacDisplay_SetGammaRamp(const D3DGAMMARAMP *pRamp);
+#endif
+#if defined(COD2_X64)
+extern void MacDisplay_FadeOut(float);
+#else
 extern void MacDisplay_FadeOut(int val);
+#endif
 extern void MacDisplay_FadeIn(float val);
+#if defined(COD2_X64)
+extern uint16_t MacDisplay_GetCurrentDimensions(int *, int *);
+#else
 extern void MacDisplay_GetCurrentDimensions(int *w, int *h);
+#endif
 extern void *MacDisplay_CreateScreenContext(int depth, int windowed, int stencil, int multiSample, int fsaa, int *hasAux);
+#if defined(COD2_X64)
+extern uint16_t MacDisplay_SwapContext(void *);
+#else
 extern void MacDisplay_SwapContext(void *ctx);
+#endif
 #if !COD2_APPLE_SDK
 extern void MacDisplay_SetMode(int w, int h, int depth, int freq);
 #endif
@@ -123,7 +139,11 @@ extern const char *MacDisplay_GetGLRenderer(void);
 extern const char *MacDisplay_GetGLExtensions(void);
 extern void game_dprintf(const char *fmt, ...);
 extern void COpenGLMatrix_SetIdentity(float *m);
+#if defined(COD2_X64)
+extern D3DXMATRIX * D3DXMatrixMultiply(D3DXMATRIX *, const D3DXMATRIX *, const D3DXMATRIX *);
+#else
 extern void D3DXMatrixMultiply(float *out, const float *a, const float *b);
+#endif
 extern int MacOpenGLUtils_ConvertD3DProjectionMatrixToOpenGL(float *m, float ViewportWidth, float ViewportHeight);
 extern D3DMATRIX *RB_GetActiveWorldMatrix(void);
 

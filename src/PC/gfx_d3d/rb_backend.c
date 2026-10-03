@@ -332,7 +332,11 @@ extern struct _D3DMATRIX *RB_GetActiveWorldMatrix(void);
 extern void MatrixIdentity44(float (*out)[4]);
 extern void MatrixMultiply44(const float (*a)[4], const float (*b)[4], float (*out)[4]);
 extern Bool RB_GetViewport(GfxViewport *viewport);
+#if defined(COD2_X64)
+extern int MacOpenGLUtils_ConvertD3DProjectionMatrixToOpenGL(float *, float, float);
+#else
 extern void MacOpenGLUtils_ConvertD3DProjectionMatrixToOpenGL(void *proj, float width, float height);
+#endif
 extern void RB_SetViewMatrix(const D3DMATRIX *matrix);
 extern void RB_SetProjectionMatrix(const D3DMATRIX *matrix);
 extern void MatrixForViewer(float (*mtx)[4], const vec_t *origin, vec3_t *axis);
@@ -2509,7 +2513,11 @@ void RB_DrawTextInSpace(const char *text, FontHandle font, const vec_t *org, con
     const Material *material;
     float startX, startY, startZ;
     int isDx7;
+#if defined(COD2_X64)
+    unsigned int (*Q_ReadToken)(const char **, qboolean *);
+#else
     int (*Q_ReadToken)(const char **, int);
+#endif
 
     material = (const Material *)font->material;
 
@@ -2519,7 +2527,11 @@ void RB_DrawTextInSpace(const char *text, FontHandle font, const vec_t *org, con
     startY = org[1] - 0.5f * xPixelStep[1] - 0.5f * yPixelStep[1];
     startZ = org[2] - 0.5f * xPixelStep[2] - 0.5f * yPixelStep[2];
 
+#if defined(COD2_X64)
+    Q_ReadToken = ri.SEH_ReadCharFromString;
+#else
     Q_ReadToken = (int (*)(const char **, int))ri.SEH_ReadCharFromString;
+#endif
 
     isDx7 = r_rendererInUse->current.integer == 2;
 
@@ -3056,7 +3068,11 @@ extern void RB_SetAnisotropy(void);
 extern void RB_SetAlphaAntiAliasingState(int state);
 extern qboolean R_RecoverLostDevice(void);
 extern void RB_DrawDebug(const GfxViewParms *viewParms);
+#if defined(COD2_X64)
+extern void RB_ChangeIndices(IDirect3DIndexBuffer9 *);
+#else
 extern void RB_ChangeIndices(int value);
+#endif
 extern void RB_ClearAllStreamSources(void);
 extern void Image_RebuildCosinePowerMap(float shift);
 void RB_ExecuteRenderCommands(const void *data)
@@ -3567,7 +3583,11 @@ static void RB_BACKEND_REGPARM3_SSE_ABI RB_DrawTextWithCursor_impl(const char *t
                                                                    float x, float y, float xScale, float yScale,
                                                                    GfxColor color, int style, int cursorPos, int cursor)
 {
+#if defined(COD2_X64)
+    unsigned int (*Q_ReadToken)(const char **, qboolean *) = ri.SEH_ReadCharFromString;
+#else
     int (*Q_ReadToken)(const char **, int) = (int (*)(const char **, int))ri.SEH_ReadCharFromString;
+#endif
     int (*Sys_Milliseconds)(void) = (int (*)(void))ri.Milliseconds;
     const Material *material = COD2_DEBUG_ENV("X64_FONT_WHITE") ? rgp.whiteMaterial : (const Material *)font->material;
     int traceText = RB_ShouldTraceTextCmd(text);
@@ -3849,9 +3869,15 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
             int glowRadii[2] = { 0, 0 };
             int p;
             for (p = 0; p < 2; p++) {
+#if defined(COD2_X64)
+                float intensity = ((const dvar_t **)imp_r_glowBloomIntensity)[p]->current.value;
+                if (intensity > 0.0f)
+                    glowRadii[p] = ((const dvar_t **)imp_r_glowRadius)[p]->current.integer;
+#else
                 float intensity = *(float *)(*(char **)imp_r_glowBloomIntensity + 8 + p * 4);
                 if (intensity > 0.0f)
                     glowRadii[p] = *(int *)(*(char **)imp_r_glowRadius + 8 + p * 4);
+#endif
             }
 
             if (glowRadii[1] != 0 && glowRadii[0] == 0) {
@@ -3876,8 +3902,13 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
             float sh = (float)dxState.renderTargetHeight;
 
             for (pass = 0; pass < glowCount; pass++) {
+#if defined(COD2_X64)
+                float skyBleed = ((const dvar_t **)imp_r_glowSkyBleedIntensity)[glowIndex]->current.value;
+                int bloomIntensity = ((const dvar_t **)imp_r_glowBloomIntensity)[glowIndex]->current.integer;
+#else
                 float skyBleed = *(float *)(*(char **)imp_r_glowSkyBleedIntensity + 8 + glowIndex * 4);
                 int bloomIntensity = *(int *)(*(char **)imp_r_glowBloomIntensity + 8 + glowIndex * 4);
+#endif
                 const Material *glowMaterial;
 
                 if (skyBleed > 0.0f)

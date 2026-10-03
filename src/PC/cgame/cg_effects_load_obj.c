@@ -39,10 +39,17 @@ static const char *g_TypeName[11] = {
     "rocket_explode"
 };
 
+#if defined(COD2_X64)
+static int compare_impact_files(const void *pe0, const void *pe1)
+{
+    return stricmp(*(const char *const *)pe0, *(const char *const *)pe1);
+}
+#else
 static int compare_impact_files(const int *pe0, const int *pe1)
 {
     return stricmp((const char *)(*pe0), (const char *)(*pe1));
 }
+#endif
 
 static int CG_RegisterImpactEffectsForDir(const char *dir, char *(*szEffectFile)[23])
 {
@@ -63,7 +70,11 @@ static int CG_RegisterImpactEffectsForDir(const char *dir, char *(*szEffectFile)
         psz += strlen(psz) + 1;
     }
 
+#if defined(COD2_X64)
+    qsort(pszFiles, iListCount, sizeof(pszFiles[0]), compare_impact_files);
+#else
     qsort(pszFiles, iListCount, 4, (int (*)(const void *, const void *))compare_impact_files);
+#endif
 
     for (i = 0; i < iListCount; i++) {
         const char *filename = va("%s/%s", dir, pszFiles[i]);

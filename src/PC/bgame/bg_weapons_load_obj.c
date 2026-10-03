@@ -20,7 +20,11 @@ extern qboolean G_ParseWeaponAccurayGraphs(WeaponDef *weapDef);
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
 extern void Com_Printf(const char *fmt, ...);
 extern qboolean Info_Validate(const char *s);
+#if defined(COD2_X64)
+extern int ParseConfigStringToStruct(byte *pStruct, cspField_t *fields, int numFields, const char *buffer, int maxFieldTypes, qboolean (*parseSpecificFieldType)(byte *, const char *, int), void (*setConfigString)(byte *, const char *));
+#else
 extern int ParseConfigStringToStruct(byte *pStruct, cspField_t *fields, int numFields, const char *buffer, int maxFieldTypes, qboolean (*parseSpecificFieldType)(byte *, const char *, int), long int (*setConfigString)(byte *, const char *));
+#endif
 extern char *I_strlwr(char *s);
 
 static WeaponDef bg_defaultWeaponDefs;
@@ -392,7 +396,11 @@ WeaponDef *BG_LoadWeaponDefInternal(const char *folder, const char *name)
 
     if (!ParseConfigStringToStruct((byte *)weapDef, weaponDefFields, 366, szBuffer, 16,
                                    BG_ParseWeaponDefSpecificFieldType,
+#if defined(COD2_X64)
+                                   SetConfigString2)) {
+#else
                                    (long int (*)(byte *, const char *))SetConfigString2)) {
+#endif
         weapDef = 0;
         return weapDef;
     }

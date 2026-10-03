@@ -105,8 +105,16 @@ extern int Hunk_HideTempMemory(void);
 extern void Hunk_ShowTempMemory(int mark);
 extern void Hunk_ClearTempMemory(void);
 extern int FS_FileSeek(FILE *stream, long offset, int origin);
+#if defined(COD2_X64)
+extern size_t FS_FileRead(void *, size_t, size_t, FILE *);
+#else
 extern unsigned int FS_FileRead(void *buffer, unsigned int size, unsigned int count, FILE *stream);
+#endif
+#if defined(COD2_X64)
+extern size_t FS_FileWrite(const void *, size_t, size_t, FILE *);
+#else
 extern unsigned int FS_FileWrite(const void *buffer, unsigned int size, unsigned int count, FILE *stream);
+#endif
 extern void FS_Remove(const char *osPath);
 extern void *malloc(size_t size);
 extern void free(void *ptr);

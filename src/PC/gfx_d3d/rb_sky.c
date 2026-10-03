@@ -61,7 +61,11 @@ int RB_CalcSunSpriteSamples(void)
     int sampleCount;
     int result;
 
+#if defined(COD2_X64)
+    occlusionQuery = sunFlareArray[0].sunQuery[0];
+#else
     occlusionQuery = r_occlusionQuery;
+#endif
     if (!occlusionQuery) {
         return 0;
     }

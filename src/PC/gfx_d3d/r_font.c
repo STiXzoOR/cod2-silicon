@@ -169,9 +169,14 @@ int R_TextHeight(FontHandle font)
 
 int R_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style)
 {
+#if defined(COD2_X64)
+    R_AddCmdDrawTextWithCursor(text, maxChars, font, x, y, xScale, yScale, color, style, -1, 0);
+    return 0;
+#else
     int (*draw)(const char *, int, FontHandle, float, float, float, float, const vec_t *, int, int, int) =
         (int (*)(const char *, int, FontHandle, float, float, float, float, const vec_t *, int, int, int))R_AddCmdDrawTextWithCursor;
     return draw(text, maxChars, font, x, y, xScale, yScale, color, style, -1, 0);
+#endif
 }
 
 static __attribute_regparm__(3)

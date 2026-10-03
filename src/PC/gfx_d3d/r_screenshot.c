@@ -44,7 +44,11 @@ extern const vec_t Vec3Normalize(vec_t *v);
 extern float FresnelTerm(float n0, float n1, float cosAngle);
 extern int MacDisplay_GetCardType(void);
 extern int MacOpenGLUtils_GetPCPixelShaderVersion(void);
+#if defined(COD2_X64)
+extern uint16_t MacDisplay_GetCurrentDimensions(int *, int *);
+#else
 extern void MacDisplay_GetCurrentDimensions(int *width, int *height);
+#endif
 
 static void R_ClearGLErrors(void)
 {
@@ -291,7 +295,11 @@ void R_EndCubemapShot(const CubemapShot shotIndex)
         }
     }
 
+#if defined(COD2_X64)
+    gammaVal = (*(const dvar_t **)imp_r_overbrightBits)->current.integer;
+#else
     gammaVal = (*r_gammaSetting)[2];
+#endif
     if (gammaVal > 0 && vidConfig.deviceSupportsGamma) {
         R_GammaCorrect(buffer, bufferSizeInBytes);
     }

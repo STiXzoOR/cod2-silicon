@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #endif
 #if defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 #include "../qcommon/cod2x.h"
 #endif
 #include "common_types.h"
@@ -21,6 +24,9 @@ typedef struct serverStatusRequest_s {
     qboolean retrieved;
 } serverStatusRequest_t;
 
+#if !defined(COD2_X64)
+#line 20
+#endif
 COD2_ASSERT_FIELD(serverStatusRequest_t, address, 0x2000);
 COD2_ASSERT_FIELD(serverStatusRequest_t, time, 0x2014);
 COD2_ASSERT_FIELD(serverStatusRequest_t, retrieved, 0x2024);
@@ -78,6 +84,9 @@ typedef struct rconGlob_s {
     netadr_t address;
 } rconGlob_t;
 
+#if !defined(COD2_X64)
+#line 75
+#endif
 COD2_ASSERT_FIELD(rconGlob_t, address, 0x18);
 COD2_ASSERT_SIZE(rconGlob_t, 0x2c);
 

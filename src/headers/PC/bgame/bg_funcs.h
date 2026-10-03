@@ -72,7 +72,11 @@ void PM_SetProneMovementOverride(playerState_t *ps);
 float BG_GetSpeed(const playerState_t *ps, int time);
 qboolean PM_ShouldMakeFootsteps(pmove_t *pm);
 void PM_ClipVelocity(const vec_t *in, const vec_t *normal, vec_t *out);
+#if defined(COD2_X64)
+void PM_UpdateLean(playerState_t *ps, float msec, usercmd_t *cmd, void (*capsuleTrace)(trace_t *, const vec_t *, const vec_t *, const vec_t *, const vec_t *, int, int));
+#else
 void PM_UpdateLean(playerState_t *ps, float msec, usercmd_t *cmd, void (*capsuleTrace)());
+#endif
 void PM_UpdateViewAngles(playerState_t *ps, float msec, usercmd_t *cmd, int handler);
 void PM_playerTrace(pmove_t *pm, trace_t *results, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int contentMask);
 void PM_UpdatePronePitch(pmove_t *pm, pml_t *pml);

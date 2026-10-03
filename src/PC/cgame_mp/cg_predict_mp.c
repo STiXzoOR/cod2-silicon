@@ -16,13 +16,21 @@ static centity_t *cg_triggerEntities[256];
 extern int CM_PointContents(const vec_t *point, unsigned int model);
 extern int CM_TransformedPointContents(const vec_t *point, unsigned int model, const vec_t *origin, const vec_t *angles);
 extern int CM_ContentsOfModel(unsigned int model);
+#if defined(COD2_X64)
+extern int CM_BoxTrace(trace_t *, const vec_t *, const vec_t *, const vec_t *, const vec_t *, clipHandle_t, int);
+#else
 extern void CM_BoxTrace(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, unsigned int model, int brushmask);
+#endif
 extern clipHandle_t CM_TempBoxModel(const vec_t *mins, const vec_t *maxs, int contents);
 extern int CM_TransformedBoxTraceExternal(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask, const vec_t *origin, const vec_t *angles);
 extern float CM_RadiusOfModel(unsigned int model);
 extern int CL_GetCurrentCmdNumber(void);
 extern qboolean CL_GetUserCmd(int cmdNumber, usercmd_t *ucmd);
+#if defined(COD2_X64)
+extern void PM_UpdateViewAngles(playerState_t *, float, usercmd_t *, int);
+#else
 extern void PM_UpdateViewAngles(playerState_t *ps, const usercmd_t *cmd, int, int);
+#endif
 extern const float LerpAngle(const float from, const float to, const float frac);
 extern void Pmove(pmove_t *pm);
 extern void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops);
@@ -130,7 +138,12 @@ static void CG_InterpolatePlayerState(qboolean grabAngles)
     if (grabAngles) {
         int cmdNum = CL_GetCurrentCmdNumber();
         CL_GetUserCmd(cmdNum, &cmd);
+
+#if defined(COD2_X64)
+        PM_UpdateViewAngles(out, 0.0f, &cmd, 0);
+#else
         PM_UpdateViewAngles(out, &cmd, 0, 0);
+#endif
     }
 
     if (next->serverTime <= prev->serverTime)

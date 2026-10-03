@@ -101,7 +101,11 @@ struct moveclip_t {
 };
 
 struct refexport_t {
+#if defined(COD2_X64)
+    void (*Shutdown)(qboolean destroyWindow);
+#else
     void (*Shutdown)(void);
+#endif
     void (*BeginRegistration)(void *vidConfigOut);
     struct XModel * (*RegisterModel)(const char *name);
     GfxBrushModel * (*RegisterInlineModel)(int modelIndex);
@@ -123,7 +127,11 @@ struct refexport_t {
     void (*DefaultVertexFrames)(int vertCount, GfxWorldVertex *verts);
     void (*AddPolyToScene)(MaterialHandle materialHandle, int lmapIndex, int vertCount, const GfxWorldVertex *verts);
     void (*AddLightToScene)(const vec_t *org, float radius, float r, float g, float b);
+#if defined(COD2_X64)
+    void (*InterpretSunLightParseParams)(SunLightParseParams *sunParse);
+#else
     void (*InterpretSunLightParseParams)();
+#endif
     void (*ResetSunLightParseParams)(void);
     void (*SetCullDist)(float dist);
     void (*SetFog)(int fogvar, float start, float end, int r, int g, int b, float density);
@@ -140,7 +148,11 @@ struct refexport_t {
     void (*SetMaterialColor)(const vec_t *color);
     void (*DrawStretchPic)(float x, float y, float w, float h, float s0, float t0, float s1, float t1, const vec_t *color, MaterialHandle material);
     void (*DrawStretchPicRotate)(float x, float y, float w, float h, float s0, float t0, float s1, float t1, float angle, const vec_t *color, MaterialHandle material);
+#if defined(COD2_X64)
+    void (*DrawStretchRaw)(int x, int y, int w, int h, int cols, int rows, const byte *data, int client, qboolean dirty);
+#else
     void (*DrawStretchRaw)();
+#endif
     void (*DrawQuadPic)(void *verts, const vec_t *color, MaterialHandle material);
     void (*DrawSprite)(MaterialHandle material, const unsigned char *rgbaColor, const vec_t *pos, float radius, float minScreenRadius, int renderFxFlags);
     void (*BeginFrame)(void);
@@ -172,29 +184,49 @@ struct refexport_t {
     float (*NormalizedTextScale)(FontHandle font, float scale);
     int (*TextWidth)(const char *text, int maxChars, FontHandle font);
     int (*TextHeight)(FontHandle font);
+#if defined(COD2_X64)
+    int (*DrawText)(const char *text, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style);
+#else
     void (*DrawText)(const char *text, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style);
+#endif
     void (*DrawTextInSpace)(const char *text, FontHandle font, const vec_t *org, const vec_t *xPixelStep, const vec_t *yPixelStep, const vec_t *color);
     int (*ConsoleTextWidth)(const short int *string, int maxChars, FontHandle font);
+#if defined(COD2_X64)
+    int (*DrawConsoleText)(const short int *string, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style);
+#else
     void (*DrawConsoleText)(const short int *string, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style);
+#endif
     void (*DrawTextWithCursor)(const char *text, int maxChars, FontHandle font, float x, float y, float xScale, float yScale, const vec_t *color, int style, int cursorPos, int cursor);
     void (*DObjGetSurfMaterials)(struct DObj_s *obj, int lod, MaterialHandle *matHandleArray);
     void (*DObjReplaceMaterial)(struct DObj_s *obj, int lod, int surfaceIndex, MaterialHandle material);
     const char * (*ParseSunLight)(void *params, const char *text);
     MaterialHandle (*Material_Duplicate)(MaterialHandle mtlCopy, const char *name);
+#if defined(COD2_X64)
+    int (*DuplicateFont)(FontHandle fontCopy, const char *name);
+#else
     void (*DuplicateFont)(FontHandle fontCopy, const char *name);
+#endif
     bool XModelAllowReadSurface;
     void (*SyncRenderThread)(void);
     void (*AbortRenderCommands)(void);
     qboolean (*IsGpuFenceFinished)(void);
     void (*SyncGpu)(void);
+#if defined(COD2_X64)
+    void (*GpuWaited)(int ticks);
+#else
     void (*GpuWaited)(void);
+#endif
     void (*SetLodOrigin)(const refdef_t *refdef);
 };
 
 struct refimport_t {
     void (*Printf)(int print_level, const char *fmt, ...);
     void (*Error)(errorParm_t code, const char *fmt, ...);
+#if defined(COD2_X64)
+    int (*Milliseconds)(void);
+#else
     int (*Milliseconds)();
+#endif
     void * (*Hunk_AllocInternal)(int size);
     void * (*Hunk_AllocateTempMemoryInternal)(int size);
     void * (*Z_MallocInternal)(int size);
@@ -205,15 +237,29 @@ struct refimport_t {
     void (*Z_VirtualDecommitInternal)(void *ptr, int size);
     void (*Z_VirtualFreeInternal)(void *ptr);
     void (*Hunk_FreeTempMemory)(void *buf);
+#if defined(COD2_X64)
+    void (*Hunk_ClearTempMemory)(void);
+    int (*Hunk_HideTempMemory)(void);
+    void (*Hunk_ShowTempMemory)(int mark);
+#else
     void (*Hunk_ClearTempMemory)();
     int (*Hunk_HideTempMemory)();
     void (*Hunk_ShowTempMemory)(void *mark);
+#endif
     void * (*Hunk_AllocateTempMemoryHighInternal)(int size);
+#if defined(COD2_X64)
+    void (*Hunk_ClearTempMemoryHigh)(void);
+    void (*Sys_DirectXFatalError)(void);
+    void (*Sys_ShowSplashWindow)(void);
+    void (*Sys_HideSplashWindow)(void);
+    void (*Sys_LoadingKeepAlive)(void);
+#else
     void (*Hunk_ClearTempMemoryHigh)();
     void (*Sys_DirectXFatalError)();
     void (*Sys_ShowSplashWindow)();
     void (*Sys_HideSplashWindow)();
     void (*Sys_LoadingKeepAlive)();
+#endif
     const dvar_t * (*Dvar_RegisterBool)(const char *dvarName, int value, int flags);
     const dvar_t * (*Dvar_RegisterInt)(const char *dvarName, int value, int min, int max, int flags);
     const dvar_t * (*Dvar_RegisterFloat)(const char *dvarName, float value, float min, float max, int flags);
@@ -256,14 +302,22 @@ struct refimport_t {
     void (*Dvar_Reset)(void *dvar, int source);
     void (*Cmd_AddCommand)(const char *cmdName, xcommand_t function);
     void (*Cmd_RemoveCommand)(const char *cmdName);
+#if defined(COD2_X64)
+    int (*Cmd_Argc)(void);
+#else
     int (*Cmd_Argc)();
+#endif
     char * (*Cmd_Argv)(int arg);
     void (*Cbuf_ExecuteText)(int exec_when, const char *text);
     qboolean (*Com_SaveDvarsToBuffer)(const char **dvar_names, int count, char *buf, int bufsize);
     qboolean (*Com_LoadDvarsFromBuffer)(const char **dvar_names, int count, const char *buf, const char *path);
     const dheader_s * (*Com_GetBsp)(int *fileSize, unsigned int *checksum);
     unsigned int (*SEH_ReadCharFromString)(const char **ppsText, qboolean *pbIsTrailingPunctuation);
+#if defined(COD2_X64)
+    void (*CL_UpdateDebugData)(void);
+#else
     void (*CL_UpdateDebugData)();
+#endif
     void (*CL_FlushDebugData)(qboolean fromServer);
     void (*StatMon_Warning)(int type, int duration, const char *materialName);
     int (*FS_ReadFile)(const char *qpath, void **buffer);
@@ -278,7 +332,11 @@ struct refimport_t {
     int (*FS_Read)(void *buffer, int len, fileHandle_t h);
     int (*FS_Write)(const void *buf, int len, int fh);
     void (*CM_SaveLump)(int lumpnum, byte *newLump, int size, int *checksum);
+#if defined(COD2_X64)
+    int (*CM_BoxTrace)(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask);
+#else
     void (*CM_BoxTrace)(trace_t *results, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask);
+#endif
     int (*CM_BoxSightTrace)(int oldHitNum, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask);
     Bool (*CM_RayTriangleIntersect)();
     struct XModel * (*XModelPrecache)(const char *name, Alloc_t Alloc, Alloc_t AllocColl);

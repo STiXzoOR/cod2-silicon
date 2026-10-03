@@ -58,7 +58,11 @@ extern const dvar_t *Dvar_RegisterBool(const char *name, qboolean value, unsigne
 extern void Dvar_SetInt(const dvar_t *dvar, int value);
 extern int I_stricmp(const char *s1, const char *s2);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
+#if defined(COD2_X64)
+extern void I_strncat(char *, int, const char *);
+#else
 extern void I_strncat(char *dest, const char *src, int destsize);
+#endif
 extern void Com_Printf(const char *fmt, ...);
 extern void Com_Error(int level, const char *fmt, ...);
 extern const char *va(const char *fmt, ...);
@@ -418,8 +422,18 @@ const char *SEH_SafeTranslateString(const char *pszReference)
             Com_Printf("^3WARNING: Could not translate exe string \"%s\"\n", pszReference);
         }
         strcpy(szErrorString, "^1UNLOCALIZED(^7");
+
+#if defined(COD2_X64)
+        I_strncat(szErrorString, 1024, pszReference);
+#else
         I_strncat(szErrorString, pszReference, 1024);
+#endif
+
+#if defined(COD2_X64)
+        I_strncat(szErrorString, 1024, "^1)^7");
+#else
         I_strncat(szErrorString, "^1)^7", 1024);
+#endif
         return szErrorString;
     }
 

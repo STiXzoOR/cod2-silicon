@@ -163,7 +163,11 @@ extern Bool IsTalking(void);
 
 extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int flags);   /* was int -> truncated MaterialHandle on x64 */
 extern FontHandle CL_RegisterFont(const char *name, int flags);   /* was int -> truncated FontHandle on x64 */
+#if defined(COD2_X64)
+extern snd_alias_list_t * Com_FindSoundAlias(const char *);
+#else
 extern int Com_FindSoundAlias(const char *name);
+#endif
 extern void CL_DrawStretchPic(float x, float y, float w, float h, int horzAlign, int vertAlign, float s0, float t0, float s1, float t1, const vec_t *color, MaterialHandle material);
 extern float CL_NormalizedTextScale(FontHandle font, float scale);
 extern int CL_TextWidth(const char *text, int maxChars, FontHandle font);
@@ -222,7 +226,11 @@ extern void LAN_MarkServerDirty(int source, int index, int dirty);
 extern int LAN_UpdateDirtyPings(int source);
 extern void LAN_GetServerAddressString(int source, int index, char *addr, int addrSize);
 extern void LAN_RemoveServer(int source, const char *addr);
+#if defined(COD2_X64)
+extern void LAN_LoadCachedServers(void);
+#else
 extern int LAN_LoadCachedServers(void);
+#endif
 extern e_status CIN_StopCinematic(int handle);
 extern int CIN_PlayCinematic(const char *name, int x, int y, int w, int h, int flags);
 extern e_status CIN_RunCinematic(int handle);
@@ -262,7 +270,11 @@ extern void Controls_SetConfig(int apply);
 extern void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, FontHandle font, float scale, vec_t *color, MaterialHandle material, int textStyle);
 extern const char *CG_GameTypeString(void);
 extern const char *CG_GetKillerText(void);
+#if defined(COD2_X64)
+extern const char * SEH_LocalizeTextMessage(const char *, const char *, msgLocErrType_t);
+#else
 extern const char *SEH_LocalizeTextMessage(const char *msg, const char *fmt, const char *ctx);
+#endif
 extern void LerpColor(vec_t *a, vec_t *b, vec_t *c, float t);
 extern void Item_SetCursorPos(itemDef_t *item, int pos);
 extern int Item_ListBox_MaxScroll(itemDef_t *item);

@@ -57,15 +57,22 @@ int pthread_main_np(void)
 }
 #endif
 
+#if defined(COD2_X64)
+typedef struct AbsoluteTime {
+    unsigned int lo;
+    unsigned int hi;
+} AbsoluteTime;
+#else
 typedef struct {
     unsigned int hi;
     unsigned int lo;
 } AbsoluteTime;
+#endif
 AbsoluteTime UpTime(void)
 {
 #if defined(__APPLE__) && defined(COD2_X64)
     uint64_t nanos = MacSystem_Nanoseconds();
-    AbsoluteTime t = { (unsigned int)(nanos >> 32), (unsigned int)nanos };
+    AbsoluteTime t = { .hi = (unsigned int)(nanos >> 32), .lo = (unsigned int)nanos };
 #else
     AbsoluteTime t = { 0, 0 };
 #endif

@@ -49,9 +49,17 @@ extern void MatrixTranspose44(const float *in, float *out);
 extern void MatrixMultiply44(const float (*a)[4], const float (*b)[4], float (*out)[4]);
 extern void MatrixTransformVector44(const float *vec, const float (*mat)[4], float *out);
 extern Bool RB_GetViewport(GfxViewport *viewport);
+#if defined(COD2_X64)
+extern int MacOpenGLUtils_ConvertD3DProjectionMatrixToOpenGL(float *, float, float);
+#else
 extern void MacOpenGLUtils_ConvertD3DProjectionMatrixToOpenGL(void *proj, float width, float height);
+#endif
 extern void RB_UpdateViewport(void);
+#if defined(COD2_X64)
+extern void RB_SetIteratorFog(void);
+#else
 extern int RB_SetIteratorFog(void);
+#endif
 extern int RB_DeriveEntityLights(vec4_t *colorForDir, float sunVisibility, const Material *material, D3DLIGHT9 *lights, int maxLights);
 extern void RB_SetupEntityLighting(const GfxEntity *ent, GfxEntityLighting *lighting);
 extern void RB_SetCodeConstant(int constant, vec_t x, vec_t y, vec_t z, vec_t w);

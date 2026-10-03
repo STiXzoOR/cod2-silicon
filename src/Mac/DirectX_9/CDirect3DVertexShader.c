@@ -24,7 +24,11 @@ unsigned char CDirect3DVertexShader_CDirect3DVertexShader(const CDirect3DVertexS
 HRESULT CDirect3DVertexShader_GetFunction(const CDirect3DVertexShader *_this, UINT *pSizeOfData);
 
 extern unsigned int COpenGLVertexProgram_COpenGLVertexProgram(const COpenGLVertexProgram *_this, const char *pSrcData);
+#if defined(COD2_X64)
+extern void ZN20COpenGLVertexProgramD2Ev(void *_this);
+#else
 extern void ZN20COpenGLVertexProgramD2Ev(void);
+#endif
 
 ULONG CDirect3DVertexShader_AddRef(const CDirect3DVertexShader *_this)
 {

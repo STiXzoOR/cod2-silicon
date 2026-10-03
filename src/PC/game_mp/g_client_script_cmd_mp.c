@@ -81,13 +81,37 @@ extern const char *Scr_GetString(unsigned int index);
 extern int GScr_GetScriptMenuIndex(const char *menu);
 extern void SV_GameSendServerCommand(int clientNum, svscmd_type type, const char *text);
 extern int SV_GetGuid(int clientNum);
+#if defined(COD2_X64)
+extern void Scr_AddInt(int);
+#else
 extern unsigned int Scr_AddInt(int value);
+#endif
+#if defined(COD2_X64)
+extern void Scr_AddFloat(float);
+#else
 extern unsigned int Scr_AddFloat(float value);
+#endif
+#if defined(COD2_X64)
+extern void Scr_AddVector(const float *);
+#else
 extern unsigned int Scr_AddVector(vec_t *value);
+#endif
 extern void Scr_GetVector(unsigned int index, vec_t *value);
+#if defined(COD2_X64)
+extern void Scr_AddString(const char *);
+#else
 extern unsigned int Scr_AddString(const char *value);
+#endif
+#if defined(COD2_X64)
+extern void Scr_AddBool(int);
+#else
 extern unsigned int Scr_AddBool(int value);
+#endif
+#if defined(COD2_X64)
+extern void Scr_AddConstString(unsigned int);
+#else
 extern unsigned int Scr_AddConstString(unsigned int value);
+#endif
 extern void Scr_AddEntity(gentity_t *ent);
 extern void Scr_ParamError(unsigned int index, const char *msg);
 extern unsigned int Scr_GetNumParam(void);
@@ -121,7 +145,11 @@ extern gentity_t *Drop_Weapon(gentity_t *pEnt, int iWeaponIndex, unsigned int ta
 extern const gitem_t *G_FindItem(const char *pickupName);
 extern gentity_t *Drop_Item(gentity_t *ent, const gitem_t *item, float angle, qboolean novelocity);
 extern int Add_Ammo(gentity_t *ent, int weapon, int count, qboolean fillClip);
+#if defined(COD2_X64)
+extern void GScr_AddEntity(gentity_t *);
+#else
 extern unsigned int GScr_AddEntity(gentity_t *pEnt);
+#endif
 extern void player_die(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath, int iWeapon, const vec_t *vDir, const hitLocation_t hitLoc, int psTimeOffset);
 extern void Scr_MakeGameMessage(int iClientNum, const char *pszCmd);
 extern void ClientSpawn(gentity_t *ent, const vec_t *spawn_origin, const vec_t *spawn_angles);
@@ -331,7 +359,11 @@ unsigned int PlayerCmd_getAngles(scr_entref_t entref)
 {
     gentity_t *pSelf = PlayerCmd_GetPlayerEntity(entref);
 
+#if defined(COD2_X64)
+    return (Scr_AddVector(pSelf->client->ps.viewangles), 0);
+#else
     return Scr_AddVector(pSelf->client->ps.viewangles);
+#endif
 }
 
 void PlayerCmd_useButtonPressed(scr_entref_t entref)
@@ -353,7 +385,11 @@ unsigned int PlayerCmd_playerADS(scr_entref_t entref)
 {
     gentity_t *pSelf = PlayerCmd_GetPlayerEntity(entref);
 
+#if defined(COD2_X64)
+    return (Scr_AddFloat(pSelf->client->ps.fWeaponPosFrac), 0);
+#else
     return Scr_AddFloat(pSelf->client->ps.fWeaponPosFrac);
+#endif
 }
 
 void PlayerCmd_isOnGround(scr_entref_t entref)
@@ -390,7 +426,11 @@ unsigned int PlayerCmd_GetViewmodel(scr_entref_t entref)
 {
     gentity_t *pSelf = PlayerCmd_GetPlayerEntity(entref);
 
+#if defined(COD2_X64)
+    return (Scr_AddString(G_ModelName(pSelf->client->sess.viewmodelIndex)), 0);
+#else
     return Scr_AddString(G_ModelName(pSelf->client->sess.viewmodelIndex));
+#endif
 }
 
 void PlayerCmd_showScoreboard(scr_entref_t entref)
@@ -439,8 +479,17 @@ unsigned int PlayerCmd_dropItem(scr_entref_t entref)
         if (item)
             dropped = Drop_Item(pSelf, item, 0.0f, 0);
     }
+#if defined(COD2_X64)
 
+    return (GScr_AddEntity(dropped), 0);
+#else
+
+#if defined(COD2_X64)
+    return (GScr_AddEntity(dropped), 0);
+#else
     return GScr_AddEntity(dropped);
+#endif
+#endif
 }
 
 void PlayerCmd_Suicide(scr_entref_t entref)
@@ -468,7 +517,11 @@ unsigned int PlayerCmd_OpenMenu(scr_entref_t entref)
                 Com_Printf("[menu-trace] openMenu client=%u connected=%d menu='%s' rejected\n",
                            entref.entnum, pSelf->client->sess.connected, menuName);
         }
+#if defined(COD2_X64)
+        return (Scr_AddInt(0), 0);
+#else
         return Scr_AddInt(0);
+#endif
     }
 
     menuIndex = GScr_GetScriptMenuIndex(menuName);
@@ -478,7 +531,11 @@ unsigned int PlayerCmd_OpenMenu(scr_entref_t entref)
                        entref.entnum, pSelf->client->sess.connected, menuName, menuIndex, menuIndex);
     }
     SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i", 0x74, menuIndex));
+#if defined(COD2_X64)
+    return (Scr_AddInt(1), 0);
+#else
     return Scr_AddInt(1);
+#endif
 }
 
 unsigned int PlayerCmd_OpenMenuNoMouse(scr_entref_t entref)
@@ -496,7 +553,11 @@ unsigned int PlayerCmd_OpenMenuNoMouse(scr_entref_t entref)
                 Com_Printf("[menu-trace] openMenuNoMouse client=%u connected=%d menu='%s' rejected\n",
                            entref.entnum, pSelf->client->sess.connected, menuName);
         }
+#if defined(COD2_X64)
+        return (Scr_AddInt(0), 0);
+#else
         return Scr_AddInt(0);
+#endif
     }
 
     menuIndex = GScr_GetScriptMenuIndex(menuName);
@@ -506,7 +567,11 @@ unsigned int PlayerCmd_OpenMenuNoMouse(scr_entref_t entref)
                        entref.entnum, pSelf->client->sess.connected, menuName, menuIndex, menuIndex);
     }
     SV_GameSendServerCommand(entref.entnum, SV_CMD_RELIABLE, va("%c %i 1", 0x74, menuIndex));
+#if defined(COD2_X64)
+    return (Scr_AddInt(1), 0);
+#else
     return Scr_AddInt(1);
+#endif
 }
 
 void PlayerCmd_CloseMenu(scr_entref_t entref)
@@ -959,7 +1024,11 @@ unsigned int PlayerCmd_GetGuid(scr_entref_t entref)
     if (Scr_GetNumParam())
         Scr_Error("USAGE: self getGuid()\n");
 
+#if defined(COD2_X64)
+    return (Scr_AddInt(SV_GetGuid(entref.entnum)), 0);
+#else
     return Scr_AddInt(SV_GetGuid(entref.entnum));
+#endif
 }
 
 void PlayerCmd_giveWeapon(scr_entref_t entref)
@@ -1091,17 +1160,33 @@ unsigned int PlayerCmd_getFractionStartAmmo(scr_entref_t entref)
 
     weaponIndex = G_GetWeaponIndexForName(Scr_GetString(0));
     if (!PlayerCmd_HasWeapon(&pSelf->client->ps, weaponIndex))
+#if defined(COD2_X64)
+        return (Scr_AddFloat(1.0f), 0);
+#else
         return Scr_AddFloat(1.0f);
+#endif
 
     weapDef = BG_GetWeaponDef(weaponIndex);
     if (weapDef->iStartAmmo <= 0)
+#if defined(COD2_X64)
+        return (Scr_AddFloat(1.0f), 0);
+#else
         return Scr_AddFloat(1.0f);
+#endif
 
     ammo = pSelf->client->ps.ammo[weapDef->iAmmoIndex];
     if (ammo <= 0)
+#if defined(COD2_X64)
+        return (Scr_AddFloat(0.0f), 0);
+#else
         return Scr_AddFloat(0.0f);
+#endif
     else
+#if defined(COD2_X64)
+        return (Scr_AddFloat((float)ammo / (float)weapDef->iStartAmmo), 0);
+#else
         return Scr_AddFloat((float)ammo / (float)weapDef->iStartAmmo);
+#endif
 }
 
 unsigned int PlayerCmd_getFractionMaxAmmo(scr_entref_t entref)
@@ -1114,18 +1199,34 @@ unsigned int PlayerCmd_getFractionMaxAmmo(scr_entref_t entref)
 
     weaponIndex = G_GetWeaponIndexForName(Scr_GetString(0));
     if (!PlayerCmd_HasWeapon(&pSelf->client->ps, weaponIndex))
+#if defined(COD2_X64)
+        return (Scr_AddFloat(1.0f), 0);
+#else
         return Scr_AddFloat(1.0f);
+#endif
 
     weapDef = BG_GetWeaponDef(weaponIndex);
     maxAmmo = BG_GetAmmoTypeMax(weapDef->iAmmoIndex);
     if (maxAmmo <= 0)
+#if defined(COD2_X64)
+        return (Scr_AddFloat(1.0f), 0);
+#else
         return Scr_AddFloat(1.0f);
+#endif
 
     ammo = pSelf->client->ps.ammo[weapDef->iAmmoIndex];
     if (ammo <= 0)
+#if defined(COD2_X64)
+        return (Scr_AddFloat(0.0f), 0);
+#else
         return Scr_AddFloat(0.0f);
+#endif
     else
+#if defined(COD2_X64)
+        return (Scr_AddFloat((float)ammo / (float)maxAmmo), 0);
+#else
         return Scr_AddFloat((float)ammo / (float)maxAmmo);
+#endif
 }
 
 void PlayerCmd_setOrigin(scr_entref_t entref)
@@ -1327,7 +1428,11 @@ void PlayerCmd_finishPlayerDamage(scr_entref_t entref)
     if (health > 0) {
         void (*pain)(gentity_t *, gentity_t *, int, const vec_t *, int, const vec_t *, hitLocation_t);
 
+#if defined(COD2_X64)
+        pain = entityHandlers[pSelf->handler].pain;
+#else
         pain = (void (*)(gentity_t *, gentity_t *, int, const vec_t *, int, const vec_t *, hitLocation_t))entityHandlers[pSelf->handler].pain;
+#endif
         if (pain)
             pain(pSelf, attacker, damage, point, mod, localdir, hitLoc);
 
@@ -1468,14 +1573,26 @@ unsigned int PlayerCmd_GetWeaponSlotWeapon(scr_entref_t entref)
     int weaponIndex;
 
     if (pSelf->client->sess.sessionState != SESS_STATE_PLAYING)
+#if defined(COD2_X64)
+        return (Scr_AddConstString(scrConst->none), 0);
+#else
         return Scr_AddConstString(scrConst->none);
+#endif
 
     slot = PlayerCmd_GetWeaponSlotParam(0);
     weaponIndex = (signed char)pSelf->client->ps.weaponslots[slot];
     if (!weaponIndex)
+#if defined(COD2_X64)
+        return (Scr_AddConstString(scrConst->none), 0);
+#else
         return Scr_AddConstString(scrConst->none);
+#endif
 
+#if defined(COD2_X64)
+    return (Scr_AddString(BG_GetWeaponDef(weaponIndex)->szInternalName), 0);
+#else
     return Scr_AddString(BG_GetWeaponDef(weaponIndex)->szInternalName);
+#endif
 }
 
 void PlayerCmd_GetWeaponSlotAmmo(scr_entref_t entref)

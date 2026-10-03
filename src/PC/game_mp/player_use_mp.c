@@ -15,7 +15,11 @@ extern qboolean SV_EntityContact(const vec_t *mins, const vec_t *maxs, const gen
 extern qboolean G_IsTurretUsable(gentity_t *turret, gentity_t *player);
 extern qboolean BG_CanItemBeGrabbed(const entityState_t *ent, const playerState_t *ps, qboolean bTouched);
 extern int G_TraceCapsuleComplete(const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int contentMask);
+#if defined(COD2_X64)
+extern int G_DObjGetWorldTagPos(gentity_t *, unsigned int, vec_t *);
+#else
 extern void G_DObjGetWorldTagPos(gentity_t *ent, unsigned int tagName, vec_t *pos);
+#endif
 extern void G_LocationalTrace(trace_t *trace, const vec_t *start, const vec_t *end, int passEntityNum, int contentMask, unsigned char *priorityMap);
 extern float SV_FX_GetVisibility(const vec_t *start, const vec_t *end);
 extern void G_Trigger(gentity_t *self, gentity_t *other);

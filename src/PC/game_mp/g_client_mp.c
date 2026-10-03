@@ -15,17 +15,29 @@ extern void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_
 extern const float AngleDelta(const float angle1, const float angle2);
 extern const float AngleNormalize180(const float angle);
 extern const float AngleNormalize360(const float angle);
+#if defined(COD2_X64)
+extern void CalculateRanks(void);
+#else
 extern int CalculateRanks(void);
+#endif
 extern void Scr_Notify(gentity_t *ent, unsigned short name, unsigned int numArgs);
 extern int Scr_IsSystemActive(int flag);
+#if defined(COD2_X64)
+extern void Scr_AddString(const char *);
+#else
 extern unsigned int Scr_AddString(const char *str);
+#endif
 extern void Scr_PlayerConnect(gentity_t *ent);
 extern void Scr_PlayerDisconnect(gentity_t *ent);
 extern void StopFollowing(gentity_t *ent);
 extern void HudElem_ClientDisconnect(gentity_t *ent);
 extern void G_FreeEntity(gentity_t *ed);
 extern void G_InitGentity(gentity_t *ent);
+#if defined(COD2_X64)
+extern unsigned char G_EntUnlink(gentity_t *);
+#else
 extern void G_EntUnlink(gentity_t *ent);
+#endif
 extern void G_SetOrigin(gentity_t *ent, const vec_t *origin);
 extern void G_SetClientContents(gentity_t *ent);
 extern void G_ClientStopUsingTurret(gentity_t *ent);

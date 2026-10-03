@@ -53,6 +53,7 @@ src/win32/sdl2/lib/*.pdb
 
 # Native macOS compile and diagnostic output
 /build-macos/
+/build-abi/
 
 # Local typed-data generation and verification outputs
 /build/x64_gen/

@@ -20,7 +20,11 @@ extern gentity_t g_entities[];   /* was a macro over imp_g_entities (extra load)
 extern int BG_GetNumWeapons(void);
 extern WeaponDef *BG_GetWeaponDef(int weaponIndex);
 extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
+#if defined(COD2_X64)
+extern void G_SetConstString(scr_string_t *, const char *);
+#else
 extern unsigned char G_SetConstString(scr_string_t *to, const char *from);
+#endif
 extern void I_strncat(char *dest, int size, const char *src);
 extern void SV_SetConfigstring(const int index, const char *val);
 extern void *imp_g_scr_data;
@@ -34,7 +38,11 @@ extern void G_SetModel(gentity_t *ent, const char *modelName);
 extern void G_DObjUpdate(gentity_t *ent);
 extern void G_SetAngle(gentity_t *ent, const vec_t *angle);
 extern void G_SetOrigin(gentity_t *ent, const vec_t *origin);
+#if defined(COD2_X64)
+extern void SV_LinkEntity(gentity_t *);
+#else
 extern int SV_LinkEntity(gentity_t *gEnt);
+#endif
 extern int G_GetHintStringIndex(int *piIndex, const char *pszString);
 extern void Com_Error(int code, const char *fmt, ...);
 extern qboolean G_XModelBad(int index);
@@ -85,7 +93,11 @@ extern int BG_GetEmptySlotForWeapon(const playerState_t *pPS, int iWeaponIndex);
 extern int BG_GetStackSlotForWeapon(const playerState_t *pPS, int iWeaponIndex, weapSlot_t preferredSlot);
 extern void G_SelectWeaponIndex(int clientNum, int iWeaponIndex);
 extern void Scr_AddEntity(gentity_t *ent);
+#if defined(COD2_X64)
+extern void Scr_AddUndefined(void);
+#else
 extern unsigned int Scr_AddUndefined(void);
+#endif
 extern void Scr_Notify(gentity_t *ent, unsigned short stringValue, unsigned int paramcount);
 extern void G_AddPredictableEvent(gentity_t *ent, int event, int eventParm);
 extern void G_AddEvent(gentity_t *ent, int event, int eventParm);

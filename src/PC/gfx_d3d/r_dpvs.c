@@ -857,7 +857,11 @@ extern void RB_ShowLightVisCachePoints(const GfxViewParms *viewParms, const Dpvs
 extern struct DObj_s *R_GetGfxEntityDObj(GfxSceneEntity *sceneEnt, GfxEntity *ent);
 extern void ClearBounds(vec_t *mins, vec_t *maxs);
 extern void AddPointToBounds(const vec_t *v, vec_t *mins, vec_t *maxs);
+#if defined(COD2_X64)
+extern void R_dpvs_diag_print(int, int, int);
+#else
 extern void R_dpvs_diag_print(int cameraCellIndex, int drawWorld, const void *cellPtr);
+#endif
 extern void LargeLocal_LargeLocal(const LargeLocal *_this, int size);
 extern void *LargeLocal_GetBuf(const LargeLocal *_this);
 extern void ZN10LargeLocalD1Ev(LargeLocal *_this);

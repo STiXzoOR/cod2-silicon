@@ -8,8 +8,13 @@
 typedef void (*fn_reached)(gentity_t *ent);
 typedef void (*fn_blocked)(gentity_t *ent, gentity_t *other);
 typedef void (*fn_controller)(gentity_t *ent, int *boneIndices);
+#if defined(COD2_X64)
+typedef void (*fn_pain)(gentity_t *self, gentity_t *attacker, int damage,
+                        const vec_t *point, int mod, const vec_t *dir, hitLocation_t hitLoc);
+#else
 typedef void (*fn_pain)(gentity_t *self, gentity_t *attacker, int damage,
                         const vec_t *point, int mod, hitLocation_t hitLoc);
+#endif
 typedef void (*fn_die)(gentity_t *self, gentity_t *inflictor, gentity_t *attacker,
                        int damage, int mod, int contents, const vec_t *point,
                        hitLocation_t hitLoc, int modelIndex);

@@ -25,6 +25,9 @@ extern const void *speex_nb_mode_ptr;
 extern const void *speex_wb_mode_ptr;
 extern const void *speex_uwb_mode_ptr;
 extern int *speex_quality_ptr;
+#if defined(COD2_X64)
+extern int g_encoder_samplerate;
+#endif
 
 extern void *g_decoder;
 extern int g_current_decode_bandwidth_setting;
@@ -38,13 +41,25 @@ Bool Decode_Init(int bandwidthEnum)
 
     switch (bandwidthEnum) {
     case 0:
+#if defined(COD2_X64)
+        mode = imp_speex_nb_mode;
+#else
         mode = speex_nb_mode_ptr;
+#endif
         break;
     case 1:
+#if defined(COD2_X64)
+        mode = imp_speex_wb_mode;
+#else
         mode = speex_wb_mode_ptr;
+#endif
         break;
     case 2:
+#if defined(COD2_X64)
+        mode = imp_speex_uwb_mode;
+#else
         mode = speex_uwb_mode_ptr;
+#endif
         break;
     default:
         Com_Printf("Unknown bandwidth mode %i\n", bandwidthEnum);
@@ -53,7 +68,11 @@ Bool Decode_Init(int bandwidthEnum)
 
     g_decoder = speex_decoder_init( (const SpeexMode *)(mode));
     speex_decoder_ctl(g_decoder, 0, &tmp);
+#if defined(COD2_X64)
+    speex_decoder_ctl(g_decoder, 0x18, &g_encoder_samplerate);
+#else
     speex_decoder_ctl(g_decoder, 0x18, speex_quality_ptr);
+#endif
     speex_encoder_ctl(g_decoder, 3, &g_decode_frame_size);
     g_current_decode_bandwidth_setting = bandwidthEnum;
     speex_bits_init(&decodeBits);

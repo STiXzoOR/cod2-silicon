@@ -8,7 +8,11 @@ int g_voice_initialized = 0x0;
 extern const dvar_t *Dvar_RegisterBool(const char *name, int defaultValue, int flags);
 extern const dvar_t *Dvar_RegisterFloat(const char *name, float defaultValue, float min, float max, int flags);
 extern int Record_Init(int callInit, const void *handle);
+#if defined(COD2_X64)
+extern int Sound_Init(const unsigned char *);
+#else
 extern void Sound_Init(int freq);
+#endif
 extern Bool Encode_Init(int freq);
 extern unsigned char Decode_Init(int freq);
 extern void Record_Shutdown(void);
@@ -25,16 +29,36 @@ extern int Record_Start(recordingSample_t *sample);
 extern int Record_Stop(recordingSample_t *sample);
 extern recordingSample_t *Record_NewSample(void);
 extern int Record_DestroySample(recordingSample_t *sample);
+#if defined(COD2_X64)
+extern int mixerGetRecordSource(char *);
+#else
 extern void mixerGetRecordSource(char *source);
+#endif
+#if defined(COD2_X64)
+extern int mixerSetRecordSource(const char *);
+#else
 extern void mixerSetRecordSource(const char *source);
+#endif
 extern int mixerGetRecordLevel(const char *source);
+#if defined(COD2_X64)
+extern int mixerSetRecordLevel(const char *, int);
+#else
 extern void mixerSetRecordLevel(const char *source, int level);
+#endif
+#if defined(COD2_X64)
+extern int mixerSetMicrophoneMute(int);
+#else
 extern void mixerSetMicrophoneMute(int mute);
+#endif
 extern int Sys_Milliseconds(void);
 extern int Decode_Sample(char *inData, int inSize, short *outData, int maxOutSize);
 
 extern byte *voice_freq_ptr;
 extern byte *voice_maxframe_ptr;
+#if defined(COD2_X64)
+extern int g_current_bandwidth_setting;
+extern int g_frame_size;
+#endif
 
 #if COD2_APPLE_SDK
 const dvar_t *winvoice_mic_mute;
@@ -92,16 +116,13 @@ Bool Voice_Init(void)
     winvoice_save_voice = Dvar_RegisterBool("winvoice_save_voice", 0, 0x1001);
     winvoice_mic_scaler = Dvar_RegisterFloat("winvoice_mic_scaler", 1.0f, 0.25f, 2.0f, 0x1001);
 
-    freq = *(int **)&voice_freq_ptr;
-#if COD2_APPLE_SDK
-    /* voice_freq_ptr is placeholder storage (link_stubs.c); the original reads
-     * a pointer from an unmodelled global (Mac 1.3 Voice_Init loads it from
-     * 0x1acd9fd). Skip the write until that global is reconstructed. */
-    if (freq)
-        *freq = 0;
+#if defined(COD2_X64)
+    /* Mac 1.3 GOT slot 0x1acd9fd names g_current_bandwidth_setting. */
+    freq = &g_current_bandwidth_setting;
 #else
-    *freq = 0;
+    freq = *(int **)&voice_freq_ptr;
 #endif
+    *freq = 0;
 
     if (!Record_Init(0, 0))
         return 0;
@@ -197,7 +218,13 @@ void Voice_IncomingVoiceData(int talker, unsigned char *data, int packetDataSize
     decodedLen = 0;
     if (packetDataSize > 0) {
         processedBytes = 0;
+#if defined(COD2_X64)
+        maxFrameSize = g_frame_size;
+        if (maxFrameSize <= 0)
+            return;
+#else
         maxFrameSize = *(int *)voice_maxframe_ptr;
+#endif
 
         while (processedBytes < packetDataSize) {
             remaining = packetDataSize - processedBytes;

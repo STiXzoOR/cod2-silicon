@@ -139,7 +139,11 @@ extern unsigned char g_clients[];
 #endif
 
 extern float ceilf(float x);
+#if defined(COD2_X64)
+extern void Com_ServerDObjCreate(DObjModel_s *, int, struct XAnimTree_s *, int);
+#else
 extern int Com_ServerDObjCreate(DObjModel_s *models, int numModels, struct XAnimTree_s *tree, int handle);
+#endif
 extern void *Hunk_AllocLowInternal(int size);
 extern void SV_Trace(trace_t *results, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int contentmask, qboolean locational, unsigned char *priorityMap, qboolean staticmodels);
 extern qboolean SV_TracePassed(const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int passEntityNum, int passOwnerNum, int contentmask, int locational, int staticmodels);
@@ -162,9 +166,17 @@ extern void Scr_ShutdownSystem(int inst, qboolean freeScripts);
 extern void SV_FreeClientScriptPers(void);
 extern void Z_FreeInternal(void *ptr);
 extern void Mantle_ShutdownAnims(void);
+#if defined(COD2_X64)
+extern void GScr_FreeScripts(void);
+#else
 extern unsigned int GScr_FreeScripts(void);
+#endif
 extern void Scr_FreeScripts(int inst);
+#if defined(COD2_X64)
+extern void XAnimFreeTree(XAnimTree *, Free_t);
+#else
 extern void XAnimFreeTree(struct XAnimTree_s *tree, int inst);
+#endif
 extern void Hunk_ClearToMarkLow(int mark);
 extern void G_RunMissile(gentity_t *ent);
 extern void G_RunItem(gentity_t *ent);
@@ -196,7 +208,11 @@ void G_SetClientArchiveTime(int clientNum, int time);
 clientState_t *G_GetClientState(int clientNum);
 static int G_CreateDObj(DObjModel_s *dobjModels, int numModels, struct XAnimTree_s *tree, int handle, clientInfo_t *ci);
 int *Hunk_AllocXAnimServer(int size);
+#if defined(COD2_X64)
+static int SortRanks(const void *a, const void *b);
+#else
 static int SortRanks(const int *a, const int *b);
+#endif
 void CalculateRanks(void);
 void G_LogPrintf(const char *fmt, ...);
 void ExitLevel(void);
@@ -357,16 +373,35 @@ static int G_CreateDObj(DObjModel_s *dobjModels, int numModels, struct XAnimTree
 {
     numModels = (unsigned short)numModels;
     (void)ci;
+#if defined(COD2_X64)
+    return (Com_ServerDObjCreate(dobjModels, numModels, tree, handle), 0);
+#else
     return Com_ServerDObjCreate(dobjModels, numModels, tree, handle);
+#endif
 }
+
+#if defined(COD2_X64)
+static void G_CreateDObjCallback(void *dobjModels, unsigned short numModels, void *tree, int handle, void *ci)
+{
+    G_CreateDObj((DObjModel_s *)dobjModels, numModels, (struct XAnimTree_s *)tree, handle, (clientInfo_t *)ci);
+}
+#endif
 
 int *Hunk_AllocXAnimServer(int size)
 {
     return (int *)Hunk_AllocLowInternal(size);
 }
 
+#if defined(COD2_X64)
+static int SortRanks(const void *va, const void *vb)
+#else
 static int SortRanks(const int *a, const int *b)
+#endif
 {
+#if defined(COD2_X64)
+    const int *a = va;
+    const int *b = vb;
+#endif
     gclient_t *ca = &level.clients[*a];
     gclient_t *cb = &level.clients[*b];
 
@@ -431,7 +466,11 @@ void CalculateRanks(void)
         }
     }
 
+#if defined(COD2_X64)
+    qsort(level.sortedClients, level.numConnectedClients, sizeof(int), SortRanks);
+#else
     qsort(level.sortedClients, level.numConnectedClients, sizeof(int), (int (*)(const void *, const void *))SortRanks);
+#endif
     level.bUpdateScoresForIntermission = 1;
 }
 
@@ -516,16 +555,32 @@ extern void Scr_InitSystem(int sys);
 extern void Scr_SetLoading(int loading);
 extern void Scr_AllocGameVariable(void);
 extern void G_LoadStructs(void);
+#if defined(COD2_X64)
+extern void Scr_LoadLevel(void);
+#else
 extern unsigned int Scr_LoadLevel(void);
+#endif
+#if defined(COD2_X64)
+extern void Scr_LoadGameType(void);
+#else
 extern unsigned int Scr_LoadGameType(void);
+#endif
+#if defined(COD2_X64)
+extern void Scr_StartupGameType(void);
+#else
 extern unsigned int Scr_StartupGameType(void);
+#endif
 extern void RestoreBody(void);
 extern void ClientUserinfoChanged(int clientNum);
 extern void G_InitTurrets(void);
 extern int SV_GetBrushModelCount(void);
 extern void G_SpawnTriggerHurt(int numBrushModels);
 extern void GScr_PostResetTimeout(void);
+#if defined(COD2_X64)
+extern void CheckTeamStatus(void);
+#else
 extern short int CheckTeamStatus(void);
+#endif
 extern void DeathmatchScoreboardMessage(gentity_t *ent);
 #if !defined(__APPLE__) || !defined(COD2_X64)
 extern const char *SL_ConvertToString(unsigned short index);
@@ -602,7 +657,11 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     G_ProcessIPBans();
 
     level_bgs.GetXModel    = (XModel *(__cdecl *)(const char *))((struct XModel *(*)())imp_SV_XModelGet);
+#if defined(COD2_X64)
+    level_bgs.CreateDObj   = G_CreateDObjCallback;
+#else
     level_bgs.CreateDObj   = (void (__cdecl *)(void *,unsigned short,void *,int,void *))((void (*)())G_CreateDObj);
+#endif
     level_bgs.SafeDObjFree = (void (__cdecl *)(int))((void (*)())imp_Com_SafeServerDObjFree);
     level_bgs.AllocXAnim   = (void *(*)())Hunk_AllocXAnimServer;
     level_bgs.anim_user    = 1;
@@ -758,16 +817,32 @@ extern void Scr_InitSystem(int sys);
 extern void Scr_SetLoading(int loading);
 extern void Scr_AllocGameVariable(void);
 extern void G_LoadStructs(void);
+#if defined(COD2_X64)
+extern void Scr_LoadLevel(void);
+#else
 extern unsigned int Scr_LoadLevel(void);
+#endif
+#if defined(COD2_X64)
+extern void Scr_LoadGameType(void);
+#else
 extern unsigned int Scr_LoadGameType(void);
+#endif
+#if defined(COD2_X64)
+extern void Scr_StartupGameType(void);
+#else
 extern unsigned int Scr_StartupGameType(void);
+#endif
 extern void RestoreBody(void);
 extern void ClientUserinfoChanged(int clientNum);
 extern void G_InitTurrets(void);
 extern int SV_GetBrushModelCount(void);
 extern void G_SpawnTriggerHurt(int numBrushModels);
 extern void GScr_PostResetTimeout(void);
+#if defined(COD2_X64)
+extern void CheckTeamStatus(void);
+#else
 extern short int CheckTeamStatus(void);
+#endif
 extern void DeathmatchScoreboardMessage(gentity_t *ent);
 #if !defined(__APPLE__) || !defined(COD2_X64)
 extern const char *SL_ConvertToString(unsigned short index);

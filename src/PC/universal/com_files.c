@@ -326,7 +326,11 @@ qboolean FS_FilenameCompare(const char *s1, const char *s2)
 
 extern int stricmp(const char *, const char *);
 extern int I_stricmp(const char *, const char *);
+#if defined(COD2_X64)
+extern int I_strnicmp(const char *, const char *, size_t);
+#else
 extern int I_strnicmp(const char *, const char *, int);
+#endif
 extern char *CopyStringInternal(const char *in);
 extern Bool Com_FilterPath(const char *filter, const char *name, int casesensitive);
 qboolean FS_PureIgnoresExtension(const char *extension)

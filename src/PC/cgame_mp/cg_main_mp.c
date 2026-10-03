@@ -70,8 +70,16 @@ extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int flags);
 extern void CG_RegisterScoreboardGraphics(void);
 extern void CG_RegisterItems(void);
 extern int CM_NumInlineModels(void);
+#if defined(COD2_X64)
+extern struct GfxBrushModel * CL_RegisterInlineModel(int);
+#else
 extern int CL_RegisterInlineModel(int index);
+#endif
+#if defined(COD2_X64)
+extern void CL_ModelBounds(struct GfxBrushModel *, vec_t *, vec_t *);
+#else
 extern void CL_ModelBounds(int model, float *mins, float *maxs);
+#endif
 extern EffectTemplate * FX_RegisterEffect(const char *fileName);
 extern void CG_SetShellShockParmsFromDvars(shellshock_parms_t *parms);
 extern int CG_LoadShellShockDvars(const char *name);

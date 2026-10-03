@@ -382,14 +382,28 @@ int GetControlReference()
 {
     return 0;
 }
+#if defined(COD2_X64)
+void SND_SetChannelInfo(int index, int entnum, const snd_alias_t *pAlias0, const snd_alias_t *pAlias1, float lerp, const vec_t *origin, float volume, float pitch, int srcChannelCount, int baserate, int total_msec, int start_msec, int startDelay, int master, snd_alias_system_t system)
+{
+    (void)index; (void)entnum; (void)pAlias0; (void)pAlias1; (void)lerp;
+    (void)origin; (void)volume; (void)pitch; (void)srcChannelCount;
+    (void)baserate; (void)total_msec; (void)start_msec; (void)startDelay;
+    (void)master; (void)system;
+}
+#else
 int SND_SetChannelInfo()
 {
     return 0;
 }
+#endif
+#if defined(COD2_X64)
+void SND_SetEnvironmentEffects_f(void) {}
+#else
 int SND_SetEnvironmentEffects_f()
 {
     return 0;
 }
+#endif
 int SV_GetBrushModelCount()
 {
     return 0;
@@ -837,9 +851,17 @@ void CDirect3DDevice_CreateAndSetFixedFunctionVAO(void)
 }
 #undef VAO_X16
 
+#if defined(COD2_X64)
+extern void *__cxa_allocate_exception(size_t thrown_size);
+#else
 extern void *__cxa_allocate_exception(unsigned int thrown_size);
+#endif
 extern void __cxa_throw(void *thrown, void *tinfo, void (*dest)(void *));
+#if defined(COD2_X64)
+void *cxa_allocate_exception(size_t thrown_size)
+#else
 void *cxa_allocate_exception(unsigned int thrown_size)
+#endif
 {
     return __cxa_allocate_exception(thrown_size);
 }

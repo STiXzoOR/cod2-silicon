@@ -161,7 +161,11 @@ extern void Window_AddDynamicFlags(Window *window, int flags);
 /* Declared int here, but the real function returns void and takes a Window*. A caller
    does `return Window_RemoveDynamicFlags(..)`, so correcting the signature would change
    that caller's return value -- needs care. */
+#if defined(COD2_X64)
+extern void Window_RemoveDynamicFlags(Window *, const int);
+#else
 extern int Window_RemoveDynamicFlags(void *window, int flags);
+#endif
 extern void CG_MenuShowNotify(int menuToShow);
 extern float CG_CalcPlayerHealth(void);
 extern Bool CG_CheckPlayerForLowAmmo(void);
@@ -832,7 +836,12 @@ after_buttons:
     if (!menu) {
         return 0;
     }
+#if defined(COD2_X64)
+    Window_RemoveDynamicFlags(menu, 4);
+    return 0;
+#else
     return Window_RemoveDynamicFlags(menu, 4);
+#endif
 }
 
 static void CG_DrawSoundOverlay(void)

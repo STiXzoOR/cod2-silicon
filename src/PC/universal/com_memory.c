@@ -16,8 +16,19 @@ extern void Com_Printf(const char *fmt, ...);
 extern void Com_Error(int code, const char *fmt, ...);
 extern void Com_Memset(void *dest, const int val, int count);
 extern void Sys_OutOfMemErrorInternal(const char *filename, int line);
+#if defined(COD2_X64)
+extern LPVOID VirtualAlloc(LPVOID, SIZE_T, DWORD, DWORD);
+#else
 extern void *VirtualAlloc(void *lpAddress, int dwSize, int flAllocationType, int flProtect);
+#endif
+#if defined(COD2_X64)
+extern BOOL VirtualFree(LPVOID, SIZE_T, DWORD);
+#else
 extern int VirtualFree(void *lpAddress, int dwSize, int dwFreeType);
+#endif
+#if !defined(COD2_X64)
+#line 20
+#endif
 
 #if defined(COD2_X64) && defined(COD2_GUARDHEAP)
 #if COD2_APPLE_SDK

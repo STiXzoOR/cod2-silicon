@@ -2,7 +2,11 @@
 #include "imports.h"
 
 extern byte *__DefaultRuneLocale;
+#if defined(COD2_X64)
+extern int ___maskrune(int, unsigned long);
+#else
 extern int ___maskrune(int ch, unsigned int mask);
+#endif
 
 extern void SL_TransferRefToUser(unsigned int stringValue, unsigned int user);
 extern void SL_RemoveRefToString(unsigned int stringValue);
@@ -19,7 +23,11 @@ extern void Scr_LoadAnimTreeAtIndex(int index, Alloc_t Alloc, int user);
 extern void Scr_InitOpcodeLookup(void);
 extern void Scr_ShutdownOpcodeLookup(void);
 extern void Scr_ClearErrorMessage(void);
+#if defined(COD2_X64)
+extern unsigned long long Scr_EvalVariable(unsigned int);
+#else
 extern int Scr_EvalVariable(unsigned int varId);
+#endif
 
 extern void ScriptParse(sval_t *parseData, int flag);
 extern void ScriptCompile(sval_t parseData, unsigned int compiledObj, unsigned int scriptId);

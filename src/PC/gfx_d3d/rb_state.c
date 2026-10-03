@@ -56,7 +56,11 @@ typedef struct {
 extern void MatrixInverse44(const float *mat, float *dst);
 extern void MatrixIdentity44(float (*out)[4]);
 extern void MatrixSet44(float (*out)[4], const vec_t *origin, vec3_t *axis, vec_t scale);
+#if defined(COD2_X64)
+extern int MacOpenGLUtils_GetSubPixelOffset(float *, float *);
+#else
 extern void MacOpenGLUtils_GetSubPixelOffset(float *xOffset, float *yOffset);
+#endif
 extern void RB_SetCodeConstant(int constant, vec_t x, vec_t y, vec_t z, vec_t w);
 
 enum {

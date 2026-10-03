@@ -69,7 +69,11 @@ extern const dvar_t *Dvar_RegisterFloat(const char *name, float value, float min
 extern void *Hunk_AllocAlignInternal(int size, int align);
 extern void *XAnimCreateAnims(const char *name, int count, void *allocFunc);
 extern void XAnimBlend(XAnim *anims, unsigned int animIndex, const char *name, unsigned int children, unsigned int num, unsigned int flags);
+#if defined(COD2_X64)
+extern XAnimParts * XAnimPrecache(const char *, Alloc_t);
+#else
 extern void XAnimPrecache(const char *name, void *allocFunc);
+#endif
 extern void XAnimCreate(struct XAnim_s *anims, unsigned int index, const char *name);
 extern void XAnimGetAbsDelta(const struct XAnim_s *anims, unsigned int animIndex, float *rot, float *delta, float frac);
 extern int XAnimGetLengthMsec(const struct XAnim_s *anims, unsigned int animIndex);

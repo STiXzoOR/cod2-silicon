@@ -10,7 +10,11 @@ int AUGraphOpen();
 int AUGraphStart();
 int AUGraphStop();
 int AUGraphUpdate();
+#if defined(COD2_X64)
+AbsoluteTime AddDurationToAbsolute(int duration, AbsoluteTime base);
+#else
 long long AddDurationToAbsolute(int duration, long long base);
+#endif
 int AddMovieResource(void *movie, short refNum, short *resId, const unsigned char *resName);
 int AdvanceKeyboardFocus();
 int AlertSoundPlay();
@@ -168,7 +172,11 @@ int IsWindowVisible();
 int LSCopyItemInfoForRef();
 int LSOpenFSRef();
 int LockPixels();
+#if defined(COD2_X64)
+int MPDelayUntil(AbsoluteTime *expiration);
+#else
 int MPDelayUntil();
+#endif
 int MapRect();
 int MediaSetSoundBalance();
 int Microseconds();
@@ -254,7 +262,11 @@ int TXNSetSelection();
 int TXNSetTypeAttributes();
 int TXNShowSelection();
 int TickCount();
+#if defined(COD2_X64)
+AbsoluteTime UpTime(void);
+#else
 long long UpTime(void);
+#endif
 int UpdateSystemActivity();
 int WaitNextEvent();
 int DefaultRuneLocale();

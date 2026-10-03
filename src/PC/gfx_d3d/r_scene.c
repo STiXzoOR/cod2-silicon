@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #endif
 #include "common_types.h"
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 extern dvar_t *r_rendererInUse;
 extern DxGlobals dx;
 #include "imports.h"

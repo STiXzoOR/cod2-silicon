@@ -6,8 +6,16 @@
 
 float * speex_encoder_init(const SpeexMode *mode);
 float * speex_decoder_init(const SpeexMode *mode);
+#if defined(COD2_X64)
+void speex_encoder_destroy(void *state);
+#else
 float speex_encoder_destroy(float *state);
+#endif
+#if defined(COD2_X64)
+void speex_decoder_destroy(void *state);
+#else
 float speex_decoder_destroy(float *state);
+#endif
 int speex_encode_native(float *state, spx_word16_t *in, SpeexBits *bits);
 int speex_decode_native(float *state, SpeexBits *bits, spx_word16_t *out);
 int speex_encoder_ctl(float *state, int request, float *ptr);
@@ -31,17 +39,33 @@ float * speex_decoder_init(const SpeexMode *mode)
 }
 
 /* line 60 */
+#if defined(COD2_X64)
+void speex_encoder_destroy(void *state)
+#else
 float speex_encoder_destroy(float *state)
+#endif
 {
     const SpeexMode *mode = *(const SpeexMode **)state;
+#if defined(COD2_X64)
+    ((void (*)(void *))mode->enc_destroy)(state);
+#else
     return ((float (*)(float *))mode->enc_destroy)(state);
+#endif
 }
 
 /* line 65 */
+#if defined(COD2_X64)
+void speex_decoder_destroy(void *state)
+#else
 float speex_decoder_destroy(float *state)
+#endif
 {
     const SpeexMode *mode = *(const SpeexMode **)state;
+#if defined(COD2_X64)
+    ((void (*)(void *))mode->dec_destroy)(state);
+#else
     return ((float (*)(float *))mode->dec_destroy)(state);
+#endif
 }
 
 /* line 72 */

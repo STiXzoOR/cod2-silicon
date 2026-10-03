@@ -58,8 +58,16 @@ void MacTools_CenterRect(MacRect *ioRect, const MacRect *inBounds)
 
 void MacTools_Sleep(UInt32 inMillisecondsToSleep)
 {
+#if defined(COD2_X64)
+    AbsoluteTime now = UpTime();
+#else
     long long now = UpTime();
+#endif
+#if defined(COD2_X64)
+    AbsoluteTime deadline = AddDurationToAbsolute(inMillisecondsToSleep, now);
+#else
     long long deadline = AddDurationToAbsolute(inMillisecondsToSleep, now);
+#endif
     MPDelayUntil(&deadline);
 }
 

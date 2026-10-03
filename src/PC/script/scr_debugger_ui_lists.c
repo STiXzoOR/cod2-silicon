@@ -37,7 +37,9 @@ extern char *CopyStringInternal(const char *s);
 extern char *va(const char *fmt, ...);
 extern void Com_sprintf(char *dst, int size, const char *fmt, ...);
 extern int sscanf(const char *s, const char *fmt, ...);
-#if !defined(COD2_X64)
+#if defined(COD2_X64)
+#include <stdlib.h>
+#else
 extern void qsort(void *base, int n, int size,
                   int (*cmp)(const void *, const void *));
 #endif

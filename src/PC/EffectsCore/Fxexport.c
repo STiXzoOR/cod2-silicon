@@ -5,7 +5,11 @@ extern volatile qboolean fx_camera_valid;
 
 extern struct DObj_s * Com_GetClientDObj(int handle, int localClientNum);
 extern int DObjGetBoneIndex(const DObj *obj, unsigned int boneName);
+#if defined(COD2_X64)
+extern void FxScheduler_PlayEffect(const FxScheduler *, const EffectTemplate *, const vec_t *, MediaHandles *(*)[4], const FxBoltInfo *);
+#else
 extern void FxScheduler_PlayEffect(void *scheduler, EffectTemplate *fx, const vec_t *org, ...);
+#endif
 extern int FX_Init(int rendererExists);
 extern void FX_Free(int freeAll);
 extern void FxHelper_AdjustCamera(const FxHelper *_this, refdef_t *refdef, float zfar);
