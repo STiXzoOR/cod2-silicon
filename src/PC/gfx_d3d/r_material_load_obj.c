@@ -912,8 +912,26 @@ static Bool MATERIAL_REGPARM3_ABI Material_SetPassShaderArguments_impl(const cha
                 goto fail;
 
             memset(&arg, 0, sizeof(arg));
+#if COD2_APPLE_SDK
+            const char *source = Com_Parse(text);
+            if (strcmp(source, "constant") == 0) {
+                unsigned short typeInfo[6] = {1, 3, 1, 4, 1, 0};
+                MaterialCodeConstantRouting routing = {0, 1, (const byte *)typeInfo};
+                arg.type = 1;
+                if (!Material_ParseCodeConstantSource_r_impl(text, (const byte *)&routing, 0,
+                                                              s_codeConsts, (byte *)&arg))
+                    goto fail;
+                /* The native channel mixer reads its RGBA weights from env[0]. */
+                dest = strcmp(tok, "materialColor") == 0 ? 0 : -1;
+            } else {
+                Com_UngetToken();
+                if (!Material_ParseSamplerSource_impl(text, &arg))
+                    goto fail;
+            }
+#else
             if (!Material_ParseSamplerSource_impl(text, &arg))
                 goto fail;
+#endif
             if (!Com_MatchToken(text, ";", 1))
                 goto fail;
 
