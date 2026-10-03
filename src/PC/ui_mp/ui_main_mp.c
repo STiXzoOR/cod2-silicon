@@ -2905,11 +2905,19 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         return;
     }
 
+#if defined(COD2_X64)
+    case 265:
+#else
     case 263:
+#endif
         UI_DrawRecordLevel((rectDef_t *)rect);
         return;
 
+#if defined(COD2_X64)
+    case 266:
+#else
     case 264:
+#endif
     {
         if ((sv_voice)->current.enabled == 0 || (cl_voice)->current.enabled == 0)
             return;
@@ -2922,14 +2930,20 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         return;
     }
 
+#if !defined(COD2_X64)
     case 265:
     case 266:
+#endif
     case 267:
     case 268:
     case 269:
     case 270:
     {
+#if defined(COD2_X64)
+        int targetTalker = ownerDraw - 267;
+#else
         int targetTalker = ownerDraw - 265;
+#endif
         int talkerCount = 0;
         int clientNum;
         int pi;
@@ -2946,8 +2960,13 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         if (clientNum < 0)
             return;
 
+#if defined(COD2_X64)
+        if (clientNum >= 64)
+            return;
+#else
         if (clientNum >= 64)
             clientNum = -1;
+#endif
 
         {
             MaterialHandle voiceMat;
