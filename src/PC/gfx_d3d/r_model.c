@@ -27,8 +27,16 @@ static int warnCount_00c85b0c;
 static int warnCount_00c85b10;
 extern void *Hunk_AllocInternal(int size);
 extern void DB_EnumXAssets(int type, void (*func)(XAssetHeader, void *), void *data, qboolean overrides);
+#if defined(COD2_X64)
+extern int XModelBad(const XModel *);
+#else
 extern int XModelBad(union XAssetHeader header);
+#endif
+#if defined(COD2_X64)
+extern void XModelUnoptimize(XModel *);
+#else
 extern void XModelUnoptimize(union XAssetHeader header);
+#endif
 extern void XModelOptimize(XModel *xmodel);
 extern float Vec3Distance(const void *a, const void *b);
 extern int DObjGetLodForDist(const DObj *obj, int modelIndex, float dist);
@@ -247,9 +255,19 @@ void R_DObjReplaceMaterial(struct DObj_s *obj, int lod, int surfaceIndex, Materi
 
 static void R_ReleaseModel(union XAssetHeader header, void *data)
 {
+
+#if defined(COD2_X64)
+    if (XModelBad(header.model))
+#else
     if (XModelBad(header))
+#endif
         return;
+
+#if defined(COD2_X64)
+    XModelUnoptimize(header.model);
+#else
     XModelUnoptimize(header);
+#endif
 }
 
 void R_OptimizeAllModels(void)
@@ -272,7 +290,12 @@ void *Model_Alloc(int size)
 
 static void R_OptimizeModel(XAssetHeader header, void *data)
 {
+
+#if defined(COD2_X64)
+    if (XModelBad(header.model))
+#else
     if (XModelBad(header))
+#endif
         return;
     XModelOptimize(header.model);
 }
@@ -1147,7 +1170,12 @@ void R_SkinXModel(GfxSceneEntity *sceneEnt, GfxEntity *ent, int smodelIndex)
     if (InterlockedCompareExchange(&((GfxSceneEntity *)se)->cullState, 2, 3) != 2) {
     }
 
+
+#if defined(COD2_X64)
+    if (XModelBad(model)) {
+#else
     if (XModelBad(*(union XAssetHeader *)&model)) {
+#endif
         if (developer->current.integer) {
             void *defaultObj = rgg->modelDObj;
             DObjSetModel((struct DObj_s *)defaultObj, model);

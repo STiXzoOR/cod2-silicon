@@ -204,7 +204,11 @@ static void __attribute_regparm__(3) Image_LoadDxtc(GfxImage *image, const GfxIm
 
 extern void Wavelet_DecompressLevel(byte *src, byte *dst, WaveletDecode *decode);   /* was int offset -> truncated dst on x64 */
 extern int Image_CubemapFace(int faceIndex);
+#if defined(COD2_X64)
+extern void * __Znam(size_t);
+#else
 extern void *__Znam(unsigned int size);
+#endif
 extern void __ZdaPv(void *ptr);
 extern void Com_Printf(const char *fmt, ...);
 static void __attribute_regparm__(3) Image_LoadWavelet(GfxImage *image, const byte *fileHeader,

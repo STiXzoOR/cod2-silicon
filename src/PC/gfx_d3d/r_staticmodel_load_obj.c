@@ -1,11 +1,16 @@
 #include "common_types.h"
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 extern dvar_t *r_rendererInUse;
 #include "imports.h"
 extern refimport_t ri;
 #include "bytematch.h"
 #include <float.h>
 
+#if !defined(COD2_X64)
 extern void qsort(void *base, unsigned int nmemb, unsigned int size, int (*compar)(const void *, const void *));
+#endif
 
 extern unsigned char smodelLoadGlob[128];
 

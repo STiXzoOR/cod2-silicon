@@ -1,4 +1,7 @@
 #include "common_types.h"
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 extern dvar_t *r_rendererInUse;
 extern DxGlobals dx;
 #include "imports.h"
@@ -67,7 +70,9 @@ extern r_global_permanent_t rgp;
 extern r_globals_t rg;
 extern refimport_t ri;
 extern const dvar_t *r_dlightLimit;
+#if !defined(COD2_X64)
 extern void qsort(void *base, unsigned int nmemb, unsigned int size, int (*compar)(const void *, const void *));
+#endif
 
 extern const float *colorWhite;
 
