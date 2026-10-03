@@ -440,7 +440,7 @@ equivalent native console commands and traces. The final native images were
 captured with `build-macos-codx/cod2_macos`. Comparison uses all RGB pixels with
 no alignment, colour adjustment, crop or exclusion mask:
 
-| View | Before MAE /255 | Final MAE /255 | Final RMSE /255 | Before / after / reference panel |
+| View | Before MAE (0–255) | Final MAE (0–255) | Final RMSE (0–255) | Before / after / reference panel |
 | --- | ---: | ---: | ---: | --- |
 | Courtyard | 13.7801 | **2.0050** | 3.8825 | `E/courtyard-final-parity-panels.png` |
 | Rooftop | 8.5242 | **1.8718** | 4.7761 | `E/rooftop-final-parity-panels.png` |
@@ -557,5 +557,107 @@ then removed. `S/ws15-pam-final-hud.jpg` confirms transparent compass corners
 with real ARB HUD rendering; this is a local asset check, not a repeated online
 zPAM session. A raw-directory override sits below stock IWDs and is insufficient.
 
-Combat/event verification and final validation are recorded below after the
-remaining grenade-event check.
+### Final integration (2026-10-03)
+
+Merged `port/main` at `64bb6ad` in `da2e4bd`, including WS14, WS16 and WS17.
+The four conflicts preserve both sides' safety intent: WS15's typed scheduled
+FX fields, widened renderer DObj storage and native matrix assignments cover
+WS16's overlapping layout repairs; platform CMake retains gamma, frame-wait
+and fullscreen tests. Other changes merged automatically and were reviewed.
+
+Pending-change review: committed the native nonuniform bone-bounds fix and
+four-pose corner comparison in `4fb4adb`, and the earlier follow-up evidence in
+`1e0af39`. Removed the unused, never-called device-capability helper and its
+unregistered test, plus temporary material-pointer diagnostics. The two source
+experiments are preserved in a named git stash; the unused fixture is outside
+git at `E/integration-final/unused-device-caps.c`. They are not merge inputs.
+
+Integration exposed stale test fixtures, repaired in `8f8e4bc`: script strings
+now test final-reference reclamation, VM mocks use the verified void returns,
+delayed FX tests retain the production full-width link accessor, HUD expectations
+use D3D9 pixel centers, and renderer options test automatic cache selection and
+explicit fallback. No engine behavior was changed for these fixture repairs.
+
+All requested suites pass, as do the extra HUD, FX primitive/cloud/event/impact
+and CGL texture/raster/volume checks. Evidence is in `E/integration-final/`;
+`suite-results.json` retains initial failures and successful rerun log names.
+Both full builds exit 0. The complete ABI command exits 0: **620 translation
+units, 0 errors, 0 mismatches; 218 renderer bindings, 0 table/cast mismatches;
+0 proven extra or missing import dereferences**.
+
+```sh
+cmake -S . -B build-macos -DCOD2_X64=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake --build build-macos -j12 --target cod2_macos
+cmake -S . -B build-macos-codx -DCOD2_X64=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DCOD2_FEATURE_CFLAGS=-DCOD2_CODX=1
+cmake --build build-macos-codx -j12 --target cod2_macos
+python3 tests/fixes13/run.py --build build-macos-codx
+sh tests/lp64/renderer/run.sh
+python3 tests/lp64/game/run.py
+python3 tests/lp64/script/run.py
+bash tests/cod2x/run.sh
+python3 tests/perf/run.py
+python3 tests/online/run.py build-macos/compile_commands.json
+python3 tests/lp64/script/vm_semantics.py
+sh tools/abi/check.sh build-macos/compile_commands.json "$H/evidence/integration-final/abi"
+python3 tests/lp64/renderer/legacy_guards.py --base port/main
+git diff --check
+```
+
+The exact no-argument `fixes13/run.py` command also passed, using a temporary
+`build/ws9/compile_commands.json` symlink to the CoD2x database, because its
+legacy default needs CoD2x flags. Test output was then moved to ignored
+`build-macos/ws15-fixes13`; the explicit `--build` form above reproduces it
+without that setup. Logs are `build-{stock,codx}.log`, `fixes13-verified.log`,
+`renderer.log`, `game.log`, `script-final.log`, `cod2x.log`, `perf.log`,
+`online-rerun.log`, `vm_semantics.log` and `abi.log` in the evidence directory.
+
+Inactive source-body checks show **175 comparisons, 0 mismatches** against
+`port/main`, and 150 comparisons, 0 mismatches for the incoming merge against
+`1e0af39`. The pending bounds change separately passed five comparisons against
+`a2ed097`. The OFF source paths remain identical; an executable i386
+byte-for-byte comparison is unavailable on this arm64 host.
+
+### Merged-tree visual result and remaining gaps
+
+Fresh CoD2x Toujane intro colour checks pass with **magenta fraction 0** in both
+modes. Default approximation mean RGB is `[52.821,48.485,39.434]`; automatically
+selected licensed ARB mean is `[43.858,42.489,38.468]`. Logs are
+`E/integration-final/rgb-{default,arb}.log`; screenshots are in
+`H/rgb-merged-{default,arb}/main/screenshots/ws15-rgb-regression.jpg`.
+
+Re-captured the same courtyard, rooftop and clamped sky cameras on the merged
+CoD2x tree, with the local shader cache and **no D3D_PROG opt-in or shader
+overrides**; one-frame draw tracing recorded evidence. Other settings match
+the table above. Comparison still uses all
+1280x720 RGB pixels, without adjustments, against the existing matched Windows
+references. Inspected all three new Before/After/Windows panels.
+
+| View | Merged MAE (0–255) | Merged RMSE (0–255) | Evidence under `E/integration-final` |
+| --- | ---: | ---: | --- |
+| Courtyard | **2.0050** | 3.8825 | `courtyard-merged-panels.png`, `courtyard-merged-metrics.json` |
+| Rooftop | **1.8726** | 4.7769 | `rooftop-merged-panels.png`, `rooftop-merged-metrics.json` |
+| Sky | **0.5856** | 0.9951 | `sky-merged-panels.png`, `sky-merged-metrics.json` |
+
+Native images: `S/ws15-merged-tree-{courtyard,roof,sky}.jpg`. New traces:
+`E/native-merged-tree-{courtyard,rooftop,sky}.jsonl`. The driver log is
+`E/integration-final/capture-driver.log`, engine log `E/ws15-merged-tree.log`.
+This capture run reached all views and `quit` exited **0**, with the merged VM
+shutdown fixes. The Windows reference images were reused, not re-generated.
+
+| Earlier gap | Current verified status |
+| --- | --- |
+| ARB crash while firing | **Unresolved.** Fresh grounded Sten firing crashed on the first shot in `RB_EndSurface`, called by `RB_SetLightPropertiesCmd`; invalid address `0x3f8000003f800020`. Impact-buffer fixes remain useful but are insufficient. `E/integration-final/grounded-firing-crash.txt`, `combat-driver.log` and `E/ws15-merged-combat.log` preserve the failure. Pre-merge `H/cod2_crash_47601.txt` has the same fault/stack, so this failure predates the integration. No driver-only cause or safe-gameplay claim is made. |
+| FX primitives | **Native dispatch/lifecycle restored:** nine classes, scheduled effects, cloud buffers and grenade/projectile events pass production ASan/UBSan fixtures. Logs `fx_primitives.log`, `fx_cloud.log`, `fx_events.log`, `impact_marks.log`. Current grounded smoke/frag validation could not proceed past the firing crash. Full live combat FX parity remains unverified. |
+| Post-processing | **Partly repaired, full parity unverified:** native HUD matrices, ARB blending/rasterization, texture extents and gamma presentation are implemented. Complete channel mixing/bloom and sun/shadow parity remain outside the matched views and are not claimed resolved. |
+| zPAM white HUD box | **Local texture incompleteness resolved.** Fresh production CGL mip tests pass one-level, partial and full chains (`texture_mips.log`). The earlier real zPAM screenshot `S/ws15-pam-final-hud.jpg` was inspected again and has transparent compass corners. A new online zPAM session was not run. |
+
+The orchestration merge should take the full branch, including `da2e4bd` and
+the fixture repairs. It already contains main through `64bb6ad`; no new shared
+header or top-level CMake edits were introduced by this final step. Retain the
+external licensed shader cache configuration for the matched ARB appearance.
+The firing crash is the concrete remaining gameplay blocker; default ARB
+selection must not be mistaken for stability certification. No 333 FPS claim.
+No packages were missing or installed. No game data, binary, decompiler dump or
+imagery was added to git; no sibling worktrees, remotes, pushes, PRs or issues
+were touched.
