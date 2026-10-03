@@ -387,7 +387,11 @@ void SetClientViewAngle(gentity_t *ent, const vec_t *angle)
 
     client = ent->client;
 
+#if defined(COD2_X64)
+    if ((client->ps.pm_flags & 1) != 0 && (client->ps.eFlags & 0x300) == 0) {
+#else
     if ((client->ps.pm_flags & 1) == 0 || (client->ps.eFlags & 0x300) != 0) {
+#endif
 
         delta = AngleNormalize180(AngleDelta(client->ps.proneDirection, newAngle[1]));
 
