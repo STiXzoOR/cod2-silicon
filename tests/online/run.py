@@ -21,6 +21,7 @@ suites = [
      ['UI_ReplaceConversions', 'UI_ReplaceConversionString']),
     ('infostring', 'src/PC/universal/q_shared.c', ['Info_RemoveKey', 'Info_RemoveKey_Big']),
     ('pure_iwds', 'src/PC/qcommon/files.c', ['FS_PureServerSetLoadedIwds']),
+    ('timeout', 'src/PC/client_mp/cl_main_mp.c', ['CL_Frame']),
     ('mantle', 'src/PC/bgame/bg_mantle.c', []),
     ('md4', 'src/PC/qcommon/md4.c', []),
     ('cdkey_hash', 'src/PC/client_mp/cl_main_mp.c', ['CL_BuildMd5StrFromCDKey']),

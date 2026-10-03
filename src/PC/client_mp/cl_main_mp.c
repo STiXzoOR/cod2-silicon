@@ -2489,7 +2489,11 @@ Lc6:
             goto L183;
         goto Lmain0;
     }
+#if defined(COD2_X64)
+    t = cls.realtime - clc_p->lastPacketTime;
+#else
     t = cls.realtime - clc_p->connectTime;
+#endif
     if ((float)t <= cl_timeout->current.value * 1000.0f)
         goto Lmain0;
     cl_p->timeoutcount += 1;
