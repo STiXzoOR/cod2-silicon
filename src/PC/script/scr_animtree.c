@@ -117,7 +117,11 @@ static unsigned int g_animRefCount = 1;   /* index 0 reserved = end-of-chain */
 static unsigned int AnimRef_Enc(const char *pos)
 {
     const char *base = SCR_PROGBUF_BASE();
+#if defined(COD2_X64)
+    uintptr_t off = (uintptr_t)pos - (uintptr_t)base;
+#else
     uintptr_t off = (uintptr_t)(pos - base);
+#endif
     if (base && off < 0x4000000u)
         return (unsigned int)off;             /* inside the program buffer -> offset */
     if (g_animRefCount < 16384) {
@@ -239,7 +243,11 @@ static void ConnectScriptToAnim(unsigned int names, int index, unsigned int file
 
 struct XAnim_s *Scr_GetAnims(int index)
 {
+#if defined(COD2_X64)
+    return scrAnimPub.xanim_lookup[1][index].anims;
+#else
     return *(struct XAnim_s **)(0x114e22c + index * 4);
+#endif
 }
 
 static int Scr_CreateAnimationTree(unsigned int parentNode, unsigned int names, struct XAnim_s *anims, unsigned int childIndex, const char *parentName, unsigned int parentIndex, unsigned int filename, int treeIndex)
@@ -317,8 +325,14 @@ static void Scr_CheckAnimsDefined(unsigned int names, unsigned int filename)
 
         msg = va("animation '%s' not defined in anim tree '%s'",
                  SL_ConvertToString(name), SL_ConvertToString(filename));
+#if defined(COD2_X64)
+        const char *codePos = AnimRef_Dec(value->codePosValue);
+        if (Scr_IsInOpcodeMemory(codePos)) {
+            CompileError2(codePos, "%s", msg);
+#else
         if (Scr_IsInOpcodeMemory(SCR_CODEPOS_GET(*value))) {
             CompileError2(SCR_CODEPOS_GET(*value), "%s", msg);
+#endif
             continue;
         }
         Com_Error(1, "%s", msg);
@@ -459,7 +473,12 @@ struct scr_animtree_t Scr_FindAnimTree(const char *filename)
     if (!FindVariable(fileId, 1))
         return result;
 
-#if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(COD2_X64)
+    /* XAnim allocations are outside opcode memory. Reuse the existing anim-ref
+       encoding, which retains external pointers in its native pointer table. */
+    result.anims = (struct XAnim_s *)(void *)AnimRef_Dec(
+        (unsigned int)Scr_EvalVariable(FindVariable(fileId, SCR_ANIMTREE_XANIM)));
+#elif defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     /* The XAnim* was stored with SCR_CODEPOS_SET (a program-buffer-relative offset) at
        Scr_LoadAnimTreeAtIndex; decode it back to a real pointer. Reading the raw value would
        hand back the offset (e.g. 0xce60) as a pointer -> crash in XAnimGetAnimTreeSize. */
@@ -721,7 +740,11 @@ void Scr_LoadAnimTreeAtIndex(int index, Alloc_t Alloc, int user)
     RemoveRefToObject(scrAnimPub.animtree_node);
     scrAnimPub.animtree_node = 0;
 
+#if defined(COD2_X64)
+    tempValue.u.codePosValue = AnimRef_Enc((const char *)animtree.anims);
+#else
     SCR_CODEPOS_SET(tempValue.u, (const char *)animtree.anims);
+#endif
     tempValue.type = SCR_VAR_CODEPOS;
     SetVariableValue(GetVariable(fileId, SCR_ANIMTREE_XANIM), &tempValue);
 
