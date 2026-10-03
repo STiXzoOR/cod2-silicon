@@ -774,7 +774,10 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     }
 
     GScr_LoadConsts();
+#if !defined(COD2_X64)
+    /* No-op here with the reconstructed Scr_FreeScripts; 1.3 has no such call. */
     Scr_FreeScripts(1);
+#endif
     Scr_BeginLoadAnimScripts();
     GScr_LoadAnimScripts();
     Scr_EndLoadAnimScripts();
