@@ -379,7 +379,7 @@ void CG_Init(int serverMessageNum, int serverCommandSequence, int clientNum);
 
 void CG_GetEntityOrientation(int entnum, vec_t *origin_out, vec3_t *axis_out)
 {
-    #if defined(COD2_X64)
+#if defined(COD2_X64)
     char *ent = (char *)&cg_entities[entnum];
 #else
     char *ent = (char *)cg_entities + entnum * 548;
@@ -618,13 +618,11 @@ void CG_Shutdown(void)
     FX_FreeSystem();
 
     cgBase = (byte *)cg;
-    for (i = 0; i < 64; ++i, cgBase +=
 #if defined(COD2_X64)
-         sizeof(clientInfo_t)
+    for (i = 0; i < 64; ++i, cgBase += sizeof(clientInfo_t)) {
 #else
-         0x4b8
+    for (i = 0; i < 64; ++i, cgBase += 0x4b8) {
 #endif
-    ) {
         struct XAnimTree_s *tree = ((cg_t *)cgBase)->bgs.clientinfo[0].pXAnimTree;
         if (tree) {
             XAnimFreeTree(tree, 0);
@@ -633,13 +631,11 @@ void CG_Shutdown(void)
     }
 
     cgsBase = (byte *)cgs;
-    for (i = 0; i < 8; ++i, cgsBase +=
 #if defined(COD2_X64)
-         sizeof(clientInfo_t)
+    for (i = 0; i < 8; ++i, cgsBase += sizeof(clientInfo_t)) {
 #else
-         0x4b8
+    for (i = 0; i < 8; ++i, cgsBase += 0x4b8) {
 #endif
-    ) {
         struct XAnimTree_s *tree = ((cgs_t *)cgsBase)->corpseinfo[0].pXAnimTree;
         if (tree) {
             XAnimFreeTree(tree, 0);
@@ -731,7 +727,7 @@ void CG_GetDObjOrientation(int dobjHandle, orientation_t *orient)
     const byte *cent;
 
     if ((unsigned int)dobjHandle <= 0x3ff) {
-        #if defined(COD2_X64)
+#if defined(COD2_X64)
         cent = (const byte *)&cg_entities[dobjHandle];
 #else
         cent = (const byte *)cg_entities + dobjHandle * 548;
@@ -868,7 +864,7 @@ int CG_PlayEntitySoundAlias(int entitynum, snd_alias_list_t *aliasList)
 {
     const vec_t *origin;
 
-    #if defined(COD2_X64)
+#if defined(COD2_X64)
     origin = cg_entities[entitynum].lerpOrigin;
 #else
     origin = (const vec_t *)((const byte *)cg_entities + entitynum * 548 + 0x108);
@@ -1168,22 +1164,18 @@ static inline __attribute__((always_inline)) void CG_InitXAnimTrees(void)
     byte *cgsTree = (byte *)(((char *)cgsBase + offsetof(cgs_t, corpseinfo[0].pXAnimTree)));
     int i;
 
-    for (i = 0; i < 64; i++, clientTree +=
 #if defined(COD2_X64)
-         sizeof(clientInfo_t)
+    for (i = 0; i < 64; i++, clientTree += sizeof(clientInfo_t))
 #else
-         0x4b8
+    for (i = 0; i < 64; i++, clientTree += 0x4b8)
 #endif
-    )
         *(void **)clientTree = XAnimCreateTree((XAnim *)anims, (Alloc_t)Hunk_AllocXAnimClient);
 
-    for (i = 0; i < 8; i++, cgsTree +=
 #if defined(COD2_X64)
-         sizeof(clientInfo_t)
+    for (i = 0; i < 8; i++, cgsTree += sizeof(clientInfo_t))
 #else
-         0x4b8
+    for (i = 0; i < 8; i++, cgsTree += 0x4b8)
 #endif
-    )
         *(void **)cgsTree = XAnimCreateTree((XAnim *)anims, (Alloc_t)Hunk_AllocXAnimClient);
 }
 
