@@ -54,9 +54,9 @@ COD2_ALT("CDirect3DDevice_mNeedsRasterizationValidation", "__ZN15CDirect3DDevice
 #else
 #define COD2_COFF_ASM_PREFIX ""
 #endif
-extern bool __attribute__((visibility("default"))) CDirect3DDevice_mNeedsVertexShaderValidation __asm__(COD2_COFF_ASM_PREFIX "__ZN15CDirect3DDevice28mNeedsVertexShaderValidationE");
-extern bool __attribute__((visibility("default"))) CDirect3DDevice_mNeedsTransformationValidation __asm__(COD2_COFF_ASM_PREFIX "__ZN15CDirect3DDevice30mNeedsTransformationValidationE");
-extern bool __attribute__((visibility("default"))) CDirect3DDevice_mNeedsRasterizationValidation __asm__(COD2_COFF_ASM_PREFIX "__ZN15CDirect3DDevice29mNeedsRasterizationValidationE");
+extern CXX_BOOL __attribute__((visibility("default"))) CDirect3DDevice_mNeedsVertexShaderValidation __asm__(COD2_COFF_ASM_PREFIX "__ZN15CDirect3DDevice28mNeedsVertexShaderValidationE");
+extern CXX_BOOL __attribute__((visibility("default"))) CDirect3DDevice_mNeedsTransformationValidation __asm__(COD2_COFF_ASM_PREFIX "__ZN15CDirect3DDevice30mNeedsTransformationValidationE");
+extern CXX_BOOL __attribute__((visibility("default"))) CDirect3DDevice_mNeedsRasterizationValidation __asm__(COD2_COFF_ASM_PREFIX "__ZN15CDirect3DDevice29mNeedsRasterizationValidationE");
 #undef COD2_COFF_ASM_PREFIX
 #endif
 

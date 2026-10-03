@@ -897,7 +897,16 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
     FFT_Init(rg.fftBitswap, rg.fftTrigTable);
 
     {
+#if defined(COD2_X64)
+        /* One empty DObjModel_s; the i386 record was three ints, but the
+           native one is 24 bytes and DObjCreate read past the int array. */
+        DObjModel_s nullModel;
+        void *args = &nullModel;
+
+        memset(&nullModel, 0, sizeof(nullModel));
+#else
         int args[3] = { 0, 0, 0 };
+#endif
         ((void (*)(void *, int, void *, void *, int))ri.DObjCreate)(
             args, 1, NULL, rg.modelDObjBuf, 0);
         rg.modelDObj = (struct DObj_s *)rg.modelDObjBuf;

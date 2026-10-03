@@ -780,6 +780,13 @@ static GfxImage *Image_CreateSolidColor(const char *name, int semantic, int imag
     return image;
 }
 
+#if defined(COD2_X64)
+/* Exact built-in image names; fixed-length memcmp read past shorter names. */
+#define IMAGE_NAME_IS(name, lit, len) (strcmp(name, lit) == 0)
+#else
+#define IMAGE_NAME_IS(name, lit, len) !memcmp(name, lit, len)
+#endif
+
 GfxImage *Image_Load(const char *name, int semantic, int imageTrack)
 {
     GfxImage *image;
@@ -791,17 +798,17 @@ GfxImage *Image_Load(const char *name, int semantic, int imageTrack)
         return image;
     }
 
-    if (!memcmp(name, "$white", 7)) {
+    if (IMAGE_NAME_IS(name, "$white", 7)) {
         return Image_CreateSolidColor(name, (byte)semantic, imageTrack, 0xFF, 0xFF, 0xFF, 0xFF);
     }
-    if (!memcmp(name, "$black", 7)) {
+    if (IMAGE_NAME_IS(name, "$black", 7)) {
         return Image_CreateSolidColor(name, (byte)semantic, imageTrack, 0x00, 0x00, 0x00, 0xFF);
     }
-    if (!memcmp(name, "$identitynormalmap", 19)) {
+    if (IMAGE_NAME_IS(name, "$identitynormalmap", 19)) {
 
         return Image_CreateSolidColor(name, (byte)semantic, imageTrack, 0x80, 0x80, 0xFF, 0x80);
     }
-    if (!memcmp(name, "$specularity", 13)) {
+    if (IMAGE_NAME_IS(name, "$specularity", 13)) {
         byte pic[0x2000];
         image = Image_Alloc(name, 1, (byte)semantic, imageTrack);
         Image_BuildSpecularityMap(0, pic);
@@ -809,29 +816,29 @@ GfxImage *Image_Load(const char *name, int semantic, int imageTrack)
         Image_UploadData(image, 0x32, Image_CubemapFace(0), 0, pic);
         return image;
     }
-    if (!memcmp(name, "$outdoor", 9)) {
+    if (IMAGE_NAME_IS(name, "$outdoor", 9)) {
         image = Image_Alloc(name, 1, (byte)semantic, imageTrack);
         R_GenerateOutdoorImage(image);
         return image;
     }
-    if (!memcmp(name, "$lightmapweights", 17)) {
+    if (IMAGE_NAME_IS(name, "$lightmapweights", 17)) {
         image = Image_Alloc(name, 1, (byte)semantic, imageTrack);
         Image_LoadLightmapWeights(image);
         return image;
     }
-    if (!memcmp(name, "$lightgridweights0", 19)) {
+    if (IMAGE_NAME_IS(name, "$lightgridweights0", 19)) {
         byte pic[0x6000];
         image = Image_Alloc(name, 1, (byte)semantic, imageTrack);
         Image_GenerateCubemapFunction(image, pic, 0x20, 0, (CubemapPixelCallback)Image_GetLightGridWeightsForVector);
         return image;
     }
-    if (!memcmp(name, "$lightgridweights1", 19)) {
+    if (IMAGE_NAME_IS(name, "$lightgridweights1", 19)) {
         byte pic[0x6000];
         image = Image_Alloc(name, 1, (byte)semantic, imageTrack);
         Image_GenerateCubemapFunction(image, pic, 0x20, 1, (CubemapPixelCallback)Image_GetLightGridWeightsForVector);
         return image;
     }
-    if (!memcmp(name, "$watercolor", 12)) {
+    if (IMAGE_NAME_IS(name, "$watercolor", 12)) {
         byte pic[0x1800];
         int waterColor;
         image = Image_Alloc(name, 1, (byte)semantic, imageTrack);
@@ -845,7 +852,7 @@ GfxImage *Image_Load(const char *name, int semantic, int imageTrack)
                                       (CubemapPixelCallback)Image_GetWaterColorForVector);
         return image;
     }
-    if (!memcmp(name, "$sunhalfangle", 14)) {
+    if (IMAGE_NAME_IS(name, "$sunhalfangle", 14)) {
         byte *pic;
         image = Image_Alloc(name, 1, (byte)semantic, imageTrack);
         pic = (byte *)Hunk_AllocateTempMemoryInternal(0x18000);
