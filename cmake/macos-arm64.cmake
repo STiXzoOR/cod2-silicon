@@ -30,6 +30,14 @@ foreach(target cod2_macos cod2_macos_ded)
     -Wno-typedef-redefinition -Wno-duplicate-decl-specifier
     -ferror-limit=0)
   target_link_libraries(${target} PRIVATE ZLIB::ZLIB ${COD2_OPENGL_FRAMEWORK})
+  # ld64 equivalents of the MinGW --defsym seam aliases in CMakeLists.txt.
+  target_link_options(${target} PRIVATE
+    "LINKER:-alias,_g_entities,_g_entities_ptr"
+    "LINKER:-alias,_imp_bgs,_g_time_ptr"
+    "LINKER:-alias,_vidConfig,_r_limits_ptr"
+    "LINKER:-alias,_scr_const,_scr_const_ptr"
+    "LINKER:-alias,_sv,_sv_ptr"
+    "LINKER:-alias,_svs,_svs_ptr")
 endforeach()
 target_sources(cod2_macos PRIVATE src/unix/linux_input.c)
 target_link_libraries(cod2_macos PRIVATE SDL2::SDL2)
