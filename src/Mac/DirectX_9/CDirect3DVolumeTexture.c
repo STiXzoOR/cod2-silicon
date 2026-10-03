@@ -453,7 +453,20 @@ void CDirect3DVolumeTexture_CDirect3DVolumeTexture(const CDirect3DVolumeTexture 
 
 void CDirect3DVolumeTexture_UpdateOpenGLSurfaces(const CDirect3DVolumeTexture *_this)
 {
+#if COD2_APPLE_SDK
+    CDirect3DVolumeTextureClean *tex = (void *)_this;
+    GLint previous;
+    glGetIntegerv(GL_TEXTURE_BINDING_3D, &previous);
+    glBindTexture(GL_TEXTURE_3D, tex->texIDStorage);
+    for (UINT32 level = 0; level < tex->levelCount; ++level) {
+        CDirect3DVolumeClean *volume = tex->volumes[level];
+        if (volume->isDirty)
+            CDirect3DVolume_UpdateOpenGLSurfaceObject(volume, 0);
+    }
+    glBindTexture(GL_TEXTURE_3D, previous);
+#else
     (void)_this;
+#endif
 }
 
 HRESULT CDirect3DVolumeTexture_GetDevice(const CDirect3DVolumeTexture *t, void *p)

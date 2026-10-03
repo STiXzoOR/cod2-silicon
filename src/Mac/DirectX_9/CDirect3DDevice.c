@@ -1051,7 +1051,11 @@ static void CDirect3DDevice_ApplySamplerState(UINT sampler, GLenum target)
                     CDirect3DDevice_MapTextureAddress(addressU));
     glTexParameteri(target, 0x2803 ,
                     CDirect3DDevice_MapTextureAddress(addressV));
-    if (target == GL_TEXTURE_CUBE_MAP) {
+    if (target == GL_TEXTURE_CUBE_MAP
+#if COD2_APPLE_SDK
+        || target == GL_TEXTURE_3D
+#endif
+    ) {
         glTexParameteri(target, GL_TEXTURE_WRAP_R,
                         CDirect3DDevice_MapTextureAddress(addressW));
     }
@@ -1069,6 +1073,12 @@ static void CDirect3DDevice_UpdateTextureIfNeeded(IDirect3DBaseTexture9 *texture
         return;
     if (*(void ***)texture == vtbl_CDirect3DTexture)
         CDirect3DTexture_UpdateOpenGLSurfaces((const CDirect3DTexture *)texture);
+#if COD2_APPLE_SDK
+    else if (*(void ***)texture == vtbl_CDirect3DVolumeTexture) {
+        extern void CDirect3DVolumeTexture_UpdateOpenGLSurfaces(const CDirect3DVolumeTexture *);
+        CDirect3DVolumeTexture_UpdateOpenGLSurfaces((const void *)texture);
+    }
+#endif
 }
 
 static GfxImage *CDirect3DDevice_SelectMaterialColorImage(const Material *material)
