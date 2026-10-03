@@ -216,7 +216,11 @@ void Material_FinishLoading(void);
 void Material_ReleaseAll(void);
 void Material_UpdatePicmipAll(void);
 int Material_LoadFile(const char *filename, int *file);
+#if defined(COD2_X64)
+const char *R_GetMaterialName(MaterialHandle handle);
+#else
 const char *R_GetMaterialName(_ValueType handle);
+#endif
 int R_GetMaterialSubimageCount(MaterialHandle handle);
 void Material_Sort(void);
 const char *Material_RegisterString(const char *string);

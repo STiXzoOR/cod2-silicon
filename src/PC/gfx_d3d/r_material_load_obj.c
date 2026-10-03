@@ -9,10 +9,18 @@ static struct DxGlobals * const dx_g = &dx;
 #define MATERIAL_REGPARM2_ABI COD2_REGPARM(2)
 #define MATERIAL_REGPARM3_ABI COD2_REGPARM(3)
 
+#if defined(COD2_X64)
+extern struct { int cachedShaderCount; GfxCachedShaderText *cachedShaderText; } mtlLoadGlob;
+#else
 extern unsigned char mtlLoadGlob[];
+#endif
 extern dvar_t *r_rendererInUse;
 
-#if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(COD2_X64)
+#    define MTLGLOB_COUNT (mtlLoadGlob.cachedShaderCount)
+#    define MTLGLOB_PTR(T) ((T *)mtlLoadGlob.cachedShaderText)
+#    define MTLGLOB_SET_PTR(p) (mtlLoadGlob.cachedShaderText = (p))
+#elif defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 #    define MTLGLOB_COUNT (*(int *)mtlLoadGlob)
 #    define MTLGLOB_PTR(T) (*(T **)(mtlLoadGlob + 8))
 #    define MTLGLOB_SET_PTR(p) (*(void **)(mtlLoadGlob + 8) = (void *)(p))
@@ -72,8 +80,32 @@ extern const MtlStateMapBitGroup s_stateMapDstFogBitGroup[];
 extern const MtlStateMapBitGroup s_stateMapDstPolygonOffsetBitGroup[];
 extern const MtlStateMapBitGroup s_stateMapDstWireframeBitGroup[];
 extern const MtlStateMapBitGroup s_stateMapDstStencilBitGroup[];
+#if defined(COD2_X64)
+/* Verified names, enumerants and option order from the i386 reference tables.
+ * Reconstructed static declarations otherwise shadow their data with zeros. */
+static const MtlTextureFunctionDx7 s_textureFuncsDx7[21] = {
+    {"select", 1, 1, 3}, {"modulate", 3, 2, 3},
+    {"modulate2x", 4, 2, 3}, {"modulate4x", 5, 2, 3},
+    {"add", 6, 2, 3}, {"addSigned", 7, 2, 3},
+    {"addSigned2x", 8, 2, 3}, {"subtract", 9, 2, 3},
+    {"addSmooth", 10, 2, 3}, {"blendDiffuseAlpha", 11, 2, 3},
+    {"blendTextureAlpha", 12, 2, 3}, {"blendFactorAlpha", 13, 2, 3},
+    {"blendTextureAlphaPm", 14, 2, 3}, {"blendCurrentAlpha", 15, 2, 3},
+    {"modulateAlphaAddColor", 16, 2, 3}, {"modulateColorAddAlpha", 17, 2, 3},
+    {"modulateInvAlphaAddColor", 18, 2, 3}, {"modulateInvColorAddAlpha", 19, 2, 3},
+    {"dotProduct3", 20, 2, 3}, {"multiplyAdd", 21, 3, 3}, {"lerp", 22, 3, 3}
+};
+static const PassOptionDx7 s_passOptionsDx7[5] = {
+    {"gridLighting", offsetof(MaterialPassDx7, gridLighting)},
+    {"projectToInfinity", offsetof(MaterialPassDx7, projectToInfinity)},
+    {"ambientLighting", offsetof(MaterialPassDx7, ambientLighting)},
+    {"objectiveGlow", offsetof(MaterialPassDx7, objectiveGlow)},
+    {"fogToBlack", offsetof(MaterialPassDx7, fogToBlack)}
+};
+#else
 static const MtlTextureFunctionDx7 s_textureFuncsDx7[21];
 static const PassOptionDx7 s_passOptionsDx7[5];
+#endif
 
 HRESULT IncludeClass_Close(const IncludeClass *_this, LPCVOID data);
 static Bool MATERIAL_REGPARM3_ABI Material_ValidatePassArguments_impl(const Material *material, const char *techniqueSetName, const char *techniqueName, int argCount, const MaterialShaderArgument *args);
@@ -90,6 +122,14 @@ extern void *Hunk_AllocAlignInternal(int size, int align);
 static Bool Material_CachedShaderTextLess(const GfxCachedShaderText *cached0, const GfxCachedShaderText *cached1);
 HRESULT IncludeClass_Open(const IncludeClass *_this, D3DXINCLUDE_TYPE IncludeType, LPCSTR filename, LPCVOID parentData, LPCVOID *data, MaterialTechnique *(*byteCount)[4][34]);
 void Material_PreLoadAllShaderText(void);
+#if defined(COD2_X64)
+/* Private parser state. CTAB records themselves keep their fixed-width offsets. */
+typedef struct {
+    byte firstRow, rowCount;
+    const byte *typeInfo;
+} MaterialCodeConstantRouting;
+#endif
+
 static Bool MATERIAL_REGPARM3_ABI Material_ParseCodeConstantSource_r_impl(const char **text, const byte *routing, int offset, const CodeConstantSource *sourceTable, byte *arg);
 extern void Com_UngetToken(void);
 extern void *Material_Alloc(int size);
@@ -382,7 +422,11 @@ found:;
     int arrayIndex = 0;
 
     if (arrayCount != 0) {
+#if defined(COD2_X64)
+        byte componentCount = ((const MaterialCodeConstantRouting *)routing)->rowCount;
+#else
         byte componentCount = *(routing + 5);
+#endif
         if (entry->subtable != 0 || componentCount <= 1) {
 
             int arrayStride = entry->arrayStride;
@@ -442,13 +486,29 @@ found:;
 
     if (source <= 0xBA) {
 
+#if defined(COD2_X64)
+        ((MaterialShaderArgument *)arg)->u.codeConst.index = (unsigned short)source;
+#else
         *(unsigned short *)(arg + 4) = (unsigned short)source;
+#endif
+#if defined(COD2_X64)
+        ((MaterialShaderArgument *)arg)->u.codeConst.firstRow = 0;
+#else
         *(arg + 6) = 0;
+#endif
+#if defined(COD2_X64)
+        ((MaterialShaderArgument *)arg)->u.codeConst.rowCount = ((const MaterialCodeConstantRouting *)routing)->rowCount;
+#else
         *(arg + 7) = *(routing + 5);
+#endif
         return 1;
     }
 
+#if defined(COD2_X64)
+    const short *routingShaderType = (const short *)((const MaterialCodeConstantRouting *)routing)->typeInfo;
+#else
     short *routingShaderType = *(short **)(routing + 0xc);
+#endif
     if (*routingShaderType == 3)
         source ^= 2;
 
@@ -456,23 +516,51 @@ found:;
     if (*nextToken == ';') {
 
         Com_UngetToken();
+#if defined(COD2_X64)
+        ((MaterialShaderArgument *)arg)->u.codeConst.index = (unsigned short)source;
+#else
         *(unsigned short *)(arg + 4) = (unsigned short)source;
+#endif
+#if defined(COD2_X64)
+        ((MaterialShaderArgument *)arg)->u.codeConst.firstRow = 0;
+#else
         *(arg + 6) = 0;
+#endif
+#if defined(COD2_X64)
+        const byte *routingShader = ((const MaterialCodeConstantRouting *)routing)->typeInfo;
+#else
         byte *routingShader = *(byte **)(routing + 8);
+#endif
+#if defined(COD2_X64)
+        ((MaterialShaderArgument *)arg)->u.codeConst.rowCount = (byte)*(const unsigned short *)(routingShader + 8);
+#else
         *(arg + 7) = (byte) * (unsigned short *)(routingShader + 8);
+#endif
         return 1;
     }
 
     if (*nextToken == '[') {
 
+#if defined(COD2_X64)
+        ((MaterialShaderArgument *)arg)->u.codeConst.index = (unsigned short)source;
+#else
         *(unsigned short *)(arg + 4) = (unsigned short)source;
+#endif
         int rowIndex = Com_ParseInt(text);
         if ((unsigned)rowIndex > 3) {
             Com_ScriptWarning("row index %i should be in the range [0, 3]\n", rowIndex);
             return 0;
         }
+#if defined(COD2_X64)
+        ((MaterialShaderArgument *)arg)->u.codeConst.firstRow = (byte)rowIndex;
+#else
         *(arg + 6) = (byte)rowIndex;
+#endif
+#if defined(COD2_X64)
+        ((MaterialShaderArgument *)arg)->u.codeConst.rowCount = 1;
+#else
         *(arg + 7) = 1;
+#endif
         return Com_MatchToken(text, "]", 1) ? 1 : 0;
     }
 
@@ -536,7 +624,11 @@ static Bool MATERIAL_REGPARM3_ABI Material_LoadPassTextureStateDx7_impl(const ch
 
     token = Com_Parse(text);
     for (fnIndex = 0; fnIndex < 21; fnIndex++) {
+#if defined(COD2_X64)
+        const byte *entry = (const byte *)&s_textureFuncsDx7[fnIndex];
+#else
         const byte *entry = (const byte *)s_textureFuncsDx7 + fnIndex * 16;
+#endif
         if (strcmp(token, *(const char **)entry) == 0)
             break;
     }
@@ -546,7 +638,11 @@ static Bool MATERIAL_REGPARM3_ABI Material_LoadPassTextureStateDx7_impl(const ch
         {
             int i;
             for (i = 0; i < 21; i++) {
+#if defined(COD2_X64)
+                const byte *e = (const byte *)&s_textureFuncsDx7[i];
+#else
                 const byte *e = (const byte *)s_textureFuncsDx7 + i * 16;
+#endif
                 Com_Printf("  %s\n", *(const char **)e);
             }
         }
@@ -554,15 +650,31 @@ static Bool MATERIAL_REGPARM3_ABI Material_LoadPassTextureStateDx7_impl(const ch
     }
 
     {
+#if defined(COD2_X64)
+        const byte *entry = (const byte *)&s_textureFuncsDx7[fnIndex];
+#else
         const byte *entry = (const byte *)s_textureFuncsDx7 + fnIndex * 16;
+#endif
+#if defined(COD2_X64)
+        int funcValidMask = ((const MtlTextureFunctionDx7 *)entry)->valid;
+#else
         int funcValidMask = *(int *)(entry + 12);
+#endif
         if (!(validTest & funcValidMask)) {
             const char *desc = (validTest == 1) ? "alpha" : "color";
             Com_ScriptWarning("%s is only valid for %s\n", token, desc);
             return 0;
         }
+#if defined(COD2_X64)
+        *texStageBits = ((const MtlTextureFunctionDx7 *)entry)->enumerant;
+#else
         *texStageBits = *(int *)(entry + 4);
+#endif
+#if defined(COD2_X64)
+        argCount = ((const MtlTextureFunctionDx7 *)entry)->argCount;
+#else
         argCount = *(int *)(entry + 8);
+#endif
     }
 
     if (!Com_MatchToken(text, "(", 1))
@@ -749,7 +861,12 @@ static Bool MATERIAL_REGPARM3_ABI Material_SetPassShaderArguments_impl(const cha
     MaterialShaderArgument *allocatedArgs;
     Bool success;
     unsigned short constType;
+#if defined(COD2_X64)
+    MaterialCodeConstantRouting routingStorage;
+    byte *routing = (byte *)&routingStorage;
+#else
     byte routing[16];
+#endif
     float literal[4];
 
     hr = D3DXGetShaderConstantTable((const void *)((const MaterialShader *)mtlShader)->program, &constants);   /* was *(void**)(mtlShader+4) (x86 program offset) */
@@ -765,6 +882,12 @@ static Bool MATERIAL_REGPARM3_ABI Material_SetPassShaderArguments_impl(const cha
     constantTable = (const byte *)((void *(D3DVTCC *)(void *))((*(void ***)constants)[3]))(constants);   /* was (int**)[3]/(int(*)) -- truncated vtable ptr + return on x64 */
 #endif
     constantCount = *(const unsigned int *)(constantTable + 0xC);
+#if defined(COD2_X64)
+    if (constantCount > sizeof(usedConstant)) {
+        Com_ScriptWarning("Shader has more than 256 constants\n");
+        goto fail;
+    }
+#endif
     *argCount = (unsigned short)constantCount;
 
     if (constantCount == 0) {
@@ -914,8 +1037,14 @@ static Bool MATERIAL_REGPARM3_ABI Material_SetPassShaderArguments_impl(const cha
             rowCount = 1;
         }
 
+#if defined(COD2_X64)
+        routingStorage.firstRow = firstRow;
+        routingStorage.rowCount = rowCount;
+        routingStorage.typeInfo = typeInfo;
+#else
         routing[4] = firstRow;
         routing[5] = rowCount;
+#endif
 
         if (!Com_MatchToken(text, "=", 1))
             goto fail;
@@ -1393,7 +1522,11 @@ static Bool MATERIAL_REGPARM2_ABI Material_LoadPassStateMap_impl(const char **te
                                             &sm->ruleSet[1]))
                 goto sm_fail;
 
+#if defined(COD2_X64)
+            if (!dx_g->hasBlendOp) {
+#else
             if (((byte *)dx_g)[0x2d7c] == 0) {
+#endif
                 byte *rs = (byte *)sm->ruleSet[1];
                 int rc = *(int *)rs;
                 byte *rule = rs;
@@ -1417,7 +1550,11 @@ static Bool MATERIAL_REGPARM2_ABI Material_LoadPassStateMap_impl(const char **te
 
             {
                 byte *alphaRS = (byte *)sm->ruleSet[2];
+#if defined(COD2_X64)
+                if (!dx_g->hasSeparateAlphaBlend) {
+#else
                 if (((byte *)dx_g)[0x2d7d] == 0) {
+#endif
 
                     *(int *)alphaRS = 1;
                     ((MaterialStateMapRule *)alphaRS)->stateBitsMask[1] = 0;
@@ -1429,7 +1566,11 @@ static Bool MATERIAL_REGPARM2_ABI Material_LoadPassStateMap_impl(const char **te
                         unsigned int v14 = *(unsigned int *)(alphaRS + 0x14);
                         *(unsigned int *)(alphaRS + 0x14) = (v14 & 0xf800ffff) | 0x120000;
                     }
+#if defined(COD2_X64)
+                } else if (!dx_g->hasBlendOp) {
+#else
                 } else if (((byte *)dx_g)[0x2d7c] == 0) {
+#endif
                     int rc = *(int *)alphaRS;
                     byte *rule = alphaRS;
                     int i;
@@ -1777,6 +1918,7 @@ extern const byte s_techniqueTypeNames[];
  * can share the (layout-neutral, text-parsed) techset loader. */
 static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int imageTrack);
 
+#if !defined(COD2_X64)
 static Bool MATERIAL_REGPARM2_ABI Material_FinishLoadingInstance_impl(MaterialObj *material, int imageTrack)
 {
     byte *mtl = (byte *)material;
@@ -1841,6 +1983,7 @@ static Bool MATERIAL_REGPARM2_ABI Material_FinishLoadingInstance_impl(MaterialOb
         return Material_ResolveTechniqueSet((Material *)mtl, tsName, imageTrack);
     }
 }
+#endif
 
 static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int imageTrack)
 {
@@ -1957,7 +2100,12 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                             unsigned short ltf = 0;
                             int pi2 = 0;
                             unsigned short lpc = 0;
+#if defined(COD2_X64)
+                            MaterialPassDx9 nativePasses[4] = {0};
+                            byte *lpd = (byte *)nativePasses;
+#else
                             byte lpd[4 * sizeof(MaterialPassDx9)];
+#endif
                             byte *cp = lpd;
                             int terr = 0;
                             while (pi2 < 4) {
@@ -2207,7 +2355,12 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                             Com_SetSpaceDelimited(0);
                             int dpi = 0;
                             unsigned short dpc = 0;
+#if defined(COD2_X64)
+                            MaterialPassDx7 nativePasses[4] = {0};
+                            byte *dpd = (byte *)nativePasses;
+#else
                             byte dpd[4 * 0x5c];
+#endif
                             byte *dcp = dpd;
                             int derr = 0;
                             while (dpi < 4) {
@@ -2228,7 +2381,15 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                                     int oi;
                                     for (oi = 0; oi < 5; oi++) {
                                         byte *sp = (byte *)&s_passOptionsDx7[oi];
+#if defined(COD2_X64)
+                                        ((MaterialPassDx7 *)dcp)->gridLighting = 0;
+                                        ((MaterialPassDx7 *)dcp)->projectToInfinity = 0;
+                                        ((MaterialPassDx7 *)dcp)->ambientLighting = 0;
+                                        ((MaterialPassDx7 *)dcp)->objectiveGlow = 0;
+                                        ((MaterialPassDx7 *)dcp)->fogToBlack = 0;
+#else
                                         *(byte *)(dcp + *(int *)(sp + 4)) = 0;
+#endif
                                     }
                                 }
                                 {
@@ -2251,7 +2412,18 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                                         }
                                         {
                                             byte *sp = (byte *)&s_passOptionsDx7[oi];
+#if defined(COD2_X64)
+                                            Bool *optionFields[] = {
+                                                &((MaterialPassDx7 *)dcp)->gridLighting,
+                                                &((MaterialPassDx7 *)dcp)->projectToInfinity,
+                                                &((MaterialPassDx7 *)dcp)->ambientLighting,
+                                                &((MaterialPassDx7 *)dcp)->objectiveGlow,
+                                                &((MaterialPassDx7 *)dcp)->fogToBlack
+                                            };
+                                            *optionFields[oi] = 1;
+#else
                                             *(byte *)(dcp + *(int *)(sp + 4)) = 1;
+#endif
                                         }
                                     }
                                     if (optErr) {
@@ -2264,7 +2436,11 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                                     int texturesParsed;
 
                                     for (;;) {
+#if defined(COD2_X64)
+                                        byte *ap = (byte *)&((MaterialPassDx7 *)dcp)->samplers[ti];
+#else
                                         byte *ap = dcp + 0x0c + ti * 8;
+#endif
                                         if (!Com_MatchToken(&dtext, "texture", 1)) {
                                             derr = 1;
                                             goto endDx7Tech;
@@ -2296,7 +2472,11 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                                             derr = 1;
                                             goto endDx7Tech;
                                         }
+#if defined(COD2_X64)
+                                        ((MaterialPassDx7 *)dcp)->genTexCoords[ti] = 0;
+#else
                                         *(byte *)(dcp + ti + 9) = 0;
+#endif
                                         {
                                             const char *tct = Com_Parse(&dtext);
                                             if (strcmp(tct, "texcoord") == 0) {
@@ -2320,9 +2500,17 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                                                 }
                                                 const char *tcv = Com_Parse(&dtext);
                                                 if (strcmp(tcv, "genEyeDirCoords") == 0)
+#if defined(COD2_X64)
+                                                    ((MaterialPassDx7 *)dcp)->genTexCoords[ti] = 1;
+#else
                                                     *(byte *)(dcp + ti + 9) = 1;
+#endif
                                                 else if (strcmp(tcv, "texScroll") == 0)
+#if defined(COD2_X64)
+                                                    ((MaterialPassDx7 *)dcp)->genTexCoords[ti] = 2;
+#else
                                                     *(byte *)(dcp + ti + 9) = 2;
+#endif
                                                 else {
                                                     Com_ScriptWarning("expected 'genEyeDirCoords' or 'texScroll', found '%s'\n", tcv);
                                                     derr = 1;
@@ -2352,23 +2540,55 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                                     if ((unsigned short)texturesParsed <= 1) {
                                         int fi;
                                         for (fi = texturesParsed; fi < 2; fi++) {
+#if defined(COD2_X64)
+                                            ((MaterialPassDx7 *)dcp)->samplers[fi].type = 3;
+#else
                                             *(unsigned short *)(dcp + 0x0c + fi * 8) = 3;
+#endif
+#if defined(COD2_X64)
+                                            ((MaterialPassDx7 *)dcp)->samplers[fi].dest = (unsigned short)fi;
+#else
                                             *(unsigned short *)(dcp + 0x0e + fi * 8) = (unsigned short)fi;
+#endif
+#if defined(COD2_X64)
+                                            ((MaterialPassDx7 *)dcp)->samplers[fi].u.codeSampler = 1;
+#else
                                             *(int *)(dcp + 0x10 + fi * 8) = 1;
+#endif
+#if defined(COD2_X64)
+                                            ((MaterialPassDx7 *)dcp)->genTexCoords[fi] = 0;
+#else
                                             *(byte *)(dcp + 9 + fi) = 0;
+#endif
                                         }
                                     }
                                 }
                                 {
                                     int sti = 0;
                                     for (;;) {
+#if defined(COD2_X64)
+                                        ((MaterialPassDx7 *)dcp)->colorStageBits[sti] = 0;
+#else
                                         *(int *)(dcp + 0x1c + sti * 4) = 0;
+#endif
+#if defined(COD2_X64)
+                                        if (!Material_LoadPassTextureStateDx7_impl(&dtext, sti, "rgb", 1, &((MaterialPassDx7 *)dcp)->colorStageBits[sti])) {
+#else
                                         if (!Material_LoadPassTextureStateDx7_impl(&dtext, sti, "rgb", 1, (int *)(dcp + 0x1c + sti * 4))) {
+#endif
                                             derr = 1;
                                             goto endDx7Tech;
                                         }
+#if defined(COD2_X64)
+                                        ((MaterialPassDx7 *)dcp)->alphaStageBits[sti] = 0;
+#else
                                         *(int *)(dcp + 0x3c + sti * 4) = 0;
+#endif
+#if defined(COD2_X64)
+                                        if (!Material_LoadPassTextureStateDx7_impl(&dtext, sti, "a", 2, &((MaterialPassDx7 *)dcp)->alphaStageBits[sti])) {
+#else
                                         if (!Material_LoadPassTextureStateDx7_impl(&dtext, sti, "a", 2, (int *)(dcp + 0x3c + sti * 4))) {
+#endif
                                             derr = 1;
                                             goto endDx7Tech;
                                         }
@@ -2383,8 +2603,16 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                                     if ((unsigned short)sti <= 7) {
                                         int ui;
                                         for (ui = sti; ui < 8; ui++) {
-                                            *(int *)(dcp + 0x1c + ui * 4) = 0;
-                                            *(int *)(dcp + 0x3c + ui * 4) = 0;
+    #if defined(COD2_X64)
+                                        ((MaterialPassDx7 *)dcp)->colorStageBits[ui] = 0;
+#else
+                                        *(int *)(dcp + 0x1c + ui * 4) = 0;
+#endif
+    #if defined(COD2_X64)
+                                        ((MaterialPassDx7 *)dcp)->alphaStageBits[ui] = 0;
+#else
+                                        *(int *)(dcp + 0x3c + ui * 4) = 0;
+#endif
                                         }
                                     }
                                 }
@@ -2394,7 +2622,11 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                                 }
                                 dpc = (unsigned short)(dpi + 1);
                                 dpi++;
+#if defined(COD2_X64)
+                                dcp += sizeof(MaterialPassDx7);
+#else
                                 dcp += 0x5c;
+#endif
                             }
                         endDx7Tech:
                             Com_EndParseSession();
@@ -2410,10 +2642,26 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                             }
                             {
                                 int nl = (int)strlen(techName) + 1;
+#if defined(COD2_X64)
+                                int pds = (int)dpc * sizeof(MaterialPassDx7);
+#else
                                 int pds = (int)dpc * 0x5c;
+#endif
+#if defined(COD2_X64)
+                                technique = (MaterialTechnique *)Material_Alloc(offsetof(MaterialTechnique, passArray) + nl + pds);
+#else
                                 technique = (MaterialTechnique *)Material_Alloc(8 + nl + pds);
+#endif
+#if defined(COD2_X64)
+                                technique->name = (const char *)((byte *)technique + offsetof(MaterialTechnique, passArray) + pds);
+#else
                                 technique->name = (const char *)((byte *)technique + 8 + pds);
+#endif
+#if defined(COD2_X64)
+                                memcpy((void *)technique->name, techName, nl);
+#else
                                 memcpy((byte *)technique + 8 + pds, techName, nl);
+#endif
                                 technique->passCount = dpc;
                                 memcpy((byte *)&technique->passArray, dpd, pds);
                             }
@@ -2491,11 +2739,18 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
                     continue;
                 isDx7 = (r_rendererInUse->current.integer == 2);
                 if (isDx7) {
+#if defined(COD2_X64)
+                    for (int pi = 0; pi < passCount; ++pi)
+                        if (!Material_ValidatePassArguments_impl(mtlx, tsNameStr, tech->name,
+                                                                 2, tech->passArray.dx7[pi].samplers))
+                            return 0;
+#else
                     byte *pb = (byte *)tech + 8;
                     int pi;
                     for (pi = 0; pi < passCount; pi++, pb += 0x5c)
                         if (!Material_ValidatePassArguments_impl((const Material *)mtl, tsNameStr, (const char *)*(int *)tech, 2, (const MaterialShaderArgument *)&((MaterialPassDx9 *)pb)->pixelShader))
                             return 0;
+#endif
                 } else {
                     int pi;
                     MaterialPassDx9 *passes = (MaterialPassDx9 *)&tech->passArray;                    for (pi = 0; pi < passCount; pi++) {
@@ -2514,10 +2769,12 @@ static Bool Material_ResolveTechniqueSet(Material *mtlx, const char *tsName, int
     }
 }
 
+#if !defined(COD2_X64)
 static Bool MATERIAL_REGPARM2_ABI Material_FinishLoadingInstance(MaterialObj *material, int imageTrack)
 {
     return Material_FinishLoadingInstance_impl(material, imageTrack);
 }
+#endif
 
 extern int Material_LoadFile(const char *filename, int *fileHandle);
 extern void *Material_Alloc(int size);
@@ -2576,141 +2833,7 @@ static Bool Material_ShouldPrintMissingMaterial(const char *name)
     return !Material_HasExtensionlessAliasForLoad(name);
 }
 
-#if defined(COD2_X64)
-/* ===== 32-bit .material on-disk layout (kept binary-compatible) =====
- * The .material file is a 32-bit memory image: "pointers" are 4-byte
- * blob-relative offsets. On x64 we cannot relocate those in place (an 8-byte
- * pointer can't fit a 4-byte slot), so we MARSHAL the 32-bit image into an
- * x64-laid-out Material. The file bytes are never modified. */
-typedef struct {
-    unsigned int   name;            /* @0  blob offset */
-    unsigned int   refImageName;    /* @4  blob offset */
-    unsigned short hashIndex;       /* @8  */
-    unsigned short sortedIndex;     /* @10 */
-    unsigned char  gameFlags;       /* @12 */
-    unsigned char  sortKey;         /* @13 */
-    unsigned char  textureAtlasRowCount;    /* @14 */
-    unsigned char  textureAtlasColumnCount; /* @15 */
-    float          maxDeformMove;   /* @16 */
-    unsigned char  deformFlags;     /* @20 */
-    unsigned char  usage;           /* @21 */
-    unsigned short toolFlags;       /* @22 */
-    unsigned int   locale;          /* @24 */
-    unsigned short autoTexScaleWidth;  /* @28 */
-    unsigned short autoTexScaleHeight; /* @30 */
-    float          tessSize;        /* @32 */
-    int            surfaceFlags;    /* @36 */
-    int            contents;        /* @40 */
-} MaterialInfo32;   /* 44 bytes */
-
-typedef struct {
-    MaterialInfo32 info;            /* @0  */
-    int            stateBits[2];    /* @44 */
-    unsigned short textureCount;    /* @52 */
-    unsigned short constantCount;   /* @54 */
-    unsigned int   techniqueSet;    /* @56 blob offset (techset name) */
-    unsigned int   textures;        /* @60 blob offset */
-    unsigned int   constants;       /* @64 blob offset */
-} Material32;   /* 68 bytes */
-
-typedef struct {
-    unsigned int   name;            /* @0 blob offset */
-    unsigned char  samplerState;    /* @4 */
-    unsigned char  semantic;        /* @5 */
-    unsigned char  pad6, pad7;      /* @6,7 */
-    unsigned int   image;           /* @8 blob offset */
-} MaterialTextureDef32;   /* 12 bytes */
-
-typedef struct {
-    unsigned int   name;            /* @0 blob offset */
-    float          literal[4];      /* @4 */
-} MaterialConstantDef32;   /* 20 bytes */
-
-static Material *Material_Marshal32To64(byte *blob, int imageTrack)
-{
-    const Material32 *src = (const Material32 *)blob;
-    Material *m = (Material *)Material_Alloc((int)sizeof(Material));
-    int i;
-
-    memset(m, 0, sizeof(*m));
-
-    m->info.name                    = (const char *)(blob + src->info.name);
-    m->info.refImageName            = src->info.refImageName ? (const char *)(blob + src->info.refImageName) : (const char *)0;
-    m->info.hashIndex               = src->info.hashIndex;
-    m->info.sortedIndex             = src->info.sortedIndex;
-    m->info.gameFlags               = src->info.gameFlags;
-    m->info.sortKey                 = src->info.sortKey;
-    m->info.textureAtlasRowCount    = src->info.textureAtlasRowCount;
-    m->info.textureAtlasColumnCount = src->info.textureAtlasColumnCount;
-    m->info.maxDeformMove           = src->info.maxDeformMove;
-    m->info.deformFlags             = src->info.deformFlags;
-    m->info.usage                   = src->info.usage;
-    m->info.toolFlags               = src->info.toolFlags;
-    m->info.locale                  = src->info.locale;
-    m->info.autoTexScaleWidth       = src->info.autoTexScaleWidth;
-    m->info.autoTexScaleHeight      = src->info.autoTexScaleHeight;
-    m->info.tessSize                = src->info.tessSize;
-    m->info.surfaceFlags            = src->info.surfaceFlags;
-    m->info.contents                = src->info.contents;
-
-    m->stateBits[0]  = src->stateBits[0];
-    m->stateBits[1]  = src->stateBits[1];
-    m->textureCount  = src->textureCount;
-    m->constantCount = src->constantCount;
-
-    if (m->textureCount) {
-        const MaterialTextureDef32 *st = (const MaterialTextureDef32 *)(blob + src->textures);
-        MaterialTextureDef *dt = (MaterialTextureDef *)Material_Alloc((int)(m->textureCount * sizeof(MaterialTextureDef)));
-        m->textures = dt;
-        for (i = 0; i < m->textureCount; i++) {
-            unsigned char sem = st[i].semantic;
-            dt[i].name         = Material_RegisterString((const char *)(blob + st[i].name));
-            dt[i].samplerState = st[i].samplerState;
-            dt[i].semantic     = sem;
-            dt[i].unused_0     = 0;
-            dt[i].unused_1     = 0;
-            dt[i].u.image      = (GfxImage *)0;
-            if (sem == 5) {
-                /* TS_WATER_MAP: world water setup not yet marshaled on x64 (the UI
-                 * never references water). Leave NULL; revisit with world rendering. */
-                dt[i].u.water = (MaterialWaterDef *)0;
-            } else {
-                int isDx7 = (r_rendererInUse->current.integer == 2);
-                if (isDx7 && (unsigned)(sem - 3) <= 1) {
-                    dt[i].u.image = (GfxImage *)0;
-                } else {
-                    GfxImage *img = (GfxImage *)Image_Register((const char *)(blob + st[i].image), sem, imageTrack);
-                    dt[i].u.image = img;
-                    if (!img)
-                        return (Material *)0;
-                }
-            }
-        }
-    }
-
-    if (m->constantCount) {
-        const MaterialConstantDef32 *sc = (const MaterialConstantDef32 *)(blob + src->constants);
-        MaterialConstantDef *dc = (MaterialConstantDef *)Material_Alloc((int)(m->constantCount * sizeof(MaterialConstantDef)));
-        m->constants = dc;
-        for (i = 0; i < m->constantCount; i++) {
-            dc[i].name = Material_RegisterString((const char *)(blob + sc[i].name));
-            if (!dc[i].name)
-                return (Material *)0;
-            dc[i].literal[0] = sc[i].literal[0];
-            dc[i].literal[1] = sc[i].literal[1];
-            dc[i].literal[2] = sc[i].literal[2];
-            dc[i].literal[3] = sc[i].literal[3];
-        }
-    }
-
-    {
-        const char *tsName = (const char *)(blob + src->techniqueSet);
-        if (!Material_ResolveTechniqueSet(m, tsName, imageTrack))
-            return (Material *)0;
-    }
-    return m;
-}
-#endif /* COD2_X64 */
+#include "r_material_disk.h"
 
 Material *Material_Load(const char *name, int imageTrack)
 {
@@ -2730,12 +2853,20 @@ Material *Material_Load(const char *name, int imageTrack)
     }
 
     void *mtlData = Material_Alloc(fileSize);
+#if defined(COD2_X64)
+    if (FS_Read(mtlData, fileSize, fileHandle) != fileSize) {
+        FS_FCloseFile(fileHandle);
+        Com_Printf("^1ERROR: Short read of material '%s'\n", name);
+        return NULL;
+    }
+#else
     FS_Read(mtlData, fileSize, fileHandle);
+#endif
     FS_FCloseFile(fileHandle);
 
 #if defined(COD2_X64)
     {
-        Material *m = Material_Marshal32To64((byte *)mtlData, imageTrack);
+        Material *m = Material_Marshal32To64((const byte *)mtlData, fileSize, imageTrack);
         if (!m) {
             /* Do NOT return the raw 32-bit blob on x64 -- it's unrelocated (its
              * pointer fields are 4-byte file offsets), so the caller would read

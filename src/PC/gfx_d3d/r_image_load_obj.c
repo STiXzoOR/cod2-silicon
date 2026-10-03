@@ -514,8 +514,17 @@ Bool Image_LoadFromFile(GfxImage *image)
 
     fileData = (const byte *)imageFile;
 
+#if defined(COD2_X64)
+    if (fileLen < (int)sizeof(GfxImageFileHeader)) {
+        FS_FreeFile(imageFile);
+        return 0;
+    }
+    if (fileData[5] & 3)
+        image->noPicmip = 1;
+#else
     if (fileData[5] & 3)
         img[0xb] = 1;
+#endif
 
     if ((*(int *)fileData & 0x00FFFFFF) != 0x695749) {
         Com_Printf("^1ERROR: image '%s' is not an IW image\n", filepath);
@@ -542,7 +551,11 @@ GfxImage *R_CreateWaterMap(char *name, int imageWidth, int imageHeight)
     image->height = (unsigned short)imageHeight;
 
     int *dvar = (int *)r_rendererInUse;
+#if defined(COD2_X64)
+    if (r_rendererInUse->current.integer == 2)
+#else
     if (*(int *)(dvar + 2) == 2)
+#endif
         Image_Create2DTexture(image, image->width, imageHeight, 1, 0x200, 0x16, 0);
     else
         Image_Create2DTexture(image, image->width, imageHeight, 0, 0x200, 0x32, 0);

@@ -147,7 +147,11 @@ void Material_FinishLoading(void);
 void Material_ReleaseAll(void);
 void Material_UpdatePicmipAll(void);
 int Material_LoadFile(const char *filename, fileHandle_t *file);
+#if defined(COD2_X64)
+const char *R_GetMaterialName(MaterialHandle handle);
+#else
 const char *R_GetMaterialName(_ValueType handle);
+#endif
 int R_GetMaterialSubimageCount(MaterialHandle handle);
 void Material_Sort(void);
 const char *Material_RegisterString(const char *string);
@@ -257,7 +261,12 @@ static Bool Material_Compare(const Material *mtl0, const Material *mtl1)
     int diff = (int)mtl0->info.sortKey - (int)mtl1->info.sortKey;
     if (diff != 0)
         return (unsigned int)diff >> 31;
+#if defined(COD2_X64)
+    diff = ((uintptr_t)mtl0->techniqueSet > (uintptr_t)mtl1->techniqueSet) -
+           ((uintptr_t)mtl0->techniqueSet < (uintptr_t)mtl1->techniqueSet);
+#else
     diff = (int)((unsigned int)mtl0->techniqueSet - (unsigned int)mtl1->techniqueSet);
+#endif
     if (diff == 0)
         return 0;
     return (unsigned int)diff >> 31;
@@ -404,6 +413,21 @@ void Material_ReleaseAll(void)
 
 void Material_UpdatePicmipAll(void)
 {
+#if defined(COD2_X64)
+    r_globals_t *globals = (r_globals_t *)imp_rg;
+    int i, j;
+    R_SetPicmip();
+    for (i = 0; i < ARRAY_COUNT(globals->materialHashTable); ++i) {
+        Material *material = globals->materialHashTable[i];
+        if (!material)
+            continue;
+        for (j = 0; j < material->textureCount; ++j) {
+            MaterialTextureDef *texture = &material->textures[j];
+            if (texture->semantic != 5 && texture->u.image)
+                Image_UpdatePicmip(texture->u.image);
+        }
+    }
+#else
     byte *rg;
     byte *slot;
     int textureIndex, textureCount;
@@ -442,6 +466,7 @@ void Material_UpdatePicmipAll(void)
             offset += 0xc;
         } while (textureIndex < textureCount);
     }
+#endif
 }
 
 extern int FS_FOpenFileRead(const char *filename, int *file, int uniqueFILE);
@@ -452,10 +477,17 @@ int Material_LoadFile(const char *filename, int *file)
     return ri.FS_FOpenFileRead(fullFilename, file, 1);
 }
 
+#if defined(COD2_X64)
+const char *R_GetMaterialName(MaterialHandle handle)
+{
+    return handle->info.name;
+}
+#else
 const char *R_GetMaterialName(_ValueType handle)
 {
     return *(const char **)(*(int *)&handle);
 }
+#endif
 
 int R_GetMaterialSubimageCount(MaterialHandle handle)
 {
@@ -960,7 +992,11 @@ void R_Cmd_ReloadMaterialTextures(void)
     for (;;) {
         best = NULL;
         for (i = 0; i < textureCount; i++) {
+#if defined(COD2_X64)
+            byte *texdef = (byte *)&material->textures[i];
+#else
             byte *texdef = texdefs + i * 0xc;
+#endif
             GfxImage *img;
 
             if (((MaterialTextureDef *)texdef)->semantic == 5)
@@ -969,12 +1005,21 @@ void R_Cmd_ReloadMaterialTextures(void)
             img = ((MaterialTextureDef *)texdef)->u.image;
             if (!lastReloaded) {
 
+#if defined(COD2_X64)
+                if ((uintptr_t)img > (uintptr_t)best)
+#else
                 if ((unsigned int)img > (unsigned int)best)
+#endif
                     best = img;
             } else {
 
+#if defined(COD2_X64)
+                if ((uintptr_t)img > (uintptr_t)best &&
+                    (uintptr_t)img < (uintptr_t)lastReloaded)
+#else
                 if ((unsigned int)img > (unsigned int)best &&
                     (unsigned int)img < (unsigned int)lastReloaded)
+#endif
                     best = img;
             }
         }
