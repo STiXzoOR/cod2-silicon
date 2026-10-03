@@ -1,0 +1,107 @@
+name: macOS port verification
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      game_data:
+        description: Run private local-server smoke on the configured self-hosted Mac
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s tools/tests -v
+      - run: shellcheck tools/ci/*.sh tools/macos/*.sh
+
+  x86-reference:
+    name: x86 ILP32 byte-for-byte reference (410342a versus head)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: README multilib build dependencies
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc-14-multilib g++-14-multilib cmake pkg-config \
+            libsdl2-dev:i386 libgl1-mesa-dev:i386 libx11-dev:i386 \
+            libcurl4-openssl-dev:i386 zlib1g-dev:i386 libstdc++6:i386
+      - name: Build both snapshots and compare all game objects and both binaries
+        env:
+          PKG_CONFIG_LIBDIR: /usr/lib/i386-linux-gnu/pkgconfig:/usr/share/pkgconfig
+        run: bash tools/ci/compare-x86.sh
+      - name: Preserve diagnostics only (no game data or executables)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: x86-reference-logs
+          path: |
+            output/x86-reference/*.log
+            output/x86-reference/*.txt
+
+  macos-arm64:
+    name: arm64 compile probe — expected failure until WS1/WS2 land
+    runs-on: macos-latest
+    # Remove this once WS1/WS2 are integrated; keep failure diagnostics visible.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require arm64 and preinstalled SDL2 development tools
+        run: |
+          test "$(uname -m)" = arm64
+          command -v cmake
+          command -v sdl2-config
+      - name: Configure and build native client
+        shell: bash
+        run: |
+          set -o pipefail
+          cmake -S . -B output/build-macos -DCOD2_X64=ON \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_C_FLAGS=-ffp-contract=off \
+            2>&1 | tee configure-macos.log
+          cmake --build output/build-macos --parallel 3 --target cod2_macos \
+            2>&1 | tee build-macos.log
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build-logs
+          path: '*-macos.log'
+
+  data-gate:
+    if: github.event_name == 'workflow_dispatch' && inputs.game_data && vars.COD2_DATA_RUNNER_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - id: check
+        env:
+          DATA_PATH: ${{ secrets.COD2_DATA_PATH }}
+        run: |
+          if [ -n "$DATA_PATH" ]; then echo 'enabled=true' >> "$GITHUB_OUTPUT"; fi
+
+  game-data-smoke:
+    name: Private local-server smoke (requires WS1/WS2 and licensed data)
+    needs: data-gate
+    if: needs.data-gate.outputs.enabled == 'true'
+    runs-on: [self-hosted, macOS, ARM64, cod2-data]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          cmake -S . -B output/build-macos -DCOD2_X64=ON -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_C_FLAGS=-ffp-contract=off
+          cmake --build output/build-macos --parallel 3 --target cod2_macos
+      - name: Record 100 simulation frames (requires an interactive Mac session)
+        env:
+          COD2_DATA_PATH: ${{ secrets.COD2_DATA_PATH }}
+        run: |
+          python3 tools/parity/record.py --binary output/build-macos/cod2_macos \
+            --data "$COD2_DATA_PATH" --output "output/smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" --frames 100
+      # Deliberately no artifact upload from the data runner.
