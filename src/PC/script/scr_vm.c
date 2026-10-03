@@ -435,6 +435,16 @@ unsigned int Scr_GetNumScriptThreads(void)
     return 0;
 }
 
+#if COD2_APPLE_SDK
+static unsigned int Scr_TimeoutMilliseconds(void)
+{
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    /* Timer slots contain wrapping 32-bit milliseconds. */
+    return (unsigned int)((uint64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000);
+}
+#endif
+
 static inline __attribute__((always_inline)) void Scr_ResetTimeout_core(void)
 {
 #if defined(__GNUC__) && !defined(__clang__) && defined(__i386__) && !defined(__EMSCRIPTEN__)
@@ -445,12 +455,7 @@ static inline __attribute__((always_inline)) void Scr_ResetTimeout_core(void)
     tsc = (unsigned long long)tsc_low_raw;
     *(unsigned int *)(scrVmGlob + 24) = (unsigned int)(tsc >> 2);
 #elif COD2_APPLE_SDK
-    /* The portable VM has no TSC comparisons. Record monotonic milliseconds;
-     * any restored timeout checks must use this same clock and typed field. */
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    ((struct scrVmGlob_t *)scrVmGlob)->starttime =
-        (unsigned int)((uint64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000);
+    ((struct scrVmGlob_t *)scrVmGlob)->starttime = Scr_TimeoutMilliseconds();
 #else
     *(unsigned int *)(scrVmGlob + 24) = 0;
 #endif
@@ -483,7 +488,12 @@ void VM_CancelNotify(unsigned int notifyListOwnerId, unsigned int startLocalId)
 
 static unsigned int VM_CurrentFrameLocalCacheCount(void)
 {
+#if defined(COD2_X64)
+    /* localVars starts at the sentinel before the increment-before-store stack. */
+    unsigned int *base = ((scrVmGlob_t *)scrVmGlob)->localVarsStack - 1;
+#else
     unsigned int *base = (unsigned int *)(scrVmGlob + 24);
+#endif
     unsigned int previousFrameLocals = 0;
     unsigned int frameIndex;
     unsigned int *frameBase;
@@ -980,11 +990,19 @@ void Scr_Init(void)
     scrVmPub.top = scrVmPub.stack;
     scrVmPub.function_count = 0;
     scrVmPub.function_frame = scrVmPub.function_frame_start;
+#if defined(COD2_X64)
+    scrVmPub.localVars = ((scrVmGlob_t *)scrVmGlob)->localVarsStack - 1;
+#else
     scrVmPub.localVars = (unsigned int *)(scrVmGlob + 24);
+#endif
     varPub->evaluate = 0;
     scrVmPub.debugCode = 0;
     varPub->error_message = NULL;
+#if defined(COD2_X64)
+    ((scrVmGlob_t *)scrVmGlob)->dialog_error_message = NULL;
+#else
     *(int *)(scrVmGlob + 16) = 0;
+#endif
     varPub->error_index = 0;
     scrVmPub.terminal_error = 0;
     scrVmPub.outparamcount = 0;
@@ -998,7 +1016,11 @@ void Scr_Init(void)
     varPub->animId = 0;
     varPub->freeEntList = 0;
     scrVmPub.stack[0].type = 7;
+#if defined(COD2_X64)
+    ((scrVmGlob_t *)scrVmGlob)->loading = 0;
+#else
     *(int *)(scrVmGlob + 20) = 0;
+#endif
 
     compilePub = (struct scrCompilePub_t *)imp_scrCompilePub;
     compilePub->script_loading = 0;
@@ -1831,7 +1853,11 @@ static inline __attribute__((always_inline)) void Scr_SetErrorMessageAndJump(con
         return;
     }
 
+#if defined(COD2_X64)
+    if (varPub->developer && ((scrVmGlob_t *)scrVmGlob)->loading)
+#else
     if (varPub->developer && *(int *)(scrVmGlob + 20))
+#endif
         scrVmPub.terminal_error = 1;
 
     if (scrVmPub.function_count || scrVmPub.debugCode)
@@ -2070,7 +2096,12 @@ static const char str_dbg_vmexec_top0[] = "DBG ERROR: scrVmPub.top is NULL after
 static const char str_dbg_null_builtin[] = "DBG ERROR: NULL builtin index=%d pos=%p\n";
 static const char str_dbg_builtin_oor[] = "DBG FATAL: builtin index %d out of range, pos=%p byte[-3]=%02x byte[-1]=%02x\n";
 
+#if defined(COD2_X64)
+/* Even slots hold pointers; odd slots hold the original unsigned opcode. */
+static uintptr_t dbg_op_ring[64];
+#else
 static unsigned int dbg_op_ring[64];
+#endif
 static int dbg_op_ring_idx;
 static const char str_dbg_op_dump[] = "  op[%d]: pos=%p opcode=0x%02x\n";
 static const char str_dbg_op_hdr[] = "Last 32 opcodes before fatal:\n";
@@ -2080,7 +2111,11 @@ static const char str_dbg_castbool[] = "DBG: op 0x5f CastBool at fs=%p val=0x%x 
 static void VM_DebugRecordOpcode(const char *pos, unsigned int opcode)
 {
     unsigned int i = (unsigned int)dbg_op_ring_idx & 31u;
+#if defined(COD2_X64)
+    dbg_op_ring[i * 2u] = (uintptr_t)pos;
+#else
     dbg_op_ring[i * 2u] = (unsigned int)(uintptr_t)pos;
+#endif
     dbg_op_ring[i * 2u + 1u] = opcode;
     dbg_op_ring_idx++;
 }
@@ -6259,21 +6294,36 @@ extern int GetVarType(unsigned int id);
 
 static unsigned short VM_ReadU16(const char **pos)
 {
+#if defined(COD2_X64)
+    unsigned short v;
+    memcpy(&v, *pos, sizeof(v));
+#else
     unsigned short v = *(const unsigned short *)*pos;
+#endif
     *pos += 2;
     return v;
 }
 
 static int VM_ReadI32(const char **pos)
 {
+#if defined(COD2_X64)
+    int v;
+    memcpy(&v, *pos, sizeof(v));
+#else
     int v = *(const int *)*pos;
+#endif
     *pos += 4;
     return v;
 }
 
 static float VM_ReadF32(const char **pos)
 {
+#if defined(COD2_X64)
+    float v;
+    memcpy(&v, *pos, sizeof(v));
+#else
     float v = *(const float *)*pos;
+#endif
     *pos += 4;
     return v;
 }
@@ -6370,7 +6420,11 @@ static void VM_CandidateDumpOpcodeRing(void)
     for (i = 0; i < 32; ++i) {
         unsigned int slot = (unsigned int)(dbg_op_ring_idx + i) & 31u;
         Com_Printf(str_dbg_op_dump, i, (void *)(uintptr_t)dbg_op_ring[slot * 2u],
+#if defined(COD2_X64)
+                   (unsigned int)dbg_op_ring[slot * 2u + 1u]);
+#else
                    dbg_op_ring[slot * 2u + 1u]);
+#endif
     }
 }
 
@@ -6516,6 +6570,32 @@ static int VM_CandidateThreadSuspendReturn(const char **pos, unsigned int *local
                                            VariableValue **startTop, unsigned int *resultLocalId,
                                            unsigned int *threadCount);
 
+#if defined(COD2_X64)
+static int VM_CandidateThreadReturn(const char **pos, unsigned int *localId,
+                                    unsigned int *localVarCount, VariableValue **top,
+                                    VariableValue **startTop, unsigned int *resultLocalId,
+                                    unsigned int *threadCount)
+{
+    if (*threadCount == 0) {
+        *resultLocalId = VM_CandidateFinishOutermost(*startTop, *localId);
+        return 1;
+    }
+    --*threadCount;
+    RemoveRefToObject(*localId);
+    {
+        function_frame_t *ff = scrVmPub.function_frame;
+        *pos = ff->fs.pos;
+        *localId = ff->fs.localId;
+        *localVarCount = ff->fs.localVarCount;
+        *top = ff->fs.top;
+        *startTop = ff->fs.startTop;
+        (*top)->type = ff->topType;
+        *top = *top + 1;
+    }
+    return 0;
+}
+#endif
+
 static int VM_CandidateHandleEnd(const char **pos, unsigned int *localId,
                                  unsigned int *localVarCount, VariableValue **top,
                                  VariableValue **startTop, unsigned int *resultLocalId,
@@ -6564,9 +6644,15 @@ static int VM_CandidateHandleReturn(const char **pos, unsigned int *localId,
     scrVmPub.function_frame--;
 
     if (parentLocalId == 0) {
-
+#if defined(COD2_X64)
+        /* The i386 VM leaves the result above the thread frame sentinel. */
+        (*top)[1] = returnValue;
+        return VM_CandidateThreadReturn(pos, localId, localVarCount, top,
+                                       startTop, resultLocalId, threadCount);
+#else
         return VM_CandidateThreadSuspendReturn(pos, localId, localVarCount, top,
                                                startTop, resultLocalId, threadCount);
+#endif
     }
 
     **top = returnValue;
@@ -6574,14 +6660,22 @@ static int VM_CandidateHandleReturn(const char **pos, unsigned int *localId,
     return 0;
 }
 
+#if defined(COD2_X64)
+static VariableStackBuffer *VM_CandidateSuspendCurrentStack(const char *archivePos,
+#else
 static unsigned int VM_CandidateSuspendCurrentStack(const char *archivePos,
+#endif
                                                     unsigned int localVarCount,
                                                     VariableValue *top,
                                                     VariableValue *startTop,
                                                     unsigned int *localId)
 {
     int stackSize = (int)(top - startTop);
+#if defined(COD2_X64)
+    return VM_ArchiveStack(stackSize, archivePos, top, localVarCount, localId);
+#else
     return (unsigned int)(uintptr_t)VM_ArchiveStack(stackSize, archivePos, top, localVarCount, localId);
+#endif
 }
 
 static unsigned int VM_CandidateFinishSuspend(VariableValue *startTop, unsigned int localId)
@@ -6597,6 +6691,10 @@ static int VM_CandidateThreadSuspendReturn(const char **pos, unsigned int *local
                                            unsigned int *threadCount)
 {
     ((*startTop) + 1)->type = VAR_UNDEFINED;
+#if defined(COD2_X64)
+    return VM_CandidateThreadReturn(pos, localId, localVarCount, top,
+                                   startTop, resultLocalId, threadCount);
+#else
     if (*threadCount == 0) {
         *resultLocalId = VM_CandidateFinishSuspend(*startTop, *localId);
         return 1;
@@ -6614,7 +6712,60 @@ static int VM_CandidateThreadSuspendReturn(const char **pos, unsigned int *local
         *top = *top + 1;
     }
     return 0;
+#endif
 }
+
+#if COD2_APPLE_SDK
+static int VM_CandidateHandleJumpBack(const char **pos, unsigned int *localId,
+                                      unsigned int *localVarCount, VariableValue **top,
+                                      VariableValue **startTop, unsigned int *resultLocalId,
+                                      unsigned int *threadCount)
+{
+    scrVmGlob_t *glob = (scrVmGlob_t *)scrVmGlob;
+
+    /* The Mac reference uses 2500 ms. Unsigned elapsed time handles wrap. */
+    if (Scr_TimeoutMilliseconds() - glob->starttime >= 2500u) {
+        if (glob->loading) {
+            Com_Printf("script runtime warning: potential infinite loop in script.\n");
+            Scr_PrintPrevCodePos((print_msg_type_t)0, *pos, 0);
+            Scr_ResetTimeout();
+        } else {
+            if (scrVmPub.abort_on_error) {
+                Scr_DumpScriptThreads();
+                Scr_DumpScriptVariables();
+                scrVmPub.terminal_error = 1;
+                Scr_SetErrorMessageAndJump("potential infinite loop in script");
+                return 0;
+            }
+
+            Com_Printf("script runtime error: potential infinite loop in script - killing thread.\n");
+            Scr_PrintPrevCodePos((print_msg_type_t)0, *pos, 0);
+            Scr_ResetTimeout();
+            for (;;) {
+                unsigned int parentLocalId = GetSafeParentLocalId(*localId);
+                Scr_KillThread(*localId);
+                scrVmPub.localVars -= *localVarCount;
+                VM_CandidatePopToFrameSentinel(top);
+                scrVmPub.function_count--;
+                scrVmPub.function_frame--;
+                if (!parentLocalId) {
+                    return VM_CandidateThreadSuspendReturn(pos, localId, localVarCount,
+                                                           top, startTop, resultLocalId,
+                                                           threadCount);
+                }
+                VM_CandidateRestoreCaller(parentLocalId, pos, localId, localVarCount);
+                --*top;
+            }
+        }
+    }
+
+    {
+        unsigned int offset = VM_ReadU16(pos);
+        *pos -= offset;
+    }
+    return 0;
+}
+#endif
 
 static unsigned int VM_CandidateWaitTimeFromValue(VariableValue *value)
 {
@@ -6668,7 +6819,11 @@ static int VM_CandidateHandleWait(const char **pos, unsigned int *localVarCount,
     waitTime = (waitTime + (unsigned int)varPub->time) & 0x00ffffffu;
     --*top;
 
+#if defined(COD2_X64)
+    stackValue =
+#else
     stackValue = (VariableStackBuffer *)(uintptr_t)
+#endif
         VM_CandidateSuspendCurrentStack(archivePos, *localVarCount, *top, *startTop, localId);
     tempValue.u.stackValue = SCR_STACK_ENC(stackValue);
     tempValue.type = 10;
@@ -6694,7 +6849,11 @@ static int VM_CandidateHandleWaitTillFrameEnd(const char **pos, unsigned int *lo
     unsigned int stackId;
     const char *archivePos = *pos;
 
+#if defined(COD2_X64)
+    stackValue =
+#else
     stackValue = (VariableStackBuffer *)(uintptr_t)
+#endif
         VM_CandidateSuspendCurrentStack(archivePos, *localVarCount, *top, *startTop, localId);
     tempValue.u.stackValue = SCR_STACK_ENC(stackValue);
     tempValue.type = 10;
@@ -6739,7 +6898,11 @@ static int VM_CandidateHandleWaitTill(const char **pos, unsigned int *localVarCo
     stringValue = (*top)->u.stringValue;
     --*top;
 
+#if defined(COD2_X64)
+    stackValue =
+#else
     stackValue = (VariableStackBuffer *)(uintptr_t)
+#endif
         VM_CandidateSuspendCurrentStack(archivePos, *localVarCount, *top, *startTop, localId);
     tempValue.u.stackValue = SCR_STACK_ENC(stackValue);
     tempValue.type = 10;
@@ -7678,10 +7841,17 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
         }
 
         case VMOP_JumpBack: {
+#if COD2_APPLE_SDK
+            if (VM_CandidateHandleJumpBack(&pos, &localId, &localVarCount, &top,
+                                           &startTop, &resultLocalId, &thread_count)) {
+                return resultLocalId;
+            }
+#else
             const char *opcodeStart = pos - 1;
             unsigned int offset = VM_ReadU16(&pos);
 
             pos = opcodeStart + 3 - offset;
+#endif
             break;
         }
 
@@ -7788,8 +7958,13 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             break;
 
         case VMOP_Object: {
+#if defined(COD2_X64)
+            int classnum = VM_ReadI32(&pos);
+            int entnum = VM_ReadI32(&pos);
+#else
             int entnum = VM_ReadI32(&pos);
             int classnum = VM_ReadI32(&pos);
+#endif
             VM_CandidatePushEntityObject(&top, classnum, entnum);
             break;
         }
@@ -7836,7 +8011,11 @@ static unsigned int VM_RestoreLocalVarsFromSibling(unsigned int localId)
 {
     unsigned int localVarCount = 0;
     unsigned int varId;
+#if defined(COD2_X64)
+    unsigned int *localVarLimit = ((scrVmGlob_t *)scrVmGlob)->localVarsStack + 2046;
+#else
     unsigned int *localVarLimit = (unsigned int *)(scrVmGlob + 24) + 2047;
+#endif
 
     if (localId <= 2)
         return 0;

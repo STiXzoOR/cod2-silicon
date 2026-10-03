@@ -93,7 +93,7 @@ YY_BUFFER_STATE yy_create_buffer(FILE *file, int size)
     YY_BUFFER_STATE b;
     char *buf;
 
-#if COD2_APPLE_SDK
+#if defined(COD2_X64) && (defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64))
     b = (YY_BUFFER_STATE)malloc(sizeof(*b));
 #else
     b = (YY_BUFFER_STATE)malloc(0x28);

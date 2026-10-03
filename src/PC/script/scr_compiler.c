@@ -22,7 +22,11 @@ extern unsigned int GetArray(unsigned int id);
 extern void SetVariableValue(unsigned int id, VariableValue *value);
 extern void Com_Error(int code, const char *fmt, ...);
 extern void CompileError(unsigned int sourcePos, const char *fmt, ...);
+#if defined(COD2_X64) && (defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64))
+extern void CompileError2(const char *codePos, const char *msg, ...);
+#else
 extern void CompileError2(int codePos, const char *msg);
+#endif
 extern void AddOpcodePos(unsigned int sourcePos, int type);
 extern void RemoveOpcodePos(void);
 extern void AddThreadStartOpcodePos(unsigned int sourcePos);
@@ -82,6 +86,12 @@ static const char str_dbg_before_lt[] = "before-LinkThread";
 #define SCRCOMP_VAR_DEVELOPER_CODEPOS 12
 #define SCRCOMP_VAR_INCLUDE_CODEPOS 13
 #define SCRCOMP_MAX_VARIABLES 65534
+
+#if defined(COD2_X64) && (defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64))
+#define SCRCOMP_CHILD_BLOCK_BYTES (0x400 * sizeof(scr_block_t *))
+#else
+#define SCRCOMP_CHILD_BLOCK_BYTES 0x1000
+#endif
 
 #ifndef __EMSCRIPTEN__
 static unsigned int LinkThread(unsigned int threadId, VariableValue *pos, int allowFarCall) __attribute_regparm__(3);
@@ -156,7 +166,11 @@ static unsigned int __attribute_regparm__(3)
 
         if (pos->type == SCRCOMP_VAR_DEVELOPER_CODEPOS) {
             if (type == SCRCOMP_VAR_CODEPOS) {
+#    if defined(COD2_X64) && (defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64))
+                CompileError2(codePtr, "normal script cannot reference a function in a /# ... #/ comment");
+#    else
                 CompileError2( (int)(codePtr), "normal script cannot reference a function in a /# ... #/ comment");
+#    endif
                 continue;
             }
         } else {
@@ -165,7 +179,11 @@ static unsigned int __attribute_regparm__(3)
                 fprintf(stderr, "[UNKFN-LINKTHREAD-169 nodef] threadId=%u count=%d i=%d valueId=%u progoff=%d\n",
                         threadId, count, i, valueId, (int)(codePtr - SCRVP->programBuffer));
 #    endif
+#    if defined(COD2_X64) && (defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64))
+                CompileError2(codePtr, "unknown function");
+#    else
                 CompileError2( (int)(codePtr), "unknown function");
+#    endif
                 continue;
             }
 
@@ -174,7 +192,11 @@ static unsigned int __attribute_regparm__(3)
                 fprintf(stderr, "[UNKFN-LINKTHREAD-174 farcall] threadId=%u progoff=%d\n",
                         threadId, (int)(codePtr - SCRVP->programBuffer));
 #    endif
+#    if defined(COD2_X64) && (defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64))
+                CompileError2(codePtr, "unknown function");
+#    else
                 CompileError2( (int)(codePtr), "unknown function");
+#    endif
                 continue;
             }
         }
@@ -223,6 +245,13 @@ int CompareCaseInfo(const unsigned int *elem1, const unsigned int *elem2)
 
 void Scr_CompileShutdown(void)
 {
+#if defined(COD2_X64) && (defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64))
+    PrecacheEntry *node;
+    while ((node = SCRCG->precachescriptListHead) != NULL) {
+        SCRCG->precachescriptListHead = node->next;
+        Z_FreeInternal(node);
+    }
+#else
     void *node;
     /* x86 offset 88 = precachescriptListHead; on x64 it's at offsetof (struct grew) */
     void **pHead = (void **)((char *)&scrCompileGlob + __builtin_offsetof(struct scrCompileGlob_t, precachescriptListHead));
@@ -230,6 +259,7 @@ void Scr_CompileShutdown(void)
         *pHead = *(void **)((char *)node + 8);
         Z_FreeInternal(node);
     }
+#endif
 }
 
 static unsigned int __attribute_regparm__(2)
@@ -824,8 +854,8 @@ Scr_CalcLocalVarsSwitchStatement(sval_t stmtlist, scr_block_t *block)
 
     oldBreakChildBlocks = SCRCG->breakChildBlocks;
     oldBreakChildCount = SCRCG->breakChildCount;
-    breakChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(0x1000);
-    caseBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(0x1000);
+    breakChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(SCRCOMP_CHILD_BLOCK_BYTES);
+    caseBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(SCRCOMP_CHILD_BLOCK_BYTES);
     breakChildCount = 0;
     caseBlockCount = 0;
     currentBlock = NULL;
@@ -982,8 +1012,8 @@ static unsigned int __attribute_regparm__(2)
         oldContinueChildBlocks = SCRCG->continueChildBlocks;
         oldContinueChildCount = SCRCG->continueChildCount;
 
-        breakChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(0x1000);
-        continueChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(0x1000);
+        breakChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(SCRCOMP_CHILD_BLOCK_BYTES);
+        continueChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(SCRCOMP_CHILD_BLOCK_BYTES);
         SCRCG->breakChildBlocks = breakChildBlocks;
         SCRCG->breakChildCount = &breakChildCount;
         SCRCG->continueChildBlocks = continueChildBlocks;
@@ -1030,8 +1060,8 @@ static unsigned int __attribute_regparm__(2)
         oldContinueChildBlocks = SCRCG->continueChildBlocks;
         oldContinueChildCount = SCRCG->continueChildCount;
 
-        breakChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(0x1000);
-        continueChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(0x1000);
+        breakChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(SCRCOMP_CHILD_BLOCK_BYTES);
+        continueChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(SCRCOMP_CHILD_BLOCK_BYTES);
         SCRCG->breakChildBlocks = breakChildBlocks;
         SCRCG->breakChildCount = &breakChildCount;
         SCRCG->continueChildBlocks = continueChildBlocks;
@@ -1944,6 +1974,13 @@ static int __attribute_regparm__(1)
 {
     int i;
 
+#if defined(COD2_X64) && (defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64))
+    for (i = 0; i < scrCompilePub.func_table_size; ++i) {
+        if (scrCompilePub.func_table[i] == func) {
+            return i;
+        }
+    }
+#else
     /* Dedup by the low 32 bits: a builtin cached in a 4-byte script-variable value comes back
        truncated on x64, but its low bits still uniquely identify the (single-module) function,
        so it matches the full pointer already stored here. */
@@ -1952,6 +1989,7 @@ static int __attribute_regparm__(1)
             return i;
         }
     }
+#endif
 
     if (scrCompilePub.func_table_size == 0x400) {
         Com_Error(1, "\x15SCR_FUNC_TABLE_SIZE exceeded");
@@ -1962,6 +2000,19 @@ static int __attribute_regparm__(1)
     scrCompilePub.func_table_size = i + 1;
     return i;
 }
+
+#if defined(COD2_X64) && (defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64))
+/* Cache slots stay 32-bit: 1..1024 identify full pointers in func_table; 0 means absent. */
+static int Scr_BuiltinPointerToIndex(intptr_t func)
+{
+    return func ? EmitFunctionTableIndex(func) + 1 : 0;
+}
+
+static intptr_t Scr_BuiltinPointerFromIndex(int index)
+{
+    return index ? scrCompilePub.func_table[index - 1] : 0;
+}
+#endif
 
 static int __attribute_regparm__(2)
     EmitPrepareDeveloperCall(int *type, char **savedPos)
@@ -2094,7 +2145,11 @@ static unsigned int __attribute_regparm__(3)
                 if (varId) {
                     Scr_EvalVariableValue(varId, &value);
                     type = (value.type != SCRCOMP_VAR_CODEPOS);
+#if defined(COD2_X64) && (defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64))
+                    func = Scr_BuiltinPointerFromIndex(value.u.intValue);
+#else
                     func = value.u.intValue;
+#endif
                 } else {
                     unsigned int newId;
 
@@ -2102,7 +2157,11 @@ static unsigned int __attribute_regparm__(3)
                     func = Scr_GetFunction(&pName, &type);
                     newId = GetNewVariable(scrCompilePub.builtinFunc, name);
                     value.type = (type == 1) ? SCRCOMP_VAR_DEVELOPER_CODEPOS : SCRCOMP_VAR_CODEPOS;
+#if defined(COD2_X64) && (defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64))
+                    value.u.intValue = Scr_BuiltinPointerToIndex(func);
+#else
                     value.u.intValue = func;
+#endif
                     SetVariableValue(newId, &value);
                 }
 
@@ -2179,7 +2238,11 @@ static unsigned int __attribute_regparm__(3)
                 if (varId) {
                     Scr_EvalVariableValue(varId, &value);
                     type = (value.type != SCRCOMP_VAR_CODEPOS);
+#if defined(COD2_X64) && (defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64))
+                    meth = Scr_BuiltinPointerFromIndex(value.u.intValue);
+#else
                     meth = value.u.intValue;
+#endif
                 } else {
                     unsigned int newId;
 
@@ -2187,7 +2250,11 @@ static unsigned int __attribute_regparm__(3)
                     meth = Scr_GetMethod(&pName, &type);
                     newId = GetNewVariable(scrCompilePub.builtinMeth, name);
                     value.type = (type == 1) ? SCRCOMP_VAR_DEVELOPER_CODEPOS : SCRCOMP_VAR_CODEPOS;
+#if defined(COD2_X64) && (defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64))
+                    value.u.intValue = Scr_BuiltinPointerToIndex(meth);
+#else
                     value.u.intValue = meth;
+#endif
                     SetVariableValue(newId, &value);
                 }
 
@@ -4514,7 +4581,7 @@ static unsigned int __attribute_regparm__(3)
     SCRCG->breakBlock = whileBlock;
 
     if (constConditional) {
-        breakChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(0x1000);
+        breakChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(SCRCOMP_CHILD_BLOCK_BYTES);
         SCRCG->breakChildCount = &breakChildCount;
         pos2 = NULL;
         nextPos2 = NULL;
@@ -4676,13 +4743,13 @@ static unsigned int __attribute_regparm__(3)
 
     breakChildCount = 0;
     continueChildCount = 0;
-    continueChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(0x1000);
+    continueChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(SCRCOMP_CHILD_BLOCK_BYTES);
     SCRCG->continueChildBlocks = continueChildBlocks;
     SCRCG->continueChildCount = &continueChildCount;
     SCRCG->breakBlock = forBlock;
 
     if (constConditional) {
-        breakChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(0x1000);
+        breakChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(SCRCOMP_CHILD_BLOCK_BYTES);
         SCRCG->breakChildCount = &breakChildCount;
         pos2 = NULL;
         nextPos2 = NULL;
@@ -4828,7 +4895,7 @@ static unsigned int __attribute_regparm__(3)
     oldBreakChildCount = SCRCG->breakChildCount;
     oldBreakBlock = SCRCG->breakBlock;
     breakChildCount = 0;
-    breakChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(0x1000);
+    breakChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(SCRCOMP_CHILD_BLOCK_BYTES);
     SCRCG->breakChildBlocks = breakChildBlocks;
     SCRCG->breakChildCount = &breakChildCount;
     SCRCG->breakBlock = NULL;

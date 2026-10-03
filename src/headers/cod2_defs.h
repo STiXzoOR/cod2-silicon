@@ -6044,16 +6044,38 @@ extern unsigned char scrMemTreeGlob[];
 extern void * const imp_scrVarPub;
 #if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 #define SCR_ARENA_PTR(off)    ((void *)(scrMemTreeGlob + (unsigned int)(off)))
+#if defined(COD2_X64)
+#define SCR_ARENA_ENC(ptr)    ((unsigned int)((uintptr_t)(ptr) - (uintptr_t)scrMemTreeGlob))
+#else
 #define SCR_ARENA_ENC(ptr)    ((unsigned int)((const unsigned char *)(const void *)(ptr) - scrMemTreeGlob))
+#endif
 #define SCR_PROGBUF_BASE()    (((struct scrVarPub_t *)imp_scrVarPub)->programBuffer)
+#if defined(COD2_X64)
+extern char g_EndPos;
+/* Endon can archive this external sentinel. Program lengths are signed ints,
+   so UINT32_MAX is outside the opcode-offset range and keeps null at zero. */
+#define SCR_CODEPOS_END      0xffffffffu
+#define SCR_CODEPOS_PTR(off)  ((unsigned int)(off) == SCR_CODEPOS_END ? &g_EndPos : \
+    (const char *)((off) ? SCR_PROGBUF_BASE() + (unsigned int)(off) : (const char *)0))
+#define SCR_CODEPOS_ENC(ptr)  ((unsigned int)((const char *)(ptr) == &g_EndPos ? SCR_CODEPOS_END : \
+    (ptr) ? (uintptr_t)(ptr) - (uintptr_t)SCR_PROGBUF_BASE() : 0))
+#else
 #define SCR_CODEPOS_PTR(off)  ((const char *)((off) ? (SCR_PROGBUF_BASE() + (unsigned int)(off)) : (const char *)0))
 #define SCR_CODEPOS_ENC(ptr)  ((unsigned int)((ptr) ? ((const char *)(ptr) - SCR_PROGBUF_BASE()) : 0))
+#endif
 #define SCR_VEC_TAG_PROG      0x80000000u
+#if defined(COD2_X64)
+#define SCR_VEC_ENC_FROM(p) \
+    ( (uintptr_t)(p) - (uintptr_t)scrMemTreeGlob < 0x80330u \
+        ? SCR_ARENA_ENC(p) \
+        : (SCR_VEC_TAG_PROG | SCR_CODEPOS_ENC(p)) )
+#else
 #define SCR_VEC_ENC_FROM(p) \
     ( ((const unsigned char *)(const void *)(p) >= scrMemTreeGlob && \
        (const unsigned char *)(const void *)(p) < scrMemTreeGlob + 0x80330) \
         ? SCR_ARENA_ENC(p) \
         : (SCR_VEC_TAG_PROG | SCR_CODEPOS_ENC(p)) )
+#endif
 #define SCR_VEC_PTR(u) \
     ((const float *)( ((u).vectorValue & SCR_VEC_TAG_PROG) \
         ? (SCR_PROGBUF_BASE() + ((u).vectorValue & ~SCR_VEC_TAG_PROG)) \
