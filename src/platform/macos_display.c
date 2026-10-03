@@ -3,6 +3,9 @@
 #include <SDL2/SDL.h>
 #include <OpenGL/gl.h>
 #include <OpenGL/glext.h>
+#if defined(__APPLE__) && defined(COD2_X64)
+#include <OpenGL/OpenGL.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -86,9 +89,25 @@ static int SetWindowMode(void)
         desired.h = sdl_gl_height;
         desired.refresh_rate = refreshRate;
         int display = SDL_GetWindowDisplayIndex(sdl_gl_window);
+#if defined(__APPLE__) && defined(COD2_X64)
+        int found = 0;
+        for (int i = 0; i < SDL_GetNumDisplayModes(display); ++i) {
+            SDL_DisplayMode candidate;
+            if (SDL_GetDisplayMode(display, i, &candidate) == 0 &&
+                candidate.w == desired.w && candidate.h == desired.h &&
+                (!desired.refresh_rate || candidate.refresh_rate == desired.refresh_rate)) {
+                closest = candidate;
+                found = 1;
+                break;
+            }
+        }
+        if (!found || SDL_SetWindowDisplayMode(sdl_gl_window, &closest) != 0 ||
+            SDL_SetWindowFullscreen(sdl_gl_window, SDL_WINDOW_FULLSCREEN) != 0)
+#else
         if (!SDL_GetClosestDisplayMode(display, &desired, &closest) ||
             SDL_SetWindowDisplayMode(sdl_gl_window, &closest) != 0 ||
             SDL_SetWindowFullscreen(sdl_gl_window, SDL_WINDOW_FULLSCREEN) != 0)
+#endif
         {
             fprintf(stderr, "CoD2-native exclusive fullscreen unavailable: %s; using desktop fullscreen\n", SDL_GetError());
             if (SDL_SetWindowFullscreen(sdl_gl_window, SDL_WINDOW_FULLSCREEN_DESKTOP) != 0)
@@ -112,6 +131,20 @@ static int SetWindowMode(void)
     }
     return 0;
 }
+
+#if defined(__APPLE__) && defined(COD2_X64)
+static int SetSurfaceSize(int width, int height)
+{
+    CGLContextObj context = CGLGetCurrentContext();
+    GLint size[2] = { width, height };
+    CGLError error = CGLSetParameter(context, kCGLCPSurfaceBackingSize, size);
+    if (error == kCGLNoError)
+        error = CGLEnable(context, kCGLCESurfaceBackingSize);
+    if (error != kCGLNoError)
+        fprintf(stderr, "CoD2-native fixed OpenGL backing unavailable: %s\n", CGLErrorString(error));
+    return error == kCGLNoError ? 0 : -1;
+}
+#endif
 
 static int CreateRenderBuffer(MacContext *ctx, int depthBits, int stencil)
 {
@@ -161,7 +194,12 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
     if (!sdl_gl_window)
         sdl_gl_window = SDL_CreateWindow("CoD2-native", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                          sdl_gl_width, sdl_gl_height,
+#if defined(__APPLE__) && defined(COD2_X64)
+                                         SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN |
+                                         (windowMode == MAC_WINDOWED ? SDL_WINDOW_ALLOW_HIGHDPI : 0));
+#else
                                          SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_SHOWN);
+#endif
     if (!sdl_gl_window)
         return NULL;
     MacContext *ctx = calloc(1, sizeof(*ctx));
@@ -178,6 +216,14 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
         MacDisplay_ReleaseContext((void **)&ctx);
         return NULL;
     }
+#if defined(__APPLE__) && defined(COD2_X64)
+    /* CGL fixes the actual back buffer; WindowServer scales to the view.
+     * SDL's drawable query describes view bounds, not this override. */
+    if (windowMode != MAC_WINDOWED && SetSurfaceSize(ctx->width, ctx->height) != 0) {
+        MacDisplay_ReleaseContext((void **)&ctx);
+        return NULL;
+    }
+#endif
     SDL_GL_SetSwapInterval(0);
     if (!strstr((const char *)glGetString(GL_EXTENSIONS), "GL_EXT_framebuffer_blit") ||
         CreateRenderBuffer(ctx, depth, stencil) != 0) {
@@ -237,7 +283,11 @@ void MacPlatform_MapWindowPoint(int x, int y, int *rx, int *ry)
 {
     int logicalW, logicalH, pixelW, pixelH;
     SDL_GetWindowSize(sdl_gl_window, &logicalW, &logicalH);
+#if defined(__APPLE__) && defined(COD2_X64)
+    MacPlatform_GetDrawableSize(&pixelW, &pixelH);
+#else
     SDL_GL_GetDrawableSize(sdl_gl_window, &pixelW, &pixelH);
+#endif
     MacPlatform_TransformPoint(x, y, logicalW, logicalH, pixelW, pixelH, rx, ry);
 }
 
@@ -247,7 +297,11 @@ void SDL_GL_SwapWindowDirect(void)
     if (!ctx)
         return;
     int width, height;
+#if defined(__APPLE__) && defined(COD2_X64)
+    MacPlatform_GetDrawableSize(&width, &height);
+#else
     SDL_GL_GetDrawableSize(sdl_gl_window, &width, &height);
+#endif
     if (width <= 0 || height <= 0)
         return;
     int x, y, destW, destH;
@@ -277,6 +331,10 @@ uint16_t MacDisplay_ReleaseContext(void **reference)
     MacContext *ctx = reference ? *reference : NULL;
     if (!ctx)
         return 0;
+#if defined(__APPLE__) && defined(COD2_X64)
+    if (sdl_gl_window)
+        SDL_SetWindowFullscreen(sdl_gl_window, 0);
+#endif
     if (ctx->context) {
         SDL_GL_MakeCurrent(sdl_gl_window, ctx->context);
         glDeleteFramebuffersEXT(1, &ctx->framebuffer);
@@ -312,7 +370,19 @@ int MacPlatform_GetRenderSize(int *width, int *height)
     *height = screenContext ? screenContext->height : sdl_gl_height;
     return screenContext != NULL;
 }
-void MacPlatform_GetDrawableSize(int *width, int *height) { SDL_GL_GetDrawableSize(sdl_gl_window, width, height); }
+void MacPlatform_GetDrawableSize(int *width, int *height)
+{
+#if defined(__APPLE__) && defined(COD2_X64)
+    if (screenContext && windowMode != MAC_WINDOWED) {
+        GLint size[2];
+        if (CGLGetParameter(CGLGetCurrentContext(), kCGLCPSurfaceBackingSize, size) == kCGLNoError) {
+            *width = size[0]; *height = size[1];
+            return;
+        }
+    }
+#endif
+    SDL_GL_GetDrawableSize(sdl_gl_window, width, height);
+}
 uint16_t MacDisplay_GetCurrentDimensions(int *w, int *h) { MacPlatform_GetRenderSize(w, h); return 0; }
 int MacDisplay_GetCurrentDepth(void) { return 32; }
 int MacDisplay_GetNumModes(void) { MacDisplay_Initialize(); return modeCount; }
@@ -322,12 +392,24 @@ const char **MacPlatform_ModeNames(void)
     static char storage[127][32];
     if (names[0])
         return names;
+#if defined(__APPLE__) && defined(COD2_X64)
+    const int defaults[][2] = { {640, 480}, {800, 600}, {1024, 768}, {1280, 720},
+        {1920, 1080}, {2560, 1440}, {3008, 1692}, {3840, 2160}, {5120, 2880}, {6016, 3384} };
+    const int defaultCount = sizeof(defaults) / sizeof(*defaults);
+#else
     const int defaults[][2] = { {640, 480}, {800, 600}, {1024, 768}, {1280, 720} };
+#endif
     int used = 0;
     MacDisplay_Initialize();
+#if defined(__APPLE__) && defined(COD2_X64)
+    for (int i = 0; i < defaultCount + modeCount && used < 127; ++i) {
+        int w = i < defaultCount ? defaults[i][0] : modes[i - defaultCount].width;
+        int h = i < defaultCount ? defaults[i][1] : modes[i - defaultCount].height;
+#else
     for (int i = 0; i < 4 + modeCount && used < 127; ++i) {
         int w = i < 4 ? defaults[i][0] : modes[i - 4].width;
         int h = i < 4 ? defaults[i][1] : modes[i - 4].height;
+#endif
         char name[32];
         snprintf(name, sizeof(name), "%dx%d", w, h);
         int duplicate = 0;
@@ -361,6 +443,10 @@ uint16_t MacDisplay_SetMode(int w, int h, int d, int r)
     MacPlatform_ConfigureWindow(w, h, windowMode, r);
     if (sdl_gl_window && SetWindowMode() != 0)
         return 1;
+#if defined(__APPLE__) && defined(COD2_X64)
+    if (screenContext && windowMode != MAC_WINDOWED && SetSurfaceSize(w, h) != 0)
+        return 1;
+#endif
     if (screenContext && (screenContext->width != w || screenContext->height != h)) {
         MacContext replacement = { 0 };
         replacement.width = w;
