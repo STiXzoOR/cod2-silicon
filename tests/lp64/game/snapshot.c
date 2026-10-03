@@ -1,4 +1,4 @@
-#include "../../../src/PC/server_mp/sv_snapshot_mp.c"
+#include "ws6_snapshot_source.c"
 #include <assert.h>
 #include <stdlib.h>
 
@@ -48,8 +48,8 @@ byte *SV_SvEntityForGentity(byte *ent) { abort(); }
 
 int main(void)
 {
-    svs.clients = calloc(3, sizeof(client_t));
-    assert(SV_ClientIndexLocal(&svs.clients[2]) == 2);
+    svs.clients = calloc(4, sizeof(client_t));
+    assert(SV_ClientIndexLocal(&svs.clients[3]) == 3);
     clientState_t out[3] = {0};
     svs.snapshotClients = (char *(*)())out;
     svs.numSnapshotClients = 3;

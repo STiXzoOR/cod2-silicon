@@ -1,5 +1,5 @@
 #include "ws6_weapon_symbols.h"
-#include "../../../src/PC/bgame/bg_weapons_load_obj.c"
+#include "ws6_weapons_source.c"
 #include <assert.h>
 
 int main(void)

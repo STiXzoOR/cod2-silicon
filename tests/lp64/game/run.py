@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[3]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--build', type=Path, default=ROOT / 'build-macos')
 parser.add_argument('--baseline', help='test source from a local git commit without changing checkout')
+parser.add_argument('--test', action='append', help='run only a named test (repeatable)')
 args = parser.parse_args()
 build = args.build.resolve()
 output = build / ('ws6-test-baseline' if args.baseline else 'ws6-tests')
@@ -19,6 +20,15 @@ output.mkdir(parents=True, exist_ok=True)
 declarations = (ROOT / 'src/PC/bgame/bg_weapons_load_obj_weaponDefFields_decls.inc').read_text()
 symbols = re.findall(r'extern const char (\w+)\[\];', declarations)
 (output / 'ws6_weapon_symbols.h').write_text(''.join(f'const char {symbol}[] = "";\n' for symbol in symbols))
+include_sources = {
+    'ws6_snapshot_source.c': 'src/PC/server_mp/sv_snapshot_mp.c',
+    'ws6_weapons_source.c': 'src/PC/bgame/bg_weapons_load_obj.c',
+    'bg_weapons_load_obj_weaponDefFields.inc': 'src/PC/bgame/bg_weapons_load_obj_weaponDefFields.inc',
+    'bg_weapons_load_obj_weaponDefFields_decls.inc': 'src/PC/bgame/bg_weapons_load_obj_weaponDefFields_decls.inc',
+}
+for name, source in include_sources.items():
+    data = subprocess.check_output(['git', 'show', f'{args.baseline}:{source}'], cwd=ROOT) if args.baseline else (ROOT / source).read_bytes()
+    (output / name).write_bytes(data)
 entries = json.loads((build / 'compile_commands.json').read_text())
 
 
@@ -43,7 +53,11 @@ for name, sources in [('startup', ['src/PC/server_mp/sv_init_mp.c']),
                       ('script_api', ['src/PC/game_mp/g_scr_main_mp.c']),
                       ('snapshot', []),
                       ('netchan', ['src/PC/server_mp/sv_net_chan_mp.c']),
-                      ('weapon_fields', [])]:
+                      ('weapon_fields', []),
+                      ('spawn', ['src/PC/game_mp/g_utils_mp.c']),
+                      ('wire', ['src/PC/qcommon/msg_mp.c'])]:
+    if args.test and name not in args.test:
+        continue
     objects = [compile_source(s, Path(s).stem, True) for s in sources]
     objects.append(compile_source(f'tests/lp64/game/{name}.c', name))
     exe = output / name

@@ -70,20 +70,20 @@ int main(void)
 
     /* Retail XOR keys use 32-bit challenge/sequence scalars; native pointers do not enter the bytes. */
     byte packet[] = {0, 0, 0, 0, 0, 1, 2, 3, 4, 5};
-    byte expected[] = {0, 0, 0, 0, 0x33, 0x70, 0x12, 0x82, 0xC5, 0x07};
+    const byte expected[] = {0, 0, 0, 0, 0x70, 0xb5, 0xf7, 0x32, 0x74, 0xb1};
     client_t *client = &svs.clients[1];
     client->challenge = 0x1234;
     client->netchan.outgoingSequence = 5;
     strcpy(client->lastClientCommandString, "Ab");
     SV_Netchan_Transmit(client, sizeof(packet), packet);
-    /* Calculate independently from the retail loop's key and alternating shift. */
-    byte key = 0x34 ^ 5;
-    const byte chars[] = {'A','b','A','b','A','b'};
-    for (int i = 0; i < 6; i++) {
-        key ^= chars[i] << (i & 1);
-        expected[i + 4] = (byte)i ^ key;
-    }
     assert(!memcmp(packet, expected, sizeof(packet)));
+    client->serverId = 0;
+    client->messageAcknowledge = 5;
+    client->reliableAcknowledge = 3;
+    strcpy(client->reliableCommandInfo[3].cmd, "Ab");
+    SV_Netchan_Decode(client, packet + 4, 6);
+    const byte plain[] = {0, 1, 2, 3, 4, 5};
+    assert(!memcmp(packet + 4, plain, sizeof(plain)));
     free(svs.pOOBProf);
     free(svs.clients);
     puts("netchan: native profiles/client names and retail XOR pass");
