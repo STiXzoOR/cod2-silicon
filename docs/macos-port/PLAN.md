@@ -4,15 +4,26 @@ Shared brief for every agent working on this port. Read it fully before starting
 
 ## Goal
 
-A native Apple Silicon (arm64, macOS 27) build of the opencod2 multiplayer
-client that can join CoD2x 1.4 servers at a stable 250 fps with true raw mouse
-input. Changes should be clean enough to offer back to opencod2 upstream.
+The user's goal, in their words: play the latest CoD2 multiplayer with all the
+goodies of CoD2x, natively, at the highest framerate (333) on this Mac mini.
+
+So: a native Apple Silicon (arm64, macOS 27) opencod2 multiplayer client with
+**full CoD2x 1.4 client feature parity** (everything in `cod2x-compat.md`
+except the auto-updater), holding a stable **`com_maxfps 333`** with true raw
+mouse input. Note that CoD2x competitive servers (`g_competitive`) cap clients
+at 125–250, so 333 applies where the server allows it. Changes should be clean
+enough to offer back to opencod2 upstream.
+
+A parallel "play now" track (WS8) runs the real Windows CoD2 + CoD2x under
+Wine on this Mac. It is the performance and behaviour baseline the native client
+has to beat.
 
 ## Machine
 
 Mac mini, Apple M6 (12 cores), 24 GB, macOS 27.0.1, Xcode 27 / Apple clang 21,
-CMake, SDL3 with `sdl2-config` (sdl2-compat) from Homebrew. No Rosetta, no
-Docker, no QEMU, no ninja. The machine cannot run 32-bit x86 code at all.
+CMake, SDL3 with `sdl2-config` (sdl2-compat) from Homebrew. Rosetta 2 is
+installed (2026-10-03, for the WS8 Wine baseline only). No Docker, QEMU or
+ninja. Native code cannot run 32-bit x86 at all.
 
 ## Facts established on 2026-10-03
 
@@ -191,7 +202,7 @@ and runs the integrated build.
    menu and loads a map.
 2. It connects to a stock 1.3 server and to a CoD2x 1.4 server and plays a full
    round without desync or crashes.
-3. It holds `com_maxfps 250` with a stable frame time on the M6 (timedemo plus
-   live play).
+3. It holds `com_maxfps 333` with a stable frame time on the M6 (timedemo plus
+   live play), and beats the WS8 Wine baseline.
 4. Raw mouse input bypasses macOS pointer acceleration.
 5. With `COD2_X64=OFF` the 32-bit Linux and Windows builds still build unchanged.
