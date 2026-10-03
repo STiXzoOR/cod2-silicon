@@ -67,6 +67,7 @@ int AESend()
 {
     return 0;
 }
+#if !COD2_APPLE_SDK
 int aglDescribePixelFormat()
 {
     return 0;
@@ -119,6 +120,7 @@ int AudioUnitUninitialize()
 {
     return 0;
 }
+#endif
 int CFBooleanGetValue()
 {
     return 0;
@@ -393,6 +395,7 @@ int SV_GetBrushModelCount()
     return 0;
 }
 
+#if !COD2_APPLE_SDK
 int AUGraphGetCPULoad(void *graph, float *outLoad)
 {
     (void)graph;
@@ -403,6 +406,7 @@ int AUGraphGetCPULoad(void *graph, float *outLoad)
 char AUGraphGetNodeInfo[64] __attribute__((aligned(4))) = { 0 };
 char AUGraphNewNode[64] __attribute__((aligned(4))) = { 0 };
 char AUGraphUpdate[64] __attribute__((aligned(4))) = { 0 };
+#endif
 extern unsigned char bg_itemlist[];
 extern void G_RegisterWeapon(int weapIndex);
 void *bg_itemlist_ptr __attribute__((aligned(4))) = (void *)bg_itemlist;

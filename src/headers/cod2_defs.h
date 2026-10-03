@@ -3019,6 +3019,15 @@ typedef float Float32;
 typedef double Float64;
 typedef void (*Free_t)(void *, int);   /* real Free(ptr,size) sig; byte-neutral fn-ptr */
 typedef GDevice * GDPtr;
+#if COD2_APPLE_SDK
+typedef unsigned int GLbitfield;
+typedef unsigned char GLboolean;
+typedef unsigned int GLenum;
+typedef float GLfloat;
+typedef int GLint;
+typedef int GLsizei;
+typedef unsigned int GLuint;
+#else
 typedef long unsigned int GLbitfield;
 
 typedef unsigned char GLboolean;
@@ -3027,6 +3036,7 @@ typedef float GLfloat;
 typedef long int GLint;
 typedef long int GLsizei;
 typedef long unsigned int GLuint;
+#endif
 
 typedef unsigned int GfxDrawSurfSort;
 
@@ -3632,7 +3642,15 @@ struct CAudioRecorder {
 };
 
 struct CCircularBuffer {
+#if COD2_APPLE_SDK
+    unsigned char *buffer;
+    UInt32 capacity;
+    UInt32 readOffset;
+    UInt32 lastReadSize;
+    UInt32 writeOffset;
+#else
     int _placeholder;
+#endif
 };
 
 struct CFUUIDBytes {
@@ -6005,7 +6023,7 @@ union VariableUnion {
     int intValue;
     float floatValue;
     unsigned int stringValue;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(_M_X64) || COD2_APPLE_SDK
     unsigned int vectorValue;
     unsigned int codePosValue;
 #else
@@ -6013,7 +6031,7 @@ union VariableUnion {
     const char *codePosValue;
 #endif
     unsigned int pointerValue;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(_M_X64) || COD2_APPLE_SDK
     unsigned int stackValue;
 #else
     VariableStackBuffer *stackValue;
@@ -6024,7 +6042,7 @@ union VariableUnion {
 extern unsigned char scrMemTreeGlob[];
 
 extern void * const imp_scrVarPub;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__) || defined(_M_X64) || COD2_APPLE_SDK
 #define SCR_ARENA_PTR(off)    ((void *)(scrMemTreeGlob + (unsigned int)(off)))
 #define SCR_ARENA_ENC(ptr)    ((unsigned int)((const unsigned char *)(const void *)(ptr) - scrMemTreeGlob))
 #define SCR_PROGBUF_BASE()    (((struct scrVarPub_t *)imp_scrVarPub)->programBuffer)

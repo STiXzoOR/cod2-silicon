@@ -5,6 +5,11 @@
 #include <sys/time.h>
 #include <math.h>
 #include <stdio.h>
+#if defined(__APPLE__) && defined(COD2_X64)
+#include "platform/macos_system.h"
+#include <errno.h>
+#include <time.h>
+#endif
 
 #if !(defined(__APPLE__) && defined(COD2_X64) && defined(DEDICATED))
 #if !defined(_WIN32) || defined(W32_CLIENT)
@@ -45,7 +50,7 @@ int ___maskrune(int c, unsigned long f)
     return rt[(unsigned char)c] & f;
 }
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !(defined(__APPLE__) && defined(COD2_X64))
 int pthread_main_np(void)
 {
     return 1;
@@ -58,22 +63,46 @@ typedef struct {
 } AbsoluteTime;
 AbsoluteTime UpTime(void)
 {
+#if defined(__APPLE__) && defined(COD2_X64)
+    uint64_t nanos = MacSystem_Nanoseconds();
+    AbsoluteTime t = { (unsigned int)(nanos >> 32), (unsigned int)nanos };
+#else
     AbsoluteTime t = { 0, 0 };
+#endif
     return t;
 }
 AbsoluteTime AddDurationToAbsolute(int duration, AbsoluteTime absTime)
 {
+#if defined(__APPLE__) && defined(COD2_X64)
+    uint64_t nanos = ((uint64_t)absTime.hi << 32) | absTime.lo;
+    nanos += duration >= 0 ? (uint64_t)duration * 1000000 : (uint64_t)-(int64_t)duration * 1000;
+    absTime.hi = (unsigned int)(nanos >> 32);
+    absTime.lo = (unsigned int)nanos;
+#endif
     return absTime;
 }
 int MPDelayUntil(AbsoluteTime *expiration)
 {
+#if defined(__APPLE__) && defined(COD2_X64)
+    uint64_t deadline = ((uint64_t)expiration->hi << 32) | expiration->lo;
+    uint64_t now = MacSystem_Nanoseconds();
+    if (deadline > now) {
+        uint64_t remaining = deadline - now;
+        struct timespec delay = { (time_t)(remaining / 1000000000), (long)(remaining % 1000000000) };
+        while (nanosleep(&delay, &delay) != 0 && errno == EINTR) {}
+    }
+#endif
     return 0;
 }
 void Microseconds(long long *us)
 {
+#if defined(__APPLE__) && defined(COD2_X64)
+    *us = (long long)(MacSystem_Nanoseconds() / 1000);
+#else
     struct timeval tv;
     gettimeofday(&tv, 0);
     *us = (long long)tv.tv_sec * 1000000LL + tv.tv_usec;
+#endif
 }
 
 void *NewPtrClear(long size)
@@ -160,6 +189,7 @@ __attribute__((constructor)) static void init_rune_locale(void)
         rt[i] = 0x2000 | 0x0800 | 0x40000 | 0x10;
 }
 
+#if !(defined(__APPLE__) && defined(COD2_X64))
 extern void *sDisplayList[3];   /* matches the real def (void*[3]); was [12] (x86 4-byte slots) */
 extern int sInWindowMode;
 
@@ -732,4 +762,6 @@ void MacDisplay_FadeOut(float duration)
 #    endif
 
 #endif
+#endif
+
 #endif

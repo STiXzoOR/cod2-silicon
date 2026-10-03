@@ -2,6 +2,9 @@
 #include "imports.h"
 #include <stdlib.h>
 #include <string.h>
+#if COD2_APPLE_SDK
+#include "platform/macos_display.h"
+#endif
 
 float g_scale1 = 1.0f;
 float g_scale2 = 16777216.0f;
@@ -98,14 +101,18 @@ extern int MacDisplay_GetSupportsAnisotropicFiltering(void);
 extern float MacDisplay_GetMaxSupportedAnisotropy(void);
 extern int MacDisplay_GetMaxTextureImageUnits(void);
 extern int MacDisplay_GetMaxTextureUnits(void);
+#if !COD2_APPLE_SDK
 extern void MacDisplay_ReleaseContext(void *ctx);
+#endif
 extern void MacDisplay_SetGammaRamp(const D3DGAMMARAMP *pRamp);
 extern void MacDisplay_FadeOut(int val);
 extern void MacDisplay_FadeIn(float val);
 extern void MacDisplay_GetCurrentDimensions(int *w, int *h);
 extern void *MacDisplay_CreateScreenContext(int depth, int windowed, int stencil, int multiSample, int fsaa, int *hasAux);
 extern void MacDisplay_SwapContext(void *ctx);
+#if !COD2_APPLE_SDK
 extern void MacDisplay_SetMode(int w, int h, int depth, int freq);
+#endif
 extern void MacDisplay_GetVideoMemoryInfo(int *video, int *texture);
 extern const char *MacDisplay_GetGLVendor(void);
 extern const char *MacDisplay_GetGLRenderer(void);
@@ -2647,8 +2654,24 @@ HRESULT CDirect3DDevice_ValidateDevice(const CDirect3DDevice *_this, DWORD *pNum
 HRESULT CDirect3DDevice_Reset(const CDirect3DDevice *_this, D3DPRESENT_PARAMETERS *pPresentationParameters)
 {
     (void)_this;
+#if COD2_APPLE_SDK
+    if (!pPresentationParameters)
+        return (HRESULT)(int32_t)0x8876086cu;
+    /* r_init.c constructs this retained D3D9 presentation word array. */
+    const int *parameters = (const int *)pPresentationParameters;
+    extern dvar_t *Dvar_RegisterBool(const char *, int, int);
+    dvar_t *borderless = Dvar_RegisterBool("r_borderless", 0, 0x1001);
+    MacPlatform_ConfigureWindow(parameters[0], parameters[1],
+        borderless->current.enabled ? MAC_BORDERLESS : (parameters[7] ? MAC_WINDOWED : MAC_FULLSCREEN), parameters[12]);
+    if (MacDisplay_SetMode(parameters[0], parameters[1], 32, parameters[12]))
+        return (HRESULT)(int32_t)0x8876086cu;
+    extern void CDirect3DSurface_SetNativeDimensions(void *, UINT32, UINT32);
+    CDirect3DSurface_SetNativeDimensions(((DeviceImpl *)_this)->backBuffer, parameters[0], parameters[1]);
+    return 0;
+#else
     (void)pPresentationParameters;
     return 0;
+#endif
 }
 
 long unsigned int CDirect3DDevice_SetGammaRamp(const CDirect3DDevice *_this, UINT iSwapChain, DWORD Flags, const D3DGAMMARAMP *pRamp)

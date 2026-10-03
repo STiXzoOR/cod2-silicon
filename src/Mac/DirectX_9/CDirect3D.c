@@ -2,6 +2,11 @@
 #include "imports.h"
 #include <stdlib.h>
 #include <string.h>
+#if COD2_APPLE_SDK
+#include "platform/macos_display.h"
+extern dvar_t *Dvar_RegisterBool(const char *, int, int);
+extern dvar_t *r_fullscreen;
+#endif
 
 #ifdef _MSC_VER
 #pragma pack(push, 1)
@@ -229,7 +234,16 @@ HRESULT CDirect3D_CreateDevice(const void *_this, UINT Adapter, int DeviceType, 
         sdl_gl_width = width;
         sdl_gl_height = height;
     }
+#if COD2_APPLE_SDK
+    dvar_t *borderless = Dvar_RegisterBool("r_borderless", 0, 0x1001);
+    int fullscreen = r_fullscreen && r_fullscreen->current.enabled;
+    MacPlatform_ConfigureWindow(width, height, fullscreen ? (borderless->current.enabled ? MAC_BORDERLESS : MAC_FULLSCREEN) : MAC_WINDOWED, pp ? pp[12] : 0);
     ctx = MacDisplay_CreateScreenContext(24, 1, 0, 0, 0, NULL);
+    if (!ctx)
+        return (HRESULT)(int32_t)0x8876086cu;
+#else
+    ctx = MacDisplay_CreateScreenContext(24, 1, 0, 0, 0, NULL);
+#endif
     /* DeviceImpl field offsets differ on x64 (8-byte ptrs): context@16 renderTarget@32
      * backBuffer@48 (x86: 0x08/0x14/0x1C). GetBackBuffer reads the typed backBuffer
      * field, so these must land at the right offset or it returns NULL. */
