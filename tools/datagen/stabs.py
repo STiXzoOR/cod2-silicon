@@ -1,5 +1,5 @@
 """Read i386 Mach-O STABS without nm, SDK headers, or third party modules."""
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 import re
 import struct

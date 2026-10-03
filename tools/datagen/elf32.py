@@ -37,10 +37,14 @@ class Object:
     relocs: dict
     section: str
     align: int = 4
+    aliases: tuple = ()
+    global_symbol: bool = True
+    origin: str = ''
 
 
 class ELF:
     def __init__(self, path):
+        self.path = str(path)
         data = Path(path).read_bytes()
         if data[:7] != b'\x7fELF\x01\x01\x01':
             raise ValueError('expected little-endian ELF32')
@@ -72,7 +76,8 @@ class ELF:
                         raise ValueError('expected R_386_32')
                     symbol = self.symbols[info >> 8]
                     addend = struct.unpack_from('<i', self.sections[section.info].data, address)[0]
-                    entries[address] = (symbol.name, addend)
+                    target = self.sections[symbol.section].name if symbol.info & 15 == 3 else symbol.name
+                    entries[address] = (target, addend)
 
     @staticmethod
     def string(data, offset):
@@ -81,15 +86,23 @@ class ELF:
     def objects(self):
         result = []
         for index, section in enumerate(self.sections):
-            if section.name not in ('.data', '.rodata', '.bss') or not section.size:
+            if not section.flags & 2 or section.flags & 4 or not section.size:
                 continue
-            symbols = sorted((s for s in self.symbols if s.section == index and s.info >> 4 == 1), key=lambda s: (s.value, s.name))
-            for i, sym in enumerate(symbols):
-                end = symbols[i + 1].value if i + 1 < len(symbols) else section.size
-                if end <= sym.value:
-                    raise ValueError('overlapping/alias blob symbols: ' + sym.name)
-                relocs = {off - sym.value: r for off, r in self.relocs.get(index, {}).items() if sym.value <= off < end}
-                result.append(Object(sym.name, sym.value, section.data[sym.value:end], relocs, section.name))
+            at_offset = {}
+            for sym in self.symbols:
+                if sym.section == index and sym.name and (sym.info & 15) in (0, 1):
+                    at_offset.setdefault(sym.value, []).append(sym)
+            offsets = sorted(at_offset)
+            for i, offset in enumerate(offsets):
+                symbols = at_offset[offset]
+                sym = min(symbols, key=lambda s: (not bool(s.size), not s.name.startswith('imp_'), s.name))
+                end = offsets[i + 1] if i + 1 < len(offsets) else section.size
+                if end <= offset:
+                    raise ValueError('empty blob symbol: ' + sym.name)
+                relocs = {off - offset: r for off, r in self.relocs.get(index, {}).items() if offset <= off < end}
+                aliases = tuple(sorted(s.name for s in symbols if s is not sym))
+                result.append(Object(sym.name, offset, section.data[offset:end], relocs, section.name,
+                                     aliases=aliases, global_symbol=bool(sym.info >> 4), origin=self.path))
         return result
 
     def image(self):

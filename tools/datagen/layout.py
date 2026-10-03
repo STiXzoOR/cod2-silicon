@@ -1,6 +1,6 @@
 """Conservative C-layout reconstruction. Unsupported layouts are never guessed."""
 import re
-from stabs import Unsupported
+from stabs import Type, Unsupported
 
 
 def align_up(n, align):
@@ -12,6 +12,19 @@ def shape(db, ty, active=()):
         if ty.args[0] in active:
             raise Unsupported('recursive value type')
         active += (ty.args[0],)
+    names = []
+    named, visited = ty, set()
+    while named.kind in ('ref', 'const', 'volatile', 'attribute'):
+        if named.kind == 'ref':
+            key = named.args[0]
+            if key in visited:
+                break
+            visited.add(key)
+            if key in db.names:
+                names.append(db.names[key])
+            named = db.types.get(key, Type('unknown'))
+        else:
+            named = named.args[-1]
     node = db.resolve(ty)
     kind = node.kind
     if kind == 'builtin':
@@ -92,7 +105,10 @@ def shape(db, ty, active=()):
             align = max(align, child['align'])
         if not fields or align_up(offset, align) != size:
             raise Unsupported('non-native i386 aggregate size')
-        return dict(kind=kind, fields=fields, size=size, align=align)
+        result = dict(kind=kind, fields=fields, size=size, align=align)
+        if names and re.fullmatch(r'[A-Za-z_]\w*', names[-1]):
+            result['tag'] = kind + ' ' + names[-1]
+        return result
     raise Unsupported('unsupported value type ' + kind)
 
 

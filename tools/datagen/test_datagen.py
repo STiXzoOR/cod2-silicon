@@ -39,6 +39,26 @@ class GrammarTests(unittest.TestCase):
         with self.assertRaises(Unsupported):
             self.parse('Z')
 
+class HeaderReuseTests(unittest.TestCase):
+    def test_enum_typedef_has_complete_definition(self):
+        from c_headers import Headers
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / 'src' / 'headers'
+            root.mkdir(parents=True)
+            (root / 'types.h').write_text('enum Color { RED = 1 };\ntypedef enum Color Color;\nstruct Paint { Color value; };\n')
+            index = Headers(root)
+            output = index.render({'struct Paint'})
+            self.assertIn('enum Color { RED = 1 };', output)
+            self.assertLess(output.index('enum Color { RED = 1 };'), output.index('struct Paint {'))
+
+    def test_pointer_array_is_not_equivalent_to_byte_array(self):
+        from c_headers import Headers, equivalent
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'types.h').write_text('struct A { char *p[2]; };\nstruct B { unsigned char p[8]; };\n')
+            index = Headers(root)
+            self.assertFalse(equivalent(index.aggregate('struct A'), index.aggregate('struct B')))
+
 
 if __name__ == '__main__':
     unittest.main()
