@@ -1821,6 +1821,10 @@ static MaterialShader *MATERIAL_REGPARM2_ABI COD2_FORCE_ALIGN_ARG_POINTER Materi
             hr = D3DXCompileShader((const char *)fileData, fileSize, realDefs, includeObj,
                                    entryPoint, target, compileFlags, &shaderBlob, &messages, NULL);
         }
+#elif COD2_APPLE_SDK
+        extern HRESULT MacD3DXCompileShader(const char *name, const char *source, UINT length, const char *profile,
+                                            void **shader, void **messages);
+        hr = MacD3DXCompileShader(filename, (const char *)fileData, fileSize, target, &shaderBlob, &messages);
 #elif defined(COD2_X64)
         /* x64: pass the actual HLSL source (fileData/fileSize), not the name buffer
          * -- the x86 path passes sourceName, which made hlsl_has scan a

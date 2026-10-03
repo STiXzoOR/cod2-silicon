@@ -283,7 +283,11 @@ qboolean CG_IsConsoleCommandName(const char *cmd)
     while (name != NULL) {
         if (I_stricmp(cmd, name) == 0)
             return 1;
+#if defined(COD2_X64)
+        cmdList += sizeof(consoleCommand_t);
+#else
         cmdList += 8;
+#endif
         name = *(const char **)cmdList;
     }
 
@@ -297,7 +301,12 @@ qboolean CG_ConsoleCommand(void)
     const char *name;
     int i;
 
+#if defined(COD2_X64)
+    /* A local server may have no future snapshot between its ticks. */
+    if (cg->snap == NULL && cg->nextSnap == NULL)
+#else
     if (cg->nextSnap == NULL)
+#endif
         return 0;
 
     cmd = CG_Argv(0);
@@ -329,7 +338,11 @@ void CG_InitConsoleCommands(void)
     name = *(const char **)cmdList;
     while (name != NULL) {
         CL_AddCgameCommand(name);
+#if defined(COD2_X64)
+        cmdList += sizeof(consoleCommand_t);
+#else
         cmdList += 8;
+#endif
         name = *(const char **)cmdList;
     }
 

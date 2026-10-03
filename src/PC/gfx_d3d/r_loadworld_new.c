@@ -462,7 +462,7 @@ GfxWorld *R_LoadWorldInternal(const char *name)
 
                 int rendererInUse = r_rendererInUse->current.integer;
 
-#ifdef GFX_REAL_D3D9
+#if defined(GFX_REAL_D3D9) || COD2_APPLE_SDK
 
                 if (0) {
 

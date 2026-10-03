@@ -276,6 +276,9 @@ void CDirect3DCubeTexture_CDirect3DCubeTexture(const CDirect3DCubeTexture *_this
     glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP, &prevTex);
     glBindTexture(GL_TEXTURE_CUBE_MAP, tex->texIDStorage);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+#if COD2_APPLE_SDK
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, tex->levelCount - 1);
+#endif
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_REPEAT);

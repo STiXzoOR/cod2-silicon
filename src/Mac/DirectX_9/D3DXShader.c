@@ -622,6 +622,8 @@ HRESULT D3DXCompileShader(
     return 0;
 }
 
+#include "lp64_shader_cache.h"
+
 static int IncludeClass_Open(void *_this, int IncludeType, const char *pFileName,
                              const void *pParentData, const void **ppData, UINT *pBytes)
 {

@@ -269,6 +269,10 @@ void CDirect3DTexture_CDirect3DTexture(const CDirect3DTexture *_this, UINT32 Wid
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &prevTex);
     glBindTexture(GL_TEXTURE_2D, tex->texIDStorage);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+#if COD2_APPLE_SDK
+    /* D3D allows a truncated mip chain; GL otherwise requires every level. */
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, tex->levelCount - 1);
+#endif
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);

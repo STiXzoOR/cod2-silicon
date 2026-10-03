@@ -1,8 +1,53 @@
 #include "common_types.h"
 #include "imports.h"
 
+#if defined(COD2_X64)
+/* Flag names/masks verified against the Mac 1.3 tables at 0x36a800/0x36a760. */
+static const FxFlagEntry fxAttributeFlags[] = {
+    { "depthHack", { 0x1, 0 } },
+    { "setShaderTime", { 0x4, 0 } },
+    { "useModel", { 0x10, 0 } },
+    { "useBBox", { 0x40, 0 } },
+    { "usePhysics", { 0x20, 0 } },
+    { "impactKills", { 0x400, 0 } },
+    { "impactFx", { 0x800, 0 } },
+    { "deathFx", { 0x200, 0 } },
+    { "useAlpha", { 0x80, 0 } },
+    { "useRandomColors", { 0x2000, 0 } },
+    { "useRandomAlpha", { 0x4000, 0 } },
+    { "useRandomSize", { 0x8000, 0 } },
+    { "useRandomSize2", { 0x10000, 0 } },
+    { "useRandomLength", { 0x20000, 0 } },
+    { "useRandomRotationDelta", { 0x40000, 0 } },
+    { "useRandomVelocity", { 0x80000, 0 } },
+    { "useRandomVelocity2", { 0x100000, 0 } },
+    { "absoluteVel", { 0x200000, 0 } },
+    { "absoluteVel2", { 0x400000, 0 } },
+    { "affectedByWind", { 0x800000, 0 } },
+    { "emitFx", { 0x100, 0 } },
+    { "relative", { 0x2, 0 } },
+    { "blocksSight", { 0x1000, 0 } },
+    { "disableFarPlaneCulling", { 0x2000000, 0 } },
+};
+static const FxFlagEntry fxSpawnFlags[] = {
+    { "org2fromTrace", { 0, 0x8 } },
+    { "traceImpactFx", { 0, 0x10 } },
+    { "org2isOffset", { 0, 0x20 } },
+    { "cheapOrgCalc", { 0, 0x40 } },
+    { "cheapOrg2Calc", { 0, 0x80 } },
+    { "orgOnSphere", { 0, 0x1 } },
+    { "orgOnCylinder", { 0, 0x4 } },
+    { "axisFromSphere", { 0, 0x2 } },
+    { "randrotaroundfwd", { 0, 0x100 } },
+    { "evenDistribution", { 0, 0x200 } },
+    { "frustumCull", { 0, 0x400 } },
+    { "absoluteVel", { 0x200000, 0 } },
+    { "absoluteAccel", { 0x400000, 0 } },
+};
+#else
 extern const FxFlagEntry fxAttributeFlags[26];
 extern const FxFlagEntry fxSpawnFlags[13];
+#endif
 extern Bool g_rendererExists;
 
 extern MaterialHandle Material_RegisterHandle(const char *name, int imageTrack, int materialType);
@@ -782,10 +827,19 @@ Bool PrimitiveTemplate_ParseFlags(const PrimitiveTemplate *_this, const char *li
     if (lineLen == 0)
         return 0;
 
+    #if defined(COD2_X64)
+    flag = (char *)Hunk_AllocateTempMemoryInternal(lineLen + 1);
+#else
     flag = (char *)Hunk_AllocateTempMemoryInternal(lineLen);
+#endif
 
     parsedLength = 0;
     while (parsedLength < lineLen) {
+#if defined(COD2_X64)
+        parsedLength += (int)strspn(line + parsedLength, " \t\r\n");
+        if (parsedLength == lineLen)
+            break;
+#endif
         if (sscanf(line + parsedLength, "%s", flag) != 1) {
             Hunk_FreeTempMemory(flag);
             return 0;
@@ -1375,7 +1429,11 @@ Bool PrimitiveTemplate_ParsePrimitiveInternal(const PrimitiveTemplate *_this, Ba
         }
 
         else if (stricmp(key, "flags") == 0 || stricmp(key, "flag") == 0) {
+#if defined(COD2_X64)
+            if (!PrimitiveTemplate_ParseFlags(_this, val, fxAttributeFlags, sizeof(fxAttributeFlags) / sizeof(fxAttributeFlags[0])))
+#else
             if (!PrimitiveTemplate_ParseFlags(_this, val, fxAttributeFlags, 26))
+#endif
                 goto error_key;
         }
 

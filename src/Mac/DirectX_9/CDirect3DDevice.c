@@ -398,7 +398,11 @@ typedef struct {
 
 static DWORD g_currentFVF = 0;
 static float g_vsConst[256 * 4];
+#if COD2_APPLE_SDK
+static IDirect3DBaseTexture9 *g_boundTextures[16] = { 0 };
+#else
 static IDirect3DBaseTexture9 *g_boundTextures[8] = { 0 };
+#endif
 static DWORD g_alphaTestEnable = 0;
 static DWORD g_textureFactor = 0xFFFFFFFFu;
 
@@ -1666,6 +1670,8 @@ HRESULT CDirect3DDevice_DrawPrimitive(const CDirect3DDevice *_this,
     return 0;
 }
 
+#include "lp64_shader_draw.h"
+
 COD2_FORCE_ALIGN_ARG_POINTER
 HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
                                              D3DPRIMITIVETYPE PrimitiveType, INT BaseVertexIndex, UINT MinVertexIndex,
@@ -1693,6 +1699,11 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
 
     if (!dev->streams[0] || !dev->indexBuffer)
         return 0;
+#if COD2_APPLE_SDK
+    if (MacShader_DrawEnabled() && g_activeVertexShader && dev->pixelShader && g_activeVertexDeclaration &&
+        !((r_backEndGlobals_t *)imp_backEnd)->projection2D)
+        return MacShader_DrawIndexed(dev, BaseVertexIndex, MinVertexIndex, NumVertices, startIndex, primCount);
+#endif
 
 #if defined(COD2_X64)
     vbData = ((const CDirect3DVertexBufferClean *)dev->streams[0])->data;
@@ -2293,7 +2304,11 @@ HRESULT CDirect3DDevice_GetRenderState(const CDirect3DDevice *_this, D3DRENDERST
 HRESULT CDirect3DDevice_SetTexture(const CDirect3DDevice *_this, DWORD Stage, IDirect3DBaseTexture9 *pTexture)
 {
     (void)_this;
+#if COD2_APPLE_SDK
+    if (Stage < 16) {
+#else
     if (Stage < 8) {
+#endif
         g_boundTextures[Stage] = pTexture;
         if (Stage == 0 && !pTexture) {
             g_prebind_texID = 0;
@@ -2307,7 +2322,11 @@ HRESULT CDirect3DDevice_GetTexture(const CDirect3DDevice *_this, DWORD Stage, ID
 {
     (void)_this;
     if (ppTexture)
+#if COD2_APPLE_SDK
+        *ppTexture = (Stage < 16) ? g_boundTextures[Stage] : NULL;
+#else
         *ppTexture = (Stage < 8) ? g_boundTextures[Stage] : NULL;
+#endif
     return 0;
 }
 
