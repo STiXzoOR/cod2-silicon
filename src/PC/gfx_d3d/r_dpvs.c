@@ -94,7 +94,12 @@ static inline int R_CullByFrustumPlanes(DpvsPlane *planes, int planeCount, int s
 {
     int i;
     for (i = 0; i < planeCount; i++) {
+#if defined(COD2_X64)
+        /* 0xff needs testing; a smaller level records an ancestor result. */
+        if (planes[i].u.frontal < stackLevel)
+#else
         if ((unsigned char)planes[i].u.frontal > (unsigned)stackLevel)
+#endif
             continue;
         planes[i].u.frontal = 0xFF;
         if (R_DpvsPlaneBoundsTest(&planes[i], bounds) <= 0.0f)
@@ -119,10 +124,15 @@ static inline int R_CullByOccluders(int stackLevel, const float *bounds)
         int j;
         int allBehind = 1;
         for (j = 0; j < planeCount; j++) {
+#if defined(COD2_X64)
+            if (planes[j].u.frontal < stackLevel)
+                continue;
+#else
             if ((unsigned char)planes[j].u.frontal > (unsigned)stackLevel) {
                 allBehind = 0;
                 break;
             }
+#endif
             planes[j].u.frontal = 0xFF;
             if (R_DpvsPlaneBoundsTest(&planes[j], bounds) > 0.0f) {
                 allBehind = 0;
@@ -658,10 +668,15 @@ static void R_DPVS_REGPARM3_ABI R_AddAabbTreeSurfaces_r_impl(GfxAabbTree *tree, 
         int j;
         for (j = 0; j < occPlaneCount; j++) {
             DpvsPlane *op = &occPlanes[j];
+#if defined(COD2_X64)
+            if (op->u.frontal < stackLevel)
+                continue;
+#else
             if ((unsigned char)op->u.frontal > (unsigned)stackLevel) {
                 op->u.frontal = stackLevel;
                 continue;
             }
+#endif
             op->u.frontal = 0xFF;
             if (R_DpvsPlaneBoundsTest(op, bounds) > 0.0f)
                 occluded = 0;
@@ -676,7 +691,11 @@ static void R_DPVS_REGPARM3_ABI R_AddAabbTreeSurfaces_r_impl(GfxAabbTree *tree, 
     if (planeCount > 0) {
         for (i = 0; i < planeCount; i++) {
             DpvsPlane *p = &planes[i];
+#if defined(COD2_X64)
+            if (p->u.frontal < stackLevel)
+#else
             if ((unsigned char)p->u.frontal > (unsigned)stackLevel)
+#endif
                 continue;
             if (R_DpvsPlaneFarBoundsTest(p, tree) >= 0.0f)
                 p->u.frontal = stackLevel;
