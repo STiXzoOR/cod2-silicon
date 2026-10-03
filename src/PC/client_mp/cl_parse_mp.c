@@ -1,3 +1,6 @@
+#if defined(COD2_CODX) && COD2_CODX
+#include "../qcommon/cod2x.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 #include "www_download.h"
@@ -134,6 +137,12 @@ void CL_SystemInfoChanged(void)
     clc = (clientConnection_t *)*clc_ptr;
 
     systemInfo = cla->gameState.stringData + cla->gameState.stringOffsets[1];
+#if defined(COD2_CODX) && COD2_CODX
+    /* Clear previous server policy before applying a new systeminfo, including demos. */
+    Dvar_SetFromStringByName("g_cod2x", Info_ValueForKey(systemInfo, "g_cod2x"));
+    Dvar_SetFromStringByName("g_competitive", Info_ValueForKey(systemInfo, "g_competitive"));
+    Dvar_SetFromStringByName("com_maxfps_limit", Info_ValueForKey(systemInfo, "com_maxfps_limit"));
+#endif
 
     {
         const char *sid_str = Info_ValueForKey(systemInfo, "sv_serverid");

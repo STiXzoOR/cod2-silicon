@@ -1,3 +1,6 @@
+#if defined(COD2_CODX) && COD2_CODX
+#include "../qcommon/cod2x.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 /* dvar globals */
@@ -209,7 +212,11 @@ void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time)
     else
         expectedProt = 0x76;
 
+#if defined(COD2_CODX) && COD2_CODX
+    if (*protoStr ? prot != expectedProt : !Cod2x_ConnectProtocol(prot)) {
+#else
     if (prot != expectedProt) {
+#endif
         Com_DPrintf((const char *)"Different protocol info packet: %s\n", infoString);
         return;
     }
@@ -599,6 +606,25 @@ void CL_GlobalServers_f(void)
 
     Com_Printf((const char *)"Requesting servers from the master...\n");
 
+#if defined(COD2_CODX) && COD2_CODX
+    {
+        static const char *masters[] = { "cod2master.activision.com", "master.cod2x.me" };
+        unsigned int master;
+        cls.waitglobalserverresponse = 1;
+        cls.pingUpdateSource = 1;
+        /* CoD2x src/mss32/master_server.cpp:41-69: query both protocols. */
+        for (master = 0; master < sizeof(masters) / sizeof(masters[0]); ++master) {
+            if (!NET_StringToAdr(masters[master], &to)) {
+                Com_Printf("Couldn't resolve master %s\n", masters[master]);
+                continue;
+            }
+            to.port = (unsigned short)0xe650; /* 20710, network byte order */
+            NET_OutOfBandPrint(NS_SERVER, to, "getservers 118 full empty");
+            NET_OutOfBandPrint(NS_SERVER, to, "getservers 120 full empty");
+        }
+        return;
+    }
+#endif
     NET_StringToAdr((const char *)"cod2master.activision.com", &to);
 
     {

@@ -8,3 +8,9 @@ clang -std=c11 -Wall -Wextra -Werror -Wno-deprecated-declarations \
     src/PC/qcommon/cod2x_identity.c src/PC/qcommon/cod2x_protocol.c \
     -framework IOKit -framework CoreFoundation -o "$work/test_cod2x"
 "$work/test_cod2x"
+clang -std=c11 -Wall -Wextra -Werror -Wno-deprecated-declarations \
+    -DCOD2_CODX=1 -Itests/cod2x/fixtures -Isrc/PC/qcommon \
+    tests/cod2x/test_runtime.c src/PC/qcommon/cod2x_runtime.c \
+    src/PC/qcommon/cod2x_identity.c src/PC/qcommon/cod2x_protocol.c \
+    -framework IOKit -framework CoreFoundation -o "$work/test_runtime"
+"$work/test_runtime"
