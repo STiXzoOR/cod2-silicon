@@ -784,6 +784,9 @@ static void MSS_SpatializeStreamImpl(int i, float *volume, float *pan)
     float lerp, oneMinusLerp;
     float fDistMin, fDistMax;
     float savedVolume, attenuation;
+#if defined(COD2_X64)
+    float dist;
+#endif
 
     sndGlob = &g_snd;
     chaninfo = &sndGlob->chaninfo[i];
@@ -800,10 +803,18 @@ static void MSS_SpatializeStreamImpl(int i, float *volume, float *pan)
     delta[1] = orgVec[1] - listenerOrigin[1];
     delta[2] = orgVec[2] - listenerOrigin[2];
 
+#if defined(COD2_X64)
+    /* Mac 1.3 SND_UpdateStreamChannel (0x56be0): pan from the listener's
+       axis[1] and distance attenuation from Vec3Normalize's length. */
+    dist = Vec3Normalize(delta);
+    right = listener->orient.axis[1];
+    dot = delta[0] * right[0] + delta[1] * right[1] + delta[2] * right[2];
+#else
     Vec3Normalize(delta);
 
     right = listener->orient.axis[0];
     dot = delta[0] * right[-1] + delta[1] * right[0] + delta[2] * right[1];
+#endif
 
     lerp = chaninfo->lerp;
     oneMinusLerp = 1.0f - lerp;
@@ -812,7 +823,11 @@ static void MSS_SpatializeStreamImpl(int i, float *volume, float *pan)
     fDistMax = oneMinusLerp * pAlias0->fDistMax + lerp * pAlias1->fDistMax;
 
     savedVolume = *volume;
+#if defined(COD2_X64)
+    attenuation = SND_Attenuate(pAlias0->volumeFalloffCurve, dist, fDistMin, fDistMax);
+#else
     attenuation = SND_Attenuate(pAlias0->volumeFalloffCurve, savedVolume, fDistMin, fDistMax);
+#endif
     *volume = savedVolume * attenuation;
     *pan = (1.0f - dot) * 0.5f;
 }
@@ -1498,7 +1513,13 @@ got_handle:
 
     if (SND_IsAliasChannel3D(channel)) {
 
+#if defined(COD2_X64)
+        /* The helper indexes chaninfo: Mac 1.3 SND_StartAliasStreamOnChannel
+           (0x57c52) spatializes the channel, not its stream slot (index - 0x20). */
+        MSS_SpatializeStreamImpl(index, &volume, &pan);
+#else
         MSS_SpatializeStreamImpl(streamIdx, &volume, &pan);
+#endif
 
         if (AIL_is_3D_stream(milesGlob.handle_stream[streamIdx])) {
             sndGlob = SND_GLOB_PTR;

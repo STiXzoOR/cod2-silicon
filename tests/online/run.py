@@ -33,6 +33,8 @@ suites = [
     ('cdkey_hash', 'src/PC/client_mp/cl_main_mp.c', ['CL_BuildMd5StrFromCDKey']),
     ('challenge_resend', 'src/PC/client_mp/cl_main_mp.c',
      ['CL_BuildMd5StrFromCDKey', 'CL_CheckForResend']),
+    ('stream_spatialize', 'src/PC/win32/snd_driver.c',
+     ['MSS_SpatializeStreamImpl', 'SND_StartAliasStreamOnChannel']),
 ]
 if len(sys.argv) > 2:
     suites = [suite for suite in suites if suite[0] in sys.argv[2:]]
@@ -44,7 +46,7 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
             source = source[:source.index('extern const dvar_t *Dvar_RegisterBool')]
         functions = [] if names else [source]
         for function in names:
-            match = re.search(r'^(?:static )?(?:const char \*|void |dvar_t \*|qboolean )' + function + r'\([^;]*?\)\n\{',
+            match = re.search(r'^(?:static )?(?:const char \*|void |dvar_t \*|qboolean |int )' + function + r'\([^;]*?\)\n\{',
                               source, re.M)
             depth = 0
             for token in re.finditer(r'/\*[\s\S]*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"|[{}]',
