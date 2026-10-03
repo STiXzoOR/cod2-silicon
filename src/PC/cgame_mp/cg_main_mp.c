@@ -10,7 +10,9 @@ extern snd_alias_t *CL_PickSoundAlias(const char *aliasname);
 extern const char *CL_GetConfigString(int index);
 extern void CL_SubtitlePrint(const char *pszText, int iDuration, int iLineWidth);
 extern int atoi(const char *nptr);
+#if !COD2_APPLE_SDK
 extern int sprintf(char *str, const char *format, ...);
+#endif
 extern char *Info_ValueForKey(const char *s, const char *key);
 extern const char *SEH_LocalizeTextMessage(const char *msg, const char *context, int errType);
 extern void SND_PlayAmbientAlias(const snd_alias_t *pAlias, int fadetime, snd_alias_system_t system);
@@ -31,10 +33,14 @@ extern int BG_GetNumWeapons(void);
 extern void AxisCopy(vec3_t *in, vec3_t *out);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 #if !defined(__EMSCRIPTEN__) && !defined(__x86_64__)
+#if !COD2_APPLE_SDK
 extern void *memcpy(void *dest, const void *src, unsigned int n);
 #endif
+#endif
 #if !defined(__EMSCRIPTEN__) && !defined(__x86_64__)
+#if !COD2_APPLE_SDK
 extern void *memset(void *s, int c, unsigned int n);
+#endif
 #endif
 #if defined(__x86_64__) || defined(_M_X64)
 #    include <string.h>

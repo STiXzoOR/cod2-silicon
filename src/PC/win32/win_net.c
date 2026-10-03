@@ -7,6 +7,9 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
+#if COD2_APPLE_SDK
+#include <net/if.h>
+#endif
 
 static qboolean usingSocks;
 static qboolean networkingEnabled;
@@ -628,10 +631,14 @@ void NET_OpenIP(void)
 
             {
                 char hostname[512];
+#if COD2_APPLE_SDK
+                struct ifconf ifconf;
+#else
                 struct {
                     int ifc_len;
                     char *ifc_buf;
                 } ifconf;
+#endif
                 int tmpSocket;
 
                 numIP = 0;

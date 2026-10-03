@@ -4,7 +4,11 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#if COD2_APPLE_SDK
+DWORD timeGetTime(void);
+#else
 __declspec(dllimport) DWORD __stdcall timeGetTime(void);
+#endif
 #ifdef __cplusplus
 }
 #endif

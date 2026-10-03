@@ -28,7 +28,7 @@ const char *netSources[3] = { (const char *)&str_002a9e74, (const char *)&str_00
 
 int lastColumn = 0xffffffff;
 
-#ifndef __EMSCRIPTEN__
+#if !defined(__EMSCRIPTEN__) && !COD2_APPLE_SDK
 #    define UI_REGPARM1 __attribute__((regparm(1)))
 #else
 #    define UI_REGPARM1

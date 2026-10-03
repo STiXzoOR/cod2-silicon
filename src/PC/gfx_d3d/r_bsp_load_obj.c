@@ -38,7 +38,11 @@ typedef struct dcell_ondisk_s {
     int reflectionProbeCount;
 } dcell_ondisk_t;
 
+#if COD2_APPLE_SDK
+static int R_FinishLoadingAabbTrees_r(GfxAabbTree *tree, int totalTreesUsed);
+#else
 static int R_FinishLoadingAabbTrees_r(byte *tree, int totalTreesUsed);
+#endif
 #endif
 const char *R_ParseSunLight(SunLightParseParams *params, const char *text);
 void R_InterpretSunLightParseParamsIntoLights(SunLightParseParams *sunParse, GfxLight *sunLight);

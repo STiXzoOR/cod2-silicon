@@ -16,8 +16,12 @@ extern void FreeScript(script_t *script);
 extern script_t *LoadScriptFile(const char *filename);
 extern int PS_ReadToken(script_t *script, token_t *token);
 extern int EndOfScript(script_t *script);
+#if !COD2_APPLE_SDK
 extern int vsnprintf(char *str, size_t size, const char *format, va_list ap);
+#endif
+#if !COD2_APPLE_SDK
 extern char *strncat(char *dest, const char *src, size_t count);
+#endif
 #include <time.h>
 extern void free(void *ptr);
 extern int I_stricmp(const char *s1, const char *s2);

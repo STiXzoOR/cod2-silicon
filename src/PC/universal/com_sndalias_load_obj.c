@@ -7,7 +7,7 @@
 extern const dvar_t *fs_copyfiles;
 extern const dvar_t *snd_touchStreamFilesOnLoad;
 
-#ifndef __EMSCRIPTEN__
+#if !defined(__EMSCRIPTEN__) && !(defined(__APPLE__) && defined(COD2_X64))
 #    define COM_REGPARM3 __attribute__((regparm(3)))
 #else
 #    define COM_REGPARM3
@@ -87,7 +87,9 @@ extern char *strlwr(char *s);
 extern void *Hunk_AllocateTempMemoryInternal(int size);
 extern SndCurve *Com_RegisterSoundAliasVolumeFalloffCurve(const char *filename, const char *sourceFile);
 extern int ___maskrune(int c, unsigned long mask);
+#if !defined(__APPLE__) || !defined(COD2_X64)
 extern int sprintf(char *str, const char *format, ...);
+#endif
 
 extern void *imp_fs_basepath;
 extern void *imp_fs_gamedir;

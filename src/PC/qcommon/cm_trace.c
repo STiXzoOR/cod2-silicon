@@ -7,7 +7,11 @@
 extern void *Sys_GetValue(int key);
 cmodel_t *CM_ClipHandleToModel(clipHandle_t handle);
 static void __attribute_regparm__(3) CM_TestInLeafBrushNode_r(traceWork_t *tw, byte *node, trace_t *trace);
+#if COD2_APPLE_SDK
+static int CM_SightTraceThroughBrush(const traceWork_t *tw, cbrush_t *brush, trace_t *tr);
+#else
 static int CM_SightTraceThroughBrush(cbrush_t *brush);
+#endif
 static int CM_SightTraceThroughLeafBrushNode_r(const vec_t *p2);
 static int CM_SightTraceThroughLeaf(trace_t *trace);
 static int CM_TraceThroughLeafBrushNode_r(const vec_t *p2, trace_t *trace);
