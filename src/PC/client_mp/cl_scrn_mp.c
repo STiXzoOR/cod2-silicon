@@ -1,6 +1,9 @@
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "PC/qcommon/cod2x_demo.h"
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -408,7 +411,11 @@ static void SCR_UpdateFrame(void)
                 re = re_ptr_195eca8;
                 cls = cls_ptr_195ecac;
                 FontHandle font = (((clientStatic_t *)(cls))->consoleFont);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+                float fontH = RE_FUNC(re, 0x110, re_font_height_func)(font, 0.2f);
+#else
                 float fontH = RE_FUNC(re, 0x110, re_font_height_func)(font, 0.333333f);
+#endif
                 float w = fontH;
                 float h = fontH;
 
@@ -467,6 +474,23 @@ check_ui:
 end_frame_draw:
     re = re_ptr_195eca8;
     RE_FUNC(re, 0xbc, re_void_func)();
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        const Cod2xDemoProgress *upload = Cod2x_DemoUploadProgress();
+        if (upload->state == COD2X_DEMO_UPLOAD_ACTIVE && upload->total) {
+            char text[256];
+            float color[4], x = 5, y = 463, w, h;
+            FontHandle font = ((clientStatic_t *)cls_ptr_195ecac)->consoleFont;
+            unsigned percent = (unsigned)((double)upload->uploaded * 100.0 / (double)upload->total);
+            snprintf(text, sizeof(text), "UPLOADING %s: %u%% (%llu KiB/s)", upload->name,
+                     percent, (unsigned long long)(upload->bytesPerSecond / 1024));
+            CL_LookupColor(0x37, color);
+            w = h = RE_FUNC(re, 0x110, re_font_height_func)(font, 0.2f);
+            CalcScreenPlacement(&x, &y, &w, &h, 1, 1);
+            RE_FUNC(re, 0x11c, re_draw_string_func)(text, 0x7fffffff, font, x, y, w, h, color, 0);
+        }
+    }
+#endif
     Con_DrawConsole();
     {
         re_void_func fn = re->EndFrame;

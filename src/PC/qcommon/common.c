@@ -1221,6 +1221,11 @@ void Com_Quit_f(void)
     extern void FS_ShutdownServerReferencedIwds(void);
     extern void Sys_Quit(void);
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
+    extern int Cod2x_DemoClientQuitRequested(void);
+    if (!com_errorEntered && Cod2x_DemoClientQuitRequested())
+        return;
+#endif
     Com_Printf("quitting...\n");
     if (com_errorEntered) {
         Sys_Quit();
