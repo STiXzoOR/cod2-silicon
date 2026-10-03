@@ -14,6 +14,18 @@ static const dvar_t *mantle_check_radius;
 static const dvar_t *mantle_check_angle;
 static const dvar_t *mantle_view_yawcap;
 
+#if defined(COD2_X64)
+static MantleAnimTransition s_mantleTrans[8] = {
+    { 1, 8, 57.0f },
+    { 2, 8, 51.0f },
+    { 3, 9, 45.0f },
+    { 4, 9, 39.0f },
+    { 5, 9, 33.0f },
+    { 6, 10, 27.0f },
+    { 7, 10, 21.0f },
+    { 0, 0, 0.0f },
+};
+#else
 __attribute__((used, aligned(4)))
 UInt32 s_mantleTrans[24] = {
     0x00000001,
@@ -41,6 +53,7 @@ UInt32 s_mantleTrans[24] = {
     0x00000000,
     0x00000000,
 };
+#endif
 __attribute__((used, aligned(4)))
 const char *s_mantleAnimNames[] = {
     "mp_mantle_root",
@@ -62,7 +75,9 @@ const char *s_mantleAnimNames[] = {
 };
 static char (*s_mantleAnims)[64];
 
+#if !defined(COD2_X64)
 #define s_mantleTrans ((MantleAnimTransition *)s_mantleTrans)
+#endif
 
 extern const dvar_t *Dvar_RegisterBool(const char *name, int value, int flags);
 extern const dvar_t *Dvar_RegisterFloat(const char *name, float value, float min, float max, int flags);

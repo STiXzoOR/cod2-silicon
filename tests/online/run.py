@@ -21,6 +21,7 @@ suites = [
      ['UI_ReplaceConversions', 'UI_ReplaceConversionString']),
     ('infostring', 'src/PC/universal/q_shared.c', ['Info_RemoveKey', 'Info_RemoveKey_Big']),
     ('pure_iwds', 'src/PC/qcommon/files.c', ['FS_PureServerSetLoadedIwds']),
+    ('mantle', 'src/PC/bgame/bg_mantle.c', []),
     ('md4', 'src/PC/qcommon/md4.c', []),
     ('cdkey_hash', 'src/PC/client_mp/cl_main_mp.c', ['CL_BuildMd5StrFromCDKey']),
 ]
@@ -30,6 +31,8 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
     out = Path(tmp)
     for name, path, names in suites:
         source = (root / path).read_text()
+        if name == 'mantle':
+            source = source[:source.index('extern const dvar_t *Dvar_RegisterBool')]
         functions = [] if names else [source]
         for function in names:
             match = re.search(r'^(?:const char \*|(?:static )?void )' + function + r'\([^;]*?\)\n\{',
