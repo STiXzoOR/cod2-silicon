@@ -1735,11 +1735,16 @@ const char *UI_ReplaceConversions(const char *sourceString, ConversionArguments 
 
 const char *UI_ReplaceConversionString(const char *sourceString, const char *replaceString)
 {
+#if defined(COD2_X64)
+    ConversionArguments arguments = { 1, { replaceString } };
+    return UI_ReplaceConversions(sourceString, &arguments);
+#else
     int convArgs[10];
     memset(convArgs, 0, sizeof(convArgs));
     convArgs[0] = 1;
     convArgs[1] = (int)replaceString;
     return UI_ReplaceConversions(sourceString, (ConversionArguments *)convArgs);
+#endif
 }
 
 #ifndef __EMSCRIPTEN__
@@ -2816,17 +2821,24 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
                 serverCount = LAN_GetServerCount((ui_netSource)->current.integer);
                 {
                     char tempString[64];
+#if !defined(COD2_X64)
                     int convArgs[10];
                     int ci;
+#endif
 
                     text = UI_SafeTranslateString("EXE_GETTINGINFOFORSERVERS");
 
+#if defined(COD2_X64)
+                    sprintf(tempString, "%d", serverCount);
+                    countText = UI_ReplaceConversionString(text, tempString);
+#else
                     for (ci = 0; ci < 10; ci++)
                         convArgs[ci] = 0;
                     sprintf(tempString, "%d", serverCount);
                     convArgs[0] = 1;
                     convArgs[1] = (int)tempString;
                     countText = UI_ReplaceConversions(text, (ConversionArguments *)convArgs);
+#endif
                 }
             }
 
@@ -2834,17 +2846,23 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         } else {
 
             char tempString[64];
+#if !defined(COD2_X64)
             int convArgs[10];
             int ci;
+#endif
 
             I_strncpyz(tempString, Dvar_GetVariantString(va("ui_lastServerRefresh_%i", (ui_netSource)->current.integer)), 64);
             text = UI_SafeTranslateString("EXE_REFRESHTIME");
 
+#if defined(COD2_X64)
+            text = UI_ReplaceConversionString(text, tempString);
+#else
             for (ci = 0; ci < 10; ci++)
                 convArgs[ci] = 0;
             convArgs[0] = 1;
             convArgs[1] = (int)tempString;
             text = UI_ReplaceConversions(text, (ConversionArguments *)convArgs);
+#endif
 
             UI_DrawText(text, 0x7fffffff, font, rect[0], rect[1], 0, 0, scale, color, textStyle);
         }
@@ -4518,11 +4536,17 @@ check_connection_state: {
 
             const char *translated;
             char tempString[64];
+#if !defined(COD2_X64)
             int convArgs[10];
             int ci;
+#endif
 
             translated = UI_SafeTranslateString("EXE_AWAITINGCHALLENGE");
 
+#if defined(COD2_X64)
+            sprintf(tempString, "%d", cstate.connectPacketCount);
+            translated = UI_ReplaceConversionString(translated, tempString);
+#else
             for (ci = 0; ci < 10; ci++)
                 convArgs[ci] = bConnectInfoDisplayed;
 
@@ -4531,6 +4555,7 @@ check_connection_state: {
             convArgs[1] = (int)tempString;
 
             translated = UI_ReplaceConversions(translated, (ConversionArguments *)convArgs);
+#endif
             if (!translated)
                 return;
 
@@ -4555,11 +4580,17 @@ check_connection_state: {
         {
             const char *translated;
             char tempString[64];
+#if !defined(COD2_X64)
             int convArgs[10];
             int ci;
+#endif
 
             translated = UI_SafeTranslateString("EXE_AWAITINGCONNECTION");
 
+#if defined(COD2_X64)
+            sprintf(tempString, "%d", cstate.connectPacketCount);
+            translated = UI_ReplaceConversionString(translated, tempString);
+#else
             for (ci = 0; ci < 10; ci++)
                 convArgs[ci] = bConnectInfoDisplayed;
 
@@ -4568,6 +4599,7 @@ check_connection_state: {
             convArgs[1] = (int)tempString;
 
             translated = UI_ReplaceConversions(translated, (ConversionArguments *)convArgs);
+#endif
             if (!translated)
                 return;
 
