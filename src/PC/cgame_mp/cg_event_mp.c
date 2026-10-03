@@ -145,6 +145,13 @@ static char *CG_WeaponInfoBase(void)
     return *(char **)imp_cg_weapons;
 }
 
+#if COD2_X64
+static EffectTemplate *CG_EventImpactEffect(int type, int surface)
+{
+    return ((EffectTemplate **)cgs->media.fx->table)[type * 23 + surface];
+}
+#endif
+
 static char *CG_ItemInfoBase(void)
 {
     return *(char **)imp_cg_items;
@@ -1218,9 +1225,13 @@ void CG_EntityEvent(centity_t *cent, int event)
                               cgs->media.grenadeExplodeSound[0]);
 
             {
+#if COD2_X64
+                EffectTemplate *effect = CG_EventImpactEffect(9, 0);
+#else
                 char *fxLookup = (char *)cgs->media.fx;
                 char *fxData = *(char **)(fxLookup + 4);
                 EffectTemplate *effect = *(EffectTemplate **)(fxData + 0x33c);
+#endif
                 if (effect) {
 
                     FX_PlayEffect(effect, position, dir);
@@ -1262,9 +1273,13 @@ void CG_EntityEvent(centity_t *cent, int event)
                               cgs->media.grenadeBounceSound[surfType]);
 
             {
+#if COD2_X64
+                EffectTemplate *effect = CG_EventImpactEffect(8, surfType);
+#else
                 char *fxLookup = (char *)cgs->media.fx;
                 char *fxData = *(char **)(fxLookup + 4);
                 EffectTemplate *effect = *(EffectTemplate **)(fxData + 0x2e0 + surfType * 4);
+#endif
                 if (effect) {
 
                     FX_PlayEffect(effect, position, dir);
@@ -1283,9 +1298,13 @@ void CG_EntityEvent(centity_t *cent, int event)
                               cgs->media.grenadeExplodeSound[surfType2]);
 
             {
+#if COD2_X64
+                EffectTemplate *effect = CG_EventImpactEffect(9, surfType2);
+#else
                 char *fxLookup = (char *)cgs->media.fx;
                 char *fxData = *(char **)(fxLookup + 4);
                 EffectTemplate *effect = *(EffectTemplate **)(fxData + 0x33c + surfType2 * 4);
+#endif
                 if (effect) {
 
                     FX_PlayEffect(effect, position, dir);
@@ -1296,7 +1315,11 @@ void CG_EntityEvent(centity_t *cent, int event)
             {
                 int wepOff = weaponDataOffset(weapon);
                 char *wepDefs = CG_WeaponInfoBase();
+#if COD2_X64
+                EffectTemplate *effect = ((weaponInfo_t *)wepDefs)[weapon].projExplosionEffect;
+#else
                 EffectTemplate *effect = *(EffectTemplate **)(wepDefs + 0x164 + wepOff * 4);
+#endif
                 if (effect) {
 
                     FX_PlayEffect(effect, position, dir);
@@ -1305,7 +1328,11 @@ void CG_EntityEvent(centity_t *cent, int event)
                 weapon = es->weapon;
                 wepOff = weaponDataOffset(weapon);
 
+#if COD2_X64
+                snd_alias_list_t *sndAlias = ((weaponInfo_t *)wepDefs)[weapon].projExplosionSound;
+#else
                 int sndAlias = *(int *)(wepDefs + 0x168 + wepOff * 4);
+#endif
                 if (sndAlias != 0) {
 
                     CG_PlaySoundAlias(0x3fe, position, (snd_alias_list_t *)(sndAlias));
@@ -1329,10 +1356,14 @@ void CG_EntityEvent(centity_t *cent, int event)
                                   cgs->media.rocketExplodeSound[surfType3]);
 
                 {
+#if COD2_X64
+                    EffectTemplate *effect = CG_EventImpactEffect(10, es->surfType);
+#else
                     char *fxLookup = (char *)cgs->media.fx;
                     char *fxData = *(char **)(fxLookup + 4);
                     int surfType4 = es->surfType;
                     EffectTemplate *effect = *(EffectTemplate **)(fxData + 0x398 + surfType4 * 4);
+#endif
                     if (effect) {
 
                         FX_PlayEffect(effect, position, dir);
@@ -1341,7 +1372,11 @@ void CG_EntityEvent(centity_t *cent, int event)
 
                 weapon = es->weapon;
                 wepOff = weaponDataOffset(weapon);
+#if COD2_X64
+                EffectTemplate *effect = ((weaponInfo_t *)wepDefs)[weapon].projExplosionEffect;
+#else
                 EffectTemplate *effect = *(EffectTemplate **)(wepDefs + 0x164 + wepOff * 4);
+#endif
                 if (effect) {
 
                     FX_PlayEffect(effect, position, dir);
@@ -1349,7 +1384,11 @@ void CG_EntityEvent(centity_t *cent, int event)
 
                 weapon = es->weapon;
                 wepOff = weaponDataOffset(weapon);
+#if COD2_X64
+                snd_alias_list_t *sndAlias = ((weaponInfo_t *)wepDefs)[weapon].projExplosionSound;
+#else
                 int sndAlias = *(int *)(wepDefs + 0x168 + wepOff * 4);
+#endif
                 if (sndAlias != 0) {
 
                     CG_PlaySoundAlias(0x3fe, position, (snd_alias_list_t *)(sndAlias));
@@ -1372,10 +1411,14 @@ void CG_EntityEvent(centity_t *cent, int event)
                               cgs->media.rocketExplodeSound[surfType5]);
 
             {
+#if COD2_X64
+                EffectTemplate *effect = CG_EventImpactEffect(10, es->surfType);
+#else
                 char *fxLookup = (char *)cgs->media.fx;
                 char *fxData = *(char **)(fxLookup + 4);
                 int surfType6 = es->surfType;
                 EffectTemplate *effect = *(EffectTemplate **)(fxData + 0x398 + surfType6 * 4);
+#endif
                 if (effect) {
 
                     FX_PlayEffect(effect, position, dir);
@@ -1386,7 +1429,11 @@ void CG_EntityEvent(centity_t *cent, int event)
             {
                 int wepOff = weaponDataOffset(weapon);
                 char *wepDefs = CG_WeaponInfoBase();
+#if COD2_X64
+                EffectTemplate *effect = ((weaponInfo_t *)wepDefs)[weapon].projExplosionEffect;
+#else
                 EffectTemplate *effect = *(EffectTemplate **)(wepDefs + 0x164 + wepOff * 4);
+#endif
                 if (effect) {
 
                     FX_PlayEffect(effect, position, dir);
@@ -1395,7 +1442,11 @@ void CG_EntityEvent(centity_t *cent, int event)
                 weapon = es->weapon;
                 wepOff = weaponDataOffset(weapon);
 
+#if COD2_X64
+                snd_alias_list_t *sndAlias = ((weaponInfo_t *)wepDefs)[weapon].projExplosionSound;
+#else
                 int sndAlias = *(int *)(wepDefs + 0x168 + wepOff * 4);
+#endif
                 if (sndAlias != 0) {
 
                     CG_PlaySoundAlias(0x3fe, position, (snd_alias_list_t *)(sndAlias));
@@ -1415,14 +1466,22 @@ void CG_EntityEvent(centity_t *cent, int event)
             {
                 int wepOff = weaponDataOffset(weapon);
                 char *wepDefs = CG_WeaponInfoBase();
+#if COD2_X64
+                EffectTemplate *effect = ((weaponInfo_t *)wepDefs)[weapon].projExplosionEffect;
+#else
                 EffectTemplate *effect = *(EffectTemplate **)(wepDefs + 0x164 + wepOff * 4);
+#endif
                 if (effect) {
 
                     FX_WarpTime(es->time);
 
                     weapon = es->weapon;
                     wepOff = weaponDataOffset(weapon);
+#if COD2_X64
+                    effect = ((weaponInfo_t *)wepDefs)[weapon].projExplosionEffect;
+#else
                     effect = *(EffectTemplate **)(wepDefs + 0x164 + wepOff * 4);
+#endif
                     FX_PlayEffect(effect, position, dir);
 
                     FX_WarpTime(cg->time);
@@ -1430,7 +1489,11 @@ void CG_EntityEvent(centity_t *cent, int event)
 
                 weapon = es->weapon;
                 wepOff = weaponDataOffset(weapon);
+#if COD2_X64
+                snd_alias_list_t *sndAlias = ((weaponInfo_t *)wepDefs)[weapon].projExplosionSound;
+#else
                 int sndAlias = *(int *)(wepDefs + 0x168 + wepOff * 4);
+#endif
                 if (sndAlias == 0)
                     return;
 
@@ -1488,7 +1551,11 @@ void CG_EntityEvent(centity_t *cent, int event)
                 return;
             }
 
+#if COD2_X64
+            EffectTemplate *effect = cgs->fxs[fxIndex];
+#else
             EffectTemplate *effect = *(EffectTemplate **)((char *)cgs + CGS_FX_DEATHFX + fxIdx * 4);
+#endif
 
             AngleVectors(angles, forward, 0, up);
 
@@ -1504,8 +1571,13 @@ void CG_EntityEvent(centity_t *cent, int event)
             {
                 signed char c0 = csStr2[0];
                 signed char c1 = csStr2[1];
+#if COD2_X64
+                int fxIdx2 = (c0 - '0') * 10 + c1 - '0';
+                EffectTemplate *effect = cgs->fxs[fxIdx2];
+#else
                 int fxIdx2 = c1 + c0 * 10;
                 EffectTemplate *effect = *(EffectTemplate **)((char *)cgs + CGS_FX_CUSTOM + fxIdx2 * 4);
+#endif
                 FxBoltInfo boltInfo;
                 scr_string_t tagName;
 
