@@ -1168,6 +1168,11 @@ static void __attribute_regparm__(3)
     int lc;
 
     inuse = MSG_ReadBits_core(msg, 5);
+#if COD2_NET_BOUNDS
+    /* A read past the end returns -1; the clear below must still start at to[0]. */
+    if (inuse < 0)
+        inuse = 0;
+#endif
 
     for (i = 0; i < inuse; ++i) {
         lc = MSG_ReadBits_core(msg, 5);
