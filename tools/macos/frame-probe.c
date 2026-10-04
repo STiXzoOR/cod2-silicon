@@ -21,7 +21,7 @@
         { (const void *)&replacement, (const void *)&original }
 
 static struct {
-    uint64_t stamp, cpu, swap, poll, blit, clear, fence, upload, program, buffer, wait, overshoot, sleep, pump, peep, sceneClear, presentClear, sleepOvershoot;
+    uint64_t stamp, cpu, swap, poll, blit, clear, fence, upload, program, buffer, wait, overshoot, sleep, pump, peep, sceneClear, presentClear, sleepOvershoot, flush, syncIssue;
     int engine;
     unsigned int polls, uploads, programs, buffers, syncTimeouts;
 } frames[262144];
@@ -33,7 +33,7 @@ static int clientBoundary;
 static uint64_t sleepTime, pumpTime, peepTime, sceneClearTime, presentClearTime;
 static GLuint currentDrawFramebuffer;
 static _Thread_local int capActive;
-static uint64_t sleepOvershoot;
+static uint64_t sleepOvershoot, flushTime, syncIssueTime;
 static uint64_t pollTime, blitTime, clearTime, fenceTime, start, duration;
 static unsigned int polls;
 static uint64_t uploadTime, programTime, bufferTime, previousSwap;
@@ -108,9 +108,9 @@ static void save(void)
     FILE *stream = fopen(temporary, "w");
     if (!stream)
         return;
-    fprintf(stream, "interval_ms,swap_ms,poll_ms,blit_ms,clear_ms,fence_ms,engine_ms,poll_calls,cpu_ms,upload_ms,program_ms,buffer_ms,upload_calls,program_calls,buffer_calls,cap_wait_ms,wait_overshoot_ms,sync_timeouts,sleep_ms,pump_ms,peep_ms,scene_clear_ms,present_clear_ms,sleep_overshoot_ms\n");
+    fprintf(stream, "interval_ms,swap_ms,poll_ms,blit_ms,clear_ms,fence_ms,engine_ms,poll_calls,cpu_ms,upload_ms,program_ms,buffer_ms,upload_calls,program_calls,buffer_calls,cap_wait_ms,wait_overshoot_ms,sync_timeouts,sleep_ms,pump_ms,peep_ms,scene_clear_ms,present_clear_ms,sleep_overshoot_ms,flush_ms,sync_issue_ms\n");
     for (unsigned int i = 1; i < count; ++i) {
-        fprintf(stream, "%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%u,%u,%.6f,%.6f,%.6f,%.6f,%u,%u,%u,%.6f,%.6f,%u,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n",
+        fprintf(stream, "%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%u,%u,%.6f,%.6f,%.6f,%.6f,%u,%u,%u,%.6f,%.6f,%u,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n",
                 (frames[i].stamp - frames[i - 1].stamp) / 1e6,
                 frames[i].swap / 1e6, frames[i].poll / 1e6,
                 frames[i].blit / 1e6, frames[i].clear / 1e6, frames[i].fence / 1e6,
@@ -120,7 +120,7 @@ static void save(void)
                 frames[i].uploads, frames[i].programs, frames[i].buffers,
                 frames[i].wait / 1e6, frames[i].overshoot / 1e6, frames[i].syncTimeouts, frames[i].sleep / 1e6,
                 frames[i].pump / 1e6, frames[i].peep / 1e6,
-                frames[i].sceneClear / 1e6, frames[i].presentClear / 1e6, frames[i].sleepOvershoot / 1e6);
+                frames[i].sceneClear / 1e6, frames[i].presentClear / 1e6, frames[i].sleepOvershoot / 1e6, frames[i].flush / 1e6, frames[i].syncIssue / 1e6);
     }
     fclose(stream);
     rename(temporary, filename);
@@ -223,6 +223,9 @@ void MacFrameProbe_Frame(int engineTime)
     frames[count].stamp = stamp;
     frames[count].cpu = cpu;
     frames[count].swap = swapTime;
+    frames[count].flush = flushTime;
+    frames[count].syncIssue = syncIssueTime;
+    flushTime = syncIssueTime = 0;
     frames[count].sleep = sleepTime;
     frames[count].sleepOvershoot = sleepOvershoot;
     sleepOvershoot = 0;
@@ -315,6 +318,24 @@ static GLboolean probeFence(GLuint fence)
     return result;
 }
 
+static void probeFlush(void)
+{
+    if (!recording) { glFlush(); return; }
+    uint64_t started = nanos();
+    glFlush();
+    flushTime += nanos() - started;
+}
+
+static GLsync probeIssue(GLenum condition, GLbitfield flags)
+{
+    if (!recording)
+        return glFenceSync(condition, flags);
+    uint64_t started = nanos();
+    GLsync result = glFenceSync(condition, flags);
+    syncIssueTime += nanos() - started;
+    return result;
+}
+
 static GLenum probeSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
 {
     if (!recording)
@@ -383,6 +404,8 @@ INTERPOSE(probeBlit, glBlitFramebufferEXT);
 INTERPOSE(probeClear, glClear);
 INTERPOSE(probeFence, glTestFenceAPPLE);
 INTERPOSE(probeSync, glClientWaitSync);
+INTERPOSE(probeIssue, glFenceSync);
+INTERPOSE(probeFlush, glFlush);
 INTERPOSE(probeFullscreen, SDL_SetWindowFullscreen);
 
 /* Creation/upload calls are counted only during the warmed capture. */

@@ -229,7 +229,7 @@ result = dict(samples=len(values), fps=1000 / statistics.mean(values),
               milliseconds_histogram={str(value): sum(int(row['engine_ms']) == value for row in rows)
                                       for value in sorted({int(row['engine_ms']) for row in rows})},
               phases_ms={name: statistics.mean(float(row[name]) for row in rows)
-                         for name in ['swap_ms', 'poll_ms', 'blit_ms', 'clear_ms', 'fence_ms', 'cap_wait_ms', 'wait_overshoot_ms', 'sleep_ms', 'pump_ms', 'peep_ms', 'scene_clear_ms', 'present_clear_ms', 'sleep_overshoot_ms'] if name in rows[0]},
+                         for name in ['swap_ms', 'poll_ms', 'blit_ms', 'clear_ms', 'fence_ms', 'cap_wait_ms', 'wait_overshoot_ms', 'sleep_ms', 'pump_ms', 'peep_ms', 'scene_clear_ms', 'present_clear_ms', 'sleep_overshoot_ms', 'flush_ms', 'sync_issue_ms'] if name in rows[0]},
               main_thread_cpu_ms=statistics.mean(float(row['cpu_ms']) for row in rows),
               sync_timeouts=sum(int(row.get('sync_timeouts', 0)) for row in rows),
               upload_calls=sum(int(row['upload_calls']) for row in rows),
