@@ -169,7 +169,7 @@ def main():
     monitor = CompletionMonitor(out)
     with (out / 'wrapper.log').open('w') as stream:
         process = subprocess.Popen(command, env=env, stdout=stream, stderr=subprocess.STDOUT,
-                                   start_new_session=True, cwd=out)
+                                   start_new_session=True, cwd=out, stdin=subprocess.PIPE, text=True)
         completed = False
         try:
             while time.monotonic() < deadline:
@@ -183,6 +183,13 @@ def main():
                     break
                 time.sleep(.1)
         finally:
+            if completed and process.poll() is None:
+                try:
+                    process.stdin.write('quit\n')
+                    process.stdin.flush()
+                    process.wait(timeout=10)
+                except (BrokenPipeError, subprocess.TimeoutExpired):
+                    pass
             natural_exit = process.poll()
             stop(process)
     if natural_exit not in (None, 0):
@@ -196,6 +203,7 @@ def main():
     result['csv'] = str(candidates[0])
     result['machine_state'] = dict(before=state, after=snapshot(out, 'after'))
     result['dvars'] = dict(args.set)
+    result['fullscreen_spaces'] = os.environ.get('SDL_VIDEO_MAC_FULLSCREEN_SPACES', '0')
     result.update(resolution=args.resolution, window_mode=args.window_mode, maxfps=args.maxfps)
     result['stopped_after_completion'] = natural_exit is None
     (out / 'results.json').write_text(json.dumps(result, indent=2) + '\n')

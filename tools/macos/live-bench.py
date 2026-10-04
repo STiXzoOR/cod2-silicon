@@ -110,9 +110,9 @@ with (out / 'console.log').open('w') as stream:
                 self.stdin.close()
         process = OwnedApp()
     else:
-        process = subprocess.Popen(command, env=env, stdin=subprocess.PIPE, stdout=stream,
+        process = subprocess.Popen(['timeout', '-k', '10', str(args.seconds + 90), *command], env=env, stdin=subprocess.PIPE, stdout=stream,
                                    stderr=stream, text=True, cwd=out, start_new_session=True)
-    (out / 'client.pid').write_text(str(process.pid))
+    client_pid = process.pid
     def send(text):
         process.stdin.write(text + '\n')
         process.stdin.flush()
@@ -128,8 +128,12 @@ with (out / 'console.log').open('w') as stream:
         raise RuntimeError(f'timeout waiting for {text}: {out}')
     try:
         wait_for('Going from CS_PRIMED to CS_ACTIVE')
-        if not (out / 'observer.pid').exists() or int((out / 'observer.pid').read_text()) != process.pid:
+        if not (out / 'observer.pid').exists():
             raise RuntimeError('frame observer was not loaded into the client; --binary must be the native executable')
+        client_pid = int((out / 'observer.pid').read_text())
+        if not args.app and os.getpgid(client_pid) != process.pid:
+            raise RuntimeError('observer PID is outside our owned process group')
+        (out / 'client.pid').write_text(str(client_pid))
         send('sv_serverId')
         send('configstrings')
         log = wait_for('1250: serverinfo_dm')
@@ -153,8 +157,8 @@ with (out / 'console.log').open('w') as stream:
         time.sleep(5)
         send('viewpos')
         if args.profile:
-            cmd = ['sample', str(process.pid), '3', '1', '-file', str(out / 'profile.txt')] if args.profile == 'sample' else [
-                'xcrun', 'xctrace', 'record', '--template', 'Time Profiler', '--attach', str(process.pid),
+            cmd = ['sample', str(client_pid), '3', '1', '-file', str(out / 'profile.txt')] if args.profile == 'sample' else [
+                'xcrun', 'xctrace', 'record', '--template', 'Time Profiler', '--attach', str(client_pid),
                 '--time-limit', '5s', '--output', str(out / 'profile.trace')]
             try:
                 with (out / 'profile.log').open('w') as log:
@@ -164,7 +168,7 @@ with (out / 'console.log').open('w') as stream:
         if args.record:
             send('record ' + args.record)
             time.sleep(1)
-        os.kill(process.pid, signal.SIGUSR1)
+        os.kill(client_pid, signal.SIGUSR1)
         wait_for('[frame-probe]')
         deadline = time.monotonic() + args.seconds + 10
         started = time.monotonic()
@@ -203,7 +207,7 @@ with (out / 'console.log').open('w') as stream:
                 time.sleep(.1)
             shutdown = 'quit'
             if process.poll() is None:
-                owned = subprocess.check_output(['ps', '-p', str(process.pid), '-o', 'command='], text=True)
+                owned = subprocess.check_output(['ps', '-p', str(client_pid), '-o', 'command='], text=True)
                 if str(out / 'home') not in owned:
                     raise RuntimeError('refusing to kill a PID without our unique fs_homepath')
                 if args.app:
@@ -225,8 +229,9 @@ result = dict(samples=len(values), fps=1000 / statistics.mean(values),
               milliseconds_histogram={str(value): sum(int(row['engine_ms']) == value for row in rows)
                                       for value in sorted({int(row['engine_ms']) for row in rows})},
               phases_ms={name: statistics.mean(float(row[name]) for row in rows)
-                         for name in ['swap_ms', 'poll_ms', 'blit_ms', 'clear_ms', 'fence_ms', 'cap_wait_ms', 'wait_overshoot_ms'] if name in rows[0]},
+                         for name in ['swap_ms', 'poll_ms', 'blit_ms', 'clear_ms', 'fence_ms', 'cap_wait_ms', 'wait_overshoot_ms', 'sleep_ms', 'pump_ms', 'peep_ms', 'scene_clear_ms', 'present_clear_ms', 'sleep_overshoot_ms'] if name in rows[0]},
               main_thread_cpu_ms=statistics.mean(float(row['cpu_ms']) for row in rows),
+              sync_timeouts=sum(int(row.get('sync_timeouts', 0)) for row in rows),
               upload_calls=sum(int(row['upload_calls']) for row in rows),
               program_calls=sum(int(row['program_calls']) for row in rows),
               buffer_calls=sum(int(row['buffer_calls']) for row in rows),
@@ -238,7 +243,9 @@ result = dict(samples=len(values), fps=1000 / statistics.mean(values),
               app=str(args.app.resolve()) if args.app else None,
               shutdown=shutdown)
 result['machine_state'] = dict(before=state, after=snapshot(out, 'after'))
+result['phase_max_ms'] = {name: max(float(row[name]) for row in rows) for name in result['phases_ms']}
 result['dvars'] = dict(args.set)
+result['fullscreen_spaces'] = os.environ.get('SDL_VIDEO_MAC_FULLSCREEN_SPACES', '0')
 log = (out / 'console.log').read_text(errors='replace')
 result['clock_boundary'] = 'client' if '[frame-probe-clock] boundary=client' in log else 'swap'
 presented = out / 'frames.csv.presented.csv'

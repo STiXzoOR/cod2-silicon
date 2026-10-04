@@ -54,6 +54,8 @@ void MacSystem_WaitUntil(uint64_t deadline)
     pthread_once(&observerOnce, MacSystem_InitObserver);
     /* Leave 80 us for the final spin; mach_wait_until can wake late. */
     uint64_t now = MacSystem_Nanoseconds();
+    if (observeWait)
+        observeWait(now, deadline, 0);
     if (deadline > now && deadline - now > 80000) {
         uint64_t wake = deadline - 80000;
         mach_wait_until((uint64_t)((__uint128_t)wake * timebase.denom / timebase.numer));

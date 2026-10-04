@@ -21,19 +21,23 @@
         { (const void *)&replacement, (const void *)&original }
 
 static struct {
-    uint64_t stamp, cpu, swap, poll, blit, clear, fence, upload, program, buffer, wait, overshoot;
+    uint64_t stamp, cpu, swap, poll, blit, clear, fence, upload, program, buffer, wait, overshoot, sleep, pump, peep, sceneClear, presentClear, sleepOvershoot;
     int engine;
-    unsigned int polls, uploads, programs, buffers;
+    unsigned int polls, uploads, programs, buffers, syncTimeouts;
 } frames[262144];
 static unsigned int count;
 static uint64_t presentStamps[262144];
 static unsigned int presentCount;
 static uint64_t swapTime, waitTime, waitOvershoot;
 static int clientBoundary;
+static uint64_t sleepTime, pumpTime, peepTime, sceneClearTime, presentClearTime;
+static GLuint currentDrawFramebuffer;
+static _Thread_local int capActive;
+static uint64_t sleepOvershoot;
 static uint64_t pollTime, blitTime, clearTime, fenceTime, start, duration;
 static unsigned int polls;
 static uint64_t uploadTime, programTime, bufferTime, previousSwap;
-static unsigned int uploads, programs, buffers;
+static unsigned int uploads, programs, buffers, syncTimeouts;
 static mach_timebase_info_data_t timebase;
 static volatile sig_atomic_t recording;
 static int finished;
@@ -104,9 +108,9 @@ static void save(void)
     FILE *stream = fopen(temporary, "w");
     if (!stream)
         return;
-    fprintf(stream, "interval_ms,swap_ms,poll_ms,blit_ms,clear_ms,fence_ms,engine_ms,poll_calls,cpu_ms,upload_ms,program_ms,buffer_ms,upload_calls,program_calls,buffer_calls,cap_wait_ms,wait_overshoot_ms\n");
+    fprintf(stream, "interval_ms,swap_ms,poll_ms,blit_ms,clear_ms,fence_ms,engine_ms,poll_calls,cpu_ms,upload_ms,program_ms,buffer_ms,upload_calls,program_calls,buffer_calls,cap_wait_ms,wait_overshoot_ms,sync_timeouts,sleep_ms,pump_ms,peep_ms,scene_clear_ms,present_clear_ms,sleep_overshoot_ms\n");
     for (unsigned int i = 1; i < count; ++i) {
-        fprintf(stream, "%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%u,%u,%.6f,%.6f,%.6f,%.6f,%u,%u,%u,%.6f,%.6f\n",
+        fprintf(stream, "%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%u,%u,%.6f,%.6f,%.6f,%.6f,%u,%u,%u,%.6f,%.6f,%u,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f\n",
                 (frames[i].stamp - frames[i - 1].stamp) / 1e6,
                 frames[i].swap / 1e6, frames[i].poll / 1e6,
                 frames[i].blit / 1e6, frames[i].clear / 1e6, frames[i].fence / 1e6,
@@ -114,7 +118,9 @@ static void save(void)
                 (frames[i].cpu - frames[i - 1].cpu) / 1e6,
                 frames[i].upload / 1e6, frames[i].program / 1e6, frames[i].buffer / 1e6,
                 frames[i].uploads, frames[i].programs, frames[i].buffers,
-                frames[i].wait / 1e6, frames[i].overshoot / 1e6);
+                frames[i].wait / 1e6, frames[i].overshoot / 1e6, frames[i].syncTimeouts, frames[i].sleep / 1e6,
+                frames[i].pump / 1e6, frames[i].peep / 1e6,
+                frames[i].sceneClear / 1e6, frames[i].presentClear / 1e6, frames[i].sleepOvershoot / 1e6);
     }
     fclose(stream);
     rename(temporary, filename);
@@ -137,7 +143,6 @@ static void probeSwap(SDL_Window *window)
         return;
     }
     uint64_t stamp = nanos();
-    uint64_t cpu = cpuNanos();
     SDL_GL_SwapWindow(window);
     uint64_t end = nanos();
     if (!geometryCheck)
@@ -192,6 +197,9 @@ static void probeSwap(SDL_Window *window)
 
 void MacFrameProbe_Wait(uint64_t started, uint64_t target, uint64_t ended)
 {
+    capActive = !ended;
+    if (!ended)
+        return;
     if (recording) {
         waitTime += ended - started;
         uint64_t late = ended > target ? ended - target : 0;
@@ -215,6 +223,14 @@ void MacFrameProbe_Frame(int engineTime)
     frames[count].stamp = stamp;
     frames[count].cpu = cpu;
     frames[count].swap = swapTime;
+    frames[count].sleep = sleepTime;
+    frames[count].sleepOvershoot = sleepOvershoot;
+    sleepOvershoot = 0;
+    frames[count].pump = pumpTime;
+    frames[count].peep = peepTime;
+    frames[count].sceneClear = sceneClearTime;
+    frames[count].presentClear = presentClearTime;
+    sleepTime = pumpTime = peepTime = sceneClearTime = presentClearTime = 0;
     frames[count].wait = waitTime;
     frames[count].overshoot = waitOvershoot;
     frames[count].poll = pollTime;
@@ -226,6 +242,8 @@ void MacFrameProbe_Frame(int engineTime)
     frames[count].upload = uploadTime;
     frames[count].program = programTime;
     frames[count].buffer = bufferTime;
+    frames[count].syncTimeouts = syncTimeouts;
+    syncTimeouts = 0;
     frames[count].uploads = uploads;
     frames[count].programs = programs;
     frames[count].buffers = buffers;
@@ -257,7 +275,9 @@ static void probePump(void)
     uint64_t start = nanos();
     ++polls;
     SDL_PumpEvents();
-    pollTime += nanos() - start;
+    uint64_t elapsed = nanos() - start;
+    pollTime += elapsed;
+    pumpTime += elapsed;
 }
 
 static int probePeep(SDL_Event *events, int numevents, SDL_eventaction action, Uint32 minType, Uint32 maxType)
@@ -266,7 +286,9 @@ static int probePeep(SDL_Event *events, int numevents, SDL_eventaction action, U
         return SDL_PeepEvents(events, numevents, action, minType, maxType);
     uint64_t start = nanos();
     int result = SDL_PeepEvents(events, numevents, action, minType, maxType);
-    pollTime += nanos() - start;
+    uint64_t elapsed = nanos() - start;
+    pollTime += elapsed;
+    peepTime += elapsed;
     return result;
 }
 
@@ -293,6 +315,18 @@ static GLboolean probeFence(GLuint fence)
     return result;
 }
 
+static GLenum probeSync(GLsync sync, GLbitfield flags, GLuint64 timeout)
+{
+    if (!recording)
+        return glClientWaitSync(sync, flags, timeout);
+    uint64_t start = nanos();
+    GLenum result = glClientWaitSync(sync, flags, timeout);
+    if (result == GL_TIMEOUT_EXPIRED)
+        ++syncTimeouts;
+    fenceTime += nanos() - start;
+    return result;
+}
+
 static void probeClear(GLbitfield mask)
 {
     if (!recording) {
@@ -301,7 +335,12 @@ static void probeClear(GLbitfield mask)
     }
     uint64_t start = nanos();
     glClear(mask);
-    clearTime += nanos() - start;
+    uint64_t elapsed = nanos() - start;
+    clearTime += elapsed;
+    if (currentDrawFramebuffer)
+        sceneClearTime += elapsed;
+    else
+        presentClearTime += elapsed;
 }
 
 static int probeFullscreen(SDL_Window *window, Uint32 flags)
@@ -313,6 +352,29 @@ static int probeFullscreen(SDL_Window *window, Uint32 flags)
     return result;
 }
 
+static kern_return_t probeSleep(uint64_t deadline)
+{
+    if (!recording || !capActive)
+        return mach_wait_until(deadline);
+    uint64_t started = nanos();
+    kern_return_t result = mach_wait_until(deadline);
+    uint64_t ended = nanos();
+    sleepTime += ended - started;
+    uint64_t target = (uint64_t)((__uint128_t)deadline * timebase.numer / timebase.denom);
+    if (ended > target && ended - target > sleepOvershoot)
+        sleepOvershoot = ended - target;
+    return result;
+}
+
+static void probeFramebuffer(GLenum target, GLuint framebuffer)
+{
+    if (target == GL_FRAMEBUFFER_EXT || target == GL_DRAW_FRAMEBUFFER_EXT)
+        currentDrawFramebuffer = framebuffer;
+    glBindFramebufferEXT(target, framebuffer);
+}
+
+INTERPOSE(probeSleep, mach_wait_until);
+INTERPOSE(probeFramebuffer, glBindFramebufferEXT);
 INTERPOSE(probeSwap, SDL_GL_SwapWindow);
 INTERPOSE(probePoll, SDL_PollEvent);
 INTERPOSE(probePump, SDL_PumpEvents);
@@ -320,6 +382,7 @@ INTERPOSE(probePeep, SDL_PeepEvents);
 INTERPOSE(probeBlit, glBlitFramebufferEXT);
 INTERPOSE(probeClear, glClear);
 INTERPOSE(probeFence, glTestFenceAPPLE);
+INTERPOSE(probeSync, glClientWaitSync);
 INTERPOSE(probeFullscreen, SDL_SetWindowFullscreen);
 
 /* Creation/upload calls are counted only during the warmed capture. */
