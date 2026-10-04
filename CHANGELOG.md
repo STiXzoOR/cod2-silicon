@@ -19,9 +19,20 @@ All notable changes to CoD2 Silicon are documented here, following
   cache reuse and approximate rendering fallback.
 - Fullscreen render sizes through 6K with exact backing dimensions and
   desktop-fullscreen fallback.
-- App bundle preparation, launch defaults and signed-resource verification.
-- ABI, ILP32 preservation, script, game, renderer, platform, network and
-  performance fixtures; public documentation and contribution policies.
+- Self-contained `CoD2 Silicon.app` for Apple silicon on macOS 13 or later,
+  with pinned SDL3/sdl2-compat built from checksum-verified source and
+  bundled; ad-hoc signed release zip and a from-source `scripts/install.sh`.
+- First-run setup: game-folder discovery or picker, validated CD-key prompt
+  with owner-only storage, native (Python-free) shader extraction and one-time
+  migration from earlier `CoD2x Native` installs.
+- Committed typed-data snapshot (`build/lp64_gen/`) so clean checkouts and CI
+  build without any original game binary; local regeneration verifies it.
+- Opt-in client-frame observer, `r_presentMode 1` fence presentation
+  experiment, Spaces fullscreen selection and the `validate-333.sh` /
+  `check-gamemode.sh` acceptance tools.
+- ABI, ILP32 preservation, script, game, renderer, platform, network,
+  packaging and performance fixtures; public documentation and contribution
+  policies.
 
 ### Fixed
 
@@ -37,7 +48,8 @@ All notable changes to CoD2 Silicon are documented here, following
 ### Known limitations
 
 - Constant 333 fps and active macOS Game Mode remain unverified. WS18's capped
-  1080p capture averaged 331.2 fps with a 205.2 fps 1% low.
+  1080p capture averaged 331.2 fps with a 205.2 fps 1% low; most slow frames
+  wait inside the OpenGL swap (WS19).
 - No microphone capture, intro cinematics or standalone native server link.
 - Rendering comparisons cover three matched views, not complete graphics
   parity. Memory-safety and mod edge cases remain.

@@ -57,8 +57,8 @@ flags, swap interval and QoS. Geometry/focus changes are recorded too.
 
 Apart from that manual baseline, each run has `before/after-session.txt`, `before/after-display.txt` and
 `before/after-processes.txt`. The process snapshot uses PID, PPID, CPU, memory and
-executable name, not arguments that might disclose a key. Existing Spark, Warp,
-aerial wallpaper and unowned `powermetrics` were left running. During the later
+executable name, not arguments that might disclose a key. Existing user applications,
+an aerial wallpaper and an unowned `powermetrics` were left running. During the later
 experiments another pre-existing/unowned Codex audit process tree ran several
 CPU-heavy worker processes. Its ancestry did not match my benchmark or merge-gate
 processes. I did not kill it, inspect its files or enter a sibling worktree. This
