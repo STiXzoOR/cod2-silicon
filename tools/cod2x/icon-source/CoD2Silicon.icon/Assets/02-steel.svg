@@ -1,3 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-<defs><mask id="steel"><rect width="1024" height="1024" fill="white"/><path fill="black" d="M304 242 H620 Q720 242 720 342 V426 Q720 474 680 506 L394 716 H720 V794 H304 V696 L624 456 V342 Q624 326 608 326 H304 Z"/><path fill="white" d="M448 230 H472 V340 H448 Z M432 444 L456 426 L646 674 L622 692 Z M560 700 H584 V810 H560 Z"/></mask></defs><rect x="96" y="96" width="832" height="832" rx="160" fill="#586246" mask="url(#steel)"/>
-</svg>

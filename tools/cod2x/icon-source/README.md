@@ -1,97 +1,66 @@
-# Original launcher icons
+# CoD2 Silicon app icon (icon G)
 
-The default `CoD2Silicon.icon` uses a squared stencil 2 cut through an olive plate,
-a khaki inlay and four small rivets. `Helmet.icon` is an original frontal helmet
-silhouette over khaki. `DogTag.icon` is a punched steel tag with the same squared
-stencil stamp. None uses a font, game data, copied logos or third-party artwork.
-The SVGs contain flat colors and hard-edged vector paths; the material, masking,
-lighting, shadows and appearance adaptation come from Icon Composer.
+`CoD2 Silicon.icon` is an Icon Composer document: a stenciled 2 over a raised
+star on olive steel, from the approved launcher design. It is original art. It
+uses no font, game data, copied logo or third-party artwork.
 
-The default stencil outline is a 1024-unit path:
+## Document
 
-```text
-M304 242 H620 Q720 242 720 342 V426 Q720 474 680 506
-L394 716 H720 V794 H304 V696 L624 456 V342
-Q624 326 608 326 H304 Z
-```
+The olive background is the document `fill`, a linear gradient from `#6f7a44`
+to `#323819`. Dark uses its own olive-black gradient from `#262a1b` to
+`#0c0d08`. There are three groups, listed front to back (the first group
+renders on top):
 
-The three bridge shapes mask the outline; masking clips bridges to the glyph
-and avoids projecting extra shapes outside it:
+| Group | Layer | Shadow | Translucency | Appearance variants |
+| --- | --- | --- | --- | --- |
+| Stencil 2 | `stencil-two.svg`: cream paint with three stencil bridges and worn chips | layer colour, 0.5 | off | Dark uses deeper paint; mono uses a solid white fill |
+| Raised star | `star.svg`: lit and shaded facets | neutral, 0.5 | off | Dark and mono use darker facets, so the numeral leads |
+| Plate | `plate.svg`: inner bevel line and four rivets | none | 0.3 | Dark lowers the line and rivets |
 
-```text
-M448 230 H472 V340 H448 Z
-M432 444 L456 426 L646 674 L622 692 Z
-M560 700 H584 V810 H560 Z
-```
+The layers are flat colour. Icon Composer supplies the specular highlights,
+refraction, translucency and shadows, and masks the canvas to the macOS shape.
+`layers.py` writes every SVG. It rescales the design board's 100–924 tile to
+the full 1024 canvas, and seeds the paint chips so its output is reproducible.
 
-This direction can be reused for the launcher's original wordmark and sidebar
-mark. It deliberately does not resemble the official Call of Duty logotype.
+The JSON schema is not a published API. Its keys were checked against the
+strings in Icon Composer's own frameworks, and the installed `ictool` and
+`actool` validated the files. A key and its `-specializations` form must not
+both be present: if they are, the specializations are ignored.
 
 ## Build and integration
 
 ```sh
-scripts/compile-launcher-icon.sh output/ws25/icon-build
+scripts/compile-launcher-icon.sh output/ws28/icon-build
 ```
 
-Verified with Xcode 27.0 `actool`: this compiles the `.icon` package directly,
-without an Xcode project or GUI, targeting macOS 13.0. It emits:
+Xcode 27's `actool` compiles the package directly, with no Xcode project, for a
+macOS 13.0 minimum. It writes:
 
-- `Assets.car`, including layered `IconImageStack`, `IconGroup` and SVG vector
-  renditions, plus flattened compatibility renditions;
-- `CoD2Silicon.icns`, the static fallback;
-- `icon-info.plist`, containing `CFBundleIconName = CoD2Silicon` and
-  `CFBundleIconFile = CoD2Silicon`.
+- `Assets.car`, with layered `IconImageStack` and `IconGroup` renditions for
+  Aqua, DarkAqua and tintable appearances, plus flattened renditions;
+- `CoD2 Silicon.icns`, the static fallback;
+- `icon-info.plist`, with `CFBundleIconName` and `CFBundleIconFile` set to
+  `CoD2 Silicon`.
 
-Copy `Assets.car` and the ICNS into each app's `Contents/Resources`, and merge the
-partial plist keys into that app's `Info.plist` before signing. Do not package
-the intermediate plist. The helper accepts an optional second argument selecting
-`Helmet.icon` or `DogTag.icon` and emits their corresponding icon names.
-
-The JSON schema isn't a published stable API. The background/package structure
-was checked against Xcode's installed macOS Icon Composer template; the
-specialization and glass annotation structure was checked against Apple's
-Landmarks sample. `actool`, `ictool` and `assetutil` validated the actual files.
-Older SDKs that don't support `.icon` can still run the existing static fallback:
-
-```sh
-swift tools/cod2x/app_icon.swift output/ws25/Native.iconset
-iconutil -c icns output/ws25/Native.iconset -o output/ws25/Native.icns
-```
-
-No Icon Composer tool or Homebrew dependency is needed at runtime. This generator
-omits tiny rivets below 128px for a cleaner small-scale fallback.
+`tools/cod2x/make_macos_app.py` installs `Assets.car` and the ICNS into both the
+outer launcher and the nested `CoD2 Game.app`, and merges the plist keys into
+each `Info.plist` before signing. `actool` ships with Xcode, not the Command Line
+Tools. Without it, the bundler draws the same composition with
+`tools/cod2x/app_icon.swift` and packages a static `CoD2 Silicon.icns`.
 
 ## Review renditions
 
 ```sh
-tools/cod2x/icon-source/render.sh output/ws25/screens-v2/icons
+tools/cod2x/icon-source/render.sh output/ws28/icon
 ```
 
-Uses the installed Xcode Icon Composer `ictool` to render the genuine macOS 26
-design at 1024px. Each concept has `Default`, `Dark`, `ClearLight`, `ClearDark`,
-`TintedLight` and `TintedDark` PNGs named `<concept>-<appearance>.png`. The purple
-tint is the tool's default preview tint, not a fixed app color. Icon tint remains
-the user's system choice. White mono annotations preserve the primary silhouette
-in clear/tinted appearances.
+This uses Xcode's Icon Composer `ictool`, which renders through the same system
+pipeline, to export `Default`, `Dark`, `ClearLight`, `ClearDark`, `TintedLight`
+and `TintedDark` at 1024 px. The purple in the tinted renditions is the tool's
+default preview tint. On a real Mac, the tint follows the user's choice.
 
-All 18 renditions were reviewed in three iterations. The first review exposed
-reversed layer ordering and an obscured glyph. The second fixed the layer order
-and the stencil bridges, then exposed weak mono contrast and excessive material
-on the dog tag stamp. The final version clips each bridge to the glyph, uses
-white mono annotations, keeps stamped ink flat, and reduces the group's shadow
-and translucency. Icon Composer applies the outer canvas mask itself.
-
-Sources consulted directly:
+Sources consulted:
 
 - [Apple HIG: App icons](https://developer.apple.com/design/human-interface-guidelines/app-icons)
-  — vector layers, clearly defined edges, balanced foreground and background,
-  system-applied masking, and review of every appearance.
-- [Say hello to the new look of app icons, WWDC25](https://developer.apple.com/videos/play/wwdc2025/220/)
-  — frontal silhouettes, generous breathing room, bold details and soft gradients.
 - [Create icons with Icon Composer, WWDC25](https://developer.apple.com/videos/play/wwdc2025/361/)
-  — flat source artwork, outlined type, background/foreground separation and
-  dynamic materials supplied by the system.
 - [Creating your app icon using Icon Composer](https://developer.apple.com/documentation/xcode/creating-your-app-icon-using-icon-composer)
-  — compiler-generated compatibility icons for older deployment targets.
-- [Landmarks: Building an app with Liquid Glass](https://developer.apple.com/documentation/swiftui/landmarks-building-an-app-with-liquid-glass)
-  — annotation/schema reference only; no sample artwork was copied.

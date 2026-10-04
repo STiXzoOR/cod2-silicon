@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+<defs><linearGradient id="lit" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7a7a7a"/><stop offset="1" stop-color="#585858"/></linearGradient><linearGradient id="shade" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a3a3a"/><stop offset="1" stop-color="#242424"/></linearGradient></defs>
+<g transform="matrix(1.242718 0 0 1.242718 -124.2718 -124.2718)">
+<path d="M512 520 L431.2 408.7 L512 160 Z M512 520 L592.8 408.7 L854.4 408.8 Z M512 520 L642.8 562.5 L723.6 811.2 Z M512 520 L512 657.5 L300.4 811.2 Z M512 520 L381.2 562.5 L169.6 408.8 Z" fill="url(#lit)"/>
+<path d="M512 520 L512 160 L592.8 408.7 Z M512 520 L854.4 408.8 L642.8 562.5 Z M512 520 L723.6 811.2 L512 657.5 Z M512 520 L300.4 811.2 L381.2 562.5 Z M512 520 L169.6 408.8 L431.2 408.7 Z" fill="url(#shade)"/>
+</g>
+</svg>

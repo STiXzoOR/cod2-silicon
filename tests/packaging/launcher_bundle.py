@@ -14,6 +14,16 @@ assert engine['LSSupportsGameMode'] is True
 assert engine['CoD2AutomaticShaderSetup'] is False
 assert 'CFBundleURLTypes' not in engine
 assert 'CoD2GameDirectory' not in info
+for contents, plist in [(app / 'Contents', info), (game / 'Contents', engine)]:
+    assert plist['CFBundleIconFile'] == 'CoD2 Silicon', plist.get('CFBundleIconFile')
+    assert (contents / 'Resources/CoD2 Silicon.icns').is_file()
+    if 'CFBundleIconName' in plist:  # layered Icon Composer build (Xcode actool)
+        assert plist['CFBundleIconName'] == 'CoD2 Silicon'
+        assert (contents / 'Resources/Assets.car').is_file()
+assert info['ATSApplicationFontsPath'] == 'Fonts'
+fonts = {p.name for p in (app / 'Contents/Resources/Fonts').iterdir()}
+assert fonts == {'BigShouldersStencilDisplay.ttf', 'CourierPrime-Regular.ttf', 'CourierPrime-Bold.ttf',
+                 'OFL-BigShouldersStencilDisplay.txt', 'OFL-CourierPrime.txt'}, fonts
 binaries = [app / 'Contents/MacOS/CoD2Launcher', game / 'Contents/MacOS/cod2_macos']
 binaries += [p for p in (game / 'Contents/Frameworks').glob('*.dylib') if not p.is_symlink()]
 assert len(binaries) == 4
@@ -30,4 +40,4 @@ for path in app.rglob('*'):
     assert path.suffix not in {'.iwd', '.py', '.dm_1', '.dm_2'}, path
     assert path.name not in {'preferences', 'manifest.json', 'data-path.txt'}, path
 subprocess.run(['codesign', '--verify', '--deep', '--strict', str(app)], check=True)
-print('PASS: launcher + isolated Game Mode helper, one URL owner, four arm64/macOS13 Mach-Os, portable links, deep signature, no game content')
+print('PASS: launcher + isolated Game Mode helper, one URL owner, four arm64/macOS13 Mach-Os, portable links, deep signature, no game content, icon G in both apps, OFL fonts with licences')

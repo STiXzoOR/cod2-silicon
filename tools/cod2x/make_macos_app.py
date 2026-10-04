@@ -10,6 +10,26 @@ import tempfile
 import os
 
 
+def build_icon(root, output):
+    """Compile CoD2 Silicon.icon, or draw the static fallback without Xcode's actool."""
+    result = subprocess.run([str(root / "scripts/compile-launcher-icon.sh"), str(output)])
+    if result.returncode == 0:
+        with (output / "icon-info.plist").open("rb") as file:
+            keys = plistlib.load(file)
+        files = [output / "Assets.car", output / (keys["CFBundleIconFile"] + ".icns")]
+        if set(keys) != {"CFBundleIconFile", "CFBundleIconName"} or not all(path.is_file() for path in files):
+            raise SystemExit("actool did not produce the expected icon files")
+        return files, keys
+    if result.returncode != 3:
+        raise SystemExit("actool failed to compile CoD2 Silicon.icon")
+    print("Using the static icon fallback; install Xcode for the layered macOS 26 icon.")
+    iconset = output / "CoD2 Silicon.iconset"
+    subprocess.run(["swift", str(root / "tools/cod2x/app_icon.swift"), str(iconset)], check=True)
+    icns = output / "CoD2 Silicon.icns"
+    subprocess.run(["iconutil", "-c", "icns", str(iconset), "-o", str(icns)], check=True)
+    return [icns], {"CFBundleIconFile": "CoD2 Silicon"}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("executable", type=pathlib.Path)
@@ -111,9 +131,9 @@ def main():
                 parser.error(f"{macho.name} must be built for macOS 13.0")
         for dylib in machos[1:]:
             subprocess.run(["codesign", "--force", "--sign", "-", str(dylib)], check=True)
-    iconset = pathlib.Path(staging.name) / "Native.iconset"
-    subprocess.run(["swift", str(root / "tools/cod2x/app_icon.swift"), str(iconset)], check=True)
-    subprocess.run(["iconutil", "-c", "icns", str(iconset), "-o", str(resources / "Native.icns")], check=True)
+    icon_files, icon_keys = build_icon(root, pathlib.Path(staging.name) / "icon")
+    for icon_file in icon_files:
+        shutil.copy2(icon_file, resources / icon_file.name)
     info = {
         "CFBundleDevelopmentRegion": "en",
         "CFBundleExecutable": "cod2_macos" if args.engine_only else "CoD2Launcher",
@@ -123,7 +143,7 @@ def main():
         "CFBundlePackageType": "APPL",
         "CFBundleShortVersionString": args.version,
         "CFBundleVersion": "1",
-        "CFBundleIconFile": "Native.icns",
+        **icon_keys,
         "LSMinimumSystemVersion": "13.0",
         "NSHighResolutionCapable": not args.engine_only,
         "LSApplicationCategoryType": "public.app-category.action-games",
@@ -165,7 +185,8 @@ def main():
         game_info.pop("CoD2GameDirectory", None)
         game_resources = game_contents / "Resources"
         game_resources.mkdir()
-        shutil.copy2(resources / "Native.icns", game_resources / "Native.icns")
+        for icon_file in icon_files:
+            shutil.copy2(icon_file, game_resources / icon_file.name)
         with (game_contents / "Info.plist").open("wb") as file:
             plistlib.dump(game_info, file)
         subprocess.run(["codesign", "--force", "--sign", "-", str(game_contents.parent)], check=True)
@@ -173,6 +194,12 @@ def main():
         info["CoD2AutomaticShaderSetup"] = False
         info["CoD2DefaultResolution"] = args.resolution
         info["CoD2DefaultFullscreen"] = "borderless" if args.borderless else "exclusive"
+        # SIL OFL 1.1 typefaces travel with their licence texts; the launcher also
+        # registers them at runtime when run outside a bundle.
+        fonts = root / "launcher/Resources/Fonts"
+        subprocess.run([str(root / "scripts/fetch-launcher-fonts.sh"), "--check"], check=True, stdout=subprocess.DEVNULL)
+        shutil.copytree(fonts, resources / "Fonts")
+        info["ATSApplicationFontsPath"] = "Fonts"
         for name in ["LICENSE", "NOTICE.md", "CREDITS.md"]:
             shutil.copy2(root / name, resources / name)
     with (contents / "Info.plist").open("wb") as file:
