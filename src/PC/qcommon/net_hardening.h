@@ -3,6 +3,14 @@
 
 #include "cod2_feature_config.h"
 
+/* Memory-safety bounds on untrusted network input. Native builds always apply
+ * them; legacy builds keep their original code unless hardening is enabled. */
+#if defined(COD2_X64) || COD2_FEATURE_NET_HARDENING
+#    define COD2_NET_BOUNDS 1
+#else
+#    define COD2_NET_BOUNDS 0
+#endif
+
 #if COD2_FEATURE_NET_HARDENING
 
 #    ifndef COD2_NET_HARDENING_NEED_NETADR

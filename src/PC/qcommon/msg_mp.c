@@ -6,6 +6,7 @@
 #define COD2_IMAGE_CONSTANT_4096 (int)&__mh_execute_header
 #endif
 #include "imports.h"
+#include "PC/qcommon/net_hardening.h"
 #include <string.h>
 #if defined(_MSC_VER)
 #define MSG_FORCEINLINE __forceinline
@@ -551,6 +552,9 @@ int MSG_WriteBitsCompress(byte *from, byte *to, int size)
     return (bit + 7) >> 3;
 }
 
+#if COD2_NET_BOUNDS
+extern int Huff_offsetReceiveLimit(nodetype *node, int *ch, byte *fin, int *offset, int maxoffset);
+#endif
 int MSG_ReadBitsCompress(byte *from, byte *to, int size)
 {
     int bits = size * 8;
@@ -558,6 +562,17 @@ int MSG_ReadBitsCompress(byte *from, byte *to, int size)
     int bit = 0;
     byte *data = to;
 
+#if COD2_NET_BOUNDS
+    /* Stop where the input ends instead of finishing a code from the bytes
+       after it, and where every caller's MAX_MSG_DECOMPRESS_BYTES buffer ends:
+       a peer can make each byte decode to as many as four. */
+    while (bits > bit && data - to < MAX_MSG_DECOMPRESS_BYTES) {
+        if (!Huff_offsetReceiveLimit((nodetype *)msgHuff.decompressor.tree, &get, from, &bit, bits))
+            break;
+        *data++ = (byte)get;
+    }
+    return (int)(data - to);
+#endif
     if (__builtin_expect(bits > 0, 0)) {
         do {
 
