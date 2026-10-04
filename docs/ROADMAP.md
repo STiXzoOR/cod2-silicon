@@ -1,38 +1,67 @@
 # CoD2 Silicon roadmap
 
-These are planned directions, not release promises. The current evidence is
-in the [port reports](macos-port/README.md).
+CoD2 Silicon is **Mac-first**. The goal is the best way to play Call of Duty 2
+multiplayer anywhere, built natively for Apple silicon and current macOS
+standards. These are planned directions, not release promises. The current
+evidence is in the [port reports](macos-port/README.md).
 
-## Near term
+## 0.2 — Launcher, servers and smooth frames
 
-- **Constant 333 fps:** WS18 averages approach the cap, but 1% lows remain
-  205–233 fps in capped captures. WS19 traced most slow frames to the OpenGL
-  swap waiting on the compositor; a GPU fence did not prevent it, so that path
-  stays opt-in (`r_presentMode 1`). Next: present through Metal (an
-  IOSurface/`CAMetalLayer` bridge that keeps the existing renderer), then
-  accept only unlocked, quiet-machine results from `tools/macos/validate-333.sh`.
-- **Game Mode:** establish actual ON state in macOS built-in fullscreen,
-  verify input focus and display restoration, then measure a matched ON/OFF
-  comparison. The plist eligibility flag alone does not establish activation.
+- **Native launcher.** A SwiftUI front end that replaces the first-run
+  dialogs. It covers:
+  - onboarding: game data, CD key and shader setup;
+  - a server browser for stock 1.3 and CoD2x 1.4 servers, with direct
+    connect, favorites and ping;
+  - display, graphics, input, audio and fps-cap settings;
+  - demos, screenshots and update notices.
+
+  It follows the current macOS design language and uses only original
+  artwork.
+- **Dedicated servers on Mac hardware.** A native, headless arm64
+  `cod2_macos_ded` that runs as a launchd service on any Apple silicon Mac,
+  followed by a server manager. Network and file parsing will be fuzzed and
+  hardened before internet hosting is recommended.
+- **Constant 333 fps.** Present frames through Metal (`CAMetalLayer` and
+  `CAMetalDisplayLink`), so the 3 ms client frame never waits on the
+  compositor. WS19 traced most current hitches to the OpenGL swap. Results
+  count only when `tools/macos/validate-333.sh` runs on an unlocked, quiet
+  machine.
+
+## 0.3 — Metal renderer
+
+- **Native Metal renderer.** Metal 4 on macOS 26 and later, implementing the
+  existing D3D9-style renderer contracts so engine code is unchanged. OpenGL
+  remains the classic fallback on macOS 13–25 and the visual parity reference.
+  The original Mac shaders are translated to Metal locally from the player's
+  own copy; they are never distributed.
+- **Modern options, with a faithful classic mode:**
+  - render scale with MetalFX upscaling;
+  - supersampling;
+  - anisotropic filtering;
+  - EDR/HDR output;
+  - ProMotion and variable refresh;
+  - correct widescreen FOV;
+  - HUD scaling for 4K–6K.
+
+  Server policy is respected, and there is no frame interpolation in
+  competitive play.
+- **Game Mode.** Native fullscreen Spaces, verified on and off with matched
+  measurements.
 
 ## Engine gaps
 
-- **Standalone dedicated server:** finish linking `cod2_macos_ded` without
-  renderer/data roots. The current workaround is `cod2_macos +set dedicated 1`.
-- **185 placeholder globals:** classify and replace remaining zero-filled
-  placeholders using verified type, size, initialization and ownership facts;
-  retain a zero-mismatch ABI audit and unchanged i386 output.
-- **Voice capture:** implement the native microphone path, permissions,
-  device changes and compatible capture/encoding without blocking gameplay.
-- **Intro cinematics:** restore playback from player-owned content with safe
+- **185 placeholder globals:** classify and replace the remaining zero-filled
+  placeholders using verified type, size, initialization and ownership facts.
+  Keep the ABI audit at zero mismatches and the i386 output unchanged.
+- **Voice capture:** a native microphone path that handles permissions and
+  device changes and encodes compatibly, without blocking gameplay.
+- **Intro cinematics:** restore playback from player-owned content, with safe
   timing, skip and cleanup behavior.
+- **CoD2x server features:** server-side CoD2x 1.4 behavior for the native
+  dedicated server.
 
 ## Later
 
-- **Quality of life:** clearer setup and diagnostics, input/display options,
-  server-browser usability and accessible settings while preserving protocol
-  and competitive-server policy.
-- **Modern graphics:** explore optional “2026 era” post-processing, with a
-  faithful classic mode and measured latency/cost. A possible Metal renderer
-  is a separate research track; first establish renderer contracts and
-  reproducible comparisons, then prototype rather than promise a rewrite.
+- An iPad and Apple TV client, once the Metal renderer has replaced OpenGL
+  (neither platform has OpenGL).
+- Server-manager hosting presets for Mac mini and Mac cloud machines.

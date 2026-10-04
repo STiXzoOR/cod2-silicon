@@ -18,6 +18,48 @@ A parallel "play now" track (WS8) runs the real Windows CoD2 + CoD2x under
 Wine on this Mac. It is the performance and behaviour baseline the native client
 has to beat.
 
+## Phase 2 — Mac-first (decided 2026-10-04)
+
+CoD2 Silicon 0.1.0 is public (`github.com/STiXzoOR/cod2-silicon`). The user's
+direction for the next phase, in their words: "Mac first 100x including proper
+metal and all the latest standards and improve launcher and design", plus
+"running dedicated servers on macOS hardware". They explicitly declined using
+their Mac mini as a GitHub runner. Decisions:
+
+- **Renderer: native Metal.** Implement a Metal backend behind the existing
+  D3D9 shim object contracts in `src/Mac/DirectX_9` (device, swap chain,
+  surfaces, textures, buffers, declarations, shaders, fences), so the 277
+  engine call sites stay unchanged. Use **Metal 4 on macOS 26+**; keep the
+  OpenGL path as the classic fallback on macOS 13–25 and as the visual parity
+  reference. Select with a dvar (`r_renderer gl|metal`), default Metal where
+  supported.
+- **Shaders:** translate the original ARB vertex/fragment programs (the
+  834-file cache the app extracts from the player's own Mac binary) to MSL
+  locally on first run, like extraction. Translations of original shaders are
+  derived content: never commit or bundle them. Cache compiled pipelines
+  (binary archives / Metal 4 pipeline datasets) so no shader compiles during
+  play.
+- **Presentation and pacing:** `CAMetalLayer` + `CAMetalDisplayLink`, a 3 ms
+  client frame loop that never blocks on the compositor, low-latency present,
+  native fullscreen Spaces so Game Mode can engage, optional EDR/HDR output,
+  ProMotion/VRR awareness.
+- **Modern options, always with a faithful classic mode and respecting server
+  policy:** render scale with MetalFX upscaling, supersampling/MSAA,
+  anisotropic filtering, correct widescreen FOV and HUD scaling for 4K–6K. No
+  frame interpolation in competitive play (it adds latency).
+- **Launcher and design:** a native SwiftUI front end in the app bundle:
+  onboarding (game data, CD key, shaders), server browser (master servers for
+  protocols 118/120, direct connect, favorites, ping), settings (display,
+  graphics, input, audio, fps cap), demos/screenshots and updates. Current
+  macOS design language (Liquid Glass on macOS 26+, graceful on 13+), original
+  artwork only.
+- **Dedicated servers on Mac hardware:** a native headless arm64
+  `cod2_macos_ded`, runnable as a launchd service on any Apple silicon Mac,
+  then a server manager UI. Fuzz and harden network/file parsing before
+  recommending internet exposure. CoD2x server-side features come later.
+- **Infrastructure:** no self-hosted runner. The local merge gate stays the
+  authority; add GL-versus-Metal golden-image parity tests.
+
 ## Machine
 
 Mac mini, Apple M6 (12 cores), 24 GB, macOS 27.0.1, Xcode 27 / Apple clang 21,
@@ -209,6 +251,14 @@ From `research/mac-client-reconstructions.md`:
 7. Finish by writing `docs/macos-port/reports/<workstream>.md`: what you did,
    what works (with the commands that show it), what is left, and any blockers.
    Commit it.
+
+8. **Benchmark lock.** Before any performance measurement, take the lock with
+   `mkdir ~/Projects/cod2-native-wt/_agents/bench.lock` (retry every 60 s
+   while it exists) and remove it when done. Record in every result whether
+   the screen was locked and what else was running. Numbers taken without the
+   lock, or with the screen locked, are exploratory only.
+9. Never commit or bundle content derived from original game files, including
+   extracted or translated shaders, textures, sounds or menus.
 
 ## Workstreams
 
