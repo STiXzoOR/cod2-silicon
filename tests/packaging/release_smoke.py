@@ -35,7 +35,7 @@ while True:
 environment = {**os.environ, "CFFIXED_USER_HOME": str(home), "HOME": str(home),
                "COD2_SETUP_NONINTERACTIVE": "1", "COD2_SETUP_GAME_DIR": str(args.game.resolve()),
                "COD2_SETUP_MAC_BINARY": str(args.mac_binary.resolve()),
-               "COD2_SETUP_CD_KEY": "0" * 20, "DYLD_PRINT_LIBRARIES": "1"}
+               "COD2_SETUP_CD_KEY": '000000000000000086D3', "DYLD_PRINT_LIBRARIES": "1"}
 environment.pop("COD2_MAC_SHADER_CACHE", None)
 command = ["timeout", "-k", "10", "90", str(args.app.resolve() / "Contents/MacOS/cod2_macos"),
            "+set", "r_fullscreen", "0", "+set", "r_mode", "1280x720", "+set", "developer", "1",

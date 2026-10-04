@@ -58,7 +58,7 @@ build_app() {
     /usr/sbin/taskpolicy -b /usr/bin/nice -n 19 cmake -S "$root" -B "$build/client" \
         -DCOD2_X64=ON -DCOD2_FEATURE_CFLAGS=-DCOD2_CODX=1 -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 "-DCMAKE_OSX_SYSROOT=$sdk" \
-        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCOD2_MACOS_RELEASE=ON \
+        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCOD2_MACOS_RELEASE=ON "-DCOD2_MACOS_SDL_PREFIX=$prefix" \
         "-DCMAKE_PREFIX_PATH=$prefix" "-DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew;/usr/local" \
         "-DZLIB_LIBRARY=$sdk/usr/lib/libz.tbd" "-DZLIB_INCLUDE_DIR=$sdk/usr/include" \
         "-DCOD2_CURL_LIBRARY=$sdk/usr/lib/libcurl.tbd" \

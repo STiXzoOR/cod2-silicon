@@ -138,13 +138,30 @@ static NSString *Cod2xGameDirectory(NSBundle *bundle)
     return path;
 }
 
+static BOOL Cod2xKeyValid(NSString *key)
+{
+    if (!key || [key rangeOfString:@"\\A[A-Za-z0-9]{16}[A-Fa-f0-9]{4}\\z" options:NSRegularExpressionSearch].location == NSNotFound)
+        return NO;
+    const unsigned char *bytes = (const unsigned char *)key.UTF8String;
+    unsigned crc = 0;
+    /* Same CRC-16 check as CL_CDKeyValidate; never expose the supplied key. */
+    for (unsigned i = 0; i < 16; ++i) {
+        crc ^= bytes[i];
+        for (unsigned bit = 0; bit < 8; ++bit) crc = crc & 1 ? (crc >> 1) ^ 0xa001 : crc >> 1;
+    }
+    NSString *checksum = [NSString stringWithFormat:@"%04x", crc];
+    return [[key substringFromIndex:16] caseInsensitiveCompare:checksum] == NSOrderedSame;
+}
+
 static BOOL Cod2xSetupKey(void)
 {
     NSString *directory = [NSHomeDirectory() stringByAppendingPathComponent:@".cod2"];
     NSString *preferences = [directory stringByAppendingPathComponent:@"preferences"];
     NSString *previous = [NSString stringWithContentsOfFile:preferences encoding:NSUTF8StringEncoding error:nil] ?: @"";
     for (NSString *line in [previous componentsSeparatedByString:@"\n"])
-        if ([line hasPrefix:@"codkey="] && line.length >= 27) { chmod(preferences.fileSystemRepresentation, 0600); return YES; }
+        if ([line hasPrefix:@"codkey="] && Cod2xKeyValid([line substringFromIndex:7])) {
+            chmod(preferences.fileSystemRepresentation, 0600); return YES;
+        }
     NSString *key = Cod2xSetupOverride("COD2_SETUP_CD_KEY");
     for (;;) {
         if (!key) {
@@ -160,8 +177,8 @@ static BOOL Cod2xSetupKey(void)
             key = input.stringValue;
         }
         key = [[key stringByReplacingOccurrencesOfString:@"-" withString:@""] stringByReplacingOccurrencesOfString:@" " withString:@""].uppercaseString;
-        if (key.length == 20 && [key rangeOfString:@"\\A[A-Z0-9]{20}\\z" options:NSRegularExpressionSearch].location != NSNotFound) break;
-        Cod2xSetupAlert(@"The CD key must contain 20 letters and digits.", @"Check the key supplied with your licensed copy.");
+        if (Cod2xKeyValid(key)) break;
+        Cod2xSetupAlert(@"The CD key is incomplete or its checksum is incorrect.", @"Enter all 20 characters from your licensed copy, including the last four checksum digits.");
         if (Cod2xNoninteractive()) return NO;
         key = nil;
     }
@@ -238,6 +255,8 @@ static int Cod2xSetupAppArguments(NSBundle *bundle, NSString *arguments, char *b
     setenv("HOME", NSHomeDirectory().fileSystemRepresentation, 1);
     [NSApplication sharedApplication];
     [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+    [NSApp finishLaunching];
+    if (!Cod2xNoninteractive()) [NSApp activateIgnoringOtherApps:YES];
     [NSFileManager.defaultManager createDirectoryAtPath:Cod2xAppHome() withIntermediateDirectories:YES attributes:nil error:nil];
     Cod2xMigrate();
     NSString *data = Cod2xGameDirectory(bundle);

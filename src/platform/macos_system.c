@@ -53,7 +53,7 @@ static void MacSystem_InitHome(void)
     }
     if (!home || !home[0])
         return;
-    length = snprintf(homePath, sizeof(homePath), "%s/Library/Application Support/CoD2-native", home);
+    length = snprintf(homePath, sizeof(homePath), "%s/Library/Application Support/CoD2 Silicon", home);
     if (length < 0 || length >= (int)sizeof(homePath))
         homePath[0] = '\0';
 }

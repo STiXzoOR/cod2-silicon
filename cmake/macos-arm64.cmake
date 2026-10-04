@@ -9,7 +9,12 @@ find_library(COD2_GAMECONTROLLER_FRAMEWORK GameController REQUIRED)
 find_library(COD2_FOUNDATION_FRAMEWORK Foundation REQUIRED)
 find_package(SDL2 CONFIG REQUIRED)
 if(COD2_MACOS_RELEASE)
+  set(COD2_MACOS_SDL_PREFIX "" CACHE PATH "Pinned SDL install prefix for release bundles")
+  if(NOT COD2_MACOS_SDL_PREFIX)
+    message(FATAL_ERROR "Release bundles require COD2_MACOS_SDL_PREFIX; use scripts/package-release.sh")
+  endif()
   set(CMAKE_SKIP_BUILD_RPATH TRUE)
+  set(COD2_MACOS_APP_FRAMEWORK_ARGS --frameworks "${COD2_MACOS_SDL_PREFIX}")
 endif()
 file(GLOB MACOS_PLATFORM_SOURCES "${CMAKE_SOURCE_DIR}/src/platform/*.[cm]" "${CMAKE_SOURCE_DIR}/src/platform/*.cpp")
 set_property(SOURCE ${MACOS_PLATFORM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS
@@ -106,7 +111,7 @@ if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
   set(COD2_MACOS_APP "${CMAKE_BINARY_DIR}/CoD2 Silicon.app" CACHE PATH "Native app output path")
   add_custom_target(cod2_macos_app
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/cod2x/make_macos_app.py"
-      "$<TARGET_FILE:cod2_macos>" "${COD2_MACOS_APP}" --replace
+      "$<TARGET_FILE:cod2_macos>" "${COD2_MACOS_APP}" --replace ${COD2_MACOS_APP_FRAMEWORK_ARGS}
     DEPENDS cod2_macos
     COMMENT "Build and ad-hoc sign CoD2 Silicon.app"
     VERBATIM)

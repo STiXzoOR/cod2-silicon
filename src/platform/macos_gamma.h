@@ -22,7 +22,7 @@ static GLuint GammaCompile(GLenum type, const char *source)
     if (!compiled) {
         char log[512];
         glGetShaderInfoLog(shader, sizeof(log), NULL, log);
-        fprintf(stderr, "CoD2-native presentation gamma shader: %s\n", log);
+        fprintf(stderr, "CoD2 Silicon presentation gamma shader: %s\n", log);
         glDeleteShader(shader);
         return 0;
     }
@@ -63,7 +63,7 @@ static int GammaCreate(MacPresentationGamma *gamma)
     if (!linked) {
         char log[512];
         glGetProgramInfoLog(gamma->program, sizeof(log), NULL, log);
-        fprintf(stderr, "CoD2-native presentation gamma link: %s\n", log);
+        fprintf(stderr, "CoD2 Silicon presentation gamma link: %s\n", log);
         glDeleteProgram(gamma->program);
         gamma->program = 0;
         gamma->failed = 1;

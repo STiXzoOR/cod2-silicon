@@ -136,7 +136,7 @@ static int SetWindowMode(void)
             SDL_SetWindowFullscreen(sdl_gl_window, SDL_WINDOW_FULLSCREEN) != 0)
 #endif
         {
-            fprintf(stderr, "CoD2-native exclusive fullscreen unavailable: %s; using desktop fullscreen\n", SDL_GetError());
+            fprintf(stderr, "CoD2 Silicon exclusive fullscreen unavailable: %s; using desktop fullscreen\n", SDL_GetError());
 #if defined(__APPLE__) && defined(COD2_X64)
             windowMode = MAC_BORDERLESS;
             SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
@@ -172,7 +172,7 @@ static int SetSurfaceSize(int width, int height)
     if (error == kCGLNoError)
         error = CGLEnable(context, kCGLCESurfaceBackingSize);
     if (error != kCGLNoError)
-        fprintf(stderr, "CoD2-native fixed OpenGL backing unavailable: %s\n", CGLErrorString(error));
+        fprintf(stderr, "CoD2 Silicon fixed OpenGL backing unavailable: %s\n", CGLErrorString(error));
     return error == kCGLNoError ? 0 : -1;
 }
 #endif
@@ -258,7 +258,7 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
     SDL_GL_SetSwapInterval(0);
     if (!strstr((const char *)glGetString(GL_EXTENSIONS), "GL_EXT_framebuffer_blit") ||
         CreateRenderBuffer(ctx, depth, stencil) != 0) {
-        fprintf(stderr, "CoD2-native render framebuffer unavailable\n");
+        fprintf(stderr, "CoD2 Silicon render framebuffer unavailable\n");
         MacDisplay_ReleaseContext((void **)&ctx);
         return NULL;
     }

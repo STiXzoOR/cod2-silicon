@@ -31,7 +31,7 @@ with tempfile.TemporaryDirectory(prefix="cod2-silicon-first-run-") as directory:
     (old / "main").mkdir(parents=True)
     (old / "main/config_mp.cfg").write_text('// fake migration fixture\n')
     environment = {**os.environ, "CFFIXED_USER_HOME": str(home), "HOME": str(home),
-                   "COD2_SETUP_NONINTERACTIVE": "1", "COD2_SETUP_CD_KEY": "0" * 20}
+                   "COD2_SETUP_NONINTERACTIVE": "1", "COD2_SETUP_CD_KEY": '000000000000000086D3'}
     command = [str(app / "Contents/MacOS/cod2_macos")]
     subprocess.run(command, env=environment, check=True)
     new = home / "Library/Application Support/CoD2 Silicon"
@@ -39,7 +39,12 @@ with tempfile.TemporaryDirectory(prefix="cod2-silicon-first-run-") as directory:
     assert (new / "data-path.txt").read_text() == str(game)
     preferences = home / ".cod2/preferences"
     assert preferences.stat().st_mode & 0o777 == 0o600
-    assert preferences.read_text() == "codkey=" + "0" * 20 + "\n"
+    assert preferences.read_text() == "codkey=" + '000000000000000086D3' + "\n"
+    del environment["COD2_SETUP_CD_KEY"]
+    preferences.write_text("codkey=" + " " * 16 + "0000\n")
+    assert subprocess.run(command, env=environment).returncode == 1
+    environment["COD2_SETUP_CD_KEY"] = '000000000000000086D3'
+    subprocess.run(command, env=environment, check=True)
     del environment["COD2_SETUP_CD_KEY"]
     moved = scratch / "remembered-game"
     game.rename(moved)
