@@ -10,8 +10,9 @@ import math, random, sys, pathlib
 out = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path(__file__).resolve().parent / "CoD2 Silicon.icon"
 T = 'transform="matrix(1.242718 0 0 1.242718 -124.2718 -124.2718)"'
 TWO = "M352 404 C 352 300 428 246 516 246 C 612 246 676 306 676 392 C 676 470 628 516 566 566 L 372 740 L 700 740"
+# Two stencil bridges: the design's third, on the top-left hook, read as a separate tick at
+# Dock sizes (32-64 px), so the 2 keeps its crown whole.
 CUT = ('<mask id="cut" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024"><rect width="1024" height="1024" fill="#fff"/>'
-       '<rect x="402" y="214" width="34" height="96" fill="#000" transform="rotate(-38 419 262)"/>'
        '<rect x="452" y="612" width="34" height="110" fill="#000" transform="rotate(42 469 667)"/>'
        '<rect x="548" y="676" width="30" height="118" fill="#000"/></mask>')
 def bez(p0, p1, p2, p3, n):

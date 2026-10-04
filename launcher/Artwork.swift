@@ -369,8 +369,7 @@ struct BrandMark: View {
                 layer.stroke(SVGPath.parse("M352 404 C 352 300 428 246 516 246 C 612 246 676 306 676 392 C 676 470 628 516 566 566 L 372 740 L 700 740"),
                              with: .color(hex(0xecdfb4)), style: StrokeStyle(lineWidth: 124, lineJoin: .miter))
                 layer.blendMode = .destinationOut
-                for (rect, angle, pivot) in [(CGRect(x: 402, y: 214, width: 34, height: 96), -38.0, CGPoint(x: 419, y: 262)),
-                                             (CGRect(x: 452, y: 612, width: 34, height: 110), 42.0, CGPoint(x: 469, y: 667)),
+                for (rect, angle, pivot) in [(CGRect(x: 452, y: 612, width: 34, height: 110), 42.0, CGPoint(x: 469, y: 667)),
                                              (CGRect(x: 548, y: 676, width: 30, height: 118), 0.0, CGPoint(x: 563, y: 735))] {
                     let turn = CGAffineTransform(translationX: pivot.x, y: pivot.y).rotated(by: angle * .pi / 180).translatedBy(x: -pivot.x, y: -pivot.y)
                     layer.fill(Path(rect).applying(turn), with: .color(.black))

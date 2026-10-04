@@ -13,9 +13,12 @@ renders on top):
 
 | Group | Layer | Shadow | Translucency | Appearance variants |
 | --- | --- | --- | --- | --- |
-| Stencil 2 | `stencil-two.svg`: cream paint with three stencil bridges and worn chips | layer colour, 0.5 | off | Dark uses deeper paint; mono uses a solid white fill |
+| Stencil 2 | `stencil-two.svg`: cream paint with two stencil bridges and worn chips | layer colour, 0.5 | off | Dark uses deeper paint; mono uses a solid white fill |
 | Raised star | `star.svg`: lit and shaded facets | neutral, 0.5 | off | Dark and mono use darker facets, so the numeral leads |
 | Plate | `plate.svg`: inner bevel line and four rivets | none | 0.3 | Dark lowers the line and rivets |
+
+The design had a third bridge on the 2's top-left hook. At Dock sizes (32–64 px)
+it read as a separate tick mark, so it was removed and the crown stays whole.
 
 The layers are flat colour. Icon Composer supplies the specular highlights,
 refraction, translucency and shadows, and masks the canvas to the macOS shape.

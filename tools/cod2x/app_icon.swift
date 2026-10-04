@@ -26,8 +26,7 @@ func numeral() -> CGPath {
     return p.copy(strokingWithWidth: 124, lineCap: .butt, lineJoin: .miter, miterLimit: 10)
 }
 func bridges(_ c: CGContext) {
-    for (rect, angle, pivot) in [(CGRect(x: 402, y: 214, width: 34, height: 96), -38.0, CGPoint(x: 419, y: 262)),
-                                 (CGRect(x: 452, y: 612, width: 34, height: 110), 42.0, CGPoint(x: 469, y: 667)),
+    for (rect, angle, pivot) in [(CGRect(x: 452, y: 612, width: 34, height: 110), 42.0, CGPoint(x: 469, y: 667)),
                                  (CGRect(x: 548, y: 676, width: 30, height: 118), 0.0, CGPoint(x: 563, y: 735))] {
         c.saveGState()
         c.translateBy(x: pivot.x, y: pivot.y); c.rotate(by: angle * .pi / 180); c.translateBy(x: -pivot.x, y: -pivot.y)
