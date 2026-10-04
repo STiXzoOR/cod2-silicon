@@ -18,7 +18,7 @@ rendering comparisons, fullscreen limits and measured performance.
 ## Requirements and game data
 
 - An **Apple silicon Mac**; Intel Macs are not supported by this port.
-- **macOS 13 or later**. <!-- WS21: confirm -->
+- **macOS 13 or later**.
 - Your own licensed Call of Duty 2 1.3 game data and CD key.
 - The original Steam Mac copy enables matching shaders; without it the app
   uses approximate shaders, with visibly different lighting.
@@ -57,8 +57,10 @@ git clone https://github.com/STiXzoOR/cod2-silicon && cd cod2-silicon && ./scrip
 ```
 
 The installer needs the Xcode Command Line Tools and CMake and explains how to
-get them. It installs to `~/Applications/CoD2 Silicon.app`. A locally built app
-is not quarantined. <!-- WS21: confirm installer and clean-checkout build prerequisites -->
+get them. It downloads and builds the pinned SDL release itself (no Homebrew),
+compiles the client and installs `~/Applications/CoD2 Silicon.app`. No original
+game binary is needed to build. A locally built app is not quarantined, so
+Gatekeeper does not block it.
 
 ## First run and playing
 
@@ -68,7 +70,6 @@ yours and saves it in `~/.cod2/preferences`. Never share that file or your key.
 It extracts the original shaders from your own Steam Mac copy when available,
 otherwise continues with approximate shaders. Configs, logs, demos, screenshots
 and the shader cache live in `~/Library/Application Support/CoD2 Silicon`.
-<!-- WS21: confirm first-run picker, CD-key prompt, data discovery and support path -->
 
 Use the multiplayer menu and server browser, or open a `cod2x://` server link:
 
@@ -137,11 +138,11 @@ See the [roadmap](docs/ROADMAP.md).
 ## Building for development
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for the complete merge gate and data
-requirements. Direct development builds currently need SDL2-compatible
-development libraries (the port was tested with Homebrew SDL3 + sdl2-compat),
-Python 3.9+ and the private reference inputs described in
-[typed-data generation](tools/datagen/README.md). The installer path above is
-the player-facing entry point. <!-- WS21: confirm public source build removes private reference prerequisite -->
+requirements. Development builds need SDL2-compatible development libraries
+(the port was tested with SDL3 + sdl2-compat; `scripts/build-sdl.sh` builds the
+pinned versions) and Python 3.9+. No proprietary input is needed: arm64 builds
+compile the committed typed-data snapshot in `build/lp64_gen/`, described in
+[typed-data generation](tools/datagen/README.md).
 
 ```sh
 cmake -S . -B build-macos -DCOD2_X64=ON -DCMAKE_BUILD_TYPE=Release \

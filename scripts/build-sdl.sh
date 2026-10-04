@@ -27,17 +27,25 @@ for source in SDL3-3.4.10 sdl2-compat-2.32.72; do
         /usr/bin/tar -xzf "$cache/$source.tar.gz" -C "$cache"
     fi
 done
-run() { /usr/sbin/taskpolicy -b /usr/bin/nice -n 19 "$@"; }
+# Full speed by default; COD2_BUILD_BACKGROUND=1 keeps builds on efficiency cores.
+run() {
+    if [[ ${COD2_BUILD_BACKGROUND:-0} == 1 ]]; then
+        /usr/sbin/taskpolicy -b /usr/bin/nice -n 19 "$@"
+    else
+        "$@"
+    fi
+}
+jobs=$(/usr/sbin/sysctl -n hw.ncpu)
 common=(-DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64
     -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 -DCMAKE_EXPORT_PACKAGE_REGISTRY=OFF "-DCMAKE_INSTALL_PREFIX=$prefix"
     "-DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew;/usr/local")
 run cmake -S "$cache/SDL3-3.4.10" -B "$cache/sdl3-build" "${common[@]}" \
     -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TESTS=OFF -DSDL_TEST_LIBRARY=OFF -DSDL_FRAMEWORK=OFF
-run cmake --build "$cache/sdl3-build" --parallel 4
+run cmake --build "$cache/sdl3-build" --parallel "$jobs"
 run cmake --install "$cache/sdl3-build"
 run cmake -S "$cache/sdl2-compat-2.32.72" -B "$cache/sdl2-build" "${common[@]}" \
     "-DCMAKE_PREFIX_PATH=$prefix" -DSDL2COMPAT_TESTS=OFF -DSDL2COMPAT_INSTALL=ON -DSDL2COMPAT_FRAMEWORK=OFF
-run cmake --build "$cache/sdl2-build" --parallel 4
+run cmake --build "$cache/sdl2-build" --parallel "$jobs"
 run cmake --install "$cache/sdl2-build"
 mkdir -p "$prefix/licenses"
 cp "$cache/SDL3-3.4.10/LICENSE.txt" "$prefix/licenses/SDL3-LICENSE.txt"

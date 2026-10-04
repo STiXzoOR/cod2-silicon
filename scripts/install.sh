@@ -13,7 +13,7 @@ while [[ $# -gt 0 ]]; do
         --build-dir) build=${2:?missing directory}; shift 2 ;;
         --mac-binary) mac_binary=${2:?missing path}; shift 2 ;;
         --stabs-binary) stabs_binary=${2:?missing path}; shift 2 ;;
-        *) printf 'Usage: %s [--prefix DIR] [--build-dir DIR] [--mac-binary FILE] [--stabs-binary FILE]\n' "$0" >&2; exit 2 ;;
+        *) printf 'Usage: %s [--prefix DIR] [--build-dir DIR] [--mac-binary FILE --stabs-binary FILE]\n(the two reference binaries are optional and only verify the committed typed-data snapshot)\n' "$0" >&2; exit 2 ;;
     esac
 done
 check_prerequisites

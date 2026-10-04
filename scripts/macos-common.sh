@@ -1,5 +1,5 @@
 #!/bin/bash
-# Shared source-build prerequisites and licensed input discovery.
+# Shared source-build prerequisites and the app build.
 check_prerequisites() {
     if [[ $(/usr/bin/uname -s) != Darwin || $(/usr/bin/uname -m) != arm64 ]]; then
         printf 'CoD2 Silicon requires an Apple silicon Mac running macOS 13 or later.\n' >&2
@@ -26,51 +26,42 @@ check_prerequisites() {
     fi
 }
 
-find_mac_binary() {
-    local candidate base
-    local roots=("$HOME/Games/CoD2-mac-bin" "$HOME/Games/CoD2"
-        "$HOME/Library/Application Support/Steam/steamapps/common/Call of Duty 2")
-    local libraries="$HOME/Library/Application Support/Steam/steamapps/libraryfolders.vdf"
-    if [[ -f "$libraries" ]]; then
-        while IFS= read -r base; do
-            roots+=("$base/steamapps/common/Call of Duty 2")
-        done < <(/usr/bin/awk -F '"' '$2 == "path" {gsub(/\\\\/, "\\", $4); print $4}' "$libraries")
+# Full speed by default; COD2_BUILD_BACKGROUND=1 keeps builds on efficiency cores.
+run_build() {
+    if [[ ${COD2_BUILD_BACKGROUND:-0} == 1 ]]; then
+        /usr/sbin/taskpolicy -b /usr/bin/nice -n 19 "$@"
+    else
+        "$@"
     fi
-    for base in /Applications/Call\ of\ Duty\ 2*; do
-        [[ -d "$base" ]] && roots+=("$base")
-    done
-    for base in "${roots[@]}"; do
-        [[ -d "$base" ]] || continue
-        while IFS= read -r -d '' candidate; do
-            printf '%s\n' "$candidate"
-            return 0
-        done < <(/usr/bin/find "$base" -type f -name 'Call of Duty 2 Multiplayer' -print0)
-    done
-    return 1
 }
 
 build_app() {
     local root=$1 build=$2 app=$3 version=$4 mac_binary=$5 stabs_binary=$6
     check_prerequisites
-    if [[ -z "$mac_binary" ]]; then mac_binary=$(find_mac_binary || true); fi
-
-    if [[ ! -f "$mac_binary" || ! -f "$stabs_binary" ]]; then
-        printf 'Source builds currently require two licensed inputs for typed-data generation.\nUse --mac-binary "/path/to/Call of Duty 2 Multiplayer" and --stabs-binary "/path/to/cod2mp_mac_1.3_i386". The binary stays outside the repository and app.\nThe prebuilt release needs only your game data.\n' >&2
-        return 1
+    # The committed build/lp64_gen snapshot needs no private input. When both
+    # reference binaries are supplied, CMake regenerates and verifies it instead.
+    local datagen_args=()
+    if [[ -n "$mac_binary" || -n "$stabs_binary" ]]; then
+        if [[ ! -f "$mac_binary" || ! -f "$stabs_binary" ]]; then
+            printf 'Snapshot verification needs both --mac-binary and --stabs-binary as existing files.\nOmit both to build from the committed snapshot.\n' >&2
+            return 1
+        fi
+        datagen_args=("-DCOD2_REGENERATE_TYPED_DATA=ON" "-DCOD2_STABS_BINARY=$stabs_binary" "-DCOD2_VALUES_BINARY=$mac_binary")
+    else
+        datagen_args=("-DCOD2_REGENERATE_TYPED_DATA=OFF" "-DCOD2_STABS_BINARY=" "-DCOD2_VALUES_BINARY=")
     fi
     "$root/scripts/build-sdl.sh" "$build/deps"
     local prefix="$build/deps/install" sdk
     sdk=$(/usr/bin/xcrun --show-sdk-path)
-    /usr/sbin/taskpolicy -b /usr/bin/nice -n 19 cmake -S "$root" -B "$build/client" \
+    run_build cmake -S "$root" -B "$build/client" \
         -DCOD2_X64=ON -DCOD2_FEATURE_CFLAGS=-DCOD2_CODX=1 -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 "-DCMAKE_OSX_SYSROOT=$sdk" \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCOD2_MACOS_RELEASE=ON "-DCOD2_MACOS_SDL_PREFIX=$prefix" \
         "-DCMAKE_PREFIX_PATH=$prefix" "-DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew;/usr/local" \
         "-DZLIB_LIBRARY=$sdk/usr/lib/libz.tbd" "-DZLIB_INCLUDE_DIR=$sdk/usr/include" \
         "-DCOD2_CURL_LIBRARY=$sdk/usr/lib/libcurl.tbd" \
-        "-DCOD2_STABS_BINARY=$stabs_binary" "-DCOD2_VALUES_BINARY=$mac_binary" \
-        "-DCOD2_TYPED_DATA_DIR=$build/typed" "-DPython3_EXECUTABLE=$python"
-    /usr/sbin/taskpolicy -b /usr/bin/nice -n 19 cmake --build "$build/client" --target cod2_macos --parallel 4
-    /usr/sbin/taskpolicy -b /usr/bin/nice -n 19 "$python" "$root/tools/cod2x/make_macos_app.py" \
+        "${datagen_args[@]}" "-DCOD2_TYPED_DATA_DIR=$build/typed" "-DPython3_EXECUTABLE=$python"
+    run_build cmake --build "$build/client" --target cod2_macos --parallel "$(/usr/sbin/sysctl -n hw.ncpu)"
+    run_build "$python" "$root/tools/cod2x/make_macos_app.py" \
         "$build/client/cod2_macos" "$app" --replace --frameworks "$prefix" --version "$version"
 }

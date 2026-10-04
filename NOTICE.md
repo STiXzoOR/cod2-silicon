@@ -20,6 +20,12 @@ payloads or decompiler dumps are included. Players supply their own licensed
 game data. Original Mac shaders are extracted locally from the player's own
 copy, never distributed with this project.
 
+The `build/lp64_gen/` snapshot re-encodes the data blobs that upstream
+opencod2 already commits, as typed C for 64-bit builds, in the same way as
+upstream's own generated `build/*_gen` sources. It adds type layouts from the
+original Mac 1.3 debug information and thirteen scalar values checked against
+the Steam Mac executable. It contains no machine code from either binary.
+
 “Call of Duty” is a trademark of Activision. This independent project is not
 affiliated with, authorized by, sponsored by or endorsed by Activision,
 Infinity Ward, Aspyr or the CoD2x project.

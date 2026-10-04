@@ -71,21 +71,26 @@ It contains the original ARB programs and constant metadata. The app extracts
 834 files into a local cache, validates their manifest and reuses them on
 later launches. It continues with approximate shaders if extraction is
 unavailable. No original shader is bundled or downloaded by this project.
-<!-- WS21: confirm shader discovery locations and extraction runtime dependency -->
 
-This Steam executable has incomplete STABS type information. It is suitable
-for shader extraction and the current generator's scalar-value input; it
-does **not** replace the full-STABS reference required by the direct
-build. See [typed-data generation](../../tools/datagen/README.md).
-<!-- WS21: confirm source installer resolves the full-STABS build prerequisite -->
+Extraction is native code inside the app; no Python or developer tools are
+needed at runtime. The app looks for the Mac executable in your game folder,
+Steam libraries (including those listed in `libraryfolders.vdf`),
+`/Applications` and `~/Games/CoD2-mac-bin`, and otherwise lets you choose the
+Mac game folder.
+
+Building from source does not need any Mac executable: arm64 builds compile
+the committed typed-data snapshot. The Steam executable has incomplete STABS
+type information; regenerating that snapshot additionally needs the
+full-STABS 1.3 reference. See [typed-data generation](../../tools/datagen/README.md).
 
 ## First-run paths and privacy
 
 The app finds your game folder or asks for it, and asks for a CD key if none
 is stored. The key lives in `~/.cod2/preferences`; configs, logs, demos,
 screenshots and the shader cache live in
-`~/Library/Application Support/CoD2 Silicon`.
-<!-- WS21: confirm picker, CD-key prompt and renamed support directory -->
+`~/Library/Application Support/CoD2 Silicon`. The key prompt checks the key's
+checksum before saving it with owner-only permissions. Data from an earlier
+`CoD2x Native` install is migrated once.
 
 If `default_mp.cfg` is missing, check that you selected the parent of `main/`
 and that the base and matching language archives are complete. Keep source

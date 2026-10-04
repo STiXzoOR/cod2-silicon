@@ -110,11 +110,8 @@ jobs:
             cmake --build "$build" --parallel 3
             ctest --test-dir "$build" --output-on-failure
           done
-      # The present datagen CMake module requires private Mac reference binaries.
-      # WS21/orchestrator must resolve that source-build prerequisite before
-      # public release. Never fetch proprietary inputs, use secrets for them,
-      # or disguise a failed configure as an expected success.
-      # WS21: confirm public clean-checkout datagen/build support.
+      # Clean checkouts compile the committed build/lp64_gen typed-data snapshot;
+      # no proprietary input is fetched or needed.
       - name: Configure and build stock Release client
         id: stock
         if: ${{ !cancelled() }}

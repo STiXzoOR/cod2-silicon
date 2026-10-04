@@ -69,11 +69,14 @@ review the output, verify it and describe substantial AI use in the PR.
 ## Native builds and merge gate
 
 Use Xcode Command Line Tools, CMake, Python 3.9+ and SDL2-compatible headers/
-libraries; development used SDL3 + sdl2-compat. Direct arm64 builds currently
-also need the two private reference inputs described in
-[tools/datagen/README.md](tools/datagen/README.md). A Steam shader executable
-alone lacks the full STABS needed for the type source.
-<!-- WS21: confirm clean-checkout source build and CI datagen prerequisites -->
+libraries; development used SDL3 + sdl2-compat (`scripts/build-sdl.sh` builds
+the pinned release versions without Homebrew). A clean checkout needs no
+proprietary input: arm64 builds compile the committed typed-data snapshot in
+`build/lp64_gen/`. If both reference binaries described in
+[tools/datagen/README.md](tools/datagen/README.md) are present, CMake
+regenerates the data and fails if it differs from the snapshot. Refresh the
+snapshot only with `-DCOD2_UPDATE_TYPED_SNAPSHOT=ON`, and commit the result
+with the change that required it.
 
 Run from the repository root. On a shared benchmarking Mac, prefix builds
 and fixture compilation with `taskpolicy -b nice -n 19`. Do not run competing
