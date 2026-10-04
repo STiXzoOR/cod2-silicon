@@ -79,7 +79,8 @@ between hourly runs. `rotate` performs the same check immediately.
 For a Mac cloud host or startup without user login, the separate
 `scripts/server/io.github.stixzoor.cod2silicon.daemon.plist` is an administrator
 edited template. Substitute every placeholder, create owned writable directories,
-set `UserName` to a dedicated non-root account, and install a root-owned,
+set `UserName` to a dedicated non-root account, retain literal quotes around
+engine path values containing spaces, and install a root-owned,
 non-writable-by-others plist in `/Library/LaunchDaemons/`. Bootstrap into `system`
 and use that domain for status/bootout. The user helper deliberately operates
 only in `gui/<uid>`. Arrange an equivalent log-rotation job for the daemon.
@@ -105,8 +106,9 @@ firewall and restrict who can reach rcon. Internet-facing packet-parser hardenin
 is still a separate workstream; start with a trusted LAN or VPN.
 
 Recommended baseline: `sv_fps 20`, eight slots, `sv_maxRate 25000`, `sv_pure 1`,
-`sv_allowDownload 0`, `sv_punkbuster 0`. The rate setting limits each client's
-bytes per second; zero means no server cap. Keep the stock IWD set identical on
+`sv_allowDownload 0`, `sv_punkbuster 0`. The rate setting limits non-LAN clients'
+bytes per second; zero means no server cap. Stock 1.3's LAN send path bypasses
+this throttle, so loopback testing does not establish WAN bandwidth enforcement. Keep the stock IWD set identical on
 clients and server. Pure validation compares protocol checksums of IWD contents,
 not a SHA-256 digest of the ZIP file. The runtime accepts higher `sv_fps` values
 (10–1000 is the registered range), but higher rates need live validation with
@@ -146,3 +148,9 @@ stop and uninstall, then reinstall with the new paths; configuration is preserve
 CoD2x client builds fall back to stock 1.3/protocol 118 behavior here. CoD2x
 server extensions, protocol 120 and server-side competitive features are outside
 this server's scope. See the validation report for the tested client baseline.
+
+A separate `scripts/server/package-server.sh [binary] [output-directory]` makes
+a local server tarball and SHA-256 sidecar. It includes the native binary,
+service templates/helper, config, guide and license, with no game data or shaders.
+It rejects non-arm64 binaries and direct non-system library dependencies.
+Signing/notarization and release publication remain release-operator tasks.
