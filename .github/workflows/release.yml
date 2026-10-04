@@ -3,6 +3,13 @@ name: Draft macOS arm64 release
 on:
   push:
     tags: ['v*']
+  # Dry run: package on the hosted runner and keep the zip as a workflow
+  # artifact, without creating or touching a release.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version stamped into the dry-run app (N.N.N)
+        default: 0.0.0
 
 permissions:
   contents: write
@@ -14,8 +21,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build from the committed snapshot, audit and ad-hoc sign
-        run: ./scripts/package-release.sh --version "${GITHUB_REF_NAME#v}"
+        env:
+          DRY_RUN_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then version=$DRY_RUN_VERSION; else version=${GITHUB_REF_NAME#v}; fi
+          ./scripts/package-release.sh --version "$version"
+      - name: Keep dry-run assets as a workflow artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cod2-silicon-dry-run
+          path: dist/
       - name: Upload assets to a draft release
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash

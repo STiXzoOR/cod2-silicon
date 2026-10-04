@@ -73,21 +73,28 @@ def main():
             parser.error("SDL install prefix must contain SDL3 and sdl2-compat dylibs")
         shutil.copytree(args.frameworks / "licenses", resources / "licenses")
         machos = [binary] + sorted(p for p in frameworks.glob("*.dylib") if not p.is_symlink())
+        bundle_rpath = "@executable_path/../Frameworks"
         for macho in machos:
-            subprocess.run(["codesign", "--remove-signature", str(macho)], check=True)
+            # Edit signed Mach-O files directly and re-sign afterwards. Stripping the
+            # signature first leaves a __LINKEDIT gap that Xcode 16's install_name_tool
+            # rejects, and no-op edits are skipped entirely.
             dependencies = subprocess.check_output(["otool", "-L", str(macho)], text=True).splitlines()[1:]
             for line in dependencies:
                 dependency = line.strip().rsplit(" (", 1)[0]
                 name = pathlib.PurePosixPath(dependency).name
-                if name.startswith("libSDL") and (frameworks / name).is_file():
+                if name.startswith("libSDL") and (frameworks / name).is_file() and dependency != "@rpath/" + name:
                     subprocess.run(["install_name_tool", "-change", dependency, "@rpath/" + name, str(macho)], check=True)
             if macho != binary:
-                subprocess.run(["install_name_tool", "-id", "@rpath/" + macho.name, str(macho)], check=True)
+                current = subprocess.check_output(["otool", "-D", str(macho)], text=True).splitlines()[1:]
+                if [line.strip() for line in current] != ["@rpath/" + macho.name]:
+                    subprocess.run(["install_name_tool", "-id", "@rpath/" + macho.name, str(macho)], check=True)
             commands = subprocess.check_output(["otool", "-l", str(macho)], text=True)
             rpaths = re.findall(r"cmd LC_RPATH\n.*?path (.*?) \(offset", commands, re.DOTALL)
             for rpath in rpaths:
-                subprocess.run(["install_name_tool", "-delete_rpath", rpath, str(macho)], check=True)
-            subprocess.run(["install_name_tool", "-add_rpath", "@executable_path/../Frameworks", str(macho)], check=True)
+                if rpath != bundle_rpath:
+                    subprocess.run(["install_name_tool", "-delete_rpath", rpath, str(macho)], check=True)
+            if bundle_rpath not in rpaths:
+                subprocess.run(["install_name_tool", "-add_rpath", bundle_rpath, str(macho)], check=True)
         for macho in machos:
             dependencies = subprocess.check_output(["otool", "-L", str(macho)], text=True).splitlines()[1:]
             for line in dependencies:
