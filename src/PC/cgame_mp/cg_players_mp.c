@@ -62,7 +62,7 @@ void CG_PlayerSprites(centity_t *cent);
 void CG_Player(centity_t *cent);
 void CG_Corpse(centity_t *cent);
 
-#if defined(COD2_X64)
+#if defined(COD2_X64) && COD2_X64
 #define CI_STRIDE sizeof(clientInfo_t)
 #else
 #define CI_STRIDE 1208
@@ -99,7 +99,7 @@ void CG_ResetPlayerEntity(centity_t *cent)
     es = &cent->nextState;
     clientNum = es->clientNum;
 
-#if defined(COD2_X64)
+#if defined(COD2_X64) && COD2_X64
     ci = (byte *)&cg->bgs.clientinfo[clientNum];
 #else
     ciBase = (byte *)(((char *)cg + offsetof(cg_t, bgs.anim_user)) + clientNum * CI_STRIDE);
@@ -127,7 +127,7 @@ void CG_ResetPlayerEntity(centity_t *cent)
             XAnimSetCompleteGoalWeight(pAnimTree, (*(unsigned short *)&cg->bgs.animScriptData.turningAnim) , 0.0f, 0.0f, 1.0f, 0, 0, 0);
         }
 
-#if defined(COD2_X64)
+#if defined(COD2_X64) && COD2_X64
         memset(&((clientInfo_t *)ci)->legs, 0, sizeof(lerpFrame_t));
 #else
         memset(ciBase + 0x394, 0, 48);
@@ -137,7 +137,7 @@ void CG_ResetPlayerEntity(centity_t *cent)
         ((clientInfo_t *)ci)->legs.pitchAngle = 0;
         ((clientInfo_t *)ci)->legs.pitching = 0;
 
-#if defined(COD2_X64)
+#if defined(COD2_X64) && COD2_X64
         memset(&((clientInfo_t *)ci)->torso, 0, sizeof(lerpFrame_t));
 #else
         memset(ciBase + 0x3c4, 0, 48);
@@ -215,7 +215,7 @@ void CG_PlayerSprites(centity_t *cent)
     int height;
     MaterialHandle material;
 
-#if defined(COD2_X64)
+#if defined(COD2_X64) && COD2_X64
     ci = (byte *)&cg->bgs.clientinfo[cent->nextState.clientNum];
     if (!((clientInfo_t *)ci)->infoValid)
         return;
@@ -315,7 +315,7 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
     {
         int iClientNum = es->clientNum;
         byte *ciBase = (byte *)(((char *)cg + offsetof(cg_t, bgs.anim_user)) + iClientNum * CI_STRIDE);
-#if defined(COD2_X64)
+#if defined(COD2_X64) && COD2_X64
         byte *turretCi = (byte *)&cg->bgs.clientinfo[iClientNum];
 #else
         byte *turretCi = ciBase + 0x14;
@@ -348,7 +348,7 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
         if (!*(int *)turretCi)
             return;
 
-#if defined(COD2_X64)
+#if defined(COD2_X64) && COD2_X64
         pLerpAnim = (byte *)&((clientInfo_t *)turretCi)->legs;
 #else
         pLerpAnim = ciBase + 0x394;
@@ -732,7 +732,7 @@ void CG_Corpse(centity_t *cent)
 
     clientNum = cent->nextState.number;
 
-#if defined(COD2_X64)
+#if defined(COD2_X64) && COD2_X64
     ci = (byte *)&cgs->corpseinfo[clientNum - 64];
 #else
     ci = (byte *)((char *)cgs - 0x6bec + clientNum * CI_STRIDE);

@@ -1489,7 +1489,7 @@ static void __attribute_regparm__(3) Dvar_MakeExplicitType(
         dvar->current.string = NULL;
     }
 
-#if defined(COD2_X64)
+#if defined(COD2_X64) && COD2_X64
     /* Mac 1.3 compares the live slots after each clear (0x52c48, 0x52c67).
        Keeping the old aliases here leaked startup +set strings on promotion. */
     Dvar_FreeOwnedString(oldLatchedString, dvar->current.string, oldResetString);
@@ -1498,7 +1498,7 @@ static void __attribute_regparm__(3) Dvar_MakeExplicitType(
 #endif
     dvar->latched.string = NULL;
 
-#if defined(COD2_X64)
+#if defined(COD2_X64) && COD2_X64
     Dvar_FreeOwnedString(oldResetString, dvar->current.string, NULL);
 #else
     Dvar_FreeOwnedString(oldResetString, oldCurrentString, oldLatchedString);

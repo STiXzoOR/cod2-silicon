@@ -2364,7 +2364,7 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
             I_strncpyz(mapname, MSG_ReadStringLine(msg), sizeof(mapname));
             gametype = MSG_ReadStringLine(msg);
             CL_SetupForNewServerMap(mapname, gametype);
-#if defined(COD2_X64)
+#if defined(COD2_X64) && COD2_X64
             /* Mac 1.3 at 0x14cec6 unconditionally returns to CA_CONNECTED.
                Active clients must send acknowledgements while the map loads. */
             conn->state = CA_CONNECTED;
