@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--binary', type=Path, default=Path.home() / 'Projects/cod2-native-refs/macbin/cod2mp_mac_1.3_i386')
 parser.add_argument('--build', type=Path, default=ROOT / 'build-macos')
 args = parser.parse_args()
-missing = [str(path) for path in [args.binary] if not path.is_file()]
+missing = [str(path) for path in [args.binary] if not path.exists()]
 if missing:
     print('SKIP retail-derived LP64 layouts: missing private input: ' + ', '.join(missing))
     raise SystemExit(0)

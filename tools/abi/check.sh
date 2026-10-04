@@ -12,7 +12,7 @@ python3 "$root/tools/abi/audit.py" "$database" --output "$output/functions.json"
     --baseline "$root/tools/abi/baseline.json"
 python3 "$root/tools/abi/callback_tables.py" "$database" --audit "$output/functions.json" \
     --baseline "$root/tools/abi/callback-baseline.json" --output "$output/callbacks.json"
-if [ ! -f "$binary" ]; then
+if [ ! -e "$binary" ]; then
     echo "SKIP retail import ABI check: missing private STABS input: $binary"
     exit 0
 fi
