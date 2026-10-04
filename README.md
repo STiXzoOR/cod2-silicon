@@ -146,8 +146,9 @@ cmake --build build-macos-codx --target cod2_macos --parallel 3
 ```
 
 `COD2_CODX=ON` is not a CMake option: use the feature flag shown above.
-The original Linux, Windows and WebAssembly/i386 paths retain their build
-instructions in the [upstream README](docs/upstream-opencod2-README.md).
+The original i386 Linux and Windows paths retain their build instructions in
+the [upstream README](docs/upstream-opencod2-README.md); WebAssembly has its
+[own build guide](src/web/README.md).
 
 | Path | Contents |
 | --- | --- |
