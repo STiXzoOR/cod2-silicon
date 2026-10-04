@@ -1,7 +1,6 @@
 #include "common_types.h"
 #include <assert.h>
 #include <ctype.h>
-#include <setjmp.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,17 +9,15 @@
 int dvarCount, dvar_modifiedFlags;
 dvar_t *sortedDvars;
 const char str_00219524[] = "off", str_00219528[] = "on";
-static jmp_buf exhausted;
-static char error[512];
 
 void Com_Error(int code, const char *format, ...)
 {
     va_list args;
     (void)code;
     va_start(args, format);
-    vsnprintf(error, sizeof(error), format, args);
+    vfprintf(stderr, format, args);
     va_end(args);
-    longjmp(exhausted, 1);
+    abort();
 }
 void Com_Printf(const char *format, ...) { (void)format; }
 void Com_PrintMessage(int channel, const char *message) { (void)channel; (void)message; }

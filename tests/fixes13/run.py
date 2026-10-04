@@ -150,10 +150,17 @@ if not args.test or 'trajectory' in args.test:
     run('trajectory', ''.join(function(path, n) for n in
         ['BG_Vec3Copy', 'BG_Vec3Mad', 'BG_EvaluateTrajectory']))
 if not args.test or 'timing' in args.test:
+    # This fixture includes CoD2x's optional policy cap, even with a stock database.
+    saved_flags = flags
+    flags = [*flags, '-DCOD2_CODX=1']
+    for path in ['src/PC/qcommon/cod2x_protocol.c', 'src/PC/qcommon/cod2x_runtime.c',
+                 'src/PC/qcommon/common.c', 'src/PC/client_mp/cl_input.c']:
+        preprocessed.pop(path, None)
     run('timing', function('src/PC/qcommon/cod2x_protocol.c', 'Cod2x_LimitedFPS') +
         function('src/PC/qcommon/cod2x_runtime.c', 'Cod2x_FrameFPS') +
         function('src/PC/qcommon/common.c', 'Com_Frame_Try_Block_Function') +
         function('src/PC/client_mp/cl_input.c', 'CL_SendCmdInternal'))
+    flags = saved_flags
 if not args.test or 'renderer_options' in args.test:
     path = 'src/Mac/DirectX_9/CDirect3DDevice.c'
     assert 'getenv(' not in function(path, 'CDirect3DDevice_DrawIndexedPrimitive')

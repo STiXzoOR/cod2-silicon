@@ -39,6 +39,12 @@ void I_strncpyz(char *dest, const char *src, int size) { snprintf(dest, size, "%
 void Info_SetValueForKey(char *s, const char *key, const char *value) { (void)s; (void)key; (void)value; }
 Bool NET_OutOfBandData(netsrc_t sock, netadr_t adr, unsigned char *data, int len)
 { (void)sock; (void)adr; (void)data; (void)len; return 1; }
+#if COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* This fixture covers CA_CONNECTING only. The connect encoder has its own suite. */
+void Cod2x_PrepareConnect(void) { assert(!"unexpected connect packet"); }
+size_t Cod2x_EncodeConnect(char *data, size_t capacity, const char *userinfo)
+{ (void)data; (void)capacity; (void)userinfo; assert(!"unexpected connect packet"); return 0; }
+#endif
 #include "challenge_resend_source.h"
 int main(void)
 {

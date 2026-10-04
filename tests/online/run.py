@@ -49,6 +49,12 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
         if name == 'mantle':
             source = source[:source.index('extern const dvar_t *Dvar_RegisterBool')]
         functions = [] if names else [source]
+        if name in ('cdkey_hash', 'challenge_resend') and '-DCOD2_CODX=1' in flags:
+            # The feature build calls the real shared digest helper, not the
+            # gate-off inline implementation supplied by cdkey_hash.h.
+            identity = (root / 'src/PC/qcommon/cod2x_identity.c').read_text()
+            start = identity.index('int Cod2x_CDKeyHash(')
+            functions.append(identity[start:identity.index('\n}\n', start) + 3])
         if name == 'scheduled_fx':
             # Keep the production native link accessor and its layout assertion.
             functions.append(source[source.index('#if defined(COD2_X64)'):
