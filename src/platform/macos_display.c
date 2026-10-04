@@ -34,6 +34,12 @@ static int windowMode = MAC_WINDOWED;
 static int refreshRate;
 static int initialized;
 static MacContext *screenContext;
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+/* Experimental: GPU completion does not guarantee a nonblocking Cocoa swap. */
+static int presentMode;
+static GLsync presentFence;
+void MacPlatform_SetPresentMode(int mode) { presentMode = mode; }
+#endif
 #if !defined(COD2_X64)
 static unsigned short originalGamma[3][256];
 static int gammaSaved;
@@ -60,6 +66,8 @@ int MacDisplay_Initialize(void)
     /* Cocoa reads this at video initialization, before mode enumeration.
      * The environment can opt into Spaces for Game Mode experiments. */
     SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
+    if (SDL_GetHintBoolean(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, SDL_FALSE))
+        SDL_SetHint("SDL_VIDEO_SYNC_WINDOW_OPERATIONS", "1");
 #endif
     if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
         return -1;
@@ -100,6 +108,11 @@ void MacPlatform_ConfigureWindow(int width, int height, int mode, int refresh)
 static int SetWindowMode(void)
 {
 #if defined(__APPLE__) && defined(COD2_X64)
+    /* A native fullscreen Space keeps the desktop display mode. Selecting an
+     * exclusive display mode sends SDL down the non-Spaces Cocoa path. */
+    if (windowMode == MAC_FULLSCREEN &&
+        SDL_GetHintBoolean(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, SDL_FALSE))
+        windowMode = MAC_BORDERLESS;
     /* Reset also runs at map load. Toggling out and immediately back into a
      * Cocoa fullscreen Space can cancel its asynchronous transition. */
     SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, windowMode == MAC_BORDERLESS ? "0" : "1");
@@ -327,6 +340,18 @@ void SDL_GL_SwapWindowDirect(void)
     MacContext *ctx = screenContext;
     if (!ctx)
         return;
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+    if (presentFence) {
+        GLenum ready = glClientWaitSync(presentFence, 0, 0);
+        if (presentMode && ready == GL_TIMEOUT_EXPIRED) {
+            /* Keep submitting the current scene, never queue an older image. */
+            glFlush();
+            return;
+        }
+        glDeleteSync(presentFence);
+        presentFence = NULL;
+    }
+#endif
     int width, height;
 #if defined(__APPLE__) && defined(COD2_X64)
     MacPlatform_GetDrawableSize(&width, &height);
@@ -361,6 +386,12 @@ void SDL_GL_SwapWindowDirect(void)
     if (!GammaPresent(&ctx->gamma, ctx->width, ctx->height, x, y, destW, destH))
 #endif
         glBlitFramebufferEXT(0, 0, ctx->width, ctx->height, x, y, x + destW, y + destH, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+    /* Swap already flushes this stream. Include the fence in that submission;
+     * a second flush after swap is costly in Apple's Metal-backed GL driver. */
+    if (presentMode)
+        presentFence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+#endif
     SDL_GL_SwapWindow(sdl_gl_window);
 #if defined(COD2_X64)
     glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, readFramebuffer);
@@ -384,6 +415,12 @@ uint16_t MacDisplay_ReleaseContext(void **reference)
 #endif
     if (ctx->context) {
         SDL_GL_MakeCurrent(sdl_gl_window, ctx->context);
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+        if (presentFence) {
+            glDeleteSync(presentFence);
+            presentFence = NULL;
+        }
+#endif
 #if defined(COD2_X64)
         GammaRelease(&ctx->gamma);
 #endif

@@ -25,6 +25,7 @@ void SetAnimCheck(int enabled) { (void)enabled; }
 int Com_EventLoop(void) { return ++clockMsec; }
 void NET_Sleep(int msec) { assert(msec == 0); ++sleeps; }
 void Sys_WaitUntilMilliseconds(unsigned int target) { assert(target > (unsigned int)clockMsec); ++sleeps; }
+void MacSystem_ObserveFrame(int engineTime) { assert(engineTime == clockMsec); }
 void Cbuf_Execute(void) {}
 void Com_Printf(const char *fmt, ...) { (void)fmt; }
 void CL_SwitchToLocalClient(int n) { assert(n == 0); }

@@ -22,6 +22,7 @@ parser.add_argument('--resolution', default='1920x1080')
 parser.add_argument('--window-mode', choices=['windowed', 'fullscreen', 'borderless'], default='windowed')
 parser.add_argument('--maxfps', type=int, default=333)
 parser.add_argument('--seconds', type=float, default=15)
+parser.add_argument('--set', nargs=2, action='append', default=[], metavar=('DVAR', 'VALUE'))
 parser.add_argument('--gpu-sync', type=int, choices=range(4), default=None)
 parser.add_argument('--view-pos', type=float, nargs=4, default=[-299, 1001, 121, 90],
                     metavar=('X', 'Y', 'Z', 'YAW'), help='eye position and yaw (cheats)')
@@ -29,6 +30,7 @@ parser.add_argument('--record', help='record a demo basename during the measurem
 parser.add_argument('--combat', action='store_true', help='fire, reload, move and throw grenades throughout capture')
 parser.add_argument('--profile', choices=['sample', 'xctrace'])
 parser.add_argument('--cpu-profile', action='store_true', help='in-process main-thread sampler; FPS is perturbed')
+parser.add_argument('--cocoa-probe', action='store_true', help='time slow AppKit methods; FPS is perturbed')
 args = parser.parse_args()
 if args.app:
     if args.app.suffix != '.app' or not args.app.is_dir():
@@ -47,6 +49,8 @@ for path in (args.data, args.binary, args.output):
         parser.error('paths cannot contain quotes, semicolons, plus signs, or newlines')
 out = args.output.resolve()
 out.mkdir(parents=True, exist_ok=False)
+from bench_state import snapshot
+state = snapshot(out, 'before')
 profile = out / 'home/raw/players/default'
 profile.mkdir(parents=True)
 full = int(args.window_mode != 'windowed')
@@ -54,11 +58,15 @@ borderless = int(args.window_mode == 'borderless')
 (profile / 'config_mp.cfg').write_text(f'seta r_mode "{args.resolution}"\nseta r_fullscreen "{full}"\nseta r_borderless "{borderless}"\n')
 probe = out / 'frame-probe.dylib'
 flags = subprocess.check_output(['sdl2-config', '--cflags', '--libs'], text=True).split()
+if args.cocoa_probe:
+    flags += [str(ROOT / 'tools/macos/cocoa-probe.m'), '-framework', 'Cocoa']
 subprocess.run(['clang', '-dynamiclib', '-O2', '-Wno-deprecated-declarations', *flags,
                 str(ROOT / 'tools/macos/frame-probe.c'), str(ROOT / 'tools/macos/stack-probe.c'),
                 '-framework', 'OpenGL', '-framework', 'CoreGraphics', '-o', str(probe)], check=True)
 env = dict(os.environ, DYLD_INSERT_LIBRARIES=str(probe), COD2_FRAME_CSV=str(out / 'frames.csv'), COD2_FRAME_SECONDS=str(args.seconds))
 env['COD2_FRAME_PID'] = str(out / 'observer.pid')
+if args.cocoa_probe:
+    env['COD2_COCOA_TRACE'] = str(out / 'cocoa.csv')
 if args.cpu_profile:
     env['COD2_CPU_PROFILE'] = str(out / 'cpu-stacks.csv')
 command = [str(args.binary.resolve()), '+set', 'fs_basepath', '"' + str(args.data.resolve()) + '"',
@@ -69,6 +77,10 @@ command = [str(args.binary.resolve()), '+set', 'fs_basepath', '"' + str(args.dat
            '+set', 'com_maxfps', str(args.maxfps), '+set', 'cg_drawFPS', '1',
            '+set', 'sv_pure', '0', '+set', 'g_gametype', 'dm', '+set', 'sv_maxclients', '1',
            '+devmap', 'mp_toujane']
+for name, value in args.set:
+    if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*', name) or not re.fullmatch(r'[A-Za-z0-9_.-]+', value):
+        parser.error('--set requires a simple dvar and value')
+    command[1:1] = ['+set', name, value]
 if args.gpu_sync is not None:
     command[1:1] = ['+set', 'r_gpuSync', str(args.gpu_sync)]
 (out / 'launch.json').write_text(json.dumps(dict(command=command, metal_hud=env.get('MTL_HUD_ENABLED', '0')), indent=2) + '\n')
@@ -79,7 +91,7 @@ with (out / 'console.log').open('w') as stream:
         writer = os.fdopen(os.open(fifo, os.O_RDWR | os.O_NONBLOCK), 'w', buffering=1)
         launch = ['open', '-n', '-a', str(args.app.resolve()), '--stdin', str(fifo),
                   '--stdout', str(out / 'console.log'), '--stderr', str(out / 'console.log')]
-        for name in ['DYLD_INSERT_LIBRARIES', 'COD2_FRAME_CSV', 'COD2_FRAME_SECONDS', 'COD2_FRAME_PID', 'COD2_CPU_PROFILE', 'SDL_VIDEO_MAC_FULLSCREEN_SPACES', 'MTL_HUD_ENABLED', 'COD2_MAC_SHADER_CACHE', 'D3D_PROG', 'COD2_MAC_SHADER_DIAGNOSTICS']:
+        for name in ['DYLD_INSERT_LIBRARIES', 'COD2_FRAME_CSV', 'COD2_FRAME_SECONDS', 'COD2_FRAME_PID', 'COD2_CPU_PROFILE', 'COD2_COCOA_TRACE', 'SDL_VIDEO_MAC_FULLSCREEN_SPACES', 'MTL_HUD_ENABLED', 'COD2_MAC_SHADER_CACHE', 'D3D_PROG', 'COD2_MAC_SHADER_DIAGNOSTICS']:
             if name in env:
                 launch += ['--env', name + '=' + env[name]]
         subprocess.run([*launch, '--args', *command[1:]], check=True, timeout=15)
@@ -103,9 +115,9 @@ with (out / 'console.log').open('w') as stream:
                 self.stdin.close()
         process = OwnedApp()
     else:
-        process = subprocess.Popen(command, env=env, stdin=subprocess.PIPE, stdout=stream,
+        process = subprocess.Popen(['timeout', '-k', '10', str(args.seconds + 90), *command], env=env, stdin=subprocess.PIPE, stdout=stream,
                                    stderr=stream, text=True, cwd=out, start_new_session=True)
-    (out / 'client.pid').write_text(str(process.pid))
+    client_pid = process.pid
     def send(text):
         process.stdin.write(text + '\n')
         process.stdin.flush()
@@ -121,8 +133,12 @@ with (out / 'console.log').open('w') as stream:
         raise RuntimeError(f'timeout waiting for {text}: {out}')
     try:
         wait_for('Going from CS_PRIMED to CS_ACTIVE')
-        if not (out / 'observer.pid').exists() or int((out / 'observer.pid').read_text()) != process.pid:
+        if not (out / 'observer.pid').exists():
             raise RuntimeError('frame observer was not loaded into the client; --binary must be the native executable')
+        client_pid = int((out / 'observer.pid').read_text())
+        if not args.app and os.getpgid(client_pid) != process.pid:
+            raise RuntimeError('observer PID is outside our owned process group')
+        (out / 'client.pid').write_text(str(client_pid))
         send('sv_serverId')
         send('configstrings')
         log = wait_for('1250: serverinfo_dm')
@@ -146,8 +162,8 @@ with (out / 'console.log').open('w') as stream:
         time.sleep(5)
         send('viewpos')
         if args.profile:
-            cmd = ['sample', str(process.pid), '3', '1', '-file', str(out / 'profile.txt')] if args.profile == 'sample' else [
-                'xcrun', 'xctrace', 'record', '--template', 'Time Profiler', '--attach', str(process.pid),
+            cmd = ['sample', str(client_pid), '3', '1', '-file', str(out / 'profile.txt')] if args.profile == 'sample' else [
+                'xcrun', 'xctrace', 'record', '--template', 'Time Profiler', '--attach', str(client_pid),
                 '--time-limit', '5s', '--output', str(out / 'profile.trace')]
             try:
                 with (out / 'profile.log').open('w') as log:
@@ -157,7 +173,7 @@ with (out / 'console.log').open('w') as stream:
         if args.record:
             send('record ' + args.record)
             time.sleep(1)
-        os.kill(process.pid, signal.SIGUSR1)
+        os.kill(client_pid, signal.SIGUSR1)
         wait_for('[frame-probe]')
         deadline = time.monotonic() + args.seconds + 10
         started = time.monotonic()
@@ -196,6 +212,9 @@ with (out / 'console.log').open('w') as stream:
                 time.sleep(.1)
             shutdown = 'quit'
             if process.poll() is None:
+                owned = subprocess.check_output(['ps', '-p', str(client_pid), '-o', 'command='], text=True)
+                if str(out / 'home') not in owned:
+                    raise RuntimeError('refusing to kill a PID without our unique fs_homepath')
                 if args.app:
                     os.kill(process.pid, signal.SIGKILL)
                 else:
@@ -215,19 +234,34 @@ result = dict(samples=len(values), fps=1000 / statistics.mean(values),
               milliseconds_histogram={str(value): sum(int(row['engine_ms']) == value for row in rows)
                                       for value in sorted({int(row['engine_ms']) for row in rows})},
               phases_ms={name: statistics.mean(float(row[name]) for row in rows)
-                         for name in ['swap_ms', 'poll_ms', 'blit_ms', 'clear_ms', 'fence_ms']},
+                         for name in ['swap_ms', 'poll_ms', 'blit_ms', 'clear_ms', 'fence_ms', 'cap_wait_ms', 'wait_overshoot_ms', 'sleep_ms', 'pump_ms', 'peep_ms', 'scene_clear_ms', 'present_clear_ms', 'sleep_overshoot_ms', 'flush_ms', 'sync_issue_ms'] if name in rows[0]},
               main_thread_cpu_ms=statistics.mean(float(row['cpu_ms']) for row in rows),
+              sync_timeouts=sum(int(row.get('sync_timeouts', 0)) for row in rows),
               upload_calls=sum(int(row['upload_calls']) for row in rows),
               program_calls=sum(int(row['program_calls']) for row in rows),
               buffer_calls=sum(int(row['buffer_calls']) for row in rows),
               poll_calls_per_frame=statistics.mean(int(row['poll_calls']) for row in rows),
               resolution=args.resolution, window_mode=args.window_mode, maxfps=args.maxfps,
+              cocoa_probe=args.cocoa_probe,
               requested_view_pos=args.view_pos,
               cpu_profile=args.cpu_profile,
               combat=args.combat, measured_seconds=sum(values) / 1000,
               app=str(args.app.resolve()) if args.app else None,
               shutdown=shutdown)
+result['machine_state'] = dict(before=state, after=snapshot(out, 'after'))
+result['phase_max_ms'] = {name: max(float(row[name]) for row in rows) for name in result['phases_ms']}
+result['dvars'] = dict(args.set)
+result['fullscreen_spaces'] = os.environ.get('SDL_VIDEO_MAC_FULLSCREEN_SPACES', '0')
 log = (out / 'console.log').read_text(errors='replace')
+result['clock_boundary'] = 'client' if '[frame-probe-clock] boundary=client' in log else 'swap'
+presented = out / 'frames.csv.presented.csv'
+if presented.exists():
+    with presented.open() as stream:
+        intervals = [float(row['interval_ms']) for row in csv.DictReader(stream)]
+    if intervals:
+        ordered_presented = sorted(intervals)
+        result['presented'] = dict(samples=len(intervals), fps=1000 / statistics.mean(intervals),
+            frame_ms_p99=ordered_presented[math.ceil(len(intervals)*.99)-1], frame_ms_max=max(intervals))
 match = re.search(r'\[frame-probe\] ([^\n]+)', log)
 result['actual_presentation'] = match.group(1) if match else None
 match = re.search(r'\[frame-probe-display\] ([^\n]+)', log)

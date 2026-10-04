@@ -118,6 +118,7 @@ def main():
     parser.add_argument('--timeout', type=float, default=180)
     parser.add_argument('--maxfps', type=int, default=0, help='0 uncapped; 250 for pacing check')
     parser.add_argument('--resolution', help='render resolution, e.g. 1920x1080')
+    parser.add_argument('--set', nargs=2, action='append', default=[], metavar=('DVAR', 'VALUE'))
     parser.add_argument('--window-mode', choices=['windowed', 'fullscreen', 'borderless'])
     args = parser.parse_args()
     if not re.fullmatch(r'[A-Za-z0-9_-]+(?:\.dm_1)?', args.demo):
@@ -131,6 +132,8 @@ def main():
     if not (data / 'main' / 'demos' / demo).is_file():
         parser.error(f'missing {data / "main" / "demos" / demo}')
     out.mkdir(parents=True, exist_ok=False)
+    from bench_state import snapshot
+    state = snapshot(out, 'before')
     # A fresh home has no renderer config. Apply latched modes before startup;
     # restarting a renderer after loading assets adds unrelated reset work.
     if args.resolution or args.window_mode:
@@ -154,6 +157,10 @@ def main():
     if args.window_mode:
         command += ['+set', 'r_fullscreen', str(int(args.window_mode != 'windowed')),
                     '+set', 'r_borderless', str(int(args.window_mode == 'borderless'))]
+    for name, value in args.set:
+        if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*', name) or not re.fullmatch(r'[A-Za-z0-9_.-]+', value):
+            parser.error('--set requires a simple dvar and value')
+        command += ['+set', name, value]
     command += ['+timedemo', args.demo]
     (out / 'benchmark.json').write_text(json.dumps(dict(command=command,
         maxfps=args.maxfps, resolution=args.resolution, window_mode=args.window_mode,
@@ -162,7 +169,7 @@ def main():
     monitor = CompletionMonitor(out)
     with (out / 'wrapper.log').open('w') as stream:
         process = subprocess.Popen(command, env=env, stdout=stream, stderr=subprocess.STDOUT,
-                                   start_new_session=True, cwd=out)
+                                   start_new_session=True, cwd=out, stdin=subprocess.PIPE, text=True)
         completed = False
         try:
             while time.monotonic() < deadline:
@@ -176,6 +183,13 @@ def main():
                     break
                 time.sleep(.1)
         finally:
+            if completed and process.poll() is None:
+                try:
+                    process.stdin.write('quit\n')
+                    process.stdin.flush()
+                    process.wait(timeout=10)
+                except (BrokenPipeError, subprocess.TimeoutExpired):
+                    pass
             natural_exit = process.poll()
             stop(process)
     if natural_exit not in (None, 0):
@@ -187,6 +201,9 @@ def main():
         raise ValueError(f'Expected one engine timing CSV, found {len(candidates)}; inspect {out}')
     result = summarize(logs(out), candidates[0])
     result['csv'] = str(candidates[0])
+    result['machine_state'] = dict(before=state, after=snapshot(out, 'after'))
+    result['dvars'] = dict(args.set)
+    result['fullscreen_spaces'] = os.environ.get('SDL_VIDEO_MAC_FULLSCREEN_SPACES', '0')
     result.update(resolution=args.resolution, window_mode=args.window_mode, maxfps=args.maxfps)
     result['stopped_after_completion'] = natural_exit is None
     (out / 'results.json').write_text(json.dumps(result, indent=2) + '\n')
