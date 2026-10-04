@@ -24,12 +24,16 @@ try:
     wait(lambda:'fixture link localhost:28966' in log.read_text(errors='replace'))
     child=int(re.search(r'fixture ready (\d+)',log.read_text()).group(1))
     launcher=int(subprocess.check_output([str(fixture),'find','io.github.stixzoor.cod2silicon.ws25fixture'],text=True).strip())
-    assert subprocess.check_output([str(fixture),'policy',str(launcher)],text=True).strip()=='1'
+    # Another process sees activation-policy changes asynchronously, so wait for each state.
+    policy=lambda:subprocess.check_output([str(fixture),'policy',str(launcher)],text=True).strip()
+    wait(lambda:policy()=='1')
     arguments=subprocess.check_output(['ps','-p',str(child),'-o','args='],text=True)
     assert 'p+quit' not in arguments and ' password ' not in arguments
     exitfile.touch()
     wait(lambda:'returned to launcher (game exit 37)' in log.read_text(errors='replace'))
-    assert subprocess.check_output([str(fixture),'policy',str(launcher)],text=True).strip()=='0'
+    wait(lambda:policy()=='0')
+    # A reused scratch home exercises a cold link once setup is complete: it starts one game only.
+    assert log.read_text(errors='replace').count('game started')==1
     print('PASS: actual cold LaunchServices cod2x delivery, scratch onboarding, native-valid plus password deferred without argv exposure, game→launcher')
 finally:
     for pid in [launcher,child]:

@@ -6,9 +6,13 @@ import AppKit
 }
 @MainActor final class LauncherDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.regular)
+        // Become a regular, active app first; boot() may start the game straight away (a cold
+        // cod2x:// link or --play) and then hands the Dock to it.
+        if !LauncherState.model.gameRunning {
+            NSApp.setActivationPolicy(.regular)
+            NSApp.activate(ignoringOtherApps: true)
+        }
         LauncherState.model.boot()
-        NSApp.activate(ignoringOtherApps: true)
     }
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls { LauncherState.model.openLink(url.absoluteString) }

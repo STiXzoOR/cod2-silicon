@@ -80,6 +80,7 @@ struct MediaEntry: Identifiable {
     private var browserTask: Task<Void, Never>?
     private var pendingLink: LaunchLink?
     private var fastPlay = false
+    private var booted = false
     private var setupTask: Task<Void, Never>?
     var forwardedArguments: [String] = []
     var exitAfterGame = false
@@ -136,6 +137,7 @@ struct MediaEntry: Identifiable {
     }
     func boot() {
         guard !snapshot else { return }
+        booted = true
         _ = attachExistingGame()
         let args = CommandLine.arguments
         fastPlay = args.contains("--play")
@@ -323,7 +325,11 @@ struct MediaEntry: Identifiable {
             let link = try LaunchLink(url)
             if let pid = activeGamePID {
                 scheduleLink(link, pid: pid)
-            } else { pendingLink = link; fastPlay = true; if !onboard { play() } }
+            } else {
+                // A cold link can arrive before launch finishes; boot() starts the game then, so the
+                // Dock hand-off always runs after AppKit's own launch-time activation.
+                pendingLink = link; fastPlay = true; if booted && !onboard { play() }
+            }
         } catch { notice = error.localizedDescription }
     }
     private func scheduleLink(_ link: LaunchLink, pid: pid_t) {
@@ -397,7 +403,8 @@ struct MediaEntry: Identifiable {
             }
             try PrivateFile.write(Data(try settings.config().utf8), to: home.appendingPathComponent("main/launcher.cfg"))
             try process.run(); engine = process; gameRunning = true; gameStartedAt = Date(); crashReport = nil; notice = ""
-            pendingLink = nil
+            // --play and cold links launch once: a later setup completion must not start a second game.
+            pendingLink = nil; fastPlay = false
             if let link = plan.link { scheduleLink(link, pid: process.processIdentifier) }
             cancelRefresh()
             NSApp.windows.forEach { $0.orderOut(nil) }
@@ -406,10 +413,25 @@ struct MediaEntry: Identifiable {
             fflush(stdout)
         } catch { notice = error.localizedDescription }
     }
+    /// Takes the Dock back after the game. The system can refuse the switch (seen right after a
+    /// LaunchServices launch); AppKit then already reports .regular, so step through accessory and retry.
+    private func restoreRegularPolicy() {
+        guard !NSApp.setActivationPolicy(.regular) else { return }
+        NSApp.setActivationPolicy(.accessory)
+        guard !NSApp.setActivationPolicy(.regular) else { return }
+        Task {
+            for _ in 0..<10 {
+                try? await Task.sleep(for: .milliseconds(250))
+                guard !gameRunning else { return }
+                NSApp.setActivationPolicy(.accessory)
+                if NSApp.setActivationPolicy(.regular) { NSApp.activate(ignoringOtherApps: true); return }
+            }
+        }
+    }
     private func gameEnded(code: Int32?) {
         connectionTask?.cancel()
         engine = nil; gameRunning = false
-        NSApp.setActivationPolicy(.regular)
+        restoreRegularPolicy()
         NSApp.windows.first?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
         if let code, code != 0 {
             notice = "The game exited unexpectedly (\(code)). Your launcher is still open."
