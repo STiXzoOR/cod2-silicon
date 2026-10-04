@@ -47,6 +47,10 @@ clang $flags -fobjc-arc tests/cod2x/test_url_native.m src/platform/cod2x_native_
 "$work/native-url"
 mkdir -p "$work/game/main"
 python3 tools/cod2x/make_macos_app.py "$work/native-url" "$work/URLProbe.app" --game-dir "$work/game"
+# This fixture checks explicit bundle arguments, without licensed assets or the
+# user's first-launch preferences/shader cache. Exercise automatic setup separately.
+plutil -replace CoD2AutomaticShaderSetup -bool NO "$work/URLProbe.app/Contents/Info.plist"
+codesign --force --deep --sign - "$work/URLProbe.app"
 plutil -lint "$work/URLProbe.app/Contents/Info.plist"
 expected_game=$(cd "$work/game" && pwd -P)
 WS10_EXPECT_GAME="$expected_game" "$work/URLProbe.app/Contents/MacOS/cod2_macos"

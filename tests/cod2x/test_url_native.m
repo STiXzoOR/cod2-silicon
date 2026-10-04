@@ -31,10 +31,11 @@ int main(void)
         if (expectedGame) {
             char arguments[4096];
             assert(Cod2xNativeApp_Arguments(arguments, sizeof(arguments)) > 0);
-            assert(strstr(arguments, expectedGame));
-            assert(strstr(arguments, "CoD2x Native"));
+            NSString *configured = [NSBundle.mainBundle objectForInfoDictionaryKey:@"CoD2GameDirectory"];
+            assert([configured isKindOfClass:NSString.class]);
+            assert(!strcmp(configured.UTF8String, expectedGame));
             assert(strstr(arguments, "+set com_maxfps 333"));
-            assert(!gamePath[0]); /* Explicit prepared launch paths win. */
+            assert(!strcmp(gamePath, expectedGame)); /* Synthetic bundle skips first-launch setup. */
         }
         Cod2xNativeURL_Install();
         assert(Cod2xNativeURL_Queue("cod2x://%2Bconnect%20localhost/"));
