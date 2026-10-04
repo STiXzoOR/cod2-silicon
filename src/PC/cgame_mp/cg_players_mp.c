@@ -62,7 +62,11 @@ void CG_PlayerSprites(centity_t *cent);
 void CG_Player(centity_t *cent);
 void CG_Corpse(centity_t *cent);
 
+#if defined(COD2_X64)
+#define CI_STRIDE sizeof(clientInfo_t)
+#else
 #define CI_STRIDE 1208
+#endif
 
 void CG_UpdatePlayerDObj(centity_t *cent)
 {
@@ -95,8 +99,12 @@ void CG_ResetPlayerEntity(centity_t *cent)
     es = &cent->nextState;
     clientNum = es->clientNum;
 
+#if defined(COD2_X64)
+    ci = (byte *)&cg->bgs.clientinfo[clientNum];
+#else
     ciBase = (byte *)(((char *)cg + offsetof(cg_t, bgs.anim_user)) + clientNum * CI_STRIDE);
     ci = ciBase + 0x14;
+#endif
 
     deadFlag = es->eFlags & 0x20000;
 
@@ -119,13 +127,21 @@ void CG_ResetPlayerEntity(centity_t *cent)
             XAnimSetCompleteGoalWeight(pAnimTree, (*(unsigned short *)&cg->bgs.animScriptData.turningAnim) , 0.0f, 0.0f, 1.0f, 0, 0, 0);
         }
 
+#if defined(COD2_X64)
+        memset(&((clientInfo_t *)ci)->legs, 0, sizeof(lerpFrame_t));
+#else
         memset(ciBase + 0x394, 0, 48);
+#endif
         ((clientInfo_t *)ci)->legs.yawAngle = ((clientInfo_t *)ci)->playerAngles[1];
         ((clientInfo_t *)ci)->legs.yawing = 0;
         ((clientInfo_t *)ci)->legs.pitchAngle = 0;
         ((clientInfo_t *)ci)->legs.pitching = 0;
 
+#if defined(COD2_X64)
+        memset(&((clientInfo_t *)ci)->torso, 0, sizeof(lerpFrame_t));
+#else
         memset(ciBase + 0x3c4, 0, 48);
+#endif
         ((clientInfo_t *)ci)->torso.yawAngle = ((clientInfo_t *)ci)->playerAngles[1];
         ((clientInfo_t *)ci)->torso.yawing = 0;
         (*(int *)&((clientInfo_t *)ci)->torso.pitchAngle) = (*(int *)&((clientInfo_t *)ci)->playerAngles[0]);
@@ -199,6 +215,17 @@ void CG_PlayerSprites(centity_t *cent)
     int height;
     MaterialHandle material;
 
+#if defined(COD2_X64)
+    ci = (byte *)&cg->bgs.clientinfo[cent->nextState.clientNum];
+    if (!((clientInfo_t *)ci)->infoValid)
+        return;
+    iTeam = ((clientInfo_t *)ci)->team;
+    snap = (*(byte **)&cg->nextSnap);
+    ci = (byte *)&cg->bgs.clientinfo[((snapshot_t *)snap)->ps.clientNum];
+    if (!((clientInfo_t *)ci)->infoValid)
+        return;
+    localTeam = ((clientInfo_t *)ci)->team;
+#else
     ci = (byte *)((char *)cg + cent->nextState.clientNum * CI_STRIDE);
     if (!*(int *)(ci + 0xe0914))
         return;
@@ -209,6 +236,7 @@ void CG_PlayerSprites(centity_t *cent)
     if (!*(int *)(ci + 0xe0914))
         return;
     localTeam = *(int *)(ci + 0xe0940);
+#endif
 
     {
         int headicon = cent->nextState.iHeadIcon;
@@ -287,7 +315,11 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
     {
         int iClientNum = es->clientNum;
         byte *ciBase = (byte *)(((char *)cg + offsetof(cg_t, bgs.anim_user)) + iClientNum * CI_STRIDE);
+#if defined(COD2_X64)
+        byte *turretCi = (byte *)&cg->bgs.clientinfo[iClientNum];
+#else
         byte *turretCi = ciBase + 0x14;
+#endif
         byte *pLerpAnim;
         int animValue;
         byte *animPtr;
@@ -316,7 +348,11 @@ static void CG_PlayerTurretPositionAndBlend(centity_t *cent)
         if (!*(int *)turretCi)
             return;
 
+#if defined(COD2_X64)
+        pLerpAnim = (byte *)&((clientInfo_t *)turretCi)->legs;
+#else
         pLerpAnim = ciBase + 0x394;
+#endif
 
         animValue = ((lerpFrame_t *)pLerpAnim)->animationNumber;
         if (!animValue)
@@ -696,7 +732,11 @@ void CG_Corpse(centity_t *cent)
 
     clientNum = cent->nextState.number;
 
+#if defined(COD2_X64)
+    ci = (byte *)&cgs->corpseinfo[clientNum - 64];
+#else
     ci = (byte *)((char *)cgs - 0x6bec + clientNum * CI_STRIDE);
+#endif
 
     obj = Com_GetClientDObj(clientNum, cent->localClientNum);
     BG_UpdatePlayerDObj(obj, es, (clientInfo_t *)ci, 0);
