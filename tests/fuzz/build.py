@@ -29,6 +29,15 @@ TARGETS = {
         ],
         'max_len': 70000,
     },
+    'tokenize': {
+        'flavor': 'ded',
+        'sources': [
+            'src/PC/qcommon/cmd.c', 'src/PC/universal/q_shared.c',
+            'src/PC/universal/com_shared.c',
+        ],
+        'codx_sources': ['src/PC/qcommon/cod2x_policy.c'],
+        'max_len': 4096,
+    },
 }
 
 SANITIZERS = ['-fsanitize=address,undefined', '-fno-sanitize-recover=all',

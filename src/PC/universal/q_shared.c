@@ -1,6 +1,7 @@
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
+#include "PC/qcommon/net_hardening.h"
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -565,7 +566,15 @@ void Info_SetValueForKey(char *s, const char *key, const char *value)
         return;
     }
 
+#if COD2_NET_BOUNDS
+    /* strcat appends a terminating NUL, so the sum must leave room for it in
+       the 1024-byte destination; `> 1024` let strlen(s)+strlen(newi) == 1024
+       write a 1025th byte. SVC_Info builds a 1024-byte infostring starting
+       with a getinfo peer's challenge, so this was remotely reachable. */
+    if (strlen(newi) + strlen(s) >= 1024) {
+#else
     if (strlen(newi) + strlen(s) > 1024) {
+#endif
         Com_Printf("Info string length exceeded\nkey: '%s'\nvalue: '%s'\nInfo string: '%s'\n", key, value, s);
         return;
     }
