@@ -9,43 +9,11 @@ Duty 2: no game content is included.
 
 ## Status
 
-The `0.1.0` port is playable, with further stability and frame-pacing work ahead.
-Verified development results include:
-
-- Online stock 1.3 (protocol 118) and CoD2x 1.4 (protocol 120) play: movement,
-  firing, reloading, round restart and respawn; HTTP mod downloads also worked.
-  The sessions were short and mostly on empty servers. [Online report](docs/macos-port/reports/WS14-online.md)
-- CoD2x's 68-row compatibility inventory has **41 implemented**, **12 native
-  equivalents**, **2 partial** and **13 excluded or server-owned** behaviors.
-  This is implementation coverage, not 68 live acceptance tests. Match-service
-  UI/backend validation remains partial; the auto-updater is excluded.
-  [Compatibility report](docs/macos-port/reports/WS10-cod2x-full.md)
-- With the original Mac shaders, three matched Toujane views have RGB mean
-  absolute errors of **2.0050, 1.8726 and 0.5856 out of 255** against Windows.
-  Full post-processing, shadows and combat FX parity are still unverified.
-  [Rendering report](docs/macos-port/reports/WS15-render.md)
-- Fullscreen rendering up to **6016×3384 (6K)**, with desktop-fullscreen fallback
-  when an exclusive mode is unavailable. [Fullscreen report](docs/macos-port/reports/WS17-fullscreen.md)
-- A ten-minute combat soak completed without a crash after fixing the first-shot
-  stencil-clear fault. [Playable-app report](docs/macos-port/reports/WS18-ship.md)
-
-WS18 measured these two-minute live combat captures on a Mac mini with Apple
-M6, macOS 27.0.1 and original Mac shaders:
-
-| Render size | FPS cap | Average FPS | 1% low FPS |
-| --- | ---: | ---: | ---: |
-| 1920×1080 | 333 | 331.2 | 205.2 |
-| 1920×1080 | Uncapped | 798.6 | 354.1 |
-| 2560×1440 | 333 | 332.4 | 233.0 |
-| 2560×1440 | Uncapped | 663.5 | 326.8 |
-| 3840×2160 | 333 | 332.3 | 230.8 |
-| 3840×2160 | Uncapped | 417.1 | 256.9 |
-
-The 1440p and 4K runs rendered at those sizes on a 1080p physical display using
-desktop fullscreen. Other user applications were running. A 1% low is the
-reciprocal of the mean of the slowest 1% of frame intervals. **Constant 333 fps
-is a target, not an achieved guarantee.** Game Mode activation is unverified.
-See the [roadmap](docs/ROADMAP.md).
+The `0.1.0` port is playable on stock 1.3 and CoD2x 1.4 servers. Movement,
+firing, reloading, HTTP mod downloads and round restarts have been tested.
+Constant 333 fps and active Game Mode remain goals. See the
+[verified results below](#verified-results) for compatibility coverage,
+rendering comparisons, fullscreen limits and measured performance.
 
 ## Requirements and game data
 
@@ -125,6 +93,46 @@ enforce their own **125–250 fps** caps; 333 applies where the server allows it
 - This engine inherits security-sensitive networking, file parsing and memory
   behavior from an old reconstruction. It is not hardened. Use trusted content
   and servers; see [SECURITY.md](SECURITY.md).
+
+## Verified results
+
+The `0.1.0` port is playable, with further stability and frame-pacing work ahead.
+Verified development results include:
+
+- Online stock 1.3 (protocol 118) and CoD2x 1.4 (protocol 120) play: movement,
+  firing, reloading, round restart and respawn; HTTP mod downloads also worked.
+  The sessions were short and mostly on empty servers. [Online report](docs/macos-port/reports/WS14-online.md)
+- CoD2x's 68-row compatibility inventory has **41 implemented**, **12 native
+  equivalents**, **2 partial** and **13 excluded or server-owned** behaviors.
+  This is implementation coverage, not 68 live acceptance tests. Match-service
+  UI/backend validation remains partial; the auto-updater is excluded.
+  [Compatibility report](docs/macos-port/reports/WS10-cod2x-full.md)
+- With the original Mac shaders, three matched Toujane views have RGB mean
+  absolute errors of **2.0050, 1.8726 and 0.5856 out of 255** against Windows.
+  Full post-processing, shadows and combat FX parity are still unverified.
+  [Rendering report](docs/macos-port/reports/WS15-render.md)
+- Fullscreen rendering up to **6016×3384 (6K)**, with desktop-fullscreen fallback
+  when an exclusive mode is unavailable. [Fullscreen report](docs/macos-port/reports/WS17-fullscreen.md)
+- A ten-minute combat soak completed without a crash after fixing the first-shot
+  stencil-clear fault. [Playable-app report](docs/macos-port/reports/WS18-ship.md)
+
+WS18 measured these two-minute live combat captures on a Mac mini with Apple
+M6, macOS 27.0.1 and original Mac shaders:
+
+| Render size | FPS cap | Average FPS | 1% low FPS |
+| --- | ---: | ---: | ---: |
+| 1920×1080 | 333 | 331.2 | 205.2 |
+| 1920×1080 | Uncapped | 798.6 | 354.1 |
+| 2560×1440 | 333 | 332.4 | 233.0 |
+| 2560×1440 | Uncapped | 663.5 | 326.8 |
+| 3840×2160 | 333 | 332.3 | 230.8 |
+| 3840×2160 | Uncapped | 417.1 | 256.9 |
+
+The 1440p and 4K runs rendered at those sizes on a 1080p physical display using
+desktop fullscreen. Other user applications were running. A 1% low is the
+reciprocal of the mean of the slowest 1% of frame intervals. **Constant 333 fps
+is a target, not an achieved guarantee.** Game Mode activation is unverified.
+See the [roadmap](docs/ROADMAP.md).
 
 ## Building for development
 
