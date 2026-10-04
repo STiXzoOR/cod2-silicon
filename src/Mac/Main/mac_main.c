@@ -6,6 +6,10 @@
 #include "imports.h"
 #include "cod2_feature_config.h"
 #include "PC/qcommon/crash_handler.h"
+#if COD2_APPLE_SDK && defined(DEDICATED)
+extern void MacServer_InstallSignals(void);
+extern void MacServer_CheckQuit(void);
+#endif
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
 #include "platform/cod2x_native.h"
 #include <strings.h>
@@ -119,6 +123,7 @@ void Sys_ArchiveInfo(int checksum)
 void Sys_DirectXFatalError(void)
 {
 
+#if !COD2_APPLE_SDK || !defined(DEDICATED)
     {
         extern int g_gfxV60DllActive;
         extern void Com_Printf(const char *, ...);
@@ -129,6 +134,7 @@ void Sys_DirectXFatalError(void)
                 return;
         }
     }
+#endif
     const char *title = Win_LocalizeRef("WIN_DIRECTX_INIT_TITLE");
     const char *body = Win_LocalizeRef("WIN_DIRECTX_INIT_BODY");
     MessageBoxA(0, body, title, 0x10);
@@ -426,6 +432,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 #endif
 
     Sys_InitMainThread();
+#if COD2_APPLE_SDK && defined(DEDICATED)
+    MacServer_InstallSignals();
+#endif
     Win_InitLocalization();
     Dvar_Init();
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
@@ -467,7 +476,11 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
     {
         static char ded_cmdline[2048];
+#if COD2_APPLE_SDK
+        snprintf(ded_cmdline, sizeof(ded_cmdline), "+set dedicated 1 %s",
+#else
         snprintf(ded_cmdline, sizeof(ded_cmdline), "+set dedicated 2 %s",
+#endif
                  lpCmdLine ? lpCmdLine : "");
         Com_Init(ded_cmdline);
     }
@@ -488,6 +501,9 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 #else
 
     for (;;) {
+#if COD2_APPLE_SDK && defined(DEDICATED)
+        MacServer_CheckQuit();
+#endif
 #if defined(__APPLE__) && defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX && !defined(DEDICATED)
         Cod2xNative_Frame();
 #endif

@@ -59,7 +59,22 @@ list(FILTER MACOS_DED_C EXCLUDE REGEX "/PC/qcommon/cod2x_(features|demo|url|pose
 include(${CMAKE_SOURCE_DIR}/cmake/datagen.cmake)
 cod2_generate_typed_blobs(MACOS_GEN_C)
 list(APPEND MACOS_C ${MACOS_GEN_C})
-list(APPEND MACOS_DED_C ${MACOS_GEN_C})
+# The verified blobs retain every client import for round-trip auditing. A
+# dedicated-only view removes retention annotations so dead_strip follows the
+# actual server graph, rather than pulling in renderer/voice/UI owners.
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+set(MACOS_DED_GEN_DIR "${CMAKE_BINARY_DIR}/dedicated_gen")
+set(MACOS_DED_GEN_C)
+foreach(source ${MACOS_GEN_C})
+  get_filename_component(name "${source}" NAME)
+  list(APPEND MACOS_DED_GEN_C "${MACOS_DED_GEN_DIR}/${name}")
+endforeach()
+add_custom_command(OUTPUT ${MACOS_DED_GEN_C} "${MACOS_DED_GEN_DIR}/typed_types.h"
+  COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/server/dedicated_data.py"
+    "${MACOS_DED_GEN_DIR}" ${MACOS_GEN_C}
+  DEPENDS ${MACOS_GEN_C} "${CMAKE_SOURCE_DIR}/tools/server/dedicated_data.py"
+  VERBATIM)
+list(APPEND MACOS_DED_C ${MACOS_DED_GEN_C})
 
 foreach(target cod2_macos cod2_macos_ded)
   if(target STREQUAL "cod2_macos_ded")
@@ -117,6 +132,7 @@ if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
     VERBATIM)
 endif()
 target_compile_definitions(cod2_macos_ded PRIVATE DEDICATED)
+target_sources(cod2_macos_ded PRIVATE src/platform/macos_server.c)
 target_link_options(cod2_macos_ded PRIVATE -Wl,-dead_strip)
 set_source_files_properties(src/PC/qcommon/crash_handler.c PROPERTIES
   COMPILE_DEFINITIONS "COD2_GIT_HASH=\"${COD2_GIT_HASH}\"")
