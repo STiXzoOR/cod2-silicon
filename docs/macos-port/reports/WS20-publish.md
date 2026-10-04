@@ -41,11 +41,11 @@ reruns also used `nice -n 19`; they launch synthetic scripts, not the game.
 | `python3 -m unittest discover -s tests/lp64/renderer -p test_wine_draw_trace.py -v` | 1/1 pass; synthetic trace parser. |
 | `sh tests/cod2x/run_native.sh` | Pass: URL, mouse, input, native AppleEvent queue, synthetic app/plist/signature and watchdog/crash fixtures. |
 | Compare upstream README bytes after the single provenance header | Exactly equal to `git show df08d50:README.md`. The upstream README body was not edited. |
-| Compare `LICENSE` with standard SPDX MIT text after substituting only the requested copyright | Exact equality. DCO is the canonical site's verbatim `<pre>` text; Covenant 2.1 differs only by filling its contact placeholder. |
+| Compare `LICENSE` with standard SPDX MIT text after substituting only the requested copyright | Exact equality. DCO is the canonical site's verbatim `<pre>` text; Covenant 2.1 fills its contact placeholder and normalizes the terminal newline. |
 | Compare old/new x86 workflow job text | Entire `x86-reference` job remains byte-for-byte identical. |
 | Check local Markdown links in new docs | All resolve after this report was added. External release/installer existence remains a WS21/orchestrator check. |
 | `git diff df08d50 HEAD -- src cmake tools scripts tests CMakeLists.txt` | Empty. No implementation/build inputs changed. |
-| `git diff --check` | Pass. |
+| `git diff --check df08d50` | Pass after removing a trailing blank line from the Code of Conduct in the final branch-wide check. |
 
 PyYAML is unavailable (`python3 -c 'import yaml'` raises
 `ModuleNotFoundError`); `actionlint` is not installed. No tool was installed.
@@ -167,8 +167,10 @@ future ephemeral Actions runner; no Homebrew install ran on this Mac.
 - `7fb608b` — Credit YAML validation and macOS system tools.
 - `9f99285` — Link the preserved WebAssembly build guide.
 - `7408b03` — Put player setup before detailed verification results.
+- `4dfa8cd` — Record WS20 publication evidence and release handoff.
 
-This report is committed separately. Every WS20 commit has a DCO sign-off.
+The final whitespace correction and report update are committed separately.
+Every WS20 commit has a DCO sign-off.
 Merge the full `port/publish` branch after reconciling WS21's installer/app
 contract. The only likely overlap is documentation; no source/CMake/shared
 headers were changed. Re-run the public pipeline after WS21 integration and
