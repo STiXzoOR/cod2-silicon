@@ -65,6 +65,8 @@ int MacDisplay_Initialize(void)
     /* Cocoa reads this at video initialization, before mode enumeration.
      * The environment can opt into Spaces for Game Mode experiments. */
     SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
+    if (SDL_GetHintBoolean(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, SDL_FALSE))
+        SDL_SetHint("SDL_VIDEO_SYNC_WINDOW_OPERATIONS", "1");
 #endif
     if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
         return -1;
@@ -105,6 +107,11 @@ void MacPlatform_ConfigureWindow(int width, int height, int mode, int refresh)
 static int SetWindowMode(void)
 {
 #if defined(__APPLE__) && defined(COD2_X64)
+    /* A native fullscreen Space keeps the desktop display mode. Selecting an
+     * exclusive display mode sends SDL down the non-Spaces Cocoa path. */
+    if (windowMode == MAC_FULLSCREEN &&
+        SDL_GetHintBoolean(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, SDL_FALSE))
+        windowMode = MAC_BORDERLESS;
     /* Reset also runs at map load. Toggling out and immediately back into a
      * Cocoa fullscreen Space can cancel its asynchronous transition. */
     SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, windowMode == MAC_BORDERLESS ? "0" : "1");
