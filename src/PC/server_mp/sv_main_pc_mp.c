@@ -176,6 +176,10 @@ const netadr_t *SV_MasterAddress(void)
 
 void SV_MasterGameCompleteStatus(void)
 {
+#if COD2_APPLE_SDK && defined(DEDICATED)
+    extern void MacServer_MasterGameCompleteStatus(void);
+    MacServer_MasterGameCompleteStatus();
+#else
     const dvar_t *dedicated;
     const netadr_t *master;
     netadr_t addr;
@@ -194,10 +198,15 @@ void SV_MasterGameCompleteStatus(void)
 
     addr = *master;
     SVC_GameCompleteStatus(addr);
+#endif
 }
 
 void SV_MasterHeartbeat(const char *hbname)
 {
+#if COD2_APPLE_SDK && defined(DEDICATED)
+    extern void MacServer_MasterHeartbeat(const char *);
+    MacServer_MasterHeartbeat(hbname);
+#else
     const dvar_t *dedicated;
     byte *svs;
     const netadr_t *master;
@@ -242,6 +251,7 @@ void SV_MasterHeartbeat(const char *hbname)
 
     addr = *master;
     SVC_Status(addr);
+#endif
 }
 
 void SV_MasterShutdown(void)
