@@ -13,13 +13,17 @@ entry = next(e for e in commands if e['file'].endswith('/scr_vm.c')
              and 'cod2_macos.dir' in e['command'])
 argv = shlex.split(entry['command'])
 flags = argv[1:argv.index('-o')]
+bss_entry = next(e for e in commands if e['file'].endswith('/bss_native.c')
+                 and 'cod2_macos.dir' in e['command'])
+bss_argv = shlex.split(bss_entry['command'])
+bss_object = Path(bss_entry['directory']) / bss_argv[bss_argv.index('-o') + 1]
 checks = [('runtime_test', ['src/PC/script/scr_memorytree.c']),
           ('variable_test', ['src/PC/script/scr_memorytree.c']),
           ('string_test', ['src/PC/script/scr_memorytree.c']),
           ('animation_test', []),
           ('bindings_test', ['tests/lp64/script/bindings_fixture.c']),
           ('storage_test', ['src/PC/script/scr_memorytree.c',
-                            'build-macos/CMakeFiles/cod2_macos.dir/build/x64_gen/bss_native.c.o'])]
+                            str(bss_object)])]
 for name, sources in checks:
     output = build / ('ws6-' + name)
     result = subprocess.run([argv[0], *flags, '-fsanitize=address', '-Wl,-dead_strip',

@@ -226,7 +226,7 @@ def main():
     commands = json.loads(options.compile_commands.read_text())
     commands = [c for c in commands if c['file'].endswith(('.c', '.cpp', '.m'))
                 and options.target in c.get('command', str(c.get('arguments', [])))
-                and '/build/' not in c['file']]
+                and Path(c['file']).is_relative_to(root / 'src')]
     cache = options.cache or options.output.parent / 'audit-cache'
     cache.mkdir(parents=True, exist_ok=True)
     headers = hashlib.sha256()

@@ -8,9 +8,13 @@ values_binary=${COD2_VALUES_BINARY:-$HOME/Games/CoD2-mac-bin/Call of Duty 2.app/
 out=${2:-build/x64_gen}
 compiler=${CLANG:-clang}
 python=${PYTHON:-python3}
-if [ ! -f "$binary" ]; then
-    echo "Missing STABS reference binary: $binary" >&2
-    exit 1
+if [ ! -e "$binary" ]; then
+    echo "SKIP datagen round-trip: missing STABS reference binary: $binary"
+    exit 0
+fi
+if [ ! -e "$values_binary" ]; then
+    echo "SKIP datagen round-trip: missing scalar reference binary: $values_binary"
+    exit 0
 fi
 if [ -n "${OBJDUMP:-}" ]; then
     objdump=$OBJDUMP

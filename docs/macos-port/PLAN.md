@@ -198,6 +198,11 @@ From `research/mac-client-reconstructions.md`:
 3. Match upstream's style (see `.clang-format`, comment density, naming). No
    drive-by reformatting.
 4. Never add game data, Activision binaries or decompiler dumps to the repo.
+   The five typed LP64 production sources are committed in `build/lp64_gen/`;
+   private inputs, coverage and verification objects remain local. With both
+   private inputs present, CMake regenerates and verifies this snapshot; use
+   `COD2_UPDATE_TYPED_SNAPSHOT=ON` only to deliberately refresh it. Without those
+   inputs, builds compile the snapshot (see `tools/datagen/README.md`).
 5. Do not install system packages or change global config. If you need a tool
    that is missing, stop and say so in your report.
 6. Verify claims with real commands. If something could not be verified, say so.

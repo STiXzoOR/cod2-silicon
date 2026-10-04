@@ -43,13 +43,24 @@ clang $flags -I"$(sdl2-config --prefix)/include" $(sdl2-config --cflags) -Wl,-de
     src/platform/cod2x_native_mouse.c -o "$work/input"
 "$work/input"
 clang $flags -fobjc-arc tests/cod2x/test_url_native.m src/platform/cod2x_native_macos.m \
-    src/PC/qcommon/cod2x_url.c -framework AppKit -framework Foundation -o "$work/native-url"
+    src/platform/cod2x_native_shaders.m src/PC/qcommon/cod2x_url.c \
+    -framework AppKit -framework Foundation -o "$work/native-url"
 "$work/native-url"
-mkdir -p "$work/game/main"
+# Synthetic placeholders satisfy first-run data validation; no licensed assets.
+mkdir -p "$work/game/main" "$work/home"
+index=0
+while [ "$index" -lt 16 ]; do
+    touch "$work/game/main/$(printf 'iw_%02d.iwd' "$index")"
+    index=$((index + 1))
+done
 python3 tools/cod2x/make_macos_app.py "$work/native-url" "$work/URLProbe.app" --game-dir "$work/game"
 plutil -lint "$work/URLProbe.app/Contents/Info.plist"
 expected_game=$(cd "$work/game" && pwd -P)
-WS10_EXPECT_GAME="$expected_game" "$work/URLProbe.app/Contents/MacOS/cod2_macos"
+CFFIXED_USER_HOME="$work/home" COD2_SETUP_NONINTERACTIVE=1 COD2_SETUP_CD_KEY=000000000000000086D3 \
+    WS10_EXPECT_GAME="$expected_game" "$work/URLProbe.app/Contents/MacOS/cod2_macos"
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+    -u "$work/URLProbe.app" || true
+codesign --verify --deep --strict "$work/URLProbe.app"
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/cod2x -p test_extract_iwd.py
 PYTHONDONTWRITEBYTECODE=1 python3 tests/cod2x/test_demo_https.py
 if [ "${COD2X_SANITIZERS:-0}" != 1 ]; then
