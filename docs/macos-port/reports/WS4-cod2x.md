@@ -1,6 +1,6 @@
 # WS4 — CoD2x client compatibility
 
-Branch: `port/cod2x`. Worktree: `/Users/stix/Projects/cod2-native-wt/cod2x`.
+Branch: `port/cod2x`. Worktree: `~/Projects/cod2-native-wt/cod2x`.
 Reference: CoD2x 1.4.6.8, commit `d8c54695a5239ac99d1dfe96212b809b1a54bfee`.
 Completed source implementation and native logic verification on 2026-10-03.
 The game cannot run on this Mac yet, so **live admission, authentication,

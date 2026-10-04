@@ -1,7 +1,7 @@
 # WS12 — native arm64 ABI audit
 
 Branch: `port/abi-audit`. Baseline: `391870a`. Worktree:
-`/Users/stix/Projects/cod2-native-wt/abi-audit`. Verified on 2026-10-03 with
+`~/Projects/cod2-native-wt/abi-audit`. Verified on 2026-10-03 with
 Apple Clang and the local reference paths in PLAN.md. No sibling worktrees,
 remotes, packages, proprietary repository additions, pushes or PRs were used.
 
@@ -73,7 +73,7 @@ The final executable was launched with a 60-second process timeout:
 
 ```sh
 ./build-abi/cod2_macos \
-  +set fs_basepath /Users/stix/Games/CoD2 \
+  +set fs_basepath ~/Games/CoD2 \
   +set fs_homepath "$PWD/build-abi/smoke-home" \
   +set dedicated 1 +set net_port 28998 +quit
 ```

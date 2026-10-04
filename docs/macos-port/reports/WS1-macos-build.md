@@ -1,6 +1,6 @@
 # WS1 — macOS arm64 build
 
-Status: compile bring-up complete; linking and runtime remain incomplete by design. Worktree `/Users/stix/Projects/cod2-native-wt/macos-build`, branch `port/macos-build`. Read the complete `docs/macos-port/PLAN.md` before implementation. No sibling worktrees were accessed, no packages installed, no global configuration or remotes changed, and nothing pushed or published. No game data, Activision binaries or reference/decompiler dumps were added.
+Status: compile bring-up complete; linking and runtime remain incomplete by design. Worktree `~/Projects/cod2-native-wt/macos-build`, branch `port/macos-build`. Read the complete `docs/macos-port/PLAN.md` before implementation. No sibling worktrees were accessed, no packages installed, no global configuration or remotes changed, and nothing pushed or published. No game data, Activision binaries or reference/decompiler dumps were added.
 
 ## What works and how it was verified
 

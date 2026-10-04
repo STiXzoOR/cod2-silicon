@@ -1,6 +1,6 @@
 # WS6 — renderer LP64 runtime correctness
 
-Status: static renderer fixes and standalone verification complete. Full-engine execution is blocked at platform/C++ linking; first launch and map loading have not been tested. Worktree `/Users/stix/Projects/cod2-native-wt/lp64-render`, branch `port/lp64-render`, baseline `a2f4477` (includes the orchestrator's arm64 guards, infoParms and seam aliases).
+Status: static renderer fixes and standalone verification complete. Full-engine execution is blocked at platform/C++ linking; first launch and map loading have not been tested. Worktree `~/Projects/cod2-native-wt/lp64-render`, branch `port/lp64-render`, baseline `a2f4477` (includes the orchestrator's arm64 guards, infoParms and seam aliases).
 
 Read all of PLAN.md, the LP64 inventory, WS1 and WS2 reports. Worked only in this worktree. No sibling worktrees, pushes, PRs, issues, remotes, installed packages or global configuration changes. Reference binaries and licensed assets were read only; no binaries, game assets or decompiler dumps were added. No required tool was missing.
 

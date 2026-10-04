@@ -6,7 +6,7 @@ grounded combat passes 10 minutes and all twelve benchmark runs complete.
 Active Game Mode/input focus, a literal otherwise-empty system, plain URI
 default-handler selection and stable capped 333 FPS remain acceptance gaps.
 
-Worktree: `/Users/stix/Projects/cod2-native-wt/ship`, branch `port/ship`,
+Worktree: `~/Projects/cod2-native-wt/ship`, branch `port/ship`,
 base `7dbfcea`. Host: Apple M6, 24 GiB, macOS 27.0.1 (26A434), SDL 2.32.72.
 No packages installed, remotes changed, pushes, PRs or issues. Licensed data,
 extracted shaders, demos, screenshots and diagnostic binaries remain outside
@@ -218,9 +218,8 @@ the warmed captures; program creation happens before measurement.
 Runtime launch, URL, Game Mode and benchmark evidence follows. Benchmarks do
 not overlap our other clients,
 compilers, tests or profilers. Pre-existing user processes are left running:
-notably Spark, Fusion, WallpaperAerialsExtension, Activity Monitor and an
-unowned powermetrics process. Therefore these measurements cannot honestly
-meet a literal "nothing else running" condition.
+other user applications and an unowned powermetrics process. Therefore these
+measurements cannot honestly meet a literal "nothing else running" condition.
 
 Game Mode **activation is not verified**. The plist has the requested action
 game category and `LSSupportsGameMode=true`. System logs identify the exact

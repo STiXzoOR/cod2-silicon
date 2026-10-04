@@ -102,7 +102,7 @@ dereferences (185 existing placeholders). Logs are in
 
 ## Measurement method and limitations
 
-Licensed data at `/Users/stix/Games/CoD2` remained read-only. Every run has a
+Licensed data at `~/Games/CoD2` remained read-only. Every run has a
 new home and output directory under ignored `output/ws13`. Demos, JPEGs,
 profiles and binaries are local evidence only and are not committed.
 

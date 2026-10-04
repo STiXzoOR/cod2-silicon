@@ -1,6 +1,6 @@
 # WS11 — native menu, listen server, and local play
 
-Date: 2026-10-03. Worktree: `/Users/stix/Projects/cod2-native-wt/bringup`.
+Date: 2026-10-03. Worktree: `~/Projects/cod2-native-wt/bringup`.
 Branch: `port/bringup`; starting commit: `391870a`.
 
 ## Result
@@ -20,7 +20,7 @@ unsupported cinematics, and the observed channel-mixer parse/marshal failure.
 No sibling worktree was read or written. No packages were installed, remotes
 changed, branches pushed, or PRs/issues opened. Only recorded child processes
 from this workstream were terminated. Licensed data stayed read-only at
-`/Users/stix/Games/CoD2`; no data, binaries, screenshots, or decompiler dumps
+`~/Games/CoD2`; no data, binaries, screenshots, or decompiler dumps
 were added to git. Temporary diagnostics were removed before commits.
 
 ## Build and verification
@@ -71,9 +71,9 @@ expressions, allocations, prototypes, and constants.
 ## Runtime reproduction and evidence
 
 Runtime files live in the private home:
-`/Users/stix/Library/Application Support/CoD2-native-ws11`.
+`~/Library/Application Support/CoD2-native-ws11`.
 The evidence directory below is abbreviated **E**:
-`/Users/stix/Library/Application Support/CoD2-native-ws11/evidence`.
+`~/Library/Application Support/CoD2-native-ws11/evidence`.
 All JPEGs were produced by the game through `screenshotJPEG`; no screen capture
 permission was required.
 
