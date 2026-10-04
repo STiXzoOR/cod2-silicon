@@ -1,6 +1,6 @@
 # macOS port development log
 
-CoD2 Silicon grew from an AI-orchestrated opencod2 port organized into 21
+CoD2 Silicon grew from an AI-orchestrated opencod2 port organized into 22
 workstreams. [PLAN.md](PLAN.md) is the shared development brief; `reports/WS*.md`
 record decisions, commands, observations and limits. These are historical
 records, not current player instructions. Later follow-ups and workstreams
@@ -37,11 +37,17 @@ existing cross-references continue to work.
 - [WS16: vm-safety](reports/WS16-vm-safety.md) — shutdown, return/unwind, timeout and unaligned-value fixes.
 - [WS17: fullscreen](reports/WS17-fullscreen.md) — exact render backing through 6K, pacing and Game Mode limits.
 - [WS18: ship](reports/WS18-ship.md) — firing fix, shader setup, combat soak and six performance captures.
+- [WS19: hitch](reports/WS19-hitch.md) — client-frame observer, presentation experiments, Spaces fullscreen and 333/Game Mode validators.
 - [WS20: publish](reports/WS20-publish.md) — release docs, credits, contribution policies, CI and privacy hygiene.
+- [WS21: package](reports/WS21-package.md) — self-contained macOS 13 app, bundled SDL, native shader setup, first run and release scripts.
+- [WS22: datagen-snapshot](reports/WS22-datagen-snapshot.md) — committed typed-data snapshot so clean checkouts build without private inputs.
 
 WS7 has no separate report in this checkout; the numbering is retained.
-WS19 (frame pacing) and WS21 (packaging) are concurrent workstreams whose
-reports are not yet present here.
+
+Commit hashes quoted in these reports refer to the development history before
+publication. The author email was normalized to a GitHub noreply address
+before the first public push, which changed those hashes; commit subjects and
+order are unchanged, so `git log --grep` finds them.
 
 ## Deeper references
 

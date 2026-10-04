@@ -5,10 +5,12 @@ in the [port reports](macos-port/README.md).
 
 ## Near term
 
-- **Constant 333 fps:** WS19 is investigating fullscreen frame pacing. WS18
-  averages approach the cap, but 1% lows remain 205–233 fps in capped captures.
-  Separate driver/swap waits, Cocoa polling and CPU work; validate on an
-  isolated foreground client before claiming steady 333.
+- **Constant 333 fps:** WS18 averages approach the cap, but 1% lows remain
+  205–233 fps in capped captures. WS19 traced most slow frames to the OpenGL
+  swap waiting on the compositor; a GPU fence did not prevent it, so that path
+  stays opt-in (`r_presentMode 1`). Next: present through Metal (an
+  IOSurface/`CAMetalLayer` bridge that keeps the existing renderer), then
+  accept only unlocked, quiet-machine results from `tools/macos/validate-333.sh`.
 - **Game Mode:** establish actual ON state in macOS built-in fullscreen,
   verify input focus and display restoration, then measure a matched ON/OFF
   comparison. The plist eligibility flag alone does not establish activation.
