@@ -1,197 +1,172 @@
-# opencod2
+# CoD2 Silicon
 
-> A reconstruction of the **Call of Duty 2** engine
+**Call of Duty 2 multiplayer, native on Apple silicon. CoD2x 1.4 compatible, built for 333 fps.**
 
-> [!WARNING]
-> **Work in progress — this does not fully work yet.** It is an early, incomplete
-> reconstruction: it builds and boots, but expect crashes, missing functionality,
-> and broken features. It is shared for the curious and for collaboration, not as
-> a finished or playable port. No stability, no support, and the code may change
-> shape at any time.
-
-> [!IMPORTANT]
-> **No game content is included — bring your own data.** This repository is
-> *source code only*: no executables, archives, maps, models, textures, sounds,
-> or scripts. To run anything you must supply data files from a copy of the game
-> that **you legally own**.
+CoD2 Silicon ports the reconstructed [opencod2](https://github.com/opencod2/opencod2)
+engine to native macOS arm64. It runs directly on Apple silicon, with raw mouse
+input, native audio and an OpenGL renderer. Bring a licensed copy of Call of
+Duty 2: no game content is included.
 
 ## Status
 
-The reconstruction is incomplete. It may crash, omit subsystems, or only
-partially implement behavior that exists in the original game.
+The `0.1.0` port is playable, with further stability and frame-pacing work ahead.
+Verified development results include:
 
-## Security
+- Online stock 1.3 (protocol 118) and CoD2x 1.4 (protocol 120) play: movement,
+  firing, reloading, round restart and respawn; HTTP mod downloads also worked.
+  The sessions were short and mostly on empty servers. [Online report](docs/macos-port/reports/WS14-online.md)
+- CoD2x's 68-row compatibility inventory has **41 implemented**, **12 native
+  equivalents**, **2 partial** and **13 excluded or server-owned** behaviors.
+  This is implementation coverage, not 68 live acceptance tests. Match-service
+  UI/backend validation remains partial; the auto-updater is excluded.
+  [Compatibility report](docs/macos-port/reports/WS10-cod2x-full.md)
+- With the original Mac shaders, three matched Toujane views have RGB mean
+  absolute errors of **2.0050, 1.8726 and 0.5856 out of 255** against Windows.
+  Full post-processing, shadows and combat FX parity are still unverified.
+  [Rendering report](docs/macos-port/reports/WS15-render.md)
+- Fullscreen rendering up to **6016×3384 (6K)**, with desktop-fullscreen fallback
+  when an exclusive mode is unavailable. [Fullscreen report](docs/macos-port/reports/WS17-fullscreen.md)
+- A ten-minute combat soak completed without a crash after fixing the first-shot
+  stencil-clear fault. [Playable-app report](docs/macos-port/reports/WS18-ship.md)
 
-Older Call of Duty titles and game engines from this era have a history of
-security-sensitive bugs, especially around networking, file parsing,
-content-loading paths, and memory safety. This project should not currently be
-treated as a hardened or production-safe engine.
+WS18 measured these two-minute live combat captures on a Mac mini with Apple
+M6, macOS 27.0.1 and original Mac shaders:
 
-One long-term goal of the reconstruction is to make those risks easier to audit
-and fix: preserve compatibility where practical, but replace unsafe behavior and
-close vulnerabilities as they are found. Until then, run it only with data you
-trust and avoid exposing test servers to untrusted networks.
+| Render size | FPS cap | Average FPS | 1% low FPS |
+| --- | ---: | ---: | ---: |
+| 1920×1080 | 333 | 331.2 | 205.2 |
+| 1920×1080 | Uncapped | 798.6 | 354.1 |
+| 2560×1440 | 333 | 332.4 | 233.0 |
+| 2560×1440 | Uncapped | 663.5 | 326.8 |
+| 3840×2160 | 333 | 332.3 | 230.8 |
+| 3840×2160 | Uncapped | 417.1 | 256.9 |
 
-## Building
+The 1440p and 4K runs rendered at those sizes on a 1080p physical display using
+desktop fullscreen. Other user applications were running. A 1% low is the
+reciprocal of the mean of the slowest 1% of frame intervals. **Constant 333 fps
+is a target, not an achieved guarantee.** Game Mode activation is unverified.
+See the [roadmap](docs/ROADMAP.md).
 
-All targets are driven by **CMake (≥ 3.16)**, each an out-of-source build into
-its own directory.
+## Requirements and game data
 
-### Linux (primary)
+- An **Apple silicon Mac**; Intel Macs are not supported by this port.
+- **macOS 13 or later**. <!-- WS21: confirm -->
+- Your own licensed Call of Duty 2 1.3 game data and CD key.
+- The original Steam Mac copy enables matching shaders; without it the app
+  uses approximate shaders, with visibly different lighting.
 
-The engine is a 32-bit x86 binary; you need a multilib toolchain and 32-bit libs
-(Debian/Ubuntu names shown):
+Keep the game outside this repository. The data folder must contain
+`main/iw_00.iwd` through `main/iw_15.iwd` and matching localized archives.
+Existing Windows 1.3 data works too; the Mac executable is needed separately
+for shader extraction. See [getting your game data](docs/macos-port/game-data.md).
 
-```sh
-sudo apt install build-essential gcc-multilib g++-multilib cmake \
-     libsdl2-dev:i386 libgl1-mesa-dev:i386 libx11-dev:i386 \
-     libcurl4-openssl-dev:i386 zlib1g-dev:i386 libstdc++6:i386
-```
+## Install
 
-```sh
-cmake -S . -B build-native
-cmake --build build-native -j
-# -> build-native/cod2_linux    (client)
-# -> build-native/cod2_lnxded   (dedicated server)
-```
+### Prebuilt app
 
-### Windows (MinGW cross-compile)
+1. Open [GitHub Releases](https://github.com/STiXzoOR/cod2-silicon/releases).
+2. Download `CoD2-Silicon-0.1.0-macos-arm64.zip` and `SHA256SUMS` into the same
+   folder. Verify the archive, then unzip it:
 
-```sh
-cmake -S . -B build-win32 -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-mingw32.cmake
-cmake --build build-win32 -j
-# -> build-win32/cod2_win32_ded.exe   (dedicated server)
-```
+   ```sh
+   shasum -a 256 -c SHA256SUMS
+   ```
 
-Add `-DCOD2_WIN32_CLIENT=ON` for the SDL2/GL client (supply SDL2 dev libs under
-`src/win32/sdl2/lib/`; the dedicated server needs none).
+3. Move **CoD2 Silicon.app** to `/Applications` and open it.
 
-#### Swap-in renderer DLL (optional, experimental)
-
-The renderer can be built as a separate swap-in DLL — it exports `GetRefAPI`
-and talks to the engine only through the `ri`/`re` tables. With the client
-configured, run the `gfxdll` target:
-
-```sh
-cmake --build build-win32 --target gfxdll
-# -> build-win32/gfx_d3d_mp_x86_s.dll   (renderer DLL)
-# -> build-win32/cod2_win32_gfxdll.exe  (engine that loads it at runtime)
-```
-
-The renderer↔engine bridge is pre-generated and committed under `build/gfxdll/`;
-the build is pure compile+link. Experimental — not exhaustively tested.
-
-### Windows (MSVC, native — `cod2_win32.exe`)
-
-A native Windows build of the full SDL2/GL client with the Microsoft C/C++
-compiler (`cl.exe`) — no cross-compiler required. It is **additive**: it does not
-touch the MinGW path above (everything MSVC-specific is gated behind the
-`COD2_WIN_MSVC` CMake option).
-
-Requires Visual Studio 2022 or newer with the **x86 MSVC toolset**. The binary is
-32-bit, so configure and build from an **"x86 Native Tools for VS" command
-prompt** (or run `call "<VS_INSTALL_DIR>\VC\Auxiliary\Build\vcvars32.bat"` to put the x86 `cl`, CMake, and Ninja on `PATH`):
-
-**Debug build:**
-
-```bat
-cmake --preset msvc-client
-cmake --build build/msvc --target cod2_win32
-:: -> build/msvc/cod2_win32.exe   (full client, ~2.7 MB)
-```
-
-**Optimized Release build (`/O2`):**
-
-```bat
-cmake --preset msvc-client-release
-cmake --build build/msvc-release --target cod2_win32
-:: -> build/msvc-release/cod2_win32.exe   (~1.9 MB)
-```
-
-> [!NOTE]
-> Release applies `/O2` to decompiler-faithful C, which is less battle-tested
-> than the Debug build — if something misbehaves only in Release, suspect the
-> optimizer. (MSVC doesn't assume strict aliasing, so the code's heavy
-> type-punning is comparatively safe.)
-
-SDL2 is user-supplied (never committed). Drop the 32-bit MSVC SDL2 dev package
-under `third_party/SDL2-<version>/` (or the legacy `src/win32/sdl2/`); the build
-finds the headers and `lib/x86` automatically.
-
-- **Default — dynamic.** Uses the import `SDL2.lib`; copy the 32-bit `SDL2.dll` next to the
-  built exe in `build/msvc/` (or `build/msvc-release/`).
-- **Optional — fully static / standalone** (`-DCOD2_SDL2_STATIC=ON`, on either
-  preset). Produces a single self-contained exe that imports **only Windows
-  system DLLs** — no `SDL2.dll`, no VC runtime DLLs. This one flag statically
-  links **both** SDL2 **and** the CRT (`/MTd` Debug, `/MT` Release). You supply a
-  static `SDL2-static.lib` you build yourself from the SDL2 source, in the
-  **same config** as the engine:
-
-  ```bat
-  :: match the engine: -DCMAKE_BUILD_TYPE=Debug for msvc-client, =Release for -release
-  cmake -S SDL2-2.32.10 -B sdl2-build -DCMAKE_BUILD_TYPE=Debug ^
-        -DSDL_STATIC=ON -DSDL_SHARED=OFF -DSDL_RENDER=OFF -DSDL_FORCE_STATIC_VCRT=ON
-  cmake --build sdl2-build
-  :: copy the resulting SDL2-static*.lib -> third_party/SDL2-*/lib/x86/SDL2-static.lib
-  ```
-
-  - **Config must match** — a `/MTd` (Debug) SDL2 lib against a `/MT` (Release)
-    engine, or vice-versa, fails with `LNK4098`. `SDL_FORCE_STATIC_VCRT=ON` gives
-    the static CRT; the SDL2 build's `CMAKE_BUILD_TYPE` picks `/MTd` vs `/MT`.
-  - `SDL_RENDER=OFF` — the engine uses SDL only for window/GL/input, and SDL's
-    render backend exports a `MatrixMultiply` that otherwise collides with the
-    engine's own.
-
-  The extra system deps (`uuid`, `dinput8`) are linked for you. Most people
-  won't need this.
-
-With no SDL2 lib at all, the link falls back to a stub and no window opens.
-
-This target compiles all TUs, links with no unresolved or duplicate symbols,
-boots, renders the menu, and can load maps — but the same work-in-progress
-caveats above apply.
-
-## Running
-
-This reconstructs the engine, not the content. Point it at data from a copy of
-the game you legally own:
+The app is ad-hoc signed and **not notarized**. On macOS 15 and later, open it
+once, then go to **System Settings → Privacy & Security → Open Anyway**.
+Alternatively, after verifying your download:
 
 ```sh
-./build-native/cod2_linux +set fs_basepath /path/to/your/game
+xattr -dr com.apple.quarantine "/Applications/CoD2 Silicon.app"
 ```
 
-On Windows (native MSVC client):
+### From source
 
-```bat
-:: Debug
-build\msvc\cod2_win32.exe +set fs_basepath "C:\path\to\your\game"
-
-:: Release
-build\msvc-release\cod2_win32.exe +set fs_basepath "C:\path\to\your\game"
+```sh
+git clone https://github.com/STiXzoOR/cod2-silicon && cd cod2-silicon && ./scripts/install.sh
 ```
 
-Without legally-obtained data the build runs but has nothing to load.
+The installer needs the Xcode Command Line Tools and CMake and explains how to
+get them. It installs to `~/Applications/CoD2 Silicon.app`. A locally built app
+is not quarantined. <!-- WS21: confirm installer and clean-checkout build prerequisites -->
 
-## Notice
+## First run and playing
 
-This is an independent, source-level reconstruction of the Call of Duty
-2 engine. It is not affiliated with, authorized by, sponsored by, or endorsed by
-Activision Publishing, Inc., Infinity Ward, or any of their affiliates.
+Open **CoD2 Silicon.app**. It finds the game folder automatically or asks you
+to choose the folder containing `main/`. If no CD key is stored, it asks for
+yours and saves it in `~/.cod2/preferences`. Never share that file or your key.
+It extracts the original shaders from your own Steam Mac copy when available,
+otherwise continues with approximate shaders. Configs, logs, demos, screenshots
+and the shader cache live in `~/Library/Application Support/CoD2 Silicon`.
+<!-- WS21: confirm first-run picker, CD-key prompt, data discovery and support path -->
 
-"Call of Duty" and "Call of Duty 2" are trademarks of Activision Publishing,
-Inc. They are used in this repository only for identification and
-interoperability, to describe what the code reconstructs. No claim is made to
-those marks.
+Use the multiplayer menu and server browser, or open a `cod2x://` server link:
 
-This project does not provide or help obtain copyrighted game data. To use it
-with real game content, you must supply data files from a copy of Call of Duty 2
-that you legally own.
+```sh
+open -a "/Applications/CoD2 Silicon.app" 'cod2x://connect/127.0.0.1:28960'
+```
 
-The reconstructed engine source is a derivative work created for the purposes of
-preservation, interoperability, research, and education. It is provided as-is,
-without warranty of any kind, express or implied. The original port, build
-system, and platform glue are separable original work.
+Replace the address with your server. For a source install, use the app under
+`~/Applications` instead. The default settings target 1080p fullscreen,
+`com_maxfps 333`, vsync off and raw mouse input. Competitive CoD2x servers
+enforce their own **125–250 fps** caps; 333 applies where the server allows it.
 
-If you are a rights holder and believe something here should not be distributed,
-please open an issue or contact the maintainer and it will be addressed
-promptly.
+## Known limitations
+
+- No microphone/voice capture; no intro cinematics.
+- No standalone native dedicated-server binary yet. Use the client executable
+  with `+set dedicated 1 +map mp_toujane` and your normal data arguments.
+- Frame-pacing hitches remain; active Game Mode and quiet-desktop display
+  restoration still need acceptance testing.
+- Some rendering and mod edge cases remain. A server restart during an HTTP
+  download can stall it; reconnecting recovered in the tested case.
+- This engine inherits security-sensitive networking, file parsing and memory
+  behavior from an old reconstruction. It is not hardened. Use trusted content
+  and servers; see [SECURITY.md](SECURITY.md).
+
+## Building for development
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) for the complete merge gate and data
+requirements. Direct development builds currently need SDL2-compatible
+development libraries (the port was tested with Homebrew SDL3 + sdl2-compat),
+Python 3.9+ and the private reference inputs described in
+[typed-data generation](tools/datagen/README.md). The installer path above is
+the player-facing entry point. <!-- WS21: confirm public source build removes private reference prerequisite -->
+
+```sh
+cmake -S . -B build-macos -DCOD2_X64=ON -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake --build build-macos --target cod2_macos --parallel 3
+cmake -S . -B build-macos-codx -DCOD2_X64=ON -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DCOD2_FEATURE_CFLAGS=-DCOD2_CODX=1
+cmake --build build-macos-codx --target cod2_macos --parallel 3
+```
+
+`COD2_CODX=ON` is not a CMake option: use the feature flag shown above.
+The original Linux, Windows and WebAssembly/i386 paths retain their build
+instructions in the [upstream README](docs/upstream-opencod2-README.md).
+
+| Path | Contents |
+| --- | --- |
+| `src/PC`, `src/Mac` | Reconstructed engine and renderer |
+| `src/platform` | Native macOS display, input, audio and system adapters |
+| `cmake`, `tools`, `tests` | Build definitions, verification and test fixtures |
+| `docs/macos-port` | [Development log and report index](docs/macos-port/README.md), compatibility and parity research |
+
+## Credits and license
+
+Built on opencod2, with behavior research from CoD2x, cod2engine,
+CoD2rev_Server and KisakCOD, and native support from SDL, Apple frameworks,
+libcurl and zlib. Most port code and analysis was written by OpenAI Codex and
+Anthropic Claude Code agents, then verified with test suites and live server
+play. [Full credits and provenance](CREDITS.md)
+
+[MIT](LICENSE) covers this project's own changes after opencod2 `410342a`.
+Upstream opencod2 declares no license and retains its authors' rights;
+third-party licenses remain applicable. Read [NOTICE.md](NOTICE.md) for scope.
+
+“Call of Duty” is a trademark of Activision. CoD2 Silicon is not affiliated
+with Activision, Infinity Ward, Aspyr or the CoD2x project.
