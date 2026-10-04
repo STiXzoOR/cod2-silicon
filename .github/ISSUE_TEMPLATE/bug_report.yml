@@ -1,0 +1,66 @@
+name: Bug report
+description: Report a reproducible CoD2 Silicon problem.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For security vulnerabilities, use the private link in SECURITY.md.
+        Never include a CD key, key digest, HWID, Steam account name, password,
+        token, game archive, shader cache, demo or decompiler dump.
+  - type: input
+    id: version
+    attributes:
+      label: CoD2 Silicon version or Git commit
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      description: Include the exact version from About This Mac.
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Mac model and chip
+      placeholder: Mac mini, Apple M4, 16 GB
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Install method
+      options:
+        - GitHub Releases zip
+        - scripts/install.sh
+        - Development CMake build
+    validations:
+      required: true
+  - type: input
+    id: data
+    attributes:
+      label: Game data source and language
+      description: Steam Windows, Steam Mac or retail; version/language only, never account or key.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Include relevant server protocol/mod and display settings; omit private server passwords.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual result
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Redacted console.log excerpt
+      description: From your CoD2 Silicon support folder; review every line and remove keys, identifiers and credentials before pasting.
+      render: text

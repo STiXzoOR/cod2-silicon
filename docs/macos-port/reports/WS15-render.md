@@ -4,7 +4,7 @@
 contains matched Windows/native comparisons, the merged-tree colour regression,
 and the subsequent shader, lighting, HUD and gameplay fixes.
 
-2026-10-03. Worktree `/Users/stix/Projects/cod2-native-wt/render-parity`, branch
+2026-10-03. Worktree `~/Projects/cod2-native-wt/render-parity`, branch
 `port/render-parity`, starting commit `4ddccfd`.
 
 **Verified partial result; full rendering parity is not achieved.** The native

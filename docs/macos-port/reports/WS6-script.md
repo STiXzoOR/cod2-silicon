@@ -1,7 +1,7 @@
 # WS6 — script VM LP64 correctness
 
 Branch: `port/lp64-script`. Base: `a2f4477` on `port/main`.
-Worktree: `/Users/stix/Projects/cod2-native-wt/lp64-script`.
+Worktree: `~/Projects/cod2-native-wt/lp64-script`.
 Date: 2026-10-03.
 
 ## Result

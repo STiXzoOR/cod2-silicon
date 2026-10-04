@@ -1,7 +1,7 @@
 # WS14 — online play on public servers
 
 Date: 2026-10-03. Branch: `port/online`. Worktree:
-`/Users/stix/Projects/cod2-native-wt/online`. Base: `4ddccfd`; `port/main`
+`~/Projects/cod2-native-wt/online`. Base: `4ddccfd`; `port/main`
 (`5f69688`, WS10) merged in `5f1cbc7`.
 
 ## Result

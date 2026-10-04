@@ -1,6 +1,6 @@
 # WS16 — script VM shutdown and game-state integrity
 
-Date: 2026-10-03. Worktree: `/Users/stix/Projects/cod2-native-wt/vm-safety`.
+Date: 2026-10-03. Worktree: `~/Projects/cod2-native-wt/vm-safety`.
 Branch: `port/vm-safety`, started from `port/main` at `5f69688` (merged first).
 
 ## Result

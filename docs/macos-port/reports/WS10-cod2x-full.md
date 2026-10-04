@@ -1,6 +1,6 @@
 # WS10 — full native CoD2x client
 
-Branch: `port/cod2x-full`. Worktree: `/Users/stix/Projects/cod2-native-wt/cod2x-full`.
+Branch: `port/cod2x-full`. Worktree: `~/Projects/cod2-native-wt/cod2x-full`.
 Initial base: `231d6be5d1f49864862a98a3e72d7b6ddbe840fa`. Integrated `port/main`
 at `b834082bc95cf5fdb44f62bffa0f31dad21a6592` through merge `5acae2f`.
 Verified on 2026-10-03.

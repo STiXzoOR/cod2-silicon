@@ -1,6 +1,6 @@
 # WS5 — verification harness
 
-Completed on 2026-10-03 in `/Users/stix/Projects/cod2-native-wt/verify`, branch
+Completed on 2026-10-03 in `~/Projects/cod2-native-wt/verify`, branch
 `port/verify`. Read all of `PLAN.md` before implementation. Integration and
 publication remain with the orchestrator. No sibling worktrees were accessed;
 no remotes, global configuration or system packages were changed. No game

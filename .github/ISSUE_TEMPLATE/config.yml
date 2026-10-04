@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Private security report
+    url: https://github.com/STiXzoOR/cod2-silicon/security/advisories/new
+    about: Report vulnerabilities privately; never post exploits or credentials in public issues.
+  - name: Roadmap and contributing
+    url: https://github.com/STiXzoOR/cod2-silicon/blob/main/CONTRIBUTING.md
+    about: Read the roadmap, contribution rules and verification requirements.

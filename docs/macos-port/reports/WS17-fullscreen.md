@@ -1,7 +1,7 @@
 # WS17 — selected-resolution fullscreen and the 333 FPS cap
 
 Branch: `port/fullscreen-333`. Base: `7a94368`. Worktree:
-`/Users/stix/Projects/cod2-native-wt/fullscreen-333`. Host: Apple M6
+`~/Projects/cod2-native-wt/fullscreen-333`. Host: Apple M6
 (`sysctl -n machdep.cpu.brand_string`). Target display: PA27JCV, 6016×3384
 physical pixels, 3008×1692 logical pixels, 60 Hz, as verified in WS13.
 

@@ -325,7 +325,7 @@ in this follow-up, and the dedicated import-pointer problem was not modified.
 The separate value source is the user's licensed Steam Mac executable:
 
 ```text
-/Users/stix/Games/CoD2-mac-bin/Call of Duty 2.app/Contents/Call of Duty 2 Multiplayer.app/Contents/MacOS/Call of Duty 2 Multiplayer
+~/Games/CoD2-mac-bin/Call of Duty 2.app/Contents/Call of Duty 2 Multiplayer.app/Contents/MacOS/Call of Duty 2 Multiplayer
 ```
 
 Its SHA-256 is

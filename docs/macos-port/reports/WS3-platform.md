@@ -1,6 +1,6 @@
 # WS3 — native macOS platform and link closure
 
-Worktree: `/Users/stix/Projects/cod2-native-wt/platform`; branch: `port/platform`;
+Worktree: `~/Projects/cod2-native-wt/platform`; branch: `port/platform`;
 base: `bae83a6` (WS1 + WS5). Verified on the Apple M6/macOS 27/Xcode 27 machine
 on 2026-10-03. No packages installed, sibling worktrees accessed, remote changes,
 pushes, PRs, issues, game data, binary copies or decompiler dumps added.

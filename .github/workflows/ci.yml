@@ -1,0 +1,181 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest discover -s tools/tests -v
+      - run: python3 -m unittest discover -s tools/datagen -p test_datagen.py -v
+      - run: python3 tests/rendering/shader_setup.py
+      - run: python3 -m unittest discover -s tests/lp64/renderer -p test_wine_draw_trace.py -v
+      - run: shellcheck tools/ci/*.sh tools/macos/*.sh
+
+  x86-reference:
+    name: x86 ILP32 byte-for-byte reference (410342a versus head)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: README multilib build dependencies
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc-14-multilib g++-14-multilib cmake pkg-config \
+            libsdl2-dev:i386 libgl1-mesa-dev:i386 libx11-dev:i386 \
+            libcurl4-openssl-dev:i386 zlib1g-dev:i386 libstdc++6:i386
+      - name: Build both snapshots and compare all game objects and both binaries
+        env:
+          PKG_CONFIG_LIBDIR: /usr/lib/i386-linux-gnu/pkgconfig:/usr/share/pkgconfig
+        run: bash tools/ci/compare-x86.sh
+      - name: Preserve diagnostics only (no game data or executables)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: x86-reference-logs
+          path: |
+            output/x86-reference/*.log
+            output/x86-reference/*.txt
+
+  macos-arm64:
+    name: Apple silicon Release clients and data-free fixtures
+    # macos-15 is a standard GitHub-hosted M1 runner, not an Intel label.
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      ASAN_OPTIONS: symbolize=0
+      UBSAN_OPTIONS: halt_on_error=1
+      HOMEBREW_NO_AUTO_UPDATE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require native arm64 and prepare SDL development libraries
+        run: |
+          test "$(uname -m)" = arm64
+          command -v cmake
+          command -v clang
+          brew install sdl2-compat
+          command -v sdl2-config
+      - name: Synthetic ABI checker tests
+        run: |
+          python3 tools/abi/test_audit.py
+          python3 tools/abi/test_imports.py
+      - name: Full CoD2x fixtures
+        timeout-minutes: 5
+        if: ${{ !cancelled() }}
+        run: COD2X_SANITIZERS=1 sh tests/cod2x/run_full.sh
+      - name: Native CoD2x integration fixtures
+        timeout-minutes: 5
+        if: ${{ !cancelled() }}
+        run: sh tests/cod2x/run_native.sh
+      - name: SDK identity fixture
+        if: ${{ !cancelled() }}
+        run: sh tests/online/sdk_identity.sh
+      - name: Synthetic renderer, performance, HUD and FX fixtures
+        if: ${{ !cancelled() }}
+        run: |
+          status=0
+          run_fixture() { "$@" || status=1; }
+          run_fixture sh tests/lp64/renderer/run.sh
+          run_fixture sh tests/lp64/renderer/run_shader_raster.sh
+          run_fixture sh tests/lp64/renderer/run_texture_mips.sh
+          run_fixture sh tests/lp64/renderer/run_volume_upload.sh
+          run_fixture python3 tests/perf/run.py
+          run_fixture python3 tests/platform/run_hud_matrices.py
+          run_fixture python3 tests/platform/run_impact_marks.py
+          run_fixture python3 tests/platform/run_fx_events.py
+          run_fixture python3 tests/platform/run_fx_primitives.py
+          run_fixture python3 tests/platform/run_fx_cloud.py
+          run_fixture sh tests/platform/run_dedicated_fx.sh
+          exit "$status"
+      - name: Native platform CTest with and without sanitizers
+        timeout-minutes: 10
+        if: ${{ !cancelled() }}
+        run: |
+          for sanitizers in ON OFF; do
+            build="output/platform-$sanitizers"
+            cmake -S tests/platform -B "$build" -DCMAKE_BUILD_TYPE=Debug \
+              -DCOD2_PLATFORM_SANITIZERS="$sanitizers"
+            cmake --build "$build" --parallel 3
+            ctest --test-dir "$build" --output-on-failure
+          done
+      # The present datagen CMake module requires private Mac reference binaries.
+      # WS21/orchestrator must resolve that source-build prerequisite before
+      # public release. Never fetch proprietary inputs, use secrets for them,
+      # or disguise a failed configure as an expected success.
+      # WS21: confirm public clean-checkout datagen/build support.
+      - name: Configure and build stock Release client
+        id: stock
+        if: ${{ !cancelled() }}
+        run: |
+          cmake -S . -B build-macos -DCOD2_X64=ON -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build build-macos --parallel 3 --target cod2_macos
+      - name: Configure and build CoD2x Release client
+        id: codx
+        if: ${{ !cancelled() }}
+        run: |
+          cmake -S . -B build-macos-codx -DCOD2_X64=ON -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DCOD2_FEATURE_CFLAGS=-DCOD2_CODX=1
+          cmake --build build-macos-codx --parallel 3 --target cod2_macos
+      - name: Data-free function and renderer callback ABI audits
+        if: ${{ !cancelled() && steps.stock.outcome == 'success' && steps.codx.outcome == 'success' }}
+        run: |
+          for build in build-macos build-macos-codx; do
+            out="output/abi-$build"
+            mkdir -p "$out"
+            python3 tools/abi/audit.py "$build/compile_commands.json" \
+              --output "$out/functions.json" --baseline tools/abi/baseline.json
+            python3 tools/abi/callback_tables.py "$build/compile_commands.json" \
+              --audit "$out/functions.json" --baseline tools/abi/callback-baseline.json \
+              --output "$out/callbacks.json"
+          done
+          # imports.py / full check.sh require a proprietary binary: local gate only.
+      - name: Keep assertions enabled in fixture compile commands
+        if: ${{ !cancelled() && steps.stock.outcome == 'success' && steps.codx.outcome == 'success' }}
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for build in ['build-macos', 'build-macos-codx']:
+              path = Path(build) / 'compile_commands.json'
+              path.with_name('compile_commands.engine.json').write_bytes(path.read_bytes())
+              rows = json.loads(path.read_text())
+              for row in rows:
+                  if 'command' in row:
+                      row['command'] = row['command'].replace(' -DNDEBUG', ' -UNDEBUG')
+                  if 'arguments' in row:
+                      row['arguments'] = ['-UNDEBUG' if x == '-DNDEBUG' else x for x in row['arguments']]
+              path.write_text(json.dumps(rows))
+          PY
+      - name: Source-based game, script, network and reconstruction fixtures
+        if: ${{ !cancelled() && steps.stock.outcome == 'success' && steps.codx.outcome == 'success' }}
+        run: |
+          python3 tests/lp64/game/run.py --build build-macos
+          python3 tests/lp64/script/run.py
+          python3 tests/online/run.py build-macos/compile_commands.json
+          python3 tests/online/run.py build-macos-codx/compile_commands.json
+          python3 tests/fixes13/run.py --build build-macos
+          python3 tests/fixes13/run.py --build build-macos-codx
+      - name: Preserve diagnostics only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64-diagnostics
+          if-no-files-found: ignore
+          path: |
+            output/abi-*/functions.json
+            output/abi-*/callbacks.json
+            output/platform-*/Testing/Temporary/LastTest.log
