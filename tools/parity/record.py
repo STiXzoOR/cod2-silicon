@@ -31,12 +31,15 @@ def main():
     parser.add_argument('--seed', type=int, default=12345)
     parser.add_argument('--map', default='mp_toujane')
     parser.add_argument('--timeout', type=float, default=180)
+    parser.add_argument('--port', type=int, help='unique loopback UDP port for parallel runs')
     parser.add_argument('--dedicated', action='store_true', help='use with cod2_lnxded on Linux')
     args = parser.parse_args()
     if args.frames < 1 or not 0 <= args.seed <= 2147483647 or args.timeout <= 0:
         parser.error('positive frames/timeout and a nonnegative int32 seed are required')
     if not re.fullmatch(r'mp_[A-Za-z0-9_]+', args.map):
         parser.error('expected an mp_ map name')
+    if args.port is not None and not 1024 < args.port <= 65535:
+        parser.error('port must be 1025..65535')
     binary, data, out = args.binary.resolve(), args.data.resolve(), args.output.resolve()
     iwds = sorted((data / 'main').glob('*.iwd'))
     if not binary.is_file() or not os.access(binary, os.X_OK) or not iwds:
@@ -52,6 +55,8 @@ def main():
                '+set', 'net_ip', '127.0.0.1',
                '+set', 'sv_fps', '20', '+set', 'fixedtime', '50',
                '+set', 'g_gametype', 'dm', '+map', args.map]
+    if args.port is not None:
+        command[1:1] = ['+set', 'net_port', str(args.port)]
     env = dict(os.environ, SYSDIFF_SEED=str(args.seed), SYSDIFF_MAXFRAMES=str(args.frames),
                SYSDIFF_STATEHASH=str(out / 'statehash.txt'), SYSDIFF_DUMP=str(out / 'entities.txt'))
     metadata = dict(command=command, platform=platform.platform(), binary_sha256=sha256(binary),
