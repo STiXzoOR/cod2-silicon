@@ -17,7 +17,7 @@ def build_icon(root, output):
         with (output / "icon-info.plist").open("rb") as file:
             keys = plistlib.load(file)
         files = [output / "Assets.car", output / (keys["CFBundleIconFile"] + ".icns")]
-        if set(keys) != {"CFBundleIconFile", "CFBundleIconName"} or not all(path.is_file() for path in files):
+        if set(keys) != {"CFBundleIconFile", "CFBundleIconName", "NSAccentColorName"} or not all(path.is_file() for path in files):
             raise SystemExit("actool did not produce the expected icon files")
         return files, keys
     if result.returncode != 3:

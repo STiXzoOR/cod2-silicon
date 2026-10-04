@@ -20,6 +20,7 @@ for contents, plist in [(app / 'Contents', info), (game / 'Contents', engine)]:
     if 'CFBundleIconName' in plist:  # layered Icon Composer build (Xcode actool)
         assert plist['CFBundleIconName'] == 'CoD2 Silicon'
         assert (contents / 'Resources/Assets.car').is_file()
+        assert plist['NSAccentColorName'] == 'AccentColor'
 assert info['ATSApplicationFontsPath'] == 'Fonts'
 fonts = {p.name for p in (app / 'Contents/Resources/Fonts').iterdir()}
 assert fonts == {'BigShouldersStencilDisplay.ttf', 'CourierPrime-Regular.ttf', 'CourierPrime-Bold.ttf',
