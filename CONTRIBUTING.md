@@ -66,6 +66,10 @@ This adds `Signed-off-by: Your Name <your-email>` and certifies your right to
 submit the contribution. AI assistance does not replace that responsibility:
 review the output, verify it and describe substantial AI use in the PR.
 
+The x86 byte-for-byte CI comparison is temporarily non-blocking because
+upstream `410342a` does not compile with GCC 14 on Linux; see
+[the tracking issue](https://github.com/STiXzoOR/cod2-silicon/issues/10).
+
 ## Native builds and merge gate
 
 Use Xcode Command Line Tools, CMake, Python 3.9+ and SDL2-compatible headers/
