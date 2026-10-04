@@ -1,5 +1,17 @@
 import SwiftUI
 import AppKit
+import Carbon.HIToolbox
+
+/// The key field stays readable so it can stamp the dog tag, but like NSSecureTextField it
+/// turns on secure event input while focused, so other processes can't observe keystrokes.
+@MainActor enum SecureKeyEntry {
+    private static var active = false
+    static func set(_ on: Bool) {
+        guard on != active else { return }
+        active = on
+        _ = on ? EnableSecureEventInput() : DisableSecureEventInput()
+    }
+}
 
 struct SetupView: View {
     @ObservedObject var model: LauncherModel
@@ -64,9 +76,7 @@ struct SetupView: View {
         VStack(alignment: .leading, spacing: 20) {
             let found = !model.dataPath.isEmpty
             HStack(alignment: .top, spacing: 18) {
-                Image(systemName: found ? "folder.badge.checkmark" : "folder.badge.questionmark").font(.system(size: 40, weight: .light))
-                    .symbolRenderingMode(.palette).foregroundStyle(found ? palette.positive : palette.accent, palette.accent)
-                    .frame(width: 54, height: 54).accessibilityHidden(true)
+                SetupGlyph(kind: found ? .folderFound : .folderMissing).frame(width: 54, height: 54)
                 VStack(alignment: .leading, spacing: 6) {
                     Text(found ? "Game data found" : "Find your game data").font(.system(size: 21, weight: .bold)).foregroundStyle(palette.text)
                     Text(found ? "We use your installed Call of Duty 2 files where they are. Configs, demos and screenshots get their own folder."
@@ -113,6 +123,8 @@ struct SetupView: View {
                     .onSubmit { if model.keyReady { model.nextSetup() } }
                     .accessibilityLabel("CD key, twenty characters")
                     .onAppear { keyFocused = !model.snapshot }
+                    .onChange(of: keyFocused) { SecureKeyEntry.set($0 && !model.snapshot) }
+                    .onDisappear { SecureKeyEntry.set(false) }
                 Text(keyHint(raw)).font(.system(size: 13)).foregroundStyle(raw.count == 20 ? (model.keyReady ? palette.positive : palette.negative) : palette.secondary)
                     .accessibilityAddTraits(.updatesFrequently)
             }
@@ -135,7 +147,7 @@ struct SetupView: View {
     @ViewBuilder private var shaderStep: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .top, spacing: 18) {
-                Image(systemName: "circle.lefthalf.filled").font(.system(size: 40, weight: .light)).foregroundStyle(palette.accent).frame(width: 54, height: 54).accessibilityHidden(true)
+                SetupGlyph(kind: .shaders).frame(width: 54, height: 54)
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Original shaders").font(.system(size: 21, weight: .bold)).foregroundStyle(palette.text)
                     Text("Lighting and sky exactly as the game shipped, taken from your own Mac copy of Call of Duty 2.")
@@ -162,6 +174,35 @@ struct SetupView: View {
                 }
             }
         }
+    }
+}
+
+/// The design's line glyphs for the data and shader steps (24-point artboard, drawn at 54).
+struct SetupGlyph: View {
+    enum Kind { case folderFound, folderMissing, shaders }
+    var kind: Kind
+    @Environment(\.palette) private var palette
+    var body: some View {
+        Canvas { context, size in
+            let scale = CGAffineTransform(scaleX: size.width / 24, y: size.height / 24)
+            let line = StrokeStyle(lineWidth: 1.4 * size.width / 24, lineCap: .round, lineJoin: .round)
+            switch kind {
+            case .folderFound, .folderMissing:
+                let folder = SVGPath.parse("M3 7.5a2 2 0 0 1 2-2h4.2l2 2.2H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z", transform: scale)
+                context.stroke(folder, with: .color(palette.accent), style: line)
+                if kind == .folderFound {
+                    context.stroke(SVGPath.parse("M8 13.2l2.6 2.6L16 10.6", transform: scale), with: .color(palette.positive),
+                                   style: StrokeStyle(lineWidth: 1.8 * size.width / 24, lineCap: .round, lineJoin: .round))
+                } else {
+                    context.stroke(SVGPath.parse("M12 10.4v5.4M9.3 13.1h5.4", transform: scale), with: .color(palette.accent), style: line)
+                }
+            case .shaders:
+                context.stroke(Path(ellipseIn: CGRect(x: 3.5, y: 3.5, width: 17, height: 17)).applying(scale), with: .color(palette.accent), style: line)
+                context.fill(SVGPath.parse("M12 3.5a8.5 8.5 0 0 1 0 17Z", transform: scale), with: .color(palette.accent.opacity(0.25)))
+                context.stroke(SVGPath.parse("M3.5 12h17", transform: scale), with: .color(palette.accent), style: line)
+            }
+        }
+        .accessibilityHidden(true)
     }
 }
 

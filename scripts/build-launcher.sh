@@ -26,11 +26,14 @@ elif [[ ${2:-} == --snapshots ]]; then
     # compiled Assets.car beside the executable.
     sources+=("${views[@]}" "$root/tests/launcher/Snapshots.swift")
     name=LauncherSnapshots
-    "$root/scripts/compile-launcher-icon.sh" "$out/assets" >/dev/null
-    cp "$out/assets/Assets.car" "$out/Assets.car"
     /usr/bin/plutil -create xml1 "$out/Info.plist"
     /usr/bin/plutil -insert CFBundleIdentifier -string io.github.stixzoor.cod2silicon.snapshots "$out/Info.plist"
-    /usr/bin/plutil -insert NSAccentColorName -string AccentColor "$out/Info.plist"
+    if "$root/scripts/compile-launcher-icon.sh" "$out/assets" >/dev/null; then
+        cp "$out/assets/Assets.car" "$out/Assets.car"
+        /usr/bin/plutil -insert NSAccentColorName -string AccentColor "$out/Info.plist"
+    else
+        printf 'Rendering with the system accent: this toolchain cannot compile the asset catalog.\n' >&2
+    fi
     swift_flags+=(-Xlinker -sectcreate -Xlinker __TEXT -Xlinker __info_plist -Xlinker "$out/Info.plist")
 elif [[ ${2:-} == --network-test ]]; then
     sources+=("$root/launcher/Network.swift" "$root/tests/launcher/NetworkTests.swift")

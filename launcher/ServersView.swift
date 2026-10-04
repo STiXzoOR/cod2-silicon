@@ -24,7 +24,7 @@ struct ServersView: View {
                                 ServerRow(server: server, image: artwork.image(for: server.map), selected: server.address == model.selected?.address,
                                           favorite: model.library.favorites.contains(server.address)) {
                                     withAnimation(reduceMotion ? nil : .launcherSpring) { model.selectedServer = server.address }
-                                } toggleFavorite: { model.favorite(server.address) }
+                                } toggleFavorite: { model.favorite(server.address) } deploy: { model.connect(server) }
                                 .id(server.address)
                             }
                             if rows.isEmpty { NoContact(refreshing: model.refreshing, hasServers: !model.servers.isEmpty) }
@@ -39,6 +39,9 @@ struct ServersView: View {
                         model.selectedServer = rows[next].address
                         reader.scrollTo(rows[next].address)
                     }
+                    // Return deploys only while the list has focus; a default button would also
+                    // swallow Return in the search and direct-connect fields.
+                    .onReturnKey { if let server = model.selected { model.connect(server) } }
                     .accessibilityLabel("Servers")
                 }
                 .bottomBar { DirectConnectBar(model: model).padding(.bottom, 22).padding(.top, 10) }
@@ -134,6 +137,7 @@ struct ServerRow: View {
     var favorite: Bool
     var select: () -> Void
     var toggleFavorite: () -> Void
+    var deploy: () -> Void
     @Environment(\.palette) private var palette
     @State private var hovering = false
     var body: some View {
@@ -175,12 +179,14 @@ struct ServerRow: View {
         .background(selected ? palette.selection : (palette.dark ? Color.white : Color.black).opacity(hovering ? 0.045 : 0), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(selected ? palette.selectionStroke : .clear, lineWidth: 1))
         .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .onTapGesture(count: 2, perform: deploy)
         .onTapGesture(perform: select)
         .onHover { hovering = $0 }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(QuakeColors.plain(server.name)), \(MapCatalog.displayName(server.map)), \(GameModes.long(server.gametype)), \(facts.versionLabel), \(server.playerCount) of \(server.maxPlayers) players, \(server.ping) milliseconds\(server.password ? ", password protected" : "")")
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
         .accessibilityAction { select() }
+        .accessibilityAction(named: "Deploy", deploy)
     }
 }
 
@@ -249,8 +255,8 @@ struct ServerDetails: View {
                             Label("Deploy", systemImage: "play.fill").font(.system(size: 15, weight: .semibold)).frame(maxWidth: .infinity, minHeight: 30)
                         }
                         .prominentAction().controlSize(.large)
-                        .keyboardShortcut(.defaultAction)
                         .accessibilityLabel("Deploy to \(QuakeColors.plain(server.name))")
+                        .help("Deploy to this server (Return in the server list, or double-click a row)")
                         let favorite = model.library.favorites.contains(server.address)
                         Button { model.favorite(server.address) } label: {
                             Image(systemName: favorite ? "star.fill" : "star").font(.system(size: 15)).foregroundStyle(palette.dark ? palette.accent : palette.link).frame(width: 30, height: 30)
@@ -362,5 +368,9 @@ struct ContourBackdrop: View {
 private extension View {
     @ViewBuilder func circleBorder() -> some View {
         if #available(macOS 14.0, *) { self.buttonBorderShape(.circle) } else { self }
+    }
+    /// Return while this view has focus (macOS 14+); on macOS 13 double-click and the Deploy button remain.
+    @ViewBuilder func onReturnKey(_ action: @escaping () -> Void) -> some View {
+        if #available(macOS 14.0, *) { self.onKeyPress(.return) { action(); return .handled } } else { self }
     }
 }

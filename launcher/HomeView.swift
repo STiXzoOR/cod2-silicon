@@ -190,9 +190,11 @@ enum HeroInk {
 
 /// Text-region luminance of a loading screen, sampled once per image.
 @MainActor enum HeroLuminance {
-    private static var cache: [ObjectIdentifier: (low: Double, high: Double)] = [:]
+    // Weakly held so a freed image's identifier, if reused, never returns stale numbers.
+    private final class Entry { weak var image: NSImage?; let value: (low: Double, high: Double); init(_ image: NSImage, _ value: (low: Double, high: Double)) { self.image = image; self.value = value } }
+    private static var cache: [ObjectIdentifier: Entry] = [:]
     static func stats(_ image: NSImage) -> (low: Double, high: Double) {
-        if let value = cache[ObjectIdentifier(image)] { return value }
+        if let entry = cache[ObjectIdentifier(image)], entry.image === image { return entry.value }
         var result = (low: 0.0, high: 1.0)
         let width = 384, height = 288
         var pixels = Data(count: width * height * 4)
@@ -219,7 +221,8 @@ enum HeroInk {
                                   lower: 0.01, upper: 1)
         }
         if drawn, !stats.isEmpty { result = (stats.map(\.low).min() ?? 0, stats.map(\.high).max() ?? 1) }
-        cache[ObjectIdentifier(image)] = result
+        cache = cache.filter { $0.value.image != nil }
+        cache[ObjectIdentifier(image)] = Entry(image, result)
         return result
     }
 }

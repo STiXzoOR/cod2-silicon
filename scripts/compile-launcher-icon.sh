@@ -16,6 +16,12 @@ if ! actool=$(/usr/bin/xcrun --find actool 2>/dev/null); then
     printf '%s\n' 'actool is unavailable (it ships with Xcode, not the Command Line Tools).' >&2
     exit 3
 fi
+# Icon Composer documents need the macOS 26 SDK's actool (Xcode 26 or later).
+sdk_version=$(/usr/bin/xcrun --show-sdk-version 2>/dev/null || echo 0)
+if [ "${sdk_version%%.*}" -lt 26 ]; then
+    printf 'actool from SDK %s cannot compile Icon Composer documents (needs Xcode 26 or later).\n' "$sdk_version" >&2
+    exit 3
+fi
 mkdir -p "$output"
 "$actool" "$source_icon" "$root/launcher/Resources/Accent.xcassets" --compile "$output" --platform macosx \
     --minimum-deployment-target 13.0 --app-icon "$name" --accent-color AccentColor \

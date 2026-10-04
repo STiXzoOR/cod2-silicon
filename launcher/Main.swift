@@ -39,7 +39,8 @@ import AppKit
         .windowToolbarStyle(.unified)
         .commands {
             CommandGroup(replacing: .appInfo) {
-                Button("About CoD2 Silicon") { LauncherState.model.onboard = false; LauncherState.model.page = .about }
+                // Setup must finish first: About never bypasses onboarding.
+                Button("About CoD2 Silicon") { if !LauncherState.model.onboard { LauncherState.model.page = .about } }
             }
             CommandGroup(after: .newItem) {
                 Button("Deploy") { LauncherState.model.deploy() }.keyboardShortcut(.return, modifiers: .command)

@@ -313,6 +313,7 @@ struct MediaEntry: Identifiable {
     }
     /// Home's Deploy: rejoin the last server, or open the game's menu when there is none.
     func deploy() {
+        guard !onboard else { return }
         if let address = library.recent.first, !snapshot {
             do { pendingLink = try LaunchLink.direct(address); play() } catch { notice = error.localizedDescription }
         } else { play() }
