@@ -1,0 +1,88 @@
+{
+  "fill": {
+    "automatic-gradient": "extended-srgb:0.28000,0.32000,0.30000,1.00000"
+  },
+  "groups": [
+    {
+      "name": "Stamp",
+      "layers": [
+        {
+          "name": "Squared stamp",
+          "image-name": "02-stamp.svg",
+          "glass": false,
+          "fill-specializations": [
+            {
+              "value": "automatic"
+            },
+            {
+              "appearance": "tinted",
+              "value": {
+                "solid": "extended-srgb:1,1,1,1"
+              }
+            }
+          ]
+        }
+      ],
+      "translucency": {
+        "enabled": true,
+        "value": 0.12
+      },
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.25
+      }
+    },
+    {
+      "name": "Tag",
+      "layers": [
+        {
+          "name": "Steel tag",
+          "image-name": "01-tag.svg",
+          "glass": true,
+          "fill-specializations": [
+            {
+              "value": "automatic"
+            },
+            {
+              "appearance": "tinted",
+              "value": {
+                "solid": "extended-srgb:0.42,0.42,0.42,1"
+              }
+            }
+          ]
+        }
+      ],
+      "translucency": {
+        "enabled": true,
+        "value": 0.12
+      },
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.25
+      }
+    },
+    {
+      "name": "Cord",
+      "layers": [
+        {
+          "name": "Cord",
+          "image-name": "03-cord.svg",
+          "glass": true
+        }
+      ],
+      "translucency": {
+        "enabled": true,
+        "value": 0.12
+      },
+      "shadow": {
+        "kind": "neutral",
+        "opacity": 0.25
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": [
+      "macOS"
+    ]
+  }
+}
