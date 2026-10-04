@@ -5,6 +5,12 @@ check_prerequisites() {
         printf 'CoD2 Silicon requires an Apple silicon Mac running macOS 13 or later.\n' >&2
         return 1
     fi
+    local os_version
+    os_version=$(/usr/bin/sw_vers -productVersion)
+    if [[ ${os_version%%.*} -lt 13 ]]; then
+        printf 'CoD2 Silicon requires macOS 13 or later; this Mac runs %s.\n' "$os_version" >&2
+        return 1
+    fi
     if ! /usr/bin/xcode-select -p >/dev/null 2>&1 || ! /usr/bin/xcrun --find clang >/dev/null 2>&1; then
         printf 'Install the Xcode Command Line Tools: xcode-select --install\n' >&2
         return 1
