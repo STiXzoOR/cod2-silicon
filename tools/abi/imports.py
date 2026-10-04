@@ -215,6 +215,9 @@ def main():
     parser.add_argument('--json', type=Path, required=True)
     parser.add_argument('--check', action='store_true')
     options = parser.parse_args()
+    if not options.binary.is_file():
+        print(f'SKIP retail import ABI check: missing private STABS input: {options.binary}')
+        return
     files = {p: p.read_text(errors='replace') for p in sorted((ROOT / 'src').rglob('*'))
              if p.suffix in ('.c', '.h', '.cpp') and 'sdl2' not in p.parts}
     lexical = list(source_sites(files))

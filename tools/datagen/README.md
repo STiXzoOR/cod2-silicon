@@ -28,8 +28,11 @@ usable type definitions. Generation matches data symbols by name (including
 C++ static mangling), bounds reads by STABS size and the next symbol, and fails
 if any nonzero, non-relocated source byte disagrees with the value reference.
 Only scalar bytes are recovered; genuine pointers retain repository symbol
-references rather than Steam addresses. Proprietary inputs and all generated
-payloads remain local.
+references rather than Steam addresses. Proprietary inputs, coverage reports
+and verification objects remain local.
+The five production sources are committed in `build/lp64_gen/`, matching the
+upstream convention for `build/native_gen/` and other generated source sets.
+They contain typed C storage and symbolic references, never private binaries.
 
 For generation alone:
 
@@ -38,7 +41,7 @@ python3 tools/datagen/generate.py \
   --binary "$HOME/Projects/cod2-native-refs/macbin/cod2mp_mac_1.3_i386"
 ```
 
-Generated output is local and must not be committed:
+Only the five production files below are snapshotted; all other output stays local:
 
 | Output | Authority and use |
 | --- | --- |
@@ -65,7 +68,7 @@ Scan actual build objects with:
 
 ```sh
 python3 tools/datagen/check_alignment.py \
-  build-macos/CMakeFiles/cod2_macos.dir/build/x64_gen/*_native.c.o
+  build-macos/CMakeFiles/cod2_macos.dir/x64_gen/*_native.c.o
 ```
 
 Full `bss_native.c` compilation requires the engine headers. After the macOS
@@ -84,8 +87,32 @@ Mac. Original 32-bit source files and CMake selection stay unchanged.
 
 `cmake/datagen.cmake` exposes `cod2_generate_typed_blobs(output_var)` and the
 `cod2_datagen` target. Its cache settings are `COD2_STABS_BINARY`, `COD2_VALUES_BINARY`,
-`COD2_TYPED_DATA_DIR`, and `COD2_DATAGEN_CLANG`. The function returns the four
-production C files. The existing native CMake branch calls it under `COD2_X64`
+`COD2_TYPED_DATA_DIR` (default: `<cmake-build-dir>/x64_gen`), and
+`COD2_DATAGEN_CLANG`. With either private input absent, CMake compiles the
+committed snapshot and
+prints a STATUS message; ordinary builds require no private input. When both
+inputs exist, CMake regenerates and compares all five files byte for byte before
+compiling. Differences fail the build. `COD2_REGENERATE_TYPED_DATA=ON` requires
+regeneration and fails configuration if an input is missing. To deliberately
+refresh the snapshot after reviewing a generator/source change:
+
+```sh
+cmake -S . -B build-macos -DCOD2_X64=ON \
+  -DCOD2_UPDATE_TYPED_SNAPSHOT=ON
+cmake --build build-macos --target cod2_datagen
+cmake -S . -B build-macos -DCOD2_UPDATE_TYPED_SNAPSHOT=OFF
+git diff -- build/lp64_gen
+```
+
+Both inputs must exist for an update. Never point `COD2_TYPED_DATA_DIR` at the
+tracked snapshot. Standalone generator scratch output remains `build/x64_gen/`.
+Commit only `data_native.c`, `literals_native.c`, `import_pointers_native.c`,
+`bss_native.c`, and `typed_types.h`; leave `coverage.json` and objects local.
+`roundtrip_test.sh` skips clearly if either licensed reference is unavailable,
+but rejects invalid references when present.
+
+The function returns the four production C files. The existing native CMake
+branch calls it under `COD2_X64`
 and removes the original `src/blobs/bss.c` from that source set. The separate
 macOS module also calls the function and appends its returned sources.
 

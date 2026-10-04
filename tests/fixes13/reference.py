@@ -17,6 +17,10 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--binary', type=Path, default=Path.home() / 'Projects/cod2-native-refs/macbin/cod2mp_mac_1.3_i386')
 parser.add_argument('--steam', type=Path, default=Path.home() / 'Games/CoD2-mac-bin/Call of Duty 2.app/Contents/Call of Duty 2 Multiplayer.app/Contents/MacOS/Call of Duty 2 Multiplayer')
 args = parser.parse_args()
+missing = [str(path) for path in [args.binary, args.steam] if not path.is_file()]
+if missing:
+    print('SKIP 1.3 reference facts: missing private input: ' + ', '.join(missing))
+    raise SystemExit(0)
 
 
 class Image:
