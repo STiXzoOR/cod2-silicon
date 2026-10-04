@@ -35,7 +35,8 @@ static int refreshRate;
 static int initialized;
 static MacContext *screenContext;
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
-static int presentMode = 1;
+/* Experimental: GPU completion does not guarantee a nonblocking Cocoa swap. */
+static int presentMode;
 static GLsync presentFence;
 void MacPlatform_SetPresentMode(int mode) { presentMode = mode; }
 #endif
@@ -385,13 +386,13 @@ void SDL_GL_SwapWindowDirect(void)
     if (!GammaPresent(&ctx->gamma, ctx->width, ctx->height, x, y, destW, destH))
 #endif
         glBlitFramebufferEXT(0, 0, ctx->width, ctx->height, x, y, x + destW, y + destH, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-    SDL_GL_SwapWindow(sdl_gl_window);
 #if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
-    if (presentMode) {
+    /* Swap already flushes this stream. Include the fence in that submission;
+     * a second flush after swap is costly in Apple's Metal-backed GL driver. */
+    if (presentMode)
         presentFence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-        glFlush();
-    }
 #endif
+    SDL_GL_SwapWindow(sdl_gl_window);
 #if defined(COD2_X64)
     glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, readFramebuffer);
     glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, drawFramebuffer);

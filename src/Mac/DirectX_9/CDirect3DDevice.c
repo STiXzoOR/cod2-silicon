@@ -1712,12 +1712,12 @@ HRESULT CDirect3DDevice_Present(const CDirect3DDevice *_this, const RECT *pSourc
     MacTrace_EndFrame();
 #endif
     if (sdl_gl_window) {
-#if COD2_APPLE_SDK
+#if COD2_APPLE_SDK && defined(__aarch64__)
         static const dvar_t *presentMode;
         extern const dvar_t *Dvar_RegisterInt(const char *, int, int, int, unsigned short);
         extern void MacPlatform_SetPresentMode(int mode);
         if (!presentMode)
-            presentMode = Dvar_RegisterInt("r_presentMode", 1, 0, 1, 1);
+            presentMode = Dvar_RegisterInt("r_presentMode", 0, 0, 1, 1);
         MacPlatform_SetPresentMode(presentMode->current.integer);
 #endif
         SDL_GL_SwapWindowDirect();
