@@ -1117,7 +1117,14 @@ static qboolean __attribute_regparm__(3)
     }
 
     lc = MSG_ReadByte_core(msg);
+#if COD2_NET_BOUNDS
+    /* MSG_ReadByte_core returns -1 at the end of a truncated delta; the
+       unsigned compare rejects that as well as a count past the table, so the
+       fill-unchanged loop below never indexes stateFields[-1]. */
+    if ((unsigned int)lc > (unsigned int)numFields) {
+#else
     if (lc > numFields) {
+#endif
         msg->overflowed = 1;
         return 0;
     }
