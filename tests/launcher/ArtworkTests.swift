@@ -4,6 +4,10 @@ import Foundation
 @main struct ArtworkTests {
     @MainActor static func main() async throws {
         let root = URL(fileURLWithPath: CommandLine.arguments[1])
+        for value in [Int.min, Int.max, -13, -1, 0, 1, 13] {
+            let seed = ArtworkVariation.normalize(value)
+            precondition((0..<13).contains(seed) && seed * 7 <= 84)
+        }
         func decode(_ name: String) throws -> MapPixels {
             try IWIImageDecoder.decode(Data(contentsOf: root.appendingPathComponent(name + ".iwi")))
         }

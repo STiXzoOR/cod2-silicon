@@ -4,6 +4,11 @@ import CryptoKit
 import Foundation
 import zlib
 
+enum ArtworkVariation {
+    // Server metadata is untrusted: normalize before multiplying the seed.
+    static func normalize(_ value: Int) -> Int { ((value % 13) + 13) % 13 }
+}
+
 struct MapPixels: Sendable {
     let width: Int
     let height: Int
