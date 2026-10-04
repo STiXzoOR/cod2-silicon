@@ -110,6 +110,11 @@ target_link_libraries(macos_fullscreen_test PRIVATE SDL2::SDL2 ${OPENGL_FRAMEWOR
 add_test(NAME fixed_borderless_backing COMMAND macos_fullscreen_test)
 add_test(NAME fixed_exclusive_backing COMMAND macos_fullscreen_test --exclusive)
 set_tests_properties(fixed_borderless_backing fixed_exclusive_backing PROPERTIES RUN_SERIAL TRUE)
+# GitHub-hosted macOS runners expose a paravirtual GPU: hardware renderer queries
+# and exact backing readback are not meaningful there. The local gate runs them.
+if(DEFINED ENV{GITHUB_ACTIONS})
+  set_tests_properties(hardware fixed_borderless_backing fixed_exclusive_backing PROPERTIES DISABLED TRUE)
+endif()
 add_test(NAME input COMMAND macos_input_test)
 add_test(NAME threads_ring COMMAND macos_threads_ring_test)
 add_test(NAME cpp_abi COMMAND macos_cpp_abi_test)

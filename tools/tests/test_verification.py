@@ -137,7 +137,8 @@ time.sleep(30)
 ''')
         result = subprocess.run([str(ROOT / 'tools/macos/bench.sh'), str(data), 'test',
             '--output', str(self.path / 'bench'), '--timeout', '3'],
-            env=dict(os.environ, COD2_BINARY=str(binary)), capture_output=True, text=True, timeout=10)
+            # The harness waits up to 10 s for a scripted quit before stopping a hung engine.
+            env=dict(os.environ, COD2_BINARY=str(binary)), capture_output=True, text=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('"stopped_after_completion": true', result.stdout)
         self.assertTrue((self.path / 'bench/results.json').is_file())

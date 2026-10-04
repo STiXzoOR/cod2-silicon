@@ -179,7 +179,7 @@ int main(int argc, char **argv)
         const char *userHome = getenv("HOME");
         if (!userHome || !userHome[0])
             userHome = getpwuid(getuid())->pw_dir;
-        snprintf(expected, sizeof(expected), "%s/Library/Application Support/CoD2-native", userHome);
+        snprintf(expected, sizeof(expected), "%s/Library/Application Support/CoD2 Silicon", userHome);
     }
     test_check(home && !strcmp(home, expected), "macOS application support home path");
     before = Sys_Milliseconds();

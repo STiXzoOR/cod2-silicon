@@ -43,7 +43,7 @@ def main():
         parser.error("bundle ID must contain only letters, numbers, dots, and hyphens")
     if shutil.which("lipo") is None:
         parser.error("lipo is required (provided by Xcode); no packages were installed")
-    subprocess.run(["lipo", "-verify_arch", "arm64", str(args.executable)], check=True)
+    subprocess.run(["lipo", str(args.executable), "-verify_arch", "arm64"], check=True)
     symbols = subprocess.check_output(["nm", "-g", str(args.executable)], text=True)
     if "_Cod2xNativeApp_Arguments" not in symbols:
         parser.error("client needs COD2_CODX=1 and bundle argument support; rebuild the native target")
