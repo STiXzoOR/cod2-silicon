@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+    <key>Label</key><string>io.github.stixzoor.cod2silicon.daemon</string>
+    <key>ProgramArguments</key><array>
+        <string>SERVER_BINARY</string>
+        <string>+set</string><string>fs_basepath</string><string>DATA_PATH</string>
+        <string>+set</string><string>fs_homepath</string><string>HOME_PATH</string>
+        <string>+set</string><string>net_ip</string><string>0.0.0.0</string>
+        <string>+set</string><string>net_port</string><string>28960</string>
+        <string>+set</string><string>dedicated</string><string>1</string>
+        <string>+exec</string><string>server.cfg</string><string>+map_rotate</string>
+    </array>
+    <key>UserName</key><string>SERVER_USER</string>
+    <key>WorkingDirectory</key><string>SERVER_HOME</string>
+    <key>EnvironmentVariables</key><dict><key>HOME</key><string>PRIVATE_HOME</string></dict>
+    <key>StandardOutPath</key><string>SERVER_LOG</string>
+    <key>StandardErrorPath</key><string>SERVER_LOG</string>
+    <key>RunAtLoad</key><true/>
+    <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
+    <key>ThrottleInterval</key><integer>10</integer>
+    <key>ExitTimeOut</key><integer>30</integer>
+    <key>ProcessType</key><string>Background</string>
+    <key>SoftResourceLimits</key><dict>
+        <key>NumberOfFiles</key><integer>2048</integer>
+        <key>Core</key><integer>0</integer>
+    </dict>
+    <key>HardResourceLimits</key><dict>
+        <key>NumberOfFiles</key><integer>4096</integer>
+        <key>Core</key><integer>0</integer>
+    </dict>
+</dict></plist>

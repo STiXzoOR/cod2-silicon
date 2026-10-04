@@ -1,0 +1,114 @@
+#!/bin/bash
+# User launchd service. plutil handles XML escaping; no Python/SDL runtime needed.
+set -euo pipefail
+umask 077
+script_dir=$(cd "$(dirname "$0")" && pwd)
+label=${COD2_SERVER_LABEL:-io.github.stixzoor.cod2silicon.server}
+agent_dir=${COD2_SERVER_AGENT_DIR:-"$HOME/Library/LaunchAgents"}
+server_home=${COD2_SERVER_HOME:-"$HOME/Library/Application Support/CoD2 Silicon Server"}
+domain="gui/$(id -u)"
+[[ $label =~ ^[a-zA-Z0-9._-]+$ ]] || { echo 'Invalid service label' >&2; exit 1; }
+plist="$agent_dir/$label.plist"
+logs_plist="$agent_dir/$label.logs.plist"
+
+usage() {
+    echo 'Usage: cod2-silicon-server install --binary PATH --data PATH [--port 28960] [--bind 0.0.0.0] [--public]'
+    echo '       cod2-silicon-server start|stop|status|logs|rotate|uninstall'
+    echo 'Overrides: COD2_SERVER_HOME, COD2_SERVER_LABEL, COD2_SERVER_AGENT_DIR'
+}
+path_check() {
+    case "$1" in *\"*|*\+*|*\;*|*$'\n'*|*$'\r'*) echo 'Engine paths cannot contain quotes, +, semicolons or newlines' >&2; exit 1;; esac
+}
+set_string() {
+    # plutil's array replace inserts on macOS; remove first to keep indexes stable.
+    case "$1" in ProgramArguments.*) /usr/bin/plutil -remove "$1" "$plist";; esac
+    /usr/bin/plutil -insert "$1" -string "$2" "$plist" 2>/dev/null ||
+        /usr/bin/plutil -replace "$1" -string "$2" "$plist"
+}
+
+case ${1:-} in
+install)
+    shift
+    binary='' data='' bind=0.0.0.0 port=28960 dedicated=1
+    while (($#)); do
+        case "$1" in
+        --binary|--data|--bind|--port)
+            (($# >= 2)) || { usage >&2; exit 1; }
+            case "$1" in --binary) binary=$2;; --data) data=$2;; --bind) bind=$2;; --port) port=$2;; esac
+            shift 2;;
+        --public) dedicated=2; shift;;
+        *) usage >&2; exit 1;;
+        esac
+    done
+    [[ $binary = /* && -x $binary && $data = /* && -r $data/main/iw_00.iwd ]] || { echo 'Use an executable server and an absolute owned data directory containing main/iw_00.iwd' >&2; exit 1; }
+    [[ $server_home = /* && $port =~ ^[0-9]+$ && $port -gt 1024 && $port -le 65535 && $bind =~ ^[a-zA-Z0-9.:-]+$ ]] || { echo 'Invalid home, port or bind address' >&2; exit 1; }
+    path_check "$binary"; path_check "$data"; path_check "$server_home"
+    [[ ! -e $plist && ! -e $logs_plist ]] || { echo 'Service already installed; stop and uninstall before reinstalling (data/configs are kept)' >&2; exit 1; }
+    mkdir -p "$agent_dir" "$server_home/main" "$server_home/logs" "$server_home/user"
+    [[ -e $server_home/main/server.cfg ]] || cp "$script_dir/server.cfg" "$server_home/main/server.cfg"
+    cp "$script_dir/io.github.stixzoor.cod2silicon.server.plist" "$plist"
+    set_string Label "$label"
+    set_string ProgramArguments.0 "$binary"
+    set_string ProgramArguments.3 "\"$data\""
+    set_string ProgramArguments.6 "\"$server_home\""
+    set_string ProgramArguments.9 "$bind"
+    set_string ProgramArguments.12 "$port"
+    set_string ProgramArguments.15 "$dedicated"
+    set_string WorkingDirectory "$server_home"
+    set_string EnvironmentVariables.HOME "$server_home/user"
+    set_string StandardOutPath "$server_home/logs/console.log"
+    set_string StandardErrorPath "$server_home/logs/console.log"
+    cp "$plist" "$server_home/service.plist"
+    # Rotate append-open launchd logs hourly using a separate bounded job.
+    /usr/bin/plutil -create xml1 "$logs_plist"
+    /usr/bin/plutil -insert Label -string "$label.logs" "$logs_plist"
+    /usr/bin/plutil -insert ProgramArguments -json '["/bin/bash","HELPER","rotate"]' "$logs_plist"
+    /usr/bin/plutil -remove ProgramArguments.1 "$logs_plist"
+    /usr/bin/plutil -insert ProgramArguments.1 -string "$script_dir/cod2-silicon-server" "$logs_plist"
+    /usr/bin/plutil -insert EnvironmentVariables -json '{}' "$logs_plist"
+    /usr/bin/plutil -insert EnvironmentVariables.COD2_SERVER_HOME -string "$server_home" "$logs_plist"
+    /usr/bin/plutil -insert StartInterval -integer 3600 "$logs_plist"
+    /usr/bin/plutil -insert RunAtLoad -bool YES "$logs_plist"
+    /usr/bin/plutil -lint "$plist" "$logs_plist"
+    echo "Installed $plist; edit $server_home/main/server.cfg, then run start."
+    ;;
+start)
+    [[ -e $plist && -e $logs_plist ]] || { echo 'Install the service first' >&2; exit 1; }
+    if launchctl print "$domain/$label" >/dev/null 2>&1; then
+        launchctl kickstart "$domain/$label"
+        exit 0
+    fi
+    launchctl print "$domain/$label.logs" >/dev/null 2>&1 || launchctl bootstrap "$domain" "$logs_plist"
+    if ! launchctl bootstrap "$domain" "$plist"; then
+        launchctl bootout "$domain/$label.logs" 2>/dev/null || true
+        exit 1
+    fi
+    ;;
+stop)
+    launchctl bootout "$domain/$label" 2>/dev/null || true
+    launchctl bootout "$domain/$label.logs" 2>/dev/null || true
+    ;;
+status) launchctl print "$domain/$label";;
+logs) exec tail -n 80 -F "$server_home/logs/console.log";;
+rotate)
+    mkdir -p "$server_home/logs"
+    mkdir "$server_home/logs/.rotate-lock" 2>/dev/null || exit 0
+    trap 'rmdir "$server_home/logs/.rotate-lock"' EXIT
+    for log in "$server_home/logs/console.log" "$server_home/main/games_mp.log"; do
+        [[ -f $log ]] || continue
+        size=$(/usr/bin/stat -f %z "$log")
+        if ((size >= 10485760)); then
+            rm -f "$log.5"
+            for ((i=4; i>=1; i--)); do [[ ! -e $log.$i ]] || mv "$log.$i" "$log.$((i+1))"; done
+            cp "$log" "$log.1"
+            : > "$log"
+        fi
+    done
+    ;;
+uninstall)
+    "$0" stop
+    rm -f "$plist" "$logs_plist"
+    echo "Removed service definitions; kept $server_home."
+    ;;
+*) usage; exit 1;;
+esac
