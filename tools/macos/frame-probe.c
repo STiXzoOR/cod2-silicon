@@ -40,6 +40,7 @@ static uint64_t uploadTime, programTime, bufferTime, previousSwap;
 static unsigned int uploads, programs, buffers, syncTimeouts;
 static mach_timebase_info_data_t timebase;
 static volatile sig_atomic_t recording;
+int MacFrameProbe_IsRecording(void) { return recording && start; }
 static int finished;
 static int *frameTime;
 static const char *filename;

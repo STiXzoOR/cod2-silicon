@@ -30,6 +30,7 @@ parser.add_argument('--record', help='record a demo basename during the measurem
 parser.add_argument('--combat', action='store_true', help='fire, reload, move and throw grenades throughout capture')
 parser.add_argument('--profile', choices=['sample', 'xctrace'])
 parser.add_argument('--cpu-profile', action='store_true', help='in-process main-thread sampler; FPS is perturbed')
+parser.add_argument('--cocoa-probe', action='store_true', help='time slow AppKit methods; FPS is perturbed')
 args = parser.parse_args()
 if args.app:
     if args.app.suffix != '.app' or not args.app.is_dir():
@@ -57,11 +58,15 @@ borderless = int(args.window_mode == 'borderless')
 (profile / 'config_mp.cfg').write_text(f'seta r_mode "{args.resolution}"\nseta r_fullscreen "{full}"\nseta r_borderless "{borderless}"\n')
 probe = out / 'frame-probe.dylib'
 flags = subprocess.check_output(['sdl2-config', '--cflags', '--libs'], text=True).split()
+if args.cocoa_probe:
+    flags += [str(ROOT / 'tools/macos/cocoa-probe.m'), '-framework', 'Cocoa']
 subprocess.run(['clang', '-dynamiclib', '-O2', '-Wno-deprecated-declarations', *flags,
                 str(ROOT / 'tools/macos/frame-probe.c'), str(ROOT / 'tools/macos/stack-probe.c'),
                 '-framework', 'OpenGL', '-framework', 'CoreGraphics', '-o', str(probe)], check=True)
 env = dict(os.environ, DYLD_INSERT_LIBRARIES=str(probe), COD2_FRAME_CSV=str(out / 'frames.csv'), COD2_FRAME_SECONDS=str(args.seconds))
 env['COD2_FRAME_PID'] = str(out / 'observer.pid')
+if args.cocoa_probe:
+    env['COD2_COCOA_TRACE'] = str(out / 'cocoa.csv')
 if args.cpu_profile:
     env['COD2_CPU_PROFILE'] = str(out / 'cpu-stacks.csv')
 command = [str(args.binary.resolve()), '+set', 'fs_basepath', '"' + str(args.data.resolve()) + '"',
@@ -86,7 +91,7 @@ with (out / 'console.log').open('w') as stream:
         writer = os.fdopen(os.open(fifo, os.O_RDWR | os.O_NONBLOCK), 'w', buffering=1)
         launch = ['open', '-n', '-a', str(args.app.resolve()), '--stdin', str(fifo),
                   '--stdout', str(out / 'console.log'), '--stderr', str(out / 'console.log')]
-        for name in ['DYLD_INSERT_LIBRARIES', 'COD2_FRAME_CSV', 'COD2_FRAME_SECONDS', 'COD2_FRAME_PID', 'COD2_CPU_PROFILE', 'SDL_VIDEO_MAC_FULLSCREEN_SPACES', 'MTL_HUD_ENABLED', 'COD2_MAC_SHADER_CACHE', 'D3D_PROG', 'COD2_MAC_SHADER_DIAGNOSTICS']:
+        for name in ['DYLD_INSERT_LIBRARIES', 'COD2_FRAME_CSV', 'COD2_FRAME_SECONDS', 'COD2_FRAME_PID', 'COD2_CPU_PROFILE', 'COD2_COCOA_TRACE', 'SDL_VIDEO_MAC_FULLSCREEN_SPACES', 'MTL_HUD_ENABLED', 'COD2_MAC_SHADER_CACHE', 'D3D_PROG', 'COD2_MAC_SHADER_DIAGNOSTICS']:
             if name in env:
                 launch += ['--env', name + '=' + env[name]]
         subprocess.run([*launch, '--args', *command[1:]], check=True, timeout=15)
@@ -237,6 +242,7 @@ result = dict(samples=len(values), fps=1000 / statistics.mean(values),
               buffer_calls=sum(int(row['buffer_calls']) for row in rows),
               poll_calls_per_frame=statistics.mean(int(row['poll_calls']) for row in rows),
               resolution=args.resolution, window_mode=args.window_mode, maxfps=args.maxfps,
+              cocoa_probe=args.cocoa_probe,
               requested_view_pos=args.view_pos,
               cpu_profile=args.cpu_profile,
               combat=args.combat, measured_seconds=sum(values) / 1000,
