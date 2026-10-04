@@ -2,7 +2,7 @@
 set -eu
 cd "$(dirname "$0")/../.."
 test_work=$(mktemp -d "${TMPDIR:-/tmp}/cod2x-native.XXXXXX")
-trap 'rm -rf "$test_work"' EXIT HUP INT TERM
+trap '/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -u "$test_work/URLProbe.app"; rm -rf "$test_work"' EXIT HUP INT TERM
 compile() {
     clang -std=c11 -Wall -Wextra -Werror -DCOD2_X64=1 -DCOD2_CODX=1 "$@"
 }
@@ -19,7 +19,8 @@ compile -Wno-unused-function -Wno-unused-but-set-variable -Wno-typedef-redefinit
     src/unix/linux_input.c src/platform/cod2x_native_mouse.c -o "$test_work/input"
 "$test_work/input"
 compile -fobjc-arc -Isrc tests/cod2x/test_url_native.m src/platform/cod2x_native_macos.m \
-    src/PC/qcommon/cod2x_url.c -framework AppKit -framework Foundation -o "$test_work/url_native"
+    src/platform/cod2x_native_shaders.m src/PC/qcommon/cod2x_url.c \
+    -framework AppKit -framework Foundation -o "$test_work/url_native"
 "$test_work/url_native"
 mkdir -p "$test_work/game/main" "$test_work/reports"
 index=0
@@ -30,7 +31,9 @@ done
 python3 tools/cod2x/make_macos_app.py "$test_work/url_native" "$test_work/URLProbe.app" --game-dir "$test_work/game"
 plutil -lint "$test_work/URLProbe.app/Contents/Info.plist"
 expected_game=$(cd "$test_work/game" && pwd -P)
-WS10_EXPECT_GAME="$expected_game" "$test_work/URLProbe.app/Contents/MacOS/cod2_macos"
+mkdir -p "$test_work/home"
+CFFIXED_USER_HOME="$test_work/home" COD2_SETUP_NONINTERACTIVE=1 COD2_SETUP_CD_KEY=000000000000000086D3 \
+    WS10_EXPECT_GAME="$expected_game" "$test_work/URLProbe.app/Contents/MacOS/cod2_macos"
 codesign --verify --deep --strict "$test_work/URLProbe.app"
 compile -Wno-unused-function -Wno-typedef-redefinition -Wno-duplicate-decl-specifier -Isrc -Isrc/headers \
     tests/cod2x/test_native_freeze.c src/platform/cod2x_native.c src/PC/qcommon/crash_handler.c -o "$test_work/freeze"

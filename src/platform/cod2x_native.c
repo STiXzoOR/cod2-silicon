@@ -37,7 +37,7 @@ static void *WatchMain(void *argument)
         if (atomic_load_explicit(&enabled, memory_order_relaxed) && now >= last &&
             now - last > 12000000000ULL && last != reportedHeartbeat) {
             reportedHeartbeat = last;
-            fprintf(stderr, "CoD2x: main thread has stalled for more than 12 seconds; writing a native diagnostic.\n");
+            fprintf(stderr, "CoD2 Silicon: main thread has stalled for more than 12 seconds; writing a native diagnostic.\n");
             pthread_kill(mainThread, SIGUSR2);
         }
     }
@@ -58,7 +58,7 @@ void Cod2xNative_Init(void)
     action.sa_flags = SA_SIGINFO | SA_ONSTACK;
     sigemptyset(&action.sa_mask);
     if (sigaction(SIGUSR2, &action, &previousFreezeSignal) != 0) {
-        Com_Printf("CoD2x: native freeze reporting could not install its signal handler.\n");
+        Com_Printf("CoD2 Silicon: native freeze reporting could not install its signal handler.\n");
         return;
     }
     atomic_store(&stopping, 0);
@@ -66,7 +66,7 @@ void Cod2xNative_Init(void)
     Cod2xNative_Heartbeat();
     if (pthread_create(&watchThread, NULL, WatchMain, NULL) != 0) {
         sigaction(SIGUSR2, &previousFreezeSignal, NULL);
-        Com_Printf("CoD2x: native freeze watcher could not create its thread.\n");
+        Com_Printf("CoD2 Silicon: native freeze watcher could not create its thread.\n");
         return;
     }
     watchStarted = 1;

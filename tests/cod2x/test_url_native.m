@@ -32,7 +32,7 @@ int main(void)
             char arguments[4096];
             assert(Cod2xNativeApp_Arguments(arguments, sizeof(arguments)) > 0);
             assert(strstr(arguments, expectedGame));
-            assert(strstr(arguments, "CoD2x Native"));
+            assert(strstr(arguments, "CoD2 Silicon"));
             assert(strstr(arguments, "+set com_maxfps 333"));
             assert(!gamePath[0]); /* Explicit prepared launch paths win. */
         }

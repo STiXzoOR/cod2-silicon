@@ -44,7 +44,7 @@ void MacRawMouse_Init(void)
     if (attached)
         return;
     attached = [[NSMutableArray alloc] init];
-    mouseQueue = dispatch_queue_create("org.opencod2.rawmouse", DISPATCH_QUEUE_SERIAL);
+    mouseQueue = dispatch_queue_create("io.github.stixzoor.cod2silicon.rawmouse", DISPATCH_QUEUE_SERIAL);
     NSNotificationCenter *center = NSNotificationCenter.defaultCenter;
     connectObserver = [center addObserverForName:GCMouseDidConnectNotification object:nil queue:NSOperationQueue.mainQueue usingBlock:^(NSNotification *note) {
         AttachMouse(note.object);

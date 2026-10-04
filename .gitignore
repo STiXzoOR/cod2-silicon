@@ -62,3 +62,6 @@ src/win32/sdl2/lib/*.pdb
 cod2_crash_*.txt
 /build/ws10-*/
 /build-macos-codx/
+/build/package/
+/build/ws21-*/
+/dist/
