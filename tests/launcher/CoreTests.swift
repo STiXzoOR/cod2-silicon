@@ -49,6 +49,92 @@ import Foundation
         precondition(plan.arguments.contains("\"/Game Data\""))
         precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 32))) == nil)
         precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 31))) != nil)
+        try presentation(fixtures)
         print("PASS: real master/status fixtures, malformed packets, colours, native key CRC/private storage, config and URL injection")
+        print("PASS: cm/360, advanced dvar forms, settings migration, release notes, maps, server facts, media, key tag and player name")
+    }
+
+    static func presentation(_ fixtures: URL) throws {
+        // cm/360: 360 / (0.022 × 5) counts per turn at 800 DPI is 4.0909 in = 10.39 cm.
+        let cm = try requireValue(MouseMath.centimetresPer360(dpi: 800, sensitivity: 5))
+        precondition(abs(cm - 10.3909) < 0.001 && MouseMath.label(cm) == "10.4")
+        let doubled = try requireValue(MouseMath.centimetresPer360(dpi: 1600, sensitivity: 2.5))
+        let customYaw = try requireValue(MouseMath.centimetresPer360(dpi: 400, sensitivity: 2, yaw: 0.0165))
+        precondition(abs(doubled - cm) < 1e-9 && abs(customYaw - 69.2727) < 0.001)
+        for (dpi, sensitivity) in [(0.0, 5.0), (800, 0), (-800, 5), (.nan, 5), (800, .infinity)] {
+            precondition(MouseMath.centimetresPer360(dpi: dpi, sensitivity: sensitivity) == nil)
+        }
+        precondition(MouseMath.label(nil) == "—")
+
+        // Console-style and equals-style advanced lines produce the same dvars; renderer reservations stay.
+        var settings = GameSettings()
+        settings.advanced = "cg_fov 80\nr_gamma=1.1\n  name   Player One  \nsnaps = 30"
+        let pairs = try settings.dvars()
+        for expected in [("cg_fov", "80"), ("r_gamma", "1.1"), ("name", "Player One"), ("snaps", "30"), ("r_anisotropy", "8")] {
+            precondition(pairs.contains { $0.0 == expected.0 && $0.1 == expected.1 }, "missing \(expected)")
+        }
+        for bad in ["cg_fov", "r_renderer metal", "fs_homepath /tmp", "cl_password x", "name a;quit", "9bad 1"] {
+            settings.advanced = bad
+            precondition((try? settings.dvars()) == nil, bad)
+        }
+        settings.advanced = ""; settings.anisotropy = 3
+        precondition((try? settings.dvars()) == nil)
+        let legacy = try JSONDecoder().decode(GameSettings.self, from: Data(#"{"resolution":"2560x1440","fps":250,"advanced":"cg_fov=90"}"#.utf8))
+        precondition(legacy.resolution == "2560x1440" && legacy.fps == 250 && legacy.anisotropy == 8 && legacy.rawMouse && legacy.dpi == 800)
+        let library = try JSONDecoder().decode(LauncherLibrary.self, from: Data(#"{"favorites":["192.0.2.1:28960"],"recent":[],"cache":[]}"#.utf8))
+        precondition(library.favorites.count == 1 && library.dispatches.isEmpty)
+
+        // Release notes: drafts hidden, Markdown reduced to a sentence, only github.com links kept.
+        var utc = Calendar(identifier: .gregorian); utc.timeZone = TimeZone(identifier: "UTC")!
+        let feed = try ReleaseNotes.parse(try Data(contentsOf: fixtures.appendingPathComponent("releases.json")), calendar: utc)
+        precondition(feed.dispatches.count == 3 && feed.latestVersion == "0.1.1")
+        precondition(!feed.dispatches.contains { $0.summary.contains("Draft") })
+        precondition(feed.dispatches[0] == Dispatch(stamp: "02 NOV", title: "CoD2 Silicon 0.2 beta",
+            summary: "Launcher redesign with Liquid Glass navigation. Server browser favourites.",
+            link: "https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.0-beta.1"))
+        precondition(feed.dispatches[1].title == "CoD2 Silicon 0.1.1" && feed.dispatches[1].link == nil && feed.dispatches[1].stamp == "20 OCT")
+        precondition(feed.dispatches[1].summary.hasSuffix("…") && feed.dispatches[1].summary.count <= 161 && feed.dispatches[1].summary.hasPrefix("Fixes r_mode on 6K"))
+        precondition(feed.dispatches[2].summary == "Call of Duty 2 multiplayer, native on Apple silicon. CoD2x 1.4 compatible, built for 333 fps.")
+        precondition(ReleaseNotes.isNewer("0.1.10", than: "0.1.9") && !ReleaseNotes.isNewer("0.1.0", than: "0.1.0"))
+        precondition((try? ReleaseNotes.parse(Data("{}".utf8))) == nil && (try? ReleaseNotes.parse(Data(count: 1_000_001))) == nil)
+        let empty = try ReleaseNotes.parse(Data("[]".utf8))
+        precondition(empty.dispatches.isEmpty && empty.latestVersion == nil)
+
+        // Maps: stock regions and scenery, safe names for untrusted metadata, stable custom scenes.
+        precondition(MapCatalog.displayName("mp_toujane") == "Toujane" && MapCatalog.region("MP_TOUJANE") == "NORTH AFRICA")
+        precondition(MapCatalog.displayName("mp_brecourt") == "Brécourt" && MapCatalog.scenery("mp_railyard") == .winter)
+        precondition(MapCatalog.displayName("mp_su_crossroads_v2") == "Su Crossroads V2" && MapCatalog.region("mp_su_crossroads_v2") == nil)
+        precondition(MapCatalog.key("../mp_toujane") == nil && MapCatalog.displayName("mp_x;quit") == "Unknown map" && MapCatalog.key("mp_") == nil)
+        precondition(MapCatalog.scenery("mp_custom") == MapCatalog.scenery("MP_CUSTOM"))
+        precondition(GameModes.long("tdm") == "Team Deathmatch" && GameModes.long("SD") == "Search & Destroy" && GameModes.long("zom") == "ZOM")
+
+        // Server facts drive badges, ping bars and the details grid.
+        func server(_ fields: [String: String], ping: Int = 18) -> GameServer { GameServer(address: "192.0.2.1:28960", fields: fields, ping: ping, players: []) }
+        let codx = ServerFacts(server(["shortversion": "1.4.6.8", "clients": "24", "sv_maxclients": "24", "sv_maxfps": "250", "pswrd": "1"]))
+        precondition(codx.isCoD2x && codx.versionLabel == "CoD2x 1.4.6.8" && codx.occupancy == .full && codx.frameCap == "250 fps" && codx.access == "Password")
+        let stock = ServerFacts(server(["protocol": "118", "clients": "0", "sv_maxclients": "20"], ping: 88))
+        precondition(!stock.isCoD2x && stock.versionLabel == "Stock 1.3" && stock.occupancy == .empty && stock.frameCap == "Not set" && stock.pingLevel == 1)
+        precondition(ServerFacts(server(["protocol": "120"])).versionLabel == "CoD2x 1.4")
+        precondition([18, 39, 40, 59, 60, 79, 80].map(ServerFacts.pingLevel) == [4, 4, 3, 3, 2, 2, 1])
+
+        // Library rows: map hints from file names, sizes and stamped dates.
+        let date = try requireValue(ISO8601DateFormatter().date(from: "2026-10-04T21:14:00Z"))
+        let demo = MediaFacts(name: "toujane_tdm_1004_2114.dm_1", date: date, bytes: 3_100_000, calendar: utc)
+        precondition(demo.map == "toujane" && demo.size == "3.1 MB" && demo.stamp == "04 OCT 21:14")
+        precondition(MediaFacts.mapHint("shot0001.jpg") == nil && MediaFacts.sizeLabel(512) == "512 B" && MediaFacts.sizeLabel(48_200) == "48 KB")
+
+        // CD key display: grouped, uppercased, bounded, stamped onto the tag without exposing extra input.
+        precondition(KeyFormat.display("ab12-cd34 ef56gh78ij90kl12mn") == "AB12 CD34 EF56 GH78 IJ90")
+        precondition(KeyFormat.tag("7q4m2kx9lp3r") == ["7Q4M 2KX9", "LP3R ····", "····", "COD2 · 1.3"])
+        precondition(KeyFormat.tag("") == ["···· ····", "···· ····", "····", "COD2 · 1.3"] && KeyFormat.tag("ab")[0] == "AB·· ····")
+
+        // Player name comes from the engine's config, last assignment wins, colour codes kept for display.
+        precondition(PlayerProfile.name(config: "seta name \"Old\"\nseta cg_fov \"80\"\nseta name \"^1Red^7Fox\"\n") == "^1Red^7Fox")
+        precondition(PlayerProfile.name(config: "seta name \"^7\"\n") == nil && PlayerProfile.name(config: "") == nil)
+    }
+
+    static func requireValue<T>(_ value: T?) throws -> T {
+        guard let value else { throw LauncherError(message: "Missing expected value") }
+        return value
     }
 }

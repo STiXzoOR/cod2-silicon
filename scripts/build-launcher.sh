@@ -11,7 +11,7 @@ clang=(/usr/bin/xcrun clang -target arm64-apple-macos13 -isysroot "$sdk" -fobjc-
 "${clang[@]}" -c "$root/launcher/NativeSetup.m" -o "$out/NativeSetup.o"
 "${clang[@]}" -c "$root/src/platform/cod2x_native_shaders.m" -o "$out/NativeShaders.o"
 /usr/bin/xcrun clang -target arm64-apple-macos13 -isysroot "$sdk" -DCOD2_X64=1 -DCOD2_CODX=1 -c "$root/src/PC/qcommon/cod2x_url.c" -o "$out/URL.o"
-sources=("$root/launcher/Core.swift")
+sources=("$root/launcher/Core.swift" "$root/launcher/Presentation.swift")
 name=CoD2Launcher
 if [[ ${2:-} == --test ]]; then
     sources+=("$root/tests/launcher/CoreTests.swift")

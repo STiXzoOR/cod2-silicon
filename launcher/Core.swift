@@ -179,31 +179,60 @@ struct GameSettings: Codable, Sendable {
     var sensitivity = 5.0
     var dpi = 800.0
     var volume = 0.8
+    var anisotropy = 8
     var advanced = ""
     static let resolutions = ["1280x720", "1920x1080", "2560x1440", "3008x1692", "3840x2160", "5120x2880", "6016x3384"]
-    var cm360: Double { 360 * 2.54 / (max(dpi, 1) * max(sensitivity, 0.01) * 0.022) }
+    static let anisotropyLevels = [2, 4, 8, 16]
+    var cm360: Double? { MouseMath.centimetresPer360(dpi: dpi, sensitivity: sensitivity) }
+    init() {}
+    // Settings saved by older launchers lack newer keys; keep their values and default the rest.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = GameSettings()
+        resolution = try c.decodeIfPresent(String.self, forKey: .resolution) ?? d.resolution
+        fullscreen = try c.decodeIfPresent(String.self, forKey: .fullscreen) ?? d.fullscreen
+        fps = try c.decodeIfPresent(Int.self, forKey: .fps) ?? d.fps
+        vsync = try c.decodeIfPresent(Bool.self, forKey: .vsync) ?? d.vsync
+        rawMouse = try c.decodeIfPresent(Bool.self, forKey: .rawMouse) ?? d.rawMouse
+        sensitivity = try c.decodeIfPresent(Double.self, forKey: .sensitivity) ?? d.sensitivity
+        dpi = try c.decodeIfPresent(Double.self, forKey: .dpi) ?? d.dpi
+        volume = try c.decodeIfPresent(Double.self, forKey: .volume) ?? d.volume
+        anisotropy = try c.decodeIfPresent(Int.self, forKey: .anisotropy) ?? d.anisotropy
+        advanced = try c.decodeIfPresent(String.self, forKey: .advanced) ?? d.advanced
+    }
+    /// One advanced line as (name, value): `dvar value` as typed in the console, or `dvar=value`.
+    static func advancedPair(_ line: String) -> (String, String)? {
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        let equals = trimmed.firstIndex(of: "="), space = trimmed.firstIndex(where: { $0 == " " || $0 == "\t" })
+        guard let split = [equals, space].compactMap({ $0 }).min() else { return nil }
+        let name = String(trimmed[..<split]).trimmingCharacters(in: .whitespaces)
+        var value = String(trimmed[trimmed.index(after: split)...]).trimmingCharacters(in: .whitespaces)
+        if split == space, value.hasPrefix("=") { value = String(value.dropFirst()).trimmingCharacters(in: .whitespaces) }
+        return (name, value)
+    }
     static func safeValue(_ value: String) -> Bool {
         value.utf8.count <= 512 && !value.unicodeScalars.contains { $0.value < 32 || $0.value == 127 || "\";\\+".unicodeScalars.contains($0) }
     }
     func dvars() throws -> [(String, String)] {
         guard Self.resolutions.contains(resolution), ["exclusive", "borderless", "spaces", "windowed"].contains(fullscreen),
-              (1...1000).contains(fps), sensitivity.isFinite, (0.01...100).contains(sensitivity), volume.isFinite, (0...1).contains(volume) else {
-            throw LauncherError(message: "Choose a valid resolution, frame cap (1–1000), sensitivity and volume.")
+              (1...1000).contains(fps), sensitivity.isFinite, (0.01...100).contains(sensitivity), volume.isFinite, (0...1).contains(volume),
+              Self.anisotropyLevels.contains(anisotropy) else {
+            throw LauncherError(message: "Choose a valid resolution, frame cap (1–1000), sensitivity, volume and filtering level.")
         }
         var pairs = [("r_mode", resolution), ("r_fullscreen", fullscreen == "windowed" ? "0" : "1"),
             ("r_borderless", fullscreen == "borderless" ? "1" : "0"), ("com_maxfps", String(fps)),
             ("r_swapInterval", vsync ? "1" : "0"), ("in_rawmouse", rawMouse ? "1" : "0"),
-            ("sensitivity", String(sensitivity)), ("snd_volume", String(volume)), ("m_filter", "0"), ("cl_mouseAccel", "0"),
+            ("sensitivity", String(sensitivity)), ("snd_volume", String(volume)), ("r_anisotropy", String(anisotropy)), ("m_filter", "0"), ("cl_mouseAccel", "0"),
             ("logfile", "0"), ("developer", "0"), ("com_introPlayed", "1")]
         for line in advanced.components(separatedBy: "\n") where !line.trimmingCharacters(in: .whitespaces).isEmpty {
-            let parts = line.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
-            let name = String(parts[0]).trimmingCharacters(in: .whitespaces)
-            guard parts.count == 2, name.range(of: "^[A-Za-z_][A-Za-z0-9_]{0,63}$", options: .regularExpression) != nil,
+            let pair = Self.advancedPair(line)
+            let name = pair?.0 ?? ""
+            guard let pair, name.range(of: "^[A-Za-z_][A-Za-z0-9_]{0,63}$", options: .regularExpression) != nil,
                   !["fs_basepath", "fs_homepath", "password", "cl_cdkey", "cdkey", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr"].contains(name.lowercased()),
                   !name.lowercased().contains("password"), !name.lowercased().contains("codkey") else {
-                throw LauncherError(message: "Advanced options use one dvar=value per line. Paths, credentials and upcoming renderer options are managed separately.")
+                throw LauncherError(message: "Advanced options use one “dvar value” per line. Paths, credentials and upcoming renderer options are managed separately.")
             }
-            let value = String(parts[1]).trimmingCharacters(in: .whitespaces)
+            let value = pair.1
             guard Self.safeValue(value) else { throw LauncherError(message: "Dvar values cannot contain quotes, separators or control characters.") }
             pairs.removeAll { $0.0 == name }; pairs.append((name, value))
         }
@@ -219,5 +248,17 @@ struct LauncherLibrary: Codable {
     var recent: [String] = []
     var cache: [GameServer] = []
     var cachedAt: Date? = nil
+    var dispatches: [Dispatch] = []
+    var dispatchesCheckedAt: Date? = nil
+    init() {}
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        favorites = try c.decodeIfPresent(Set<String>.self, forKey: .favorites) ?? []
+        recent = try c.decodeIfPresent([String].self, forKey: .recent) ?? []
+        cache = try c.decodeIfPresent([GameServer].self, forKey: .cache) ?? []
+        cachedAt = try c.decodeIfPresent(Date.self, forKey: .cachedAt)
+        dispatches = Array((try c.decodeIfPresent([Dispatch].self, forKey: .dispatches) ?? []).prefix(5))
+        dispatchesCheckedAt = try c.decodeIfPresent(Date.self, forKey: .dispatchesCheckedAt)
+    }
     mutating func joined(_ address: String) { recent.removeAll { $0 == address }; recent.insert(address, at: 0); recent = Array(recent.prefix(30)) }
 }
