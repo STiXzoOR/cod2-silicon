@@ -1346,6 +1346,13 @@ void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to
     }
 
     lc = MSG_ReadByte_core(msg);
+#if COD2_NET_BOUNDS
+    /* Entries past the table would aim the field writes anywhere near `to`. */
+    if (lc > (int)(sizeof(playerStateFields) / sizeof(playerStateFields[0]))) {
+        msg->overflowed = 1;
+        return;
+    }
+#endif
     if (lc > 0) {
         for (i = 0; i < lc; ++i) {
             MSG_ReadDeltaPlayerstateField(msg, (byte *)from, (byte *)to, &playerStateFields[i], print);
