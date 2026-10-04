@@ -214,6 +214,18 @@ enum KeyFormat {
 }
 
 enum PlayerProfile {
+    /// Shown when the engine has not saved a name yet; the launcher never invents one.
+    static let unnamed = "Player"
+    /// The engine's active profile from `main/players/active.txt` (its first token), if it is a safe folder name.
+    static func activeProfile(_ text: String) -> String? {
+        let trimmed = text.prefix(256).trimmingCharacters(in: .whitespacesAndNewlines)
+        let token: Substring
+        if trimmed.hasPrefix("\"") { token = trimmed.dropFirst().prefix { $0 != "\"" } }
+        else { token = trimmed.prefix { !$0.isWhitespace } }
+        guard !token.isEmpty, token.count <= 64, token != ".", token != "..",
+              !token.contains(where: { "/\\:".contains($0) || $0.isNewline || ($0.asciiValue ?? 32) < 32 }) else { return nil }
+        return String(token)
+    }
     /// The `name` dvar from the engine's own config. Read-only: the launcher never rewrites config_mp.cfg.
     static func name(config: String) -> String? {
         for line in config.prefix(262_144).components(separatedBy: .newlines).reversed() {

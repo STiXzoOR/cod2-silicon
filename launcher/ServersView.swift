@@ -32,6 +32,7 @@ struct ServersView: View {
                         .padding(.bottom, 12)
                     }
                     .scrollIndicators(.automatic)
+                    .bottomEdgeUnderBar()
                     .focusable()
                     .onMoveCommand { direction in
                         guard let index = rows.firstIndex(where: { $0.address == model.selected?.address }) else { return }
@@ -368,6 +369,14 @@ struct ContourBackdrop: View {
 private extension View {
     @ViewBuilder func circleBorder() -> some View {
         if #available(macOS 14.0, *) { self.buttonBorderShape(.circle) } else { self }
+    }
+    /// Rows fade out over the last 36 points above the direct-connect bar, so none is sliced at rest or
+    /// reads through the glass; the mask also clips anything drawn into the bar's inset.
+    func bottomEdgeUnderBar() -> some View {
+        self.mask(VStack(spacing: 0) {
+            Color.black
+            LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: .bottom).frame(height: 36)
+        })
     }
     /// Return while this view has focus (macOS 14+); on macOS 13 double-click and the Deploy button remain.
     @ViewBuilder func onReturnKey(_ action: @escaping () -> Void) -> some View {

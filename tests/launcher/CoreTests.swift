@@ -152,6 +152,11 @@ import Foundation
         // Player name comes from the engine's config, last assignment wins, colour codes kept for display.
         precondition(PlayerProfile.name(config: "seta name \"Old\"\nseta cg_fov \"80\"\nseta name \"^1Red^7Fox\"\n") == "^1Red^7Fox")
         precondition(PlayerProfile.name(config: "seta name \"^7\"\n") == nil && PlayerProfile.name(config: "") == nil)
+        // The engine's active profile (players/active.txt) picks players/<profile>/config_mp.cfg; never invent a name.
+        precondition(PlayerProfile.activeProfile("default") == "default" && PlayerProfile.activeProfile("  default\n") == "default")
+        precondition(PlayerProfile.activeProfile("\"My Squad\"\n") == "My Squad" && PlayerProfile.activeProfile("alpha bravo") == "alpha")
+        for unsafe in ["", "..", ".", "../etc", "a/b", "a\\b", "c:d", "\"\""] { precondition(PlayerProfile.activeProfile(unsafe) == nil, unsafe) }
+        precondition(PlayerProfile.activeProfile(String(repeating: "x", count: 65)) == nil && PlayerProfile.unnamed == "Player")
     }
 
     static func requireValue<T>(_ value: T?) throws -> T {

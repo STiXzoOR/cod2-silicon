@@ -59,7 +59,7 @@ struct MediaEntry: Identifiable {
     @Published var releaseURL: URL?
     @Published var media: [MediaEntry] = []
     @Published var libraryTab: LibraryTab = .demos
-    @Published var playerName = "Unknown Soldier"
+    @Published var playerName = PlayerProfile.unnamed
     @Published var keyVerified = false
     let artwork: MapArtworkStore
     let home: URL
@@ -173,11 +173,21 @@ struct MediaEntry: Identifiable {
         let path = dataPath
         Task { await artwork.load(dataPath: path, maps: maps) }
     }
+    /// The in-game name, read the way the engine loads it: the active profile's config_mp.cfg, then main's.
     private func readPlayerName() {
-        let config = home.appendingPathComponent("main/config_mp.cfg")
-        guard let values = try? config.resourceValues(forKeys: [.fileSizeKey]), (values.fileSize ?? 0) <= 262_144,
-              let text = try? String(contentsOf: config, encoding: .isoLatin1), let name = PlayerProfile.name(config: text) else { return }
-        playerName = name
+        let main = home.appendingPathComponent("main")
+        var configs: [URL] = []
+        if let active = try? String(contentsOf: main.appendingPathComponent("players/active.txt"), encoding: .isoLatin1),
+           let profile = PlayerProfile.activeProfile(active) {
+            configs.append(main.appendingPathComponent("players").appendingPathComponent(profile).appendingPathComponent("config_mp.cfg"))
+        }
+        configs.append(main.appendingPathComponent("config_mp.cfg"))
+        for config in configs {
+            guard let values = try? config.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey]), values.isRegularFile == true,
+                  (values.fileSize ?? 0) <= 262_144, let text = try? String(contentsOf: config, encoding: .isoLatin1) else { continue }
+            if let name = PlayerProfile.name(config: text) { playerName = name; return }
+        }
+        playerName = PlayerProfile.unnamed
     }
 
     // MARK: Setup
