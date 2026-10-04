@@ -131,11 +131,15 @@ try:
                     idx = next((n for n, v in menus.items() if v == menu), None)
                     if idx is None:
                         send(c, 'configstrings')
-                        continue
+                        # The previous map's table can still be in the log.
+                        # Retry this request after the new table arrives.
+                        break
                     choice = 'close' if menu.startswith('serverinfo_') else 'allies' if menu.startswith('team_') else {'weapon_british': 'enfield_mp', 'weapon_american': 'm1garand_mp', 'weapon_russian': 'mosin_nagant_mp', 'weapon_german': 'kar98k_mp'}.get(menu)
                     if idx is not None and ids and choice:
                         send(c, f'cmd mr {ids[-1]} {idx - 1246} {choice}')
-                c['opened'] = len(opened) if menus else c['opened']
+                        c['opened'] += 1
+                    else:
+                        raise RuntimeError('unsupported menu request: ' + menu)
             cycle = int(elapsed) % 30
             if cycle == 5:
                 send(c, '+forward')
@@ -179,6 +183,7 @@ try:
             last_sample = elapsed
         time.sleep(1)
     assert all((content(c).count('CL_InitCGame:') >= 3 for c in clients)), 'client did not reload both maps'
+    assert all((content(c).count("script menu 'weapon_") >= 3 for c in clients)), 'client did not select a weapon on every map'
     (out / 'status-final.txt').write_text(query('getstatus ws26'))
     for c in clients:
         send(c, 'viewpos')
