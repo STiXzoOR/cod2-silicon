@@ -15,6 +15,7 @@ data=${COD2_DATA_DIR:-"$HOME/Games/CoD2"}
 demo_data=${COD2_DEMO_DATA:-"$HOME/Library/Application Support/CoD2-native-ws18/bench-data"}
 [[ -x $binary ]] || { echo "Missing Release CoD2x executable: $binary" >&2; exit 2; }
 command -v timeout >/dev/null || { echo 'timeout is required; no packages were installed' >&2; exit 2; }
+mkdir -p "$(dirname "$out")"
 mkdir "$out"
 if [[ ! -f "$demo_data/main/demos/ws18_bench.dm_1" ]]; then
     archived="$HOME/Projects/cod2-native-refs/evidence/ship/ws18/bench/live-1920x1080-333/home/main/demos/ws18_bench.dm_1"
