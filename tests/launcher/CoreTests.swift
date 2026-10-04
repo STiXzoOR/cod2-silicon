@@ -51,7 +51,7 @@ import Foundation
         precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 31))) != nil)
         try presentation(fixtures)
         print("PASS: real master/status fixtures, malformed packets, colours, native key CRC/private storage, config and URL injection")
-        print("PASS: cm/360, advanced dvar forms, settings migration, release notes, maps, server facts, media, key tag and player name")
+        print("PASS: cm/360, advanced dvar forms, settings migration, release notes, maps, server facts, media, key tag, player name and scrims")
     }
 
     static func presentation(_ fixtures: URL) throws {
@@ -127,6 +127,27 @@ import Foundation
         precondition(KeyFormat.display("ab12-cd34 ef56gh78ij90kl12mn") == "AB12 CD34 EF56 GH78 IJ90")
         precondition(KeyFormat.tag("7q4m2kx9lp3r") == ["7Q4M 2KX9", "LP3R ····", "····", "COD2 · 1.3"])
         precondition(KeyFormat.tag("") == ["···· ····", "···· ····", "····", "COD2 · 1.3"] && KeyFormat.tag("ab")[0] == "AB·· ····")
+
+        // Scrims: computed opacity restores 4.5:1 for the extreme pixel in either appearance,
+        // judged after compositing in gamma-encoded sRGB as SwiftUI does.
+        let brass = ScrimMath.luminance(0xe2, 0xbd, 0x72), ink = ScrimMath.luminance(0x6b, 0x4a, 0x12), paper = ScrimMath.luminance(0xef, 0xe8, 0xd8)
+        precondition(abs(ScrimMath.decode(ScrimMath.encode(0.37)) - 0.37) < 1e-9)
+        for high in [0.1, 0.2, 0.5, 0.8] {
+            let alpha = ScrimMath.darkScrim(high: high, text: brass)
+            let shown = ScrimMath.decode(ScrimMath.encode(high) * (1 - alpha))
+            precondition(ScrimMath.contrast(brass, shown) >= 4.5, "dark scrim \(high)")
+        }
+        precondition(ScrimMath.darkScrim(high: 0.01, text: brass) == 0.35 && ScrimMath.darkScrim(high: 1, text: 0.1) == 0.92)
+        for low in [0.0, 0.05, 0.15, 0.3] {
+            let alpha = ScrimMath.lightWash(low: low, text: ink, paper: paper)
+            let shown = ScrimMath.decode(ScrimMath.encode(low) * (1 - alpha) + ScrimMath.encode(paper) * alpha)
+            precondition(ScrimMath.contrast(ink, shown) >= 4.5, "light wash \(low)")
+        }
+        var pixels = Data(count: 10 * 10 * 4)
+        for i in 0..<100 { let v = UInt8(i * 255 / 99); pixels[i * 4] = v; pixels[i * 4 + 1] = v; pixels[i * 4 + 2] = v; pixels[i * 4 + 3] = 255 }
+        let spread = try requireValue(ScrimMath.percentiles(rgba: pixels, width: 10, height: 10, region: (0, 0, 1, 1)))
+        precondition(spread.low < 0.02 && spread.high > 0.7 && ScrimMath.percentiles(rgba: pixels, width: 10, height: 9, region: (0, 0, 1, 1)) == nil)
+        precondition(ScrimMath.percentiles(rgba: pixels, width: 10, height: 10, region: (0.95, 0.95, 0.01, 0.01)) == nil)
 
         // Player name comes from the engine's config, last assignment wins, colour codes kept for display.
         precondition(PlayerProfile.name(config: "seta name \"Old\"\nseta cg_fov \"80\"\nseta name \"^1Red^7Fox\"\n") == "^1Red^7Fox")

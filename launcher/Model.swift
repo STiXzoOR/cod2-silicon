@@ -1,25 +1,52 @@
 import AppKit
 import SwiftUI
 
+enum LauncherPage: String, CaseIterable, Identifiable, Hashable {
+    case deploy, servers, library, settings, about
+    var id: String { rawValue }
+    var title: String {
+        switch self { case .deploy: "Deploy"; case .servers: "Servers"; case .library: "Library"; case .settings: "Settings"; case .about: "About" }
+    }
+    var symbol: String {
+        switch self {
+        case .deploy: "play.fill"; case .servers: "dot.radiowaves.left.and.right"; case .library: "film"
+        case .settings: "slider.horizontal.3"; case .about: "info.circle"
+        }
+    }
+    static let navigation: [LauncherPage] = [.deploy, .servers, .library, .settings]
+}
+
+enum ServerFilter: String, CaseIterable, Identifiable { case all = "All", stock = "Stock 1.3", codx = "CoD2x 1.4"; var id: String { rawValue } }
+enum ServerSort: String { case ping, players, name }
+enum LibraryTab: String, CaseIterable, Identifiable { case demos = "Demos", screenshots = "Screenshots"; var id: String { rawValue } }
+
+struct MediaEntry: Identifiable {
+    var url: URL
+    var facts: MediaFacts
+    var id: String { url.path }
+}
+
 @MainActor final class LauncherModel: ObservableObject {
-    @Published var page: LauncherPage = .home
+    @Published var page: LauncherPage = .deploy
     @Published var onboard = true
     @Published var step = 0
     @Published var dataPath = ""
     @Published var keyInput = ""
     @Published var shaderBusy = false
-    @Published var shaderProgress = 0.0
-    @Published var shaderMessage = "Original rendering, prepared on your Mac."
+    @Published var shaderCount = 0
+    @Published var shaderMessage = "Lighting and sky exactly as the game shipped, taken from your own Mac copy of Call of Duty 2."
     @Published var approximate = false
-    @Published var settings = GameSettings()
+    @Published var settings = GameSettings() { didSet { if settings != savedSettings { settingsSaved = false } } }
+    /// True right after Save, until the next change.
+    @Published var settingsSaved = false
     @Published var library = LauncherLibrary()
     @Published var servers: [GameServer] = []
     @Published var selectedServer: String?
     @Published var refreshing = false
     @Published var queryProgress = ""
     @Published var search = ""
-    @Published var filter = "All servers"
-    @Published var sort = "Ping"
+    @Published var filter: ServerFilter = .all
+    @Published var sort: ServerSort = .ping
     @Published var hideEmpty = false
     @Published var hideFull = false
     @Published var directAddress = ""
@@ -28,12 +55,17 @@ import SwiftUI
     @Published var notice = ""
     @Published var crashReport: URL?
     @Published var updateMessage = "Check for the latest release when you're ready."
+    @Published var checkingUpdates = false
     @Published var releaseURL: URL?
-    @Published var media: [URL] = []
-    @Published var mediaTab = "Demos"
+    @Published var media: [MediaEntry] = []
+    @Published var libraryTab: LibraryTab = .demos
+    @Published var playerName = "Unknown Soldier"
+    @Published var keyVerified = false
+    let artwork: MapArtworkStore
     let home: URL
     let preferences: URL
     let snapshot: Bool
+    private var savedSettings = GameSettings()
     private var engine: Process?
     private var attachedGame: NSRunningApplication?
     private var attachmentTask: Task<Void, Never>?
@@ -55,36 +87,49 @@ import SwiftUI
     init(snapshot: Bool = false) {
         self.snapshot = snapshot
         home = URL(fileURLWithPath: snapshot ? "/Preview/CoD2 Silicon" : LauncherHome())
+        artwork = MapArtworkStore(home: home)
         preferences = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".cod2/preferences")
         if snapshot { seedPreview(); return }
         if let resolution = Bundle.main.object(forInfoDictionaryKey: "CoD2DefaultResolution") as? String { settings.resolution = resolution }
         if let mode = Bundle.main.object(forInfoDictionaryKey: "CoD2DefaultFullscreen") as? String { settings.fullscreen = mode }
         LauncherMigrate()
         if let data = try? Data(contentsOf: home.appendingPathComponent("launcher-settings.json")), let value = try? JSONDecoder().decode(GameSettings.self, from: data) { settings = value }
+        savedSettings = settings
         if let data = try? Data(contentsOf: home.appendingPathComponent("launcher-library.json")), let value = try? JSONDecoder().decode(LauncherLibrary.self, from: data) { library = value; servers = value.cache }
         dataPath = LauncherFindData(nil) ?? ""
-        let keyReady = KeyStore.hasValidKey(at: preferences)
+        keyVerified = KeyStore.hasValidKey(at: preferences)
         approximate = !LauncherVerifyShaders()
+        readPlayerName()
         let setupComplete = FileManager.default.fileExists(atPath: home.appendingPathComponent(".launcher-setup-complete").path)
-        onboard = dataPath.isEmpty || !keyReady || (approximate && !setupComplete)
-        step = dataPath.isEmpty ? 0 : (keyReady ? 2 : 1)
+        onboard = dataPath.isEmpty || !keyVerified || (approximate && !setupComplete)
+        step = dataPath.isEmpty ? 0 : (keyVerified ? 2 : 1)
+        if !onboard { step = 0 }
     }
     var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0" }
-    var selected: GameServer? { servers.first { $0.address == selectedServer } }
+    var selected: GameServer? { servers.first { $0.address == selectedServer } ?? visibleServers.first }
+    var lastServer: GameServer? {
+        guard let address = library.recent.first else { return nil }
+        return servers.first { $0.address == address } ?? library.cache.first { $0.address == address }
+    }
+    var recentServers: [GameServer] {
+        library.recent.prefix(12).compactMap { address in servers.first { $0.address == address } ?? library.cache.first { $0.address == address } }
+    }
+    var favoriteServers: [GameServer] {
+        library.favorites.sorted().compactMap { address in servers.first { $0.address == address } ?? library.cache.first { $0.address == address } }
+    }
+    var dispatches: [Dispatch] { library.dispatches.isEmpty ? Dispatch.bundled : Array(library.dispatches.prefix(2)) }
+    var dataPathDisplay: String { (dataPath as NSString).abbreviatingWithTildeInPath }
     var visibleServers: [GameServer] {
         let result = servers.filter {
-            (search.isEmpty || [QuakeColors.plain($0.name), $0.map, $0.mod, $0.address].joined(separator: " ").localizedCaseInsensitiveContains(search)) &&
-            (filter != "Favorites" || library.favorites.contains($0.address)) &&
-            (filter != "Recent" || library.recent.contains($0.address)) &&
-            (filter != "Stock 1.3" || $0.version.hasPrefix("1.3")) &&
-            (filter != "CoD2x 1.4" || $0.version.hasPrefix("1.4")) &&
-            (!hideEmpty || $0.playerCount > 0) && (!hideFull || $0.playerCount < $0.maxPlayers)
+            (search.isEmpty || [QuakeColors.plain($0.name), $0.map, MapCatalog.displayName($0.map), $0.mod, $0.address].joined(separator: " ").localizedCaseInsensitiveContains(search)) &&
+            (filter != .stock || !ServerFacts($0).isCoD2x) && (filter != .codx || ServerFacts($0).isCoD2x) &&
+            (!hideEmpty || $0.playerCount > 0) && (!hideFull || $0.maxPlayers == 0 || $0.playerCount < $0.maxPlayers)
         }
         return result.sorted {
             switch sort {
-            case "Players": if $0.playerCount != $1.playerCount { return $0.playerCount > $1.playerCount }
-            case "Name": return QuakeColors.plain($0.name).localizedStandardCompare(QuakeColors.plain($1.name)) == .orderedAscending
-            default: if $0.ping != $1.ping { return $0.ping < $1.ping }
+            case .players: if $0.playerCount != $1.playerCount { return $0.playerCount > $1.playerCount }
+            case .name: return QuakeColors.plain($0.name).localizedStandardCompare(QuakeColors.plain($1.name)) == .orderedAscending
+            case .ping: if $0.ping != $1.ping { return $0.ping < $1.ping }
             }
             return $0.address < $1.address
         }
@@ -105,6 +150,7 @@ import SwiftUI
                     if !KeyStore.hasValidKey(at: preferences) {
                         try KeyStore.save(ProcessInfo.processInfo.environment["COD2_SETUP_CD_KEY"] ?? "", at: preferences)
                     }
+                    keyVerified = true
                     try rememberData()
                     shaderBusy = true
                     approximate = !(await Task.detached(priority: .utility) { LauncherPrepareShaders(data, nil) }.value)
@@ -116,7 +162,23 @@ import SwiftUI
             }
         } else if onboard && step == 2 { prepareShaders() }
         else if (fastPlay || pendingLink != nil) && !onboard { play() }
+        loadArtwork()
     }
+    func loadArtwork() {
+        guard !snapshot, !dataPath.isEmpty else { return }
+        var maps = recentServers.map(\.map) + visibleServers.prefix(48).map(\.map)
+        if let selected { maps.append(selected.map) }
+        let path = dataPath
+        Task { await artwork.load(dataPath: path, maps: maps) }
+    }
+    private func readPlayerName() {
+        let config = home.appendingPathComponent("main/config_mp.cfg")
+        guard let values = try? config.resourceValues(forKeys: [.fileSizeKey]), (values.fileSize ?? 0) <= 262_144,
+              let text = try? String(contentsOf: config, encoding: .isoLatin1), let name = PlayerProfile.name(config: text) else { return }
+        playerName = name
+    }
+
+    // MARK: Setup
     func pickData() {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true; panel.canChooseFiles = false; panel.treatsFilePackagesAsDirectories = true
@@ -129,28 +191,51 @@ import SwiftUI
         guard !dataPath.isEmpty, GameSettings.safeValue(dataPath), GameSettings.safeValue(home.path) else { throw LauncherError(message: "Choose a path without quotes, plus signs, semicolons or control characters.") }
         try PrivateFile.write(Data((dataPath + "\n").utf8), to: home.appendingPathComponent("data-path.txt"))
     }
+    var keyReady: Bool { KeyStore.valid(keyInput) }
     func nextSetup() {
         do {
             if step == 0 {
                 guard let data = LauncherFindData(dataPath) else { throw LauncherError(message: "Choose a complete licensed game data folder.") }
-                dataPath = data; try rememberData(); step = 1
-                if KeyStore.hasValidKey(at: preferences) { step = 2; prepareShaders() }
+                dataPath = data; try rememberData()
+                withAnimation(.launcherSpring) { step = 1 }
+                if KeyStore.hasValidKey(at: preferences) { keyVerified = true; withAnimation(.launcherSpring) { step = 2 }; prepareShaders() }
             } else if step == 1 {
-                try KeyStore.save(keyInput, at: preferences); keyInput = ""; step = 2; prepareShaders()
+                try KeyStore.save(keyInput, at: preferences); keyInput = ""; keyVerified = true
+                withAnimation(.launcherSpring) { step = 2 }; prepareShaders()
             } else { finishSetup() }
             notice = ""
         } catch { notice = error.localizedDescription }
     }
+    func backSetup() { if step > 0 && !shaderBusy { withAnimation(.launcherSpring) { step -= 1 } } }
     func prepareShaders(selected: String? = nil) {
-        guard !shaderBusy else { return }
-        shaderBusy = true; shaderProgress = 0.2; shaderMessage = "Checking the cache and locating your licensed Mac executable…"
-        let data = dataPath
-        setupTask = Task {
-            shaderProgress = 0.5; shaderMessage = "Extracting and verifying 834 shader payloads…"
-            let verified = await Task.detached(priority: .utility) { LauncherPrepareShaders(data, selected) }.value
-            shaderProgress = 1; shaderBusy = false; approximate = !verified
-            shaderMessage = verified ? "Original shaders verified. You're ready to play." : "Original Mac shaders weren't found. Approximate shaders change some lighting and skies."
+        guard !shaderBusy, !snapshot else { return }
+        shaderBusy = true; shaderCount = 0; shaderMessage = "Reading your Mac copy of Call of Duty 2…"
+        let data = dataPath, parent = home
+        let progress = Task { [weak self] in
+            while !Task.isCancelled {
+                let count = await Task.detached(priority: .utility) { Self.stagedShaderCount(in: parent) }.value
+                if let self, self.shaderBusy, let count {
+                    self.shaderCount = min(834, max(self.shaderCount, count))
+                    self.shaderMessage = "Extracting from Call of Duty 2 Multiplayer…"
+                }
+                try? await Task.sleep(for: .milliseconds(120))
+            }
         }
+        setupTask = Task {
+            let verified = await Task.detached(priority: .utility) { LauncherPrepareShaders(data, selected) }.value
+            progress.cancel()
+            withAnimation(.launcherSpring) { shaderCount = verified ? 834 : 0 }
+            shaderBusy = false; approximate = !verified
+            shaderMessage = verified ? "All shaders verified" : "Original Mac shaders weren't found. Approximate shaders change some lighting and skies."
+        }
+    }
+    /// Payloads written so far into the extractor's private staging folder in the app home.
+    nonisolated static func stagedShaderCount(in parent: URL) -> Int? {
+        guard let entries = try? FileManager.default.contentsOfDirectory(at: parent, includingPropertiesForKeys: nil) else { return nil }
+        let staging = entries.filter { $0.lastPathComponent.hasPrefix(".shaders-") && !$0.lastPathComponent.hasSuffix("-old") }
+        guard let folder = staging.first else { return nil }
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? []
+        return names.filter { !$0.hasPrefix(".") && $0 != "manifest.json" }.count
     }
     func pickShaders() {
         let panel = NSOpenPanel(); panel.canChooseDirectories = true; panel.canChooseFiles = true; panel.treatsFilePackagesAsDirectories = true
@@ -160,15 +245,21 @@ import SwiftUI
     func finishSetup() {
         do {
             try PrivateFile.write(Data("prepared\n".utf8), to: home.appendingPathComponent(".launcher-setup-complete"))
-            onboard = false; if fastPlay || pendingLink != nil { play() }
+            withAnimation(.launcherSpring) { onboard = false; page = .deploy }
+            loadArtwork()
+            if fastPlay || pendingLink != nil { play() }
         } catch { notice = error.localizedDescription }
     }
+    func restartSetup() { keyInput = ""; step = 0; withAnimation(.launcherSpring) { onboard = true } }
+
+    // MARK: Settings and library
     func saveSettings() {
         do {
             let text = try settings.config()
+            guard !snapshot else { settingsSaved = true; return }
             try PrivateFile.write(Data(text.utf8), to: home.appendingPathComponent("main/launcher.cfg"))
             try PrivateFile.write(JSONEncoder().encode(settings), to: home.appendingPathComponent("launcher-settings.json"))
-            notice = "Settings saved. They apply next time you play."
+            savedSettings = settings; settingsSaved = true
         } catch { notice = error.localizedDescription }
     }
     func saveLibrary() {
@@ -180,6 +271,11 @@ import SwiftUI
         if library.favorites.contains(address) { library.favorites.remove(address) } else { library.favorites.insert(address) }
         saveLibrary()
     }
+    func showServer(_ address: String) {
+        withAnimation(.launcherSpring) { page = .servers; selectedServer = address }
+    }
+
+    // MARK: Servers
     func refresh() {
         guard !snapshot, !refreshing else { return }
         refreshing = true; queryProgress = "Contacting both master servers…"
@@ -199,17 +295,27 @@ import SwiftUI
                     for await value in group { if let value { fresh.append(value) } }
                 }
                 servers = fresh + library.cache.filter { cached in !fresh.contains { $0.address == cached.address } }
-                queryProgress = "Queried \(min(start + 6, addresses.count)) of \(addresses.count) · \(fresh.count) responding"
+                queryProgress = "Queried \(min(start + 6, addresses.count)) of \(addresses.count)"
             }
             if fresh.isEmpty && !Task.isCancelled { notice = "No servers responded. Your cached results remain available; try direct connect or refresh later." }
             if !fresh.isEmpty { servers = fresh; library.cache = fresh; library.cachedAt = Date(); saveLibrary() }
             refreshing = false
+            loadArtwork()
         }
     }
     func cancelRefresh() { browserTask?.cancel() }
     func connect(_ server: GameServer? = nil) {
+        if server == nil && directAddress.trimmingCharacters(in: .whitespaces).isEmpty {
+            notice = "Enter a server address, such as 203.0.113.24:28960."; return
+        }
         do { pendingLink = try LaunchLink.direct(server?.address ?? directAddress, password: serverPassword); serverPassword = ""; play() }
         catch { notice = error.localizedDescription }
+    }
+    /// Home's Deploy: rejoin the last server, or open the game's menu when there is none.
+    func deploy() {
+        if let address = library.recent.first, !snapshot {
+            do { pendingLink = try LaunchLink.direct(address); play() } catch { notice = error.localizedDescription }
+        } else { play() }
     }
     func openLink(_ url: String) {
         do {
@@ -239,6 +345,8 @@ import SwiftUI
             notice = "The game hasn't finished starting. Open the server link again after the menu appears."
         }
     }
+
+    // MARK: Game lifecycle
     private func attachExistingGame() -> Bool {
         guard !snapshot, !gameRunning, let identifier = Bundle.main.bundleIdentifier else { return false }
         let expected = gameBundle.appendingPathComponent("Contents/MacOS/cod2_macos").resolvingSymlinksInPath()
@@ -313,44 +421,110 @@ import SwiftUI
         if code == nil && crashReport != nil { notice = "The game closed and produced a crash report. Your launcher is still open." }
         print("CoD2 Silicon: returned to launcher (game exit \(code.map(String.init) ?? "unavailable")).")
         fflush(stdout)
+        readPlayerName()
         if pendingLink != nil { play() }
         else if exitAfterGame { NSApp.terminate(nil) }
     }
+
+    // MARK: Library, folders and updates
     func loadMedia() {
         guard !snapshot else { return }
-        let folder = home.appendingPathComponent(mediaTab == "Demos" ? "main/demos" : "main/screenshots")
+        let folder = home.appendingPathComponent(libraryTab == .demos ? "main/demos" : "main/screenshots")
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        let extensions = mediaTab == "Demos" ? ["dm_1"] : ["jpg", "jpeg", "png", "tga"]
-        media = ((try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []).filter { extensions.contains($0.pathExtension.lowercased()) }.sorted { $0.lastPathComponent < $1.lastPathComponent }
+        let extensions = libraryTab == .demos ? ["dm_1"] : ["jpg", "jpeg", "png", "tga"]
+        let keys: [URLResourceKey] = [.contentModificationDateKey, .fileSizeKey]
+        media = ((try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: keys)) ?? [])
+            .filter { extensions.contains($0.pathExtension.lowercased()) }
+            .map { url in
+                let values = try? url.resourceValues(forKeys: Set(keys))
+                return MediaEntry(url: url, facts: MediaFacts(name: url.lastPathComponent, date: values?.contentModificationDate, bytes: values?.fileSize))
+            }
+            .sorted { ($0.url.lastPathComponent) > ($1.url.lastPathComponent) }
     }
-    func openMediaFolder() { NSWorkspace.shared.open(home.appendingPathComponent(mediaTab == "Demos" ? "main/demos" : "main/screenshots")) }
+    func openMediaFolder() { NSWorkspace.shared.open(home.appendingPathComponent(libraryTab == .demos ? "main/demos" : "main/screenshots")) }
+    func openHomeFolder() { NSWorkspace.shared.open(home) }
+    /// Explicit HTTPS request to GitHub Releases. Notify only: nothing is downloaded or installed.
     func checkUpdates() {
-        guard !snapshot else { return }
-        updateMessage = "Checking GitHub Releases…"
+        guard !snapshot, !checkingUpdates else { return }
+        checkingUpdates = true; updateMessage = "Checking GitHub Releases…"
         Task {
+            defer { checkingUpdates = false }
             do {
-                var request = URLRequest(url: URL(string: "https://api.github.com/repos/STiXzoOR/cod2-silicon/releases/latest")!)
+                var request = URLRequest(url: URL(string: "https://api.github.com/repos/STiXzoOR/cod2-silicon/releases?per_page=10")!)
                 request.timeoutInterval = 15; request.setValue("CoD2-Silicon-Launcher", forHTTPHeaderField: "User-Agent")
+                request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
                 let (data, response) = try await URLSession.shared.data(for: request)
-                guard let response = response as? HTTPURLResponse, response.statusCode == 200, data.count < 1_000_000 else { throw LauncherError(message: "Release service is unavailable. Try again later.") }
-                struct Release: Decodable { var tag_name: String; var html_url: String }
-                let release = try JSONDecoder().decode(Release.self, from: data)
-                let latest = release.tag_name.trimmingCharacters(in: CharacterSet(charactersIn: "v"))
-                if latest.compare(version, options: .numeric) == .orderedDescending {
+                guard let response = response as? HTTPURLResponse, response.statusCode == 200 else { throw LauncherError(message: "Release service is unavailable. Try again later.") }
+                let feed = try ReleaseNotes.parse(data)
+                if !feed.dispatches.isEmpty { library.dispatches = feed.dispatches }
+                library.dispatchesCheckedAt = Date(); saveLibrary()
+                if let latest = feed.latestVersion, ReleaseNotes.isNewer(latest, than: version) {
                     updateMessage = "Version \(latest) is available. Download it when you're ready."
                     releaseURL = URL(string: "https://github.com/STiXzoOR/cod2-silicon/releases")
                 } else { updateMessage = "You're up to date · \(version)"; releaseURL = nil }
             } catch { updateMessage = error.localizedDescription }
         }
     }
+
+    // MARK: Preview data for the review harness (documentation-range addresses, invented names)
     private func seedPreview() {
-        onboard = false; dataPath = "/Users/Player/Games/CoD2"
-        let names = ["^5Northern Lights ^7| Public", "^2Sunday Rifles ^7• EU", "^3The Toujane Club", "^1Classic ^7Headquarters", "^5Silicon Sessions"]
-        servers = names.enumerated().map { index, name in
-            GameServer(address: "192.0.2.\(index + 10):28960", fields: ["sv_hostname": name, "mapname": ["mp_toujane", "mp_carentan", "mp_burgundy", "mp_dawnville", "mp_matmata"][index], "g_gametype": index == 2 ? "sd" : "tdm", "sv_maxclients": "24", "clients": String(18 - index * 3), "shortversion": index % 2 == 0 ? "1.4.6.8" : "1.3", "fs_game": index == 2 ? "PAM" : "", "pswrd": index == 4 ? "1" : "0", "sv_maxfps": "250"], ping: 18 + index * 12, players: (0..<6).map { ServerPlayer(id: $0, score: 42 - $0 * 5, ping: 20 + $0 * 7, name: ["^5Aurora", "North", "^2Moss", "Echo", "Scout", "River"][$0]) })
+        onboard = false; dataPath = "/Users/Player/Games/CoD2"; keyVerified = true; playerName = "^3Sgt. ^7Morrow"
+        let rows: [(String, String, String, Int, Int, Int, Bool, String, Int, Bool, String)] = [
+            ("^4Northern ^7Lights | Public", "mp_toujane", "tdm", 18, 24, 18, true, "", 250, false, "203.0.113.24:28960"),
+            ("^2Sunday ^7Rifles · EU", "mp_carentan", "tdm", 15, 24, 30, false, "", 0, false, "198.51.100.7:28960"),
+            ("^3Desert ^7Fox ^1SD", "mp_matmata", "sd", 12, 20, 42, true, "zPAM 3", 250, false, "203.0.113.90:28962"),
+            ("^1Classic ^7Headquarters", "mp_dawnville", "hq", 9, 24, 54, false, "", 0, false, "198.51.100.41:28960"),
+            ("^5Silicon ^7Sessions", "mp_leningrad", "tdm", 6, 16, 66, true, "", 333, true, "192.0.2.10:28960"),
+            ("^7Eastern ^1Front", "mp_stalingrad", "dm", 20, 32, 71, false, "", 0, false, "198.51.100.88:28961"),
+            ("^2Hedgerow ^7League", "mp_brecourt", "sd", 10, 10, 35, true, "zPAM 3", 250, false, "203.0.113.150:28960"),
+            ("^6Railyard ^7Night", "mp_railyard", "ctf", 0, 20, 88, true, "", 250, false, "192.0.2.77:28960"),
+        ]
+        let names = ["Aurora", "^5North", "Moss", "Echo", "^3Scout", "River", "Harbor", "Quill", "Juniper", "Atlas", "Bramble", "Cedar"]
+        servers = rows.map { row in
+            var fields = ["sv_hostname": row.0, "mapname": row.1, "g_gametype": row.2, "clients": String(row.3), "sv_maxclients": String(row.4),
+                          "shortversion": row.6 ? "1.4.6.8" : "1.3", "fs_game": row.7, "pswrd": row.9 ? "1" : "0"]
+            if row.8 > 0 { fields["sv_maxfps"] = String(row.8) }
+            return GameServer(address: row.10, fields: fields, ping: row.5,
+                              players: (0..<min(row.3, 9)).map { ServerPlayer(id: $0, score: max(0, 42 - $0 * 5), ping: 18 + $0 * 7, name: names[$0]) })
         }
         selectedServer = servers.first?.address
-        library.favorites = [servers[0].address, servers[2].address]; library.recent = [servers[0].address]
-        library.cachedAt = Date(); media = ["toujane-evening.dm_1", "rifle-practice.dm_1", "carentan-round.dm_1"].map { home.appendingPathComponent("main/demos/" + $0) }
+        library.favorites = [servers[0].address, servers[2].address]
+        library.recent = [servers[0].address, servers[1].address, servers[5].address]
+        library.cachedAt = Date()
+        settings.advanced = "cg_fov 80\nr_gamma 1.1"
+        savedSettings = settings
+        let calendar = Calendar(identifier: .gregorian)
+        func date(_ day: Int, _ hour: Int, _ minute: Int) -> Date { calendar.date(from: DateComponents(year: 2026, month: 10, day: day, hour: hour, minute: minute)) ?? Date() }
+        media = [("toujane_tdm_1004_2114.dm_1", date(4, 21, 14), 3_100_000), ("carentan_tdm_1003_2240.dm_1", date(3, 22, 40), 4_800_000),
+                 ("leningrad_tdm_1003_1918.dm_1", date(3, 19, 18), 2_000_000)].map {
+            MediaEntry(url: home.appendingPathComponent("main/demos/" + $0.0), facts: MediaFacts(name: $0.0, date: $0.1, bytes: $0.2))
+        }
     }
+    /// Screen states for the review harness.
+    func preview(_ screen: String) {
+        switch screen {
+        case "setup-data": onboard = true; step = 0
+        case "setup-data-missing": onboard = true; step = 0; dataPath = ""
+        case "setup-key": onboard = true; step = 1; keyInput = "7Q4M 2KX9 LP3R"
+        case "setup-shaders": onboard = true; step = 2; shaderBusy = true; shaderCount = 518; shaderMessage = "Extracting from Call of Duty 2 Multiplayer…"
+        case "setup-ready": onboard = true; step = 2; shaderCount = 834; shaderMessage = "All shaders verified"
+        case "servers": page = .servers
+        case "servers-empty": page = .servers; search = "zzz"
+        case "settings": page = .settings
+        case "library-demos": page = .library
+        case "library-screenshots": page = .library; libraryTab = .screenshots
+            media = ["toujane-dusk.jpg", "carentan-rooftops.jpg", "leningrad-snow.jpg"].enumerated().map { index, name in
+                MediaEntry(url: home.appendingPathComponent("main/screenshots/" + name),
+                           facts: MediaFacts(name: name, date: Calendar(identifier: .gregorian).date(from: DateComponents(year: 2026, month: 10, day: 4 - min(index, 1), hour: 21 - index * 2, minute: 17 + index * 13)), bytes: 412_000))
+            }
+        case "about": page = .about
+        case "home-first": library.recent = []
+        default: page = .deploy
+        }
+    }
+}
+
+extension Animation {
+    /// The launcher's one spring. Views read Reduce Motion and skip it where motion isn't meaning.
+    static let launcherSpring = Animation.spring(response: 0.42, dampingFraction: 0.86)
 }

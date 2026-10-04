@@ -227,3 +227,53 @@ enum PlayerProfile {
         return nil
     }
 }
+
+/// Scrims that keep hero text at 4.5:1 over the player's own loading screens.
+enum ScrimMath {
+    static func linear(_ channel: UInt8) -> Double {
+        let c = Double(channel) / 255
+        return c <= 0.04045 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4)
+    }
+    static func luminance(_ r: UInt8, _ g: UInt8, _ b: UInt8) -> Double { 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b) }
+    static func contrast(_ a: Double, _ b: Double) -> Double { (max(a, b) + 0.05) / (min(a, b) + 0.05) }
+    static func encode(_ linear: Double) -> Double { linear <= 0.0031308 ? 12.92 * linear : 1.055 * pow(linear, 1 / 2.4) - 0.055 }
+    static func decode(_ encoded: Double) -> Double { encoded <= 0.04045 ? encoded / 12.92 : pow((encoded + 0.055) / 1.055, 2.4) }
+    /// Low and high percentile luminance (2nd and 98th by default) of straight RGBA pixels inside a normalized region.
+    static func percentiles(rgba: Data, width: Int, height: Int, region: (x: Double, y: Double, width: Double, height: Double),
+                            lower: Double = 0.02, upper: Double = 0.98) -> (low: Double, high: Double)? {
+        guard width > 0, height > 0, rgba.count == width * height * 4 else { return nil }
+        let x0 = max(0, Int(Double(width) * region.x)), x1 = min(width, Int(Double(width) * (region.x + region.width)))
+        let y0 = max(0, Int(Double(height) * region.y)), y1 = min(height, Int(Double(height) * (region.y + region.height)))
+        guard x1 > x0, y1 > y0 else { return nil }
+        let step = max(1, Int(sqrt(Double((x1 - x0) * (y1 - y0)) / 4096)))
+        var values: [Double] = []
+        rgba.withUnsafeBytes { raw in
+            let p = raw.bindMemory(to: UInt8.self)
+            for y in stride(from: y0, to: y1, by: step) {
+                for x in stride(from: x0, to: x1, by: step) {
+                    let o = (y * width + x) * 4
+                    values.append(luminance(p[o], p[o + 1], p[o + 2]))
+                }
+            }
+        }
+        values.sort()
+        let index = { (fraction: Double) in min(values.count - 1, max(0, Int(Double(values.count) * fraction))) }
+        return (values[index(lower)], values[index(upper)])
+    }
+    // SwiftUI composites in gamma-encoded sRGB, so these blend there and judge the result in
+    // linear light. A slight overshoot covers the gap between a grey estimate and real colour.
+    /// Opacity of a black scrim so the brightest likely pixel stays behind light text at `target`.
+    static func darkScrim(high: Double, text: Double, target: Double = 4.5) -> Double {
+        let allowed = (text + 0.05) / (target * 1.04) - 0.05
+        guard high > allowed else { return 0.35 }
+        guard allowed > 0 else { return 0.92 }
+        return min(0.92, max(0.35, 1 - encode(allowed) / encode(high)))
+    }
+    /// Opacity of a paper wash so the darkest likely pixel stays behind dark text at `target`.
+    static func lightWash(low: Double, text: Double, paper: Double, target: Double = 4.5) -> Double {
+        let needed = (text + 0.05) * target * 1.04 - 0.05
+        guard low < needed else { return 0.3 }
+        guard paper > needed else { return 0.95 }
+        return min(0.95, max(0.3, (encode(needed) - encode(low)) / (encode(paper) - encode(low))))
+    }
+}

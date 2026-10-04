@@ -170,7 +170,7 @@ enum KeyStore {
     }
 }
 
-struct GameSettings: Codable, Sendable {
+struct GameSettings: Codable, Sendable, Equatable {
     var resolution = "1920x1080"
     var fullscreen = "exclusive"
     var fps = 333
