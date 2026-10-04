@@ -98,6 +98,8 @@ provenance description. Neither original executable is part of this repo.
 | [Emscripten](https://emscripten.org/) | Emscripten contributors | MIT / University of Illinois-NCSA | Tool: inherited WebAssembly target; not claimed rebuilt during this port. |
 | [DepotDownloader](https://github.com/SteamRE/DepotDownloader) | SteamRE and contributors | GPL-2.0 | Tool: native arm64 download of the player’s entitled Steam Windows/Mac depots outside git. |
 | [Steam / SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) | Valve | Proprietary Valve terms | Tools: owned game/depot provenance and Wine Steam-client experiments; SteamCMD documented as an alternative, not claimed run by WS5. |
+| [Ruby / Psych](https://github.com/ruby/psych) | Yukihiro Matsumoto and Ruby contributors; Aaron Patterson, SHIBATA Hiroshi and Charles Oliver Nutter / Psych | Ruby OR BSD-2-Clause; Psych MIT | Tool: installed Ruby/Psych parsed CI and issue-template YAML when PyYAML and actionlint were unavailable. |
+| [macOS signing and system utilities](https://developer.apple.com/documentation/security) | Apple and component contributors | macOS distribution/component terms | Tools: codesign, plutil, xattr, taskpolicy, shell and checksum utilities for app validation and low-priority development commands. |
 
 ## Windows baseline tools (external only)
 
