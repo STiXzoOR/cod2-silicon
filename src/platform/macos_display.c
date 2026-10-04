@@ -34,6 +34,11 @@ static int windowMode = MAC_WINDOWED;
 static int refreshRate;
 static int initialized;
 static MacContext *screenContext;
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+static int presentMode = 1;
+static GLsync presentFence;
+void MacPlatform_SetPresentMode(int mode) { presentMode = mode; }
+#endif
 #if !defined(COD2_X64)
 static unsigned short originalGamma[3][256];
 static int gammaSaved;
@@ -327,6 +332,18 @@ void SDL_GL_SwapWindowDirect(void)
     MacContext *ctx = screenContext;
     if (!ctx)
         return;
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+    if (presentFence) {
+        GLenum ready = glClientWaitSync(presentFence, 0, 0);
+        if (presentMode && ready == GL_TIMEOUT_EXPIRED) {
+            /* Keep submitting the current scene, never queue an older image. */
+            glFlush();
+            return;
+        }
+        glDeleteSync(presentFence);
+        presentFence = NULL;
+    }
+#endif
     int width, height;
 #if defined(__APPLE__) && defined(COD2_X64)
     MacPlatform_GetDrawableSize(&width, &height);
@@ -362,6 +379,12 @@ void SDL_GL_SwapWindowDirect(void)
 #endif
         glBlitFramebufferEXT(0, 0, ctx->width, ctx->height, x, y, x + destW, y + destH, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     SDL_GL_SwapWindow(sdl_gl_window);
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+    if (presentMode) {
+        presentFence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+        glFlush();
+    }
+#endif
 #if defined(COD2_X64)
     glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, readFramebuffer);
     glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, drawFramebuffer);
@@ -384,6 +407,12 @@ uint16_t MacDisplay_ReleaseContext(void **reference)
 #endif
     if (ctx->context) {
         SDL_GL_MakeCurrent(sdl_gl_window, ctx->context);
+#if defined(__APPLE__) && defined(COD2_X64) && defined(__aarch64__)
+        if (presentFence) {
+            glDeleteSync(presentFence);
+            presentFence = NULL;
+        }
+#endif
 #if defined(COD2_X64)
         GammaRelease(&ctx->gamma);
 #endif
