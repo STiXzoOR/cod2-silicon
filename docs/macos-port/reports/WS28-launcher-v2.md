@@ -34,6 +34,9 @@ Commits on this branch, oldest first:
 | `795f342` | Fixes from an independent review of the diff |
 | `5187bd9` | Fixes for three pre-existing cold-link ordering bugs in the Dock hand-off |
 | `00d017d` | Verbatim licence texts exempt from whitespace checks; the bundler skips dotfiles |
+| `135aeb6` | This report (first version) |
+| `9afdad3` | Icon G: top-left stencil bridge removed so the 2 is one shape at Dock sizes |
+| `1b99cd7` | Real player name from the engine's active profile; server rows fade above the connect bar |
 
 ## Prototype fidelity, screen by screen
 
@@ -211,7 +214,8 @@ Every name was checked in the installed macOS 27.0 SDK's
 | `GlassEffectContainer(spacing:)` | macOS 26.0 | Chips; Deploy plus favourite |
 | `.buttonStyle(.glass)` / `.glassProminent` | macOS 26.0 | Secondary and prominent actions |
 | `backgroundExtensionEffect()` | macOS 26.0 | Home and About hero under the sidebar |
-| `safeAreaBar(edge:spacing:content:)` | macOS 26.0 | Direct-connect bar with the scroll-edge effect |
+| `safeAreaBar(edge:spacing:content:)` | macOS 26.0 | Direct-connect bar insetting the list (rows fade out above it) |
+| `scrollEdgeEffectStyle(_:for:)` | macOS 26.0 | Evaluated for the bar (probe); the automatic style under toolbars was kept, per the HIG's "prefer the automatic scroll edge effect style" |
 | `ToolbarSpacer(.flexible)`, `sharedBackgroundVisibility(.hidden)` | macOS 26.0 | Trailing groups; the plain save note |
 | `toolbar(removing: .title)` | macOS 15.0 | Untitled toolbar (`navigationTitle("")` before) |
 | `sidebarRowSize(.large)`, `controlSize(.extraLarge)`, `buttonBorderShape(.circle)` | macOS 14.0 | Sidebar rows, hero buttons, favourite button |
@@ -413,6 +417,52 @@ call order. Fixed in `5187bd9`:
 `cold_url.py` now waits for each policy, since another process sees it
 asynchronously, and asserts that exactly one game starts.
 
+## Orchestrator review of pass 3
+
+1. **Servers' last row showed through the direct-connect bar.**
+   - A probe compared the default, soft and hard scroll-edge styles
+     ([Scroll views](https://developer.apple.com/design/human-interface-guidelines/scroll-views))
+     with a fade.
+   - Soft and default still let the half row read through the glass. Hard hid
+     it, but sliced the row above through its text and added a footer-like
+     band.
+   - The list now fades out over its last 36 points above the bar, on every
+     macOS version. No row is sliced at rest, nothing sits under the glass, and
+     `safeAreaBar`'s inset lets the last row clear the bar at the end of the
+     list. This matches the prototype, where the list ends above the bar.
+   - The automatic edge effect remains under the toolbars.
+2. **The sidebar looked like an opaque panel.**
+   - It is the standard sidebar's real Liquid Glass, captured through the
+     window server, not offscreen.
+   - Sampling the dark Home render matches the prototype's sidebar tones at
+     every height, for example `#3d3829` against the prototype's `#353223` where
+     the hero lies beneath. The `backgroundExtensionEffect` mirror shows through.
+   - A probe with a vivid striped hero shows the same sidebar plainly
+     translucent. AppKit's own `NSSplitViewController` sidebar is also full
+     height in this macOS 27 window.
+   - HIG ([Color](https://developer.apple.com/design/human-interface-guidelines/color))
+     notes that "Liquid Glass appears more opaque in larger elements like
+     sidebars."
+   - The inset, rounded panel in the prototype is not what the system draws in
+     the harness window. Check the shipping window unlocked (see What's left).
+3. **The profile name.** The dog tag reads the in-game name the way the engine
+   loads it:
+   - `main/players/active.txt` gives the active profile;
+   - its `players/<profile>/config_mp.cfg` is read first, then
+     `main/config_mp.cfg`;
+   - the result is "Player" when no name is set.
+
+   Profile names are sanitized (no path separators or `..`) and unit-tested.
+   Only review renders use an invented name.
+4. **Icon.**
+   - At 32–64 px the top-left stencil bridge read as a separate tick. Five
+     variants were compared at 64, 32 and 256 px: narrower, moved to the crown,
+     both, and removed.
+   - Removing that bridge keeps the 2 one shape at every size. The stencil
+     character stays in the diagonal and baseline bridges.
+   - The change is applied to the `.icon` layers, the static fallback and the
+     sidebar mark. All six renditions were re-rendered.
+
 ## Tests and gate evidence
 
 All logs are under ignored `output/ws28/gate/`. Builds and tests ran under
@@ -421,28 +471,28 @@ work, and no performance was measured.
 
 | Check | Result |
 | --- | --- |
-| `sh tests/launcher/run.sh` | **PASS** (`launcher-tests.log`). Core and wire fixtures, the new presentation tests, the Network.framework UDP test, the IWI/IWD artwork tests, font checksums, the pre-26 typecheck, and 26 screens plus the fallback rendered and checked |
+| `sh tests/launcher/run.sh` at `1b99cd7` | **PASS** (`launcher-tests-1b99cd7.log`). Core and wire fixtures, the new presentation tests, the Network.framework UDP test, the IWI/IWD artwork tests, font checksums, the pre-26 typecheck, and 26 screens plus the fallback rendered and checked |
 | New unit tests (`CoreTests`) | cm/360 (800 DPI × 5 = 10.39 cm, invariance, invalid input), both advanced-dvar forms and reservations, settings and library migration from older JSON, the release-notes parser against a synthetic fixture (drafts, Markdown, CRLF, truncation, link host, newest stable), map names and regions with unsafe names, server facts, media facts, the key tag, the player name, and sRGB-composited scrims |
 | Strict build | Swift 6, complete concurrency, warnings as errors, `arm64-apple-macos13`: launcher, harness and tests |
-| `python3 tests/launcher/lifecycle.py` | **PASS** (`lifecycle-final-5.log`): nested child, Dock policies, live links, no duplicate engine, force-quit reconnect, crash report |
-| `python3 tests/launcher/cold_url.py` | **PASS** five times in a row with a completed scratch home (`cold-url-final-u1..5.log`) and once with a fresh home (`cold-url-fresh.log`). Cold LaunchServices `cod2x://` with a `+` password is deferred and never in argv; accessory during the game, regular after it, one game only. No test processes left behind |
+| `python3 tests/launcher/lifecycle.py` | **PASS** at `1b99cd7` (`lifecycle-1b99cd7.log`): nested child, Dock policies, live links, no duplicate engine, force-quit reconnect, crash report |
+| `python3 tests/launcher/cold_url.py` | **PASS** three times at `1b99cd7` (`cold-url-1b99cd7-{1,2,3}.log`). Earlier, at `5187bd9`, it passed five times in a row with a completed scratch home and once with a fresh home (`cold-url-fresh.log`). Cold LaunchServices `cod2x://` with a `+` password is deferred and never in argv; accessory during the game, regular after it, one game only. No test processes left behind |
 | `python3 tests/packaging/first_run.py` | **PASS** (`first-run.log`) |
 | Stock engine build (CONTRIBUTING configuration) | **PASS**, `build-stock.log` |
 | CoD2x engine build | **PASS**, `build-codx.log` |
 | `sh tools/abi/check.sh build-macos/compile_commands.json output/ws28/abi-stock` | **exit 0**: 620 TUs, 0 errors, **0 mismatches**; 218 renderer bindings with 0 table/cast/floating mismatches; 514 imports and 1,776 native sites with 0 proven extra or missing dereferences |
 | Same for `build-macos-codx` | **exit 0**: 637 TUs, **0 mismatches**; 218 bindings clean; 1,778 native sites, 0 proven extra or missing |
-| Private contrast gate | **PASS**, worst 4.66:1 over 30 heroes |
-| `COD2_BUILD_BACKGROUND=1 scripts/package-release.sh --build-dir build/package/ws28` at `00d017d` | **exit 0**. `dist/CoD2-Silicon-0.1.0-macos-arm64.zip`, SHA-256 `2e7a4d3602cc6e7d4f9ed6f6658768b29fe01f620c9ad0c93ea75195c797adf5`; `shasum -c SHA256SUMS` OK |
-| `python3 tests/packaging/launcher_bundle.py` on the extracted zip | **PASS**. Launcher plus the isolated Game Mode helper, one URL owner; four arm64 Mach-Os at `minos 13.0` (SDK 27.0); portable links; `codesign --verify --deep --strict`; no game content; icon G (`Assets.car`, ICNS, `CFBundleIconName`, `NSAccentColorName`) in both apps; the five font and licence files |
-| `python3 tests/packaging/release_smoke.py` on the extracted zip (under `gtimeout -k 10 300`; no other game running, benchmark lock free) | **PASS**. Empty home → launcher non-interactive setup → engine menu → `devmap mp_toujane` → two captures → scripted quit, exit 0 → "returned to launcher"; bundled SDL2/SDL3 loaded. `output/ws28/release-smoke-00d017d/results.json` |
-| System-resolved app icon | `NSWorkspace` icons of the extracted outer app and nested helper show icon G (`output/ws28/icon/finder-icon-{outer,helper}.png`) |
+| Private contrast gate | **PASS** at `1b99cd7`, worst 4.66:1 over 30 heroes |
+| `COD2_BUILD_BACKGROUND=1 scripts/package-release.sh --build-dir build/package/ws28` at `1b99cd7` | **exit 0**. `dist/CoD2-Silicon-0.1.0-macos-arm64.zip`, SHA-256 `c205400b69b3f71f5e65c9f80981714b642c1d92b6a2245a62c4c044abbaf067`; `shasum -c SHA256SUMS` OK (`package-1b99cd7.log`). The earlier `00d017d` package was `2e7a4d36…adf5` |
+| `python3 tests/packaging/launcher_bundle.py` on the extracted `1b99cd7` zip | **PASS** (`bundle-audit-1b99cd7.log`). Launcher plus the isolated Game Mode helper, one URL owner; four arm64 Mach-Os at `minos 13.0` (SDK 27.0); portable links; `codesign --verify --deep --strict`; no game content; icon G (`Assets.car`, ICNS, `CFBundleIconName`, `NSAccentColorName`) in both apps; the five font and licence files |
+| `python3 tests/packaging/release_smoke.py` on the extracted zip (under `gtimeout -k 10 300`; no other game running, benchmark lock free) | **PASS** at `00d017d`. Empty home → launcher non-interactive setup → engine menu → `devmap mp_toujane` → two captures → scripted quit, exit 0 → "returned to launcher"; bundled SDL2/SDL3 loaded. `output/ws28/release-smoke-00d017d/results.json`. **Pending** at `1b99cd7`: another agent holds the benchmark lock, so the run waits for it (`output/ws28/gate/release-smoke-1b99cd7.log`) |
+| System-resolved app icon | `NSWorkspace` icons of the extracted `1b99cd7` outer app and nested helper show icon G with two bridges (`output/ws28/icon/finder-icon-{outer,helper}.png`) |
 | Static checks | `shellcheck` clean on the changed scripts; Python compiles; `git diff --check 4d56e0b` clean outside the verbatim OFL texts, whose upstream trailing spaces are exempt through `launcher/Resources/Fonts/.gitattributes` |
 
 The CONTRIBUTING fixture suites (online, fixes13, lp64, platform and so on) were
 not re-run. This branch changes no engine source, header, CMake or data blob
 (`git diff 4d56e0b -- src CMakeLists.txt cmake build/lp64_gen` is empty).
-Both engine targets rebuild as no-ops at the final commit, and both full ABI
-audits ran against them. The release smoke's captures are game content; they
+The engine builds and both full ABI audits ran on this branch, and no engine
+input has changed since, so they still describe `1b99cd7`. The release smoke's captures are game content; they
 stay in ignored `output/`.
 
 ## What's left
