@@ -40,7 +40,9 @@ for key, rows in sorted(groups.items(), key=lambda pair: str(pair[0])):
         actual = row.get('actual_presentation') or ''
         flags = re.search(r'windowFlags=0x([0-9a-f]+)', actual)
         size = row['resolution']
-        return (row.get('clock_boundary') == 'client' and flags and int(flags[1], 16) & 1
+        return (row.get('clock_boundary') == 'client' and not row.get('cocoa_probe')
+                and flags and int(flags[1], 16) & 1
+                and int(flags[1], 16) & 0x200  # SDL_WINDOW_INPUT_FOCUS
                 and f'viewport={size} ' in actual and f'drawable={size} ' in actual
                 and not row.get('presentation_changes') and row.get('measured_seconds', 0) >= 119.9
                 and row.get('shutdown') == 'quit')
@@ -56,6 +58,7 @@ for row in summary:
           f"low {low['median']:.1f} [{low['min']:.1f},{low['max']:.1f}], "
           f"P99 {p99['median']:.3f} [{p99['min']:.3f},{p99['max']:.3f}] ms")
 required = [row for row in summary if row['kind'] == 'live' and row['cap'] == 333
-            and row['present_mode'] == '1' and row['resolution'] in ('1920x1080', '2560x1440')]
+            and row['present_mode'] == '0' and row['fullscreen_spaces'] == '0'
+            and row['resolution'] in ('1920x1080', '2560x1440')]
 if not args.allow_locked and (len(required) < 2 or not all(row['target_met'] for row in required)):
     raise SystemExit('333 acceptance failed or is unverified; see summary.json')

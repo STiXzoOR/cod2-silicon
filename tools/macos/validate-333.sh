@@ -48,7 +48,7 @@ export COD2_BINARY="$binary"
 # Both modes allow a direct comparison. Spaces preserves the desktop mode.
 for spaces in ${COD2_SPACES_MODES:-0}; do
     export SDL_VIDEO_MAC_FULLSCREEN_SPACES=$spaces
-    for present in ${COD2_PRESENT_MODES:-1}; do
+    for present in ${COD2_PRESENT_MODES:-0}; do
         for resolution in 1920x1080 2560x1440 3840x2160; do
             for cap in 333 0; do
                 for repeat in 1 2 3; do
@@ -67,5 +67,9 @@ for spaces in ${COD2_SPACES_MODES:-0}; do
     done
 done
 tools/macos/check-gamemode.sh "$app" "$out/gamemode"
-python3 tools/macos/summarize-333.py "$out" ${COD2_ALLOW_LOCKED:+--allow-locked}
+if [[ ${COD2_ALLOW_LOCKED:-0} == 1 ]]; then
+    python3 tools/macos/summarize-333.py "$out" --allow-locked
+else
+    python3 tools/macos/summarize-333.py "$out"
+fi
 echo "Evidence: $out/summary.json and $out/gamemode/game-policy.log"

@@ -17,10 +17,11 @@ cleanup() {
 }
 trap cleanup EXIT
 started=$(date '+%Y-%m-%d %H:%M:%S')
-SDL_VIDEO_MAC_FULLSCREEN_SPACES=1 timeout -k 10 55 python3 "$repo/tools/macos/live-bench.py" \
+export COD2_MAC_SHADER_CACHE=${COD2_MAC_SHADER_CACHE:-"$HOME/Library/Application Support/CoD2x Native/shaders"}
+SDL_VIDEO_MAC_FULLSCREEN_SPACES=1 timeout -k 10 45 python3 "$repo/tools/macos/live-bench.py" \
     "$data" --app "$app" --output "$out" --window-mode fullscreen \
     --resolution 1920x1080 --maxfps 333 --seconds 10 --combat
-/usr/bin/log show --start "$started" --style compact \
+timeout -k 5 10 /usr/bin/log show --start "$started" --style compact \
     --predicate 'process == "gamepolicyd" OR process == "GamePolicyAgent"' > "$out/game-policy.log"
 python3 - "$out" <<'PY'
 import json, re, sys
