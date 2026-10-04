@@ -58,10 +58,8 @@ with log.open("w") as stream:
             time.sleep(.1)
 
     try:
-        # Echo runs through the real console once startup is complete.
-        time.sleep(3)
-        send("echo WS21_MENU_READY")
-        wait_for(lambda: "WS21_MENU_READY" in log.read_text(errors="replace"))
+        wait_for(lambda: "Loading 'ui_mp/main.menu'" in log.read_text(errors="replace") and
+                 "--- Common Initialization Complete ---" in log.read_text(errors="replace"))
         send("screenshotJPEG ws21-menu")
         time.sleep(1)
         send("devmap mp_toujane")
