@@ -1,6 +1,6 @@
 #!/bin/sh
 set -eu
-root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
+root=$(CDPATH='' cd -- "$(dirname "$0")/../.." && pwd)
 out="$root/output/ws28/unit"
 mkdir -p "$out"
 "$root/scripts/build-launcher.sh" "$out" --test

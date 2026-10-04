@@ -198,7 +198,7 @@ def main():
         # registers them at runtime when run outside a bundle.
         fonts = root / "launcher/Resources/Fonts"
         subprocess.run([str(root / "scripts/fetch-launcher-fonts.sh"), "--check"], check=True, stdout=subprocess.DEVNULL)
-        shutil.copytree(fonts, resources / "Fonts")
+        shutil.copytree(fonts, resources / "Fonts", ignore=shutil.ignore_patterns(".*"))
         info["ATSApplicationFontsPath"] = "Fonts"
         for name in ["LICENSE", "NOTICE.md", "CREDITS.md"]:
             shutil.copy2(root / name, resources / name)
