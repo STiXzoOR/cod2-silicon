@@ -35,6 +35,16 @@ import SwiftUI
     let preferences: URL
     let snapshot: Bool
     private var engine: Process?
+    private var attachedGame: NSRunningApplication?
+    private var attachmentTask: Task<Void, Never>?
+    private var connectionTask: Task<Void, Never>?
+    private var gameStartedAt = Date()
+    private var gameBundle: URL { Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app") }
+    private var activeGamePID: pid_t? {
+        if let engine, engine.isRunning { return engine.processIdentifier }
+        if let attachedGame, !attachedGame.isTerminated { return attachedGame.processIdentifier }
+        return nil
+    }
     private var browserTask: Task<Void, Never>?
     private var pendingLink: LaunchLink?
     private var fastPlay = false
@@ -81,6 +91,7 @@ import SwiftUI
     }
     func boot() {
         guard !snapshot else { return }
+        _ = attachExistingGame()
         let args = CommandLine.arguments
         fastPlay = args.contains("--play")
         exitAfterGame = args.contains("--exit-after-game")
@@ -175,7 +186,7 @@ import SwiftUI
         browserTask = Task {
             let discovered = await ServerQueries.masterAddresses()
             let addresses = Array(Set(discovered).union(library.favorites).union(library.recent)).sorted()
-            if addresses.isEmpty { notice = "Master servers did not respond. Cached servers and direct connect remain available." }
+            if discovered.isEmpty && !Task.isCancelled { notice = "Master servers did not respond. Cached servers and direct connect remain available." }
             var fresh: [GameServer] = []
             for start in stride(from: 0, to: addresses.count, by: 6) {
                 if Task.isCancelled { break }
@@ -190,6 +201,7 @@ import SwiftUI
                 servers = fresh + library.cache.filter { cached in !fresh.contains { $0.address == cached.address } }
                 queryProgress = "Queried \(min(start + 6, addresses.count)) of \(addresses.count) · \(fresh.count) responding"
             }
+            if fresh.isEmpty && !Task.isCancelled { notice = "No servers responded. Your cached results remain available; try direct connect or refresh later." }
             if !fresh.isEmpty { servers = fresh; library.cache = fresh; library.cachedAt = Date(); saveLibrary() }
             refreshing = false
         }
@@ -202,36 +214,64 @@ import SwiftUI
     func openLink(_ url: String) {
         do {
             let link = try LaunchLink(url)
-            if let engine, engine.isRunning {
-                let event = NSAppleEventDescriptor(eventClass: AEEventClass(kInternetEventClass), eventID: AEEventID(kAEGetURL), targetDescriptor: NSAppleEventDescriptor(processIdentifier: engine.processIdentifier), returnID: AEReturnID(kAutoGenerateReturnID), transactionID: AETransactionID(kAnyTransactionID))
-                event.setParam(NSAppleEventDescriptor(string: link.url), forKeyword: AEKeyword(keyDirectObject))
-                _ = try event.sendEvent(options: .noReply, timeout: 2)
-                library.joined(link.address); saveLibrary()
-                NSRunningApplication(processIdentifier: engine.processIdentifier)?.activate(options: .activateAllWindows)
+            if let pid = activeGamePID {
+                scheduleLink(link, pid: pid)
             } else { pendingLink = link; fastPlay = true; if !onboard { play() } }
         } catch { notice = error.localizedDescription }
     }
+    private func scheduleLink(_ link: LaunchLink, pid: pid_t) {
+        connectionTask?.cancel()
+        connectionTask = Task {
+            for _ in 0..<150 {
+                guard !Task.isCancelled, activeGamePID == pid else { return }
+                if NSRunningApplication(processIdentifier: pid)?.isFinishedLaunching == true {
+                    do {
+                        let event = NSAppleEventDescriptor(eventClass: AEEventClass(kInternetEventClass), eventID: AEEventID(kAEGetURL), targetDescriptor: NSAppleEventDescriptor(processIdentifier: pid), returnID: AEReturnID(kAutoGenerateReturnID), transactionID: AETransactionID(kAnyTransactionID))
+                        event.setParam(NSAppleEventDescriptor(string: link.url), forKeyword: AEKeyword(keyDirectObject))
+                        _ = try event.sendEvent(options: .noReply, timeout: 2)
+                        library.joined(link.address); saveLibrary()
+                        NSRunningApplication(processIdentifier: pid)?.activate(options: .activateAllWindows)
+                    } catch { notice = "Could not deliver the server link to the game. Try again after the menu appears." }
+                    return
+                }
+                try? await Task.sleep(for: .milliseconds(200))
+            }
+            notice = "The game hasn't finished starting. Open the server link again after the menu appears."
+        }
+    }
+    private func attachExistingGame() -> Bool {
+        guard !snapshot, !gameRunning, let identifier = Bundle.main.bundleIdentifier else { return false }
+        let expected = gameBundle.appendingPathComponent("Contents/MacOS/cod2_macos").resolvingSymlinksInPath()
+        guard let app = NSRunningApplication.runningApplications(withBundleIdentifier: identifier + ".game").first(where: {
+            !$0.isTerminated && $0.executableURL?.resolvingSymlinksInPath() == expected
+        }) else { return false }
+        attachedGame = app; gameRunning = true; gameStartedAt = Date()
+        NSApp.setActivationPolicy(.accessory)
+        NSApp.windows.forEach { $0.orderOut(nil) }
+        print("CoD2 Silicon: reconnected to existing game (pid \(app.processIdentifier)).")
+        fflush(stdout)
+        attachmentTask = Task { [weak self] in
+            while !app.isTerminated { try? await Task.sleep(for: .milliseconds(250)); if Task.isCancelled { return } }
+            self?.attachedGame = nil
+            self?.gameEnded(code: nil)
+        }
+        return true
+    }
     func play(demo: URL? = nil) {
         guard !snapshot, !gameRunning else { return }
+        if attachExistingGame() {
+            if let link = pendingLink { pendingLink = nil; openLink(link.url) }
+            return
+        }
         if onboard { return }
         do {
             try rememberData()
-            let bundle = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app")
+            let bundle = gameBundle
             let executable = bundle.appendingPathComponent("Contents/MacOS/cod2_macos")
             guard FileManager.default.isExecutableFile(atPath: executable.path) else { throw LauncherError(message: "The game helper is missing. Rebuild or reinstall this app.") }
-            var arguments = try settings.arguments()
-            arguments += ["+set", "fs_basepath", "\"\(dataPath)\"", "+set", "fs_homepath", "\"\(home.path)\""]
-            if let link = pendingLink {
-                arguments += ["+set", "password", "\"\(link.password)\"", "+connect", link.address]
-            }
-            if let demo {
-                let name = demo.deletingPathExtension().lastPathComponent
-                guard name.range(of: "^[A-Za-z0-9_.-]+$", options: .regularExpression) != nil else { throw LauncherError(message: "Rename this demo using letters, numbers, dots, underscores or hyphens before playback.") }
-                arguments += ["+demo", name]
-            }
-            arguments += forwardedArguments
-            guard arguments.joined(separator: " ").utf8.count < 3900 else { throw LauncherError(message: "Launch arguments exceed the game's limit.") }
-            let process = Process(); process.executableURL = executable; process.arguments = arguments
+            let plan = try GameLaunchPlan(settings: settings, dataPath: dataPath, homePath: home.path, link: pendingLink,
+                demo: demo?.deletingPathExtension().lastPathComponent, forwarded: forwardedArguments)
+            let process = Process(); process.executableURL = executable; process.arguments = plan.arguments
             process.currentDirectoryURL = home
             var environment = ProcessInfo.processInfo.environment
             environment["HOME"] = NSHomeDirectory()
@@ -247,33 +287,39 @@ import SwiftUI
                 Task { @MainActor in self?.gameEnded(code: code) }
             }
             try PrivateFile.write(Data(try settings.config().utf8), to: home.appendingPathComponent("main/launcher.cfg"))
-            try process.run(); engine = process; gameRunning = true
-            if let link = pendingLink { library.joined(link.address); saveLibrary() }; pendingLink = nil
+            try process.run(); engine = process; gameRunning = true; gameStartedAt = Date(); crashReport = nil; notice = ""
+            pendingLink = nil
+            if let link = plan.link { scheduleLink(link, pid: process.processIdentifier) }
             cancelRefresh()
             NSApp.windows.forEach { $0.orderOut(nil) }
             NSApp.setActivationPolicy(.accessory)
             print("CoD2 Silicon: game started (pid \(process.processIdentifier)).")
         } catch { notice = error.localizedDescription }
     }
-    private func gameEnded(code: Int32) {
+    private func gameEnded(code: Int32?) {
+        connectionTask?.cancel()
         engine = nil; gameRunning = false
         NSApp.setActivationPolicy(.regular)
         NSApp.windows.first?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
-        if code != 0 {
+        if let code, code != 0 {
             notice = "The game exited unexpectedly (\(code)). Your launcher is still open."
-            crashReport = (try? FileManager.default.contentsOfDirectory(at: home, includingPropertiesForKeys: [.contentModificationDateKey]))?
-                .filter { $0.lastPathComponent.hasPrefix("cod2_crash_") && $0.pathExtension == "txt" }
-                .sorted { $0.lastPathComponent > $1.lastPathComponent }.first
         }
-        print("CoD2 Silicon: returned to launcher (game exit \(code)).")
+        if code == nil || code != 0 {
+            crashReport = (try? FileManager.default.contentsOfDirectory(at: home, includingPropertiesForKeys: [.contentModificationDateKey]))?
+                .filter { $0.lastPathComponent.hasPrefix("cod2_crash_") && $0.pathExtension == "txt" && ((try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast) >= gameStartedAt }
+                .sorted { ((try? $0.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast) > ((try? $1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast) }.first
+        }
+        if code == nil && crashReport != nil { notice = "The game closed and produced a crash report. Your launcher is still open." }
+        print("CoD2 Silicon: returned to launcher (game exit \(code.map(String.init) ?? "unavailable")).")
         fflush(stdout)
-        if exitAfterGame { NSApp.terminate(nil) }
+        if pendingLink != nil { play() }
+        else if exitAfterGame { NSApp.terminate(nil) }
     }
     func loadMedia() {
         guard !snapshot else { return }
         let folder = home.appendingPathComponent(mediaTab == "Demos" ? "main/demos" : "main/screenshots")
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        let extensions = mediaTab == "Demos" ? ["dm_1", "dm_2"] : ["jpg", "jpeg", "png", "tga"]
+        let extensions = mediaTab == "Demos" ? ["dm_1"] : ["jpg", "jpeg", "png", "tga"]
         media = ((try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []).filter { extensions.contains($0.pathExtension.lowercased()) }.sorted { $0.lastPathComponent < $1.lastPathComponent }
     }
     func openMediaFolder() { NSWorkspace.shared.open(home.appendingPathComponent(mediaTab == "Demos" ? "main/demos" : "main/screenshots")) }

@@ -103,6 +103,32 @@ struct LaunchLink: Sendable {
     }
 }
 
+enum EngineCommandLine {
+    static func validate(_ arguments: [String]) throws -> [String] {
+        let text = arguments.joined(separator: " ")
+        guard text.utf8.count < 3900 else { throw LauncherError(message: "Launch arguments exceed the game's byte limit.") }
+        guard text.filter({ $0 == "+" }).count <= 31 else { throw LauncherError(message: "Too many startup commands. Reduce the number of advanced dvars before playing.") }
+        return arguments
+    }
+}
+
+struct GameLaunchPlan {
+    var arguments: [String]
+    var link: LaunchLink?
+    init(settings: GameSettings, dataPath: String, homePath: String, link: LaunchLink? = nil, demo: String? = nil, forwarded: [String] = []) throws {
+        guard GameSettings.safeValue(dataPath), GameSettings.safeValue(homePath) else { throw LauncherError(message: "Game paths contain unsupported characters.") }
+        var args = try settings.arguments()
+        args += ["+set", "fs_basepath", "\"\(dataPath)\"", "+set", "fs_homepath", "\"\(homePath)\""]
+        if let demo {
+            guard demo.range(of: "^[A-Za-z0-9_.-]+$", options: .regularExpression) != nil else { throw LauncherError(message: "Rename this demo using letters, numbers, dots, underscores or hyphens before playback.") }
+            args += ["+demo", demo]
+        }
+        arguments = try EngineCommandLine.validate(args + forwarded)
+        // Links are delivered as Apple events after startup, never serialized into argv.
+        self.link = link
+    }
+}
+
 enum PrivateFile {
     static func write(_ data: Data, to target: URL) throws {
         try FileManager.default.createDirectory(at: target.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])

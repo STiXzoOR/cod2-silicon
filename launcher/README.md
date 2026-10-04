@@ -16,7 +16,9 @@ network. The secure key field stays empty.
 
 The outer app registers `cod2x`. A nested `CoD2 Game.app` owns the engine and its
 fullscreen/Game Mode eligibility. The launcher becomes an accessory app during
-play, then restores its Dock/window after the tracked child exits. A game crash
+play, then restores its Dock/window after the tracked child exits. If the launcher is force-quit, reopening it
+reconnects to the exact running helper (bundle ID and executable path) rather
+than spawning another engine. Normal Quit waits until the game closes. A game crash
 leaves the launcher running and exposes any native crash report in the app home.
 Only a single launcher window exists; Play is guarded against duplicate children.
 
@@ -30,14 +32,17 @@ open -a "CoD2 Silicon.app" 'cod2x://connect/127.0.0.1:28960'
 
 Arguments following `--` are forwarded verbatim to the engine's command parser
 for trusted CLI/developer use. GUI settings and links always go through bounded
-validators. Passwords are held in memory and never cached. CD keys are validated
+validators. Cold links wait for the helper to finish launching, then use the same validated
+Apple-event path as live links. Passwords are held in memory and never put in
+process arguments or cached. CD keys are validated
 by WS21's native CRC routine, written using mode-600 temporary files and rename,
 and removed from the child environment. The raw key is never printed.
 
 `launcher-settings.json`, `launcher-library.json`, `main/launcher.cfg` and
 `data-path.txt` live in the existing app home. The launcher never rewrites
 `config_mp.cfg`. Startup dvars make settings apply before renderer initialization.
-Advanced values reject command separators; startup paths/credentials and upcoming
+Advanced values reject command separators and the complete startup is limited to the
+engine's 31 commands/3900 bytes; startup paths/credentials and upcoming
 renderer options are reserved. Native Spaces sets
 `SDL_VIDEO_MAC_FULLSCREEN_SPACES=1`. Metal/MetalFX/HDR/render scale remain disabled
 until the renderer workstreams provide their supported interfaces.
@@ -53,3 +58,10 @@ WS21's NSAlert setup remains available in engine-only development/test bundles
 (`make_macos_app.py --engine-only`). Production bundles set automatic setup off
 in the helper because SwiftUI owns setup. The existing native engine URL handler
 and server-facing CoD2x 1.4.6.8 identity are untouched.
+
+Lifecycle checks: `python3 tests/launcher/lifecycle.py` then
+`python3 tests/launcher/cold_url.py` (build the launcher into
+`output/ws25/launcher` first). These use a synthetic helper, public wire parser
+and fake game archives/key in scratch homes, exercise real activation policies
+and Apple events, and unregister both test bundles. Media playback lists only
+the engine-supported `.dm_1` format.

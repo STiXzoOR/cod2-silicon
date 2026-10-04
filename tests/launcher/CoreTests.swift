@@ -42,6 +42,13 @@ import Foundation
         precondition((try? settings.config()) == nil)
         precondition((try? LaunchLink("cod2x://connect/127.0.0.1:28960"))?.address == "127.0.0.1:28960")
         precondition((try? LaunchLink("cod2x://connect/localhost%3Bquit")) == nil)
+        let injection = try LaunchLink("cod2x://connect%20localhost%20password%20%22p%2Bquit%20%22")
+        let plan = try GameLaunchPlan(settings: GameSettings(), dataPath: "/Game Data", homePath: "/Private Home", link: injection)
+        precondition(!plan.arguments.contains("password") && !plan.arguments.joined().contains("quit"))
+        precondition(plan.link?.password == "p+quit ")
+        precondition(plan.arguments.contains("\"/Game Data\""))
+        precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 32))) == nil)
+        precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 31))) != nil)
         print("PASS: real master/status fixtures, malformed packets, colours, native key CRC/private storage, config and URL injection")
     }
 }

@@ -14,9 +14,13 @@ import AppKit
         for url in urls { LauncherState.model.openLink(url.absoluteString) }
     }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        // The game keeps its own lifetime; closing the launcher cannot crash it.
-        .terminateNow
+        if LauncherState.model.gameRunning {
+            LauncherState.model.notice = "Quit the game first, then quit CoD2 Silicon."
+            return .terminateCancel
+        }
+        return .terminateNow
     }
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !LauncherState.model.gameRunning { sender.windows.first?.makeKeyAndOrderFront(nil) }
         return true
