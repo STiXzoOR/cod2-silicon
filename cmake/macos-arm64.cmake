@@ -1,11 +1,19 @@
 # Native Apple platform. Typed engine data/import slots are supplied by WS2.
 set(CMAKE_OSX_ARCHITECTURES arm64)
+set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "Minimum native macOS version" FORCE)
+option(COD2_MACOS_RELEASE "Require a portable pinned-SDL release build" OFF)
 enable_language(CXX OBJC)
 find_library(COD2_AUDIO_FRAMEWORK AudioToolbox REQUIRED)
 find_library(COD2_COREAUDIO_FRAMEWORK CoreAudio REQUIRED)
 find_library(COD2_GAMECONTROLLER_FRAMEWORK GameController REQUIRED)
 find_library(COD2_FOUNDATION_FRAMEWORK Foundation REQUIRED)
 find_package(SDL2 CONFIG REQUIRED)
+if(COD2_MACOS_RELEASE)
+  set(CMAKE_SKIP_BUILD_RPATH TRUE)
+endif()
+file(GLOB MACOS_PLATFORM_SOURCES "${CMAKE_SOURCE_DIR}/src/platform/*.[cm]" "${CMAKE_SOURCE_DIR}/src/platform/*.cpp")
+set_property(SOURCE ${MACOS_PLATFORM_SOURCES} APPEND PROPERTY COMPILE_OPTIONS
+  -Werror=unguarded-availability -Werror=unguarded-availability-new)
 find_library(COD2_OPENGL_FRAMEWORK OpenGL REQUIRED)
 find_package(ZLIB REQUIRED)
 find_library(COD2_CURL_LIBRARY curl REQUIRED)
@@ -78,7 +86,7 @@ target_link_options(cod2_macos PRIVATE "LINKER:-alias,_vidConfig,_r_limits_ptr")
 target_sources(cod2_macos PRIVATE src/unix/linux_input.c src/platform/macos_display.c
   src/platform/macos_rawmouse.m src/platform/macos_audio.c src/platform/macos_voice.c
   src/platform/macos_jpeg.c)
-set_source_files_properties(src/platform/macos_rawmouse.m PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+set_property(SOURCE src/platform/macos_rawmouse.m APPEND PROPERTY COMPILE_OPTIONS -fobjc-arc)
 # The renderer renders into the exact r_mode framebuffer; presentation scales it.
 set_source_files_properties(src/PC/gfx_d3d/rb_state.c src/PC/gfx_d3d/r_screenshot.c PROPERTIES
   COMPILE_DEFINITIONS "glDrawBuffer=MacGL_DrawBuffer;glReadBuffer=MacGL_ReadBuffer")
@@ -90,14 +98,17 @@ if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
   find_library(COD2_APPKIT_FRAMEWORK AppKit REQUIRED)
   target_sources(cod2_macos PRIVATE src/platform/cod2x_native.c
-    src/platform/cod2x_native_mouse.c src/platform/cod2x_native_macos.m)
-  set_source_files_properties(src/platform/cod2x_native_macos.m PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+    src/platform/cod2x_native_mouse.c src/platform/cod2x_native_macos.m
+    src/platform/cod2x_native_shaders.m)
+  set_property(SOURCE src/platform/cod2x_native_macos.m src/platform/cod2x_native_shaders.m
+    APPEND PROPERTY COMPILE_OPTIONS -fobjc-arc)
   target_link_libraries(cod2_macos PRIVATE ${COD2_APPKIT_FRAMEWORK})
+  set(COD2_MACOS_APP "${CMAKE_BINARY_DIR}/CoD2 Silicon.app" CACHE PATH "Native app output path")
   add_custom_target(cod2_macos_app
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/cod2x/make_macos_app.py"
-      "$<TARGET_FILE:cod2_macos>" "$ENV{HOME}/Applications/CoD2x Native.app" --replace
+      "$<TARGET_FILE:cod2_macos>" "${COD2_MACOS_APP}" --replace
     DEPENDS cod2_macos
-    COMMENT "Build and ad-hoc sign CoD2x Native.app in the user's Applications folder"
+    COMMENT "Build and ad-hoc sign CoD2 Silicon.app"
     VERBATIM)
 endif()
 target_compile_definitions(cod2_macos_ded PRIVATE DEDICATED)

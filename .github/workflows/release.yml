@@ -1,0 +1,57 @@
+name: Draft macOS arm64 release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    # GitHub's standard macos-15 runner is Apple silicon (M1).
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Obtain private licensed generation inputs
+        env:
+          STABS_URL: ${{ secrets.COD2_STABS_URL }}
+          VALUES_URL: ${{ secrets.COD2_VALUES_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # These are owner-supplied HTTPS URLs, never repository or release assets.
+          for value in "$STABS_URL" "$VALUES_URL"; do
+            case "$value" in
+              https://*) ;;
+              *) echo 'Configure COD2_STABS_URL and COD2_VALUES_URL with private licensed generation inputs.' >&2; exit 1 ;;
+            esac
+          done
+          mkdir -p "$RUNNER_TEMP/cod2-inputs"
+          curl --fail --location --proto '=https' --proto-redir '=https' "$STABS_URL" -o "$RUNNER_TEMP/cod2-inputs/stabs"
+          curl --fail --location --proto '=https' --proto-redir '=https' "$VALUES_URL" -o "$RUNNER_TEMP/cod2-inputs/values"
+          echo '15efec53aa25a3bc686745edbb32ad4b565b9e82606e1cc5349c61753a708f12  stabs' > "$RUNNER_TEMP/cod2-inputs/checksums"
+          echo 'a6aa70d4e2b0bf5f388b0653752847bddac95398ee0d860e757ec79e466f5d1b  values' >> "$RUNNER_TEMP/cod2-inputs/checksums"
+          (cd "$RUNNER_TEMP/cod2-inputs" && shasum -a 256 -c checksums)
+      - name: Build, audit and ad-hoc sign
+        env:
+          COD2_STABS_BINARY: ${{ runner.temp }}/cod2-inputs/stabs
+          COD2_VALUES_BINARY: ${{ runner.temp }}/cod2-inputs/values
+        run: ./scripts/package-release.sh --version "${GITHUB_REF_NAME#v}"
+      - name: Upload assets to a draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$GITHUB_REF_NAME" --json isDraft >/dev/null 2>&1; then
+            test "$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq .isDraft)" = true
+            gh release upload "$GITHUB_REF_NAME" dist/*.zip dist/SHA256SUMS --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/*.zip dist/SHA256SUMS --draft \
+              --title "CoD2 Silicon ${GITHUB_REF_NAME#v}" \
+              --notes 'Apple silicon, macOS 13+. Ad-hoc signed and not notarized. See the README for game data and Gatekeeper instructions.'
+          fi
+      - name: Remove licensed temporary inputs
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/cod2-inputs"
