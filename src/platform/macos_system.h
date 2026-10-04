@@ -6,6 +6,7 @@
 uint64_t MacSystem_Nanoseconds(void);
 #if defined(__APPLE__) && defined(COD2_X64)
 void MacSystem_WaitUntil(uint64_t deadline);
+void MacSystem_ObserveFrame(int engineTime);
 #endif
 char *MacSystem_HomePath(void);
 uint64_t MacSystem_MemoryBytes(void);

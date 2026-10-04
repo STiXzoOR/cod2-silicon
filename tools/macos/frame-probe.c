@@ -21,11 +21,15 @@
         { (const void *)&replacement, (const void *)&original }
 
 static struct {
-    uint64_t stamp, cpu, swap, poll, blit, clear, fence, upload, program, buffer;
+    uint64_t stamp, cpu, swap, poll, blit, clear, fence, upload, program, buffer, wait, overshoot;
     int engine;
     unsigned int polls, uploads, programs, buffers;
 } frames[262144];
 static unsigned int count;
+static uint64_t presentStamps[262144];
+static unsigned int presentCount;
+static uint64_t swapTime, waitTime, waitOvershoot;
+static int clientBoundary;
 static uint64_t pollTime, blitTime, clearTime, fenceTime, start, duration;
 static unsigned int polls;
 static uint64_t uploadTime, programTime, bufferTime, previousSwap;
@@ -39,6 +43,7 @@ static uint64_t geometryCheck;
 static int logicalWidth, logicalHeight, drawableWidth, drawableHeight;
 static Uint32 windowFlags;
 extern void MacProbe_BeginCPU(void);
+void MacFrameProbe_Frame(int engineTime);
 extern void MacProbe_SaveCPU(void);
 
 static void backingSize(SDL_Window *window, int *width, int *height)
@@ -99,19 +104,30 @@ static void save(void)
     FILE *stream = fopen(temporary, "w");
     if (!stream)
         return;
-    fprintf(stream, "interval_ms,swap_ms,poll_ms,blit_ms,clear_ms,fence_ms,engine_ms,poll_calls,cpu_ms,upload_ms,program_ms,buffer_ms,upload_calls,program_calls,buffer_calls\n");
+    fprintf(stream, "interval_ms,swap_ms,poll_ms,blit_ms,clear_ms,fence_ms,engine_ms,poll_calls,cpu_ms,upload_ms,program_ms,buffer_ms,upload_calls,program_calls,buffer_calls,cap_wait_ms,wait_overshoot_ms\n");
     for (unsigned int i = 1; i < count; ++i) {
-        fprintf(stream, "%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%u,%u,%.6f,%.6f,%.6f,%.6f,%u,%u,%u\n",
+        fprintf(stream, "%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%u,%u,%.6f,%.6f,%.6f,%.6f,%u,%u,%u,%.6f,%.6f\n",
                 (frames[i].stamp - frames[i - 1].stamp) / 1e6,
                 frames[i].swap / 1e6, frames[i].poll / 1e6,
                 frames[i].blit / 1e6, frames[i].clear / 1e6, frames[i].fence / 1e6,
                 (uint32_t)frames[i].engine - (uint32_t)frames[i - 1].engine, frames[i].polls,
                 (frames[i].cpu - frames[i - 1].cpu) / 1e6,
                 frames[i].upload / 1e6, frames[i].program / 1e6, frames[i].buffer / 1e6,
-                frames[i].uploads, frames[i].programs, frames[i].buffers);
+                frames[i].uploads, frames[i].programs, frames[i].buffers,
+                frames[i].wait / 1e6, frames[i].overshoot / 1e6);
     }
     fclose(stream);
     rename(temporary, filename);
+    char presented[4096];
+    if (snprintf(presented, sizeof(presented), "%s.presented.csv", filename) >= sizeof(presented))
+        return;
+    stream = fopen(presented, "w");
+    if (stream) {
+        fprintf(stream, "interval_ms\n");
+        for (unsigned int i = 1; i < presentCount; ++i)
+            fprintf(stream, "%.6f\n", (presentStamps[i] - presentStamps[i - 1]) / 1e6);
+        fclose(stream);
+    }
 }
 
 static void probeSwap(SDL_Window *window)
@@ -124,10 +140,8 @@ static void probeSwap(SDL_Window *window)
     uint64_t cpu = cpuNanos();
     SDL_GL_SwapWindow(window);
     uint64_t end = nanos();
-    if (!start)
+    if (!geometryCheck)
     {
-        start = stamp;
-        MacProbe_BeginCPU();
         int logicalW, logicalH, drawableW, drawableH;
         GLint viewport[4];
         SDL_GetWindowSize(window, &logicalW, &logicalH);
@@ -164,23 +178,58 @@ static void probeSwap(SDL_Window *window)
         }
         geometryCheck = stamp;
     }
+    swapTime += end - stamp;
+    if (presentCount < sizeof(presentStamps) / sizeof(*presentStamps))
+        presentStamps[presentCount++] = end;
+    if (!clientBoundary) {
+        /* Compatibility with the earlier binaries: label swap-boundary data. */
+        swapTime = previousSwap;
+        previousSwap = end - stamp;
+        MacFrameProbe_Frame(frameTime ? *frameTime : 0);
+        clientBoundary = 0;
+    }
+}
+
+void MacFrameProbe_Wait(uint64_t started, uint64_t target, uint64_t ended)
+{
+    if (recording) {
+        waitTime += ended - started;
+        uint64_t late = ended > target ? ended - target : 0;
+        if (late > waitOvershoot)
+            waitOvershoot = late;
+    }
+}
+
+void MacFrameProbe_Frame(int engineTime)
+{
+    clientBoundary = 1;
+    if (!recording)
+        return;
+    uint64_t stamp = nanos(), cpu = cpuNanos();
+    if (!start) {
+        start = stamp;
+        MacProbe_BeginCPU();
+        fprintf(stderr, "[frame-probe-clock] boundary=%s\n",
+                dlsym(RTLD_DEFAULT, "MacSystem_ObserveFrame") ? "client" : "swap");
+    }
     frames[count].stamp = stamp;
     frames[count].cpu = cpu;
-    frames[count].swap = previousSwap;
-    previousSwap = end - stamp;
+    frames[count].swap = swapTime;
+    frames[count].wait = waitTime;
+    frames[count].overshoot = waitOvershoot;
     frames[count].poll = pollTime;
     frames[count].polls = polls;
     frames[count].blit = blitTime;
     frames[count].clear = clearTime;
     frames[count].fence = fenceTime;
-    frames[count].engine = frameTime ? *frameTime : 0;
+    frames[count].engine = engineTime;
     frames[count].upload = uploadTime;
     frames[count].program = programTime;
     frames[count].buffer = bufferTime;
     frames[count].uploads = uploads;
     frames[count].programs = programs;
     frames[count].buffers = buffers;
-    pollTime = blitTime = clearTime = fenceTime = 0;
+    pollTime = blitTime = clearTime = fenceTime = swapTime = waitTime = waitOvershoot = 0;
     uploadTime = programTime = bufferTime = 0;
     uploads = programs = buffers = 0;
     polls = 0;

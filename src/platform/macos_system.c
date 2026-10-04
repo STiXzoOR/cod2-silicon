@@ -18,6 +18,25 @@ static pthread_once_t clockOnce = PTHREAD_ONCE_INIT;
 static mach_timebase_info_data_t timebase;
 static pthread_once_t homeOnce = PTHREAD_ONCE_INIT;
 static char homePath[PATH_MAX];
+static void (*observeFrame)(int);
+static void (*observeWait)(uint64_t, uint64_t, uint64_t);
+static pthread_once_t observerOnce = PTHREAD_ONCE_INIT;
+
+static void MacSystem_InitObserver(void)
+{
+    /* No observer lookup or per-frame clocks unless explicitly requested. */
+    if (getenv("COD2_FRAME_CSV")) {
+        observeFrame = dlsym(RTLD_DEFAULT, "MacFrameProbe_Frame");
+        observeWait = dlsym(RTLD_DEFAULT, "MacFrameProbe_Wait");
+    }
+}
+
+void MacSystem_ObserveFrame(int engineTime)
+{
+    pthread_once(&observerOnce, MacSystem_InitObserver);
+    if (observeFrame)
+        observeFrame(engineTime);
+}
 
 static void MacSystem_InitClock(void)
 {
@@ -32,6 +51,7 @@ uint64_t MacSystem_Nanoseconds(void)
 
 void MacSystem_WaitUntil(uint64_t deadline)
 {
+    pthread_once(&observerOnce, MacSystem_InitObserver);
     /* Leave 80 us for the final spin; mach_wait_until can wake late. */
     uint64_t now = MacSystem_Nanoseconds();
     if (deadline > now && deadline - now > 80000) {
@@ -40,6 +60,8 @@ void MacSystem_WaitUntil(uint64_t deadline)
     }
     while (MacSystem_Nanoseconds() < deadline)
         ;
+    if (observeWait)
+        observeWait(now, deadline, MacSystem_Nanoseconds());
 }
 
 static void MacSystem_InitHome(void)

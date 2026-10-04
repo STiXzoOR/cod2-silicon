@@ -103,6 +103,7 @@ extern void SetAnimCheck(int enabled);
 extern void NET_Sleep(int msec);
 #if COD2_APPLE_SDK
 extern void Sys_WaitUntilMilliseconds(unsigned int target);
+extern void MacSystem_ObserveFrame(int engineTime);
 #endif
 extern int Com_EventLoop(void);
 extern void Cbuf_Execute(void);
@@ -1803,6 +1804,9 @@ BM_NOINLINE void Com_Frame_Try_Block_Function(void)
 #endif
     } while (rawMsec < minMsec);
 
+#if COD2_APPLE_SDK && !defined(DEDICATED)
+    MacSystem_ObserveFrame(com_frameTime);
+#endif
     Cbuf_Execute();
     com_lastFrameTime = com_frameTime;
 

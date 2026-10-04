@@ -22,6 +22,7 @@ parser.add_argument('--resolution', default='1920x1080')
 parser.add_argument('--window-mode', choices=['windowed', 'fullscreen', 'borderless'], default='windowed')
 parser.add_argument('--maxfps', type=int, default=333)
 parser.add_argument('--seconds', type=float, default=15)
+parser.add_argument('--set', nargs=2, action='append', default=[], metavar=('DVAR', 'VALUE'))
 parser.add_argument('--gpu-sync', type=int, choices=range(4), default=None)
 parser.add_argument('--view-pos', type=float, nargs=4, default=[-299, 1001, 121, 90],
                     metavar=('X', 'Y', 'Z', 'YAW'), help='eye position and yaw (cheats)')
@@ -47,6 +48,8 @@ for path in (args.data, args.binary, args.output):
         parser.error('paths cannot contain quotes, semicolons, plus signs, or newlines')
 out = args.output.resolve()
 out.mkdir(parents=True, exist_ok=False)
+from bench_state import snapshot
+state = snapshot(out, 'before')
 profile = out / 'home/raw/players/default'
 profile.mkdir(parents=True)
 full = int(args.window_mode != 'windowed')
@@ -69,6 +72,10 @@ command = [str(args.binary.resolve()), '+set', 'fs_basepath', '"' + str(args.dat
            '+set', 'com_maxfps', str(args.maxfps), '+set', 'cg_drawFPS', '1',
            '+set', 'sv_pure', '0', '+set', 'g_gametype', 'dm', '+set', 'sv_maxclients', '1',
            '+devmap', 'mp_toujane']
+for name, value in args.set:
+    if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]*', name) or not re.fullmatch(r'[A-Za-z0-9_.-]+', value):
+        parser.error('--set requires a simple dvar and value')
+    command[1:1] = ['+set', name, value]
 if args.gpu_sync is not None:
     command[1:1] = ['+set', 'r_gpuSync', str(args.gpu_sync)]
 (out / 'launch.json').write_text(json.dumps(dict(command=command, metal_hud=env.get('MTL_HUD_ENABLED', '0')), indent=2) + '\n')
@@ -196,6 +203,9 @@ with (out / 'console.log').open('w') as stream:
                 time.sleep(.1)
             shutdown = 'quit'
             if process.poll() is None:
+                owned = subprocess.check_output(['ps', '-p', str(process.pid), '-o', 'command='], text=True)
+                if str(out / 'home') not in owned:
+                    raise RuntimeError('refusing to kill a PID without our unique fs_homepath')
                 if args.app:
                     os.kill(process.pid, signal.SIGKILL)
                 else:
@@ -215,7 +225,7 @@ result = dict(samples=len(values), fps=1000 / statistics.mean(values),
               milliseconds_histogram={str(value): sum(int(row['engine_ms']) == value for row in rows)
                                       for value in sorted({int(row['engine_ms']) for row in rows})},
               phases_ms={name: statistics.mean(float(row[name]) for row in rows)
-                         for name in ['swap_ms', 'poll_ms', 'blit_ms', 'clear_ms', 'fence_ms']},
+                         for name in ['swap_ms', 'poll_ms', 'blit_ms', 'clear_ms', 'fence_ms', 'cap_wait_ms', 'wait_overshoot_ms'] if name in rows[0]},
               main_thread_cpu_ms=statistics.mean(float(row['cpu_ms']) for row in rows),
               upload_calls=sum(int(row['upload_calls']) for row in rows),
               program_calls=sum(int(row['program_calls']) for row in rows),
@@ -227,7 +237,18 @@ result = dict(samples=len(values), fps=1000 / statistics.mean(values),
               combat=args.combat, measured_seconds=sum(values) / 1000,
               app=str(args.app.resolve()) if args.app else None,
               shutdown=shutdown)
+result['machine_state'] = dict(before=state, after=snapshot(out, 'after'))
+result['dvars'] = dict(args.set)
 log = (out / 'console.log').read_text(errors='replace')
+result['clock_boundary'] = 'client' if '[frame-probe-clock] boundary=client' in log else 'swap'
+presented = out / 'frames.csv.presented.csv'
+if presented.exists():
+    with presented.open() as stream:
+        intervals = [float(row['interval_ms']) for row in csv.DictReader(stream)]
+    if intervals:
+        ordered_presented = sorted(intervals)
+        result['presented'] = dict(samples=len(intervals), fps=1000 / statistics.mean(intervals),
+            frame_ms_p99=ordered_presented[math.ceil(len(intervals)*.99)-1], frame_ms_max=max(intervals))
 match = re.search(r'\[frame-probe\] ([^\n]+)', log)
 result['actual_presentation'] = match.group(1) if match else None
 match = re.search(r'\[frame-probe-display\] ([^\n]+)', log)
