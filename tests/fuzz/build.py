@@ -21,6 +21,28 @@ HERE = ROOT / 'tests/fuzz'
 
 # flavor: 'ded' uses the cod2_macos_ded (DEDICATED) commands, 'client' cod2_macos.
 TARGETS = {
+    'oob': {
+        'flavor': 'ded',
+        'sources': [
+            'src/PC/server_mp/sv_main_mp.c', 'src/PC/server_mp/sv_main_pc_mp.c',
+            'src/PC/server_mp/sv_voice_mp.c', 'src/PC/server_mp/sv_net_chan_mp.c',
+            'src/PC/qcommon/net_chan_mp.c', 'src/PC/qcommon/msg_mp.c',
+            'src/PC/qcommon/huffman.c', 'src/PC/qcommon/cmd.c',
+            'src/PC/qcommon/net_hardening.c', 'src/PC/qcommon/common.c',
+            'src/PC/universal/q_shared.c', 'src/PC/universal/com_shared.c',
+        ],
+        'codx_sources': ['src/PC/qcommon/cod2x_policy.c'],
+        'max_len': 8192,
+    },
+    'netchan': {
+        'flavor': 'ded',
+        'sources': [
+            'src/PC/qcommon/net_chan_mp.c', 'src/PC/server_mp/sv_net_chan_mp.c',
+            'src/PC/qcommon/msg_mp.c', 'src/PC/qcommon/huffman.c',
+            'src/PC/universal/q_shared.c', 'src/PC/universal/com_shared.c',
+        ],
+        'max_len': 16384,
+    },
     'msg': {
         'flavor': 'client',
         'sources': [

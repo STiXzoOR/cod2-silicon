@@ -83,8 +83,63 @@ def msg_seeds():
     return seeds
 
 
+def tokenize_seeds():
+    # Byte 0: low two bits pick tokenize / tokenize-with-limit / userinfo.
+    return {
+        'cmd-plain': b'\x00getstatus xxx',
+        'cmd-quoted': b'\x00"quoted arg" // comment\n/* block */ tail',
+        'cmd-connect': b'\x00connect "\\name\\player\\rate\\25000\\snaps\\20"',
+        'cmd-limit': b'\x01rcon password a very long command line with many words',
+        # Userinfo: op byte (bit0 picks big), key, value, then the seed info string.
+        'info-small': b'\x02\x04name\x06player\\name\\x\\rate\\5000\\snaps\\20',
+        'info-overwrite': b'\x02\x01a\x01b\\a\\1\\b\\2\\a\\3',
+        'info-big': b'\x03\x08hostname\x04test' + b'\\key\\value' * 16,
+    }
+
+
+def _netchan_packet(payload, seq, sock_server, fragmented=False, start=0):
+    body = struct.pack('<I', (seq | (1 << 31)) if fragmented else seq)
+    if sock_server:
+        body += struct.pack('<h', 0)          # qport, skipped on the server socket
+    if fragmented:
+        body += struct.pack('<h', start) + struct.pack('<h', len(payload))
+    body += payload
+    return struct.pack('<H', len(body)) + body
+
+
+def netchan_seeds():
+    tail = b'\x00\x00\x00\x00' * 3 + b'\x00'   # serverId/challenge/ack for SV_Netchan_Decode
+    seeds = {
+        'server-unfragmented': b'\x01' + _netchan_packet(b'reliable server payload', 1, True) + tail,
+        'client-unfragmented': b'\x00' + _netchan_packet(b'\x01\x02\x03\x04server to client', 1, False),
+    }
+    # Two fragments: first is a full 0x514 (continue), the second is short (end).
+    frag = b'\x01'
+    frag += _netchan_packet(b'A' * 0x514, 5, True, fragmented=True, start=0)
+    frag += _netchan_packet(b'B' * 16, 5, True, fragmented=True, start=0x514)
+    frag += tail
+    seeds['server-fragmented'] = frag
+    return seeds
+
+
+def oob_seeds():
+    return {
+        'getstatus': b'getstatus 1234',
+        'getinfo': b'getinfo 1234',
+        'getchallenge': b'getchallenge',
+        'connect': b'connect "\\protocol\\118\\challenge\\1\\qport\\2\\name\\p"',
+        'rcon-good': b'rcon secret status',
+        'rcon-bad': b'rcon wrongpass map_rotate',
+        'voice': b'v\x02\x01\x00\x10\x00' + b'voicebytes',
+        'getstatus-long': b'getstatus ' + b'X' * 400,
+    }
+
+
 TARGETS = {
     'msg': msg_seeds,
+    'tokenize': tokenize_seeds,
+    'netchan': netchan_seeds,
+    'oob': oob_seeds,
 }
 
 
