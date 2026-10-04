@@ -53,7 +53,7 @@ while [ "$index" -lt 16 ]; do
     touch "$work/game/main/$(printf 'iw_%02d.iwd' "$index")"
     index=$((index + 1))
 done
-python3 tools/cod2x/make_macos_app.py "$work/native-url" "$work/URLProbe.app" --game-dir "$work/game"
+python3 tools/cod2x/make_macos_app.py "$work/native-url" "$work/URLProbe.app" --engine-only --game-dir "$work/game"
 plutil -lint "$work/URLProbe.app/Contents/Info.plist"
 expected_game=$(cd "$work/game" && pwd -P)
 CFFIXED_USER_HOME="$work/home" COD2_SETUP_NONINTERACTIVE=1 COD2_SETUP_CD_KEY=000000000000000086D3 \

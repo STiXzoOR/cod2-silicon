@@ -109,10 +109,20 @@ if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
     APPEND PROPERTY COMPILE_OPTIONS -fobjc-arc)
   target_link_libraries(cod2_macos PRIVATE ${COD2_APPKIT_FRAMEWORK})
   set(COD2_MACOS_APP "${CMAKE_BINARY_DIR}/CoD2 Silicon.app" CACHE PATH "Native app output path")
+  file(GLOB COD2_LAUNCHER_SOURCES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/launcher/*")
+  add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/launcher/CoD2Launcher"
+    COMMAND "${CMAKE_SOURCE_DIR}/scripts/build-launcher.sh" "${CMAKE_BINARY_DIR}/launcher"
+    DEPENDS ${COD2_LAUNCHER_SOURCES} "${CMAKE_SOURCE_DIR}/scripts/build-launcher.sh"
+      "${CMAKE_SOURCE_DIR}/src/platform/cod2x_native_setup.h"
+      "${CMAKE_SOURCE_DIR}/src/platform/cod2x_native_shaders.m"
+      "${CMAKE_SOURCE_DIR}/src/PC/qcommon/cod2x_url.c"
+    COMMENT "Build Swift 6 native launcher (macOS 13)"
+    VERBATIM)
+  add_custom_target(cod2_launcher DEPENDS "${CMAKE_BINARY_DIR}/launcher/CoD2Launcher")
   add_custom_target(cod2_macos_app
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/cod2x/make_macos_app.py"
-      "$<TARGET_FILE:cod2_macos>" "${COD2_MACOS_APP}" --replace ${COD2_MACOS_APP_FRAMEWORK_ARGS}
-    DEPENDS cod2_macos
+      "$<TARGET_FILE:cod2_macos>" "${COD2_MACOS_APP}" --replace --launcher "${CMAKE_BINARY_DIR}/launcher/CoD2Launcher" ${COD2_MACOS_APP_FRAMEWORK_ARGS}
+    DEPENDS cod2_macos cod2_launcher
     COMMENT "Build and ad-hoc sign CoD2 Silicon.app"
     VERBATIM)
 endif()

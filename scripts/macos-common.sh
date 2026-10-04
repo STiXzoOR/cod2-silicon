@@ -11,12 +11,18 @@ check_prerequisites() {
         printf 'CoD2 Silicon requires macOS 13 or later; this Mac runs %s.\n' "$os_version" >&2
         return 1
     fi
-    if ! /usr/bin/xcode-select -p >/dev/null 2>&1 || ! /usr/bin/xcrun --find clang >/dev/null 2>&1; then
+    if ! /usr/bin/xcode-select -p >/dev/null 2>&1 || ! /usr/bin/xcrun --find clang >/dev/null 2>&1 || ! /usr/bin/xcrun --find swiftc >/dev/null 2>&1; then
         printf 'Install the Xcode Command Line Tools: xcode-select --install\n' >&2
         return 1
     fi
     if ! command -v cmake >/dev/null 2>&1; then
         printf 'Install CMake from https://cmake.org/download/ (add its bin directory to PATH), or run: brew install cmake\n' >&2
+        return 1
+    fi
+    local swift_major
+    swift_major=$(/usr/bin/xcrun swiftc --version | /usr/bin/sed -n 's/.*Swift version \([0-9][0-9]*\).*/\1/p' | /usr/bin/head -n 1)
+    if [[ -z "$swift_major" || "$swift_major" -lt 6 ]]; then
+        printf 'Source builds need Swift 6 (Xcode 16 or later). The prebuilt app runs on macOS 13 or later. Update your developer tools.\n' >&2
         return 1
     fi
     python=$(/usr/bin/xcrun --find python3)
@@ -62,6 +68,7 @@ build_app() {
         "-DCOD2_CURL_LIBRARY=$sdk/usr/lib/libcurl.tbd" \
         "${datagen_args[@]}" "-DCOD2_TYPED_DATA_DIR=$build/typed" "-DPython3_EXECUTABLE=$python"
     run_build cmake --build "$build/client" --target cod2_macos --parallel "$(/usr/sbin/sysctl -n hw.ncpu)"
+    run_build cmake --build "$build/client" --target cod2_launcher --parallel 3
     run_build "$python" "$root/tools/cod2x/make_macos_app.py" \
-        "$build/client/cod2_macos" "$app" --replace --frameworks "$prefix" --version "$version"
+        "$build/client/cod2_macos" "$app" --replace --launcher "$build/client/launcher/CoD2Launcher" --frameworks "$prefix" --version "$version"
 }

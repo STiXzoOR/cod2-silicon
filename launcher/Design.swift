@@ -10,8 +10,12 @@ enum LauncherPage: String, CaseIterable, Identifiable {
 
 extension View {
     @ViewBuilder func launcherGlass() -> some View {
+        #if COD2_LIQUID_GLASS
         if #available(macOS 26.0, *) { self.glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16)) }
         else { self.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16)) }
+        #else
+        self.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        #endif
     }
 }
 struct Eyebrow: View {

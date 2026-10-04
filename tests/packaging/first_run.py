@@ -16,7 +16,7 @@ with tempfile.TemporaryDirectory(prefix="cod2-silicon-first-run-") as directory:
                     "-framework", "AppKit", "-o", str(executable)], cwd=ROOT, check=True)
     app = scratch / "CoD2 Silicon.app"
     subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", "python3",
-                    "tools/cod2x/make_macos_app.py", str(executable), str(app)], cwd=ROOT, check=True)
+                    "tools/cod2x/make_macos_app.py", str(executable), str(app), "--engine-only"], cwd=ROOT, check=True)
     info = plistlib.loads((app / "Contents/Info.plist").read_bytes())
     assert "CoD2GameDirectory" not in info
     assert info["CFBundleIdentifier"] == "io.github.stixzoor.cod2silicon"

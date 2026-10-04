@@ -14,6 +14,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("executable", type=pathlib.Path)
     parser.add_argument("app", type=pathlib.Path, help="new output path ending in .app")
+    parser.add_argument("--launcher", type=pathlib.Path, help="prebuilt Swift 6 launcher; built locally if omitted")
+    parser.add_argument("--engine-only", action="store_true", help="legacy engine-only bundle for native engine fixtures")
     parser.add_argument("--game-dir", type=pathlib.Path, default=None,
                         help="optional developer override; omitted in release bundles")
     parser.add_argument("--frameworks", type=pathlib.Path, help="pinned SDL install prefix for a self-contained bundle")
@@ -55,13 +57,16 @@ def main():
     contents = app / "Contents"
     macos = contents / "MacOS"
     macos.mkdir(parents=True)
-    binary = macos / "cod2_macos"
+    game_contents = contents if args.engine_only else contents / "Helpers/CoD2 Game.app/Contents"
+    game_macos = game_contents / "MacOS"
+    game_macos.mkdir(parents=True, exist_ok=True)
+    binary = game_macos / "cod2_macos"
     shutil.copy2(args.executable, binary)
     binary.chmod(binary.stat().st_mode | 0o111)
     resources = contents / "Resources"
     resources.mkdir(parents=True)
     if args.frameworks:
-        frameworks = contents / "Frameworks"
+        frameworks = game_contents / "Frameworks"
         frameworks.mkdir()
         for source in sorted((args.frameworks / "lib").glob("libSDL*.dylib")):
             target = frameworks / source.name
@@ -111,7 +116,7 @@ def main():
     subprocess.run(["iconutil", "-c", "icns", str(iconset), "-o", str(resources / "Native.icns")], check=True)
     info = {
         "CFBundleDevelopmentRegion": "en",
-        "CFBundleExecutable": "cod2_macos",
+        "CFBundleExecutable": "cod2_macos" if args.engine_only else "CoD2Launcher",
         "CFBundleIdentifier": args.bundle_id,
         "CFBundleName": "CoD2 Silicon",
         "CFBundleDisplayName": "CoD2 Silicon",
@@ -120,7 +125,7 @@ def main():
         "CFBundleVersion": "1",
         "CFBundleIconFile": "Native.icns",
         "LSMinimumSystemVersion": "13.0",
-        "NSHighResolutionCapable": False,
+        "NSHighResolutionCapable": not args.engine_only,
         "LSApplicationCategoryType": "public.app-category.action-games",
         "LSSupportsGameMode": not args.no_game_mode,
         "CoD2AutomaticShaderSetup": True,
@@ -136,6 +141,40 @@ def main():
     }
     if game_dir:
         info["CoD2GameDirectory"] = game_dir
+    if not args.engine_only:
+        launcher = args.launcher
+        if launcher is None:
+            launcher_output = pathlib.Path(staging.name) / "launcher-build"
+            subprocess.run([str(root / "scripts/build-launcher.sh"), str(launcher_output)], check=True)
+            launcher = launcher_output / "CoD2Launcher"
+        if not launcher.is_file():
+            parser.error("Swift launcher executable does not exist")
+        subprocess.run(["lipo", str(launcher), "-verify_arch", "arm64"], check=True)
+        launcher_build = subprocess.check_output(["vtool", "-show-build", str(launcher)], text=True)
+        if not re.search(r"minos 13\.0(?:\.0)?\s", launcher_build):
+            parser.error("launcher must be built for macOS 13.0")
+        for line in subprocess.check_output(["otool", "-L", str(launcher)], text=True).splitlines()[1:]:
+            dependency = line.strip().rsplit(" (", 1)[0]
+            if not dependency.startswith(("/System/", "/usr/lib/")):
+                parser.error(f"non-system launcher dependency: {dependency}")
+        shutil.copy2(launcher, macos / "CoD2Launcher")
+        game_info = dict(info)
+        game_info.update(CFBundleExecutable="cod2_macos", CFBundleIdentifier=args.bundle_id + ".game",
+                         NSHighResolutionCapable=False, CoD2AutomaticShaderSetup=False, CoD2LaunchArguments="")
+        game_info.pop("CFBundleURLTypes", None)
+        game_info.pop("CoD2GameDirectory", None)
+        game_resources = game_contents / "Resources"
+        game_resources.mkdir()
+        shutil.copy2(resources / "Native.icns", game_resources / "Native.icns")
+        with (game_contents / "Info.plist").open("wb") as file:
+            plistlib.dump(game_info, file)
+        subprocess.run(["codesign", "--force", "--sign", "-", str(game_contents.parent)], check=True)
+        info["LSSupportsGameMode"] = False
+        info["CoD2AutomaticShaderSetup"] = False
+        info["CoD2DefaultResolution"] = args.resolution
+        info["CoD2DefaultFullscreen"] = "borderless" if args.borderless else "exclusive"
+        for name in ["LICENSE", "NOTICE.md", "CREDITS.md"]:
+            shutil.copy2(root / name, resources / name)
     with (contents / "Info.plist").open("wb") as file:
         plistlib.dump(info, file)
     subprocess.run(["codesign", "--force", "--sign", "-", str(app)], check=True)

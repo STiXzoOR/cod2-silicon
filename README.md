@@ -56,7 +56,7 @@ xattr -dr com.apple.quarantine "/Applications/CoD2 Silicon.app"
 git clone https://github.com/STiXzoOR/cod2-silicon && cd cod2-silicon && ./scripts/install.sh
 ```
 
-The installer needs the Xcode Command Line Tools and CMake and explains how to
+The installer needs Swift 6 (Xcode 16 or later), the Xcode Command Line Tools and CMake and explains how to
 get them. It downloads and builds the pinned SDL release itself (no Homebrew),
 compiles the client and installs `~/Applications/CoD2 Silicon.app`. No original
 game binary is needed to build. A locally built app is not quarantined, so
@@ -64,18 +64,29 @@ Gatekeeper does not block it.
 
 ## First run and playing
 
-Open **CoD2 Silicon.app**. It finds the game folder automatically or asks you
+Open **CoD2 Silicon.app** to use the native SwiftUI launcher: Play, a server
+browser with favorites and recents, settings, demos/screenshots and update checks.
+It finds the game folder automatically or asks you
 to choose the folder containing `main/`. If no CD key is stored, it asks for
 yours and saves it in `~/.cod2/preferences`. Never share that file or your key.
 It extracts the original shaders from your own Steam Mac copy when available,
 otherwise continues with approximate shaders. Configs, logs, demos, screenshots
 and the shader cache live in `~/Library/Application Support/CoD2 Silicon`.
 
-Use the multiplayer menu and server browser, or open a `cod2x://` server link:
+Use **Play** to enter the original multiplayer menus, or join from the launcher
+server browser. Quitting the game returns to the launcher; a game crash leaves
+the launcher open with a link to its crash report. You can also open a `cod2x://`
+server link (including while the game is running):
 
 ```sh
 open -a "/Applications/CoD2 Silicon.app" 'cod2x://connect/127.0.0.1:28960'
 ```
+
+For a direct CLI launch, run the app executable with `--play`. Append
+`--exit-after-game` to close the launcher when the game quits, or pass trusted
+engine arguments after `--`. Settings include 1080p–6K, frame caps, vsync,
+raw mouse, audio and native fullscreen Spaces. Metal options are marked as
+upcoming until the native renderer is integrated.
 
 Replace the address with your server. For a source install, use the app under
 `~/Applications` instead. The default settings target 1080p fullscreen,

@@ -294,6 +294,7 @@ import SwiftUI
             NSApp.windows.forEach { $0.orderOut(nil) }
             NSApp.setActivationPolicy(.accessory)
             print("CoD2 Silicon: game started (pid \(process.processIdentifier)).")
+            fflush(stdout)
         } catch { notice = error.localizedDescription }
     }
     private func gameEnded(code: Int32?) {
