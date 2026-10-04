@@ -223,7 +223,7 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, stencil ? 8 : 0);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     if (!sdl_gl_window)
-        sdl_gl_window = SDL_CreateWindow("CoD2-native", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        sdl_gl_window = SDL_CreateWindow("CoD2 Silicon", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
                                          sdl_gl_width, sdl_gl_height,
 #if defined(__APPLE__) && defined(COD2_X64)
                                          SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN |
