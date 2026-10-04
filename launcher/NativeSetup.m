@@ -31,7 +31,11 @@ NSString *LauncherFindData(NSString *selected)
 BOOL LauncherKeyValid(NSString *key) { return Cod2xKeyValid(key); }
 BOOL LauncherPrepareShaders(NSString *data, NSString *selected)
 {
-    return Cod2xShadersSetup(Cod2xShaderBinaries(selected ?: data), [Cod2xAppHome() stringByAppendingPathComponent:@"shaders"]);
+    BOOL directory = NO;
+    NSMutableArray *binaries = Cod2xShaderBinaries(selected ?: data).mutableCopy;
+    if (selected && [NSFileManager.defaultManager fileExistsAtPath:selected isDirectory:&directory] && !directory)
+        [binaries insertObject:selected atIndex:0];
+    return Cod2xShadersSetup(binaries, [Cod2xAppHome() stringByAppendingPathComponent:@"shaders"]);
 }
 BOOL LauncherVerifyShaders(void)
 {

@@ -13,6 +13,9 @@ name=CoD2Launcher
 if [[ ${2:-} == --test ]]; then
     sources+=("$root/tests/launcher/CoreTests.swift")
     name=LauncherTests
+elif [[ ${2:-} == --network-test ]]; then
+    sources+=("$root/launcher/Network.swift" "$root/tests/launcher/NetworkTests.swift")
+    name=LauncherNetworkTests
 else
     sources+=("$root/launcher/Network.swift" "$root/launcher/Model.swift" "$root/launcher/Design.swift" "$root/launcher/Views.swift" "$root/launcher/Main.swift")
 fi

@@ -5,3 +5,5 @@ out="$root/output/ws25/unit"
 mkdir -p "$out"
 "$root/scripts/build-launcher.sh" "$out" --test
 "$out/LauncherTests" "$root/tests/launcher/fixtures"
+
+python3 "$root/tests/launcher/network.py"
