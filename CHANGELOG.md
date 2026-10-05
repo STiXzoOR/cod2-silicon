@@ -50,6 +50,8 @@ All notable changes to CoD2 Silicon are documented here, following
   a cloud.
 - Effect colour curves and scales were not parsed, so smoke and explosion
   particles drew tiny and black.
+- The world turned black for several seconds after a nearby explosion: the
+  OpenGL backbuffer copy behind the screen-feedback effect never copied.
 - Ordinary projectile impacts were skipped, and splash damage swapped its
   inner damage with its radius.
 - The Controls pages showed no key names next to their actions.
