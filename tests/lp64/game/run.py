@@ -23,6 +23,7 @@ symbols = re.findall(r'extern const char (\w+)\[\];', declarations)
 include_sources = {
     'ws6_snapshot_source.c': 'src/PC/server_mp/sv_snapshot_mp.c',
     'ws6_weapons_source.c': 'src/PC/bgame/bg_weapons_load_obj.c',
+    'ws39_player_use.c': 'src/PC/game_mp/player_use_mp.c',
     'bg_weapons_load_obj_weaponDefFields.inc': 'src/PC/bgame/bg_weapons_load_obj_weaponDefFields.inc',
     'bg_weapons_load_obj_weaponDefFields_decls.inc': 'src/PC/bgame/bg_weapons_load_obj_weaponDefFields_decls.inc',
 }
@@ -55,6 +56,7 @@ for name, sources in [('startup', ['src/PC/server_mp/sv_init_mp.c']),
                       ('netchan', ['src/PC/server_mp/sv_net_chan_mp.c']),
                       ('weapon_fields', []),
                       ('spawn', ['src/PC/game_mp/g_utils_mp.c']),
+                      ('use_list', []),
                       ('wire', ['src/PC/qcommon/msg_mp.c'])]:
     if args.test and name not in args.test:
         continue
