@@ -2899,6 +2899,30 @@ long unsigned int CDirect3DDevice_GetGammaRamp(const CDirect3DDevice *_this, UIN
 HRESULT CDirect3DDevice_StretchRect(const CDirect3DDevice *_this, IDirect3DSurface9 *pSourceSurface,
                                     const RECT *pSourceRect, IDirect3DSurface9 *pDestSurface, const RECT *pDestRect, D3DTEXTUREFILTERTYPE Filter)
 {
+#if defined(COD2_X64)
+    /* Mac 1.3 copies the backbuffer into the destination texture without
+     * drawing a quad. The saved-screen blend needs this copy every frame. */
+    DeviceImpl *dev = (DeviceImpl *)_this;
+    if (pSourceSurface == dev->backBuffer && !pSourceRect && !pDestRect) {
+        extern int CDirect3DSurface_GetGLBlitInfo(const void *, unsigned int *, unsigned int *, unsigned int *);
+        unsigned int texture, width, height;
+        D3DSURFACE_DESC source;
+        void **methods = *(void ***)pSourceSurface;
+        if (((HRESULT (*)(const void *, D3DSURFACE_DESC *))methods[12])(pSourceSurface, &source) == 0 &&
+            CDirect3DSurface_GetGLBlitInfo(pDestSurface, &texture, &width, &height) &&
+            source.Width == width && source.Height == height) {
+            GLint activeTexture, binding;
+            glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTexture);
+            glActiveTextureARB(GL_TEXTURE0_ARB);
+            glGetIntegerv(GL_TEXTURE_BINDING_2D, &binding);
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+            glBindTexture(GL_TEXTURE_2D, binding);
+            glActiveTextureARB(activeTexture);
+            return 0;
+        }
+    }
+#endif
     extern int CDirect3DSurface_GetGLBlitInfo(const void *surf, unsigned int *texId,
                                               unsigned int *width, unsigned int *height);
     extern void glDrawElements(unsigned int, int, unsigned int, const void *);
