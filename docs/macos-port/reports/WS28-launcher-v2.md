@@ -42,6 +42,9 @@ Commits on this branch, oldest first:
 | `99c3128` | About's three panels share one height |
 | `e8a1f78` | Review harness: 2× renders drawn from the laid-out window |
 | `dea4b2d` | Snapshot test accepts Retina-scale window captures |
+| `7732ecb` | This report: button shapes and concentricity |
+| `e36c3ce` | Frame cap: 250 by default, any value 0–1000, neutral copy (no 333 pitch) |
+| `3262385` | Engine `com_maxfps` defaults to 250; the helper's launch arguments force no cap |
 
 ## Prototype fidelity, screen by screen
 
@@ -85,7 +88,9 @@ review image was compared side by side with them.
 - WS25's discovery, queries and cache are untouched.
 
 **Settings ("Field manual").**
-- Ammo-crate frame-cap presets 333/250/125, plus a custom value edited in place.
+- Ammo-crate frame-cap quick picks 125/250/333/1000 with neutral captions,
+  plus a custom value from 0 (no cap) to 1000 edited in place (see "Frame
+  cap").
 - Display: resolution (to 6016 × 3384, labelled 4K/5K/6K), Exclusive /
   Borderless / Native Space with the mode hint (Native Space says it is required
   for Game Mode), plus Window and Vertical sync rows.
@@ -614,6 +619,92 @@ Every API was checked in the macOS 27.0 SDK:
   `Edge.Corner.Style.concentric(minimum:)`: macOS 26.0;
 - `onGeometryChange(for:of:action:)`: macOS 13.0, back-deployed.
 
+## Frame cap: neutral copy, 250 by default, 0–1000
+
+The user asked to stop presenting 333 fps as a feature. It was a personal goal,
+not a selling point. They also decided that the default is a 250 fps cap and that
+players choose any value the engine accepts. The engine registers
+`com_maxfps` with the range 0–1000. 0 means no cap: the frame loop then neither
+waits nor computes a cap, leaving only its 1 ms floor.
+
+**Copy.** 333 stays available as a value but is no longer pitched:
+
+- Settings' quick picks are 125 "Low", 250 "Default", 333 "High" and 1000
+  "Engine maximum". A custom crate takes any value from 0 to 1000 and reads
+  "Unlimited" at 0.
+  - The old captions are gone: "Classic competitive physics", "Common CoD2x
+    server cap" and "Original default feel". The last was also wrong, because
+    the original engine registers the cap at 85, not 125.
+  - The footer reads "Any cap from 0 to 1000, where 0 means no cap. Servers can
+    enforce their own; CoD2x competitive servers keep it between 125 and 250",
+    which is the range `cod2x_runtime.c` enforces in competitive mode.
+- Home's chip shows the setting as data: "250 fps cap", or "No fps cap" at 0.
+  VoiceOver reads "Frame cap 250 frames per second" or "No frame cap".
+- README:
+  - the tagline drops "built for 333 fps";
+  - "Constant 333 fps … remain goals" becomes "Smoother frame pacing … remain
+    goals";
+  - the defaults paragraph says "a 250 fps cap" and gives the 0–1000 range;
+  - the benchmark note now calls the table "measurements, not guarantees of
+    steady frame pacing".
+  - The measured table rows at a 333 cap stay, as data.
+- The synthetic release-notes fixture and its test drop the tagline phrase.
+  The fake "Silicon Sessions" preview server now reports a 250 cap.
+- No string in Home, Setup, About, tooltips or accessibility labels presents
+  333 as a feature. I checked all of them with `grep`.
+
+**Defaults and the single source of truth:**
+
+- **Launcher.** `GameSettings.fps` defaults to 250 (it was 333). The validated
+  writer accepts 0–1000 (it was 1–1000), and its error names the range.
+  - A value already saved by an earlier build is the player's own and is kept.
+  - Unit tests cover 0 and 1000 (accepted and written) and 1001, −1 and −250
+    (rejected), plus the chip, the spoken label, the captions and the quick-pick
+    list.
+- **Engine.** `src/PC/qcommon/common.c` registers `com_maxfps` at 250 in the
+  native CoD2x build (it was 333).
+  - The original registration (85) in the `#else` branch is byte-for-byte
+    unchanged, and so is the guard.
+  - Only a constant changed, so no layout or ABI changes.
+- **Launch arguments.**
+  - `tools/cod2x/make_macos_app.py` no longer puts `+set com_maxfps 333` in the
+    helper's `CoD2LaunchArguments`. That bundle string comes before argv, so a
+    cap there overrode `config_mp.cfg` whenever the helper started on its own.
+  - The launcher still passes the player's saved setting. Without the
+    launcher, the engine's 250 default or the player's `config_mp.cfg` applies.
+  - `tests/cod2x/test_url_native.m` now asserts that the bundle arguments
+    contain no `com_maxfps`.
+- **Unchanged on purpose:**
+  - the benchmark and validation tools under `tools/macos` (`validate-333.sh`,
+    `live-bench.py --maxfps 333` and others), which measure that cap
+    deliberately;
+  - the legacy Wine script `tools/wine/play-cod2x.sh`;
+  - `tests/cod2x/test_runtime.c`, which registers its own dvar to test
+    CoD2x's competitive clamp;
+  - the PLAN and CHANGELOG history.
+
+**Checked at `3262385`, without opening any window.** The user was testing
+the game in fullscreen, so harness windows, renders and app or game launches
+waited for the orchestrator's all-clear. Logs are `output/ws28/gate/*-fps.log`.
+
+- **Passed:**
+  - unit tests (`LauncherTests`, including the new frame-cap cases);
+  - the Network.framework UDP test and the artwork tests;
+  - the font checksums and the button-style lint;
+  - the pre-26 typecheck;
+  - builds of the launcher and the review harness;
+  - `tests/cod2x/run.sh`;
+  - incremental stock and CoD2x engine builds;
+  - a check that the bundle's launch arguments carry no frame cap.
+- **Pending the all-clear:**
+  - re-rendering Settings and Home;
+  - the snapshot test and shape audit;
+  - `tests/cod2x/run_native.sh`, which starts the URL probe app and runs the
+    updated `test_url_native.m`;
+  - lifecycle and cold-link;
+  - the package, bundle audit and release smoke;
+  - the ABI audits. Only a literal changed, so no layout or ABI is affected.
+
 ## Tests and gate evidence
 
 All logs are under ignored `output/ws28/gate/`. Builds and tests ran under
@@ -641,10 +732,11 @@ work, and no performance was measured.
 | Static checks | `shellcheck` clean on the changed scripts; Python compiles; `git diff --check 4d56e0b` clean outside the verbatim OFL texts, whose upstream trailing spaces are exempt through `launcher/Resources/Fonts/.gitattributes` |
 
 The CONTRIBUTING fixture suites (online, fixes13, lp64, platform and so on) were
-not re-run. This branch changes no engine source, header, CMake or data blob
-(`git diff 4d56e0b -- src CMakeLists.txt cmake build/lp64_gen` is empty).
-The engine builds and both full ABI audits ran on this branch, and no engine
-input has changed since, so they still describe `99c3128`. After `99c3128`,
+not re-run. Until `3262385` this branch changed no engine source, header, CMake
+or data blob. `3262385` changes one constant in `src/PC/qcommon/common.c`: the
+native `com_maxfps` default goes from 333 to 250. The engine builds and both
+full ABI audits in this table describe `99c3128`; at `3262385` both engines
+rebuilt incrementally, and the ABI audits are pending (see "Frame cap"). After `99c3128`,
 `e8a1f78` and `dea4b2d` touch only the review harness and its test, so the app,
 package, lifecycle and smoke evidence at `99c3128` still applies. The release smoke's captures are game content; they
 stay in ignored `output/`.
