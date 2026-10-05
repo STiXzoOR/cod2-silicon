@@ -1,5 +1,6 @@
 #include "common_types.h"
 #include "imports.h"
+#include "PC/qcommon/net_hardening.h"
 
 #define NODE_LEFT(n) ((node_t *)(n)->left)
 #define NODE_RIGHT(n) ((node_t *)(n)->right)
@@ -194,6 +195,31 @@ void Huff_offsetReceive(node_t *node, int *ch, byte *fin, int *offset)
     *ch = node->symbol;
     *offset = bloc;
 }
+
+#if COD2_NET_BOUNDS
+/* Huff_offsetReceive for untrusted input: reads no bit at or past maxoffset.
+ * Returns 0 and leaves *offset alone when no complete code fits. */
+int Huff_offsetReceiveLimit(node_t *node, int *ch, byte *fin, int *offset, int maxoffset)
+{
+    bloc = *offset;
+    while (node && node->symbol == INTERNAL_NODE) {
+        if (bloc >= maxoffset) {
+            return 0;
+        }
+        if (get_bit(fin)) {
+            node = NODE_RIGHT(node);
+        } else {
+            node = NODE_LEFT(node);
+        }
+    }
+    if (!node) {
+        return 0;
+    }
+    *ch = node->symbol;
+    *offset = bloc;
+    return 1;
+}
+#endif
 
 static inline __attribute__((always_inline)) void huffman_send_core(node_t *node, node_t *child, byte *fout)
 {

@@ -6,6 +6,7 @@
 #define COD2_IMAGE_CONSTANT_4096 (int)&__mh_execute_header
 #endif
 #include "imports.h"
+#include "PC/qcommon/net_hardening.h"
 #include <string.h>
 #if defined(_MSC_VER)
 #define MSG_FORCEINLINE __forceinline
@@ -551,6 +552,9 @@ int MSG_WriteBitsCompress(byte *from, byte *to, int size)
     return (bit + 7) >> 3;
 }
 
+#if COD2_NET_BOUNDS
+extern int Huff_offsetReceiveLimit(nodetype *node, int *ch, byte *fin, int *offset, int maxoffset);
+#endif
 int MSG_ReadBitsCompress(byte *from, byte *to, int size)
 {
     int bits = size * 8;
@@ -558,6 +562,17 @@ int MSG_ReadBitsCompress(byte *from, byte *to, int size)
     int bit = 0;
     byte *data = to;
 
+#if COD2_NET_BOUNDS
+    /* Stop where the input ends instead of finishing a code from the bytes
+       after it, and where every caller's MAX_MSG_DECOMPRESS_BYTES buffer ends:
+       a peer can make each byte decode to as many as four. */
+    while (bits > bit && data - to < MAX_MSG_DECOMPRESS_BYTES) {
+        if (!Huff_offsetReceiveLimit((nodetype *)msgHuff.decompressor.tree, &get, from, &bit, bits))
+            break;
+        *data++ = (byte)get;
+    }
+    return (int)(data - to);
+#endif
     if (__builtin_expect(bits > 0, 0)) {
         do {
 
@@ -1102,7 +1117,14 @@ static qboolean __attribute_regparm__(3)
     }
 
     lc = MSG_ReadByte_core(msg);
+#if COD2_NET_BOUNDS
+    /* MSG_ReadByte_core returns -1 at the end of a truncated delta; the
+       unsigned compare rejects that as well as a count past the table, so the
+       fill-unchanged loop below never indexes stateFields[-1]. */
+    if ((unsigned int)lc > (unsigned int)numFields) {
+#else
     if (lc > numFields) {
+#endif
         msg->overflowed = 1;
         return 0;
     }
@@ -1153,6 +1175,11 @@ static void __attribute_regparm__(3)
     int lc;
 
     inuse = MSG_ReadBits_core(msg, 5);
+#if COD2_NET_BOUNDS
+    /* A read past the end returns -1; the clear below must still start at to[0]. */
+    if (inuse < 0)
+        inuse = 0;
+#endif
 
     for (i = 0; i < inuse; ++i) {
         lc = MSG_ReadBits_core(msg, 5);
@@ -1331,6 +1358,13 @@ void MSG_ReadDeltaPlayerstate(msg_t *msg, playerState_t *from, playerState_t *to
     }
 
     lc = MSG_ReadByte_core(msg);
+#if COD2_NET_BOUNDS
+    /* Entries past the table would aim the field writes anywhere near `to`. */
+    if (lc > (int)(sizeof(playerStateFields) / sizeof(playerStateFields[0]))) {
+        msg->overflowed = 1;
+        return;
+    }
+#endif
     if (lc > 0) {
         for (i = 0; i < lc; ++i) {
             MSG_ReadDeltaPlayerstateField(msg, (byte *)from, (byte *)to, &playerStateFields[i], print);
