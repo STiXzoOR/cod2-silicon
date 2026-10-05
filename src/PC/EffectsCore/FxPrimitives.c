@@ -3092,6 +3092,15 @@ void Emitter_Archive(const Emitter *_this, FxArchive *arch)
 {
     byte *self = (byte *)_this;
     Particle_Archive((const Particle *)_this, arch);
+#if defined(COD2_X64)
+    ArchiveVec3(arch, self, offsetof(Emitter, emitPos));
+    ArchiveVec3(arch, self, offsetof(Emitter, initialVel));
+    ArchiveVec3(arch, self, offsetof(Emitter, velocityDelta));
+    ArchiveInt(arch, self, offsetof(Emitter, emitLastTime));
+    ArchiveInt(arch, self, offsetof(Emitter, emitStep));
+    ArchiveVec3(arch, self, offsetof(Emitter, spawnSize));
+    ArchiveVec3(arch, self, offsetof(Emitter, spawnDensity));
+#else
     ArchiveVec3(arch, self, 0x24c);
     ArchiveVec3(arch, self, 0x258);
     ArchiveVec3(arch, self, 0x264);
@@ -3099,10 +3108,17 @@ void Emitter_Archive(const Emitter *_this, FxArchive *arch)
     ArchiveInt(arch, self, 0x274);
     ArchiveVec3(arch, self, 0x278);
     ArchiveVec3(arch, self, 0x284);
+#endif
     FxArchive_ArchiveEffect((const FxArchive *)(arch), (const EffectTemplate **)(((char *)self + offsetof(Emitter, emitFx))));
+#if defined(COD2_X64)
+    ArchiveInt(arch, self, offsetof(Emitter, spawnVariance));
+    ArchiveInt(arch, self, offsetof(Emitter, _tail));
+    if (((Effect *)self)->mModelPtr == NULL)
+#else
     ArchiveInt(arch, self, 0x294);
     ArchiveInt(arch, self, 0x298);
     if ((*(int *)&((Effect *)self)->mModelPtr) == 0)
+#endif
         ((Effect *)self)->mFlags &= ~0x10;
 }
 
