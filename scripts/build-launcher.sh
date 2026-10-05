@@ -43,7 +43,7 @@ else
 fi
 /usr/bin/xcrun swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
     -target arm64-apple-macos13 -sdk "$sdk" -O -import-objc-header "$root/launcher/NativeSetup.h" \
-    "${swift_flags[@]}" "${sources[@]}" "$out/NativeSetup.o" "$out/NativeShaders.o" "$out/URL.o" \
+    ${swift_flags[@]+"${swift_flags[@]}"} "${sources[@]}" "$out/NativeSetup.o" "$out/NativeShaders.o" "$out/URL.o" \
     -framework AppKit -framework SwiftUI -framework Network -lz -o "$out/$name"
 # Development builds find the bundled OFL fonts beside the executable; app bundles use Resources/Fonts.
 mkdir -p "$out/Fonts"
