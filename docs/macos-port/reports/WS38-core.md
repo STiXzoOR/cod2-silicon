@@ -29,8 +29,8 @@ native path and leaves the original build source unchanged as required.
 ## Retained sites
 
 The untracked `output/ws38/core-review.json` contains exact source text, count,
-classification and reason for 335 retained records / 364 occurrences from the
-initial and expanded compiler-selected scans. Removed offset text is tracked
+classification and reason for 340 retained records / 369 occurrences across the
+stock and CoD2x compiler-selected scans (364 stock sites and 365 CoD2x sites). Removed offset text is tracked
 separately in `core-fixed.json` (15 occurrences); it is not retained approval.
 
 Native layout checks confirm the following unchanged fixed-width records:
