@@ -64,10 +64,87 @@ struct Palette {
 
 private struct PaletteKey: EnvironmentKey { static let defaultValue = Palette.dark }
 private struct UsesGlassKey: EnvironmentKey { static let defaultValue = LiquidGlass.available }
+private struct ShapeAuditKey: EnvironmentKey { static let defaultValue: ShapeAudit? = nil }
 extension EnvironmentValues {
     var palette: Palette { get { self[PaletteKey.self] } set { self[PaletteKey.self] = newValue } }
     /// Liquid Glass on macOS 26 SDK/runtime; the review harness can force the 13–25 material fallback.
     var usesGlass: Bool { get { self[UsesGlassKey.self] } set { self[UsesGlassKey.self] = newValue } }
+    /// Set only by the review harness, which checks the shapes and insets reported into it.
+    var shapeAudit: ShapeAudit? { get { self[ShapeAuditKey.self] } set { self[ShapeAuditKey.self] = newValue } }
+}
+
+// MARK: - Shape system
+
+/// Concentric nesting: a shape set `inset` points into a corner of radius `outer`, the same distance
+/// from both edges, takes the radius `outer − inset`.
+enum Concentric {
+    static func radius(in outer: CGFloat, inset: CGFloat, minimum: CGFloat = 4) -> CGFloat { max(minimum, outer - inset) }
+}
+
+/// Button metrics (points) of the macOS 26 glass styles, which the 13–25 fallback styles match so
+/// every layout is the same on every version. Sizes in use: the hero's extra-large pair, `action`
+/// (extra large) for bars, cards and the inspector, and regular for buttons inside rows and panels.
+enum ControlMetrics {
+    static let action: CGFloat = 36
+    static func height(_ size: ControlSize) -> CGFloat {
+        switch size {
+        case .mini: return 16
+        case .small: return 20
+        case .regular: return 24
+        case .large:
+            // macOS 13 has no extra large: `actionControlSize()` falls back to large there.
+            if #available(macOS 14.0, *) { return 28 } else { return action }
+        default: return action
+        }
+    }
+    /// Vertical padding around a 16-point label, and the horizontal padding beside it.
+    static func padding(_ size: ControlSize) -> (vertical: CGFloat, horizontal: CGFloat) {
+        let height = height(size)
+        return ((height - 16) / 2, height >= action ? 18 : height >= 28 ? 14 : 12)
+    }
+}
+
+/// Geometry the review harness collects to check shapes and concentricity. The app never sets it.
+@MainActor final class ShapeAudit {
+    struct Item: Equatable, Sendable {
+        enum Role: String, Sendable { case container, control, field, inset }
+        enum Form: Equatable, Sendable { case capsule, circle, rounded(CGFloat) }
+        var role: Role
+        var form: Form
+        var name: String
+        var frame: CGRect
+    }
+    var items: [UUID: Item] = [:]
+}
+
+private struct ShapeAuditReporter: ViewModifier {
+    var role: ShapeAudit.Item.Role
+    var form: ShapeAudit.Item.Form
+    var name: String
+    @Environment(\.shapeAudit) private var audit
+    @State private var id = UUID()
+    func body(content: Content) -> some View {
+        if let audit {
+            content
+                .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .global) }) { audit.items[id] = .init(role: role, form: form, name: name, frame: $0) }
+                .onDisappear { audit.items[id] = nil }
+        } else {
+            content
+        }
+    }
+}
+extension View {
+    /// Reports this view's frame and shape to the review harness's shape audit (no-op in the app).
+    func shapeAudit(_ role: ShapeAudit.Item.Role, _ form: ShapeAudit.Item.Form, _ name: String) -> some View {
+        modifier(ShapeAuditReporter(role: role, form: form, name: name))
+    }
+}
+extension ShapeAudit.Item.Form {
+    init<S: Shape>(_ shape: S) {
+        if let rounded = shape as? RoundedRectangle { self = .rounded(rounded.cornerSize.width) }
+        else if shape is Circle { self = .circle }
+        else { self = .capsule }
+    }
 }
 
 enum LiquidGlass {
@@ -125,6 +202,9 @@ struct GlassSurface<S: InsettableShape>: ViewModifier {
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     func body(content: Content) -> some View {
+        surface(content).shapeAudit(interactive ? .control : .container, .init(shape), "glass")
+    }
+    @ViewBuilder private func surface(_ content: Content) -> some View {
         #if COD2_LIQUID_GLASS
         if usesGlass, #available(macOS 26.0, *) {
             // The system adapts glass itself for Reduce Transparency and Increase Contrast.
@@ -148,10 +228,25 @@ extension View {
         modifier(GlassSurface(shape: shape, tint: tint, interactive: interactive))
     }
     func glassCapsule(interactive: Bool = false) -> some View { glassSurface(Capsule(), interactive: interactive) }
-    /// The one emphasized action per view: brass in dark, olive in light.
+    /// The one emphasized action per view: brass in dark, olive in light. Always a capsule.
     func prominentAction() -> some View { modifier(ProminentAction()) }
-    /// Secondary actions: neutral glass buttons.
-    func glassAction() -> some View { modifier(GlassAction()) }
+    /// Secondary actions: neutral glass capsules, or circles for a lone symbol.
+    func glassAction(circle: Bool = false) -> some View { modifier(GlassAction(circle: circle)) }
+    /// System controls drawn with a border (pop-up buttons, segmented controls) take the buttons'
+    /// capsule shape too; glass buttons set theirs in their styles.
+    @ViewBuilder func capsuleControls() -> some View {
+        if #available(macOS 14.0, *) { self.buttonBorderShape(.capsule) } else { self }
+    }
+    /// The one button size for bars, cards and the inspector (36 points).
+    @ViewBuilder func actionControlSize() -> some View {
+        if #available(macOS 14.0, *) { self.controlSize(.extraLarge) } else { self.controlSize(.large) }
+    }
+}
+
+private extension View {
+    /// Glass buttons default to rounded rectangles below the large size; every button here is a capsule or a circle.
+    @available(macOS 26.0, *)
+    func capsuleBorder(circle: Bool = false) -> some View { buttonBorderShape(circle ? .circle : .capsule) }
 }
 
 struct GlassContainer<Content: View>: View {
@@ -171,9 +266,12 @@ private struct ProminentAction: ViewModifier {
     @Environment(\.usesGlass) private var usesGlass
     @Environment(\.palette) private var palette
     func body(content: Content) -> some View {
+        styled(content).shapeAudit(.control, .capsule, "prominent")
+    }
+    @ViewBuilder private func styled(_ content: Content) -> some View {
         #if COD2_LIQUID_GLASS
         if usesGlass, #available(macOS 26.0, *) {
-            content.buttonStyle(.glassProminent).tint(palette.prominentTint).foregroundStyle(palette.prominentText)
+            content.buttonStyle(InkedGlassProminent(ink: palette.prominentText)).tint(palette.prominentTint)
         } else { content.buttonStyle(ProminentFallbackStyle(palette: palette)) }
         #else
         content.buttonStyle(ProminentFallbackStyle(palette: palette))
@@ -181,15 +279,36 @@ private struct ProminentAction: ViewModifier {
     }
 }
 
+#if COD2_LIQUID_GLASS
+/// The system prominent glass button, with the design's ink on its label: the style's own white
+/// label reads at about 2:1 on brass, and a colour set outside the label doesn't reach it. Disabled,
+/// the button loses its tint, so the system's own label colour stays.
+@available(macOS 26.0, *)
+private struct InkedGlassProminent: PrimitiveButtonStyle {
+    var ink: Color
+    @Environment(\.isEnabled) private var isEnabled
+    func makeBody(configuration: Configuration) -> some View {
+        Button(role: configuration.role, action: configuration.trigger) {
+            if isEnabled { configuration.label.fontWeight(.semibold).foregroundStyle(ink) } else { configuration.label.fontWeight(.semibold) }
+        }
+        .buttonStyle(.glassProminent).capsuleBorder()
+    }
+}
+#endif
+
 private struct GlassAction: ViewModifier {
+    var circle: Bool
     @Environment(\.usesGlass) private var usesGlass
     @Environment(\.palette) private var palette
     func body(content: Content) -> some View {
+        styled(content).shapeAudit(.control, circle ? .circle : .capsule, "glass button")
+    }
+    @ViewBuilder private func styled(_ content: Content) -> some View {
         #if COD2_LIQUID_GLASS
-        if usesGlass, #available(macOS 26.0, *) { content.buttonStyle(.glass).foregroundStyle(palette.text) }
-        else { content.buttonStyle(GlassFallbackStyle(palette: palette)) }
+        if usesGlass, #available(macOS 26.0, *) { content.buttonStyle(.glass).capsuleBorder(circle: circle).fontWeight(.semibold).foregroundStyle(palette.text) }
+        else { content.buttonStyle(GlassFallbackStyle(palette: palette, circle: circle)) }
         #else
-        content.buttonStyle(GlassFallbackStyle(palette: palette))
+        content.buttonStyle(GlassFallbackStyle(palette: palette, circle: circle))
         #endif
     }
 }
@@ -200,11 +319,12 @@ struct ProminentFallbackStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
     @Environment(\.controlSize) private var controlSize
     func makeBody(configuration: Configuration) -> some View {
+        let padding = ControlMetrics.padding(controlSize)
         configuration.label
-            .font(.system(size: controlSize == .large ? 17 : 14, weight: .semibold))
+            .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(palette.prominentText)
-            .padding(.horizontal, controlSize == .large ? 28 : 18)
-            .frame(minHeight: controlSize == .large ? 52 : 38)
+            .padding(.vertical, padding.vertical).padding(.horizontal, padding.horizontal)
+            .frame(minHeight: ControlMetrics.height(controlSize))
             .background(LinearGradient(colors: [palette.prominentTop, palette.prominentBottom], startPoint: .top, endPoint: .bottom), in: Capsule())
             .overlay(Capsule().stroke(.white.opacity(palette.dark ? 0.45 : 0.3), lineWidth: 1))
             .overlay(Capsule().inset(by: 1).stroke(LinearGradient(colors: [.white.opacity(0.55), .clear], startPoint: .top, endPoint: .center), lineWidth: 1))
@@ -215,17 +335,19 @@ struct ProminentFallbackStyle: ButtonStyle {
     }
 }
 
-/// macOS 13–25: a neutral translucent capsule.
+/// macOS 13–25: a neutral translucent capsule (a circle around a lone symbol).
 struct GlassFallbackStyle: ButtonStyle {
     var palette: Palette
+    var circle = false
     @Environment(\.isEnabled) private var isEnabled
     @Environment(\.controlSize) private var controlSize
     func makeBody(configuration: Configuration) -> some View {
+        let padding = ControlMetrics.padding(controlSize)
         configuration.label
-            .font(.system(size: controlSize == .large ? 17 : 13, weight: .semibold))
+            .font(.system(size: 13, weight: .semibold))
             .foregroundStyle(palette.text)
-            .padding(.horizontal, controlSize == .large ? 26 : 14)
-            .frame(minHeight: controlSize == .large ? 52 : 34)
+            .padding(.vertical, padding.vertical).padding(.horizontal, circle ? padding.vertical : padding.horizontal)
+            .frame(minHeight: ControlMetrics.height(controlSize))
             .background(palette.dark ? Color.white.opacity(configuration.isPressed ? 0.16 : 0.10) : Color.white.opacity(configuration.isPressed ? 0.72 : 0.55), in: Capsule())
             .background(.ultraThinMaterial, in: Capsule())
             .overlay(Capsule().stroke(palette.dark ? Color.white.opacity(0.16) : Color.white.opacity(0.85), lineWidth: 1))

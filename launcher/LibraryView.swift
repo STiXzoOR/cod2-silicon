@@ -50,7 +50,8 @@ struct DemoRow: View {
     var body: some View {
         let map = entry.facts.map.map { "mp_" + $0 } ?? entry.url.lastPathComponent
         HStack(spacing: 16) {
-            MapArt(map: map, image: image).frame(width: 96, height: 60).clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            MapArt(map: map, image: image).frame(width: 96, height: 60)
+                .clipShape(RoundedRectangle(cornerRadius: RowMetrics.artRadius, style: .continuous)).shapeAudit(.inset, .rounded(RowMetrics.artRadius), "row art")
             VStack(alignment: .leading, spacing: 5) {
                 Text(entry.url.lastPathComponent).font(.typewriter(14, bold: true)).foregroundStyle(palette.dark ? Palette.hex(0xefe7d3) : palette.text).lineLimit(1).truncationMode(.middle)
                 Text([entry.facts.map.map(MapCatalog.displayName), "Multiplayer demo"].compactMap { $0 }.joined(separator: " · "))
@@ -63,8 +64,9 @@ struct DemoRow: View {
                 .glassAction()
                 .accessibilityLabel("Play demo \(entry.url.lastPathComponent)")
         }
-        .padding(.vertical, 10).padding(.horizontal, 14)
-        .background((palette.dark ? Color.white : Color.black).opacity(hovering ? 0.045 : 0), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(.vertical, RowMetrics.inset).padding(.leading, RowMetrics.inset).padding(.trailing, RowMetrics.buttonTrailing(.regular))
+        .background((palette.dark ? Color.white : Color.black).opacity(hovering ? 0.045 : 0), in: RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous))
+        .shapeAudit(.container, .rounded(RowMetrics.radius), "demo row")
         .onHover { hovering = $0 }
         .accessibilityElement(children: .contain)
     }
@@ -179,7 +181,7 @@ struct AboutView: View {
                             .font(.system(size: 13)).foregroundStyle(palette.body).lineSpacing(3).padding(.top, 10).fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                .frame(height: max(236, proxy.size.height - 638))
+                .frame(height: max(242, proxy.size.height - 632))
             }
             .padding(.leading, max(24, 264 - origin.x)).padding(.trailing, 32).padding(.top, 30).padding(.bottom, 28)
             .frame(minHeight: max(proxy.size.height, 760), alignment: .top)

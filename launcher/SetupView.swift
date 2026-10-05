@@ -18,6 +18,9 @@ struct SetupView: View {
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @FocusState private var keyFocused: Bool
+    /// Back and Continue sit this far from the card's bottom and side edges, concentric with its corners.
+    private let footerInset: CGFloat = 14
+    private var cardRadius: CGFloat { footerInset + ControlMetrics.action / 2 }
 
     var body: some View {
         ZStack {
@@ -39,7 +42,7 @@ struct SetupView: View {
     }
 
     private var card: some View {
-        VStack(alignment: .leading, spacing: 22) {
+        VStack(alignment: .leading, spacing: 0) {
             Group {
                 switch model.step {
                 case 0: dataStep
@@ -49,25 +52,25 @@ struct SetupView: View {
             }
             .transition(reduceMotion ? .opacity : .asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .move(edge: .leading).combined(with: .opacity)))
             .id(model.step)
+            .padding(.top, 34).padding(.horizontal, 38)
             HStack {
-                Button("Back", action: model.backSetup).glassAction().controlSize(.large)
+                Button("Back", action: model.backSetup).glassAction().actionControlSize()
                     .disabled(model.step == 0 || model.shaderBusy)
                 Spacer()
                 if model.step == 2 && !model.shaderBusy {
                     Button(action: model.nextSetup) {
                         Label(model.approximate ? "Deploy with approximate shaders" : "Deploy", systemImage: "play.fill")
                     }
-                    .prominentAction().controlSize(.large).keyboardShortcut(.defaultAction)
+                    .prominentAction().actionControlSize().keyboardShortcut(.defaultAction)
                 } else {
-                    Button("Continue", action: model.nextSetup).prominentAction().controlSize(.large).keyboardShortcut(.defaultAction)
+                    Button("Continue", action: model.nextSetup).prominentAction().actionControlSize().keyboardShortcut(.defaultAction)
                         .disabled((model.step == 0 && model.dataPath.isEmpty) || (model.step == 1 && !model.keyReady) || model.shaderBusy)
                 }
             }
-            .padding(.top, 6)
+            .padding(.top, 26).padding([.horizontal, .bottom], footerInset)
         }
-        .padding(.top, 34).padding(.horizontal, 38).padding(.bottom, 30)
         .frame(width: 680)
-        .glassSurface(RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .glassSurface(RoundedRectangle(cornerRadius: cardRadius, style: .continuous))
         .animation(reduceMotion ? nil : .launcherSpring, value: model.step)
         .accessibilityElement(children: .contain)
     }
@@ -91,11 +94,13 @@ struct SetupView: View {
                         .font(.system(size: 13)).foregroundStyle(found ? palette.positive : palette.secondary)
                 }
                 Spacer()
-                Button(found ? "Change…" : "Choose Folder…", action: model.pickData).glassAction()
+                Button(found ? "Change…" : "Choose Folder…", action: model.pickData).glassAction().actionControlSize()
             }
-            .padding(.vertical, 16).padding(.horizontal, 18)
+            // The button sits 20 points from the well's top, bottom and trailing edge.
+            .padding(.vertical, 16).padding(.horizontal, 20).frame(minHeight: ControlMetrics.action + 40)
             .background(palette.well, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(palette.wellStroke, lineWidth: 1))
+            .shapeAudit(.container, .rounded(18), "data well")
             HStack(spacing: 4) {
                 Text("Don't have the files yet?").foregroundStyle(palette.secondary)
                 Link("Where to find your game data", destination: URL(string: "https://github.com/STiXzoOR/cod2-silicon#game-data")!).foregroundStyle(palette.link)
@@ -117,9 +122,10 @@ struct SetupView: View {
                     .textFieldStyle(.plain).font(.typewriter(22, bold: true)).tracking(2.6)
                     .foregroundStyle(palette.dark ? Palette.hex(0xf1ead9) : palette.text)
                     .autocorrectionDisabled().focused($keyFocused)
-                    .padding(.horizontal, 18).frame(height: 56)
-                    .background(palette.dark ? Color.black.opacity(0.3) : Color.white.opacity(0.55), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(keyFocused ? palette.selectionStroke.opacity(1.5) : palette.wellStroke, lineWidth: keyFocused ? 1.5 : 1))
+                    .padding(.horizontal, 24).frame(height: 56)
+                    .background(palette.dark ? Color.black.opacity(0.3) : Color.white.opacity(0.55), in: Capsule())
+                    .overlay(Capsule().stroke(keyFocused ? palette.selectionStroke.opacity(1.5) : palette.wellStroke, lineWidth: keyFocused ? 1.5 : 1))
+                    .shapeAudit(.field, .capsule, "key field")
                     .onSubmit { if model.keyReady { model.nextSetup() } }
                     .accessibilityLabel("CD key, twenty characters")
                     .onAppear { keyFocused = !model.snapshot }
@@ -137,6 +143,7 @@ struct SetupView: View {
         .padding(.vertical, 14).padding(.horizontal, 16)
         .background(palette.dark ? Color.black.opacity(0.24) : Color.white.opacity(0.4), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(palette.wellStroke.opacity(0.7), lineWidth: 1))
+        .shapeAudit(.container, .rounded(16), "key notice")
     }
     private func keyHint(_ raw: String) -> String {
         if raw.isEmpty { return "Spaces and dashes are fine." }
@@ -167,7 +174,7 @@ struct SetupView: View {
                     HStack(spacing: 10) {
                         Text("Approximate shaders change some lighting and skies.").font(.system(size: 12)).foregroundStyle(palette.tertiary)
                         Spacer()
-                        Button("Choose Mac Copy…", action: model.pickShaders).glassAction()
+                        Button("Choose Mac Copy…", action: model.pickShaders).glassAction().actionControlSize()
                     }
                 } else {
                     Text("No Mac copy? You can still play with approximate lighting and add it later in Settings.").font(.system(size: 12)).foregroundStyle(palette.tertiary)

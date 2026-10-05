@@ -116,7 +116,7 @@ struct ColumnHeaders: View {
             Color.clear.frame(width: 22, height: 1)
         }
         .font(.stencil(12, heavy: false)).tracking(2.64).foregroundStyle(palette.tertiary)
-        .padding(.horizontal, 14).padding(.bottom, 8)
+        .padding(.leading, RowMetrics.inset).padding(.trailing, RowMetrics.trailing).padding(.bottom, 8)
     }
     private func header(_ title: String, _ key: ServerSort) -> some View {
         Button { sort = key } label: {
@@ -144,7 +144,8 @@ struct ServerRow: View {
     var body: some View {
         let facts = ServerFacts(server)
         HStack(spacing: 16) {
-            MapArt(map: server.map, image: image).frame(width: 96, height: 60).clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            MapArt(map: server.map, image: image).frame(width: 96, height: 60)
+                .clipShape(RoundedRectangle(cornerRadius: RowMetrics.artRadius, style: .continuous)).shapeAudit(.inset, .rounded(RowMetrics.artRadius), "row art")
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 8) {
                     QuakeName(name: server.name).font(.system(size: 15, weight: .semibold)).lineLimit(1)
@@ -176,10 +177,11 @@ struct ServerRow: View {
             .buttonStyle(.plain)
             .accessibilityLabel(favorite ? "Remove \(QuakeColors.plain(server.name)) from favorites" : "Add \(QuakeColors.plain(server.name)) to favorites")
         }
-        .padding(.vertical, 10).padding(.horizontal, 14)
-        .background(selected ? palette.selection : (palette.dark ? Color.white : Color.black).opacity(hovering ? 0.045 : 0), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(selected ? palette.selectionStroke : .clear, lineWidth: 1))
-        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(.vertical, RowMetrics.inset).padding(.leading, RowMetrics.inset).padding(.trailing, RowMetrics.trailing)
+        .background(selected ? palette.selection : (palette.dark ? Color.white : Color.black).opacity(hovering ? 0.045 : 0), in: RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous).stroke(selected ? palette.selectionStroke : .clear, lineWidth: 1))
+        .contentShape(RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous))
+        .shapeAudit(.container, .rounded(RowMetrics.radius), "server row")
         .onTapGesture(count: 2, perform: deploy)
         .onTapGesture(perform: select)
         .onHover { hovering = $0 }
@@ -224,6 +226,7 @@ struct ServerDetails: View {
     var image: NSImage?
     @Environment(\.palette) private var palette
     @Namespace private var glass
+    private let radius: CGFloat = 26, inset: CGFloat = 14
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             if let server {
@@ -232,7 +235,9 @@ struct ServerDetails: View {
                     MapArt(map: server.map, image: image)
                     LinearGradient(stops: [.init(color: .clear, location: 0.55), .init(color: .black.opacity(0.55), location: 1)], startPoint: .top, endPoint: .bottom)
                 }
-                .frame(height: 168).clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .frame(height: 168)
+                .clipShape(RoundedRectangle(cornerRadius: Concentric.radius(in: radius, inset: inset), style: .continuous))
+                .shapeAudit(.inset, .rounded(Concentric.radius(in: radius, inset: inset)), "inspector art")
                 VStack(alignment: .leading, spacing: 6) {
                     Eyebrow(text: "\(MapCatalog.displayName(server.map)) · \(GameModes.long(server.gametype))", size: 12, tracking: 0.28)
                     QuakeName(name: server.name).font(.system(size: 19, weight: .bold)).lineLimit(2)
@@ -247,22 +252,22 @@ struct ServerDetails: View {
                 .padding(.horizontal, 6)
                 if server.password {
                     SecureField("Server password", text: $model.serverPassword).textFieldStyle(.plain)
-                        .padding(.horizontal, 14).frame(height: 34).wellCapsule().padding(.horizontal, 6)
+                        .padding(.horizontal, 14).frame(height: ControlMetrics.action).wellCapsule().padding(.horizontal, 6)
                         .onSubmit { model.connect(server) }
                 }
                 GlassContainer(spacing: 8) {
                     HStack(spacing: 8) {
                         Button { model.connect(server) } label: {
-                            Label("Deploy", systemImage: "play.fill").font(.system(size: 15, weight: .semibold)).frame(maxWidth: .infinity, minHeight: 30)
+                            Label("Deploy", systemImage: "play.fill").frame(maxWidth: .infinity)
                         }
-                        .prominentAction().controlSize(.large)
+                        .prominentAction().actionControlSize()
                         .accessibilityLabel("Deploy to \(QuakeColors.plain(server.name))")
                         .help("Deploy to this server (Return in the server list, or double-click a row)")
                         let favorite = model.library.favorites.contains(server.address)
                         Button { model.favorite(server.address) } label: {
-                            Image(systemName: favorite ? "star.fill" : "star").font(.system(size: 15)).foregroundStyle(palette.dark ? palette.accent : palette.link).frame(width: 30, height: 30)
+                            Image(systemName: favorite ? "star.fill" : "star").font(.system(size: 15)).foregroundStyle(palette.dark ? palette.accent : palette.link).frame(width: 16, height: 16)
                         }
-                        .glassAction().controlSize(.large).circleBorder()
+                        .glassAction(circle: true).actionControlSize()
                         .accessibilityLabel(favorite ? "Remove from favorites" : "Add to favorites")
                     }
                 }
@@ -296,9 +301,9 @@ struct ServerDetails: View {
                 Spacer()
             }
         }
-        .padding(14)
+        .padding(inset)
         .frame(maxHeight: .infinity, alignment: .top)
-        .glassSurface(RoundedRectangle(cornerRadius: 26, style: .continuous))
+        .glassSurface(RoundedRectangle(cornerRadius: radius, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Server details")
     }
@@ -319,28 +324,31 @@ extension View {
 private struct WellCapsule: ViewModifier {
     @Environment(\.palette) private var palette
     func body(content: Content) -> some View {
-        content.background(palette.well, in: Capsule()).overlay(Capsule().stroke(palette.wellStroke, lineWidth: 1))
+        content.background(palette.well, in: Capsule()).overlay(Capsule().stroke(palette.wellStroke, lineWidth: 1)).shapeAudit(.field, .capsule, "field")
     }
 }
 
+/// The bar is a capsule; its fields and Connect are capsules of one height, inset equally from the
+/// bar's top, bottom and trailing end, so they're concentric with it.
 struct DirectConnectBar: View {
     @ObservedObject var model: LauncherModel
     @Environment(\.palette) private var palette
+    private let inset: CGFloat = 11
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "mappin.and.ellipse").font(.system(size: 15, weight: .medium)).foregroundStyle(palette.dark ? palette.accent : palette.link).accessibilityHidden(true)
             Text("Direct connect").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.chipText).fixedSize()
             TextField("hostname or IP:port", text: $model.directAddress).textFieldStyle(.plain)
-                .padding(.horizontal, 14).frame(height: 34).wellCapsule()
+                .padding(.horizontal, 14).frame(height: ControlMetrics.action).wellCapsule()
                 .onSubmit { model.connect() }
                 .accessibilityLabel("Server address")
             SecureField("Password (optional)", text: $model.serverPassword).textFieldStyle(.plain)
-                .padding(.horizontal, 14).frame(width: 190, height: 34).wellCapsule()
+                .padding(.horizontal, 14).frame(width: 190, height: ControlMetrics.action).wellCapsule()
                 .accessibilityLabel("Server password, optional")
-            Button("Connect") { model.connect() }.prominentAction().controlSize(.regular)
+            Button("Connect") { model.connect() }.prominentAction().actionControlSize()
         }
-        .padding(.leading, 20).padding(.trailing, 9)
-        .frame(height: 58)
+        .padding(.leading, 20).padding(.trailing, inset)
+        .frame(height: ControlMetrics.action + 2 * inset)
         .glassSurface(Capsule())
     }
 }
@@ -366,10 +374,15 @@ struct ContourBackdrop: View {
     }
 }
 
+/// List rows (servers, demos): 60-point art 10 points in, concentric with a 20-point corner. Trailing
+/// content keeps the corner radius from the edge; a button there sits as far in as from the top.
+enum RowMetrics {
+    static let inset: CGFloat = 10, radius: CGFloat = 20, trailing: CGFloat = 20, height: CGFloat = 60 + 2 * 10
+    static var artRadius: CGFloat { Concentric.radius(in: radius, inset: inset) }
+    static func buttonTrailing(_ size: ControlSize) -> CGFloat { (height - ControlMetrics.height(size)) / 2 }
+}
+
 private extension View {
-    @ViewBuilder func circleBorder() -> some View {
-        if #available(macOS 14.0, *) { self.buttonBorderShape(.circle) } else { self }
-    }
     /// Rows fade out over the last 36 points above the direct-connect bar, so none is sliced at rest or
     /// reads through the glass; the mask also clips anything drawn into the bar's inset.
     func bottomEdgeUnderBar() -> some View {

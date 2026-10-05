@@ -70,9 +70,10 @@ struct SettingsView: View {
             }
             SettingsRow("Mouse DPI") {
                 TextField("DPI", value: $model.settings.dpi, format: .number.grouping(.never)).textFieldStyle(.plain).multilineTextAlignment(.trailing)
-                    .padding(.horizontal, 10).frame(width: 80, height: 30)
-                    .background(palette.dark ? Color.white.opacity(0.07) : Color.white.opacity(0.6), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous).stroke(palette.wellStroke, lineWidth: 1))
+                    .padding(.horizontal, 12).frame(width: 80, height: ControlMetrics.height(.large))
+                    .background(palette.dark ? Color.white.opacity(0.07) : Color.white.opacity(0.6), in: Capsule())
+                    .overlay(Capsule().stroke(palette.wellStroke, lineWidth: 1))
+                    .shapeAudit(.field, .capsule, "DPI field")
                     .accessibilityLabel("Mouse DPI")
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text(MouseMath.label(model.settings.cm360)).font(.stencil(20)).foregroundStyle(palette.dark ? palette.accent : Palette.hex(0x4e5b2f))
@@ -128,17 +129,22 @@ struct SettingsView: View {
                 .frame(height: 112)
                 .background(palette.well, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(palette.wellStroke, lineWidth: 1))
+                .shapeAudit(.inset, .rounded(12), "dvar editor")
                 .accessibilityLabel("Extra console variables")
             Text("Paths, passwords and your CD key are managed by the launcher and can't be set here.").font(.system(size: 12)).foregroundStyle(palette.tertiary)
         }
-        .padding(.vertical, 14).padding(.horizontal, 18)
-        .background(palette.panel, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(palette.panelStroke, lineWidth: 1))
+        .padding(.vertical, 14).padding(.horizontal, SettingsMetrics.radius)
+        .background(palette.panel, in: RoundedRectangle(cornerRadius: SettingsMetrics.radius, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: SettingsMetrics.radius, style: .continuous).stroke(palette.panelStroke, lineWidth: 1))
+        .shapeAudit(.container, .rounded(SettingsMetrics.radius), "advanced panel")
     }
 
     private var setupGroup: some View {
         SettingsGroup {
-            SettingsRow(model.dataPathDisplay.isEmpty ? "Not found" : model.dataPathDisplay, detail: model.approximate ? "Approximate shaders · add your Mac copy for the original look" : "Original shaders verified", typewriter: true) {
+            // Tall enough that the button keeps the group's corner radius from its top and bottom
+            // (plus the point the group hides under its first hairline).
+            SettingsRow(model.dataPathDisplay.isEmpty ? "Not found" : model.dataPathDisplay, detail: model.approximate ? "Approximate shaders · add your Mac copy for the original look" : "Original shaders verified",
+                        typewriter: true, minHeight: ControlMetrics.height(.regular) + 2 * SettingsMetrics.radius + 1) {
                 Button("Set Up Again…", action: model.restartSetup).glassAction()
             }
         }
@@ -169,7 +175,7 @@ private struct SaveToolbar: ViewModifier {
             content.toolbar {
                 ToolbarSpacer(.flexible)
                 ToolbarItem(placement: .automatic) { note }.sharedBackgroundVisibility(.hidden)
-                ToolbarItem(placement: .automatic) { button.buttonStyle(.glassProminent).tint(palette.prominentTint).foregroundStyle(palette.prominentText) }
+                ToolbarItem(placement: .automatic) { button.prominentAction() }
             }
         } else { legacy(content) }
         #else
@@ -216,6 +222,12 @@ extension SettingsSection where Footer == EmptyView {
     init(_ title: String, @ViewBuilder content: () -> Content) { self.init(title, content: content, footer: { EmptyView() }) }
 }
 
+/// Settings panels' corner radius, which rows also keep as their side margin, so no control
+/// reaches into a corner.
+enum SettingsMetrics {
+    static let radius: CGFloat = 20
+}
+
 /// Grouped settings rows on an opaque panel, separated by hairlines.
 struct SettingsGroup<Content: View>: View {
     @ViewBuilder var content: Content
@@ -224,9 +236,10 @@ struct SettingsGroup<Content: View>: View {
         // Every row draws a hairline above itself; shifting up one point hides the first under the clip.
         VStack(spacing: 0) { content }
         .padding(.top, -1)
-        .background(palette.panel, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(palette.panelStroke, lineWidth: 1))
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .background(palette.panel, in: RoundedRectangle(cornerRadius: SettingsMetrics.radius, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: SettingsMetrics.radius, style: .continuous).stroke(palette.panelStroke, lineWidth: 1))
+        .clipShape(RoundedRectangle(cornerRadius: SettingsMetrics.radius, style: .continuous))
+        .shapeAudit(.container, .rounded(SettingsMetrics.radius), "settings group")
     }
 }
 
@@ -242,10 +255,13 @@ struct SettingsRow<Control: View>: View {
     var typewriter = false
     /// In the design but waiting on the Metal renderer (0.3): labelled, dimmed and inert.
     var upcoming = false
+    var minHeight: CGFloat = 52
     @ViewBuilder var control: Control
     @Environment(\.palette) private var palette
-    init(_ title: String, detail: String? = nil, fixedLabel: CGFloat? = nil, typewriter: Bool = false, upcoming: Bool = false, @ViewBuilder control: () -> Control) {
-        self.title = title; self.detail = detail; self.fixedLabel = fixedLabel; self.typewriter = typewriter; self.upcoming = upcoming; self.control = control()
+    init(_ title: String, detail: String? = nil, fixedLabel: CGFloat? = nil, typewriter: Bool = false, upcoming: Bool = false, minHeight: CGFloat = 52,
+         @ViewBuilder control: () -> Control) {
+        self.title = title; self.detail = detail; self.fixedLabel = fixedLabel; self.typewriter = typewriter; self.upcoming = upcoming
+        self.minHeight = minHeight; self.control = control()
     }
     var body: some View {
         HStack(spacing: 16) {
@@ -266,8 +282,8 @@ struct SettingsRow<Control: View>: View {
             .frame(maxWidth: fixedLabel == nil ? .infinity : nil, alignment: .leading)
             control.disabled(upcoming).opacity(upcoming ? 0.45 : 1)
         }
-        .padding(.horizontal, 18).padding(.vertical, detail == nil ? 10 : 9)
-        .frame(minHeight: 52)
+        .padding(.horizontal, SettingsMetrics.radius).padding(.vertical, detail == nil ? 10 : 9)
+        .frame(minHeight: minHeight)
         .accessibilityElement(children: .contain)
         .modifier(Hairline())
     }
@@ -277,7 +293,7 @@ struct SettingsNote: View {
     var text: String
     @Environment(\.palette) private var palette
     var body: some View {
-        Text(text).font(.system(size: 12)).foregroundStyle(palette.tertiary).frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).padding(.horizontal, 18)
+        Text(text).font(.system(size: 12)).foregroundStyle(palette.tertiary).frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).padding(.horizontal, SettingsMetrics.radius)
             .modifier(Hairline())
     }
 }
@@ -333,5 +349,6 @@ private extension View {
             .background(selected ? palette.selection : palette.crate, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(selected ? palette.selectionStroke.opacity(1.3) : (palette.dark ? Color.white.opacity(0.09) : palette.panelStroke), lineWidth: 1))
             .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .shapeAudit(.container, .rounded(16), "crate")
     }
 }

@@ -10,6 +10,15 @@ python3 "$root/tests/launcher/network.py"
 sh "$root/tests/launcher/artwork.sh"
 "$root/scripts/fetch-launcher-fonts.sh" --check
 
+# One shape system: buttons take their style from Theme.swift (capsules, or circles for a lone
+# symbol) or are plain text and glyph buttons. The review harness checks the rendered geometry.
+if grep -n -E '\.buttonStyle\(|\.buttonBorderShape\(' "$root"/launcher/*.swift |
+    grep -v -E 'launcher/Theme\.swift:|\.buttonStyle\(\.plain\)|\.buttonStyle\(RowButtonStyle'; then
+    echo "FAIL: button styles outside launcher/Theme.swift" >&2
+    exit 1
+fi
+echo "PASS: every button style comes from launcher/Theme.swift"
+
 # Every view must also compile for SDKs before macOS 26, where only the material styling exists.
 sdk=$(/usr/bin/xcrun --show-sdk-path)
 views=""

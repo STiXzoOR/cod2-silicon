@@ -21,8 +21,8 @@ struct HomeView: View {
                         RecentServersPanel(model: model)
                         DispatchesPanel(model: model)
                     }
-                    .frame(height: max(236, proxy.size.height - 638))
-                    .padding(.top, 38)
+                    .frame(height: max(242, proxy.size.height - 632))
+                    .padding(.top, 32)
                 }
                 .padding(.leading, max(32, 300 - origin.x)).padding(.trailing, 32).padding(.bottom, 28)
                 .frame(minHeight: max(proxy.size.height, 760), alignment: .top)
@@ -63,12 +63,12 @@ struct HomeView: View {
                 Button(action: model.deploy) {
                     Label("Deploy", systemImage: "play.fill").labelStyle(HeroLabelStyle())
                 }
-                .prominentAction().heroControlSize()
+                .prominentAction().actionControlSize()
                 .accessibilityLabel(last.map { "Deploy to \(QuakeColors.plain($0.name))" } ?? "Deploy to the main menu")
                 Button { withAnimation(.launcherSpring) { model.page = .servers } } label: {
                     Label("Find a server", systemImage: "dot.radiowaves.left.and.right").labelStyle(HeroLabelStyle())
                 }
-                .glassAction().heroControlSize()
+                .glassAction().actionControlSize()
                 Text("⌘ Return to deploy").font(.system(size: 12)).foregroundStyle(palette.dark ? HeroInk.hint.dark : HeroInk.hint.light).padding(.leading, 6)
             }
             .padding(.top, 14)
@@ -120,9 +120,6 @@ struct HeroLabelStyle: LabelStyle {
 }
 
 extension View {
-    @ViewBuilder func heroControlSize() -> some View {
-        if #available(macOS 14.0, *) { self.controlSize(.extraLarge) } else { self.controlSize(.large) }
-    }
     /// Lets the hero art continue under the floating sidebar on macOS 26.
     @ViewBuilder func heroExtension() -> some View {
         #if COD2_LIQUID_GLASS
@@ -258,9 +255,9 @@ struct StatusChips: View {
         Button(action: action) {
             HStack(spacing: 10) { content() }
                 .font(.system(size: 13)).foregroundStyle(palette.chipText)
-                .padding(.horizontal, 16).frame(height: 40)
-                .glassSurface(RoundedRectangle(cornerRadius: 14, style: .continuous), interactive: true)
-                .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .padding(.horizontal, 18).frame(height: 40)
+                .glassSurface(Capsule(), interactive: true)
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
@@ -298,7 +295,7 @@ struct RecentServersPanel: View {
                     Button { model.showServer(server.address) } label: {
                         HStack(spacing: 14) {
                             MapArt(map: server.map, image: artwork.image(for: server.map))
-                                .frame(width: 72, height: 44).clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+                                .frame(width: 72, height: 44).clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous)).shapeAudit(.inset, .rounded(8), "row art")
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(QuakeColors.plain(server.name)).font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.text).lineLimit(1)
                                 Text("\(MapCatalog.displayName(server.map)) · \(GameModes.long(server.gametype)) · \(facts.isCoD2x ? "CoD2x 1.4" : "Stock 1.3")")
@@ -308,9 +305,9 @@ struct RecentServersPanel: View {
                             Text("\(server.playerCount)/\(server.maxPlayers)").font(.stencil(22)).foregroundStyle(palette.numeral)
                             Text("\(server.ping) ms").font(.system(size: 12)).foregroundStyle(palette.secondary).frame(width: 46, alignment: .trailing)
                         }
-                        .padding(8).contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .padding(8).contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous)).shapeAudit(.container, .rounded(16), "recent row")
                     }
-                    .buttonStyle(RowButtonStyle(radius: 12))
+                    .buttonStyle(RowButtonStyle(radius: 16))
                     .padding(.horizontal, -8)
                     .accessibilityLabel("\(QuakeColors.plain(server.name)), \(MapCatalog.displayName(server.map)), \(server.playerCount) of \(server.maxPlayers) players, \(server.ping) milliseconds")
                 }

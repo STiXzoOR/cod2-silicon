@@ -47,4 +47,6 @@ for appearance in ["dark", "light"]:
     (width, height), length = size(fallback / f"servers-{appearance}.png")
     assert (width, height) == (1440, 900) and length > 60_000
     assert (fallback / f"servers-{appearance}.png").read_bytes() != (out / f"servers-{appearance}.png").read_bytes()
-print(f"PASS: {len(screens) * 2} launcher screens at 1440x900 in dark and light, plus the material fallback, with bundled fonts")
+# The harness exits non-zero on any shape-audit finding, so reaching here means none.
+print(f"PASS: {len(screens) * 2} launcher screens at 1440x900 in dark and light, plus the material fallback, with bundled fonts"
+      " and a clean shape audit (capsule buttons, concentric nesting, equal insets)")

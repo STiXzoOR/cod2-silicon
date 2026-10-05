@@ -17,6 +17,7 @@ struct LauncherRoot: View {
         // Controls follow the app accent (NSAccentColorName: brass in dark, olive in light);
         // only the one prominent action per view is tinted explicitly.
         .environment(\.palette, palette)
+        .capsuleControls()
         .background(palette.ground)
         .overlay(alignment: .bottom) { NoticeBanner(model: model).padding(.bottom, 24) }
         .frame(minWidth: 1100, minHeight: 760)
@@ -133,9 +134,30 @@ struct PlayerTag: View {
             Spacer(minLength: 0)
         }
         .padding(12)
-        .background(palette.dark ? Color.white.opacity(0.05) : Color.white.opacity(0.5), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(palette.dark ? Color.white.opacity(0.07) : Color.white.opacity(0.8), lineWidth: 1))
+        .modifier(PlayerTagPlate(fill: palette.dark ? Color.white.opacity(0.05) : Color.white.opacity(0.5),
+                                 stroke: palette.dark ? Color.white.opacity(0.07) : Color.white.opacity(0.8)))
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// The tag sits in the window's bottom corner: on macOS 26 its corners follow the window's
+/// (concentric, never tighter than 10 points); earlier versions keep a fixed 16.
+private struct PlayerTagPlate: ViewModifier {
+    var fill: Color, stroke: Color
+    @Environment(\.usesGlass) private var usesGlass
+    func body(content: Content) -> some View {
+        #if COD2_LIQUID_GLASS
+        if usesGlass, #available(macOS 26.0, *) {
+            let shape = ConcentricRectangle(corners: .concentric(minimum: .fixed(10)), isUniform: true)
+            content.background(fill, in: shape).overlay(shape.stroke(stroke, lineWidth: 1))
+        } else { fixed(content) }
+        #else
+        fixed(content)
+        #endif
+    }
+    private func fixed(_ content: Content) -> some View {
+        content.background(fill, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(stroke, lineWidth: 1))
     }
 }
 
@@ -166,10 +188,11 @@ struct PageHeader: View {
     }
 }
 
-/// Content panel: opaque, quiet and concentric with its rows. Never glass.
+/// Content panel: opaque and quiet, never glass. Padding equals the corner radius, so nothing
+/// inside reaches into a corner.
 struct ContentPanel<Content: View>: View {
     var radius: CGFloat = 22
-    var padding = EdgeInsets(top: 20, leading: 22, bottom: 20, trailing: 22)
+    var padding = EdgeInsets(top: 22, leading: 22, bottom: 22, trailing: 22)
     @ViewBuilder var content: Content
     @Environment(\.palette) private var palette
     var body: some View {
@@ -178,6 +201,7 @@ struct ContentPanel<Content: View>: View {
             .frame(maxWidth: .infinity, alignment: .topLeading)
             .background(palette.panel, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: radius, style: .continuous).stroke(palette.panelStroke, lineWidth: 1))
+            .shapeAudit(.container, .rounded(radius), "panel")
     }
 }
 

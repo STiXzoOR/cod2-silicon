@@ -57,7 +57,8 @@ final class SnapshotWindow: NSWindow {
             exit(contrastReport(data: data, output: output) ? 0 : 1)
         }
         Task { @MainActor in
-            var written = 0
+            var written = 0, checked = 0
+            var findings: [String] = [], report: [[String: Any]] = []
             for dark in [true, false] {
                 for screen in screens where only == nil || only == screen {
                     let model = LauncherModel(snapshot: true)
@@ -67,8 +68,13 @@ final class SnapshotWindow: NSWindow {
                         model.artwork.loadPrivatePreviewSynchronously(dataPath: data, maps: maps)
                     }
                     let name = "\(screen)-\(dark ? "dark" : "light")"
-                    if let image = await capture(model: model, dark: dark, fallback: fallback) {
+                    let audit = ShapeAudit()
+                    if let image = await capture(model: model, dark: dark, fallback: fallback, audit: audit) {
                         try? write(image, to: output.appendingPathComponent(name + ".png")); written += 1
+                        let items = Array(audit.items.values)
+                        let found = ShapeCheck.findings(items, image: image).map { "\(name): \($0)" }
+                        checked += items.count; findings += found
+                        report.append(["screen": name, "items": items.map(ShapeCheck.json), "findings": found])
                     } else { fputs("Capture failed: \(name)\n", stderr) }
                     if scale2, let image = render2x(model: model, dark: dark) {
                         try? write(image, to: output.appendingPathComponent(name + "@2x.png")); written += 1
@@ -76,23 +82,29 @@ final class SnapshotWindow: NSWindow {
                 }
             }
             print("Rendered \(written) launcher review images to \(output.path)\(fallback ? " (material fallback)" : "")\(data == nil ? "" : " with private game artwork")")
-            exit(written > 0 ? 0 : 1)
+            if let json = try? JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted, .sortedKeys]) {
+                try? json.write(to: output.appendingPathComponent("shape-audit.json"))
+            }
+            findings.forEach { print("SHAPE: \($0)") }
+            print("Shape audit: \(checked) shapes checked, \(findings.count) findings")
+            exit(written > 0 && findings.isEmpty ? 0 : 1)
         }
         app.run()
     }
 
-    @MainActor static func root(_ model: LauncherModel, dark: Bool, glass: Bool) -> some View {
+    @MainActor static func root(_ model: LauncherModel, dark: Bool, glass: Bool, audit: ShapeAudit? = nil) -> some View {
         LauncherRoot(model: model)
+            .environment(\.shapeAudit, audit)
             .environment(\.usesGlass, glass && LiquidGlass.available)
             .environment(\.colorScheme, dark ? .dark : .light)
             .environment(\.controlActiveState, .key)
     }
 
 
-    @MainActor static func capture(model: LauncherModel, dark: Bool, fallback: Bool) async -> CGImage? {
+    @MainActor static func capture(model: LauncherModel, dark: Bool, fallback: Bool, audit: ShapeAudit) async -> CGImage? {
         let appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
         NSApp.appearance = appearance
-        let controller = NSHostingController(rootView: root(model, dark: dark, glass: !fallback))
+        let controller = NSHostingController(rootView: root(model, dark: dark, glass: !fallback, audit: audit))
         controller.sizingOptions = []
         if #available(macOS 14.0, *) { controller.sceneBridgingOptions = [.toolbars] }
         let window = SnapshotWindow(contentRect: NSRect(x: 0, y: 0, width: 1440, height: 900),
@@ -189,5 +201,121 @@ final class SnapshotWindow: NSWindow {
     static func write(_ image: CGImage, to url: URL) throws {
         guard let png = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else { throw LauncherError(message: "PNG encoding failed") }
         try png.write(to: url)
+    }
+}
+
+/// The shape system, checked on every captured screen from the frames the views report:
+/// - a button is a capsule or a circle (and a prominent one is seen to be one in the pixels);
+/// - a shape that reaches into a container's corner is concentric with it: equal insets to both
+///   edges, and a radius of the container's radius minus that inset;
+/// - a shape centred in a row sits as far from the row's end as from its top and bottom;
+/// - controls and fields side by side share one height.
+@MainActor enum ShapeCheck {
+    typealias Item = ShapeAudit.Item
+    static let tolerance: CGFloat = 0.75
+
+    static func findings(_ items: [Item], image: CGImage) -> [String] {
+        var out: [String] = []
+        let pixels = Pixels(image)
+        let containers = items.filter { $0.role == .container }
+        func area(_ item: Item) -> CGFloat { item.frame.width * item.frame.height }
+        func parent(of item: Item) -> Item? {
+            containers.filter { $0 != item && area($0) > area(item) && $0.frame.insetBy(dx: -0.5, dy: -0.5).contains(item.frame) }
+                .min { area($0) < area($1) }
+        }
+        for item in items where item.role == .control {
+            if case .rounded = item.form { out.append("\(describe(item)) is a rounded rectangle; buttons are capsules or circles") }
+            if item.name == "prominent", let seen = pixels?.shape(of: item.frame), seen != "capsule" {
+                out.append("\(describe(item)) draws as a \(seen), not a capsule")
+            }
+        }
+        for item in items {
+            guard let container = parent(of: item) else { continue }
+            let f = item.frame, k = container.frame
+            let top = f.minY - k.minY, bottom = k.maxY - f.maxY, leading = f.minX - k.minX, trailing = k.maxX - f.maxX
+            let outer = radius(container), inner = radius(item)
+            let corners = [("top-leading", top, leading), ("top-trailing", top, trailing), ("bottom-leading", bottom, leading), ("bottom-trailing", bottom, trailing)]
+            var inCorner = false
+            for (corner, a, b) in corners where a < outer - tolerance && b < outer - tolerance {
+                inCorner = true
+                if abs(a - b) > tolerance {
+                    out.append("\(describe(item)) in \(describe(container)): \(corner) insets \(fmt(a)) and \(fmt(b)) differ")
+                } else if abs(inner - (outer - a)) > tolerance {
+                    out.append("\(describe(item)) in \(describe(container)): radius \(fmt(inner)) is not concentric (\(fmt(outer)) − \(fmt(a)) = \(fmt(outer - a)))")
+                }
+            }
+            if !inCorner, abs(top - bottom) <= tolerance {
+                for (side, inset) in [("leading", leading), ("trailing", trailing)] where inset < 2 * top && abs(inset - top) > tolerance {
+                    out.append("\(describe(item)) in \(describe(container)): \(side) inset \(fmt(inset)) but vertical inset \(fmt(top))")
+                }
+            }
+        }
+        // Side by side: controls and fields whose vertical ranges overlap, in the same container and close together.
+        let rowItems = items.filter { $0.role == .control || $0.role == .field }
+        for (index, a) in rowItems.enumerated() {
+            for b in rowItems[(index + 1)...] where parent(of: a) == parent(of: b) {
+                let gap = max(b.frame.minX - a.frame.maxX, a.frame.minX - b.frame.maxX)
+                let overlap = min(a.frame.maxY, b.frame.maxY) - max(a.frame.minY, b.frame.minY)
+                if gap >= 0, gap < 40, overlap > 0, abs(a.frame.height - b.frame.height) > tolerance {
+                    out.append("\(describe(a)) and \(describe(b)) sit side by side at different heights")
+                }
+            }
+        }
+        return out
+    }
+
+    static func radius(_ item: Item) -> CGFloat {
+        let short = min(item.frame.width, item.frame.height) / 2
+        switch item.form {
+        case .capsule, .circle: return short
+        case .rounded(let value): return min(value, short)
+        }
+    }
+    static func fmt(_ value: CGFloat) -> String { String(format: value == value.rounded() ? "%.0f" : "%.1f", value) }
+    static func describe(_ item: Item) -> String {
+        let f = item.frame
+        return "\(item.name) [\(fmt(f.minX)),\(fmt(f.minY)) \(fmt(f.width))×\(fmt(f.height))]"
+    }
+    static func json(_ item: Item) -> [String: Any] {
+        let form: String
+        switch item.form {
+        case .capsule: form = "capsule"
+        case .circle: form = "circle"
+        case .rounded(let value): form = "rounded \(fmt(value))"
+        }
+        return ["role": item.role.rawValue, "name": item.name, "form": form,
+                "frame": [item.frame.minX, item.frame.minY, item.frame.width, item.frame.height].map { Double($0) }]
+    }
+
+    /// The captured window's pixels, addressed in window points.
+    struct Pixels {
+        var data: [UInt8], width: Int, height: Int, scale: CGFloat
+        init?(_ image: CGImage) {
+            width = image.width; height = image.height; scale = CGFloat(image.width) / 1440
+            data = [UInt8](repeating: 0, count: width * height * 4)
+            let (w, h) = (width, height)
+            let drawn = data.withUnsafeMutableBytes { raw -> Bool in
+                guard let space = CGColorSpace(name: CGColorSpace.sRGB),
+                      let context = CGContext(data: raw.baseAddress, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4, space: space,
+                                              bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return false }
+                context.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+                return true
+            }
+            if !drawn { return nil }
+        }
+        func color(_ x: CGFloat, _ y: CGFloat) -> [Int] {
+            let px = min(width - 1, max(0, Int(x * scale))), py = min(height - 1, max(0, Int(y * scale)))
+            let o = (py * width + px) * 4
+            return [Int(data[o]), Int(data[o + 1]), Int(data[o + 2])]
+        }
+        static func distance(_ a: [Int], _ b: [Int]) -> Int { zip(a, b).map { abs($0 - $1) }.reduce(0, +) }
+        /// "capsule" when the point 2 pt inside the top-leading corner matches the background beside the
+        /// button, "rounded rectangle" when it matches the fill; nil when fill and background are too alike.
+        func shape(of frame: CGRect) -> String? {
+            let fill = color(frame.minX + 4, frame.midY), outside = color(frame.minX - 3, frame.midY)
+            let corner = color(frame.minX + 2, frame.minY + 2)
+            guard Self.distance(fill, outside) > 90 else { return nil }
+            return Self.distance(corner, outside) < Self.distance(corner, fill) ? "capsule" : "rounded rectangle"
+        }
     }
 }
