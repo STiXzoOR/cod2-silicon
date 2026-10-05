@@ -34,6 +34,9 @@ enum {
     GMISSILE_ENTITYNUM_WORLD = 0x3fe,
     GMISSILE_FL_GUIDED = 0x10000,
     GMISSILE_FL_TURRET = 0x20000,
+#if defined(COD2_X64)
+    GMISSILE_EF_BOUNCE = 0x1000000,
+#endif
 };
 
 void G_ExplodeMissile(gentity_t *ent);
@@ -483,7 +486,11 @@ static qboolean G_BounceMissile(gentity_t *ent, trace_t *trace)
         (_ENT(ent)->s.groundEntityNum) = trace->entityNum;
     }
 
+#if defined(COD2_X64)
+    if (ent->s.eFlags & GMISSILE_EF_BOUNCE) {
+#else
     if ((_ENT(ent)->s.eFlags) & 0x10000) {
+#endif
 
         speed = VectorLength(velocity);
 
@@ -693,7 +700,11 @@ after_trace:
 
     VectorCopy(endpos, (_ENT(ent)->r.currentOrigin));
 
+#if defined(COD2_X64)
+    if (ent->s.eFlags & GMISSILE_EF_BOUNCE) {
+#else
     if ((_ENT(ent)->s.eFlags) & 0x10000) {
+#endif
 
         if (fraction != 1.0f || (fraction == 1.0f && tr.normal[2] > 0.7f)) {
 
@@ -804,7 +815,11 @@ after_trace:
 
         (_ENT(ent)->s.surfType) = (tr.surfaceFlags & 0x1F00000) >> 20;
 
+#if defined(COD2_X64)
+        if (other->takedamage || (ent->s.eFlags & GMISSILE_EF_BOUNCE)) {
+#else
         if ((_ENT(other)->takedamage) || ((_ENT(ent)->s.eFlags) & 0x10000)) {
+#endif
 
             if (!(_ENT(other)->takedamage)) {
 
