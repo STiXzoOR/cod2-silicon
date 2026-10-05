@@ -47,8 +47,13 @@ void Scr_InitOpcodeLookup(void)
     scrParserGlob.delayedSourceIndex = -1;
     scrParserGlob.opcodeLookupMaxLen = 0x10000;
     scrParserGlob.opcodeLookupLen = 0;
+#if defined(COD2_X64)
+    scrParserGlob.opcodeLookup = (OpcodeLookup *)Z_MallocInternal((int)(scrParserGlob.opcodeLookupMaxLen * sizeof(*scrParserGlob.opcodeLookup)));
+    memset(scrParserGlob.opcodeLookup, 0, scrParserGlob.opcodeLookupMaxLen * sizeof(*scrParserGlob.opcodeLookup));
+#else
     scrParserGlob.opcodeLookup = (OpcodeLookup *)(Z_MallocInternal(0x140000));
     memset(scrParserGlob.opcodeLookup, 0, scrParserGlob.opcodeLookupMaxLen * 20);
+#endif
     scrParserGlob.sourcePosLookupMaxLen = 0x10000;
     scrParserGlob.sourcePosLookupLen = 0;
     scrParserGlob.sourcePosLookup = (SourceLookup *)(Z_MallocInternal(0x80000));

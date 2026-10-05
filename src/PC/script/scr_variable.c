@@ -389,8 +389,13 @@ static int ThreadInfoCompare(const void *info1, const void *info2)
 {
     const JCOEF *threadInfo1 = (const JCOEF *)info1;
     const JCOEF *threadInfo2 = (const JCOEF *)info2;
+#if defined(COD2_X64)
+    int count1 = ((const ThreadDebugInfo *)info1)->posSize;
+    int count2 = ((const ThreadDebugInfo *)info2)->posSize;
+#else
     int count1 = *(int *)((byte *)threadInfo1 + 0x80);
     int count2 = *(int *)((byte *)threadInfo2 + 0x80);
+#endif
     int i;
 
     if (count1 <= 0 || count2 <= 0)
