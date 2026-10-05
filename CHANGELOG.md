@@ -39,6 +39,20 @@ All notable changes to CoD2 Silicon are documented here, following
   steps aside while the game is hidden. Exclusive fullscreen can still fail
   to restore after display sleep.
 - A second (system) cursor in fullscreen menus.
+- Players could not use stock mounted turrets: the use check read the
+  wrong field on the 64-bit build.
+- A source-wide audit fixed more fields that the 64-bit build read at
+  their 32-bit positions:
+  - key binding records (the Controls menu);
+  - 13 sound-setting reads (enable, pause and volume);
+  - swapped network-channel sequence and dropped-packet fields;
+  - player, corpse, obituary, scoreboard, pickup-sound and turret-event
+    records;
+  - renderer world, sun, sky and occluder objects;
+  - collision-map allocation sizes.
+
+  A gate now rejects new raw offsets, and a test opens every menu and runs
+  every safe menu script.
 - Five network-parser memory-safety bugs found by fuzzing, including an
   out-of-bounds decompression read and an `Info_SetValueForKey` overflow
   reachable through `getinfo`.

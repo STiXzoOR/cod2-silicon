@@ -46,6 +46,7 @@ existing cross-references continue to work.
 - [WS27: fuzz](reports/WS27-fuzz.md) — network-parser fuzzing with five robustness fixes.
 - [WS28: launcher-v2](reports/WS28-launcher-v2.md) — Liquid Glass launcher from the approved prototype, the Icon Composer icon and a 250 fps default cap.
 - [WS36: qa-fixes](reports/WS36-qa-fixes.md) — first hands-on fixes: server browser, menu text and colours, hover cadence, portal bounds and the desktop-fullscreen default.
+- [WS38: lp64-audit](reports/WS38-lp64-audit.md) — source-wide audit of 32-bit offsets compiled into the 64-bit build, the raw-offset gate and the all-menus sweep ([core audit](reports/WS38-core.md)).
 
 WS7, WS23 and WS24 have no separate report in this checkout, and the Metal renderer reports (WS29–WS35, WS37 and WS39) arrive with the renderer in 0.3; the numbering is retained.
 
