@@ -23,6 +23,7 @@ suites = [
      ['SEH_IsDigit', 'SEH_LocalizeTextMessage']),
     ('ui_item_color', 'src/PC/ui_mp/ui_shared_mp.c', ['Script_SetItemColor']),
     ('ui_server_insert', 'src/PC/ui_mp/ui_main_mp.c', ['UI_InsertServerAtPosition', 'UI_BinaryInsertServer']),
+    ('ui_text_color', 'src/PC/ui_mp/ui_shared_mp.c', ['Item_TextColor']),
     ('infostring', 'src/PC/universal/q_shared.c', ['Info_RemoveKey', 'Info_RemoveKey_Big']),
     ('pure_iwds', 'src/PC/qcommon/files.c', ['FS_PureServerSetLoadedIwds']),
     ('timeout', 'src/PC/client_mp/cl_main_mp.c', ['CL_Frame']),
@@ -52,6 +53,9 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
         if name == 'mantle':
             source = source[:source.index('extern const dvar_t *Dvar_RegisterBool')]
         functions = [] if names else [source]
+        if name == 'ui_text_color':
+            functions.append(source[source.index('#if defined(COD2_X64)'):
+                                    source.index('extern commandDef_t')])
         if name == 'scheduled_fx':
             # Keep the production native link accessor and its layout assertion.
             functions.append(source[source.index('#if defined(COD2_X64)'):

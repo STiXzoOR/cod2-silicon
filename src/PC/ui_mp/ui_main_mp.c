@@ -2838,7 +2838,11 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
 
             {
                 int realTime = uiInfo->uiDC.realTime;
+#if defined(COD2_X64)
+                float phase = (float)(realTime / 75);
+#else
                 float phase = (float)(realTime % 1000);
+#endif
                 float sinVal;
                 {
                     double sv;
