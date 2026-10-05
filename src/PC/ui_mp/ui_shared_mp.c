@@ -3054,9 +3054,15 @@ void Item_Bind_Paint(displayContextDef_t *dc, itemDef_t *item)
     int i;
 
     editFieldDef_t *editPtr = Item_GetEditFieldDef(item);
+#if defined(COD2_X64)
+    /* Mac 1.3 (0x16a4dd): without maxPaintChars the limit is 0x7fffffff and the key
+       names are still drawn. Stock bind items never set it. */
+    maxChars = editPtr && editPtr->maxPaintChars ? editPtr->maxPaintChars : 0x7fffffff;
+#else
     if (!editPtr || !editPtr->maxPaintChars)
         return;
     maxChars = editPtr->maxPaintChars;
+#endif
 
     bindName = item->dvar;
     if (!bindName || !bindName[0])
