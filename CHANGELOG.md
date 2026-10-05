@@ -39,8 +39,15 @@ All notable changes to CoD2 Silicon are documented here, following
   steps aside while the game is hidden. Exclusive fullscreen can still fail
   to restore after display sleep.
 - A second (system) cursor in fullscreen menus.
-- Players could not use stock mounted turrets: the use check read the
-  wrong field on the 64-bit build.
+- Players could not use stock mounted turrets. The use check read the
+  wrong field, and the server marked every living player active each frame,
+  which skipped the turret query.
+- Temporary collision models dropped their content mask and broadphase
+  links used the wrong entity numbering, so they were unlinked from the
+  world.
+- The Controls pages showed no key names next to their actions.
+- After a game started from a server link or `--play` with engine options,
+  the launcher came back without a window.
 - A source-wide audit fixed more fields that the 64-bit build read at
   their 32-bit positions:
   - key binding records (the Controls menu);
