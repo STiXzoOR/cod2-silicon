@@ -230,9 +230,10 @@ struct StatusChips: View {
     var body: some View {
         GlassContainer(spacing: 10) {
             HStack(spacing: 10) {
-                chip(label: "Frame cap \(model.settings.fps) frames per second") {
-                    Text("\(model.settings.fps)").font(.stencil(20)).foregroundStyle(palette.dark ? palette.accent : Palette.hex(0x4e5b2f))
-                    Text("fps cap")
+                let cap = FrameCap.chip(model.settings.fps)
+                chip(label: FrameCap.spoken(model.settings.fps)) {
+                    if let numeral = cap.numeral { Text(numeral).font(.stencil(20)).foregroundStyle(palette.dark ? palette.accent : Palette.hex(0x4e5b2f)) }
+                    Text(cap.text)
                 } action: { model.page = .settings }
                 chip(label: "Display \(resolutionText)") {
                     Image(systemName: "display").font(.system(size: 14)).foregroundStyle(palette.chipIcon)

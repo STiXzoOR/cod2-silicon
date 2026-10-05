@@ -507,7 +507,7 @@ struct MediaEntry: Identifiable {
             ("^2Sunday ^7Rifles · EU", "mp_carentan", "tdm", 15, 24, 30, false, "", 0, false, "198.51.100.7:28960"),
             ("^3Desert ^7Fox ^1SD", "mp_matmata", "sd", 12, 20, 42, true, "zPAM 3", 250, false, "203.0.113.90:28962"),
             ("^1Classic ^7Headquarters", "mp_dawnville", "hq", 9, 24, 54, false, "", 0, false, "198.51.100.41:28960"),
-            ("^5Silicon ^7Sessions", "mp_leningrad", "tdm", 6, 16, 66, true, "", 333, true, "192.0.2.10:28960"),
+            ("^5Silicon ^7Sessions", "mp_leningrad", "tdm", 6, 16, 66, true, "", 250, true, "192.0.2.10:28960"),
             ("^7Eastern ^1Front", "mp_stalingrad", "dm", 20, 32, 71, false, "", 0, false, "198.51.100.88:28961"),
             ("^2Hedgerow ^7League", "mp_brecourt", "sd", 10, 10, 35, true, "zPAM 3", 250, false, "203.0.113.150:28960"),
             ("^6Railyard ^7Night", "mp_railyard", "ctf", 0, 20, 88, true, "", 250, false, "192.0.2.77:28960"),

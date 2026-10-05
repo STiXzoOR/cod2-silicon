@@ -83,6 +83,17 @@ struct ServerFacts: Equatable {
     static func pingLevel(_ ping: Int) -> Int { ping < 40 ? 4 : ping < 60 ? 3 : ping < 80 ? 2 : 1 }
 }
 
+/// The player's frame cap (com_maxfps, 0–1000; 0 is no cap), shown as plain data.
+enum FrameCap {
+    /// Quick picks in Settings, with neutral captions; any other value is entered by hand.
+    static let presets: [(value: Int, caption: String)] = [(125, "Low"), (250, "Default"), (333, "High"), (1000, "Engine maximum")]
+    static func isPreset(_ fps: Int) -> Bool { presets.contains { $0.value == fps } }
+    /// Home's status chip: the numeral (nil for no cap) and the words after it.
+    static func chip(_ fps: Int) -> (numeral: String?, text: String) { fps > 0 ? ("\(fps)", "fps cap") : (nil, "No fps cap") }
+    static func spoken(_ fps: Int) -> String { fps > 0 ? "Frame cap \(fps) frames per second" : "No frame cap" }
+    static func customCaption(_ fps: Int) -> String { fps == 0 ? "Unlimited" : "Custom value" }
+}
+
 enum MouseMath {
     /// Distance for a full turn: counts per 360° (360 / (yaw × sensitivity)) divided by DPI, in centimetres.
     static func centimetresPer360(dpi: Double, sensitivity: Double, yaw: Double = 0.022) -> Double? {

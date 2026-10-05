@@ -16,7 +16,7 @@ struct SettingsView: View {
                         SettingsSection("Frame rate") {
                             FrameRateCrates(fps: $model.settings.fps, custom: $customFPS)
                         } footer: {
-                            Text("Servers can enforce their own cap. Competitive CoD2x servers usually allow 125 to 250.")
+                            Text("Any cap from 0 to 1000, where 0 means no cap. Servers can enforce their own; CoD2x competitive servers keep it between 125 and 250.")
                         }
                         SettingsSection("Display") { displayGroup }
                         SettingsSection("Mouse and sound") { mouseGroup }
@@ -33,7 +33,7 @@ struct SettingsView: View {
         .scrollIndicators(.automatic)
         .ignoresSafeArea(.container, edges: .top)
         .background(WindowOriginReader(origin: $origin))
-        .onAppear { customFPS = ![333, 250, 125].contains(model.settings.fps) }
+        .onAppear { customFPS = !FrameCap.isPreset(model.settings.fps) }
         .modifier(SaveToolbar(saved: model.settingsSaved, save: model.saveSettings))
     }
 
@@ -298,8 +298,7 @@ struct SettingsNote: View {
     }
 }
 
-/// Settings that exist in the design but wait on the Metal renderer: visibly disabled and labelled.
-/// Ammo-crate frame-rate presets: 333, 250, 125 and a custom value.
+/// Ammo-crate frame-cap quick picks (`FrameCap.presets`) and a custom value from 0 (no cap) to 1000.
 struct FrameRateCrates: View {
     @Binding var fps: Int
     @Binding var custom: Bool
@@ -307,19 +306,20 @@ struct FrameRateCrates: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
         HStack(spacing: 10) {
-            crate("333", "Classic competitive physics", selected: !custom && fps == 333) { fps = 333; custom = false }
-            crate("250", "Common CoD2x server cap", selected: !custom && fps == 250) { fps = 250; custom = false }
-            crate("125", "Original default feel", selected: !custom && fps == 125) { fps = 125; custom = false }
+            ForEach(FrameCap.presets, id: \.value) { preset in
+                crate("\(preset.value)", preset.caption, selected: !custom && fps == preset.value) { fps = preset.value; custom = false }
+            }
             Button { withAnimation(reduceMotion ? nil : .launcherSpring) { custom = true } } label: {
                 VStack(alignment: .leading, spacing: 6) {
                     if custom {
                         TextField("FPS", value: $fps, format: .number.grouping(.never)).textFieldStyle(.plain)
                             .font(.stencil(34)).foregroundStyle(palette.dark ? palette.accent : Palette.hex(0x4e5b2f)).frame(height: 34)
-                            .accessibilityLabel("Custom frame cap")
+                            .onSubmit { fps = min(1000, max(0, fps)) }
+                            .accessibilityLabel("Custom frame cap, 0 to 1000, 0 for no cap")
                     } else {
                         Text("—").font(.stencil(34)).foregroundStyle(palette.numeral).frame(height: 34)
                     }
-                    Text("Custom value").font(.system(size: 11)).foregroundStyle(palette.secondary)
+                    Text(custom ? FrameCap.customCaption(fps) : "Custom value").font(.system(size: 11)).foregroundStyle(palette.secondary)
                 }
                 .crateStyle(selected: custom, palette: palette)
             }
