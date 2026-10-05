@@ -1857,9 +1857,16 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
     {
 
         {
+#if defined(COD2_X64)
+            extern GLuint CDirect3DVertexShader_GetProgramId(const CDirect3DVertexShader *shader);
+            GLuint vsId = (!is2D && g_activeVertexShader)
+                              ? CDirect3DVertexShader_GetProgramId((const CDirect3DVertexShader *)g_activeVertexShader)
+                              : 0;
+#else
             GLuint vsId = (!is2D && g_activeVertexShader)
                               ? *(GLuint *)((char *)g_activeVertexShader + 4)
                               : 0;
+#endif
 #if defined(COD2_X64)
             int useProg = vsId && dev->pixelShader && CDirect3DDevice_UsePrograms();
 #else

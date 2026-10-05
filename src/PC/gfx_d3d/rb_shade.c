@@ -1273,7 +1273,11 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                 const Material *tessMat = ((materialCommands_t *)tess)->material;
                 refStateBits = (byte *)tessMat->stateBits;
             }
+#if defined(COD2_X64)
+            stateMap = (byte *)((MaterialPassDx7 *)pass)->stateMap;
+#else
             stateMap = *(byte **)(pass + 8);
+#endif
 
             stateBits[0] = *(int *)(refStateBits + 0);
             stateBits[1] = *(int *)(refStateBits + 4);
@@ -1335,12 +1339,20 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
             }
 
             {
+#if defined(COD2_X64)
+                int fogSrc = (((MaterialPassDx7 *)pass)->fogToBlack == 1) ? 0 : 2;
+#else
                 int fogSrc = (*(byte *)(pass + 8) == 1) ? 0 : 2;
+#endif
                 RB_UpdateFogColor( (FogColorSrcEnum)(fogSrc));
             }
 
             {
+#if defined(COD2_X64)
+                byte passNormalize = ((MaterialPassDx7 *)pass)->gridLighting;
+#else
                 byte passNormalize = *(byte *)(pass + 4);
+#endif
                 if (passNormalize != dxState.gridLighting) {
                     byte *dx = (byte *)dx_g;
                     volatile int *af = (volatile int *)&alwaysfails;
@@ -1379,7 +1391,11 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                 }
             }
 
+#if defined(COD2_X64)
+            if (((MaterialPassDx7 *)pass)->objectiveGlow) {
+#else
             if (*(byte *)(pass + 7)) {
+#endif
 
                 r_backEndGlobals_t *backEnd2 = backEnd;
                 float phase = backEnd2->sceneDef.floatTime;

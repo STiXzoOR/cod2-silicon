@@ -30,11 +30,18 @@ extern void ZN20COpenGLVertexProgramD2Ev(void *_this);
 extern void ZN20COpenGLVertexProgramD2Ev(void);
 #endif
 
+#if defined(COD2_X64)
+GLuint CDirect3DVertexShader_GetProgramId(const CDirect3DVertexShader *_this)
+{
+    return *(const GLuint *)((const CDirect3DVertexShaderImpl *)_this)->baseState;
+}
+#else
 #if COD2_APPLE_SDK
 GLuint CDirect3DVertexShader_GetProgramId(const CDirect3DVertexShader *_this)
 {
     return *(const GLuint *)((const CDirect3DVertexShaderImpl *)_this)->baseState;
 }
+#endif
 #endif
 
 ULONG CDirect3DVertexShader_AddRef(const CDirect3DVertexShader *_this)
