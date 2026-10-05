@@ -8,6 +8,8 @@ binary=${3:-${COD2_STABS_BINARY:-$HOME/Projects/cod2-native-refs/macbin/cod2mp_m
 mkdir -p "$output"
 python3 "$root/tools/abi/test_audit.py"
 python3 "$root/tools/abi/test_imports.py"
+python3 "$root/tools/abi/test_raw_offsets.py"
+python3 "$root/tools/abi/raw_offsets.py" "$database" --output "$output/raw-offsets.json"
 python3 "$root/tools/abi/audit.py" "$database" --output "$output/functions.json" \
     --baseline "$root/tools/abi/baseline.json"
 python3 "$root/tools/abi/callback_tables.py" "$database" --audit "$output/functions.json" \

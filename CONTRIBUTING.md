@@ -116,6 +116,7 @@ python3 -m unittest discover -s tools/tests -v
 python3 -m unittest discover -s tools/datagen -p test_datagen.py -v
 python3 tools/abi/test_audit.py
 python3 tools/abi/test_imports.py
+python3 tools/abi/test_raw_offsets.py
 python3 tests/rendering/shader_setup.py
 python3 -m unittest discover -s tests/lp64/renderer -p test_wine_draw_trace.py -v
 COD2X_SANITIZERS=1 sh tests/cod2x/run_full.sh
@@ -128,6 +129,8 @@ python3 tests/fixes13/run.py --build build-macos-codx
 python3 tests/perf/run.py
 python3 tests/lp64/game/run.py --build build-macos
 python3 tests/lp64/script/run.py
+python3 tests/lp64/ui/run.py --build build-macos
+python3 tests/lp64/ui/run.py --build build-macos-codx
 sh tests/lp64/renderer/run.sh
 sh tests/lp64/renderer/run_shader_raster.sh
 sh tests/lp64/renderer/run_texture_mips.sh
@@ -160,7 +163,11 @@ git diff --check
 ```
 
 The full ABI check must report **zero mismatches**; it includes function,
-renderer callback and import-indirection audits. It reads the private Mac
+renderer callback, import-indirection and reviewed raw-offset audits. The raw
+checker uses each engine compile entry's actual preprocessor flags, including
+CoD2x, and rejects new or duplicated candidates absent from
+`tools/abi/raw-offsets.json`. Review each new entry's layout/reachability evidence;
+do not regenerate an approval list from unchecked source. It reads the private Mac
 reference binary. Public CI runs the function and callback portions and
 synthetic checker tests; it cannot run the binary-dependent import audit.
 
@@ -190,6 +197,13 @@ stability or performance:
 ```sh
 python3 tools/parity/record.py --binary build-macos-codx/cod2_macos \
   --data "$HOME/Games/CoD2" --output output/smoke-new --frames 100
+
+# Menu acceptance: run sequentially when pgrep -fl cod2_macos is empty.
+# Output directories must be new and outside the repository.
+python3 tests/rendering/menu_sweep.py build-macos/cod2_macos \
+  --output "$HOME/Library/Application Support/CoD2-native/menu-stock-new" --port 29938
+python3 tests/rendering/menu_sweep.py build-macos-codx/cod2_macos \
+  --output "$HOME/Library/Application Support/CoD2-native/menu-codx-new" --port 29939
 ```
 
 ## Which checks need game data?
@@ -202,7 +216,8 @@ even when they use synthetic content.
 | Suite/check | Licensed input needed? | Other requirements |
 | --- | --- | --- |
 | `tools/tests`, `tools/datagen/test_datagen.py`, shader manifest tests, Wine trace parser tests | No | Python standard library; synthetic files only |
-| `tools/abi/test_audit.py`, `test_imports.py` | No | Clang for synthetic independent translation units |
+| `tools/abi/test_audit.py`, `test_imports.py`, `test_raw_offsets.py` | No | Clang for synthetic independent translation units |
+| `tools/abi/raw_offsets.py` | No | Real native engine compile database; exact reviewed allowlist, both stock and CoD2x |
 | `tools/abi/audit.py`, `callback_tables.py` | No | Real native compile database; no game executable required |
 | `tools/abi/check.sh`, `imports.py` | **Mac binary** | Full-STABS reference plus compile database |
 | `tests/cod2x/run.sh`, `run_full.sh`, `run_native.sh` | No | Clang/SDK, SDL headers; synthetic archives, URL probe app, local HTTPS fixtures (openssl); native watchdog/crash fixtures |
@@ -210,6 +225,7 @@ even when they use synthetic content.
 | `tests/online/sdk_identity.sh` | No | IOKit/CoreFoundation and legacy-stub fixture |
 | `tests/fixes13/run.py`, `tests/lp64/game/run.py` | No | Compile database; generated fixture labels are empty |
 | `tests/lp64/script/run.py` | No | `build-macos` compile database and generated `bss_native.c.o`; includes compiler and VM suites |
+| `tests/lp64/ui/run.py` | No | Native compile database; production binding/multi-choice/enum/debug-table ASan/UBSan fixtures |
 | `tests/perf/run.py` | No | Clang; source fixtures, **not a benchmark** |
 | `tests/lp64/renderer/run.sh` | No | Clang + ASan/UBSan; synthetic buffers/materials/commands, no GL context |
 | Renderer `run_shader_raster.sh`, `run_texture_mips.sh`, `run_volume_upload.sh` | No | Synthetic content in private real CGL contexts; OpenGL-capable session |
@@ -219,6 +235,7 @@ even when they use synthetic content.
 | `tests/lp64/game/check_layouts.py`, `tests/fixes13/reference.py` | **Mac binaries** | Compare layouts/facts to reference STABS/disassembly data |
 | `tools/macos-port/check_wavelets.py`, material/shader extraction validation | **IWDs and/or Mac binary** | External owned inputs; retain results outside git |
 | `tests/rendering/toujane_rgb.py`, parity recording, combat drivers, demos, live play and benchmarks | **Game data** | Built engine, private writable home; some checks also need owned shaders, CD key, server or demo |
+| `tests/rendering/menu_sweep.py` | **Game data** | Interactive session, `timeout`, no competing game; every loaded menu in front end/listen game plus safe UI scripts; captures outside git |
 
 Diagnostic replay tools (`tests/lp64/game/replay.py`, renderer diagnostics,
 LP64 inventory) inspect compiler output; they are not live acceptance tests.
