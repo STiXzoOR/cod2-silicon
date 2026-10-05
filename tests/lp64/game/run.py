@@ -61,6 +61,7 @@ for name, sources in [('startup', ['src/PC/server_mp/sv_init_mp.c']),
                       ('use_list', []),
                       ('world_links', []),
                       ('fx_channels', ['src/PC/EffectsCore/FxTemplate.c', 'src/PC/EffectsCore/FxCurve_load_obj.c']),
+                      ('shellshock_file', ['src/PC/cgame_mp/cg_shellshock.c']),
                       ('grenades', ['src/PC/game_mp/g_missile_mp.c', 'src/PC/bgame/bg_misc.c', 'src/PC/universal/com_math.c']),
                       ('wire', ['src/PC/qcommon/msg_mp.c'])]:
     if args.test and name not in args.test:

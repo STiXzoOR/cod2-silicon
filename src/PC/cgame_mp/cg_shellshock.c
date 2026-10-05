@@ -210,12 +210,21 @@ qboolean CG_SaveShellShockDvars(const char *name)
 qboolean CG_LoadShellShockDvars(const char *name)
 {
     const char *fullpath;
+#if defined(COD2_X64)
+    char fullpathBuffer[1024];
+#endif
     int fh;
     int filesize;
     char *buf;
     qboolean result;
 
     fullpath = va("shock/%s.shock", name);
+#if defined(COD2_X64)
+    /* File loading and dvar parsing can reuse both thread-local va buffers. */
+    strncpy(fullpathBuffer, fullpath, sizeof(fullpathBuffer));
+    fullpathBuffer[sizeof(fullpathBuffer) - 1] = '\0';
+    fullpath = fullpathBuffer;
+#endif
 
     filesize = FS_FOpenFileByMode(fullpath, &fh, 0);
     if (filesize < 0) {
