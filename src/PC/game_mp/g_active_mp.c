@@ -1276,7 +1276,12 @@ void ClientEndFrame(gentity_t *ent)
     }
 
     ent->r.svFlags = (ent->r.svFlags | 2) & 0xfe;
+#if defined(COD2_X64)
+    /* Mac reference writes takedamage (i386 +0x161), not turret activity. */
+    ent->takedamage = 1;
+#else
     ent->active = 1;
+#endif
 
     client->ps.pm_flags |= 0x00800000;
     client->ps.pm_flags &= 0xfcffffff;
@@ -1296,7 +1301,11 @@ void ClientEndFrame(gentity_t *ent)
     } else if (client->sess.sessionState == SESS_STATE_DEAD) {
         client->ps.pm_type = (ent->count == 1) ? 6 : 7;
         ent->r.svFlags = (ent->r.svFlags | 1) & 0xfd;
+#if defined(COD2_X64)
+        ent->takedamage = 0;
+#else
         ent->active = 0;
+#endif
     } else {
         client->ps.pm_type = ent->tagInfo != 0;
     }
