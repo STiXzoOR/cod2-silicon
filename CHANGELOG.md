@@ -45,6 +45,13 @@ All notable changes to CoD2 Silicon are documented here, following
 - Temporary collision models dropped their content mask and broadphase
   links used the wrong entity numbering, so they were unlinked from the
   world.
+- Thrown grenades fell through the world: movement checked the wrong
+  bounce flag, so frags exploded far below the map and smoke never formed
+  a cloud.
+- Effect colour curves and scales were not parsed, so smoke and explosion
+  particles drew tiny and black.
+- Ordinary projectile impacts were skipped, and splash damage swapped its
+  inner damage with its radius.
 - The Controls pages showed no key names next to their actions.
 - After a game started from a server link or `--play` with engine options,
   the launcher came back without a window.
