@@ -714,18 +714,26 @@ static inline __attribute__((always_inline)) int CG_PlayPickedAlias(const snd_al
 
 static inline __attribute__((always_inline)) int CG_LocalSoundEntityNum(void)
 {
+#if defined(COD2_X64)
+    return cg->nextSnap->ps.clientNum;
+#else
     const byte *localSoundState;
 
     localSoundState = (const byte *)&cgArray + 36;
     return *(const int *)(localSoundState + 0xd8);
+#endif
 }
 
 static inline __attribute__((always_inline)) const vec_t *CG_LocalSoundOrigin(void)
 {
+#if defined(COD2_X64)
+    return cg->nextSnap->ps.origin;
+#else
     const byte *localSoundState;
 
     localSoundState = (const byte *)&cgArray + 36;
     return (const vec_t *)(localSoundState + 0x20);
+#endif
 }
 
 int CG_PlaySoundAliasAsMasterByName(int entitynum, const vec_t *origin, const char *aliasname)
