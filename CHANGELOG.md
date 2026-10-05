@@ -47,7 +47,7 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Known limitations
 
-- Constant 333 fps and active macOS Game Mode remain unverified. WS18's capped
+- Smooth frame pacing at high caps and active macOS Game Mode remain unverified. WS18's capped
   1080p capture averaged 331.2 fps with a 205.2 fps 1% low; most slow frames
   wait inside the OpenGL swap (WS19).
 - No microphone capture, intro cinematics or standalone native server link.

@@ -21,8 +21,8 @@ evidence is in the [port reports](macos-port/README.md).
   `cod2_macos_ded` that runs as a launchd service on any Apple silicon Mac,
   followed by a server manager. Network and file parsing will be fuzzed and
   hardened before internet hosting is recommended.
-- **Constant 333 fps.** Present frames through Metal (`CAMetalLayer` and
-  `CAMetalDisplayLink`), so the 3 ms client frame never waits on the
+- **Smooth frame pacing.** Present frames through Metal (`CAMetalLayer` and
+  `CAMetalDisplayLink`), so the game's frame loop never waits on the
   compositor. WS19 traced most current hitches to the OpenGL swap. Results
   count only when `tools/macos/validate-333.sh` runs on an unlocked, quiet
   machine.
