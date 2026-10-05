@@ -1805,12 +1805,24 @@ void Script_SetItemColor(displayContextDef_t *dc, itemDef_t *item, const char **
 
         float *out = NULL;
         if (I_stricmp(name, "backcolor") == 0) {
+#if defined(COD2_X64)
+            out = ((itemDef_t *)item2)->window.backColor;
+#else
             out = (float *)(item2 + 0x1dc);
+#endif
         } else if (I_stricmp(name, "forecolor") == 0) {
+#if defined(COD2_X64)
+            out = ((itemDef_t *)item2)->window.foreColor;
+#else
             out = (float *)(item2 + 0x1cc);
+#endif
             Window_AddDynamicFlags( (itemDef_t *)((void *)item2), 0x10000);
         } else if (I_stricmp(name, "bordercolor") == 0) {
+#if defined(COD2_X64)
+            out = ((itemDef_t *)item2)->window.borderColor;
+#else
             out = (float *)(item2 + 0x1ec);
+#endif
         }
 
         if (out) {

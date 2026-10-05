@@ -19,6 +19,9 @@ flags += ['-UNDEBUG', '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
 suites = [
     ('ui_conversion', 'src/PC/ui_mp/ui_main_mp.c',
      ['UI_ReplaceConversions', 'UI_ReplaceConversionString']),
+    ('localization', 'src/PC/stringed/stringed_hooks.c',
+     ['SEH_IsDigit', 'SEH_LocalizeTextMessage']),
+    ('ui_item_color', 'src/PC/ui_mp/ui_shared_mp.c', ['Script_SetItemColor']),
     ('infostring', 'src/PC/universal/q_shared.c', ['Info_RemoveKey', 'Info_RemoveKey_Big']),
     ('pure_iwds', 'src/PC/qcommon/files.c', ['FS_PureServerSetLoadedIwds']),
     ('timeout', 'src/PC/client_mp/cl_main_mp.c', ['CL_Frame']),
