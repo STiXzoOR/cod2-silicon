@@ -11,7 +11,7 @@
  *   driver -minimize_crash=1 FILE
  *
  * Options use libFuzzer spelling: -runs=N -max_total_time=S -seed=N -max_len=N
- * -timeout=S -artifact_prefix=PATH -dict=FILE -corpus_out=DIR -print_every=S.
+ * -timeout=S (CPU seconds) -artifact_prefix=PATH -dict=FILE -corpus_out=DIR -print_every=S.
  * A crash, sanitizer report or timeout writes the input to the artifact prefix
  * (default crashes/) and exits non-zero. Seeds are recorded in every run log.
  */
@@ -24,6 +24,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -498,13 +499,24 @@ static void DeathCallback(void)
 
 /* ---- timeouts ---- */
 
-static volatile time_t run_started;
+/* Measured in process CPU time: on a shared Mac under `taskpolicy -b` a
+   starved process can stall for many wall-clock seconds without hanging. */
+static volatile double run_started;
+
+static double CpuSeconds(void)
+{
+    struct rusage usage;
+
+    getrusage(RUSAGE_SELF, &usage);
+    return (double)usage.ru_utime.tv_sec + usage.ru_utime.tv_usec / 1e6 +
+           (double)usage.ru_stime.tv_sec + usage.ru_stime.tv_usec / 1e6;
+}
 
 static void AlarmHandler(int sig)
 {
     (void)sig;
-    if (running_target && run_started && time(NULL) - run_started > opt_timeout) {
-        fprintf(stderr, "==driver== timeout: one input ran longer than %d s\n", opt_timeout);
+    if (running_target && CpuSeconds() - run_started > opt_timeout) {
+        fprintf(stderr, "==driver== timeout: one input used more than %d s of CPU\n", opt_timeout);
         __sanitizer_print_stack_trace();
         WriteArtifact("timeout", current_data, current_size);
         _exit(70);
@@ -539,7 +551,7 @@ static void RunOne(const uint8_t *data, size_t size)
     memcpy(copy, data, size);
     current_data = copy;
     current_size = size;
-    run_started = time(NULL);
+    run_started = CpuSeconds();
     running_target = 1;
     LLVMFuzzerTestOneInput(copy, size);
     running_target = 0;

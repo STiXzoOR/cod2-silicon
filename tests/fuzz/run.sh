@@ -53,7 +53,7 @@ for target in $targets; do
     echo "== $target: regressions =="
     regdir="tests/fuzz/regressions/$target"
     if [ -d "$regdir" ] && [ -n "$(ls -A "$regdir" 2>/dev/null)" ]; then
-        "$exe" "$regdir"/* || status=1
+        "$exe" -artifact_prefix="$crashes/$target-" "$regdir"/* || status=1
     else
         echo "  (none)"
     fi
