@@ -2173,7 +2173,15 @@ void RB_EndSurface(void)
                         ((void(D3DVTCC *)(void *, int, void *))vtable[0x104 / 4])(device, 0, d3dTexture);
 
                         {
+#if defined(COD2_X64)
+                            extern GLuint CDirect3DTexture_GetGLName(const void *texture);
+                            extern GLuint CDirect3DCubeTexture_GetGLName(const void *texture);
+                            unsigned int texID = ((GfxImage *)image)->mapType == 5
+                                                     ? CDirect3DCubeTexture_GetGLName(d3dTexture)
+                                                     : CDirect3DTexture_GetGLName(d3dTexture);
+#else
                             unsigned int texID = *(unsigned int *)((byte *)d3dTexture + 0x54);
+#endif
                             unsigned int texTarget = (*(int *)image == 5)
                                                          ? RB_GL_TEXTURE_CUBE_MAP
                                                          : RB_GL_TEXTURE_2D;

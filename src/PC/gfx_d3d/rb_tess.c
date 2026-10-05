@@ -1521,10 +1521,18 @@ void RB_TessEntity(const GfxEntity *re)
             }
 
             if (isDx7) {
+#if defined(COD2_X64)
+                RB_AddLineDx7_impl(((GfxEntity *)ent)->origin, ((GfxEntity *)ent)->endpos,
+#else
                 RB_AddLineDx7_impl(((GfxEntity *)ent)->origin, (float *)(ent + 0x48),
+#endif
                                    ((GfxEntity *)ent)->radius[0], color, s0, t0, s1, t1);
             } else {
+#if defined(COD2_X64)
+                RB_AddLine_impl(((GfxEntity *)ent)->origin, ((GfxEntity *)ent)->endpos,
+#else
                 RB_AddLine_impl(((GfxEntity *)ent)->origin, (float *)(ent + 0x48),
+#endif
                                 ((GfxEntity *)ent)->radius[0], color, s0, t0, s1, t1);
             }
         }
