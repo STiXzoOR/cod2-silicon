@@ -791,9 +791,15 @@ static int R_DPVS_REGPARM3_ABI R_GetFurtherCellList_r_impl(const GfxCell *cell, 
             if (!vertCount)
                 continue;
 
+#if defined(COD2_X64)
+            if (dpvsG.farPlanePtr) {
+                vec3_t *altBuf = (w != v) ? v : v + 128;
+                w = R_ChopPortalWinding_impl(w, &vertCount, dpvsG.farPlanePtr->coeffs, altBuf);
+#else
             if (*(int *)&dpvsG.farPlanePtr) {
                 vec3_t *altBuf = (w != v) ? v : v + 128;
                 w = R_ChopPortalWinding_impl(w, &vertCount, (const float *)parentPlane, altBuf);
+#endif
                 if (!vertCount)
                     continue;
             }
@@ -1167,7 +1173,11 @@ static inline float R_PortalMinDot(const vec3_t *verts, int vertCount, const flo
 static void R_DPVS_REGPARM3_ABI R_VisitPortalsForCell_impl(const GfxCell *cell, GfxPortal *parentPortal, const DpvsPlane *parentPlane, const DpvsPlane *planes, int planeCount, DpvsClipChildren clipChildren)
 {
     const GfxCell **cellList;
+#if defined(COD2_X64)
+    vec3_t scratchBuf[256];
+#else
     vec3_t scratchBuf[128];
+#endif
     vec3_t altBuf[128];
     int i;
 
@@ -1524,10 +1534,12 @@ static void R_VisitPortals_impl(const GfxCell *cell, const DpvsPlane *parentPlan
     LargeLocal_LargeLocal(&hullPointsPool_large_local, 0x20000);
     byte *poolBuf = (byte *)LargeLocal_GetBuf(&hullPointsPool_large_local);
 
+#if !defined(COD2_X64)
     for (i = 0; i < 255; i++) {
         *(void **)(poolBuf + (i + 1) * 0x200) = poolBuf + (i + 2) * 0x200;
     }
     *(void **)(poolBuf + 255 * 0x200 + 0x200) = 0;
+#endif
 
     for (i = 0; i < 255; i++) {
         *(void **)(poolBuf + i * 0x200) = poolBuf + (i + 1) * 0x200;
@@ -1608,13 +1620,21 @@ static void R_VisitPortals_impl(const GfxCell *cell, const DpvsPlane *parentPlan
             }
         } else {
 
+#if defined(COD2_X64)
+            const D3DMATRIX *viewProj = dpvsG.viewProjectionMatrix;
+#else
             const D3DMATRIX *viewProj = dpvsG.inverseViewProjectionMatrix;
+#endif
             const float *mtx = (const float *)viewProj;
             vec2_t screenVerts[64];
             float minX = 1.0f, maxX = -1.0f, minY = 1.0f, maxY = -1.0f;
             int nearClip = 0;
 
+#if defined(COD2_X64)
+            float fz = portalVerts[0][0] * mtx[3] + portalVerts[0][1] * mtx[7] + portalVerts[0][2] * mtx[11] + mtx[15];
+#else
             float fz = portalVerts[0][0] * mtx[0x0C] + portalVerts[0][1] * mtx[0x1C] + portalVerts[0][2] * mtx[0x2C] + mtx[0x3C];
+#endif
             if (fz < 0.125f) {
 
                 clipChildren = 1;
@@ -1631,7 +1651,11 @@ static void R_VisitPortals_impl(const GfxCell *cell, const DpvsPlane *parentPlan
                     float fx = portalVerts[i][0];
                     float fy = portalVerts[i][1];
                     float fzz = portalVerts[i][2];
+#if defined(COD2_X64)
+                    float w = fx * mtx[3] + fy * mtx[7] + fzz * mtx[11] + mtx[15];
+#else
                     float w = fx * mtx[0x0C] + fy * mtx[0x1C] + fzz * mtx[0x2C] + mtx[0x3C];
+#endif
                     if (w < 0.125f) {
                         nearClip = 1;
                         clipChildren = 1;
@@ -1642,9 +1666,14 @@ static void R_VisitPortals_impl(const GfxCell *cell, const DpvsPlane *parentPlan
                         break;
                     }
                     float invW = 1.0f / w;
+#if defined(COD2_X64)
+                    float sx = (fx * mtx[0] + fy * mtx[4] + fzz * mtx[8] + mtx[12]) * invW;
+                    float sy = (fx * mtx[1] + fy * mtx[5] + fzz * mtx[9] + mtx[13]) * invW;
+#else
                     float sx = (fx * mtx[0x00] + fy * mtx[0x10] + fzz * mtx[0x20] + mtx[0x30]) * invW;
                     float sy = (fx * mtx[0x04] + fy * mtx[0x14] + fzz * mtx[0x24] + mtx[0x34]) * invW;
                     float sz = (fx * mtx[0x08] + fy * mtx[0x18] + fzz * mtx[0x28] + mtx[0x38]) * invW;
+#endif
                     screenVerts[i][0] = sx;
                     screenVerts[i][1] = sy;
                     if (sx < minX)
