@@ -246,23 +246,37 @@ extern entityHandler_t entityHandlers[20];
 #define FUNCTIONS_COUNT ((int)(sizeof(functions) / sizeof(functions[0])))
 #define BUILTIN_METHODS_COUNT 0x3b
 
+#if !defined(COD2_X64)
 #define SCRIPT_IO_HANDLE_OFFSET 0x3608
 #define SCRIPT_IO_BUFFER_OFFSET 0x360c
 #define SCRIPT_IO_MARK_OFFSET 0x3610
+#endif
 
 static inline __attribute__((always_inline)) fileHandle_t *GScr_ScriptIOFileHandle(int filenum)
 {
+#if defined(COD2_X64)
+    return &((level_locals_t *)imp_level)->openScriptIOFileHandles[filenum];
+#else
     return (fileHandle_t *)((byte *)imp_level + SCRIPT_IO_HANDLE_OFFSET + filenum * sizeof(fileHandle_t));
+#endif
 }
 
 static inline __attribute__((always_inline)) char **GScr_ScriptIOFileBuffer(int filenum)
 {
+#if defined(COD2_X64)
+    return &((level_locals_t *)imp_level)->openScriptIOFileBuffers[filenum];
+#else
     return (char **)((byte *)imp_level + SCRIPT_IO_BUFFER_OFFSET + filenum * sizeof(char *));
+#endif
 }
 
 static inline __attribute__((always_inline)) com_parse_mark_t *GScr_ScriptIOLineMark(int filenum)
 {
+#if defined(COD2_X64)
+    return &((level_locals_t *)imp_level)->currentScriptIOLineMark[filenum];
+#else
     return (com_parse_mark_t *)((byte *)imp_level + SCRIPT_IO_MARK_OFFSET + filenum * sizeof(com_parse_mark_t));
+#endif
 }
 
 static const char *GScr_EffectName(int fxId, char *buffer, int bufferSize)

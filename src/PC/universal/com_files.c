@@ -437,6 +437,14 @@ Bool FS_RegisterDvars(void)
 
 void FS_ClearIwdReferences(void)
 {
+#if defined(COD2_X64)
+    searchpath_t *search;
+
+    for (search = fs_searchpaths; search; search = (searchpath_t *)search->next) {
+        if (search->pack)
+            search->pack->referenced = 0;
+    }
+#else
     byte *search;
 
     for (search = (byte *)fs_searchpaths; search; search = *(byte **)search) {
@@ -444,6 +452,7 @@ void FS_ClearIwdReferences(void)
         if (pack)
             *(byte *)(pack + 0x310) = 0;
     }
+#endif
 }
 
 const char *GetBspExtension(void)

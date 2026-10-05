@@ -74,7 +74,11 @@ void CM_LoadMap(const char *name, int *checksum)
     alloc = Hunk_AllocInternal(cm_base->vertCount * 4);
     phys->checkcount.verts = (int *)alloc;
 
+#if defined(COD2_X64)
+    alloc = Hunk_AllocInternal(sizeof(cbrush_t));
+#else
     alloc = Hunk_AllocInternal(0x30);
+#endif
     phys->box_brush = (cbrush_t *)alloc;
     memcpy(alloc, cm_base->box_brush, sizeof(cbrush_t));
 
@@ -87,7 +91,11 @@ void CM_LoadMap(const char *name, int *checksum)
 
 void CM_Shutdown(void)
 {
+#if defined(COD2_X64)
+    Com_Memset(&cm, 0, sizeof(cm));
+#else
     Com_Memset(&cm, 0, 0x110);
+#endif
 }
 
 int CM_NumInlineModels(void)

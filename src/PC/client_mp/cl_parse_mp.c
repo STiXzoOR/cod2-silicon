@@ -599,19 +599,31 @@ void CL_WWWDownload(void)
 static byte *CL_EntitySlot(byte *base, int num)
 {
     int idx = num & 0x7ff;
+#if defined(COD2_X64)
+    return (byte *)&((clientActive_t *)base)->parseEntities[idx];
+#else
     return base + 0xd30e0 + idx * 240;
+#endif
 }
 
 static byte *CL_ClientSlot(byte *base, int num)
 {
     int idx = num & 0x7ff;
+#if defined(COD2_X64)
+    return (byte *)&((clientActive_t *)base)->parseClients[idx];
+#else
     return base + 0x14b0e0 + idx * 92;
+#endif
 }
 
 static byte *CL_SnapSlot(byte *base, int messageNum)
 {
     int idx = messageNum & 0x1f;
+#if defined(COD2_X64)
+    return (byte *)&((clientActive_t *)base)->snapshots[idx];
+#else
     return base + 0x495e0 + idx * 0x26d8;
+#endif
 }
 
 void CL_ParseSnapshot(msg_t *msg)
