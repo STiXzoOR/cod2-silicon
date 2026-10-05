@@ -1076,6 +1076,14 @@ void SV_Frame(int msec)
         SV_ResetSkeletonCache();
         G_RunFrame(svs.time);
         Scr_SetLoading(0);
+#if defined(COD2_X64) && COD2_X64
+        /* Catch-up can run several simulation ticks in one Com_Frame. Record
+           each completed tick; the existing outer hook suppresses duplicates. */
+        {
+            extern void Sys_StateHashFrame(void);
+            Sys_StateHashFrame();
+        }
+#endif
 
         if (frameMsec <= sv.timeResidual) {
             SV_ArchiveSnapshot();

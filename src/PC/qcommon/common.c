@@ -1792,7 +1792,9 @@ BM_NOINLINE void Com_Frame_Try_Block_Function(void)
             com_lastFrameTime = com_frameTime;
         rawMsec = com_frameTime - com_lastFrameTime;
         if (rawMsec < minMsec)
-#if COD2_APPLE_SDK
+#if COD2_APPLE_SDK && defined(DEDICATED)
+            NET_Sleep(minMsec - rawMsec);
+#elif COD2_APPLE_SDK
         {
             if (!com_dedicated->current.integer && com_maxfps->current.integer > 0)
                 Sys_WaitUntilMilliseconds((unsigned int)com_lastFrameTime + minMsec);

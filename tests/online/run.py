@@ -28,6 +28,7 @@ suites = [
     ('infostring', 'src/PC/universal/q_shared.c', ['Info_RemoveKey', 'Info_RemoveKey_Big']),
     ('pure_iwds', 'src/PC/qcommon/files.c', ['FS_PureServerSetLoadedIwds']),
     ('timeout', 'src/PC/client_mp/cl_main_mp.c', ['CL_Frame']),
+    ('map_loading', 'src/PC/client_mp/cl_main_mp.c', ['CL_ConnectionlessPacket']),
     ('scheduled_fx', 'src/PC/EffectsCore/FxScheduler.c',
      ['FxScheduler_GetDvar', 'FxScheduler_PlayEffect', 'FxScheduler_Clean']),
     ('server_commands', 'src/PC/client_mp/cl_cgame_mp.c', ['CL_GetServerCommand']),
@@ -69,7 +70,7 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
                 functions.append(protocol[protocol.index('size_t Cod2x_EncodeConnect('):
                                           protocol.index('int Cod2x_HwidValid(')])
         for function in names:
-            match = re.search(r'^(?:static )?(?:const char \*|void |dvar_t \*|qboolean |int )' + function + r'\([^;]*?\)\n\{',
+            match = re.search(r'^(?:static )?(?:const char \*|void |dvar_t \*|qboolean |Bool |int )' + function + r'\([^;]*?\)\n\{',
                               source, re.M)
             depth = 0
             for token in re.finditer(r'/\*[\s\S]*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"|[{}]',

@@ -83,7 +83,11 @@ extern void XAnimSetTime(XAnimTree *tree, unsigned int animIndex, float time);
 #define SNAP_NUMCLIENTS 0x26b8
 #define SNAP_CLIENTS 0x116b0
 
+#if defined(COD2_X64) && COD2_X64
+#define CI_STRIDE sizeof(clientInfo_t)
+#else
 #define CI_STRIDE 0x4b8
+#endif
 #define CI_INFOVALID 0x000
 #define CI_NEXTVALID 0x004
 #define CI_CLIENTNUM 0x008
@@ -93,7 +97,11 @@ extern void XAnimSetTime(XAnimTree *tree, unsigned int animIndex, float time);
 #define CI_ATTACHMODELNAMES 0x080
 #define CI_ATTACHTAGNAMES 0x200
 #define CI_DOBJDIRTY 0x3f8
+#if defined(COD2_X64) && COD2_X64
+#define CI_PXANIMTREE offsetof(clientInfo_t, pXAnimTree)
+#else
 #define CI_PXANIMTREE 0x4a4
+#endif
 
 #define CLSTATE_STRIDE 0x5c
 
@@ -195,8 +203,13 @@ static void CG_ResetEntity(char *cent)
         {
             char *cgs_ptr = (char *)cgs;
 
+#if defined(COD2_X64) && COD2_X64
+            corpseInfo = (char *)&cgs->corpseinfo[entNum - 64];
+            corpseBase = corpseInfo - 4;
+#else
             corpseBase = cgs_ptr + entNum * CI_STRIDE - 0x6bf0;
             corpseInfo = corpseBase + 4;
+#endif
         }
 
         pXAnimTree = ((clientInfo_t *)corpseInfo)->pXAnimTree;
@@ -633,8 +646,12 @@ void CG_SetNextSnap(snapshot_t *snap_param)
                         {
                             char *cgs_ptr = (char *)cgs;
                             int csNum = ((centity_t *)cent)->nextState.number;
+#if defined(COD2_X64) && COD2_X64
+                            char *corpseCI = (char *)&cgs->corpseinfo[csNum - 64];
+#else
                             char *corpseBase = cgs_ptr + csNum * CI_STRIDE - 0x6bf0;
                             char *corpseCI = corpseBase + 4;
+#endif
 
                             XAnimTree *savedTree = *(XAnimTree **)(corpseCI + CI_PXANIMTREE);
 
