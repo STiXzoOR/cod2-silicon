@@ -61,6 +61,13 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
             # Keep the production native link accessor and its layout assertion.
             functions.append(source[source.index('#if defined(COD2_X64)'):
                                     source.index('extern int irand')])
+        if '-DCOD2_CODX=1' in flags and name in ('cdkey_hash', 'challenge_resend'):
+            identity = (root / 'src/PC/qcommon/cod2x_identity.c').read_text()
+            functions.append(identity[identity.index('int Cod2x_CDKeyHash('):identity.rindex('#endif')])
+            if name == 'challenge_resend':
+                protocol = (root / 'src/PC/qcommon/cod2x_protocol.c').read_text()
+                functions.append(protocol[protocol.index('size_t Cod2x_EncodeConnect('):
+                                          protocol.index('int Cod2x_HwidValid(')])
         for function in names:
             match = re.search(r'^(?:static )?(?:const char \*|void |dvar_t \*|qboolean |int )' + function + r'\([^;]*?\)\n\{',
                               source, re.M)

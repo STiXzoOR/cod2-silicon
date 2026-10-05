@@ -32,6 +32,9 @@ char *va(const char *format, ...)
 }
 int Sys_IsLANAddress(netadr_t adr) { (void)adr; return 0; }
 void CL_RequestAuthorization(void) { ++authorizations; }
+#if defined(COD2_CODX) && COD2_CODX
+void Cod2x_PrepareConnect(void) {}
+#endif
 Bool NET_OutOfBandPrint(netsrc_t sock, netadr_t adr, const char *text)
 { (void)sock; (void)adr; snprintf(packet, sizeof(packet), "%s", text); return ++sent; }
 const char *Dvar_InfoString(int bit) { (void)bit; return ""; }

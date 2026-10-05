@@ -2599,7 +2599,13 @@ const char *UI_FeederItemText(float feederID, int index, int column, MaterialHan
         if ((unsigned)column > 3)
             return "";
         {
+#if defined(COD2_X64)
+            const char *text = sharedUiInfo.serverStatusInfo.lines[index][column];
+            if (!text)
+                return "";
+#else
             const char *text = *(const char **)((byte *)&sharedUiInfo + 109864 + (column + index * 4) * 4);
+#endif
             if (text[0] == '@')
                 return UI_SafeTranslateString(text + 1);
             return text;
