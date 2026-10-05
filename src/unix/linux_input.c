@@ -288,8 +288,13 @@ int SDL_PumpInputEvents(void)
         case SDL_WINDOWEVENT:
             if (ev.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
                 extern void Key_ClearStates(void);
+                extern void MacDisplay_FocusChanged(int focused);
                 Key_ClearStates();
                 MacRawMouse_SetActive(0);
+                MacDisplay_FocusChanged(0);
+            } else if (ev.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
+                extern void MacDisplay_FocusChanged(int focused);
+                MacDisplay_FocusChanged(1);
             }
             break;
 #endif

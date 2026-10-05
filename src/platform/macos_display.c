@@ -115,7 +115,10 @@ static int SetWindowMode(void)
         windowMode = MAC_BORDERLESS;
     /* Reset also runs at map load. Toggling out and immediately back into a
      * Cocoa fullscreen Space can cancel its asynchronous transition. */
-    SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, windowMode == MAC_BORDERLESS ? "0" : "1");
+    /* Minimizing an exclusive fullscreen window leaves the display captured in
+     * its game mode (a black screen). MacDisplay_FocusChanged steps down to the
+     * desktop mode instead and restores exclusive mode on return. */
+    SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
     if (windowMode == MAC_WINDOWED && SDL_SetWindowFullscreen(sdl_gl_window, 0) != 0)
 #else
     if (SDL_SetWindowFullscreen(sdl_gl_window, 0) != 0)
@@ -211,6 +214,26 @@ static int CreateRenderBuffer(MacContext *ctx, int depthBits, int stencil)
     glReadBuffer(GL_COLOR_ATTACHMENT0_EXT);
     return glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) == GL_FRAMEBUFFER_COMPLETE_EXT ? 0 : -1;
 }
+
+#if defined(__APPLE__) && defined(COD2_X64)
+/* Called from the event pump. In exclusive fullscreen, losing focus returns the
+ * display to its desktop mode so other apps are usable; regaining focus restores
+ * the exclusive mode chosen by SetWindowMode. */
+void MacDisplay_FocusChanged(int focused)
+{
+    static int steppedDown;
+
+    if (!sdl_gl_window || windowMode != MAC_FULLSCREEN)
+        return;
+    if (!focused && !steppedDown) {
+        if (SDL_SetWindowFullscreen(sdl_gl_window, SDL_WINDOW_FULLSCREEN_DESKTOP) == 0)
+            steppedDown = 1;
+    } else if (focused && steppedDown) {
+        if (SDL_SetWindowFullscreen(sdl_gl_window, SDL_WINDOW_FULLSCREEN) == 0)
+            steppedDown = 0;
+    }
+}
+#endif
 
 void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
                                     int quality, int interval, int *hasAux)

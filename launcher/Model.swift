@@ -70,6 +70,7 @@ struct MediaEntry: Identifiable {
     private var attachedGame: NSRunningApplication?
     private var attachmentTask: Task<Void, Never>?
     private var connectionTask: Task<Void, Never>?
+    private var handOffTask: Task<Void, Never>?
     private var gameStartedAt = Date()
     private var gameBundle: URL { Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app") }
     private var activeGamePID: pid_t? {
@@ -417,11 +418,34 @@ struct MediaEntry: Identifiable {
             pendingLink = nil; fastPlay = false
             if let link = plan.link { scheduleLink(link, pid: process.processIdentifier) }
             cancelRefresh()
-            NSApp.windows.forEach { $0.orderOut(nil) }
-            NSApp.setActivationPolicy(.accessory)
+            handOff(to: process.processIdentifier)
             print("CoD2 Silicon: game started (pid \(process.processIdentifier)).")
             fflush(stdout)
         } catch { notice = error.localizedDescription }
+    }
+    /// Gives the game keyboard and mouse focus. Since macOS 14 an app can only take focus when
+    /// the active app yields it, so the launcher stays active until the game has launched,
+    /// yields and activates it, and only then hides its window and leaves the Dock.
+    private func handOff(to pid: pid_t) {
+        handOffTask?.cancel()
+        handOffTask = Task { @MainActor [weak self] in
+            for _ in 0..<150 {
+                guard let self, self.gameRunning, !Task.isCancelled else { return }
+                if let game = NSRunningApplication(processIdentifier: pid), game.isFinishedLaunching {
+                    if #available(macOS 14.0, *) {
+                        NSApp.yieldActivation(to: game)
+                        game.activate(from: NSRunningApplication.current, options: [.activateAllWindows])
+                    } else {
+                        game.activate(options: [.activateAllWindows, .activateIgnoringOtherApps])
+                    }
+                    break
+                }
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+            guard let self, self.gameRunning else { return }
+            NSApp.windows.forEach { $0.orderOut(nil) }
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
     /// Takes the Dock back after the game. The system can refuse the switch (seen right after a
     /// LaunchServices launch); AppKit then already reports .regular, so step through accessory and retry.
@@ -439,7 +463,7 @@ struct MediaEntry: Identifiable {
         }
     }
     private func gameEnded(code: Int32?) {
-        connectionTask?.cancel()
+        connectionTask?.cancel(); handOffTask?.cancel()
         engine = nil; gameRunning = false
         restoreRegularPolicy()
         NSApp.windows.first?.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
