@@ -97,7 +97,11 @@ HRESULT CDirect3D_GetAdapterIdentifier(const void *_this, UINT Adapter, DWORD Fl
     (void)_this;
     (void)Adapter;
     (void)Flags;
+#if defined(COD2_X64)
+    memset(pIdentifier, 0, sizeof(D3DADAPTER_IDENTIFIER9));
+#else
     memset(pIdentifier, 0, 1024);
+#endif
     return 0;
 }
 

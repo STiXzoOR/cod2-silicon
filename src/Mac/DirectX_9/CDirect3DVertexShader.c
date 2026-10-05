@@ -122,7 +122,12 @@ HRESULT CDirect3DVertexShader_GetFunction(const CDirect3DVertexShader *_this, UI
     return 0;
 }
 
+#if defined(COD2_X64)
+void ZThn4_N21CDirect3DVertexShaderD0Ev(void *p) { ZN21CDirect3DVertexShaderD0Ev((char *)p - offsetof(CDirect3DVertexShaderImpl, vtableSecondary)); }
+void ZThn4_N21CDirect3DVertexShaderD1Ev(void *p) { ZN21CDirect3DVertexShaderD1Ev((char *)p - offsetof(CDirect3DVertexShaderImpl, vtableSecondary)); }
+#else
 void ZThn4_N21CDirect3DVertexShaderD0Ev(void *p) { ZN21CDirect3DVertexShaderD0Ev((char *)p - 4); }
 void ZThn4_N21CDirect3DVertexShaderD1Ev(void *p) { ZN21CDirect3DVertexShaderD1Ev((char *)p - 4); }
+#endif
 fnptr_t vtbl_CDirect3DVertexShader[] = { (fnptr_t)CDirect3DVertexShader_QueryInterface, (fnptr_t)CDirect3DVertexShader_AddRef, (fnptr_t)CDirect3DVertexShader_Release, (fnptr_t)CDirect3DVertexShader_GetDevice, (fnptr_t)CDirect3DVertexShader_GetFunction, (fnptr_t)ZN21CDirect3DVertexShaderD1Ev, (fnptr_t)ZN21CDirect3DVertexShaderD0Ev };
 fnptr_t vtbl_CDirect3DVertexShader_secondary[] = { (fnptr_t)ZThn4_N21CDirect3DVertexShaderD1Ev, (fnptr_t)ZThn4_N21CDirect3DVertexShaderD0Ev };
