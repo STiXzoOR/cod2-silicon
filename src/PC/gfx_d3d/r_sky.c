@@ -177,7 +177,11 @@ void R_FlushSun(void)
         sfd->lastTime = 0;
         sfd->lastVisibility = 0.0f;
         i++;
+#if defined(COD2_X64)
+        sfd++;
+#else
         sfd = (SunFlareDynamic *)((byte *)sfd + 0x30);
+#endif
     } while (i < 4);
 }
 
