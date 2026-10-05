@@ -14,20 +14,28 @@ void *imp_cl = &client;
 static struct { int type, value, value2; } events[64];
 static int count, absoluteX, absoluteY, relativeX, relativeY, cleared, quit;
 static int pumps;
+#if defined(COD2_X64) && COD2_X64
 static int fullscreen, focused = 1, visible = 1, displayFocus = -1;
+#endif
 static Uint32 ticks = 1;
 void MacTest_PumpEvents(void) { ++pumps; }
 Uint32 MacTest_GetTicks(void) { return ticks; }
 /* Drive focus states explicitly: desktop focus belongs to the user/test runner. */
 Uint32 MacTest_GetWindowFlags(SDL_Window *window)
 {
+#if defined(COD2_X64) && COD2_X64
     return (SDL_GetWindowFlags(window) & ~SDL_WINDOW_INPUT_FOCUS) |
         (focused ? SDL_WINDOW_INPUT_FOCUS : 0);
+#else
+    return SDL_GetWindowFlags(window) | SDL_WINDOW_INPUT_FOCUS;
+#endif
 }
+#if defined(COD2_X64) && COD2_X64
 int MacDisplay_IsFullscreen(void) { return fullscreen; }
 void MacDisplay_FocusChanged(int focus) { displayFocus = focus; }
 void MacDisplay_PumpVisibility(void) {}
 int MacDisplay_WindowVisible(void) { return visible; }
+#endif
 extern int SDL_PumpInputEvents(void);
 extern void IN_Frame(void);
 void Sys_QueEvent(int time, sysEventType_t type, int value, int value2, int length, void *pointer)
@@ -106,6 +114,7 @@ int main(void)
     e = (SDL_Event){0}; e.type = SDL_MOUSEMOTION; e.motion.xrel = 7; e.motion.yrel = -4; push(&e);
     IN_Frame();
     assert(relativeX == 7 && relativeY == -4);
+#if defined(COD2_X64) && COD2_X64
     client->keyCatchers = 2;
     fullscreen = 1;
     IN_Frame();
@@ -138,6 +147,12 @@ int main(void)
     IN_Frame();
     assert(displayFocus == 1 && SDL_GetRelativeMouseMode() == SDL_TRUE);
     assert(SDL_ShowCursor(SDL_QUERY) == SDL_DISABLE);
+#else
+    e = (SDL_Event){0}; e.type = SDL_WINDOWEVENT; e.window.event = SDL_WINDOWEVENT_FOCUS_LOST; push(&e);
+    e = (SDL_Event){0}; e.type = SDL_QUIT; push(&e);
+    SDL_PumpInputEvents();
+    assert(cleared && quit == 1);
+#endif
     SDL_SetRelativeMouseMode(SDL_FALSE);
     free(client); SDL_DestroyWindow(sdl_gl_window); SDL_Quit();
     puts("input: keys, UTF-8 events, buttons, flipped multi-click wheel, scaled UI, relative fallback, focus and quit passed");
