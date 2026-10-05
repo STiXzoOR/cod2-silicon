@@ -15,6 +15,11 @@ dvar_t *in_mouse = &mouse, *in_rawmouse = &raw;
 static int variableCount, relativeMode, rawMode, rawActive, focused = 1;
 static int rawX, rawY, resultX, resultY, pendingMotion;
 static uint64_t now, rawEvents;
+int MacDisplay_IsFullscreen(void) { return 0; }
+int MacDisplay_WindowVisible(void) { return 1; }
+void MacDisplay_FocusChanged(int focus) { (void)focus; }
+void MacDisplay_PumpVisibility(void) {}
+int SDL_ShowCursor(int toggle) { (void)toggle; return 0; }
 
 const dvar_t *Dvar_RegisterInt(const char *name, int value, int min, int max, unsigned short flags)
 {

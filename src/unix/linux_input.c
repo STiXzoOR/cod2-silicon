@@ -272,6 +272,7 @@ int SDL_PumpInputEvents(void)
     Uint32 now = SDL_GetTicks();
     if (!pumped || now != lastPump) {
         SDL_PumpEvents();
+        { extern void MacDisplay_PumpVisibility(void); MacDisplay_PumpVisibility(); }
         lastPump = now;
         pumped = 1;
     }
@@ -413,7 +414,15 @@ void IN_Frame(void)
 #if defined(__APPLE__) && defined(COD2_X64)
     extern SDL_Window *sdl_gl_window;
     clientActive_t *client = imp_cl ? *(clientActive_t **)imp_cl : NULL;
-    int focused = sdl_gl_window && (SDL_GetWindowFlags(sdl_gl_window) & SDL_WINDOW_INPUT_FOCUS);
+    extern int MacDisplay_WindowVisible(void);
+    int focused = sdl_gl_window && (SDL_GetWindowFlags(sdl_gl_window) & SDL_WINDOW_INPUT_FOCUS) &&
+        MacDisplay_WindowVisible();
+    static int hadFocus;
+    if (hadFocus && !focused) {
+        extern void Key_ClearStates(void);
+        Key_ClearStates();
+    }
+    hadFocus = focused;
     extern int MacDisplay_IsFullscreen(void);
     /* Fullscreen keeps the mouse captured in menus too, as the original does:
      * menus move the game's own cursor from relative motion (CL_MouseEvent

@@ -31,6 +31,11 @@ typedef struct { int width, height, depth, refresh; } MacMode;
 static MacMode *modes;
 static int modeCount;
 static int windowMode = MAC_WINDOWED;
+#if defined(__APPLE__) && defined(COD2_X64)
+static int exclusiveSuspended;
+static int exclusiveResumeArmed;
+extern int MacWindow_IsVisible(SDL_Window *window);
+#endif
 static int refreshRate;
 static int initialized;
 static MacContext *screenContext;
@@ -101,6 +106,10 @@ void MacPlatform_ConfigureWindow(int width, int height, int mode, int refresh)
     sdl_gl_width = width;
     sdl_gl_height = height;
     windowMode = mode;
+#if defined(__APPLE__) && defined(COD2_X64)
+    exclusiveSuspended = 0;
+    exclusiveResumeArmed = 0;
+#endif
     refreshRate = refresh;
     sInWindowMode = mode == MAC_WINDOWED;
 }
@@ -221,16 +230,36 @@ static int CreateRenderBuffer(MacContext *ctx, int depthBits, int stencil)
  * the exclusive mode chosen by SetWindowMode. */
 void MacDisplay_FocusChanged(int focused)
 {
-    static int steppedDown;
-
     if (!sdl_gl_window || windowMode != MAC_FULLSCREEN)
         return;
-    if (!focused && !steppedDown) {
+    if (!focused)
+        exclusiveResumeArmed = 1;
+    focused = focused && MacWindow_IsVisible(sdl_gl_window);
+    if (!focused && !exclusiveSuspended) {
         if (SDL_SetWindowFullscreen(sdl_gl_window, SDL_WINDOW_FULLSCREEN_DESKTOP) == 0)
-            steppedDown = 1;
-    } else if (focused && steppedDown) {
-        if (SDL_SetWindowFullscreen(sdl_gl_window, SDL_WINDOW_FULLSCREEN) == 0)
-            steppedDown = 0;
+            exclusiveSuspended = 1;
+    } else if (focused && exclusiveSuspended && exclusiveResumeArmed) {
+        if (SDL_SetWindowFullscreen(sdl_gl_window, SDL_WINDOW_FULLSCREEN) == 0) {
+            exclusiveSuspended = 0;
+            exclusiveResumeArmed = 0;
+        }
+    }
+}
+
+int MacDisplay_WindowVisible(void)
+{
+    return sdl_gl_window && MacWindow_IsVisible(sdl_gl_window);
+}
+
+void MacDisplay_PumpVisibility(void)
+{
+    /* Mission Control briefly exposes thumbnails while animating. Latch the
+     * safe desktop mode until a real focus-loss/gain pair, rather than treating
+     * those exposures as a request to capture the display again. */
+    if (sdl_gl_window && windowMode == MAC_FULLSCREEN && !exclusiveSuspended &&
+        !MacWindow_IsVisible(sdl_gl_window)) {
+        if (SDL_SetWindowFullscreen(sdl_gl_window, SDL_WINDOW_FULLSCREEN_DESKTOP) == 0)
+            exclusiveSuspended = 1;
     }
 }
 #endif

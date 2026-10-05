@@ -14,7 +14,7 @@ void *imp_cl = &client;
 static struct { int type, value, value2; } events[64];
 static int count, absoluteX, absoluteY, relativeX, relativeY, cleared, quit;
 static int pumps;
-static int fullscreen, focused = 1, displayFocus = -1;
+static int fullscreen, focused = 1, visible = 1, displayFocus = -1;
 static Uint32 ticks = 1;
 void MacTest_PumpEvents(void) { ++pumps; }
 Uint32 MacTest_GetTicks(void) { return ticks; }
@@ -26,6 +26,8 @@ Uint32 MacTest_GetWindowFlags(SDL_Window *window)
 }
 int MacDisplay_IsFullscreen(void) { return fullscreen; }
 void MacDisplay_FocusChanged(int focus) { displayFocus = focus; }
+void MacDisplay_PumpVisibility(void) {}
+int MacDisplay_WindowVisible(void) { return visible; }
 extern int SDL_PumpInputEvents(void);
 extern void IN_Frame(void);
 void Sys_QueEvent(int time, sysEventType_t type, int value, int value2, int length, void *pointer)
@@ -113,6 +115,17 @@ int main(void)
     e = (SDL_Event){0}; e.type = SDL_MOUSEMOTION; e.motion.xrel = 3; e.motion.yrel = 2; push(&e);
     IN_Frame();
     assert(relativeX == 3 && relativeY == 2);
+    /* Mission Control occludes a still-key window without SDL focus loss. */
+    int clearedBeforeOcclusion = cleared;
+    visible = 0;
+    IN_Frame();
+    assert(cleared == clearedBeforeOcclusion + 1);
+    assert(SDL_GetRelativeMouseMode() == SDL_FALSE);
+    assert(SDL_ShowCursor(SDL_QUERY) == SDL_ENABLE);
+    visible = 1;
+    IN_Frame();
+    assert(SDL_GetRelativeMouseMode() == SDL_TRUE);
+    assert(SDL_ShowCursor(SDL_QUERY) == SDL_DISABLE);
     focused = 0;
     e = (SDL_Event){0}; e.type = SDL_WINDOWEVENT; e.window.event = SDL_WINDOWEVENT_FOCUS_LOST; push(&e);
     e = (SDL_Event){0}; e.type = SDL_QUIT; push(&e);

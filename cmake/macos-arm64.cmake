@@ -88,7 +88,7 @@ foreach(target cod2_macos cod2_macos_ded)
 endforeach()
 # vidConfig lives in the renderer, which the dedicated server does not build.
 target_link_options(cod2_macos PRIVATE "LINKER:-alias,_vidConfig,_r_limits_ptr")
-target_sources(cod2_macos PRIVATE src/unix/linux_input.c src/platform/macos_display.c
+target_sources(cod2_macos PRIVATE src/unix/linux_input.c src/platform/macos_display.c src/platform/macos_window.m
   src/platform/macos_rawmouse.m src/platform/macos_audio.c src/platform/macos_voice.c
   src/platform/macos_jpeg.c)
 set_property(SOURCE src/platform/macos_rawmouse.m APPEND PROPERTY COMPILE_OPTIONS -fobjc-arc)
@@ -98,7 +98,7 @@ set_source_files_properties(src/PC/gfx_d3d/rb_state.c src/PC/gfx_d3d/r_screensho
 target_link_libraries(cod2_macos PRIVATE SDL2::SDL2 ${COD2_OPENGL_FRAMEWORK} ${COD2_CURL_LIBRARY}
   ${COD2_AUDIO_FRAMEWORK} ${COD2_COREAUDIO_FRAMEWORK}
   ${COD2_GAMECONTROLLER_FRAMEWORK} ${COD2_FOUNDATION_FRAMEWORK}
-  "-framework ImageIO" "-framework CoreGraphics")
+  "-framework ImageIO" "-framework CoreGraphics" "-framework AppKit")
 if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
   find_library(COD2_APPKIT_FRAMEWORK AppKit REQUIRED)
