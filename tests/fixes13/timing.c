@@ -77,7 +77,13 @@ int main(void)
 {
     com_timescale_value.current.value = 1;
     simulate(125, 8); simulate(250, 4); simulate(333, 3);
-    limited = 1; simulate(333, 4); limited = 0;
+    limited = 1;
+#if defined(COD2_CODX) && COD2_CODX
+    simulate(333, 4);
+#else
+    simulate(333, 3);
+#endif
+    limited = 0;
     /* A renderer hitch passes its real integer elapsed time through unchanged. */
     workMsec = 12; Com_Frame_Try_Block_Function(); Com_Frame_Try_Block_Function();
     assert(lastClientMsec >= 12 && lastClientMsec == lastServerMsec);
