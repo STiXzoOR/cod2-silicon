@@ -22,10 +22,6 @@ void Cod2x_DemoClientFrame(void) {}
 void Voice_GetLocalVoiceData(ClientVoicePacket_t *p) { (void)p; }
 void Voice_Playback(void) {}
 void CL_UpdateColor(void) {}
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-void Cod2x_Frame(int active, int demo) { (void)active; (void)demo; }
-void Cod2x_DemoClientFrame(void) {}
-#endif
 int DL_InProgress(void) { return 0; }
 void CL_WWWDownload(void) {}
 void CL_CheckForResend(void) {}
