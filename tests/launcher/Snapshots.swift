@@ -8,8 +8,8 @@ import SwiftUI
 //   LauncherSnapshots OUTPUT [--data GAME_DIR] [--fallback] [--scale2] [--only SCREEN]
 //
 // --data uses the player's own loading screens (private review only; never commit them).
-// --fallback forces the macOS 13–25 material styling. --scale2 adds 2× offscreen renders
-// for checking text and vector crispness (system materials draw flat in that path).
+// --fallback forces the macOS 13–25 material styling. --scale2 adds 2× renders of the same
+// window for checking text, vectors and shapes (material styling; system glass draws flat there).
 
 /// The review host can't become the active app while the login session is locked, so the
 /// window reports key and main appearance. Test-only: these overrides never ship.
@@ -76,7 +76,7 @@ final class SnapshotWindow: NSWindow {
                         checked += items.count; findings += found
                         report.append(["screen": name, "items": items.map(ShapeCheck.json), "findings": found])
                     } else { fputs("Capture failed: \(name)\n", stderr) }
-                    if scale2, let image = render2x(model: model, dark: dark) {
+                    if scale2, let image = await render2x(model: model, dark: dark) {
                         try? write(image, to: output.appendingPathComponent(name + "@2x.png")); written += 1
                     }
                 }
@@ -102,9 +102,17 @@ final class SnapshotWindow: NSWindow {
 
 
     @MainActor static func capture(model: LauncherModel, dark: Bool, fallback: Bool, audit: ShapeAudit) async -> CGImage? {
+        let window = await show(model: model, dark: dark, glass: !fallback, audit: audit)
+        let image = WindowCapture.image(of: window)
+        window.orderOut(nil); window.close()
+        return image
+    }
+
+    /// The app-like window, shown and laid out at 1440×900.
+    @MainActor static func show(model: LauncherModel, dark: Bool, glass: Bool, audit: ShapeAudit? = nil) async -> NSWindow {
         let appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
         NSApp.appearance = appearance
-        let controller = NSHostingController(rootView: root(model, dark: dark, glass: !fallback, audit: audit))
+        let controller = NSHostingController(rootView: root(model, dark: dark, glass: glass, audit: audit))
         controller.sizingOptions = []
         if #available(macOS 14.0, *) { controller.sceneBridgingOptions = [.toolbars] }
         let window = SnapshotWindow(contentRect: NSRect(x: 0, y: 0, width: 1440, height: 900),
@@ -120,22 +128,19 @@ final class SnapshotWindow: NSWindow {
         try? await Task.sleep(for: .milliseconds(1400))
         window.setFrame(NSRect(x: 40, y: 40, width: 1440, height: 900), display: true)
         try? await Task.sleep(for: .milliseconds(400))
-        let image = WindowCapture.image(of: window)
-        window.orderOut(nil); window.close()
-        return image
+        return window
     }
 
-    /// 2× offscreen render of the material styling, for text and vector crispness checks.
-    @MainActor static func render2x(model: LauncherModel, dark: Bool) -> CGImage? {
-        let view = NSHostingView(rootView: root(model, dark: dark, glass: false))
-        view.frame = NSRect(x: 0, y: 0, width: 1440, height: 900)
-        view.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
-        view.layoutSubtreeIfNeeded()
-        guard let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 2880, pixelsHigh: 1800, bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
+    /// 2× render of the same window with the material styling, toolbar included, for text, vector
+    /// and shape checks. A bare hosting view has no window, so the split view wouldn't lay out.
+    @MainActor static func render2x(model: LauncherModel, dark: Bool) async -> CGImage? {
+        let window = await show(model: model, dark: dark, glass: false)
+        defer { window.orderOut(nil); window.close() }
+        guard let frame = window.contentView?.superview,
+              let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 2880, pixelsHigh: 1800, bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
                                          isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
-        rep.size = view.bounds.size
-        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.3))
-        view.cacheDisplay(in: view.bounds, to: rep)
+        rep.size = frame.bounds.size
+        frame.cacheDisplay(in: frame.bounds, to: rep)
         return rep.cgImage
     }
 
