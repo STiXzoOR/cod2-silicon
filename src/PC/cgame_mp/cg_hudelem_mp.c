@@ -379,8 +379,14 @@ static void CG_GetHudElemInfo(const hudelem_t *elem, cg_hudelem_t *cghe, char *h
         if (idx > 63)
             break;
 
+#if defined(COD2_X64)
+        if (idx < 0)
+            break;
+        I_strncpyz(cghe->hudElemText, cg->bgs.clientinfo[idx].name, 256);
+#else
         char *snap = cg_snap();
         I_strncpyz(cghe->hudElemText, (char *)snap + 0xe0920 + idx * 1208, 256);
+#endif
         break;
     }
     case HE_TYPE_MAPNAME:

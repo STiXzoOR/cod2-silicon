@@ -289,37 +289,67 @@ static void CG_Obituary(centity_t *cent)
 
     }
     {
+#if defined(COD2_X64)
+        char *clientInfoBase = (char *)&cg->bgs.clientinfo[target];
+        victimCI = clientInfoBase;
+#else
         char *clientInfoBase = (char *)cg + CG_CLIENTINFO + target * 1208;
         victimCI = ((char *)clientInfoBase + offsetof(clientInfo_t, name[8]));
+#endif
 
         if (((clientInfo_t *)clientInfoBase)->infoValid == 0)
             return;
 
+#if defined(COD2_X64)
+        I_strncpyz(targetName, ((clientInfo_t *)clientInfoBase)->name, 0x20);
+#else
         I_strncpyz(targetName, ((char *)clientInfoBase + offsetof(clientInfo_t, name[20])), 0x20);
+#endif
 
         I_strncat(targetName, 0x22, (const char *)"^7");
 
+#if defined(COD2_X64)
+        CG_DrawScoreboard_GetTeamColor(((clientInfo_t *)victimCI)->oldteam, victimColor);
+#else
         CG_DrawScoreboard_GetTeamColor(*(int *)(((char *)victimCI + offsetof(clientInfo_t, oldteam)) - 0x14), victimColor);
+#endif
 
         int localClient = cg->clientNum;
+#if defined(COD2_X64)
+        char *localCI = (char *)&cg->bgs.clientinfo[localClient];
+#else
         char *localCI = (char *)cg + CG_CLIENTINFO + localClient * 1208;
+#endif
         if (((clientInfo_t *)localCI)->infoValid == 0)
             return;
     }
 
     if ((unsigned int)attacker <= 63) {
 
+#if defined(COD2_X64)
+        char *atkInfoBase = (char *)&cg->bgs.clientinfo[attacker];
+        attackerCI = atkInfoBase;
+#else
         char *atkInfoBase = (char *)cg + CG_CLIENTINFO + attacker * 1208;
         attackerCI = ((char *)atkInfoBase + offsetof(clientInfo_t, name[8]));
+#endif
 
         if (((clientInfo_t *)atkInfoBase)->infoValid == 0)
             return;
 
+#if defined(COD2_X64)
+        I_strncpyz(attackerName, ((clientInfo_t *)atkInfoBase)->name, 0x20);
+#else
         I_strncpyz(attackerName, ((char *)atkInfoBase + offsetof(clientInfo_t, name[20])), 0x20);
+#endif
 
         I_strncat(attackerName, 0x22, (const char *)"^7");
 
+#if defined(COD2_X64)
+        CG_DrawScoreboard_GetTeamColor(((clientInfo_t *)attackerCI)->oldteam, attackerColor);
+#else
         CG_DrawScoreboard_GetTeamColor(*(int *)(((char *)attackerCI + offsetof(clientInfo_t, oldteam)) - 0x14), attackerColor);
+#endif
 
         snap = (char *)cg->nextSnap;
         if (target == *(int *)(snap + SNAP_PS_CLIENTNUM)) {
@@ -344,8 +374,13 @@ static void CG_Obituary(centity_t *cent)
         if (attacker == localClientNum) {
 
             if (attackerCI != (char *)0) {
+#if defined(COD2_X64)
+                int atkTeam = ((clientInfo_t *)attackerCI)->oldteam;
+                if (atkTeam != 0 && atkTeam == ((clientInfo_t *)victimCI)->oldteam) {
+#else
                 int atkTeam = *(int *)(((char *)attackerCI + offsetof(clientInfo_t, oldteam)) - 0x14);
                 if (atkTeam != 0 && atkTeam == *(int *)(((char *)victimCI + offsetof(clientInfo_t, oldteam)) - 0x14)) {
+#endif
 
                     const char *msg = va((const char *)"CGAME_YOUKILLED\x15^1&&2^7 %s\x14%s", targetName, (const char *)"CGAME_TEAMMATE");
 
@@ -368,8 +403,13 @@ static void CG_Obituary(centity_t *cent)
         } else if (target == localClientNum) {
 
             if (attackerCI != (char *)0) {
+#if defined(COD2_X64)
+                int atkTeam = ((clientInfo_t *)attackerCI)->oldteam;
+                if (atkTeam != 0 && atkTeam == ((clientInfo_t *)victimCI)->oldteam) {
+#else
                 int atkTeam = *(int *)(((char *)attackerCI + offsetof(clientInfo_t, oldteam)) - 0x14);
                 if (atkTeam != 0 && atkTeam == *(int *)(((char *)victimCI + offsetof(clientInfo_t, oldteam)) - 0x14)) {
+#endif
 
                     const char *msg = va((const char *)"CGAME_YOUWEREKILLED\x15^1&&2^7 %s\x14%s", attackerName, (const char *)"CGAME_TEAMMATE");
                     if (cg->inKillCam == 0) {
@@ -779,16 +819,28 @@ void CG_EntityEvent(centity_t *cent, int event)
                 return;
 
             char *itemDefs = CG_ItemInfoBase();
+#if defined(COD2_X64)
+            char *itemData = (char *)&((itemInfo_t *)itemDefs)[itemIndex];
+#else
             char *itemData = itemDefs + itemIndex * 9 * 4;
+#endif
 
             if (event == 0x90) {
 
                 CG_PlayEntitySoundAlias(es->number,
+#if defined(COD2_X64)
+                                        ((itemInfo_t *)itemData)->pickupSound);
+#else
                                         *(snd_alias_list_t **)(itemData + 0x1c) );
+#endif
             } else {
 
                 CG_PlayEntitySoundAlias(es->number,
+#if defined(COD2_X64)
+                                        ((itemInfo_t *)itemData)->ammoPickupSound);
+#else
                                         *(snd_alias_list_t **)(itemData + 0x20) );
+#endif
             }
 
             snap = (char *)cg->nextSnap;
@@ -800,9 +852,15 @@ void CG_EntityEvent(centity_t *cent, int event)
             {
                 int itemid = itemIndex;
                 char *itemInfoBase = BG_ItemListBase();
+#if defined(COD2_X64)
+                gitem_t *item = &((gitem_t *)itemInfoBase)[itemid];
+                int weapId = item->giTag;
+                if (item->giType != IT_WEAPON)
+#else
                 char *item = itemInfoBase + itemid * (1 + 2 * 5) * 4;
                 int weapId = *(int *)(item + 0x20) ;
                 if (*(int *)(item + 0x1c)  != 1)
+#endif
                     return;
 
                 char *weapDef = (char *)BG_GetWeaponDef(weapId);
@@ -1085,10 +1143,14 @@ void CG_EntityEvent(centity_t *cent, int event)
 
             {
                 int ep = eventParm;
+#if defined(COD2_X64)
+                char *entData = (char *)&cg_entities[ep];
+#else
                 int entStride = ep * 16 + ep;
                 entStride = ep + entStride * 8;
                 char *ents = (char *)cg_entities;
                 char *entData = ents + entStride * 4;
+#endif
 
                 if (((centity_t *)entData)->nextValid == 0)
                     return;

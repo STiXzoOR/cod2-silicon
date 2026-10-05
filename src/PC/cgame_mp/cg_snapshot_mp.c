@@ -83,7 +83,11 @@ extern void XAnimSetTime(XAnimTree *tree, unsigned int animIndex, float time);
 #define SNAP_NUMCLIENTS 0x26b8
 #define SNAP_CLIENTS 0x116b0
 
+#if defined(COD2_X64)
+#define CI_STRIDE sizeof(clientInfo_t)
+#else
 #define CI_STRIDE 0x4b8
+#endif
 #define CI_INFOVALID 0x000
 #define CI_NEXTVALID 0x004
 #define CI_CLIENTNUM 0x008
@@ -160,6 +164,12 @@ static void CG_ResetEntity(char *cent)
         ((centity_t *)cent)->previousEventSequence = ((centity_t *)cent)->nextState.eventSequence;
 
         clientNum = ((centity_t *)cent)->nextState.clientNum;
+#if defined(COD2_X64)
+        ci = (char *)&cg->bgs.clientinfo[clientNum];
+        ((clientInfo_t *)ci)->lerpMoveDir = ((centity_t *)cent)->nextState.angles2[1];
+        ((clientInfo_t *)ci)->lerpLean = ((centity_t *)cent)->nextState.leanf;
+        VectorCopy3(((centity_t *)cent)->lerpAngles, ((clientInfo_t *)ci)->playerAngles);
+#else
         ci = (char *)&((cg_t *)cg)->bgs.clientinfo[clientNum] - 0x14 ;
 
         *(int *)(((char *)ci + offsetof(clientInfo_t, name[8])) + 0x3e0)  = *(int *)(cent + 0x15c) ;
@@ -170,6 +180,7 @@ static void CG_ResetEntity(char *cent)
             char *to = ((char *)ci + offsetof(clientInfo_t, angles[0][0]));
             VectorCopy3((char *)((centity_t *)cent)->lerpAngles, to);
         }
+#endif
 
         *(int *)((char *)((centity_t *)cent)->lerpAngles) = 0;
         *(int *)((char *)((centity_t *)cent)->lerpAngles + 8) = 0;
@@ -195,8 +206,12 @@ static void CG_ResetEntity(char *cent)
         {
             char *cgs_ptr = (char *)cgs;
 
+#if defined(COD2_X64)
+            corpseInfo = (char *)&cgs->corpseinfo[entNum - 64];
+#else
             corpseBase = cgs_ptr + entNum * CI_STRIDE - 0x6bf0;
             corpseInfo = corpseBase + 4;
+#endif
         }
 
         pXAnimTree = ((clientInfo_t *)corpseInfo)->pXAnimTree;
@@ -207,7 +222,11 @@ static void CG_ResetEntity(char *cent)
             memcpy(corpseInfo, ci, CI_STRIDE);
 
             {
+#if defined(COD2_X64)
+                char *tagSrc = ((clientInfo_t *)corpseInfo)->attachTagNames[0];
+#else
                 char *tagSrc = corpseBase + 0x204;
+#endif
                 char *modelDst = corpseInfo;
                 for (attachIndex = 0; attachIndex < 6; attachIndex++) {
                     if (I_stricmp(tagSrc, (const char *)"J_Spine4") == 0) {
@@ -242,7 +261,11 @@ static void CG_ResetEntity(char *cent)
                 memcpy(corpseInfo, src, CI_STRIDE);
 
                 {
+#if defined(COD2_X64)
+                    char *tagSrc = ((clientInfo_t *)corpseInfo)->attachTagNames[0];
+#else
                     char *tagSrc = corpseBase + 0x204;
+#endif
                     char *modelDst = corpseInfo;
                     for (attachIndex = 0; attachIndex < 6; attachIndex++) {
                         if (I_stricmp(tagSrc, (const char *)"J_Spine4") == 0) {
@@ -633,12 +656,18 @@ void CG_SetNextSnap(snapshot_t *snap_param)
                         {
                             char *cgs_ptr = (char *)cgs;
                             int csNum = ((centity_t *)cent)->nextState.number;
+#if defined(COD2_X64)
+                            clientInfo_t *corpseCI = &cgs->corpseinfo[csNum - 64];
+                            XAnimTree *savedTree = corpseCI->pXAnimTree;
+                            int animState = corpseCI->legs.animationNumber & ~0x200;
+#else
                             char *corpseBase = cgs_ptr + csNum * CI_STRIDE - 0x6bf0;
                             char *corpseCI = corpseBase + 4;
 
                             XAnimTree *savedTree = *(XAnimTree **)(corpseCI + CI_PXANIMTREE);
 
                             int animState = *(int *)(corpseCI + 0x390)  & ~0x200;
+#endif
 
                             void *anims = XAnimGetAnims(savedTree);
 
