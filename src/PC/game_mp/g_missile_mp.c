@@ -1,5 +1,9 @@
 #include "common_types.h"
 #include "imports.h"
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+#include <stdlib.h>
+extern void Com_Printf(const char *format, ...);
+#endif
 extern level_locals_t level;
 extern scr_const_t scr_const;
 
@@ -149,6 +153,30 @@ static inline void LerpPosition(const vec_t *start, const vec_t *end, float frac
     out[1] = start[1] + (end[1] - start[1]) * fraction;
     out[2] = start[2] + (end[2] - start[2]) * fraction;
 }
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+
+static void G_MissileCombatTrace(const gentity_t *ent, const char *phase, const trace_t *trace)
+{
+    static int enabled = -1;
+    if (enabled < 0)
+        enabled = getenv("COD2_MAC_COMBAT_TRACE") != NULL;
+    if (!enabled)
+        return;
+
+    const trajectory_t *pos = &ent->s.pos;
+    Com_Printf("[combat-missile] time=%i entity=%i phase=%s weapon=%i flags=%x owner=%i mask=%x origin=%.3f,%.3f,%.3f type=%i base=%.3f,%.3f,%.3f delta=%.3f,%.3f,%.3f trTime=%i ground=%i nextthink=%i fraction=%.6f startsolid=%i contents=%x hit=%i normal=%.3f,%.3f,%.3f\n",
+        LEVEL_TIME, ent->s.number, phase, ent->s.weapon, ent->s.eFlags,
+        ent->r.ownerNum, ent->clipmask,
+        ent->r.currentOrigin[0], ent->r.currentOrigin[1], ent->r.currentOrigin[2],
+        pos->trType, pos->trBase[0], pos->trBase[1], pos->trBase[2],
+        pos->trDelta[0], pos->trDelta[1], pos->trDelta[2], pos->trTime,
+        ent->s.groundEntityNum, ent->nextthink,
+        trace ? trace->fraction : -1.0f, trace ? trace->startsolid : -1,
+        trace ? trace->contents : 0, trace ? trace->entityNum : -1,
+        trace ? trace->normal[0] : 0.0f, trace ? trace->normal[1] : 0.0f,
+        trace ? trace->normal[2] : 0.0f);
+}
+#endif
 
 void G_ExplodeMissile(gentity_t *ent)
 {
@@ -169,6 +197,9 @@ void G_ExplodeMissile(gentity_t *ent)
     SnapVector(origin);
 
     G_SetOrigin(ent, origin);
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+    G_MissileCombatTrace(ent, "explode", NULL);
+#endif
 
     (_ENT(ent)->s.eType) = 0;
 
@@ -531,6 +562,10 @@ void G_RunMissile(gentity_t *ent)
     int methodOfDeath;
     int hitClient;
     WeaponDef *weapDef;
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+
+    G_MissileCombatTrace(ent, "frame", NULL);
+#endif
 
     if ((&_ENT(ent)->s.pos)->trType == 0 && (_ENT(ent)->s.groundEntityNum) != 0x3FE) {
 
@@ -599,6 +634,9 @@ void G_RunMissile(gentity_t *ent)
     }
 
 after_trace:
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+    G_MissileCombatTrace(ent, "move", &tr);
+#endif
 
     if ((tr.surfaceFlags & 0x1F00000) == 0x1400000) {
 
@@ -666,6 +704,9 @@ after_trace:
 
             G_LocationalTrace(&trDown, (_ENT(ent)->r.currentOrigin), origin,
                               (_ENT(ent)->r.ownerNum), (_ENT(ent)->clipmask), pPriorityMap);
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+            G_MissileCombatTrace(ent, "down", &trDown);
+#endif
             if (trDown.startsolid) {
                 trDown.fraction = 0.0f;
                 VectorSubtract((_ENT(ent)->r.currentOrigin), origin, dir);
@@ -776,6 +817,9 @@ after_trace:
                 }
 
                 qboolean bounceResult = G_BounceMissile(ent, &tr);
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+                G_MissileCombatTrace(ent, "bounce", &tr);
+#endif
                 if (bounceResult && !tr.startsolid) {
 
                     G_AddEvent(ent, 0xBB, (tr.surfaceFlags & 0x1F00000) >> 20);
