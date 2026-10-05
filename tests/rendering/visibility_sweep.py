@@ -96,7 +96,7 @@ with log.open('w') as stream:
                             'Camera position changed between adjacent angles'
                     luma = json.loads(subprocess.check_output([str(analyzer), str(shot)], text=True))
                     frame = dict(pose=pose, requested_eye=position, yaw=yaw, pitch=pitch,
-                                 view_origin=world[0]['origin'] if world else None,
+                                 view_origin=origin,
                                  screenshot=str(shot), world_draws=len(world),
                                  world_primitives=sum(row['primitives'] for row in world), **luma)
                     frame['flags'] = []
