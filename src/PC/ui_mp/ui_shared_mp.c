@@ -4124,21 +4124,41 @@ qboolean Item_Bind_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, 
         const char *dvarName = item->dvar;
 
         for (i = 0; i < 0x38; i++) {
+#if defined(COD2_X64)
+            if (I_stricmp(dvarName, g_bindings[i].command) == 0)
+#else
             if (I_stricmp(dvarName, *(const char **)((byte *)g_bindings + i * 0x14)) == 0)
+#endif
                 break;
         }
         if (i < 0x38) {
 
+#if defined(COD2_X64)
+            int key1 = g_bindings[i].bind1;
+#else
             int idx = i * 0x14;
             int key1 = *(int *)((byte *)g_bindings + idx + 12);
+#endif
             if (key1 != -1) {
                 Key_SetBinding(key1, "");
+#if defined(COD2_X64)
+                g_bindings[i].bind1 = -1;
+#else
                 *(int *)((byte *)g_bindings + idx + 12) = -1;
+#endif
             }
+#if defined(COD2_X64)
+            int key2 = g_bindings[i].bind2;
+#else
             int key2 = *(int *)((byte *)g_bindings + idx + 16);
+#endif
             if (key2 != -1) {
                 Key_SetBinding(key2, "");
+#if defined(COD2_X64)
+                g_bindings[i].bind2 = -1;
+#else
                 *(int *)((byte *)g_bindings + idx + 16) = -1;
+#endif
             }
         }
         Controls_SetConfig(0);
@@ -4156,7 +4176,11 @@ qboolean Item_Bind_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, 
     if (key != -1) {
 
         byte *entry = (byte *)g_bindings;
+#if defined(COD2_X64)
+        while (entry != (byte *)(g_bindings + 56)) {
+#else
         while (entry != (byte *)g_bindings + 56 * 0x14) {
+#endif
             if ((((bind_t*)(entry))->bind2) == key) {
                 (((bind_t*)(entry))->bind2) = -1;
             }
@@ -4165,26 +4189,42 @@ qboolean Item_Bind_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, 
                 (((bind_t*)(entry))->bind1) = (((bind_t*)(entry))->bind2);
                 (((bind_t*)(entry))->bind2) = -1;
             }
+#if defined(COD2_X64)
+            entry += sizeof(bind_t);
+#else
             entry += 0x14;
+#endif
         }
     }
 
     const char *bindName = item->dvar;
     int bindIdx = -1;
     for (i = 0; i < 0x38; i++) {
+#if defined(COD2_X64)
+        if (I_stricmp(bindName, g_bindings[i].command) == 0) {
+#else
         if (I_stricmp(bindName, *(const char **)((byte *)g_bindings + i * 0x14)) == 0) {
+#endif
             bindIdx = i;
             break;
         }
     }
 
     if (bindIdx >= 0 && key != -1) {
+#if defined(COD2_X64)
+        if (g_bindings[bindIdx].bind1 == -1) {
+            g_bindings[bindIdx].bind1 = key;
+        } else {
+            g_bindings[bindIdx].bind2 = key;
+        }
+#else
         int offset = bindIdx * 0x14;
         if (*(int *)((byte *)g_bindings + offset + 12) == -1) {
             *(int *)((byte *)g_bindings + offset + 12) = key;
         } else {
             *(int *)((byte *)g_bindings + offset + 16) = key;
         }
+#endif
     }
 
     Controls_SetConfig(0);
@@ -4335,7 +4375,11 @@ qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qbool
                     if (curVal != (((multiDef_s*)(mDef))->dvarValue[0])) {
                         int i;
                         for (i = 1; i < count; i++) {
+#if defined(COD2_X64)
+                            if (((multiDef_t *)mDef)->dvarValue[i] == curVal) {
+#else
                             if (*(float *)(mDef + 0x100 + i * 4) == curVal) {
+#endif
                                 current = i;
                                 break;
                             }
@@ -4350,7 +4394,11 @@ qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qbool
                 if (count > 0) {
                     int i;
                     for (i = 0; i < count; i++) {
+#if defined(COD2_X64)
+                        if (I_stricmp(string, ((multiDef_t *)mDef)->dvarStr[i]) == 0) {
+#else
                         if (I_stricmp(string, *(const char **)(mDef + 0x80 + i * 4)) == 0) {
+#endif
                             current = i;
                             break;
                         }
@@ -4385,7 +4433,11 @@ qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qbool
         const char *newVal;
         if ((((multiDef_s*)(multiPtr))->strDef)) {
 
+#if defined(COD2_X64)
+            newVal = ((multiDef_t *)multiPtr)->dvarStr[newIndex];
+#else
             newVal = *(const char **)(multiPtr + 0x80 + newIndex * 4);
+#endif
         } else {
 
             newVal = va("%g", (double)(((multiDef_s*)(multiPtr))->dvarValue[newIndex]));
@@ -4431,7 +4483,11 @@ qboolean Item_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, qbool
         struct dvar_s *dv = Dvar_FindVar((*(const char **)&((itemDef_t *)it)->typeData.listBox));
         int totalCount;
         if (dv->type == 6)
+#if defined(COD2_X64)
+            totalCount = dv->domain.enumeration.stringCount;
+#else
             totalCount = *(int *)((byte *)dv + 0x14);
+#endif
         else
             totalCount = 0;
 

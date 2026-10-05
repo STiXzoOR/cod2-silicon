@@ -1260,8 +1260,52 @@ void UI_Pause(qboolean b)
 }
 
 #ifndef __EMSCRIPTEN__
+#if defined(COD2_X64)
+static void UI_Sweep_f(void)
+{
+    extern char *Cmd_Argv(int arg);
+    const char *action = Cmd_Argv(1);
+    int i;
+
+    if (!getenv("COD2_UI_SWEEP"))
+        return;
+    if (I_stricmp(action, "list") == 0) {
+        for (i = 0; i < uiInfo->uiDC.menuCount; i++) {
+            menuDef_t *menu = uiInfo->uiDC.Menus[i];
+            Com_Printf("[ui-sweep] menu %s\n", menu->window.name);
+        }
+        Com_Printf("[ui-sweep] listed %d\n", uiInfo->uiDC.menuCount);
+    } else if (I_stricmp(action, "script") == 0) {
+        const char *args = Cmd_Args(2);
+        char name[64];
+        I_strncpyz(name, Cmd_Argv(2), sizeof(name));
+        UI_RunMenuScript(&args);
+        Com_Printf("[ui-sweep] script %s done\n", name);
+    } else if (I_stricmp(action, "closeall") == 0) {
+        Menus_CloseAll(&uiInfo->uiDC);
+        Com_Printf("[ui-sweep] closed all\n");
+    } else if (I_stricmp(action, "map") == 0) {
+        for (i = 0; i < sharedUiInfo.mapCount; i++) {
+            if (I_stricmp(Cmd_Argv(2), sharedUiInfo.mapList[i].mapLoadName) == 0) {
+                Dvar_SetInt(ui_currentNetMap, i);
+                Com_Printf("[ui-sweep] selected map %s\n", Cmd_Argv(2));
+                return;
+            }
+        }
+        Com_Printf("[ui-sweep] missing map %s\n", Cmd_Argv(2));
+    }
+}
+#endif
 void UI_OpenMenu_f(void)
 {
+#if defined(COD2_X64)
+    if (getenv("COD2_UI_SWEEP")) {
+        const char *name = Cmd_Args(1);
+        qboolean result = Menus_OpenByName(&uiInfo->uiDC, name);
+        Com_Printf("[ui-sweep] open %s %d\n", name, result);
+        return;
+    }
+#endif
     Menus_OpenByName(&uiInfo->uiDC, Cmd_Args(1));
 }
 #endif
@@ -1270,6 +1314,10 @@ void UI_OpenMenu_f(void)
 void UI_CloseMenu_f(void)
 {
     Menus_CloseByName(&uiInfo->uiDC, Cmd_Args(1));
+#if defined(COD2_X64)
+    if (getenv("COD2_UI_SWEEP"))
+        Com_Printf("[ui-sweep] close %s\n", Cmd_Args(1));
+#endif
 }
 #endif
 
@@ -1369,6 +1417,14 @@ void UI_Init(void)
 
     menuList = UI_LoadMenus("ui_mp/menus.txt", 3);
     UI_AddMenuList(&uiInfo->uiDC, menuList);
+#if defined(COD2_X64)
+    if (getenv("COD2_UI_SWEEP")) {
+        extern void Cmd_AddCommand(const char *name, void (*cmd)(void));
+        extern void Cmd_RemoveCommand(const char *name);
+        Cmd_RemoveCommand("ui_sweep");
+        Cmd_AddCommand("ui_sweep", UI_Sweep_f);
+    }
+#endif
     UI_LoadIngameMenus();
 
     if (g_mapname[0] != '\0') {
@@ -2250,7 +2306,11 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
         }
 
         if (ui_serverFilterType > 0) {
+#if defined(COD2_X64)
+            const char *filterBaseName = serverFilters[ui_serverFilterType].basedir;
+#else
             const char *filterBaseName = *(const char **)((byte *)serverFilters + ui_serverFilterType * 8 + 4);
+#endif
             if (I_stricmp(Info_ValueForKey(info_buf, "game"), filterBaseName) != 0)
                 goto reject;
         }
@@ -3200,11 +3260,18 @@ static void BM_NOINLINE UI_BuildFindPlayerList(void)
     UI_UpdateServerCount();
 
     for (i = 0; i < 16; i++) {
+#if defined(COD2_X64)
+        serverAddr = (byte *)sharedUiInfo.pendingServerStatus.server[i].adrstr;
+        hostName = (byte *)sharedUiInfo.pendingServerStatus.server[i].name;
+        hostName2 = hostName;
+        pendingFlag = &sharedUiInfo.pendingServerStatus.server[i].valid;
+#else
         slotBase = (byte *)&sharedUiInfo + i * 0x8c;
         serverAddr = (byte *)&sharedUiInfo + 113140 + i * 0x8c;
         hostName = (byte *)&sharedUiInfo + 113204 + i * 0x8c;
         hostName2 = (byte *)&sharedUiInfo + 113204 + i * 0x8c;
         pendingFlag = (int *)((byte *)&sharedUiInfo + 0x1ba7c + i * 0x8c);
+#endif
 
         if (!*pendingFlag) {
             UI_GetServerStatusInfo((const char *)serverAddr, 0);
@@ -3232,7 +3299,11 @@ static void BM_NOINLINE UI_BuildFindPlayerList(void)
                 sharedUiInfo.pendingServerStatus.num = curServer;
 
                 numResults = uiInfo->numFoundPlayerServers;
+#if defined(COD2_X64)
+                Com_sprintf(uiInfo->foundPlayerServerNames[numResults], 0x40, "searching %d/%d...", curServer, numFound);
+#else
                 Com_sprintf((char *)((byte *)uiInfo + 0xc60 + numResults * 64), 0x40, "searching %d/%d...", curServer, numFound);
+#endif
             }
             continue;
         }
@@ -3277,15 +3348,24 @@ static void BM_NOINLINE UI_BuildFindPlayerList(void)
                         continue;
                     }
 
+#if defined(COD2_X64)
+                    I_strncpyz(uiInfo->foundPlayerServerAddresses[numResults], (const char *)serverAddr, 0x40);
+                    I_strncpyz(uiInfo->foundPlayerServerNames[numResults], (const char *)hostName2, 0x40);
+#else
                     I_strncpyz((char *)((byte *)uiInfo + 0x860 + numResults * 64), (const char *)serverAddr, 0x40);
                     I_strncpyz((char *)((byte *)uiInfo + 0xc60 + numResults * 64), (const char *)hostName2, 0x40);
+#endif
                     uiInfo->numFoundPlayerServers += 1;
                     continue;
                 }
             }
         }
 
+#if defined(COD2_X64)
+        Com_sprintf(uiInfo->foundPlayerServerNames[uiInfo->numFoundPlayerServers], 0x40, "searching %d/%d...", sharedUiInfo.pendingServerStatus.num, numFound);
+#else
         Com_sprintf((char *)((byte *)uiInfo + 0xc60 + uiInfo->numFoundPlayerServers * 64), 0x40, "searching %d/%d...", sharedUiInfo.pendingServerStatus.num, numFound);
+#endif
         *pendingFlag = 0;
 
         if (!*pendingFlag)
@@ -3310,7 +3390,11 @@ static void BM_NOINLINE UI_BuildFindPlayerList(void)
 
     numResults = uiInfo->numFoundPlayerServers;
     if (numResults == 0) {
+#if defined(COD2_X64)
+        Com_sprintf(uiInfo->foundPlayerServerNames[0], 0x40, "no servers found");
+#else
         Com_sprintf((char *)((byte *)uiInfo + 0xc60), 0x40, "no servers found");
+#endif
     } else {
         const char *plural = (numResults == 2) ? "" : "s";
         Com_sprintf(uiInfo->foundPlayerServerNames[numResults - 1], 0x40, "%d server%s found with player %s", numResults - 1, plural, uiInfo->findPlayerName);
@@ -5581,7 +5665,11 @@ static void UI_BuildServerDisplayList(qboolean force)
         }
 
         if (ui_serverFilterType > 0) {
+#if defined(COD2_X64)
+            const char *filterBaseName = serverFilters[ui_serverFilterType].basedir;
+#else
             const char *filterBaseName = *(const char **)((byte *)serverFilters + ui_serverFilterType * 8 + 4);
+#endif
             if (I_stricmp(Info_ValueForKey(info_buf, "game"), filterBaseName) != 0)
                 goto reject;
         }
