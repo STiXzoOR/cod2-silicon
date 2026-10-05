@@ -11,7 +11,7 @@ Duty 2: no game content is included.
 
 The `0.1.0` port is playable on stock 1.3 and CoD2x 1.4 servers. Movement,
 firing, reloading, HTTP mod downloads and round restarts have been tested.
-Smoother frame pacing at high frame-rate caps and active Game Mode are still in progress. See the
+Smoother frame pacing and active Game Mode remain goals. See the
 [verified results below](#verified-results) for compatibility coverage,
 rendering comparisons, fullscreen limits and measured performance.
 
@@ -56,7 +56,7 @@ xattr -dr com.apple.quarantine "/Applications/CoD2 Silicon.app"
 git clone https://github.com/STiXzoOR/cod2-silicon && cd cod2-silicon && ./scripts/install.sh
 ```
 
-The installer needs the Xcode Command Line Tools and CMake and explains how to
+The installer needs Swift 6 (Xcode 16 or later), the Xcode Command Line Tools and CMake and explains how to
 get them. It downloads and builds the pinned SDL release itself (no Homebrew),
 compiles the client and installs `~/Applications/CoD2 Silicon.app`. No original
 game binary is needed to build. A locally built app is not quarantined, so
@@ -64,23 +64,35 @@ Gatekeeper does not block it.
 
 ## First run and playing
 
-Open **CoD2 Silicon.app**. It finds the game folder automatically or asks you
+Open **CoD2 Silicon.app** to use the native SwiftUI launcher: Play, a server
+browser with favorites and recents, settings, demos/screenshots and update checks.
+It finds the game folder automatically or asks you
 to choose the folder containing `main/`. If no CD key is stored, it asks for
 yours and saves it in `~/.cod2/preferences`. Never share that file or your key.
 It extracts the original shaders from your own Steam Mac copy when available,
 otherwise continues with approximate shaders. Configs, logs, demos, screenshots
 and the shader cache live in `~/Library/Application Support/CoD2 Silicon`.
 
-Use the multiplayer menu and server browser, or open a `cod2x://` server link:
+Use **Play** to enter the original multiplayer menus, or join from the launcher
+server browser. Quitting the game returns to the launcher; a game crash leaves
+the launcher open with a link to its crash report. You can also open a `cod2x://`
+server link (including while the game is running):
 
 ```sh
 open -a "/Applications/CoD2 Silicon.app" 'cod2x://connect/127.0.0.1:28960'
 ```
 
+For a direct CLI launch, run the app executable with `--play`. Append
+`--exit-after-game` to close the launcher when the game quits, or pass trusted
+engine arguments after `--`. Settings include 1080p–6K, the frame cap, vsync,
+raw mouse, audio and native fullscreen Spaces. Metal options are marked as
+upcoming until the native renderer is integrated.
+
 Replace the address with your server. For a source install, use the app under
 `~/Applications` instead. The default settings target 1080p fullscreen,
-a high frame cap, vsync off and raw mouse input; change them in Settings.
-Servers can enforce their own frame caps (competitive CoD2x servers use 125–250).
+a 250 fps cap, vsync off and raw mouse input. The cap can be set anywhere from
+0 (no cap) to 1000. Competitive CoD2x servers enforce their own 125–250 fps
+caps.
 
 ## Known limitations
 
@@ -131,8 +143,9 @@ M6, macOS 27.0.1 and original Mac shaders:
 
 The 1440p and 4K runs rendered at those sizes on a 1080p physical display using
 desktop fullscreen. Other user applications were running. A 1% low is the
-reciprocal of the mean of the slowest 1% of frame intervals. Frame pacing at high
-caps is still being improved. Game Mode activation is unverified.
+reciprocal of the mean of the slowest 1% of frame intervals. These are
+measurements, not guarantees of steady frame pacing. Game Mode activation is
+unverified.
 See the [roadmap](docs/ROADMAP.md).
 
 ## Building for development

@@ -13,6 +13,12 @@
 #define SCRIPT_ITEM_SIZE 0x2a0
 #endif
 
+#if defined(COD2_X64)
+#define UI_PULSE_DIVISOR 75
+#else
+#define UI_PULSE_DIVISOR 22
+#endif
+
 extern commandDef_t commandList[28];
 extern bind_t g_bindings[56];
 
@@ -1805,12 +1811,24 @@ void Script_SetItemColor(displayContextDef_t *dc, itemDef_t *item, const char **
 
         float *out = NULL;
         if (I_stricmp(name, "backcolor") == 0) {
+#if defined(COD2_X64)
+            out = ((itemDef_t *)item2)->window.backColor;
+#else
             out = (float *)(item2 + 0x1dc);
+#endif
         } else if (I_stricmp(name, "forecolor") == 0) {
+#if defined(COD2_X64)
+            out = ((itemDef_t *)item2)->window.foreColor;
+#else
             out = (float *)(item2 + 0x1cc);
+#endif
             Window_AddDynamicFlags( (itemDef_t *)((void *)item2), 0x10000);
         } else if (I_stricmp(name, "bordercolor") == 0) {
+#if defined(COD2_X64)
+            out = ((itemDef_t *)item2)->window.borderColor;
+#else
             out = (float *)(item2 + 0x1ec);
+#endif
         }
 
         if (out) {
@@ -2536,7 +2554,7 @@ void Item_TextColor(displayContextDef_t *dc, itemDef_t *item, vec4_t *newColor)
         for (i = 0; i < 4; i++)
             lowLight[i] = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4) * 0.8f;
 
-        float t = sinf((float)(curTime / 22));
+        float t = sinf((float)(curTime / UI_PULSE_DIVISOR));
         t = t * 0.5f + 0.5f;
 
         for (i = 0; i < 4; i++) {
@@ -2562,7 +2580,7 @@ void Item_TextColor(displayContextDef_t *dc, itemDef_t *item, vec4_t *newColor)
             for (i = 0; i < 4; i++)
                 lowLight[i] = ((itemDef_t *)it)->window.foreColor[i] * 0.8f;
 
-            float t = sinf((float)(curTime / 22));
+            float t = sinf((float)(curTime / UI_PULSE_DIVISOR));
             t = t * 0.5f + 0.5f;
 
             for (i = 0; i < 4; i++) {
@@ -2915,7 +2933,7 @@ void Item_YesNo_Paint(displayContextDef_t *dc, itemDef_t *item)
             lowLight[i] = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4) * 0.8f;
 
         int curTime = dc->realTime;
-        float t = sinf((float)(curTime / 22));
+        float t = sinf((float)(curTime / UI_PULSE_DIVISOR));
         t = t * 0.5f + 0.5f;
 
         for (i = 0; i < 4; i++) {
@@ -2980,7 +2998,7 @@ void Item_Slider_Paint(displayContextDef_t *dc, itemDef_t *item)
             lowLight[i] = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4) * 0.8f;
 
         int curTime = dc->realTime;
-        float t = sinf((float)(curTime / 22));
+        float t = sinf((float)(curTime / UI_PULSE_DIVISOR));
         t = t * 0.5f + 0.5f;
 
         for (i = 0; i < 4; i++) {
@@ -3063,7 +3081,7 @@ void Item_Bind_Paint(displayContextDef_t *dc, itemDef_t *item)
             lowLight[i] = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4) * 0.8f;
 
         int curTime = dc->realTime;
-        float t = sinf((float)(curTime / 22));
+        float t = sinf((float)(curTime / UI_PULSE_DIVISOR));
         t = t * 0.5f + 0.5f;
 
         for (i = 0; i < 4; i++) {
@@ -3143,7 +3161,7 @@ void Item_OwnerDraw_Paint(displayContextDef_t *dc, itemDef_t *item)
         float lowLight[4];
         for (i = 0; i < 4; i++)
             lowLight[i] = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4) * 0.8f;
-        float t = sinf((float)(curTime / 22));
+        float t = sinf((float)(curTime / UI_PULSE_DIVISOR));
         t = t * 0.5f + 0.5f;
         for (i = 0; i < 4; i++) {
             float hi = *(float *)(((char *)parent + offsetof(menuDef_t, focusColor[0])) + i * 4);
@@ -3162,7 +3180,7 @@ void Item_OwnerDraw_Paint(displayContextDef_t *dc, itemDef_t *item)
             float lowLight[4];
             for (i = 0; i < 4; i++)
                 lowLight[i] = ((itemDef_t *)it)->window.foreColor[i] * 0.8f;
-            float t = sinf((float)(curTime / 22));
+            float t = sinf((float)(curTime / UI_PULSE_DIVISOR));
             t = t * 0.5f + 0.5f;
             for (i = 0; i < 4; i++) {
                 float hi = ((itemDef_t *)it)->window.foreColor[i];

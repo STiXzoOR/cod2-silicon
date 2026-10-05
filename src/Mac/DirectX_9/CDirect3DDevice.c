@@ -2852,9 +2852,9 @@ HRESULT CDirect3DDevice_Reset(const CDirect3DDevice *_this, D3DPRESENT_PARAMETER
     /* r_init.c constructs this retained D3D9 presentation word array. */
     const int *parameters = (const int *)pPresentationParameters;
     extern dvar_t *Dvar_RegisterBool(const char *, int, int);
-    dvar_t *borderless = Dvar_RegisterBool("r_borderless", 0, 0x1001);
+    dvar_t *borderless = Dvar_RegisterBool("r_borderless", 1, 0x1001);
     MacPlatform_ConfigureWindow(parameters[0], parameters[1],
-        borderless->current.enabled ? MAC_BORDERLESS : (parameters[7] ? MAC_WINDOWED : MAC_FULLSCREEN), parameters[12]);
+        parameters[7] ? MAC_WINDOWED : (borderless->current.enabled ? MAC_BORDERLESS : MAC_FULLSCREEN), parameters[12]);
     if (MacDisplay_SetMode(parameters[0], parameters[1], 32, parameters[12]))
         return (HRESULT)(int32_t)0x8876086cu;
     extern void CDirect3DSurface_SetNativeDimensions(void *, UINT32, UINT32);

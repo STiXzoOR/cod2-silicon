@@ -15,6 +15,8 @@ def snapshot(out, phase):
         return text
     registry = capture('session', ['ioreg', '-n', 'Root', '-d1'])
     match = re.search(r'"CGSSessionScreenIsLocked"\s*=\s*(Yes|No|true|false)', registry)
+    if not match:
+        match = re.search(r'"IOConsoleLocked"\s*=\s*(Yes|No|true|false)', registry)
     capture('processes', ['ps', '-axo', 'pid,ppid,%cpu,%mem,comm'])
     capture('display', ['system_profiler', 'SPDisplaysDataType'])
     return dict(screen_locked=match.group(1) in ('Yes', 'true') if match else None)

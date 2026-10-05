@@ -1,0 +1,45 @@
+{
+  "captured": "2026-10-04",
+  "records": [
+    {
+      "file": "cod2master.activision.com-118.bin",
+      "peer": [
+        "185.34.107.159",
+        20710
+      ],
+      "command": "getservers 118 full empty"
+    },
+    {
+      "file": "cod2master.activision.com-120.bin",
+      "peer": [
+        "185.34.107.159",
+        20710
+      ],
+      "command": "getservers 120 full empty"
+    },
+    {
+      "file": "master.cod2x.me-118.bin",
+      "peer": [
+        "51.89.216.249",
+        20710
+      ],
+      "command": "getservers 118 full empty"
+    },
+    {
+      "file": "master.cod2x.me-120.bin",
+      "peer": [
+        "51.89.216.249",
+        20710
+      ],
+      "command": "getservers 120 full empty"
+    },
+    {
+      "file": "status.bin",
+      "peer": [
+        "151.80.40.237",
+        28962
+      ],
+      "command": "getstatus ws25"
+    }
+  ]
+}

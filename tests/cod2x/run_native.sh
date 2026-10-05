@@ -28,7 +28,7 @@ while [ "$index" -lt 16 ]; do
     touch "$test_work/game/main/$(printf 'iw_%02d.iwd' "$index")"
     index=$((index + 1))
 done
-python3 tools/cod2x/make_macos_app.py "$test_work/url_native" "$test_work/URLProbe.app" --game-dir "$test_work/game"
+python3 tools/cod2x/make_macos_app.py "$test_work/url_native" "$test_work/URLProbe.app" --engine-only --game-dir "$test_work/game"
 plutil -lint "$test_work/URLProbe.app/Contents/Info.plist"
 expected_game=$(cd "$test_work/game" && pwd -P)
 mkdir -p "$test_work/home"

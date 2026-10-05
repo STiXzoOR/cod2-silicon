@@ -735,12 +735,19 @@ static void UI_SelectCurrentMap(void)
 
     visibleIndex = 0;
     for (i = 0; i < sharedUiInfo.mapCount; i++) {
+#if defined(COD2_X64)
+        if (!sharedUiInfo.mapList[i].active)
+            continue;
+
+        if (I_stricmp(szMap, sharedUiInfo.mapList[i].mapName) == 0) {
+#else
         byte *entry = (byte *)&sharedUiInfo + i * 0xa4;
 
         if (!*(int *)(entry + 0x13f4))
             continue;
 
         if (I_stricmp(szMap, *(const char **)(entry + 0x1354)) == 0) {
+#endif
             Menu_SetFeederSelection(&uiInfo->uiDC, 0, 4, visibleIndex, "createserver_maps");
             return;
         }
@@ -1075,13 +1082,21 @@ void UI_FeederSelection(float feederID, int index)
     if (feederID == 4.0f) {
 
         int mapVal = (ui_currentNetMap)->current.integer;
+#if defined(COD2_X64)
+        int cinHandle = sharedUiInfo.mapList[mapVal].cinematic;
+#else
         int offset = mapVal * 164;
         int cinHandle = *(int *)((byte *)&sharedUiInfo + 4972 + offset);
+#endif
         int numMaps, visCount, actual, i;
 
         if (cinHandle >= 0) {
             CIN_StopCinematic(cinHandle);
+#if defined(COD2_X64)
+            sharedUiInfo.mapList[mapVal].cinematic = -1;
+#else
             *(int *)((byte *)&sharedUiInfo + 4960 + 12 + offset) = -1;
+#endif
         }
 
         numMaps = sharedUiInfo.mapCount;
@@ -1208,7 +1223,11 @@ static void UI_GetGameTypesList(void)
             } else {
 
                 int gt3 = sharedUiInfo.numGameTypes;
+#if defined(COD2_X64)
+                sharedUiInfo.gameTypes[gt3].gameTypeName = sharedUiInfo.gameTypes[gt3].gameType;
+#else
                 *(const char **)((byte *)&sharedUiInfo + 4432 + gt3 * 8) = *(const char **)((byte *)&sharedUiInfo + 4428 + gt3 * 8);
+#endif
                 {
                     const char *displayName2 = sharedUiInfo.gameTypes[sharedUiInfo.numGameTypes].gameTypeName;
                     int nameIdx3 = sharedUiInfo.numJoinGameTypes;
@@ -1979,7 +1998,11 @@ static void UI_StartServerRefresh(qboolean full)
         if (debugProtocol[0])
             Cbuf_ExecuteText(0, va("globalservers %d %s full empty\n", 0, debugProtocol));
         else
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+            Cbuf_ExecuteText(0, va("globalservers %d %d full empty\n", 0, 118));
+#else
             Cbuf_ExecuteText(0, va("globalservers %d %d full empty\n", 0, 0x73));
+#endif
     }
 }
 #endif
@@ -2036,6 +2059,21 @@ static void UI_RemoveDuplicateFromFavorites(int serverIndex)
 #ifndef __EMSCRIPTEN__
 static void UI_BinaryInsertServer(int serverIndex)
 {
+#if defined(COD2_X64)
+    int lo = 0, hi = sharedUiInfo.serverStatus.numDisplayServers;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        int cmp = LAN_CompareServers(ui_netSource->current.integer,
+                                    sharedUiInfo.serverStatus.sortKey,
+                                    sharedUiInfo.serverStatus.sortDir,
+                                    serverIndex, sharedUiInfo.serverStatus.displayServers[mid]);
+        if (cmp > 0)
+            lo = mid + 1;
+        else
+            hi = mid;
+    }
+    UI_InsertServerAtPosition(serverIndex, lo);
+#else
     int numDisplay = sharedUiInfo.serverStatus.numDisplayServers;
     int *displayServers = sharedUiInfo.serverStatus.displayServers;
     int lo, hi, mid, testIdx, cmp, position, lastCmp;
@@ -2074,6 +2112,7 @@ static void UI_BinaryInsertServer(int serverIndex)
         position = lo;
 
     UI_InsertServerAtPosition(serverIndex, position);
+#endif
 }
 #endif
 
@@ -2088,7 +2127,9 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
         if (uiInfo->uiDC.realTime <= sharedUiInfo.serverStatus.nextDisplayRefresh)
             return;
     } else if (force == 2) {
-
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        force = 0;
+#endif
     }
 
     clients = 0;
@@ -2245,6 +2286,16 @@ static int UI_UpdateMapVisibility(int listIndex)
     int i, visCount = 0;
     byte *p = (byte *)&sharedUiInfo;
 
+#if defined(COD2_X64)
+    (void)p;
+    for (i = 0; i < numMaps; i++) {
+        sharedUiInfo.mapList[i].active = 0;
+        if ((sharedUiInfo.mapList[i].typeBits >> listIndex) & 1) {
+            visCount++;
+            sharedUiInfo.mapList[i].active = 1;
+        }
+    }
+#else
     for (i = 0; i < numMaps; i++) {
         *(int *)(p + 0x13f4 + i * 0xa4) = 0;
         if ((*(int *)(p + 0x1368 + i * 0xa4) >> listIndex) & 1) {
@@ -2252,6 +2303,7 @@ static int UI_UpdateMapVisibility(int listIndex)
             *(int *)(p + 0x13f4 + i * 0xa4) = 1;
         }
     }
+#endif
     return visCount;
 }
 
@@ -2261,13 +2313,24 @@ static void UI_SelectFirstVisibleMap(int currentMapIdx)
     int i, firstVisible = -1;
     byte *p = (byte *)&sharedUiInfo;
 
+#if defined(COD2_X64)
+    (void)p;
+#endif
     if (currentMapIdx >= 0 && currentMapIdx < numMaps) {
+#if defined(COD2_X64)
+        if (sharedUiInfo.mapList[currentMapIdx].active != 0) {
+#else
         int off = currentMapIdx * 0xa4;
         if (*(int *)(p + 5108 + off) != 0) {
+#endif
 
             int listIdx = 0;
             for (i = 0; i < numMaps; i++) {
+#if defined(COD2_X64)
+                if (sharedUiInfo.mapList[i].active != 0) {
+#else
                 if (*(int *)(p + 0x13f4 + i * 0xa4) != 0) {
+#endif
                     if (i == currentMapIdx)
                         break;
                     listIdx++;
@@ -2287,8 +2350,13 @@ static void UI_SelectFirstVisibleMap(int currentMapIdx)
             firstVisible = 0;
         } else {
             for (i = 1; i < numMaps; i++) {
+#if defined(COD2_X64)
+                if (sharedUiInfo.mapList[i].active != 0) {
+                    firstVisible = i;
+#else
                 if (*(int *)(p + 0x1498 + (i - 1) * 0xa4) != 0) {
                     firstVisible = i;
+#endif
                     break;
                 }
             }
@@ -2456,6 +2524,13 @@ const char *UI_FeederItemText(float feederID, int index, int column, MaterialHan
             return "";
 
         for (i = 0; i < numMaps; i++) {
+#if defined(COD2_X64)
+            if (sharedUiInfo.mapList[i].active) {
+                if (count == index)
+                    return sharedUiInfo.mapList[i].mapName;
+                count++;
+            }
+#else
             byte *entry = (byte *)&sharedUiInfo + i * 0xa4;
             if (*(int *)(entry + 0x13f4)) {
                 if (count == index) {
@@ -2464,6 +2539,7 @@ const char *UI_FeederItemText(float feederID, int index, int column, MaterialHan
                 }
                 count++;
             }
+#endif
         }
         return "";
     } else if (feederID == 2.0f) {
@@ -2495,7 +2571,11 @@ const char *UI_FeederItemText(float feederID, int index, int column, MaterialHan
 
         pingVal = atoi(Info_ValueForKey(info, "ping"));
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        if (column <= 10) {
+#else
         if (column <= 9) {
+#endif
             switch (column) {
             case 0:
                 if (atoi(Info_ValueForKey(info, "pswrd")))
@@ -2520,10 +2600,15 @@ const char *UI_FeederItemText(float feederID, int index, int column, MaterialHan
                 if (numM <= 0)
                     return mapName;
                 for (mi = 0; mi < numM; mi++) {
+#if defined(COD2_X64)
+                    if (I_stricmp(mapName, sharedUiInfo.mapList[mi].mapLoadName) == 0)
+                        return sharedUiInfo.mapList[mi].mapName;
+#else
                     byte *entry = (byte *)&sharedUiInfo + mi * 0xa4;
                     if (I_stricmp(mapName, *(const char **)(entry + 0x1358)) == 0) {
                         return *(const char **)(entry + 0x1354);
                     }
+#endif
                 }
                 return mapName;
             }
@@ -2552,6 +2637,10 @@ const char *UI_FeederItemText(float feederID, int index, int column, MaterialHan
                     return "X";
                 return "";
             case 9:
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+                return atoi(Info_ValueForKey(info, "pb")) ? "X" : "";
+            case 10:
+#endif
                 if (pingVal > 0)
                     return Info_ValueForKey(info, "ping");
                 return "...";
@@ -2564,7 +2653,13 @@ const char *UI_FeederItemText(float feederID, int index, int column, MaterialHan
         if ((unsigned)column > 3)
             return "";
         {
+#if defined(COD2_X64)
+            const char *text = sharedUiInfo.serverStatusInfo.lines[index][column];
+            if (!text)
+                return "";
+#else
             const char *text = *(const char **)((byte *)&sharedUiInfo + 109864 + (column + index * 4) * 4);
+#endif
             if (text[0] == '@')
                 return UI_SafeTranslateString(text + 1);
             return text;
@@ -2579,10 +2674,17 @@ const char *UI_FeederItemText(float feederID, int index, int column, MaterialHan
         if (index < 0 || index >= sharedUiInfo.modCount)
             return "";
         {
+#if defined(COD2_X64)
+            const char *desc = sharedUiInfo.modList[index].modDescr;
+            if (desc && desc[0] != '\0')
+                return desc;
+            return sharedUiInfo.modList[index].modName;
+#else
             const char *desc = *(const char **)((byte *)&sharedUiInfo + 25976 + index * 8);
             if (desc && desc[0] != '\0')
                 return desc;
             return *(const char **)((byte *)&sharedUiInfo + 25972 + index * 8);
+#endif
         }
     } else if (feederID == 20.0f) {
 
@@ -2803,7 +2905,11 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
 
             {
                 int realTime = uiInfo->uiDC.realTime;
+#if defined(COD2_X64)
+                float phase = (float)(realTime / 75);
+#else
                 float phase = (float)(realTime % 1000);
+#endif
                 float sinVal;
                 {
                     double sv;
@@ -2881,7 +2987,11 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         return;
     }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    case 253:
+#else
     case 252:
+#endif
     {
         int jgtIdx = (ui_joinGameType)->current.integer;
         if (jgtIdx > sharedUiInfo.numJoinGameTypes) {
@@ -2898,7 +3008,11 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         return;
     }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    case 254:
+#else
     case 253:
+#endif
     {
         int cinHandle = sharedUiInfo.previewMovie;
         if (cinHandle <= -2)
@@ -2917,7 +3031,11 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         return;
     }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    case 255:
+#else
     case 254:
+#endif
     {
         UI_DrawMapPreview((const rectDef_t *)rect, color, 1);
         return;
@@ -3400,8 +3518,12 @@ void UI_RunMenuScript(const char **args)
                              sharedUiInfo.gameTypes[(ui_netGameType)->current.integer].gameType);
         {
             int mapIdx = (ui_currentNetMap)->current.integer;
+#if defined(COD2_X64)
+            const char *mapName = sharedUiInfo.mapList[mapIdx].mapLoadName;
+#else
             int offset = mapIdx * 41 + mapIdx;
             const char *mapName = *(const char **)((byte *)&sharedUiInfo.mapList[0].mapLoadName + offset * 4);
+#endif
             Cbuf_ExecuteText(2, va("wait ; wait ; map %s\n", mapName));
         }
         return;
@@ -3483,7 +3605,11 @@ void UI_RunMenuScript(const char **args)
             int numGT = sharedUiInfo.numGameTypes;
             if (numGT > 0) {
                 for (i = 0; i < numGT; i++) {
+#if defined(COD2_X64)
+                    if (I_stricmp(curGameType, sharedUiInfo.gameTypes[i].gameType) == 0) {
+#else
                     if (I_stricmp(curGameType, *(const char **)((byte *)&sharedUiInfo + 0x114c + i * 8)) == 0) {
+#endif
                         Dvar_SetInt(ui_netGameType, i);
                         Dvar_SetString(ui_netGameTypeName, sharedUiInfo.gameTypes[i].gameType);
                         break;
@@ -3497,11 +3623,15 @@ void UI_RunMenuScript(const char **args)
             int numMaps = sharedUiInfo.mapCount;
             if (numMaps > 0) {
                 for (i = 0; i < numMaps; i++) {
+#if defined(COD2_X64)
+                    sharedUiInfo.mapList[i].active = (sharedUiInfo.mapList[i].typeBits >> gtIdx) & 1;
+#else
                     byte *entry = (byte *)&sharedUiInfo + i * 0xa4;
                     *(int *)(entry + 0x13f4) = 0;
                     if ((*(int *)(entry + 0x1368) >> gtIdx) & 1) {
                         *(int *)(entry + 0x13f4) = 1;
                     }
+#endif
                 }
             }
         }
@@ -3540,10 +3670,17 @@ void UI_RunMenuScript(const char **args)
             modName = namePtr;
             modDesc = namePtr + nameLen;
 
+#if defined(COD2_X64)
+            sharedUiInfo.modList[modCount].modName = String_Alloc(modName);
+
+            modCount = sharedUiInfo.modCount;
+            sharedUiInfo.modList[modCount].modDescr = String_Alloc(modDesc);
+#else
             *(const char **)((byte *)&sharedUiInfo + 25972 + modCount * 8) = String_Alloc(modName);
 
             modCount = sharedUiInfo.modCount;
             *(const char **)((byte *)&sharedUiInfo + 25976 + modCount * 8) = String_Alloc(modDesc);
+#endif
 
             for (descLen = 0; modDesc[descLen]; descLen++)
                 ;
@@ -3559,8 +3696,12 @@ void UI_RunMenuScript(const char **args)
 
     if (I_stricmp(name, "voteTypeMap") == 0) {
         int mapIdx = (ui_currentNetMap)->current.integer;
+#if defined(COD2_X64)
+        const char *mapName = sharedUiInfo.mapList[mapIdx].mapLoadName;
+#else
         int offset = mapIdx * 41 + mapIdx;
         const char *mapName = *(const char **)((byte *)&sharedUiInfo.mapList[0].mapLoadName + offset * 4);
+#endif
         const char *gtName = sharedUiInfo.gameTypes[(ui_netGameType)->current.integer].gameType;
         Cbuf_ExecuteText(2, va("callvote typemap %s %s\n", gtName, mapName));
         return;
@@ -3571,8 +3712,12 @@ void UI_RunMenuScript(const char **args)
         if (mapIdx < 0 || mapIdx >= sharedUiInfo.mapCount)
             return;
         {
+#if defined(COD2_X64)
+            const char *mapName = sharedUiInfo.mapList[mapIdx].mapLoadName;
+#else
             int offset = mapIdx * 41 + mapIdx;
             const char *mapName = *(const char **)((byte *)&sharedUiInfo.mapList[0].mapLoadName + offset * 4);
+#endif
             Cbuf_ExecuteText(2, va("callvote map %s\n", mapName));
         }
         return;
@@ -3807,7 +3952,11 @@ void UI_RunMenuScript(const char **args)
             }
             if (found < 0) {
                 found = -1;
+#if defined(COD2_X64)
+                sortedIdx = uiInfo->playerProfileStatus.sortDir;
+#else
                 sortedIdx = *(int *)((byte *)uiInfo + 0x388 - 4);
+#endif
             }
 
             uiInfo->playerProfileCount -= 1;
@@ -3880,7 +4029,11 @@ void UI_RunMenuScript(const char **args)
                 *(end - 4) = '\0';
 
             I_strupr(filePtr);
+#if defined(COD2_X64)
+            sharedUiInfo.movieList[i] = String_Alloc(filePtr);
+#else
             *(const char **)((byte *)&sharedUiInfo + 0x677c + i * 4) = String_Alloc(filePtr);
+#endif
 
             filePtr = end + 1;
         }
@@ -3897,8 +4050,12 @@ void UI_RunMenuScript(const char **args)
     }
 
     if (I_stricmp(name, "RunMod") == 0) {
+#if defined(COD2_X64)
+        Dvar_SetStringByName("fs_game", sharedUiInfo.modList[sharedUiInfo.modIndex].modName);
+#else
         Dvar_SetStringByName("fs_game",
                              *(const char **)((byte *)&sharedUiInfo + 25972 + sharedUiInfo.modIndex * 8));
+#endif
         Cbuf_ExecuteText(2, "vid_restart;");
         return;
     }
@@ -4247,6 +4404,15 @@ int UI_FeederCount(float feederID)
         if (numMaps <= 0)
             return 0;
 
+#if defined(COD2_X64)
+        for (i = 0; i < numMaps; i++) {
+            sharedUiInfo.mapList[i].active = 0;
+            if ((sharedUiInfo.mapList[i].typeBits >> gameType) & 1) {
+                count++;
+                sharedUiInfo.mapList[i].active = 1;
+            }
+        }
+#else
         for (i = 0; i < numMaps; i++) {
             byte *entry = (byte *)&sharedUiInfo + i * 0xa4;
             *(int *)(entry + 0x13f4) = 0;
@@ -4255,6 +4421,7 @@ int UI_FeederCount(float feederID)
                 *(int *)(entry + 0x13f4) = 1;
             }
         }
+#endif
         return count;
     } else if (feederID == 9.0f) {
         return sharedUiInfo.modCount;
@@ -4513,7 +4680,11 @@ void UI_DrawConnectScreen(void)
             int gi;
             byte *base = (byte *)&sharedUiInfo;
             for (gi = 0; gi < numGameTypes; gi++) {
+#if defined(COD2_X64)
+                if (I_stricmp(g_gametype, sharedUiInfo.gameTypes[gi].gameType) == 0) {
+#else
                 if (I_stricmp(g_gametype, sharedUiInfo.gameTypes[gi].gameTypeName) == 0) {   /* was base+0x114c+gi*8 (x86) */
+#endif
                     pszGameType = sharedUiInfo.gameTypes[gi].gameTypeName;
                     break;
                 }
@@ -4527,7 +4698,11 @@ void UI_DrawConnectScreen(void)
             int mi;
             mapDisplayName = g_mapname;
             for (mi = 0; mi < numMaps; mi++) {
+#if defined(COD2_X64)
+                if (I_stricmp(g_mapname, sharedUiInfo.mapList[mi].mapLoadName) == 0)
+#else
                 if (I_stricmp(g_mapname, sharedUiInfo.mapList[mi].mapName) == 0)   /* was &sharedUiInfo+mi*0xa4+0x1358 (x86) */
+#endif
                     break;
             }
         }

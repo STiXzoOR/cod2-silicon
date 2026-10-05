@@ -5,7 +5,7 @@ repo=$(cd "$(dirname "$0")/../.." && pwd)
 binary=${COD2_BINARY:-"$repo/build-macos/cod2_macos"}
 data=${COD2_DATA_DIR:-"$HOME/Games/CoD2"}
 resolution=${COD2_RESOLUTION:-1920x1080}
-borderless=${COD2_BORDERLESS:-0}
+borderless=${COD2_BORDERLESS:-1}
 run_dir=${COD2_RUN_DIR:-"$repo/output/fullscreen"}
 [[ -x $binary && -d $data/main ]] || { echo 'Build cod2_macos and set COD2_DATA_DIR to the licensed game directory.' >&2; exit 2; }
 binary=$(cd "$(dirname "$binary")" && pwd)/$(basename "$binary")

@@ -150,8 +150,10 @@ if not args.test or 'trajectory' in args.test:
     run('trajectory', ''.join(function(path, n) for n in
         ['BG_Vec3Copy', 'BG_Vec3Mad', 'BG_EvaluateTrajectory']))
 if not args.test or 'timing' in args.test:
-    run('timing', function('src/PC/qcommon/cod2x_protocol.c', 'Cod2x_LimitedFPS') +
-        function('src/PC/qcommon/cod2x_runtime.c', 'Cod2x_FrameFPS') +
+    codx_timing = ('-DCOD2_CODX=1' in flags)
+    helpers = (function('src/PC/qcommon/cod2x_protocol.c', 'Cod2x_LimitedFPS') +
+               function('src/PC/qcommon/cod2x_runtime.c', 'Cod2x_FrameFPS')) if codx_timing else ''
+    run('timing', helpers +
         function('src/PC/qcommon/common.c', 'Com_Frame_Try_Block_Function') +
         function('src/PC/client_mp/cl_input.c', 'CL_SendCmdInternal'))
 if not args.test or 'renderer_options' in args.test:

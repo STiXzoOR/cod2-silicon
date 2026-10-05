@@ -10,16 +10,42 @@ import tempfile
 import os
 
 
+def build_icon(root, output):
+    """Compile CoD2 Silicon.icon, or draw the static fallback without Xcode's actool."""
+    result = subprocess.run([str(root / "scripts/compile-launcher-icon.sh"), str(output)])
+    if result.returncode == 0:
+        with (output / "icon-info.plist").open("rb") as file:
+            keys = plistlib.load(file)
+        files = [output / "Assets.car", output / (keys["CFBundleIconFile"] + ".icns")]
+        if set(keys) != {"CFBundleIconFile", "CFBundleIconName", "NSAccentColorName"} or not all(path.is_file() for path in files):
+            raise SystemExit("actool did not produce the expected icon files")
+        return files, keys
+    if result.returncode != 3:
+        raise SystemExit("actool failed to compile CoD2 Silicon.icon")
+    print("Using the static icon fallback; install Xcode for the layered macOS 26 icon.")
+    iconset = output / "CoD2 Silicon.iconset"
+    subprocess.run(["swift", str(root / "tools/cod2x/app_icon.swift"), str(iconset)], check=True)
+    icns = output / "CoD2 Silicon.icns"
+    subprocess.run(["iconutil", "-c", "icns", str(iconset), "-o", str(icns)], check=True)
+    return [icns], {"CFBundleIconFile": "CoD2 Silicon"}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("executable", type=pathlib.Path)
     parser.add_argument("app", type=pathlib.Path, help="new output path ending in .app")
+    parser.add_argument("--launcher", type=pathlib.Path, help="prebuilt Swift 6 launcher; built locally if omitted")
+    parser.add_argument("--engine-only", action="store_true", help="legacy engine-only bundle for native engine fixtures")
     parser.add_argument("--game-dir", type=pathlib.Path, default=None,
                         help="optional developer override; omitted in release bundles")
     parser.add_argument("--frameworks", type=pathlib.Path, help="pinned SDL install prefix for a self-contained bundle")
     parser.add_argument("--version", default="0.1.0")
     parser.add_argument("--resolution", default="1920x1080")
-    parser.add_argument("--borderless", action="store_true", help="desktop fullscreen instead of an explicit display mode")
+    fullscreen = parser.add_mutually_exclusive_group()
+    fullscreen.add_argument("--borderless", dest="borderless", action="store_true", default=True,
+                            help="desktop fullscreen (default)")
+    fullscreen.add_argument("--exclusive", dest="borderless", action="store_false",
+                            help="select an explicit display mode")
     parser.add_argument("--no-game-mode", action="store_true", help="disable eligibility for a controlled comparison")
     parser.add_argument("--bundle-id", default="io.github.stixzoor.cod2silicon")
     parser.add_argument("--replace", action="store_true", help="replace an existing bundle with the same ID after verification")
@@ -55,13 +81,16 @@ def main():
     contents = app / "Contents"
     macos = contents / "MacOS"
     macos.mkdir(parents=True)
-    binary = macos / "cod2_macos"
+    game_contents = contents if args.engine_only else contents / "Helpers/CoD2 Game.app/Contents"
+    game_macos = game_contents / "MacOS"
+    game_macos.mkdir(parents=True, exist_ok=True)
+    binary = game_macos / "cod2_macos"
     shutil.copy2(args.executable, binary)
     binary.chmod(binary.stat().st_mode | 0o111)
     resources = contents / "Resources"
     resources.mkdir(parents=True)
     if args.frameworks:
-        frameworks = contents / "Frameworks"
+        frameworks = game_contents / "Frameworks"
         frameworks.mkdir()
         for source in sorted((args.frameworks / "lib").glob("libSDL*.dylib")):
             target = frameworks / source.name
@@ -106,26 +135,28 @@ def main():
                 parser.error(f"{macho.name} must be built for macOS 13.0")
         for dylib in machos[1:]:
             subprocess.run(["codesign", "--force", "--sign", "-", str(dylib)], check=True)
-    iconset = pathlib.Path(staging.name) / "Native.iconset"
-    subprocess.run(["swift", str(root / "tools/cod2x/app_icon.swift"), str(iconset)], check=True)
-    subprocess.run(["iconutil", "-c", "icns", str(iconset), "-o", str(resources / "Native.icns")], check=True)
+    icon_files, icon_keys = build_icon(root, pathlib.Path(staging.name) / "icon")
+    for icon_file in icon_files:
+        shutil.copy2(icon_file, resources / icon_file.name)
     info = {
         "CFBundleDevelopmentRegion": "en",
-        "CFBundleExecutable": "cod2_macos",
+        "CFBundleExecutable": "cod2_macos" if args.engine_only else "CoD2Launcher",
         "CFBundleIdentifier": args.bundle_id,
         "CFBundleName": "CoD2 Silicon",
         "CFBundleDisplayName": "CoD2 Silicon",
         "CFBundlePackageType": "APPL",
         "CFBundleShortVersionString": args.version,
         "CFBundleVersion": "1",
-        "CFBundleIconFile": "Native.icns",
+        **icon_keys,
         "LSMinimumSystemVersion": "13.0",
-        "NSHighResolutionCapable": False,
+        "NSHighResolutionCapable": not args.engine_only,
         "LSApplicationCategoryType": "public.app-category.action-games",
         "LSSupportsGameMode": not args.no_game_mode,
         "CoD2AutomaticShaderSetup": True,
+        # No frame cap here: the engine defaults to 250 and the player's own setting (the launcher's,
+        # or config_mp.cfg) decides.
         "CoD2LaunchArguments": f'+set r_mode {args.resolution} '
-            f'+set r_fullscreen 1 +set r_borderless {int(args.borderless)} +set com_maxfps 333 '
+            f'+set r_fullscreen 1 +set r_borderless {int(args.borderless)} '
             '+set r_swapInterval 0 +set in_rawmouse 1 +set m_filter 0 +set cl_mouseAccel 0 '
             '+set logfile 0 +set developer 0 +set com_introPlayed 1',
         "CFBundleURLTypes": [{
@@ -136,6 +167,47 @@ def main():
     }
     if game_dir:
         info["CoD2GameDirectory"] = game_dir
+    if not args.engine_only:
+        launcher = args.launcher
+        if launcher is None:
+            launcher_output = pathlib.Path(staging.name) / "launcher-build"
+            subprocess.run([str(root / "scripts/build-launcher.sh"), str(launcher_output)], check=True)
+            launcher = launcher_output / "CoD2Launcher"
+        if not launcher.is_file():
+            parser.error("Swift launcher executable does not exist")
+        subprocess.run(["lipo", str(launcher), "-verify_arch", "arm64"], check=True)
+        launcher_build = subprocess.check_output(["vtool", "-show-build", str(launcher)], text=True)
+        if not re.search(r"minos 13\.0(?:\.0)?\s", launcher_build):
+            parser.error("launcher must be built for macOS 13.0")
+        for line in subprocess.check_output(["otool", "-L", str(launcher)], text=True).splitlines()[1:]:
+            dependency = line.strip().rsplit(" (", 1)[0]
+            if not dependency.startswith(("/System/", "/usr/lib/")):
+                parser.error(f"non-system launcher dependency: {dependency}")
+        shutil.copy2(launcher, macos / "CoD2Launcher")
+        game_info = dict(info)
+        game_info.update(CFBundleExecutable="cod2_macos", CFBundleIdentifier=args.bundle_id + ".game",
+                         NSHighResolutionCapable=False, CoD2AutomaticShaderSetup=False, CoD2LaunchArguments="")
+        game_info.pop("CFBundleURLTypes", None)
+        game_info.pop("CoD2GameDirectory", None)
+        game_resources = game_contents / "Resources"
+        game_resources.mkdir()
+        for icon_file in icon_files:
+            shutil.copy2(icon_file, game_resources / icon_file.name)
+        with (game_contents / "Info.plist").open("wb") as file:
+            plistlib.dump(game_info, file)
+        subprocess.run(["codesign", "--force", "--sign", "-", str(game_contents.parent)], check=True)
+        info["LSSupportsGameMode"] = False
+        info["CoD2AutomaticShaderSetup"] = False
+        info["CoD2DefaultResolution"] = args.resolution
+        info["CoD2DefaultFullscreen"] = "borderless" if args.borderless else "exclusive"
+        # SIL OFL 1.1 typefaces travel with their licence texts; the launcher also
+        # registers them at runtime when run outside a bundle.
+        fonts = root / "launcher/Resources/Fonts"
+        subprocess.run([str(root / "scripts/fetch-launcher-fonts.sh"), "--check"], check=True, stdout=subprocess.DEVNULL)
+        shutil.copytree(fonts, resources / "Fonts", ignore=shutil.ignore_patterns(".*"))
+        info["ATSApplicationFontsPath"] = "Fonts"
+        for name in ["LICENSE", "NOTICE.md", "CREDITS.md"]:
+            shutil.copy2(root / name, resources / name)
     with (contents / "Info.plist").open("wb") as file:
         plistlib.dump(info, file)
     subprocess.run(["codesign", "--force", "--sign", "-", str(app)], check=True)

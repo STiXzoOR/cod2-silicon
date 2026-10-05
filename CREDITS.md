@@ -77,6 +77,19 @@ provenance description. Neither original executable is part of this repo.
 | [libjpeg-turbo / Independent JPEG Group](https://github.com/libjpeg-turbo/libjpeg-turbo) | libjpeg-turbo contributors; Thomas G. Lane and Guido Vollbeding / IJG | IJG, BSD-3-Clause and Zlib as described in its notices | Library: vendored third_party headers/support for legacy JPEG integration; native JPEG uses ImageIO. This software is based in part on the work of the Independent JPEG Group. |
 | [macOS SDK frameworks](https://developer.apple.com/documentation/) | Apple | Apple SDK terms / proprietary system frameworks | Libraries: AppKit, Foundation, CoreFoundation, IOKit, OpenGL/CGL, AudioToolbox/CoreAudio, GameController, CoreGraphics and ImageIO for native adapters. |
 
+## Typefaces bundled with the launcher
+
+Both families are unmodified files from the official
+[google/fonts](https://github.com/google/fonts) repository at commit
+`9710da1e`, pinned by SHA-256 in `scripts/fetch-launcher-fonts.sh`. Each
+ships with its licence text in `Contents/Resources/Fonts`. Neither declares a
+Reserved Font Name. All other launcher text uses the system font.
+
+| Typeface | Author or organisation | License | How it is used |
+| --- | --- | --- | --- |
+| [Big Shoulders Stencil Display](https://github.com/xotypeco/big_shoulders) | Patric King / The Big Shoulders Project Authors (XO Type Co.) | SIL OFL 1.1 | Display titles, eyebrows and numerals (Bold and ExtraBold instances of the variable font). |
+| [Courier Prime](https://github.com/quoteunquoteapps/CourierPrime) | Alan Dague-Greene for Quote-Unquote Apps / The Courier Prime Project Authors | SIL OFL 1.1 | Timestamps, IP addresses, file names and the CD key field. |
+
 ## Build, analysis and verification tools
 
 | Project / tool | Author or organisation | License | How it was used |
@@ -100,6 +113,7 @@ provenance description. Neither original executable is part of this repo.
 | [Steam / SteamCMD](https://developer.valvesoftware.com/wiki/SteamCMD) | Valve | Proprietary Valve terms | Tools: owned game/depot provenance and Wine Steam-client experiments; SteamCMD documented as an alternative, not claimed run by WS5. |
 | [Ruby / Psych](https://github.com/ruby/psych) | Yukihiro Matsumoto and Ruby contributors; Aaron Patterson, SHIBATA Hiroshi and Charles Oliver Nutter / Psych | Ruby OR BSD-2-Clause; Psych MIT | Tool: installed Ruby/Psych parsed CI and issue-template YAML when PyYAML and actionlint were unavailable. |
 | [macOS signing and system utilities](https://developer.apple.com/documentation/security) | Apple and component contributors | macOS distribution/component terms | Tools: codesign, plutil, xattr, taskpolicy, shell and checksum utilities for app validation and low-priority development commands. |
+| [Icon Composer / actool / ictool](https://developer.apple.com/icon-composer/) | Apple | Apple developer-tool terms / proprietary | Tools: compile the original layered `CoD2 Silicon.icon` into `Assets.car` and the ICNS fallback, and render all six system appearances for review. |
 
 ## Windows baseline tools (external only)
 

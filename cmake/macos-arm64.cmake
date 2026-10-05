@@ -88,7 +88,7 @@ foreach(target cod2_macos cod2_macos_ded)
 endforeach()
 # vidConfig lives in the renderer, which the dedicated server does not build.
 target_link_options(cod2_macos PRIVATE "LINKER:-alias,_vidConfig,_r_limits_ptr")
-target_sources(cod2_macos PRIVATE src/unix/linux_input.c src/platform/macos_display.c
+target_sources(cod2_macos PRIVATE src/unix/linux_input.c src/platform/macos_display.c src/platform/macos_window.m
   src/platform/macos_rawmouse.m src/platform/macos_audio.c src/platform/macos_voice.c
   src/platform/macos_jpeg.c)
 set_property(SOURCE src/platform/macos_rawmouse.m APPEND PROPERTY COMPILE_OPTIONS -fobjc-arc)
@@ -98,7 +98,7 @@ set_source_files_properties(src/PC/gfx_d3d/rb_state.c src/PC/gfx_d3d/r_screensho
 target_link_libraries(cod2_macos PRIVATE SDL2::SDL2 ${COD2_OPENGL_FRAMEWORK} ${COD2_CURL_LIBRARY}
   ${COD2_AUDIO_FRAMEWORK} ${COD2_COREAUDIO_FRAMEWORK}
   ${COD2_GAMECONTROLLER_FRAMEWORK} ${COD2_FOUNDATION_FRAMEWORK}
-  "-framework ImageIO" "-framework CoreGraphics")
+  "-framework ImageIO" "-framework CoreGraphics" "-framework AppKit")
 if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
   find_package(Python3 REQUIRED COMPONENTS Interpreter)
   find_library(COD2_APPKIT_FRAMEWORK AppKit REQUIRED)
@@ -109,10 +109,20 @@ if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
     APPEND PROPERTY COMPILE_OPTIONS -fobjc-arc)
   target_link_libraries(cod2_macos PRIVATE ${COD2_APPKIT_FRAMEWORK})
   set(COD2_MACOS_APP "${CMAKE_BINARY_DIR}/CoD2 Silicon.app" CACHE PATH "Native app output path")
+  file(GLOB COD2_LAUNCHER_SOURCES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/launcher/*")
+  add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/launcher/CoD2Launcher"
+    COMMAND "${CMAKE_SOURCE_DIR}/scripts/build-launcher.sh" "${CMAKE_BINARY_DIR}/launcher"
+    DEPENDS ${COD2_LAUNCHER_SOURCES} "${CMAKE_SOURCE_DIR}/scripts/build-launcher.sh"
+      "${CMAKE_SOURCE_DIR}/src/platform/cod2x_native_setup.h"
+      "${CMAKE_SOURCE_DIR}/src/platform/cod2x_native_shaders.m"
+      "${CMAKE_SOURCE_DIR}/src/PC/qcommon/cod2x_url.c"
+    COMMENT "Build Swift 6 native launcher (macOS 13)"
+    VERBATIM)
+  add_custom_target(cod2_launcher DEPENDS "${CMAKE_BINARY_DIR}/launcher/CoD2Launcher")
   add_custom_target(cod2_macos_app
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/cod2x/make_macos_app.py"
-      "$<TARGET_FILE:cod2_macos>" "${COD2_MACOS_APP}" --replace ${COD2_MACOS_APP_FRAMEWORK_ARGS}
-    DEPENDS cod2_macos
+      "$<TARGET_FILE:cod2_macos>" "${COD2_MACOS_APP}" --replace --launcher "${CMAKE_BINARY_DIR}/launcher/CoD2Launcher" ${COD2_MACOS_APP_FRAMEWORK_ARGS}
+    DEPENDS cod2_macos cod2_launcher
     COMMENT "Build and ad-hoc sign CoD2 Silicon.app"
     VERBATIM)
 endif()

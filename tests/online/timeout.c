@@ -15,6 +15,10 @@ static dvar_t paused, timeout, connectTimeout, ingame;
 const dvar_t *cl_paused = &paused, *sv_paused = &paused;
 const dvar_t *cl_timeout = &timeout, *cl_connectTimeout = &connectTimeout, *cl_ingame = &ingame;
 static int drops;
+#if defined(COD2_CODX) && COD2_CODX
+void Cod2x_Frame(int connected, int demo) { (void)connected; (void)demo; }
+void Cod2x_DemoClientFrame(void) {}
+#endif
 void Voice_GetLocalVoiceData(ClientVoicePacket_t *p) { (void)p; }
 void Voice_Playback(void) {}
 void CL_UpdateColor(void) {}

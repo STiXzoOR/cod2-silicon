@@ -1,0 +1,798 @@
+# WS28 — launcher v2 and icon G
+
+Branch: `port/launcher-v2`. Base: `port/launcher` at `4d56e0b`. Worktree:
+`/Users/stix/Projects/cod2-native-wt/launcher-v2`. Verified on the PLAN host
+(Apple M6, macOS 27.0.1, Xcode 27.0, Swift 6.4, macOS 27.0 SDK) with existing tools only.
+
+## Result
+
+The SwiftUI launcher now follows the approved Claude Design prototype on every
+screen: Home, Servers, Settings ("Field manual"), the three-step Setup and the Library.
+About is a new screen designed in the same language. The structure is a standard
+`NavigationSplitView` with a sidebar, system toolbars and Liquid Glass on macOS
+26 and later. Content stays opaque, and macOS 13–25 get a material fallback.
+The app icon is icon G, built as an Icon Composer document and compiled by
+`actool` into a layered Liquid Glass icon, an ICNS fallback and the bundle's
+brass/olive accent colour.
+
+WS25's architecture is unchanged. The outer launcher and the nested
+`Contents/Helpers/CoD2 Game.app` behave as before: lifecycle, Dock hand-off,
+force-quit reconnect, `cod2x://` delivery through Apple events, in-memory
+passwords, crash reports, native setup, the validated config writer, and the
+master/UDP discovery code. The deployment target stays macOS 13.
+
+Commits on this branch, oldest first:
+
+| Commit | Change |
+| --- | --- |
+| `50f4fc5` | Bundle the two OFL typefaces, pinned by SHA-256; CREDITS |
+| `52d1cf3` | Icon G as `CoD2 Silicon.icon`; actool packaging for both apps; static fallback |
+| `9d47e2e` | Tested presentation logic (maps, badges, cm/360, release notes, media, key tag, player name) |
+| `00c428b` | Accent colour compiled with the icon (`NSAccentColorName`) |
+| `749ad62` | The redesigned views, model and theme |
+| `304e998` | Test-only review harness, contrast gate and extended `tests/launcher/run.sh` |
+| `795f342` | Fixes from an independent review of the diff |
+| `5187bd9` | Fixes for three pre-existing cold-link ordering bugs in the Dock hand-off |
+| `00d017d` | Verbatim licence texts exempt from whitespace checks; the bundler skips dotfiles |
+| `135aeb6` | This report (first version) |
+| `9afdad3` | Icon G: top-left stencil bridge removed so the 2 is one shape at Dock sizes |
+| `1b99cd7` | Real player name from the engine's active profile; server rows fade above the connect bar |
+| `0b6ce67` | This report: pass-3 review and gate |
+| `366d2fd` | Every button a capsule, nested shapes concentric, prominent label ink, shape audit in the harness |
+| `99c3128` | About's three panels share one height |
+| `e8a1f78` | Review harness: 2× renders drawn from the laid-out window |
+| `dea4b2d` | Snapshot test accepts Retina-scale window captures |
+| `7732ecb` | This report: button shapes and concentricity |
+| `e36c3ce` | Frame cap: 250 by default, any value 0–1000, neutral copy (no 333 pitch) |
+| `3262385` | Engine `com_maxfps` defaults to 250; the helper's launch arguments force no cap |
+
+## Prototype fidelity, screen by screen
+
+Measurements were read from the prototype's HTML/CSS and kept: window
+coordinates (content at x = 300, 280 and 264 as drawn), type sizes and tracking
+(converted from `em`), radii (22 panels, 20 groups, 16 crates, 26 details
+panel), the colour tokens, and every piece of copy except where noted. Pass 5
+re-derived the nested radii and button sizes from the concentricity rule
+(difference 7). The prototype was rendered with a small local runtime for its `dc`
+template format, giving reference images in `output/ws28/prototype/`. Every
+review image was compared side by side with them.
+
+**Home.**
+- The hero uses the design's own vector scene (desert dusk in dark, Normandy
+  day in light) drawn from its path data. A Big Shoulders Stencil 132-point map
+  title (0.86 line height, 0.02 em tracking) sits over it, with the eyebrow
+  "LAST DEPLOYMENT · <REGION>".
+- The meta line carries the server name in its colour codes, the mode, players
+  and ping.
+- Deploy (prominent) and Find a server (glass), with the "⌘ Return to deploy"
+  hint.
+- Glass status chips for the frame cap, resolution and mode, and shader state.
+- Recent servers and Dispatches panels, and the player dog tag in the sidebar.
+- Deploy rejoins the last server, or opens the game menu when there is none.
+  The no-history state reads "READY FOR DEPLOYMENT · COD2 SILICON".
+- With game data, the hero and thumbnails show the player's own loading screen
+  for the map.
+
+**Servers.**
+- The glass toolbar holds search, the All / Stock 1.3 / CoD2x 1.4 segmented
+  filter, Hide empty, Hide full, the count and Refresh (⌘R).
+- Rows show the map thumbnail, the colour-coded name, the map · mode ·
+  version badge, stencil player numerals (red when full, dimmed when empty),
+  four-bar ping and a favourite star. The selected row gets the brass outline.
+- Column headers sort by name, players or ping.
+- The floating glass details panel shows the art header, the address in
+  Courier Prime, version, mod, frame cap and access, a password field when
+  needed, Deploy, the favourite toggle and the roster.
+- The "NO CONTACT" empty state, and a glass direct-connect capsule that floats
+  over the list with the system scroll-edge effect.
+- WS25's discovery, queries and cache are untouched.
+
+**Settings ("Field manual").**
+- Ammo-crate frame-cap quick picks 125/250/333/1000 with neutral captions,
+  plus a custom value from 0 (no cap) to 1000 edited in place (see "Frame
+  cap").
+- Display: resolution (to 6016 × 3384, labelled 4K/5K/6K), Exclusive /
+  Borderless / Native Space with the mode hint (Native Space says it is required
+  for Game Mode), plus Window and Vertical sync rows.
+- Mouse and sound: raw mouse switch, sensitivity, DPI with a live cm/360
+  readout in stencil numerals, and volume.
+- Graphics: Renderer Metal 4 / Classic OpenGL. This branch has no `r_renderer`
+  dvar, so Metal 4 is unselectable and labelled. Render scale, MetalFX and HDR
+  are dimmed and badged "0.3", matching `docs/ROADMAP.md`. Anisotropic
+  filtering is wired to the engine's `r_anisotropy` (2×–16×, the dvar's range).
+- Advanced dvars in Courier Prime accept `dvar value` (as typed in the console)
+  or `dvar=value`.
+- A Game data row offers "Set Up Again…".
+- Save is the toolbar's one prominent action (⌘S), with "Applies on next launch"
+  beside it.
+- WS25's validated config writer and reserved-name rules are unchanged.
+
+**Setup.**
+- Full-bleed scene, "REPORTING FOR DUTY", the three-step indicator and a glass
+  card.
+- Step 1 shows the path in Courier Prime and "All 16 game archives present ·
+  Version 1.3". It also has a not-found variant with Choose Folder…
+- Step 2 is the CD key. Each typed character stamps onto the steel dog tag.
+  The field groups in fours, live hints count down, and a full key shows
+  "Checksum verified." or a mismatch, using WS21's native CRC. The key is stored
+  mode 600, and the keystroke buffer is cleared after saving.
+- Step 3 shows real extraction progress, "N / 834". It counts the payloads the
+  native extractor writes into its private staging folder; there's no fake
+  timer. An approximate-shaders path offers "Choose Mac Copy…".
+- Then Deploy.
+
+**Library.** Demos rows show the map thumbnail, the file name in Courier
+Prime, a map hint from the name, a date stamp, the size and Play. Screenshots
+show as a three-column grid of real thumbnails, made with ImageIO and
+downsampled, with a stamped date. The prototype shows a demo's length. `.dm_1`
+files have no cheap length field, so the row shows the file's date instead.
+
+**About** (new): an eyebrow "SERVICE RECORD", icon G at 148 pt, a 96-point
+stencil wordmark, the version line in Courier Prime and the tagline over a
+Normandy-at-dusk band. Below are three equal panels: Updates (check on demand,
+notification only), Credits and Licence. The app menu's "About CoD2 Silicon"
+opens it.
+
+Intentional differences from the prototype:
+
+1. The sidebar is the system `NavigationSplitView` sidebar. In the harness
+   window macOS 27 draws it full height, flush with the window edge, rather
+   than as the prototype's inset rounded panel.
+2. Sidebar icons follow the app accent (all brass in dark, olive in light),
+   not just the selected row. The HIG says sidebar icons should show the accent
+   colour people choose; a fixed palette would override that choice.
+3. The Servers toolbar is three system glass groups (search; filters; count and
+   Refresh), not one long capsule. The HIG says to aim for at most three groups.
+4. Settings adds Window and Vertical sync, which WS25 already supported. The
+   sidebar always lists favourites and the dog tag, where the prototype varies
+   them per board.
+5. CD-key privacy copy is corrected to what the engine does. It sends a one-way
+   hash (`getKeyAuthorize`), never the key: "Stored only on this Mac, in a
+   file only your account can read. Like the original game, joining a server
+   sends the authorization service a one-way hash of it; the key itself never
+   leaves this Mac."
+6. The prototype's dog tag clipped its last line. It is set at 12 points so it
+   fits.
+7. Shapes follow one concentric system (see "Button shapes and concentricity").
+   - The status chips and every field are capsules; the prototype drew the
+     chips as 14-radius rectangles.
+   - Server and demo rows are 20 points, not 16, around 10-point art.
+   - The setup card is 32 with its buttons 14 from the corners, not 30 with them
+     at the content margin.
+   - Bar, card and inspector buttons are the system's 36-point extra-large size,
+     not the prototype's 40 and 44.
+
+## Apple HIG applied
+
+Read directly from Apple's HIG pages through their JSON endpoints on 2026-10-04:
+
+- [Materials](https://developer.apple.com/design/human-interface-guidelines/materials): "Liquid Glass
+  forms a distinct functional layer for controls and navigation", and "Don't use
+  Liquid Glass in the content layer."
+  - Glass covers the sidebar, the toolbars, buttons, the status chips (they are
+    buttons into Settings), the floating server details panel, the
+    direct-connect bar, the setup card and the notice banner.
+  - Panels, rows, crates, groups and art are opaque content.
+  - Effects are limited to important functional elements, and a
+    `GlassEffectContainer` groups the chips and the Deploy/favourite pair.
+- [Sidebars](https://developer.apple.com/design/human-interface-guidelines/sidebars):
+  - "Extend visually rich content beneath the sidebar … by applying a
+    background extension effect." The hero uses `backgroundExtensionEffect()`.
+  - "By default, sidebar icons use your app's accent color … make sure your
+    sidebar icons display the color people choose." This drove difference 2
+    above.
+- [Toolbars](https://developer.apple.com/design/human-interface-guidelines/toolbars):
+  - "Use the .prominent style for key actions … put it on the trailing side":
+    Settings' Save.
+  - "Aim for a maximum of three" groups.
+  - "Don't title windows with your app name": the title is removed from the
+    toolbar.
+  - Standard components carry concentric radii.
+- [Buttons](https://developer.apple.com/design/human-interface-guidelines/buttons)
+  and [Color](https://developer.apple.com/design/human-interface-guidelines/color):
+  - The accent colour is applied "to the background in prominent buttons". One
+    prominent action per view: Deploy, Continue/Deploy, Save, Connect.
+  - "Refrain from adding color to the background of multiple controls":
+    secondary actions are neutral glass.
+  - The app accent colour (macOS 11+, used when the system accent is
+    multicolor) is set through `NSAccentColorName`.
+  - Custom colours have light, dark and increased-contrast variants
+    (`colorSchemeContrast`).
+- [Layout](https://developer.apple.com/design/human-interface-guidelines/layout):
+  - Safe areas are respected. Content is aligned to the design's grid in window
+    coordinates, measured from the detail column's real origin.
+  - The background extension effect is used where a sidebar would cover art.
+  - Spacing follows an 8-point rhythm, with radii concentric between panel and
+    row.
+- [Typography](https://developer.apple.com/design/human-interface-guidelines/typography):
+  - SF for all UI text. The custom faces are limited to display titles,
+    eyebrows and numerals (Big Shoulders Bold/ExtraBold) and timestamps,
+    addresses and file names (Courier Prime). No light weights.
+- [Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility)
+  and [Motion](https://developer.apple.com/design/human-interface-guidelines/motion):
+  - VoiceOver labels on rows (name, map, mode, version, players, ping, lock),
+    chips, crates, steps, the dog tag and the cm/360 readout.
+  - Selected traits, headers, and `updatesFrequently` on the key hint.
+  - Keyboard access: ⌘↩ Deploy, ⇧⌘↩ game menu, ⌘2/⌘3/⌘, pages, ⌘F search,
+    ⌘R refresh, arrow keys in the server list, Return for the details Deploy,
+    and ⌘S Save.
+  - Every animation uses one spring and checks Reduce Motion. Reduce
+    Transparency makes the fallback surfaces opaque; the system adapts glass.
+- [App icons](https://developer.apple.com/design/human-interface-guidelines/app-icons):
+  layered vector artwork, a gradient background in Icon Composer, clearly
+  defined edges, and appearance variants annotated in the document.
+
+## APIs used, verified against the SDK
+
+Every name was checked in the installed macOS 27.0 SDK's
+`SwiftUI.swiftinterface` and `SwiftUICore.swiftinterface` before use.
+
+| API | Declared availability | Use |
+| --- | --- | --- |
+| `glassEffect(_:in:)`, `Glass.regular.tint(_:).interactive(_:)` | macOS 26.0 | Floating panels, chips, bars and banner (`GlassSurface`) |
+| `GlassEffectContainer(spacing:)` | macOS 26.0 | Chips; Deploy plus favourite |
+| `.buttonStyle(.glass)` / `.glassProminent` | macOS 26.0 | Secondary and prominent actions |
+| `backgroundExtensionEffect()` | macOS 26.0 | Home and About hero under the sidebar |
+| `safeAreaBar(edge:spacing:content:)` | macOS 26.0 | Direct-connect bar insetting the list (rows fade out above it) |
+| `scrollEdgeEffectStyle(_:for:)` | macOS 26.0 | Evaluated for the bar (probe); the automatic style under toolbars was kept, per the HIG's "prefer the automatic scroll edge effect style" |
+| `ToolbarSpacer(.flexible)`, `sharedBackgroundVisibility(.hidden)` | macOS 26.0 | Trailing groups; the plain save note |
+| `toolbar(removing: .title)` | macOS 15.0 | Untitled toolbar (`navigationTitle("")` before) |
+| `sidebarRowSize(.large)`, `controlSize(.extraLarge)`, `buttonBorderShape(.capsule)` / `.circle` | macOS 14.0 | Sidebar rows; hero and action buttons; capsule buttons, pop-ups and segmented controls; the favourite circle |
+| `ConcentricRectangle(corners:isUniform:)`, `Edge.Corner.Style.concentric(minimum:)` | macOS 26.0 | The sidebar profile card in the window corner |
+| `onGeometryChange(for:of:action:)` | macOS 13.0 (back-deployed) | Frames for the harness's shape audit (inert in the app) |
+
+The glass API calls sit behind `#if COD2_LIQUID_GLASS` (defined for SDK 26+)
+and `if #available(macOS 26.0, *)`. Toolbar variants are chosen at the view
+level, because `if #available` inside a toolbar builder is only safe from macOS
+14.5. `tests/launcher/run.sh` typechecks all views without `COD2_LIQUID_GLASS`
+under Swift 6 strict concurrency with warnings as errors.
+
+## Typefaces and licensing
+
+Big Shoulders Stencil Display (variable `wght` font; Bold 700 and ExtraBold 800
+instances by PostScript name) and Courier Prime Regular/Bold come unmodified
+from `github.com/google/fonts` at commit `9710da1eacb3be272583c3224dcb70f9da6eadbb`.
+
+- `scripts/fetch-launcher-fonts.sh` records the upstream paths and SHA-256 of
+  all five files (three fonts, two `OFL.txt`). `--check` verifies the
+  committed copies, and fails on tampering (tested).
+- Both are SIL OFL 1.1 with no Reserved Font Name. Designers, from METADATA.pb:
+  Patric King and Alan Dague-Greene.
+- They ship in `Contents/Resources/Fonts` with their licence texts and register
+  through `ATSApplicationFontsPath`. Development builds register them with
+  `CTFontManagerRegisterFontsForURL`.
+- `CREDITS.md` lists both families and the Icon Composer tools.
+- If the files are missing, the code falls back to condensed SF and SF Mono.
+
+## Icon G: pipeline and renditions
+
+`tools/cod2x/icon-source/CoD2 Silicon.icon` holds `icon.json` and seven flat SVG
+layers written by `layers.py`. The script is reproducible: the worn-paint chips
+are seeded, and the design's 100–924 tile is rescaled to the full 1024 canvas.
+
+- `fill-specializations`: an olive gradient from `#6f7a44` to `#323819`, and an
+  olive-black Dark gradient from `#262a1b` to `#0c0d08`.
+- Groups, front to back:
+  1. **Stencil 2:** layer-colour shadow at 0.5, no translucency. Dark uses
+     deeper paint, and mono uses a solid white fill.
+  2. **Raised star:** neutral shadow at 0.5. Dark and mono use darker facets.
+  3. **Plate:** bevel line and rivets, translucency 0.3, no shadow.
+- No glass is baked into the layers.
+- Schema keys were checked against strings in Icon Composer's frameworks. A
+  key and its `-specializations` form must not coexist: during development, the
+  dark variants were silently ignored until the plain keys were removed. Pixel
+  sampling confirmed the fix.
+
+Renditions were exported with `ictool --platform macOS --width 1024 --height
+1024 --scale 1`. Each was reviewed over three iterations and at 128, 64, 32 and
+16 points:
+
+| Rendition | File |
+| --- | --- |
+| Default | `output/ws28/icon/CoD2 Silicon-Default.png` |
+| Dark | `output/ws28/icon/CoD2 Silicon-Dark.png` |
+| ClearLight | `output/ws28/icon/CoD2 Silicon-ClearLight.png` |
+| ClearDark | `output/ws28/icon/CoD2 Silicon-ClearDark.png` |
+| TintedLight | `output/ws28/icon/CoD2 Silicon-TintedLight.png` |
+| TintedDark | `output/ws28/icon/CoD2 Silicon-TintedDark.png` |
+| All six | `output/ws28/icon/CoD2 Silicon-all-renditions.png` |
+
+`scripts/compile-launcher-icon.sh` runs `xcrun actool "CoD2 Silicon.icon"
+launcher/Resources/Accent.xcassets --compile … --platform macosx
+--minimum-deployment-target 13.0 --app-icon "CoD2 Silicon" --accent-color
+AccentColor`.
+
+- It emits `Assets.car` with no warnings. That holds `IconImageStack`/`IconGroup`
+  renditions for Aqua, DarkAqua and tintable appearances, flattened sizes and
+  the accent colour.
+- It also emits `CoD2 Silicon.icns` and a partial plist with
+  `CFBundleIconFile`, `CFBundleIconName` and `NSAccentColorName`.
+- `make_macos_app.py` installs these into both the launcher and the nested game
+  helper before signing.
+- `actool` ships only with Xcode. A Command Line Tools-only build gets exit code
+  3, and then `tools/cod2x/app_icon.swift` draws icon G statically into an
+  ICNS. Both paths were tested by packaging with each developer directory.
+- The sidebar mark draws icon G natively, with quieter star facets at 34 points.
+- The superseded concepts A–C were removed.
+
+## Review renders and how they were captured
+
+Glass draws through the window server, so `cacheDisplay` renders it blank (I
+confirmed this). The test-only `LauncherSnapshots` harness instead hosts the real
+`LauncherRoot` in a titled, full-size-content window configured like the app's
+hidden-title-bar window, with toolbar bridging. It then captures its own window
+with `CGWindowListCreateImage`, which needs no screen-recording permission for
+the app's own windows.
+
+The session's screen was locked, so the host app couldn't activate. The
+harness window therefore overrides `isKeyWindow` and the private
+`_hasActiveAppearance` family, so controls draw as focused. That override
+exists only in `tests/launcher/Snapshots.swift`; the shipping binary contains
+no private selectors.
+
+Like an app bundle, the harness embeds an `Info.plist` naming `AccentColor` and
+loads the compiled `Assets.car` beside it. SwiftUI's `Window` scene itself never
+opens a window while the session is locked (probed), hence the hosting window.
+
+| Set | Path | Content |
+| --- | --- | --- |
+| Final, fallback art | `output/ws28/no-data/*.png` | 13 screens × dark/light at 1440×900, real glass |
+| Material fallback | `output/ws28/fallback/*.png` | The macOS 13–25 styling of the same screens |
+| Private game art | `output/ws28/with-data/*.png` | Player's own loading screens. Local only; never committed or uploaded |
+| 2× crispness | `output/ws28/scale2/*@2x.png` | 2880×1800 of every screen, drawn from the same laid-out window (material styling), beside 1× glass captures. This path is `cacheDisplay`, so system vibrancy (the sidebar list, the selected segment) draws flat and material buttons show hairline ticks at their ends; the 1× window-server captures have neither |
+| Shape audit | `output/ws28/{no-data,fallback,with-data,scale2}/shape-audit.json` | Every reported shape's frame and form per capture, and the findings (none) |
+| Prototype | `output/ws28/prototype/*.png` | The approved design, rendered for comparison |
+| Iterations | `output/ws28/pass1` … `pass4` | Earlier passes kept as evidence |
+
+Screen names: `home`, `home-first`, `servers`, `servers-empty`, `settings`,
+`library-demos`, `library-screenshots`, `about`, `setup-data`,
+`setup-data-missing`, `setup-key`, `setup-shaders`, `setup-ready`. Fake servers
+use the RFC 5737 documentation ranges. Player names and the CD key are invented.
+
+`with-data` images were not opened in any conversation tool, so the licensed
+pixels never left the Mac. Their legibility was checked numerically instead.
+`LauncherSnapshots --data … --contrast` renders each stock map's hero backdrop
+offscreen without text. It then compares the 98th-brightest (dark) or
+2nd-darkest (light) background pixel in the eyebrow, title, meta and hint boxes
+with those exact text colours, and keeps only numbers. The final result is
+**30 heroes (15 maps × 2 appearances), worst 4.66:1, all at least 4.5:1**
+(`output/ws28/with-data/contrast.json`).
+
+### What changed after each review pass
+
+- **Pass 1 → 2:**
+  - The harness window grew to 952 points because the hosting controller sized
+    it to the content; it is now pinned at 1440×900.
+  - The hero was centred in a `.top`-aligned background, shifting the art 116
+    points. It is now a top-leading window-space slice with
+    `backgroundExtensionEffect`.
+  - A root `.tint` coloured the secondary glass buttons. The accent now comes
+    from `NSAccentColorName`, and only prominent actions are tinted.
+  - Trailing toolbar items appeared on the leading side (`.primaryAction` is
+    leading on macOS).
+  - The upcoming "0.3" badges overlapped values; they are now inline.
+  - The save capsule turned entirely brass and covered the eyebrow. The note now
+    sits on the bar, with a separate prominent Save.
+  - About was top-heavy; it gained a hero band and three equal panels.
+  - The disabled Connect was invisible. It is now enabled and asks for an
+    address.
+  - The key field was auto-selected in renders.
+  - The light desert town was too heavy.
+- **Pass 2 → 3:**
+  - Explicit flexible spacers now pin the trailing groups.
+  - The sidebar icons were system blue in the harness. The harness now resolves
+    the accent the way a bundle does.
+  - The Servers toolbar went from four groups to three.
+  - Increase Contrast and Reduce Transparency variants were added.
+- **Pass 3 → 4:**
+  - About's tagline crossed the church spire. The composition was shifted and
+    the tagline capped at 520 points.
+  - The sidebar mark's star competed with the numeral at 34 points, so it was
+    quietened.
+- **Contrast work on real art:**
+  - Linear-light scrim maths underestimated what sRGB compositing does, which
+    left light mode at 2.90:1. Both scrims now model gamma-space blending.
+  - Scrims are sized from the dimmest text (the brass eyebrow and hint in dark,
+    the brown eyebrow in light) and from the worst text box.
+  - The result went from 2.90 → 3.47 → 4.23 → 4.66 (passing).
+- **Final review:**
+  - The data step's icon was blank (`folder.badge.checkmark` is not an SF
+    Symbol). Both setup glyphs are now drawn from the prototype's own paths.
+  - Every other symbol name was verified to exist.
+- **Pass 4 → 5:** button shapes, concentric nesting and label ink; see
+  "Button shapes and concentricity (pass 5)".
+
+## Review and bugs fixed along the way
+
+A separate read-only reviewer checked the branch diff against WS25's
+behaviour. Fixed in `795f342`:
+
+1. The details panel's Deploy was the window's default button. Return would
+   then fire it from the search or direct-connect fields, joining the
+   selected server instead of the typed address. Instead:
+   - the server list deploys on Return only while it has focus (macOS 14+);
+   - double-click on a row deploys;
+   - so does a VoiceOver Deploy action.
+2. "About CoD2 Silicon" and the Deploy command could bypass setup. Both now
+   respect `onboard`.
+3. Xcode 16's `actool` exists but can't compile `.icon`. The icon script now
+   reports it unavailable for SDKs before 26, so packaging uses the static
+   icon there.
+4. The CD key field is visible, by design, so the tag can be stamped. It now
+   turns on secure event input while focused, as `NSSecureTextField` does, so
+   other processes can't observe the keystrokes.
+
+Re-running WS25's `cold_url.py` with its scratch home reused, so setup was
+already complete, exposed three ordering bugs that predate this branch. A fresh
+home hides them. lldb traces of my own test process established the
+call order. Fixed in `5187bd9`:
+
+1. LaunchServices delivers a cold link before `applicationDidFinishLaunching`.
+   The link started the game, and the delegate then made the launcher a
+   regular, active app again: a Dock tile beside the game. WS25's original
+   launcher shows policy 0 throughout. Links that arrive before launch finishes
+   now start the game from `boot()`.
+2. The one-shot `--play`/link request wasn't consumed, so a later setup
+   completion could start a second game.
+3. `setActivationPolicy(.regular)` after the game was sometimes refused (it
+   returned false) while AppKit already reported `.regular`. The launcher now
+   steps through accessory and retries; regular returns within about 0.5 s.
+
+`cold_url.py` now waits for each policy, since another process sees it
+asynchronously, and asserts that exactly one game starts.
+
+## Orchestrator review of pass 3
+
+1. **Servers' last row showed through the direct-connect bar.**
+   - A probe compared the default, soft and hard scroll-edge styles
+     ([Scroll views](https://developer.apple.com/design/human-interface-guidelines/scroll-views))
+     with a fade.
+   - Soft and default still let the half row read through the glass. Hard hid
+     it, but sliced the row above through its text and added a footer-like
+     band.
+   - The list now fades out over its last 36 points above the bar, on every
+     macOS version. No row is sliced at rest, nothing sits under the glass, and
+     `safeAreaBar`'s inset lets the last row clear the bar at the end of the
+     list. This matches the prototype, where the list ends above the bar.
+   - The automatic edge effect remains under the toolbars.
+2. **The sidebar looked like an opaque panel.**
+   - It is the standard sidebar's real Liquid Glass, captured through the
+     window server, not offscreen.
+   - Sampling the dark Home render matches the prototype's sidebar tones at
+     every height, for example `#3d3829` against the prototype's `#353223` where
+     the hero lies beneath. The `backgroundExtensionEffect` mirror shows through.
+   - A probe with a vivid striped hero shows the same sidebar plainly
+     translucent. AppKit's own `NSSplitViewController` sidebar is also full
+     height in this macOS 27 window.
+   - HIG ([Color](https://developer.apple.com/design/human-interface-guidelines/color))
+     notes that "Liquid Glass appears more opaque in larger elements like
+     sidebars."
+   - The inset, rounded panel in the prototype is not what the system draws in
+     the harness window. Check the shipping window unlocked (see What's left).
+3. **The profile name.** The dog tag reads the in-game name the way the engine
+   loads it:
+   - `main/players/active.txt` gives the active profile;
+   - its `players/<profile>/config_mp.cfg` is read first, then
+     `main/config_mp.cfg`;
+   - the result is "Player" when no name is set.
+
+   Profile names are sanitized (no path separators or `..`) and unit-tested.
+   Only review renders use an invented name.
+4. **Icon.**
+   - At 32–64 px the top-left stencil bridge read as a separate tick. Five
+     variants were compared at 64, 32 and 256 px: narrower, moved to the crown,
+     both, and removed.
+   - Removing that bridge keeps the 2 one shape at every size. The stencil
+     character stays in the diagonal and baseline bridges.
+   - The change is applied to the `.icon` layers, the static fallback and the
+     sidebar mark. All six renditions were re-rendered.
+
+## Button shapes and concentricity (pass 5)
+
+The user asked why Connect, in the direct-connect bar, wasn't a capsule like
+every other button, and why it sat close to the bar's edge.
+
+**The cause.** The macOS 26 glass button styles are capsules only at the large
+and extra-large sizes. At the regular size they draw as rounded rectangles.
+Connect used `.glassProminent` at the regular size, so it came out as a 76 × 24
+rounded rectangle. In the 58-point bar that left 17 points above and below it,
+but only 9 at the trailing end, and its fields were 34 points tall.
+
+**The rules, now one system.**
+
+- **Buttons are capsules, or circles for a lone symbol.**
+  - `prominentAction()` and `glassAction(circle:)` in `Theme.swift` set
+    `buttonBorderShape(.capsule)` (or `.circle`) on the glass styles.
+  - The macOS 13–25 fallback styles were already capsules. They now match the
+    glass styles' heights.
+  - The root view also applies `.capsule` to bordered system controls, so the
+    pop-up buttons and segmented controls in Settings and the toolbars are
+    capsules too.
+- **Single-line fields are capsules.** That covers the bar fields, the
+  inspector password, DPI and the CD key. The multi-line dvar editor stays a
+  rounded rectangle.
+- **Three button sizes.**
+  - The hero pair is extra large with a 56-point label.
+  - Bar, card and inspector buttons use one action size: extra large, 36 points
+    (`actionControlSize()`, macOS 14+). It falls back to large on macOS 13,
+    which the fallback styles draw at 36.
+  - Buttons inside rows and content panels are regular, 24 points, like system
+    forms.
+  - Standard control sizes are used throughout; there are no custom metrics
+    on the glass path.
+- **Concentric nesting.** A shape that reaches into its container's corner
+  sits the same distance from both edges, and its radius is the container's
+  radius minus that distance (`Concentric.radius(in:inset:)`).
+- **Equal end insets.** A shape that isn't in a corner keeps at least the
+  corner radius from the edge. A button at a row's end sits as far from the end
+  as from the top and bottom.
+
+**What changed:**
+
+| Where | Before | Now |
+| --- | --- | --- |
+| Direct-connect bar | Connect a 76 × 24 rounded rectangle; insets 17 vertical and 9 trailing; fields 34 tall | Connect, address and password are 36-point capsules, all 11 from the bar's edges; bar 58 = 36 + 2 × 11, so each capsule's radius 18 = 29 − 11 |
+| Server details | Map art radius 16 at 14 inside a 26 panel; Deploy 39 tall beside a 36 favourite circle | Art radius 12 = 26 − 14; Deploy and favourite both 36 |
+| Server and demo rows | Art radius 10 at 14 from the side and 10 from the top, in a 16 row | Art 10 in on every side, radius 10, in a 20 row; Play (24) sits 28 from the end, as from the top |
+| Home status chips | Glass buttons as 14-radius rounded rectangles | Capsules |
+| Home recent rows | Art radius 9 at 8 inside a 12 row; the last row reached 14 and 20 into the panel's corner | Art radius 8 inside a 16 row; panels pad 22 = their radius, so no row reaches a corner (panels 6 points taller, 6 higher) |
+| Setup card | Back and Continue 28 tall, 38 and 30 from the card's edges at radius 30; "Change…" a rounded rectangle | Back and Continue/Deploy are 36-point capsules 14 from the bottom and sides, and the card radius is 32 = 14 + 18. "Change…" and "Choose Mac Copy…" are capsules; "Change…" sits 20 from the well's top, bottom and end |
+| Settings | Pop-ups and segmented controls rounded rectangles; "Set Up Again…" 18 from the end and 13.5 from the top; DPI a 9-radius box | All capsules. Rows keep the 20-point radius as their side margin, and the game-data row is tall enough that its button sits 20 from top, bottom and end |
+| Sidebar profile card | Radius 16 at 12 inside the window's ~15-point corner | `ConcentricRectangle(corners: .concentric(minimum: .fixed(10)), isUniform: true)` on macOS 26, so it follows the window or floating-sidebar corner; 16 on 13–25 |
+| About | The three panels sized to their text, so their bottoms didn't line up | They fill one height, like Home's |
+
+**Label ink.** `.glassProminent` draws its label in white. A foreground style
+set outside the label doesn't reach it, so in dark mode Deploy, Connect,
+Continue and Save were white on brass at about 2:1. A small `PrimitiveButtonStyle`
+in `Theme.swift` now re-creates the system button with the design's ink on the
+label: `#1c170c` on the brass tint is about 8.5:1, and `#fff8e8` on olive about 6.3:1. Disabled
+buttons keep the system's own label colour. A probe confirmed that `.defaultAction`
+and ⌘S still fire through the wrapper.
+
+**Toolbars.** Toolbar groups are system glass around system controls (search,
+segmented filter, checkboxes, the count and refresh button, Save). Their insets
+are the system's own, and I checked them at 200 % in the final renders.
+
+**Renders.** All four sets were re-rendered in dark and light:
+`output/ws28/no-data`, `output/ws28/with-data` and `output/ws28/fallback` at
+`99c3128`, and `output/ws28/scale2` at `e8a1f78`.
+
+- During this pass the session went from a locked 1× display to an unlocked
+  6K Retina display, so the window server now captures at 2×.
+- `output/ws28/scale2/<screen>-<appearance>.png` are therefore real Liquid
+  Glass at 2880×1800. The `@2x` files beside them are the material styling
+  drawn at 2×.
+- I reviewed every no-data screen at 100 %, and every reworked control at
+  200 % in both appearances, from the real 2× glass captures and from crops:
+  the bar, the inspector, rows, chips, recent rows, Settings, the setup well
+  and footer, Library and the toolbars.
+- The with-data set was checked only by the shape audit and the contrast
+  gate, without being opened.
+
+**Checked automatically.** `LauncherSnapshots` now audits every screen it
+renders.
+
+- Views report their frames and declared shapes through `shapeAudit(_:_:_:)`.
+  The reporting lives in the shared modifiers (glass surfaces, both button
+  styles, the field wells), panels, rows and art, and it is off unless the
+  harness sets the environment value.
+- Frames come from `onGeometryChange(for:of:action:)`. Back-deployed to macOS
+  13, it tracks the final layout; a `GeometryReader` with `onChange` kept
+  stale first-pass frames.
+- `ShapeCheck` then enforces the rules above:
+  - every button is a capsule or a circle;
+  - a prominent button is seen to be one in the captured pixels (the corner
+    sample matches the background, not the fill);
+  - shapes that reach a corner are concentric;
+  - row-end buttons have equal insets;
+  - controls side by side share one height.
+- The check writes `shape-audit.json` and exits non-zero on any finding, which
+  fails `tests/launcher/run.sh`.
+- `run.sh` also rejects any `buttonStyle` or `buttonBorderShape` outside
+  `Theme.swift`, other than plain and row styles.
+
+On the code before this pass, the audit reported **102 findings** across the 26
+captures, including Connect drawn as a rounded rectangle. After the pass it
+reports **0 findings over 198 shapes per run** with Liquid Glass, with the
+material fallback, in the 2× run and with the private game art.
+
+**HIG references.**
+
+- [Buttons](https://developer.apple.com/design/human-interface-guidelines/buttons):
+  - "Use style — not size — to visually distinguish the preferred choice";
+  - "prefer the capsule shape in a horizontal row of buttons" (from its visionOS
+    section, which states the reasoning for preferring capsules).
+- [Adopting Liquid Glass](https://developer.apple.com/documentation/technologyoverviews/adopting-liquid-glass),
+  Controls:
+  - "Consider aligning the shape of controls with other rounded elements …
+    using rounded shapes that are concentric to their containers";
+  - standard controls adopt the new shapes "if you … don't hard-code their
+    layout metrics".
+- The HIG's Layout page, as published on 2026-10-05, has no concentricity
+  passage. Apple's concentricity guidance is the overview above, with
+  `ConcentricRectangle`.
+
+Every API was checked in the macOS 27.0 SDK:
+
+- `ButtonBorderShape.capsule` and `.circle`: macOS 14.0;
+- `ConcentricRectangle(corners:isUniform:)` and
+  `Edge.Corner.Style.concentric(minimum:)`: macOS 26.0;
+- `onGeometryChange(for:of:action:)`: macOS 13.0, back-deployed.
+
+## Frame cap: neutral copy, 250 by default, 0–1000
+
+The user asked to stop presenting 333 fps as a feature. It was a personal goal,
+not a selling point. They also decided that the default is a 250 fps cap and that
+players choose any value the engine accepts. The engine registers
+`com_maxfps` with the range 0–1000. 0 means no cap: the frame loop then neither
+waits nor computes a cap, leaving only its 1 ms floor.
+
+**Copy.** 333 stays available as a value but is no longer pitched:
+
+- Settings' quick picks are 125 "Low", 250 "Default", 333 "High" and 1000
+  "Engine maximum". A custom crate takes any value from 0 to 1000 and reads
+  "Unlimited" at 0.
+  - The old captions are gone: "Classic competitive physics", "Common CoD2x
+    server cap" and "Original default feel". The last was also wrong, because
+    the original engine registers the cap at 85, not 125.
+  - The footer reads "Any cap from 0 to 1000, where 0 means no cap. Servers can
+    enforce their own; CoD2x competitive servers keep it between 125 and 250",
+    which is the range `cod2x_runtime.c` enforces in competitive mode.
+- Home's chip shows the setting as data: "250 fps cap", or "No fps cap" at 0.
+  VoiceOver reads "Frame cap 250 frames per second" or "No frame cap".
+- README:
+  - the tagline drops "built for 333 fps";
+  - "Constant 333 fps … remain goals" becomes "Smoother frame pacing … remain
+    goals";
+  - the defaults paragraph says "a 250 fps cap" and gives the 0–1000 range;
+  - the benchmark note now calls the table "measurements, not guarantees of
+    steady frame pacing".
+  - The measured table rows at a 333 cap stay, as data.
+- The synthetic release-notes fixture and its test drop the tagline phrase.
+  The fake "Silicon Sessions" preview server now reports a 250 cap.
+- No string in Home, Setup, About, tooltips or accessibility labels presents
+  333 as a feature. I checked all of them with `grep`.
+
+**Defaults and the single source of truth:**
+
+- **Launcher.** `GameSettings.fps` defaults to 250 (it was 333). The validated
+  writer accepts 0–1000 (it was 1–1000), and its error names the range.
+  - A value already saved by an earlier build is the player's own and is kept.
+  - Unit tests cover 0 and 1000 (accepted and written) and 1001, −1 and −250
+    (rejected), plus the chip, the spoken label, the captions and the quick-pick
+    list.
+- **Engine.** `src/PC/qcommon/common.c` registers `com_maxfps` at 250 in the
+  native CoD2x build (it was 333).
+  - The original registration (85) in the `#else` branch is byte-for-byte
+    unchanged, and so is the guard.
+  - Only a constant changed, so no layout or ABI changes.
+- **Launch arguments.**
+  - `tools/cod2x/make_macos_app.py` no longer puts `+set com_maxfps 333` in the
+    helper's `CoD2LaunchArguments`. That bundle string comes before argv, so a
+    cap there overrode `config_mp.cfg` whenever the helper started on its own.
+  - The launcher still passes the player's saved setting. Without the
+    launcher, the engine's 250 default or the player's `config_mp.cfg` applies.
+  - `tests/cod2x/test_url_native.m` now asserts that the bundle arguments
+    contain no `com_maxfps`.
+- **Unchanged on purpose:**
+  - the benchmark and validation tools under `tools/macos` (`validate-333.sh`,
+    `live-bench.py --maxfps 333` and others), which measure that cap
+    deliberately;
+  - the legacy Wine script `tools/wine/play-cod2x.sh`;
+  - `tests/cod2x/test_runtime.c`, which registers its own dvar to test
+    CoD2x's competitive clamp;
+  - the PLAN and CHANGELOG history.
+
+**Checked at `3262385`, without opening any window.** The user was testing
+the game in fullscreen, so harness windows, renders and app or game launches
+waited for the orchestrator's all-clear. Logs are `output/ws28/gate/*-fps.log`.
+
+- **Passed:**
+  - unit tests (`LauncherTests`, including the new frame-cap cases);
+  - the Network.framework UDP test and the artwork tests;
+  - the font checksums and the button-style lint;
+  - the pre-26 typecheck;
+  - builds of the launcher and the review harness;
+  - `tests/cod2x/run.sh`;
+  - incremental stock and CoD2x engine builds;
+  - a check that the bundle's launch arguments carry no frame cap.
+- **Pending the all-clear:**
+  - re-rendering Settings and Home;
+  - the snapshot test and shape audit;
+  - `tests/cod2x/run_native.sh`, which starts the URL probe app and runs the
+    updated `test_url_native.m`;
+  - lifecycle and cold-link;
+  - the package, bundle audit and release smoke;
+  - the ABI audits. Only a literal changed, so no layout or ABI is affected.
+
+## Tests and gate evidence
+
+All logs are under ignored `output/ws28/gate/`. Builds and tests ran under
+`taskpolicy -b nice -n 19`. Another agent held the benchmark lock during this
+work, and no performance was measured.
+
+| Check | Result |
+| --- | --- |
+| `sh tests/launcher/run.sh` at `dea4b2d` | **PASS**, 7 of 7 (`launcher-tests-dea4b2d.log`; also at `99c3128`, `launcher-tests-99c3128.log`). Core and wire fixtures, the new presentation tests, the Network.framework UDP test, the IWI/IWD artwork tests, font checksums, the button-style lint, the pre-26 typecheck, and 26 screens plus the fallback rendered with a clean shape audit |
+| Shape audit at `99c3128` | **0 findings** over 198 shapes in each of the glass, fallback, 2× and private-art runs (`render-*-99c3128.log`, `shape-audit.json` beside each set). On the code before pass 5: 102 findings |
+| New unit tests (`CoreTests`) | cm/360 (800 DPI × 5 = 10.39 cm, invariance, invalid input), both advanced-dvar forms and reservations, settings and library migration from older JSON, the release-notes parser against a synthetic fixture (drafts, Markdown, CRLF, truncation, link host, newest stable), map names and regions with unsafe names, server facts, media facts, the key tag, the player name, and sRGB-composited scrims |
+| Strict build | Swift 6, complete concurrency, warnings as errors, `arm64-apple-macos13`: launcher, harness and tests |
+| `python3 tests/launcher/lifecycle.py` | **PASS** at `99c3128` (`lifecycle-99c3128.log`): nested child, Dock policies, live links, no duplicate engine, force-quit reconnect, crash report |
+| `python3 tests/launcher/cold_url.py` | **PASS** three times at `99c3128` (`cold-url-99c3128-{1,2,3}.log`), as at `1b99cd7`. Earlier, at `5187bd9`, it passed five times in a row with a completed scratch home and once with a fresh home (`cold-url-fresh.log`). Cold LaunchServices `cod2x://` with a `+` password is deferred and never in argv; accessory during the game, regular after it, one game only. No test processes left behind |
+| `python3 tests/packaging/first_run.py` | **PASS** (`first-run.log`) |
+| Stock engine build (CONTRIBUTING configuration) | **PASS**, `build-stock.log` |
+| CoD2x engine build | **PASS**, `build-codx.log` |
+| `sh tools/abi/check.sh build-macos/compile_commands.json output/ws28/abi-stock` | **exit 0**: 620 TUs, 0 errors, **0 mismatches**; 218 renderer bindings with 0 table/cast/floating mismatches; 514 imports and 1,776 native sites with 0 proven extra or missing dereferences |
+| Same for `build-macos-codx` | **exit 0**: 637 TUs, **0 mismatches**; 218 bindings clean; 1,778 native sites, 0 proven extra or missing |
+| Private contrast gate | **PASS** at `99c3128`, worst 4.66:1 over 30 heroes (`contrast-99c3128.log`) |
+| `COD2_BUILD_BACKGROUND=1 scripts/package-release.sh --build-dir build/package/ws28` at `99c3128` | **exit 0**. `dist/CoD2-Silicon-0.1.0-macos-arm64.zip`, SHA-256 `68d6f4daff9c30ba991638c7afb16f8d1f61fbaeab7787b9e203f2f97fee7f7a`; `shasum -c SHA256SUMS` OK (`package-99c3128.log`). Earlier packages: `1b99cd7` `c205400b…f067`, `00d017d` `2e7a4d36…adf5` |
+| `python3 tests/packaging/launcher_bundle.py` on the extracted `99c3128` zip | **PASS** (`bundle-audit-99c3128.log`). Launcher plus the isolated Game Mode helper, one URL owner; four arm64 Mach-Os at `minos 13.0` (SDK 27.0); portable links; `codesign --verify --deep --strict`; no game content; icon G (`Assets.car`, ICNS, `CFBundleIconName`, `NSAccentColorName`) in both apps; the five font and licence files |
+| `python3 tests/packaging/release_smoke.py` on the extracted zip (under `gtimeout -k 10 300`; no other game running, benchmark lock free) | **PASS** at `99c3128`. Empty home → launcher non-interactive setup → engine menu → `devmap mp_toujane` → two captures → scripted quit, exit 0 → "returned to launcher"; bundled SDL2/SDL3 loaded (`output/ws28/release-smoke-99c3128/results.json`). It also passed at `00d017d` and `1b99cd7` |
+| System-resolved app icon | `NSWorkspace` icons of the extracted `1b99cd7` outer app and nested helper show icon G with two bridges (`output/ws28/icon/finder-icon-{outer,helper}.png`) |
+| Static checks | `shellcheck` clean on the changed scripts; Python compiles; `git diff --check 4d56e0b` clean outside the verbatim OFL texts, whose upstream trailing spaces are exempt through `launcher/Resources/Fonts/.gitattributes` |
+
+The CONTRIBUTING fixture suites (online, fixes13, lp64, platform and so on) were
+not re-run. Until `3262385` this branch changed no engine source, header, CMake
+or data blob. `3262385` changes one constant in `src/PC/qcommon/common.c`: the
+native `com_maxfps` default goes from 333 to 250. The engine builds and both
+full ABI audits in this table describe `99c3128`; at `3262385` both engines
+rebuilt incrementally, and the ABI audits are pending (see "Frame cap"). After `99c3128`,
+`e8a1f78` and `dea4b2d` touch only the review harness and its test, so the app,
+package, lifecycle and smoke evidence at `99c3128` still applies. The release smoke's captures are game content; they
+stay in ignored `output/`.
+
+## What's left
+
+- **Accepting the real `Window` scene.**
+  - SwiftUI opens no scene windows while the session is locked. The review
+    images come from the hosting-window harness, so the shipping window's
+    sidebar may draw differently: it could be the floating, inset Tahoe
+    sidebar.
+  - Look at the app unlocked, on macOS 26 and 27, and on macOS 13–15 for the
+    material fallback. That wasn't possible while the session was locked.
+  - The session was unlocked, on a 6K display, by the end of pass 5. A capture
+    of the real `Window` scene is now possible, but it isn't part of this pass.
+- **VoiceOver and keyboard walkthrough.** Labels, traits and shortcuts are in
+  place, but nobody has toured the app with VoiceOver.
+- **Renderer controls.**
+  - Metal 4, render scale, MetalFX and HDR need the engine's `r_renderer` and
+    related dvars from the Metal workstreams. When they land, remove
+    `upcoming:` in `SettingsView.graphicsGroup` and extend
+    `GameSettings.dvars()`.
+  - The reserved-name list already holds these names.
+- **Demo length.** It needs a `.dm_1` reader; the row shows the date for now.
+- **Dispatches update only on demand.** Fetches happen when someone checks for
+  updates (Home toolbar or About), keeping WS25's no-network-on-launch rule.
+  The two bundled entries show until the first check.
+- **Font licensing.** Big Shoulders is a variable font, and only its
+  700/800 named instances are used. No other font licensing questions are open.
+
+## Merge notes for `port/launcher-v2`
+
+- **Merging.** Merge after `port/launcher`, which is this branch's base.
+- **Conflicts with WS25.**
+  - WS25 owned `launcher/Views.swift` and `launcher/Design.swift`, which this
+    branch deletes.
+  - Any later change to those files on `port/launcher` must be re-applied in
+    the per-screen files.
+  - `launcher/Model.swift` keeps every WS25 method; the diff adds to it.
+- **Packaging and icon.**
+  - `make_macos_app.py` changes only icon, font and accent installation.
+    Bundle identity, Info keys, signing order, the SDL rpath, the helper's
+    Game Mode and automatic-setup flags and the sole URL owner are unchanged.
+  - `Native.icns` is gone. The bundle's icon is now `CoD2 Silicon` from
+    `Assets.car` and the ICNS.
+  - Keep `tools/cod2x/icon-source/CoD2 Silicon.icon` together with
+    `layers.py`.
+- **Build integration.**
+  - CMake needs no change: the existing `launcher/*` glob covers the new files.
+  - `scripts/build-launcher.sh` lists the view files explicitly. Add new launcher
+    sources there.
+- **Docs index.** Add WS25 and WS28 to the index in `docs/macos-port/README.md`
+  when merging. I left the shared index alone to avoid conflicts.
+- **Housekeeping.**
+  - No pushes, PRs, issues, remote changes, system packages, sibling-worktree
+    access or benchmark measurements.
+  - Test bundles registered with LaunchServices were unregistered.
+  - Only processes this session started were stopped: test launchers left
+    behind by debugging runs.

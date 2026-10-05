@@ -4,6 +4,8 @@ import argparse
 import json
 import os
 import pathlib
+import plistlib
+import signal
 import subprocess
 import time
 
@@ -19,14 +21,16 @@ home = out / "home"
 home.mkdir()
 # The user specifically requested this inventory before each game launch.
 while True:
-    inventory = subprocess.run(["pgrep", "-fl", "cod2_macos"], capture_output=True, text=True)
-    (out / "process-inventory.txt").write_text(inventory.stdout)
+    inventory = subprocess.run(["pgrep", "-x", "cod2_macos"], capture_output=True, text=True)
+    safe_inventory = []
     running = []
     for line in inventory.stdout.splitlines():
         pid = line.split()[0]
         comm = subprocess.run(["ps", "-p", pid, "-o", "comm="], capture_output=True, text=True).stdout.strip()
+        safe_inventory.append(f"{pid} {comm}")
         if pathlib.Path(comm).name == "cod2_macos":
             running.append(pid)
+    (out / "process-inventory.txt").write_text("\n".join(safe_inventory) + "\n")
     if not running:
         break
     print("Another agent's game is running; polling again in 60 seconds.", flush=True)
@@ -37,13 +41,18 @@ environment = {**os.environ, "CFFIXED_USER_HOME": str(home), "HOME": str(home),
                "COD2_SETUP_MAC_BINARY": str(args.mac_binary.resolve()),
                "COD2_SETUP_CD_KEY": '000000000000000086D3', "DYLD_PRINT_LIBRARIES": "1"}
 environment.pop("COD2_MAC_SHADER_CACHE", None)
-command = ["timeout", "-k", "10", "90", str(args.app.resolve() / "Contents/MacOS/cod2_macos"),
+info = plistlib.loads((args.app.resolve() / "Contents/Info.plist").read_bytes())
+launcher = info["CFBundleExecutable"] == "CoD2Launcher"
+command = [str(args.app.resolve() / "Contents/MacOS" / info["CFBundleExecutable"])]
+if launcher:
+    command += ["--play", "--exit-after-game", "--"]
+command += [
            "+set", "r_fullscreen", "0", "+set", "r_mode", "1280x720", "+set", "developer", "1",
            "+set", "sv_pure", "0", "+set", "net_port", "29021", "+set", "g_gametype", "dm"]
 log = out / "console.log"
 with log.open("w") as stream:
     process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=stream, stderr=stream,
-                               text=True, env=environment, cwd=out)
+                               text=True, env=environment, cwd=out, start_new_session=True)
     def send(text):
         process.stdin.write(text + "\n")
         process.stdin.flush()
@@ -70,6 +79,8 @@ with log.open("w") as stream:
         send("quit")
         process.wait(timeout=20)
         assert process.returncode == 0
+        if launcher:
+            assert "returned to launcher (game exit 0)" in log.read_text(errors="replace")
         text = log.read_text(errors="replace")
         framework_lines = [line for line in text.splitlines() if "dyld" in line and "libSDL" in line]
         assert any("Contents/Frameworks/libSDL2" in line for line in framework_lines), framework_lines
@@ -77,16 +88,21 @@ with log.open("w") as stream:
         assert not any("/opt/homebrew" in line for line in framework_lines), framework_lines
         assert (home / ".cod2/preferences").stat().st_mode & 0o777 == 0o600
         results = {"exit_code": process.returncode, "menu": True, "devmap": "mp_toujane",
-                   "screenshots": [str(p) for p in screenshots.glob("*.jpg")], "loaded_sdl": framework_lines}
+                   "screenshots": [str(p) for p in screenshots.glob("*.jpg")], "loaded_sdl": framework_lines, "launcher_returned": launcher and "returned to launcher (game exit 0)" in text}
         (out / "results.json").write_text(json.dumps(results, indent=2) + "\n")
-        print("PASS: empty-home menu, devmap mp_toujane, two JPEGs, scripted quit exit 0, bundled SDL2/SDL3")
+        print("PASS: empty-home menu, devmap mp_toujane, two JPEGs, scripted quit exit 0, launcher return, bundled SDL2/SDL3")
     finally:
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
         if process.poll() is None:
-            process.terminate()
             try:
                 process.wait(timeout=15)
             except subprocess.TimeoutExpired:
-                process.kill()
+                os.killpg(process.pid, signal.SIGKILL)
                 process.wait()
-        subprocess.run(["/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister",
-                        "-u", str(args.app.resolve())], check=False)
+        for bundle in [args.app.resolve(), args.app.resolve() / "Contents/Helpers/CoD2 Game.app"]:
+            if bundle.exists():
+                subprocess.run(["/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister",
+                                "-u", str(bundle)], check=False)

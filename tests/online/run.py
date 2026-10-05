@@ -19,6 +19,12 @@ flags += ['-UNDEBUG', '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
 suites = [
     ('ui_conversion', 'src/PC/ui_mp/ui_main_mp.c',
      ['UI_ReplaceConversions', 'UI_ReplaceConversionString']),
+    ('localization', 'src/PC/stringed/stringed_hooks.c',
+     ['SEH_IsDigit', 'SEH_LocalizeTextMessage']),
+    ('ui_item_color', 'src/PC/ui_mp/ui_shared_mp.c', ['Script_SetItemColor']),
+    ('ui_server_insert', 'src/PC/ui_mp/ui_main_mp.c', ['UI_InsertServerAtPosition', 'UI_BinaryInsertServer']),
+    ('ui_text_color', 'src/PC/ui_mp/ui_shared_mp.c', ['Item_TextColor']),
+    ('setviewpos', 'src/PC/game_mp/g_cmds_mp.c', ['Cmd_SetViewpos_f']),
     ('infostring', 'src/PC/universal/q_shared.c', ['Info_RemoveKey', 'Info_RemoveKey_Big']),
     ('pure_iwds', 'src/PC/qcommon/files.c', ['FS_PureServerSetLoadedIwds']),
     ('timeout', 'src/PC/client_mp/cl_main_mp.c', ['CL_Frame']),
@@ -48,10 +54,20 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
         if name == 'mantle':
             source = source[:source.index('extern const dvar_t *Dvar_RegisterBool')]
         functions = [] if names else [source]
+        if name == 'ui_text_color':
+            functions.append(source[source.index('#if defined(COD2_X64)'):
+                                    source.index('extern commandDef_t')])
         if name == 'scheduled_fx':
             # Keep the production native link accessor and its layout assertion.
             functions.append(source[source.index('#if defined(COD2_X64)'):
                                     source.index('extern int irand')])
+        if '-DCOD2_CODX=1' in flags and name in ('cdkey_hash', 'challenge_resend'):
+            identity = (root / 'src/PC/qcommon/cod2x_identity.c').read_text()
+            functions.append(identity[identity.index('int Cod2x_CDKeyHash('):identity.rindex('#endif')])
+            if name == 'challenge_resend':
+                protocol = (root / 'src/PC/qcommon/cod2x_protocol.c').read_text()
+                functions.append(protocol[protocol.index('size_t Cod2x_EncodeConnect('):
+                                          protocol.index('int Cod2x_HwidValid(')])
         for function in names:
             match = re.search(r'^(?:static )?(?:const char \*|void |dvar_t \*|qboolean |int )' + function + r'\([^;]*?\)\n\{',
                               source, re.M)
