@@ -28,11 +28,17 @@ int main(void)
         '\\', 37, 187, 138, 61, 0x75, 0x67,
         '\\', 'E', 'O', 'T'
     };
-    /* Deliberately cross a 32-bit address boundary in this isolated process. */
-    void *area = mmap((void *)0x1ffffc000ULL, 0x8000, PROT_READ | PROT_WRITE,
-                     MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0);
+    /* Deliberately cross a 32-bit address boundary. A fixed address can collide
+       with sanitizer shadow or ASLR placement, so reserve 4 GB + 64 KB wherever
+       the kernel puts it and open 32 KB around the boundary inside it. */
+    const size_t span = (1ULL << 32) + 0x10000;
+    byte *area = mmap(NULL, span, PROT_NONE, MAP_ANON | MAP_PRIVATE, -1, 0);
     assert(area != MAP_FAILED);
-    byte *data = (byte *)0x1ffffffe0ULL;
+    uintptr_t boundary = ((uintptr_t)area + 0xffffffffULL) & ~(uintptr_t)0xffffffffULL;
+    if (boundary - (uintptr_t)area < 0x4000)
+        boundary += 1ULL << 32;
+    assert(mprotect((void *)(boundary - 0x4000), 0x8000, PROT_READ | PROT_WRITE) == 0);
+    byte *data = (byte *)(boundary - 0x20);
     memcpy(data, packet, sizeof(packet));
     msg_t msg = { .data = data, .cursize = sizeof(packet) };
     netadr_t from = {0};
@@ -45,7 +51,7 @@ int main(void)
     msg.cursize = 25; /* incomplete first endpoint */
     CL_ServersResponsePacket(from, &msg);
     assert(browser.numglobalservers == 2);
-    munmap(area, 0x8000);
+    munmap(area, span);
     puts("online: master response pointer width, duplicates and truncated packet passed");
     return 0;
 }
