@@ -158,6 +158,7 @@ struct AboutView: View {
                         }
                         .padding(.top, 14)
                         Text("Notification only. Nothing is downloaded or installed for you.").font(.system(size: 12)).foregroundStyle(palette.tertiary).padding(.top, 12)
+                        Spacer(minLength: 0)
                     }
                     ContentPanel {
                         PanelHeading(title: "Credits", action: "Full credits") {
@@ -170,6 +171,7 @@ struct AboutView: View {
                             credit("Big Shoulders · Courier Prime", "Typefaces · SIL Open Font License 1.1")
                         }
                         .padding(.top, 14)
+                        Spacer(minLength: 0)
                     }
                     ContentPanel {
                         PanelHeading(title: "Licence", action: "Notice") {
@@ -179,6 +181,7 @@ struct AboutView: View {
                             .font(.system(size: 13)).foregroundStyle(palette.body).lineSpacing(3).padding(.top, 12).fixedSize(horizontal: false, vertical: true)
                         Text("Call of Duty is a trademark of Activision. This independent project isn't affiliated with Activision, Infinity Ward, Aspyr or CoD2x. Bring your own licensed game.")
                             .font(.system(size: 13)).foregroundStyle(palette.body).lineSpacing(3).padding(.top, 10).fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
                     }
                 }
                 .frame(height: max(242, proxy.size.height - 632))
