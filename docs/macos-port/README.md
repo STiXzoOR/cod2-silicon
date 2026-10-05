@@ -41,8 +41,13 @@ existing cross-references continue to work.
 - [WS20: publish](reports/WS20-publish.md) — release docs, credits, contribution policies, CI and privacy hygiene.
 - [WS21: package](reports/WS21-package.md) — self-contained macOS 13 app, bundled SDL, native shader setup, first run and release scripts.
 - [WS22: datagen-snapshot](reports/WS22-datagen-snapshot.md) — committed typed-data snapshot so clean checkouts build without private inputs.
+- [WS25: launcher](reports/WS25-launcher.md) — native SwiftUI launcher with game hand-off, first-run setup and `cod2x://` links ([design](WS25-design.md), [design v2](WS25-design-v2.md)).
+- [WS26: dedicated](reports/WS26-dedicated.md) — native arm64 dedicated server for hosting on Mac hardware.
+- [WS27: fuzz](reports/WS27-fuzz.md) — network-parser fuzzing with five robustness fixes.
+- [WS28: launcher-v2](reports/WS28-launcher-v2.md) — Liquid Glass launcher from the approved prototype, the Icon Composer icon and a 250 fps default cap.
+- [WS36: qa-fixes](reports/WS36-qa-fixes.md) — first hands-on fixes: server browser, menu text and colours, hover cadence, portal bounds and the desktop-fullscreen default.
 
-WS7 has no separate report in this checkout; the numbering is retained.
+WS7, WS23 and WS24 have no separate report in this checkout, and the Metal renderer reports (WS29–WS35, WS37 and WS39) arrive with the renderer in 0.3; the numbering is retained.
 
 Commit hashes quoted in these reports refer to the development history before
 publication. The author email was normalized to a GitHub noreply address

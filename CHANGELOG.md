@@ -5,6 +5,44 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
+### Added
+
+- Native SwiftUI launcher with Liquid Glass styling on macOS 26+ (material
+  fallback on macOS 13–25): server browser, library, settings, first-run
+  setup and `cod2x://` links. The game helper gets keyboard and mouse focus
+  on launch.
+- Layered Icon Composer app icon with light, dark, clear and tinted variants.
+- Native arm64 dedicated server (`cod2_macos_ded`) for hosting on Mac
+  hardware, with a launchd service, example config and operator guide in
+  [docs/server.md](docs/server.md).
+
+### Changed
+
+- Fullscreen now defaults to desktop (borderless) fullscreen at the chosen
+  render resolution. Exclusive fullscreen remains selectable.
+- `com_maxfps` defaults to 250 and accepts 0 (no cap) through 1000.
+
+### Fixed
+
+- Opening Start New Server crashed the game. The UI read the game-type,
+  map, mod and movie lists through 32-bit offsets on the 64-bit build.
+- Smoke, explosions, muzzle flashes and other effects never advanced: the
+  effects clock misread `fx_freeze` on the 64-bit build.
+- Join Server: localized placeholders such as "Source: &&1Internet", the
+  empty Game Type, the empty server list and the cyan column tint.
+- Menu items flickered on hover; the pulse now follows the original timing.
+- Portal visibility overran its pool and clipped projections incorrectly,
+  a likely cause of the world briefly disappearing while looking around
+  (that symptom has not been reproduced in automated sweeps).
+- Black screens after Cmd-Tab, Mission Control or a hot corner: desktop
+  fullscreen avoids display mode switches, and exclusive fullscreen now
+  steps aside while the game is hidden. Exclusive fullscreen can still fail
+  to restore after display sleep.
+- A second (system) cursor in fullscreen menus.
+- Five network-parser memory-safety bugs found by fuzzing, including an
+  out-of-bounds decompression read and an `Info_SetValueForKey` overflow
+  reachable through `getinfo`.
+
 ## [0.1.0] - 2026-10-04
 
 ### Added
