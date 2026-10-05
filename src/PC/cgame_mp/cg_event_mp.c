@@ -2,6 +2,9 @@
 #include "imports.h"
 #include "headers/PC/cgame_mp/cg_local.h"
 #include "bytematch.h"
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+#include <stdlib.h>
+#endif
 extern const dvar_t *cg_debugEvents;
 extern const dvar_t *cg_footsteps;
 extern const dvar_t *bg_fallDamageMinHeight;
@@ -440,6 +443,14 @@ static void CG_Obituary(centity_t *cent)
 
 void CG_EntityEvent(centity_t *cent, int event)
 {
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+    static int combatTrace = -1;
+    if (combatTrace < 0)
+        combatTrace = getenv("COD2_MAC_COMBAT_TRACE") != NULL;
+    if (combatTrace) Com_Printf("[combat-event] time=%i entity=%i event=%i weapon=%i parm=%i origin=%.3f,%.3f,%.3f\n",
+        cg->time, cent->nextState.number, event, cent->nextState.weapon, cent->nextState.eventParm,
+        cent->lerpOrigin[0], cent->lerpOrigin[1], cent->lerpOrigin[2]);
+#endif
     entityState_t *es;
     vec_t *position;
     int eventParm;

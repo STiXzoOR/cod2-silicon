@@ -728,22 +728,43 @@ void PrimitiveTemplate_ParseChannelCurve(const PrimitiveTemplate *_this, GPValue
         }
     }
 
+#if defined(COD2_X64)
+    int dimensions = (channel == FXCHAN_COLOR || channel == FXCHAN_COLOR_RAND) ? 3 : 1;
+    int keySize = dimensions + 1;
+    keys = (float *)Hunk_AllocateTempMemoryInternal(keyCount * keySize * sizeof(*keys));
+#else
     keys = (float *)Hunk_AllocateTempMemoryInternal(keyCount * 8);
+#endif
 
     if (list) {
         float *cur = keys;
         GPValue *p = list;
         keyCount = 0;
         do {
+#if defined(COD2_X64)
+            if (dimensions == 3)
+                sscanf(GPV_STRING(p), "%f %f %f %f", &cur[0], &cur[1], &cur[2], &cur[3]);
+            else
+                sscanf(GPV_STRING(p), "%f %f", &cur[0], &cur[1]);
+#else
             sscanf(GPV_STRING(p), "%f %f", &cur[0], &cur[1]);
+#endif
             keyCount++;
             p = GPV_NEXT(p);
+#if defined(COD2_X64)
+            cur += keySize;
+#else
             cur += 2;
+#endif
         } while (p);
     } else {
         keyCount = 0;
     }
 
+#if defined(COD2_X64)
+    ((PrimitiveTemplate *)thisPtr)->mFxChannels[channel].curve =
+        FxCurve_AllocAndCreateWithKeys(keys, dimensions, keyCount);
+#else
 #if COD2_APPLE_SDK
     ((PrimitiveTemplate *)thisPtr)->mFxChannels[channel].curve =
         FxCurve_AllocAndCreateWithKeys(keys, 1, keyCount);
@@ -751,6 +772,7 @@ void PrimitiveTemplate_ParseChannelCurve(const PrimitiveTemplate *_this, GPValue
     int channelOffset = channel * 3;
     *(const FxCurve **)(((char *)thisPtr + offsetof(PrimitiveTemplate, mFxChannels[0].curve)) + channelOffset * 4) =
         FxCurve_AllocAndCreateWithKeys(keys, 1, keyCount);
+#endif
 #endif
 
     Hunk_FreeTempMemory(keys);
@@ -1156,6 +1178,16 @@ Bool PrimitiveTemplate_ParseChannel(const PrimitiveTemplate *_this, BackCompatib
         } else if (stricmp(key, "flags") == 0 || stricmp(key, "flag") == 0) {
             PrimitiveTemplate_ParseChannelFlags(channel, topValue);
             parsed = 1;
+#if defined(COD2_X64)
+        } else if (stricmp(key, "scale") == 0) {
+            float minVal, maxVal;
+            if (ParseFloatRange(topValue, &minVal, &maxVal)) {
+                FxChannel *target = &((PrimitiveTemplate *)_this)->mFxChannels[channelId];
+                target->scaleRange.mMin = minVal;
+                target->scaleRange.mMax = maxVal;
+                parsed = 1;
+            }
+#endif
         } else if (stricmp(key, "curve") == 0 || stricmp(key, "graph") == 0) {
             PrimitiveTemplate_ParseChannelCurve(_this, pair, channelId);
             parsed = 1;

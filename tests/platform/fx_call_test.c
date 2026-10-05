@@ -1,6 +1,12 @@
 #include "PC/EffectsCore/Fxexport.c"
 #include <assert.h>
 #include <math.h>
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+/* The opt-in receipt hook shares the engine's console and helper imports. */
+static FxHelper *fixtureHelper;
+void *imp_theFxHelper = &fixtureHelper;
+void Com_Printf(const char *format, ...) {}
+#endif
 static FxScheduler scheduler;
 static FxScheduler *schedulerPointer=&scheduler;
 byte *fx_scheduler_ptr=(byte *)&schedulerPointer;

@@ -1,5 +1,9 @@
 #include "common_types.h"
 #include "imports.h"
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+#include <stdlib.h>
+extern void Com_Printf(const char *format, ...);
+#endif
 extern level_locals_t level;
 extern scr_const_t scr_const;
 
@@ -30,6 +34,9 @@ enum {
     GMISSILE_ENTITYNUM_WORLD = 0x3fe,
     GMISSILE_FL_GUIDED = 0x10000,
     GMISSILE_FL_TURRET = 0x20000,
+#if defined(COD2_X64)
+    GMISSILE_EF_BOUNCE = 0x1000000,
+#endif
 };
 
 void G_ExplodeMissile(gentity_t *ent);
@@ -149,6 +156,30 @@ static inline void LerpPosition(const vec_t *start, const vec_t *end, float frac
     out[1] = start[1] + (end[1] - start[1]) * fraction;
     out[2] = start[2] + (end[2] - start[2]) * fraction;
 }
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+
+static void G_MissileCombatTrace(const gentity_t *ent, const char *phase, const trace_t *trace)
+{
+    static int enabled = -1;
+    if (enabled < 0)
+        enabled = getenv("COD2_MAC_COMBAT_TRACE") != NULL;
+    if (!enabled)
+        return;
+
+    const trajectory_t *pos = &ent->s.pos;
+    Com_Printf("[combat-missile] time=%i entity=%i phase=%s weapon=%i flags=%x owner=%i mask=%x origin=%.3f,%.3f,%.3f type=%i base=%.3f,%.3f,%.3f delta=%.3f,%.3f,%.3f trTime=%i ground=%i nextthink=%i fraction=%.6f startsolid=%i contents=%x hit=%i normal=%.3f,%.3f,%.3f\n",
+        LEVEL_TIME, ent->s.number, phase, ent->s.weapon, ent->s.eFlags,
+        ent->r.ownerNum, ent->clipmask,
+        ent->r.currentOrigin[0], ent->r.currentOrigin[1], ent->r.currentOrigin[2],
+        pos->trType, pos->trBase[0], pos->trBase[1], pos->trBase[2],
+        pos->trDelta[0], pos->trDelta[1], pos->trDelta[2], pos->trTime,
+        ent->s.groundEntityNum, ent->nextthink,
+        trace ? trace->fraction : -1.0f, trace ? trace->startsolid : -1,
+        trace ? trace->contents : 0, trace ? trace->entityNum : -1,
+        trace ? trace->normal[0] : 0.0f, trace ? trace->normal[1] : 0.0f,
+        trace ? trace->normal[2] : 0.0f);
+}
+#endif
 
 void G_ExplodeMissile(gentity_t *ent)
 {
@@ -169,6 +200,9 @@ void G_ExplodeMissile(gentity_t *ent)
     SnapVector(origin);
 
     G_SetOrigin(ent, origin);
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+    G_MissileCombatTrace(ent, "explode", NULL);
+#endif
 
     (_ENT(ent)->s.eType) = 0;
 
@@ -215,13 +249,25 @@ void G_ExplodeMissile(gentity_t *ent)
         (_ENT(ent)->freeAfterEvent) = 1;
     }
 
+#if defined(COD2_X64)
+    if (weapDef->iExplosionInnerDamage > 0) {
+#else
     if (weapDef->iExplosionRadius > 0) {
+#endif
         int splashMod = HANDLER_SPLASHMOD((_ENT(ent)->handler));
+#if defined(COD2_X64)
+        G_RadiusDamage((_ENT(ent)->r.currentOrigin), ent, COD2_GEntityFromHandle(_ENT(ent)->parent),
+                       (float)weapDef->iExplosionInnerDamage,
+                       (float)weapDef->iExplosionOuterDamage,
+                       (float)weapDef->iExplosionRadius,
+                       ent, splashMod);
+#else
         G_RadiusDamage((_ENT(ent)->r.currentOrigin), ent, COD2_GEntityFromHandle(_ENT(ent)->parent),
                        (float)weapDef->iExplosionRadius,
                        (float)weapDef->iExplosionOuterDamage,
                        (float)weapDef->iExplosionInnerDamage,
                        ent, splashMod);
+#endif
     }
 
     SV_LinkEntity(ent);
@@ -452,7 +498,11 @@ static qboolean G_BounceMissile(gentity_t *ent, trace_t *trace)
         (_ENT(ent)->s.groundEntityNum) = trace->entityNum;
     }
 
+#if defined(COD2_X64)
+    if (ent->s.eFlags & GMISSILE_EF_BOUNCE) {
+#else
     if ((_ENT(ent)->s.eFlags) & 0x10000) {
+#endif
 
         speed = VectorLength(velocity);
 
@@ -531,6 +581,10 @@ void G_RunMissile(gentity_t *ent)
     int methodOfDeath;
     int hitClient;
     WeaponDef *weapDef;
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+
+    G_MissileCombatTrace(ent, "frame", NULL);
+#endif
 
     if ((&_ENT(ent)->s.pos)->trType == 0 && (_ENT(ent)->s.groundEntityNum) != 0x3FE) {
 
@@ -599,6 +653,9 @@ void G_RunMissile(gentity_t *ent)
     }
 
 after_trace:
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+    G_MissileCombatTrace(ent, "move", &tr);
+#endif
 
     if ((tr.surfaceFlags & 0x1F00000) == 0x1400000) {
 
@@ -655,7 +712,11 @@ after_trace:
 
     VectorCopy(endpos, (_ENT(ent)->r.currentOrigin));
 
+#if defined(COD2_X64)
+    if (ent->s.eFlags & GMISSILE_EF_BOUNCE) {
+#else
     if ((_ENT(ent)->s.eFlags) & 0x10000) {
+#endif
 
         if (fraction != 1.0f || (fraction == 1.0f && tr.normal[2] > 0.7f)) {
 
@@ -666,6 +727,9 @@ after_trace:
 
             G_LocationalTrace(&trDown, (_ENT(ent)->r.currentOrigin), origin,
                               (_ENT(ent)->r.ownerNum), (_ENT(ent)->clipmask), pPriorityMap);
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+            G_MissileCombatTrace(ent, "down", &trDown);
+#endif
             if (trDown.startsolid) {
                 trDown.fraction = 0.0f;
                 VectorSubtract((_ENT(ent)->r.currentOrigin), origin, dir);
@@ -763,9 +827,17 @@ after_trace:
 
         (_ENT(ent)->s.surfType) = (tr.surfaceFlags & 0x1F00000) >> 20;
 
+#if defined(COD2_X64)
+        {
+#else
         if ((_ENT(other)->takedamage) || ((_ENT(ent)->s.eFlags) & 0x10000)) {
+#endif
 
+#if defined(COD2_X64)
+            if (!other->takedamage && (ent->s.eFlags & GMISSILE_EF_BOUNCE)) {
+#else
             if (!(_ENT(other)->takedamage)) {
+#endif
 
                 gclient_t *otherClient = (_ENT(other)->client);
                 if (otherClient) {
@@ -776,6 +848,9 @@ after_trace:
                 }
 
                 qboolean bounceResult = G_BounceMissile(ent, &tr);
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+                G_MissileCombatTrace(ent, "bounce", &tr);
+#endif
                 if (bounceResult && !tr.startsolid) {
 
                     G_AddEvent(ent, 0xBB, (tr.surfaceFlags & 0x1F00000) >> 20);
@@ -861,13 +936,25 @@ after_trace:
 
             G_SetOrigin(ent, endpos);
 
+#if defined(COD2_X64)
+            if (hitWeapDef->iExplosionInnerDamage > 0) {
+#else
             if (hitWeapDef->iExplosionRadius > 0) {
+#endif
                 int splashMod = HANDLER_SPLASHMOD((_ENT(ent)->handler));
+#if defined(COD2_X64)
+                G_RadiusDamage(endpos, ent, COD2_GEntityFromHandle(_ENT(ent)->parent),
+                               (float)hitWeapDef->iExplosionInnerDamage,
+                               (float)hitWeapDef->iExplosionOuterDamage,
+                               (float)hitWeapDef->iExplosionRadius,
+                               ent, splashMod);
+#else
                 G_RadiusDamage(endpos, ent, COD2_GEntityFromHandle(_ENT(ent)->parent),
                                (float)hitWeapDef->iExplosionRadius,
                                (float)hitWeapDef->iExplosionOuterDamage,
                                (float)hitWeapDef->iExplosionInnerDamage,
                                ent, splashMod);
+#endif
             }
 
             SV_LinkEntity(ent);
