@@ -262,7 +262,12 @@ static int BM_REGPARM(0) Player_GetUseList(gentity_t *ent, useList_t *useList)
             continue;
 
         if ((((gentity_t *)(hitEnt))->s.eType) != 3) {
+#if defined(COD2_X64)
+            /* Mac reference tests byte +2 of r.contents, not r.svFlags. */
+            if (!(hitEnt->r.contents & 0x200000))
+#else
             if (!((((gentity_t *)(hitEnt))->r.svFlags) & 0x20))
+#endif
                 continue;
         }
 
