@@ -33,7 +33,13 @@ import AppKit
 
 @main struct CoD2LauncherApp: App {
     @NSApplicationDelegateAdaptor(LauncherDelegate.self) var delegate
-    init() { LauncherFonts.register() }
+    init() {
+        // Engine arguments after `--` (`+set r_mode …`) are not documents. AppKit would treat them
+        // as files to open, which makes the launch non-default and SwiftUI then never creates
+        // the launcher window, so there is nothing to return to after the game.
+        UserDefaults.standard.register(defaults: ["NSTreatUnknownArgumentsAsOpen": false])
+        LauncherFonts.register()
+    }
     var body: some Scene {
         Window("CoD2 Silicon", id: "launcher") {
             LauncherRoot(model: LauncherState.model).frame(idealWidth: 1440, idealHeight: 900)
