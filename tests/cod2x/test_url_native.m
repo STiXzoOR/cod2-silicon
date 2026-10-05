@@ -33,7 +33,8 @@ int main(void)
             assert(Cod2xNativeApp_Arguments(arguments, sizeof(arguments)) > 0);
             assert(strstr(arguments, expectedGame));
             assert(strstr(arguments, "CoD2 Silicon"));
-            assert(strstr(arguments, "+set com_maxfps 333"));
+            assert(strstr(arguments, "+set in_rawmouse 1"));
+            assert(!strstr(arguments, "com_maxfps")); /* The player's cap is never overridden at launch. */
             assert(!gamePath[0]); /* Explicit prepared launch paths win. */
         }
         Cod2xNativeURL_Install();

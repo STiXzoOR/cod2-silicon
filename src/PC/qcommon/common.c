@@ -2283,7 +2283,7 @@ void Com_Init_Try_Block_Function(char *commandLine)
     }
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    com_maxfps = Dvar_RegisterInt("com_maxfps", 333, 0, 1000, 0x1001);
+    com_maxfps = Dvar_RegisterInt("com_maxfps", 250, 0, 1000, 0x1001);
     Dvar_RegisterBool("com_writeConfig", 1, 0x1001);
 #else
     com_maxfps = Dvar_RegisterInt("com_maxfps", 85, 0, 1000, 0x1001);

@@ -149,8 +149,10 @@ def main():
         "LSApplicationCategoryType": "public.app-category.action-games",
         "LSSupportsGameMode": not args.no_game_mode,
         "CoD2AutomaticShaderSetup": True,
+        # No frame cap here: the engine defaults to 250 and the player's own setting (the launcher's,
+        # or config_mp.cfg) decides.
         "CoD2LaunchArguments": f'+set r_mode {args.resolution} '
-            f'+set r_fullscreen 1 +set r_borderless {int(args.borderless)} +set com_maxfps 333 '
+            f'+set r_fullscreen 1 +set r_borderless {int(args.borderless)} '
             '+set r_swapInterval 0 +set in_rawmouse 1 +set m_filter 0 +set cl_mouseAccel 0 '
             '+set logfile 0 +set developer 0 +set com_introPlayed 1',
         "CFBundleURLTypes": [{
