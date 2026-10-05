@@ -234,7 +234,7 @@ HRESULT CDirect3D_CreateDevice(const void *_this, UINT Adapter, int DeviceType, 
     /* The original Mac build already had a current AGL context here, so
      * CDirect3DDevice_Init could issue GL calls. The SDL display layer creates
      * the context on demand, so create it before Init touches GL state. */
-    dvar_t *borderless = Dvar_RegisterBool("r_borderless", 0, 0x1001);
+    dvar_t *borderless = Dvar_RegisterBool("r_borderless", 1, 0x1001);
     int fullscreen = r_fullscreen && r_fullscreen->current.enabled;
     MacPlatform_ConfigureWindow(width, height, fullscreen ? (borderless->current.enabled ? MAC_BORDERLESS : MAC_FULLSCREEN) : MAC_WINDOWED, pp ? pp[12] : 0);
     ctx = MacDisplay_CreateScreenContext(24, 1, 0, 0, 0, NULL);

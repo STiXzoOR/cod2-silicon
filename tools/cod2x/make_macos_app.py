@@ -41,7 +41,11 @@ def main():
     parser.add_argument("--frameworks", type=pathlib.Path, help="pinned SDL install prefix for a self-contained bundle")
     parser.add_argument("--version", default="0.1.0")
     parser.add_argument("--resolution", default="1920x1080")
-    parser.add_argument("--borderless", action="store_true", help="desktop fullscreen instead of an explicit display mode")
+    fullscreen = parser.add_mutually_exclusive_group()
+    fullscreen.add_argument("--borderless", dest="borderless", action="store_true", default=True,
+                            help="desktop fullscreen (default)")
+    fullscreen.add_argument("--exclusive", dest="borderless", action="store_false",
+                            help="select an explicit display mode")
     parser.add_argument("--no-game-mode", action="store_true", help="disable eligibility for a controlled comparison")
     parser.add_argument("--bundle-id", default="io.github.stixzoor.cod2silicon")
     parser.add_argument("--replace", action="store_true", help="replace an existing bundle with the same ID after verification")

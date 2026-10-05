@@ -172,7 +172,7 @@ enum KeyStore {
 
 struct GameSettings: Codable, Sendable, Equatable {
     var resolution = "1920x1080"
-    var fullscreen = "exclusive"
+    var fullscreen = "borderless"
     /// com_maxfps: 0 (no cap) to 1000, the engine dvar's range.
     var fps = 250
     var vsync = false

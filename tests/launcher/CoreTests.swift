@@ -32,6 +32,7 @@ import Foundation
         let attrs = try FileManager.default.attributesOfItem(atPath: preferences.path)
         precondition((attrs[.posixPermissions] as? NSNumber)?.intValue == 0o600)
         var settings = GameSettings()
+        precondition(settings.fullscreen == "borderless")
         settings.advanced = "cg_fov=90\nname=Player One"
         let config = try settings.config()
         precondition(GameSettings().fps == 250 && config.contains("seta com_maxfps \"250\""))
