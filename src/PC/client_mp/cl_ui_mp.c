@@ -175,6 +175,9 @@ void LAN_GetServerInfo(int source, int n, char *buf, int buflen)
     Info_SetValueForKey(info, "hw", va("%i", (int)server->hardware));
     Info_SetValueForKey(info, "mod", va("%i", (int)server->mod));
     Info_SetValueForKey(info, "voice", va("%i", (int)server->voice));
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    Info_SetValueForKey(info, "pb", va("%i", (int)server->punkbuster));
+#endif
     I_strncpyz(buf, info, buflen);
     return;
 

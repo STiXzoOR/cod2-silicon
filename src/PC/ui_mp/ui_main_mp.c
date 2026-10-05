@@ -1979,7 +1979,11 @@ static void UI_StartServerRefresh(qboolean full)
         if (debugProtocol[0])
             Cbuf_ExecuteText(0, va("globalservers %d %s full empty\n", 0, debugProtocol));
         else
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+            Cbuf_ExecuteText(0, va("globalservers %d %d full empty\n", 0, 118));
+#else
             Cbuf_ExecuteText(0, va("globalservers %d %d full empty\n", 0, 0x73));
+#endif
     }
 }
 #endif
@@ -2036,6 +2040,21 @@ static void UI_RemoveDuplicateFromFavorites(int serverIndex)
 #ifndef __EMSCRIPTEN__
 static void UI_BinaryInsertServer(int serverIndex)
 {
+#if defined(COD2_X64)
+    int lo = 0, hi = sharedUiInfo.serverStatus.numDisplayServers;
+    while (lo < hi) {
+        int mid = lo + (hi - lo) / 2;
+        int cmp = LAN_CompareServers(ui_netSource->current.integer,
+                                    sharedUiInfo.serverStatus.sortKey,
+                                    sharedUiInfo.serverStatus.sortDir,
+                                    serverIndex, sharedUiInfo.serverStatus.displayServers[mid]);
+        if (cmp > 0)
+            lo = mid + 1;
+        else
+            hi = mid;
+    }
+    UI_InsertServerAtPosition(serverIndex, lo);
+#else
     int numDisplay = sharedUiInfo.serverStatus.numDisplayServers;
     int *displayServers = sharedUiInfo.serverStatus.displayServers;
     int lo, hi, mid, testIdx, cmp, position, lastCmp;
@@ -2074,6 +2093,7 @@ static void UI_BinaryInsertServer(int serverIndex)
         position = lo;
 
     UI_InsertServerAtPosition(serverIndex, position);
+#endif
 }
 #endif
 
@@ -2088,7 +2108,9 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
         if (uiInfo->uiDC.realTime <= sharedUiInfo.serverStatus.nextDisplayRefresh)
             return;
     } else if (force == 2) {
-
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        force = 0;
+#endif
     }
 
     clients = 0;
@@ -2495,7 +2517,11 @@ const char *UI_FeederItemText(float feederID, int index, int column, MaterialHan
 
         pingVal = atoi(Info_ValueForKey(info, "ping"));
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        if (column <= 10) {
+#else
         if (column <= 9) {
+#endif
             switch (column) {
             case 0:
                 if (atoi(Info_ValueForKey(info, "pswrd")))
@@ -2520,10 +2546,15 @@ const char *UI_FeederItemText(float feederID, int index, int column, MaterialHan
                 if (numM <= 0)
                     return mapName;
                 for (mi = 0; mi < numM; mi++) {
+#if defined(COD2_X64)
+                    if (I_stricmp(mapName, sharedUiInfo.mapList[mi].mapLoadName) == 0)
+                        return sharedUiInfo.mapList[mi].mapName;
+#else
                     byte *entry = (byte *)&sharedUiInfo + mi * 0xa4;
                     if (I_stricmp(mapName, *(const char **)(entry + 0x1358)) == 0) {
                         return *(const char **)(entry + 0x1354);
                     }
+#endif
                 }
                 return mapName;
             }
@@ -2552,6 +2583,10 @@ const char *UI_FeederItemText(float feederID, int index, int column, MaterialHan
                     return "X";
                 return "";
             case 9:
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+                return atoi(Info_ValueForKey(info, "pb")) ? "X" : "";
+            case 10:
+#endif
                 if (pingVal > 0)
                     return Info_ValueForKey(info, "ping");
                 return "...";
@@ -2881,7 +2916,11 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         return;
     }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    case 253:
+#else
     case 252:
+#endif
     {
         int jgtIdx = (ui_joinGameType)->current.integer;
         if (jgtIdx > sharedUiInfo.numJoinGameTypes) {
@@ -2898,7 +2937,11 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         return;
     }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    case 254:
+#else
     case 253:
+#endif
     {
         int cinHandle = sharedUiInfo.previewMovie;
         if (cinHandle <= -2)
@@ -2917,7 +2960,11 @@ void UI_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         return;
     }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    case 255:
+#else
     case 254:
+#endif
     {
         UI_DrawMapPreview((const rectDef_t *)rect, color, 1);
         return;

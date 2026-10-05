@@ -22,6 +22,7 @@ suites = [
     ('localization', 'src/PC/stringed/stringed_hooks.c',
      ['SEH_IsDigit', 'SEH_LocalizeTextMessage']),
     ('ui_item_color', 'src/PC/ui_mp/ui_shared_mp.c', ['Script_SetItemColor']),
+    ('ui_server_insert', 'src/PC/ui_mp/ui_main_mp.c', ['UI_InsertServerAtPosition', 'UI_BinaryInsertServer']),
     ('infostring', 'src/PC/universal/q_shared.c', ['Info_RemoveKey', 'Info_RemoveKey_Big']),
     ('pure_iwds', 'src/PC/qcommon/files.c', ['FS_PureServerSetLoadedIwds']),
     ('timeout', 'src/PC/client_mp/cl_main_mp.c', ['CL_Frame']),
