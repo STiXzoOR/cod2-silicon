@@ -31,10 +31,13 @@ def main():
     parser.add_argument('--seed', type=int, default=12345)
     parser.add_argument('--map', default='mp_toujane')
     parser.add_argument('--timeout', type=float, default=180)
+    parser.add_argument('--port', type=int, default=28960)
     parser.add_argument('--dedicated', action='store_true', help='use with cod2_lnxded on Linux')
     args = parser.parse_args()
     if args.frames < 1 or not 0 <= args.seed <= 2147483647 or args.timeout <= 0:
         parser.error('positive frames/timeout and a nonnegative int32 seed are required')
+    if not 1024 <= args.port <= 65535:
+        parser.error('port must be unprivileged and fit a UDP port')
     if not re.fullmatch(r'mp_[A-Za-z0-9_]+', args.map):
         parser.error('expected an mp_ map name')
     binary, data, out = args.binary.resolve(), args.data.resolve(), args.output.resolve()
@@ -50,6 +53,7 @@ def main():
                '+set', 'fs_game', '""', '+set', 'dedicated', '1' if args.dedicated else '0',
                '+set', 'logfile', '2', '+set', 'sv_punkbuster', '0',
                '+set', 'net_ip', '127.0.0.1',
+               '+set', 'net_port', str(args.port),
                '+set', 'sv_fps', '20', '+set', 'fixedtime', '50',
                '+set', 'g_gametype', 'dm', '+map', args.map]
     env = dict(os.environ, SYSDIFF_SEED=str(args.seed), SYSDIFF_MAXFRAMES=str(args.frames),

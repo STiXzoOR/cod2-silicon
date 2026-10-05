@@ -97,6 +97,15 @@ with (out / 'console.log').open('w') as stream:
             subprocess.run(['caffeinate', '-u', '-t', '2'], check=True)
             time.sleep(2)
             activate()
+            value = snapshot(pid, 'wake-visible')
+            assert value['active'] and value['windows'], 'Missing visible window after display wake'
+            assert value['display'] == desktop or value['display'] == [1920, 1080, 1920, 1080]
+            # Wake can occlude a still-key window without a focus event. The
+            # safety latch keeps desktop fullscreen until a real focus pair.
+            if a.mode == 'exclusive':
+                subprocess.run(['open', '-a', 'Finder'], check=True)
+                time.sleep(.6)
+                activate()
             check_return('wake-return')
         game.stdin.write('quit\n')
         game.stdin.flush()
