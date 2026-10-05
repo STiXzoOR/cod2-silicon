@@ -9,8 +9,10 @@ Duty 2: no game content is included.
 
 ## Status
 
-The `0.1.0` port is playable on stock 1.3 and CoD2x 1.4 servers. Movement,
-firing, reloading, HTTP mod downloads and round restarts have been tested.
+The `0.2.0` release is playable on stock 1.3 and CoD2x 1.4 servers, with a
+native launcher and server browser. Movement, firing, grenades, mounted
+turrets, HTTP mod downloads and round restarts have been tested, and every
+menu is opened by an automated sweep.
 Smoother frame pacing and active Game Mode remain goals. See the
 [verified results below](#verified-results) for compatibility coverage,
 rendering comparisons, fullscreen limits and measured performance.

@@ -5,7 +5,7 @@ multiplayer anywhere, built natively for Apple silicon and current macOS
 standards. These are planned directions, not release promises. The current
 evidence is in the [port reports](macos-port/README.md).
 
-## 0.2 — Launcher, servers and smooth frames
+## 0.2 — Launcher and servers (released 0.2.0)
 
 - **Native launcher.** A SwiftUI front end that replaces the first-run
   dialogs. It covers:
@@ -21,11 +21,12 @@ evidence is in the [port reports](macos-port/README.md).
   `cod2_macos_ded` that runs as a launchd service on any Apple silicon Mac,
   followed by a server manager. Network and file parsing will be fuzzed and
   hardened before internet hosting is recommended.
-- **Smooth frame pacing.** Present frames through Metal (`CAMetalLayer` and
-  `CAMetalDisplayLink`), so the game's frame loop never waits on the
-  compositor. WS19 traced most current hitches to the OpenGL swap. Results
-  count only when `tools/macos/validate-333.sh` runs on an unlocked, quiet
-  machine.
+- **Gameplay correctness.** A source-wide audit (WS38) and hands-on testing
+  fixed dozens of 64-bit layout and reconstruction errors: menus, controls,
+  sound settings, turrets, grenades and effects.
+
+Smooth frame pacing through Metal presentation moved to 0.3 with the
+renderer.
 
 ## 0.3 — Metal renderer
 

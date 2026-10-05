@@ -5,6 +5,8 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-05
+
 ### Added
 
 - Native SwiftUI launcher with Liquid Glass styling on macOS 26+ (material
@@ -73,6 +75,15 @@ All notable changes to CoD2 Silicon are documented here, following
   out-of-bounds decompression read and an `Info_SetValueForKey` overflow
   reachable through `getinfo`.
 
+### Known limitations
+
+- OpenGL remains the renderer. The native Metal renderer is in progress for
+  0.3, and so is presentation through Metal for smoother frame pacing.
+- Exclusive fullscreen can fail to restore after the display sleeps. The
+  default desktop fullscreen is not affected.
+- The byte-for-byte comparison of the original 32-bit Linux build needs an
+  x86_64 Linux host and runs in CI only.
+
 ## [0.1.0] - 2026-10-04
 
 ### Added
@@ -125,5 +136,6 @@ All notable changes to CoD2 Silicon are documented here, following
 Evidence and historical qualifications are preserved in the
 [workstream reports](docs/macos-port/README.md).
 
-[Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.0
 [0.1.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.1.0
