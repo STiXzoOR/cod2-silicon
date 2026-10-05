@@ -37,14 +37,23 @@ Commits on this branch, oldest first:
 | `135aeb6` | This report (first version) |
 | `9afdad3` | Icon G: top-left stencil bridge removed so the 2 is one shape at Dock sizes |
 | `1b99cd7` | Real player name from the engine's active profile; server rows fade above the connect bar |
+| `0b6ce67` | This report: pass-3 review and gate |
+| `366d2fd` | Every button a capsule, nested shapes concentric, prominent label ink, shape audit in the harness |
+| `99c3128` | About's three panels share one height |
+| `e8a1f78` | Review harness: 2× renders drawn from the laid-out window |
+| `dea4b2d` | Snapshot test accepts Retina-scale window captures |
+| `7732ecb` | This report: button shapes and concentricity |
+| `e36c3ce` | Frame cap: 250 by default, any value 0–1000, neutral copy (no 333 pitch) |
+| `3262385` | Engine `com_maxfps` defaults to 250; the helper's launch arguments force no cap |
 
 ## Prototype fidelity, screen by screen
 
 Measurements were read from the prototype's HTML/CSS and kept: window
 coordinates (content at x = 300, 280 and 264 as drawn), type sizes and tracking
-(converted from `em`), radii (22 panels, 20 groups, 16 rows and crates, 26
-details panel, 30 setup card), the colour tokens, and every piece of copy except where
-noted. The prototype was rendered with a small local runtime for its `dc`
+(converted from `em`), radii (22 panels, 20 groups, 16 crates, 26 details
+panel), the colour tokens, and every piece of copy except where noted. Pass 5
+re-derived the nested radii and button sizes from the concentricity rule
+(difference 7). The prototype was rendered with a small local runtime for its `dc`
 template format, giving reference images in `output/ws28/prototype/`. Every
 review image was compared side by side with them.
 
@@ -79,7 +88,9 @@ review image was compared side by side with them.
 - WS25's discovery, queries and cache are untouched.
 
 **Settings ("Field manual").**
-- Ammo-crate frame-cap presets 333/250/125, plus a custom value edited in place.
+- Ammo-crate frame-cap quick picks 125/250/333/1000 with neutral captions,
+  plus a custom value from 0 (no cap) to 1000 edited in place (see "Frame
+  cap").
 - Display: resolution (to 6016 × 3384, labelled 4K/5K/6K), Exclusive /
   Borderless / Native Space with the mode hint (Native Space says it is required
   for Game Mode), plus Window and Vertical sync rows.
@@ -142,6 +153,14 @@ Intentional differences from the prototype:
    leaves this Mac."
 6. The prototype's dog tag clipped its last line. It is set at 12 points so it
    fits.
+7. Shapes follow one concentric system (see "Button shapes and concentricity").
+   - The status chips and every field are capsules; the prototype drew the
+     chips as 14-radius rectangles.
+   - Server and demo rows are 20 points, not 16, around 10-point art.
+   - The setup card is 32 with its buttons 14 from the corners, not 30 with them
+     at the content margin.
+   - Bar, card and inspector buttons are the system's 36-point extra-large size,
+     not the prototype's 40 and 44.
 
 ## Apple HIG applied
 
@@ -218,7 +237,9 @@ Every name was checked in the installed macOS 27.0 SDK's
 | `scrollEdgeEffectStyle(_:for:)` | macOS 26.0 | Evaluated for the bar (probe); the automatic style under toolbars was kept, per the HIG's "prefer the automatic scroll edge effect style" |
 | `ToolbarSpacer(.flexible)`, `sharedBackgroundVisibility(.hidden)` | macOS 26.0 | Trailing groups; the plain save note |
 | `toolbar(removing: .title)` | macOS 15.0 | Untitled toolbar (`navigationTitle("")` before) |
-| `sidebarRowSize(.large)`, `controlSize(.extraLarge)`, `buttonBorderShape(.circle)` | macOS 14.0 | Sidebar rows, hero buttons, favourite button |
+| `sidebarRowSize(.large)`, `controlSize(.extraLarge)`, `buttonBorderShape(.capsule)` / `.circle` | macOS 14.0 | Sidebar rows; hero and action buttons; capsule buttons, pop-ups and segmented controls; the favourite circle |
+| `ConcentricRectangle(corners:isUniform:)`, `Edge.Corner.Style.concentric(minimum:)` | macOS 26.0 | The sidebar profile card in the window corner |
+| `onGeometryChange(for:of:action:)` | macOS 13.0 (back-deployed) | Frames for the harness's shape audit (inert in the app) |
 
 The glass API calls sit behind `#if COD2_LIQUID_GLASS` (defined for SDK 26+)
 and `if #available(macOS 26.0, *)`. Toolbar variants are chosen at the view
@@ -318,7 +339,8 @@ opens a window while the session is locked (probed), hence the hosting window.
 | Final, fallback art | `output/ws28/no-data/*.png` | 13 screens × dark/light at 1440×900, real glass |
 | Material fallback | `output/ws28/fallback/*.png` | The macOS 13–25 styling of the same screens |
 | Private game art | `output/ws28/with-data/*.png` | Player's own loading screens. Local only; never committed or uploaded |
-| 2× crispness | `output/ws28/scale2/home-{dark,light}@2x.png` | Offscreen 2880×1800 of Home (material styling) |
+| 2× crispness | `output/ws28/scale2/*@2x.png` | 2880×1800 of every screen, drawn from the same laid-out window (material styling), beside 1× glass captures. This path is `cacheDisplay`, so system vibrancy (the sidebar list, the selected segment) draws flat and material buttons show hairline ticks at their ends; the 1× window-server captures have neither |
+| Shape audit | `output/ws28/{no-data,fallback,with-data,scale2}/shape-audit.json` | Every reported shape's frame and form per capture, and the findings (none) |
 | Prototype | `output/ws28/prototype/*.png` | The approved design, rendered for comparison |
 | Iterations | `output/ws28/pass1` … `pass4` | Earlier passes kept as evidence |
 
@@ -377,6 +399,8 @@ with those exact text colours, and keeps only numbers. The final result is
   - The data step's icon was blank (`folder.badge.checkmark` is not an SF
     Symbol). Both setup glyphs are now drawn from the prototype's own paths.
   - Every other symbol name was verified to exist.
+- **Pass 4 → 5:** button shapes, concentric nesting and label ink; see
+  "Button shapes and concentricity (pass 5)".
 
 ## Review and bugs fixed along the way
 
@@ -463,6 +487,224 @@ asynchronously, and asserts that exactly one game starts.
    - The change is applied to the `.icon` layers, the static fallback and the
      sidebar mark. All six renditions were re-rendered.
 
+## Button shapes and concentricity (pass 5)
+
+The user asked why Connect, in the direct-connect bar, wasn't a capsule like
+every other button, and why it sat close to the bar's edge.
+
+**The cause.** The macOS 26 glass button styles are capsules only at the large
+and extra-large sizes. At the regular size they draw as rounded rectangles.
+Connect used `.glassProminent` at the regular size, so it came out as a 76 × 24
+rounded rectangle. In the 58-point bar that left 17 points above and below it,
+but only 9 at the trailing end, and its fields were 34 points tall.
+
+**The rules, now one system.**
+
+- **Buttons are capsules, or circles for a lone symbol.**
+  - `prominentAction()` and `glassAction(circle:)` in `Theme.swift` set
+    `buttonBorderShape(.capsule)` (or `.circle`) on the glass styles.
+  - The macOS 13–25 fallback styles were already capsules. They now match the
+    glass styles' heights.
+  - The root view also applies `.capsule` to bordered system controls, so the
+    pop-up buttons and segmented controls in Settings and the toolbars are
+    capsules too.
+- **Single-line fields are capsules.** That covers the bar fields, the
+  inspector password, DPI and the CD key. The multi-line dvar editor stays a
+  rounded rectangle.
+- **Three button sizes.**
+  - The hero pair is extra large with a 56-point label.
+  - Bar, card and inspector buttons use one action size: extra large, 36 points
+    (`actionControlSize()`, macOS 14+). It falls back to large on macOS 13,
+    which the fallback styles draw at 36.
+  - Buttons inside rows and content panels are regular, 24 points, like system
+    forms.
+  - Standard control sizes are used throughout; there are no custom metrics
+    on the glass path.
+- **Concentric nesting.** A shape that reaches into its container's corner
+  sits the same distance from both edges, and its radius is the container's
+  radius minus that distance (`Concentric.radius(in:inset:)`).
+- **Equal end insets.** A shape that isn't in a corner keeps at least the
+  corner radius from the edge. A button at a row's end sits as far from the end
+  as from the top and bottom.
+
+**What changed:**
+
+| Where | Before | Now |
+| --- | --- | --- |
+| Direct-connect bar | Connect a 76 × 24 rounded rectangle; insets 17 vertical and 9 trailing; fields 34 tall | Connect, address and password are 36-point capsules, all 11 from the bar's edges; bar 58 = 36 + 2 × 11, so each capsule's radius 18 = 29 − 11 |
+| Server details | Map art radius 16 at 14 inside a 26 panel; Deploy 39 tall beside a 36 favourite circle | Art radius 12 = 26 − 14; Deploy and favourite both 36 |
+| Server and demo rows | Art radius 10 at 14 from the side and 10 from the top, in a 16 row | Art 10 in on every side, radius 10, in a 20 row; Play (24) sits 28 from the end, as from the top |
+| Home status chips | Glass buttons as 14-radius rounded rectangles | Capsules |
+| Home recent rows | Art radius 9 at 8 inside a 12 row; the last row reached 14 and 20 into the panel's corner | Art radius 8 inside a 16 row; panels pad 22 = their radius, so no row reaches a corner (panels 6 points taller, 6 higher) |
+| Setup card | Back and Continue 28 tall, 38 and 30 from the card's edges at radius 30; "Change…" a rounded rectangle | Back and Continue/Deploy are 36-point capsules 14 from the bottom and sides, and the card radius is 32 = 14 + 18. "Change…" and "Choose Mac Copy…" are capsules; "Change…" sits 20 from the well's top, bottom and end |
+| Settings | Pop-ups and segmented controls rounded rectangles; "Set Up Again…" 18 from the end and 13.5 from the top; DPI a 9-radius box | All capsules. Rows keep the 20-point radius as their side margin, and the game-data row is tall enough that its button sits 20 from top, bottom and end |
+| Sidebar profile card | Radius 16 at 12 inside the window's ~15-point corner | `ConcentricRectangle(corners: .concentric(minimum: .fixed(10)), isUniform: true)` on macOS 26, so it follows the window or floating-sidebar corner; 16 on 13–25 |
+| About | The three panels sized to their text, so their bottoms didn't line up | They fill one height, like Home's |
+
+**Label ink.** `.glassProminent` draws its label in white. A foreground style
+set outside the label doesn't reach it, so in dark mode Deploy, Connect,
+Continue and Save were white on brass at about 2:1. A small `PrimitiveButtonStyle`
+in `Theme.swift` now re-creates the system button with the design's ink on the
+label: `#1c170c` on the brass tint is about 8.5:1, and `#fff8e8` on olive about 6.3:1. Disabled
+buttons keep the system's own label colour. A probe confirmed that `.defaultAction`
+and ⌘S still fire through the wrapper.
+
+**Toolbars.** Toolbar groups are system glass around system controls (search,
+segmented filter, checkboxes, the count and refresh button, Save). Their insets
+are the system's own, and I checked them at 200 % in the final renders.
+
+**Renders.** All four sets were re-rendered in dark and light:
+`output/ws28/no-data`, `output/ws28/with-data` and `output/ws28/fallback` at
+`99c3128`, and `output/ws28/scale2` at `e8a1f78`.
+
+- During this pass the session went from a locked 1× display to an unlocked
+  6K Retina display, so the window server now captures at 2×.
+- `output/ws28/scale2/<screen>-<appearance>.png` are therefore real Liquid
+  Glass at 2880×1800. The `@2x` files beside them are the material styling
+  drawn at 2×.
+- I reviewed every no-data screen at 100 %, and every reworked control at
+  200 % in both appearances, from the real 2× glass captures and from crops:
+  the bar, the inspector, rows, chips, recent rows, Settings, the setup well
+  and footer, Library and the toolbars.
+- The with-data set was checked only by the shape audit and the contrast
+  gate, without being opened.
+
+**Checked automatically.** `LauncherSnapshots` now audits every screen it
+renders.
+
+- Views report their frames and declared shapes through `shapeAudit(_:_:_:)`.
+  The reporting lives in the shared modifiers (glass surfaces, both button
+  styles, the field wells), panels, rows and art, and it is off unless the
+  harness sets the environment value.
+- Frames come from `onGeometryChange(for:of:action:)`. Back-deployed to macOS
+  13, it tracks the final layout; a `GeometryReader` with `onChange` kept
+  stale first-pass frames.
+- `ShapeCheck` then enforces the rules above:
+  - every button is a capsule or a circle;
+  - a prominent button is seen to be one in the captured pixels (the corner
+    sample matches the background, not the fill);
+  - shapes that reach a corner are concentric;
+  - row-end buttons have equal insets;
+  - controls side by side share one height.
+- The check writes `shape-audit.json` and exits non-zero on any finding, which
+  fails `tests/launcher/run.sh`.
+- `run.sh` also rejects any `buttonStyle` or `buttonBorderShape` outside
+  `Theme.swift`, other than plain and row styles.
+
+On the code before this pass, the audit reported **102 findings** across the 26
+captures, including Connect drawn as a rounded rectangle. After the pass it
+reports **0 findings over 198 shapes per run** with Liquid Glass, with the
+material fallback, in the 2× run and with the private game art.
+
+**HIG references.**
+
+- [Buttons](https://developer.apple.com/design/human-interface-guidelines/buttons):
+  - "Use style — not size — to visually distinguish the preferred choice";
+  - "prefer the capsule shape in a horizontal row of buttons" (from its visionOS
+    section, which states the reasoning for preferring capsules).
+- [Adopting Liquid Glass](https://developer.apple.com/documentation/technologyoverviews/adopting-liquid-glass),
+  Controls:
+  - "Consider aligning the shape of controls with other rounded elements …
+    using rounded shapes that are concentric to their containers";
+  - standard controls adopt the new shapes "if you … don't hard-code their
+    layout metrics".
+- The HIG's Layout page, as published on 2026-10-05, has no concentricity
+  passage. Apple's concentricity guidance is the overview above, with
+  `ConcentricRectangle`.
+
+Every API was checked in the macOS 27.0 SDK:
+
+- `ButtonBorderShape.capsule` and `.circle`: macOS 14.0;
+- `ConcentricRectangle(corners:isUniform:)` and
+  `Edge.Corner.Style.concentric(minimum:)`: macOS 26.0;
+- `onGeometryChange(for:of:action:)`: macOS 13.0, back-deployed.
+
+## Frame cap: neutral copy, 250 by default, 0–1000
+
+The user asked to stop presenting 333 fps as a feature. It was a personal goal,
+not a selling point. They also decided that the default is a 250 fps cap and that
+players choose any value the engine accepts. The engine registers
+`com_maxfps` with the range 0–1000. 0 means no cap: the frame loop then neither
+waits nor computes a cap, leaving only its 1 ms floor.
+
+**Copy.** 333 stays available as a value but is no longer pitched:
+
+- Settings' quick picks are 125 "Low", 250 "Default", 333 "High" and 1000
+  "Engine maximum". A custom crate takes any value from 0 to 1000 and reads
+  "Unlimited" at 0.
+  - The old captions are gone: "Classic competitive physics", "Common CoD2x
+    server cap" and "Original default feel". The last was also wrong, because
+    the original engine registers the cap at 85, not 125.
+  - The footer reads "Any cap from 0 to 1000, where 0 means no cap. Servers can
+    enforce their own; CoD2x competitive servers keep it between 125 and 250",
+    which is the range `cod2x_runtime.c` enforces in competitive mode.
+- Home's chip shows the setting as data: "250 fps cap", or "No fps cap" at 0.
+  VoiceOver reads "Frame cap 250 frames per second" or "No frame cap".
+- README:
+  - the tagline drops "built for 333 fps";
+  - "Constant 333 fps … remain goals" becomes "Smoother frame pacing … remain
+    goals";
+  - the defaults paragraph says "a 250 fps cap" and gives the 0–1000 range;
+  - the benchmark note now calls the table "measurements, not guarantees of
+    steady frame pacing".
+  - The measured table rows at a 333 cap stay, as data.
+- The synthetic release-notes fixture and its test drop the tagline phrase.
+  The fake "Silicon Sessions" preview server now reports a 250 cap.
+- No string in Home, Setup, About, tooltips or accessibility labels presents
+  333 as a feature. I checked all of them with `grep`.
+
+**Defaults and the single source of truth:**
+
+- **Launcher.** `GameSettings.fps` defaults to 250 (it was 333). The validated
+  writer accepts 0–1000 (it was 1–1000), and its error names the range.
+  - A value already saved by an earlier build is the player's own and is kept.
+  - Unit tests cover 0 and 1000 (accepted and written) and 1001, −1 and −250
+    (rejected), plus the chip, the spoken label, the captions and the quick-pick
+    list.
+- **Engine.** `src/PC/qcommon/common.c` registers `com_maxfps` at 250 in the
+  native CoD2x build (it was 333).
+  - The original registration (85) in the `#else` branch is byte-for-byte
+    unchanged, and so is the guard.
+  - Only a constant changed, so no layout or ABI changes.
+- **Launch arguments.**
+  - `tools/cod2x/make_macos_app.py` no longer puts `+set com_maxfps 333` in the
+    helper's `CoD2LaunchArguments`. That bundle string comes before argv, so a
+    cap there overrode `config_mp.cfg` whenever the helper started on its own.
+  - The launcher still passes the player's saved setting. Without the
+    launcher, the engine's 250 default or the player's `config_mp.cfg` applies.
+  - `tests/cod2x/test_url_native.m` now asserts that the bundle arguments
+    contain no `com_maxfps`.
+- **Unchanged on purpose:**
+  - the benchmark and validation tools under `tools/macos` (`validate-333.sh`,
+    `live-bench.py --maxfps 333` and others), which measure that cap
+    deliberately;
+  - the legacy Wine script `tools/wine/play-cod2x.sh`;
+  - `tests/cod2x/test_runtime.c`, which registers its own dvar to test
+    CoD2x's competitive clamp;
+  - the PLAN and CHANGELOG history.
+
+**Checked at `3262385`, without opening any window.** The user was testing
+the game in fullscreen, so harness windows, renders and app or game launches
+waited for the orchestrator's all-clear. Logs are `output/ws28/gate/*-fps.log`.
+
+- **Passed:**
+  - unit tests (`LauncherTests`, including the new frame-cap cases);
+  - the Network.framework UDP test and the artwork tests;
+  - the font checksums and the button-style lint;
+  - the pre-26 typecheck;
+  - builds of the launcher and the review harness;
+  - `tests/cod2x/run.sh`;
+  - incremental stock and CoD2x engine builds;
+  - a check that the bundle's launch arguments carry no frame cap.
+- **Pending the all-clear:**
+  - re-rendering Settings and Home;
+  - the snapshot test and shape audit;
+  - `tests/cod2x/run_native.sh`, which starts the URL probe app and runs the
+    updated `test_url_native.m`;
+  - lifecycle and cold-link;
+  - the package, bundle audit and release smoke;
+  - the ABI audits. Only a literal changed, so no layout or ABI is affected.
+
 ## Tests and gate evidence
 
 All logs are under ignored `output/ws28/gate/`. Builds and tests ran under
@@ -471,28 +713,32 @@ work, and no performance was measured.
 
 | Check | Result |
 | --- | --- |
-| `sh tests/launcher/run.sh` at `1b99cd7` | **PASS** (`launcher-tests-1b99cd7.log`). Core and wire fixtures, the new presentation tests, the Network.framework UDP test, the IWI/IWD artwork tests, font checksums, the pre-26 typecheck, and 26 screens plus the fallback rendered and checked |
+| `sh tests/launcher/run.sh` at `dea4b2d` | **PASS**, 7 of 7 (`launcher-tests-dea4b2d.log`; also at `99c3128`, `launcher-tests-99c3128.log`). Core and wire fixtures, the new presentation tests, the Network.framework UDP test, the IWI/IWD artwork tests, font checksums, the button-style lint, the pre-26 typecheck, and 26 screens plus the fallback rendered with a clean shape audit |
+| Shape audit at `99c3128` | **0 findings** over 198 shapes in each of the glass, fallback, 2× and private-art runs (`render-*-99c3128.log`, `shape-audit.json` beside each set). On the code before pass 5: 102 findings |
 | New unit tests (`CoreTests`) | cm/360 (800 DPI × 5 = 10.39 cm, invariance, invalid input), both advanced-dvar forms and reservations, settings and library migration from older JSON, the release-notes parser against a synthetic fixture (drafts, Markdown, CRLF, truncation, link host, newest stable), map names and regions with unsafe names, server facts, media facts, the key tag, the player name, and sRGB-composited scrims |
 | Strict build | Swift 6, complete concurrency, warnings as errors, `arm64-apple-macos13`: launcher, harness and tests |
-| `python3 tests/launcher/lifecycle.py` | **PASS** at `1b99cd7` (`lifecycle-1b99cd7.log`): nested child, Dock policies, live links, no duplicate engine, force-quit reconnect, crash report |
-| `python3 tests/launcher/cold_url.py` | **PASS** three times at `1b99cd7` (`cold-url-1b99cd7-{1,2,3}.log`). Earlier, at `5187bd9`, it passed five times in a row with a completed scratch home and once with a fresh home (`cold-url-fresh.log`). Cold LaunchServices `cod2x://` with a `+` password is deferred and never in argv; accessory during the game, regular after it, one game only. No test processes left behind |
+| `python3 tests/launcher/lifecycle.py` | **PASS** at `99c3128` (`lifecycle-99c3128.log`): nested child, Dock policies, live links, no duplicate engine, force-quit reconnect, crash report |
+| `python3 tests/launcher/cold_url.py` | **PASS** three times at `99c3128` (`cold-url-99c3128-{1,2,3}.log`), as at `1b99cd7`. Earlier, at `5187bd9`, it passed five times in a row with a completed scratch home and once with a fresh home (`cold-url-fresh.log`). Cold LaunchServices `cod2x://` with a `+` password is deferred and never in argv; accessory during the game, regular after it, one game only. No test processes left behind |
 | `python3 tests/packaging/first_run.py` | **PASS** (`first-run.log`) |
 | Stock engine build (CONTRIBUTING configuration) | **PASS**, `build-stock.log` |
 | CoD2x engine build | **PASS**, `build-codx.log` |
 | `sh tools/abi/check.sh build-macos/compile_commands.json output/ws28/abi-stock` | **exit 0**: 620 TUs, 0 errors, **0 mismatches**; 218 renderer bindings with 0 table/cast/floating mismatches; 514 imports and 1,776 native sites with 0 proven extra or missing dereferences |
 | Same for `build-macos-codx` | **exit 0**: 637 TUs, **0 mismatches**; 218 bindings clean; 1,778 native sites, 0 proven extra or missing |
-| Private contrast gate | **PASS** at `1b99cd7`, worst 4.66:1 over 30 heroes |
-| `COD2_BUILD_BACKGROUND=1 scripts/package-release.sh --build-dir build/package/ws28` at `1b99cd7` | **exit 0**. `dist/CoD2-Silicon-0.1.0-macos-arm64.zip`, SHA-256 `c205400b69b3f71f5e65c9f80981714b642c1d92b6a2245a62c4c044abbaf067`; `shasum -c SHA256SUMS` OK (`package-1b99cd7.log`). The earlier `00d017d` package was `2e7a4d36…adf5` |
-| `python3 tests/packaging/launcher_bundle.py` on the extracted `1b99cd7` zip | **PASS** (`bundle-audit-1b99cd7.log`). Launcher plus the isolated Game Mode helper, one URL owner; four arm64 Mach-Os at `minos 13.0` (SDK 27.0); portable links; `codesign --verify --deep --strict`; no game content; icon G (`Assets.car`, ICNS, `CFBundleIconName`, `NSAccentColorName`) in both apps; the five font and licence files |
-| `python3 tests/packaging/release_smoke.py` on the extracted zip (under `gtimeout -k 10 300`; no other game running, benchmark lock free) | **PASS** at `00d017d`. Empty home → launcher non-interactive setup → engine menu → `devmap mp_toujane` → two captures → scripted quit, exit 0 → "returned to launcher"; bundled SDL2/SDL3 loaded. `output/ws28/release-smoke-00d017d/results.json`. **Pending** at `1b99cd7`: another agent holds the benchmark lock, so the run waits for it (`output/ws28/gate/release-smoke-1b99cd7.log`) |
+| Private contrast gate | **PASS** at `99c3128`, worst 4.66:1 over 30 heroes (`contrast-99c3128.log`) |
+| `COD2_BUILD_BACKGROUND=1 scripts/package-release.sh --build-dir build/package/ws28` at `99c3128` | **exit 0**. `dist/CoD2-Silicon-0.1.0-macos-arm64.zip`, SHA-256 `68d6f4daff9c30ba991638c7afb16f8d1f61fbaeab7787b9e203f2f97fee7f7a`; `shasum -c SHA256SUMS` OK (`package-99c3128.log`). Earlier packages: `1b99cd7` `c205400b…f067`, `00d017d` `2e7a4d36…adf5` |
+| `python3 tests/packaging/launcher_bundle.py` on the extracted `99c3128` zip | **PASS** (`bundle-audit-99c3128.log`). Launcher plus the isolated Game Mode helper, one URL owner; four arm64 Mach-Os at `minos 13.0` (SDK 27.0); portable links; `codesign --verify --deep --strict`; no game content; icon G (`Assets.car`, ICNS, `CFBundleIconName`, `NSAccentColorName`) in both apps; the five font and licence files |
+| `python3 tests/packaging/release_smoke.py` on the extracted zip (under `gtimeout -k 10 300`; no other game running, benchmark lock free) | **PASS** at `99c3128`. Empty home → launcher non-interactive setup → engine menu → `devmap mp_toujane` → two captures → scripted quit, exit 0 → "returned to launcher"; bundled SDL2/SDL3 loaded (`output/ws28/release-smoke-99c3128/results.json`). It also passed at `00d017d` and `1b99cd7` |
 | System-resolved app icon | `NSWorkspace` icons of the extracted `1b99cd7` outer app and nested helper show icon G with two bridges (`output/ws28/icon/finder-icon-{outer,helper}.png`) |
 | Static checks | `shellcheck` clean on the changed scripts; Python compiles; `git diff --check 4d56e0b` clean outside the verbatim OFL texts, whose upstream trailing spaces are exempt through `launcher/Resources/Fonts/.gitattributes` |
 
 The CONTRIBUTING fixture suites (online, fixes13, lp64, platform and so on) were
-not re-run. This branch changes no engine source, header, CMake or data blob
-(`git diff 4d56e0b -- src CMakeLists.txt cmake build/lp64_gen` is empty).
-The engine builds and both full ABI audits ran on this branch, and no engine
-input has changed since, so they still describe `1b99cd7`. The release smoke's captures are game content; they
+not re-run. Until `3262385` this branch changed no engine source, header, CMake
+or data blob. `3262385` changes one constant in `src/PC/qcommon/common.c`: the
+native `com_maxfps` default goes from 333 to 250. The engine builds and both
+full ABI audits in this table describe `99c3128`; at `3262385` both engines
+rebuilt incrementally, and the ABI audits are pending (see "Frame cap"). After `99c3128`,
+`e8a1f78` and `dea4b2d` touch only the review harness and its test, so the app,
+package, lifecycle and smoke evidence at `99c3128` still applies. The release smoke's captures are game content; they
 stay in ignored `output/`.
 
 ## What's left
@@ -503,7 +749,9 @@ stay in ignored `output/`.
     sidebar may draw differently: it could be the floating, inset Tahoe
     sidebar.
   - Look at the app unlocked, on macOS 26 and 27, and on macOS 13–15 for the
-    material fallback. That was not possible here.
+    material fallback. That wasn't possible while the session was locked.
+  - The session was unlocked, on a 6K display, by the end of pass 5. A capture
+    of the real `Window` scene is now possible, but it isn't part of this pass.
 - **VoiceOver and keyboard walkthrough.** Labels, traits and shortcuts are in
   place, but nobody has toured the app with VoiceOver.
 - **Renderer controls.**

@@ -173,7 +173,8 @@ enum KeyStore {
 struct GameSettings: Codable, Sendable, Equatable {
     var resolution = "1920x1080"
     var fullscreen = "exclusive"
-    var fps = 333
+    /// com_maxfps: 0 (no cap) to 1000, the engine dvar's range.
+    var fps = 250
     var vsync = false
     var rawMouse = true
     var sensitivity = 5.0
@@ -215,9 +216,9 @@ struct GameSettings: Codable, Sendable, Equatable {
     }
     func dvars() throws -> [(String, String)] {
         guard Self.resolutions.contains(resolution), ["exclusive", "borderless", "spaces", "windowed"].contains(fullscreen),
-              (1...1000).contains(fps), sensitivity.isFinite, (0.01...100).contains(sensitivity), volume.isFinite, (0...1).contains(volume),
+              (0...1000).contains(fps), sensitivity.isFinite, (0.01...100).contains(sensitivity), volume.isFinite, (0...1).contains(volume),
               Self.anisotropyLevels.contains(anisotropy) else {
-            throw LauncherError(message: "Choose a valid resolution, frame cap (1–1000), sensitivity, volume and filtering level.")
+            throw LauncherError(message: "Choose a valid resolution, frame cap (0–1000, where 0 is no cap), sensitivity, volume and filtering level.")
         }
         var pairs = [("r_mode", resolution), ("r_fullscreen", fullscreen == "windowed" ? "0" : "1"),
             ("r_borderless", fullscreen == "borderless" ? "1" : "0"), ("com_maxfps", String(fps)),

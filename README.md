@@ -1,6 +1,6 @@
 # CoD2 Silicon
 
-**Call of Duty 2 multiplayer, native on Apple silicon. CoD2x 1.4 compatible, built for 333 fps.**
+**Call of Duty 2 multiplayer, native on Apple silicon. CoD2x 1.4 compatible.**
 
 CoD2 Silicon ports the reconstructed [opencod2](https://github.com/opencod2/opencod2)
 engine to native macOS arm64. It runs directly on Apple silicon, with raw mouse
@@ -11,7 +11,7 @@ Duty 2: no game content is included.
 
 The `0.1.0` port is playable on stock 1.3 and CoD2x 1.4 servers. Movement,
 firing, reloading, HTTP mod downloads and round restarts have been tested.
-Constant 333 fps and active Game Mode remain goals. See the
+Smoother frame pacing and active Game Mode remain goals. See the
 [verified results below](#verified-results) for compatibility coverage,
 rendering comparisons, fullscreen limits and measured performance.
 
@@ -84,14 +84,15 @@ open -a "/Applications/CoD2 Silicon.app" 'cod2x://connect/127.0.0.1:28960'
 
 For a direct CLI launch, run the app executable with `--play`. Append
 `--exit-after-game` to close the launcher when the game quits, or pass trusted
-engine arguments after `--`. Settings include 1080p–6K, frame caps, vsync,
+engine arguments after `--`. Settings include 1080p–6K, the frame cap, vsync,
 raw mouse, audio and native fullscreen Spaces. Metal options are marked as
 upcoming until the native renderer is integrated.
 
 Replace the address with your server. For a source install, use the app under
 `~/Applications` instead. The default settings target 1080p fullscreen,
-`com_maxfps 333`, vsync off and raw mouse input. Competitive CoD2x servers
-enforce their own **125–250 fps** caps; 333 applies where the server allows it.
+a 250 fps cap, vsync off and raw mouse input. The cap can be set anywhere from
+0 (no cap) to 1000. Competitive CoD2x servers enforce their own 125–250 fps
+caps.
 
 ## Known limitations
 
@@ -142,8 +143,9 @@ M6, macOS 27.0.1 and original Mac shaders:
 
 The 1440p and 4K runs rendered at those sizes on a 1080p physical display using
 desktop fullscreen. Other user applications were running. A 1% low is the
-reciprocal of the mean of the slowest 1% of frame intervals. **Constant 333 fps
-is a target, not an achieved guarantee.** Game Mode activation is unverified.
+reciprocal of the mean of the slowest 1% of frame intervals. These are
+measurements, not guarantees of steady frame pacing. Game Mode activation is
+unverified.
 See the [roadmap](docs/ROADMAP.md).
 
 ## Building for development

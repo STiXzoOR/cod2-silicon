@@ -34,8 +34,17 @@ import Foundation
         var settings = GameSettings()
         settings.advanced = "cg_fov=90\nname=Player One"
         let config = try settings.config()
-        precondition(config.contains("seta com_maxfps \"333\""))
+        precondition(GameSettings().fps == 250 && config.contains("seta com_maxfps \"250\""))
         precondition(config.contains("seta name \"Player One\""))
+        // The frame cap is free from 0 (no cap) to 1000, the engine dvar's range.
+        for (fps, valid) in [(0, true), (1000, true), (1001, false), (-1, false), (-250, false)] {
+            var capped = GameSettings(); capped.fps = fps
+            precondition(((try? capped.config()) != nil) == valid, "frame cap \(fps)")
+            if valid { let written = try capped.config(); precondition(written.contains("seta com_maxfps \"\(fps)\"")) }
+        }
+        precondition(FrameCap.chip(250) == ("250", "fps cap") && FrameCap.chip(0) == (nil, "No fps cap"))
+        precondition(FrameCap.spoken(0) == "No frame cap" && FrameCap.customCaption(0) == "Unlimited" && FrameCap.customCaption(90) == "Custom value")
+        precondition(FrameCap.presets.map(\.value) == [125, 250, 333, 1000] && FrameCap.isPreset(250) && !FrameCap.isPreset(0) && !FrameCap.isPreset(144))
         settings.advanced = "name=bad;quit"
         precondition((try? settings.config()) == nil)
         settings.advanced = "fs_basepath=/tmp"
@@ -50,7 +59,7 @@ import Foundation
         precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 32))) == nil)
         precondition((try? EngineCommandLine.validate(Array(repeating: "+set x 1", count: 31))) != nil)
         try presentation(fixtures)
-        print("PASS: real master/status fixtures, malformed packets, colours, native key CRC/private storage, config and URL injection")
+        print("PASS: real master/status fixtures, malformed packets, colours, native key CRC/private storage, config and URL injection, frame cap 0–1000 (250 by default)")
         print("PASS: cm/360, advanced dvar forms, settings migration, release notes, maps, server facts, media, key tag, player name and scrims")
     }
 
@@ -94,7 +103,7 @@ import Foundation
             link: "https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.0-beta.1"))
         precondition(feed.dispatches[1].title == "CoD2 Silicon 0.1.1" && feed.dispatches[1].link == nil && feed.dispatches[1].stamp == "20 OCT")
         precondition(feed.dispatches[1].summary.hasSuffix("…") && feed.dispatches[1].summary.count <= 161 && feed.dispatches[1].summary.hasPrefix("Fixes r_mode on 6K"))
-        precondition(feed.dispatches[2].summary == "Call of Duty 2 multiplayer, native on Apple silicon. CoD2x 1.4 compatible, built for 333 fps.")
+        precondition(feed.dispatches[2].summary == "Call of Duty 2 multiplayer, native on Apple silicon. CoD2x 1.4 compatible.")
         precondition(ReleaseNotes.isNewer("0.1.10", than: "0.1.9") && !ReleaseNotes.isNewer("0.1.0", than: "0.1.0"))
         precondition((try? ReleaseNotes.parse(Data("{}".utf8))) == nil && (try? ReleaseNotes.parse(Data(count: 1_000_001))) == nil)
         let empty = try ReleaseNotes.parse(Data("[]".utf8))

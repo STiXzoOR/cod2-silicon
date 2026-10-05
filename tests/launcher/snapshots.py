@@ -22,6 +22,10 @@ def run(target, *extra):
     subprocess.run([str(harness), str(target), *extra], check=True, timeout=300)
 
 
+# The window server captures at the display's scale: 1440x900 points is 2880x1800 on a Retina display.
+WINDOW = {(1440, 900), (2880, 1800)}
+
+
 def size(png):
     data = png.read_bytes()
     assert data[:8] == b"\x89PNG\r\n\x1a\n" and data[12:16] == b"IHDR", png
@@ -36,7 +40,7 @@ for screen in screens:
     for appearance in ["dark", "light"]:
         png = out / f"{screen}-{appearance}.png"
         (width, height), length = size(png)
-        assert (width, height) == (1440, 900), (png, width, height)
+        assert (width, height) in WINDOW, (png, width, height)
         assert length > 60_000, f"{png} looks blank ({length} bytes)"
         shots[appearance] = png.read_bytes()
     assert shots["dark"] != shots["light"], screen
@@ -45,8 +49,8 @@ fallback = out / "fallback"
 run(fallback, "--fallback", "--only", "servers")
 for appearance in ["dark", "light"]:
     (width, height), length = size(fallback / f"servers-{appearance}.png")
-    assert (width, height) == (1440, 900) and length > 60_000
+    assert (width, height) in WINDOW and length > 60_000
     assert (fallback / f"servers-{appearance}.png").read_bytes() != (out / f"servers-{appearance}.png").read_bytes()
 # The harness exits non-zero on any shape-audit finding, so reaching here means none.
-print(f"PASS: {len(screens) * 2} launcher screens at 1440x900 in dark and light, plus the material fallback, with bundled fonts"
+print(f"PASS: {len(screens) * 2} launcher screens at 1440x900 points in dark and light, plus the material fallback, with bundled fonts"
       " and a clean shape audit (capsule buttons, concentric nesting, equal insets)")
