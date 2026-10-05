@@ -57,21 +57,36 @@ void R_ResetSunLightOverride(void)
 void R_ReleaseWorld(void)
 {
 
+#if defined(COD2_X64)
+    if (rgp.world->vd.worldVb != NULL) {
+        R_FreeStaticVertexBuffer(rgp.world->vd.worldVb);
+        rgp.world->vd.worldVb = NULL;
+    }
+#else
     if (*(void **)((*(byte **)&rgp.world) + 0x30) != NULL) {
         R_FreeStaticVertexBuffer(*(IDirect3DVertexBuffer9 **)((*(byte **)&rgp.world) + 0x30));
         *(void **)((*(byte **)&rgp.world) + 0x30) = NULL;
     }
+#endif
 }
 
 void R_GetWorldBounds(vec_t *min, vec_t *max)
 {
 
+#if defined(COD2_X64)
+    const vec_t *bmin = rgp.world->mins;
+#else
     const vec_t *bmin = (const vec_t *)((*(byte **)&rgp.world) + 0x13c);
+#endif
     min[0] = bmin[0];
     min[1] = bmin[1];
     min[2] = bmin[2];
 
+#if defined(COD2_X64)
+    const vec_t *bmax = rgp.world->maxs;
+#else
     const vec_t *bmax = (const vec_t *)((*(byte **)&rgp.world) + 0x148);
+#endif
     max[0] = bmax[0];
     max[1] = bmax[1];
     max[2] = bmax[2];
@@ -80,7 +95,11 @@ void R_GetWorldBounds(vec_t *min, vec_t *max)
 void R_InterpretSunLightParseParams(SunLightParseParams *sunParse)
 {
 
+#if defined(COD2_X64)
+    R_InterpretSunLightParseParamsIntoLights(sunParse, &rgp.world->sunLight);
+#else
     R_InterpretSunLightParseParamsIntoLights(sunParse, (GfxLight *)((*(byte **)&rgp.world) + 0xb4));
+#endif
 
     {
         byte *world = (*(byte **)&rgp.world);
@@ -166,7 +185,11 @@ void R_ShutdownWorld(void)
         void *vb = (*(void **)&((GfxWorld *)world)->vd.worldVb);
         if (vb != NULL) {
             R_FreeStaticVertexBuffer((IDirect3DVertexBuffer9 *)vb);
+#if defined(COD2_X64)
+            rgp.world->vd.worldVb = NULL;
+#else
             *(void **)((*(byte **)&rgp.world) + 0x30) = NULL;
+#endif
         }
     }
 
@@ -219,7 +242,11 @@ void R_UpdateLightsFromDvars(void)
 
     world = (*(byte **)&rgp.world);
     if (world) {   /* no world (e.g. main menu, no map loaded) -> nothing to update */
+#if defined(COD2_X64)
+        R_InterpretSunLightParseParamsIntoLights((SunLightParseParams *)sunParse, &((GfxWorld *)world)->sunLight);
+#else
         R_InterpretSunLightParseParamsIntoLights((SunLightParseParams *)sunParse, (GfxLight *)(world + 0xb4));
+#endif
 
         {
             vec_t *dst = (vec_t *)&((GfxWorld *)world)->sunColorFromBsp[0];

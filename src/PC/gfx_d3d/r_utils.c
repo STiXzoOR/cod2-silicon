@@ -73,7 +73,12 @@ void R_ConvertColorToBytes(const vec_t *colorFloat, byte *colorBytes)
 qboolean R_PickMaterial(const vec_t *org, const vec_t *dir, char *name, char *surfaceFlags, char *contents, int charLimit)
 {
     float end[3];
+#if defined(COD2_X64)
+    trace_t traceStorage;
+    byte *trace = (byte *)&traceStorage;
+#else
     byte trace[36];
+#endif
     int surfFlags;
     int contFlags;
     void *material;
@@ -121,7 +126,11 @@ qboolean R_PickMaterial(const vec_t *org, const vec_t *dir, char *name, char *su
         strncpy(surfaceFlags, "^1default^7", charLimit);
     } else {
         table = (byte *)imp_infoParms;
+#if defined(COD2_X64)
+        strncpy(surfaceFlags, ((const infoParm_t *)table)[surfType].name, charLimit);
+#else
         strncpy(surfaceFlags, *(char **)(table + surfType * 20), charLimit);
+#endif
     }
 
     if (*surfEnd != '\0')
@@ -142,10 +151,18 @@ qboolean R_PickMaterial(const vec_t *org, const vec_t *dir, char *name, char *su
     contentsLen = strlen(contents);
 
     table = (byte *)imp_infoParms;
+#if defined(COD2_X64)
+    entryOff = 22 * sizeof(infoParm_t);
+#else
     entryOff = 0x1b8;
+#endif
 
     while (*(char **)(table + entryOff) != NULL) {
+#if defined(COD2_X64)
+        if (((const infoParm_t *)(table + entryOff))->surfaceFlags & surfFlags) {
+#else
         if (*(int *)(table + entryOff + 8) & surfFlags) {
+#endif
             surfaceFlags[surfaceFlagsLen] = ' ';
             appendPos = surfaceFlags + surfaceFlagsLen + 1;
             strncpy(appendPos, *(char **)(table + entryOff), charLimit - surfaceFlagsLen - 1);
@@ -154,7 +171,11 @@ qboolean R_PickMaterial(const vec_t *org, const vec_t *dir, char *name, char *su
             surfaceFlagsLen = surfaceFlagsLen + 1 + strlen(appendPos);
         }
 
+#if defined(COD2_X64)
+        if (((const infoParm_t *)(table + entryOff))->contents & contFlags) {
+#else
         if (*(int *)(table + entryOff + 0xc) & contFlags) {
+#endif
             contents[contentsLen] = ' ';
             appendPos = contents + contentsLen + 1;
             strncpy(appendPos, *(char **)(table + entryOff), charLimit - contentsLen - 1);
@@ -163,7 +184,11 @@ qboolean R_PickMaterial(const vec_t *org, const vec_t *dir, char *name, char *su
             contentsLen = contentsLen + 1 + strlen(appendPos);
         }
 
+#if defined(COD2_X64)
+        entryOff += sizeof(infoParm_t);
+#else
         entryOff += 0x14;
+#endif
     }
 
     return 1;

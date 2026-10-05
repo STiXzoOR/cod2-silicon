@@ -39,7 +39,11 @@ void R_LoadSun(const char *name, sunflare_t *sun)
     const char *p;
     char *dot;
 
+#if defined(COD2_X64)
+    Com_Memset(sun, 0, sizeof(*sun));
+#else
     Com_Memset(sun, 0, 0x60);
+#endif
 
     lastSlash = name;
     p = name;

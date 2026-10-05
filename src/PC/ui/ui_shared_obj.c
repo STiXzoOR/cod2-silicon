@@ -888,7 +888,11 @@ static Bool __attribute_regparm__(2) Menu_New(int handle, int imageTrack)
     ((menuDef_t *)menuBytes)->imageTrack = imageTrack;
     ((menuDef_t *)menuBytes)->items = UI_MenuItemStorage();
 
+#if defined(COD2_X64)
+    memset(&menu->window, 0, sizeof(menu->window));
+#else
     memset(menu, 0, 0x210);
+#endif
     ((menuDef_t *)menuBytes)->window.borderSize = 1.0f;
     ((menuDef_t *)menuBytes)->window.foreColor[3] = 1.0f;
     ((menuDef_t *)menuBytes)->window.foreColor[2] = 1.0f;
@@ -999,7 +1003,11 @@ qboolean MenuParse_itemDef(const char (*item)[4], int handle)
     ((itemDef_t *)itemBytes)->textscale = 0.55f;
     ((itemDef_t *)itemBytes)->imageTrack = imageTrack;
 
+#if defined(COD2_X64)
+    memset(&itemDef->window, 0, sizeof(itemDef->window));
+#else
     memset(itemDef, 0, 0x210);
+#endif
     ((itemDef_t *)itemBytes)->window.borderSize = 1.0f;
     ((itemDef_t *)itemBytes)->window.foreColor[3] = 1.0f;
     ((itemDef_t *)itemBytes)->window.foreColor[2] = 1.0f;

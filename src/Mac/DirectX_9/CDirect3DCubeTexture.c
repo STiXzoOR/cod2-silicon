@@ -365,10 +365,17 @@ void CDirect3DCubeTexture_PreLoad(const CDirect3DCubeTexture *_this)
 
 extern void ZN16CDirect3DTextureD0Ev(void *);
 extern void ZN16CDirect3DTextureD1Ev(void *);
+#if defined(COD2_X64)
+void ZThn4_N16CDirect3DTextureD0Ev(void *p) { ZN16CDirect3DTextureD0Ev((void **)p - 1); }
+void ZThn4_N16CDirect3DTextureD1Ev(void *p) { ZN16CDirect3DTextureD1Ev((void **)p - 1); }
+void ZThn4_N20CDirect3DCubeTextureD0Ev(void *p) { ZN20CDirect3DCubeTextureD0Ev((void **)p - 1); }
+void ZThn4_N20CDirect3DCubeTextureD1Ev(void *p) { ZN20CDirect3DCubeTextureD1Ev((void **)p - 1); }
+#else
 void ZThn4_N16CDirect3DTextureD0Ev(void *p) { ZN16CDirect3DTextureD0Ev((char *)p - 4); }
 void ZThn4_N16CDirect3DTextureD1Ev(void *p) { ZN16CDirect3DTextureD1Ev((char *)p - 4); }
 void ZThn4_N20CDirect3DCubeTextureD0Ev(void *p) { ZN20CDirect3DCubeTextureD0Ev((char *)p - 4); }
 void ZThn4_N20CDirect3DCubeTextureD1Ev(void *p) { ZN20CDirect3DCubeTextureD1Ev((char *)p - 4); }
+#endif
 fnptr_t vtbl_CDirect3DCubeTexture[] = { (fnptr_t)CDirect3DCubeTexture_QueryInterface, (fnptr_t)CDirect3DCubeTexture_AddRef, (fnptr_t)CDirect3DCubeTexture_Release, (fnptr_t)CDirect3DCubeTexture_GetDevice, (fnptr_t)CDirect3DCubeTexture_SetPrivateData, (fnptr_t)CDirect3DCubeTexture_GetPrivateData, (fnptr_t)CDirect3DCubeTexture_FreePrivateData, (fnptr_t)CDirect3DCubeTexture_SetPriority, (fnptr_t)CDirect3DCubeTexture_GetPriority, (fnptr_t)CDirect3DCubeTexture_PreLoad, (fnptr_t)CDirect3DCubeTexture_GetType, (fnptr_t)CDirect3DCubeTexture_SetLOD, (fnptr_t)CDirect3DCubeTexture_GetLOD, (fnptr_t)CDirect3DCubeTexture_GetLevelCount, (fnptr_t)CDirect3DCubeTexture_SetAutoGenFilterType, (fnptr_t)CDirect3DCubeTexture_GetAutoGenFilterType, (fnptr_t)CDirect3DCubeTexture_GenerateMipSubLevels, (fnptr_t)CDirect3DCubeTexture_GetLevelDesc, (fnptr_t)CDirect3DCubeTexture_GetCubeMapSurface, (fnptr_t)CDirect3DCubeTexture_LockRect, (fnptr_t)CDirect3DCubeTexture_UnlockRect, (fnptr_t)CDirect3DCubeTexture_AddDirtyRect, (fnptr_t)ZN20CDirect3DCubeTextureD1Ev, (fnptr_t)ZN20CDirect3DCubeTextureD0Ev };
 fnptr_t vtbl_CDirect3DCubeTexture_secondary[] = { (fnptr_t)ZThn4_N20CDirect3DCubeTextureD1Ev, (fnptr_t)ZThn4_N20CDirect3DCubeTextureD0Ev, (fnptr_t)COpenGLTexture_UpdateOpenGLSurfaces };
 fnptr_t vtbl_CDirect3DTexture_secondary[] = { (fnptr_t)ZThn4_N16CDirect3DTextureD1Ev, (fnptr_t)ZThn4_N16CDirect3DTextureD0Ev, (fnptr_t)COpenGLTexture_UpdateOpenGLSurfaces };

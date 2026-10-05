@@ -77,7 +77,11 @@ static void CColorConverter_SetVTable(void *object, void **vtable)
 
 static void **CColorConverter_GetBaseVTable(void)
 {
+#if defined(COD2_X64)
+    return (void **)((char *)imp___ZTV15CColorConverter + 2 * sizeof(void *));
+#else
     return (void **)((char *)imp___ZTV15CColorConverter + 8);
+#endif
 }
 
 void StdConverterARGB_Convert(const StdConverterARGB *_this, const void *pDst, const void *pSrc);

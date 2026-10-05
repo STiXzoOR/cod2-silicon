@@ -1860,9 +1860,15 @@ unsigned int CG_Draw2D(void)
             float y = 200.0f;
             int i;
             for (i = 0; i < statsCount; ++i) {
+#if defined(COD2_X64)
+                const statmonitor_t *entry = &((const statmonitor_t *)statsArray)[i];
+                if (now <= entry->endtime)
+                    UI_DrawHandlePic(2.0f, y, 0.0f, 0.0f, 1, 0, 0, entry->material);
+#else
                 const int *entry = (const int *)((const char *)statsArray + i * 8);
                 if (now <= entry[0])
                     UI_DrawHandlePic(2.0f, y, 0.0f, 0.0f, 1, 0, 0, (MaterialHandle)entry[1]);
+#endif
                 y += 34.0f;
             }
         }

@@ -14,9 +14,30 @@ sh tools/abi/check.sh build-macos/abi/compile_commands.json build-macos/abi/chec
 The script exits nonzero for compilation errors, cross-file calling-convention
 mismatches, direct/indirect unprototyped floating calls, incompatible renderer
 bindings or named/member function casts, and proven wrong import loads. Both
-baseline files are empty. Its four real-Clang tests and six import-pattern tests
+function and callback baseline files are empty. Its four real-Clang tests and six import-pattern tests
 check the tooling, including detection of variadic, pointer-width, floating,
 arity, C++ overload and generic-vtable-storage cases.
+
+The raw-offset gate preprocesses every `cod2_macos` compile entry with its real
+flags, then scans the selected source spelling for literal byte offsets, strides
+and allocation/clear sizes. `raw-offsets.json` records exact reviewed lines,
+occurrence bounds, classifications and reasons. New/duplicated candidates,
+unknown classifications and missing evidence fail; inventory output never
+approves source automatically. Run both stock and CoD2x databases. For inspection:
+
+```sh
+python3 tools/abi/test_raw_offsets.py
+python3 tools/abi/raw_offsets.py COMPILE_COMMANDS --inventory-only --output INVENTORY
+```
+
+This conservative scanner also captures harmless text, wire/GPU records and
+scalar arithmetic. It scans main translation-unit source, not expanded SDK or
+project headers, and cannot prove arbitrary computed pointer arithmetic or
+continued reachability assumptions. Review changes that activate dormant code
+or alter an approved record's layout. Historical `--base COMMIT` inventories
+use current headers/flags (and unchanged generated TUs); they are source-only
+comparisons. See [WS38](../../docs/macos-port/reports/WS38-lp64-audit.md) for measured
+layouts, native fixes and acceptance results.
 
 The optional third argument overrides the reference binary path:
 

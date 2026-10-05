@@ -451,8 +451,13 @@ static void R_XModelDebugBoxes_impl(const byte *sceneEnt, const byte *ent, const
 
     R_GetSurfaceData_impl(ent, obj, surfaces, partBits, lods);
 
+#if defined(COD2_X64)
+    if (((const GfxSceneEntity *)sceneEnt)->cent)
+        CG_DObjCalcPose((const centity_t *)((const GfxSceneEntity *)sceneEnt)->cent, (const DObj_s *)obj, partBits);
+#else
     if (*(void **)(sceneEnt + 8))
         CG_DObjCalcPose( (const centity_t *)(*(void **)(sceneEnt + 8)), (const DObj_s *)(obj), partBits);
+#endif
 
     boneCount = DObjNumBones((const struct DObj_s *)obj);
     DObjGetBoneInfo((const struct DObj_s *)obj, (struct XBoneInfo_s **)boneInfoArray);
@@ -461,8 +466,16 @@ static void R_XModelDebugBoxes_impl(const byte *sceneEnt, const byte *ent, const
         return;
 
     vec4_t color = { 1.0f, 1.0f, 1.0f, 0.0f };
+#if defined(COD2_X64)
+    byte *entMatrix = (byte *)((const GfxEntity *)ent)->axis;
+#else
     byte *entMatrix = (byte *)(ent + 0x14);
+#endif
+#if defined(COD2_X64)
+    const float *entOrigin = ((const GfxEntity *)ent)->origin;
+#else
     float *entOrigin = (float *)(ent + 0x3c);
+#endif
     DebugGlobals *debugGlobals = &frontEndDataOut->debugGlobals;
 
     for (boneIndex = 0; boneIndex < boneCount; boneIndex++) {
@@ -517,8 +530,13 @@ static void R_XModelDebugAxes_impl(const byte *sceneEnt, const byte *ent, const 
 
     R_GetSurfaceData_impl(ent, obj, surfaces, partBits, lods);
 
+#if defined(COD2_X64)
+    if (((const GfxSceneEntity *)sceneEnt)->cent)
+        CG_DObjCalcPose((const centity_t *)((const GfxSceneEntity *)sceneEnt)->cent, (const DObj_s *)obj, partBits);
+#else
     if (*(void **)(sceneEnt + 8))
         CG_DObjCalcPose( (const centity_t *)(*(void **)(sceneEnt + 8)), (const DObj_s *)(obj), partBits);
+#endif
 
     vec3_t translation[3] = { { 6.0f, 0.0f, 0.0f }, { 0.0f, 6.0f, 0.0f }, { 0.0f, 0.0f, 6.0f } };
 
@@ -527,8 +545,16 @@ static void R_XModelDebugAxes_impl(const byte *sceneEnt, const byte *ent, const 
     if (!rotTransArray || boneCount <= 0)
         return;
 
+#if defined(COD2_X64)
+    byte *entMatrix = (byte *)((const GfxEntity *)ent)->axis;
+#else
     byte *entMatrix = (byte *)(ent + 0x14);
+#endif
+#if defined(COD2_X64)
+    const float *entOrigin = ((const GfxEntity *)ent)->origin;
+#else
     float *entOrigin = (float *)(ent + 0x3c);
+#endif
     DebugGlobals *debugGlobals = &frontEndDataOut->debugGlobals;
 
     for (boneIndex = 0; boneIndex < boneCount; boneIndex++) {

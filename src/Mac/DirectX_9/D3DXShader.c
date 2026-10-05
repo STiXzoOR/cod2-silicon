@@ -118,7 +118,11 @@ UINT32 CD3DXConstantTable_GetBufferSize(const void *_this)
 HRESULT CD3DXConstantTable_GetDesc(const void *_this, void *pDesc)
 {
     (void)_this;
+#if defined(COD2_X64)
+    memset(pDesc, 0, sizeof(D3DXCONSTANTTABLE_DESC));
+#else
     memset(pDesc, 0, 32);
+#endif
     return 0;
 }
 HRESULT CD3DXConstantTable_GetConstantDesc(const void *_this, const void *hConstant, void *pConstantDesc, UINT *pCount)

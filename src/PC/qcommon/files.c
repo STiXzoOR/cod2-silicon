@@ -933,7 +933,11 @@ int FS_GetModList(char *listbuf, int bufsize)
                 n2++;
         }
 
+#if defined(COD2_X64)
+        pFiles = (char **)Z_MallocInternal((n0 + n1 + n2 + 1) * sizeof(*pFiles));
+#else
         pFiles = (char **)Z_MallocInternal((n0 + n1 + n2 + 1) * 4);
+#endif
 
         {
             int idx = 0;

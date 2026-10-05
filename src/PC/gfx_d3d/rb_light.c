@@ -211,7 +211,11 @@ int RB_DeriveEntityLights(vec4_t *colorForDir, float sunVisibility, const Materi
     if (!technique)
         goto fallback;
 
+#if defined(COD2_X64)
+    if (!technique->passArray.dx7[0].ambientLighting)
+#else
     if (*((unsigned char *)technique + 0xe) == 0)
+#endif
         goto fallback;
 
     memset(lights, 0, maxLights * sizeof(D3DLIGHT9));

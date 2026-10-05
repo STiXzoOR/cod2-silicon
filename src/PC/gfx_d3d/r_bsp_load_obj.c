@@ -1042,7 +1042,11 @@ static void R_LoadOccluders_impl(const GfxBspLoad *load)
     if (occLumpSize < 0 || occluderCount * 20 != occLumpSize)
         R_Error(1, "LoadMap: funny lump size in %s", s_world.name);
     const byte *diskOcc = bspData + *(int *)(bspHeader + 0x9C);
+#if defined(COD2_X64)
+    byte *occluders = (byte *)Hunk_AllocInternal(occluderCount * sizeof(GfxOccluder));
+#else
     byte *occluders = (byte *)Hunk_AllocInternal(occluderCount * 36);
+#endif
 
     int planeLumpSize = *(int *)(bspHeader + 0xA0);
     if (*(int *)(bspHeader + 0xA4) + planeLumpSize > fileSize)
@@ -1064,11 +1068,53 @@ static void R_LoadOccluders_impl(const GfxBspLoad *load)
     if (edgeLumpSize < 0 || edgeCount * 4 != edgeLumpSize)
         R_Error(1, "LoadMap: funny lump size in %s", s_world.name);
     const byte *diskEdges = bspData + *(int *)(bspHeader + 0xAC);
+#if defined(COD2_X64)
+    byte *edges = (byte *)Hunk_AllocInternal(edgeCount * sizeof(GfxOccluderEdge));
+#else
     byte *edges = (byte *)Hunk_AllocInternal(edgeCount * 16);
+#endif
 
     rgl.occluders = (GfxOccluder *)occluders;
     byte *vertBase = (byte *)rgl.portalVerts;
 
+#if defined(COD2_X64)
+    for (i = 0; i < occluderCount; i++) {
+        GfxOccluder *out = &rgl.occluders[i];
+        int firstPlane = *(int *)diskOcc;
+        int firstEdge = *(int *)(diskOcc + 8);
+        DpvsPlane *planeBase = (DpvsPlane *)sidePlanes + firstPlane;
+        GfxOccluderEdge *edgeBase = (GfxOccluderEdge *)edges + firstEdge;
+
+        out->planeCount = *(short *)(diskOcc + 4);
+        out->planes = planeBase;
+        for (j = 0; j < out->planeCount; j++) {
+            const float *src = (const float *)CM_GetPlaneNum(((const int *)planeIndices)[firstPlane + j]);
+            DpvsPlane *dst = &planeBase[j];
+            dst->coeffs[0] = src[0];
+            dst->coeffs[1] = src[1];
+            dst->coeffs[2] = src[2];
+            *(int *)&dst->coeffs[3] = *(const int *)&src[3] ^ 0x80000000;
+            dst->side[0] = (*(int *)&dst->coeffs[0] > 0) ? 0x0C : 0x00;
+            dst->side[1] = (*(int *)&dst->coeffs[1] > 0) ? 0x10 : 0x04;
+            dst->side[2] = (*(int *)&dst->coeffs[2] > 0) ? 0x14 : 0x08;
+        }
+
+        out->vertices = (vec3_t *)vertBase + *(int *)(diskOcc + 0xc);
+        out->vertexCount = *(short *)(diskOcc + 0x10);
+        out->edgeCount = *(short *)(diskOcc + 6);
+        out->edges = edgeBase;
+        for (j = 0; j < out->edgeCount; j++) {
+            const byte *de = diskEdges + (firstEdge + j) * 4;
+            edgeBase[j].plane[0] = &planeBase[de[0]];
+            edgeBase[j].plane[1] = &planeBase[de[1]];
+            edgeBase[j].vertex[0] = &out->vertices[de[2]];
+            edgeBase[j].vertex[1] = &out->vertices[de[3]];
+        }
+        out->ignoreStackLevel = 0;
+        out->viewPlaneCount = 0;
+        diskOcc += 20;
+    }
+#else
     byte *out = (byte *)&((GfxOccluder *)occluders)->edges;
     for (i = 0; i < occluderCount; i++) {
         int nPlanes = *(short *)(diskOcc + 4);
@@ -1119,6 +1165,7 @@ static void R_LoadOccluders_impl(const GfxBspLoad *load)
         diskOcc += 20;
         out += 36;
     }
+#endif
 }
 
 void __attribute_regparm__(1) R_LoadOccluders(GfxBspLoad *load)

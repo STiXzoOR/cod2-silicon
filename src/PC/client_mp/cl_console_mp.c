@@ -232,7 +232,11 @@ void Con_ToggleConsole_f(void)
     char *field;
 
     if (con_restricted->current.enabled) {
+#if defined(COD2_X64)
+        if ((*(qkey_t **)imp_keys)[0xa0].down)
+#else
         if (*(int *)((char *)*(void **)imp_keys + 0x780))
+#endif
             goto toggle;
         if (!((*(clientActive_t **)imp_cl)->keyCatchers & 1))
             return;

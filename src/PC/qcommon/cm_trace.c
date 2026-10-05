@@ -528,7 +528,11 @@ int CM_ContentsOfModel(clipHandle_t handle)
     if (handle < cm->numSubModels)
         model = &cm->cmodels[handle];
     else
+#if defined(COD2_X64)
+        model = ((TraceThreadInfo *)Sys_GetValue(3))->box_model;
+#else
         model = *(cmodel_t **)((byte *)Sys_GetValue(3) + 0x14);
+#endif
 
     return model->leaf.brushContents | model->leaf.terrainContents;
 }
@@ -541,7 +545,11 @@ float CM_RadiusOfModel(clipHandle_t handle)
     if (handle < cm->numSubModels)
         model = &cm->cmodels[handle];
     else
+#if defined(COD2_X64)
+        model = ((TraceThreadInfo *)Sys_GetValue(3))->box_model;
+#else
         model = *(cmodel_t **)((byte *)Sys_GetValue(3) + 0x14);
+#endif
 
     return model->radius;
 }

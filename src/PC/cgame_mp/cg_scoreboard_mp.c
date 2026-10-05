@@ -63,7 +63,11 @@ qboolean CG_ScoreboardDisplayed(void)
 void CG_ScrollScoreboardUp(void)
 {
     if (cg->scoresTop > 0) {
+#if defined(COD2_X64)
+        cg->scoresTop -= (*(const dvar_t **)imp_cg_scoreboardScrollStep)->current.integer;
+#else
         cg->scoresTop -= *(int *)(*(int *)imp_cg_scoreboardScrollStep + 8);
+#endif
         if (cg->scoresTop < 0)
             cg->scoresTop = 0;
     }
@@ -72,7 +76,11 @@ void CG_ScrollScoreboardUp(void)
 void CG_ScrollScoreboardDown(void)
 {
     if (cg->scoresOffBottom != 0) {
+#if defined(COD2_X64)
+        cg->scoresTop += (*(const dvar_t **)imp_cg_scoreboardScrollStep)->current.integer;
+#else
         cg->scoresTop += *(int *)(*(int *)imp_cg_scoreboardScrollStep + 8);
+#endif
         int maxScroll = cg->numScores - 1;
         if (cg->scoresTop > maxScroll)
             cg->scoresTop = maxScroll;
@@ -165,7 +173,11 @@ static clientInfo_t *CG_ScoreboardClientInfo(cg_t *cg, int clientNum)
     if (!cg || clientNum < 0 || clientNum >= 64)
         return 0;
 
+#if defined(COD2_X64)
+    return &cg->bgs.clientinfo[clientNum];
+#else
     return &((clientInfo_t *)((byte *)cg + CG_SCOREBOARD_CLIENTINFO_OFFSET))[clientNum];
+#endif
 }
 
 static int CG_Scoreboard_BeginVisibleLine(cg_t *cg, int *drawLine, float y, float lineHeight, float *nextY)

@@ -890,8 +890,13 @@ qboolean Netchan_Process(netchan_t *chan, msg_t *msg)
         }
     }
 
+#if defined(COD2_X64)
+#define CHAN_INCOMING_SEQUENCE (chan->incomingSequence)
+#define CHAN_DROPPED (chan->dropped)
+#else
 #define CHAN_INCOMING_SEQUENCE (*(int *)((char *)chan + 0xc))
 #define CHAN_DROPPED (*(int *)((char *)chan + 0x8))
+#endif
 
     if (sequence <= CHAN_INCOMING_SEQUENCE) {
         if (showdrop->current.enabled || showpackets->current.enabled) {

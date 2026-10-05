@@ -345,7 +345,11 @@ void Image_LoadFromData(GfxImage *image, GfxImageFileHeader *fileHeader, const b
     const byte *hdr = (const byte *)fileHeader;
     int formatType;
 
+#if defined(COD2_X64)
+    image->texture.basemap = NULL;
+#else
     *(int *)(img + 4) = 0;
+#endif
 
     formatType = hdr[4];
 
