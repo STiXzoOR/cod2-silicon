@@ -249,13 +249,25 @@ void G_ExplodeMissile(gentity_t *ent)
         (_ENT(ent)->freeAfterEvent) = 1;
     }
 
+#if defined(COD2_X64)
+    if (weapDef->iExplosionInnerDamage > 0) {
+#else
     if (weapDef->iExplosionRadius > 0) {
+#endif
         int splashMod = HANDLER_SPLASHMOD((_ENT(ent)->handler));
+#if defined(COD2_X64)
+        G_RadiusDamage((_ENT(ent)->r.currentOrigin), ent, COD2_GEntityFromHandle(_ENT(ent)->parent),
+                       (float)weapDef->iExplosionInnerDamage,
+                       (float)weapDef->iExplosionOuterDamage,
+                       (float)weapDef->iExplosionRadius,
+                       ent, splashMod);
+#else
         G_RadiusDamage((_ENT(ent)->r.currentOrigin), ent, COD2_GEntityFromHandle(_ENT(ent)->parent),
                        (float)weapDef->iExplosionRadius,
                        (float)weapDef->iExplosionOuterDamage,
                        (float)weapDef->iExplosionInnerDamage,
                        ent, splashMod);
+#endif
     }
 
     SV_LinkEntity(ent);
@@ -816,12 +828,16 @@ after_trace:
         (_ENT(ent)->s.surfType) = (tr.surfaceFlags & 0x1F00000) >> 20;
 
 #if defined(COD2_X64)
-        if (other->takedamage || (ent->s.eFlags & GMISSILE_EF_BOUNCE)) {
+        {
 #else
         if ((_ENT(other)->takedamage) || ((_ENT(ent)->s.eFlags) & 0x10000)) {
 #endif
 
+#if defined(COD2_X64)
+            if (!other->takedamage && (ent->s.eFlags & GMISSILE_EF_BOUNCE)) {
+#else
             if (!(_ENT(other)->takedamage)) {
+#endif
 
                 gclient_t *otherClient = (_ENT(other)->client);
                 if (otherClient) {
@@ -920,13 +936,25 @@ after_trace:
 
             G_SetOrigin(ent, endpos);
 
+#if defined(COD2_X64)
+            if (hitWeapDef->iExplosionInnerDamage > 0) {
+#else
             if (hitWeapDef->iExplosionRadius > 0) {
+#endif
                 int splashMod = HANDLER_SPLASHMOD((_ENT(ent)->handler));
+#if defined(COD2_X64)
+                G_RadiusDamage(endpos, ent, COD2_GEntityFromHandle(_ENT(ent)->parent),
+                               (float)hitWeapDef->iExplosionInnerDamage,
+                               (float)hitWeapDef->iExplosionOuterDamage,
+                               (float)hitWeapDef->iExplosionRadius,
+                               ent, splashMod);
+#else
                 G_RadiusDamage(endpos, ent, COD2_GEntityFromHandle(_ENT(ent)->parent),
                                (float)hitWeapDef->iExplosionRadius,
                                (float)hitWeapDef->iExplosionOuterDamage,
                                (float)hitWeapDef->iExplosionInnerDamage,
                                ent, splashMod);
+#endif
             }
 
             SV_LinkEntity(ent);
