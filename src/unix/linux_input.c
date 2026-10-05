@@ -414,12 +414,27 @@ void IN_Frame(void)
     extern SDL_Window *sdl_gl_window;
     clientActive_t *client = imp_cl ? *(clientActive_t **)imp_cl : NULL;
     int focused = sdl_gl_window && (SDL_GetWindowFlags(sdl_gl_window) & SDL_WINDOW_INPUT_FOCUS);
-    int wantRelative = focused && client && client->active && client->keyCatchers == 0 && in_mouse && in_mouse->current.enabled;
+    extern int MacDisplay_IsFullscreen(void);
+    /* Fullscreen keeps the mouse captured in menus too, as the original does:
+     * menus move the game's own cursor from relative motion (CL_MouseEvent
+     * routes it to UI_MouseEvent), so the system pointer never appears or
+     * reaches hot corners. Windowed menus keep the free system pointer. */
+    int wantRelative = focused && in_mouse && in_mouse->current.enabled &&
+        (MacDisplay_IsFullscreen() || (client && client->active && client->keyCatchers == 0));
     mac_relative = SDL_GetRelativeMouseMode() == SDL_TRUE;
     if (wantRelative != mac_relative) {
         SDL_SetWindowGrab(sdl_gl_window, wantRelative ? SDL_TRUE : SDL_FALSE);
         SDL_SetRelativeMouseMode(wantRelative ? SDL_TRUE : SDL_FALSE);
         mac_relative = SDL_GetRelativeMouseMode() == SDL_TRUE;
+    }
+    {
+        /* The game draws its own cursor in menus, so the system pointer stays
+         * hidden while the window has focus and returns when it loses focus. */
+        static int cursorHidden = -1;
+        if (focused != cursorHidden) {
+            SDL_ShowCursor(focused ? SDL_DISABLE : SDL_ENABLE);
+            cursorHidden = focused;
+        }
     }
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     int rawMode = MacInput_RawMode();
