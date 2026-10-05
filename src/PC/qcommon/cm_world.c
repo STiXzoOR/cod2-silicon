@@ -725,12 +725,21 @@ void CM_ClipMoveToEntities(moveclip_t *clip, trace_t *trace)
 static unsigned short CM_WorldEntityIndex(const svEntity_t *ent)
 {
     server_t *sv = (server_t *)imp_sv;
+#if defined(COD2_X64)
+    /* Zero terminates sector lists; stored entity indices are one-based. */
+    return (unsigned short)(ent - sv->svEntities + 1);
+#else
     return (unsigned short)(ent - sv->svEntities);
+#endif
 }
 
 static svEntity_t *CM_WorldEntityForIndex(unsigned short entIndex)
 {
+#if defined(COD2_X64)
+    return &sv.svEntities[(unsigned int)entIndex - 1];
+#else
     return &sv.svEntities[(unsigned int)entIndex];
+#endif
 }
 
 static unsigned short CM_AllocWorldSector(const vec_t *mins, const vec_t *maxs)
