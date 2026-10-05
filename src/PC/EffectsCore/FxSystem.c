@@ -74,9 +74,14 @@ void FxHelper_Init(const FxHelper *_this)
 void FxHelper_AdjustTime(const FxHelper *_this, int intime)
 {
     FxHelper *self = (FxHelper *)_this;
+#if defined(COD2_X64)
+    /* Byte 8 is current.enabled only in the i386 dvar_t; on LP64 it is flags. */
+    if (fx_freeze->current.enabled) {
+#else
     char *frozenStruct = (char *)fx_freeze;
 
     if (frozenStruct[8]) {
+#endif
         self->mFrameTime = 0;
     } else {
         if (self->time == 0) {
@@ -102,10 +107,16 @@ void FxHelper_AdjustTime(const FxHelper *_this, int intime)
 void FxHelper_WarpTime(const FxHelper *_this, int intime)
 {
     FxHelper *self = (FxHelper *)_this;
+#if !defined(COD2_X64)
     char *frozenStruct = (char *)fx_freeze;
+#endif
     int frameTime;
 
+#if defined(COD2_X64)
+    if (fx_freeze->current.enabled || self->time == 0) {
+#else
     if (frozenStruct[8] || self->time == 0) {
+#endif
         self->mFrameTime = 0;
         goto set_time_seed;
     }
