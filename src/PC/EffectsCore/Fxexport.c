@@ -1,5 +1,21 @@
 #include "common_types.h"
 #include "imports.h"
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+#include <stdlib.h>
+static void FX_CombatReceipt(const EffectTemplate *fx, const vec_t *org)
+{
+    static int enabled = -1;
+    if (enabled < 0)
+        enabled = getenv("COD2_MAC_COMBAT_TRACE") != NULL;
+    if (!enabled || !fx || !org) return;
+    extern void Com_Printf(const char *, ...);
+    extern void *imp_theFxHelper;
+    const FxHelper *helper = *(FxHelper **)imp_theFxHelper;
+    Com_Printf("[combat-fx] time=%i effect=%s primitives=%i origin=%.9g,%.9g,%.9g\n",
+              helper ? helper->mTime : -1, fx->mEffectName ? fx->mEffectName : "unnamed", fx->mPrimitiveCount,
+              (double)org[0], (double)org[1], (double)org[2]);
+}
+#endif
 
 extern volatile qboolean fx_camera_valid;
 
@@ -50,6 +66,9 @@ int FX_GetBoneIndex(const int entNum, unsigned int bone)
 
 void FX_PlaySimpleEffect(EffectTemplate *fx, const vec_t *org)
 {
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+    FX_CombatReceipt(fx, org);
+#endif
     /* no orientation, no bolt: pass explicit NULLs so the trailing axis/bolt args
        aren't garbage x64 registers (was UB: too few args for the 5-param callee). */
     FxScheduler_PlayEffect(*(void **)*(void **)&fx_scheduler_ptr, fx, org, (MediaHandles *(*)[4])0, (const FxBoltInfo *)0);
@@ -57,6 +76,9 @@ void FX_PlaySimpleEffect(EffectTemplate *fx, const vec_t *org)
 
 void FX_PlayEffect(EffectTemplate *fx, const vec_t *org, const vec_t *fwd)
 {
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+    FX_CombatReceipt(fx, org);
+#endif
 #if COD2_APPLE_SDK
     vec3_t axis[3];
     memcpy(axis[0], fwd, sizeof(vec3_t));
@@ -71,6 +93,9 @@ void FX_PlayEffect(EffectTemplate *fx, const vec_t *org, const vec_t *fwd)
 #if COD2_APPLE_SDK
 void FX_PlayOrientedEffect(EffectTemplate *fx, const vec_t *org, const vec_t *forward, const vec_t *up)
 {
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+    FX_CombatReceipt(fx, org);
+#endif
     vec3_t axis[3];
     memcpy(axis[0], forward, sizeof(vec3_t));
     memcpy(axis[2], up, sizeof(vec3_t));
@@ -81,6 +106,9 @@ void FX_PlayOrientedEffect(EffectTemplate *fx, const vec_t *org, const vec_t *fo
 
 void FX_PlayEntityEffect(EffectTemplate *fx, const vec_t *org, vec3_t *axis, const FxBoltInfo *bolt)
 {
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+    FX_CombatReceipt(fx, org);
+#endif
     FxScheduler_PlayEffect(*(void **)*(void **)&fx_scheduler_ptr, fx, org, axis, bolt);
 }
 
