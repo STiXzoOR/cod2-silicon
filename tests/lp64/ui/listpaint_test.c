@@ -27,14 +27,19 @@ int main(void)
     assert(labels == 1 && values == 1 && drawX == 98 && drawY == 25);
     assert(extents == 0 && item.textRect[0].w == 80 && drawColor[0] == .3f);
     item.text = NULL; Item_List_Paint(&dc, &item, "value");
-    assert(labels == 1 && values == 2 && drawX == 10);
+    assert(labels == 1 && values == 2 && drawX == 10 && extents == 0);
     item.window.dynamicFlags[0] = 6; menu.focusColor[0] = .5f; menu.focusColor[3] = 1;
     Item_List_Paint(&dc, &item, "value");
     assert(fabsf(drawColor[0] - .45f) < 1e-6f);
     /* Fade and text-style effects belong to label painting, not the value. */
     item.window.dynamicFlags[0] = 0x10; item.textStyle = 1; dc.realTime = 300;
     Item_List_Paint(&dc, &item, "value"); assert(drawColor[0] == .3f);
-    item.text = " "; Item_List_Paint(&dc, &item, ""); assert(labels == 2);
+    item.text = " "; Item_List_Paint(&dc, &item, "");
+    assert(labels == 2 && values == 5 && drawX == 98 && extents == 0);
+    /* Both Mac value paths draw directly, including empty and wrapped values. */
+    item.text = NULL; item.window.staticFlags = 0xc00000;
+    Item_List_Paint(&dc, &item, "");
+    assert(labels == 2 && values == 6 && drawX == 10 && extents == 0);
     puts("PASS multi label/value positions, translation order, cached extents and reference colours");
     return 0;
 }
