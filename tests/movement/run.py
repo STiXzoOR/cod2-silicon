@@ -43,6 +43,11 @@ server = subprocess.check_output(['git', 'show', f'{a.baseline}:{initpath}'], cw
 start = server.index('    Scr_EndLoadScripts();') + len('    Scr_EndLoadScripts();')
 end = server.index('    *(void **)imp_bgs = (void *)&level_bgs;', start)
 (out / 'server_anim_init_source.h').write_text(server[start:end])
+snappath = 'src/PC/win32/win_shared.c'
+snap = subprocess.check_output(['git', 'show', f'{a.baseline}:{snappath}'], cwd=ROOT, text=True) if a.baseline else (ROOT / snappath).read_text()
+start = snap.index('void Sys_SnapVector(float *v)\n{')
+# This pure function is the final definition in the production translation unit.
+(out / 'snap_source.h').write_text(snap[start:])
 defaults = {'friction': '5.5f', 'stopspeed': '100.0f', 'inertiaMax': '10000.0f',
             'player_footstepsThreshhold': '190.0f', 'player_moveThreshhold': '10.0f',
             'player_strafeSpeedScale': '0.8f', 'player_backSpeedScale': '0.7f',
@@ -74,7 +79,7 @@ for source in ['com_math', 'q_shared']:
     objects.append(extra)
 exe = out / 'movement'
 subprocess.run(['clang', '-arch', 'arm64', '-fsanitize=address,undefined', '-Wl,-dead_strip', *map(str, objects), '-o', str(exe)], check=True)
-for name in a.test or ['bob', 'scale', 'walk', 'lean', 'timers', 'direction', 'view', 'ladder', 'prone', 'dispatch']:
+for name in a.test or ['bob', 'scale', 'snap', 'walk', 'lean', 'timers', 'direction', 'view', 'ladder', 'prone', 'dispatch']:
     if name in ('collision', 'events', 'sway'):
         continue
     subprocess.run([str(exe), name], check=True)

@@ -40,7 +40,7 @@ void G_TraceCapsule(trace_t *tr, const vec_t *s, const vec_t *mi, const vec_t *m
 int CG_PointContents(const vec_t *p, int skip, int mask) { (void)p; (void)skip; (void)mask; return 0; }
 int SV_PointContents(const vec_t *p, int skip, int mask) { return CG_PointContents(p, skip, mask); }
 void G_PlayerEvent(int client, int event) { (void)client; (void)event; }
-void Sys_SnapVector(vec_t *v) { for (int i = 0; i < 3; ++i) v[i] = nearbyintf(v[i]); }
+#include "snap_source.h"
 void BG_AnimUpdatePlayerStateConditions(pmove_t *pm) { (void)pm; }
 int BG_AnimScriptEvent(playerState_t *ps, scriptAnimEventTypes_t event, qboolean cont, qboolean force)
 { (void)ps; (void)event; (void)cont; (void)force; return 0; }
@@ -136,6 +136,21 @@ static void test_scale(void)
         ps.pm_flags = 0x100; close_float(PM_CmdScale(&ps, &pm.cmd), 190.0f / 127.0f * 0.4f);
     }
     puts("PASS command scale: ADS-walk flag, independent air stance");
+}
+
+static void test_snap(void)
+{
+    const float values[] = {-2.9f, -2.5f, -2.1f, -1.5f, -0.9f, -0.5f, -0.1f, 0.0f,
+                            0.1f, 0.5f, 0.9f, 1.5f, 2.1f, 2.5f, 2.9f};
+    const int expected[] = {-2, -2, -2, -1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2};
+    for (int i = 0; i < (int)(sizeof(values) / sizeof(values[0])); ++i) {
+        vec3_t velocity = {values[i], -values[i], values[i]};
+        Sys_SnapVector(velocity);
+        close_float(velocity[0], (float)expected[i]);
+        close_float(velocity[1], (float)-expected[i]);
+        close_float(velocity[2], (float)expected[i]);
+    }
+    puts("PASS production velocity snapping truncates toward zero");
 }
 
 static void test_walk(void)
@@ -239,6 +254,7 @@ int main(int argc, char **argv)
     assert(argc == 2);
     if (!strcmp(argv[1], "bob")) test_bob();
     else if (!strcmp(argv[1], "scale")) test_scale();
+    else if (!strcmp(argv[1], "snap")) test_snap();
     else if (!strcmp(argv[1], "walk")) test_walk();
     else if (!strcmp(argv[1], "lean")) test_lean();
     else if (!strcmp(argv[1], "timers")) test_timers();
