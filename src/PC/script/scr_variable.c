@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -318,7 +321,13 @@ static inline __attribute__((always_inline)) unsigned int AllocVariable(void)
         id = VG_ID(index);
         s_varNetDbg++;
         if ((s_varNetDbg & 0x7ff) == 0)
+#if defined(COD2_X64)
+            COD2_NATIVE_TRACE_ONLY(
+#endif
             fprintf(stderr, "[varleak] net=%u\n", s_varNetDbg);
+#if defined(COD2_X64)
+            )
+#endif
         return id;
     }
 }

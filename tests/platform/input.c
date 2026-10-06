@@ -49,6 +49,9 @@ void CL_MouseEventAbsolute(int x, int y, int dx, int dy) { (void)dx; (void)dy; a
 void Key_ClearStates(void) { ++cleared; }
 void Cbuf_AddText(const char *text) { assert(!strcmp(text, "quit\n")); ++quit; }
 void MacPlatform_MapWindowPoint(int x, int y, int *rx, int *ry) { *rx = x * 2; *ry = y * 2; }
+#if defined(COD2_X64)
+int MacPlatform_GetRenderSize(int *w, int *h) { *w = 1280; *h = 960; return 0; }
+#endif
 
 /* SDL2-compat Event2to3 rejects injected TEXTINPUT and passes NULL to SDL3.
  * Feed synthetic events at the poll boundary; all conversion is production code. */
@@ -103,9 +106,32 @@ int main(void)
     assert(events[4].value == 0x7f && events[5].type == SE_CHAR && events[5].value == 8);
     assert(events[6].value == 'A' && events[7].value == 0x20ac);
     assert(events[8].value == 0xc9 && events[8].value2 == 1 && events[9].value2 == 0);
+#if defined(COD2_X64)
+    for (int i = 10; i < 14; ++i)
+        assert(events[i].value == 0xce && events[i].value2 == !(i & 1));
+#else
     for (int i = 10; i < 14; ++i)
         assert(events[i].value == 0xcd && events[i].value2 == !(i & 1));
+#endif
+#if defined(COD2_X64)
+    assert(absoluteX == 10 && absoluteY == 20);
+#else
     assert(absoluteX == 20 && absoluteY == 40);
+#endif
+#if defined(COD2_X64)
+    int wheelCount = count;
+    for (int i = 0; i < 4; ++i) {
+        e = (SDL_Event){0}; e.type = SDL_MOUSEWHEEL; e.wheel.preciseY = .25f;
+        e.wheel.direction = SDL_MOUSEWHEEL_FLIPPED; push(&e);
+    }
+    SDL_PumpInputEvents();
+    assert(count == wheelCount + 2 && events[wheelCount].value == 0xce);
+    for (int i = 0; i < 4; ++i) {
+        e = (SDL_Event){0}; e.type = SDL_MOUSEWHEEL; e.wheel.preciseY = -.25f; push(&e);
+    }
+    SDL_PumpInputEvents();
+    assert(count == wheelCount + 4 && events[wheelCount + 2].value == 0xcd);
+#endif
     client = calloc(1, sizeof(*client));
     assert(client);
     client->active = 1; mouse.current.enabled = raw.current.enabled = 1;

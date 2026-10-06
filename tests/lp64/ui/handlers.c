@@ -74,10 +74,28 @@ int main(void)
     g_waitingForKey = 1;
     assert(Item_Bind_HandleKey(&dc, &item, 43, 1));
     assert(g_bindings[55].bind2 == 43);
+#if defined(COD2_X64)
+    g_bindItem = &item;
+    g_waitingForKey = 1;
+    assert(Item_Bind_HandleKey(&dc, &item, 44, 1));
+    assert(cleared == 2 && g_bindings[55].bind1 == 44 && g_bindings[55].bind2 == -1);
+#endif
     g_bindItem = &item;
     g_waitingForKey = 1;
     assert(Item_Bind_HandleKey(&dc, &item, 0x7f, 1));
+#if defined(COD2_X64)
+    assert(cleared == 3 && g_bindings[55].bind1 == -1 && g_bindings[55].bind2 == -1);
+    g_bindItem = &item; g_waitingForKey = 1;
+    assert(Item_Bind_HandleKey(&dc, &item, 45, 1));
+    g_bindItem = &item; g_waitingForKey = 1;
+    assert(Item_Bind_HandleKey(&dc, &item, -1, 1));
+    /* -1 carries the character flag and is ignored before slot handling. */
+    assert(cleared == 3 && g_bindings[55].bind1 == 45 && g_waitingForKey);
+    assert(Item_Bind_HandleKey(&dc, &item, 0x7f, 1));
+    assert(cleared == 4 && g_bindings[55].bind1 == -1 && g_bindings[55].bind2 == -1);
+#else
     assert(cleared == 2 && g_bindings[55].bind1 == -1 && g_bindings[55].bind2 == -1);
+#endif
 
     item.window.dynamicFlags[0] = 6;
     item.dvar = "choice";

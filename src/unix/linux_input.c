@@ -87,12 +87,14 @@ extern int Linux_PollInputEvent(LinuxInputEvent *event);
 
 #if defined(__APPLE__) && defined(COD2_X64)
 #include "platform/macos_rawmouse.h"
+#include "platform/macos_input_policy.h"
 #include "platform/macos_display.h"
 extern dvar_t *in_rawmouse;
 extern dvar_t *in_mouse;
 extern void CL_MouseEvent(int dx, int dy);
 static int mac_relative;
 static int mac_use_raw;
+static float mac_wheel_remainder;
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "platform/cod2x_native_mouse.h"
 #include "platform/macos_system.h"
@@ -291,6 +293,7 @@ int SDL_PumpInputEvents(void)
                 extern void Key_ClearStates(void);
                 extern void MacDisplay_FocusChanged(int focused);
                 Key_ClearStates();
+                mac_wheel_remainder = 0;
                 MacRawMouse_SetActive(0);
                 MacDisplay_FocusChanged(0);
             } else if (ev.window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
@@ -305,8 +308,10 @@ int SDL_PumpInputEvents(void)
                 if (!mac_use_raw)
                     CL_MouseEvent(ev.motion.xrel, ev.motion.yrel);
             } else {
-                int x, y;
+                int x, y, width, height;
                 MacPlatform_MapWindowPoint(ev.motion.x, ev.motion.y, &x, &y);
+                MacPlatform_GetRenderSize(&width, &height);
+                MacInput_RenderToUI(x, y, width, height, &x, &y);
                 CL_MouseEventAbsolute(x, y, 0, 0);
             }
 #else
@@ -334,7 +339,10 @@ int SDL_PumpInputEvents(void)
         }
         case SDL_MOUSEWHEEL: {
 #if defined(__APPLE__) && defined(COD2_X64)
-            int delta = ev.wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -ev.wheel.y : ev.wheel.y;
+            /* Cocoa already applies the user's scrolling direction, as Carbon
+             * did. Undoing FLIPPED discards natural scrolling. */
+            float motion = ev.wheel.preciseY != 0.0f ? ev.wheel.preciseY : (float)ev.wheel.y;
+            int delta = MacInput_WheelSteps(&mac_wheel_remainder, motion);
             int key = delta > 0 ? K_MWHEELUP : K_MWHEELDOWN;
             int clicks = abs(delta);
             /* Preserve individual wheel clicks in the engine key-event path. */
@@ -447,9 +455,11 @@ void IN_Frame(void)
     }
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     int rawMode = MacInput_RawMode();
-    mac_use_raw = rawMode > 0 && mac_relative && in_rawmouse && in_rawmouse->current.enabled && MacRawMouse_Available();
+    mac_use_raw = MacInput_UseRaw(client && client->active, client ? client->keyCatchers : -1,
+        mac_relative, rawMode, in_rawmouse && in_rawmouse->current.enabled, MacRawMouse_Available());
 #else
-    mac_use_raw = mac_relative && in_rawmouse && in_rawmouse->current.enabled && MacRawMouse_Available();
+    mac_use_raw = MacInput_UseRaw(client && client->active, client ? client->keyCatchers : -1,
+        mac_relative, 1, in_rawmouse && in_rawmouse->current.enabled, MacRawMouse_Available());
 #endif
     MacRawMouse_SetActive(mac_use_raw);
     SDL_PumpInputEvents();

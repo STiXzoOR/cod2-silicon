@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 
@@ -38,7 +41,13 @@ void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int ver
         t1 = 1.0f;
     }
 
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     { extern void Com_Printf(const char *, ...); static int n; if (n++ < 4) Com_Printf("[uidhp] #%d hMaterial=%p\n", n, (void *)hMaterial); }
+#if defined(COD2_X64)
+    )
+#endif
     CL_DrawStretchPic(x, y, w, h, horzAlign, vertAlign, s0, t0, s1, t1, color, hMaterial);
 }
 

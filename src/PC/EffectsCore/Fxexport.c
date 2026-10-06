@@ -1,13 +1,13 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 #if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
 #include <stdlib.h>
 static void FX_CombatReceipt(const EffectTemplate *fx, const vec_t *org)
 {
-    static int enabled = -1;
-    if (enabled < 0)
-        enabled = getenv("COD2_MAC_COMBAT_TRACE") != NULL;
-    if (!enabled || !fx || !org) return;
+    if (!COD2_NATIVE_TRACE_ENABLED() || !fx || !org) return;
     extern void Com_Printf(const char *, ...);
     extern void *imp_theFxHelper;
     const FxHelper *helper = *(FxHelper **)imp_theFxHelper;

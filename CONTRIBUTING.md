@@ -117,6 +117,8 @@ python3 -m unittest discover -s tools/datagen -p test_datagen.py -v
 python3 tools/abi/test_audit.py
 python3 tools/abi/test_imports.py
 python3 tools/abi/test_raw_offsets.py
+python3 tools/abi/test_bit_conversions.py
+python3 tools/check_trace_guards.py
 python3 tests/rendering/shader_setup.py
 python3 -m unittest discover -s tests/lp64/renderer -p test_wine_draw_trace.py -v
 COD2X_SANITIZERS=1 sh tests/cod2x/run_full.sh
@@ -195,9 +197,30 @@ changes. Neither fixture success nor frame-cap registration proves live
 stability or performance:
 
 ```sh
-python3 tools/parity/record.py --binary build-macos-codx/cod2_macos \
-  --data "$HOME/Games/CoD2" --output output/smoke-new --frames 100
+COD2_MAC_SHADER_CACHE="$HOME/Library/Application Support/CoD2 Silicon/shaders" \
+python3 tools/parity/record.py --binary build-macos-codx/cod2_macos --windowed \
+  --data "$HOME/Games/CoD2" --port 29945 --frames 100 \
+  --output "$HOME/Library/Application Support/CoD2-native-ws42/smoke-new"
 
+# Real SDL input: the --self-test fixture needs no data; live scenarios do.
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/input -p 'test_*.py' -v
+python3 tests/input/run.py --self-test \
+  --output "$HOME/Library/Application Support/CoD2-native-ws42/injector-new"
+python3 tests/input/run.py --self-test --compile-db build-macos-codx/compile_commands.json \
+  --output "$HOME/Library/Application Support/CoD2-native-ws42/injector-codx-new"
+# Run sequentially, with no other game using the display. Each output must be new.
+cmake --build build-macos --target cod2_macos_ded --parallel 3
+python3 tests/input/run.py build-macos/cod2_macos --scenario all \
+  --server-binary build-macos/cod2_macos_ded --server-port 29952 --port 29942 \
+  --output "$HOME/Library/Application Support/CoD2-native-ws42/input-stock-new"
+python3 tests/input/run.py build-macos-codx/cod2_macos --scenario all \
+  --compile-db build-macos-codx/compile_commands.json \
+  --server-binary build-macos/cod2_macos_ded --server-port 29953 --port 29943 \
+  --output "$HOME/Library/Application Support/CoD2-native-ws42/input-codx-new"
+python3 tests/input/run.py build-macos/cod2_macos --scenario browser --fullscreen \
+  --port 29944 \
+  --output "$HOME/Library/Application Support/CoD2-native-ws42/input-fullscreen-new"
+# Scenarios, assertions and fixture limits are documented in tests/input/README.md.
 # Menu acceptance: run sequentially when pgrep -fl cod2_macos is empty.
 # Output directories must be new and outside the repository.
 python3 tests/rendering/menu_sweep.py build-macos/cod2_macos \
@@ -236,6 +259,7 @@ even when they use synthetic content.
 | `tools/macos-port/check_wavelets.py`, material/shader extraction validation | **IWDs and/or Mac binary** | External owned inputs; retain results outside git |
 | `tests/rendering/toujane_rgb.py`, parity recording, combat drivers, demos, live play and benchmarks | **Game data** | Built engine, private writable home; some checks also need owned shaders, CD key, server or demo |
 | `tests/rendering/menu_sweep.py` | **Game data** | Interactive session, `timeout`, no competing game; every loaded menu in front end/listen game plus safe UI scripts; captures outside git |
+| `tests/input/run.py`, `tests/input/test_driver.py` | Self-test: No; live: **Game data** | Test-only SDL event injector, installed SDL2/SDL3, runtime UI assertions, owned localhost server and private home; fullscreen browser pass is capped at 60 seconds |
 
 Diagnostic replay tools (`tests/lp64/game/replay.py`, renderer diagnostics,
 LP64 inventory) inspect compiler output; they are not live acceptance tests.

@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 #include "cod2_feature_config.h"
@@ -682,7 +685,13 @@ void SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
     c = MSG_ReadStringLine(msg);
     SV_Cmd_TokenizeString(c);
     c = SV_Cmd_Argv(0);
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     Com_Printf("[cnx] SV_ConnectionlessPacket cmd='%s'\n", c);
+#if defined(COD2_X64)
+    )
+#endif
 
 #if COD2_IS_PATCH_13
 

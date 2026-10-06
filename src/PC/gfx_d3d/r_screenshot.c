@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 #include <stdlib.h>
@@ -182,6 +185,9 @@ static Bool R_GetFrontBufferData(int width, int height, int bytesPerPixel, byte 
         }
     }
 
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     glReadBuffer(0x0405);
     glReadPixels(width / 2, height / 2, 1, 1, 0x1908, 0x1401, centerBack);
     glReadBuffer(0x0404);
@@ -192,6 +198,9 @@ static Bool R_GetFrontBufferData(int width, int height, int bytesPerPixel, byte 
               readBuffer, drawBuffer,
               centerBack[0], centerBack[1], centerBack[2], centerBack[3],
               centerFront[0], centerFront[1], centerFront[2], centerFront[3]);
+#if defined(COD2_X64)
+    )
+#endif
 
     glReadBuffer(0x0405);
     glReadPixels(0, ScreenHeight - height, width, height, 0x1908, 0x1401, tempBuffer);
@@ -803,14 +812,38 @@ static void R_CaptureScreenshotNow(GfxScreenshotType type, const char *filename,
         height = vidConfig.height;
 
         buffer = (byte *)ri.Z_MallocInternal(width * height * 3);
+#if defined(COD2_X64)
+        COD2_NATIVE_TRACE_ONLY(
+#endif
         ri.Printf(0, "[screenshot-trace] jpg filename='%s' size=%dx%d buffer=%p\n",
                   filename, width, height, buffer);
+#if defined(COD2_X64)
+        )
+#endif
         if (R_GetFrontBufferData(width, height, 3, buffer)) {
+#if defined(COD2_X64)
+            COD2_NATIVE_TRACE_ONLY(
+#endif
             ri.Printf(0, "[screenshot-trace] readback ok, saving '%s'\n", filename);
+#if defined(COD2_X64)
+            )
+#endif
             R_SaveJpg(filename, 90, width, height, buffer);
+#if defined(COD2_X64)
+            COD2_NATIVE_TRACE_ONLY(
+#endif
             ri.Printf(0, "[screenshot-trace] save requested '%s'\n", filename);
+#if defined(COD2_X64)
+            )
+#endif
         } else {
+#if defined(COD2_X64)
+            COD2_NATIVE_TRACE_ONLY(
+#endif
             ri.Printf(0, "[screenshot-trace] readback failed '%s'\n", filename);
+#if defined(COD2_X64)
+            )
+#endif
         }
         ri.Z_FreeInternal(buffer);
     } else if (type == 1) {
@@ -854,8 +887,14 @@ void R_CapturePendingScreenshotBeforePresent(void)
         return;
 
     if (pendingScreenshotDelayFrames > 0) {
+#if defined(COD2_X64)
+        COD2_NATIVE_TRACE_ONLY(
+#endif
         ri.Printf(0, "[screenshot-trace] pending delay before present frames=%d file='%s'\n",
                   pendingScreenshotDelayFrames, pendingScreenshotFilename);
+#if defined(COD2_X64)
+        )
+#endif
         --pendingScreenshotDelayFrames;
         return;
     }
@@ -894,8 +933,14 @@ void R_ScreenshotCommand(GfxScreenshotType type)
         return;
     }
 
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     ri.Printf(0, "[screenshot-trace] command type=%d argc=%d arg1='%s'\n",
               type, ri.Cmd_Argc(), ri.Cmd_Argv(1));
+#if defined(COD2_X64)
+    )
+#endif
 
     arg = ri.Cmd_Argv(1);
     if (strcmp(arg, "levelshot") == 0) {
@@ -953,5 +998,11 @@ void R_ScreenshotCommand(GfxScreenshotType type)
     pendingScreenshotSilent = silent;
     pendingScreenshotDelayFrames = 2;
     I_strncpyz(pendingScreenshotFilename, filename, sizeof(pendingScreenshotFilename));
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     ri.Printf(0, "[screenshot-trace] queued '%s' type=%d\n", filename, type);
+#if defined(COD2_X64)
+    )
+#endif
 }

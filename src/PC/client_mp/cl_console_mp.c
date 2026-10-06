@@ -630,7 +630,15 @@ static BM_NOINLINE void Con_DrawOuputWindow(void)
     innerY = y + 6.0f;
     innerHeight = height - 12.0f;
 
+#if defined(COD2_X64) && COD2_X64 && defined(__APPLE__) && (defined(__aarch64__) || defined(__arm64__))
+#if defined(COD2_CODX) && COD2_CODX
+    version = va("CoD2 Silicon %s · CoD2x 1.4.6.8 · macOS arm64", COD2_RELEASE_VERSION);
+#else
+    version = va("Build %s %s", getBuildNumber(), "macOS arm64");
+#endif
+#else
     version = va("Build %s %s", getBuildNumber(), "MacOSXS-i386");
+#endif
     SCR_DrawSmallStringExt((int)innerX, (int)(innerY + innerHeight - 16.0f), version, con_versionColor);
 
     scrollBarWidth = 10.0f;
@@ -1552,7 +1560,11 @@ static BM_NOINLINE void Con_DrawInput(void)
     if (!Sys_IsMainThread())
         return;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    prompt = va("%s: %s> ", "CoD2x MP", "1.4.6.8");
+#else
     prompt = va("%s: %s> ", "CoD2 MP", COD2_VERSION_SHORT);
+#endif
     font = cls.consoleFont;
     conDrawInputGlob.fontHeight = (float)re.TextHeight(font);
     if (conDrawInputGlob.fontHeight <= 0.0f)

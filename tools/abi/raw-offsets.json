@@ -7404,5 +7404,12 @@
     "count": 1,
     "classification": "safe",
     "reason": "RGBA pixel buffer has four bytes per pixel, not four bytes per native pointer."
+  },
+  {
+    "file": "src/PC/ui_mp/ui_shared_mp.c",
+    "text": "x = item->textRect[0].x + item->textRect[0].w + 8.0f;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Multi-choice value X position adds scalar float label coordinates and the verified eight-pixel gap; no address or struct offset arithmetic."
   }
 ]

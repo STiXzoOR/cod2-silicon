@@ -2,6 +2,14 @@
 set(CMAKE_OSX_ARCHITECTURES arm64)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "Minimum native macOS version" FORCE)
 option(COD2_MACOS_RELEASE "Require a portable pinned-SDL release build" OFF)
+set(COD2_RELEASE_VERSION "" CACHE STRING "Release version override (empty uses RELEASE_VERSION)")
+if(NOT COD2_RELEASE_VERSION)
+  file(STRINGS "${CMAKE_SOURCE_DIR}/RELEASE_VERSION" COD2_RELEASE_VERSION LIMIT_COUNT 1)
+endif()
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/RELEASE_VERSION")
+if(NOT COD2_RELEASE_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+  message(FATAL_ERROR "COD2_RELEASE_VERSION must be N.N.N")
+endif()
 enable_language(CXX OBJC)
 find_library(COD2_AUDIO_FRAMEWORK AudioToolbox REQUIRED)
 find_library(COD2_COREAUDIO_FRAMEWORK CoreAudio REQUIRED)
@@ -93,6 +101,7 @@ foreach(target cod2_macos cod2_macos_ded)
     -ferror-limit=0)
   target_link_libraries(${target} PRIVATE ZLIB::ZLIB c++ "-framework IOKit" "-framework CoreFoundation")
   target_compile_features(${target} PRIVATE cxx_std_17)
+  target_compile_definitions(${target} PRIVATE COD2_RELEASE_VERSION="${COD2_RELEASE_VERSION}")
   # ld64 equivalents of the MinGW --defsym seam aliases in CMakeLists.txt.
   target_link_options(${target} PRIVATE
     "LINKER:-alias,_g_entities,_g_entities_ptr"
@@ -136,7 +145,7 @@ if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
   add_custom_target(cod2_launcher DEPENDS "${CMAKE_BINARY_DIR}/launcher/CoD2Launcher")
   add_custom_target(cod2_macos_app
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/cod2x/make_macos_app.py"
-      "$<TARGET_FILE:cod2_macos>" "${COD2_MACOS_APP}" --replace --launcher "${CMAKE_BINARY_DIR}/launcher/CoD2Launcher" ${COD2_MACOS_APP_FRAMEWORK_ARGS}
+      "$<TARGET_FILE:cod2_macos>" "${COD2_MACOS_APP}" --replace --launcher "${CMAKE_BINARY_DIR}/launcher/CoD2Launcher" --version "${COD2_RELEASE_VERSION}" ${COD2_MACOS_APP_FRAMEWORK_ARGS}
     DEPENDS cod2_macos cod2_launcher
     COMMENT "Build and ad-hoc sign CoD2 Silicon.app"
     VERBATIM)

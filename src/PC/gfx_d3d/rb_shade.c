@@ -128,6 +128,10 @@ static int RB_MaterialNameContains(const Material *material, const char *needle)
 static void RB_X64TraceEndSurface(const char *stage, const Material *material,
                                   const MaterialTechnique *technique, const materialCommands_t *mc)
 {
+#if defined(COD2_X64)
+    if (!COD2_NATIVE_TRACE_ENABLED())
+        return;
+#endif
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     static int traceCount;
     FILE *f;
@@ -189,6 +193,10 @@ static void RB_X64TraceEndSurface(const char *stage, const Material *material,
 static void RB_X64TraceSampler(const char *stage, const Material *material, int argType, int dest,
                                const char *sourceName, int codeTexture, GfxImage *image, int samplerState)
 {
+#if defined(COD2_X64)
+    if (!COD2_NATIVE_TRACE_ENABLED())
+        return;
+#endif
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     static int traceCount;
     FILE *f;
@@ -2117,7 +2125,13 @@ void RB_EndSurface(void)
         if (!lockSlot) {
             static int lockslot_warn = 0;
             if (lockslot_warn++ < 5)
+#if defined(COD2_X64)
+                COD2_NATIVE_TRACE_ONLY(
+#endif
                 fprintf(stderr, "[EndSurf] lockSlot NULL at dx->dynamicVertexBuffer, skipping draw\n");
+#if defined(COD2_X64)
+                )
+#endif
             goto cleanup;
         }
         int needed = ((materialCommands_t *)tess)->vertexCount * vertexStride + lockSlot[0];

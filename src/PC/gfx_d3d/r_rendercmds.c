@@ -57,6 +57,10 @@ extern struct r_globals_t rg;
 static void R_X64TraceStretchPic(MaterialHandle material, float x, float y, float w, float h)
 {
 #if defined(COD2_X64)
+    if (!COD2_NATIVE_TRACE_ENABLED())
+        return;
+#endif
+#if defined(COD2_X64)
     static int traceCount;
     FILE *f;
 
@@ -196,6 +200,11 @@ static void R_DumpCommandListForMenu(const GfxCmdArray *cl)
     int limit;
     int count;
 
+#if defined(COD2_X64)
+    if (!COD2_NATIVE_TRACE_ENABLED()) {
+        return;
+    }
+#endif
     if (dumped || !cl || cl->usedTotal <= 0) {
         return;
     }
@@ -206,12 +215,16 @@ static void R_DumpCommandListForMenu(const GfxCmdArray *cl)
 
     dumped = 1;
     limit = cl->usedTotal;
+#if !defined(COD2_X64)
     if (COD2_DEBUG_ENV("DBGSPAM"))
+#endif
         printf("[cmddump] used=%d critical=%d\n", cl->usedTotal, cl->usedCritical);
 
     for (off = 0, count = 0; off >= 0 && off + 4 <= limit && count < 120; ++count) {
         const GfxCmdHeader *h = (const GfxCmdHeader *)((const byte *)cl->cmds + off);
+#if !defined(COD2_X64)
         if (COD2_DEBUG_ENV("DBGSPAM"))
+#endif
             printf("[cmddump] off=%d id=%u bytes=%u", off, h->id, h->byteCount);
         if ((h->id == 1 || h->id == 2) && h->byteCount >= 8) {
 #if defined(COD2_X64)
@@ -230,7 +243,9 @@ static void R_DumpCommandListForMenu(const GfxCmdArray *cl)
             break;
         }
         if (h->byteCount <= 0) {
+#if !defined(COD2_X64)
             if (COD2_DEBUG_ENV("DBGSPAM"))
+#endif
                 printf("[cmddump] stop invalid byteCount at off=%d\n", off);
             break;
         }
@@ -790,6 +805,9 @@ void R_AddCmdDrawTextWithCursor(const char *text, int maxChars, FontHandle font,
     cmdText[len] = '\0';
 
     if (R_ShouldTraceTextCmd(cmdText)) {
+#if defined(COD2_X64)
+        COD2_NATIVE_TRACE_ONLY(
+#endif
         printf("[textcmd-front] used=%d bytes=%d text='%.96s' xy=(%.1f,%.1f) scale=(%.3f,%.3f) style=%d max=%d cursor=%d/%d colorBytes=(%u,%u,%u,%u) font=%p\n",
                s_cmdList ? s_cmdList->usedTotal : -1,
                byteCount,
@@ -798,6 +816,9 @@ void R_AddCmdDrawTextWithCursor(const char *text, int maxChars, FontHandle font,
                style, maxChars, cursorPos, cursor,
                cmd->color.array[0], cmd->color.array[1], cmd->color.array[2], cmd->color.array[3],
                font);
+#if defined(COD2_X64)
+        )
+#endif
     }
 }
 

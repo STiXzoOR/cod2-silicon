@@ -1095,6 +1095,9 @@ void CG_ServerCommand(void)
     case 'v': {
         char dvarName[150];
         I_strncpyz(dvarName, CG_Argv(1), sizeof(dvarName));
+#if defined(COD2_X64)
+        if (COD2_NATIVE_TRACE_ENABLED())
+#endif
         if (strncmp(dvarName, "ui_allow_join", 13) == 0) {
             Com_Printf("client dvar command %s='%s'\n", dvarName, CG_Argv(2));
         }

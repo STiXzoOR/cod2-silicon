@@ -1267,7 +1267,7 @@ static void UI_Sweep_f(void)
     const char *action = Cmd_Argv(1);
     int i;
 
-    if (!getenv("COD2_UI_SWEEP"))
+    if (!COD2_NATIVE_TRACE_ENABLED())
         return;
     if (I_stricmp(action, "list") == 0) {
         for (i = 0; i < uiInfo->uiDC.menuCount; i++) {
@@ -1299,7 +1299,7 @@ static void UI_Sweep_f(void)
 void UI_OpenMenu_f(void)
 {
 #if defined(COD2_X64)
-    if (getenv("COD2_UI_SWEEP")) {
+    if (COD2_NATIVE_TRACE_ENABLED()) {
         const char *name = Cmd_Args(1);
         qboolean result = Menus_OpenByName(&uiInfo->uiDC, name);
         Com_Printf("[ui-sweep] open %s %d\n", name, result);
@@ -1315,7 +1315,7 @@ void UI_CloseMenu_f(void)
 {
     Menus_CloseByName(&uiInfo->uiDC, Cmd_Args(1));
 #if defined(COD2_X64)
-    if (getenv("COD2_UI_SWEEP"))
+    if (COD2_NATIVE_TRACE_ENABLED())
         Com_Printf("[ui-sweep] close %s\n", Cmd_Args(1));
 #endif
 }
@@ -1418,7 +1418,7 @@ void UI_Init(void)
     menuList = UI_LoadMenus("ui_mp/menus.txt", 3);
     UI_AddMenuList(&uiInfo->uiDC, menuList);
 #if defined(COD2_X64)
-    if (getenv("COD2_UI_SWEEP")) {
+    if (COD2_NATIVE_TRACE_ENABLED()) {
         extern void Cmd_AddCommand(const char *name, void (*cmd)(void));
         extern void Cmd_RemoveCommand(const char *name);
         Cmd_RemoveCommand("ui_sweep");
@@ -1676,6 +1676,9 @@ qboolean UI_SetActiveMenu(int menu)
         (*(byte *)&((LegacyHacks *)legacyBase)->ui_newScriptMenu[0]) = 0;
         ((LegacyHacks *)legacyBase)->ui_newScriptMenuIndex = -1;
 
+#if defined(COD2_X64)
+        if (COD2_NATIVE_TRACE_ENABLED())
+#endif
         Com_Printf("script menu '%s': join dvars auto='%s' allies='%s' axis='%s'\n",
                    ((LegacyHacks *)legacyBase)->ui_scriptMenu,
                    Dvar_GetVariantString("ui_allow_joinauto"),
@@ -2290,6 +2293,11 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
                 goto reject;
         }
 
+#if defined(COD2_X64)
+        if (ui_browserShowPunkBuster->current.integer >= 0 &&
+            atoi(Info_ValueForKey(info_buf, "punkbuster")) != ui_browserShowPunkBuster->current.integer)
+            goto reject;
+#endif
         if ((ui_browserKillcam)->current.integer >= 0) {
             if (atoi(Info_ValueForKey(info_buf, "kc")) != (ui_browserKillcam)->current.integer)
                 goto reject;
@@ -3478,7 +3486,11 @@ void UI_Refresh(void)
     if (Menu_Count(&uiInfo->uiDC) <= 0)
         return;
 
+#if defined(COD2_X64)
+    if (COD2_NATIVE_TRACE_ENABLED() && fileTraceCount < 40) {
+#else
     if (fileTraceCount < 40) {
+#endif
         FILE *f = fopen("x64_ui_trace.txt", fileTraceCount ? "a" : "w");
         if (f) {
             int i;
@@ -3498,9 +3510,17 @@ void UI_Refresh(void)
         fileTraceCount++;
     }
 
+#if defined(COD2_X64)
+    if (COD2_NATIVE_TRACE_ENABLED() && refreshTraceCount < 80 && (uiInfo->currentMenuType || uiInfo->uiDC.openMenuCount > 0)) {
+#else
     if (refreshTraceCount < 80 && (uiInfo->currentMenuType || uiInfo->uiDC.openMenuCount > 0)) {
+#endif
         int i;
+#if defined(COD2_X64)
+        if (COD2_NATIVE_TRACE_ENABLED())
+#else
         if (COD2_DEBUG_ENV("MTRACE"))
+#endif
             Com_Printf("[menu-trace] UI_Refresh active=%d menuCount=%d openCount=%d",
                        uiInfo->currentMenuType, uiInfo->uiDC.menuCount, uiInfo->uiDC.openMenuCount);
         for (i = 0; i < uiInfo->uiDC.openMenuCount && i < 16; ++i) {
@@ -5650,6 +5670,11 @@ static void UI_BuildServerDisplayList(qboolean force)
         if ((ui_browserFriendlyfire)->current.integer >= 0 &&
             atoi(Info_ValueForKey(info_buf, "ff")) != (ui_browserFriendlyfire)->current.integer)
             goto reject;
+#if defined(COD2_X64)
+        if (ui_browserShowPunkBuster->current.integer >= 0 &&
+            atoi(Info_ValueForKey(info_buf, "punkbuster")) != ui_browserShowPunkBuster->current.integer)
+            goto reject;
+#endif
         if ((ui_browserKillcam)->current.integer >= 0 &&
             atoi(Info_ValueForKey(info_buf, "kc")) != (ui_browserKillcam)->current.integer)
             goto reject;

@@ -707,12 +707,30 @@ static Bool R_CreateForInitOrReset(void)
     byte *dxp = (byte *)(void *)&dx;
     int i;
 
+#if defined(COD2_X64)
+    ((ri_fn)ri.Printf)(0, "Initializing render targets...\n");
+#else
     ((ri_fn)ri.Printf)(0, "R_InitRenderTargets");
+#endif
     R_InitRenderTargets();
+#if defined(COD2_X64)
+    ((ri_fn)ri.Printf)(0, "Initializing static model cache...\n");
+#else
     ((ri_fn)ri.Printf)(0, "R_InitStaticModelCache");
+#endif
     R_InitStaticModelCache();
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     { extern void Com_Printf(const char *, ...); Com_Printf("[dr] after staticmodelcache=%d\n", g_disableRendering); }
+#if defined(COD2_X64)
+    )
+#endif
+#if defined(COD2_X64)
+    ((ri_fn)ri.Printf)(0, "Initializing dynamic buffers...\n");
+#else
     ((ri_fn)ri.Printf)(0, "Dynamic buffers");
+#endif
 
     /* Dynamic buffer pools: were hardcoded x86 DxGlobals byte offsets (dxp+116xx);
      * r_ib_state_t/r_vb_state_t are 16B on x64 (8B buffer ptr) so use typed fields. */
@@ -755,9 +773,17 @@ static Bool R_CreateForInitOrReset(void)
 
     dx.tempSkinBuf = (byte *)((void *(*)(int))ri.Z_VirtualReserveInternal)(0xa00000);
 
+#if defined(COD2_X64)
+    ((ri_fn)ri.Printf)(0, "Initializing particle cloud buffer...\n");
+#else
     ((ri_fn)ri.Printf)(0, "Particle cloud");
+#endif
     R_CreateParticleCloudBuffer();
+#if defined(COD2_X64)
+    ((ri_fn)ri.Printf)(0, "Creating Direct3D queries...\n");
+#else
     ((ri_fn)ri.Printf)(0, "State");
+#endif
 
     dx.tempSkinPos = 0;
     dx.dynamicBufferFrame = 0;
@@ -776,10 +802,26 @@ static Bool R_CreateForInitOrReset(void)
     }
 #endif
 
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     { extern void Com_Printf(const char *, ...); Com_Printf("[dr] after stateblock=%d\n", g_disableRendering); }
+#if defined(COD2_X64)
+    )
+#endif
+#if defined(COD2_X64)
+    ((ri_fn)ri.Printf)(0, "Setting initial state...\n");
+#else
     ((ri_fn)ri.Printf)(0, "Initial state");
+#endif
     RB_SetInitialState();
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     { extern void Com_Printf(const char *, ...); Com_Printf("[dr] after setinitialstate=%d\n", g_disableRendering); }
+#if defined(COD2_X64)
+    )
+#endif
     return 1;
 }
 
@@ -822,7 +864,13 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
     }
     R_InitBackendData();
     R_InitDrawGroups();
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     { extern void Com_Printf(const char *, ...); Com_Printf("[disrend] after R_InitDrawGroups = %d\n", g_disableRendering); }
+#if defined(COD2_X64)
+    )
+#endif
 
     if (dx.device) {
 
@@ -944,7 +992,13 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
     }
 
     memcpy(vidConfigOut, imp_vidConfig, 44);
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     { extern void Com_Printf(const char *, ...); Com_Printf("[disrend] R_Init end = %d\n", g_disableRendering); }
+#if defined(COD2_X64)
+    )
+#endif
 }
 
 void R_BeginRegistration(vidConfig_t *vidConfigOut)
