@@ -435,6 +435,7 @@
   {"file":"src/PC/gfx_d3d/rb_state.c","name":"RB_InvalidateCodeMatrix","patterns":["zero-output"]},
   {"file":"src/PC/gfx_d3d/rb_tess.c","name":"RB_TessBad","patterns":["empty-body"]},
   {"file":"src/PC/jpeg-6/jccolor.c","name":"null_method","patterns":["empty-body"]},
+  {"file":"src/PC/jpeg-6/jcsample.c","name":"start_pass_downsample","patterns":["empty-body"]},
   {"file":"src/PC/jpeg-6/jdatasrc.c","name":"term_source","patterns":["empty-body"]},
   {"file":"src/PC/jpeg-6/jdcolor.c","name":"start_pass_dcolor","patterns":["empty-body"]},
   {"file":"src/PC/jpeg-6/jerror.c","name":"reset_error_mgr","patterns":["zero-output"]},
