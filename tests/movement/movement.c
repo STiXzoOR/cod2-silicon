@@ -1,0 +1,174 @@
+#include "common_types.h"
+#include <assert.h>
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+#include "pmove_source.h"
+#include "dvars.h"
+
+static bgs_t fixture_bgs;
+bgs_t *bgs = &fixture_bgs;
+static WeaponDef weapon;
+static int animation, eventCount, lastEvent, slideCount;
+static float traceFraction = 1.0f;
+WeaponDef *BG_GetWeaponDef(int index) { (void)index; return &weapon; }
+int BG_AnimScriptAnimation(playerState_t *ps, aistateEnum_t state, scriptAnimMoveTypes_t move, qboolean cont)
+{ (void)ps; (void)state; (void)cont; animation = move; return 1; }
+void BG_UpdateConditionValue(int client, int condition, int value, qboolean bits)
+{ (void)client; (void)condition; (void)value; (void)bits; }
+void BG_AddPredictableEventToPlayerstate(int event, int parm, playerState_t *ps)
+{ (void)parm; (void)ps; ++eventCount; lastEvent = event; }
+void Com_Printf(const char *fmt, ...) { (void)fmt; }
+void Com_DPrintf(const char *fmt, ...) { (void)fmt; }
+Bool Jump_Check(pmove_t *pm, pml_t *pml) { (void)pm; (void)pml; return 0; }
+float Jump_ReduceFriction(playerState_t *ps) { (void)ps; return 1.0f; }
+void Jump_ApplySlowdown(playerState_t *ps) { (void)ps; }
+void PM_StepSlideMove(pmove_t *pm, pml_t *pml, qboolean gravity)
+{ (void)gravity; ++slideCount; for (int i = 0; i < 3; ++i) pm->ps->origin[i] += pm->ps->velocity[i] * pml->frametime; }
+void CG_TraceCapsule(trace_t *tr, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skip, int mask)
+{ (void)start; (void)mins; (void)maxs; (void)end; (void)skip; (void)mask; memset(tr, 0, sizeof(*tr)); tr->fraction = traceFraction; }
+void G_TraceCapsule(trace_t *tr, const vec_t *s, const vec_t *mi, const vec_t *ma, const vec_t *e, int skip, int mask)
+{ CG_TraceCapsule(tr, s, mi, ma, e, skip, mask); }
+int CG_PointContents(const vec_t *p, int skip, int mask) { (void)p; (void)skip; (void)mask; return 0; }
+int SV_PointContents(const vec_t *p, int skip, int mask) { return CG_PointContents(p, skip, mask); }
+void G_PlayerEvent(int client, int event) { (void)client; (void)event; }
+
+static void close_float(float actual, float expected)
+{
+    if (fabsf(actual - expected) > 0.00003f) {
+        fprintf(stderr, "expected %.9g, got %.9g\n", expected, actual);
+        assert(0);
+    }
+}
+
+static void init(playerState_t *ps, pmove_t *pm, pml_t *pml, int stance)
+{
+    memset(ps, 0, sizeof(*ps)); memset(pm, 0, sizeof(*pm)); memset(pml, 0, sizeof(*pml));
+    ps->speed = 190; ps->groundEntityNum = 1022; ps->viewHeightTarget = stance;
+    ps->viewHeightCurrent = (float)stance; ps->weapon = 1;
+    pm->ps = ps; pm->cmd.forwardmove = 127;
+    pml->forward[0] = 1; pml->right[1] = -1; pml->groundTrace.normal[2] = 1;
+    pml->groundTrace.surfaceFlags = 7 << 20; pml->walking = pml->groundPlane = 1;
+    pml->msec = 3; pml->frametime = 0.003f;
+    weapon.fMoveSpeedScale = 1.0f; animation = 0; eventCount = 0; slideCount = 0;
+}
+
+static void test_bob(void)
+{
+    const int heights[] = {60, 40, 11};
+    const float stances[] = {1, 0.65f, 0.15f};
+    const float coeff[][2] = {{0.335f, 0.305f}, {0.34f, 0.315f}, {0.25f, 0.24f}};
+    const int anims[][2] = {{ANIM_MT_RUN, ANIM_MT_WALK}, {ANIM_MT_RUNCR, ANIM_MT_WALKCR}, {ANIM_MT_WALKPRONE, ANIM_MT_WALKPRONE}};
+    int cases = 0;
+    for (int h = 0; h < 3; ++h) for (int walk = 0; walk < 2; ++walk)
+        for (int ms = 1; ms <= 16; ++ms) for (int ratio = 1; ratio <= 4; ++ratio)
+            for (int old = 0; old < 256; ++old) {
+                playerState_t ps; pmove_t pm; pml_t pml; init(&ps, &pm, &pml, heights[h]);
+                ps.pm_flags = walk ? 0x100 : 0; ps.bobCycle = old;
+                float scale = 190.0f * (walk ? 0.4f : 1.0f) * stances[h];
+                ps.velocity[0] = scale * ((float)ratio / 4.0f); pm.xyspeed = ps.velocity[0];
+                pml.msec = ms; pml.frametime = (float)ms * 0.001f;
+                PM_Footsteps(&pm, &pml);
+                int expected = (int)((float)old + (float)ms * (ps.velocity[0] / scale * coeff[h][walk])) & 255;
+                if (ps.velocity[0] < 10.0f) expected = old;
+                if (ps.bobCycle != expected) {
+                    fprintf(stderr, "bob stance=%d walk=%d msec=%d speed=%g old=%d expected=%d got=%d\n", heights[h], walk, ms, pm.xyspeed, old, expected, ps.bobCycle); assert(0);
+                }
+                assert(animation == (ps.velocity[0] < 10.0f ? (h == 2 ? ANIM_MT_IDLEPRONE : ANIM_MT_IDLECR) : anims[h][walk])); ++cases;
+            }
+    playerState_t ps; pmove_t pm; pml_t pml; init(&ps, &pm, &pml, 60);
+    ps.bobCycle = 93; ps.velocity[0] = 0.5f; PM_Footsteps(&pm, &pml); assert(ps.bobCycle == 0);
+    init(&ps, &pm, &pml, 60); ps.velocity[0] = 190; int total = 0;
+    for (int i = 0; i < 333; ++i) { int old = ps.bobCycle; PM_Footsteps(&pm, &pml); total += (ps.bobCycle - old) & 255; }
+    assert(total == 333); assert(eventCount == 3);
+    printf("PASS bob: %d cases; 3 ms at 190 units/s = %d bob units/s, %d footsteps\n", cases, total, eventCount);
+}
+
+static void test_scale(void)
+{
+    playerState_t ps; pmove_t pm; pml_t pml;
+    for (int height = 11; height <= 60; ++height) {
+        init(&ps, &pm, &pml, height); ps.pm_flags = 1;
+        close_float(PM_CmdScale(&ps, &pm.cmd), 190.0f / 127.0f);
+        ps.pm_flags = 0x100; close_float(PM_CmdScale(&ps, &pm.cmd), 190.0f / 127.0f * 0.4f);
+    }
+    puts("PASS command scale: ADS-walk flag, independent air stance");
+}
+
+static void test_walk(void)
+{
+    const int heights[] = {60, 40, 11};
+    const float stance[] = {1.0f, 0.65f, 0.15f}, accel[] = {9, 12, 19};
+    const float weapons[] = {0, 0.9f, 1, 1.05f, 1.1f};
+    int cases = 0;
+    for (int h = 0; h < 3; ++h) for (int w = 0; w < 5; ++w) for (int d = 0; d < 3; ++d)
+        for (int flags = 0; flags < 4; ++flags) for (int ms = 1; ms <= 16; ++ms) {
+            playerState_t ps; pmove_t pm; pml_t pml; init(&ps, &pm, &pml, heights[h]);
+            weapon.fMoveSpeedScale = weapons[w]; ps.pm_flags = (flags & 1) ? 0x100 : 0;
+            pm.cmd.buttons = (flags & 2) ? 0x800 : 0;
+            if (d == 1) pm.cmd.forwardmove = -127;
+            if (d == 2) { pm.cmd.forwardmove = 0; pm.cmd.rightmove = 127; }
+            pml.msec = ms; pml.frametime = (float)ms * 0.001f;
+            float speed = 190.0f * (d == 1 ? 0.7f : (d == 2 ? 0.8f : 1));
+            if (flags & 1) speed *= 0.4f;
+            speed *= stance[h]; if (weapons[w] > 0) speed *= weapons[w]; if (flags & 2) speed *= 0.4f;
+            float expected = fminf(speed, fmaxf(speed, 100.0f) * (accel[h] * pml.frametime));
+            PM_WalkMove(&pm, &pml);
+            close_float(sqrtf(ps.velocity[0]*ps.velocity[0]+ps.velocity[1]*ps.velocity[1]), expected); ++cases;
+            ps.velocity[0] = 190; ps.velocity[1] = 0; PM_Friction(&ps, &pml);
+            close_float(ps.velocity[0], 190.0f - 190.0f * 5.5f * pml.frametime);
+        }
+    printf("PASS walk acceleration/friction: %d stance/weapon/direction/ADS/msec cases\n", cases);
+}
+
+static void test_lean(void)
+{
+    playerState_t ps; pmove_t pm; pml_t pml; init(&ps, &pm, &pml, 60);
+    pm.cmd.buttons = 0x80; PM_UpdateLean(&ps, 175, &pm.cmd, CG_TraceCapsule); close_float(ps.leanf, 0.25f);
+    PM_UpdateLean(&ps, 175, &pm.cmd, CG_TraceCapsule); close_float(ps.leanf, 0.5f);
+    pm.cmd.buttons = 0; PM_UpdateLean(&ps, 140, &pm.cmd, CG_TraceCapsule); close_float(ps.leanf, 0.25f);
+    PM_UpdateLean(&ps, 140, &pm.cmd, CG_TraceCapsule); close_float(ps.leanf, 0);
+    ps.viewHeightTarget = 11; pm.cmd.buttons = 0x40; PM_UpdateLean(&ps, 350, &pm.cmd, CG_TraceCapsule); close_float(ps.leanf, -0.25f);
+    traceFraction = 0; PM_UpdateLean(&ps, 3, &pm.cmd, CG_TraceCapsule); close_float(ps.leanf, 0);
+    puts("PASS lean timing, stance limit and collision cap");
+}
+
+static void test_timers(void)
+{
+    playerState_t ps; pmove_t pm; pml_t pml; init(&ps, &pm, &pml, 60);
+    ps.pm_time = 2; ps.pm_flags = 0x80000 | 0x600; ps.weaponTime = 100; ps.legsTimer = 100; ps.torsoTimer = 2;
+    PM_DropTimers(&ps, 3); assert(ps.pm_time == 0); assert(!(ps.pm_flags & 0x80600));
+    assert(ps.weaponTime == 100); assert(ps.legsTimer == 97); assert(ps.torsoTimer == 0);
+    puts("PASS movement timers clear timed flags and preserve weapon-owned timers");
+}
+
+static void test_direction(void)
+{
+    playerState_t ps; pmove_t pm; pml_t pml; init(&ps, &pm, &pml, 60);
+    ps.origin[0] = 1; ps.origin[1] = -1; pm.cmd.rightmove = 127;
+    PM_SetMovementDir(&pm, &pml); assert(ps.movementDir == -45);
+    puts("PASS legs follow displacement in degrees");
+}
+
+static void test_view(void)
+{
+    dvar_t dvar = { .current.value = 8.0f };
+    const dvar_t *bg_bobMax = &dvar;
+#include "bob_max_source.h"
+    close_float(bobMax, 8.0f);
+    puts("PASS view bob amplitude reads the float dvar");
+}
+
+int main(int argc, char **argv)
+{
+    assert(argc == 2);
+    if (!strcmp(argv[1], "bob")) test_bob();
+    else if (!strcmp(argv[1], "scale")) test_scale();
+    else if (!strcmp(argv[1], "walk")) test_walk();
+    else if (!strcmp(argv[1], "lean")) test_lean();
+    else if (!strcmp(argv[1], "timers")) test_timers();
+    else if (!strcmp(argv[1], "direction")) test_direction();
+    else if (!strcmp(argv[1], "view")) test_view();
+    else assert(0);
+    return 0;
+}

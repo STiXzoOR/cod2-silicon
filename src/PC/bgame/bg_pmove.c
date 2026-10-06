@@ -2,6 +2,9 @@
 #include "imports.h"
 #include "bytematch.h"
 #include <math.h>
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 
 #if defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x.h"
@@ -347,6 +350,24 @@ static int PM_AbsInt(int value)
 
 static float PM_CmdScale(const playerState_t *ps, const usercmd_t *cmd)
 {
+#if defined(COD2_X64)
+    float total = sqrtf((float)(cmd->forwardmove * cmd->forwardmove + cmd->rightmove * cmd->rightmove));
+    int maxMove = PM_AbsInt(cmd->forwardmove);
+    if (PM_AbsInt(cmd->rightmove) > maxMove)
+        maxMove = PM_AbsInt(cmd->rightmove);
+    if (!maxMove)
+        return 0.0f;
+    float scale = (float)ps->speed * (float)maxMove / (127.0f * total);
+    if ((ps->pm_flags & 0x100) || ps->leanf != 0.0f)
+        scale *= 0.4f;
+    if (ps->pm_type == 2)
+        scale *= 3.0f;
+    if (ps->pm_type == 3)
+        scale *= 6.0f;
+    if (ps->pm_type == 4)
+        scale *= player_spectateSpeedScale->current.value;
+    return scale;
+#else
     int maxMove;
     float total;
     float scale;
@@ -384,10 +405,105 @@ static float PM_CmdScale(const playerState_t *ps, const usercmd_t *cmd)
     }
 
     return scale;
+#endif
 }
+#if defined(COD2_X64)
+extern bgs_t *bgs;
+extern WeaponDef *BG_GetWeaponDef(int weaponIndex);
+extern int BG_AnimScriptAnimation(playerState_t *ps, aistateEnum_t state, scriptAnimMoveTypes_t move, qboolean isContinue);
+extern void BG_UpdateConditionValue(int client, int condition, int value, qboolean checkConversion);
+extern const dvar_t *player_moveThreshhold;
+extern const dvar_t *player_backSpeedScale;
+extern const dvar_t *player_strafeSpeedScale;
+extern const dvar_t *player_turnAnims;
+extern const dvar_t *player_dmgtimer_stumbleTime;
+extern const dvar_t *player_dmgtimer_maxTime;
+extern const dvar_t *player_dmgtimer_minScale;
+extern void Jump_ApplySlowdown(playerState_t *ps);
+extern void AddLeanToPosition(vec_t *position, float yaw, float fraction, float viewRoll, float leanDist);
+extern float UnGetLeanFraction(float fraction);
+extern const float AngleNormalize180(const float angle);
+extern const vec_t Vec3NormalizeTo(const vec_t *v, vec_t *out);
+extern void vectoangles(const vec_t *v, vec_t *angles);
+
+/* Mac 1.3 inlines this stance transition in walking scale and footsteps. */
+static float PM_StanceTransition(const pmove_t *pm, int from, int to)
+{
+    const playerState_t *ps = pm->ps;
+    if (!ps->viewHeightLerpTime || ps->viewHeightLerpTarget != to)
+        return 0.0f;
+    if ((from < to && ps->viewHeightLerpDown) || (from > to && !ps->viewHeightLerpDown))
+        return 0.0f;
+    float fraction = (float)(pm->cmd.serverTime - ps->viewHeightLerpTime) /
+                     (float)PM_GetViewHeightLerpTime(ps, to, ps->viewHeightLerpDown);
+    if (fraction < 0.0f)
+        return 0.0f;
+    return fraction > 1.0f ? 1.0f : fraction;
+}
+
+static float PM_StanceScale(const pmove_t *pm)
+{
+    float fraction = PM_StanceTransition(pm, 40, 11);
+    if (fraction != 0.0f)
+        return fraction * 0.15f + (1.0f - fraction) * 0.65f;
+    fraction = PM_StanceTransition(pm, 11, 40);
+    if (fraction != 0.0f)
+        return fraction * 0.65f + (1.0f - fraction) * 0.15f;
+    int stance = PM_GetEffectiveStance(pm->ps);
+    return stance == 1 ? 0.15f : (stance == 2 ? 0.65f : 1.0f);
+}
+
+static float PM_CmdScale_Walk(const pmove_t *pm, const usercmd_t *cmd)
+{
+    const playerState_t *ps = pm->ps;
+    float total = sqrtf((float)(cmd->forwardmove * cmd->forwardmove + cmd->rightmove * cmd->rightmove));
+    float forward = fabsf((float)cmd->forwardmove * (cmd->forwardmove < 0 ? player_backSpeedScale->current.value : 1.0f));
+    float side = fabsf((float)cmd->rightmove * player_strafeSpeedScale->current.value);
+    float maxMove = fmaxf(forward, side);
+    if (maxMove == 0.0f)
+        return 0.0f;
+    float scale = (float)ps->speed * maxMove / (127.0f * total);
+    if ((ps->pm_flags & 0x100) || ps->leanf != 0.0f)
+        scale *= 0.4f;
+    if (ps->pm_type == 2)
+        scale *= 3.0f;
+    else if (ps->pm_type == 3)
+        scale *= 6.0f;
+    else
+        scale *= PM_StanceScale(pm);
+    if (ps->weapon) {
+        float weaponScale = BG_GetWeaponDef(ps->weapon)->fMoveSpeedScale;
+        if (weaponScale > 0.0f)
+            scale *= BG_GetWeaponDef(ps->weapon)->fMoveSpeedScale;
+    }
+    if (cmd->buttons & 0x800)
+        scale *= 0.4f;
+    return scale;
+}
+#endif
 
 static void PM_DropTimers(playerState_t *ps, int msec)
 {
+#if defined(COD2_X64)
+    if (ps->pm_time) {
+        if (msec >= ps->pm_time) {
+            ps->pm_flags &= ~0x80600;
+            ps->pm_time = 0;
+        } else {
+            ps->pm_time -= msec;
+        }
+    }
+    if (ps->legsTimer > 0) {
+        ps->legsTimer -= msec;
+        if (ps->legsTimer < 0)
+            ps->legsTimer = 0;
+    }
+    if (ps->torsoTimer > 0) {
+        ps->torsoTimer -= msec;
+        if (ps->torsoTimer < 0)
+            ps->torsoTimer = 0;
+    }
+#else
     if (ps->pm_time > 0) {
         ps->pm_time -= msec;
         if (ps->pm_time <= 0) {
@@ -443,6 +559,7 @@ static void PM_DropTimers(playerState_t *ps, int msec)
         if (ps->holdBreathTimer < 0)
             ps->holdBreathTimer = 0;
     }
+#endif
 }
 
 #if defined(COD2_X64)
@@ -451,10 +568,60 @@ void PM_UpdateLean(playerState_t *ps, float msec, usercmd_t *cmd, void (*capsule
 void PM_UpdateLean(playerState_t *ps, float msec, usercmd_t *cmd, void (*capsuleTrace)())
 #endif
 {
+#if defined(COD2_X64)
+    int leaning = 0;
+    if ((cmd->buttons & 0xc0) && !(ps->pm_flags & 0x8000) && ps->pm_type <= 5 &&
+        (ps->groundEntityNum != ENTITYNUM_NONE || ps->pm_type == 1)) {
+        if (cmd->buttons & 0x40)
+            --leaning;
+        if (cmd->buttons & 0x80)
+            ++leaning;
+    }
+    if (ps->eFlags & 0x300)
+        leaning = 0;
+    float limit = PM_GetEffectiveStance(ps) == 1 ? 0.25f : 0.5f;
+    float lean = ps->leanf;
+    if (!leaning) {
+        if (lean > 0.0f) {
+            lean += msec / -280.0f * limit;
+            if (lean < 0.0f)
+                lean = 0.0f;
+        } else if (lean < 0.0f) {
+            lean += msec / 280.0f * limit;
+            if (lean > 0.0f)
+                lean = 0.0f;
+        }
+    } else if (leaning > 0) {
+        if (lean < limit)
+            lean += msec / 350.0f * limit;
+        if (lean > limit)
+            lean = limit;
+    } else {
+        if (lean > -limit)
+            lean += msec / -350.0f * limit;
+        if (lean < -limit)
+            lean = -limit;
+    }
+    ps->leanf = lean;
+    if (lean != 0.0f) {
+        vec3_t start, end, mins = {-8.0f, -8.0f, -8.0f}, maxs = {8.0f, 8.0f, 8.0f};
+        trace_t trace;
+        PM_VectorCopy(ps->origin, start);
+        start[2] += ps->viewHeightCurrent;
+        PM_VectorCopy(start, end);
+        float sign = lean < 0.0f ? -1.0f : 1.0f;
+        AddLeanToPosition(end, ps->viewangles[1], sign, 16.0f, 20.0f);
+        capsuleTrace(&trace, start, mins, maxs, end, ps->clientNum, 0x2810011);
+        float fraction = UnGetLeanFraction(trace.fraction);
+        if (fabsf(ps->leanf) > fraction)
+            ps->leanf = fraction * (ps->leanf < 0.0f ? -1.0f : 1.0f);
+    }
+#else
     (void)msec;
     (void)cmd;
     (void)capsuleTrace;
     ps->leanf = 0.0f;
+#endif
 }
 
 void PM_UpdateViewAngles(playerState_t *ps, float msec, usercmd_t *cmd, int handler)
@@ -1175,6 +1342,31 @@ static void PM_REGPARM2_ABI PM_SetMovementDir(pmove_t *pm, pml_t *pml)
     }
 #endif
 
+#if defined(COD2_X64)
+    int yaw;
+    if ((ps->pm_flags & 1) && !(ps->eFlags & 0x300)) {
+        yaw = (int)AngleDelta(ps->proneDirection, ps->viewangles[1]);
+    } else if (ps->pm_flags & PMF_LADDER) {
+        yaw = (int)AngleDelta(vectoyaw(ps->vLadderVec) + 180.0f, ps->viewangles[1]);
+    } else {
+        vec3_t moved, direction;
+        for (int i = 0; i < 3; ++i)
+            moved[i] = ps->origin[i] - pml->previous_origin[i];
+        float speed = sqrtf(PM_DotProduct(moved, moved));
+        if (!(fmove || smove) || ps->groundEntityNum == ENTITYNUM_NONE || speed == 0.0f || speed <= pml->frametime * 5.0f) {
+            ps->movementDir = 0;
+            return;
+        }
+        Vec3NormalizeTo(moved, direction);
+        vectoangles(direction, direction);
+        yaw = (int)AngleDelta(direction[1], ps->viewangles[1]);
+        if (fmove < 0)
+            yaw = (int)AngleNormalize180((float)yaw + 180.0f);
+    }
+    if (PM_AbsInt(yaw) > 90)
+        yaw = yaw > 0 ? 90 : -90;
+    ps->movementDir = (signed char)yaw;
+#else
     (void)pml;
 
     if (fmove == 0 && smove == 0) {
@@ -1196,6 +1388,7 @@ static void PM_REGPARM2_ABI PM_SetMovementDir(pmove_t *pm, pml_t *pml)
     } else {
         ps->movementDir = 7;
     }
+#endif
 }
 
 static void PM_ApplyGroundPlane(playerState_t *ps, pml_t *pml)
@@ -1212,6 +1405,52 @@ static void PM_ApplyGroundPlane(playerState_t *ps, pml_t *pml)
 
 static void PM_WalkMove(pmove_t *pm, pml_t *pml)
 {
+#if defined(COD2_X64)
+    playerState_t *ps = pm->ps;
+    if (ps->pm_flags & PMF_JUMPING)
+        Jump_ApplySlowdown(ps);
+    if (Jump_Check(pm, pml)) {
+        PM_AirMove(pm, pml);
+        return;
+    }
+    PM_Friction(ps, pml);
+    usercmd_t cmd = pm->cmd;
+    float scale = PM_CmdScale_Walk(pm, &cmd);
+    if (ps->damageTimer && player_dmgtimer_maxTime->current.value != 0.0f)
+        scale *= (float)ps->damageTimer * (-player_dmgtimer_minScale->current.value / player_dmgtimer_maxTime->current.value) + 1.0f;
+    ps->damageTimer -= (int)(pml->frametime * 1000.0f);
+    if (ps->damageTimer <= 0)
+        ps->damageTimer = 0;
+    pml->forward[2] = 0.0f;
+    pml->right[2] = 0.0f;
+    PM_ClipVelocity(pml->forward, pml->groundTrace.normal, pml->forward);
+    PM_ClipVelocity(pml->right, pml->groundTrace.normal, pml->right);
+    Vec3Normalize(pml->forward);
+    Vec3Normalize(pml->right);
+    vec3_t wishdir, oldVelocity;
+    for (int i = 0; i < 3; ++i)
+        wishdir[i] = (float)cmd.forwardmove * pml->forward[i] + (float)cmd.rightmove * pml->right[i];
+    float wishspeed = Vec3Normalize(wishdir) * scale;
+    int stance = PM_GetEffectiveStance(ps);
+    float acceleration = ((pml->groundTrace.surfaceFlags & 2) || (ps->pm_flags & 0x400)) ? 1.0f :
+                         (stance == 1 ? 19.0f : (stance == 2 ? 12.0f : 9.0f));
+    if (ps->pm_flags & 0x200)
+        acceleration *= 0.25f;
+    PM_Accelerate(ps, pml, wishdir, wishspeed, acceleration);
+    if ((pml->groundTrace.surfaceFlags & 2) || (ps->pm_flags & 0x400))
+        ps->velocity[2] -= (float)ps->gravity * pml->frametime;
+    float speed = sqrtf(PM_DotProduct(ps->velocity, ps->velocity));
+    PM_VectorCopy(ps->velocity, oldVelocity);
+    PM_ClipVelocity(ps->velocity, pml->groundTrace.normal, ps->velocity);
+    if (PM_DotProduct(ps->velocity, oldVelocity) > 0.0f) {
+        Vec3Normalize(ps->velocity);
+        for (int i = 0; i < 3; ++i)
+            ps->velocity[i] *= speed;
+    }
+    if (ps->velocity[0] != 0.0f || ps->velocity[1] != 0.0f)
+        PM_StepSlideMove(pm, pml, 0);
+    PM_SetMovementDir(pm, pml);
+#else
     playerState_t *ps = pm->ps;
     vec3_t wishvel;
     vec3_t wishdir;
@@ -1240,6 +1479,7 @@ static void PM_WalkMove(pmove_t *pm, pml_t *pml)
     PM_ApplyGroundPlane(ps, pml);
     PM_StepSlideMove(pm, pml, 0);
     PM_SetMovementDir(pm, pml);
+#endif
 }
 
 static void PM_REGPARM2_ABI PM_AirMove(pmove_t *pm, pml_t *pml)
@@ -1589,15 +1829,217 @@ void PM_UpdatePronePitch(pmove_t *pm, pml_t *pml)
 
 void PM_FootstepEvent(pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycle, qboolean bFootStep)
 {
+#if defined(COD2_X64)
+    playerState_t *ps = pm->ps;
+    if (!(((byte)(iOldBobCycle + 64) ^ (byte)(iNewBobCycle + 64)) & 128) || !bFootStep)
+        return;
+    if (ps->groundEntityNum != ENTITYNUM_NONE) {
+        int surface = PM_GroundSurfaceType(pml);
+        int event = 0;
+        if (surface) {
+            if (ps->pm_flags & 1)
+                event = surface + 47;
+            else if ((ps->pm_flags & 0x100) || ps->leanf != 0.0f)
+                event = surface + 24;
+            else
+                event = surface + 1;
+        }
+        PM_AddEvent(ps, event);
+    } else if (ps->pm_flags & PMF_LADDER) {
+        vec3_t mins, maxs, end;
+        trace_t trace;
+        PM_VectorCopy(pm->mins, mins);
+        PM_VectorCopy(pm->maxs, maxs);
+        mins[0] += 6.0f;
+        mins[1] += 6.0f;
+        mins[2] = 8.0f;
+        maxs[0] -= 6.0f;
+        maxs[1] -= 6.0f;
+        if (maxs[2] < mins[2])
+            maxs[2] = mins[2];
+        for (int i = 0; i < 3; ++i)
+            end[i] = ps->origin[i] + -31.0f * ps->vLadderVec[i];
+        PM_playerTrace(pm, &trace, ps->origin, mins, maxs, end, ps->clientNum, pm->tracemask & ~0x2010000);
+        int surface = (trace.surfaceFlags >> 20) & 31;
+        PM_AddEvent(ps, trace.fraction == 1.0f || !surface ? 22 : surface + 1);
+    }
+#else
     (void)pm;
     (void)pml;
     (void)iOldBobCycle;
     (void)iNewBobCycle;
     (void)bFootStep;
+#endif
 }
+#if defined(COD2_X64)
+static int PM_MoveTraceEnabled(void)
+{
+    static int enabled = -1;
+    if (enabled < 0) {
+        const char *value = getenv("COD2_MAC_MOVE_TRACE");
+        enabled = value && value[0] && value[0] != '0';
+    }
+    return enabled;
+}
+
+static void PM_AdvanceBob(pmove_t *pm, pml_t *pml, float bobmove, qboolean footstep)
+{
+    int old = pm->ps->bobCycle;
+    pm->ps->bobCycle = (int)((float)old + (float)pml->msec * bobmove) & 255;
+    if (PM_MoveTraceEnabled())
+        Com_Printf("[move] handler=%d time=%d msec=%d xyspeed=%.6f bob=%d->%d rate=%.9f origin=%.6f,%.6f,%.6f lean=%.6f flags=%x weapon=%d\n",
+                   pm->handler, pm->cmd.serverTime, pml->msec, (double)pm->xyspeed, old, pm->ps->bobCycle, (double)bobmove,
+                   (double)pm->ps->origin[0], (double)pm->ps->origin[1], (double)pm->ps->origin[2], (double)pm->ps->leanf, pm->ps->pm_flags, pm->ps->weapon);
+    PM_FootstepEvent(pm, pml, old, pm->ps->bobCycle, footstep);
+}
+
+static scriptAnimMoveTypes_t PM_FlinchAnimation(int yaw)
+{
+    if (yaw < 0)
+        yaw += 360;
+    if (yaw >= 315 || yaw < 45)
+        return ANIM_MT_FLINCH_FORWARD;
+    if (yaw < 135)
+        return ANIM_MT_FLINCH_LEFT;
+    if (yaw < 225)
+        return ANIM_MT_FLINCH_BACKWARD;
+    return ANIM_MT_FLINCH_RIGHT;
+}
+#endif
 
 static void PM_REGPARM2_ABI PM_Footsteps(pmove_t *pm, pml_t *pml)
 {
+#if defined(COD2_X64)
+    playerState_t *ps = pm->ps;
+    if (ps->pm_type > 5)
+        return;
+    clientInfo_t *ci = ps->clientNum < 64 ? &bgs->clientinfo[ps->clientNum] : NULL;
+    int stumbleEnd = ps->damageDuration - player_dmgtimer_stumbleTime->current.integer;
+    if (stumbleEnd < 0)
+        stumbleEnd = 0;
+    pm->xyspeed = PM_VectorLength2D(ps->velocity);
+    int stance = PM_GetEffectiveStance(ps);
+    scriptAnimMoveTypes_t idle = stance == 1 ? ANIM_MT_IDLEPRONE : (stance == 2 ? ANIM_MT_IDLECR : ANIM_MT_IDLE);
+    if (ps->eFlags & 0x300) {
+        idle = (ps->pm_flags & 1) ? ANIM_MT_IDLEPRONE : ((ps->pm_flags & 2) ? ANIM_MT_IDLECR : ANIM_MT_IDLE);
+        BG_AnimScriptAnimation(ps, AISTATE_COMBAT, idle, 1);
+        return;
+    }
+    int walking = (ps->pm_flags & 0x100) || ps->leanf != 0.0f;
+    if (ps->groundEntityNum == ENTITYNUM_NONE && ps->pm_type != 1) {
+        if (ps->pm_flags & PMF_LADDER) {
+            if (pm->cmd.serverTime - ps->jumpTime <= 299)
+                return;
+            float speed = ps->velocity[2];
+            float rate = walking ? speed / 38.10000228881836f * 0.35f : speed / 95.25f * 0.45f;
+            BG_AnimScriptAnimation(ps, AISTATE_COMBAT, speed >= 0.0f ? ANIM_MT_CLIMBUP : ANIM_MT_CLIMBDOWN, 1);
+            PM_AdvanceBob(pm, pml, rate, 1);
+        }
+        if (stance == (ps->pm_flags & 3))
+            return;
+    }
+    if (pm->xyspeed < player_moveThreshhold->current.value || ps->pm_type == 1) {
+        if (pm->xyspeed < 1.0f)
+            ps->bobCycle = 0;
+        scriptAnimMoveTypes_t turn = ANIM_MT_UNUSED;
+        if (ci && player_turnAnims->current.enabled) {
+            if (ci->legs.yawing) {
+                turn = ci->legs.yawAngle > ci->torso.yawAngle ? ANIM_MT_TURNRIGHT : ANIM_MT_TURNLEFT;
+                ci->legs.yawAngle = ci->torso.yawAngle;
+                ci->turnAnimType = (char)turn;
+                if (ci->turnAnimEndTime < bgs->time)
+                    ci->turnAnimEndTime = 0;
+            } else {
+                if (ci->turnAnimEndTime > bgs->time) {
+                    ci->legs.yawAngle = ci->torso.yawAngle;
+                    return;
+                }
+                if (ci->turnAnimEndTime) {
+                    ci->turnAnimEndTime = 0;
+                    ci->legs.yawAngle = ci->torso.yawAngle;
+                }
+            }
+        }
+        scriptAnimMoveTypes_t move = idle;
+        if (stance != 1 && turn) {
+            move = stance == 2 ? (turn == ANIM_MT_TURNRIGHT ? ANIM_MT_TURNRIGHTCR : ANIM_MT_TURNLEFTCR) : turn;
+        } else if (stance == 0 && ps->damageTimer > stumbleEnd) {
+            move = PM_FlinchAnimation(ps->flinchYaw);
+            BG_AnimScriptAnimation(ps, AISTATE_COMBAT, move, 1);
+            return;
+        }
+        int result = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, move, 1);
+        if (turn && stance != 1 && result > 0 && !ci->turnAnimEndTime)
+            ci->turnAnimEndTime = bgs->time + ps->legsAnimDuration;
+        if (result < 0) {
+            if (stance == 2)
+                move = ANIM_MT_IDLECR;
+            else if (ps->damageTimer > stumbleEnd)
+                move = ANIM_MT_FLINCH_FORWARD;
+            else
+                move = ANIM_MT_IDLE;
+            BG_AnimScriptAnimation(ps, AISTATE_COMBAT, move, 1);
+        }
+        return;
+    }
+    float scale = (float)ps->speed;
+    if (pm->cmd.forwardmove) {
+        if (pm->cmd.rightmove) {
+            scale *= ((player_strafeSpeedScale->current.value - 1.0f) * 0.75f + 1.0f + 1.0f) * 0.5f;
+            if (pm->cmd.forwardmove < 0)
+                scale *= (player_backSpeedScale->current.value + 1.0f) * 0.5f;
+        } else if (pm->cmd.forwardmove < 0) {
+            scale *= player_backSpeedScale->current.value;
+        }
+        BG_UpdateConditionValue(ps->clientNum, 8, 0, 1);
+    } else if (pm->cmd.rightmove) {
+        scale *= (player_strafeSpeedScale->current.value - 1.0f) * 0.75f + 1.0f;
+        BG_UpdateConditionValue(ps->clientNum, 8, pm->cmd.rightmove > 0 ? 2 : 1, 1);
+    }
+    if (walking)
+        scale *= 0.4f;
+    scale *= PM_StanceScale(pm);
+    int backward = (ps->pm_flags & 0x80) != 0;
+    int stumble = ps->damageTimer > stumbleEnd;
+    float coefficient;
+    scriptAnimMoveTypes_t move;
+    if (stance == 1) {
+        coefficient = walking ? 0.24f : 0.25f;
+        move = backward ? ANIM_MT_WALKPRONEBK : ANIM_MT_WALKPRONE;
+    } else if (stance == 2) {
+        coefficient = walking ? 0.315f : 0.34f;
+        if (stumble)
+            move = backward ? ANIM_MT_STUMBLE_CROUCH_BACKWARD : ANIM_MT_STUMBLE_CROUCH_FORWARD;
+        else if (walking)
+            move = backward ? ANIM_MT_WALKCRBK : ANIM_MT_WALKCR;
+        else
+            move = backward ? ANIM_MT_RUNCRBK : ANIM_MT_RUNCR;
+    } else if (backward) {
+        coefficient = walking ? 0.325f : 0.36f;
+        move = stumble ? (walking ? ANIM_MT_STUMBLE_WALK_BACKWARD : ANIM_MT_STUMBLE_BACKWARD) :
+                         (walking ? ANIM_MT_WALKBK : ANIM_MT_RUNBK);
+    } else {
+        coefficient = walking ? 0.305f : 0.335f;
+        move = stumble ? (walking ? ANIM_MT_STUMBLE_WALK_FORWARD : ANIM_MT_STUMBLE_FORWARD) :
+                         (walking ? ANIM_MT_WALK : ANIM_MT_RUN);
+    }
+    int result = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, move, 1);
+    int old = ps->bobCycle;
+    float rate = pm->xyspeed / scale * coefficient;
+    if (!pm->cmd.forwardmove && !pm->cmd.rightmove) {
+        ps->bobCycle = (int)((float)old + (float)pml->msec * rate) & 255;
+        if (pm->xyspeed > 120.0f)
+            return;
+        if (stance)
+            result = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, idle, 1);
+        if (result < 0)
+            BG_AnimScriptAnimation(ps, AISTATE_COMBAT, stumble ? ANIM_MT_FLINCH_FORWARD : ANIM_MT_IDLE, 1);
+        return;
+    }
+    if (result < 0)
+        BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, 1);
+    PM_AdvanceBob(pm, pml, rate, PM_ShouldMakeFootsteps(pm));
+#else
     int oldBob;
     int newBob;
 
@@ -1610,6 +2052,7 @@ static void PM_REGPARM2_ABI PM_Footsteps(pmove_t *pm, pml_t *pml)
 
     if ((oldBob ^ newBob) & 0x40)
         PM_FootstepEvent(pm, pml, oldBob, newBob, 1);
+#endif
 }
 
 static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
