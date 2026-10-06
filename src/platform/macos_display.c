@@ -35,6 +35,7 @@ static int windowMode = MAC_WINDOWED;
 static int exclusiveSuspended;
 static int exclusiveResumeArmed;
 extern int MacWindow_IsVisible(SDL_Window *window);
+extern void MacWindow_SetBorderless(int enabled);
 #endif
 static int refreshRate;
 static int initialized;
@@ -64,9 +65,11 @@ int MacDisplay_Initialize(void)
 {
     if (initialized)
         return 0;
+#if !defined(COD2_X64)
     SDL_SetHint("SDL_MAC_USE_GCMOUSE", "0");
     SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_MODE_WARP, "0");
     SDL_SetHint("SDL_MOUSE_RELATIVE_SYSTEM_SCALE", "0");
+#endif
 #if defined(__APPLE__) && defined(COD2_X64)
     /* Cocoa reads this at video initialization, before mode enumeration.
      * The environment can opt into Spaces for Game Mode experiments. */
@@ -185,6 +188,9 @@ static int SetWindowMode(void)
         SDL_SetWindowSize(sdl_gl_window, (int)(sdl_gl_width / scaleX), (int)(sdl_gl_height / scaleY));
         SDL_SetWindowPosition(sdl_gl_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
     }
+#if defined(__APPLE__) && defined(COD2_X64)
+    MacWindow_SetBorderless(windowMode == MAC_BORDERLESS);
+#endif
     return 0;
 }
 
@@ -490,6 +496,9 @@ uint16_t MacDisplay_ReleaseContext(void **reference)
 
 void MacDisplay_ReleaseDisplay(void)
 {
+#if defined(__APPLE__) && defined(COD2_X64)
+    MacWindow_SetBorderless(0);
+#endif
     MacDisplay_ReleaseContext((void **)&screenContext);
 #if defined(COD2_X64)
     presentationGammaIdentity = 1;
