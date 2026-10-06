@@ -113,6 +113,13 @@ for build in ['build-macos', 'build-macos-codx']:
 PYTHON
 
 python3 -m unittest discover -s tools/tests -v
+python3 -m unittest discover -s tools/fidelity -v
+python3 tools/fidelity/audit.py --compile-commands build-macos/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/fidelity-stub-stock.json" \
+  --stub-gate tools/fidelity/stub-baseline.json
+python3 tools/fidelity/audit.py --compile-commands build-macos-codx/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/fidelity-stub-codx.json" \
+  --stub-gate tools/fidelity/stub-baseline.json
 python3 -m unittest discover -s tools/datagen -p test_datagen.py -v
 python3 tools/abi/test_audit.py
 python3 tools/abi/test_imports.py
@@ -206,6 +213,12 @@ python3 tests/rendering/menu_sweep.py build-macos-codx/cod2_macos \
   --output "$HOME/Library/Application Support/CoD2-native/menu-codx-new" --port 29939
 ```
 
+Reference-driven structural triage, dvar/scalar-table comparisons and the new-stub
+gate are documented in [tools/fidelity/README.md](tools/fidelity/README.md).
+Run both stock and CoD2x audits when changing gameplay; hand-check findings
+against Mac 1.3 and preserve intentional CoD2x changes. Existing self-comparison
+gates cannot establish fidelity to the original.
+
 ## Which checks need game data?
 
 “No” below describes the test's inputs. A suite that needs an engine compile
@@ -215,6 +228,8 @@ even when they use synthetic content.
 
 | Suite/check | Licensed input needed? | Other requirements |
 | --- | --- | --- |
+| `tools/fidelity` unit tests and new-stub gate | No | Clang; gate uses actual engine compile database |
+| Fidelity inventory, dvars and table comparisons | **Mac binary** | Clang, nm, otool; tables also need built arm64 objects |
 | `tools/tests`, `tools/datagen/test_datagen.py`, shader manifest tests, Wine trace parser tests | No | Python standard library; synthetic files only |
 | `tools/abi/test_audit.py`, `test_imports.py`, `test_raw_offsets.py` | No | Clang for synthetic independent translation units |
 | `tools/abi/raw_offsets.py` | No | Real native engine compile database; exact reviewed allowlist, both stock and CoD2x |

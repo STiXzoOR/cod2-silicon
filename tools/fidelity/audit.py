@@ -38,6 +38,8 @@ def name_of(symbol):
         return symbol[match.end():match.end() + int(match[1])]
     if symbol.startswith('_ZN'):
         parts, pos = [], 3
+        while pos < len(symbol) and symbol[pos] in 'KVRO':
+            pos += 1
         while pos < len(symbol):
             match = re.match(r'\d+', symbol[pos:])
             if not match:
@@ -75,7 +77,7 @@ def stabs_functions(rows):
     return result
 
 
-def literal_at(data, sections, address):
+def literal_at(data, sections, address, width=None):
     for s in sections:
         if not s['address'] <= address < s['address'] + s['size']:
             continue
@@ -86,7 +88,7 @@ def literal_at(data, sections, address):
             if end >= 0:
                 value = data[offset:end].decode('utf-8', 'replace')
                 return 'string', value
-        size = 8 if s['name'] == '__literal8' else 4
+        size = 8 if s['name'] == '__literal8' or width == 8 else 4
         if s['name'] in ('__literal4', '__literal8', '__const') and remaining >= size:
             value = struct.unpack_from('<d' if size == 8 else '<f', data, offset)[0]
             if math.isfinite(value):
@@ -163,8 +165,18 @@ def reference_dvars(instructions, read_literal, symbols=None):
                             literal = read_literal(args[1])
                             args[1] = literal[1] if literal and literal[0] == 'string' else None
                         calls.append(dict(type=target.removeprefix('Dvar_Register'), arguments=args))
-            for reg in ('%eax', '%ecx', '%edx'):
+            for reg in ('%eax', '%ecx', '%edx', *(f'%xmm{i}' for i in range(8))):
                 regs.pop(reg, None)
+        elif mnemonic not in ('cmpl', 'cmpb', 'cmpw', 'testl', 'testb', 'testw', 'pushl', 'retl', 'nop') and not mnemonic.startswith('j'):
+            # Computed arguments stay unknown; never reuse a stale register value.
+            dst = operands.rsplit(',', 1)[-1].strip()
+            if re.fullmatch(r'%\w+', dst):
+                regs.pop(dst, None)
+            target = re.fullmatch(r'(0x[0-9a-f]+)?\(%esp\)', dst)
+            if target:
+                off = int(target[1] or '0', 0)
+                for index in range(4 if mnemonic in ('movaps', 'movups') else 1):
+                    stack[off + index * 4] = None
     return calls
 
 
@@ -207,7 +219,7 @@ def disassembly_features(text, refs, addresses, data=b'', sections=(), symbols=N
             if operands[pos:pos + 1] == '(':
                 continue
             addr = int(token, 16)
-            literal = literal_at(data, sections, addr)
+            literal = literal_at(data, sections, addr, 8 if mnemonic.endswith('sd') else None)
             if literal:
                 kind, value = literal
                 # __const is untyped; only SSE scalar loads support a float claim.
@@ -386,16 +398,48 @@ def expanded_calls(function, definitions, depth=3):
     return calls
 
 
+def canonical_call(name, known):
+    if re.match(r'^Z\d', name):
+        name = name_of('_' + name)
+    name = name.removesuffix('_impl')
+    if name.endswith('Reg') and name[:-3] in known:
+        name = name[:-3]
+    return name
+
+
+def wrapper_features(native, definitions, known):
+    """Include extracted implementations of this function, not unrelated helpers."""
+    result = dict(native, floats=list(native['floats']), strings=list(native['strings']))
+    identity = canonical_call(native.get('name', ''), known)
+    frontier, seen = list(native['callees']), set()
+    for _ in range(4):
+        following = []
+        for name in frontier:
+            helper = definitions.get(name)
+            if name in seen or not helper or canonical_call(name, known) != identity:
+                continue
+            seen.add(name)
+            result['floats'].extend(helper.get('floats', []))
+            result['strings'].extend(helper.get('strings', []))
+            result['branches'] += helper.get('branches', 0)
+            following.extend(helper['callees'])
+        frontier = following
+    return result
+
+
 def compare(reference, native, definitions):
-    original = set(reference['callees'])
-    ours = expanded_calls(native, definitions)
+    known = set(definitions) | set(reference['callees'])
+    normalize = lambda names: {canonical_call(n, known) for n in names}
+    original = normalize(reference['callees'])
+    ours = normalize(expanded_calls(native, definitions))
     expanded_original = set(original)
     for name in original:
         helper = definitions.get(name)
         if helper:
-            expanded_original |= expanded_calls(helper, definitions)
+            expanded_original |= normalize(expanded_calls(helper, definitions))
     missing = sorted(original - ours)
-    added = sorted(set(native['callees']) - expanded_original)
+    added = sorted(normalize(native['callees']) - expanded_original)
+    native = wrapper_features(native, definitions, known)
     # SDK/compiler lowering and deliberate platform adapters need human review.
     engine_missing = [n for n in missing if re.match(r'^(?:[A-Z][A-Za-z0-9]*_)', n)]
     absent_floats = [x for x in reference['floats'] if not any(math.isclose(x, y, rel_tol=1e-6, abs_tol=1e-8) for y in native['floats'])]
@@ -415,7 +459,7 @@ def compare(reference, native, definitions):
 
 def stub_inventory(functions):
     return [dict(file=f['file'], name=f['name'], patterns=f['stubs']) for f in functions
-            if f['file'].startswith(('src/PC/', 'src/Mac/')) and f['stubs']]
+            if f['file'].startswith('src/') and f['stubs']]
 
 
 def new_stubs(current, baseline):
@@ -483,15 +527,20 @@ def native_only_context(rows, functions):
     return result
 
 
-def dvar_report(rows):
+def dvar_report(rows, functions=None):
     reference, native = {}, {}
     for row in rows:
         for d in row['reference'].get('dvars', []):
             reference.setdefault(d['arguments'][0], dict(d, function=row['reference']['name'], address=row['reference']['address']))
-        if 'native' in row:
-            for d in row['native']['dvars']:
-                if d['arguments'] and isinstance(d['arguments'][0], str):
-                    native.setdefault(d['arguments'][0], dict(d, function=row['native']['name'], file=row['native']['file']))
+    functions = functions if functions is not None else [r['native'] for r in rows if 'native' in r]
+    for f in functions:
+        for d in f['dvars']:
+            if d['arguments'] and isinstance(d['arguments'][0], str):
+                entry = dict(d, function=f['name'], file=f['file'])
+                entry['type'] = re.sub(r'_(?:mac|native)$', '', entry['type'])
+                if entry['type'] == 'Int':
+                    entry['arguments'] = [entry['arguments'][0]] + [int32(v & 0xffffffff) if isinstance(v, int) else v for v in entry['arguments'][1:4]] + entry['arguments'][4:]
+                native.setdefault(d['arguments'][0], entry)
     mismatches = []
     for name in sorted(reference.keys() & native.keys()):
         a, b = reference[name], native[name]
@@ -510,6 +559,35 @@ def dvar_report(rows):
                 compared_count=len(reference.keys() & native.keys()), mismatches=mismatches,
                 reference_only=sorted(reference.keys() - native.keys()), native_only=sorted(native.keys() - reference.keys()),
                 reference_registrations=reference, native_registrations=native)
+
+
+def string_summary(value):
+    if not value or re.fullmatch(r'[A-Za-z0-9_./:@+$ -]{1,160}', value):
+        return value
+    return 'sha256:' + hashlib.sha256(value.encode()).hexdigest() + ':bytes=' + str(len(value.encode()))
+
+
+def sanitize_report(result):
+    for row in result['functions']:
+        for side in ('reference', 'native'):
+            f = row.get(side)
+            if not f:
+                continue
+            f['strings'] = [string_summary(s) for s in f['strings']]
+            for site in f.get('literal_sites', []):
+                if site['kind'] == 'string':
+                    site['value'] = string_summary(site['value'])
+            for d in f.get('dvars', []):
+                d['arguments'] = [string_summary(v) if isinstance(v, str) else v for v in d['arguments']]
+        for field in ('missing_strings', 'added_strings'):
+            if 'comparison' in row:
+                row['comparison'][field] = [string_summary(s) for s in row['comparison'][field]]
+    for side in ('reference_registrations', 'native_registrations'):
+        for d in result['dvars'][side].values():
+            d['arguments'] = [string_summary(v) if isinstance(v, str) else v for v in d['arguments']]
+    for d in result['dvars']['mismatches']:
+        for side in ('reference', 'native'):
+            d[side]['arguments'] = [string_summary(v) if isinstance(v, str) else v for v in d[side]['arguments']]
 
 
 def main():
@@ -577,7 +655,7 @@ def main():
     result = dict(schema=1, binary=str(options.binary), binary_sha256=hashlib.sha256(image.data).hexdigest(),
                   compile_commands=str(options.compile_commands.resolve()), source_commit=run(['git', 'rev-parse', 'HEAD'], cwd=ROOT).strip(),
                   counts=dict(reference=len(refs), native=len(functions), status=dict(Counter(r['status'] for r in rows)), flagged=len(flagged), unflagged=len(unflagged)),
-                  functions=rows, native_only=native_only_context(rows, functions), dvars=dvar_report(rows), sample_seed=options.sample_seed, sample=sample,
+                  functions=rows, native_only=native_only_context(rows, functions), dvars=dvar_report(rows, functions), sample_seed=options.sample_seed, sample=sample,
                   stub_candidates=stubs)
     # Annotate native global uses through blob/import storage without assuming these are bugs.
     blob_source = '\n'.join(p.read_text(errors='replace') for p in (ROOT / 'src/blobs').glob('*') if p.is_file())
@@ -585,8 +663,9 @@ def main():
     for row in rows:
         if 'native' in row:
             row['storage_references'] = [n for n in row['native']['variables'] if n.startswith('imp_') or n in blob_names]
+    sanitize_report(result)
     options.output.parent.mkdir(parents=True, exist_ok=True)
-    options.output.write_text(json.dumps(result, indent=2, allow_nan=False) + '\n')
+    options.output.write_text(json.dumps(result, separators=(',', ':'), allow_nan=False) + '\n')
     print(json.dumps(result['counts'], indent=2))
     print(f'Dvars: {result["dvars"]["compared_count"]} compared, {len(result["dvars"]["mismatches"])} candidates')
     return 0

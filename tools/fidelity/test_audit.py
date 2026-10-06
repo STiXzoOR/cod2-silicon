@@ -85,6 +85,7 @@ class AuditTests(unittest.TestCase):
     def test_cpp_member_names_match_c_reconstruction(self):
         self.assertEqual(audit.name_of('__ZN7Example4TickEv'), 'Example_Tick')
         self.assertEqual(audit.name_of('__ZN7ExampleC1Ev'), 'Example_Example')
+        self.assertEqual(audit.name_of('__ZNK7Example4TickEv'), 'Example_Tick')
 
     def test_native_only_helper_is_attributed_to_mismatching_reference_caller(self):
         functions = [{'name': 'Move', 'callees': ['Helper'], 'file': 'src/a.c'},
@@ -107,6 +108,49 @@ class AuditTests(unittest.TestCase):
         ref = {'callees': [], 'branches': 0, 'instructions': 4, 'floats': [], 'strings': []}
         native = {'callees': [], 'branches': 0, 'nodes': 1, 'floats': [], 'strings': [], 'stubs': ['empty-body']}
         self.assertEqual(audit.compare(ref, native, {})['score'], 0)
+
+    def test_extracted_implementation_and_abi_bridge_share_reference_identity(self):
+        ref = {'callees': ['Render', 'Decode'], 'branches': 20, 'instructions': 100,
+               'floats': [0.5], 'strings': ['key']}
+        helper = {'name': 'Tick_impl', 'callees': ['Render_impl', 'DecodeReg'],
+                  'branches': 20, 'floats': [0.5], 'strings': ['key']}
+        native = {'name': 'Tick', 'callees': ['Tick_impl'], 'branches': 0,
+                  'floats': [], 'strings': [], 'stubs': []}
+        result = audit.compare(ref, native, {'Tick_impl': helper, 'Decode': {}, 'DecodeReg': {}})
+        self.assertEqual(result['missing_callees'], [])
+        self.assertEqual(result['missing_strings'], [])
+        self.assertEqual(result['missing_floats'], [])
+        self.assertEqual(result['score'], 0)
+
+    def test_encoded_template_callee_names_normalize_without_game_function_list(self):
+        ref = {'callees': ['Select'], 'branches': 0, 'instructions': 8, 'floats': [], 'strings': []}
+        native = {'callees': ['Z6SelectIiEvT_'], 'branches': 0, 'floats': [], 'strings': [], 'stubs': []}
+        self.assertEqual(audit.compare(ref, native, {})['missing_callees'], [])
+
+    def test_dvars_include_native_only_registration_helpers(self):
+        funcs = [{'name': 'NewInit', 'file': 'src/new.c', 'dvars': [
+            {'type': 'Bool_mac', 'arguments': ['option', 1, 128]}]}]
+        result = audit.dvar_report([], funcs)
+        self.assertEqual(result['native_count'], 1)
+        self.assertEqual(result['native_registrations']['option']['type'], 'Bool')
+        funcs[0]['dvars'] = [{'type': 'Int', 'arguments': ['option', 0, 0x80000000, 0x7fffffff, 128]}]
+        result = audit.dvar_report([], funcs)
+        self.assertEqual(result['native_registrations']['option']['arguments'][2], -2147483648)
+
+    def test_unmodeled_arithmetic_cannot_create_false_dvar_default(self):
+        ins = [('movl', '$0x500, (%esp)'), ('movl', '$10, %esi'),
+               ('addl', '$5, %esi'), ('movl', '%esi, 0x4(%esp)'),
+               ('movl', '$0, 0x8(%esp)'), ('movl', '$20, 0xc(%esp)'),
+               ('movl', '$128, 0x10(%esp)'), ('calll', '__Z16Dvar_RegisterIntPKciiit')]
+        calls = audit.reference_dvars(ins, lambda addr: ('string', 'example') if addr == 0x500 else None)
+        self.assertIsNone(calls[0]['arguments'][1])
+
+    def test_string_summary_never_persists_embedded_code(self):
+        self.assertEqual(audit.string_summary('player_speed'), 'player_speed')
+        self.assertEqual(audit.string_summary('@MP_PLAY'), '@MP_PLAY')
+        value = audit.string_summary('void main() {\n return; }')
+        self.assertTrue(value.startswith('sha256:'))
+        self.assertNotIn('return', value)
 
     def test_real_compile_database_extraction_and_cache(self):
         import json
@@ -133,6 +177,8 @@ class AuditTests(unittest.TestCase):
         sections = [{'name': '__literal4', 'address': 0x400, 'size': 4, 'offset': 0}]
         self.assertEqual(audit.literal_at(struct.pack('<f', 0.25), sections, 0x400), ('float', 0.25))
         self.assertIsNone(audit.literal_at(b'xxxx', sections, 0x404))
+        sections[0].update(name='__const', size=8)
+        self.assertEqual(audit.literal_at(struct.pack('<d', 0.125), sections, 0x400, 8), ('float', 0.125))
 
     def test_dvar_stack_call_decodes_signed_int_and_flags(self):
         ins = [('movl', '$0x500, (%esp)'), ('movl', '$0xffffffff, 0x4(%esp)'),

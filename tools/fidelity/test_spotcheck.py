@@ -16,4 +16,8 @@ class SpotcheckTests(unittest.TestCase):
         self.assertNotIn('Next', body)
         self.assertTrue(body.endswith('}'))
 
+    def test_extracts_static_integer_message_reader(self):
+        body = spotcheck.extract_function('static int Read(int key) { return key; }', 'Read')
+        self.assertTrue(body.startswith('static int Read'))
+
 if __name__ == '__main__': unittest.main()

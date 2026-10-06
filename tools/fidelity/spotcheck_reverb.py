@@ -14,7 +14,7 @@ LEX = re.compile(r'/\*.*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'', r
 
 def extract_function(source, name):
     clean = LEX.sub(lambda m: ' ' * len(m[0]), source)
-    start = re.search(r'^void\s+' + re.escape(name) + r'\s*\([^;{]*\)\s*\{', clean, re.M)
+    start = re.search(r'^(?:static\s+)?(?:void|int)\s+' + re.escape(name) + r'\s*\([^;{]*\)\s*\{', clean, re.M)
     if not start:
         raise ValueError('Missing function: ' + name)
     begin = clean.index('{', start.start())
