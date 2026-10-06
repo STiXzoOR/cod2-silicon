@@ -74,7 +74,8 @@ initializers reproduce Mac 1.3. Runtime-populated/BSS tables need differential
 harnesses.
 
 The seed-44 sample selects 30 flagged and 30 unflagged owned `src/PC` functions,
-excluding bundled codecs and platform adapters. For review, inspect the original
+excluding bundled Speex/zlib/JPEG and functions outside `src/PC`. PC sound and
+PunkBuster adapters remain eligible. For review, inspect the original
 with `otool -arch i386 -tV -p <symbol> <binary>` and read the native function and
 its helpers. A review JSON has `flagged` and `unflagged` arrays with exactly the
 sample's `name`/`address` pairs, a `verdict` (`difference`, `equivalent`, or
