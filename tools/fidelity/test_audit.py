@@ -41,6 +41,20 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(funcs[0]['floats'], [0.5])
         self.assertEqual(funcs[0]['strings'], ['example_dvar'])
 
+    def test_main_file_location_elision_after_header_does_not_drop_definitions(self):
+        body = {'kind': 'CompoundStmt', 'inner': []}
+        tree = {'kind': 'TranslationUnitDecl', 'inner': [
+            {'kind': 'FunctionDecl', 'name': 'Header',
+             'loc': {'file': '/repo/src/header.h', 'includedFrom': {'file': '/repo/src/test.c'}},
+             'inner': [body]},
+            {'kind': 'FunctionDecl', 'name': 'HeaderAgain',
+             'loc': {'offset': 10, 'includedFrom': {'file': '/repo/src/test.c'}},
+             'inner': [body]},
+            {'kind': 'FunctionDecl', 'name': 'Tick', 'loc': {'offset': 12, 'line': 2},
+             'inner': [body]}]}
+        funcs = audit.ast_features(tree, Path('/repo'), Path('/repo/src/test.c'), '')
+        self.assertEqual([f['name'] for f in funcs], ['Tick'])
+
     def test_generic_missing_calls_and_shape_flag_simplification(self):
         ref = {'callees': ['A', 'B'], 'branches': 20, 'instructions': 200, 'floats': [], 'strings': []}
         native = {'callees': ['A'], 'branches': 1, 'nodes': 8, 'floats': [], 'strings': [], 'stubs': []}

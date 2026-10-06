@@ -299,7 +299,12 @@ def ast_features(tree, root, path, source):
         kind = node.get('kind')
         if kind in ('FunctionDecl', 'CXXMethodDecl', 'CXXConstructorDecl', 'CXXDestructorDecl'):
             body = next((c for c in node.get('inner', []) if c['kind'] == 'CompoundStmt'), None)
-            if body is None or Path(last_file) != path:
+            # Clang elides repeated filenames across nested macro/type locations,
+            # not just top-level declarations. Main-file locations have no
+            # includedFrom; inheriting our last top-level header loses real TUs.
+            origin = loc.get('expansionLoc', loc)
+            source_file = origin.get('file', last_file if 'includedFrom' in origin else str(path))
+            if body is None or Path(source_file) != path:
                 return
             begin = body.get('range', {}).get('begin', {})
             end = body.get('range', {}).get('end', {})
