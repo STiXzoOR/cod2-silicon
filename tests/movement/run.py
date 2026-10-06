@@ -2,6 +2,7 @@
 """Test production movement with synthetic services and Mac 1.3 expectations."""
 import argparse
 import json
+import os
 from pathlib import Path
 import re
 import shlex
@@ -13,12 +14,13 @@ p.add_argument('--build', type=Path, default=ROOT / 'build-macos')
 p.add_argument('--baseline')
 p.add_argument('--test', action='append')
 a = p.parse_args()
+os.environ.setdefault('UBSAN_OPTIONS', 'halt_on_error=1')
 out = a.build.resolve() / 'movement-tests'
 out.mkdir(parents=True, exist_ok=True)
 source = 'src/PC/bgame/bg_pmove.c'
 data = subprocess.check_output(['git', 'show', f'{a.baseline}:{source}'], cwd=ROOT, text=True) if a.baseline else (ROOT / source).read_text()
 (out / 'pmove_source.h').write_text(data)
-for name in ['slidemove', 'mantle']:
+for name in ['slidemove', 'mantle', 'jump']:
     path = 'src/PC/bgame/bg_' + name + '.c'
     content = subprocess.check_output(['git', 'show', f'{a.baseline}:{path}'], cwd=ROOT, text=True) if a.baseline else (ROOT / path).read_text()
     (out / (name + '_source.h')).write_text(content)
@@ -26,6 +28,11 @@ viewpath = 'src/PC/cgame_mp/cg_view_mp.c'
 view = subprocess.check_output(['git', 'show', f'{a.baseline}:{viewpath}'], cwd=ROOT, text=True) if a.baseline else (ROOT / viewpath).read_text()
 match = re.search(r'        (float bobMax = [^;]+;)', view)
 (out / 'bob_max_source.h').write_text(match[1] + '\n')
+transitionpath = 'src/PC/cgame_mp/cg_playerstate_mp.c'
+transition = subprocess.check_output(['git', 'show', f'{a.baseline}:{transitionpath}'], cwd=ROOT, text=True) if a.baseline else (ROOT / transitionpath).read_text()
+start = transition.index('void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops)\n{')
+# This is the final definition in the production translation unit.
+(out / 'transition_source.h').write_text(transition[start:])
 defaults = {'friction': '5.5f', 'stopspeed': '100.0f', 'inertiaMax': '10000.0f',
             'player_footstepsThreshhold': '190.0f', 'player_moveThreshhold': '10.0f',
             'player_strafeSpeedScale': '0.8f', 'player_backSpeedScale': '0.7f',
@@ -58,7 +65,7 @@ for source in ['com_math', 'q_shared']:
 exe = out / 'movement'
 subprocess.run(['clang', '-arch', 'arm64', '-fsanitize=address,undefined', '-Wl,-dead_strip', *map(str, objects), '-o', str(exe)], check=True)
 for name in a.test or ['bob', 'scale', 'walk', 'lean', 'timers', 'direction', 'view', 'ladder', 'prone', 'dispatch']:
-    if name == 'collision':
+    if name in ('collision', 'events'):
         continue
     subprocess.run([str(exe), name], check=True)
 if not a.test or 'collision' in a.test:
@@ -66,3 +73,8 @@ if not a.test or 'collision' in a.test:
     collision = out / 'collision'
     subprocess.run(['clang', '-arch', 'arm64', '-fsanitize=address,undefined', '-Wl,-dead_strip', *map(str, objects), '-o', str(collision)], check=True)
     subprocess.run([str(collision)], check=True)
+if not a.test or 'events' in a.test:
+    subprocess.run([*flags, '-c', str(ROOT / 'tests/movement/events.c'), '-o', str(obj)], check=True)
+    events = out / 'events'
+    subprocess.run(['clang', '-arch', 'arm64', '-fsanitize=address,undefined', '-Wl,-dead_strip', str(obj), '-o', str(events)], check=True)
+    subprocess.run([str(events)], check=True)

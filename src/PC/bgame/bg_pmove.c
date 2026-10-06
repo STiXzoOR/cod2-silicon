@@ -2350,6 +2350,56 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
 
     if (ps->groundEntityNum == ENTITYNUM_NONE) {
 
+#if defined(COD2_X64)
+        /* Mac 1.3 0x70678: inlined PM_CrashLand, including double sqrt/divide. */
+        float vz = pml->previous_velocity[2];
+        float grav = (float)ps->gravity;
+        float acc = -grav;
+        float halfg = acc * 0.5f;
+        float disc = vz * vz + (pml->previous_origin[2] - ps->origin[2]) * (halfg * -4.0f);
+        if (disc >= 0.0f) {
+            float t = (float)((-(double)vz - sqrt((double)disc)) / (double)(halfg + halfg));
+            float landVel = -(t * acc + vz);
+            float fallHeight = landVel * landVel / (grav + grav);
+            float minH = bg_fallDamageMinHeight->current.value;
+            float maxH = bg_fallDamageMaxHeight->current.value;
+            int damage = 0, viewDip = 0;
+            int surf = PM_GroundSurfaceType(pml);
+            if (minH >= maxH)
+                Com_Printf("bg_fallDamageMaxHeight must be greater than bg_fallDamageMinHeight\n");
+            else if (fallHeight > minH && !(pml->groundTrace.surfaceFlags & 1) && ps->pm_type <= 5) {
+                damage = fallHeight >= maxH ? 100 : (int)((fallHeight - minH) / (maxH - minH) * 100.0f);
+                if (damage > 100) damage = 100;
+                if (damage < 0) damage = 0;
+            }
+            if (fallHeight > 12.0f) {
+                viewDip = (int)((fallHeight - 12.0f) / 26.0f * 4.0f + 4.0f);
+                if (viewDip > 24) viewDip = 24;
+                BG_AnimScriptEvent(ps, ANIM_ET_LAND, 0, 1);
+            }
+            if (damage) {
+                float scale = 0.67f;
+                if (damage <= 99 && !(pml->groundTrace.surfaceFlags & 2)) {
+                    int stun = damage * 35 + 500;
+                    if (stun > 2000) stun = 2000;
+                    scale = stun <= 500 ? 0.5f : (stun >= 1500 ? 0.2f : ((float)stun - 500.0f) / 1000.0f * -0.3f + 0.5f);
+                    ps->pm_time = stun;
+                    ps->pm_flags |= 0x200;
+                }
+                for (int axis = 0; axis < 3; ++axis) ps->velocity[axis] *= scale;
+                BG_AddPredictableEventToPlayerstate(surf + 116, damage, ps);
+            } else if (fallHeight > 4.0f) {
+                if (fallHeight < 8.0f)
+                    PM_AddEvent(ps, surf ? surf + 24 : 0);
+                else if (fallHeight < 12.0f)
+                    PM_AddEvent(ps, surf ? surf + 1 : 0);
+                else {
+                    for (int axis = 0; axis < 3; ++axis) ps->velocity[axis] *= 0.67f;
+                    BG_AddPredictableEventToPlayerstate(surf + 93, viewDip, ps);
+                }
+            }
+        }
+#else
         float vz = pml->previous_velocity[2];
         float grav = (float)ps->gravity;
         float halfg = grav * 0.5f;
@@ -2443,6 +2493,7 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
                 BG_AddPredictableEventToPlayerstate(impactEvent, damage, ps);
             }
         }
+#endif
     }
 
     ps->groundEntityNum = trace.entityNum;

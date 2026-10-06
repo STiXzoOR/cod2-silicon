@@ -197,6 +197,12 @@ Bool Jump_Check(pmove_t *pm, pml_t *pml)
             pushOffDir[2] = flatForward[2];
         } else {
 
+#if defined(COD2_X64)
+            /* Mac 1.3 0x9d241: reflect the normalized horizontal direction. */
+            dot = ps->vLadderVec[0] * flatForward[0] +
+                  ps->vLadderVec[1] * flatForward[1] +
+                  ps->vLadderVec[2] * flatForward[2];
+#endif
             reflectScale = dot * -2.0f;
             pushOffDir[0] = flatForward[0] + reflectScale * ps->vLadderVec[0];
             pushOffDir[1] = flatForward[1] + reflectScale * ps->vLadderVec[1];

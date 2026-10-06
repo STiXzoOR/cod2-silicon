@@ -20,12 +20,14 @@ int BG_AnimScriptAnimation(playerState_t *ps, aistateEnum_t state, scriptAnimMov
 void BG_UpdateConditionValue(int client, int condition, int value, qboolean bits)
 { (void)client; (void)condition; (void)value; (void)bits; }
 void BG_AddPredictableEventToPlayerstate(int event, int parm, playerState_t *ps)
-{ (void)parm; (void)ps; ++eventCount; lastEvent = event; }
+{ ps->events[ps->eventSequence & 3] = event; ps->eventParms[ps->eventSequence & 3] = parm; ++ps->eventSequence; ++eventCount; lastEvent = event; }
 void Com_Printf(const char *fmt, ...) { (void)fmt; }
 void Com_DPrintf(const char *fmt, ...) { (void)fmt; }
+#ifndef MOVEMENT_JUMP
 Bool Jump_Check(pmove_t *pm, pml_t *pml) { (void)pm; (void)pml; return 0; }
 float Jump_ReduceFriction(playerState_t *ps) { (void)ps; return 1.0f; }
 void Jump_ApplySlowdown(playerState_t *ps) { (void)ps; }
+#endif
 #ifndef MOVEMENT_COLLISION
 void PM_StepSlideMove(pmove_t *pm, pml_t *pml, qboolean gravity)
 { (void)gravity; ++slideCount; for (int i = 0; i < 3; ++i) pm->ps->origin[i] += pm->ps->velocity[i] * pml->frametime; }
@@ -49,8 +51,10 @@ void PM_ResetWeaponState(playerState_t *ps) { (void)ps; }
 int PM_WeaponAmmoAvailable(playerState_t *ps) { (void)ps; return 1; }
 qboolean PM_InteruptWeaponWithProneMove(playerState_t *ps) { (void)ps; return 0; }
 void PM_ExitAimDownSight(playerState_t *ps) { ps->pm_flags &= ~0x40; }
+#ifndef MOVEMENT_JUMP
 void Jump_ClearState(playerState_t *ps) { ps->pm_flags &= ~0x80000; ps->jumpOriginZ = 0; }
 void Jump_ActivateSlowdown(playerState_t *ps) { (void)ps; }
+#endif
 #ifndef MOVEMENT_COLLISION
 void Mantle_CapView(playerState_t *ps) { (void)ps; }
 void Mantle_ClearHint(playerState_t *ps) { ps->mantleState.flags &= ~8; }
@@ -77,6 +81,7 @@ static void init(playerState_t *ps, pmove_t *pm, pml_t *pml, int stance)
 {
     memset(ps, 0, sizeof(*ps)); memset(pm, 0, sizeof(*pm)); memset(pml, 0, sizeof(*pml));
     ps->speed = 190; ps->groundEntityNum = 1022; ps->viewHeightTarget = stance;
+    ps->mins[0] = ps->mins[1] = -15; ps->maxs[0] = ps->maxs[1] = 15; ps->maxs[2] = 70;
     ps->viewHeightCurrent = (float)stance; ps->weapon = 1;
     pm->ps = ps; pm->cmd.forwardmove = 127;
     pml->forward[0] = 1; pml->right[1] = -1; pml->groundTrace.normal[2] = 1;
