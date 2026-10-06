@@ -48,7 +48,7 @@ def name_of(symbol):
             parts.append(symbol[pos:pos + int(match[0])])
             pos += int(match[0])
         if parts:
-            
+
             if symbol[pos:pos + 2] in ('C1', 'C2', 'C3'):
                 parts.append(parts[-1])
             return '_'.join(parts)
