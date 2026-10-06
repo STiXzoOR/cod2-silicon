@@ -24,6 +24,8 @@ python3 tools/fidelity/spotcheck_reverb.py --build build-macos \
   --output "$FIDELITY_EVIDENCE/reverb-stock.json" --expect-difference
 python3 tools/fidelity/spotcheck_msg.py --build build-macos \
   --output "$FIDELITY_EVIDENCE/message-stock.json" --expect-difference
+python3 tools/fidelity/spotcheck_collision.py --build build-macos \
+  --output "$FIDELITY_EVIDENCE/collision-stock.json" --expect-difference
 ```
 
 `--binary` overrides the reference path. `--jobs` defaults to two compiler
@@ -115,3 +117,13 @@ engine flags/types. It probes each field width with a differing key bit and a
 wire value restricted to that field's width, as the production writer does.
 Only JSON observations remain. Repeat both harnesses with `--build
 build-macos-codx`; omit `--expect-difference` to require fidelity.
+
+The collision harness compiles the production `cm_trace.c` and trace-extents
+setup with actual engine flags/types. Its five point rays use a synthetic
+temporary model; expected blocked/clear results follow the rounded model
+geometry verified in Mac 1.3's `CM_Trace` branch at `0x6498c` to `0x64e2a`.
+The rays stay in the middle cylinder and far from collision epsilon boundaries.
+This is an analytic geometry oracle, not execution of the reference binary.
+Unused world/terrain dependencies are isolated; this probe establishes no claim
+about terrain contacts. Repeat it for both builds and omit `--expect-difference`
+to make the current two corner-contact differences fail acceptance.
