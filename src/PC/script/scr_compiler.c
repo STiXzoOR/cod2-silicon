@@ -1,4 +1,7 @@
 #if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
+#if defined(COD2_X64)
 #include <stdlib.h>
 #endif
 
@@ -1870,8 +1873,14 @@ static unsigned int __attribute_regparm__(2)
             scope = FindVariable(scriptThreadTable, name);
             if (!scope) {
 #    ifdef LT_TRACE
+#if defined(COD2_X64)
+                COD2_NATIVE_TRACE_ONLY(
+#endif
                 fprintf(stderr, "[UNKFN-1844] file='%s' func='%s' pos=%u\n",
                         SL_ConvertToString((unsigned int)entry->filename), SL_ConvertToString(name), sourcePos);
+#if defined(COD2_X64)
+                )
+#endif
 #    endif
                 CompileError(sourcePos, "unknown function");
                 return 0;
@@ -1879,8 +1888,14 @@ static unsigned int __attribute_regparm__(2)
 
             if (GetVarType(scope) != SCRCOMP_VAR_POINTER) {
 #    ifdef LT_TRACE
+#if defined(COD2_X64)
+                COD2_NATIVE_TRACE_ONLY(
+#endif
                 fprintf(stderr, "[UNKFN-1849] file='%s' func='%s' pos=%u\n",
                         SL_ConvertToString((unsigned int)entry->filename), SL_ConvertToString(name), sourcePos);
+#if defined(COD2_X64)
+                )
+#endif
 #    endif
                 CompileError(sourcePos, "unknown function");
                 return 0;
@@ -1905,8 +1920,14 @@ static unsigned int __attribute_regparm__(2)
 
             if (value.type == SCRCOMP_VAR_INCLUDE_CODEPOS) {
 #    ifdef LT_TRACE
+#if defined(COD2_X64)
+                COD2_NATIVE_TRACE_ONLY(
+#endif
                 fprintf(stderr, "[UNKFN-1871] file='%s' func='%s' pos=%u\n",
                         SL_ConvertToString((unsigned int)entry->filename), SL_ConvertToString(name), sourcePos);
+#if defined(COD2_X64)
+                )
+#endif
 #    endif
                 CompileError(sourcePos, "unknown function");
                 return 0;

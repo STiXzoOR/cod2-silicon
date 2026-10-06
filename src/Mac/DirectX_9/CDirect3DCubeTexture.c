@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 #include <stdlib.h>
@@ -196,7 +199,13 @@ void COpenGLTexture_UpdateOpenGLSurfaces(const COpenGLTexture *_this)
     {
         static int uos = 0;
         if (uos++ < 10)
+#if defined(COD2_X64)
+            COD2_NATIVE_TRACE_ONLY(
+#endif
             fprintf(stderr, "[UOS] texID=%u texBase=%p\n", texID, texBase);
+#if defined(COD2_X64)
+            )
+#endif
     }
     extern void CDirect3DTexture_UpdateOpenGLSurfaces(const void *);
     CDirect3DTexture_UpdateOpenGLSurfaces(texBase);

@@ -309,7 +309,13 @@ static void SCR_UpdateFrame(void)
         static int diagOnce2;
         if (!diagOnce2) {
             diagOnce2 = 1;
+#if defined(COD2_X64)
+            COD2_NATIVE_TRACE_ONLY(
+#endif
             Com_Printf("[diag] SCR_UpdateFrame REACHED gameLoaded(uiStarted)=%d\n", gameLoaded);
+#if defined(COD2_X64)
+            )
+#endif
         }
     }
 
@@ -456,9 +462,15 @@ check_ui:
             static int diagOnce;
             if (!diagOnce) {
                 diagOnce = 1;
+#if defined(COD2_X64)
+                COD2_NATIVE_TRACE_ONLY(
+#endif
                 Com_Printf("[diag] check_ui REACHED state=%d activeMenu=%d keyCatchers=0x%x displayHUD=%d\n",
                            (*(clientConnection_t **)clc_ptr_195ee8c)->state, activeMenu,
                            dv->keyCatchers, dv->displayHUDWithKeycatchUI);
+#if defined(COD2_X64)
+                )
+#endif
             }
         }
 

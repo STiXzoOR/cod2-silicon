@@ -711,7 +711,13 @@ static Bool R_CreateForInitOrReset(void)
     R_InitRenderTargets();
     ((ri_fn)ri.Printf)(0, "R_InitStaticModelCache");
     R_InitStaticModelCache();
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     { extern void Com_Printf(const char *, ...); Com_Printf("[dr] after staticmodelcache=%d\n", g_disableRendering); }
+#if defined(COD2_X64)
+    )
+#endif
     ((ri_fn)ri.Printf)(0, "Dynamic buffers");
 
     /* Dynamic buffer pools: were hardcoded x86 DxGlobals byte offsets (dxp+116xx);
@@ -776,10 +782,22 @@ static Bool R_CreateForInitOrReset(void)
     }
 #endif
 
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     { extern void Com_Printf(const char *, ...); Com_Printf("[dr] after stateblock=%d\n", g_disableRendering); }
+#if defined(COD2_X64)
+    )
+#endif
     ((ri_fn)ri.Printf)(0, "Initial state");
     RB_SetInitialState();
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     { extern void Com_Printf(const char *, ...); Com_Printf("[dr] after setinitialstate=%d\n", g_disableRendering); }
+#if defined(COD2_X64)
+    )
+#endif
     return 1;
 }
 
@@ -822,7 +840,13 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
     }
     R_InitBackendData();
     R_InitDrawGroups();
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     { extern void Com_Printf(const char *, ...); Com_Printf("[disrend] after R_InitDrawGroups = %d\n", g_disableRendering); }
+#if defined(COD2_X64)
+    )
+#endif
 
     if (dx.device) {
 
@@ -944,7 +968,13 @@ static void R_BeginRegistration_impl(vidConfig_t *vidConfigOut)
     }
 
     memcpy(vidConfigOut, imp_vidConfig, 44);
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     { extern void Com_Printf(const char *, ...); Com_Printf("[disrend] R_Init end = %d\n", g_disableRendering); }
+#if defined(COD2_X64)
+    )
+#endif
 }
 
 void R_BeginRegistration(vidConfig_t *vidConfigOut)

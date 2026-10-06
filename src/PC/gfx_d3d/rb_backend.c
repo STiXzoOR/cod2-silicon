@@ -90,6 +90,10 @@ int rb_drawsurfscmd_dxskip = 0;
 static void RB_X64TraceText(const char *text, const Font *font, const Material *material,
                             GfxColor color, int style, float x, float y, float xScale, float yScale)
 {
+#if defined(COD2_X64)
+    if (!COD2_NATIVE_TRACE_ENABLED())
+        return;
+#endif
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     static int traceCount;
     FILE *f;
@@ -131,6 +135,10 @@ static void RB_X64TraceText(const char *text, const Font *font, const Material *
 static void RB_X64TraceGlyph(const char *text, int ch, const Glyph *glyph,
                              float glyphX, float glyphY, float w, float h, GfxColor color)
 {
+#if defined(COD2_X64)
+    if (!COD2_NATIVE_TRACE_ENABLED())
+        return;
+#endif
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     static int traceCount;
     FILE *f;
@@ -3115,9 +3123,15 @@ void RB_ExecuteRenderCommands(const void *data)
         extern int g_disableRendering;
         static int once;
         if (!once) { once = 1;
+#if defined(COD2_X64)
+            COD2_NATIVE_TRACE_ONLY(
+#endif
             Com_Printf("[rbexec] *imp=%d &direct=%p direct=%d imp=%p\n",
                        *(int *)imp_g_disableRendering, (void *)&g_disableRendering,
                        g_disableRendering, imp_g_disableRendering);
+#if defined(COD2_X64)
+            )
+#endif
         }
     }
 
@@ -3241,15 +3255,27 @@ void RB_ExecuteRenderCommands(const void *data)
 
         if (execTraceCount < 1) {
             extern void Com_Printf(const char *, ...);
+#if defined(COD2_X64)
+            COD2_NATIVE_TRACE_ONLY(
+#endif
             Com_Printf("[cmdexec] backEndData=%p cmds=%p first_id=%u\n",
                        (void *)backEndData, (void *)cmdBuf, cmd);
+#if defined(COD2_X64)
+            )
+#endif
         }
 
         while (cmd != 0) {
             if (execTraceCount < 40) {
                 extern void Com_Printf(const char *, ...);
                 const GfxCmdHeader *h = (const GfxCmdHeader *)execState.cmd;
+#if defined(COD2_X64)
+                COD2_NATIVE_TRACE_ONLY(
+#endif
                 Com_Printf("[cmdexec] #%d id=%u bytes=%u\n", execTraceCount, h->id, h->byteCount);
+#if defined(COD2_X64)
+                )
+#endif
                 ++execTraceCount;
             }
             RB_RenderCommandTable[cmd](&execState);
@@ -3635,6 +3661,9 @@ static void RB_BACKEND_REGPARM3_SSE_ABI RB_DrawTextWithCursor_impl(const char *t
     count = 0;
 
     if (traceText) {
+#if defined(COD2_X64)
+        COD2_NATIVE_TRACE_ONLY(
+#endif
         printf("[textcmd-back-impl] text='%.96s' font=%p fontName=%s material=%p matName=%s xy=(%.1f,%.1f) scale=(%.3f,%.3f) color=0x%08x bytes=(%u,%u,%u,%u) style=%d max=%d cursor=%d/%d\n",
                text,
                font,
@@ -3645,6 +3674,9 @@ static void RB_BACKEND_REGPARM3_SSE_ABI RB_DrawTextWithCursor_impl(const char *t
                color.packed,
                color.array[0], color.array[1], color.array[2], color.array[3],
                style, maxChars, cursorPos, cursor);
+#if defined(COD2_X64)
+        )
+#endif
     }
 
     while (*text && maxChars) {
@@ -3721,6 +3753,9 @@ static void RB_BACKEND_REGPARM3_SSE_ABI RB_DrawTextWithCursor_impl(const char *t
                 COD2_DEBUG_ONLY(RB_X64TraceGlyph(text, ch, glyph, glyphX, glyphY, w, h, newColor);)
             }
             if (traceText && count == 0) {
+#if defined(COD2_X64)
+                COD2_NATIVE_TRACE_ONLY(
+#endif
                 printf("[textcmd-glyph0] ch=%d glyph=(%d,%d %dx%d) draw=(%.1f,%.1f %.1fx%.1f) st=(%.3f,%.3f %.3f,%.3f) color=0x%08x mat=%s\n",
                        ch,
                        (int)(signed char)glyph->x0,
@@ -3731,6 +3766,9 @@ static void RB_BACKEND_REGPARM3_SSE_ABI RB_DrawTextWithCursor_impl(const char *t
                        glyph->s0, glyph->t0, glyph->s1, glyph->t1,
                        newColor.packed,
                        material && material->info.name ? material->info.name : "<null>");
+#if defined(COD2_X64)
+                )
+#endif
             }
             RB_DrawStretchPic(material, glyphX, glyphY, w, h,
                               glyph->s0, glyph->t0, glyph->s1, glyph->t1, newColor.packed, (GfxPrimStatsTarget)8);
@@ -3806,6 +3844,9 @@ static void RB_DrawTextCmd(GfxRenderCommandExecState *execState)
                     color, style, x, y, xScale, yScale);)
 
     if (RB_ShouldTraceTextCmd(text)) {
+#if defined(COD2_X64)
+        COD2_NATIVE_TRACE_ONLY(
+#endif
         printf("[textcmd-back] cmd=%p bytes=%u text='%.96s' xy=(%.1f,%.1f) scale=(%.3f,%.3f) color=0x%08x bytes=(%u,%u,%u,%u) style=%d max=%d cursor=%d/%d font=%p\n",
                cmd,
                cmd->header.byteCount,
@@ -3815,6 +3856,9 @@ static void RB_DrawTextCmd(GfxRenderCommandExecState *execState)
                cmd->color.array[0], cmd->color.array[1], cmd->color.array[2], cmd->color.array[3],
                cmd->style, maxChars, cursorPos, cursor,
                cmd->font);
+#if defined(COD2_X64)
+        )
+#endif
     }
 
     RB_DrawTextWithCursor_impl(text, maxChars, font, x, y, xScale, yScale, color, style, cursorPos, cursor);

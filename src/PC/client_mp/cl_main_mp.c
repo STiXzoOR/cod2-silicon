@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #if defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x.h"
 #endif
@@ -556,7 +559,9 @@ extern int Cmd_Argc(void);
 extern char *Cmd_Argv(int arg);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern void I_strncat(char *dest, int maxlen, const char *src);
+#if !defined(COD2_X64)
 extern int putenv(const char *string);
+#endif
 extern char *getenv(const char *name);
 void CL_Setenv_f(void)
 {
@@ -1896,7 +1901,13 @@ void CL_CheckForResend(void)
 
     conn->connectTime = cls.realtime;
     conn->connectPacketCount++;
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     Com_Printf("[cnx] CL_CheckForResend state=%d count=%d realtime=%d\n", conn->state, conn->connectPacketCount, cls.realtime);
+#if defined(COD2_X64)
+    )
+#endif
 
     if (conn->state == CA_CONNECTING) {
         const dvar_t *lanAuthorize = net_lanauthorize;
@@ -2216,7 +2227,13 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
 
     Cmd_TokenizeString(MSG_ReadStringLine(msg));
     cmd = Cmd_Argv(0);
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     Com_Printf("[cnx] CL_ConnectionlessPacket cmd='%s' state=%d\n", cmd, conn->state);
+#if defined(COD2_X64)
+    )
+#endif
 
 #if COD2_IS_PATCH_13
 

@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -437,9 +440,21 @@ void CL_InitUI(void)
     extern int g_disableRendering;
     cls.uiStarted = 1;
     CL_SwitchToLocalClient(0);
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     Com_Printf("[disrend] CL_InitUI before UI_Init = %d\n", g_disableRendering);
+#if defined(COD2_X64)
+    )
+#endif
     UI_Init();
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     Com_Printf("[disrend] CL_InitUI after UI_Init = %d\n", g_disableRendering);
+#if defined(COD2_X64)
+    )
+#endif
     CL_SwitchToLocalClient(0);
     UI_Component_Init();
 }

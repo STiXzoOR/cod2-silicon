@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 #include <stddef.h>
@@ -95,7 +98,11 @@ void CL_Netchan_Decode(byte *data, int size)
     }
 
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(COD2_X64)
+    if (COD2_NATIVE_TRACE_ENABLED() && x64DecodeTraceCount < 12) {
+#else
     if (x64DecodeTraceCount < 12) {
+#endif
         FILE *f = fopen("x64_netchan_trace.txt", "a");
         if (f) {
             fprintf(f,

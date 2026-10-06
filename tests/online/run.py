@@ -82,7 +82,7 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
                     if not depth:
                         functions.append(source[match.start():match.start() + token.end()])
                         break
-        (out / (name + '_source.h')).write_text('\n'.join(functions))
+        (out / (name + '_source.h')).write_text('#include "PC/qcommon/port_debug.h"\n' + '\n'.join(functions))
         obj = out / (name + '.o')
         subprocess.run([*flags, '-I' + tmp, '-c', str(root / ('tests/online/' + name + '.c')),
                         '-o', str(obj)], check=True, cwd=root)

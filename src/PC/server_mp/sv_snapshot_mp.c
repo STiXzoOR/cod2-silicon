@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #include "common_types.h"
 #if COD2_APPLE_SDK
 #define COD2_IMAGE_CONSTANT_4096 4096
@@ -994,7 +997,11 @@ void SV_SendMessageToClient(msg_t *msg, client_t *client)
     {
         static int traceCount;
 
+#if defined(COD2_X64)
+        if (COD2_NATIVE_TRACE_ENABLED() && traceCount < 12) {
+#else
         if (traceCount < 12) {
+#endif
             byte verifyBuf_ll[24];
             byte *verifyBuf;
             int verifySize;

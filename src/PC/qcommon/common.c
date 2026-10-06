@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #if defined(COD2_CODX) && COD2_CODX
 #include "cod2x.h"
 #endif
@@ -2503,6 +2506,9 @@ void Com_Init_Try_Block_Function(char *commandLine)
 
 void Com_Init(char *commandLine)
 {
+#if defined(COD2_X64)
+    COD2_InitNativeTracing();
+#endif
     jmp_buf *abortframe = (jmp_buf *)Sys_GetValue(2);
 
     if (!setjmp(*abortframe)) {
@@ -2510,7 +2516,13 @@ void Com_Init(char *commandLine)
         return;
     }
 
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     Com_Printf("[REALERROR] %s\n", com_errorMessage);
+#if defined(COD2_X64)
+    )
+#endif
     Sys_Error(va("Error during initialization:\n%s\n", com_errorMessage));
 }
 

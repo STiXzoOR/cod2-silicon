@@ -1047,7 +1047,11 @@ void CL_ParseServerMessage(msg_t *msg)
                                                  msg->cursize - msg->readcount);
 
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(COD2_X64)
+    if (COD2_NATIVE_TRACE_ENABLED() && x64TraceCount < 16) {
+#else
     if (x64TraceCount < 16) {
+#endif
         FILE *f = fopen("x64_msg_trace.txt", x64TraceCount ? "a" : "w");
         if (f) {
             int i;

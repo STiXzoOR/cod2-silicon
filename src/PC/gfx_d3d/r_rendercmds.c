@@ -57,6 +57,10 @@ extern struct r_globals_t rg;
 static void R_X64TraceStretchPic(MaterialHandle material, float x, float y, float w, float h)
 {
 #if defined(COD2_X64)
+    if (!COD2_NATIVE_TRACE_ENABLED())
+        return;
+#endif
+#if defined(COD2_X64)
     static int traceCount;
     FILE *f;
 
@@ -790,6 +794,9 @@ void R_AddCmdDrawTextWithCursor(const char *text, int maxChars, FontHandle font,
     cmdText[len] = '\0';
 
     if (R_ShouldTraceTextCmd(cmdText)) {
+#if defined(COD2_X64)
+        COD2_NATIVE_TRACE_ONLY(
+#endif
         printf("[textcmd-front] used=%d bytes=%d text='%.96s' xy=(%.1f,%.1f) scale=(%.3f,%.3f) style=%d max=%d cursor=%d/%d colorBytes=(%u,%u,%u,%u) font=%p\n",
                s_cmdList ? s_cmdList->usedTotal : -1,
                byteCount,
@@ -798,6 +805,9 @@ void R_AddCmdDrawTextWithCursor(const char *text, int maxChars, FontHandle font,
                style, maxChars, cursorPos, cursor,
                cmd->color.array[0], cmd->color.array[1], cmd->color.array[2], cmd->color.array[3],
                font);
+#if defined(COD2_X64)
+        )
+#endif
     }
 }
 
