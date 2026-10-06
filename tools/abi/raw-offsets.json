@@ -7411,5 +7411,33 @@
     "count": 1,
     "classification": "safe",
     "reason": "Multi-choice value X position adds scalar float label coordinates and the verified eight-pixel gap; no address or struct offset arithmetic."
+  },
+  {
+    "file": "src/PC/bgame/bg_pmove.c",
+    "text": "float yawcapM5 = bg_prone_yawcap->current.value - 5.0f;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Scalar float arithmetic on the typed dvar_t.current.value member; no pointer arithmetic or byte offset. Prone yaw limit in PM_UpdateViewAngles (Mac 1.3 0x6c082)."
+  },
+  {
+    "file": "src/PC/bgame/bg_pmove.c",
+    "text": "scale *= ((player_strafeSpeedScale->current.value - 1.0f) * 0.75f + 1.0f + 1.0f) * 0.5f;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Scalar float arithmetic on the typed dvar_t.current.value member; no pointer arithmetic or byte offset. Directional bob speed scale in PM_Footsteps (Mac 1.3 0x6ed5c), covered by the native movement/reference fixtures."
+  },
+  {
+    "file": "src/PC/bgame/bg_pmove.c",
+    "text": "scale *= (player_backSpeedScale->current.value + 1.0f) * 0.5f;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Scalar float arithmetic on the typed dvar_t.current.value member; no pointer arithmetic or byte offset. Directional bob speed scale in PM_Footsteps (Mac 1.3 0x6ed5c), covered by the native movement/reference fixtures."
+  },
+  {
+    "file": "src/PC/bgame/bg_pmove.c",
+    "text": "scale *= (player_strafeSpeedScale->current.value - 1.0f) * 0.75f + 1.0f;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Scalar float arithmetic on the typed dvar_t.current.value member; no pointer arithmetic or byte offset. Directional bob speed scale in PM_Footsteps (Mac 1.3 0x6ed5c), covered by the native movement/reference fixtures."
   }
 ]

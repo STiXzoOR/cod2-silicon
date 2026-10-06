@@ -474,9 +474,18 @@ static Bool __attribute_regparm__(3) Mantle_CheckLedge(pmove_t *pm, pml_t *pml, 
         wallStart[1] = mr->ledgePos[1];
         wallStart[2] = mr->ledgePos[2];
 
+#if defined(COD2_X64)
+        wallStart[0] += mr->dir[0] * 31.0f;
+        wallStart[1] += mr->dir[1] * 31.0f;
+        wallStart[2] += mr->dir[2] * 31.0f;
+        wallEnd[0] = wallStart[0];
+        wallEnd[1] = wallStart[1];
+        wallEnd[2] = wallStart[2] - 18.0f;
+#else
         wallEnd[0] = mr->dir[0] * 31.0f + wallStart[0];
         wallEnd[1] = mr->dir[1] * 31.0f + wallStart[1];
         wallEnd[2] = mr->dir[2] * 31.0f + wallStart[2] - 18.0f;
+#endif
 
         PM_trace(pm, &wallTr, wallStart, wallMins, wallMaxs, wallEnd, ps->clientNum, pm->tracemask);
 
@@ -578,9 +587,17 @@ void Mantle_Check(pmove_t *pm, pml_t *pml)
     float start[3], end[3];
     float traceDir[3];
     float mantleDir[3];
+#if defined(COD2_X64)
+    trace_t trace;
+#else
     byte trace[0x38];
+#endif
     float len;
+#if defined(COD2_X64)
+    MantleResults mresults;
+#else
     byte mresults[0x38];
+#endif
     trace_t *tr;
     MantleResults *results;
 
@@ -655,12 +672,19 @@ void Mantle_Check(pmove_t *pm, pml_t *pml)
         end[2] = ps->origin[2] + traceDir[2] * checkRange;
     }
 
+#if defined(COD2_X64)
+    tr = &trace;
+    results = &mresults;
+    PM_trace(pm, tr, start, mins, maxs, end, ps->clientNum, 0x1000000);
+    if (tr->allsolid || tr->startsolid) {
+#else
     tr = (trace_t *)trace;
     results = (MantleResults *)mresults;
 
     PM_trace(pm, (trace_t *)(trace), start, mins, maxs, end, ps->clientNum, 0x1000000);
 
     if (tr->allsolid == 0 && tr->startsolid == 0) {
+#endif
         if (mantle_debug->current.enabled)
             Com_Printf("%s\n", "Mantle Failed: No wall found");
         return;
@@ -699,7 +723,11 @@ void Mantle_Check(pmove_t *pm, pml_t *pml)
         }
     }
 
+#if defined(COD2_X64)
+    memset(&mresults, 0, sizeof(mresults));
+#else
     memset(mresults, 0, sizeof(MantleResults));
+#endif
 
     results->dir[0] = mantleDir[0];
     results->dir[1] = mantleDir[1];
@@ -713,9 +741,17 @@ void Mantle_Check(pmove_t *pm, pml_t *pml)
         results->flags |= 1;
     }
 
+#if defined(COD2_X64)
+    if (Mantle_CheckLedge(pm, pml, (byte *)&mresults, 60.0f))
+        return;
+    if (Mantle_CheckLedge(pm, pml, (byte *)&mresults, 40.0f))
+        return;
+    Mantle_CheckLedge(pm, pml, (byte *)&mresults, 20.0f);
+#else
     if (Mantle_CheckLedge(pm, pml, mresults, 60.0f))
         return;
     if (Mantle_CheckLedge(pm, pml, mresults, 40.0f))
         return;
     Mantle_CheckLedge(pm, pml, mresults, 20.0f);
+#endif
 }

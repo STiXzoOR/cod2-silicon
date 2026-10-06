@@ -281,7 +281,11 @@ void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops)
 
         if (i < ops->eventSequence) {
 
+#if defined(COD2_X64)
+            if (i <= ops->eventSequence - 4) {
+#else
             if (i < ops->eventSequence - 4) {
+#endif
                 i++;
                 continue;
             }

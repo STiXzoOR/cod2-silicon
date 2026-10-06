@@ -128,6 +128,8 @@ python3 tests/online/run.py build-macos/compile_commands.json
 python3 tests/online/run.py build-macos-codx/compile_commands.json
 python3 tests/fixes13/run.py --build build-macos
 python3 tests/fixes13/run.py --build build-macos-codx
+python3 tests/movement/run.py --build build-macos
+python3 tests/movement/run.py --build build-macos-codx
 python3 tests/perf/run.py
 python3 tests/lp64/game/run.py --build build-macos
 python3 tests/lp64/script/run.py
@@ -250,6 +252,7 @@ even when they use synthetic content.
 | `tests/lp64/script/run.py` | No | `build-macos` compile database and generated `bss_native.c.o`; includes compiler and VM suites |
 | `tests/lp64/ui/run.py` | No | Native compile database; production binding/multi-choice/enum/debug-table ASan/UBSan fixtures |
 | `tests/perf/run.py` | No | Clang; source fixtures, **not a benchmark** |
+| `tests/movement/run.py` | No | Native compile database; production movement ASan/UBSan fixtures with Mac 1.3 bob/scale/stance/lean/landing/ladder/mantle expectations and randomized prediction/server frames |
 | `tests/lp64/renderer/run.sh` | No | Clang + ASan/UBSan; synthetic buffers/materials/commands, no GL context |
 | Renderer `run_shader_raster.sh`, `run_texture_mips.sh`, `run_volume_upload.sh` | No | Synthetic content in private real CGL contexts; OpenGL-capable session |
 | `tests/platform` CTest, `run_dedicated_fx.sh`, `run_hud_matrices.py`, `run_impact_marks.py`, `run_fx_*.py` | No | Synthetic FX/HUD/network/audio; full CTest also exercises real window/fullscreen/audio APIs |
