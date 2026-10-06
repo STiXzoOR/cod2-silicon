@@ -38,6 +38,11 @@ weapon = subprocess.check_output(['git', 'show', f'{a.baseline}:{weaponpath}'], 
 start = weapon.index('void BG_CalculateWeaponPosition_Sway(playerState_t *ps, vec_t *swayViewAngles, vec_t *swayOffset, vec_t *swayAngles, float ssSwayScale, int frametime)\n{')
 end = weapon.index('\nint BG_GetFirstAvailableOffhand(', start)
 (out / 'sway_source.h').write_text(weapon[start:end])
+initpath = 'src/PC/game_mp/g_main_mp.c'
+server = subprocess.check_output(['git', 'show', f'{a.baseline}:{initpath}'], cwd=ROOT, text=True) if a.baseline else (ROOT / initpath).read_text()
+start = server.index('    Scr_EndLoadScripts();') + len('    Scr_EndLoadScripts();')
+end = server.index('    *(void **)imp_bgs = (void *)&level_bgs;', start)
+(out / 'server_anim_init_source.h').write_text(server[start:end])
 defaults = {'friction': '5.5f', 'stopspeed': '100.0f', 'inertiaMax': '10000.0f',
             'player_footstepsThreshhold': '190.0f', 'player_moveThreshhold': '10.0f',
             'player_strafeSpeedScale': '0.8f', 'player_backSpeedScale': '0.7f',

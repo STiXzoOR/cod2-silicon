@@ -167,6 +167,7 @@ extern void SV_FreeClientScriptPers(void);
 extern void Z_FreeInternal(void *ptr);
 extern void Mantle_ShutdownAnims(void);
 #if defined(COD2_X64)
+extern void Mantle_CreateAnims(MantleAnimAlloc xanimAlloc);
 extern void GScr_FreeScripts(void);
 #else
 extern unsigned int GScr_FreeScripts(void);
@@ -751,6 +752,12 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     Scr_PostCompileScripts();
     Scr_EndLoadScripts();
     COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_endload);)
+#if defined(COD2_X64)
+
+    /* Mac 1.3 0x1adf5d initializes this tree on the server. A listen client
+       deliberately skips its own allocation while com_sv_running is true. */
+    Mantle_CreateAnims((MantleAnimAlloc)Hunk_AllocXAnimServer);
+#endif
 
     *(void **)imp_bgs = (void *)&level_bgs;
 #if defined(COD2_X64)

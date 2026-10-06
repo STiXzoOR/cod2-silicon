@@ -2769,6 +2769,11 @@ static void PmoveSingle(pmove_t *pm)
         PM_UpdatePlayerWalkingFlag(pm);
         PM_CheckDuck(pm, &pml);
         Mantle_Move(pm, ps, &pml);
+        if (PM_MoveTraceEnabled())
+            Com_Printf("[move-mantle] handler=%d time=%d msec=%d timer=%d trans=%d flags=%x origin=%.6f,%.6f,%.6f\n",
+                       pm->handler, pm->cmd.serverTime, pml.msec, ps->mantleState.timer,
+                       ps->mantleState.transIndex, ps->pm_flags,
+                       (double)ps->origin[0], (double)ps->origin[1], (double)ps->origin[2]);
         PM_Weapon(pm, &pml);
         return;
     }

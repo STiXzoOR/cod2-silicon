@@ -9,8 +9,19 @@
 
 static int traceNumber, testWorld;
 static vec3_t overStart, overEnd;
+static int animationCreates;
+static int animationStorage[16];
+void *Hunk_AllocXAnimServer(int size) { assert(size <= (int)sizeof(animationStorage)); return animationStorage; }
+void *Hunk_AllocAlignInternal(int size, int align) { (void)align; return Hunk_AllocXAnimServer(size); }
+void *XAnimCreateAnims(const char *name, int count, void *alloc)
+{ assert(!strcmp(name, "PLAYER_MANTLE") && count == 11); ++animationCreates; return ((void *(*)(int))alloc)(16); }
+void XAnimBlend(XAnim *anims, unsigned int index, const char *name, unsigned int children, unsigned int count, unsigned int flags)
+{ (void)name; (void)flags; assert(anims && !index && children == 1 && count == 10); }
+XAnimParts *XAnimPrecache(const char *name, Alloc_t alloc) { assert(name && alloc); return (XAnimParts *)alloc(16); }
+void XAnimCreate(struct XAnim_s *anims, unsigned int index, const char *name) { assert(anims && index && name); }
+void Com_Error(int code, const char *fmt, ...) { (void)code; (void)fmt; assert(0); }
 
-int XAnimGetLengthMsec(const struct XAnim_s *anims, unsigned int index) { (void)anims; (void)index; return 100; }
+int XAnimGetLengthMsec(const struct XAnim_s *anims, unsigned int index) { assert(anims); (void)index; return 100; }
 void XAnimGetAbsDelta(const struct XAnim_s *anims, unsigned int index, float *rot, float *delta, float frac)
 { (void)anims; (void)rot; delta[0] = frac * (index < 8 ? 16.0f : 31.0f); delta[1] = 0; delta[2] = frac * (index < 8 ? 57.0f - (float)(index-1)*6.0f : -18.0f); }
 const char *va(const char *fmt, ...) { return fmt; }
@@ -97,6 +108,14 @@ static void mantle(void)
 {
     static dvar_t enabled = {.current.enabled = 1}, disabled = {0}, range = {.current.value = 20}, radius = {.current.value = 0.1f}, angle = {.current.value = 60};
     mantle_enable = &enabled; mantle_debug = &disabled; mantle_check_range = &range; mantle_check_radius = &radius; mantle_check_angle = &angle;
+    /* Execute the production server animation setup: a listen client relies on it. */
+#undef COD2_DEBUG_ONLY
+#define COD2_DEBUG_ONLY(...)
+#include "server_anim_init_source.h"
+#undef COD2_DEBUG_ONLY
+    assert(s_mantleAnims && animationCreates == 1);
+    Mantle_CreateAnims(Hunk_AllocXAnimServer);
+    assert(animationCreates == 1);
     playerState_t ps; pmove_t pm; pml_t pml; init(&ps, &pm, &pml, 60);
     ps.maxs[0] = ps.maxs[1] = 15; ps.maxs[2] = 70; ps.mins[0] = ps.mins[1] = -15;
     pm.cmd.buttons = 0x400; testWorld = 2; traceNumber = 0;
