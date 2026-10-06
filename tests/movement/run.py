@@ -33,6 +33,11 @@ transition = subprocess.check_output(['git', 'show', f'{a.baseline}:{transitionp
 start = transition.index('void CG_TransitionPlayerState(playerState_t *ps, playerState_t *ops)\n{')
 # This is the final definition in the production translation unit.
 (out / 'transition_source.h').write_text(transition[start:])
+weaponpath = 'src/PC/bgame/bg_weapons.c'
+weapon = subprocess.check_output(['git', 'show', f'{a.baseline}:{weaponpath}'], cwd=ROOT, text=True) if a.baseline else (ROOT / weaponpath).read_text()
+start = weapon.index('void BG_CalculateWeaponPosition_Sway(playerState_t *ps, vec_t *swayViewAngles, vec_t *swayOffset, vec_t *swayAngles, float ssSwayScale, int frametime)\n{')
+end = weapon.index('\nint BG_GetFirstAvailableOffhand(', start)
+(out / 'sway_source.h').write_text(weapon[start:end])
 defaults = {'friction': '5.5f', 'stopspeed': '100.0f', 'inertiaMax': '10000.0f',
             'player_footstepsThreshhold': '190.0f', 'player_moveThreshhold': '10.0f',
             'player_strafeSpeedScale': '0.8f', 'player_backSpeedScale': '0.7f',
@@ -65,7 +70,7 @@ for source in ['com_math', 'q_shared']:
 exe = out / 'movement'
 subprocess.run(['clang', '-arch', 'arm64', '-fsanitize=address,undefined', '-Wl,-dead_strip', *map(str, objects), '-o', str(exe)], check=True)
 for name in a.test or ['bob', 'scale', 'walk', 'lean', 'timers', 'direction', 'view', 'ladder', 'prone', 'dispatch']:
-    if name in ('collision', 'events'):
+    if name in ('collision', 'events', 'sway'):
         continue
     subprocess.run([str(exe), name], check=True)
 if not a.test or 'collision' in a.test:
@@ -78,3 +83,8 @@ if not a.test or 'events' in a.test:
     events = out / 'events'
     subprocess.run(['clang', '-arch', 'arm64', '-fsanitize=address,undefined', '-Wl,-dead_strip', str(obj), '-o', str(events)], check=True)
     subprocess.run([str(events)], check=True)
+if not a.test or 'sway' in a.test:
+    subprocess.run([*flags, '-c', str(ROOT / 'tests/movement/sway.c'), '-o', str(obj)], check=True)
+    sway = out / 'sway'
+    subprocess.run(['clang', '-arch', 'arm64', '-fsanitize=address,undefined', '-Wl,-dead_strip', *map(str, objects), '-o', str(sway)], check=True)
+    subprocess.run([str(sway)], check=True)

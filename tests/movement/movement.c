@@ -10,13 +10,14 @@ static bgs_t fixture_bgs;
 bgs_t *bgs = &fixture_bgs;
 static WeaponDef weapon;
 static int animation, eventCount, lastEvent, slideCount;
+static int animationCalls, animationBob, failAnimation;
 static float traceFraction = 1.0f;
 static int mantleChecks, weaponCalls;
 static int ladderSurface;
 static void (*fixtureTrace)(trace_t *, const vec_t *, const vec_t *, const vec_t *);
 WeaponDef *BG_GetWeaponDef(int index) { (void)index; return &weapon; }
 int BG_AnimScriptAnimation(playerState_t *ps, aistateEnum_t state, scriptAnimMoveTypes_t move, qboolean cont)
-{ (void)ps; (void)state; (void)cont; animation = move; return 1; }
+{ (void)state; (void)cont; animation = move; animationBob = ps->bobCycle; ++animationCalls; if (failAnimation) { failAnimation = 0; return -1; } return 1; }
 void BG_UpdateConditionValue(int client, int condition, int value, qboolean bits)
 { (void)client; (void)condition; (void)value; (void)bits; }
 void BG_AddPredictableEventToPlayerstate(int event, int parm, playerState_t *ps)
@@ -88,6 +89,7 @@ static void init(playerState_t *ps, pmove_t *pm, pml_t *pml, int stance)
     pml->groundTrace.surfaceFlags = 7 << 20; pml->walking = pml->groundPlane = 1;
     pml->msec = 3; pml->frametime = 0.003f;
     weapon.fMoveSpeedScale = 1.0f; animation = 0; eventCount = 0; slideCount = 0;
+    animationCalls = 0; failAnimation = 0;
 }
 
 static void test_bob(void)
@@ -119,6 +121,10 @@ static void test_bob(void)
     for (int i = 0; i < 333; ++i) { int old = ps.bobCycle; PM_Footsteps(&pm, &pml); total += (ps.bobCycle - old) & 255; }
     assert(total == 333); assert(eventCount == 3);
     printf("PASS bob: %d cases; 3 ms at 190 units/s = %d bob units/s, %d footsteps\n", cases, total, eventCount);
+    init(&ps, &pm, &pml, 60); ps.velocity[0] = 190; ps.bobCycle = 63; failAnimation = 1;
+    PM_Footsteps(&pm, &pml);
+    assert(animationCalls == 2 && animation == ANIM_MT_IDLE && animationBob == 64);
+    assert(eventCount == 1);
 }
 
 static void test_scale(void)

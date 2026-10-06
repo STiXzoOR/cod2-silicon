@@ -953,8 +953,13 @@ void BG_CalculateWeaponPosition_Sway(playerState_t *ps, vec_t *swayViewAngles, v
     if (deltaAngles[1] < -swayMaxAngle)
         deltaAngles[1] = -swayMaxAngle;
 
+#if defined(COD2_X64)
+    swayOffset[1] = DiffTrack(deltaAngles[1] * swayHorizScale, swayOffset[1], swayLerpSpeed, dt);
+    swayOffset[2] = DiffTrack(deltaAngles[0] * swayVertScale, swayOffset[2], swayLerpSpeed, dt);
+#else
     swayOffset[1] = DiffTrack(deltaAngles[1] * swayVertScale, swayOffset[1], swayLerpSpeed, dt);
     swayOffset[2] = DiffTrack(deltaAngles[0] * swayHorizScale, swayOffset[2], swayLerpSpeed, dt);
+#endif
     swayAngles[0] = DiffTrackAngle(deltaAngles[0] * swayPitchScale, swayAngles[0], swayLerpSpeed, dt, 0.0f, 0.0f, 0.0f);
     swayAngles[1] = DiffTrackAngle(deltaAngles[1] * swayYawScale, swayAngles[1], swayLerpSpeed, dt, 0.0f, 0.0f, 0.0f);
 

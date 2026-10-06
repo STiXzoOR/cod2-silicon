@@ -2032,10 +2032,13 @@ static void PM_AdvanceBob(pmove_t *pm, pml_t *pml, float bobmove, qboolean foots
 {
     int old = pm->ps->bobCycle;
     pm->ps->bobCycle = (int)((float)old + (float)pml->msec * bobmove) & 255;
-    if (PM_MoveTraceEnabled())
-        Com_Printf("[move] handler=%d time=%d msec=%d xyspeed=%.6f bob=%d->%d rate=%.9f origin=%.6f,%.6f,%.6f lean=%.6f flags=%x weapon=%d\n",
+    if (PM_MoveTraceEnabled()) {
+        const WeaponDef *weapon = pm->ps->weapon ? BG_GetWeaponDef(pm->ps->weapon) : NULL;
+        Com_Printf("[move] handler=%d time=%d msec=%d xyspeed=%.6f bob=%d->%d rate=%.9f origin=%.6f,%.6f,%.6f lean=%.6f flags=%x weapon=%d weaponScale=%.6f stance=%d cmd=%d,%d buttons=%x ground=%d\n",
                    pm->handler, pm->cmd.serverTime, pml->msec, (double)pm->xyspeed, old, pm->ps->bobCycle, (double)bobmove,
-                   (double)pm->ps->origin[0], (double)pm->ps->origin[1], (double)pm->ps->origin[2], (double)pm->ps->leanf, pm->ps->pm_flags, pm->ps->weapon);
+                   (double)pm->ps->origin[0], (double)pm->ps->origin[1], (double)pm->ps->origin[2], (double)pm->ps->leanf, pm->ps->pm_flags, pm->ps->weapon,
+                   (double)(weapon ? weapon->fMoveSpeedScale : 1.0f), pm->ps->viewHeightTarget, pm->cmd.forwardmove, pm->cmd.rightmove, pm->cmd.buttons, pm->ps->groundEntityNum);
+    }
     PM_FootstepEvent(pm, pml, old, pm->ps->bobCycle, footstep);
 }
 
@@ -2172,8 +2175,9 @@ static void PM_REGPARM2_ABI PM_Footsteps(pmove_t *pm, pml_t *pml)
     int result = BG_AnimScriptAnimation(ps, AISTATE_COMBAT, move, 1);
     int old = ps->bobCycle;
     float rate = pm->xyspeed / scale * coefficient;
+    qboolean footstep = PM_ShouldMakeFootsteps(pm);
+    PM_AdvanceBob(pm, pml, rate, 0);
     if (!pm->cmd.forwardmove && !pm->cmd.rightmove) {
-        ps->bobCycle = (int)((float)old + (float)pml->msec * rate) & 255;
         if (pm->xyspeed > 120.0f)
             return;
         if (stance)
@@ -2184,7 +2188,7 @@ static void PM_REGPARM2_ABI PM_Footsteps(pmove_t *pm, pml_t *pml)
     }
     if (result < 0)
         BG_AnimScriptAnimation(ps, AISTATE_COMBAT, ANIM_MT_IDLE, 1);
-    PM_AdvanceBob(pm, pml, rate, PM_ShouldMakeFootsteps(pm));
+    PM_FootstepEvent(pm, pml, old, ps->bobCycle, footstep);
 #else
     int oldBob;
     int newBob;
