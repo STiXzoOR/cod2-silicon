@@ -18,6 +18,10 @@ out.mkdir(parents=True, exist_ok=True)
 source = 'src/PC/bgame/bg_pmove.c'
 data = subprocess.check_output(['git', 'show', f'{a.baseline}:{source}'], cwd=ROOT, text=True) if a.baseline else (ROOT / source).read_text()
 (out / 'pmove_source.h').write_text(data)
+for name in ['slidemove', 'mantle']:
+    path = 'src/PC/bgame/bg_' + name + '.c'
+    content = subprocess.check_output(['git', 'show', f'{a.baseline}:{path}'], cwd=ROOT, text=True) if a.baseline else (ROOT / path).read_text()
+    (out / (name + '_source.h')).write_text(content)
 viewpath = 'src/PC/cgame_mp/cg_view_mp.c'
 view = subprocess.check_output(['git', 'show', f'{a.baseline}:{viewpath}'], cwd=ROOT, text=True) if a.baseline else (ROOT / viewpath).read_text()
 match = re.search(r'        (float bobMax = [^;]+;)', view)
@@ -26,8 +30,11 @@ defaults = {'friction': '5.5f', 'stopspeed': '100.0f', 'inertiaMax': '10000.0f',
             'player_footstepsThreshhold': '190.0f', 'player_moveThreshhold': '10.0f',
             'player_strafeSpeedScale': '0.8f', 'player_backSpeedScale': '0.7f',
             'player_spectateSpeedScale': '2.0f', 'player_dmgtimer_maxTime': '750.0f',
-            'bg_fallDamageMinHeight': '128.0f', 'bg_fallDamageMaxHeight': '300.0f'}
-ints = {'player_dmgtimer_stumbleTime': 500, 'player_dmgtimer_flinchTime': 500}
+            'bg_fallDamageMinHeight': '128.0f', 'bg_fallDamageMaxHeight': '300.0f',
+            'bg_foliagesnd_minspeed': '40.0f', 'bg_foliagesnd_maxspeed': '180.0f'}
+ints = {'player_dmgtimer_stumbleTime': 500, 'player_dmgtimer_flinchTime': 500,
+        'bg_foliagesnd_resetinterval': 500, 'bg_foliagesnd_fastinterval': 500,
+        'bg_foliagesnd_slowinterval': 1500}
 names = set(re.findall(r'extern const dvar_t \*(\w+);', data))
 globals_ = []
 for n in sorted(names):
@@ -50,5 +57,12 @@ for source in ['com_math', 'q_shared']:
     objects.append(extra)
 exe = out / 'movement'
 subprocess.run(['clang', '-arch', 'arm64', '-fsanitize=address,undefined', '-Wl,-dead_strip', *map(str, objects), '-o', str(exe)], check=True)
-for name in a.test or ['bob', 'scale', 'walk', 'lean', 'timers', 'direction', 'view']:
+for name in a.test or ['bob', 'scale', 'walk', 'lean', 'timers', 'direction', 'view', 'ladder', 'prone', 'dispatch']:
+    if name == 'collision':
+        continue
     subprocess.run([str(exe), name], check=True)
+if not a.test or 'collision' in a.test:
+    subprocess.run([*flags, '-c', str(ROOT / 'tests/movement/collision.c'), '-o', str(obj)], check=True)
+    collision = out / 'collision'
+    subprocess.run(['clang', '-arch', 'arm64', '-fsanitize=address,undefined', '-Wl,-dead_strip', *map(str, objects), '-o', str(collision)], check=True)
+    subprocess.run([str(collision)], check=True)

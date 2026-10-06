@@ -11,6 +11,9 @@ bgs_t *bgs = &fixture_bgs;
 static WeaponDef weapon;
 static int animation, eventCount, lastEvent, slideCount;
 static float traceFraction = 1.0f;
+static int mantleChecks, weaponCalls;
+static int ladderSurface;
+static void (*fixtureTrace)(trace_t *, const vec_t *, const vec_t *, const vec_t *);
 WeaponDef *BG_GetWeaponDef(int index) { (void)index; return &weapon; }
 int BG_AnimScriptAnimation(playerState_t *ps, aistateEnum_t state, scriptAnimMoveTypes_t move, qboolean cont)
 { (void)ps; (void)state; (void)cont; animation = move; return 1; }
@@ -23,15 +26,44 @@ void Com_DPrintf(const char *fmt, ...) { (void)fmt; }
 Bool Jump_Check(pmove_t *pm, pml_t *pml) { (void)pm; (void)pml; return 0; }
 float Jump_ReduceFriction(playerState_t *ps) { (void)ps; return 1.0f; }
 void Jump_ApplySlowdown(playerState_t *ps) { (void)ps; }
+#ifndef MOVEMENT_COLLISION
 void PM_StepSlideMove(pmove_t *pm, pml_t *pml, qboolean gravity)
 { (void)gravity; ++slideCount; for (int i = 0; i < 3; ++i) pm->ps->origin[i] += pm->ps->velocity[i] * pml->frametime; }
+#endif
 void CG_TraceCapsule(trace_t *tr, const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skip, int mask)
-{ (void)start; (void)mins; (void)maxs; (void)end; (void)skip; (void)mask; memset(tr, 0, sizeof(*tr)); tr->fraction = traceFraction; }
+{ (void)mins; (void)maxs; (void)skip; (void)mask; if (fixtureTrace) { fixtureTrace(tr, start, end, maxs); return; } memset(tr, 0, sizeof(*tr)); tr->fraction = traceFraction; tr->surfaceFlags = ladderSurface; tr->normal[0] = -1; tr->entityNum = 1022; }
 void G_TraceCapsule(trace_t *tr, const vec_t *s, const vec_t *mi, const vec_t *ma, const vec_t *e, int skip, int mask)
 { CG_TraceCapsule(tr, s, mi, ma, e, skip, mask); }
 int CG_PointContents(const vec_t *p, int skip, int mask) { (void)p; (void)skip; (void)mask; return 0; }
 int SV_PointContents(const vec_t *p, int skip, int mask) { return CG_PointContents(p, skip, mask); }
 void G_PlayerEvent(int client, int event) { (void)client; (void)event; }
+void Sys_SnapVector(vec_t *v) { for (int i = 0; i < 3; ++i) v[i] = nearbyintf(v[i]); }
+void BG_AnimUpdatePlayerStateConditions(pmove_t *pm) { (void)pm; }
+int BG_AnimScriptEvent(playerState_t *ps, scriptAnimEventTypes_t event, qboolean cont, qboolean force)
+{ (void)ps; (void)event; (void)cont; (void)force; return 0; }
+void PM_AdjustAimSpreadScale(pmove_t *pm, pml_t *pml) { (void)pm; (void)pml; }
+void PM_UpdateAimDownSightFlag(pmove_t *pm, pml_t *pml) { (void)pm; (void)pml; }
+void PM_UpdateAimDownSightLerp(pmove_t *pm, pml_t *pml) { (void)pm; (void)pml; }
+void PM_Weapon(pmove_t *pm, pml_t *pml) { (void)pm; (void)pml; ++weaponCalls; }
+void PM_ResetWeaponState(playerState_t *ps) { (void)ps; }
+int PM_WeaponAmmoAvailable(playerState_t *ps) { (void)ps; return 1; }
+qboolean PM_InteruptWeaponWithProneMove(playerState_t *ps) { (void)ps; return 0; }
+void PM_ExitAimDownSight(playerState_t *ps) { ps->pm_flags &= ~0x40; }
+void Jump_ClearState(playerState_t *ps) { ps->pm_flags &= ~0x80000; ps->jumpOriginZ = 0; }
+void Jump_ActivateSlowdown(playerState_t *ps) { (void)ps; }
+#ifndef MOVEMENT_COLLISION
+void Mantle_CapView(playerState_t *ps) { (void)ps; }
+void Mantle_ClearHint(playerState_t *ps) { ps->mantleState.flags &= ~8; }
+void Mantle_Check(pmove_t *pm, pml_t *pml) { (void)pm; (void)pml; ++mantleChecks; }
+void Mantle_Move(pmove_t *pm, playerState_t *ps, pml_t *pml) { (void)pm; (void)ps; (void)pml; }
+#endif
+int BG_PlayAnim(playerState_t *ps, int anim, animBodyPart_t part, int duration, qboolean timer, qboolean cont, qboolean force)
+{ (void)ps; (void)anim; (void)part; (void)duration; (void)timer; (void)cont; (void)force; return 0; }
+qboolean BG_CheckProne(int pass, const vec_t *pos, float size, float height, float yaw, float *torsoHeight, float *torsoPitch, float *waistPitch, qboolean already, qboolean ground, vec_t *normal, int handler, proneCheckType_t check, float feet)
+{ (void)pass; (void)pos; (void)size; (void)height; (void)yaw; (void)torsoHeight; (void)torsoPitch; (void)waistPitch; (void)already; (void)ground; (void)normal; (void)handler; (void)check; (void)feet; return 1; }
+#if defined(COD2_CODX) && COD2_CODX
+int Cod2x_GameVersion(void) { return 3; }
+#endif
 
 static void close_float(float actual, float expected)
 {
@@ -159,6 +191,38 @@ static void test_view(void)
     puts("PASS view bob amplitude reads the float dvar");
 }
 
+static void test_ladder(void)
+{
+    playerState_t ps; pmove_t pm; pml_t pml; init(&ps, &pm, &pml, 60);
+    ps.pm_flags = 0x20; ps.vLadderVec[0] = -1; pml.walking = 0;
+    PM_LadderMove(&pm, &pml); close_float(ps.velocity[2], 0.625f * 0.5f * 190.0f * (9.0f * 0.003f));
+    assert(ps.movementDir == 0);
+    puts("PASS ladder pitch-scaled acceleration");
+}
+
+static void test_prone(void)
+{
+    playerState_t ps; pmove_t pm; pml_t pml; init(&ps, &pm, &pml, 11);
+    ps.pm_flags = 1; ps.proneDirectionPitch = 30; ps.proneTorsoPitch = -20;
+    PM_UpdatePronePitch(&pm, &pml); close_float(ps.proneDirectionPitch, 30 - 0.003f * 70); close_float(ps.proneTorsoPitch, -20 + 0.003f * 70);
+    puts("PASS prone pitch approaches the ground at 70 degrees/s");
+}
+
+static void test_dispatch(void)
+{
+    playerState_t ps; pmove_t pm; pml_t pml; init(&ps, &pm, &pml, 60);
+    ps.pm_type = 5; ps.velocity[0] = 100; ps.weaponTime = 50; pm.cmd.serverTime = 3; weaponCalls = 0;
+    Pmove(&pm); assert(ps.commandTime == 3); close_float(ps.origin[0], 0); assert(ps.weaponTime == 50); assert(weaponCalls == 0);
+    init(&ps, &pm, &pml, 60); ps.pm_flags = 0x8000; pm.cmd.serverTime = 3; ps.velocity[0] = 100; mantleChecks = 0;
+    Pmove(&pm); assert(pm.cmd.forwardmove == 0); assert(ps.velocity[0] == 0); assert(mantleChecks == 1);
+    init(&ps, &pm, &pml, 60); ps.pm_type = 2; pm.cmd.forwardmove = 0; pm.cmd.buttons = 0x80; pm.cmd.serverTime = 3;
+    Pmove(&pm); close_float(ps.velocity[2], 570.0f * (9.0f * 0.003f));
+    init(&ps, &pm, &pml, 60); ps.groundEntityNum = 1023; ps.commandTime = 997; pm.cmd.serverTime = 1000;
+    ladderSurface = 8; traceFraction = 0.5f; Pmove(&pm); assert(ps.pm_flags & 0x20);
+    ladderSurface = 0; traceFraction = 1;
+    puts("PASS intermission/frozen frame paths and mantle dispatch");
+}
+
 int main(int argc, char **argv)
 {
     assert(argc == 2);
@@ -169,6 +233,9 @@ int main(int argc, char **argv)
     else if (!strcmp(argv[1], "timers")) test_timers();
     else if (!strcmp(argv[1], "direction")) test_direction();
     else if (!strcmp(argv[1], "view")) test_view();
+    else if (!strcmp(argv[1], "ladder")) test_ladder();
+    else if (!strcmp(argv[1], "prone")) test_prone();
+    else if (!strcmp(argv[1], "dispatch")) test_dispatch();
     else assert(0);
     return 0;
 }
