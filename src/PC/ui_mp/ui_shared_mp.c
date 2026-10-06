@@ -4259,22 +4259,37 @@ qboolean Item_Bind_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, 
         }
     }
 
-    if (bindIdx >= 0 && key != -1) {
 #if defined(COD2_X64)
-        if (g_bindings[bindIdx].bind1 == -1) {
-            g_bindings[bindIdx].bind1 = key;
+    if (bindIdx >= 0) {
+        bind_t *binding = &g_bindings[bindIdx];
+        if (key == -1) {
+            if (binding->bind1 != -1)
+                Key_SetBinding(binding->bind1, "");
+            if (binding->bind2 != -1)
+                Key_SetBinding(binding->bind2, "");
+            binding->bind1 = binding->bind2 = -1;
+        } else if (binding->bind1 == -1) {
+            binding->bind1 = key;
+        } else if (binding->bind1 != key && binding->bind2 == -1) {
+            binding->bind2 = key;
         } else {
-            g_bindings[bindIdx].bind2 = key;
+            Key_SetBinding(binding->bind1, "");
+            if (binding->bind2 != -1)
+                Key_SetBinding(binding->bind2, "");
+            binding->bind1 = key;
+            binding->bind2 = -1;
         }
+    }
 #else
+    if (bindIdx >= 0 && key != -1) {
         int offset = bindIdx * 0x14;
         if (*(int *)((byte *)g_bindings + offset + 12) == -1) {
             *(int *)((byte *)g_bindings + offset + 12) = key;
         } else {
             *(int *)((byte *)g_bindings + offset + 16) = key;
         }
-#endif
     }
+#endif
 
     Controls_SetConfig(0);
     g_waitingForKey = 0;
@@ -5791,7 +5806,11 @@ void Menus_HandleOOBClick(displayContextDef_t *dc, menuDef_t *menu, int key, qbo
                 continue;
 
             int itemType = (((itemDef_s*)(item))->type);
+#if defined(COD2_X64)
+            if (itemType == 0 && ((itemDef_t *)item)->text) {
+#else
             if (itemType != 0 && ((itemDef_t *)item)->text) {
+#endif
 
                 int textBuf[6];
                 memset(textBuf, 0, 24);

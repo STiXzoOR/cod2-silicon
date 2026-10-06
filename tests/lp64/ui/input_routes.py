@@ -57,10 +57,24 @@ static qboolean UI_checkKeyExec(int key) { (void)key; queries++; return wants; }
 static void UI_KeyEvent(int key, qboolean down) { assert(down); (void)key; uiKeys++; }
 static void UI_Pause(int value) { assert(value == 0); pauses++; }
 static void CIN_StopCinematic(int handle) { assert(handle == 7); stops++; }
+static int handled;
+static menuDef_t *expectedMenu;
+static void CalcScreenX(float *p, int a) { (void)p; (void)a; }
+static void CalcScreenY(float *p, int a) { (void)p; (void)a; }
+static void CalcScreenPlacement(float *x,float *y,float *w,float *h,int a,int b)
+{ (void)x; (void)y; (void)w; (void)h; (void)a; (void)b; }
+static void Item_RunScript(displayContextDef_t *dc,itemDef_t *it,const char *s)
+{ (void)dc; (void)it; (void)s; assert(0); }
+static void Window_RemoveDynamicFlags(itemDef_t *it,int bits) { it->window.dynamicFlags[0] &= ~bits; }
+static void Window_AddDynamicFlags(itemDef_t *it,int bits) { it->window.dynamicFlags[0] |= bits; }
+static void Display_MouseMove(displayContextDef_t *dc,void *p,int x,int y) { (void)dc; (void)p; (void)x; (void)y; }
+static void Menu_HandleMouseMove(displayContextDef_t *dc,menuDef_t *m,float x,float y) { (void)dc; (void)m; (void)x; (void)y; }
+static void Menu_HandleKey(displayContextDef_t *dc,menuDef_t *m,int key,int down)
+{ (void)dc; assert(m == expectedMenu && key == 0xc8 && down); handled++; }
 static void route(int key) { int down = 1, keyCatchers = 8, bypassUi;
 ''' + route + '''gameplay++; }
 static void cleanup(displayContextDef_t *dc) { byte *d = (byte *)dc; int i,j,k,openCount;
-''' + cleanup + '''}
+''' + cleanup + '}\n' + oob + '''
 int main(void) {
   if (CASE_KEY) {
   cls.uiStarted = 1;
@@ -85,6 +99,25 @@ int main(void) {
   menu.window.cinematic = 7; item.window.cinematic = 7;
   menu.window.dynamicFlags[0] = 0; cleanup(&dc);
   assert(pauses == 1 && stops == 4 && menu.window.cinematic == -1 && item.window.cinematic == -1);
+  menuDef_t target = {0}, focused = {0}; itemDef_t control = {0};
+  dc.menuCount = dc.openMenuCount = 2;
+  dc.Menus[0] = dc.menuStack[0] = &target; dc.Menus[1] = dc.menuStack[1] = &focused;
+  focused.window.rect[0].w = focused.window.rect[0].h = 100;
+  target.window.rect[0].x = 100; target.window.rect[0].w = target.window.rect[0].h = 100;
+  target.itemCount = 1; target.items = (itemDef_t*[]){&control};
+  control.window.rect[0] = target.window.rect[0]; control.window.dynamicFlags[0] = 4;
+  control.type = 12; control.text = "label";
+  control.textRect[0].x = 100; control.textRect[0].y = 10; control.textRect[0].w = control.textRect[0].h = 10;
+  target.window.dynamicFlags[0] = 4; focused.window.dynamicFlags[0] = 6;
+  dc.cursorx = 150; dc.cursory = 50; expectedMenu = &target;
+  Menus_HandleOOBClick(&dc,&focused,0xc8,1);
+  assert(handled == 1 && (target.window.dynamicFlags[0] & 2) && pauses == 1);
+  target.window.dynamicFlags[0] = 4; focused.window.dynamicFlags[0] = 6; control.type = 0;
+  Menus_HandleOOBClick(&dc,&focused,0xc8,1);
+  assert(handled == 1 && !(target.window.dynamicFlags[0] & 2));
+  dc.cursorx = 105; dc.cursory = 5;
+  Menus_HandleOOBClick(&dc,&focused,0xc8,1);
+  assert(handled == 2 && (target.window.dynamicFlags[0] & 2) && pauses == 1);
   }
   puts("PASS UI key routing with bypass off/on and cross-panel capture until last menu closes");
 }
