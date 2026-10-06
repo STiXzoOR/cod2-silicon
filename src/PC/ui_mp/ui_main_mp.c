@@ -2290,6 +2290,11 @@ static void __attribute_regparm__(0) UI_BuildServerDisplayList(qboolean force)
                 goto reject;
         }
 
+#if defined(COD2_X64)
+        if (ui_browserShowPunkBuster->current.integer >= 0 &&
+            atoi(Info_ValueForKey(info_buf, "punkbuster")) != ui_browserShowPunkBuster->current.integer)
+            goto reject;
+#endif
         if ((ui_browserKillcam)->current.integer >= 0) {
             if (atoi(Info_ValueForKey(info_buf, "kc")) != (ui_browserKillcam)->current.integer)
                 goto reject;
@@ -5662,6 +5667,11 @@ static void UI_BuildServerDisplayList(qboolean force)
         if ((ui_browserFriendlyfire)->current.integer >= 0 &&
             atoi(Info_ValueForKey(info_buf, "ff")) != (ui_browserFriendlyfire)->current.integer)
             goto reject;
+#if defined(COD2_X64)
+        if (ui_browserShowPunkBuster->current.integer >= 0 &&
+            atoi(Info_ValueForKey(info_buf, "punkbuster")) != ui_browserShowPunkBuster->current.integer)
+            goto reject;
+#endif
         if ((ui_browserKillcam)->current.integer >= 0 &&
             atoi(Info_ValueForKey(info_buf, "kc")) != (ui_browserKillcam)->current.integer)
             goto reject;
