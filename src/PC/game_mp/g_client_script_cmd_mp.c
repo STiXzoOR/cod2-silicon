@@ -812,6 +812,9 @@ void PlayerCmd_SetClientDvar(scr_entref_t entref)
     }
 
     PlayerCmd_CleanDvarValue(pszText, szOutString, sizeof(szOutString));
+#if defined(COD2_X64)
+    if (COD2_NATIVE_TRACE_ENABLED())
+#endif
     if (strncmp(pszDvar, "ui_allow_join", 13) == 0) {
         Com_Printf("setClientCvar client=%u %s='%s'\n",
                    entref.entnum, pszDvar, szOutString);

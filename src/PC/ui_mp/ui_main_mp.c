@@ -1676,6 +1676,9 @@ qboolean UI_SetActiveMenu(int menu)
         (*(byte *)&((LegacyHacks *)legacyBase)->ui_newScriptMenu[0]) = 0;
         ((LegacyHacks *)legacyBase)->ui_newScriptMenuIndex = -1;
 
+#if defined(COD2_X64)
+        if (COD2_NATIVE_TRACE_ENABLED())
+#endif
         Com_Printf("script menu '%s': join dvars auto='%s' allies='%s' axis='%s'\n",
                    ((LegacyHacks *)legacyBase)->ui_scriptMenu,
                    Dvar_GetVariantString("ui_allow_joinauto"),

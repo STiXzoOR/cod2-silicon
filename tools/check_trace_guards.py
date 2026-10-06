@@ -21,7 +21,8 @@ NATIVE = {
 LEX = re.compile(r'/\*[\s\S]*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"|'
                  r"'(?:\\.|[^'\\])*'|[A-Za-z_]\w*|\d+|&&|\|\||==|!=|<=|>=|[^\s]")
 OUTPUT = {'Com_Printf', 'Com_DPrintf', 'printf', 'fprintf', 'Printf', 'DPrintf'}
-TAG = re.compile(r'^(?:\\n)*\[[A-Za-z][A-Za-z0-9_-]*\]')
+TAG = re.compile(r"^(?:\\n)*(?:\[[A-Za-z][A-Za-z0-9_-]*\]|setClientCvar client=|"
+                 r"client dvar command |script menu '%s': join dvars| target=%d| text='%\.80s')")
 TRACE_FILE = re.compile(r'(?:x64_[^"/]*_trace\.txt|cod2_heapdiag\.txt)')
 
 

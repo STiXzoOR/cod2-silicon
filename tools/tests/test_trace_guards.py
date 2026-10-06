@@ -17,6 +17,14 @@ class TraceGuardTests(unittest.TestCase):
         self.check('void f() { Com_Printf("[cnx] hello"); fopen("x64_ui_trace.txt", "w"); }', 2)
         self.check('void f() { Com_Printf("[screenshot-" "trace] hi"); fopen("x64_" "ui_trace.txt", "w"); }', 2)
 
+    def test_untagged_client_dvar_probe(self):
+        self.check('void f() { Com_Printf("setClientCvar client=%u %s=%s"); }', 1)
+        self.check('void f() { if (COD2_NATIVE_TRACE_ENABLED()) Com_Printf("setClientCvar client=%u %s=%s"); }', 0)
+        for text in ("client dvar command %s=%s", "script menu '%s': join dvars auto=%s",
+                     " target=%d", " text='%.80s' xy=%f"):
+            self.check('void f() { printf("' + text + '"); }', 1)
+            self.check('void f() { if (!COD2_NATIVE_TRACE_ENABLED()) return; printf("' + text + '"); }', 0)
+
     def test_trace_if_and_early_return(self):
         self.check('void f() { if (COD2_NATIVE_TRACE_ENABLED() && n < 3) { Com_Printf("[cnx] hello"); } }', 0)
         self.check('void f() { if (!COD2_NATIVE_TRACE_ENABLED()) return; fopen("cod2_heapdiag.txt", "w"); }', 0)

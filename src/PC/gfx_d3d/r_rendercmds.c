@@ -200,6 +200,11 @@ static void R_DumpCommandListForMenu(const GfxCmdArray *cl)
     int limit;
     int count;
 
+#if defined(COD2_X64)
+    if (!COD2_NATIVE_TRACE_ENABLED()) {
+        return;
+    }
+#endif
     if (dumped || !cl || cl->usedTotal <= 0) {
         return;
     }
@@ -210,12 +215,16 @@ static void R_DumpCommandListForMenu(const GfxCmdArray *cl)
 
     dumped = 1;
     limit = cl->usedTotal;
+#if !defined(COD2_X64)
     if (COD2_DEBUG_ENV("DBGSPAM"))
+#endif
         printf("[cmddump] used=%d critical=%d\n", cl->usedTotal, cl->usedCritical);
 
     for (off = 0, count = 0; off >= 0 && off + 4 <= limit && count < 120; ++count) {
         const GfxCmdHeader *h = (const GfxCmdHeader *)((const byte *)cl->cmds + off);
+#if !defined(COD2_X64)
         if (COD2_DEBUG_ENV("DBGSPAM"))
+#endif
             printf("[cmddump] off=%d id=%u bytes=%u", off, h->id, h->byteCount);
         if ((h->id == 1 || h->id == 2) && h->byteCount >= 8) {
 #if defined(COD2_X64)
@@ -234,7 +243,9 @@ static void R_DumpCommandListForMenu(const GfxCmdArray *cl)
             break;
         }
         if (h->byteCount <= 0) {
+#if !defined(COD2_X64)
             if (COD2_DEBUG_ENV("DBGSPAM"))
+#endif
                 printf("[cmddump] stop invalid byteCount at off=%d\n", off);
             break;
         }
