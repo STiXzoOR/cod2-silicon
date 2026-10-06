@@ -50,6 +50,11 @@ if len(sys.argv) > 2:
     suites = [suite for suite in suites if suite[0] in sys.argv[2:]]
 with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
     out = Path(tmp)
+    # Link the production trace flag: ASan emits a strong reference even when
+    # an extracted function includes the weak-import diagnostic accessor.
+    trace_obj = out / 'port_debug.o'
+    subprocess.run([*flags, '-c', str(root / 'src/PC/qcommon/port_debug.c'),
+                    '-o', str(trace_obj)], check=True, cwd=root)
     for name, path, names in suites:
         source = (root / path).read_text()
         if name == 'mantle':
@@ -87,7 +92,7 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
         subprocess.run([*flags, '-I' + tmp, '-c', str(root / ('tests/online/' + name + '.c')),
                         '-o', str(obj)], check=True, cwd=root)
         exe = out / name
-        subprocess.run(['clang', '-fsanitize=address,undefined', str(obj), '-o', str(exe)],
+        subprocess.run(['clang', '-fsanitize=address,undefined', str(obj), str(trace_obj), '-o', str(exe)],
                        check=True)
         subprocess.run([str(exe)], check=True, timeout=20,
                        env={**os.environ, 'ASAN_OPTIONS': 'symbolize=0'})
