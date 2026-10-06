@@ -48,3 +48,5 @@ subprocess.run(["python3", str(ROOT / "tests/lp64/ui/build_harness.py"), "--buil
 subprocess.run(["python3", str(ROOT / "tests/lp64/ui/version_test.py"), "--build", str(a.build)] + (["--baseline", a.baseline] if a.baseline else []), check=True)
 
 subprocess.run(["python3", str(ROOT / "tests/lp64/ui/browser_filter.py"), "--build", str(a.build)] + (["--baseline", a.baseline] if a.baseline else []), check=True)
+
+subprocess.run(["python3", str(ROOT / "tests/lp64/ui/input_routes.py"), "--build", str(a.build)] + (["--baseline", a.baseline] if a.baseline else []), check=True)

@@ -5842,7 +5842,12 @@ count_visible:;
             visCount++;
     }
 
+#if defined(COD2_X64)
+    {
+        if (visCount == 0)
+#else
     if (visCount > 0) {
+#endif
         UI_Pause(0);
 
         openCount = (((displayContextDef_s*)(d))->openMenuCount);
@@ -5874,8 +5879,10 @@ count_visible:;
                     CIN_StopCinematic(-((itemDef_t *)item)->window.ownerDraw);
             }
         }
+#if !defined(COD2_X64)
     } else {
         UI_Pause(0);
+#endif
     }
 }
 
