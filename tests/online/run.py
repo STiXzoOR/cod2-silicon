@@ -29,6 +29,7 @@ suites = [
     ('pure_iwds', 'src/PC/qcommon/files.c', ['FS_PureServerSetLoadedIwds']),
     ('timeout', 'src/PC/client_mp/cl_main_mp.c', ['CL_Frame']),
     ('map_loading', 'src/PC/client_mp/cl_main_mp.c', ['CL_ConnectionlessPacket']),
+    ('netchan_decode', 'src/PC/client_mp/cl_net_chan_mp.c', ['CL_Netchan_Decode']),
     ('scheduled_fx', 'src/PC/EffectsCore/FxScheduler.c',
      ['FxScheduler_GetDvar', 'FxScheduler_PlayEffect', 'FxScheduler_Clean']),
     ('server_commands', 'src/PC/client_mp/cl_cgame_mp.c', ['CL_GetServerCommand']),
@@ -57,6 +58,12 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
                     '-o', str(trace_obj)], check=True, cwd=root)
     for name, path, names in suites:
         source = (root / path).read_text()
+        if name == 'netchan_decode':
+            # Its legacy/native diagnostic branches have alternative opening
+            # braces. Resolve them with the real compile flags before extracting.
+            source = subprocess.check_output(
+                [*[flag for flag in flags if flag != '-c'], '-E', '-P', str(root / path)],
+                cwd=root, text=True)
         if name == 'mantle':
             source = source[:source.index('extern const dvar_t *Dvar_RegisterBool')]
         functions = [] if names else [source]

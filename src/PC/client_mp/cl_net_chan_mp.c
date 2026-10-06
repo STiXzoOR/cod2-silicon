@@ -67,10 +67,15 @@ void CL_Netchan_Decode(byte *data, int size)
 
     key = (byte)(((clientConnection_t *)clc_base)->serverMessageSequence);
     challenge = ((clientConnection_t *)clc_base)->challenge;
+#if defined(COD2_X64)
+    /* Mac 1.3 0x18feca: zero is the valid challenge for a listen connection.
+       Reusing an earlier remote challenge corrupts its server messages. */
+#else
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     if (!challenge) {
         challenge = clc_x64_lastChallenge;
     }
+#endif
 #endif
     key ^= (byte)challenge;
 
