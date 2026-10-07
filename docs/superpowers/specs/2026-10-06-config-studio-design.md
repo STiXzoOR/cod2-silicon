@@ -1,8 +1,8 @@
 # Config Studio: design spec
 
-- **Status:** draft for review. Research facts are folded in from `research/` (see the Appendix).
+- **Status:** implementation authorized on 2026-10-07. Research facts are folded in from `research/` (see the Appendix).
 - **Date:** 2026-10-06.
-- **Owner:** the user (product decisions). Engineering goes to Codex `gpt-6.1-sol` at xhigh; design to Opus or Astra at medium effort.
+- **Owner:** the user (product decisions). Engineering goes to Codex `gpt-6.1-sol` at xhigh; design to Astra at high effort, as requested on 2026-10-07.
 - **Visual source of truth:** the CoD2 Silicon Launcher design canvas, https://claude.ai/artifact/XZmUZKarMJWQ2Qa8NThzdh, specifically its Design Rules board and the Config Studio boards.
 
 ## 1. Purpose
@@ -122,9 +122,9 @@ It covers:
 - **`+`/`-` binds with extra commands:** key-down and key-up behaviour exactly as the engine does it (Appendix A).
 - **Quote workarounds** (variables holding quoted text) are preserved.
 
-**Where chains live: decision for the user (Friday).** The game keeps exactly two kinds of state in `config_mp.cfg`: binds and archived dvars (`seta`). It rewrites the whole file on the frame after any change, never merges, and drops comments, `set`, `exec` and `vstr` lines. The options:
+**Where chains live: option A approved by the user on 2026-10-07.** The game keeps exactly two kinds of state in `config_mp.cfg`: binds and archived dvars (`seta`). It rewrites the whole file on the frame after any change, never merges, and drops comments, `set`, `exec` and `vstr` lines. The considered options:
 - **(A) Recommended: a launcher-owned chain file.** It is `main/cs_<profile>.cfg`, loaded with `+exec` at launch.
-  - It uses `set`, so it costs no dvar slots, causes no disk write per keypress, and allows `\"` inside values.
+  - It uses `set`, so helper variables are not archived and pointer changes do not cause a config rewrite per keypress; escaped quotes are allowed subject to the engine's splitter rules. Helper variables still occupy runtime dvar slots.
   - The triggering `bind` stays in `config_mp.cfg`.
   - Without the launcher, `bind F12 "exec cs_<profile>"` reloads it on demand.
   - An **"Export for Windows"** action converts the chains to the portable `seta` form.
@@ -270,7 +270,7 @@ As drawn (BindsVisual, BindsList).
 ## 11. Import
 
 **Sources:**
-- **"Bring your Windows profiles"** (proposed; to be confirmed with the user). Detect a Windows CoD2 install on any mounted volume (Boot Camp, an external Windows drive or a network share) by looking for `…/Activision/Call of Duty 2/main/players/`. Offer each profile there, active one first, as a new loadout through the same review sheet. Backups such as `config_mp_2.cfg` and Raptr copies are offered as optional extra loadouts.
+- **"Bring your Windows profiles"** (approved by the user on 2026-10-07). Detect a Windows CoD2 install on any mounted volume (Boot Camp, an external Windows drive or a network share) by looking for `…/Activision/Call of Duty 2/main/players/`. Offer each profile there, active one first, as a new loadout through the same review sheet. Backups such as `config_mp_2.cfg` and Raptr copies are offered as optional extra loadouts.
 - a file or folder;
 - https URLs (http only for `localhost` and `127.0.0.1`);
 - GitHub repo files, raw links and gists;
@@ -548,4 +548,4 @@ Rules never touch locked settings or violate the selected ruleset. Every rule is
 - The cgame command `quickmessage` should be `mp_QuickMessage`, which is the command `default_mp.cfg` binds to `V`.
 - `motd` and `cl_profileTextHeight` are not registered.
 - `r_lodScale` in the stock build mixes CoD2x flags with stock ranges.
-- The CoD2x build's defaults for `snaps` (40) and `cl_maxpackets` (125) are port choices, not upstream CoD2x. They need a decision.
+- The user requested source verification of `snaps 40` and `cl_maxpackets 125` on 2026-10-07. CoD2x `src/mss32/cgame.cpp:241–245` raises their maximums; `src/mss32/competitive.cpp:54–76` sets those values when `g_competitive` is enabled. These conditional assignments do not establish unconditional startup defaults. Keep the existing port defaults during this work and preserve user profiles; document the distinction.
