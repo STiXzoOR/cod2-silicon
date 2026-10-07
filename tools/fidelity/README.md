@@ -84,6 +84,23 @@ sample and reports resolved precision plus conservative lower/upper bounds.
 Unresolved cases never silently become true positives. “Equivalent” means no
 difference found in this inspection, not a proof of all inputs.
 
+After repairing the seven calibration bugs, their scores need not remain above
+the triage threshold. To keep those historical positive controls separate from
+the current review, pass `--positive-control <archived-known-bug-audit.json>`.
+The tool requires matching reference-binary hashes and source provenance,
+records the archive's SHA-256, and still requires all seven historical cases
+to flag. It reports current scores separately as `current_known_cases`.
+`--reviews` always validates the **current** seeded sample, so old review notes
+cannot certify a changed sample. Omitting the new option preserves the original
+all-seven-current-cases requirement and exit status.
+
+An archived positive-control pass checks the stored audit's calibration receipt;
+it does not rerun the extractor/scorer against historical source, certify the
+current fixes, resolve unreviewed samples or establish whole-game fidelity.
+After changing scoring or extraction, regenerate the positive control from its
+recorded known-bug source before relying on that check. Current behavioral
+regressions, new-stub checks, manual review and ABI gates remain independent.
+
 ## New-stub gate
 
 ```sh

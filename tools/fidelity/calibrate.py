@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate fixed calibration expectations and honest hand-review precision."""
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -37,14 +38,34 @@ def precision(reviews):
                 resolved_precision=positive / (positive + negative) if positive + negative else None)
 
 
+def evaluate(audit, positive_control=None):
+    if positive_control is None:
+        return dict(known_bugs=coverage(audit, KNOWN))
+    if (not audit.get('source_commit') or not positive_control.get('source_commit') or
+            not audit.get('binary_sha256') or
+            audit['binary_sha256'] != positive_control.get('binary_sha256')):
+        raise ValueError('Positive control requires source provenance and the same reference binary')
+    return dict(known_bugs=coverage(positive_control, KNOWN),
+                positive_control=dict(source_commit=positive_control['source_commit'],
+                                      binary_sha256=positive_control['binary_sha256']),
+                current_source_commit=audit['source_commit'],
+                current_known_cases=coverage(audit, KNOWN))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('audit', type=Path)
     parser.add_argument('--reviews', type=Path)
+    parser.add_argument('--positive-control', type=Path,
+                        help='Archived audit of the known-bug source; current scores remain diagnostic')
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     audit = json.loads(args.audit.read_text())
-    result = dict(known_bugs=coverage(audit, KNOWN))
+    control_bytes = args.positive_control.read_bytes() if args.positive_control else None
+    result = evaluate(audit, json.loads(control_bytes) if control_bytes is not None else None)
+    if control_bytes is not None:
+        result['positive_control'].update(path=str(args.positive_control.resolve()),
+                                          audit_sha256=hashlib.sha256(control_bytes).hexdigest())
     if args.reviews:
         reviews = json.loads(args.reviews.read_text())
         for group in ('flagged', 'unflagged'):
