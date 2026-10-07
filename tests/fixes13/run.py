@@ -208,3 +208,6 @@ if args.test and 'debug_enabled' in args.test:
 if not args.test or 'script_load' in args.test:
     path = 'src/PC/game_mp/g_scr_main_mp.c'
     run('script_load', function(path, 'GScr_LoadScriptFunction') + function(path, 'GScr_LoadScripts'))
+
+if not args.test or 'server_snaps' in args.test:
+    run('server_snaps', function('src/PC/server_mp/sv_client_mp.c', 'SV_UserinfoChanged'))

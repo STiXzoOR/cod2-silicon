@@ -528,8 +528,13 @@ void SV_UserinfoChanged(client_t *cl)
         snaps = atoi(value);
         if (snaps <= 0) {
             cl->snapshotMsec = 1000;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        } else if (snaps > 40) {
+            cl->snapshotMsec = 25;
+#else
         } else if (snaps > 30) {
             cl->snapshotMsec = 33;
+#endif
         } else {
             cl->snapshotMsec = 1000 / snaps;
         }
