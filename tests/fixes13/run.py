@@ -256,3 +256,12 @@ if not args.test or 'corpse_trees' in args.test:
     end = source.index('Hunk_ClearToMarkLow(0);', start)
     generated += 'static void release_corpse_trees(void) { int i; {\n' + source[start:end] + '\n}\n'
     run('corpse_trees', generated)
+
+if not args.test or 'world_lighting' in args.test:
+    path = 'src/PC/gfx_d3d/r_bsp.c'
+    source = function(path, 'R_LoadWorld')
+    start = source.index('world = *(byte **)&rgp.world;')
+    end = source.index('dvar = R_DvarFromImport(imp_r_lightTweakAmbient);', start)
+    generated = function(path, 'R_DvarFromImport')
+    generated += 'static void initialize_world_lighting(void) { byte *world, *worldData; refimport_t *refimport;\n' + source[start:end] + '\n}\n'
+    run('world_lighting', generated)
