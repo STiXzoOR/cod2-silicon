@@ -786,7 +786,12 @@ void SND_Set3DPosition(int index, const vec_t *org)
     z = dx * forward[0] + dy * forward[1] + dz * forward[2];
     y = -(dx * up[0] + dy * up[1] + dz * up[2]);
 
+#if defined(COD2_X64)
+    /* The listener axes are forward, left, up; Miles takes right, up, forward. */
+    AIL_set_3D_position(milesGlob.handle_3D[index], y, z, x);
+#else
     AIL_set_3D_position(milesGlob.handle_3D[index], x, y, z);
+#endif
 }
 
 static void MSS_SpatializeStream(float *volume, float *pan)
@@ -1620,7 +1625,11 @@ void SND_Update3DChannel(int i, int frametime)
         lerp = ci->lerp;
         volume = ci->basevolume;
 
+#if defined(COD2_X64)
+        SND_GetCurrent3DPosition(ci->entnum, ci->offset, org);
+#else
         SND_GetCurrent3DPosition(ci->entnum, (float *)&ci->system, org);
+#endif
         SND_Set3DPosition(i, org);
 
         oneMinusLerp = 1.0f - lerp;
