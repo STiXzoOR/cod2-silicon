@@ -141,6 +141,73 @@ python3 tests/movement/weapons.py --build build-macos
 python3 tests/movement/weapons.py --build build-macos-codx
 python3 tests/audio/run.py --build build-macos
 python3 tests/audio/run.py --build build-macos-codx
+python3 tests/fidelity/run.py --build build-macos
+python3 tests/fidelity/run.py --build build-macos-codx
+python3 tests/collision/run.py --build build-macos
+python3 tests/collision/run.py --build build-macos-codx
+python3 tests/cod2x/run_mouse_sensitivity.py \
+  --compile-db build-macos/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/mouse-stock"
+python3 tests/cod2x/run_mouse_sensitivity.py \
+  --compile-db build-macos-codx/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/mouse-codx"
+python3 tests/camera/run.py --compile-commands build-macos/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/camera-stock"
+python3 tests/camera/run.py --compile-commands build-macos-codx/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/camera-codx"
+for mode in stock codx; do
+  if [ "$mode" = stock ]; then build=build-macos; else build=build-macos-codx; fi
+  for fixture in animation_stance run_player_broadcast; do
+    python3 "tests/cod2x/$fixture.py" --compile-db "$build/compile_commands.engine.json" \
+      --output "$HOME/Library/Application Support/CoD2-native/$fixture-$mode"
+  done
+  for fixture in host_lifecycle run_host_protocol run_shotgun_spread; do
+    python3 "tests/cod2x/$fixture.py" --compile-db "$build/compile_commands.engine.json" \
+      --output "$HOME/Library/Application Support/CoD2-native/$fixture-$mode"
+  done
+  python3 tests/cod2x/host_lifecycle.py --dedicated \
+    --compile-db "$build/compile_commands.engine.json" \
+    --output "$HOME/Library/Application Support/CoD2-native/host-lifecycle-dedicated-$mode"
+  for fixture in stop_gametype udp_operations; do
+    python3 "tests/cod2x/$fixture.py" --compile-db "$build/compile_commands.engine.json" \
+      --output "$HOME/Library/Application Support/CoD2-native/$fixture-$mode"
+  done
+  python3 tests/cod2x/stop_gametype.py --dedicated \
+    --compile-db "$build/compile_commands.engine.json" \
+    --output "$HOME/Library/Application Support/CoD2-native/stop-gametype-dedicated-$mode"
+  for target in cod2_macos cod2_macos_ded; do
+    python3 tests/lp64/script/compiler_checks.py --target "$target" \
+      --compile-db "$build/compile_commands.engine.json" \
+      --output "$HOME/Library/Application Support/CoD2-native/compiler-$mode-$target"
+  done
+  python3 tests/lp64/script/identity_methods.py --parser-ubsan \
+    --compile-db "$build/compile_commands.engine.json" \
+    --output "$HOME/Library/Application Support/CoD2-native/identity-$mode"
+  python3 tests/hud/ownerdraw.py --compile-commands "$build/compile_commands.engine.json" \
+    --output "$HOME/Library/Application Support/CoD2-native/ownerdraw-$mode"
+  for fixture in run weapons; do
+    python3 "tests/movement/$fixture.py" --revision-matrix \
+      --compile-db "$build/compile_commands.engine.json" \
+      --output "$HOME/Library/Application Support/CoD2-native/matrix-$fixture-$mode"
+  done
+  python3 tests/cod2x/animation_stance.py --revision-matrix \
+    --compile-db "$build/compile_commands.engine.json" \
+    --output "$HOME/Library/Application Support/CoD2-native/matrix-animation-$mode"
+  python3 tests/hud/run.py --compile-commands "$build/compile_commands.engine.json" \
+    --output "$HOME/Library/Application Support/CoD2-native/hud-$mode"
+  python3 tests/lp64/renderer/run_player_skeleton.py \
+    --compile-db "$build/compile_commands.engine.json" \
+    --output "$HOME/Library/Application Support/CoD2-native/player-skeleton-$mode"
+  python3 tests/lp64/renderer/run_water.py \
+    --compile-commands "$build/compile_commands.engine.json"
+done
+# The callback VM fixture requires the CoD2x callback implementation.
+python3 tests/cod2x/stop_gametype_vm.py --ubsan \
+  --compile-db build-macos-codx/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/stop-vm-listen"
+python3 tests/cod2x/stop_gametype_vm.py --ubsan --dedicated \
+  --compile-db build-macos-codx/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/stop-vm-dedicated"
 python3 tests/perf/run.py
 python3 tests/lp64/game/run.py --build build-macos
 python3 tests/lp64/script/run.py
