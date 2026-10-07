@@ -6497,6 +6497,13 @@
   },
   {
     "file": "src/PC/universal/dvar.c",
+    "text": "cursor = outBufferEnd - 1;",
+    "count": 2,
+    "classification": "safe",
+    "reason": "Both enum-domain truncation branches clamp a char cursor to the last byte of the caller's buffer. The native early return excludes outBufferLen <= 0 before outBufferEnd = outBuffer + outBufferLen; subtracting one stays inside the buffer and does not encode an object-layout offset. tests/fixes13/console_hints.c checks sizes 1 through 32, a long enum at size 64, zero length, cursor bounds and terminators under ASan."
+  },
+  {
+    "file": "src/PC/universal/dvar.c",
     "text": "isAlnum = (*(int *)(*(byte **)&__DefaultRuneLocale + 0x34 + sch * 4) & 0x500) != 0;",
     "count": 1,
     "classification": "safe",
