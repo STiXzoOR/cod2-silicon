@@ -94,6 +94,8 @@ if not args.test or 'snapshot' in args.test:
     path = 'src/PC/server_mp/sv_snapshot_mp.c'
     run('snapshot', ''.join(function(path, n) for n in
         ['SV_WriteSnapshotToClientLocal', 'SV_WriteOverflowRecoveryCommandsLocal', 'SV_SendClientSnapshot']))
+if not args.test or 'items' in args.test:
+    run('items', function('src/PC/cgame_mp/cg_weapons.c', 'CG_RegisterItems'))
 if not args.test or 'abi' in args.test:
     for path in ABI_SOURCES:
         subprocess.run([*flags, '-include', 'stdlib.h', '-include', 'string.h',
