@@ -61,6 +61,9 @@ extern float Dvar_GetFloat(const char *name);
 extern const char *Dvar_GetString(const char *name);
 extern void Dvar_SetFromStringByName(const char *dvarName, const char *string);
 extern struct dvar_s *Dvar_FindVar(const char *name);
+#ifdef COD2_X64
+extern void Com_LocalizedFloatToString(float value, char *buffer, unsigned int size, unsigned int decimals);
+#endif
 extern int UI_PlayLocalSoundAlias(snd_alias_list_t *aliasList);
 extern int UI_PlayLocalSoundAliasByName(const char *name);
 extern void UI_RunMenuScript(const char **args);
@@ -2847,10 +2850,20 @@ void Item_TextField_Paint(displayContextDef_t *dc, itemDef_t *item)
 
     buff[0] = '\0';
     if (item->dvar) {
+#ifdef COD2_X64
+        if (item->type == 17) {
+            const dvar_t *numeric = Dvar_FindVar(item->dvar);
+            if (numeric && numeric->type == 1)
+                Com_LocalizedFloatToString(numeric->current.value, buff, sizeof(buff), 2);
+        } else {
+#endif
         value = Dvar_GetVariantString(item->dvar);
         if (value) {
             I_strncpyz(buff, value, sizeof(buff));
         }
+#ifdef COD2_X64
+        }
+#endif
     }
 
     Item_SetTextExtents(item, &width, &height, buff);
