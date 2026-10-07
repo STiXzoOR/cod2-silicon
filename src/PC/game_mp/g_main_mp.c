@@ -809,9 +809,14 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_gls, G_VM_FRAME);)
 
     level.initializing = 1;
+#if defined(COD2_X64)
+    Scr_LoadGameType();
+#endif
     Scr_LoadLevel();
     COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_before, G_VM_FRAME);)
+#if !defined(COD2_X64)
     Scr_LoadGameType();
+#endif
     COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_after_load, G_VM_FRAME);)
     Scr_StartupGameType();
     COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_after_startup, G_VM_FRAME);)
@@ -841,6 +846,10 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     COD2_DEBUG_ONLY(Com_Printf("[ckpt] before CalculateRanks\n");)
     CalculateRanks();
     level.initializing = 0;
+#if defined(COD2_X64)
+    SaveRegisteredWeapons();
+    SaveRegisteredItems();
+#endif
     COD2_DEBUG_ONLY(Com_Printf("[ckpt] G_InitGame END\n");)
     COD2_DEBUG_ONLY(dbg_scan_ents("G_InitGame_end");)
 

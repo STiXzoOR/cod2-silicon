@@ -171,6 +171,20 @@ if not args.test or 'level_state' in args.test:
     generated += function('src/PC/game_mp/g_scr_main_mp.c', 'G_InitObjectives')
     generated += 'static void initialize_spawned_level(void) {\n' + source[start:end] + '\n}\n'
     run('level_state', generated)
+if not args.test or 'level_scripts' in args.test:
+    path = 'src/PC/game_mp/g_main_mp.c'
+    source = subprocess.check_output(['git', 'show', f'{args.baseline}:{path}'], text=True, cwd=ROOT) if args.baseline else (ROOT / path).read_text()
+    # The block begins at the final initializing assignment before script startup.
+    start = source.index('    level.initializing = 1;', source.index('    G_LoadStructs();'))
+    end = source.index('    if (restart && !savepersist)', start)
+    tail = source.index('    CalculateRanks();', end)
+    tail_end = source.index('    return;', tail)
+    generated = ''.join(function('src/PC/game_mp/g_scr_main_mp.c', name) for name in
+                        ['Scr_LoadLevel', 'Scr_LoadGameType', 'Scr_StartupGameType'])
+    generated += ''.join(function('src/PC/game_mp/g_items_mp.c', name) for name in
+                         ['SaveRegisteredWeapons', 'SaveRegisteredItems'])
+    generated += 'static void initialize_level_scripts(void) {\n' + source[start:end] + source[tail:tail_end] + '\n}\n'
+    run('level_scripts', generated)
 if args.test and 'debug_enabled' in args.test:
     checked = set()
     for entry in entries:
