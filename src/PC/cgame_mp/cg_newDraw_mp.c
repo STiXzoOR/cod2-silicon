@@ -171,6 +171,18 @@ COD2_ASSERT_FIELD(WeaponDef,     overlayReticle, 0x278);
 COD2_ASSERT_FIELD(WeaponDef,     bWideListIcon,  0x344);
 COD2_ASSERT_FIELD(playerState_t, fWeaponPosFrac, 0xdc);
 
+#if defined(COD2_X64) && COD2_X64
+extern const dvar_t *cg_hudCompassMinRange;
+extern const dvar_t *cg_hudCompassMaxRange;
+extern const dvar_t *cg_hudCompassMinRadius;
+extern const dvar_t *cg_hudObjectiveMaxRange;
+extern const dvar_t *cg_hudObjectiveMinAlpha;
+extern const float vectoyaw(const vec_t *vec);
+extern const float AngleNormalize360(const float angle);
+extern void CG_ApplyCompassPointerRadiusScale(float *radiusScale);
+extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack);
+#endif
+
 static qboolean CG_DrawHealthEnabled(void)
 {
     const dvar_t *drawHealth = Dvar_FindVar("cg_drawHealth");
@@ -1631,6 +1643,109 @@ static inline __attribute__((always_inline)) void CG_DrawPlayerCompassFriendlies
     CG_DrawCompassFriendlies(rect, material, drawColor);
 }
 
+#if defined(COD2_X64) && COD2_X64
+static void CG_DrawPlayerCompassPointers(const rectDef_t *rect, const vec_t *color)
+{
+    const playerState_t *ps;
+    float fadeAlpha;
+    float sizeScale;
+    float centerX;
+    float centerY;
+    int i;
+
+    fadeAlpha = CG_HudFadeAlpha(hud_fade_compass, cg->compassFadeTime);
+    if (fadeAlpha == 0.0f) {
+        return;
+    }
+
+    CG_UpdateCompPointerOrientation();
+    if (!cg->nextSnap) {
+        return;
+    }
+    ps = &cg->nextSnap->ps;
+    if ((unsigned int)ps->clientNum >= 64 || !cg->bgs.clientinfo[ps->clientNum].infoValid) {
+        return;
+    }
+
+    sizeScale = cg_hudCompassSize->current.value;
+    centerX = rect->w * sizeScale * 0.5f + rect->x;
+    centerY = 0.5f * sizeScale * rect->h - (sizeScale - 1.0f) * rect->h + rect->y;
+
+    for (i = 0; i < 16; ++i) {
+        const objective_t *objective;
+        const vec_t *origin;
+        vec3_t delta;
+        vec4_t drawColor;
+        float distance;
+        float yaw;
+        float radians;
+        float radius;
+        float minRange;
+        float maxRange;
+        float objectiveMaxRange;
+        float fraction;
+        float iconSize;
+        float x;
+        float y;
+        MaterialHandle icon;
+        char materialName[64];
+
+        objective = &ps->objective[i];
+        if (objective->state != OBJST_CURRENT) {
+            continue;
+        }
+        origin = objective->entNum == 1023 ? objective->origin : cg_entities[objective->entNum].lerpOrigin;
+        delta[0] = origin[0] - cg->refdef.vieworg[0];
+        delta[1] = origin[1] - cg->refdef.vieworg[1];
+        delta[2] = origin[2] - cg->refdef.vieworg[2];
+        yaw = AngleNormalize360(vectoyaw(delta) - cg->compPointerYaw);
+        distance = sqrtf(delta[0] * delta[0] + delta[1] * delta[1]);
+
+        memcpy(drawColor, color, sizeof(drawColor));
+        maxRange = cg_hudCompassMaxRange->current.value;
+        objectiveMaxRange = cg_hudObjectiveMaxRange->current.value;
+        if (distance <= maxRange) {
+            drawColor[3] = 1.0f;
+        } else if (distance >= objectiveMaxRange) {
+            drawColor[3] = cg_hudObjectiveMinAlpha->current.value;
+        } else {
+            fraction = objectiveMaxRange - maxRange;
+            if (fraction != 0.0f) {
+                fraction = (distance - maxRange) / fraction;
+            }
+            drawColor[3] = 1.0f - (1.0f - cg_hudObjectiveMinAlpha->current.value) * fraction;
+        }
+
+        minRange = cg_hudCompassMinRange->current.value;
+        if (distance <= minRange) {
+            radius = cg_hudCompassMinRadius->current.value;
+        } else if (distance >= maxRange) {
+            radius = 1.0f;
+        } else {
+            fraction = maxRange - minRange;
+            if (fraction != 0.0f) {
+                fraction = (maxRange - distance) / fraction;
+            }
+            radius = 1.0f - (1.0f - cg_hudCompassMinRadius->current.value) * fraction;
+        }
+        CG_ApplyCompassPointerRadiusScale(&radius);
+
+        radians = (float)((double)yaw * 0.017453292519943295);
+        iconSize = 16.0f * cg_hudCompassSize->current.value;
+        x = centerX + iconSize * -0.5f - sinf(radians) * radius;
+        y = centerY + iconSize * -0.5f - cosf(radians) * radius;
+        icon = cgs->media.objectiveMaterials[0];
+        if (CG_ServerMaterialName(objective->icon, materialName, sizeof(materialName))) {
+            icon = CL_RegisterMaterialNoMip(materialName, 7);
+        }
+        if (fadeAlpha < drawColor[3]) {
+            drawColor[3] = fadeAlpha;
+        }
+        UI_DrawHandlePic(x, y, iconSize, iconSize, rect->horzAlign, rect->vertAlign, drawColor, icon);
+    }
+}
+#endif
+
 void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, struct Font_s *font, float scale, vec_t *color, MaterialHandle material, int textStyle)
 {
     rectDef_t rect;
@@ -1667,6 +1782,17 @@ void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
     case CG_RED_SCORE:
         CG_DrawScore(0, &rect, font, scale, color, material, textStyle);
         break;
+#if defined(COD2_X64) && COD2_X64
+    case CG_PLAYER_LOCATION:
+        if (cg->nextSnap && (unsigned int)cg->nextSnap->ps.clientNum < 64) {
+            const clientInfo_t *clientInfo = &cg->bgs.clientinfo[cg->nextSnap->ps.clientNum];
+            if (clientInfo->infoValid) {
+                UI_DrawText(CG_GetTranslatedLocationString(clientInfo->location), 0x7fffffff, font,
+                            rect.x, rect.y + rect.h, rect.horzAlign, rect.vertAlign, scale, color, textStyle);
+            }
+        }
+        break;
+#endif
     case CG_GAME_TYPE:
         UI_DrawText(CG_GameTypeString(), 0x7fffffff, font, rect.x, rect.y + rect.h,
                     rect.horzAlign, rect.vertAlign, scale, color, textStyle);
@@ -1724,7 +1850,16 @@ void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         CG_DrawPlayerCompassBack(&rect, material, color);
         break;
     case CG_PLAYER_COMPASS_POINTERS:
+#if defined(COD2_X64) && COD2_X64
+#if defined(COD2_CODX) && COD2_CODX
+        if (!Cod2x_DrawCompass())
+            break;
+        Cod2x_CompassOffset(&rect.x, &rect.y);
+#endif
+        CG_DrawPlayerCompassPointers(&rect, color);
+#else
         CG_UpdateCompPointerOrientation();
+#endif
         break;
     case CG_PLAYER_COMPASS_FRIENDS:
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
