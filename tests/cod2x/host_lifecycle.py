@@ -61,7 +61,9 @@ def function(text, name):
 
 init = active(source_path)
 globals_ = sorted(set(re.findall(r'^extern const dvar_t \*(\w+);', init, re.M)))
-(out / 'host_globals.h').write_text(''.join('const dvar_t *' + name + ';\n' for name in globals_))
+(out / 'host_globals.h').write_text(
+    '#define HOST_HAS_IDENTITY_CLEANUP ' + str(int('SV_Cod2xClearIdentities();' in function(init, 'SV_Shutdown'))) + '\n' +
+    ''.join('const dvar_t *' + name + ';\n' for name in globals_))
 for path, names, output in [
     (source_path, ['SV_Init', 'SV_InitDvar', 'SV_InitArchivedSnapshot', 'SV_Shutdown', 'SV_SpawnServer'], 'host_server_source.h'),
     ('src/PC/server_mp/sv_client_mp.c', ['SV_ClientEnterWorld'], 'host_begin_source.h'),

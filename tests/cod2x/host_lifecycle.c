@@ -29,6 +29,7 @@ cg_t *cg = &clientGame;
 static gentity_t entities[2];
 static client_t hostClients[64];
 static int begins, publications, clientResets, allResets, identityReads, gameplayStarts;
+static int identityClears;
 static char published[128], serialized[128];
 static int valueindex;
 static char value1[2][8192];
@@ -62,6 +63,8 @@ void SV_RemoveOperatorCommands(void) {}
 void SV_MasterShutdown(void) {}
 void SV_ShutdownGameProgs(void) {}
 void SV_FreeClients(void) { svs.clients = NULL; }
+/* WS76's separate identity fixture executes the actual sidecar clear. */
+void SV_Cod2xClearIdentities(void) { ++identityClears; }
 void SV_DropClient(client_t *client_, const char *reason) { (void)reason; client_->state = 0; }
 void SV_SendClientSnapshot(client_t *client_) { (void)client_; }
 void SV_SendServerCommand(client_t *client_, svscmd_type type, const char *format, ...)
@@ -292,6 +295,7 @@ int main(void)
     hostClient.state = 0;
     svs.clients = NULL;
     SV_Shutdown("fixture shutdown");
+    CHECK(identityClears == HOST_HAS_IDENTITY_CLEANUP);
     CHECK(Cod2x_GameVersion() == 0);
 #ifdef COD2X_HOST_REVISION
     CHECK(!Cod2x_ServerActive() && Cod2x_ServerGameVersion() == 0);
@@ -326,6 +330,7 @@ int main(void)
     CHECK(!Dvar_FindVar("g_competitive")->current.enabled);
     CHECK(!Dvar_FindVar("com_maxfps_limit")->current.enabled);
     SV_Shutdown("fixture final shutdown");
+    CHECK(identityClears == 2 * HOST_HAS_IDENTITY_CLEANUP);
 #endif
     Dvar_Shutdown();
     FINISH("native host lifecycle, revision ownership, begin, restart and remote policy");

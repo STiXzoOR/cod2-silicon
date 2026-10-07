@@ -58,10 +58,10 @@ def main():
         client, main = active(CLIENT), active(MAIN)
         generated = '#define WS69_HAS_CHALLENGE_METADATA ' + str(int('cod2xChallengeIdentities' in client)) + '\n'
         if 'cod2xChallengeIdentities' in client:
-            generated += re.search(r'typedef struct Cod2x_ChallengeIdentity\s*\{[\s\S]*?\}\s*Cod2x_ChallengeIdentity;', client)[0] + '\n'
-            generated += re.search(r'static Cod2x_ChallengeIdentity cod2xChallengeIdentities\[[^;]*;', client)[0] + '\n'
-            for name in ('SV_Cod2xChallengeDigest', 'SV_Cod2xStoreChallengeDigest'):
-                generated += function(client, name)
+            generated += function(client, 'SV_ClientNumForClient')
+            start = client.index('typedef struct Cod2x_ChallengeIdentity')
+            end = client.index('\nvoid SV_AuthorizeRequest', start)
+            generated += client[start:end] + '\n'
         for name in ('SV_AuthorizeRequest', 'SV_AuthorizeIpPacket', 'SV_GetChallenge', 'SV_UserinfoChanged', 'SV_DirectConnect'):
             generated += function(client, name)
         for name in ('SVC_Info', 'SVC_Status', 'SVC_GameCompleteStatus'):

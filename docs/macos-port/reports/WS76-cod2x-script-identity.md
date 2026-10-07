@@ -176,6 +176,14 @@ with the expanded metadata block and `SV_ClientNumForClient` helper before
 rerunning it. The existing host-lifecycle fixture's shutdown extraction also
 needs the new metadata cleanup dependency during composition.
 
+Parent composition now extracts the complete production metadata block for
+WS69. The separate host lifecycle fixture records the shutdown cleanup boundary;
+the identity fixture above still executes the real cleanup implementation.
+Parent stock/CoD2x protocol and lifecycle reruns pass in
+`CoD2-native/ws76-composed`, and parent identity reruns pass in
+`CoD2-native/ws76-parent`, under Application Support. Parser limitations remain
+unchanged by these fixture adaptations.
+
 All identities and service replies in the new fixtures are synthetic. No
 game/GUI, live authorization, owned-key join, benchmark or third-party assets
 ran or were copied. Work is uncommitted and unstaged for root review and
