@@ -83,7 +83,23 @@ def main():
         fixture = fixture.replace('int main(void)', 'int WS69_protocol_fixture_main(void)')
         (out / 'host_fixture.h').write_text(fixture)
         lifecycle = active('src/PC/server_mp/sv_init_mp.c')
-        (out / 'identity_shutdown_source.h').write_text(function(lifecycle, 'SV_Shutdown') +
+        commands = active('src/PC/server_mp/sv_ccmds_mp.c')
+        map_change = ''
+        if 'SV_Cod2xBeginMapChangeApproved' in commands:
+            # Identity shutdown runs without a callback. WS81 separately tests
+            # the real callback/VM; retain actual server guard bodies here.
+            map_change = '''
+qboolean GScr_Cod2xBeforeMapChange(qboolean shutdown, const char *source)
+{ (void)shutdown; (void)source; return 1; }
+qboolean GScr_Cod2xConsumeMapChange(const char *source, const char *command,
+                                  const char *target, const char *marker)
+{ (void)source; (void)command; (void)target; (void)marker; return 0; }
+void GScr_Cod2xResetMapChange(void) {}
+'''
+            map_change += re.search(r'^static unsigned int cod2xMapChangeDepth;', commands, re.M)[0] + '\n'
+            map_change += ''.join(function(commands, name) for name in
+                                 ('SV_Cod2xBeginMapChangeApproved', 'SV_Cod2xBeginMapChange', 'SV_Cod2xEndMapChange'))
+        (out / 'identity_shutdown_source.h').write_text(map_change + function(lifecycle, 'SV_Shutdown') +
                                                         function(lifecycle, 'SV_ChangeMaxClients'))
 
         table = re.search(r'static const BuiltinMethodDef player_methods\[\][\s\S]*?\n};', player)[0]
