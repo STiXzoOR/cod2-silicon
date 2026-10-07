@@ -40,6 +40,14 @@ static cmodel_t probeModel;
 static TraceThreadInfo info;
 void *Sys_GetValue(int key) { return &info; }
 void CM_TraceThroughAabbTree(const traceWork_t *t, CollisionAabbTree *a, trace_t *r) { }
+short int CM_MeshTestInLeaf(const traceWork_t *t, cLeaf_t *l, trace_t *r) { return 0; }
+int CM_BoxLeafnums(const vec_t *a, const vec_t *b, int *l, int n, int *last) { return 0; }
+const vec_t Vec3NormalizeTo(const vec_t *v, vec_t *out) {
+    float length = sqrtf(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
+    float inverse = length ? 1.0f / length : 0.0f;
+    for (int i=0;i<3;i++) out[i] = v[i] * inverse;
+    return length;
+}
 '''
     driver += extents
     driver += '''

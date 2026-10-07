@@ -482,6 +482,227 @@ static int CM_TraceThroughTree(const traceWork_t *tw, int num,
     CM_TraceLeaf(tw, &cm.leafs[-1 - num], trace);
     return 0;
 }
+#if defined(COD2_X64)
+
+extern const vec_t Vec3NormalizeTo(const vec_t *v, vec_t *out);
+
+static void CM_TestBrushPosition(const traceWork_t *tw, const cbrush_t *brush, trace_t *trace)
+{
+    int i;
+
+    if (!(brush->contents & tw->contents))
+        return;
+    for (i = 0; i < 3; i++) {
+        if (tw->bounds[0][i] > brush->maxs[i] || tw->bounds[1][i] < brush->mins[i])
+            return;
+    }
+    for (i = 0; i < brush->numsides; i++) {
+        const cplane_t *plane = brush->sides[i].plane;
+        float support = tw->radius + CM_AbsFloat(tw->offsetZ * plane->normal[2]);
+        if (CM_DotProduct(tw->extents.start, plane->normal) > plane->dist + support)
+            return;
+    }
+    trace->startsolid = 1;
+    trace->allsolid = 1;
+    trace->fraction = 0.0f;
+    trace->contents = brush->contents;
+}
+
+static void CM_TestLeafBrushNode(const traceWork_t *tw, const cLeafBrushNode_t *node, trace_t *trace, int depth)
+{
+    int i;
+
+    if (depth > 64 || trace->allsolid || !(node->contents & tw->contents))
+        return;
+    if (node->leafBrushCount > 0) {
+        for (i = 0; i < node->leafBrushCount && !trace->allsolid; i++) {
+            unsigned short index = node->data.leaf.brushes[i];
+            if (index < cm.numBrushes)
+                CM_TestBrushPosition(tw, &cm.brushes[index], trace);
+        }
+        return;
+    }
+    if (node->leafBrushCount < 0)
+        CM_TestLeafBrushNode(tw, &node[1], trace, depth + 1);
+    if (trace->allsolid)
+        return;
+    if (tw->bounds[0][node->axis] > node->data.children.dist) {
+        CM_TestLeafBrushNode(tw, node + node->data.children.childOffset[0], trace, depth + 1);
+    } else if (tw->bounds[1][node->axis] < node->data.children.dist) {
+        CM_TestLeafBrushNode(tw, node + node->data.children.childOffset[1], trace, depth + 1);
+    } else {
+        CM_TestLeafBrushNode(tw, node + node->data.children.childOffset[0], trace, depth + 1);
+        if (!trace->allsolid)
+            CM_TestLeafBrushNode(tw, node + node->data.children.childOffset[1], trace, depth + 1);
+    }
+}
+
+static void CM_TestLeafPosition(const traceWork_t *tw, cLeaf_t *leaf, trace_t *trace)
+{
+    int i;
+    int overlap = 1;
+
+    if (leaf->brushContents & tw->contents) {
+        for (i = 0; i < 3; i++) {
+            if (leaf->mins[i] >= tw->bounds[1][i] || tw->bounds[0][i] >= leaf->maxs[i])
+                overlap = 0;
+        }
+        if (overlap && leaf->leafBrushNode >= 0 && leaf->leafBrushNode < cm.leafbrushNodesCount)
+            CM_TestLeafBrushNode(tw, &cm.leafbrushNodes[leaf->leafBrushNode], trace, 0);
+    }
+    if (!trace->allsolid && (leaf->terrainContents & tw->contents))
+        CM_MeshTestInLeaf(tw, leaf, trace);
+}
+
+static void CM_TempCapsuleGeometry(const cmodel_t *model, vec3_t center, float *radius, float *offsetZ)
+{
+    int i;
+
+    for (i = 0; i < 3; i++)
+        center[i] = (model->mins[i] + model->maxs[i]) * 0.5f;
+    *radius = CM_MinFloat(model->maxs[0] - center[0], model->maxs[2] - center[2]);
+    *offsetZ = model->maxs[2] - center[2] - *radius;
+}
+
+static void CM_TestTempCapsulePosition(const traceWork_t *tw, const cmodel_t *model, trace_t *trace)
+{
+    vec3_t center;
+    float radius, offsetZ, x, y, z;
+
+    if (!(CM_BoxBrush()->contents & tw->contents))
+        return;
+    CM_TempCapsuleGeometry(model, center, &radius, &offsetZ);
+    radius += tw->radius;
+    offsetZ += tw->offsetZ;
+    x = tw->extents.start[0] - center[0];
+    y = tw->extents.start[1] - center[1];
+    z = CM_AbsFloat(tw->extents.start[2] - center[2]) - offsetZ;
+    if (z < 0.0f)
+        z = 0.0f;
+    if (x * x + y * y + z * z < radius * radius) {
+        trace->startsolid = 1;
+        trace->allsolid = 1;
+        trace->fraction = 0.0f;
+    }
+}
+
+/* The reference stores the start separation normal, and backs the quadratic
+ * contact up by separation length * 0.125 / projection (Mac 0x63cec..0x63d14). */
+static int CM_TraceTempSphere(const traceWork_t *tw, const vec_t *start, const vec_t *end,
+                              const vec_t *center, float radius, trace_t *trace)
+{
+    vec3_t separation, normal;
+    float distanceSq, c, projection, discriminant, length, fraction;
+    int i;
+
+    for (i = 0; i < 3; i++)
+        separation[i] = start[i] - center[i];
+    radius += tw->radius;
+    distanceSq = CM_DotProduct(separation, separation);
+    c = distanceSq - radius * radius;
+    length = Vec3NormalizeTo(separation, normal);
+    if (c <= 0.0f) {
+        trace->fraction = 0.0f;
+        trace->startsolid = 1;
+        CM_CopyVec3(normal, trace->normal);
+        trace->contents = CM_BoxBrush()->contents;
+        for (i = 0; i < 3; i++)
+            separation[i] = end[i] - center[i];
+        if (CM_DotProduct(separation, separation) <= radius * radius)
+            trace->allsolid = 1;
+        return 0;
+    }
+    projection = CM_DotProduct(separation, tw->delta);
+    if (projection >= 0.0f)
+        return 1;
+    discriminant = projection * projection - tw->deltaLenSq * c;
+    if (discriminant < 0.0f)
+        return 1;
+    fraction = (-projection - sqrtf(discriminant)) / tw->deltaLenSq + length * 0.125f / projection;
+    if (fraction >= trace->fraction)
+        return 1;
+    trace->fraction = fraction < 0.0f ? 0.0f : fraction;
+    CM_CopyVec3(normal, trace->normal);
+    trace->contents = CM_BoxBrush()->contents;
+    return 0;
+}
+
+static void CM_TraceTempCapsule(const traceWork_t *tw, const cmodel_t *model, trace_t *trace)
+{
+    vec3_t center, top, bottom, startTop, startBottom, endTop, endBottom, normal;
+    float radius, offsetZ, totalRadius, totalOffset, x, y, c, projection, lengthSq;
+    float discriminant, length, root, epsilon, fraction;
+    int i;
+
+    if (!(CM_BoxBrush()->contents & tw->contents))
+        return;
+    for (i = 0; i < 3; i++) {
+        if (tw->bounds[0][i] > model->maxs[i] + 1.0f || tw->bounds[1][i] < model->mins[i] - 1.0f)
+            return;
+    }
+    CM_TempCapsuleGeometry(model, center, &radius, &offsetZ);
+    CM_CopyVec3(center, top);
+    CM_CopyVec3(center, bottom);
+    top[2] += offsetZ;
+    bottom[2] -= offsetZ;
+    CM_CopyVec3(tw->extents.start, startTop);
+    CM_CopyVec3(tw->extents.start, startBottom);
+    CM_CopyVec3(tw->extents.end, endTop);
+    CM_CopyVec3(tw->extents.end, endBottom);
+    startTop[2] += tw->offsetZ;
+    startBottom[2] -= tw->offsetZ;
+    endTop[2] += tw->offsetZ;
+    endBottom[2] -= tw->offsetZ;
+    if (startBottom[2] > top[2]) {
+        if (!CM_TraceTempSphere(tw, startBottom, endBottom, top, radius, trace) || tw->delta[2] >= 0.0f)
+            return;
+    } else if (startTop[2] < bottom[2]) {
+        if (!CM_TraceTempSphere(tw, startTop, endTop, bottom, radius, trace) || tw->delta[2] <= 0.0f)
+            return;
+    }
+    totalRadius = radius + tw->radius;
+    totalOffset = offsetZ + tw->offsetZ;
+    x = tw->extents.start[0] - center[0];
+    y = tw->extents.start[1] - center[1];
+    normal[0] = x;
+    normal[1] = y;
+    normal[2] = 0.0f;
+    length = Vec3NormalizeTo(normal, normal);
+    c = x * x + y * y - totalRadius * totalRadius;
+    if (c <= 0.0f) {
+        if (CM_AbsFloat(tw->extents.start[2] - center[2]) <= totalOffset) {
+            trace->fraction = 0.0f;
+            trace->startsolid = 1;
+            CM_CopyVec3(normal, trace->normal);
+            trace->contents = CM_BoxBrush()->contents;
+            if (CM_AbsFloat(tw->extents.end[2] - center[2]) <= totalOffset)
+                trace->allsolid = 1;
+            return;
+        }
+    } else {
+        projection = x * tw->delta[0] + y * tw->delta[1];
+        if (projection < 0.0f) {
+            lengthSq = tw->delta[0] * tw->delta[0] + tw->delta[1] * tw->delta[1];
+            discriminant = projection * projection - lengthSq * c;
+            if (discriminant >= 0.0f) {
+                root = (-projection - sqrtf(discriminant)) / lengthSq;
+                epsilon = length * 0.125f / projection;
+                fraction = root + epsilon;
+                if (fraction < trace->fraction && CM_AbsFloat(tw->extents.start[2] + root * tw->delta[2] - center[2]) <= totalOffset) {
+                    trace->fraction = fraction < 0.0f ? 0.0f : fraction;
+                    CM_CopyVec3(normal, trace->normal);
+                    trace->contents = CM_BoxBrush()->contents;
+                    return;
+                }
+            }
+        }
+    }
+    if (endBottom[2] > top[2] && startBottom[2] <= top[2])
+        CM_TraceTempSphere(tw, startBottom, endBottom, top, radius, trace);
+    else if (endTop[2] < bottom[2] && startTop[2] >= bottom[2])
+        CM_TraceTempSphere(tw, startTop, endTop, bottom, radius, trace);
+}
+#endif
 
 static int __attribute_regparm__(3) CM_Trace(trace_t *results, const vec_t *start, const vec_t *end,
                                                          const vec_t *mins, const vec_t *maxs,
@@ -491,9 +712,39 @@ static int __attribute_regparm__(3) CM_Trace(trace_t *results, const vec_t *star
     cmodel_t *cmodel;
 
     CM_InitTraceWork(&tw, start, end, mins, maxs, brushmask);
+#if defined(COD2_X64)
+
+    if (start[0] == end[0] && start[1] == end[1] && start[2] == end[2]) {
+        if (model == CM_TEMP_BOX_MODEL) {
+            CM_TestTempCapsulePosition(&tw, CM_ModelForHandle(model), results);
+        } else if (model != 0) {
+            cmodel = CM_ModelForHandle(model);
+            if (cmodel)
+                CM_TestLeafPosition(&tw, &cmodel->leaf, results);
+        } else {
+            int leafs[1024], lastLeaf = 0, count, i;
+            vec3_t boundsMin, boundsMax;
+
+            for (i = 0; i < 3; i++) {
+                boundsMin[i] = tw.extents.start[i] - tw.size[i] - 1.0f;
+                boundsMax[i] = tw.extents.start[i] + tw.size[i] + 1.0f;
+            }
+            count = CM_BoxLeafnums(boundsMin, boundsMax, leafs, 1024, &lastLeaf);
+            for (i = 0; i < count && !results->allsolid; i++) {
+                if (leafs[i] >= 0 && leafs[i] < cm.numLeafs)
+                    CM_TestLeafPosition(&tw, &cm.leafs[leafs[i]], results);
+            }
+        }
+        return 0;
+    }
+#endif
 
     if (model == CM_TEMP_BOX_MODEL) {
+#if defined(COD2_X64)
+        CM_TraceTempCapsule(&tw, CM_ModelForHandle(model), results);
+#else
         CM_TraceThroughBrush(&tw, CM_BoxBrush(), results);
+#endif
         return 0;
     }
 
