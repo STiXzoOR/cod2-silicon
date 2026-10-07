@@ -1,6 +1,10 @@
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "cod2x_stop_gametype.h"
+static unsigned int cod2xMapChangeDepth;
+#endif
 #include <string.h>
 /* dvar globals */
 extern server_t sv;
@@ -72,6 +76,34 @@ static dvar_t *SV_ImportedDvar(void *importedDvar)
 {
     return *(dvar_t **)importedDvar;
 }
+
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static qboolean SV_Cod2xBeginMapChangeApproved(qboolean shutdown, const char *source, qboolean approved)
+{
+    /* Only an accepted operation suppresses its nested map/spawn calls. A
+       rejected request leaves the next independent command able to retry. */
+    if (!cod2xMapChangeDepth && !approved && com_sv_running && com_sv_running->current.enabled &&
+        !GScr_Cod2xBeforeMapChange(shutdown, source))
+        return 0;
+    ++cod2xMapChangeDepth;
+    return 1;
+}
+
+qboolean SV_Cod2xBeginMapChange(qboolean shutdown, const char *source)
+{
+    return SV_Cod2xBeginMapChangeApproved(shutdown, source, 0);
+}
+
+void SV_Cod2xEndMapChange(qboolean shutdown)
+{
+    if (shutdown) {
+        cod2xMapChangeDepth = 0;
+        GScr_Cod2xResetMapChange();
+    }
+    else if (cod2xMapChangeDepth)
+        --cod2xMapChangeDepth;
+}
+#endif
 
 static const char *SV_ConsumeMapRotationToken(void)
 {
@@ -225,12 +257,20 @@ static void __attribute_regparm__(1) SV_MapRestart(qboolean fast_restart)
     dvar_t *svGametype;
     dvar_t *svMaxclients;
     int savepersist;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    const char *source = fast_restart ? "fast_restart" : "map_restart";
+    qboolean approved = GScr_Cod2xConsumeMapChange(source, SV_Cmd_Argv(0), "", SV_Cmd_Argv(1));
+#endif
 
     if (!SV_ImportedDvar(imp_com_sv_running)->current.enabled) {
         Com_Printf("Server is not running.\n");
         return;
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (!SV_Cod2xBeginMapChangeApproved(0, source, approved))
+        return;
+#endif
     SV_SetGametype();
 
     svGametype = SV_ImportedDvar(imp_sv_gametype);
@@ -246,11 +286,21 @@ static void __attribute_regparm__(1) SV_MapRestart(qboolean fast_restart)
         I_strncpyz(mapname, Dvar_GetString("mapname"), sizeof(mapname));
         FS_ConvertPath(mapname);
         SV_SpawnServer(mapname);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        SV_Cod2xEndMapChange(0);
+#endif
         return;
     }
 
     if (sv.start_frameTime == *(int *)imp_com_frameTime)
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        SV_Cod2xEndMapChange(0);
         return;
+    }
+#else
+        return;
+#endif
 
     SV_InitDvar();
     SV_InitArchivedSnapshot();
@@ -295,6 +345,9 @@ static void __attribute_regparm__(1) SV_MapRestart(qboolean fast_restart)
 
     sv.state = SS_GAME;
     sv.restarting = 0;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    SV_Cod2xEndMapChange(0);
+#endif
 }
 
 static void SV_MapRestart_f(void)
@@ -609,6 +662,9 @@ static void SV_Map_f(void)
     const char *expanded;
     const char *map;
     int isDevmap;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    qboolean approved = GScr_Cod2xConsumeMapChange("map", SV_Cmd_Argv(0), SV_Cmd_Argv(1), SV_Cmd_Argv(2));
+#endif
 
     map = SV_Cmd_Argv(1);
     if (!map[0])
@@ -629,10 +685,17 @@ static void SV_Map_f(void)
     }
 
     isDevmap = I_stricmp(SV_Cmd_Argv(0), "devmap");
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (!SV_Cod2xBeginMapChangeApproved(0, "map", approved))
+        return;
+#endif
     FS_ConvertPath(mapname);
     SV_SpawnServer(mapname);
 
     Dvar_SetBool(sv_cheats, isDevmap == 0);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    SV_Cod2xEndMapChange(0);
+#endif
 }
 
 void SV_AddOperatorCommands(void)
@@ -734,6 +797,14 @@ static void SV_MapRotate_f(void)
     const char *token;
     dvar_t *mapRotation = SV_ImportedDvar(imp_sv_mapRotation);
     dvar_t *mapRotationCurrent = SV_ImportedDvar(imp_sv_mapRotationCurrent);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    qboolean approved = GScr_Cod2xConsumeMapChange("map_rotate", SV_Cmd_Argv(0), "", SV_Cmd_Argv(1));
+#endif
+
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (!SV_Cod2xBeginMapChangeApproved(0, "map_rotate", approved))
+        return;
+#endif
 
     Com_Printf("map_rotate...\n\n");
     Com_Printf("\"sv_mapRotation\" is:\"%s\"\n\n", mapRotation->current.string);
@@ -755,6 +826,9 @@ static void SV_MapRotate_f(void)
             if (!token) {
                 Com_Printf("No gametype specified after 'gametype' keyword in sv_mapRotation - forcing map_restart.\n");
                 SV_MapRestart(1);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+                SV_Cod2xEndMapChange(0);
+#endif
                 return;
             }
 
@@ -772,17 +846,26 @@ static void SV_MapRotate_f(void)
             if (!token) {
                 Com_Printf("No map specified after 'map' keyword in sv_mapRotation - forcing map_restart.\n");
                 SV_MapRestart(1);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+                SV_Cod2xEndMapChange(0);
+#endif
                 return;
             }
 
             Com_Printf("Setting map: %s.\n", token);
             Cbuf_ExecuteText(0, va("map %s\n", token));
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            SV_Cod2xEndMapChange(0);
+#endif
             return;
         }
 
         if (!*token) {
             Com_Printf("No map specified in sv_mapRotation - forcing map_restart.\n");
             SV_MapRestart(1);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            SV_Cod2xEndMapChange(0);
+#endif
             return;
         }
 
