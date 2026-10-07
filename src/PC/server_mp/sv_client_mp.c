@@ -7,6 +7,9 @@
 #endif
 #include "pb_public.h"
 #include "PC/qcommon/net_hardening.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "cod2x_host_protocol.h"
+#endif
 #include <stddef.h>
 #include <string.h>
 #if defined(COD2_X64)
@@ -217,6 +220,39 @@ void SV_BeginDownload_f(client_t *cl);
 void SV_UserMove(client_t *cl, msg_t *msg, qboolean delta);
 void SV_ExecuteClientMessage(client_t *cl, msg_t *msg);
 gentity_t *SV_AddTestClient(void);
+
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* Native metadata belongs to the real challenge, without changing shared layouts. */
+typedef struct Cod2x_ChallengeIdentity
+{
+    netadr_t address;
+    int challenge;
+    char digest[33];
+} Cod2x_ChallengeIdentity;
+static Cod2x_ChallengeIdentity cod2xChallengeIdentities[1024];
+
+static const char *SV_Cod2xChallengeDigest(netadr_t from, int challenge)
+{
+    for (int i = 0; i < 1024; ++i) {
+        const challenge_t *entry = &svs.challenges[i];
+        const Cod2x_ChallengeIdentity *identity = &cod2xChallengeIdentities[i];
+        if (entry->challenge == challenge && NET_CompareAdr(entry->adr, from) &&
+            identity->challenge == challenge && NET_CompareAdr(identity->address, from))
+            return identity->digest[0] ? identity->digest : NULL;
+    }
+    return NULL;
+}
+
+static void SV_Cod2xStoreChallengeDigest(int slot, const challenge_t *entry, const char *digest)
+{
+    Cod2x_ChallengeIdentity *identity = &cod2xChallengeIdentities[slot];
+    identity->address = entry->adr;
+    identity->challenge = entry->challenge;
+    identity->digest[0] = '\0';
+    if (SV_Cod2xDigestValid(digest))
+        memcpy(identity->digest, digest, sizeof(identity->digest));
+}
+#endif
 
 #if COD2_IS_PATCH_13
 void SV_AuthorizeRequest(struct netadr_t from, int challenge, const char *clientPBGuid)
@@ -433,6 +469,9 @@ void SV_AuthorizeIpPacket(netadr_t from)
     }
 
     if (!I_stricmp(status, "accept")) {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        if (!SV_Cod2xHostAdmission()) {
+#endif
         int guid = atoi(SV_Cmd_Argv(4));
         challengeInfo->guid = guid;
 
@@ -458,6 +497,9 @@ void SV_AuthorizeIpPacket(netadr_t from)
                 }
             }
         }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        }
+#endif
 
         if (challengeInfo->connected) {
             return;
@@ -1121,6 +1163,9 @@ void SV_GetChallenge(netadr_t from)
     i = oldest;
 
 challenge_found:
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    SV_Cod2xStoreChallengeDigest(i, challenge, SV_Cmd_Argc() == 3 ? SV_Cmd_Argv(2) : NULL);
+#endif
     if (!(*(const dvar_t **)imp_net_lanauthorize)->current.enabled && Sys_IsLANAddress(from)) {
         challenge->pingTime = svsLocal->time;
         NET_OutOfBandPrint(NS_SERVER, from, va("challengeResponse %i", challenge->challenge));
@@ -1134,16 +1179,27 @@ challenge_found:
             return;
         }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        svsLocal->authorizeAddress.port = (unsigned short)((20700 >> 8) | (20700 << 8));
+        Com_Printf("%s resolved to %i.%i.%i.%i:%i\n", "cod2master.activision.com",
+                   svsLocal->authorizeAddress.ip[0], svsLocal->authorizeAddress.ip[1],
+                   svsLocal->authorizeAddress.ip[2], svsLocal->authorizeAddress.ip[3], 20700);
+#else
         svsLocal->authorizeAddress.port = (unsigned short)((20966 >> 8) | (20966 << 8));
         Com_Printf("%s resolved to %i.%i.%i.%i:%i\n", "cod2master.activision.com",
                    svsLocal->authorizeAddress.ip[0], svsLocal->authorizeAddress.ip[1],
                    svsLocal->authorizeAddress.ip[2], svsLocal->authorizeAddress.ip[3], 20966);
+#endif
     }
 
     if (svsLocal->time - challenge->firstTime <= 5000 || NET_CompareAdr(from, *SV_MasterAddress())) {
 #if COD2_IS_PATCH_13
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        SV_AuthorizeRequest(from, challenge->challenge, SV_Cod2xChallengeDigest(from, challenge->challenge));
+#else
         SV_AuthorizeRequest(from, challenge->challenge, NULL);
+#endif
 #else
         SV_AuthorizeRequest(from, challenge->challenge);
 #endif
@@ -1268,6 +1324,9 @@ void SV_DirectConnect(netadr_t from)
     const char *denied;
     client_t *cl;
     serverStatic_t *svs = (serverStatic_t *)imp_svs;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    int cod2xGuid = 0;
+#endif
 
     Com_DPrintf("SV_DirectConnect()\n");
 
@@ -1279,6 +1338,22 @@ void SV_DirectConnect(netadr_t from)
         Com_DPrintf("    rejected connect from protocol version %i (should be %i)\n", version, 0x76);
         return;
     }
+
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (SV_Cod2xHostAdmission() && from.type != NA_BOT) {
+        int extension = atoi(Info_ValueForKey(userinfo, "protocol_cod2x"));
+        if (extension < COD2X_REVISION) {
+            NET_OutOfBandPrint(NS_SERVER, from,
+                               "error\nEXE_SERVER_IS_DIFFERENT_VER\x15This server requires CoD2x revision 6 or newer\n");
+            return;
+        }
+        cod2xGuid = SV_Cod2xHwidGuid(Info_ValueForKey(userinfo, "cl_hwid2"));
+        if (!cod2xGuid) {
+            NET_OutOfBandPrint(NS_SERVER, from, "error\n\x15This server requires a 32-byte HWID2\n");
+            return;
+        }
+    }
+#endif
 
     challenge = atoi(Info_ValueForKey(userinfo, "challenge"));
     qport = atoi(Info_ValueForKey(userinfo, "qport"));
@@ -1349,6 +1424,32 @@ void SV_DirectConnect(netadr_t from)
             }
         }
     }
+
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (cod2xGuid) {
+        int banned = SV_IsBannedGuid(cod2xGuid);
+        if (!banned) {
+            float duration = (*(const dvar_t **)imp_sv_kickBanTime)->current.value * 1000.0f;
+            for (int i = 0; i < 16; ++i) {
+                if (svs->tempBans[i].guid == cod2xGuid && (float)(svs->time - svs->tempBans[i].banTime) <= duration) {
+                    banned = 2;
+                    break;
+                }
+            }
+        }
+        if (banned) {
+            NET_OutOfBandPrint(NS_SERVER, from, banned == 1 ?
+                               "error\n\x15You are permanently banned from this server" :
+                               "error\n\x15You are temporarily banned from this server");
+            if (challengeIndex >= 0)
+                memset(&svs->challenges[challengeIndex], 0, sizeof(svs->challenges[challengeIndex]));
+            return;
+        }
+        guid = cod2xGuid;
+        if (challengeIndex >= 0)
+            svs->challenges[challengeIndex].guid = guid;
+    }
+#endif
 
     for (clientNum = 0, cl = svs->clients; clientNum < maxClients; ++clientNum, ++cl) {
         if (!cl->state) {
@@ -1661,7 +1762,12 @@ void SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
         }
 
 #if COD2_IS_PATCH_13
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        SV_AuthorizeRequest(cl->netchan.remoteAddress, cl->challenge,
+                            SV_Cod2xChallengeDigest(cl->netchan.remoteAddress, cl->challenge));
+#else
         SV_AuthorizeRequest(cl->netchan.remoteAddress, cl->challenge, NULL);
+#endif
 #else
         SV_AuthorizeRequest(cl->netchan.remoteAddress, cl->challenge);
 #endif

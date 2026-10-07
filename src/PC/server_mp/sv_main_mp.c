@@ -6,6 +6,9 @@
 #include "cod2_feature_config.h"
 #include "pb_public.h"
 #include "PC/qcommon/net_hardening.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "cod2x_host_protocol.h"
+#endif
 #include <stdarg.h>
 /* dvar globals */
 extern int dvar_modifiedFlags;
@@ -433,6 +436,9 @@ void SVC_Status(netadr_t from)
 
     strcpy(infostring, Dvar_InfoString(0x404));
     Info_SetValueForKey(infostring, "challenge", SV_Cmd_Argv(1));
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Info_SetValueForKey(infostring, "protocol", va("%i", SV_Cod2xDiscoveryProtocol()));
+#endif
 
     if (Dvar_GetBool("fs_restrict")) {
         Com_sprintf(keywords, sizeof(keywords), "demo %s", Info_ValueForKey(infostring, "sv_keywords"));
@@ -519,6 +525,9 @@ void SVC_GameCompleteStatus(netadr_t from)
 
     strcpy(infostring, Dvar_InfoString(0x404));
     Info_SetValueForKey(infostring, "challenge", SV_Cmd_Argv(1));
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Info_SetValueForKey(infostring, "protocol", va("%i", SV_Cod2xDiscoveryProtocol()));
+#endif
 
     if (Dvar_GetBool("fs_restrict")) {
         Com_sprintf(keywords, sizeof(keywords), "demo %s", Info_ValueForKey(infostring, "sv_keywords"));
@@ -596,7 +605,11 @@ void SVC_Info(netadr_t from)
 
     infostring[0] = '\0';
     Info_SetValueForKey(infostring, "challenge", SV_Cmd_Argv(1));
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Info_SetValueForKey(infostring, "protocol", va("%i", SV_Cod2xDiscoveryProtocol()));
+#else
     Info_SetValueForKey(infostring, "protocol", va("%i", 0x76));
+#endif
     Info_SetValueForKey(infostring, "hostname", sv_hostname->current.string);
     Info_SetValueForKey(infostring, "mapname", sv_mapname->current.string);
 

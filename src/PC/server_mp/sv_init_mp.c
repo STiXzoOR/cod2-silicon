@@ -9,7 +9,7 @@
 #include "bytematch.h"
 #include "cod2_feature_config.h"
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-#include "../qcommon/cod2x.h"
+#include "PC/qcommon/cod2x.h"
 #endif
 #include <string.h>
 #include <stdlib.h>
@@ -430,7 +430,14 @@ void SV_Init(void)
 
     sv_gametype = Dvar_RegisterString("g_gametype", "dm", 0x1024);
     Dvar_RegisterString("sv_keywords", "", 0x1004);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        int protocol = COD2X_HOST_REVISION >= COD2X_REVISION ? COD2X_PROTOCOL : COD2X_CONNECT_PROTOCOL;
+        Dvar_RegisterInt("protocol", protocol, protocol, protocol, 0x1044);
+    }
+#else
     Dvar_RegisterInt("protocol", 0x76, 0x76, 0x76, 0x1044);
+#endif
     sv_mapname = Dvar_RegisterString("mapname", "", 0x1044);
     sv_privateClients = Dvar_RegisterInt("sv_privateClients", 0, 0, 0x40, 0x1004);
     sv_maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, 0x40, 0x1025);
