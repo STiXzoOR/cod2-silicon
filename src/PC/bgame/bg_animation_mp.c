@@ -374,6 +374,9 @@ static inline __attribute__((always_inline)) unsigned int BG_ControllerTagName(i
 }
 
 #if defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64) && COD2_X64
+extern playerState_t *SV_GameClientNum(int clientNum);
+#endif
 #include "cod2x_animation.h"
 #if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
 #include "PC/qcommon/cod2x_pose.h"

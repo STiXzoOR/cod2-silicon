@@ -21,8 +21,32 @@ game data, system package installation, or a server.
   stance blend durations, prone posture/reload/fire offsets, diagonal alignment,
   stance bounce, separate animation users and time-rewind reset.
 
-The fixtures model only the fields needed for these calculations. They do not
-verify engine layout, networking, rendering, real hitboxes, or admission to a
+The authoritative grenade stance fixture needs an actual native engine compile
+database and a private output directory. Run it for both stock and CoD2x builds:
+
+```sh
+taskpolicy -b nice -n 19 python3 tests/cod2x/animation_stance.py \
+  --compile-db build-macos/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/ws62-stock"
+taskpolicy -b nice -n 19 python3 tests/cod2x/animation_stance.py \
+  --compile-db build-macos-codx/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/ws62-codx"
+```
+
+`animation_stance.c` exercises the full production animation translation unit,
+the production `G_PlayerController` body, and the production server playerstate
+stride calculation under ASan/UBSan. It checks actual timer writes for exact
+standing/crouch throw names, unrelated and near-matching names, null legs with
+a throw on the torso, standing/crouched/prone flags, both animation users,
+revisions 0/3/6, and mounted controls. A nonzero client index and neighboring
+sentinels check that only the selected player's legs timer changes. The version
+and animation ownership are synthetic inputs; this fixture does not establish
+the pending CR03 host revision lifecycle. `--baseline <commit>` reads older
+production source without changing the checkout.
+
+The standalone helper fixtures model only the fields needed for their
+calculations. These fixtures do not verify engine layout, networking,
+rendering, real hitboxes, or admission to a
 live authenticated server. The report at
 `docs/macos-port/reports/WS4-cod2x.md` records the engine syntax-check boundary
 and the live-server test procedure.
