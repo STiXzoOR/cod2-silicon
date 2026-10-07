@@ -202,3 +202,7 @@ if args.test and 'debug_enabled' in args.test:
         checked.add(path)
     assert checked
     print(f'PASS debug opt-in: {len(checked)} native translation units')
+
+if not args.test or 'script_load' in args.test:
+    path = 'src/PC/game_mp/g_scr_main_mp.c'
+    run('script_load', function(path, 'GScr_LoadScriptFunction') + function(path, 'GScr_LoadScripts'))

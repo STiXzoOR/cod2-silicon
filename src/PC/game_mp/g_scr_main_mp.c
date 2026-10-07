@@ -4628,6 +4628,11 @@ void GScr_LoadScripts(int inst)
     int i;
     char s[64];
 
+#if defined(COD2_X64)
+    g_scr_data.delete_ = GScr_LoadScriptFunction("codescripts/delete", "main", 1);
+    g_scr_data.initstructs = GScr_LoadScriptFunction("codescripts/struct", "initstructs", 1);
+    g_scr_data.createstruct = GScr_LoadScriptFunction("codescripts/struct", "createstruct", 1);
+#else
     Scr_LoadScript("codescripts/delete");
     g_scr_data.delete_ = Scr_GetFunctionHandle("codescripts/delete", "main");
 
@@ -4636,6 +4641,7 @@ void GScr_LoadScripts(int inst)
 
     Scr_LoadScript("codescripts/struct");
     g_scr_data.createstruct = Scr_GetFunctionHandle("codescripts/struct", "createstruct");
+#endif
 
     GScr_LoadGameTypeScript();
 
