@@ -94,6 +94,18 @@ extern void AddLeanToPosition(vec_t *position, const float fViewYaw, const float
 extern unsigned int CG_ShakeCamera(void);
 extern void CG_PerturbCamera(void);
 extern void AnglesToAxis(const vec_t *angles, vec3_t *axis);
+#if defined(COD2_X64)
+extern scr_const_t scr_const;
+extern weaponInfo_t cg_weaponsArray[];
+extern int DObjGetBoneIndex(const DObj *obj, unsigned int boneName);
+extern DObjAnimMat *DObjGetRotTransArray(const struct DObj_s *obj);
+extern void ConvertQuatToMat(const DObjAnimMat *mat, float axis[3][3]);
+extern void MatrixMultiply43(const float (*in1)[3], const float (*in2)[3], float (*out)[3]);
+extern void AxisToAngles(vec3_t *axis, vec_t *angles);
+extern qboolean CG_DObjGetWorldTagPos(const centity_t *cent, struct DObj_s *obj, unsigned int tagName, vec_t *pos);
+extern float crandom(void);
+extern void Com_Error(errorParm_t code, const char *fmt, ...);
+#endif
 
 void CG_FxRestart(void);
 void CG_FxTest(void);
@@ -548,9 +560,30 @@ static void CG_CalcViewValues(void)
         }
     }
 
+#if defined(COD2_X64)
+    if (ps->eFlags & 0x300) {
+        centity_t *cent = &cg_entities[ps->viewlocked_entNum];
+        struct DObj_s *obj = Com_GetClientDObj(cent->nextState.number, cent->localClientNum);
+        if (obj) {
+            if (!CG_DObjGetWorldTagPos(cent, obj, scr_const.tag_player, cg->refdef.vieworg))
+                Com_Error(ERR_DROP, "\025Turret has no bone: tag_player");
+            if (ps->viewlocked == 2 && !cg->renderingThirdPerson) {
+                float jitter = crandom();
+                cg->refdefViewAngles[0] += jitter * BG_GetWeaponDef(cent->nextState.weapon)->vertViewJitter;
+                jitter = crandom();
+                cg->refdefViewAngles[1] += jitter * BG_GetWeaponDef(cent->nextState.weapon)->horizViewJitter;
+            }
+        }
+    }
+
+#endif
     if (cg->renderingThirdPerson)
         goto do_third_person;
 
+#if defined(COD2_X64)
+    if (cg->nextSnap->ps.pm_type == 5)
+        goto post_lean;
+#endif
     if (ps->eFlags & 0x300)
         goto post_lean;
 
@@ -670,6 +703,42 @@ post_lean:
         }
     }
 
+#if defined(COD2_X64)
+    {
+        int weaponIndex = BG_GetViewmodelWeaponIndex(ps);
+        if (weaponIndex > 0) {
+            struct DObj_s *obj = cg_weaponsArray[weaponIndex].viewModelDObj;
+            if (obj) {
+                int boneIndex = DObjGetBoneIndex(obj, scr_const.tag_camera);
+                if (boneIndex >= 0) {
+                    DObjAnimMat *bones = DObjGetRotTransArray(obj);
+                    if (bones) {
+                        vec3_t cameraAxis[4], viewAxis[4], attachedAxis[4];
+                        int i;
+
+                        ConvertQuatToMat(&bones[boneIndex], cameraAxis);
+                        for (i = 0; i < 3; ++i) {
+                            cameraAxis[3][i] = bones[boneIndex].trans[i];
+                            viewAxis[0][i] = cg->refdef.viewaxis[0][i];
+                            viewAxis[1][i] = cg->refdef.viewaxis[1][i];
+                            viewAxis[2][i] = cg->refdef.viewaxis[2][i];
+                            viewAxis[3][i] = cg->refdef.vieworg[i];
+                        }
+                        MatrixMultiply43(cameraAxis, viewAxis, attachedAxis);
+                        for (i = 0; i < 3; ++i) {
+                            cg->refdef.viewaxis[0][i] = attachedAxis[0][i];
+                            cg->refdef.viewaxis[1][i] = attachedAxis[1][i];
+                            cg->refdef.viewaxis[2][i] = attachedAxis[2][i];
+                            cg->refdef.vieworg[i] = attachedAxis[3][i];
+                        }
+                        AxisToAngles(cg->refdef.viewaxis, cg->refdefViewAngles);
+                    }
+                }
+            }
+        }
+    }
+
+#endif
     CG_PerturbCamera();
 
     CG_CalcFov();
