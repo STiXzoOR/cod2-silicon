@@ -84,6 +84,10 @@ for text, names, header in [
     if implemented and header == 'stop_commands_source.h':
         prefix = '\n'.join(re.findall(r'^static .*\bcod2xMapChangeDepth[^\n]*;', text, re.M)) + '\n'
         names = ['SV_Cod2xBeginMapChangeApproved', 'SV_Cod2xBeginMapChange', 'SV_Cod2xEndMapChange', *names]
+    if header == 'stop_server_source.h' and 'SV_Cod2xUdpInit();' in text:
+        for policy_header in ('cod2x_udp_operations.h', 'cod2x_udp_operations_impl.h'):
+            (out / policy_header).write_bytes(source('src/PC/server_mp/' + policy_header))
+        prefix = '#include "cod2x_udp_operations_impl.h"\n' + prefix
     (out / header).write_text(prefix + ''.join(function(text, name) for name in names))
 objects = []
 for path, name in [(ROOT / 'tests/cod2x/stop_gametype.c', 'fixture'),

@@ -60,8 +60,17 @@ def function(text, name):
 
 
 init = active(source_path)
+commands = active('src/PC/server_mp/sv_ccmds_mp.c')
+has_map_change_guard = 'SV_Cod2xBeginMapChangeApproved' in commands
+map_change_source = ''
+if has_map_change_guard:
+    map_change_source = re.search(r'^static unsigned int cod2xMapChangeDepth;', commands, re.M)[0] + '\n'
+    map_change_source += ''.join(function(commands, name) for name in
+                               ('SV_Cod2xBeginMapChangeApproved', 'SV_Cod2xBeginMapChange', 'SV_Cod2xEndMapChange'))
+(out / 'host_map_change_source.h').write_text(map_change_source)
 globals_ = sorted(set(re.findall(r'^extern const dvar_t \*(\w+);', init, re.M)))
 (out / 'host_globals.h').write_text(
+    '#define HOST_HAS_MAP_CHANGE_GUARD ' + str(int(has_map_change_guard)) + '\n' +
     '#define HOST_HAS_IDENTITY_CLEANUP ' + str(int('SV_Cod2xClearIdentities();' in function(init, 'SV_Shutdown'))) + '\n' +
     ''.join('const dvar_t *' + name + ';\n' for name in globals_))
 for path, names, output in [
