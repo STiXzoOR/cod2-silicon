@@ -539,7 +539,11 @@ void RB_ChangeGenTexCoords(int samplerIndex, int genTexCoords)
         break;
     case 2:
         MatrixIdentity44(transform.m);
+#if defined(COD2_X64)
+        transform._32 = -backEnd.texScrollAmountDx7;
+#else
         transform._32 = -backEnd.viewParms->depthHackNearClip;
+#endif
         RB_SetTextureStageStateDx7(samplerIndex, D3DTSS_TEXCOORDINDEX, samplerIndex);
         RB_SetTextureStageStateDx7(samplerIndex, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3);
         RB_SetTransformDx7( (D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0 + samplerIndex), &transform);

@@ -33,6 +33,10 @@ extern void RB_SetSampler(int samplerIndex, int samplerState, GfxImage *image);
 extern void RB_SetSamplerConstantDx7(unsigned int color);
 extern void RB_SetViewMatrixForWDx7(float w);
 extern void RB_UpdateFogColor(FogColorSrcEnum fogColorSrc);
+#if defined(COD2_X64)
+extern void RB_ChangeGenTexCoords(int samplerIndex, int genTexCoords);
+extern void RB_UploadWaterTexture(GfxImage *image, water_t *water);
+#endif
 
 extern DxGlobals dx;
 
@@ -1224,6 +1228,25 @@ static const float *RB_GetCodeMatrix(int source, int firstRow)
 
 #endif
 
+#if defined(COD2_X64)
+static GfxImage *RB_PrepareMaterialTexture(const MaterialTextureDef *texture, byte *samplerState)
+{
+    GfxImage *image;
+
+    *samplerState = texture->samplerState;
+    if (texture->semantic == 5)
+        image = texture->u.water->map->image;
+    else
+        image = texture->u.image;
+
+    if (image && image->mapType == 3 && texture->semantic == 5) {
+        RB_UploadWaterTexture(image, texture->u.water->map);
+        *samplerState = 6;
+    }
+    return image;
+}
+#endif
+
 static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(MaterialTechniqueType techType, MaterialVertexDeclType vertDeclType, const GfxDrawPrimArgs *args, const GfxStateOverride *stateOverride)
 {
     char *tess = RB_TessBase();
@@ -1446,8 +1469,33 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
             {
                 int samplerIndex;
                 for (samplerIndex = 0; samplerIndex < 2; samplerIndex++) {
+#if defined(COD2_X64)
+                    const MaterialPassDx7 *dx7Pass = (const MaterialPassDx7 *)pass;
+                    const MaterialShaderArgument *sampler = &dx7Pass->samplers[samplerIndex];
+                    void *image = NULL;
+                    byte samplerState = 0;
+                    byte genTexCoords = dx7Pass->genTexCoords[samplerIndex];
+
+                    if (sampler->type == 3) {
+                        RB_GetTextureFromCode_impl(sampler->u.codeSampler, &image, &samplerState);
+                    } else {
+                        int textureIndex;
+                        const Material *tessMaterial = ((materialCommands_t *)RB_TessBase())->material;
+                        for (textureIndex = 0; textureIndex < tessMaterial->textureCount; textureIndex++) {
+                            const MaterialTextureDef *texture = &tessMaterial->textures[textureIndex];
+                            if (texture->name == sampler->u.name || strcmp(texture->name, sampler->u.name) == 0) {
+                                image = RB_PrepareMaterialTexture(texture, &samplerState);
+                                break;
+                            }
+                        }
+                    }
+                    RB_SetSampler(samplerIndex, samplerState, (GfxImage *)image);
+                    if (genTexCoords != dxState.genTexCoords[samplerIndex] || genTexCoords == 2)
+                        RB_ChangeGenTexCoords(samplerIndex, genTexCoords);
+#else
                     byte *samplerDef = (byte *)(((char *)pass + offsetof(MaterialPassDx9, pixelShader)) + samplerIndex * 8);
 
+#endif
                 }
             }
 
@@ -1845,6 +1893,9 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                                 MaterialTextureDef *texDef = &textures[ti];
                                 if (texDef->name == textureName || strcmp(texDef->name, textureName) == 0) {
 
+#if defined(COD2_X64)
+                                    image = RB_PrepareMaterialTexture(texDef, &samplerState);
+#else
                                     byte semantic = texDef->semantic;
                                     if (semantic == 5) {
 
@@ -1860,6 +1911,7 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                                         byte imgSemantic = ((GfxImage *)image)->semantic;
 
                                     }
+#endif
                                     break;
                                 }
                             }

@@ -65,6 +65,15 @@ void RB_UploadWaterTexture(GfxImage *image, water_t *water)
         for (m = -M / 2; m < M / 2; m++) {
             float w = water->wTerm[vecKIndex];
 
+#if defined(COD2_X64)
+            if (w == 0.0f) {
+                waterData[vecKIndex].real = 0.0f;
+                waterData[vecKIndex].imag = 0.0f;
+                vecKIndex++;
+                continue;
+            }
+#endif
+
             int phase;
             int cosPhase;
             float phaseFloat;
@@ -121,8 +130,12 @@ void RB_UploadWaterTexture(GfxImage *image, water_t *water)
     }
 
     {
+#if defined(COD2_X64)
+        if (r_rendererInUse->current.integer == 2) {
+#else
         int *capsPtr = (int *)r_rendererInUse;
         if (capsPtr[2] == 2) {
+#endif
             goto normalmap_path;
         }
     }
@@ -193,6 +206,9 @@ normalmap_path:
             int y;
             int ixy_base;
             int ixm1y_base;
+#if defined(COD2_X64)
+            int prevYm1 = ymask;
+#endif
 
             pixels = waterGlob.pixels;
             ixm1y = 0;
@@ -205,7 +221,9 @@ normalmap_path:
                     int x;
                     int ixm1y_idx = ixm1y;
                     int ixy_idx = ixy_base;
+#if !defined(COD2_X64)
                     int prevYm1 = ymask;
+#endif
 
                     for (x = 0; x < water->M; x++) {
 
