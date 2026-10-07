@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "pmove_source.h"
 #include "dvars.h"
@@ -10,7 +11,7 @@ static bgs_t fixture_bgs;
 bgs_t *bgs = &fixture_bgs;
 static WeaponDef weapon;
 static int animation, eventCount, lastEvent, slideCount;
-static int animationCalls, animationBob, failAnimation;
+static int animationCalls, animationBob, failAnimation, stanceCalls, stanceEvent;
 static float traceFraction = 1.0f;
 static int mantleChecks, weaponCalls;
 static int ladderSurface;
@@ -43,7 +44,7 @@ void G_PlayerEvent(int client, int event) { (void)client; (void)event; }
 #include "snap_source.h"
 void BG_AnimUpdatePlayerStateConditions(pmove_t *pm) { (void)pm; }
 int BG_AnimScriptEvent(playerState_t *ps, scriptAnimEventTypes_t event, qboolean cont, qboolean force)
-{ (void)ps; (void)event; (void)cont; (void)force; return 0; }
+{ (void)ps; (void)cont; (void)force; ++stanceCalls; stanceEvent = event; return 0; }
 void PM_AdjustAimSpreadScale(pmove_t *pm, pml_t *pml) { (void)pm; (void)pml; }
 void PM_UpdateAimDownSightFlag(pmove_t *pm, pml_t *pml) { (void)pm; (void)pml; }
 void PM_UpdateAimDownSightLerp(pmove_t *pm, pml_t *pml) { (void)pm; (void)pml; }
@@ -66,7 +67,9 @@ int BG_PlayAnim(playerState_t *ps, int anim, animBodyPart_t part, int duration, 
 { (void)ps; (void)anim; (void)part; (void)duration; (void)timer; (void)cont; (void)force; return 0; }
 qboolean BG_CheckProne(int pass, const vec_t *pos, float size, float height, float yaw, float *torsoHeight, float *torsoPitch, float *waistPitch, qboolean already, qboolean ground, vec_t *normal, int handler, proneCheckType_t check, float feet)
 { (void)pass; (void)pos; (void)size; (void)height; (void)yaw; (void)torsoHeight; (void)torsoPitch; (void)waistPitch; (void)already; (void)ground; (void)normal; (void)handler; (void)check; (void)feet; return 1; }
-#if defined(COD2_CODX) && COD2_CODX
+#ifdef GAMEPLAY_MATRIX
+void Fixture_SetRevision(int revision);
+#elif defined(COD2_CODX) && COD2_CODX
 int Cod2x_GameVersion(void) { return 3; }
 #endif
 
@@ -206,6 +209,63 @@ static void test_direction(void)
     ps.origin[0] = 1; ps.origin[1] = -1; pm.cmd.rightmove = 127;
     PM_SetMovementDir(&pm, &pml); assert(ps.movementDir == -45);
     puts("PASS legs follow displacement in degrees");
+
+    /* Mac PM_SetMovementDir 0x6ceb8 turns every negative forward command.
+       Pinned CoD2x animation.cpp:1331-1339 turns only actual backward travel.
+       Expectations below are named angles, not a hash of native output. */
+    static const struct { float x, y; int command, stock, codx; } cases[] = {
+        {1, 0, -127, 90, 0}, {1, 1, -127, -90, 45},
+        {-1, 1, -127, -45, -45}, {-1, -1, -127, 45, 45},
+        {0, 1, -127, -90, 90}, {0, -1, -127, 90, -90},
+        {1, -1, 127, -45, -45}, {-1, 0, 127, 90, 90}
+    };
+    int fixed = 0;
+#if defined(COD2_CODX) && COD2_CODX
+    fixed = Cod2x_GameVersion() >= 3;
+#endif
+    for (int handler = 0; handler < 2; ++handler) {
+        for (unsigned int i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+            init(&ps, &pm, &pml, 60); pm.handler = handler;
+            pm.cmd.forwardmove = cases[i].command;
+            ps.origin[0] = cases[i].x; ps.origin[1] = cases[i].y;
+            PM_SetMovementDir(&pm, &pml);
+            assert(ps.movementDir == (fixed ? cases[i].codx : cases[i].stock));
+        }
+        init(&ps, &pm, &pml, 60); pm.handler = handler;
+        ps.origin[0] = 0.015f; PM_SetMovementDir(&pm, &pml); assert(ps.movementDir == 0);
+        ps.origin[0] = -1; ps.groundEntityNum = 1023;
+        PM_SetMovementDir(&pm, &pml); assert(ps.movementDir == 0);
+        init(&ps, &pm, &pml, 11); pm.handler = handler; ps.pm_flags = 1;
+        ps.proneDirection = 135; PM_SetMovementDir(&pm, &pml); assert(ps.movementDir == 90);
+    }
+    puts("PASS independent backward displacement, speed/air/prone contracts for both handlers");
+}
+
+static void test_stance_events(void)
+{
+    /* Stock Mac PM_CheckDuck 0x6e08e and CoD2x animation.cpp:1389-1393.
+       Controller transitions replace exactly these four script events >=3. */
+    const int from[] = {11, 60, 11, 40};
+    const int buttons[] = {0x200, 0x200, 0, 0};
+    const int events[] = {ANIM_ET_PRONE_TO_CROUCH, ANIM_ET_STAND_TO_CROUCH,
+                          ANIM_ET_PRONE_TO_STAND, ANIM_ET_CROUCH_TO_STAND};
+    int suppressed = 0;
+#if defined(COD2_CODX) && COD2_CODX
+    suppressed = Cod2x_GameVersion() >= 3;
+#endif
+    for (int handler = 0; handler < 2; ++handler) {
+        for (int i = 0; i < 4; ++i) {
+            playerState_t ps; pmove_t pm; pml_t pml; init(&ps, &pm, &pml, from[i]);
+            pm.handler = handler; ps.pm_flags = from[i] == 11 ? 1 : from[i] == 40 ? 2 : 0;
+            pm.cmd.buttons = buttons[i]; pm.cmd.forwardmove = 0;
+            stanceCalls = 0; PM_CheckDuck(&pm, &pml);
+            assert(stanceCalls == !suppressed);
+            if (!suppressed) assert(stanceEvent == events[i]);
+            assert(ps.viewHeightTarget == (buttons[i] || from[i] == 11 ? 40 : 60));
+            assert((ps.eFlags & 12) == (ps.viewHeightTarget == 40 ? 4 : 0));
+        }
+    }
+    puts("PASS four stance event contracts and effective stance for both handlers");
 }
 
 static void test_view(void)
@@ -251,7 +311,10 @@ static void test_dispatch(void)
 
 int main(int argc, char **argv)
 {
-    assert(argc == 2);
+    assert(argc == 2 || argc == 3);
+#ifdef GAMEPLAY_MATRIX
+    Fixture_SetRevision(argc == 3 ? atoi(argv[2]) : 3);
+#endif
     if (!strcmp(argv[1], "bob")) test_bob();
     else if (!strcmp(argv[1], "scale")) test_scale();
     else if (!strcmp(argv[1], "snap")) test_snap();
@@ -259,6 +322,7 @@ int main(int argc, char **argv)
     else if (!strcmp(argv[1], "lean")) test_lean();
     else if (!strcmp(argv[1], "timers")) test_timers();
     else if (!strcmp(argv[1], "direction")) test_direction();
+    else if (!strcmp(argv[1], "stance")) test_stance_events();
     else if (!strcmp(argv[1], "view")) test_view();
     else if (!strcmp(argv[1], "ladder")) test_ladder();
     else if (!strcmp(argv[1], "prone")) test_prone();

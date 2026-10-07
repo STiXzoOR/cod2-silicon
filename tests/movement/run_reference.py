@@ -17,6 +17,8 @@ p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('--build', type=Path, default=ROOT / 'build-macos')
 p.add_argument('--reference', type=Path, required=True, help='External lnxded-1.3/src/bgame/bg_pmove.cpp')
 p.add_argument('--output', type=Path, required=True, help='Private directory outside this worktree')
+p.add_argument('--compile-db', type=Path)
+p.add_argument('--fixture-dir', type=Path)
 a = p.parse_args()
 out = a.output.expanduser().resolve()
 if out == ROOT or ROOT in out.parents:
@@ -43,11 +45,12 @@ for symbol in subprocess.check_output(['nm', '-u', str(obj)], text=True).splitli
         service = {'CG_Trace': 'CG_TraceCapsule', 'va': 'ws43_fixture_va'}.get(name, name)
         aliases.append('-Wl,-alias,_' + service + ',' + symbol)
 build = a.build.resolve()
-fixture = build / 'movement-tests'
-rows = json.loads((build / 'compile_commands.json').read_text())
+fixture = a.fixture_dir.resolve() if a.fixture_dir else build / 'movement-tests'
+rows = json.loads((a.compile_db or build / 'compile_commands.json').read_text())
 entry = next(row for row in rows if row['file'].endswith('/src/PC/bgame/bg_pmove.c'))
-flags = shlex.split(entry['command'])
-flags = [x for x in flags[:flags.index('-o')] if x != '-DNDEBUG']
+source_root = entry['file'][:-len('/src/PC/bgame/bg_pmove.c')]
+flags = entry.get('arguments') or shlex.split(entry['command'])
+flags = [x.replace(source_root, str(ROOT)) for x in flags[:flags.index('-o')] if x != '-DNDEBUG']
 flags += ['-UNDEBUG', '-UCOD2_CODX', '-I' + str(fixture), '-DMOVEMENT_REFERENCE=1',
           '-Dva=ws43_fixture_va', '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
 native = out / 'reference-fixture.o'

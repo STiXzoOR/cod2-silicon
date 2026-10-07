@@ -6,12 +6,17 @@ import os
 from pathlib import Path
 import shlex
 import subprocess
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'movement'))
+from policy_build import compile_policy
 
 ROOT = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--compile-db', type=Path, required=True)
 parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--baseline', help='read production source from a local commit')
+parser.add_argument('--revision-matrix', action='store_true')
 args = parser.parse_args()
 os.environ.setdefault('UBSAN_OPTIONS', 'halt_on_error=1')
 output = args.output.resolve()
@@ -47,6 +52,9 @@ flags += ['-UNDEBUG', '-I' + str(output), '-I' + str(ROOT / 'src/PC/bgame'),
           '-ffunction-sections', '-fdata-sections', '-fsanitize=address,undefined',
           '-fno-omit-frame-pointer']
 objects = []
+if args.revision_matrix:
+    flags += ['-DGAMEPLAY_MATRIX=1']
+    objects += list(map(str, compile_policy(ROOT, output, flags)))
 for path, name in [('tests/cod2x/animation_stance.c', 'animation_stance'),
                    ('src/PC/universal/com_math.c', 'com_math')]:
     obj = output / (name + '.o')

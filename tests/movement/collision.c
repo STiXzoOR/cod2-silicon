@@ -179,13 +179,46 @@ static void frames(void)
     assert(!divergences);
 }
 
+static void backward_frames(void)
+{
+    /* A held backward command cannot instantly reverse existing velocity.
+       Stock Mac rotates movementDir for the command; CoD2x >=3 uses actual
+       travel direction. Run the complete movement/collision dispatch. */
+    static dvar_t disabled = {0}; mantle_enable = &disabled;
+    testWorld = 4; ladderSurface = 0;
+    playerState_t results[2];
+    int fixed = 0;
+#if defined(COD2_CODX) && COD2_CODX
+    fixed = Cod2x_GameVersion() >= 3;
+#endif
+    for (int handler = 0; handler < 2; ++handler) {
+        playerState_t ps; pmove_t pm; pml_t pml; init(&ps, &pm, &pml, 60);
+        ps.velocity[0] = 190; ps.gravity = 800; ps.commandTime = 1000;
+        pm.cmd.serverTime = 1003; pm.oldcmd.serverTime = 1000;
+        pm.cmd.forwardmove = -127; pm.handler = handler; pm.tracemask = 0x2810011;
+        PmoveSingle(&pm);
+        close_float(ps.origin[0], (190.0f - 190.0f * 5.5f * 0.003f - 133.0f * 9.0f * 0.003f) * 0.003f);
+        close_float(ps.origin[1], 0); close_float(ps.origin[2], 0);
+        assert(ps.velocity[0] == 183 && ps.velocity[1] == 0 && ps.velocity[2] == 0);
+        assert(ps.movementDir == (fixed ? 0 : 90) && ps.commandTime == 1003);
+        results[handler] = ps;
+    }
+    assert(!memcmp(&results[0], &results[1], sizeof(results[0])));
+    puts("PASS full PmoveSingle backward-command displacement and independent velocity/yaw expectations");
+}
+
 int main(int argc, char **argv)
 {
+#ifdef GAMEPLAY_MATRIX
+    Fixture_SetRevision(argc == 3 ? atoi(argv[2]) : 3);
+#endif
     fixtureTrace = collision_world;
-    if (argc == 1 || !strcmp(argv[1], "step")) step_drop();
-    if (argc == 1 || !strcmp(argv[1], "mantle")) mantle();
-    if (argc == 1 || !strcmp(argv[1], "jump")) jump();
-    if (argc == 1 || !strcmp(argv[1], "landing")) landing();
-    if (argc == 1 || !strcmp(argv[1], "frames")) frames();
+    int all = argc == 1 || !strcmp(argv[1], "all");
+    if (all || !strcmp(argv[1], "step")) step_drop();
+    if (all || !strcmp(argv[1], "mantle")) mantle();
+    if (all || !strcmp(argv[1], "jump")) jump();
+    if (all || !strcmp(argv[1], "landing")) landing();
+    if (all || !strcmp(argv[1], "frames")) frames();
+    if (all || !strcmp(argv[1], "backward")) backward_frames();
     return 0;
 }

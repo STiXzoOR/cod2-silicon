@@ -9,6 +9,14 @@
 #endif
 extern scr_const_t scr_const;
 
+#if defined(COD2_X64) && COD2_X64
+/* Mac 1.3 0x182b94, 0x183f4b and 0x184034 test the high flag byte.
+   Mounted controllers/angles use 0x300 even on stock revision zero. */
+#define BG_ANIMATION_MOUNTED_MASK 0x300
+#else
+#define BG_ANIMATION_MOUNTED_MASK 0x3
+#endif
+
 /* File-scope alias: bound where no local can shadow `scr_const`, so uses below
    always reach the global even inside functions that declare their own `scr_const`. */
 static scr_const_t * const scr_const_g = &scr_const;
@@ -401,9 +409,9 @@ void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es
     } else
 #endif
 #if defined(COD2_CODX) && COD2_CODX
-    if (Cod2x_GameVersion() >= 3 ? (es->eFlags & 0x300) != 0 : (es->eFlags & 0x3) != 0) {
+    if (Cod2x_GameVersion() >= 3 ? (es->eFlags & 0x300) != 0 : (es->eFlags & BG_ANIMATION_MOUNTED_MASK) != 0) {
 #else
-    if ((es->eFlags & 0x3) != 0) {
+    if ((es->eFlags & BG_ANIMATION_MOUNTED_MASK) != 0) {
 #endif
         memset(goals, 0, sizeof(goals));
     } else {
@@ -958,9 +966,9 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
     eFlags = es->eFlags;
 
 #if defined(COD2_CODX) && COD2_CODX
-    if (Cod2x_GameVersion() >= 3 ? (eFlags & 0x300) != 0 : (eFlags & 0x3) != 0) {
+    if (Cod2x_GameVersion() >= 3 ? (eFlags & 0x300) != 0 : (eFlags & BG_ANIMATION_MOUNTED_MASK) != 0) {
 #else
-    if ((eFlags & 0x3) != 0) {
+    if ((eFlags & BG_ANIMATION_MOUNTED_MASK) != 0) {
 #endif
         ci->torso.yawing = 1;
         ci->torso.pitching = 1;
@@ -1052,9 +1060,9 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
     }
 
 #if defined(COD2_CODX) && COD2_CODX
-    if (Cod2x_GameVersion() >= 3 ? (eFlags & 0x300) != 0 : (eFlags & 0x3) != 0) {
+    if (Cod2x_GameVersion() >= 3 ? (eFlags & 0x300) != 0 : (eFlags & BG_ANIMATION_MOUNTED_MASK) != 0) {
 #else
-    if ((eFlags & 0x3) != 0) {
+    if ((eFlags & BG_ANIMATION_MOUNTED_MASK) != 0) {
 #endif
         ci->torso.yawAngle = playerYaw;
         ci->legs.yawAngle = playerYaw;
@@ -1067,10 +1075,10 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
 
 #if defined(COD2_CODX) && COD2_CODX
     if ((eFlags & 0x20000) != 0 ||
-        (Cod2x_GameVersion() >= 3 ? (eFlags & 0x300) != 0 : (eFlags & 0x3) != 0) ||
+        (Cod2x_GameVersion() >= 3 ? (eFlags & 0x300) != 0 : (eFlags & BG_ANIMATION_MOUNTED_MASK) != 0) ||
         (ci->clientConditions[3][0] & 0xc0000) != 0 || eFlags == 0x4000) {
 #else
-    if ((eFlags & 0x20000) != 0 || (eFlags & 0x3) != 0 || (ci->clientConditions[3][0] & 0xc0000) != 0 || eFlags == 0x4000) {
+    if ((eFlags & 0x20000) != 0 || (eFlags & BG_ANIMATION_MOUNTED_MASK) != 0 || (ci->clientConditions[3][0] & 0xc0000) != 0 || eFlags == 0x4000) {
 #endif
         torsoPitchDest = 0.0f;
     } else {

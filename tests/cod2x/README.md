@@ -149,3 +149,41 @@ registration services are synthetic; live hitboxes, collisions, networking,
 and full CoD2x host lifecycle remain outside this fixture. `--baseline <commit>
 --skip-registration` characterizes the spread path before the switch exists.
 See `docs/macos-port/reports/WS66-cod2x-shotgun-spread.md` for its evidence bounds.
+
+The bounded production gameplay revision matrix selects remote revisions
+0/3/4/6 through the real runtime and typed dvars, then repeats the gameplay
+checks under the current release's actual hosted-zero ownership:
+
+```sh
+taskpolicy -b nice -n 19 python3 tests/movement/run.py \
+  --compile-db build-macos-codx/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/movement-matrix-new" \
+  --revision-matrix
+taskpolicy -b nice -n 19 python3 tests/movement/weapons.py \
+  --compile-db build-macos-codx/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/weapons-matrix-new" \
+  --revision-matrix
+taskpolicy -b nice -n 19 python3 tests/cod2x/animation_stance.py \
+  --compile-db build-macos-codx/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/animation-matrix-new" \
+  --revision-matrix
+```
+
+Repeat with the stock database and distinct private outputs. The movement
+matrix preserves every original fixture, including 20,000 complete player-state
+prediction/server comparisons per selection, and adds independent backward
+displacement/velocity/yaw and stance-event expectations. The weapon matrix
+preserves WS53 and runs unavailable smoke/frag competition and valid final
+throws through production event-ring insertion, player/entity conversion and
+receiving-client event delivery. The animation matrix runs the complete native
+animation TU: angle calculation, lerp frames/rates and controller/tag output for
+both animation users, including revision-3-only prone yaw and stock mounted
+flag handling. `--baseline <commit>` on the animation runner can reproduce the
+mounted-mask regression before WS74.
+
+Collision worlds, weapon/animation definitions, script services and XAnim/DObj
+endpoints are synthetic. Event delivery uses in-memory entity state, without
+packet serialization or network transport. No nonzero hosted revision is
+enabled or certified by these fixtures. See
+`docs/macos-port/reports/WS74-production-gameplay-matrix.md` for reference
+contracts, the bounded stock correction and remaining runtime acceptance.

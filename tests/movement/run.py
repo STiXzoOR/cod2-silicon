@@ -7,15 +7,19 @@ from pathlib import Path
 import re
 import shlex
 import subprocess
+from policy_build import compile_policy
 
 ROOT = Path(__file__).resolve().parents[2]
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('--build', type=Path, default=ROOT / 'build-macos')
 p.add_argument('--baseline')
 p.add_argument('--test', action='append')
+p.add_argument('--compile-db', type=Path)
+p.add_argument('--output', type=Path)
+p.add_argument('--revision-matrix', action='store_true')
 a = p.parse_args()
 os.environ.setdefault('UBSAN_OPTIONS', 'halt_on_error=1')
-out = a.build.resolve() / 'movement-tests'
+out = a.output.resolve() if a.output else a.build.resolve() / 'movement-tests'
 out.mkdir(parents=True, exist_ok=True)
 source = 'src/PC/bgame/bg_pmove.c'
 data = subprocess.check_output(['git', 'show', f'{a.baseline}:{source}'], cwd=ROOT, text=True) if a.baseline else (ROOT / source).read_text()
@@ -63,16 +67,21 @@ for n in sorted(names):
     member, value = ('integer', str(ints[n])) if n in ints else ('value', defaults.get(n, '0.0f'))
     globals_.append(f'static dvar_t fixture_{n} = {{ .current.{member} = {value} }};\nconst dvar_t *{n} = &fixture_{n};\n')
 (out / 'dvars.h').write_text(''.join(globals_))
-rows = json.loads((a.build / 'compile_commands.json').read_text())
+rows = json.loads((a.compile_db or a.build / 'compile_commands.json').read_text())
 entry = next(x for x in rows if x['file'].endswith('/' + source))
-flags = shlex.split(entry['command'])
+source_root = entry['file'][:-len('/' + source)]
+flags = entry.get('arguments') or shlex.split(entry['command'])
 flags = flags[:flags.index('-o')]
-flags = [x for x in flags if x != '-DNDEBUG']
+flags = [x.replace(source_root, str(ROOT)) for x in flags if x != '-DNDEBUG']
 flags += ['-UNDEBUG', '-I' + str(out), '-ffunction-sections', '-fdata-sections',
           '-fsanitize=address,undefined', '-fno-omit-frame-pointer']
+if a.revision_matrix:
+    flags += ['-DGAMEPLAY_MATRIX=1']
 obj = out / 'movement.o'
 subprocess.run([*flags, '-c', str(ROOT / 'tests/movement/movement.c'), '-o', str(obj)], check=True)
 objects = [obj]
+if a.revision_matrix:
+    objects += compile_policy(ROOT, out, flags)
 for source in ['src/PC/universal/com_math.c', 'src/PC/universal/q_shared.c',
                'src/PC/qcommon/port_debug.c']:
     extra = out / (Path(source).stem + '.o')
@@ -80,15 +89,17 @@ for source in ['src/PC/universal/com_math.c', 'src/PC/universal/q_shared.c',
     objects.append(extra)
 exe = out / 'movement'
 subprocess.run(['clang', '-arch', 'arm64', '-fsanitize=address,undefined', '-Wl,-dead_strip', *map(str, objects), '-o', str(exe)], check=True)
-for name in a.test or ['bob', 'scale', 'snap', 'walk', 'lean', 'timers', 'direction', 'view', 'ladder', 'prone', 'dispatch']:
+for name in a.test or ['bob', 'scale', 'snap', 'walk', 'lean', 'timers', 'direction', 'stance', 'view', 'ladder', 'prone', 'dispatch']:
     if name in ('collision', 'events', 'sway'):
         continue
-    subprocess.run([str(exe), name], check=True)
+    for revision in ([0, 3, 4, 6, -1] if a.revision_matrix else [None]):
+        subprocess.run([str(exe), name, *([] if revision is None else [str(revision)])], check=True)
 if not a.test or 'collision' in a.test:
     subprocess.run([*flags, '-c', str(ROOT / 'tests/movement/collision.c'), '-o', str(obj)], check=True)
     collision = out / 'collision'
     subprocess.run(['clang', '-arch', 'arm64', '-fsanitize=address,undefined', '-Wl,-dead_strip', *map(str, objects), '-o', str(collision)], check=True)
-    subprocess.run([str(collision)], check=True)
+    for revision in ([0, 3, 4, 6, -1] if a.revision_matrix else [None]):
+        subprocess.run([str(collision), *([] if revision is None else ['all', str(revision)])], check=True)
 if not a.test or 'events' in a.test:
     subprocess.run([*flags, '-c', str(ROOT / 'tests/movement/events.c'), '-o', str(obj)], check=True)
     events = out / 'events'
