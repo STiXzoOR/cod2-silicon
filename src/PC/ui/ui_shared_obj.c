@@ -1735,7 +1735,41 @@ qboolean ItemParse_execKeyInt(const char (*item)[4], int handle)
     return 1;
 }
 
+#ifdef COD2_X64
+extern int SEH_GetCurrentLanguage(void);
+
+static FontHandle UI_RegisterLocaleFont(const char *fontRole, const char *fontName,
+                                      const char *duplicateName, int imageTrack)
+{
+    const char *directory = NULL;
+    char localizedName[256];
+
+    switch (SEH_GetCurrentLanguage()) {
+    case 6: directory = "russian"; break;
+    case 7: directory = "polish"; break;
+    case 8: directory = "korean"; break;
+    case 9: directory = "taiwanese"; break;
+    case 10: directory = "japanese"; break;
+    case 11: directory = "chinese"; break;
+    case 12: directory = "thai"; break;
+    case 14: directory = "czech"; break;
+    }
+    if (directory) {
+        const char *role = !strcmp(duplicateName, "$font") ? "normalFont" : fontRole;
+        Com_sprintf(localizedName, sizeof(localizedName), "fonts/%s/%s", directory, role);
+    } else {
+        Com_sprintf(localizedName, sizeof(localizedName), "%s", fontName);
+    }
+    return CL_RegisterFont(localizedName, imageTrack);
+}
+#endif
+
+#ifdef COD2_X64
+static qboolean UI_ParseFontAsset(int handle, int imageTrack, const char *duplicateName,
+                                 const char *fontRole)
+#else
 static qboolean UI_ParseFontAsset(int handle, int imageTrack, const char *duplicateName)
+#endif
 {
     pc_token_t token;
     int pointSize;
@@ -1750,7 +1784,11 @@ static qboolean UI_ParseFontAsset(int handle, int imageTrack, const char *duplic
         return 0;
 
     (void)pointSize;
+#ifdef COD2_X64
+    font = UI_RegisterLocaleFont(fontRole, fontName, duplicateName, imageTrack);
+#else
     font = CL_RegisterFont(fontName, imageTrack);
+#endif
     CL_DuplicateFont(font, duplicateName);
     return 1;
 }
@@ -1772,22 +1810,46 @@ static qboolean UI_ParseAssetGlobalDef(int handle, int imageTrack)
             return 1;
 
         if (!I_stricmp(token.string, "font")) {
+#ifdef COD2_X64
+            if (!UI_ParseFontAsset(handle, imageTrack, "$font", token.string))
+#else
             if (!UI_ParseFontAsset(handle, imageTrack, "$font"))
+#endif
                 return 0;
         } else if (!I_stricmp(token.string, "smallFont")) {
+#ifdef COD2_X64
+            if (!UI_ParseFontAsset(handle, imageTrack, "$smallfont", token.string))
+#else
             if (!UI_ParseFontAsset(handle, imageTrack, "$smallfont"))
+#endif
                 return 0;
         } else if (!I_stricmp(token.string, "bigFont")) {
+#ifdef COD2_X64
+            if (!UI_ParseFontAsset(handle, imageTrack, "$bigfont", token.string))
+#else
             if (!UI_ParseFontAsset(handle, imageTrack, "$bigfont"))
+#endif
                 return 0;
         } else if (!I_stricmp(token.string, "extraBigFont")) {
+#ifdef COD2_X64
+            if (!UI_ParseFontAsset(handle, imageTrack, "$extrabigfont", token.string))
+#else
             if (!UI_ParseFontAsset(handle, imageTrack, "$extrabigfont"))
+#endif
                 return 0;
         } else if (!I_stricmp(token.string, "boldFont")) {
+#ifdef COD2_X64
+            if (!UI_ParseFontAsset(handle, imageTrack, "$boldfont", token.string))
+#else
             if (!UI_ParseFontAsset(handle, imageTrack, "$boldfont"))
+#endif
                 return 0;
         } else if (!I_stricmp(token.string, "consoleFont")) {
+#ifdef COD2_X64
+            if (!UI_ParseFontAsset(handle, imageTrack, "$consolefont", token.string))
+#else
             if (!UI_ParseFontAsset(handle, imageTrack, "$consolefont"))
+#endif
                 return 0;
         } else if (!I_stricmp(token.string, "gradientbar")) {
             if (!PC_ReadTokenHandle(handle, &token))

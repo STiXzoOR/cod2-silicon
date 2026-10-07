@@ -216,3 +216,15 @@ if not args.test or 'browser_maps' in args.test:
     run('browser_maps', function('src/PC/ui_mp/ui_main_mp.c', 'UI_GetMapDisplayName') +
         ''.join(function('src/PC/client_mp/cl_ui_mp.c', name) for name in
                 ['LAN_CompareHostname', 'LAN_CompareServers']))
+
+if not args.test or 'locale_fonts' in args.test:
+    path = 'src/PC/ui/ui_shared_obj.c'
+    generated = ''
+    if 'UI_RegisterLocaleFont' in active(path):
+        generated += function(path, 'UI_RegisterLocaleFont')
+    generated += function(path, 'UI_ParseFontAsset') + function(path, 'UI_ParseAssetGlobalDef')
+    if 'const char *fontRole' in generated:
+        generated += '#define TEST_PARSE_FONT(role, alias) UI_ParseFontAsset(7, 11, alias, role)\n'
+    else:
+        generated += '#define TEST_PARSE_FONT(role, alias) UI_ParseFontAsset(7, 11, alias)\n'
+    run('locale_fonts', generated)
