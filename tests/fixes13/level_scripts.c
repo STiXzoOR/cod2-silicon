@@ -6,6 +6,7 @@
 #define COD2_DEBUG_ONLY(...)
 static level_locals_t level;
 static scr_data_t g_scr_data;
+static void *imp_g_scr_data = &g_scr_data;
 static qboolean itemRegistered[256];
 static int numItems = 4;
 static void *imp_bg_numItems = &numItems;

@@ -799,6 +799,12 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
         for (t = 0; t < 64; t++)
             level_bgs.clientinfo[t].pXAnimTree =
                 (XAnimTree_s *)XAnimCreateTree((XAnim *)animTree, (Alloc_t)Hunk_AllocXAnimServer);
+#if defined(COD2_X64)
+        /* Mac 1.3 0x1aeac3 also allocates the eight persistent clone trees. */
+        for (t = 0; t < 8; t++)
+            ((scr_data_t *)imp_g_scr_data)->playerCorpseInfo[t].tree =
+                (XAnimTree_s *)XAnimCreateTree((XAnim *)animTree, (Alloc_t)Hunk_AllocXAnimServer);
+#endif
     }
 
     GScr_LoadConsts();
@@ -833,6 +839,11 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_after_load, G_VM_FRAME);)
     Scr_StartupGameType();
     COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_after_startup, G_VM_FRAME);)
+#if defined(COD2_X64)
+    /* Mac 1.3 0x1ae10f marks every corpse slot free on cold loads and restarts. */
+    for (int corpseIndex = 0; corpseIndex < 8; corpseIndex++)
+        ((scr_data_t *)imp_g_scr_data)->playerCorpseInfo[corpseIndex].entnum = -1;
+#endif
 
     if (restart && !savepersist) {
         RestoreBody();
@@ -1344,7 +1355,12 @@ void G_ShutdownGame(qboolean freeScripts)
             scr_data_t *scrData = (scr_data_t *)imp_g_scr_data;
             for (i = 0; i < 8; i++) {
                 corpseInfo_t *corpse = &scrData->playerCorpseInfo[i];
+#if defined(COD2_X64)
+                /* Slots own trees even before a player has been cloned into ci. */
+                struct XAnimTree_s *tree = corpse->tree;
+#else
                 struct XAnimTree_s *tree = corpse->ci.pXAnimTree;
+#endif
                 if (tree && (((uintptr_t)tree & (sizeof(void *) - 1)) == 0)) {
                     XAnimFreeTree(tree, 0);
                 }

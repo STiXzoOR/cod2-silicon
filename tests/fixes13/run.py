@@ -241,3 +241,18 @@ if not args.test or 'console_hints' in args.test:
 if not args.test or 'numeric_fields' in args.test:
     run('numeric_fields', function('src/PC/qcommon/common.c', 'Com_LocalizedFloatToString') +
         function('src/PC/ui_mp/ui_shared_mp.c', 'Item_TextField_Paint'))
+
+if not args.test or 'corpse_trees' in args.test:
+    path = 'src/PC/game_mp/g_main_mp.c'
+    source = function(path, 'G_InitGame')
+    start = source.index('if (!restart) {\n        BG_LoadAnim();')
+    end = source.index('GScr_LoadConsts();', start)
+    generated = 'static void initialize_trees(int restart) {\n' + source[start:end] + '\n}\n'
+    start = source.index('Scr_StartupGameType();') + len('Scr_StartupGameType();')
+    end = source.index('if (restart && !savepersist)', start)
+    generated += 'static void initialize_corpse_slots(void) {\n' + source[start:end] + '\n}\n'
+    source = function(path, 'G_ShutdownGame')
+    start = source.index('scr_data_t *scrData =')
+    end = source.index('Hunk_ClearToMarkLow(0);', start)
+    generated += 'static void release_corpse_trees(void) { int i; {\n' + source[start:end] + '\n}\n'
+    run('corpse_trees', generated)
