@@ -55,16 +55,39 @@ version 4. The fixture contains:
   35 through 39 to 1. Repeating it tests ordinary output, then following it with
   a lost frame or null-mode packet tests both other clipping paths.
 
-The 48 checks require exact encoded packet bytes and bit counts, matching
+The 55 checks require exact encoded packet bytes and bit counts, matching
 decode return values and remaining-bit counts, and a maximum absolute PCM
-error of 0.25 relative to independent 1.0.4. This PCM tolerance permits scalar
-floating-point differences, including the verified Mac comfort-noise floor;
-it is not a claim of bit-exact PCM. The initial-loss noise check and header/
+error of 0.25 relative to independent 1.0.4 for all normal sequences with
+enhancement disabled and loss sequences in modes 1 and 8. This PCM tolerance
+permits scalar floating-point differences, including the verified Mac
+comfort-noise floor; it is not a claim of bit-exact PCM. The initial-loss noise check and header/
 saturation contracts were separately checked against the actual Mac 1.3 decoder.
 The one-byte truncated mode-5 payload deliberately retains the original return
 value 0 with `speex_bits_remaining == -1`; exhaustion before a complete frame
 header returns -1. This is a compatibility fixture, not a general packet-fuzzing
 or malformed-payload hardening change.
+
+Original comb enhancement and three-tap loss history intentionally differ from
+unmodified 1.0.4. The fixed corpus is unchanged: the remaining 1.0.4 PCM
+comparisons are retained in `upstream_1_0_4_pcm` as observations with
+`acceptance: false`. Their packet/status checks still run. PCM tolerance is
+unchanged for the ten unaffected configurations, covering 80 frames.
+
+Seven additional checks exercise the repaired behavior independently.
+`compatibility_probe.c` calls the real comb helper with constant synthetic
+excitation/history and known pitch taps. `contracts.py` evaluates the constant
+raw output and smoothing through a closed-form expression, without using the
+engine to generate an expectation. Four cases cover the RMS floor, the RMS
+normalization denominator, negative outer taps and high-gain adjustment. The
+helper output limit is 0.0003 sample units. Three pitch-history checks use the
+first three fixed mode-6 packets: their seven-bit gain indices and tap values
+were independently read from the published Xiph 1.0.4 `gain_cdbk_nb`, giving
+frame averages 0.49609375, 0.947265625 and 0.970703125. These synthetic scalar
+expectations contain no original binary tables or decoded original PCM.
+
+The principal `codec_probe.c` driver and regeneration path remain unchanged.
+See [the WS91 report](../../docs/macos-port/reports/WS91-voice-original-fidelity.md)
+for the direct-call evidence, failing baseline and remaining differences.
 
 ## Regenerate the synthetic corpus
 
@@ -110,5 +133,11 @@ Mac application environment are not reproduced. The optional report keeps
 aggregate PCM errors and model metadata outside Git. Original packet data,
 binary bytes, tables, disassembly and decoded original PCM are never embedded
 in the fixture. Successful regression tests do not establish original PCM
-parity: enhancement and some loss/recovery sequences still differ, as recorded
-in [the WS89 report](../../docs/macos-port/reports/WS89-voice-compatibility.md).
+parity. Two extra bounded original acceptance checks cover mode 5 with
+enhancement enabled and mode 6 with enhancement disabled plus two losses.
+They require matching status/bit counts, RMSE at most 15 sample units and
+maximum error at most 64, for 57 checks when the oracle is enabled. These
+limits detect the diagnosed errors while allowing the import-model and scalar
+numerical differences already present in the enhancement-off control.
+Other enhanced modes retain differences, as recorded in
+[the WS91 report](../../docs/macos-port/reports/WS91-voice-original-fidelity.md).

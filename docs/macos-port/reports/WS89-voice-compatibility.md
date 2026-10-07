@@ -16,6 +16,10 @@ regression behavior. **It does not establish original Mac PCM parity.** Enhanced
 output and some consecutive-loss/recovery sequences retain material differences.
 FA08's broader original-fidelity question remains open.
 
+The subsequent [WS91 follow-up](WS91-voice-original-fidelity.md) diagnoses and
+repairs the principal comb and three-tap loss-history differences. The results
+and 1.0.4 acceptance described below remain the historical WS89 receipts.
+
 No capture, audio callback, network wrapper, mode table, shared layout, platform
 configuration or renderer code changes. Capture remains unavailable in the
 existing native implementation. No game, GUI or benchmark was started. No

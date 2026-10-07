@@ -218,6 +218,14 @@ void comp_filter_mem_init (CombFilterMem *mem)
    mem->smooth_gain=1;
 }
 
+#if defined(COD2_X64)
+static float comb_pitch_gain(const float *gain)
+{
+   return fabs(gain[1]) + (gain[0]>0 ? gain[0] : -.5*gain[0]) +
+      (gain[2]>0 ? gain[2] : -.5*gain[2]);
+}
+#endif
+
 void comb_filter(
 float *exc,          /*decoded excitation*/
 float *new_exc,      /*enhanced excitation*/
@@ -238,12 +246,20 @@ CombFilterMem *mem
    /*Compute excitation energy prior to enhancement*/
    for (i=0;i<nsf;i++)
       exc_energy+=exc[i]*exc[i];
+#if defined(COD2_X64)
+   /* Mac 1.3 normalizes with floored RMS rather than total energy. */
+   exc_energy=sqrt(exc_energy/nsf+.1);
+#endif
 
    /*Some gain adjustment is pitch is too high or if unvoiced*/
    {
       float g=0;
+#if defined(COD2_X64)
+      g = .5*(comb_pitch_gain(pitch_gain) + comb_pitch_gain(mem->last_pitch_gain));
+#else
       g = .5*fabs(pitch_gain[0]+pitch_gain[1]+pitch_gain[2] +
       mem->last_pitch_gain[0] + mem->last_pitch_gain[1] + mem->last_pitch_gain[2]);
+#endif
       if (g>1.3)
          comb_gain*=1.3/g;
       if (g<.5)
@@ -278,7 +294,12 @@ CombFilterMem *mem
       new_exc_energy+=new_exc[i]*new_exc[i];
 
    /*Compute scaling factor and normalize energy*/
+#if defined(COD2_X64)
+   new_exc_energy=sqrt(new_exc_energy/nsf+.1);
+   gain = (new_exc_energy<exc_energy ? new_exc_energy : exc_energy)/(new_exc_energy+1);
+#else
    gain = sqrt(exc_energy)/sqrt(.1+new_exc_energy);
+#endif
    if (gain < .5)
       gain=.5;
    if (gain>1)

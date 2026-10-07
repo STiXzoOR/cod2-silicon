@@ -1347,7 +1347,11 @@ int nb_decode(void *state, SpeexBits *bits, float *out)
          if (pitch_gain[2]>0)
             tmp += pitch_gain[2];
          else
+#if defined(COD2_X64)
+            tmp -= .5*pitch_gain[2];
+#else
             tmp -= .5*pitch_gain[0];
+#endif
 
 
          pitch_average += tmp;
