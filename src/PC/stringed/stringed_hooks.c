@@ -8,6 +8,14 @@
 
 #include <string.h>
 
+#if defined(COD2_X64) && COD2_X64
+#define SEH_LANGUAGE_COUNT 15
+#define SEH_LANGUAGE_MAX 14
+#else
+#define SEH_LANGUAGE_COUNT 14
+#define SEH_LANGUAGE_MAX 13
+#endif
+
 #if defined(_MSC_VER)
 #define STRINGED_NOINLINE __declspec(noinline)
 #else
@@ -39,7 +47,11 @@ languageInfo_t g_languages[] = {
     { "chinese", 0 },
     { "thai", 0 },
     { "leet", 0 },
+#if defined(COD2_X64) && COD2_X64
+    { "czech", 0 },
+#else
     { NULL, 0 },
+#endif
     { NULL, 0 },
 };
 static qboolean g_currentAsian;
@@ -96,8 +108,8 @@ int SEH_VerifyLanguageSelection(int iLanguageSelection)
         return iLanguageSelection;
     }
 
-    for (i = 0; i < 14; i++) {
-        int candidate = (i + iLanguageSelection) % 14;
+    for (i = 0; i < SEH_LANGUAGE_COUNT; i++) {
+        int candidate = (i + iLanguageSelection) % SEH_LANGUAGE_COUNT;
         if (g_languages[candidate].bPresent) {
             return candidate;
         }
@@ -120,7 +132,7 @@ void SEH_Shutdown_StringEd(void)
 const char *SEH_GetLanguageName(const int iLanguage)
 {
 
-    if ((unsigned int)iLanguage > 13) {
+    if ((unsigned int)iLanguage > SEH_LANGUAGE_MAX) {
         return g_languages[0].pszName;
     }
     return g_languages[iLanguage].pszName;
@@ -146,7 +158,7 @@ qboolean SEH_GetLanguageIndexForName(const char *pszLanguageName, int *piLanguag
 {
     int i;
 
-    for (i = 0; i < 14; i++) {
+    for (i = 0; i < SEH_LANGUAGE_COUNT; i++) {
         if (I_stricmp(pszLanguageName, g_languages[i].pszName) == 0) {
             *piLanguageIndex = i;
             return 1;
@@ -159,7 +171,7 @@ qboolean SEH_GetLanguageIndexForName(const char *pszLanguageName, int *piLanguag
 
 void SEH_InitLanguage(void)
 {
-    loc_language = Dvar_RegisterInt("loc_language", 0, 0, 13, 0x1021);
+    loc_language = Dvar_RegisterInt("loc_language", 0, 0, SEH_LANGUAGE_MAX, 0x1021);
     loc_forceEnglish = Dvar_RegisterBool("loc_forceEnglish", 0, 0x1021);
     loc_translate = Dvar_RegisterBool("loc_translate", 1, 0x1020);
     loc_warnings = Dvar_RegisterBool("loc_warnings", 0, COD2_IMAGE_CONSTANT_4096);
@@ -218,13 +230,13 @@ void SEH_UpdateLanguageInfo(void)
         SEH_InitLanguage();
     }
 
-    Dvar_RegisterInt(loc_language->name, 0, 0, 13, 0x1021);
+    Dvar_RegisterInt(loc_language->name, 0, 0, SEH_LANGUAGE_MAX, 0x1021);
     Dvar_RegisterBool(loc_forceEnglish->name, 0, 0x1021);
 
     g_currentAsian = ((unsigned int)(loc_language->current.integer - 8) <= 4);
 
     iNumLanguages = 0;
-    for (i = 0; i < 14; i++) {
+    for (i = 0; i < SEH_LANGUAGE_COUNT; i++) {
         if (FS_LanguageHasAssets(i)) {
             g_languages[i].bPresent = 1;
             iNumLanguages++;
@@ -241,7 +253,7 @@ void SEH_UpdateLanguageInfo(void)
         return;
     }
 
-    for (i = 0; i < 14; i++) {
+    for (i = 0; i < SEH_LANGUAGE_COUNT; i++) {
         Dvar_SetInt(loc_language, i);
         g_currentAsian = ((unsigned int)(loc_language->current.integer - 8) <= 4);
         if (SEH_StringEd_SetLanguageStrings(i)) {

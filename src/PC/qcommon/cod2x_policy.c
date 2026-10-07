@@ -136,6 +136,71 @@ const char *Cod2x_ConfigGame(const char *game, const char *qpath)
    URLs retain // after a colon; comments retain their ordinary meaning. */
 int Cod2x_Tokenize(const char *p, int limit, char **argv, char *out, size_t capacity)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    const char *input = p;
+    int argc = 0;
+    size_t used = 0;
+
+    if (!p || !capacity)
+        return 0;
+    for (;;) {
+        if (argc == 512)
+            return 0;
+        if (limit > 0 && argc == limit - 1) {
+            size_t remaining;
+            if (!*p)
+                return argc;
+            remaining = strlen(p) + 1;
+            if (remaining > capacity - used)
+                return -1;
+            argv[argc] = out + used;
+            memcpy(out + used, p, remaining);
+            return argc + 1;
+        }
+        while (*p && (signed char)*p <= ' ')
+            ++p;
+        if (!*p || (p[0] == '/' && p[1] == '/' && (p == input || p[-1] != ':')))
+            return argc;
+        if (p[0] == '/' && p[1] == '*') {
+            ++p;
+            while (*p && !(p[0] == '*' && p[1] == '/'))
+                ++p;
+            if (!*p)
+                return argc;
+            p += 2;
+            continue;
+        }
+        argv[argc++] = out + used;
+        if (*p == '"') {
+            ++p;
+            while (*p && *p != '"') {
+                if (*p == '\\' && p[1] == '"')
+                    ++p;
+                if (used + 1 >= capacity)
+                    return -1;
+                out[used++] = *p++;
+            }
+            if (*p)
+                ++p;
+        } else {
+            while ((signed char)*p > ' ') {
+                if (*p == '"' || (p[0] == '/' && (p[1] == '*' ||
+                    (p[1] == '/' && (p == input || p[-1] != ':')))))
+                    break;
+                if (used + 1 >= capacity)
+                    return -1;
+                out[used++] = *p++;
+            }
+        }
+        if (used >= capacity)
+            return -1;
+        out[used++] = '\0';
+        if (!*p)
+            return argc;
+        if ((signed char)*p <= ' ')
+            ++p;
+    }
+#else
     int argc = 0;
     size_t used = 0;
     if (!p || !capacity)
@@ -182,4 +247,5 @@ int Cod2x_Tokenize(const char *p, int limit, char **argv, char *out, size_t capa
         if (quoted && *p == '"') ++p;
     }
     return argc;
+#endif
 }

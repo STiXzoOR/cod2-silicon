@@ -1161,9 +1161,17 @@ void CL_InitOnceForAllClients(void)
     }
 
 #if defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64) && COD2_X64
+    cl_maxpackets = Dvar_RegisterInt("cl_maxpackets", 125, 10, 125, 0x1001);
+#else
     cl_maxpackets = Dvar_RegisterInt("cl_maxpackets", 125, 15, 125, 0x1001);
+#endif
+#else
+#if defined(COD2_X64) && COD2_X64
+    cl_maxpackets = Dvar_RegisterInt("cl_maxpackets", 30, 10, 100, 0x1001);
 #else
     cl_maxpackets = Dvar_RegisterInt("cl_maxpackets", 30, 15, 100, 0x1001);
+#endif
 #endif
     cl_packetdup = Dvar_RegisterInt("cl_packetdup", 1, 0, 5, 0x1001);
     cl_sensitivity = Dvar_RegisterFloat("sensitivity", 5.0f, 0.01f, 100.0f, 0x1001);
@@ -1188,6 +1196,10 @@ void CL_InitOnceForAllClients(void)
     input_viewSensitivity = Dvar_RegisterFloat("input_viewSensitivity", 1.0f, 0.0001f, 5.0f, 0x1001);
     cg_drawCrosshair = Dvar_RegisterBool_mac("cg_drawCrosshair", 1, 0x1001);
     cl_motdString = Dvar_RegisterString_mac("cl_motdString", "", 0x1040);
+#if defined(COD2_X64) && COD2_X64
+    Dvar_RegisterString_mac("motd", "", 0x1000);
+    Dvar_RegisterInt("cl_profileTextHeight", 16, 1, 100, 0x1000);
+#endif
     cl_ingame = Dvar_RegisterBool_mac("cl_ingame", 0, 0x1040);
     Dvar_RegisterInt("cl_maxPing", 800, 20, 2000, 0x1001);
     name = Dvar_RegisterString_mac("name", "Unknown Soldier", 0x1003);
@@ -2689,7 +2701,11 @@ void CL_Vid_Restart_f(void)
     CL_AddReliableCommand(va((const char *)"vdr"));
     Com_Restart();
 
+#if defined(COD2_X64) && COD2_X64
+    Dvar_RegisterInt((const char *)"loc_language", 0, 0, 14, 0x1021);
+#else
     Dvar_RegisterInt((const char *)"loc_language", 0, 0, 13, 0x1021);
+#endif
     Dvar_RegisterBool_mac((const char *)"loc_translate", 1, 0x1020);
     Dvar_RegisterBool_mac((const char *)"fs_ignoreLocalized", 0, 0x10a0);
 
