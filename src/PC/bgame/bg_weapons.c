@@ -33,7 +33,11 @@ extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern int BG_AnimScriptEvent(playerState_t *ps, scriptAnimEventTypes_t event, qboolean isContinue, qboolean force);
 extern void BG_UpdateConditionValue(int client, int condition, int value, qboolean checkConversion);
 extern void PM_SetProneMovementOverride(playerState_t *ps);
+#if defined(COD2_X64) && COD2_X64
+extern Bool Mantle_IsWeaponInactive(playerState_t *ps);
+#else
 extern qboolean Mantle_IsWeaponInactive(playerState_t *ps);
+#endif
 extern void BG_AddPredictableEventToPlayerstate(int newEvent, int eventParm, playerState_t *ps);
 extern const dvar_t *bg_aimSpreadMoveSpeedThreshold;
 extern const dvar_t *player_scopeExitOnDamage;
@@ -1690,6 +1694,11 @@ static void PM_FinishWeaponChange(pmove_t *pm)
     WeaponDef *weapDef;
     qboolean altSwitch = 0;
 
+#if defined(COD2_X64) && COD2_X64
+    if (Mantle_IsWeaponInactive(ps))
+        newWeapon = 0;
+    else
+#endif
     if (!PM_WeaponHasInventoryWeapon(ps, newWeapon))
         newWeapon = PM_FindFirstSelectableWeapon(ps);
 
@@ -1700,13 +1709,19 @@ static void PM_FinishWeaponChange(pmove_t *pm)
         return;
     }
 
+#if !defined(COD2_X64) || !COD2_X64
     if (!newWeapon) {
         PM_WeaponSetIdle(ps);
         return;
     }
+#endif
 
     weapDef = bg_weaponDefs[newWeapon];
+#if defined(COD2_X64) && COD2_X64
+    if (oldWeapon && newWeapon && bg_weaponDefs[oldWeapon]->iAltWeaponIndex == newWeapon)
+#else
     if (oldWeapon && bg_weaponDefs[oldWeapon]->iAltWeaponIndex == newWeapon)
+#endif
         altSwitch = 1;
 
     ps->weaponstate = WEAPON_RAISING;
@@ -1726,7 +1741,11 @@ static void PM_FinishWeaponChange(pmove_t *pm)
         PM_AddEvent(ps, 0x9a);
 
     ps->weaponTime = weapDef->iRaiseTime;
+#if defined(COD2_X64) && COD2_X64
+    BG_AnimScriptEvent(ps, ANIM_ET_RAISEWEAPON, 0, newWeapon != 0);
+#else
     BG_AnimScriptEvent(ps, ANIM_ET_RAISEWEAPON, 0, 1);
+#endif
     ps->aimSpreadScale = 255.0f;
     PM_WeaponSetAnim(ps, 0x0a);
 }
@@ -1757,6 +1776,20 @@ static void PM_CheckWeaponChange(pmove_t *pm)
     if (ps->weaponstate == WEAPON_DROPPING)
         return;
 
+#if defined(COD2_X64) && COD2_X64
+    if (Mantle_IsWeaponInactive(ps)) {
+        if (PM_WeaponStateIsBinoculars(ps->weaponstate) || PM_WeaponStateIsOffhand(ps->weaponstate))
+            return;
+        if (ps->weaponTime && !PM_WeaponStateIsReloading(ps->weaponstate) &&
+            ps->weaponstate != WEAPON_RECHAMBERING &&
+            (ps->weaponstate == WEAPON_FIRING || ps->weaponstate == WEAPON_MELEE_INIT ||
+             ps->weaponstate == WEAPON_MELEE_FIRE || ps->weaponDelay))
+            return;
+        if (ps->weapon)
+            PM_BeginWeaponChange(ps, 0);
+        return;
+    }
+#endif
     if (PM_ShouldChangeWeapon(pm)) {
         if (PM_WeaponStateIsBinoculars(ps->weaponstate))
             PM_ResetWeaponState(ps);

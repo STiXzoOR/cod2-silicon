@@ -137,6 +137,8 @@ python3 tests/fixes13/run.py --build build-macos
 python3 tests/fixes13/run.py --build build-macos-codx
 python3 tests/movement/run.py --build build-macos
 python3 tests/movement/run.py --build build-macos-codx
+python3 tests/movement/weapons.py --build build-macos
+python3 tests/movement/weapons.py --build build-macos-codx
 python3 tests/audio/run.py --build build-macos
 python3 tests/audio/run.py --build build-macos-codx
 python3 tests/perf/run.py
