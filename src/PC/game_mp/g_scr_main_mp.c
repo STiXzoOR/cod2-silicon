@@ -12,6 +12,9 @@ extern scr_const_t scr_const;
    always reach the global even inside functions that declare their own `scr_const`. */
 static scr_const_t * const scr_const_g = &scr_const;
 extern BuiltinMethod Player_GetMethod(const char **pName);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+extern BuiltinMethod Player_Cod2xGetMethod(const char **pName, int *type);
+#endif
 extern BuiltinMethod ScriptEnt_GetMethod(const char **pName);
 extern BuiltinMethod HudElem_GetMethod(const char **pName);
 extern void RegisterItem(int iItemIndex, qboolean bUpdateCS);
@@ -2662,7 +2665,11 @@ BuiltinMethod Scr_GetMethod(const char **pName, int *type)
         }
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    return Player_Cod2xGetMethod(pName, type);
+#else
     return (BuiltinMethod)0;
+#endif
 }
 
 void Scr_SetOrigin(gentity_t *ent, int offset)

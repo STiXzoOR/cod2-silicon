@@ -229,6 +229,9 @@ COD2_ASSERT_FIELD(server_t, checksumFeed,  0xc);
 COD2_ASSERT_FIELD(server_t, configstrings, 0x418);
 COD2_ASSERT_FIELD(server_t, num_entities,  0x5f424);
 COD2_ASSERT_FIELD(server_t, gametype,      0x5f4f4);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "cod2x_client_identity.h"
+#endif
 
 #if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 #    define SV_CONFIGSTRING_SLOT(svbase, index) (((server_t *)(svbase))->configstrings[(index)])
@@ -701,6 +704,9 @@ void SV_Shutdown(char *finalmsg)
         svs->cachedSnapshotFrames = 0;
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    SV_Cod2xClearIdentities();
+#endif
     memset(svs, 0, sizeof(serverStatic_t));
 
     {

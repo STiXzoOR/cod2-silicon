@@ -2,6 +2,9 @@
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "PC/server_mp/cod2x_client_identity.h"
+#endif
 extern char *getenv(const char *name);
 extern scr_const_t scr_const;
 /* File-scope alias: bound where no local can shadow `scr_const`, so uses below
@@ -1624,6 +1627,100 @@ void PlayerCmd_GetWeaponSlotAmmo(scr_entref_t entref)
     else
         Scr_AddInt(pSelf->client->ps.ammo[BG_AmmoForWeapon(weaponIndex)]);
 }
+
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+extern void G_GetPlayerViewOrigin(const gentity_t *ent, vec_t *origin);
+extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
+extern int I_stricmp(const char *s1, const char *s2);
+
+static gentity_t *PlayerCmd_Cod2xPlayer(scr_entref_t entref)
+{
+    if (entref.classnum != 0 || entref.entnum >= 64) {
+        Scr_ObjectError(entref.classnum != 0 ? "not an entity" :
+                        va("entity %i is not a player", (int)entref.entnum));
+        return NULL;
+    }
+    return PlayerCmd_GetPlayerEntity(entref);
+}
+
+static void PlayerCmd_Cod2xGetIp(scr_entref_t entref)
+{
+    unsigned char ip[4];
+    char address[16];
+    if (!PlayerCmd_Cod2xPlayer(entref))
+        return;
+    SV_Cod2xClientIp(entref.entnum, ip);
+    Com_sprintf(address, sizeof(address), "%u.%u.%u.%u",
+                (unsigned int)ip[0], (unsigned int)ip[1], (unsigned int)ip[2], (unsigned int)ip[3]);
+    Scr_AddString(address);
+}
+
+static void PlayerCmd_Cod2xGetHwid(scr_entref_t entref)
+{
+    if (PlayerCmd_Cod2xPlayer(entref))
+        Scr_AddString(SV_Cod2xClientHwid(entref.entnum));
+}
+
+static void PlayerCmd_Cod2xGetDigest(scr_entref_t entref)
+{
+    if (PlayerCmd_Cod2xPlayer(entref))
+        Scr_AddString(SV_Cod2xClientDigest(entref.entnum));
+}
+
+static void PlayerCmd_Cod2xGetAuthorization(scr_entref_t entref)
+{
+    if (PlayerCmd_Cod2xPlayer(entref))
+        Scr_AddString(SV_Cod2xClientAuthorization(entref.entnum));
+}
+
+static void PlayerCmd_Cod2xGetViewOrigin(scr_entref_t entref)
+{
+    gentity_t *player = PlayerCmd_Cod2xPlayer(entref);
+    vec3_t origin;
+    if (!player)
+        return;
+    G_GetPlayerViewOrigin(player, origin);
+    Scr_AddVector(origin);
+}
+
+static void PlayerCmd_Cod2xGetStance(scr_entref_t entref)
+{
+    gentity_t *player = PlayerCmd_Cod2xPlayer(entref);
+    if (player)
+        Scr_AddString((player->client->ps.pm_flags & 2) ? "crouch" :
+                      (player->client->ps.pm_flags & 1) ? "prone" : "stand");
+}
+
+static void PlayerCmd_Cod2xIsUsingTurret(scr_entref_t entref)
+{
+    gentity_t *player = PlayerCmd_Cod2xPlayer(entref);
+    if (player)
+        Scr_AddBool((player->s.eFlags & 0x300) != 0);
+}
+
+/* Separate native table leaves the original builtin table and layout intact. */
+BuiltinMethod Player_Cod2xGetMethod(const char **pName, int *type)
+{
+    static const BuiltinMethodDef extensionMethods[] = {
+        { "getIp", (BuiltinMethod)PlayerCmd_Cod2xGetIp, 0 },
+        { "getHWID", (BuiltinMethod)PlayerCmd_Cod2xGetHwid, 0 },
+        { "getCDKeyHash", (BuiltinMethod)PlayerCmd_Cod2xGetDigest, 0 },
+        { "getAuthorizationStatus", (BuiltinMethod)PlayerCmd_Cod2xGetAuthorization, 0 },
+        { "getViewOrigin", (BuiltinMethod)PlayerCmd_Cod2xGetViewOrigin, 0 },
+        { "getStance", (BuiltinMethod)PlayerCmd_Cod2xGetStance, 0 },
+        { "isUsingTurret", (BuiltinMethod)PlayerCmd_Cod2xIsUsingTurret, 0 },
+        { NULL, NULL, 0 },
+    };
+    for (const BuiltinMethodDef *method = extensionMethods; method->actionString; ++method) {
+        if (!I_stricmp(*pName, method->actionString)) {
+            *pName = method->actionString;
+            *type = method->type;
+            return method->actionFunc;
+        }
+    }
+    return NULL;
+}
+#endif
 
 static const BuiltinMethodDef player_methods[] __attribute__((used)) = {
     { "giveweapon", (BuiltinMethod)PlayerCmd_giveWeapon, 0 },
