@@ -160,6 +160,17 @@ if not args.test or 'renderer_options' in args.test:
     path = 'src/Mac/DirectX_9/CDirect3DDevice.c'
     assert 'getenv(' not in function(path, 'CDirect3DDevice_DrawIndexedPrimitive')
     run('renderer_options', function(path, 'CDirect3DDevice_UsePrograms'), cases=((), ('on',), ('off',)))
+if not args.test or 'level_state' in args.test:
+    path = 'src/PC/game_mp/g_main_mp.c'
+    source = subprocess.check_output(['git', 'show', f'{args.baseline}:{path}'], text=True, cwd=ROOT) if args.baseline else (ROOT / path).read_text()
+    start = source.index('    COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_spawn);)')
+    start = source.index('\n', start) + 1
+    end = source.index('    level.initializing = 0;', start)
+    generated = function('src/PC/game_mp/g_cmds_mp.c', 'G_setfog')
+    generated += function('src/PC/game_mp/g_scr_main_mp.c', 'G_ResetObjective')
+    generated += function('src/PC/game_mp/g_scr_main_mp.c', 'G_InitObjectives')
+    generated += 'static void initialize_spawned_level(void) {\n' + source[start:end] + '\n}\n'
+    run('level_state', generated)
 if args.test and 'debug_enabled' in args.test:
     checked = set()
     for entry in entries:

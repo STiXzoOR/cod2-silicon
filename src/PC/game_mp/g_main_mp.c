@@ -72,6 +72,10 @@ extern struct bgs_t level_bgs;
 extern struct bgs_t *bgs;
 extern struct level_locals_t level;
 extern gentity_t g_entities[];
+#if defined(COD2_X64)
+extern void G_setfog(const char *fogstring);
+extern void G_InitObjectives(void);
+#endif
 
 extern const dvar_t *g_gametype;
 extern const dvar_t *g_dedicated;
@@ -736,6 +740,10 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
 #endif
     G_SpawnEntitiesFromString();
     COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_spawn);)
+#if defined(COD2_X64)
+    G_setfog("0");
+    G_InitObjectives();
+#endif
     level.initializing = 0;
 
     G_LogPrintf("gametype: %s\n", g_gametype->current.string);
