@@ -78,7 +78,12 @@ for path, names, output in [
         # Every native begin path must use the production publishing boundary.
         assert len(re.findall(r'\bSV_Cod2xClientBegin\([^;{}]*\);', text)) == 4
         assert len(re.findall(r'\bClientBegin\([^;{}]*\);', text)) == 2  # declaration + helper
-    (out / output).write_text(''.join(function(text, name) for name in names))
+    prefix = ''
+    if output == 'host_server_source.h' and 'SV_Cod2xUdpInit();' in text:
+        for header in ('cod2x_udp_operations.h', 'cod2x_udp_operations_impl.h'):
+            (out / header).write_bytes(source('src/PC/server_mp/' + header))
+        prefix = '#include "cod2x_udp_operations_impl.h"\n'
+    (out / output).write_text(prefix + ''.join(function(text, name) for name in names))
 (out / 'cod2x_runtime.c').write_bytes(source('src/PC/qcommon/cod2x_runtime.c'))
 (out / 'cod2x.h').write_bytes(source('src/PC/qcommon/cod2x.h'))
 objects = []

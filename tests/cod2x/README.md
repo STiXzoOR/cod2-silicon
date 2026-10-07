@@ -77,6 +77,38 @@ these tests establish lifecycle ownership, not complete CoD2x hosting. Add
 missing dedicated registration before this correction. See WS68 for the
 remaining revision activation requirements.
 
+The UDP operations fixture executes production server registration, query
+responses, connectionless dispatch, invalid-client packet handling, rcon and
+frame statistics, with real dvars and the production LAN classifier:
+
+```sh
+taskpolicy -b nice -n 19 python3 tests/cod2x/udp_operations.py \
+  --compile-db build-macos-codx/compile_commands.engine.json --compile-engine \
+  --output "$HOME/Library/Application Support/CoD2-native/ws79-udp-codx"
+taskpolicy -b nice -n 19 python3 tests/cod2x/udp_operations.py \
+  --compile-db build-macos/compile_commands.engine.json --compile-engine \
+  --output "$HOME/Library/Application Support/CoD2-native/ws79-udp-stock"
+```
+
+Add `--hardening` and a fresh output path to check that native CoD2x packets
+consume one policy when optional network hardening is also enabled. Replace
+`--compile-engine` with `--baseline 4b63491` to reproduce the missing behavior. The fixture checks
+shared address/query buckets, independent global query/rcon/disconnect buckets,
+LAN/global behavior, ports, disabled mode, exact refill/expiry boundaries,
+16,384-address exhaustion/reuse, clock rollover, nonnegative statistics and
+the original rcon password/throttle boundary. `--compile-engine` also compiles
+the three complete changed server units for both targets with their unchanged
+Release flags; fixtures enable assertions and ASan/UBSan separately.
+
+Clock, packet readers/tokenizer, game/challenge/connect/auth, redirect and
+network output services are synthetic here. The existing OOB fuzzer retains
+the real packet/tokenizer/query/rcon parsing paths and resets production
+limiter state for each input. Neither suite runs a server process or certifies
+public traffic capacity. Statistics count recent address buckets and sum
+their already-drained bursts, including globally rejected packets; they are
+an approximation, not an accepted-packet total. See WS79 for the pinned
+contract and release evidence.
+
 The standalone helper fixtures model only the fields needed for their
 calculations. These fixtures do not verify engine layout, networking,
 rendering, real hitboxes, or admission to a
