@@ -723,9 +723,17 @@ void SND_Update2DChannelReverb(int index)
     float reverbLevel;
 
     if (pAlias == NULL || ((*(dvar_t **)imp_snd_enableReverb)->current.enabled != 0 && !(pAlias->flags & 0x10))) {
-        reverbLevel = 0;
-    } else {
+#if defined(COD2_X64) && COD2_X64
         reverbLevel = sndGlob->effect->wetlevel;
+#else
+        reverbLevel = 0;
+#endif
+    } else {
+#if defined(COD2_X64) && COD2_X64
+        reverbLevel = 0;
+#else
+        reverbLevel = sndGlob->effect->wetlevel;
+#endif
     }
     AIL_set_sample_reverb_levels(SND_2D_HANDLE(index), 1.0f, reverbLevel);
 }
@@ -738,9 +746,17 @@ void SND_Update3DChannelReverb(int index)
     float reverbLevel;
 
     if (pAlias == NULL || ((*(dvar_t **)imp_snd_enableReverb)->current.enabled != 0 && !(pAlias->flags & 0x10))) {
-        reverbLevel = 0;
-    } else {
+#if defined(COD2_X64) && COD2_X64
         reverbLevel = sndGlob->effect->wetlevel;
+#else
+        reverbLevel = 0;
+#endif
+    } else {
+#if defined(COD2_X64) && COD2_X64
+        reverbLevel = 0;
+#else
+        reverbLevel = sndGlob->effect->wetlevel;
+#endif
     }
     AIL_set_3D_sample_effects_level(milesGlob.handle_3D[index], reverbLevel);
 }

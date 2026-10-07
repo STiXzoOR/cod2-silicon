@@ -21,7 +21,7 @@ python3 tools/fidelity/tables.py "$FIDELITY_EVIDENCE/stock.json" \
   --output "$FIDELITY_EVIDENCE/tables-stock.json"
 python3 tools/fidelity/calibrate.py "$FIDELITY_EVIDENCE/stock.json"
 python3 tools/fidelity/spotcheck_reverb.py --build build-macos \
-  --output "$FIDELITY_EVIDENCE/reverb-stock.json" --expect-difference
+  --output "$FIDELITY_EVIDENCE/reverb-stock.json"
 python3 tools/fidelity/spotcheck_msg.py --build build-macos \
   --output "$FIDELITY_EVIDENCE/message-stock.json"
 python3 tools/fidelity/spotcheck_collision.py --build build-macos \

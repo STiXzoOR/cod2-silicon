@@ -1721,6 +1721,65 @@ void SND_FadeAllSounds(float volume, int fadetime)
     }
 }
 
+#if defined(COD2_X64) && COD2_X64
+void SND_SetEnvironmentEffects_f(void)
+{
+    const char *priorities[] = { "none", "level", "shellshock" };
+    const char *priorityName;
+    const char *room;
+    int priority;
+    int roomIndex;
+    int fade;
+    float dry;
+    float wet;
+
+    if (Cmd_Argc() != 6) {
+        Com_Printf("usage: snd_setEnvironmentEffects <priority> <roomtype> <drylevel> <wetlevel> <fademsec>\n");
+        return;
+    }
+
+    priorityName = Cmd_Argv(1);
+    for (priority = 1; priority < 3; ++priority) {
+        if (!stricmp(priorityName, priorities[priority]))
+            break;
+    }
+    if (priority == 3) {
+        Com_Printf("invalid priority '%s'; use level or shellshock\n", priorityName);
+        return;
+    }
+
+    room = Cmd_Argv(2);
+    for (roomIndex = 0; snd_roomStrings[roomIndex]; ++roomIndex) {
+        if (!stricmp(room, snd_roomStrings[roomIndex]))
+            break;
+    }
+    if (!snd_roomStrings[roomIndex]) {
+        Com_Printf("invalid roomtype '%s'; available room types:\n", room);
+        for (roomIndex = 0; snd_roomStrings[roomIndex]; ++roomIndex) {
+            if (snd_roomStrings[roomIndex][0])
+                Com_Printf("  %s\n", snd_roomStrings[roomIndex]);
+        }
+        return;
+    }
+
+    dry = (float)atof(Cmd_Argv(3));
+    if (dry < 0.0f || dry > 1.0f) {
+        Com_Printf("invalid drylevel %g; expected 0 to 1\n", dry);
+        return;
+    }
+    wet = (float)atof(Cmd_Argv(4));
+    if (wet < 0.0f || wet > 1.0f) {
+        Com_Printf("invalid wetlevel %g; expected 0 to 1\n", wet);
+        return;
+    }
+    fade = atoi(Cmd_Argv(5));
+    if (fade < 0) {
+        Com_Printf("invalid fademsec %i; expected zero or greater\n", fade);
+        return;
+    }
+    SND_SetEnvironmentEffects(priority, room, dry, wet, fade);
+}
+#endif
 void SND_DeactivateEnvironmentEffects_f(void)
 {
     const char *priorityStrings[3];
