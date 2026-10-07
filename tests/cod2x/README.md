@@ -129,3 +129,23 @@ The fixtures and temporary app bundles are created under the system temporary
 directory and removed on exit. The inactive-gate comparison checks preprocessed
 source bodies against integrated main, including explicit zero-valued macros;
 it cannot prove byte-level 32-bit binary parity.
+
+The bounded authoritative shotgun fixture uses an existing engine compile
+database and a new private output directory:
+
+```sh
+taskpolicy -b nice -n 19 python3 tests/cod2x/run_shotgun_spread.py \
+  --compile-db /absolute/path/to/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/shotgun-new" \
+  --release-tus
+```
+
+Repeat with the stock and CoD2x databases and distinct output directories. It
+uses ASan/UBSan and the complete production weapon source to check eight-pellet
+patterns, rotation, RNG state, weapon ranges, hip/ADS fire dispatch, actual
+trace/trigger/damage processing, stock/off/non-eight controls, anti-lag
+restoration, glass recursion, and normal server dvar registration. Trace and
+registration services are synthetic; live hitboxes, collisions, networking,
+and full CoD2x host lifecycle remain outside this fixture. `--baseline <commit>
+--skip-registration` characterizes the spread path before the switch exists.
+See `docs/macos-port/reports/WS66-cod2x-shotgun-spread.md` for its evidence bounds.

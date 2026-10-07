@@ -75,6 +75,7 @@ extern gentity_t g_entities[];
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 extern serverStatic_t svs;
 static const dvar_t *sv_playerBroadcastLimit;
+const dvar_t *g_shotgun_spread_fix;
 #endif
 #if defined(COD2_X64)
 extern void G_setfog(const char *fogstring);
@@ -963,6 +964,7 @@ static void G_RegisterDvars_impl(void)
     g_dedicated = Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1020);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     sv_playerBroadcastLimit = Dvar_RegisterInt("sv_playerBroadcastLimit", 15, 0, 64, 0x1000);
+    g_shotgun_spread_fix = Dvar_RegisterBool_mac("g_shotgun_spread_fix", 1, 0x1080);
 #endif
     if (g_dedicated->current.integer != 0) {
         Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1040);
