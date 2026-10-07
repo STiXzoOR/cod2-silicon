@@ -211,3 +211,8 @@ if not args.test or 'script_load' in args.test:
 
 if not args.test or 'server_snaps' in args.test:
     run('server_snaps', function('src/PC/server_mp/sv_client_mp.c', 'SV_UserinfoChanged'))
+
+if not args.test or 'browser_maps' in args.test:
+    run('browser_maps', function('src/PC/ui_mp/ui_main_mp.c', 'UI_GetMapDisplayName') +
+        ''.join(function('src/PC/client_mp/cl_ui_mp.c', name) for name in
+                ['LAN_CompareHostname', 'LAN_CompareServers']))
