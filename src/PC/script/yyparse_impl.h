@@ -505,7 +505,11 @@ yy_find_action:
         yylval.pos = p;
         g_sourcePos = p;
         g_out_pos = p + yyleng;
+#if defined(COD2_X64)
+        static const int tmap[] = { 0x14f, 0x150, 0x151, 0x152, 0x153, 0x154, 0x155, 0x156 };
+#else
         static const int tmap[] = { 0x150, 0x14f, 0x151, 0x152, 0x153, 0x154, 0x155, 0x156 };
+#endif
         return tmap[yy_act - 82];
     }
     case 90:
@@ -599,7 +603,11 @@ int yyparse(void)
 
     short *yyss = yyssa;
     stype_t *yyvs = yyvsa;
+#if defined(COD2_X64)
+    short *yyssp = yyssa;
+#else
     short *yyssp = yyssa - 1;
+#endif
     stype_t *yyvsp = yyvsa;
     int yystacksize = 200;
     int yystate = 0;
@@ -611,8 +619,14 @@ int yyparse(void)
     yynerrs = 0;
     yychar = -2;
 
+#if defined(COD2_X64)
+    goto yyinitialstate;
+#endif
 yysetstate:
     yyssp++;
+#if defined(COD2_X64)
+yyinitialstate:
+#endif
     *yyssp = (short)yystate;
 
     if (yyssp >= yyss + yystacksize - 1) {

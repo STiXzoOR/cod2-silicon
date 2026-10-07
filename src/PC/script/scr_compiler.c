@@ -16,6 +16,9 @@ extern unsigned int FindVariable(unsigned int parentId, unsigned int value);
 extern unsigned long long Scr_EvalVariable(unsigned int id);
 extern VariableUnion *GetVariableValueAddress(unsigned int id);
 extern void AddRefToValue(int type, VariableUnion u);
+#if defined(COD2_X64)
+extern void RemoveRefToValue(int type, VariableUnion u);
+#endif
 extern void Scr_EvalBinaryOperator(int op, VariableValue *value1, VariableValue *value2);
 extern int GetVarType(unsigned int id);
 extern unsigned int FindNextSibling(unsigned int id);
@@ -643,6 +646,32 @@ static Bool __attribute_regparm__(3)
     return 1;
 }
 
+#if defined(COD2_X64)
+static Bool Scr_CalcLocalVarsIsConstantTrue(sval_t expr)
+{
+    sval_t *node = (sval_t *)(uintptr_t)expr.node;
+    VariableCompileValue constValue;
+    Bool constantTrue = 0;
+
+    if (node[0].type == 6) {
+        if (!EvalPrimitiveExpression(node[1], &constValue))
+            return 0;
+    } else if (node[0].type == 49) {
+        if (!EvalBinaryOperatorExpression(node[1], node[2], node[3], node[4], &constValue))
+            return 0;
+    } else {
+        return 0;
+    }
+
+    if (constValue.value.type == 5 || constValue.value.type == 6) {
+        Scr_CastBool(&constValue.value);
+        constantTrue = constValue.value.u.intValue != 0;
+    }
+    RemoveRefToValue(constValue.value.type, constValue.value.u);
+    return constantTrue;
+}
+#endif
+
 static int
 Scr_CalcLocalVarsLocalIndex(const scr_block_t *block, unsigned int name)
 {
@@ -1042,7 +1071,12 @@ static unsigned int __attribute_regparm__(2)
         oldContinueChildBlocks = SCRCG->continueChildBlocks;
         oldContinueChildCount = SCRCG->continueChildCount;
 
+#if defined(COD2_X64)
+        breakChildBlocks = Scr_CalcLocalVarsIsConstantTrue(node[1])
+            ? (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(SCRCOMP_CHILD_BLOCK_BYTES) : NULL;
+#else
         breakChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(SCRCOMP_CHILD_BLOCK_BYTES);
+#endif
         continueChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(SCRCOMP_CHILD_BLOCK_BYTES);
         SCRCG->breakChildBlocks = breakChildBlocks;
         SCRCG->breakChildCount = &breakChildCount;
@@ -1090,7 +1124,13 @@ static unsigned int __attribute_regparm__(2)
         oldContinueChildBlocks = SCRCG->continueChildBlocks;
         oldContinueChildCount = SCRCG->continueChildCount;
 
+#if defined(COD2_X64)
+        sval_t *condition = (sval_t *)(uintptr_t)node[2].node;
+        breakChildBlocks = (condition[0].type != 0x41 || Scr_CalcLocalVarsIsConstantTrue(condition[1]))
+            ? (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(SCRCOMP_CHILD_BLOCK_BYTES) : NULL;
+#else
         breakChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(SCRCOMP_CHILD_BLOCK_BYTES);
+#endif
         continueChildBlocks = (scr_block_t **)Hunk_AllocateTempMemoryHighInternal(SCRCOMP_CHILD_BLOCK_BYTES);
         SCRCG->breakChildBlocks = breakChildBlocks;
         SCRCG->breakChildCount = &breakChildCount;
@@ -2125,7 +2165,13 @@ static void __attribute_regparm__(3)
 
     index = EmitFunctionTableIndex(func);
     SCRCG->codePos = (byte *)TempMallocAlign(2);
+#if defined(COD2_X64)
+    /* TempMallocAlign keeps bytecode packed, so the operand can start at an odd address. */
+    short operand = (short)index;
+    memcpy(SCRCG->codePos, &operand, sizeof(operand));
+#else
     *(short *)SCRCG->codePos = (short)index;
+#endif
 }
 
 static void __attribute_regparm__(3)
@@ -2156,7 +2202,12 @@ static void __attribute_regparm__(3)
 
     index = EmitFunctionTableIndex(meth);
     SCRCG->codePos = (byte *)TempMallocAlign(2);
+#if defined(COD2_X64)
+    short operand = (short)index;
+    memcpy(SCRCG->codePos, &operand, sizeof(operand));
+#else
     *(short *)SCRCG->codePos = (short)index;
+#endif
 }
 
 static unsigned int __attribute_regparm__(3)
