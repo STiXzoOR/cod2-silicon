@@ -3,7 +3,7 @@
 #include "bytematch.h"
 #include <math.h>
 #if defined(COD2_X64)
-#include <stdlib.h>
+#include "PC/qcommon/port_debug.h"
 #endif
 
 #if defined(COD2_CODX) && COD2_CODX
@@ -2018,21 +2018,11 @@ void PM_FootstepEvent(pmove_t *pm, pml_t *pml, int iOldBobCycle, int iNewBobCycl
 #endif
 }
 #if defined(COD2_X64)
-static int PM_MoveTraceEnabled(void)
-{
-    static int enabled = -1;
-    if (enabled < 0) {
-        const char *value = getenv("COD2_MAC_MOVE_TRACE");
-        enabled = value && value[0] && value[0] != '0';
-    }
-    return enabled;
-}
-
 static void PM_AdvanceBob(pmove_t *pm, pml_t *pml, float bobmove, qboolean footstep)
 {
     int old = pm->ps->bobCycle;
     pm->ps->bobCycle = (int)((float)old + (float)pml->msec * bobmove) & 255;
-    if (PM_MoveTraceEnabled()) {
+    if (COD2_NATIVE_TRACE_ENABLED()) {
         const WeaponDef *weapon = pm->ps->weapon ? BG_GetWeaponDef(pm->ps->weapon) : NULL;
         Com_Printf("[move] handler=%d time=%d msec=%d xyspeed=%.6f bob=%d->%d rate=%.9f origin=%.6f,%.6f,%.6f lean=%.6f flags=%x weapon=%d weaponScale=%.6f stance=%d cmd=%d,%d buttons=%x ground=%d\n",
                    pm->handler, pm->cmd.serverTime, pml->msec, (double)pm->xyspeed, old, pm->ps->bobCycle, (double)bobmove,
@@ -2769,7 +2759,7 @@ static void PmoveSingle(pmove_t *pm)
         PM_UpdatePlayerWalkingFlag(pm);
         PM_CheckDuck(pm, &pml);
         Mantle_Move(pm, ps, &pml);
-        if (PM_MoveTraceEnabled())
+        if (COD2_NATIVE_TRACE_ENABLED())
             Com_Printf("[move-mantle] handler=%d time=%d msec=%d timer=%d trans=%d flags=%x origin=%.6f,%.6f,%.6f\n",
                        pm->handler, pm->cmd.serverTime, pml.msec, ps->mantleState.timer,
                        ps->mantleState.transIndex, ps->pm_flags,

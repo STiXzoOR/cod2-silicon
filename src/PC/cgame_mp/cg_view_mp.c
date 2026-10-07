@@ -4,7 +4,7 @@
 #include "headers/PC/cgame_mp/cg_local.h"
 #include <math.h>
 #if defined(COD2_X64)
-#include <stdlib.h>
+#include "PC/qcommon/port_debug.h"
 #endif
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
 #include "PC/qcommon/cod2x_features.h"
@@ -585,12 +585,7 @@ static void CG_CalcViewValues(void)
             float vbob = BG_GetVerticalBobFactor(ps, bobCycle, speed, bobMax);
             cg->refdef.vieworg[2] += vbob;
 #if defined(COD2_X64)
-            static int moveTrace = -1;
-            if (moveTrace < 0) {
-                const char *value = getenv("COD2_MAC_MOVE_TRACE");
-                moveTrace = value && value[0] && value[0] != '0';
-            }
-            if (moveTrace)
+            if (COD2_NATIVE_TRACE_ENABLED())
                 Com_Printf("[move-view] time=%d msec=%d xyspeed=%.6f bob=%d cycle=%.9f applied=%.9f max=%.6f\n",
                            cg->time, cg->frametime, (double)speed, ps->bobCycle, (double)bobCycle, (double)vbob, (double)bobMax);
 #endif

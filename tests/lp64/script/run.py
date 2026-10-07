@@ -27,7 +27,8 @@ checks = [('runtime_test', ['src/PC/script/scr_memorytree.c']),
 for name, sources in checks:
     output = build / ('ws6-' + name)
     result = subprocess.run([argv[0], *flags, '-fsanitize=address', '-Wl,-dead_strip',
-                             f'tests/lp64/script/{name}.c', *sources, '-o', str(output)],
+                             f'tests/lp64/script/{name}.c', *sources,
+                             'src/PC/qcommon/port_debug.c', '-o', str(output)],
                             cwd=root, text=True, capture_output=True)
     (build / ('ws6-' + name + '.log')).write_text(result.stdout + result.stderr)
     if result.returncode:

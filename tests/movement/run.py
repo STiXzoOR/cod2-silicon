@@ -73,9 +73,10 @@ flags += ['-UNDEBUG', '-I' + str(out), '-ffunction-sections', '-fdata-sections',
 obj = out / 'movement.o'
 subprocess.run([*flags, '-c', str(ROOT / 'tests/movement/movement.c'), '-o', str(obj)], check=True)
 objects = [obj]
-for source in ['com_math', 'q_shared']:
-    extra = out / (source + '.o')
-    subprocess.run([*flags, '-c', str(ROOT / ('src/PC/universal/' + source + '.c')), '-o', str(extra)], check=True)
+for source in ['src/PC/universal/com_math.c', 'src/PC/universal/q_shared.c',
+               'src/PC/qcommon/port_debug.c']:
+    extra = out / (Path(source).stem + '.o')
+    subprocess.run([*flags, '-c', str(ROOT / source), '-o', str(extra)], check=True)
     objects.append(extra)
 exe = out / 'movement'
 subprocess.run(['clang', '-arch', 'arm64', '-fsanitize=address,undefined', '-Wl,-dead_strip', *map(str, objects), '-o', str(exe)], check=True)

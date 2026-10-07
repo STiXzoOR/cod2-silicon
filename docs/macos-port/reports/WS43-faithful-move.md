@@ -154,7 +154,7 @@ Cgame's reviewed chain is InitView → prediction/viewmodel animation → CalcVi
 - Bob/viewmodel details: bob advances before failed-animation idle fallback (0x6f63b). Yaw position sway uses horizontal scale (0x7b851), pitch uses vertical (0x7b822). bg_bobMax reads current.value (8), rather than integer interpretation of the same bits (1,090,519,040).
 - Mantle lifecycle: live ledge testing crashed with a null animation tree in XAnimGetLengthMsec. CG_Init intentionally skips allocation on a listen server; G_InitGame omitted the server call at 0x1adf5d. The native server now creates it before bgs animation setup. The new fixture executes that production setup fragment and checks allocation/idempotence. The initial live crash and failing lifecycle test are preserved privately.
 
-COD2_MAC_MOVE_TRACE=1 enables [move], [move-view] and [move-mantle] records. It is off by default. Bob records include msec, xyspeed, old/new bob, rate, origin, lean, flags, weapon factor, stance, command and ground; view records include applied bob/max; mantle records include timer/transition/origin. Default menu sweeps contain no move records.
+COD2_NATIVE_TRACE=1 enables [move], [move-view] and [move-mantle] records after WS45 integration. It is off by default. Bob records include msec, xyspeed, old/new bob, rate, origin, lean, flags, weapon factor, stance, command and ground; view records include applied bob/max; mantle records include timer/transition/origin. Default menu sweeps contain no move records.
 
 ## Unit and differential proof
 

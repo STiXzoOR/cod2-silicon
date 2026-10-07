@@ -55,5 +55,6 @@ subprocess.run([*flags, '-c', str(ROOT / 'tests/movement/collision.c'), '-o', st
 exe = out / 'differential'
 subprocess.run(['clang++', '-arch', 'arm64', '-fsanitize=address,undefined',
                 '-Wl,-dead_strip', *aliases, str(native), str(obj),
-                str(fixture / 'com_math.o'), str(fixture / 'q_shared.o'), '-o', str(exe)], check=True)
+                str(fixture / 'com_math.o'), str(fixture / 'q_shared.o'),
+                str(fixture / 'port_debug.o'), '-o', str(exe)], check=True)
 subprocess.run([str(exe)], check=True)
