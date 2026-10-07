@@ -44,7 +44,7 @@ def main():
         flags = row.get('arguments') or shlex.split(row['command'])
         flags = [x.replace(original, str(ROOT)) for x in flags[:flags.index('-o')]]
         flags = [x for x in flags if x not in ('-DNDEBUG', '-c')]
-        flags += ['-UNDEBUG', '-DCOD2X_HOST_REVISION=0', '-fsanitize=address,undefined',
+        flags += ['-UNDEBUG', '-fsanitize=address,undefined',
                   '-fno-omit-frame-pointer', '-I' + str(out)]
 
         def active(path):

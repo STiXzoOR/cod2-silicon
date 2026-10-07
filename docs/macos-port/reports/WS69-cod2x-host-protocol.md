@@ -299,3 +299,17 @@ Actual match backend, uploads and vMIX service acceptance are optional external
 integrations, not prerequisites for local identity/callback/limiter/master
 implementation. Windows injection/updater/registry mechanics remain platform
 exclusions; none authorizes omitting the local units above.
+
+## Parent composition receipt
+
+WS68 was composed as `9b5a0d3` after bounded WS69 commit `abc159c`. The single
+merge conflict was two equivalent spellings of the CoD2x header include; the
+shared source-root include was retained. The protocol runner now consumes the
+actual shared revision definition instead of a temporary command-line zero.
+Parent reruns pass stock/CoD2x admission/auth/discovery for client and dedicated
+flags, plus the composed real-dvar host lifecycle fixture. Actual unchanged
+Release commands compile six stock and eight CoD2x affected server/runtime
+translation units with no temporary revision definition. These are focused
+composition checks; complete links, host6 activation and live authentication
+remain unclaimed. Private receipt: `CoD2-native/ws69-composed-*` and
+`CoD2-native-protocol/validation.noindex/ws69-composed/`.
