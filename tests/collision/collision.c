@@ -282,10 +282,354 @@ static void StationaryMesh(void)
     CHECK(leafCalls == 1);
 }
 
+#if defined(COD2_X64)
+static void SightTemporaryCapsule(void)
+{
+    const vec3_t zero = { 0, 0, 0 };
+    const vec3_t boundsMin = { -10, -10, -20 }, boundsMax = { 10, 10, 20 };
+    const struct { vec3_t start, end; int hit; } rays[] = {
+        { { 9, 9, 0 }, { 9, 9, 1 }, 0 },
+        { { -9, 9, 0 }, { -9, 9, 1 }, 0 },
+        { { 0, 0, 0 }, { 0, 0, 1 }, -1 },
+        { { 9, 0, 0 }, { 9, 0, 1 }, -1 },
+        { { 16, 0, 0 }, { 16, 0, 1 }, 0 },
+        { { 8, 0, 19 }, { 8, 0, 18 }, 0 },
+        { { 8, 0, -19 }, { 8, 0, -18 }, 0 },
+        { { 20, 0, 0 }, { 0, 0, 0 }, -1 },
+        { { 0, 0, 30 }, { 0, 0, 10 }, -1 },
+        { { 0, 0, -30 }, { 0, 0, -10 }, -1 },
+        { { 0, 0, 30 }, { 0, 0, 31 }, 0 },
+        { { 0, 0, -30 }, { 0, 0, -31 }, 0 },
+        { { 20, 10, 0 }, { 0, 0, 0 }, -1 },
+        { { 10, 0, 0 }, { 10, 0, 0 }, -1 },
+        { { 0, 0, 20 }, { 0, 0, 20 }, -1 },
+        { { 0, 0, 20.01f }, { 0, 0, 20.01f }, 0 },
+        { { 0, 0, -20 }, { 0, 0, -20 }, -1 },
+        { { 30, 30, 30 }, { 31, 31, 31 }, 0 },
+        // Mac sight bias is projection * 0.125 / initial separation length.
+        // These rays stop one unit short, yet that bias makes sight block.
+        { { 20, 0, 0 }, { 11, 0, 0 }, -1 },
+        { { 0, 0, 30 }, { 0, 0, 21 }, -1 },
+        { { 0, 0, -30 }, { 0, 0, -21 }, -1 },
+        // The cylinder clears with full delta length; the upper cap blocks.
+        { { 20, 0, 0 }, { 0, 0, 20 }, -1 },
+        { { 20, 0, 0 }, { 0, 0, -20 }, -1 },
+        // Full delta length can clear even though a horizontal sweep hits.
+        { { 20, 0, -9 }, { 0, 0, 9 }, 0 },
+        // After the cylinder clears, test the end entering the upper cap.
+        { { 0, 0, 0 }, { 0, 0, 30 }, -1 },
+    };
+    Reset();
+    clipHandle_t model = CM_TempBoxModel(boundsMin, boundsMax, 1);
+    for (int i = 0; i < (int)(sizeof(rays) / sizeof(rays[0])); ++i) {
+        CHECK(CM_BoxSightTrace(0, rays[i].start, rays[i].end, zero, zero, model, 1) == rays[i].hit);
+        CHECK(CM_BoxSightTrace(87, rays[i].start, rays[i].end, zero, zero, model, 1) == rays[i].hit);
+        CHECK(CM_BoxSightTrace(0, rays[i].start, rays[i].end, zero, zero, model, 2) == 0);
+    }
+    CHECK(leafCalls == 0);
+    trace_t trace;
+    CM_BoxTrace(&trace, rays[18].start, rays[18].end, zero, zero, model, 1);
+    Clear(&trace); // Sight's bias is a separate contract from swept fractions.
+    const vec3_t bodyMin = { -2, -2, -5 }, bodyMax = { 2, 2, 5 };
+    const vec3_t corner = { 9, 9, 0 }, middle = { 11, 0, 0 }, cap = { 0, 0, 24 };
+    CHECK(CM_BoxSightTrace(0, corner, corner, bodyMin, bodyMax, model, 1) == 0);
+    CHECK(CM_BoxSightTrace(0, middle, middle, bodyMin, bodyMax, model, 1) == -1);
+    CHECK(CM_BoxSightTrace(0, cap, cap, bodyMin, bodyMax, model, 1) == -1);
+    const vec3_t movingSphereMin = { -2, -2, -2 }, movingSphereMax = { 2, 2, 2 };
+    const vec3_t movingSphereCap = { 0, 0, 22 };
+    CHECK(CM_BoxSightTrace(0, corner, corner, movingSphereMin, movingSphereMax, model, 1) == 0);
+    CHECK(CM_BoxSightTrace(0, middle, middle, movingSphereMin, movingSphereMax, model, 1) == -1);
+    CHECK(CM_BoxSightTrace(0, movingSphereCap, movingSphereCap, movingSphereMin, movingSphereMax, model, 1) == -1);
+    const vec3_t sphereMin = { -10, -10, -10 }, sphereMax = { 10, 10, 10 };
+    CM_TempBoxModel(sphereMin, sphereMax, 1);
+    const vec3_t sphereCorner = { 8, 0, 8 }, sphereInside = { 6, 0, 6 };
+    CHECK(CM_BoxSightTrace(0, sphereCorner, sphereCorner, zero, zero, model, 1) == 0);
+    CHECK(CM_BoxSightTrace(0, sphereInside, sphereInside, zero, zero, model, 1) == -1);
+    const vec3_t shiftedMin = { 90, 190, 280 }, shiftedMax = { 110, 210, 320 };
+    const vec3_t asymmetricMin = { 0, 0, 0 }, asymmetricMax = { 4, 4, 10 };
+    const vec3_t shiftedCorner = { 107, 207, 295 }, shiftedCenter = { 98, 198, 295 };
+    CM_TempBoxModel(shiftedMin, shiftedMax, 1);
+    CHECK(CM_BoxSightTrace(0, shiftedCorner, shiftedCorner, asymmetricMin, asymmetricMax, model, 1) == 0);
+    CHECK(CM_BoxSightTrace(0, shiftedCenter, shiftedCenter, asymmetricMin, asymmetricMax, model, 1) == -1);
+}
+
+static void SightBrush(void)
+{
+    Reset();
+    cplane_t sidePlane = { .normal = { 0.6f, 0.8f, 0 }, .dist = 0 };
+    cbrushside_t side = { .plane = &sidePlane };
+    cbrush_t brushes[2] = { 0 };
+    brushes[1] = (cbrush_t){ .mins = { -20, -20, -20 }, .maxs = { 20, 20, 20 },
+        .contents = 1, .numsides = 1, .sides = &side };
+    unsigned short brushIndex = 1;
+    cLeafBrushNode_t node = { .leafBrushCount = 1, .contents = 1, .data.leaf.brushes = &brushIndex };
+    cmodel_t models[2] = { 0 };
+    models[1].leaf = (cLeaf_t){ .brushContents = 1, .mins = { -20, -20, -20 },
+        .maxs = { 20, 20, 20 }, .leafBrushNode = 0 };
+    cm.numSubModels = 2;
+    cm.cmodels = models;
+    cm.brushes = brushes;
+    cm.numBrushes = 2;
+    cm.leafbrushNodes = &node;
+    cm.leafbrushNodesCount = 1;
+    const vec3_t bodyMin = { -1, -2, -3 }, bodyMax = { 1, 2, 3 };
+    const vec3_t outside = { 2, 0, 0 }, inside = { 1, 0, 0 }, zero = { 0, 0, 0 };
+    CHECK(CM_BoxSightTrace(0, outside, outside, bodyMin, bodyMax, 1, 1) == 0);
+    CHECK(CM_BoxSightTrace(0, inside, inside, bodyMin, bodyMax, 1, 1) == 2);
+    CHECK(CM_BoxSightTrace(0, inside, inside, bodyMin, bodyMax, 1, 2) == 0);
+    const vec3_t negative = { -1, 0, 0 };
+    CHECK(CM_BoxSightTrace(0, outside, zero, zero, zero, 1, 1) == 0);
+    CHECK(CM_BoxSightTrace(0, outside, negative, zero, zero, 1, 1) == 2);
+    CHECK(CM_BoxSightTrace(0, zero, outside, zero, zero, 1, 1) == 0);
+    CHECK(CM_BoxSightTrace(0, negative, outside, zero, zero, 1, 1) == 2);
+    brushes[1].contents = 2;
+    CHECK(CM_BoxSightTrace(0, inside, inside, bodyMin, bodyMax, 1, 1) == 0);
+    brushes[1].contents = 1;
+    sidePlane.normal[1] = 0;
+    sidePlane.normal[2] = 0.8f;
+    const vec3_t slopeOutside = { 5, 0, 0 }, slopeInside = { 4, 0, 0 };
+    CHECK(CM_BoxSightTrace(0, slopeOutside, slopeOutside, bodyMin, bodyMax, 1, 1) == 0);
+    CHECK(CM_BoxSightTrace(0, slopeInside, slopeInside, bodyMin, bodyMax, 1, 1) == 2);
+    brushes[1].numsides = 0;
+    for (int axis = 0; axis < 3; ++axis) {
+        brushes[1].mins[axis] = -1;
+        brushes[1].maxs[axis] = 1;
+    }
+    for (int axis = 0; axis < 3; ++axis) {
+        for (int sign = -1; sign <= 1; sign += 2) {
+            vec3_t start = { 0, 0, 0 }, end = { 0, 0, 0 };
+            start[axis] = 2 * sign;
+            end[axis] = sign;
+            CHECK(CM_BoxSightTrace(0, start, end, zero, zero, 1, 1) == 0); // Exact end contact clears.
+            end[axis] = 0.999f * sign;
+            CHECK(CM_BoxSightTrace(0, start, end, zero, zero, 1, 1) == 2);
+            start[axis] = sign;
+            end[axis] = 2 * sign;
+            CHECK(CM_BoxSightTrace(0, start, end, zero, zero, 1, 1) == 0); // Contact while leaving clears.
+            end[axis] = 0;
+            CHECK(CM_BoxSightTrace(0, start, end, zero, zero, 1, 1) == 2);
+            CHECK(CM_BoxSightTrace(0, start, start, zero, zero, 1, 1) == 2);
+        }
+    }
+    const vec3_t cornerStart = { -2, 0, 0 }, cornerEnd = { 0, 2, 0 };
+    CHECK(CM_BoxSightTrace(0, cornerStart, cornerEnd, zero, zero, 1, 1) == 0);
+    const vec3_t axialOutside = { 0, 2.5f, 0 }, axialInside = { 0, 1.9f, 0 };
+    CHECK(CM_BoxSightTrace(0, axialOutside, axialOutside, bodyMin, bodyMax, 1, 1) == 0);
+    CHECK(CM_BoxSightTrace(0, axialInside, axialInside, bodyMin, bodyMax, 1, 1) == 2);
+    // Leaf bounds cull the brush call, even when synthetic brush bounds overlap.
+    models[1].leaf.mins[0] = 50;
+    models[1].leaf.maxs[0] = 60;
+    CHECK(CM_BoxSightTrace(0, zero, zero, zero, zero, 1, 1) == 0);
+    CHECK(leafCalls == 0);
+}
+
+static void SightTreeAndHints(void)
+{
+    Reset();
+    const vec3_t zero = { 0, 0, 0 }, front = { 10, 0, 0 }, back = { -10, 0, 0 };
+    cbrush_t brushes[2] = {
+        { .mins = { -20, -20, -20 }, .maxs = { 20, 20, 20 }, .contents = 1 },
+        { .mins = { -20, -20, -20 }, .maxs = { 20, 20, 20 }, .contents = 1 },
+    };
+    unsigned short indices[2] = { 0, 1 };
+    cLeafBrushNode_t brushNodes[2] = {
+        { .leafBrushCount = 1, .contents = 1, .data.leaf.brushes = &indices[0] },
+        { .leafBrushCount = 1, .contents = 1, .data.leaf.brushes = &indices[1] },
+    };
+    cLeaf_t leaves[2] = {
+        { .brushContents = 1, .mins = { -20, -20, -20 }, .maxs = { 20, 20, 20 }, .leafBrushNode = 0 },
+        { .brushContents = 1, .mins = { -20, -20, -20 }, .maxs = { 20, 20, 20 }, .leafBrushNode = 1 },
+    };
+    cplane_t plane = { .normal = { 1, 0, 0 }, .type = 0 };
+    cNode_t root = { .plane = &plane, .children = { -1, -2 } };
+    cm.nodes = &root;
+    cm.numNodes = 1;
+    cm.leafs = leaves;
+    cm.numLeafs = 2;
+    cm.brushes = brushes;
+    cm.numBrushes = 2;
+    cm.leafbrushNodes = brushNodes;
+    cm.leafbrushNodesCount = 2;
+    CHECK(CM_BoxSightTrace(0, front, front, zero, zero, 0, 1) == 1);
+    CHECK(CM_BoxSightTrace(0, back, back, zero, zero, 0, 1) == 2);
+    const vec3_t positiveBoundary = { 0.125f, 0, 0 }, negativeBoundary = { -0.125f, 0, 0 };
+    CHECK(CM_BoxSightTrace(0, positiveBoundary, positiveBoundary, zero, zero, 0, 1) == 1);
+    CHECK(CM_BoxSightTrace(0, negativeBoundary, negativeBoundary, zero, zero, 0, 1) == 2);
+    CHECK(CM_BoxSightTrace(0, zero, zero, zero, zero, 0, 1) == 1);
+    CHECK(CM_BoxSightTrace(0, front, back, zero, zero, 0, 1) == 1);
+    CHECK(CM_BoxSightTrace(0, back, front, zero, zero, 0, 1) == 2);
+    CHECK(CM_BoxSightTrace(2, front, front, zero, zero, 0, 1) == 2);
+    CHECK(CM_BoxSightTrace(3, front, front, zero, zero, 0, 1) == 1);
+    CHECK(CM_BoxSightTrace(-1, front, front, zero, zero, 0, 1) == 1);
+    // Mac checks a valid old brush directly before the contents-gated tree.
+    CHECK(CM_BoxSightTrace(1, front, front, zero, zero, 0, 2) == 1);
+    CHECK(CM_BoxSightTrace(0, front, front, zero, zero, 0, 2) == 0);
+    brushes[0].mins[0] = 50;
+    brushes[0].maxs[0] = 60;
+    CHECK(CM_BoxSightTrace(1, back, back, zero, zero, 0, 1) == 2);
+    // The first subtree clears, so traversal must reach the far leaf.
+    CHECK(CM_BoxSightTrace(0, front, back, zero, zero, 0, 1) == 2);
+    brushes[0] = brushes[1];
+    plane.type = 3;
+    plane.normal[0] = 0.6f;
+    plane.normal[1] = 0.8f;
+    CHECK(CM_BoxSightTrace(0, front, front, zero, zero, 0, 1) == 1);
+    CHECK(CM_BoxSightTrace(0, back, back, zero, zero, 0, 1) == 2);
+    const vec3_t bodyMin = { -1, -1, -1 }, bodyMax = { 1, 1, 1 };
+    CHECK(CM_BoxSightTrace(0, back, back, bodyMin, bodyMax, 0, 1) == 1); // Diagonal box offset is 2048.
+    CHECK(leafCalls == 0);
+
+    cLeafBrushNode_t split[4] = { 0 };
+    split[0] = (cLeafBrushNode_t){ .axis = 0, .contents = 1,
+        .data.children = { .dist = 0, .childOffset = { 2, 3 } } };
+    split[1] = brushNodes[1];
+    split[2] = brushNodes[0];
+    split[3] = brushNodes[1];
+    cm.leafbrushNodes = split;
+    cm.leafbrushNodesCount = 4;
+    cmodel_t models[2] = { 0 };
+    models[1].leaf = leaves[0];
+    cm.cmodels = models;
+    cm.numSubModels = 2;
+    CHECK(CM_BoxSightTrace(2, front, front, zero, zero, 1, 1) == 1); // Submodels ignore hints.
+    CHECK(CM_BoxSightTrace(0, back, back, zero, zero, 1, 1) == 2);
+    CHECK(CM_BoxSightTrace(0, back, front, zero, zero, 1, 1) == 2);
+    CHECK(CM_BoxSightTrace(0, front, back, zero, zero, 1, 1) == 1);
+    CHECK(CM_BoxSightTrace(0, zero, zero, zero, zero, 1, 1) == 1); // Parallel split visits front first.
+    split[0].leafBrushCount = -1;
+    CHECK(CM_BoxSightTrace(0, front, front, zero, zero, 1, 1) == 2); // Immediate child wins.
+    split[0].leafBrushCount = 0;
+    split[0].data.children.range = 5;
+    CHECK(CM_BoxSightTrace(0, zero, zero, zero, zero, 1, 1) == 0); // Empty gap between children.
+    split[2].contents = 2;
+    CHECK(CM_BoxSightTrace(0, front, back, zero, zero, 1, 1) == 2);
+}
+
+static void SightMesh(void)
+{
+    Reset();
+    CollisionTriangle triangle = { .plane = { 0, 0, 1, 0 },
+        .svec = { 0.01f, 0, 0, 0 }, .tvec = { 0, 0.01f, 0, 0 } };
+    CollisionPartition partition = { .triCount = 1, .tris = &triangle };
+    CollisionAabbTree trees[3] = { 0 };
+    trees[2] = (CollisionAabbTree){ .origin = { 50, 50, 0 }, .halfSize = { 50, 50, 1 }, .u.partitionIndex = 0 };
+    dmaterial_t material = { .contentFlags = 4, .surfaceFlags = 123 };
+    cmodel_t models[2] = { 0 };
+    models[1].leaf = (cLeaf_t){ .terrainContents = 4, .firstCollAabbIndex = 2, .collAabbCount = 1 };
+    cm.numSubModels = 2;
+    cm.cmodels = models;
+    cm.numBrushes = 5;
+    cm.aabbTrees = trees;
+    cm.aabbTreeCount = 3;
+    cm.partitions = &partition;
+    cm.materials = &material;
+    cm.numMaterials = 1;
+    const vec3_t above = { 10, 10, 4 }, below = { 10, 10, -4 }, zero = { 0, 0, 0 };
+    const vec3_t miss = { 150, 150, -4 }, bodyMin = { -1, -1, -2 }, bodyMax = { 1, 1, 2 };
+    CHECK(CM_BoxSightTrace(0, above, below, zero, zero, 1, 4) == 8);
+    CHECK(CM_BoxSightTrace(8, above, below, bodyMin, bodyMax, 1, 4) == 8);
+    CHECK(CM_BoxSightTrace(0, below, above, zero, zero, 1, 4) == 0);
+    CHECK(CM_BoxSightTrace(0, above, above, zero, zero, 1, 4) == 0);
+    const vec3_t stationaryOverlap = { 10, 10, 0.5f };
+    CHECK(CM_BoxSightTrace(0, stationaryOverlap, stationaryOverlap, bodyMin, bodyMax, 1, 4) == 0);
+    CHECK(CM_BoxSightTrace(0, above, miss, zero, zero, 1, 4) == 0);
+    CHECK(CM_BoxSightTrace(0, above, below, zero, zero, 1, 1) == 0);
+    material.contentFlags = 8;
+    CHECK(CM_BoxSightTrace(0, above, below, zero, zero, 1, 4) == 0);
+    material.contentFlags = 4;
+    cm.leafs = &models[1].leaf;
+    cm.numLeafs = 1;
+    cplane_t plane = { .normal = { 1, 0, 0 }, .type = 0 };
+    cNode_t node = { .plane = &plane, .children = { -1, -1 } };
+    cm.nodes = &node;
+    cm.numNodes = 1;
+    CHECK(CM_BoxSightTrace(8, above, below, zero, zero, 0, 4) == 8);
+    CHECK(leafCalls == 0);
+    cbrush_t brushes[5] = { 0 };
+    brushes[3] = (cbrush_t){ .mins = { -20, -20, -20 }, .maxs = { 20, 20, 20 }, .contents = 1 };
+    unsigned short brushIndex = 3;
+    cLeafBrushNode_t brushNode = { .leafBrushCount = 1, .contents = 1, .data.leaf.brushes = &brushIndex };
+    cm.brushes = brushes;
+    cm.leafbrushNodes = &brushNode;
+    cm.leafbrushNodesCount = 1;
+    models[1].leaf.brushContents = 1;
+    for (int i = 0; i < 3; ++i) {
+        models[1].leaf.mins[i] = -100;
+        models[1].leaf.maxs[i] = 100;
+    }
+    CHECK(CM_BoxSightTrace(0, above, below, zero, zero, 1, 5) == 4); // Brushes precede terrain.
+    CHECK(CM_BoxSightTrace(0, above, below, zero, zero, 1, 4) == 8);
+}
+
+static int SlabCull(const TraceExtents *extents, const vec_t *mins, const vec_t *maxs, float fraction)
+{
+    double enter = 0, leave = fraction;
+    for (int i = 0; i < 3; ++i) {
+        double start = extents->start[i], delta = extents->end[i] - start;
+        if (!delta) {
+            if (start < mins[i] || start > maxs[i])
+                return 1;
+            continue;
+        }
+        double a = (mins[i] - start) / delta, b = (maxs[i] - start) / delta;
+        if (a > b) {
+            double temporary = a;
+            a = b;
+            b = temporary;
+        }
+        if (a > enter)
+            enter = a;
+        if (b < leave)
+            leave = b;
+        if (enter >= leave)
+            return 1;
+    }
+    return 0;
+}
+
+static void TraceBoxCull(void)
+{
+    const vec3_t mins = { -1, -2, -3 }, maxs = { 1, 2, 3 };
+    TraceExtents extents = { .start = { 0, 0, 0 }, .end = { 0, 0, 0 } };
+    CM_CalcTraceEntents(&extents);
+    CHECK(CM_TraceBox(&extents, mins, maxs, 1) == 0);
+    extents.start[0] = -2;
+    extents.end[0] = 2;
+    CM_CalcTraceEntents(&extents);
+    CHECK(CM_TraceBox(&extents, mins, maxs, 1) == 0); // Leaving before the end still overlaps.
+    CHECK(CM_TraceBox(&extents, mins, maxs, 0.25f) == 1);
+    CHECK(CM_TraceBox(&extents, mins, maxs, 0.251f) == 0);
+    extents.start[0] = 2;
+    extents.end[0] = -2;
+    CM_CalcTraceEntents(&extents);
+    CHECK(CM_TraceBox(&extents, mins, maxs, 1) == 0);
+    CHECK(CM_TraceBox(&extents, mins, maxs, 0.25f) == 1);
+    CHECK(CM_TraceBox(&extents, mins, maxs, 0.251f) == 0);
+    unsigned int seed = 0x615b;
+    for (int sample = 0; sample < 2000; ++sample) {
+        for (int i = 0; i < 3; ++i) {
+            seed = seed * 1664525u + 1013904223u;
+            extents.start[i] = ((int)(seed >> 24) - 128) * 0.125f;
+            seed = seed * 1664525u + 1013904223u;
+            extents.end[i] = ((int)(seed >> 24) - 128) * 0.125f;
+        }
+        CM_CalcTraceEntents(&extents);
+        CHECK(CM_TraceBox(&extents, mins, maxs, 1) == SlabCull(&extents, mins, maxs, 1));
+    }
+}
+#endif
+
 int main(void)
 {
     TemporaryCapsule();
     StationaryBrush();
     StationaryMesh();
+#if defined(COD2_X64)
+    SightTemporaryCapsule();
+    SightBrush();
+    SightTreeAndHints();
+    SightMesh();
+    TraceBoxCull();
+#endif
     FINISH("collision");
 }

@@ -7,6 +7,13 @@
 extern void *Sys_GetValue(int key);
 cmodel_t *CM_ClipHandleToModel(clipHandle_t handle);
 static void __attribute_regparm__(3) CM_TestInLeafBrushNode_r(traceWork_t *tw, byte *node, trace_t *trace);
+#if defined(COD2_X64)
+static int CM_SightTraceThroughBrush(const traceWork_t *tw, cbrush_t *brush);
+static int CM_SightTraceThroughLeafBrushNode_r(const traceWork_t *tw, cLeafBrushNode_t *node, const vec_t *p1, const vec_t *p2);
+static int CM_SightTraceThroughLeaf(const traceWork_t *tw, cLeaf_t *leaf, trace_t *trace);
+static int CM_TraceThroughLeafBrushNode_r(const vec_t *p2, trace_t *trace);
+static int CM_SightTraceThroughTree(const traceWork_t *tw, int num, const vec_t *p1, const vec_t *p2, trace_t *trace);
+#else
 #if COD2_APPLE_SDK
 static int CM_SightTraceThroughBrush(const traceWork_t *tw, cbrush_t *brush, trace_t *tr);
 #else
@@ -16,9 +23,14 @@ static int CM_SightTraceThroughLeafBrushNode_r(const vec_t *p2);
 static int CM_SightTraceThroughLeaf(trace_t *trace);
 static int CM_TraceThroughLeafBrushNode_r(const vec_t *p2, trace_t *trace);
 static int CM_SightTraceThroughTree(const traceWork_t *tw, const vec_t *p2, trace_t *trace);
+#endif
 static Bool CM_TraceThroughLeafBrushNode(void);
 static qboolean CM_TraceSphereThroughSphere(const vec_t *vStationary, trace_t *trace);
+#if defined(COD2_X64)
+static qboolean CM_SightTraceSphereThroughSphere(const traceWork_t *tw, const vec_t *start, const vec_t *end, const vec_t *center, float radius, trace_t *trace);
+#else
 static qboolean CM_SightTraceSphereThroughSphere(const vec_t *vStationary, trace_t *trace);
+#endif
 clipHandle_t CM_TempBoxModel(const vec_t *mins, const vec_t *maxs, int contents);
 static int CM_TraceThroughTree(const traceWork_t *tw, int num, const vec_t *p1, const vec_t *p2, trace_t *trace);
 int CM_ContentsOfModel(clipHandle_t handle);
@@ -49,6 +61,10 @@ extern void CM_CalcTraceEntents(TraceExtents *extents);
 extern int CM_BoxLeafnums(const vec_t *mins, const vec_t *maxs, int *list, int listsize, int *lastLeaf);
 extern short int CM_MeshTestInLeaf(const traceWork_t *tw, cLeaf_t *leaf, trace_t *trace);
 extern void CM_TraceThroughAabbTree(const traceWork_t *tw, CollisionAabbTree *aabbTree, trace_t *trace);
+#if defined(COD2_X64)
+extern void CM_SightTraceThroughAabbTree(const traceWork_t *tw, CollisionAabbTree *aabbTree, trace_t *trace);
+extern qboolean CM_TraceBox(const TraceExtents *extents, const vec_t *mins, const vec_t *maxs, float fraction);
+#endif
 extern void AnglesToAxis(const vec_t *angles, vec3_t *axis);
 extern void MatrixTransformVector(const vec_t *in, const vec_t *matrix, vec_t *out);
 extern void MatrixTransposeTransformVector(const vec_t *in, const vec_t *matrix, vec_t *out);
@@ -830,6 +846,320 @@ int CM_BoxTrace(trace_t *results, const vec_t *start, const vec_t *end,
 extern const vec_t Vec3Normalize(vec_t *v);
 extern const vec_t Vec3NormalizeTo(const vec_t *v, vec_t *out);
 
+#if defined(COD2_X64)
+/* Sight brushes clip an unshifted interval and return a stable brush hint.
+ * Capsule support and endpoint comparisons follow Mac 0x628fe..0x62b97. */
+static int CM_SightTraceThroughBrush(const traceWork_t *tw, cbrush_t *brush)
+{
+    float enter = 0.0f, leave = 1.0f;
+    int pass, axis, i;
+
+    for (pass = 0; pass < 2; pass++) {
+        const vec_t *bounds = pass ? brush->maxs : brush->mins;
+        float sign = pass ? 1.0f : -1.0f;
+
+        for (axis = 0; axis < 3; axis++) {
+            float startDist = (tw->extents.start[axis] - bounds[axis]) * sign - tw->radiusOffset[axis];
+            float endDist = (tw->extents.end[axis] - bounds[axis]) * sign - tw->radiusOffset[axis];
+            float fraction;
+
+            if (startDist > 0.0f) {
+                if (endDist > 0.0f)
+                    return 0;
+                fraction = startDist * tw->extents.invDelta[axis] * sign;
+                if (fraction >= leave)
+                    return 0;
+                if (fraction > enter)
+                    enter = fraction;
+            } else if (endDist > 0.0f) {
+                fraction = startDist * tw->extents.invDelta[axis] * sign;
+                if (enter >= fraction)
+                    return 0;
+                if (fraction < leave)
+                    leave = fraction;
+            }
+        }
+    }
+    for (i = 0; i < brush->numsides; i++) {
+        const cplane_t *plane = brush->sides[i].plane;
+        float expandedDist = CM_AbsFloat(tw->offsetZ * plane->normal[2]) + (tw->radius + plane->dist);
+        float startDist = CM_DotProduct(tw->extents.start, plane->normal) - expandedDist;
+        float endDist = CM_DotProduct(tw->extents.end, plane->normal) - expandedDist;
+        float denominator = startDist - endDist;
+
+        if (startDist > 0.0f) {
+            if (endDist > 0.0f)
+                return 0;
+            if (startDist > enter * denominator) {
+                enter = startDist / denominator;
+                if (enter >= leave)
+                    return 0;
+            }
+        } else if (endDist > 0.0f && startDist > leave * denominator) {
+            leave = startDist / denominator;
+            if (leave <= enter)
+                return 0;
+        }
+    }
+    return (int)(brush - cm.brushes) + 1;
+}
+
+static int CM_SightTraceThroughLeafBrushNode_r(const traceWork_t *tw, cLeafBrushNode_t *node,
+                                              const vec_t *p1_in, const vec_t *p2)
+{
+    vec3_t p1, mid;
+    int i, hit, side;
+
+    CM_CopyVec3(p1_in, p1);
+    while (node->contents & tw->contents) {
+        if (node->leafBrushCount > 0) {
+            for (i = 0; i < node->leafBrushCount; i++) {
+                unsigned short index = node->data.leaf.brushes[i];
+                if (index < cm.numBrushes && (cm.brushes[index].contents & tw->contents)) {
+                    hit = CM_SightTraceThroughBrush(tw, &cm.brushes[index]);
+                    if (hit)
+                        return hit;
+                }
+            }
+            return 0;
+        }
+        if (node->leafBrushCount < 0) {
+            hit = CM_SightTraceThroughLeafBrushNode_r(tw, &node[1], p1, p2);
+            if (hit)
+                return hit;
+        }
+        float d1 = p1[node->axis] - node->data.children.dist;
+        float d2 = p2[node->axis] - node->data.children.dist;
+        float offset = (tw->size[node->axis] + 0.125f) - node->data.children.range;
+        float spread = d2 - d1;
+        float fractionNear, fractionFar;
+
+        if (CM_MinFloat(d1, d2) >= offset) {
+            if ((d1 > d2 ? d1 : d2) <= -offset)
+                return 0;
+            node += node->data.children.childOffset[0];
+            continue;
+        }
+        if ((d1 > d2 ? d1 : d2) <= -offset) {
+            node += node->data.children.childOffset[1];
+            continue;
+        }
+        if (CM_AbsFloat(spread) <= CM_PARALLEL_EP) {
+            fractionNear = 1.0f;
+            fractionFar = 0.0f;
+            side = 0;
+        } else {
+            float signedDist = spread >= 0.0f ? -d1 : d1;
+            float inverse = 1.0f / CM_AbsFloat(spread);
+            fractionNear = (signedDist + offset) * inverse;
+            fractionFar = (signedDist - offset) * inverse;
+            side = spread >= 0.0f;
+        }
+        if (fractionNear > 1.0f)
+            fractionNear = 1.0f;
+        for (i = 0; i < 3; i++)
+            mid[i] = (p2[i] - p1[i]) * fractionNear + p1[i];
+        hit = CM_SightTraceThroughLeafBrushNode_r(tw, node + node->data.children.childOffset[side], p1, mid);
+        if (hit)
+            return hit;
+        if (fractionFar < 0.0f)
+            fractionFar = 0.0f;
+        for (i = 0; i < 3; i++)
+            p1[i] = (p2[i] - p1[i]) * fractionFar + p1[i];
+        node += node->data.children.childOffset[side ^ 1];
+    }
+    return 0;
+}
+
+static int CM_SightTraceThroughLeaf(const traceWork_t *tw, cLeaf_t *leaf, trace_t *trace)
+{
+    int i, hit;
+
+    if (leaf->brushContents & tw->contents) {
+        vec3_t mins, maxs;
+        for (i = 0; i < 3; i++) {
+            mins[i] = leaf->mins[i] - tw->size[i];
+            maxs[i] = leaf->maxs[i] + tw->size[i];
+        }
+        if (!CM_TraceBox(&tw->extents, mins, maxs, 1.0f) &&
+            leaf->leafBrushNode >= 0 && leaf->leafBrushNode < cm.leafbrushNodesCount) {
+            hit = CM_SightTraceThroughLeafBrushNode_r(tw, &cm.leafbrushNodes[leaf->leafBrushNode],
+                                                     tw->extents.start, tw->extents.end);
+            if (hit)
+                return hit;
+        }
+    }
+    if (leaf->terrainContents & tw->contents) {
+        for (i = 0; i < leaf->collAabbCount; i++) {
+            int index = leaf->firstCollAabbIndex + i;
+            if (index >= 0 && index < cm.aabbTreeCount)
+                CM_SightTraceThroughAabbTree(tw, &cm.aabbTrees[index], trace);
+            if (trace->fraction != 1.0f)
+                return cm.numBrushes + index + 1;
+        }
+    }
+    return 0;
+}
+
+static int CM_SightTraceThroughTree(const traceWork_t *tw, int num, const vec_t *p1_in,
+                                    const vec_t *p2, trace_t *trace)
+{
+    vec3_t p1, mid;
+    int i, side, hit;
+
+    CM_CopyVec3(p1_in, p1);
+    while (num >= 0) {
+        cNode_t *node = &cm.nodes[num];
+        const cplane_t *plane = node->plane;
+        float d1, d2, offset, spread, fractionNear, fractionFar;
+
+        if (plane->type < 3) {
+            d1 = p1[plane->type] - plane->dist;
+            d2 = p2[plane->type] - plane->dist;
+            offset = tw->size[plane->type] + 0.125f;
+        } else {
+            d1 = CM_DotProduct(p1, plane->normal) - plane->dist;
+            d2 = CM_DotProduct(p2, plane->normal) - plane->dist;
+            offset = tw->isPoint ? 0.125f : 2048.0f;
+        }
+        if (CM_MinFloat(d1, d2) >= offset) {
+            num = node->children[0];
+            continue;
+        }
+        if ((d1 > d2 ? d1 : d2) <= -offset) {
+            num = node->children[1];
+            continue;
+        }
+        spread = d2 - d1;
+        if (CM_AbsFloat(spread) <= CM_PARALLEL_EP) {
+            fractionNear = 1.0f;
+            fractionFar = 0.0f;
+            side = 0;
+        } else {
+            float signedDist = spread >= 0.0f ? -d1 : d1;
+            float inverse = 1.0f / CM_AbsFloat(spread);
+            fractionNear = (signedDist + offset) * inverse;
+            fractionFar = (signedDist - offset) * inverse;
+            side = spread >= 0.0f;
+        }
+        if (fractionNear > 1.0f)
+            fractionNear = 1.0f;
+        for (i = 0; i < 3; i++)
+            mid[i] = (p2[i] - p1[i]) * fractionNear + p1[i];
+        hit = CM_SightTraceThroughTree(tw, node->children[side], p1, mid, trace);
+        if (hit)
+            return hit;
+        if (fractionFar < 0.0f)
+            fractionFar = 0.0f;
+        for (i = 0; i < 3; i++)
+            p1[i] = (p2[i] - p1[i]) * fractionFar + p1[i];
+        num = node->children[side ^ 1];
+    }
+    i = -1 - num;
+    if (i >= 0 && i < cm.numLeafs)
+        return CM_SightTraceThroughLeaf(tw, &cm.leafs[i], trace);
+    return 0;
+}
+
+static qboolean CM_SightTraceSphereThroughSphere(const traceWork_t *tw, const vec_t *start,
+                                                 const vec_t *end, const vec_t *center, float radius, trace_t *trace)
+{
+    vec3_t separation, normal;
+    float c, projection, discriminant, length, fraction;
+    int i;
+
+    (void)end;
+    for (i = 0; i < 3; i++)
+        separation[i] = start[i] - center[i];
+    radius += tw->radius;
+    c = CM_DotProduct(separation, separation) - radius * radius;
+    if (c <= 0.0f)
+        return 0;
+    projection = CM_DotProduct(separation, tw->delta);
+    if (projection >= 0.0f)
+        return 1;
+    discriminant = projection * projection - tw->deltaLenSq * c;
+    if (discriminant < 0.0f)
+        return 1;
+    length = Vec3NormalizeTo(separation, normal);
+    /* Sight uses projection/length, unlike the swept trace's length/projection
+     * contact bias (Mac 0x63ef1..0x63efe). */
+    fraction = (-projection - sqrtf(discriminant)) / tw->deltaLenSq + (projection * 0.125f) / length;
+    return fraction >= trace->fraction;
+}
+
+static int CM_SightTraceTempCapsule(const traceWork_t *tw, const cmodel_t *model, trace_t *trace)
+{
+    vec3_t center, top, bottom, startTop, startBottom, endTop, endBottom, separation, normal;
+    float radius, offsetZ, totalRadius, totalOffset, c, projection, discriminant, length, epsilon, root;
+    int i;
+
+    if (!(CM_BoxBrush()->contents & tw->contents))
+        return 0;
+    for (i = 0; i < 3; i++) {
+        if (tw->bounds[0][i] > model->maxs[i] + 1.0f || tw->bounds[1][i] < model->mins[i] - 1.0f)
+            return 0;
+    }
+    CM_TempCapsuleGeometry(model, center, &radius, &offsetZ);
+    CM_CopyVec3(center, top);
+    CM_CopyVec3(center, bottom);
+    top[2] += offsetZ;
+    bottom[2] -= offsetZ;
+    CM_CopyVec3(tw->extents.start, startTop);
+    CM_CopyVec3(tw->extents.start, startBottom);
+    CM_CopyVec3(tw->extents.end, endTop);
+    CM_CopyVec3(tw->extents.end, endBottom);
+    startTop[2] += tw->offsetZ;
+    startBottom[2] -= tw->offsetZ;
+    endTop[2] += tw->offsetZ;
+    endBottom[2] -= tw->offsetZ;
+    if (startBottom[2] > top[2]) {
+        if (!CM_SightTraceSphereThroughSphere(tw, startBottom, endBottom, top, radius, trace))
+            return -1;
+        if (tw->delta[2] >= 0.0f)
+            return 0;
+    } else if (startTop[2] < bottom[2]) {
+        if (!CM_SightTraceSphereThroughSphere(tw, startTop, endTop, bottom, radius, trace))
+            return -1;
+        if (tw->delta[2] <= 0.0f)
+            return 0;
+    }
+    totalRadius = radius + tw->radius;
+    totalOffset = tw->size[2] - tw->radius + offsetZ;
+    for (i = 0; i < 3; i++)
+        separation[i] = tw->extents.start[i] - center[i];
+    c = separation[0] * separation[0] + separation[1] * separation[1] - totalRadius * totalRadius;
+    if (c <= 0.0f) {
+        if (CM_AbsFloat(separation[2]) <= totalOffset)
+            return -1;
+    } else {
+        projection = separation[0] * tw->delta[0] + separation[1] * tw->delta[1];
+        if (projection < 0.0f) {
+            /* The sight cylinder deliberately uses the full delta length
+             * here, including Z (Mac 0x65cb6..0x65cd1). */
+            discriminant = projection * projection - tw->deltaLenSq * c;
+            if (discriminant >= 0.0f) {
+                separation[2] = 0.0f;
+                length = Vec3NormalizeTo(separation, normal);
+                epsilon = (projection * 0.125f) / length;
+                root = (-projection - sqrtf(discriminant)) / tw->deltaLenSq + epsilon;
+                if (root < trace->fraction &&
+                    CM_AbsFloat(tw->extents.start[2] + (root - epsilon) * tw->delta[2] - center[2]) <= totalOffset)
+                    return -1;
+            }
+        }
+    }
+    if (endBottom[2] > top[2] && startBottom[2] > top[2])
+        return 0;
+    if (endBottom[2] > top[2])
+        return CM_SightTraceSphereThroughSphere(tw, startBottom, endBottom, top, radius, trace) ? 0 : -1;
+    if (endTop[2] >= bottom[2])
+        return 0;
+    if (startTop[2] < bottom[2])
+        return 0;
+    return CM_SightTraceSphereThroughSphere(tw, startTop, endTop, bottom, radius, trace) ? 0 : -1;
+}
+#else
 /* 0x0041E070 ray-vs-sphere sight test: 1 = clears, 0 = blocked. */
 static int CM_SightRaySphere(const traceWork_t *tw, const vec_t *a, const vec_t *b,
                              float rbias, trace_t *tr)
@@ -921,6 +1251,7 @@ static int CM_SightTraceThroughBrush(const traceWork_t *tw, cbrush_t *brush, tra
     }
     return 0;
 }
+#endif
 
 int CM_BoxSightTrace(int oldHitNum, const vec_t *start, const vec_t *end,
                      const vec_t *mins, const vec_t *maxs, clipHandle_t model, int brushmask)
@@ -928,6 +1259,29 @@ int CM_BoxSightTrace(int oldHitNum, const vec_t *start, const vec_t *end,
     traceWork_t tw;
     trace_t trace;
 
+#if defined(COD2_X64)
+    cmodel_t *cmodel;
+    float volume;
+    int hit;
+
+    CM_InitTraceWork(&tw, start, end, mins, maxs, brushmask);
+    volume = (tw.bounds[1][2] - tw.bounds[0][2]) *
+             ((tw.bounds[1][1] - tw.bounds[0][1]) * (tw.bounds[1][0] - tw.bounds[0][0]));
+    tw.axialCullOnly = tw.size[0] * tw.size[1] * tw.size[2] * 16.0f * tw.deltaLen > volume;
+    CM_ClearTraceResult(&trace);
+    if (model == CM_TEMP_BOX_MODEL)
+        return CM_SightTraceTempCapsule(&tw, CM_ModelForHandle(model), &trace);
+    if (model != 0) {
+        cmodel = CM_ModelForHandle(model);
+        return cmodel ? CM_SightTraceThroughLeaf(&tw, &cmodel->leaf, &trace) : 0;
+    }
+    if (oldHitNum > 0 && oldHitNum <= cm.numBrushes) {
+        hit = CM_SightTraceThroughBrush(&tw, &cm.brushes[oldHitNum - 1]);
+        if (hit)
+            return hit;
+    }
+    return CM_SightTraceThroughTree(&tw, 0, tw.extents.start, tw.extents.end, &trace);
+#else
     (void)oldHitNum;
     CM_InitTraceWork(&tw, start, end, mins, maxs, brushmask);
     trace.fraction = 1.0f;
@@ -963,6 +1317,7 @@ int CM_BoxSightTrace(int oldHitNum, const vec_t *start, const vec_t *end,
     }
 
     return 0;
+#endif
 }
 
 extern void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up);
