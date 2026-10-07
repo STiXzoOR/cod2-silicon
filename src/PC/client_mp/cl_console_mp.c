@@ -1503,6 +1503,36 @@ static void ConDrawInput_DetailedDvarMatch(const char *str)
         return;
 
     hasLatchedValue = Dvar_HasLatchedValue(dvar);
+#ifdef COD2_X64
+    lineCount = hasLatchedValue ? 3 : 2;
+    ConDrawInput_DrawHintBox(lineCount, 0.0f);
+    ConDrawInput_DrawText(str, COD2X_CON_NAME_CHARS, con_inputDvarMatchColor);
+    conDrawInputGlob.x += COD2X_CON_VALUE_OFFSET;
+    ConDrawInput_DrawText(Dvar_DisplayableValue(dvar), 0x28, con_inputDvarValueColor);
+    ConDrawInput_NextLine();
+
+    if (hasLatchedValue) {
+        ConDrawInput_DrawText("  latched value", 0x7fffffff, con_inputDvarInactiveValueColor);
+        conDrawInputGlob.x += COD2X_CON_VALUE_OFFSET;
+        ConDrawInput_DrawText(Dvar_DisplayableLatchedValue(dvar), 0x28, con_inputDvarInactiveValueColor);
+        ConDrawInput_NextLine();
+    }
+    ConDrawInput_DrawText("  default", 0x7fffffff, con_inputDvarInactiveValueColor);
+    conDrawInputGlob.x += COD2X_CON_VALUE_OFFSET;
+    ConDrawInput_DrawText(Dvar_DisplayableResetValue(dvar), 0x28, con_inputDvarInactiveValueColor);
+    ConDrawInput_NextLine();
+    ConDrawInput_NextLine();
+
+    {
+        char domain[1024];
+        Dvar_DomainToString_GetLines(dvar->type, dvar->domain, domain, sizeof(domain), &lineCount);
+        ConDrawInput_DrawHintBox(lineCount + 1, 0.0f);
+        ConDrawInput_DrawText(domain, 0x7fffffff, con_inputDvarInfoColor);
+        ConDrawInput_NextLine();
+    }
+    if (dvar->type == 6 && Cmd_Argc() == 2)
+        ConDrawInput_AutoCompleteArg(dvar->domain.enumeration.strings, dvar->domain.enumeration.stringCount);
+#else
     lineCount = hasLatchedValue ? 4 : 3;
     ConDrawInput_DrawHintBox(lineCount, 0.0f);
 
@@ -1522,6 +1552,7 @@ static void ConDrawInput_DetailedDvarMatch(const char *str)
 
     if (Cmd_Argc() == 2)
         ConDrawInput_AutoCompleteArg(dvar->domain.enumeration.strings, dvar->domain.enumeration.stringCount);
+#endif
 }
 
 static void ConDrawInput_DetailedCmdMatch(const char *str)

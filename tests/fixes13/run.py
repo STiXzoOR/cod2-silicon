@@ -228,3 +228,12 @@ if not args.test or 'locale_fonts' in args.test:
     else:
         generated += '#define TEST_PARSE_FONT(role, alias) UI_ParseFontAsset(7, 11, alias)\n'
     run('locale_fonts', generated)
+
+if not args.test or 'console_hints' in args.test:
+    path = 'src/PC/universal/dvar.c'
+    generated = ''.join(function(path, name) for name in
+                        ['Dvar_DescribeIntDomain', 'Dvar_DescribeFloatDomain', 'Dvar_DescribeVectorDomain',
+                         'Dvar_DomainToString_Internal_impl', 'Dvar_DomainToString_InternalReg',
+                         'Dvar_DomainToString_GetLines'])
+    generated += function('src/PC/client_mp/cl_console_mp.c', 'ConDrawInput_DetailedDvarMatch')
+    run('console_hints', generated, cases=((), ('overflow',)))
