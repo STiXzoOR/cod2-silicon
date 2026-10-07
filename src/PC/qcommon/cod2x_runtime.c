@@ -6,6 +6,9 @@
 #include "cod2x_policy.h"
 #endif
 #include <string.h>
+#if defined(COD2_X64) && COD2_X64
+#include <strings.h>
+#endif
 
 extern const dvar_t *Dvar_RegisterInt(const char *, int, int, int, unsigned short);
 extern const dvar_t *Dvar_RegisterBool(const char *, unsigned char, unsigned short);
@@ -20,9 +23,16 @@ static const dvar_t *cod2x_game, *cod2x_competitive, *cod2x_fpsLimit;
 static const dvar_t *cod2x_revision, *cod2x_identity;
 static char cod2x_hwid[33];
 static int cod2x_playing, cod2x_demo;
+#if defined(COD2_X64) && COD2_X64
+static int cod2x_serverActive, cod2x_remotePolicy;
+#endif
 
 int Cod2x_GameVersion(void)
 {
+#if defined(COD2_X64) && COD2_X64
+    if (cod2x_serverActive)
+        return COD2X_HOST_REVISION;
+#endif
     return cod2x_game ? cod2x_game->current.integer : 0;
 }
 
@@ -49,13 +59,86 @@ const char *Cod2x_Hwid(void)
     return cod2x_hwid;
 }
 
+#if defined(COD2_X64) && COD2_X64
+static void Cod2x_SharedInit(int dedicated)
+{
+    if (cod2x_game)
+        return;
+    cod2x_game = Dvar_RegisterInt("g_cod2x", 0, 0, COD2X_REVISION, 0x18);
+    cod2x_competitive = Dvar_RegisterBool("g_competitive", 0, dedicated ? 0x1008 : 0x18);
+    cod2x_fpsLimit = Dvar_RegisterBool("com_maxfps_limit", 0, 0x98);
+}
+
+void Cod2x_ServerInit(int dedicated)
+{
+    /* Dedicated startup has no client identity, features, or connection state. */
+    Cod2x_SharedInit(dedicated);
+}
+
+int Cod2x_ServerActive(void)
+{
+    return cod2x_serverActive;
+}
+
+int Cod2x_ServerGameVersion(void)
+{
+    return cod2x_serverActive ? COD2X_HOST_REVISION : 0;
+}
+
+void Cod2x_ServerSpawn(void)
+{
+    Cod2x_SharedInit(0);
+    if (!cod2x_serverActive && cod2x_remotePolicy) {
+        Dvar_SetBool(cod2x_competitive, 0);
+        Dvar_SetBool(cod2x_fpsLimit, 0);
+    }
+    cod2x_remotePolicy = 0;
+    cod2x_serverActive = 1;
+    ((dvar_t *)cod2x_game)->domain.integer.min = COD2X_HOST_REVISION;
+    ((dvar_t *)cod2x_game)->domain.integer.max = COD2X_HOST_REVISION;
+    Dvar_SetInt(cod2x_game, COD2X_HOST_REVISION);
+    Cod2x_ResetAnimation();
+}
+
+void Cod2x_ServerShutdown(void)
+{
+    cod2x_serverActive = 0;
+    cod2x_remotePolicy = 0;
+    if (cod2x_game) {
+        ((dvar_t *)cod2x_game)->domain.integer.min = 0;
+        ((dvar_t *)cod2x_game)->domain.integer.max = COD2X_REVISION;
+        Dvar_SetInt(cod2x_game, 0);
+    }
+    Cod2x_ResetAnimation();
+}
+
+int Cod2x_SetClientDvar(const char *name, const char *value)
+{
+    extern void Dvar_SetFromStringByName(const char *, const char *);
+    if (strcasecmp(name, "g_cod2x") && strcasecmp(name, "g_competitive") &&
+        strcasecmp(name, "com_maxfps_limit"))
+        return 0;
+    /* A listen client receives systeminfo/reliable commands in the same process
+       as its host. Only remote sessions may change the shared policy view. */
+    if (!cod2x_serverActive) {
+        cod2x_remotePolicy = 1;
+        Dvar_SetFromStringByName(name, value);
+    }
+    return 1;
+}
+#endif
+
 void Cod2x_Init(void)
 {
     /* NOWRITE allows internal server updates, blocks console/config changes.
        CoD2x src/shared/game.cpp:14, src/shared/server.cpp:1313-1315. */
+#if defined(COD2_X64) && COD2_X64
+    Cod2x_SharedInit(0);
+#else
     cod2x_game = Dvar_RegisterInt("g_cod2x", 0, 0, COD2X_REVISION, 0x18);
     cod2x_competitive = Dvar_RegisterBool("g_competitive", 0, 0x18);
     cod2x_fpsLimit = Dvar_RegisterBool("com_maxfps_limit", 0, 0x98);
+#endif
     cod2x_revision = Dvar_RegisterInt("protocol_cod2x", COD2X_REVISION, COD2X_REVISION, COD2X_REVISION, 0x42);
     Dvar_RegisterString("cl_cod2x_version", COD2X_VERSION, 0x40);
     if (!Cod2x_ReadMachineHwid(cod2x_hwid))
@@ -137,9 +220,19 @@ void Cod2x_Frame(int active, int demo)
 void Cod2x_Disconnect(void)
 {
     Cod2x_Frame(0, 0);
+#if defined(COD2_X64) && COD2_X64
+    if (cod2x_serverActive)
+        Cod2x_ResetClientAnimation();
+    else
+#endif
     Cod2x_ResetAnimation();
 #if defined(COD2_X64) && COD2_X64 && !defined(DEDICATED)
     Cod2x_IwdSystemInfo("");
+#endif
+#if defined(COD2_X64) && COD2_X64
+    cod2x_remotePolicy = 0;
+    if (cod2x_serverActive)
+        return;
 #endif
     if (cod2x_game)
         Dvar_SetInt(cod2x_game, 0);

@@ -2,6 +2,9 @@
 #include "common_types.h"
 #include "imports.h"
 #include "cod2_feature_config.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "../qcommon/cod2x.h"
+#endif
 #include "pb_public.h"
 #include "PC/qcommon/net_hardening.h"
 #include <stddef.h>
@@ -648,6 +651,15 @@ void SV_SendClientGameState(client_t *client)
     ZN10LargeLocalD1Ev(&msgBuffer_large_local);
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static void SV_Cod2xClientBegin(client_t *client, int clientNum)
+{
+    ClientBegin(clientNum);
+    /* The reliable update also covers a soft restart without a new gamestate. */
+    SV_SendServerCommand(client, SV_CMD_RELIABLE, "v g_cod2x \"%d\"", Cod2x_ServerGameVersion());
+}
+#endif
+
 void SV_ClientEnterWorld(client_t *client, const dvar_t *(*cmd)[4])
 {
     int clientNum;
@@ -663,7 +675,11 @@ void SV_ClientEnterWorld(client_t *client, const dvar_t *(*cmd)[4])
     client->deltaMessage = -1;
     client->nextSnapshotTime = svs.time;
     client->lastUsercmd = *(usercmd_t *)cmd;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    SV_Cod2xClientBegin(client, clientNum);
+#else
     ClientBegin(client - svs.clients);
+#endif
 }
 
 void SV_DoneDownload_f(client_t *cl)
@@ -1546,7 +1562,11 @@ void SV_UserMove(client_t *cl, msg_t *msg, qboolean delta)
         cl->deltaMessage = -1;
         cl->nextSnapshotTime = svs->time;
         cl->lastUsercmd = cmds[0];
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        SV_Cod2xClientBegin(cl, clientNum);
+#else
         ClientBegin(clientNum);
+#endif
     }
 
     if ((*(const dvar_t **)imp_sv_pure)->current.enabled && !cl->pureAuthentic) {
@@ -1616,7 +1636,11 @@ void SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
                 cl->gentity = (unsigned char *(*)[16])ent;
                 cl->deltaMessage = -1;
                 cl->nextSnapshotTime = svs.time;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+                SV_Cod2xClientBegin(cl, clientNum);
+#else
                 ClientBegin(clientNum);
+#endif
             }
             return;
         }
@@ -1778,7 +1802,11 @@ gentity_t *SV_AddTestClient(void)
     cl->nextSnapshotTime = svsPtr->time;
     cl->lastUsercmd = nullcmd;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    SV_Cod2xClientBegin(cl, clientNum);
+#else
     ClientBegin(clientNum);
+#endif
 
     return SV_GentityNum(clientNum);
 }

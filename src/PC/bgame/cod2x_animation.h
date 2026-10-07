@@ -22,6 +22,14 @@ void Cod2x_ResetAnimation(void)
     memset(cod2xAnimationState, 0, sizeof(cod2xAnimationState));
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+void Cod2x_ResetClientAnimation(void)
+{
+    /* Native cgame owns animation user 0; the authoritative host owns user 1. */
+    memset(cod2xAnimationState[0], 0, sizeof(cod2xAnimationState[0]));
+}
+#endif
+
 static cod2xAnimationState_t *BG_Cod2xState(const clientInfo_t *ci)
 {
     cod2xAnimationState_t *state;

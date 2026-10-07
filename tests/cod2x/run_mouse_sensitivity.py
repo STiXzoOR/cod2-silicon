@@ -72,7 +72,7 @@ mg = re.search(r'^static const dvar_t \*cl_sensitivityMG\s*;', text, re.M)
 if mg:
     generated += mg[0] + '\n'
 if '-DCOD2_CODX=1' in flags:
-    generated += 'static const dvar_t *cod2x_game;\n'
+    generated += 'static const dvar_t *cod2x_game;\nstatic int cod2x_serverActive;\n'
     generated += function(active('src/PC/qcommon/cod2x_runtime.c'), 'Cod2x_GameVersion')
 generated += function(active('src/PC/universal/com_math.c'), 'ClampChar')
 generated += ''.join(function(text, name) for name in names)

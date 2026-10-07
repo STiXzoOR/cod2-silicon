@@ -8,6 +8,9 @@
 #include "imports.h"
 #include "bytematch.h"
 #include "cod2_feature_config.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "../qcommon/cod2x.h"
+#endif
 #include <string.h>
 #include <stdlib.h>
 /* dvar globals */
@@ -413,10 +416,16 @@ void SV_InitArchivedSnapshot(void)
 void SV_InitDvar(void)
 {
     Dvar_ResetScriptInfo();
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Cod2x_ServerSpawn();
+#endif
 }
 
 void SV_Init(void)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Cod2x_ServerInit(com_dedicated->current.integer != 0);
+#endif
     SV_AddOperatorCommands();
 
     sv_gametype = Dvar_RegisterString("g_gametype", "dm", 0x1024);
@@ -694,6 +703,9 @@ void SV_Shutdown(char *finalmsg)
     }
 
     Dvar_SetBool( (dvar_t *)(com_sv_running), 0);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Cod2x_ServerShutdown();
+#endif
     Com_Printf("---------------------------\n");
 
 #if !COD2_APPLE_SDK || !defined(DEDICATED)
@@ -996,6 +1008,9 @@ void SV_SpawnServer(const char *server)
     }
 
     Dvar_ResetScriptInfo();
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Cod2x_ServerSpawn();
+#endif
 
     {
         serverStatic_t *svsPtr = (serverStatic_t *)imp_svs;

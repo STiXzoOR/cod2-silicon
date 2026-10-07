@@ -143,9 +143,15 @@ void CL_SystemInfoChanged(void)
     systemInfo = cla->gameState.stringData + cla->gameState.stringOffsets[1];
 #if defined(COD2_CODX) && COD2_CODX
     /* Clear previous server policy before applying a new systeminfo, including demos. */
+#if defined(COD2_X64) && COD2_X64
+    Cod2x_SetClientDvar("g_cod2x", Info_ValueForKey(systemInfo, "g_cod2x"));
+    Cod2x_SetClientDvar("g_competitive", Info_ValueForKey(systemInfo, "g_competitive"));
+    Cod2x_SetClientDvar("com_maxfps_limit", Info_ValueForKey(systemInfo, "com_maxfps_limit"));
+#else
     Dvar_SetFromStringByName("g_cod2x", Info_ValueForKey(systemInfo, "g_cod2x"));
     Dvar_SetFromStringByName("g_competitive", Info_ValueForKey(systemInfo, "g_competitive"));
     Dvar_SetFromStringByName("com_maxfps_limit", Info_ValueForKey(systemInfo, "com_maxfps_limit"));
+#endif
 #if defined(COD2_X64) && COD2_X64
     Cod2x_IwdSystemInfo(Info_ValueForKey(systemInfo, "sv_iwdNames"));
 #endif
@@ -194,6 +200,10 @@ void CL_SystemInfoChanged(void)
             }
 #endif
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            if (Cod2x_SetClientDvar(key, value))
+                continue;
+#endif
             Dvar_SetFromStringByName(key, value);
         }
     }

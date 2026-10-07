@@ -161,6 +161,15 @@ int main(void)
     /* The CoD2x controller exits for mounted flags before stance correction. */
     checkThrow(names[0], 4 | 0x100, 1, 6, 0);
     checkThrow(names[1], 8 | 0x200, 1, 6, 0);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    cod2xAnimationState[0][3].stance = 2;
+    cod2xAnimationState[1][3].stance = 4;
+    Cod2x_ResetClientAnimation();
+    assert(cod2xAnimationState[0][3].stance == 0);
+    assert(cod2xAnimationState[1][3].stance == 4);
+    Cod2x_ResetAnimation();
+    assert(cod2xAnimationState[1][3].stance == 0);
+#endif
     printf("cod2x: %d production grenade stance cases and mounted controls passed\n", cases);
     return 0;
 }

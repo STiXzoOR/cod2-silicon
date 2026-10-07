@@ -44,6 +44,39 @@ and animation ownership are synthetic inputs; this fixture does not establish
 the pending CR03 host revision lifecycle. `--baseline <commit>` reads older
 production source without changing the checkout.
 
+The bounded host lifecycle fixture uses the real dvar implementation and
+production server registration, map spawn, soft/full map restart, shutdown,
+client enter-world, systeminfo, and reliable dvar setter bodies:
+
+```sh
+taskpolicy -b nice -n 19 python3 tests/cod2x/host_lifecycle.py \
+  --compile-db build-macos-codx/compile_commands.json \
+  --output "$HOME/Library/Application Support/CoD2-native/ws68-host-client"
+taskpolicy -b nice -n 19 python3 tests/cod2x/host_lifecycle.py \
+  --compile-db build-macos-codx/compile_commands.json --dedicated \
+  --output "$HOME/Library/Application Support/CoD2-native/ws68-host-dedicated"
+taskpolicy -b nice -n 19 python3 tests/cod2x/host_lifecycle.py \
+  --compile-db build-macos/compile_commands.json \
+  --output "$HOME/Library/Application Support/CoD2-native/ws68-host-stock"
+```
+
+It checks clientless dedicated registration without identity lookup, native
+protocol 118, host revision zero/domain ownership, remote revision-6 and empty
+systeminfo, reliable updates, disconnect, restart, begin publication, and remote
+stock/CoD2x/demo transitions. The dedicated variant selects the actual dedicated
+compile entry. The original gameplay begin must precede its reliable revision
+command. A source check requires all four begin sites to use that same boundary;
+only enter-world is dynamically exercised as a begin caller. The production
+grenade fixture also checks that client animation reset preserves server user 1.
+
+Services for maps, gameplay scripts, networking, frame execution, identity and
+systeminfo serialization are synthetic. There is no engine process, licensed
+input, or authenticated admission. The hosted extension remains revision zero;
+these tests establish lifecycle ownership, not complete CoD2x hosting. Add
+`--baseline 8a1cb60 --dedicated` with a new output directory to reproduce the
+missing dedicated registration before this correction. See WS68 for the
+remaining revision activation requirements.
+
 The standalone helper fixtures model only the fields needed for their
 calculations. These fixtures do not verify engine layout, networking,
 rendering, real hitboxes, or admission to a
