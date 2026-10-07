@@ -91,6 +91,24 @@ static const char str_dbg_before_lt[] = "before-LinkThread";
 #define SCRPP ((scrParserPub_t *)imp_scrParserPub)
 #define SCRVP (&scrVarPub)
 
+#if defined(COD2_X64)
+/* Bytecode operands remain packed even when an allocator name says Align. */
+static void Scr_StorePackedShort(void *destination, short value)
+{
+    memcpy(destination, &value, sizeof(value));
+}
+
+static void Scr_StorePackedInt(void *destination, int value)
+{
+    memcpy(destination, &value, sizeof(value));
+}
+
+static void Scr_StorePackedFloat(void *destination, float value)
+{
+    memcpy(destination, &value, sizeof(value));
+}
+#endif
+
 #define SCRCOMP_SCR_DEV_NO 0
 #define SCRCOMP_SCR_DEV_ON 1
 #define SCRCOMP_SCR_DEV_IGNORE 2
@@ -1240,7 +1258,11 @@ static unsigned int __attribute_regparm__(1)
         stringValue = constValue->value.u.stringValue;
         EmitOpcode(0x0a, 1, 0);
         AddOpcodePos(sourcePos, 1);
+#if defined(COD2_X64)
+        Scr_StorePackedShort(TempMallocAlign(2), (short)stringValue);
+#else
         *(short *)TempMallocAlign(2) = (short)stringValue;
+#endif
 
         if (SCRCP->developer_statement == SCRCOMP_SCR_DEV_IGNORE) {
             if (!SCRCG->bConstRefCount) {
@@ -1259,7 +1281,11 @@ static unsigned int __attribute_regparm__(1)
         stringValue = constValue->value.u.stringValue;
         EmitOpcode(0x0b, 1, 0);
         AddOpcodePos(sourcePos, 1);
+#if defined(COD2_X64)
+        Scr_StorePackedShort(TempMallocAlign(2), (short)stringValue);
+#else
         *(short *)TempMallocAlign(2) = (short)stringValue;
+#endif
 
         if (SCRCP->developer_statement == SCRCOMP_SCR_DEV_IGNORE) {
             if (!SCRCG->bConstRefCount) {
@@ -1279,7 +1305,11 @@ static unsigned int __attribute_regparm__(1)
         EmitOpcode(0x0c, 1, 0);
         AddOpcodePos(sourcePos, 1);
         for (i = 0; i != 3; ++i) {
+#if defined(COD2_X64)
+            Scr_StorePackedFloat(TempMallocAlignStrict(4), vectorValue[i]);
+#else
             *(float *)TempMallocAlignStrict(4) = vectorValue[i];
+#endif
         }
         RemoveRefToVector(vectorValue);
         break;
@@ -1288,7 +1318,11 @@ static unsigned int __attribute_regparm__(1)
         sourcePos = constValue->sourcePos.sourcePosValue;
         EmitOpcode(9, 1, 0);
         AddOpcodePos(sourcePos, 1);
+#if defined(COD2_X64)
+        Scr_StorePackedFloat(TempMallocAlignStrict(4), constValue->value.u.floatValue);
+#else
         *(float *)TempMallocAlignStrict(4) = constValue->value.u.floatValue;
+#endif
         break;
 
     case 6:
@@ -1518,11 +1552,19 @@ static unsigned int __attribute_regparm__(2)
         } else if (value <= 0xffff) {
             EmitOpcode(6, 1, 0);
             AddOpcodePos(sourcePos, 1);
+#if defined(COD2_X64)
+            Scr_StorePackedShort(TempMallocAlign(2), (short)value);
+#else
             *(short *)TempMallocAlign(2) = (short)value;
+#endif
         } else {
             EmitOpcode(8, 1, 0);
             AddOpcodePos(sourcePos, 1);
+#if defined(COD2_X64)
+            Scr_StorePackedInt(TempMallocAlign(4), value);
+#else
             *(int *)TempMallocAlign(4) = value;
+#endif
         }
         return 0;
     }
@@ -1534,11 +1576,19 @@ static unsigned int __attribute_regparm__(2)
     } else if (value > -65536) {
         EmitOpcode(7, 1, 0);
         AddOpcodePos(sourcePos, 1);
+#if defined(COD2_X64)
+        Scr_StorePackedShort(TempMallocAlign(2), (short)-value);
+#else
         *(short *)TempMallocAlign(2) = (short)-value;
+#endif
     } else {
         EmitOpcode(8, 1, 0);
         AddOpcodePos(sourcePos, 1);
+#if defined(COD2_X64)
+        Scr_StorePackedInt(TempMallocAlign(4), value);
+#else
         *(int *)TempMallocAlign(4) = value;
+#endif
     }
 
     return 0;
@@ -1719,7 +1769,11 @@ static void Scr_EmitCanonicalLocalVarName(unsigned int stringValue)
     } else {
         if (SCRCG->bConstRefCount)
             SL_AddRefToString(stringValue);
+#if defined(COD2_X64)
+        Scr_StorePackedShort(SCRCG->codePos, (short)SL_TransferToCanonicalString(stringValue));
+#else
         *(unsigned short *)SCRCG->codePos = (unsigned short)SL_TransferToCanonicalString(stringValue);
+#endif
     }
 
     SCRCG->bConstRefCount = oldConstRefCount;
