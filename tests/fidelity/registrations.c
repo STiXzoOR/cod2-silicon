@@ -39,6 +39,34 @@ int main(void)
     CHECK(height && height->type == 5 && height->reset.integer == 16 && height->domain.integer.min == 1 && height->domain.integer.max == 100 && height->flags == 0x1000);
     const dvar_t *motd = Dvar_FindVar("motd");
     CHECK(motd && motd->type == 7 && !strcmp(motd->reset.string, "") && motd->flags == 0x1000);
+    const char *owned[] = {
+        "activeAction", "cl_anglespeedkey", "cl_avidemo", "cl_bypassMouseInput",
+        "cl_connectTimeout", "cl_forceavidemo", "cl_freezeDemo", "cl_noprint",
+        "cl_serverStatusResendTime", "cl_showSend", "cl_showServerCommands", "cl_showTimeDelta",
+        "cl_showmouserate", "cl_shownet", "cl_shownuments", "cl_talking",
+        "cl_timeout", "fx_cull", "fx_sort", "nextdemo"
+    };
+    for (unsigned i = 0; i < sizeof(owned) / sizeof(owned[0]); ++i) {
+        const dvar_t *var = Dvar_FindVar(owned[i]);
+        CHECK(var && (var->flags & 0x1000));
+    }
+    Dvar_Shutdown();
+    /* A previous engine registration without owner bits must yield its name
+       to the client registration, retaining the existing typed values. */
+    Dvar_Init();
+    Dvar_RegisterBool("CL_NOPRINT", 1, 0);
+    Dvar_RegisterInt("CL_SHOWNET", 1, -2, 4, 0);
+    Dvar_RegisterFloat("CL_TIMEOUT", 100, 0, 3600, 0);
+    Dvar_RegisterString("ACTIVEACTION", "fixture", 0);
+    RegisterCorrections();
+    CHECK(!strcmp(Dvar_FindVar("cl_noprint")->name, "cl_noprint"));
+    CHECK(!strcmp(Dvar_FindVar("cl_shownet")->name, "cl_shownet"));
+    CHECK(!strcmp(Dvar_FindVar("cl_timeout")->name, "cl_timeout"));
+    CHECK(!strcmp(Dvar_FindVar("activeAction")->name, "activeAction"));
+    CHECK(Dvar_FindVar("cl_noprint")->current.enabled == 1);
+    CHECK(Dvar_FindVar("cl_shownet")->current.integer == 1);
+    CHECK(Dvar_FindVar("cl_timeout")->current.value == 100);
+    CHECK(!strcmp(Dvar_FindVar("activeAction")->current.string, "fixture"));
     Dvar_Shutdown();
     /* Config text can create archived strings before engine registration. */
     Dvar_Init();

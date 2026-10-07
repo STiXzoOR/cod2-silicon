@@ -1131,8 +1131,22 @@ void CL_InitOnceForAllClients(void)
     Con_Init();
     CL_InitInput();
 
+#if defined(COD2_X64) && COD2_X64
+    cl_noprint = Dvar_RegisterBool_mac("cl_noprint", 0, 0x1000);
+#else
     cl_noprint = Dvar_RegisterBool_mac("cl_noprint", 0, 0);
+#endif
     cl_voice = Dvar_RegisterBool_mac("cl_voice", 1, 0x1003);
+#if defined(COD2_X64) && COD2_X64
+    cl_timeout = Dvar_RegisterFloat("cl_timeout", 200.0f, 0.0f, 3600.0f, 0x1000);
+    cl_connectTimeout = Dvar_RegisterFloat("cl_connectTimeout", 200.0f, 0.0f, 3600.0f, 0x1000);
+    cl_shownet = Dvar_RegisterInt("cl_shownet", 0, -2, 4, 0x1000);
+    cl_shownuments = Dvar_RegisterBool_mac("cl_shownuments", 0, 0x1000);
+    cl_showServerCommands = Dvar_RegisterBool_mac("cl_showServerCommands", 0, 0x1000);
+    cl_showSend = Dvar_RegisterBool_mac("cl_showSend", 0, 0x1000);
+    cl_showTimeDelta = Dvar_RegisterBool_mac("cl_showTimeDelta", 0, 0x1000);
+    cl_freezeDemo = Dvar_RegisterBool_mac("cl_freezeDemo", 0, 0x1000);
+#else
     cl_timeout = Dvar_RegisterFloat("cl_timeout", 200.0f, 0.0f, 3600.0f, 0);
     cl_connectTimeout = Dvar_RegisterFloat("cl_connectTimeout", 200.0f, 0.0f, 3600.0f, 0);
     cl_shownet = Dvar_RegisterInt("cl_shownet", 0, -2, 4, 0);
@@ -1141,14 +1155,21 @@ void CL_InitOnceForAllClients(void)
     cl_showSend = Dvar_RegisterBool_mac("cl_showSend", 0, 0);
     cl_showTimeDelta = Dvar_RegisterBool_mac("cl_showTimeDelta", 0, 0);
     cl_freezeDemo = Dvar_RegisterBool_mac("cl_freezeDemo", 0, 0);
+#endif
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     cod2x_demoName = Dvar_RegisterString_mac("cl_demoAutoRecordName", "", 0x1010);
     cod2x_demoURL = Dvar_RegisterString_mac("cl_demoAutoRecordUploadUrl", "", 0x1010);
     cod2x_demoTimeout = Dvar_RegisterInt("cl_demoAutoRecordUploadTimeout", 60, 10, 600, 0x1001);
 #endif
+#if defined(COD2_X64) && COD2_X64
+    cl_activeAction = Dvar_RegisterString_mac("activeAction", "", 0x1000);
+    cl_avidemo = Dvar_RegisterInt("cl_avidemo", 0, 0, 0x7fffffff, 0x1000);
+    cl_forceavidemo = Dvar_RegisterBool_mac("cl_forceavidemo", 0, 0x1000);
+#else
     cl_activeAction = Dvar_RegisterString_mac("activeAction", "", 0);
     cl_avidemo = Dvar_RegisterInt("cl_avidemo", 0, 0, 0x7fffffff, 0);
     cl_forceavidemo = Dvar_RegisterBool_mac("cl_forceavidemo", 0, 0);
+#endif
 
     {
         union {
@@ -1157,7 +1178,11 @@ void CL_InitOnceForAllClients(void)
         } flt_max = { 0x7f7fffff }, flt_nmax = { 0xff7fffff };
         cl_yawspeed = Dvar_RegisterFloat("cl_yawspeed", 140.0f, flt_nmax.f, flt_max.f, 0x1001);
         cl_pitchspeed = Dvar_RegisterFloat("cl_pitchspeed", 140.0f, flt_nmax.f, flt_max.f, 0x1001);
+#if defined(COD2_X64) && COD2_X64
+        cl_anglespeedkey = Dvar_RegisterFloat("cl_anglespeedkey", 1.5f, 0.0f, flt_max.f, 0x1000);
+#else
         cl_anglespeedkey = Dvar_RegisterFloat("cl_anglespeedkey", 1.5f, 0.0f, flt_max.f, 0);
+#endif
     }
 
 #if defined(COD2_CODX) && COD2_CODX
@@ -1177,16 +1202,29 @@ void CL_InitOnceForAllClients(void)
     cl_sensitivity = Dvar_RegisterFloat("sensitivity", 5.0f, 0.01f, 100.0f, 0x1001);
     cl_mouseAccel = Dvar_RegisterFloat("cl_mouseAccel", 0.0f, 0.0f, 100.0f, 0x1001);
     cl_freelook = Dvar_RegisterBool_mac("cl_freelook", 1, 0x1001);
+#if defined(COD2_X64) && COD2_X64
+    cl_showMouseRate = Dvar_RegisterBool_mac("cl_showmouserate", 0, 0x1000);
+#else
     cl_showMouseRate = Dvar_RegisterBool_mac("cl_showmouserate", 0, 0);
+#endif
     cl_allowDownload = Dvar_RegisterBool_mac("cl_allowDownload", 1, 0x1001);
 #if COD2_IS_PATCH_13
     cl_wwwDownload = Dvar_RegisterBool("cl_wwwDownload", 1, 0x1003);
     cl_punkbuster = Dvar_RegisterBool("cl_punkbuster", 0, 0x1013);
 #endif
+#if defined(COD2_X64) && COD2_X64
+    cl_talking = Dvar_RegisterBool_mac("cl_talking", 0, 0x1000);
+#else
     cl_talking = Dvar_RegisterBool_mac("cl_talking", 0, 0);
+#endif
     cl_inGameVideo = Dvar_RegisterBool_mac("r_inGameVideo", 1, 0x1001);
+#if defined(COD2_X64) && COD2_X64
+    cl_serverStatusResendTime = Dvar_RegisterInt("cl_serverStatusResendTime", 750, 0, 3600, 0x1000);
+    cl_bypassMouseInput = Dvar_RegisterBool_mac("cl_bypassMouseInput", 0, 0x1000);
+#else
     cl_serverStatusResendTime = Dvar_RegisterInt("cl_serverStatusResendTime", 750, 0, 3600, 0);
     cl_bypassMouseInput = Dvar_RegisterBool_mac("cl_bypassMouseInput", 0, 0);
+#endif
 
     m_pitch = Dvar_RegisterFloat("m_pitch", 0.022f, -1.0f, 1.0f, 0x1001);
     m_yaw = Dvar_RegisterFloat("m_yaw", 0.022f, -1.0f, 1.0f, 0x1001);
@@ -1214,15 +1252,24 @@ void CL_InitOnceForAllClients(void)
 
     fx_enable = Dvar_RegisterBool_mac("fx_enable", 1, 0x1080);
     fx_draw = Dvar_RegisterBool_mac("fx_draw", 1, 0x1080);
+#if defined(COD2_X64) && COD2_X64
+    fx_cull = Dvar_RegisterBool_mac("fx_cull", 1, 0x1000);
+    fx_sort = Dvar_RegisterBool_mac("fx_sort", 1, 0x1000);
+#else
     fx_cull = Dvar_RegisterBool_mac("fx_cull", 1, 0);
     fx_sort = Dvar_RegisterBool_mac("fx_sort", 1, 0);
+#endif
     fx_freeze = Dvar_RegisterBool_mac("fx_freeze", 0, 0x1080);
     fx_debug = Dvar_RegisterBool_mac("fx_debug", 0, 0x1080);
     fx_debugBolt = Dvar_RegisterFloat("fx_debugBolt", 0.0f, 0.0f, 100.0f, 0x1080);
     fx_count = Dvar_RegisterBool_mac("fx_count", 0, 0x1080);
     fx_visMinTraceDist = Dvar_RegisterFloat("fx_visMinTraceDist", 80.0f, 0.0f, 1000.0f, 0x1080);
     fx_profile = Dvar_RegisterBool_mac("fx_profile", 0, 0x1080);
+#if defined(COD2_X64) && COD2_X64
+    nextdemo = Dvar_RegisterString_mac("nextdemo", "", 0x1000);
+#else
     nextdemo = Dvar_RegisterString_mac("nextdemo", "", 0);
+#endif
     Dvar_RegisterBool_mac("hud_enable", 1, 0x1001);
     Dvar_RegisterBool_mac("cg_blood", 1, 0x1001);
 

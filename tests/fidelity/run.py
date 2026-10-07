@@ -85,13 +85,18 @@ run('dvars', ''.join(function('src/PC/qcommon/dvar_cmds.c', n) for n in
 names = ['r_lodBias', 'r_lodScale', 'r_lightTweakAmbient', 'r_lightTweakDiffuseFraction',
     'r_lightTweakSunLight', 'r_lightTweakAmbientColor', 'r_lightTweakSunColor',
     'r_lightTweakSunDiffuseColor', 'r_lightTweakSunDirection', 'cl_maxpackets',
-    'loc_language', 'motd', 'cl_profileTextHeight']
+    'loc_language', 'motd', 'cl_profileTextHeight',
+    'activeAction', 'cl_anglespeedkey', 'cl_avidemo', 'cl_bypassMouseInput',
+    'cl_connectTimeout', 'cl_forceavidemo', 'cl_freezeDemo', 'cl_noprint',
+    'cl_serverStatusResendTime', 'cl_showSend', 'cl_showServerCommands',
+    'cl_showTimeDelta', 'cl_showmouserate', 'cl_shownet', 'cl_shownuments',
+    'cl_talking', 'cl_timeout', 'fx_cull', 'fx_sort', 'nextdemo']
 calls = []
 for path in ['src/PC/stringed/stringed_hooks.c', 'src/PC/gfx_d3d/r_dvars.c', 'src/PC/client_mp/cl_main_mp.c']:
     for match in re.finditer(r'(?:ri\.)?Dvar_Register\w+\([^;]*\);', active(path)):
         if any('"' + name + '"' in match[0] for name in names):
             calls.append(match[0].replace('ri.', '').replace('_mac(', '('))
-run('registrations', 'static void RegisterCorrections(void) {\n' + '\n'.join(calls) + '\n}\n',
+run('registrations', 'static void RegisterCorrections(void) {\nunion { int i; float f; } flt_max = { 0x7f7fffff };\n' + '\n'.join(calls) + '\n}\n',
     ['src/PC/universal/dvar.c'])
 path = 'src/PC/stringed/stringed_hooks.c'
 run('language', declaration(path, 'g_languages') + ''.join(function(path, n) for n in
