@@ -72,6 +72,10 @@ extern struct bgs_t level_bgs;
 extern struct bgs_t *bgs;
 extern struct level_locals_t level;
 extern gentity_t g_entities[];
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+extern serverStatic_t svs;
+static const dvar_t *sv_playerBroadcastLimit;
+#endif
 #if defined(COD2_X64)
 extern void G_setfog(const char *fogstring);
 extern void G_InitObjectives(void);
@@ -195,6 +199,9 @@ static vec3_t vec3_zero = { 0.0f, 0.0f, 0.0f };
 enum {
     GMAIN_CS_VOTE_TIME = 15,
     GMAIN_ET_GENERAL = 0,
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    GMAIN_ET_PLAYER = 1,
+#endif
     GMAIN_ET_PLAYER_CORPSE = 2,
     GMAIN_ET_ITEM = 3,
     GMAIN_ET_MISSILE = 4,
@@ -954,6 +961,9 @@ static void G_RegisterDvars_impl(void)
     g_password = Dvar_RegisterString_mac("g_password", "", 0x1000);
     g_banIPs = Dvar_RegisterString_mac("g_banIPs", "", 0x1001);
     g_dedicated = Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1020);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    sv_playerBroadcastLimit = Dvar_RegisterInt("sv_playerBroadcastLimit", 15, 0, 64, 0x1000);
+#endif
     if (g_dedicated->current.integer != 0) {
         Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1040);
     }
@@ -1432,6 +1442,34 @@ static void __attribute_regparm__(1) G_RunFrameForEntity(gentity_t *ent)
     G_RunThink_core(ent);
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static void G_RefreshPlayerBroadcast(void)
+{
+    int i;
+    int numPlayers = 0;
+    int limit = sv_playerBroadcastLimit->current.integer;
+
+    if (limit <= 0)
+        return;
+
+    for (i = 0; i < 0x400; ++i) {
+        gentity_t *ent = &g_entities[i];
+        if (ent->client && ent->r.inuse && ent->s.eType == GMAIN_ET_PLAYER)
+            ++numPlayers;
+    }
+    if (numPlayers > limit)
+        return;
+
+    /* Include dead players in the limit, but refresh only living players.
+       Snapshot expiry uses server milliseconds and includes the endpoint. */
+    for (i = 0; i < 0x400; ++i) {
+        gentity_t *ent = &g_entities[i];
+        if (ent->client && ent->r.inuse && ent->s.eType == GMAIN_ET_PLAYER && ent->health > 0)
+            ent->r.broadcastTime = svs.time + 1;
+    }
+}
+#endif
+
 int G_RunFrame(int levelTime)
 {
     int i, j;
@@ -1685,6 +1723,9 @@ int G_RunFrame(int levelTime)
     }
 
     *(void **)imp_bgs = NULL;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    G_RefreshPlayerBroadcast();
+#endif
     return (int)imp_bgs;
 }
 
