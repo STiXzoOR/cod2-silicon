@@ -1282,7 +1282,16 @@ void SV_GetChallenge(netadr_t from)
     }
 
     challenge = &svsLocal->challenges[oldest];
+#if defined(COD2_X64) && COD2_X64
+    {
+        uint32_t high = (uint32_t)rand();
+        uint32_t bits = (high << 16) ^ (uint32_t)rand() ^ (uint32_t)svsLocal->time;
+        /* Retain the original 32-bit result without signed-shift overflow. */
+        memcpy(&challenge->challenge, &bits, sizeof(bits));
+    }
+#else
     challenge->challenge = ((rand() << 16) ^ rand()) ^ svsLocal->time;
+#endif
     challenge->adr = from;
     challenge->firstTime = svsLocal->time;
     challenge->firstPing = 0;

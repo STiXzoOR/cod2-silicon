@@ -184,6 +184,11 @@ Parent stock/CoD2x protocol and lifecycle reruns pass in
 `CoD2-native/ws76-parent`, under Application Support. Parser limitations remain
 unchanged by these fixture adaptations.
 
+Subsequent WS83 resolves the signed challenge-shift issue with explicit native
+32-bit arithmetic and full-range fixed random vectors. The earlier WS76 failure
+receipt above remains the diagnosis history; its small identity-fixture random
+stream is no longer the sole challenge arithmetic coverage.
+
 All identities and service replies in the new fixtures are synthetic. No
 game/GUI, live authorization, owned-key join, benchmark or third-party assets
 ran or were copied. Work is uncommitted and unstaged for root review and

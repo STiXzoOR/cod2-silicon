@@ -44,7 +44,7 @@ def main():
         flags = row.get('arguments') or shlex.split(row['command'])
         flags = [x.replace(original, str(ROOT)) for x in flags[:flags.index('-o')]]
         flags = [x for x in flags if x not in ('-DNDEBUG', '-c')]
-        flags += ['-UNDEBUG', '-fsanitize=address,undefined',
+        flags += ['-UNDEBUG', '-fsanitize=address,undefined', '-fno-sanitize-recover=all',
                   '-fno-omit-frame-pointer', '-I' + str(out)]
 
         def active(path):
@@ -81,6 +81,16 @@ def main():
         print(target + ': ' + result.stdout + result.stderr, flush=True)
         if result.returncode:
             failures.append(target)
+        random_exe = out / (target + '-random')
+        random_command = [*flags, '-Wl,-dead_strip', str(ROOT / 'tests/cod2x/challenge_random.c'),
+                          str(ROOT / 'src/PC/universal/q_shared.c'), '-o', str(random_exe)]
+        with (out / (target + '-random-compile.log')).open('w') as log:
+            subprocess.run(random_command, cwd=ROOT, stdout=log, stderr=log, check=True)
+        result = subprocess.run([str(random_exe)], cwd=ROOT, text=True, capture_output=True)
+        (out / (target + '-random-result.log')).write_text(result.stdout + result.stderr)
+        print(target + ' random: ' + result.stdout + result.stderr, flush=True)
+        if result.returncode:
+            failures.append(target + '-random')
     if failures:
         raise SystemExit('Failed production fixtures: ' + ', '.join(failures))
 
