@@ -5,6 +5,10 @@ import Foundation
         if !condition() { FileHandle.standardError.write(Data("FAIL: \(message)\n".utf8)); exit(1) }
     }
     static func bytes(_ string: String) -> Data { Data(string.utf8) }
+    static var temporaryRoot: URL {
+        ProcessInfo.processInfo.environment["COD2_IMPORT_TEST_SCRATCH"].map { URL(fileURLWithPath: $0) }
+            ?? FileManager.default.temporaryDirectory
+    }
     static let catalog = ConfigImportCatalogSnapshot(settings: [
         "sensitivity": .init(archived: true), "com_maxfps": .init(archived: true),
         "cg_fov": .init(cheatProtected: true), "r_fullbright": .init(cheatProtected: true),
@@ -86,6 +90,11 @@ import Foundation
         require(perPress.candidates.allSatisfy { !$0.reasons.contains(.cycle) && $0.importable }, "per-press pointer changes do not execute their newly stored scripts immediately")
         require(review("seta foreign_fixture_setting 1").candidates[0].reasons.contains(.inertName), "catalog can identify proven foreign names without classifying all custom helpers as inert")
         require(review("seta destination \"https://user:secret@example.invalid/config\"").candidates[0].reasons.contains(.credential), "credentials inside setting URLs are blocked and redacted")
+        for binding in ["+attack;", "+attack;  ", "+attack; /* comment */"] {
+            let item = review("bind j \"\(binding)\"").candidates[0]
+            require(!item.importable && item.reasons.contains(.unknownForwardedCommand), "generated key/time command after trailing separator is never imported")
+        }
+        require(review("bind j \"+attack; // comment\"").candidates[0].importable, "line comments ignore appended event arguments without making the parent bind unimportable")
         print("PASS: synthetic safety and transitive dependency checks")
     }
     struct FixtureFetcher: ConfigImportTextFetcher {
@@ -99,7 +108,7 @@ import Foundation
         do { _ = try await operation(); require(false, message) } catch { }
     }
     static func sources() async throws {
-        let temp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let temp = temporaryRoot.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: temp, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: temp) }
         let root = temp.appendingPathComponent("selected")
@@ -139,6 +148,14 @@ import Foundation
         ]))
         let remote = try await network.load(.remote(entryURL), dialect: .stock)
         require(remote.files.count == 2 && remote.source.kind == .https, "injected HTTPS fetch and same-root dependencies")
+        let queryURL = URL(string: "https://example.invalid/config/main.cfg?download=1")!
+        let queried = ConfigImportLoader(catalog: catalog, fetcher: FixtureFetcher(responses: [
+            queryURL: .init(data: bytes("exec sub/extra"), finalURL: queryURL, contentType: "text/plain"),
+            depURL: .init(data: bytes("quit"), finalURL: depURL, contentType: "text/plain")
+        ]))
+        let queriedBundle = try await queried.load(.remote(queryURL), dialect: .stock)
+        require(queriedBundle.files.count == 2 && queriedBundle.source.rootURL?.query == nil, "ordinary download query is supported and never inherited by exec dependencies")
+        require(!ConfigImportLoader.permittedURL(URL(string: "https://example.invalid/config/main.cfg?token=secret")!), "credential-bearing URL queries are refused before fetching")
         for url in ["http://example.invalid/a.cfg", "file:///private/config.cfg", "https://user:password@example.invalid/config.cfg"] {
             await rejects({ try await network.load(.remote(URL(string: url)!), dialect: .stock) }, "URL policy rejects insecure or credential-bearing URL")
         }
@@ -172,7 +189,7 @@ import Foundation
         print("PASS: synthetic source, URL policy, filesystem containment and size checks; no network")
     }
     static func windows() throws {
-        let volume = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let volume = temporaryRoot.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: volume) }
         let players = volume.appendingPathComponent("Program Files (x86)/Activision/Call of Duty 2/main/players")
         for name in ["Alpha", "Zulu"] {

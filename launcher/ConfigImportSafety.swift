@@ -228,7 +228,21 @@ struct ConfigImportSafety: Sendable {
                     result.add(.malformed, level: .blocked, importable: false); return result
                 }
                 if ConfigImportScript.bindingWasTruncated(command) { result.add(.limit, level: .blocked, importable: false) }
-                if binding.first == 43 && binding.contains(59) { result.add(.keyRelease) }
+                if binding.first == 43 {
+                    if binding.contains(59) { result.add(.keyRelease) }
+                    // CL_KeyEvent appends key/time to the whole + binding on
+                    // both press and release (Com_sprintf caps it at 1023).
+                    // The timestamp's value cannot change this command name.
+                    let key = ConfigDocument.keyNumber(tokens[1].text)!
+                    let event = Data((binding + Data(" \(key) 1\n".utf8)).prefix(1023))
+                    let parsed = ConfigDocument(data: event, dialect: dialect)
+                    for generated in parsed.commands where generated.tokens.first.map({ $0.range.lowerBound >= binding.count }) == true {
+                        result.add(.unknownForwardedCommand, importable: false)
+                        result.effects.append(.init(location: .init(file: location.file, context: location.context + ["key event (illustrative time)"], range: generated.range),
+                                                    command: generated, classification: .needsOK, reasons: [.unknownForwardedCommand],
+                                                    details: ConfigDocument.text(event.subdata(in: generated.range))))
+                    }
+                }
                 expand(binding, dialect: dialect, location: location, label: "bind:" + tokens[1].text,
                        files: files, graph: graph, stack: stack, budget: &budget, into: &result,
                        detectCycles: detectCycles && previewStoredRoot)
@@ -344,7 +358,7 @@ struct ConfigImportSafety: Sendable {
                         detectCycles: Bool = true) {
         let document = ConfigDocument(data: data, dialect: dialect)
         let context = label.map { location.context + [$0] } ?? []
-        for command in document.commands where !command.range.isEmpty {
+        for command in document.commands where !command.tokens.isEmpty || command.tokenizationFailure != nil || command.splitAtLimit {
             guard budget > 0 else { result.add(.limit, level: .blocked, importable: false); break }
             let childLocation = ConfigImportLocation(file: location.file, context: context, range: command.range)
             var child = assess(command, document: document, location: childLocation, files: files,
@@ -361,7 +375,7 @@ struct ConfigImportSafety: Sendable {
         if Self.credentialName(name) { result.add(.credential, level: .blocked, importable: false) }
         if let url = URLComponents(string: ConfigDocument.text(value)),
            ["http", "https"].contains(url.scheme?.lowercased() ?? ""),
-           url.user != nil || url.password != nil || url.queryItems?.contains(where: { Self.credentialName($0.name.lowercased()) }) == true {
+           url.user != nil || url.password != nil || url.queryItems?.contains(where: { Self.credentialURLParameter($0.name) }) == true {
             result.add(.credential, level: .blocked, importable: false)
         }
         if Self.pathName(name) || Self.pathValue(ConfigDocument.text(value)) { result.add(.filesystemPath, level: .blocked, importable: false) }
@@ -382,6 +396,10 @@ struct ConfigImportSafety: Sendable {
         name.contains("password") || name.contains("passwd") || name.contains("cdkey") || name.contains("cd_key")
             || name.contains("token") || name.contains("secret") || name.hasPrefix("cl_hwid")
             || ["match_login", "codkey", "auth", "apikey", "api_key"].contains(name)
+    }
+    static func credentialURLParameter(_ name: String) -> Bool {
+        let name = name.lowercased()
+        return credentialName(name) || ["key", "signature", "sig", "access_key"].contains(name)
     }
     private static func pathName(_ name: String) -> Bool {
         name.hasPrefix("fs_") || name.hasPrefix("sys_") || name.contains("path") || name.contains("directory")

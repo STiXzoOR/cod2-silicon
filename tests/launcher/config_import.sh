@@ -9,4 +9,4 @@ taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc \
     "$root/launcher/ConfigDocument.swift" "$root/launcher/ConfigImport.swift" \
     "$root/launcher/ConfigImportSafety.swift" "$root/launcher/WindowsProfiles.swift" \
     "$root/tests/launcher/ConfigImportTests.swift" -o "$scratch/ConfigImportTests"
-taskpolicy -b nice -n 19 "$scratch/ConfigImportTests" "$@"
+COD2_IMPORT_TEST_SCRATCH="$scratch" taskpolicy -b nice -n 19 "$scratch/ConfigImportTests" "$@"

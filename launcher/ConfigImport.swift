@@ -314,13 +314,14 @@ struct ConfigImportLoader: Sendable {
     static func permittedURL(_ url: URL) -> Bool {
         guard let parts = URLComponents(url: url, resolvingAgainstBaseURL: false), parts.user == nil, parts.password == nil,
               let host = parts.host?.lowercased(), !host.isEmpty,
+              parts.queryItems?.contains(where: { ConfigImportSafety.credentialURLParameter($0.name) }) != true,
               !parts.path.contains("\\"), !parts.path.split(separator: "/").contains(where: { $0 == "." || $0 == ".." }),
               !["%2e", "%2f", "%5c", "%25"].contains(where: { parts.percentEncodedPath.lowercased().contains($0) }) else { return false }
         return parts.scheme?.lowercased() == "https" || (parts.scheme?.lowercased() == "http" && ["localhost", "127.0.0.1"].contains(host))
     }
     private struct Remote { let url: URL; let root: URL; let path: String; let kind: ConfigImportSource.Kind }
     private static func remoteSource(_ original: URL) throws -> Remote {
-        guard permittedURL(original), original.query == nil else { throw ConfigImportError.invalidURL }
+        guard permittedURL(original) else { throw ConfigImportError.invalidURL }
         var url = original
         let host = original.host!.lowercased(), segments = original.path.split(separator: "/").map(String.init)
         var kind: ConfigImportSource.Kind = original.scheme?.lowercased() == "http" ? .localhost : .https
@@ -346,6 +347,8 @@ struct ConfigImportLoader: Sendable {
             let root = URL(string: "https://gist.githubusercontent.com/" + parts.prefix(3).joined(separator: "/"))!
             return .init(url: url, root: root, path: parts.count >= 5 ? parts.dropFirst(4).joined(separator: "/") : "import.cfg", kind: kind)
         }
-        return .init(url: url, root: url.deletingLastPathComponent(), path: url.lastPathComponent, kind: kind)
+        var root = URLComponents(url: url.deletingLastPathComponent(), resolvingAgainstBaseURL: false)!
+        root.query = nil; root.fragment = nil
+        return .init(url: url, root: root.url!, path: url.lastPathComponent, kind: kind)
     }
 }
