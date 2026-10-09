@@ -592,8 +592,19 @@ struct ConfigStudioFailure: Identifiable {
         let summaryMatches = specs.filter { !titleMatches.map(\.name).contains($0.name) && $0.setting.summary.localizedCaseInsensitiveContains(query) }
         return Array((titleMatches + summaryMatches).prefix(30))
     }
+    /// Opens Expert at the setting. With unapplied text edits, it selects the setting's line instead.
     func jump(to spec: ConfigSettingSpec) {
-        tab = .settings; level = .expert; textMode = false
+        tab = .settings; level = .expert
+        if textMode && textEdited {
+            let scalars = text.unicodeScalars
+            guard scalars.allSatisfy({ $0.value <= 255 }) else { return }
+            let document = ConfigDocument(data: Data(scalars.map { UInt8($0.value) }), dialect: dialect)
+            if let command = document.commands.last(where: { $0.kind == .setting && $0.tokens.count >= 2 && $0.tokens[1].text.caseInsensitiveCompare(spec.name) == .orderedSame }) {
+                textSelection = NSRange(location: command.range.lowerBound, length: command.range.count)
+            }
+            return
+        }
+        textMode = false; textBase = nil; textIssues = []
         filter = nil; search = ""; group = spec.group; highlighted = spec.name
     }
 

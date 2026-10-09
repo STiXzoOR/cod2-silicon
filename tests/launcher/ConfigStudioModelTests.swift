@@ -149,6 +149,9 @@ import Foundation
         require(model.textBlocked && model.textIssues.first { $0.blocking }?.line == 6)
         model.editText(valid)
         require(!model.textBlocked && model.textIssues.contains { !$0.blocking && $0.excerpt == "my_mod_value" })
+        model.jump(to: drawFPS)
+        require(model.textMode && model.textEdited && model.textSelection?.location == (model.text as NSString).range(of: "seta cg_drawFPS").location,
+                "Jump to any setting keeps unapplied text and selects the line")
         let textUndo = UndoManager()
         textUndo.groupsByEvent = false
         textUndo.beginUndoGrouping(); model.applyText(undo: textUndo); textUndo.endUndoGrouping()
