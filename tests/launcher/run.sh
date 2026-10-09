@@ -12,6 +12,8 @@ sh "$root/tests/launcher/artwork.sh"
 sh "$root/tests/launcher/config_document.sh"
 sh "$root/tests/launcher/config_profiles.sh"
 sh "$root/tests/launcher/config_launch.sh"
+sh "$root/tests/launcher/config_catalog.sh"
+sh "$root/tests/launcher/config_import.sh"
 "$root/scripts/fetch-launcher-fonts.sh" --check
 
 # One shape system: buttons take their style from Theme.swift (capsules, or circles for a lone
