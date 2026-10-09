@@ -62,9 +62,20 @@ const dvar_t *Dvar_RegisterFloat(const char *name, float value, float min, float
 void *AIL_open_digital_driver(int rate, int bits, int channels, int flags)
 {
     (void)flags;
+#if defined(VOICE_RATE_CONTRACT)
+    extern void *VoiceRate_OpenDigitalDriver(int rate, int bits, int channels, int flags);
+    assert(rate > 0 && bits == 16 && channels == 2);
+#elif defined(__APPLE__) && defined(COD2_X64)
+    assert(rate == 8192 && bits == 16 && channels == 2);
+#else
     assert(rate == 11025 && bits == 16 && channels == 2);
+#endif
     driverCalls++;
+#if defined(VOICE_RATE_CONTRACT)
+    return driverAvailable ? VoiceRate_OpenDigitalDriver(rate, bits, channels, flags) : NULL;
+#else
     return driverAvailable ? (void *)(uintptr_t)1 : NULL;
+#endif
 }
 int Record_Init(int initialize, const void *handle)
 {

@@ -20,6 +20,7 @@ def main():
     parser.add_argument('--compile-db', required=True, type=Path)
     parser.add_argument('--output', required=True, type=Path)
     parser.add_argument('--baseline', help='Read production source from this local commit')
+    parser.add_argument('--rate-contract', action='store_true', help='Measure synthetic voice duration and pitch')
     args = parser.parse_args()
     out = args.output.resolve()
     if out.is_relative_to(ROOT):
@@ -82,9 +83,11 @@ def main():
                 'compile-' + Path(path).stem)
             objects.append(str(obj))
         for path, engine_flags, extra in [
-            ('tests/audio/render.c', 'src/platform/macos_audio.c',
+            ('tests/voice/rate_render.c' if args.rate_contract else 'tests/audio/render.c',
+             'src/platform/macos_audio.c',
              ['-DAIL_open_digital_driver=VoiceTest_UnusedOpenDigitalDriver']),
-            ('tests/voice/playback_init.c', 'src/PC/win32/win_voice.c', ['-I' + str(build)])
+            ('tests/voice/playback_rate.c' if args.rate_contract else 'tests/voice/playback_init.c',
+             'src/PC/win32/win_voice.c', ['-I' + str(build)])
         ]:
             obj = build / (Path(path).stem + '.o')
             run(flags(engine_flags) + extra + ['-c', str(ROOT / path), '-o', str(obj)], 'compile-' + Path(path).stem)
@@ -92,16 +95,29 @@ def main():
         exe = build / 'playback-init'
         run([flags(paths[0])[0], '-arch', 'arm64', '-fsanitize=address,undefined', '-Wl,-dead_strip',
              *objects, '-framework', 'AudioToolbox', '-framework', 'CoreAudio', '-o', str(exe)], 'link')
-        result = subprocess.run(BACKGROUND + [str(exe), packet], cwd=build, capture_output=True, text=True)
-        (out / 'run.log').write_text(result.stdout + result.stderr)
         notice = 'Native microphone capture is unavailable; voice recording disabled.'
-        passed = result.returncode == 0 and result.stderr.count(notice) == 1
+        observations = []
+        passed = True
+        cases = ['default', 'zero', 'negative'] if args.rate_contract else ['init']
+        if args.rate_contract:
+            tone = json.loads((ROOT / 'tests/voice/tone_packets.json').read_text())
+            (build / 'packets.txt').write_text('\n'.join(tone['packets']) + '\n')
+        for case in cases:
+            command = [str(exe), str(build / 'packets.txt'), case] if args.rate_contract else [str(exe), packet]
+            commands.append(shlex.join(command))
+            result = subprocess.run(BACKGROUND + command, cwd=build, capture_output=True, text=True)
+            log_name = 'run-' + case if args.rate_contract else 'run'
+            (out / (log_name + '.log')).write_text(result.stdout + result.stderr)
+            passed &= result.returncode == 0 and result.stderr.count(notice) == 1
+            observations.append(dict(case=case, returncode=result.returncode,
+                                     notice_count=result.stderr.count(notice), stdout=result.stdout))
+            print(result.stdout + result.stderr)
         (out / 'result.json').write_text(json.dumps(dict(
             passed=passed, returncode=result.returncode, notice_count=result.stderr.count(notice),
+            observations=observations,
             baseline=args.baseline, compile_db=str(args.compile_db.resolve()),
             scope='Production receive/codec/queue/mixer; controlled output device and capture-success boundary; no game or UDP socket'
         ), indent=2) + '\n')
-        print(result.stdout + result.stderr)
     (out / 'commands.txt').write_text('\n'.join(commands) + '\n')
     return int(not passed)
 
