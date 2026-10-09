@@ -70,6 +70,21 @@ import Darwin
             var entries = object["settings"] as! [[String: Any]]
             entries[0]["group"] = "invented"; object["settings"] = entries
         }, "unknown group accepted")
+        let malformedCommandFields: [(String, Any)] = [
+            ("name", "invented"), ("path", ""), ("line", 0), ("mechanism", "")
+        ]
+        for (field, value) in malformedCommandFields {
+            rejects(try changed(bytes) { object in
+                var entries = object["commands"] as! [[String: Any]]
+                var variants = entries[0]["variants"] as! [String: Any]
+                let mode = variants.keys.sorted()[0]
+                var variant = variants[mode] as! [String: Any]
+                var sites = variant["sites"] as! [[String: Any]]
+                sites[0][field] = value
+                variant["sites"] = sites; variants[mode] = variant
+                entries[0]["variants"] = variants; object["commands"] = entries
+            }, "malformed command site accepted: \(field)")
+        }
         // Do not trust a resource's editable hint when its source flags forbid editing.
         let unsafe = try changed(bytes) { object in
             var entries = object["settings"] as! [[String: Any]]

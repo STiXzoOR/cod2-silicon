@@ -306,7 +306,10 @@ struct ConfigCatalog: Codable, Sendable {
             guard !entry.name.isEmpty, !entry.title.isEmpty, !entry.summary.isEmpty, !entry.details.isEmpty,
                   !entry.sources.isEmpty, Set(entry.variants.keys).isSubset(of: modes),
                   actual ? !entry.variants.isEmpty : entry.variants.isEmpty,
-                  entry.variants.values.allSatisfy({ !$0.sites.isEmpty }) else {
+                  entry.variants.values.allSatisfy({ !$0.sites.isEmpty && $0.sites.allSatisfy {
+                      $0.name.lowercased() == entry.name.lowercased() &&
+                          !$0.path.isEmpty && $0.line > 0 && !$0.mechanism.isEmpty
+                  } }) else {
                 throw ConfigCatalogError.invalidEntry(entry.name)
             }
             guard commandsIndex.updateValue(entry, forKey: entry.name.lowercased()) == nil else {
