@@ -206,7 +206,7 @@ def main():
         subprocess.run([str(root / "scripts/fetch-launcher-fonts.sh"), "--check"], check=True, stdout=subprocess.DEVNULL)
         shutil.copytree(fonts, resources / "Fonts", ignore=shutil.ignore_patterns(".*"))
         info["ATSApplicationFontsPath"] = "Fonts"
-        for policy in ["ConfigCatalog.json", "ConfigRulesets.json"]:
+        for policy in ["ConfigCatalog.json", "ConfigRulesets.json", "ConfigOptimizer.json"]:
             shutil.copy2(root / "launcher/Resources" / policy, resources / policy)
         for name in ["LICENSE", "NOTICE.md", "CREDITS.md"]:
             shutil.copy2(root / name, resources / name)

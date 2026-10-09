@@ -15,6 +15,11 @@ sources=("$root/launcher/Core.swift" "$root/launcher/Presentation.swift")
 views=("$root/launcher/ConfigDocument.swift" "$root/launcher/ConfigProfiles.swift"
     "$root/launcher/ConfigHistory.swift" "$root/launcher/ConfigStudioSession.swift"
     "$root/launcher/ConfigCatalog.swift" "$root/launcher/ConfigRules.swift" "$root/launcher/ConfigReadyCheck.swift")
+# Every Config Studio model ships in the launcher, ready for its screens.
+for file in ConfigCheckup ConfigBindings InputDevices ConfigChains ConfigImport ConfigImportSafety WindowsProfiles \
+    ConfigImportSession ConfigImportCatalogAdapter ConfigDirectory; do
+    views+=("$root/launcher/$file.swift")
+done
 for file in Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView LibraryView \
     ConfigStudioModel ConfigStudioStyle ConfigsView ConfigSettingsView ConfigHistoryView; do
     views+=("$root/launcher/$file.swift")
@@ -52,4 +57,4 @@ fi
 # app bundles use Resources.
 mkdir -p "$out/Fonts"
 cp "$root"/launcher/Resources/Fonts/* "$out/Fonts/"
-cp "$root/launcher/Resources/ConfigCatalog.json" "$root/launcher/Resources/ConfigRulesets.json" "$out/"
+cp "$root/launcher/Resources/ConfigCatalog.json" "$root/launcher/Resources/ConfigRulesets.json" "$root/launcher/Resources/ConfigOptimizer.json" "$out/"
