@@ -45,3 +45,26 @@ global import identities, reviewed literals and nested STABS offsets. It does
 not execute i386 code or independently prove every branch. Neither fixture
 requires game data or opens a window. Live mounted-turret/spectator checks and
 screenshots remain a separate integration requirement.
+
+The scoreboard border fixture extracts the active production border-buffer
+declaration, `CalcBorderLines`, and the border draw block from
+`CG_DrawScoreboard`. ASan checks the real buffer capacity; captured
+`UI_DrawHandlePic` calls must emit six thin borders inside the existing panel,
+with four horizontal and two vertical lines and unchanged fade alpha. These
+geometric expectations are independent of the producer's rectangle values.
+The original Mac consumer's six records and field order were inspected for
+WS93. This fixture covers CPU geometry, not rendered pixels or keyboard input.
+
+```sh
+taskpolicy -b nice -n 19 python3 tests/hud/scoreboard.py \
+  --compile-commands build-macos/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/scoreboard-stock"
+taskpolicy -b nice -n 19 python3 tests/hud/scoreboard.py \
+  --compile-commands build-macos-codx/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/scoreboard-codx"
+```
+
+Use `--baseline f5b83ad` to reproduce the stack overflow. Increasing capacity
+alone still fails the independent panel bounds check because the old consumer
+shifts every rectangle by one float. Outputs and sanitizer logs remain outside
+the checkout; the compile database is never modified.
