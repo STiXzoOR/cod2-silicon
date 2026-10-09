@@ -221,13 +221,14 @@ enum EngineInputMapping {
 
 enum KeyboardShape: String, CaseIterable, Codable, Sendable { case ansi, iso, jis }
 enum InputKeyUnavailable: Equatable, Sendable {
-    case noPhysicalKey, hardwareModifier, unsupportedSymbol(String), unsupportedSDLKey(Int32)
+    case noPhysicalKey, hardwareModifier, unsupportedSymbol(String), unsupportedSDLKey(Int32), nonCanonicalKey(Int)
     var explanation: String {
         switch self {
         case .noPhysicalKey: return "This physical key is not known to the game's keyboard backend."
         case .hardwareModifier: return "Fn changes other keys in the keyboard hardware and cannot be bound by itself."
         case .unsupportedSymbol(let symbol): return "The original game cannot use \(symbol) as a binding key."
         case .unsupportedSDLKey: return "The game's keyboard backend has no binding for this key."
+        case .nonCanonicalKey: return "This layout sends an uppercase letter, but the game saves bindings as lowercase letters. Choose another input source to bind this key."
         }
     }
 }
@@ -276,11 +277,12 @@ struct InputSourceSnapshot: Equatable, Sendable {
         if shape == .iso && (virtualKey == 10 || virtualKey == 50) { scan = scan == 100 ? 53 : 100 }
         var symbol: Int32
         if let ascii = Self.defaultCharacters[scan] {
-            if usesLatinFallback || [36,48,49,51,53].contains(virtualKey) { symbol = ascii }
+            if usesLatinFallback { symbol = ascii }
             else {
                 let text = usesFrenchNumbers && Self.digitPositions.contains(virtualKey) ? shiftedLabels[virtualKey] : labels[virtualKey]
-                guard let first = text?.utf16.first else { return .unavailable(.unsupportedSymbol(label(virtualKey: virtualKey))) }
-                symbol = Int32(first)
+                if let first = text?.utf16.first { symbol = Int32(first) }
+                else if [36,48,49,51,53].contains(virtualKey) { symbol = ascii }
+                else { return .unavailable(.unsupportedSymbol(label(virtualKey: virtualKey))) }
             }
         } else {
             symbol = scan == 76 ? 127 : Int32((1 << 30) | scan)
@@ -288,6 +290,7 @@ struct InputSourceSnapshot: Equatable, Sendable {
         guard let number = EngineInputMapping.keyNumber(sdlKeycode: symbol), let key = EngineKey(number: number) else {
             return .unavailable(symbol < (1 << 30) ? .unsupportedSymbol(label(virtualKey: virtualKey)) : .unsupportedSDLKey(symbol))
         }
+        guard key.number == number else { return .unavailable(.nonCanonicalKey(number)) }
         return number == 96 || number == 126 ? .console(key) : .available(key)
     }
     private static let digitPositions: [UInt16] = [18,19,20,21,23,22,26,28,25,29]

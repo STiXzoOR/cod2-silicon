@@ -45,6 +45,11 @@ enum InputDevicesTests {
     static func layouts() {
         let abc = InputSourceSnapshot(id: "ABC", name: "ABC", shape: .ansi, labels: abcLabels())
         require(abc.mapping(virtualKey: 13).engineKey?.number == 119, "ABC physical W binds w")
+        let uppercase = InputSourceSnapshot(id: "Uppercase", name: "Custom", shape: .ansi, labels: abcLabels().merging([13:"W"]) { _, new in new })
+        require(uppercase.mapping(virtualKey: 13).engineKey == nil,
+                "custom uppercase keycodes cannot silently become lowercase bindings; engine bind folds but key events do not")
+        let remappedReturn = InputSourceSnapshot(id: "Remapped", name: "Custom", shape: .ansi, labels: abcLabels().merging([36:"a"]) { _, new in new })
+        require(remappedReturn.mapping(virtualKey: 36).engineKey?.number == 97, "custom control-key translation follows SDL instead of inventing Return identity")
         let iso = InputSourceSnapshot(id: "ABC-ISO", name: "ABC", shape: .iso, labels: abcLabels().merging([10:"`",50:"§"]) { _, new in new })
         require(iso.mapping(virtualKey: 10).isReserved && iso.mapping(virtualKey: 50).engineKey == nil && iso.label(virtualKey: 50) == "§",
                 "ISO ABC keeps the top section sign unavailable and console beside Shift")
