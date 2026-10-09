@@ -673,8 +673,8 @@
     "com_writeconfig": {
       "group": "other",
       "title": "Save game config changes",
-      "summary": "Allow the CoD2x game to write archived settings and binds.",
-      "details": "Config Studio still remains read-only while the engine runs. Turning this off is not permission for concurrent profile editing."
+      "summary": "Lets CoD2x write changes to your config file as you play.",
+      "details": "CoD2x only, on by default. With it off, changes made in game are not saved, although the change to this setting itself is. Config Studio stays read-only while the game runs either way."
     },
     "com_errormessage": {
       "group": "other",
@@ -707,8 +707,8 @@
     "version": {
       "group": "other",
       "title": "Build information",
-      "summary": "Read the engine's build description.",
-      "details": "The source registers an empty string and fills it during startup. The registration default is not the eventual run-time value."
+      "summary": "The game's build description.",
+      "details": "The game treats this as read-only and sets it itself. The registered default is empty and the game fills it in at start-up. The CoD2x build changes the build name and date."
     },
     "ui_dedicated": {
       "group": "net",
@@ -859,16 +859,16 @@
       }
     },
     "motd": {
+      "group": "other",
       "title": "Message of the day",
-      "summary": "Read the game's message-of-the-day preference.",
-      "details": "Restored in the readiness integration source. The registration facts describe this build.",
-      "group": "other"
+      "summary": "A message of the day for the game.",
+      "details": "The registered default is empty. The research found no further use for it."
     },
     "cl_profiletextheight": {
+      "group": "other",
       "title": "Profile text height",
-      "summary": "Set the height used for profile text.",
-      "details": "Restored in the readiness integration source. The registration facts describe this build.",
-      "group": "other"
+      "summary": "How tall the text is in the profile screens.",
+      "details": "From 1 to 100, and 16 by default. The research labels it a debugging value."
     },
     "sv_ratelimiter": {
       "group": "net",
@@ -3392,6 +3392,1324 @@
       "title": "Binoculars toggle",
       "summary": "A switch for how binoculars are turned on and off.",
       "details": "The server sets this and shares it with every player. On by default. The exact behaviour is inferred from its name."
+    },
+    "cg_fov": {
+      "group": "vis",
+      "title": "Field of view",
+      "summary": "How wide your view is.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 80 degrees for a 4:3 screen and the game widens it for wider screens. ESL's old PunkBuster list and WWCL's old rules required exactly 80. Whether a config file can set it is untested, so nothing here offers it."
+    },
+    "cg_fovscale": {
+      "group": "vis",
+      "title": "Field of view scale",
+      "summary": "A multiplier applied to the final field of view.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 1, from 0.2 to 2. Because mouse speed scales with the original value, a scale above 1 also raises mouse speed."
+    },
+    "cg_fovmin": {
+      "group": "vis",
+      "title": "Smallest field of view",
+      "summary": "The lowest the final field of view may go.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 10 degrees."
+    },
+    "cg_tracerchance": {
+      "group": "vis",
+      "title": "Tracer chance",
+      "summary": "How often a bullet shows a tracer.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.4. zPAM sets it to 1 for every player."
+    },
+    "cg_tracerwidth": {
+      "group": "vis",
+      "title": "Tracer width",
+      "summary": "How wide bullet tracers are.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.8. zPAM sets it to 1 for every player."
+    },
+    "cg_tracerlength": {
+      "group": "vis",
+      "title": "Tracer length",
+      "summary": "How long bullet tracers are.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 160. zPAM sets it to 1,000 for every player."
+    },
+    "cg_tracerspeed": {
+      "group": "vis",
+      "title": "Tracer speed",
+      "summary": "How fast bullet tracers travel.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 4,500. zPAM sets it to 20,000 for every player."
+    },
+    "cg_tracerscale": {
+      "group": "vis",
+      "title": "Tracer scale",
+      "summary": "A scale for distant bullet tracers.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 50."
+    },
+    "cg_tracerscaledistrange": {
+      "group": "vis",
+      "title": "Tracer scale range",
+      "summary": "A distance range for scaling distant tracers.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 25,000."
+    },
+    "cg_tracerscalemindist": {
+      "group": "vis",
+      "title": "Tracer scale start",
+      "summary": "The distance where tracers start to scale.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 5,000."
+    },
+    "cg_thirdperson": {
+      "group": "vis",
+      "title": "Third-person camera",
+      "summary": "Shows the game from behind your player.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "cg_thirdpersonangle": {
+      "group": "vis",
+      "title": "Third-person angle",
+      "summary": "The angle of the third-person camera.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0."
+    },
+    "cg_thirdpersonrange": {
+      "group": "vis",
+      "title": "Third-person distance",
+      "summary": "How far behind you the third-person camera sits.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 120."
+    },
+    "cg_thirdpersonmode": {
+      "group": "vis",
+      "title": "Third-person mode",
+      "summary": "A CoD2x variant of the third-person camera.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. Mode 1 orbits the player without checking for walls. CoD2x only."
+    },
+    "cg_gun_x": {
+      "group": "vis",
+      "title": "Weapon left-right offset",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0. A PunkBuster stock list required 0."
+    },
+    "cg_gun_y": {
+      "group": "vis",
+      "title": "Weapon forward offset",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0."
+    },
+    "cg_gun_z": {
+      "group": "vis",
+      "title": "Weapon up-down offset",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0."
+    },
+    "cg_gun_ofs_f": {
+      "group": "vis",
+      "title": "Weapon offset forward",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0."
+    },
+    "cg_gun_ofs_r": {
+      "group": "vis",
+      "title": "Weapon offset right",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0."
+    },
+    "cg_gun_ofs_u": {
+      "group": "vis",
+      "title": "Weapon offset up",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0."
+    },
+    "cg_gun_move_f": {
+      "group": "vis",
+      "title": "Weapon move forward",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0."
+    },
+    "cg_gun_move_r": {
+      "group": "vis",
+      "title": "Weapon move right",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0."
+    },
+    "cg_gun_move_u": {
+      "group": "vis",
+      "title": "Weapon move up",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0."
+    },
+    "cg_gun_move_rate": {
+      "group": "vis",
+      "title": "Weapon move rate",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0."
+    },
+    "cg_gun_move_minspeed": {
+      "group": "vis",
+      "title": "Weapon move minimum speed",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0."
+    },
+    "cg_centerprinty": {
+      "group": "hud",
+      "title": "Centre message height",
+      "summary": "How high or low centre messages appear.",
+      "details": "From -10,000 to 10,000, and -60 by default."
+    },
+    "cg_centertime": {
+      "group": "hud",
+      "title": "Centre message time",
+      "summary": "How many seconds centre messages stay on screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 5 seconds."
+    },
+    "cg_connectioniconsize": {
+      "group": "hud",
+      "title": "Connection icon size",
+      "summary": "How large the connection-problem icon is; 0 hides it.",
+      "details": "From 0 to 100, and 0 by default."
+    },
+    "cg_constantsizeheadicons": {
+      "group": "hud",
+      "title": "Constant-size head icons",
+      "summary": "Keeps head icons the same size at any distance.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "cg_cursorhints": {
+      "group": "hud",
+      "title": "Use-hint style",
+      "summary": "How the on-screen use hints look.",
+      "details": "TweakGuide lists 0 as none, 1 as a fast pulse, 2 as a slow pulse and 3 as static. The game's default is 4, which looks the same as 3.",
+      "control": {
+        "kind": "number",
+        "labels": {
+          "0": "None",
+          "1": "Pulse fast",
+          "2": "Pulse slowly",
+          "3": "Static",
+          "4": "Static (default)"
+        }
+      }
+    },
+    "cg_descriptivetext": {
+      "group": "hud",
+      "title": "Descriptive hint text",
+      "summary": "Shows descriptive text in on-screen hints.",
+      "details": "On by default."
+    },
+    "cg_gamemessagewidth": {
+      "group": "hud",
+      "title": "Message width",
+      "summary": "How many characters wide game messages are.",
+      "details": "From 20 to 256, and 70 by default."
+    },
+    "cg_gameboldmessagewidth": {
+      "group": "hud",
+      "title": "Bold message width",
+      "summary": "How many characters wide bold game messages are.",
+      "details": "From 20 to 256, and 60 by default."
+    },
+    "cg_headiconminscreenradius": {
+      "group": "hud",
+      "title": "Head icon minimum size",
+      "summary": "The smallest size a head icon gets on screen.",
+      "details": "From 0 to 1, and 0.02 by default."
+    },
+    "cg_hintfadetime": {
+      "group": "hud",
+      "title": "Hint hold time",
+      "summary": "How many milliseconds a hint stays before it fades.",
+      "details": "From 0 upward, and 100 by default. A guide describes seconds, but the game's registration is in milliseconds. zPAM sets it to 100 for every player after they join a team, so a saved value is replaced on servers running it.",
+      "control": {
+        "kind": "number",
+        "unit": "ms"
+      }
+    },
+    "cg_scoreboardbannerheight": {
+      "group": "hud",
+      "title": "Scoreboard banner height",
+      "summary": "How tall the scoreboard's banner rows are.",
+      "details": "From 1 to 100, and 24 by default."
+    },
+    "cg_scoreboarditemheight": {
+      "group": "hud",
+      "title": "Scoreboard row height",
+      "summary": "How tall each scoreboard row is.",
+      "details": "From 1 to 100, and 18 by default. zPAM replaces the scoreboard menu."
+    },
+    "cg_scoreboardscrollstep": {
+      "group": "hud",
+      "title": "Scoreboard scroll step",
+      "summary": "How many rows the scoreboard moves per scroll.",
+      "details": "From 1 to 8, and 3 by default."
+    },
+    "cg_scripticonsize": {
+      "group": "hud",
+      "title": "Script icon size",
+      "summary": "How large icons placed by game scripts are.",
+      "details": "From 0 to 100, and 0 by default."
+    },
+    "cg_subtitlecharheight": {
+      "group": "hud",
+      "title": "Subtitle text height",
+      "summary": "How tall subtitle text is.",
+      "details": "From 1 to 480, and 12 by default."
+    },
+    "cg_subtitlemintime": {
+      "group": "hud",
+      "title": "Subtitle minimum time",
+      "summary": "The fewest seconds a subtitle stays on screen.",
+      "details": "The default is 3 seconds."
+    },
+    "cg_subtitleposx": {
+      "group": "hud",
+      "title": "Subtitle left position",
+      "summary": "Where subtitles sit from the left of the screen.",
+      "details": "From 0 to 640, and 120 by default."
+    },
+    "cg_subtitleposy": {
+      "group": "hud",
+      "title": "Subtitle top position",
+      "summary": "Where subtitles sit from the top of the screen.",
+      "details": "From 0 to 480, and 400 by default."
+    },
+    "cg_subtitlewidthstandard": {
+      "group": "hud",
+      "title": "Subtitle width, standard",
+      "summary": "How many characters wide subtitles are on a standard screen.",
+      "details": "From 20 to 256, and 80 by default."
+    },
+    "cg_subtitlewidthwidescreen": {
+      "group": "hud",
+      "title": "Subtitle width, widescreen",
+      "summary": "How many characters wide subtitles are on a widescreen display.",
+      "details": "From 20 to 256, and 80 by default."
+    },
+    "cg_teamchatsonly": {
+      "group": "hud",
+      "title": "Team chat only",
+      "summary": "Shows only your team's chat.",
+      "details": "Off by default."
+    },
+    "cg_notaunt": {
+      "group": "hud",
+      "title": "Hide taunts",
+      "summary": "Hides taunt sounds and messages.",
+      "details": "Off by default."
+    },
+    "cg_viewsize": {
+      "group": "hud",
+      "title": "View size",
+      "summary": "How much of the screen the 3D view fills.",
+      "details": "A percentage from 30 to 100, and 100 by default. Its effect in CoD2 is inferred from its Quake heritage. ESL's old PunkBuster list required 100. zPAM sets it to 100 for every player after they join a team, so a saved value is replaced on servers running it.",
+      "control": {
+        "kind": "number",
+        "unit": "%"
+      }
+    },
+    "cg_voiceiconsize": {
+      "group": "hud",
+      "title": "Voice icon size",
+      "summary": "How large the voice chat icon is; 0 hides it.",
+      "details": "From 0 to 100, and 0 by default."
+    },
+    "cg_voicespritetime": {
+      "group": "hud",
+      "title": "Voice sprite time",
+      "summary": "How many milliseconds a voice sprite stays on screen.",
+      "details": "From 0 to 60,000, and 6,000 by default.",
+      "control": {
+        "kind": "number",
+        "unit": "ms"
+      }
+    },
+    "cg_youinkillcamsize": {
+      "group": "hud",
+      "title": "Kill-cam marker size",
+      "summary": "How large the 'you' marker is in the kill cam.",
+      "details": "From 0 to 100, and 6 by default."
+    },
+    "cg_footsteps": {
+      "group": "audio",
+      "title": "Footstep sounds",
+      "summary": "Whether footstep sounds and effects play.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "cg_shock_sound": {
+      "group": "audio",
+      "title": "Shell shock sound",
+      "summary": "Whether the shell shock sound effect plays.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "cg_shock_sounddrylevel": {
+      "group": "audio",
+      "title": "Shock sound dry level",
+      "summary": "How much of the unprocessed sound is heard during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "cg_shock_soundwetlevel": {
+      "group": "audio",
+      "title": "Shock sound wet level",
+      "summary": "How much of the processed sound is heard during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "cg_shock_soundfadeintime": {
+      "group": "audio",
+      "title": "Shock sound fade in",
+      "summary": "How many seconds the shell shock sound takes to fade in.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "cg_shock_soundfadeouttime": {
+      "group": "audio",
+      "title": "Shock sound fade out",
+      "summary": "How many seconds the shell shock sound takes to fade out.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "cg_shock_soundloopfadetime": {
+      "group": "audio",
+      "title": "Shock loop fade time",
+      "summary": "How many seconds the shell shock loop takes to fade.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "cg_shock_soundloopenddelay": {
+      "group": "audio",
+      "title": "Shock loop end delay",
+      "summary": "A delay, in seconds, for the end of the shell shock loop.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "cg_shock_soundmodenddelay": {
+      "group": "audio",
+      "title": "Shock sound end delay",
+      "summary": "A delay, in seconds, for the end of the shell shock sound change.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "cg_shock_soundroomtype": {
+      "group": "audio",
+      "title": "Shock sound room type",
+      "summary": "The room type used for the shell shock sound effect.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. Choices run from generic through underwater, drugged, dizzy and psychotic."
+    },
+    "cg_shock_volume_announcer": {
+      "group": "audio",
+      "title": "Shock volume: announcer",
+      "summary": "How loud the announcer is during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1."
+    },
+    "cg_shock_volume_auto": {
+      "group": "audio",
+      "title": "Shock volume: auto",
+      "summary": "How loud automatic sounds are during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1."
+    },
+    "cg_shock_volume_auto2d": {
+      "group": "audio",
+      "title": "Shock volume: auto 2D",
+      "summary": "How loud automatic 2D sounds are during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1."
+    },
+    "cg_shock_volume_body": {
+      "group": "audio",
+      "title": "Shock volume: body",
+      "summary": "How loud body sounds are during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1."
+    },
+    "cg_shock_volume_item": {
+      "group": "audio",
+      "title": "Shock volume: items",
+      "summary": "How loud item sounds are during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1."
+    },
+    "cg_shock_volume_local": {
+      "group": "audio",
+      "title": "Shock volume: local",
+      "summary": "How loud local sounds are during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1."
+    },
+    "cg_shock_volume_menu": {
+      "group": "audio",
+      "title": "Shock volume: menu",
+      "summary": "How loud menu sounds are during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1."
+    },
+    "cg_shock_volume_music": {
+      "group": "audio",
+      "title": "Shock volume: music",
+      "summary": "How loud the music is during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1."
+    },
+    "cg_shock_volume_shellshock": {
+      "group": "audio",
+      "title": "Shock volume: shock",
+      "summary": "How loud the shell shock sounds themselves are.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1."
+    },
+    "cg_shock_volume_voice": {
+      "group": "audio",
+      "title": "Shock volume: voices",
+      "summary": "How loud voices are during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1."
+    },
+    "cg_shock_volume_weapon": {
+      "group": "audio",
+      "title": "Shock volume: weapons",
+      "summary": "How loud weapons are during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1."
+    },
+    "voice_deadchat": {
+      "group": "audio",
+      "title": "Hear dead players",
+      "summary": "Lets you hear the voice chat of dead players.",
+      "details": "Off by default."
+    },
+    "voice_global": {
+      "group": "audio",
+      "title": "Global voice chat",
+      "summary": "Makes voice chat audible to everyone.",
+      "details": "Off by default."
+    },
+    "voice_localecho": {
+      "group": "audio",
+      "title": "Hear yourself",
+      "summary": "Plays your own voice back to you.",
+      "details": "Off by default."
+    },
+    "cg_shock_mouse": {
+      "group": "other",
+      "title": "Shock mouse effect",
+      "summary": "Whether shell shock affects your mouse.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "cg_shock_mouse_fadetime": {
+      "group": "other",
+      "title": "Shock mouse fade",
+      "summary": "How many seconds the shell shock mouse effect takes to fade.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 2 seconds."
+    },
+    "cg_shock_mouse_maxpitchspeed": {
+      "group": "other",
+      "title": "Shock mouse tilt limit",
+      "summary": "The fastest your view may tilt during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 90."
+    },
+    "cg_shock_mouse_maxyawspeed": {
+      "group": "other",
+      "title": "Shock mouse turn limit",
+      "summary": "The fastest your view may turn during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 90."
+    },
+    "cg_shock_mouse_sensitivityscale": {
+      "group": "other",
+      "title": "Shock mouse speed",
+      "summary": "How much shell shock scales your mouse speed.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.5."
+    },
+    "cg_shock_screenblendfadetime": {
+      "group": "other",
+      "title": "Shock blend fade",
+      "summary": "How many seconds the shell shock screen tint takes to fade.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 1 second."
+    },
+    "cg_shock_screenblendtime": {
+      "group": "other",
+      "title": "Shock blend time",
+      "summary": "How many seconds the shell shock screen tint builds.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.4 seconds."
+    },
+    "cg_shock_viewkickfadetime": {
+      "group": "other",
+      "title": "Shock view kick fade",
+      "summary": "How many seconds the shell shock view kick takes to fade.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 3 seconds."
+    },
+    "cg_shock_viewkickperiod": {
+      "group": "other",
+      "title": "Shock view kick period",
+      "summary": "How long one shell shock view kick lasts.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.75 seconds."
+    },
+    "cg_shock_viewkickradius": {
+      "group": "other",
+      "title": "Shock view kick size",
+      "summary": "How far shell shock kicks your view.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.05."
+    },
+    "cg_errordecay": {
+      "group": "net",
+      "title": "Prediction smoothing",
+      "summary": "How fast your game smooths out corrections to your predicted position.",
+      "details": "The default is 100. zPAM sets it to 100 for every player after they join a team, so a saved value is replaced on servers running it. ESL's old PunkBuster list also required 100."
+    },
+    "cg_nopredict": {
+      "group": "net",
+      "title": "Turn off prediction",
+      "summary": "Stops your game predicting your own movement.",
+      "details": "A debugging aid: movement waits for the server, so the game feels laggy. Off by default and not saved."
+    },
+    "cg_predictitems": {
+      "group": "net",
+      "title": "Predict item pickups",
+      "summary": "Lets your game predict picking up items before the server confirms.",
+      "details": "On by default, and shared with the server as player information."
+    },
+    "cg_showmiss": {
+      "group": "net",
+      "title": "Show prediction misses",
+      "summary": "Shows when your game's prediction was wrong.",
+      "details": "A developer aid from 0 to 2, off by default."
+    },
+    "showdrop": {
+      "group": "net",
+      "title": "Show dropped packets",
+      "summary": "Prints a note when a packet is dropped.",
+      "details": "A developer aid. It is off by default."
+    },
+    "showpackets": {
+      "group": "net",
+      "title": "Show every packet",
+      "summary": "Prints every packet sent and received.",
+      "details": "A developer aid. It is off by default and floods the console."
+    },
+    "packetdebug": {
+      "group": "net",
+      "title": "Packet debugging",
+      "summary": "Prints packet debugging information.",
+      "details": "A developer aid. It is off by default."
+    },
+    "rcon_password": {
+      "group": "net",
+      "title": "Remote console password",
+      "summary": "The password for controlling a server remotely.",
+      "details": "Treat it as private. It is not saved to your config."
+    },
+    "nextmap": {
+      "group": "net",
+      "title": "Next map",
+      "summary": "The map a server you host loads next.",
+      "details": "It only matters on a server you host. The default is empty."
+    },
+    "g_antilag": {
+      "group": "net",
+      "title": "Lag compensation",
+      "summary": "Rewinds players when you fire so hits land where you saw them, on a server you host.",
+      "details": "On by default. Rule sets differ: FPSChallenge's EU text and zPAM's EU rules want it off, and zPAM's NA rules want it on. It only matters on a server you host."
+    },
+    "g_banips": {
+      "group": "net",
+      "title": "Banned addresses",
+      "summary": "The list of banned addresses for a server you host.",
+      "details": "Saved with your config. It only matters on a server you host."
+    },
+    "g_cloneplayermaxvelocity": {
+      "group": "net",
+      "title": "Body push speed",
+      "summary": "A limit on how fast a dead player's body is pushed.",
+      "details": "The default is 80. It only matters on a server you host. Its role is inferred from its name."
+    },
+    "g_deadchat": {
+      "group": "net",
+      "title": "Dead players chat",
+      "summary": "Lets dead players chat with the living on a server you host.",
+      "details": "Off by default. zPAM registers its own default of on."
+    },
+    "g_dropforwardspeed": {
+      "group": "net",
+      "title": "Weapon drop forward speed",
+      "summary": "A tuning value for how dropped weapons fly out.",
+      "details": "The default is 10. It only matters on a server you host. Its role is inferred from its name."
+    },
+    "g_dropupspeedbase": {
+      "group": "net",
+      "title": "Weapon drop up speed",
+      "summary": "A tuning value for how dropped weapons fly out.",
+      "details": "The default is 10. It only matters on a server you host. Its role is inferred from its name."
+    },
+    "g_dropupspeedrand": {
+      "group": "net",
+      "title": "Weapon drop up variation",
+      "summary": "A tuning value for how dropped weapons fly out.",
+      "details": "The default is 5. It only matters on a server you host. Its role is inferred from its name."
+    },
+    "g_gametype": {
+      "group": "net",
+      "title": "Game type",
+      "summary": "Which game type a server you host runs.",
+      "details": "Stock choices are ctf, dm, hq, sd and tdm, and zPAM adds htf, re and strat. A change applies from the next map because it is latched. It only matters on a server you host."
+    },
+    "g_gravity": {
+      "group": "net",
+      "title": "Server gravity",
+      "summary": "How strongly gravity pulls on a server you host.",
+      "details": "The default is 800 game units per second squared. It only matters on a server you host."
+    },
+    "g_inactivity": {
+      "group": "net",
+      "title": "Idle kick time",
+      "summary": "Drops players who are idle this many seconds on a server you host; 0 is off.",
+      "details": "The server warns them 10 seconds before. The local player is exempt."
+    },
+    "g_knockback": {
+      "group": "net",
+      "title": "Hit knockback",
+      "summary": "How hard hits push players back on a server you host.",
+      "details": "The default is 1,000, and zPAM sets it to 0. It only matters on a server you host."
+    },
+    "g_listentity": {
+      "group": "net",
+      "title": "List entities",
+      "summary": "A developer switch that lists the server's entities.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "g_log": {
+      "group": "net",
+      "title": "Game log file",
+      "summary": "The file a server you host writes its game log to.",
+      "details": "The default is the standard game log name. It only matters on a server you host."
+    },
+    "g_logsync": {
+      "group": "net",
+      "title": "Log immediately",
+      "summary": "Writes the game log straight to disk instead of buffering it.",
+      "details": "Off by default. It only matters on a server you host."
+    },
+    "g_maxdroppedweapons": {
+      "group": "net",
+      "title": "Dropped weapon limit",
+      "summary": "The most dropped weapons left lying around on a server you host.",
+      "details": "From 1 to 32, and 16 by default."
+    },
+    "g_motd": {
+      "group": "net",
+      "title": "Hosted server message",
+      "summary": "A message of the day for a server you host.",
+      "details": "It only matters on a server you host. The default is empty."
+    },
+    "g_no_script_spam": {
+      "group": "net",
+      "title": "Limit script spam",
+      "summary": "A switch the game registers to limit script message spam.",
+      "details": "Off by default. It only matters on a server you host. Its role is inferred from its name."
+    },
+    "g_oldvoting": {
+      "group": "net",
+      "title": "Old voting system",
+      "summary": "Uses the older voting system on a server you host.",
+      "details": "On by default. zPAM's comment says it must stay on or voting does not work."
+    },
+    "g_playercollisionejectspeed": {
+      "group": "net",
+      "title": "Player push-apart speed",
+      "summary": "How fast overlapping players are pushed apart.",
+      "details": "From 0 to 32,000, and 25 by default. It only matters on a server you host."
+    },
+    "g_scoresbanner_allies": {
+      "group": "net",
+      "title": "Allies scoreboard banner",
+      "summary": "The scoreboard banner image for the Allies.",
+      "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced."
+    },
+    "g_scoresbanner_axis": {
+      "group": "net",
+      "title": "Axis scoreboard banner",
+      "summary": "The scoreboard banner image for the Axis.",
+      "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced."
+    },
+    "g_scoresbanner_none": {
+      "group": "net",
+      "title": "Neutral scoreboard banner",
+      "summary": "The scoreboard banner image for no team.",
+      "details": "The server sets this and shares it with every player."
+    },
+    "g_scoresbanner_spectators": {
+      "group": "net",
+      "title": "Spectator scoreboard banner",
+      "summary": "The scoreboard banner image for spectators.",
+      "details": "The server sets this and shares it with every player."
+    },
+    "g_teamcolor_allies": {
+      "group": "net",
+      "title": "Allies team colour",
+      "summary": "The colour used for the Allies.",
+      "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced."
+    },
+    "g_teamcolor_axis": {
+      "group": "net",
+      "title": "Axis team colour",
+      "summary": "The colour used for the Axis.",
+      "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced."
+    },
+    "g_teamname_allies": {
+      "group": "net",
+      "title": "Allies team name",
+      "summary": "The name shown for the Allies.",
+      "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced."
+    },
+    "g_teamname_axis": {
+      "group": "net",
+      "title": "Axis team name",
+      "summary": "The name shown for the Axis.",
+      "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced."
+    },
+    "g_smoothclients": {
+      "group": "net",
+      "title": "Smooth other players",
+      "summary": "Smooths other players' movement on a server you host.",
+      "details": "On by default. The server extrapolates players' positions before it sends updates."
+    },
+    "g_speed": {
+      "group": "net",
+      "title": "Player run speed",
+      "summary": "How fast players run on a server you host.",
+      "details": "The default is 190 game units per second. It only matters on a server you host."
+    },
+    "g_synchronousclients": {
+      "group": "net",
+      "title": "Synchronous player logic",
+      "summary": "Runs each player's logic once per server frame, which smooths demos.",
+      "details": "Off by default. The server shares it with every player."
+    },
+    "g_useholdtime": {
+      "group": "net",
+      "title": "Use-key hold time",
+      "summary": "How long a player must hold the use key.",
+      "details": "The default is 0. It only matters on a server you host. Its role is inferred from its name."
+    },
+    "g_voicechattalkingduration": {
+      "group": "net",
+      "title": "Voice talking time",
+      "summary": "How long a player is shown as talking after they speak.",
+      "details": "From 0 to 10,000, and 500 by default. Its role is inferred from its name."
+    },
+    "g_voteabstainweight": {
+      "group": "net",
+      "title": "Abstain vote weight",
+      "summary": "How much a player who does not vote counts toward a vote.",
+      "details": "From 0 to 1, and 0.5 by default. Its role is inferred from its name."
+    },
+    "g_weaponammopools": {
+      "group": "net",
+      "title": "Shared ammo pools",
+      "summary": "A switch the game registers for sharing weapon ammo.",
+      "details": "Off by default. It only matters on a server you host. Its role is inferred from its name."
+    },
+    "g_debugbullets": {
+      "group": "net",
+      "title": "Bullet debug level",
+      "summary": "A developer switch for bullet debugging.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from -3 to 6."
+    },
+    "g_debugdamage": {
+      "group": "net",
+      "title": "Damage debug",
+      "summary": "A developer switch for damage debugging.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "g_debuglocdamage": {
+      "group": "net",
+      "title": "Hit location debug",
+      "summary": "A developer switch for hit-location damage debugging.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "g_dumpanims": {
+      "group": "net",
+      "title": "Server animation dump",
+      "summary": "A developer switch that dumps an entity's animations.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "g_friendlyfiredist": {
+      "group": "net",
+      "title": "Friendly-fire distance",
+      "summary": "A distance used for friendly-fire handling.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 256."
+    },
+    "g_friendlynamedist": {
+      "group": "net",
+      "title": "Friendly name distance",
+      "summary": "How far away a friendly player's name shows.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 15,000."
+    },
+    "g_mantleblocktimebuffer": {
+      "group": "net",
+      "title": "Mantle block time",
+      "summary": "A server mantle block timer.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 500 milliseconds."
+    },
+    "g_shotgun_spread_fix": {
+      "group": "net",
+      "title": "Fixed shotgun pattern",
+      "summary": "Uses a fixed eight-pellet pattern for shotguns instead of random spread.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. CoD2x only. The server picks one of two fixed patterns for each shot."
+    },
+    "g_useholdspawndelay": {
+      "group": "net",
+      "title": "Spawn use delay",
+      "summary": "A server delay, in seconds, before players can use things after spawning.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 1."
+    },
+    "timescale": {
+      "group": "frame",
+      "title": "Game speed",
+      "summary": "How fast game time runs.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 1, and servers share it. It is used for demos and slow motion."
+    },
+    "fixedtime": {
+      "group": "frame",
+      "title": "Fixed frame time",
+      "summary": "Forces every frame to last a fixed number of milliseconds.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. 0 is off. zPAM sets it to 0 for every player."
+    },
+    "cg_weaponcycledelay": {
+      "group": "other",
+      "title": "Weapon cycle delay",
+      "summary": "A delay, in milliseconds, between weapon-cycle key presses.",
+      "details": "0 by default. zPAM briefly sets it to 200 to prevent the fast-reload double-scroll trick, then back to 0.",
+      "control": {
+        "kind": "number",
+        "unit": "ms"
+      }
+    },
+    "cg_weaponleftbone": {
+      "group": "other",
+      "title": "Left weapon bone",
+      "summary": "The model tag the left-hand weapon attaches to.",
+      "details": "The default is the left weapon tag."
+    },
+    "cg_weaponrightbone": {
+      "group": "other",
+      "title": "Right weapon bone",
+      "summary": "The model tag the right-hand weapon attaches to.",
+      "details": "The default is the right weapon tag."
+    },
+    "activeaction": {
+      "group": "other",
+      "title": "Active action",
+      "summary": "A text value the game keeps for the current menu action.",
+      "details": "The registered default is empty. Its use is not documented."
+    },
+    "com_animcheck": {
+      "group": "other",
+      "title": "Animation check",
+      "summary": "A developer switch for checking animations.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "com_expectedhunkusage": {
+      "group": "other",
+      "title": "Expected memory use",
+      "summary": "A hint of the main memory the current map is expected to need.",
+      "details": "The game treats this as read-only and sets it itself."
+    },
+    "com_freezewatch": {
+      "group": "other",
+      "title": "Freeze watchdog",
+      "summary": "Offers to save a crash report when the game stops responding.",
+      "details": "CoD2x only, on by default. It checks every second and shows a 'has frozen' dialog after about 12 seconds without a heartbeat."
+    },
+    "com_hunkmegs": {
+      "group": "other",
+      "title": "Game memory",
+      "summary": "How many megabytes the game reserves for its main memory.",
+      "details": "Stock allows 1 to 512 with 160 by default. CoD2x pins it to 512. It is latched, so a change applies after the game restarts.",
+      "control": {
+        "kind": "number",
+        "unit": "MB"
+      }
+    },
+    "com_introplayed": {
+      "group": "other",
+      "title": "Skip intro movies",
+      "summary": "Skips the opening publisher movies when set.",
+      "details": "Set to 1 to skip them. A guide suggests setting it on the launch line."
+    },
+    "com_playerprofile": {
+      "group": "other",
+      "title": "Active profile name",
+      "summary": "The name of the profile the game is using.",
+      "details": "The game treats this as read-only and sets it itself. It comes from the active profile file when the game starts."
+    },
+    "com_recommendedset": {
+      "group": "other",
+      "title": "System check done",
+      "summary": "Marks that the game's automatic system check has run.",
+      "details": "Present in saved configs. Leave it alone."
+    },
+    "com_statmon": {
+      "group": "other",
+      "title": "Stat monitor",
+      "summary": "A developer switch for a statistics monitor.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "dedicated": {
+      "group": "other",
+      "title": "Dedicated server mode",
+      "summary": "Whether this copy of the game runs as a dedicated server.",
+      "details": "The game treats this as read-only and sets it itself. The separate dedicated-server program is a different launch path. It is latched."
+    },
+    "developer": {
+      "group": "other",
+      "title": "Developer mode",
+      "summary": "Turns on developer printing and testing functions.",
+      "details": "From 0 to 2, and 0 for normal play. CoD2x forces 2 during demo playback only. It is not saved."
+    },
+    "developer_script": {
+      "group": "other",
+      "title": "Script developer output",
+      "summary": "Prints debug output from game scripts.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "fs_basegame": {
+      "group": "other",
+      "title": "Base game folder",
+      "summary": "The base game folder name.",
+      "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here."
+    },
+    "fs_basepath": {
+      "group": "other",
+      "title": "Install folder",
+      "summary": "The folder that contains the game's main folder.",
+      "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here."
+    },
+    "fs_cdpath": {
+      "group": "other",
+      "title": "CD folder",
+      "summary": "A folder the game can read files from, as if from a disc.",
+      "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here."
+    },
+    "fs_copyfiles": {
+      "group": "other",
+      "title": "Copy from CD folder",
+      "summary": "A Quake 3 style flag to copy files from the CD folder.",
+      "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here."
+    },
+    "fs_homepath": {
+      "group": "other",
+      "title": "Game data folder",
+      "summary": "The folder where the game writes configs, demos, screenshots and logs.",
+      "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here."
+    },
+    "fs_ignorelocalized": {
+      "group": "other",
+      "title": "Ignore localized files",
+      "summary": "A switch the game registers to ignore localized files.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It is latched."
+    },
+    "fs_restrict": {
+      "group": "other",
+      "title": "Restrict file access",
+      "summary": "A switch the game registers to restrict file access.",
+      "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here."
+    },
+    "fs_game": {
+      "group": "other",
+      "title": "Mod folder",
+      "summary": "The mod folder the game is using.",
+      "details": "The server shares it with players and the game protects it from changes here. CoD2x resets it to empty and restarts the file system when you leave a server."
+    },
+    "fs_debug": {
+      "group": "other",
+      "title": "File system debug",
+      "summary": "A developer switch for file system debugging.",
+      "details": "A developer aid; its effect is not documented here. It runs from 0 to 2."
+    },
+    "fs_useoldassets": {
+      "group": "other",
+      "title": "Use old assets",
+      "summary": "A switch the game registers to use older asset files.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "gamedate": {
+      "group": "other",
+      "title": "Game build date",
+      "summary": "The date the game was built.",
+      "details": "The game treats this as read-only and sets it itself."
+    },
+    "gamename": {
+      "group": "other",
+      "title": "Game name",
+      "summary": "The name of the game.",
+      "details": "The game treats this as read-only and sets it itself. The server shares it with players."
+    },
+    "mapname": {
+      "group": "other",
+      "title": "Current map name",
+      "summary": "The name of the map being played.",
+      "details": "The game treats this as read-only and sets it itself. The server shares it with players."
+    },
+    "loc_forceenglish": {
+      "group": "other",
+      "title": "Force English text",
+      "summary": "Shows English text whatever language you pick.",
+      "details": "Latched, so a change applies after the game restarts."
+    },
+    "loc_language": {
+      "group": "other",
+      "title": "Game language",
+      "summary": "Which language the game's text uses.",
+      "details": "A number from 0 to 14. It is latched, so a change applies after the game restarts."
+    },
+    "loc_translate": {
+      "group": "other",
+      "title": "Translate text",
+      "summary": "Translates the game's text strings.",
+      "details": "On by default and latched."
+    },
+    "loc_warnings": {
+      "group": "other",
+      "title": "Localization warnings",
+      "summary": "Prints warnings about missing translations.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "loc_warningsaserrors": {
+      "group": "other",
+      "title": "Warnings as errors",
+      "summary": "Treats translation warnings as errors.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "logfile": {
+      "group": "other",
+      "title": "Console log file",
+      "summary": "Writes the console output to a log file.",
+      "details": "From 0 to 2, and 0 is off. It is not saved."
+    },
+    "nextdemo": {
+      "group": "other",
+      "title": "Next demo",
+      "summary": "The demo that plays next.",
+      "details": "The registered default is empty."
+    },
+    "server1": {
+      "group": "other",
+      "title": "Favourite server 1",
+      "summary": "Favourite server slot 1 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite."
+    },
+    "server2": {
+      "group": "other",
+      "title": "Favourite server 2",
+      "summary": "Favourite server slot 2 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite."
+    },
+    "server3": {
+      "group": "other",
+      "title": "Favourite server 3",
+      "summary": "Favourite server slot 3 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite."
+    },
+    "server4": {
+      "group": "other",
+      "title": "Favourite server 4",
+      "summary": "Favourite server slot 4 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite."
+    },
+    "server5": {
+      "group": "other",
+      "title": "Favourite server 5",
+      "summary": "Favourite server slot 5 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite."
+    },
+    "server6": {
+      "group": "other",
+      "title": "Favourite server 6",
+      "summary": "Favourite server slot 6 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite."
+    },
+    "server7": {
+      "group": "other",
+      "title": "Favourite server 7",
+      "summary": "Favourite server slot 7 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite."
+    },
+    "server8": {
+      "group": "other",
+      "title": "Favourite server 8",
+      "summary": "Favourite server slot 8 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite."
+    },
+    "server9": {
+      "group": "other",
+      "title": "Favourite server 9",
+      "summary": "Favourite server slot 9 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite."
+    },
+    "server10": {
+      "group": "other",
+      "title": "Favourite server 10",
+      "summary": "Favourite server slot 10 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite."
+    },
+    "server11": {
+      "group": "other",
+      "title": "Favourite server 11",
+      "summary": "Favourite server slot 11 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite."
+    },
+    "server12": {
+      "group": "other",
+      "title": "Favourite server 12",
+      "summary": "Favourite server slot 12 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite."
+    },
+    "server13": {
+      "group": "other",
+      "title": "Favourite server 13",
+      "summary": "Favourite server slot 13 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite."
+    },
+    "server14": {
+      "group": "other",
+      "title": "Favourite server 14",
+      "summary": "Favourite server slot 14 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite."
+    },
+    "server15": {
+      "group": "other",
+      "title": "Favourite server 15",
+      "summary": "Favourite server slot 15 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite."
+    },
+    "server16": {
+      "group": "other",
+      "title": "Favourite server 16",
+      "summary": "Favourite server slot 16 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite."
+    },
+    "sys_configsum": {
+      "group": "other",
+      "title": "System check sum",
+      "summary": "A checksum the game uses to decide when to run its hardware check again.",
+      "details": "The game protects it from changes here. Leave it alone."
+    },
+    "sys_cpughz": {
+      "group": "other",
+      "title": "Detected CPU speed",
+      "summary": "The processor speed the game detected, in GHz.",
+      "details": "The game protects it from changes here. It is hardware information."
+    },
+    "sys_gpu": {
+      "group": "other",
+      "title": "Detected graphics card",
+      "summary": "The graphics card the game detected.",
+      "details": "The game protects it from changes here. It is hardware information."
+    },
+    "sys_sysmb": {
+      "group": "other",
+      "title": "Detected memory",
+      "summary": "The system memory the game detected, in megabytes.",
+      "details": "The game protects it from changes here. TweakGuide notes it is often detected wrongly."
+    },
+    "sys_sse": {
+      "group": "other",
+      "title": "SSE support",
+      "summary": "Whether the game treats your processor as supporting SSE.",
+      "details": "Not saved. TweakGuide says it should be on for all systems, and its value is not documented beyond that."
+    },
+    "viewlog": {
+      "group": "other",
+      "title": "Console log overlay",
+      "summary": "Shows the developer console log over the picture.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 2."
+    },
+    "cg_debugbullets": {
+      "group": "other",
+      "title": "Bullet trace debug",
+      "summary": "Draws bullet traces and impact points, for diagnosing hit registration.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. CoD2x only."
+    },
+    "cg_debugevents": {
+      "group": "other",
+      "title": "Event debug",
+      "summary": "Prints game events for debugging.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "cg_debugposition": {
+      "group": "other",
+      "title": "Position debug",
+      "summary": "Prints player positions for debugging.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "cg_dumpanims": {
+      "group": "other",
+      "title": "Client animation dump",
+      "summary": "Dumps an entity's animations for debugging.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "ui_bigfont": {
+      "group": "other",
+      "title": "Big font scale",
+      "summary": "Scales one of the game's menu fonts.",
+      "details": "From 0 to 1. The defaults are 0.4, 0.55 and 0.25 for big, extra big and small fonts. It is purely cosmetic."
+    },
+    "ui_extrabigfont": {
+      "group": "other",
+      "title": "Extra big font scale",
+      "summary": "Scales one of the game's menu fonts.",
+      "details": "From 0 to 1. The defaults are 0.4, 0.55 and 0.25 for big, extra big and small fonts. It is purely cosmetic."
+    },
+    "ui_smallfont": {
+      "group": "other",
+      "title": "Small font scale",
+      "summary": "Scales one of the game's menu fonts.",
+      "details": "From 0 to 1. The defaults are 0.4, 0.55 and 0.25 for big, extra big and small fonts. It is purely cosmetic."
+    },
+    "ui_currentmap": {
+      "group": "other",
+      "title": "Selected map",
+      "summary": "A number the game's menus remember.",
+      "details": "The menus save this themselves. It is not a setting to tune."
+    },
+    "ui_currentnetmap": {
+      "group": "other",
+      "title": "Selected network map",
+      "summary": "A number the game's menus remember.",
+      "details": "The menus save this themselves. It is not a setting to tune."
+    },
+    "ui_gametype": {
+      "group": "other",
+      "title": "Selected game type",
+      "summary": "A number the game's menus remember.",
+      "details": "The menus save this themselves. It is not a setting to tune."
+    },
+    "ui_joingametype": {
+      "group": "other",
+      "title": "Join game type filter",
+      "summary": "A number the game's menus remember.",
+      "details": "The menus save this themselves. It is not a setting to tune."
+    },
+    "ui_netgametype": {
+      "group": "other",
+      "title": "Hosted game type number",
+      "summary": "A number the game's menus remember.",
+      "details": "The menus save this themselves. It is not a setting to tune."
+    },
+    "ui_netsource": {
+      "group": "other",
+      "title": "Server list source",
+      "summary": "A number the game's menus remember.",
+      "details": "The menus save this themselves. It is not a setting to tune."
+    },
+    "ui_serverstatustimeout": {
+      "group": "other",
+      "title": "Server status timeout",
+      "summary": "How many milliseconds the server list waits for a server's status.",
+      "details": "The default is 7,000 milliseconds.",
+      "control": {
+        "kind": "number",
+        "unit": "ms"
+      }
+    },
+    "ui_multiplayer": {
+      "group": "other",
+      "title": "Multiplayer menus",
+      "summary": "Whether the game's menus are in multiplayer mode.",
+      "details": "The game treats this as read-only and sets it itself."
+    },
+    "ui_playerprofilealreadychosen": {
+      "group": "other",
+      "title": "Profile already chosen",
+      "summary": "Records that a player profile has been chosen.",
+      "details": "The game sets this itself."
+    },
+    "ui_playerprofilecount": {
+      "group": "other",
+      "title": "Profile count",
+      "summary": "How many player profiles the game found.",
+      "details": "The game treats this as read-only and sets it itself."
+    },
+    "ui_playerprofileselected": {
+      "group": "other",
+      "title": "Selected profile",
+      "summary": "The profile selected in the profile menu.",
+      "details": "The game treats this as read-only and sets it itself."
     }
   },
   "commands": {

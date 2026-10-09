@@ -93,8 +93,8 @@
       ],
       "group": "other",
       "title": "Active action",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "A text value the game keeps for the current menu action.",
+      "details": "The registered default is empty. Its use is not documented.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225583",
         "src/PC/client_mp/cl_main_mp.c:225618"
@@ -1674,10 +1674,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Center print y",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Centre message height",
+      "summary": "How high or low centre messages appear.",
+      "details": "From -10,000 to 10,000, and -60 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1066"
       ],
@@ -1759,10 +1759,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Centertime",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Centre message time",
+      "summary": "How many seconds centre messages stay on screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 5 seconds.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1087"
       ],
@@ -2017,10 +2017,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
+      "group": "hud",
       "title": "Connection icon size",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "How large the connection-problem icon is; 0 hides it.",
+      "details": "From 0 to 100, and 0 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1161"
       ],
@@ -2086,10 +2086,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Constant size head icons",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Constant-size head icons",
+      "summary": "Keeps head icons the same size at any distance.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1163"
       ],
@@ -2487,16 +2487,23 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Cursor hints",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Use-hint style",
+      "summary": "How the on-screen use hints look.",
+      "details": "TweakGuide lists 0 as none, 1 as a fast pulse, 2 as a slow pulse and 3 as static. The game's default is 4, which looks the same as 3.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1016"
       ],
       "guided": false,
       "control": {
-        "kind": "number"
+        "kind": "number",
+        "labels": {
+          "0": "None",
+          "1": "Pulse fast",
+          "2": "Pulse slowly",
+          "3": "Static",
+          "4": "Static (default)"
+        }
       }
     },
     {
@@ -2533,9 +2540,9 @@
         "cod2x"
       ],
       "group": "other",
-      "title": "Debug bullets",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Bullet trace debug",
+      "summary": "Draws bullet traces and impact points, for diagnosing hit registration.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. CoD2x only.",
       "sources": [
         "src/PC/qcommon/cod2x_features.c:70"
       ],
@@ -2602,9 +2609,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Debugevents",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Event debug",
+      "summary": "Prints game events for debugging.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1089"
       ],
@@ -2671,9 +2678,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Debugposition",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Position debug",
+      "summary": "Prints player positions for debugging.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1088"
       ],
@@ -2739,10 +2746,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Descriptive text",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Descriptive hint text",
+      "summary": "Shows descriptive text in on-screen hints.",
+      "details": "On by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1128"
       ],
@@ -4190,9 +4197,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Dump anims",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Client animation dump",
+      "summary": "Dumps an entity's animations for debugging.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1112"
       ],
@@ -4272,10 +4279,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Errordecay",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Prediction smoothing",
+      "summary": "How fast your game smooths out corrections to your predicted position.",
+      "details": "The default is 100. zPAM sets it to 100 for every player after they join a team, so a saved value is replaced on servers running it. ESL's old PunkBuster list also required 100.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1090"
       ],
@@ -4341,10 +4348,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Footsteps",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Footstep sounds",
+      "summary": "Whether footstep sounds and effects play.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1093"
       ],
@@ -4426,10 +4433,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Fov",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Field of view",
+      "summary": "How wide your view is.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 80 degrees for a 4:3 screen and the game widens it for wider screens. ESL's old PunkBuster list and WWCL's old rules required exactly 80. Whether a config file can set it is untested, so nothing here offers it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1018"
       ],
@@ -4511,10 +4518,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Fov min",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Smallest field of view",
+      "summary": "The lowest the final field of view may go.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 10 degrees.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1020"
       ],
@@ -4596,10 +4603,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Fov scale",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Field of view scale",
+      "summary": "A multiplier applied to the final field of view.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 1, from 0.2 to 2. Because mouse speed scales with the original value, a scale above 1 also raises mouse speed.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1019"
       ],
@@ -4681,10 +4688,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Game bold message width",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Bold message width",
+      "summary": "How many characters wide bold game messages are.",
+      "details": "From 20 to 256, and 60 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1123"
       ],
@@ -4766,10 +4773,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Game message width",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Message width",
+      "summary": "How many characters wide game messages are.",
+      "details": "From 20 to 256, and 70 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1122"
       ],
@@ -4851,10 +4858,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Gun move f",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Weapon move forward",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1079"
       ],
@@ -4936,10 +4943,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Gun move minspeed",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Weapon move minimum speed",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1086"
       ],
@@ -5021,10 +5028,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Gun move r",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Weapon move right",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1080"
       ],
@@ -5106,10 +5113,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Gun move rate",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Weapon move rate",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1085"
       ],
@@ -5191,10 +5198,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Gun move u",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Weapon move up",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1081"
       ],
@@ -5276,10 +5283,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Gun ofs f",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Weapon offset forward",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1082"
       ],
@@ -5361,10 +5368,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Gun ofs r",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Weapon offset right",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1083"
       ],
@@ -5446,10 +5453,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Gun ofs u",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Weapon offset up",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1084"
       ],
@@ -5531,10 +5538,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Gun x",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Weapon left-right offset",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0. A PunkBuster stock list required 0.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1076"
       ],
@@ -5616,10 +5623,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Gun y",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Weapon forward offset",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1077"
       ],
@@ -5701,10 +5708,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Gun z",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Weapon up-down offset",
+      "summary": "Moves where your first-person weapon sits on the screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1078"
       ],
@@ -5786,10 +5793,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Head icon min screen radius",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Head icon minimum size",
+      "summary": "The smallest size a head icon gets on screen.",
+      "details": "From 0 to 1, and 0.02 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1164"
       ],
@@ -5871,16 +5878,17 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Hint fade time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Hint hold time",
+      "summary": "How many milliseconds a hint stays before it fades.",
+      "details": "From 0 upward, and 100 by default. A guide describes seconds, but the game's registration is in milliseconds. zPAM sets it to 100 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1017"
       ],
       "guided": false,
       "control": {
-        "kind": "number"
+        "kind": "number",
+        "unit": "ms"
       }
     },
     {
@@ -9410,10 +9418,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Nopredict",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Turn off prediction",
+      "summary": "Stops your game predicting your own movement.",
+      "details": "A debugging aid: movement waits for the server, so the game feels laggy. Off by default and not saved.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1091"
       ],
@@ -9479,10 +9487,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "No taunt",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Hide taunts",
+      "summary": "Hides taunt sounds and messages.",
+      "details": "Off by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1107"
       ],
@@ -9550,10 +9558,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Predict items",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Predict item pickups",
+      "summary": "Lets your game predict picking up items before the server confirms.",
+      "details": "On by default, and shared with the server as player information.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1106"
       ],
@@ -9635,10 +9643,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
+      "group": "hud",
       "title": "Scoreboard banner height",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "How tall the scoreboard's banner rows are.",
+      "details": "From 1 to 100, and 24 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1126"
       ],
@@ -9720,10 +9728,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Scoreboard item height",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Scoreboard row height",
+      "summary": "How tall each scoreboard row is.",
+      "details": "From 1 to 100, and 18 by default. zPAM replaces the scoreboard menu.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1127"
       ],
@@ -9805,10 +9813,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
+      "group": "hud",
       "title": "Scoreboard scroll step",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "How many rows the scoreboard moves per scroll.",
+      "details": "From 1 to 8, and 3 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1125"
       ],
@@ -9890,10 +9898,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
+      "group": "hud",
       "title": "Script icon size",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "How large icons placed by game scripts are.",
+      "details": "From 0 to 100, and 0 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1160"
       ],
@@ -9960,9 +9968,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Shock mouse",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shock mouse effect",
+      "summary": "Whether shell shock affects your mouse.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1154"
       ],
@@ -10045,9 +10053,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Shock mouse fade time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shock mouse fade",
+      "summary": "How many seconds the shell shock mouse effect takes to fade.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 2 seconds.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1158"
       ],
@@ -10130,9 +10138,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Shock mouse maxpitchspeed",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shock mouse tilt limit",
+      "summary": "The fastest your view may tilt during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 90.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1155"
       ],
@@ -10215,9 +10223,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Shock mouse maxyawspeed",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shock mouse turn limit",
+      "summary": "The fastest your view may turn during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 90.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1156"
       ],
@@ -10300,9 +10308,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Shock mouse sensitivityscale",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shock mouse speed",
+      "summary": "How much shell shock scales your mouse speed.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.5.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1157"
       ],
@@ -10385,9 +10393,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Shock screen blend fade time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shock blend fade",
+      "summary": "How many seconds the shell shock screen tint takes to fade.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 1 second.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1130"
       ],
@@ -10470,9 +10478,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Shock screen blend time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shock blend time",
+      "summary": "How many seconds the shell shock screen tint builds.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.4 seconds.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1129"
       ],
@@ -10538,10 +10546,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Shock sound",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Shell shock sound",
+      "summary": "Whether the shell shock sound effect plays.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1134"
       ],
@@ -10623,10 +10631,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
+      "group": "audio",
       "title": "Shock sound dry level",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "How much of the unprocessed sound is heard during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1140"
       ],
@@ -10708,10 +10716,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Shock sound fade in time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Shock sound fade in",
+      "summary": "How many seconds the shell shock sound takes to fade in.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1135"
       ],
@@ -10793,10 +10801,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Shock sound fade out time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Shock sound fade out",
+      "summary": "How many seconds the shell shock sound takes to fade out.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1136"
       ],
@@ -10878,10 +10886,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Shock sound loop end delay",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Shock loop end delay",
+      "summary": "A delay, in seconds, for the end of the shell shock loop.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1138"
       ],
@@ -10963,10 +10971,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Shock sound loop fade time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Shock loop fade time",
+      "summary": "How many seconds the shell shock loop takes to fade.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1137"
       ],
@@ -11048,10 +11056,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Shock sound mod end delay",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Shock sound end delay",
+      "summary": "A delay, in seconds, for the end of the shell shock sound change.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1142"
       ],
@@ -11179,10 +11187,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
+      "group": "audio",
       "title": "Shock sound room type",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "The room type used for the shell shock sound effect.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. Choices run from generic through underwater, drugged, dizzy and psychotic.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1139"
       ],
@@ -11264,10 +11272,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
+      "group": "audio",
       "title": "Shock sound wet level",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "How much of the processed sound is heard during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1141"
       ],
@@ -11350,9 +11358,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Shock view kick fade time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shock view kick fade",
+      "summary": "How many seconds the shell shock view kick takes to fade.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 3 seconds.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1133"
       ],
@@ -11436,8 +11444,8 @@
       ],
       "group": "other",
       "title": "Shock view kick period",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "How long one shell shock view kick lasts.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.75 seconds.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1131"
       ],
@@ -11520,9 +11528,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Shock view kick radius",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shock view kick size",
+      "summary": "How far shell shock kicks your view.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.05.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1132"
       ],
@@ -11604,10 +11612,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Shock volume announcer",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Shock volume: announcer",
+      "summary": "How loud the announcer is during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1152"
       ],
@@ -11689,10 +11697,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Shock volume auto",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Shock volume: auto",
+      "summary": "How loud automatic sounds are during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1143"
       ],
@@ -11774,10 +11782,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Shock volume auto2d",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Shock volume: auto 2D",
+      "summary": "How loud automatic 2D sounds are during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1144"
       ],
@@ -11859,10 +11867,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Shock volume body",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Shock volume: body",
+      "summary": "How loud body sounds are during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1149"
       ],
@@ -11944,10 +11952,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Shock volume item",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Shock volume: items",
+      "summary": "How loud item sounds are during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1148"
       ],
@@ -12029,10 +12037,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Shock volume local",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Shock volume: local",
+      "summary": "How loud local sounds are during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1150"
       ],
@@ -12114,10 +12122,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Shock volume menu",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Shock volume: menu",
+      "summary": "How loud menu sounds are during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1145"
       ],
@@ -12199,10 +12207,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Shock volume music",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Shock volume: music",
+      "summary": "How loud the music is during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1151"
       ],
@@ -12284,10 +12292,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Shock volume shellshock",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Shock volume: shock",
+      "summary": "How loud the shell shock sounds themselves are.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1153"
       ],
@@ -12369,10 +12377,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Shock volume voice",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Shock volume: voices",
+      "summary": "How loud voices are during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1147"
       ],
@@ -12454,10 +12462,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Shock volume weapon",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Shock volume: weapons",
+      "summary": "How loud weapons are during shell shock.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1146"
       ],
@@ -12537,10 +12545,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Showmiss",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Show prediction misses",
+      "summary": "Shows when your game's prediction was wrong.",
+      "details": "A developer aid from 0 to 2, off by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1092"
       ],
@@ -12622,10 +12630,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Subtitle char height",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Subtitle text height",
+      "summary": "How tall subtitle text is.",
+      "details": "From 1 to 480, and 12 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1121"
       ],
@@ -12707,10 +12715,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Subtitle min time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Subtitle minimum time",
+      "summary": "The fewest seconds a subtitle stays on screen.",
+      "details": "The default is 3 seconds.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1116"
       ],
@@ -12792,10 +12800,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Subtitle pos x",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Subtitle left position",
+      "summary": "Where subtitles sit from the left of the screen.",
+      "details": "From 0 to 640, and 120 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1119"
       ],
@@ -12877,10 +12885,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Subtitle pos y",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Subtitle top position",
+      "summary": "Where subtitles sit from the top of the screen.",
+      "details": "From 0 to 480, and 400 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1120"
       ],
@@ -13032,10 +13040,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Subtitle width standard",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Subtitle width, standard",
+      "summary": "How many characters wide subtitles are on a standard screen.",
+      "details": "From 20 to 256, and 80 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1117"
       ],
@@ -13117,10 +13125,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Subtitle width widescreen",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Subtitle width, widescreen",
+      "summary": "How many characters wide subtitles are on a widescreen display.",
+      "details": "From 20 to 256, and 80 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1118"
       ],
@@ -13186,10 +13194,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Team chats only",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Team chat only",
+      "summary": "Shows only your team's chat.",
+      "details": "Off by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1109"
       ],
@@ -13255,10 +13263,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Third person",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Third-person camera",
+      "summary": "Shows the game from behind your player.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1103"
       ],
@@ -13340,10 +13348,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Third person angle",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Third-person angle",
+      "summary": "The angle of the third-person camera.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1102"
       ],
@@ -13393,10 +13401,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Third person mode",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Third-person mode",
+      "summary": "A CoD2x variant of the third-person camera.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. Mode 1 orbits the player without checking for walls. CoD2x only.",
       "sources": [
         "src/PC/qcommon/cod2x_features.c:69"
       ],
@@ -13478,10 +13486,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Third person range",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Third-person distance",
+      "summary": "How far behind you the third-person camera sits.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 120.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1101"
       ],
@@ -13563,10 +13571,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Tracerchance",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Tracer chance",
+      "summary": "How often a bullet shows a tracer.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.4. zPAM sets it to 1 for every player.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1094"
       ],
@@ -13648,10 +13656,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Tracerlength",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Tracer length",
+      "summary": "How long bullet tracers are.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 160. zPAM sets it to 1,000 for every player.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1097"
       ],
@@ -13733,10 +13741,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
+      "group": "vis",
       "title": "Tracer scale",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "A scale for distant bullet tracers.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 50.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1098"
       ],
@@ -13818,10 +13826,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Tracer scale dist range",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Tracer scale range",
+      "summary": "A distance range for scaling distant tracers.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 25,000.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1100"
       ],
@@ -13903,10 +13911,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Tracer scale min dist",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Tracer scale start",
+      "summary": "The distance where tracers start to scale.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 5,000.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1099"
       ],
@@ -13988,10 +13996,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
+      "group": "vis",
       "title": "Tracer speed",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "How fast bullet tracers travel.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 4,500. zPAM sets it to 20,000 for every player.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1096"
       ],
@@ -14073,10 +14081,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Tracerwidth",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Tracer width",
+      "summary": "How wide bullet tracers are.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.8. zPAM sets it to 1 for every player.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1095"
       ],
@@ -14158,16 +14166,17 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Viewsize",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "View size",
+      "summary": "How much of the screen the 3D view fills.",
+      "details": "A percentage from 30 to 100, and 100 by default. Its effect in CoD2 is inferred from its Quake heritage. ESL's old PunkBuster list required 100. zPAM sets it to 100 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1021"
       ],
       "guided": false,
       "control": {
-        "kind": "number"
+        "kind": "number",
+        "unit": "%"
       }
     },
     {
@@ -14243,10 +14252,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
+      "group": "hud",
       "title": "Voice icon size",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "How large the voice chat icon is; 0 hides it.",
+      "details": "From 0 to 100, and 0 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1162"
       ],
@@ -14328,16 +14337,17 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
+      "group": "hud",
       "title": "Voice sprite time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "How many milliseconds a voice sprite stays on screen.",
+      "details": "From 0 to 60,000, and 6,000 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1108"
       ],
       "guided": false,
       "control": {
-        "kind": "number"
+        "kind": "number",
+        "unit": "ms"
       }
     },
     {
@@ -14415,14 +14425,15 @@
       ],
       "group": "other",
       "title": "Weapon cycle delay",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "A delay, in milliseconds, between weapon-cycle key presses.",
+      "details": "0 by default. zPAM briefly sets it to 200 to prevent the fast-reload double-scroll trick, then back to 0.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1068"
       ],
       "guided": false,
       "control": {
-        "kind": "number"
+        "kind": "number",
+        "unit": "ms"
       }
     },
     {
@@ -14481,9 +14492,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Weaponleftbone",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Left weapon bone",
+      "summary": "The model tag the left-hand weapon attaches to.",
+      "details": "The default is the left weapon tag.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1167"
       ],
@@ -14548,9 +14559,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Weaponrightbone",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Right weapon bone",
+      "summary": "The model tag the right-hand weapon attaches to.",
+      "details": "The default is the right weapon tag.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1168"
       ],
@@ -14632,10 +14643,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "You in kill cam size",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "hud",
+      "title": "Kill-cam marker size",
+      "summary": "How large the 'you' marker is in the kill cam.",
+      "details": "From 0 to 100, and 6 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1159"
       ],
@@ -16645,8 +16656,8 @@
       ],
       "group": "other",
       "title": "Profile text height",
-      "summary": "Set the height used for profile text.",
-      "details": "Restored in the readiness integration source. The registration facts describe this build.",
+      "summary": "How tall the text is in the profile screens.",
+      "details": "From 1 to 100, and 16 by default. The research labels it a debugging value.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225657",
         "src/PC/client_mp/cl_main_mp.c:225692"
@@ -17761,9 +17772,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Anim check",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Animation check",
+      "summary": "A developer switch for checking animations.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/qcommon/common.c:2310"
       ],
@@ -17986,9 +17997,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Expected hunk usage",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Expected memory use",
+      "summary": "A hint of the main memory the current map is expected to need.",
+      "details": "The game treats this as read-only and sets it itself.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:505",
         "src/PC/server_mp/sv_init_mp.c:606"
@@ -18031,9 +18042,9 @@
         "port"
       ],
       "group": "other",
-      "title": "Freeze watch",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Freeze watchdog",
+      "summary": "Offers to save a crash report when the game stops responding.",
+      "details": "CoD2x only, on by default. It checks every second and shows a 'has frozen' dialog after about 12 seconds without a heartbeat.",
       "sources": [
         "src/platform/cod2x_native.c:52"
       ],
@@ -18119,16 +18130,17 @@
         "cod2x"
       ],
       "group": "other",
-      "title": "Hunk megs",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Game memory",
+      "summary": "How many megabytes the game reserves for its main memory.",
+      "details": "Stock allows 1 to 512 with 160 by default. CoD2x pins it to 512. It is latched, so a change applies after the game restarts.",
       "sources": [
         "src/PC/universal/com_memory.c:365",
         "src/PC/universal/com_memory.c:367"
       ],
       "guided": false,
       "control": {
-        "kind": "number"
+        "kind": "number",
+        "unit": "MB"
       }
     },
     {
@@ -18189,9 +18201,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Intro played",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Skip intro movies",
+      "summary": "Skips the opening publisher movies when set.",
+      "details": "Set to 1 to skip them. A guide suggests setting it on the launch line.",
       "sources": [
         "src/PC/qcommon/common.c:2309"
       ],
@@ -18400,9 +18412,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Player profile",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Active profile name",
+      "summary": "The name of the profile the game is using.",
+      "details": "The game treats this as read-only and sets it itself. It comes from the active profile file when the game starts.",
       "sources": [
         "src/PC/qcommon/com_playerprofile.c:220"
       ],
@@ -18469,9 +18481,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Recommended set",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "System check done",
+      "summary": "Marks that the game's automatic system check has run.",
+      "details": "Present in saved configs. Leave it alone.",
       "sources": [
         "src/PC/qcommon/common.c:2333"
       ],
@@ -18562,9 +18574,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Statmon",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Stat monitor",
+      "summary": "A developer switch for a statistics monitor.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:530",
         "src/PC/qcommon/common.c:2299"
@@ -18609,8 +18621,8 @@
       ],
       "group": "other",
       "title": "Save game config changes",
-      "summary": "Allow the CoD2x game to write archived settings and binds.",
-      "details": "Config Studio still remains read-only while the engine runs. Turning this off is not permission for concurrent profile editing.",
+      "summary": "Lets CoD2x write changes to your config file as you play.",
+      "details": "CoD2x only, on by default. With it off, changes made in game are not saved, although the change to this setting itself is. Config Studio stays read-only while the game runs either way.",
       "sources": [
         "src/PC/qcommon/common.c:2292"
       ],
@@ -19889,9 +19901,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Dedicated",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Dedicated server mode",
+      "summary": "Whether this copy of the game runs as a dedicated server.",
+      "details": "The game treats this as read-only and sets it itself. The separate dedicated-server program is a different launch path. It is latched.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:980",
         "src/PC/game_mp/g_main_mp.c:986",
@@ -20059,9 +20071,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Developer",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Developer mode",
+      "summary": "Turns on developer printing and testing functions.",
+      "details": "From 0 to 2, and 0 for normal play. CoD2x forces 2 during demo playback only. It is not saved.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1113",
         "src/PC/gfx_d3d/r_dvars.c:526",
@@ -20128,9 +20140,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Developer script",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Script developer output",
+      "summary": "Prints debug output from game scripts.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/qcommon/common.c:2297"
       ],
@@ -20212,10 +20224,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Fixedtime",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "frame",
+      "title": "Fixed frame time",
+      "summary": "Forces every frame to last a fixed number of milliseconds.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. 0 is off. zPAM sets it to 0 for every player.",
       "sources": [
         "src/PC/qcommon/common.c:2301"
       ],
@@ -20369,9 +20381,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Fs basegame",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Base game folder",
+      "summary": "The base game folder name.",
+      "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:417",
         "src/PC/universal/com_files.c:487"
@@ -20441,9 +20453,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Fs basepath",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Install folder",
+      "summary": "The folder that contains the game's main folder.",
+      "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:416",
         "src/PC/universal/com_files.c:486"
@@ -20513,9 +20525,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Fs cdpath",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "CD folder",
+      "summary": "A folder the game can read files from, as if from a disc.",
+      "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:415",
         "src/PC/universal/com_files.c:485"
@@ -20583,9 +20595,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Fs copyfiles",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Copy from CD folder",
+      "summary": "A Quake 3 style flag to copy files from the CD folder.",
+      "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:414",
         "src/PC/universal/com_files.c:484"
@@ -20667,9 +20679,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Fs debug",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "File system debug",
+      "summary": "A developer switch for file system debugging.",
+      "details": "A developer aid; its effect is not documented here. It runs from 0 to 2.",
       "sources": [
         "src/PC/universal/com_files.c:413",
         "src/PC/universal/com_files.c:483"
@@ -20789,9 +20801,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Fs game",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Mod folder",
+      "summary": "The mod folder the game is using.",
+      "details": "The server shares it with players and the game protects it from changes here. CoD2x resets it to empty and restarts the file system when you leave a server.",
       "sources": [
         "src/PC/client_mp/cl_ui_mp.c:343",
         "src/PC/server_mp/sv_client_mp.c:396",
@@ -20864,9 +20876,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Fs homepath",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Game data folder",
+      "summary": "The folder where the game writes configs, demos, screenshots and logs.",
+      "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:430",
         "src/PC/universal/com_files.c:500"
@@ -20960,9 +20972,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Fs ignore localized",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Ignore localized files",
+      "summary": "A switch the game registers to ignore localized files.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It is latched.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:227175",
         "src/PC/client_mp/cl_main_mp.c:227210",
@@ -21032,9 +21044,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Fs restrict",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Restrict file access",
+      "summary": "A switch the game registers to restrict file access.",
+      "details": "It can only be set on the launch line, before the game starts, and the game protects it from changes here.",
       "sources": [
         "src/PC/universal/com_files.c:432",
         "src/PC/universal/com_files.c:502"
@@ -21100,9 +21112,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Fs use old assets",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Use old assets",
+      "summary": "A switch the game registers to use older asset files.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/universal/com_files.c:418",
         "src/PC/universal/com_files.c:488"
@@ -22028,10 +22040,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Antilag",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Lag compensation",
+      "summary": "Rewinds players when you fire so hits land where you saw them, on a server you host.",
+      "details": "On by default. Rule sets differ: FPSChallenge's EU text and zPAM's EU rules want it off, and zPAM's NA rules want it on. It only matters on a server you host.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1018"
       ],
@@ -22097,10 +22109,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Ban ips",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Banned addresses",
+      "summary": "The list of banned addresses for a server you host.",
+      "details": "Saved with your config. It only matters on a server you host.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:979"
       ],
@@ -22182,10 +22194,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Clone player max velocity",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Body push speed",
+      "summary": "A limit on how fast a dead player's body is pushed.",
+      "details": "The default is 80. It only matters on a server you host. Its role is inferred from its name.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1001"
       ],
@@ -22355,10 +22367,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Dead chat",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Dead players chat",
+      "summary": "Lets dead players chat with the living on a server you host.",
+      "details": "Off by default. zPAM registers its own default of on.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1007"
       ],
@@ -22440,10 +22452,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Debug bullets",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Bullet debug level",
+      "summary": "A developer switch for bullet debugging.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from -3 to 6.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:995"
       ],
@@ -22509,10 +22521,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Debug damage",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Damage debug",
+      "summary": "A developer switch for damage debugging.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:994"
       ],
@@ -22578,10 +22590,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Debug loc damage",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Hit location debug",
+      "summary": "A developer switch for hit-location damage debugging.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1022"
       ],
@@ -22663,10 +22675,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Drop forward speed",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Weapon drop forward speed",
+      "summary": "A tuning value for how dropped weapons fly out.",
+      "details": "The default is 10. It only matters on a server you host. Its role is inferred from its name.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:998"
       ],
@@ -22748,10 +22760,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Drop up speed base",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Weapon drop up speed",
+      "summary": "A tuning value for how dropped weapons fly out.",
+      "details": "The default is 10. It only matters on a server you host. Its role is inferred from its name.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:999"
       ],
@@ -22833,10 +22845,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Drop up speed rand",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Weapon drop up variation",
+      "summary": "A tuning value for how dropped weapons fly out.",
+      "details": "The default is 5. It only matters on a server you host. Its role is inferred from its name.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1000"
       ],
@@ -22918,10 +22930,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Dump anims",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Server animation dump",
+      "summary": "A developer switch that dumps an entity's animations.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1028"
       ],
@@ -23003,10 +23015,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Friendlyfire dist",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Friendly-fire distance",
+      "summary": "A distance used for friendly-fire handling.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 256.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1023"
       ],
@@ -23088,10 +23100,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Friendly name dist",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Friendly name distance",
+      "summary": "How far away a friendly player's name shows.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 15,000.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1024"
       ],
@@ -23207,10 +23219,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Gametype",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Game type",
+      "summary": "Which game type a server you host runs.",
+      "details": "Stock choices are ctf, dm, hq, sd and tdm, and zPAM adds htf, re and strat. A change applies from the next map because it is latched. It only matters on a server you host.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:973",
         "src/PC/server_mp/sv_game_mp.c:387",
@@ -23293,10 +23305,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Gravity",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Server gravity",
+      "summary": "How strongly gravity pulls on a server you host.",
+      "details": "The default is 800 game units per second squared. It only matters on a server you host.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:989"
       ],
@@ -23376,10 +23388,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Inactivity",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Idle kick time",
+      "summary": "Drops players who are idle this many seconds on a server you host; 0 is off.",
+      "details": "The server warns them 10 seconds before. The local player is exempt.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:993"
       ],
@@ -23459,10 +23471,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Knockback",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Hit knockback",
+      "summary": "How hard hits push players back on a server you host.",
+      "details": "The default is 1,000, and zPAM sets it to 0. It only matters on a server you host.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:990"
       ],
@@ -23526,10 +23538,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "List entity",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "List entities",
+      "summary": "A developer switch that lists the server's entities.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1006"
       ],
@@ -23595,10 +23607,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Log",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Game log file",
+      "summary": "The file a server you host writes its game log to.",
+      "details": "The default is the standard game log name. It only matters on a server you host.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:976"
       ],
@@ -23664,10 +23676,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Log sync",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Log immediately",
+      "summary": "Writes the game log straight to disk instead of buffering it.",
+      "details": "Off by default. It only matters on a server you host.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:977"
       ],
@@ -23749,10 +23761,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Mantle block time buffer",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Mantle block time",
+      "summary": "A server mantle block timer.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 500 milliseconds.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1031"
       ],
@@ -23832,10 +23844,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Max dropped weapons",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Dropped weapon limit",
+      "summary": "The most dropped weapons left lying around on a server you host.",
+      "details": "From 1 to 32, and 16 by default.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:992"
       ],
@@ -23899,10 +23911,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Motd",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Hosted server message",
+      "summary": "A message of the day for a server you host.",
+      "details": "It only matters on a server you host. The default is empty.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:996"
       ],
@@ -23966,10 +23978,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "No script spam",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Limit script spam",
+      "summary": "A switch the game registers to limit script message spam.",
+      "details": "Off by default. It only matters on a server you host. Its role is inferred from its name.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1021"
       ],
@@ -24035,10 +24047,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Old voting",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Old voting system",
+      "summary": "Uses the older voting system on a server you host.",
+      "details": "On by default. zPAM's comment says it must stay on or voting does not work.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1019"
       ],
@@ -24188,10 +24200,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Player collision eject speed",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Player push-apart speed",
+      "summary": "How fast overlapping players are pushed apart.",
+      "details": "From 0 to 32,000, and 25 by default. It only matters on a server you host.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:997"
       ],
@@ -24257,10 +24269,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Scores banner allies",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Allies scoreboard banner",
+      "summary": "The scoreboard banner image for the Allies.",
+      "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1009"
       ],
@@ -24326,10 +24338,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Scores banner axis",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Axis scoreboard banner",
+      "summary": "The scoreboard banner image for the Axis.",
+      "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1010"
       ],
@@ -24395,10 +24407,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Scores banner none",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Neutral scoreboard banner",
+      "summary": "The scoreboard banner image for no team.",
+      "details": "The server sets this and shares it with every player.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1011"
       ],
@@ -24464,10 +24476,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Scores banner spectators",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Spectator scoreboard banner",
+      "summary": "The scoreboard banner image for spectators.",
+      "details": "The server sets this and shares it with every player.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1012"
       ],
@@ -24509,10 +24521,10 @@
       "origins": [
         "cod2x"
       ],
-      "group": "other",
-      "title": "Shotgun spread fix",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Fixed shotgun pattern",
+      "summary": "Uses a fixed eight-pellet pattern for shotguns instead of random spread.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. CoD2x only. The server picks one of two fixed patterns for each shot.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:983"
       ],
@@ -24576,10 +24588,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Smooth clients",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Smooth other players",
+      "summary": "Smooths other players' movement on a server you host.",
+      "details": "On by default. The server extrapolates players' positions before it sends updates.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1017"
       ],
@@ -24659,10 +24671,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Speed",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Player run speed",
+      "summary": "How fast players run on a server you host.",
+      "details": "The default is 190 game units per second. It only matters on a server you host.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:988"
       ],
@@ -24752,10 +24764,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Synchronous clients",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Synchronous player logic",
+      "summary": "Runs each player's logic once per server frame, which smooths demos.",
+      "details": "Off by default. The server shares it with every player.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1111",
         "src/PC/game_mp/g_main_mp.c:975"
@@ -24832,10 +24844,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Team color allies",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Allies team colour",
+      "summary": "The colour used for the Allies.",
+      "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1015"
       ],
@@ -24911,10 +24923,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Team color axis",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Axis team colour",
+      "summary": "The colour used for the Axis.",
+      "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1016"
       ],
@@ -24980,10 +24992,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Team name allies",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Allies team name",
+      "summary": "The name shown for the Allies.",
+      "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1013"
       ],
@@ -25049,10 +25061,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Team name axis",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Axis team name",
+      "summary": "The name shown for the Axis.",
+      "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1014"
       ],
@@ -25136,10 +25148,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Useholdspawndelay",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Spawn use delay",
+      "summary": "A server delay, in seconds, before players can use things after spawning.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 1.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1030"
       ],
@@ -25219,10 +25231,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Useholdtime",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Use-key hold time",
+      "summary": "How long a player must hold the use key.",
+      "details": "The default is 0. It only matters on a server you host. Its role is inferred from its name.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1029"
       ],
@@ -25304,10 +25316,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Voice chat talking duration",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Voice talking time",
+      "summary": "How long a player is shown as talking after they speak.",
+      "details": "From 0 to 10,000, and 500 by default. Its role is inferred from its name.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1008"
       ],
@@ -25389,10 +25401,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Vote abstain weight",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Abstain vote weight",
+      "summary": "How much a player who does not vote counts toward a vote.",
+      "details": "From 0 to 1, and 0.5 by default. Its role is inferred from its name.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1020"
       ],
@@ -25456,10 +25468,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Weapon ammo pools",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Shared ammo pools",
+      "summary": "A switch the game registers for sharing weapon ammo.",
+      "details": "Off by default. It only matters on a server you host. Its role is inferred from its name.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:991"
       ],
@@ -25526,9 +25538,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Gamedate",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Game build date",
+      "summary": "The date the game was built.",
+      "details": "The game treats this as read-only and sets it itself.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:971"
       ],
@@ -25597,9 +25609,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Gamename",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Game name",
+      "summary": "The name of the game.",
+      "details": "The game treats this as read-only and sets it itself. The server shares it with players.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:970"
       ],
@@ -28549,9 +28561,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Loc force english",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Force English text",
+      "summary": "Shows English text whatever language you pick.",
+      "details": "Latched, so a change applies after the game restarts.",
       "sources": [
         "src/PC/stringed/stringed_hooks.c:175",
         "src/PC/stringed/stringed_hooks.c:234"
@@ -28717,9 +28729,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Loc language",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Game language",
+      "summary": "Which language the game's text uses.",
+      "details": "A number from 0 to 14. It is latched, so a change applies after the game restarts.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:227170",
         "src/PC/client_mp/cl_main_mp.c:227205",
@@ -28813,9 +28825,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Loc translate",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Translate text",
+      "summary": "Translates the game's text strings.",
+      "details": "On by default and latched.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:227174",
         "src/PC/client_mp/cl_main_mp.c:227209",
@@ -28882,9 +28894,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Loc warnings",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Localization warnings",
+      "summary": "Prints warnings about missing translations.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/stringed/stringed_hooks.c:177"
       ],
@@ -28949,9 +28961,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Loc warnings as errors",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Warnings as errors",
+      "summary": "Treats translation warnings as errors.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/stringed/stringed_hooks.c:178"
       ],
@@ -29032,9 +29044,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Logfile",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Console log file",
+      "summary": "Writes the console output to a log file.",
+      "details": "From 0 to 2, and 0 is off. It is not saved.",
       "sources": [
         "src/PC/qcommon/common.c:2298"
       ],
@@ -30270,9 +30282,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Mapname",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Current map name",
+      "summary": "The name of the map being played.",
+      "details": "The game treats this as read-only and sets it itself. The server shares it with players.",
       "sources": [
         "src/PC/game_mp/g_cmds_mp.c:430",
         "src/PC/server_mp/sv_init_mp.c:449",
@@ -30385,8 +30397,8 @@
       ],
       "group": "other",
       "title": "Message of the day",
-      "summary": "Read the game's message-of-the-day preference.",
-      "details": "Restored in the readiness integration source. The registration facts describe this build.",
+      "summary": "A message of the day for the game.",
+      "details": "The registered default is empty. The research found no further use for it.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225656",
         "src/PC/client_mp/cl_main_mp.c:225691"
@@ -31571,9 +31583,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Nextdemo",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Next demo",
+      "summary": "The demo that plays next.",
+      "details": "The registered default is empty.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225687",
         "src/PC/client_mp/cl_main_mp.c:225722"
@@ -31638,10 +31650,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Nextmap",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Next map",
+      "summary": "The map a server you host loads next.",
+      "details": "It only matters on a server you host. The default is empty.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:501",
         "src/PC/server_mp/sv_init_mp.c:602"
@@ -31706,10 +31718,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Packet debug",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Packet debugging",
+      "summary": "Prints packet debugging information.",
+      "details": "A developer aid. It is off by default.",
       "sources": [
         "src/PC/qcommon/net_chan_mp.c:307"
       ],
@@ -46409,10 +46421,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Rcon password",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Remote console password",
+      "summary": "The password for controlling a server remotely.",
+      "details": "Treat it as private. It is not saved to your config.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:472",
         "src/PC/server_mp/sv_init_mp.c:573"
@@ -47894,9 +47906,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Server1",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Favourite server 1",
+      "summary": "Favourite server slot 1 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1342"
       ],
@@ -47963,9 +47975,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Server10",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Favourite server 10",
+      "summary": "Favourite server slot 10 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1351"
       ],
@@ -48032,9 +48044,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Server11",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Favourite server 11",
+      "summary": "Favourite server slot 11 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1352"
       ],
@@ -48101,9 +48113,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Server12",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Favourite server 12",
+      "summary": "Favourite server slot 12 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1353"
       ],
@@ -48170,9 +48182,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Server13",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Favourite server 13",
+      "summary": "Favourite server slot 13 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1354"
       ],
@@ -48239,9 +48251,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Server14",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Favourite server 14",
+      "summary": "Favourite server slot 14 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1355"
       ],
@@ -48308,9 +48320,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Server15",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Favourite server 15",
+      "summary": "Favourite server slot 15 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1356"
       ],
@@ -48377,9 +48389,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Server16",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Favourite server 16",
+      "summary": "Favourite server slot 16 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1357"
       ],
@@ -48446,9 +48458,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Server2",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Favourite server 2",
+      "summary": "Favourite server slot 2 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1343"
       ],
@@ -48515,9 +48527,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Server3",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Favourite server 3",
+      "summary": "Favourite server slot 3 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1344"
       ],
@@ -48584,9 +48596,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Server4",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Favourite server 4",
+      "summary": "Favourite server slot 4 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1345"
       ],
@@ -48653,9 +48665,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Server5",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Favourite server 5",
+      "summary": "Favourite server slot 5 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1346"
       ],
@@ -48722,9 +48734,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Server6",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Favourite server 6",
+      "summary": "Favourite server slot 6 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1347"
       ],
@@ -48791,9 +48803,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Server7",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Favourite server 7",
+      "summary": "Favourite server slot 7 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1348"
       ],
@@ -48860,9 +48872,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Server8",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Favourite server 8",
+      "summary": "Favourite server slot 8 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1349"
       ],
@@ -48929,9 +48941,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Server9",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Favourite server 9",
+      "summary": "Favourite server slot 9 in the game's server browser.",
+      "details": "The game's server browser saves addresses here, and it is empty until you add a favourite.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1350"
       ],
@@ -49069,10 +49081,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Showdrop",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Show dropped packets",
+      "summary": "Prints a note when a packet is dropped.",
+      "details": "A developer aid. It is off by default.",
       "sources": [
         "src/PC/qcommon/net_chan_mp.c:306"
       ],
@@ -49136,10 +49148,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Showpackets",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "net",
+      "title": "Show every packet",
+      "summary": "Prints every packet sent and received.",
+      "details": "A developer aid. It is off by default and floods the console.",
       "sources": [
         "src/PC/qcommon/net_chan_mp.c:305"
       ],
@@ -53926,9 +53938,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Sys config sum",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "System check sum",
+      "summary": "A checksum the game uses to decide when to run its hardware check again.",
+      "details": "The game protects it from changes here. Leave it alone.",
       "sources": [
         "src/Mac/Main/mac_main.c:108",
         "src/Mac/Main/mac_main.c:127"
@@ -54014,9 +54026,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Sys cpu ghz",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Detected CPU speed",
+      "summary": "The processor speed the game detected, in GHz.",
+      "details": "The game protects it from changes here. It is hardware information.",
       "sources": [
         "src/Mac/Main/mac_main.c:105",
         "src/Mac/Main/mac_main.c:124"
@@ -54086,9 +54098,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Sys gpu",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Detected graphics card",
+      "summary": "The graphics card the game detected.",
+      "details": "The game protects it from changes here. It is hardware information.",
       "sources": [
         "src/Mac/Main/mac_main.c:107",
         "src/Mac/Main/mac_main.c:126"
@@ -54178,9 +54190,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Sys sse",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "SSE support",
+      "summary": "Whether the game treats your processor as supporting SSE.",
+      "details": "Not saved. TweakGuide says it should be on for all systems, and its value is not documented beyond that.",
       "sources": [
         "src/Mac/Main/mac_main.c:481",
         "src/Mac/Main/mac_main.c:500",
@@ -54267,9 +54279,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Sys sys mb",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Detected memory",
+      "summary": "The system memory the game detected, in megabytes.",
+      "details": "The game protects it from changes here. TweakGuide notes it is often detected wrongly.",
       "sources": [
         "src/Mac/Main/mac_main.c:106",
         "src/Mac/Main/mac_main.c:125"
@@ -54354,10 +54366,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Timescale",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "frame",
+      "title": "Game speed",
+      "summary": "How fast game time runs.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 1, and servers share it. It is used for demos and slow motion.",
       "sources": [
         "src/PC/qcommon/common.c:2300"
       ],
@@ -54440,9 +54452,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Big font",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Big font scale",
+      "summary": "Scales one of the game's menu fonts.",
+      "details": "From 0 to 1. The defaults are 0.4, 0.55 and 0.25 for big, extra big and small fonts. It is purely cosmetic.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1361"
       ],
@@ -55311,9 +55323,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Current map",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Selected map",
+      "summary": "A number the game's menus remember.",
+      "details": "The menus save this themselves. It is not a setting to tune.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1363"
       ],
@@ -55396,9 +55408,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Current net map",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Selected network map",
+      "summary": "A number the game's menus remember.",
+      "details": "The menus save this themselves. It is not a setting to tune.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1368"
       ],
@@ -55572,9 +55584,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Extra big font",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Extra big font scale",
+      "summary": "Scales one of the game's menu fonts.",
+      "details": "From 0 to 1. The defaults are 0.4, 0.55 and 0.25 for big, extra big and small fonts. It is purely cosmetic.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1362"
       ],
@@ -55657,9 +55669,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Gametype",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Selected game type",
+      "summary": "A number the game's menus remember.",
+      "details": "The menus save this themselves. It is not a setting to tune.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1364"
       ],
@@ -55742,9 +55754,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Join gametype",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Join game type filter",
+      "summary": "A number the game's menus remember.",
+      "details": "The menus save this themselves. It is not a setting to tune.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1365"
       ],
@@ -55811,9 +55823,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Multiplayer",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Multiplayer menus",
+      "summary": "Whether the game's menus are in multiplayer mode.",
+      "details": "The game treats this as read-only and sets it itself.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1460"
       ],
@@ -55898,9 +55910,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Net gametype",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Hosted game type number",
+      "summary": "A number the game's menus remember.",
+      "details": "The menus save this themselves. It is not a setting to tune.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1414"
       ],
@@ -56053,9 +56065,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Net source",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Server list source",
+      "summary": "A number the game's menus remember.",
+      "details": "The menus save this themselves. It is not a setting to tune.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1359"
       ],
@@ -56138,9 +56150,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Player profile already chosen",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Profile already chosen",
+      "summary": "Records that a player profile has been chosen.",
+      "details": "The game sets this itself.",
       "sources": [
         "src/PC/qcommon/com_playerprofile.c:213"
       ],
@@ -56223,9 +56235,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Player profile count",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Profile count",
+      "summary": "How many player profiles the game found.",
+      "details": "The game treats this as read-only and sets it itself.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1382"
       ],
@@ -56360,9 +56372,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Player profile selected",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Selected profile",
+      "summary": "The profile selected in the profile menu.",
+      "details": "The game treats this as read-only and sets it itself.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1383"
       ],
@@ -56445,15 +56457,16 @@
         "stock"
       ],
       "group": "other",
-      "title": "Server status time out",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Server status timeout",
+      "summary": "How many milliseconds the server list waits for a server's status.",
+      "details": "The default is 7,000 milliseconds.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1381"
       ],
       "guided": false,
       "control": {
-        "kind": "number"
+        "kind": "number",
+        "unit": "ms"
       }
     },
     {
@@ -56530,9 +56543,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Small font",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Small font scale",
+      "summary": "Scales one of the game's menu fonts.",
+      "details": "From 0 to 1. The defaults are 0.4, 0.55 and 0.25 for big, extra big and small fonts. It is purely cosmetic.",
       "sources": [
         "src/PC/ui_mp/ui_main_mp.c:1360"
       ],
@@ -56600,8 +56613,8 @@
       ],
       "group": "other",
       "title": "Build information",
-      "summary": "Read the engine's build description.",
-      "details": "The source registers an empty string and fills it during startup. The registration default is not the eventual run-time value.",
+      "summary": "The game's build description.",
+      "details": "The game treats this as read-only and sets it itself. The registered default is empty and the game fills it in at start-up. The CoD2x build changes the build name and date.",
       "sources": [
         "src/PC/qcommon/common.c:2368"
       ],
@@ -56854,9 +56867,9 @@
         "stock"
       ],
       "group": "other",
-      "title": "Viewlog",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Console log overlay",
+      "summary": "Shows the developer console log over the picture.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 2.",
       "sources": [
         "src/PC/qcommon/common.c:2302"
       ],
@@ -56922,10 +56935,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Voice dead chat",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Hear dead players",
+      "summary": "Lets you hear the voice chat of dead players.",
+      "details": "Off by default.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1004"
       ],
@@ -56991,10 +57004,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Voice global",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Global voice chat",
+      "summary": "Makes voice chat audible to everyone.",
+      "details": "Off by default.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1002"
       ],
@@ -57060,10 +57073,10 @@
       "origins": [
         "stock"
       ],
-      "group": "other",
-      "title": "Voice local echo",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "audio",
+      "title": "Hear yourself",
+      "summary": "Plays your own voice back to you.",
+      "details": "Off by default.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:1003"
       ],
