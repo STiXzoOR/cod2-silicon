@@ -1,7 +1,8 @@
 #!/bin/sh
 set -eu
 root=$(CDPATH='' cd -- "$(dirname "$0")/../.." && pwd)
-out="$root/output/ws28/unit"
+# Keep review captures and temporary builds in task-private directories when requested.
+out="${COD2_LAUNCHER_TEST_OUTPUT:-$root/output/ws28/unit}"
 mkdir -p "$out"
 "$root/scripts/build-launcher.sh" "$out" --test
 "$out/LauncherTests" "$root/tests/launcher/fixtures"
@@ -31,4 +32,4 @@ done
 echo "PASS: views typecheck without COD2_LIQUID_GLASS (macOS 13-25 material branch)"
 
 # Render every screen in both appearances through the review harness and check the images.
-python3 "$root/tests/launcher/snapshots.py" "$out/snapshots"
+python3 "$root/tests/launcher/snapshots.py" "${COD2_LAUNCHER_SNAPSHOT_OUTPUT:-$out/snapshots}"
