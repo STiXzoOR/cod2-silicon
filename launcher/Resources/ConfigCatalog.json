@@ -9344,9 +9344,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Marks limit",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Bullet mark limit",
+      "summary": "The most bullet and explosion marks kept on screen at once.",
+      "details": "From 0 to 1,024, and 1,024 by default. Fewer marks can ease heavy fights. It only matters while Bullet marks is on.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1075"
       ],
@@ -21170,9 +21170,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Count",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Effect counting",
+      "summary": "A developer switch for counting effects.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225683",
         "src/PC/client_mp/cl_main_mp.c:225718"
@@ -21238,9 +21238,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Cull",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Hide unseen effects",
+      "summary": "Skips drawing effects that are out of view.",
+      "details": "A culling switch for the effects system. It is on by default and, unlike its neighbours, is not cheat-protected.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225674",
         "src/PC/client_mp/cl_main_mp.c:225709"
@@ -21308,9 +21308,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Debug",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Effects debug",
+      "summary": "A developer switch that shows effects debugging.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225681",
         "src/PC/client_mp/cl_main_mp.c:225716"
@@ -21394,9 +21394,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Debug bolt",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Effects bolt debug",
+      "summary": "A developer value for debugging bolted-on effects.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225682",
         "src/PC/client_mp/cl_main_mp.c:225717"
@@ -21464,9 +21464,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Draw",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Draw effects",
+      "summary": "Whether the effects system draws its effects.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. ESL's old PunkBuster list required it on.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225672",
         "src/PC/client_mp/cl_main_mp.c:225707"
@@ -21534,9 +21534,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Enable",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Special effects",
+      "summary": "The master switch for special effects.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. TweakGuide says turning it off can improve performance. ESL's old PunkBuster list and WWCL's old rules required it on.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225671",
         "src/PC/client_mp/cl_main_mp.c:225706"
@@ -21604,9 +21604,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Freeze",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Freeze effects",
+      "summary": "A developer switch that freezes effects in place.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225680",
         "src/PC/client_mp/cl_main_mp.c:225715"
@@ -21674,9 +21674,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Profile",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Effects profiling",
+      "summary": "A developer switch for profiling effects.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225685",
         "src/PC/client_mp/cl_main_mp.c:225720"
@@ -21769,8 +21769,8 @@
       ],
       "group": "gfx",
       "title": "Sort visual effects",
-      "summary": "Use the visual-effect sorting preference.",
-      "details": "CoD2x competitive mode forces this on and changes its run-time type and limits.",
+      "summary": "Draws overlapping smoke and other effects in depth order.",
+      "details": "On by default. A PunkBuster kick message read 'Must be equal to 1', ESL's old list required 1, and ePAM, zPAM and CoD2x competitive rules force it on. Only WWCL's 2007 LAN rules asked for 0.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225675",
         "src/PC/client_mp/cl_main_mp.c:225710",
@@ -21862,9 +21862,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Vis min trace dist",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Effect visibility distance",
+      "summary": "A developer distance value for effect visibility checks.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225684",
         "src/PC/client_mp/cl_main_mp.c:225719"
@@ -34949,9 +34949,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Aa alpha",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Smooth cut-out edges",
+      "summary": "How the game smooths the edges of textures with see-through cut-outs.",
+      "details": "Choices are off, a quick dither and a slower supersample. Higher quality costs speed. It is saved with your config.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:382"
       ],
@@ -35321,9 +35321,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Blur",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Screen blur",
+      "summary": "How much the whole picture is blurred.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:482"
       ],
@@ -35415,8 +35415,8 @@
       ],
       "group": "gfx",
       "title": "Borderless full screen",
-      "summary": "Use the native borderless window preference.",
-      "details": "This is a macOS port registration. It belongs to machine display settings when Config Studio is integrated.",
+      "summary": "Fills the screen with a borderless window instead of changing the display mode.",
+      "details": "This setting comes from the macOS version of the game. The launcher's display settings cover it for most players.",
       "sources": [
         "src/Mac/DirectX_9/CDirect3D.c:241",
         "src/Mac/DirectX_9/CDirect3DDevice.c:2862"
@@ -35492,9 +35492,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Clear color",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Screen clear colour",
+      "summary": "A colour the renderer clears the screen to before drawing.",
+      "details": "Its exact use is not documented. The default is black.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:386"
       ],
@@ -35569,9 +35569,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Clear color2",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Second clear colour",
+      "summary": "A second colour the renderer clears the screen to.",
+      "details": "Its exact use is not documented. The default is black.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:388"
       ],
@@ -35654,9 +35654,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Color map",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Colour map override",
+      "summary": "A developer switch that replaces colour maps with white or black.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:320"
       ],
@@ -35739,9 +35739,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Cosine power map shift",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Specular power shift",
+      "summary": "A developer value that shifts the specular power map.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:328"
       ],
@@ -35822,9 +35822,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Debug ent counts",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Entity count debug",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:266"
       ],
@@ -35911,9 +35911,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Debug shader",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shader debug view",
+      "summary": "A developer switch for viewing shader debug information.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:264"
       ],
@@ -35978,9 +35978,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Depth prepass models",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Model depth pre-pass",
+      "summary": "Draws model depth in a first pass before the models themselves.",
+      "details": "Off by default, and the game's safe mode sets it to off. Its effect is inferred from the name.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:412"
       ],
@@ -36131,9 +36131,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Distortion effects",
-      "summary": "Set the renderer's distortion preference.",
-      "details": "The effect depends on the materials and rendering path in use.",
+      "title": "Heat haze",
+      "summary": "Bends the picture around heat sources such as flames and explosions.",
+      "details": "Heat haze is one of the DirectX 9 effects, and competitive configs in the research often turn it off. Nothing in the research measures its cost.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:484"
       ],
@@ -36290,9 +36290,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Draw bmodels",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Draw brush models",
+      "summary": "A developer switch for drawing brush models.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:398"
       ],
@@ -36359,9 +36359,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Draw decals",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Draw wall marks",
+      "summary": "Whether wall marks are drawn.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. Turn Bullet marks off to remove marks instead. ESL's old PunkBuster list required it on.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:394"
       ],
@@ -36429,8 +36429,8 @@
       ],
       "group": "gfx",
       "title": "Draw entities",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "A developer switch for drawing entities.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. ESL's old PunkBuster list required it on.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:396"
       ],
@@ -36513,9 +36513,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Draw prim cap",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Draw primitive cap",
+      "summary": "A developer value that limits how many primitives are drawn.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. ESL's old PunkBuster list required 0.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:406"
       ],
@@ -36598,9 +36598,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Draw prim floor",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Draw primitive floor",
+      "summary": "A developer value that sets a minimum for primitives drawn.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. ESL's old PunkBuster list required 0.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:408"
       ],
@@ -36667,9 +36667,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Draw smodels",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Draw static models",
+      "summary": "A developer switch for drawing static models.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. ESL's old PunkBuster list required it on.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:400"
       ],
@@ -36806,8 +36806,8 @@
       ],
       "group": "gfx",
       "title": "Draw water",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "Whether water is drawn.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. WWCL's old rules required it on.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:410"
       ],
@@ -36874,9 +36874,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Draw world",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Draw the world",
+      "summary": "A developer switch for drawing the world geometry.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:392"
       ],
@@ -36943,9 +36943,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Draw xmodels",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Draw models",
+      "summary": "A developer switch for drawing models.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:402"
       ],
@@ -37101,9 +37101,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Force lod",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Force model detail",
+      "summary": "Forces every model to one level of detail.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. WWCL's old rules required it left on none.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:450"
       ],
@@ -37170,9 +37170,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Fullbright",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Full brightness",
+      "summary": "Draws everything fully lit, without shading.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It removes shadowing, so rule sets forbid it: ESL's old PunkBuster list and WWCL's old rules required it off.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:262"
       ],
@@ -37242,8 +37242,8 @@
       ],
       "group": "gfx",
       "title": "Full-screen display",
-      "summary": "Request full-screen rendering.",
-      "details": "Stock marks this registration read-only. CoD2x changes its flags; native window behaviour is handled by the macOS platform layer.",
+      "summary": "Chooses full screen or a window.",
+      "details": "CoD2x lets you change this: on is full screen and off is a window, and a window the size of your display gives borderless play. It is latched, so a change applies after the renderer restarts.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:537"
       ],
@@ -37398,8 +37398,8 @@
       ],
       "group": "gfx",
       "title": "Glow effects",
-      "summary": "Set the renderer's glow preference.",
-      "details": "The effect depends on the materials and rendering path in use.",
+      "summary": "Adds a soft glow around bright parts of the picture.",
+      "details": "Turning it off can noticeably improve performance, especially on weaker graphics cards, and some players find the glow distracting. It is a DirectX 9 effect. Published pro configs mostly turn it off.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:486"
       ],
@@ -37480,9 +37480,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Glow bloom cutoff",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Glow brightness cutoff",
+      "summary": "A tuning value for the glow effect.",
+      "details": "It likely sets the brightness above which things glow, inferred from its name.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:500"
       ],
@@ -37563,9 +37563,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Glow bloom desaturation",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Glow colour drain",
+      "summary": "A tuning value for the glow effect.",
+      "details": "It likely sets how much colour the glow loses, inferred from its name.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:502"
       ],
@@ -37646,9 +37646,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Glow bloom intensity0",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "First glow strength",
+      "summary": "A tuning value for the glow effect.",
+      "details": "It likely sets how strong the first glow is, inferred from its name. Map scripts set this when a map loads, so a value you save may be replaced.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:496"
       ],
@@ -37729,9 +37729,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Glow bloom intensity1",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Second glow strength",
+      "summary": "A tuning value for the glow effect.",
+      "details": "It likely sets how strong the second glow is, inferred from its name. Map scripts set this when a map loads, so a value you save may be replaced.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:498"
       ],
@@ -37812,9 +37812,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Glow radius0",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "First glow radius",
+      "summary": "A tuning value for the glow effect.",
+      "details": "It likely sets how far the first glow spreads, inferred from its name.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:488"
       ],
@@ -37895,9 +37895,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Glow radius1",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Second glow radius",
+      "summary": "A tuning value for the glow effect.",
+      "details": "It likely sets how far the second glow spreads, inferred from its name.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:490"
       ],
@@ -37978,9 +37978,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Glow sky bleed intensity0",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "First glow sky bleed",
+      "summary": "A tuning value for the glow effect.",
+      "details": "It likely sets how much the first glow bleeds in from the sky, inferred from its name. Map scripts set this when a map loads, so a value you save may be replaced.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:492"
       ],
@@ -38061,9 +38061,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Glow sky bleed intensity1",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Second glow sky bleed",
+      "summary": "A tuning value for the glow effect.",
+      "details": "It likely sets how much the second glow bleeds in from the sky, inferred from its name.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:494"
       ],
@@ -38146,9 +38146,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Gpu sync",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "CPU and GPU syncing",
+      "summary": "How strictly the game keeps your processor and graphics card in step.",
+      "details": "Choices are off, beginning, before present and adaptive, and adaptive is the default. Lower settings can raise frame rate but may add mouse and keyboard lag, which is why the game's makers chose adaptive.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:274"
       ],
@@ -38231,9 +38231,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "High lod dist",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "High detail distance",
+      "summary": "A developer value for the distance that uses high model detail.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:442"
       ],
@@ -38314,9 +38314,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Ignore",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Renderer ignore flags",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:250"
       ],
@@ -38385,9 +38385,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Ignorehwgamma",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Ignore display gamma",
+      "summary": "Tells the game not to use the display's hardware brightness curve.",
+      "details": "The exact effect is not documented. It is latched, so a change applies after the renderer restarts.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:256"
       ],
@@ -38454,9 +38454,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "In game video",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "In-game video",
+      "summary": "Plays video that appears on in-game screens.",
+      "details": "On by default.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225638",
         "src/PC/client_mp/cl_main_mp.c:225673"
@@ -38540,9 +38540,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Light map",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Lightmap override",
+      "summary": "A developer switch that replaces lightmaps with white or black.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. WWCL's old rules required it left on unchanged.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:318"
       ],
@@ -38627,9 +38627,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Light tweak ambient",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Model ambient light",
+      "summary": "Adds extra ambient light to models.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. ESL's old PunkBuster list allowed 0 to 0.2 and ePAM forced 0.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:355"
       ],
@@ -38708,9 +38708,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Light tweak ambient color",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Ambient light colour",
+      "summary": "A developer colour for the extra ambient light.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:361"
       ],
@@ -38795,9 +38795,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Light tweak diffuse fraction",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Diffuse light share",
+      "summary": "A developer value for how much of the tweaked light is diffuse.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:357"
       ],
@@ -38876,9 +38876,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Light tweak sun color",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun light colour",
+      "summary": "A developer colour for the tweaked sun light.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:363"
       ],
@@ -38957,9 +38957,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Light tweak sun diffuse color",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun diffuse colour",
+      "summary": "A developer colour for the tweaked diffuse sun light.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:365"
       ],
@@ -39052,9 +39052,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Light tweak sun direction",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun light direction",
+      "summary": "A developer direction for the tweaked sun light.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:367"
       ],
@@ -39139,9 +39139,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Light tweak sun light",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun light strength",
+      "summary": "A developer value for the tweaked sun light.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:359"
       ],
@@ -39208,9 +39208,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Lock pvs",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Lock visibility",
+      "summary": "A developer switch that freezes what the game considers visible.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:414"
       ],
@@ -39463,9 +39463,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Log file",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Renderer log file",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:374"
       ],
@@ -39548,9 +39548,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Lowest lod dist",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Lowest detail distance",
+      "summary": "A developer value for the distance that uses the lowest model detail.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:448"
       ],
@@ -39633,9 +39633,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Low lod dist",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Low detail distance",
+      "summary": "A developer value for the distance that uses low model detail.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:446"
       ],
@@ -39718,9 +39718,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Medium lod dist",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Medium detail distance",
+      "summary": "A developer value for the distance that uses medium model detail.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:444"
       ],
@@ -39887,9 +39887,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Monitor",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Monitor number",
+      "summary": "Which monitor the game uses in full screen.",
+      "details": "From 0 to 8, and the name suggests the monitor's position in the list. It is latched, so a change applies after the renderer restarts.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:542"
       ],
@@ -40024,9 +40024,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Norefresh",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Skip screen refresh",
+      "summary": "A developer switch that stops the screen being refreshed.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:378"
       ],
@@ -40107,9 +40107,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Normal map",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Normal map override",
+      "summary": "A developer switch that replaces normal maps with flat ones.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:322"
       ],
@@ -40184,9 +40184,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Objective color dx7max",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Objective colour, high",
+      "summary": "The brighter colour used for objectives in the DirectX 7 renderer.",
+      "details": "Its role is inferred from its name.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:372"
       ],
@@ -40261,9 +40261,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Objective color dx7min",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Objective colour, low",
+      "summary": "The darker colour used for objectives in the DirectX 7 renderer.",
+      "details": "Its role is inferred from its name.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:370"
       ],
@@ -40330,9 +40330,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Optimize",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Optimise geometry on load",
+      "summary": "Tidies map geometry when a map loads.",
+      "details": "On by default. It is latched, so a change applies after the renderer restarts.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:268"
       ],
@@ -40399,9 +40399,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Optimize lightmaps",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Optimise lightmaps on load",
+      "summary": "Tidies a map's baked lighting when it loads.",
+      "details": "On by default. It is latched, so a change applies after the renderer restarts.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:270"
       ],
@@ -40484,9 +40484,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Optimize xmodels",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Optimise models on load",
+      "summary": "How hard the game tidies model data when a map loads.",
+      "details": "From 0 to 1,000, and 100 by default. It is latched, so a change applies after the renderer restarts.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:272"
       ],
@@ -40568,8 +40568,8 @@
       ],
       "group": "gfx",
       "title": "Outdoor away bias",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "A renderer tuning value for outdoor scenes.",
+      "details": "Its exact effect is not documented.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:504"
       ],
@@ -40651,8 +40651,8 @@
       ],
       "group": "gfx",
       "title": "Outdoor down bias",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "A renderer tuning value for outdoor scenes.",
+      "details": "Its exact effect is not documented.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:506"
       ],
@@ -40734,8 +40734,8 @@
       ],
       "group": "gfx",
       "title": "Outdoor feather",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "A renderer tuning value for outdoor scenes.",
+      "details": "Its exact effect is not documented.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:508"
       ],
@@ -40820,9 +40820,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Overbright bits",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Light intensity scaling",
+      "summary": "Scales how bright map lighting is drawn.",
+      "details": "Believed to scale baked lighting intensity, from its Quake heritage. The setting accepts 0 or 1 and is latched. ESL's old PunkBuster list allowed 0 to 2.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:252"
       ],
@@ -41255,9 +41255,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Polygon offset bias",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Mark depth offset",
+      "summary": "Pushes wall marks and overlays toward or away from the surface they sit on.",
+      "details": "From -16 to 16, and -1 by default. Large values make bullet marks and overlay textures disappear, which some players use to spot enemies more easily. Rule sets treat unusual values as suspect: ESL's old PunkBuster list allowed -1 to 16 and a later PunkBuster template required exactly -1.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:308"
       ],
@@ -41340,9 +41340,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Polygon offset scale",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Mark depth slope",
+      "summary": "Adjusts the same wall-mark depth offset on sloped surfaces.",
+      "details": "From -4 to 4, and -1 by default. Unusual values are treated as suspect: ESL's old PunkBuster list allowed -1 to 4.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:306"
       ],
@@ -41425,9 +41425,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Portal bevels",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Portal bevel amount",
+      "summary": "A renderer tuning value for portal visibility.",
+      "details": "From 0 to 1, and 0.7 by default. It is saved with your config. Its exact effect is not documented.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:422"
       ],
@@ -41493,8 +41493,8 @@
       ],
       "group": "gfx",
       "title": "Portal bevels only",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "A renderer tuning switch for portal visibility.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:424"
       ],
@@ -41561,9 +41561,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Portal fine cull",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Fine portal culling",
+      "summary": "A developer switch for portal visibility culling.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:420"
       ],
@@ -41644,9 +41644,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Portal min clip area",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Portal minimum area",
+      "summary": "A renderer tuning value for portal visibility.",
+      "details": "From 0 to 1, and 0.02 by default. Its exact effect is not documented.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:430"
       ],
@@ -41730,8 +41730,8 @@
       ],
       "group": "gfx",
       "title": "Portal walk limit",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "A developer value that limits portal visibility walking.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:428"
       ],
@@ -41811,16 +41811,20 @@
       "origins": [
         "port"
       ],
-      "group": "gfx",
-      "title": "Present mode",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "frame",
+      "title": "Frame presenting mode",
+      "summary": "Chooses whether the game skips showing a frame while the last one is still being drawn.",
+      "details": "0 shows every frame. 1 waits for the graphics card to finish the previous frame and, if it has not, skips showing this one so the screen never shows an older picture. It comes from the macOS version of the game and is saved with your config.",
       "sources": [
         "src/Mac/DirectX_9/CDirect3DDevice.c:1720"
       ],
       "guided": false,
       "control": {
-        "kind": "number"
+        "kind": "number",
+        "labels": {
+          "0": "Show every frame",
+          "1": "Skip while busy"
+        }
       }
     },
     {
@@ -41879,9 +41883,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Pvs stats",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Visibility statistics",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:418"
       ],
@@ -41964,9 +41968,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Rail core width",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Rail beam width",
+      "summary": "A leftover Quake 3 setting for the width of a rail beam.",
+      "details": "No effect is known in CoD2.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:340"
       ],
@@ -42050,8 +42054,8 @@
       ],
       "group": "gfx",
       "title": "Renderer in use",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "Which drawing method the game is using right now.",
+      "details": "The game sets it itself and treats it as read-only. Choices are none, DirectX 9 and DirectX 7.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:554"
       ],
@@ -42222,9 +42226,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Show fb color debug",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Framebuffer colour debug",
+      "summary": "A developer switch for showing framebuffer colours.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:436"
       ],
@@ -42291,9 +42295,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Show float zdebug",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Floating depth debug",
+      "summary": "A developer switch for showing floating-point depth.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:438"
       ],
@@ -42362,9 +42366,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Show ground lit",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show ground lighting",
+      "summary": "A developer switch for showing ground lighting.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:440"
       ],
@@ -42432,8 +42436,8 @@
       ],
       "group": "gfx",
       "title": "Show light grid",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "A developer switch for showing the light grid.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:346"
       ],
@@ -42501,8 +42505,8 @@
       ],
       "group": "gfx",
       "title": "Show missing light grid",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "A developer switch for showing where the light grid is missing.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:348"
       ],
@@ -42586,8 +42590,8 @@
       ],
       "group": "gfx",
       "title": "Show portals",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "A developer switch for showing portals.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:432"
       ],
@@ -42654,9 +42658,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Show smodel names",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show static model names",
+      "summary": "A developer switch for showing static model names.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:434"
       ],
@@ -42723,9 +42727,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Show surf counts",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show surface counts",
+      "summary": "A developer switch for showing surface counts.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:334"
       ],
@@ -42792,9 +42796,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Show tri counts",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show triangle counts",
+      "summary": "A developer switch for showing triangle counts.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:332"
       ],
@@ -42877,9 +42881,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Show tris",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show wireframe",
+      "summary": "Draws the world as a wireframe.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. ESL's old PunkBuster list required it off.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:330"
       ],
@@ -42946,9 +42950,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Show vert counts",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show vertex counts",
+      "summary": "A developer switch for showing vertex counts.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:336"
       ],
@@ -43015,9 +43019,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Single cell",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Single visibility cell",
+      "summary": "A developer switch that limits drawing to one visibility cell.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:426"
       ],
@@ -43082,9 +43086,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Skin cache",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Cache model skins",
+      "summary": "Keeps model skin data ready so models draw more smoothly.",
+      "details": "On by default. TweakGuide says to turn it off only on very low memory.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:278"
       ],
@@ -43151,9 +43155,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Skip back end",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Skip drawing stage",
+      "summary": "Skips the last stage of drawing, leaving a black screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. WWCL's old rules required it off.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:376"
       ],
@@ -43220,9 +43224,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Skip pvs",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Skip visibility culling",
+      "summary": "A developer switch that turns off visibility culling.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:416"
       ],
@@ -43287,9 +43291,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Smc enable",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Static model cache",
+      "summary": "Turns on the cache the game keeps for static models.",
+      "details": "On by default.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:280"
       ],
@@ -43372,9 +43376,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Specular color scale",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Specular colour scale",
+      "summary": "A developer value that scales specular colour.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:326"
       ],
@@ -43457,9 +43461,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Specular map",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Specular map override",
+      "summary": "A developer switch that replaces specular maps with white or black.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:324"
       ],
@@ -43524,9 +43528,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sse skinning",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "SSE model skinning",
+      "summary": "A switch registered for faster model animation.",
+      "details": "On by default. This version of the game only registers it and never reads the value.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:534"
       ],
@@ -43593,9 +43597,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sun from dvars",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun from settings",
+      "summary": "A developer switch, probably for taking the sun from these settings rather than the map.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:512"
       ],
@@ -43684,9 +43688,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sun fx position",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun effect position",
+      "summary": "Where the sun effect is placed, as angles in degrees.",
+      "details": "Three numbers from -360 to 360. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:111"
       ],
@@ -43767,9 +43771,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunblind fadein",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun-blind fade in",
+      "summary": "How many seconds the sun-blind darkening takes to build up.",
+      "details": "From 0 to 60 seconds, and 0.5 by default. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:102"
       ],
@@ -43850,9 +43854,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunblind fadeout",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun-blind fade out",
+      "summary": "How many seconds the sun-blind darkening takes to fade.",
+      "details": "From 0 to 60 seconds, and 3 by default. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:103"
       ],
@@ -43933,9 +43937,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunblind max angle",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun-blind full angle",
+      "summary": "How close to the sun, in degrees, the sun-blind darkening is at full strength.",
+      "details": "From 0 to 90 degrees, and 5 by default. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:100"
       ],
@@ -44016,9 +44020,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunblind max darken",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun-blind darkness",
+      "summary": "The most the picture darkens when you look at the sun.",
+      "details": "From 0 to 1, and 0.75 by default. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:101"
       ],
@@ -44099,9 +44103,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunblind min angle",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun-blind start angle",
+      "summary": "How far from the sun, in degrees, the sun-blind darkening starts.",
+      "details": "From 0 to 90 degrees, and 30 by default. Maps likely set the sun themselves, so a saved value may be replaced.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:99"
       ],
@@ -44182,9 +44186,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunflare fadein",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun flare fade in",
+      "summary": "How many seconds the sun flare takes to appear.",
+      "details": "From 0 to 60 seconds, and 1 by default. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:96"
       ],
@@ -44265,9 +44269,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunflare fadeout",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun flare fade out",
+      "summary": "How many seconds the sun flare takes to fade.",
+      "details": "From 0 to 60 seconds, and 1 by default. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:97"
       ],
@@ -44348,9 +44352,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunflare max alpha",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun flare strength",
+      "summary": "The most opaque the sun flare gets.",
+      "details": "From 0 to 1, and 1 by default. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:95"
       ],
@@ -44431,9 +44435,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunflare max angle",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun flare large angle",
+      "summary": "The angle, in degrees, where the sun flare is largest.",
+      "details": "From 0 to 90 degrees, and 2 by default. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:94"
       ],
@@ -44514,9 +44518,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunflare max size",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun flare maximum size",
+      "summary": "The largest size the sun flare gets.",
+      "details": "From 0 to 10,000, and 2,500 by default. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:93"
       ],
@@ -44597,9 +44601,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunflare min angle",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun flare small angle",
+      "summary": "The angle, in degrees, where the sun flare is smallest.",
+      "details": "From 0 to 90 degrees, and 45 by default. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:92"
       ],
@@ -44680,9 +44684,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunflare min size",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun flare minimum size",
+      "summary": "The smallest size the sun flare gets.",
+      "details": "From 0 to 10,000, and 0 by default. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:91"
       ],
@@ -44747,9 +44751,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunflare shader",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun flare material",
+      "summary": "The material the game uses to draw the sun flare.",
+      "details": "The default is the standard sun flare material. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:90"
       ],
@@ -44830,9 +44834,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunglare fadein",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun glare fade in",
+      "summary": "How many seconds the sun glare takes to build up.",
+      "details": "From 0 to 60 seconds, and 0.5 by default. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:108"
       ],
@@ -44913,9 +44917,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunglare fadeout",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun glare fade out",
+      "summary": "How many seconds the sun glare takes to fade.",
+      "details": "From 0 to 60 seconds, and 3 by default. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:109"
       ],
@@ -44996,9 +45000,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunglare max angle",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun glare full angle",
+      "summary": "How close to the sun, in degrees, the sun glare is at full strength.",
+      "details": "From 0 to 90 degrees, and 5 by default. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:106"
       ],
@@ -45079,9 +45083,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunglare max lighten",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun glare brightness",
+      "summary": "The most the picture lightens when you look at the sun.",
+      "details": "From 0 to 1, and 0.75 by default. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:107"
       ],
@@ -45162,9 +45166,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunglare min angle",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun glare start angle",
+      "summary": "How far from the sun, in degrees, the sun glare starts.",
+      "details": "From 0 to 90 degrees, and 30 by default. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:105"
       ],
@@ -45229,9 +45233,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunsprite shader",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun material",
+      "summary": "The material the game uses to draw the sun.",
+      "details": "The default is sun. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:87"
       ],
@@ -45312,9 +45316,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sunsprite size",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sun size",
+      "summary": "How large the sun is drawn.",
+      "details": "From 1 to 1,000, and 16 by default. Maps likely set the sun themselves.",
       "sources": [
         "src/PC/gfx_d3d/r_sky.c:88"
       ],
@@ -45467,9 +45471,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Test fill",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Fill-rate test",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:516"
       ],
@@ -45536,9 +45540,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Test fill enable",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Enable fill-rate test",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:518"
       ],
@@ -45619,9 +45623,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Test transform",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Transform test",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:514"
       ],
@@ -45794,9 +45798,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Vc makelog",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Make a vertex-cache log",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:342"
       ],
@@ -45877,9 +45881,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Vc showlog",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show a vertex-cache log",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:344"
       ],
@@ -45982,9 +45986,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Xdebug",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Model debug view",
+      "summary": "A developer switch for showing boxes or axes on models.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:338"
       ],
@@ -46067,9 +46071,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Zfar",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Far clip distance",
+      "summary": "How far away the game stops drawing; 0 leaves it to the game.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. WWCL's old rules disqualified changing it.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:302"
       ],
@@ -46152,9 +46156,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Znear",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Near clip distance",
+      "summary": "How close to the camera the game starts drawing.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. WWCL's old rules disqualified changing it.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:298"
       ],
@@ -46237,9 +46241,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Znear depthhack",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Held weapon near clip",
+      "summary": "How close to the camera held weapons start to draw.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. WWCL's old rules disqualified changing it.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:300"
       ],
@@ -46492,9 +46496,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sc blur",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shadow blur",
+      "summary": "How soft shadow edges are.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:454"
       ],
@@ -46577,9 +46581,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sc count",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shadow casters",
+      "summary": "A developer value for how many shadow casters the game uses.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:456"
       ],
@@ -46662,9 +46666,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sc debug caster count",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shadow caster debug count",
+      "summary": "A developer value for debugging shadow casters.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:458"
       ],
@@ -46747,9 +46751,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sc debug receiver count",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shadow receiver debug count",
+      "summary": "A developer value for debugging shadow receivers.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:460"
       ],
@@ -46907,9 +46911,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sc fade range",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shadow fade range",
+      "summary": "A developer value for how shadows fade with distance.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:470"
       ],
@@ -46992,9 +46996,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sc length",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shadow length",
+      "summary": "A developer value for how long shadows are.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:476"
       ],
@@ -47077,9 +47081,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sc offscreen caster lod bias",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Off-screen shadow detail bias",
+      "summary": "A developer value for model detail on off-screen shadow casters.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:478"
       ],
@@ -47162,9 +47166,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sc offscreen caster lod scale",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Off-screen shadow detail scale",
+      "summary": "A developer value for model detail on off-screen shadow casters.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:480"
       ],
@@ -47247,9 +47251,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sc shadow in rate",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shadow fade-in rate",
+      "summary": "A developer value for how fast shadows fade in.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:472"
       ],
@@ -47332,9 +47336,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sc shadow out rate",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shadow fade-out rate",
+      "summary": "A developer value for how fast shadows fade out.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:474"
       ],
@@ -47401,9 +47405,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sc show debug",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show shadow debug",
+      "summary": "A developer switch for showing shadow debugging.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:464"
       ],
@@ -47470,9 +47474,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sc show overlay",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show shadow overlay",
+      "summary": "A developer switch for showing the shadow overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:462"
       ],
@@ -47555,9 +47559,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sc want count",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shadow casters wanted",
+      "summary": "A developer value for how many shadow casters the game aims for.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:466"
       ],
@@ -47640,9 +47644,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Sc want count margin",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Shadow caster margin",
+      "summary": "A developer value for the margin around wanted shadow casters.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:468"
       ],
@@ -56680,9 +56684,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Vid xpos",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Window left position",
+      "summary": "Where the game window sits from the left of the screen when windowed.",
+      "details": "The game saves it every time you move the window. The range is -4,096 to 4,096.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:522"
       ],
@@ -56765,9 +56769,9 @@
         "stock"
       ],
       "group": "gfx",
-      "title": "Vid ypos",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Window top position",
+      "summary": "Where the game window sits from the top of the screen when windowed.",
+      "details": "The game saves it every time you move the window. The range is -4,096 to 4,096.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:524"
       ],

@@ -368,14 +368,14 @@
     "r_fullscreen": {
       "group": "gfx",
       "title": "Full-screen display",
-      "summary": "Request full-screen rendering.",
-      "details": "Stock marks this registration read-only. CoD2x changes its flags; native window behaviour is handled by the macOS platform layer."
+      "summary": "Chooses full screen or a window.",
+      "details": "CoD2x lets you change this: on is full screen and off is a window, and a window the size of your display gives borderless play. It is latched, so a change applies after the renderer restarts."
     },
     "r_borderless": {
       "group": "gfx",
       "title": "Borderless full screen",
-      "summary": "Use the native borderless window preference.",
-      "details": "This is a macOS port registration. It belongs to machine display settings when Config Studio is integrated."
+      "summary": "Fills the screen with a borderless window instead of changing the display mode.",
+      "details": "This setting comes from the macOS version of the game. The launcher's display settings cover it for most players."
     },
     "r_multigpu": {
       "group": "gfx",
@@ -410,14 +410,14 @@
     "r_glow": {
       "group": "gfx",
       "title": "Glow effects",
-      "summary": "Set the renderer's glow preference.",
-      "details": "The effect depends on the materials and rendering path in use."
+      "summary": "Adds a soft glow around bright parts of the picture.",
+      "details": "Turning it off can noticeably improve performance, especially on weaker graphics cards, and some players find the glow distracting. It is a DirectX 9 effect. Published pro configs mostly turn it off."
     },
     "r_distortion": {
       "group": "gfx",
-      "title": "Distortion effects",
-      "summary": "Set the renderer's distortion preference.",
-      "details": "The effect depends on the materials and rendering path in use."
+      "title": "Heat haze",
+      "summary": "Bends the picture around heat sources such as flames and explosions.",
+      "details": "Heat haze is one of the DirectX 9 effects, and competitive configs in the research often turn it off. Nothing in the research measures its cost."
     },
     "sc_enable": {
       "group": "gfx",
@@ -436,8 +436,8 @@
     "fx_sort": {
       "group": "gfx",
       "title": "Sort visual effects",
-      "summary": "Use the visual-effect sorting preference.",
-      "details": "CoD2x competitive mode forces this on and changes its run-time type and limits.",
+      "summary": "Draws overlapping smoke and other effects in depth order.",
+      "details": "On by default. A PunkBuster kick message read 'Must be equal to 1', ESL's old list required 1, and ePAM, zPAM and CoD2x competitive rules force it on. Only WWCL's 2007 LAN rules asked for 0.",
       "runtimeNotes": [
         "CoD2x server policy can change the value, type or limits at run time; registration metadata is not a live ruleset."
       ],
@@ -2089,6 +2089,883 @@
       "title": "Volume fade time",
       "summary": "How many milliseconds sounds take to fade when volumes are linked.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 500 milliseconds."
+    },
+    "cg_markslimit": {
+      "group": "gfx",
+      "title": "Bullet mark limit",
+      "summary": "The most bullet and explosion marks kept on screen at once.",
+      "details": "From 0 to 1,024, and 1,024 by default. Fewer marks can ease heavy fights. It only matters while Bullet marks is on."
+    },
+    "fx_cull": {
+      "group": "gfx",
+      "title": "Hide unseen effects",
+      "summary": "Skips drawing effects that are out of view.",
+      "details": "A culling switch for the effects system. It is on by default and, unlike its neighbours, is not cheat-protected."
+    },
+    "r_aaalpha": {
+      "group": "gfx",
+      "title": "Smooth cut-out edges",
+      "summary": "How the game smooths the edges of textures with see-through cut-outs.",
+      "details": "Choices are off, a quick dither and a slower supersample. Higher quality costs speed. It is saved with your config."
+    },
+    "r_gpusync": {
+      "group": "gfx",
+      "title": "CPU and GPU syncing",
+      "summary": "How strictly the game keeps your processor and graphics card in step.",
+      "details": "Choices are off, beginning, before present and adaptive, and adaptive is the default. Lower settings can raise frame rate but may add mouse and keyboard lag, which is why the game's makers chose adaptive."
+    },
+    "r_ignorehwgamma": {
+      "group": "gfx",
+      "title": "Ignore display gamma",
+      "summary": "Tells the game not to use the display's hardware brightness curve.",
+      "details": "The exact effect is not documented. It is latched, so a change applies after the renderer restarts."
+    },
+    "r_ingamevideo": {
+      "group": "gfx",
+      "title": "In-game video",
+      "summary": "Plays video that appears on in-game screens.",
+      "details": "On by default."
+    },
+    "r_monitor": {
+      "group": "gfx",
+      "title": "Monitor number",
+      "summary": "Which monitor the game uses in full screen.",
+      "details": "From 0 to 8, and the name suggests the monitor's position in the list. It is latched, so a change applies after the renderer restarts."
+    },
+    "r_depthprepassmodels": {
+      "group": "gfx",
+      "title": "Model depth pre-pass",
+      "summary": "Draws model depth in a first pass before the models themselves.",
+      "details": "Off by default, and the game's safe mode sets it to off. Its effect is inferred from the name."
+    },
+    "r_skincache": {
+      "group": "gfx",
+      "title": "Cache model skins",
+      "summary": "Keeps model skin data ready so models draw more smoothly.",
+      "details": "On by default. TweakGuide says to turn it off only on very low memory."
+    },
+    "r_smc_enable": {
+      "group": "gfx",
+      "title": "Static model cache",
+      "summary": "Turns on the cache the game keeps for static models.",
+      "details": "On by default."
+    },
+    "r_sse_skinning": {
+      "group": "gfx",
+      "title": "SSE model skinning",
+      "summary": "A switch registered for faster model animation.",
+      "details": "On by default. This version of the game only registers it and never reads the value."
+    },
+    "r_optimize": {
+      "group": "gfx",
+      "title": "Optimise geometry on load",
+      "summary": "Tidies map geometry when a map loads.",
+      "details": "On by default. It is latched, so a change applies after the renderer restarts."
+    },
+    "r_optimizelightmaps": {
+      "group": "gfx",
+      "title": "Optimise lightmaps on load",
+      "summary": "Tidies a map's baked lighting when it loads.",
+      "details": "On by default. It is latched, so a change applies after the renderer restarts."
+    },
+    "r_optimizexmodels": {
+      "group": "gfx",
+      "title": "Optimise models on load",
+      "summary": "How hard the game tidies model data when a map loads.",
+      "details": "From 0 to 1,000, and 100 by default. It is latched, so a change applies after the renderer restarts."
+    },
+    "r_overbrightbits": {
+      "group": "gfx",
+      "title": "Light intensity scaling",
+      "summary": "Scales how bright map lighting is drawn.",
+      "details": "Believed to scale baked lighting intensity, from its Quake heritage. The setting accepts 0 or 1 and is latched. ESL's old PunkBuster list allowed 0 to 2."
+    },
+    "r_polygonoffsetbias": {
+      "group": "gfx",
+      "title": "Mark depth offset",
+      "summary": "Pushes wall marks and overlays toward or away from the surface they sit on.",
+      "details": "From -16 to 16, and -1 by default. Large values make bullet marks and overlay textures disappear, which some players use to spot enemies more easily. Rule sets treat unusual values as suspect: ESL's old PunkBuster list allowed -1 to 16 and a later PunkBuster template required exactly -1."
+    },
+    "r_polygonoffsetscale": {
+      "group": "gfx",
+      "title": "Mark depth slope",
+      "summary": "Adjusts the same wall-mark depth offset on sloped surfaces.",
+      "details": "From -4 to 4, and -1 by default. Unusual values are treated as suspect: ESL's old PunkBuster list allowed -1 to 4."
+    },
+    "r_presentmode": {
+      "group": "frame",
+      "title": "Frame presenting mode",
+      "summary": "Chooses whether the game skips showing a frame while the last one is still being drawn.",
+      "details": "0 shows every frame. 1 waits for the graphics card to finish the previous frame and, if it has not, skips showing this one so the screen never shows an older picture. It comes from the macOS version of the game and is saved with your config.",
+      "control": {
+        "kind": "number",
+        "labels": {
+          "0": "Show every frame",
+          "1": "Skip while busy"
+        }
+      }
+    },
+    "vid_xpos": {
+      "group": "gfx",
+      "title": "Window left position",
+      "summary": "Where the game window sits from the left of the screen when windowed.",
+      "details": "The game saves it every time you move the window. The range is -4,096 to 4,096."
+    },
+    "vid_ypos": {
+      "group": "gfx",
+      "title": "Window top position",
+      "summary": "Where the game window sits from the top of the screen when windowed.",
+      "details": "The game saves it every time you move the window. The range is -4,096 to 4,096."
+    },
+    "r_railcorewidth": {
+      "group": "gfx",
+      "title": "Rail beam width",
+      "summary": "A leftover Quake 3 setting for the width of a rail beam.",
+      "details": "No effect is known in CoD2."
+    },
+    "r_clearcolor": {
+      "group": "gfx",
+      "title": "Screen clear colour",
+      "summary": "A colour the renderer clears the screen to before drawing.",
+      "details": "Its exact use is not documented. The default is black."
+    },
+    "r_clearcolor2": {
+      "group": "gfx",
+      "title": "Second clear colour",
+      "summary": "A second colour the renderer clears the screen to.",
+      "details": "Its exact use is not documented. The default is black."
+    },
+    "r_objectivecolordx7max": {
+      "group": "gfx",
+      "title": "Objective colour, high",
+      "summary": "The brighter colour used for objectives in the DirectX 7 renderer.",
+      "details": "Its role is inferred from its name."
+    },
+    "r_objectivecolordx7min": {
+      "group": "gfx",
+      "title": "Objective colour, low",
+      "summary": "The darker colour used for objectives in the DirectX 7 renderer.",
+      "details": "Its role is inferred from its name."
+    },
+    "r_outdoorawaybias": {
+      "group": "gfx",
+      "title": "Outdoor away bias",
+      "summary": "A renderer tuning value for outdoor scenes.",
+      "details": "Its exact effect is not documented."
+    },
+    "r_outdoordownbias": {
+      "group": "gfx",
+      "title": "Outdoor down bias",
+      "summary": "A renderer tuning value for outdoor scenes.",
+      "details": "Its exact effect is not documented."
+    },
+    "r_outdoorfeather": {
+      "group": "gfx",
+      "title": "Outdoor feather",
+      "summary": "A renderer tuning value for outdoor scenes.",
+      "details": "Its exact effect is not documented."
+    },
+    "r_portalbevels": {
+      "group": "gfx",
+      "title": "Portal bevel amount",
+      "summary": "A renderer tuning value for portal visibility.",
+      "details": "From 0 to 1, and 0.7 by default. It is saved with your config. Its exact effect is not documented."
+    },
+    "r_portalbevelsonly": {
+      "group": "gfx",
+      "title": "Portal bevels only",
+      "summary": "A renderer tuning switch for portal visibility.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "r_portalmincliparea": {
+      "group": "gfx",
+      "title": "Portal minimum area",
+      "summary": "A renderer tuning value for portal visibility.",
+      "details": "From 0 to 1, and 0.02 by default. Its exact effect is not documented."
+    },
+    "r_glowbloomcutoff": {
+      "group": "gfx",
+      "title": "Glow brightness cutoff",
+      "summary": "A tuning value for the glow effect.",
+      "details": "It likely sets the brightness above which things glow, inferred from its name."
+    },
+    "r_glowbloomdesaturation": {
+      "group": "gfx",
+      "title": "Glow colour drain",
+      "summary": "A tuning value for the glow effect.",
+      "details": "It likely sets how much colour the glow loses, inferred from its name."
+    },
+    "r_glowbloomintensity0": {
+      "group": "gfx",
+      "title": "First glow strength",
+      "summary": "A tuning value for the glow effect.",
+      "details": "It likely sets how strong the first glow is, inferred from its name. Map scripts set this when a map loads, so a value you save may be replaced."
+    },
+    "r_glowbloomintensity1": {
+      "group": "gfx",
+      "title": "Second glow strength",
+      "summary": "A tuning value for the glow effect.",
+      "details": "It likely sets how strong the second glow is, inferred from its name. Map scripts set this when a map loads, so a value you save may be replaced."
+    },
+    "r_glowradius0": {
+      "group": "gfx",
+      "title": "First glow radius",
+      "summary": "A tuning value for the glow effect.",
+      "details": "It likely sets how far the first glow spreads, inferred from its name."
+    },
+    "r_glowradius1": {
+      "group": "gfx",
+      "title": "Second glow radius",
+      "summary": "A tuning value for the glow effect.",
+      "details": "It likely sets how far the second glow spreads, inferred from its name."
+    },
+    "r_glowskybleedintensity0": {
+      "group": "gfx",
+      "title": "First glow sky bleed",
+      "summary": "A tuning value for the glow effect.",
+      "details": "It likely sets how much the first glow bleeds in from the sky, inferred from its name. Map scripts set this when a map loads, so a value you save may be replaced."
+    },
+    "r_glowskybleedintensity1": {
+      "group": "gfx",
+      "title": "Second glow sky bleed",
+      "summary": "A tuning value for the glow effect.",
+      "details": "It likely sets how much the second glow bleeds in from the sky, inferred from its name."
+    },
+    "r_sunblind_min_angle": {
+      "group": "gfx",
+      "title": "Sun-blind start angle",
+      "summary": "How far from the sun, in degrees, the sun-blind darkening starts.",
+      "details": "From 0 to 90 degrees, and 30 by default. Maps likely set the sun themselves, so a saved value may be replaced."
+    },
+    "r_sunblind_max_angle": {
+      "group": "gfx",
+      "title": "Sun-blind full angle",
+      "summary": "How close to the sun, in degrees, the sun-blind darkening is at full strength.",
+      "details": "From 0 to 90 degrees, and 5 by default. Maps likely set the sun themselves."
+    },
+    "r_sunblind_max_darken": {
+      "group": "gfx",
+      "title": "Sun-blind darkness",
+      "summary": "The most the picture darkens when you look at the sun.",
+      "details": "From 0 to 1, and 0.75 by default. Maps likely set the sun themselves."
+    },
+    "r_sunblind_fadein": {
+      "group": "gfx",
+      "title": "Sun-blind fade in",
+      "summary": "How many seconds the sun-blind darkening takes to build up.",
+      "details": "From 0 to 60 seconds, and 0.5 by default. Maps likely set the sun themselves."
+    },
+    "r_sunblind_fadeout": {
+      "group": "gfx",
+      "title": "Sun-blind fade out",
+      "summary": "How many seconds the sun-blind darkening takes to fade.",
+      "details": "From 0 to 60 seconds, and 3 by default. Maps likely set the sun themselves."
+    },
+    "r_sunglare_min_angle": {
+      "group": "gfx",
+      "title": "Sun glare start angle",
+      "summary": "How far from the sun, in degrees, the sun glare starts.",
+      "details": "From 0 to 90 degrees, and 30 by default. Maps likely set the sun themselves."
+    },
+    "r_sunglare_max_angle": {
+      "group": "gfx",
+      "title": "Sun glare full angle",
+      "summary": "How close to the sun, in degrees, the sun glare is at full strength.",
+      "details": "From 0 to 90 degrees, and 5 by default. Maps likely set the sun themselves."
+    },
+    "r_sunglare_max_lighten": {
+      "group": "gfx",
+      "title": "Sun glare brightness",
+      "summary": "The most the picture lightens when you look at the sun.",
+      "details": "From 0 to 1, and 0.75 by default. Maps likely set the sun themselves."
+    },
+    "r_sunglare_fadein": {
+      "group": "gfx",
+      "title": "Sun glare fade in",
+      "summary": "How many seconds the sun glare takes to build up.",
+      "details": "From 0 to 60 seconds, and 0.5 by default. Maps likely set the sun themselves."
+    },
+    "r_sunglare_fadeout": {
+      "group": "gfx",
+      "title": "Sun glare fade out",
+      "summary": "How many seconds the sun glare takes to fade.",
+      "details": "From 0 to 60 seconds, and 3 by default. Maps likely set the sun themselves."
+    },
+    "r_sunflare_min_angle": {
+      "group": "gfx",
+      "title": "Sun flare small angle",
+      "summary": "The angle, in degrees, where the sun flare is smallest.",
+      "details": "From 0 to 90 degrees, and 45 by default. Maps likely set the sun themselves."
+    },
+    "r_sunflare_max_angle": {
+      "group": "gfx",
+      "title": "Sun flare large angle",
+      "summary": "The angle, in degrees, where the sun flare is largest.",
+      "details": "From 0 to 90 degrees, and 2 by default. Maps likely set the sun themselves."
+    },
+    "r_sunflare_min_size": {
+      "group": "gfx",
+      "title": "Sun flare minimum size",
+      "summary": "The smallest size the sun flare gets.",
+      "details": "From 0 to 10,000, and 0 by default. Maps likely set the sun themselves."
+    },
+    "r_sunflare_max_size": {
+      "group": "gfx",
+      "title": "Sun flare maximum size",
+      "summary": "The largest size the sun flare gets.",
+      "details": "From 0 to 10,000, and 2,500 by default. Maps likely set the sun themselves."
+    },
+    "r_sunflare_max_alpha": {
+      "group": "gfx",
+      "title": "Sun flare strength",
+      "summary": "The most opaque the sun flare gets.",
+      "details": "From 0 to 1, and 1 by default. Maps likely set the sun themselves."
+    },
+    "r_sunflare_fadein": {
+      "group": "gfx",
+      "title": "Sun flare fade in",
+      "summary": "How many seconds the sun flare takes to appear.",
+      "details": "From 0 to 60 seconds, and 1 by default. Maps likely set the sun themselves."
+    },
+    "r_sunflare_fadeout": {
+      "group": "gfx",
+      "title": "Sun flare fade out",
+      "summary": "How many seconds the sun flare takes to fade.",
+      "details": "From 0 to 60 seconds, and 1 by default. Maps likely set the sun themselves."
+    },
+    "r_sunflare_shader": {
+      "group": "gfx",
+      "title": "Sun flare material",
+      "summary": "The material the game uses to draw the sun flare.",
+      "details": "The default is the standard sun flare material. Maps likely set the sun themselves."
+    },
+    "r_sunsprite_shader": {
+      "group": "gfx",
+      "title": "Sun material",
+      "summary": "The material the game uses to draw the sun.",
+      "details": "The default is sun. Maps likely set the sun themselves."
+    },
+    "r_sunsprite_size": {
+      "group": "gfx",
+      "title": "Sun size",
+      "summary": "How large the sun is drawn.",
+      "details": "From 1 to 1,000, and 16 by default. Maps likely set the sun themselves."
+    },
+    "r_sun_fx_position": {
+      "group": "gfx",
+      "title": "Sun effect position",
+      "summary": "Where the sun effect is placed, as angles in degrees.",
+      "details": "Three numbers from -360 to 360. Maps likely set the sun themselves."
+    },
+    "r_debugentcounts": {
+      "group": "gfx",
+      "title": "Entity count debug",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "r_ignore": {
+      "group": "gfx",
+      "title": "Renderer ignore flags",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "r_logfile": {
+      "group": "gfx",
+      "title": "Renderer log file",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "r_pvsstats": {
+      "group": "gfx",
+      "title": "Visibility statistics",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "r_testfill": {
+      "group": "gfx",
+      "title": "Fill-rate test",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "r_testfillenable": {
+      "group": "gfx",
+      "title": "Enable fill-rate test",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "r_testtransform": {
+      "group": "gfx",
+      "title": "Transform test",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "r_vc_makelog": {
+      "group": "gfx",
+      "title": "Make a vertex-cache log",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "r_vc_showlog": {
+      "group": "gfx",
+      "title": "Show a vertex-cache log",
+      "summary": "A renderer developer aid.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "fx_enable": {
+      "group": "gfx",
+      "title": "Special effects",
+      "summary": "The master switch for special effects.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. TweakGuide says turning it off can improve performance. ESL's old PunkBuster list and WWCL's old rules required it on."
+    },
+    "fx_draw": {
+      "group": "gfx",
+      "title": "Draw effects",
+      "summary": "Whether the effects system draws its effects.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. ESL's old PunkBuster list required it on."
+    },
+    "fx_count": {
+      "group": "gfx",
+      "title": "Effect counting",
+      "summary": "A developer switch for counting effects.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "fx_debug": {
+      "group": "gfx",
+      "title": "Effects debug",
+      "summary": "A developer switch that shows effects debugging.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "fx_debugbolt": {
+      "group": "gfx",
+      "title": "Effects bolt debug",
+      "summary": "A developer value for debugging bolted-on effects.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "fx_freeze": {
+      "group": "gfx",
+      "title": "Freeze effects",
+      "summary": "A developer switch that freezes effects in place.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "fx_profile": {
+      "group": "gfx",
+      "title": "Effects profiling",
+      "summary": "A developer switch for profiling effects.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "fx_vismintracedist": {
+      "group": "gfx",
+      "title": "Effect visibility distance",
+      "summary": "A developer distance value for effect visibility checks.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_blur": {
+      "group": "gfx",
+      "title": "Screen blur",
+      "summary": "How much the whole picture is blurred.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_colormap": {
+      "group": "gfx",
+      "title": "Colour map override",
+      "summary": "A developer switch that replaces colour maps with white or black.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_cosinepowermapshift": {
+      "group": "gfx",
+      "title": "Specular power shift",
+      "summary": "A developer value that shifts the specular power map.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_debugshader": {
+      "group": "gfx",
+      "title": "Shader debug view",
+      "summary": "A developer switch for viewing shader debug information.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_drawbmodels": {
+      "group": "gfx",
+      "title": "Draw brush models",
+      "summary": "A developer switch for drawing brush models.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_drawdecals": {
+      "group": "gfx",
+      "title": "Draw wall marks",
+      "summary": "Whether wall marks are drawn.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. Turn Bullet marks off to remove marks instead. ESL's old PunkBuster list required it on."
+    },
+    "r_drawentities": {
+      "group": "gfx",
+      "title": "Draw entities",
+      "summary": "A developer switch for drawing entities.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. ESL's old PunkBuster list required it on."
+    },
+    "r_drawprimcap": {
+      "group": "gfx",
+      "title": "Draw primitive cap",
+      "summary": "A developer value that limits how many primitives are drawn.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. ESL's old PunkBuster list required 0."
+    },
+    "r_drawprimfloor": {
+      "group": "gfx",
+      "title": "Draw primitive floor",
+      "summary": "A developer value that sets a minimum for primitives drawn.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. ESL's old PunkBuster list required 0."
+    },
+    "r_drawsmodels": {
+      "group": "gfx",
+      "title": "Draw static models",
+      "summary": "A developer switch for drawing static models.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. ESL's old PunkBuster list required it on."
+    },
+    "r_drawwater": {
+      "group": "gfx",
+      "title": "Draw water",
+      "summary": "Whether water is drawn.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. WWCL's old rules required it on."
+    },
+    "r_drawworld": {
+      "group": "gfx",
+      "title": "Draw the world",
+      "summary": "A developer switch for drawing the world geometry.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_drawxmodels": {
+      "group": "gfx",
+      "title": "Draw models",
+      "summary": "A developer switch for drawing models.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_forcelod": {
+      "group": "gfx",
+      "title": "Force model detail",
+      "summary": "Forces every model to one level of detail.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. WWCL's old rules required it left on none."
+    },
+    "r_fullbright": {
+      "group": "gfx",
+      "title": "Full brightness",
+      "summary": "Draws everything fully lit, without shading.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It removes shadowing, so rule sets forbid it: ESL's old PunkBuster list and WWCL's old rules required it off."
+    },
+    "r_highloddist": {
+      "group": "gfx",
+      "title": "High detail distance",
+      "summary": "A developer value for the distance that uses high model detail.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_mediumloddist": {
+      "group": "gfx",
+      "title": "Medium detail distance",
+      "summary": "A developer value for the distance that uses medium model detail.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_lowloddist": {
+      "group": "gfx",
+      "title": "Low detail distance",
+      "summary": "A developer value for the distance that uses low model detail.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_lowestloddist": {
+      "group": "gfx",
+      "title": "Lowest detail distance",
+      "summary": "A developer value for the distance that uses the lowest model detail.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_lightmap": {
+      "group": "gfx",
+      "title": "Lightmap override",
+      "summary": "A developer switch that replaces lightmaps with white or black.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. WWCL's old rules required it left on unchanged."
+    },
+    "r_lighttweakambient": {
+      "group": "gfx",
+      "title": "Model ambient light",
+      "summary": "Adds extra ambient light to models.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. ESL's old PunkBuster list allowed 0 to 0.2 and ePAM forced 0."
+    },
+    "r_lighttweakambientcolor": {
+      "group": "gfx",
+      "title": "Ambient light colour",
+      "summary": "A developer colour for the extra ambient light.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_lighttweakdiffusefraction": {
+      "group": "gfx",
+      "title": "Diffuse light share",
+      "summary": "A developer value for how much of the tweaked light is diffuse.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_lighttweaksuncolor": {
+      "group": "gfx",
+      "title": "Sun light colour",
+      "summary": "A developer colour for the tweaked sun light.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_lighttweaksundiffusecolor": {
+      "group": "gfx",
+      "title": "Sun diffuse colour",
+      "summary": "A developer colour for the tweaked diffuse sun light.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_lighttweaksundirection": {
+      "group": "gfx",
+      "title": "Sun light direction",
+      "summary": "A developer direction for the tweaked sun light.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_lighttweaksunlight": {
+      "group": "gfx",
+      "title": "Sun light strength",
+      "summary": "A developer value for the tweaked sun light.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_lockpvs": {
+      "group": "gfx",
+      "title": "Lock visibility",
+      "summary": "A developer switch that freezes what the game considers visible.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_norefresh": {
+      "group": "gfx",
+      "title": "Skip screen refresh",
+      "summary": "A developer switch that stops the screen being refreshed.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_normalmap": {
+      "group": "gfx",
+      "title": "Normal map override",
+      "summary": "A developer switch that replaces normal maps with flat ones.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_portalfinecull": {
+      "group": "gfx",
+      "title": "Fine portal culling",
+      "summary": "A developer switch for portal visibility culling.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_portalwalklimit": {
+      "group": "gfx",
+      "title": "Portal walk limit",
+      "summary": "A developer value that limits portal visibility walking.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_showfbcolordebug": {
+      "group": "gfx",
+      "title": "Framebuffer colour debug",
+      "summary": "A developer switch for showing framebuffer colours.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_showfloatzdebug": {
+      "group": "gfx",
+      "title": "Floating depth debug",
+      "summary": "A developer switch for showing floating-point depth.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_showgroundlit": {
+      "group": "gfx",
+      "title": "Show ground lighting",
+      "summary": "A developer switch for showing ground lighting.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_showlightgrid": {
+      "group": "gfx",
+      "title": "Show light grid",
+      "summary": "A developer switch for showing the light grid.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_showmissinglightgrid": {
+      "group": "gfx",
+      "title": "Show missing light grid",
+      "summary": "A developer switch for showing where the light grid is missing.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_showportals": {
+      "group": "gfx",
+      "title": "Show portals",
+      "summary": "A developer switch for showing portals.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_showsmodelnames": {
+      "group": "gfx",
+      "title": "Show static model names",
+      "summary": "A developer switch for showing static model names.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_showsurfcounts": {
+      "group": "gfx",
+      "title": "Show surface counts",
+      "summary": "A developer switch for showing surface counts.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_showtricounts": {
+      "group": "gfx",
+      "title": "Show triangle counts",
+      "summary": "A developer switch for showing triangle counts.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_showtris": {
+      "group": "gfx",
+      "title": "Show wireframe",
+      "summary": "Draws the world as a wireframe.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. ESL's old PunkBuster list required it off."
+    },
+    "r_showvertcounts": {
+      "group": "gfx",
+      "title": "Show vertex counts",
+      "summary": "A developer switch for showing vertex counts.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_singlecell": {
+      "group": "gfx",
+      "title": "Single visibility cell",
+      "summary": "A developer switch that limits drawing to one visibility cell.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_skipbackend": {
+      "group": "gfx",
+      "title": "Skip drawing stage",
+      "summary": "Skips the last stage of drawing, leaving a black screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. WWCL's old rules required it off."
+    },
+    "r_skippvs": {
+      "group": "gfx",
+      "title": "Skip visibility culling",
+      "summary": "A developer switch that turns off visibility culling.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_specularcolorscale": {
+      "group": "gfx",
+      "title": "Specular colour scale",
+      "summary": "A developer value that scales specular colour.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_specularmap": {
+      "group": "gfx",
+      "title": "Specular map override",
+      "summary": "A developer switch that replaces specular maps with white or black.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_sun_from_dvars": {
+      "group": "gfx",
+      "title": "Sun from settings",
+      "summary": "A developer switch, probably for taking the sun from these settings rather than the map.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_xdebug": {
+      "group": "gfx",
+      "title": "Model debug view",
+      "summary": "A developer switch for showing boxes or axes on models.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_zfar": {
+      "group": "gfx",
+      "title": "Far clip distance",
+      "summary": "How far away the game stops drawing; 0 leaves it to the game.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. WWCL's old rules disqualified changing it."
+    },
+    "r_znear": {
+      "group": "gfx",
+      "title": "Near clip distance",
+      "summary": "How close to the camera the game starts drawing.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. WWCL's old rules disqualified changing it."
+    },
+    "r_znear_depthhack": {
+      "group": "gfx",
+      "title": "Held weapon near clip",
+      "summary": "How close to the camera held weapons start to draw.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. WWCL's old rules disqualified changing it."
+    },
+    "sc_blur": {
+      "group": "gfx",
+      "title": "Shadow blur",
+      "summary": "How soft shadow edges are.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "sc_count": {
+      "group": "gfx",
+      "title": "Shadow casters",
+      "summary": "A developer value for how many shadow casters the game uses.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "sc_debugcastercount": {
+      "group": "gfx",
+      "title": "Shadow caster debug count",
+      "summary": "A developer value for debugging shadow casters.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "sc_debugreceivercount": {
+      "group": "gfx",
+      "title": "Shadow receiver debug count",
+      "summary": "A developer value for debugging shadow receivers.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "sc_faderange": {
+      "group": "gfx",
+      "title": "Shadow fade range",
+      "summary": "A developer value for how shadows fade with distance.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "sc_length": {
+      "group": "gfx",
+      "title": "Shadow length",
+      "summary": "A developer value for how long shadows are.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "sc_offscreencasterlodbias": {
+      "group": "gfx",
+      "title": "Off-screen shadow detail bias",
+      "summary": "A developer value for model detail on off-screen shadow casters.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "sc_offscreencasterlodscale": {
+      "group": "gfx",
+      "title": "Off-screen shadow detail scale",
+      "summary": "A developer value for model detail on off-screen shadow casters.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "sc_shadowinrate": {
+      "group": "gfx",
+      "title": "Shadow fade-in rate",
+      "summary": "A developer value for how fast shadows fade in.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "sc_shadowoutrate": {
+      "group": "gfx",
+      "title": "Shadow fade-out rate",
+      "summary": "A developer value for how fast shadows fade out.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "sc_showdebug": {
+      "group": "gfx",
+      "title": "Show shadow debug",
+      "summary": "A developer switch for showing shadow debugging.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "sc_showoverlay": {
+      "group": "gfx",
+      "title": "Show shadow overlay",
+      "summary": "A developer switch for showing the shadow overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "sc_wantcount": {
+      "group": "gfx",
+      "title": "Shadow casters wanted",
+      "summary": "A developer value for how many shadow casters the game aims for.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "sc_wantcountmargin": {
+      "group": "gfx",
+      "title": "Shadow caster margin",
+      "summary": "A developer value for the margin around wanted shadow casters.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "r_rendererinuse": {
+      "group": "gfx",
+      "title": "Renderer in use",
+      "summary": "Which drawing method the game is using right now.",
+      "details": "The game sets it itself and treats it as read-only. Choices are none, DirectX 9 and DirectX 7."
     }
   },
   "commands": {
