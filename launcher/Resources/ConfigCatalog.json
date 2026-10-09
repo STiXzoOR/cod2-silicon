@@ -14785,10 +14785,10 @@
       "origins": [
         "stock"
       ],
-      "group": "net",
-      "title": "Analog attack threshold",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "aim",
+      "title": "Controller fire point",
+      "summary": "How far a controller trigger must be pressed to fire.",
+      "details": "A fraction from 0.0001 to 1, 0.8 by default. This version of the game only registers it and never reads the value.",
       "sources": [
         "src/PC/client_mp/cl_input.c:1086"
       ],
@@ -14868,10 +14868,10 @@
       "origins": [
         "stock"
       ],
-      "group": "net",
-      "title": "Anglespeedkey",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "aim",
+      "title": "Keyboard turn boost",
+      "summary": "How much faster the look and turn keys work while the speed key is held.",
+      "details": "A multiplier on the keyboard look and turn speeds, 1.5 by default. It does not affect the mouse.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225600",
         "src/PC/client_mp/cl_main_mp.c:225635"
@@ -15096,10 +15096,10 @@
       "origins": [
         "stock"
       ],
-      "group": "net",
-      "title": "Bypass mouse input",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "aim",
+      "title": "Mouse works in menus",
+      "summary": "Keeps the mouse controlling your view even while a menu is open.",
+      "details": "Leave it off in normal play: with it on, your view turns while you move around menus. Some tools and zPAM's mouse menu use it.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225641",
         "src/PC/client_mp/cl_main_mp.c:225676"
@@ -16558,10 +16558,10 @@
       "origins": [
         "stock"
       ],
-      "group": "net",
-      "title": "Pitchspeed",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "aim",
+      "title": "Keyboard look speed",
+      "summary": "How fast the arrow-style look keys tilt your view up and down.",
+      "details": "In degrees per second, 140 by default. It affects only the keys bound to look up and look down, not the mouse. zPAM sets it to 140 when you join a team, and ESL's old PunkBuster list required 140.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225598",
         "src/PC/client_mp/cl_main_mp.c:225633"
@@ -16869,10 +16869,10 @@
       "origins": [
         "stock"
       ],
-      "group": "net",
-      "title": "Showmouserate",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "aim",
+      "title": "Show mouse rate",
+      "summary": "Prints your mouse update rate and effective mouse speed to the console while you move the mouse.",
+      "details": "A diagnostic: each line shows mouse counts per millisecond and the mouse speed the game ends up using, including Mouse acceleration and zooming. It floods the console, so use it only briefly.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225624",
         "src/PC/client_mp/cl_main_mp.c:225659"
@@ -17309,10 +17309,10 @@
       "origins": [
         "stock"
       ],
-      "group": "net",
+      "group": "aim",
       "title": "Stance hold time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "How many milliseconds a stance key must be held for the hold-style stance change.",
+      "details": "From 0 to 1,000 milliseconds, 300 by default. This version of the game only registers it and never reads the value.",
       "sources": [
         "src/PC/client_mp/cl_input.c:1087"
       ],
@@ -17691,10 +17691,10 @@
       "origins": [
         "stock"
       ],
-      "group": "net",
-      "title": "Yawspeed",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "aim",
+      "title": "Keyboard turn speed",
+      "summary": "How fast the turn-left and turn-right keys swing your view.",
+      "details": "In degrees per second, 140 by default. It affects only the keys bound to turn left and turn right, not the mouse. zPAM sets it to 140 when you join a team, and ESL's old PunkBuster list required 140.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225597",
         "src/PC/client_mp/cl_main_mp.c:225632"
@@ -27633,9 +27633,9 @@
         "stock"
       ],
       "group": "aim",
-      "title": "In mouse",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Mouse control",
+      "summary": "Lets the mouse control the game; with it off the game does not capture the mouse.",
+      "details": "With it off the game prints that mouse control is not active at start-up and leaves the pointer free. It is latched, so a change applies after the game restarts. Raw mouse input also needs it on.",
       "sources": [
         "src/Mac/Main/mac_input.c:420"
       ],
@@ -28032,9 +28032,9 @@
         "stock"
       ],
       "group": "aim",
-      "title": "Input view sensitivity",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Controller look speed",
+      "summary": "A look-speed scale the game registers for controller input.",
+      "details": "It runs from 0.0001 to 5 and the default is 1. This version of the game only registers it and never reads the value, so it has no effect on mouse aim.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225652",
         "src/PC/client_mp/cl_main_mp.c:225687"
@@ -29206,9 +29206,9 @@
         "stock"
       ],
       "group": "aim",
-      "title": "M forward",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Mouse walk speed",
+      "summary": "How fast moving the mouse forward and back walks you when mouse look is off.",
+      "details": "Only used when moving the mouse would not tilt your view, meaning mouse look is off and the mouse-look key is not held, or the strafe key is held. The default is 0.25.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225649",
         "src/PC/client_mp/cl_main_mp.c:225684"
@@ -29347,15 +29347,20 @@
         "cod2x"
       ],
       "group": "aim",
-      "title": "CoD2x mouse input",
-      "summary": "Select the CoD2x input compatibility path.",
-      "details": "This is distinct from native raw mouse input. The native adapter translates the CoD2x preference; see the source for supported behaviour.",
+      "title": "CoD2x raw mouse mode",
+      "summary": "Chooses how the game handles raw mouse movement: 0 off, 1 on its own thread, 2 on the main thread.",
+      "details": "CoD2x only. With 0, raw mouse movement is not used even when Raw mouse input is on. 1 and 2 differ in which thread handles the raw movement, and no source says which is better. It is latched, so a change applies after the game restarts. This version of the game starts at 1, where upstream CoD2x starts at 0.",
       "sources": [
         "src/unix/linux_input.c:111"
       ],
       "guided": false,
       "control": {
-        "kind": "number"
+        "kind": "number",
+        "labels": {
+          "0": "Off",
+          "1": "Own thread",
+          "2": "Main thread"
+        }
       }
     },
     {
@@ -29400,9 +29405,9 @@
         "cod2x"
       ],
       "group": "aim",
-      "title": "Measured mouse input rate",
-      "summary": "Read the input-rate measurement reported by the game.",
-      "details": "This diagnostic is read-only. A measured value is not a promised device polling rate.",
+      "title": "Mouse update rate",
+      "summary": "How many mouse updates per second the game is receiving right now.",
+      "details": "The game measures this itself and treats it as read-only. It is a measurement, not your mouse's rated polling rate.",
       "sources": [
         "src/unix/linux_input.c:112"
       ],
@@ -29453,9 +29458,9 @@
         "cod2x"
       ],
       "group": "aim",
-      "title": "Peak measured mouse input rate",
-      "summary": "Read the highest input rate measured by the game.",
-      "details": "This is a read-only peak measurement from the native input statistics. It is not a configured limit or a promised device polling rate.",
+      "title": "Peak mouse update rate",
+      "summary": "The highest mouse update rate the game has measured.",
+      "details": "The game measures this itself and treats it as read-only. It is a measurement, not your mouse's rated polling rate.",
       "sources": [
         "src/unix/linux_input.c:114"
       ],
@@ -29506,9 +29511,9 @@
         "port"
       ],
       "group": "aim",
-      "title": "M rinput max",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Old peak mouse rate",
+      "summary": "The highest mouse update rate the game has measured, under an older name.",
+      "details": "The game fills this in itself and treats it as read-only. Current CoD2x calls the same measurement Peak measured mouse input rate, and the README still uses the older name.",
       "sources": [
         "src/unix/linux_input.c:113"
       ],
@@ -29591,9 +29596,9 @@
         "stock"
       ],
       "group": "aim",
-      "title": "M side",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Mouse strafe speed",
+      "summary": "How fast moving the mouse sideways strafes you while the strafe key is held.",
+      "details": "Only used while the strafe key is held, and then turning sideways does not turn your view. The default is 0.25.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225650",
         "src/PC/client_mp/cl_main_mp.c:225685"
@@ -47814,9 +47819,9 @@
         "cod2x"
       ],
       "group": "aim",
-      "title": "Mounted weapon mouse speed",
-      "summary": "Adjust mouse speed while using a mounted weapon.",
-      "details": "Available in the CoD2x build. It does not replace your normal mouse speed.",
+      "title": "Mounted gun mouse speed",
+      "summary": "How far your view turns when you move the mouse while using a mounted machine gun.",
+      "details": "CoD2x only. Without it, mounted guns ignore Mouse speed and turn at a fixed rate. With it, this number is used in place of Mouse speed while you man one, and Mouse acceleration still adds to it. The default is 1, and it accepts 0.01 to 100.",
       "sources": [
         "src/PC/client_mp/cl_input.c:1089"
       ],
