@@ -458,7 +458,7 @@ def coverage_errors(document, facts, mode):
                     b = sorted(json.dumps(s.get(field), sort_keys=True) for s in sites)
                     if a != b:
                         errors.append(f'{field} mismatch {name}')
-        elif any('sites' in variant for variant in claimed.values()):
+        else:
             for name in sorted(actual.keys() & claimed.keys()):
                 signature = lambda sites: sorted(json.dumps({k: v for k, v in s.items() if k != 'line'}, sort_keys=True) for s in sites)
                 if signature(claimed[name].get('sites', [])) != signature(actual[name]):

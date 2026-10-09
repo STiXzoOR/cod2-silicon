@@ -37,7 +37,9 @@ void Init(void) {
                     mode: {'sites': [{'type': 'float', 'default': {'status': 'literal', 'value': 1.0}, 'flags': 8320, 'minimum': {'status': 'literal', 'value': 0.0}, 'maximum': {'status': 'literal', 'value': 4.0}}]}
                     for mode in ['stock', 'cod2x']}},
             ],
-            'commands': [{'name': 'exec', 'availability': 'registered', 'variants': {'stock': {}, 'cod2x': {}}}],
+            'commands': [{'name': 'exec', 'availability': 'registered', 'variants': {
+                mode: {'sites': [{'name': 'exec', 'path': 'src/fixture.c', 'line': 10,
+                                  'mechanism': 'Cmd_AddCommand'}]} for mode in ['stock', 'cod2x']}}],
         }
 
     def errors(self, document=None, mode='stock'):
@@ -58,6 +60,11 @@ void Init(void) {
         errors = self.errors(doc)
         self.assertTrue(any('extra setting invented' in e for e in errors), errors)
         self.assertTrue(any('extra command alias' in e for e in errors), errors)
+
+    def test_missing_all_command_evidence_fails(self):
+        doc = copy.deepcopy(self.document)
+        doc['commands'][0]['variants']['stock'] = {}
+        self.assertTrue(any('sites mismatch exec' in e for e in self.errors(doc)))
 
     def test_type_and_default_mismatch_fail(self):
         doc = copy.deepcopy(self.document)
