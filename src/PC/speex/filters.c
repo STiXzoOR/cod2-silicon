@@ -224,8 +224,8 @@ static float comb_pitch_gain(const float *gain)
    return fabs(gain[1]) + (gain[0]>0 ? gain[0] : -.5*gain[0]) +
       (gain[2]>0 ? gain[2] : -.5*gain[2]);
 }
-#endif
 
+#endif
 void comb_filter(
 float *exc,          /*decoded excitation*/
 float *new_exc,      /*enhanced excitation*/
