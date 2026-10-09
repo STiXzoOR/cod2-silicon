@@ -60,6 +60,18 @@ import AppKit
                 Button("Library") { LauncherState.model.page = .library; LauncherState.model.loadMedia() }.keyboardShortcut("3", modifiers: .command)
                 Button("Configs") { if !LauncherState.model.onboard { LauncherState.model.page = .configs } }.keyboardShortcut("4", modifiers: .command)
                 Button("Settings") { LauncherState.model.page = .settings }.keyboardShortcut(",", modifiers: .command)
+                Divider()
+                // Config imports open their review on the Configs page; nothing changes until it's confirmed.
+                Button("Import a Config…") {
+                    let model = LauncherState.model
+                    if !model.onboard && model.discover.step == nil { model.page = .configs; model.discover.chooseFile() }
+                }
+                .keyboardShortcut("o", modifiers: .command)
+                Button("Review Pasted Config") {
+                    let model = LauncherState.model
+                    if !model.onboard && model.discover.step == nil { model.page = .configs; model.discover.importPasteboard() }
+                }
+                .keyboardShortcut("v", modifiers: [.command, .shift])
             }
         }
     }

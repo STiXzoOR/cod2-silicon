@@ -81,6 +81,8 @@ struct MediaEntry: Identifiable {
     }()
     /// The Configs page's view store over the same session.
     let studio: ConfigStudioModel
+    /// Discover and import. The player directory has no signed publication yet, so it reports itself unavailable.
+    let discover: ConfigDiscoverModel
     private var savedSettings = GameSettings()
     private var engine: Process?
     private var attachedGames: [pid_t: NSRunningApplication] = [:]
@@ -122,6 +124,8 @@ struct MediaEntry: Identifiable {
             } catch { configStudio = nil; sessionError = error.localizedDescription }
         }
         studio = ConfigStudioModel(session: configStudio, dialect: .cod2x)
+        discover = ConfigDiscoverModel(studio: studio, directory: ConfigDirectory(cacheURL: home.appendingPathComponent("directory/index.json")))
+        discover.notify = { [weak self] in self?.notice = $0 }
         if let sessionError { notice = sessionError }
         if snapshot { seedPreview(); return }
         if let resolution = Bundle.main.object(forInfoDictionaryKey: "CoD2DefaultResolution") as? String { settings.resolution = resolution }
@@ -721,6 +725,11 @@ struct MediaEntry: Identifiable {
         case "configs-expert": page = .configs; studio.level = .expert; studio.group = .aim
         case "configs-text": page = .configs; studio.level = .expert; studio.group = .aim
         case "configs-history": page = .configs; studio.tab = .history
+        // Discover and import: the harness supplies a signed fixture directory or a reviewed import.
+        case "discover-unavailable", "discover-players": page = .configs; discover.page = .players
+        case "discover-saved": page = .configs; discover.page = .saved
+        case "discover-player": page = .configs
+        case "configs-import", "configs-import-everything": page = .configs
         default: page = .deploy
         }
     }

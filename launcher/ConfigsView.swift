@@ -12,7 +12,7 @@ struct ConfigsView: View {
     var body: some View {
         Group {
             if let session = studio.session {
-                ConfigsShell(model: model, studio: studio, session: session)
+                ConfigsShell(model: model, studio: studio, session: session, discover: model.discover)
             } else {
                 ConfigsUnavailable(snapshot: model.snapshot)
             }
@@ -36,6 +36,7 @@ struct ConfigsShell: View {
     @ObservedObject var model: LauncherModel
     @ObservedObject var studio: ConfigStudioModel
     @ObservedObject var session: ConfigStudioSession
+    @ObservedObject var discover: ConfigDiscoverModel
     @Environment(\.palette) private var palette
     @Environment(\.undoManager) private var undoManager
     @State private var origin = CGPoint.zero
@@ -46,11 +47,11 @@ struct ConfigsShell: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            LoadoutColumn(studio: studio, session: session, select: { id in leaveText { studio.select(id) } },
-                          create: { newLoadout = NewLoadoutRequest(copy: false) })
+            LoadoutColumn(studio: studio, session: session, discover: discover, select: { id in leaveText { discover.page = nil; studio.select(id) } },
+                          create: { newLoadout = NewLoadoutRequest(copy: false) }, open: { page in leaveText { discover.open(page) } })
                 .frame(width: StudioMetrics.loadoutColumn)
             Rectangle().fill(palette.separator).frame(width: 1).ignoresSafeArea()
-            content
+            if discover.page != nil { ConfigDiscoverView(model: model, discover: discover) } else { content }
         }
         .padding(.leading, max(0, 252 - origin.x))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -61,16 +62,19 @@ struct ConfigsShell: View {
             studio.refreshComparison()
             if studio.textMode && !studio.textEdited { studio.loadText() }
         }
+        // A loadout made, imported or chosen elsewhere is shown in place of Discover.
+        .onChange(of: session.current?.profile.id) { _ in discover.page = nil }
+        .configImportFlows(discover)
         .toolbar {
-            ToolbarItem(placement: .principal) {
+            if discover.page == nil { ToolbarItem(placement: .principal) {
                 Picker("Loadout section", selection: Binding(get: { studio.tab }, set: { tab in leaveText { studio.tab = tab } })) {
                     ForEach(ConfigStudioTab.available) { Text($0.title).tag($0) }
                 }
                 .pickerStyle(.segmented).labelsHidden().fixedSize()
                 .disabled(session.current == nil)
-            }
+            } }
         }
-        .trailingToolbar {
+        .trailingToolbar { if discover.page == nil {
             if studio.tab == .history {
                 Button(action: studio.saveSnapshot) { Label("Save a Snapshot Now", systemImage: "clock.badge.checkmark") }
                     .disabled(studio.isReadOnly || session.current == nil)
@@ -81,7 +85,7 @@ struct ConfigsShell: View {
                 .disabled(studio.catalog == nil || session.current == nil)
                 .help("Jump to any setting (⌘K)")
             moreMenu
-        }
+        } }
         .sheet(item: $newLoadout) { request in
             NewLoadoutSheet(studio: studio, copy: request.copy)
         }
@@ -167,8 +171,10 @@ private struct NewLoadoutRequest: Identifiable {
 private struct LoadoutColumn: View {
     @ObservedObject var studio: ConfigStudioModel
     @ObservedObject var session: ConfigStudioSession
+    @ObservedObject var discover: ConfigDiscoverModel
     var select: (String) -> Void
     var create: () -> Void
+    var open: (ConfigDiscoverPage) -> Void
     @Environment(\.palette) private var palette
 
     var body: some View {
@@ -179,7 +185,7 @@ private struct LoadoutColumn: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(session.profiles) { profile in
-                        LoadoutRow(profile: profile, subtitle: subtitle(profile), selected: profile.id == session.current?.profile.id) { select(profile.id) }
+                        LoadoutRow(profile: profile, subtitle: subtitle(profile), selected: discover.page == nil && profile.id == session.current?.profile.id) { select(profile.id) }
                     }
                     Button(action: create) {
                         HStack(spacing: 10) {
@@ -197,6 +203,7 @@ private struct LoadoutColumn: View {
                     .disabled(studio.isReadOnly)
                     .opacity(studio.isReadOnly ? 0.45 : 1)
                     .help("Make a new loadout from the game’s defaults or a copy")
+                    DiscoverColumnSection(discover: discover, open: open)
                 }
             }
             .scrollIndicators(.never)
