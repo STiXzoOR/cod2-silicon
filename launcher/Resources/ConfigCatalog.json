@@ -1933,14 +1933,15 @@
       ],
       "group": "hud",
       "title": "Chat duration",
-      "summary": "Choose how long chat messages remain visible.",
-      "details": "The value is in milliseconds. The line limit can remove older messages sooner.",
+      "summary": "How long chat messages stay on screen.",
+      "details": "The value is in milliseconds, from 0 to 60,000, and 12,000 by default. The line limit can remove older messages sooner.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1104"
       ],
       "guided": false,
       "control": {
-        "kind": "number"
+        "kind": "number",
+        "unit": "ms"
       }
     },
     {
@@ -2173,9 +2174,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Crosshair alpha",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Crosshair opacity",
+      "summary": "How solid the crosshair is.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1069"
       ],
@@ -2260,9 +2261,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Crosshair alpha min",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Crosshair minimum opacity",
+      "summary": "The faintest the crosshair gets.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1070"
       ],
@@ -2331,9 +2332,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Crosshair dynamic",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Crosshair follows spread",
+      "summary": "Makes the crosshair size follow your weapon spread.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. Published pro configs show it off.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1071"
       ],
@@ -2402,9 +2403,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Crosshair enemy color",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Crosshair over enemies",
+      "summary": "Changes the crosshair's colour when it is over an enemy.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1072"
       ],
@@ -2808,9 +2809,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Draw2d",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Draw the 2D layer",
+      "summary": "Whether the game draws the HUD layer.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1022"
       ],
@@ -2877,9 +2878,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Draw breath hint",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Breath hint",
+      "summary": "Shows the 'hold breath' hint when you are scoped.",
+      "details": "On by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1024"
       ],
@@ -2922,8 +2923,8 @@
       ],
       "group": "hud",
       "title": "Show compass",
-      "summary": "Show the CoD2x compass display.",
-      "details": "Available in the CoD2x client build. Server rules can affect the match's HUD.",
+      "summary": "Shows the compass, objectives and friendly markers.",
+      "details": "CoD2x only. Turning it off hides the compass and the CoD2x drawing tied to it. On by default. Servers can still affect what the match HUD shows.",
       "sources": [
         "src/PC/qcommon/cod2x_features.c:73"
       ],
@@ -3144,9 +3145,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Draw crosshair names pos x",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Name left-right position",
+      "summary": "Where the name under your crosshair sits, from the left.",
+      "details": "From 0 to 640, and 300 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1033"
       ],
@@ -3227,9 +3228,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Draw crosshair names pos y",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Name up-down position",
+      "summary": "Where the name under your crosshair sits, from the top.",
+      "details": "From 0 to 480, and 180 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1034"
       ],
@@ -3381,9 +3382,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Draw game messages",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Game messages",
+      "summary": "Shows messages from the game on screen.",
+      "details": "On by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1124"
       ],
@@ -3450,9 +3451,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Draw gun",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Draw your weapon",
+      "summary": "Whether your first-person weapon is drawn.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. A PunkBuster stock list and WWCL's old rules required it on.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1015"
       ],
@@ -3519,9 +3520,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Draw health",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Draw a health bar",
+      "summary": "Shows a health bar, which the game does not normally show.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. WWCL's old rules required it off.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1023"
       ],
@@ -3657,9 +3658,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Draw mantle hint",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Mantle hint",
+      "summary": "Shows the prompt that tells you when you can climb over something.",
+      "details": "On by default. Turning it off hides the grey prompt, which is only visual.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1025"
       ],
@@ -3726,9 +3727,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Draw material",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Draw a named material",
+      "summary": "A developer switch that draws a named material on screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1029"
       ],
@@ -3770,9 +3771,9 @@
         "cod2x"
       ],
       "group": "hud",
-      "title": "Radar mode",
-      "summary": "Choose the CoD2x radar display mode.",
-      "details": "The registered modes and source range are shown in Expert. Server rules and game state can constrain the display.",
+      "title": "Spectator radar",
+      "summary": "Draws a radar of every player, but only for spectators, demos or when cheats are on.",
+      "details": "CoD2x only, and not a player aid: the radar is drawn only for spectators, while a demo plays or when cheats are on, and only if a radar map image has been set. It is off by default and not saved.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_radar.c:184"
       ],
@@ -3837,9 +3838,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Draw script usage",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show script usage",
+      "summary": "Shows script usage information.",
+      "details": "A developer aid; its effect is not documented here.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1028"
       ],
@@ -3906,9 +3907,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Draw snapshot",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show update info",
+      "summary": "Shows technical information about the updates your game receives.",
+      "details": "A diagnostic overlay, off by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1030"
       ],
@@ -3991,9 +3992,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Draw sound overlay",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sound debug overlay",
+      "summary": "Shows a sound debugging overlay.",
+      "details": "Choices are None, 3D, Stream and 2D. A developer aid.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1027"
       ],
@@ -4036,8 +4037,8 @@
       ],
       "group": "hud",
       "title": "Spectated player's name",
-      "summary": "Show the name of the player you are watching.",
-      "details": "Available in the CoD2x client build.",
+      "summary": "Shows who you are watching while you spectate.",
+      "details": "CoD2x only. It draws a 'following' line with the player's name at the top centre while you spectate. On by default.",
       "sources": [
         "src/PC/qcommon/cod2x_features.c:72"
       ],
@@ -4104,9 +4105,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Draw turret crosshair",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Turret crosshair",
+      "summary": "Shows the crosshair while you use a turret.",
+      "details": "On by default. ePAM 1.02 forced it on for every player.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1031"
       ],
@@ -5962,9 +5963,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud chat position",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Chat position",
+      "summary": "Where chat appears on the screen, as two numbers.",
+      "details": "Left and top positions from 0 to 640, 5 and 150 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1063"
       ],
@@ -6047,9 +6048,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud compass max range",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Compass range",
+      "summary": "How far away players and objects show on the compass.",
+      "details": "In game units, 1,500 by default. zPAM sets it to 1,500 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1036"
       ],
@@ -6132,9 +6133,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud compass min radius",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Compass minimum radius",
+      "summary": "The smallest radius the compass draws markers at.",
+      "details": "In game units, 0 by default. zPAM sets it to 0 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1038"
       ],
@@ -6217,9 +6218,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud compass min range",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Compass minimum range",
+      "summary": "The closest range the compass draws markers for.",
+      "details": "In game units, 0 by default. zPAM sets it to 0 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1037"
       ],
@@ -6269,9 +6270,9 @@
         "cod2x"
       ],
       "group": "hud",
-      "title": "Hud compass offset x",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Compass left-right shift",
+      "summary": "Moves the compass sideways on the screen.",
+      "details": "CoD2x only. It runs from -640 to 640, and 0 is the usual position.",
       "sources": [
         "src/PC/qcommon/cod2x_features.c:74"
       ],
@@ -6321,9 +6322,9 @@
         "cod2x"
       ],
       "group": "hud",
-      "title": "Hud compass offset y",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Compass up-down shift",
+      "summary": "Moves the compass up or down on the screen.",
+      "details": "CoD2x only. It runs from -480 to 480, and 0 is the usual position.",
       "sources": [
         "src/PC/qcommon/cod2x_features.c:75"
       ],
@@ -6406,9 +6407,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud compass size",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Compass size",
+      "summary": "How large the compass is; 0 hides it.",
+      "details": "A multiplier, 1 by default. A PunkBuster stock list allowed 0.5 to 2, and published configs use 1 to 1.2.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1035"
       ],
@@ -6493,9 +6494,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud compass sound ping fade time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Compass sound fade",
+      "summary": "How many seconds a sound marker lingers on the compass.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 2 seconds, and zPAM sets it to 2 for every player.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1040"
       ],
@@ -6562,9 +6563,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud compass springy pointers",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Springy compass pointers",
+      "summary": "Makes compass pointers move with a springy motion.",
+      "details": "Off by default. zPAM sets it to off for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1039"
       ],
@@ -6647,9 +6648,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud damage icon height",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Damage indicator height",
+      "summary": "How tall the damage direction indicator is.",
+      "details": "The default is 64. zPAM sets it to 64 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1047"
       ],
@@ -6716,9 +6717,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud damage icon in scope",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Damage indicator while scoped",
+      "summary": "Whether the damage direction indicator shows while you look through a scope.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. zPAM sets it to on for every player, while ESL's old PunkBuster list required it off.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1050"
       ],
@@ -6801,9 +6802,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud damage icon offset",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Damage indicator distance",
+      "summary": "How far from the centre the damage direction indicator sits.",
+      "details": "The default is 128. zPAM sets it to 128 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1048"
       ],
@@ -6886,9 +6887,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud damage icon time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Damage indicator time",
+      "summary": "How long the damage direction indicator stays on screen, in milliseconds.",
+      "details": "The default is 2,000 milliseconds. zPAM sets it to 2,000 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1049"
       ],
@@ -6971,9 +6972,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud damage icon width",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Damage indicator width",
+      "summary": "How wide the damage direction indicator is.",
+      "details": "The default is 128. zPAM sets it to 128 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1046"
       ],
@@ -7056,9 +7057,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud grenade icon height",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Grenade icon height",
+      "summary": "How tall the incoming-grenade icon is.",
+      "details": "The default is 25. zPAM sets it to 25 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1055"
       ],
@@ -7125,9 +7126,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud grenade icon in scope",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Grenade icon while scoped",
+      "summary": "Whether the incoming-grenade icon shows while you look through a scope.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. zPAM sets it to on for every player.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1053"
       ],
@@ -7210,9 +7211,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud grenade icon max height",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Grenade icon maximum height",
+      "summary": "The tallest the incoming-grenade icon can get.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 104.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1052"
       ],
@@ -7295,9 +7296,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud grenade icon max range",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Grenade icon range",
+      "summary": "How far away an incoming grenade still shows an icon.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 250 game units.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1051"
       ],
@@ -7380,9 +7381,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud grenade icon offset",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Grenade icon distance",
+      "summary": "How far from the centre the incoming-grenade icon sits.",
+      "details": "The default is 50. zPAM sets it to 50 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1054"
       ],
@@ -7465,9 +7466,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud grenade icon width",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Grenade icon width",
+      "summary": "How wide the incoming-grenade icon is.",
+      "details": "The default is 25. zPAM sets it to 25 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1056"
       ],
@@ -7550,9 +7551,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud grenade pointer height",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Grenade pointer height",
+      "summary": "How tall the incoming-grenade pointer is.",
+      "details": "The default is 12. zPAM sets it to 12 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1057"
       ],
@@ -7641,9 +7642,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud grenade pointer pivot",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Grenade pointer pivot",
+      "summary": "The point the incoming-grenade pointer turns around.",
+      "details": "Two numbers, 12 and 27 by default. zPAM sets it to 12 27 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1059"
       ],
@@ -7724,9 +7725,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud grenade pointer pulse freq",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Grenade pointer pulse speed",
+      "summary": "How fast the incoming-grenade pointer pulses.",
+      "details": "From 0.1 to 50, and 1.7 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1060"
       ],
@@ -7807,9 +7808,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud grenade pointer pulse max",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Grenade pointer pulse maximum",
+      "summary": "How large the incoming-grenade pointer pulse gets.",
+      "details": "From 0 to 3, and 1.85 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1061"
       ],
@@ -7890,9 +7891,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud grenade pointer pulse min",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Grenade pointer pulse minimum",
+      "summary": "How small the incoming-grenade pointer pulse gets.",
+      "details": "From -3 to 1, and 0.3 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1062"
       ],
@@ -7975,9 +7976,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud grenade pointer width",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Grenade pointer width",
+      "summary": "How wide the incoming-grenade pointer is.",
+      "details": "The default is 25. zPAM sets it to 25 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1058"
       ],
@@ -8060,9 +8061,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud objective max range",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Objective icon range",
+      "summary": "How far away objective icons still show.",
+      "details": "The default is 2,048. zPAM sets it to 2,048 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1042"
       ],
@@ -8145,9 +8146,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud objective min alpha",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Objective icon opacity",
+      "summary": "The faintest an objective icon gets.",
+      "details": "The default is 1. zPAM sets it to 1 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1043"
       ],
@@ -8230,9 +8231,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud objective min height",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Objective icon height",
+      "summary": "The lowest height objective icons are drawn at.",
+      "details": "The default is -70. zPAM sets it to -70 for every player after they join a team, so a saved value is replaced on servers running it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1041"
       ],
@@ -8315,9 +8316,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud prone y",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Prone indicator position",
+      "summary": "How high or low the prone indicator sits on the screen.",
+      "details": "From -10,000 to 10,000, and -160 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1067"
       ],
@@ -8371,9 +8372,9 @@
         "cod2x"
       ],
       "group": "hud",
-      "title": "Hud radar color",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Radar tint colour",
+      "summary": "The tint of the radar map image.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_radar.c:196"
       ],
@@ -8423,9 +8424,9 @@
         "cod2x"
       ],
       "group": "hud",
-      "title": "Hud radar entity offset x",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Radar player left-right shift",
+      "summary": "Shifts players left or right on the radar.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on. The game fills it in from the map's radar file or when you calibrate the radar.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_radar.c:191"
       ],
@@ -8475,9 +8476,9 @@
         "cod2x"
       ],
       "group": "hud",
-      "title": "Hud radar entity offset y",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Radar player up-down shift",
+      "summary": "Shifts players up or down on the radar.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on. The game fills it in from the map's radar file or when you calibrate the radar.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_radar.c:192"
       ],
@@ -8527,9 +8528,9 @@
         "cod2x"
       ],
       "group": "hud",
-      "title": "Hud radar entity scale",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Radar player scale",
+      "summary": "Scales the positions of players on the radar.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on. The game fills it in from the map's radar file or when you calibrate the radar.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_radar.c:190"
       ],
@@ -8571,9 +8572,9 @@
         "cod2x"
       ],
       "group": "hud",
-      "title": "Hud radar map image",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Radar map image",
+      "summary": "The material name of the radar's map image.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on. The game fills it in from the map's radar file when the map changes.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_radar.c:186"
       ],
@@ -8623,9 +8624,9 @@
         "cod2x"
       ],
       "group": "hud",
-      "title": "Hud radar map image offset x",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Radar map left-right shift",
+      "summary": "Shifts the radar map image left or right.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on. The game fills it in from the map's radar file.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_radar.c:187"
       ],
@@ -8675,9 +8676,9 @@
         "cod2x"
       ],
       "group": "hud",
-      "title": "Hud radar map image offset y",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Radar map up-down shift",
+      "summary": "Shifts the radar map image up or down.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on. The game fills it in from the map's radar file.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_radar.c:188"
       ],
@@ -8727,9 +8728,9 @@
         "cod2x"
       ],
       "group": "hud",
-      "title": "Hud radar map image rotation",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Radar map rotation",
+      "summary": "Rotates the radar map image, in degrees.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on. The game fills it in from the map's radar file.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_radar.c:189"
       ],
@@ -8779,9 +8780,9 @@
         "cod2x"
       ],
       "group": "hud",
-      "title": "Hud radar offset x",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Radar left position",
+      "summary": "Where the radar sits from the left of the screen.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_radar.c:193"
       ],
@@ -8831,9 +8832,9 @@
         "cod2x"
       ],
       "group": "hud",
-      "title": "Hud radar offset y",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Radar top position",
+      "summary": "Where the radar sits from the top of the screen.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_radar.c:194"
       ],
@@ -8875,9 +8876,9 @@
         "cod2x"
       ],
       "group": "hud",
-      "title": "Hud radar players number switch",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Radar number swap",
+      "summary": "Swaps which team gets player numbers 1 to 5 and which gets 6 to 0.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_radar.c:195"
       ],
@@ -8927,9 +8928,9 @@
         "cod2x"
       ],
       "group": "hud",
-      "title": "Hud radar scale",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Radar scale",
+      "summary": "Scales the whole radar.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on.",
       "sources": [
         "src/PC/cgame_mp/cg_cod2x_radar.c:185"
       ],
@@ -9018,9 +9019,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud say position",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Say prompt position",
+      "summary": "Where the say prompt appears on the screen, as two numbers.",
+      "details": "Left and top positions from 0 to 640, 5 and 126 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1064"
       ],
@@ -9095,9 +9096,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud stance flash",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Stance indicator flash colour",
+      "summary": "The colour the stance indicator flashes.",
+      "details": "White by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1044"
       ],
@@ -9164,9 +9165,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud stance hint prints",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Print stance hints",
+      "summary": "Prints stance hints as messages.",
+      "details": "Off by default.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1045"
       ],
@@ -18690,9 +18691,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Boldgamemessagetime",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Bold message time",
+      "summary": "How many seconds bold game messages stay on screen.",
+      "details": "The default is 8 seconds.",
       "sources": [
         "src/PC/client_mp/cl_console_mp.c:1160"
       ],
@@ -18773,9 +18774,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Gamemessagetime",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Message time",
+      "summary": "How many seconds game messages stay on screen.",
+      "details": "The default is 5 seconds.",
       "sources": [
         "src/PC/client_mp/cl_console_mp.c:1159"
       ],
@@ -18868,9 +18869,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Input box color",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Console input colour",
+      "summary": "The colour of the console's input box.",
+      "details": "Four numbers from 0 to 1 for red, green, blue and opacity.",
       "sources": [
         "src/PC/client_mp/cl_console_mp.c:1153"
       ],
@@ -18963,9 +18964,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Input hint box color",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Console hint colour",
+      "summary": "The colour of the console's hint box.",
+      "details": "Four numbers from 0 to 1 for red, green, blue and opacity.",
       "sources": [
         "src/PC/client_mp/cl_console_mp.c:1154"
       ],
@@ -19032,9 +19033,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Minicon",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Mini console",
+      "summary": "Shows recent console text on the main screen.",
+      "details": "Off by default. The mini console's lines and time are set separately.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1114"
       ],
@@ -19117,9 +19118,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Miniconlines",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Mini console lines",
+      "summary": "How many lines the mini console shows.",
+      "details": "From 0 to 100, and 5 by default.",
       "sources": [
         "src/PC/client_mp/cl_console_mp.c:1162"
       ],
@@ -19202,9 +19203,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Minicontime",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Mini console time",
+      "summary": "How many seconds mini console text stays on screen.",
+      "details": "The default is 4 seconds.",
       "sources": [
         "src/PC/client_mp/cl_console_mp.c:1161"
       ],
@@ -19297,9 +19298,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Output bar color",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Console output bar colour",
+      "summary": "The colour of the console output bar.",
+      "details": "Four numbers from 0 to 1 for red, green, blue and opacity.",
       "sources": [
         "src/PC/client_mp/cl_console_mp.c:1155"
       ],
@@ -19392,9 +19393,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Output slider color",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Console slider colour",
+      "summary": "The colour of the console output slider.",
+      "details": "Four numbers from 0 to 1 for red, green, blue and opacity.",
       "sources": [
         "src/PC/client_mp/cl_console_mp.c:1156"
       ],
@@ -19487,9 +19488,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Output window color",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Console window colour",
+      "summary": "The colour of the console output window.",
+      "details": "Four numbers from 0 to 1 for red, green, blue and opacity.",
       "sources": [
         "src/PC/client_mp/cl_console_mp.c:1157"
       ],
@@ -19531,9 +19532,9 @@
         "cod2x"
       ],
       "group": "hud",
-      "title": "Print double colors",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Double colour codes",
+      "summary": "Lets doubled colour codes show in the killfeed and console.",
+      "details": "CoD2x only. With it off, doubled colour codes are removed from console and killfeed text. On by default.",
       "sources": [
         "src/PC/qcommon/cod2x_features.c:71"
       ],
@@ -25681,15 +25682,16 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud death quote fade time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Death quote fade time",
+      "summary": "How many milliseconds the death quote takes to fade.",
+      "details": "From 0 to 100,000 milliseconds, and 1,000 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:212"
       ],
       "guided": false,
       "control": {
-        "kind": "number"
+        "kind": "number",
+        "unit": "ms"
       }
     },
     {
@@ -25862,9 +25864,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud fade ammodisplay",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Ammo display fade",
+      "summary": "How many seconds before the ammo display fades; 0 keeps it visible.",
+      "details": "From 0 to 30 seconds.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:201"
       ],
@@ -25947,9 +25949,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud fade compass",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Compass fade",
+      "summary": "How many seconds before the compass fades.",
+      "details": "From 0 to 30 seconds.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:203"
       ],
@@ -26032,9 +26034,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud fade healthbar",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Health bar fade",
+      "summary": "How many seconds before the health bar fades.",
+      "details": "From 0 to 30 seconds.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:202"
       ],
@@ -26117,9 +26119,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud fade offhand",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Grenade display fade",
+      "summary": "How many seconds before the grenade display fades.",
+      "details": "From 0 to 30 seconds.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:205"
       ],
@@ -26202,9 +26204,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud fade stance",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Stance display fade",
+      "summary": "How many seconds before the stance display fades.",
+      "details": "From 0 to 30 seconds.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:204"
       ],
@@ -26287,9 +26289,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud fadeout speed",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "HUD fade speed",
+      "summary": "How fast faded HUD elements disappear.",
+      "details": "From 0 to 1, and 0.1 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:198"
       ],
@@ -26372,9 +26374,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud flash period offhand",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Grenade flash period",
+      "summary": "How many seconds between flashes of the grenade display.",
+      "details": "From 0 to 30 seconds, and 0.5 by default.",
       "sources": [
         "src/PC/cgame_mp/offhandweapons_mp.c:62"
       ],
@@ -26457,9 +26459,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud flash time offhand",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Grenade flash time",
+      "summary": "How many seconds the grenade display flashes.",
+      "details": "From 0 to 30 seconds, and 2 by default.",
       "sources": [
         "src/PC/cgame_mp/offhandweapons_mp.c:61"
       ],
@@ -26542,9 +26544,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud health pulserate critical",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Critical health pulse",
+      "summary": "How fast the health display pulses when you are badly hurt.",
+      "details": "From 0.1 to 3, and 0.5 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:210"
       ],
@@ -26627,9 +26629,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud health pulserate injured",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Injured health pulse",
+      "summary": "How fast the health display pulses when you are hurt.",
+      "details": "From 0.1 to 3, and 1 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:209"
       ],
@@ -26712,9 +26714,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud health startpulse critical",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Critical pulse starts",
+      "summary": "The health level where the critical pulse starts.",
+      "details": "A fraction of full health from 0 to 1.1, and 0.33 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:208"
       ],
@@ -26797,9 +26799,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud health startpulse injured",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Injured pulse starts",
+      "summary": "The health level where the injured pulse starts.",
+      "details": "A fraction of full health from 0 to 1.1, and 1 by default.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:207"
       ],
@@ -26882,9 +26884,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud health overlay phase end pulse duration",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Health overlay end pulse",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:222"
       ],
@@ -26967,9 +26969,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud health overlay phase end to alpha",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Health overlay end fade",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:221"
       ],
@@ -27052,9 +27054,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud health overlay phase one pulse duration",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Overlay phase one pulse",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:216"
       ],
@@ -27137,9 +27139,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud health overlay phase three pulse duration",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Overlay phase three pulse",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:220"
       ],
@@ -27222,9 +27224,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud health overlay phase three to alpha multiplier",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Overlay phase three fade",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:219"
       ],
@@ -27307,9 +27309,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud health overlay phase two pulse duration",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Overlay phase two pulse",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:218"
       ],
@@ -27392,9 +27394,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud health overlay phase two to alpha multiplier",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Overlay phase two fade",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:217"
       ],
@@ -27477,9 +27479,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud health overlay pulse start",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Health overlay pulse start",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:215"
       ],
@@ -27562,9 +27564,9 @@
         "stock"
       ],
       "group": "hud",
-      "title": "Hud health overlay regen pause time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Health regeneration pause",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:214"
       ],

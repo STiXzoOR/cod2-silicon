@@ -497,8 +497,12 @@
     "cg_chattime": {
       "group": "hud",
       "title": "Chat duration",
-      "summary": "Choose how long chat messages remain visible.",
-      "details": "The value is in milliseconds. The line limit can remove older messages sooner."
+      "summary": "How long chat messages stay on screen.",
+      "details": "The value is in milliseconds, from 0 to 60,000, and 12,000 by default. The line limit can remove older messages sooner.",
+      "control": {
+        "kind": "number",
+        "unit": "ms"
+      }
     },
     "cg_subtitles": {
       "group": "hud",
@@ -517,20 +521,20 @@
     "cg_drawspectatedplayername": {
       "group": "hud",
       "title": "Spectated player's name",
-      "summary": "Show the name of the player you are watching.",
-      "details": "Available in the CoD2x client build."
+      "summary": "Shows who you are watching while you spectate.",
+      "details": "CoD2x only. It draws a 'following' line with the player's name at the top centre while you spectate. On by default."
     },
     "cg_drawcompass": {
       "group": "hud",
       "title": "Show compass",
-      "summary": "Show the CoD2x compass display.",
-      "details": "Available in the CoD2x client build. Server rules can affect the match's HUD."
+      "summary": "Shows the compass, objectives and friendly markers.",
+      "details": "CoD2x only. Turning it off hides the compass and the CoD2x drawing tied to it. On by default. Servers can still affect what the match HUD shows."
     },
     "cg_drawradar": {
       "group": "hud",
-      "title": "Radar mode",
-      "summary": "Choose the CoD2x radar display mode.",
-      "details": "The registered modes and source range are shown in Expert. Server rules and game state can constrain the display."
+      "title": "Spectator radar",
+      "summary": "Draws a radar of every player, but only for spectators, demos or when cheats are on.",
+      "details": "CoD2x only, and not a player aid: the radar is drawn only for spectators, while a demo plays or when cheats are on, and only if a radar map image has been set. It is off by default and not saved."
     },
     "snd_volume": {
       "group": "audio",
@@ -1435,6 +1439,580 @@
       "title": "Model detail bias",
       "summary": "Pushes distant models toward more detail.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. Its range is -1000 to 0, and ESL's old PunkBuster list allowed -200 to 0."
+    },
+    "cg_hudcompasssize": {
+      "group": "hud",
+      "title": "Compass size",
+      "summary": "How large the compass is; 0 hides it.",
+      "details": "A multiplier, 1 by default. A PunkBuster stock list allowed 0.5 to 2, and published configs use 1 to 1.2."
+    },
+    "cg_hudcompassmaxrange": {
+      "group": "hud",
+      "title": "Compass range",
+      "summary": "How far away players and objects show on the compass.",
+      "details": "In game units, 1,500 by default. zPAM sets it to 1,500 for every player after they join a team, so a saved value is replaced on servers running it."
+    },
+    "cg_hudcompassminrange": {
+      "group": "hud",
+      "title": "Compass minimum range",
+      "summary": "The closest range the compass draws markers for.",
+      "details": "In game units, 0 by default. zPAM sets it to 0 for every player after they join a team, so a saved value is replaced on servers running it."
+    },
+    "cg_hudcompassminradius": {
+      "group": "hud",
+      "title": "Compass minimum radius",
+      "summary": "The smallest radius the compass draws markers at.",
+      "details": "In game units, 0 by default. zPAM sets it to 0 for every player after they join a team, so a saved value is replaced on servers running it."
+    },
+    "cg_hudcompassspringypointers": {
+      "group": "hud",
+      "title": "Springy compass pointers",
+      "summary": "Makes compass pointers move with a springy motion.",
+      "details": "Off by default. zPAM sets it to off for every player after they join a team, so a saved value is replaced on servers running it."
+    },
+    "cg_hudcompassoffsetx": {
+      "group": "hud",
+      "title": "Compass left-right shift",
+      "summary": "Moves the compass sideways on the screen.",
+      "details": "CoD2x only. It runs from -640 to 640, and 0 is the usual position."
+    },
+    "cg_hudcompassoffsety": {
+      "group": "hud",
+      "title": "Compass up-down shift",
+      "summary": "Moves the compass up or down on the screen.",
+      "details": "CoD2x only. It runs from -480 to 480, and 0 is the usual position."
+    },
+    "cg_huddamageiconheight": {
+      "group": "hud",
+      "title": "Damage indicator height",
+      "summary": "How tall the damage direction indicator is.",
+      "details": "The default is 64. zPAM sets it to 64 for every player after they join a team, so a saved value is replaced on servers running it."
+    },
+    "cg_huddamageiconwidth": {
+      "group": "hud",
+      "title": "Damage indicator width",
+      "summary": "How wide the damage direction indicator is.",
+      "details": "The default is 128. zPAM sets it to 128 for every player after they join a team, so a saved value is replaced on servers running it."
+    },
+    "cg_huddamageiconoffset": {
+      "group": "hud",
+      "title": "Damage indicator distance",
+      "summary": "How far from the centre the damage direction indicator sits.",
+      "details": "The default is 128. zPAM sets it to 128 for every player after they join a team, so a saved value is replaced on servers running it."
+    },
+    "cg_huddamageicontime": {
+      "group": "hud",
+      "title": "Damage indicator time",
+      "summary": "How long the damage direction indicator stays on screen, in milliseconds.",
+      "details": "The default is 2,000 milliseconds. zPAM sets it to 2,000 for every player after they join a team, so a saved value is replaced on servers running it."
+    },
+    "cg_hudgrenadeiconheight": {
+      "group": "hud",
+      "title": "Grenade icon height",
+      "summary": "How tall the incoming-grenade icon is.",
+      "details": "The default is 25. zPAM sets it to 25 for every player after they join a team, so a saved value is replaced on servers running it."
+    },
+    "cg_hudgrenadeiconwidth": {
+      "group": "hud",
+      "title": "Grenade icon width",
+      "summary": "How wide the incoming-grenade icon is.",
+      "details": "The default is 25. zPAM sets it to 25 for every player after they join a team, so a saved value is replaced on servers running it."
+    },
+    "cg_hudgrenadeiconoffset": {
+      "group": "hud",
+      "title": "Grenade icon distance",
+      "summary": "How far from the centre the incoming-grenade icon sits.",
+      "details": "The default is 50. zPAM sets it to 50 for every player after they join a team, so a saved value is replaced on servers running it."
+    },
+    "cg_hudgrenadepointerheight": {
+      "group": "hud",
+      "title": "Grenade pointer height",
+      "summary": "How tall the incoming-grenade pointer is.",
+      "details": "The default is 12. zPAM sets it to 12 for every player after they join a team, so a saved value is replaced on servers running it."
+    },
+    "cg_hudgrenadepointerwidth": {
+      "group": "hud",
+      "title": "Grenade pointer width",
+      "summary": "How wide the incoming-grenade pointer is.",
+      "details": "The default is 25. zPAM sets it to 25 for every player after they join a team, so a saved value is replaced on servers running it."
+    },
+    "cg_hudobjectivemaxrange": {
+      "group": "hud",
+      "title": "Objective icon range",
+      "summary": "How far away objective icons still show.",
+      "details": "The default is 2,048. zPAM sets it to 2,048 for every player after they join a team, so a saved value is replaced on servers running it."
+    },
+    "cg_hudobjectiveminalpha": {
+      "group": "hud",
+      "title": "Objective icon opacity",
+      "summary": "The faintest an objective icon gets.",
+      "details": "The default is 1. zPAM sets it to 1 for every player after they join a team, so a saved value is replaced on servers running it."
+    },
+    "cg_hudobjectiveminheight": {
+      "group": "hud",
+      "title": "Objective icon height",
+      "summary": "The lowest height objective icons are drawn at.",
+      "details": "The default is -70. zPAM sets it to -70 for every player after they join a team, so a saved value is replaced on servers running it."
+    },
+    "cg_hudgrenadepointerpivot": {
+      "group": "hud",
+      "title": "Grenade pointer pivot",
+      "summary": "The point the incoming-grenade pointer turns around.",
+      "details": "Two numbers, 12 and 27 by default. zPAM sets it to 12 27 for every player after they join a team, so a saved value is replaced on servers running it."
+    },
+    "cg_hudgrenadepointerpulsefreq": {
+      "group": "hud",
+      "title": "Grenade pointer pulse speed",
+      "summary": "How fast the incoming-grenade pointer pulses.",
+      "details": "From 0.1 to 50, and 1.7 by default."
+    },
+    "cg_hudgrenadepointerpulsemax": {
+      "group": "hud",
+      "title": "Grenade pointer pulse maximum",
+      "summary": "How large the incoming-grenade pointer pulse gets.",
+      "details": "From 0 to 3, and 1.85 by default."
+    },
+    "cg_hudgrenadepointerpulsemin": {
+      "group": "hud",
+      "title": "Grenade pointer pulse minimum",
+      "summary": "How small the incoming-grenade pointer pulse gets.",
+      "details": "From -3 to 1, and 0.3 by default."
+    },
+    "cg_hudgrenadeiconinscope": {
+      "group": "hud",
+      "title": "Grenade icon while scoped",
+      "summary": "Whether the incoming-grenade icon shows while you look through a scope.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. zPAM sets it to on for every player."
+    },
+    "cg_huddamageiconinscope": {
+      "group": "hud",
+      "title": "Damage indicator while scoped",
+      "summary": "Whether the damage direction indicator shows while you look through a scope.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. zPAM sets it to on for every player, while ESL's old PunkBuster list required it off."
+    },
+    "cg_hudgrenadeiconmaxheight": {
+      "group": "hud",
+      "title": "Grenade icon maximum height",
+      "summary": "The tallest the incoming-grenade icon can get.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 104."
+    },
+    "cg_hudgrenadeiconmaxrange": {
+      "group": "hud",
+      "title": "Grenade icon range",
+      "summary": "How far away an incoming grenade still shows an icon.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 250 game units."
+    },
+    "cg_hudcompasssoundpingfadetime": {
+      "group": "hud",
+      "title": "Compass sound fade",
+      "summary": "How many seconds a sound marker lingers on the compass.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 2 seconds, and zPAM sets it to 2 for every player."
+    },
+    "cg_hudproney": {
+      "group": "hud",
+      "title": "Prone indicator position",
+      "summary": "How high or low the prone indicator sits on the screen.",
+      "details": "From -10,000 to 10,000, and -160 by default."
+    },
+    "cg_hudstanceflash": {
+      "group": "hud",
+      "title": "Stance indicator flash colour",
+      "summary": "The colour the stance indicator flashes.",
+      "details": "White by default."
+    },
+    "cg_hudstancehintprints": {
+      "group": "hud",
+      "title": "Print stance hints",
+      "summary": "Prints stance hints as messages.",
+      "details": "Off by default."
+    },
+    "cg_hudchatposition": {
+      "group": "hud",
+      "title": "Chat position",
+      "summary": "Where chat appears on the screen, as two numbers.",
+      "details": "Left and top positions from 0 to 640, 5 and 150 by default."
+    },
+    "cg_hudsayposition": {
+      "group": "hud",
+      "title": "Say prompt position",
+      "summary": "Where the say prompt appears on the screen, as two numbers.",
+      "details": "Left and top positions from 0 to 640, 5 and 126 by default."
+    },
+    "cg_drawcrosshairnamesposx": {
+      "group": "hud",
+      "title": "Name left-right position",
+      "summary": "Where the name under your crosshair sits, from the left.",
+      "details": "From 0 to 640, and 300 by default."
+    },
+    "cg_drawcrosshairnamesposy": {
+      "group": "hud",
+      "title": "Name up-down position",
+      "summary": "Where the name under your crosshair sits, from the top.",
+      "details": "From 0 to 480, and 180 by default."
+    },
+    "cg_drawturretcrosshair": {
+      "group": "hud",
+      "title": "Turret crosshair",
+      "summary": "Shows the crosshair while you use a turret.",
+      "details": "On by default. ePAM 1.02 forced it on for every player."
+    },
+    "cg_drawbreathhint": {
+      "group": "hud",
+      "title": "Breath hint",
+      "summary": "Shows the 'hold breath' hint when you are scoped.",
+      "details": "On by default."
+    },
+    "cg_drawmantlehint": {
+      "group": "hud",
+      "title": "Mantle hint",
+      "summary": "Shows the prompt that tells you when you can climb over something.",
+      "details": "On by default. Turning it off hides the grey prompt, which is only visual."
+    },
+    "cg_drawgamemessages": {
+      "group": "hud",
+      "title": "Game messages",
+      "summary": "Shows messages from the game on screen.",
+      "details": "On by default."
+    },
+    "cg_drawsnapshot": {
+      "group": "hud",
+      "title": "Show update info",
+      "summary": "Shows technical information about the updates your game receives.",
+      "details": "A diagnostic overlay, off by default."
+    },
+    "cg_drawscriptusage": {
+      "group": "hud",
+      "title": "Show script usage",
+      "summary": "Shows script usage information.",
+      "details": "A developer aid; its effect is not documented here."
+    },
+    "cg_drawsoundoverlay": {
+      "group": "hud",
+      "title": "Sound debug overlay",
+      "summary": "Shows a sound debugging overlay.",
+      "details": "Choices are None, 3D, Stream and 2D. A developer aid."
+    },
+    "cg_crosshairalpha": {
+      "group": "hud",
+      "title": "Crosshair opacity",
+      "summary": "How solid the crosshair is.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1."
+    },
+    "cg_crosshairalphamin": {
+      "group": "hud",
+      "title": "Crosshair minimum opacity",
+      "summary": "The faintest the crosshair gets.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from 0 to 1."
+    },
+    "cg_crosshairdynamic": {
+      "group": "hud",
+      "title": "Crosshair follows spread",
+      "summary": "Makes the crosshair size follow your weapon spread.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. Published pro configs show it off."
+    },
+    "cg_crosshairenemycolor": {
+      "group": "hud",
+      "title": "Crosshair over enemies",
+      "summary": "Changes the crosshair's colour when it is over an enemy.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "cg_draw2d": {
+      "group": "hud",
+      "title": "Draw the 2D layer",
+      "summary": "Whether the game draws the HUD layer.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "cg_drawgun": {
+      "group": "hud",
+      "title": "Draw your weapon",
+      "summary": "Whether your first-person weapon is drawn.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. A PunkBuster stock list and WWCL's old rules required it on."
+    },
+    "cg_drawhealth": {
+      "group": "hud",
+      "title": "Draw a health bar",
+      "summary": "Shows a health bar, which the game does not normally show.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. WWCL's old rules required it off."
+    },
+    "cg_drawmaterial": {
+      "group": "hud",
+      "title": "Draw a named material",
+      "summary": "A developer switch that draws a named material on screen.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "con_gamemessagetime": {
+      "group": "hud",
+      "title": "Message time",
+      "summary": "How many seconds game messages stay on screen.",
+      "details": "The default is 5 seconds."
+    },
+    "con_boldgamemessagetime": {
+      "group": "hud",
+      "title": "Bold message time",
+      "summary": "How many seconds bold game messages stay on screen.",
+      "details": "The default is 8 seconds."
+    },
+    "con_minicon": {
+      "group": "hud",
+      "title": "Mini console",
+      "summary": "Shows recent console text on the main screen.",
+      "details": "Off by default. The mini console's lines and time are set separately."
+    },
+    "con_miniconlines": {
+      "group": "hud",
+      "title": "Mini console lines",
+      "summary": "How many lines the mini console shows.",
+      "details": "From 0 to 100, and 5 by default."
+    },
+    "con_minicontime": {
+      "group": "hud",
+      "title": "Mini console time",
+      "summary": "How many seconds mini console text stays on screen.",
+      "details": "The default is 4 seconds."
+    },
+    "con_printdoublecolors": {
+      "group": "hud",
+      "title": "Double colour codes",
+      "summary": "Lets doubled colour codes show in the killfeed and console.",
+      "details": "CoD2x only. With it off, doubled colour codes are removed from console and killfeed text. On by default."
+    },
+    "con_inputboxcolor": {
+      "group": "hud",
+      "title": "Console input colour",
+      "summary": "The colour of the console's input box.",
+      "details": "Four numbers from 0 to 1 for red, green, blue and opacity."
+    },
+    "con_inputhintboxcolor": {
+      "group": "hud",
+      "title": "Console hint colour",
+      "summary": "The colour of the console's hint box.",
+      "details": "Four numbers from 0 to 1 for red, green, blue and opacity."
+    },
+    "con_outputbarcolor": {
+      "group": "hud",
+      "title": "Console output bar colour",
+      "summary": "The colour of the console output bar.",
+      "details": "Four numbers from 0 to 1 for red, green, blue and opacity."
+    },
+    "con_outputslidercolor": {
+      "group": "hud",
+      "title": "Console slider colour",
+      "summary": "The colour of the console output slider.",
+      "details": "Four numbers from 0 to 1 for red, green, blue and opacity."
+    },
+    "con_outputwindowcolor": {
+      "group": "hud",
+      "title": "Console window colour",
+      "summary": "The colour of the console output window.",
+      "details": "Four numbers from 0 to 1 for red, green, blue and opacity."
+    },
+    "hud_deathquotefadetime": {
+      "group": "hud",
+      "title": "Death quote fade time",
+      "summary": "How many milliseconds the death quote takes to fade.",
+      "details": "From 0 to 100,000 milliseconds, and 1,000 by default.",
+      "control": {
+        "kind": "number",
+        "unit": "ms"
+      }
+    },
+    "hud_fade_ammodisplay": {
+      "group": "hud",
+      "title": "Ammo display fade",
+      "summary": "How many seconds before the ammo display fades; 0 keeps it visible.",
+      "details": "From 0 to 30 seconds."
+    },
+    "hud_fade_compass": {
+      "group": "hud",
+      "title": "Compass fade",
+      "summary": "How many seconds before the compass fades.",
+      "details": "From 0 to 30 seconds."
+    },
+    "hud_fade_healthbar": {
+      "group": "hud",
+      "title": "Health bar fade",
+      "summary": "How many seconds before the health bar fades.",
+      "details": "From 0 to 30 seconds."
+    },
+    "hud_fade_offhand": {
+      "group": "hud",
+      "title": "Grenade display fade",
+      "summary": "How many seconds before the grenade display fades.",
+      "details": "From 0 to 30 seconds."
+    },
+    "hud_fade_stance": {
+      "group": "hud",
+      "title": "Stance display fade",
+      "summary": "How many seconds before the stance display fades.",
+      "details": "From 0 to 30 seconds."
+    },
+    "hud_fadeout_speed": {
+      "group": "hud",
+      "title": "HUD fade speed",
+      "summary": "How fast faded HUD elements disappear.",
+      "details": "From 0 to 1, and 0.1 by default."
+    },
+    "hud_flash_period_offhand": {
+      "group": "hud",
+      "title": "Grenade flash period",
+      "summary": "How many seconds between flashes of the grenade display.",
+      "details": "From 0 to 30 seconds, and 0.5 by default."
+    },
+    "hud_flash_time_offhand": {
+      "group": "hud",
+      "title": "Grenade flash time",
+      "summary": "How many seconds the grenade display flashes.",
+      "details": "From 0 to 30 seconds, and 2 by default."
+    },
+    "hud_health_pulserate_critical": {
+      "group": "hud",
+      "title": "Critical health pulse",
+      "summary": "How fast the health display pulses when you are badly hurt.",
+      "details": "From 0.1 to 3, and 0.5 by default."
+    },
+    "hud_health_pulserate_injured": {
+      "group": "hud",
+      "title": "Injured health pulse",
+      "summary": "How fast the health display pulses when you are hurt.",
+      "details": "From 0.1 to 3, and 1 by default."
+    },
+    "hud_health_startpulse_critical": {
+      "group": "hud",
+      "title": "Critical pulse starts",
+      "summary": "The health level where the critical pulse starts.",
+      "details": "A fraction of full health from 0 to 1.1, and 0.33 by default."
+    },
+    "hud_health_startpulse_injured": {
+      "group": "hud",
+      "title": "Injured pulse starts",
+      "summary": "The health level where the injured pulse starts.",
+      "details": "A fraction of full health from 0 to 1.1, and 1 by default."
+    },
+    "hud_healthoverlay_phaseend_pulseduration": {
+      "group": "hud",
+      "title": "Health overlay end pulse",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "hud_healthoverlay_phaseend_toalpha": {
+      "group": "hud",
+      "title": "Health overlay end fade",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "hud_healthoverlay_phaseone_pulseduration": {
+      "group": "hud",
+      "title": "Overlay phase one pulse",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "hud_healthoverlay_phasethree_pulseduration": {
+      "group": "hud",
+      "title": "Overlay phase three pulse",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "hud_healthoverlay_phasethree_toalphamultiplier": {
+      "group": "hud",
+      "title": "Overlay phase three fade",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "hud_healthoverlay_phasetwo_pulseduration": {
+      "group": "hud",
+      "title": "Overlay phase two pulse",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "hud_healthoverlay_phasetwo_toalphamultiplier": {
+      "group": "hud",
+      "title": "Overlay phase two fade",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "hud_healthoverlay_pulsestart": {
+      "group": "hud",
+      "title": "Health overlay pulse start",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "hud_healthoverlay_regenpausetime": {
+      "group": "hud",
+      "title": "Health regeneration pause",
+      "summary": "A developer value for the health overlay.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "cg_hudradarcolor": {
+      "group": "hud",
+      "title": "Radar tint colour",
+      "summary": "The tint of the radar map image.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on."
+    },
+    "cg_hudradarentityoffsetx": {
+      "group": "hud",
+      "title": "Radar player left-right shift",
+      "summary": "Shifts players left or right on the radar.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on. The game fills it in from the map's radar file or when you calibrate the radar."
+    },
+    "cg_hudradarentityoffsety": {
+      "group": "hud",
+      "title": "Radar player up-down shift",
+      "summary": "Shifts players up or down on the radar.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on. The game fills it in from the map's radar file or when you calibrate the radar."
+    },
+    "cg_hudradarentityscale": {
+      "group": "hud",
+      "title": "Radar player scale",
+      "summary": "Scales the positions of players on the radar.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on. The game fills it in from the map's radar file or when you calibrate the radar."
+    },
+    "cg_hudradarmapimage": {
+      "group": "hud",
+      "title": "Radar map image",
+      "summary": "The material name of the radar's map image.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on. The game fills it in from the map's radar file when the map changes."
+    },
+    "cg_hudradarmapimageoffsetx": {
+      "group": "hud",
+      "title": "Radar map left-right shift",
+      "summary": "Shifts the radar map image left or right.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on. The game fills it in from the map's radar file."
+    },
+    "cg_hudradarmapimageoffsety": {
+      "group": "hud",
+      "title": "Radar map up-down shift",
+      "summary": "Shifts the radar map image up or down.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on. The game fills it in from the map's radar file."
+    },
+    "cg_hudradarmapimagerotation": {
+      "group": "hud",
+      "title": "Radar map rotation",
+      "summary": "Rotates the radar map image, in degrees.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on. The game fills it in from the map's radar file."
+    },
+    "cg_hudradaroffsetx": {
+      "group": "hud",
+      "title": "Radar left position",
+      "summary": "Where the radar sits from the left of the screen.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on."
+    },
+    "cg_hudradaroffsety": {
+      "group": "hud",
+      "title": "Radar top position",
+      "summary": "Where the radar sits from the top of the screen.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on."
+    },
+    "cg_hudradarplayersnumberswitch": {
+      "group": "hud",
+      "title": "Radar number swap",
+      "summary": "Swaps which team gets player numbers 1 to 5 and which gets 6 to 0.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on."
+    },
+    "cg_hudradarscale": {
+      "group": "hud",
+      "title": "Radar scale",
+      "summary": "Scales the whole radar.",
+      "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on."
     }
   },
   "commands": {
