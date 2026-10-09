@@ -362,7 +362,7 @@ struct MediaEntry: Identifiable {
         let normalized = try LaunchLink.canonicalAddress(address)
         let server = servers.first { (try? LaunchLink.canonicalAddress($0.address)) == normalized }
         let chosenID = serverConnection.address == normalized ? serverConnection.profileID : nil
-        guard let profile = try chosenID.map(configStudio.readProfile) ?? configStudio.current else { return nil }
+        guard let profile = try chosenID.map(configStudio.readProfile) ?? configStudio.readActive() else { return nil }
         return readyChecker.evaluate(server: server, profile: profile, mode: .cod2x,
             advancedChain: try configStudio.readAdvancedChain(profileID: profile.profile.id))
     }
@@ -505,7 +505,7 @@ struct MediaEntry: Identifiable {
                 connectionProfileID = serverConnection.profileID
                 if let configStudio {
                     try configStudio.refresh()
-                    if let profile = try connectionProfileID.map(configStudio.readProfile) ?? configStudio.current,
+                    if let profile = try connectionProfileID.map(configStudio.readProfile) ?? configStudio.readActive(),
                        let report = try readyCheck(for: link.address) {
                         connectionLaunch = try serverConnection.launch(for: link, profile: profile, report: report)
                         if connectionLaunch != nil {

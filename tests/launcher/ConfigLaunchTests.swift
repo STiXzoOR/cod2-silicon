@@ -9,8 +9,8 @@ private final class GameProbe: @unchecked Sendable {
 private enum InjectedFailure: Error { case write }
 
 @main struct ConfigLaunchTests {
-    static func require(_ condition: Bool, _ message: String = "config launch contract") {
-        if !condition { fatalError("FAIL: " + message) }
+    static func require(_ condition: Bool, _ message: String = "config launch contract", line: Int = #line) {
+        if !condition { fatalError("FAIL: \(message) (line \(line))") }
     }
     @MainActor static func main() throws {
         let scratch = URL(fileURLWithPath: ProcessInfo.processInfo.environment["TMPDIR"]!)
@@ -217,5 +217,49 @@ private enum InjectedFailure: Error { case write }
         require(try changedSession.prepareLaunch(settings: GameSettings())?.profileID == "new")
         try changedSession.cancelLaunch()
         print("PASS: in-game profile creation gets history and profile deletion does not block the next launch")
+
+        // Viewing another loadout never changes the game's active selection.
+        let viewHome = scratch.appendingPathComponent("view")
+        let viewStore = try ConfigProfileStore(homeURL: viewHome, dialect: .cod2x)
+        _ = try viewStore.create(id: "daily", displayName: "Daily", document: ConfigDocument(data: original, dialect: .cod2x))
+        let scrim = try viewStore.create(id: "scrim", displayName: "Scrim", document: ConfigDocument(data: Data("seta sensitivity \"3\"\n".utf8), dialect: .cod2x))
+        try viewStore.select(id: "daily", expectedActive: nil)
+        let viewer = try ConfigStudioSession(home: viewHome, dialect: .cod2x)
+        _ = try viewer.prepareLaunch(settings: GameSettings())
+        try viewer.cancelLaunch()
+        // Migration made a new Main from daily and selected it.
+        let activeID = try viewStore.activeSelection().profileID!
+        let activeBytes = try Data(contentsOf: viewHome.appendingPathComponent("main/players/active.txt"))
+        require(activeID == "Main" && viewer.current?.profile.id == activeID)
+        try viewer.focus("scrim")
+        require(viewer.focusedProfileID == "scrim" && viewer.current?.profile.id == "scrim" && viewer.current?.profile.isActive == false)
+        require(try viewer.readProfile(activeID).profile.isActive && !(try viewer.readProfile("daily").profile.isActive))
+        require(try viewer.readActive()?.profile.id == activeID)
+        require(viewer.current?.profile.id == "scrim")
+        var scrimEdit = viewer.current!.document
+        try scrimEdit.setSetting(named: "sensitivity", value: "2.5")
+        try viewer.update(document: scrimEdit, summary: "Changed Mouse speed")
+        require(try viewStore.read(id: "scrim").document.effectiveSetting(named: "sensitivity") == "2.5")
+        require(try viewStore.history(id: "scrim").first?.beforeData == scrim.data)
+        require(viewer.history.first?.summary == "Changed Mouse speed")
+        require(try Data(contentsOf: viewHome.appendingPathComponent("main/players/active.txt")) == activeBytes)
+        require(try viewer.prepareLaunch(settings: GameSettings())?.profileID == activeID && viewer.current?.profile.id == "scrim")
+        try viewer.cancelLaunch()
+        // A temporary per-connection copy is made from the active loadout, not the one on screen.
+        let activeRead = try viewStore.read(id: activeID)
+        let isolated = try viewer.prepareLaunch(settings: GameSettings(), connection: ConfigConnectionLaunch(address: "203.0.113.24:28960", values: ["snaps": "40"]),
+                                                connectionExpectedVersion: activeRead.version, connectionChainBytes: nil)
+        require(isolated?.profileID == activeID && isolated?.connectionIsolated == true && viewer.current?.profile.id == "scrim")
+        require(!viewer.profiles.contains { $0.id.hasPrefix("csconn") })
+        try viewer.cancelLaunch()
+        require(try Data(contentsOf: viewHome.appendingPathComponent("main/players/active.txt")) == activeBytes)
+        require(try viewStore.list().allSatisfy { !$0.id.hasPrefix("csconn") })
+        try FileManager.default.removeItem(at: viewHome.appendingPathComponent("main/players/scrim"))
+        try viewer.refresh()
+        require(viewer.focusedProfileID == nil && viewer.current?.profile.id == activeID)
+        do { try viewer.focus("missing"); fatalError("focused a missing loadout") }
+        catch ConfigProfileError.missingProfile {}
+        require(viewer.current?.profile.id == activeID)
+        print("PASS: a viewed loadout is edited and read without changing the active selection or launch profile")
     }
 }

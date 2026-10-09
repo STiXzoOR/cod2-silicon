@@ -34,6 +34,9 @@ private final class ConfigGameGuard: @unchecked Sendable {
     private let guardState: ConfigGameGuard
     private var draftVersion: ConfigProfileVersion?
     @Published private(set) var draftProfileID: String?
+    /// The loadout on screen when it is not the active one. Viewing never
+    /// writes active.txt; nil follows the game's active selection.
+    @Published private(set) var focusedProfileID: String?
     private var archive: SessionArchive?
     private struct SessionArchive: Codable {
         let id: String
@@ -79,16 +82,42 @@ private final class ConfigGameGuard: @unchecked Sendable {
     /// Reads the game's current bytes without rebasing or clearing an unsaved draft.
     func refresh() throws {
         do {
-            let temporary = archive?.connectionSelection?.disposableProfileID
-            profiles = try store.list().filter { $0.id != temporary }
-            if let id = try store.activeSelection().profileID {
-                let reviewedID = id == temporary ? archive?.connectionSelection?.sourceProfileID ?? id : id
-                current = try store.read(id: reviewedID)
-                history = try store.history(id: reviewedID)
+            profiles = try managedProfiles()
+            // A loadout removed elsewhere (the game's profile menu) returns the view to the active one.
+            if let focused = focusedProfileID, !profiles.contains(where: { $0.id.caseInsensitiveCompare(focused) == .orderedSame }) {
+                focusedProfileID = nil
+            }
+            if let id = try focusedProfileID ?? activeReviewedID() {
+                current = try store.read(id: id)
+                history = try store.history(id: id)
             } else { current = nil; history = [] }
             error = nil
         } catch { self.error = error.localizedDescription; throw error }
     }
+    /// Shows a loadout without selecting it for the next game. Pass nil to
+    /// follow the active loadout again.
+    func focus(_ id: String?) throws {
+        if let id, !(try managedProfiles()).contains(where: { $0.id.caseInsensitiveCompare(id) == .orderedSame }) {
+            throw ConfigProfileError.missingProfile
+        }
+        let previous = focusedProfileID
+        focusedProfileID = id
+        do { try refresh() } catch { focusedProfileID = previous; throw error }
+    }
+    /// Loadouts people manage; a temporary per-connection copy is never one of them.
+    private func managedProfiles() throws -> [ConfigProfile] {
+        let temporary = archive?.connectionSelection?.disposableProfileID
+        return try store.list().filter { $0.id != temporary }
+    }
+    /// The loadout the next game uses, whichever one is on screen. While a temporary
+    /// per-connection copy is selected, that is the saved loadout it was copied from.
+    private func activeReviewedID() throws -> String? {
+        guard let id = try store.activeSelection().profileID else { return nil }
+        let temporary = archive?.connectionSelection?.disposableProfileID
+        return id == temporary ? archive?.connectionSelection?.sourceProfileID ?? id : id
+    }
+    /// Reads the loadout the next game uses, for callers that must not follow the view.
+    func readActive() throws -> ConfigProfileRead? { try activeReviewedID().map { try store.read(id: $0) } }
     func setDraft(_ document: ConfigDocument) {
         if draft == nil { draftVersion = current?.version; draftProfileID = current?.profile.id }
         draft = document
@@ -256,7 +285,8 @@ private final class ConfigGameGuard: @unchecked Sendable {
         }
         if connectionProfileID != nil || disposable {
             guard migrationCompleted else { throw ConfigProfileError.invalidMigration }
-            guard let chosenID = connectionProfileID ?? current?.profile.id else { throw ConfigProfileError.missingProfile }
+            // Without an explicit choice, the active loadout serves the connection, not the one on screen.
+            guard let chosenID = try connectionProfileID ?? activeReviewedID() else { throw ConfigProfileError.missingProfile }
             let chosen = try store.read(id: chosenID)
             if disposable {
                 guard chosen.version == connectionExpectedVersion,
@@ -285,7 +315,10 @@ private final class ConfigGameGuard: @unchecked Sendable {
         }
         if migrationCompleted {
             try refresh()
-            guard let id = current?.profile.id else { throw ConfigProfileError.missingProfile }
+            // The active loadout launches, whichever loadout is on screen; a temporary
+            // per-connection copy keeps its saved loadout's command chain.
+            guard let selected = try activeReviewedID() else { throw ConfigProfileError.missingProfile }
+            let id = try store.read(id: selected).profile.id
             let chain = try ConfigStudioLaunch.chainBasename(profileID: id)
             let chainURL = store.homeURL.appendingPathComponent("main/" + chain)
             try ConfigProfileStore.checkPath(chainURL, under: store.homeURL)
