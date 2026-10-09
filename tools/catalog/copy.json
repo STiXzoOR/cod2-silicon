@@ -551,8 +551,8 @@
     "mss_q3fs": {
       "group": "audio",
       "title": "Sound file system",
-      "summary": "Set the sound driver's file-system preference.",
-      "details": "CoD2x competitive mode forces this on and changes its run-time type and limits. It is not a sound-quality preset.",
+      "summary": "A sound system switch that CoD2x competitive rules force on.",
+      "details": "On by default and latched, so a change applies after the game restarts. What it does is not documented; its name suggests a Quake 3 style file hook for the Miles sound system. Servers using CoD2x competitive rules force it on, ESL's old PunkBuster list required 1, and ClanBase's old rules blocked changing it as an ambient sound exploit. It is not a sound quality setting.",
       "runtimeNotes": [
         "CoD2x server policy can change the value, type or limits at run time; registration metadata is not a live ruleset."
       ],
@@ -564,8 +564,8 @@
     "mss_3d_provider": {
       "group": "audio",
       "title": "Sound provider",
-      "summary": "Set the legacy sound-provider preference.",
-      "details": "The native backend supplies audio on macOS. A legacy provider name does not install or select a Windows driver."
+      "summary": "Which legacy Miles sound provider the game asks for.",
+      "details": "The default is Miles Fast 2D Positional Audio. TweakGuide lists EAX providers too and calls the 2D one the fastest and a fix for EAX glitches. It is latched, and macOS supplies the real audio, so a provider name does not install or select a Windows driver."
     },
     "winvoice_mic_reclevel": {
       "group": "audio",
@@ -2013,6 +2013,82 @@
       "title": "Radar scale",
       "summary": "Scales the whole radar.",
       "details": "CoD2x only, and part of the spectator radar, which is drawn only for spectators, demos or when cheats are on."
+    },
+    "snd_bits": {
+      "group": "audio",
+      "title": "Sound depth",
+      "summary": "How many bits of detail each sound sample uses.",
+      "details": "From 8 to 16 bits, and 16 by default. TweakGuide says 8 can improve performance at the cost of quality. It is latched, so a change applies after the game restarts.",
+      "control": {
+        "kind": "number",
+        "unit": "bits"
+      }
+    },
+    "snd_stereo": {
+      "group": "audio",
+      "title": "Stereo sound",
+      "summary": "Plays sound in stereo instead of mono.",
+      "details": "On by default and latched, so a change applies after the game restarts. Mono removes direction from sound, which is a disadvantage when listening for footsteps."
+    },
+    "snd_erroronmissing": {
+      "group": "audio",
+      "title": "Error on missing sounds",
+      "summary": "Raises an error when a sound asset is missing.",
+      "details": "Off by default. A developer aid."
+    },
+    "snd_touchstreamfilesonload": {
+      "group": "audio",
+      "title": "Preload streamed sounds",
+      "summary": "Reads streamed sound files in advance when a map loads.",
+      "details": "Off by default."
+    },
+    "winvoice_mic_mute": {
+      "group": "audio",
+      "title": "Mute microphone",
+      "summary": "Mutes your microphone in voice chat.",
+      "details": "On by default. It is separate from your Mac's microphone mute."
+    },
+    "winvoice_mic_scaler": {
+      "group": "audio",
+      "title": "Microphone scale",
+      "summary": "A scale applied to your microphone signal in voice chat.",
+      "details": "From 0.25 to 2, and 1 by default."
+    },
+    "winvoice_save_voice": {
+      "group": "audio",
+      "title": "Save received voice",
+      "summary": "Saves voice chat you receive to disk.",
+      "details": "Off by default. A debugging aid."
+    },
+    "snd_enable2d": {
+      "group": "audio",
+      "title": "2D sounds",
+      "summary": "Whether the game plays 2D sounds such as menu clicks and music.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. Turning it off would silence 2D sounds, which TweakGuide lists as button clicks and music."
+    },
+    "snd_enable3d": {
+      "group": "audio",
+      "title": "3D sounds",
+      "summary": "Whether the game plays positioned sound effects.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. Turning it off would silence most in-game effects."
+    },
+    "snd_enablereverb": {
+      "group": "audio",
+      "title": "Reverb",
+      "summary": "Whether the game adds reverb to positioned sounds.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. TweakGuide says turning it off can improve performance."
+    },
+    "snd_enablestream": {
+      "group": "audio",
+      "title": "Streamed sounds",
+      "summary": "Whether the game plays streamed sounds.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "snd_slavefadetime": {
+      "group": "audio",
+      "title": "Volume fade time",
+      "summary": "How many milliseconds sounds take to fade when volumes are linked.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 500 milliseconds."
     }
   },
   "commands": {

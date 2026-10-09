@@ -30457,8 +30457,8 @@
       ],
       "group": "audio",
       "title": "Sound provider",
-      "summary": "Set the legacy sound-provider preference.",
-      "details": "The native backend supplies audio on macOS. A legacy provider name does not install or select a Windows driver.",
+      "summary": "Which legacy Miles sound provider the game asks for.",
+      "details": "The default is Miles Fast 2D Positional Audio. TweakGuide lists EAX providers too and calls the 2D one the fastest and a fix for EAX glitches. It is latched, and macOS supplies the real audio, so a provider name does not install or select a Windows driver.",
       "sources": [
         "src/PC/win32/snd_driver.c:1721"
       ],
@@ -30526,8 +30526,8 @@
       ],
       "group": "audio",
       "title": "Sound file system",
-      "summary": "Set the sound driver's file-system preference.",
-      "details": "CoD2x competitive mode forces this on and changes its run-time type and limits. It is not a sound-quality preset.",
+      "summary": "A sound system switch that CoD2x competitive rules force on.",
+      "details": "On by default and latched, so a change applies after the game restarts. What it does is not documented; its name suggests a Quake 3 style file hook for the Miles sound system. Servers using CoD2x competitive rules force it on, ESL's old PunkBuster list required 1, and ClanBase's old rules blocked changing it as an ambient sound exploit. It is not a sound quality setting.",
       "sources": [
         "src/PC/win32/snd_driver.c:1711"
       ],
@@ -49318,15 +49318,16 @@
         "stock"
       ],
       "group": "audio",
-      "title": "Bits",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sound depth",
+      "summary": "How many bits of detail each sound sample uses.",
+      "details": "From 8 to 16 bits, and 16 by default. TweakGuide says 8 can improve performance at the cost of quality. It is latched, so a change applies after the game restarts.",
       "sources": [
         "src/PC/snd.c:1053"
       ],
       "guided": false,
       "control": {
-        "kind": "number"
+        "kind": "number",
+        "unit": "bits"
       }
     },
     {
@@ -49387,9 +49388,9 @@
         "stock"
       ],
       "group": "audio",
-      "title": "Enable2d",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "2D sounds",
+      "summary": "Whether the game plays 2D sounds such as menu clicks and music.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. Turning it off would silence 2D sounds, which TweakGuide lists as button clicks and music.",
       "sources": [
         "src/PC/snd.c:1057"
       ],
@@ -49456,9 +49457,9 @@
         "stock"
       ],
       "group": "audio",
-      "title": "Enable3d",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "3D sounds",
+      "summary": "Whether the game plays positioned sound effects.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. Turning it off would silence most in-game effects.",
       "sources": [
         "src/PC/snd.c:1058"
       ],
@@ -49525,9 +49526,9 @@
         "stock"
       ],
       "group": "audio",
-      "title": "Enable reverb",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Reverb",
+      "summary": "Whether the game adds reverb to positioned sounds.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. TweakGuide says turning it off can improve performance.",
       "sources": [
         "src/PC/snd.c:1060"
       ],
@@ -49594,9 +49595,9 @@
         "stock"
       ],
       "group": "audio",
-      "title": "Enable stream",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Streamed sounds",
+      "summary": "Whether the game plays streamed sounds.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
         "src/PC/snd.c:1059"
       ],
@@ -49663,9 +49664,9 @@
         "stock"
       ],
       "group": "audio",
-      "title": "Error on missing",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Error on missing sounds",
+      "summary": "Raises an error when a sound asset is missing.",
+      "details": "Off by default. A developer aid.",
       "sources": [
         "src/PC/snd.c:1051"
       ],
@@ -49843,9 +49844,9 @@
         "stock"
       ],
       "group": "audio",
-      "title": "Slave fade time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Volume fade time",
+      "summary": "How many milliseconds sounds take to fade when volumes are linked.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 500 milliseconds.",
       "sources": [
         "src/PC/snd.c:1056"
       ],
@@ -49914,9 +49915,9 @@
         "stock"
       ],
       "group": "audio",
-      "title": "Stereo",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Stereo sound",
+      "summary": "Plays sound in stereo instead of mono.",
+      "details": "On by default and latched, so a change applies after the game restarts. Mono removes direction from sound, which is a disadvantage when listening for footsteps.",
       "sources": [
         "src/PC/snd.c:1054"
       ],
@@ -49983,9 +49984,9 @@
         "stock"
       ],
       "group": "audio",
-      "title": "Touch stream files on load",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Preload streamed sounds",
+      "summary": "Reads streamed sound files in advance when a map loads.",
+      "details": "Off by default.",
       "sources": [
         "src/PC/snd.c:1061"
       ],
@@ -57125,9 +57126,9 @@
         "stock"
       ],
       "group": "audio",
-      "title": "Winvoice mic mute",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Mute microphone",
+      "summary": "Mutes your microphone in voice chat.",
+      "details": "On by default. It is separate from your Mac's microphone mute.",
       "sources": [
         "src/PC/win32/win_voice.c:114"
       ],
@@ -57296,9 +57297,9 @@
         "stock"
       ],
       "group": "audio",
-      "title": "Winvoice mic scaler",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Microphone scale",
+      "summary": "A scale applied to your microphone signal in voice chat.",
+      "details": "From 0.25 to 2, and 1 by default.",
       "sources": [
         "src/PC/win32/win_voice.c:117"
       ],
@@ -57365,9 +57366,9 @@
         "stock"
       ],
       "group": "audio",
-      "title": "Winvoice save voice",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Save received voice",
+      "summary": "Saves voice chat you receive to disk.",
+      "details": "Off by default. A debugging aid.",
       "sources": [
         "src/PC/win32/win_voice.c:116"
       ],
