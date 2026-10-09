@@ -3,9 +3,6 @@
 #if defined(COD2_X64) && COD2_X64
 #define DVAR_COMMAND_EXTERNAL_FLAG 0x4000
 #define DVAR_COMBINED_STRING_SIZE 4096
-#else
-#define DVAR_COMMAND_EXTERNAL_FLAG 0x40
-#define DVAR_COMBINED_STRING_SIZE 1023
 #endif
 extern int dvarCount;
 /* dvar globals */
@@ -117,9 +114,17 @@ static void Dvar_GetCombinedString_impl(char *combined, int first)
         l += arglen - 1;
         if (l > 0xffd)
             return;
+#if defined(COD2_X64) && COD2_X64
         I_strncat(combined, DVAR_COMBINED_STRING_SIZE, arg);
+#else
+        I_strncat(combined, 1023, arg);
+#endif
         if (i != last) {
+#if defined(COD2_X64) && COD2_X64
             I_strncat(combined, DVAR_COMBINED_STRING_SIZE, " ");
+#else
+            I_strncat(combined, 1023, " ");
+#endif
         }
     }
 }
@@ -347,7 +352,11 @@ static void Dvar_RegisterBool_f(void)
     existing = (dvar_t *)Dvar_FindVar(dvarName);
     if (existing) {
         if (existing->type == 7) {
+#if defined(COD2_X64) && COD2_X64
             if (!(existing->flags & DVAR_COMMAND_EXTERNAL_FLAG)) {
+#else
+            if (!(existing->flags & 0x40)) {
+#endif
                 Com_Printf("dvar '%s' is not a boolean dvar\n", existing->name);
                 return;
             }
@@ -357,7 +366,11 @@ static void Dvar_RegisterBool_f(void)
         }
 
         if (existing->type == 7) {
+#if defined(COD2_X64) && COD2_X64
             if (!(existing->flags & DVAR_COMMAND_EXTERNAL_FLAG))
+#else
+            if (!(existing->flags & 0x40))
+#endif
                 goto print_not_bool;
         }
     }
@@ -393,7 +406,11 @@ static void Dvar_RegisterInt_f(void)
     existing = (dvar_t *)Dvar_FindVar(dvarName);
     if (existing) {
         if (existing->type == 7) {
+#if defined(COD2_X64) && COD2_X64
             if (!(existing->flags & DVAR_COMMAND_EXTERNAL_FLAG))
+#else
+            if (!(existing->flags & 0x40))
+#endif
                 goto print_not_int;
         } else {
 
@@ -439,7 +456,11 @@ static void Dvar_RegisterFloat_f(void)
     existing = (dvar_t *)Dvar_FindVar(dvarName);
     if (existing) {
         if (existing->type == 7) {
+#if defined(COD2_X64) && COD2_X64
             if (!(existing->flags & DVAR_COMMAND_EXTERNAL_FLAG))
+#else
+            if (!(existing->flags & 0x40))
+#endif
                 goto print_not_float;
         } else if (existing->type - 1 != 0) {
             goto print_not_float;

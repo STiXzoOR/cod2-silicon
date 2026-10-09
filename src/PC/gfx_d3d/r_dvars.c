@@ -349,9 +349,6 @@ void R_RegisterDvars(void)
 
 #if defined(COD2_X64) && COD2_X64
 #define R_LIGHT_TWEAK_FLAGS 0x2280
-#else
-#define R_LIGHT_TWEAK_FLAGS 0x2200
-#endif
     r_lightTweakAmbient = ri.Dvar_RegisterFloat("r_lightTweakAmbient", 0.1f, 0.0f, 4.0f, R_LIGHT_TWEAK_FLAGS);
 
     r_lightTweakDiffuseFraction = ri.Dvar_RegisterFloat("r_lightTweakDiffuseFraction", 0.5f, 0.0f, 1.0f, R_LIGHT_TWEAK_FLAGS);
@@ -367,6 +364,22 @@ void R_RegisterDvars(void)
     r_lightTweakSunDirection = ri.Dvar_RegisterVec3("r_lightTweakSunDirection", 0.0f, 0.0f, 0.0f, -360.0f, 360.0f, R_LIGHT_TWEAK_FLAGS);
 #undef R_LIGHT_TWEAK_FLAGS
 
+#else
+    r_lightTweakAmbient = ri.Dvar_RegisterFloat("r_lightTweakAmbient", 0.1f, 0.0f, 4.0f, 0x2200);
+
+    r_lightTweakDiffuseFraction = ri.Dvar_RegisterFloat("r_lightTweakDiffuseFraction", 0.5f, 0.0f, 1.0f, 0x2200);
+
+    r_lightTweakSunLight = ri.Dvar_RegisterFloat("r_lightTweakSunLight", 1.0f, 0.0f, 4.0f, 0x2200);
+
+    r_lightTweakAmbientColor = ri.Dvar_RegisterColor("r_lightTweakAmbientColor", 1.0f, 0.0f, 0.0f, 1.0f, 0x2200);
+
+    r_lightTweakSunColor = ri.Dvar_RegisterColor("r_lightTweakSunColor", 0.0f, 1.0f, 0.0f, 1.0f, 0x2200);
+
+    r_lightTweakSunDiffuseColor = ri.Dvar_RegisterColor("r_lightTweakSunDiffuseColor", 0.0f, 0.0f, 1.0f, 1.0f, 0x2200);
+
+    r_lightTweakSunDirection = ri.Dvar_RegisterVec3("r_lightTweakSunDirection", 0.0f, 0.0f, 0.0f, -360.0f, 360.0f, 0x2200);
+
+#endif
     r_objectiveColorDx7Min = ri.Dvar_RegisterColor("r_objectiveColorDx7Min", 0.55f, 0.38f, 0.0f, 1.0f, 0x2000);
 
     r_objectiveColorDx7Max = ri.Dvar_RegisterColor("r_objectiveColorDx7Max", 1.0f, 0.7f, 0.2f, 1.0f, 0x2000);
