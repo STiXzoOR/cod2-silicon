@@ -54,6 +54,8 @@ names = ['GScr_MapRestart', 'GScr_LoadMap', 'GScr_ExitLevel',
          'GScr_LoadScriptFunction', 'GScr_LoadGameTypeScript', 'Scr_RandomInt']
 implemented = 'GScr_Cod2xBeforeMapChange' in game
 prefix = '#define STOP_VM_CALLBACK_IMPLEMENTED ' + str(int(implemented)) + '\n'
+queue_result = implemented and not function(game, 'GScr_Cod2xQueueExitLevel').lstrip().startswith('void ')
+prefix += '#define STOP_VM_QUEUE_RETURNS_RESULT ' + str(int(queue_result)) + '\n'
 (out / 'stop_vm_features.h').write_text(prefix)
 if 'GScr_Cod2xBeforeMapChange' in game:
     prefix += '\n'.join(re.findall(r'^static .*\bcod2xStop\w*[^\n]*;', game, re.M)) + '\n'

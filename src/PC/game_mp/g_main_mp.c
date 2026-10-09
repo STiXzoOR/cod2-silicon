@@ -516,8 +516,9 @@ void ExitLevel(void)
     int i;
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
-    extern void GScr_Cod2xQueueExitLevel(void);
-    GScr_Cod2xQueueExitLevel();
+    extern qboolean GScr_Cod2xQueueExitLevel(void);
+    if (!GScr_Cod2xQueueExitLevel())
+        return;
 #else
     Cbuf_ExecuteText(2, "map_rotate\n");
 #endif

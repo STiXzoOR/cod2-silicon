@@ -38,6 +38,8 @@ cmd_t cmd_texts[1], *cmd_text = cmd_texts;
 static cmd_text_buf_t cmd_text_buf;
 #define queued ((char *)cmd_text->data)
 static jmp_buf transitionError;
+static jmp_buf retryError;
+static int catchRetryError;
 static int callbackError, startupError, missingMap, missingProfile, retainedStrings;
 static int scriptArgCount, scriptPersist, returnedType = 6, returnedInt = 1, nestedRequest;
 static int callbackArgs[3], callbackDestroys;
@@ -53,7 +55,6 @@ void GScr_FreeScripts(void);
 void GScr_MapRestart(void);
 void GScr_LoadMap(void);
 void GScr_ExitLevel(void);
-void GScr_Cod2xQueueExitLevel(void);
 void ExitLevel(void);
 int G_GetSavePersist(void);
 void G_SetSavePersist(qboolean persist);
@@ -207,7 +208,7 @@ void Cmd_ExecuteString(const char *text)
     else if (!strcmp(cmdName, "map_rotate")) SV_MapRotate_f();
     else if (!strcmp(cmdName, "map_restart")) SV_MapRestart_f();
     else if (!strcmp(cmdName, "fast_restart")) SV_FastRestart_f();
-    else abort();
+    else if (cmdName[0]) abort();
 }
 void SV_MatchEnd(void) { ++matchEnds; }
 qboolean SV_MapExists(const char *name) { (void)name; return 1; }
@@ -216,7 +217,7 @@ unsigned int Scr_GetConstString(unsigned int arg) { (void)arg; return 1; }
 void SL_AddRefToString(unsigned int value) { (void)value; ++retainedStrings; }
 void SL_RemoveRefToString(unsigned int value) { (void)value; --retainedStrings; CHECK(retainedStrings >= 0); }
 const char *Scr_GetString(unsigned int arg) { (void)arg; return "fixture_next"; }
-void Scr_Error(const char *text) { fprintf(stderr, "%s\n", text); abort(); }
+void Scr_Error(const char *text) { fprintf(stderr, "%s\n", text); if (catchRetryError) longjmp(retryError, 1); abort(); }
 void Scr_AddString(const char *s) { snprintf(callbackSource, sizeof(callbackSource), "%s", s); ++scrVmPub.top; ++scrVmPub.inparamcount; scrVmPub.top->type = 2; }
 void Scr_AddBool(int b) { ++scrVmPub.top; ++scrVmPub.inparamcount; scrVmPub.top->type = 6; scrVmPub.top->u.intValue = b; }
 void RemoveRefToValue(int type, VariableUnion u) { (void)type; (void)u; ++clearedReturns; }
@@ -241,8 +242,8 @@ void Scr_AddExecThread(scr_func_t handle, unsigned int paramcount)
     ++scrVmPub.top; scrVmPub.top->type = returnedType; scrVmPub.top->u.intValue = returnedInt;
     scrVmPub.outparamcount = 1;
 }
-#include "stop_main_source.h"
 #include "stop_game_source.h"
+#include "stop_main_source.h"
 #include "stop_commands_source.h"
 #include "stop_server_source.h"
 #include "stop_buffer_source.h"
@@ -284,6 +285,101 @@ static void transition(int source)
     case 4: SV_Shutdown("synthetic shutdown"); break;
     }
 }
+static void fillCommandBuffer(int freeBytes)
+{
+    static char padding[0x10000];
+    int size = 0x10000 - freeBytes;
+    memset(padding, '\n', size);
+    padding[size] = 0;
+    Cbuf_AddText(padding);
+    CHECK(cmd_text->cmdsize == size);
+}
+static void transitionBufferCases(int codx)
+{
+    for (int present = 0; present <= 1; ++present) {
+        printf("Transition buffer: mode=%s callback=%d\n", codx ? "codx" : "stock", present);
+        /* Thirteen untagged bytes fit; the approval marker does not. */
+        resetCase(present, 6, 1, 0, 7);
+        scriptArgCount = 1; scriptPersist = 1;
+        fillCommandBuffer(14);
+        GScr_MapRestart();
+        CHECK(cmd_text->cmdsize == 0x10000 - (codx ? 14 : 1));
+        CHECK(level.finished == (codx ? 0 : 1));
+        CHECK(level.savepersist == (codx ? 7 : 1));
+        CHECK(stopped == (codx && present));
+#if STOP_CALLBACK_IMPLEMENTED
+        CHECK(!cod2xStopQueuedSource && !cod2xStopQueuedMarker[0]);
+#endif
+        Cbuf_Execute();
+        CHECK(!cmd_text->cmdsize && gameplayStarts == !codx);
+
+        /* A rejected map must release its string and allow a fresh GSC retry. */
+        resetCase(present, 6, 1, 0, 7);
+        scriptArgCount = 2; scriptPersist = 1;
+        fillCommandBuffer(1);
+        GScr_LoadMap();
+        CHECK(cmd_text->cmdsize == 0x10000 - 1 && !retainedStrings);
+        CHECK(level.finished == (codx ? 0 : 2));
+        CHECK(level.savepersist == (codx ? 7 : 1));
+#if STOP_CALLBACK_IMPLEMENTED
+        CHECK(!cod2xStopQueuedSource && !cod2xStopQueuedMarker[0]);
+#endif
+        Cbuf_Execute();
+        CHECK(!cmd_text->cmdsize && !gameplayStarts);
+        catchRetryError = 1;
+        if (!setjmp(retryError)) {
+            GScr_LoadMap();
+            CHECK(codx);
+        } else {
+            CHECK(!codx);
+        }
+        catchRetryError = 0;
+        if (codx) {
+            CHECK(level.finished == 2 && level.savepersist == 1 && cmd_text->cmdsize > 0);
+            CHECK(stopped == 2 * present && !retainedStrings);
+            Cbuf_Execute();
+            CHECK(gameplayStarts == 1 && persisted == 1 && !cmd_text->cmdsize);
+            CHECK(stopped == 2 * present);
+        }
+
+        /* Full and marker-only rejection must not apply CoD2x exit effects. */
+        for (int freeBytes = 1; freeBytes <= 12; freeBytes += 11) {
+            resetCase(present, 6, 1, 0, 7);
+            scriptArgCount = 1; scriptPersist = 1;
+            gameClients[0].sess.score = 42;
+            gameClients[1].sess.connected = CON_CONNECTING;
+            gameClients[1].sess.score = 24;
+            fillCommandBuffer(freeBytes);
+            GScr_ExitLevel();
+            CHECK(cmd_text->cmdsize == 0x10000 - freeBytes + (codx || freeBytes == 1 ? 0 : 11));
+            CHECK(level.finished == (codx ? 0 : 3));
+            CHECK(level.savepersist == (codx ? 7 : 1));
+            CHECK(matchEnds == !codx);
+            CHECK(level.teamScores[TEAM_AXIS] == (codx ? 10 : 0));
+            CHECK(level.teamScores[TEAM_ALLIES] == (codx ? 20 : 0));
+            CHECK(gameClients[0].sess.score == (codx ? 42 : 0));
+            CHECK(gameClients[0].sess.connected == (codx ? CON_CONNECTED : CON_CONNECTING));
+            CHECK(gameClients[1].sess.score == 24 && gameClients[1].sess.connected == CON_CONNECTING);
+#if STOP_CALLBACK_IMPLEMENTED
+            CHECK(!cod2xStopQueuedSource && !cod2xStopQueuedMarker[0]);
+#endif
+            if (codx) {
+                Cbuf_Execute();
+                catchRetryError = 1;
+                if (!setjmp(retryError)) GScr_ExitLevel();
+                else CHECK(0); /* A rejected append must not trigger already-called. */
+                catchRetryError = 0;
+                CHECK(level.finished == 3 && level.savepersist == 1 && matchEnds == 1);
+                CHECK(level.teamScores[TEAM_AXIS] == 0 && level.teamScores[TEAM_ALLIES] == 0);
+                CHECK(gameClients[0].sess.score == 0 && gameClients[0].sess.connected == CON_CONNECTING);
+                CHECK(stopped == 2 * present);
+                Dvar_SetString(sv_mapRotationCurrent, "map fixture_next");
+                Cbuf_Execute();
+                CHECK(gameplayStarts == 1 && persisted == 1 && stopped == 2 * present);
+            }
+        }
+    }
+}
 int main(void)
 {
     Dvar_Init();
@@ -296,6 +392,7 @@ int main(void)
 #if defined(COD2_CODX) && COD2_CODX
     codx = 1;
 #endif
+    transitionBufferCases(codx);
     for (int source = 0; source < 6; ++source) {
         for (int present = 0; present <= 1; ++present) {
             for (int origin = 0; origin <= 1; ++origin) {

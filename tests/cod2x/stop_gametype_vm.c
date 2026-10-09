@@ -158,10 +158,16 @@ int Scr_SetObjectField(unsigned int classnum, int entnum, int offset) { (void)cl
 qboolean SV_MapExists(const char *map) { assert(!strcmp(map, "fixture_next")); return 1; }
 void Cbuf_ExecuteText(int when, const char *text) { assert(when == 2); ++queuedTransitions; cmd_text->cmdsize += strlen(text); snprintf(queued, sizeof(queued), "%s", text); }
 void SV_MatchEnd(void) { ++matchEnds; }
-void GScr_Cod2xQueueExitLevel(void);
+void ExitLevel(void);
+#include "stop_vm_game.h"
 void ExitLevel(void) {
 #if defined(COD2_CODX) && COD2_CODX && STOP_VM_CALLBACK_IMPLEMENTED
+#if STOP_VM_QUEUE_RETURNS_RESULT
+    if (!GScr_Cod2xQueueExitLevel())
+        return;
+#else
     GScr_Cod2xQueueExitLevel();
+#endif
 #else
     Cbuf_ExecuteText(2, "map_rotate\n");
 #endif
@@ -170,7 +176,6 @@ void ExitLevel(void) {
 void Hunk_ClearToMark(int mark) { (void)mark; for (size_t i = 0; i < permanentCount; ++i) free(permanent[i]); permanentCount = 0; }
 extern void Scr_EndLoadScripts(void);
 extern void Scr_EndLoadAnimTrees(void);
-#include "stop_vm_game.h"
 #include "stop_vm_errors.h"
 
 int main(void)

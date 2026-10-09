@@ -789,8 +789,6 @@ static qboolean GScr_Cod2xQueueMapChange(int finished, int persist, const char *
 {
     if (!GScr_Cod2xCallStopGameType(1, persist == 0, 0, source))
         return 0;
-    level.finished = finished;
-    level.savepersist = persist;
     cod2xStopQueuedSource = source;
     cod2xStopQueuedCommand = finished == 1 ? "fast_restart" : finished == 2 ? "map" : "map_rotate";
     I_strncpyz(cod2xStopQueuedTarget, target, sizeof(cod2xStopQueuedTarget));
@@ -802,7 +800,7 @@ static qboolean GScr_Cod2xQueueMapChange(int finished, int persist, const char *
     return 1;
 }
 
-static void GScr_Cod2xQueueCommand(void)
+static qboolean GScr_Cod2xQueueCommand(void)
 {
     int before = cmd_text->cmdsize;
     int length;
@@ -816,15 +814,24 @@ static void GScr_Cod2xQueueCommand(void)
     if (cmd_text->cmdsize != before + length) {
         cod2xStopQueuedSource = NULL;
         cod2xStopQueuedMarker[0] = 0;
+        return 0;
     }
+    level.finished = cod2xStopQueuedFinished;
+    level.savepersist = cod2xStopQueuedPersist;
+    return 1;
 }
 
-void GScr_Cod2xQueueExitLevel(void)
+qboolean GScr_Cod2xQueueExitLevel(void)
 {
-    if (cod2xStopQueuedSource && !strcmp(cod2xStopQueuedSource, "map_rotate"))
-        GScr_Cod2xQueueCommand();
-    else
+    if (cod2xStopQueuedSource && !strcmp(cod2xStopQueuedSource, "map_rotate")) {
+        if (!GScr_Cod2xQueueCommand())
+            return 0;
+        /* Script match-end effects require a successfully queued transition. */
+        SV_MatchEnd();
+    } else {
         Cbuf_ExecuteText(2, "map_rotate\n");
+    }
+    return 1;
 }
 #endif
 
@@ -2410,7 +2417,9 @@ void GScr_ExitLevel(void)
         lvl->savepersist = Scr_GetInt(0);
 #endif
 
+#if !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
     SV_MatchEnd();
+#endif
     ExitLevel();
 }
 
