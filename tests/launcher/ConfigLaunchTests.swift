@@ -196,5 +196,26 @@ private enum InjectedFailure: Error { case write }
         require(stockMod.migrationError != nil)
         try stockMod.cancelLaunch()
         print("PASS: explicit fresh/profile migration in both dialects; stock mod launch retains legacy ownership")
+
+        // The original in-game profile menu can create/delete profiles too.
+        let changedHome = scratch.appendingPathComponent("game-profiles")
+        let changedStore = try ConfigProfileStore(homeURL: changedHome, dialect: .cod2x)
+        _ = try changedStore.create(id: "old", displayName: "Old", document: ConfigDocument(data: original, dialect: .cod2x))
+        try changedStore.select(id: "old", expectedActive: nil)
+        let changedSession = try ConfigStudioSession(home: changedHome, dialect: .cod2x)
+        _ = try changedSession.prepareLaunch(settings: GameSettings())
+        changedSession.gameLaunched(pid: 105)
+        try FileManager.default.removeItem(at: changedHome.appendingPathComponent("main/players/old"))
+        let createdInGame = Data("seta name \"In game\"\n".utf8)
+        try PrivateFile.write(createdInGame, to: changedHome.appendingPathComponent("main/players/new/config_mp.cfg"))
+        try PrivateFile.write(Data("new".utf8), to: changedHome.appendingPathComponent("main/players/active.txt"))
+        do { try changedSession.reconcileGames([]) }
+        catch { fatalError("FAIL: in-game profile deletion blocked session exit: \(error)") }
+        let createdHistory = try changedStore.history(id: "new")
+        require(createdHistory.count == 1 && createdHistory[0].source == .gameSession)
+        require(createdHistory[0].beforeData.isEmpty && createdHistory[0].data == createdInGame)
+        require(try changedSession.prepareLaunch(settings: GameSettings())?.profileID == "new")
+        try changedSession.cancelLaunch()
+        print("PASS: in-game profile creation gets history and profile deletion does not block the next launch")
     }
 }

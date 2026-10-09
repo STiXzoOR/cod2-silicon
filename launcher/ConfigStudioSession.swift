@@ -224,8 +224,11 @@ private final class ConfigGameGuard: @unchecked Sendable {
     func finishSession() throws {
         guard !isReadOnly else { throw ConfigProfileError.gameRunning }
         guard let archive else { return }
-        for (id, before) in archive.before {
-            try store.recordGameSession(id: id, before: before, sessionID: archive.id)
+        // The game's own profile menu can remove old profiles and create new
+        // ones. Never recreate a deleted profile or let it block future launch.
+        for profile in try store.list() {
+            let before = archive.before[profile.id] ?? ConfigProfileVersion(config: Data(), metadata: nil)
+            try store.recordGameSession(id: profile.id, before: before, sessionID: archive.id)
         }
         try ConfigProfileStore.checkPath(archiveURL, under: store.homeURL)
         try FileManager.default.removeItem(at: archiveURL)
