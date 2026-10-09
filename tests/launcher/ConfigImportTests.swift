@@ -13,7 +13,8 @@ import Foundation
         "sensitivity": .init(archived: true), "com_maxfps": .init(archived: true),
         "cg_fov": .init(cheatProtected: true), "r_fullbright": .init(cheatProtected: true),
         "name": .init(archived: true), "cl_allowdownload": .init(archived: true),
-        "foreign_fixture_setting": .init(inert: true)
+        "foreign_fixture_setting": .init(inert: true),
+        "protected_foreign_fixture": .init(cheatProtected: true, inert: true)
     ], commands: ["+attack": .init(bindable: true), "-attack": .init(bindable: true),
                   "+forward": .init(bindable: true), "weapnext": .init(bindable: true)])
     static func review(_ text: String, dialect: ConfigDialect = .stock,
@@ -89,6 +90,7 @@ import Foundation
         let perPress = review("seta step1 \"+attack;set next vstr step2\"\nseta step2 \"weapnext;set next vstr step1\"\nseta next \"vstr step1\"\nbind j \"vstr next\"")
         require(perPress.candidates.allSatisfy { !$0.reasons.contains(.cycle) && $0.importable }, "per-press pointer changes do not execute their newly stored scripts immediately")
         require(review("seta foreign_fixture_setting 1").candidates[0].reasons.contains(.inertName), "catalog can identify proven foreign names without classifying all custom helpers as inert")
+        require(!review("seta protected_foreign_fixture 1").candidates[0].importable, "protection flags take precedence over every catalog label")
         require(review("seta destination \"https://user:secret@example.invalid/config\"").candidates[0].reasons.contains(.credential), "credentials inside setting URLs are blocked and redacted")
         for binding in ["+attack;", "+attack;  ", "+attack; /* comment */"] {
             let item = review("bind j \"\(binding)\"").candidates[0]

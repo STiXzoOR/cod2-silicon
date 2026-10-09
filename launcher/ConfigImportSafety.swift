@@ -382,8 +382,8 @@ struct ConfigImportSafety: Sendable {
         if name.hasPrefix("cg_fov") { result.add(.protectedSetting, level: .blocked, importable: false) }
         if let info = catalog.setting(named: name, dialect: dialect) {
             if info.inert { result.add(.inertName) }
-            else if info.cheatProtected || info.readOnly || info.writeProtected { result.add(.protectedSetting, level: .blocked, importable: false) }
-            else if !info.archived { result.add(.sideEffect) }
+            if info.cheatProtected || info.readOnly || info.writeProtected { result.add(.protectedSetting, level: .blocked, importable: false) }
+            else if !info.inert && !info.archived { result.add(.sideEffect) }
         } else if Self.inertName(name) { result.add(.inertName) }
         else { result.add(.unknownSetting) }
         if name == "name" || name == "cl_anonymous" { result.add(.identity) }
