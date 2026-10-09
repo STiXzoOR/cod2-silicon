@@ -53,7 +53,9 @@ private struct BindsListLayout: View {
             if proxy.size.width >= 840 {
                 HStack(alignment: .top, spacing: 16) {
                     actions
-                    AdvancedBindsPanel(studio: studio, binds: binds).frame(width: 384).frame(maxHeight: .infinity, alignment: .top)
+                    // The editor can outgrow the window; it scrolls on its own, beside the list.
+                    ScrollView { AdvancedBindsPanel(studio: studio, binds: binds).padding(.bottom, 8) }
+                        .frame(width: 384).frame(maxHeight: .infinity, alignment: .top)
                 }
             } else {
                 ScrollView {

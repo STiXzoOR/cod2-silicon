@@ -168,7 +168,7 @@ enum ConfigStudioTabsTests {
         binds.updateDraft { $0.key = "k"; $0.kind = .several; $0.commands = [.init(kind: .action, text: "+gostand"), .init(kind: .command, text: "wait"), .init(kind: .action, text: "gocrouch")] }
         require(binds.chainNotes.contains { $0.text.hasPrefix("Competitive CoD2x servers turn off wait") }, "competitive wait is called out")
         binds.updateDraft { $0.kind = .cycle; $0.steps = [.init(kind: .say, text: String(repeating: "a", count: 1100)), .init(kind: .say, text: "b")] }
-        require(binds.chainError == ConfigChainError.helperTooLong.errorDescription, "B2's 1022-byte refusal is actionable")
+        require(binds.chainError == "One step is longer than the 1,022 characters the game keeps. Split it into shorter steps.", "B2's 1022-byte refusal is actionable")
         binds.deleteChain()
         require(binds.draft == nil)
 
@@ -176,7 +176,8 @@ enum ConfigStudioTabsTests {
         binds.exportWindows(to: export)
         require(try Data(contentsOf: export) == ConfigChains.windowsExport(read: session.current!) && model.failure == nil)
         binds.exportWindows(to: session.home.appendingPathComponent("main/windows.cfg"))
-        require(model.failure?.message == ConfigChainError.unsafeExport.errorDescription, "exports into the game home are refused")
+        require(model.failure?.message == "Choose a place outside the game’s own folders.", "exports into the game home are refused")
+        require(binds.message(ConfigChainError.unsafeQuotes, exporting: true).hasPrefix("Windows can’t keep quote marks"))
         model.failure = nil
         print("PASS: advanced binds preview, review labels, wait warning, B2 refusals, save and Windows export")
 

@@ -476,7 +476,7 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
             let edit = try ConfigChains.prepare(chains: others + [chain], read: current)
             chainEdit = edit
             if let catalog = studio.catalog { assess(edit, chain: chain, catalog: catalog) }
-        } catch { chainError = error.localizedDescription }
+        } catch { chainError = message(error) }
     }
     /// I1's labels for the commands this bind adds, shown before saving.
     private func assess(_ edit: ConfigChainEdit, chain: ConfigChain, catalog: ConfigCatalog) {
@@ -508,7 +508,7 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
             if let entry = session.history.first { studio.didSave(entry, name: "Advanced Bind", undo: undo) }
             if let draft { var saved = draft; saved.isNew = false; self.draft = saved }
             preview()
-        } catch { chainError = error.localizedDescription }
+        } catch { chainError = message(error) }
     }
     func deleteChain(undo: UndoManager? = nil) {
         guard let draft, let current = studio.current, let session = studio.session else { return }
@@ -518,7 +518,7 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
             try ConfigChains.apply(edit, to: session)
             if let entry = session.history.first { studio.didSave(entry, name: "Delete Advanced Bind", undo: undo) }
             self.draft = nil; chainID = nil; chainEdit = nil
-        } catch { chainError = error.localizedDescription }
+        } catch { chainError = message(error) }
     }
 
     /// Press-by-press preview from B2's machine: the saved profile, then its chain file,
@@ -590,6 +590,31 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
     }
 
     /// Windows export: B2 compiles helpers to archived lines and refuses what it can't carry.
+    /// B2's refusals in the words of this screen, each saying what to change.
+    func message(_ error: Error, exporting: Bool = false) -> String {
+        guard let error = error as? ConfigChainError else { return error.localizedDescription }
+        switch error {
+        case .helperTooLong: return "One step is longer than the 1,022 characters the game keeps. Split it into shorter steps."
+        case .unsafeQuotes:
+            if exporting { return "Windows can’t keep quote marks inside an advanced bind’s steps. Remove them, then export." }
+            if studio.current?.document.dialect == .stock {
+                return "The original game drops quote marks when it loads a bind, so text with spaces or quote marks can’t be saved here. Use single words, or play with CoD2x."
+            }
+            return "A step has quote marks inside it, which the game would read differently. Remove them."
+        case .heldActionInCycle: return "A cycle can’t hold an action down, like Fire or Lean. Use Several, starting with that action."
+        case .invalidCommands: return "Each step needs a complete command that fits on one game line."
+        case .unsafeExecution: return "This bind would keep running by itself. Remove the step that starts it again."
+        case .duplicateKey: return "Another advanced bind already uses this key. Choose a different key."
+        case .invalidIdentity: return "This bind’s internal name isn’t valid. Discard it and make it again."
+        case .opaqueOwnedFile: return "Advanced binds were changed outside Config Studio. Check them in Edit as Text before replacing them."
+        case .conflictNeedsReview: return "This key already does something else. Save again and confirm replacing it."
+        case .locked(let name): return "\(studio.spec(named: name)?.title ?? name) is locked. Unlock it in Settings to change this bind."
+        case .unsafeExport: return "Choose a place outside the game’s own folders."
+        case .portableDependency: return "This loadout runs files or values Windows won’t have. Put those commands in the loadout itself, then export."
+        case .portablePreviewLimit: return "A bind here has more steps than the export check can follow (128 presses). Simplify it, then export."
+        }
+    }
+
     func exportWindows(to url: URL) {
         guard let current = studio.current, let session = studio.session else { return }
         do {
@@ -597,7 +622,7 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
             studio.announce("Exported for Windows.")
             studio.notice = "Exported \(url.lastPathComponent) for Windows."
         } catch {
-            studio.failure = ConfigStudioFailure(title: "Couldn’t export for Windows", message: error.localizedDescription, retry: nil)
+            studio.failure = ConfigStudioFailure(title: "Couldn’t export for Windows", message: message(error, exporting: true), retry: nil)
         }
     }
 }
