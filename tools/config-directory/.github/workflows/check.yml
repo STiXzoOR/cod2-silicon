@@ -1,0 +1,39 @@
+name: Check permissioned config directory
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require reviewed publication and model configuration
+        env:
+          MODEL_REPOSITORY: ${{ vars.MODEL_REPOSITORY }}
+          MODEL_REVISION: ${{ vars.MODEL_REVISION }}
+          PUBLICATION_BASE_URL: ${{ vars.PUBLICATION_BASE_URL }}
+          INDEX_REVISION: ${{ vars.INDEX_REVISION }}
+        run: |
+          test -n "$MODEL_REPOSITORY"
+          test -n "$PUBLICATION_BASE_URL"
+          test -n "$INDEX_REVISION"
+          test "${#MODEL_REVISION}" -eq 40
+          case "$MODEL_REVISION" in *[!0-9a-f]*) exit 1;; esac
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.MODEL_REPOSITORY }}
+          ref: ${{ vars.MODEL_REVISION }}
+          path: .models
+      - name: Compile production grammar, classifier and signature tooling
+        run: sh build-audit.sh "$PWD/.models" "$RUNNER_TEMP/directory-audit"
+      - name: Check schema, permissions, safety and generated artifacts
+        env:
+          PUBLICATION_BASE_URL: ${{ vars.PUBLICATION_BASE_URL }}
+          INDEX_REVISION: ${{ vars.INDEX_REVISION }}
+        run: |
+          python3 generate.py --root . --base-url "$PUBLICATION_BASE_URL" \
+            --revision "$INDEX_REVISION" --audit-binary "$RUNNER_TEMP/directory-audit/audit" --check
+          if test -f index.sig; then
+            test -f trust/public-key.ed25519
+            "$RUNNER_TEMP/directory-audit/sign" verify index.json trust/public-key.ed25519 index.sig
+          fi
