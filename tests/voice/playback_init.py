@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+import re
 import shlex
 import subprocess
 import sys
@@ -21,7 +22,10 @@ def main():
     parser.add_argument('--output', required=True, type=Path)
     parser.add_argument('--baseline', help='Read production source from this local commit')
     parser.add_argument('--rate-contract', action='store_true', help='Measure synthetic voice duration and pitch')
+    parser.add_argument('--relay-contract', action='store_true', help='Exercise client/server/game relay and spectator routing')
     args = parser.parse_args()
+    if args.rate_contract and args.relay_contract:
+        parser.error('Choose one contract per run')
     out = args.output.resolve()
     if out.is_relative_to(ROOT):
         parser.error('Keep evidence outside the repository')
@@ -62,9 +66,26 @@ def main():
         (build / 'client_receive.h').write_text(extract_function(client, 'CL_VoicePacket') + '\n' +
             '\n'.join(extract_function(inputs, name) for name in
                       ('IN_KeyDown', 'IN_KeyUp', 'IN_TalkDown', 'IN_TalkUp', 'IsTalking')))
+        if args.relay_contract:
+            server = source('src/PC/server_mp/sv_voice_mp.c')
+            game = source('src/PC/game_mp/g_client_mp.c')
+            helpers = '\n'.join(re.search(
+                r'^static inline[^\n]*\b' + name + r'\([^;{]*\)\s*\{[^}]*\}',
+                game, re.M)[0] for name in ('G_EntityForNum', 'G_Level'))
+            (build / 'relay_source.h').write_text(
+                extract_function(inputs, 'CL_WriteVoicePacket') + '\n' +
+                '\n'.join(extract_function(client, name) for name in
+                          ('CL_VoiceTransmit', 'Client_SendVoiceData')) + '\n' +
+                helpers + '\n' + extract_function(game, 'G_BroadcastVoice') + '\n' +
+                '\n'.join(extract_function(server, name) for name in
+                          ('SV_ClientWantsVoiceData', 'SV_ClientHasClientMuted', 'SV_QueueVoicePacket',
+                           'SV_UserVoice', 'SV_PreGameUserVoice', 'SV_SendClientVoiceData')) + '\n' +
+                extract_function(source('src/PC/server_mp/sv_main_mp.c'), 'SV_VoicePacket'))
         paths = ['src/PC/win32/win_voice.c', 'src/platform/macos_voice.c',
                  'src/PC/groupvoice/play.c', 'src/PC/groupvoice/encode.c', 'src/PC/groupvoice/decode.c',
                  'src/PC/qcommon/msg_mp.c']
+        if args.relay_contract:
+            paths += ['src/PC/qcommon/huffman.c', 'src/PC/universal/q_shared.c']
         paths += [str(Path(row['file']).relative_to(Path(row['file'].split('/src/')[0]))) for row in rows
                   if '/src/PC/speex/' in row['file'] and
                   'cod2_macos.dir/' in row.get('command', ' '.join(row.get('arguments', [])))]
@@ -86,7 +107,8 @@ def main():
             ('tests/voice/rate_render.c' if args.rate_contract else 'tests/audio/render.c',
              'src/platform/macos_audio.c',
              ['-DAIL_open_digital_driver=VoiceTest_UnusedOpenDigitalDriver']),
-            ('tests/voice/playback_rate.c' if args.rate_contract else 'tests/voice/playback_init.c',
+            ('tests/voice/relay.c' if args.relay_contract else
+             'tests/voice/playback_rate.c' if args.rate_contract else 'tests/voice/playback_init.c',
              'src/PC/win32/win_voice.c', ['-I' + str(build)])
         ]:
             obj = build / (Path(path).stem + '.o')
@@ -116,7 +138,9 @@ def main():
             passed=passed, returncode=result.returncode, notice_count=result.stderr.count(notice),
             observations=observations,
             baseline=args.baseline, compile_db=str(args.compile_db.resolve()),
-            scope='Production receive/codec/queue/mixer; controlled output device and capture-success boundary; no game or UDP socket'
+            scope=('Production client/server/game relay, receive/codec/queue/mixer; synthetic network and output device'
+                   if args.relay_contract else
+                   'Production receive/codec/queue/mixer; controlled output device and capture-success boundary; no game or UDP socket')
         ), indent=2) + '\n')
     (out / 'commands.txt').write_text('\n'.join(commands) + '\n')
     return int(not passed)

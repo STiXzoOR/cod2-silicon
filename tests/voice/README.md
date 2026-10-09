@@ -94,6 +94,26 @@ taskpolicy -b nice -n 19 python3 tests/voice/tone_packets.py \
 cmp tests/voice/tone_packets.json /absolute/private/path/tone-packets.json
 ```
 
+## Server relay and routing
+
+```sh
+taskpolicy -b nice -n 19 python3 tests/voice/playback_init.py --relay-contract \
+  --compile-db build-macos/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/voice-relay-stock"
+```
+
+Repeat with the CoD2x database and a fresh output directory. `--baseline
+5fc9812` reproduces the missing spectator team bypass. The fixture follows
+production `Client_SendVoiceData`, `CL_WriteVoicePacket`, `SV_VoicePacket`,
+`SV_UserVoice`, `G_BroadcastVoice`, server queue/send, `CL_VoicePacket`, Speex,
+native playback queues and `Render`. It checks byte-preserving cross-client
+relay, original local echo with the sender's entity number, ten-frame and
+199/200 ms transmit boundaries, the 299/300 ms talk timeout, spectator team
+bypass, and global/dead chat, server mute and `sendVoice` gates. ASan/UBSan
+remain enabled. Networking, game entities, dvars and device creation are
+controlled fixture boundaries; this opens no UDP socket or game window and
+does not prove microphone capture or hardware playback.
+
 ## Independent expected values
 
 `codec_probe.c` generates eight 160-sample input frames from an integer triangle,
