@@ -250,6 +250,8 @@ struct ServerDetails: View {
                     GridRow { fact("Frame cap", facts.frameCap); fact("Access", facts.access) }
                 }
                 .padding(.horizontal, 6)
+                ReadyCheckCard(model: model, studio: model.studio, connection: model.serverConnection, server: server)
+                    .padding(.horizontal, 6)
                 if server.password {
                     SecureField("Server password", text: $model.serverPassword).textFieldStyle(.plain)
                         .padding(.horizontal, 14).frame(height: ControlMetrics.action).wellCapsule().padding(.horizontal, 6)
@@ -258,7 +260,7 @@ struct ServerDetails: View {
                 GlassContainer(spacing: 8) {
                     HStack(spacing: 8) {
                         Button { model.connect(server) } label: {
-                            Label("Deploy", systemImage: "play.fill").frame(maxWidth: .infinity)
+                            Label(ReadyCheckCard.deployTitle(model, server), systemImage: "play.fill").frame(maxWidth: .infinity)
                         }
                         .prominentAction().actionControlSize()
                         .accessibilityLabel("Deploy to \(QuakeColors.plain(server.name))")

@@ -42,7 +42,7 @@ for file in Core Presentation ConfigDocument ConfigProfiles ConfigHistory Config
     ConfigCheckup ConfigBindings InputDevices ConfigChains ConfigImport ConfigImportSafety WindowsProfiles ConfigImportSession \
     ConfigImportCatalogAdapter ConfigDirectory ConfigStudioModel ConfigStudioStyle \
     Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView LibraryView ConfigsView ConfigSettingsView ConfigHistoryView \
-    ConfigDiscoverModel ConfigDiscoverView ConfigImportView Main; do
+    ConfigDiscoverModel ConfigDiscoverView ConfigImportView ServerReadyCheck ServerReadyCheckView Main; do
     views="$views $root/launcher/$file.swift"
 done
 # shellcheck disable=SC2086

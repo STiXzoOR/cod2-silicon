@@ -22,7 +22,7 @@ for file in ConfigCheckup ConfigBindings InputDevices ConfigChains ConfigImport 
 done
 for file in Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView LibraryView \
     ConfigStudioModel ConfigStudioStyle ConfigsView ConfigSettingsView ConfigHistoryView \
-    ConfigDiscoverModel ConfigDiscoverView ConfigImportView; do
+    ConfigDiscoverModel ConfigDiscoverView ConfigImportView ServerReadyCheck ServerReadyCheckView; do
     views+=("$root/launcher/$file.swift")
 done
 name=CoD2Launcher

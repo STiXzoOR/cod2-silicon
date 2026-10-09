@@ -359,16 +359,18 @@ struct MediaEntry: Identifiable {
         }
     }
     func cancelRefresh() { browserTask?.cancel() }
+    /// The session the ready check reads: Configs' own (the review harness attaches one to a preview).
+    private var readySession: ConfigStudioSession? { studio.session ?? configStudio }
     /// A connection alternative does not change the active loadout in Studio.
     func useLoadoutForServer(_ id: String, address: String) throws {
-        guard let configStudio, !configStudio.isReadOnly else { throw ConfigProfileError.gameRunning }
+        guard let configStudio = readySession, !configStudio.isReadOnly else { throw ConfigProfileError.gameRunning }
         _ = try configStudio.readProfile(id)
         try serverConnection.select(address: address)
         try serverConnection.useProfile(id)
         objectWillChange.send()
     }
     func readyCheck(for address: String) throws -> ConfigReadyReport? {
-        guard let readyChecker, let configStudio else { return nil }
+        guard let readyChecker, let configStudio = readySession else { return nil }
         let normalized = try LaunchLink.canonicalAddress(address)
         let server = servers.first { (try? LaunchLink.canonicalAddress($0.address)) == normalized }
         let chosenID = serverConnection.address == normalized ? serverConnection.profileID : nil
@@ -377,7 +379,7 @@ struct MediaEntry: Identifiable {
             advancedChain: try configStudio.readAdvancedChain(profileID: profile.profile.id))
     }
     func fixForServerOnly(_ address: String) throws {
-        guard let configStudio, !configStudio.isReadOnly else { throw ConfigProfileError.gameRunning }
+        guard let configStudio = readySession, !configStudio.isReadOnly else { throw ConfigProfileError.gameRunning }
         try serverConnection.select(address: address)
         guard let report = try readyCheck(for: address) else { throw ConfigReadyCheckError.noVerifiedFix }
         try serverConnection.fix(report: report)
@@ -730,6 +732,7 @@ struct MediaEntry: Identifiable {
         case "discover-saved": page = .configs; discover.page = .saved
         case "discover-player": page = .configs
         case "configs-import", "configs-import-everything": page = .configs
+        case "servers-ready", "servers-ready-fixed": page = .servers
         default: page = .deploy
         }
     }
