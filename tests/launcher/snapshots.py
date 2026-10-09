@@ -5,6 +5,7 @@ Needs a login session whose window server supplies rendered window pixels (macOS
 can return transparent captures while locked). Uses only the original fallback art
 and fake documentation-range servers; no game data is read.
 """
+import json
 import pathlib
 import struct
 import subprocess
@@ -60,6 +61,10 @@ for appearance in ["dark", "light"]:
 run(fallback, "--fallback", "--only", "configs-guided")
 
 # Config Studio under Increase Contrast and Reduce Transparency (set for the capture only).
+# Increase Contrast changes every screen's palette. Reduce Transparency swaps glass for
+# opaque fills, so only screens whose shape audit lists glass must change; a screen of
+# opaque panels (Guided, the read-only banner) can capture identically.
+audit = {entry["screen"]: entry["items"] for entry in json.loads((out / "shape-audit.json").read_text())}
 # Behind the import sheet the window shows no translucent surface of its own, and the sheet's
 # material belongs to the system, so Reduce Transparency can leave those captures unchanged.
 sheets = {"configs-import", "configs-import-everything"}
@@ -73,7 +78,9 @@ for variant in ["increase-contrast", "reduce-transparency"]:
             assert (width, height) in WINDOW and length > 60_000, png
             if variant == "reduce-transparency" and screen in sheets:
                 continue
-            assert png.read_bytes() != (out / f"{screen}-{appearance}.png").read_bytes(), f"{png} matches the standard capture"
+            glass = any("glass" in item["name"] for item in audit[f"{screen}-{appearance}"])
+            if variant == "increase-contrast" or glass:
+                assert png.read_bytes() != (out / f"{screen}-{appearance}.png").read_bytes(), f"{png} matches the standard capture"
 
 # Real clicks on Config Studio controls (including a Binds key capture and Check-up Apply and
 # Undo) write exact bytes and History rows in a temporary home.
