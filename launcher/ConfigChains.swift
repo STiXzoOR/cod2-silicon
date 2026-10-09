@@ -170,7 +170,7 @@ struct ConfigChainMachine: Sendable {
 enum ConfigChainError: Error, LocalizedError, Sendable {
     case invalidIdentity, duplicateKey, invalidCommands, unsafeQuotes, heldActionInCycle
     case helperTooLong, unsafeExecution, opaqueOwnedFile, conflictNeedsReview, locked(String), unsafeExport
-    case portableDependency
+    case portableDependency, portablePreviewLimit
     var errorDescription: String? {
         switch self {
         case .invalidIdentity: return "Use a unique chain identifier with ASCII letters, numbers and underscores."
@@ -185,6 +185,7 @@ enum ConfigChainError: Error, LocalizedError, Sendable {
         case .locked(let name): return "Unlock \(name) before changing this chain."
         case .unsafeExport: return "Choose an export file outside the active game home and its linked folders."
         case .portableDependency: return "This loadout requires an exec file, an unresolved variable, or an unarchived script helper. Include and review those commands in the loadout before exporting for Windows."
+        case .portablePreviewLimit: return "This imported script has more states than the 128-press export preview can verify. Simplify the cycle or review and export its dependencies separately."
         }
     }
 }
@@ -284,7 +285,10 @@ enum ConfigChains {
             _ = machine.execute(document.serialized())
             _ = machine.execute(new.script)
             for (key, binding) in new.bindings.sorted(by: { $0.key < $1.key }) {
-                for _ in 0..<128 {
+                var seen = Set<Data>(), repeated = false
+                for count in 0...128 {
+                    if !seen.insert(try symbolicState(machine)).inserted { repeated = true; break }
+                    guard count < 128 else { break }
                     for down in [true, false] {
                         let trace = machine.keyEvent(binding: binding, key: ConfigDocument.keyNumber(key)!, down: down, time: down ? 100 : 200)
                         if trace.issues.contains(where: \.blocksCompilation) { throw ConfigChainError.unsafeExecution }
@@ -292,6 +296,7 @@ enum ConfigChains {
                         for issue in trace.issues where !issues.contains(issue) { issues.append(issue) }
                     }
                 }
+                if previous != chains && !read.metadata.locks.isEmpty && !repeated { throw ConfigChainError.unsafeExecution }
             }
         }
         return ConfigChainEdit(profileID: read.profile.id, before: read.version, document: document, metadata: metadata,
@@ -452,10 +457,19 @@ enum ConfigChains {
         var machine = ConfigChainMachine(dialect: read.document.dialect)
         _ = machine.execute(read.document.serialized())
         if let script = read.version.chain { _ = machine.execute(script) }
-        for down in [true, false] {
-            let trace = machine.keyEvent(binding: binding, key: ConfigDocument.keyNumber(key) ?? 0, down: down, time: down ? 100 : 200)
-            try checkTraceLocks(key: key, commands: trace.commands, read: read)
+        var seen = Set<Data>()
+        for count in 0...128 {
+            if !seen.insert(try symbolicState(machine)).inserted { return }
+            guard count < 128 else { throw ConfigChainError.unsafeExecution }
+            for down in [true, false] {
+                let trace = machine.keyEvent(binding: binding, key: ConfigDocument.keyNumber(key) ?? 0, down: down, time: down ? 100 : 200)
+                if trace.issues.contains(where: \.blocksCompilation) { throw ConfigChainError.unsafeExecution }
+                try checkTraceLocks(key: key, commands: trace.commands, read: read)
+            }
         }
+    }
+    private static func symbolicState(_ machine: ConfigChainMachine) throws -> Data {
+        try encode(machine.variables) + Data([0]) + encode(machine.archivedVariables.sorted())
     }
     private static func checkTraceLocks(key: String, commands: [[Data]], read: ConfigProfileRead) throws {
         let names = Set(commands.flatMap { command -> [String] in
@@ -494,13 +508,23 @@ enum ConfigChains {
         guard startup.complete else { throw ConfigChainError.portableDependency }
         try checkArchivedValues(machine)
         for key in 0..<256 {
+            // Letter spellings fold to lowercase engine identities. Do not
+            // count the same binding twice through its uppercase alias.
+            guard ConfigDocument.keyNumber(ConfigDocument.keySpelling(key)) == key else { continue }
             guard let binding = parsed.effectiveBindBytes(key: ConfigDocument.keySpelling(key)) else { continue }
-            for _ in 0..<128 {
+            var seen = Set<Data>(), repeated = false
+            for count in 0...128 {
+                let state = try symbolicState(machine)
+                if !seen.insert(state).inserted { repeated = true; break }
+                guard count < 128 else { break }
                 let press = machine.keyEvent(binding: binding, key: key, down: true, time: 100)
                 let release = machine.keyEvent(binding: binding, key: key, down: false, time: 200)
                 guard press.complete && release.complete else { throw ConfigChainError.portableDependency }
                 try checkArchivedValues(machine)
             }
+            // A finite preview without a repeated state cannot establish that
+            // later presses introduce no additional archive dependencies.
+            guard repeated else { throw ConfigChainError.portablePreviewLimit }
         }
         let archived = Set(parsed.commands.filter { $0.tokens.first?.text.lowercased() == "seta" && $0.tokens.count >= 3 }.map { $0.tokens[1].text.lowercased() })
         guard machine.referencedVariables.isSubset(of: archived) else { throw ConfigChainError.portableDependency }

@@ -40,6 +40,18 @@ import Foundation
 
         let source = try store.create(id: "Source", displayName: "Source", document: document("set source 5\nseta target 0\nbind j \"setfromdvar target source\"\n"))
         expectThrow("setfromdvar export loses source after rewrite") { _ = try ConfigChains.windowsExport(read: source) }
+        var wideText = "set source 5\nseta target 0\nseta next \"vstr s0\"\nbind MOUSE1 \"vstr next\"\n"
+        for index in 0..<129 {
+            let effect = index == 128 ? "setfromdvar target source; " : ""
+            wideText += "seta s\(index) \"\(effect)set next vstr s\((index + 1) % 129)\"\n"
+        }
+        let wide = try store.create(id: "Wide", displayName: "Wide", document: document(wideText))
+        do { _ = try ConfigChains.windowsExport(read: wide); failures.append("dependency beyond bounded export preview") }
+        catch ConfigChainError.portablePreviewLimit {} catch { failures.append("wrong export bound refusal") }
+        var boundedText = "seta next \"vstr s0\"\nbind MOUSE1 \"vstr next\"\n"
+        for index in 0..<128 { boundedText += "seta s\(index) \"set next vstr s\((index + 1) % 128)\"\n" }
+        let bounded = try store.create(id: "Bounded", displayName: "Bounded", document: document(boundedText))
+        if try ConfigChains.windowsExport(read: bounded).isEmpty { failures.append("128-state cycle export") }
         let runtime = try store.create(id: "Runtime", displayName: "Runtime", document: document("seta script \"say harmless\"\nset script \"say \\\"hello world\\\"\"\nbind j \"vstr script\"\n"))
         expectThrow("effective archived quotes") { _ = try ConfigChains.windowsExport(read: runtime) }
         var transientDoc = document("seta script \"say harmless\"\n")
@@ -49,9 +61,12 @@ import Foundation
         var oldMeta = ConfigStudioMetadata(displayName: "Old"); oldMeta.locks = ["action:quit"]
         let old = try store.create(id: "Old", displayName: "Old", document: document("seta act \"quit\"\nbind j \"vstr act\"\n"), metadata: oldMeta)
         expectThrow("old imported action lock") { _ = try ConfigChains.prepare(chains: [.init(id: "replace", key: "j", behavior: .commands(["say replacement"]))], read: old) }
+        let oldCycle = try store.create(id: "OldCycle", displayName: "OldCycle", document: document("seta next \"vstr s0\"\nseta s0 \"say first; set next vstr s1\"\nseta s1 \"quit; set next vstr s0\"\nbind j \"vstr next\"\n"), metadata: oldMeta)
+        expectThrow("old imported action lock on a later press") { _ = try ConfigChains.prepare(chains: [.init(id: "replace", key: "j", behavior: .commands(["say replacement"]))], read: oldCycle) }
         for failure in failures { fputs("REVIEW RED: \(failure)\n", stderr) }
         require(failures.isEmpty, "\(failures.count) review regressions")
         print("PASS: five review regressions: native truncation, interrupted copy, setfromdvar durability, runtime quotes and old transitive locks")
+        print("PASS: full 128-state export cycle and actionable refusal beyond its bound")
     }
     @MainActor static func main() throws {
         let scratch = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
