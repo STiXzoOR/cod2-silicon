@@ -23,7 +23,7 @@ done
 for file in Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView LibraryView \
     ConfigStudioModel ConfigStudioBinds ConfigStudioCheckup ConfigStudioStyle ConfigsView ConfigSettingsView ConfigHistoryView \
     ConfigDiscoverModel ConfigDiscoverView ConfigImportView ServerReadyCheck ServerReadyCheckView \
-    ConfigBindsView; do
+    ConfigBindsView ConfigCheckupView; do
     views+=("$root/launcher/$file.swift")
 done
 name=CoD2Launcher

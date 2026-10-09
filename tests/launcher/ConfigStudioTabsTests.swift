@@ -213,7 +213,8 @@ enum ConfigStudioTabsTests {
         let cap = try require(report.suggestions.first { $0.id == "competitive-frame-cap" })
         require(checkup.changeText(cap.changes[0]) == "Frame rate cap: 333 fps → 250 fps")
         let gauges = checkup.gauges(report)
-        require(gauges.map(\.status).prefix(3) == ["Not measured", "Not measured", "Not measured"] && gauges[0].value == "333 FPS")
+        require(gauges.map(\.status).prefix(3) == ["From settings", "Not measured", "Not measured"] && gauges[0].value == "333 FPS")
+        require(checkup.holdBack == nil)
         let capSpec = try require(model.spec(named: "com_maxfps"))
         require(checkup.badge(capSpec)?.text == "125 fps–250 fps" && checkup.badge(capSpec)?.tone == .negative)
         require(checkup.tip(capSpec)?.fix?.id == "competitive-frame-cap")
@@ -249,6 +250,12 @@ enum ConfigStudioTabsTests {
         require(try Data(contentsOf: file) == config && model.failure != nil, "Apply refuses while the game runs")
         try session.reconcileGames([])
         print("PASS: contradictions, missing rules and the running game")
+
+        // An advanced bind changes values in play: no advice, and the screen says why.
+        let fps = ConfigChain(id: "fps", key: "m", behavior: .settingCycle(name: "cg_drawFPS", values: ["Off", "Simple"]))
+        try ConfigChains.apply(try ConfigChains.prepare(chains: [fps], read: try require(session.current)), to: session)
+        require(checkup.report?.suggestions.isEmpty == true && checkup.holdBack?.contains("advanced binds") == true)
+        print("PASS: an advanced bind holds suggestions back and Check-up says why")
     }
 
     static func require<T>(_ value: T?, line: Int = #line) throws -> T {

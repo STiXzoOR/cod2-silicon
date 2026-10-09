@@ -121,6 +121,20 @@ struct ConfigAppliedSuggestion: Identifiable {
         return report
     }
 
+    /// Why the review holds its advice back, found the way A1 looks: lines whose effect
+    /// can't be known before the game runs them. Nil when nothing holds it back.
+    var holdBack: String? {
+        guard let current = studio.current else { return nil }
+        let document = current.document
+        let keys = Set(document.commands.filter { $0.kind == .bind }.compactMap { $0.tokens.count > 1 ? $0.tokens[1].text : nil })
+        let bound = keys.compactMap { document.effectiveBindBytes(key: $0).map { ConfigDocument(data: $0, dialect: document.dialect) } }
+        guard ([document] + bound).contains(where: { !$0.unresolvedCommands.isEmpty || !$0.diagnostics.isEmpty }) else { return nil }
+        if (try? ConfigChains.ownedChains(read: current))?.isEmpty == false {
+            return "Its advanced binds change values while you play, so Check-up can’t know ahead of time which values the game will use."
+        }
+        return "Some lines run other files or commands that only the game can follow, or can’t be read. Edit as Text shows them."
+    }
+
     func notNow(_ id: String) { dismissed[scope, default: []].insert(id); showing.remove(id) }
     func showAgain() { dismissed[scope] = [] }
 
@@ -203,7 +217,7 @@ struct ConfigAppliedSuggestion: Identifiable {
                 let cap = studio.spec(named: "com_maxfps").map { studio.state($0) }
                 let value = cap?.number.map { $0 == 0 ? "NO CAP" : "\(Int($0)) FPS" } ?? "—"
                 return .init(area: .movement, value: value, detail: "Your frame rate cap. The frame rate you actually get isn’t measured.",
-                             status: "Not measured", tone: .unknown)
+                             status: cap?.number == nil ? "Not measured" : "From settings", tone: cap?.number == nil ? .unknown : .information)
             case .aim:
                 let dpi = studio.metadata?.dpi
                 let speed = studio.spec(named: "sensitivity").flatMap { studio.state($0).number }
@@ -212,7 +226,7 @@ struct ConfigAppliedSuggestion: Identifiable {
                 return .init(area: .aim, value: distance.map { MouseMath.label($0) + " CM" } ?? "—",
                              detail: distance == nil ? "Enter your mouse’s DPI in Settings › Aim to see how far you turn. Polling rate isn’t measured."
                                                      : "Per full turn at \(ConfigValues.format(dpi ?? 0)) DPI. Polling rate isn’t measured.",
-                             status: "Not measured", tone: .unknown)
+                             status: distance == nil ? "Not measured" : "From settings", tone: distance == nil ? .unknown : .information)
             case .connection:
                 return .init(area: .connection, value: "—", detail: "Ping and lost updates aren’t measured.", status: "Not measured", tone: .unknown)
             case .visibility:
@@ -228,7 +242,13 @@ struct ConfigAppliedSuggestion: Identifiable {
                 case .violation: return .init(area: .visibility, value: "OUTSIDE RULES", detail: "Brightness or texture detail breaks \(title).", status: "Needs a change", tone: .negative)
                 case .conflict: return .init(area: .visibility, value: "—", detail: "The chosen rules disagree about these settings.", status: "Rules disagree", tone: .caution)
                 case .warning: return .init(area: .visibility, value: "ADVISORY", detail: "\(title) recommends a different value.", status: "Watch", tone: .caution)
-                case .unknown: return .init(area: .visibility, value: "—", detail: "Scripts or missing values prevent a judgement.", status: "Not assessed", tone: .unknown)
+                case .unknown:
+                    let open = relevant.filter { $0.status == .unknown }
+                    let detail = holdBack != nil ? "Advanced binds or scripts prevent a judgement."
+                        : open.contains { $0.value == nil } ? "These rules check values this loadout doesn’t set."
+                        : open.contains { $0.serverOwned } ? "The server sets these values when you join."
+                        : "No verified rule covers these settings in this game mode."
+                    return .init(area: .visibility, value: "—", detail: detail, status: "Not assessed", tone: .unknown)
                 }
             }
         }
