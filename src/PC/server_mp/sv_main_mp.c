@@ -425,11 +425,13 @@ void SVC_Status(netadr_t from)
     int i;
     int mod;
 
-#if COD2_FEATURE_NET_HARDENING && !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
+#if !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
+#if COD2_FEATURE_NET_HARDENING
 
     if (NetHardening_SVC_RateLimitAddress(from, svs.time) ||
         NetHardening_SVC_RateLimit(svs.time))
         return;
+#endif
 #endif
 
     LargeLocal_LargeLocal(&status_large_local, MAX_MSGLEN);
@@ -581,11 +583,13 @@ void SVC_Info(netadr_t from)
     int mod;
     int argc;
 
-#if COD2_FEATURE_NET_HARDENING && !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
+#if !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
+#if COD2_FEATURE_NET_HARDENING
 
     if (NetHardening_SVC_RateLimitAddress(from, svs.time) ||
         NetHardening_SVC_RateLimit(svs.time))
         return;
+#endif
 #endif
 
     privateClients = sv_privateClients->current.integer;
