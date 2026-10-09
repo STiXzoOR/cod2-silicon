@@ -128,6 +128,13 @@ final class ConfigProfileStore: Sendable {
         (65...90).contains(byte) || (97...122).contains(byte) || (48...57).contains(byte)
     }
 
+    /// Whether `url` is `root` or lies beneath it, with the same system-alias
+    /// normalization as `checkPath`. Does not inspect links.
+    static func isContained(_ url: URL, in root: URL) -> Bool {
+        let rootPath = ownedURL(root).path, path = ownedURL(url).path
+        return path == rootPath || path.hasPrefix(rootPath + "/")
+    }
+
     /// Reject links in owned descendants rather than following one into licensed
     /// data. The explicitly supplied home and its ancestors may not be links.
     static func checkPath(_ url: URL, under root: URL) throws {

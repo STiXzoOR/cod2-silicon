@@ -539,7 +539,8 @@ enum ConfigChains {
     static func exportWindows(read: ConfigProfileRead, to url: URL, home: URL) throws {
         let root = home.resolvingSymlinksInPath().standardizedFileURL.path
         let target = url.resolvingSymlinksInPath().standardizedFileURL.path
-        guard url.isFileURL, target != root, !target.hasPrefix(root + "/") else { throw ConfigChainError.unsafeExport }
+        guard url.isFileURL, target != root, !target.hasPrefix(root + "/"),
+              !ConfigProfileStore.isContained(url, in: home) else { throw ConfigChainError.unsafeExport }
         try ConfigProfileStore.checkPath(url, under: url.deletingLastPathComponent())
         let bytes = try windowsExport(read: read)
         try PrivateFile.write(bytes, to: url)
