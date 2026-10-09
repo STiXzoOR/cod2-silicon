@@ -124,8 +124,12 @@ int Cod2x_IwdAllowed(const char *folder, const char *file, const char *const *fi
 const char *Cod2x_ConfigGame(const char *game, const char *qpath)
 {
     size_t n = strlen(qpath);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (equaln(qpath, "players/", 8) && n >= 14 && equal(qpath + n - 14, "/config_mp.cfg"))
+#else
     if (equal(qpath, "config_mp.cfg") ||
         (equaln(qpath, "players/", 8) && n >= 14 && equal(qpath + n - 14, "/config_mp.cfg")))
+#endif
         return "main";
     if (game && equal(game, "movie") && !(n >= 4 && equal(qpath + n - 4, ".iwd")))
         return "main";

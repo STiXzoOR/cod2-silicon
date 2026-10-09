@@ -8,9 +8,13 @@ CoD2x 1.4.6.8 source contracts and the native writable-home contract, recorded i
 They are assertions about behavior, not expected output generated from the
 implementation under test.
 
-The current-release integration keeps CoD2x’s existing shared config mapping.
-Per-profile storage and migration are parked with Config Studio; writable-home
-profile directory creation and deletion are included here.
+The prepared WS102 branch restores CoD2x per-profile configs at
+`<fs_homepath>/main/players/<profile>/config_mp.cfg`, independent of `fs_game`.
+It must ship with Config Studio's launcher migration of the released shared
+`main/config_mp.cfg`; see
+[WS102-cod2x-profile-paths.md](../../docs/macos-port/reports/WS102-cod2x-profile-paths.md).
+Stock configs, profile listing, `players/active.txt`, and writable-home profile
+directory creation/deletion continue to follow the current game directory.
 
 Configure separate native stock and CoD2x builds with exported compile commands:
 
@@ -51,7 +55,7 @@ comparison of original linked i386 artifacts.
 | `dvars.c` | Unknown external string promotion by each typed registration command, engine-owned ROM string rejection, 3005-byte joined value and whole-argument cutoff at 4093 argument bytes |
 | `registrations.c` | Actual selected registration expressions, real dvar flag/domain merge and external setting, cheat protection including vector content, preserved stock/CoD2x LOD and network defaults, existing config strings before registration, missing client dvars, twenty client registration flags and real bool/int/float/string name ownership transitions |
 | `language.c` | Real language table/name/index/initialization/refresh/selection functions, Czech index 14 and fallback when only Czech assets exist |
-| `profiles.c` | Actual profile path/init/change/create/delete functions and OS path builder, separate base/home ownership, active-file first token, profile reset/exec, stock mod paths and the retained CoD2x shared `main/config_mp.cfg` mapping |
+| `profiles.c` | Production `FS_BuildOSPath` and profile path/init/change/create/delete functions, separate base/home ownership, active-file first token, profile reset/exec and resolved config paths in main/mod modes, CoD2x per-profile routing, bare config paths with explicit/NULL/empty game, nested mod directories and existing movie fallback |
 | `commands.c` | Actual cgame table/registration/name lookup/dispatch and QuickMessage handler, case-insensitive `mp_QuickMessage`, `mr`, existing snapshot/pm-flag popup condition |
 
 Boundaries deliberately isolated by the fixtures include allocation/string

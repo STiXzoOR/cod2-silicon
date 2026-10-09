@@ -104,6 +104,7 @@ run('language', declaration(path, 'g_languages') + ''.join(function(path, n) for
      'SEH_InitLanguage', 'SEH_StringEd_SetLanguageStrings', 'SEH_UpdateLanguageInfo']),
     ['src/PC/universal/dvar.c'])
 run('profiles', function('src/PC/universal/com_files.c', 'FS_BuildOSPath_Internal') +
+    function('src/PC/universal/com_files.c', 'FS_BuildOSPath') +
     ''.join(function('src/PC/qcommon/com_playerprofile.c', n) for n in ['Com_PlayerProfileExists',
         'Com_BuildPlayerProfilePathInternal', 'Com_BuildPlayerProfilePath', 'Com_BuildPlayerProfilePathForPlayer',
         'Com_SetPlayerProfileAndExec', 'Com_NewPlayerProfile', 'Com_DeletePlayerProfile',
