@@ -14945,9 +14945,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Anonymous",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Anonymous login",
+      "summary": "Whether you hide your identity when joining servers.",
+      "details": "The game protects this setting from writes, so it can't be changed from here.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:226346",
         "src/PC/client_mp/cl_main_mp.c:226381"
@@ -15029,9 +15029,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Avidemo",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Capture video frames",
+      "summary": "Saves every frame as a picture file so you can assemble a video.",
+      "details": "Any number above 0 starts the capture at that many frames per second, which can slow the computer a great deal; 0 stops it. zPAM sets it back to 0 when you join a team.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225584",
         "src/PC/client_mp/cl_main_mp.c:225619"
@@ -15142,9 +15142,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Cod2x version",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "CoD2x build name",
+      "summary": "The CoD2x build this game reports.",
+      "details": "The game fills this in itself and treats it as read-only.",
       "sources": [
         "src/PC/qcommon/cod2x_runtime.c:143"
       ],
@@ -15225,9 +15225,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Connect timeout",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Connection attempt time",
+      "summary": "How many seconds the game keeps trying to connect to a server.",
+      "details": "From 0 to 3,600 seconds, 200 by default.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225560",
         "src/PC/client_mp/cl_main_mp.c:225595"
@@ -15271,9 +15271,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Demo auto record name",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Automatic demo name",
+      "summary": "The file name a server mod gave your game for an automatic demo recording.",
+      "details": "Set only by a server mod, and protected from changes here. While it is set, stopping the recording is ignored.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225578"
       ],
@@ -15324,9 +15324,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Demo auto record upload timeout",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Demo upload time limit",
+      "summary": "How many seconds an automatic demo upload may take before it gives up.",
+      "details": "From 10 to 600 seconds, 60 by default. It applies only if a server mod asks your game to upload demos.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225580"
       ],
@@ -15369,9 +15369,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Demo auto record upload url",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Automatic demo upload address",
+      "summary": "The web address a server mod told your game to upload automatic demos to.",
+      "details": "Set only by a server mod, and protected from changes here.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225579"
       ],
@@ -15436,9 +15436,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Forceavidemo",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Force frame capture",
+      "summary": "Forces the video frame capture to run.",
+      "details": "Related to Capture video frames. zPAM sets it back to 0 when you join a team.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225585",
         "src/PC/client_mp/cl_main_mp.c:225620"
@@ -15575,9 +15575,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Freeze demo",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Freeze demo playback",
+      "summary": "Pauses playback of a recorded demo.",
+      "details": "A developer aid. It is not saved.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225566",
         "src/PC/client_mp/cl_main_mp.c:225601"
@@ -15622,9 +15622,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Hwid2",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Hardware ID",
+      "summary": "A long identity code CoD2x servers use to recognise your computer.",
+      "details": "The game builds it itself and treats it as read-only. CoD2x servers use it for bans in place of PunkBuster IDs, and reject players who send no valid one. Never edit it.",
       "sources": [
         "src/PC/qcommon/cod2x_runtime.c:146"
       ],
@@ -15691,9 +15691,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Ingame",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "In a game",
+      "summary": "Whether you are in a game right now.",
+      "details": "The game keeps this up to date itself and treats it as read-only.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225659",
         "src/PC/client_mp/cl_main_mp.c:225694"
@@ -15744,9 +15744,9 @@
         "port"
       ],
       "group": "net",
-      "title": "Master port",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Second master port",
+      "summary": "The network port used to reach the second master server.",
+      "details": "From 1 to 65,535, 20710 by default. Current upstream CoD2x no longer registers it, but this version of the game still reads it.",
       "sources": [
         "src/PC/qcommon/cod2x_runtime.c:149"
       ],
@@ -15788,9 +15788,9 @@
         "port"
       ],
       "group": "net",
-      "title": "Master server",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Second master server",
+      "summary": "The address of the second master server the game asks for the server list.",
+      "details": "The CoD2x build asks cod2master.activision.com first and then the address here, master.cod2x.me by default, on the port set separately. Current upstream CoD2x no longer registers it, but this version of the game still reads it.",
       "sources": [
         "src/PC/qcommon/cod2x_runtime.c:148"
       ],
@@ -15969,9 +15969,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Max ping",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Server list ping wait",
+      "summary": "How long the server list waits for a server's ping reply before it shows the waiting time instead of 0.",
+      "details": "In milliseconds, 800 by default, and never treated as less than 100. A host's join ping limit is a different, server-side setting. This is the game's own server list only.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225660",
         "src/PC/client_mp/cl_main_mp.c:225695"
@@ -16039,9 +16039,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Motd string",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Received server message",
+      "summary": "The server's message of the day, as the game last received it.",
+      "details": "The game fills this in itself and treats it as read-only.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225654",
         "src/PC/client_mp/cl_main_mp.c:225689"
@@ -16194,9 +16194,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Nodelta",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Turn off update compression",
+      "summary": "A network debugging aid that makes the server send full updates instead of compact ones.",
+      "details": "Not for normal play: every update gets larger. It is not saved.",
       "sources": [
         "src/PC/client_mp/cl_input.c:1092"
       ],
@@ -16261,9 +16261,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Noprint",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Silence console messages",
+      "summary": "Stops the game printing messages to the console.",
+      "details": "It is not saved.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225553",
         "src/PC/client_mp/cl_main_mp.c:225588"
@@ -16473,9 +16473,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Paused",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Game paused",
+      "summary": "Whether the game is paused.",
+      "details": "The game keeps this up to date itself and treats it as read-only. Some players bind a key to toggle it.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1110",
         "src/PC/qcommon/common.c:2304"
@@ -16717,9 +16717,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Client PunkBuster preference",
-      "summary": "Read the legacy client anti-cheat preference.",
-      "details": "Registration does not prove a working PunkBuster service is available on this native port.",
+      "title": "PunkBuster (your game)",
+      "summary": "Whether the PunkBuster anti-cheat is switched on for your game.",
+      "details": "The game's menu shows it as PunkBuster, and the game protects it from changes here. This version of the game cannot show that a working PunkBuster service exists, and CoD2x does not support PunkBuster. League rules disagree: ScrimBase wants it on, while FPSChallenge and the 2026 Polish championship want it off.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225631",
         "src/PC/client_mp/cl_main_mp.c:225666"
@@ -16802,9 +16802,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Server status resend time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Server status retry time",
+      "summary": "How many milliseconds the game waits before asking a server for its status again.",
+      "details": "From 0 to 3,600 milliseconds, 750 by default.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225640",
         "src/PC/client_mp/cl_main_mp.c:225675"
@@ -16954,9 +16954,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Shownet",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show network debug",
+      "summary": "Prints network debugging information to the console.",
+      "details": "Levels run from -2 to 4, and 0 is off. It prints a lot of text, which can lower frame rate. For developers.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225561",
         "src/PC/client_mp/cl_main_mp.c:225596"
@@ -17022,9 +17022,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Shownuments",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Entity debug switch",
+      "summary": "A developer switch the game registers; its name suggests entity counts.",
+      "details": "No effect is documented for it. It is not saved.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225562",
         "src/PC/client_mp/cl_main_mp.c:225597"
@@ -17090,9 +17090,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Show send",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show sent packets",
+      "summary": "Prints a line for each packet your game sends.",
+      "details": "A developer aid for seeing how your update rate and frame rate batch together. It floods the console.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225564",
         "src/PC/client_mp/cl_main_mp.c:225599"
@@ -17159,8 +17159,8 @@
       ],
       "group": "net",
       "title": "Show server commands",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "Prints the commands the server sends to your game.",
+      "details": "A developer aid. It is not saved.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225563",
         "src/PC/client_mp/cl_main_mp.c:225598"
@@ -17226,9 +17226,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Show time delta",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show server time offset",
+      "summary": "Prints how far your game's clock is from the server's.",
+      "details": "A developer aid. It is not saved.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225565",
         "src/PC/client_mp/cl_main_mp.c:225600"
@@ -17377,9 +17377,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Talking",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Sending voice now",
+      "summary": "Whether you are sending voice chat right now.",
+      "details": "The game keeps this up to date itself.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225634",
         "src/PC/client_mp/cl_main_mp.c:225669"
@@ -17461,9 +17461,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Timeout",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Dropped connection time",
+      "summary": "How many seconds without any data from the server before your game disconnects.",
+      "details": "From 0 to 3,600 seconds, 200 by default. Rarely worth changing.",
       "sources": [
         "src/PC/client_mp/cl_main_mp.c:225559",
         "src/PC/client_mp/cl_main_mp.c:225594"
@@ -22235,9 +22235,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Server CoD2x revision",
-      "summary": "Read the server's advertised CoD2x revision.",
-      "details": "The local host revision stays locked to 0. A registered range does not advertise full CoD2x server support.",
+      "title": "Server CoD2x level",
+      "summary": "Which level of CoD2x features the server you are on supports.",
+      "details": "The server sets this and the game protects it from changes here. 0 means stock CoD2 1.3 behaviour, and CoD2x servers report 6, the current level. Some CoD2x fixes only switch on at certain levels.",
       "sources": [
         "src/PC/qcommon/cod2x_runtime.c:67"
       ],
@@ -22287,8 +22287,8 @@
       ],
       "group": "net",
       "title": "Competitive server rules",
-      "summary": "Read the CoD2x competitive policy switch.",
-      "details": "This is server-controlled. It constrains frame rate, networking, shadows, effect sorting, sound file access and the wait command.",
+      "summary": "Whether the server has switched on CoD2x's competitive rules.",
+      "details": "The server sets this and the game protects it from changes here. When it is on, your CoD2x game keeps the frame rate cap between 125 and 250, connection speed at 25,000, updates you receive at 40, updates you send at 125, shadows off, effect sorting on and the sound file system on, and it blocks the wait command once you are connected. zPAM 4's code turns it on in every mode, including public games. Your game turns it off again when you disconnect.",
       "sources": [
         "src/PC/qcommon/cod2x_runtime.c:68"
       ],
@@ -30315,9 +30315,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Match login",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Match login code",
+      "summary": "A login code for the CoD2x match system.",
+      "details": "Set with a game command rather than here, protected from changes, and removed after you disconnect. CoD2x servers read it as player information.",
       "sources": [
         "src/PC/qcommon/cod2x_features.c:76"
       ],
@@ -30671,9 +30671,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Ip",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Network address",
+      "summary": "The local network address the game uses.",
+      "details": "The default is localhost. It is latched, so a change applies after the game restarts. Players should leave it alone; servers on computers with several network connections may need it.",
       "sources": [
         "src/PC/win32/win_net.c:446"
       ],
@@ -30738,9 +30738,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Lanauthorize",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Check LAN players online",
+      "summary": "Whether players who join over the local network are also checked with the online key server.",
+      "details": "Off by default. It is the game's own switch for LAN authorization.",
       "sources": [
         "src/PC/qcommon/net_chan_mp.c:311"
       ],
@@ -30809,9 +30809,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Noipx",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Disable IPX",
+      "summary": "Turns off the old IPX network option.",
+      "details": "Registered as a latched, saved setting, so a change applies after the game restarts.",
       "sources": [
         "src/PC/win32/win_net.c:159"
       ],
@@ -30880,9 +30880,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Noudp",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Disable UDP",
+      "summary": "Turns off the network type CoD2 normally uses to talk to servers.",
+      "details": "Leave it off for online play. It is latched, so a change applies after the game restarts.",
       "sources": [
         "src/PC/win32/win_net.c:153"
       ],
@@ -30965,9 +30965,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Port",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Network port",
+      "summary": "The network port your game uses.",
+      "details": "From 0 to 65,535, 28960 by default, which is also CoD2's usual server port. It is latched, so a change applies after the game restarts. The game tries the next few ports if this one is taken.",
       "sources": [
         "src/PC/win32/win_net.c:447"
       ],
@@ -31048,9 +31048,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Profile",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Network profiling",
+      "summary": "Turns on the game's network profiling.",
+      "details": "Levels run from 0 to 2, and 0 is off. A developer aid.",
       "sources": [
         "src/PC/qcommon/net_chan_mp.c:309"
       ],
@@ -31131,9 +31131,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Showprofile",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show network profile",
+      "summary": "Shows the game's network profile on screen.",
+      "details": "Levels run from 0 to 3, and 0 is off. A developer aid.",
       "sources": [
         "src/PC/qcommon/net_chan_mp.c:310"
       ],
@@ -31202,9 +31202,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Socks enabled",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Use a SOCKS proxy",
+      "summary": "Sends the game's network traffic through a SOCKS proxy.",
+      "details": "The proxy's address, port, user name and password are set separately. It is latched, so a change applies after the game restarts. Leave it off unless you know you need a proxy.",
       "sources": [
         "src/PC/win32/win_net.c:165"
       ],
@@ -31273,9 +31273,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Socks password",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "SOCKS password",
+      "summary": "The password the SOCKS proxy asks for.",
+      "details": "Used only when Use a SOCKS proxy is on. It is saved in your config as plain text, so treat the file as private.",
       "sources": [
         "src/PC/win32/win_net.c:189"
       ],
@@ -31360,9 +31360,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Socks port",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "SOCKS proxy port",
+      "summary": "The port of the SOCKS proxy the game uses.",
+      "details": "From 0 to 65,535, 1080 by default. Used only when Use a SOCKS proxy is on. It is latched.",
       "sources": [
         "src/PC/win32/win_net.c:177"
       ],
@@ -31431,9 +31431,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Socks server",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "SOCKS proxy address",
+      "summary": "The address of the SOCKS proxy the game uses.",
+      "details": "Used only when Use a SOCKS proxy is on. It is latched, so a change applies after the game restarts.",
       "sources": [
         "src/PC/win32/win_net.c:171"
       ],
@@ -31502,9 +31502,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Socks username",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "SOCKS user name",
+      "summary": "The user name the SOCKS proxy asks for.",
+      "details": "Used only when Use a SOCKS proxy is on. It is latched.",
       "sources": [
         "src/PC/win32/win_net.c:183"
       ],
@@ -34808,9 +34808,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Protocol",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Network protocol version",
+      "summary": "The network protocol version the game uses.",
+      "details": "Read-only. Stock CoD2 1.3 uses 118 and CoD2x servers use 120.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:444",
         "src/PC/server_mp/sv_init_mp.c:548"
@@ -34862,9 +34862,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Protocol cod2x",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "CoD2x protocol level",
+      "summary": "The CoD2x protocol level your game announces when it connects.",
+      "details": "Fixed at 6 and read-only. CoD2x servers turn away clients that send 0 or a lower level than their own.",
       "sources": [
         "src/PC/qcommon/cod2x_runtime.c:142"
       ],
@@ -50224,9 +50224,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Allow anonymous",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Allow anonymous players",
+      "summary": "Lets players who hide their identity join a server you host.",
+      "details": "Off by default.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:460",
         "src/PC/server_mp/sv_init_mp.c:561"
@@ -50294,9 +50294,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Allow download",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Allow file downloads",
+      "summary": "Lets players download maps and mods straight from a server you host.",
+      "details": "On by default. Downloads through a web address are controlled separately.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:477",
         "src/PC/server_mp/sv_init_mp.c:578"
@@ -50362,9 +50362,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Allowed clan1",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Allowed clan 1",
+      "summary": "A text setting the game registers for a server you host.",
+      "details": "Its purpose is not documented.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:486",
         "src/PC/server_mp/sv_init_mp.c:587"
@@ -50430,9 +50430,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Allowed clan2",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Allowed clan 2",
+      "summary": "A text setting the game registers for a server you host.",
+      "details": "Its purpose is not documented.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:487",
         "src/PC/server_mp/sv_init_mp.c:588"
@@ -50578,9 +50578,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Cheats",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Cheat mode",
+      "summary": "Whether cheats are on for the current game.",
+      "details": "Protected: the game sets it itself and it can't be changed from here. While it is off, settings marked cheat-protected refuse changes. Match servers keep it off.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:969",
         "src/PC/gfx_d3d/r_dvars.c:528",
@@ -50649,9 +50649,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Debug rate",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show send timing",
+      "summary": "Prints how long each message would take to reach a player at their connection speed.",
+      "details": "A developer aid for servers you host.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:493",
         "src/PC/server_mp/sv_init_mp.c:594"
@@ -50717,9 +50717,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Debug reliable cmds",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Debug reliable commands",
+      "summary": "A developer switch the game registers for servers you host.",
+      "details": "No effect is documented for it.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:494",
         "src/PC/server_mp/sv_init_mp.c:595"
@@ -50811,9 +50811,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Disable client console",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Disable player consoles",
+      "summary": "Stops players from using the console on a server you host.",
+      "details": "Off by default. The game sends this setting to players as part of the server's system information.",
       "sources": [
         "src/Mac/Main/mac_main.c:467",
         "src/Mac/Main/mac_main.c:486",
@@ -50885,9 +50885,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Flood protect",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Limit player commands",
+      "summary": "Limits each player's commands to one every 800 milliseconds on a server you host.",
+      "details": "On by default. Team changes and score requests are exempt, and extra commands are ignored without removing the player.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:459",
         "src/PC/server_mp/sv_init_mp.c:560"
@@ -50969,9 +50969,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Fps",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Server update rate",
+      "summary": "How many times per second a server you host runs the game.",
+      "details": "From 10 to 1,000, and 20 by default. It also caps how many updates per second any player can receive. zPAM's competitive rules default to 30 and support 40 on CoD2x. It is a server setting, not something you tune for yourself.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:474",
         "src/PC/server_mp/sv_init_mp.c:575"
@@ -51114,9 +51114,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Iwd names",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Server game files",
+      "summary": "The names of the game files a server says it uses.",
+      "details": "The server sets this and your game treats it as read-only. While you are connected, the CoD2x client loads only these files plus the game's own.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:469",
         "src/PC/server_mp/sv_init_mp.c:570"
@@ -51186,9 +51186,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Iwds",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Server game file checks",
+      "summary": "Check codes for the game files a server says it uses.",
+      "details": "The server sets this and your game treats it as read-only.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:468",
         "src/PC/server_mp/sv_init_mp.c:569"
@@ -51256,9 +51256,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Keywords",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Server list keywords",
+      "summary": "Words that help players find a server you host in the server list.",
+      "details": "Empty by default.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:440",
         "src/PC/server_mp/sv_init_mp.c:541"
@@ -51340,9 +51340,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Kick ban time",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Kick ban length",
+      "summary": "How many seconds a player stays banned after you kick them.",
+      "details": "From 0 to 3,600 seconds, 300 by default.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:490",
         "src/PC/server_mp/sv_init_mp.c:591"
@@ -51412,9 +51412,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Mapname",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Current map",
+      "summary": "The name of the map the server is running.",
+      "details": "The game fills this in itself and treats it as read-only.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:972"
       ],
@@ -51480,8 +51480,8 @@
       ],
       "group": "net",
       "title": "Map rotation",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "The list of maps and game types a server you host cycles through.",
+      "details": "Written as pairs of the words gametype and map followed by names, for example a game type, then a map. The server keeps the maps still to come in a separate setting.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:491",
         "src/PC/server_mp/sv_init_mp.c:592"
@@ -51547,9 +51547,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Map rotation current",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Maps still to come",
+      "summary": "The part of the map rotation a server you host has not played yet.",
+      "details": "The server fills this in itself.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:492",
         "src/PC/server_mp/sv_init_mp.c:593"
@@ -52098,9 +52098,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Packet info",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Packet info printing",
+      "summary": "A developer switch the game registers for servers you host.",
+      "details": "No effect is documented for it.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:488",
         "src/PC/server_mp/sv_init_mp.c:589"
@@ -52182,9 +52182,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Pad packets",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Pad update size",
+      "summary": "Adds extra bytes to every update a server you host sends, to test connection limits.",
+      "details": "A test aid with 0 as the default. Never use it on a live server.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:479",
         "src/PC/server_mp/sv_init_mp.c:580"
@@ -52268,9 +52268,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Paused",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Server paused",
+      "summary": "Whether the server is paused.",
+      "details": "The game keeps this up to date itself and treats it as read-only.",
       "sources": [
         "src/PC/qcommon/common.c:2303"
       ],
@@ -52320,9 +52320,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Player broadcast limit",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Send every player",
+      "summary": "While a server has this many players or fewer, it sends every player to every player, even out of sight.",
+      "details": "From 0 to 64, 15 by default, and 0 turns it off. It fixes missing sounds from players outside your view. CoD2x servers only.",
       "sources": [
         "src/PC/game_mp/g_main_mp.c:982"
       ],
@@ -52405,9 +52405,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Private clients",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Private slots",
+      "summary": "How many of a server's player slots need the private password.",
+      "details": "From 0 to 64, 0 by default. These slots come out of the server's total player slots, and the private password is set separately.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:450",
         "src/PC/server_mp/sv_init_mp.c:551"
@@ -52473,9 +52473,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Private password",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Private slot password",
+      "summary": "The password for a server's private player slots.",
+      "details": "Treat it as private. Empty by default.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:473",
         "src/PC/server_mp/sv_init_mp.c:574"
@@ -52547,9 +52547,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Server PunkBuster preference",
-      "summary": "Set the legacy server anti-cheat preference.",
-      "details": "Registration does not prove a working PunkBuster service is available on this native port.",
+      "title": "PunkBuster (your server)",
+      "summary": "Whether the PunkBuster anti-cheat is switched on for a server you host.",
+      "details": "The game's Create Server menu shows it as PunkBuster, and the game protects it from changes here. This version of the game cannot show that a working PunkBuster service exists.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:454",
         "src/PC/server_mp/sv_init_mp.c:555"
@@ -52667,8 +52667,8 @@
       ],
       "group": "net",
       "title": "Limit server queries",
-      "summary": "Limit incoming queries to a server you host.",
-      "details": "The CoD2x server query limiter bounds request traffic. This does not change a remote server's policy.",
+      "summary": "Slows down floods of server-list and login-style requests to a server you host.",
+      "details": "CoD2x only. It limits each address and the total for status, info, challenge, remote console and disconnect requests.",
       "sources": [
         "src/PC/server_mp/cod2x_udp_operations_impl.h:103"
       ],
@@ -52718,9 +52718,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Server query count",
-      "summary": "Read the server query-limiter request counter.",
-      "details": "This is a read-only diagnostic, not a personal network preference.",
+      "title": "Limited requests",
+      "summary": "About how many requests the query limiter turned back in the last second.",
+      "details": "The game measures this once a second and treats it as read-only. It is not a setting.",
       "sources": [
         "src/PC/server_mp/cod2x_udp_operations_impl.h:104"
       ],
@@ -52770,9 +52770,9 @@
         "cod2x"
       ],
       "group": "net",
-      "title": "Unique query addresses",
-      "summary": "Read the server query-limiter address counter.",
-      "details": "This is a read-only diagnostic, not a personal network preference.",
+      "title": "Querying addresses",
+      "summary": "How many different addresses sent the server requests in the last second.",
+      "details": "The game measures this once a second and treats it as read-only. It is not a setting.",
       "sources": [
         "src/PC/server_mp/cod2x_udp_operations_impl.h:105"
       ],
@@ -52855,9 +52855,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Reconnectlimit",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Reconnect wait",
+      "summary": "How many seconds a player must wait before reconnecting to a server you host.",
+      "details": "From 0 to 1,800 seconds, 3 by default.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:478",
         "src/PC/server_mp/sv_init_mp.c:579"
@@ -52927,9 +52927,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Referenced iwd names",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Referenced game file names",
+      "summary": "The names of the extra game files a server says clients need.",
+      "details": "The server sets this and your game treats it as read-only.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:471",
         "src/PC/server_mp/sv_init_mp.c:572"
@@ -52999,9 +52999,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Referenced iwds",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Referenced game file checks",
+      "summary": "Check codes for the extra game files a server says clients need.",
+      "details": "The server sets this and your game treats it as read-only.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:470",
         "src/PC/server_mp/sv_init_mp.c:571"
@@ -53069,9 +53069,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Running",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Server running",
+      "summary": "Whether a server is running on this computer.",
+      "details": "The game keeps this up to date itself and treats it as read-only.",
       "sources": [
         "src/PC/qcommon/common.c:2305"
       ],
@@ -53156,9 +53156,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Serverid",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Server session number",
+      "summary": "A number that identifies the server's current session.",
+      "details": "The server sets this and your game treats it as read-only.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:466",
         "src/PC/server_mp/sv_init_mp.c:567"
@@ -53224,9 +53224,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Show average bps",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show average data rate",
+      "summary": "A developer switch the game registers for servers you host.",
+      "details": "No effect is documented for it.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:489",
         "src/PC/server_mp/sv_init_mp.c:590"
@@ -53292,9 +53292,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Show commands",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Show player commands",
+      "summary": "A developer switch the game registers for servers you host.",
+      "details": "No effect is documented for it.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:461",
         "src/PC/server_mp/sv_init_mp.c:562"
@@ -53376,9 +53376,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Timeout",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Silent player timeout",
+      "summary": "How many seconds without data before a server you host drops a player.",
+      "details": "From 0 to 1,800 seconds, 240 by default. A vanished player can hold their slot for about this long.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:475",
         "src/PC/server_mp/sv_init_mp.c:576"
@@ -53537,9 +53537,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Voice quality",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Voice chat quality",
+      "summary": "How much detail a server's voice chat keeps.",
+      "details": "From 0 to 9, 1 by default. The server sends this to players as part of its system information.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:464",
         "src/PC/server_mp/sv_init_mp.c:565"
@@ -53607,9 +53607,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Www base url",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Web download address",
+      "summary": "The web address players download files from on a server you host.",
+      "details": "Empty by default. zPAM asks for a valid address and suggests one for people who have none.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:497",
         "src/PC/server_mp/sv_init_mp.c:598"
@@ -53677,9 +53677,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Www dl disconnected",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Download after disconnecting",
+      "summary": "Lets players keep downloading from the web address after they leave your server.",
+      "details": "Off by default. zPAM's server config turns it off.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:498",
         "src/PC/server_mp/sv_init_mp.c:599"
@@ -53747,9 +53747,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Www download",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Allow web downloads",
+      "summary": "Lets players download files from a web address for a server you host.",
+      "details": "Off by default. Players also need their own redirected downloads setting on. zPAM expects it on, with a valid web address, so its maps download quickly.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:496",
         "src/PC/server_mp/sv_init_mp.c:597"
@@ -53831,9 +53831,9 @@
         "stock"
       ],
       "group": "net",
-      "title": "Zombietime",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Dropped player hold time",
+      "summary": "How many seconds a dropped player's slot is held before it is freed.",
+      "details": "From 0 to 1,800 seconds, 2 by default. Leave it alone.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:476",
         "src/PC/server_mp/sv_init_mp.c:577"

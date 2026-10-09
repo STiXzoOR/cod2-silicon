@@ -635,16 +635,16 @@
     },
     "sv_punkbuster": {
       "group": "net",
-      "title": "Server PunkBuster preference",
-      "summary": "Set the legacy server anti-cheat preference.",
-      "details": "Registration does not prove a working PunkBuster service is available on this native port.",
+      "title": "PunkBuster (your server)",
+      "summary": "Whether the PunkBuster anti-cheat is switched on for a server you host.",
+      "details": "The game's Create Server menu shows it as PunkBuster, and the game protects it from changes here. This version of the game cannot show that a working PunkBuster service exists.",
       "menuExposed": true
     },
     "cl_punkbuster": {
       "group": "net",
-      "title": "Client PunkBuster preference",
-      "summary": "Read the legacy client anti-cheat preference.",
-      "details": "Registration does not prove a working PunkBuster service is available on this native port.",
+      "title": "PunkBuster (your game)",
+      "summary": "Whether the PunkBuster anti-cheat is switched on for your game.",
+      "details": "The game's menu shows it as PunkBuster, and the game protects it from changes here. This version of the game cannot show that a working PunkBuster service exists, and CoD2x does not support PunkBuster. League rules disagree: ScrimBase wants it on, while FPSChallenge and the 2026 Polish championship want it off.",
       "menuExposed": true
     },
     "g_allowvote": {
@@ -657,14 +657,14 @@
     "g_competitive": {
       "group": "net",
       "title": "Competitive server rules",
-      "summary": "Read the CoD2x competitive policy switch.",
-      "details": "This is server-controlled. It constrains frame rate, networking, shadows, effect sorting, sound file access and the wait command."
+      "summary": "Whether the server has switched on CoD2x's competitive rules.",
+      "details": "The server sets this and the game protects it from changes here. When it is on, your CoD2x game keeps the frame rate cap between 125 and 250, connection speed at 25,000, updates you receive at 40, updates you send at 125, shadows off, effect sorting on and the sound file system on, and it blocks the wait command once you are connected. zPAM 4's code turns it on in every mode, including public games. Your game turns it off again when you disconnect."
     },
     "g_cod2x": {
       "group": "net",
-      "title": "Server CoD2x revision",
-      "summary": "Read the server's advertised CoD2x revision.",
-      "details": "The local host revision stays locked to 0. A registered range does not advertise full CoD2x server support."
+      "title": "Server CoD2x level",
+      "summary": "Which level of CoD2x features the server you are on supports.",
+      "details": "The server sets this and the game protects it from changes here. 0 means stock CoD2 1.3 behaviour, and CoD2x servers report 6, the current level. Some CoD2x fixes only switch on at certain levels."
     },
     "com_writeconfig": {
       "group": "other",
@@ -867,22 +867,22 @@
       "group": "other"
     },
     "sv_ratelimiter": {
+      "group": "net",
       "title": "Limit server queries",
-      "summary": "Limit incoming queries to a server you host.",
-      "details": "The CoD2x server query limiter bounds request traffic. This does not change a remote server's policy.",
-      "group": "net"
+      "summary": "Slows down floods of server-list and login-style requests to a server you host.",
+      "details": "CoD2x only. It limits each address and the total for status, info, challenge, remote console and disconnect requests."
     },
     "sv_ratelimiterrequestcount": {
-      "title": "Server query count",
-      "summary": "Read the server query-limiter request counter.",
-      "details": "This is a read-only diagnostic, not a personal network preference.",
-      "group": "net"
+      "group": "net",
+      "title": "Limited requests",
+      "summary": "About how many requests the query limiter turned back in the last second.",
+      "details": "The game measures this once a second and treats it as read-only. It is not a setting."
     },
     "sv_ratelimiteruniqueipcount": {
-      "title": "Unique query addresses",
-      "summary": "Read the server query-limiter address counter.",
-      "details": "This is a read-only diagnostic, not a personal network preference.",
-      "group": "net"
+      "group": "net",
+      "title": "Querying addresses",
+      "summary": "How many different addresses sent the server requests in the last second.",
+      "details": "The game measures this once a second and treats it as read-only. It is not a setting."
     },
     "in_mouse": {
       "group": "aim",
@@ -955,6 +955,468 @@
       "title": "Stance hold time",
       "summary": "How many milliseconds a stance key must be held for the hold-style stance change.",
       "details": "From 0 to 1,000 milliseconds, 300 by default. This version of the game only registers it and never reads the value."
+    },
+    "cl_connecttimeout": {
+      "group": "net",
+      "title": "Connection attempt time",
+      "summary": "How many seconds the game keeps trying to connect to a server.",
+      "details": "From 0 to 3,600 seconds, 200 by default."
+    },
+    "cl_timeout": {
+      "group": "net",
+      "title": "Dropped connection time",
+      "summary": "How many seconds without any data from the server before your game disconnects.",
+      "details": "From 0 to 3,600 seconds, 200 by default. Rarely worth changing."
+    },
+    "cl_maxping": {
+      "group": "net",
+      "title": "Server list ping wait",
+      "summary": "How long the server list waits for a server's ping reply before it shows the waiting time instead of 0.",
+      "details": "In milliseconds, 800 by default, and never treated as less than 100. A host's join ping limit is a different, server-side setting. This is the game's own server list only."
+    },
+    "cl_serverstatusresendtime": {
+      "group": "net",
+      "title": "Server status retry time",
+      "summary": "How many milliseconds the game waits before asking a server for its status again.",
+      "details": "From 0 to 3,600 milliseconds, 750 by default."
+    },
+    "cl_masterserver": {
+      "group": "net",
+      "title": "Second master server",
+      "summary": "The address of the second master server the game asks for the server list.",
+      "details": "The CoD2x build asks cod2master.activision.com first and then the address here, master.cod2x.me by default, on the port set separately. Current upstream CoD2x no longer registers it, but this version of the game still reads it."
+    },
+    "cl_masterport": {
+      "group": "net",
+      "title": "Second master port",
+      "summary": "The network port used to reach the second master server.",
+      "details": "From 1 to 65,535, 20710 by default. Current upstream CoD2x no longer registers it, but this version of the game still reads it."
+    },
+    "net_ip": {
+      "group": "net",
+      "title": "Network address",
+      "summary": "The local network address the game uses.",
+      "details": "The default is localhost. It is latched, so a change applies after the game restarts. Players should leave it alone; servers on computers with several network connections may need it."
+    },
+    "net_port": {
+      "group": "net",
+      "title": "Network port",
+      "summary": "The network port your game uses.",
+      "details": "From 0 to 65,535, 28960 by default, which is also CoD2's usual server port. It is latched, so a change applies after the game restarts. The game tries the next few ports if this one is taken."
+    },
+    "net_noudp": {
+      "group": "net",
+      "title": "Disable UDP",
+      "summary": "Turns off the network type CoD2 normally uses to talk to servers.",
+      "details": "Leave it off for online play. It is latched, so a change applies after the game restarts."
+    },
+    "net_noipx": {
+      "group": "net",
+      "title": "Disable IPX",
+      "summary": "Turns off the old IPX network option.",
+      "details": "Registered as a latched, saved setting, so a change applies after the game restarts."
+    },
+    "net_lanauthorize": {
+      "group": "net",
+      "title": "Check LAN players online",
+      "summary": "Whether players who join over the local network are also checked with the online key server.",
+      "details": "Off by default. It is the game's own switch for LAN authorization."
+    },
+    "net_socksenabled": {
+      "group": "net",
+      "title": "Use a SOCKS proxy",
+      "summary": "Sends the game's network traffic through a SOCKS proxy.",
+      "details": "The proxy's address, port, user name and password are set separately. It is latched, so a change applies after the game restarts. Leave it off unless you know you need a proxy."
+    },
+    "net_socksserver": {
+      "group": "net",
+      "title": "SOCKS proxy address",
+      "summary": "The address of the SOCKS proxy the game uses.",
+      "details": "Used only when Use a SOCKS proxy is on. It is latched, so a change applies after the game restarts."
+    },
+    "net_socksport": {
+      "group": "net",
+      "title": "SOCKS proxy port",
+      "summary": "The port of the SOCKS proxy the game uses.",
+      "details": "From 0 to 65,535, 1080 by default. Used only when Use a SOCKS proxy is on. It is latched."
+    },
+    "net_socksusername": {
+      "group": "net",
+      "title": "SOCKS user name",
+      "summary": "The user name the SOCKS proxy asks for.",
+      "details": "Used only when Use a SOCKS proxy is on. It is latched."
+    },
+    "net_sockspassword": {
+      "group": "net",
+      "title": "SOCKS password",
+      "summary": "The password the SOCKS proxy asks for.",
+      "details": "Used only when Use a SOCKS proxy is on. It is saved in your config as plain text, so treat the file as private."
+    },
+    "cl_talking": {
+      "group": "net",
+      "title": "Sending voice now",
+      "summary": "Whether you are sending voice chat right now.",
+      "details": "The game keeps this up to date itself."
+    },
+    "cl_nodelta": {
+      "group": "net",
+      "title": "Turn off update compression",
+      "summary": "A network debugging aid that makes the server send full updates instead of compact ones.",
+      "details": "Not for normal play: every update gets larger. It is not saved."
+    },
+    "cl_noprint": {
+      "group": "net",
+      "title": "Silence console messages",
+      "summary": "Stops the game printing messages to the console.",
+      "details": "It is not saved."
+    },
+    "cl_shownet": {
+      "group": "net",
+      "title": "Show network debug",
+      "summary": "Prints network debugging information to the console.",
+      "details": "Levels run from -2 to 4, and 0 is off. It prints a lot of text, which can lower frame rate. For developers."
+    },
+    "cl_showsend": {
+      "group": "net",
+      "title": "Show sent packets",
+      "summary": "Prints a line for each packet your game sends.",
+      "details": "A developer aid for seeing how your update rate and frame rate batch together. It floods the console."
+    },
+    "cl_showservercommands": {
+      "group": "net",
+      "title": "Show server commands",
+      "summary": "Prints the commands the server sends to your game.",
+      "details": "A developer aid. It is not saved."
+    },
+    "cl_showtimedelta": {
+      "group": "net",
+      "title": "Show server time offset",
+      "summary": "Prints how far your game's clock is from the server's.",
+      "details": "A developer aid. It is not saved."
+    },
+    "cl_shownuments": {
+      "group": "net",
+      "title": "Entity debug switch",
+      "summary": "A developer switch the game registers; its name suggests entity counts.",
+      "details": "No effect is documented for it. It is not saved."
+    },
+    "cl_freezedemo": {
+      "group": "net",
+      "title": "Freeze demo playback",
+      "summary": "Pauses playback of a recorded demo.",
+      "details": "A developer aid. It is not saved."
+    },
+    "cl_avidemo": {
+      "group": "net",
+      "title": "Capture video frames",
+      "summary": "Saves every frame as a picture file so you can assemble a video.",
+      "details": "Any number above 0 starts the capture at that many frames per second, which can slow the computer a great deal; 0 stops it. zPAM sets it back to 0 when you join a team."
+    },
+    "cl_forceavidemo": {
+      "group": "net",
+      "title": "Force frame capture",
+      "summary": "Forces the video frame capture to run.",
+      "details": "Related to Capture video frames. zPAM sets it back to 0 when you join a team."
+    },
+    "cl_demoautorecorduploadtimeout": {
+      "group": "net",
+      "title": "Demo upload time limit",
+      "summary": "How many seconds an automatic demo upload may take before it gives up.",
+      "details": "From 10 to 600 seconds, 60 by default. It applies only if a server mod asks your game to upload demos."
+    },
+    "net_profile": {
+      "group": "net",
+      "title": "Network profiling",
+      "summary": "Turns on the game's network profiling.",
+      "details": "Levels run from 0 to 2, and 0 is off. A developer aid."
+    },
+    "net_showprofile": {
+      "group": "net",
+      "title": "Show network profile",
+      "summary": "Shows the game's network profile on screen.",
+      "details": "Levels run from 0 to 3, and 0 is off. A developer aid."
+    },
+    "sv_fps": {
+      "group": "net",
+      "title": "Server update rate",
+      "summary": "How many times per second a server you host runs the game.",
+      "details": "From 10 to 1,000, and 20 by default. It also caps how many updates per second any player can receive. zPAM's competitive rules default to 30 and support 40 on CoD2x. It is a server setting, not something you tune for yourself."
+    },
+    "sv_allowanonymous": {
+      "group": "net",
+      "title": "Allow anonymous players",
+      "summary": "Lets players who hide their identity join a server you host.",
+      "details": "Off by default."
+    },
+    "sv_allowdownload": {
+      "group": "net",
+      "title": "Allow file downloads",
+      "summary": "Lets players download maps and mods straight from a server you host.",
+      "details": "On by default. Downloads through a web address are controlled separately."
+    },
+    "sv_wwwdownload": {
+      "group": "net",
+      "title": "Allow web downloads",
+      "summary": "Lets players download files from a web address for a server you host.",
+      "details": "Off by default. Players also need their own redirected downloads setting on. zPAM expects it on, with a valid web address, so its maps download quickly."
+    },
+    "sv_wwwbaseurl": {
+      "group": "net",
+      "title": "Web download address",
+      "summary": "The web address players download files from on a server you host.",
+      "details": "Empty by default. zPAM asks for a valid address and suggests one for people who have none."
+    },
+    "sv_wwwdldisconnected": {
+      "group": "net",
+      "title": "Download after disconnecting",
+      "summary": "Lets players keep downloading from the web address after they leave your server.",
+      "details": "Off by default. zPAM's server config turns it off."
+    },
+    "sv_allowedclan1": {
+      "group": "net",
+      "title": "Allowed clan 1",
+      "summary": "A text setting the game registers for a server you host.",
+      "details": "Its purpose is not documented."
+    },
+    "sv_allowedclan2": {
+      "group": "net",
+      "title": "Allowed clan 2",
+      "summary": "A text setting the game registers for a server you host.",
+      "details": "Its purpose is not documented."
+    },
+    "sv_debugrate": {
+      "group": "net",
+      "title": "Show send timing",
+      "summary": "Prints how long each message would take to reach a player at their connection speed.",
+      "details": "A developer aid for servers you host."
+    },
+    "sv_debugreliablecmds": {
+      "group": "net",
+      "title": "Debug reliable commands",
+      "summary": "A developer switch the game registers for servers you host.",
+      "details": "No effect is documented for it."
+    },
+    "sv_disableclientconsole": {
+      "group": "net",
+      "title": "Disable player consoles",
+      "summary": "Stops players from using the console on a server you host.",
+      "details": "Off by default. The game sends this setting to players as part of the server's system information."
+    },
+    "sv_floodprotect": {
+      "group": "net",
+      "title": "Limit player commands",
+      "summary": "Limits each player's commands to one every 800 milliseconds on a server you host.",
+      "details": "On by default. Team changes and score requests are exempt, and extra commands are ignored without removing the player."
+    },
+    "sv_keywords": {
+      "group": "net",
+      "title": "Server list keywords",
+      "summary": "Words that help players find a server you host in the server list.",
+      "details": "Empty by default."
+    },
+    "sv_kickbantime": {
+      "group": "net",
+      "title": "Kick ban length",
+      "summary": "How many seconds a player stays banned after you kick them.",
+      "details": "From 0 to 3,600 seconds, 300 by default."
+    },
+    "sv_maprotation": {
+      "group": "net",
+      "title": "Map rotation",
+      "summary": "The list of maps and game types a server you host cycles through.",
+      "details": "Written as pairs of the words gametype and map followed by names, for example a game type, then a map. The server keeps the maps still to come in a separate setting."
+    },
+    "sv_maprotationcurrent": {
+      "group": "net",
+      "title": "Maps still to come",
+      "summary": "The part of the map rotation a server you host has not played yet.",
+      "details": "The server fills this in itself."
+    },
+    "sv_packet_info": {
+      "group": "net",
+      "title": "Packet info printing",
+      "summary": "A developer switch the game registers for servers you host.",
+      "details": "No effect is documented for it."
+    },
+    "sv_padpackets": {
+      "group": "net",
+      "title": "Pad update size",
+      "summary": "Adds extra bytes to every update a server you host sends, to test connection limits.",
+      "details": "A test aid with 0 as the default. Never use it on a live server."
+    },
+    "sv_playerbroadcastlimit": {
+      "group": "net",
+      "title": "Send every player",
+      "summary": "While a server has this many players or fewer, it sends every player to every player, even out of sight.",
+      "details": "From 0 to 64, 15 by default, and 0 turns it off. It fixes missing sounds from players outside your view. CoD2x servers only."
+    },
+    "sv_privateclients": {
+      "group": "net",
+      "title": "Private slots",
+      "summary": "How many of a server's player slots need the private password.",
+      "details": "From 0 to 64, 0 by default. These slots come out of the server's total player slots, and the private password is set separately."
+    },
+    "sv_privatepassword": {
+      "group": "net",
+      "title": "Private slot password",
+      "summary": "The password for a server's private player slots.",
+      "details": "Treat it as private. Empty by default."
+    },
+    "sv_reconnectlimit": {
+      "group": "net",
+      "title": "Reconnect wait",
+      "summary": "How many seconds a player must wait before reconnecting to a server you host.",
+      "details": "From 0 to 1,800 seconds, 3 by default."
+    },
+    "sv_showaveragebps": {
+      "group": "net",
+      "title": "Show average data rate",
+      "summary": "A developer switch the game registers for servers you host.",
+      "details": "No effect is documented for it."
+    },
+    "sv_showcommands": {
+      "group": "net",
+      "title": "Show player commands",
+      "summary": "A developer switch the game registers for servers you host.",
+      "details": "No effect is documented for it."
+    },
+    "sv_timeout": {
+      "group": "net",
+      "title": "Silent player timeout",
+      "summary": "How many seconds without data before a server you host drops a player.",
+      "details": "From 0 to 1,800 seconds, 240 by default. A vanished player can hold their slot for about this long."
+    },
+    "sv_voicequality": {
+      "group": "net",
+      "title": "Voice chat quality",
+      "summary": "How much detail a server's voice chat keeps.",
+      "details": "From 0 to 9, 1 by default. The server sends this to players as part of its system information."
+    },
+    "sv_zombietime": {
+      "group": "net",
+      "title": "Dropped player hold time",
+      "summary": "How many seconds a dropped player's slot is held before it is freed.",
+      "details": "From 0 to 1,800 seconds, 2 by default. Leave it alone."
+    },
+    "cl_anonymous": {
+      "group": "net",
+      "title": "Anonymous login",
+      "summary": "Whether you hide your identity when joining servers.",
+      "details": "The game protects this setting from writes, so it can't be changed from here."
+    },
+    "cl_cod2x_version": {
+      "group": "net",
+      "title": "CoD2x build name",
+      "summary": "The CoD2x build this game reports.",
+      "details": "The game fills this in itself and treats it as read-only."
+    },
+    "cl_demoautorecordname": {
+      "group": "net",
+      "title": "Automatic demo name",
+      "summary": "The file name a server mod gave your game for an automatic demo recording.",
+      "details": "Set only by a server mod, and protected from changes here. While it is set, stopping the recording is ignored."
+    },
+    "cl_demoautorecorduploadurl": {
+      "group": "net",
+      "title": "Automatic demo upload address",
+      "summary": "The web address a server mod told your game to upload automatic demos to.",
+      "details": "Set only by a server mod, and protected from changes here."
+    },
+    "cl_hwid2": {
+      "group": "net",
+      "title": "Hardware ID",
+      "summary": "A long identity code CoD2x servers use to recognise your computer.",
+      "details": "The game builds it itself and treats it as read-only. CoD2x servers use it for bans in place of PunkBuster IDs, and reject players who send no valid one. Never edit it."
+    },
+    "cl_ingame": {
+      "group": "net",
+      "title": "In a game",
+      "summary": "Whether you are in a game right now.",
+      "details": "The game keeps this up to date itself and treats it as read-only."
+    },
+    "cl_motdstring": {
+      "group": "net",
+      "title": "Received server message",
+      "summary": "The server's message of the day, as the game last received it.",
+      "details": "The game fills this in itself and treats it as read-only."
+    },
+    "cl_paused": {
+      "group": "net",
+      "title": "Game paused",
+      "summary": "Whether the game is paused.",
+      "details": "The game keeps this up to date itself and treats it as read-only. Some players bind a key to toggle it."
+    },
+    "match_login": {
+      "group": "net",
+      "title": "Match login code",
+      "summary": "A login code for the CoD2x match system.",
+      "details": "Set with a game command rather than here, protected from changes, and removed after you disconnect. CoD2x servers read it as player information."
+    },
+    "protocol": {
+      "group": "net",
+      "title": "Network protocol version",
+      "summary": "The network protocol version the game uses.",
+      "details": "Read-only. Stock CoD2 1.3 uses 118 and CoD2x servers use 120."
+    },
+    "protocol_cod2x": {
+      "group": "net",
+      "title": "CoD2x protocol level",
+      "summary": "The CoD2x protocol level your game announces when it connects.",
+      "details": "Fixed at 6 and read-only. CoD2x servers turn away clients that send 0 or a lower level than their own."
+    },
+    "sv_cheats": {
+      "group": "net",
+      "title": "Cheat mode",
+      "summary": "Whether cheats are on for the current game.",
+      "details": "Protected: the game sets it itself and it can't be changed from here. While it is off, settings marked cheat-protected refuse changes. Match servers keep it off."
+    },
+    "sv_iwdnames": {
+      "group": "net",
+      "title": "Server game files",
+      "summary": "The names of the game files a server says it uses.",
+      "details": "The server sets this and your game treats it as read-only. While you are connected, the CoD2x client loads only these files plus the game's own."
+    },
+    "sv_iwds": {
+      "group": "net",
+      "title": "Server game file checks",
+      "summary": "Check codes for the game files a server says it uses.",
+      "details": "The server sets this and your game treats it as read-only."
+    },
+    "sv_mapname": {
+      "group": "net",
+      "title": "Current map",
+      "summary": "The name of the map the server is running.",
+      "details": "The game fills this in itself and treats it as read-only."
+    },
+    "sv_paused": {
+      "group": "net",
+      "title": "Server paused",
+      "summary": "Whether the server is paused.",
+      "details": "The game keeps this up to date itself and treats it as read-only."
+    },
+    "sv_referencediwdnames": {
+      "group": "net",
+      "title": "Referenced game file names",
+      "summary": "The names of the extra game files a server says clients need.",
+      "details": "The server sets this and your game treats it as read-only."
+    },
+    "sv_referencediwds": {
+      "group": "net",
+      "title": "Referenced game file checks",
+      "summary": "Check codes for the extra game files a server says clients need.",
+      "details": "The server sets this and your game treats it as read-only."
+    },
+    "sv_running": {
+      "group": "net",
+      "title": "Server running",
+      "summary": "Whether a server is running on this computer.",
+      "details": "The game keeps this up to date itself and treats it as read-only."
+    },
+    "sv_serverid": {
+      "group": "net",
+      "title": "Server session number",
+      "summary": "A number that identifies the server's current session.",
+      "details": "The server sets this and your game treats it as read-only."
     }
   },
   "commands": {
