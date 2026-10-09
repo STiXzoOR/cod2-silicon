@@ -10,10 +10,18 @@ import SwiftUI
 // --data uses the player's own loading screens (private review only; never commit them).
 // --fallback forces the macOS 13–25 material styling. --scale2 adds 2× renders of the same
 // window for checking text, vectors and shapes (material styling; system glass draws flat there).
+// COD2_SNAPSHOT_GEOMETRY=1 logs AppKit, view and WindowServer geometry at each sizing step.
 
 /// The review host can't become the active app while the login session is locked, so the
 /// window reports key and main appearance. Test-only: these overrides never ship.
 final class SnapshotWindow: NSWindow {
+    override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect {
+        let result = super.constrainFrameRect(frameRect, to: screen)
+        if ProcessInfo.processInfo.environment["COD2_SNAPSHOT_GEOMETRY"] == "1" {
+            print("CONSTRAIN requested=\(frameRect) result=\(result) screen=\(String(describing: screen?.visibleFrame))")
+        }
+        return result
+    }
     override var isKeyWindow: Bool { true }
     override var isMainWindow: Bool { true }
     override var canBecomeKey: Bool { true }
@@ -27,10 +35,17 @@ final class SnapshotWindow: NSWindow {
     private typealias Create = @convention(c) (CGRect, UInt32, UInt32, UInt32) -> Unmanaged<CGImage>?
     /// CGWindowListCreateImage of our own window: no screen-recording permission is needed for it.
     static func image(of window: NSWindow) -> CGImage? {
-        guard let handle = dlopen(nil, RTLD_NOW), let symbol = dlsym(handle, "CGWindowListCreateImage") else { return nil }
+        guard let primary = NSScreen.screens.first,
+              let handle = dlopen(nil, RTLD_NOW), let symbol = dlsym(handle, "CGWindowListCreateImage") else { return nil }
         let create = unsafeBitCast(symbol, to: Create.self)
-        // kCGWindowListOptionIncludingWindow, kCGWindowImageBoundsIgnoreFraming | kCGWindowImageBestResolution
-        return create(.null, 1 << 3, UInt32(window.windowNumber), (1 << 0) | (1 << 3))?.takeRetainedValue()
+        // A null capture rect uses WindowServer's framing bounds, which on macOS 27 are
+        // inset from the AppKit canvas (1412×882 for a 1440×900 window). Capture the actual
+        // frame without rescaling so the image and SwiftUI's shape-audit coordinates agree.
+        // Quartz's screen origin is the primary display's top-left; AppKit's is bottom-left.
+        let frame = window.frame
+        let bounds = CGRect(x: frame.minX, y: primary.frame.maxY - frame.maxY, width: frame.width, height: frame.height)
+        // kCGWindowListOptionIncludingWindow, kCGWindowImageBestResolution (shadow outside bounds excluded).
+        return create(bounds, 1 << 3, UInt32(window.windowNumber), 1 << 3)?.takeRetainedValue()
     }
 }
 
@@ -101,9 +116,28 @@ final class SnapshotWindow: NSWindow {
     }
 
 
+    @MainActor static func geometry(_ window: NSWindow, _ step: String, image: CGImage? = nil) {
+        guard ProcessInfo.processInfo.environment["COD2_SNAPSHOT_GEOMETRY"] == "1" else { return }
+        var row: [String: Any] = ["step": step, "frame": NSStringFromRect(window.frame),
+            "contentLayoutRect": NSStringFromRect(window.contentLayoutRect), "scale": window.backingScaleFactor,
+            "screenFrame": NSStringFromRect(window.screen?.frame ?? .zero),
+            "screenVisibleFrame": NSStringFromRect(window.screen?.visibleFrame ?? .zero)]
+        var views: [[String: String]] = []
+        var view = window.contentView
+        while let current = view {
+            views.append(["class": String(describing: type(of: current)), "frame": NSStringFromRect(current.frame), "bounds": NSStringFromRect(current.bounds)])
+            view = current.superview
+        }
+        row["views"] = views
+        row["windowServer"] = CGWindowListCopyWindowInfo([.optionIncludingWindow], CGWindowID(window.windowNumber)) as Any
+        if let image { row["image"] = [image.width, image.height] }
+        if let data = try? JSONSerialization.data(withJSONObject: row, options: [.sortedKeys]), let json = String(data: data, encoding: .utf8) { print("GEOMETRY " + json) }
+    }
+
     @MainActor static func capture(model: LauncherModel, dark: Bool, fallback: Bool, audit: ShapeAudit) async -> CGImage? {
         let window = await show(model: model, dark: dark, glass: !fallback, audit: audit)
         let image = WindowCapture.image(of: window)
+        geometry(window, "capture", image: image)
         window.orderOut(nil); window.close()
         return image
     }
@@ -117,17 +151,24 @@ final class SnapshotWindow: NSWindow {
         if #available(macOS 14.0, *) { controller.sceneBridgingOptions = [.toolbars] }
         let window = SnapshotWindow(contentRect: NSRect(x: 0, y: 0, width: 1440, height: 900),
                                     styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView], backing: .buffered, defer: false)
+        geometry(window, "init")
         window.appearance = appearance
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.toolbarStyle = .unified
         window.isReleasedWhenClosed = false
         window.contentViewController = controller
+        geometry(window, "content-controller")
         window.setFrame(NSRect(x: 40, y: 40, width: 1440, height: 900), display: true)
+        geometry(window, "first-set-frame")
         window.orderFrontRegardless()
+        geometry(window, "order-front")
         try? await Task.sleep(for: .milliseconds(1400))
+        geometry(window, "first-settled")
         window.setFrame(NSRect(x: 40, y: 40, width: 1440, height: 900), display: true)
+        geometry(window, "second-set-frame")
         try? await Task.sleep(for: .milliseconds(400))
+        geometry(window, "settled")
         return window
     }
 
@@ -141,6 +182,7 @@ final class SnapshotWindow: NSWindow {
                                          isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
         rep.size = frame.bounds.size
         frame.cacheDisplay(in: frame.bounds, to: rep)
+        geometry(window, "render2x", image: rep.cgImage)
         return rep.cgImage
     }
 

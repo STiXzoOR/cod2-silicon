@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Render every launcher screen through the review harness and sanity-check the images.
 
-Needs a login session with a window server (a locked screen is fine). Uses only the
-original fallback art and fake documentation-range servers; no game data is read.
+Needs a login session whose window server supplies rendered window pixels (macOS 27
+can return transparent captures while locked). Uses only the original fallback art
+and fake documentation-range servers; no game data is read.
 """
 import pathlib
 import struct
@@ -11,7 +12,7 @@ import sys
 
 root = pathlib.Path(__file__).resolve().parents[2]
 out = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else root / "output/ws28/unit/snapshots"
-build = root / "output/ws28/harness"
+build = out.parent / "snapshot-harness"
 subprocess.run([str(root / "scripts/build-launcher.sh"), str(build), "--snapshots"], check=True)
 harness = build / "LauncherSnapshots"
 
