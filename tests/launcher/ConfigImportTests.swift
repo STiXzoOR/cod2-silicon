@@ -171,6 +171,38 @@ import Foundation
         await rejects({ try await aggregate.load(.file(root.appendingPathComponent("main.cfg")), dialect: .stock) }, "aggregate dependency bytes bounded")
         print("PASS: synthetic source, URL policy, filesystem containment and size checks; no network")
     }
+    static func windows() throws {
+        let volume = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: volume) }
+        let players = volume.appendingPathComponent("Program Files (x86)/Activision/Call of Duty 2/main/players")
+        for name in ["Alpha", "Zulu"] {
+            try FileManager.default.createDirectory(at: players.appendingPathComponent(name), withIntermediateDirectories: true)
+            try bytes("seta sensitivity 2").write(to: players.appendingPathComponent(name + "/config_mp.cfg"))
+        }
+        try bytes("Zulu\n").write(to: players.appendingPathComponent("active.txt"))
+        try bytes("seta sensitivity 3").write(to: players.appendingPathComponent("Zulu/config_mp_2.cfg"))
+        try bytes("seta sensitivity 4").write(to: players.appendingPathComponent("Zulu/config_mp_raptr.cfg"))
+        try bytes("not a config").write(to: players.appendingPathComponent("Zulu/unrelated.txt"))
+        let unrelated = volume.appendingPathComponent("Users/private/unknown-game/main/players/Hidden")
+        try FileManager.default.createDirectory(at: unrelated, withIntermediateDirectories: true)
+        try bytes("quit").write(to: unrelated.appendingPathComponent("config_mp.cfg"))
+        let outside = volume.appendingPathComponent("outside")
+        try FileManager.default.createDirectory(at: outside, withIntermediateDirectories: true)
+        try bytes("quit").write(to: outside.appendingPathComponent("config_mp.cfg"))
+        try FileManager.default.createSymbolicLink(at: players.appendingPathComponent("Escape"), withDestinationURL: outside)
+        let discovery = WindowsProfiles().discover(mountedVolumes: [volume])
+        require(discovery.profiles.count == 4, "known install offers primary and backup configs only")
+        require(discovery.profiles.first?.profileName == "Zulu" && discovery.profiles.first?.isActive == true && discovery.profiles.first?.isBackup == false, "active profile primary offered first")
+        require(discovery.profiles.filter(\.isBackup).count == 2, "numbered and Raptr backups explicitly labelled")
+        require(!discovery.profiles.contains { $0.profileName == "Hidden" || $0.profileName == "Escape" }, "discovery avoids unrelated directories and profile symlinks")
+        let selected = WindowsProfiles().discover(mountedVolumes: [], selectedFolders: [unrelated])
+        require(selected.profiles.count == 1 && selected.profiles[0].profileName == "Hidden", "user-selected profile folder is discoverable")
+        let install = players.deletingLastPathComponent().deletingLastPathComponent()
+        require(WindowsProfiles().discover(mountedVolumes: [volume], selectedFolders: [install]).profiles.count == 4, "overlapping selected roots deduplicate configs")
+        let limited = WindowsProfiles(maximumEntries: 1).discover(mountedVolumes: [volume])
+        require(limited.truncated && limited.profiles.count <= 1, "bounded discovery reports truncation")
+        print("PASS: synthetic Windows volume/profile/backup discovery and active-first ordering")
+    }
     static func corpus(_ root: URL, research: URL) throws {
         let fixture = try ConfigImportCatalogSnapshot(
             researchDvars: Data(contentsOf: research.appendingPathComponent("dvars.json")),
@@ -202,7 +234,7 @@ import Foundation
     }
     static func main() async {
         do {
-            safety(); try await sources()
+            safety(); try await sources(); try windows()
             let arguments = Array(CommandLine.arguments.dropFirst())
             if arguments.count == 3 && arguments[0] == "--corpus" {
                 try corpus(URL(fileURLWithPath: arguments[1]), research: URL(fileURLWithPath: arguments[2]))
