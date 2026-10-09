@@ -58,6 +58,7 @@ import AppKit
                 Divider()
                 Button("Servers") { LauncherState.model.page = .servers }.keyboardShortcut("2", modifiers: .command)
                 Button("Library") { LauncherState.model.page = .library; LauncherState.model.loadMedia() }.keyboardShortcut("3", modifiers: .command)
+                Button("Configs") { if !LauncherState.model.onboard { LauncherState.model.page = .configs } }.keyboardShortcut("4", modifiers: .command)
                 Button("Settings") { LauncherState.model.page = .settings }.keyboardShortcut(",", modifiers: .command)
             }
         }

@@ -38,6 +38,7 @@ struct LauncherSplitView: View {
                 case .deploy: HomeView(model: model)
                 case .servers: ServersView(model: model)
                 case .library: LibraryView(model: model)
+                case .configs: ConfigsView(model: model)
                 case .settings: SettingsView(model: model)
                 case .about: AboutView(model: model)
                 }
@@ -65,6 +66,7 @@ struct Sidebar: View {
             guard let page else { return }
             withAnimation(.launcherSpring) { model.page = page }
             if page == .library { model.loadMedia() }
+            if page == .configs { model.studio.loadCatalog() }
         })) {
             Section {
                 // Icons take the app accent (brass/olive), or the accent the person chose in System Settings.

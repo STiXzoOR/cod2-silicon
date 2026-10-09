@@ -38,7 +38,8 @@ echo "PASS: every button style comes from launcher/Theme.swift"
 # Every view must also compile for SDKs before macOS 26, where only the material styling exists.
 sdk=$(/usr/bin/xcrun --show-sdk-path)
 views=""
-for file in Core Presentation ConfigDocument ConfigProfiles ConfigHistory ConfigStudioSession ConfigCatalog ConfigRules ConfigReadyCheck Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView LibraryView Main; do
+for file in Core Presentation ConfigDocument ConfigProfiles ConfigHistory ConfigStudioSession ConfigCatalog ConfigRules ConfigReadyCheck ConfigStudioModel ConfigStudioStyle \
+    Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView LibraryView ConfigsView ConfigSettingsView ConfigHistoryView Main; do
     views="$views $root/launcher/$file.swift"
 done
 # shellcheck disable=SC2086

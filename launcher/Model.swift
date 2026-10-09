@@ -2,18 +2,18 @@ import AppKit
 import SwiftUI
 
 enum LauncherPage: String, CaseIterable, Identifiable, Hashable {
-    case deploy, servers, library, settings, about
+    case deploy, servers, library, configs, settings, about
     var id: String { rawValue }
     var title: String {
-        switch self { case .deploy: "Deploy"; case .servers: "Servers"; case .library: "Library"; case .settings: "Settings"; case .about: "About" }
+        switch self { case .deploy: "Deploy"; case .servers: "Servers"; case .library: "Library"; case .configs: "Configs"; case .settings: "Settings"; case .about: "About" }
     }
     var symbol: String {
         switch self {
         case .deploy: "play.fill"; case .servers: "dot.radiowaves.left.and.right"; case .library: "film"
-        case .settings: "slider.horizontal.3"; case .about: "info.circle"
+        case .configs: "square.stack"; case .settings: "slider.horizontal.3"; case .about: "info.circle"
         }
     }
-    static let navigation: [LauncherPage] = [.deploy, .servers, .library, .settings]
+    static let navigation: [LauncherPage] = [.deploy, .servers, .library, .configs, .settings]
 }
 
 enum ServerFilter: String, CaseIterable, Identifiable { case all = "All", stock = "Stock 1.3", codx = "CoD2x 1.4"; var id: String { rawValue } }
@@ -79,6 +79,8 @@ struct MediaEntry: Identifiable {
         guard let catalog = try? ConfigCatalog.load(), let rules = try? ConfigRules.load() else { return nil }
         return ConfigReadyCheck(catalog: catalog, rules: rules)
     }()
+    /// The Configs page's view store over the same session.
+    let studio: ConfigStudioModel
     private var savedSettings = GameSettings()
     private var engine: Process?
     private var attachedGames: [pid_t: NSRunningApplication] = [:]
@@ -108,6 +110,7 @@ struct MediaEntry: Identifiable {
         preferences = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".cod2/preferences")
         let expected = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app/Contents/MacOS/cod2_macos").resolvingSymlinksInPath()
         let identifier = (Bundle.main.bundleIdentifier ?? "") + ".game"
+        var sessionError: String?
         if snapshot { configStudio = nil }
         else {
             do {
@@ -116,8 +119,10 @@ struct MediaEntry: Identifiable {
                         !$0.isTerminated && $0.executableURL?.resolvingSymlinksInPath() == expected
                     }.map(\.processIdentifier))
                 })
-            } catch { configStudio = nil; notice = error.localizedDescription }
+            } catch { configStudio = nil; sessionError = error.localizedDescription }
         }
+        studio = ConfigStudioModel(session: configStudio, dialect: .cod2x)
+        if let sessionError { notice = sessionError }
         if snapshot { seedPreview(); return }
         if let resolution = Bundle.main.object(forInfoDictionaryKey: "CoD2DefaultResolution") as? String { settings.resolution = resolution }
         if let mode = Bundle.main.object(forInfoDictionaryKey: "CoD2DefaultFullscreen") as? String { settings.fullscreen = mode }
@@ -177,6 +182,7 @@ struct MediaEntry: Identifiable {
             catch { notice = error.localizedDescription }
         }
         if let url = args.first(where: { $0.hasPrefix("cod2x://") }) { openLink(url) }
+        studio.loadCatalog()
         if ProcessInfo.processInfo.environment["COD2_SETUP_NONINTERACTIVE"] == "1" {
             setupTask = Task {
                 do {
@@ -681,7 +687,7 @@ struct MediaEntry: Identifiable {
         library.favorites = [servers[0].address, servers[2].address]
         library.recent = [servers[0].address, servers[1].address, servers[5].address]
         library.cachedAt = Date()
-        settings.advanced = "cg_fov 80\nr_gamma 1.1"
+        settings.advanced = "com_hunkMegs 256"
         savedSettings = settings
         let calendar = Calendar(identifier: .gregorian)
         func date(_ day: Int, _ hour: Int, _ minute: Int) -> Date { calendar.date(from: DateComponents(year: 2026, month: 10, day: day, hour: hour, minute: minute)) ?? Date() }
@@ -709,6 +715,12 @@ struct MediaEntry: Identifiable {
             }
         case "about": page = .about
         case "home-first": library.recent = []
+        // The review harness attaches a session over a temporary home with synthetic loadouts.
+        case "configs-guided": page = .configs; studio.level = .guided; studio.group = .frame
+        case "configs-guided-aim", "configs-running": page = .configs; studio.level = .guided; studio.group = .aim
+        case "configs-expert": page = .configs; studio.level = .expert; studio.group = .aim
+        case "configs-text": page = .configs; studio.level = .expert; studio.group = .aim
+        case "configs-history": page = .configs; studio.tab = .history
         default: page = .deploy
         }
     }

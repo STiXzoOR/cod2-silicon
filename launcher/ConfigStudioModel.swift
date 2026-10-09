@@ -292,7 +292,13 @@ enum ConfigDiff {
                 }
                 result.append(ConfigChange(id: "locks", label: "Locked settings", consoleName: nil, then: list(m0.locks), now: list(m1.locks)))
             }
-            if m0.notes != m1.notes { result.append(ConfigChange(id: "notes", label: "Notes", consoleName: nil, then: "\(m0.notes.count)", now: "\(m1.notes.count)")) }
+            if m0.notes != m1.notes {
+                func noted(_ notes: [String: String]) -> String {
+                    notes.isEmpty ? "None" : notes.keys.map { specs[$0.lowercased()]?.title ?? catalog?.setting(named: $0)?.title ?? $0 }.sorted().joined(separator: ", ")
+                }
+                let label = Set(m0.notes.keys) == Set(m1.notes.keys) ? "Edited notes" : "Notes"
+                result.append(ConfigChange(id: "notes", label: label, consoleName: nil, then: noted(m0.notes), now: noted(m1.notes)))
+            }
             if m0.dpi != m1.dpi {
                 func dpi(_ value: Double?) -> String { value.map { "\(ConfigValues.format($0)) DPI" } ?? "Not set" }
                 result.append(ConfigChange(id: "dpi", label: "Mouse DPI", consoleName: nil, then: dpi(m0.dpi), now: dpi(m1.dpi)))
@@ -384,6 +390,12 @@ enum ConfigTextCheck {
 }
 
 // MARK: - Store
+
+struct ConfigExpertSection: Identifiable {
+    let group: ConfigPurposeGroup
+    let specs: [ConfigSettingSpec]
+    var id: ConfigPurposeGroup { group }
+}
 
 struct ConfigStudioFailure: Identifiable {
     let id = UUID()
@@ -513,14 +525,17 @@ struct ConfigStudioFailure: Identifiable {
     func spec(named name: String) -> ConfigSettingSpec? { specsByName[name.lowercased()] }
     func specs(in group: ConfigPurposeGroup) -> [ConfigSettingSpec] { specs.filter { $0.group == group } }
     func protectedCount(in group: ConfigPurposeGroup) -> Int { protectedCounts[group] ?? 0 }
+    private static let importance = ["com_maxfps", "cg_drawfps", "sensitivity", "in_rawmouse", "cl_mouseaccel", "m_filter", "m_pitch", "rate", "snaps",
+                                     "cl_maxpackets", "cg_drawlagometer", "r_gamma", "r_picmip", "cg_drawcrosshair", "cg_drawcrosshairnames",
+                                     "cg_chatheight", "snd_volume", "r_anisotropy", "cg_brass", "cg_marks", "name", "cl_allowdownload"]
+    /// Guided entries first, in a fixed order of importance, then the rest by name.
+    private func ordered(_ list: [ConfigSettingSpec]) -> [ConfigSettingSpec] {
+        func rank(_ spec: ConfigSettingSpec) -> Int { spec.setting.guided ? Self.importance.firstIndex(of: spec.name.lowercased()) ?? Self.importance.count : Self.importance.count + 1 }
+        return list.enumerated().sorted { (rank($0.element), $0.offset) < (rank($1.element), $1.offset) }.map(\.element)
+    }
     /// Guided shows the catalog's guided entries in a fixed order of importance.
     func guidedSpecs(in group: ConfigPurposeGroup) -> [ConfigSettingSpec] {
-        let order = ["com_maxfps", "cg_drawfps", "sensitivity", "in_rawmouse", "cl_mouseaccel", "m_filter", "m_pitch", "rate", "snaps", "cl_maxpackets",
-                     "cg_drawlagometer", "r_gamma", "r_picmip", "cg_drawcrosshair", "cg_drawcrosshairnames", "cg_chatheight", "snd_volume",
-                     "r_anisotropy", "cg_brass", "cg_marks", "name", "cl_allowdownload"]
-        return specs.filter { $0.group == group && $0.setting.guided && !$0.launcherOwned }.sorted {
-            (order.firstIndex(of: $0.name.lowercased()) ?? order.count, $0.title) < (order.firstIndex(of: $1.name.lowercased()) ?? order.count, $1.title)
-        }
+        ordered(specs.filter { $0.group == group && $0.setting.guided && !$0.launcherOwned })
     }
 
     /// Every direct assignment's effective value, computed once per document.
@@ -551,7 +566,7 @@ struct ConfigStudioFailure: Identifiable {
     var lockedCount: Int { metadata?.locks.count ?? 0 }
 
     /// Expert rows: one group, or Changed/Locked across groups, narrowed by search.
-    func expertSections() -> [(group: ConfigPurposeGroup, specs: [ConfigSettingSpec])] {
+    func expertSections() -> [ConfigExpertSection] {
         let query = search.trimmingCharacters(in: .whitespaces)
         let rows = specs.filter { spec in
             if !query.isEmpty { return matches(spec, query) }
@@ -562,8 +577,8 @@ struct ConfigStudioFailure: Identifiable {
             }
         }
         return ConfigPurposeGroup.allCases.compactMap { group in
-            let list = rows.filter { $0.group == group }
-            return list.isEmpty ? nil : (group, list)
+            let list = ordered(rows.filter { $0.group == group })
+            return list.isEmpty ? nil : ConfigExpertSection(group: group, specs: list)
         }
     }
     func matches(_ spec: ConfigSettingSpec, _ query: String) -> Bool {

@@ -15,7 +15,8 @@ sources=("$root/launcher/Core.swift" "$root/launcher/Presentation.swift")
 views=("$root/launcher/ConfigDocument.swift" "$root/launcher/ConfigProfiles.swift"
     "$root/launcher/ConfigHistory.swift" "$root/launcher/ConfigStudioSession.swift"
     "$root/launcher/ConfigCatalog.swift" "$root/launcher/ConfigRules.swift" "$root/launcher/ConfigReadyCheck.swift")
-for file in Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView LibraryView; do
+for file in Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView LibraryView \
+    ConfigStudioModel ConfigStudioStyle ConfigsView ConfigSettingsView ConfigHistoryView; do
     views+=("$root/launcher/$file.swift")
 done
 name=CoD2Launcher
@@ -47,7 +48,8 @@ fi
     -target arm64-apple-macos13 -sdk "$sdk" -O -import-objc-header "$root/launcher/NativeSetup.h" \
     ${swift_flags[@]+"${swift_flags[@]}"} "${sources[@]}" "$out/NativeSetup.o" "$out/NativeShaders.o" "$out/URL.o" \
     -framework AppKit -framework SwiftUI -framework Network -lz -o "$out/$name"
-# Development builds find the bundled OFL fonts beside the executable; app bundles use Resources/Fonts.
+# Development builds find the bundled OFL fonts and Config Studio's data files beside the executable;
+# app bundles use Resources.
 mkdir -p "$out/Fonts"
 cp "$root"/launcher/Resources/Fonts/* "$out/Fonts/"
 cp "$root/launcher/Resources/ConfigCatalog.json" "$root/launcher/Resources/ConfigRulesets.json" "$out/"
