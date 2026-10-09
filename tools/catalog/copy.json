@@ -1,0 +1,1305 @@
+{
+  "settings": {
+    "com_maxfps": {
+      "group": "frame",
+      "title": "Frame rate cap",
+      "summary": "Limit how many frames the game runs each second.",
+      "details": "Frame timing also feeds movement. CoD2x competitive servers constrain the cap to 125–250 fps; registration defaults are shown separately from server enforcement.",
+      "guided": true,
+      "control": {
+        "kind": "number",
+        "step": 1,
+        "unit": "fps"
+      },
+      "runtimeNotes": [
+        "CoD2x server policy can change the value, type or limits at run time; registration metadata is not a live ruleset."
+      ],
+      "effectSources": [
+        "src/PC/qcommon/cod2x_runtime.c: Cod2x_Frame",
+        "CoD2x 1.4.6.8: src/mss32/competitive.cpp"
+      ]
+    },
+    "cg_drawfps": {
+      "group": "frame",
+      "title": "Show frame rate",
+      "summary": "Show a frame rate counter while you play.",
+      "details": "The registered modes select the counter display. This does not measure a sustained benchmark.",
+      "guided": true
+    },
+    "r_swapinterval": {
+      "group": "frame",
+      "title": "Wait for the display",
+      "summary": "Synchronize presentation with your display.",
+      "details": "The source requests a swap interval. Presentation support depends on the graphics driver. Restart the renderer to apply a latched change.",
+      "menuExposed": true
+    },
+    "sensitivity": {
+      "group": "aim",
+      "title": "Mouse speed",
+      "summary": "Choose how far your view turns when you move the mouse.",
+      "details": "A larger value turns farther for the same input. Mouse DPI is separate from this setting.",
+      "guided": true,
+      "control": {
+        "kind": "number",
+        "step": 0.1
+      },
+      "menuExposed": true
+    },
+    "in_rawmouse": {
+      "group": "aim",
+      "title": "Raw mouse input",
+      "summary": "Use mouse movement from the native input path.",
+      "details": "The macOS input code uses the raw mouse path when enabled. This is a port setting, separate from CoD2x raw-input compatibility controls.",
+      "guided": true
+    },
+    "m_filter": {
+      "group": "aim",
+      "title": "Smooth mouse movement",
+      "summary": "Average mouse movement across input samples.",
+      "details": "Smoothing changes how individual samples contribute to a turn. It can soften quick changes of direction.",
+      "guided": true,
+      "menuExposed": true
+    },
+    "cl_mouseaccel": {
+      "group": "aim",
+      "title": "Speed up on fast movements",
+      "summary": "Add more turning as mouse movement gets faster.",
+      "details": "Zero disables the acceleration term in the client input calculation.",
+      "guided": true
+    },
+    "m_pitch": {
+      "group": "aim",
+      "title": "Vertical mouse direction",
+      "summary": "Choose the direction and scale of up-and-down mouse movement.",
+      "details": "Negative values invert vertical movement. This is a signed scale, so preserve its magnitude when toggling direction.",
+      "guided": true
+    },
+    "m_yaw": {
+      "group": "aim",
+      "title": "Horizontal mouse scale",
+      "summary": "Scale left-and-right mouse movement.",
+      "details": "This multiplies the horizontal mouse input before it changes your view angle."
+    },
+    "cl_freelook": {
+      "group": "aim",
+      "title": "Look with the mouse",
+      "summary": "Let mouse movement control your view.",
+      "details": "This is the engine's mouse-look preference. Key actions and game state can also affect look behaviour.",
+      "menuExposed": true
+    },
+    "sensitivity_mg": {
+      "group": "aim",
+      "title": "Mounted weapon mouse speed",
+      "summary": "Adjust mouse speed while using a mounted weapon.",
+      "details": "Available in the CoD2x build. It does not replace your normal mouse speed."
+    },
+    "m_rinput": {
+      "group": "aim",
+      "title": "CoD2x mouse input",
+      "summary": "Select the CoD2x input compatibility path.",
+      "details": "This is distinct from native raw mouse input. The native adapter translates the CoD2x preference; see the source for supported behaviour."
+    },
+    "m_rinput_hz": {
+      "group": "aim",
+      "title": "Measured mouse input rate",
+      "summary": "Read the input-rate measurement reported by the game.",
+      "details": "This diagnostic is read-only. A measured value is not a promised device polling rate."
+    },
+    "m_rinput_hz_max": {
+      "group": "aim",
+      "title": "Mouse input rate limit",
+      "summary": "Set the CoD2x input-rate limit.",
+      "details": "The adapter and input device determine the observed rate. A configured limit is not a measurement."
+    },
+    "rate": {
+      "group": "net",
+      "title": "Connection bandwidth",
+      "summary": "Limit how much game data the server may send each second.",
+      "details": "The value is in bytes per second. CoD2x competitive enforcement requires 25,000; the registration default and source range are separate facts.",
+      "guided": true,
+      "control": {
+        "kind": "number",
+        "step": 1000,
+        "unit": "bytes/s"
+      },
+      "menuExposed": true,
+      "runtimeNotes": [
+        "CoD2x server policy can change the value, type or limits at run time; registration metadata is not a live ruleset."
+      ],
+      "effectSources": [
+        "src/PC/qcommon/cod2x_runtime.c: Cod2x_Frame",
+        "CoD2x 1.4.6.8: src/mss32/competitive.cpp"
+      ]
+    },
+    "snaps": {
+      "group": "net",
+      "title": "Updates you receive",
+      "summary": "Request how often the server sends game updates.",
+      "details": "The server's own frame rate and policy limit what it can send. The current CoD2x port registers 40 and competitive enforcement requires 40.",
+      "guided": true,
+      "control": {
+        "kind": "number",
+        "step": 1,
+        "unit": "updates/s"
+      },
+      "runtimeNotes": [
+        "CoD2x server policy can change the value, type or limits at run time; registration metadata is not a live ruleset."
+      ],
+      "effectSources": [
+        "src/PC/qcommon/cod2x_runtime.c: Cod2x_Frame",
+        "CoD2x 1.4.6.8: src/mss32/competitive.cpp"
+      ]
+    },
+    "cl_maxpackets": {
+      "group": "net",
+      "title": "Updates you send",
+      "summary": "Limit how often your client sends movement packets.",
+      "details": "This is an upper limit, not a guarantee of packets per second. The current CoD2x port registers 125; competitive enforcement also requires 125.",
+      "guided": true,
+      "control": {
+        "kind": "number",
+        "step": 1,
+        "unit": "packets/s"
+      },
+      "runtimeNotes": [
+        "CoD2x server policy can change the value, type or limits at run time; registration metadata is not a live ruleset."
+      ],
+      "effectSources": [
+        "src/PC/qcommon/cod2x_runtime.c: Cod2x_Frame",
+        "CoD2x 1.4.6.8: src/mss32/competitive.cpp"
+      ]
+    },
+    "cl_packetdup": {
+      "group": "net",
+      "title": "Repeat recent movement",
+      "summary": "Include recent movement commands in outgoing packets.",
+      "details": "The client repeats recent commands to help with lost packets. This does not remove latency."
+    },
+    "cg_drawlagometer": {
+      "group": "net",
+      "title": "Show connection graph",
+      "summary": "Show the connection timing graph while you play.",
+      "details": "The display helps you notice irregular updates. It does not fix the connection.",
+      "guided": true
+    },
+    "cl_allowdownload": {
+      "group": "other",
+      "title": "Download server content",
+      "summary": "Allow downloads needed for the server you join.",
+      "details": "Servers may require maps or mods that are not installed. The server and redirected-download settings control the available download path.",
+      "guided": true,
+      "menuExposed": true
+    },
+    "cl_wwwdownload": {
+      "group": "net",
+      "title": "Redirected downloads",
+      "summary": "Allow the server's redirected download path.",
+      "details": "Used for HTTP-style redirected downloads when supported. Availability depends on the server."
+    },
+    "cl_voice": {
+      "group": "audio",
+      "title": "Receive voice chat",
+      "summary": "Allow voice communication from players.",
+      "details": "The client advertises this preference to the server. Voice availability also depends on server settings.",
+      "menuExposed": true
+    },
+    "sv_voice": {
+      "group": "audio",
+      "title": "Server voice chat",
+      "summary": "Allow voice communication on a server you host.",
+      "details": "This is a hosted-server preference, not a local volume control.",
+      "menuExposed": true
+    },
+    "r_gamma": {
+      "group": "vis",
+      "title": "Brightness",
+      "summary": "Adjust the brightness of the game picture.",
+      "details": "The renderer applies this through its gamma path. Display and renderer support affect the result.",
+      "guided": true,
+      "control": {
+        "kind": "number",
+        "step": 0.1
+      },
+      "menuExposed": true
+    },
+    "r_picmip": {
+      "group": "vis",
+      "title": "Texture detail",
+      "summary": "Choose the detail level of surface textures.",
+      "details": "Larger values select smaller texture mip levels. Automatic texture settings can override this unless manual texture detail is enabled.",
+      "guided": true,
+      "menuExposed": true
+    },
+    "r_picmip_bump": {
+      "group": "vis",
+      "title": "Surface relief detail",
+      "summary": "Choose the detail level of normal-map textures.",
+      "details": "Larger values reduce texture resolution. Manual texture detail controls whether these preferences are used directly.",
+      "menuExposed": true
+    },
+    "r_picmip_spec": {
+      "group": "vis",
+      "title": "Reflection texture detail",
+      "summary": "Choose the detail level of specular textures.",
+      "details": "Larger values reduce texture resolution. This changes texture detail, not the lighting model.",
+      "menuExposed": true
+    },
+    "r_picmip_manual": {
+      "group": "vis",
+      "title": "Choose texture detail yourself",
+      "summary": "Use your chosen texture detail values.",
+      "details": "When disabled, the renderer's automatic texture settings can choose the mip levels.",
+      "menuExposed": true
+    },
+    "r_lodscale": {
+      "group": "vis",
+      "title": "Distant model detail",
+      "summary": "Adjust when models use less detailed versions.",
+      "details": "Stock protects this setting. The CoD2x registration changes its range and protection; use the facts for your selected build."
+    },
+    "r_anisotropy": {
+      "group": "gfx",
+      "title": "Texture filtering at angles",
+      "summary": "Keep angled surfaces clearer in the distance.",
+      "details": "This is the source's texture filtering setting. The range is a registration fact; hardware support still determines the applied filtering.",
+      "guided": true
+    },
+    "r_texturemode": {
+      "group": "gfx",
+      "title": "Texture filtering",
+      "summary": "Choose how texture samples blend.",
+      "details": "Choose from the registered filtering modes. These are separate from the texture-resolution settings.",
+      "menuExposed": true
+    },
+    "r_aasamples": {
+      "group": "gfx",
+      "title": "Smooth polygon edges",
+      "summary": "Choose the renderer's requested sample count.",
+      "details": "This is a latched renderer preference. The requested value does not prove that a display or driver accepts it.",
+      "menuExposed": true
+    },
+    "r_aspectratio": {
+      "group": "gfx",
+      "title": "Picture proportions",
+      "summary": "Choose how the game interprets the display's shape.",
+      "details": "The source provides named aspect-ratio choices. This is separate from display resolution.",
+      "menuExposed": true
+    },
+    "r_mode": {
+      "group": "gfx",
+      "title": "Display resolution",
+      "summary": "Choose the game's rendering resolution.",
+      "details": "On macOS the choices are built from available display modes. The catalog preserves a dynamic choice list instead of inventing resolutions.",
+      "menuExposed": true
+    },
+    "r_displayrefresh": {
+      "group": "gfx",
+      "title": "Display refresh preference",
+      "summary": "Choose the registered refresh-rate preference.",
+      "details": "The catalog records the source table. A registered choice does not establish the display's actual refresh rate.",
+      "menuExposed": true
+    },
+    "r_fullscreen": {
+      "group": "gfx",
+      "title": "Full-screen display",
+      "summary": "Request full-screen rendering.",
+      "details": "Stock marks this registration read-only. CoD2x changes its flags; native window behaviour is handled by the macOS platform layer."
+    },
+    "r_borderless": {
+      "group": "gfx",
+      "title": "Borderless full screen",
+      "summary": "Use the native borderless window preference.",
+      "details": "This is a macOS port registration. It belongs to machine display settings when Config Studio is integrated."
+    },
+    "r_multigpu": {
+      "group": "gfx",
+      "title": "Multiple graphics processors",
+      "summary": "Set the renderer's multi-GPU preference.",
+      "details": "The legacy renderer registers this preference. Registration does not establish that this Mac has a supported multi-GPU path.",
+      "menuExposed": true
+    },
+    "r_rendererpreference": {
+      "group": "gfx",
+      "title": "Renderer preference",
+      "summary": "Choose the renderer technology preference.",
+      "details": "These are legacy renderer choices. This catalog does not add a Metal renderer or promise one is available.",
+      "menuExposed": true
+    },
+    "r_dlightlimit": {
+      "group": "gfx",
+      "title": "Dynamic light limit",
+      "summary": "Limit how many dynamic lights the renderer considers.",
+      "details": "A lower limit can reduce the number of dynamic lights. The visual result depends on the scene.",
+      "menuExposed": true
+    },
+    "r_glow": {
+      "group": "gfx",
+      "title": "Glow effects",
+      "summary": "Set the renderer's glow preference.",
+      "details": "The effect depends on the materials and rendering path in use."
+    },
+    "r_distortion": {
+      "group": "gfx",
+      "title": "Distortion effects",
+      "summary": "Set the renderer's distortion preference.",
+      "details": "The effect depends on the materials and rendering path in use."
+    },
+    "sc_enable": {
+      "group": "gfx",
+      "title": "Shadows",
+      "summary": "Set the renderer's shadow preference.",
+      "details": "CoD2x competitive mode forces this off. The run-time policy can change the registered type and limits.",
+      "menuExposed": true,
+      "runtimeNotes": [
+        "CoD2x server policy can change the value, type or limits at run time; registration metadata is not a live ruleset."
+      ],
+      "effectSources": [
+        "src/PC/qcommon/cod2x_runtime.c: Cod2x_Frame",
+        "CoD2x 1.4.6.8: src/mss32/competitive.cpp"
+      ]
+    },
+    "fx_sort": {
+      "group": "gfx",
+      "title": "Sort visual effects",
+      "summary": "Use the visual-effect sorting preference.",
+      "details": "CoD2x competitive mode forces this on and changes its run-time type and limits.",
+      "runtimeNotes": [
+        "CoD2x server policy can change the value, type or limits at run time; registration metadata is not a live ruleset."
+      ],
+      "effectSources": [
+        "src/PC/qcommon/cod2x_runtime.c: Cod2x_Frame",
+        "CoD2x 1.4.6.8: src/mss32/competitive.cpp"
+      ]
+    },
+    "cg_brass": {
+      "group": "gfx",
+      "title": "Shell casings",
+      "summary": "Show spent casings from weapons.",
+      "details": "Controls client-side casing effects. It does not change the weapon's gameplay.",
+      "guided": true
+    },
+    "cg_marks": {
+      "group": "gfx",
+      "title": "Bullet marks",
+      "summary": "Show impact marks on surfaces.",
+      "details": "Controls client-side marks. It does not change hit registration.",
+      "guided": true
+    },
+    "cg_blood": {
+      "group": "gfx",
+      "title": "Blood effects",
+      "summary": "Show blood effects when players are hit.",
+      "details": "This is a visual preference; server gameplay is separate.",
+      "menuExposed": true
+    },
+    "cg_drawcrosshair": {
+      "group": "hud",
+      "title": "Show crosshair",
+      "summary": "Show the aiming crosshair.",
+      "details": "The weapon and game state also determine which crosshair or reticle is drawn.",
+      "guided": true,
+      "menuExposed": true
+    },
+    "cg_drawcrosshairnames": {
+      "group": "hud",
+      "title": "Show player names",
+      "summary": "Show names when you aim at players.",
+      "details": "The game decides which player names are eligible to appear.",
+      "guided": true
+    },
+    "cg_chatheight": {
+      "group": "hud",
+      "title": "Chat lines on screen",
+      "summary": "Choose how many chat lines stay visible.",
+      "details": "The engine keeps a bounded message window. Older messages also expire according to the chat duration.",
+      "guided": true,
+      "control": {
+        "kind": "number",
+        "step": 1,
+        "unit": "lines"
+      }
+    },
+    "cg_chattime": {
+      "group": "hud",
+      "title": "Chat duration",
+      "summary": "Choose how long chat messages remain visible.",
+      "details": "The value is in milliseconds. The line limit can remove older messages sooner."
+    },
+    "cg_subtitles": {
+      "group": "hud",
+      "title": "Subtitles",
+      "summary": "Set the game's subtitle preference.",
+      "details": "Only content with subtitle support can display subtitles.",
+      "menuExposed": true
+    },
+    "hud_enable": {
+      "group": "hud",
+      "title": "Show the HUD",
+      "summary": "Set the heads-up display preference.",
+      "details": "The setting is cheat-protected in the registration. Config Studio presents it as a protected reference.",
+      "menuExposed": true
+    },
+    "cg_drawspectatedplayername": {
+      "group": "hud",
+      "title": "Spectated player's name",
+      "summary": "Show the name of the player you are watching.",
+      "details": "Available in the CoD2x client build."
+    },
+    "cg_drawcompass": {
+      "group": "hud",
+      "title": "Show compass",
+      "summary": "Show the CoD2x compass display.",
+      "details": "Available in the CoD2x client build. Server rules can affect the match's HUD."
+    },
+    "cg_drawradar": {
+      "group": "hud",
+      "title": "Radar mode",
+      "summary": "Choose the CoD2x radar display mode.",
+      "details": "The registered modes and source range are shown in Expert. Server rules and game state can constrain the display."
+    },
+    "snd_volume": {
+      "group": "audio",
+      "title": "Game volume",
+      "summary": "Adjust the volume of game sounds.",
+      "details": "The engine value is a scale from 0 to 1. This is separate from your Mac's output volume.",
+      "guided": true,
+      "control": {
+        "kind": "number",
+        "step": 0.05
+      },
+      "menuExposed": true
+    },
+    "mss_q3fs": {
+      "group": "audio",
+      "title": "Sound file system",
+      "summary": "Set the sound driver's file-system preference.",
+      "details": "CoD2x competitive mode forces this on and changes its run-time type and limits. It is not a sound-quality preset.",
+      "runtimeNotes": [
+        "CoD2x server policy can change the value, type or limits at run time; registration metadata is not a live ruleset."
+      ],
+      "effectSources": [
+        "src/PC/qcommon/cod2x_runtime.c: Cod2x_Frame",
+        "CoD2x 1.4.6.8: src/mss32/competitive.cpp"
+      ]
+    },
+    "mss_3d_provider": {
+      "group": "audio",
+      "title": "Sound provider",
+      "summary": "Set the legacy sound-provider preference.",
+      "details": "The native backend supplies audio on macOS. A legacy provider name does not install or select a Windows driver."
+    },
+    "winvoice_mic_reclevel": {
+      "group": "audio",
+      "title": "Microphone recording level",
+      "summary": "Set the voice recording-level preference.",
+      "details": "This is an engine input scale, separate from the Mac's microphone settings.",
+      "menuExposed": true
+    },
+    "name": {
+      "group": "other",
+      "title": "Your name in game",
+      "summary": "Choose the name other players see.",
+      "details": "The engine supports colour codes. This is shared with the server as player information.",
+      "guided": true
+    },
+    "password": {
+      "group": "other",
+      "title": "Server password",
+      "summary": "Set the password used when joining a server.",
+      "details": "Treat this as private. The catalog contains only the source's empty registration default, never a player's saved password.",
+      "menuExposed": true
+    },
+    "g_password": {
+      "group": "net",
+      "title": "Hosted server password",
+      "summary": "Require a password on a server you host.",
+      "details": "This applies to the hosted game. Keep actual passwords in private profiles.",
+      "menuExposed": true
+    },
+    "sv_hostname": {
+      "group": "net",
+      "title": "Hosted server name",
+      "summary": "Choose the name advertised by a server you host.",
+      "details": "This is server information, separate from your player name.",
+      "menuExposed": true
+    },
+    "sv_maxclients": {
+      "group": "net",
+      "title": "Player slots",
+      "summary": "Set the maximum player count for a server you host.",
+      "details": "This is a server setting. It does not change the capacity of a remote server.",
+      "menuExposed": true
+    },
+    "sv_maxrate": {
+      "group": "net",
+      "title": "Server bandwidth limit",
+      "summary": "Limit the rate allowed by a server you host.",
+      "details": "A client cannot raise a remote server's limit by changing this locally.",
+      "menuExposed": true
+    },
+    "sv_maxping": {
+      "group": "net",
+      "title": "Highest allowed join ping",
+      "summary": "Set the server's upper ping admission limit.",
+      "details": "This applies to a server you host, not your own connection's latency.",
+      "menuExposed": true
+    },
+    "sv_minping": {
+      "group": "net",
+      "title": "Lowest allowed join ping",
+      "summary": "Set the server's lower ping admission limit.",
+      "details": "This applies to a server you host.",
+      "menuExposed": true
+    },
+    "sv_pure": {
+      "group": "net",
+      "title": "Require approved server files",
+      "summary": "Set the hosted server's pure-file preference.",
+      "details": "This controls file checks for a server you host. It does not bypass checks on another server.",
+      "menuExposed": true
+    },
+    "sv_punkbuster": {
+      "group": "net",
+      "title": "Server PunkBuster preference",
+      "summary": "Set the legacy server anti-cheat preference.",
+      "details": "Registration does not prove a working PunkBuster service is available on this native port.",
+      "menuExposed": true
+    },
+    "cl_punkbuster": {
+      "group": "net",
+      "title": "Client PunkBuster preference",
+      "summary": "Read the legacy client anti-cheat preference.",
+      "details": "Registration does not prove a working PunkBuster service is available on this native port.",
+      "menuExposed": true
+    },
+    "g_allowvote": {
+      "group": "net",
+      "title": "Allow voting",
+      "summary": "Allow votes on a server you host.",
+      "details": "The game and server rules also determine which votes are available.",
+      "menuExposed": true
+    },
+    "g_competitive": {
+      "group": "net",
+      "title": "Competitive server rules",
+      "summary": "Read the CoD2x competitive policy switch.",
+      "details": "This is server-controlled. It constrains frame rate, networking, shadows, effect sorting, sound file access and the wait command."
+    },
+    "g_cod2x": {
+      "group": "net",
+      "title": "Server CoD2x revision",
+      "summary": "Read the server's advertised CoD2x revision.",
+      "details": "The local host revision stays locked to 0. A registered range does not advertise full CoD2x server support."
+    },
+    "com_writeconfig": {
+      "group": "other",
+      "title": "Save game config changes",
+      "summary": "Allow the CoD2x game to write archived settings and binds.",
+      "details": "Config Studio still remains read-only while the engine runs. Turning this off is not permission for concurrent profile editing."
+    },
+    "com_errormessage": {
+      "group": "other",
+      "title": "Game error message",
+      "summary": "Read the latest game error text.",
+      "details": "This is engine-owned status, not a personal preference.",
+      "menuExposed": true
+    },
+    "com_errortitle": {
+      "group": "other",
+      "title": "Game error title",
+      "summary": "Read the title of the latest game error.",
+      "details": "This is engine-owned status.",
+      "menuExposed": true
+    },
+    "con_restricted": {
+      "group": "other",
+      "title": "Restricted console",
+      "summary": "Read the game's restricted-console preference.",
+      "details": "Protection and server policy are recorded in the registration metadata.",
+      "menuExposed": true
+    },
+    "shortversion": {
+      "group": "other",
+      "title": "Game version",
+      "summary": "Read the game version advertised by this build.",
+      "details": "This is read-only version information.",
+      "menuExposed": true
+    },
+    "version": {
+      "group": "other",
+      "title": "Build information",
+      "summary": "Read the engine's build description.",
+      "details": "The source registers an empty string and fills it during startup. The registration default is not the eventual run-time value."
+    },
+    "ui_dedicated": {
+      "group": "net",
+      "title": "Hosted server mode",
+      "summary": "Choose the in-game server-start preference.",
+      "details": "The native dedicated-server executable is a separate launch path.",
+      "menuExposed": true
+    },
+    "ui_netgametypename": {
+      "group": "net",
+      "title": "Hosted game type name",
+      "summary": "Read or set the in-game game-type name preference.",
+      "details": "This is an in-game menu preference; game scripts determine available types.",
+      "menuExposed": true
+    },
+    "ui_playerprofilenamenew": {
+      "group": "other",
+      "title": "New in-game profile name",
+      "summary": "Set the name used by the in-game profile-creation menu.",
+      "details": "Config Studio's own profile operations validate names separately.",
+      "menuExposed": true
+    },
+    "ui_browserfriendlyfire": {
+      "group": "net",
+      "title": "Friendly-fire server filter",
+      "summary": "Filter the in-game browser by friendly-fire policy.",
+      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "menuExposed": true
+    },
+    "ui_browserkillcam": {
+      "group": "net",
+      "title": "Killcam server filter",
+      "summary": "Filter the in-game browser by killcam policy.",
+      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "menuExposed": true
+    },
+    "ui_browsermod": {
+      "group": "net",
+      "title": "Mod server filter",
+      "summary": "Set the in-game browser mod filter.",
+      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "menuExposed": true
+    },
+    "ui_browsershowdedicated": {
+      "group": "net",
+      "title": "Show dedicated servers",
+      "summary": "Include dedicated servers in the in-game browser.",
+      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "menuExposed": true
+    },
+    "ui_browsershowempty": {
+      "group": "net",
+      "title": "Show empty servers",
+      "summary": "Include servers with no players in the in-game browser.",
+      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "menuExposed": true
+    },
+    "ui_browsershowfull": {
+      "group": "net",
+      "title": "Show full servers",
+      "summary": "Include servers with no free slots in the in-game browser.",
+      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "menuExposed": true
+    },
+    "ui_browsershownopassword": {
+      "group": "net",
+      "title": "Show servers without passwords",
+      "summary": "Include open servers in the in-game browser.",
+      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "menuExposed": true
+    },
+    "ui_browsershowpassword": {
+      "group": "net",
+      "title": "Show password servers",
+      "summary": "Include password-protected servers in the in-game browser.",
+      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "menuExposed": true
+    },
+    "ui_browsershowpunkbuster": {
+      "group": "net",
+      "title": "PunkBuster server filter",
+      "summary": "Set the legacy anti-cheat filter in the in-game browser.",
+      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "menuExposed": true
+    },
+    "ui_browsershowpure": {
+      "group": "net",
+      "title": "Show pure servers",
+      "summary": "Include pure-file servers in the in-game browser.",
+      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "menuExposed": true
+    },
+    "snd_khz": {
+      "group": "audio",
+      "title": "Sound sample rate",
+      "summary": "Choose the sound driver's sample-rate preference.",
+      "details": "This is a latched sound preference. The native audio backend determines the actual output format."
+    },
+    "motd": {
+      "title": "Message of the day",
+      "summary": "Read the game's message-of-the-day preference.",
+      "details": "Restored in the readiness integration source. The registration facts describe this build.",
+      "group": "other"
+    },
+    "cl_profiletextheight": {
+      "title": "Profile text height",
+      "summary": "Set the height used for profile text.",
+      "details": "Restored in the readiness integration source. The registration facts describe this build.",
+      "group": "other"
+    }
+  },
+  "commands": {
+    "+forward": {
+      "title": "Move forward",
+      "summary": "Move forward.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Move forward"
+    },
+    "+back": {
+      "title": "Move backward",
+      "summary": "Move backward.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Move backward"
+    },
+    "+moveleft": {
+      "title": "Move left",
+      "summary": "Move left.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Move left"
+    },
+    "+moveright": {
+      "title": "Move right",
+      "summary": "Move right.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Move right"
+    },
+    "+left": {
+      "title": "Turn left",
+      "summary": "Turn left.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Turn left"
+    },
+    "+right": {
+      "title": "Turn right",
+      "summary": "Turn right.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Turn right"
+    },
+    "+lookup": {
+      "title": "Look up",
+      "summary": "Look up.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Look up"
+    },
+    "+lookdown": {
+      "title": "Look down",
+      "summary": "Look down.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Look down"
+    },
+    "+mlook": {
+      "title": "Mouse look",
+      "summary": "Mouse look.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Mouse look"
+    },
+    "+strafe": {
+      "title": "Strafe modifier",
+      "summary": "Strafe modifier.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Strafe modifier"
+    },
+    "+attack": {
+      "title": "Fire",
+      "summary": "Fire.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Fire"
+    },
+    "+melee": {
+      "title": "Melee attack",
+      "summary": "Melee attack.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Melee attack"
+    },
+    "+frag": {
+      "title": "Throw frag grenade",
+      "summary": "Throw frag grenade.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Throw frag grenade"
+    },
+    "+smoke": {
+      "title": "Throw smoke grenade",
+      "summary": "Throw smoke grenade.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Throw smoke grenade"
+    },
+    "+reload": {
+      "title": "Reload",
+      "summary": "Reload.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Reload"
+    },
+    "+activate": {
+      "title": "Use",
+      "summary": "Use.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Use"
+    },
+    "+leanleft": {
+      "title": "Lean left",
+      "summary": "Lean left.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Lean left"
+    },
+    "+leanright": {
+      "title": "Lean right",
+      "summary": "Lean right.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Lean right"
+    },
+    "+gostand": {
+      "title": "Jump or stand",
+      "summary": "Jump or stand.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Jump or stand"
+    },
+    "+speed": {
+      "title": "Hold aim down sights",
+      "summary": "Hold aim down sights.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Hold aim down sights"
+    },
+    "+holdbreath": {
+      "title": "Hold breath",
+      "summary": "Hold breath.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Hold breath"
+    },
+    "+binoculars": {
+      "title": "Use binoculars",
+      "summary": "Use binoculars.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Use binoculars"
+    },
+    "+scores": {
+      "title": "Show scoreboard",
+      "summary": "Show scoreboard.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Show scoreboard"
+    },
+    "weapnext": {
+      "title": "Next weapon",
+      "summary": "Next weapon.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Next weapon"
+    },
+    "weapprev": {
+      "title": "Previous weapon",
+      "summary": "Previous weapon.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Previous weapon"
+    },
+    "toggleads": {
+      "title": "Toggle aim down sights",
+      "summary": "Toggle aim down sights.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Toggle aim down sights"
+    },
+    "togglecrouch": {
+      "title": "Toggle crouch",
+      "summary": "Toggle crouch.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Toggle crouch"
+    },
+    "toggleprone": {
+      "title": "Toggle prone",
+      "summary": "Toggle prone.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Toggle prone"
+    },
+    "mp_quickmessage": {
+      "title": "Quick messages",
+      "summary": "Quick messages.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Quick messages"
+    },
+    "exec": {
+      "title": "Run a config file",
+      "summary": "Insert a config file into the command buffer.",
+      "details": "Inserted text can run more commands. This is a file name, not shell execution.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "vstr": {
+      "title": "Run stored commands",
+      "summary": "Insert the commands stored in a setting.",
+      "details": "Inserted text can run more commands. The engine has no general loop protection; a text editor must check chains that never yield.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "wait": {
+      "title": "Wait before the next command",
+      "summary": "Pause command execution for a number of command-buffer passes.",
+      "details": "CoD2x competitive servers restrict wait. Its count measures command-buffer passes, not milliseconds or rendered frames.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "bind": {
+      "title": "Assign a key",
+      "summary": "Assign commands to a supported key.",
+      "details": "See the config grammar and source registration for limits and dispatch behaviour.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "unbind": {
+      "title": "Clear a key",
+      "summary": "Remove the commands assigned to a key.",
+      "details": "See the config grammar and source registration for limits and dispatch behaviour.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "toggle": {
+      "title": "Cycle a setting",
+      "summary": "Cycle a setting through the supplied values.",
+      "details": "See the config grammar and source registration for limits and dispatch behaviour.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "seta": {
+      "title": "Save a setting",
+      "summary": "Assign a value and mark the setting for config saving.",
+      "details": "See the config grammar and source registration for limits and dispatch behaviour.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "set": {
+      "title": "Set a value",
+      "summary": "Assign a setting value.",
+      "details": "See the config grammar and source registration for limits and dispatch behaviour.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "say": {
+      "title": "Say to everyone",
+      "summary": "Send a chat message to the server.",
+      "details": "See the config grammar and source registration for limits and dispatch behaviour.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "say_team": {
+      "title": "Say to your team",
+      "summary": "Send a team chat message to the server.",
+      "details": "See the config grammar and source registration for limits and dispatch behaviour.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "gocrouch": {
+      "title": "Crouch",
+      "summary": "Crouch.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Crouch"
+    },
+    "goprone": {
+      "title": "Go prone",
+      "summary": "Go prone.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Go prone"
+    },
+    "+stance": {
+      "title": "Cycle stance",
+      "summary": "Cycle stance.",
+      "details": "A gameplay action. Availability depends on your state in the match.",
+      "bindable": true,
+      "menuLabel": "Cycle stance"
+    },
+    "-forward": {
+      "title": "Release move forward",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-back": {
+      "title": "Release move backward",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-moveleft": {
+      "title": "Release move left",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-moveright": {
+      "title": "Release move right",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-left": {
+      "title": "Release turn left",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-right": {
+      "title": "Release turn right",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-lookup": {
+      "title": "Release look up",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-lookdown": {
+      "title": "Release look down",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-mlook": {
+      "title": "Release mouse look",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-strafe": {
+      "title": "Release strafe modifier",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-attack": {
+      "title": "Release fire",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-melee": {
+      "title": "Release melee attack",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-frag": {
+      "title": "Release throw frag grenade",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-smoke": {
+      "title": "Release throw smoke grenade",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-reload": {
+      "title": "Release reload",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-activate": {
+      "title": "Release use",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-leanleft": {
+      "title": "Release lean left",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-leanright": {
+      "title": "Release lean right",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-gostand": {
+      "title": "Release jump or stand",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-speed": {
+      "title": "Release hold aim down sights",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-holdbreath": {
+      "title": "Release hold breath",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-binoculars": {
+      "title": "Release use binoculars",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-scores": {
+      "title": "Release show scoreboard",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    },
+    "-stance": {
+      "title": "Release cycle stance",
+      "summary": "Release the held action.",
+      "details": "The key-up counterpart of the held action.",
+      "bindable": true,
+      "menuLabel": null
+    }
+  },
+  "supplemental": {
+    "settings": [
+      {
+        "name": "scr_sd_roundlimit",
+        "title": "Search and Destroy round limit",
+        "summary": "Game scripts or mods may create this name. No engine type, range or default is asserted.",
+        "details": "Game scripts or mods may create this name. No engine type, range or default is asserted.",
+        "group": "other",
+        "control": {
+          "kind": "text"
+        },
+        "guided": false,
+        "availability": "scriptOrMod",
+        "variants": {},
+        "origins": [],
+        "cod2x": "unchanged",
+        "sources": [
+          "Script/mod namespace; no engine registration"
+        ]
+      },
+      {
+        "name": "scr_dm_scorelimit",
+        "title": "Deathmatch score limit",
+        "summary": "Game scripts or mods may create this name. No engine type, range or default is asserted.",
+        "details": "Game scripts or mods may create this name. No engine type, range or default is asserted.",
+        "group": "other",
+        "control": {
+          "kind": "text"
+        },
+        "guided": false,
+        "availability": "scriptOrMod",
+        "variants": {},
+        "origins": [],
+        "cod2x": "unchanged",
+        "sources": [
+          "Script/mod namespace; no engine registration"
+        ]
+      },
+      {
+        "name": "r_vsync",
+        "title": "Legacy display-sync spelling",
+        "summary": "This name has no registration here. Use the Wait for the display setting instead.",
+        "details": "This name has no registration here. Use the Wait for the display setting instead.",
+        "group": "other",
+        "control": {
+          "kind": "text"
+        },
+        "guided": false,
+        "availability": "unavailable",
+        "variants": {},
+        "origins": [],
+        "cod2x": "unchanged",
+        "sources": [
+          "Source coverage: absent"
+        ]
+      },
+      {
+        "name": "r_anisotropic",
+        "title": "Legacy texture-filtering spelling",
+        "summary": "This name has no registration here. Use Texture filtering at angles instead.",
+        "details": "This name has no registration here. Use Texture filtering at angles instead.",
+        "group": "other",
+        "control": {
+          "kind": "text"
+        },
+        "guided": false,
+        "availability": "unavailable",
+        "variants": {},
+        "origins": [],
+        "cod2x": "unchanged",
+        "sources": [
+          "Source coverage: absent"
+        ]
+      },
+      {
+        "name": "m_enable",
+        "availability": "referenceOnly",
+        "variants": {},
+        "title": "Windows mouse movement",
+        "summary": "A Windows CoD2x setting that is not registered in this native port.",
+        "details": "Upstream CoD2x 1.4.6.8 registers this in its Windows mouse layer. No native default or editable control is asserted.",
+        "group": "aim",
+        "control": {
+          "kind": "text"
+        },
+        "guided": false,
+        "origins": [
+          "cod2x"
+        ],
+        "cod2x": "added",
+        "sources": [
+          "CoD2x 1.4.6.8: src/mss32/window.cpp:802"
+        ]
+      }
+    ],
+    "commands": []
+  }
+}
