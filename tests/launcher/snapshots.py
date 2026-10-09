@@ -36,7 +36,9 @@ def size(png):
 run(out)
 configs = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-text", "configs-history", "configs-running",
            "discover-unavailable", "discover-players", "discover-saved", "discover-player", "configs-import",
-           "configs-import-everything", "servers-ready", "servers-ready-fixed"]
+           "configs-import-everything", "servers-ready", "servers-ready-fixed",
+           "configs-binds-list", "configs-binds-advanced", "configs-binds-visual", "configs-checkup",
+           "configs-guided-rules", "configs-expert-rules"]
 screens = ["home", "home-first", "servers", "servers-empty", "settings", "library-demos", "library-screenshots", "about",
            "setup-data", "setup-data-missing", "setup-key", "setup-shaders", "setup-ready"] + configs
 for screen in screens:
@@ -73,7 +75,8 @@ for variant in ["increase-contrast", "reduce-transparency"]:
                 continue
             assert png.read_bytes() != (out / f"{screen}-{appearance}.png").read_bytes(), f"{png} matches the standard capture"
 
-# Real clicks on Config Studio controls write exact bytes and History rows in a temporary home.
+# Real clicks on Config Studio controls (including a Binds key capture and Check-up Apply and
+# Undo) write exact bytes and History rows in a temporary home.
 subprocess.run([str(harness), str(out / "actions"), "--actions"], check=True, timeout=300)
 
 # The harness exits non-zero on any shape-audit finding, so reaching here means none.

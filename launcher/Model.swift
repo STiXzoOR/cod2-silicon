@@ -722,7 +722,8 @@ struct MediaEntry: Identifiable {
         case "about": page = .about
         case "home-first": library.recent = []
         // The review harness attaches a session over a temporary home with synthetic loadouts.
-        case "configs-guided": page = .configs; studio.level = .guided; studio.group = .frame
+        case "configs-guided", "configs-guided-rules": page = .configs; studio.level = .guided; studio.group = .frame
+        case "configs-expert-rules": page = .configs; studio.level = .expert; studio.group = .net
         case "configs-guided-aim", "configs-running": page = .configs; studio.level = .guided; studio.group = .aim
         case "configs-expert": page = .configs; studio.level = .expert; studio.group = .aim
         case "configs-text": page = .configs; studio.level = .expert; studio.group = .aim
@@ -733,6 +734,8 @@ struct MediaEntry: Identifiable {
         case "discover-player": page = .configs
         case "configs-import", "configs-import-everything": page = .configs
         case "servers-ready", "servers-ready-fixed": page = .servers
+        case "configs-binds-list", "configs-binds-visual", "configs-binds-advanced": page = .configs; studio.tab = .binds
+        case "configs-checkup": page = .configs; studio.tab = .checkup
         default: page = .deploy
         }
     }
