@@ -3,8 +3,8 @@
     "com_maxfps": {
       "group": "frame",
       "title": "Frame rate cap",
-      "summary": "Limit how many frames the game runs each second.",
-      "details": "Frame timing also feeds movement. CoD2x competitive servers constrain the cap to 125–250 fps; registration defaults are shown separately from server enforcement.",
+      "summary": "The most frames per second the game will draw.",
+      "details": "The game turns the cap into whole milliseconds per frame (1000 divided by the cap, rounded down), so only some caps really differ, and 251 to 333 all run at the same rate. Because movement is calculated once per frame, the cap also changes jump height and fall damage, and 333 is commonly reported to jump highest. Servers using CoD2x competitive rules keep it between 125 and 250 and reset anything outside to 250; several league rule texts forbid 333.",
       "guided": true,
       "control": {
         "kind": "number",
@@ -22,15 +22,15 @@
     "cg_drawfps": {
       "group": "frame",
       "title": "Show frame rate",
-      "summary": "Show a frame rate counter while you play.",
-      "details": "The registered modes select the counter display. This does not measure a sustained benchmark.",
+      "summary": "Shows a frame rate counter in the corner while you play.",
+      "details": "Simple shows frames per second, with the lowest and highest recent values and a figure for how much they vary. Verbose adds counts of triangles drawn and texture memory in use. Time shows milliseconds per frame instead, with the same extra counts. It averages the last 32 frames and is not a benchmark.",
       "guided": true
     },
     "r_swapinterval": {
       "group": "frame",
       "title": "Wait for the display",
-      "summary": "Synchronize presentation with your display.",
-      "details": "The source requests a swap interval. Presentation support depends on the graphics driver. Restart the renderer to apply a latched change.",
+      "summary": "Matches every frame to your display's refresh, which stops tearing but limits how fast frames can come.",
+      "details": "The game's menu calls this Sync Every Frame. With it on, frames per second cannot go above your display's refresh rate. It is a latched setting, so it applies after the renderer restarts, and what happens in the end depends on your graphics driver.",
       "menuExposed": true
     },
     "sensitivity": {
@@ -52,15 +52,15 @@
     "in_rawmouse": {
       "group": "aim",
       "title": "Raw mouse input",
-      "summary": "Use mouse movement from the native input path.",
-      "details": "The macOS input code uses the raw mouse path when enabled. This is a port setting, separate from CoD2x raw-input compatibility controls.",
+      "summary": "Reads mouse movement straight from the mouse while you play.",
+      "details": "The macOS version of the game reads the mouse through Apple's GameController framework while you are playing and the pointer is captured. It does not apply in menus and it needs Mouse control to be on. This is a setting of this version of the game, separate from CoD2x's own raw-input option.",
       "guided": true
     },
     "m_filter": {
       "group": "aim",
       "title": "Smooth mouse movement",
-      "summary": "Average mouse movement across input samples.",
-      "details": "Smoothing changes how individual samples contribute to a turn. It can soften quick changes of direction.",
+      "summary": "Averages each mouse movement with the one before it.",
+      "details": "The game blends the last two mouse readings, which can make aim look steadier but a little slower to respond. Off is the default and TweakGuide suggests turning it off if the mouse feels laggy.",
       "guided": true,
       "menuExposed": true
     },
@@ -78,21 +78,21 @@
     "m_pitch": {
       "group": "aim",
       "title": "Vertical mouse direction",
-      "summary": "Choose the direction and scale of up-and-down mouse movement.",
-      "details": "Negative values invert vertical movement. This is a signed scale, so preserve its magnitude when toggling direction.",
+      "summary": "Which way your view tilts when you move the mouse up or down.",
+      "details": "The default, 0.022, tilts the normal way, and the game's own Invert Mouse option writes -0.022. The size of the number sets how far the view tilts per mouse movement and is normally left alone: ESL's old PunkBuster list required values outside -0.015 to 0.015. Keep the size when you flip the direction.",
       "guided": true
     },
     "m_yaw": {
       "group": "aim",
       "title": "Horizontal mouse scale",
-      "summary": "Scale left-and-right mouse movement.",
-      "details": "This multiplies the horizontal mouse input before it changes your view angle."
+      "summary": "How far your view turns sideways for each bit of mouse movement.",
+      "details": "The default, 0.022, is what published configs keep, and ESL's old PunkBuster list required exactly 0.022. It scales your left and right turning only."
     },
     "cl_freelook": {
       "group": "aim",
       "title": "Look with the mouse",
-      "summary": "Let mouse movement control your view.",
-      "details": "This is the engine's mouse-look preference. Key actions and game state can also affect look behaviour.",
+      "summary": "Lets moving the mouse up and down tilt your view.",
+      "details": "With it off, moving the mouse forward and back walks you instead of tilting the view, unless the mouse-look key is held. The game's menu calls it Free Look. zPAM servers set it back to on when you join a team.",
       "menuExposed": true
     },
     "sensitivity_mg": {
@@ -146,8 +146,8 @@
     "snaps": {
       "group": "net",
       "title": "Updates you receive",
-      "summary": "Request how often the server sends game updates.",
-      "details": "The server's own frame rate and policy limit what it can send. The current CoD2x port registers 40 and competitive enforcement requires 40.",
+      "summary": "How many game updates per second you ask the server to send you.",
+      "details": "Your request is a ceiling: the server's own update rate also limits how often you get one. Stock servers cap it at 30 and CoD2x servers at 40. Servers using CoD2x competitive rules enforce 40, and zPAM 3 servers on stock CoD2 expect 30.",
       "guided": true,
       "control": {
         "kind": "number",
@@ -184,42 +184,42 @@
     "cl_packetdup": {
       "group": "net",
       "title": "Repeat recent movement",
-      "summary": "Include recent movement commands in outgoing packets.",
-      "details": "The client repeats recent commands to help with lost packets. This does not remove latency."
+      "summary": "How many extra copies of your recent movement go into each packet you send.",
+      "details": "The extra copies help when packets are lost, at the price of a little more data. Repeating does not reduce delay. The game's connection-speed step sets this to 1 whenever the connection speed is 5,000 or more."
     },
     "cg_drawlagometer": {
       "group": "net",
       "title": "Show connection graph",
-      "summary": "Show the connection timing graph while you play.",
-      "details": "The display helps you notice irregular updates. It does not fix the connection.",
+      "summary": "Shows a small graph that tracks how steadily updates arrive from the server.",
+      "details": "One trace shows how old your newest update is and the other shows your ping, marking updates that were lost. It appears only when you are connected to another player's server. It helps you read your connection and does not fix it.",
       "guided": true
     },
     "cl_allowdownload": {
       "group": "other",
       "title": "Download server content",
-      "summary": "Allow downloads needed for the server you join.",
-      "details": "Servers may require maps or mods that are not installed. The server and redirected-download settings control the available download path.",
+      "summary": "Lets the game download maps and mods from the server you join.",
+      "details": "The game's menu calls this Allow Downloading. Downloads happen while you connect, and the server also has to allow them. With it off you will not get files a server needs.",
       "guided": true,
       "menuExposed": true
     },
     "cl_wwwdownload": {
       "group": "net",
       "title": "Redirected downloads",
-      "summary": "Allow the server's redirected download path.",
-      "details": "Used for HTTP-style redirected downloads when supported. Availability depends on the server."
+      "summary": "Lets the game fetch server files from a web address the server names.",
+      "details": "The setting is shared with the server as player information, and the server only uses a redirect if it has one set up."
     },
     "cl_voice": {
       "group": "audio",
       "title": "Receive voice chat",
-      "summary": "Allow voice communication from players.",
-      "details": "The client advertises this preference to the server. Voice availability also depends on server settings.",
+      "summary": "Lets other players' voice chat reach you.",
+      "details": "The server only sends you voice if your connection speed is 5,000 or more. Voice also depends on the server turning it on. The game's menu calls this Voice Chat.",
       "menuExposed": true
     },
     "sv_voice": {
       "group": "audio",
       "title": "Server voice chat",
-      "summary": "Allow voice communication on a server you host.",
-      "details": "This is a hosted-server preference, not a local volume control.",
+      "summary": "Turns voice chat on for a server you host.",
+      "details": "The game's Create Server menu has a Voice Chat switch for this. A player only gets voice if their connection speed is 5,000 or more.",
       "menuExposed": true
     },
     "r_gamma": {
@@ -286,8 +286,15 @@
     "r_picmip_manual": {
       "group": "vis",
       "title": "Choose texture detail yourself",
-      "summary": "Use your chosen texture detail values.",
-      "details": "When disabled, the renderer's automatic texture settings can choose the mip levels.",
+      "summary": "Uses the texture detail levels you pick instead of letting the game choose.",
+      "details": "The game's menu calls this Texture Quality, with Automatic and Manual. With it off, the game's automatic settings pick the detail, and the three texture detail settings are not used.",
+      "control": {
+        "kind": "switch",
+        "labels": {
+          "0": "Automatic",
+          "1": "Manual"
+        }
+      },
       "menuExposed": true
     },
     "r_lodscale": {
@@ -310,36 +317,44 @@
     "r_texturemode": {
       "group": "gfx",
       "title": "Texture filtering",
-      "summary": "Choose how texture samples blend.",
-      "details": "Choose from the registered filtering modes. These are separate from the texture-resolution settings.",
+      "summary": "How the game blends textures where they are stretched or seen at an angle.",
+      "details": "Choices are nearest, linear, bilinear, trilinear and anisotropic, and the game's menu offers the last three. Of those three, bilinear is the cheapest and anisotropic costs the most, and only anisotropic uses the angled filtering level.",
       "menuExposed": true
     },
     "r_aasamples": {
       "group": "gfx",
-      "title": "Smooth polygon edges",
-      "summary": "Choose the renderer's requested sample count.",
-      "details": "This is a latched renderer preference. The requested value does not prove that a display or driver accepts it.",
+      "title": "Edge smoothing",
+      "summary": "Smooths the jagged edges of objects; more samples look smoother and cost more speed.",
+      "details": "1 is off, and the game's menu offers 2× and 4×. 3 has no menu choice. It is latched, so it applies after the renderer restarts, and your display or driver may not accept every value. CyberGamer EU's rule text asks players to check it is off.",
+      "control": {
+        "kind": "number",
+        "labels": {
+          "1": "Off",
+          "2": "2×",
+          "4": "4×"
+        }
+      },
       "menuExposed": true
     },
     "r_aspectratio": {
       "group": "gfx",
       "title": "Picture proportions",
-      "summary": "Choose how the game interprets the display's shape.",
-      "details": "The source provides named aspect-ratio choices. This is separate from display resolution.",
+      "summary": "Chooses whether the picture is drawn for a 4:3, 16:10 or 16:9 screen, or follows your display.",
+      "details": "Auto follows your display. The game scales your mouse turn with the picture's width, so the same Mouse speed turns about 13% farther at 16:10 and about 21% farther at 16:9 than at 4:3. It is a latched setting and applies after the renderer restarts.",
       "menuExposed": true
     },
     "r_mode": {
       "group": "gfx",
       "title": "Display resolution",
-      "summary": "Choose the game's rendering resolution.",
-      "details": "On macOS the choices are built from available display modes. The catalog preserves a dynamic choice list instead of inventing resolutions.",
+      "summary": "The size of the picture the game draws.",
+      "details": "The game's menu calls this Video Mode. On macOS the list is built from your display's available modes when the game starts, so the catalog cannot list the sizes. It is latched and applies after the renderer restarts.",
       "menuExposed": true
     },
     "r_displayrefresh": {
       "group": "gfx",
-      "title": "Display refresh preference",
-      "summary": "Choose the registered refresh-rate preference.",
-      "details": "The catalog records the source table. A registered choice does not establish the display's actual refresh rate.",
+      "title": "Screen refresh rate",
+      "summary": "Which refresh rate the game asks your display for.",
+      "details": "The game builds this list from your display at start-up, so the catalog cannot list the rates. It is a latched setting, and the rate you get depends on your display.",
       "menuExposed": true
     },
     "r_fullscreen": {
@@ -356,23 +371,32 @@
     },
     "r_multigpu": {
       "group": "gfx",
-      "title": "Multiple graphics processors",
-      "summary": "Set the renderer's multi-GPU preference.",
-      "details": "The legacy renderer registers this preference. Registration does not establish that this Mac has a supported multi-GPU path.",
+      "title": "Multi-GPU tuning",
+      "summary": "Tunes the game for computers with more than one graphics card.",
+      "details": "The game's menu calls this Optimize for SLI. Guides warn it can add mouse and keyboard lag, and the game leaves it off by default.",
       "menuExposed": true
     },
     "r_rendererpreference": {
       "group": "gfx",
-      "title": "Renderer preference",
-      "summary": "Choose the renderer technology preference.",
-      "details": "These are legacy renderer choices. This catalog does not add a Metal renderer or promise one is available.",
+      "title": "Drawing method",
+      "summary": "Which of the game's original drawing methods it prefers.",
+      "details": "Choices are Auto, DirectX 9 and DirectX 7, and DirectX 9 is the default. It is latched and applies after the renderer restarts. The catalog neither adds a Metal renderer nor promises that any listed method is available.",
       "menuExposed": true
     },
     "r_dlightlimit": {
       "group": "gfx",
-      "title": "Dynamic light limit",
-      "summary": "Limit how many dynamic lights the renderer considers.",
-      "details": "A lower limit can reduce the number of dynamic lights. The visual result depends on the scene.",
+      "title": "Dynamic lights",
+      "summary": "How many moving lights, such as muzzle flashes and explosions, the game draws at once.",
+      "details": "The game's menu offers Off (0), Low (2), Normal (4) and High (8); the setting accepts 0 to 32. More lights cost frame rate in firefights.",
+      "control": {
+        "kind": "number",
+        "labels": {
+          "0": "Off",
+          "2": "Low",
+          "4": "Normal",
+          "8": "High"
+        }
+      },
       "menuExposed": true
     },
     "r_glow": {
@@ -390,8 +414,8 @@
     "sc_enable": {
       "group": "gfx",
       "title": "Shadows",
-      "summary": "Set the renderer's shadow preference.",
-      "details": "CoD2x competitive mode forces this off. The run-time policy can change the registered type and limits.",
+      "summary": "Draws shadows from players and objects.",
+      "details": "Shadows exist only in the DirectX 9 renderer, and guides report the cost can be significant. Servers using CoD2x competitive rules force them off, as do zPAM 3 servers and CyberGamer AU's old rules.",
       "menuExposed": true,
       "runtimeNotes": [
         "CoD2x server policy can change the value, type or limits at run time; registration metadata is not a live ruleset."
@@ -417,44 +441,44 @@
     "cg_brass": {
       "group": "gfx",
       "title": "Shell casings",
-      "summary": "Show spent casings from weapons.",
-      "details": "Controls client-side casing effects. It does not change the weapon's gameplay.",
+      "summary": "Shows spent cartridges flying out of weapons.",
+      "details": "Turning it off can improve frame rate slightly while firing, according to TweakGuide and another guide. It does not change how weapons work.",
       "guided": true
     },
     "cg_marks": {
       "group": "gfx",
       "title": "Bullet marks",
-      "summary": "Show impact marks on surfaces.",
-      "details": "Controls client-side marks. It does not change hit registration.",
+      "summary": "Shows bullet and explosion marks on walls and floors.",
+      "details": "Turning it off can improve frame rate in heavy fighting, according to TweakGuide and another guide. Marks are only visual and do not change hit registration.",
       "guided": true
     },
     "cg_blood": {
       "group": "gfx",
       "title": "Blood effects",
-      "summary": "Show blood effects when players are hit.",
-      "details": "This is a visual preference; server gameplay is separate.",
+      "summary": "Shows blood when players are hit.",
+      "details": "The game's menu calls this Show Blood. It is only visual, and guides report no real effect on performance. Newer zPAM versions also use it to show where a hit landed.",
       "menuExposed": true
     },
     "cg_drawcrosshair": {
       "group": "hud",
       "title": "Show crosshair",
-      "summary": "Show the aiming crosshair.",
-      "details": "The weapon and game state also determine which crosshair or reticle is drawn.",
+      "summary": "Shows the crosshair in the middle of the screen.",
+      "details": "The game's menu calls this Enable Crosshair. It controls the standard crosshair only; scoped weapons draw their own reticle.",
       "guided": true,
       "menuExposed": true
     },
     "cg_drawcrosshairnames": {
       "group": "hud",
       "title": "Show player names",
-      "summary": "Show names when you aim at players.",
-      "details": "The game decides which player names are eligible to appear.",
+      "summary": "Shows a player's name when your crosshair is on them.",
+      "details": "On by default. Servers using ePAM 1.02 force it on for every player.",
       "guided": true
     },
     "cg_chatheight": {
       "group": "hud",
       "title": "Chat lines on screen",
-      "summary": "Choose how many chat lines stay visible.",
-      "details": "The engine keeps a bounded message window. Older messages also expire according to the chat duration.",
+      "summary": "How many chat lines stay on screen at once.",
+      "details": "It runs from 0 to 8 lines, and 8 is the default. Messages also fade after the chat time set separately.",
       "guided": true,
       "control": {
         "kind": "number",
@@ -471,15 +495,15 @@
     "cg_subtitles": {
       "group": "hud",
       "title": "Subtitles",
-      "summary": "Set the game's subtitle preference.",
-      "details": "Only content with subtitle support can display subtitles.",
+      "summary": "Shows subtitles for spoken lines that have them.",
+      "details": "Only sounds that come with subtitle text can show one. Default is on.",
       "menuExposed": true
     },
     "hud_enable": {
       "group": "hud",
       "title": "Show the HUD",
-      "summary": "Set the heads-up display preference.",
-      "details": "This is an archived, editable preference in the described source. The game state can also determine which HUD elements are drawn.",
+      "summary": "Shows or hides the heads-up display.",
+      "details": "The game's menu calls this Draw HUD. Turning it off hides the HUD menus the game draws on top of the picture. Game state still decides which elements appear while it is on.",
       "menuExposed": true
     },
     "cg_drawspectatedplayername": {
@@ -533,72 +557,72 @@
     },
     "winvoice_mic_reclevel": {
       "group": "audio",
-      "title": "Microphone recording level",
-      "summary": "Set the voice recording-level preference.",
-      "details": "This is an engine input scale, separate from the Mac's microphone settings.",
+      "title": "Microphone level",
+      "summary": "How loudly your microphone is recorded for voice chat.",
+      "details": "It runs from 0 to 65,535 and the default is the maximum. The game's Record Level slider uses the same range. It is separate from your Mac's microphone setting.",
       "menuExposed": true
     },
     "name": {
       "group": "other",
       "title": "Your name in game",
-      "summary": "Choose the name other players see.",
-      "details": "The engine supports colour codes. This is shared with the server as player information.",
+      "summary": "The name other players see next to you.",
+      "details": "Colour codes ^0 to ^9 change the colour of the letters that follow. The name is sent to every server you join. The default is Unknown Soldier.",
       "guided": true
     },
     "password": {
       "group": "other",
       "title": "Server password",
-      "summary": "Set the password used when joining a server.",
-      "details": "Treat this as private. The catalog contains only the source's empty registration default, never a player's saved password.",
+      "summary": "The password the game sends when you join a server that needs one.",
+      "details": "The game's own password box takes up to 12 characters. Treat it as private. The catalog holds only the empty default, never anyone's saved password.",
       "menuExposed": true
     },
     "g_password": {
       "group": "net",
       "title": "Hosted server password",
-      "summary": "Require a password on a server you host.",
-      "details": "This applies to the hosted game. Keep actual passwords in private profiles.",
+      "summary": "The password players need to join a server you host.",
+      "details": "It appears as Password in the game's Create Server menu, which takes up to 12 characters.",
       "menuExposed": true
     },
     "sv_hostname": {
       "group": "net",
       "title": "Hosted server name",
-      "summary": "Choose the name advertised by a server you host.",
-      "details": "This is server information, separate from your player name.",
+      "summary": "The name your server shows in the server list.",
+      "details": "It is shown in server lists and can be up to 32 characters in the game's Create Server menu. It is separate from your player name.",
       "menuExposed": true
     },
     "sv_maxclients": {
       "group": "net",
       "title": "Player slots",
-      "summary": "Set the maximum player count for a server you host.",
-      "details": "This is a server setting. It does not change the capacity of a remote server.",
+      "summary": "The most players your hosted server lets in.",
+      "details": "From 1 to 64, with 20 as the default. It is latched and applies after the map restarts. It only affects a server you host.",
       "menuExposed": true
     },
     "sv_maxrate": {
       "group": "net",
       "title": "Server bandwidth limit",
-      "summary": "Limit the rate allowed by a server you host.",
-      "details": "A client cannot raise a remote server's limit by changing this locally.",
+      "summary": "The most data per second your server will send to any one player.",
+      "details": "0 means no limit and the highest allowed is 25,000. The server uses the smaller of this and each player's own connection speed. zPAM sets it to 25,000.",
       "menuExposed": true
     },
     "sv_maxping": {
       "group": "net",
       "title": "Highest allowed join ping",
-      "summary": "Set the server's upper ping admission limit.",
-      "details": "This applies to a server you host, not your own connection's latency.",
+      "summary": "Turns away players whose ping is above this when they join (0 is off).",
+      "details": "It is checked only at the moment someone connects, not afterwards, and local network players are exempt. It affects a server you host, not your own connection.",
       "menuExposed": true
     },
     "sv_minping": {
       "group": "net",
       "title": "Lowest allowed join ping",
-      "summary": "Set the server's lower ping admission limit.",
-      "details": "This applies to a server you host.",
+      "summary": "Turns away players whose ping is below this when they join (0 is off).",
+      "details": "It is checked only at the moment someone connects, not afterwards, and local network players are exempt. It affects a server you host.",
       "menuExposed": true
     },
     "sv_pure": {
       "group": "net",
       "title": "Require approved server files",
-      "summary": "Set the hosted server's pure-file preference.",
-      "details": "This controls file checks for a server you host. It does not bypass checks on another server.",
+      "summary": "Makes players on a server you host use only the same game files as the server.",
+      "details": "Players with modified game files are dropped. zPAM forces it on, and league rules forbid modified game files. It does not change checks on a server someone else hosts.",
       "menuExposed": true
     },
     "sv_punkbuster": {
@@ -618,8 +642,8 @@
     "g_allowvote": {
       "group": "net",
       "title": "Allow voting",
-      "summary": "Allow votes on a server you host.",
-      "details": "The game and server rules also determine which votes are available.",
+      "summary": "Lets players call votes on a server you host.",
+      "details": "The game's Create Server menu has an Allow Voting switch for this. The game scripts decide which votes exist.",
       "menuExposed": true
     },
     "g_competitive": {
@@ -642,30 +666,30 @@
     },
     "com_errormessage": {
       "group": "other",
-      "title": "Game error message",
-      "summary": "Read the latest game error text.",
-      "details": "This is engine-owned status, not a personal preference.",
+      "title": "Last error message",
+      "summary": "The text of the last error the game showed.",
+      "details": "The game fills this in itself and treats it as read-only. It is not a personal preference.",
       "menuExposed": true
     },
     "com_errortitle": {
       "group": "other",
-      "title": "Game error title",
-      "summary": "Read the title of the latest game error.",
-      "details": "This is engine-owned status.",
+      "title": "Last error title",
+      "summary": "The title of the last error the game showed.",
+      "details": "The game fills this in itself and treats it as read-only. It is not a personal preference.",
       "menuExposed": true
     },
     "con_restricted": {
       "group": "other",
-      "title": "Restricted console",
-      "summary": "Read the game's restricted-console preference.",
-      "details": "Protection and server policy are recorded in the registration metadata.",
+      "title": "Restrict the console",
+      "summary": "Requires an extra key held down to open the in-game console.",
+      "details": "The game's menu calls this Enable Console and shows it the other way round: Yes is 0 and No is 1. With it on, the console does not open from the console key alone.",
       "menuExposed": true
     },
     "shortversion": {
       "group": "other",
       "title": "Game version",
-      "summary": "Read the game version advertised by this build.",
-      "details": "This is read-only version information.",
+      "summary": "The version number this build reports to servers.",
+      "details": "The game fills this in itself and treats it as read-only. The CoD2x build reports 1.4.6.8 where stock reports 1.3.",
       "menuExposed": true
     },
     "version": {
@@ -677,92 +701,134 @@
     "ui_dedicated": {
       "group": "net",
       "title": "Hosted server mode",
-      "summary": "Choose the in-game server-start preference.",
-      "details": "The native dedicated-server executable is a separate launch path.",
+      "summary": "Chooses how the in-game Create Server menu starts a server.",
+      "details": "The game's menu offers No (0), LAN (1) and Internet (2). The separate dedicated-server program is a different way to start a server.",
+      "control": {
+        "kind": "number",
+        "labels": {
+          "0": "No",
+          "1": "LAN",
+          "2": "Internet"
+        }
+      },
       "menuExposed": true
     },
     "ui_netgametypename": {
       "group": "net",
       "title": "Hosted game type name",
-      "summary": "Read or set the in-game game-type name preference.",
-      "details": "This is an in-game menu preference; game scripts determine available types.",
+      "summary": "The game type name the in-game Create Server menu remembers.",
+      "details": "The menu fills this in itself, and game scripts decide which game types exist.",
       "menuExposed": true
     },
     "ui_playerprofilenamenew": {
       "group": "other",
-      "title": "New in-game profile name",
-      "summary": "Set the name used by the in-game profile-creation menu.",
-      "details": "Config Studio's own profile operations validate names separately.",
+      "title": "New profile name",
+      "summary": "The name typed into the game's profile-creation box.",
+      "details": "The game's own box takes up to 14 characters. Config Studio checks profile names separately.",
       "menuExposed": true
     },
     "ui_browserfriendlyfire": {
       "group": "net",
-      "title": "Friendly-fire server filter",
-      "summary": "Filter the in-game browser by friendly-fire policy.",
-      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "title": "Friendly-fire filter",
+      "summary": "The server browser's friendly-fire filter.",
+      "details": "The game's Filter menu offers All (-1), Off (0), On (1), Reflect (2) and Shared (3). This is only a browser filter.",
+      "control": {
+        "kind": "number",
+        "labels": {
+          "-1": "All",
+          "0": "Off",
+          "1": "On",
+          "2": "Reflect",
+          "3": "Shared"
+        }
+      },
       "menuExposed": true
     },
     "ui_browserkillcam": {
       "group": "net",
-      "title": "Killcam server filter",
-      "summary": "Filter the in-game browser by killcam policy.",
-      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "title": "Killcam filter",
+      "summary": "The server browser's killcam filter.",
+      "details": "The game's Filter menu offers All (-1), Off (0) and On (1). This is only a browser filter.",
+      "control": {
+        "kind": "number",
+        "labels": {
+          "-1": "All",
+          "0": "Off",
+          "1": "On"
+        }
+      },
       "menuExposed": true
     },
     "ui_browsermod": {
       "group": "net",
-      "title": "Mod server filter",
-      "summary": "Set the in-game browser mod filter.",
-      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "title": "Mods filter",
+      "summary": "The server browser's filter for servers running mods.",
+      "details": "The game's Filter menu offers All (-1), No (0) and Yes (1). This is only a browser filter.",
+      "control": {
+        "kind": "number",
+        "labels": {
+          "-1": "All",
+          "0": "No",
+          "1": "Yes"
+        }
+      },
       "menuExposed": true
     },
     "ui_browsershowdedicated": {
       "group": "net",
-      "title": "Show dedicated servers",
-      "summary": "Include dedicated servers in the in-game browser.",
-      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "title": "Dedicated servers only",
+      "summary": "Lists only dedicated servers in the server browser.",
+      "details": "This is the game's own server browser filter, set from its Filter menu, and it is separate from the launcher's browser filters.",
       "menuExposed": true
     },
     "ui_browsershowempty": {
       "group": "net",
       "title": "Show empty servers",
-      "summary": "Include servers with no players in the in-game browser.",
-      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "summary": "Includes servers with no players in the server browser.",
+      "details": "This is the game's own server browser filter, set from its Filter menu, and it is separate from the launcher's browser filters.",
       "menuExposed": true
     },
     "ui_browsershowfull": {
       "group": "net",
       "title": "Show full servers",
-      "summary": "Include servers with no free slots in the in-game browser.",
-      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "summary": "Includes servers with no free slots in the server browser.",
+      "details": "This is the game's own server browser filter, set from its Filter menu, and it is separate from the launcher's browser filters.",
       "menuExposed": true
     },
     "ui_browsershownopassword": {
       "group": "net",
-      "title": "Show servers without passwords",
-      "summary": "Include open servers in the in-game browser.",
-      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "title": "Servers without passwords",
+      "summary": "Includes servers that need no password in the server browser.",
+      "details": "This is the game's own server browser filter, set from its Filter menu, and it is separate from the launcher's browser filters.",
       "menuExposed": true
     },
     "ui_browsershowpassword": {
       "group": "net",
-      "title": "Show password servers",
-      "summary": "Include password-protected servers in the in-game browser.",
-      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "title": "Servers with passwords",
+      "summary": "Includes password-protected servers in the server browser.",
+      "details": "This is the game's own server browser filter, set from its Filter menu, and it is separate from the launcher's browser filters.",
       "menuExposed": true
     },
     "ui_browsershowpunkbuster": {
       "group": "net",
-      "title": "PunkBuster server filter",
-      "summary": "Set the legacy anti-cheat filter in the in-game browser.",
-      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "title": "PunkBuster filter",
+      "summary": "The server browser's filter for PunkBuster servers.",
+      "details": "The game's Filter menu offers All (-1), Off (0) and On (1). This is only a browser filter.",
+      "control": {
+        "kind": "number",
+        "labels": {
+          "-1": "All",
+          "0": "Off",
+          "1": "On"
+        }
+      },
       "menuExposed": true
     },
     "ui_browsershowpure": {
       "group": "net",
-      "title": "Show pure servers",
-      "summary": "Include pure-file servers in the in-game browser.",
-      "details": "This is an in-game server-browser preference, separate from launcher browser filters. The registered values are shown in Expert.",
+      "title": "Pure servers only",
+      "summary": "Lists only servers that require matching game files in the server browser.",
+      "details": "This is the game's own server browser filter, set from its Filter menu, and it is separate from the launcher's browser filters.",
       "menuExposed": true
     },
     "snd_khz": {
