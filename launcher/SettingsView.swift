@@ -171,7 +171,12 @@ struct SettingsView: View {
             // (plus the point the group hides under its first hairline).
             SettingsRow(model.dataPathDisplay.isEmpty ? "Not found" : model.dataPathDisplay, detail: model.approximate ? "Approximate shaders · add your Mac copy for the original look" : "Original shaders verified",
                         typewriter: true, minHeight: ControlMetrics.height(.regular) + 2 * SettingsMetrics.radius + 1) {
-                Button("Set Up Again…", action: model.restartSetup).glassAction()
+                HStack(spacing: 8) {
+                    Button { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: model.dataPath)]) } label: { Image(systemName: "folder").frame(width: 16, height: 16) }
+                        .glassAction(circle: true).disabled(model.dataPath.isEmpty)
+                        .help("Show game data in Finder").accessibilityLabel("Show game data in Finder")
+                    Button("Set Up Again…", action: model.restartSetup).glassAction()
+                }
             }
         }
     }
