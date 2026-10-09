@@ -59,7 +59,9 @@ final class SnapshotWindow: NSWindow {
 @main struct Snapshots {
     static let screens = ["home", "home-first", "servers", "servers-empty", "settings", "library-demos", "library-screenshots", "about",
                           "setup-data", "setup-data-missing", "setup-key", "setup-shaders", "setup-ready"] + configScreens
-    static let configScreens = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-text", "configs-history", "configs-running"]
+    static let configScreens = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-text", "configs-history", "configs-running",
+                                "discover-unavailable", "discover-players", "discover-saved", "discover-player", "configs-import",
+                                "configs-import-everything", "servers-ready", "servers-ready-fixed"]
 
     @MainActor static func main() {
         let arguments = CommandLine.arguments
@@ -95,7 +97,7 @@ final class SnapshotWindow: NSWindow {
                     model.preview(screen)
                     var home: URL?
                     if configScreens.contains(screen) {
-                        do { home = try ConfigsPreview.seed(model, screen: screen) }
+                        do { home = try ConfigsPreview.seed(model, screen: screen); try await ConfigsPreview.prepare(model, screen: screen, home: home!) }
                         catch { fputs("Config Studio preview failed for \(screen): \(error)\n", stderr); exit(1) }
                     }
                     defer { if let home { try? FileManager.default.removeItem(at: home) } }
@@ -105,15 +107,19 @@ final class SnapshotWindow: NSWindow {
                     }
                     let name = "\(screen)-\(dark ? "dark" : "light")"
                     let audit = ShapeAudit()
-                    if let image = await capture(model: model, dark: dark, fallback: fallback, audit: audit, accessibility: accessibility) {
+                    let captured = await capture(model: model, dark: dark, fallback: fallback, audit: audit, accessibility: accessibility)
+                    if let sheet = captured.sheet { try? write(sheet, to: output.appendingPathComponent(name + "-sheet.png")); written += 1 }
+                    if let image = captured.window {
                         try? write(image, to: output.appendingPathComponent(name + ".png")); written += 1
                         let items = Array(audit.items.values)
                         let found = ShapeCheck.findings(items, image: image).map { "\(name): \($0)" }
                         checked += items.count; findings += found
                         report.append(["screen": name, "items": items.map(ShapeCheck.json), "findings": found])
                     } else { fputs("Capture failed: \(name)\n", stderr) }
-                    if scale2, let image = await render2x(model: model, dark: dark, accessibility: accessibility) {
-                        try? write(image, to: output.appendingPathComponent(name + "@2x.png")); written += 1
+                    if scale2 {
+                        let rendered = await render2x(model: model, dark: dark, accessibility: accessibility)
+                        if let image = rendered.window { try? write(image, to: output.appendingPathComponent(name + "@2x.png")); written += 1 }
+                        if let sheet = rendered.sheet { try? write(sheet, to: output.appendingPathComponent(name + "-sheet@2x.png")); written += 1 }
                     }
                 }
             }
@@ -160,12 +166,15 @@ final class SnapshotWindow: NSWindow {
         if let data = try? JSONSerialization.data(withJSONObject: row, options: [.sortedKeys]), let json = String(data: data, encoding: .utf8) { print("GEOMETRY " + json) }
     }
 
-    @MainActor static func capture(model: LauncherModel, dark: Bool, fallback: Bool, audit: ShapeAudit, accessibility: Accessibility = .init()) async -> CGImage? {
+    /// The window, and an attached sheet (the import review) as its own image.
+    @MainActor static func capture(model: LauncherModel, dark: Bool, fallback: Bool, audit: ShapeAudit, accessibility: Accessibility = .init()) async -> (window: CGImage?, sheet: CGImage?) {
         let window = await show(model: model, dark: dark, glass: !fallback, audit: audit, accessibility: accessibility)
         let image = WindowCapture.image(of: window)
+        let sheet = window.attachedSheet.flatMap { WindowCapture.image(of: $0) }
         geometry(window, "capture", image: image)
+        window.attachedSheet.map { window.endSheet($0) }
         window.orderOut(nil); window.close()
-        return image
+        return (image, sheet)
     }
 
     /// 1440×900, or the launcher's 1100×760 minimum with --minimum.
@@ -203,16 +212,20 @@ final class SnapshotWindow: NSWindow {
 
     /// 2× render of the same window with the material styling, toolbar included, for text, vector
     /// and shape checks. A bare hosting view has no window, so the split view wouldn't lay out.
-    @MainActor static func render2x(model: LauncherModel, dark: Bool, accessibility: Accessibility = .init()) async -> CGImage? {
+    @MainActor static func render2x(model: LauncherModel, dark: Bool, accessibility: Accessibility = .init()) async -> (window: CGImage?, sheet: CGImage?) {
         let window = await show(model: model, dark: dark, glass: false, accessibility: accessibility)
-        defer { window.orderOut(nil); window.close() }
-        guard let frame = window.contentView?.superview,
-              let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(windowSize.width) * 2, pixelsHigh: Int(windowSize.height) * 2, bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
-                                         isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
-        rep.size = frame.bounds.size
-        frame.cacheDisplay(in: frame.bounds, to: rep)
-        geometry(window, "render2x", image: rep.cgImage)
-        return rep.cgImage
+        defer { window.attachedSheet.map { window.endSheet($0) }; window.orderOut(nil); window.close() }
+        func render(_ view: NSView?) -> CGImage? {
+            guard let view, let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(view.bounds.width) * 2, pixelsHigh: Int(view.bounds.height) * 2,
+                                                       bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
+                                                       bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
+            rep.size = view.bounds.size
+            view.cacheDisplay(in: view.bounds, to: rep)
+            return rep.cgImage
+        }
+        let image = render(window.contentView?.superview)
+        geometry(window, "render2x", image: image)
+        return (image, render(window.attachedSheet?.contentView?.superview))
     }
 
     /// Measures text contrast over the player's own loading screens without looking at, or writing,
@@ -469,6 +482,58 @@ final class SnapshotWindow: NSWindow {
         return home
     }
 
+    /// Discover, import and ready-check states. Players come from the signed synthetic fixture
+    /// (placeholder names, preview only); “discover-unavailable” is the production directory.
+    static func prepare(_ model: LauncherModel, screen: String, home: URL) async throws {
+        let discover = model.discover
+        func fixture() async throws {
+            discover.use(try DirectoryFixture.directory(cacheURL: home.appendingPathComponent("directory/index.json")))
+            await discover.reload()
+        }
+        func waitReview() async {
+            for _ in 0..<200 {
+                guard let review = discover.review, case .loading = review.phase else { return }
+                try? await Task.sleep(for: .milliseconds(20))
+            }
+        }
+        switch screen {
+        case "discover-unavailable": await discover.reload()
+        case "discover-players": try await fixture()
+        case "discover-saved":
+            try await fixture()
+            discover.setSaved("player-2", true); discover.setSaved("player-4", true)
+        case "discover-player":
+            try await fixture()
+            discover.open(.player("player-1"))
+            for _ in 0..<200 {
+                guard case .loading? = discover.detail?.phase else { break }
+                try? await Task.sleep(for: .milliseconds(20))
+            }
+        case "configs-import", "configs-import-everything":
+            try await fixture()
+            guard let entry = discover.entry("player-1") else { return }
+            discover.tryEntry(entry)
+            await waitReview()
+            if screen == "configs-import" { discover.review?.setTarget("Main") } else { discover.review?.setMode(.everything) }
+        case "servers-ready", "servers-ready-fixed":
+            // A game-written config saves every archived setting; the rules also read these three.
+            let store = try ConfigProfileStore(homeURL: home, dialect: .cod2x)
+            let main = try store.read(id: "Main")
+            var document = main.document
+            for (name, value) in [("m_filter", "0"), ("cl_mouseAccel", "0"), ("r_picmip_manual", "0")] { try document.setSetting(named: name, value: value) }
+            try store.update(id: "Main", document: document, expected: main.version, summary: "Changed 3 settings")
+            try model.studio.session?.refresh()
+            let server = GameServer(address: "203.0.113.200:28960", fields: ["sv_hostname": "^3Desert ^7Fox ^1League", "mapname": "mp_matmata",
+                "g_gametype": "sd", "clients": "8", "sv_maxclients": "10", "protocol": "120", "shortversion": "1.4.6.8", "fs_game": "", "g_competitive": "1"],
+                ping: 42, players: (0..<8).map { ServerPlayer(id: $0, score: 30 - $0 * 3, ping: 20 + $0 * 6, name: ["Aurora", "North", "Moss", "Echo", "Scout", "River", "Harbor", "Quill"][$0]) },
+                observedAt: Date())
+            model.servers.insert(server, at: 0)
+            model.selectedServer = server.address
+            if screen == "servers-ready-fixed" { try model.fixForServerOnly(server.address) }
+        default: break
+        }
+    }
+
     /// Spreads History rows over the board's dates, keeping their order.
     static func spreadDates(_ folder: URL) throws {
         let formatter = ISO8601DateFormatter()
@@ -544,6 +609,89 @@ final class SnapshotWindow: NSWindow {
             print("FAIL: Restore did not write the snapshot as a new transaction"); return false
         }
         print("PASS: clicking Restore This Snapshot wrote the snapshot's exact bytes as a new History transaction")
+        guard await importAction() else { return false }
+        return await readyAction()
+    }
+
+    /// A real click on the import review's Apply button (the sheet's bottom-trailing control) writes
+    /// exactly the reviewed lines into a new loadout as one Import transaction, leaving Main alone.
+    static func importAction() async -> Bool {
+        let model = LauncherModel(snapshot: true)
+        model.preview("configs-import")
+        let home: URL
+        do { home = try seed(model, screen: "configs-actions-import"); try await prepare(model, screen: "configs-import-everything", home: home) }
+        catch { print("FAIL: import preview: \(error)"); return false }
+        defer { try? FileManager.default.removeItem(at: home) }
+        guard let review = model.discover.review, review.session != nil else { print("FAIL: the import review did not load"); return false }
+        review.setMode(.review)
+        guard let expected = try? review.session?.preview().document.serialized() else { print("FAIL: no reviewed bytes"); return false }
+        let players = home.appendingPathComponent("main/players")
+        let main = try? Data(contentsOf: players.appendingPathComponent("Main/config_mp.cfg")), active = try? Data(contentsOf: players.appendingPathComponent("active.txt"))
+        let window = await Snapshots.show(model: model, dark: true, glass: true)
+        defer { window.orderOut(nil); window.close() }
+        guard let sheet = window.attachedSheet else { print("FAIL: the import review sheet is not attached"); return false }
+        sheet.makeKey()
+        click(sheet, at: NSPoint(x: sheet.frame.width - 22 - 28, y: 16 + 18))
+        try? await Task.sleep(for: .milliseconds(800))
+        let written = try? Data(contentsOf: players.appendingPathComponent("Player_1/config_mp.cfg"))
+        guard written == expected, (try? ConfigProfileStore(homeURL: home, dialect: .cod2x).history(id: "Player_1"))?.map(\.source) == [.import],
+              (try? Data(contentsOf: players.appendingPathComponent("Main/config_mp.cfg"))) == main,
+              (try? Data(contentsOf: players.appendingPathComponent("active.txt"))) == active, model.discover.review == nil else {
+            print("FAIL: clicking Apply did not import exactly the reviewed lines (\(review.applyError ?? "no error shown"))"); return false
+        }
+        print("PASS: clicking the review's Apply button imported exactly the ticked lines into a new loadout as one Import transaction; Main and the active loadout are unchanged")
+        return true
+    }
+
+    /// Real clicks on Fix for This Server Only, its confirmation and Undo stage and clear a
+    /// per-connection override without writing the loadout, its sidecar or the active selection.
+    static func readyAction() async -> Bool {
+        let model = LauncherModel(snapshot: true)
+        model.preview("servers-ready")
+        let home: URL
+        do { home = try seed(model, screen: "servers-actions"); try await prepare(model, screen: "servers-ready", home: home) }
+        catch { print("FAIL: ready-check preview: \(error)"); return false }
+        defer { try? FileManager.default.removeItem(at: home) }
+        let players = home.appendingPathComponent("main/players")
+        func disk() -> [Data?] { ["Main/config_mp.cfg", "Main/studio.json", "active.txt"].map { try? Data(contentsOf: players.appendingPathComponent($0)) } }
+        let before = disk()
+        let audit = ShapeAudit()
+        let window = await Snapshots.show(model: model, dark: true, glass: true, audit: audit)
+        defer { window.orderOut(nil); window.close() }
+        func cardButton() -> CGRect? {
+            guard let deploy = audit.items.values.first(where: { $0.name == "prominent" && $0.frame.minX > 1000 })?.frame else { return nil }
+            return audit.items.values.filter { $0.name == "glass button" && $0.form == .capsule && $0.frame.minX > 1000 && $0.frame.maxY < deploy.minY }
+                .map(\.frame).min { $0.minY < $1.minY }
+        }
+        guard let fix = cardButton() else { print("FAIL: Fix for This Server Only is not on screen"); return false }
+        click(window, at: NSPoint(x: fix.midX, y: window.frame.height - fix.midY))
+        try? await Task.sleep(for: .milliseconds(800))
+        guard let alert = window.attachedSheet, let content = alert.contentView,
+              let confirm = views(NSButton.self, in: content).first(where: { $0.title == "Fix for This Server Only" }) else {
+            print("FAIL: the fix confirmation did not appear"); return false
+        }
+        let frame = confirm.convert(confirm.bounds, to: nil)
+        alert.makeKey()
+        click(alert, at: NSPoint(x: frame.midX, y: frame.midY))
+        try? await Task.sleep(for: .milliseconds(800))
+        guard model.serverConnection.overrides == ["com_maxfps": "250"], disk() == before else {
+            print("FAIL: the fix was not staged for this connection only (\(model.serverConnection.overrides))"); return false
+        }
+        print("PASS: clicking Fix for This Server Only and confirming staged com_maxfps 250 for this connection; Main's config, sidecar and the active selection are unchanged")
+        // The confirmation closes asynchronously; the window takes clicks again once it has gone.
+        for _ in 0..<40 where window.attachedSheet != nil { try? await Task.sleep(for: .milliseconds(50)) }
+        try? await Task.sleep(for: .milliseconds(400))
+        window.makeKey()
+        guard let undo = cardButton() else { print("FAIL: Undo is not on screen"); return false }
+        // After the confirmation window had key focus, the first click can only bring this window forward.
+        for _ in 0..<2 where !model.serverConnection.overrides.isEmpty {
+            click(window, at: NSPoint(x: undo.midX, y: window.frame.height - undo.midY))
+            try? await Task.sleep(for: .milliseconds(600))
+        }
+        guard model.serverConnection.overrides.isEmpty, model.serverConnection.profileID == nil, disk() == before else {
+            print("FAIL: Undo did not clear the per-connection fix (clicked \(undo), sheet \(window.attachedSheet.map { "\($0)" } ?? "none"))"); return false
+        }
+        print("PASS: clicking Undo cleared the per-connection fix; nothing on disk changed")
         return true
     }
 }

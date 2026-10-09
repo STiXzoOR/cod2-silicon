@@ -33,7 +33,7 @@ elif [[ ${2:-} == --snapshots ]]; then
     # Review harness: every launcher view with a test-only window that can capture real glass.
     # Like an app bundle, it names its accent colour in an embedded Info.plist and finds the
     # compiled Assets.car beside the executable.
-    sources+=("${views[@]}" "$root/tests/launcher/Snapshots.swift")
+    sources+=("${views[@]}" "$root/tests/launcher/Snapshots.swift" "$root/tests/launcher/DirectoryFixture.swift")
     name=LauncherSnapshots
     /usr/bin/plutil -create xml1 "$out/Info.plist"
     /usr/bin/plutil -insert CFBundleIdentifier -string io.github.stixzoor.cod2silicon.snapshots "$out/Info.plist"

@@ -24,6 +24,7 @@ sh "$root/tests/launcher/config_bindings.sh"
 sh "$root/tests/launcher/config_ready_check.sh"
 sh "$root/tests/launcher/input_devices.sh"
 sh "$root/tests/launcher/config_chains.sh"
+sh "$root/tests/launcher/config_discover.sh"
 "$root/scripts/fetch-launcher-fonts.sh" --check
 
 # One shape system: buttons take their style from Theme.swift (capsules, or circles for a lone

@@ -34,7 +34,9 @@ def size(png):
 
 
 run(out)
-configs = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-text", "configs-history", "configs-running"]
+configs = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-text", "configs-history", "configs-running",
+           "discover-unavailable", "discover-players", "discover-saved", "discover-player", "configs-import",
+           "configs-import-everything", "servers-ready", "servers-ready-fixed"]
 screens = ["home", "home-first", "servers", "servers-empty", "settings", "library-demos", "library-screenshots", "about",
            "setup-data", "setup-data-missing", "setup-key", "setup-shaders", "setup-ready"] + configs
 for screen in screens:
@@ -56,6 +58,9 @@ for appearance in ["dark", "light"]:
 run(fallback, "--fallback", "--only", "configs-guided")
 
 # Config Studio under Increase Contrast and Reduce Transparency (set for the capture only).
+# Behind the import sheet the window shows no translucent surface of its own, and the sheet's
+# material belongs to the system, so Reduce Transparency can leave those captures unchanged.
+sheets = {"configs-import", "configs-import-everything"}
 for variant in ["increase-contrast", "reduce-transparency"]:
     folder = out / variant
     run(folder, "--group", "configs", f"--{variant}")
@@ -64,6 +69,8 @@ for variant in ["increase-contrast", "reduce-transparency"]:
             png = folder / f"{screen}-{appearance}.png"
             (width, height), length = size(png)
             assert (width, height) in WINDOW and length > 60_000, png
+            if variant == "reduce-transparency" and screen in sheets:
+                continue
             assert png.read_bytes() != (out / f"{screen}-{appearance}.png").read_bytes(), f"{png} matches the standard capture"
 
 # Real clicks on Config Studio controls write exact bytes and History rows in a temporary home.
