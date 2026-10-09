@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "2026-10-09.1",
+  "version": "2026-10-09.2",
   "researchedOn": "2026-10-09",
   "rulesets": [
     {
@@ -167,6 +167,29 @@
               "sourceDate": "2026-10-09",
               "quoteReference": "048ff5e:src/PC/gfx_d3d/r_dvars.c registration of r_picmip",
               "quote": "Dvar_RegisterInt(\"r_picmip\", 0, 0, 3, 0x2001);",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "r_picmip_manual",
+          "setting": "r_picmip_manual",
+          "constraint": {
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 1,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "Manual texture mode is a registered player choice; frame-time and memory effects are not measured.",
+          "sources": [
+            {
+              "sourceURL": "git:048ff5e:src/PC/gfx_d3d/r_dvars.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/gfx_d3d/r_dvars.c registration of r_picmip_manual",
+              "quote": "Dvar_RegisterBool(\"r_picmip_manual\", 0, 0x2001);",
               "enforcedBy": "code",
               "archiveTimestamp": null
             }
@@ -348,6 +371,29 @@
               "sourceDate": "2026-10-09",
               "quoteReference": "048ff5e:src/PC/gfx_d3d/r_dvars.c registration of r_picmip",
               "quote": "Dvar_RegisterInt(\"r_picmip\", 0, 0, 3, 0x2001);",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "r_picmip_manual",
+          "setting": "r_picmip_manual",
+          "constraint": {
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 1,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "Manual texture mode is a registered player choice; frame-time and memory effects are not measured.",
+          "sources": [
+            {
+              "sourceURL": "git:048ff5e:src/PC/gfx_d3d/r_dvars.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/gfx_d3d/r_dvars.c registration of r_picmip_manual",
+              "quote": "Dvar_RegisterBool(\"r_picmip_manual\", 0, 0x2001);",
               "enforcedBy": "code",
               "archiveTimestamp": null
             }
