@@ -36733,10 +36733,10 @@
       "origins": [
         "stock"
       ],
-      "group": "gfx",
-      "title": "Draw sun",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "group": "vis",
+      "title": "Draw the sun",
+      "summary": "Shows or hides the sun and the glare it causes.",
+      "details": "Turning it off removes the sun and the sun-blind darkening, and can help performance slightly, according to TweakGuide. zPAM sets it to off for every player when they join a team.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:390"
       ],
@@ -37011,8 +37011,8 @@
       ],
       "group": "vis",
       "title": "Fog",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "summary": "Whether the game draws fog.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. ESL's old PunkBuster list and WWCL's old rules required fog on.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:304"
       ],
@@ -37325,8 +37325,8 @@
       ],
       "group": "vis",
       "title": "Brightness",
-      "summary": "Adjust the brightness of the game picture.",
-      "details": "The renderer applies this through its gamma path. Display and renderer support affect the result.",
+      "summary": "How bright the picture is; 1 is normal.",
+      "details": "The game's own slider runs from 0.5 to 3. Higher is brighter, and 3 is very bright. The renderer applies it through the display's brightness curve, so what you see also depends on your display.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:254"
       ],
@@ -39291,9 +39291,9 @@
         "stock"
       ],
       "group": "vis",
-      "title": "Lod bias",
-      "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
-      "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
+      "title": "Model detail bias",
+      "summary": "Pushes distant models toward more detail.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. Its range is -1000 to 0, and ESL's old PunkBuster list allowed -200 to 0.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:293"
       ],
@@ -39378,8 +39378,8 @@
       ],
       "group": "vis",
       "title": "Distant model detail",
-      "summary": "Adjust when models use less detailed versions.",
-      "details": "Stock protects this setting. The CoD2x registration changes its range and protection; use the facts for your selected build.",
+      "summary": "How soon models in the distance switch to simpler versions.",
+      "details": "Stock CoD2 protects this setting and allows 1 to 4. CoD2x unlocks it and allows 0 to 1, saved with your config, and 1 is the default. ESL's old PunkBuster list and ePAM both required 1, and ClanBase's old enforcer blocked changing it.",
       "sources": [
         "src/PC/gfx_d3d/r_dvars.c:283",
         "src/PC/gfx_d3d/r_dvars.c:286"
