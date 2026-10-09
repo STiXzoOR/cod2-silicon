@@ -50,6 +50,14 @@ import Foundation
         precondition((try? settings.config()) == nil)
         settings.advanced = "fs_basepath=/tmp"
         precondition((try? settings.config()) == nil)
+        settings.advanced = "dpi 1600"
+        precondition((try? settings.arguments()) == nil, "DPI is metadata, never an engine startup command")
+        var startup = GameSettings()
+        startup.advanced = "fs_cdpath /Game\nfs_copyfiles 0\nfs_restrict 0\nloc_language 1\ndedicated 0\ncom_hunkMegs 512"
+        let startupNames = try startup.launchDvars(migrated: true).map { $0.0.lowercased() }
+        for name in ["fs_cdpath", "fs_copyfiles", "fs_restrict", "loc_language", "dedicated", "com_hunkmegs"] {
+            if !startupNames.contains(name) { fatalError("FAIL: migrated launch dropped startup option " + name) }
+        }
         precondition((try? LaunchLink("cod2x://connect/127.0.0.1:28960"))?.address == "127.0.0.1:28960")
         precondition((try? LaunchLink("cod2x://connect/localhost%3Bquit")) == nil)
         let injection = try LaunchLink("cod2x://connect%20localhost%20password%20%22p%2Bquit%20%22")

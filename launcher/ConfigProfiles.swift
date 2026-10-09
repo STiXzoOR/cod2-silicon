@@ -69,6 +69,12 @@ struct ConfigActiveSelection: Equatable, Sendable {
     let originalBytes: Data?
 }
 
+struct ConfigTransactionRecovery: Sendable {
+    let profileID: String
+    let current: ConfigProfileVersion
+    let journal: Data
+}
+
 /// Synchronous disk operations serialize through flock across store instances.
 /// F3 must also serialize launch/attached-process transitions with these calls;
 /// gameIsRunning is rechecked inside the lock and before every config write.
@@ -221,6 +227,42 @@ final class ConfigProfileStore: Sendable {
                                  document: ConfigDocument(data: value.config, dialect: dialect), metadata: meta, version: value)
     }
     func read(id: String) throws -> ConfigProfileRead { try withLock { try readLocked(id: id) } }
+
+    /// Inspect an interrupted transaction without replaying it or losing the
+    /// external writer's version. The exact receipt is required for disposition.
+    func inspectRecovery(id: String) throws -> ConfigTransactionRecovery {
+        try withLock {
+            let directory = try profileURL(id)
+            guard let journal = try optionalData(directory.appendingPathComponent(".studio-transaction.json")) else { throw ConfigProfileError.conflict }
+            return try ConfigTransactionRecovery(profileID: id, current: version(at: directory), journal: journal)
+        }
+    }
+    func keepDiskVersion(_ recovery: ConfigTransactionRecovery, runningGame: Bool = false) throws {
+        try guardWritable(runningGame)
+        try withLock {
+            try guardWritable(runningGame)
+            let directory = try profileURL(recovery.profileID)
+            let journalURL = directory.appendingPathComponent(".studio-transaction.json")
+            guard try optionalData(journalURL) == recovery.journal, try version(at: directory) == recovery.current else { throw ConfigProfileError.conflict }
+            let transaction = try JSONDecoder().decode(Transaction.self, from: recovery.journal)
+            guard transaction.schemaVersion == 1, UUID(uuidString: transaction.entry.id) != nil else { throw ConfigProfileError.invalidHistory }
+            let saved = directory.appendingPathComponent("recovery/" + transaction.entry.id + ".json")
+            if let existing = try optionalData(saved) {
+                guard existing == recovery.journal else { throw ConfigProfileError.conflict }
+            } else { try write(recovery.journal, to: saved) }
+            guard try optionalData(journalURL) == recovery.journal, try version(at: directory) == recovery.current else { throw ConfigProfileError.conflict }
+            let staged = directory.appendingPathComponent("history/" + transaction.entry.id + ".json")
+            if let existing = try optionalData(staged) {
+                guard existing == (try encode(transaction.entry)) else { throw ConfigProfileError.conflict }
+                try guardWritable(runningGame)
+                try FileManager.default.removeItem(at: staged)
+                try syncDirectory(staged.deletingLastPathComponent())
+            }
+            try guardWritable(runningGame)
+            try FileManager.default.removeItem(at: journalURL)
+            try syncDirectory(directory)
+        }
+    }
 
     @discardableResult
     func create(id: String, displayName: String, document: ConfigDocument, metadata: ConfigStudioMetadata? = nil, runningGame: Bool = false) throws -> ConfigProfileRead {
@@ -382,15 +424,23 @@ final class ConfigProfileStore: Sendable {
     }
     /// Call after the last attached or launched engine has exited. It records the
     /// observed result without rewriting a file that the game has just saved.
-    func recordGameSession(id: String, before: ConfigProfileVersion, summary: String = "Game session", runningGame: Bool = false) throws {
+    func recordGameSession(id: String, before: ConfigProfileVersion, summary: String = "Game session", sessionID: String? = nil, runningGame: Bool = false) throws {
         try guardWritable(runningGame)
         try withLock {
             try guardWritable(runningGame)
             let current = try readLocked(id: id)
             if current.version == before { return }
             let directory = try profileURL(id)
-            _ = try ConfigHistory.load(directory: directory.appendingPathComponent("history"))
-            let entry = ConfigHistoryEntry(source: .gameSession, summary: summary, before: before, after: current.version)
+            let history = try ConfigHistory.load(directory: directory.appendingPathComponent("history"))
+            if let sessionID {
+                guard UUID(uuidString: sessionID) != nil else { throw ConfigProfileError.invalidHistory }
+                if let recorded = history.first(where: { $0.id == sessionID }) {
+                    guard recorded.source == .gameSession, recorded.beforeData == before.config,
+                          recorded.beforeMetadata == before.metadata else { throw ConfigProfileError.conflict }
+                    return
+                }
+            }
+            let entry = ConfigHistoryEntry(source: .gameSession, summary: summary, before: before, after: current.version, id: sessionID)
             try write(encode(entry), to: directory.appendingPathComponent("history/" + entry.id + ".json"))
             try ConfigHistory.prune(directory: directory.appendingPathComponent("history"), beforeRemoval: { try self.guardWritable(false) })
             try syncDirectory(directory.appendingPathComponent("history"))
@@ -519,7 +569,7 @@ struct ConfigPersonalValues: Sendable {
     init(effectiveLauncherDvars: [(String, String)], dpi: Double) throws {
         guard dpi.isFinite && dpi > 0 else { throw ConfigProfileError.invalidMetadata }
         self.dpi = dpi
-        let machine: Set<String> = ["r_mode", "r_fullscreen", "r_borderless", "r_swapinterval", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr", "com_introplayed", "fs_basepath", "fs_homepath"]
+        let machine = GameSettings.machineDvarNames
         var values: [Setting] = []
         for (name, value) in effectiveLauncherDvars {
             let lower = name.lowercased()

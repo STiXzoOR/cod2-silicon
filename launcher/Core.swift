@@ -1,5 +1,6 @@
 import Foundation
 import Darwin
+import CryptoKit
 
 struct LauncherError: LocalizedError, Sendable {
     var message: String
@@ -112,13 +113,41 @@ enum EngineCommandLine {
     }
 }
 
+struct ConfigStudioLaunch: Sendable {
+    let profileID: String
+    let chain: String?
+    static func validateProfileID(_ id: String) throws {
+        guard id.range(of: "\\A[A-Za-z0-9][A-Za-z0-9_.-]{0,40}\\z", options: .regularExpression) != nil else {
+            throw LauncherError(message: "The loadout identifier is invalid.")
+        }
+    }
+    static func chainBasename(profileID: String) throws -> String {
+        try validateProfileID(profileID)
+        // A fixed ASCII basename fits MAX_QPATH even for a 41-byte profile ID.
+        // Hash every ID so punctuation substitution cannot alias another profile.
+        let digest = SHA256.hash(data: Data(profileID.lowercased().utf8)).prefix(20).map { String(format: "%02x", $0) }.joined()
+        return "cs_" + digest + ".cfg"
+    }
+}
+
 struct GameLaunchPlan {
     var arguments: [String]
     var link: LaunchLink?
-    init(settings: GameSettings, dataPath: String, homePath: String, link: LaunchLink? = nil, demo: String? = nil, forwarded: [String] = []) throws {
+    init(settings: GameSettings, dataPath: String, homePath: String, link: LaunchLink? = nil, demo: String? = nil, forwarded: [String] = [], configStudio: ConfigStudioLaunch? = nil) throws {
         guard GameSettings.safeValue(dataPath), GameSettings.safeValue(homePath) else { throw LauncherError(message: "Game paths contain unsupported characters.") }
-        var args = try settings.arguments()
+        var args = try settings.launchDvars(migrated: configStudio != nil).flatMap { ["+set", $0.0, "\"\($0.1)\""] }
         args += ["+set", "fs_basepath", "\"\(dataPath)\"", "+set", "fs_homepath", "\"\(homePath)\""]
+        if let configStudio {
+            try ConfigStudioLaunch.validateProfileID(configStudio.profileID)
+            if let chain = configStudio.chain {
+                guard chain == (try ConfigStudioLaunch.chainBasename(profileID: configStudio.profileID)) else {
+                    throw LauncherError(message: "The loadout's advanced chain filename is invalid.")
+                }
+                let path = URL(fileURLWithPath: homePath).appendingPathComponent("main/" + chain)
+                let values = try? path.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey])
+                if values?.isRegularFile == true && values?.isSymbolicLink != true { args += ["+exec", chain] }
+            }
+        }
         if let demo {
             guard demo.range(of: "^[A-Za-z0-9_.-]+$", options: .regularExpression) != nil else { throw LauncherError(message: "Rename this demo using letters, numbers, dots, underscores or hyphens before playback.") }
             args += ["+demo", demo]
@@ -171,6 +200,7 @@ enum KeyStore {
 }
 
 struct GameSettings: Codable, Sendable, Equatable {
+    static let machineDvarNames: Set<String> = ["r_mode", "r_fullscreen", "r_borderless", "r_swapinterval", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr", "com_introplayed", "logfile", "developer", "fs_basepath", "fs_homepath", "fs_game", "fs_cdpath", "fs_copyfiles", "fs_restrict", "loc_language", "dedicated", "com_hunkmegs", "net_port"]
     var resolution = "1920x1080"
     var fullscreen = "borderless"
     /// com_maxfps: 0 (no cap) to 1000, the engine dvar's range.
@@ -229,7 +259,7 @@ struct GameSettings: Codable, Sendable, Equatable {
             let pair = Self.advancedPair(line)
             let name = pair?.0 ?? ""
             guard let pair, name.range(of: "^[A-Za-z_][A-Za-z0-9_]{0,63}$", options: .regularExpression) != nil,
-                  !["fs_basepath", "fs_homepath", "password", "cl_cdkey", "cdkey", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr"].contains(name.lowercased()),
+                  !["fs_basepath", "fs_homepath", "password", "cl_cdkey", "cdkey", "dpi", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr"].contains(name.lowercased()),
                   !name.lowercased().contains("password"), !name.lowercased().contains("codkey") else {
                 throw LauncherError(message: "Advanced options use one “dvar value” per line. Paths, credentials and upcoming renderer options are managed separately.")
             }
@@ -242,6 +272,13 @@ struct GameSettings: Codable, Sendable, Equatable {
     }
     func config() throws -> String { try dvars().map { "seta \($0.0) \"\($0.1)\"" }.joined(separator: "\n") + "\n" }
     func arguments() throws -> [String] { try dvars().flatMap { ["+set", $0.0, "\"\($0.1)\""] } }
+    func launchDvars(migrated: Bool) throws -> [(String, String)] {
+        let values = try dvars()
+        return migrated ? values.filter { Self.machineDvarNames.contains($0.0.lowercased()) } : values
+    }
+    func launchConfig(migrated: Bool) throws -> String {
+        try launchDvars(migrated: migrated).map { "seta \($0.0) \"\($0.1)\"" }.joined(separator: "\n") + "\n"
+    }
 }
 
 struct LauncherLibrary: Codable {

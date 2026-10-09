@@ -18,8 +18,8 @@ struct ConfigHistoryEntry: Codable, Equatable, Sendable, Identifiable {
     let beforeMetadata: Data?
     let metadata: Data?
 
-    init(source: ConfigHistorySource, summary: String, before: ConfigProfileVersion, after: ConfigProfileVersion) {
-        id = UUID().uuidString.lowercased()
+    init(source: ConfigHistorySource, summary: String, before: ConfigProfileVersion, after: ConfigProfileVersion, id: String? = nil) {
+        self.id = id ?? UUID().uuidString.lowercased()
         date = Date()
         self.source = source
         self.summary = summary
