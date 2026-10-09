@@ -2966,6 +2966,432 @@
       "title": "Renderer in use",
       "summary": "Which drawing method the game is using right now.",
       "details": "The game sets it itself and treats it as read-only. Choices are none, DirectX 9 and DirectX 7."
+    },
+    "com_maxfps_limit": {
+      "group": "frame",
+      "title": "Legacy frame cap switch",
+      "summary": "The older CoD2x switch servers used to limit frame rates to 125 to 250.",
+      "details": "Competitive rules now use the competitive rules switch instead, and the CoD2x README still describes this older one. This version of the game still registers it and the server sets it, so it is not a player setting."
+    },
+    "bg_aimspreadmovespeedthreshold": {
+      "group": "frame",
+      "title": "Movement spread threshold",
+      "summary": "The movement speed above which your aim spread grows.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 11."
+    },
+    "bg_bobamplitudeducked": {
+      "group": "frame",
+      "title": "Crouch bob size",
+      "summary": "How much your view bobs while you move crouched.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 0.0075. Its role is inferred from its name."
+    },
+    "bg_bobamplitudeprone": {
+      "group": "frame",
+      "title": "Prone bob size",
+      "summary": "How much your view bobs while you move prone.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 0.03. Its role is inferred from its name."
+    },
+    "bg_bobamplitudestanding": {
+      "group": "frame",
+      "title": "Standing bob size",
+      "summary": "How much your view bobs while you move standing.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 0.007. Its role is inferred from its name."
+    },
+    "bg_bobmax": {
+      "group": "frame",
+      "title": "Largest view bob",
+      "summary": "A limit on how far your view can bob.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 8. Its role is inferred from its name."
+    },
+    "bg_falldamagemaxheight": {
+      "group": "frame",
+      "title": "Full-damage fall height",
+      "summary": "The fall height at which fall damage reaches 100.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 480. Damage grows evenly from the minimum height up to this one, and it is also part of the server's system information."
+    },
+    "bg_falldamageminheight": {
+      "group": "frame",
+      "title": "No-damage fall height",
+      "summary": "The fall height below which you take no fall damage.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 256. It must stay below the full damage height or the game prints an error and applies no damage."
+    },
+    "bg_foliagesnd_fastinterval": {
+      "group": "frame",
+      "title": "Fast foliage sound gap",
+      "summary": "A timing value for foliage sounds when you move fast.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 500 milliseconds. Its role is inferred from its name."
+    },
+    "bg_foliagesnd_slowinterval": {
+      "group": "frame",
+      "title": "Slow foliage sound gap",
+      "summary": "A timing value for foliage sounds when you move slowly.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 1,500 milliseconds. Its role is inferred from its name."
+    },
+    "bg_foliagesnd_resetinterval": {
+      "group": "frame",
+      "title": "Foliage sound reset gap",
+      "summary": "A timing value for resetting foliage sounds.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 500 milliseconds. Its role is inferred from its name."
+    },
+    "bg_foliagesnd_minspeed": {
+      "group": "frame",
+      "title": "Foliage sound minimum speed",
+      "summary": "A movement speed value for foliage sounds.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 40. Its role is inferred from its name."
+    },
+    "bg_foliagesnd_maxspeed": {
+      "group": "frame",
+      "title": "Foliage sound maximum speed",
+      "summary": "A movement speed value for foliage sounds.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 180. Its role is inferred from its name."
+    },
+    "bg_ladder_yawcap": {
+      "group": "frame",
+      "title": "Ladder turn limit",
+      "summary": "How far, in degrees, you can turn either side of a ladder while climbing.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 100 degrees."
+    },
+    "bg_prone_yawcap": {
+      "group": "frame",
+      "title": "Prone turn limit",
+      "summary": "How far, in degrees, you can turn while prone.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 85 degrees."
+    },
+    "bg_swingspeed": {
+      "group": "frame",
+      "title": "Torso swing speed",
+      "summary": "How fast a character's torso turns to follow where it looks.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.2. When the server's CoD2x level is 3 or higher, the game ignores it and uses 1, so characters always match their view angles."
+    },
+    "friction": {
+      "group": "frame",
+      "title": "Ground friction",
+      "summary": "How quickly you lose speed on the ground.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 5.5. zPAM sets it to 5.5 for every player."
+    },
+    "stopspeed": {
+      "group": "frame",
+      "title": "Stop speed",
+      "summary": "The speed threshold ground friction uses when slowing you down.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 100."
+    },
+    "inertiaangle": {
+      "group": "frame",
+      "title": "Inertia angle",
+      "summary": "A tuning value for how momentum carries.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 0. Its exact effect is not documented."
+    },
+    "inertiadebug": {
+      "group": "frame",
+      "title": "Inertia debug",
+      "summary": "A developer switch for movement inertia.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is off."
+    },
+    "inertiamax": {
+      "group": "frame",
+      "title": "Maximum inertia",
+      "summary": "A limit on how much momentum carries.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 50."
+    },
+    "jump_height": {
+      "group": "frame",
+      "title": "Jump height",
+      "summary": "How high you jump.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 39 game units. Jump height also depends on the frame rate cap, so players have measured different heights at different caps."
+    },
+    "jump_ladderpushvel": {
+      "group": "frame",
+      "title": "Ladder jump push",
+      "summary": "How hard you are pushed away when you jump off a ladder.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 128."
+    },
+    "jump_slowdownenable": {
+      "group": "frame",
+      "title": "Slow down after jumps",
+      "summary": "Slows you after landing from a jump.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. On by default."
+    },
+    "jump_spreadadd": {
+      "group": "frame",
+      "title": "Jump aim spread",
+      "summary": "How much jumping adds to your weapon spread.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 64."
+    },
+    "jump_stepsize": {
+      "group": "frame",
+      "title": "Post-jump step height",
+      "summary": "The tallest step you can climb right after a jump.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 18."
+    },
+    "mantle_check_angle": {
+      "group": "frame",
+      "title": "Mantle check angle",
+      "summary": "A tuning value for the angle the game checks before a mantle.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 60 degrees. Its role is inferred from its name."
+    },
+    "mantle_check_radius": {
+      "group": "frame",
+      "title": "Mantle check radius",
+      "summary": "A tuning value for the radius the game checks before a mantle.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 0.1. Its role is inferred from its name."
+    },
+    "mantle_check_range": {
+      "group": "frame",
+      "title": "Mantle check range",
+      "summary": "How far ahead the game looks for something to mantle.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 20. Its role is inferred from its name."
+    },
+    "mantle_debug": {
+      "group": "frame",
+      "title": "Mantle debug",
+      "summary": "A developer switch for mantle checks.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is off."
+    },
+    "mantle_enable": {
+      "group": "frame",
+      "title": "Allow mantling",
+      "summary": "Lets you climb over obstacles.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. On by default."
+    },
+    "mantle_view_yawcap": {
+      "group": "frame",
+      "title": "Mantle turn limit",
+      "summary": "How far, in degrees, you can turn your view while mantling.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 60 degrees."
+    },
+    "player_adsexitdelay": {
+      "group": "frame",
+      "title": "Scope exit delay",
+      "summary": "A delay before you leave aim down sights.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 0, and the range is 0 to 1,000. Its role is inferred from its name."
+    },
+    "player_backspeedscale": {
+      "group": "frame",
+      "title": "Backward speed",
+      "summary": "How fast you move backward compared with forward.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 0.7."
+    },
+    "player_strafespeedscale": {
+      "group": "frame",
+      "title": "Strafe speed",
+      "summary": "How fast you move sideways compared with forward.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 0.8."
+    },
+    "player_spectatespeedscale": {
+      "group": "frame",
+      "title": "Spectator speed",
+      "summary": "How fast spectators move.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 2."
+    },
+    "player_breath_hold_time": {
+      "group": "frame",
+      "title": "Breath hold time",
+      "summary": "How many seconds a sniper can hold their breath.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 4.5 seconds."
+    },
+    "player_breath_fire_delay": {
+      "group": "frame",
+      "title": "Breath fire delay",
+      "summary": "A timing value for firing while holding breath.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 0. Its exact effect is not documented."
+    },
+    "player_breath_gasp_lerp": {
+      "group": "frame",
+      "title": "Breath gasp blend",
+      "summary": "A blend value for the gasp after holding breath.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 6. Its exact effect is not documented."
+    },
+    "player_breath_gasp_scale": {
+      "group": "frame",
+      "title": "Breath gasp scale",
+      "summary": "A scale value for the gasp after holding breath.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 4.5. Its exact effect is not documented."
+    },
+    "player_breath_gasp_time": {
+      "group": "frame",
+      "title": "Breath gasp time",
+      "summary": "A timing value for the gasp after holding breath.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 1 second. Its exact effect is not documented."
+    },
+    "player_breath_hold_lerp": {
+      "group": "frame",
+      "title": "Breath hold blend",
+      "summary": "A blend value for holding breath.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 4. Its exact effect is not documented."
+    },
+    "player_breath_snd_delay": {
+      "group": "frame",
+      "title": "Breath sound delay",
+      "summary": "A timing value for the breathing sound.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 1 second. Its exact effect is not documented."
+    },
+    "player_breath_snd_lerp": {
+      "group": "frame",
+      "title": "Breath sound blend",
+      "summary": "A blend value for the breathing sound.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 2. Its exact effect is not documented."
+    },
+    "player_dmgtimer_flinchtime": {
+      "group": "frame",
+      "title": "Flinch time",
+      "summary": "A damage timing value for flinching.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 500 milliseconds. Its exact effect is not documented."
+    },
+    "player_dmgtimer_maxtime": {
+      "group": "frame",
+      "title": "Maximum damage slowdown",
+      "summary": "A damage timing limit.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 750. Its exact effect is not documented."
+    },
+    "player_dmgtimer_minscale": {
+      "group": "frame",
+      "title": "Minimum damage speed",
+      "summary": "A speed scale after damage.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 0. Its exact effect is not documented."
+    },
+    "player_dmgtimer_stumbletime": {
+      "group": "frame",
+      "title": "Stumble time",
+      "summary": "A damage timing value for stumbling.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 500 milliseconds. Its exact effect is not documented."
+    },
+    "player_dmgtimer_timeperpoint": {
+      "group": "frame",
+      "title": "Damage slowdown per point",
+      "summary": "A damage timing value per point of damage.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 100. Its exact effect is not documented."
+    },
+    "player_footstepsthreshhold": {
+      "group": "frame",
+      "title": "Footstep threshold",
+      "summary": "A speed threshold for footstep sounds.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 0. The game treats it as read-only."
+    },
+    "player_movethreshhold": {
+      "group": "frame",
+      "title": "Movement threshold",
+      "summary": "A speed threshold the game uses for movement checks.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 10. The game treats it as read-only."
+    },
+    "player_meleeheight": {
+      "group": "frame",
+      "title": "Melee height",
+      "summary": "A tuning value for the height of a melee strike.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 10."
+    },
+    "player_meleerange": {
+      "group": "frame",
+      "title": "Melee range",
+      "summary": "How far a melee strike reaches.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 64."
+    },
+    "player_meleewidth": {
+      "group": "frame",
+      "title": "Melee width",
+      "summary": "A tuning value for the width of a melee strike.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 10."
+    },
+    "player_scopeexitondamage": {
+      "group": "frame",
+      "title": "Leave scope when hit",
+      "summary": "Whether taking damage knocks you out of aiming down sights.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. Off by default."
+    },
+    "player_turnanims": {
+      "group": "frame",
+      "title": "Turn animations",
+      "summary": "A switch for turning animations.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. Off by default. Its exact effect is not documented."
+    },
+    "player_view_pitch_down": {
+      "group": "frame",
+      "title": "Look-down limit",
+      "summary": "How far down, in degrees, you can look.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 85 degrees."
+    },
+    "player_view_pitch_up": {
+      "group": "frame",
+      "title": "Look-up limit",
+      "summary": "How far up, in degrees, you can look.",
+      "details": "The game protects this setting and the server's value is shared with every player, so it is not a player setting. The default is 85 degrees."
+    },
+    "player_debug": {
+      "group": "frame",
+      "title": "Player animation debug",
+      "summary": "A developer switch for the new CoD2x player animation.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. 1 shows client-side debug output and 2 the listen-server side."
+    },
+    "player_debugeyeposition": {
+      "group": "frame",
+      "title": "Eye position debug",
+      "summary": "A developer switch that draws a cross at your view position.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "player_offsetenable": {
+      "group": "frame",
+      "title": "Bone offset switch",
+      "summary": "A developer switch for CoD2x character bone offsets.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It works only when the server's CoD2x level is 3 or higher."
+    },
+    "player_offsetneutral": {
+      "group": "frame",
+      "title": "Reset animation to neutral",
+      "summary": "A developer switch that resets torso and leg animation on a local server.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting."
+    },
+    "player_offsetangleorigin": {
+      "group": "frame",
+      "title": "Origin bone angle",
+      "summary": "Extra angles for the origin bone, for developers.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It applies only while the bone offset switch is on."
+    },
+    "player_offsetanglepelvis": {
+      "group": "frame",
+      "title": "Pelvis bone angle",
+      "summary": "Extra angles for the pelvis bone, for developers.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It applies only while the bone offset switch is on."
+    },
+    "player_offsetanglebacklow": {
+      "group": "frame",
+      "title": "Lower back bone angle",
+      "summary": "Extra angles for the lower back bone, for developers.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It applies only while the bone offset switch is on."
+    },
+    "player_offsetanglebackmid": {
+      "group": "frame",
+      "title": "Middle back bone angle",
+      "summary": "Extra angles for the middle back bone, for developers.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It applies only while the bone offset switch is on."
+    },
+    "player_offsetanglebackup": {
+      "group": "frame",
+      "title": "Upper back bone angle",
+      "summary": "Extra angles for the upper back bone, for developers.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It applies only while the bone offset switch is on."
+    },
+    "player_offsetangleneck": {
+      "group": "frame",
+      "title": "Neck bone angle",
+      "summary": "Extra angles for the neck bone, for developers.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It applies only while the bone offset switch is on."
+    },
+    "player_offsetanglehead": {
+      "group": "frame",
+      "title": "Head bone angle",
+      "summary": "Extra angles for the head bone, for developers.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It applies only while the bone offset switch is on."
+    },
+    "player_offsetpositionorigin": {
+      "group": "frame",
+      "title": "Origin bone position",
+      "summary": "An extra position offset for the origin bone, for developers.",
+      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It applies only while the bone offset switch is on."
+    },
+    "player_togglebinoculars": {
+      "group": "frame",
+      "title": "Binoculars toggle",
+      "summary": "A switch for how binoculars are turned on and off.",
+      "details": "The server sets this and shares it with every player. On by default. The exact behaviour is inferred from its name."
     }
   },
   "commands": {
