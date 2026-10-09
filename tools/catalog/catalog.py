@@ -94,9 +94,12 @@ def uncast(expr):
 
 
 def literal(expr):
+    original = expr
     expr = uncast(expr)
     if re.fullmatch(r'(?:"(?:\\.|[^"\\])*"\s*)+', expr):
         return ''.join(ast.literal_eval(s) for s in STRING.findall(expr))
+    if '/' in expr and re.search(r'\(\s*(?:float|double|unsigned)\b', original):
+        return None  # Cast-sensitive arithmetic requires a reviewed evaluator.
     # Hexadecimal f/F digits are digits, not floating-point suffixes.
     expr = re.sub(r'\b(0[xX][0-9a-fA-F]+)[uUlL]*\b|(?<![\w.])((?:\d+\.\d*|\.\d+|\d+)(?:[eE][+-]?\d+)?)[fFuUlL]+\b',
                   lambda m: m[1] or m[2], expr)
@@ -110,7 +113,10 @@ def literal(expr):
         if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.USub, ast.UAdd, ast.Invert)):
             return {ast.USub: operator.neg, ast.UAdd: operator.pos, ast.Invert: operator.invert}[type(node.op)](evaluate(node.operand))
         if isinstance(node, ast.BinOp) and type(node.op) in ops:
-            return ops[type(node.op)](evaluate(node.left), evaluate(node.right))
+            left, right = evaluate(node.left), evaluate(node.right)
+            if isinstance(node.op, ast.Div) and isinstance(left, int) and isinstance(right, int):
+                return (abs(left) // abs(right)) * (-1 if (left < 0) != (right < 0) else 1)
+            return ops[type(node.op)](left, right)
         raise ValueError()
 
     try:
@@ -118,7 +124,7 @@ def literal(expr):
         if '(int)' in expr:
             value = (int(value) + 2**31) % 2**32 - 2**31
         return value
-    except (ValueError, SyntaxError, TypeError):
+    except (ValueError, SyntaxError, TypeError, ZeroDivisionError, OverflowError):
         return None
 
 
@@ -141,6 +147,12 @@ def native_sources(root, mode):
     text = cmake.read_text()
     if not re.search(r'set\(MACOS_C\s+\$\{MACOS_PC_C\}\s+\$\{MACOS_MAC_C\}\s+\$\{MACOS_STUBS_C\}\s+\$\{MACOS_ROOT_C\}\s*\)', text):
         raise CatalogError('unreviewed source selection: MACOS_C seed')
+    for variable, directory, recursive in [('MACOS_PC_C', 'PC/', True), ('MACOS_MAC_C', 'Mac/', True),
+                                            ('MACOS_STUBS_C', 'stubs/', True), ('MACOS_ROOT_C', '', False)]:
+        expected = f'GLOB_RECURSE {variable} CONFIGURE_DEPENDS "${{COD2_SRC_DIR}}/{directory}*.c"' if recursive else f'GLOB {variable} CONFIGURE_DEPENDS "${{COD2_SRC_DIR}}/*.c"'
+        found = re.findall(r'file\(\s*(GLOB(?:_RECURSE)?\s+' + variable + r'\b[^)]*)\)', text)
+        if len(found) != 1 or ' '.join(found[0].split()) != expected:
+            raise CatalogError('unreviewed source selection: ' + variable + ' glob')
     paths = set()
     for directory in ('PC', 'Mac', 'stubs'):
         paths.update((root / 'src' / directory).rglob('*.c'))
@@ -161,28 +173,76 @@ def native_sources(root, mode):
     return sorted(paths)
 
 
-def preprocess(root, path, mode):
-    raw = path.read_text()
-    source = re.sub(r'^\s*#\s*include[^\n]*', '', raw, flags=re.M)
+def expand_project_includes(root, path, cache, stack=(), expanded_cache=None, cycles=None):
+    """Expand source-local headers; leave SDK declarations out of this reader.
+
+    Include guards/macros are evaluated by Clang after expansion. Keeping #line
+    markers lets header constructors retain their own evidence paths.
+    """
+    expanded_cache = {} if expanded_cache is None else expanded_cache
+    cycles = [0] if cycles is None else cycles
+    if path in stack:
+        cycles[0] += 1
+        return ''
+    if path in expanded_cache:
+        return expanded_cache[path]
+    before_cycles = cycles[0]
+    if path not in cache:
+        cache[path] = path.read_text()
+    raw = cache[path]
+    rel = path.relative_to(root).as_posix()
+    include = re.compile(r'^[ \t]*#[ \t]*include[ \t]*[<"]([^>"\n]+)[>"][^\n]*(?:\n|$)', re.M)
+
+    def replace(match):
+        name = match[1]
+        search = (path.parent, root / 'src', root / 'src/headers', root / 'src/PC/speex', root)
+        target = next((base / name for base in search if (base / name).is_file()), None)
+        following_line = raw.count('\n', 0, match.end()) + 1
+        if target is None:
+            return '\n' if match[0].endswith('\n') else ''  # Preserve system include lines.
+        target = target.resolve()
+        if not target.is_relative_to(root.resolve()):
+            raise CatalogError('include escapes source root: ' + name)
+        return expand_project_includes(root, target, cache, stack + (path,), expanded_cache, cycles) + f'\n#line {following_line} "{rel}"\n'
+
+    expanded = f'#line 1 "{rel}"\n' + include.sub(replace, raw)
+    # Acyclic expansions are context independent. A cycle-truncated expansion
+    # must never be reused with a different include stack.
+    if cycles[0] == before_cycles:
+        expanded_cache[path] = expanded
+    return expanded
+
+
+def preprocess(root, path, mode, expanded=None, cache=None):
+    cache = {} if cache is None else cache
+    source = expanded if expanded is not None else expand_project_includes(root, path, cache)
     prelude = '#include <float.h>\n#include <limits.h>\n'
     for name in ('src/headers/cod2_feature_config.h', 'src/PC/qcommon/cod2x.h'):
         header = root / name
         if header.exists():
             prelude += re.sub(r'^\s*#\s*include[^\n]*', '', header.read_text(), flags=re.M) + '\n'
     rel = path.relative_to(root).as_posix()
-    source = prelude + f'\n#line 1 "{rel}"\n' + source
-    result = subprocess.run(['clang', '-E', '-x', 'c', '-DCOD2_X64=1', '-DCOD2_APPLE_SDK=1',
+    source = prelude + '\n' + source
+    language = {'.m': 'objective-c', '.cpp': 'c++'}.get(path.suffix, 'c')
+    result = subprocess.run(['clang', '-E', '-x', language, '-DCOD2_X64=1', '-DCOD2_APPLE_SDK=1',
                              '-D__APPLE__=1', '-D__aarch64__=1', '-D__arm64__=1',
                              *(['-DCOD2_CODX=1'] if mode == 'cod2x' else []), '-'],
                             input=source, text=True, capture_output=True, check=True)
-    lines, line_numbers, active, number = [], [], False, 0
+    included_paths = set(re.findall(r'^#line \d+ "([^"]+)"', source, re.M))
+    evidence_paths = {rel}
+    for name in included_paths:
+        raw = cache.get(root / name, '')
+        if CALL.search(raw) or ANY_REGISTER.search(raw):
+            evidence_paths.add(name)
+    lines, line_numbers, active, number, current_path = [], [], False, 0, rel
     for line in result.stdout.splitlines(keepends=True):
         marker = re.match(r'# (\d+) "([^"]+)"', line)
         if marker:
-            number, active = int(marker[1]), marker[2] == rel
+            number, current_path = int(marker[1]), marker[2]
+            active = current_path in evidence_paths
         elif active:
             lines.append(line)
-            line_numbers.append(number)
+            line_numbers.append((current_path, number))
             number += 1
     return ''.join(lines), line_numbers
 
@@ -203,7 +263,7 @@ def tables(text):
 
 def function_at(text, offset):
     text = re.sub(r'__attribute__\s*\(\([^\n]*?\)\)', '', text[:offset])
-    matches = list(re.finditer(r'^\w[\w\s*]*?\b(\w+)\s*\([^;{}]*\)\s*\{', text, re.M))
+    matches = list(re.finditer(r'^[A-Za-z_][^\n;{}()]*?\b(\w+)\s*\([^;{}]*\)\s*\{', text, re.M))
     return matches[-1][1] if matches else ''
 
 
@@ -231,13 +291,18 @@ FACTORIES = {
 
 
 def extract_source(root, mode):
-    root = Path(root)
+    root = Path(root).resolve()
     settings, commands, dispatch = (collections.defaultdict(list) for _ in range(3))
     dynamic, unresolved = [], []
+    include_cache = {}
+    expanded_cache = {}
     for path in native_sources(root, mode):
-        if not path.exists() or not (CALL.search(path.read_text()) or ANY_REGISTER.search(path.read_text()) or path.name in ('g_cmds_mp.c', 'g_svcmds_mp.c')):
+        if not path.exists():
             continue
-        text, numbers = preprocess(root, path, mode)
+        expanded = expand_project_includes(root, path, include_cache, expanded_cache=expanded_cache)
+        if not (CALL.search(expanded) or ANY_REGISTER.search(expanded) or path.name in ('g_cmds_mp.c', 'g_svcmds_mp.c')):
+            continue
+        text, numbers = preprocess(root, path, mode, expanded, include_cache)
         text = strip_comments(text)
         arrays = tables(text)
         rel = path.relative_to(root).as_posix()
@@ -256,8 +321,9 @@ def extract_source(root, mode):
                 owner = function_at(text, m.start())
                 if owner in ('ClientCommand', 'ConsoleCommand'):
                     name = ast.literal_eval(m[1])
-                    dispatch[name.lower()].append({'name': name, 'path': rel,
-                        'line': numbers[text.count('\n', 0, m.start())], 'mechanism': owner + ':dispatch'})
+                    evidence_path, evidence_line = numbers[text.count('\n', 0, m.start())]
+                    dispatch[name.lower()].append({'name': name, 'path': evidence_path,
+                        'line': evidence_line, 'mechanism': owner + ':dispatch'})
         # Source-local bit-pattern float constants, not values from the binary.
         for m in re.finditer(r'\b(flt_\w+)\s*=\s*\{\s*(0x[\da-fA-F]+)\s*\}', text):
             value = struct.unpack('!f', struct.pack('!I', int(m[2], 16)))[0]
@@ -270,7 +336,8 @@ def extract_source(root, mode):
             if re.match(r'(?:const|char|unsigned|int|float|void)\b', args[0]):
                 continue
             line_index = text.count('\n', 0, match.start())
-            site = {'path': rel, 'line': numbers[line_index], 'mechanism': func}
+            rel, evidence_line = numbers[line_index]
+            site = {'path': rel, 'line': evidence_line, 'mechanism': func}
             names = [literal(args[0])]
             owner = function_at(text, match.start())
             if (rel == 'src/PC/universal/dvar.c' and owner in {
@@ -288,6 +355,21 @@ def extract_source(root, mode):
                         names = [ast.literal_eval(s) for s in re.findall(r'\{\s*("(?:\\.|[^"\\])*")', body)]
                     else:
                         names = [ast.literal_eval(s) for s in STRING.findall(body)]
+                    index_expression = re.search(r'\[([^]]+)\]', args[0])[1]
+                    index = literal(index_expression)
+                    if isinstance(index, int):
+                        if not 0 <= index < len(names):
+                            raise CatalogError('table registration index outside source table')
+                        names = [names[index]]
+                    else:
+                        variable = re.escape(index_expression)
+                        loops = list(re.finditer(r'for\s*\(\s*(?:int\s+)?' + variable + r'\s*=\s*(\d+)\s*;\s*' + variable + r'\s*<\s*(\d+)\s*;\s*(?:\+\+\s*' + variable + '|' + variable + r'\s*\+\+)\s*\)', text[:match.start()]))
+                        loop = loops[-1] if loops else None
+                        prefix = text[loop.end():match.start()] if loop else ''
+                        if (not loop or not re.fullmatch(r'\s*\{?\s*(?:\w+(?:\[[^]]+\])?\s*=\s*)?', prefix)
+                                or not 0 <= int(loop[1]) <= int(loop[2]) <= len(names)):
+                            raise CatalogError('unreviewed table registration index: ' + args[0])
+                        names = names[int(loop[1]):int(loop[2])]
                     site['mechanism'] += ':table:' + table[1]
                 elif rel == 'src/PC/cgame_mp/cg_consolecmds_mp.c' and owner == 'CG_InitConsoleCommands':
                     names = [ast.literal_eval(s) for s in re.findall(r'\{\s*("(?:\\.|[^"\\])*")', arrays['commandsList'])]
@@ -343,6 +425,12 @@ def extract_source(root, mode):
                 settings[name.lower()].append(dict(site, name=name))
     if unresolved:
         raise CatalogError('\n'.join(unresolved))
+    def unique(sites):
+        return list({json.dumps(s, sort_keys=True): s for s in sites}.values())
+    for collection in (settings, commands, dispatch):
+        for name in collection:
+            collection[name] = unique(collection[name])
+    dynamic = unique(dynamic)
     return {'settings': dict(settings), 'commands': dict(commands), 'dispatchCommands': dict(dispatch), 'dynamicRegistrations': dynamic}
 
 

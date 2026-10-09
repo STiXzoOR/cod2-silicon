@@ -44,7 +44,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1165,
+              "line": 225618,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4096,
@@ -67,7 +67,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1165,
+              "line": 225583,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4096,
@@ -96,7 +96,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1165"
+        "src/PC/client_mp/cl_main_mp.c:225583",
+        "src/PC/client_mp/cl_main_mp.c:225618"
       ],
       "guided": false,
       "control": {
@@ -1430,7 +1431,7 @@
             },
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1274,
+              "line": 225727,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -1466,7 +1467,7 @@
             },
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1274,
+              "line": 225692,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -1497,7 +1498,8 @@
       "details": "This is a visual preference; server gameplay is separate.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1165",
-        "src/PC/client_mp/cl_main_mp.c:1274"
+        "src/PC/client_mp/cl_main_mp.c:225692",
+        "src/PC/client_mp/cl_main_mp.c:225727"
       ],
       "guided": false,
       "control": {
@@ -2938,7 +2940,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1235,
+              "line": 225688,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -2962,7 +2964,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1235,
+              "line": 225653,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -2992,7 +2994,8 @@
       "summary": "Show the aiming crosshair.",
       "details": "The weapon and game state also determine which crosshair or reticle is drawn.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1235"
+        "src/PC/client_mp/cl_main_mp.c:225653",
+        "src/PC/client_mp/cl_main_mp.c:225688"
       ],
       "guided": true,
       "control": {
@@ -14648,7 +14651,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1210,
+              "line": 225663,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -14672,7 +14675,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1210,
+              "line": 225628,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -14702,7 +14705,8 @@
       "summary": "Allow downloads needed for the server you join.",
       "details": "Servers may require maps or mods that are not installed. The server and redirected-download settings control the available download path.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1210"
+        "src/PC/client_mp/cl_main_mp.c:225628",
+        "src/PC/client_mp/cl_main_mp.c:225663"
       ],
       "guided": true,
       "control": {
@@ -14801,7 +14805,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1182,
+              "line": 225635,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4096,
@@ -14832,7 +14836,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1182,
+              "line": 225600,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4096,
@@ -14869,7 +14873,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1182"
+        "src/PC/client_mp/cl_main_mp.c:225600",
+        "src/PC/client_mp/cl_main_mp.c:225635"
       ],
       "guided": false,
       "control": {
@@ -14884,7 +14889,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1928,
+              "line": 226381,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4123,
@@ -14911,7 +14916,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1928,
+              "line": 226346,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4123,
@@ -14944,7 +14949,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1928"
+        "src/PC/client_mp/cl_main_mp.c:226346",
+        "src/PC/client_mp/cl_main_mp.c:226381"
       ],
       "guided": false,
       "control": {
@@ -14959,7 +14965,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1166,
+              "line": 225619,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -14990,7 +14996,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1166,
+              "line": 225584,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -15027,7 +15033,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1166"
+        "src/PC/client_mp/cl_main_mp.c:225584",
+        "src/PC/client_mp/cl_main_mp.c:225619"
       ],
       "guided": false,
       "control": {
@@ -15042,7 +15049,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1223,
+              "line": 225676,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -15065,7 +15072,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1223,
+              "line": 225641,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -15094,7 +15101,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1223"
+        "src/PC/client_mp/cl_main_mp.c:225641",
+        "src/PC/client_mp/cl_main_mp.c:225676"
       ],
       "guided": false,
       "control": {
@@ -15153,7 +15161,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1142,
+              "line": 225595,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4096,
@@ -15184,7 +15192,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1142,
+              "line": 225560,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4096,
@@ -15221,7 +15229,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1142"
+        "src/PC/client_mp/cl_main_mp.c:225560",
+        "src/PC/client_mp/cl_main_mp.c:225595"
       ],
       "guided": false,
       "control": {
@@ -15236,7 +15245,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1160,
+              "line": 225578,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4112,
@@ -15266,7 +15275,7 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1160"
+        "src/PC/client_mp/cl_main_mp.c:225578"
       ],
       "guided": false,
       "control": {
@@ -15281,7 +15290,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1162,
+              "line": 225580,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -15319,7 +15328,7 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1162"
+        "src/PC/client_mp/cl_main_mp.c:225580"
       ],
       "guided": false,
       "control": {
@@ -15334,7 +15343,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1161,
+              "line": 225579,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4112,
@@ -15364,7 +15373,7 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1161"
+        "src/PC/client_mp/cl_main_mp.c:225579"
       ],
       "guided": false,
       "control": {
@@ -15379,7 +15388,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1167,
+              "line": 225620,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -15402,7 +15411,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1167,
+              "line": 225585,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -15431,7 +15440,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1167"
+        "src/PC/client_mp/cl_main_mp.c:225585",
+        "src/PC/client_mp/cl_main_mp.c:225620"
       ],
       "guided": false,
       "control": {
@@ -15446,7 +15456,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1204,
+              "line": 225657,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -15470,7 +15480,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1204,
+              "line": 225622,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -15500,7 +15510,8 @@
       "summary": "Let mouse movement control your view.",
       "details": "This is the engine's mouse-look preference. Key actions and game state can also affect look behaviour.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1204"
+        "src/PC/client_mp/cl_main_mp.c:225622",
+        "src/PC/client_mp/cl_main_mp.c:225657"
       ],
       "guided": false,
       "control": {
@@ -15516,7 +15527,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1148,
+              "line": 225601,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -15539,7 +15550,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1148,
+              "line": 225566,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -15568,7 +15579,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1148"
+        "src/PC/client_mp/cl_main_mp.c:225566",
+        "src/PC/client_mp/cl_main_mp.c:225601"
       ],
       "guided": false,
       "control": {
@@ -15629,7 +15641,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1241,
+              "line": 225694,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4160,
@@ -15653,7 +15665,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1241,
+              "line": 225659,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4160,
@@ -15683,7 +15695,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1241"
+        "src/PC/client_mp/cl_main_mp.c:225659",
+        "src/PC/client_mp/cl_main_mp.c:225694"
       ],
       "guided": false,
       "control": {
@@ -15794,7 +15807,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1196,
+              "line": 225649,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -15826,7 +15839,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1190,
+              "line": 225608,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -15865,8 +15878,8 @@
       "summary": "Limit how often your client sends movement packets.",
       "details": "This is an upper limit, not a guarantee of packets per second. The current CoD2x port registers 125; competitive enforcement also requires 125.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1190",
-        "src/PC/client_mp/cl_main_mp.c:1196"
+        "src/PC/client_mp/cl_main_mp.c:225608",
+        "src/PC/client_mp/cl_main_mp.c:225649"
       ],
       "guided": true,
       "control": {
@@ -15890,7 +15903,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1242,
+              "line": 225695,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -15922,7 +15935,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1242,
+              "line": 225660,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -15960,7 +15973,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1242"
+        "src/PC/client_mp/cl_main_mp.c:225660",
+        "src/PC/client_mp/cl_main_mp.c:225695"
       ],
       "guided": false,
       "control": {
@@ -15975,7 +15989,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1236,
+              "line": 225689,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4160,
@@ -15999,7 +16013,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1236,
+              "line": 225654,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4160,
@@ -16029,7 +16043,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1236"
+        "src/PC/client_mp/cl_main_mp.c:225654",
+        "src/PC/client_mp/cl_main_mp.c:225689"
       ],
       "guided": false,
       "control": {
@@ -16044,7 +16059,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1203,
+              "line": 225656,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -16076,7 +16091,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1203,
+              "line": 225621,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -16114,7 +16129,8 @@
       "summary": "Add more turning as mouse movement gets faster.",
       "details": "Zero disables the acceleration term in the client input calculation.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1203"
+        "src/PC/client_mp/cl_main_mp.c:225621",
+        "src/PC/client_mp/cl_main_mp.c:225656"
       ],
       "guided": true,
       "control": {
@@ -16196,7 +16212,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1135,
+              "line": 225588,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -16219,7 +16235,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1135,
+              "line": 225553,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -16248,7 +16264,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1135"
+        "src/PC/client_mp/cl_main_mp.c:225553",
+        "src/PC/client_mp/cl_main_mp.c:225588"
       ],
       "guided": false,
       "control": {
@@ -16263,7 +16280,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1201,
+              "line": 225654,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -16295,7 +16312,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1201,
+              "line": 225619,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -16333,7 +16350,8 @@
       "summary": "Include recent movement commands in outgoing packets.",
       "details": "The client repeats recent commands to help with lost packets. This does not remove latency.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1201"
+        "src/PC/client_mp/cl_main_mp.c:225619",
+        "src/PC/client_mp/cl_main_mp.c:225654"
       ],
       "guided": false,
       "control": {
@@ -16474,7 +16492,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1180,
+              "line": 225633,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -16506,7 +16524,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1180,
+              "line": 225598,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -16544,7 +16562,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1180"
+        "src/PC/client_mp/cl_main_mp.c:225598",
+        "src/PC/client_mp/cl_main_mp.c:225633"
       ],
       "guided": false,
       "control": {
@@ -16559,7 +16578,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1239,
+              "line": 225692,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -16590,7 +16609,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1239,
+              "line": 225657,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -16627,7 +16646,8 @@
       "summary": "Set the height used for profile text.",
       "details": "Restored in the readiness integration source. The registration facts describe this build.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1239"
+        "src/PC/client_mp/cl_main_mp.c:225657",
+        "src/PC/client_mp/cl_main_mp.c:225692"
       ],
       "guided": false,
       "control": {
@@ -16642,7 +16662,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1213,
+              "line": 225666,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4115,
@@ -16668,7 +16688,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1213,
+              "line": 225631,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4115,
@@ -16700,7 +16720,8 @@
       "summary": "Read the legacy client anti-cheat preference.",
       "details": "Registration does not prove a working PunkBuster service is available on this native port.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1213"
+        "src/PC/client_mp/cl_main_mp.c:225631",
+        "src/PC/client_mp/cl_main_mp.c:225666"
       ],
       "guided": false,
       "control": {
@@ -16716,7 +16737,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1222,
+              "line": 225675,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -16747,7 +16768,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1222,
+              "line": 225640,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -16784,7 +16805,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1222"
+        "src/PC/client_mp/cl_main_mp.c:225640",
+        "src/PC/client_mp/cl_main_mp.c:225675"
       ],
       "guided": false,
       "control": {
@@ -16799,7 +16821,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1206,
+              "line": 225659,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -16822,7 +16844,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1206,
+              "line": 225624,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -16851,7 +16873,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1206"
+        "src/PC/client_mp/cl_main_mp.c:225624",
+        "src/PC/client_mp/cl_main_mp.c:225659"
       ],
       "guided": false,
       "control": {
@@ -16866,7 +16889,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1143,
+              "line": 225596,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -16897,7 +16920,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1143,
+              "line": 225561,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -16934,7 +16957,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1143"
+        "src/PC/client_mp/cl_main_mp.c:225561",
+        "src/PC/client_mp/cl_main_mp.c:225596"
       ],
       "guided": false,
       "control": {
@@ -16949,7 +16973,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1144,
+              "line": 225597,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -16972,7 +16996,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1144,
+              "line": 225562,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -17001,7 +17025,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1144"
+        "src/PC/client_mp/cl_main_mp.c:225562",
+        "src/PC/client_mp/cl_main_mp.c:225597"
       ],
       "guided": false,
       "control": {
@@ -17016,7 +17041,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1146,
+              "line": 225599,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -17039,7 +17064,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1146,
+              "line": 225564,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -17068,7 +17093,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1146"
+        "src/PC/client_mp/cl_main_mp.c:225564",
+        "src/PC/client_mp/cl_main_mp.c:225599"
       ],
       "guided": false,
       "control": {
@@ -17083,7 +17109,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1145,
+              "line": 225598,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -17106,7 +17132,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1145,
+              "line": 225563,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -17135,7 +17161,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1145"
+        "src/PC/client_mp/cl_main_mp.c:225563",
+        "src/PC/client_mp/cl_main_mp.c:225598"
       ],
       "guided": false,
       "control": {
@@ -17150,7 +17177,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1147,
+              "line": 225600,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -17173,7 +17200,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1147,
+              "line": 225565,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -17202,7 +17229,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1147"
+        "src/PC/client_mp/cl_main_mp.c:225565",
+        "src/PC/client_mp/cl_main_mp.c:225600"
       ],
       "guided": false,
       "control": {
@@ -17300,7 +17328,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1216,
+              "line": 225669,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -17323,7 +17351,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1216,
+              "line": 225634,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -17352,7 +17380,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1216"
+        "src/PC/client_mp/cl_main_mp.c:225634",
+        "src/PC/client_mp/cl_main_mp.c:225669"
       ],
       "guided": false,
       "control": {
@@ -17367,7 +17396,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1141,
+              "line": 225594,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4096,
@@ -17398,7 +17427,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1141,
+              "line": 225559,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4096,
@@ -17435,7 +17464,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1141"
+        "src/PC/client_mp/cl_main_mp.c:225559",
+        "src/PC/client_mp/cl_main_mp.c:225594"
       ],
       "guided": false,
       "control": {
@@ -17450,7 +17480,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1139,
+              "line": 225592,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4099,
@@ -17475,7 +17505,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1139,
+              "line": 225557,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4099,
@@ -17506,7 +17536,8 @@
       "summary": "Allow voice communication from players.",
       "details": "The client advertises this preference to the server. Voice availability also depends on server settings.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1139"
+        "src/PC/client_mp/cl_main_mp.c:225557",
+        "src/PC/client_mp/cl_main_mp.c:225592"
       ],
       "guided": false,
       "control": {
@@ -17522,7 +17553,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1212,
+              "line": 225665,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4099,
@@ -17547,7 +17578,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1212,
+              "line": 225630,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4099,
@@ -17578,7 +17609,8 @@
       "summary": "Allow the server's redirected download path.",
       "details": "Used for HTTP-style redirected downloads when supported. Availability depends on the server.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1212"
+        "src/PC/client_mp/cl_main_mp.c:225630",
+        "src/PC/client_mp/cl_main_mp.c:225665"
       ],
       "guided": false,
       "control": {
@@ -17593,7 +17625,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1179,
+              "line": 225632,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -17625,7 +17657,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1179,
+              "line": 225597,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -17663,7 +17695,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1179"
+        "src/PC/client_mp/cl_main_mp.c:225597",
+        "src/PC/client_mp/cl_main_mp.c:225632"
       ],
       "guided": false,
       "control": {
@@ -17885,7 +17918,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 505,
+              "line": 606,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -17955,7 +17988,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:505"
+        "src/PC/server_mp/sv_init_mp.c:505",
+        "src/PC/server_mp/sv_init_mp.c:606"
       ],
       "guided": false,
       "control": {
@@ -18014,7 +18048,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_memory.c",
-              "line": 366,
+              "line": 367,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4129,
@@ -18047,7 +18081,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_memory.c",
-              "line": 364,
+              "line": 365,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4129,
@@ -18087,8 +18121,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/universal/com_memory.c:364",
-        "src/PC/universal/com_memory.c:366"
+        "src/PC/universal/com_memory.c:365",
+        "src/PC/universal/com_memory.c:367"
       ],
       "guided": false,
       "control": {
@@ -20283,7 +20317,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 417,
+              "line": 487,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4112,
@@ -20337,7 +20371,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/universal/com_files.c:417"
+        "src/PC/universal/com_files.c:417",
+        "src/PC/universal/com_files.c:487"
       ],
       "guided": false,
       "control": {
@@ -20352,7 +20387,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 416,
+              "line": 486,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4112,
@@ -20408,7 +20443,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/universal/com_files.c:416"
+        "src/PC/universal/com_files.c:416",
+        "src/PC/universal/com_files.c:486"
       ],
       "guided": false,
       "control": {
@@ -20423,7 +20459,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 415,
+              "line": 485,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4112,
@@ -20479,7 +20515,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/universal/com_files.c:415"
+        "src/PC/universal/com_files.c:415",
+        "src/PC/universal/com_files.c:485"
       ],
       "guided": false,
       "control": {
@@ -20494,7 +20531,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 414,
+              "line": 484,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4112,
@@ -20548,7 +20585,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/universal/com_files.c:414"
+        "src/PC/universal/com_files.c:414",
+        "src/PC/universal/com_files.c:484"
       ],
       "guided": false,
       "control": {
@@ -20563,7 +20601,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 413,
+              "line": 483,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -20631,7 +20669,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/universal/com_files.c:413"
+        "src/PC/universal/com_files.c:413",
+        "src/PC/universal/com_files.c:483"
       ],
       "guided": false,
       "control": {
@@ -20658,7 +20697,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_client_mp.c",
-              "line": 396,
+              "line": 507,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4124,
@@ -20670,7 +20709,7 @@
             },
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 431,
+              "line": 501,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4124,
@@ -20754,7 +20793,9 @@
       "sources": [
         "src/PC/client_mp/cl_ui_mp.c:343",
         "src/PC/server_mp/sv_client_mp.c:396",
-        "src/PC/universal/com_files.c:431"
+        "src/PC/server_mp/sv_client_mp.c:507",
+        "src/PC/universal/com_files.c:431",
+        "src/PC/universal/com_files.c:501"
       ],
       "guided": false,
       "control": {
@@ -20769,7 +20810,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 430,
+              "line": 500,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4112,
@@ -20825,7 +20866,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/universal/com_files.c:430"
+        "src/PC/universal/com_files.c:430",
+        "src/PC/universal/com_files.c:500"
       ],
       "guided": false,
       "control": {
@@ -20840,7 +20882,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 2757,
+              "line": 227210,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4256,
@@ -20852,7 +20894,7 @@
             },
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 433,
+              "line": 503,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4256,
@@ -20877,7 +20919,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 2757,
+              "line": 227175,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4256,
@@ -20920,8 +20962,10 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:2757",
-        "src/PC/universal/com_files.c:433"
+        "src/PC/client_mp/cl_main_mp.c:227175",
+        "src/PC/client_mp/cl_main_mp.c:227210",
+        "src/PC/universal/com_files.c:433",
+        "src/PC/universal/com_files.c:503"
       ],
       "guided": false,
       "control": {
@@ -20936,7 +20980,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 432,
+              "line": 502,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4112,
@@ -20990,7 +21034,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/universal/com_files.c:432"
+        "src/PC/universal/com_files.c:432",
+        "src/PC/universal/com_files.c:502"
       ],
       "guided": false,
       "control": {
@@ -21005,7 +21050,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_files.c",
-              "line": 418,
+              "line": 488,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -21057,7 +21102,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/universal/com_files.c:418"
+        "src/PC/universal/com_files.c:418",
+        "src/PC/universal/com_files.c:488"
       ],
       "guided": false,
       "control": {
@@ -21072,7 +21118,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1265,
+              "line": 225718,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21096,7 +21142,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1265,
+              "line": 225683,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21126,7 +21172,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1265"
+        "src/PC/client_mp/cl_main_mp.c:225683",
+        "src/PC/client_mp/cl_main_mp.c:225718"
       ],
       "guided": false,
       "control": {
@@ -21141,7 +21188,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1256,
+              "line": 225709,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -21164,7 +21211,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1256,
+              "line": 225674,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -21193,7 +21240,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1256"
+        "src/PC/client_mp/cl_main_mp.c:225674",
+        "src/PC/client_mp/cl_main_mp.c:225709"
       ],
       "guided": false,
       "control": {
@@ -21208,7 +21256,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1263,
+              "line": 225716,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21232,7 +21280,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1263,
+              "line": 225681,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21262,7 +21310,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1263"
+        "src/PC/client_mp/cl_main_mp.c:225681",
+        "src/PC/client_mp/cl_main_mp.c:225716"
       ],
       "guided": false,
       "control": {
@@ -21277,7 +21326,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1264,
+              "line": 225717,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -21309,7 +21358,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1264,
+              "line": 225682,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -21347,7 +21396,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1264"
+        "src/PC/client_mp/cl_main_mp.c:225682",
+        "src/PC/client_mp/cl_main_mp.c:225717"
       ],
       "guided": false,
       "control": {
@@ -21362,7 +21412,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1254,
+              "line": 225707,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21386,7 +21436,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1254,
+              "line": 225672,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21416,7 +21466,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1254"
+        "src/PC/client_mp/cl_main_mp.c:225672",
+        "src/PC/client_mp/cl_main_mp.c:225707"
       ],
       "guided": false,
       "control": {
@@ -21431,7 +21482,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1253,
+              "line": 225706,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21455,7 +21506,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1253,
+              "line": 225671,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21485,7 +21536,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1253"
+        "src/PC/client_mp/cl_main_mp.c:225671",
+        "src/PC/client_mp/cl_main_mp.c:225706"
       ],
       "guided": false,
       "control": {
@@ -21500,7 +21552,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1262,
+              "line": 225715,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21524,7 +21576,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1262,
+              "line": 225680,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21554,7 +21606,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1262"
+        "src/PC/client_mp/cl_main_mp.c:225680",
+        "src/PC/client_mp/cl_main_mp.c:225715"
       ],
       "guided": false,
       "control": {
@@ -21569,7 +21622,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1267,
+              "line": 225720,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21593,7 +21646,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1267,
+              "line": 225685,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -21623,7 +21676,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1267"
+        "src/PC/client_mp/cl_main_mp.c:225685",
+        "src/PC/client_mp/cl_main_mp.c:225720"
       ],
       "guided": false,
       "control": {
@@ -21638,7 +21692,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1257,
+              "line": 225710,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -21674,7 +21728,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1257,
+              "line": 225675,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -21716,7 +21770,8 @@
       "summary": "Use the visual-effect sorting preference.",
       "details": "CoD2x competitive mode forces this on and changes its run-time type and limits.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1257",
+        "src/PC/client_mp/cl_main_mp.c:225675",
+        "src/PC/client_mp/cl_main_mp.c:225710",
         "src/PC/gfx_d3d/r_dvars.c:520"
       ],
       "guided": false,
@@ -21739,7 +21794,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1266,
+              "line": 225719,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -21771,7 +21826,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1266,
+              "line": 225684,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -21809,7 +21864,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1266"
+        "src/PC/client_mp/cl_main_mp.c:225684",
+        "src/PC/client_mp/cl_main_mp.c:225719"
       ],
       "guided": false,
       "control": {
@@ -23074,7 +23130,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 439,
+              "line": 540,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4132,
@@ -23156,7 +23212,8 @@
       "sources": [
         "src/PC/game_mp/g_main_mp.c:973",
         "src/PC/server_mp/sv_game_mp.c:387",
-        "src/PC/server_mp/sv_init_mp.c:439"
+        "src/PC/server_mp/sv_init_mp.c:439",
+        "src/PC/server_mp/sv_init_mp.c:540"
       ],
       "guided": false,
       "control": {
@@ -25654,7 +25711,7 @@
             },
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1273,
+              "line": 225726,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -25690,7 +25747,7 @@
             },
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1273,
+              "line": 225691,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -25718,10 +25775,11 @@
       "group": "hud",
       "title": "Show the HUD",
       "summary": "Set the heads-up display preference.",
-      "details": "The setting is cheat-protected in the registration. Config Studio presents it as a protected reference.",
+      "details": "This is an archived, editable preference in the described source. The game state can also determine which HUD elements are drawn.",
       "sources": [
         "src/PC/cgame_mp/cg_newDraw_mp.c:199",
-        "src/PC/client_mp/cl_main_mp.c:1273"
+        "src/PC/client_mp/cl_main_mp.c:225691",
+        "src/PC/client_mp/cl_main_mp.c:225726"
       ],
       "guided": false,
       "control": {
@@ -27907,7 +27965,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1234,
+              "line": 225687,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -27939,7 +27997,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1234,
+              "line": 225652,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -27977,7 +28035,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1234"
+        "src/PC/client_mp/cl_main_mp.c:225652",
+        "src/PC/client_mp/cl_main_mp.c:225687"
       ],
       "guided": false,
       "control": {
@@ -28411,7 +28470,7 @@
           "sites": [
             {
               "path": "src/PC/stringed/stringed_hooks.c",
-              "line": 174,
+              "line": 175,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4129,
@@ -28423,7 +28482,7 @@
             },
             {
               "path": "src/PC/stringed/stringed_hooks.c",
-              "line": 233,
+              "line": 234,
               "mechanism": "Dvar_RegisterBool:existingName",
               "type": "bool",
               "flags": 4129,
@@ -28448,7 +28507,7 @@
           "sites": [
             {
               "path": "src/PC/stringed/stringed_hooks.c",
-              "line": 174,
+              "line": 175,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4129,
@@ -28460,7 +28519,7 @@
             },
             {
               "path": "src/PC/stringed/stringed_hooks.c",
-              "line": 233,
+              "line": 234,
               "mechanism": "Dvar_RegisterBool:existingName",
               "type": "bool",
               "flags": 4129,
@@ -28491,8 +28550,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/stringed/stringed_hooks.c:174",
-        "src/PC/stringed/stringed_hooks.c:233"
+        "src/PC/stringed/stringed_hooks.c:175",
+        "src/PC/stringed/stringed_hooks.c:234"
       ],
       "guided": false,
       "control": {
@@ -28507,7 +28566,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 2752,
+              "line": 227205,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4129,
@@ -28527,7 +28586,7 @@
             },
             {
               "path": "src/PC/stringed/stringed_hooks.c",
-              "line": 173,
+              "line": 174,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4129,
@@ -28547,7 +28606,7 @@
             },
             {
               "path": "src/PC/stringed/stringed_hooks.c",
-              "line": 232,
+              "line": 233,
               "mechanism": "Dvar_RegisterInt:existingName",
               "type": "int",
               "flags": 4129,
@@ -28580,7 +28639,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 2752,
+              "line": 227170,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4129,
@@ -28600,7 +28659,7 @@
             },
             {
               "path": "src/PC/stringed/stringed_hooks.c",
-              "line": 173,
+              "line": 174,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4129,
@@ -28620,7 +28679,7 @@
             },
             {
               "path": "src/PC/stringed/stringed_hooks.c",
-              "line": 232,
+              "line": 233,
               "mechanism": "Dvar_RegisterInt:existingName",
               "type": "int",
               "flags": 4129,
@@ -28659,9 +28718,10 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:2752",
-        "src/PC/stringed/stringed_hooks.c:173",
-        "src/PC/stringed/stringed_hooks.c:232"
+        "src/PC/client_mp/cl_main_mp.c:227170",
+        "src/PC/client_mp/cl_main_mp.c:227205",
+        "src/PC/stringed/stringed_hooks.c:174",
+        "src/PC/stringed/stringed_hooks.c:233"
       ],
       "guided": false,
       "control": {
@@ -28676,7 +28736,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 2756,
+              "line": 227209,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4128,
@@ -28688,7 +28748,7 @@
             },
             {
               "path": "src/PC/stringed/stringed_hooks.c",
-              "line": 175,
+              "line": 176,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4128,
@@ -28712,7 +28772,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 2756,
+              "line": 227174,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4128,
@@ -28724,7 +28784,7 @@
             },
             {
               "path": "src/PC/stringed/stringed_hooks.c",
-              "line": 175,
+              "line": 176,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4128,
@@ -28754,8 +28814,9 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:2756",
-        "src/PC/stringed/stringed_hooks.c:175"
+        "src/PC/client_mp/cl_main_mp.c:227174",
+        "src/PC/client_mp/cl_main_mp.c:227209",
+        "src/PC/stringed/stringed_hooks.c:176"
       ],
       "guided": false,
       "control": {
@@ -28770,7 +28831,7 @@
           "sites": [
             {
               "path": "src/PC/stringed/stringed_hooks.c",
-              "line": 176,
+              "line": 177,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -28793,7 +28854,7 @@
           "sites": [
             {
               "path": "src/PC/stringed/stringed_hooks.c",
-              "line": 176,
+              "line": 177,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -28822,7 +28883,7 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/stringed/stringed_hooks.c:176"
+        "src/PC/stringed/stringed_hooks.c:177"
       ],
       "guided": false,
       "control": {
@@ -28837,7 +28898,7 @@
           "sites": [
             {
               "path": "src/PC/stringed/stringed_hooks.c",
-              "line": 177,
+              "line": 178,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -28860,7 +28921,7 @@
           "sites": [
             {
               "path": "src/PC/stringed/stringed_hooks.c",
-              "line": 177,
+              "line": 178,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -28889,7 +28950,7 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/stringed/stringed_hooks.c:177"
+        "src/PC/stringed/stringed_hooks.c:178"
       ],
       "guided": false,
       "control": {
@@ -29007,7 +29068,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1233,
+              "line": 225686,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -29031,7 +29092,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1233,
+              "line": 225651,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -29061,7 +29122,8 @@
       "summary": "Average mouse movement across input samples.",
       "details": "Smoothing changes how individual samples contribute to a turn. It can soften quick changes of direction.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1233"
+        "src/PC/client_mp/cl_main_mp.c:225651",
+        "src/PC/client_mp/cl_main_mp.c:225686"
       ],
       "guided": true,
       "control": {
@@ -29077,7 +29139,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1231,
+              "line": 225684,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -29109,7 +29171,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1231,
+              "line": 225649,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -29147,7 +29209,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1231"
+        "src/PC/client_mp/cl_main_mp.c:225649",
+        "src/PC/client_mp/cl_main_mp.c:225684"
       ],
       "guided": false,
       "control": {
@@ -29162,7 +29225,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1229,
+              "line": 225682,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -29194,7 +29257,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1229,
+              "line": 225647,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -29232,7 +29295,8 @@
       "summary": "Choose the direction and scale of up-and-down mouse movement.",
       "details": "Negative values invert vertical movement. This is a signed scale, so preserve its magnitude when toggling direction.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1229"
+        "src/PC/client_mp/cl_main_mp.c:225647",
+        "src/PC/client_mp/cl_main_mp.c:225682"
       ],
       "guided": true,
       "control": {
@@ -29247,7 +29311,7 @@
           "sites": [
             {
               "path": "src/unix/linux_input.c",
-              "line": 110,
+              "line": 111,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4129,
@@ -29286,7 +29350,7 @@
       "summary": "Select the CoD2x input compatibility path.",
       "details": "This is distinct from native raw mouse input. The native adapter translates the CoD2x preference; see the source for supported behaviour.",
       "sources": [
-        "src/unix/linux_input.c:110"
+        "src/unix/linux_input.c:111"
       ],
       "guided": false,
       "control": {
@@ -29301,7 +29365,7 @@
           "sites": [
             {
               "path": "src/unix/linux_input.c",
-              "line": 111,
+              "line": 112,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -29339,7 +29403,7 @@
       "summary": "Read the input-rate measurement reported by the game.",
       "details": "This diagnostic is read-only. A measured value is not a promised device polling rate.",
       "sources": [
-        "src/unix/linux_input.c:111"
+        "src/unix/linux_input.c:112"
       ],
       "guided": false,
       "control": {
@@ -29354,7 +29418,7 @@
           "sites": [
             {
               "path": "src/unix/linux_input.c",
-              "line": 113,
+              "line": 114,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -29388,11 +29452,11 @@
         "cod2x"
       ],
       "group": "aim",
-      "title": "Mouse input rate limit",
-      "summary": "Set the CoD2x input-rate limit.",
-      "details": "The adapter and input device determine the observed rate. A configured limit is not a measurement.",
+      "title": "Peak measured mouse input rate",
+      "summary": "Read the highest input rate measured by the game.",
+      "details": "This is a read-only peak measurement from the native input statistics. It is not a configured limit or a promised device polling rate.",
       "sources": [
-        "src/unix/linux_input.c:113"
+        "src/unix/linux_input.c:114"
       ],
       "guided": false,
       "control": {
@@ -29407,7 +29471,7 @@
           "sites": [
             {
               "path": "src/unix/linux_input.c",
-              "line": 112,
+              "line": 113,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -29445,7 +29509,7 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/unix/linux_input.c:112"
+        "src/unix/linux_input.c:113"
       ],
       "guided": false,
       "control": {
@@ -29460,7 +29524,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1232,
+              "line": 225685,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -29492,7 +29556,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1232,
+              "line": 225650,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -29530,7 +29594,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1232"
+        "src/PC/client_mp/cl_main_mp.c:225650",
+        "src/PC/client_mp/cl_main_mp.c:225685"
       ],
       "guided": false,
       "control": {
@@ -29545,7 +29610,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1230,
+              "line": 225683,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -29577,7 +29642,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1230,
+              "line": 225648,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -29615,7 +29680,8 @@
       "summary": "Scale left-and-right mouse movement.",
       "details": "This multiplies the horizontal mouse input before it changes your view angle.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1230"
+        "src/PC/client_mp/cl_main_mp.c:225648",
+        "src/PC/client_mp/cl_main_mp.c:225683"
       ],
       "guided": false,
       "control": {
@@ -30132,7 +30198,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 449,
+              "line": 550,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4164,
@@ -30201,7 +30267,8 @@
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
         "src/PC/game_mp/g_cmds_mp.c:430",
-        "src/PC/server_mp/sv_init_mp.c:449"
+        "src/PC/server_mp/sv_init_mp.c:449",
+        "src/PC/server_mp/sv_init_mp.c:550"
       ],
       "guided": false,
       "control": {
@@ -30261,7 +30328,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1238,
+              "line": 225691,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4096,
@@ -30284,7 +30351,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1238,
+              "line": 225656,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4096,
@@ -30313,7 +30380,8 @@
       "summary": "Read the game's message-of-the-day preference.",
       "details": "Restored in the readiness integration source. The registration facts describe this build.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1238"
+        "src/PC/client_mp/cl_main_mp.c:225656",
+        "src/PC/client_mp/cl_main_mp.c:225691"
       ],
       "guided": false,
       "control": {
@@ -30475,7 +30543,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1243,
+              "line": 225696,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4099,
@@ -30500,7 +30568,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1243,
+              "line": 225661,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4099,
@@ -30531,7 +30599,8 @@
       "summary": "Choose the name other players see.",
       "details": "The engine supports colour codes. This is shared with the server as player information.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1243"
+        "src/PC/client_mp/cl_main_mp.c:225661",
+        "src/PC/client_mp/cl_main_mp.c:225696"
       ],
       "guided": true,
       "control": {
@@ -31446,7 +31515,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1269,
+              "line": 225722,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4096,
@@ -31469,7 +31538,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1269,
+              "line": 225687,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4096,
@@ -31498,7 +31567,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1269"
+        "src/PC/client_mp/cl_main_mp.c:225687",
+        "src/PC/client_mp/cl_main_mp.c:225722"
       ],
       "guided": false,
       "control": {
@@ -31513,7 +31583,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 501,
+              "line": 602,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -31565,7 +31635,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:501"
+        "src/PC/server_mp/sv_init_mp.c:501",
+        "src/PC/server_mp/sv_init_mp.c:602"
       ],
       "guided": false,
       "control": {
@@ -31647,7 +31718,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1251,
+              "line": 225704,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4098,
@@ -31671,7 +31742,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1251,
+              "line": 225669,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4098,
@@ -31701,7 +31772,8 @@
       "summary": "Set the password used when joining a server.",
       "details": "Treat this as private. The catalog contains only the source's empty registration default, never a player's saved password.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1251"
+        "src/PC/client_mp/cl_main_mp.c:225669",
+        "src/PC/client_mp/cl_main_mp.c:225704"
       ],
       "guided": false,
       "control": {
@@ -34658,7 +34730,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 447,
+              "line": 548,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4164,
@@ -34735,7 +34807,7 @@
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
         "src/PC/server_mp/sv_init_mp.c:444",
-        "src/PC/server_mp/sv_init_mp.c:447"
+        "src/PC/server_mp/sv_init_mp.c:548"
       ],
       "guided": false,
       "control": {
@@ -35266,7 +35338,7 @@
             },
             {
               "path": "src/Mac/DirectX_9/CDirect3DDevice.c",
-              "line": 2859,
+              "line": 2862,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -35302,7 +35374,7 @@
             },
             {
               "path": "src/Mac/DirectX_9/CDirect3DDevice.c",
-              "line": 2859,
+              "line": 2862,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -35333,7 +35405,7 @@
       "details": "This is a macOS port registration. It belongs to machine display settings when Config Studio is integrated.",
       "sources": [
         "src/Mac/DirectX_9/CDirect3D.c:241",
-        "src/Mac/DirectX_9/CDirect3DDevice.c:2859"
+        "src/Mac/DirectX_9/CDirect3DDevice.c:2862"
       ],
       "guided": false,
       "control": {
@@ -38312,7 +38384,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1220,
+              "line": 225673,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -38336,7 +38408,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1220,
+              "line": 225638,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -38366,7 +38438,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1220"
+        "src/PC/client_mp/cl_main_mp.c:225638",
+        "src/PC/client_mp/cl_main_mp.c:225673"
       ],
       "guided": false,
       "control": {
@@ -41633,7 +41706,7 @@
           "sites": [
             {
               "path": "src/Mac/DirectX_9/CDirect3DDevice.c",
-              "line": 1718,
+              "line": 1720,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 1,
@@ -41664,7 +41737,7 @@
           "sites": [
             {
               "path": "src/Mac/DirectX_9/CDirect3DDevice.c",
-              "line": 1718,
+              "line": 1720,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 1,
@@ -41701,7 +41774,7 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/Mac/DirectX_9/CDirect3DDevice.c:1718"
+        "src/Mac/DirectX_9/CDirect3DDevice.c:1720"
       ],
       "guided": false,
       "control": {
@@ -46141,7 +46214,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1244,
+              "line": 225697,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4099,
@@ -46174,7 +46247,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1244,
+              "line": 225662,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4099,
@@ -46213,7 +46286,8 @@
       "summary": "Limit how much game data the server may send each second.",
       "details": "The value is in bytes per second. CoD2x competitive enforcement requires 25,000; the registration default and source range are separate facts.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1244"
+        "src/PC/client_mp/cl_main_mp.c:225662",
+        "src/PC/client_mp/cl_main_mp.c:225697"
       ],
       "guided": true,
       "control": {
@@ -46238,7 +46312,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 472,
+              "line": 573,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -46290,7 +46364,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:472"
+        "src/PC/server_mp/sv_init_mp.c:472",
+        "src/PC/server_mp/sv_init_mp.c:573"
       ],
       "guided": false,
       "control": {
@@ -47574,7 +47649,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1202,
+              "line": 225655,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -47606,7 +47681,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1202,
+              "line": 225620,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -47644,7 +47719,8 @@
       "summary": "Choose how far your view turns when you move the mouse.",
       "details": "A larger value turns farther for the same input. Mouse DPI is separate from this setting.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1202"
+        "src/PC/client_mp/cl_main_mp.c:225620",
+        "src/PC/client_mp/cl_main_mp.c:225655"
       ],
       "guided": true,
       "control": {
@@ -49026,7 +49102,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1249,
+              "line": 225702,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4099,
@@ -49059,7 +49135,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1246,
+              "line": 225664,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4099,
@@ -49099,8 +49175,8 @@
       "summary": "Request how often the server sends game updates.",
       "details": "The server's own frame rate and policy limit what it can send. The current CoD2x port registers 40 and competitive enforcement requires 40.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1246",
-        "src/PC/client_mp/cl_main_mp.c:1249"
+        "src/PC/client_mp/cl_main_mp.c:225664",
+        "src/PC/client_mp/cl_main_mp.c:225702"
       ],
       "guided": true,
       "control": {
@@ -50044,7 +50120,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 460,
+              "line": 561,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4100,
@@ -50098,7 +50174,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:460"
+        "src/PC/server_mp/sv_init_mp.c:460",
+        "src/PC/server_mp/sv_init_mp.c:561"
       ],
       "guided": false,
       "control": {
@@ -50113,7 +50190,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 477,
+              "line": 578,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -50167,7 +50244,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:477"
+        "src/PC/server_mp/sv_init_mp.c:477",
+        "src/PC/server_mp/sv_init_mp.c:578"
       ],
       "guided": false,
       "control": {
@@ -50182,7 +50260,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 486,
+              "line": 587,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -50234,7 +50312,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:486"
+        "src/PC/server_mp/sv_init_mp.c:486",
+        "src/PC/server_mp/sv_init_mp.c:587"
       ],
       "guided": false,
       "control": {
@@ -50249,7 +50328,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 487,
+              "line": 588,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -50301,7 +50380,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:487"
+        "src/PC/server_mp/sv_init_mp.c:487",
+        "src/PC/server_mp/sv_init_mp.c:588"
       ],
       "guided": false,
       "control": {
@@ -50340,7 +50420,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 465,
+              "line": 566,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4120,
@@ -50451,6 +50531,7 @@
         "src/PC/game_mp/g_main_mp.c:969",
         "src/PC/gfx_d3d/r_dvars.c:528",
         "src/PC/server_mp/sv_init_mp.c:465",
+        "src/PC/server_mp/sv_init_mp.c:566",
         "src/PC/universal/dvar.c:2008"
       ],
       "guided": false,
@@ -50466,7 +50547,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 493,
+              "line": 594,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -50518,7 +50599,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:493"
+        "src/PC/server_mp/sv_init_mp.c:493",
+        "src/PC/server_mp/sv_init_mp.c:594"
       ],
       "guided": false,
       "control": {
@@ -50533,7 +50615,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 494,
+              "line": 595,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -50585,7 +50667,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:494"
+        "src/PC/server_mp/sv_init_mp.c:494",
+        "src/PC/server_mp/sv_init_mp.c:595"
       ],
       "guided": false,
       "control": {
@@ -50600,7 +50683,7 @@
           "sites": [
             {
               "path": "src/Mac/Main/mac_main.c",
-              "line": 467,
+              "line": 486,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4104,
@@ -50612,7 +50695,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 462,
+              "line": 563,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4104,
@@ -50679,7 +50762,9 @@
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
         "src/Mac/Main/mac_main.c:467",
-        "src/PC/server_mp/sv_init_mp.c:462"
+        "src/Mac/Main/mac_main.c:486",
+        "src/PC/server_mp/sv_init_mp.c:462",
+        "src/PC/server_mp/sv_init_mp.c:563"
       ],
       "guided": false,
       "control": {
@@ -50694,7 +50779,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 459,
+              "line": 560,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4101,
@@ -50750,7 +50835,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:459"
+        "src/PC/server_mp/sv_init_mp.c:459",
+        "src/PC/server_mp/sv_init_mp.c:560"
       ],
       "guided": false,
       "control": {
@@ -50765,7 +50851,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 474,
+              "line": 575,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -50833,7 +50919,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:474"
+        "src/PC/server_mp/sv_init_mp.c:474",
+        "src/PC/server_mp/sv_init_mp.c:575"
       ],
       "guided": false,
       "control": {
@@ -50848,7 +50935,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 452,
+              "line": 553,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4101,
@@ -50904,7 +50991,8 @@
       "summary": "Choose the name advertised by a server you host.",
       "details": "This is server information, separate from your player name.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:452"
+        "src/PC/server_mp/sv_init_mp.c:452",
+        "src/PC/server_mp/sv_init_mp.c:553"
       ],
       "guided": false,
       "control": {
@@ -50920,7 +51008,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 469,
+              "line": 570,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4168,
@@ -50976,7 +51064,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:469"
+        "src/PC/server_mp/sv_init_mp.c:469",
+        "src/PC/server_mp/sv_init_mp.c:570"
       ],
       "guided": false,
       "control": {
@@ -50991,7 +51080,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 468,
+              "line": 569,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4168,
@@ -51047,7 +51136,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:468"
+        "src/PC/server_mp/sv_init_mp.c:468",
+        "src/PC/server_mp/sv_init_mp.c:569"
       ],
       "guided": false,
       "control": {
@@ -51062,7 +51152,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 440,
+              "line": 541,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4100,
@@ -51116,7 +51206,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:440"
+        "src/PC/server_mp/sv_init_mp.c:440",
+        "src/PC/server_mp/sv_init_mp.c:541"
       ],
       "guided": false,
       "control": {
@@ -51131,7 +51222,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 490,
+              "line": 591,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4096,
@@ -51199,7 +51290,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:490"
+        "src/PC/server_mp/sv_init_mp.c:490",
+        "src/PC/server_mp/sv_init_mp.c:591"
       ],
       "guided": false,
       "control": {
@@ -51285,7 +51377,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 491,
+              "line": 592,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -51337,7 +51429,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:491"
+        "src/PC/server_mp/sv_init_mp.c:491",
+        "src/PC/server_mp/sv_init_mp.c:592"
       ],
       "guided": false,
       "control": {
@@ -51352,7 +51445,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 492,
+              "line": 593,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -51404,7 +51497,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:492"
+        "src/PC/server_mp/sv_init_mp.c:492",
+        "src/PC/server_mp/sv_init_mp.c:593"
       ],
       "guided": false,
       "control": {
@@ -51439,7 +51533,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 451,
+              "line": 552,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4133,
@@ -51459,7 +51553,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 768,
+              "line": 869,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4133,
@@ -51479,7 +51573,7 @@
             },
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 830,
+              "line": 931,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4133,
@@ -51615,8 +51709,11 @@
       "sources": [
         "src/PC/game_mp/g_main_mp.c:974",
         "src/PC/server_mp/sv_init_mp.c:451",
+        "src/PC/server_mp/sv_init_mp.c:552",
         "src/PC/server_mp/sv_init_mp.c:768",
-        "src/PC/server_mp/sv_init_mp.c:830"
+        "src/PC/server_mp/sv_init_mp.c:830",
+        "src/PC/server_mp/sv_init_mp.c:869",
+        "src/PC/server_mp/sv_init_mp.c:931"
       ],
       "guided": false,
       "control": {
@@ -51632,7 +51729,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 458,
+              "line": 559,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4101,
@@ -51704,7 +51801,8 @@
       "summary": "Set the server's upper ping admission limit.",
       "details": "This applies to a server you host, not your own connection's latency.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:458"
+        "src/PC/server_mp/sv_init_mp.c:458",
+        "src/PC/server_mp/sv_init_mp.c:559"
       ],
       "guided": false,
       "control": {
@@ -51720,7 +51818,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 456,
+              "line": 557,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4101,
@@ -51792,7 +51890,8 @@
       "summary": "Limit the rate allowed by a server you host.",
       "details": "A client cannot raise a remote server's limit by changing this locally.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:456"
+        "src/PC/server_mp/sv_init_mp.c:456",
+        "src/PC/server_mp/sv_init_mp.c:557"
       ],
       "guided": false,
       "control": {
@@ -51808,7 +51907,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 457,
+              "line": 558,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4101,
@@ -51880,7 +51979,8 @@
       "summary": "Set the server's lower ping admission limit.",
       "details": "This applies to a server you host.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:457"
+        "src/PC/server_mp/sv_init_mp.c:457",
+        "src/PC/server_mp/sv_init_mp.c:558"
       ],
       "guided": false,
       "control": {
@@ -51896,7 +51996,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 488,
+              "line": 589,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -51948,7 +52048,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:488"
+        "src/PC/server_mp/sv_init_mp.c:488",
+        "src/PC/server_mp/sv_init_mp.c:589"
       ],
       "guided": false,
       "control": {
@@ -51963,7 +52064,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 479,
+              "line": 580,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -52031,7 +52132,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:479"
+        "src/PC/server_mp/sv_init_mp.c:479",
+        "src/PC/server_mp/sv_init_mp.c:580"
       ],
       "guided": false,
       "control": {
@@ -52183,7 +52285,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 450,
+              "line": 551,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4100,
@@ -52253,7 +52355,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:450"
+        "src/PC/server_mp/sv_init_mp.c:450",
+        "src/PC/server_mp/sv_init_mp.c:551"
       ],
       "guided": false,
       "control": {
@@ -52268,7 +52371,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 473,
+              "line": 574,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4096,
@@ -52320,7 +52423,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:473"
+        "src/PC/server_mp/sv_init_mp.c:473",
+        "src/PC/server_mp/sv_init_mp.c:574"
       ],
       "guided": false,
       "control": {
@@ -52335,7 +52439,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 454,
+              "line": 555,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4117,
@@ -52393,7 +52497,8 @@
       "summary": "Set the legacy server anti-cheat preference.",
       "details": "Registration does not prove a working PunkBuster service is available on this native port.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:454"
+        "src/PC/server_mp/sv_init_mp.c:454",
+        "src/PC/server_mp/sv_init_mp.c:555"
       ],
       "guided": false,
       "control": {
@@ -52409,7 +52514,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 467,
+              "line": 568,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4108,
@@ -52465,13 +52570,162 @@
       "summary": "Set the hosted server's pure-file preference.",
       "details": "This controls file checks for a server you host. It does not bypass checks on another server.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:467"
+        "src/PC/server_mp/sv_init_mp.c:467",
+        "src/PC/server_mp/sv_init_mp.c:568"
       ],
       "guided": false,
       "control": {
         "kind": "switch"
       },
       "menuExposed": true
+    },
+    {
+      "name": "sv_rateLimiter",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/server_mp/cod2x_udp_operations_impl.h",
+              "line": 103,
+              "mechanism": "Dvar_RegisterBool",
+              "type": "bool",
+              "flags": 4096,
+              "default": {
+                "status": "literal",
+                "value": true
+              },
+              "name": "sv_rateLimiter"
+            }
+          ],
+          "flags": 4096,
+          "flagNames": [
+            "engineOwned"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": true
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Limit server queries",
+      "summary": "Limit incoming queries to a server you host.",
+      "details": "The CoD2x server query limiter bounds request traffic. This does not change a remote server's policy.",
+      "sources": [
+        "src/PC/server_mp/cod2x_udp_operations_impl.h:103"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "switch"
+      }
+    },
+    {
+      "name": "sv_rateLimiterRequestCount",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/server_mp/cod2x_udp_operations_impl.h",
+              "line": 104,
+              "mechanism": "Dvar_RegisterInt",
+              "type": "int",
+              "flags": 64,
+              "default": {
+                "status": "literal",
+                "value": 0
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 2147483647
+              },
+              "name": "sv_rateLimiterRequestCount"
+            }
+          ],
+          "flags": 64,
+          "flagNames": [
+            "readOnly"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": false
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Server query count",
+      "summary": "Read the server query-limiter request counter.",
+      "details": "This is a read-only diagnostic, not a personal network preference.",
+      "sources": [
+        "src/PC/server_mp/cod2x_udp_operations_impl.h:104"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
+    },
+    {
+      "name": "sv_rateLimiterUniqueIPCount",
+      "availability": "registered",
+      "variants": {
+        "cod2x": {
+          "sites": [
+            {
+              "path": "src/PC/server_mp/cod2x_udp_operations_impl.h",
+              "line": 105,
+              "mechanism": "Dvar_RegisterInt",
+              "type": "int",
+              "flags": 64,
+              "default": {
+                "status": "literal",
+                "value": 0
+              },
+              "minimum": {
+                "status": "literal",
+                "value": 0
+              },
+              "maximum": {
+                "status": "literal",
+                "value": 2147483647
+              },
+              "name": "sv_rateLimiterUniqueIPCount"
+            }
+          ],
+          "flags": 64,
+          "flagNames": [
+            "readOnly"
+          ],
+          "flagsDynamic": false,
+          "serverControlled": false,
+          "editable": false
+        }
+      },
+      "cod2x": "added",
+      "origins": [
+        "cod2x"
+      ],
+      "group": "net",
+      "title": "Unique query addresses",
+      "summary": "Read the server query-limiter address counter.",
+      "details": "This is a read-only diagnostic, not a personal network preference.",
+      "sources": [
+        "src/PC/server_mp/cod2x_udp_operations_impl.h:105"
+      ],
+      "guided": false,
+      "control": {
+        "kind": "number"
+      }
     },
     {
       "name": "sv_reconnectlimit",
@@ -52481,7 +52735,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 478,
+              "line": 579,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -52551,7 +52805,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:478"
+        "src/PC/server_mp/sv_init_mp.c:478",
+        "src/PC/server_mp/sv_init_mp.c:579"
       ],
       "guided": false,
       "control": {
@@ -52566,7 +52821,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 471,
+              "line": 572,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4168,
@@ -52622,7 +52877,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:471"
+        "src/PC/server_mp/sv_init_mp.c:471",
+        "src/PC/server_mp/sv_init_mp.c:572"
       ],
       "guided": false,
       "control": {
@@ -52637,7 +52893,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 470,
+              "line": 571,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4168,
@@ -52693,7 +52949,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:470"
+        "src/PC/server_mp/sv_init_mp.c:470",
+        "src/PC/server_mp/sv_init_mp.c:571"
       ],
       "guided": false,
       "control": {
@@ -52777,7 +53034,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 466,
+              "line": 567,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4168,
@@ -52849,7 +53106,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:466"
+        "src/PC/server_mp/sv_init_mp.c:466",
+        "src/PC/server_mp/sv_init_mp.c:567"
       ],
       "guided": false,
       "control": {
@@ -52864,7 +53122,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 489,
+              "line": 590,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -52916,7 +53174,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:489"
+        "src/PC/server_mp/sv_init_mp.c:489",
+        "src/PC/server_mp/sv_init_mp.c:590"
       ],
       "guided": false,
       "control": {
@@ -52931,7 +53190,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 461,
+              "line": 562,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4096,
@@ -52983,7 +53242,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:461"
+        "src/PC/server_mp/sv_init_mp.c:461",
+        "src/PC/server_mp/sv_init_mp.c:562"
       ],
       "guided": false,
       "control": {
@@ -52998,7 +53258,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 475,
+              "line": 576,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -53066,7 +53326,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:475"
+        "src/PC/server_mp/sv_init_mp.c:475",
+        "src/PC/server_mp/sv_init_mp.c:576"
       ],
       "guided": false,
       "control": {
@@ -53081,7 +53342,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 463,
+              "line": 564,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4109,
@@ -53139,7 +53400,8 @@
       "summary": "Allow voice communication on a server you host.",
       "details": "This is a hosted-server preference, not a local volume control.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:463"
+        "src/PC/server_mp/sv_init_mp.c:463",
+        "src/PC/server_mp/sv_init_mp.c:564"
       ],
       "guided": false,
       "control": {
@@ -53155,7 +53417,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 464,
+              "line": 565,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4104,
@@ -53225,7 +53487,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:464"
+        "src/PC/server_mp/sv_init_mp.c:464",
+        "src/PC/server_mp/sv_init_mp.c:565"
       ],
       "guided": false,
       "control": {
@@ -53240,7 +53503,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 497,
+              "line": 598,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4097,
@@ -53294,7 +53557,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:497"
+        "src/PC/server_mp/sv_init_mp.c:497",
+        "src/PC/server_mp/sv_init_mp.c:598"
       ],
       "guided": false,
       "control": {
@@ -53309,7 +53573,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 498,
+              "line": 599,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -53363,7 +53627,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:498"
+        "src/PC/server_mp/sv_init_mp.c:498",
+        "src/PC/server_mp/sv_init_mp.c:599"
       ],
       "guided": false,
       "control": {
@@ -53378,7 +53643,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 496,
+              "line": 597,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -53432,7 +53697,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:496"
+        "src/PC/server_mp/sv_init_mp.c:496",
+        "src/PC/server_mp/sv_init_mp.c:597"
       ],
       "guided": false,
       "control": {
@@ -53447,7 +53713,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_init_mp.c",
-              "line": 476,
+              "line": 577,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -53515,7 +53781,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/PC/server_mp/sv_init_mp.c:476"
+        "src/PC/server_mp/sv_init_mp.c:476",
+        "src/PC/server_mp/sv_init_mp.c:577"
       ],
       "guided": false,
       "control": {
@@ -53530,7 +53797,7 @@
           "sites": [
             {
               "path": "src/Mac/Main/mac_main.c",
-              "line": 108,
+              "line": 127,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4113,
@@ -53602,7 +53869,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/Mac/Main/mac_main.c:108"
+        "src/Mac/Main/mac_main.c:108",
+        "src/Mac/Main/mac_main.c:127"
       ],
       "guided": false,
       "control": {
@@ -53617,7 +53885,7 @@
           "sites": [
             {
               "path": "src/Mac/Main/mac_main.c",
-              "line": 105,
+              "line": 124,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4113,
@@ -53689,7 +53957,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/Mac/Main/mac_main.c:105"
+        "src/Mac/Main/mac_main.c:105",
+        "src/Mac/Main/mac_main.c:124"
       ],
       "guided": false,
       "control": {
@@ -53704,7 +53973,7 @@
           "sites": [
             {
               "path": "src/Mac/Main/mac_main.c",
-              "line": 107,
+              "line": 126,
               "mechanism": "Dvar_RegisterString",
               "type": "string",
               "flags": 4113,
@@ -53760,7 +54029,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/Mac/Main/mac_main.c:107"
+        "src/Mac/Main/mac_main.c:107",
+        "src/Mac/Main/mac_main.c:126"
       ],
       "guided": false,
       "control": {
@@ -53775,7 +54045,7 @@
           "sites": [
             {
               "path": "src/Mac/Main/mac_main.c",
-              "line": 481,
+              "line": 500,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 0,
@@ -53852,6 +54122,7 @@
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
         "src/Mac/Main/mac_main.c:481",
+        "src/Mac/Main/mac_main.c:500",
         "src/PC/gfx_d3d/r_dvars.c:532"
       ],
       "guided": false,
@@ -53867,7 +54138,7 @@
           "sites": [
             {
               "path": "src/Mac/Main/mac_main.c",
-              "line": 106,
+              "line": 125,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4113,
@@ -53939,7 +54210,8 @@
       "summary": "An engine reference setting. See Expert for its registered values and restrictions.",
       "details": "The source establishes registration metadata. Its effect has not been independently documented here.",
       "sources": [
-        "src/Mac/Main/mac_main.c:106"
+        "src/Mac/Main/mac_main.c:106",
+        "src/Mac/Main/mac_main.c:125"
       ],
       "guided": false,
       "control": {
@@ -59488,7 +59760,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 709,
+              "line": 724,
               "mechanism": "Cmd_AddCommand",
               "name": "banClient"
             }
@@ -59514,7 +59786,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:709"
+        "src/PC/server_mp/sv_ccmds_mp.c:709",
+        "src/PC/server_mp/sv_ccmds_mp.c:724"
       ],
       "bindable": false,
       "menuLabel": null
@@ -59527,7 +59800,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 708,
+              "line": 723,
               "mechanism": "Cmd_AddCommand",
               "name": "banUser"
             }
@@ -59553,7 +59826,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:708"
+        "src/PC/server_mp/sv_ccmds_mp.c:708",
+        "src/PC/server_mp/sv_ccmds_mp.c:723"
       ],
       "bindable": false,
       "menuLabel": null
@@ -59959,7 +60233,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1288,
+              "line": 225741,
               "mechanism": "Cmd_AddCommand",
               "name": "cinematic"
             }
@@ -59969,7 +60243,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1288,
+              "line": 225706,
               "mechanism": "Cmd_AddCommand",
               "name": "cinematic"
             }
@@ -59985,7 +60259,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1288"
+        "src/PC/client_mp/cl_main_mp.c:225706",
+        "src/PC/client_mp/cl_main_mp.c:225741"
       ],
       "bindable": false,
       "menuLabel": null
@@ -60037,7 +60312,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1278,
+              "line": 225731,
               "mechanism": "Cmd_AddCommand",
               "name": "clientinfo"
             }
@@ -60047,7 +60322,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1278,
+              "line": 225696,
               "mechanism": "Cmd_AddCommand",
               "name": "clientinfo"
             }
@@ -60063,7 +60338,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1278"
+        "src/PC/client_mp/cl_main_mp.c:225696",
+        "src/PC/client_mp/cl_main_mp.c:225731"
       ],
       "bindable": false,
       "menuLabel": null
@@ -60076,7 +60352,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 714,
+              "line": 729,
               "mechanism": "Cmd_AddCommand",
               "name": "clientkick"
             }
@@ -60102,7 +60378,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:714"
+        "src/PC/server_mp/sv_ccmds_mp.c:714",
+        "src/PC/server_mp/sv_ccmds_mp.c:729"
       ],
       "bindable": false,
       "menuLabel": null
@@ -60115,7 +60392,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1312,
+              "line": 225765,
               "mechanism": "Cmd_AddCommand",
               "name": "closemenu"
             }
@@ -60125,7 +60402,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1312,
+              "line": 225730,
               "mechanism": "Cmd_AddCommand",
               "name": "closemenu"
             }
@@ -60141,7 +60418,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1312"
+        "src/PC/client_mp/cl_main_mp.c:225730",
+        "src/PC/client_mp/cl_main_mp.c:225765"
       ],
       "bindable": false,
       "menuLabel": null
@@ -60154,7 +60432,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1276,
+              "line": 225729,
               "mechanism": "Cmd_AddCommand",
               "name": "cmd"
             }
@@ -60164,7 +60442,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1276,
+              "line": 225694,
               "mechanism": "Cmd_AddCommand",
               "name": "cmd"
             }
@@ -60180,7 +60458,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1276"
+        "src/PC/client_mp/cl_main_mp.c:225694",
+        "src/PC/client_mp/cl_main_mp.c:225729"
       ],
       "bindable": false,
       "menuLabel": null
@@ -60193,7 +60472,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/cmd.c",
-              "line": 648,
+              "line": 649,
               "mechanism": "Cmd_AddCommand",
               "name": "cmdlist"
             }
@@ -60203,7 +60482,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/cmd.c",
-              "line": 648,
+              "line": 649,
               "mechanism": "Cmd_AddCommand",
               "name": "cmdlist"
             }
@@ -60219,7 +60498,7 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/qcommon/cmd.c:648"
+        "src/PC/qcommon/cmd.c:649"
       ],
       "bindable": false,
       "menuLabel": null
@@ -60271,7 +60550,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1277,
+              "line": 225730,
               "mechanism": "Cmd_AddCommand",
               "name": "configstrings"
             }
@@ -60281,7 +60560,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1277,
+              "line": 225695,
               "mechanism": "Cmd_AddCommand",
               "name": "configstrings"
             }
@@ -60297,7 +60576,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1277"
+        "src/PC/client_mp/cl_main_mp.c:225695",
+        "src/PC/client_mp/cl_main_mp.c:225730"
       ],
       "bindable": false,
       "menuLabel": null
@@ -60310,7 +60590,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1291,
+              "line": 225744,
               "mechanism": "Cmd_AddCommand",
               "name": "connect"
             }
@@ -60320,7 +60600,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1291,
+              "line": 225709,
               "mechanism": "Cmd_AddCommand",
               "name": "connect"
             }
@@ -60336,7 +60616,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1291"
+        "src/PC/client_mp/cl_main_mp.c:225709",
+        "src/PC/client_mp/cl_main_mp.c:225744"
       ],
       "bindable": false,
       "menuLabel": null
@@ -60388,7 +60669,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1308,
+              "line": 225761,
               "mechanism": "Cmd_AddCommand",
               "name": "cubemapShot"
             }
@@ -60398,7 +60679,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1308,
+              "line": 225726,
               "mechanism": "Cmd_AddCommand",
               "name": "cubemapShot"
             }
@@ -60414,7 +60695,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1308"
+        "src/PC/client_mp/cl_main_mp.c:225726",
+        "src/PC/client_mp/cl_main_mp.c:225761"
       ],
       "bindable": false,
       "menuLabel": null
@@ -60508,7 +60790,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1284,
+              "line": 225737,
               "mechanism": "Cmd_AddCommand",
               "name": "demo"
             }
@@ -60518,7 +60800,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1284,
+              "line": 225702,
               "mechanism": "Cmd_AddCommand",
               "name": "demo"
             }
@@ -60534,7 +60816,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1284"
+        "src/PC/client_mp/cl_main_mp.c:225702",
+        "src/PC/client_mp/cl_main_mp.c:225737"
       ],
       "bindable": false,
       "menuLabel": null
@@ -60547,7 +60830,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 725,
+              "line": 740,
               "mechanism": "Cmd_AddCommand",
               "name": "devmap"
             }
@@ -60573,7 +60856,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:725"
+        "src/PC/server_mp/sv_ccmds_mp.c:725",
+        "src/PC/server_mp/sv_ccmds_mp.c:740"
       ],
       "bindable": false,
       "menuLabel": null
@@ -60586,7 +60870,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/files.c",
-              "line": 448,
+              "line": 518,
               "mechanism": "Cmd_AddCommand",
               "name": "dir"
             }
@@ -60612,7 +60896,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/qcommon/files.c:448"
+        "src/PC/qcommon/files.c:448",
+        "src/PC/qcommon/files.c:518"
       ],
       "bindable": false,
       "menuLabel": null
@@ -60625,7 +60910,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1281,
+              "line": 225734,
               "mechanism": "Cmd_AddCommand",
               "name": "disconnect"
             }
@@ -60635,7 +60920,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1281,
+              "line": 225699,
               "mechanism": "Cmd_AddCommand",
               "name": "disconnect"
             }
@@ -60651,7 +60936,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1281"
+        "src/PC/client_mp/cl_main_mp.c:225699",
+        "src/PC/client_mp/cl_main_mp.c:225734"
       ],
       "bindable": false,
       "menuLabel": null
@@ -60664,7 +60950,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 718,
+              "line": 733,
               "mechanism": "Cmd_AddCommand",
               "name": "dumpuser"
             }
@@ -60690,7 +60976,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:718"
+        "src/PC/server_mp/sv_ccmds_mp.c:718",
+        "src/PC/server_mp/sv_ccmds_mp.c:733"
       ],
       "bindable": false,
       "menuLabel": null
@@ -61015,7 +61302,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/cmd.c",
-              "line": 649,
+              "line": 650,
               "mechanism": "Cmd_AddCommand",
               "name": "exec"
             }
@@ -61025,7 +61312,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/cmd.c",
-              "line": 649,
+              "line": 650,
               "mechanism": "Cmd_AddCommand",
               "name": "exec"
             }
@@ -61041,7 +61328,7 @@
       "summary": "Insert a config file into the command buffer.",
       "details": "Inserted text can run more commands. This is a file name, not shell execution.",
       "sources": [
-        "src/PC/qcommon/cmd.c:649"
+        "src/PC/qcommon/cmd.c:650"
       ],
       "bindable": true,
       "menuLabel": null
@@ -61054,7 +61341,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 720,
+              "line": 735,
               "mechanism": "Cmd_AddCommand",
               "name": "fast_restart"
             }
@@ -61080,7 +61367,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:720"
+        "src/PC/server_mp/sv_ccmds_mp.c:720",
+        "src/PC/server_mp/sv_ccmds_mp.c:735"
       ],
       "bindable": false,
       "menuLabel": null
@@ -61093,7 +61381,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/files.c",
-              "line": 449,
+              "line": 519,
               "mechanism": "Cmd_AddCommand",
               "name": "fdir"
             }
@@ -61119,7 +61407,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/qcommon/files.c:449"
+        "src/PC/qcommon/files.c:449",
+        "src/PC/qcommon/files.c:519"
       ],
       "bindable": false,
       "menuLabel": null
@@ -61314,7 +61603,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1302,
+              "line": 225755,
               "mechanism": "Cmd_AddCommand",
               "name": "fs_openedList"
             }
@@ -61324,7 +61613,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1302,
+              "line": 225720,
               "mechanism": "Cmd_AddCommand",
               "name": "fs_openedList"
             }
@@ -61340,7 +61629,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1302"
+        "src/PC/client_mp/cl_main_mp.c:225720",
+        "src/PC/client_mp/cl_main_mp.c:225755"
       ],
       "bindable": false,
       "menuLabel": null
@@ -61353,7 +61643,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1303,
+              "line": 225756,
               "mechanism": "Cmd_AddCommand",
               "name": "fs_referencedList"
             }
@@ -61363,7 +61653,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1303,
+              "line": 225721,
               "mechanism": "Cmd_AddCommand",
               "name": "fs_referencedList"
             }
@@ -61379,7 +61669,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1303"
+        "src/PC/client_mp/cl_main_mp.c:225721",
+        "src/PC/client_mp/cl_main_mp.c:225756"
       ],
       "bindable": false,
       "menuLabel": null
@@ -61392,7 +61683,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/files.c",
-              "line": 447,
+              "line": 517,
               "mechanism": "Cmd_AddCommand",
               "name": "fullpath"
             }
@@ -61418,7 +61709,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/qcommon/files.c:447"
+        "src/PC/qcommon/files.c:447",
+        "src/PC/qcommon/files.c:517"
       ],
       "bindable": false,
       "menuLabel": null
@@ -61548,7 +61840,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 724,
+              "line": 739,
               "mechanism": "Cmd_AddCommand",
               "name": "gameCompleteStatus"
             }
@@ -61574,7 +61866,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:724"
+        "src/PC/server_mp/sv_ccmds_mp.c:724",
+        "src/PC/server_mp/sv_ccmds_mp.c:739"
       ],
       "bindable": false,
       "menuLabel": null
@@ -61678,7 +61971,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1294,
+              "line": 225747,
               "mechanism": "Cmd_AddCommand",
               "name": "globalservers"
             }
@@ -61688,7 +61981,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1294,
+              "line": 225712,
               "mechanism": "Cmd_AddCommand",
               "name": "globalservers"
             }
@@ -61704,7 +61997,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1294"
+        "src/PC/client_mp/cl_main_mp.c:225712",
+        "src/PC/client_mp/cl_main_mp.c:225747"
       ],
       "bindable": false,
       "menuLabel": null
@@ -61847,7 +62141,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 706,
+              "line": 721,
               "mechanism": "Cmd_AddCommand",
               "name": "heartbeat"
             }
@@ -61873,7 +62167,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:706"
+        "src/PC/server_mp/sv_ccmds_mp.c:706",
+        "src/PC/server_mp/sv_ccmds_mp.c:721"
       ],
       "bindable": false,
       "menuLabel": null
@@ -61925,7 +62220,7 @@
           "sites": [
             {
               "path": "src/Mac/Main/mac_main.c",
-              "line": 271,
+              "line": 290,
               "mechanism": "Cmd_AddCommand",
               "name": "in_restart"
             }
@@ -61951,7 +62246,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/Mac/Main/mac_main.c:271"
+        "src/Mac/Main/mac_main.c:271",
+        "src/Mac/Main/mac_main.c:290"
       ],
       "bindable": false,
       "menuLabel": null
@@ -62032,7 +62328,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 710,
+              "line": 725,
               "mechanism": "Cmd_AddCommand",
               "name": "kick"
             }
@@ -62058,7 +62354,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:710"
+        "src/PC/server_mp/sv_ccmds_mp.c:710",
+        "src/PC/server_mp/sv_ccmds_mp.c:725"
       ],
       "bindable": false,
       "menuLabel": null
@@ -62123,7 +62420,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 727,
+              "line": 742,
               "mechanism": "Cmd_AddCommand",
               "name": "killserver"
             }
@@ -62149,7 +62446,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:727"
+        "src/PC/server_mp/sv_ccmds_mp.c:727",
+        "src/PC/server_mp/sv_ccmds_mp.c:742"
       ],
       "bindable": false,
       "menuLabel": null
@@ -62240,7 +62538,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1310,
+              "line": 225763,
               "mechanism": "Cmd_AddCommand",
               "name": "localizeSoundAliasFiles"
             }
@@ -62250,7 +62548,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1310,
+              "line": 225728,
               "mechanism": "Cmd_AddCommand",
               "name": "localizeSoundAliasFiles"
             }
@@ -62266,7 +62564,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1310"
+        "src/PC/client_mp/cl_main_mp.c:225728",
+        "src/PC/client_mp/cl_main_mp.c:225763"
       ],
       "bindable": false,
       "menuLabel": null
@@ -62279,7 +62578,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1293,
+              "line": 225746,
               "mechanism": "Cmd_AddCommand",
               "name": "localservers"
             }
@@ -62289,7 +62588,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1293,
+              "line": 225711,
               "mechanism": "Cmd_AddCommand",
               "name": "localservers"
             }
@@ -62305,7 +62604,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1293"
+        "src/PC/client_mp/cl_main_mp.c:225711",
+        "src/PC/client_mp/cl_main_mp.c:225746"
       ],
       "bindable": false,
       "menuLabel": null
@@ -62318,7 +62618,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1290,
+              "line": 225743,
               "mechanism": "Cmd_AddCommand",
               "name": "logo"
             }
@@ -62328,7 +62628,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1290,
+              "line": 225708,
               "mechanism": "Cmd_AddCommand",
               "name": "logo"
             }
@@ -62344,7 +62644,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1290"
+        "src/PC/client_mp/cl_main_mp.c:225708",
+        "src/PC/client_mp/cl_main_mp.c:225743"
       ],
       "bindable": false,
       "menuLabel": null
@@ -62396,7 +62697,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 721,
+              "line": 736,
               "mechanism": "Cmd_AddCommand",
               "name": "map"
             }
@@ -62422,7 +62723,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:721"
+        "src/PC/server_mp/sv_ccmds_mp.c:721",
+        "src/PC/server_mp/sv_ccmds_mp.c:736"
       ],
       "bindable": false,
       "menuLabel": null
@@ -62435,7 +62737,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 719,
+              "line": 734,
               "mechanism": "Cmd_AddCommand",
               "name": "map_restart"
             }
@@ -62461,7 +62763,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:719"
+        "src/PC/server_mp/sv_ccmds_mp.c:719",
+        "src/PC/server_mp/sv_ccmds_mp.c:734"
       ],
       "bindable": false,
       "menuLabel": null
@@ -62474,7 +62777,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 723,
+              "line": 738,
               "mechanism": "Cmd_AddCommand",
               "name": "map_rotate"
             }
@@ -62500,7 +62803,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:723"
+        "src/PC/server_mp/sv_ccmds_mp.c:723",
+        "src/PC/server_mp/sv_ccmds_mp.c:738"
       ],
       "bindable": false,
       "menuLabel": null
@@ -62581,7 +62885,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_memory.c",
-              "line": 389,
+              "line": 390,
               "mechanism": "Cmd_AddCommand",
               "name": "meminfo"
             }
@@ -62591,7 +62895,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_memory.c",
-              "line": 389,
+              "line": 390,
               "mechanism": "Cmd_AddCommand",
               "name": "meminfo"
             }
@@ -62607,7 +62911,7 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/universal/com_memory.c:389"
+        "src/PC/universal/com_memory.c:390"
       ],
       "bindable": false,
       "menuLabel": null
@@ -62789,7 +63093,7 @@
           "sites": [
             {
               "path": "src/Mac/Main/mac_main.c",
-              "line": 273,
+              "line": 292,
               "mechanism": "Cmd_AddCommand",
               "name": "net_restart"
             }
@@ -62815,7 +63119,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/Mac/Main/mac_main.c:273"
+        "src/Mac/Main/mac_main.c:273",
+        "src/Mac/Main/mac_main.c:292"
       ],
       "bindable": false,
       "menuLabel": null
@@ -62932,7 +63237,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 707,
+              "line": 722,
               "mechanism": "Cmd_AddCommand",
               "name": "onlykick"
             }
@@ -62958,7 +63263,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:707"
+        "src/PC/server_mp/sv_ccmds_mp.c:707",
+        "src/PC/server_mp/sv_ccmds_mp.c:722"
       ],
       "bindable": false,
       "menuLabel": null
@@ -62971,7 +63277,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1311,
+              "line": 225764,
               "mechanism": "Cmd_AddCommand",
               "name": "openmenu"
             }
@@ -62981,7 +63287,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1311,
+              "line": 225729,
               "mechanism": "Cmd_AddCommand",
               "name": "openmenu"
             }
@@ -62997,7 +63303,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1311"
+        "src/PC/client_mp/cl_main_mp.c:225729",
+        "src/PC/client_mp/cl_main_mp.c:225764"
       ],
       "bindable": false,
       "menuLabel": null
@@ -63010,7 +63317,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1309,
+              "line": 225762,
               "mechanism": "Cmd_AddCommand",
               "name": "openScriptMenu"
             }
@@ -63020,7 +63327,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1309,
+              "line": 225727,
               "mechanism": "Cmd_AddCommand",
               "name": "openScriptMenu"
             }
@@ -63036,7 +63343,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1309"
+        "src/PC/client_mp/cl_main_mp.c:225727",
+        "src/PC/client_mp/cl_main_mp.c:225762"
       ],
       "bindable": false,
       "menuLabel": null
@@ -63049,7 +63357,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/files.c",
-              "line": 446,
+              "line": 516,
               "mechanism": "Cmd_AddCommand",
               "name": "path"
             }
@@ -63075,7 +63383,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/qcommon/files.c:446"
+        "src/PC/qcommon/files.c:446",
+        "src/PC/qcommon/files.c:516"
       ],
       "bindable": false,
       "menuLabel": null
@@ -63088,7 +63397,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1297,
+              "line": 225750,
               "mechanism": "Cmd_AddCommand",
               "name": "ping"
             }
@@ -63098,7 +63407,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1297,
+              "line": 225715,
               "mechanism": "Cmd_AddCommand",
               "name": "ping"
             }
@@ -63114,7 +63423,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1297"
+        "src/PC/client_mp/cl_main_mp.c:225715",
+        "src/PC/client_mp/cl_main_mp.c:225750"
       ],
       "bindable": false,
       "menuLabel": null
@@ -63452,7 +63762,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1296,
+              "line": 225749,
               "mechanism": "Cmd_AddCommand",
               "name": "rcon"
             }
@@ -63462,7 +63772,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1296,
+              "line": 225714,
               "mechanism": "Cmd_AddCommand",
               "name": "rcon"
             }
@@ -63478,7 +63788,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1296"
+        "src/PC/client_mp/cl_main_mp.c:225714",
+        "src/PC/client_mp/cl_main_mp.c:225749"
       ],
       "bindable": false,
       "menuLabel": null
@@ -63491,7 +63802,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1292,
+              "line": 225745,
               "mechanism": "Cmd_AddCommand",
               "name": "reconnect"
             }
@@ -63501,7 +63812,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1292,
+              "line": 225710,
               "mechanism": "Cmd_AddCommand",
               "name": "reconnect"
             }
@@ -63517,7 +63828,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1292"
+        "src/PC/client_mp/cl_main_mp.c:225710",
+        "src/PC/client_mp/cl_main_mp.c:225745"
       ],
       "bindable": false,
       "menuLabel": null
@@ -63530,7 +63842,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1282,
+              "line": 225735,
               "mechanism": "Cmd_AddCommand",
               "name": "record"
             }
@@ -63540,7 +63852,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1282,
+              "line": 225700,
               "mechanism": "Cmd_AddCommand",
               "name": "record"
             }
@@ -63556,7 +63868,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1282"
+        "src/PC/client_mp/cl_main_mp.c:225700",
+        "src/PC/client_mp/cl_main_mp.c:225735"
       ],
       "bindable": false,
       "menuLabel": null
@@ -63692,13 +64005,13 @@
             },
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 623,
+              "line": 638,
               "mechanism": "Cmd_AddCommand",
               "name": "say"
             },
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 733,
+              "line": 748,
               "mechanism": "Cmd_AddCommand",
               "name": "say"
             },
@@ -63764,7 +64077,9 @@
         "src/PC/game_mp/g_cmds_mp.c:1058",
         "src/PC/game_mp/g_svcmds_mp.c:303",
         "src/PC/server_mp/sv_ccmds_mp.c:623",
-        "src/PC/server_mp/sv_ccmds_mp.c:733"
+        "src/PC/server_mp/sv_ccmds_mp.c:638",
+        "src/PC/server_mp/sv_ccmds_mp.c:733",
+        "src/PC/server_mp/sv_ccmds_mp.c:748"
       ],
       "bindable": true,
       "menuLabel": null
@@ -63946,7 +64261,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 736,
+              "line": 751,
               "mechanism": "Cmd_AddCommand",
               "name": "scriptUsage"
             }
@@ -63972,7 +64287,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:736"
+        "src/PC/server_mp/sv_ccmds_mp.c:736",
+        "src/PC/server_mp/sv_ccmds_mp.c:751"
       ],
       "bindable": false,
       "menuLabel": null
@@ -63985,7 +64301,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 716,
+              "line": 731,
               "mechanism": "Cmd_AddCommand",
               "name": "serverinfo"
             }
@@ -64011,7 +64327,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:716"
+        "src/PC/server_mp/sv_ccmds_mp.c:716",
+        "src/PC/server_mp/sv_ccmds_mp.c:731"
       ],
       "bindable": false,
       "menuLabel": null
@@ -64024,7 +64341,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1298,
+              "line": 225751,
               "mechanism": "Cmd_AddCommand",
               "name": "serverstatus"
             }
@@ -64034,7 +64351,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1298,
+              "line": 225716,
               "mechanism": "Cmd_AddCommand",
               "name": "serverstatus"
             }
@@ -64050,7 +64367,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1298"
+        "src/PC/client_mp/cl_main_mp.c:225716",
+        "src/PC/client_mp/cl_main_mp.c:225751"
       ],
       "bindable": false,
       "menuLabel": null
@@ -64141,7 +64459,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1300,
+              "line": 225753,
               "mechanism": "Cmd_AddCommand",
               "name": "setenv"
             }
@@ -64151,7 +64469,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1300,
+              "line": 225718,
               "mechanism": "Cmd_AddCommand",
               "name": "setenv"
             }
@@ -64167,7 +64485,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1300"
+        "src/PC/client_mp/cl_main_mp.c:225718",
+        "src/PC/client_mp/cl_main_mp.c:225753"
       ],
       "bindable": false,
       "menuLabel": null
@@ -64219,7 +64538,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1307,
+              "line": 225760,
               "mechanism": "Cmd_AddCommand",
               "name": "setRecommended"
             }
@@ -64229,7 +64548,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1307,
+              "line": 225725,
               "mechanism": "Cmd_AddCommand",
               "name": "setRecommended"
             }
@@ -64245,7 +64564,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1307"
+        "src/PC/client_mp/cl_main_mp.c:225725",
+        "src/PC/client_mp/cl_main_mp.c:225760"
       ],
       "bindable": false,
       "menuLabel": null
@@ -64388,7 +64708,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1301,
+              "line": 225754,
               "mechanism": "Cmd_AddCommand",
               "name": "showip"
             }
@@ -64398,7 +64718,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1301,
+              "line": 225719,
               "mechanism": "Cmd_AddCommand",
               "name": "showip"
             }
@@ -64414,7 +64734,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1301"
+        "src/PC/client_mp/cl_main_mp.c:225719",
+        "src/PC/client_mp/cl_main_mp.c:225754"
       ],
       "bindable": false,
       "menuLabel": null
@@ -64583,7 +64904,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_sndalias_load_obj.c",
-              "line": 1895,
+              "line": 1896,
               "mechanism": "Cmd_AddCommand",
               "name": "snd_refreshVolumeModGroups"
             }
@@ -64593,7 +64914,7 @@
           "sites": [
             {
               "path": "src/PC/universal/com_sndalias_load_obj.c",
-              "line": 1895,
+              "line": 1896,
               "mechanism": "Cmd_AddCommand",
               "name": "snd_refreshVolumeModGroups"
             }
@@ -64609,7 +64930,7 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/universal/com_sndalias_load_obj.c:1895"
+        "src/PC/universal/com_sndalias_load_obj.c:1896"
       ],
       "bindable": false,
       "menuLabel": null
@@ -64622,7 +64943,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1280,
+              "line": 225733,
               "mechanism": "Cmd_AddCommand",
               "name": "snd_restart"
             }
@@ -64632,7 +64953,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1280,
+              "line": 225698,
               "mechanism": "Cmd_AddCommand",
               "name": "snd_restart"
             }
@@ -64648,7 +64969,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1280"
+        "src/PC/client_mp/cl_main_mp.c:225698",
+        "src/PC/client_mp/cl_main_mp.c:225733"
       ],
       "bindable": false,
       "menuLabel": null
@@ -64700,7 +65022,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1306,
+              "line": 225759,
               "mechanism": "Cmd_AddCommand",
               "name": "startSingleplayer"
             }
@@ -64710,7 +65032,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1306,
+              "line": 225724,
               "mechanism": "Cmd_AddCommand",
               "name": "startSingleplayer"
             }
@@ -64726,7 +65048,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1306"
+        "src/PC/client_mp/cl_main_mp.c:225724",
+        "src/PC/client_mp/cl_main_mp.c:225759"
       ],
       "bindable": false,
       "menuLabel": null
@@ -64778,7 +65101,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 715,
+              "line": 730,
               "mechanism": "Cmd_AddCommand",
               "name": "status"
             }
@@ -64804,7 +65127,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:715"
+        "src/PC/server_mp/sv_ccmds_mp.c:715",
+        "src/PC/server_mp/sv_ccmds_mp.c:730"
       ],
       "bindable": false,
       "menuLabel": null
@@ -64817,7 +65141,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1283,
+              "line": 225736,
               "mechanism": "Cmd_AddCommand",
               "name": "stoprecord"
             }
@@ -64827,7 +65151,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1283,
+              "line": 225701,
               "mechanism": "Cmd_AddCommand",
               "name": "stoprecord"
             }
@@ -64843,7 +65167,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1283"
+        "src/PC/client_mp/cl_main_mp.c:225701",
+        "src/PC/client_mp/cl_main_mp.c:225736"
       ],
       "bindable": false,
       "menuLabel": null
@@ -64856,7 +65181,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 737,
+              "line": 752,
               "mechanism": "Cmd_AddCommand",
               "name": "stringUsage"
             }
@@ -64882,7 +65207,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:737"
+        "src/PC/server_mp/sv_ccmds_mp.c:737",
+        "src/PC/server_mp/sv_ccmds_mp.c:752"
       ],
       "bindable": false,
       "menuLabel": null
@@ -64895,7 +65221,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 717,
+              "line": 732,
               "mechanism": "Cmd_AddCommand",
               "name": "systeminfo"
             }
@@ -64921,7 +65247,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:717"
+        "src/PC/server_mp/sv_ccmds_mp.c:717",
+        "src/PC/server_mp/sv_ccmds_mp.c:732"
       ],
       "bindable": false,
       "menuLabel": null
@@ -65070,13 +65397,13 @@
             },
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 624,
+              "line": 639,
               "mechanism": "Cmd_AddCommand",
               "name": "tell"
             },
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 734,
+              "line": 749,
               "mechanism": "Cmd_AddCommand",
               "name": "tell"
             },
@@ -65129,7 +65456,9 @@
         "src/PC/cgame_mp/cg_consolecmds_mp.c:370",
         "src/PC/game_mp/g_cmds_mp.c:1074",
         "src/PC/server_mp/sv_ccmds_mp.c:624",
-        "src/PC/server_mp/sv_ccmds_mp.c:734"
+        "src/PC/server_mp/sv_ccmds_mp.c:639",
+        "src/PC/server_mp/sv_ccmds_mp.c:734",
+        "src/PC/server_mp/sv_ccmds_mp.c:749"
       ],
       "bindable": false,
       "menuLabel": null
@@ -65181,7 +65510,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 712,
+              "line": 727,
               "mechanism": "Cmd_AddCommand",
               "name": "tempBanClient"
             }
@@ -65207,7 +65536,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:712"
+        "src/PC/server_mp/sv_ccmds_mp.c:712",
+        "src/PC/server_mp/sv_ccmds_mp.c:727"
       ],
       "bindable": false,
       "menuLabel": null
@@ -65220,7 +65550,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 711,
+              "line": 726,
               "mechanism": "Cmd_AddCommand",
               "name": "tempBanUser"
             }
@@ -65246,7 +65576,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:711"
+        "src/PC/server_mp/sv_ccmds_mp.c:711",
+        "src/PC/server_mp/sv_ccmds_mp.c:726"
       ],
       "bindable": false,
       "menuLabel": null
@@ -65259,7 +65590,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1285,
+              "line": 225738,
               "mechanism": "Cmd_AddCommand",
               "name": "timedemo"
             }
@@ -65269,7 +65600,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1285,
+              "line": 225703,
               "mechanism": "Cmd_AddCommand",
               "name": "timedemo"
             }
@@ -65285,7 +65616,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1285"
+        "src/PC/client_mp/cl_main_mp.c:225703",
+        "src/PC/client_mp/cl_main_mp.c:225738"
       ],
       "bindable": false,
       "menuLabel": null
@@ -65454,7 +65786,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1299,
+              "line": 225752,
               "mechanism": "Cmd_AddCommand",
               "name": "toggleMenu"
             }
@@ -65464,7 +65796,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1299,
+              "line": 225717,
               "mechanism": "Cmd_AddCommand",
               "name": "toggleMenu"
             }
@@ -65480,7 +65812,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1299"
+        "src/PC/client_mp/cl_main_mp.c:225717",
+        "src/PC/client_mp/cl_main_mp.c:225752"
       ],
       "bindable": false,
       "menuLabel": null
@@ -65571,7 +65904,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/files.c",
-              "line": 450,
+              "line": 520,
               "mechanism": "Cmd_AddCommand",
               "name": "touchFile"
             }
@@ -65597,7 +65930,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/qcommon/files.c:450"
+        "src/PC/qcommon/files.c:450",
+        "src/PC/qcommon/files.c:520"
       ],
       "bindable": false,
       "menuLabel": null
@@ -65701,7 +66035,7 @@
           "sites": [
             {
               "path": "src/PC/server_mp/sv_ccmds_mp.c",
-              "line": 713,
+              "line": 728,
               "mechanism": "Cmd_AddCommand",
               "name": "unbanUser"
             }
@@ -65727,7 +66061,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/server_mp/sv_ccmds_mp.c:713"
+        "src/PC/server_mp/sv_ccmds_mp.c:713",
+        "src/PC/server_mp/sv_ccmds_mp.c:728"
       ],
       "bindable": false,
       "menuLabel": null
@@ -65857,7 +66192,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1304,
+              "line": 225757,
               "mechanism": "Cmd_AddCommand",
               "name": "updatehunkusage"
             }
@@ -65867,7 +66202,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1304,
+              "line": 225722,
               "mechanism": "Cmd_AddCommand",
               "name": "updatehunkusage"
             }
@@ -65883,7 +66218,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1304"
+        "src/PC/client_mp/cl_main_mp.c:225722",
+        "src/PC/client_mp/cl_main_mp.c:225757"
       ],
       "bindable": false,
       "menuLabel": null
@@ -65896,7 +66232,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1305,
+              "line": 225758,
               "mechanism": "Cmd_AddCommand",
               "name": "updatescreen"
             }
@@ -65906,7 +66242,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1305,
+              "line": 225723,
               "mechanism": "Cmd_AddCommand",
               "name": "updatescreen"
             }
@@ -65922,7 +66258,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1305"
+        "src/PC/client_mp/cl_main_mp.c:225723",
+        "src/PC/client_mp/cl_main_mp.c:225758"
       ],
       "bindable": false,
       "menuLabel": null
@@ -65935,7 +66272,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1279,
+              "line": 225732,
               "mechanism": "Cmd_AddCommand",
               "name": "vid_restart"
             }
@@ -65945,7 +66282,7 @@
           "sites": [
             {
               "path": "src/PC/client_mp/cl_main_mp.c",
-              "line": 1279,
+              "line": 225697,
               "mechanism": "Cmd_AddCommand",
               "name": "vid_restart"
             }
@@ -65961,7 +66298,8 @@
       "summary": "An engine command. See Expert for where it is registered.",
       "details": "Command availability may depend on the current game state. Registration alone does not establish that it is safe or useful in a bind.",
       "sources": [
-        "src/PC/client_mp/cl_main_mp.c:1279"
+        "src/PC/client_mp/cl_main_mp.c:225697",
+        "src/PC/client_mp/cl_main_mp.c:225732"
       ],
       "bindable": false,
       "menuLabel": null
@@ -66143,7 +66481,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/cmd.c",
-              "line": 650,
+              "line": 651,
               "mechanism": "Cmd_AddCommand",
               "name": "vstr"
             }
@@ -66153,7 +66491,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/cmd.c",
-              "line": 650,
+              "line": 651,
               "mechanism": "Cmd_AddCommand",
               "name": "vstr"
             }
@@ -66169,7 +66507,7 @@
       "summary": "Insert the commands stored in a setting.",
       "details": "Inserted text can run more commands. The engine has no general loop protection; a text editor must check chains that never yield.",
       "sources": [
-        "src/PC/qcommon/cmd.c:650"
+        "src/PC/qcommon/cmd.c:651"
       ],
       "bindable": true,
       "menuLabel": null
@@ -66182,7 +66520,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/cmd.c",
-              "line": 651,
+              "line": 652,
               "mechanism": "Cmd_AddCommand",
               "name": "wait"
             }
@@ -66192,7 +66530,7 @@
           "sites": [
             {
               "path": "src/PC/qcommon/cmd.c",
-              "line": 651,
+              "line": 652,
               "mechanism": "Cmd_AddCommand",
               "name": "wait"
             }
@@ -66208,7 +66546,7 @@
       "summary": "Pause command execution for a number of command-buffer passes.",
       "details": "CoD2x competitive servers restrict wait. Its count measures command-buffer passes, not milliseconds or rendered frames.",
       "sources": [
-        "src/PC/qcommon/cmd.c:651"
+        "src/PC/qcommon/cmd.c:652"
       ],
       "bindable": true,
       "menuLabel": null
@@ -66459,7 +66797,7 @@
       },
       {
         "path": "src/PC/game_mp/g_scr_main_mp.c",
-        "line": 3675,
+        "line": 3690,
         "mechanism": "Dvar_RegisterString_mac",
         "function": "GScr_MakeDvarServerInfo",
         "nameExpression": "dvarName"

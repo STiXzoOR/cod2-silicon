@@ -107,9 +107,9 @@
     },
     "m_rinput_hz_max": {
       "group": "aim",
-      "title": "Mouse input rate limit",
-      "summary": "Set the CoD2x input-rate limit.",
-      "details": "The adapter and input device determine the observed rate. A configured limit is not a measurement."
+      "title": "Peak measured mouse input rate",
+      "summary": "Read the highest input rate measured by the game.",
+      "details": "This is a read-only peak measurement from the native input statistics. It is not a configured limit or a promised device polling rate."
     },
     "rate": {
       "group": "net",
@@ -436,7 +436,7 @@
       "group": "hud",
       "title": "Show the HUD",
       "summary": "Set the heads-up display preference.",
-      "details": "The setting is cheat-protected in the registration. Config Studio presents it as a protected reference.",
+      "details": "This is an archived, editable preference in the described source. The game state can also determine which HUD elements are drawn.",
       "menuExposed": true
     },
     "cg_drawspectatedplayername": {
@@ -739,6 +739,24 @@
       "summary": "Set the height used for profile text.",
       "details": "Restored in the readiness integration source. The registration facts describe this build.",
       "group": "other"
+    },
+    "sv_ratelimiter": {
+      "title": "Limit server queries",
+      "summary": "Limit incoming queries to a server you host.",
+      "details": "The CoD2x server query limiter bounds request traffic. This does not change a remote server's policy.",
+      "group": "net"
+    },
+    "sv_ratelimiterrequestcount": {
+      "title": "Server query count",
+      "summary": "Read the server query-limiter request counter.",
+      "details": "This is a read-only diagnostic, not a personal network preference.",
+      "group": "net"
+    },
+    "sv_ratelimiteruniqueipcount": {
+      "title": "Unique query addresses",
+      "summary": "Read the server query-limiter address counter.",
+      "details": "This is a read-only diagnostic, not a personal network preference.",
+      "group": "net"
     }
   },
   "commands": {

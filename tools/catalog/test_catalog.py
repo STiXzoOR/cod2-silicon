@@ -93,7 +93,7 @@ void Init(void) {
     for (int i = 0; i < 2; i++) Dvar_RegisterVec3(names[i], 0, 0, 0, -1, 1, 0x1080);
     Dvar_RegisterEnum("choice", choices, 1, 1);
     Dvar_RegisterString("home", Sys_DefaultHomePath(), 0x1010);
-    CL_AddCgameCommand(commandsList[i].cmd);
+    for (int i = 0; i < 1; i++) CL_AddCgameCommand(commandsList[i].cmd);
 }
 ''')
         facts = catalog.extract_source(self.root, 'stock')
@@ -169,6 +169,52 @@ void Init(void) {
             f.write('void Other(void) { Dvar_RegisterLong("newtype", 1, 0, 10, 1); }\n')
         with self.assertRaisesRegex(catalog.CatalogError, 'unreviewed registration constructor'):
             catalog.extract_source(self.root, 'stock')
+
+    def test_included_implementation_registrations_and_macros_are_covered(self):
+        (self.root / 'src/impl.h').write_text('#ifndef IMPL_H\n#define IMPL_H\n#define UDP_DEFAULT 4\nstatic void HeaderInit(void) { Dvar_RegisterInt("udp", UDP_DEFAULT, 1, 64, 0x1000); Cmd_AddCommand("udp_status", Status); }\n#endif\n')
+        (self.root / 'src/fixture.c').write_text('#include "impl.h"\nvoid Init(void) { HeaderInit(); }\n')
+        facts = catalog.extract_source(self.root, 'stock')
+        self.assertEqual(facts['settings']['udp'][0]['default']['value'], 4)
+        self.assertEqual(facts['settings']['udp'][0]['path'], 'src/impl.h')
+        self.assertEqual(facts['settings']['udp'][0]['line'], 4)
+        self.assertEqual(set(facts['commands']), {'udp_status'})
+
+    def test_nested_headers_do_not_duplicate_sites_between_translation_units(self):
+        (self.root / 'src/defs.h').write_text('#define SHARED_DEFAULT 8\n')
+        (self.root / 'src/impl.h').write_text('#include "defs.h"\nstatic void HeaderInit(void) { Dvar_RegisterBool("shared", 1, SHARED_DEFAULT); }\n')
+        (self.root / 'src/fixture.c').write_text('#include "impl.h"\n')
+        (self.root / 'src/second.c').write_text('#include "impl.h"\n')
+        facts = catalog.extract_source(self.root, 'stock')
+        self.assertEqual(len(facts['settings']['shared']), 1)
+        self.assertEqual(facts['settings']['shared'][0]['flags'], 8)
+        self.assertEqual(facts['settings']['shared'][0]['line'], 2)
+
+    def test_constant_name_index_does_not_claim_the_rest_of_the_table(self):
+        (self.root / 'src/fixture.c').write_text('static const char *names[] = {"present", "never_registered"}; void Init(void) { Dvar_RegisterBool(names[0], 0, 1); }')
+        facts = catalog.extract_source(self.root, 'stock')
+        self.assertEqual(set(facts['settings']), {'present'})
+
+    def test_integer_division_uses_c_semantics(self):
+        (self.root / 'src/fixture.c').write_text('void Init(void) { Dvar_RegisterFloat("fraction", 5/2, 0, 10, 1); }')
+        site = catalog.extract_source(self.root, 'stock')['settings']['fraction'][0]
+        self.assertEqual(site['default']['value'], 2)
+
+    def test_unknown_native_glob_definition_fails_closed(self):
+        (self.root / 'cmake').mkdir()
+        (self.root / 'cmake/macos-arm64.cmake').write_text('file(GLOB_RECURSE MACOS_PC_C "${COD2_SRC_DIR}/PC/*.c" "${COD2_SRC_DIR}/added/*.c")\nset(MACOS_C ${MACOS_PC_C} ${MACOS_MAC_C} ${MACOS_STUBS_C} ${MACOS_ROOT_C})\n')
+        with self.assertRaisesRegex(catalog.CatalogError, 'unreviewed source selection'):
+            catalog.extract_source(self.root, 'stock')
+
+    def test_include_cycle_cache_does_not_hide_a_later_enabled_registration(self):
+        (self.root / 'src/a.h').write_text('#ifndef A_H\n#define A_H\n#include "b.h"\n#ifndef DISABLE_A\nstatic void A(void) { Dvar_RegisterBool("a", 0, 1); }\n#endif\n#endif\n')
+        (self.root / 'src/b.h').write_text('#ifndef B_H\n#define B_H\n#include "a.h"\nstatic void B(void) { Dvar_RegisterBool("b", 0, 1); }\n#endif\n')
+        (self.root / 'src/fixture.c').write_text('#define DISABLE_A 1\n#include "a.h"\n')
+        (self.root / 'src/second.c').write_text('#include "b.h"\n')
+        self.assertEqual(set(catalog.extract_source(self.root, 'stock')['settings']), {'a', 'b'})
+
+    def test_system_include_and_blank_lines_preserve_registration_line(self):
+        (self.root / 'src/fixture.c').write_text('\n\n#include <stdio.h>\n\nvoid Init(void) { Dvar_RegisterBool("line", 0, 1); }\n')
+        self.assertEqual(catalog.extract_source(self.root, 'stock')['settings']['line'][0]['line'], 5)
 
 
 if __name__ == '__main__':

@@ -28,7 +28,9 @@ names absent from that source in a **scratch copy file** and pass `--copy`.
 ## Facts and scope
 
 - `variants.stock` and `variants.cod2x` hold **all registration sites**, including
-  renderer import calls and reviewed table/alias indirections. The native client
+  source-local implementation headers, renderer import calls and reviewed
+  table/alias indirections. Header sites retain their own path and line and are
+  deduplicated across translation units. The native client
   source selection follows `cmake/macos-arm64.cmake`; feature headers and gates
   are preprocessed with `COD2_X64=1`, `COD2_APPLE_SDK=1`, macOS/arm64 and optionally
   `COD2_CODX=1`. The scope includes hosted-server registrations in that client,
@@ -62,7 +64,9 @@ names absent from that source in a **scratch copy file** and pass `--copy`.
   choices, command mechanisms/site counts and dynamic-factory evidence. It is
   static registration coverage, not a whole-program execution trace. New source
   selection rules or new registration wrappers/indirections need review of this
-  bounded reader; the C parser does not claim to interpret arbitrary C.
+  bounded reader; supported CMake glob definitions are checked explicitly. Table
+  names require a constant index or a reviewed bounded iteration. Cast-sensitive
+  arithmetic remains dynamic. The C parser does not claim to interpret arbitrary C.
 
 ## Copy and consumers
 
