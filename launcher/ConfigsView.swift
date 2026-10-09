@@ -1,9 +1,11 @@
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 
 /// Configs: the person's loadouts in a middle column, and the selected loadout's
-/// Settings or History beside it. Selecting a loadout only shows it; “Use for next
-/// game” is the one action that changes which loadout the game starts with.
+/// Settings, Binds, Check-up or History beside it. Selecting a loadout only shows
+/// it; “Use for next game” is the one action that changes which loadout the game
+/// starts with.
 struct ConfigsView: View {
     @ObservedObject var model: LauncherModel
     @ObservedObject var studio: ConfigStudioModel
@@ -57,7 +59,8 @@ struct ConfigsShell: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .ignoresSafeArea(.container, edges: .top)
         .background(WindowOriginReader(origin: $origin))
-        .onAppear { studio.refreshComparison() }
+        .onAppear { studio.refreshComparison(); studio.checkup.load() }
+        .onChange(of: studio.gameRunning) { running in if running { studio.binds.gameStarted() } }
         .onChange(of: session.current?.version) { _ in
             studio.refreshComparison()
             if studio.textMode && !studio.textEdited { studio.loadText() }
@@ -106,6 +109,16 @@ struct ConfigsShell: View {
         if studio.textMode && studio.textEdited { pendingLeave = action } else { action() }
     }
 
+    /// B2 writes an independent config that stock Windows CoD2 can load.
+    private func exportWindows(_ name: String) {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "config_mp.cfg"
+        panel.allowedContentTypes = [UTType(filenameExtension: "cfg") ?? .plainText]
+        panel.message = "Save \(name) for Call of Duty 2 on Windows. Copy it into that player profile’s folder."
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        studio.binds.exportWindows(to: url)
+    }
+
     private var moreMenu: some View {
         Menu {
             Button("New Loadout…") { newLoadout = NewLoadoutRequest(copy: false) }
@@ -118,6 +131,7 @@ struct ConfigsShell: View {
                     let file = session.home.appendingPathComponent("main/players/\(current.profile.id)/config_mp.cfg")
                     NSWorkspace.shared.activateFileViewerSelecting([file])
                 }
+                Button("Export for Windows…") { exportWindows(current.profile.displayName) }.disabled(studio.catalog == nil)
             }
         } label: {
             Label("More Actions for This Loadout", systemImage: "ellipsis.circle")
@@ -140,9 +154,14 @@ struct ConfigsShell: View {
                             .accessibilityElement(children: .combine)
                     }
                 } else {
-                    switch studio.tab {
-                    case .history: ConfigHistoryView(studio: studio, session: session)
-                    default: ConfigSettingsView(studio: studio, session: session, openSettings: { model.page = .settings })
+                    switch studio.destination {
+                    case .loadout:
+                        switch studio.tab {
+                        case .settings: ConfigSettingsView(studio: studio, session: session, openSettings: { model.page = .settings })
+                        case .binds: ConfigBindsView(studio: studio, session: session)
+                        case .checkup: ConfigCheckupView(studio: studio, session: session)
+                        case .history: ConfigHistoryView(studio: studio, session: session)
+                        }
                     }
                 }
             } else {
@@ -346,10 +365,36 @@ struct LoadoutHeader: View {
             if studio.tab == .settings {
                 Picker("Detail level", selection: $studio.level) { ForEach(ConfigDetailLevel.allCases) { Text($0.title).tag($0) } }
                     .pickerStyle(.segmented).labelsHidden().fixedSize()
+            } else if studio.tab == .binds {
+                BindsLayoutPicker(binds: studio.binds)
+            } else if studio.tab == .checkup {
+                TuneForPicker(checkup: studio.checkup)
             } else if studio.tab == .history {
                 Picker("Show changes from", selection: $studio.historyFilter) { ForEach(ConfigHistoryFilter.allCases) { Text($0.title).tag($0) } }
                     .pickerStyle(.segmented).labelsHidden().fixedSize()
             }
+        }
+    }
+}
+
+private struct BindsLayoutPicker: View {
+    @ObservedObject var binds: ConfigBindsModel
+    var body: some View {
+        Picker("Binds view", selection: $binds.layout) {
+            ForEach(ConfigBindsLayout.allCases) { Label($0.title, systemImage: $0.symbol).tag($0) }
+        }
+        .pickerStyle(.segmented).labelsHidden().fixedSize()
+    }
+}
+
+private struct TuneForPicker: View {
+    @ObservedObject var checkup: ConfigCheckupModel
+    @Environment(\.palette) private var palette
+    var body: some View {
+        HStack(spacing: 10) {
+            Text("Tune for").font(.system(size: 12)).foregroundStyle(palette.secondary)
+            Picker("Tune for", selection: $checkup.tuneFor) { ForEach(ConfigTuneFor.allCases, id: \.self) { Text($0.title).tag($0) } }
+                .pickerStyle(.segmented).labelsHidden().fixedSize()
         }
     }
 }
@@ -362,6 +407,12 @@ struct ConfigBanners: View {
     @State private var confirmRecovery = false
 
     var body: some View {
+        if let notice = studio.notice {
+            HStack(spacing: 12) {
+                StudioBanner(title: notice, tone: .positive)
+                Button("Dismiss") { studio.notice = nil }.glassAction().fixedSize()
+            }
+        }
         if studio.gameRunning {
             StudioBanner(title: "Configs are read-only while Call of Duty 2 is running. Changes you make in game appear here as the game saves them.",
                          tone: .information)

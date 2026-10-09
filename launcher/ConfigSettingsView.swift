@@ -122,7 +122,7 @@ private struct GuidedEditor: View {
                 .padding(.horizontal, 4)
                 SettingsGroup {
                     ForEach(specs) { spec in
-                        GuidedRow(studio: studio, spec: spec)
+                        GuidedRow(studio: studio, checkup: studio.checkup, spec: spec)
                         if spec.name.lowercased() == "sensitivity" { DPIRow(studio: studio) }
                     }
                 }
@@ -138,20 +138,52 @@ private struct GuidedEditor: View {
 
 private struct GuidedRow: View {
     @ObservedObject var studio: ConfigStudioModel
+    @ObservedObject var checkup: ConfigCheckupModel
     var spec: ConfigSettingSpec
     @Environment(\.undoManager) private var undo
     @Environment(\.palette) private var palette
 
     var body: some View {
         let state = studio.state(spec)
-        if spec.name.lowercased() == "com_maxfps" {
-            FrameCapRow(studio: studio, spec: spec, state: state)
-        } else {
-            SettingsRow(spec.title, detail: spec.setting.summary) {
-                GuidedControl(studio: studio, spec: spec, state: state)
+        VStack(spacing: 0) {
+            if spec.name.lowercased() == "com_maxfps" {
+                FrameCapRow(studio: studio, spec: spec, state: state)
+            } else {
+                SettingsRow(spec.title, detail: spec.setting.summary) {
+                    GuidedControl(studio: studio, spec: spec, state: state)
+                }
+                .accessibilityHint(spec.setting.summary)
             }
-            .accessibilityHint(spec.setting.summary)
+            if let tip = checkup.tip(spec) { RuleTip(studio: studio, checkup: checkup, spec: spec, text: tip.text, fix: tip.fix) }
         }
+    }
+}
+
+/// A rule this setting breaks under the chosen rules, with A1's fix when it has one.
+private struct RuleTip: View {
+    @ObservedObject var studio: ConfigStudioModel
+    @ObservedObject var checkup: ConfigCheckupModel
+    var spec: ConfigSettingSpec
+    var text: String
+    var fix: ConfigCheckupSuggestion?
+    @Environment(\.undoManager) private var undo
+    @Environment(\.palette) private var palette
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "lightbulb").foregroundStyle(palette.accent).accessibilityHidden(true)
+            Text("\(checkup.selectionTitle): \(text)").font(.system(size: 13)).foregroundStyle(palette.text).fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 8)
+            if let fix, let change = fix.changes.first(where: { $0.setting.caseInsensitiveCompare(spec.name) == .orderedSame }) {
+                Button("Use \(ConfigValues.display(spec, change.newValue))") { checkup.apply(fix.id, undo: undo) }
+                    .glassAction().controlSize(.small).fixedSize().disabled(studio.isReadOnly)
+                    .help(fix.title)
+            }
+        }
+        .padding(.vertical, 10).padding(.leading, 14).padding(.trailing, 12)
+        .background(palette.accent.opacity(0.07), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(palette.accent.opacity(0.25), lineWidth: 1))
+        .padding(.horizontal, SettingsMetrics.radius).padding(.bottom, 14)
+        .accessibilityElement(children: .contain)
     }
 }
 
@@ -356,6 +388,7 @@ private struct ExpertTools: View {
 
     private var tools: some View {
         HStack(spacing: 10) {
+            ExpertRulesStatus(checkup: studio.checkup)
             HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass").foregroundStyle(palette.secondary).accessibilityHidden(true)
                 TextField("Find a setting", text: $studio.search).textFieldStyle(.plain).focused(searchFocused).frame(width: 150)
@@ -374,6 +407,21 @@ private struct ExpertTools: View {
             }
             .glassAction().fixedSize()
             .help(studio.textMode ? "Back to the controls" : "Edit this loadout’s config as text")
+        }
+    }
+}
+
+private struct ExpertRulesStatus: View {
+    @ObservedObject var checkup: ConfigCheckupModel
+    var body: some View {
+        HStack(spacing: 10) {
+            RulesMenu(checkup: checkup)
+            if !checkup.rulesetIDs.isEmpty {
+                let count = checkup.violations.count
+                StudioStatusLabel(title: count == 0 ? "Follows these rules" : count == 1 ? "1 setting breaks them" : "\(count) settings break them",
+                                  tone: count == 0 ? .positive : .negative)
+                    .fixedSize()
+            }
         }
     }
 }
@@ -398,8 +446,9 @@ private struct ExpertEditor: View {
                         }
                         .padding(.horizontal, 4).padding(.top, 8).padding(.bottom, 8)
                         ForEach(Array(section.specs.enumerated()), id: \.element.id) { index, spec in
-                            ExpertRow(studio: studio, spec: spec, openSettings: openSettings)
-                                .panelSegment(first: index == 0, last: index == section.specs.count - 1, highlighted: studio.highlighted == spec.name)
+                            ExpertRow(studio: studio, checkup: studio.checkup, spec: spec, openSettings: openSettings)
+                                .panelSegment(first: index == 0, last: index == section.specs.count - 1, highlighted: studio.highlighted == spec.name,
+                                              bad: studio.checkup.evaluation(spec)?.status == .violation)
                                 .id(spec.name)
                         }
                         if studio.filter == nil && studio.search.isEmpty, studio.protectedCount(in: section.group) > 0 {
@@ -431,6 +480,7 @@ private struct ExpertEditor: View {
 
 private struct ExpertRow: View {
     @ObservedObject var studio: ConfigStudioModel
+    @ObservedObject var checkup: ConfigCheckupModel
     var spec: ConfigSettingSpec
     var openSettings: () -> Void
     @Environment(\.undoManager) private var undo
@@ -450,6 +500,13 @@ private struct ExpertRow: View {
                         if state.changed && !spec.launcherOwned { Circle().fill(palette.accent).frame(width: 6, height: 6).accessibilityLabel("Changed from default") }
                     }
                     Text(spec.name).font(StudioTypography.consoleName).foregroundStyle(palette.address).lineLimit(1).textSelection(.enabled)
+                    if let badge = checkup.badge(spec) {
+                        Label(badge.text, systemImage: badge.tone.symbol).font(.system(size: 10.5, weight: .semibold))
+                            .foregroundStyle(badge.tone.color(in: palette)).labelStyle(.titleOnly)
+                            .padding(.horizontal, 7).frame(height: 18)
+                            .overlay(Capsule().strokeBorder(badge.tone.color(in: palette).opacity(0.55), lineWidth: 1))
+                            .accessibilityLabel("Rules: \(badge.text)")
+                    }
                     if spec.setting.variant(for: studio.mode)?.serverControlled == true {
                         Text("Servers can set this").font(.system(size: 10.5, weight: .semibold)).foregroundStyle(palette.chipText)
                             .padding(.horizontal, 7).frame(height: 18).overlay(Capsule().strokeBorder(palette.dark ? Color.white.opacity(0.16) : palette.wellStroke, lineWidth: 1))
@@ -483,8 +540,11 @@ private struct ExpertRow: View {
                 }
             }
             .frame(minHeight: 40)
-            if theirs != nil || state.note != nil || spec.launcherOwned {
+            let evaluation = checkup.evaluation(spec)
+            let issue = evaluation.flatMap { $0.status == .violation || $0.status == .conflict ? $0 : nil }
+            if theirs != nil || state.note != nil || spec.launcherOwned || issue != nil {
                 HStack(spacing: 10) {
+                    if let issue { StudioStatusLabel(title: issue.reason, tone: issue.status.tone) }
                     if let theirs, let source = studio.comparison?.profile.displayName {
                         StudioCompareValue(value: theirs.display, source: source).fixedSize()
                         if state.locked {
@@ -837,8 +897,8 @@ private struct PanelSegmentEdge: Shape {
 
 private extension View {
     /// One row of an opaque settings panel inside a lazy stack, so long groups stay fast.
-    func panelSegment(first: Bool, last: Bool, highlighted: Bool) -> some View {
-        modifier(PanelSegmentStyle(first: first, last: last, highlighted: highlighted))
+    func panelSegment(first: Bool, last: Bool, highlighted: Bool, bad: Bool = false) -> some View {
+        modifier(PanelSegmentStyle(first: first, last: last, highlighted: highlighted, bad: bad))
     }
 }
 
@@ -846,11 +906,12 @@ private struct PanelSegmentStyle: ViewModifier {
     var first: Bool
     var last: Bool
     var highlighted: Bool
+    var bad = false
     @Environment(\.palette) private var palette
     func body(content: Content) -> some View {
         let shape = PanelSegment(radius: SettingsMetrics.radius, top: first, bottom: last)
         content
-            .background(highlighted ? palette.selection : .clear, in: shape)
+            .background(highlighted ? palette.selection : bad ? palette.negative.opacity(0.05) : .clear, in: shape)
             .background(palette.panel, in: shape)
             .overlay(alignment: .top) { if !first { Rectangle().fill(palette.separator).frame(height: 1).padding(.leading, 18) } }
             .overlay { PanelSegmentEdge(radius: SettingsMetrics.radius, top: first, bottom: last).stroke(highlighted ? palette.selectionStroke : palette.panelStroke, lineWidth: 1) }

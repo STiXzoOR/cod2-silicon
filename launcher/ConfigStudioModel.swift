@@ -11,8 +11,7 @@ enum ConfigStudioTab: String, CaseIterable, Identifiable {
     var title: String {
         switch self { case .settings: "Settings"; case .binds: "Binds"; case .checkup: "Check-up"; case .history: "History" }
     }
-    /// Binds and Check-up join this list with their screens.
-    static let available: [ConfigStudioTab] = [.settings, .history]
+    static let available: [ConfigStudioTab] = [.settings, .binds, .checkup, .history]
 }
 
 /// What the Configs page shows beside the loadout column. Discover (Players,
