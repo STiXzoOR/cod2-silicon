@@ -90,8 +90,8 @@ static const char str_dbg_before_lt[] = "before-LinkThread";
 #define SCRAP ((scrAnimPub_t *)imp_scrAnimPub)
 #define SCRPP ((scrParserPub_t *)imp_scrParserPub)
 #define SCRVP (&scrVarPub)
-
 #if defined(COD2_X64)
+
 /* Bytecode operands remain packed even when an allocator name says Align. */
 static void Scr_StorePackedShort(void *destination, short value)
 {
@@ -663,8 +663,8 @@ static Bool __attribute_regparm__(3)
     constValue->sourcePos = sourcePos;
     return 1;
 }
-
 #if defined(COD2_X64)
+
 static Bool Scr_CalcLocalVarsIsConstantTrue(sval_t expr)
 {
     sval_t *node = (sval_t *)(uintptr_t)expr.node;

@@ -170,8 +170,8 @@ COD2_ASSERT_FIELD(WeaponDef,     weapSlot,       0x80);
 COD2_ASSERT_FIELD(WeaponDef,     overlayReticle, 0x278);
 COD2_ASSERT_FIELD(WeaponDef,     bWideListIcon,  0x344);
 COD2_ASSERT_FIELD(playerState_t, fWeaponPosFrac, 0xdc);
-
 #if defined(COD2_X64) && COD2_X64
+
 extern const dvar_t *cg_hudCompassMinRange;
 extern const dvar_t *cg_hudCompassMaxRange;
 extern const dvar_t *cg_hudCompassMinRadius;
@@ -1744,8 +1744,8 @@ static void CG_DrawPlayerCompassPointers(const rectDef_t *rect, const vec_t *col
         UI_DrawHandlePic(x, y, iconSize, iconSize, rect->horzAlign, rect->vertAlign, drawColor, icon);
     }
 }
-#endif
 
+#endif
 void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAlign, float text_x, float text_y, int ownerDraw, int ownerDrawFlags, int align, float special, struct Font_s *font, float scale, vec_t *color, MaterialHandle material, int textStyle)
 {
     rectDef_t rect;

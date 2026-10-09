@@ -717,8 +717,8 @@ void Scr_LoadLevel(void)
     }
     return;
 }
-
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+
 void GScr_Cod2xResetMapChange(void)
 {
     cod2xStopActive = 0;

@@ -1763,8 +1763,8 @@ static FontHandle UI_RegisterLocaleFont(const char *fontRole, const char *fontNa
     return CL_RegisterFont(localizedName, imageTrack);
 }
 #endif
-
 #ifdef COD2_X64
+
 static qboolean UI_ParseFontAsset(int handle, int imageTrack, const char *duplicateName,
                                  const char *fontRole)
 #else

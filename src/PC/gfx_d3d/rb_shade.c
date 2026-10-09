@@ -1245,8 +1245,8 @@ static GfxImage *RB_PrepareMaterialTexture(const MaterialTextureDef *texture, by
     }
     return image;
 }
-#endif
 
+#endif
 static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(MaterialTechniqueType techType, MaterialVertexDeclType vertDeclType, const GfxDrawPrimArgs *args, const GfxStateOverride *stateOverride)
 {
     char *tess = RB_TessBase();

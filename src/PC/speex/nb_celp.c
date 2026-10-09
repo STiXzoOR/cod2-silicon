@@ -1015,8 +1015,8 @@ static void nb_clip_output(float *out, int count)
          out[i]=-32767.f;
    }
 }
-#endif
 
+#endif
 int nb_decode(void *state, SpeexBits *bits, float *out)
 {
    DecState *st;

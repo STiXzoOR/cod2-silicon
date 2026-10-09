@@ -223,8 +223,8 @@ void SV_BeginDownload_f(client_t *cl);
 void SV_UserMove(client_t *cl, msg_t *msg, qboolean delta);
 void SV_ExecuteClientMessage(client_t *cl, msg_t *msg);
 gentity_t *SV_AddTestClient(void);
-
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+
 /* Native metadata belongs to the real challenge, without changing shared layouts. */
 typedef struct Cod2x_ChallengeIdentity
 {
@@ -826,8 +826,8 @@ void SV_SendClientGameState(client_t *client)
 
     ZN10LargeLocalD1Ev(&msgBuffer_large_local);
 }
-
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+
 static void SV_Cod2xClientBegin(client_t *client, int clientNum)
 {
     ClientBegin(clientNum);
@@ -1499,8 +1499,8 @@ void SV_DirectConnect(netadr_t from)
             return;
         }
     }
-#endif
 
+#endif
     challenge = atoi(Info_ValueForKey(userinfo, "challenge"));
     qport = atoi(Info_ValueForKey(userinfo, "qport"));
 
@@ -1570,8 +1570,8 @@ void SV_DirectConnect(netadr_t from)
             }
         }
     }
-
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+
     if (cod2xGuid) {
         int banned = SV_IsBannedGuid(cod2xGuid);
         if (!banned) {

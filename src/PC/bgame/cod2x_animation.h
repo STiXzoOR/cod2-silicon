@@ -21,8 +21,8 @@ void Cod2x_ResetAnimation(void)
 {
     memset(cod2xAnimationState, 0, sizeof(cod2xAnimationState));
 }
-
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+
 void Cod2x_ResetClientAnimation(void)
 {
     /* Native cgame owns animation user 0; the authoritative host owns user 1. */
@@ -209,8 +209,8 @@ static void BG_Cod2xControllerGoals(const entityState_t *es, clientInfo_t *ci,
         if (wrongStance)
             SV_GameClientNum(es->clientNum)->legsTimer = 0;
     }
-#endif
 
+#endif
     if (state->stanceDuration > 0) {
         float fraction = (float)(bgs->time - state->stanceStart) / (float)state->stanceDuration;
         if (fraction > 0.0f && fraction < 1.0f) {

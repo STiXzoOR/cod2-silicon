@@ -1492,8 +1492,8 @@ static void G_RefreshPlayerBroadcast(void)
             ent->r.broadcastTime = svs.time + 1;
     }
 }
-#endif
 
+#endif
 int G_RunFrame(int levelTime)
 {
     int i, j;

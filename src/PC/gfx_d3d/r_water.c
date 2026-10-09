@@ -64,8 +64,8 @@ void RB_UploadWaterTexture(GfxImage *image, water_t *water)
     for (n = -N / 2; n < N / 2; n++) {
         for (m = -M / 2; m < M / 2; m++) {
             float w = water->wTerm[vecKIndex];
-
 #if defined(COD2_X64)
+
             if (w == 0.0f) {
                 waterData[vecKIndex].real = 0.0f;
                 waterData[vecKIndex].imag = 0.0f;

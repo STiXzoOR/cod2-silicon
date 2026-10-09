@@ -58,8 +58,8 @@ const char *Cod2x_Hwid(void)
 {
     return cod2x_hwid;
 }
-
 #if defined(COD2_X64) && COD2_X64
+
 static void Cod2x_SharedInit(int dedicated)
 {
     if (cod2x_game)

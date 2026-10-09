@@ -1720,8 +1720,8 @@ BuiltinMethod Player_Cod2xGetMethod(const char **pName, int *type)
     }
     return NULL;
 }
-#endif
 
+#endif
 static const BuiltinMethodDef player_methods[] __attribute__((used)) = {
     { "giveweapon", (BuiltinMethod)PlayerCmd_giveWeapon, 0 },
     { "takeweapon", (BuiltinMethod)PlayerCmd_takeWeapon, 0 },

@@ -76,8 +76,8 @@ static dvar_t *SV_ImportedDvar(void *importedDvar)
 {
     return *(dvar_t **)importedDvar;
 }
-
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+
 static qboolean SV_Cod2xBeginMapChangeApproved(qboolean shutdown, const char *source, qboolean approved)
 {
     /* Only an accepted operation suppresses its nested map/spawn calls. A
@@ -804,8 +804,8 @@ static void SV_MapRotate_f(void)
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     if (!SV_Cod2xBeginMapChangeApproved(0, "map_rotate", approved))
         return;
-#endif
 
+#endif
     Com_Printf("map_rotate...\n\n");
     Com_Printf("\"sv_mapRotation\" is:\"%s\"\n\n", mapRotation->current.string);
     Com_Printf("\"sv_mapRotationCurrent\" is:\"%s\"\n\n", mapRotationCurrent->current.string);

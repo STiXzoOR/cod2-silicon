@@ -92,8 +92,8 @@ COD2_ASSERT_FIELD(playerState_t, velocity,      0x0020);
 COD2_ASSERT_FIELD(playerState_t, viewangles,    0x00e8);
 COD2_ASSERT_FIELD(playerState_t, offHandIndex,  0x00d0);
 COD2_ASSERT_FIELD(trace_t, surfaceFlags,        0x0010);
-
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+
 extern const dvar_t *g_shotgun_spread_fix;
 extern float tanf(float x);
 #endif
@@ -559,8 +559,8 @@ static void Bullet_ShotgunEndpos(vec_t *end, const weaponParms *wp, int pellet, 
         end[axis] += up * wp->up[axis];
     }
 }
-#endif
 
+#endif
 void Bullet_Fire(gentity_s (*attacker)[16], float spread, weaponParms *wp, gentity_s (*weaponEnt)[16], int gametime)
 {
     vec3_t end;
