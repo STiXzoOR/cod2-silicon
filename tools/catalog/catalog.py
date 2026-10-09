@@ -26,6 +26,7 @@ FLAG_NAMES = {1: 'archive', 2: 'userinfo', 4: 'serverinfo', 8: 'systeminfo',
               256: 'gameplaySynced', 512: 'savedBit', 1024: 'scriptinfo',
               4096: 'engineOwned', 8192: 'rendererOwned', 16384: 'external', 32768: 'autoexec'}
 CALL = re.compile(r'\b(Dvar_Register(?:Bool|Int|Float|String|Enum|Color|Vec[234])(?:_mac|_inl)?|Dvar_RegisterVariantReg|Cmd_AddCommand|CL_AddCgameCommand)\s*\(')
+ANY_REGISTER = re.compile(r'\b(Dvar_Register\w+)\s*\(')
 STRING = re.compile(r'"(?:\\.|[^"\\])*"')
 
 
@@ -138,6 +139,8 @@ def native_sources(root, mode):
     if not cmake.exists():  # Synthetic fixtures have only src/.
         return sorted((root / 'src').rglob('*.c'))
     text = cmake.read_text()
+    if not re.search(r'set\(MACOS_C\s+\$\{MACOS_PC_C\}\s+\$\{MACOS_MAC_C\}\s+\$\{MACOS_STUBS_C\}\s+\$\{MACOS_ROOT_C\}\s*\)', text):
+        raise CatalogError('unreviewed source selection: MACOS_C seed')
     paths = set()
     for directory in ('PC', 'Mac', 'stubs'):
         paths.update((root / 'src' / directory).rglob('*.c'))
@@ -146,6 +149,9 @@ def native_sources(root, mode):
         pattern = pattern.replace('\\\\', '\\')
         paths = {p for p in paths if not re.search(pattern, '/' + p.relative_to(root).as_posix())}
     for body in re.findall(r'(?:list\(APPEND MACOS_C|target_sources\(cod2_macos PRIVATE)\s+([^)]*)\)', text):
+        variables = set(re.findall(r'\$\{([^}]+)\}', body))
+        if variables - {'MACOS_GEN_C'}:
+            raise CatalogError('unreviewed source selection: ' + ', '.join(sorted(variables)))
         for name in re.findall(r'\bsrc/[\w/.-]+\.(?:c|m|cpp)\b', body):
             if '/cod2x_native' not in name or mode == 'cod2x':
                 paths.add(root / name)
@@ -229,12 +235,22 @@ def extract_source(root, mode):
     settings, commands, dispatch = (collections.defaultdict(list) for _ in range(3))
     dynamic, unresolved = [], []
     for path in native_sources(root, mode):
-        if not path.exists() or not (CALL.search(path.read_text()) or path.name in ('g_cmds_mp.c', 'g_svcmds_mp.c')):
+        if not path.exists() or not (CALL.search(path.read_text()) or ANY_REGISTER.search(path.read_text()) or path.name in ('g_cmds_mp.c', 'g_svcmds_mp.c')):
             continue
         text, numbers = preprocess(root, path, mode)
         text = strip_comments(text)
         arrays = tables(text)
         rel = path.relative_to(root).as_posix()
+        for m in ANY_REGISTER.finditer(text):
+            if CALL.match(text, m.start()):
+                continue
+            args = split_args(text[m.end():call_end(text, m.end())])
+            if re.match(r'(?:const|char|unsigned|int|float|void)\b', args[0]):
+                continue
+            if (rel == 'src/PC/universal/dvar.c' and m[1] in ('Dvar_RegisterVariant', 'Dvar_RegisterVariant_impl')
+                    and args[0] == 'dvarName'):
+                continue  # Reviewed internal constructor forwarding.
+            raise CatalogError(f'{rel}: unreviewed registration constructor {m[1]}')
         if rel in ('src/PC/game_mp/g_cmds_mp.c', 'src/PC/game_mp/g_svcmds_mp.c'):
             for m in re.finditer(r'I_stricmp\(\s*cmd\s*,\s*("(?:\\.|[^"\\])*")\s*\)', text):
                 owner = function_at(text, m.start())

@@ -158,6 +158,18 @@ void Init(void) {
         doc['commands'][0]['variants']['stock']['sites'] = []
         self.assertTrue(any('sites mismatch exec' in e for e in self.errors(doc)))
 
+    def test_unreviewed_source_selection_rule_fails_closed(self):
+        (self.root / 'cmake').mkdir()
+        (self.root / 'cmake/macos-arm64.cmake').write_text('set(MACOS_C ${MACOS_PC_C} ${MACOS_MAC_C} ${MACOS_STUBS_C} ${MACOS_ROOT_C})\ntarget_sources(cod2_macos PRIVATE ${UNKNOWN_SOURCES})\n')
+        with self.assertRaisesRegex(catalog.CatalogError, 'unreviewed source selection'):
+            catalog.extract_source(self.root, 'stock')
+
+    def test_unreviewed_registration_constructor_fails_closed(self):
+        with (self.root / 'src/fixture.c').open('a') as f:
+            f.write('void Other(void) { Dvar_RegisterLong("newtype", 1, 0, 10, 1); }\n')
+        with self.assertRaisesRegex(catalog.CatalogError, 'unreviewed registration constructor'):
+            catalog.extract_source(self.root, 'stock')
+
 
 if __name__ == '__main__':
     unittest.main()
