@@ -41,7 +41,9 @@ struct MediaEntry: Identifiable {
     @Published var settingsSaved = false
     @Published var library = LauncherLibrary()
     @Published var servers: [GameServer] = []
-    @Published var selectedServer: String?
+    @Published var selectedServer: String? {
+        didSet { do { try serverConnection.select(address: selectedServer) } catch { serverConnection.clear(); notice = error.localizedDescription } }
+    }
     @Published var refreshing = false
     @Published var queryProgress = ""
     @Published var search = ""
@@ -49,7 +51,13 @@ struct MediaEntry: Identifiable {
     @Published var sort: ServerSort = .ping
     @Published var hideEmpty = false
     @Published var hideFull = false
-    @Published var directAddress = ""
+    @Published var directAddress = "" {
+        didSet {
+            guard directAddress != oldValue else { return }
+            do { try serverConnection.select(address: directAddress.isEmpty ? nil : directAddress) }
+            catch { try? serverConnection.select(address: nil) }
+        }
+    }
     @Published var serverPassword = ""
     @Published var gameRunning = false
     @Published var notice = ""
@@ -66,6 +74,11 @@ struct MediaEntry: Identifiable {
     let preferences: URL
     let snapshot: Bool
     let configStudio: ConfigStudioSession?
+    let serverConnection = ConfigServerConnection()
+    private let readyChecker: ConfigReadyCheck? = {
+        guard let catalog = try? ConfigCatalog.load(), let rules = try? ConfigRules.load() else { return nil }
+        return ConfigReadyCheck(catalog: catalog, rules: rules)
+    }()
     private var savedSettings = GameSettings()
     private var engine: Process?
     private var attachedGames: [pid_t: NSRunningApplication] = [:]
@@ -336,24 +349,69 @@ struct MediaEntry: Identifiable {
         }
     }
     func cancelRefresh() { browserTask?.cancel() }
+    /// A connection alternative does not change the active loadout in Studio.
+    func useLoadoutForServer(_ id: String, address: String) throws {
+        guard let configStudio, !configStudio.isReadOnly else { throw ConfigProfileError.gameRunning }
+        _ = try configStudio.readProfile(id)
+        try serverConnection.select(address: address)
+        try serverConnection.useProfile(id)
+        objectWillChange.send()
+    }
+    func readyCheck(for address: String) throws -> ConfigReadyReport? {
+        guard let readyChecker, let configStudio else { return nil }
+        let normalized = try LaunchLink.canonicalAddress(address)
+        let server = servers.first { (try? LaunchLink.canonicalAddress($0.address)) == normalized }
+        let chosenID = serverConnection.address == normalized ? serverConnection.profileID : nil
+        guard let profile = try chosenID.map(configStudio.readProfile) ?? configStudio.current else { return nil }
+        return readyChecker.evaluate(server: server, profile: profile, mode: .cod2x,
+            advancedChain: try configStudio.readAdvancedChain(profileID: profile.profile.id))
+    }
+    func fixForServerOnly(_ address: String) throws {
+        guard let configStudio, !configStudio.isReadOnly else { throw ConfigProfileError.gameRunning }
+        try serverConnection.select(address: address)
+        guard let report = try readyCheck(for: address) else { throw ConfigReadyCheckError.noVerifiedFix }
+        try serverConnection.fix(report: report)
+        objectWillChange.send()
+    }
+    /// Query one endpoint, including direct-connect addresses absent from the
+    /// master list. Selection and staged choices remain the caller's decision.
+    func refreshReadyCheck(for address: String) async throws -> ConfigReadyReport? {
+        let normalized = try LaunchLink.canonicalAddress(address)
+        servers.removeAll { (try? LaunchLink.canonicalAddress($0.address)) == normalized }
+        if let server = await ServerQueries.server(normalized) {
+            servers.removeAll { (try? LaunchLink.canonicalAddress($0.address)) == normalized }
+            servers.append(server)
+        }
+        return try readyCheck(for: normalized)
+    }
     func connect(_ server: GameServer? = nil) {
         if server == nil && directAddress.trimmingCharacters(in: .whitespaces).isEmpty {
             notice = "Enter a server address, such as 203.0.113.24:28960."; return
         }
-        do { pendingLink = try LaunchLink.direct(server?.address ?? directAddress, password: serverPassword); serverPassword = ""; play() }
+        do {
+            let link = try LaunchLink.direct(server?.address ?? directAddress, password: serverPassword)
+            try serverConnection.select(address: link.address)
+            serverPassword = ""
+            if activeGamePID != nil { openLink(link.url) }
+            else { pendingLink = link; play() }
+        }
         catch { notice = error.localizedDescription }
     }
     /// Home's Deploy: rejoin the last server, or open the game's menu when there is none.
     func deploy() {
         guard !onboard else { return }
         if let address = library.recent.first, !snapshot {
-            do { pendingLink = try LaunchLink.direct(address); play() } catch { notice = error.localizedDescription }
+            do { try serverConnection.select(address: address); pendingLink = try LaunchLink.direct(address); play() } catch { notice = error.localizedDescription }
         } else { play() }
     }
     func openLink(_ url: String) {
         do {
             let link = try LaunchLink(url)
+            try serverConnection.select(address: link.address)
             if let pid = activeGamePID {
+                // Startup overrides cannot be applied to an already running
+                // game through the read-only launch API.
+                serverConnection.clear()
                 scheduleLink(link, pid: pid)
             } else {
                 // A cold link can arrive before launch finishes; boot() starts the game then, so the
@@ -439,9 +497,29 @@ struct MediaEntry: Identifiable {
             let bundle = gameBundle
             let executable = bundle.appendingPathComponent("Contents/MacOS/cod2_macos")
             guard FileManager.default.isExecutableFile(atPath: executable.path) else { throw LauncherError(message: "The game helper is missing. Rebuild or reinstall this app.") }
-            let configLaunch = try configStudio?.prepareLaunch(settings: settings, forwarded: forwardedArguments)
+            var connectionLaunch: ConfigConnectionLaunch?
+            var connectionProfileID: String?
+            var connectionExpectedVersion: ConfigProfileVersion?
+            var connectionChainBytes: Data?
+            if demo == nil, let link = pendingLink, serverConnection.address == (try LaunchLink.canonicalAddress(link.address)) {
+                connectionProfileID = serverConnection.profileID
+                if let configStudio {
+                    try configStudio.refresh()
+                    if let profile = try connectionProfileID.map(configStudio.readProfile) ?? configStudio.current,
+                       let report = try readyCheck(for: link.address) {
+                        connectionLaunch = try serverConnection.launch(for: link, profile: profile, report: report)
+                        if connectionLaunch != nil {
+                            connectionProfileID = profile.profile.id; connectionExpectedVersion = profile.version
+                            connectionChainBytes = report.advancedChainBytes
+                        }
+                    } else if !serverConnection.overrides.isEmpty { throw ConfigReadyCheckError.staleReview }
+                }
+            }
+            let configLaunch = try configStudio?.prepareLaunch(settings: settings, forwarded: forwardedArguments,
+                connectionProfileID: connectionProfileID, connection: connectionLaunch,
+                connectionExpectedVersion: connectionExpectedVersion, connectionChainBytes: connectionChainBytes)
             let plan = try GameLaunchPlan(settings: settings, dataPath: dataPath, homePath: home.path, link: pendingLink,
-                demo: demo?.deletingPathExtension().lastPathComponent, forwarded: forwardedArguments, configStudio: configLaunch)
+                demo: demo?.deletingPathExtension().lastPathComponent, forwarded: forwardedArguments, configStudio: configLaunch, connection: connectionLaunch)
             let process = Process(); process.executableURL = executable; process.arguments = plan.arguments
             process.currentDirectoryURL = home
             var environment = ProcessInfo.processInfo.environment
@@ -467,7 +545,7 @@ struct MediaEntry: Identifiable {
             if let error = configStudio?.migrationError ?? configStudio?.error { notice = error }
             startGameMonitor()
             // --play and cold links launch once: a later setup completion must not start a second game.
-            pendingLink = nil; fastPlay = false
+            pendingLink = nil; fastPlay = false; serverConnection.clear()
             if let link = plan.link { scheduleLink(link, pid: process.processIdentifier) }
             cancelRefresh()
             handOff(to: process.processIdentifier)

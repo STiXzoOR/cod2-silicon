@@ -13,7 +13,8 @@ clang=(/usr/bin/xcrun clang -target arm64-apple-macos13 -isysroot "$sdk" -fobjc-
 /usr/bin/xcrun clang -target arm64-apple-macos13 -isysroot "$sdk" -DCOD2_X64=1 -DCOD2_CODX=1 -c "$root/src/PC/qcommon/cod2x_url.c" -o "$out/URL.o"
 sources=("$root/launcher/Core.swift" "$root/launcher/Presentation.swift")
 views=("$root/launcher/ConfigDocument.swift" "$root/launcher/ConfigProfiles.swift"
-    "$root/launcher/ConfigHistory.swift" "$root/launcher/ConfigStudioSession.swift")
+    "$root/launcher/ConfigHistory.swift" "$root/launcher/ConfigStudioSession.swift"
+    "$root/launcher/ConfigCatalog.swift" "$root/launcher/ConfigRules.swift" "$root/launcher/ConfigReadyCheck.swift")
 for file in Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView LibraryView; do
     views+=("$root/launcher/$file.swift")
 done
@@ -49,3 +50,4 @@ fi
 # Development builds find the bundled OFL fonts beside the executable; app bundles use Resources/Fonts.
 mkdir -p "$out/Fonts"
 cp "$root"/launcher/Resources/Fonts/* "$out/Fonts/"
+cp "$root/launcher/Resources/ConfigCatalog.json" "$root/launcher/Resources/ConfigRulesets.json" "$out/"

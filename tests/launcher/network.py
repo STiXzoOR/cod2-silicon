@@ -9,11 +9,21 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as peer:
     peer.bind(('127.0.0.1', 0)); peer.settimeout(3)
     port = peer.getsockname()[1]
     def answer():
-        for _ in range(2):
+        for index in range(6):
             data, address = peer.recvfrom(65535)
             assert data.startswith(b'\xff'*4)
             assert data[4:].startswith((b'getstatus ', b'getinfo '))
-            peer.sendto(fixture, address)
+            if index < 2:
+                reply = fixture
+            elif index < 4:
+                header = b'statusResponse' if index == 2 else b'infoResponse'
+                competitive = b'1' if index == 2 else b'0'
+                reply = b'\xff'*4 + header + b'\n\\protocol\\120\\fs_game\\\\g_competitive\\' + competitive + b'\n'
+            elif index == 4:
+                reply = b'\xff'*4 + b'statusResponse\n\\protocol\\120\\fs_game\\\\g_competitive\\1\\g_competitive\\0\n'
+            else:
+                reply = b'\xff'*4 + b'infoResponse\n\\protocol\\120\\fs_game\\\\g_competitive\\0\n'
+            peer.sendto(reply, address)
     thread = threading.Thread(target=answer, daemon=True); thread.start()
     subprocess.run([str(out/'LauncherNetworkTests'), str(port)], check=True, timeout=10)
     thread.join(3)
