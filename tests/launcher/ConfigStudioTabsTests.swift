@@ -110,7 +110,7 @@ enum ConfigStudioTabsTests {
         binds.beginCapture(.slot(action: "+back", slot: .secondary))
         source.send(.key(virtualKey: 13, pressed: true)); source.send(.key(virtualKey: 13, pressed: false))
         require(try binds.review != nil && Data(contentsOf: file) == afterCapture, "a conflict is never written before review")
-        require(binds.reviewText(binds.review!) == "W is also Move forward, so one press would do both. Use it for Move backward only?")
+        require(binds.reviewText(binds.review!) == "W already does “Move forward”. Use it for Move backward instead? “Move forward” loses this key.")
         binds.cancelReview()
         require(try binds.review == nil && Data(contentsOf: file) == afterCapture)
         binds.beginCapture(.slot(action: "+back", slot: .secondary))

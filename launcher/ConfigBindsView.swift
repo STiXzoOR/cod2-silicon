@@ -191,7 +191,7 @@ private struct BindRowView: View {
                     Image(systemName: "exclamationmark.triangle").foregroundStyle(palette.caution).accessibilityHidden(true)
                     Text(binds.reviewText(review)).font(.system(size: 12)).foregroundStyle(palette.text).fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 4)
-                    Button("Keep \(review.key.map(binds.keyName) ?? "it") for \(row.action.title) Only") { binds.confirmReview(undo: undo) }
+                    Button("Use \(review.key.map(binds.keyName) ?? "It") for \(row.action.title)") { binds.confirmReview(undo: undo) }
                         .glassAction().controlSize(.small).fixedSize()
                     Button("Cancel") { binds.cancelReview() }.glassAction().controlSize(.small).keyboardShortcut(.cancelAction)
                 }
@@ -1021,7 +1021,7 @@ private struct PointerPanel: View {
                     }
                 }
                 Text(binds.pointer == .trackpad
-                     ? "Trackpad gestures arrive as these mouse buttons and wheel moves. Tap to click follows your System Settings."
+                     ? "Trackpad clicks and scrolling reach the game as these mouse buttons and wheel moves, as set in System Settings › Trackpad."
                      : "Buttons 6 and up can’t be used by the original game. Map them to a key in your mouse’s software.")
                     .font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 6) {

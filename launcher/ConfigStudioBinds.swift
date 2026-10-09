@@ -402,7 +402,8 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
     /// Plain words for a pending replacement: what the key does now.
     func reviewText(_ edit: ConfigBindingEdit) -> String {
         guard let conflict = edit.conflict, let key = edit.key else { return "" }
-        return "\(keyName(key)) is also \(describe(conflict)), so one press would do both. Use it for \(edit.action?.title ?? "this") only?"
+        // A key holds one binding in CoD2, so using it here takes it from the other action.
+        return "\(keyName(key)) already does “\(describe(conflict))”. Use it for \(edit.action?.title ?? "this") instead? “\(describe(conflict))” loses this key."
     }
 
     private func commit(_ edit: ConfigBindingEdit, replaceConflict: Bool, undo: UndoManager?) {
