@@ -47,10 +47,12 @@
 
 **Interfaces:** `ConfigProfileStore` initialized with explicit home URL (testable temporary roots); list/create/duplicate/select loadouts; read/update document; metadata locks/notes/origin; history list/restore. Updates accept expected original bytes or equivalent disk version and running-game state. `ConfigMigration` imports effective existing launcher personal values into Main exactly once with recoverable original snapshot. Methods return real errors; never silently mark migration successful.
 
-- [ ] Write tests that create two profiles, switch active.txt, apply one setting, inspect exact on-disk bytes, and restore a snapshot as a new history transaction.
-- [ ] Prove read-only running-game behavior, stale-file conflict behavior, 50-snapshot retention, idempotent migration and preservation of failed-migration originals before implementation.
-- [ ] Implement private atomic writes using existing PrivateFile conventions, safe profile identifiers within engine path limits, sidecar `studio.json`, history and initial migration.
-- [ ] Verify no operation modifies licensed fs_basepath; run tests in fresh private temporary homes. Document the active-profile launch contract for F3 and the engine integration.
+- [x] Write tests that create two profiles, switch active.txt, apply one setting, inspect exact on-disk bytes, and restore a snapshot as a new history transaction.
+- [x] Prove read-only running-game behavior, stale-file conflict behavior, 50-snapshot retention, idempotent migration and preservation of failed-migration originals before implementation.
+- [x] Implement private atomic writes using existing PrivateFile conventions, safe profile identifiers within engine path limits, sidecar `studio.json`, history and initial migration.
+- [x] Verify no operation modifies licensed fs_basepath; run tests in fresh private temporary homes. Document the active-profile launch contract for F3 and the engine integration.
+
+**Verified 2026-10-09:** 14 focused disk/model cases, private store/create/copy/history round-trips of all 34 corpus files in both dialects, F1 corpus checks and existing launcher Core tests pass. Six resumed-pass defects have behavioral red/green evidence. See `docs/macos-port/reports/WS51-config-profiles.md` for exact commands, bounds and F3 obligations. Process lifecycle serialization, explicit journal-conflict disposition, UI and engine/mod launch ownership remain F3/integration work.
 
 ## F4 — Complete catalog and coverage gate (independent of F1/F2)
 
