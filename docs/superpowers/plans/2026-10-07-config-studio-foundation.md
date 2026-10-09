@@ -60,10 +60,12 @@
 
 **Interfaces:** Codable/Sendable catalog entries with stable names, type/default/range/flags, availability, purpose group, typed control, plain title/summary/details, sources and guided flag; registered commands carry bindable/menu labels. `ConfigCatalog` loads resource data and exposes settings/commands by name and group. Clearly separate actual stock/CoD2x/port registrations from reference-only and script/mod entries.
 
-- [ ] Inspect current source registration mechanisms and test a missing registration, extra claimed registration and mismatched type/default all fail coverage.
-- [ ] Generate factual metadata from current source; author copy for menu-exposed and competitive/network settings first, with honest generic technical reference descriptions for the remaining Expert entries. Avoid claims not established by source.
-- [ ] Include dynamic values as dynamic, protected/read-only entries as such, and corrected names `r_swapInterval`, `r_anisotropy`, `mp_QuickMessage`.
-- [ ] Verify every actual registration is represented under both native build modes; conditional/indirect/table registrations need explicit source evidence. Run coverage against integration source again after engine fixes/Metal merge.
+- [x] Inspect current source registration mechanisms and test a missing registration, extra claimed registration and mismatched type/default all fail coverage.
+- [x] Generate factual metadata from current source; author copy for menu-exposed and competitive/network settings first, with honest generic technical reference descriptions for the remaining Expert entries. Avoid claims not established by source.
+- [x] Include dynamic values as dynamic, protected/read-only entries as such, and corrected names `r_swapInterval`, `r_anisotropy`, `mp_QuickMessage`.
+- [x] Verify every actual registration is represented under both native build modes; conditional/indirect/table registrations need explicit source evidence.
+
+WS98 verification targets readiness integration `048ff5e`: both native modes have zero catalog differences; the older foundation engine has expected differences and passes with its own scratch-generated resource. Swift 6/macOS 13 tests and deterministic JSON regeneration pass. See [WS98 report](../../macos-port/reports/WS98-config-catalog.md) for commands, counts and bounded claims. Run coverage against integration source again after later engine fixes/Metal merge; this check-off verifies the named snapshot, not future registration changes.
 
 ## F3 — Native Settings and History integration (depends F1/F2/F4 and Astra design primitives)
 
