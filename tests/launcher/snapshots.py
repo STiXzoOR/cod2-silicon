@@ -34,8 +34,9 @@ def size(png):
 
 
 run(out)
+configs = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-text", "configs-history", "configs-running"]
 screens = ["home", "home-first", "servers", "servers-empty", "settings", "library-demos", "library-screenshots", "about",
-           "setup-data", "setup-data-missing", "setup-key", "setup-shaders", "setup-ready"]
+           "setup-data", "setup-data-missing", "setup-key", "setup-shaders", "setup-ready"] + configs
 for screen in screens:
     shots = {}
     for appearance in ["dark", "light"]:
@@ -52,6 +53,23 @@ for appearance in ["dark", "light"]:
     (width, height), length = size(fallback / f"servers-{appearance}.png")
     assert (width, height) in WINDOW and length > 60_000
     assert (fallback / f"servers-{appearance}.png").read_bytes() != (out / f"servers-{appearance}.png").read_bytes()
+run(fallback, "--fallback", "--only", "configs-guided")
+
+# Config Studio under Increase Contrast and Reduce Transparency (set for the capture only).
+for variant in ["increase-contrast", "reduce-transparency"]:
+    folder = out / variant
+    run(folder, "--group", "configs", f"--{variant}")
+    for screen in configs:
+        for appearance in ["dark", "light"]:
+            png = folder / f"{screen}-{appearance}.png"
+            (width, height), length = size(png)
+            assert (width, height) in WINDOW and length > 60_000, png
+            assert png.read_bytes() != (out / f"{screen}-{appearance}.png").read_bytes(), f"{png} matches the standard capture"
+
+# Real clicks on Config Studio controls write exact bytes and History rows in a temporary home.
+subprocess.run([str(harness), str(out / "actions"), "--actions"], check=True, timeout=300)
+
 # The harness exits non-zero on any shape-audit finding, so reaching here means none.
 print(f"PASS: {len(screens) * 2} launcher screens at 1440x900 points in dark and light, plus the material fallback, with bundled fonts"
-      " and a clean shape audit (capsule buttons, concentric nesting, equal insets)")
+      " and a clean shape audit (capsule buttons, concentric nesting, equal insets); Config Studio under Increase Contrast and"
+      " Reduce Transparency; Config Studio clicks write exact bytes")

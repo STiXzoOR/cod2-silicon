@@ -5,11 +5,18 @@ import SwiftUI
 // configured like the app's (hidden title bar, unified toolbar) and captures it through
 // the window server, so Liquid Glass, materials and toolbars render as they do on screen.
 //
-//   LauncherSnapshots OUTPUT [--data GAME_DIR] [--fallback] [--scale2] [--only SCREEN]
+//   LauncherSnapshots OUTPUT [--data GAME_DIR] [--fallback] [--scale2] [--only SCREEN] [--group configs]
+//                            [--increase-contrast] [--reduce-transparency] [--actions] [--minimum]
 //
 // --data uses the player's own loading screens (private review only; never commit them).
 // --fallback forces the macOS 13–25 material styling. --scale2 adds 2× renders of the same
 // window for checking text, vectors and shapes (material styling; system glass draws flat there).
+// --group configs renders only the Config Studio screens; --increase-contrast and
+// --reduce-transparency set those accessibility environments for the capture. --minimum uses the
+// launcher's 1100×760 minimum window.
+// --actions clicks Config Studio controls in the window (real hit-testing and actions) and checks
+// the bytes and History rows written to a temporary home.
+// Config Studio screens use synthetic loadouts in a private temporary home, removed afterwards.
 // COD2_SNAPSHOT_GEOMETRY=1 logs AppKit, view and WindowServer geometry at each sizing step.
 
 /// The review host can't become the active app while the login session is locked, so the
@@ -51,7 +58,8 @@ final class SnapshotWindow: NSWindow {
 
 @main struct Snapshots {
     static let screens = ["home", "home-first", "servers", "servers-empty", "settings", "library-demos", "library-screenshots", "about",
-                          "setup-data", "setup-data-missing", "setup-key", "setup-shaders", "setup-ready"]
+                          "setup-data", "setup-data-missing", "setup-key", "setup-shaders", "setup-ready"] + configScreens
+    static let configScreens = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-text", "configs-history", "configs-running"]
 
     @MainActor static func main() {
         let arguments = CommandLine.arguments
@@ -60,6 +68,9 @@ final class SnapshotWindow: NSWindow {
         let data = arguments.firstIndex(of: "--data").flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil }
         let fallback = arguments.contains("--fallback"), scale2 = arguments.contains("--scale2")
         let only = arguments.firstIndex(of: "--only").flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil }
+        let configsOnly = arguments.firstIndex(of: "--group").flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil } == "configs"
+        if arguments.contains("--minimum") { windowSize = NSSize(width: 1100, height: 760) }
+        let accessibility = Accessibility(increaseContrast: arguments.contains("--increase-contrast"), reduceTransparency: arguments.contains("--reduce-transparency"))
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
         LauncherFonts.register()
@@ -71,27 +82,37 @@ final class SnapshotWindow: NSWindow {
             guard let data else { fputs("--contrast needs --data GAME_DIR\n", stderr); exit(2) }
             exit(contrastReport(data: data, output: output) ? 0 : 1)
         }
+        if arguments.contains("--actions") {
+            Task { @MainActor in exit(await ConfigsPreview.actions() ? 0 : 1) }
+            app.run()
+        }
         Task { @MainActor in
             var written = 0, checked = 0
             var findings: [String] = [], report: [[String: Any]] = []
             for dark in [true, false] {
-                for screen in screens where only == nil || only == screen {
+                for screen in screens where (only == nil || only == screen) && (!configsOnly || configScreens.contains(screen)) {
                     let model = LauncherModel(snapshot: true)
                     model.preview(screen)
+                    var home: URL?
+                    if configScreens.contains(screen) {
+                        do { home = try ConfigsPreview.seed(model, screen: screen) }
+                        catch { fputs("Config Studio preview failed for \(screen): \(error)\n", stderr); exit(1) }
+                    }
+                    defer { if let home { try? FileManager.default.removeItem(at: home) } }
                     if let data {
                         let maps = model.servers.map(\.map) + model.media.compactMap { $0.facts.map.map { "mp_" + $0 } } + ["mp_toujane"]
                         model.artwork.loadPrivatePreviewSynchronously(dataPath: data, maps: maps)
                     }
                     let name = "\(screen)-\(dark ? "dark" : "light")"
                     let audit = ShapeAudit()
-                    if let image = await capture(model: model, dark: dark, fallback: fallback, audit: audit) {
+                    if let image = await capture(model: model, dark: dark, fallback: fallback, audit: audit, accessibility: accessibility) {
                         try? write(image, to: output.appendingPathComponent(name + ".png")); written += 1
                         let items = Array(audit.items.values)
                         let found = ShapeCheck.findings(items, image: image).map { "\(name): \($0)" }
                         checked += items.count; findings += found
                         report.append(["screen": name, "items": items.map(ShapeCheck.json), "findings": found])
                     } else { fputs("Capture failed: \(name)\n", stderr) }
-                    if scale2, let image = await render2x(model: model, dark: dark) {
+                    if scale2, let image = await render2x(model: model, dark: dark, accessibility: accessibility) {
                         try? write(image, to: output.appendingPathComponent(name + "@2x.png")); written += 1
                     }
                 }
@@ -107,12 +128,17 @@ final class SnapshotWindow: NSWindow {
         app.run()
     }
 
-    @MainActor static func root(_ model: LauncherModel, dark: Bool, glass: Bool, audit: ShapeAudit? = nil) -> some View {
+    struct Accessibility { var increaseContrast = false; var reduceTransparency = false }
+
+    @MainActor static func root(_ model: LauncherModel, dark: Bool, glass: Bool, audit: ShapeAudit? = nil, accessibility: Accessibility = .init()) -> some View {
         LauncherRoot(model: model)
             .environment(\.shapeAudit, audit)
             .environment(\.usesGlass, glass && LiquidGlass.available)
             .environment(\.colorScheme, dark ? .dark : .light)
             .environment(\.controlActiveState, .key)
+            // Test-only overrides of the system settings, without changing them for the Mac.
+            .environment(\._colorSchemeContrast, accessibility.increaseContrast ? .increased : .standard)
+            .environment(\._accessibilityReduceTransparency, accessibility.reduceTransparency)
     }
 
 
@@ -134,22 +160,25 @@ final class SnapshotWindow: NSWindow {
         if let data = try? JSONSerialization.data(withJSONObject: row, options: [.sortedKeys]), let json = String(data: data, encoding: .utf8) { print("GEOMETRY " + json) }
     }
 
-    @MainActor static func capture(model: LauncherModel, dark: Bool, fallback: Bool, audit: ShapeAudit) async -> CGImage? {
-        let window = await show(model: model, dark: dark, glass: !fallback, audit: audit)
+    @MainActor static func capture(model: LauncherModel, dark: Bool, fallback: Bool, audit: ShapeAudit, accessibility: Accessibility = .init()) async -> CGImage? {
+        let window = await show(model: model, dark: dark, glass: !fallback, audit: audit, accessibility: accessibility)
         let image = WindowCapture.image(of: window)
         geometry(window, "capture", image: image)
         window.orderOut(nil); window.close()
         return image
     }
 
-    /// The app-like window, shown and laid out at 1440×900.
-    @MainActor static func show(model: LauncherModel, dark: Bool, glass: Bool, audit: ShapeAudit? = nil) async -> NSWindow {
+    /// 1440×900, or the launcher's 1100×760 minimum with --minimum.
+    @MainActor static var windowSize = NSSize(width: 1440, height: 900)
+
+    /// The app-like window, shown and laid out at `windowSize`.
+    @MainActor static func show(model: LauncherModel, dark: Bool, glass: Bool, audit: ShapeAudit? = nil, accessibility: Accessibility = .init()) async -> NSWindow {
         let appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
         NSApp.appearance = appearance
-        let controller = NSHostingController(rootView: root(model, dark: dark, glass: glass, audit: audit))
+        let controller = NSHostingController(rootView: root(model, dark: dark, glass: glass, audit: audit, accessibility: accessibility))
         controller.sizingOptions = []
         if #available(macOS 14.0, *) { controller.sceneBridgingOptions = [.toolbars] }
-        let window = SnapshotWindow(contentRect: NSRect(x: 0, y: 0, width: 1440, height: 900),
+        let window = SnapshotWindow(contentRect: NSRect(origin: .zero, size: windowSize),
                                     styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView], backing: .buffered, defer: false)
         geometry(window, "init")
         window.appearance = appearance
@@ -159,13 +188,13 @@ final class SnapshotWindow: NSWindow {
         window.isReleasedWhenClosed = false
         window.contentViewController = controller
         geometry(window, "content-controller")
-        window.setFrame(NSRect(x: 40, y: 40, width: 1440, height: 900), display: true)
+        window.setFrame(NSRect(origin: NSPoint(x: 40, y: 40), size: windowSize), display: true)
         geometry(window, "first-set-frame")
         window.orderFrontRegardless()
         geometry(window, "order-front")
         try? await Task.sleep(for: .milliseconds(1400))
         geometry(window, "first-settled")
-        window.setFrame(NSRect(x: 40, y: 40, width: 1440, height: 900), display: true)
+        window.setFrame(NSRect(origin: NSPoint(x: 40, y: 40), size: windowSize), display: true)
         geometry(window, "second-set-frame")
         try? await Task.sleep(for: .milliseconds(400))
         geometry(window, "settled")
@@ -174,11 +203,11 @@ final class SnapshotWindow: NSWindow {
 
     /// 2× render of the same window with the material styling, toolbar included, for text, vector
     /// and shape checks. A bare hosting view has no window, so the split view wouldn't lay out.
-    @MainActor static func render2x(model: LauncherModel, dark: Bool) async -> CGImage? {
-        let window = await show(model: model, dark: dark, glass: false)
+    @MainActor static func render2x(model: LauncherModel, dark: Bool, accessibility: Accessibility = .init()) async -> CGImage? {
+        let window = await show(model: model, dark: dark, glass: false, accessibility: accessibility)
         defer { window.orderOut(nil); window.close() }
         guard let frame = window.contentView?.superview,
-              let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 2880, pixelsHigh: 1800, bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
+              let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(windowSize.width) * 2, pixelsHigh: Int(windowSize.height) * 2, bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
                                          isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
         rep.size = frame.bounds.size
         frame.cacheDisplay(in: frame.bounds, to: rep)
@@ -337,8 +366,8 @@ final class SnapshotWindow: NSWindow {
     /// The captured window's pixels, addressed in window points.
     struct Pixels {
         var data: [UInt8], width: Int, height: Int, scale: CGFloat
-        init?(_ image: CGImage) {
-            width = image.width; height = image.height; scale = CGFloat(image.width) / 1440
+        @MainActor init?(_ image: CGImage) {
+            width = image.width; height = image.height; scale = CGFloat(image.width) / Snapshots.windowSize.width
             data = [UInt8](repeating: 0, count: width * height * 4)
             let (w, h) = (width, height)
             let drawn = data.withUnsafeMutableBytes { raw -> Bool in
@@ -364,5 +393,157 @@ final class SnapshotWindow: NSWindow {
             guard Self.distance(fill, outside) > 90 else { return nil }
             return Self.distance(corner, outside) < Self.distance(corner, fill) ? "capsule" : "rounded rectangle"
         }
+    }
+}
+
+/// Synthetic loadouts for the Config Studio screens, written through the real store into a
+/// private temporary home. Test preview data only: generic loadout names, no real players.
+@MainActor enum ConfigsPreview {
+    static let dates = ["2026-09-28T19:40:00", "2026-10-02T20:02:00", "2026-10-02T20:03:00", "2026-10-04T21:20:00",
+                        "2026-10-05T22:31:00", "2026-10-06T17:55:00", "2026-10-06T18:42:00", "2026-10-06T18:44:00",
+                        "2026-10-06T18:50:00", "2026-10-06T18:52:00"]
+
+    /// A canonical game-written config: header, sorted binds, then sorted settings.
+    static func config(_ values: [String: String]) -> ConfigDocument {
+        var text = "// generated by Call of Duty, do not modify\nunbindall\nunbindall\n"
+        for (key, action) in [("TAB", "+scores"), ("SPACE", "+gostand"), ("a", "+moveleft"), ("d", "+moveright"), ("s", "+back"), ("w", "+forward"),
+                              ("MOUSE1", "+attack"), ("MOUSE2", "+toggleads_throw")] {
+            text += "bind \(key) \"\(action)\"\n"
+        }
+        for name in values.keys.sorted(by: { $0.lowercased() < $1.lowercased() }) { text += "seta \(name) \"\(values[name]!)\"\n" }
+        return ConfigDocument(data: Data(text.utf8), dialect: .cod2x)
+    }
+
+    @discardableResult
+    static func seed(_ model: LauncherModel, screen: String) throws -> URL {
+        let home = FileManager.default.temporaryDirectory.appendingPathComponent("cod2-configs-preview-\(screen)-\(UUID().uuidString.prefix(8))")
+        let store = try ConfigProfileStore(homeURL: home, dialect: .cod2x)
+        var values = ["cg_chatHeight": "8", "cg_drawFPS": "Simple", "cl_maxpackets": "30", "com_maxfps": "333", "in_rawmouse": "1",
+                      "name": "^3Sgt. ^7Morrow", "r_gamma": "1", "r_picmip": "1", "rate": "25000", "sensitivity": "2.8", "snaps": "30", "snd_volume": "0.8"]
+        var meta = ConfigStudioMetadata(displayName: "Main")
+        meta.origin = ConfigOrigin(kind: .migration, source: "main/config_mp.cfg"); meta.dpi = 800
+        var main = try store.create(id: "Main", displayName: "Main", document: config(values), metadata: meta)
+        try store.select(id: "Main", expectedActive: nil)
+        func change(_ edits: [String: String], _ summary: String, metadata: ConfigStudioMetadata? = nil) throws {
+            values.merge(edits) { $1 }
+            try store.update(id: "Main", document: config(values), expected: main.version, metadata: metadata, summary: summary)
+            main = try store.read(id: "Main")
+        }
+        try change(["r_gamma": "1.4"], "Changed Brightness")
+        meta.locks = ["r_gamma"]
+        try change([:], "Locked Brightness", metadata: meta)
+        try change(["cl_maxpackets": "100"], "Changed Updates you send")
+        try change(["r_picmip": "2"], "Changed Texture detail")
+        // The game saved a change while it ran.
+        let before = main.version
+        values["cg_chatHeight"] = "4"
+        try PrivateFile.write(config(values).serialized(), to: home.appendingPathComponent("main/players/Main/config_mp.cfg"))
+        try store.recordGameSession(id: "Main", before: before)
+        main = try store.read(id: "Main")
+        try change(["sensitivity": "2.6", "cg_drawFPS": "Off"], "Changed 2 settings")
+        meta.notes = ["sensitivity": "Matched to my old mouse pad. Leave it."]
+        try change([:], "Noted Mouse speed", metadata: meta)
+        var scrim = try store.duplicate(id: "Main", as: "Scrim", displayName: "Scrim", expected: main.version)
+        var scrimValues = values
+        scrimValues.merge(["sensitivity": "2.1", "com_maxfps": "250", "r_picmip": "3", "cg_drawFPS": "Simple", "snd_volume": "0.6"]) { $1 }
+        scrim = try store.read(id: "Scrim")
+        try store.update(id: "Scrim", document: config(scrimValues), expected: scrim.version, summary: "Changed 5 settings")
+        _ = try store.create(id: "Pub", displayName: "Pub", document: config(["sensitivity": "3", "com_maxfps": "125", "name": "^3Sgt. ^7Morrow"]))
+        try spreadDates(home.appendingPathComponent("main/players/Main/history"))
+
+        let running = screen == "configs-running"
+        let session = try ConfigStudioSession(home: home, dialect: .cod2x, discoverGames: { running ? [4242] : [] })
+        try session.refresh()
+        model.studio.attach(session)
+        model.studio.loadCatalogNow()
+        switch screen {
+        case "configs-expert": model.studio.compareID = "Scrim"
+        case "configs-text":
+            model.studio.toggleText()
+            model.studio.editText(model.studio.text + "seta r_gamma \"1.6\n")
+        case "configs-history":
+            model.studio.snapshotID = session.history.first { $0.summary == "Changed Texture detail" }?.id
+        case "configs-running": try session.reconcileGames([4242])
+        default: break
+        }
+        return home
+    }
+
+    /// Spreads History rows over the board's dates, keeping their order.
+    static func spreadDates(_ folder: URL) throws {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate, .withTime, .withColonSeparatorInTime, .withDashSeparatorInDate]
+        formatter.timeZone = .current
+        let files = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil).filter { $0.pathExtension == "json" }
+        var rows = try files.map { url -> (URL, [String: Any]) in (url, try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as! [String: Any]) }
+        rows.sort { ($0.1["date"] as! Double) < ($1.1["date"] as! Double) }
+        for (index, row) in rows.enumerated() {
+            var object = row.1
+            object["date"] = formatter.date(from: dates[min(index, dates.count - 1)])!.timeIntervalSinceReferenceDate
+            try PrivateFile.write(JSONSerialization.data(withJSONObject: object, options: [.sortedKeys]), to: row.0)
+        }
+    }
+
+    /// A real click: hit-testing, the control's own tracking and its action. The mouse-up is
+    /// queued first so a control's tracking loop finds it. `point` is in window base coordinates.
+    static func click(_ window: NSWindow, at point: NSPoint) {
+        func event(_ type: NSEvent.EventType) -> NSEvent? {
+            NSEvent.mouseEvent(with: type, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                               windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1)
+        }
+        guard let down = event(.leftMouseDown), let up = event(.leftMouseUp) else { return }
+        NSApp.postEvent(up, atStart: false)
+        window.sendEvent(down)
+    }
+    static func views<T: NSView>(_ type: T.Type, in view: NSView) -> [T] {
+        ((view as? T).map { [$0] } ?? []) + view.subviews.flatMap { views(type, in: $0) }
+    }
+
+    /// Real controls, real store: clicking the Show crosshair switch writes one exact edit, and
+    /// clicking History's Restore button restores a snapshot as a new transaction.
+    static func actions() async -> Bool {
+        let model = LauncherModel(snapshot: true)
+        model.preview("configs-guided")
+        model.studio.group = .hud
+        let home: URL
+        do { home = try seed(model, screen: "configs-actions") } catch { print("FAIL: preview home: \(error)"); return false }
+        defer { try? FileManager.default.removeItem(at: home) }
+        guard let session = model.studio.session else { return false }
+        let audit = ShapeAudit()
+        let window = await Snapshots.show(model: model, dark: true, glass: true, audit: audit)
+        defer { window.orderOut(nil); window.close() }
+        let file = home.appendingPathComponent("main/players/Main/config_mp.cfg")
+        // Guided HUD lists Show crosshair first; the sidebar and loadout column have no switches.
+        let switches = views(NSSwitch.self, in: window.contentView!).map { ($0, $0.convert($0.bounds, to: nil)) }
+            .filter { $0.1.minX > 700 }.sorted { $0.1.maxY > $1.1.maxY }
+        guard let before = try? Data(contentsOf: file), let toggle = switches.first else {
+            print("FAIL: the Show crosshair switch is not on screen"); return false
+        }
+        var expected = ConfigDocument(data: before, dialect: .cod2x)
+        do { try expected.setSetting(named: "cg_drawCrosshair", value: "0") } catch { return false }
+        click(window, at: NSPoint(x: toggle.1.midX, y: toggle.1.midY))
+        try? await Task.sleep(for: .milliseconds(600))
+        guard (try? Data(contentsOf: file)) == expected.serialized(), session.history.first?.summary == "Changed Show crosshair" else {
+            print("FAIL: clicking Show crosshair did not write exactly one edit (history: \(session.history.first?.summary ?? "none"))"); return false
+        }
+        print("PASS: clicking the Show crosshair switch wrote `seta cg_drawCrosshair \"0\"` in canonical order and one History row")
+
+        guard let target = session.history.first(where: { $0.summary == "Changed Texture detail" }) else { return false }
+        let count = session.history.count
+        model.studio.tab = .history
+        model.studio.snapshotID = target.id
+        try? await Task.sleep(for: .milliseconds(900))
+        // The History inspector's one prominent action is Restore This Snapshot.
+        guard let restore = audit.items.values.first(where: { $0.name == "prominent" && $0.frame.minX > 1000 })?.frame else {
+            print("FAIL: Restore button not on screen"); return false
+        }
+        click(window, at: NSPoint(x: restore.midX, y: window.frame.height - restore.midY))
+        try? await Task.sleep(for: .milliseconds(600))
+        guard (try? Data(contentsOf: file)) == target.data, session.history.count == count + 1, session.history.first?.source == .restore,
+              session.history.first?.beforeData == expected.serialized() else {
+            print("FAIL: Restore did not write the snapshot as a new transaction"); return false
+        }
+        print("PASS: clicking Restore This Snapshot wrote the snapshot's exact bytes as a new History transaction")
+        return true
     }
 }
