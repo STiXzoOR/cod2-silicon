@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Use a local UDP peer to test the actual Network.framework transport."""
-import pathlib, socket, subprocess, threading
+import os, pathlib, socket, subprocess, threading
 root = pathlib.Path(__file__).resolve().parents[2]
-out = root / 'output/ws25/network'
+out = pathlib.Path(os.environ['COD2_LAUNCHER_TEST_OUTPUT']) / 'network' if 'COD2_LAUNCHER_TEST_OUTPUT' in os.environ else root / 'output/ws25/network'
 subprocess.run([str(root/'scripts/build-launcher.sh'), str(out), '--network-test'], check=True)
 fixture = (root/'tests/launcher/fixtures/status.bin').read_bytes()
 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as peer:

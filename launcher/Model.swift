@@ -65,17 +65,19 @@ struct MediaEntry: Identifiable {
     let home: URL
     let preferences: URL
     let snapshot: Bool
+    let configStudio: ConfigStudioSession?
     private var savedSettings = GameSettings()
     private var engine: Process?
-    private var attachedGame: NSRunningApplication?
+    private var attachedGames: [pid_t: NSRunningApplication] = [:]
     private var attachmentTask: Task<Void, Never>?
     private var connectionTask: Task<Void, Never>?
     private var handOffTask: Task<Void, Never>?
     private var gameStartedAt = Date()
+    private var lastExitCode: Int32?
     private var gameBundle: URL { Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app") }
     private var activeGamePID: pid_t? {
         if let engine, engine.isRunning { return engine.processIdentifier }
-        if let attachedGame, !attachedGame.isTerminated { return attachedGame.processIdentifier }
+        if let app = attachedGames.values.filter({ !$0.isTerminated }).sorted(by: { $0.processIdentifier < $1.processIdentifier }).first { return app.processIdentifier }
         return nil
     }
     private var browserTask: Task<Void, Never>?
@@ -91,6 +93,18 @@ struct MediaEntry: Identifiable {
         home = URL(fileURLWithPath: snapshot ? "/Preview/CoD2 Silicon" : LauncherHome())
         artwork = MapArtworkStore(home: home)
         preferences = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".cod2/preferences")
+        let expected = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app/Contents/MacOS/cod2_macos").resolvingSymlinksInPath()
+        let identifier = (Bundle.main.bundleIdentifier ?? "") + ".game"
+        if snapshot { configStudio = nil }
+        else {
+            do {
+                configStudio = try ConfigStudioSession(home: home, dialect: .cod2x, discoverGames: {
+                    Set(NSRunningApplication.runningApplications(withBundleIdentifier: identifier).filter {
+                        !$0.isTerminated && $0.executableURL?.resolvingSymlinksInPath() == expected
+                    }.map(\.processIdentifier))
+                })
+            } catch { configStudio = nil; notice = error.localizedDescription }
+        }
         if snapshot { seedPreview(); return }
         if let resolution = Bundle.main.object(forInfoDictionaryKey: "CoD2DefaultResolution") as? String { settings.resolution = resolution }
         if let mode = Bundle.main.object(forInfoDictionaryKey: "CoD2DefaultFullscreen") as? String { settings.fullscreen = mode }
@@ -140,10 +154,15 @@ struct MediaEntry: Identifiable {
         guard !snapshot else { return }
         booted = true
         _ = attachExistingGame()
+        startGameMonitor()
         let args = CommandLine.arguments
         fastPlay = args.contains("--play")
         exitAfterGame = args.contains("--exit-after-game")
         if let separator = args.firstIndex(of: "--") { forwardedArguments = Array(args.dropFirst(separator + 1)) }
+        if !gameRunning {
+            do { try configStudio?.initialize(settings: settings, forwarded: forwardedArguments) }
+            catch { notice = error.localizedDescription }
+        }
         if let url = args.first(where: { $0.hasPrefix("cod2x://") }) { openLink(url) }
         if ProcessInfo.processInfo.environment["COD2_SETUP_NONINTERACTIVE"] == "1" {
             setupTask = Task {
@@ -268,7 +287,7 @@ struct MediaEntry: Identifiable {
     // MARK: Settings and library
     func saveSettings() {
         do {
-            let text = try settings.config()
+            let text = try settings.launchConfig(migrated: configStudio?.migrationCompleted == true)
             guard !snapshot else { settingsSaved = true; return }
             try PrivateFile.write(Data(text.utf8), to: home.appendingPathComponent("main/launcher.cfg"))
             try PrivateFile.write(JSONEncoder().encode(settings), to: home.appendingPathComponent("launcher-settings.json"))
@@ -368,20 +387,45 @@ struct MediaEntry: Identifiable {
     private func attachExistingGame() -> Bool {
         guard !snapshot, !gameRunning, let identifier = Bundle.main.bundleIdentifier else { return false }
         let expected = gameBundle.appendingPathComponent("Contents/MacOS/cod2_macos").resolvingSymlinksInPath()
-        guard let app = NSRunningApplication.runningApplications(withBundleIdentifier: identifier + ".game").first(where: {
+        let apps = NSRunningApplication.runningApplications(withBundleIdentifier: identifier + ".game").filter {
             !$0.isTerminated && $0.executableURL?.resolvingSymlinksInPath() == expected
-        }) else { return false }
-        attachedGame = app; gameRunning = true; gameStartedAt = Date()
+        }
+        guard let app = apps.first else { return false }
+        attachedGames = Dictionary(uniqueKeysWithValues: apps.map { ($0.processIdentifier, $0) })
+        gameRunning = true; gameStartedAt = Date()
+        do { try configStudio?.reconcileGames(Set(attachedGames.keys)) } catch { notice = error.localizedDescription }
         NSApp.setActivationPolicy(.accessory)
         NSApp.windows.forEach { $0.orderOut(nil) }
         print("CoD2 Silicon: reconnected to existing game (pid \(app.processIdentifier)).")
         fflush(stdout)
-        attachmentTask = Task { [weak self] in
-            while !app.isTerminated { try? await Task.sleep(for: .milliseconds(250)); if Task.isCancelled { return } }
-            self?.attachedGame = nil
-            self?.gameEnded(code: nil)
-        }
+        startGameMonitor()
         return true
+    }
+    private func startGameMonitor() {
+        guard attachmentTask == nil, !snapshot else { return }
+        attachmentTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(250))
+                guard let self, !Task.isCancelled else { return }
+                self.synchronizeGames()
+            }
+        }
+    }
+    private func synchronizeGames() {
+        if let engine, !engine.isRunning { lastExitCode = engine.terminationStatus; self.engine = nil }
+        let expected = gameBundle.appendingPathComponent("Contents/MacOS/cod2_macos").resolvingSymlinksInPath()
+        let identifier = (Bundle.main.bundleIdentifier ?? "") + ".game"
+        let apps = NSRunningApplication.runningApplications(withBundleIdentifier: identifier).filter {
+            !$0.isTerminated && $0.executableURL?.resolvingSymlinksInPath() == expected
+        }
+        attachedGames = Dictionary(uniqueKeysWithValues: apps.map { ($0.processIdentifier, $0) })
+        var pids = Set(attachedGames.keys)
+        if let engine, engine.isRunning { pids.insert(engine.processIdentifier) }
+        let wasRunning = gameRunning
+        if !pids.isEmpty && !wasRunning { gameStartedAt = Date() }
+        gameRunning = !pids.isEmpty
+        do { try configStudio?.reconcileGames(pids) } catch { notice = error.localizedDescription }
+        if wasRunning && !gameRunning { gameEnded(code: lastExitCode); lastExitCode = nil }
     }
     func play(demo: URL? = nil) {
         guard !snapshot, !gameRunning else { return }
@@ -395,8 +439,9 @@ struct MediaEntry: Identifiable {
             let bundle = gameBundle
             let executable = bundle.appendingPathComponent("Contents/MacOS/cod2_macos")
             guard FileManager.default.isExecutableFile(atPath: executable.path) else { throw LauncherError(message: "The game helper is missing. Rebuild or reinstall this app.") }
+            let configLaunch = try configStudio?.prepareLaunch(settings: settings, forwarded: forwardedArguments)
             let plan = try GameLaunchPlan(settings: settings, dataPath: dataPath, homePath: home.path, link: pendingLink,
-                demo: demo?.deletingPathExtension().lastPathComponent, forwarded: forwardedArguments)
+                demo: demo?.deletingPathExtension().lastPathComponent, forwarded: forwardedArguments, configStudio: configLaunch)
             let process = Process(); process.executableURL = executable; process.arguments = plan.arguments
             process.currentDirectoryURL = home
             var environment = ProcessInfo.processInfo.environment
@@ -410,10 +455,17 @@ struct MediaEntry: Identifiable {
             process.standardOutput = FileHandle.standardOutput; process.standardError = FileHandle.standardError
             process.terminationHandler = { [weak self] process in
                 let code = process.terminationStatus
-                Task { @MainActor in self?.gameEnded(code: code) }
+                let pid = process.processIdentifier
+                Task { @MainActor in
+                    guard let self, self.engine?.processIdentifier == pid else { return }
+                    self.lastExitCode = code; self.engine = nil; self.synchronizeGames()
+                }
             }
-            try PrivateFile.write(Data(try settings.config().utf8), to: home.appendingPathComponent("main/launcher.cfg"))
+            try PrivateFile.write(Data(try settings.launchConfig(migrated: configLaunch != nil).utf8), to: home.appendingPathComponent("main/launcher.cfg"))
             try process.run(); engine = process; gameRunning = true; gameStartedAt = Date(); crashReport = nil; notice = ""
+            configStudio?.gameLaunched(pid: process.processIdentifier)
+            if let error = configStudio?.migrationError ?? configStudio?.error { notice = error }
+            startGameMonitor()
             // --play and cold links launch once: a later setup completion must not start a second game.
             pendingLink = nil; fastPlay = false
             if let link = plan.link { scheduleLink(link, pid: process.processIdentifier) }
@@ -421,7 +473,10 @@ struct MediaEntry: Identifiable {
             handOff(to: process.processIdentifier)
             print("CoD2 Silicon: game started (pid \(process.processIdentifier)).")
             fflush(stdout)
-        } catch { notice = error.localizedDescription }
+        } catch {
+            notice = error.localizedDescription
+            do { try configStudio?.cancelLaunch() } catch { notice += " " + error.localizedDescription }
+        }
     }
     /// Gives the game keyboard and mouse focus. Since macOS 14 an app can only take focus when
     /// the active app yields it, so the launcher stays active until the game has launched,
