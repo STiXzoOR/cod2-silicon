@@ -1,0 +1,3130 @@
+{
+  "schemaVersion": 1,
+  "version": "2026-10-09.1",
+  "researchedOn": "2026-10-09",
+  "rulesets": [
+    {
+      "id": "stock-1.3",
+      "title": "Stock 1.3",
+      "version": "1.3",
+      "mode": "stock",
+      "baseID": null,
+      "scope": "Only the listed client settings and command rules are assessed. Match, bind, anti-cheat and full league compatibility are not certified.",
+      "rules": [
+        {
+          "id": "com_maxfps",
+          "setting": "com_maxfps",
+          "constraint": {
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 1000,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "com_maxfps must be within its stock registration range (0–1000); this is not a performance measurement.",
+          "sources": [
+            {
+              "sourceURL": "git:048ff5e:src/PC/qcommon/common.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/qcommon/common.c registration of com_maxfps",
+              "quote": "Dvar_RegisterInt(\"com_maxfps\", 85, 0, 1000, 0x1001);",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "rate",
+          "setting": "rate",
+          "constraint": {
+            "kind": "range",
+            "minimum": 1000,
+            "maximum": 25000,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "rate must be within its stock registration range (1000–25000); this is not a performance measurement.",
+          "sources": [
+            {
+              "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/client_mp/cl_main_mp.c registration of rate",
+              "quote": "Dvar_RegisterInt(\"rate\", 5000, 1000, 25000, 0x1003);",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "snaps",
+          "setting": "snaps",
+          "constraint": {
+            "kind": "range",
+            "minimum": 1,
+            "maximum": 30,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "snaps must be within its stock registration range (1–30); this is not a performance measurement.",
+          "sources": [
+            {
+              "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/client_mp/cl_main_mp.c registration of snaps",
+              "quote": "Dvar_RegisterInt(\"snaps\", 20, 1, 30, 0x1003);",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_maxpackets",
+          "setting": "cl_maxpackets",
+          "constraint": {
+            "kind": "range",
+            "minimum": 10,
+            "maximum": 100,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "cl_maxpackets must be within its stock registration range (10–100); this is not a performance measurement.",
+          "sources": [
+            {
+              "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/client_mp/cl_main_mp.c registration of cl_maxpackets",
+              "quote": "Dvar_RegisterInt(\"cl_maxpackets\", 30, 15, 100, 0x1001);",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "m_filter",
+          "setting": "m_filter",
+          "constraint": {
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 1,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "m_filter must be within its stock registration range (0–1); this is not a performance measurement.",
+          "sources": [
+            {
+              "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/client_mp/cl_main_mp.c registration of m_filter",
+              "quote": "Dvar_RegisterBool_mac(\"m_filter\", 0, 0x1001);",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_mouseaccel",
+          "setting": "cl_mouseAccel",
+          "constraint": {
+            "kind": "range",
+            "minimum": 0.0,
+            "maximum": 100.0,
+            "integer": false
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "cl_mouseAccel must be within its stock registration range (0.0–100.0); this is not a performance measurement.",
+          "sources": [
+            {
+              "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/client_mp/cl_main_mp.c registration of cl_mouseAccel",
+              "quote": "Dvar_RegisterFloat(\"cl_mouseAccel\", 0.0f, 0.0f, 100.0f, 0x1001);",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "r_picmip",
+          "setting": "r_picmip",
+          "constraint": {
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 3,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "r_picmip must be within its stock registration range (0–3); this is not a performance measurement.",
+          "sources": [
+            {
+              "sourceURL": "git:048ff5e:src/PC/gfx_d3d/r_dvars.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/gfx_d3d/r_dvars.c registration of r_picmip",
+              "quote": "Dvar_RegisterInt(\"r_picmip\", 0, 0, 3, 0x2001);",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "sourceURL": "git:048ff5e:src/PC/qcommon/common.c",
+          "sourceDate": "2026-10-09",
+          "quoteReference": "048ff5e:src/PC/qcommon/common.c registration of com_maxfps",
+          "quote": "Dvar_RegisterInt(\"com_maxfps\", 85, 0, 1000, 0x1001);",
+          "enforcedBy": "code",
+          "archiveTimestamp": null
+        }
+      ]
+    },
+    {
+      "id": "public-cod2x",
+      "title": "Public CoD2x 1.4.6.8",
+      "version": "1.4.6.8",
+      "mode": "cod2x",
+      "baseID": null,
+      "scope": "Only the listed client settings and command rules are assessed. Match, bind, anti-cheat and full league compatibility are not certified.",
+      "rules": [
+        {
+          "id": "com_maxfps",
+          "setting": "com_maxfps",
+          "constraint": {
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 1000,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "com_maxfps must be within its cod2x registration range (0–1000); this is not a performance measurement.",
+          "sources": [
+            {
+              "sourceURL": "git:048ff5e:src/PC/qcommon/common.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/qcommon/common.c registration of com_maxfps",
+              "quote": "Dvar_RegisterInt(\"com_maxfps\", 250, 0, 1000, 0x1001);",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "rate",
+          "setting": "rate",
+          "constraint": {
+            "kind": "range",
+            "minimum": 1000,
+            "maximum": 25000,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "rate must be within its cod2x registration range (1000–25000); this is not a performance measurement.",
+          "sources": [
+            {
+              "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/client_mp/cl_main_mp.c registration of rate",
+              "quote": "Dvar_RegisterInt(\"rate\", 5000, 1000, 25000, 0x1003);",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "snaps",
+          "setting": "snaps",
+          "constraint": {
+            "kind": "range",
+            "minimum": 1,
+            "maximum": 40,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "snaps must be within its cod2x registration range (1–40); this is not a performance measurement.",
+          "sources": [
+            {
+              "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/client_mp/cl_main_mp.c registration of snaps",
+              "quote": "Dvar_RegisterInt(\"snaps\", 40, 1, 40, 0x1003);",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_maxpackets",
+          "setting": "cl_maxpackets",
+          "constraint": {
+            "kind": "range",
+            "minimum": 10,
+            "maximum": 125,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "cl_maxpackets must be within its cod2x registration range (10–125); this is not a performance measurement.",
+          "sources": [
+            {
+              "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/client_mp/cl_main_mp.c registration of cl_maxpackets",
+              "quote": "Dvar_RegisterInt(\"cl_maxpackets\", 125, 10, 125, 0x1001);",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "m_filter",
+          "setting": "m_filter",
+          "constraint": {
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 1,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "m_filter must be within its cod2x registration range (0–1); this is not a performance measurement.",
+          "sources": [
+            {
+              "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/client_mp/cl_main_mp.c registration of m_filter",
+              "quote": "Dvar_RegisterBool_mac(\"m_filter\", 0, 0x1001);",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_mouseaccel",
+          "setting": "cl_mouseAccel",
+          "constraint": {
+            "kind": "range",
+            "minimum": 0.0,
+            "maximum": 100.0,
+            "integer": false
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "cl_mouseAccel must be within its cod2x registration range (0.0–100.0); this is not a performance measurement.",
+          "sources": [
+            {
+              "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/client_mp/cl_main_mp.c registration of cl_mouseAccel",
+              "quote": "Dvar_RegisterFloat(\"cl_mouseAccel\", 0.0f, 0.0f, 100.0f, 0x1001);",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "r_picmip",
+          "setting": "r_picmip",
+          "constraint": {
+            "kind": "range",
+            "minimum": 0,
+            "maximum": 3,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "r_picmip must be within its cod2x registration range (0–3); this is not a performance measurement.",
+          "sources": [
+            {
+              "sourceURL": "git:048ff5e:src/PC/gfx_d3d/r_dvars.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/gfx_d3d/r_dvars.c registration of r_picmip",
+              "quote": "Dvar_RegisterInt(\"r_picmip\", 0, 0, 3, 0x2001);",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "sourceURL": "git:048ff5e:src/PC/qcommon/common.c",
+          "sourceDate": "2026-10-09",
+          "quoteReference": "048ff5e:src/PC/qcommon/common.c registration of com_maxfps",
+          "quote": "Dvar_RegisterInt(\"com_maxfps\", 250, 0, 1000, 0x1001);",
+          "enforcedBy": "code",
+          "archiveTimestamp": null
+        }
+      ]
+    },
+    {
+      "id": "cod2x-competitive",
+      "title": "CoD2x competitive (g_competitive 1)",
+      "version": "1.4.6.8",
+      "mode": "cod2x",
+      "baseID": "public-cod2x",
+      "scope": "Only the listed client settings and command rules are assessed. Match, bind, anti-cheat and full league compatibility are not certified.",
+      "rules": [
+        {
+          "id": "com_maxfps",
+          "setting": "com_maxfps",
+          "constraint": {
+            "kind": "range",
+            "minimum": 125,
+            "maximum": 250,
+            "resetValue": "250",
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "Frame caps outside 125–250 reset to 250 during CoD2x competitive play.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L57-L61",
+              "sourceDate": "2026-04-07",
+              "quoteReference": "research/rulesets.json row 98; com_maxfps",
+              "quote": "com_maxFps->limits.integer.min = 125; com_maxFps->limits.integer.max = 250; if (com_maxFps->value.integer < 125 || com_maxFps->value.integer > 250) { Dvar_SetInt(com_maxFps, 250); // it will also set the latched value }",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            },
+            {
+              "sourceURL": "git:048ff5e:src/PC/qcommon/cod2x_runtime.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/qcommon/cod2x_runtime.c Cod2x_Frame / Cod2x_Competitive",
+              "quote": "{ .name = \"com_maxfps\", .min = 125, .max = 250, .value = 250 },",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "rate",
+          "setting": "rate",
+          "constraint": {
+            "kind": "exact",
+            "value": "25000"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "CoD2x forces rate to 25000 during competitive play.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L64-L67",
+              "sourceDate": "2026-04-07",
+              "quoteReference": "research/rulesets.json row 99; rate",
+              "quote": "rate->limits.integer.min = 25000; if (rate->value.integer != 25000) { Dvar_SetInt(rate, 25000); }",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            },
+            {
+              "sourceURL": "git:048ff5e:src/PC/qcommon/cod2x_runtime.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/qcommon/cod2x_runtime.c Cod2x_Frame / Cod2x_Competitive",
+              "quote": "{ .name = \"com_maxfps\", .min = 125, .max = 250, .value = 250 },",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "snaps",
+          "setting": "snaps",
+          "constraint": {
+            "kind": "exact",
+            "value": "40"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "CoD2x forces snaps to 40 during competitive play.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L69-L72",
+              "sourceDate": "2026-04-07",
+              "quoteReference": "research/rulesets.json row 100; snaps",
+              "quote": "snaps->limits.integer.min = 40; if (snaps->value.integer != 40) { Dvar_SetInt(snaps, 40); }",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            },
+            {
+              "sourceURL": "git:048ff5e:src/PC/qcommon/cod2x_runtime.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/qcommon/cod2x_runtime.c Cod2x_Frame / Cod2x_Competitive",
+              "quote": "{ .name = \"com_maxfps\", .min = 125, .max = 250, .value = 250 },",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_maxpackets",
+          "setting": "cl_maxpackets",
+          "constraint": {
+            "kind": "exact",
+            "value": "125"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "CoD2x forces cl_maxpackets to 125 during competitive play.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L74-L77",
+              "sourceDate": "2026-04-07",
+              "quoteReference": "research/rulesets.json row 101; cl_maxpackets",
+              "quote": "cl_maxpackets->limits.integer.min = 125; if (cl_maxpackets->value.integer != 125) { Dvar_SetInt(cl_maxpackets, 125); }",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            },
+            {
+              "sourceURL": "git:048ff5e:src/PC/qcommon/cod2x_runtime.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/qcommon/cod2x_runtime.c Cod2x_Frame / Cod2x_Competitive",
+              "quote": "{ .name = \"com_maxfps\", .min = 125, .max = 250, .value = 250 },",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "sc_enable",
+          "setting": "sc_enable",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "CoD2x forces sc_enable to 0 during competitive play.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L79-L84",
+              "sourceDate": "2026-04-07",
+              "quoteReference": "research/rulesets.json row 102; sc_enable",
+              "quote": "sc_shadows->type = DVAR_TYPE_INT; sc_shadows->limits.integer.min = 0; sc_shadows->limits.integer.max = 0; if (sc_shadows->value.integer != 0) { Dvar_SetInt(sc_shadows, 0); }",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            },
+            {
+              "sourceURL": "git:048ff5e:src/PC/qcommon/cod2x_runtime.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/qcommon/cod2x_runtime.c Cod2x_Frame / Cod2x_Competitive",
+              "quote": "{ .name = \"com_maxfps\", .min = 125, .max = 250, .value = 250 },",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "fx_sort",
+          "setting": "fx_sort",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "CoD2x forces fx_sort to 1 during competitive play.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L86-L91",
+              "sourceDate": "2026-04-07",
+              "quoteReference": "research/rulesets.json row 103; fx_sort",
+              "quote": "fx_sort->type = DVAR_TYPE_INT; fx_sort->limits.integer.min = 1; fx_sort->limits.integer.max = 1; if (fx_sort->value.integer != 1) { Dvar_SetInt(fx_sort, 1); }",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            },
+            {
+              "sourceURL": "git:048ff5e:src/PC/qcommon/cod2x_runtime.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/qcommon/cod2x_runtime.c Cod2x_Frame / Cod2x_Competitive",
+              "quote": "{ .name = \"com_maxfps\", .min = 125, .max = 250, .value = 250 },",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "mss_q3fs",
+          "setting": "mss_q3fs",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "CoD2x forces mss_q3fs to 1 during competitive play.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L93-L98",
+              "sourceDate": "2026-04-07",
+              "quoteReference": "research/rulesets.json row 104; mss_q3fs",
+              "quote": "mss_q3fs->type = DVAR_TYPE_INT; mss_q3fs->limits.integer.min = 1; mss_q3fs->limits.integer.max = 1; if (mss_q3fs->value.integer != 1) { Dvar_SetInt(mss_q3fs, 1); }",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            },
+            {
+              "sourceURL": "git:048ff5e:src/PC/qcommon/cod2x_runtime.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/qcommon/cod2x_runtime.c Cod2x_Frame / Cod2x_Competitive",
+              "quote": "{ .name = \"com_maxfps\", .min = 125, .max = 250, .value = 250 },",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "wait",
+          "setting": "wait",
+          "constraint": {
+            "kind": "disabledCommand"
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "wait is disabled during competitive play once primed; demo playback is exempt.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L15-L29",
+              "sourceDate": "2026-04-07",
+              "quoteReference": "research/rulesets.json row 105; wait (console command)",
+              "quote": "void competitive_cmd_wait() { bool block = g_competitive->value.boolean; // Prevent blocking wait command untill connnected to the server if (COD2X_WIN32 && (clientState < CLIENT_STATE_PRIMED || demo_isPlaying)) { block = false; } if (block) { Com_Printf(\"Wait command is disabled by the server via competitive settings.\\n\"); return; } ASM_CALL(RETURN_VOID, 0x00420a80); }",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            },
+            {
+              "sourceURL": "git:048ff5e:src/PC/qcommon/cod2x_runtime.c",
+              "sourceDate": "2026-10-09",
+              "quoteReference": "048ff5e:src/PC/qcommon/cod2x_runtime.c Cod2x_Frame / Cod2x_Competitive",
+              "quote": "{ .name = \"com_maxfps\", .min = 125, .max = 250, .value = 250 },",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "g_competitive",
+          "setting": "g_competitive",
+          "constraint": {
+            "kind": "ownership"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "The server owns g_competitive; the client must not write it.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/shared/server.cpp#L1313-L1315",
+              "sourceDate": "2026-04-07",
+              "quoteReference": "research/rulesets.json row 107; g_competitive (registration)",
+              "quote": "g_competitive = Dvar_RegisterBool(\"g_competitive\", false, (enum dvarFlags_e)(noWriteForClientFlag | DVAR_SYSTEMINFO | DVAR_CHANGEABLE_RESET));",
+              "enforcedBy": "code",
+              "archiveTimestamp": null
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L57-L61",
+          "sourceDate": "2026-04-07",
+          "quoteReference": "research/rulesets.json row 98; com_maxfps",
+          "quote": "com_maxFps->limits.integer.min = 125; com_maxFps->limits.integer.max = 250; if (com_maxFps->value.integer < 125 || com_maxFps->value.integer > 250) { Dvar_SetInt(com_maxFps, 250); // it will also set the latched value }",
+          "enforcedBy": "code",
+          "archiveTimestamp": null
+        }
+      ]
+    },
+    {
+      "id": "zpam-3.36",
+      "title": "Stock / zPAM 3.36",
+      "version": "3.36",
+      "mode": "stock",
+      "baseID": "stock-1.3",
+      "scope": "Only the listed client settings and command rules are assessed. Match, bind, anti-cheat and full league compatibility are not certified.",
+      "rules": [
+        {
+          "id": "cg_tracerchance",
+          "setting": "cg_tracerChance",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_tracerChance = 1 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L41",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 36; cg_tracerChance",
+              "quote": "self setClientCvar2(\"cg_tracerChance\", \"1\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_tracerwidth",
+          "setting": "cg_tracerWidth",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_tracerWidth = 1 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L42",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 37; cg_tracerWidth",
+              "quote": "self setClientCvar2(\"cg_tracerWidth\", \"1\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_tracerlength",
+          "setting": "cg_tracerLength",
+          "constraint": {
+            "kind": "exact",
+            "value": "1000"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_tracerLength = 1000 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L43",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 38; cg_tracerLength",
+              "quote": "self setClientCvar2(\"cg_tracerLength\", \"1000\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_tracerspeed",
+          "setting": "cg_tracerSpeed",
+          "constraint": {
+            "kind": "exact",
+            "value": "20000"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_tracerSpeed = 20000 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L44",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 39; cg_tracerSpeed",
+              "quote": "self setClientCvar2(\"cg_tracerSpeed\", \"20000\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_huddamageiconinscope",
+          "setting": "cg_hudDamageIconInScope",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudDamageIconInScope = 1 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L47",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 40; cg_hudDamageIconInScope",
+              "quote": "self setClientCvar2(\"cg_hudDamageIconInScope\", \"1\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudgrenadeiconinscope",
+          "setting": "cg_hudGrenadeIconInScope",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudGrenadeIconInScope = 1 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L48",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 41; cg_hudGrenadeIconInScope",
+              "quote": "self setClientCvar2(\"cg_hudGrenadeIconInScope\", \"1\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "r_drawsun",
+          "setting": "r_drawSun",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes r_drawSun = 0 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L51",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 42; r_drawSun",
+              "quote": "self setClientCvar2(\"r_drawSun\", 0);",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "snaps",
+          "setting": "snaps",
+          "constraint": {
+            "kind": "exact",
+            "value": "30"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes snaps = 30 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L69",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 43; snaps",
+              "quote": "self setClientCvar2(\"snaps\", 30);",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "sc_enable",
+          "setting": "sc_enable",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes sc_enable = 0 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L70",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 44; sc_enable",
+              "quote": "self setClientCvar2(\"sc_enable\", \"0\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "fx_sort",
+          "setting": "fx_sort",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes fx_sort = 1 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L71",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 45; fx_sort",
+              "quote": "self setClientCvar2(\"fx_sort\", \"1\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "rate",
+          "setting": "rate",
+          "constraint": {
+            "kind": "exact",
+            "value": "25000"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes rate = 25000 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L72",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 46; rate",
+              "quote": "self setClientCvar2(\"rate\", \"25000\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_maxpackets",
+          "setting": "cl_maxpackets",
+          "constraint": {
+            "kind": "exact",
+            "value": "100"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cl_maxpackets = 100 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L73",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 47; cl_maxpackets",
+              "quote": "self setClientCvar2(\"cl_maxpackets\", \"100\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_viewsize",
+          "setting": "cg_viewsize",
+          "constraint": {
+            "kind": "exact",
+            "value": "100"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_viewsize = 100 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L77",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 48; cg_viewsize",
+              "quote": "self setClientCvar2(\"cg_viewsize\", \"100\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_avidemo",
+          "setting": "cl_avidemo",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cl_avidemo = 0 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L78",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 49; cl_avidemo",
+              "quote": "self setClientCvar2(\"cl_avidemo\", \"0\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_forceavidemo",
+          "setting": "cl_forceavidemo",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cl_forceavidemo = 0 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L79",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 50; cl_forceavidemo",
+              "quote": "self setClientCvar2(\"cl_forceavidemo\", \"0\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_freelook",
+          "setting": "cl_freelook",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cl_freelook = 1 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L80",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 51; cl_freelook",
+              "quote": "self setClientCvar2(\"cl_freelook\", \"1\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_pitchspeed",
+          "setting": "cl_pitchspeed",
+          "constraint": {
+            "kind": "exact",
+            "value": "140"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cl_pitchspeed = 140 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L81",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 52; cl_pitchspeed",
+              "quote": "self setClientCvar2(\"cl_pitchspeed\", \"140\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_yawspeed",
+          "setting": "cl_yawspeed",
+          "constraint": {
+            "kind": "exact",
+            "value": "140"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cl_yawspeed = 140 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L82",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 53; cl_yawspeed",
+              "quote": "self setClientCvar2(\"cl_yawspeed\", \"140\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "fixedtime",
+          "setting": "fixedtime",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes fixedtime = 0 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L86",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 54; fixedtime",
+              "quote": "self setClientCvar2(\"fixedtime\", \"0\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "friction",
+          "setting": "friction",
+          "constraint": {
+            "kind": "exact",
+            "value": "5.5"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes friction = 5.5 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L87",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 55; friction",
+              "quote": "self setClientCvar2(\"friction\", \"5.5\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "mss_q3fs",
+          "setting": "mss_q3fs",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes mss_q3fs = 1 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L88",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 56; mss_q3fs",
+              "quote": "self setClientCvar2(\"mss_q3fs\", \"1\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_errordecay",
+          "setting": "cg_errordecay",
+          "constraint": {
+            "kind": "exact",
+            "value": "100"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_errordecay = 100 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L89",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 57; cg_errordecay",
+              "quote": "self setClientCvar2(\"cg_errordecay\", \"100\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hintfadetime",
+          "setting": "cg_hintFadeTime",
+          "constraint": {
+            "kind": "exact",
+            "value": "100"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hintFadeTime = 100 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L90",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 58; cg_hintFadeTime",
+              "quote": "self setClientCvar2(\"cg_hintFadeTime\", \"100\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudcompassmaxrange",
+          "setting": "cg_hudCompassMaxRange",
+          "constraint": {
+            "kind": "exact",
+            "value": "1500"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudCompassMaxRange = 1500 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L94",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 59; cg_hudCompassMaxRange",
+              "quote": "self setClientCvar2(\"cg_hudCompassMaxRange\", \"1500\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudcompassminradius",
+          "setting": "cg_hudCompassMinRadius",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudCompassMinRadius = 0 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L95",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 60; cg_hudCompassMinRadius",
+              "quote": "self setClientCvar2(\"cg_hudCompassMinRadius\", \"0\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudcompassminrange",
+          "setting": "cg_hudCompassMinRange",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudCompassMinRange = 0 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L96",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 61; cg_hudCompassMinRange",
+              "quote": "self setClientCvar2(\"cg_hudCompassMinRange\", \"0\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudcompassspringypointers",
+          "setting": "cg_hudCompassSpringyPointers",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudCompassSpringyPointers = 0 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L97",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 62; cg_hudCompassSpringyPointers",
+              "quote": "self setClientCvar2(\"cg_hudCompassSpringyPointers\", \"0\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudcompasssoundpingfadetime",
+          "setting": "cg_hudCompassSoundPingFadeTime",
+          "constraint": {
+            "kind": "exact",
+            "value": "2"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudCompassSoundPingFadeTime = 2 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L98",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 63; cg_hudCompassSoundPingFadeTime",
+              "quote": "self setClientCvar2(\"cg_hudCompassSoundPingFadeTime\", \"2\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_huddamageiconheight",
+          "setting": "cg_hudDamageIconHeight",
+          "constraint": {
+            "kind": "exact",
+            "value": "64"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudDamageIconHeight = 64 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L102",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 64; cg_hudDamageIconHeight",
+              "quote": "self setClientCvar2(\"cg_hudDamageIconHeight\", \"64\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_huddamageiconoffset",
+          "setting": "cg_hudDamageIconOffset",
+          "constraint": {
+            "kind": "exact",
+            "value": "128"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudDamageIconOffset = 128 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L103",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 65; cg_hudDamageIconOffset",
+              "quote": "self setClientCvar2(\"cg_hudDamageIconOffset\", \"128\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_huddamageicontime",
+          "setting": "cg_hudDamageIconTime",
+          "constraint": {
+            "kind": "exact",
+            "value": "2000"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudDamageIconTime = 2000 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L104",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 66; cg_hudDamageIconTime",
+              "quote": "self setClientCvar2(\"cg_hudDamageIconTime\", \"2000\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_huddamageiconwidth",
+          "setting": "cg_hudDamageIconWidth",
+          "constraint": {
+            "kind": "exact",
+            "value": "128"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudDamageIconWidth = 128 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L105",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 67; cg_hudDamageIconWidth",
+              "quote": "self setClientCvar2(\"cg_hudDamageIconWidth\", \"128\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudgrenadeiconheight",
+          "setting": "cg_hudGrenadeIconHeight",
+          "constraint": {
+            "kind": "exact",
+            "value": "25"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudGrenadeIconHeight = 25 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L109",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 68; cg_hudGrenadeIconHeight",
+              "quote": "self setClientCvar2(\"cg_hudGrenadeIconHeight\", \"25\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudgrenadeiconoffset",
+          "setting": "cg_hudGrenadeIconOffset",
+          "constraint": {
+            "kind": "exact",
+            "value": "50"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudGrenadeIconOffset = 50 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L110",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 69; cg_hudGrenadeIconOffset",
+              "quote": "self setClientCvar2(\"cg_hudGrenadeIconOffset\", \"50\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudgrenadeiconwidth",
+          "setting": "cg_hudGrenadeIconWidth",
+          "constraint": {
+            "kind": "exact",
+            "value": "25"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudGrenadeIconWidth = 25 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L111",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 70; cg_hudGrenadeIconWidth",
+              "quote": "self setClientCvar2(\"cg_hudGrenadeIconWidth\", \"25\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudgrenadepointerheight",
+          "setting": "cg_hudGrenadePointerHeight",
+          "constraint": {
+            "kind": "exact",
+            "value": "12"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudGrenadePointerHeight = 12 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L112",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 71; cg_hudGrenadePointerHeight",
+              "quote": "self setClientCvar2(\"cg_hudGrenadePointerHeight\", \"12\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudgrenadepointerpivot",
+          "setting": "cg_hudGrenadePointerPivot",
+          "constraint": {
+            "kind": "exact",
+            "value": "12 27"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudGrenadePointerPivot = 12 27 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L116",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 72; cg_hudGrenadePointerPivot",
+              "quote": "self setClientCvar2(\"cg_hudGrenadePointerPivot\", \"12 27\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudgrenadepointerwidth",
+          "setting": "cg_hudGrenadePointerWidth",
+          "constraint": {
+            "kind": "exact",
+            "value": "25"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudGrenadePointerWidth = 25 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L117",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 73; cg_hudGrenadePointerWidth",
+              "quote": "self setClientCvar2(\"cg_hudGrenadePointerWidth\", \"25\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudobjectivemaxrange",
+          "setting": "cg_hudObjectiveMaxRange",
+          "constraint": {
+            "kind": "exact",
+            "value": "2048"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudObjectiveMaxRange = 2048 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L118",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 74; cg_hudObjectiveMaxRange",
+              "quote": "self setClientCvar2(\"cg_hudObjectiveMaxRange\", \"2048\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudobjectiveminalpha",
+          "setting": "cg_hudObjectiveMinAlpha",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudObjectiveMinAlpha = 1 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L119",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 75; cg_hudObjectiveMinAlpha",
+              "quote": "self setClientCvar2(\"cg_hudObjectiveMinAlpha\", \"1\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudobjectiveminheight",
+          "setting": "cg_hudObjectiveMinHeight",
+          "constraint": {
+            "kind": "exact",
+            "value": "-70"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 3.36 pushes cg_hudObjectiveMinHeight = -70 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L120",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 76; cg_hudObjectiveMinHeight",
+              "quote": "self setClientCvar2(\"cg_hudObjectiveMinHeight\", \"-70\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "com_maxfps",
+          "setting": "com_maxfps",
+          "constraint": {
+            "kind": "range",
+            "minimum": 125,
+            "maximum": 250,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "zPAM 3.36 shows a blocking HUD warning outside 125–250 fps.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/ui_mp/hud.menu#L507",
+              "sourceDate": "2025-09-15",
+              "quoteReference": "research/rulesets.json row 84; com_maxfps",
+              "quote": "DVAR_CHECK(\"Set com_maxFPS within 125-250\", \"com_maxfps\", hideDvar { 125;126;...;250 } )  [list abbreviated; full line in raw/zpam-hud-menu-dvar_forces.md]",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L41",
+          "sourceDate": "2025-09-15",
+          "quoteReference": "research/rulesets.json row 36; cg_tracerChance",
+          "quote": "self setClientCvar2(\"cg_tracerChance\", \"1\");",
+          "enforcedBy": "modScript",
+          "archiveTimestamp": null
+        }
+      ]
+    },
+    {
+      "id": "zpam-4.08",
+      "title": "CoD2x / zPAM 4.08 (all modes, including pub)",
+      "version": "4.08",
+      "mode": "cod2x",
+      "baseID": "cod2x-competitive",
+      "scope": "Only the listed client settings and command rules are assessed. Match, bind, anti-cheat and full league compatibility are not certified.",
+      "rules": [
+        {
+          "id": "cg_tracerchance",
+          "setting": "cg_tracerChance",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_tracerChance = 1 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L38",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 0; cg_tracerChance",
+              "quote": "self setClientCvar2(\"cg_tracerChance\", \"1\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_tracerwidth",
+          "setting": "cg_tracerWidth",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_tracerWidth = 1 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L39",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 1; cg_tracerWidth",
+              "quote": "self setClientCvar2(\"cg_tracerWidth\", \"1\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_tracerlength",
+          "setting": "cg_tracerLength",
+          "constraint": {
+            "kind": "exact",
+            "value": "1000"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_tracerLength = 1000 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L40",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 2; cg_tracerLength",
+              "quote": "self setClientCvar2(\"cg_tracerLength\", \"1000\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_tracerspeed",
+          "setting": "cg_tracerSpeed",
+          "constraint": {
+            "kind": "exact",
+            "value": "20000"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_tracerSpeed = 20000 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L41",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 3; cg_tracerSpeed",
+              "quote": "self setClientCvar2(\"cg_tracerSpeed\", \"20000\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_huddamageiconinscope",
+          "setting": "cg_hudDamageIconInScope",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudDamageIconInScope = 1 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L44",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 4; cg_hudDamageIconInScope",
+              "quote": "self setClientCvar2(\"cg_hudDamageIconInScope\", \"1\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudgrenadeiconinscope",
+          "setting": "cg_hudGrenadeIconInScope",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudGrenadeIconInScope = 1 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L45",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 5; cg_hudGrenadeIconInScope",
+              "quote": "self setClientCvar2(\"cg_hudGrenadeIconInScope\", \"1\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "r_drawsun",
+          "setting": "r_drawSun",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes r_drawSun = 0 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L48",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 6; r_drawSun",
+              "quote": "self setClientCvar2(\"r_drawSun\", 0);",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_viewsize",
+          "setting": "cg_viewsize",
+          "constraint": {
+            "kind": "exact",
+            "value": "100"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_viewsize = 100 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L53",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 7; cg_viewsize",
+              "quote": "self setClientCvar2(\"cg_viewsize\", \"100\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_avidemo",
+          "setting": "cl_avidemo",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cl_avidemo = 0 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L54",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 8; cl_avidemo",
+              "quote": "self setClientCvar2(\"cl_avidemo\", \"0\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_forceavidemo",
+          "setting": "cl_forceavidemo",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cl_forceavidemo = 0 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L55",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 9; cl_forceavidemo",
+              "quote": "self setClientCvar2(\"cl_forceavidemo\", \"0\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_freelook",
+          "setting": "cl_freelook",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cl_freelook = 1 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L56",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 10; cl_freelook",
+              "quote": "self setClientCvar2(\"cl_freelook\", \"1\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_pitchspeed",
+          "setting": "cl_pitchspeed",
+          "constraint": {
+            "kind": "exact",
+            "value": "140"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cl_pitchspeed = 140 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L57",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 11; cl_pitchspeed",
+              "quote": "self setClientCvar2(\"cl_pitchspeed\", \"140\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_yawspeed",
+          "setting": "cl_yawspeed",
+          "constraint": {
+            "kind": "exact",
+            "value": "140"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cl_yawspeed = 140 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L58",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 12; cl_yawspeed",
+              "quote": "self setClientCvar2(\"cl_yawspeed\", \"140\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "fixedtime",
+          "setting": "fixedtime",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes fixedtime = 0 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L62",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 13; fixedtime",
+              "quote": "self setClientCvar2(\"fixedtime\", \"0\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "friction",
+          "setting": "friction",
+          "constraint": {
+            "kind": "exact",
+            "value": "5.5"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes friction = 5.5 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L63",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 14; friction",
+              "quote": "self setClientCvar2(\"friction\", \"5.5\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "mss_q3fs",
+          "setting": "mss_q3fs",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes mss_q3fs = 1 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L64",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 15; mss_q3fs",
+              "quote": "self setClientCvar2(\"mss_q3fs\", \"1\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_errordecay",
+          "setting": "cg_errordecay",
+          "constraint": {
+            "kind": "exact",
+            "value": "100"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_errordecay = 100 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L65",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 16; cg_errordecay",
+              "quote": "self setClientCvar2(\"cg_errordecay\", \"100\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hintfadetime",
+          "setting": "cg_hintFadeTime",
+          "constraint": {
+            "kind": "exact",
+            "value": "100"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hintFadeTime = 100 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L66",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 17; cg_hintFadeTime",
+              "quote": "self setClientCvar2(\"cg_hintFadeTime\", \"100\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudcompassmaxrange",
+          "setting": "cg_hudCompassMaxRange",
+          "constraint": {
+            "kind": "exact",
+            "value": "1500"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudCompassMaxRange = 1500 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L70",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 18; cg_hudCompassMaxRange",
+              "quote": "self setClientCvar2(\"cg_hudCompassMaxRange\", \"1500\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudcompassminradius",
+          "setting": "cg_hudCompassMinRadius",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudCompassMinRadius = 0 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L71",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 19; cg_hudCompassMinRadius",
+              "quote": "self setClientCvar2(\"cg_hudCompassMinRadius\", \"0\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudcompassminrange",
+          "setting": "cg_hudCompassMinRange",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudCompassMinRange = 0 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L72",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 20; cg_hudCompassMinRange",
+              "quote": "self setClientCvar2(\"cg_hudCompassMinRange\", \"0\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudcompassspringypointers",
+          "setting": "cg_hudCompassSpringyPointers",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudCompassSpringyPointers = 0 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L73",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 21; cg_hudCompassSpringyPointers",
+              "quote": "self setClientCvar2(\"cg_hudCompassSpringyPointers\", \"0\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudcompasssoundpingfadetime",
+          "setting": "cg_hudCompassSoundPingFadeTime",
+          "constraint": {
+            "kind": "exact",
+            "value": "2"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudCompassSoundPingFadeTime = 2 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L74",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 22; cg_hudCompassSoundPingFadeTime",
+              "quote": "self setClientCvar2(\"cg_hudCompassSoundPingFadeTime\", \"2\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_huddamageiconheight",
+          "setting": "cg_hudDamageIconHeight",
+          "constraint": {
+            "kind": "exact",
+            "value": "64"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudDamageIconHeight = 64 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L78",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 23; cg_hudDamageIconHeight",
+              "quote": "self setClientCvar2(\"cg_hudDamageIconHeight\", \"64\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_huddamageiconoffset",
+          "setting": "cg_hudDamageIconOffset",
+          "constraint": {
+            "kind": "exact",
+            "value": "128"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudDamageIconOffset = 128 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L79",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 24; cg_hudDamageIconOffset",
+              "quote": "self setClientCvar2(\"cg_hudDamageIconOffset\", \"128\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_huddamageicontime",
+          "setting": "cg_hudDamageIconTime",
+          "constraint": {
+            "kind": "exact",
+            "value": "2000"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudDamageIconTime = 2000 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L80",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 25; cg_hudDamageIconTime",
+              "quote": "self setClientCvar2(\"cg_hudDamageIconTime\", \"2000\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_huddamageiconwidth",
+          "setting": "cg_hudDamageIconWidth",
+          "constraint": {
+            "kind": "exact",
+            "value": "128"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudDamageIconWidth = 128 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L81",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 26; cg_hudDamageIconWidth",
+              "quote": "self setClientCvar2(\"cg_hudDamageIconWidth\", \"128\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudgrenadeiconheight",
+          "setting": "cg_hudGrenadeIconHeight",
+          "constraint": {
+            "kind": "exact",
+            "value": "25"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudGrenadeIconHeight = 25 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L85",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 27; cg_hudGrenadeIconHeight",
+              "quote": "self setClientCvar2(\"cg_hudGrenadeIconHeight\", \"25\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudgrenadeiconoffset",
+          "setting": "cg_hudGrenadeIconOffset",
+          "constraint": {
+            "kind": "exact",
+            "value": "50"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudGrenadeIconOffset = 50 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L86",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 28; cg_hudGrenadeIconOffset",
+              "quote": "self setClientCvar2(\"cg_hudGrenadeIconOffset\", \"50\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudgrenadeiconwidth",
+          "setting": "cg_hudGrenadeIconWidth",
+          "constraint": {
+            "kind": "exact",
+            "value": "25"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudGrenadeIconWidth = 25 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L87",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 29; cg_hudGrenadeIconWidth",
+              "quote": "self setClientCvar2(\"cg_hudGrenadeIconWidth\", \"25\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudgrenadepointerheight",
+          "setting": "cg_hudGrenadePointerHeight",
+          "constraint": {
+            "kind": "exact",
+            "value": "12"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudGrenadePointerHeight = 12 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L88",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 30; cg_hudGrenadePointerHeight",
+              "quote": "self setClientCvar2(\"cg_hudGrenadePointerHeight\", \"12\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudgrenadepointerpivot",
+          "setting": "cg_hudGrenadePointerPivot",
+          "constraint": {
+            "kind": "exact",
+            "value": "12 27"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudGrenadePointerPivot = 12 27 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L92",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 31; cg_hudGrenadePointerPivot",
+              "quote": "self setClientCvar2(\"cg_hudGrenadePointerPivot\", \"12 27\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudgrenadepointerwidth",
+          "setting": "cg_hudGrenadePointerWidth",
+          "constraint": {
+            "kind": "exact",
+            "value": "25"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudGrenadePointerWidth = 25 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L93",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 32; cg_hudGrenadePointerWidth",
+              "quote": "self setClientCvar2(\"cg_hudGrenadePointerWidth\", \"25\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudobjectivemaxrange",
+          "setting": "cg_hudObjectiveMaxRange",
+          "constraint": {
+            "kind": "exact",
+            "value": "2048"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudObjectiveMaxRange = 2048 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L94",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 33; cg_hudObjectiveMaxRange",
+              "quote": "self setClientCvar2(\"cg_hudObjectiveMaxRange\", \"2048\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudobjectiveminalpha",
+          "setting": "cg_hudObjectiveMinAlpha",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudObjectiveMinAlpha = 1 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L95",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 34; cg_hudObjectiveMinAlpha",
+              "quote": "self setClientCvar2(\"cg_hudObjectiveMinAlpha\", \"1\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_hudobjectiveminheight",
+          "setting": "cg_hudObjectiveMinHeight",
+          "constraint": {
+            "kind": "exact",
+            "value": "-70"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 pushes cg_hudObjectiveMinHeight = -70 on connect; leave this setting to the server.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L96",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 35; cg_hudObjectiveMinHeight",
+              "quote": "self setClientCvar2(\"cg_hudObjectiveMinHeight\", \"-70\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "g_competitive",
+          "setting": "g_competitive",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM 4.08 sets g_competitive 1 unconditionally, including pub. This is a target policy, not a live server measurement.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L13",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "research/rulesets.json row 80; server:g_competitive",
+              "quote": "setCvar(\"g_competitive\", \"1\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cg_weaponcycledelay",
+          "setting": "cg_weaponCycleDelay",
+          "constraint": {
+            "kind": "ownership"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM can write cg_weaponCycleDelay as part of its runtime behavior; Check-up leaves it to the mod.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_fast_reload.gsc#L105",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "source/maps/mp/gametypes/_fast_reload.gsc:105",
+              "quote": "self setClientCvar2(\"cg_weaponCycleDelay\", \"0\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_allowdownload",
+          "setting": "cl_allowdownload",
+          "constraint": {
+            "kind": "ownership"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM can write cl_allowdownload as part of its runtime behavior; Check-up leaves it to the mod.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_force_download.gsc#L9",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "source/maps/mp/gametypes/_force_download.gsc:9",
+              "quote": "precacheString2(\"STRING_FORCEDOWNLOAD_ERROR_2\", &\"Downloading was enabled (/cl_allowDownload 1).\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_wwwdownload",
+          "setting": "cl_wwwdownload",
+          "constraint": {
+            "kind": "ownership"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM can write cl_wwwdownload as part of its runtime behavior; Check-up leaves it to the mod.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_force_download.gsc#L74",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "source/maps/mp/gametypes/_force_download.gsc:74",
+              "quote": "self setClientCvar2(\"cl_wwwdownload\", \"1\");",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "m_enable",
+          "setting": "m_enable",
+          "constraint": {
+            "kind": "ownership"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM can write m_enable as part of its runtime behavior; Check-up leaves it to the mod.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_streamer.gsc#L781",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "source/maps/mp/gametypes/_streamer.gsc:781",
+              "quote": "self setClientCvar2(\"m_enable\", 1); // CoD2x cvar: enable cursor movement",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_bypassmouseinput",
+          "setting": "cl_bypassMouseInput",
+          "constraint": {
+            "kind": "ownership"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM can write cl_bypassMouseInput as part of its runtime behavior; Check-up leaves it to the mod.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_streamer.gsc#L877",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "source/maps/mp/gametypes/_streamer.gsc:877",
+              "quote": "cl_bypassMouseInput = 0; // 0 = enable menu cursor moving, disable ingame mouse",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_demoautorecordname",
+          "setting": "cl_demoAutoRecordName",
+          "constraint": {
+            "kind": "ownership"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM can write cl_demoAutoRecordName as part of its runtime behavior; Check-up leaves it to the mod.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_record.gsc#L371",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "source/maps/mp/gametypes/_record.gsc:371",
+              "quote": "self setClientCvar2(\"cl_demoAutoRecordName\", demoName); // CoD2x 1.4.5.1-test.12 and later",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        },
+        {
+          "id": "cl_demoautorecorduploadurl",
+          "setting": "cl_demoAutoRecordUploadUrl",
+          "constraint": {
+            "kind": "ownership"
+          },
+          "serverOwned": true,
+          "advisory": false,
+          "reason": "zPAM can write cl_demoAutoRecordUploadUrl as part of its runtime behavior; Check-up leaves it to the mod.",
+          "sources": [
+            {
+              "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_record.gsc#L368",
+              "sourceDate": "2026-05-20",
+              "quoteReference": "source/maps/mp/gametypes/_record.gsc:368",
+              "quote": "self setClientCvar2(\"cl_demoAutoRecordUploadUrl\", url); // CoD2x 1.4.5.1-test.12 and later",
+              "enforcedBy": "modScript",
+              "archiveTimestamp": null
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L13",
+          "sourceDate": "2026-05-20",
+          "quoteReference": "research/rulesets.json row 80; server:g_competitive",
+          "quote": "setCvar(\"g_competitive\", \"1\");",
+          "enforcedBy": "modScript",
+          "archiveTimestamp": null
+        }
+      ]
+    },
+    {
+      "id": "esl-eu-2008",
+      "title": "ESL EU 2008 numeric client rules (archived)",
+      "version": "2008-08-04",
+      "mode": "stock",
+      "baseID": "stock-1.3",
+      "scope": "Only the listed client settings and command rules are assessed. Match, bind, anti-cheat and full league compatibility are not certified.",
+      "rules": [
+        {
+          "id": "cg_fov",
+          "setting": "cg_fov",
+          "constraint": {
+            "kind": "exact",
+            "value": "80"
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "Archived ESL EU PunkBuster client setting requirement; other league requirements are outside this numeric policy.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
+              "sourceDate": "2008-08-04",
+              "quoteReference": "research/rulesets.json row 243; cg_fov",
+              "quote": "pb_sv_cvar cg_fov IN 80",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20080804082816"
+            }
+          ]
+        },
+        {
+          "id": "cg_huddamageiconinscope",
+          "setting": "cg_hudDamageIconInScope",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "Archived ESL EU PunkBuster client setting requirement; other league requirements are outside this numeric policy.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
+              "sourceDate": "2008-08-04",
+              "quoteReference": "research/rulesets.json row 245; cg_hudDamageIconInScope",
+              "quote": "pb_sv_cvar cg_hudDamageIconInScope IN 0",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20080804082816"
+            }
+          ]
+        },
+        {
+          "id": "cl_maxpackets",
+          "setting": "cl_maxpackets",
+          "constraint": {
+            "kind": "range",
+            "minimum": 60.0,
+            "maximum": 100.0,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "Archived ESL EU PunkBuster client setting requirement; other league requirements are outside this numeric policy.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
+              "sourceDate": "2008-08-04",
+              "quoteReference": "research/rulesets.json row 257; cl_maxpackets",
+              "quote": "pb_sv_cvar cl_maxpackets IN 60 100",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20080804082816"
+            }
+          ]
+        },
+        {
+          "id": "com_maxfps",
+          "setting": "com_maxfps",
+          "constraint": {
+            "kind": "range",
+            "minimum": 40.0,
+            "maximum": 250.0,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "Archived ESL EU PunkBuster client setting requirement; other league requirements are outside this numeric policy.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
+              "sourceDate": "2008-08-04",
+              "quoteReference": "research/rulesets.json row 261; com_maxfps",
+              "quote": "pb_sv_cvar com_maxfps IN 40 250",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20080804082816"
+            }
+          ]
+        },
+        {
+          "id": "mss_q3fs",
+          "setting": "mss_q3fs",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "Archived ESL EU PunkBuster client setting requirement; other league requirements are outside this numeric policy.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
+              "sourceDate": "2008-08-04",
+              "quoteReference": "research/rulesets.json row 264; mss_q3fs",
+              "quote": "pb_sv_cvar mss_q3fs IN 1",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20080804082816"
+            }
+          ]
+        },
+        {
+          "id": "r_fog",
+          "setting": "r_fog",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "Archived ESL EU PunkBuster client setting requirement; other league requirements are outside this numeric policy.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
+              "sourceDate": "2008-08-04",
+              "quoteReference": "research/rulesets.json row 268; r_fog",
+              "quote": "pb_sv_cvar r_fog IN 1",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20080804082816"
+            }
+          ]
+        },
+        {
+          "id": "r_fullbright",
+          "setting": "r_fullbright",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "Archived ESL EU PunkBuster client setting requirement; other league requirements are outside this numeric policy.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
+              "sourceDate": "2008-08-04",
+              "quoteReference": "research/rulesets.json row 269; r_fullbright",
+              "quote": "pb_sv_cvar r_fullbright IN 0",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20080804082816"
+            }
+          ]
+        },
+        {
+          "id": "r_lodscale",
+          "setting": "r_lodscale",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "Archived ESL EU PunkBuster client setting requirement; other league requirements are outside this numeric policy.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
+              "sourceDate": "2008-08-04",
+              "quoteReference": "research/rulesets.json row 271; r_lodscale",
+              "quote": "pb_sv_cvar r_lodscale IN 1",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20080804082816"
+            }
+          ]
+        },
+        {
+          "id": "r_picmip",
+          "setting": "r_picmip",
+          "constraint": {
+            "kind": "range",
+            "minimum": 0.0,
+            "maximum": 3.0,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "Archived ESL EU PunkBuster client setting requirement; other league requirements are outside this numeric policy.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
+              "sourceDate": "2008-08-04",
+              "quoteReference": "research/rulesets.json row 273; r_picmip",
+              "quote": "pb_sv_cvar r_picmip IN 0 3",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20080804082816"
+            }
+          ]
+        },
+        {
+          "id": "r_drawdecals",
+          "setting": "r_drawdecals",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "Archived ESL EU PunkBuster client setting requirement; other league requirements are outside this numeric policy.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
+              "sourceDate": "2008-08-04",
+              "quoteReference": "research/rulesets.json row 278; r_drawdecals",
+              "quote": "pb_sv_cvar r_drawdecals IN 1",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20080804082816"
+            }
+          ]
+        },
+        {
+          "id": "rate",
+          "setting": "rate",
+          "constraint": {
+            "kind": "range",
+            "minimum": 5000.0,
+            "maximum": 25000.0,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "Archived ESL EU PunkBuster client setting requirement; other league requirements are outside this numeric policy.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
+              "sourceDate": "2008-08-04",
+              "quoteReference": "research/rulesets.json row 281; rate",
+              "quote": "pb_sv_cvar rate IN 5000 25000",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20080804082816"
+            }
+          ]
+        },
+        {
+          "id": "snaps",
+          "setting": "snaps",
+          "constraint": {
+            "kind": "range",
+            "minimum": 20.0,
+            "maximum": 30.0,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "Archived ESL EU PunkBuster client setting requirement; other league requirements are outside this numeric policy.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
+              "sourceDate": "2008-08-04",
+              "quoteReference": "research/rulesets.json row 283; snaps",
+              "quote": "pb_sv_cvar snaps IN 20 30",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20080804082816"
+            }
+          ]
+        },
+        {
+          "id": "fx_sort",
+          "setting": "fx_sort",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "Archived ESL EU PunkBuster client setting requirement; other league requirements are outside this numeric policy.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
+              "sourceDate": "2008-08-04",
+              "quoteReference": "research/rulesets.json row 285; fx_sort",
+              "quote": "pb_sv_cvar fx_sort IN 1",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20080804082816"
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
+          "sourceDate": "2008-08-04",
+          "quoteReference": "research/rulesets.json row 243; cg_fov",
+          "quote": "pb_sv_cvar cg_fov IN 80",
+          "enforcedBy": "paper",
+          "archiveTimestamp": "20080804082816"
+        }
+      ]
+    },
+    {
+      "id": "wwcl-2007",
+      "title": "WWCL LAN V13.1 numeric rules (archived)",
+      "version": "2007-10-23",
+      "mode": "stock",
+      "baseID": "stock-1.3",
+      "scope": "Only the listed client settings and command rules are assessed. Match, bind, anti-cheat and full league compatibility are not certified.",
+      "rules": [
+        {
+          "id": "cl_maxpackets",
+          "setting": "cl_maxpackets",
+          "constraint": {
+            "kind": "range",
+            "minimum": 60,
+            "maximum": 100,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "WWCL V13.1 LAN numeric rule; this historical requirement does not resolve its conflict with other policies.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20071216093212id_/http://www.wwcl.net/downloads/rules.zip",
+              "sourceDate": "2007-10-23",
+              "quoteReference": "research/rulesets.json row 441; cl_maxpackets (mandatory range) (rule text heading: 'Diese Cliensettings sind Pflicht und entsprechend einzuhalten. Bei Nichteinhaltung kann das Match komplett wiederholt werden, und sogar zum Ausschluss des Spielers führen.')",
+              "quote": "cl_maxpackets (60-100)",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20071216093212"
+            }
+          ]
+        },
+        {
+          "id": "snaps",
+          "setting": "snaps",
+          "constraint": {
+            "kind": "exact",
+            "value": "30"
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "WWCL V13.1 LAN numeric rule; this historical requirement does not resolve its conflict with other policies.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20071216093212id_/http://www.wwcl.net/downloads/rules.zip",
+              "sourceDate": "2007-10-23",
+              "quoteReference": "research/rulesets.json row 442; snaps (mandatory value) (rule text heading: 'Diese Cliensettings sind Pflicht und entsprechend einzuhalten. Bei Nichteinhaltung kann das Match komplett wiederholt werden, und sogar zum Ausschluss des Spielers führen.')",
+              "quote": "snaps (30)",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20071216093212"
+            }
+          ]
+        },
+        {
+          "id": "rate",
+          "setting": "rate",
+          "constraint": {
+            "kind": "exact",
+            "value": "25000"
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "WWCL V13.1 LAN numeric rule; this historical requirement does not resolve its conflict with other policies.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20071216093212id_/http://www.wwcl.net/downloads/rules.zip",
+              "sourceDate": "2007-10-23",
+              "quoteReference": "research/rulesets.json row 443; rate (mandatory value) (rule text heading: 'Diese Cliensettings sind Pflicht und entsprechend einzuhalten. Bei Nichteinhaltung kann das Match komplett wiederholt werden, und sogar zum Ausschluss des Spielers führen.')",
+              "quote": "rate (25000)",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20071216093212"
+            }
+          ]
+        },
+        {
+          "id": "com_maxfps",
+          "setting": "com_maxfps",
+          "constraint": {
+            "kind": "range",
+            "minimum": 125,
+            "maximum": 250,
+            "integer": true
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "WWCL V13.1 LAN numeric rule; this historical requirement does not resolve its conflict with other policies.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20071216093212id_/http://www.wwcl.net/downloads/rules.zip",
+              "sourceDate": "2007-10-23",
+              "quoteReference": "research/rulesets.json row 444; max_fps (the rule's name for the fps cap; engine dvar is com_maxfps) (rule text heading: 'Diese Cliensettings sind Pflicht und entsprechend einzuhalten. Bei Nichteinhaltung kann das Match komplett wiederholt werden, und sogar zum Ausschluss des Spielers führen.')",
+              "quote": "max_fps (125-250)",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20071216093212"
+            }
+          ]
+        },
+        {
+          "id": "r_fog",
+          "setting": "r_fog",
+          "constraint": {
+            "kind": "exact",
+            "value": "1"
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "WWCL V13.1 LAN numeric rule; this historical requirement does not resolve its conflict with other policies.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20071216093212id_/http://www.wwcl.net/downloads/rules.zip",
+              "sourceDate": "2007-10-23",
+              "quoteReference": "research/rulesets.json row 448; r_fog must stay at the listed value (changing it = immediate disqualification per 'Das Verändern folgender Werte hat eine sofortige Disqualifikation auf sich.')",
+              "quote": "r_fog (1 Pflicht)",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20071216093212"
+            }
+          ]
+        },
+        {
+          "id": "r_fullbright",
+          "setting": "r_fullbright",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "WWCL V13.1 LAN numeric rule; this historical requirement does not resolve its conflict with other policies.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20071216093212id_/http://www.wwcl.net/downloads/rules.zip",
+              "sourceDate": "2007-10-23",
+              "quoteReference": "research/rulesets.json row 450; r_fullbright must stay at the listed value (changing it = immediate disqualification per 'Das Verändern folgender Werte hat eine sofortige Disqualifikation auf sich.')",
+              "quote": "r_fullbright (0 Pflicht)",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20071216093212"
+            }
+          ]
+        },
+        {
+          "id": "cg_fov",
+          "setting": "cg_fov",
+          "constraint": {
+            "kind": "exact",
+            "value": "80"
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "WWCL V13.1 LAN numeric rule; this historical requirement does not resolve its conflict with other policies.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20071216093212id_/http://www.wwcl.net/downloads/rules.zip",
+              "sourceDate": "2007-10-23",
+              "quoteReference": "research/rulesets.json row 457; cg_fov must stay at the listed value (changing it = immediate disqualification per 'Das Verändern folgender Werte hat eine sofortige Disqualifikation auf sich.')",
+              "quote": "cg_fov (80 Pflicht)",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20071216093212"
+            }
+          ]
+        },
+        {
+          "id": "fx_sort",
+          "setting": "fx_sort",
+          "constraint": {
+            "kind": "exact",
+            "value": "0"
+          },
+          "serverOwned": false,
+          "advisory": false,
+          "reason": "WWCL V13.1 LAN numeric rule; this historical requirement does not resolve its conflict with other policies.",
+          "sources": [
+            {
+              "sourceURL": "https://web.archive.org/web/20071216093212id_/http://www.wwcl.net/downloads/rules.zip",
+              "sourceDate": "2007-10-23",
+              "quoteReference": "research/rulesets.json row 458; fx_sort must stay at the listed value (changing it = immediate disqualification per 'Das Verändern folgender Werte hat eine sofortige Disqualifikation auf sich.')",
+              "quote": "fx_sort (0 Pflicht)",
+              "enforcedBy": "paper",
+              "archiveTimestamp": "20071216093212"
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "sourceURL": "https://web.archive.org/web/20071216093212id_/http://www.wwcl.net/downloads/rules.zip",
+          "sourceDate": "2007-10-23",
+          "quoteReference": "research/rulesets.json row 441; cl_maxpackets (mandatory range) (rule text heading: 'Diese Cliensettings sind Pflicht und entsprechend einzuhalten. Bei Nichteinhaltung kann das Match komplett wiederholt werden, und sogar zum Ausschluss des Spielers führen.')",
+          "quote": "cl_maxpackets (60-100)",
+          "enforcedBy": "paper",
+          "archiveTimestamp": "20071216093212"
+        }
+      ]
+    },
+    {
+      "id": "polish-2026",
+      "title": "Polish Championship 2026 packet recommendation",
+      "version": "2026-05-30/31",
+      "mode": "cod2x",
+      "baseID": null,
+      "scope": "Only the listed client settings and command rules are assessed. Match, bind, anti-cheat and full league compatibility are not certified.",
+      "rules": [
+        {
+          "id": "cl_maxpackets",
+          "setting": "cl_maxpackets",
+          "constraint": {
+            "kind": "exact",
+            "value": "100"
+          },
+          "serverOwned": false,
+          "advisory": true,
+          "reason": "Polish Championship 2026 prints cl_maxpackets 100 as recommended, while required CoD2x/zPAM 4 forces 125. This contradiction is unresolved.",
+          "sources": [
+            {
+              "sourceURL": "https://www.codmaniac.com/esport_tournament/polish-cod2-championship-1-30-31-may-2026/",
+              "sourceDate": "2026-01-03",
+              "quoteReference": "research/rulesets.json row 172; cl_maxpackets",
+              "quote": "- cl_maxpackets 100 (zalecane)",
+              "enforcedBy": "paper",
+              "archiveTimestamp": null
+            }
+          ]
+        }
+      ],
+      "sources": [
+        {
+          "sourceURL": "https://www.codmaniac.com/esport_tournament/polish-cod2-championship-1-30-31-may-2026/",
+          "sourceDate": "2026-01-03",
+          "quoteReference": "research/rulesets.json row 172; cl_maxpackets",
+          "quote": "- cl_maxpackets 100 (zalecane)",
+          "enforcedBy": "paper",
+          "archiveTimestamp": null
+        }
+      ]
+    }
+  ],
+  "conflicts": [
+    {
+      "id": "fx_sort-wwcl-2007",
+      "setting": "fx_sort",
+      "rulesetIDs": [
+        "esl-eu-2008",
+        "wwcl-2007"
+      ],
+      "reason": "ESL requires fx_sort 1; WWCL 2007 requires 0. No common value is established.",
+      "sources": [
+        {
+          "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
+          "sourceDate": "2008-08-04",
+          "quoteReference": "research/rulesets.json row 285; fx_sort",
+          "quote": "pb_sv_cvar fx_sort IN 1",
+          "enforcedBy": "paper",
+          "archiveTimestamp": "20080804082816"
+        },
+        {
+          "sourceURL": "https://web.archive.org/web/20071216093212id_/http://www.wwcl.net/downloads/rules.zip",
+          "sourceDate": "2007-10-23",
+          "quoteReference": "research/rulesets.json row 458; fx_sort must stay at the listed value (changing it = immediate disqualification per 'Das Verändern folgender Werte hat eine sofortige Disqualifikation auf sich.')",
+          "quote": "fx_sort (0 Pflicht)",
+          "enforcedBy": "paper",
+          "archiveTimestamp": "20071216093212"
+        }
+      ]
+    },
+    {
+      "id": "cg_huddamageiconinscope-zpam-3.36",
+      "setting": "cg_hudDamageIconInScope",
+      "rulesetIDs": [
+        "esl-eu-2008",
+        "zpam-3.36"
+      ],
+      "reason": "ESL requires scoped damage icon 0; zPAM pushes 1. No common value is established.",
+      "sources": [
+        {
+          "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
+          "sourceDate": "2008-08-04",
+          "quoteReference": "research/rulesets.json row 245; cg_hudDamageIconInScope",
+          "quote": "pb_sv_cvar cg_hudDamageIconInScope IN 0",
+          "enforcedBy": "paper",
+          "archiveTimestamp": "20080804082816"
+        },
+        {
+          "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L47",
+          "sourceDate": "2025-09-15",
+          "quoteReference": "research/rulesets.json row 40; cg_hudDamageIconInScope",
+          "quote": "self setClientCvar2(\"cg_hudDamageIconInScope\", \"1\");",
+          "enforcedBy": "modScript",
+          "archiveTimestamp": null
+        }
+      ]
+    },
+    {
+      "id": "cg_huddamageiconinscope-zpam-4.08",
+      "setting": "cg_hudDamageIconInScope",
+      "rulesetIDs": [
+        "esl-eu-2008",
+        "zpam-4.08"
+      ],
+      "reason": "ESL requires scoped damage icon 0; zPAM pushes 1. These target different client modes.",
+      "sources": [
+        {
+          "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
+          "sourceDate": "2008-08-04",
+          "quoteReference": "research/rulesets.json row 245; cg_hudDamageIconInScope",
+          "quote": "pb_sv_cvar cg_hudDamageIconInScope IN 0",
+          "enforcedBy": "paper",
+          "archiveTimestamp": "20080804082816"
+        },
+        {
+          "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L44",
+          "sourceDate": "2026-05-20",
+          "quoteReference": "research/rulesets.json row 4; cg_hudDamageIconInScope",
+          "quote": "self setClientCvar2(\"cg_hudDamageIconInScope\", \"1\");",
+          "enforcedBy": "modScript",
+          "archiveTimestamp": null
+        }
+      ]
+    },
+    {
+      "id": "cl_maxpackets-zpam-4.08",
+      "setting": "cl_maxpackets",
+      "rulesetIDs": [
+        "polish-2026",
+        "zpam-4.08"
+      ],
+      "reason": "Polish 2026 recommends packets 100 and requires CoD2x/zPAM 4; that client forces 125. The printed recommendation and engine enforcement contradict one another.",
+      "sources": [
+        {
+          "sourceURL": "https://www.codmaniac.com/esport_tournament/polish-cod2-championship-1-30-31-may-2026/",
+          "sourceDate": "2026-01-03",
+          "quoteReference": "research/rulesets.json row 172; cl_maxpackets",
+          "quote": "- cl_maxpackets 100 (zalecane)",
+          "enforcedBy": "paper",
+          "archiveTimestamp": null
+        },
+        {
+          "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L74-L77",
+          "sourceDate": "2026-04-07",
+          "quoteReference": "research/rulesets.json row 101; cl_maxpackets",
+          "quote": "cl_maxpackets->limits.integer.min = 125; if (cl_maxpackets->value.integer != 125) { Dvar_SetInt(cl_maxpackets, 125); }",
+          "enforcedBy": "code",
+          "archiveTimestamp": null
+        }
+      ]
+    }
+  ]
+}
