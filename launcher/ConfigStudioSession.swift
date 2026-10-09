@@ -80,18 +80,25 @@ private final class ConfigGameGuard: @unchecked Sendable {
     }
 
     /// Reads the game's current bytes without rebasing or clearing an unsaved draft.
+    /// The root polls this several times a second, so unchanged results are
+    /// not republished to observing views.
     func refresh() throws {
         do {
-            profiles = try managedProfiles()
+            let listed = try managedProfiles()
+            if listed != profiles { profiles = listed }
             // A loadout removed elsewhere (the game's profile menu) returns the view to the active one.
             if let focused = focusedProfileID, !profiles.contains(where: { $0.id.caseInsensitiveCompare(focused) == .orderedSame }) {
                 focusedProfileID = nil
             }
             if let id = try focusedProfileID ?? activeReviewedID() {
-                current = try store.read(id: id)
-                history = try store.history(id: id)
-            } else { current = nil; history = [] }
-            error = nil
+                let read = try store.read(id: id), entries = try store.history(id: id)
+                if read.profile != current?.profile || read.version != current?.version { current = read }
+                if entries != history { history = entries }
+            } else {
+                if current != nil { current = nil }
+                if !history.isEmpty { history = [] }
+            }
+            if error != nil { error = nil }
         } catch { self.error = error.localizedDescription; throw error }
     }
     /// Shows a loadout without selecting it for the next game. Pass nil to
@@ -343,7 +350,7 @@ private final class ConfigGameGuard: @unchecked Sendable {
     /// harmless; no history publication occurs until this set is empty.
     func reconcileGames(_ pids: Set<Int32>) throws {
         let starting = runningPIDs.isEmpty && !pids.isEmpty
-        runningPIDs = pids
+        if runningPIDs != pids { runningPIDs = pids }
         guardState.set(reserved: launchReserved, pids: pids)
         if starting && archive == nil { try archiveSession() }
         if pids.isEmpty && !launchReserved && !guardState.running() { try finishSession() }

@@ -1,0 +1,886 @@
+import AppKit
+import Foundation
+
+// The Configs page's view store. Disk work goes through ConfigStudioSession (and its
+// guarded store); this type owns selection, presentation state, value formatting and
+// the single-transaction intents the controls call. It never invents loadouts or values.
+
+enum ConfigStudioTab: String, CaseIterable, Identifiable {
+    case settings, binds, checkup, history
+    var id: String { rawValue }
+    var title: String {
+        switch self { case .settings: "Settings"; case .binds: "Binds"; case .checkup: "Check-up"; case .history: "History" }
+    }
+    /// Binds (B1/B2) and Check-up (A1) join this list when their screens exist.
+    static let available: [ConfigStudioTab] = [.settings, .history]
+}
+
+enum ConfigDetailLevel: String, CaseIterable, Identifiable {
+    case guided, expert
+    var id: String { rawValue }
+    var title: String { self == .guided ? "Guided" : "Expert" }
+}
+
+enum ConfigExpertFilter: String, CaseIterable, Identifiable {
+    case changed, locked
+    var id: String { rawValue }
+    var title: String { self == .changed ? "Changed" : "Locked" }
+}
+
+enum ConfigHistoryFilter: String, CaseIterable, Identifiable {
+    case all, you, imports, checkup, game
+    var id: String { rawValue }
+    var title: String {
+        switch self { case .all: "All"; case .you: "You"; case .imports: "Imports"; case .checkup: "Check-up"; case .game: "Game" }
+    }
+    func includes(_ source: ConfigHistorySource) -> Bool {
+        switch self {
+        case .all: true
+        case .you: source == .you || source == .restore
+        case .imports: source == .import
+        case .checkup: source == .checkup
+        case .game: source == .gameSession
+        }
+    }
+}
+
+extension ConfigPurposeGroup {
+    var symbol: String {
+        switch self {
+        case .frame: "gauge.with.dots.needle.33percent"; case .aim: "scope"; case .net: "chart.bar"; case .vis: "eye"
+        case .hud: "viewfinder"; case .audio: "speaker.wave.2"; case .gfx: "photo"; case .other: "ellipsis.circle"
+        }
+    }
+    /// Short descriptions from the approved Guided board, kept to what the catalog supports.
+    var blurb: String {
+        switch self {
+        case .frame: "How smoothly the game runs, and how high and far you can jump."
+        case .aim: "How the game responds to your mouse or trackpad."
+        case .net: "How often you and the server talk."
+        case .vis: "How bright and clear the picture is."
+        case .hud: "What stays on screen while you play."
+        case .audio: "How loud the game is."
+        case .gfx: "How the world looks."
+        case .other: "Your name, and what the game may download."
+        }
+    }
+}
+
+extension ConfigHistorySource {
+    var title: String {
+        switch self {
+        case .you: "You"; case .import: "Import"; case .checkup: "Check-up"; case .gameSession: "Game session"
+        case .restore: "Restore"; case .migration: "CoD2 Silicon"
+        }
+    }
+}
+
+// MARK: - Values
+
+/// How one catalog setting reads and writes in a config for the current engine.
+struct ConfigSettingSpec: Identifiable {
+    let setting: ConfigCatalogSetting
+    let type: ConfigCatalogType
+    let minimum: Double?
+    let maximum: Double?
+    /// Names of an enumeration's values, in registration order.
+    let choices: [String]
+    /// The registered default as config text; nil when the default is dynamic.
+    let defaultText: String?
+    /// CoD2 Silicon sets this at every launch from Settings, so a loadout can't own it.
+    let launcherOwned: Bool
+    var id: String { setting.name }
+    var name: String { setting.name }
+    var title: String { setting.title }
+    var group: ConfigPurposeGroup { setting.group }
+    var unit: String? { setting.control.unit }
+    var step: Double {
+        if let step = setting.control.step, step > 0 { return step }
+        return type == .int ? 1 : 0
+    }
+    var isSecret: Bool { name.lowercased().contains("password") }
+    var isNumeric: Bool { type == .int || type == .float }
+    var vectorCount: Int? {
+        switch type { case .vec2: 2; case .vec3: 3; case .vec4, .color: 4; default: nil }
+    }
+
+    init?(setting: ConfigCatalogSetting, mode: ConfigCatalogMode) {
+        guard setting.isEditable(in: mode), let variant = setting.variant(for: mode), let type = variant.type else { return nil }
+        self.setting = setting
+        self.type = type
+        func literal(_ fact: ConfigCatalogFact?) -> Double? {
+            guard fact?.status == .literal, case .number(let value)? = fact?.value else { return nil }
+            return value
+        }
+        minimum = literal(variant.minimum)
+        maximum = literal(variant.maximum)
+        var names: [String] = []
+        if variant.enumValues?.status == .literal, case .array(let values)? = variant.enumValues?.value {
+            names = values.compactMap { if case .string(let name) = $0 { return name }; return nil }
+        }
+        choices = names
+        let fact = variant.defaultValue
+        defaultText = fact.status == .literal ? fact.value.flatMap { ConfigValues.configText($0, type: type, choices: names) } : nil
+        launcherOwned = GameSettings.machineDvarNames.contains(setting.name.lowercased())
+    }
+}
+
+/// Pure value conversions between config text, typed values and plain display.
+enum ConfigValues {
+    private static let posix = Locale(identifier: "en_US_POSIX")
+
+    static func configText(_ value: ConfigCatalogValue, type: ConfigCatalogType, choices: [String]) -> String? {
+        switch (type, value) {
+        case (.bool, .bool(let flag)): return flag ? "1" : "0"
+        case (.enumeration, .number(let index)):
+            let i = Int(index)
+            return choices.indices.contains(i) ? choices[i] : String(i)
+        case (_, .number(let number)): return format(number, integer: type == .int)
+        case (_, .string(let text)): return text
+        case (_, .array(let values)):
+            let numbers = values.compactMap { if case .number(let n) = $0 { return format(n, integer: false) }; return nil }
+            return numbers.count == values.count ? numbers.joined(separator: " ") : nil
+        default: return nil
+        }
+    }
+
+    /// Plain numerals without grouping or locale: "2.6", "250", "0.022".
+    static func format(_ number: Double, integer: Bool = false) -> String {
+        guard number.isFinite else { return "0" }
+        if integer || (number == number.rounded() && abs(number) < 1e15) { return String(Int64(number.rounded())) }
+        var text = String(format: "%.6f", locale: posix, number)
+        while text.hasSuffix("0") { text.removeLast() }
+        if text.hasSuffix(".") { text.removeLast() }
+        return text == "-0" ? "0" : text
+    }
+
+    /// The engine reads numbers like atof: the leading numeric part, else zero.
+    static func number(_ text: String) -> Double? {
+        let trimmed = text.trimmingCharacters(in: .whitespaces)
+        if let value = Double(trimmed), value.isFinite { return value }
+        let scanner = Scanner(string: trimmed)
+        scanner.locale = posix
+        return scanner.scanDouble().flatMap { $0.isFinite ? $0 : nil }
+    }
+    static func bool(_ text: String) -> Bool { (number(text) ?? 0) != 0 }
+    static func enumIndex(_ text: String, choices: [String]) -> Int? {
+        if let index = choices.firstIndex(where: { $0.caseInsensitiveCompare(text) == .orderedSame }) { return index }
+        if let value = Int(text.trimmingCharacters(in: .whitespaces)), choices.indices.contains(value) { return value }
+        return nil
+    }
+    static func vector(_ text: String) -> [Double] { text.split(separator: " ").compactMap { number(String($0)) } }
+
+    /// Typed equality, so "5", "5.0" and "5.000" are the same mouse speed.
+    static func same(_ spec: ConfigSettingSpec, _ a: String, _ b: String) -> Bool {
+        switch spec.type {
+        case .bool: return bool(a) == bool(b)
+        case .int, .float: return number(a).map { x in number(b).map { abs(x - $0) < 1e-9 } ?? false } ?? (a == b)
+        case .enumeration: return enumIndex(a, choices: spec.choices).map { $0 == enumIndex(b, choices: spec.choices) } ?? (a == b)
+        case .vec2, .vec3, .vec4, .color: return vector(a) == vector(b)
+        case .string: return a == b
+        }
+    }
+
+    /// Plain words for people: On/Off, an enumeration's name, a number with its unit.
+    static func display(_ spec: ConfigSettingSpec, _ text: String?) -> String {
+        guard let text else { return "Not set" }
+        switch spec.type {
+        case .bool: return bool(text) ? "On" : "Off"
+        case .enumeration: return enumIndex(text, choices: spec.choices).map { spec.choices[$0] } ?? text
+        case .int, .float:
+            guard let value = number(text) else { return text }
+            if spec.name.lowercased() == "snd_volume" { return "\(Int((value * 100).rounded()))%" }
+            let numeral = spec.type == .int ? String(Int64(value.rounded())) : format(value)
+            return spec.unit.map { "\(numeral) \($0)" } ?? numeral
+        case .string: return spec.isSecret ? (text.isEmpty ? "None" : "Hidden") : (text.isEmpty ? "Empty" : text)
+        case .vec2, .vec3, .vec4, .color: return vector(text).map { format($0) }.joined(separator: " ")
+        }
+    }
+
+    /// The text written for a typed control, clamped to the registered range.
+    static func text(number value: Double, spec: ConfigSettingSpec) -> String {
+        var clamped = value
+        if let minimum = spec.minimum { clamped = max(minimum, clamped) }
+        if let maximum = spec.maximum { clamped = min(maximum, clamped) }
+        return format(clamped, integer: spec.type == .int)
+    }
+}
+
+/// One row's facts for a document: value, default, changed, lock and note.
+struct ConfigSettingState {
+    let spec: ConfigSettingSpec
+    /// The direct assignment in this config; nil means the game uses its default.
+    let raw: String?
+    let locked: Bool
+    let note: String?
+    var value: String? { raw ?? spec.defaultText }
+    var changed: Bool {
+        guard let raw else { return false }
+        guard let defaultText = spec.defaultText else { return true }
+        return !ConfigValues.same(spec, raw, defaultText)
+    }
+    var display: String { ConfigValues.display(spec, value) }
+    var number: Double? { value.flatMap(ConfigValues.number) }
+    var flag: Bool { value.map(ConfigValues.bool) ?? false }
+}
+
+// MARK: - History differences
+
+struct ConfigChange: Identifiable, Equatable {
+    let id: String
+    let label: String
+    let consoleName: String?
+    let then: String
+    let now: String
+}
+
+enum ConfigDiff {
+    /// Differences between two saved states, in plain names and units.
+    static func changes(from before: Data, _ beforeMetadata: Data?, to after: Data, _ afterMetadata: Data?,
+                        chains: (before: Data?, after: Data?) = (nil, nil),
+                        specs: [String: ConfigSettingSpec], catalog: ConfigCatalog?, dialect: ConfigDialect) -> [ConfigChange] {
+        let old = ConfigDocument(data: before, dialect: dialect), new = ConfigDocument(data: after, dialect: dialect)
+        var names: [String: String] = [:]
+        for document in [old, new] {
+            for command in document.commands where command.kind == .setting && command.tokens.count >= 2 {
+                let name = command.tokens[1].text
+                names[name.lowercased()] = names[name.lowercased()] ?? name
+            }
+        }
+        var result: [ConfigChange] = [], others = 0
+        for key in names.keys.sorted() {
+            let name = names[key]!
+            let a = old.effectiveSetting(named: name), b = new.effectiveSetting(named: name)
+            guard a != b else { continue }
+            if let spec = specs[key] {
+                let state = { (raw: String?) in ConfigSettingState(spec: spec, raw: raw, locked: false, note: nil) }
+                if let a, let b, ConfigValues.same(spec, a, b) { continue }
+                result.append(ConfigChange(id: key, label: spec.title, consoleName: spec.name, then: state(a).display, now: state(b).display))
+            } else if let setting = catalog?.setting(named: name) {
+                result.append(ConfigChange(id: key, label: setting.title, consoleName: setting.name, then: a ?? "Not set", now: b ?? "Not set"))
+            } else { others += 1 }
+        }
+        var binds = Set<Int>()
+        for document in [old, new] {
+            for command in document.commands where (command.kind == .bind || command.kind == .unbind) && command.tokens.count >= 2 {
+                if let key = ConfigDocument.keyNumber(command.tokens[1].text) { binds.insert(key) }
+            }
+        }
+        let changedBinds = binds.filter { key in
+            let spelling = ConfigDocument.keySpelling(key)
+            return old.effectiveBind(key: spelling) != new.effectiveBind(key: spelling)
+        }.count
+        if changedBinds > 0 {
+            result.append(ConfigChange(id: "binds", label: "Key bindings", consoleName: nil, then: "", now: changedBinds == 1 ? "1 key changed" : "\(changedBinds) keys changed"))
+        }
+        if others > 0 {
+            result.append(ConfigChange(id: "other", label: "Other lines", consoleName: nil, then: "", now: others == 1 ? "1 line changed" : "\(others) lines changed"))
+        }
+        // The loadout's launcher-owned advanced-bind file travels with History too.
+        if chains.before != chains.after {
+            let now = chains.before == nil ? "Added" : chains.after == nil ? "Removed" : "Changed"
+            result.append(ConfigChange(id: "chain", label: "Advanced binds", consoleName: nil, then: "", now: now))
+        }
+        let decoder = JSONDecoder()
+        let m0 = beforeMetadata.flatMap { try? decoder.decode(ConfigStudioMetadata.self, from: $0) }
+        let m1 = afterMetadata.flatMap { try? decoder.decode(ConfigStudioMetadata.self, from: $0) }
+        if let m0, let m1 {
+            if m0.displayName != m1.displayName { result.append(ConfigChange(id: "name", label: "Loadout name", consoleName: nil, then: m0.displayName, now: m1.displayName)) }
+            if m0.locks != m1.locks {
+                func list(_ locks: Set<String>) -> String {
+                    locks.isEmpty ? "None" : locks.map { specs[$0.lowercased()]?.title ?? catalog?.setting(named: $0)?.title ?? $0 }.sorted().joined(separator: ", ")
+                }
+                result.append(ConfigChange(id: "locks", label: "Locked settings", consoleName: nil, then: list(m0.locks), now: list(m1.locks)))
+            }
+            if m0.notes != m1.notes { result.append(ConfigChange(id: "notes", label: "Notes", consoleName: nil, then: "\(m0.notes.count)", now: "\(m1.notes.count)")) }
+            if m0.dpi != m1.dpi {
+                func dpi(_ value: Double?) -> String { value.map { "\(ConfigValues.format($0)) DPI" } ?? "Not set" }
+                result.append(ConfigChange(id: "dpi", label: "Mouse DPI", consoleName: nil, then: dpi(m0.dpi), now: dpi(m1.dpi)))
+            }
+        }
+        return result
+    }
+
+    /// "Mouse speed 2.8 → 2.6. Show frame rate On → Off." — at most three, then a count.
+    static func sentence(_ changes: [ConfigChange]) -> String {
+        guard !changes.isEmpty else { return "No settings changed." }
+        let shown = changes.prefix(3).map { $0.then.isEmpty ? "\($0.label): \($0.now)" : "\($0.label) \($0.then) → \($0.now)" }
+        let rest = changes.count - shown.count
+        return shown.joined(separator: ". ") + "." + (rest > 0 ? " And \(rest) more." : "")
+    }
+}
+
+// MARK: - Edit as text
+
+struct ConfigTextIssue: Identifiable, Equatable {
+    let id: Int
+    let line: Int
+    let column: Int
+    let message: String
+    let excerpt: String
+    /// Blocking issues stop Apply; warnings describe lines the game reads differently.
+    let blocking: Bool
+    /// UTF-16 range in the editor text (Latin-1 text is one unit per byte).
+    let range: NSRange
+}
+
+enum ConfigTextCheck {
+    /// Validates editor text exactly as the game would read its bytes.
+    static func issues(text: String, dialect: ConfigDialect, catalog: ConfigCatalog?, mode: ConfigCatalogMode) -> (data: Data?, issues: [ConfigTextIssue]) {
+        let scalars = Array(text.unicodeScalars)
+        var lineStarts = [0]
+        for (index, scalar) in scalars.enumerated() where scalar == "\n" || (scalar == "\r" && (index + 1 == scalars.count || scalars[index + 1] != "\n")) {
+            lineStarts.append(index + 1)
+        }
+        func location(_ offset: Int) -> (line: Int, column: Int) {
+            let line = (lineStarts.lastIndex { $0 <= offset } ?? 0)
+            return (line + 1, offset - lineStarts[line] + 1)
+        }
+        func excerpt(_ range: Range<Int>) -> String {
+            let upper = min(scalars.count, max(range.lowerBound + 1, min(range.upperBound, range.lowerBound + 60)))
+            guard range.lowerBound < upper else { return "" }
+            var view = String.UnicodeScalarView(); view.append(contentsOf: scalars[range.lowerBound..<upper])
+            return String(view).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        var issues: [ConfigTextIssue] = []
+        func add(_ range: Range<Int>, _ message: String, blocking: Bool) {
+            let place = location(range.lowerBound)
+            issues.append(ConfigTextIssue(id: issues.count, line: place.line, column: place.column, message: message, excerpt: excerpt(range),
+                                          blocking: blocking, range: NSRange(location: range.lowerBound, length: max(1, range.count))))
+        }
+        if let bad = scalars.firstIndex(where: { $0.value > 255 }) {
+            add(bad..<(bad + 1), "The game stores single-byte text, so this character can’t be saved.", blocking: true)
+            return (nil, issues)
+        }
+        let data = Data(scalars.map { UInt8($0.value) })
+        let document = ConfigDocument(data: data, dialect: dialect)
+        for diagnostic in document.diagnostics {
+            switch diagnostic {
+            case .unterminatedQuote(let range): add(range, "This value opens a quote but never closes it.", blocking: true)
+            case .lineLimit(let command, _): add(command, "This line is longer than the 4,095 characters the game reads.", blocking: true)
+            case .tokenizationFailure(let command, let failure):
+                add(command, failure == .tooManyTokens ? "This line has more than 512 words, so the game skips it." : "This line is too long for the game to read.", blocking: true)
+            case .commandBufferOverflow: add(65535..<min(data.count, 65536), "The config is longer than the 65,535 characters the game reads.", blocking: true)
+            case .ignoredNULSuffix(let range): add(range, "The game stops reading at an invisible NUL character here.", blocking: false)
+            }
+        }
+        if let catalog {
+            for command in document.commands where command.kind == .setting && command.tokens.count >= 3 {
+                let token = command.tokens[1]
+                if let setting = catalog.setting(named: token.text) {
+                    if setting.availability == .registered, setting.variant(for: mode) != nil, !setting.isEditable(in: mode) {
+                        add(token.range, "The game protects \(setting.title.lowercased()) and normally refuses it from a config.", blocking: false)
+                    }
+                } else {
+                    add(token.range, "The game doesn’t register this setting. It keeps the line, but nothing reads it unless a mod does.", blocking: false)
+                }
+            }
+        }
+        return (data, issues.sorted { ($0.line, $0.column) < ($1.line, $1.column) }.enumerated().map {
+            ConfigTextIssue(id: $0.offset, line: $0.element.line, column: $0.element.column, message: $0.element.message,
+                            excerpt: $0.element.excerpt, blocking: $0.element.blocking, range: $0.element.range)
+        })
+    }
+}
+
+// MARK: - Store
+
+struct ConfigStudioFailure: Identifiable {
+    let id = UUID()
+    let title: String
+    let message: String
+    /// Re-applies the same intent to the latest disk version.
+    let retry: (@MainActor () -> Void)?
+}
+
+@MainActor final class ConfigStudioModel: ObservableObject {
+    /// Optional: preview mode and an initialization error leave Configs unavailable.
+    @Published private(set) var session: ConfigStudioSession?
+    let mode: ConfigCatalogMode
+    let dialect: ConfigDialect
+    @Published private(set) var catalog: ConfigCatalog?
+    @Published private(set) var catalogError: String?
+    private var catalogLoading = false
+    private let catalogSource: @Sendable () throws -> ConfigCatalog
+
+    @Published var tab: ConfigStudioTab = .settings
+    @Published var level: ConfigDetailLevel = .guided
+    @Published var group: ConfigPurposeGroup = .frame
+    @Published var filter: ConfigExpertFilter?
+    @Published var search = ""
+    @Published var compareID: String? { didSet { if compareID != oldValue { refreshComparison() } } }
+    /// Another of the person's own loadouts, read for Compare.
+    @Published private(set) var comparison: ConfigProfileRead?
+    /// A setting brought into view from Jump to any setting.
+    @Published var highlighted: String?
+    @Published var historyFilter: ConfigHistoryFilter = .all
+    /// The selected snapshot; nil is “now”.
+    @Published var snapshotID: String?
+    @Published private(set) var restoredSnapshotID: String?
+    @Published var failure: ConfigStudioFailure?
+    @Published var textMode = false
+    @Published private(set) var text = ""
+    @Published private(set) var textIssues: [ConfigTextIssue] = []
+    @Published var textSelection: NSRange?
+    private var textBase: Data?
+
+    private(set) var specs: [ConfigSettingSpec] = []
+    private var specsByName: [String: ConfigSettingSpec] = [:]
+    private var protectedCounts: [ConfigPurposeGroup: Int] = [:]
+    private var valueCache: (data: Data, values: [String: String])?
+    private var diffCache: [String: [ConfigChange]] = [:]
+    private var sinceCache: (id: String, base: Data, changes: [ConfigChange])?
+    /// Speaks a completed change once (VoiceOver). Tests replace it.
+    var announce: (String) -> Void = { message in
+        guard let app = NSApp else { return }
+        NSAccessibility.post(element: app.mainWindow ?? app, notification: .announcementRequested,
+                             userInfo: [.announcement: message, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
+    }
+
+    init(session: ConfigStudioSession?, dialect: ConfigDialect = .cod2x,
+         catalog: @escaping @Sendable () throws -> ConfigCatalog = { try ConfigStudioModel.bundledCatalog() }) {
+        self.session = session
+        self.dialect = dialect
+        mode = dialect == .stock ? .stock : .cod2x
+        catalogSource = catalog
+    }
+
+    /// Bundled resource in the app; beside the executable in development builds.
+    nonisolated static func bundledCatalog() throws -> ConfigCatalog {
+        if let catalog = try? ConfigCatalog.load(bundle: .main) { return catalog }
+        guard let folder = Bundle.main.executableURL?.deletingLastPathComponent() else { throw ConfigCatalogError.missingResource }
+        let url = folder.appendingPathComponent("ConfigCatalog.json")
+        guard FileManager.default.fileExists(atPath: url.path) else { throw ConfigCatalogError.missingResource }
+        return try ConfigCatalog(data: Data(contentsOf: url))
+    }
+
+    /// The review harness hosts a session over a temporary home.
+    func attach(_ session: ConfigStudioSession?) {
+        self.session = session
+        comparison = nil; valueCache = nil; diffCache = [:]; sinceCache = nil
+    }
+
+    /// Decodes the 2 MB catalog off the main thread; the page shows a loading state meanwhile.
+    func loadCatalog() {
+        guard catalog == nil, !catalogLoading else { return }
+        catalogLoading = true
+        let source = catalogSource
+        Task { [weak self] in
+            let result = await Task.detached(priority: .userInitiated) { Result { try source() } }.value
+            self?.finishLoading(result)
+        }
+    }
+    func loadCatalogNow() { finishLoading(Result { try catalogSource() }) }
+    private func finishLoading(_ result: Result<ConfigCatalog, Error>) {
+        catalogLoading = false
+        switch result {
+        case .success(let value): install(value)
+        case .failure: catalogError = "The settings catalog is missing or damaged. Reinstall CoD2 Silicon to restore it."
+        }
+    }
+    private func install(_ catalog: ConfigCatalog) {
+        var protected: [ConfigPurposeGroup: Int] = [:]
+        var built: [ConfigSettingSpec] = []
+        for setting in catalog.settings {
+            if let spec = ConfigSettingSpec(setting: setting, mode: mode) { built.append(spec) }
+            else if setting.availability == .registered, setting.variant(for: mode) != nil { protected[setting.group, default: 0] += 1 }
+        }
+        specs = built.sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
+        specsByName = Dictionary(specs.map { ($0.name.lowercased(), $0) }, uniquingKeysWith: { a, _ in a })
+        protectedCounts = protected
+        diffCache = [:]; sinceCache = nil
+        self.catalog = catalog
+        catalogError = nil
+    }
+
+    // MARK: Reading
+
+    var profiles: [ConfigProfile] { session?.profiles ?? [] }
+    var current: ConfigProfileRead? { session?.current }
+    var history: [ConfigHistoryEntry] { session?.history ?? [] }
+    /// The game owns its profile config while it runs (or is being launched).
+    var isReadOnly: Bool { guard let session else { return true }; return session.launchReserved || !session.runningPIDs.isEmpty }
+    var gameRunning: Bool { guard let session else { return false }; return session.launchReserved || !session.runningPIDs.isEmpty }
+    var activeProfile: ConfigProfile? { profiles.first { $0.isActive } }
+    /// A failed save keeps its draft on screen until it is retried or discarded.
+    var document: ConfigDocument? {
+        guard let current else { return nil }
+        if let session, let draft = session.draft, session.draftProfileID?.caseInsensitiveCompare(current.profile.id) == .orderedSame { return draft }
+        return current.document
+    }
+    var metadata: ConfigStudioMetadata? { current?.metadata }
+
+    func spec(named name: String) -> ConfigSettingSpec? { specsByName[name.lowercased()] }
+    func specs(in group: ConfigPurposeGroup) -> [ConfigSettingSpec] { specs.filter { $0.group == group } }
+    func protectedCount(in group: ConfigPurposeGroup) -> Int { protectedCounts[group] ?? 0 }
+    /// Guided shows the catalog's guided entries in a fixed order of importance.
+    func guidedSpecs(in group: ConfigPurposeGroup) -> [ConfigSettingSpec] {
+        let order = ["com_maxfps", "cg_drawfps", "sensitivity", "in_rawmouse", "cl_mouseaccel", "m_filter", "m_pitch", "rate", "snaps", "cl_maxpackets",
+                     "cg_drawlagometer", "r_gamma", "r_picmip", "cg_drawcrosshair", "cg_drawcrosshairnames", "cg_chatheight", "snd_volume",
+                     "r_anisotropy", "cg_brass", "cg_marks", "name", "cl_allowdownload"]
+        return specs.filter { $0.group == group && $0.setting.guided && !$0.launcherOwned }.sorted {
+            (order.firstIndex(of: $0.name.lowercased()) ?? order.count, $0.title) < (order.firstIndex(of: $1.name.lowercased()) ?? order.count, $1.title)
+        }
+    }
+
+    /// Every direct assignment's effective value, computed once per document.
+    private func values(of document: ConfigDocument) -> [String: String] {
+        let data = document.serialized()
+        if let cache = valueCache, cache.data == data { return cache.values }
+        var names = Set<String>()
+        for command in document.commands {
+            if command.kind == .setting, command.tokens.count >= 3 { names.insert(command.tokens[1].text.lowercased()) }
+            else if command.kind == .unknown, command.tokens.count >= 2 { names.insert(command.tokens[0].text.lowercased()) }
+        }
+        var values: [String: String] = [:]
+        for name in names { values[name] = document.effectiveSetting(named: name) }
+        valueCache = (data, values)
+        return values
+    }
+    func state(_ spec: ConfigSettingSpec, in document: ConfigDocument? = nil, metadata: ConfigStudioMetadata? = nil) -> ConfigSettingState {
+        let raw: String?
+        if let document { raw = document.effectiveSetting(named: spec.name) }
+        else { raw = self.document.flatMap { values(of: $0)[spec.name.lowercased()] } }
+        let metadata = metadata ?? self.metadata
+        return ConfigSettingState(spec: spec, raw: raw,
+                                  locked: metadata?.locks.contains { $0.caseInsensitiveCompare(spec.name) == .orderedSame } ?? false,
+                                  note: metadata?.notes.first { $0.key.caseInsensitiveCompare(spec.name) == .orderedSame }?.value)
+    }
+
+    var changedCount: Int { specs.filter { !$0.launcherOwned && state($0).changed }.count }
+    var lockedCount: Int { metadata?.locks.count ?? 0 }
+
+    /// Expert rows: one group, or Changed/Locked across groups, narrowed by search.
+    func expertSections() -> [(group: ConfigPurposeGroup, specs: [ConfigSettingSpec])] {
+        let query = search.trimmingCharacters(in: .whitespaces)
+        let rows = specs.filter { spec in
+            if !query.isEmpty { return matches(spec, query) }
+            switch filter {
+            case .changed: return !spec.launcherOwned && state(spec).changed
+            case .locked: return state(spec).locked
+            case nil: return spec.group == group
+            }
+        }
+        return ConfigPurposeGroup.allCases.compactMap { group in
+            let list = rows.filter { $0.group == group }
+            return list.isEmpty ? nil : (group, list)
+        }
+    }
+    func matches(_ spec: ConfigSettingSpec, _ query: String) -> Bool {
+        [spec.title, spec.setting.summary, spec.name].contains { $0.localizedCaseInsensitiveContains(query) }
+    }
+    /// Command-K results: title, description and console name.
+    func jumpResults(_ query: String) -> [ConfigSettingSpec] {
+        let query = query.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty else { return Array(specs.filter { $0.setting.guided }.prefix(8)) }
+        let titleMatches = specs.filter { $0.title.localizedCaseInsensitiveContains(query) || $0.name.localizedCaseInsensitiveContains(query) }
+        let summaryMatches = specs.filter { !titleMatches.map(\.name).contains($0.name) && $0.setting.summary.localizedCaseInsensitiveContains(query) }
+        return Array((titleMatches + summaryMatches).prefix(30))
+    }
+    func jump(to spec: ConfigSettingSpec) {
+        tab = .settings; level = .expert; textMode = false
+        filter = nil; search = ""; group = spec.group; highlighted = spec.name
+    }
+
+    /// Rereads the compared loadout; the page calls this when it appears or the loadout changes.
+    func refreshComparison() {
+        guard let id = compareID, let session, id.caseInsensitiveCompare(current?.profile.id ?? "") != .orderedSame,
+              profiles.contains(where: { $0.id == id }), let read = try? session.readProfile(id) else { comparison = nil; return }
+        if read.version != comparison?.version || read.profile != comparison?.profile { comparison = read }
+    }
+    func theirs(_ spec: ConfigSettingSpec) -> ConfigSettingState? {
+        guard let other = comparison else { return nil }
+        let mine = state(spec), result = state(spec, in: other.document, metadata: other.metadata)
+        guard let a = mine.value, let b = result.value, !ConfigValues.same(spec, a, b) else { return nil }
+        return result
+    }
+
+    // MARK: History
+
+    var visibleHistory: [ConfigHistoryEntry] { history.filter { historyFilter.includes($0.source) } }
+    func changes(in entry: ConfigHistoryEntry) -> [ConfigChange] {
+        if let cached = diffCache[entry.id] { return cached }
+        let result = ConfigDiff.changes(from: entry.beforeData, entry.beforeMetadata, to: entry.data, entry.metadata,
+                                        chains: (entry.beforeChain, entry.chain), specs: specsByName, catalog: catalog, dialect: dialect)
+        diffCache[entry.id] = result
+        return result
+    }
+    /// What differs between a snapshot's saved state and now.
+    func changesSince(_ entry: ConfigHistoryEntry) -> [ConfigChange] {
+        guard let current else { return [] }
+        let base = current.data + (current.version.metadata ?? Data()) + (current.version.chain ?? Data())
+        if let cache = sinceCache, cache.id == entry.id, cache.base == base { return cache.changes }
+        let result = ConfigDiff.changes(from: entry.data, entry.metadata, to: current.data, current.version.metadata,
+                                        chains: (entry.chain, current.version.chain), specs: specsByName, catalog: catalog, dialect: dialect)
+        sinceCache = (entry.id, base, result)
+        return result
+    }
+    func title(of entry: ConfigHistoryEntry) -> String {
+        switch entry.source {
+        case .gameSession: "Changed while you played"
+        case .migration: "Brought over your launcher settings"
+        case .restore: "Restored a snapshot"
+        default: entry.summary
+        }
+    }
+
+    // MARK: Intents (one transaction per committed gesture)
+
+    func refresh() {
+        guard let session else { return }
+        do { try session.refresh() } catch { fail("Couldn’t read this loadout", error) }
+    }
+
+    func select(_ id: String) {
+        guard let session, id != current?.profile.id else { return }
+        do {
+            try session.focus(id)
+            if compareID == id { compareID = nil } else { refreshComparison() }
+            snapshotID = nil; restoredSnapshotID = nil; highlighted = nil
+            if textMode { loadText() }
+        } catch { fail("Couldn’t open this loadout", error) }
+    }
+
+    func useForNextGame() {
+        guard let session, let current, !isReadOnly else { return }
+        do {
+            try session.selectProfile(current.profile.id)
+            announce("\(current.profile.displayName) is in use for your next game.")
+        } catch { fail("Couldn’t choose this loadout", error) }
+    }
+
+    /// Sets one setting's config text. Locks never block the person's own edit.
+    func set(_ spec: ConfigSettingSpec, to value: String, summary: String? = nil, undo: UndoManager? = nil) {
+        guard !spec.launcherOwned else { return }
+        let previous = document?.effectiveSetting(named: spec.name)
+        if let previous, ConfigValues.same(spec, previous, value), previous == value { return }
+        let summary = summary ?? "Changed \(spec.title)"
+        commit(summary: summary, undo: undo, undoName: "Change \(spec.title)", retry: { [weak self] in self?.set(spec, to: value, summary: summary, undo: undo) },
+               edit: { try $0.setSetting(named: spec.name, value: value) }, revert: { [weak self] in
+            self?.restoreRaw(spec, previous, undo: undo)
+        })
+    }
+    func reset(_ spec: ConfigSettingSpec, undo: UndoManager? = nil) {
+        guard let value = spec.defaultText else { return }
+        set(spec, to: value, summary: "Reset \(spec.title)", undo: undo)
+    }
+    func takeTheirs(_ spec: ConfigSettingSpec, undo: UndoManager? = nil) {
+        guard let theirs = theirs(spec), let value = theirs.value, !state(spec).locked, let source = comparison?.profile.displayName else { return }
+        set(spec, to: value, summary: "Took \(spec.title) from \(source)", undo: undo)
+    }
+    private func restoreRaw(_ spec: ConfigSettingSpec, _ raw: String?, undo: UndoManager?) {
+        let current = document?.effectiveSetting(named: spec.name)
+        commit(summary: "Undid a change to \(spec.title)", undo: undo, undoName: "Change \(spec.title)", retry: nil, edit: { document in
+            if let raw { try document.setSetting(named: spec.name, value: raw) } else { try document.removeSetting(named: spec.name) }
+        }, revert: { [weak self] in self?.restoreRaw(spec, current, undo: undo) })
+    }
+
+    func setLock(_ spec: ConfigSettingSpec, _ locked: Bool, undo: UndoManager? = nil) {
+        guard var meta = metadata else { return }
+        meta.locks = meta.locks.filter { $0.caseInsensitiveCompare(spec.name) != .orderedSame }
+        if locked { meta.locks.insert(spec.name) }
+        commitMetadata(meta, summary: locked ? "Locked \(spec.title)" : "Unlocked \(spec.title)", undo: undo, undoName: locked ? "Lock" : "Unlock")
+    }
+    func setNote(_ spec: ConfigSettingSpec, _ note: String, undo: UndoManager? = nil) {
+        guard var meta = metadata else { return }
+        let text = note.trimmingCharacters(in: .whitespacesAndNewlines)
+        let key = meta.notes.keys.first { $0.caseInsensitiveCompare(spec.name) == .orderedSame } ?? spec.name
+        if meta.notes[key] == (text.isEmpty ? nil : text) { return }
+        meta.notes[key] = text.isEmpty ? nil : text
+        commitMetadata(meta, summary: text.isEmpty ? "Removed the note on \(spec.title)" : "Noted \(spec.title)", undo: undo, undoName: "Note")
+    }
+    func setDPI(_ dpi: Double?, undo: UndoManager? = nil) {
+        guard var meta = metadata else { return }
+        let value = dpi.flatMap { $0.isFinite && $0 > 0 ? $0 : nil }
+        guard meta.dpi != value else { return }
+        meta.dpi = value
+        commitMetadata(meta, summary: "Set mouse DPI", undo: undo, undoName: "Mouse DPI")
+    }
+    func rename(_ name: String, undo: UndoManager? = nil) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard var meta = metadata, !trimmed.isEmpty, trimmed != meta.displayName else { return }
+        meta.displayName = trimmed
+        commitMetadata(meta, summary: "Renamed to \(trimmed)", undo: undo, undoName: "Rename")
+    }
+    /// Records the current state as a History row (the board's “Save a snapshot now”).
+    func saveSnapshot() {
+        guard let current else { return }
+        commit(summary: "Saved a snapshot", undo: nil, undoName: "", retry: nil, metadata: current.metadata, edit: { _ in }, revert: nil)
+    }
+    private func commitMetadata(_ meta: ConfigStudioMetadata, summary: String, undo: UndoManager?, undoName: String) {
+        let previous = metadata
+        commit(summary: summary, undo: undo, undoName: undoName, retry: { [weak self] in self?.commitMetadataAgain(meta, summary: summary, undo: undo, undoName: undoName) },
+               metadata: meta, edit: { _ in }, revert: { [weak self] in
+            if let previous { self?.commitMetadataAgain(previous, summary: "Undid: \(summary)", undo: undo, undoName: undoName) }
+        })
+    }
+    private func commitMetadataAgain(_ meta: ConfigStudioMetadata, summary: String, undo: UndoManager?, undoName: String) {
+        commitMetadata(meta, summary: summary, undo: undo, undoName: undoName)
+    }
+
+    /// The one write path for ordinary controls: apply the edit to the latest saved
+    /// document and save it as one History transaction.
+    private func commit(summary: String, undo: UndoManager?, undoName: String, retry: (@MainActor () -> Void)?,
+                        metadata: ConfigStudioMetadata? = nil, edit: (inout ConfigDocument) throws -> Void, revert: (@MainActor () -> Void)?) {
+        guard let session, let current else { return }
+        guard !isReadOnly else { fail("Quit the game to change this loadout", ConfigProfileError.gameRunning); return }
+        guard session.draft == nil else {
+            failure = failure ?? ConfigStudioFailure(title: "An earlier change isn’t saved yet", message: "Try it again or discard it first.", retry: nil)
+            return
+        }
+        var updated = current.document
+        do { try edit(&updated) } catch { fail("Couldn’t change this setting", error); return }
+        do {
+            try session.update(document: updated, metadata: metadata, summary: summary)
+            failure = nil
+            diffCache = [:]
+            if let revert, let undo {
+                undo.registerUndo(withTarget: self) { _ in revert() }
+                undo.setActionName(undoName)
+            }
+            announce("Saved. \(summary).")
+        } catch {
+            fail("Couldn’t save: \(summary)", error, retry: retry)
+        }
+    }
+
+    private func fail(_ title: String, _ error: Error, retry: (@MainActor () -> Void)? = nil) {
+        failure = ConfigStudioFailure(title: title, message: error.localizedDescription, retry: retry)
+    }
+    /// Discards a failed change and re-applies the same intent to the latest disk version.
+    func retryFailure() {
+        let retry = failure?.retry
+        discardFailedChange()
+        retry?()
+    }
+    func discardFailedChange() {
+        failure = nil
+        guard let session else { return }
+        do { if session.draft != nil { try session.discardDraft() } else { try session.refresh() } }
+        catch { fail("Couldn’t reload this loadout", error) }
+        if textMode && !textEdited { loadText() }
+    }
+
+    // MARK: New loadouts
+
+    /// A profile folder name for a display name: what the game's own profile menu shows.
+    static func identifier(for name: String, existing: [String]) -> String {
+        let folded = name.folding(options: [.diacriticInsensitive, .widthInsensitive], locale: Locale(identifier: "en_US_POSIX"))
+        var id = ""
+        for scalar in folded.unicodeScalars {
+            if scalar.isASCII, CharacterSet.alphanumerics.contains(scalar) { id.unicodeScalars.append(scalar) }
+            else if [".", "-", "_"].contains(scalar) || CharacterSet.whitespaces.contains(scalar) {
+                if !id.isEmpty, !id.hasSuffix("_") { id.append(scalar == "." || scalar == "-" ? Character(scalar) : "_") }
+            }
+        }
+        while let last = id.last, !last.isLetter && !last.isNumber { id.removeLast() }
+        if id.isEmpty { id = "Loadout" }
+        id = String(id.prefix(36))
+        var candidate = id, suffix = 2
+        while existing.contains(where: { $0.caseInsensitiveCompare(candidate) == .orderedSame }) { candidate = "\(id)_\(suffix)"; suffix += 1 }
+        return candidate
+    }
+
+    /// Creates from the game's defaults or as a copy of the loadout on screen, then shows it.
+    /// It doesn't become the active loadout until the person chooses it.
+    @discardableResult
+    func createLoadout(named name: String, copyingCurrent: Bool) -> Bool {
+        guard let session, !isReadOnly else { return false }
+        let display = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !display.isEmpty else { return false }
+        let id = Self.identifier(for: display, existing: profiles.map(\.id))
+        do {
+            let created = copyingCurrent ? try session.duplicateProfile(as: id, displayName: display) : try session.createProfile(id: id, displayName: display)
+            try session.focus(created.profile.id)
+            tab = .settings; snapshotID = nil
+            announce("Created \(display).")
+            return true
+        } catch { fail("Couldn’t create \(display)", error); return false }
+    }
+
+    // MARK: Restore
+
+    func restore(_ entry: ConfigHistoryEntry, revision: ConfigSnapshotRevision = .after, undo: UndoManager? = nil) {
+        guard let session, !isReadOnly else { return }
+        do {
+            try session.restore(snapshotID: entry.id, revision: revision)
+            restoredSnapshotID = entry.id
+            diffCache = [:]
+            if let undo, let row = session.history.first, row.source == .restore {
+                undo.registerUndo(withTarget: self) { model in model.undoRestore(row.id) }
+                undo.setActionName("Restore")
+            }
+            announce("Restored. Your previous state is saved as a snapshot.")
+        } catch { fail("Couldn’t restore this snapshot", error) }
+    }
+    private func undoRestore(_ id: String) {
+        guard let session, let row = session.history.first(where: { $0.id == id }), current?.data == row.data else {
+            failure = ConfigStudioFailure(title: "Nothing to undo", message: "This loadout changed after the restore. Pick a snapshot in History instead.", retry: nil)
+            return
+        }
+        do { try session.restore(snapshotID: id, revision: .before); restoredSnapshotID = nil; announce("Undid the restore.") }
+        catch { fail("Couldn’t undo the restore", error) }
+    }
+
+    // MARK: Edit as text
+
+    var textEdited: Bool { textBase != nil && encodedText != textBase }
+    var textBlocked: Bool { textIssues.contains { $0.blocking } }
+    /// The loadout changed on disk since the text was loaded.
+    var textStale: Bool { guard let textBase, let current else { return false }; return current.data != textBase }
+    private var encodedText: Data? {
+        let scalars = text.unicodeScalars
+        guard scalars.allSatisfy({ $0.value <= 255 }) else { return nil }
+        return Data(scalars.map { UInt8($0.value) })
+    }
+
+    func toggleText() {
+        if textMode { textMode = false; textBase = nil; textIssues = [] } else { textMode = true; loadText() }
+    }
+    func loadText() {
+        guard let current else { return }
+        textBase = current.data
+        text = ConfigDocument.text(current.data)
+        validateText()
+    }
+    func editText(_ value: String) {
+        text = value
+        validateText()
+    }
+    private func validateText() {
+        textIssues = ConfigTextCheck.issues(text: text, dialect: dialect, catalog: catalog, mode: mode).issues
+    }
+    /// One explicit transaction after validation; the text stays on screen if saving fails.
+    func applyText(undo: UndoManager? = nil) {
+        guard let session, let current, !isReadOnly, textEdited, !textBlocked, let data = encodedText else { return }
+        guard !textStale else {
+            failure = ConfigStudioFailure(title: "This loadout changed while you were editing",
+                                          message: "Reload it to see the new version. Your text edits are discarded when you reload.", retry: nil)
+            return
+        }
+        let before = current.document
+        do {
+            try session.update(document: ConfigDocument(data: data, dialect: dialect), summary: "Edited as text")
+            failure = nil; diffCache = [:]
+            if let undo {
+                let written = data
+                undo.registerUndo(withTarget: self) { model in model.undoText(before: before, written: written) }
+                undo.setActionName("Edit as Text")
+            }
+            loadText()
+            announce("Saved. Edited as text.")
+        } catch {
+            // Keep the person's text; the session keeps the draft for retry or discard.
+            fail("Couldn’t save your text edits", error, retry: { [weak self] in self?.applyText(undo: undo) })
+        }
+    }
+    private func undoText(before: ConfigDocument, written: Data) {
+        guard let session, current?.data == written else {
+            failure = ConfigStudioFailure(title: "Nothing to undo", message: "This loadout changed after your text edit. Pick a snapshot in History instead.", retry: nil)
+            return
+        }
+        do { try session.update(document: before, summary: "Undid a text edit"); if textMode { loadText() } }
+        catch { fail("Couldn’t undo the text edit", error) }
+    }
+    func revertText() { loadText() }
+}
