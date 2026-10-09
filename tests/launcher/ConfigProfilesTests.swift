@@ -453,6 +453,27 @@ private final class WriteGate: @unchecked Sendable {
         require(try Data(contentsOf: journal) == invalidBytes, "invalid transaction evidence is retained")
     }
 
+    static func chainCompanions() throws {
+        let home = try temporaryHome(); defer { try? FileManager.default.removeItem(at: home) }
+        let store = try ConfigProfileStore(homeURL: home, dialect: .cod2x)
+        let read = try store.create(id: "daily", displayName: "Daily", document: ConfigDocument(data: Data("bind j \"say old\"\n".utf8), dialect: .cod2x))
+        let script = Data("set next \"say new\"\n".utf8)
+        var document = read.document
+        try document.setBind(key: "j", binding: "vstr next")
+        let entry = try store.updateChain(id: "daily", document: document, expected: read.version, metadata: read.metadata, chain: script, summary: "Chain")
+        let current = try store.read(id: "daily")
+        require(current.version.chain == script && entry.chain == script && entry.beforeChain == nil, "companion in current version and history")
+        let copy = try store.duplicate(id: "daily", as: "copy", displayName: "Copy", expected: current.version)
+        require(copy.version.chain == script && copy.document.effectiveBind(key: "j") == "vstr next", "companion copied with trigger")
+        let path = home.appendingPathComponent("main/" + (try ConfigStudioLaunch.chainBasename(profileID: "daily")))
+        try PrivateFile.write(Data("// external\n".utf8), to: path)
+        rejects(.conflict) { _ = try store.update(id: "daily", document: document, expected: current.version, summary: "Stale") }
+        let external = try store.read(id: "daily")
+        _ = try store.restore(id: "daily", snapshotID: entry.id, expected: external.version, revision: .before)
+        require(try store.read(id: "daily").version == read.version, "undo restores config, metadata and absent companion")
+        require(!FileManager.default.fileExists(atPath: path.path), "undo removes absent-before companion")
+    }
+
     static func corpusRoundTrip(_ root: URL) throws {
         guard let files = FileManager.default.enumerator(at: root, includingPropertiesForKeys: [.isRegularFileKey]) else { fatalError("FAIL: corpus unavailable") }
         let home = try temporaryHome(); defer { try? FileManager.default.removeItem(at: home) }
@@ -488,7 +509,8 @@ private final class WriteGate: @unchecked Sendable {
             ("linked home ancestor", linkedHomeAncestor),
             ("invalid existing history", invalidExistingHistory),
             ("frozen migration", migrationFreezesValuesAndSelection),
-            ("invalid transaction snapshot", invalidTransactionSnapshot)
+            ("invalid transaction snapshot", invalidTransactionSnapshot),
+            ("chain companions", chainCompanions)
         ]
         var arguments = Array(CommandLine.arguments.dropFirst())
         var corpus: URL?

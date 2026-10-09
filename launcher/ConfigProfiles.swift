@@ -37,6 +37,9 @@ struct ConfigStudioMetadata: Codable, Equatable, Sendable {
     var origin = ConfigOrigin()
     var dpi: Double? = nil
     var lastImportedValues: [String: String] = [:]
+    /// B2 owns this JSON payload; F2 snapshots its bytes without
+    /// depending on the advanced-bind model or interpreting imported scripts.
+    var chainDefinitions: Data? = nil
 
     init(displayName: String) { self.displayName = displayName }
     func validate() throws {
@@ -54,6 +57,10 @@ struct ConfigProfile: Identifiable, Equatable, Sendable {
 struct ConfigProfileVersion: Codable, Equatable, Sendable {
     let config: Data
     let metadata: Data?
+    let chain: Data?
+    init(config: Data, metadata: Data?, chain: Data? = nil) {
+        self.config = config; self.metadata = metadata; self.chain = chain
+    }
 }
 
 struct ConfigProfileRead: Sendable {
@@ -180,7 +187,11 @@ final class ConfigProfileStore: Sendable {
     }
     private func version(at directory: URL) throws -> ConfigProfileVersion {
         guard let data = try optionalData(directory.appendingPathComponent("config_mp.cfg")) else { throw ConfigProfileError.missingProfile }
-        return try ConfigProfileVersion(config: data, metadata: optionalData(directory.appendingPathComponent("studio.json")))
+        return try ConfigProfileVersion(config: data, metadata: optionalData(directory.appendingPathComponent("studio.json")),
+                                        chain: optionalData(chainURL(id: directory.lastPathComponent)))
+    }
+    private func chainURL(id: String) throws -> URL {
+        homeURL.appendingPathComponent("main/" + (try ConfigStudioLaunch.chainBasename(profileID: id)))
     }
     private func metadata(_ data: Data?, id: String) throws -> ConfigStudioMetadata {
         guard let data else { return ConfigStudioMetadata(displayName: id) }
@@ -276,25 +287,67 @@ final class ConfigProfileStore: Sendable {
         }
     }
 
-    private func createLocked(id: String, document: ConfigDocument, metadata: ConfigStudioMetadata, source: ConfigHistorySource, summary: String, before: ConfigProfileVersion?) throws {
+    private func createLocked(id: String, document: ConfigDocument, metadata: ConfigStudioMetadata, source: ConfigHistorySource, summary: String, before: ConfigProfileVersion?, chain: Data? = nil) throws {
         let target = try profileURL(id)
-        guard !FileManager.default.fileExists(atPath: target.path), try !identifiers().contains(where: { $0.caseInsensitiveCompare(id) == .orderedSame }) else { throw ConfigProfileError.alreadyExists }
         try metadata.validate()
-        let value = try ConfigProfileVersion(config: document.serialized(), metadata: encode(metadata))
+        let value = try ConfigProfileVersion(config: document.serialized(), metadata: encode(metadata), chain: chain)
+        let chainPath = try chainURL(id: id)
+        let journal = playersURL.appendingPathComponent(".studio-companion-" + (try ConfigStudioLaunch.chainBasename(profileID: id)) + ".json")
+        let saved: CompanionCreation?
+        if let bytes = try optionalData(journal) {
+            do { saved = try JSONDecoder().decode(CompanionCreation.self, from: bytes) }
+            catch { throw ConfigProfileError.invalidHistory }
+            guard let saved, saved.schemaVersion == 1, saved.profileID == id, saved.version == value, chain != nil,
+                  UUID(uuidString: saved.entry.id) != nil, saved.entry.source == source, saved.entry.summary == summary,
+                  saved.entry.data == value.config, saved.entry.metadata == value.metadata, saved.entry.chain == chain,
+                  saved.entry.beforeData == (before ?? value).config, saved.entry.beforeMetadata == (before ?? value).metadata,
+                  saved.entry.beforeChain == (before ?? value).chain else { throw ConfigProfileError.conflict }
+        } else { saved = nil }
+        if FileManager.default.fileExists(atPath: target.path) {
+            guard let saved else { throw ConfigProfileError.alreadyExists }
+            guard try version(at: target) == value, try ConfigHistory.load(directory: target.appendingPathComponent("history")).contains(saved.entry) else { throw ConfigProfileError.conflict }
+            try guardWritable(false)
+            try FileManager.default.removeItem(at: journal)
+            try syncDirectory(playersURL)
+            return
+        }
+        guard try !identifiers().contains(where: { $0.caseInsensitiveCompare(id) == .orderedSame }) else { throw ConfigProfileError.alreadyExists }
+        let existingChain = try optionalData(chainPath)
+        guard existingChain == nil || (saved != nil && existingChain == chain) else { throw ConfigProfileError.conflict }
         let staging = playersURL.appendingPathComponent(".studio-create-" + UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: false, attributes: [.posixPermissions: 0o700])
         defer { try? FileManager.default.removeItem(at: staging) }
-        let entry = ConfigHistoryEntry(source: source, summary: summary, before: before ?? value, after: value)
+        let entry = saved?.entry ?? ConfigHistoryEntry(source: source, summary: summary, before: before ?? value, after: value)
         try write(encode(entry), to: staging.appendingPathComponent("history/" + entry.id + ".json"))
         try guardWritable(false)
         try write(value.config, to: staging.appendingPathComponent("config_mp.cfg"))
         try write(value.metadata!, to: staging.appendingPathComponent("studio.json"))
+        if let chain {
+            if saved == nil { try write(encode(CompanionCreation(profileID: id, version: value, entry: entry)), to: journal) }
+            if existingChain != chain { try write(chain, to: chainPath) }
+            guard try optionalData(chainPath) == chain else { throw ConfigProfileError.conflict }
+        }
         try guardWritable(false)
         guard renamex_np(staging.path, target.path, UInt32(RENAME_EXCL)) == 0 else {
             if errno == EEXIST || errno == ENOTEMPTY { throw ConfigProfileError.alreadyExists }
             throw ConfigProfileError.cannotPublish
         }
         try syncDirectory(playersURL)
+        if chain != nil {
+            try guardWritable(false)
+            try FileManager.default.removeItem(at: journal)
+            try syncDirectory(playersURL)
+        }
+    }
+
+    /// A copied companion lives outside the staged profile directory. Retain
+    /// the full creation receipt before publishing it, so the same copy request
+    /// can resume after either a throwing writer or a process interruption.
+    private struct CompanionCreation: Codable {
+        var schemaVersion = 1
+        let profileID: String
+        let version: ConfigProfileVersion
+        let entry: ConfigHistoryEntry
     }
 
     @discardableResult
@@ -305,7 +358,7 @@ final class ConfigProfileStore: Sendable {
             let original = try readLocked(id: id)
             guard original.version == expected else { throw ConfigProfileError.conflict }
             var meta = original.metadata; meta.displayName = displayName; meta.origin = ConfigOrigin(kind: .copied, source: id)
-            try createLocked(id: newID, document: original.document, metadata: meta, source: .you, summary: "Copied loadout", before: nil)
+            try createLocked(id: newID, document: original.document, metadata: meta, source: .you, summary: "Copied loadout", before: nil, chain: original.version.chain)
             return try readLocked(id: newID)
         }
     }
@@ -376,14 +429,16 @@ final class ConfigProfileStore: Sendable {
         guard transaction.schemaVersion == 1 else { throw ConfigProfileError.invalidHistory }
         let current = try version(at: directory)
         guard (current.config == transaction.before.config || current.config == transaction.after.config),
-              (current.metadata == transaction.before.metadata || current.metadata == transaction.after.metadata) else { throw ConfigProfileError.conflict }
+              (current.metadata == transaction.before.metadata || current.metadata == transaction.after.metadata),
+              (current.chain == transaction.before.chain || current.chain == transaction.after.chain) else { throw ConfigProfileError.conflict }
         try finish(transaction, directory: directory)
     }
     private func finish(_ transaction: Transaction, directory: URL) throws {
         let entry = transaction.entry, history = directory.appendingPathComponent("history", isDirectory: true)
         guard transaction.schemaVersion == 1, UUID(uuidString: entry.id) != nil,
               entry.beforeData == transaction.before.config, entry.data == transaction.after.config,
-              entry.beforeMetadata == transaction.before.metadata, entry.metadata == transaction.after.metadata else { throw ConfigProfileError.invalidHistory }
+              entry.beforeMetadata == transaction.before.metadata, entry.metadata == transaction.after.metadata,
+              entry.beforeChain == transaction.before.chain, entry.chain == transaction.after.chain else { throw ConfigProfileError.invalidHistory }
         _ = try ConfigHistory.load(directory: history)
         try guardWritable(false)
         let snapshot = history.appendingPathComponent(entry.id + ".json"), encoded = try encode(entry)
@@ -393,13 +448,28 @@ final class ConfigProfileStore: Sendable {
         // Recheck disk bytes after staging the snapshot, before overwriting.
         let current = try version(at: directory)
         guard (current.config == transaction.before.config || current.config == transaction.after.config),
-              (current.metadata == transaction.before.metadata || current.metadata == transaction.after.metadata) else { throw ConfigProfileError.conflict }
+              (current.metadata == transaction.before.metadata || current.metadata == transaction.after.metadata),
+              (current.chain == transaction.before.chain || current.chain == transaction.after.chain) else { throw ConfigProfileError.conflict }
+        // Publish helper text before its triggering bind. The durable journal
+        // recovers mixed states; launcher reads/launches recover under this lock.
+        if current.chain != transaction.after.chain {
+            let path = try chainURL(id: directory.lastPathComponent)
+            if let chain = transaction.after.chain { try write(chain, to: path) }
+            else {
+                try guardWritable(false)
+                try FileManager.default.removeItem(at: path)
+                try syncDirectory(path.deletingLastPathComponent())
+            }
+        }
+        let afterChain = try version(at: directory)
+        guard afterChain.chain == transaction.after.chain, afterChain.config == current.config,
+              afterChain.metadata == current.metadata else { throw ConfigProfileError.conflict }
         try guardWritable(false)
         if current.config != transaction.after.config { try write(transaction.after.config, to: directory.appendingPathComponent("config_mp.cfg")) }
         // Config publication can take time. Do not overwrite a sidecar edited
         // externally during that write, or complete an already-diverged pair.
         let afterConfig = try version(at: directory)
-        guard afterConfig.config == transaction.after.config,
+        guard afterConfig.config == transaction.after.config, afterConfig.chain == transaction.after.chain,
               (afterConfig.metadata == transaction.before.metadata || afterConfig.metadata == transaction.after.metadata) else { throw ConfigProfileError.conflict }
         try guardWritable(false)
         if afterConfig.metadata != transaction.after.metadata {
@@ -414,11 +484,11 @@ final class ConfigProfileStore: Sendable {
         try FileManager.default.removeItem(at: directory.appendingPathComponent(".studio-transaction.json"))
         try syncDirectory(directory)
     }
-    private func updateLocked(id: String, document: ConfigDocument, expected: ConfigProfileVersion, metadata: ConfigStudioMetadata?, source: ConfigHistorySource, summary: String) throws -> ConfigHistoryEntry {
+    private func updateLocked(id: String, document: ConfigDocument, expected: ConfigProfileVersion, metadata: ConfigStudioMetadata?, chain: Data?, source: ConfigHistorySource, summary: String) throws -> ConfigHistoryEntry {
         let original = try readLocked(id: id)
         guard original.version == expected else { throw ConfigProfileError.conflict }
         try metadata?.validate()
-        let value = try ConfigProfileVersion(config: document.serialized(), metadata: metadata.map(encode) ?? original.version.metadata)
+        let value = try ConfigProfileVersion(config: document.serialized(), metadata: metadata.map(encode) ?? original.version.metadata, chain: chain)
         let entry = ConfigHistoryEntry(source: source, summary: summary, before: expected, after: value)
         let transaction = Transaction(before: expected, after: value, entry: entry)
         let directory = try profileURL(id)
@@ -433,7 +503,18 @@ final class ConfigProfileStore: Sendable {
         try guardWritable(runningGame)
         return try withLock {
             try guardWritable(runningGame)
-            return try updateLocked(id: id, document: document, expected: expected, metadata: metadata, source: source, summary: summary)
+            return try updateLocked(id: id, document: document, expected: expected, metadata: metadata, chain: expected.chain, source: source, summary: summary)
+        }
+    }
+    /// Same F2 transaction, conflict receipt, process guard and history as an
+    /// ordinary edit, now including the launcher-owned companion file.
+    @discardableResult
+    func updateChain(id: String, document: ConfigDocument, expected: ConfigProfileVersion, metadata: ConfigStudioMetadata,
+                     chain: Data?, summary: String, runningGame: Bool = false) throws -> ConfigHistoryEntry {
+        try guardWritable(runningGame)
+        return try withLock {
+            try guardWritable(runningGame)
+            return try updateLocked(id: id, document: document, expected: expected, metadata: metadata, chain: chain, source: .you, summary: summary)
         }
     }
     func history(id: String) throws -> [ConfigHistoryEntry] {
@@ -456,7 +537,7 @@ final class ConfigProfileStore: Sendable {
             let original = try readLocked(id: id)
             guard original.version == expected else { throw ConfigProfileError.conflict }
             if let meta { _ = try metadata(meta, id: id) }
-            let after = ConfigProfileVersion(config: bytes, metadata: meta)
+            let after = ConfigProfileVersion(config: bytes, metadata: meta, chain: revision == .before ? entry.beforeChain : entry.chain)
             let restored = ConfigHistoryEntry(source: .restore, summary: "Restored snapshot", before: expected, after: after)
             let transaction = Transaction(before: expected, after: after, entry: restored)
             try write(encode(transaction), to: directory.appendingPathComponent(".studio-transaction.json"))

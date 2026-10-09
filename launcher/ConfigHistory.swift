@@ -17,6 +17,8 @@ struct ConfigHistoryEntry: Codable, Equatable, Sendable, Identifiable {
     let data: Data
     let beforeMetadata: Data?
     let metadata: Data?
+    let beforeChain: Data?
+    let chain: Data?
 
     init(source: ConfigHistorySource, summary: String, before: ConfigProfileVersion, after: ConfigProfileVersion, id: String? = nil) {
         self.id = id ?? UUID().uuidString.lowercased()
@@ -27,6 +29,8 @@ struct ConfigHistoryEntry: Codable, Equatable, Sendable, Identifiable {
         data = after.config
         beforeMetadata = before.metadata
         metadata = after.metadata
+        beforeChain = before.chain
+        chain = after.chain
     }
 }
 

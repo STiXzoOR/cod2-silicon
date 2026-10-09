@@ -118,6 +118,17 @@ private final class ConfigGameGuard: @unchecked Sendable {
         setDraft(document)
         try saveDraft(metadata: metadata, summary: summary)
     }
+    /// Advanced-bind models prepare and validate the receipt. Keep companion
+    /// publication inside the same main-actor lifecycle boundary as F2 edits.
+    func updateChain(profileID: String, document: ConfigDocument, metadata: ConfigStudioMetadata, chain: Data?,
+                     expected: ConfigProfileVersion, summary: String) throws {
+        guard !isReadOnly else { throw ConfigProfileError.gameRunning }
+        guard draft == nil, current?.profile.id == profileID, current?.version == expected else { throw ConfigProfileError.conflict }
+        do {
+            _ = try store.updateChain(id: profileID, document: document, expected: expected, metadata: metadata, chain: chain, summary: summary)
+            try refresh()
+        } catch { self.error = error.localizedDescription; throw error }
+    }
     func selectProfile(_ id: String) throws {
         guard !isReadOnly else { throw ConfigProfileError.gameRunning }
         guard draft == nil else { throw ConfigProfileError.conflict }
