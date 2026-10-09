@@ -15,6 +15,7 @@
         "CoD2x server policy can change the value, type or limits at run time; registration metadata is not a live ruleset."
       ],
       "effectSources": [
+        "src/PC/qcommon/common.c: Com_Frame_Try_Block_Function",
         "src/PC/qcommon/cod2x_runtime.c: Cod2x_Frame",
         "CoD2x 1.4.6.8: src/mss32/competitive.cpp"
       ]
@@ -24,7 +25,10 @@
       "title": "Show frame rate",
       "summary": "Shows a frame rate counter in the corner while you play.",
       "details": "Simple shows frames per second, with the lowest and highest recent values and a figure for how much they vary. Verbose adds counts of triangles drawn and texture memory in use. Time shows milliseconds per frame instead, with the same extra counts. It averages the last 32 frames and is not a benchmark.",
-      "guided": true
+      "guided": true,
+      "effectSources": [
+        "src/PC/cgame_mp/cg_draw_mp.c: CG_DrawFPS"
+      ]
     },
     "r_swapinterval": {
       "group": "frame",
@@ -47,14 +51,23 @@
           "max": 30
         }
       },
-      "menuExposed": true
+      "menuExposed": true,
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove",
+        "src/PC/cgame_mp/cg_view_mp.c: CG_CalcFov"
+      ]
     },
     "in_rawmouse": {
       "group": "aim",
       "title": "Raw mouse input",
       "summary": "Reads mouse movement straight from the mouse while you play.",
       "details": "The macOS version of the game reads the mouse through Apple's GameController framework while you are playing and the pointer is captured. It does not apply in menus and it needs Mouse control to be on. This is a setting of this version of the game, separate from CoD2x's own raw-input option.",
-      "guided": true
+      "guided": true,
+      "effectSources": [
+        "src/unix/linux_input.c: IN_Frame",
+        "src/platform/macos_input_policy.h: MacInput_UseRaw",
+        "src/platform/macos_rawmouse.m: AttachMouse"
+      ]
     },
     "m_filter": {
       "group": "aim",
@@ -62,7 +75,10 @@
       "summary": "Averages each mouse movement with the one before it.",
       "details": "The game blends the last two mouse readings, which can make aim look steadier but a little slower to respond. Off is the default and TweakGuide suggests turning it off if the mouse feels laggy.",
       "guided": true,
-      "menuExposed": true
+      "menuExposed": true,
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove"
+      ]
     },
     "cl_mouseaccel": {
       "group": "aim",
@@ -73,33 +89,48 @@
       "control": {
         "kind": "number",
         "step": 0.01
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove"
+      ]
     },
     "m_pitch": {
       "group": "aim",
       "title": "Vertical mouse direction",
       "summary": "Which way your view tilts when you move the mouse up or down.",
       "details": "The default, 0.022, tilts the normal way, and the game's own Invert Mouse option writes -0.022. The size of the number sets how far the view tilts per mouse movement and is normally left alone: ESL's old PunkBuster list required values outside -0.015 to 0.015. Keep the size when you flip the direction.",
-      "guided": true
+      "guided": true,
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove"
+      ]
     },
     "m_yaw": {
       "group": "aim",
       "title": "Horizontal mouse scale",
       "summary": "How far your view turns sideways for each bit of mouse movement.",
-      "details": "The default, 0.022, is what published configs keep, and ESL's old PunkBuster list required exactly 0.022. It scales your left and right turning only."
+      "details": "The default, 0.022, is what published configs keep, and ESL's old PunkBuster list required exactly 0.022. It scales your left and right turning only.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove"
+      ]
     },
     "cl_freelook": {
       "group": "aim",
       "title": "Look with the mouse",
       "summary": "Lets moving the mouse up and down tilt your view.",
       "details": "With it off, moving the mouse forward and back walks you instead of tilting the view, unless the mouse-look key is held. The game's menu calls it Free Look. zPAM servers set it back to on when you join a team.",
-      "menuExposed": true
+      "menuExposed": true,
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove"
+      ]
     },
     "sensitivity_mg": {
       "group": "aim",
       "title": "Mounted gun mouse speed",
       "summary": "How far your view turns when you move the mouse while using a mounted machine gun.",
-      "details": "CoD2x only. Without it, mounted guns ignore Mouse speed and turn at a fixed rate. With it, this number is used in place of Mouse speed while you man one, and Mouse acceleration still adds to it. The default is 1, and it accepts 0.01 to 100."
+      "details": "CoD2x only. Without it, mounted guns ignore Mouse speed and turn at a fixed rate. With it, this number is used in place of Mouse speed while you man one, and Mouse acceleration still adds to it. The default is 1, and it accepts 0.01 to 100.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove (CoD2x build)"
+      ]
     },
     "m_rinput": {
       "group": "aim",
@@ -113,19 +144,31 @@
           "1": "Own thread",
           "2": "Main thread"
         }
-      }
+      },
+      "effectSources": [
+        "src/unix/linux_input.c: MacInput_RawMode",
+        "src/platform/macos_rawmouse.m: AttachMouse"
+      ]
     },
     "m_rinput_hz": {
       "group": "aim",
       "title": "Mouse update rate",
       "summary": "How many mouse updates per second the game is receiving right now.",
-      "details": "The game measures this itself and treats it as read-only. It is a measurement, not your mouse's rated polling rate."
+      "details": "The game measures this itself and treats it as read-only. It is a measurement, not your mouse's rated polling rate.",
+      "effectSources": [
+        "src/unix/linux_input.c: MacInput_RawMode",
+        "src/platform/macos_rawmouse.m: AttachMouse"
+      ]
     },
     "m_rinput_hz_max": {
       "group": "aim",
       "title": "Peak mouse update rate",
       "summary": "The highest mouse update rate the game has measured.",
-      "details": "The game measures this itself and treats it as read-only. It is a measurement, not your mouse's rated polling rate."
+      "details": "The game measures this itself and treats it as read-only. It is a measurement, not your mouse's rated polling rate.",
+      "effectSources": [
+        "src/unix/linux_input.c: MacInput_RawMode",
+        "src/platform/macos_rawmouse.m: AttachMouse"
+      ]
     },
     "rate": {
       "group": "net",
@@ -147,8 +190,7 @@
         "CoD2x server policy can change the value, type or limits at run time; registration metadata is not a live ruleset."
       ],
       "effectSources": [
-        "src/PC/qcommon/cod2x_runtime.c: Cod2x_Frame",
-        "CoD2x 1.4.6.8: src/mss32/competitive.cpp"
+        "src/PC/ui_mp/ui_main_mp.c: UI_RunMenuScript (the set-rate step)"
       ]
     },
     "snaps": {
@@ -185,22 +227,28 @@
         "CoD2x server policy can change the value, type or limits at run time; registration metadata is not a live ruleset."
       ],
       "effectSources": [
-        "src/PC/qcommon/cod2x_runtime.c: Cod2x_Frame",
-        "CoD2x 1.4.6.8: src/mss32/competitive.cpp"
+        "src/PC/ui_mp/ui_main_mp.c: UI_RunMenuScript (the set-rate step)"
       ]
     },
     "cl_packetdup": {
       "group": "net",
       "title": "Repeat recent movement",
       "summary": "How many extra copies of your recent movement go into each packet you send.",
-      "details": "The extra copies help when packets are lost, at the price of a little more data. Repeating does not reduce delay. The game's connection-speed step sets this to 1 whenever the connection speed is 5,000 or more."
+      "details": "The extra copies help when packets are lost, at the price of a little more data. Repeating does not reduce delay. The game's connection-speed step sets this to 1 whenever the connection speed is 5,000 or more.",
+      "effectSources": [
+        "src/PC/ui_mp/ui_main_mp.c: UI_RunMenuScript (the set-rate step)"
+      ]
     },
     "cg_drawlagometer": {
       "group": "net",
       "title": "Show connection graph",
       "summary": "Shows a small graph that tracks how steadily updates arrive from the server.",
       "details": "One trace shows how old your newest update is and the other shows your ping, marking updates that were lost. It appears only when you are connected to another player's server. It helps you read your connection and does not fix it.",
-      "guided": true
+      "guided": true,
+      "effectSources": [
+        "src/PC/cgame_mp/cg_draw_mp.c: CG_AddLagometerSnapshotInfo",
+        "src/PC/cgame_mp/cg_draw_mp.c: CG_Draw2D"
+      ]
     },
     "cl_allowdownload": {
       "group": "other",
@@ -320,7 +368,10 @@
       "control": {
         "kind": "number",
         "unit": "×"
-      }
+      },
+      "effectSources": [
+        "src/PC/gfx_d3d/rb_state.c: RB_SetAnisotropy_core"
+      ]
     },
     "r_texturemode": {
       "group": "gfx",
@@ -349,7 +400,10 @@
       "title": "Picture proportions",
       "summary": "Chooses whether the picture is drawn for a 4:3, 16:10 or 16:9 screen, or follows your display.",
       "details": "Auto follows your display. The game scales your mouse turn with the picture's width, so the same Mouse speed turns about 13% farther at 16:10 and about 21% farther at 16:9 than at 4:3. It is a latched setting and applies after the renderer restarts.",
-      "menuExposed": true
+      "menuExposed": true,
+      "effectSources": [
+        "src/PC/cgame_mp/cg_view_mp.c: CG_CalcFov"
+      ]
     },
     "r_mode": {
       "group": "gfx",
@@ -516,25 +570,37 @@
       "title": "Show the HUD",
       "summary": "Shows or hides the heads-up display.",
       "details": "The game's menu calls this Draw HUD. Turning it off hides the HUD menus the game draws on top of the picture. Game state still decides which elements appear while it is on.",
-      "menuExposed": true
+      "menuExposed": true,
+      "effectSources": [
+        "src/PC/cgame_mp/cg_newDraw_mp.c: HUD menu drawing"
+      ]
     },
     "cg_drawspectatedplayername": {
       "group": "hud",
       "title": "Spectated player's name",
       "summary": "Shows who you are watching while you spectate.",
-      "details": "CoD2x only. It draws a 'following' line with the player's name at the top centre while you spectate. On by default."
+      "details": "CoD2x only. It draws a 'following' line with the player's name at the top centre while you spectate. On by default.",
+      "effectSources": [
+        "src/PC/qcommon/cod2x_features.c: Cod2x_FeaturesInit"
+      ]
     },
     "cg_drawcompass": {
       "group": "hud",
       "title": "Show compass",
       "summary": "Shows the compass, objectives and friendly markers.",
-      "details": "CoD2x only. Turning it off hides the compass and the CoD2x drawing tied to it. On by default. Servers can still affect what the match HUD shows."
+      "details": "CoD2x only. Turning it off hides the compass and the CoD2x drawing tied to it. On by default. Servers can still affect what the match HUD shows.",
+      "effectSources": [
+        "src/PC/qcommon/cod2x_features.c: Cod2x_FeaturesInit"
+      ]
     },
     "cg_drawradar": {
       "group": "hud",
       "title": "Spectator radar",
       "summary": "Draws a radar of every player, but only for spectators, demos or when cheats are on.",
-      "details": "CoD2x only, and not a player aid: the radar is drawn only for spectators, while a demo plays or when cheats are on, and only if a radar map image has been set. It is off by default and not saved."
+      "details": "CoD2x only, and not a player aid: the radar is drawn only for spectators, while a demo plays or when cheats are on, and only if a radar map image has been set. It is off by default and not saved.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_cod2x_radar.c: CG_Cod2xRadarInit"
+      ]
     },
     "snd_volume": {
       "group": "audio",
@@ -662,7 +728,11 @@
       "group": "net",
       "title": "Competitive server rules",
       "summary": "Whether the server has switched on CoD2x's competitive rules.",
-      "details": "The server sets this and the game protects it from changes here. When it is on, your CoD2x game keeps the frame rate cap between 125 and 250, connection speed at 25,000, updates you receive at 40, updates you send at 125, shadows off, effect sorting on and the sound file system on, and it blocks the wait command once you are connected. zPAM 4's code turns it on in every mode, including public games. Your game turns it off again when you disconnect."
+      "details": "The server sets this and the game protects it from changes here. When it is on, your CoD2x game keeps the frame rate cap between 125 and 250, connection speed at 25,000, updates you receive at 40, updates you send at 125, shadows off, effect sorting on and the sound file system on, and it blocks the wait command once you are connected. zPAM 4's code turns it on in every mode, including public games. Your game turns it off again when you disconnect.",
+      "effectSources": [
+        "src/PC/qcommon/cod2x_runtime.c: Cod2x_SharedInit",
+        "CoD2x 1.4.6.8: src/mss32/competitive.cpp"
+      ]
     },
     "g_cod2x": {
       "group": "net",
@@ -695,7 +765,10 @@
       "title": "Restrict the console",
       "summary": "Requires an extra key held down to open the in-game console.",
       "details": "The game's menu calls this Enable Console and shows it the other way round: Yes is 0 and No is 1. With it on, the console does not open from the console key alone.",
-      "menuExposed": true
+      "menuExposed": true,
+      "effectSources": [
+        "src/PC/client_mp/cl_console_mp.c: Con_ToggleConsole_f"
+      ]
     },
     "shortversion": {
       "group": "other",
@@ -856,7 +929,10 @@
           "22": "Medium",
           "44": "High"
         }
-      }
+      },
+      "effectSources": [
+        "src/PC/win32/snd_driver.c: SND_InitDriver"
+      ]
     },
     "motd": {
       "group": "other",
@@ -892,73 +968,111 @@
       "group": "aim",
       "title": "Mouse control",
       "summary": "Lets the mouse control the game; with it off the game does not capture the mouse.",
-      "details": "With it off the game prints that mouse control is not active at start-up and leaves the pointer free. It is latched, so a change applies after the game restarts. Raw mouse input also needs it on."
+      "details": "With it off the game prints that mouse control is not active at start-up and leaves the pointer free. It is latched, so a change applies after the game restarts. Raw mouse input also needs it on.",
+      "effectSources": [
+        "src/Mac/Main/mac_input.c: IN_Init",
+        "src/unix/linux_input.c: IN_Frame"
+      ]
     },
     "input_viewsensitivity": {
       "group": "aim",
       "title": "Controller look speed",
       "summary": "A look-speed scale the game registers for controller input.",
-      "details": "It runs from 0.0001 to 5 and the default is 1. This version of the game only registers it and never reads the value, so it has no effect on mouse aim."
+      "details": "It runs from 0.0001 to 5 and the default is 1. This version of the game only registers it and never reads the value, so it has no effect on mouse aim.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_InitOnceForAllClients (registration only)"
+      ]
     },
     "m_forward": {
       "group": "aim",
       "title": "Mouse walk speed",
       "summary": "How fast moving the mouse forward and back walks you when mouse look is off.",
-      "details": "Only used when moving the mouse would not tilt your view, meaning mouse look is off and the mouse-look key is not held, or the strafe key is held. The default is 0.25."
+      "details": "Only used when moving the mouse would not tilt your view, meaning mouse look is off and the mouse-look key is not held, or the strafe key is held. The default is 0.25.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove"
+      ]
     },
     "m_side": {
       "group": "aim",
       "title": "Mouse strafe speed",
       "summary": "How fast moving the mouse sideways strafes you while the strafe key is held.",
-      "details": "Only used while the strafe key is held, and then turning sideways does not turn your view. The default is 0.25."
+      "details": "Only used while the strafe key is held, and then turning sideways does not turn your view. The default is 0.25.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove"
+      ]
     },
     "m_rinput_max": {
       "group": "aim",
       "title": "Old peak mouse rate",
       "summary": "The highest mouse update rate the game has measured, under an older name.",
-      "details": "The game fills this in itself and treats it as read-only. Current CoD2x calls the same measurement Peak measured mouse input rate, and the README still uses the older name."
+      "details": "The game fills this in itself and treats it as read-only. Current CoD2x calls the same measurement Peak measured mouse input rate, and the README still uses the older name.",
+      "effectSources": [
+        "src/unix/linux_input.c: MacInput_RawMode",
+        "src/platform/macos_rawmouse.m: AttachMouse"
+      ]
     },
     "cl_pitchspeed": {
       "group": "aim",
       "title": "Keyboard look speed",
       "summary": "How fast the arrow-style look keys tilt your view up and down.",
-      "details": "In degrees per second, 140 by default. It affects only the keys bound to look up and look down, not the mouse. zPAM sets it to 140 when you join a team, and ESL's old PunkBuster list required 140."
+      "details": "In degrees per second, 140 by default. It affects only the keys bound to look up and look down, not the mouse. zPAM sets it to 140 when you join a team, and ESL's old PunkBuster list required 140.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_AdjustAngles"
+      ]
     },
     "cl_yawspeed": {
       "group": "aim",
       "title": "Keyboard turn speed",
       "summary": "How fast the turn-left and turn-right keys swing your view.",
-      "details": "In degrees per second, 140 by default. It affects only the keys bound to turn left and turn right, not the mouse. zPAM sets it to 140 when you join a team, and ESL's old PunkBuster list required 140."
+      "details": "In degrees per second, 140 by default. It affects only the keys bound to turn left and turn right, not the mouse. zPAM sets it to 140 when you join a team, and ESL's old PunkBuster list required 140.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_AdjustAngles"
+      ]
     },
     "cl_anglespeedkey": {
       "group": "aim",
       "title": "Keyboard turn boost",
       "summary": "How much faster the look and turn keys work while the speed key is held.",
-      "details": "A multiplier on the keyboard look and turn speeds, 1.5 by default. It does not affect the mouse."
+      "details": "A multiplier on the keyboard look and turn speeds, 1.5 by default. It does not affect the mouse.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_AdjustAngles"
+      ]
     },
     "cl_bypassmouseinput": {
       "group": "aim",
       "title": "Mouse works in menus",
       "summary": "Keeps the mouse controlling your view even while a menu is open.",
-      "details": "Leave it off in normal play: with it on, your view turns while you move around menus. Some tools and zPAM's mouse menu use it."
+      "details": "Leave it off in normal play: with it on, your view turns while you move around menus. Some tools and zPAM's mouse menu use it.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseEvent"
+      ]
     },
     "cl_showmouserate": {
       "group": "aim",
       "title": "Show mouse rate",
       "summary": "Prints your mouse update rate and effective mouse speed to the console while you move the mouse.",
-      "details": "A diagnostic: each line shows mouse counts per millisecond and the mouse speed the game ends up using, including Mouse acceleration and zooming. It floods the console, so use it only briefly."
+      "details": "A diagnostic: each line shows mouse counts per millisecond and the mouse speed the game ends up using, including Mouse acceleration and zooming. It floods the console, so use it only briefly.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove"
+      ]
     },
     "cl_analog_attack_threshold": {
       "group": "aim",
       "title": "Controller fire point",
       "summary": "How far a controller trigger must be pressed to fire.",
-      "details": "A fraction from 0.0001 to 1, 0.8 by default. This version of the game only registers it and never reads the value."
+      "details": "A fraction from 0.0001 to 1, 0.8 by default. This version of the game only registers it and never reads the value.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_InitInput (registration only)"
+      ]
     },
     "cl_stanceholdtime": {
       "group": "aim",
       "title": "Stance hold time",
       "summary": "How many milliseconds a stance key must be held for the hold-style stance change.",
-      "details": "From 0 to 1,000 milliseconds, 300 by default. This version of the game only registers it and never reads the value."
+      "details": "From 0 to 1,000 milliseconds, 300 by default. This version of the game only registers it and never reads the value.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_InitInput (registration only)"
+      ]
     },
     "cl_connecttimeout": {
       "group": "net",
@@ -976,85 +1090,129 @@
       "group": "net",
       "title": "Server list ping wait",
       "summary": "How long the server list waits for a server's ping reply before it shows the waiting time instead of 0.",
-      "details": "In milliseconds, 800 by default, and never treated as less than 100. A host's join ping limit is a different, server-side setting. This is the game's own server list only."
+      "details": "In milliseconds, 800 by default, and never treated as less than 100. A host's join ping limit is a different, server-side setting. This is the game's own server list only.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_GetPing"
+      ]
     },
     "cl_serverstatusresendtime": {
       "group": "net",
       "title": "Server status retry time",
       "summary": "How many milliseconds the game waits before asking a server for its status again.",
-      "details": "From 0 to 3,600 milliseconds, 750 by default."
+      "details": "From 0 to 3,600 milliseconds, 750 by default.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_pc_mp.c: CL_ServerStatus"
+      ]
     },
     "cl_masterserver": {
       "group": "net",
       "title": "Second master server",
       "summary": "The address of the second master server the game asks for the server list.",
-      "details": "The CoD2x build asks cod2master.activision.com first and then the address here, master.cod2x.me by default, on the port set separately. Current upstream CoD2x no longer registers it, but this version of the game still reads it."
+      "details": "The CoD2x build asks cod2master.activision.com first and then the address here, master.cod2x.me by default, on the port set separately. Current upstream CoD2x no longer registers it, but this version of the game still reads it.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_pc_mp.c: CL_GlobalServers_f",
+        "src/PC/qcommon/cod2x_runtime.c: Cod2x_Init"
+      ]
     },
     "cl_masterport": {
       "group": "net",
       "title": "Second master port",
       "summary": "The network port used to reach the second master server.",
-      "details": "From 1 to 65,535, 20710 by default. Current upstream CoD2x no longer registers it, but this version of the game still reads it."
+      "details": "From 1 to 65,535, 20710 by default. Current upstream CoD2x no longer registers it, but this version of the game still reads it.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_pc_mp.c: CL_GlobalServers_f",
+        "src/PC/qcommon/cod2x_runtime.c: Cod2x_Init"
+      ]
     },
     "net_ip": {
       "group": "net",
       "title": "Network address",
       "summary": "The local network address the game uses.",
-      "details": "The default is localhost. It is latched, so a change applies after the game restarts. Players should leave it alone; servers on computers with several network connections may need it."
+      "details": "The default is localhost. It is latched, so a change applies after the game restarts. Players should leave it alone; servers on computers with several network connections may need it.",
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     "net_port": {
       "group": "net",
       "title": "Network port",
       "summary": "The network port your game uses.",
-      "details": "From 0 to 65,535, 28960 by default, which is also CoD2's usual server port. It is latched, so a change applies after the game restarts. The game tries the next few ports if this one is taken."
+      "details": "From 0 to 65,535, 28960 by default, which is also CoD2's usual server port. It is latched, so a change applies after the game restarts. The game tries the next few ports if this one is taken.",
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     "net_noudp": {
       "group": "net",
       "title": "Disable UDP",
       "summary": "Turns off the network type CoD2 normally uses to talk to servers.",
-      "details": "Leave it off for online play. It is latched, so a change applies after the game restarts."
+      "details": "Leave it off for online play. It is latched, so a change applies after the game restarts.",
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     "net_noipx": {
       "group": "net",
       "title": "Disable IPX",
       "summary": "Turns off the old IPX network option.",
-      "details": "Registered as a latched, saved setting, so a change applies after the game restarts."
+      "details": "Registered as a latched, saved setting, so a change applies after the game restarts.",
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     "net_lanauthorize": {
       "group": "net",
       "title": "Check LAN players online",
       "summary": "Whether players who join over the local network are also checked with the online key server.",
-      "details": "Off by default. It is the game's own switch for LAN authorization."
+      "details": "Off by default. It is the game's own switch for LAN authorization.",
+      "effectSources": [
+        "src/PC/client_mp/cl_parse_mp.c: CL_ParseGamestate"
+      ]
     },
     "net_socksenabled": {
       "group": "net",
       "title": "Use a SOCKS proxy",
       "summary": "Sends the game's network traffic through a SOCKS proxy.",
-      "details": "The proxy's address, port, user name and password are set separately. It is latched, so a change applies after the game restarts. Leave it off unless you know you need a proxy."
+      "details": "The proxy's address, port, user name and password are set separately. It is latched, so a change applies after the game restarts. Leave it off unless you know you need a proxy.",
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     "net_socksserver": {
       "group": "net",
       "title": "SOCKS proxy address",
       "summary": "The address of the SOCKS proxy the game uses.",
-      "details": "Used only when Use a SOCKS proxy is on. It is latched, so a change applies after the game restarts."
+      "details": "Used only when Use a SOCKS proxy is on. It is latched, so a change applies after the game restarts.",
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     "net_socksport": {
       "group": "net",
       "title": "SOCKS proxy port",
       "summary": "The port of the SOCKS proxy the game uses.",
-      "details": "From 0 to 65,535, 1080 by default. Used only when Use a SOCKS proxy is on. It is latched."
+      "details": "From 0 to 65,535, 1080 by default. Used only when Use a SOCKS proxy is on. It is latched.",
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     "net_socksusername": {
       "group": "net",
       "title": "SOCKS user name",
       "summary": "The user name the SOCKS proxy asks for.",
-      "details": "Used only when Use a SOCKS proxy is on. It is latched."
+      "details": "Used only when Use a SOCKS proxy is on. It is latched.",
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     "net_sockspassword": {
       "group": "net",
       "title": "SOCKS password",
       "summary": "The password the SOCKS proxy asks for.",
-      "details": "Used only when Use a SOCKS proxy is on. It is saved in your config as plain text, so treat the file as private."
+      "details": "Used only when Use a SOCKS proxy is on. It is saved in your config as plain text, so treat the file as private.",
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     "cl_talking": {
       "group": "net",
@@ -1066,7 +1224,10 @@
       "group": "net",
       "title": "Turn off update compression",
       "summary": "A network debugging aid that makes the server send full updates instead of compact ones.",
-      "details": "Not for normal play: every update gets larger. It is not saved."
+      "details": "Not for normal play: every update gets larger. It is not saved.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_WritePacket"
+      ]
     },
     "cl_noprint": {
       "group": "net",
@@ -1690,7 +1851,10 @@
       "group": "hud",
       "title": "Sound debug overlay",
       "summary": "Shows a sound debugging overlay.",
-      "details": "Choices are None, 3D, Stream and 2D. A developer aid."
+      "details": "Choices are None, 3D, Stream and 2D. A developer aid.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_draw_mp.c: CG_DrawSoundOverlay"
+      ]
     },
     "cg_crosshairalpha": {
       "group": "hud",
@@ -2142,19 +2306,28 @@
       "group": "gfx",
       "title": "Cache model skins",
       "summary": "Keeps model skin data ready so models draw more smoothly.",
-      "details": "On by default. TweakGuide says to turn it off only on very low memory."
+      "details": "On by default. TweakGuide says to turn it off only on very low memory.",
+      "effectSources": [
+        "src/PC/gfx_d3d/r_model.c: R_PreSkinXSurface"
+      ]
     },
     "r_smc_enable": {
       "group": "gfx",
       "title": "Static model cache",
       "summary": "Turns on the cache the game keeps for static models.",
-      "details": "On by default."
+      "details": "On by default.",
+      "effectSources": [
+        "src/PC/gfx_d3d/r_model.c: R_SkinSceneDObj"
+      ]
     },
     "r_sse_skinning": {
       "group": "gfx",
       "title": "SSE model skinning",
       "summary": "A switch registered for faster model animation.",
-      "details": "On by default. This version of the game only registers it and never reads the value."
+      "details": "On by default. This version of the game only registers it and never reads the value.",
+      "effectSources": [
+        "src/PC/gfx_d3d/r_dvars.c: R_RegisterDvars (registration only)"
+      ]
     },
     "r_optimize": {
       "group": "gfx",
@@ -2172,7 +2345,10 @@
       "group": "gfx",
       "title": "Optimise models on load",
       "summary": "How hard the game tidies model data when a map loads.",
-      "details": "From 0 to 1,000, and 100 by default. It is latched, so a change applies after the renderer restarts."
+      "details": "From 0 to 1,000, and 100 by default. It is latched, so a change applies after the renderer restarts.",
+      "effectSources": [
+        "src/PC/gfx_d3d/r_model.c: R_OptimizeAllModels"
+      ]
     },
     "r_overbrightbits": {
       "group": "gfx",
@@ -2203,7 +2379,11 @@
           "0": "Show every frame",
           "1": "Skip while busy"
         }
-      }
+      },
+      "effectSources": [
+        "src/platform/macos_display.c: SDL_GL_SwapWindowDirect",
+        "src/Mac/DirectX_9/CDirect3DDevice.c: CDirect3DDevice_EndScene"
+      ]
     },
     "vid_xpos": {
       "group": "gfx",
@@ -2971,7 +3151,11 @@
       "group": "frame",
       "title": "Legacy frame cap switch",
       "summary": "The older CoD2x switch servers used to limit frame rates to 125 to 250.",
-      "details": "Competitive rules now use the competitive rules switch instead, and the CoD2x README still describes this older one. This version of the game still registers it and the server sets it, so it is not a player setting."
+      "details": "Competitive rules now use the competitive rules switch instead, and the CoD2x README still describes this older one. This version of the game still registers it and the server sets it, so it is not a player setting.",
+      "effectSources": [
+        "src/PC/qcommon/cod2x_runtime.c: Cod2x_SharedInit",
+        "src/PC/client_mp/cl_parse_mp.c: CL_SystemInfoChanged"
+      ]
     },
     "bg_aimspreadmovespeedthreshold": {
       "group": "frame",

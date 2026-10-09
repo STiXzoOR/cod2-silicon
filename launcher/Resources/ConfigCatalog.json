@@ -2938,7 +2938,10 @@
       "guided": false,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/PC/qcommon/cod2x_features.c: Cod2x_FeaturesInit"
+      ]
     },
     {
       "name": "cg_drawCrosshair",
@@ -3331,7 +3334,10 @@
       "guided": true,
       "control": {
         "kind": "menu"
-      }
+      },
+      "effectSources": [
+        "src/PC/cgame_mp/cg_draw_mp.c: CG_DrawFPS"
+      ]
     },
     {
       "name": "cg_drawGameMessages",
@@ -3605,7 +3611,11 @@
       "guided": true,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/PC/cgame_mp/cg_draw_mp.c: CG_AddLagometerSnapshotInfo",
+        "src/PC/cgame_mp/cg_draw_mp.c: CG_Draw2D"
+      ]
     },
     {
       "name": "cg_drawMantleHint",
@@ -3787,7 +3797,10 @@
       "guided": false,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/PC/cgame_mp/cg_cod2x_radar.c: CG_Cod2xRadarInit"
+      ]
     },
     {
       "name": "cg_drawScriptUsage",
@@ -4008,7 +4021,10 @@
       "guided": false,
       "control": {
         "kind": "menu"
-      }
+      },
+      "effectSources": [
+        "src/PC/cgame_mp/cg_draw_mp.c: CG_DrawSoundOverlay"
+      ]
     },
     {
       "name": "cg_drawSpectatedPlayerName",
@@ -4052,7 +4068,10 @@
       "guided": false,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/PC/qcommon/cod2x_features.c: Cod2x_FeaturesInit"
+      ]
     },
     {
       "name": "cg_drawTurretCrosshair",
@@ -14807,7 +14826,10 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_InitInput (registration only)"
+      ]
     },
     {
       "name": "cl_anglespeedkey",
@@ -14891,7 +14913,10 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_AdjustAngles"
+      ]
     },
     {
       "name": "cl_anonymous",
@@ -15119,7 +15144,10 @@
       "guided": false,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseEvent"
+      ]
     },
     {
       "name": "cl_cod2x_version",
@@ -15529,7 +15557,10 @@
       "control": {
         "kind": "switch"
       },
-      "menuExposed": true
+      "menuExposed": true,
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove"
+      ]
     },
     {
       "name": "cl_freezeDemo",
@@ -15765,7 +15796,11 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_main_pc_mp.c: CL_GlobalServers_f",
+        "src/PC/qcommon/cod2x_runtime.c: Cod2x_Init"
+      ]
     },
     {
       "name": "cl_masterServer",
@@ -15809,7 +15844,11 @@
       "guided": false,
       "control": {
         "kind": "text"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_main_pc_mp.c: CL_GlobalServers_f",
+        "src/PC/qcommon/cod2x_runtime.c: Cod2x_Init"
+      ]
     },
     {
       "name": "cl_maxpackets",
@@ -15903,8 +15942,7 @@
         "CoD2x server policy can change the value, type or limits at run time; registration metadata is not a live ruleset."
       ],
       "effectSources": [
-        "src/PC/qcommon/cod2x_runtime.c: Cod2x_Frame",
-        "CoD2x 1.4.6.8: src/mss32/competitive.cpp"
+        "src/PC/ui_mp/ui_main_mp.c: UI_RunMenuScript (the set-rate step)"
       ]
     },
     {
@@ -15991,7 +16029,10 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_GetPing"
+      ]
     },
     {
       "name": "cl_motdString",
@@ -16148,7 +16189,10 @@
       "control": {
         "kind": "number",
         "step": 0.01
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove"
+      ]
     },
     {
       "name": "cl_nodelta",
@@ -16215,7 +16259,10 @@
       "guided": false,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_WritePacket"
+      ]
     },
     {
       "name": "cl_noprint",
@@ -16369,7 +16416,10 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/ui_mp/ui_main_mp.c: UI_RunMenuScript (the set-rate step)"
+      ]
     },
     {
       "name": "cl_paused",
@@ -16581,7 +16631,10 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_AdjustAngles"
+      ]
     },
     {
       "name": "cl_profileTextHeight",
@@ -16824,7 +16877,10 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_main_pc_mp.c: CL_ServerStatus"
+      ]
     },
     {
       "name": "cl_showmouserate",
@@ -16892,7 +16948,10 @@
       "guided": false,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove"
+      ]
     },
     {
       "name": "cl_shownet",
@@ -17331,7 +17390,10 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_InitInput (registration only)"
+      ]
     },
     {
       "name": "cl_talking",
@@ -17714,7 +17776,10 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_AdjustAngles"
+      ]
     },
     {
       "name": "com_animCheck",
@@ -18304,6 +18369,7 @@
         "CoD2x server policy can change the value, type or limits at run time; registration metadata is not a live ruleset."
       ],
       "effectSources": [
+        "src/PC/qcommon/common.c: Com_Frame_Try_Block_Function",
         "src/PC/qcommon/cod2x_runtime.c: Cod2x_Frame",
         "CoD2x 1.4.6.8: src/mss32/competitive.cpp"
       ]
@@ -18352,7 +18418,11 @@
       "guided": false,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/PC/qcommon/cod2x_runtime.c: Cod2x_SharedInit",
+        "src/PC/client_mp/cl_parse_mp.c: CL_SystemInfoChanged"
+      ]
     },
     {
       "name": "com_playerProfile",
@@ -19623,7 +19693,10 @@
       "control": {
         "kind": "switch"
       },
-      "menuExposed": true
+      "menuExposed": true,
+      "effectSources": [
+        "src/PC/client_mp/cl_console_mp.c: Con_ToggleConsole_f"
+      ]
     },
     {
       "name": "dedicated",
@@ -22308,7 +22381,11 @@
       "guided": false,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/PC/qcommon/cod2x_runtime.c: Cod2x_SharedInit",
+        "CoD2x 1.4.6.8: src/mss32/competitive.cpp"
+      ]
     },
     {
       "name": "g_deadChat",
@@ -25800,7 +25877,10 @@
       "control": {
         "kind": "switch"
       },
-      "menuExposed": true
+      "menuExposed": true,
+      "effectSources": [
+        "src/PC/cgame_mp/cg_newDraw_mp.c: HUD menu drawing"
+      ]
     },
     {
       "name": "hud_fade_ammodisplay",
@@ -27656,7 +27736,11 @@
       "guided": false,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/Mac/Main/mac_input.c: IN_Init",
+        "src/unix/linux_input.c: IN_Frame"
+      ]
     },
     {
       "name": "in_rawmouse",
@@ -27725,7 +27809,12 @@
       "guided": true,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/unix/linux_input.c: IN_Frame",
+        "src/platform/macos_input_policy.h: MacInput_UseRaw",
+        "src/platform/macos_rawmouse.m: AttachMouse"
+      ]
     },
     {
       "name": "inertiaAngle",
@@ -28056,7 +28145,10 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_InitOnceForAllClients (registration only)"
+      ]
     },
     {
       "name": "jump_height",
@@ -29144,7 +29236,10 @@
       "control": {
         "kind": "switch"
       },
-      "menuExposed": true
+      "menuExposed": true,
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove"
+      ]
     },
     {
       "name": "m_forward",
@@ -29230,7 +29325,10 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove"
+      ]
     },
     {
       "name": "m_pitch",
@@ -29316,7 +29414,10 @@
       "guided": true,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove"
+      ]
     },
     {
       "name": "m_rinput",
@@ -29375,7 +29476,11 @@
           "1": "Own thread",
           "2": "Main thread"
         }
-      }
+      },
+      "effectSources": [
+        "src/unix/linux_input.c: MacInput_RawMode",
+        "src/platform/macos_rawmouse.m: AttachMouse"
+      ]
     },
     {
       "name": "m_rinput_hz",
@@ -29428,7 +29533,11 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/unix/linux_input.c: MacInput_RawMode",
+        "src/platform/macos_rawmouse.m: AttachMouse"
+      ]
     },
     {
       "name": "m_rinput_hz_max",
@@ -29481,7 +29590,11 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/unix/linux_input.c: MacInput_RawMode",
+        "src/platform/macos_rawmouse.m: AttachMouse"
+      ]
     },
     {
       "name": "m_rinput_max",
@@ -29534,7 +29647,11 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/unix/linux_input.c: MacInput_RawMode",
+        "src/platform/macos_rawmouse.m: AttachMouse"
+      ]
     },
     {
       "name": "m_side",
@@ -29620,7 +29737,10 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove"
+      ]
     },
     {
       "name": "m_yaw",
@@ -29706,7 +29826,10 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove"
+      ]
     },
     {
       "name": "mantle_check_angle",
@@ -30694,7 +30817,10 @@
       "guided": false,
       "control": {
         "kind": "text"
-      }
+      },
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     {
       "name": "net_lanauthorize",
@@ -30761,7 +30887,10 @@
       "guided": false,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_parse_mp.c: CL_ParseGamestate"
+      ]
     },
     {
       "name": "net_noipx",
@@ -30832,7 +30961,10 @@
       "guided": false,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     {
       "name": "net_noudp",
@@ -30903,7 +31035,10 @@
       "guided": false,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     {
       "name": "net_port",
@@ -30988,7 +31123,10 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     {
       "name": "net_profile",
@@ -31225,7 +31363,10 @@
       "guided": false,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     {
       "name": "net_socksPassword",
@@ -31296,7 +31437,10 @@
       "guided": false,
       "control": {
         "kind": "text"
-      }
+      },
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     {
       "name": "net_socksPort",
@@ -31383,7 +31527,10 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     {
       "name": "net_socksServer",
@@ -31454,7 +31601,10 @@
       "guided": false,
       "control": {
         "kind": "text"
-      }
+      },
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     {
       "name": "net_socksUsername",
@@ -31525,7 +31675,10 @@
       "guided": false,
       "control": {
         "kind": "text"
-      }
+      },
+      "effectSources": [
+        "src/PC/win32/win_net.c: NET_OpenIP"
+      ]
     },
     {
       "name": "nextdemo",
@@ -35167,7 +35320,10 @@
       "control": {
         "kind": "number",
         "unit": "×"
-      }
+      },
+      "effectSources": [
+        "src/PC/gfx_d3d/rb_state.c: RB_SetAnisotropy_core"
+      ]
     },
     {
       "name": "r_aspectRatio",
@@ -35257,7 +35413,10 @@
       "control": {
         "kind": "menu"
       },
-      "menuExposed": true
+      "menuExposed": true,
+      "effectSources": [
+        "src/PC/cgame_mp/cg_view_mp.c: CG_CalcFov"
+      ]
     },
     {
       "name": "r_blur",
@@ -40505,7 +40664,10 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/gfx_d3d/r_model.c: R_OptimizeAllModels"
+      ]
     },
     {
       "name": "r_outdoorAwayBias",
@@ -41837,7 +41999,11 @@
           "0": "Show every frame",
           "1": "Skip while busy"
         }
-      }
+      },
+      "effectSources": [
+        "src/platform/macos_display.c: SDL_GL_SwapWindowDirect",
+        "src/Mac/DirectX_9/CDirect3DDevice.c: CDirect3DDevice_EndScene"
+      ]
     },
     {
       "name": "r_pvsStats",
@@ -43107,7 +43273,10 @@
       "guided": false,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/PC/gfx_d3d/r_model.c: R_PreSkinXSurface"
+      ]
     },
     {
       "name": "r_skipBackEnd",
@@ -43312,7 +43481,10 @@
       "guided": false,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/PC/gfx_d3d/r_model.c: R_SkinSceneDObj"
+      ]
     },
     {
       "name": "r_specularColorScale",
@@ -43549,7 +43721,10 @@
       "guided": false,
       "control": {
         "kind": "switch"
-      }
+      },
+      "effectSources": [
+        "src/PC/gfx_d3d/r_dvars.c: R_RegisterDvars (registration only)"
+      ]
     },
     {
       "name": "r_sun_from_dvars",
@@ -46362,8 +46537,7 @@
         "CoD2x server policy can change the value, type or limits at run time; registration metadata is not a live ruleset."
       ],
       "effectSources": [
-        "src/PC/qcommon/cod2x_runtime.c: Cod2x_Frame",
-        "CoD2x 1.4.6.8: src/mss32/competitive.cpp"
+        "src/PC/ui_mp/ui_main_mp.c: UI_RunMenuScript (the set-rate step)"
       ]
     },
     {
@@ -47793,7 +47967,11 @@
           "max": 30
         }
       },
-      "menuExposed": true
+      "menuExposed": true,
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove",
+        "src/PC/cgame_mp/cg_view_mp.c: CG_CalcFov"
+      ]
     },
     {
       "name": "sensitivity_MG",
@@ -47846,7 +48024,10 @@
       "guided": false,
       "control": {
         "kind": "number"
-      }
+      },
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: CL_MouseMove (CoD2x build)"
+      ]
     },
     {
       "name": "server1",
@@ -49782,7 +49963,10 @@
           "22": "Medium",
           "44": "High"
         }
-      }
+      },
+      "effectSources": [
+        "src/PC/win32/snd_driver.c: SND_InitDriver"
+      ]
     },
     {
       "name": "snd_slaveFadeTime",
