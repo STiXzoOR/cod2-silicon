@@ -329,9 +329,18 @@ private struct ExpertTools: View {
     @Environment(\.palette) private var palette
 
     var body: some View {
+        // One row when it fits; otherwise the tools wrap into a second row, never squeezing labels.
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 10) { compare; Spacer(minLength: 8); tools }
+            VStack(alignment: .leading, spacing: 10) { compare; tools }
+        }
+        .controlSize(.regular)
+    }
+
+    private var compare: some View {
         HStack(spacing: 10) {
             HStack(spacing: 8) {
-                Text("Compare with").font(.system(size: 12)).foregroundStyle(palette.secondary)
+                Text("Compare with").font(.system(size: 12)).foregroundStyle(palette.secondary).fixedSize()
                 Picker("Compare with", selection: $studio.compareID) {
                     Text("Nobody").tag(String?.none)
                     ForEach(studio.profiles.filter { $0.id != studio.current?.profile.id }) { Text($0.displayName).tag(String?.some($0.id)) }
@@ -339,10 +348,14 @@ private struct ExpertTools: View {
                 .labelsHidden().fixedSize()
             }
             if let other = studio.comparison {
-                Label("\(other.profile.displayName)’s value", systemImage: "diamond.fill").font(.system(size: 12)).foregroundStyle(palette.compare)
+                Label("\(other.profile.displayName)’s value", systemImage: "diamond.fill").font(.system(size: 12)).foregroundStyle(palette.compare).fixedSize()
                     .accessibilityLabel("Compare markers show \(other.profile.displayName)’s values")
             }
-            Spacer(minLength: 8)
+        }
+    }
+
+    private var tools: some View {
+        HStack(spacing: 10) {
             HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass").foregroundStyle(palette.secondary).accessibilityHidden(true)
                 TextField("Find a setting", text: $studio.search).textFieldStyle(.plain).focused(searchFocused).frame(width: 150)
@@ -359,10 +372,9 @@ private struct ExpertTools: View {
                 if studio.textMode { Label("Show Controls", systemImage: "slider.horizontal.3") }
                 else { Label("Edit as Text", systemImage: "text.alignleft") }
             }
-            .glassAction()
+            .glassAction().fixedSize()
             .help(studio.textMode ? "Back to the controls" : "Edit this loadout’s config as text")
         }
-        .controlSize(.regular)
     }
 }
 
@@ -474,11 +486,11 @@ private struct ExpertRow: View {
             if theirs != nil || state.note != nil || spec.launcherOwned {
                 HStack(spacing: 10) {
                     if let theirs, let source = studio.comparison?.profile.displayName {
-                        StudioCompareValue(value: theirs.display, source: source)
+                        StudioCompareValue(value: theirs.display, source: source).fixedSize()
                         if state.locked {
                             Text("Locked, so it stays yours").font(StudioTypography.help).foregroundStyle(palette.secondary)
                         } else {
-                            Button("Take Theirs") { studio.takeTheirs(spec, undo: undo) }.glassAction().controlSize(.small)
+                            Button("Take Theirs") { studio.takeTheirs(spec, undo: undo) }.glassAction().controlSize(.small).fixedSize()
                                 .accessibilityLabel("Take \(source)’s \(spec.title), \(theirs.display)")
                         }
                     }
@@ -486,7 +498,7 @@ private struct ExpertRow: View {
                         Text("CoD2 Silicon sets this from Settings each time the game starts.").font(StudioTypography.help).foregroundStyle(palette.secondary)
                     }
                     if let note = state.note {
-                        Text("Note: \(note)").font(StudioTypography.help).italic().foregroundStyle(palette.secondary).lineLimit(2)
+                        Text("Note: \(note)").font(StudioTypography.help).italic().foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 .padding(.leading, 228)
