@@ -38,6 +38,13 @@ private final class ConfigGameGuard: @unchecked Sendable {
     private struct SessionArchive: Codable {
         let id: String
         let before: [String: ConfigProfileVersion]
+        var connectionSelection: ConnectionSelection? = nil
+    }
+    private struct ConnectionSelection: Codable {
+        let before: Data
+        let applied: Data
+        var sourceProfileID: String? = nil
+        var disposableProfileID: String? = nil
     }
     private var archiveURL: URL { store.homeURL.appendingPathComponent("main/players/.studio-game-session.json") }
     var isReadOnly: Bool { guardState.running() }
@@ -54,6 +61,17 @@ private final class ConfigGameGuard: @unchecked Sendable {
             let saved = try JSONDecoder().decode(SessionArchive.self, from: Data(contentsOf: archiveURL))
             guard UUID(uuidString: saved.id) != nil else { throw ConfigProfileError.invalidHistory }
             for id in saved.before.keys { try ConfigProfileStore.validateIdentifier(id) }
+            if let selection = saved.connectionSelection {
+                guard let beforeID = ConfigDocument.tokenize(data: selection.before, dialect: .stock).tokens.first?.text,
+                      let appliedID = String(data: selection.applied, encoding: .utf8) else { throw ConfigProfileError.invalidHistory }
+                try ConfigProfileStore.validateIdentifier(beforeID)
+                try ConfigProfileStore.validateIdentifier(appliedID)
+                if let id = selection.disposableProfileID {
+                    guard id == appliedID, id.range(of: "^csconn[0-9a-f]{32}$", options: .regularExpression) != nil,
+                          saved.before[id] == nil, let source = selection.sourceProfileID else { throw ConfigProfileError.invalidHistory }
+                    try ConfigProfileStore.validateIdentifier(source)
+                }
+            }
             archive = saved
         }
     }
@@ -61,10 +79,12 @@ private final class ConfigGameGuard: @unchecked Sendable {
     /// Reads the game's current bytes without rebasing or clearing an unsaved draft.
     func refresh() throws {
         do {
-            profiles = try store.list()
+            let temporary = archive?.connectionSelection?.disposableProfileID
+            profiles = try store.list().filter { $0.id != temporary }
             if let id = try store.activeSelection().profileID {
-                current = try store.read(id: id)
-                history = try store.history(id: id)
+                let reviewedID = id == temporary ? archive?.connectionSelection?.sourceProfileID ?? id : id
+                current = try store.read(id: reviewedID)
+                history = try store.history(id: reviewedID)
             } else { current = nil; history = [] }
             error = nil
         } catch { self.error = error.localizedDescription; throw error }
@@ -103,6 +123,16 @@ private final class ConfigGameGuard: @unchecked Sendable {
         guard draft == nil else { throw ConfigProfileError.conflict }
         try store.select(id: id, expectedActive: store.activeSelection().originalBytes)
         try refresh()
+    }
+    /// Review an alternative without changing the active loadout or a draft.
+    func readProfile(_ id: String) throws -> ConfigProfileRead { try store.read(id: id) }
+    func readAdvancedChain(profileID: String) throws -> ConfigDocument? {
+        let path = store.homeURL.appendingPathComponent("main/" + (try ConfigStudioLaunch.chainBasename(profileID: profileID)))
+        try ConfigProfileStore.checkPath(path, under: store.homeURL)
+        guard FileManager.default.fileExists(atPath: path.path) else { return nil }
+        let values = try path.resourceValues(forKeys: [.isRegularFileKey])
+        guard values.isRegularFile == true else { return nil }
+        return ConfigDocument(data: try Data(contentsOf: path), dialect: store.dialect)
     }
     @discardableResult
     func createProfile(id: String, displayName: String, document: ConfigDocument? = nil) throws -> ConfigProfileRead {
@@ -197,7 +227,9 @@ private final class ConfigGameGuard: @unchecked Sendable {
             throw error
         }
     }
-    func prepareLaunch(settings: GameSettings, forwarded: [String] = []) throws -> ConfigStudioLaunch? {
+    func prepareLaunch(settings: GameSettings, forwarded: [String] = [], connectionProfileID: String? = nil,
+                       connection: ConfigConnectionLaunch? = nil, connectionExpectedVersion: ConfigProfileVersion? = nil,
+                       connectionChainBytes: Data? = nil) throws -> ConfigStudioLaunch? {
         guard !isReadOnly else { throw ConfigProfileError.gameRunning }
         guard draft == nil else { throw ConfigProfileError.conflict }
         if archive != nil { try finishSession() }
@@ -205,6 +237,41 @@ private final class ConfigGameGuard: @unchecked Sendable {
         do {
             try initialize(settings: settings, forwarded: forwarded)
         } catch { /* The complete legacy plan remains available. */ }
+        let disposable = connection?.values.isEmpty == false
+        if disposable {
+            // Validate before allocating a write owner. GameLaunchPlan also
+            // checks this against the actual password-safe pending link.
+            _ = try connection!.arguments(for: LaunchLink.direct(connection!.address))
+        }
+        if connectionProfileID != nil || disposable {
+            guard migrationCompleted else { throw ConfigProfileError.invalidMigration }
+            guard let chosenID = connectionProfileID ?? current?.profile.id else { throw ConfigProfileError.missingProfile }
+            let chosen = try store.read(id: chosenID)
+            if disposable {
+                guard chosen.version == connectionExpectedVersion,
+                      try readAdvancedChain(profileID: chosenID)?.serialized() == connectionChainBytes else { throw ConfigProfileError.conflict }
+            }
+            let selection = try store.activeSelection()
+            guard let before = selection.originalBytes else { throw ConfigProfileError.missingProfile }
+            if disposable {
+                // Archived +set values are serialized by the engine. Give all
+                // writes from this temporary connection a disposable owner,
+                // while retaining the saved loadout's optional command chain.
+                let id = "csconn" + UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
+                try archiveSession()
+                guard archive?.before[id] == nil else { throw ConfigProfileError.alreadyExists }
+                archive?.connectionSelection = ConnectionSelection(before: before, applied: Data(id.utf8),
+                    sourceProfileID: chosenID, disposableProfileID: id)
+                try PrivateFile.write(JSONEncoder().encode(archive!), to: archiveURL)
+                _ = try store.duplicate(id: chosenID, as: id, displayName: chosen.profile.displayName, expected: chosen.version)
+                try store.select(id: id, expectedActive: before)
+            } else if selection.profileID != chosenID {
+                try archiveSession()
+                archive?.connectionSelection = ConnectionSelection(before: before, applied: Data(chosenID.utf8))
+                try PrivateFile.write(JSONEncoder().encode(archive!), to: archiveURL)
+                try store.select(id: chosenID, expectedActive: before)
+            }
+        }
         if migrationCompleted {
             try refresh()
             guard let id = current?.profile.id else { throw ConfigProfileError.missingProfile }
@@ -212,7 +279,7 @@ private final class ConfigGameGuard: @unchecked Sendable {
             let chainURL = store.homeURL.appendingPathComponent("main/" + chain)
             try ConfigProfileStore.checkPath(chainURL, under: store.homeURL)
             let values = try? chainURL.resourceValues(forKeys: [.isRegularFileKey])
-            launch = ConfigStudioLaunch(profileID: id, chain: values?.isRegularFile == true ? chain : nil)
+            launch = ConfigStudioLaunch(profileID: id, chain: values?.isRegularFile == true ? chain : nil, connectionIsolated: disposable)
         }
         // Even legacy launches get an observed baseline when the store is usable.
         if migrationCompleted { try archiveSession() }
@@ -254,9 +321,18 @@ private final class ConfigGameGuard: @unchecked Sendable {
         guard let archive else { return }
         // The game's own profile menu can remove old profiles and create new
         // ones. Never recreate a deleted profile or let it block future launch.
-        for profile in try store.list() {
+        for profile in try store.list() where profile.id != archive.connectionSelection?.disposableProfileID {
             let before = archive.before[profile.id] ?? ConfigProfileVersion(config: Data(), metadata: nil)
             try store.recordGameSession(id: profile.id, before: before, sessionID: archive.id)
+        }
+        if let selection = archive.connectionSelection {
+            // A game/user selection made later wins. Only undo our exact
+            // temporary choice after the final game has exited. Preserve the
+            // original active.txt bytes, including whitespace and comments.
+            try store.restoreConnectionSelection(original: selection.before, expectedActive: selection.applied)
+            if let id = selection.disposableProfileID, let source = selection.sourceProfileID {
+                try store.discardConnectionProfile(id: id, sourceProfileID: source, expectedActive: selection.applied)
+            }
         }
         try ConfigProfileStore.checkPath(archiveURL, under: store.homeURL)
         try FileManager.default.removeItem(at: archiveURL)

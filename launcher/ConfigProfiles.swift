@@ -321,6 +321,47 @@ final class ConfigProfileStore: Sendable {
         }
     }
 
+    /// Undo only our exact connection selection. A later game/user choice wins.
+    @discardableResult
+    func restoreConnectionSelection(original: Data, expectedActive: Data) throws -> Bool {
+        try guardWritable(false)
+        return try withLock {
+            try guardWritable(false)
+            guard try selection().originalBytes == expectedActive else { return false }
+            guard let id = ConfigDocument.tokenize(data: original, dialect: .stock).tokens.first?.text else {
+                throw ConfigProfileError.invalidIdentifier
+            }
+            do { _ = try readLocked(id: id) }
+            catch ConfigProfileError.missingProfile { return false }
+            try write(original, to: playersURL.appendingPathComponent("active.txt"))
+            return true
+        }
+    }
+
+    /// Disposable write owners are created by F3, never ordinary loadouts.
+    func discardConnectionProfile(id: String, sourceProfileID: String, expectedActive: Data) throws {
+        guard id.range(of: "^csconn[0-9a-f]{32}$", options: .regularExpression) != nil else { throw ConfigProfileError.invalidIdentifier }
+        try guardWritable(false)
+        try withLock {
+            try guardWritable(false)
+            let path = try profileURL(id)
+            guard FileManager.default.fileExists(atPath: path.path) else { return }
+            let profile = try readLocked(id: id)
+            guard profile.metadata.origin.kind == .copied, profile.metadata.origin.source == sourceProfileID else { throw ConfigProfileError.conflict }
+            if try selection().profileID == id {
+                guard try selection().originalBytes == expectedActive else { throw ConfigProfileError.conflict }
+                // The previous loadout was deleted. Removing only our exact
+                // selection lets the original engine choose its default next
+                // time, without resurrecting or guessing a saved loadout.
+                try guardWritable(false)
+                try FileManager.default.removeItem(at: playersURL.appendingPathComponent("active.txt"))
+            }
+            try guardWritable(false)
+            try FileManager.default.removeItem(at: path)
+            try syncDirectory(playersURL)
+        }
+    }
+
     private struct Transaction: Codable {
         var schemaVersion = 1
         let before: ConfigProfileVersion
