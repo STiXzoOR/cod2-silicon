@@ -25,6 +25,35 @@ deletes them on exit. Compilation runs under `taskpolicy -b nice -n 19`.
 `--sanitizers` adds AddressSanitizer and UndefinedBehaviorSanitizer. Reports must
 stay outside the repository, including reports made without the private oracle.
 
+## Playback without microphone capture
+
+```sh
+taskpolicy -b nice -n 19 python3 tests/voice/playback_init.py \
+  --compile-db build-macos/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/voice-init-stock"
+```
+
+Repeat with the CoD2x compile database and a fresh output directory. Add
+`--baseline 7dac4d2` to reproduce the initialization failure. The fixture calls
+the production `Voice_Init`, native unavailable recorder, `CL_VoicePacket`,
+message readers, encode/decode wrappers, Speex, playback queues and native
+`Render` callback. It never explicitly initializes DSound. A fixed independent
+mode-5 synthetic packet must produce finite, nonzero mixer output for all 64
+talkers. It checks mute/`cl_voice` gates, the 299 ms talk indicator boundary,
+`+talk`/`-talk`, silent local input, microphone mixer call exclusion, two full
+lifecycles, late packets, output-device failure and the one-time stderr notice.
+It also verifies that decode converts only the 160 produced samples and returns
+320 PCM bytes. ASan/UBSan stay enabled throughout.
+
+The output-device creation boundary is controlled, so no audio device opens.
+The successful-recorder control checks capture and mixer call counts using a
+synthetic recorder; it does not implement or test real microphone capture.
+Dvar registration, command arguments and player mute lookup are fixture
+boundaries. The receive entry is `CL_VoicePacket`, after connectionless command
+dispatch; no UDP socket, live server, game, hardware sound or original PCM
+parity is claimed. Temporary build files are removed; logs and a JSON receipt
+remain in the private output directory.
+
 ## Independent expected values
 
 `codec_probe.c` generates eight 160-sample input frames from an integer triangle,
