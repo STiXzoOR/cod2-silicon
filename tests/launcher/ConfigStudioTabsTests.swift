@@ -144,7 +144,8 @@ enum ConfigStudioTabsTests {
         binds.updateDraft { $0.kind = .toggle; $0.setting = "cg_drawFPS"; $0.values = ["Off", "Simple"] }
         require(binds.draft?.key == "m" && binds.chainEdit != nil && binds.chainError == nil && !binds.chainNeedsConfirmation)
         let preview = binds.pressPreview()
-        require(preview.count == 2 && preview[0].press.first?.text == "Switch Show frame rate")
+        require(preview.count == 3 && preview[0].press.first?.text == "Switch Show frame rate")
+        require(preview.map(\.value) == ["Simple", "Off", "Simple"] || preview.map(\.value) == ["Off", "Simple", "Off"], "each press shows the value it leaves")
         let beforeChain = try Data(contentsOf: file)
         binds.saveChain()
         var toggled = ConfigDocument(data: beforeChain, dialect: .cod2x); try toggled.setBind(key: "m", binding: "toggle cg_drawFPS \"Off\" \"Simple\"")

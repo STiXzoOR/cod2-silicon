@@ -174,16 +174,19 @@ struct StudioKeyCap: View {
     var role: StudioKeyRole
     var selected = false
     var width: CGFloat = 44
+    /// Half-height arrow keys are shorter and drop the caption.
+    var height: CGFloat = 36
     @Environment(\.palette) private var palette
     @Environment(\.colorSchemeContrast) private var contrast
 
     var body: some View {
         VStack(spacing: 2) {
-            Text(key).font(.system(size: 11, weight: .semibold))
-            if let action { Text(action).font(.system(size: 10)).lineLimit(1) }
+            Text(key).font(.system(size: 11, weight: .semibold)).lineLimit(1)
+            if let action, height >= 30 { Text(action).font(.system(size: 10)).lineLimit(1) }
         }
+        .padding(.horizontal, 3)
         .foregroundStyle(role.ink)
-        .frame(width: max(StudioMetrics.minimumHitTarget, width), height: 36)
+        .frame(width: max(StudioMetrics.minimumHitTarget, width), height: height)
         .background {
             ZStack {
                 role.fill

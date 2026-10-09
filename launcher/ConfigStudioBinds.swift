@@ -59,12 +59,12 @@ struct ConfigKeyboardKey: Identifiable, Equatable {
 }
 
 enum ConfigKeyboardLayout {
-    /// Rows of (virtual key, width); nil key is a gap. Heights: function row 0.6, others 1.
+    /// Rows of (virtual key, width); nil key is a gap. Every row is one key high.
     static func keys(shape: KeyboardShape, size: KeyboardSize) -> [ConfigKeyboardKey] {
         let compactTop = size == .percent60 || size == .percent65
         var rows: [(height: Double, keys: [(UInt16?, Double)])] = []
         if !compactTop {
-            rows.append((0.6, [(53, 1.5)] + [122, 120, 99, 118, 96, 97, 98, 100, 101, 109, 103, 111].map { (UInt16?($0), 1.0) }))
+            rows.append((1, [(53, 1.5)] + [122, 120, 99, 118, 96, 97, 98, 100, 101, 109, 103, 111].map { (UInt16?($0), 1.0) }))
         }
         let iso = shape == .iso, jis = shape == .jis
         let numberRow: [(UInt16?, Double)] = [(iso ? 10 : 50, 1)] + [18, 19, 20, 21, 23, 22, 26, 28, 25, 29, 27, 24].map { (UInt16?($0), 1.0) }
@@ -101,7 +101,7 @@ enum ConfigKeyboardLayout {
         }
         if size == .full || size == .tkl {
             let right = (result.map { $0.x + $0.width }.max() ?? 15) + 0.6
-            let top = compactTop ? 0 : 0.7
+            let top = compactTop ? 0 : 1.1
             for (index, key) in [114, 115, 116].enumerated() { result.append(.init(virtualKey: UInt16(key), x: right + Double(index) * 1.1, y: top, width: 1, height: 1)) }
             for (index, key) in [117, 119, 121].enumerated() { result.append(.init(virtualKey: UInt16(key), x: right + Double(index) * 1.1, y: top + 1.1, width: 1, height: 1)) }
             if size == .full {
@@ -227,6 +227,8 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
     /// A proposal that displaces another binding, waiting for the person's decision.
     @Published private(set) var review: ConfigBindingEdit?
     @Published var selectedKey: EngineKey? = EngineKey(spelling: "w")
+    /// The drawn key chosen in Visual; nil when a mouse button or an engine-only key is chosen.
+    @Published var selectedVirtualKey: UInt16?
     @Published var pointer: InputDeviceKind = .mouse
     @Published var keyboardID: String?
 
@@ -364,7 +366,7 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
     }
     private func use(_ key: EngineKey, for target: ConfigCaptureTarget) {
         switch target {
-        case .find: selectedKey = key
+        case .find: selectedKey = key; selectedVirtualKey = nil
         case .chainKey:
             guard var draft else { return }
             draft.key = key.spelling
@@ -518,19 +520,22 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
         } catch { chainError = error.localizedDescription }
     }
 
-    /// Press-by-press preview from B2's machine: the saved profile, then its
-    /// chain file, then key events. `nil` on a press means its trace is incomplete.
-    func pressPreview(presses: Int? = nil) -> [(press: [ConfigCommandWords], release: [ConfigCommandWords], complete: Bool)] {
+    /// Press-by-press preview from B2's machine: the saved profile, then its chain file,
+    /// then key events. One press for "several"; cycles and toggles run one past the end
+    /// so the loop shows. `value` is the toggled setting after each press.
+    func pressPreview(presses: Int? = nil) -> [(press: [ConfigCommandWords], release: [ConfigCommandWords], complete: Bool, value: String?)] {
         guard let edit = chainEdit, let draft, let key = ConfigDocument.keyNumber(draft.key),
               let binding = edit.document.effectiveBindBytes(key: draft.key) else { return [] }
         var machine = ConfigChainMachine(dialect: edit.document.dialect, files: [:], waitDisabled: false)
         _ = machine.execute(edit.document.serialized())
         _ = machine.execute(edit.script)
-        let count = presses ?? (draft.kind == .cycle ? draft.steps.filter { !$0.isEmpty }.count + 1 : draft.kind == .toggle ? max(2, draft.values.count) : 1)
+        let count = presses ?? (draft.kind == .cycle ? draft.steps.filter { !$0.isEmpty }.count + 1 : draft.kind == .toggle ? max(2, draft.values.count) + 1 : 1)
+        let setting = draft.kind == .toggle ? draft.setting.lowercased() : nil
         return (0..<count).map { _ in
             let press = machine.keyEvent(binding: binding, key: key, down: true, time: 100)
             let release = machine.keyEvent(binding: binding, key: key, down: false, time: 200)
-            return (press.commands.compactMap(words), release.commands.compactMap(words), press.complete && release.complete)
+            let value = setting.flatMap { name in machine.variables.first { $0.key.lowercased() == name }.map { ConfigDocument.text($0.value) } }
+            return (press.commands.compactMap(words), release.commands.compactMap(words), press.complete && release.complete, value)
         }
     }
     /// Leaf command → words. Helper pointer assignments are internal and hidden.
