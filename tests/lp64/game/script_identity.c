@@ -18,6 +18,10 @@ static const char *gameDenial;
 static int readDuringConnect;
 void WS76_ConnectScript(int n);
 
+#if defined(COD2X_NAT_IDENTITY_FIXTURE)
+void Com_Printf(const char *format, ...);
+void NetProf_PrepProfiling(netProfileInfo_t **p) { (void)p; }
+#endif
 #include "host_fixture.h"
 
 static int requestedMaxClients;
@@ -395,8 +399,16 @@ static void argument_cases(void)
     }
 }
 
+#if defined(COD2X_NAT_IDENTITY_FIXTURE)
+#include "nat_identity.c"
+#endif
+
 int main(void)
 {
+#if defined(COD2X_NAT_IDENTITY_FIXTURE)
+    nat_identity_cases();
+    printf("WS97 NAT identity: %d failures\n",failures);
+#else
     WS69_protocol_fixture_main();
 #if defined(COD2_CODX) && COD2_CODX
     identity_cases(); provenance_cases(); player_cases(); correlation_cases(); argument_cases();
@@ -405,5 +417,6 @@ int main(void)
     for(int i=0;i<7;++i) { const char *n=names[i]; int dev; Verify(!Scr_GetMethod(&n,&dev),"stock has no extension methods"); }
 #endif
     printf("WS76 script identity: %d failures\n",failures);
+#endif
     return failures!=0;
 }

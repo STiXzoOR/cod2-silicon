@@ -31,6 +31,8 @@ def main():
     parser.add_argument('--compile-db', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--baseline')
+    parser.add_argument('--nat-only', action='store_true',
+                        help='run packet/voice NAT identity regression cases without the parser')
     parser.add_argument('--parser-ubsan', action='store_true',
                         help='also expose the retained yacc parser UBSan limitation')
     args = parser.parse_args()
@@ -77,6 +79,13 @@ def main():
 
         # Reuse WS69's external seams and cases; FreeClient itself stays production.
         fixture = (ROOT / 'tests/cod2x/test_host_protocol.c').read_text()
+        if args.nat_only:
+            network = active('src/PC/qcommon/net_chan_mp.c')
+            for name in ('NET_CompareAdr', 'NET_CompareBaseAdr', 'Netchan_Setup'):
+                fixture = fixture.replace(function(fixture, name), function(network, name))
+            (out / 'nat_packet_source.h').write_text(
+                function(network, 'Netchan_Process') +
+                function(discovery, 'SV_PacketEvent') + function(discovery, 'SV_VoicePacket'))
         fixture = fixture.replace('void SV_FreeClient(client_t *cl) { (void)cl; }', '')
         fixture = fixture.replace('++connects; return NULL;',
                                   '++connects; WS76_ConnectScript(n); return (char *)gameDenial;')
@@ -129,6 +138,8 @@ void GScr_Cod2xResetMapChange(void) {}
         command = [*flags, '-DCOD2X_SCRIPT_IDENTITY_FIXTURE=1', '-Wl,-dead_strip',
                    str(ROOT / 'tests/lp64/game/script_api.c'),
                    str(ROOT / 'src/PC/universal/q_shared.c'), '-o', str(exe)]
+        if args.nat_only:
+            command.insert(1, '-DCOD2X_NAT_IDENTITY_FIXTURE=1')
         result = subprocess.run(command, cwd=ROOT, text=True, capture_output=True)
         (out / (target + '-compile.log')).write_text(result.stdout + result.stderr)
         if result.returncode:
@@ -139,6 +150,8 @@ void GScr_Cod2xResetMapChange(void) {}
         print(target + ': ' + result.stdout + result.stderr, flush=True)
         if result.returncode:
             failures.append(target)
+        if args.nat_only:
+            continue
         parser_exe = out / (target + '-parser')
         # The retained yacc parser intentionally forms a stack-before-start
         # pointer. Its existing compiler fixture uses ASan; record that UBSan
