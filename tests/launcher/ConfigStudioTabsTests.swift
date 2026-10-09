@@ -218,6 +218,11 @@ enum ConfigStudioTabsTests {
         let capSpec = try require(model.spec(named: "com_maxfps"))
         require(checkup.badge(capSpec)?.text == "125 fps–250 fps" && checkup.badge(capSpec)?.tone == .negative)
         require(checkup.tip(capSpec)?.fix?.id == "competitive-frame-cap")
+        let packetsSpec = try require(model.spec(named: "cl_maxpackets"))
+        require(ConfigCheckupModel.plain("CoD2x forces cl_maxpackets to 125 during competitive play.", spec: packetsSpec)
+                == "CoD2x forces \(packetsSpec.title.prefix(1).lowercased() + packetsSpec.title.dropFirst()) to 125 during competitive play.")
+        require(ConfigCheckupModel.plain("com_maxfps must be within its range.", spec: capSpec) == "\(capSpec.title) must be within its range.")
+        require(checkup.tip(capSpec).map { !$0.text.lowercased().contains("com_maxfps") } ?? true, "Guided tips use plain names")
         require(checkup.violations.contains { $0.setting.lowercased() == "com_maxfps" })
         print("PASS: Check-up suggestions, plain changes, Not measured dials, rule badges and tips")
 

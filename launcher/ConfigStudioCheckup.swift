@@ -306,6 +306,16 @@ struct ConfigAppliedSuggestion: Identifiable {
     func tip(_ spec: ConfigSettingSpec) -> (text: String, fix: ConfigCheckupSuggestion?)? {
         guard let evaluation = evaluation(spec), evaluation.status == .violation || evaluation.status == .conflict else { return nil }
         let fix = report?.suggestions.first { suggestion in suggestion.changes.contains { $0.setting.caseInsensitiveCompare(spec.name) == .orderedSame } }
-        return (evaluation.reason, fix)
+        return (Self.plain(evaluation.reason, spec: spec), fix)
+    }
+    /// Rule text names settings by console name; Guided says the plain name instead.
+    static func plain(_ text: String, spec: ConfigSettingSpec) -> String {
+        guard let regex = try? NSRegularExpression(pattern: "\\b" + NSRegularExpression.escapedPattern(for: spec.name) + "\\b", options: .caseInsensitive) else { return text }
+        let title = spec.title
+        // Mid-sentence, "Updates you send" reads "updates you send"; "CoD2x mouse input" keeps its case.
+        let inner = title.count > 1 && title.dropFirst().first?.isLowercase == true ? title.prefix(1).lowercased() + title.dropFirst() : title
+        var result = regex.stringByReplacingMatches(in: text, range: NSRange(text.startIndex..., in: text), withTemplate: NSRegularExpression.escapedTemplate(for: inner))
+        if result.hasPrefix(inner) { result = title + result.dropFirst(inner.count) }
+        return result
     }
 }
