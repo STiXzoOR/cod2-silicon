@@ -11,7 +11,11 @@ taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc -j 1 \
     "$root/launcher/Core.swift" "$root/launcher/Presentation.swift" \
     "$root/launcher/ConfigDocument.swift" "$root/launcher/ConfigProfiles.swift" "$root/launcher/ConfigHistory.swift" \
     "$root/launcher/ConfigStudioSession.swift" "$root/launcher/ConfigCatalog.swift" "$root/launcher/ConfigStudioModel.swift" \
-    "$root/tests/launcher/ConfigStudioModelTests.swift" \
+    "$root/launcher/InputDevices.swift" "$root/launcher/ConfigBindings.swift" "$root/launcher/ConfigChains.swift" \
+    "$root/launcher/ConfigImport.swift" "$root/launcher/ConfigImportSafety.swift" "$root/launcher/ConfigImportCatalogAdapter.swift" \
+    "$root/launcher/ConfigRules.swift" "$root/launcher/ConfigCheckup.swift" "$root/launcher/Theme.swift" "$root/launcher/ConfigStudioStyle.swift" \
+    "$root/launcher/ConfigStudioBinds.swift" "$root/launcher/ConfigStudioCheckup.swift" \
+    "$root/tests/launcher/ConfigStudioModelTests.swift" "$root/tests/launcher/ConfigStudioTabsTests.swift" \
     "$scratch/core/NativeSetup.o" "$scratch/core/NativeShaders.o" "$scratch/core/URL.o" \
-    -framework AppKit -lz -o "$scratch/ConfigStudioModelTests"
+    -framework AppKit -framework SwiftUI -lz -o "$scratch/ConfigStudioModelTests"
 TMPDIR="$scratch" taskpolicy -b nice -n 19 "$scratch/ConfigStudioModelTests" "$root/launcher/Resources/ConfigCatalog.json"

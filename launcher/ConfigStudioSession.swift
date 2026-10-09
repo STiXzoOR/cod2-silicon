@@ -165,6 +165,16 @@ private final class ConfigGameGuard: @unchecked Sendable {
             try refresh()
         } catch { self.error = error.localizedDescription; throw error }
     }
+    /// Model units that publish through the store themselves (B1 bindings, A1
+    /// Check-up) run inside the same guard as every Studio mutation: no running
+    /// game, no undisposed draft, and only the loadout on screen. The store is
+    /// lent for this one call and the shared state refreshes afterwards.
+    func mutate<T>(profileID: String, _ body: (ConfigProfileStore) throws -> T) throws -> T {
+        guard !isReadOnly else { throw ConfigProfileError.gameRunning }
+        guard draft == nil, current?.profile.id.caseInsensitiveCompare(profileID) == .orderedSame else { throw ConfigProfileError.conflict }
+        defer { try? refresh() }
+        return try body(store)
+    }
     func selectProfile(_ id: String) throws {
         guard !isReadOnly else { throw ConfigProfileError.gameRunning }
         guard draft == nil else { throw ConfigProfileError.conflict }

@@ -11,8 +11,14 @@ enum ConfigStudioTab: String, CaseIterable, Identifiable {
     var title: String {
         switch self { case .settings: "Settings"; case .binds: "Binds"; case .checkup: "Check-up"; case .history: "History" }
     }
-    /// Binds (B1/B2) and Check-up (A1) join this list when their screens exist.
+    /// Binds and Check-up join this list with their screens.
     static let available: [ConfigStudioTab] = [.settings, .history]
+}
+
+/// What the Configs page shows beside the loadout column. Discover (Players,
+/// Saved) adds its own case and view; a loadout keeps its tabs.
+enum ConfigStudioDestination: Hashable {
+    case loadout
 }
 
 enum ConfigDetailLevel: String, CaseIterable, Identifiable {
@@ -415,6 +421,7 @@ struct ConfigStudioFailure: Identifiable {
     private var catalogLoading = false
     private let catalogSource: @Sendable () throws -> ConfigCatalog
 
+    @Published var destination: ConfigStudioDestination = .loadout
     @Published var tab: ConfigStudioTab = .settings
     @Published var level: ConfigDetailLevel = .guided
     @Published var group: ConfigPurposeGroup = .frame
@@ -430,6 +437,8 @@ struct ConfigStudioFailure: Identifiable {
     @Published var snapshotID: String?
     @Published private(set) var restoredSnapshotID: String?
     @Published var failure: ConfigStudioFailure?
+    /// A completed action worth a calm line (export, for example); errors use `failure`.
+    @Published var notice: String?
     @Published var textMode = false
     @Published private(set) var text = ""
     @Published private(set) var textIssues: [ConfigTextIssue] = []
@@ -442,6 +451,11 @@ struct ConfigStudioFailure: Identifiable {
     private var valueCache: (data: Data, values: [String: String])?
     private var diffCache: [String: [ConfigChange]] = [:]
     private var sinceCache: (id: String, base: Data, changes: [ConfigChange])?
+    /// Input devices for Binds; the review harness and tests supply their own.
+    var deviceProvider: @MainActor () -> any InputDeviceProvider = { SystemInputDeviceProvider() }
+    var captureSource: @MainActor (NSWindow?) -> (any BindingCaptureEventSource)? = { window in window.map { AppKitBindingEventSource(window: $0) } }
+    private(set) lazy var binds = ConfigBindsModel(studio: self, devices: InputDevicesModel(provider: deviceProvider()), makeSource: captureSource)
+    private(set) lazy var checkup = ConfigCheckupModel(studio: self)
     /// Speaks a completed change once (VoiceOver). Tests replace it.
     var announce: (String) -> Void = { message in
         guard let app = NSApp else { return }
@@ -768,6 +782,25 @@ struct ConfigStudioFailure: Identifiable {
         } catch {
             fail("Couldn’t save: \(summary)", error, retry: retry)
         }
+    }
+
+    /// After a model unit's own transaction (binds, advanced binds): announce it,
+    /// and let Command-Z put back exactly what was there before.
+    func didSave(_ entry: ConfigHistoryEntry, name: String, undo: UndoManager?) {
+        failure = nil; diffCache = [:]
+        announce("Saved. \(title(of: entry)).")
+        guard let undo else { return }
+        undo.registerUndo(withTarget: self) { model in model.undoEntry(entry.id, name: name) }
+        undo.setActionName(name)
+    }
+    private func undoEntry(_ id: String, name: String) {
+        guard let session, let row = session.history.first(where: { $0.id == id }), current?.version.config == row.data,
+              current?.version.metadata == row.metadata, current?.version.chain == row.chain else {
+            failure = ConfigStudioFailure(title: "Nothing to undo", message: "This loadout changed since. Pick a snapshot in History instead.", retry: nil)
+            return
+        }
+        do { try session.restore(snapshotID: id, revision: .before); diffCache = [:]; announce("Undid \(name.lowercased()).") }
+        catch { fail("Couldn’t undo", error) }
     }
 
     private func fail(_ title: String, _ error: Error, retry: (@MainActor () -> Void)? = nil) {

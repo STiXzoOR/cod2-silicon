@@ -21,7 +21,7 @@ for file in ConfigCheckup ConfigBindings InputDevices ConfigChains ConfigImport 
     views+=("$root/launcher/$file.swift")
 done
 for file in Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView LibraryView \
-    ConfigStudioModel ConfigStudioStyle ConfigsView ConfigSettingsView ConfigHistoryView \
+    ConfigStudioModel ConfigStudioBinds ConfigStudioCheckup ConfigStudioStyle ConfigsView ConfigSettingsView ConfigHistoryView \
     ConfigDiscoverModel ConfigDiscoverView ConfigImportView ServerReadyCheck ServerReadyCheckView; do
     views+=("$root/launcher/$file.swift")
 done

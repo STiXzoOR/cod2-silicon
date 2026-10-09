@@ -197,6 +197,9 @@ import Foundation
         require(model.current?.profile.id == "Night_Scrim_2" && model.current?.data.isEmpty == true)
         require(try Data(contentsOf: activeFile) == active)
         print("PASS: new loadouts from a copy or defaults never change the active loadout")
+
+        try ConfigStudioTabsTests.run(scratch: scratch, catalog: catalog,
+                                      resources: URL(fileURLWithPath: CommandLine.arguments[1]).deletingLastPathComponent())
     }
 
     static func require<T>(_ value: T?, line: Int = #line) throws -> T {
