@@ -36,12 +36,16 @@
     "sensitivity": {
       "group": "aim",
       "title": "Mouse speed",
-      "summary": "Choose how far your view turns when you move the mouse.",
-      "details": "A larger value turns farther for the same input. Mouse DPI is separate from this setting.",
+      "summary": "How far your view turns when you move the mouse.",
+      "details": "A higher number turns farther for the same hand movement. The game's own slider runs from 1 to 30 and ESL's old PunkBuster list also stops at 30; the setting itself accepts 0.01 to 100, and values below 1 are valid. The game also scales your turn with the picture's field of view, so the same number turns a little farther in a wider window and slower while you zoom in. Your mouse's DPI is separate.",
       "guided": true,
       "control": {
         "kind": "number",
-        "step": 0.1
+        "step": 0.1,
+        "practicalRange": {
+          "min": 0.01,
+          "max": 30
+        }
       },
       "menuExposed": true
     },
@@ -62,10 +66,14 @@
     },
     "cl_mouseaccel": {
       "group": "aim",
-      "title": "Speed up on fast movements",
-      "summary": "Add more turning as mouse movement gets faster.",
-      "details": "Zero disables the acceleration term in the client input calculation.",
-      "guided": true
+      "title": "Mouse acceleration",
+      "summary": "Turns your view farther the faster you move the mouse; 0 turns this off.",
+      "details": "The game adds this number, multiplied by how many mouse counts arrive each millisecond, to your mouse speed. For example 0.04 at 31 counts per millisecond adds 1.24. Zero is the default and keeps every turn the same size however fast your hand moves. zPAM's mouse menu offers 0 and 0.01 to 0.04.",
+      "guided": true,
+      "control": {
+        "kind": "number",
+        "step": 0.01
+      }
     },
     "m_pitch": {
       "group": "aim",
@@ -113,14 +121,18 @@
     },
     "rate": {
       "group": "net",
-      "title": "Connection bandwidth",
-      "summary": "Limit how much game data the server may send each second.",
-      "details": "The value is in bytes per second. CoD2x competitive enforcement requires 25,000; the registration default and source range are separate facts.",
+      "title": "Connection speed",
+      "summary": "The most game data per second the server may send you.",
+      "details": "The value is in bytes per second. The game's own Connection menu offers ISDN (5,000) and LAN, cable or DSL (25,000). 25,000 is the highest the game accepts, and servers using CoD2x competitive rules enforce exactly that.",
       "guided": true,
       "control": {
         "kind": "number",
         "step": 1000,
-        "unit": "bytes/s"
+        "unit": "bytes/s",
+        "labels": {
+          "5000": "ISDN",
+          "25000": "LAN, cable or DSL"
+        }
       },
       "menuExposed": true,
       "runtimeNotes": [
@@ -153,8 +165,8 @@
     "cl_maxpackets": {
       "group": "net",
       "title": "Updates you send",
-      "summary": "Limit how often your client sends movement packets.",
-      "details": "This is an upper limit, not a guarantee of packets per second. The current CoD2x port registers 125; competitive enforcement also requires 125.",
+      "summary": "The most movement updates your game sends the server each second.",
+      "details": "This is an upper limit, not a promise of that many packets per second. The game's connection-speed step sets it to 30 whenever the connection speed is 5,000 or more, and the in-game Connection menu is expected to run that step. Servers using CoD2x competitive rules enforce 125; zPAM 3 servers on stock CoD2 expect 100.",
       "guided": true,
       "control": {
         "kind": "number",
@@ -225,23 +237,50 @@
     "r_picmip": {
       "group": "vis",
       "title": "Texture detail",
-      "summary": "Choose the detail level of surface textures.",
-      "details": "Larger values select smaller texture mip levels. Automatic texture settings can override this unless manual texture detail is enabled.",
+      "summary": "How sharp surface textures look, from Extra (sharpest) down to Low.",
+      "details": "0 is Extra, 1 is High, 2 is Normal and 3 is Low, the same order as the game's own Texture Resolution menu. Sharper textures use more memory. Automatic texture settings can override this unless Choose texture detail yourself is on. Rule sets disagree about level 3, so 0 to 2 is the conservative range.",
       "guided": true,
+      "control": {
+        "kind": "number",
+        "labels": {
+          "0": "Extra",
+          "1": "High",
+          "2": "Normal",
+          "3": "Low"
+        }
+      },
       "menuExposed": true
     },
     "r_picmip_bump": {
       "group": "vis",
       "title": "Surface relief detail",
-      "summary": "Choose the detail level of normal-map textures.",
-      "details": "Larger values reduce texture resolution. Manual texture detail controls whether these preferences are used directly.",
+      "summary": "How sharp the textures that give surfaces their small bumps look, on the same Extra to Low scale.",
+      "details": "0 is Extra, 1 is High, 2 is Normal and 3 is Low, matching the game's Normal Map Resolution menu. It is only used when Choose texture detail yourself is on.",
+      "control": {
+        "kind": "number",
+        "labels": {
+          "0": "Extra",
+          "1": "High",
+          "2": "Normal",
+          "3": "Low"
+        }
+      },
       "menuExposed": true
     },
     "r_picmip_spec": {
       "group": "vis",
-      "title": "Reflection texture detail",
-      "summary": "Choose the detail level of specular textures.",
-      "details": "Larger values reduce texture resolution. This changes texture detail, not the lighting model.",
+      "title": "Shine texture detail",
+      "summary": "How sharp the textures that make surfaces shine look, on the same Extra to Low scale.",
+      "details": "0 is Extra, 1 is High, 2 is Normal and 3 is Low, matching the game's Specular Map Resolution menu. It is only used when Choose texture detail yourself is on.",
+      "control": {
+        "kind": "number",
+        "labels": {
+          "0": "Extra",
+          "1": "High",
+          "2": "Normal",
+          "3": "Low"
+        }
+      },
       "menuExposed": true
     },
     "r_picmip_manual": {
@@ -260,9 +299,13 @@
     "r_anisotropy": {
       "group": "gfx",
       "title": "Texture filtering at angles",
-      "summary": "Keep angled surfaces clearer in the distance.",
-      "details": "This is the source's texture filtering setting. The range is a registration fact; hardware support still determines the applied filtering.",
-      "guided": true
+      "summary": "How sharp floors and walls stay when you look along them.",
+      "details": "The number is the filtering level, 2× up to 16×. Higher levels keep textures seen at a shallow angle sharper and can cost performance on some systems. Your graphics hardware caps the level the game can actually use.",
+      "guided": true,
+      "control": {
+        "kind": "number",
+        "unit": "×"
+      }
     },
     "r_texturemode": {
       "group": "gfx",
@@ -460,8 +503,8 @@
     "snd_volume": {
       "group": "audio",
       "title": "Game volume",
-      "summary": "Adjust the volume of game sounds.",
-      "details": "The engine value is a scale from 0 to 1. This is separate from your Mac's output volume.",
+      "summary": "How loud the game is, from silent to full.",
+      "details": "The value runs from 0 (silent) to 1 (full volume). The game's own Master Volume slider uses the same scale. This is separate from your Mac's output volume.",
       "guided": true,
       "control": {
         "kind": "number",
@@ -724,9 +767,18 @@
     },
     "snd_khz": {
       "group": "audio",
-      "title": "Sound sample rate",
-      "summary": "Choose the sound driver's sample-rate preference.",
-      "details": "This is a latched sound preference. The native audio backend determines the actual output format."
+      "title": "Sound quality",
+      "summary": "How detailed the game's sound is, from Low to High.",
+      "details": "The game opens its sound at 11, 22 or 44 kHz; any other number makes it use 22 kHz and print a warning. Higher gives finer sound at little performance cost. A change applies after the game restarts.",
+      "control": {
+        "kind": "number",
+        "unit": "kHz",
+        "labels": {
+          "11": "Low",
+          "22": "Medium",
+          "44": "High"
+        }
+      }
     },
     "motd": {
       "title": "Message of the day",
