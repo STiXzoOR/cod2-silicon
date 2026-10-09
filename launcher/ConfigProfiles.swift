@@ -265,12 +265,13 @@ final class ConfigProfileStore: Sendable {
     }
 
     @discardableResult
-    func create(id: String, displayName: String, document: ConfigDocument, metadata: ConfigStudioMetadata? = nil, runningGame: Bool = false) throws -> ConfigProfileRead {
+    func create(id: String, displayName: String, document: ConfigDocument, metadata: ConfigStudioMetadata? = nil,
+                source: ConfigHistorySource = .you, summary: String = "Created loadout", runningGame: Bool = false) throws -> ConfigProfileRead {
         try guardWritable(runningGame)
         return try withLock {
             try guardWritable(runningGame)
             var meta = metadata ?? ConfigStudioMetadata(displayName: displayName); meta.displayName = displayName
-            try createLocked(id: id, document: document, metadata: meta, source: .you, summary: "Created loadout", before: nil)
+            try createLocked(id: id, document: document, metadata: meta, source: source, summary: summary, before: nil)
             return try readLocked(id: id)
         }
     }

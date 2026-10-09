@@ -43,6 +43,7 @@ private final class ConfigGameGuard: @unchecked Sendable {
     var isReadOnly: Bool { guardState.running() }
     var hasDraft: Bool { draft != nil }
     var home: URL { store.homeURL }
+    var configDialect: ConfigDialect { store.dialect }
 
     init(home: URL, dialect: ConfigDialect, discoverGames: @escaping @Sendable () -> Set<Int32> = { [] }) throws {
         let guardState = ConfigGameGuard(discover: discoverGames)
@@ -113,6 +114,33 @@ private final class ConfigGameGuard: @unchecked Sendable {
         guard let current else { throw ConfigProfileError.missingProfile }
         let result = try store.duplicate(id: current.profile.id, as: id, displayName: displayName, expected: current.version)
         try refresh(); return result
+    }
+
+    /// Review captures an explicit target without changing active.txt or exposing
+    /// a second store to the view. Pending drafts must be disposed first.
+    func readImportTarget(id: String) throws -> ConfigProfileRead {
+        guard draft == nil else { throw ConfigProfileError.conflict }
+        return try store.read(id: id)
+    }
+    /// I2 constructs and rechecks the reviewed bytes before calling this seam.
+    /// F2 rechecks game ownership and the exact disk revision inside its lock.
+    func commitReviewedImport(id: String, displayName: String, document: ConfigDocument,
+                              expected: ConfigProfileVersion?, metadata: ConfigStudioMetadata) throws -> ConfigHistoryEntry {
+        guard draft == nil, document.dialect == store.dialect else { throw ConfigProfileError.conflict }
+        let entry: ConfigHistoryEntry
+        if let expected {
+            entry = try store.update(id: id, document: document, expected: expected, metadata: metadata,
+                                     source: .import, summary: "Imported reviewed config")
+        } else {
+            _ = try store.create(id: id, displayName: displayName, document: document, metadata: metadata,
+                                 source: .import, summary: "Imported reviewed config")
+            guard let created = try store.history(id: id).first else { throw ConfigProfileError.invalidHistory }
+            entry = created
+        }
+        // A refresh error must not make an already committed import retryable.
+        // refresh publishes its own error; the successful receipt still returns.
+        try? refresh()
+        return entry
     }
     func restore(snapshotID: String, revision: ConfigSnapshotRevision = .after) throws {
         guard draft == nil, let current else { throw ConfigProfileError.conflict }
