@@ -241,6 +241,7 @@ typedef struct Cod2x_ClientIdentity
     int occupied;
     netadr_t address;
     int challenge;
+    int qport;
     char hwid[33];
     char digest[33];
     char authorization[33];
@@ -256,8 +257,12 @@ static const Cod2x_ClientIdentity *SV_Cod2xClientIdentity(int clientNum)
         return NULL;
     identity = &cod2xClientIdentities[clientNum];
     client = &svs.clients[clientNum];
+    /* IP source ports can change after admission; qport identifies the channel. */
     if (!identity->occupied || identity->challenge != client->challenge ||
-        !NET_CompareAdr(identity->address, client->netchan.remoteAddress))
+        identity->qport != client->netchan.qport ||
+        !(identity->address.type == NA_IP ?
+          NET_CompareBaseAdr(identity->address, client->netchan.remoteAddress) :
+          NET_CompareAdr(identity->address, client->netchan.remoteAddress)))
         return NULL;
     return identity;
 }
@@ -365,10 +370,11 @@ static void SV_Cod2xStoreClientIdentity(client_t *client, const char *hwid)
         return;
     identity = &cod2xClientIdentities[clientNum];
     memset(identity, 0, sizeof(*identity));
-    /* Slot/address/challenge identity survives SV_ChangeMaxClients relocation. */
+    /* Keep the admission address for replies; slot/channel survives relocation. */
     identity->occupied = 1;
     identity->address = client->netchan.remoteAddress;
     identity->challenge = client->challenge;
+    identity->qport = client->netchan.qport;
     if (hwid && strlen(hwid) == 32)
         memcpy(identity->hwid, hwid, sizeof(identity->hwid));
     challengeIdentity = SV_Cod2xChallengeIdentity(identity->address, identity->challenge);
