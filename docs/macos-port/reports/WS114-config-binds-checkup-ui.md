@@ -45,7 +45,8 @@ In wide windows the panel scrolls on its own beside the list, so Save Bind stays
 - **Keyboard drawing.** Apple key positions by virtual key, for each shape and size. Labels come from the current input source and update when it changes; saved binds stay on the same engine keys.
   - Keys are coloured by what they do, with a legend; keys the game can't use are hatched.
   - Keys grow to fill the panel, from 28 to 44 points wide plus a 4-point gap, so a key is never below the 28-point hit target.
-  - The keyboard is focusable, and arrow keys move to the nearest key in that direction on the drawing.
+  - Clicking a key selects it and gives it keyboard focus. Keys take focus even with keyboard navigation off, selection follows focus, and the arrow keys move focus and selection to the nearest key in that direction on the drawing. See “Real-window review” for what was and wasn't verified.
+  - Popovers here (and Expert's note popover) sit on the opaque panel colour so their text stays legible over the coloured keys.
 - **Pointer panel.** Mouse 1–5 and the wheel, or trackpad click, two-finger click and scrolling, each with its binding. The panel notes that buttons 6 and up can't be used by the original game.
 - **Inspector** for the selected key or button:
   - the key cap, the plain action and its group, and what pressing it does
@@ -213,11 +214,69 @@ Launcher copy written here (all within the board's tone):
 - **Keyboard and pointer:** a layout chooser independent of the input source; the key-verify and button-learn flows; measured polling rate.
 - **Check-up measurements:** match summaries, which would feed A1's measurements, the dials and bars.
 - **Advanced binds and Check-up:** A1 treats every B2 chain as unresolved, so a loadout with any advanced bind gets no suggestions. B2's machine can simulate owned chains exactly; A1 could treat B2-owned chains as resolved. That is an A1/B2 decision, not changed here.
-- **Not verified:** a VoiceOver walk-through and keyboard-only operation in a live window; the harness checks labels and captures but not spoken output.
+- **Not verified:**
+  - spoken VoiceOver output (see the accessibility audit in “Real-window review”)
+  - arrow-key movement on the Visual keyboard in a live, active window
+  - the Rename sheet and the Export save panel
+
+## Real-window review (Mac unlocked)
+
+On 2026-10-10 the Mac was unlocked (`IOConsoleLocked` false), and the orchestrator asked for real window captures, Liquid Glass pixels, sheets, a VoiceOver pass and a re-run of the WS103 window-capture gate.
+
+Every GUI run, from probes to the full gate, took the bench lease first. That is `_agents/bench.lock`, created with `noclobber`, checked against the lock state, and removed by its owner as soon as the run ended. The review host never activates itself, so it never takes keyboard focus from whoever is using the Mac. Its captures therefore show the inactive-app look: grey traffic lights, untinted switch tracks, flat text-field bezels and dimmed sheet buttons. That look is expected and is not a defect.
+
+**WS103 gate and real PNGs.** `snapshots.py` ran end to end under the lease (results in Verification). I looked at real captures of Guided (Frame & movement, Aim & input), Expert with comparison, Edit as Text with its blocking issue, History, the read-only state and Settings, in dark and light. Real Liquid Glass draws in the toolbar's tab pill and the Jump/More group, on glass buttons (Show Me, Show Rules, device chips, Take Theirs) and on popover and sheet edges. Text stays legible over all of them. Layout, spacing and copy match the offscreen renders reviewed in WS103.
+
+**Sheets, popovers and alerts.** A new `--overlays` mode opens each one with a real click on the control that the accessibility tree names. It captures our own windows, composited front to back, and never another app's. Captured in dark and light:
+- the Jump palette, with “fps” typed through the field's accessibility value (results: Fps `sv_fps`, Frame rate cap, Show frame rate)
+- the New Loadout sheet
+- Expert's note popover
+- the Binds keyboard and pointing-device popovers
+- the Save Bind confirmation alert (“This bind sends chat or a response to other players.”)
+
+The real captures showed that Liquid Glass popovers let the bright keyboard keys show through, so popover text over orange and yellow keys was hard to read. Those popovers now use the opaque panel colour as their presentation background (macOS 13.3+), the same rule Config Studio uses for content.
+
+Not captured:
+- the Rename sheet, which opens from a menu; menu tracking would block the harness
+- the Export save panel, which belongs to another process
+
+**Accessibility (in place of a spoken VoiceOver pass).** I did not turn VoiceOver on. That changes a system setting, and driving it by AppleScript needs a privacy permission; both are outside this task's rules.
+
+Instead, a new `--accessibility` mode reads each Config Studio window's accessibility tree through the AX API, which is how VoiceOver reads it. Asking our own process needs no permission and makes SwiftUI build its nodes. Reading SwiftUI's nodes in-process raised an exception inside a Menu, so the audit uses the AX API. For each of the 12 screens it:
+- writes the tree in reading order to `accessibility/<screen>.txt`
+- fails on any control without a name. The window's own buttons and scroll-bar parts are exempt, because the system names them by subrole. So is read-only text that carries its own content.
+- fails on any named element that has no role, which VoiceOver would read without saying what it is.
+- requires each screen's key labels, so an empty tree can't pass. Examples: “Primary key for Throw frag grenade…”, “W, Move forward”, “Movement: 333 FPS…”, “Apply”, “Rules to check against…”, “Restore This Snapshot”.
+
+The audit found two problems, both now fixed:
+- History's compare rows were read four times each, because a grid row hands its label to every cell. The first cell now reads the whole row and the rest are hidden.
+- Several elements had no role: status labels, comparison values, the Check-up dials, Expert's changed dot and the cm-per-turn readout. They now read as text.
+
+All 12 screens now pass, with every control named and every named element given a role. The trees read as intended, for example: Guided's “125 frames per second, Low”; the tab bar as a radio group, “Loadout section”; “Main, in use for your next game”; and the toolbar's “Jump to Any Setting” with its ⌘K hint.
+
+**Keyboard focus in Visual.** This Mac has keyboard navigation on (`AppleKeyboardUIMode` 3). The first design made the whole drawing focusable, so a click on W left focus on the ↓ key button and the arrows did nothing.
+
+Keys are now focusable buttons. A click selects the key and gives it focus, and the arrow keys move focus and selection along the drawing. Selection follows focus, so Tab and keyboard navigation select too.
+
+`--actions` now checks with a real click that clicking E selects it and puts the keyboard focus on E, read back as VoiceOver reads focus.
+
+Arrow movement itself is **not verified**. In the review window, synthesized arrow keys (sent to the window, the application or the process) never reach SwiftUI's move handler, because AppKit's first responder stays on the root hosting view. The same structure does move in minimal windows that add a hosting controller with a toolbar, a split view and the harness's window overrides, so the cause is in the review window or the app's tree and wasn't pinned down. This needs a hands-on check in the running app.
+
+With keyboard navigation on, Tab also stops on each key.
+
+**Verification for this round** (sources at `6b2bb28`; logs in the evidence folder):
+- **Non-GUI stages of `run.sh`** (`logs/run-nongui-2.log`): 79 PASS, covering every focused runner, the button-style check and the strict Swift 6 / macOS 13 typecheck.
+- **`snapshots.py` under the lease** (`logs/snapshots-gate-2.log`, lock state false before and after):
+  - 50 window captures with 536 shapes and 0 findings
+  - the material fallback
+  - Increase Contrast and Reduce Transparency, 342 shapes each with 0 findings
+  - five real-click actions: Show crosshair, Restore, Binds key capture, Check-up Apply/Undo, and clicking E in Visual takes the keyboard focus
+  - the accessibility audit on all 12 screens: every control named and every named element given a role
+  - 12 sheet, popover and alert captures
 
 ## Composition
 
-Compose `defeb5a..` in order: `9fe61dc` (view stores), `bcb7c66` (Binds screens), `6b960f6` (Check-up screen), `7e64e4d` (tabs, Export, Guided tips and Expert badges), `71f0712` (harness), `d09b539` (plain names in Guided tips), `18360b9` (conflict copy), `71e8f06` (scrolling editor, plain B2 refusals), `11bc5bf` (Reduce Transparency check), then this report. All carry DCO sign-off and the requested author email.
+Compose `defeb5a..` in order: `9fe61dc` (view stores), `bcb7c66` (Binds screens), `6b960f6` (Check-up screen), `7e64e4d` (tabs, Export, Guided tips and Expert badges), `71f0712` (harness), `d09b539` (plain names in Guided tips), `18360b9` (conflict copy), `71e8f06` (scrolling editor, plain B2 refusals), `11bc5bf` (Reduce Transparency check), `58cbe79` (this report), then the real-window round: `a0738b1` (legible popovers), `2bae628` (keyboard focus in Visual), `06fe40d` (accessibility fixes), `6b2bb28` (harness accessibility audit and overlays), and this report's update. All carry DCO sign-off and the requested author email.
 
 The build lists (`scripts/build-launcher.sh`, the `tests/launcher/run.sh` typecheck) include both new views. `tests/launcher/config_studio.sh` compiles B1, B2, A1, I1 and the two view stores.
 
