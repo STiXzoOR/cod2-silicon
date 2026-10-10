@@ -1,4 +1,5 @@
 import AppKit
+import ApplicationServices
 import SwiftUI
 
 // Review harness, never shipped. It hosts the real launcher views in a titled window
@@ -7,6 +8,7 @@ import SwiftUI
 //
 //   LauncherSnapshots OUTPUT [--data GAME_DIR] [--fallback] [--scale2] [--only SCREEN] [--group configs]
 //                            [--increase-contrast] [--reduce-transparency] [--actions] [--minimum]
+//                            [--accessibility] [--overlays]
 //
 // --data uses the player's own loading screens (private review only; never commit them).
 // --fallback forces the macOS 13–25 material styling. --scale2 adds 2× renders of the same
@@ -16,8 +18,12 @@ import SwiftUI
 // launcher's 1100×760 minimum window.
 // --actions clicks Config Studio controls in the window (real hit-testing and actions) and checks
 // the bytes and History rows written to a temporary home.
+// --accessibility reads each Config Studio window's accessibility tree, as VoiceOver would, writes
+// it in reading order to OUTPUT/accessibility, and fails on a control without a name.
+// --overlays opens sheets, popovers and alerts with real clicks and captures them over the window.
 // Config Studio screens use synthetic loadouts in a private temporary home, removed afterwards.
-// COD2_SNAPSHOT_GEOMETRY=1 logs AppKit, view and WindowServer geometry at each sizing step.
+// COD2_SNAPSHOT_GEOMETRY=1 logs AppKit, view and WindowServer geometry at each sizing step;
+// COD2_SNAPSHOT_TRACE=1 logs each step of the window-driving modes to stderr.
 
 /// The review host can't become the active app while the login session is locked, so the
 /// window reports key and main appearance. Test-only: these overrides never ship.
@@ -54,6 +60,104 @@ final class SnapshotWindow: NSWindow {
         // kCGWindowListOptionIncludingWindow, kCGWindowImageBestResolution (shadow outside bounds excluded).
         return create(bounds, 1 << 3, UInt32(window.windowNumber), 1 << 3)?.takeRetainedValue()
     }
+
+    private typealias CreateFromArray = @convention(c) (CGRect, CFArray, UInt32) -> Unmanaged<CGImage>?
+    /// Our own windows composited front to back (a sheet, popover or alert over the window),
+    /// cropped to the window: other apps' windows never enter the image.
+    static func image(of windows: [NSWindow], in window: NSWindow) -> CGImage? {
+        guard let primary = NSScreen.screens.first,
+              let handle = dlopen(nil, RTLD_NOW), let symbol = dlsym(handle, "CGWindowListCreateImageFromArray") else { return nil }
+        let create = unsafeBitCast(symbol, to: CreateFromArray.self)
+        // The window plus anything that hangs past its edge, such as a popover.
+        let frame = windows.reduce(window.frame) { $0.union($1.frame) }.intersection(primary.frame)
+        let bounds = CGRect(x: frame.minX, y: primary.frame.maxY - frame.maxY, width: frame.width, height: frame.height)
+        var ids: [UnsafeRawPointer?] = windows.map { UnsafeRawPointer(bitPattern: UInt($0.windowNumber)) }
+        guard let array = CFArrayCreate(nil, &ids, ids.count, nil) else { return nil }
+        return create(bounds, array, 1 << 3)?.takeRetainedValue()
+    }
+}
+
+/// The window's accessibility tree as VoiceOver reads it, through the AX API. Asking our own
+/// process needs no permission and changes no setting, and it makes SwiftUI build its nodes.
+/// (Reading SwiftUI's nodes directly can raise inside a Menu; the AX API reports an error instead.)
+@MainActor enum AccessibilityTree {
+    struct Element {
+        let role: String, subrole: String, label: String, value: String, help: String, selected: Bool
+        /// Screen rectangle, top-left origin (Quartz).
+        let frame: CGRect
+        let depth: Int
+        let element: AXUIElement
+        var line: String {
+            String(repeating: "  ", count: depth) + role + (label.isEmpty ? "" : " “\(label)”") + (value.isEmpty ? "" : " = \(value)")
+                + (selected ? " [selected]" : "") + (help.isEmpty ? "" : " (\(help))")
+        }
+    }
+    static let controls: Set<String> = ["AXButton", "AXCheckBox", "AXRadioButton", "AXSlider", "AXTextField", "AXTextArea", "AXPopUpButton",
+                                        "AXMenuButton", "AXComboBox", "AXLink", "AXDisclosureTriangle", "AXIncrementor", "AXSearchField"]
+    static var application: AXUIElement { AXUIElementCreateApplication(getpid()) }
+    static func wake() { _ = attribute(application, kAXWindowsAttribute) }
+    static func attribute(_ element: AXUIElement, _ name: String) -> CFTypeRef? {
+        var value: CFTypeRef?
+        return AXUIElementCopyAttributeValue(element, name as CFString, &value) == .success ? value : nil
+    }
+    static func text(_ element: AXUIElement, _ name: String) -> String { attribute(element, name) as? String ?? "" }
+    static func frame(_ element: AXUIElement) -> CGRect {
+        var point = CGPoint.zero, size = CGSize.zero
+        if let value = attribute(element, kAXPositionAttribute), CFGetTypeID(value) == AXValueGetTypeID() { AXValueGetValue(value as! AXValue, .cgPoint, &point) }
+        if let value = attribute(element, kAXSizeAttribute), CFGetTypeID(value) == AXValueGetTypeID() { AXValueGetValue(value as! AXValue, .cgSize, &size) }
+        return CGRect(origin: point, size: size)
+    }
+    /// The AX window that is this NSWindow (same frame), with its sheets and popovers as children or siblings.
+    static func windows(matching window: NSWindow?) -> [AXUIElement] {
+        let all = attribute(application, kAXWindowsAttribute) as? [AXUIElement] ?? []
+        guard let window, let primary = NSScreen.screens.first else { return all }
+        let target = CGRect(x: window.frame.minX, y: primary.frame.maxY - window.frame.maxY, width: window.frame.width, height: window.frame.height)
+        return all.filter { abs(frame($0).minX - target.minX) < 2 && abs(frame($0).minY - target.minY) < 2 && abs(frame($0).width - target.width) < 2 }
+    }
+    static func elements(of window: NSWindow?) -> [Element] {
+        var result: [Element] = []
+        func walk(_ element: AXUIElement, depth: Int) {
+            guard depth < 80 else { return }
+            let role = text(element, kAXRoleAttribute)
+            let label = [text(element, kAXDescriptionAttribute), text(element, kAXTitleAttribute), text(element, kAXPlaceholderValueAttribute)].first { !$0.isEmpty } ?? ""
+            var value = ""
+            if let raw = attribute(element, kAXValueAttribute) {
+                if let string = raw as? String { value = string } else if let number = raw as? NSNumber { value = number.stringValue }
+            }
+            if value.count > 80 { value = String(value.prefix(80)) + "…" }
+            result.append(Element(role: role, subrole: text(element, kAXSubroleAttribute), label: label, value: value.replacingOccurrences(of: "\n", with: " "),
+                                  help: text(element, kAXHelpAttribute), selected: (attribute(element, kAXSelectedAttribute) as? Bool) == true,
+                                  frame: frame(element), depth: depth, element: element))
+            for child in attribute(element, kAXChildrenAttribute) as? [AXUIElement] ?? [] { walk(child, depth: depth + 1) }
+        }
+        for root in windows(matching: window) { walk(root, depth: 0) }
+        return result
+    }
+    /// Named elements with no role, which VoiceOver reads without saying what they are.
+    static func roleless(_ elements: [Element]) -> [Element] {
+        elements.filter { ($0.role == "AXUnknown" || $0.role.isEmpty) && !$0.label.isEmpty }
+    }
+    /// Controls VoiceOver would announce without a name.
+    static func unnamed(_ elements: [Element]) -> [Element] {
+        // The window's own buttons and scroll-bar parts are named by their subrole; selectable
+        // read-only text is read by its value.
+        let system: Set<String> = ["AXCloseButton", "AXMinimizeButton", "AXZoomButton", "AXFullScreenButton",
+                                   "AXIncrementArrow", "AXDecrementArrow", "AXIncrementPage", "AXDecrementPage"]
+        return elements.indices.compactMap { index in
+            let element = elements[index]
+            guard controls.contains(element.role), !system.contains(element.subrole), element.label.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
+            if ["AXTextArea", "AXTextField"].contains(element.role), !settable(element.element) {
+                // Read-only text is read by its contents, its own value or the text inside it.
+                let inside = elements[(index + 1)...].prefix { $0.depth > element.depth }
+                if !element.value.isEmpty || inside.contains(where: { $0.role == "AXStaticText" && !$0.value.isEmpty }) { return nil }
+            }
+            return element
+        }
+    }
+    static func settable(_ element: AXUIElement) -> Bool {
+        var settable: DarwinBoolean = false
+        return AXUIElementIsAttributeSettable(element, kAXValueAttribute as CFString, &settable) == .success && settable.boolValue
+    }
 }
 
 @main struct Snapshots {
@@ -88,6 +192,14 @@ final class SnapshotWindow: NSWindow {
         }
         if arguments.contains("--actions") {
             Task { @MainActor in exit(await ConfigsPreview.actions() ? 0 : 1) }
+            app.run()
+        }
+        if arguments.contains("--accessibility") {
+            Task { @MainActor in exit(await ConfigsPreview.accessibility(output: output, only: only) ? 0 : 1) }
+            app.run()
+        }
+        if arguments.contains("--overlays") {
+            Task { @MainActor in exit(await ConfigsPreview.overlays(output: output, only: only) ? 0 : 1) }
             app.run()
         }
         Task { @MainActor in
@@ -670,6 +782,7 @@ final class SnapshotWindow: NSWindow {
         }
         print("PASS: clicking a key chip and pressing G saved `bind g \"+frag\"` as one History row and stopped listening")
 
+
         // Check-up: Apply the top suggestion, then Undo it from its card.
         model.studio.checkup.rulesetIDs = ["zpam-4.08"]
         model.studio.tab = .checkup
@@ -691,6 +804,27 @@ final class SnapshotWindow: NSWindow {
         }
         print("PASS: clicking Apply wrote `seta com_maxfps \"250\"` as a Check-up transaction and clicking Undo restored the exact bytes")
 
+        // One window at a time from here, so the keyboard focus is unambiguous.
+        window.orderOut(nil)
+        do {
+            // Visual: clicking a key selects it and hands it the keyboard focus (read back the way
+            // VoiceOver reads focus). The arrow keys' move commands are not checked here: in this
+            // window they never reach SwiftUI, although the same structure moves in a minimal one.
+            guard let (visualModel, visual, visualHome) = await open("configs-binds-visual", dark: true) else { return false }
+            defer { visual.orderOut(nil); visual.close(); try? FileManager.default.removeItem(at: visualHome) }
+            guard let keyE = AccessibilityTree.elements(of: visual).first(where: { $0.role == "AXButton" && $0.label.hasPrefix("E, ") }) else {
+                print("FAIL: key E isn't in the accessibility tree"); return false
+            }
+            visual.makeKey()
+            click(visual, element: keyE)
+            try? await Task.sleep(for: .milliseconds(400))
+            let focus = AccessibilityTree.attribute(AccessibilityTree.application, kAXFocusedUIElementAttribute).map { $0 as! AXUIElement }
+            let focusLabel = focus.map { AccessibilityTree.text($0, kAXDescriptionAttribute) } ?? ""
+            guard visualModel.studio.binds.selectedVirtualKey == 14, focusLabel.hasPrefix("E, ") else {
+                print("FAIL: clicking E selected \(String(describing: visualModel.studio.binds.selectedVirtualKey)) with focus on “\(focusLabel)”"); return false
+            }
+            print("PASS: clicking E in Visual selected it and gave it the keyboard focus")
+        }
         guard await importAction() else { return false }
         return await readyAction()
     }
@@ -776,6 +910,132 @@ final class SnapshotWindow: NSWindow {
         print("PASS: clicking Undo cleared the per-connection fix; nothing on disk changed")
         return true
     }
+    /// The window for one review screen, seeded like the snapshot run; nil if seeding failed.
+    static func open(_ screen: String, dark: Bool, prepare: (LauncherModel) -> Void = { _ in }) async -> (LauncherModel, NSWindow, URL)? {
+        let model = LauncherModel(snapshot: true)
+        model.preview(screen)
+        guard let home = try? seed(model, screen: screen) else { print("FAIL: preview home for \(screen)"); return nil }
+        prepare(model)
+        trace("open \(screen): seeded")
+        let window = await Snapshots.show(model: model, dark: dark, glass: true)
+        trace("open \(screen): shown")
+        AccessibilityTree.wake()
+        trace("open \(screen): woke")
+        try? await Task.sleep(for: .milliseconds(500))
+        trace("open \(screen): ready")
+        return (model, window, home)
+    }
+    static func trace(_ text: String) { if ProcessInfo.processInfo.environment["COD2_SNAPSHOT_TRACE"] == "1" { fputs(text + "\n", stderr) } }
+    /// Clicks the centre of an accessibility element (screen coordinates) in the window.
+    /// A real click when the control is on screen; otherwise VoiceOver's press, which
+    /// works for controls scrolled out of view.
+    static func activate(_ window: NSWindow, element: AccessibilityTree.Element) {
+        let primary = NSScreen.screens.first?.frame.maxY ?? 0
+        let visible = CGRect(x: window.frame.minX, y: primary - window.frame.maxY, width: window.frame.width, height: window.frame.height)
+        if visible.contains(CGPoint(x: element.frame.midX, y: element.frame.midY)) { click(window, element: element) }
+        else { _ = AXUIElementPerformAction(element.element, kAXPressAction as CFString) }
+    }
+    static func click(_ window: NSWindow, element: AccessibilityTree.Element) {
+        let primary = NSScreen.screens.first?.frame.maxY ?? 0
+        click(window, at: window.convertPoint(fromScreen: NSPoint(x: element.frame.midX, y: primary - element.frame.midY)))
+    }
+
+    /// Labels each screen must expose, so an empty or unbuilt tree can't pass.
+    static let expectedLabels: [String: [String]] = [
+        "configs-guided": ["Jump to Any Setting", "Frame rate cap"],
+        "configs-binds-list": ["Primary key for Throw frag grenade", "Find an action or key", "Advanced binds"],
+        "configs-binds-advanced": ["Key for this bind", "Save Bind", "Step 1"],
+        "configs-binds-visual": ["W, Move forward", "Find by Pressing", "Selected key"],
+        "configs-checkup": ["Movement: 333 FPS", "Apply", "Show Me", "Not Now", "Rules to check against"],
+        "configs-history": ["Restore This Snapshot"],
+    ]
+
+    /// Every Config Studio screen's accessibility tree in reading order, with unnamed controls as failures.
+    static func accessibility(output: URL, only: String?) async -> Bool {
+        let folder = output.appendingPathComponent("accessibility")
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        var ok = true
+        for screen in Snapshots.configScreens where only == nil || only == screen {
+            guard let (_, window, home) = await open(screen, dark: true) else { return false }
+            let elements = AccessibilityTree.elements(of: window)
+            trace("\(screen): \(elements.count) elements read")
+            window.orderOut(nil); window.close()
+            try? FileManager.default.removeItem(at: home)
+            try? (elements.map(\.line).joined(separator: "\n") + "\n").write(to: folder.appendingPathComponent(screen + ".txt"), atomically: true, encoding: .utf8)
+            let controls = elements.filter { AccessibilityTree.controls.contains($0.role) }
+            let unnamed = AccessibilityTree.unnamed(elements)
+            // Static text reads its words as its value.
+            let missing = (expectedLabels[screen] ?? []).filter { expected in !elements.contains { $0.label.hasPrefix(expected) || $0.value.hasPrefix(expected) } }
+            let roleless = AccessibilityTree.roleless(elements)
+            for element in unnamed { print("A11Y: \(screen): \(element.role) at \(NSStringFromRect(element.frame)) has no name") }
+            for element in roleless { print("A11Y: \(screen): “\(element.label)” has no role") }
+            for label in missing { print("A11Y: \(screen): no element named “\(label)…”") }
+            print("A11Y \(screen): \(elements.count) elements, \(controls.count) controls, \(unnamed.count) without a name, \(roleless.count) without a role")
+            ok = ok && unnamed.isEmpty && roleless.isEmpty && missing.isEmpty && controls.count > 5
+        }
+        print(ok ? "PASS: every Config Studio control has a name and every named element a role VoiceOver can read" : "FAIL: accessibility tree problems above")
+        return ok
+    }
+
+    struct Overlay {
+        let name: String, screen: String
+        var prepare: @MainActor (LauncherModel) -> Void = { _ in }
+        let target: @MainActor (AccessibilityTree.Element) -> Bool
+        var after: @MainActor (NSWindow) async -> Void = { _ in }
+    }
+    static let overlayCases: [Overlay] = [
+        Overlay(name: "configs-jump", screen: "configs-guided", target: { $0.role == "AXButton" && $0.label == "Jump to Any Setting" }, after: { window in
+            // Type “fps” the way VoiceOver would set a field's value.
+            if let field = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXTextField" && $0.label == "Setting name or console name" }) {
+                _ = AXUIElementSetAttributeValue(field.element, kAXValueAttribute as CFString, "fps" as CFString)
+                try? await Task.sleep(for: .milliseconds(500))
+            }
+        }),
+        Overlay(name: "configs-new-loadout", screen: "configs-guided", target: { $0.role == "AXButton" && $0.label == "New Loadout" }),
+        Overlay(name: "configs-expert-note", screen: "configs-expert", target: { $0.role == "AXButton" && $0.label == "Edit the note on Mouse speed" }),
+        Overlay(name: "configs-binds-keyboard", screen: "configs-binds-visual", target: { $0.role == "AXButton" && $0.label.hasPrefix("Magic Keyboard") }),
+        Overlay(name: "configs-binds-pointer", screen: "configs-binds-visual", target: { $0.role == "AXButton" && $0.label.hasPrefix("Mouse ·") }),
+        Overlay(name: "configs-binds-confirm", screen: "configs-binds-advanced",
+                prepare: { model in model.studio.binds.updateDraft { $0.steps[0].text = "good luck" } },
+                target: { $0.role == "AXButton" && $0.label == "Save Bind" }),
+    ]
+
+    /// Sheets, popovers and alerts opened by real clicks, captured over their window.
+    static func overlays(output: URL, only: String?) async -> Bool {
+        var ok = true, written = 0
+        for overlay in overlayCases where only == nil || only == overlay.name {
+            for dark in [true, false] {
+                guard let (_, window, home) = await open(overlay.screen, dark: dark, prepare: overlay.prepare) else { return false }
+                defer { try? FileManager.default.removeItem(at: home) }
+                let name = "\(overlay.name)-\(dark ? "dark" : "light")"
+                guard let target = AccessibilityTree.elements(of: window).first(where: overlay.target) else {
+                    print("FAIL: \(name): the control that opens it isn't in the accessibility tree"); ok = false
+                    window.orderOut(nil); window.close(); continue
+                }
+                activate(window, element: target)
+                try? await Task.sleep(for: .milliseconds(900))
+                await overlay.after(window)
+                // Sheets, alerts and popovers are windows of their own; popovers aren't in orderedWindows.
+                let others = NSApp.windows.filter { $0 !== window && $0.isVisible && $0.frame.intersects(window.frame) }
+                    .sorted { ($0.attachedSheet == nil ? 0 : 1, $0.level.rawValue) > ($1.attachedSheet == nil ? 0 : 1, $1.level.rawValue) }
+                if others.isEmpty {
+                    print("FAIL: \(name): clicking “\(target.label)” opened nothing"); ok = false
+                } else if let image = WindowCapture.image(of: others + [window], in: window) {
+                    try? Snapshots.write(image, to: output.appendingPathComponent("overlay-" + name + ".png")); written += 1
+                    print("OVERLAY \(name): \(others.map { String(describing: type(of: $0)) }.joined(separator: ", ")) over the window")
+                } else {
+                    print("FAIL: \(name): capture failed"); ok = false
+                }
+                if let sheet = window.attachedSheet { window.endSheet(sheet) }
+                for other in others { other.orderOut(nil) }
+                window.orderOut(nil); window.close()
+                try? await Task.sleep(for: .milliseconds(200))
+            }
+        }
+        print(ok ? "PASS: \(written) sheet, popover and alert captures opened by real clicks" : "FAIL: overlay problems above")
+        return ok && written > 0
+    }
+
     /// A key press delivered through the application, where Binds' local monitor listens.
     static func press(_ window: NSWindow, keyCode: UInt16, characters: String) {
         for type in [NSEvent.EventType.keyDown, .keyUp] {

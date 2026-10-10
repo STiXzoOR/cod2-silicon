@@ -86,7 +86,22 @@ for variant in ["increase-contrast", "reduce-transparency"]:
 # Undo) write exact bytes and History rows in a temporary home.
 subprocess.run([str(harness), str(out / "actions"), "--actions"], check=True, timeout=300)
 
+# Every Config Studio control has a name in the accessibility tree VoiceOver reads; the trees
+# are written in reading order for review.
+subprocess.run([str(harness), str(out), "--accessibility"], check=True, timeout=300)
+for screen in configs:
+    assert (out / "accessibility" / f"{screen}.txt").stat().st_size > 1000, screen
+
+# Sheets, popovers and alerts, opened by real clicks and captured over their window.
+overlays = ["configs-jump", "configs-new-loadout", "configs-expert-note", "configs-binds-keyboard", "configs-binds-pointer", "configs-binds-confirm"]
+subprocess.run([str(harness), str(out / "overlays"), "--overlays"], check=True, timeout=300)
+for overlay in overlays:
+    for appearance in ["dark", "light"]:
+        (width, height), length = size(out / "overlays" / f"overlay-{overlay}-{appearance}.png")
+        assert width >= 1440 and height >= 900 and length > 60_000, (overlay, appearance, width, height, length)
+
 # The harness exits non-zero on any shape-audit finding, so reaching here means none.
 print(f"PASS: {len(screens) * 2} launcher screens at 1440x900 points in dark and light, plus the material fallback, with bundled fonts"
       " and a clean shape audit (capsule buttons, concentric nesting, equal insets); Config Studio under Increase Contrast and"
-      " Reduce Transparency; Config Studio clicks write exact bytes")
+      " Reduce Transparency; Config Studio clicks write exact bytes; every Config Studio control is named for VoiceOver;"
+      f" {len(overlays) * 2} sheet, popover and alert captures")
