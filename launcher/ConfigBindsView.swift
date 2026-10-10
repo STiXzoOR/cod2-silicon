@@ -842,7 +842,8 @@ private struct KeyboardPanel: View {
     /// The width this panel may take; keys grow to fill it, within reason.
     var available: CGFloat
     @Environment(\.palette) private var palette
-    @FocusState private var focused: Bool
+    /// The key with keyboard focus; selection follows it.
+    @FocusState private var focusedKey: UInt16?
 
     var body: some View {
         let device = currentKeyboard(binds: binds, devices: devices)
@@ -858,18 +859,26 @@ private struct KeyboardPanel: View {
         let unit = min(48, max(StudioMetrics.minimumHitTarget + 4, ((available - inset * 2) / columns).rounded(.down)))
         ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: inset, leading: inset, bottom: 16, trailing: inset)) {
             VStack(alignment: .leading, spacing: 14) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    ZStack(alignment: .topLeading) {
-                        ForEach(keys) { key in
-                            KeyButton(binds: binds, devices: devices, key: key, unit: unit, modifiers: modifiers)
+                // No scroll view around the drawing: one would take the arrow keys for scrolling,
+                // and the keys shrink to fit the launcher's narrowest window instead. A chosen
+                // key keeps keyboard focus, and the arrow keys move focus and selection together
+                // along the drawing.
+                ZStack(alignment: .topLeading) {
+                    ForEach(keys) { key in
+                        KeyButton(binds: binds, devices: devices, key: key, unit: unit, modifiers: modifiers) {
+                            Task { @MainActor in focusedKey = key.virtualKey }
                         }
+                        .focused($focusedKey, equals: key.virtualKey)
+                        .onMoveCommand { direction in move(direction, keys: keys) }
                     }
-                    .frame(width: columns * unit, height: rows * unit, alignment: .topLeading)
+                }
+                .frame(width: columns * unit, height: rows * unit, alignment: .topLeading)
+                .onChange(of: focusedKey) { key in
+                    guard let key, key != binds.selectedVirtualKey else { return }
+                    binds.selectedVirtualKey = key
+                    binds.selectedKey = devices.inputSource.mapping(virtualKey: key).engineKey
                 }
                 .frame(maxWidth: columns * unit, alignment: .leading)
-                .focusable()
-                .focused($focused)
-                .onMoveCommand { direction in move(direction, keys: keys) }
                 .accessibilityElement(children: .contain)
                 .accessibilityLabel("\(device?.name ?? "Keyboard"), \(shape.rawValue.uppercased()) layout. Each key says what it does.")
                 Legend()
@@ -880,8 +889,10 @@ private struct KeyboardPanel: View {
     /// Arrow keys follow the drawing: the nearest key in that direction.
     private func move(_ direction: MoveCommandDirection, keys: [ConfigKeyboardKey]) {
         let source = devices.inputSource
-        guard let selected = binds.selectedKey,
-              let from = keys.first(where: { source.mapping(virtualKey: $0.virtualKey).engineKey == selected }) ?? keys.first else { return }
+        // Start from the drawn key chosen last; keys the game can't use have no engine key.
+        guard let from = keys.first(where: { $0.virtualKey == binds.selectedVirtualKey })
+                ?? keys.first(where: { binds.selectedKey != nil && source.mapping(virtualKey: $0.virtualKey).engineKey == binds.selectedKey })
+                ?? keys.first else { return }
         let cx = from.x + from.width / 2, cy = from.y + from.height / 2
         let candidates = keys.filter { $0.virtualKey != from.virtualKey }.compactMap { key -> (ConfigKeyboardKey, Double)? in
             let dx = key.x + key.width / 2 - cx, dy = key.y + key.height / 2 - cy
@@ -894,8 +905,9 @@ private struct KeyboardPanel: View {
             }
         }
         guard let next = candidates.min(by: { $0.1 < $1.1 })?.0 else { return }
-        binds.selectedKey = source.mapping(virtualKey: next.virtualKey).engineKey ?? binds.selectedKey
+        binds.selectedKey = source.mapping(virtualKey: next.virtualKey).engineKey
         binds.selectedVirtualKey = next.virtualKey
+        focusedKey = next.virtualKey
     }
 }
 
@@ -905,6 +917,7 @@ private struct KeyButton: View {
     var key: ConfigKeyboardKey
     var unit: CGFloat
     var modifiers: KeyboardModifierStyle
+    var chosen: () -> Void = {}
 
     var body: some View {
         let mapping = devices.inputSource.mapping(virtualKey: key.virtualKey)
@@ -918,10 +931,13 @@ private struct KeyButton: View {
         Button {
             binds.selectedVirtualKey = key.virtualKey
             binds.selectedKey = engine
+            chosen()
         } label: {
             StudioKeyCap(key: label, action: width >= 76 || key.virtualKey == 49 ? caption : nil, role: role, selected: selected, width: width, height: height)
         }
         .buttonStyle(.plain)
+        // Keys take focus even with keyboard navigation off, so arrows work after a click.
+        .focusable()
         .offset(x: key.x * unit, y: key.y * unit)
         .accessibilityLabel("\(Self.spoken(label, key.virtualKey)), \(role == .unavailable ? mapping.explanation ?? StudioKeyRole.unavailable.rawValue : caption ?? "not bound")")
         .accessibilityAddTraits(selected ? .isSelected : [])
