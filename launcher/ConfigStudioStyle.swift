@@ -168,6 +168,18 @@ enum StudioKeyRole: String, CaseIterable {
 /// A button label, not a custom control. Wrap in a native Button so activation,
 /// focus and disabled behavior remain native; the keyboard grid owns navigation.
 /// Unavailable keys stay inspectable so the explanation is reachable.
+/// Popovers that hold settings sit on an opaque panel, like the rest of Config Studio's content,
+/// so their text stays legible over the coloured keyboard and busy rows behind them.
+struct StudioPopoverBackground: ViewModifier {
+    @Environment(\.palette) private var palette
+    func body(content: Content) -> some View {
+        if #available(macOS 13.3, *) { content.presentationBackground(palette.panel) } else { content.background(palette.panel) }
+    }
+}
+extension View {
+    func studioPopover() -> some View { modifier(StudioPopoverBackground()) }
+}
+
 struct StudioKeyCap: View {
     var key: String
     var action: String? = nil

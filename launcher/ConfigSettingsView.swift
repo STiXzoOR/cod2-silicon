@@ -536,7 +536,7 @@ private struct ExpertRow: View {
                     IconAction(symbol: state.note == nil ? "square.and.pencil" : "note.text", label: state.note == nil ? "Add a note to \(spec.title)" : "Edit the note on \(spec.title)", on: state.note != nil) {
                         editingNote = true
                     }
-                    .popover(isPresented: $editingNote, arrowEdge: .bottom) { NoteEditor(studio: studio, spec: spec, note: state.note ?? "") }
+                    .popover(isPresented: $editingNote, arrowEdge: .bottom) { NoteEditor(studio: studio, spec: spec, note: state.note ?? "").studioPopover() }
                 }
             }
             .frame(minHeight: 40)

@@ -691,13 +691,13 @@ private struct DeviceChips: View {
                 ChipLabel(title: "\(keyboard?.name ?? "Keyboard") · \(shape.rawValue.uppercased()) · \(devices.inputSource.name)", symbol: "keyboard")
             }
             .glassAction().controlSize(.small).fixedSize()
-            .popover(isPresented: $keyboardOpen, arrowEdge: .bottom) { KeyboardPopover(binds: binds, devices: devices) }
+            .popover(isPresented: $keyboardOpen, arrowEdge: .bottom) { KeyboardPopover(binds: binds, devices: devices).studioPopover() }
             Button { pointerOpen.toggle() } label: {
                 ChipLabel(title: binds.pointer == .trackpad ? "Trackpad" : "Mouse" + (studio.metadata?.dpi.map { " · \(ConfigValues.format($0)) DPI" } ?? ""),
                           symbol: binds.pointer == .trackpad ? "rectangle.and.hand.point.up.left" : "computermouse")
             }
             .glassAction().controlSize(.small).fixedSize()
-            .popover(isPresented: $pointerOpen, arrowEdge: .bottom) { PointerPopover(studio: studio, binds: binds, devices: devices) }
+            .popover(isPresented: $pointerOpen, arrowEdge: .bottom) { PointerPopover(studio: studio, binds: binds, devices: devices).studioPopover() }
             // The hint steps aside rather than truncating in narrow windows.
             ViewThatFits(in: .horizontal) {
                 Text("Click any key or button to see or change what it does.").font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize()
