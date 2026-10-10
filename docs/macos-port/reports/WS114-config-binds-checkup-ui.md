@@ -4,7 +4,7 @@
 
 ## What was built
 
-**Tab bar.** Configs now has Settings, Binds, Check-up and History (`ConfigStudioTab.available`). The content area switches on `ConfigStudioModel.destination` before the tab. Today `destination` has one case, `.loadout`. Discover adds its own case and view there and in the loadout column; nothing in this unit builds or stubs Discover. The header shows List / Visual on Binds and Tune for (Competitive, Balanced, Best looking) on Check-up. The More menu gains **Export for Windows…**, which writes B2's stock-compatible config through a save panel. B2 refuses an export into the game's own home, and success shows a dismissible notice.
+**Tab bar.** Configs now has Settings, Binds, Check-up and History (`ConfigStudioTab.available`). Discover (WS115) shows in place of the loadout when its page is open; otherwise the content switches on the tab. This unit first left a placeholder `destination` for Discover. After the rebase it was removed, because Discover brought its own seam. The header shows List / Visual on Binds and Tune for (Competitive, Balanced, Best looking) on Check-up. The More menu gains **Export for Windows…**, which writes B2's stock-compatible config through a save panel. B2 refuses an export into the game's own home, and success shows a dismissible notice.
 
 **Binds › List.** Search matches an action or a key name. The catalog's game actions are grouped as Movement, Combat, Communication and Game & UI. Each row has a primary and a second key chip, and other keys bound to the action are listed under its name.
 - Pressing a chip listens for the next key, mouse button or wheel move through B1's `ConfigBindingCapture`. The chip reads "Press a key…". The console key and keys the game can't use stay listening and show B1's reason.
@@ -184,7 +184,7 @@ Inspected at full resolution against BindsList, BindsVisual and CheckUp (and Con
 | Movement dial “Not measured” | “From settings” (the cap) with “The frame rate you actually get isn’t measured.” | The value shown is a setting; the status says where it comes from. |
 | “Get advice from your own games / Turn on match summaries” card | Info banner: advice comes from settings and rules; nothing claims a frame rate, ping or hit rate you didn't record | Match summaries don't exist; a button would be disconnected. |
 | Header eyebrow “Check-up · Main” | The shared loadout header (“Loadout · In use / MAIN”) | One header for all four tabs. |
-| Discover › Players / Saved in the loadout column | Not shown | Built by the Discover unit; this unit leaves `destination` for it. |
+| Discover › Players / Saved in the loadout column | Shown since the rebase (WS115) | Built by the Discover unit. |
 
 ## Copy gaps
 
@@ -199,7 +199,7 @@ For the B1/B2 owners:
 - B2's error descriptions are technical (“vstr cycle”, “1022-byte set value limit”, “exec/vstr”), so the launcher maps every `ConfigChainError` case to its own wording; B2 could adopt those
 - keys with no drawn label and no readable name in the launcher read from the engine's spelling (“Kp Home”); B1 could supply names
 
-For the catalog owner: the toggle menu uses catalog titles, some of which are mechanical for non-guided settings.
+For the catalog owner: resolved by WS117. Every setting now has a plain title, so the toggle menu, the Jump palette (“Server update rate”, not “Fps”) and Guided tips (“CoD2x forces connection speed to 25000…”) read in plain words.
 
 Launcher copy written here (all within the board's tone):
 - review and refusal messages
@@ -274,9 +274,45 @@ With keyboard navigation on, Tab also stops on each key.
   - the accessibility audit on all 12 screens: every control named and every named element given a role
   - 12 sheet, popover and alert captures
 
+## Rebase onto `7a30dd9`
+
+I ran `git rebase --onto 7a30dd9 defeb5a codex/config-ui-binds-checkup`, which brought in WS117's catalog copy pass and WS115's Discover, import review and Servers ready check. Conflicts, each resolved by keeping both sides:
+
+- **Build lists.** `scripts/build-launcher.sh` and the `tests/launcher/run.sh` typecheck conflicted in three commits. They now list both units' sources: WS115's `ConfigDiscoverModel`, `ConfigDiscoverView`, `ConfigImportView`, `ServerReadyCheck` and `ServerReadyCheckView`, and WS114's `ConfigStudioBinds`, `ConfigStudioCheckup`, `ConfigBindsView` and `ConfigCheckupView`.
+- **`launcher/Model.swift` preview cases.** Union of both units' screens.
+- **`tests/launcher/Snapshots.swift`.**
+  - The screen list is the union of both units' screens.
+  - `--actions` runs, in order: WS103's two clicks; WS114's Binds capture and Check-up Apply/Undo in the same window; then the Visual click-to-focus check in its own window, scoped so the window closes; then WS115's import Apply and ready-check Fix/Undo.
+- **`tests/launcher/snapshots.py`.**
+  - The screen list is the union of both units' screens.
+  - Both Reduce Transparency rules are kept: WS115 skips the two import-sheet screens, and WS114 requires a change only where the shape audit lists glass.
+
+Overlaps that merged cleanly but needed a fix (`45d05ce`):
+- The placeholder `destination` was removed.
+- `config_discover.sh` now builds the Binds and Check-up stores and screens, which the Configs views reference.
+- The harness's window-driving modes load WS115's fixtures, so the accessibility audit also reads Discover, import and the ready check in their real state.
+
+**Catalog copy.** I checked the new copy (WS117) against Binds and Check-up:
+- The focused tests and harness labels pass unchanged: action titles, “Frame rate cap: 333 fps → 250 fps”, “Show frame rate”, “Move forward”.
+- Guided tips now name “Connection speed”, “Updates you send” and “Updates you receive”.
+- The optimizer and rule-reason copy gaps above are unchanged.
+
+**Verification at `45d05ce`.** I took the bench lease and confirmed the session was unlocked (`IOConsoleLocked` false before and after). I then ran the full `tests/launcher/run.sh` end to end, followed by a separate `LauncherSnapshots --actions`, and released the lease. Logs: `logs/rebase-run.log` and `logs/rebase-actions.log`.
+
+- **`run.sh` exited 0 with 95 PASS lines.** That covers every focused runner (now including `config_discover.sh`), the button-style check and the strict Swift 6 / macOS 13 typecheck of all views. Its snapshot stage:
+  - 70 window captures, now at the display's 2880 × 1800, with 668 shapes and 0 findings
+  - the material fallback
+  - Increase Contrast and Reduce Transparency for all 22 Config Studio, Discover, import and ready-check screens, 474 shapes each with 0 findings
+  - 8 real-click actions (WS103 ×2, WS114 ×3, WS115 ×3)
+  - the accessibility audit on all 20 configured screens (WS115's included), with every control named and every named element given a role
+  - 12 overlay captures
+- **The separate `--actions` run passed all 8 actions again.**
+
+I looked at the real PNGs for Binds (List and Visual), Check-up, Expert under rules, Discover › Players and the Servers ready check. Discover sits in the loadout column under My Loadouts, and the tabs hide while it's open. Binds and Check-up render as before. Expert's Network group now holds 127 settings, regrouped by WS117 with plain titles.
+
 ## Composition
 
-Compose `defeb5a..` in order: `9fe61dc` (view stores), `bcb7c66` (Binds screens), `6b960f6` (Check-up screen), `7e64e4d` (tabs, Export, Guided tips and Expert badges), `71f0712` (harness), `d09b539` (plain names in Guided tips), `18360b9` (conflict copy), `71e8f06` (scrolling editor, plain B2 refusals), `11bc5bf` (Reduce Transparency check), `58cbe79` (this report), then the real-window round: `a0738b1` (legible popovers), `2bae628` (keyboard focus in Visual), `06fe40d` (accessibility fixes), `6b2bb28` (harness accessibility audit and overlays), and this report's update. All carry DCO sign-off and the requested author email.
+Compose `defeb5a..` in order: `9fe61dc` (view stores), `bcb7c66` (Binds screens), `6b960f6` (Check-up screen), `7e64e4d` (tabs, Export, Guided tips and Expert badges), `71f0712` (harness), `d09b539` (plain names in Guided tips), `18360b9` (conflict copy), `71e8f06` (scrolling editor, plain B2 refusals), `11bc5bf` (Reduce Transparency check), `58cbe79` (this report), then the real-window round: `a0738b1` (legible popovers), `2bae628` (keyboard focus in Visual), `06fe40d` (accessibility fixes), `6b2bb28` (harness accessibility audit and overlays), and this report's update. After the rebase onto `7a30dd9` these are `894b532`…`7f6d48c`, followed by `45d05ce` (composition with Discover) and this report's rebase section. All carry DCO sign-off and the requested author email.
 
 The build lists (`scripts/build-launcher.sh`, the `tests/launcher/run.sh` typecheck) include both new views. `tests/launcher/config_studio.sh` compiles B1, B2, A1, I1 and the two view stores.
 
