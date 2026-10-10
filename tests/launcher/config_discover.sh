@@ -15,8 +15,8 @@ sources=""
 for file in Core Presentation ConfigDocument ConfigProfiles ConfigHistory ConfigStudioSession ConfigCatalog ConfigRules ConfigReadyCheck \
     ConfigCheckup ConfigBindings InputDevices ConfigChains ConfigImport ConfigImportSafety WindowsProfiles ConfigImportSession \
     ConfigImportCatalogAdapter ConfigDirectory Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView \
-    LibraryView ConfigStudioModel ConfigStudioStyle ConfigsView ConfigSettingsView ConfigHistoryView \
-    ConfigDiscoverModel ConfigDiscoverView ConfigImportView ServerReadyCheck ServerReadyCheckView; do
+    LibraryView ConfigStudioModel ConfigStudioBinds ConfigStudioCheckup ConfigStudioStyle ConfigsView ConfigSettingsView ConfigHistoryView \
+    ConfigBindsView ConfigCheckupView ConfigDiscoverModel ConfigDiscoverView ConfigImportView ServerReadyCheck ServerReadyCheckView; do
     sources="$sources $root/launcher/$file.swift"
 done
 # shellcheck disable=SC2086

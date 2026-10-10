@@ -154,14 +154,11 @@ struct ConfigsShell: View {
                             .accessibilityElement(children: .combine)
                     }
                 } else {
-                    switch studio.destination {
-                    case .loadout:
-                        switch studio.tab {
-                        case .settings: ConfigSettingsView(studio: studio, session: session, openSettings: { model.page = .settings })
-                        case .binds: ConfigBindsView(studio: studio, session: session)
-                        case .checkup: ConfigCheckupView(studio: studio, session: session)
-                        case .history: ConfigHistoryView(studio: studio, session: session)
-                        }
+                    switch studio.tab {
+                    case .settings: ConfigSettingsView(studio: studio, session: session, openSettings: { model.page = .settings })
+                    case .binds: ConfigBindsView(studio: studio, session: session)
+                    case .checkup: ConfigCheckupView(studio: studio, session: session)
+                    case .history: ConfigHistoryView(studio: studio, session: session)
                     }
                 }
             } else {

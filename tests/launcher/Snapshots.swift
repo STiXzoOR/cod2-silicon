@@ -911,11 +911,13 @@ final class SnapshotWindow: NSWindow {
         return true
     }
     /// The window for one review screen, seeded like the snapshot run; nil if seeding failed.
-    static func open(_ screen: String, dark: Bool, prepare: (LauncherModel) -> Void = { _ in }) async -> (LauncherModel, NSWindow, URL)? {
+    static func open(_ screen: String, dark: Bool, setup: (LauncherModel) -> Void = { _ in }) async -> (LauncherModel, NSWindow, URL)? {
         let model = LauncherModel(snapshot: true)
         model.preview(screen)
         guard let home = try? seed(model, screen: screen) else { print("FAIL: preview home for \(screen)"); return nil }
-        prepare(model)
+        // Discover, import and ready-check screens load their fixtures the way the snapshot run does.
+        do { try await prepare(model, screen: screen, home: home) } catch { print("FAIL: preview for \(screen): \(error)"); return nil }
+        setup(model)
         trace("open \(screen): seeded")
         let window = await Snapshots.show(model: model, dark: dark, glass: true)
         trace("open \(screen): shown")
@@ -1005,7 +1007,7 @@ final class SnapshotWindow: NSWindow {
         var ok = true, written = 0
         for overlay in overlayCases where only == nil || only == overlay.name {
             for dark in [true, false] {
-                guard let (_, window, home) = await open(overlay.screen, dark: dark, prepare: overlay.prepare) else { return false }
+                guard let (_, window, home) = await open(overlay.screen, dark: dark, setup: overlay.prepare) else { return false }
                 defer { try? FileManager.default.removeItem(at: home) }
                 let name = "\(overlay.name)-\(dark ? "dark" : "light")"
                 guard let target = AccessibilityTree.elements(of: window).first(where: overlay.target) else {

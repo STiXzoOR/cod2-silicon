@@ -14,12 +14,6 @@ enum ConfigStudioTab: String, CaseIterable, Identifiable {
     static let available: [ConfigStudioTab] = [.settings, .binds, .checkup, .history]
 }
 
-/// What the Configs page shows beside the loadout column. Discover (Players,
-/// Saved) adds its own case and view; a loadout keeps its tabs.
-enum ConfigStudioDestination: Hashable {
-    case loadout
-}
-
 enum ConfigDetailLevel: String, CaseIterable, Identifiable {
     case guided, expert
     var id: String { rawValue }
@@ -420,7 +414,6 @@ struct ConfigStudioFailure: Identifiable {
     private var catalogLoading = false
     private let catalogSource: @Sendable () throws -> ConfigCatalog
 
-    @Published var destination: ConfigStudioDestination = .loadout
     @Published var tab: ConfigStudioTab = .settings
     @Published var level: ConfigDetailLevel = .guided
     @Published var group: ConfigPurposeGroup = .frame
