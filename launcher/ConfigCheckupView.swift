@@ -216,6 +216,7 @@ private struct DialCard: View {
         .overlay(RoundedRectangle(cornerRadius: StudioMetrics.panelRadius, style: .continuous).stroke(palette.panelStroke, lineWidth: 1))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(gauge.area.title): \(gauge.value == "—" ? "no value" : gauge.value), \(gauge.status). \(gauge.detail)")
+        .accessibilityAddTraits(.isStaticText)
     }
 }
 

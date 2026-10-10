@@ -174,16 +174,18 @@ private struct SnapshotInspector: View {
                 }
                 ForEach(changes) { change in
                     Rectangle().fill(palette.separator).frame(height: 1).gridCellUnsizedAxes(.horizontal)
+                    // Grid rows pass modifiers to every cell, so the first cell reads the whole row.
                     GridRow(alignment: .firstTextBaseline) {
                         Text(change.label).foregroundStyle(palette.text).fixedSize(horizontal: false, vertical: true)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .accessibilityLabel(change.then.isEmpty ? "\(change.label), \(change.now)" : "\(change.label), then \(change.then), now \(change.now)")
                         Text(change.then.isEmpty ? "—" : change.then).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+                            .accessibilityHidden(true)
                         Text("→").foregroundStyle(palette.tertiary).accessibilityHidden(true)
                         Text(change.now).fontWeight(.semibold).foregroundStyle(palette.heading).fixedSize(horizontal: false, vertical: true)
+                            .accessibilityHidden(true)
                     }
                     .font(.system(size: 13)).monospacedDigit().padding(.vertical, 9)
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(change.then.isEmpty ? "\(change.label), \(change.now)" : "\(change.label), then \(change.then), now \(change.now)")
                 }
             }
             Spacer(minLength: 0)

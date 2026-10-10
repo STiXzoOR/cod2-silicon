@@ -64,6 +64,7 @@ struct StudioStatusLabel: View {
             .fixedSize(horizontal: false, vertical: true)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(title)
+            .accessibilityAddTraits(.isStaticText)
     }
 }
 
@@ -132,6 +133,7 @@ struct StudioCompareValue: View {
             .fixedSize(horizontal: false, vertical: true)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(value), \(source)’s choice")
+            .accessibilityAddTraits(.isStaticText)
     }
 }
 

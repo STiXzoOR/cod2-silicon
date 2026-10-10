@@ -276,6 +276,7 @@ private struct DPIRow: View {
                 .frame(minWidth: 150, alignment: .trailing)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(distance == nil ? "Enter your mouse’s DPI to see how far you turn" : "\(MouseMath.label(distance)) centimetres per full turn")
+                .accessibilityAddTraits(.isStaticText)
             }
         }
     }
@@ -497,7 +498,7 @@ private struct ExpertRow: View {
                         Text(spec.title).font(.system(size: 13, weight: .medium)).foregroundStyle(palette.dark ? Palette.hex(0xe6dfcf) : palette.text)
                             .lineLimit(2).fixedSize(horizontal: false, vertical: true)
                         if state.locked { Image(systemName: "lock.fill").font(.system(size: 10)).foregroundStyle(palette.accent).accessibilityLabel("Locked") }
-                        if state.changed && !spec.launcherOwned { Circle().fill(palette.accent).frame(width: 6, height: 6).accessibilityLabel("Changed from default") }
+                        if state.changed && !spec.launcherOwned { Circle().fill(palette.accent).frame(width: 6, height: 6).accessibilityLabel("Changed from default").accessibilityAddTraits(.isStaticText) }
                     }
                     Text(spec.name).font(StudioTypography.consoleName).foregroundStyle(palette.address).lineLimit(1).textSelection(.enabled)
                     if let badge = checkup.badge(spec) {
