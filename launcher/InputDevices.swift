@@ -107,7 +107,11 @@ struct InputDevicePresentation: Sendable {
 /// so it holds whatever the layout prints on the keys. Nothing here listens for input.
 struct KeyboardVerification: Equatable, Sendable {
     enum Step: Equatable, Sendable {
-        case besideShift, besideSpace, keypad, functionRow, navigation, arrows, done
+        case besideShift, besideSpace, keypad, functionRow, navigation, arrows
+        /// The sizes the answers fit. Keys only narrow it: the person chooses, and only that
+        /// choice makes the size verified (a compact 75% can have F1 and Home, like a tenkeyless).
+        case size([KeyboardSize])
+        case done
         var instruction: String {
             switch self {
             case .besideShift: "Press the key just to the right of the left Shift key."
@@ -116,6 +120,9 @@ struct KeyboardVerification: Equatable, Sendable {
             case .functionRow: "Press F1, at the top left. On a Mac keyboard, hold fn while you press it."
             case .navigation: "Press Home, End, Page Up or Page Down: a key with that name, not fn with an arrow."
             case .arrows: "Press any arrow key."
+            case .size(let sizes) where sizes.count > 1:
+                "Your keys fit \(sizes.map(KeyboardVerification.name).joined(separator: " or ")). Choose the size of your keyboard."
+            case .size(let sizes): "Your keys fit \(sizes.first.map(KeyboardVerification.name) ?? "this size"). Confirm the size of your keyboard."
             case .done: "Done."
             }
         }
@@ -129,7 +136,12 @@ struct KeyboardVerification: Equatable, Sendable {
     private var size: KeyboardSize?
 
     /// Every keyboard has the first two keys, so only the size questions can be skipped.
-    var canSkip: Bool { ![.besideShift, .besideSpace, .done].contains(step) }
+    var canSkip: Bool {
+        if case .size = step { return false }
+        return ![.besideShift, .besideSpace, .done].contains(step)
+    }
+    /// Sizes offered once the keys have answered; empty before then.
+    var sizeChoices: [KeyboardSize] { if case .size(let sizes) = step { return sizes }; return [] }
     var result: InputDeviceOverride? {
         guard step == .done, let shape, let modifiers, let size else { return nil }
         return .init(shape: shape, size: size, modifiers: modifiers, verified: true)
@@ -160,20 +172,28 @@ struct KeyboardVerification: Equatable, Sendable {
             }
             step = .keypad
         case .keypad:
-            if Self.keypad.contains(virtualKey) { size = .full; step = .done }
+            if Self.keypad.contains(virtualKey) { step = .size([.full]) }
             else if Self.numberRow.contains(virtualKey) { note = "That’s a number above the letters. Press one on the keypad, or choose I Don’t Have This Key." }
             else { note = "That key isn’t on a numeric keypad. Press a keypad number, or choose I Don’t Have This Key." }
         case .functionRow:
             if Self.functionKeys.contains(virtualKey) { step = .navigation }
             else { note = "That isn’t a function key. Press F1, holding fn on a Mac keyboard, or choose I Don’t Have This Key." }
         case .navigation:
-            if Self.navigationKeys.contains(virtualKey) { size = .tkl; step = .done }
+            if Self.navigationKeys.contains(virtualKey) { step = .size([.tkl, .percent75]) }
             else { note = "That isn’t Home, End, Page Up or Page Down. Press one of them, or choose I Don’t Have This Key." }
         case .arrows:
-            if Self.arrowKeys.contains(virtualKey) { size = .percent65; step = .done }
+            if Self.arrowKeys.contains(virtualKey) { step = .size([.percent65]) }
             else { note = "That isn’t an arrow key. Press one, or choose I Don’t Have This Key." }
-        case .done: break
+        case .size, .done: break
         }
+    }
+    /// The person's own size choice, among the sizes the keys fit.
+    mutating func choose(_ chosen: KeyboardSize) {
+        guard sizeChoices.contains(chosen) else { return }
+        note = nil; size = chosen; step = .done
+    }
+    static func name(_ size: KeyboardSize) -> String {
+        switch size { case .full: "Full"; case .tkl: "Tenkeyless"; case .percent75: "75%"; case .percent65: "65%"; case .percent60: "60%"; case .unknown: "Unknown" }
     }
     /// “I don’t have this key.”
     mutating func skip() {
@@ -182,8 +202,8 @@ struct KeyboardVerification: Equatable, Sendable {
         switch step {
         case .keypad: step = .functionRow
         case .functionRow: step = .arrows
-        case .navigation: size = .percent75; step = .done
-        case .arrows: size = .percent60; step = .done
+        case .navigation: step = .size([.percent75])
+        case .arrows: step = .size([.percent60])
         default: break
         }
     }

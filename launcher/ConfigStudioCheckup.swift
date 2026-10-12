@@ -36,6 +36,63 @@ struct ConfigCheckupGauge: Identifiable {
     var id: ConfigCheckupArea { area }
 }
 
+/// What Check-up last read from the game's local match summaries (`main/stats/matches.jsonl`).
+enum ConfigMatchState: Equatable {
+    case notRead
+    /// Oldest first, as the reader returns them.
+    case read([MatchSummary])
+    case failed(String)
+}
+
+/// The latest recorded match, in words, for the panel above the dials.
+struct ConfigMatchPresentation: Equatable {
+    let title: String
+    let detail: String
+    let lines: [String]
+    let tone: StudioStatusTone
+}
+
+/// How the loadout reads against the chosen rules, and what an empty suggestion list means.
+/// A violation or conflict comes first; one row within the rules never speaks for rows that
+/// weren't assessed or are only advisory.
+struct ConfigCheckupStanding {
+    struct Status: Equatable { let title: String; let tone: StudioStatusTone }
+    let status: Status?
+    let empty: (title: String, message: String)
+
+    init(policy: [ConfigRuleEvaluation], rulesetIDs: [String], selectionTitle: String, tuneFor: ConfigTuneFor) {
+        guard !rulesetIDs.isEmpty else {
+            status = nil; empty = ("NO RULES", "Choose the rules you play under to get advice for them."); return
+        }
+        func count(_ status: ConfigRuleStatus) -> Int { policy.filter { $0.status == status }.count }
+        let violations = count(.violation), conflicts = count(.conflict), unknown = count(.unknown), warnings = count(.warning), ok = count(.ok)
+        let total = policy.count
+        if violations > 0 {
+            status = .init(title: violations == 1 ? "1 setting breaks these rules" : "\(violations) settings break these rules", tone: .negative)
+        } else if conflicts > 0 {
+            status = .init(title: "The chosen rules disagree", tone: .caution)
+        } else if ok == 0 && warnings == 0 {
+            status = .init(title: "Not assessed", tone: .unknown)
+        } else if unknown > 0 {
+            status = .init(title: "\(unknown) of \(total) setting\(total == 1 ? "" : "s") not assessed", tone: .unknown)
+        } else if warnings > 0 {
+            status = .init(title: "Within the limits, \(warnings) advisory", tone: .caution)
+        } else {
+            status = .init(title: "Follows \(selectionTitle)", tone: .positive)
+        }
+        let tune = tuneFor.title.lowercased()
+        if violations > 0 || conflicts > 0 {
+            empty = ("NO SUGGESTIONS", "Check-up has no change to suggest for \(tune) play, but some settings break these rules or the rules disagree. Show Rules lists them.")
+        } else if unknown > 0 {
+            empty = ("NO SUGGESTIONS", "Check-up couldn’t assess \(unknown) of \(total) setting\(total == 1 ? "" : "s") these rules cover, so it doesn’t claim they all match. Show Rules lists them.")
+        } else if warnings > 0 {
+            empty = ("NO SUGGESTIONS", "No change to suggest for \(tune) play, but the rules mark \(warnings == 1 ? "1 setting" : "\(warnings) settings") as advisory. Show Rules lists them.")
+        } else {
+            empty = ("NOTHING TO SUGGEST", "These settings already match every suggestion for \(tune) play under these rules.")
+        }
+    }
+}
+
 /// A suggestion applied in this view, kept so it can be undone from its card.
 struct ConfigAppliedSuggestion: Identifiable {
     let suggestion: ConfigCheckupSuggestion
@@ -58,7 +115,16 @@ struct ConfigAppliedSuggestion: Identifiable {
     @Published private(set) var applied: [ConfigAppliedSuggestion] = []
     /// “Not now” lasts for this loadout, rules and tuning, as A1 asks.
     @Published private var dismissed: [String: Set<String>] = [:]
-    private var reportCache: (key: String, report: ConfigCheckupReport)?
+    private var reportCache: (key: String, measurements: ConfigCheckupMeasurements, report: ConfigCheckupReport)?
+
+    /// Local match summaries: read after a game exits or on Refresh, never on a timer.
+    @Published private(set) var matchState: ConfigMatchState = .notRead
+    /// The saved Settings › Privacy choice. Turning it off applies from the next game and
+    /// leaves summaries already on this Mac where they are.
+    @Published var matchSummariesEnabled = true
+    private var matchHome: URL?
+    /// The reader; tests count its reads or make it fail.
+    var readMatches: @MainActor (URL) throws -> [MatchSummary] = { try MatchSummaries.read(homePath: $0) }
 
     init(studio: ConfigStudioModel,
          loadRules: @escaping @Sendable () throws -> ConfigRules = { try ConfigCheckupModel.bundled("ConfigRulesets", ConfigRules.init(data:)) },
@@ -108,16 +174,113 @@ struct ConfigAppliedSuggestion: Identifiable {
     var dismissedHere: Set<String> { dismissed[scope] ?? [] }
 
     /// A1's review of the loadout on screen, regenerated whenever its bytes, locks,
-    /// rules, tuning or set-aside suggestions change.
+    /// rules, tuning, set-aside suggestions or the latest match's measurements change.
     var report: ConfigCheckupReport? {
         guard let engine, let current = studio.current else { return nil }
         let version = current.version.config + (current.version.metadata ?? Data()) + (current.version.chain ?? Data())
         let key = scope + "|" + dismissedHere.sorted().joined(separator: ",") + "|\(version.hashValue)|\(version.count)"
-        if let cache = reportCache, cache.key == key, cache.report.expectedVersion == current.version { return cache.report }
+        let measurements = self.measurements
+        if let cache = reportCache, cache.key == key, cache.measurements == measurements, cache.report.expectedVersion == current.version { return cache.report }
         let report = engine.evaluate(profile: current, rulesetIDs: rulesetIDs, tuneFor: tuneFor, targetMode: studio.mode,
-                                     measurements: ConfigCheckupMeasurements(), dismissedSuggestionIDs: dismissedHere)
-        reportCache = (key, report)
+                                     measurements: measurements, dismissedSuggestionIDs: dismissedHere)
+        reportCache = (key, measurements, report)
         return report
+    }
+
+    // MARK: Match summaries
+
+    /// Reads the summaries once: after the game exits, or when the person asks. The home is
+    /// the launcher's own (the game's fs_homepath); a failure is kept and shown, never measured.
+    func refreshMatches(home: URL? = nil) {
+        if let home { matchHome = home }
+        guard let home = matchHome ?? studio.session?.home else { return }
+        do { matchState = .read(try readMatches(home)) } catch { matchState = .failed(error.localizedDescription) }
+    }
+    var latestMatch: MatchSummary? { if case .read(let all) = matchState { return all.last }; return nil }
+    var matchCount: Int { if case .read(let all) = matchState { return all.count }; return 0 }
+
+    /// What the latest match measured, for A1. A p99 past the exact range is only an upper
+    /// bound, so it isn't passed on as a measurement; mouse polling is never recorded.
+    var measurements: ConfigCheckupMeasurements {
+        guard let match = latestMatch else { return .init() }
+        return ConfigCheckupMeasurements(frameTimeP99MS: match.frameQuantilesAreExact ? match.frameTimeP99MS : nil, mousePollingHz: nil,
+                                         pingMS: match.pingAverageMS, packetLossPercent: match.packetLossPercent,
+                                         source: "Your last match: \(MapCatalog.displayName(match.map)), \(GameModes.long(match.mode))")
+    }
+
+    var matchPresentation: ConfigMatchPresentation? {
+        switch matchState {
+        case .notRead: return nil
+        case .failed(let message):
+            return .init(title: "Couldn’t read your match summaries", detail: message + " Nothing here is shown as measured until they can be read.", lines: [], tone: .negative)
+        case .read(let all):
+            guard let match = all.last else {
+                return matchSummariesEnabled
+                    ? .init(title: "No matches recorded yet", detail: "After your next match, the game saves a short summary on this Mac and Check-up shows it here.", lines: [], tone: .unknown)
+                    : .init(title: "Match summaries are off", detail: "Turn on local match summaries in Settings › Privacy to see measurements from your next game.", lines: [], tone: .unknown)
+            }
+            let off = matchSummariesEnabled ? "" : " Match summaries are off now, so new games aren’t added."
+            let ended = Self.matchDate(match.endedAt).map { StencilDate.dayAndTime($0) } ?? match.endedAt
+            return .init(title: "Your last match: \(MapCatalog.displayName(match.map)), \(GameModes.long(match.mode))",
+                         detail: "Measured by the game on this Mac. It may have used a different loadout than the one shown here." + off,
+                         lines: ["Ended \(ended) · \(Self.duration(match.durationSeconds))",
+                                 all.count == 1 ? "1 match recorded on this Mac" : "\(all.count) matches recorded on this Mac"],
+                         tone: .information)
+        }
+    }
+    private static func matchDate(_ text: String) -> Date? {
+        let formatter = ISO8601DateFormatter()
+        if let date = formatter.date(from: text) { return date }
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.date(from: text)
+    }
+    static func duration(_ seconds: Double) -> String {
+        let total = Int(seconds.rounded())
+        if total < 60 { return "\(total) s" }
+        let minutes = total / 60
+        return minutes < 60 ? "\(minutes) min" : "\(minutes / 60) h \(minutes % 60) min"
+    }
+    /// Milliseconds and percentages to one decimal place, as people read them.
+    static func figure(_ value: Double) -> String { ConfigValues.format((value * 10).rounded() / 10) }
+
+    /// The movement dial from a match that recorded frames: p50, p99, maximum, the cap and frame
+    /// count. Quantiles at or past the exact range are said as bounds.
+    private func frameGauge(_ match: MatchSummary) -> ConfigCheckupGauge? {
+        guard match.frameCount > 0, let p50 = match.frameTimeP50MS, let p99 = match.frameTimeP99MS, let max = match.frameTimeMaxMS else { return nil }
+        let limit = match.frameTimeHistogramLimitMS
+        func quantile(_ name: String, _ value: Double) -> String {
+            guard let limit else { return "\(name) at most \(Self.figure(value)) ms" }
+            return value < limit ? "\(name) \(Self.figure(value)) ms" : "\(name) longer than \(Self.figure(limit)) ms (at most \(Self.figure(value)) ms)"
+        }
+        var parts = [quantile("p50", p50), quantile("p99", p99), "max \(Self.figure(max)) ms"]
+        if let under = match.framesUnderCap, match.capSampleFrames > 0, match.capFPS > 0 {
+            parts.append("\(under) of \(match.capSampleFrames) frames (\(Self.figure(100 * Double(under) / Double(match.capSampleFrames)))%) within the \(match.capFPS) fps cap")
+        } else {
+            parts.append("frames within the cap: Not measured")
+        }
+        parts.append(match.frameCount == 1 ? "1 frame" : "\(match.frameCount) frames")
+        let exact = match.frameQuantilesAreExact
+        return .init(area: .movement, value: (exact ? "" : "≤ ") + Self.figure(p99) + " MS",
+                     detail: "Frame time in your last match: " + parts.joined(separator: " · ") + ".",
+                     status: exact ? "Measured" : "Upper bound", tone: .information)
+    }
+    /// The connection dial from a match: ping, and server updates that never arrived.
+    private func connectionGauge(_ match: MatchSummary) -> ConfigCheckupGauge {
+        let ping: String
+        if match.pingSamples > 0, let average = match.pingAverageMS, let highest = match.pingMaximumMS {
+            ping = "Ping in your last match: average \(Self.figure(average)) ms, highest \(Self.figure(highest)) ms over \(match.pingSamples) sample\(match.pingSamples == 1 ? "" : "s")."
+        } else {
+            ping = "Ping: Not measured in your last match."
+        }
+        let missing: String
+        if match.packetsReceived > 0, let loss = match.packetLossPercent {
+            missing = "Missing server updates: \(Self.figure(loss))% (\(match.packetsLost) of \(match.packetsReceived + match.packetsLost)), inferred from gaps in the update sequence; not a precise packet-loss measurement."
+        } else {
+            missing = "Missing server updates: Not measured."
+        }
+        let measured = match.pingSamples > 0 ? match.pingAverageMS : nil
+        return .init(area: .connection, value: measured.map { Self.figure($0) + " MS" } ?? "—", detail: ping + " " + missing,
+                     status: measured == nil ? "Not measured" : "Measured", tone: measured == nil ? .unknown : .information)
     }
 
     /// Why the review holds its advice back, found the way A1 looks: lines whose effect
@@ -196,16 +359,14 @@ struct ConfigAppliedSuggestion: Identifiable {
         suggestion.evidence.first { $0.kind == .inference }?.detail ?? "Based on your settings"
     }
 
-    /// The four dials. A1 supplies measurements; with none recorded every
-    /// measured value reads “Not measured”, alongside what the loadout itself says.
+    /// The four dials. Movement and Connection come from the latest recorded match when there
+    /// is one; every value it didn't record reads “Not measured”, alongside what the loadout says.
     func gauges(_ report: ConfigCheckupReport) -> [ConfigCheckupGauge] {
-        report.dials.map { dial in
-            if let value = dial.value {
-                return ConfigCheckupGauge(area: dial.area, value: ConfigValues.format(value) + (dial.unit.map { " " + $0 } ?? ""),
-                                          detail: dial.source ?? "", status: "Measured", tone: .information)
-            }
+        let match = latestMatch
+        return report.dials.map { dial in
             switch dial.area {
             case .movement:
+                if let match, let gauge = frameGauge(match) { return gauge }
                 let cap = studio.spec(named: "com_maxfps").map { studio.state($0) }
                 let value = cap?.number.map { $0 == 0 ? "NO CAP" : "\(Int($0)) FPS" } ?? "—"
                 return .init(area: .movement, value: value, detail: "Your frame rate cap. The frame rate you actually get isn’t measured.",
@@ -220,7 +381,8 @@ struct ConfigAppliedSuggestion: Identifiable {
                                                      : "Per full turn at \(ConfigValues.format(dpi ?? 0)) DPI. Polling rate isn’t measured.",
                              status: distance == nil ? "Not measured" : "From settings", tone: distance == nil ? .unknown : .information)
             case .connection:
-                return .init(area: .connection, value: "—", detail: "Ping and lost updates aren’t measured.", status: "Not measured", tone: .unknown)
+                if let match { return connectionGauge(match) }
+                return .init(area: .connection, value: "—", detail: "Ping and missing server updates aren’t measured.", status: "Not measured", tone: .unknown)
             case .visibility:
                 let names = Set((studio.catalog?.settings(in: .vis) ?? []).map { $0.name.lowercased() })
                 let relevant = report.policy.filter { names.contains($0.setting.lowercased()) }
@@ -244,6 +406,10 @@ struct ConfigAppliedSuggestion: Identifiable {
                 }
             }
         }
+    }
+    /// The rules summary and empty-suggestions message for this report.
+    func standing(_ report: ConfigCheckupReport) -> ConfigCheckupStanding {
+        ConfigCheckupStanding(policy: report.policy, rulesetIDs: report.rulesetIDs, selectionTitle: selectionTitle, tuneFor: tuneFor)
     }
     private static func rank(_ status: ConfigRuleStatus) -> Int {
         switch status { case .ok: 0; case .unknown: 1; case .warning: 2; case .conflict: 3; case .violation: 4 }

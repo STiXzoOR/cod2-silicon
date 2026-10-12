@@ -1,0 +1,271 @@
+import Foundation
+
+// Release acceptance checks for Config Studio: History restores that change only the
+// advanced-bind companion, Take Theirs against server-owned settings, Check-up's local
+// match summaries, and the rules summary. Private temporary homes, exact bytes on disk.
+
+enum ConfigStudioAcceptanceTests {
+    static func require(_ condition: Bool, _ message: String = "config studio acceptance", line: Int = #line) {
+        if !condition { fatalError("FAIL: \(message) (line \(line))") }
+    }
+    static func bytes(_ text: String) -> Data { Data(text.utf8) }
+    static func value<T>(_ value: T?, line: Int = #line) -> T {
+        guard let value else { fatalError("FAIL: missing value (line \(line))") }
+        return value
+    }
+
+    @MainActor static func run(scratch: URL, catalog: ConfigCatalog, resources: URL) throws {
+        let rules = try ConfigRules(data: Data(contentsOf: resources.appendingPathComponent("ConfigRulesets.json")))
+        let optimizer = try ConfigOptimizer(data: Data(contentsOf: resources.appendingPathComponent("ConfigOptimizer.json")))
+        try history(scratch: scratch, catalog: catalog)
+        try takeTheirs(scratch: scratch, catalog: catalog)
+        try matches(scratch: scratch, catalog: catalog, rules: rules, optimizer: optimizer)
+        standing()
+    }
+
+    @MainActor static func studio(_ home: URL, config: String, catalog: ConfigCatalog) throws -> (ConfigStudioModel, ConfigStudioSession, ConfigProfileStore) {
+        let store = try ConfigProfileStore(homeURL: home, dialect: .cod2x)
+        _ = try store.create(id: "Main", displayName: "Main", document: ConfigDocument(data: bytes(config), dialect: .cod2x))
+        try store.select(id: "Main", expectedActive: nil)
+        let session = try ConfigStudioSession(home: home, dialect: .cod2x)
+        try session.refresh()
+        let model = ConfigStudioModel(session: session, catalog: { catalog })
+        model.announce = { _ in }
+        model.loadCatalogNow()
+        return (model, session, store)
+    }
+
+    /// Restore eligibility comes from the whole revision, companion included; the since-now
+    /// cache tells an absent companion from an empty one.
+    @MainActor static func history(scratch: URL, catalog: ConfigCatalog) throws {
+        let (model, session, store) = try studio(scratch.appendingPathComponent("acceptance-history"), config: "seta sensitivity \"2.5\"\n", catalog: catalog)
+        let home = session.home
+        let config = home.appendingPathComponent("main/players/Main/config_mp.cfg")
+        let sidecar = home.appendingPathComponent("main/players/Main/studio.json")
+        let companion = home.appendingPathComponent("main/" + (try ConfigStudioLaunch.chainBasename(profileID: "Main")))
+
+        // Absent and empty companions are different revisions.
+        model.saveSnapshot()
+        let plain = value(session.history.first)
+        require(plain.chain == nil && model.changesSince(plain).isEmpty && !model.canRestore(plain, revision: .after))
+        try PrivateFile.write(Data(), to: companion)
+        try session.refresh()
+        require(session.current?.version.chain == Data(), "an empty companion reads as empty, not absent")
+        require(model.changesSince(plain).map(\.id) == ["chain"], "the since-now cache doesn't mistake an empty companion for none")
+        require(model.canRestore(plain, revision: .after), "restoring the absent companion is a real change")
+        model.restore(plain)
+        require(!FileManager.default.fileExists(atPath: companion.path) && session.current?.version.chain == nil, "restore removes the empty companion")
+        require(model.changesSince(plain).isEmpty && !model.canRestore(plain, revision: .after))
+
+        // A History row that changed only the companion (as a game session can).
+        let chains = [ConfigChain(id: "greetings", key: "n", behavior: .commandCycle(steps: [["say gl"], ["say hf"]]))]
+        try ConfigChains.apply(try ConfigChains.prepare(chains: chains, read: value(session.current)), to: session)
+        let first = value(session.current?.version)
+        let firstChain = value(first.chain)
+        let secondChain = firstChain + bytes("// edited while you played\n")
+        try PrivateFile.write(secondChain, to: companion)
+        try store.recordGameSession(id: "Main", before: first)
+        try session.refresh()
+        let row = value(session.history.first)
+        require(row.source == .gameSession && row.beforeData == row.data && row.beforeMetadata == row.metadata && row.beforeChain == firstChain && row.chain == secondChain)
+        require(model.changes(in: row).map(\.id) == ["chain"], "the main chain-diff row is kept")
+        require(model.canRestore(row, revision: .before), "a companion-only change can be restored to its state before")
+        require(!model.canRestore(row, revision: .after) && model.changesSince(row).isEmpty, "its own state is now")
+
+        let before = (config: try Data(contentsOf: config), sidecar: try Data(contentsOf: sidecar)), count = session.history.count
+        let undo = UndoManager(); undo.groupsByEvent = false
+        undo.beginUndoGrouping(); model.restore(row, revision: .before, undo: undo); undo.endUndoGrouping()
+        require(try Data(contentsOf: companion) == firstChain, "restoring before writes the earlier companion bytes")
+        require(try Data(contentsOf: config) == before.config && Data(contentsOf: sidecar) == before.sidecar, "config and metadata stay byte-identical")
+        let restored = value(session.history.first)
+        require(session.history.count == count + 1 && restored.source == .restore && restored.beforeChain == secondChain && restored.chain == firstChain
+                && restored.beforeData == restored.data && restored.beforeMetadata == restored.metadata, "one restore row records exactly the companion change")
+        require(model.canRestore(row, revision: .after) && model.changesSince(row).map(\.id) == ["chain"])
+        undo.undo()
+        require(try Data(contentsOf: companion) == secondChain && Data(contentsOf: config) == before.config && Data(contentsOf: sidecar) == before.sidecar,
+                "Undo puts back the companion it replaced")
+        require(session.history.count == count + 2 && session.history.first?.source == .restore && session.history.contains { $0.id == row.id },
+                "Undo is another restore; earlier History stays")
+        try session.reconcileGames([4401])
+        require(!model.canRestore(row, revision: .before), "nothing restores while the game runs")
+        try session.reconcileGames([])
+        print("PASS: History restores companion-only changes from the full revision; absent and empty companions stay distinct")
+    }
+
+    /// One shared rule for the button and the action: settings the chosen rules, the catalog,
+    /// a lock or the launcher own keep the person's value; markers still show theirs.
+    @MainActor static func takeTheirs(scratch: URL, catalog: ConfigCatalog) throws {
+        let config = "seta cg_viewsize \"80\"\nseta cg_weaponCycleDelay \"0\"\nseta sensitivity \"2.5\"\n"
+        let (model, session, store) = try studio(scratch.appendingPathComponent("acceptance-compare"), config: config, catalog: catalog)
+        let home = session.home
+        _ = try store.create(id: "Scrim", displayName: "Scrim", document: ConfigDocument(data: bytes("seta cg_viewsize \"100\"\nseta cg_weaponCycleDelay \"150\"\nseta sensitivity \"1.9\"\n"), dialect: .cod2x))
+        try session.refresh()
+        let files = ["main/players/Main/config_mp.cfg", "main/players/Main/studio.json", "main/" + (try ConfigStudioLaunch.chainBasename(profileID: "Main"))]
+        func disk() -> [Data?] { files.map { try? Data(contentsOf: home.appendingPathComponent($0)) } }
+        let checkup = model.checkup
+        checkup.load()
+        require(checkup.rules != nil, "Check-up's rules load beside the test executable")
+        checkup.rulesetIDs = ["zpam-4.08"]
+        let view = value(model.spec(named: "cg_viewsize")), delay = value(model.spec(named: "cg_weaponCycleDelay")), speed = value(model.spec(named: "sensitivity"))
+        let catalogOwned = value(model.specs.first { $0.setting.variant(for: .cod2x)?.serverControlled == true && !$0.launcherOwned && $0.isNumeric && $0.defaultText != nil })
+        let launcher = value(model.specs.first { $0.launcherOwned && $0.isNumeric && $0.defaultText != nil })
+
+        func guarded(_ spec: ConfigSettingSpec, _ source: String, _ reason: String, line: Int = #line) {
+            require(model.theirs(spec) != nil, "\(spec.name): the comparison marker stays (\(source))", line: line)
+            let why = model.takeTheirsBlock(spec)
+            require(why?.contains(reason) == true, "\(spec.name): Take Theirs is disabled with its reason (\(why ?? "none"))", line: line)
+            let before = disk(), count = session.history.count
+            model.takeTheirs(spec)
+            require(disk() == before && session.history.count == count, "\(spec.name): the guarded action writes nothing (\(source))", line: line)
+        }
+
+        // A player from Discover.
+        model.compare(with: ConfigPlayerComparison(entryID: "player-1", name: "[Player 1]", provenance: "Players catalog",
+                                                   values: ["cg_viewsize": "100", "cg_weaponcycledelay": "150", "sensitivity": "3.2",
+                                                            catalogOwned.name.lowercased(): alternative(catalogOwned, model: model),
+                                                            launcher.name.lowercased(): alternative(launcher, model: model)]))
+        guarded(view, "player", "server")
+        guarded(delay, "player", "server")
+        guarded(catalogOwned, "player", "server")
+        guarded(launcher, "player", "CoD2 Silicon sets")
+        require(model.takeTheirsBlock(speed) == nil)
+        model.takeTheirs(speed)
+        require(model.state(speed).raw == "3.2" && session.history.first?.summary == "Took Mouse speed from [Player 1]", "ordinary settings stay writable")
+        model.setLock(speed, true)
+        model.compare(with: ConfigPlayerComparison(entryID: "player-1", name: "[Player 1]", provenance: "Players catalog", values: ["sensitivity": "2.2"]))
+        guarded(speed, "player", "Locked")
+        model.setLock(speed, false)
+
+        // Another of the person's own loadouts.
+        model.compareID = "Scrim"
+        guarded(view, "loadout", "server")
+        guarded(delay, "loadout", "server")
+        try session.reconcileGames([4402])
+        guarded(speed, "loadout", "running")
+        try session.reconcileGames([])
+        require(model.takeTheirsBlock(speed) == nil)
+        model.takeTheirs(speed)
+        require(model.state(speed).raw == "1.9" && session.history.first?.summary == "Took Mouse speed from Scrim")
+
+        // Ownership follows the rules chosen in Check-up.
+        checkup.rulesetIDs = []
+        require(model.takeTheirsBlock(view) == nil && model.takeTheirsBlock(delay) == nil, "without those rules the person may take them")
+        model.takeTheirs(view)
+        require(model.state(view).raw == "100" && session.history.first?.summary == "Took \(view.title) from Scrim")
+        model.stopComparing()
+        print("PASS: Take Theirs refuses server-owned (rules and catalog), locked, launcher-owned and read-only settings with a reason; markers stay")
+    }
+
+    /// A different valid value for a setting, so a comparison marker shows.
+    @MainActor static func alternative(_ spec: ConfigSettingSpec, model: ConfigStudioModel) -> String {
+        let mine = model.state(spec).number ?? 0
+        if let max = spec.maximum, mine + 1 <= max { return ConfigValues.text(number: mine + 1, spec: spec) }
+        if let min = spec.minimum, mine - 1 >= min { return ConfigValues.text(number: mine - 1, spec: spec) }
+        return ConfigValues.text(number: mine + 1, spec: spec)
+    }
+
+    static let row = #"{"schemaVersion":1,"endedAt":"2026-10-11T19:42:00Z","endReason":"map_change","map":"mp_toujane","mode":"sd","durationSeconds":1260,"serverAddress":"192.0.2.1:28960","ruleHints":{"g_competitive":"1"},"frameCount":100,"frameTimeP50MS":3,"frameTimeP99MS":7,"frameTimeMaxMS":20,"frameTimeHistogramLimitMS":250,"framesUnderCap":98,"capSampleFrames":100,"capFPS":333,"pingAverageMS":40,"pingMaximumMS":50,"pingSamples":3,"packetsReceived":3,"packetsLost":2,"packetLossPercent":40,"snapshotsReceived":4}"#
+
+    /// Check-up reads the game's summaries only when asked (after a game, or Refresh), shows the
+    /// latest with its match, and keeps every missing value “Not measured”.
+    @MainActor static func matches(scratch: URL, catalog: ConfigCatalog, rules: ConfigRules, optimizer: ConfigOptimizer) throws {
+        let (model, session, _) = try studio(scratch.appendingPathComponent("acceptance-matches"),
+                                             config: "seta com_maxfps \"333\"\nseta sensitivity \"2.6\"\n", catalog: catalog)
+        let checkup = ConfigCheckupModel(studio: model, loadRules: { rules }, loadOptimizer: { optimizer })
+        checkup.load()
+        var reads = 0
+        checkup.readMatches = { home in reads += 1; return try MatchSummaries.read(homePath: home) }
+        let stats = session.home.appendingPathComponent("main/stats")
+        try FileManager.default.createDirectory(at: stats, withIntermediateDirectories: true)
+        let file = stats.appendingPathComponent("matches.jsonl")
+
+        // Not read yet: nothing measured, nothing read.
+        require(checkup.matchState == .notRead && checkup.gauges(value(checkup.report)).map(\.status).prefix(3) == ["From settings", "Not measured", "Not measured"])
+        require(reads == 0)
+        // No file yet, summaries on: an honest empty state.
+        checkup.refreshMatches(home: session.home)
+        require(checkup.matchState == .read([]) && reads == 1)
+        let empty = value(checkup.matchPresentation)
+        require(empty.title == "No matches recorded yet" && empty.tone == .unknown && empty.lines.isEmpty)
+        checkup.matchSummariesEnabled = false
+        let off = value(checkup.matchPresentation)
+        require(off.title == "Match summaries are off" && off.detail.contains("Settings › Privacy"))
+        checkup.matchSummariesEnabled = true
+
+        // Two matches: the latest is shown, with its match, and reaches the report.
+        let older = row.replacingOccurrences(of: "mp_toujane", with: "mp_carentan").replacingOccurrences(of: "\"pingAverageMS\":40", with: "\"pingAverageMS\":45")
+        try (older + "\n" + row + "\n").write(to: file, atomically: true, encoding: .utf8)
+        let unmeasured = value(checkup.report)
+        require(unmeasured.dials[0].value == nil && unmeasured.limitations.contains("Packet loss: Not measured."))
+        checkup.refreshMatches()
+        require(reads == 2 && checkup.latestMatch?.map == "mp_toujane" && checkup.matchCount == 2)
+        let report = value(checkup.report)
+        require(report.dials[0].value == 7 && report.dials[2].value == 40 && !report.limitations.contains("Packet loss: Not measured."),
+                "Refresh invalidates the cached report when the measurement changes")
+        for _ in 0..<5 { _ = checkup.report; _ = checkup.gauges(report); _ = checkup.matchPresentation }
+        require(reads == 2, "reading the view never rereads the file")
+        let measured = value(checkup.matchPresentation)
+        require(measured.title == "Your last match: Toujane, Search & Destroy" && measured.tone == .information, measured.title)
+        require(measured.detail.contains("may have used a different loadout") && !measured.detail.contains("Main"), "a match isn't claimed for the selected loadout")
+        require(measured.lines.contains("2 matches recorded on this Mac") && measured.lines.contains { $0.hasPrefix("Ended ") && $0.contains("21 min") })
+        let gauges = checkup.gauges(report)
+        require(gauges[0].value == "7 MS" && gauges[0].status == "Measured" && gauges[0].tone == .information)
+        require(gauges[0].detail.contains("p50 3 ms · p99 7 ms · max 20 ms") && gauges[0].detail.contains("98 of 100 frames (98%) within the 333 fps cap"), gauges[0].detail)
+        require(gauges[1].status == "Not measured" || gauges[1].status == "From settings", "mouse polling is never invented")
+        require(!gauges[1].detail.contains("Hz") && gauges[1].detail.contains("Polling rate isn’t measured"))
+        require(gauges[2].value == "40 MS" && gauges[2].detail.contains("average 40 ms, highest 50 ms over 3 samples"), gauges[2].detail)
+        require(gauges[2].detail.contains("Missing server updates: 40% (2 of 5), inferred from gaps in the update sequence; not a precise packet-loss measurement."), gauges[2].detail)
+        require(gauges.allSatisfy { !$0.detail.lowercased().contains("score") && !$0.value.lowercased().contains("score") })
+
+        // Overflow: the p99 is beyond the exact range, so it is an upper bound only.
+        let slow = row.replacingOccurrences(of: "\"frameTimeP99MS\":7,\"frameTimeMaxMS\":20,\"frameTimeHistogramLimitMS\":250",
+                                            with: "\"frameTimeP99MS\":300,\"frameTimeMaxMS\":300,\"frameTimeHistogramLimitMS\":250")
+        try (slow + "\n").write(to: file, atomically: true, encoding: .utf8)
+        checkup.refreshMatches()
+        require(checkup.latestMatch?.frameQuantilesAreExact == false && checkup.report?.dials[0].value == nil, "an upper bound isn't passed on as a measured p99")
+        let bound = checkup.gauges(value(checkup.report))[0]
+        require(bound.value == "≤ 300 MS" && bound.status == "Upper bound" && bound.detail.contains("longer than 250 ms") && !bound.detail.contains("p99 300 ms"), bound.detail)
+
+        // Values a match didn't record stay Not measured.
+        let quiet = row.replacingOccurrences(of: "\"pingAverageMS\":40,\"pingMaximumMS\":50,\"pingSamples\":3,\"packetsReceived\":3,\"packetsLost\":2,\"packetLossPercent\":40",
+                                             with: "\"pingSamples\":0,\"packetsReceived\":0,\"packetsLost\":0")
+        try (quiet + "\n").write(to: file, atomically: true, encoding: .utf8)
+        checkup.refreshMatches()
+        let connection = checkup.gauges(value(checkup.report))[2]
+        require(connection.value == "—" && connection.status == "Not measured" && connection.detail.contains("Missing server updates: Not measured"), connection.detail)
+        require(checkup.report?.limitations.contains("Packet loss: Not measured.") == true)
+
+        // A read failure is said plainly and measures nothing.
+        checkup.readMatches = { _ in throw CocoaError(.fileReadNoPermission) }
+        checkup.refreshMatches()
+        guard case .failed(let message) = checkup.matchState else { fatalError("FAIL: a read failure is kept as a failure") }
+        require(!message.isEmpty && checkup.matchPresentation?.title == "Couldn’t read your match summaries" && checkup.matchPresentation?.tone == .negative)
+        require(checkup.report?.dials[0].value == nil && checkup.gauges(value(checkup.report))[2].status == "Not measured")
+        print("PASS: Check-up reads match summaries only when asked and shows the latest match's measurements, bounds and unknowns")
+    }
+
+    static func evaluation(_ setting: String, _ status: ConfigRuleStatus) -> ConfigRuleEvaluation {
+        ConfigRuleEvaluation(setting: setting, value: "1", status: status, reason: "", serverOwned: false, sources: [])
+    }
+
+    /// The rules summary and the empty-suggestions message never call a partly assessed
+    /// loadout one that follows the rules.
+    static func standing() {
+        func standing(_ statuses: [ConfigRuleStatus], rules: [String] = ["zpam-4.08"]) -> ConfigCheckupStanding {
+            ConfigCheckupStanding(policy: statuses.enumerated().map { evaluation("s\($0.offset)", $0.element) }, rulesetIDs: rules,
+                                  selectionTitle: "zPAM 4.08", tuneFor: .competitive)
+        }
+        require(standing([.ok]).status?.title == "Follows zPAM 4.08" && standing([.ok]).status?.tone == .positive)
+        require(standing([.ok, .ok]).empty.title == "NOTHING TO SUGGEST" && standing([.ok]).empty.message.contains("already match"))
+        let partial = standing([.ok, .unknown, .ok])
+        require(partial.status?.title == "1 of 3 settings not assessed" && partial.status?.tone == .unknown, "an ok row can't speak for an unknown one")
+        require(partial.empty.title == "NO SUGGESTIONS" && !partial.empty.message.contains("already match"), "withheld advice isn't a success")
+        let advisory = standing([.ok, .warning])
+        require(advisory.status?.title == "Within the limits, 1 advisory" && advisory.status?.tone == .caution && !advisory.empty.message.contains("already match"))
+        require(standing([.ok, .unknown, .violation, .conflict]).status?.title == "1 setting breaks these rules" && standing([.violation]).status?.tone == .negative)
+        require(standing([.ok, .unknown, .conflict]).status?.title == "The chosen rules disagree" && standing([.conflict]).status?.tone == .caution)
+        require(standing([.unknown]).status?.title == "Not assessed" && standing([]).status?.title == "Not assessed")
+        require(standing([.ok], rules: []).status == nil && standing([], rules: []).empty.title == "NO RULES")
+        print("PASS: the rules summary keeps violations and conflicts first and never says Follows with rows unassessed")
+    }
+}

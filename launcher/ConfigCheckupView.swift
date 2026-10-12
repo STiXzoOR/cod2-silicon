@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// A loadout's Check-up: what is measured (nothing yet, said plainly), how the
-/// loadout reads against the chosen rules, and A1's suggestions with their exact
+/// A loadout's Check-up: what the latest recorded match measured (or that nothing was),
+/// how the loadout reads against the chosen rules, and A1's suggestions with their exact
 /// changes, reasons, observable effect, evidence and sources.
 struct ConfigCheckupView: View {
     @ObservedObject var studio: ConfigStudioModel
@@ -30,6 +30,7 @@ struct ConfigCheckupView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 RulesBar(studio: studio, checkup: checkup, report: report)
+                MatchPanel(checkup: checkup)
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 190), spacing: 12)], spacing: 12) {
                     ForEach(checkup.gauges(report)) { DialCard(gauge: $0) }
                 }
@@ -38,7 +39,9 @@ struct ConfigCheckupView: View {
                                  detail: reason + " Settings that clearly break the chosen rules are still shown.", tone: .caution)
                 } else {
                     StudioBanner(title: "Advice from your settings and the rules you choose",
-                                 detail: "Measured advice from your own games isn’t available yet, so nothing here claims a frame rate, ping or hit rate you didn’t record.",
+                                 detail: checkup.latestMatch == nil
+                                     ? "No match measurements are in use, so nothing here claims a frame time, ping or missing updates you didn’t record."
+                                     : "The measurements above are from your last recorded match. Suggestions come from your settings and the rules, not from those measurements.",
                                  tone: .information)
                 }
                 ForEach(checkup.appliedHere()) { item in AppliedCard(studio: studio, checkup: checkup, item: item) }
@@ -47,9 +50,8 @@ struct ConfigCheckupView: View {
                     SuggestionCard(studio: studio, checkup: checkup, suggestion: suggestion, top: index == 0)
                 }
                 if suggestions.isEmpty && checkup.appliedHere().isEmpty && checkup.holdBack == nil {
-                    StudioEmptyState(title: report.rulesetIDs.isEmpty ? "NO RULES" : "NOTHING TO SUGGEST",
-                                     message: report.rulesetIDs.isEmpty ? "Choose the rules you play under to get advice for them."
-                                                                        : "These settings already match every suggestion for \(checkup.tuneFor.title.lowercased()) play under these rules.")
+                    let empty = checkup.standing(report).empty
+                    StudioEmptyState(title: empty.title, message: empty.message)
                         .frame(maxWidth: .infinity)
                 }
                 let hidden = checkup.dismissedHere.count
@@ -94,12 +96,11 @@ struct RulesBar: View {
     @State private var showingRules = false
 
     var body: some View {
-        let violations = report.policy.filter { $0.status == .violation }
-        let conflicts = report.policy.filter { $0.status == .conflict }
+        let standing = checkup.standing(report)
         VStack(alignment: .leading, spacing: 10) {
             ViewThatFits(in: .horizontal) {
-                HStack(spacing: 10) { RulesMenu(checkup: checkup); summary(violations: violations, conflicts: conflicts); Spacer(minLength: 0) }
-                VStack(alignment: .leading, spacing: 8) { RulesMenu(checkup: checkup); HStack(spacing: 10) { summary(violations: violations, conflicts: conflicts) } }
+                HStack(spacing: 10) { RulesMenu(checkup: checkup); summary(standing); Spacer(minLength: 0) }
+                VStack(alignment: .leading, spacing: 8) { RulesMenu(checkup: checkup); HStack(spacing: 10) { summary(standing) } }
             }
             if showingRules {
                 ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 16, leading: 20, bottom: 16, trailing: 20)) {
@@ -119,20 +120,9 @@ struct RulesBar: View {
 }
 
 extension RulesBar {
-    @ViewBuilder func summary(violations: [ConfigRuleEvaluation], conflicts: [ConfigRuleEvaluation]) -> some View {
-        if !report.rulesetIDs.isEmpty {
-            Group {
-                if !violations.isEmpty {
-                    StudioStatusLabel(title: violations.count == 1 ? "1 setting breaks these rules" : "\(violations.count) settings break these rules", tone: .negative)
-                } else if !conflicts.isEmpty {
-                    StudioStatusLabel(title: "The chosen rules disagree", tone: .caution)
-                } else if report.policy.contains(where: { $0.status == .ok }) {
-                    StudioStatusLabel(title: "Follows \(checkup.selectionTitle)", tone: .positive)
-                } else {
-                    StudioStatusLabel(title: "Not assessed", tone: .unknown)
-                }
-            }
-            .fixedSize()
+    @ViewBuilder func summary(_ standing: ConfigCheckupStanding) -> some View {
+        if let status = standing.status {
+            StudioStatusLabel(title: status.title, tone: status.tone).fixedSize()
             Button(showingRules ? "Hide Rules" : "Show Rules") { showingRules.toggle() }.glassAction().controlSize(.small).fixedSize()
         }
     }
@@ -159,6 +149,46 @@ struct RulesMenu: View {
             .fixedSize()
             .accessibilityLabel("Rules to check against: \(checkup.selectionTitle)")
         }
+    }
+}
+
+/// The latest match the game recorded on this Mac, said as a match (it may have used another
+/// loadout), with Refresh. Reading happens only here and after a game, never on a timer.
+private struct MatchPanel: View {
+    @ObservedObject var checkup: ConfigCheckupModel
+    @Environment(\.palette) private var palette
+    var body: some View {
+        if let match = checkup.matchPresentation {
+            ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 16, leading: 20, bottom: 16, trailing: 20)) {
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .top, spacing: 16) { words(match); Spacer(minLength: 8); refresh }
+                    VStack(alignment: .leading, spacing: 10) { words(match); refresh }
+                }
+            }
+        } else {
+            HStack(spacing: 10) {
+                Text("Match summaries haven’t been read yet.").font(StudioTypography.help).foregroundStyle(palette.secondary)
+                refresh
+            }
+            .padding(.horizontal, 6)
+        }
+    }
+    private func words(_ match: ConfigMatchPresentation) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            StudioStatusLabel(title: match.title, tone: match.tone).fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
+            Text(match.detail).font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+            ForEach(match.lines, id: \.self) { line in
+                Text(line).font(.typewriter(12)).foregroundStyle(palette.address).fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+    private var refresh: some View {
+        Button { checkup.refreshMatches() } label: { Label("Refresh", systemImage: "arrow.clockwise") }
+            .glassAction().controlSize(.small).fixedSize()
+            .help("Read the match summaries the game saved on this Mac again")
+            .accessibilityLabel("Refresh match summaries")
     }
 }
 

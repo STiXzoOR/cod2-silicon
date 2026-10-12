@@ -147,13 +147,26 @@ enum InputDevicesTests {
         flow.press(19)
         require(flow.step == .keypad && flow.note?.contains("keypad") == true, "a number-row digit isn't taken for the keypad")
         flow.skip(); flow.press(122); flow.press(115)
+        // No keypad, F1 and Home fit a tenkeyless board and a compact 75% alike: the keys
+        // narrow the choice, and only the person's own choice makes the size verified.
+        require(flow.step == .size([.tkl, .percent75]) && flow.result == nil && !flow.canSkip,
+                "the ambiguous answers never become a verified tenkeyless size on their own")
+        flow.press(124); flow.skip(); flow.choose(.full)
+        require(flow.step == .size([.tkl, .percent75]) && flow.result == nil, "keys, skips and a size the answers rule out choose nothing")
+        var compact = flow
+        compact.choose(.percent75)
+        require(compact.result == InputDeviceOverride(shape: .iso, size: .percent75, modifiers: .pc, verified: true), "a compact 75% with Home stays 75%")
+        flow.choose(.tkl)
         require(flow.step == .done && flow.result == InputDeviceOverride(shape: .iso, size: .tkl, modifiers: .pc, verified: true),
-                "ISO, PC labels, function row and Home make a verified tenkeyless override")
-        require(answers([6, 55, nil, 122, nil]).result == InputDeviceOverride(shape: .ansi, size: .percent75, modifiers: .mac, verified: true), "ANSI Mac 75%")
-        require(answers([6, 102, 82]).result == InputDeviceOverride(shape: .jis, size: .full, modifiers: .mac, verified: true), "英数 beside Space is JIS; a keypad is full size")
-        require(answers([6, 55, nil, nil, 123]).result?.size == .percent65, "no function row, but arrows: 65%")
-        require(answers([6, 55, nil, nil, nil]).result?.size == .percent60, "no function row and no arrows: 60%")
+                "ISO, PC labels and a chosen tenkeyless size make a verified override")
+        func chosen(_ steps: [UInt16?], _ size: KeyboardSize) -> KeyboardVerification { var flow = answers(steps); flow.choose(size); return flow }
+        require(answers([6, 55, nil, 122, nil]).step == .size([.percent75]) && answers([6, 55, nil, 122, nil]).result == nil, "75% waits for confirmation")
+        require(chosen([6, 55, nil, 122, nil], .percent75).result == InputDeviceOverride(shape: .ansi, size: .percent75, modifiers: .mac, verified: true), "ANSI Mac 75%")
+        require(chosen([6, 102, 82], .full).result == InputDeviceOverride(shape: .jis, size: .full, modifiers: .mac, verified: true), "英数 beside Space is JIS; a keypad is full size")
+        require(chosen([6, 55, nil, nil, 123], .percent65).result?.size == .percent65, "no function row, but arrows: 65%")
+        require(chosen([6, 55, nil, nil, nil], .percent60).result?.size == .percent60, "no function row and no arrows: 60%")
         require(answers([6, 55, nil, nil]).step == .arrows && answers([6, 55, nil, 122]).step == .navigation, "65% and 60% are told apart by the arrows")
+        require(KeyboardVerification.Step.size([.tkl, .percent75]).instruction.contains("Tenkeyless or 75%"), "the choice names both sizes the keys fit")
 
         let model = InputDevicesModel(provider: DeviceFixture()), keyboard = model.devices[0]
         require(model.presentation(for: keyboard).size.explanation.hasPrefix("Estimated"), "a guessed size says Estimated until confirmed")
@@ -161,7 +174,7 @@ enum InputDevicesTests {
         let verified = model.presentation(for: keyboard)
         require(verified.shape.basis == .verified && verified.size.basis == .verified && verified.modifiers.basis == .verified, "a verified answer is its own basis")
         require(verified.size.explanation == "You confirmed this by pressing keys", "the explanation says how it was confirmed")
-        print("PASS: Press keys to verify finds shape, modifier labels and size from physical key positions")
+        print("PASS: Press keys to verify finds shape and modifier labels from key positions; size is verified only once chosen")
     }
     /// Learn button positions: which physical button sends which number, and what the game can use.
     @MainActor static func learning() {

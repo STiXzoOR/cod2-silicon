@@ -169,6 +169,12 @@ enum BindingCaptureEvent: Sendable {
 @MainActor protocol BindingCaptureEventSource: AnyObject, Sendable {
     func start(_ handler: @escaping @MainActor (BindingCaptureEvent) -> BindingCaptureDisposition)
     func stop()
+    /// Clicks at these window points (top-left origin) go to the window's controls without
+    /// reaching the handler, until `stop`. Nil, the default, sends every click to the handler.
+    func passClicks(inside region: (@MainActor (CGPoint) -> Bool)?)
+}
+extension BindingCaptureEventSource {
+    func passClicks(inside region: (@MainActor (CGPoint) -> Bool)?) {}
 }
 @MainActor final class ConfigBindingCapture: ObservableObject {
     @Published private(set) var state: BindingCaptureState = .idle
@@ -251,7 +257,9 @@ enum BindingCaptureEvent: Sendable {
     private var monitor: Any?
     private var observers: [NSObjectProtocol] = []
     private var handler: (@MainActor (BindingCaptureEvent) -> BindingCaptureDisposition)?
+    private var clickRegion: (@MainActor (CGPoint) -> Bool)?
     init(window: NSWindow) { self.window = window }
+    func passClicks(inside region: (@MainActor (CGPoint) -> Bool)?) { clickRegion = region }
     func start(_ handler: @escaping @MainActor (BindingCaptureEvent) -> BindingCaptureDisposition) {
         stop(); self.handler = handler
         let mask: NSEvent.EventTypeMask = [.keyDown,.keyUp,.flagsChanged,.leftMouseDown,.leftMouseUp,.rightMouseDown,.rightMouseUp,.otherMouseDown,.otherMouseUp,.scrollWheel]
@@ -259,6 +267,7 @@ enum BindingCaptureEvent: Sendable {
             let consume = MainActor.assumeIsolated {
                 guard let self, let window = self.window, event.window === window else { return false }
                 guard let input = Self.input(event) else { return false }
+                if case .mouse = input, let region = self.clickRegion, let point = Self.topLeftPoint(event, in: window), region(point) { return false }
                 return self.handler?(input) == .consume
             }
             return consume ? nil : event
@@ -272,7 +281,13 @@ enum BindingCaptureEvent: Sendable {
     func stop() {
         if let monitor { NSEvent.removeMonitor(monitor) }; monitor = nil
         for observer in observers { NotificationCenter.default.removeObserver(observer) }; observers = []
-        handler = nil
+        handler = nil; clickRegion = nil
+    }
+    /// The click in the content view's points from its top left, as SwiftUI's global frames are.
+    private static func topLeftPoint(_ event: NSEvent, in window: NSWindow) -> CGPoint? {
+        guard let content = window.contentView else { return nil }
+        let point = content.convert(event.locationInWindow, from: nil)
+        return content.isFlipped ? point : CGPoint(x: point.x, y: content.bounds.height - point.y)
     }
     private static func input(_ event: NSEvent) -> BindingCaptureEvent? {
         switch event.type {

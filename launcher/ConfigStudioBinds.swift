@@ -52,6 +52,7 @@ enum ConfigCaptureTarget: Equatable {
         }
     }
     func stop() { inner.stop() }
+    func passClicks(inside region: (@MainActor (CGPoint) -> Bool)?) { inner.passClicks(inside: region) }
 }
 
 // MARK: - Keyboard drawing
@@ -664,6 +665,9 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
     /// Learn button positions, while it runs.
     @Published private(set) var learning: PointerButtonLearning?
     private var setupSource: (any BindingCaptureEventSource)?
+    /// The setup panel's own buttons, in window points from the top left. While learning, clicks
+    /// there press them; every other click is an answer.
+    var setupControlFrames: [CGRect] = []
 
     var keyboard: InputDevice? { devices.devices.first { $0.id == keyboardID } ?? devices.devices.first { $0.kind == .keyboard } }
     var mouse: InputDevice? { devices.devices.first { $0.kind == .mouse } }
@@ -687,13 +691,15 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
         verification = nil; learning = nil
     }
 
-    /// Keys answer the questions and are consumed; clicks still reach the panel's buttons.
+    /// Keys answer the questions and are consumed; clicks still reach the panel's buttons. Once
+    /// the keys have answered, the size is the person's choice: keys reach the size buttons then.
     func beginVerification() {
         guard let id = keyboard?.id else { return }
         let started = listen { [weak self] event in
             guard let self, var flow = self.verification else { return .passThrough }
             switch event {
             case .key(virtualKey: 53, pressed: true, repeated: _): self.stopSetup(); return .consume
+            case .key where !flow.sizeChoices.isEmpty, .keyPulse where !flow.sizeChoices.isEmpty: return .passThrough
             case .key(let key, true, false), .keyPulse(let key): flow.press(key)
             case .key: return .consume
             case .mouse, .wheel: return .passThrough
@@ -710,6 +716,12 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
         flow.skip()
         update(flow, keyboard: id)
     }
+    /// The size the person chose among those their keys fit; only this verifies a size.
+    func chooseVerifiedSize(_ size: KeyboardSize) {
+        guard var flow = verification, let id = keyboard?.id else { return }
+        flow.choose(size)
+        update(flow, keyboard: id)
+    }
     private func update(_ flow: KeyboardVerification, keyboard id: String) {
         guard let result = flow.result else {
             // Each new question is spoken once; a retry note is visible beside it.
@@ -722,8 +734,9 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
         studio.announce("Keyboard confirmed: \(words.joined(separator: ", ")).")
     }
 
-    /// Clicks are the answers and are consumed, so they can't press a control. Return skips a
-    /// button the mouse doesn't have (and finishes the extras); Escape stops.
+    /// Clicks are the answers and are consumed, so they can't press a control, except the panel's
+    /// own I Don’t Have This Button/Done and Cancel. Return skips a button the mouse doesn't have
+    /// (and finishes the extras); Escape stops.
     func beginLearning() {
         let id = mouseKey
         let started = listen { [weak self] event in
@@ -738,6 +751,7 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
             self.update(flow, mouse: id)
             return .consume
         }
+        setupSource?.passClicks { [weak self] point in self?.setupControlFrames.contains { $0.contains(point) } ?? false }
         if started { learning = PointerButtonLearning(); studio.announce(PointerButtonPosition.left.instruction) }
     }
     /// “I Don’t Have This Button”, or Done for the extra buttons.

@@ -26,6 +26,8 @@ def run(target, *extra):
 
 # The window server captures at the display's scale: 1440x900 points is 2880x1800 on a Retina display.
 WINDOW = {(1440, 900), (2880, 1800)}
+# The launcher's minimum window, 1100x760 points.
+MINIMUM = {(1100, 760), (2200, 1520)}
 
 
 def size(png):
@@ -39,7 +41,12 @@ configs = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-te
            "discover-unavailable", "discover-players", "discover-saved", "discover-player", "configs-import",
            "configs-import-everything", "servers-ready", "servers-ready-fixed",
            "configs-binds-list", "configs-binds-advanced", "configs-binds-visual", "configs-checkup",
-           "configs-guided-rules", "configs-expert-rules"]
+           "configs-guided-rules", "configs-expert-rules", "configs-binds-verify", "configs-binds-learn", "configs-expert-player",
+           # Check-up with summaries measured, turned off and unreadable (the plain screen above has none yet).
+           "configs-checkup-measured", "configs-checkup-off", "configs-checkup-error",
+           # Import from a link or a Windows profile, the review while it reads, a Saved bookmark the
+           # signed index dropped, and a save that failed. Synthetic data in a private home only.
+           "configs-import-link", "configs-import-windows", "configs-import-loading", "discover-saved-removed", "configs-save-failure"]
 screens = ["home", "home-first", "servers", "servers-empty", "settings", "library-demos", "library-screenshots", "about",
            "setup-data", "setup-data-missing", "setup-key", "setup-shaders", "setup-ready"] + configs
 for screen in screens:
@@ -67,7 +74,7 @@ run(fallback, "--fallback", "--only", "configs-guided")
 audit = {entry["screen"]: entry["items"] for entry in json.loads((out / "shape-audit.json").read_text())}
 # Behind the import sheet the window shows no translucent surface of its own, and the sheet's
 # material belongs to the system, so Reduce Transparency can leave those captures unchanged.
-sheets = {"configs-import", "configs-import-everything"}
+sheets = {"configs-import", "configs-import-everything", "configs-import-link", "configs-import-windows", "configs-import-loading"}
 for variant in ["increase-contrast", "reduce-transparency"]:
     folder = out / variant
     run(folder, "--group", "configs", f"--{variant}")
@@ -82,6 +89,29 @@ for variant in ["increase-contrast", "reduce-transparency"]:
             if variant == "increase-contrast" or glass:
                 assert png.read_bytes() != (out / f"{screen}-{appearance}.png").read_bytes(), f"{png} matches the standard capture"
 
+# Config Studio at the launcher's 1100x760 minimum: actual window images, both appearances, with the
+# same shape audit (the harness fails on a finding).
+minimum = out / "minimum"
+run(minimum, "--group", "configs", "--minimum")
+for screen in configs:
+    shots = {}
+    for appearance in ["dark", "light"]:
+        png = minimum / f"{screen}-{appearance}.png"
+        (width, height), length = size(png)
+        assert (width, height) in MINIMUM, (png, width, height)
+        assert length > 40_000, f"{png} looks blank ({length} bytes)"
+        shots[appearance] = png.read_bytes()
+    assert shots["dark"] != shots["light"], f"minimum {screen}"
+
+# Reduce Motion, set in the view environment for the capture only (never the Mac's setting).
+# Stills can match the standard captures; each must still be a whole window.
+motion = out / "reduce-motion"
+run(motion, "--group", "configs", "--reduce-motion")
+for screen in configs:
+    for appearance in ["dark", "light"]:
+        (width, height), length = size(motion / f"{screen}-{appearance}.png")
+        assert (width, height) in WINDOW and length > 60_000, (screen, appearance, width, height, length)
+
 # Real clicks on Config Studio controls (including a Binds key capture and Check-up Apply and
 # Undo) write exact bytes and History rows in a temporary home.
 subprocess.run([str(harness), str(out / "actions"), "--actions"], check=True, timeout=300)
@@ -93,7 +123,8 @@ for screen in configs:
     assert (out / "accessibility" / f"{screen}.txt").stat().st_size > 1000, screen
 
 # Sheets, popovers and alerts, opened by real clicks and captured over their window.
-overlays = ["configs-jump", "configs-new-loadout", "configs-expert-note", "configs-binds-keyboard", "configs-binds-pointer", "configs-binds-confirm"]
+overlays = ["configs-jump", "configs-new-loadout", "configs-expert-note", "configs-binds-keyboard", "configs-binds-pointer", "configs-binds-confirm",
+            "configs-import-confirm"]
 subprocess.run([str(harness), str(out / "overlays"), "--overlays"], check=True, timeout=300)
 for overlay in overlays:
     for appearance in ["dark", "light"]:
@@ -102,6 +133,7 @@ for overlay in overlays:
 
 # The harness exits non-zero on any shape-audit finding, so reaching here means none.
 print(f"PASS: {len(screens) * 2} launcher screens at 1440x900 points in dark and light, plus the material fallback, with bundled fonts"
-      " and a clean shape audit (capsule buttons, concentric nesting, equal insets); Config Studio under Increase Contrast and"
-      " Reduce Transparency; Config Studio clicks write exact bytes; every Config Studio control is named for VoiceOver;"
+      " and a clean shape audit (capsule buttons, concentric nesting, equal insets); Config Studio under Increase Contrast,"
+      f" Reduce Transparency and Reduce Motion, and {len(configs) * 2} captures at the 1100x760 minimum; Config Studio clicks"
+      " write exact bytes; every Config Studio control is named for VoiceOver;"
       f" {len(overlays) * 2} sheet, popover and alert captures")

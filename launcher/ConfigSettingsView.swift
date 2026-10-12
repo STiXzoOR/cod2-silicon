@@ -234,7 +234,7 @@ private struct GuidedControl: View {
             } else if let range = spec.slideRange {
                 HStack(spacing: 14) {
                     if spec.practicalRange != nil {
-                        // The slider covers what most players use; the field takes any value the game accepts.
+                        // The slider covers the catalog's practical range; the field takes any value the game accepts.
                         CommitSlider(value: state.number ?? range.lowerBound, range: range, step: spec.step, label: spec.title, readout: nil) {
                             studio.set(spec, to: ConfigValues.text(number: $0, spec: spec), undo: undo)
                         }
@@ -270,10 +270,11 @@ private extension View {
 }
 
 enum PracticalRangeHint {
-    /// “Most players use 0.01–30. You can type any value from 0.01 to 100.”
+    /// “Slider range 0.01–30. You can type any value from 0.01 to 100.” The range is catalog
+    /// metadata, not a measurement of what players use, so it is named for what it does.
     static func text(_ spec: ConfigSettingSpec) -> String? {
         guard let range = spec.practicalRange else { return nil }
-        var text = "Most players use \(ConfigValues.format(range.lowerBound))–\(ConfigValues.format(range.upperBound))."
+        var text = "Slider range \(ConfigValues.format(range.lowerBound))–\(ConfigValues.format(range.upperBound))."
         if let minimum = spec.minimum, let maximum = spec.maximum {
             text += " You can type any value from \(ConfigValues.format(minimum)) to \(ConfigValues.format(maximum))."
         }
@@ -595,14 +596,18 @@ private struct ExpertRow: View {
                     if let issue { StudioStatusLabel(title: issue.reason, tone: issue.status.tone) }
                     if let theirs, let source = studio.comparisonName {
                         StudioCompareValue(value: theirs.display, source: source).fixedSize()
-                        if state.locked {
-                            Text("Locked, so it stays yours").font(StudioTypography.help).foregroundStyle(palette.secondary)
-                        } else {
-                            Button("Take Theirs") { studio.takeTheirs(spec, undo: undo) }.glassAction().controlSize(.small).fixedSize()
-                                .accessibilityLabel("Take \(source)’s \(spec.title), \(theirs.display)")
+                        // The same rule guards the action: locks, the game running, the launcher and server-owned settings.
+                        let blocked = studio.takeTheirsBlock(spec)
+                        Button("Take Theirs") { studio.takeTheirs(spec, undo: undo) }.glassAction().controlSize(.small).fixedSize()
+                            .disabled(blocked != nil)
+                            .accessibilityLabel("Take \(source)’s \(spec.title), \(theirs.display)")
+                            .accessibilityHint(blocked ?? "")
+                        if let blocked {
+                            Text(blocked).font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
                         }
                     }
-                    if spec.launcherOwned {
+                    // With a comparison, Take Theirs already gives this reason.
+                    if spec.launcherOwned && (theirs == nil || studio.comparisonName == nil) {
                         Text("CoD2 Silicon sets this from Settings each time the game starts.").font(StudioTypography.help).foregroundStyle(palette.secondary)
                     }
                     if let note = state.note {

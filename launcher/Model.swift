@@ -188,6 +188,7 @@ struct MediaEntry: Identifiable {
         }
         if let url = args.first(where: { $0.hasPrefix("cod2x://") }) { openLink(url) }
         studio.loadCatalog()
+        refreshMatchSummaries()
         if ProcessInfo.processInfo.environment["COD2_SETUP_NONINTERACTIVE"] == "1" {
             setupTask = Task {
                 do {
@@ -316,6 +317,7 @@ struct MediaEntry: Identifiable {
             try PrivateFile.write(Data(text.utf8), to: home.appendingPathComponent("main/launcher.cfg"))
             try PrivateFile.write(JSONEncoder().encode(settings), to: home.appendingPathComponent("launcher-settings.json"))
             savedSettings = settings; settingsSaved = true
+            studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
         } catch { notice = error.localizedDescription }
     }
     func saveLibrary() {
@@ -625,8 +627,16 @@ struct MediaEntry: Identifiable {
         print("CoD2 Silicon: returned to launcher (game exit \(code.map(String.init) ?? "unavailable")).")
         fflush(stdout)
         readPlayerName()
+        refreshMatchSummaries()
         if pendingLink != nil { play() }
         else if exitAfterGame { NSApp.terminate(nil) }
+    }
+
+    /// Check-up reads the game's local match summaries from this home at startup and after each
+    /// game; the 250 ms game monitor never reads them. The switch shown is the saved choice.
+    private func refreshMatchSummaries() {
+        studio.checkup.matchSummariesEnabled = savedSettings.matchSummariesEnabled
+        studio.checkup.refreshMatches(home: home)
     }
 
     // MARK: Library, folders and updates

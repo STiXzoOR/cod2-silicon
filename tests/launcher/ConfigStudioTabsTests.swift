@@ -27,8 +27,11 @@ import Foundation
 @MainActor final class SyntheticCaptureSource: BindingCaptureEventSource {
     private(set) var handler: (@MainActor (BindingCaptureEvent) -> BindingCaptureDisposition)?
     private(set) var stops = 0
+    /// Where clicks reach the window's own controls instead of the handler (Learn button positions).
+    private(set) var clickRegion: (@MainActor (CGPoint) -> Bool)?
     func start(_ handler: @escaping @MainActor (BindingCaptureEvent) -> BindingCaptureDisposition) { self.handler = handler }
-    func stop() { handler = nil; stops += 1 }
+    func stop() { handler = nil; clickRegion = nil; stops += 1 }
+    func passClicks(inside region: (@MainActor (CGPoint) -> Bool)?) { clickRegion = region }
     @discardableResult func send(_ event: BindingCaptureEvent) -> BindingCaptureDisposition? { handler?(event) }
 }
 
@@ -255,8 +258,38 @@ enum ConfigStudioTabsTests {
         binds.skipVerificationStep()
         source.send(.key(virtualKey: 122, pressed: true)); source.send(.key(virtualKey: 122, pressed: false))
         binds.skipVerificationStep()
+        require(binds.verification?.step == .size([.percent75]) && source.handler != nil && binds.devices.overrides["1"] == nil,
+                "the size waits for the person's choice before anything is verified")
+        require(source.send(.key(virtualKey: 48, pressed: true)) == .passThrough && source.send(.key(virtualKey: 49, pressed: true)) == .passThrough,
+                "while choosing, Tab and Space reach the size buttons")
+        binds.chooseVerifiedSize(.percent75)
         require(binds.verification == nil && source.handler == nil, "finishing stops listening")
         require(binds.devices.overrides["1"] == InputDeviceOverride(shape: .iso, size: .percent75, modifiers: .pc, verified: true))
+        // No keypad, F1 and Home: tenkeyless or compact 75%. Cancel, focus loss and a game
+        // starting at the choice keep the earlier answer and stop listening.
+        let earlier = binds.devices.overrides["1"]
+        func ambiguous() {
+            binds.beginVerification()
+            for key: UInt16 in [6, 58] { source.send(.key(virtualKey: key, pressed: true)); source.send(.key(virtualKey: key, pressed: false)) }
+            binds.skipVerificationStep()
+            for key: UInt16 in [122, 115] { source.send(.key(virtualKey: key, pressed: true)); source.send(.key(virtualKey: key, pressed: false)) }
+        }
+        ambiguous()
+        require(binds.verification?.step == .size([.tkl, .percent75]) && binds.devices.overrides["1"] == earlier, "TKL is never verified from keys alone")
+        binds.chooseVerifiedSize(.full)
+        require(binds.verification?.step == .size([.tkl, .percent75]) && binds.devices.overrides["1"] == earlier, "a size the keys rule out is refused")
+        binds.stopSetup()
+        require(binds.verification == nil && source.handler == nil && binds.devices.overrides["1"] == earlier, "Cancel at the choice verifies nothing")
+        ambiguous(); source.send(.focusLost)
+        require(binds.verification == nil && source.handler == nil && binds.devices.overrides["1"] == earlier, "focus loss at the choice verifies nothing")
+        ambiguous(); binds.gameStarted()
+        require(binds.verification == nil && source.handler == nil && binds.devices.overrides["1"] == earlier, "a game starting at the choice verifies nothing")
+        ambiguous(); require(source.send(.key(virtualKey: 53, pressed: true)) == .consume)
+        require(binds.verification == nil && source.handler == nil && binds.devices.overrides["1"] == earlier, "Escape at the choice verifies nothing")
+        ambiguous(); binds.chooseVerifiedSize(.tkl)
+        require(binds.devices.overrides["1"] == InputDeviceOverride(shape: .ansi, size: .tkl, modifiers: .pc, verified: true) && source.handler == nil,
+                "choosing Tenkeyless verifies it")
+        binds.devices.setOverride(earlier, for: "1")
         require(binds.devices.presentation(for: binds.devices.devices[0]).size.basis == .verified)
         binds.beginVerification(); source.send(.key(virtualKey: 53, pressed: true))
         require(binds.verification == nil && source.handler == nil && binds.devices.overrides["1"]?.verified == true, "Escape stops and keeps the earlier answer")
@@ -272,7 +305,16 @@ enum ConfigStudioTabsTests {
 
         // Learn button positions: clicks are consumed; Return finishes; the panel places side buttons.
         require(binds.pointerButtonDetail(EngineKey(spelling: "mouse4")!) == nil, "before learning, the drawing keeps its generic captions")
+        // The panel's own buttons (window points, top-left origin) take clicks; every other click is an answer.
+        binds.setupControlFrames = [CGRect(x: 40, y: 300, width: 160, height: 28), CGRect(x: 208, y: 300, width: 80, height: 28)]
         binds.beginLearning()
+        require(source.clickRegion?(CGPoint(x: 60, y: 310)) == true && source.clickRegion?(CGPoint(x: 240, y: 320)) == true,
+                "clicks on I Don’t Have This Button and Cancel reach them")
+        require(source.clickRegion?(CGPoint(x: 600, y: 310)) == false && source.clickRegion?(CGPoint(x: 60, y: 340)) == false,
+                "a click anywhere else stays an answer")
+        binds.setupControlFrames = [CGRect(x: 40, y: 400, width: 160, height: 28)]
+        require(source.clickRegion?(CGPoint(x: 60, y: 410)) == true && source.clickRegion?(CGPoint(x: 60, y: 310)) == false,
+                "the region follows the buttons when the panel moves")
         for button in [0, 1, 2, 4, 3] {
             require(source.send(.mouse(button: button, pressed: true)) == .consume, "a learning click never activates a control")
             source.send(.mouse(button: button, pressed: false))
@@ -280,7 +322,7 @@ enum ConfigStudioTabsTests {
         source.send(.mouse(button: 5, pressed: true)); source.send(.mouse(button: 5, pressed: false))
         require(binds.learning?.extras == [5] && binds.learning?.note?.contains("can’t use") == true)
         require(source.send(.key(virtualKey: 36, pressed: true)) == .consume)
-        require(binds.learning == nil && source.handler == nil, "Return finishes and stops listening")
+        require(binds.learning == nil && source.handler == nil && source.clickRegion == nil, "Return finishes and stops listening")
         require(binds.pointerButtonDetail(EngineKey(spelling: "mouse4")!) == "Forward side button" && binds.pointerButtonDetail(EngineKey(spelling: "mouse5")!) == "Back side button")
         require(binds.pointerExtras == [5], "extra buttons are listed with why they can't be used")
         binds.beginLearning(); source.send(.mouse(button: 0, pressed: true)); source.send(.key(virtualKey: 53, pressed: true))

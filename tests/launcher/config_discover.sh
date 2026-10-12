@@ -12,7 +12,7 @@ done
 taskpolicy -b nice -n 19 /usr/bin/xcrun clang -target arm64-apple-macos13 -isysroot "$sdk" -DCOD2_X64=1 -DCOD2_CODX=1 \
     -c "$root/src/PC/qcommon/cod2x_url.c" -o "$scratch/URL.o"
 sources=""
-for file in Core Presentation ConfigDocument ConfigProfiles ConfigHistory ConfigStudioSession ConfigCatalog ConfigRules ConfigReadyCheck \
+for file in Core Presentation MatchSummaries ConfigDocument ConfigProfiles ConfigHistory ConfigStudioSession ConfigCatalog ConfigRules ConfigReadyCheck \
     ConfigCheckup ConfigBindings InputDevices ConfigChains ConfigImport ConfigImportSafety WindowsProfiles ConfigImportSession \
     ConfigImportCatalogAdapter ConfigDirectory Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView \
     LibraryView ConfigStudioModel ConfigStudioBinds ConfigStudioCheckup ConfigStudioStyle ConfigsView ConfigSettingsView ConfigHistoryView \

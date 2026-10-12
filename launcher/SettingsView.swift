@@ -37,6 +37,10 @@ struct SettingsView: View {
                     }
                     VStack(alignment: .leading, spacing: 22) {
                         SettingsSection("Updates") { updatesGroup }
+                        SettingsSection("Privacy") { privacyGroup } footer: {
+                            Text("Turning this off applies from your next game. Summaries already on this Mac stay there; turning it off doesn’t delete them.")
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                         SettingsSection("Advanced launch options") { advancedGroup }
                         if legacy {
                             SettingsSection("Mouse and sound") { mouseGroup }
@@ -127,6 +131,16 @@ struct SettingsView: View {
                     ForEach(GameSettings.anisotropyLevels, id: \.self) { Text("\($0)×").tag($0) }
                 }
                 .labelsHidden().fixedSize()
+            }
+        }
+    }
+
+    /// The game's local match summaries (`main/stats/matches.jsonl`), passed to it at launch.
+    private var privacyGroup: some View {
+        SettingsGroup {
+            SettingsRow("Local match summaries",
+                        detail: "On by default. After each match the game saves a short summary for Check-up: map, mode, frame times, ping and missed server updates. It stays on this Mac, which keeps the last \(MatchSummaries.recordLimit) matches, and is never sent anywhere.") {
+                Toggle("Local match summaries", isOn: $model.settings.matchSummariesEnabled).toggleStyle(.switch).labelsHidden()
             }
         }
     }

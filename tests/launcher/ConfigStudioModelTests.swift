@@ -232,8 +232,9 @@ import Foundation
         require(try Data(contentsOf: activeFile) == active)
         print("PASS: new loadouts from a copy or defaults never change the active loadout")
 
-        try ConfigStudioTabsTests.run(scratch: scratch, catalog: catalog,
-                                      resources: URL(fileURLWithPath: CommandLine.arguments[1]).deletingLastPathComponent())
+        let resources = URL(fileURLWithPath: CommandLine.arguments[1]).deletingLastPathComponent()
+        try ConfigStudioTabsTests.run(scratch: scratch, catalog: catalog, resources: resources)
+        try ConfigStudioAcceptanceTests.run(scratch: scratch, catalog: catalog, resources: resources)
     }
 
     static func require<T>(_ value: T?, line: Int = #line) throws -> T {

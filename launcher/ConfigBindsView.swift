@@ -877,9 +877,19 @@ private struct DeviceSetupPanel: View {
         Text("Verify your keyboard").font(.system(size: 15, weight: .semibold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
         Text(flow.step.instruction).font(.system(size: 14)).foregroundStyle(palette.text).fixedSize(horizontal: false, vertical: true)
         if let note = flow.note { StudioStatusLabel(title: note, tone: .caution) }
-        Text("Only this window listens, until you finish. The keys you press here do nothing else. Escape stops.")
-            .font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+        if flow.sizeChoices.isEmpty {
+            Text("Only this window listens, until you finish. The keys you press here do nothing else. Escape stops.")
+                .font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+        } else {
+            // The keys can't tell these sizes apart, so the person's choice is what's verified.
+            Text("Keys work normally again: choose with a click, or with Tab and Space. Escape stops without changing anything.")
+                .font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+        }
         HStack(spacing: 8) {
+            ForEach(flow.sizeChoices, id: \.self) { size in
+                Button(size.title) { binds.chooseVerifiedSize(size) }.glassAction()
+                    .accessibilityLabel("My keyboard is \(size.title)")
+            }
             if flow.canSkip { Button("I Don’t Have This Key") { binds.skipVerificationStep() }.glassAction() }
             Button("Cancel") { binds.stopSetup() }.glassAction()
         }
@@ -901,14 +911,16 @@ private struct DeviceSetupPanel: View {
             Text(learned.joined(separator: " · ")).font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
         }
         if let note = flow.note { StudioStatusLabel(title: note, tone: .caution) }
-        // Every click is an answer here, so the buttons below answer to the keyboard.
-        Text("Clicks are recorded, not pressed, until you finish. Press Return if your mouse doesn’t have this button; Escape stops.")
+        // Every other click is an answer; the window's listener lets clicks on these buttons through.
+        Text("Clicks are recorded, not pressed, until you finish, except on the buttons below. Press Return if your mouse doesn’t have this button; Escape stops.")
             .font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
         HStack(spacing: 8) {
             Button(flow.step == .extras ? "Done" : "I Don’t Have This Button") { binds.skipLearningStep() }.glassAction()
             Button("Cancel") { binds.stopSetup() }.glassAction()
         }
         .actionControlSize()
+        .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .global) }) { binds.setupControlFrames = [$0] }
+        .onDisappear { binds.setupControlFrames = [] }
     }
     private static func name(_ button: Int) -> String {
         PointerButtonLearning.usable(button) ? "Mouse \(button + 1)" : "button \(button + 1), unused by the game"
@@ -996,11 +1008,12 @@ private struct KeyButton: View {
         let caption = entry.map { binds.describe($0) }
         let width = key.width * unit - 4, height = key.height * unit - 4
         let selected = binds.selectedVirtualKey == key.virtualKey || (binds.selectedVirtualKey == nil && engine != nil && engine == binds.selectedKey)
-        Button {
+        let select = {
             binds.selectedVirtualKey = key.virtualKey
             binds.selectedKey = engine
             chosen()
-        } label: {
+        }
+        Button(action: select) {
             StudioKeyCap(key: label, action: width >= 76 || key.virtualKey == 49 ? caption : nil, role: role, selected: selected, width: width, height: height)
         }
         .buttonStyle(.plain)
@@ -1008,8 +1021,13 @@ private struct KeyButton: View {
         // after a click and Tab passes the drawing as one stop.
         .focusable(tabStop)
         .offset(x: key.x * unit, y: key.y * unit)
+        // Keys that aren't the Tab stop are .focusable(false), which can take their button out of
+        // the accessibility tree; so every key states its element itself: one button with its
+        // name, selection and press, whichever key holds the Tab stop.
+        .accessibilityElement(children: .ignore)
+        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
         .accessibilityLabel("\(Self.spoken(label, key.virtualKey)), \(role == .unavailable ? mapping.explanation ?? StudioKeyRole.unavailable.rawValue : caption ?? "not bound")")
-        .accessibilityAddTraits(selected ? .isSelected : [])
+        .accessibilityAction(.default, select)
     }
     static func label(_ virtualKey: UInt16, source: InputSourceSnapshot, modifiers: KeyboardModifierStyle) -> String {
         let mac = modifiers == .mac

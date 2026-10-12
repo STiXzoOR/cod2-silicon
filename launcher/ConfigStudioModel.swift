@@ -505,7 +505,8 @@ struct ConfigStudioFailure: Identifiable {
     private var protectedCounts: [ConfigPurposeGroup: Int] = [:]
     private var valueCache: (data: Data, values: [String: String])?
     private var diffCache: [String: [ConfigChange]] = [:]
-    private var sinceCache: (id: String, base: Data, changes: [ConfigChange])?
+    /// Keyed by the whole current revision, so an absent companion never matches an empty one.
+    private var sinceCache: (id: String, base: ConfigProfileVersion, changes: [ConfigChange])?
     /// Input devices for Binds; the review harness and tests supply their own.
     var deviceProvider: @MainActor () -> any InputDeviceProvider = { SystemInputDeviceProvider() }
     var captureSource: @MainActor (NSWindow?) -> (any BindingCaptureEventSource)? = { window in window.map { AppKitBindingEventSource(window: $0) } }
@@ -733,12 +734,22 @@ struct ConfigStudioFailure: Identifiable {
     /// What differs between a snapshot's saved state and now.
     func changesSince(_ entry: ConfigHistoryEntry) -> [ConfigChange] {
         guard let current else { return [] }
-        let base = current.data + (current.version.metadata ?? Data()) + (current.version.chain ?? Data())
+        let base = current.version
         if let cache = sinceCache, cache.id == entry.id, cache.base == base { return cache.changes }
         let result = ConfigDiff.changes(from: entry.data, entry.metadata, to: current.data, current.version.metadata,
                                         chains: (entry.chain, current.version.chain), specs: specsByName, catalog: catalog, dialect: dialect)
         sinceCache = (entry.id, base, result)
         return result
+    }
+    /// The exact revision a restore would write: config, metadata and advanced-bind companion.
+    func restoreTarget(_ entry: ConfigHistoryEntry, revision: ConfigSnapshotRevision) -> ConfigProfileVersion {
+        revision == .before ? ConfigProfileVersion(config: entry.beforeData, metadata: entry.beforeMetadata, chain: entry.beforeChain)
+                            : ConfigProfileVersion(config: entry.data, metadata: entry.metadata, chain: entry.chain)
+    }
+    /// Restore is offered when it would change something on disk, companion-only changes included.
+    func canRestore(_ entry: ConfigHistoryEntry, revision: ConfigSnapshotRevision) -> Bool {
+        guard let current, !isReadOnly else { return false }
+        return restoreTarget(entry, revision: revision) != current.version
     }
     func title(of entry: ConfigHistoryEntry) -> String {
         switch entry.source {
@@ -789,8 +800,22 @@ struct ConfigStudioFailure: Identifiable {
         guard let value = spec.defaultText else { return }
         set(spec, to: value, summary: "Reset \(spec.title)", undo: undo)
     }
+    /// Why Take Theirs can't change this setting, or nil when it can. The button and the action
+    /// share it: the game running, the launcher, a lock, the catalog's server-controlled flag or
+    /// the rules chosen in Check-up keep the person's own value.
+    func takeTheirsBlock(_ spec: ConfigSettingSpec) -> String? {
+        if isReadOnly { return "Configs are read-only while Call of Duty 2 is running." }
+        if spec.launcherOwned { return "CoD2 Silicon sets this from Settings each time the game starts." }
+        if state(spec).locked { return "Locked, so it stays yours." }
+        if spec.setting.variant(for: mode)?.serverControlled == true { return "The server sets this when you join, so it stays yours." }
+        if let rules = checkup.rules, rules.isServerOwned(spec.name, rulesetIDs: checkup.rulesetIDs) {
+            return "Set by the server under \(checkup.selectionTitle), so it stays yours."
+        }
+        return nil
+    }
     func takeTheirs(_ spec: ConfigSettingSpec, undo: UndoManager? = nil) {
-        guard let theirs = theirs(spec), let value = theirs.value, !state(spec).locked, let source = comparisonName else { return }
+        guard !isReadOnly else { fail("Quit the game to change this loadout", ConfigProfileError.gameRunning); return }
+        guard takeTheirsBlock(spec) == nil, let theirs = theirs(spec), let value = theirs.value, let source = comparisonName else { return }
         set(spec, to: value, summary: "Took \(spec.title) from \(source)", undo: undo)
     }
     private func restoreRaw(_ spec: ConfigSettingSpec, _ raw: String?, undo: UndoManager?) {

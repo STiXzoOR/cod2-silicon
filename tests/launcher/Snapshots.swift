@@ -7,15 +7,16 @@ import SwiftUI
 // the window server, so Liquid Glass, materials and toolbars render as they do on screen.
 //
 //   LauncherSnapshots OUTPUT [--data GAME_DIR] [--fallback] [--scale2] [--only SCREEN] [--group configs]
-//                            [--increase-contrast] [--reduce-transparency] [--actions] [--minimum]
+//                            [--increase-contrast] [--reduce-transparency] [--reduce-motion] [--actions] [--minimum]
 //                            [--accessibility] [--overlays]
 //
 // --data uses the player's own loading screens (private review only; never commit them).
 // --fallback forces the macOS 13–25 material styling. --scale2 adds 2× renders of the same
 // window for checking text, vectors and shapes (material styling; system glass draws flat there).
 // --group configs renders only the Config Studio screens; --increase-contrast and
-// --reduce-transparency set those accessibility environments for the capture. --minimum uses the
-// launcher's 1100×760 minimum window.
+// --reduce-transparency set those accessibility environments for the capture, as --reduce-motion
+// does for Reduce Motion (in the view environment only; the Mac's settings never change). --minimum
+// uses the launcher's 1100×760 minimum window.
 // --actions clicks Config Studio controls in the window (real hit-testing and actions) and checks
 // the bytes and History rows written to a temporary home.
 // --accessibility reads each Config Studio window's accessibility tree, as VoiceOver would, writes
@@ -168,7 +169,10 @@ final class SnapshotWindow: NSWindow {
                                 "configs-import-everything", "servers-ready", "servers-ready-fixed",
                                 "configs-binds-list", "configs-binds-advanced", "configs-binds-visual", "configs-checkup",
                                 "configs-guided-rules", "configs-expert-rules",
-                                "configs-binds-verify", "configs-binds-learn", "configs-expert-player"]
+                                "configs-binds-verify", "configs-binds-learn", "configs-expert-player",
+                                "configs-checkup-measured", "configs-checkup-off", "configs-checkup-error",
+                                "configs-import-link", "configs-import-windows", "configs-import-loading",
+                                "discover-saved-removed", "configs-save-failure"]
 
     @MainActor static func main() {
         let arguments = CommandLine.arguments
@@ -179,7 +183,8 @@ final class SnapshotWindow: NSWindow {
         let only = arguments.firstIndex(of: "--only").flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil }
         let configsOnly = arguments.firstIndex(of: "--group").flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil } == "configs"
         if arguments.contains("--minimum") { windowSize = NSSize(width: 1100, height: 760) }
-        let accessibility = Accessibility(increaseContrast: arguments.contains("--increase-contrast"), reduceTransparency: arguments.contains("--reduce-transparency"))
+        let accessibility = Accessibility(increaseContrast: arguments.contains("--increase-contrast"), reduceTransparency: arguments.contains("--reduce-transparency"),
+                                          reduceMotion: arguments.contains("--reduce-motion"))
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
         LauncherFonts.register()
@@ -249,7 +254,7 @@ final class SnapshotWindow: NSWindow {
         app.run()
     }
 
-    struct Accessibility { var increaseContrast = false; var reduceTransparency = false }
+    struct Accessibility { var increaseContrast = false; var reduceTransparency = false; var reduceMotion = false }
 
     @MainActor static func root(_ model: LauncherModel, dark: Bool, glass: Bool, audit: ShapeAudit? = nil, accessibility: Accessibility = .init()) -> some View {
         LauncherRoot(model: model)
@@ -260,6 +265,7 @@ final class SnapshotWindow: NSWindow {
             // Test-only overrides of the system settings, without changing them for the Mac.
             .environment(\._colorSchemeContrast, accessibility.increaseContrast ? .increased : .standard)
             .environment(\._accessibilityReduceTransparency, accessibility.reduceTransparency)
+            .environment(\._accessibilityReduceMotion, accessibility.reduceMotion)
     }
 
 
@@ -636,7 +642,24 @@ final class SnapshotWindow: NSWindow {
         case "configs-running": try session.reconcileGames([4242])
         case "configs-binds-visual": model.studio.binds.layout = .visual; model.studio.binds.selectedKey = EngineKey(spelling: "w")
         case "configs-binds-advanced": model.studio.binds.selectChain("greetings"); model.studio.binds.showLines = true
-        case "configs-checkup", "configs-guided-rules", "configs-expert-rules": model.studio.checkup.rulesetIDs = ["zpam-4.08"]
+        case "configs-guided-rules", "configs-expert-rules": model.studio.checkup.rulesetIDs = ["zpam-4.08"]
+        case "configs-checkup", "configs-checkup-measured", "configs-checkup-off", "configs-checkup-error":
+            // Check-up reads the isolated home's own summaries, as the app reads its home after a game.
+            model.page = .configs; model.studio.tab = .checkup
+            let checkup = model.studio.checkup
+            checkup.rulesetIDs = ["zpam-4.08"]
+            if screen == "configs-checkup-measured" { try writeMatches(home) }
+            if screen == "configs-checkup-off" { checkup.matchSummariesEnabled = false }
+            if screen == "configs-checkup-error" { checkup.readMatches = { _ in throw CocoaError(.fileReadNoPermission) } }
+            checkup.refreshMatches(home: home)
+        case "configs-save-failure":
+            // A real failed write: the loadout's folder refuses it, then is writable again for cleanup.
+            model.page = .configs; model.studio.level = .guided; model.studio.group = .aim
+            let folder = home.appendingPathComponent("main/players/Main")
+            try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: folder.path)
+            defer { try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: folder.path) }
+            if let speed = model.studio.spec(named: "sensitivity") { model.studio.set(speed, to: "3.1") }
+        case "configs-import-link", "configs-import-windows", "configs-import-loading", "discover-saved-removed": model.page = .configs
         case "configs-binds-verify":
             // Second question, after a key that isn't the answer: the note shows beside it.
             model.page = .configs; model.studio.tab = .binds; model.studio.binds.layout = .visual
@@ -654,6 +677,15 @@ final class SnapshotWindow: NSWindow {
         default: break
         }
         return home
+    }
+
+    /// Two synthetic matches (documentation-range server, made-up numbers): the latest is shown.
+    static func writeMatches(_ home: URL) throws {
+        let row = #"{"schemaVersion":1,"endedAt":"2026-10-06T18:40:00Z","endReason":"map_change","map":"mp_toujane","mode":"sd","durationSeconds":1260,"serverAddress":"203.0.113.24:28960","ruleHints":{"g_competitive":"1"},"frameCount":151200,"frameTimeP50MS":3,"frameTimeP99MS":5.2,"frameTimeMaxMS":41,"frameTimeHistogramLimitMS":250,"framesUnderCap":149688,"capSampleFrames":151200,"capFPS":250,"pingAverageMS":38,"pingMaximumMS":71,"pingSamples":24120,"packetsReceived":24120,"packetsLost":36,"packetLossPercent":0.14903129657228018,"snapshotsReceived":24120}"#
+        let older = row.replacingOccurrences(of: "mp_toujane", with: "mp_carentan").replacingOccurrences(of: "2026-10-06T18:40:00Z", with: "2026-10-05T21:10:00Z")
+        let stats = home.appendingPathComponent("main/stats")
+        try FileManager.default.createDirectory(at: stats, withIntermediateDirectories: true)
+        try PrivateFile.write(Data((older + "\n" + row + "\n").utf8), to: stats.appendingPathComponent("matches.jsonl"))
     }
 
     /// Discover, import and ready-check states. Players come from the signed synthetic fixture
@@ -687,6 +719,28 @@ final class SnapshotWindow: NSWindow {
                 // Compare from the player's page: Expert, Aim & input, with the player's markers.
                 discover.compareInExpert(entry)
                 model.studio.group = .aim
+            }
+        case "discover-saved-removed":
+            // A bookmark whose player the signed index no longer lists.
+            try await fixture()
+            discover.setSaved("player-2", true)
+            let saved = home.appendingPathComponent("directory/index.json.saved.json")
+            try PrivateFile.write(Data(#"{"ids":["player-2","player-retired"],"schemaVersion":1}"#.utf8), to: saved)
+            await discover.reload()
+            discover.page = .saved
+        case "configs-import-link": discover.step = .link("https://example.com/configs/config_mp.cfg")
+        case "configs-import-windows":
+            // A Windows profile folder made here, never a mounted drive.
+            let players = home.appendingPathComponent("windows-preview/players")
+            let file = players.appendingPathComponent("Morrow/config_mp.cfg")
+            try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try PrivateFile.write(config(["sensitivity": "2.2", "com_maxfps": "250", "cg_drawFPS": "Simple", "name": "Morrow"]).serialized(), to: file)
+            discover.importWindows(WindowsProfileCandidate(profileName: "Morrow", configURL: file, playersURL: players, isActive: true, isBackup: false))
+            await waitReview()
+        case "configs-import-loading":
+            // Held at reading, so the progress state can be seen; nothing is read.
+            discover.beginImport(displayName: "Pasted config", provenance: .init(source: "Pasted text", symbol: "doc.on.clipboard")) { _, _ in
+                try await Task.sleep(for: .seconds(3600)); throw CancellationError()
             }
         case "configs-import", "configs-import-everything":
             try await fixture()
@@ -839,8 +893,7 @@ final class SnapshotWindow: NSWindow {
         window.orderOut(nil)
         do {
             // Visual: clicking a key selects it and hands it the keyboard focus (read back the way
-            // VoiceOver reads focus). The arrow keys' move commands are not checked here: in this
-            // window they never reach SwiftUI, although the same structure moves in a minimal one.
+            // VoiceOver reads focus); the arrow keys then move along the drawing.
             guard let (visualModel, visual, visualHome) = await open("configs-binds-visual", dark: true) else { return false }
             defer { visual.orderOut(nil); visual.close(); try? FileManager.default.removeItem(at: visualHome) }
             guard let keyE = AccessibilityTree.elements(of: visual).first(where: { $0.role == "AXButton" && $0.label.hasPrefix("E, ") }) else {
@@ -855,9 +908,25 @@ final class SnapshotWindow: NSWindow {
                 print("FAIL: clicking E selected \(String(describing: visualModel.studio.binds.selectedVirtualKey)) with focus on “\(focusLabel)”"); return false
             }
             print("PASS: clicking E in Visual selected it and gave it the keyboard focus")
+            // Arrow keys arrive as AppKit sends them (function-key characters), so move commands reach SwiftUI.
+            let drawn = ConfigKeyboardLayout.keys(shape: .ansi, size: .percent75)
+            var at: UInt16 = 14
+            for (code, direction) in [(124, ConfigKeyboardDirection.right), (125, .down), (123, .left), (126, .up)] as [(UInt16, ConfigKeyboardDirection)] {
+                guard let next = ConfigKeyboardLayout.neighbor(of: at, direction, in: drawn) else { return false }
+                pressArrow(visual, keyCode: code)
+                try? await Task.sleep(for: .milliseconds(400))
+                let focused = AccessibilityTree.attribute(AccessibilityTree.application, kAXFocusedUIElementAttribute).map { AccessibilityTree.text($0 as! AXUIElement, kAXDescriptionAttribute) } ?? ""
+                let name = BindsLabel.drawnName(next)
+                guard visualModel.studio.binds.selectedVirtualKey == next, focused.hasPrefix(name + ", ") else {
+                    print("FAIL: arrow \(direction) from \(at) selected \(String(describing: visualModel.studio.binds.selectedVirtualKey)) with focus on “\(focused)”, not \(next)"); return false
+                }
+                at = next
+            }
+            print("PASS: the arrow keys moved selection and focus along the drawing (right, down, left, up) from E")
             guard await deviceSetupActions(model: visualModel, window: visual) else { return false }
         }
         guard await compareAction() else { return false }
+        guard await loadoutMenuActions() else { return false }
         guard await importAction() else { return false }
         guard await readyAction() else { return false }
         // Last, so a window that keeps synthesized keys from SwiftUI can't hide the checks above.
@@ -927,11 +996,38 @@ final class SnapshotWindow: NSWindow {
             if binds.verification?.step == .functionRow { press(window, keyCode: 122, characters: "") }
             try? await Task.sleep(for: .milliseconds(300))
         }
-        guard binds.verification == nil, let keyboard = binds.keyboard,
-              binds.devices.overrides[keyboard.id] == InputDeviceOverride(shape: .iso, size: .percent75, modifiers: .pc, verified: true) else {
-            print("FAIL: verifying by pressing keys did not set ISO, 75%, PC labels (\(String(describing: binds.keyboard.flatMap { binds.devices.overrides[$0.id] })))"); return false
+        // The keys only narrow the size; nothing is verified until the person chooses it.
+        guard binds.verification?.step == .size([.percent75]), let keyboard = binds.keyboard, binds.devices.overrides[keyboard.id]?.verified != true,
+              let size = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label == "My keyboard is 75%" }) else {
+            print("FAIL: the answers did not stop at choosing the size (\(String(describing: binds.verification?.step)))"); return false
         }
-        print("PASS: pressing the key beside Shift, Option, F1 and clicking I Don’t Have This Key twice verified ISO, 75%, PC labels")
+        appClick(window, element: size)
+        try? await Task.sleep(for: .milliseconds(400))
+        guard binds.verification == nil, binds.devices.overrides[keyboard.id] == InputDeviceOverride(shape: .iso, size: .percent75, modifiers: .pc, verified: true) else {
+            print("FAIL: choosing 75% did not verify ISO, 75%, PC labels (\(String(describing: binds.devices.overrides[keyboard.id])))"); return false
+        }
+        print("PASS: pressing the key beside Shift, Option, F1, clicking I Don’t Have This Key twice and choosing 75% verified ISO, 75%, PC labels")
+
+        // No keypad, F1 and Home fit Tenkeyless or 75%: both are offered, Cancel verifies neither.
+        let earlier = binds.devices.overrides[keyboard.id]
+        binds.beginVerification()
+        try? await Task.sleep(for: .milliseconds(300))
+        press(window, keyCode: 6, characters: "z"); press(window, keyCode: 58, characters: "")
+        try? await Task.sleep(for: .milliseconds(300))
+        binds.skipVerificationStep()
+        press(window, keyCode: 122, characters: ""); press(window, keyCode: 115, characters: "")
+        try? await Task.sleep(for: .milliseconds(400))
+        let offered = AccessibilityTree.elements(of: window).filter { $0.role == "AXButton" && $0.label.hasPrefix("My keyboard is ") }.map(\.label)
+        guard binds.verification?.step == .size([.tkl, .percent75]), offered == ["My keyboard is Tenkeyless", "My keyboard is 75%"],
+              let cancel = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label == "Cancel" }) else {
+            print("FAIL: F1 and Home did not offer Tenkeyless and 75% (\(offered))"); return false
+        }
+        appClick(window, element: cancel)
+        try? await Task.sleep(for: .milliseconds(400))
+        guard binds.verification == nil, binds.devices.overrides[keyboard.id] == earlier else {
+            print("FAIL: Cancel at the size choice changed the keyboard (\(String(describing: binds.devices.overrides[keyboard.id])))"); return false
+        }
+        print("PASS: F1 and Home offered Tenkeyless or 75%; clicking Cancel verified neither and kept the earlier answer")
 
         binds.beginLearning()
         try? await Task.sleep(for: .milliseconds(300))
@@ -943,6 +1039,30 @@ final class SnapshotWindow: NSWindow {
         guard binds.learning?.step == .position(.right), binds.target == nil else {
             print("FAIL: a learning click was not recorded as the left button, or pressed the control under it"); return false
         }
+        // The panel's own buttons take real clicks; the click isn't an answer.
+        guard let skip = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label == "I Don’t Have This Button" }) else {
+            print("FAIL: I Don’t Have This Button is not on screen"); return false
+        }
+        appClick(window, element: skip)
+        try? await Task.sleep(for: .milliseconds(400))
+        guard binds.learning?.step == .position(.wheel), binds.learning?.learned[.right] == nil, binds.learning?.learned.count == 1 else {
+            print("FAIL: clicking I Don’t Have This Button was recorded as an answer (\(String(describing: binds.learning?.step)))"); return false
+        }
+        guard let cancel = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label == "Cancel" }) else {
+            print("FAIL: Cancel is not on screen while learning"); return false
+        }
+        let learnedBefore = binds.devices.learnedButtons
+        appClick(window, element: cancel)
+        try? await Task.sleep(for: .milliseconds(400))
+        guard binds.learning == nil, binds.devices.learnedButtons == learnedBefore else {
+            print("FAIL: clicking Cancel did not stop learning without saving"); return false
+        }
+        print("PASS: clicking I Don’t Have This Button skipped the right button and clicking Cancel stopped learning; neither was recorded")
+        binds.beginLearning()
+        try? await Task.sleep(for: .milliseconds(300))
+        guard let findAgain = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label.hasPrefix("Find by Pressing") }) else { return false }
+        appClick(window, element: findAgain)
+        try? await Task.sleep(for: .milliseconds(400))
         for _ in 0..<5 { press(window, keyCode: 36, characters: "\r"); try? await Task.sleep(for: .milliseconds(150)) }
         guard binds.learning == nil, binds.pointerButtonDetail(EngineKey(spelling: "mouse1")!) == "Left button",
               binds.pointerButtonDetail(EngineKey(spelling: "mouse2")!) == "Not on your mouse" else {
@@ -1109,6 +1229,14 @@ final class SnapshotWindow: NSWindow {
         "configs-binds-learn": ["Learn your mouse buttons", "Press down on the scroll wheel", "I Don’t Have This Button"],
         "configs-expert-player": ["Compare markers show [Player 1]’s values", "Take [Player 1]’s Mouse speed"],
         "discover-player": ["Compare in Expert", "Try This Setup"],
+        "configs-checkup-measured": ["Your last match: Toujane, Search & Destroy", "Movement: 5.2 MS", "Connection: 38 MS", "Refresh match summaries"],
+        "configs-checkup-off": ["Match summaries are off", "Refresh match summaries"],
+        "configs-checkup-error": ["Couldn’t read your match summaries", "Connection: no value, Not measured"],
+        "configs-import-link": ["Config link", "Review"],
+        "configs-import-windows": ["Review Morrow from Windows", "From Windows"],
+        "configs-import-loading": ["Reading and checking every line"],
+        "discover-saved-removed": ["Remove this saved setup"],
+        "configs-save-failure": ["Couldn’t save: Changed Mouse speed"],
     ]
 
     /// Every Config Studio screen's accessibility tree in reading order, with unnamed controls as failures.
@@ -1143,6 +1271,8 @@ final class SnapshotWindow: NSWindow {
         var prepare: @MainActor (LauncherModel) -> Void = { _ in }
         let target: @MainActor (AccessibilityTree.Element) -> Bool
         var after: @MainActor (NSWindow) async -> Void = { _ in }
+        /// VoiceOver's press, for a control inside a sheet (a click would land on the window below).
+        var press = false
     }
     static let overlayCases: [Overlay] = [
         Overlay(name: "configs-jump", screen: "configs-guided", target: { $0.role == "AXButton" && $0.label == "Jump to Any Setting" }, after: { window in
@@ -1159,6 +1289,9 @@ final class SnapshotWindow: NSWindow {
         Overlay(name: "configs-binds-confirm", screen: "configs-binds-advanced",
                 prepare: { model in model.studio.binds.updateDraft { $0.steps[0].text = "good luck" } },
                 target: { $0.role == "AXButton" && $0.label == "Save Bind" }),
+        // Import Everything asks once more before writing; the button is in the review sheet.
+        Overlay(name: "configs-import-confirm", screen: "configs-import-everything",
+                target: { $0.role == "AXButton" && $0.label.hasPrefix("Import All") }, press: true),
     ]
 
     /// Sheets, popovers and alerts opened by real clicks, captured over their window.
@@ -1173,7 +1306,7 @@ final class SnapshotWindow: NSWindow {
                     print("FAIL: \(name): the control that opens it isn't in the accessibility tree"); ok = false
                     window.orderOut(nil); window.close(); continue
                 }
-                activate(window, element: target)
+                if overlay.press { _ = AXUIElementPerformAction(target.element, kAXPressAction as CFString) } else { activate(window, element: target) }
                 try? await Task.sleep(for: .milliseconds(900))
                 await overlay.after(window)
                 // Sheets, alerts and popovers are windows of their own; popovers aren't in orderedWindows.
@@ -1195,6 +1328,147 @@ final class SnapshotWindow: NSWindow {
         }
         print(ok ? "PASS: \(written) sheet, popover and alert captures opened by real clicks" : "FAIL: overlay problems above")
         return ok && written > 0
+    }
+
+    /// An arrow key as the keyboard sends it: a function-key character on the numeric pad, which
+    /// AppKit turns into a move command.
+    static func pressArrow(_ window: NSWindow, keyCode: UInt16) {
+        let scalar: UInt32 = [123: 0xF702, 124: 0xF703, 125: 0xF701, 126: 0xF700][keyCode] ?? 0xF703
+        let characters = String(Character(UnicodeScalar(scalar)!))
+        for type in [NSEvent.EventType.keyDown, .keyUp] {
+            if let event = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: [.numericPad, .function], timestamp: ProcessInfo.processInfo.systemUptime,
+                                            windowNumber: window.windowNumber, context: nil, characters: characters,
+                                            charactersIgnoringModifiers: characters, isARepeat: false, keyCode: keyCode) {
+                NSApp.sendEvent(event)
+            }
+        }
+    }
+    enum BindsLabel {
+        /// The name the ABC drawing speaks first for a letter or digit key.
+        @MainActor static func drawnName(_ virtualKey: UInt16) -> String {
+            PreviewInputProvider().inputSource().label(virtualKey: virtualKey).uppercased()
+        }
+    }
+
+    /// Menu items anywhere in this app (an open menu is not inside the window's tree).
+    static func menuItems() -> [AccessibilityTree.Element] {
+        var result: [AccessibilityTree.Element] = []
+        func walk(_ element: AXUIElement, depth: Int) {
+            guard depth < 12 else { return }
+            let role = AccessibilityTree.text(element, kAXRoleAttribute)
+            if role == "AXMenuItem" {
+                result.append(.init(role: role, subrole: "", label: AccessibilityTree.text(element, kAXTitleAttribute), value: "", help: "", selected: false,
+                                    frame: AccessibilityTree.frame(element), depth: depth, element: element))
+            }
+            for child in AccessibilityTree.attribute(element, kAXChildrenAttribute) as? [AXUIElement] ?? [] { walk(child, depth: depth + 1) }
+        }
+        walk(AccessibilityTree.application, depth: 0)
+        return result
+    }
+    /// Opens the loadout's More Actions menu with VoiceOver's press and chooses an item. The menu
+    /// runs its own loop, so the item is pressed from a task that runs inside it; `during` then
+    /// runs inside whatever the item opens (a save panel's modal loop).
+    static func chooseMoreAction(_ window: NSWindow, _ prefix: String, during: (@MainActor () async -> Void)? = nil) async -> Bool {
+        guard let more = AccessibilityTree.elements(of: window).first(where: { $0.label.hasPrefix("More Actions for This Loadout") }) else {
+            print("FAIL: More Actions for This Loadout is not in the accessibility tree"); return false
+        }
+        let chosen = Task { @MainActor () -> Bool in
+            for _ in 0..<40 {
+                try? await Task.sleep(for: .milliseconds(100))
+                if let item = menuItems().first(where: { $0.label.hasPrefix(prefix) }) {
+                    _ = AXUIElementPerformAction(item.element, kAXPressAction as CFString)
+                    return true
+                }
+            }
+            return false
+        }
+        let inside = Task { @MainActor in
+            guard await chosen.value else { return }
+            await during?()
+        }
+        _ = AXUIElementPerformAction(more.element, kAXPressAction as CFString)
+        await inside.value
+        guard await chosen.value else { print("FAIL: the More Actions menu has no “\(prefix)…” item"); return false }
+        return true
+    }
+
+    /// Rename and Export for Windows, opened from the loadout's More Actions menu: renaming writes
+    /// only the display name; Cancel writes nothing. Export writes exactly the Windows file into a
+    /// private folder outside the game home; Cancel writes nothing.
+    static func loadoutMenuActions() async -> Bool {
+        guard let (model, window, home) = await open("configs-guided", dark: true) else { return false }
+        let exports = FileManager.default.temporaryDirectory.appendingPathComponent("cod2-configs-export-\(UUID().uuidString.prefix(8))")
+        defer { window.orderOut(nil); window.close(); try? FileManager.default.removeItem(at: home); try? FileManager.default.removeItem(at: exports) }
+        guard let session = model.studio.session else { return false }
+        let players = home.appendingPathComponent("main/players")
+        func disk() -> [Data?] { ["Main/config_mp.cfg", "Main/studio.json", "active.txt"].map { try? Data(contentsOf: players.appendingPathComponent($0)) } }
+        func sheetElement(_ role: String, _ label: String) -> AccessibilityTree.Element? {
+            AccessibilityTree.elements(of: window).first { $0.role == role && $0.label == label }
+        }
+        window.makeKey()
+
+        // Rename, then the same sheet cancelled.
+        let before = disk(), count = session.history.count
+        guard await chooseMoreAction(window, "Rename “Main”") else { return false }
+        try? await Task.sleep(for: .milliseconds(900))
+        guard window.attachedSheet != nil, let field = sheetElement("AXTextField", "Name"), let rename = sheetElement("AXButton", "Rename") else {
+            print("FAIL: Rename “Main”… did not open the rename sheet"); return false
+        }
+        _ = AXUIElementSetAttributeValue(field.element, kAXValueAttribute as CFString, "Scrim Night" as CFString)
+        try? await Task.sleep(for: .milliseconds(400))
+        _ = AXUIElementPerformAction(rename.element, kAXPressAction as CFString)
+        try? await Task.sleep(for: .milliseconds(900))
+        let renamed = disk()
+        guard model.studio.metadata?.displayName == "Scrim Night", renamed[0] == before[0], renamed[2] == before[2], renamed[1] != before[1],
+              session.history.count == count + 1, session.history.first?.summary == "Renamed to Scrim Night", window.attachedSheet == nil else {
+            print("FAIL: Rename did not change only the display name (\(model.studio.metadata?.displayName ?? "none"))"); return false
+        }
+        print("PASS: More Actions › Rename wrote only the display name, Scrim Night, as one History row; config and active loadout unchanged")
+        guard await chooseMoreAction(window, "Rename “Scrim Night”") else { return false }
+        try? await Task.sleep(for: .milliseconds(900))
+        guard let again = sheetElement("AXTextField", "Name"), let cancel = sheetElement("AXButton", "Cancel") else { print("FAIL: the rename sheet did not reopen"); return false }
+        _ = AXUIElementSetAttributeValue(again.element, kAXValueAttribute as CFString, "Discarded" as CFString)
+        try? await Task.sleep(for: .milliseconds(300))
+        _ = AXUIElementPerformAction(cancel.element, kAXPressAction as CFString)
+        try? await Task.sleep(for: .milliseconds(900))
+        guard disk() == renamed, session.history.count == count + 1, window.attachedSheet == nil else { print("FAIL: cancelling Rename wrote something"); return false }
+        print("PASS: cancelling Rename closed the sheet and wrote nothing")
+
+        // Export for Windows through the save panel, into a private folder; then cancelled.
+        do { try FileManager.default.createDirectory(at: exports, withIntermediateDirectories: true) } catch { return false }
+        let target = exports.appendingPathComponent("config_mp.cfg")
+        guard let current = session.current, let expected = try? ConfigChains.windowsExport(read: current) else { print("FAIL: no Windows export to compare"); return false }
+        var panelSeen = false
+        let exported = await chooseMoreAction(window, "Export for Windows") {
+            for _ in 0..<40 {
+                if let panel = NSApp.modalWindow as? NSSavePanel {
+                    panelSeen = true
+                    panel.directoryURL = exports; panel.nameFieldStringValue = "config_mp.cfg"
+                    try? await Task.sleep(for: .milliseconds(600))
+                    panel.ok(nil); return
+                }
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+        }
+        try? await Task.sleep(for: .milliseconds(600))
+        guard exported, panelSeen, (try? Data(contentsOf: target)) == expected, disk() == renamed, model.studio.failure == nil else {
+            print("FAIL: Export for Windows did not write the exact file (panel \(panelSeen), failure \(model.studio.failure?.message ?? "none"))"); return false
+        }
+        print("PASS: More Actions › Export for Windows opened the save panel and wrote exactly the Windows config in a private folder")
+        try? FileManager.default.removeItem(at: target)
+        var cancelSeen = false
+        _ = await chooseMoreAction(window, "Export for Windows") {
+            for _ in 0..<40 {
+                if let panel = NSApp.modalWindow as? NSSavePanel { cancelSeen = true; panel.directoryURL = exports; panel.cancel(nil); return }
+                try? await Task.sleep(for: .milliseconds(100))
+            }
+        }
+        try? await Task.sleep(for: .milliseconds(600))
+        guard cancelSeen, !FileManager.default.fileExists(atPath: target.path), disk() == renamed, model.studio.failure == nil else {
+            print("FAIL: cancelling the export panel wrote something"); return false
+        }
+        print("PASS: cancelling the export save panel wrote nothing")
+        return true
     }
 
     /// A key press delivered through the application, where Binds' local monitor listens.

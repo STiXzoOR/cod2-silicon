@@ -199,12 +199,13 @@ private struct SnapshotInspector: View {
             Text("Restoring saves how things are now as a new snapshot first, so you can always come back.")
                 .font(StudioTypography.help).foregroundStyle(palette.secondary).lineSpacing(2).fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 8) {
+                // Both compare the whole revision, advanced-bind companion included, with now.
                 Button { studio.restore(entry, undo: undo) } label: { Text("Restore This Snapshot").frame(maxWidth: .infinity) }
                     .prominentAction().actionControlSize()
-                    .disabled(studio.isReadOnly || changes.isEmpty)
+                    .disabled(!studio.canRestore(entry, revision: .after))
                 Menu {
                     Button("Restore the State Before This Change") { studio.restore(entry, revision: .before, undo: undo) }
-                        .disabled(studio.isReadOnly || entry.beforeData == entry.data && entry.beforeMetadata == entry.metadata)
+                        .disabled(!studio.canRestore(entry, revision: .before))
                 } label: { Image(systemName: "ellipsis") }
                     .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
                     .frame(width: ControlMetrics.action, height: ControlMetrics.action)
