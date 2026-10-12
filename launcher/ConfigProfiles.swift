@@ -627,7 +627,8 @@ final class ConfigProfileStore: Sendable {
                 guard record.schemaVersion == 1, try optionalData(migrationURL.appendingPathComponent("original.cfg")) == record.original else { throw ConfigProfileError.invalidMigration }
                 try Self.validateIdentifier(record.targetID)
                 if record.completed {
-                    _ = try readLocked(id: record.targetID)
+                    // The game can delete the original migration target. The receipt
+                    // still owns migration; launch validates the current active profile.
                     return ConfigMigrationResult(profileID: record.targetID, alreadyCompleted: true)
                 }
             } else {
