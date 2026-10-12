@@ -11,10 +11,10 @@
         "stock": "250",
         "cod2x": "250"
       },
-      "title": "Use a cap within the competitive band",
-      "why": "This target requires 125–250 fps. A cap of 250 satisfies the verified band.",
-      "notice": "The saved cap becomes 250. This does not prove that your Mac sustains 250 fps or establish a movement advantage.",
-      "evidence": "Policy correction from the saved frame cap; sustained FPS and movement are Not measured.",
+      "title": "Use a frame cap allowed by these rules",
+      "why": "These rules allow 125–250 frames per second. A cap of 250 is within that range.",
+      "notice": "Your frame cap becomes 250 fps. Your Mac’s actual frame rate may be lower.",
+      "evidence": "Based on the selected rules and your saved frame cap.",
       "sources": [
         {
           "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L57-L61",
@@ -48,10 +48,10 @@
         "stock": "0",
         "cod2x": "0"
       },
-      "title": "Use the current mouse sample",
-      "why": "Mouse filtering averages the current and previous samples. Turning it off is an optional input preference.",
-      "notice": "Mouse movement uses the current sample rather than the two-sample average. Sensitivity stays as saved.",
-      "evidence": "Effect follows the mouse-move code; input latency and polling are Not measured.",
+      "title": "Turn off mouse smoothing",
+      "why": "Smoothing averages two mouse movements. Turning it off uses each movement as it arrives.",
+      "notice": "A more direct response to each mouse movement, with the same sensitivity.",
+      "evidence": "Based on how the game processes mouse movement.",
       "sources": [
         {
           "sourceURL": "git:048ff5e:src/PC/client_mp/cl_input.c",
@@ -77,10 +77,10 @@
         "stock": "0",
         "cod2x": "0"
       },
-      "title": "Use a constant mouse scale",
-      "why": "Acceleration adds a speed-dependent term to sensitivity. Zero removes that term; this is a preference, not a league requirement.",
-      "notice": "For the same mouse distance, the acceleration term no longer changes your turn with mouse speed. ADS and weapon scaling still apply.",
-      "evidence": "Effect follows the sensitivity formula; player performance is Not measured.",
+      "title": "Keep mouse speed consistent",
+      "why": "With acceleration off, moving the mouse faster does not add extra sensitivity.",
+      "notice": "The same mouse distance produces the same turn, with the usual adjustments when aiming.",
+      "evidence": "Based on the game’s mouse sensitivity calculation.",
       "sources": [
         {
           "sourceURL": "git:048ff5e:src/PC/client_mp/cl_input.c",
@@ -106,10 +106,10 @@
         "stock": "25000",
         "cod2x": "25000"
       },
-      "title": "Request the verified rate ceiling",
-      "why": "25000 is the verified client rate ceiling and the competitive target. Actual traffic is also limited by the server.",
-      "notice": "Your requested bandwidth cap becomes 25000 bytes/s. This does not establish lower ping or packet loss.",
-      "evidence": "Configuration and registration ceilings only; no connection improvement is measured.",
+      "title": "Allow more game updates",
+      "why": "A connection limit of 25,000 bytes per second lets the game request its supported maximum. The server may send less.",
+      "notice": "Your download allowance for game updates becomes 25,000 bytes per second.",
+      "evidence": "Based on your saved connection limit and the game’s supported range.",
       "sources": [
         {
           "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
@@ -143,10 +143,10 @@
         "stock": "30",
         "cod2x": "40"
       },
-      "title": "Request snapshots for this client version",
-      "why": "Stock 1.3 permits up to 30; CoD2x permits up to 40. The selected policy determines which value is valid.",
-      "notice": "Your requested snapshot rate changes. The server controls the actual delivery rate; it may remain lower.",
-      "evidence": "Configuration and registration ceilings only; no connection improvement is measured.",
+      "title": "Request more server updates",
+      "why": "Stock 1.3 supports up to 30 server updates per second; CoD2x supports up to 40. This uses the value allowed by your selected rules.",
+      "notice": "You request more frequent updates. The server determines how many arrive.",
+      "evidence": "Based on your game version and selected rules.",
       "sources": [
         {
           "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
@@ -180,10 +180,10 @@
         "stock": "100",
         "cod2x": "125"
       },
-      "title": "Use the packet cap for this client version",
-      "why": "The verified client maximum is 100 for stock and 125 for CoD2x. Packet sending also depends on frame timing.",
-      "notice": "Your outgoing packet cap changes. Ping, packet loss and actual packet cadence are Not measured.",
-      "evidence": "Configuration and registration ceilings only; no connection improvement is measured.",
+      "title": "Send more frequent updates",
+      "why": "Stock supports up to 100 outgoing updates per second; CoD2x supports up to 125. Your frame rate also affects how often they are sent.",
+      "notice": "The game can send your actions more frequently, up to the selected limit.",
+      "evidence": "Based on your game version and saved settings.",
       "sources": [
         {
           "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
@@ -217,10 +217,10 @@
         "stock": "2",
         "cod2x": "2"
       },
-      "title": "Avoid the contested texture level",
-      "why": "zPAM authors list picmip 3 as abusable. Some league texts allow it, so this is conservative advice rather than a universal prohibition. Manual mode must also be enabled so renderer setup retains the saved mip levels.",
-      "notice": "Picmip becomes 2, retaining a more detailed mip level than 3. Frame-time impact is Not measured. Manual mode keeps your saved normal-map and specular mip levels too.",
-      "evidence": "Conservative inference from a known-bug note, not a measured visibility or performance score.",
+      "title": "Use more detailed textures",
+      "why": "zPAM’s authors warn that the lowest texture detail can give an unfair advantage. This chooses a more detailed level and keeps your other texture choices.",
+      "notice": "Textures become more detailed after reloading. Manual texture quality is enabled.",
+      "evidence": "Advice from zPAM’s documented issue; league rules may differ.",
       "sources": [
         {
           "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/README.md",
@@ -262,10 +262,10 @@
         "stock": "0",
         "cod2x": "0"
       },
-      "title": "Keep the full texture mip chain",
-      "why": "Lower picmip keeps higher-resolution mip levels in the texture upload path. Choose this when you prefer detail. Manual mode must also be enabled so renderer setup retains the saved mip levels.",
-      "notice": "Textures eligible for picmip retain the full mip chain after the texture reload. Memory and frame-time costs are Not measured. Manual mode keeps your saved normal-map and specular mip levels too.",
-      "evidence": "Texture upload behavior; neither available GPU headroom nor an FPS change is measured.",
+      "title": "Use full texture detail",
+      "why": "Keep the highest-resolution textures available in your game data. This also enables manual texture quality and keeps your other texture choices.",
+      "notice": "Sharper textures after reloading, potentially using more graphics memory.",
+      "evidence": "Based on the game’s texture settings; the performance effect depends on your Mac.",
       "sources": [
         {
           "sourceURL": "git:048ff5e:src/PC/gfx_d3d/r_image_load_obj.c",

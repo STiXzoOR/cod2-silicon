@@ -22,7 +22,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "com_maxfps must be within its stock registration range (0–1000); this is not a performance measurement.",
+          "reason": "Frame rate cap: use a value in the supported stock range (0–1000).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/qcommon/common.c",
@@ -45,7 +45,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "rate must be within its stock registration range (1000–25000); this is not a performance measurement.",
+          "reason": "Connection speed: use a value in the supported stock range (1000–25000).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
@@ -68,7 +68,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "snaps must be within its stock registration range (1–30); this is not a performance measurement.",
+          "reason": "Updates you receive: use a value in the supported stock range (1–30).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
@@ -91,7 +91,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "cl_maxpackets must be within its stock registration range (10–100); this is not a performance measurement.",
+          "reason": "Updates you send: use a value in the supported stock range (10–100).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
@@ -114,7 +114,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "m_filter must be within its stock registration range (0–1); this is not a performance measurement.",
+          "reason": "Choose whether to smooth mouse movement: On or Off.",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
@@ -137,7 +137,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "cl_mouseAccel must be within its stock registration range (0.0–100.0); this is not a performance measurement.",
+          "reason": "Mouse acceleration: use a value in the supported stock range (0.0–100.0).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
@@ -160,7 +160,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "r_picmip must be within its stock registration range (0–3); this is not a performance measurement.",
+          "reason": "Texture detail: use a value in the supported stock range (0–3).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/gfx_d3d/r_dvars.c",
@@ -226,7 +226,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "com_maxfps must be within its cod2x registration range (0–1000); this is not a performance measurement.",
+          "reason": "Frame rate cap: use a value in the supported CoD2x range (0–1000).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/qcommon/common.c",
@@ -249,7 +249,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "rate must be within its cod2x registration range (1000–25000); this is not a performance measurement.",
+          "reason": "Connection speed: use a value in the supported CoD2x range (1000–25000).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
@@ -272,7 +272,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "snaps must be within its cod2x registration range (1–40); this is not a performance measurement.",
+          "reason": "Updates you receive: use a value in the supported CoD2x range (1–40).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
@@ -295,7 +295,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "cl_maxpackets must be within its cod2x registration range (10–125); this is not a performance measurement.",
+          "reason": "Updates you send: use a value in the supported CoD2x range (10–125).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
@@ -318,7 +318,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "m_filter must be within its cod2x registration range (0–1); this is not a performance measurement.",
+          "reason": "Choose whether to smooth mouse movement: On or Off.",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
@@ -341,7 +341,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "cl_mouseAccel must be within its cod2x registration range (0.0–100.0); this is not a performance measurement.",
+          "reason": "Mouse acceleration: use a value in the supported CoD2x range (0.0–100.0).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
@@ -364,7 +364,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "r_picmip must be within its cod2x registration range (0–3); this is not a performance measurement.",
+          "reason": "Texture detail: use a value in the supported CoD2x range (0–3).",
           "sources": [
             {
               "sourceURL": "git:048ff5e:src/PC/gfx_d3d/r_dvars.c",
@@ -413,7 +413,7 @@
     },
     {
       "id": "cod2x-competitive",
-      "title": "CoD2x competitive (g_competitive 1)",
+      "title": "CoD2x competitive",
       "version": "1.4.6.8",
       "mode": "cod2x",
       "baseID": "public-cod2x",
@@ -460,7 +460,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "CoD2x forces rate to 25000 during competitive play.",
+          "reason": "CoD2x requires Connection speed to 25000 during competitive play.",
           "sources": [
             {
               "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L64-L67",
@@ -489,7 +489,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "CoD2x forces snaps to 40 during competitive play.",
+          "reason": "CoD2x requires Updates you receive to 40 during competitive play.",
           "sources": [
             {
               "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L69-L72",
@@ -518,7 +518,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "CoD2x forces cl_maxpackets to 125 during competitive play.",
+          "reason": "CoD2x requires Updates you send to 125 during competitive play.",
           "sources": [
             {
               "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L74-L77",
@@ -547,7 +547,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "CoD2x forces sc_enable to 0 during competitive play.",
+          "reason": "CoD2x requires Shadows to 0 during competitive play.",
           "sources": [
             {
               "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L79-L84",
@@ -576,7 +576,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "CoD2x forces fx_sort to 1 during competitive play.",
+          "reason": "CoD2x requires Sort visual effects to 1 during competitive play.",
           "sources": [
             {
               "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L86-L91",
@@ -605,7 +605,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "CoD2x forces mss_q3fs to 1 during competitive play.",
+          "reason": "CoD2x requires Sound file system to 1 during competitive play.",
           "sources": [
             {
               "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L93-L98",
@@ -633,7 +633,7 @@
           },
           "serverOwned": false,
           "advisory": false,
-          "reason": "wait is disabled during competitive play once primed; demo playback is exempt.",
+          "reason": "wait is disabled during competitive play while connected; demo playback is exempt.",
           "sources": [
             {
               "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L15-L29",
@@ -661,7 +661,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "The server owns g_competitive; the client must not write it.",
+          "reason": "The server owns Competitive server rules; the client must not write it.",
           "sources": [
             {
               "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/shared/server.cpp#L1313-L1315",
@@ -702,7 +702,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_tracerChance = 1 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Tracer chance = 1 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L41",
@@ -723,7 +723,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_tracerWidth = 1 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Tracer width = 1 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L42",
@@ -744,7 +744,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_tracerLength = 1000 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Tracer length = 1000 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L43",
@@ -765,7 +765,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_tracerSpeed = 20000 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Tracer speed = 20000 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L44",
@@ -786,7 +786,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudDamageIconInScope = 1 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Damage indicator while scoped = 1 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L47",
@@ -807,7 +807,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudGrenadeIconInScope = 1 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Grenade icon while scoped = 1 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L48",
@@ -828,7 +828,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes r_drawSun = 0 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Draw the sun = 0 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L51",
@@ -849,7 +849,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes snaps = 30 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Updates you receive = 30 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L69",
@@ -870,7 +870,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes sc_enable = 0 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Shadows = 0 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L70",
@@ -891,7 +891,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes fx_sort = 1 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Sort visual effects = 1 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L71",
@@ -912,7 +912,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes rate = 25000 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Connection speed = 25000 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L72",
@@ -933,7 +933,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cl_maxpackets = 100 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Updates you send = 100 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L73",
@@ -954,7 +954,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_viewsize = 100 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets View size = 100 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L77",
@@ -975,7 +975,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cl_avidemo = 0 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Capture video frames = 0 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L78",
@@ -996,7 +996,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cl_forceavidemo = 0 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Force frame capture = 0 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L79",
@@ -1017,7 +1017,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cl_freelook = 1 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Look with the mouse = 1 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L80",
@@ -1038,7 +1038,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cl_pitchspeed = 140 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Keyboard look speed = 140 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L81",
@@ -1059,7 +1059,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cl_yawspeed = 140 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Keyboard turn speed = 140 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L82",
@@ -1080,7 +1080,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes fixedtime = 0 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Fixed frame time = 0 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L86",
@@ -1101,7 +1101,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes friction = 5.5 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Ground friction = 5.5 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L87",
@@ -1122,7 +1122,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes mss_q3fs = 1 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Sound file system = 1 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L88",
@@ -1143,7 +1143,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_errordecay = 100 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Prediction smoothing = 100 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L89",
@@ -1164,7 +1164,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hintFadeTime = 100 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Hint hold time = 100 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L90",
@@ -1185,7 +1185,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudCompassMaxRange = 1500 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Compass range = 1500 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L94",
@@ -1206,7 +1206,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudCompassMinRadius = 0 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Compass minimum radius = 0 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L95",
@@ -1227,7 +1227,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudCompassMinRange = 0 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Compass minimum range = 0 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L96",
@@ -1248,7 +1248,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudCompassSpringyPointers = 0 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Springy compass pointers = 0 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L97",
@@ -1269,7 +1269,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudCompassSoundPingFadeTime = 2 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Compass sound fade = 2 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L98",
@@ -1290,7 +1290,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudDamageIconHeight = 64 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Damage indicator height = 64 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L102",
@@ -1311,7 +1311,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudDamageIconOffset = 128 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Damage indicator distance = 128 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L103",
@@ -1332,7 +1332,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudDamageIconTime = 2000 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Damage indicator time = 2000 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L104",
@@ -1353,7 +1353,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudDamageIconWidth = 128 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Damage indicator width = 128 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L105",
@@ -1374,7 +1374,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudGrenadeIconHeight = 25 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Grenade icon height = 25 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L109",
@@ -1395,7 +1395,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudGrenadeIconOffset = 50 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Grenade icon distance = 50 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L110",
@@ -1416,7 +1416,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudGrenadeIconWidth = 25 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Grenade icon width = 25 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L111",
@@ -1437,7 +1437,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudGrenadePointerHeight = 12 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Grenade pointer height = 12 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L112",
@@ -1458,7 +1458,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudGrenadePointerPivot = 12 27 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Grenade pointer pivot = 12 27 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L116",
@@ -1479,7 +1479,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudGrenadePointerWidth = 25 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Grenade pointer width = 25 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L117",
@@ -1500,7 +1500,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudObjectiveMaxRange = 2048 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Objective icon range = 2048 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L118",
@@ -1521,7 +1521,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudObjectiveMinAlpha = 1 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Objective icon opacity = 1 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L119",
@@ -1542,7 +1542,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 3.36 pushes cg_hudObjectiveMinHeight = -70 on connect; leave this setting to the server.",
+          "reason": "zPAM 3.36 sets Objective icon height = -70 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/0ed8a460cddaffb7de0c1b54ce115c4c8dcdcbe6/source/maps/mp/gametypes/_cvar_forces.gsc#L120",
@@ -1591,7 +1591,7 @@
     },
     {
       "id": "zpam-4.08",
-      "title": "CoD2x / zPAM 4.08 (all modes, including pub)",
+      "title": "CoD2x / zPAM 4.08",
       "version": "4.08",
       "mode": "cod2x",
       "baseID": "cod2x-competitive",
@@ -1606,7 +1606,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_tracerChance = 1 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Tracer chance = 1 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L38",
@@ -1627,7 +1627,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_tracerWidth = 1 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Tracer width = 1 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L39",
@@ -1648,7 +1648,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_tracerLength = 1000 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Tracer length = 1000 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L40",
@@ -1669,7 +1669,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_tracerSpeed = 20000 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Tracer speed = 20000 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L41",
@@ -1690,7 +1690,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudDamageIconInScope = 1 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Damage indicator while scoped = 1 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L44",
@@ -1711,7 +1711,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudGrenadeIconInScope = 1 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Grenade icon while scoped = 1 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L45",
@@ -1732,7 +1732,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes r_drawSun = 0 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Draw the sun = 0 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L48",
@@ -1753,7 +1753,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_viewsize = 100 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets View size = 100 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L53",
@@ -1774,7 +1774,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cl_avidemo = 0 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Capture video frames = 0 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L54",
@@ -1795,7 +1795,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cl_forceavidemo = 0 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Force frame capture = 0 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L55",
@@ -1816,7 +1816,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cl_freelook = 1 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Look with the mouse = 1 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L56",
@@ -1837,7 +1837,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cl_pitchspeed = 140 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Keyboard look speed = 140 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L57",
@@ -1858,7 +1858,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cl_yawspeed = 140 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Keyboard turn speed = 140 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L58",
@@ -1879,7 +1879,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes fixedtime = 0 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Fixed frame time = 0 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L62",
@@ -1900,7 +1900,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes friction = 5.5 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Ground friction = 5.5 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L63",
@@ -1921,7 +1921,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes mss_q3fs = 1 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Sound file system = 1 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L64",
@@ -1942,7 +1942,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_errordecay = 100 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Prediction smoothing = 100 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L65",
@@ -1963,7 +1963,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hintFadeTime = 100 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Hint hold time = 100 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L66",
@@ -1984,7 +1984,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudCompassMaxRange = 1500 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Compass range = 1500 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L70",
@@ -2005,7 +2005,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudCompassMinRadius = 0 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Compass minimum radius = 0 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L71",
@@ -2026,7 +2026,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudCompassMinRange = 0 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Compass minimum range = 0 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L72",
@@ -2047,7 +2047,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudCompassSpringyPointers = 0 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Springy compass pointers = 0 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L73",
@@ -2068,7 +2068,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudCompassSoundPingFadeTime = 2 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Compass sound fade = 2 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L74",
@@ -2089,7 +2089,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudDamageIconHeight = 64 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Damage indicator height = 64 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L78",
@@ -2110,7 +2110,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudDamageIconOffset = 128 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Damage indicator distance = 128 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L79",
@@ -2131,7 +2131,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudDamageIconTime = 2000 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Damage indicator time = 2000 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L80",
@@ -2152,7 +2152,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudDamageIconWidth = 128 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Damage indicator width = 128 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L81",
@@ -2173,7 +2173,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudGrenadeIconHeight = 25 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Grenade icon height = 25 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L85",
@@ -2194,7 +2194,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudGrenadeIconOffset = 50 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Grenade icon distance = 50 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L86",
@@ -2215,7 +2215,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudGrenadeIconWidth = 25 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Grenade icon width = 25 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L87",
@@ -2236,7 +2236,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudGrenadePointerHeight = 12 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Grenade pointer height = 12 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L88",
@@ -2257,7 +2257,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudGrenadePointerPivot = 12 27 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Grenade pointer pivot = 12 27 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L92",
@@ -2278,7 +2278,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudGrenadePointerWidth = 25 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Grenade pointer width = 25 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L93",
@@ -2299,7 +2299,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudObjectiveMaxRange = 2048 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Objective icon range = 2048 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L94",
@@ -2320,7 +2320,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudObjectiveMinAlpha = 1 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Objective icon opacity = 1 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L95",
@@ -2341,7 +2341,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 pushes cg_hudObjectiveMinHeight = -70 on connect; leave this setting to the server.",
+          "reason": "zPAM 4.08 sets Objective icon height = -70 when you join. The server controls this setting.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L96",
@@ -2362,7 +2362,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM 4.08 sets g_competitive 1 unconditionally, including pub. This is a target policy, not a live server measurement.",
+          "reason": "zPAM 4.08 sets Competitive server rules 1 unconditionally, including public matches. This is a target policy, not a live server measurement.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_cvar_forces.gsc#L13",
@@ -2382,7 +2382,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM can write cg_weaponCycleDelay as part of its runtime behavior; Check-up leaves it to the mod.",
+          "reason": "zPAM can write Weapon cycle delay as part of its runtime behavior; Check-up leaves it to the mod.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_fast_reload.gsc#L105",
@@ -2402,7 +2402,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM can write cl_allowdownload as part of its runtime behavior; Check-up leaves it to the mod.",
+          "reason": "zPAM can write Download server content as part of its runtime behavior; Check-up leaves it to the mod.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_force_download.gsc#L9",
@@ -2422,7 +2422,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM can write cl_wwwdownload as part of its runtime behavior; Check-up leaves it to the mod.",
+          "reason": "zPAM can write Redirected downloads as part of its runtime behavior; Check-up leaves it to the mod.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_force_download.gsc#L74",
@@ -2442,7 +2442,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM can write m_enable as part of its runtime behavior; Check-up leaves it to the mod.",
+          "reason": "zPAM can write Windows mouse movement as part of its runtime behavior; Check-up leaves it to the mod.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_streamer.gsc#L781",
@@ -2462,7 +2462,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM can write cl_bypassMouseInput as part of its runtime behavior; Check-up leaves it to the mod.",
+          "reason": "zPAM can write Mouse works in menus as part of its runtime behavior; Check-up leaves it to the mod.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_streamer.gsc#L877",
@@ -2482,7 +2482,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM can write cl_demoAutoRecordName as part of its runtime behavior; Check-up leaves it to the mod.",
+          "reason": "zPAM can write Automatic demo name as part of its runtime behavior; Check-up leaves it to the mod.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_record.gsc#L371",
@@ -2502,7 +2502,7 @@
           },
           "serverOwned": true,
           "advisory": false,
-          "reason": "zPAM can write cl_demoAutoRecordUploadUrl as part of its runtime behavior; Check-up leaves it to the mod.",
+          "reason": "zPAM can write Automatic demo upload address as part of its runtime behavior; Check-up leaves it to the mod.",
           "sources": [
             {
               "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/source/maps/mp/gametypes/_record.gsc#L368",
@@ -3038,7 +3038,7 @@
           },
           "serverOwned": false,
           "advisory": true,
-          "reason": "Polish Championship 2026 prints cl_maxpackets 100 as recommended, while required CoD2x/zPAM 4 forces 125. This contradiction is unresolved.",
+          "reason": "Polish Championship 2026 prints Updates you send 100 as recommended, while required CoD2x/zPAM 4 requires 125. This contradiction is unresolved.",
           "sources": [
             {
               "sourceURL": "https://www.codmaniac.com/esport_tournament/polish-cod2-championship-1-30-31-may-2026/",
@@ -3071,7 +3071,7 @@
         "esl-eu-2008",
         "wwcl-2007"
       ],
-      "reason": "ESL requires fx_sort 1; WWCL 2007 requires 0. No common value is established.",
+      "reason": "ESL requires Sort visual effects 1; WWCL 2007 requires 0. No common value is established.",
       "sources": [
         {
           "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
@@ -3098,7 +3098,7 @@
         "esl-eu-2008",
         "zpam-3.36"
       ],
-      "reason": "ESL requires scoped damage icon 0; zPAM pushes 1. No common value is established.",
+      "reason": "ESL requires scoped damage icon 0; zPAM sets 1. No common value is established.",
       "sources": [
         {
           "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
@@ -3125,7 +3125,7 @@
         "esl-eu-2008",
         "zpam-4.08"
       ],
-      "reason": "ESL requires scoped damage icon 0; zPAM pushes 1. These target different client modes.",
+      "reason": "ESL requires scoped damage icon 0; zPAM sets 1. These target different client modes.",
       "sources": [
         {
           "sourceURL": "https://web.archive.org/web/20080804082816id_/http://www.esl.eu:80/eu/cod2/sd/1on1/ladder/rules/",
@@ -3152,7 +3152,7 @@
         "polish-2026",
         "zpam-4.08"
       ],
-      "reason": "Polish 2026 recommends packets 100 and requires CoD2x/zPAM 4; that client forces 125. The printed recommendation and engine enforcement contradict one another.",
+      "reason": "Polish 2026 recommends packets 100 and requires CoD2x/zPAM 4; that client requires 125. The printed recommendation and engine enforcement contradict one another.",
       "sources": [
         {
           "sourceURL": "https://www.codmaniac.com/esport_tournament/polish-cod2-championship-1-30-31-may-2026/",
