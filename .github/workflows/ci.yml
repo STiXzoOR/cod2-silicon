@@ -79,6 +79,11 @@ jobs:
           command -v clang
           brew install sdl2-compat
           command -v sdl2-config
+      - name: Config Studio catalog coverage
+        run: |
+          python3 -m unittest discover -s tools/catalog -v
+          python3 tools/catalog/catalog.py check --source-root . --catalog launcher/Resources/ConfigCatalog.json --mode stock
+          python3 tools/catalog/catalog.py check --source-root . --catalog launcher/Resources/ConfigCatalog.json --mode cod2x
       - name: Synthetic ABI checker tests
         run: |
           python3 tools/abi/test_audit.py

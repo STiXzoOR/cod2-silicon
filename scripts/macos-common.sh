@@ -56,6 +56,8 @@ build_app() {
     else
         datagen_args=("-DCOD2_REGENERATE_TYPED_DATA=OFF" "-DCOD2_STABS_BINARY=" "-DCOD2_VALUES_BINARY=")
     fi
+    "$python" "$root/tools/catalog/catalog.py" check --source-root "$root" --catalog "$root/launcher/Resources/ConfigCatalog.json" --mode stock
+    "$python" "$root/tools/catalog/catalog.py" check --source-root "$root" --catalog "$root/launcher/Resources/ConfigCatalog.json" --mode cod2x
     "$root/scripts/build-sdl.sh" "$build/deps"
     local prefix="$build/deps/install" sdk
     sdk=$(/usr/bin/xcrun --show-sdk-path)
@@ -68,8 +70,8 @@ build_app() {
         "-DZLIB_LIBRARY=$sdk/usr/lib/libz.tbd" "-DZLIB_INCLUDE_DIR=$sdk/usr/include" \
         "-DCOD2_CURL_LIBRARY=$sdk/usr/lib/libcurl.tbd" \
         "${datagen_args[@]}" "-DCOD2_TYPED_DATA_DIR=$build/typed" "-DPython3_EXECUTABLE=$python"
-    run_build cmake --build "$build/client" --target cod2_macos --parallel "$(/usr/sbin/sysctl -n hw.ncpu)"
-    run_build cmake --build "$build/client" --target cod2_launcher --parallel 3
+    run_build cmake --build "$build/client" --target cod2_macos --parallel "${COD2_BUILD_JOBS:-$(/usr/sbin/sysctl -n hw.ncpu)}"
+    run_build cmake --build "$build/client" --target cod2_launcher --parallel "${COD2_BUILD_JOBS:-3}"
     run_build "$python" "$root/tools/cod2x/make_macos_app.py" \
         "$build/client/cod2_macos" "$app" --replace --launcher "$build/client/launcher/CoD2Launcher" --frameworks "$prefix" --version "$version"
 }
