@@ -1418,15 +1418,61 @@ final class PreviewCatalogGate: Sendable {
                 window.setFrame(NSRect(origin: window.frame.origin, size: size), display: true)
                 try? await Task.sleep(for: settle)
             }
-            func toggleSidebar(_ step: String) async -> Bool {
-                let buttons = AccessibilityTree.elements(of: window).filter { $0.role == "AXButton" && $0.label.localizedCaseInsensitiveContains("sidebar") }
-                guard let toggle = buttons.first else { print("FAIL: navigation \(step)-\(appearance): the sidebar's toolbar button is not in the accessibility tree"); return false }
-                window.makeKey()
-                click(window, element: toggle)
-                try? await Task.sleep(for: settle)
+            func toggleButton() -> AccessibilityTree.Element? {
+                AccessibilityTree.elements(of: window).first { $0.role == "AXButton" && $0.label.localizedCaseInsensitiveContains("sidebar") }
+            }
+            /// The window's own split view controller, found through public AppKit only: the content view
+            /// controller's children, the delegate of a split view in the window, or the toggle's target.
+            func splitController() -> NSSplitViewController? {
+                func controllers(_ controller: NSViewController?) -> [NSViewController] {
+                    guard let controller else { return [] }
+                    return [controller] + controller.children.flatMap { controllers($0) }
+                }
+                let delegates = window.contentView.map { views(NSSplitView.self, in: $0).compactMap { $0.delegate as? NSViewController } } ?? []
+                let target = ((toggleButton()?.node as? NSControl)?.target as? NSViewController).map { [$0] } ?? []
+                return (controllers(window.contentViewController) + delegates + target).lazy.compactMap { $0 as? NSSplitViewController }
+                    .first { $0.splitViewItems.contains { $0.behavior == .sidebar } && $0.view.window === window }
+            }
+            /// The native sidebar's state as AppKit reports it: hidden, shown, or nil (with a reason) when
+            /// the item, its view and the toggle's label disagree or can't be read. Never sets anything.
+            func sidebarHidden(_ step: String) -> Bool? {
+                guard let split = splitController(), let item = split.splitViewItems.first(where: { $0.behavior == .sidebar }) else {
+                    print("FAIL: navigation \(step)-\(appearance): the window's native sidebar split view item could not be found"); return nil
+                }
+                let view = item.viewController.view
+                let visible = view.isHiddenOrHasHiddenAncestor ? NSRect.zero : view.visibleRect
+                let viewShown = view.window === window && visible.width >= 1 && visible.height >= 1
+                let label = toggleButton()?.label ?? ""
+                let labelHidden: Bool? = label.localizedCaseInsensitiveContains("show sidebar") ? true
+                    : label.localizedCaseInsensitiveContains("hide sidebar") ? false : nil
+                print("navigation \(step)-\(appearance): native sidebar isCollapsed=\(item.isCollapsed) viewHidden=\(view.isHiddenOrHasHiddenAncestor) visibleRect=\(NSStringFromRect(visible)) toggle=“\(label)”")
+                guard item.isCollapsed != viewShown, labelHidden.map({ $0 == item.isCollapsed }) ?? true else {
+                    print("FAIL: navigation \(step)-\(appearance): the native sidebar state is inconsistent (isCollapsed=\(item.isCollapsed), view shown=\(viewShown), toggle=“\(label)”)"); return nil
+                }
+                return item.isCollapsed
+            }
+            func expectSidebar(_ step: String, hidden: Bool) -> Bool {
+                guard let actual = sidebarHidden(step) else { return false }
+                guard actual == hidden else {
+                    print("FAIL: navigation \(step)-\(appearance): the native sidebar is \(actual ? "hidden" : "shown"), expected \(hidden ? "hidden" : "shown")"); return false
+                }
                 return true
             }
+            /// One real click on the sidebar's own toolbar button, through the normal event pump, then the
+            /// settled native state must be the expected one. No retry: a lost click fails here.
+            func toggleSidebar(_ step: String, hidden: Bool) async -> Bool {
+                guard let toggle = toggleButton() else { print("FAIL: navigation \(step)-\(appearance): the sidebar's toolbar button is not in the accessibility tree"); return false }
+                guard let before = sidebarHidden("\(step) (before click)") else { return false }
+                guard before != hidden else {
+                    print("FAIL: navigation \(step)-\(appearance): the native sidebar is already \(hidden ? "hidden" : "shown") before the click"); return false
+                }
+                window.makeKey()
+                appClick(window, element: toggle)
+                try? await Task.sleep(for: settle)
+                return expectSidebar(step, hidden: hidden)
+            }
             await resize(large)
+            guard expectSidebar("active", hidden: false) else { return false }
             guard window.frame.size == large, check("active", rail: true) else { return false }
             // Another of our windows takes key: the rail's selection draws as in an inactive window.
             let other = NSWindow(contentRect: NSRect(x: window.frame.minX + 40, y: window.frame.minY + 40, width: 260, height: 120),
@@ -1435,19 +1481,19 @@ final class PreviewCatalogGate: Sendable {
             other.makeKeyAndOrderFront(nil)
             try? await Task.sleep(for: .milliseconds(700))
             guard !window.isKeyWindow, other.isKeyWindow else { print("FAIL: navigation inactive-\(appearance): the window stayed key"); other.close(); return false }
-            let inactive = check("inactive", rail: true)
+            let inactive = expectSidebar("inactive", hidden: false) && check("inactive", rail: true)
             other.orderOut(nil); other.close()
             window.makeKeyAndOrderFront(nil)
             try? await Task.sleep(for: .milliseconds(600))
             guard inactive, window.isKeyWindow else { return false }
-            guard await toggleSidebar("sidebar-hidden"), check("sidebar-hidden", rail: true),
-                  await toggleSidebar("sidebar-shown"), check("sidebar-shown", rail: true) else { return false }
+            guard await toggleSidebar("sidebar-hidden", hidden: true), check("sidebar-hidden", rail: true),
+                  await toggleSidebar("sidebar-shown", hidden: false), check("sidebar-shown", rail: true) else { return false }
             await resize(small)
-            guard window.frame.size == small, check("minimum", rail: false) else { return false }
-            guard await toggleSidebar("minimum-sidebar-hidden"), check("minimum-sidebar-hidden", rail: nil),
-                  await toggleSidebar("minimum-sidebar-shown"), check("minimum-sidebar-shown", rail: false) else { return false }
+            guard window.frame.size == small, expectSidebar("minimum", hidden: false), check("minimum", rail: false) else { return false }
+            guard await toggleSidebar("minimum-sidebar-hidden", hidden: true), check("minimum-sidebar-hidden", rail: nil),
+                  await toggleSidebar("minimum-sidebar-shown", hidden: false), check("minimum-sidebar-shown", rail: false) else { return false }
             await resize(large)
-            guard window.frame.size == large, check("resized-back", rail: true) else { return false }
+            guard window.frame.size == large, expectSidebar("resized-back", hidden: false), check("resized-back", rail: true) else { return false }
         }
         print("PASS: navigation: \(written) captures; the rail kept \(ConfigPurposeGroup.aim) selected while inactive, with the sidebar hidden and shown, and across 1440x900 and 1100x760")
         return written == 16
