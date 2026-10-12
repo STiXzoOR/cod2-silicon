@@ -171,7 +171,7 @@ enum ConfigValues {
         switch (type, value) {
         case (.bool, .bool(let flag)): return flag ? "1" : "0"
         case (.enumeration, .number(let index)):
-            let i = Int(index)
+            guard let i = Int(exactly: index) else { return format(index) }
             return choices.indices.contains(i) ? choices[i] : String(i)
         case (_, .number(let number)): return format(number, integer: type == .int)
         case (_, .string(let text)): return text
@@ -185,8 +185,9 @@ enum ConfigValues {
     /// Plain numerals without grouping or locale: "2.6", "250", "0.022".
     static func format(_ number: Double, integer: Bool = false) -> String {
         guard number.isFinite else { return "0" }
-        if integer || (number == number.rounded() && abs(number) < 1e15) { return String(Int64(number.rounded())) }
-        var text = String(format: "%.6f", locale: posix, number)
+        let value = integer ? number.rounded() : number
+        if integer || (value == value.rounded() && abs(value) < 1e15), let integer = Int64(exactly: value) { return String(integer) }
+        var text = String(format: "%.6f", locale: posix, value)
         while text.hasSuffix("0") { text.removeLast() }
         if text.hasSuffix(".") { text.removeLast() }
         return text == "-0" ? "0" : text
@@ -200,7 +201,36 @@ enum ConfigValues {
         scanner.locale = posix
         return scanner.scanDouble().flatMap { $0.isFinite ? $0 : nil }
     }
-    static func bool(_ text: String) -> Bool { (number(text) ?? 0) != 0 }
+    /// atoi reads an ASCII signed decimal prefix. Overflow outside the engine's
+    /// Int32 is unsupported, so the Studio keeps that text instead of guessing.
+    static func integer(_ text: String) -> Int32? {
+        let bytes = Array(text.utf8)
+        var index = 0
+        while index < bytes.count, bytes[index] == 32 || (9...13).contains(bytes[index]) { index += 1 }
+        let negative = index < bytes.count && bytes[index] == 45
+        if index < bytes.count, bytes[index] == 43 || bytes[index] == 45 { index += 1 }
+        let limit: Int64 = negative ? 2_147_483_648 : 2_147_483_647
+        var value: Int64 = 0
+        while index < bytes.count, (48...57).contains(bytes[index]) {
+            let digit = Int64(bytes[index] - 48)
+            guard value <= (limit - digit) / 10 else { return nil }
+            value = value * 10 + digit
+            index += 1
+        }
+        return Int32(exactly: negative ? -value : value)
+    }
+    static func number(_ text: String, type: ConfigCatalogType) -> Double? {
+        switch type {
+        case .bool, .int: return integer(text).map(Double.init)
+        case .float:
+            return number(text).flatMap { value in
+                let native = Float(value)
+                return native.isFinite ? Double(native) : nil
+            }
+        default: return number(text)
+        }
+    }
+    static func bool(_ text: String) -> Bool { (integer(text) ?? 0) != 0 }
     static func enumIndex(_ text: String, choices: [String]) -> Int? {
         if let index = choices.firstIndex(where: { $0.caseInsensitiveCompare(text) == .orderedSame }) { return index }
         if let value = Int(text.trimmingCharacters(in: .whitespaces)), choices.indices.contains(value) { return value }
@@ -211,8 +241,11 @@ enum ConfigValues {
     /// Typed equality, so "5", "5.0" and "5.000" are the same mouse speed.
     static func same(_ spec: ConfigSettingSpec, _ a: String, _ b: String) -> Bool {
         switch spec.type {
-        case .bool: return bool(a) == bool(b)
-        case .int, .float: return number(a).map { x in number(b).map { abs(x - $0) < 1e-9 } ?? false } ?? (a == b)
+        case .bool:
+            guard let left = integer(a), let right = integer(b) else { return a == b }
+            return (left != 0) == (right != 0)
+        case .int: return integer(a).map { $0 == integer(b) } ?? (a == b)
+        case .float: return number(a, type: .float).map { $0 == number(b, type: .float) } ?? (a == b)
         case .enumeration: return enumIndex(a, choices: spec.choices).map { $0 == enumIndex(b, choices: spec.choices) } ?? (a == b)
         case .vec2, .vec3, .vec4, .color: return vector(a) == vector(b)
         case .string: return a == b
@@ -223,17 +256,20 @@ enum ConfigValues {
     static func display(_ spec: ConfigSettingSpec, _ text: String?) -> String {
         guard let text else { return "Not set" }
         if let label = spec.label(for: text) {
-            guard spec.isNumeric, let value = number(text) else { return label }
-            let numeral = spec.type == .int ? String(Int64(value.rounded())) : format(value)
+            guard spec.isNumeric, let value = number(text, type: spec.type) else { return label }
+            let numeral = format(value, integer: spec.type == .int)
             return spec.unit.map { "\(label) (\(numeral) \($0))" } ?? label
         }
         switch spec.type {
-        case .bool: return bool(text) ? "On" : "Off"
+        case .bool: return integer(text).map { $0 != 0 ? "On" : "Off" } ?? text
         case .enumeration: return enumIndex(text, choices: spec.choices).map { spec.choices[$0] } ?? text
         case .int, .float:
-            guard let value = number(text) else { return text }
-            if spec.name.lowercased() == "snd_volume" { return "\(Int((value * 100).rounded()))%" }
-            let numeral = spec.type == .int ? String(Int64(value.rounded())) : format(value)
+            guard let value = number(text, type: spec.type) else { return text }
+            if spec.name.lowercased() == "snd_volume" {
+                guard let percentage = Int(exactly: (value * 100).rounded()) else { return text }
+                return "\(percentage)%"
+            }
+            let numeral = format(value, integer: spec.type == .int)
             return spec.unit.map { "\(numeral) \($0)" } ?? numeral
         case .string: return spec.isSecret ? (text.isEmpty ? "None" : "Hidden") : (text.isEmpty ? "Empty" : text)
         case .vec2, .vec3, .vec4, .color: return vector(text).map { format($0) }.joined(separator: " ")
@@ -263,7 +299,7 @@ struct ConfigSettingState {
         return !ConfigValues.same(spec, raw, defaultText)
     }
     var display: String { ConfigValues.display(spec, value) }
-    var number: Double? { value.flatMap(ConfigValues.number) }
+    var number: Double? { value.flatMap { ConfigValues.number($0, type: spec.type) } }
     var flag: Bool { value.map(ConfigValues.bool) ?? false }
 }
 
@@ -853,7 +889,8 @@ struct ConfigStudioFailure: Identifiable {
         guard var meta = metadata else { return }
         meta.locks = meta.locks.filter { $0.caseInsensitiveCompare(spec.name) != .orderedSame }
         if locked { meta.locks.insert(spec.name) }
-        commitMetadata(meta, summary: locked ? "Locked \(spec.title)" : "Unlocked \(spec.title)", undo: undo, undoName: locked ? "Lock" : "Unlock")
+        commitMetadata(meta, summary: locked ? "Locked \(spec.title)" : "Unlocked \(spec.title)", undo: undo, undoName: locked ? "Lock" : "Unlock",
+                       retry: { [weak self] in self?.setLock(spec, locked, undo: undo) })
     }
     func setNote(_ spec: ConfigSettingSpec, _ note: String, undo: UndoManager? = nil) {
         guard var meta = metadata else { return }
@@ -861,35 +898,36 @@ struct ConfigStudioFailure: Identifiable {
         let key = meta.notes.keys.first { $0.caseInsensitiveCompare(spec.name) == .orderedSame } ?? spec.name
         if meta.notes[key] == (text.isEmpty ? nil : text) { return }
         meta.notes[key] = text.isEmpty ? nil : text
-        commitMetadata(meta, summary: text.isEmpty ? "Removed the note on \(spec.title)" : "Noted \(spec.title)", undo: undo, undoName: "Note")
+        commitMetadata(meta, summary: text.isEmpty ? "Removed the note on \(spec.title)" : "Noted \(spec.title)", undo: undo, undoName: "Note",
+                       retry: { [weak self] in self?.setNote(spec, note, undo: undo) })
     }
     func setDPI(_ dpi: Double?, undo: UndoManager? = nil) {
         guard var meta = metadata else { return }
         let value = dpi.flatMap { $0.isFinite && $0 > 0 ? $0 : nil }
         guard meta.dpi != value else { return }
         meta.dpi = value
-        commitMetadata(meta, summary: "Set mouse DPI", undo: undo, undoName: "Mouse DPI")
+        commitMetadata(meta, summary: "Set mouse DPI", undo: undo, undoName: "Mouse DPI", retry: { [weak self] in self?.setDPI(dpi, undo: undo) })
     }
     func rename(_ name: String, undo: UndoManager? = nil) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard var meta = metadata, !trimmed.isEmpty, trimmed != meta.displayName else { return }
         meta.displayName = trimmed
-        commitMetadata(meta, summary: "Renamed to \(trimmed)", undo: undo, undoName: "Rename")
+        commitMetadata(meta, summary: "Renamed to \(trimmed)", undo: undo, undoName: "Rename", retry: { [weak self] in self?.rename(name, undo: undo) })
     }
     /// Records the current state as a History row (the board's “Save a snapshot now”).
     func saveSnapshot() {
         guard let current else { return }
         commit(summary: "Saved a snapshot", undo: nil, undoName: "", retry: nil, metadata: current.metadata, edit: { _ in }, revert: nil)
     }
-    private func commitMetadata(_ meta: ConfigStudioMetadata, summary: String, undo: UndoManager?, undoName: String) {
+    private func commitMetadata(_ meta: ConfigStudioMetadata, summary: String, undo: UndoManager?, undoName: String, retry: (@MainActor () -> Void)?) {
         let previous = metadata
-        commit(summary: summary, undo: undo, undoName: undoName, retry: { [weak self] in self?.commitMetadataAgain(meta, summary: summary, undo: undo, undoName: undoName) },
+        commit(summary: summary, undo: undo, undoName: undoName, retry: retry,
                metadata: meta, edit: { _ in }, revert: { [weak self] in
             if let previous { self?.commitMetadataAgain(previous, summary: "Undid: \(summary)", undo: undo, undoName: undoName) }
         })
     }
     private func commitMetadataAgain(_ meta: ConfigStudioMetadata, summary: String, undo: UndoManager?, undoName: String) {
-        commitMetadata(meta, summary: summary, undo: undo, undoName: undoName)
+        commitMetadata(meta, summary: summary, undo: undo, undoName: undoName, retry: nil)
     }
 
     /// The one write path for ordinary controls: apply the edit to the latest saved
@@ -908,14 +946,39 @@ struct ConfigStudioFailure: Identifiable {
             try session.update(document: updated, metadata: metadata, summary: summary)
             failure = nil
             diffCache = [:]
-            if let revert, let undo {
-                undo.registerUndo(withTarget: self) { _ in revert() }
+            if let revert, let undo, let written = session.current?.version {
+                let profileID = current.profile.id
+                undo.registerUndo(withTarget: self) { model in
+                    guard model.session === session else { model.nothingToUndo(); return }
+                    do { try session.refresh() } catch { model.nothingToUndo(); return }
+                    guard model.current?.profile.id.caseInsensitiveCompare(profileID) == .orderedSame,
+                          model.current?.version == written, session.draft == nil else { model.nothingToUndo(); return }
+                    revert()
+                }
                 undo.setActionName(undoName)
             }
             announce("Saved. \(summary).")
         } catch {
-            fail("Couldn’t save: \(summary)", error, retry: retry)
+            let profileID = current.profile.id
+            let scopedRetry: (@MainActor () -> Void)?
+            if let retry {
+                scopedRetry = { [weak self] in
+                    guard let self else { return }
+                    guard self.session === session, self.current?.profile.id.caseInsensitiveCompare(profileID) == .orderedSame else {
+                        self.failure = ConfigStudioFailure(title: "Couldn’t save: \(summary)",
+                                                          message: "This loadout is no longer selected. Open it and make the change again.", retry: nil)
+                        return
+                    }
+                    guard self.failure == nil else { return }
+                    retry()
+                }
+            } else { scopedRetry = nil }
+            fail("Couldn’t save: \(summary)", error, retry: scopedRetry)
         }
+    }
+
+    private func nothingToUndo() {
+        failure = ConfigStudioFailure(title: "Nothing to undo", message: "This loadout changed since. Pick a snapshot in History instead.", retry: nil)
     }
 
     /// After a model unit's own transaction (binds, advanced binds): announce it,
@@ -1028,7 +1091,10 @@ struct ConfigStudioFailure: Identifiable {
     }
 
     func toggleText() {
-        if textMode { textMode = false; textBase = nil; textIssues = [] } else { textMode = true; loadText() }
+        if textMode {
+            guard !textEdited else { return }
+            textMode = false; textBase = nil; textIssues = []
+        } else { textMode = true; loadText() }
     }
     func loadText() {
         guard let current else { return }

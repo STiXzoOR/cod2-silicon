@@ -377,7 +377,7 @@ struct ConfigAppliedSuggestion: Identifiable {
             case .movement:
                 if let match, let gauge = frameGauge(match) { return gauge }
                 let cap = studio.spec(named: "com_maxfps").map { studio.state($0) }
-                let value = cap?.number.map { $0 == 0 ? "NO CAP" : "\(Int($0)) FPS" } ?? "—"
+                let value = cap?.number.map { $0 == 0 ? "NO CAP" : "\(ConfigValues.format($0, integer: true)) FPS" } ?? "—"
                 return .init(area: .movement, value: value, detail: "Your frame rate cap. The frame rate you actually get isn’t measured.",
                              status: cap?.number == nil ? "Not measured" : "From settings", tone: cap?.number == nil ? .unknown : .information)
             case .aim:

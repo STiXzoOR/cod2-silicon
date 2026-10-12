@@ -20,10 +20,10 @@ enum ConfigChainIssue: Equatable, Sendable {
     case usesWait, waitDisabled, nonYieldingRecursion, yieldingLoop, executionLimit, bufferLimit
     case unresolvedVariable(String), unresolvedFile(String), invalidTokens, negativeWait
     case releaseTail, heldActionWithoutRelease, symbolicSetting(String)
-    case nativeSetTruncation(String)
+    case vstrTooLong(String)
     var blocksCompilation: Bool {
         switch self {
-        case .nonYieldingRecursion, .yieldingLoop, .executionLimit, .bufferLimit, .invalidTokens, .negativeWait: return true
+        case .nonYieldingRecursion, .yieldingLoop, .executionLimit, .bufferLimit, .invalidTokens, .negativeWait, .vstrTooLong: return true
         default: return false
         }
     }
@@ -101,7 +101,11 @@ struct ConfigChainMachine: Sendable {
             if name == "vstr", argv.count == 2 {
                 let key = ConfigDocument.text(argv[1]).lowercased()
                 referencedVariables.insert(key)
-                if let value = variables[key] { expansion = ("vstr:" + key, value + Data([10, 10])) }
+                if let value = variables[key] {
+                    // Cmd_Vstr_f adds one newline through the engine's 1024-byte va buffer.
+                    guard value.count <= 1022 else { trace.flag(.vstrTooLong(key)); break }
+                    expansion = ("vstr:" + key, value + Data([10, 10]))
+                }
                 else { trace.flag(.unresolvedVariable(key)); trace.complete = false }
             } else if name == "exec", argv.count == 2 {
                 if let path = ConfigImportScript.execPath(argv[1]), let value = files[path] {
@@ -179,7 +183,7 @@ enum ConfigChainError: Error, LocalizedError, Sendable {
         case .invalidCommands: return "Each step needs a complete command within the game's line and token limits."
         case .unsafeQuotes: return "The game's quote rules change this script. Remove embedded quotes or use a direct multi-command bind. Windows export cannot preserve quotes inside archived helper values."
         case .heldActionInCycle: return "A vstr cycle cannot release a held + action. Use a direct bind starting with that action."
-        case .helperTooLong: return "This step exceeds the current native engine's 4093-byte set value limit. Split it into shorter steps."
+        case .helperTooLong: return "This step exceeds the game's 1,022-byte executable command limit. Split it into shorter steps."
         case .unsafeExecution: return "This chain repeats without another keypress, or exceeds the preview's execution limits. Remove the recursive exec/vstr call."
         case .opaqueOwnedFile: return "This chain file or its saved definitions changed outside Config Studio. Preserve it and review the text before replacing it."
         case .conflictNeedsReview: return "This key already has a different binding. Review and confirm replacing it."
@@ -420,8 +424,8 @@ enum ConfigChains {
         }
     }
     private static func appendAssignment(name: String, value: Data, portable: Bool, dialect: ConfigDialect, to output: inout Data) throws {
-        // Native stock and CoD2x retain the original 4093-byte argument limit.
-        guard value.count <= 4093 else { throw ConfigChainError.helperTooLong }
+        // Stored settings can be longer, but these helpers run through Cmd_Vstr_f.
+        guard value.count <= 1022 else { throw ConfigChainError.helperTooLong }
         if portable && value.contains(34) { throw ConfigChainError.unsafeQuotes }
         guard value.last != 92 else { throw ConfigChainError.unsafeQuotes }
         var quoted = Data([34])

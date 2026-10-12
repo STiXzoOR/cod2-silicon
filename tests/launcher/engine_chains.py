@@ -31,6 +31,7 @@ preamble = r'''
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -113,8 +114,14 @@ static char *read_file(const char *path) {
 static int FS_ReadFile(const char *path, void **bytes) { *bytes = read_file(path); return (int)strlen(*bytes); }
 static void FS_FreeFile(void *bytes) { free(bytes); }
 static void Com_DefaultExtension(char *path, int count, const char *ext) { if (!strchr(path, '.')) I_strncat(path, count, ext); }
-static const char *va(const char *format, ...) {
-    static char text[8192]; va_list args; va_start(args, format); vsnprintf(text, sizeof(text), format, args); va_end(args); return text;
+typedef struct { char va_string[2][1024]; int index; } va_info_t;
+static va_info_t formatter;
+static jmp_buf formatter_error;
+static int expecting_formatter_error;
+static void *Sys_GetValue(int key) { assert(key == 1); return &formatter; }
+static void Com_Error(int code, const char *message, ...) {
+    assert(expecting_formatter_error && code == 1 && !strcmp(message, "va string too long"));
+    longjmp(formatter_error, 1);
 }
 static struct { const char *binding; } keys[256];
 static char *Key_KeynumToString(int key, int translate) { (void)key; (void)translate; return "key"; }
@@ -123,6 +130,7 @@ static void Cmd_List_f(void) { abort(); }
 cmd = functions("src/PC/qcommon/cmd.c", ["Cbuf_Init", "Cbuf_AddTextInternal", "Cbuf_AddText", "Cbuf_InsertText",
     "Cbuf_ExecuteInternal", "Cbuf_Execute", "Cmd_Wait_f", "Cmd_Exec_f", "Cmd_Vstr_f", "Cmd_Argc", "Cmd_Argv",
     "Cmd_TokenizeStringInternal", "Cmd_AddCommand", "Cmd_ExecuteString", "Cmd_Init"])
+formatter_source = functions("src/PC/universal/q_shared.c", ["va"])
 # The original function definitions are external; forward declarations match.
 preamble = preamble.replace("static void Cmd_ExecuteString", "void Cmd_ExecuteString").replace("static int Cmd_Argc", "int Cmd_Argc").replace("static char *Cmd_Argv", "char *Cmd_Argv")
 policy = functions("src/PC/qcommon/cod2x_policy.c", ["Cod2x_Tokenize"])
@@ -162,7 +170,19 @@ int main(int argc, char **argv) {
     snprintf(assignment, sizeof(assignment), "seta a \"say %s; vstr safe\"", tail);
     Cmd_ExecuteString(assignment); assert(strlen(Dvar_FindVar("a")->current.string) == 1024);
     Cmd_ExecuteString("seta safe \"say harmless\""); Cmd_ExecuteString("seta sa \"quit\"");
-    Cbuf_AddText("vstr a\n"); drain();
+    expecting_formatter_error = 1;
+    if (setjmp(formatter_error) == 0) { Cbuf_AddText("vstr a\n"); drain(); assert(!"oversized vstr executed"); }
+    cmd_text->cmdsize = 0; cmd_wait = 0; expecting_formatter_error = 0;
+    puts("PASS: production formatter rejects preserved 1024-byte helper before leaf dispatch");
+    char boundary[1024]; memset(boundary, 'x', sizeof(boundary)); memcpy(boundary, "say ", 4);
+    boundary[1022] = 0; Dvar_SetCommand("boundary", boundary);
+    const char *formatted = va("%s\n", Dvar_FindVar("boundary")->current.string);
+    assert(strlen(formatted) == 1023 && formatted[1022] == '\n');
+    boundary[1022] = 'x'; boundary[1023] = 0; Dvar_SetCommand("boundary", boundary);
+    expecting_formatter_error = 1;
+    if (setjmp(formatter_error) == 0) { Cbuf_AddText("vstr boundary\n"); drain(); assert(!"1023-byte helper executed"); }
+    cmd_text->cmdsize = 0; cmd_wait = 0; expecting_formatter_error = 0;
+    puts("PASS: production vstr formatter accepts 1022 bytes and rejects 1023");
     Cmd_AddCommand("setfromdvar", Dvar_SetFromDvar_f);
     Cmd_ExecuteString("set source 5"); Cmd_ExecuteString("seta target 0"); Cmd_ExecuteString("setfromdvar target source");
     assert(!strcmp(Dvar_FindVar("target")->current.string, "5")); assert(Dvar_FindVar("target")->flags & 1);
@@ -190,7 +210,7 @@ int main(int argc, char **argv) {
 '''
 # Function ordering is declaration-only adaptation, never a changed function.
 fixture = scratch / "engine-chains.c"
-fixture.write_text(preamble + "\nstatic qboolean Dvar_Command(void);\nvoid Dvar_Set_f(void);\n" + policy + "\n" + cmd + "\n" + dvar + "\n" + dispatch + "\n" + key + "\n" + main)
+fixture.write_text(preamble + "\nstatic qboolean Dvar_Command(void);\nvoid Dvar_Set_f(void);\n" + formatter_source + "\n" + policy + "\n" + cmd + "\n" + dvar + "\n" + dispatch + "\n" + key + "\n" + main)
 binary = scratch / "engine-chains"
 expected = """CASE\t0
 TRACE\t+attack\t106\t100
@@ -221,14 +241,13 @@ QUOTED
 TRACE\tsay\thello world
 TRACE\tsay\tbye
 PRESERVED
-TRACE\tsay\t{long_value}
-TRACE\tsay\tharmless
+PASS: production formatter rejects preserved 1024-byte helper before leaf dispatch
+PASS: production vstr formatter accepts 1022 bytes and rejects 1023
 PASS: production setfromdvar source and archive retention
 PASS: production unescaped archived quote rewrite changes value
 PASS: production toggle value list
 PASS: production competitive wait gate
 """
-expected = expected.replace("{long_value}", "x" * 1009)
 for mode, mode_flags in [("stock", []), ("codx", ["-DCOD2_CODX=1"])]:
     subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", "xcrun", "clang", "-target", "arm64-apple-macos13",
         "-DCOD2_X64=1", *mode_flags, "-DCOD2_APPLE_SDK=0", "-Wall", "-Wextra", "-Werror", "-Wno-unused-function",

@@ -641,7 +641,7 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
         if issues.contains(.heldActionWithoutRelease) { notes.append(("Only the first held action is let go when you release the key; later ones keep running.", .caution)) }
         if issues.contains(.releaseTail) { notes.append(("Some commands run again when you let go of the key.", .information)) }
         for issue in issues {
-            if case .nativeSetTruncation = issue { notes.append(("A step is longer than the 1,022 characters this game build keeps, so it would be cut short. Split it into shorter steps.", .negative)) }
+            if case .vstrTooLong = issue { notes.append(("A step exceeds the game’s 1,022-byte executable command limit. Split it into shorter steps.", .negative)) }
             if case .unresolvedFile(let name) = issue { notes.append(("Runs \(name), which isn’t part of this loadout, so its effect can’t be shown.", .caution)) }
             if case .unresolvedVariable(let name) = issue { notes.append(("Uses \(name), which isn’t set in this loadout, so its effect can’t be shown.", .caution)) }
         }

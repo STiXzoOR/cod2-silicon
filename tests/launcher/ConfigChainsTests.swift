@@ -21,8 +21,20 @@ import Foundation
         if machine.variables["a"] != Data(oversized.utf8) { failures.append("native imported set preservation") }
         var meta = ConfigStudioMetadata(displayName: "Limit"); meta.locks = ["action:quit"]
         let limit = try store.create(id: "Limit", displayName: "Limit", document: document("seta a \"\(oversized)\"\nseta safe \"say harmless\"\nseta sa \"quit\"\n"), metadata: meta)
-        _ = try ConfigChains.prepare(chains: [.init(id: "preserved", key: "j", behavior: .commands(["vstr a"]))], read: limit)
-        if tokens(machine.execute(Data("vstr a\n".utf8))).last != ["say", "harmless"] { failures.append("preserved dependency executes safe action") }
+        expectThrow("stored value exceeds the executable vstr formatter") {
+            _ = try ConfigChains.prepare(chains: [.init(id: "preserved", key: "j", behavior: .commands(["vstr a"]))], read: limit)
+        }
+        let oversizedTrace = machine.execute(Data("vstr a\n".utf8))
+        if oversizedTrace.complete || !oversizedTrace.commands.isEmpty { failures.append("oversized vstr must stop before dispatching its leaf commands") }
+        for length in [1022, 1023] {
+            var boundary = ConfigChainMachine(dialect: .cod2x)
+            let text = "say " + String(repeating: "x", count: length - 4)
+            _ = boundary.execute(Data("set helper \"\(text)\"\n".utf8))
+            require(boundary.variables["helper"] == Data(text.utf8), "stored settings retain their full native value")
+            let trace = boundary.execute(Data("vstr helper\n".utf8))
+            if length == 1022 { require(trace.complete && tokens(trace) == [["say", String(repeating: "x", count: 1018)]], "1022-byte vstr executes") }
+            else if trace.complete || !trace.commands.isEmpty { failures.append("1023-byte vstr exceeds the formatter") }
+        }
 
         let base = try store.create(id: "Original", displayName: "Original", document: document(""))
         _ = try ConfigChains.apply(ConfigChains.prepare(chains: [.init(id: "copy", key: "j", behavior: .commandCycle(steps: [["say one"], ["say two"]]))], read: base), to: store)
@@ -201,7 +213,21 @@ import Foundation
         rejects("line limit") {
             _ = try ConfigChains.prepare(chains: [.init(id: "bad", key: "x", behavior: .commands(["say " + String(repeating: "x", count: 4095)]))], read: recoveryRead)
         }
-        _ = try ConfigChains.prepare(chains: [.init(id: "long", key: "x", behavior: .commandCycle(steps: [["say " + String(repeating: "x", count: 950)], ["say bye"]]))], read: recoveryRead)
+        _ = try ConfigChains.prepare(chains: [.init(id: "long", key: "x", behavior: .commandCycle(steps: [["say " + String(repeating: "x", count: 906)], ["say bye"]]))], read: recoveryRead)
+        rejects("generated helper exceeds vstr formatter by one byte") {
+            _ = try ConfigChains.prepare(chains: [.init(id: "long", key: "x", behavior: .commandCycle(steps: [["say " + String(repeating: "x", count: 907)], ["say bye"]]))], read: recoveryRead)
+        }
+        rejects("formerly accepted long cycle exceeds the real formatter") {
+            _ = try ConfigChains.prepare(chains: [.init(id: "long", key: "x", behavior: .commandCycle(steps: [["say " + String(repeating: "x", count: 950)], ["say bye"]]))], read: recoveryRead)
+        }
+        for count in [905, 906] {
+            let profile = try recoveryStore.create(id: "Portable\(count)", displayName: "Portable boundary", document: document(""))
+            let cycle = ConfigChain(id: "long", key: "x", behavior: .commandCycle(steps: [["say " + String(repeating: "x", count: count)], ["say bye"]]))
+            _ = try ConfigChains.apply(ConfigChains.prepare(chains: [cycle], read: profile), to: recoveryStore)
+            let saved = try recoveryStore.read(id: profile.profile.id)
+            if count == 905 { _ = try ConfigChains.windowsExport(read: saved) }
+            else { rejects("portable seta adds one byte beyond the vstr formatter") { _ = try ConfigChains.windowsExport(read: saved) } }
+        }
         rejects("set helper native limit") {
             _ = try ConfigChains.prepare(chains: [.init(id: "bad", key: "x", behavior: .commandCycle(steps: [["say " + String(repeating: "x", count: 4090)], ["say bye"]]))], read: recoveryRead)
         }

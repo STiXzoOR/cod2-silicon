@@ -170,8 +170,17 @@ enum ConfigStudioTabsTests {
         binds.newChain()
         binds.updateDraft { $0.key = "k"; $0.kind = .several; $0.commands = [.init(kind: .action, text: "+gostand"), .init(kind: .command, text: "wait"), .init(kind: .action, text: "gocrouch")] }
         require(binds.chainNotes.contains { $0.text.hasPrefix("Competitive CoD2x servers turn off wait") }, "competitive wait is called out")
-        binds.updateDraft { $0.kind = .cycle; $0.steps = [.init(kind: .say, text: String(repeating: "a", count: 1100)), .init(kind: .say, text: "b")] }
-        require(binds.chainError == nil, "native helpers preserve steps longer than the old 1022-byte join")
+        let beforeLongStep = try ConfigStudioAcceptanceTests.savedBytes(session.home)
+        binds.updateDraft { $0.kind = .cycle; $0.steps = [.init(kind: .say, text: String(repeating: "a", count: 906)), .init(kind: .say, text: "b")] }
+        require(binds.chainError == nil && binds.chainEdit != nil, "a 906-character cycle step fits the engine's 1022-byte helper after its generated suffix")
+        for count in [907, 1100] {
+            binds.updateDraft { $0.steps = [.init(kind: .say, text: String(repeating: "a", count: count)), .init(kind: .say, text: "b")] }
+            require(binds.chainError == "This step is too long for the game’s command buffer. Split it into shorter steps." && binds.chainEdit == nil,
+                    "\(count)-character cycle steps exceed the actual engine formatter limit")
+            binds.saveChain(confirmed: true)
+            require(try ConfigStudioAcceptanceTests.savedBytes(session.home) == beforeLongStep,
+                    "rejecting an over-limit cycle preserves every config, sidecar, companion and History byte")
+        }
         binds.updateDraft { $0.steps = [.init(kind: .say, text: String(repeating: "a", count: 4090)), .init(kind: .say, text: "b")] }
         require(binds.chainError == "This step is too long for the game’s command buffer. Split it into shorter steps.", "native helper limit refusal is actionable")
         binds.deleteChain()
@@ -356,6 +365,20 @@ enum ConfigStudioTabsTests {
         require(checkup.tip(capSpec).map { !$0.text.lowercased().contains("com_maxfps") } ?? true, "Guided tips use plain names")
         require(checkup.violations.contains { $0.setting.lowercased() == "com_maxfps" })
         print("PASS: Check-up suggestions, plain changes, Not measured dials, rule badges and tips")
+
+        // Imported and hand-edited bytes can exceed control ranges before any edit.
+        for (index, raw, expected) in [(0, "1e100", "1 FPS"), (1, "999999999999999999999", "—")] {
+            let original = bytes("seta com_maxfps \"\(raw)\"\nseta snd_volume \"3e38\"\n")
+            let (unusual, unusualSession, unusualFile) = try studio(home: scratch.appendingPathComponent("checkup-unusual-\(index)"), config: original, catalog: catalog)
+            let unusualCheckup = ConfigCheckupModel(studio: unusual, loadRules: { rules }, loadOptimizer: { optimizer })
+            unusualCheckup.load()
+            let unusualReport = try require(unusualCheckup.report)
+            require(unusualCheckup.gauges(unusualReport).first { $0.area == .movement }?.value == expected,
+                    "Check-up uses checked engine integer coercion for arbitrary saved frame caps")
+            require(try Data(contentsOf: unusualFile) == original && unusualSession.history.count == 1,
+                    "reading unusual frame caps and volume never normalizes saved bytes or adds History")
+            require(ConfigRules.number(raw) == (index == 0 ? nil : Double(raw)), "the stricter advice parser keeps its original contract")
+        }
 
         // Not now is scoped; Apply and Undo are exact transactions.
         checkup.notNow("competitive-frame-cap")

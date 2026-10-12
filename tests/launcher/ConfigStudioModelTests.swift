@@ -40,6 +40,22 @@ import Foundation
         let rate = ConfigSettingSpec(setting: catalog.setting(named: "rate")!, mode: .cod2x)!
         require(rate.valueLabels.map(\.text) == ["5000", "25000"] && !rate.labelsCoverRange, "partial labels are presets, sorted by value")
         require(ConfigValues.display(rate, "25000") == "LAN, cable or DSL (25000 bytes/s)" && ConfigValues.display(rate, "20000") == "20000 bytes/s")
+        require(!ConfigValues.bool("0.5") && ConfigValues.bool("1e2"), "boolean controls use the engine's decimal integer prefix")
+        require(ConfigValues.display(rate, "125.9") == "125 bytes/s" && ConfigValues.display(rate, "1e100") == "1 bytes/s",
+                "integer displays use atoi rather than rounding or scientific conversion")
+        require(ConfigValues.same(rate, "125.9", "125") && !ConfigValues.same(rate, "1e2", "100"))
+        require(ConfigValues.display(manual, "0.5") == "Automatic" && ConfigValues.display(manual, "2147483648") == "2147483648",
+                "boolean labels follow atoi and preserve unsupported overflowing text")
+        require(ConfigValues.display(rate, "2147483648") == "2147483648" && ConfigValues.display(rate, "-2147483649") == "-2147483649",
+                "integer values outside Int32 remain readable raw text")
+        require(ConfigValues.display(rate, " \t-125.9suffix") == "-125 bytes/s")
+        require(Double(ConfigValues.format(1e100, integer: true)) == 1e100, "large finite numerals format without narrowing traps")
+        require(ConfigValues.display(volume, "3e38") == "3e38" && ConfigValues.display(volume, "1e100") == "1e100",
+                "overflowing volume percentages retain their raw value without a trap")
+        let fractionalRate = ConfigSettingState(spec: rate, raw: "125.9", locked: false, note: nil)
+        let overflowingRate = ConfigSettingState(spec: rate, raw: "2147483648", locked: false, note: nil)
+        require(fractionalRate.number == 125 && overflowingRate.number == nil,
+                "numeric control state shares the integer display's checked coercion")
         let aa = ConfigSettingSpec(setting: catalog.setting(named: "r_aaSamples")!, mode: .cod2x)!
         require(!aa.labelsCoverRange && ConfigValues.display(aa, "3") == "3", "an unnamed value inside the range stays a number")
         let mouse = ConfigSettingSpec(setting: catalog.setting(named: "sensitivity")!, mode: .cod2x)!
@@ -183,6 +199,9 @@ import Foundation
         require(model.textBlocked && model.textIssues.first { $0.blocking }?.line == 6)
         model.editText(valid)
         require(!model.textBlocked && model.textIssues.contains { !$0.blocking && $0.excerpt == "my_mod_value" })
+        model.toggleText()
+        require(model.textMode && model.textEdited && model.text == valid,
+                "Show Controls keeps an unapplied text draft until Apply or explicit Discard")
         model.jump(to: drawFPS)
         require(model.textMode && model.textEdited && model.textSelection?.location == (model.text as NSString).range(of: "seta cg_drawFPS").location,
                 "Jump to any setting keeps unapplied text and selects the line")

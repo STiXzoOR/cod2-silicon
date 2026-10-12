@@ -1,12 +1,37 @@
 import SwiftUI
 import AppKit
 
+/// A gesture belongs to the session and loadout shown when it began, even if a
+/// focus-loss callback or slider debounce arrives after selection has changed.
+struct ConfigControlContext: Equatable, Sendable {
+    let studio: ConfigStudioModel
+    let session: ConfigStudioSession
+    let profileID: String
+    @MainActor var isCurrent: Bool {
+        studio.session === session && studio.current?.profile.id.caseInsensitiveCompare(profileID) == .orderedSame
+    }
+    static func == (left: Self, right: Self) -> Bool {
+        left.studio === right.studio && left.session === right.session && left.profileID == right.profileID
+    }
+}
+
+private struct ConfigControlContextKey: EnvironmentKey {
+    static var defaultValue: ConfigControlContext? { nil }
+}
+extension EnvironmentValues {
+    var configControlContext: ConfigControlContext? {
+        get { self[ConfigControlContextKey.self] }
+        set { self[ConfigControlContextKey.self] = newValue }
+    }
+}
+
 /// A loadout's Settings tab: Guided and Expert share the eight purpose groups and the
 /// same effective values. Every control saves one transaction when its gesture ends.
 struct ConfigSettingsView: View {
     @ObservedObject var studio: ConfigStudioModel
     @ObservedObject var session: ConfigStudioSession
     var openSettings: () -> Void
+    var toggleText: @MainActor () -> Void
     @Environment(\.palette) private var palette
     @FocusState private var searchFocused: Bool
 
@@ -18,7 +43,7 @@ struct ConfigSettingsView: View {
             // with its field and presets, and the row's three actions don't fit side by side.
             let stacked = proxy.size.width - (compact ? 0 : GroupRail.width + 22) < ExpertRow.sideBySideWidth
             VStack(alignment: .leading, spacing: StudioMetrics.sectionGap) {
-                if studio.level == .expert { ExpertTools(studio: studio, searchFocused: $searchFocused) }
+                if studio.level == .expert { ExpertTools(studio: studio, searchFocused: $searchFocused, toggleText: toggleText) }
                 HStack(alignment: .top, spacing: 22) {
                     if !compact {
                         GroupRail(studio: studio, expert: studio.level == .expert).frame(width: GroupRail.width)
@@ -258,7 +283,7 @@ private struct GuidedControl: View {
             } else if spec.name.lowercased() == "r_anisotropy", let minimum = spec.minimum, let maximum = spec.maximum {
                 let levels = stride(from: 0, through: 6, by: 1).map { pow(2.0, Double($0)) }.filter { $0 >= minimum && $0 <= maximum }
                 Picker(spec.title, selection: Binding(get: { state.number ?? minimum }, set: { studio.set(spec, to: ConfigValues.format($0, integer: true), undo: undo) })) {
-                    ForEach(levels + ((state.number).map { levels.contains($0) ? [] : [$0] } ?? []), id: \.self) { Text("\(Int($0))×").tag($0) }
+                    ForEach(levels + ((state.number).map { levels.contains($0) ? [] : [$0] } ?? []), id: \.self) { Text("\(ConfigValues.format($0, integer: true))×").tag($0) }
                 }
                 .labelsHidden().fixedSize()
             } else if spec.labelsCoverRange {
@@ -356,7 +381,7 @@ private struct FrameCapRow: View {
 
     var body: some View {
         let presets = FrameCap.presets.prefix(3)
-        let value = Int((state.number ?? 0).rounded())
+        let value = state.number.flatMap { Int(exactly: $0) }
         let isCustom = custom || !presets.contains { $0.value == value }
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
@@ -374,14 +399,14 @@ private struct FrameCapRow: View {
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     if isCustom {
-                        CommitField(value: String(value), label: "Custom frame rate cap", width: nil, plain: true,
-                                    validate: { ConfigValues.number($0).map { ConfigValues.text(number: $0, spec: spec) } }) { studio.set(spec, to: $0, undo: undo) }
+                        CommitField(value: state.value ?? "", label: "Custom frame rate cap", width: nil, plain: true,
+                                    validate: { ConfigValues.number($0, type: spec.type).map { ConfigValues.text(number: $0, spec: spec) } }) { studio.set(spec, to: $0, undo: undo) }
                             .font(.stencil(34)).foregroundStyle(palette.dark ? palette.accent : Palette.hex(0x4e5b2f)).frame(height: 34)
                     } else {
                         Button { custom = true } label: { Text("—").font(.stencil(34)).foregroundStyle(palette.numeral).frame(maxWidth: .infinity, minHeight: 34, alignment: .leading) }
                             .buttonStyle(.plain).accessibilityLabel("Custom frame rate cap")
                     }
-                    Text(isCustom ? FrameCap.customCaption(value) : "Your own number").font(.system(size: 11)).foregroundStyle(palette.secondary)
+                    Text(isCustom ? value.map(FrameCap.customCaption) ?? "Your own number" : "Your own number").font(.system(size: 11)).foregroundStyle(palette.secondary)
                 }
                 .crate(selected: isCustom, palette: palette)
             }
@@ -422,6 +447,7 @@ private extension View {
 private struct ExpertTools: View {
     @ObservedObject var studio: ConfigStudioModel
     var searchFocused: FocusState<Bool>.Binding
+    var toggleText: @MainActor () -> Void
     @Environment(\.palette) private var palette
 
     var body: some View {
@@ -497,7 +523,7 @@ private struct ExpertTools: View {
     }
 
     private var textToggle: some View {
-        Button { studio.toggleText() } label: {
+        Button(action: toggleText) {
             if studio.textMode { Label("Show Controls", systemImage: "slider.horizontal.3") }
             else { Label("Edit as Text", systemImage: "text.alignleft") }
         }
@@ -753,11 +779,11 @@ private struct FrameCapSegments: View {
     @Environment(\.undoManager) private var undo
     @State private var custom = false
     var body: some View {
-        let value = Int((state.number ?? 0).rounded())
+        let value = state.number.flatMap { Int(exactly: $0) }
         let presets = FrameCap.presets.prefix(3).map(\.value)
-        let isCustom = custom || !presets.contains(value)
+        let isCustom = custom || (value.map { !presets.contains($0) } ?? true)
         HStack(spacing: 10) {
-            Picker(spec.title, selection: Binding(get: { isCustom ? -1 : value }, set: { choice in
+            Picker(spec.title, selection: Binding(get: { isCustom ? -1 : value ?? -1 }, set: { choice in
                 if choice < 0 { custom = true } else { custom = false; studio.set(spec, to: String(choice), undo: undo) }
             })) {
                 ForEach(presets, id: \.self) { Text("\($0)").tag($0) }
@@ -890,7 +916,7 @@ private struct NumberEntry: View {
     var body: some View {
         HStack(spacing: 6) {
             CommitField(value: state.value ?? "", label: spec.title, width: 84, alignment: .trailing,
-                        validate: { ConfigValues.number($0).map { ConfigValues.text(number: $0, spec: spec) } }, commit: commit)
+                        validate: { ConfigValues.number($0, type: spec.type).map { ConfigValues.text(number: $0, spec: spec) } }, commit: commit)
             if showUnit, let unit = spec.unit {
                 Text(unit).font(.system(size: 11)).foregroundStyle(palette.tertiary).lineLimit(1).fixedSize().accessibilityHidden(true)
             }
@@ -926,8 +952,10 @@ struct CommitField: View {
     var commit: (String) -> Void
     @State private var draft = ""
     @State private var invalid = false
+    @State private var draftContext: ConfigControlContext?
     @FocusState private var focused: Bool
     @Environment(\.palette) private var palette
+    @Environment(\.configControlContext) private var controlContext
 
     var body: some View {
         field
@@ -935,9 +963,10 @@ struct CommitField: View {
             .focused($focused)
             .onSubmit(apply)
             .onExitCommand { draft = value; invalid = false; focused = false }
-            .onChange(of: focused) { if !$0 { apply() } }
-            .onChange(of: value) { if !focused { draft = $0; invalid = false } }
-            .onAppear { draft = value }
+            .onChange(of: focused) { if $0 { draftContext = controlContext } else { apply() } }
+            .onChange(of: value) { if !focused { draft = $0; invalid = false; draftContext = controlContext } }
+            .onChange(of: controlContext) { context in draft = value; invalid = false; draftContext = context; focused = false }
+            .onAppear { draft = value; draftContext = controlContext }
             .accessibilityLabel(label)
             .accessibilityValue(secure ? "" : draft)
     }
@@ -957,6 +986,7 @@ struct CommitField: View {
         }
     }
     private func apply() {
+        guard draftContext == controlContext, draftContext?.isCurrent != false else { draft = value; invalid = false; return }
         guard draft != value else { invalid = false; return }
         guard let normalized = validate(draft) else { invalid = true; NSSound.beep(); return }
         invalid = false
@@ -977,10 +1007,12 @@ struct CommitSlider: View {
     @State private var live: Double?
     @State private var dragging = false
     @State private var pending: Task<Void, Never>?
+    @State private var liveContext: ConfigControlContext?
     @Environment(\.palette) private var palette
+    @Environment(\.configControlContext) private var controlContext
 
     var body: some View {
-        let shown = live ?? value
+        let shown = preview(live ?? value)
         HStack(spacing: 14) {
             slider
                 .overlay(alignment: .topLeading) {
@@ -997,17 +1029,20 @@ struct CommitSlider: View {
                     .frame(minWidth: 110, alignment: .trailing).accessibilityHidden(true)
             }
         }
+        .onChange(of: controlContext) { _ in cancel() }
+        .onDisappear(perform: cancel)
     }
     private var slider: some View {
-        let binding = Binding(get: { live ?? value }, set: { newValue in
+        let binding = Binding(get: { preview(live ?? value) }, set: { newValue in
+            if live == nil { liveContext = controlContext }
             live = newValue
             guard !dragging else { return }
             pending?.cancel()
+            let origin = liveContext
             pending = Task { @MainActor in
                 try? await Task.sleep(for: .milliseconds(500))
-                guard !Task.isCancelled, !dragging, let current = live else { return }
-                live = nil
-                commit(current)
+                guard !Task.isCancelled, !dragging else { return }
+                commitLive(origin)
             }
         })
         return Group {
@@ -1019,15 +1054,24 @@ struct CommitSlider: View {
         }
         .tint(palette.control)
         .accessibilityLabel(label)
-        .accessibilityValue(readout.map { $0(live ?? value) } ?? ConfigValues.format(live ?? value))
+        .accessibilityValue(readout.map { $0(preview(live ?? value)) } ?? ConfigValues.format(preview(live ?? value)))
     }
     private func editing(_ active: Bool) {
         dragging = active
-        if !active, let current = live {
-            pending?.cancel()
-            live = nil
-            commit(current)
-        }
+        pending?.cancel()
+        if !active { commitLive(liveContext) }
+    }
+    private func commitLive(_ origin: ConfigControlContext?) {
+        guard origin == controlContext, origin == liveContext, origin?.isCurrent != false, let current = live else { cancel(); return }
+        live = nil; liveContext = nil; pending = nil
+        commit(current)
+    }
+    private func cancel() {
+        pending?.cancel(); pending = nil; live = nil; liveContext = nil; dragging = false
+    }
+    private func preview(_ number: Double) -> Double {
+        guard number.isFinite else { return range.lowerBound }
+        return min(range.upperBound, max(range.lowerBound, number))
     }
 }
 

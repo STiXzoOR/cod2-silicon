@@ -18,6 +18,8 @@ enum ConfigStudioAcceptanceTests {
         let rules = try ConfigRules(data: Data(contentsOf: resources.appendingPathComponent("ConfigRulesets.json")))
         let optimizer = try ConfigOptimizer(data: Data(contentsOf: resources.appendingPathComponent("ConfigOptimizer.json")))
         try history(scratch: scratch, catalog: catalog)
+        try ordinaryControls(scratch: scratch, catalog: catalog)
+        try ordinaryRetries(scratch: scratch, catalog: catalog)
         try takeTheirs(scratch: scratch, catalog: catalog)
         try takeTheirsRetries(scratch: scratch, catalog: catalog)
         try matches(scratch: scratch, catalog: catalog, rules: rules, optimizer: optimizer)
@@ -34,6 +36,116 @@ enum ConfigStudioAcceptanceTests {
         model.announce = { _ in }
         model.loadCatalogNow()
         return (model, session, store)
+    }
+
+    /// Ordinary controls keep Undo and Redo inside the complete revision they saved.
+    @MainActor static func ordinaryControls(scratch: URL, catalog: ConfigCatalog) throws {
+        let (immediate, immediateSession, _) = try studio(scratch.appendingPathComponent("controls-metadata-immediate"),
+                                                         config: "seta sensitivity \"2.5\"\n", catalog: catalog)
+        let metadataUndo = UndoManager(); metadataUndo.groupsByEvent = false
+        let original = value(immediateSession.current?.version)
+        metadataUndo.beginUndoGrouping(); immediate.rename("New Main", undo: metadataUndo); metadataUndo.endUndoGrouping()
+        let written = value(immediateSession.current?.version)
+        metadataUndo.undo()
+        require(immediateSession.current?.version == original && metadataUndo.canRedo, "immediate metadata Undo restores exact bytes")
+        metadataUndo.redo()
+        require(immediateSession.current?.version == written && immediate.failure == nil, "immediate metadata Redo restores exact bytes")
+        for kind in ["setting", "metadata"] {
+            for action in ["undo", "redo"] {
+                for change in ["loadout", "session", "config", "metadata", "companion"] {
+                    let label = "\(kind)-\(action)-\(change)"
+                    let (model, session, store) = try studio(scratch.appendingPathComponent("controls-" + label),
+                                                             config: "seta sensitivity \"2.5\"\n", catalog: catalog)
+                    let home = session.home, speed = value(model.spec(named: "sensitivity"))
+                    _ = try store.create(id: "Other", displayName: "Other", document: ConfigDocument(data: bytes("seta sensitivity \"7\"\n"), dialect: .cod2x))
+                    let undo = UndoManager(); undo.groupsByEvent = false
+                    let original = value(session.current?.version)
+                    undo.beginUndoGrouping()
+                    if kind == "setting" { model.set(speed, to: "3.5", undo: undo) } else { model.rename("New Main", undo: undo) }
+                    undo.endUndoGrouping()
+                    require(undo.canUndo && session.current?.version != original, "\(label): the change registers Undo")
+                    if action == "redo" {
+                        undo.undo()
+                        require(undo.canRedo && session.current?.version == original, "\(label): immediate Undo restores the complete revision")
+                    }
+                    switch change {
+                    case "loadout": model.select("Other")
+                    case "session":
+                        let replacement = try ConfigStudioSession(home: home, dialect: .cod2x)
+                        try replacement.refresh(); model.attach(replacement)
+                    case "config":
+                        try PrivateFile.write(bytes("seta sensitivity \"8\"\n"), to: home.appendingPathComponent("main/players/Main/config_mp.cfg"))
+                        try session.refresh()
+                    case "metadata":
+                        var metadata = value(session.current?.metadata)
+                        metadata.notes["sensitivity"] = "Keep this newer note"
+                        try PrivateFile.write(try JSONEncoder().encode(metadata), to: home.appendingPathComponent("main/players/Main/studio.json"))
+                        try session.refresh()
+                    default:
+                        try PrivateFile.write(Data(), to: home.appendingPathComponent("main/" + (try ConfigStudioLaunch.chainBasename(profileID: "Main"))))
+                        try session.refresh()
+                    }
+                    let before = try savedBytes(home)
+                    if action == "redo" { undo.redo() } else { undo.undo() }
+                    require(try savedBytes(home) == before, "\(label): a stale action preserves every config, sidecar, companion and History byte")
+                    require(model.failure?.title == "Nothing to undo", "\(label): a stale action explains why it was refused")
+                }
+            }
+        }
+        print("PASS: ordinary setting and metadata Undo/Redo stay within their session, loadout and complete saved revision")
+    }
+
+    /// Retry is an explicit reapply on the latest version, inside the original loadout.
+    @MainActor static func ordinaryRetries(scratch: URL, catalog: ConfigCatalog) throws {
+        for kind in ["setting", "metadata"] {
+            for change in ["loadout", "session", "latest"] {
+                let label = "\(kind)-retry-\(change)"
+                let (model, session, store) = try studio(scratch.appendingPathComponent("controls-" + label),
+                                                         config: "seta sensitivity \"2.5\"\n", catalog: catalog)
+                let home = session.home, speed = value(model.spec(named: "sensitivity"))
+                _ = try store.create(id: "Other", displayName: "Other", document: ConfigDocument(data: bytes("seta sensitivity \"7\"\n"), dialect: .cod2x))
+                let file = home.appendingPathComponent("main/players/Main/config_mp.cfg")
+                let latest = bytes("seta sensitivity \"2.5\"\nseta r_gamma \"1.4\"\n")
+                try PrivateFile.write(latest, to: file)
+                if kind == "setting" { model.set(speed, to: "3.5") } else { model.rename("New Main") }
+                require(model.failure?.retry != nil && session.draft != nil, "\(label): a conflict retains a retry")
+                if change == "loadout" { model.select("Other") }
+                else if change == "session" {
+                    let replacement = try ConfigStudioSession(home: home, dialect: .cod2x)
+                    try replacement.refresh(); model.attach(replacement)
+                } else {
+                    var metadata = try store.read(id: "Main").metadata
+                    metadata.notes["sensitivity"] = "Keep this newer note"
+                    metadata.locks.insert("r_gamma")
+                    try PrivateFile.write(try JSONEncoder().encode(metadata), to: home.appendingPathComponent("main/players/Main/studio.json"))
+                }
+                let before = try savedBytes(home)
+                model.retryFailure()
+                if change == "latest" {
+                    let read = try store.read(id: "Main")
+                    require(model.failure == nil && session.draft == nil, "\(label): an explicit retry succeeds on the latest version")
+                    require(read.document.effectiveSetting(named: "r_gamma") == "1.4" && read.metadata.notes["sensitivity"] == "Keep this newer note"
+                            && read.metadata.locks.contains("r_gamma"), "\(label): retry preserves newer unrelated config and metadata")
+                    require(kind == "setting" ? read.document.effectiveSetting(named: "sensitivity") == "3.5" : read.metadata.displayName == "New Main")
+                } else {
+                    require(try savedBytes(home) == before, "\(label): retry never writes to another loadout or session")
+                    require(model.failure != nil && model.failure?.retry == nil, "\(label): a stale retry cannot be retried again")
+                }
+            }
+        }
+        print("PASS: ordinary retries preserve their target and reapply only the intended change to the latest version")
+    }
+
+    /// Includes exact filenames and bytes of History as well as all synthetic profile files.
+    static func savedBytes(_ home: URL) throws -> [String: Data] {
+        let files = FileManager.default.enumerator(at: home, includingPropertiesForKeys: [.isRegularFileKey])!
+        var result: [String: Data] = [:]
+        for case let file as URL in files {
+            if try file.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true {
+                result[String(file.path.dropFirst(home.path.count + 1))] = try Data(contentsOf: file)
+            }
+        }
+        return result
     }
 
     /// Restore eligibility comes from the whole revision, companion included; the since-now

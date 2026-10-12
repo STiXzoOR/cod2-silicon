@@ -59,6 +59,7 @@ struct ConfigsShell: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .ignoresSafeArea(.container, edges: .top)
         .background(WindowOriginReader(origin: $origin))
+        .environment(\.configControlContext, session.current.map { ConfigControlContext(studio: studio, session: session, profileID: $0.profile.id) })
         .onAppear { studio.refreshComparison(); studio.checkup.load() }
         .onChange(of: studio.gameRunning) { running in if running { studio.binds.gameStarted() } }
         .onChange(of: session.current?.version) { _ in
@@ -160,7 +161,8 @@ struct ConfigsShell: View {
                     }
                 } else {
                     switch studio.tab {
-                    case .settings: ConfigSettingsView(studio: studio, session: session, openSettings: { model.page = .settings })
+                    case .settings: ConfigSettingsView(studio: studio, session: session, openSettings: { model.page = .settings },
+                                                       toggleText: { leaveText { studio.toggleText() } })
                     case .binds: ConfigBindsView(studio: studio, session: session)
                     case .checkup: ConfigCheckupView(studio: studio, session: session)
                     case .history: ConfigHistoryView(studio: studio, session: session)
