@@ -8,10 +8,12 @@ taskpolicy -b nice -n 19 /usr/bin/xcrun clang -target arm64-apple-macos13 -isysr
 taskpolicy -b nice -n 19 /usr/bin/xcrun clang -target arm64-apple-macos13 -isysroot "$sdk" -fobjc-arc -DCOD2_X64=1 -DCOD2_CODX=1 -c "$root/src/platform/cod2x_native_shaders.m" -o "$scratch/NativeShaders.o"
 taskpolicy -b nice -n 19 /usr/bin/xcrun clang -target arm64-apple-macos13 -isysroot "$sdk" -DCOD2_X64=1 -DCOD2_CODX=1 -c "$root/src/PC/qcommon/cod2x_url.c" -o "$scratch/URL.o"
 taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc \
-    -swift-version 6 -strict-concurrency=complete -warnings-as-errors -j 2 \
-    -target arm64-apple-macos13 -sdk "$sdk" -O -import-objc-header "$root/launcher/NativeSetup.h" \
+    -swift-version 6 -strict-concurrency=complete -warnings-as-errors -j 1 \
+    -target arm64-apple-macos13 -sdk "$sdk" -O -whole-module-optimization -import-objc-header "$root/launcher/NativeSetup.h" \
     "$root/launcher/Core.swift" "$root/launcher/Presentation.swift" \
     "$root/launcher/ConfigDocument.swift" "$root/launcher/ConfigProfiles.swift" "$root/launcher/ConfigHistory.swift" \
+    "$root/launcher/ConfigChains.swift" "$root/launcher/ConfigImport.swift" "$root/launcher/ConfigImportSafety.swift" \
+    "$root/launcher/ConfigStudioSession.swift" \
     "$root/launcher/ConfigCatalog.swift" "$root/launcher/ConfigRules.swift" "$root/launcher/ConfigCheckup.swift" \
     "$root/tests/launcher/ConfigCheckupTests.swift" \
     "$scratch/NativeSetup.o" "$scratch/NativeShaders.o" "$scratch/URL.o" \

@@ -261,5 +261,41 @@ private enum InjectedFailure: Error { case write }
         catch ConfigProfileError.missingProfile {}
         require(viewer.current?.profile.id == activeID)
         print("PASS: a viewed loadout is edited and read without changing the active selection or launch profile")
+
+        // Polling notices external same-size edits, including an editor that keeps mtime.
+        let pollHome = scratch.appendingPathComponent("poll")
+        let pollStore = try ConfigProfileStore(homeURL: pollHome, dialect: .cod2x)
+        let pollData = Data("seta sensitivity 2\n".utf8)
+        _ = try pollStore.create(id: "daily", displayName: "Daily", document: ConfigDocument(data: pollData, dialect: .cod2x))
+        try pollStore.select(id: "daily", expectedActive: nil)
+        let polling = try ConfigStudioSession(home: pollHome, dialect: .cod2x)
+        try polling.reconcileGames([])
+        let pollPath = pollHome.appendingPathComponent("main/players/daily/config_mp.cfg")
+        let mtime = try FileManager.default.attributesOfItem(atPath: pollPath.path)[.modificationDate]!
+        try Data("seta sensitivity 3\n".utf8).write(to: pollPath)
+        try FileManager.default.setAttributes([.modificationDate: mtime], ofItemAtPath: pollPath.path)
+        try polling.reconcileGames([])
+        require(polling.current?.document.effectiveSetting(named: "sensitivity") == "3")
+        var pollMetadata = polling.current!.metadata; pollMetadata.displayName = "Renamed"
+        try PrivateFile.write(JSONEncoder().encode(pollMetadata), to: pollHome.appendingPathComponent("main/players/daily/studio.json"))
+        try polling.reconcileGames([])
+        require(polling.current?.metadata.displayName == "Renamed" && polling.profiles.first?.displayName == "Renamed")
+        let row = try pollStore.history(id: "daily")[0]
+        let replacement = ConfigHistoryEntry(source: .you, summary: "External history edit", before: ConfigProfileVersion(config: pollData, metadata: nil), after: ConfigProfileVersion(config: pollData, metadata: nil), id: row.id)
+        try PrivateFile.write(JSONEncoder().encode(replacement), to: pollHome.appendingPathComponent("main/players/daily/history/" + row.id + ".json"))
+        try polling.reconcileGames([])
+        require(polling.history.first?.summary == "External history edit")
+        let companion = pollHome.appendingPathComponent("main/" + (try ConfigStudioLaunch.chainBasename(profileID: "daily")))
+        try PrivateFile.write(Data("// external companion\n".utf8), to: companion)
+        try polling.reconcileGames([])
+        require(polling.current?.version.chain == Data("// external companion\n".utf8))
+        _ = try pollStore.create(id: "other", displayName: "Other", document: ConfigDocument(data: pollData, dialect: .cod2x))
+        try pollStore.select(id: "other", expectedActive: pollStore.activeSelection().originalBytes)
+        try polling.reconcileGames([])
+        require(polling.current?.profile.id == "other" && polling.profiles.count == 2)
+        try FileManager.default.removeItem(at: pollHome.appendingPathComponent("main/players/daily"))
+        try polling.reconcileGames([])
+        require(polling.profiles.map(\.id) == ["other"])
+        print("PASS: polling detects config, metadata, history, companion, selection and profile changes")
     }
 }

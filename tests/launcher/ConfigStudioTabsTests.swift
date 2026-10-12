@@ -168,7 +168,9 @@ enum ConfigStudioTabsTests {
         binds.updateDraft { $0.key = "k"; $0.kind = .several; $0.commands = [.init(kind: .action, text: "+gostand"), .init(kind: .command, text: "wait"), .init(kind: .action, text: "gocrouch")] }
         require(binds.chainNotes.contains { $0.text.hasPrefix("Competitive CoD2x servers turn off wait") }, "competitive wait is called out")
         binds.updateDraft { $0.kind = .cycle; $0.steps = [.init(kind: .say, text: String(repeating: "a", count: 1100)), .init(kind: .say, text: "b")] }
-        require(binds.chainError == "One step is longer than the 1,022 characters the game keeps. Split it into shorter steps.", "B2's 1022-byte refusal is actionable")
+        require(binds.chainError == nil, "native helpers preserve steps longer than the old 1022-byte join")
+        binds.updateDraft { $0.steps = [.init(kind: .say, text: String(repeating: "a", count: 4090)), .init(kind: .say, text: "b")] }
+        require(binds.chainError == "This step is too long for the game’s command buffer. Split it into shorter steps.", "native helper limit refusal is actionable")
         binds.deleteChain()
         require(binds.draft == nil)
 
@@ -257,11 +259,40 @@ enum ConfigStudioTabsTests {
         try session.reconcileGames([])
         print("PASS: contradictions, missing rules and the running game")
 
-        // An advanced bind changes values in play: no advice, and the screen says why.
+        // A verified advanced bind affects only the settings it changes in play.
         let fps = ConfigChain(id: "fps", key: "m", behavior: .settingCycle(name: "cg_drawFPS", values: ["Off", "Simple"]))
         try ConfigChains.apply(try ConfigChains.prepare(chains: [fps], read: try require(session.current)), to: session)
-        require(checkup.report?.suggestions.isEmpty == true && checkup.holdBack?.contains("advanced binds") == true)
-        print("PASS: an advanced bind holds suggestions back and Check-up says why")
+        require(checkup.report?.suggestions.contains { $0.id == "competitive-frame-cap" } == true && checkup.holdBack == nil,
+                "verified HUD toggle does not hide unrelated frame advice")
+        let hudCycle = ConfigChain(id: "hud", key: "h", behavior: .commandCycle(steps: [["set cg_drawFPS Off"], ["set cg_drawFPS Simple"]]))
+        try ConfigChains.apply(try ConfigChains.prepare(chains: [fps, hudCycle], read: try require(session.current)), to: session)
+        let beforeAdvice = try require(session.current).version
+        checkup.apply("competitive-frame-cap")
+        require(session.current?.document.effectiveSetting(named: "com_maxfps") == "250" && session.current?.version.chain == beforeAdvice.chain,
+                "unrelated advice preserves the owned companion bytes")
+        checkup.undoApplied("competitive-frame-cap")
+        require(session.current?.version == beforeAdvice, "Undo compares and restores config, metadata and companion revision")
+        let capCycle = ConfigChain(id: "cap", key: "n", behavior: .commandCycle(steps: [["set com_maxfps 125"], ["set com_maxfps 333", "wait"]]))
+        try ConfigChains.apply(try ConfigChains.prepare(chains: [fps, capCycle], read: try require(session.current)), to: session)
+        require(checkup.report?.policy.first { $0.setting == "com_maxfps" }?.status == .unknown,
+                "all reachable B2 cycle states prevent a fixed frame-cap judgment")
+        require(checkup.report?.policy.first { $0.setting == "wait" }?.status == .violation,
+                "wait in a later owned cycle step is assessed")
+        require(checkup.report?.suggestions.contains { $0.id == "competitive-frame-cap" } == false && checkup.holdBack == nil)
+        checkup.rulesetIDs = ["public-cod2x"]
+        let aimCycle = ConfigChain(id: "aim", key: "b", behavior: .commandCycle(steps: [["m_filter 0"], ["m_filter 1"]]))
+        try ConfigChains.apply(try ConfigChains.prepare(chains: [aimCycle], read: try require(session.current)), to: session)
+        require(checkup.report?.suggestions.contains { $0.id == "unfiltered-aim" } == false,
+                "a known cycle cannot receive advice for the setting it changes")
+        let filtering = try require(model.spec(named: "m_filter"))
+        require(checkup.evaluation(filtering)?.status == .unknown && !checkup.violations.contains { $0.setting == "m_filter" },
+                "bare dvar leaves have the same uncertainty in the report, badges and violations")
+        let companion = session.home.appendingPathComponent("main/" + (try ConfigStudioLaunch.chainBasename(profileID: "Main")))
+        try PrivateFile.write(bytes("exec missing.cfg\n"), to: companion)
+        try session.refresh()
+        require(checkup.report?.suggestions.isEmpty == true && checkup.holdBack != nil,
+                "an externally changed companion remains unresolved")
+        print("PASS: verified B2 leaves, dynamic setting uncertainty and unknown companion refusal")
     }
 
     static func require<T>(_ value: T?, line: Int = #line) throws -> T {

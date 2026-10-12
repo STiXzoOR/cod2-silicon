@@ -116,6 +116,21 @@ import Foundation
         require(checker.evaluate(server: competitive, profile: scripted, mode: .cod2x).status == .unknown, "dynamic bind became all-clear")
         print("PASS: bounded match, missing values, effective wait binds, scripts, locks and ownership")
 
+        let chained = try store.create(id: "Chained", displayName: "Chained", document: legal)
+        let hudCycle = ConfigChain(id: "hud", key: "h", behavior: .commandCycle(steps: [["set cg_drawFPS Off"], ["set cg_drawFPS Simple"]]))
+        _ = try ConfigChains.apply(try ConfigChains.prepare(chains: [hudCycle], read: chained), to: store)
+        let knownChain = try store.read(id: "Chained")
+        let companion = ConfigDocument(data: knownChain.version.chain!, dialect: .cod2x)
+        require(checker.evaluate(server: competitive, profile: knownChain, mode: .cod2x, advancedChain: companion).status == .matchesKnownRules,
+                "verified HUD cycle does not make unrelated cited rules unknown")
+        let capCycle = ConfigChain(id: "cap", key: "f", behavior: .commandCycle(steps: [["set com_maxfps 125"], ["set com_maxfps 333", "wait"]]))
+        _ = try ConfigChains.apply(try ConfigChains.prepare(chains: [capCycle], read: knownChain), to: store)
+        let changingCap = try store.read(id: "Chained")
+        let changingReport = checker.evaluate(server: competitive, profile: changingCap, mode: .cod2x)
+        require(changingReport.status == .unknown && changingReport.fixes.isEmpty && changingReport.details.contains { $0.setting == "wait" && $0.status == .violation },
+                "all reachable chain leaves are reviewed; a changing rule value cannot receive a temporary fix")
+        print("PASS: verified B2 companion review and dynamic rule-value refusal")
+
         let connection = ConfigServerConnection()
         try connection.select(address: competitive.address)
         try connection.fix(report: report)

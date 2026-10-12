@@ -56,9 +56,11 @@ struct ConfigReadyCheck: Sendable {
         if let reason = identity.reason { limitations.append(reason) }
         if ambiguous { limitations.append("Conflicting case variants of advertised fields prevent a verified review.") }
         if !ids.isEmpty && !rules.knownSelection(ids, mode: mode) { limitations.append("The advertised rules do not match this client mode.") }
-        let documents = [profile.document] + bindingDocuments(profile.document) + (advancedChain.map { [$0] } ?? [])
-        let unresolved = documents.contains { !$0.unresolvedCommands.isEmpty || !$0.diagnostics.isEmpty } ||
-            advancedChain?.commands.contains(where: { ![.comment, .empty].contains($0.kind) }) == true
+        let chain = advancedChain?.serialized() ?? profile.version.chain
+        let reviewedProfile = ConfigProfileRead(profile: profile.profile, document: profile.document, metadata: profile.metadata,
+            version: ConfigProfileVersion(config: profile.version.config, metadata: profile.version.metadata, chain: chain))
+        let scripts = ConfigScriptReview(profile: reviewedProfile, catalog: catalog)
+        let unresolved = scripts.unresolved
         if unresolved {
             unknown = true
             limitations.append("External configs, dynamic commands or parser diagnostics prevent a complete static review.")
@@ -83,7 +85,7 @@ struct ConfigReadyCheck: Sendable {
         for name in names.sorted() {
             let matched = ids.flatMap { rules.resolvedRules(id: $0) }.filter { $0.setting.lowercased() == name }
             if matched.contains(where: { $0.constraint.kind == .disabledCommand }) {
-                let used = documents.contains { $0.commands.contains { $0.tokens.first?.text.lowercased() == name } }
+                let used = scripts.uses(name)
                 if used {
                     details.append(.init(setting: name, value: nil, status: .violation,
                                          reason: "This server disables \(name). Binds that pause with wait will not work here; review the bind before joining.",
@@ -93,6 +95,13 @@ struct ConfigReadyCheck: Sendable {
             }
             let value = profile.document.effectiveSetting(named: name)
             let result = rules.evaluate(setting: name, value: value, rulesetIDs: ids, mode: mode)
+            if scripts.changedSettings.contains(name) {
+                unknown = true
+                details.append(.init(setting: name, value: value, status: .unknown,
+                                     reason: "An advanced bind changes this setting while you play; its runtime value is not assessed.",
+                                     serverOwned: result.serverOwned, sources: result.sources))
+                continue
+            }
             if let advertised = facts[name], matched.contains(where: { $0.constraint.kind != .ownership }),
                rules.evaluate(setting: name, value: advertised, rulesetIDs: ids, mode: mode).status != .ok {
                 unknown = true; limitations.append("The advertised \(name) value contradicts or cannot verify the cited rule.")
@@ -132,7 +141,7 @@ struct ConfigReadyCheck: Sendable {
         case .matchesKnownRules: summary = "The directly saved values match the listed, cited rules."
         }
         return .init(address: address, profileID: profile.profile.id,
-                     expectedVersion: profile.version, advancedChainBytes: advancedChain?.serialized(), mode: mode, rulesetIDs: ids, status: status, summary: summary,
+                     expectedVersion: profile.version, advancedChainBytes: chain, mode: mode, rulesetIDs: ids, status: status, summary: summary,
                      details: details, facts: facts.filter { observedKeys.contains($0.key) || names.contains($0.key) },
                      fixes: unknown ? [:] : fixes, limitations: limitations)
     }
@@ -185,10 +194,6 @@ struct ConfigReadyCheck: Sendable {
             return ([base, advertised], nil)
         }
         return ([base], nil)
-    }
-    private func bindingDocuments(_ document: ConfigDocument) -> [ConfigDocument] {
-        let keys = Set(document.commands.filter { $0.kind == .bind }.compactMap { $0.tokens.count > 1 ? $0.tokens[1].text : nil })
-        return keys.compactMap { document.effectiveBindBytes(key: $0).map { ConfigDocument(data: $0, dialect: document.dialect) } }
     }
     private func replacement(value: String?, rules: [ConfigSettingRule]) -> String? {
         for rule in rules where !rule.advisory {

@@ -594,7 +594,7 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
     func message(_ error: Error, exporting: Bool = false) -> String {
         guard let error = error as? ConfigChainError else { return error.localizedDescription }
         switch error {
-        case .helperTooLong: return "One step is longer than the 1,022 characters the game keeps. Split it into shorter steps."
+        case .helperTooLong: return "This step is too long for the game’s command buffer. Split it into shorter steps."
         case .unsafeQuotes:
             if exporting { return "Windows can’t keep quote marks inside an advanced bind’s steps. Remove them, then export." }
             if studio.current?.document.dialect == .stock {

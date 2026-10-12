@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import Darwin
 
 /// The store callback can be invoked on any thread. Actual lifecycle transitions
 /// and UI mutations remain synchronous on the main actor, with no suspension
@@ -32,6 +33,22 @@ private final class ConfigGameGuard: @unchecked Sendable {
     @Published private(set) var recovery: ConfigTransactionRecovery?
     private let store: ConfigProfileStore
     private let guardState: ConfigGameGuard
+    private var observedDisk: [String: DiskStamp]?
+    private struct DiskStamp: Equatable {
+        let device: dev_t
+        let inode: ino_t
+        let mode: mode_t
+        let size: off_t
+        let modifiedSeconds: Int
+        let modifiedNanoseconds: Int
+        let changedSeconds: Int
+        let changedNanoseconds: Int
+        init(_ info: stat) {
+            device = info.st_dev; inode = info.st_ino; mode = info.st_mode; size = info.st_size
+            modifiedSeconds = info.st_mtimespec.tv_sec; modifiedNanoseconds = info.st_mtimespec.tv_nsec
+            changedSeconds = info.st_ctimespec.tv_sec; changedNanoseconds = info.st_ctimespec.tv_nsec
+        }
+    }
     private var draftVersion: ConfigProfileVersion?
     @Published private(set) var draftProfileID: String?
     /// The loadout on screen when it is not the active one. Viewing never
@@ -84,6 +101,7 @@ private final class ConfigGameGuard: @unchecked Sendable {
     /// not republished to observing views.
     func refresh() throws {
         do {
+            let before = try diskRevision(historyProfileID: focusedProfileID ?? activeReviewedID())
             let listed = try managedProfiles()
             if listed != profiles { profiles = listed }
             // A loadout removed elsewhere (the game's profile menu) returns the view to the active one.
@@ -99,7 +117,55 @@ private final class ConfigGameGuard: @unchecked Sendable {
                 if !history.isEmpty { history = [] }
             }
             if error != nil { error = nil }
-        } catch { self.error = error.localizedDescription; throw error }
+            let after = try diskRevision()
+            // An external write during the read must be retried by the next poll.
+            observedDisk = before == after ? after : nil
+        } catch { observedDisk = nil; self.error = error.localizedDescription; throw error }
+    }
+
+    /// Poll file revisions without loading configs, metadata or snapshot payloads.
+    /// ctime and inode catch in-place edits that preserve mtime and atomic replacements.
+    private func diskRevision(historyProfileID: String? = nil) throws -> [String: DiskStamp] {
+        let players = home.appendingPathComponent("main/players", isDirectory: true)
+        try ConfigProfileStore.checkPath(players, under: home)
+        var result: [String: DiskStamp] = [:]
+        @discardableResult func observe(_ url: URL) throws -> Bool {
+            var info = stat()
+            guard lstat(url.path, &info) == 0 else {
+                if errno == ENOENT { return false }
+                throw ConfigProfileError.unsafePath
+            }
+            guard info.st_mode & S_IFMT != S_IFLNK else { throw ConfigProfileError.unsafePath }
+            result[url.path] = DiskStamp(info)
+            return true
+        }
+        guard try observe(players) else { return result }
+        try observe(players.appendingPathComponent("active.txt"))
+        for directory in try FileManager.default.contentsOfDirectory(at: players, includingPropertiesForKeys: nil) {
+            let id = directory.lastPathComponent
+            guard (try? ConfigProfileStore.validateIdentifier(id)) != nil else { continue }
+            var info = stat()
+            guard lstat(directory.path, &info) == 0, info.st_mode & S_IFMT == S_IFDIR else { continue }
+            try observe(directory)
+            for name in ["config_mp.cfg", "studio.json", ".studio-transaction.json"] {
+                try observe(directory.appendingPathComponent(name))
+            }
+            try observe(home.appendingPathComponent("main/" + (try ConfigStudioLaunch.chainBasename(profileID: id))))
+            if id == (historyProfileID ?? current?.profile.id) {
+                let history = directory.appendingPathComponent("history", isDirectory: true)
+                if try observe(history) {
+                    for file in try FileManager.default.contentsOfDirectory(at: history, includingPropertiesForKeys: nil) where file.pathExtension == "json" {
+                        try observe(file)
+                    }
+                }
+            }
+        }
+        return result
+    }
+    private func refreshIfChanged() throws {
+        do {
+            if try observedDisk == nil || diskRevision() != observedDisk { try refresh() }
+        } catch { observedDisk = nil; self.error = error.localizedDescription; throw error }
     }
     /// Shows a loadout without selecting it for the next game. Pass nil to
     /// follow the active loadout again.
@@ -364,7 +430,7 @@ private final class ConfigGameGuard: @unchecked Sendable {
         guardState.set(reserved: launchReserved, pids: pids)
         if starting && archive == nil { try archiveSession() }
         if pids.isEmpty && !launchReserved && !guardState.running() { try finishSession() }
-        try refresh()
+        try refreshIfChanged()
     }
     private func archiveSession() throws {
         if archive != nil { return }

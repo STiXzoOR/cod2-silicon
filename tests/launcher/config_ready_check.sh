@@ -13,6 +13,8 @@ taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc -j 1 \
     "$root/launcher/Core.swift" "$root/launcher/Presentation.swift" \
     "$root/launcher/ConfigDocument.swift" "$root/launcher/ConfigProfiles.swift" "$root/launcher/ConfigHistory.swift" \
     "$root/launcher/ConfigStudioSession.swift" "$root/launcher/ConfigCatalog.swift" "$root/launcher/ConfigRules.swift" \
+    "$root/launcher/ConfigChains.swift" "$root/launcher/ConfigImport.swift" "$root/launcher/ConfigImportSafety.swift" \
+    "$root/launcher/ConfigCheckup.swift" \
     "$root/launcher/ConfigReadyCheck.swift" "$root/tests/launcher/ConfigReadyCheckTests.swift" \
     "$scratch/NativeSetup.o" "$scratch/NativeShaders.o" "$scratch/URL.o" \
     -framework AppKit -lz -o "$scratch/ConfigReadyCheckTests"

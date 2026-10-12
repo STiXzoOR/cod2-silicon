@@ -59,7 +59,6 @@ struct ConfigAppliedSuggestion: Identifiable {
     /// “Not now” lasts for this loadout, rules and tuning, as A1 asks.
     @Published private var dismissed: [String: Set<String>] = [:]
     private var reportCache: (key: String, report: ConfigCheckupReport)?
-    private var evaluationCache: (key: String, values: [String: ConfigRuleEvaluation])?
 
     init(studio: ConfigStudioModel,
          loadRules: @escaping @Sendable () throws -> ConfigRules = { try ConfigCheckupModel.bundled("ConfigRulesets", ConfigRules.init(data:)) },
@@ -124,14 +123,7 @@ struct ConfigAppliedSuggestion: Identifiable {
     /// Why the review holds its advice back, found the way A1 looks: lines whose effect
     /// can't be known before the game runs them. Nil when nothing holds it back.
     var holdBack: String? {
-        guard let current = studio.current else { return nil }
-        let document = current.document
-        let keys = Set(document.commands.filter { $0.kind == .bind }.compactMap { $0.tokens.count > 1 ? $0.tokens[1].text : nil })
-        let bound = keys.compactMap { document.effectiveBindBytes(key: $0).map { ConfigDocument(data: $0, dialect: document.dialect) } }
-        guard ([document] + bound).contains(where: { !$0.unresolvedCommands.isEmpty || !$0.diagnostics.isEmpty }) else { return nil }
-        if (try? ConfigChains.ownedChains(read: current))?.isEmpty == false {
-            return "Its advanced binds change values while you play, so Check-up can’t know ahead of time which values the game will use."
-        }
+        guard report?.unresolvedScripts == true else { return nil }
         return "Some lines run other files or commands that only the game can follow, or can’t be read. Edit as Text shows them."
     }
 
@@ -262,17 +254,7 @@ struct ConfigAppliedSuggestion: Identifiable {
     /// The rule judgement for one setting under the chosen rules, or nil when
     /// none of them mentions it.
     func evaluation(_ spec: ConfigSettingSpec) -> ConfigRuleEvaluation? {
-        guard let rules, !rulesetIDs.isEmpty, let current = studio.current else { return nil }
-        let key = "\(rulesetIDs.joined(separator: ","))|\(current.data.hashValue)|\(current.data.count)"
-        if evaluationCache?.key != key {
-            var values: [String: ConfigRuleEvaluation] = [:]
-            let names = Set(rulesetIDs.flatMap { rules.resolvedRules(id: $0) }.map { $0.setting.lowercased() })
-            for name in names {
-                values[name] = rules.evaluate(setting: name, value: current.document.effectiveSetting(named: name), rulesetIDs: rulesetIDs, mode: studio.mode)
-            }
-            evaluationCache = (key, values)
-        }
-        return evaluationCache?.values[spec.name.lowercased()]
+        report?.policy.first { $0.setting.caseInsensitiveCompare(spec.name) == .orderedSame }
     }
     /// A short badge for an Expert row: the cited limit, or the server's ownership.
     func badge(_ spec: ConfigSettingSpec) -> (text: String, tone: StudioStatusTone)? {
@@ -295,12 +277,7 @@ struct ConfigAppliedSuggestion: Identifiable {
         return (text, evaluation.status == .violation ? .negative : evaluation.status == .ok ? .positive : evaluation.status.tone)
     }
     var violations: [ConfigRuleEvaluation] {
-        guard let rules, !rulesetIDs.isEmpty, let current = studio.current else { return [] }
-        let names = Set(rulesetIDs.flatMap { rules.resolvedRules(id: $0) }.map { $0.setting.lowercased() })
-        return names.sorted().compactMap { name in
-            let value = rules.evaluate(setting: name, value: current.document.effectiveSetting(named: name), rulesetIDs: rulesetIDs, mode: studio.mode)
-            return value.status == .violation ? value : nil
-        }
+        report?.policy.filter { $0.status == .violation } ?? []
     }
     /// Guided tip: a rule this setting breaks, with A1's fix when one exists.
     func tip(_ spec: ConfigSettingSpec) -> (text: String, fix: ConfigCheckupSuggestion?)? {

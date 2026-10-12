@@ -488,9 +488,13 @@ struct ConfigStudioFailure: Identifiable {
             self?.finishLoading(result)
         }
     }
-    func loadCatalogNow() { finishLoading(Result { try catalogSource() }) }
+    func loadCatalogNow() {
+        guard catalog == nil else { return }
+        finishLoading(Result { try catalogSource() })
+    }
     private func finishLoading(_ result: Result<ConfigCatalog, Error>) {
         catalogLoading = false
+        guard catalog == nil else { return }
         switch result {
         case .success(let value): install(value)
         case .failure: catalogError = "The settings catalog is missing or damaged. Reinstall CoD2 Silicon to restore it."

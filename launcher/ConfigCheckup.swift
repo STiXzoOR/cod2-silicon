@@ -108,12 +108,74 @@ struct ConfigCheckupReport: Sendable {
     let dials: [ConfigCheckupDial]
     let policy: [ConfigRuleEvaluation]
     let limitations: [String]
+    let unresolvedScripts: Bool
 }
 struct ConfigCheckupReceipt: Sendable {
     let profileID: String
     let historyEntry: ConfigHistoryEntry
     let afterVersion: ConfigProfileVersion
     let changes: [ConfigCheckupChange]
+}
+
+/// B2 definitions are trusted only when its compiler reproduces the companion
+/// bytes and the effective binding still matches the compiled trigger. Its finite
+/// steps give the reachable leaves; imported exec/vstr dependencies remain unknown.
+struct ConfigScriptReview {
+    private let catalog: ConfigCatalog
+    var unresolved = false
+    var commands: [[Data]] = []
+    var changedSettings: Set<String> = []
+
+    init(profile: ConfigProfileRead, catalog: ConfigCatalog) {
+        self.catalog = catalog
+        let document = profile.document
+        unresolved = !document.unresolvedCommands.isEmpty || !document.diagnostics.isEmpty
+        commands = document.commands.map { $0.tokens.map(\.value) }
+        var owned: ConfigChainEdit?
+        if let definitions = profile.metadata.chainDefinitions {
+            do {
+                let chains = try JSONDecoder().decode([ConfigChain].self, from: definitions)
+                owned = try ConfigChains.prepare(chains: chains, read: profile)
+            } catch { unresolved = true }
+        } else if let bytes = profile.version.chain {
+            let companion = ConfigDocument(data: bytes, dialect: document.dialect)
+            if !companion.diagnostics.isEmpty || companion.commands.contains(where: { !$0.tokens.isEmpty }) { unresolved = true }
+        }
+        let keys = Set(document.commands.filter { $0.kind == .bind }.compactMap { $0.tokens.count > 1 ? ConfigDocument.keyNumber($0.tokens[1].text) : nil })
+        for number in keys {
+            let key = ConfigDocument.keySpelling(number)
+            guard let binding = document.effectiveBindBytes(key: key) else { continue }
+            if let owned, let chain = owned.chains.first(where: { ConfigDocument.keyNumber($0.key) == number }),
+               owned.document.effectiveBindBytes(key: key) == binding {
+                // prepare already validated every step's single-byte encoding.
+                switch chain.behavior {
+                case .commands(let steps): for step in steps { review(ConfigDocument(data: Data(step.unicodeScalars.map { UInt8($0.value) }), dialect: document.dialect), managed: true) }
+                case .commandCycle(let states):
+                    for step in states.flatMap({ $0 }) { review(ConfigDocument(data: Data(step.unicodeScalars.map { UInt8($0.value) }), dialect: document.dialect), managed: true) }
+                case .settingCycle(let name, _): changedSettings.insert(name.lowercased())
+                }
+            } else {
+                review(ConfigDocument(data: binding, dialect: document.dialect), managed: false)
+            }
+        }
+    }
+    private mutating func review(_ document: ConfigDocument, managed: Bool) {
+        if !document.diagnostics.isEmpty || document.unresolvedCommands.contains(where: {
+            !managed || !["toggle", "togglep", "reset"].contains($0.tokens.first?.text.lowercased() ?? "")
+        }) { unresolved = true }
+        for command in document.commands {
+            let argv = command.tokens.map(\.value)
+            commands.append(argv)
+            if command.kind == .bind { unresolved = true }
+            if argv.count > 1, let name = argv.first.map(ConfigDocument.text), catalog.setting(named: name) != nil {
+                changedSettings.insert(name.lowercased())
+            }
+            if argv.count > 1, ["set", "seta", "sets", "setu", "toggle", "togglep", "reset", "setfromdvar"].contains(ConfigDocument.text(argv[0]).lowercased()) {
+                changedSettings.insert(ConfigDocument.text(argv[1]).lowercased())
+            }
+        }
+    }
+    func uses(_ command: String) -> Bool { commands.contains { $0.first.map(ConfigDocument.text)?.lowercased() == command.lowercased() } }
 }
 
 /// Pure review plus explicit persistence through the existing profile store.
@@ -126,15 +188,17 @@ struct ConfigCheckup: Sendable {
                   dismissedSuggestionIDs: Set<String> = []) -> ConfigCheckupReport {
         let mode: ConfigCatalogMode = targetMode ?? (profile.document.dialect == .stock ? .stock : .cod2x)
         let known = rules.knownSelection(rulesetIDs, mode: mode)
-        let unresolved = Self.unresolved(profile.document)
+        let scripts = ConfigScriptReview(profile: profile, catalog: catalog)
+        let unresolved = scripts.unresolved
         var limitations = ["Advice uses direct config values and cited code. Performance and compatibility beyond the listed rules are not assessed."]
         if !known { limitations.append("Unknown rules or a client-mode mismatch: compatibility is not assessed.") }
         if unresolved { limitations.append("Scripts, external configs or parser diagnostics prevent a complete static review. Resolve them before applying advice.") }
+        if !scripts.changedSettings.isEmpty { limitations.append("Advanced binds can change the listed settings while you play; their runtime values are not assessed.") }
         if measurements.packetLossPercent == nil { limitations.append("Packet loss: Not measured.") }
         let locks = Set(profile.metadata.locks.map { $0.lowercased() })
         let suggestions = known && !unresolved ? optimizer.rules.compactMap { rule -> ConfigCheckupSuggestion? in
             guard rule.tuneFor.contains(tuneFor), !dismissedSuggestionIDs.contains(rule.id),
-                  !locks.contains(rule.setting.lowercased()),
+                  !locks.contains(rule.setting.lowercased()), !scripts.changedSettings.contains(rule.setting.lowercased()),
                   !rules.isServerOwned(rule.setting, rulesetIDs: rulesetIDs),
                   let setting = catalog.setting(named: rule.setting), setting.isEditable(in: mode),
                   setting.variant(for: mode)?.serverControlled == false,
@@ -156,6 +220,7 @@ struct ConfigCheckup: Sendable {
             for extra in rule.additionalChanges ?? [] {
                 guard let proposedExtra = extra.suggest[mode.rawValue] else { return nil }
                 let old = profile.document.effectiveSetting(named: extra.setting)
+                guard !scripts.changedSettings.contains(extra.setting.lowercased()) else { return nil }
                 if let old, ConfigRules.valuesEqual(old, proposedExtra) { continue }
                 guard !locks.contains(extra.setting.lowercased()), !rules.isServerOwned(extra.setting, rulesetIDs: rulesetIDs),
                       let entry = catalog.setting(named: extra.setting), entry.isEditable(in: mode),
@@ -172,8 +237,13 @@ struct ConfigCheckup: Sendable {
         let names = Set(rulesetIDs.flatMap { rules.resolvedRules(id: $0) }.map { $0.setting.lowercased() })
         let policy = names.sorted().map { name in
             let disabled = rulesetIDs.flatMap { rules.resolvedRules(id: $0) }.contains { $0.setting.lowercased() == name && $0.constraint.kind == .disabledCommand }
-            let value = disabled ? (Self.usesCommand(name, document: profile.document) ? "used" : nil) : profile.document.effectiveSetting(named: name)
+            let value = disabled ? (scripts.uses(name) ? "used" : nil) : profile.document.effectiveSetting(named: name)
             let evaluation = rules.evaluate(setting: name, value: value, rulesetIDs: rulesetIDs, mode: mode)
+            if !disabled && scripts.changedSettings.contains(name) {
+                return ConfigRuleEvaluation(setting: name, value: value, status: .unknown,
+                                            reason: "An advanced bind changes this setting while you play; its runtime value is not assessed.",
+                                            serverOwned: evaluation.serverOwned, sources: evaluation.sources)
+            }
             if unresolved && evaluation.status != .violation && evaluation.status != .conflict {
                 return ConfigRuleEvaluation(setting: name, value: value, status: .unknown,
                                             reason: "Only direct assignments are visible; unresolved scripts or parser diagnostics prevent a policy judgment.",
@@ -183,7 +253,7 @@ struct ConfigCheckup: Sendable {
         }
         return ConfigCheckupReport(profileID: profile.profile.id, expectedVersion: profile.version, rulesetIDs: rulesetIDs,
                                    tuneFor: tuneFor, mode: mode, suggestions: suggestions, dials: Self.dials(measurements),
-                                   policy: policy, limitations: limitations)
+                                   policy: policy, limitations: limitations, unresolvedScripts: unresolved)
     }
     func apply(report: ConfigCheckupReport, suggestionIDs: Set<String>, store: ConfigProfileStore,
                runningGame: Bool = false) throws -> ConfigCheckupReceipt {
@@ -205,7 +275,7 @@ struct ConfigCheckup: Sendable {
         let entry = try store.update(id: report.profileID, document: document, expected: current.version,
                                      source: .checkup, summary: chosen.map(\.title).joined(separator: "; "), runningGame: runningGame)
         return ConfigCheckupReceipt(profileID: report.profileID, historyEntry: entry,
-                                    afterVersion: ConfigProfileVersion(config: entry.data, metadata: entry.metadata), changes: changes)
+                                    afterVersion: ConfigProfileVersion(config: entry.data, metadata: entry.metadata, chain: entry.chain), changes: changes)
     }
     func undo(receipt: ConfigCheckupReceipt, rulesetIDs: [String], store: ConfigProfileStore,
               targetMode: ConfigCatalogMode? = nil, runningGame: Bool = false) throws -> ConfigHistoryEntry {
@@ -239,18 +309,6 @@ struct ConfigCheckup: Sendable {
             if lower ? n < bound : n > bound { return false }
         }
         return true
-    }
-    private static func bindingDocuments(_ document: ConfigDocument) -> [ConfigDocument] {
-        let keys = Set(document.commands.filter { $0.kind == .bind }.compactMap { $0.tokens.count > 1 ? $0.tokens[1].text : nil })
-        return keys.compactMap { key in
-            document.effectiveBindBytes(key: key).map { ConfigDocument(data: $0, dialect: document.dialect) }
-        }
-    }
-    private static func unresolved(_ document: ConfigDocument) -> Bool {
-        ([document] + bindingDocuments(document)).contains { !$0.unresolvedCommands.isEmpty || !$0.diagnostics.isEmpty }
-    }
-    private static func usesCommand(_ name: String, document: ConfigDocument) -> Bool {
-        ([document] + bindingDocuments(document)).contains { $0.commands.contains { $0.tokens.first?.text.lowercased() == name.lowercased() } }
     }
     private static func dials(_ data: ConfigCheckupMeasurements) -> [ConfigCheckupDial] {
         let source = data.source.flatMap { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0 }

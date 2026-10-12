@@ -47,6 +47,21 @@ import Foundation
         model.announce = { spoken.append($0) }
         model.loadCatalogNow()
         require(model.catalog != nil && model.catalogError == nil)
+        let catalogFile = scratch.appendingPathComponent("shared-catalog.json")
+        try PrivateFile.write(Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1])), to: catalogFile)
+        let shared = ConfigStudioModel(session: session, catalog: { try ConfigCatalog(data: Data(contentsOf: catalogFile)) })
+        shared.loadCatalogNow()
+        try FileManager.default.removeItem(at: catalogFile)
+        shared.loadCatalogNow()
+        require(shared.catalog?.setting(named: "sensitivity") != nil && shared.catalogError == nil,
+                "a loaded catalog remains usable without rereading its source")
+
+        // Import and Discover need the synchronous path during startup too.
+        let loading = ConfigStudioModel(session: session, catalog: { catalog })
+        loading.loadCatalog()
+        loading.loadCatalogNow()
+        require(loading.catalog?.setting(named: "sensitivity") != nil && loading.catalogError == nil,
+                "synchronous catalog use succeeds while startup loading is pending")
 
         // Guided comes from the catalog's guided entries; machine settings stay with Settings.
         require(model.guidedSpecs(in: .frame).first?.name == "com_maxfps")

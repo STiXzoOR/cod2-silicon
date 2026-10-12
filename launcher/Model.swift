@@ -75,10 +75,11 @@ struct MediaEntry: Identifiable {
     let snapshot: Bool
     let configStudio: ConfigStudioSession?
     let serverConnection = ConfigServerConnection()
-    private let readyChecker: ConfigReadyCheck? = {
-        guard let catalog = try? ConfigCatalog.load(), let rules = try? ConfigRules.load() else { return nil }
+    private lazy var readyRules = try? ConfigRules.load()
+    private var readyChecker: ConfigReadyCheck? {
+        guard let catalog = studio.catalog, let rules = readyRules else { return nil }
         return ConfigReadyCheck(catalog: catalog, rules: rules)
-    }()
+    }
     /// The Configs page's view store over the same session.
     let studio: ConfigStudioModel
     /// Discover and import. The player directory has no signed publication yet, so it reports itself unavailable.
