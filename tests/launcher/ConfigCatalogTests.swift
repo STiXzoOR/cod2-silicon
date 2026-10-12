@@ -21,7 +21,7 @@ import Darwin
         let url = URL(fileURLWithPath: CommandLine.arguments[1])
         let bytes = try Data(contentsOf: url)
         let catalog = try ConfigCatalog(data: bytes)
-        require(catalog.sourceRevision == "048ff5e", "catalog must describe the requested integration")
+        require(catalog.sourceRevision == "2feb769", "catalog must describe the requested integration")
         let speed = catalog.setting(named: "SENSITIVITY")!
         require(speed.name == "sensitivity" && speed.group == .aim, "case-insensitive setting lookup")
         require(catalog.settings(in: .aim).contains(speed), "group lookup")
