@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 
 @main struct MatchSummariesTests {
     static func main() throws {
@@ -36,6 +37,7 @@ import Foundation
         let tail = try MatchSummaries.read(homePath: scratch)
         precondition(tail.count == 1, "Reader considers a bounded complete tail of an oversized file")
         try numericContract(row: row, path: path, home: scratch)
+        try accessFailure(row: row, path: path, home: scratch)
         try FileManager.default.removeItem(at: path)
         let outside = scratch.appendingPathComponent("outside.jsonl")
         try (row + "\n").write(to: outside, atomically: true, encoding: .utf8)
@@ -46,7 +48,76 @@ import Foundation
         let missing = scratch.appendingPathComponent("missing")
         let absent = try MatchSummaries.read(homePath: missing)
         precondition(absent.isEmpty)
-        print("PASS: summary reader/retention, numeric ranges and packet totals, partial-line handling, persisted/default privacy and launch opt-out")
+        try missingAndRejectedPaths(path: path, home: scratch)
+        print("PASS: summary reader/retention, numeric ranges and packet totals, access-denial errors, missing/rejected paths, partial-line handling, persisted/default privacy and launch opt-out")
+    }
+
+    /// Access denial must reach Check-up's failed state, rather than look like no matches.
+    static func accessFailure(row: String, path: URL, home: URL) throws {
+        precondition(geteuid() != 0, "Access-denial fixtures require an unprivileged process")
+        try (row + "\n").write(to: path, atomically: true, encoding: .utf8)
+        let targets = [("summary file", path), ("stats directory", path.deletingLastPathComponent()),
+                       ("main directory", home.appendingPathComponent("main")), ("home directory", home)]
+        var failures: [String] = []
+        for (name, target) in targets {
+            let error = try deniedRead(target: target, home: home)
+            if error?.domain != NSPOSIXErrorDomain || error?.code != Int(EACCES) { failures.append(name) }
+        }
+        if !failures.isEmpty {
+            FileHandle.standardError.write(Data(("FAIL: access denial was hidden for " + failures.joined(separator: ", ") + "\n").utf8))
+            throw NSError(domain: "MatchSummariesTests", code: failures.count,
+                          userInfo: [NSLocalizedDescriptionKey: "Access-denial errors were hidden"])
+        }
+        let restored = try MatchSummaries.read(homePath: home)
+        precondition(restored.count == 1, "The restored fixture remains readable")
+    }
+
+    /// Restore permissions before the caller asserts, including when the production read throws.
+    static func deniedRead(target: URL, home: URL) throws -> NSError? {
+        var status = stat()
+        guard lstat(target.path, &status) == 0, chmod(target.path, 0) == 0 else {
+            throw NSError(domain: "MatchSummariesTests", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "Cannot prepare access-denial fixture"])
+        }
+        defer { precondition(chmod(target.path, status.st_mode & 0o7777) == 0, "Fixture permissions are restored") }
+        do { _ = try MatchSummaries.read(homePath: home); return nil }
+        catch { return error as NSError }
+    }
+
+    static func missingAndRejectedPaths(path: URL, home: URL) throws {
+        let absentFile = try MatchSummaries.read(homePath: home)
+        precondition(absentFile.isEmpty, "An absent summary file is an empty history")
+        try FileManager.default.createDirectory(at: path, withIntermediateDirectories: false)
+        let directory = try MatchSummaries.read(homePath: home)
+        precondition(directory.isEmpty, "A nonregular summary file is rejected")
+        try FileManager.default.removeItem(at: path)
+        precondition(mkfifo(path.path, 0o600) == 0)
+        let fifo = try MatchSummaries.read(homePath: home)
+        precondition(fifo.isEmpty, "A FIFO is rejected without waiting for a writer")
+        try FileManager.default.removeItem(at: path)
+
+        let empty = home.appendingPathComponent("empty-home")
+        try FileManager.default.createDirectory(at: empty, withIntermediateDirectories: false)
+        let absentMain = try MatchSummaries.read(homePath: empty)
+        precondition(absentMain.isEmpty, "An absent main directory is an empty history")
+        try FileManager.default.createDirectory(at: empty.appendingPathComponent("main"), withIntermediateDirectories: false)
+        let absentStats = try MatchSummaries.read(homePath: empty)
+        precondition(absentStats.isEmpty, "An absent stats directory is an empty history")
+
+        let linkedHome = home.appendingPathComponent("linked-home")
+        try FileManager.default.createSymbolicLink(at: linkedHome, withDestinationURL: home)
+        let rejectedHome = try MatchSummaries.read(homePath: linkedHome)
+        precondition(rejectedHome.isEmpty, "A symlink home is rejected")
+        let linkedMain = home.appendingPathComponent("linked-main")
+        try FileManager.default.createDirectory(at: linkedMain, withIntermediateDirectories: false)
+        try FileManager.default.createSymbolicLink(at: linkedMain.appendingPathComponent("main"), withDestinationURL: home.appendingPathComponent("main"))
+        let rejectedMain = try MatchSummaries.read(homePath: linkedMain)
+        precondition(rejectedMain.isEmpty, "A symlink main directory is rejected")
+        let linkedStats = home.appendingPathComponent("linked-stats")
+        try FileManager.default.createDirectory(at: linkedStats.appendingPathComponent("main"), withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(at: linkedStats.appendingPathComponent("main/stats"), withDestinationURL: home.appendingPathComponent("main/stats"))
+        let rejectedStats = try MatchSummaries.read(homePath: linkedStats)
+        precondition(rejectedStats.isEmpty, "A symlink stats directory is rejected")
     }
 
     static func numericContract(row: String, path: URL, home: URL) throws {

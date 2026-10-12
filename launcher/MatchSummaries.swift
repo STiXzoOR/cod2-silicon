@@ -82,18 +82,25 @@ enum MatchSummaries {
     /// Oldest first. A partial final line or malformed record cannot become measured advice.
     static func read(homePath: URL) throws -> [MatchSummary] {
         var directory = open(homePath.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW)
-        guard directory >= 0 else { return [] }
+        guard directory >= 0 else { return try openFailure(errno) }
         for component in ["main", "stats"] {
             let child = openat(directory, component, O_RDONLY | O_DIRECTORY | O_NOFOLLOW)
+            let code = errno
             close(directory)
-            guard child >= 0 else { return [] }
+            guard child >= 0 else { return try openFailure(code) }
             directory = child
         }
         let fd = openat(directory, "matches.jsonl", O_RDONLY | O_NOFOLLOW | O_NONBLOCK)
+        let code = errno
         close(directory)
-        guard fd >= 0 else { return [] }
+        guard fd >= 0 else { return try openFailure(code) }
         var status = stat()
-        guard fstat(fd, &status) == 0, (status.st_mode & S_IFMT) == S_IFREG, status.st_size >= 0 else {
+        guard fstat(fd, &status) == 0 else {
+            let code = errno
+            close(fd)
+            throw NSError(domain: NSPOSIXErrorDomain, code: Int(code))
+        }
+        guard (status.st_mode & S_IFMT) == S_IFREG, status.st_size >= 0 else {
             close(fd)
             return []
         }
@@ -117,5 +124,13 @@ enum MatchSummaries {
             if summaries.count > recordLimit { summaries.removeFirst() }
         }
         return summaries
+    }
+
+    /// Missing paths and deliberately rejected links/non-directories have no readable history.
+    private static func openFailure(_ code: Int32) throws -> [MatchSummary] {
+        switch code {
+        case ENOENT, ENOTDIR, ELOOP: return []
+        default: throw NSError(domain: NSPOSIXErrorDomain, code: Int(code))
+        }
     }
 }

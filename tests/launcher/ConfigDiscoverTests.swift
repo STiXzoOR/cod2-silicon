@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import Darwin
 
 // Focused tests for the Discover/import and Servers ready-check view stores: the same intents
 // the sheet and the card call, against private temporary homes, comparing exact bytes on disk.
@@ -67,11 +68,15 @@ import Foundation
         var homes: [URL] = []
         defer { homes.forEach { try? FileManager.default.removeItem(at: $0) } }
         do {
+            if CommandLine.arguments.contains("--match-privacy-only") { try matchPrivacy(&homes); return }
+            if CommandLine.arguments.contains("--match-read-failure-only") { try matchReadFailure(&homes); return }
             try await reviewPresentationAndNewLoadout(&homes)
             try await existingLoadoutAndUndo(&homes)
             try await failedApplyKeepsBytes(&homes)
             try await directory(&homes)
             try await readyCheck(&homes)
+            try matchPrivacy(&homes)
+            try matchReadFailure(&homes)
         } catch { print("FAIL: \(error)"); exit(1) }
     }
 
@@ -251,6 +256,92 @@ import Foundation
                 "the saved credit is shown with the loadout's values")
         studio.compareID = nil
         print("PASS: Compare in Expert uses the reviewed player values or a loadout's saved credit, honours locks and the running game")
+    }
+
+    static let matchRow = #"{"schemaVersion":1,"endedAt":"2026-10-12T00:00:00Z","endReason":"disconnect","map":"mp_toujane","mode":"sd","durationSeconds":30,"serverAddress":"192.0.2.1:28960","ruleHints":{},"frameCount":100,"frameTimeP50MS":3,"frameTimeP99MS":7,"frameTimeMaxMS":20,"frameTimeHistogramLimitMS":250,"framesUnderCap":98,"capSampleFrames":100,"capFPS":333,"pingAverageMS":40,"pingMaximumMS":50,"pingSamples":3,"packetsReceived":3,"packetsLost":2,"packetLossPercent":40,"snapshotsReceived":4}"#
+
+    /// Editing Settings applies on the next launch before Save, and Check-up must say the same thing.
+    @MainActor static func matchPrivacy(_ homes: inout [URL]) throws {
+        let home = try makeHome("match-privacy"); homes.append(home.url)
+        try PrivateFile.write(Data((matchRow + "\n").utf8), to: home.url.appendingPathComponent("main/stats/matches.jsonl"))
+        let model = LauncherModel(snapshot: true)
+        model.studio.attach(home.session)
+        let checkup = model.studio.checkup
+        var reads = 0
+        checkup.readMatches = { path in
+            require(path == home.url, "match reads use only the synthetic launcher home")
+            reads += 1
+            return try MatchSummaries.read(homePath: path)
+        }
+        checkup.refreshMatches(home: home.url)
+        require(checkup.matchCount == 1 && reads == 1, "the synthetic history is read once")
+
+        func launchPrivacy(_ expected: String) throws {
+            let prepared = try home.session.prepareLaunch(settings: model.settings)
+            defer { try? home.session.cancelLaunch() }
+            require(prepared != nil, "the current Settings draft prepares the synthetic loadout")
+            for launch in [nil, prepared] {
+                let plan = try GameLaunchPlan(settings: model.settings, dataPath: home.url.appendingPathComponent("data").path,
+                                              homePath: home.url.path, configStudio: launch)
+                let indices = plan.arguments.indices.filter { plan.arguments[$0] == "cl_matchSummaries" }
+                require(indices.count == 1 && indices[0] + 1 < plan.arguments.count && plan.arguments[indices[0] + 1] == expected,
+                        "legacy and migrated plans use the current privacy draft")
+            }
+        }
+
+        model.settings.matchSummariesEnabled = false
+        require(!model.settingsSaved && !checkup.matchSummariesEnabled && checkup.matchPresentation?.detail.contains("off now") == true,
+                "an unsaved opt-out updates Check-up immediately")
+        require(reads == 1, "editing privacy does not reread stats")
+        try launchPrivacy("\"0\"")
+        model.saveSettings()
+        require(model.settingsSaved && !model.settings.matchSummariesEnabled && !checkup.matchSummariesEnabled,
+                "the real preview Save intent keeps the current opt-out and marks Settings saved")
+
+        model.settings.matchSummariesEnabled = true
+        require(model.settings.matchSummariesEnabled && checkup.matchSummariesEnabled && checkup.matchPresentation?.detail.contains("off now") == false,
+                "an unsaved opt-in updates Check-up immediately")
+        try launchPrivacy("\"1\"")
+        require(reads == 1, "Save and launch construction do not reread stats")
+        checkup.refreshMatches()
+        require(reads == 2 && checkup.matchSummariesEnabled && checkup.matchCount == 1,
+                "manual Refresh retains the current opt-in and earlier history")
+        model.saveSettings()
+        require(model.settingsSaved && checkup.matchSummariesEnabled, "Save retains the current opt-in")
+        model.settings.matchSummariesEnabled = false
+        try launchPrivacy("\"0\"")
+        checkup.refreshMatches()
+        require(!model.settingsSaved && !checkup.matchSummariesEnabled && reads == 3 && checkup.matchCount == 1,
+                "the reverse unsaved draft stays off after Refresh without deleting earlier history")
+        print("PASS: real LauncherModel privacy drafts and Save intent agree with legacy/migrated launch plans and Check-up without extra stats reads")
+    }
+
+    /// The production reader's EACCES reaches the real Check-up failure UI and clears measurements.
+    @MainActor static func matchReadFailure(_ homes: inout [URL]) throws {
+        require(geteuid() != 0, "Access-denial fixtures require an unprivileged process")
+        let home = try makeHome("match-read-failure"); homes.append(home.url)
+        let path = home.url.appendingPathComponent("main/stats/matches.jsonl")
+        try PrivateFile.write(Data((matchRow + "\n").utf8), to: path)
+        let model = LauncherModel(snapshot: true)
+        model.studio.attach(home.session)
+        let checkup = model.studio.checkup
+        checkup.refreshMatches(home: home.url)
+        require(checkup.matchCount == 1 && checkup.measurements.frameTimeP99MS == 7, "the fixture begins with real measured data")
+        func deniedRefresh() -> Bool {
+            require(chmod(path.path, 0) == 0, "the owned fixture becomes unreadable")
+            defer { require(chmod(path.path, 0o600) == 0, "fixture read permission is restored") }
+            checkup.refreshMatches()
+            if case .failed = checkup.matchState { return true }
+            return false
+        }
+        let failed = deniedRefresh()
+        require(failed && checkup.matchCount == 0 && checkup.latestMatch == nil && checkup.measurements.frameTimeP99MS == nil,
+                "a production reader access failure clears the earlier measured data")
+        require(checkup.matchPresentation?.tone == .negative && checkup.matchPresentation?.title == "Couldn’t read your match summaries",
+                "access denial is shown as a failure instead of an empty history")
+        checkup.refreshMatches()
+        require(checkup.matchCount == 1 && checkup.measurements.frameTimeP99MS == 7, "Refresh recovers after private fixture access is restored")
+        print("PASS: production reader access denial reaches Check-up failure state, clears measurements and recovers after permission restoration")
     }
 
     @MainActor static func readyCheck(_ homes: inout [URL]) async throws {

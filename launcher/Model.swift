@@ -36,7 +36,14 @@ struct MediaEntry: Identifiable {
     @Published var shaderCount = 0
     @Published var shaderMessage = "Lighting and sky exactly as the game shipped, taken from your own Mac copy of Call of Duty 2."
     @Published var approximate = false
-    @Published var settings = GameSettings() { didSet { if settings != savedSettings { settingsSaved = false } } }
+    @Published var settings = GameSettings() {
+        didSet {
+            if settings != savedSettings { settingsSaved = false }
+            if settings.matchSummariesEnabled != oldValue.matchSummariesEnabled {
+                studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
+            }
+        }
+    }
     /// True right after Save, until the next change.
     @Published var settingsSaved = false
     @Published var library = LauncherLibrary()
@@ -134,6 +141,7 @@ struct MediaEntry: Identifiable {
         LauncherMigrate()
         if let data = try? Data(contentsOf: home.appendingPathComponent("launcher-settings.json")), let value = try? JSONDecoder().decode(GameSettings.self, from: data) { settings = value }
         savedSettings = settings
+        studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
         if let data = try? Data(contentsOf: home.appendingPathComponent("launcher-library.json")), let value = try? JSONDecoder().decode(LauncherLibrary.self, from: data) { library = value; servers = value.cache }
         dataPath = LauncherFindData(nil) ?? ""
         keyVerified = KeyStore.hasValidKey(at: preferences)
@@ -633,9 +641,9 @@ struct MediaEntry: Identifiable {
     }
 
     /// Check-up reads the game's local match summaries from this home at startup and after each
-    /// game; the 250 ms game monitor never reads them. The switch shown is the saved choice.
+    /// game; the 250 ms game monitor never reads them. The switch shown applies on the next launch.
     private func refreshMatchSummaries() {
-        studio.checkup.matchSummariesEnabled = savedSettings.matchSummariesEnabled
+        studio.checkup.matchSummariesEnabled = settings.matchSummariesEnabled
         studio.checkup.refreshMatches(home: home)
     }
 
