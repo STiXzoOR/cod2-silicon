@@ -57,7 +57,7 @@ class Driver:
         self.process, self.output = process, output
         self.sequence = 0
         self.writer = None
-        self.events = []
+        self._reset_acks()
         self.last_snapshot = None
         self.preserved_snapshots = set()
         self.wait(lambda: self.acks().get(0, {}).get('status') == 1, 15)
@@ -75,15 +75,45 @@ class Driver:
                 raise AssertionError(f'Timed out after {seconds}s; inspect {self.output}')
             time.sleep(.01)
 
+    def _reset_acks(self):
+        self._ack_identity = None
+        self._ack_offset = 0
+        self._ack_tail = b''
+        self._ack_rows = {}
+        self.events = []
+
     def acks(self):
-        path = self.output / 'input.jsonl'
-        rows = []
-        if path.exists():
-            for line in path.read_text(errors='replace').splitlines():
-                try: rows.append(json.loads(line))
-                except json.JSONDecodeError: pass  # The writer may be in the middle of a line.
-        self.events = [row for row in rows if 'observed' in row]
-        return {row['id']: row for row in rows if 'id' in row}
+        try:
+            with (self.output / 'input.jsonl').open('rb') as stream:
+                stat = os.fstat(stream.fileno())
+                identity = (stat.st_dev, stat.st_ino)
+                if identity != self._ack_identity or stat.st_size < self._ack_offset:
+                    self._reset_acks()
+                self._ack_identity = identity
+                stream.seek(self._ack_offset)
+                data = stream.read()
+                self._ack_offset = stream.tell()
+        except FileNotFoundError:
+            self._reset_acks()
+            return self._ack_rows
+        if not data:
+            return self._ack_rows
+        lines = (self._ack_tail + data).split(b'\n')
+        self._ack_tail = lines[-1]
+        for index, line in enumerate(lines):
+            if not line:
+                continue
+            try:
+                row = json.loads(line.decode(errors='replace'))
+            except json.JSONDecodeError:
+                continue  # Retain an unfinished final line for the next read.
+            if 'observed' in row:
+                self.events.append(row)
+            if 'id' in row:
+                self._ack_rows[row['id']] = row
+            if index == len(lines) - 1:
+                self._ack_tail = b''
+        return self._ack_rows
 
     def queue(self, operation):
         self.sequence += 1

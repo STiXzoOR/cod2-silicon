@@ -1,12 +1,95 @@
 """Driver geometry and real loopback fixture transport checks; no game window."""
+import json
+from pathlib import Path
 import socket
+import tempfile
 import time
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from run import Driver, center, find_item
 from scenarios import list_point, list_capacity, ui_scripts
 from servers import FixtureServers, MARKER
+
+
+class AcknowledgementTests(unittest.TestCase):
+    def setUp(self):
+        scratch = tempfile.TemporaryDirectory()
+        self.addCleanup(scratch.cleanup)
+        self.output = Path(scratch.name)
+        self.path = self.output / 'input.jsonl'
+        self.path.write_text('{"id":0,"command":"ready","status":1}\n')
+        # These checks read files only; no game or FIFO injector is involved.
+        (self.output / 'input.fifo').touch()
+        self.driver = Driver(None, self.output)
+        self.addCleanup(self.driver.close)
+
+    def append(self, data):
+        with self.path.open('ab') as stream:
+            stream.write(data)
+
+    def test_consumed_acknowledgements_are_not_parsed_again(self):
+        decoded = []
+        loads = json.loads
+
+        def record_loads(data):
+            decoded.append(data)
+            return loads(data)
+
+        self.append(b'{"id":1,"command":"barrier","status":1}\n')
+        with patch('run.json.loads', side_effect=record_loads):
+            self.assertEqual(self.driver.acks()[1]['status'], 1)
+            self.assertEqual(len(decoded), 1)
+            for _ in range(3):
+                self.assertEqual(set(self.driver.acks()), {0, 1})
+            self.assertEqual(len(decoded), 1)
+            self.append(b'{"id":2,"command":"snapshot","status":-2}\n')
+            self.assertEqual(self.driver.acks()[2]['status'], -2)
+            self.assertEqual(len(decoded), 2)
+
+    def test_partial_utf8_json_line_survives_multiple_reads(self):
+        self.append(b'{"id":1,"command":"text-\xe2')
+        self.assertNotIn(1, self.driver.acks())
+        self.append(b'\x82')
+        self.assertNotIn(1, self.driver.acks())
+        self.append(b'\xac","status":1}\n')
+        self.assertEqual(self.driver.acks()[1]['command'], 'text-\u20ac')
+
+    def test_malformed_lines_and_duplicate_ids_keep_latest_status(self):
+        self.append(b'not-json\n{"id":1,"status":1}\n{"id":1,"status":-1}\n')
+        self.assertEqual(self.driver.acks()[1]['status'], -1)
+
+    def test_observed_events_remain_in_order_without_poll_duplicates(self):
+        self.append(b'{"observed":768,"tick":10}\n{"id":1,"status":1}\n')
+        self.driver.acks()
+        self.append(b'{"observed":769,"tick":12}\n{"observed":1024,"tick":15}\n')
+        self.driver.acks()
+        self.driver.acks()
+        self.assertEqual(self.driver.events, [
+            {'observed': 768, 'tick': 10}, {'observed': 769, 'tick': 12},
+            {'observed': 1024, 'tick': 15}])
+
+    def test_truncation_discards_old_acknowledgements_and_partial_line(self):
+        self.append(b'{"observed":768,"tick":10}\n{"id":1,"status":1}\n{"id":2')
+        self.driver.acks()
+        self.path.write_text('{"id":3,"status":-2}\n')
+        self.assertEqual(self.driver.acks(), {3: {'id': 3, 'status': -2}})
+        self.assertEqual(self.driver.events, [])
+
+    def test_replaced_file_starts_a_new_acknowledgement_stream(self):
+        self.append(b'{"id":1,"status":1}\n')
+        self.driver.acks()
+        replacement = self.output / 'replacement.jsonl'
+        replacement.write_text('{"id":2,"status":-1}\n')
+        replacement.replace(self.path)
+        self.assertEqual(self.driver.acks(), {2: {'id': 2, 'status': -1}})
+
+    def test_missing_file_discards_the_previous_stream(self):
+        self.append(b'{"observed":768,"tick":10}\n')
+        self.driver.acks()
+        self.path.unlink()
+        self.assertEqual(self.driver.acks(), {})
+        self.assertEqual(self.driver.events, [])
 
 
 class GeometryTests(unittest.TestCase):
@@ -57,7 +140,9 @@ class NetworkTests(unittest.TestCase):
         client.bind(('127.0.0.1', 0)); client.settimeout(2)
         pool = FixtureServers(client.getsockname()[1], count=3).start()
         try:
-            pool.announce(.1)
+            # Keep announcements available for the existing receive deadline;
+            # background scheduling can delay the worker beyond 100ms.
+            pool.announce(2)
             addresses = set()
             for _ in range(3):
                 data, address = client.recvfrom(4096)
