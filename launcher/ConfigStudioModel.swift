@@ -88,6 +88,8 @@ struct ConfigSettingSpec: Identifiable {
     let defaultText: String?
     /// CoD2 Silicon sets this at every launch from Settings, so a loadout can't own it.
     let launcherOwned: Bool
+    /// The catalog's names for particular values, in value order.
+    let valueLabels: [ConfigValueLabel]
     var id: String { setting.name }
     var name: String { setting.name }
     var title: String { setting.title }
@@ -121,7 +123,44 @@ struct ConfigSettingSpec: Identifiable {
         let fact = variant.defaultValue
         defaultText = fact.status == .literal ? fact.value.flatMap { ConfigValues.configText($0, type: type, choices: names) } : nil
         launcherOwned = GameSettings.machineDvarNames.contains(setting.name.lowercased())
+        valueLabels = (setting.control.labels ?? [:]).map { ConfigValueLabel(text: $0.key, title: $0.value) }
+            .sorted { (ConfigValues.number($0.text) ?? 0, $0.text) < (ConfigValues.number($1.text) ?? 0, $1.text) }
     }
+
+    /// The catalog's label for a value, compared as the type the game reads.
+    func label(for text: String) -> String? {
+        valueLabels.first { ConfigValues.same(self, $0.text, text) }?.title
+    }
+    /// Every value the game accepts has a label, so a picker of labels can't hide one.
+    var labelsCoverRange: Bool {
+        guard !valueLabels.isEmpty else { return false }
+        switch type {
+        case .bool: return label(for: "0") != nil && label(for: "1") != nil
+        case .int:
+            guard let minimum, let maximum, maximum - minimum < 64 else { return false }
+            return stride(from: minimum, through: maximum, by: 1).allSatisfy { label(for: ConfigValues.format($0, integer: true)) != nil }
+        default: return false
+        }
+    }
+    /// The range most players use, kept inside the registered one.
+    var practicalRange: ClosedRange<Double>? {
+        guard let range = setting.control.practicalRange else { return nil }
+        let low = Swift.max(range.min, minimum ?? range.min), high = Swift.min(range.max, maximum ?? range.max)
+        return low < high ? low...high : nil
+    }
+    /// The practical range, or a literal range with few enough steps to slide through; otherwise a field.
+    var slideRange: ClosedRange<Double>? {
+        if let practicalRange { return practicalRange }
+        guard let minimum, let maximum, maximum > minimum else { return nil }
+        let step = self.step > 0 ? self.step : (maximum - minimum) / 100
+        return (maximum - minimum) / step <= 200 ? minimum...maximum : nil
+    }
+}
+
+/// A catalog value label: the config text and the name the game's menus give it.
+struct ConfigValueLabel: Hashable {
+    let text: String
+    let title: String
 }
 
 /// Pure value conversions between config text, typed values and plain display.
@@ -183,6 +222,11 @@ enum ConfigValues {
     /// Plain words for people: On/Off, an enumeration's name, a number with its unit.
     static func display(_ spec: ConfigSettingSpec, _ text: String?) -> String {
         guard let text else { return "Not set" }
+        if let label = spec.label(for: text) {
+            guard spec.isNumeric, let value = number(text) else { return label }
+            let numeral = spec.type == .int ? String(Int64(value.rounded())) : format(value)
+            return spec.unit.map { "\(label) (\(numeral) \($0))" } ?? label
+        }
         switch spec.type {
         case .bool: return bool(text) ? "On" : "Off"
         case .enumeration: return enumIndex(text, choices: spec.choices).map { spec.choices[$0] } ?? text
@@ -396,6 +440,18 @@ struct ConfigExpertSection: Identifiable {
     var id: ConfigPurposeGroup { group }
 }
 
+/// A player's setup to compare in Expert: values from a signed entry that was fetched,
+/// verified and reviewed against the active loadout. Only what Review would tick by default
+/// (and settings the person locked) is here; lines needing an OK, blocked lines and choices
+/// kept on this Mac never are.
+struct ConfigPlayerComparison: Equatable {
+    let entryID: String
+    let name: String
+    let provenance: String
+    /// Config text by lowercased setting name.
+    let values: [String: String]
+}
+
 struct ConfigStudioFailure: Identifiable {
     let id = UUID()
     let title: String
@@ -419,9 +475,16 @@ struct ConfigStudioFailure: Identifiable {
     @Published var group: ConfigPurposeGroup = .frame
     @Published var filter: ConfigExpertFilter?
     @Published var search = ""
-    @Published var compareID: String? { didSet { if compareID != oldValue { refreshComparison() } } }
+    @Published var compareID: String? {
+        didSet {
+            if compareID != nil { player = nil }
+            if compareID != oldValue { refreshComparison() }
+        }
+    }
     /// Another of the person's own loadouts, read for Compare.
     @Published private(set) var comparison: ConfigProfileRead?
+    /// A player from Discover, compared instead of a loadout.
+    @Published private(set) var player: ConfigPlayerComparison?
     /// A setting brought into view from Jump to any setting.
     @Published var highlighted: String?
     @Published var historyFilter: ConfigHistoryFilter = .all
@@ -475,7 +538,7 @@ struct ConfigStudioFailure: Identifiable {
     /// The review harness hosts a session over a temporary home.
     func attach(_ session: ConfigStudioSession?) {
         self.session = session
-        comparison = nil; valueCache = nil; diffCache = [:]; sinceCache = nil
+        comparison = nil; player = nil; valueCache = nil; diffCache = [:]; sinceCache = nil
     }
 
     /// Decodes the 2 MB catalog off the main thread; the page shows a loading state meanwhile.
@@ -625,10 +688,36 @@ struct ConfigStudioFailure: Identifiable {
         if read.version != comparison?.version || read.profile != comparison?.profile { comparison = read }
     }
     func theirs(_ spec: ConfigSettingSpec) -> ConfigSettingState? {
-        guard let other = comparison else { return nil }
-        let mine = state(spec), result = state(spec, in: other.document, metadata: other.metadata)
+        let result: ConfigSettingState
+        if let player {
+            // Only settings their config actually sets; a missing line isn't their default.
+            guard let value = player.values[spec.name.lowercased()] else { return nil }
+            result = ConfigSettingState(spec: spec, raw: value, locked: false, note: nil)
+        } else {
+            guard let other = comparison else { return nil }
+            result = state(spec, in: other.document, metadata: other.metadata)
+        }
+        let mine = state(spec)
         guard let a = mine.value, let b = result.value, !ConfigValues.same(spec, a, b) else { return nil }
         return result
+    }
+    /// Opens Expert comparing with a player's reviewed setup. Nothing is written.
+    func compare(with player: ConfigPlayerComparison) {
+        compareID = nil
+        self.player = player
+        tab = .settings; level = .expert
+        // The markers live on the controls; unapplied text edits keep the text editor open.
+        if textMode && !textEdited { toggleText() }
+    }
+    func stopComparing() { player = nil; compareID = nil }
+    /// Whose values the comparison markers show.
+    var comparisonName: String? { player?.name ?? comparison?.profile.displayName }
+    /// Where the compared values came from: the player's catalog entry, or the credit a loadout
+    /// saved when it was imported. Nil for a loadout made here.
+    var comparisonProvenance: String? {
+        if let player { return player.provenance }
+        guard let origin = comparison?.metadata.origin, origin.kind == .imported, let credit = origin.credit else { return nil }
+        return "Imported · credit \(credit)"
     }
 
     // MARK: History
@@ -701,7 +790,7 @@ struct ConfigStudioFailure: Identifiable {
         set(spec, to: value, summary: "Reset \(spec.title)", undo: undo)
     }
     func takeTheirs(_ spec: ConfigSettingSpec, undo: UndoManager? = nil) {
-        guard let theirs = theirs(spec), let value = theirs.value, !state(spec).locked, let source = comparison?.profile.displayName else { return }
+        guard let theirs = theirs(spec), let value = theirs.value, !state(spec).locked, let source = comparisonName else { return }
         set(spec, to: value, summary: "Took \(spec.title) from \(source)", undo: undo)
     }
     private func restoreRaw(_ spec: ConfigSettingSpec, _ raw: String?, undo: UndoManager?) {

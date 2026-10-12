@@ -29,6 +29,25 @@ import Foundation
         require(ConfigStudioModel.identifier(for: "Night.Scrim - EU", existing: []) == "Night.Scrim_EU")
         print("PASS: config text, plain display and profile folder names")
 
+        // Catalog value labels name values in the game's own words; practical ranges size the slider.
+        let picmip = ConfigSettingSpec(setting: catalog.setting(named: "r_picmip")!, mode: .cod2x)!
+        require(picmip.valueLabels.map(\.title) == ["Extra", "High", "Normal", "Low"] && picmip.labelsCoverRange, "every texture level has a name")
+        require(ConfigValues.display(picmip, "2") == "Normal" && ConfigValues.display(picmip, "2.0") == "Normal" && ConfigValues.display(picmip, "7") == "7")
+        let manual = ConfigSettingSpec(setting: catalog.setting(named: "r_picmip_manual")!, mode: .cod2x)!
+        require(ConfigValues.display(manual, "1") == "Manual" && ConfigValues.display(manual, "0") == "Automatic" && manual.labelsCoverRange, "a labelled switch reads its labels")
+        let khz = ConfigSettingSpec(setting: catalog.setting(named: "snd_khz")!, mode: .cod2x)!
+        require(ConfigValues.display(khz, "44") == "High (44 kHz)" && ConfigValues.display(khz, "30") == "30 kHz" && !khz.labelsCoverRange, "a label keeps its unit")
+        let rate = ConfigSettingSpec(setting: catalog.setting(named: "rate")!, mode: .cod2x)!
+        require(rate.valueLabels.map(\.text) == ["5000", "25000"] && !rate.labelsCoverRange, "partial labels are presets, sorted by value")
+        require(ConfigValues.display(rate, "25000") == "LAN, cable or DSL (25000 bytes/s)" && ConfigValues.display(rate, "20000") == "20000 bytes/s")
+        let aa = ConfigSettingSpec(setting: catalog.setting(named: "r_aaSamples")!, mode: .cod2x)!
+        require(!aa.labelsCoverRange && ConfigValues.display(aa, "3") == "3", "an unnamed value inside the range stays a number")
+        let mouse = ConfigSettingSpec(setting: catalog.setting(named: "sensitivity")!, mode: .cod2x)!
+        require(mouse.practicalRange == 0.01...30 && mouse.slideRange == 0.01...30, "Mouse speed slides over the practical range")
+        require(ConfigValues.text(number: 45, spec: mouse) == "45", "values beyond the practical range stay valid")
+        require(picmip.practicalRange == nil && picmip.slideRange == 0...3 && rate.slideRange == 1000...25000, "without a practical range the registered range is used")
+        print("PASS: catalog value labels and practical ranges")
+
         // Two loadouts in a private home; Main is active.
         let home = scratch.appendingPathComponent("home")
         let store = try ConfigProfileStore(homeURL: home, dialect: .cod2x)

@@ -75,9 +75,17 @@ struct ConfigCatalogControl: Codable, Hashable, Sendable {
         case segmented, slider, menu, colour, text, number, vector
         case toggle = "switch"
     }
+    /// The range most players use, inside the registered one; values outside it stay valid.
+    struct PracticalRange: Codable, Hashable, Sendable {
+        let min: Double
+        let max: Double
+    }
     let kind: Kind
     let step: Double?
     let unit: String?
+    /// Names for particular values, keyed by the config text ("0": "Extra"), from the game's own menus.
+    let labels: [String: String]?
+    let practicalRange: PracticalRange?
 }
 
 struct ConfigCatalogGroup: Codable, Hashable, Sendable {

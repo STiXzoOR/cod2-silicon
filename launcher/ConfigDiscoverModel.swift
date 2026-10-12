@@ -240,6 +240,8 @@ struct ConfigPlayerDetail {
     var phase: Phase
     /// The verified download, reused when the person tries the setup.
     var bundle: ConfigImportBundle?
+    /// The reviewed values Compare shows in Expert.
+    var values: [String: String]?
 }
 
 extension ConfigImportPresentation {
@@ -290,6 +292,21 @@ extension ConfigImportPresentation {
                                    settings: items.filter { $0.isSetting && $0.selectable }.count, keys: keys,
                                    needsOK: items.filter { $0.section == .needsOK }.count,
                                    never: items.filter { $0.section == .never || $0.section == .machine }.count)
+    }
+
+    /// The values Compare shows: the lines Review ticks by default, including ones a lock keeps,
+    /// by lowercased setting name (the last assignment wins). Credentials never appear.
+    @MainActor static func comparisonValues(_ session: ConfigImportSession, studio: ConfigStudioModel) -> [String: String] {
+        guard let catalog = studio.catalog else { return [:] }
+        let adapter = ConfigImportCatalogAdapter(catalog: catalog)
+        let files = Dictionary(session.review.bundle.files.map { ($0.path, $0) }, uniquingKeysWith: { first, _ in first })
+        var values: [String: String] = [:]
+        for row in session.rows where row.candidate.selectedByDefault && (row.canSelect || !row.lockedNames.isEmpty) && !row.candidate.reasons.contains(.credential) {
+            guard let file = files[row.candidate.location.file], let value = row.newValue,
+                  let assignment = ConfigImportScript.assignment(row.candidate.command, document: file.document, catalog: adapter) else { continue }
+            values[assignment.name.lowercased()] = value
+        }
+        return values
     }
 
     /// Turning speed scales with mouse speed while the turn rate per count stays the same. A
@@ -614,13 +631,29 @@ extension ConfigImportPresentation {
                     return session
                 }.value
                 guard let self, !Task.isCancelled else { return }
-                self.detail = ConfigPlayerDetail(entryID: id, phase: .ready(ConfigImportPresentation.summary(session, studio: self.studio, comparedWith: active)), bundle: bundle)
+                self.detail = ConfigPlayerDetail(entryID: id, phase: .ready(ConfigImportPresentation.summary(session, studio: self.studio, comparedWith: active)),
+                                                 bundle: bundle, values: ConfigImportPresentation.comparisonValues(session, studio: self.studio))
             } catch is CancellationError {
             } catch {
                 guard let self, self.detail?.entryID == id else { return }
                 self.detail?.phase = .failed(ConfigImportReviewModel.message(for: error))
             }
         }
+    }
+
+    /// Compare needs the player's setup fetched, verified and reviewed on this page.
+    func canCompare(_ id: String) -> Bool {
+        guard let detail, detail.entryID == id, detail.values != nil, entry(id) != nil, case .ready = detail.phase else { return false }
+        return true
+    }
+    /// Opens Expert with this player's reviewed values as the comparison. Nothing is written;
+    /// Take Theirs is still one guarded edit per setting.
+    func compareInExpert(_ entry: ConfigDirectoryEntry) {
+        guard canCompare(entry.id), let values = detail?.values else { return }
+        studio.compare(with: ConfigPlayerComparison(entryID: entry.id, name: entry.player,
+                                                    provenance: "Players catalog · signed entry · credit \(entry.credit)", values: values))
+        page = nil
+        studio.announce("Comparing with \(entry.player) in Expert.")
     }
 
     private func catalog() -> ConfigCatalog? {

@@ -13,6 +13,12 @@ enum ConfigBindsLayout: String, CaseIterable, Identifiable {
     var symbol: String { self == .list ? "list.bullet" : "keyboard" }
 }
 
+extension KeyboardSize {
+    var title: String {
+        switch self { case .full: "Full"; case .tkl: "Tenkeyless"; case .percent75: "75%"; case .percent65: "65%"; case .percent60: "60%"; case .unknown: "Unknown" }
+    }
+}
+
 extension ConfigBindingGroup {
     var title: String {
         switch self { case .movement: "Movement"; case .combat: "Combat"; case .communication: "Communication"; case .gameUI: "Game & UI" }
@@ -119,6 +125,36 @@ enum ConfigKeyboardLayout {
     }
 }
 
+enum ConfigKeyboardDirection: Sendable { case up, down, left, right }
+
+extension ConfigKeyboardLayout {
+    /// The drawing's one Tab stop: the chosen key when it's drawn (by position, else by game
+    /// key), otherwise the first key. Every other key is reached with the arrow keys.
+    static func entry(in keys: [ConfigKeyboardKey], selectedVirtualKey: UInt16?, selectedKey: EngineKey?, source: InputSourceSnapshot) -> UInt16? {
+        if let selectedVirtualKey, keys.contains(where: { $0.virtualKey == selectedVirtualKey }) { return selectedVirtualKey }
+        if selectedVirtualKey == nil, let selectedKey,
+           let match = keys.first(where: { source.mapping(virtualKey: $0.virtualKey).engineKey == selectedKey }) { return match.virtualKey }
+        return keys.first?.virtualKey
+    }
+    /// Arrow keys follow the drawing: the nearest row (or column) in that direction first, then
+    /// the closest key along it, so Up from W is 2, not F2 two rows up; nil at the edge.
+    static func neighbor(of virtualKey: UInt16, _ direction: ConfigKeyboardDirection, in keys: [ConfigKeyboardKey]) -> UInt16? {
+        guard let from = keys.first(where: { $0.virtualKey == virtualKey }) else { return nil }
+        let cx = from.x + from.width / 2, cy = from.y + from.height / 2
+        let candidates = keys.filter { $0.virtualKey != from.virtualKey }.compactMap { key -> (UInt16, Double)? in
+            let dx = key.x + key.width / 2 - cx, dy = key.y + key.height / 2 - cy
+            switch direction {
+            case .left where dx < -0.3: return (key.virtualKey, abs(dx) + abs(dy) * 10)
+            case .right where dx > 0.3: return (key.virtualKey, abs(dx) + abs(dy) * 10)
+            case .up where dy < -0.3: return (key.virtualKey, abs(dy) * 10 + abs(dx))
+            case .down where dy > 0.3: return (key.virtualKey, abs(dy) * 10 + abs(dx))
+            default: return nil
+            }
+        }
+        return candidates.min { $0.1 < $1.1 }?.0
+    }
+}
+
 // MARK: - Advanced binds drafts
 
 /// An editable advanced bind. `chain` is nil until it is complete enough for B2.
@@ -159,6 +195,8 @@ struct ConfigChainDraft: Equatable {
     }
     var id: String
     var isNew: Bool
+    /// What people call it; blank leaves the bind unnamed.
+    var name = ""
     var key: String = ""
     var kind: Kind = .several
     var commands: [Step] = [Step(kind: .action, text: "+gostand")]
@@ -168,16 +206,26 @@ struct ConfigChainDraft: Equatable {
 
     var chain: ConfigChain? {
         guard !key.isEmpty else { return nil }
+        let behavior: ConfigChainBehavior
         switch kind {
         case .several:
             let lines = commands.filter { !$0.isEmpty }.map(\.command)
-            return lines.isEmpty ? nil : ConfigChain(id: id, key: key, behavior: .commands(lines))
+            guard !lines.isEmpty else { return nil }
+            behavior = .commands(lines)
         case .toggle:
-            return setting.isEmpty || values.count < 2 ? nil : ConfigChain(id: id, key: key, behavior: .settingCycle(name: setting, values: values))
+            guard !setting.isEmpty, values.count >= 2 else { return nil }
+            behavior = .settingCycle(name: setting, values: values)
         case .cycle:
             let lines = steps.filter { !$0.isEmpty }.map { [$0.command] }
-            return lines.count < 2 ? nil : ConfigChain(id: id, key: key, behavior: .commandCycle(steps: lines))
+            guard lines.count >= 2 else { return nil }
+            behavior = .commandCycle(steps: lines)
         }
+        return ConfigChain(id: id, key: key, behavior: behavior, name: displayName)
+    }
+    /// The trimmed name, or nil when it's blank.
+    var displayName: String? {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
     init(newID existing: [String]) {
         var number = existing.count + 1
@@ -185,7 +233,7 @@ struct ConfigChainDraft: Equatable {
         id = "bind_\(number)"; isNew = true
     }
     init(chain: ConfigChain) {
-        id = chain.id; isNew = false; key = chain.key
+        id = chain.id; isNew = false; key = chain.key; name = chain.name ?? ""
         switch chain.behavior {
         case .commands(let lines):
             kind = .several; commands = lines.map { Self.step($0) }
@@ -321,7 +369,7 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
     func describe(_ entry: ConfigBindingEntry?) -> String {
         guard let entry else { return "Not bound" }
         if let action = action(named: entry.actionName) { return action.title }
-        if ownedChain(on: entry.key) != nil { return "Advanced bind" }
+        if let chain = ownedChain(on: entry.key) { return chain.name ?? "Advanced bind" }
         let kind = studio.current.map { ConfigChains.inspect(key: entry.key.spelling, document: $0.document).kind }
         switch kind {
         case .multiCommand?: return "Several commands"
@@ -349,9 +397,10 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
     func cancelCapture() {
         if let capture, capture.state == .listening || capture.isMonitoring { capture.cancel() }
         target = nil; captureNote = nil
+        stopSetup()
     }
     /// The game took over: listening stops at once.
-    func gameStarted() { capture?.gameDidStart(); target = nil; captureNote = nil }
+    func gameStarted() { capture?.gameDidStart(); target = nil; captureNote = nil; stopSetup() }
 
     private func captureChanged() {
         guard let capture else { return }
@@ -510,6 +559,25 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
             preview()
         } catch { chainError = message(error) }
     }
+    /// A card's title: the bind's name, else what it does.
+    func title(of draft: ConfigChainDraft) -> String { draft.displayName ?? summary(of: draft) }
+    func summary(of draft: ConfigChainDraft) -> String {
+        switch draft.kind {
+        case .several: return draft.commands.map { words([Data($0.command.utf8)])?.text ?? $0.command }.joined(separator: ", then ")
+        case .toggle: return studio.spec(named: draft.setting)?.title ?? draft.setting
+        case .cycle: return "Cycle of \(draft.steps.count)"
+        }
+    }
+    /// The card's second line; a named bind also says what it does.
+    func detail(of draft: ConfigChainDraft) -> String {
+        let named = draft.displayName != nil
+        switch draft.kind {
+        case .several: return named ? summary(of: draft) : "On one press"
+        case .toggle: return (named ? summary(of: draft) + ": " : "Each press: ") + draft.values.joined(separator: " → ")
+        case .cycle: return "Each press: " + draft.steps.map { $0.text.isEmpty ? "…" : $0.text }.joined(separator: " → ")
+        }
+    }
+
     func deleteChain(undo: UndoManager? = nil) {
         guard let draft, let current = studio.current, let session = studio.session else { return }
         if draft.isNew { self.draft = nil; chainID = nil; preview(); return }
@@ -588,6 +656,115 @@ struct ConfigCommandWords: Equatable { let text: String; let literal: Bool }
         let helpers = ConfigDocument.text(edit.script).split(whereSeparator: \.isNewline).map(String.init)
         return [trigger] + helpers
     }
+
+    // MARK: Keyboard and pointer setup
+
+    /// Press keys to verify, while it runs.
+    @Published private(set) var verification: KeyboardVerification?
+    /// Learn button positions, while it runs.
+    @Published private(set) var learning: PointerButtonLearning?
+    private var setupSource: (any BindingCaptureEventSource)?
+
+    var keyboard: InputDevice? { devices.devices.first { $0.id == keyboardID } ?? devices.devices.first { $0.kind == .keyboard } }
+    var mouse: InputDevice? { devices.devices.first { $0.kind == .mouse } }
+    private var mouseKey: String { mouse?.id ?? "mouse" }
+
+    /// Listens to this window only, like key capture; refused while the game owns the loadout.
+    private func listen(_ handler: @escaping @MainActor (BindingCaptureEvent) -> BindingCaptureDisposition) -> Bool {
+        cancelCapture()
+        guard !studio.gameRunning else { return false }
+        guard let source = makeSource(window) else {
+            studio.failure = ConfigStudioFailure(title: "Can’t listen for keys here", message: "Open Configs in its window, then try again.", retry: nil)
+            return false
+        }
+        setupSource = source
+        source.start(handler)
+        return true
+    }
+    /// Every exit path (finish, Escape, Cancel, focus loss, the game starting, leaving) ends here.
+    func stopSetup() {
+        setupSource?.stop(); setupSource = nil
+        verification = nil; learning = nil
+    }
+
+    /// Keys answer the questions and are consumed; clicks still reach the panel's buttons.
+    func beginVerification() {
+        guard let id = keyboard?.id else { return }
+        let started = listen { [weak self] event in
+            guard let self, var flow = self.verification else { return .passThrough }
+            switch event {
+            case .key(virtualKey: 53, pressed: true, repeated: _): self.stopSetup(); return .consume
+            case .key(let key, true, false), .keyPulse(let key): flow.press(key)
+            case .key: return .consume
+            case .mouse, .wheel: return .passThrough
+            case .focusLost, .gameStarted: self.stopSetup(); return .passThrough
+            }
+            self.update(flow, keyboard: id)
+            return .consume
+        }
+        if started { verification = KeyboardVerification(); studio.announce(KeyboardVerification.Step.besideShift.instruction) }
+    }
+    /// “I Don’t Have This Key.”
+    func skipVerificationStep() {
+        guard var flow = verification, let id = keyboard?.id else { return }
+        flow.skip()
+        update(flow, keyboard: id)
+    }
+    private func update(_ flow: KeyboardVerification, keyboard id: String) {
+        guard let result = flow.result else {
+            // Each new question is spoken once; a retry note is visible beside it.
+            if flow.step != verification?.step { studio.announce(flow.step.instruction) }
+            verification = flow; return
+        }
+        devices.setOverride(result, for: id)
+        stopSetup()
+        let words = [result.shape?.rawValue.uppercased(), result.size?.title, result.modifiers == .pc ? "PC labels" : "Mac labels"].compactMap { $0 }
+        studio.announce("Keyboard confirmed: \(words.joined(separator: ", ")).")
+    }
+
+    /// Clicks are the answers and are consumed, so they can't press a control. Return skips a
+    /// button the mouse doesn't have (and finishes the extras); Escape stops.
+    func beginLearning() {
+        let id = mouseKey
+        let started = listen { [weak self] event in
+            guard let self, var flow = self.learning else { return .passThrough }
+            switch event {
+            case .mouse(let button, let pressed): if pressed { flow.click(button) }
+            case .key(virtualKey: 53, pressed: true, repeated: _): self.stopSetup(); return .consume
+            case .key(virtualKey: 36, pressed: true, repeated: false), .key(virtualKey: 76, pressed: true, repeated: false): flow.skip()
+            case .key, .keyPulse, .wheel: return .passThrough
+            case .focusLost, .gameStarted: self.stopSetup(); return .passThrough
+            }
+            self.update(flow, mouse: id)
+            return .consume
+        }
+        if started { learning = PointerButtonLearning(); studio.announce(PointerButtonPosition.left.instruction) }
+    }
+    /// “I Don’t Have This Button”, or Done for the extra buttons.
+    func skipLearningStep() {
+        guard var flow = learning else { return }
+        flow.skip()
+        update(flow, mouse: mouseKey)
+    }
+    private func update(_ flow: PointerButtonLearning, mouse id: String) {
+        guard let result = flow.result else {
+            if flow.step != learning?.step {
+                if case .position(let position) = flow.step { studio.announce(position.instruction) }
+                else { studio.announce("Click any other buttons your mouse has. Press Return when you’re done.") }
+            }
+            learning = flow; return
+        }
+        devices.setLearnedButtons(result, for: id)
+        stopSetup()
+        studio.announce("Learned your mouse buttons.")
+    }
+    /// Where a game mouse button sits on this mouse, once learned.
+    func pointerButtonDetail(_ key: EngineKey) -> String? {
+        guard let map = devices.learnedButtons[mouseKey], (200...204).contains(key.number) else { return nil }
+        return map.position(appKitButton: key.number - 200)?.title ?? "Not on your mouse"
+    }
+    /// Buttons beyond the five the game reads, as learned.
+    var pointerExtras: [Int] { devices.learnedButtons[mouseKey]?.extras ?? [] }
 
     /// Windows export: B2 compiles helpers to archived lines and refuses what it can't carry.
     /// B2's refusals in the words of this screen, each saying what to change.

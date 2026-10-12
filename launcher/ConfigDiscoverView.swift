@@ -448,7 +448,9 @@ private struct PlayerDetailPage: View {
                 if let entry = discover.entry(entryID) {
                     PlayerHero(entry: entry, saved: discover.isSaved(entry.id), image: entry.favoriteMap.flatMap { artwork.image(for: $0) },
                                canTry: discover.studio.session != nil && !discover.studio.isReadOnly,
-                               tryIt: { discover.tryEntry(entry) }, toggleSaved: { discover.setSaved(entry.id, !discover.isSaved(entry.id)) })
+                               canCompare: discover.studio.session != nil && discover.canCompare(entry.id),
+                               tryIt: { discover.tryEntry(entry) }, compare: { discover.compareInExpert(entry) },
+                               toggleSaved: { discover.setSaved(entry.id, !discover.isSaved(entry.id)) })
                     // Two columns (1.25 : 1, as drawn) when there's room; one column at the minimum window size.
                     Group {
                         if width >= 760 {
@@ -479,7 +481,9 @@ private struct PlayerHero: View {
     var saved: Bool
     var image: NSImage?
     var canTry: Bool
+    var canCompare: Bool
     var tryIt: () -> Void
+    var compare: () -> Void
     var toggleSaved: () -> Void
     // Text sits on the scrim over the art, so it keeps the dark-appearance inks in both appearances.
     private let ink = Palette.dark
@@ -525,6 +529,9 @@ private struct PlayerHero: View {
             HStack(spacing: 8) {
                 Button("Try This Setup", action: tryIt).prominentAction().actionControlSize().disabled(!canTry)
                     .help("Review this setup line by line. Trying it makes a new loadout; your others stay as they are.")
+                // Available once their setup is downloaded and reviewed below; comparing writes nothing.
+                Button("Compare in Expert", action: compare).glassAction().actionControlSize().disabled(!canCompare)
+                    .help("See their values beside yours in Expert, setting by setting.")
                 Button(action: toggleSaved) {
                     Image(systemName: saved ? "bookmark.fill" : "bookmark").font(.system(size: 15)).frame(width: 16, height: 16)
                 }

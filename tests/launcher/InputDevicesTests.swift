@@ -129,10 +129,69 @@ enum InputDevicesTests {
         require(model.devices[1].buttonCount == 8, "report real extra buttons without binding them")
         print("PASS: input-source/device refresh, labelled guesses, overrides, unchanged binding identity")
     }
+    /// Press keys to verify: each answer is a physical key position, never a guess from labels.
+    @MainActor static func verification() {
+        func answers(_ steps: [UInt16?]) -> KeyboardVerification {
+            var flow = KeyboardVerification()
+            for step in steps { if let key = step { flow.press(key) } else { flow.skip() } }
+            return flow
+        }
+        var flow = KeyboardVerification()
+        require(flow.step == .besideShift && !flow.canSkip, "every keyboard has a key beside left Shift, so the first step can't be skipped")
+        flow.press(0)
+        require(flow.step == .besideShift && flow.note != nil && flow.result == nil, "a different key is explained and the step stays")
+        flow.press(50)
+        require(flow.step == .besideSpace && flow.note == nil, "the extra key beside Shift identifies ISO")
+        flow.press(58)
+        require(flow.step == .keypad && flow.canSkip, "Option beside Space means PC modifier labels")
+        flow.press(19)
+        require(flow.step == .keypad && flow.note?.contains("keypad") == true, "a number-row digit isn't taken for the keypad")
+        flow.skip(); flow.press(122); flow.press(115)
+        require(flow.step == .done && flow.result == InputDeviceOverride(shape: .iso, size: .tkl, modifiers: .pc, verified: true),
+                "ISO, PC labels, function row and Home make a verified tenkeyless override")
+        require(answers([6, 55, nil, 122, nil]).result == InputDeviceOverride(shape: .ansi, size: .percent75, modifiers: .mac, verified: true), "ANSI Mac 75%")
+        require(answers([6, 102, 82]).result == InputDeviceOverride(shape: .jis, size: .full, modifiers: .mac, verified: true), "英数 beside Space is JIS; a keypad is full size")
+        require(answers([6, 55, nil, nil, 123]).result?.size == .percent65, "no function row, but arrows: 65%")
+        require(answers([6, 55, nil, nil, nil]).result?.size == .percent60, "no function row and no arrows: 60%")
+        require(answers([6, 55, nil, nil]).step == .arrows && answers([6, 55, nil, 122]).step == .navigation, "65% and 60% are told apart by the arrows")
+
+        let model = InputDevicesModel(provider: DeviceFixture()), keyboard = model.devices[0]
+        require(model.presentation(for: keyboard).size.explanation.hasPrefix("Estimated"), "a guessed size says Estimated until confirmed")
+        model.setOverride(flow.result, for: keyboard.id)
+        let verified = model.presentation(for: keyboard)
+        require(verified.shape.basis == .verified && verified.size.basis == .verified && verified.modifiers.basis == .verified, "a verified answer is its own basis")
+        require(verified.size.explanation == "You confirmed this by pressing keys", "the explanation says how it was confirmed")
+        print("PASS: Press keys to verify finds shape, modifier labels and size from physical key positions")
+    }
+    /// Learn button positions: which physical button sends which number, and what the game can use.
+    @MainActor static func learning() {
+        var flow = PointerButtonLearning()
+        require(flow.step == .position(.left), "learning starts with the left button")
+        flow.click(0); flow.click(1)
+        flow.click(0)
+        require(flow.step == .position(.wheel) && flow.note?.contains("left") == true, "a button already learned is explained, not reused")
+        flow.click(2); flow.click(4); flow.click(3)
+        require(flow.step == .extras, "the five positions the game can use come first")
+        flow.click(6)
+        require(flow.extras == [6] && flow.note?.contains("can’t use") == true, "a seventh button is explained as unusable by the game")
+        flow.skip()
+        let map = flow.result
+        require(flow.step == .done && map?.buttons == [.left: 0, .right: 1, .wheel: 2, .back: 4, .forward: 3] && map?.extras == [6], "every position is recorded as clicked")
+        require(map?.position(appKitButton: 3) == .forward && map?.position(appKitButton: 4) == .back, "side buttons are placed as learned")
+        var short = PointerButtonLearning()
+        short.click(0); short.click(1); short.skip(); short.skip(); short.skip(); short.skip()
+        require(short.result?.buttons == [.left: 0, .right: 1] && short.result?.position(appKitButton: 2) == nil, "missing buttons stay missing")
+        let model = InputDevicesModel(provider: DeviceFixture())
+        model.setLearnedButtons(map, for: "mouse")
+        require(model.learnedButtons["mouse"] == map, "the learned map is kept for the device")
+        print("PASS: Learn button positions places side buttons and explains extra buttons")
+    }
     @MainActor static func run(_ fixture: String) throws {
         try engineMapping(fixture)
         layouts()
         devices()
+        verification()
+        learning()
     }
     @MainActor static func systemProbe() throws {
         let provider = SystemInputDeviceProvider(), source = provider.inputSource(), devices = provider.devices()

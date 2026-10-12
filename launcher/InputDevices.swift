@@ -44,9 +44,11 @@ struct InputDeviceOverride: Equatable, Sendable {
     var shape: KeyboardShape? = nil
     var size: KeyboardSize? = nil
     var modifiers: KeyboardModifierStyle? = nil
+    /// Set by Press keys to verify; any later manual choice clears it.
+    var verified = false
 }
 struct InputDeviceChoice<Value: Equatable & Sendable>: Equatable, Sendable {
-    enum Basis: Sendable { case detected, guessed, userOverride, unknown }
+    enum Basis: Sendable { case detected, guessed, userOverride, verified, unknown }
     let value: Value
     let basis: Basis
     let explanation: String
@@ -67,6 +69,8 @@ struct InputDevicePresentation: Sendable {
     @Published private(set) var inputSource: InputSourceSnapshot
     @Published private(set) var devices: [InputDevice]
     @Published private(set) var overrides: [String: InputDeviceOverride] = [:]
+    /// Learn button positions, by pointing device. Kept while the launcher runs.
+    @Published private(set) var learnedButtons: [String: PointerButtonMap] = [:]
     private let provider: any InputDeviceProvider
     init(provider: any InputDeviceProvider) {
         self.provider = provider
@@ -76,8 +80,10 @@ struct InputDevicePresentation: Sendable {
     func stopObserving() { provider.stopObserving() }
     func refresh() { inputSource = provider.inputSource(); devices = provider.devices() }
     func setOverride(_ value: InputDeviceOverride?, for deviceID: String) { overrides[deviceID] = value }
+    func setLearnedButtons(_ value: PointerButtonMap?, for deviceID: String) { learnedButtons[deviceID] = value }
     func presentation(for device: InputDevice) -> InputDevicePresentation {
         let override = overrides[device.id] ?? .init(), name = device.name.lowercased()
+        let yours = override.verified ? "You confirmed this by pressing keys" : nil
         let size: KeyboardSize
         if name.contains("60%") { size = .percent60 }
         else if name.contains("65%") { size = .percent65 }
@@ -87,13 +93,177 @@ struct InputDevicePresentation: Sendable {
         else { size = .unknown }
         return .init(device: device,
             shape: .init(value: override.shape ?? device.keyboardShape ?? inputSource.shape,
-                         basis: override.shape != nil ? .userOverride : device.keyboardShape != nil ? .detected : .guessed,
-                         explanation: override.shape != nil ? "Your keyboard shape" : device.keyboardShape != nil ? "macOS keyboard identification" : "Current macOS keyboard shape; this device does not report its own"),
-            size: .init(value: override.size ?? size, basis: override.size != nil ? .userOverride : size == .unknown ? .unknown : .guessed,
-                        explanation: override.size != nil ? "Your keyboard size" : size == .unknown ? "Choose your keyboard size" : "Guess from the device name; choose a different size if needed"),
+                         basis: override.shape != nil ? (override.verified ? .verified : .userOverride) : device.keyboardShape != nil ? .detected : .guessed,
+                         explanation: override.shape != nil ? yours ?? "Your keyboard shape" : device.keyboardShape != nil ? "macOS keyboard identification" : "Current macOS keyboard shape; this device does not report its own"),
+            size: .init(value: override.size ?? size, basis: override.size != nil ? (override.verified ? .verified : .userOverride) : size == .unknown ? .unknown : .guessed,
+                        explanation: override.size != nil ? yours ?? "Your keyboard size" : size == .unknown ? "Choose your keyboard size, or press keys to verify it" : "Estimated from the device name. Press keys to verify it, or choose a size"),
             modifiers: .init(value: override.modifiers ?? (device.vendorID == 0x05ac ? .mac : .pc),
-                             basis: override.modifiers != nil ? .userOverride : .guessed,
-                             explanation: override.modifiers != nil ? "Your modifier labels" : "Guess from the keyboard vendor"))
+                             basis: override.modifiers != nil ? (override.verified ? .verified : .userOverride) : .guessed,
+                             explanation: override.modifiers != nil ? yours ?? "Your modifier labels" : "Guess from the keyboard vendor"))
+    }
+}
+
+/// Press keys to verify: each answer is a physical key position (macOS virtual key code),
+/// so it holds whatever the layout prints on the keys. Nothing here listens for input.
+struct KeyboardVerification: Equatable, Sendable {
+    enum Step: Equatable, Sendable {
+        case besideShift, besideSpace, keypad, functionRow, navigation, arrows, done
+        var instruction: String {
+            switch self {
+            case .besideShift: "Press the key just to the right of the left Shift key."
+            case .besideSpace: "Press the key just to the left of the space bar."
+            case .keypad: "Press a number on the numeric keypad, the block of number keys at the right."
+            case .functionRow: "Press F1, at the top left. On a Mac keyboard, hold fn while you press it."
+            case .navigation: "Press Home, End, Page Up or Page Down: a key with that name, not fn with an arrow."
+            case .arrows: "Press any arrow key."
+            case .done: "Done."
+            }
+        }
+    }
+    private(set) var step: Step = .besideShift
+    /// Why the last key didn't answer this step.
+    private(set) var note: String?
+    private var iso = false
+    private var shape: KeyboardShape?
+    private var modifiers: KeyboardModifierStyle?
+    private var size: KeyboardSize?
+
+    /// Every keyboard has the first two keys, so only the size questions can be skipped.
+    var canSkip: Bool { ![.besideShift, .besideSpace, .done].contains(step) }
+    var result: InputDeviceOverride? {
+        guard step == .done, let shape, let modifiers, let size else { return nil }
+        return .init(shape: shape, size: size, modifiers: modifiers, verified: true)
+    }
+
+    static let keypad: Set<UInt16> = [65, 67, 69, 71, 75, 76, 78, 81, 82, 83, 84, 85, 86, 87, 88, 89, 91, 92]
+    static let numberRow: Set<UInt16> = [18, 19, 20, 21, 22, 23, 25, 26, 28, 29]
+    static let functionKeys: Set<UInt16> = [122, 120, 99, 118, 96, 97, 98, 100, 101, 109, 103, 111]
+    static let navigationKeys: Set<UInt16> = [114, 115, 116, 117, 119, 121]
+    static let arrowKeys: Set<UInt16> = [123, 124, 125, 126]
+
+    mutating func press(_ virtualKey: UInt16) {
+        note = nil
+        switch step {
+        case .besideShift:
+            // ISO has an extra key between left Shift and Z (macOS reports it as 50); elsewhere it's Z.
+            if virtualKey == 50 { iso = true; step = .besideSpace }
+            else if virtualKey == 6 { iso = false; step = .besideSpace }
+            else { note = "That’s a different key. Press the key right next to the left Shift key." }
+        case .besideSpace:
+            // Mac keyboards put Command there; PC keyboards put Alt, which macOS reads as Option;
+            // JIS keyboards put 英数 (Eisu) there.
+            switch virtualKey {
+            case 55: modifiers = .mac; shape = iso ? .iso : .ansi
+            case 58: modifiers = .pc; shape = iso ? .iso : .ansi
+            case 102: modifiers = .mac; shape = iso ? .iso : .jis
+            default: note = "That’s a different key. Press the one right next to the left end of the space bar."; return
+            }
+            step = .keypad
+        case .keypad:
+            if Self.keypad.contains(virtualKey) { size = .full; step = .done }
+            else if Self.numberRow.contains(virtualKey) { note = "That’s a number above the letters. Press one on the keypad, or choose I Don’t Have This Key." }
+            else { note = "That key isn’t on a numeric keypad. Press a keypad number, or choose I Don’t Have This Key." }
+        case .functionRow:
+            if Self.functionKeys.contains(virtualKey) { step = .navigation }
+            else { note = "That isn’t a function key. Press F1, holding fn on a Mac keyboard, or choose I Don’t Have This Key." }
+        case .navigation:
+            if Self.navigationKeys.contains(virtualKey) { size = .tkl; step = .done }
+            else { note = "That isn’t Home, End, Page Up or Page Down. Press one of them, or choose I Don’t Have This Key." }
+        case .arrows:
+            if Self.arrowKeys.contains(virtualKey) { size = .percent65; step = .done }
+            else { note = "That isn’t an arrow key. Press one, or choose I Don’t Have This Key." }
+        case .done: break
+        }
+    }
+    /// “I don’t have this key.”
+    mutating func skip() {
+        guard canSkip else { return }
+        note = nil
+        switch step {
+        case .keypad: step = .functionRow
+        case .functionRow: step = .arrows
+        case .navigation: size = .percent75; step = .done
+        case .arrows: size = .percent60; step = .done
+        default: break
+        }
+    }
+}
+
+/// The physical buttons Learn button positions asks for, in order.
+enum PointerButtonPosition: String, CaseIterable, Sendable {
+    case left, right, wheel, back, forward
+    var title: String {
+        switch self {
+        case .left: "Left button"; case .right: "Right button"; case .wheel: "Wheel button"
+        case .back: "Back side button"; case .forward: "Forward side button"
+        }
+    }
+    var instruction: String {
+        switch self {
+        case .left: "Click the left button."
+        case .right: "Click the right button."
+        case .wheel: "Press down on the scroll wheel."
+        case .back: "Click the side button nearer your wrist (usually Back)."
+        case .forward: "Click the side button further forward (usually Forward)."
+        }
+    }
+}
+
+/// Which AppKit button number each physical button sends. The game reads button numbers 0–4
+/// as Mouse 1–5; anything above that never reaches it.
+struct PointerButtonMap: Equatable, Sendable {
+    let buttons: [PointerButtonPosition: Int]
+    let extras: [Int]
+    func position(appKitButton: Int) -> PointerButtonPosition? { buttons.first { $0.value == appKitButton }?.key }
+}
+
+/// Learn button positions: a pure record of clicks. Nothing here listens for input.
+struct PointerButtonLearning: Equatable, Sendable {
+    enum Step: Equatable, Sendable { case position(PointerButtonPosition), extras, done }
+    private(set) var step: Step = .position(.left)
+    private(set) var learned: [PointerButtonPosition: Int] = [:]
+    private(set) var extras: [Int] = []
+    private(set) var note: String?
+    var result: PointerButtonMap? { step == .done ? PointerButtonMap(buttons: learned, extras: extras) : nil }
+
+    static func usable(_ button: Int) -> Bool { EngineInputMapping.mouseKeyNumber(appKitButton: button) != nil }
+    static func explanation(_ button: Int) -> String {
+        usable(button) ? "The game reads it as Mouse \(button + 1)."
+            : "The original game can’t use it. Map it to a key in your mouse’s software."
+    }
+
+    mutating func click(_ button: Int) {
+        if let owner = learned.first(where: { $0.value == button })?.key {
+            if case .position(let position) = step {
+                note = "That’s your \(owner.title.lowercased()). \(position.instruction) If your mouse doesn’t have one, choose I Don’t Have This Button."
+            } else {
+                note = "That’s your \(owner.title.lowercased())."
+            }
+            return
+        }
+        switch step {
+        case .position(let position):
+            learned[position] = button
+            note = Self.usable(button) ? nil : "Button \(button + 1): \(Self.explanation(button))"
+            advance(from: position)
+        case .extras:
+            if !extras.contains(button) { extras.append(button) }
+            note = "Button \(button + 1): \(Self.explanation(button))"
+        case .done: break
+        }
+    }
+    /// “I don’t have this button” for a position; “Done” for the extra buttons.
+    mutating func skip() {
+        switch step {
+        case .position(let position): note = nil; advance(from: position)
+        case .extras: note = nil; step = .done
+        case .done: break
+        }
+    }
+    private mutating func advance(from position: PointerButtonPosition) {
+        let all = PointerButtonPosition.allCases
+        let next = all.firstIndex(of: position).map { all.index(after: $0) } ?? all.endIndex
+        step = next < all.endIndex ? .position(all[next]) : .extras
     }
 }
 

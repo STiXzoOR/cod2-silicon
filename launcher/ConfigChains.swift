@@ -11,6 +11,9 @@ struct ConfigChain: Codable, Equatable, Sendable, Identifiable {
     let id: String
     let key: String
     let behavior: ConfigChainBehavior
+    /// What people call the bind. Launcher metadata only: never compiled or written for the game,
+    /// and omitted from the stored definition when nil, so unnamed binds keep their exact bytes.
+    var name: String? = nil
 }
 
 enum ConfigChainIssue: Equatable, Sendable {

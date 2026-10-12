@@ -167,7 +167,8 @@ final class SnapshotWindow: NSWindow {
                                 "discover-unavailable", "discover-players", "discover-saved", "discover-player", "configs-import",
                                 "configs-import-everything", "servers-ready", "servers-ready-fixed",
                                 "configs-binds-list", "configs-binds-advanced", "configs-binds-visual", "configs-checkup",
-                                "configs-guided-rules", "configs-expert-rules"]
+                                "configs-guided-rules", "configs-expert-rules",
+                                "configs-binds-verify", "configs-binds-learn", "configs-expert-player"]
 
     @MainActor static func main() {
         let arguments = CommandLine.arguments
@@ -543,6 +544,15 @@ final class SnapshotWindow: NSWindow {
     func stopObserving() {}
 }
 
+/// Holds Press keys to verify or Learn button positions open at a chosen step for a still
+/// capture. It never installs an event monitor, so it never hears the reviewer's input.
+@MainActor final class PreviewCaptureSource: BindingCaptureEventSource {
+    private var handler: (@MainActor (BindingCaptureEvent) -> BindingCaptureDisposition)?
+    func start(_ handler: @escaping @MainActor (BindingCaptureEvent) -> BindingCaptureDisposition) { self.handler = handler }
+    func stop() { handler = nil }
+    func send(_ event: BindingCaptureEvent) { _ = handler?(event) }
+}
+
 /// Synthetic loadouts for the Config Studio screens, written through the real store into a
 /// private temporary home. Test preview data only: generic loadout names, no real players.
 @MainActor enum ConfigsPreview {
@@ -601,7 +611,7 @@ final class SnapshotWindow: NSWindow {
         if screen.hasPrefix("configs-binds") {
             // Two advanced binds made through B2: a toggle and a cycle of messages.
             main = try store.read(id: "Main")
-            let chains = [ConfigChain(id: "fps_counter", key: "m", behavior: .settingCycle(name: "cg_drawFPS", values: ["Off", "Simple"])),
+            let chains = [ConfigChain(id: "fps_counter", key: "m", behavior: .settingCycle(name: "cg_drawFPS", values: ["Off", "Simple"]), name: "Frame counter"),
                           ConfigChain(id: "greetings", key: "n", behavior: .commandCycle(steps: [["say gl"], ["say hf"], ["say gg"]]))]
             try ConfigChains.apply(try ConfigChains.prepare(chains: chains, read: main), to: store)
         }
@@ -611,6 +621,8 @@ final class SnapshotWindow: NSWindow {
         let session = try ConfigStudioSession(home: home, dialect: .cod2x, discoverGames: { running ? [4242] : [] })
         try session.refresh()
         model.studio.deviceProvider = { PreviewInputProvider() }
+        let setup = PreviewCaptureSource()
+        if screen == "configs-binds-verify" || screen == "configs-binds-learn" { model.studio.captureSource = { _ in setup } }
         model.studio.attach(session)
         model.studio.loadCatalogNow()
         model.studio.checkup.load()
@@ -625,6 +637,20 @@ final class SnapshotWindow: NSWindow {
         case "configs-binds-visual": model.studio.binds.layout = .visual; model.studio.binds.selectedKey = EngineKey(spelling: "w")
         case "configs-binds-advanced": model.studio.binds.selectChain("greetings"); model.studio.binds.showLines = true
         case "configs-checkup", "configs-guided-rules", "configs-expert-rules": model.studio.checkup.rulesetIDs = ["zpam-4.08"]
+        case "configs-binds-verify":
+            // Second question, after a key that isn't the answer: the note shows beside it.
+            model.page = .configs; model.studio.tab = .binds; model.studio.binds.layout = .visual
+            model.studio.binds.selectedKey = EngineKey(spelling: "w")
+            model.studio.binds.beginVerification()
+            setup.send(.key(virtualKey: 6, pressed: true)); setup.send(.key(virtualKey: 6, pressed: false))
+            setup.send(.key(virtualKey: 0, pressed: true)); setup.send(.key(virtualKey: 0, pressed: false))
+        case "configs-binds-learn":
+            // Left and right learned; the wheel is next.
+            model.page = .configs; model.studio.tab = .binds; model.studio.binds.layout = .visual
+            model.studio.binds.selectedKey = EngineKey(spelling: "w")
+            model.studio.binds.beginLearning()
+            for button in [0, 1] { setup.send(.mouse(button: button, pressed: true)); setup.send(.mouse(button: button, pressed: false)) }
+        case "configs-expert-player": model.page = .configs
         default: break
         }
         return home
@@ -650,12 +676,17 @@ final class SnapshotWindow: NSWindow {
         case "discover-saved":
             try await fixture()
             discover.setSaved("player-2", true); discover.setSaved("player-4", true)
-        case "discover-player":
+        case "discover-player", "configs-expert-player":
             try await fixture()
             discover.open(.player("player-1"))
             for _ in 0..<200 {
                 guard case .loading? = discover.detail?.phase else { break }
                 try? await Task.sleep(for: .milliseconds(20))
+            }
+            if screen == "configs-expert-player", let entry = discover.entry("player-1") {
+                // Compare from the player's page: Expert, Aim & input, with the player's markers.
+                discover.compareInExpert(entry)
+                model.studio.group = .aim
             }
         case "configs-import", "configs-import-everything":
             try await fixture()
@@ -824,9 +855,133 @@ final class SnapshotWindow: NSWindow {
                 print("FAIL: clicking E selected \(String(describing: visualModel.studio.binds.selectedVirtualKey)) with focus on “\(focusLabel)”"); return false
             }
             print("PASS: clicking E in Visual selected it and gave it the keyboard focus")
+            guard await deviceSetupActions(model: visualModel, window: visual) else { return false }
         }
+        guard await compareAction() else { return false }
         guard await importAction() else { return false }
-        return await readyAction()
+        guard await readyAction() else { return false }
+        // Last, so a window that keeps synthesized keys from SwiftUI can't hide the checks above.
+        return await tabExitAction()
+    }
+
+    /// The drawing is one Tab stop: after a click on E, Tab leaves the keyboard instead of
+    /// visiting each key. Read back the way VoiceOver reads focus.
+    static func tabExitAction() async -> Bool {
+        guard let (model, window, home) = await open("configs-binds-visual", dark: true) else { return false }
+        defer { window.orderOut(nil); window.close(); try? FileManager.default.removeItem(at: home) }
+        let keys = AccessibilityTree.elements(of: window).filter { $0.role == "AXButton" && $0.label.contains(", ") && KeyLabels.drawn.contains(where: $0.label.hasPrefix) }
+        guard let keyE = keys.first(where: { $0.label.hasPrefix("E, ") }) else { print("FAIL: key E isn't in the accessibility tree"); return false }
+        window.makeKey()
+        click(window, element: keyE)
+        try? await Task.sleep(for: .milliseconds(400))
+        guard model.studio.binds.selectedVirtualKey == 14 else { print("FAIL: clicking E did not select it"); return false }
+        press(window, keyCode: 48, characters: "\t")
+        try? await Task.sleep(for: .milliseconds(400))
+        let focus = AccessibilityTree.attribute(AccessibilityTree.application, kAXFocusedUIElementAttribute).map { $0 as! AXUIElement }
+        let label = focus.map { AccessibilityTree.text($0, kAXDescriptionAttribute) } ?? ""
+        guard !label.isEmpty, !keys.contains(where: { $0.label == label }) else {
+            print("FAIL: Tab from E left the focus on “\(label)”, still on the keyboard drawing"); return false
+        }
+        print("PASS: Tab from the keyboard drawing left it in one step (focus on “\(label)”)")
+        return true
+    }
+
+    /// Key names the ANSI drawing speaks first in each key's label (“E, Not bound”).
+    enum KeyLabels {
+        static let drawn: [String] = "QWERTYUIOPASDFGHJKLZXCVBNM1234567890".map { "\($0), " }
+            + ["Space, ", "Command, ", "Option, ", "Control, ", "Shift, ", "Right ", "tab, ", "caps, ", "return, ", "delete, ", "esc, ", "fn, ", "F"]
+    }
+
+    /// A click delivered through the application, where Binds' local monitor listens (a window's
+    /// own sendEvent would bypass it). The mouse-up is queued first for a control's tracking loop.
+    static func appClick(_ window: NSWindow, element: AccessibilityTree.Element) {
+        let primary = NSScreen.screens.first?.frame.maxY ?? 0
+        let point = window.convertPoint(fromScreen: NSPoint(x: element.frame.midX, y: primary - element.frame.midY))
+        func event(_ type: NSEvent.EventType) -> NSEvent? {
+            NSEvent.mouseEvent(with: type, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                               windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1)
+        }
+        guard let down = event(.leftMouseDown), let up = event(.leftMouseUp) else { return }
+        NSApp.postEvent(up, atStart: false)
+        NSApp.sendEvent(down)
+    }
+
+    /// Press keys to verify with real key presses through the window's monitor, and a real click
+    /// on I Don’t Have This Key (clicks pass through); Learn button positions with a real click
+    /// that is consumed rather than pressing the control under it, and Return to finish.
+    static func deviceSetupActions(model: LauncherModel, window: NSWindow) async -> Bool {
+        let binds = model.studio.binds
+        window.makeKey()
+        binds.beginVerification()
+        try? await Task.sleep(for: .milliseconds(300))
+        guard binds.verification?.step == .besideShift else { print("FAIL: Press keys to verify did not start (\(model.studio.failure?.title ?? "no failure"))"); return false }
+        press(window, keyCode: 50, characters: "`")
+        press(window, keyCode: 58, characters: "")
+        try? await Task.sleep(for: .milliseconds(400))
+        for _ in 0..<2 {
+            guard let skip = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label == "I Don’t Have This Key" }) else {
+                print("FAIL: I Don’t Have This Key is not on screen (step \(String(describing: binds.verification?.step)))"); return false
+            }
+            appClick(window, element: skip)
+            try? await Task.sleep(for: .milliseconds(400))
+            if binds.verification?.step == .functionRow { press(window, keyCode: 122, characters: "") }
+            try? await Task.sleep(for: .milliseconds(300))
+        }
+        guard binds.verification == nil, let keyboard = binds.keyboard,
+              binds.devices.overrides[keyboard.id] == InputDeviceOverride(shape: .iso, size: .percent75, modifiers: .pc, verified: true) else {
+            print("FAIL: verifying by pressing keys did not set ISO, 75%, PC labels (\(String(describing: binds.keyboard.flatMap { binds.devices.overrides[$0.id] })))"); return false
+        }
+        print("PASS: pressing the key beside Shift, Option, F1 and clicking I Don’t Have This Key twice verified ISO, 75%, PC labels")
+
+        binds.beginLearning()
+        try? await Task.sleep(for: .milliseconds(300))
+        guard let find = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label.hasPrefix("Find by Pressing") }) else {
+            print("FAIL: Find by Pressing is not on screen"); return false
+        }
+        appClick(window, element: find)
+        try? await Task.sleep(for: .milliseconds(400))
+        guard binds.learning?.step == .position(.right), binds.target == nil else {
+            print("FAIL: a learning click was not recorded as the left button, or pressed the control under it"); return false
+        }
+        for _ in 0..<5 { press(window, keyCode: 36, characters: "\r"); try? await Task.sleep(for: .milliseconds(150)) }
+        guard binds.learning == nil, binds.pointerButtonDetail(EngineKey(spelling: "mouse1")!) == "Left button",
+              binds.pointerButtonDetail(EngineKey(spelling: "mouse2")!) == "Not on your mouse" else {
+            print("FAIL: Return did not finish learning with only the left button (\(String(describing: binds.learning?.step)))"); return false
+        }
+        print("PASS: a click while learning was recorded as the left button without pressing Find by Pressing; Return finished")
+        return true
+    }
+
+    /// From a player's page: a real click on Compare in Expert, then on Take Theirs for the
+    /// frame-rate cap, writes exactly that one setting as one History row.
+    static func compareAction() async -> Bool {
+        guard let (model, window, home) = await open("discover-player", dark: true) else { return false }
+        defer { window.orderOut(nil); window.close(); try? FileManager.default.removeItem(at: home) }
+        guard let session = model.studio.session else { return false }
+        let file = home.appendingPathComponent("main/players/Main/config_mp.cfg")
+        guard let compare = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label == "Compare in Expert" }) else {
+            print("FAIL: Compare in Expert is not on screen"); return false
+        }
+        activate(window, element: compare)
+        try? await Task.sleep(for: .milliseconds(900))
+        guard model.studio.player?.name == "[Player 1]", model.studio.level == .expert, model.discover.page == nil else {
+            print("FAIL: Compare in Expert did not open Expert with [Player 1]"); return false
+        }
+        model.studio.group = .frame
+        try? await Task.sleep(for: .milliseconds(700))
+        guard let before = try? Data(contentsOf: file),
+              let take = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label.hasPrefix("Take [Player 1]’s Frame rate cap") }) else {
+            print("FAIL: Take Theirs for Frame rate cap is not on screen"); return false
+        }
+        activate(window, element: take)
+        try? await Task.sleep(for: .milliseconds(700))
+        var expected = ConfigDocument(data: before, dialect: .cod2x)
+        do { try expected.setSetting(named: "com_maxfps", value: "250") } catch { return false }
+        guard (try? Data(contentsOf: file)) == expected.serialized(), session.history.first?.summary == "Took Frame rate cap from [Player 1]" else {
+            print("FAIL: Take Theirs did not write exactly the player's frame-rate cap"); return false
+        }
+        print("PASS: clicking Compare in Expert and Take Theirs wrote `seta com_maxfps \"250\"` from [Player 1] as one History row")
+        return true
     }
 
     /// A real click on the import review's Apply button (the sheet's bottom-trailing control) writes
@@ -950,6 +1105,10 @@ final class SnapshotWindow: NSWindow {
         "configs-binds-visual": ["W, Move forward", "Find by Pressing", "Selected key"],
         "configs-checkup": ["Movement: 333 FPS", "Apply", "Show Me", "Not Now", "Rules to check against"],
         "configs-history": ["Restore This Snapshot"],
+        "configs-binds-verify": ["Verify your keyboard", "Press the key just to the left of the space bar", "Cancel"],
+        "configs-binds-learn": ["Learn your mouse buttons", "Press down on the scroll wheel", "I Don’t Have This Button"],
+        "configs-expert-player": ["Compare markers show [Player 1]’s values", "Take [Player 1]’s Mouse speed"],
+        "discover-player": ["Compare in Expert", "Try This Setup"],
     ]
 
     /// Every Config Studio screen's accessibility tree in reading order, with unnamed controls as failures.

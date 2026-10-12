@@ -350,8 +350,8 @@ private struct ChainCard: View {
                     .background(palette.dark ? Palette.hex(0x22251e) : palette.crate, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).strokeBorder(palette.wellStroke, lineWidth: 1))
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(draft.isNew ? "New bind" : summary).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text).lineLimit(1)
-                    Text(detail).font(.system(size: 11)).foregroundStyle(palette.secondary).lineLimit(1)
+                    Text(title).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text).lineLimit(1)
+                    Text(binds.detail(of: draft)).font(.system(size: 11)).foregroundStyle(palette.secondary).lineLimit(1)
                 }
                 Spacer(minLength: 4)
                 Text(draft.kind.short).font(.system(size: 10.5, weight: .semibold)).foregroundStyle(palette.chipText)
@@ -364,23 +364,10 @@ private struct ChainCard: View {
             .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(summary), \(draft.kind.title), key \(draft.key.isEmpty ? "not chosen" : draft.key)")
+        .accessibilityLabel("\(title), \(binds.detail(of: draft)), \(draft.kind.title), key \(draft.key.isEmpty ? "not chosen" : draft.key)")
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
-    private var summary: String {
-        switch draft.kind {
-        case .several: return draft.commands.map { binds.words([Data($0.command.utf8)])?.text ?? $0.command }.joined(separator: ", then ")
-        case .toggle: return binds.studio.spec(named: draft.setting)?.title ?? draft.setting
-        case .cycle: return "Cycle of \(draft.steps.count)"
-        }
-    }
-    private var detail: String {
-        switch draft.kind {
-        case .several: return "On one press"
-        case .toggle: return "Each press: " + draft.values.joined(separator: " → ")
-        case .cycle: return "Each press: " + draft.steps.map { $0.text.isEmpty ? "…" : $0.text }.joined(separator: " → ")
-        }
-    }
+    private var title: String { draft.isNew && draft.displayName == nil ? "New bind" : binds.title(of: draft) }
 }
 
 private struct ChainEditor: View {
@@ -393,6 +380,14 @@ private struct ChainEditor: View {
     var body: some View {
         if let draft = binds.draft {
             VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 10) {
+                    Text("Name").font(StudioTypography.help).foregroundStyle(palette.secondary)
+                    // Only Config Studio shows the name; the game never sees it.
+                    CommitField(value: draft.name, label: "Name for this bind", width: nil, prompt: "Optional, like “Frame counter”") { name in
+                        binds.updateDraft { $0.name = name }
+                    }
+                    .frame(maxWidth: .infinity)
+                }
                 HStack(spacing: 10) {
                     Text("Key").font(StudioTypography.help).foregroundStyle(palette.secondary)
                     let listening = binds.target == .chainKey
@@ -647,6 +642,9 @@ private struct BindsVisualLayout: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     DeviceChips(studio: studio, binds: binds, devices: devices)
+                    if binds.verification != nil || binds.learning != nil {
+                        DeviceSetupPanel(binds: binds)
+                    }
                     if wide {
                         HStack(alignment: .top, spacing: 16) {
                             KeyboardPanel(binds: binds, devices: devices, available: proxy.size.width - 16 - 320)
@@ -691,7 +689,7 @@ private struct DeviceChips: View {
                 ChipLabel(title: "\(keyboard?.name ?? "Keyboard") · \(shape.rawValue.uppercased()) · \(devices.inputSource.name)", symbol: "keyboard")
             }
             .glassAction().controlSize(.small).fixedSize()
-            .popover(isPresented: $keyboardOpen, arrowEdge: .bottom) { KeyboardPopover(binds: binds, devices: devices).studioPopover() }
+            .popover(isPresented: $keyboardOpen, arrowEdge: .bottom) { KeyboardPopover(studio: studio, binds: binds, devices: devices).studioPopover() }
             Button { pointerOpen.toggle() } label: {
                 ChipLabel(title: binds.pointer == .trackpad ? "Trackpad" : "Mouse" + (studio.metadata?.dpi.map { " · \(ConfigValues.format($0)) DPI" } ?? ""),
                           symbol: binds.pointer == .trackpad ? "rectangle.and.hand.point.up.left" : "computermouse")
@@ -723,9 +721,11 @@ private struct DeviceChips: View {
 }
 
 private struct KeyboardPopover: View {
+    @ObservedObject var studio: ConfigStudioModel
     @ObservedObject var binds: ConfigBindsModel
     @ObservedObject var devices: InputDevicesModel
     @Environment(\.palette) private var palette
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         let keyboards = devices.devices.filter { $0.kind == .keyboard }
@@ -750,11 +750,15 @@ private struct KeyboardPopover: View {
                     .pickerStyle(.segmented).labelsHidden().fixedSize()
                 }
                 row("Size", presentation.size.explanation) {
-                    Picker("Keyboard size", selection: Binding(get: { presentation.size.value }, set: { value in update(device) { $0.size = value } })) {
-                        ForEach([KeyboardSize.full, .tkl, .percent75, .percent65, .percent60], id: \.self) { Text(sizeTitle($0)).tag($0) }
-                        if presentation.size.value == .unknown { Text("Unknown").tag(KeyboardSize.unknown) }
+                    HStack(spacing: 8) {
+                        if presentation.size.basis == .guessed { StudioStatusLabel(title: "Estimated", tone: .unknown).fixedSize() }
+                        if presentation.size.basis == .verified { StudioStatusLabel(title: "Confirmed", tone: .positive).fixedSize() }
+                        Picker("Keyboard size", selection: Binding(get: { presentation.size.value }, set: { value in update(device) { $0.size = value } })) {
+                            ForEach([KeyboardSize.full, .tkl, .percent75, .percent65, .percent60], id: \.self) { Text($0.title).tag($0) }
+                            if presentation.size.value == .unknown { Text("Unknown").tag(KeyboardSize.unknown) }
+                        }
+                        .pickerStyle(.menu).labelsHidden().fixedSize()
                     }
-                    .pickerStyle(.menu).labelsHidden().fixedSize()
                 }
                 row("Modifier labels", presentation.modifiers.explanation) {
                     Picker("Modifier labels", selection: Binding(get: { presentation.modifiers.value }, set: { value in update(device) { $0.modifiers = value } })) {
@@ -772,15 +776,20 @@ private struct KeyboardPopover: View {
             }
             Text("Shape and layout come from macOS. Change the size if the drawing looks wrong. Labels follow your input source; saved binds stay on the same game keys.")
                 .font(StudioTypography.help).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
+            if currentKeyboard(binds: binds, devices: devices) != nil {
+                Button("Press Keys to Verify…") { dismiss(); binds.beginVerification() }
+                    .glassAction().controlSize(.small)
+                    .disabled(studio.gameRunning)
+                    .help("Answer a few questions by pressing keys, so the shape, size and modifier labels match your keyboard.")
+            }
         }
         .padding(18).frame(width: 380)
     }
-    private func sizeTitle(_ size: KeyboardSize) -> String {
-        switch size { case .full: "Full"; case .tkl: "Tenkeyless"; case .percent75: "75%"; case .percent65: "65%"; case .percent60: "60%"; case .unknown: "Unknown" }
-    }
+    /// A manual choice replaces a verified answer, so it no longer says Confirmed.
     private func update(_ device: InputDevice, _ change: (inout InputDeviceOverride) -> Void) {
         var value = devices.overrides[device.id] ?? .init()
         change(&value)
+        value.verified = false
         devices.setOverride(value, for: device.id)
     }
     private func row<Control: View>(_ title: String, _ detail: String, @ViewBuilder control: () -> Control) -> some View {
@@ -802,6 +811,7 @@ private struct PointerPopover: View {
     @ObservedObject var devices: InputDevicesModel
     @Environment(\.undoManager) private var undo
     @Environment(\.palette) private var palette
+    @Environment(\.dismiss) private var dismiss
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Pointing devices").font(.system(size: 14, weight: .bold)).foregroundStyle(palette.heading)
@@ -831,8 +841,77 @@ private struct PointerPopover: View {
             }
             Text("Your mouse’s DPI isn’t shared with macOS, so mouse speed uses the number you enter here. It’s saved with this loadout.")
                 .font(StudioTypography.help).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
+            if binds.pointer == .mouse {
+                Button("Learn Button Positions…") { dismiss(); binds.beginLearning() }
+                    .glassAction().controlSize(.small)
+                    .disabled(studio.gameRunning)
+                    .help("Click each of your mouse’s buttons in turn, so the side buttons are placed and extra buttons explained.")
+            }
         }
         .padding(18).frame(width: 360)
+    }
+}
+
+/// Press keys to verify / Learn button positions, inline in the window that listens. A popover
+/// or sheet is a window of its own, which the capture monitor (scoped to this window) can't hear.
+private struct DeviceSetupPanel: View {
+    @ObservedObject var binds: ConfigBindsModel
+    @Environment(\.palette) private var palette
+
+    var body: some View {
+        ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: 20, leading: 20, bottom: 20, trailing: 20)) {
+            HStack(alignment: .top, spacing: 16) {
+                Image(systemName: binds.learning != nil ? "computermouse" : "keyboard").font(.system(size: 22)).foregroundStyle(palette.accent)
+                    .frame(width: 28).accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 8) {
+                    if let flow = binds.verification { verification(flow) }
+                    if let flow = binds.learning { learning(flow) }
+                }
+                Spacer(minLength: 0)
+            }
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    @ViewBuilder private func verification(_ flow: KeyboardVerification) -> some View {
+        Text("Verify your keyboard").font(.system(size: 15, weight: .semibold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+        Text(flow.step.instruction).font(.system(size: 14)).foregroundStyle(palette.text).fixedSize(horizontal: false, vertical: true)
+        if let note = flow.note { StudioStatusLabel(title: note, tone: .caution) }
+        Text("Only this window listens, until you finish. The keys you press here do nothing else. Escape stops.")
+            .font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+        HStack(spacing: 8) {
+            if flow.canSkip { Button("I Don’t Have This Key") { binds.skipVerificationStep() }.glassAction() }
+            Button("Cancel") { binds.stopSetup() }.glassAction()
+        }
+        .actionControlSize()
+    }
+
+    @ViewBuilder private func learning(_ flow: PointerButtonLearning) -> some View {
+        Text("Learn your mouse buttons").font(.system(size: 15, weight: .semibold)).foregroundStyle(palette.heading).accessibilityAddTraits(.isHeader)
+        Group {
+            switch flow.step {
+            case .position(let position): Text(position.instruction)
+            case .extras: Text("Click any other buttons your mouse has, one at a time. Press Return when you’re done.")
+            case .done: Text("Done.")
+            }
+        }
+        .font(.system(size: 14)).foregroundStyle(palette.text).fixedSize(horizontal: false, vertical: true)
+        if !flow.learned.isEmpty {
+            let learned = PointerButtonPosition.allCases.compactMap { position in flow.learned[position].map { "\(position.title): \(Self.name($0))" } }
+            Text(learned.joined(separator: " · ")).font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+        }
+        if let note = flow.note { StudioStatusLabel(title: note, tone: .caution) }
+        // Every click is an answer here, so the buttons below answer to the keyboard.
+        Text("Clicks are recorded, not pressed, until you finish. Press Return if your mouse doesn’t have this button; Escape stops.")
+            .font(StudioTypography.help).foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
+        HStack(spacing: 8) {
+            Button(flow.step == .extras ? "Done" : "I Don’t Have This Button") { binds.skipLearningStep() }.glassAction()
+            Button("Cancel") { binds.stopSetup() }.glassAction()
+        }
+        .actionControlSize()
+    }
+    private static func name(_ button: Int) -> String {
+        PointerButtonLearning.usable(button) ? "Mouse \(button + 1)" : "button \(button + 1), unused by the game"
     }
 }
 
@@ -860,16 +939,17 @@ private struct KeyboardPanel: View {
         ContentPanel(radius: StudioMetrics.panelRadius, padding: EdgeInsets(top: inset, leading: inset, bottom: 16, trailing: inset)) {
             VStack(alignment: .leading, spacing: 14) {
                 // No scroll view around the drawing: one would take the arrow keys for scrolling,
-                // and the keys shrink to fit the launcher's narrowest window instead. A chosen
-                // key keeps keyboard focus, and the arrow keys move focus and selection together
-                // along the drawing.
+                // and the keys shrink to fit the launcher's narrowest window instead. The drawing
+                // is one Tab stop (the chosen key, else the first); the arrow keys move focus and
+                // selection together along it, and Tab leaves it.
+                let entry = ConfigKeyboardLayout.entry(in: keys, selectedVirtualKey: binds.selectedVirtualKey, selectedKey: binds.selectedKey, source: devices.inputSource)
                 ZStack(alignment: .topLeading) {
                     ForEach(keys) { key in
-                        KeyButton(binds: binds, devices: devices, key: key, unit: unit, modifiers: modifiers) {
+                        KeyButton(binds: binds, devices: devices, key: key, unit: unit, modifiers: modifiers, tabStop: key.virtualKey == entry) {
                             Task { @MainActor in focusedKey = key.virtualKey }
                         }
                         .focused($focusedKey, equals: key.virtualKey)
-                        .onMoveCommand { direction in move(direction, keys: keys) }
+                        .onMoveCommand { direction in move(direction, from: key.virtualKey, keys: keys) }
                     }
                 }
                 .frame(width: columns * unit, height: rows * unit, alignment: .topLeading)
@@ -886,28 +966,14 @@ private struct KeyboardPanel: View {
         }
         .fixedSize(horizontal: false, vertical: true)
     }
-    /// Arrow keys follow the drawing: the nearest key in that direction.
-    private func move(_ direction: MoveCommandDirection, keys: [ConfigKeyboardKey]) {
-        let source = devices.inputSource
-        // Start from the drawn key chosen last; keys the game can't use have no engine key.
-        guard let from = keys.first(where: { $0.virtualKey == binds.selectedVirtualKey })
-                ?? keys.first(where: { binds.selectedKey != nil && source.mapping(virtualKey: $0.virtualKey).engineKey == binds.selectedKey })
-                ?? keys.first else { return }
-        let cx = from.x + from.width / 2, cy = from.y + from.height / 2
-        let candidates = keys.filter { $0.virtualKey != from.virtualKey }.compactMap { key -> (ConfigKeyboardKey, Double)? in
-            let dx = key.x + key.width / 2 - cx, dy = key.y + key.height / 2 - cy
-            switch direction {
-            case .left where dx < -0.3: return (key, abs(dx) + abs(dy) * 3)
-            case .right where dx > 0.3: return (key, abs(dx) + abs(dy) * 3)
-            case .up where dy < -0.3: return (key, abs(dy) + abs(dx) * 3)
-            case .down where dy > 0.3: return (key, abs(dy) + abs(dx) * 3)
-            default: return nil
-            }
-        }
-        guard let next = candidates.min(by: { $0.1 < $1.1 })?.0 else { return }
-        binds.selectedKey = source.mapping(virtualKey: next.virtualKey).engineKey
-        binds.selectedVirtualKey = next.virtualKey
-        focusedKey = next.virtualKey
+    /// Arrow keys follow the drawing: the nearest key in that direction. The next key becomes
+    /// the Tab stop first, then takes focus.
+    private func move(_ direction: MoveCommandDirection, from virtualKey: UInt16, keys: [ConfigKeyboardKey]) {
+        let mapped: ConfigKeyboardDirection? = direction == .up ? .up : direction == .down ? .down : direction == .left ? .left : direction == .right ? .right : nil
+        guard let mapped, let next = ConfigKeyboardLayout.neighbor(of: virtualKey, mapped, in: keys) else { return }
+        binds.selectedKey = devices.inputSource.mapping(virtualKey: next).engineKey
+        binds.selectedVirtualKey = next
+        Task { @MainActor in focusedKey = next }
     }
 }
 
@@ -917,6 +983,8 @@ private struct KeyButton: View {
     var key: ConfigKeyboardKey
     var unit: CGFloat
     var modifiers: KeyboardModifierStyle
+    /// The drawing's one Tab stop; the other keys are reached with the arrow keys.
+    var tabStop = false
     var chosen: () -> Void = {}
 
     var body: some View {
@@ -936,8 +1004,9 @@ private struct KeyButton: View {
             StudioKeyCap(key: label, action: width >= 76 || key.virtualKey == 49 ? caption : nil, role: role, selected: selected, width: width, height: height)
         }
         .buttonStyle(.plain)
-        // Keys take focus even with keyboard navigation off, so arrows work after a click.
-        .focusable()
+        // Only the entry key is focusable, even with keyboard navigation off, so arrows work
+        // after a click and Tab passes the drawing as one stop.
+        .focusable(tabStop)
         .offset(x: key.x * unit, y: key.y * unit)
         .accessibilityLabel("\(Self.spoken(label, key.virtualKey)), \(role == .unavailable ? mapping.explanation ?? StudioKeyRole.unavailable.rawValue : caption ?? "not bound")")
         .accessibilityAddTraits(selected ? .isSelected : [])
@@ -1024,7 +1093,8 @@ private struct PointerPanel: View {
                                 RoundedRectangle(cornerRadius: 4).fill(binds.role(of: entry).fill).frame(width: 12, height: 12).accessibilityHidden(true)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(item.0).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text)
-                                    if let detail = item.1 { Text(detail).font(.system(size: 11)).foregroundStyle(palette.secondary) }
+                                    let detail = binds.pointer == .mouse ? binds.pointerButtonDetail(key) ?? item.1 : item.1
+                                    if let detail { Text(detail).font(.system(size: 11)).foregroundStyle(palette.secondary) }
                                 }
                                 Spacer(minLength: 8)
                                 Text(binds.describe(entry)).font(.system(size: 12)).foregroundStyle(entry == nil ? palette.tertiary : palette.text).lineLimit(1)
@@ -1035,7 +1105,25 @@ private struct PointerPanel: View {
                             .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
                         .buttonStyle(RowButtonStyle(radius: 12))
-                        .accessibilityLabel("\(item.0), \(binds.describe(entry))")
+                        .accessibilityLabel("\(item.0)\((binds.pointer == .mouse ? binds.pointerButtonDetail(key) : nil).map { ", \($0)" } ?? ""), \(binds.describe(entry))")
+                    }
+                }
+                if binds.pointer == .mouse {
+                    ForEach(binds.pointerExtras, id: \.self) { button in
+                        HStack(alignment: .firstTextBaseline, spacing: 10) {
+                            RoundedRectangle(cornerRadius: 4).fill(StudioKeyRole.unavailable.fill).frame(width: 12, height: 12).accessibilityHidden(true)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Button \(button + 1)").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text)
+                                Text(PointerButtonLearning.explanation(button)).font(.system(size: 11)).foregroundStyle(palette.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                        .padding(.vertical, 4).padding(.horizontal, 10)
+                        .accessibilityElement(children: .combine)
+                    }
+                    if let count = binds.mouse?.buttonCount {
+                        Text(count == 1 ? "This mouse reports 1 button." : "This mouse reports \(count) buttons.")
+                            .font(StudioTypography.help).foregroundStyle(palette.secondary)
                     }
                 }
                 Text(binds.pointer == .trackpad

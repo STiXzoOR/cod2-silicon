@@ -198,8 +198,12 @@ private struct GuidedControl: View {
     var body: some View {
         switch spec.type {
         case .bool:
-            Toggle(spec.title, isOn: Binding(get: { state.flag }, set: { studio.set(spec, to: $0 ? "1" : "0", undo: undo) }))
-                .toggleStyle(.switch).labelsHidden().tint(palette.control)
+            if spec.labelsCoverRange {
+                LabelChoice(spec: spec, state: state) { studio.set(spec, to: $0, undo: undo) }
+            } else {
+                Toggle(spec.title, isOn: Binding(get: { state.flag }, set: { studio.set(spec, to: $0 ? "1" : "0", undo: undo) }))
+                    .toggleStyle(.switch).labelsHidden().tint(palette.control)
+            }
         case .enumeration:
             ChoiceMenu(spec: spec, state: state) { studio.set(spec, to: $0, undo: undo) }
         case .string:
@@ -225,16 +229,32 @@ private struct GuidedControl: View {
                     ForEach(levels + ((state.number).map { levels.contains($0) ? [] : [$0] } ?? []), id: \.self) { Text("\(Int($0))×").tag($0) }
                 }
                 .labelsHidden().fixedSize()
+            } else if spec.labelsCoverRange {
+                LabelChoice(spec: spec, state: state) { studio.set(spec, to: $0, undo: undo) }
             } else if let range = spec.slideRange {
                 HStack(spacing: 14) {
-                    CommitSlider(value: state.number ?? range.lowerBound, range: range, step: spec.step, label: spec.title,
-                                 readout: { ConfigValues.display(spec, ConfigValues.format($0, integer: spec.type == .int)) }) {
-                        studio.set(spec, to: ConfigValues.text(number: $0, spec: spec), undo: undo)
+                    if spec.practicalRange != nil {
+                        // The slider covers what most players use; the field takes any value the game accepts.
+                        CommitSlider(value: state.number ?? range.lowerBound, range: range, step: spec.step, label: spec.title, readout: nil) {
+                            studio.set(spec, to: ConfigValues.text(number: $0, spec: spec), undo: undo)
+                        }
+                        .frame(width: 240)
+                        NumberEntry(spec: spec, state: state, showUnit: true) { studio.set(spec, to: $0, undo: undo) }
+                    } else {
+                        CommitSlider(value: state.number ?? range.lowerBound, range: range, step: spec.step, label: spec.title,
+                                     readout: { ConfigValues.display(spec, ConfigValues.format($0, integer: spec.type == .int)) }) {
+                            studio.set(spec, to: ConfigValues.text(number: $0, spec: spec), undo: undo)
+                        }
+                        .frame(width: 330)
                     }
-                    .frame(width: 330)
+                    if !spec.valueLabels.isEmpty { LabelPresets(spec: spec) { studio.set(spec, to: $0, undo: undo) } }
                 }
+                .practicalRangeHint(spec)
             } else {
-                NumberEntry(spec: spec, state: state) { studio.set(spec, to: $0, undo: undo) }
+                HStack(spacing: 10) {
+                    NumberEntry(spec: spec, state: state) { studio.set(spec, to: $0, undo: undo) }
+                    if !spec.valueLabels.isEmpty { LabelPresets(spec: spec) { studio.set(spec, to: $0, undo: undo) } }
+                }
             }
         case .vec2, .vec3, .vec4, .color:
             VectorEntry(spec: spec, state: state) { studio.set(spec, to: $0, undo: undo) }
@@ -242,12 +262,22 @@ private struct GuidedControl: View {
     }
 }
 
-extension ConfigSettingSpec {
-    /// A literal range with few enough steps to slide through; otherwise a field.
-    var slideRange: ClosedRange<Double>? {
-        guard let minimum, let maximum, maximum > minimum else { return nil }
-        let step = self.step > 0 ? self.step : (maximum - minimum) / 100
-        return (maximum - minimum) / step <= 200 ? minimum...maximum : nil
+private extension View {
+    /// The practical range as a tooltip and a VoiceOver hint, when the catalog gives one.
+    @ViewBuilder func practicalRangeHint(_ spec: ConfigSettingSpec) -> some View {
+        if let text = PracticalRangeHint.text(spec) { help(text).accessibilityHint(text) } else { self }
+    }
+}
+
+enum PracticalRangeHint {
+    /// “Most players use 0.01–30. You can type any value from 0.01 to 100.”
+    static func text(_ spec: ConfigSettingSpec) -> String? {
+        guard let range = spec.practicalRange else { return nil }
+        var text = "Most players use \(ConfigValues.format(range.lowerBound))–\(ConfigValues.format(range.upperBound))."
+        if let minimum = spec.minimum, let maximum = spec.maximum {
+            text += " You can type any value from \(ConfigValues.format(minimum)) to \(ConfigValues.format(maximum))."
+        }
+        return text
     }
 }
 
@@ -374,15 +404,32 @@ private struct ExpertTools: View {
         HStack(spacing: 10) {
             HStack(spacing: 8) {
                 Text("Compare with").font(.system(size: 12)).foregroundStyle(palette.secondary).fixedSize()
-                Picker("Compare with", selection: $studio.compareID) {
-                    Text("Nobody").tag(String?.none)
-                    ForEach(studio.profiles.filter { $0.id != studio.current?.profile.id }) { Text($0.displayName).tag(String?.some($0.id)) }
+                // A player from Discover appears here only while it's the comparison.
+                Picker("Compare with", selection: Binding(get: {
+                    studio.player.map { CompareChoice.player($0.entryID) } ?? studio.compareID.map(CompareChoice.loadout) ?? .nobody
+                }, set: { choice in
+                    switch choice {
+                    case .nobody: studio.stopComparing()
+                    case .loadout(let id): studio.compareID = id
+                    case .player: break
+                    }
+                })) {
+                    Text("Nobody").tag(CompareChoice.nobody)
+                    if let player = studio.player { Text(player.name).tag(CompareChoice.player(player.entryID)) }
+                    ForEach(studio.profiles.filter { $0.id != studio.current?.profile.id }) { Text($0.displayName).tag(CompareChoice.loadout($0.id)) }
                 }
                 .labelsHidden().fixedSize()
             }
-            if let other = studio.comparison {
-                Label("\(other.profile.displayName)’s value", systemImage: "diamond.fill").font(.system(size: 12)).foregroundStyle(palette.compare).fixedSize()
-                    .accessibilityLabel("Compare markers show \(other.profile.displayName)’s values")
+            if let name = studio.comparisonName {
+                VStack(alignment: .leading, spacing: 1) {
+                    Label("\(name)’s value", systemImage: "diamond.fill").font(.system(size: 12)).foregroundStyle(palette.compare).fixedSize()
+                    if let provenance = studio.comparisonProvenance {
+                        Text(provenance).font(.system(size: 11)).foregroundStyle(palette.secondary).fixedSize()
+                    }
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Compare markers show \(name)’s values" + (studio.comparisonProvenance.map { ". \($0)" } ?? ""))
+                .accessibilityAddTraits(.isStaticText)
             }
         }
     }
@@ -546,7 +593,7 @@ private struct ExpertRow: View {
             if theirs != nil || state.note != nil || spec.launcherOwned || issue != nil {
                 HStack(spacing: 10) {
                     if let issue { StudioStatusLabel(title: issue.reason, tone: issue.status.tone) }
-                    if let theirs, let source = studio.comparison?.profile.displayName {
+                    if let theirs, let source = studio.comparisonName {
                         StudioCompareValue(value: theirs.display, source: source).fixedSize()
                         if state.locked {
                             Text("Locked, so it stays yours").font(StudioTypography.help).foregroundStyle(palette.secondary)
@@ -585,10 +632,14 @@ private struct ExpertControl: View {
     var body: some View {
         switch spec.type {
         case .bool:
-            HStack(spacing: 10) {
-                Toggle(spec.title, isOn: Binding(get: { state.flag }, set: { studio.set(spec, to: $0 ? "1" : "0", undo: undo) }))
-                    .toggleStyle(.switch).labelsHidden().tint(palette.control)
-                Text(state.flag ? "On" : "Off").font(.system(size: 12)).foregroundStyle(palette.secondary).accessibilityHidden(true)
+            if spec.labelsCoverRange {
+                LabelChoice(spec: spec, state: state) { studio.set(spec, to: $0, undo: undo) }
+            } else {
+                HStack(spacing: 10) {
+                    Toggle(spec.title, isOn: Binding(get: { state.flag }, set: { studio.set(spec, to: $0 ? "1" : "0", undo: undo) }))
+                        .toggleStyle(.switch).labelsHidden().tint(palette.control)
+                    Text(state.flag ? "On" : "Off").font(.system(size: 12)).foregroundStyle(palette.secondary).accessibilityHidden(true)
+                }
             }
         case .enumeration:
             ChoiceMenu(spec: spec, state: state) { studio.set(spec, to: $0, undo: undo) }
@@ -599,14 +650,21 @@ private struct ExpertControl: View {
         case .int, .float:
             if spec.name.lowercased() == "com_maxfps" {
                 FrameCapSegments(studio: studio, spec: spec, state: state, theirs: theirs)
+            } else if spec.labelsCoverRange {
+                LabelChoice(spec: spec, state: state) { studio.set(spec, to: $0, undo: undo) }
             } else if let range = spec.slideRange {
                 HStack(spacing: 10) {
                     CommitSlider(value: state.number ?? range.lowerBound, range: range, step: spec.step, label: spec.title, readout: nil,
                                  marker: theirs?.number) { studio.set(spec, to: ConfigValues.text(number: $0, spec: spec), undo: undo) }
                     NumberEntry(spec: spec, state: state, showUnit: true) { studio.set(spec, to: $0, undo: undo) }
+                    if !spec.valueLabels.isEmpty { LabelPresets(spec: spec) { studio.set(spec, to: $0, undo: undo) } }
                 }
+                .practicalRangeHint(spec)
             } else {
-                NumberEntry(spec: spec, state: state, showUnit: true) { studio.set(spec, to: $0, undo: undo) }
+                HStack(spacing: 10) {
+                    NumberEntry(spec: spec, state: state, showUnit: true) { studio.set(spec, to: $0, undo: undo) }
+                    if !spec.valueLabels.isEmpty { LabelPresets(spec: spec) { studio.set(spec, to: $0, undo: undo) } }
+                }
             }
         }
     }
@@ -682,6 +740,45 @@ private struct NoteEditor: View {
 }
 
 // MARK: - Shared controls
+
+private enum CompareChoice: Hashable { case nobody, loadout(String), player(String) }
+
+/// A setting whose every value has a name in the game's own menus: choose by name.
+private struct LabelChoice: View {
+    var spec: ConfigSettingSpec
+    var state: ConfigSettingState
+    var commit: (String) -> Void
+    var body: some View {
+        let current = state.value.flatMap { value in spec.valueLabels.first { ConfigValues.same(spec, $0.text, value) }?.text }
+        let picker = Picker(spec.title, selection: Binding(get: { current ?? "" }, set: { if !$0.isEmpty { commit($0) } })) {
+            ForEach(spec.valueLabels, id: \.text) { Text($0.title).tag($0.text) }
+            // A value outside the named ones (set by hand) still shows as itself.
+            if current == nil { Text(state.value ?? "Not set").tag("") }
+        }
+        .labelsHidden().fixedSize()
+        if spec.valueLabels.count <= 4 && spec.valueLabels.allSatisfy({ $0.title.count <= 14 }) {
+            picker.pickerStyle(.segmented)
+        } else {
+            picker.pickerStyle(.menu)
+        }
+    }
+}
+
+/// Named values from the game's menus, as quick choices beside a number.
+private struct LabelPresets: View {
+    var spec: ConfigSettingSpec
+    var commit: (String) -> Void
+    var body: some View {
+        Menu {
+            ForEach(spec.valueLabels, id: \.text) { label in
+                Button(ConfigValues.display(spec, label.text)) { commit(label.text) }
+            }
+        } label: { Text("Presets") }
+        .menuStyle(.borderlessButton).fixedSize()
+        .accessibilityLabel("Presets for \(spec.title)")
+        .help("Values the game’s own menus name")
+    }
+}
 
 private struct ChoiceMenu: View {
     var spec: ConfigSettingSpec

@@ -183,6 +183,34 @@ enum ConfigStudioTabsTests {
         model.failure = nil
         print("PASS: advanced binds preview, review labels, wait warning, B2 refusals, save and Windows export")
 
+        // Named advanced binds: the name is launcher metadata; the game's bytes stay exactly as they were.
+        let toggleID = try require(binds.chains.first { $0.key == "m" }?.id)
+        let unnamed = (config: try Data(contentsOf: file), chain: session.current?.version.chain, definitions: session.current?.metadata.chainDefinitions)
+        let stored = try JSONSerialization.jsonObject(with: try require(unnamed.definitions)) as? [[String: Any]]
+        require(stored?.count == 2 && stored?.allSatisfy { $0["name"] == nil } == true, "a bind without a name stores no name")
+        binds.selectChain(toggleID)
+        let unnamedDraft = try require(binds.draft)
+        require(binds.title(of: unnamedDraft) == "Show frame rate", "an unnamed bind is titled by what it does")
+        binds.updateDraft { $0.name = "  FPS counter  " }
+        let namedDraft = try require(binds.draft)
+        require(binds.chainEdit?.hasChanges == true && binds.title(of: namedDraft) == "FPS counter", "a name alone is a change, trimmed")
+        // The chain file also holds the chat cycle, so its review asks for the person's OK first.
+        require(binds.chainNeedsConfirmation)
+        binds.saveChain(confirmed: true)
+        require(try Data(contentsOf: file) == unnamed.config && session.current?.version.chain == unnamed.chain, "naming a bind changes no game bytes")
+        require(binds.chains.first { $0.id == toggleID }?.name == "FPS counter" && session.history.first?.summary == "Changed advanced binds")
+        require(binds.describe(binds.bindings?.entry(for: EngineKey(spelling: "m")!)) == "FPS counter", "Visual and Other binds use its name")
+        binds.selectChain(toggleID)
+        require(binds.draft?.name == "FPS counter", "the editor reopens with the name")
+        binds.updateDraft { $0.name = " " }
+        binds.saveChain(confirmed: true)
+        let renamed = try JSONSerialization.jsonObject(with: try require(session.current?.metadata.chainDefinitions)) as? [[String: Any]]
+        require(binds.chains.first { $0.id == toggleID }?.name == nil && renamed?.allSatisfy { $0["name"] == nil } == true,
+                "a blank name removes it from the stored definition")
+        require(try Data(contentsOf: file) == unnamed.config && session.current?.version.chain == unnamed.chain, "and the game's bytes never changed")
+        binds.selectChain(nil)
+        print("PASS: named advanced binds: the name is stored only when set, and game bytes never change")
+
         // Read-only while the game runs.
         try session.reconcileGames([7001])
         let locked = try Data(contentsOf: file)
@@ -201,6 +229,64 @@ enum ConfigStudioTabsTests {
         }
         require(ConfigKeyboardLayout.keys(shape: .ansi, size: .percent60).allSatisfy { $0.virtualKey != 122 }, "60% has no function row")
         print("PASS: keyboard drawings for ANSI, ISO and JIS at every size")
+
+        // The drawing is one Tab stop: the chosen key (or the first) takes focus; arrows move inside.
+        let drawn = ConfigKeyboardLayout.keys(shape: .ansi, size: .percent75), abc = binds.devices.inputSource
+        require(ConfigKeyboardLayout.entry(in: drawn, selectedVirtualKey: 14, selectedKey: nil, source: abc) == 14, "the chosen key is the entry")
+        require(ConfigKeyboardLayout.entry(in: drawn, selectedVirtualKey: nil, selectedKey: EngineKey(spelling: "w"), source: abc) == 13, "a key chosen by its game key")
+        require(ConfigKeyboardLayout.entry(in: drawn, selectedVirtualKey: nil, selectedKey: EngineKey(spelling: "mouse1"), source: abc) == drawn.first?.virtualKey,
+                "with a mouse button chosen, the first key is the entry")
+        require(ConfigKeyboardLayout.entry(in: drawn, selectedVirtualKey: 71, selectedKey: nil, source: abc) == drawn.first?.virtualKey, "a key not on this drawing isn't the entry")
+        require(ConfigKeyboardLayout.neighbor(of: 13, .right, in: drawn) == 14 && ConfigKeyboardLayout.neighbor(of: 13, .left, in: drawn) == 12)
+        require(ConfigKeyboardLayout.neighbor(of: 13, .down, in: drawn) == 1 && ConfigKeyboardLayout.neighbor(of: 13, .up, in: drawn) == 19, "arrows follow the drawing")
+        require(ConfigKeyboardLayout.neighbor(of: 53, .left, in: drawn) == nil && ConfigKeyboardLayout.neighbor(of: 53, .up, in: drawn) == nil, "the edge stays put")
+        print("PASS: the keyboard drawing has one focus entry and spatial arrow movement")
+
+        // Press keys to verify: answers come from the window's capture source; clicks still reach
+        // the panel's buttons; Escape, focus loss and a game starting stop it; nothing is written.
+        let beforeDevices = try Data(contentsOf: file)
+        binds.keyboardID = "1"
+        binds.beginVerification()
+        require(binds.verification?.step == .besideShift && source.handler != nil)
+        require(source.send(.mouse(button: 0, pressed: true)) == .passThrough && source.send(.mouse(button: 0, pressed: false)) == .passThrough,
+                "clicks reach I Don’t Have This Key and Cancel")
+        require(source.send(.key(virtualKey: 50, pressed: true)) == .consume && source.send(.key(virtualKey: 50, pressed: false)) == .consume, "answers never reach other controls")
+        source.send(.key(virtualKey: 58, pressed: true)); source.send(.key(virtualKey: 58, pressed: false))
+        binds.skipVerificationStep()
+        source.send(.key(virtualKey: 122, pressed: true)); source.send(.key(virtualKey: 122, pressed: false))
+        binds.skipVerificationStep()
+        require(binds.verification == nil && source.handler == nil, "finishing stops listening")
+        require(binds.devices.overrides["1"] == InputDeviceOverride(shape: .iso, size: .percent75, modifiers: .pc, verified: true))
+        require(binds.devices.presentation(for: binds.devices.devices[0]).size.basis == .verified)
+        binds.beginVerification(); source.send(.key(virtualKey: 53, pressed: true))
+        require(binds.verification == nil && source.handler == nil && binds.devices.overrides["1"]?.verified == true, "Escape stops and keeps the earlier answer")
+        binds.beginVerification(); source.send(.focusLost)
+        require(binds.verification == nil && source.handler == nil, "focus loss stops listening")
+        binds.beginVerification(); binds.gameStarted()
+        require(binds.verification == nil && source.handler == nil, "a game starting stops listening")
+        try session.reconcileGames([7003])
+        binds.beginVerification(); binds.beginLearning()
+        require(binds.verification == nil && binds.learning == nil && source.handler == nil, "no listening while the game owns the loadout")
+        try session.reconcileGames([])
+        print("PASS: Press keys to verify sets a verified keyboard answer and always stops listening")
+
+        // Learn button positions: clicks are consumed; Return finishes; the panel places side buttons.
+        require(binds.pointerButtonDetail(EngineKey(spelling: "mouse4")!) == nil, "before learning, the drawing keeps its generic captions")
+        binds.beginLearning()
+        for button in [0, 1, 2, 4, 3] {
+            require(source.send(.mouse(button: button, pressed: true)) == .consume, "a learning click never activates a control")
+            source.send(.mouse(button: button, pressed: false))
+        }
+        source.send(.mouse(button: 5, pressed: true)); source.send(.mouse(button: 5, pressed: false))
+        require(binds.learning?.extras == [5] && binds.learning?.note?.contains("can’t use") == true)
+        require(source.send(.key(virtualKey: 36, pressed: true)) == .consume)
+        require(binds.learning == nil && source.handler == nil, "Return finishes and stops listening")
+        require(binds.pointerButtonDetail(EngineKey(spelling: "mouse4")!) == "Forward side button" && binds.pointerButtonDetail(EngineKey(spelling: "mouse5")!) == "Back side button")
+        require(binds.pointerExtras == [5], "extra buttons are listed with why they can't be used")
+        binds.beginLearning(); source.send(.mouse(button: 0, pressed: true)); source.send(.key(virtualKey: 53, pressed: true))
+        require(binds.learning == nil && source.handler == nil && binds.pointerButtonDetail(EngineKey(spelling: "mouse5")!) == "Back side button", "Escape keeps the earlier map")
+        require(try Data(contentsOf: file) == beforeDevices, "verifying and learning never write the loadout")
+        print("PASS: Learn button positions places the side buttons, explains extras and always stops listening")
     }
 
     @MainActor static func checkup(scratch: URL, catalog: ConfigCatalog, rules: ConfigRules, optimizer: ConfigOptimizer) throws {

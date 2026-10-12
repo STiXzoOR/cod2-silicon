@@ -210,6 +210,47 @@ import Foundation
         discover.closeImport()
         require(home.bytes("Main") == mainBefore && home.players == ["Main", "Pub", "Scrim"], "closing the review writes nothing")
         print("PASS: unavailable production directory, signed fixture, Saved, player comparison and Try this setup")
+
+        // Compare opens Expert with the player's verified, reviewed values; only what Review would tick by default.
+        let studio = home.studio
+        let empty = ConfigDiscoverModel(studio: studio, directory: ConfigDirectory(cacheURL: home.url.appendingPathComponent("empty/index.json")))
+        await empty.reload()
+        require(!empty.canCompare("player-1") && studio.player == nil, "the unavailable directory offers no comparison")
+        require(discover.canCompare("player-1") && !discover.canCompare("player-2"), "only a player whose setup was fetched and reviewed")
+        discover.page = .player("player-1")
+        discover.compareInExpert(discover.entry("player-1")!)
+        require(discover.page == nil && studio.tab == .settings && studio.level == .expert, "Compare opens Expert")
+        require(studio.comparisonName == "[Player 1]" && studio.compareID == nil, "the player is the comparison source")
+        require(studio.comparisonProvenance == "Players catalog · signed entry · credit [Player 1]", "the source and credit stay visible")
+        let speed = studio.spec(named: "sensitivity")!, cap = studio.spec(named: "com_maxfps")!, gamma = studio.spec(named: "r_gamma")!
+        require(studio.theirs(speed)?.raw == "2.1" && studio.theirs(cap)?.raw == "250" && studio.theirs(gamma)?.raw == "1.5", "their reviewed values, a locked one included")
+        require(studio.theirs(studio.spec(named: "name")!) == nil && studio.spec(named: "r_mode").map({ studio.theirs($0) == nil }) != false,
+                "lines that need an OK or stay on this Mac aren't offered")
+        require(studio.theirs(studio.spec(named: "rate")!) == nil, "a setting their config doesn't set isn't compared")
+        let beforeTake = home.bytes("Main")
+        studio.takeTheirs(gamma)
+        require(home.bytes("Main") == beforeTake, "a locked setting stays yours")
+        try home.session.reconcileGames([4243])
+        studio.takeTheirs(cap)
+        require(home.bytes("Main") == beforeTake && studio.failure != nil, "Take Theirs waits while the game runs")
+        try home.session.reconcileGames([]); studio.failure = nil
+        studio.takeTheirs(cap)
+        var took = ConfigDocument(data: beforeTake!, dialect: .cod2x); try took.setSetting(named: "com_maxfps", value: "250")
+        require(home.bytes("Main") == took.serialized() && home.session.history.first?.summary == "Took Frame rate cap from [Player 1]", "one exact edit")
+        require(studio.theirs(cap) == nil, "a taken value no longer differs")
+        studio.compareID = "Scrim"
+        require(studio.player == nil && studio.comparisonName == "Scrim" && studio.comparisonProvenance == nil, "choosing a loadout replaces the player")
+
+        // A loadout imported from a player keeps its saved credit as the comparison's provenance.
+        var credited = ConfigStudioMetadata(displayName: "From Player 1")
+        credited.origin = ConfigOrigin(kind: .imported, source: DirectoryFixture.base.absoluteString, credit: "[Player 1]")
+        _ = try home.store.create(id: "From_Player_1", displayName: "From Player 1", document: config(["sensitivity": "2.1"]), metadata: credited)
+        try home.session.refresh()
+        studio.compareID = "From_Player_1"
+        require(studio.comparisonName == "From Player 1" && studio.comparisonProvenance == "Imported · credit [Player 1]" && studio.theirs(speed)?.raw == "2.1",
+                "the saved credit is shown with the loadout's values")
+        studio.compareID = nil
+        print("PASS: Compare in Expert uses the reviewed player values or a loadout's saved credit, honours locks and the running game")
     }
 
     @MainActor static func readyCheck(_ homes: inout [URL]) async throws {
