@@ -402,10 +402,12 @@ struct MediaEntry: Identifiable {
     /// master list. Selection and staged choices remain the caller's decision.
     func refreshReadyCheck(for address: String) async throws -> ConfigReadyReport? {
         let normalized = try LaunchLink.canonicalAddress(address)
-        servers.removeAll { (try? LaunchLink.canonicalAddress($0.address)) == normalized }
         if let server = await ServerQueries.server(normalized) {
-            servers.removeAll { (try? LaunchLink.canonicalAddress($0.address)) == normalized }
-            servers.append(server)
+            if let index = servers.firstIndex(where: { (try? LaunchLink.canonicalAddress($0.address)) == normalized }) {
+                servers[index] = server
+            } else {
+                servers.append(server)
+            }
         }
         return try readyCheck(for: normalized)
     }

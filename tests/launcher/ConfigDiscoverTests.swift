@@ -9,6 +9,21 @@ import Darwin
     static func require(_ condition: Bool, _ message: String, line: UInt = #line) {
         if !condition { print("FAIL: \(message) (line \(line))"); exit(1) }
     }
+    final class CountingImportCatalog: ConfigImportCatalog, @unchecked Sendable {
+        private let lock = NSLock()
+        private var calls = 0
+        let catalog: ConfigImportCatalogAdapter
+        init(_ catalog: ConfigCatalog) { self.catalog = ConfigImportCatalogAdapter(catalog: catalog) }
+        var count: Int { lock.lock(); defer { lock.unlock() }; return calls }
+        func setting(named: String, dialect: ConfigDialect) -> ConfigImportSetting? {
+            lock.lock(); calls += 1; lock.unlock()
+            return catalog.setting(named: named, dialect: dialect)
+        }
+        func command(named: String, dialect: ConfigDialect) -> ConfigImportCommandInfo? {
+            lock.lock(); calls += 1; lock.unlock()
+            return catalog.command(named: named, dialect: dialect)
+        }
+    }
     static var folder: URL { Bundle.main.executableURL!.deletingLastPathComponent() }
     static func catalog() throws -> ConfigCatalog { try ConfigCatalog(data: Data(contentsOf: folder.appendingPathComponent("ConfigCatalog.json"))) }
 
@@ -70,11 +85,17 @@ import Darwin
         do {
             if CommandLine.arguments.contains("--match-privacy-only") { try matchPrivacy(&homes); return }
             if CommandLine.arguments.contains("--match-read-failure-only") { try matchReadFailure(&homes); return }
+            if CommandLine.arguments.contains("--import-undo-only") { try await staleImportUndo(&homes); return }
+            if CommandLine.arguments.contains("--import-bulk-only") { try bulkImportToggle(&homes); return }
+            if CommandLine.arguments.contains("--server-refresh-only") { try await serverRefresh(&homes); return }
             try await reviewPresentationAndNewLoadout(&homes)
             try await existingLoadoutAndUndo(&homes)
+            try await staleImportUndo(&homes)
+            try bulkImportToggle(&homes)
             try await failedApplyKeepsBytes(&homes)
             try await directory(&homes)
             try await readyCheck(&homes)
+            try await serverRefresh(&homes)
             try matchPrivacy(&homes)
             try matchReadFailure(&homes)
         } catch { print("FAIL: \(error)"); exit(1) }
@@ -157,6 +178,68 @@ import Darwin
         let restored = try home.store.history(id: "Main").first?.source
         require(restored == .restore, "the undo is its own History transaction")
         print("PASS: importing into a locked existing loadout, then Undo, with exact bytes")
+    }
+
+    @MainActor static func bulkImportToggle(_ homes: inout [URL]) throws {
+        let home = try makeHome("bulk-import"); homes.append(home.url)
+        let counted = CountingImportCatalog(try catalog())
+        let text = (0..<80).map { "seta fixture_\($0) \($0)\n" }.joined()
+            + "quit\nseta r_gamma 2\nseta r_mode 4\nseta password synthetic-secret\n"
+        var session = try ConfigImportSession(bundle: .init(source: .init(kind: .paste), entryPath: "bulk.cfg",
+            files: [.init(path: "bulk.cfg", data: Data(text.utf8), dialect: .cod2x)]), dialect: .cod2x, catalog: counted, displayName: "Bulk")
+        session.setTarget(.existing(try home.store.read(id: "Main"))); session.setMode(.everything)
+        let onePassStart = counted.count, rows = session.rows, onePassWork = counted.count - onePassStart
+        let removed = rows.first(where: \.canSelect)!.id, keep = session.selectedIDs.subtracting([removed])
+        let review = ConfigImportReviewModel(studio: home.studio, displayName: "Bulk", provenance: .init(source: "Pasted config"))
+        review.install(session)
+        let toggleStart = counted.count
+        review.toggle(removed)
+        let toggleWork = counted.count - toggleStart
+        require(toggleWork <= onePassWork * 3,
+                "one actual bulk untick reviews eligibility a bounded number of times: one pass=\(onePassWork), toggle=\(toggleWork)")
+        require(review.mode == .review && review.session?.selectedIDs == keep && review.applyError == nil,
+                "bulk untick returns to Review and retains all remaining explicit choices")
+        require(review.riskySelected.contains { $0.exact == "quit" } && !review.items.contains { !$0.selectable && $0.selected },
+                "retained risky choices stay selected; blocked, locked and machine choices stay omitted")
+        print("PASS: actual Import Everything untick uses \(toggleWork) catalog lookups versus \(onePassWork) for one eligibility pass")
+    }
+
+    @MainActor static func staleImportUndo(_ homes: inout [URL]) async throws {
+        for edit in ["metadata", "companion", "absent-to-empty companion"] {
+            let home = try makeHome("stale-import-undo"); homes.append(home.url)
+            let sidecar = home.url.appendingPathComponent("main/players/Main/studio.json")
+            let companion = home.url.appendingPathComponent("main/" + (try ConfigStudioLaunch.chainBasename(profileID: "Main")))
+            if edit == "companion" { try PrivateFile.write(Data("// before import\n".utf8), to: companion) }
+            let discover = ConfigDiscoverModel(studio: home.studio, directory: ConfigDirectory(cacheURL: home.url.appendingPathComponent("directory/index.json")))
+            let review = await reviewed(discover, "seta sensitivity 2.1\n")
+            review.setTarget("Main")
+            let undo = UndoManager(); undo.groupsByEvent = false
+            undo.beginUndoGrouping()
+            guard review.apply(undo: undo) != nil else { require(false, "\(edit): apply failed: \(review.applyError ?? "")"); return }
+            undo.endUndoGrouping()
+            require(undo.canUndo && undo.undoActionName == "Import", "\(edit): exercise the registered Import Undo")
+            if edit == "metadata" {
+                var metadata = try home.store.read(id: "Main").metadata
+                metadata.notes["sensitivity"] = "Keep this newer note"
+                try PrivateFile.write(try JSONEncoder().encode(metadata), to: sidecar)
+            } else {
+                try PrivateFile.write(edit == "companion" ? Data("// changed after import\n".utf8) : Data(), to: companion)
+            }
+            func profileBytes() throws -> [Data?] {
+                [try Data(contentsOf: home.file("Main")), try Data(contentsOf: sidecar), try? Data(contentsOf: companion)]
+            }
+            func historyBytes() throws -> [String: Data] {
+                let directory = home.url.appendingPathComponent("main/players/Main/history")
+                return try Dictionary(uniqueKeysWithValues: FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
+                    .map { ($0.lastPathComponent, try Data(contentsOf: $0)) })
+            }
+            let bytes = try profileBytes(), history = try historyBytes(), entries = try home.store.history(id: "Main")
+            undo.undo()
+            require(home.studio.failure?.title == "Nothing to undo", "\(edit): stale registered Undo explains that the saved revision changed")
+            require(try profileBytes() == bytes, "\(edit): stale Undo preserves config, metadata and companion bytes")
+            require(try historyBytes() == history && home.store.history(id: "Main") == entries, "\(edit): stale Undo preserves all History bytes and rows")
+        }
+        print("PASS: registered Import Undo rejects metadata-only, companion-only and absent-to-empty edits without writing")
     }
 
     @MainActor static func failedApplyKeepsBytes(_ homes: inout [URL]) async throws {
@@ -342,6 +425,86 @@ import Darwin
         checkup.refreshMatches()
         require(checkup.matchCount == 1 && checkup.measurements.frameTimeP99MS == 7, "Refresh recovers after private fixture access is restored")
         print("PASS: production reader access denial reaches Check-up failure state, clears measurements and recovers after permission restoration")
+    }
+
+    /// A real loopback UDP peer holds Check Again pending, answers, then times out.
+    /// This checks the same selected server that the list and Deploy read.
+    @MainActor static func serverRefresh(_ homes: inout [URL]) async throws {
+        let socketFD = socket(AF_INET, SOCK_DGRAM, 0)
+        require(socketFD >= 0, "create loopback peer")
+        defer { close(socketFD) }
+        var endpoint = sockaddr_in()
+        endpoint.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        endpoint.sin_family = sa_family_t(AF_INET)
+        endpoint.sin_addr.s_addr = inet_addr("127.0.0.1")
+        let bound = withUnsafePointer(to: &endpoint) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                Darwin.bind(socketFD, $0, socklen_t(MemoryLayout<sockaddr_in>.size))
+            }
+        }
+        require(bound == 0, "bind loopback peer")
+        var length = socklen_t(MemoryLayout<sockaddr_in>.size)
+        let named = withUnsafeMutablePointer(to: &endpoint) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { getsockname(socketFD, $0, &length) }
+        }
+        require(named == 0 && fcntl(socketFD, F_SETFL, O_NONBLOCK) == 0, "configure loopback peer")
+        let address = "127.0.0.1:\(UInt16(bigEndian: endpoint.sin_port))"
+        let home = try makeHome("server-refresh"); homes.append(home.url)
+        let model = LauncherModel(snapshot: true)
+        model.studio.attach(home.session)
+        model.studio.loadCatalogNow()
+        let fields = ["sv_hostname": "Chosen", "mapname": "mp_toujane", "protocol": "120", "shortversion": "1.4.6.8", "fs_game": "", "g_competitive": "1"]
+        let chosen = GameServer(address: address, fields: fields, ping: 40, players: [], observedAt: Date())
+        let other = GameServer(address: "127.0.0.1:1", fields: fields, ping: 20, players: [])
+        model.servers = [other, chosen]
+        model.selectedServer = address
+        try model.fixForServerOnly(address)
+        let overrides = model.serverConnection.overrides
+        require(!overrides.isEmpty, "the selected server has a staged fix")
+        func preserved() {
+            require(model.selectedServer == address && model.selected?.address == address,
+                    "Check Again changed the effective selected server and Deploy target")
+            require(model.servers.map(\.address) == [other.address, address], "Check Again reordered or removed a server")
+            require(model.serverConnection.address == address && model.serverConnection.overrides == overrides,
+                    "Check Again changed the staged connection fix")
+        }
+        let refresh = Task { try await model.refreshReadyCheck(for: address) }
+        try await Task.sleep(for: .milliseconds(40))
+        preserved()
+        for command in ["getstatus", "getinfo"] {
+            var bytes = [UInt8](repeating: 0, count: 2048)
+            var peer = sockaddr_in()
+            var peerLength = socklen_t(MemoryLayout<sockaddr_in>.size)
+            var received = -1
+            for _ in 0..<100 {
+                received = withUnsafeMutablePointer(to: &peer) {
+                    $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                        recvfrom(socketFD, &bytes, bytes.count, 0, $0, &peerLength)
+                    }
+                }
+                if received >= 0 { break }
+                try await Task.sleep(for: .milliseconds(5))
+            }
+            require(received > 4 && String(decoding: bytes[4..<max(4, received)], as: UTF8.self).hasPrefix(command),
+                    "real ready check sent \(command)")
+            let kind = command == "getstatus" ? "statusResponse" : "infoResponse"
+            let response = WireParser.marker + Data("\(kind)\n\\sv_hostname\\Updated\\mapname\\mp_carentan\\protocol\\120\\shortversion\\1.4.6.8\\g_competitive\\1\\sv_maxclients\\24\n".utf8)
+            let sent = response.withUnsafeBytes { buffer in
+                withUnsafePointer(to: &peer) {
+                    $0.withMemoryRebound(to: sockaddr.self, capacity: 1) {
+                        sendto(socketFD, buffer.baseAddress, buffer.count, 0, $0, peerLength)
+                    }
+                }
+            }
+            require(sent == response.count, "answer loopback query")
+        }
+        _ = try await refresh.value
+        preserved()
+        require(model.selected?.map == "mp_carentan", "successful Check Again updates the chosen row in place")
+        _ = try await model.refreshReadyCheck(for: address)
+        preserved()
+        require(model.selected?.map == "mp_carentan", "a timed-out Check Again keeps the last known chosen row")
+        print("PASS: real pending, successful and timed-out Check Again preserve selection, order and staged fixes")
     }
 
     @MainActor static func readyCheck(_ homes: inout [URL]) async throws {

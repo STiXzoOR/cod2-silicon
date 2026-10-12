@@ -17,6 +17,52 @@ import Foundation
             files: [.init(path: "config.cfg", data: Data(text.utf8), dialect: .cod2x)]),
             dialect: .cod2x, catalog: catalog, displayName: "Imported", platform: platform)
     }
+    final class CountingCatalog: ConfigImportCatalog, @unchecked Sendable {
+        private let lock = NSLock()
+        private var calls = 0
+        var count: Int { lock.lock(); defer { lock.unlock() }; return calls }
+        func setting(named: String, dialect: ConfigDialect) -> ConfigImportSetting? {
+            lock.lock(); calls += 1; lock.unlock()
+            return ConfigImportSessionTests.catalog.setting(named: named, dialect: dialect)
+        }
+        func command(named: String, dialect: ConfigDialect) -> ConfigImportCommandInfo? {
+            lock.lock(); calls += 1; lock.unlock()
+            return ConfigImportSessionTests.catalog.command(named: named, dialect: dialect)
+        }
+    }
+    @MainActor static func bulkSelection(_ store: ConfigProfileStore, baseline: ConfigProfileRead) throws {
+        let text = (0..<80).map { "seta fixture_\($0) \($0)\n" }.joined()
+            + "seta sensitivity 9\nseta r_mode 4\nseta password synthetic-secret\nbind MOUSE1 +forward\n"
+        let catalog = CountingCatalog()
+        var imported = try ConfigImportSession(bundle: .init(source: .init(kind: .paste), entryPath: "bulk.cfg",
+            files: [.init(path: "bulk.cfg", data: Data(text.utf8), dialect: .cod2x)]), dialect: .cod2x, catalog: catalog, displayName: "Bulk")
+        imported.setTarget(.existing(baseline)); imported.setMode(.everything)
+        let rows = imported.rows, selected = imported.selectedIDs, removed = selected.sorted().first!
+        let keep = selected.subtracting([removed])
+        var repeated = imported
+        let repeatedStart = catalog.count
+        repeated.setMode(.review)
+        for id in repeated.selectedIDs where !keep.contains(id) { try repeated.select(id, selected: false) }
+        for id in keep { try repeated.select(id, selected: true) }
+        let repeatedWork = catalog.count - repeatedStart
+        let bulkStart = catalog.count
+        try imported.replaceSelection(keep)
+        let bulkWork = catalog.count - bulkStart
+        require(imported.mode == .review && imported.selectedIDs == keep && repeated.selectedIDs == keep,
+                "one bulk untick retains every other eligible selection including explicit risky rows")
+        require(bulkWork > 0 && repeatedWork > bulkWork * 20,
+                "bulk selection reviews eligibility once; repeated=\(repeatedWork), bulk=\(bulkWork) catalog lookups")
+        for row in rows where !row.canSelect {
+            rejects(ConfigImportSessionError.unavailableSelection) { try imported.replaceSelection(keep.union([row.id])) }
+            require(imported.selectedIDs == keep && imported.mode == .review, "blocked, locked and machine rows cannot enter the bulk selection")
+        }
+        rejects(ConfigImportSessionError.unavailableSelection) { try imported.replaceSelection(keep.union(["missing-row"])) }
+        var applied = try session("seta name BulkApplied\n")
+        applied.setMode(.everything)
+        _ = try applied.apply(to: store)
+        rejects(ConfigImportSessionError.alreadyApplied) { try applied.replaceSelection([]) }
+        print("PASS: one bulk selection retains permissions with \(bulkWork) catalog lookups versus \(repeatedWork)")
+    }
     @MainActor static func main() throws {
         let root = URL(fileURLWithPath: ProcessInfo.processInfo.environment["COD2_IMPORT_SESSION_SCRATCH"]!)
         let home = root.appendingPathComponent("home")
@@ -26,6 +72,7 @@ import Foundation
         metadata.locks = ["SENSITIVITY", "bind:mouse1"]
         let main = try store.create(id: "Main", displayName: "Main", document: .init(data: original, dialect: .cod2x), metadata: metadata)
         try store.select(id: "Main", expectedActive: nil)
+        try bulkSelection(store, baseline: main)
         var imported = try session("seta sensitivity 4\nseta name New\nbind MOUSE1 +forward\nseta password test-only\nexec absent.cfg\nunknown_forwarded\n")
         require(imported.mode == .review && imported.target.isNew, "default new target and Review")
         require(imported.rows.filter { $0.candidate.classification == .needsOK }.allSatisfy { !imported.selectedIDs.contains($0.id) }, "risky rows unchecked")

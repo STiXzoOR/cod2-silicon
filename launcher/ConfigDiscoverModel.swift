@@ -419,9 +419,7 @@ extension ConfigImportPresentation {
             if session.mode == .everything {
                 // Unticking in Import everything returns to Review with everything else still ticked.
                 let keep = session.selectedIDs.subtracting([id])
-                session.setMode(.review)
-                for other in session.selectedIDs where !keep.contains(other) { try session.select(other, selected: false) }
-                for other in keep { try session.select(other, selected: true) }
+                try session.replaceSelection(keep)
             } else {
                 try session.select(id, selected: !session.selectedIDs.contains(id))
             }
@@ -499,7 +497,7 @@ extension ConfigImportPresentation {
         guard let session = studio.session else { return }
         do {
             try session.focus(profileID)
-            guard session.current?.data == entry.data else {
+            guard session.current?.version == studio.restoreTarget(entry, revision: .after) else {
                 studio.failure = ConfigStudioFailure(title: "Nothing to undo", message: "This loadout changed after the import. Pick a snapshot in History instead.", retry: nil)
                 return
             }

@@ -206,7 +206,8 @@ struct ConfigImportSafety: Sendable {
         let name = first.text.lowercased()
         let assignment = ConfigImportScript.assignment(command, document: document, catalog: catalog, knownNames: Set(graph.values.keys))
         if let assignment {
-            assessSetting(assignment.name, value: assignment.value, dialect: dialect, into: &result)
+            assessSetting(assignment.name, value: assignment.value, dialect: dialect,
+                          archived: graph.archivedNames.contains(assignment.name), into: &result)
             if ["sets", "setu"].contains(name) { result.add(.network) }
             if graph.referenced.contains(assignment.name) || ConfigImportScript.looksExecutable(assignment.value, dialect: dialect) {
                 result.add(.script)
@@ -223,17 +224,19 @@ struct ConfigImportSafety: Sendable {
         } else {
             switch name {
             case "bind":
-                guard tokens.count >= 3, ConfigDocument.keyNumber(tokens[1].text) != nil,
+                guard tokens.count >= 3, let key = ConfigDocument.keyNumber(tokens[1].text),
                       let binding = ConfigImportScript.binding(command, document: document) else {
                     result.add(.malformed, level: .blocked, importable: false); return result
                 }
                 if ConfigImportScript.bindingWasTruncated(command) { result.add(.limit, level: .blocked, importable: false) }
+                if !Self.preservesSavedValue(binding, command: "bind", name: ConfigDocument.keySpelling(key), escapeQuotes: true, dialect: dialect) {
+                    result.add(.malformed, level: .blocked, importable: false)
+                }
                 if binding.first == 43 {
                     if binding.contains(59) { result.add(.keyRelease) }
                     // CL_KeyEvent appends key/time to the whole + binding on
                     // both press and release (Com_sprintf caps it at 1023).
                     // The timestamp's value cannot change this command name.
-                    let key = ConfigDocument.keyNumber(tokens[1].text)!
                     let event = Data((binding + Data(" \(key) 1\n".utf8)).prefix(1023))
                     let parsed = ConfigDocument(data: event, dialect: dialect)
                     for generated in parsed.commands where generated.tokens.first.map({ $0.range.lowerBound >= binding.count }) == true {
@@ -282,6 +285,11 @@ struct ConfigImportSafety: Sendable {
                 else if values.isEmpty { result.add(.unresolvedVariable, importable: false) }
                 else {
                     for value in values.sorted(by: { $0.lexicographicallyPrecedes($1) }) {
+                        // Cmd_Vstr_f adds LF through the production 1024-byte
+                        // va buffer. Longer helpers error before any leaf runs.
+                        guard value.count <= 1022 else {
+                            result.add(.limit, level: .blocked, importable: false); continue
+                        }
                         expand(value, dialect: dialect, location: location, label: key,
                                files: files, graph: graph, stack: stack + [key], budget: &budget, into: &result, detectCycles: detectCycles)
                     }
@@ -294,7 +302,8 @@ struct ConfigImportSafety: Sendable {
                 else {
                     let values = tokens.count > 2 ? Array(tokens.dropFirst(2)).map(\.value) : [Data()]
                     for value in values {
-                        assessSetting(tokens[1].text.lowercased(), value: value, dialect: dialect, into: &result)
+                        assessSetting(tokens[1].text.lowercased(), value: value, dialect: dialect,
+                                      archived: graph.archivedNames.contains(tokens[1].text.lowercased()), into: &result)
                         if name != "setfromdvar" && ConfigImportScript.looksExecutable(value, dialect: dialect) {
                             result.add(.script)
                             expand(value, dialect: dialect, location: location, label: "value:" + tokens[1].text.lowercased(),
@@ -307,7 +316,8 @@ struct ConfigImportSafety: Sendable {
                             let copied = graph.values[tokens[2].text.lowercased()] ?? []
                             if copied.isEmpty { result.add(.unresolvedVariable, importable: false) }
                             for value in copied.sorted(by: { $0.lexicographicallyPrecedes($1) }) {
-                                assessSetting(tokens[1].text.lowercased(), value: value, dialect: dialect, into: &result)
+                                assessSetting(tokens[1].text.lowercased(), value: value, dialect: dialect,
+                                              archived: graph.archivedNames.contains(tokens[1].text.lowercased()), into: &result)
                                 if ConfigImportScript.looksExecutable(value, dialect: dialect) || graph.referenced.contains(tokens[1].text.lowercased()) {
                                     result.add(.script)
                                     expand(value, dialect: dialect, location: location, label: "copied:" + tokens[2].text.lowercased(),
@@ -371,7 +381,30 @@ struct ConfigImportSafety: Sendable {
         }
     }
 
-    private func assessSetting(_ name: String, value: Data, dialect: ConfigDialect, into result: inout Assessment) {
+    /// Key_WriteBindings escapes only quotes; Dvar_WriteVariables writes the
+    /// archived value verbatim. Cbuf counts every quote, including escaped
+    /// quotes, before tokenization, so compare the actual saved command shape.
+    private static func preservesSavedValue(_ value: Data, command: String, name: String,
+                                           escapeQuotes: Bool, dialect: ConfigDialect) -> Bool {
+        var saved = Data("\(command) \(name) \"".utf8)
+        for byte in value {
+            if escapeQuotes && byte == 34 { saved.append(92) }
+            saved.append(byte)
+        }
+        saved.append(contentsOf: [34, 10])
+        let parsed = ConfigDocument(data: saved, dialect: dialect)
+        guard parsed.ignoredSuffixRange == nil, parsed.commands.count == 1,
+              let reloaded = parsed.commands.first, !reloaded.splitAtLimit,
+              reloaded.tokenizationFailure == nil, reloaded.tokens.allSatisfy(\.closed) else { return false }
+        return reloaded.tokens.map(\.value) == [Data(command.utf8), Data(name.utf8), value]
+    }
+
+    private func assessSetting(_ name: String, value: Data, dialect: ConfigDialect, archived: Bool = false, into result: inout Assessment) {
+        if archived || catalog.setting(named: name, dialect: dialect)?.archived == true {
+            if !Self.preservesSavedValue(value, command: "seta", name: name, escapeQuotes: false, dialect: dialect) {
+                result.add(.malformed, level: .blocked, importable: false)
+            }
+        }
         if Self.credentialName(name) { result.add(.credential, level: .blocked, importable: false) }
         if let url = URLComponents(string: ConfigDocument.text(value)),
            ["http", "https"].contains(url.scheme?.lowercased() ?? ""),
@@ -431,6 +464,7 @@ struct ConfigImportSafety: Sendable {
         var values: [String: Set<Data>] = [:]
         var origins: [String: [ConfigImportLocation]] = [:]
         var referenced = Set<String>()
+        var archivedNames = Set<String>()
         var copies: [(String, String)] = []
         var visited = Set<Data>()
         var count = 0
@@ -440,6 +474,7 @@ struct ConfigImportSafety: Sendable {
             guard visited.insert(document.serialized()).inserted else { return }
             for command in document.commands where command.kind == .setting && command.tokens.count >= 3 {
                 values[command.tokens[1].text.lowercased(), default: []].formUnion([])
+                if command.tokens[0].text.lowercased() == "seta" { archivedNames.insert(command.tokens[1].text.lowercased()) }
             }
             for command in document.commands {
                 count += 1

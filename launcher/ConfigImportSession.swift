@@ -71,6 +71,15 @@ struct ConfigImportSession: Sendable {
         guard let row = rows.first(where: { $0.id == id }), row.canSelect else { throw ConfigImportSessionError.unavailableSelection }
         if selected { selectedIDs.insert(id) } else { selectedIDs.remove(id) }
     }
+    /// One eligibility review when keeping explicit choices after leaving
+    /// Import Everything. Invalid selections leave the review state intact.
+    mutating func replaceSelection(_ ids: Set<String>) throws {
+        guard receipt == nil else { throw ConfigImportSessionError.alreadyApplied }
+        let eligible = Set(rows.filter(\.canSelect).map(\.id))
+        guard ids.isSubset(of: eligible) else { throw ConfigImportSessionError.unavailableSelection }
+        mode = .review
+        selectedIDs = ids
+    }
     private mutating func resetSelection() {
         selectedIDs = Set(rows.filter { $0.canSelect && (mode == .everything || $0.candidate.selectedByDefault) }.map(\.id))
     }
