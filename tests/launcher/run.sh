@@ -9,6 +9,22 @@ mkdir -p "$out"
 
 python3 "$root/tests/launcher/network.py"
 sh "$root/tests/launcher/artwork.sh"
+sh "$root/tests/launcher/config_document.sh"
+sh "$root/tests/launcher/config_profiles.sh"
+sh "$root/tests/launcher/config_launch.sh"
+sh "$root/tests/launcher/config_studio.sh"
+sh "$root/tests/launcher/config_catalog.sh"
+sh "$root/tests/launcher/config_import.sh"
+sh "$root/tests/launcher/config_import_session.sh"
+sh "$root/tests/launcher/config_directory.sh"
+sh "$root/tools/config-directory/test.sh"
+sh "$root/tests/launcher/config_rules.sh"
+sh "$root/tests/launcher/config_checkup.sh"
+sh "$root/tests/launcher/config_bindings.sh"
+sh "$root/tests/launcher/config_ready_check.sh"
+sh "$root/tests/launcher/input_devices.sh"
+sh "$root/tests/launcher/config_chains.sh"
+sh "$root/tests/launcher/config_discover.sh"
 "$root/scripts/fetch-launcher-fonts.sh" --check
 
 # One shape system: buttons take their style from Theme.swift (capsules, or circles for a lone
@@ -23,11 +39,15 @@ echo "PASS: every button style comes from launcher/Theme.swift"
 # Every view must also compile for SDKs before macOS 26, where only the material styling exists.
 sdk=$(/usr/bin/xcrun --show-sdk-path)
 views=""
-for file in Core Presentation Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView LibraryView Main; do
+for file in Core Presentation ConfigDocument ConfigProfiles ConfigHistory ConfigStudioSession ConfigCatalog ConfigRules ConfigReadyCheck \
+    ConfigCheckup ConfigBindings InputDevices ConfigChains ConfigImport ConfigImportSafety WindowsProfiles ConfigImportSession \
+    ConfigImportCatalogAdapter ConfigDirectory ConfigStudioModel ConfigStudioBinds ConfigStudioCheckup ConfigStudioStyle \
+    Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView LibraryView ConfigsView ConfigSettingsView ConfigHistoryView \
+    ConfigDiscoverModel ConfigDiscoverView ConfigImportView ServerReadyCheck ServerReadyCheckView ConfigBindsView ConfigCheckupView Main; do
     views="$views $root/launcher/$file.swift"
 done
 # shellcheck disable=SC2086
-/usr/bin/xcrun swiftc -typecheck -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
+taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc -j 1 -typecheck -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
     -target arm64-apple-macos13 -sdk "$sdk" -import-objc-header "$root/launcher/NativeSetup.h" $views
 echo "PASS: views typecheck without COD2_LIQUID_GLASS (macOS 13-25 material branch)"
 

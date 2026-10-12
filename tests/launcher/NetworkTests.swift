@@ -20,11 +20,15 @@ import Foundation
         let port = UInt16(CommandLine.arguments[1])!
         guard let server = await ServerQueries.server("127.0.0.1:\(port)") else { fatalError("Local UDP fixture did not answer") }
         precondition(server.map == "mp_trainstation" && server.players.count > 0 && server.ping < 500)
+        guard let conflicting = await ServerQueries.server("127.0.0.1:\(port)") else { fatalError("Conflicting peer did not answer") }
+        precondition(conflicting.queryConflicts?.contains("g_competitive") == true, "status/info contradiction was discarded")
+        guard let rejected = await ServerQueries.server("127.0.0.1:\(port)") else { fatalError("Info fallback did not answer") }
+        precondition(rejected.observedAt == nil, "a rejected contradictory status acquired a fresh status timestamp through info fallback")
         let task = Task { await UDPRequest(host: "127.0.0.1", port: port + 1).exchange("getstatus", seconds: 5) }
         try await Task.sleep(for: .milliseconds(20)); task.cancel()
         let start = ContinuousClock.now
         let packets = await task.value
         precondition(packets.isEmpty && start.duration(to: .now) < .seconds(1))
-        print("PASS: real Network.framework UDP exchange, parser integration, RTT and cancellation")
+        print("PASS: real Network.framework UDP exchange, parser integration, RTT, cancellation and contradictory status/info fallback")
     }
 }

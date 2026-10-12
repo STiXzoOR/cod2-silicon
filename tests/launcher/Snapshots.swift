@@ -1,16 +1,29 @@
 import AppKit
+import ApplicationServices
 import SwiftUI
 
 // Review harness, never shipped. It hosts the real launcher views in a titled window
 // configured like the app's (hidden title bar, unified toolbar) and captures it through
 // the window server, so Liquid Glass, materials and toolbars render as they do on screen.
 //
-//   LauncherSnapshots OUTPUT [--data GAME_DIR] [--fallback] [--scale2] [--only SCREEN]
+//   LauncherSnapshots OUTPUT [--data GAME_DIR] [--fallback] [--scale2] [--only SCREEN] [--group configs]
+//                            [--increase-contrast] [--reduce-transparency] [--actions] [--minimum]
+//                            [--accessibility] [--overlays]
 //
 // --data uses the player's own loading screens (private review only; never commit them).
 // --fallback forces the macOS 13–25 material styling. --scale2 adds 2× renders of the same
 // window for checking text, vectors and shapes (material styling; system glass draws flat there).
-// COD2_SNAPSHOT_GEOMETRY=1 logs AppKit, view and WindowServer geometry at each sizing step.
+// --group configs renders only the Config Studio screens; --increase-contrast and
+// --reduce-transparency set those accessibility environments for the capture. --minimum uses the
+// launcher's 1100×760 minimum window.
+// --actions clicks Config Studio controls in the window (real hit-testing and actions) and checks
+// the bytes and History rows written to a temporary home.
+// --accessibility reads each Config Studio window's accessibility tree, as VoiceOver would, writes
+// it in reading order to OUTPUT/accessibility, and fails on a control without a name.
+// --overlays opens sheets, popovers and alerts with real clicks and captures them over the window.
+// Config Studio screens use synthetic loadouts in a private temporary home, removed afterwards.
+// COD2_SNAPSHOT_GEOMETRY=1 logs AppKit, view and WindowServer geometry at each sizing step;
+// COD2_SNAPSHOT_TRACE=1 logs each step of the window-driving modes to stderr.
 
 /// The review host can't become the active app while the login session is locked, so the
 /// window reports key and main appearance. Test-only: these overrides never ship.
@@ -47,11 +60,114 @@ final class SnapshotWindow: NSWindow {
         // kCGWindowListOptionIncludingWindow, kCGWindowImageBestResolution (shadow outside bounds excluded).
         return create(bounds, 1 << 3, UInt32(window.windowNumber), 1 << 3)?.takeRetainedValue()
     }
+
+    private typealias CreateFromArray = @convention(c) (CGRect, CFArray, UInt32) -> Unmanaged<CGImage>?
+    /// Our own windows composited front to back (a sheet, popover or alert over the window),
+    /// cropped to the window: other apps' windows never enter the image.
+    static func image(of windows: [NSWindow], in window: NSWindow) -> CGImage? {
+        guard let primary = NSScreen.screens.first,
+              let handle = dlopen(nil, RTLD_NOW), let symbol = dlsym(handle, "CGWindowListCreateImageFromArray") else { return nil }
+        let create = unsafeBitCast(symbol, to: CreateFromArray.self)
+        // The window plus anything that hangs past its edge, such as a popover.
+        let frame = windows.reduce(window.frame) { $0.union($1.frame) }.intersection(primary.frame)
+        let bounds = CGRect(x: frame.minX, y: primary.frame.maxY - frame.maxY, width: frame.width, height: frame.height)
+        var ids: [UnsafeRawPointer?] = windows.map { UnsafeRawPointer(bitPattern: UInt($0.windowNumber)) }
+        guard let array = CFArrayCreate(nil, &ids, ids.count, nil) else { return nil }
+        return create(bounds, array, 1 << 3)?.takeRetainedValue()
+    }
+}
+
+/// The window's accessibility tree as VoiceOver reads it, through the AX API. Asking our own
+/// process needs no permission and changes no setting, and it makes SwiftUI build its nodes.
+/// (Reading SwiftUI's nodes directly can raise inside a Menu; the AX API reports an error instead.)
+@MainActor enum AccessibilityTree {
+    struct Element {
+        let role: String, subrole: String, label: String, value: String, help: String, selected: Bool
+        /// Screen rectangle, top-left origin (Quartz).
+        let frame: CGRect
+        let depth: Int
+        let element: AXUIElement
+        var line: String {
+            String(repeating: "  ", count: depth) + role + (label.isEmpty ? "" : " “\(label)”") + (value.isEmpty ? "" : " = \(value)")
+                + (selected ? " [selected]" : "") + (help.isEmpty ? "" : " (\(help))")
+        }
+    }
+    static let controls: Set<String> = ["AXButton", "AXCheckBox", "AXRadioButton", "AXSlider", "AXTextField", "AXTextArea", "AXPopUpButton",
+                                        "AXMenuButton", "AXComboBox", "AXLink", "AXDisclosureTriangle", "AXIncrementor", "AXSearchField"]
+    static var application: AXUIElement { AXUIElementCreateApplication(getpid()) }
+    static func wake() { _ = attribute(application, kAXWindowsAttribute) }
+    static func attribute(_ element: AXUIElement, _ name: String) -> CFTypeRef? {
+        var value: CFTypeRef?
+        return AXUIElementCopyAttributeValue(element, name as CFString, &value) == .success ? value : nil
+    }
+    static func text(_ element: AXUIElement, _ name: String) -> String { attribute(element, name) as? String ?? "" }
+    static func frame(_ element: AXUIElement) -> CGRect {
+        var point = CGPoint.zero, size = CGSize.zero
+        if let value = attribute(element, kAXPositionAttribute), CFGetTypeID(value) == AXValueGetTypeID() { AXValueGetValue(value as! AXValue, .cgPoint, &point) }
+        if let value = attribute(element, kAXSizeAttribute), CFGetTypeID(value) == AXValueGetTypeID() { AXValueGetValue(value as! AXValue, .cgSize, &size) }
+        return CGRect(origin: point, size: size)
+    }
+    /// The AX window that is this NSWindow (same frame), with its sheets and popovers as children or siblings.
+    static func windows(matching window: NSWindow?) -> [AXUIElement] {
+        let all = attribute(application, kAXWindowsAttribute) as? [AXUIElement] ?? []
+        guard let window, let primary = NSScreen.screens.first else { return all }
+        let target = CGRect(x: window.frame.minX, y: primary.frame.maxY - window.frame.maxY, width: window.frame.width, height: window.frame.height)
+        return all.filter { abs(frame($0).minX - target.minX) < 2 && abs(frame($0).minY - target.minY) < 2 && abs(frame($0).width - target.width) < 2 }
+    }
+    static func elements(of window: NSWindow?) -> [Element] {
+        var result: [Element] = []
+        func walk(_ element: AXUIElement, depth: Int) {
+            guard depth < 80 else { return }
+            let role = text(element, kAXRoleAttribute)
+            let label = [text(element, kAXDescriptionAttribute), text(element, kAXTitleAttribute), text(element, kAXPlaceholderValueAttribute)].first { !$0.isEmpty } ?? ""
+            var value = ""
+            if let raw = attribute(element, kAXValueAttribute) {
+                if let string = raw as? String { value = string } else if let number = raw as? NSNumber { value = number.stringValue }
+            }
+            if value.count > 80 { value = String(value.prefix(80)) + "…" }
+            result.append(Element(role: role, subrole: text(element, kAXSubroleAttribute), label: label, value: value.replacingOccurrences(of: "\n", with: " "),
+                                  help: text(element, kAXHelpAttribute), selected: (attribute(element, kAXSelectedAttribute) as? Bool) == true,
+                                  frame: frame(element), depth: depth, element: element))
+            for child in attribute(element, kAXChildrenAttribute) as? [AXUIElement] ?? [] { walk(child, depth: depth + 1) }
+        }
+        for root in windows(matching: window) { walk(root, depth: 0) }
+        return result
+    }
+    /// Named elements with no role, which VoiceOver reads without saying what they are.
+    static func roleless(_ elements: [Element]) -> [Element] {
+        elements.filter { ($0.role == "AXUnknown" || $0.role.isEmpty) && !$0.label.isEmpty }
+    }
+    /// Controls VoiceOver would announce without a name.
+    static func unnamed(_ elements: [Element]) -> [Element] {
+        // The window's own buttons and scroll-bar parts are named by their subrole; selectable
+        // read-only text is read by its value.
+        let system: Set<String> = ["AXCloseButton", "AXMinimizeButton", "AXZoomButton", "AXFullScreenButton",
+                                   "AXIncrementArrow", "AXDecrementArrow", "AXIncrementPage", "AXDecrementPage"]
+        return elements.indices.compactMap { index in
+            let element = elements[index]
+            guard controls.contains(element.role), !system.contains(element.subrole), element.label.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
+            if ["AXTextArea", "AXTextField"].contains(element.role), !settable(element.element) {
+                // Read-only text is read by its contents, its own value or the text inside it.
+                let inside = elements[(index + 1)...].prefix { $0.depth > element.depth }
+                if !element.value.isEmpty || inside.contains(where: { $0.role == "AXStaticText" && !$0.value.isEmpty }) { return nil }
+            }
+            return element
+        }
+    }
+    static func settable(_ element: AXUIElement) -> Bool {
+        var settable: DarwinBoolean = false
+        return AXUIElementIsAttributeSettable(element, kAXValueAttribute as CFString, &settable) == .success && settable.boolValue
+    }
 }
 
 @main struct Snapshots {
     static let screens = ["home", "home-first", "servers", "servers-empty", "settings", "library-demos", "library-screenshots", "about",
-                          "setup-data", "setup-data-missing", "setup-key", "setup-shaders", "setup-ready"]
+                          "setup-data", "setup-data-missing", "setup-key", "setup-shaders", "setup-ready"] + configScreens
+    static let configScreens = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-text", "configs-history", "configs-running",
+                                "discover-unavailable", "discover-players", "discover-saved", "discover-player", "configs-import",
+                                "configs-import-everything", "servers-ready", "servers-ready-fixed",
+                                "configs-binds-list", "configs-binds-advanced", "configs-binds-visual", "configs-checkup",
+                                "configs-guided-rules", "configs-expert-rules"]
 
     @MainActor static func main() {
         let arguments = CommandLine.arguments
@@ -60,6 +176,9 @@ final class SnapshotWindow: NSWindow {
         let data = arguments.firstIndex(of: "--data").flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil }
         let fallback = arguments.contains("--fallback"), scale2 = arguments.contains("--scale2")
         let only = arguments.firstIndex(of: "--only").flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil }
+        let configsOnly = arguments.firstIndex(of: "--group").flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil } == "configs"
+        if arguments.contains("--minimum") { windowSize = NSSize(width: 1100, height: 760) }
+        let accessibility = Accessibility(increaseContrast: arguments.contains("--increase-contrast"), reduceTransparency: arguments.contains("--reduce-transparency"))
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
         LauncherFonts.register()
@@ -71,28 +190,50 @@ final class SnapshotWindow: NSWindow {
             guard let data else { fputs("--contrast needs --data GAME_DIR\n", stderr); exit(2) }
             exit(contrastReport(data: data, output: output) ? 0 : 1)
         }
+        if arguments.contains("--actions") {
+            Task { @MainActor in exit(await ConfigsPreview.actions() ? 0 : 1) }
+            app.run()
+        }
+        if arguments.contains("--accessibility") {
+            Task { @MainActor in exit(await ConfigsPreview.accessibility(output: output, only: only) ? 0 : 1) }
+            app.run()
+        }
+        if arguments.contains("--overlays") {
+            Task { @MainActor in exit(await ConfigsPreview.overlays(output: output, only: only) ? 0 : 1) }
+            app.run()
+        }
         Task { @MainActor in
             var written = 0, checked = 0
             var findings: [String] = [], report: [[String: Any]] = []
             for dark in [true, false] {
-                for screen in screens where only == nil || only == screen {
+                for screen in screens where (only == nil || only == screen) && (!configsOnly || configScreens.contains(screen)) {
                     let model = LauncherModel(snapshot: true)
                     model.preview(screen)
+                    var home: URL?
+                    if configScreens.contains(screen) {
+                        do { home = try ConfigsPreview.seed(model, screen: screen); try await ConfigsPreview.prepare(model, screen: screen, home: home!) }
+                        catch { fputs("Config Studio preview failed for \(screen): \(error)\n", stderr); exit(1) }
+                    }
+                    defer { if let home { try? FileManager.default.removeItem(at: home) } }
                     if let data {
                         let maps = model.servers.map(\.map) + model.media.compactMap { $0.facts.map.map { "mp_" + $0 } } + ["mp_toujane"]
                         model.artwork.loadPrivatePreviewSynchronously(dataPath: data, maps: maps)
                     }
                     let name = "\(screen)-\(dark ? "dark" : "light")"
                     let audit = ShapeAudit()
-                    if let image = await capture(model: model, dark: dark, fallback: fallback, audit: audit) {
+                    let captured = await capture(model: model, dark: dark, fallback: fallback, audit: audit, accessibility: accessibility)
+                    if let sheet = captured.sheet { try? write(sheet, to: output.appendingPathComponent(name + "-sheet.png")); written += 1 }
+                    if let image = captured.window {
                         try? write(image, to: output.appendingPathComponent(name + ".png")); written += 1
                         let items = Array(audit.items.values)
                         let found = ShapeCheck.findings(items, image: image).map { "\(name): \($0)" }
                         checked += items.count; findings += found
                         report.append(["screen": name, "items": items.map(ShapeCheck.json), "findings": found])
                     } else { fputs("Capture failed: \(name)\n", stderr) }
-                    if scale2, let image = await render2x(model: model, dark: dark) {
-                        try? write(image, to: output.appendingPathComponent(name + "@2x.png")); written += 1
+                    if scale2 {
+                        let rendered = await render2x(model: model, dark: dark, accessibility: accessibility)
+                        if let image = rendered.window { try? write(image, to: output.appendingPathComponent(name + "@2x.png")); written += 1 }
+                        if let sheet = rendered.sheet { try? write(sheet, to: output.appendingPathComponent(name + "-sheet@2x.png")); written += 1 }
                     }
                 }
             }
@@ -107,12 +248,17 @@ final class SnapshotWindow: NSWindow {
         app.run()
     }
 
-    @MainActor static func root(_ model: LauncherModel, dark: Bool, glass: Bool, audit: ShapeAudit? = nil) -> some View {
+    struct Accessibility { var increaseContrast = false; var reduceTransparency = false }
+
+    @MainActor static func root(_ model: LauncherModel, dark: Bool, glass: Bool, audit: ShapeAudit? = nil, accessibility: Accessibility = .init()) -> some View {
         LauncherRoot(model: model)
             .environment(\.shapeAudit, audit)
             .environment(\.usesGlass, glass && LiquidGlass.available)
             .environment(\.colorScheme, dark ? .dark : .light)
             .environment(\.controlActiveState, .key)
+            // Test-only overrides of the system settings, without changing them for the Mac.
+            .environment(\._colorSchemeContrast, accessibility.increaseContrast ? .increased : .standard)
+            .environment(\._accessibilityReduceTransparency, accessibility.reduceTransparency)
     }
 
 
@@ -134,22 +280,28 @@ final class SnapshotWindow: NSWindow {
         if let data = try? JSONSerialization.data(withJSONObject: row, options: [.sortedKeys]), let json = String(data: data, encoding: .utf8) { print("GEOMETRY " + json) }
     }
 
-    @MainActor static func capture(model: LauncherModel, dark: Bool, fallback: Bool, audit: ShapeAudit) async -> CGImage? {
-        let window = await show(model: model, dark: dark, glass: !fallback, audit: audit)
+    /// The window, and an attached sheet (the import review) as its own image.
+    @MainActor static func capture(model: LauncherModel, dark: Bool, fallback: Bool, audit: ShapeAudit, accessibility: Accessibility = .init()) async -> (window: CGImage?, sheet: CGImage?) {
+        let window = await show(model: model, dark: dark, glass: !fallback, audit: audit, accessibility: accessibility)
         let image = WindowCapture.image(of: window)
+        let sheet = window.attachedSheet.flatMap { WindowCapture.image(of: $0) }
         geometry(window, "capture", image: image)
+        window.attachedSheet.map { window.endSheet($0) }
         window.orderOut(nil); window.close()
-        return image
+        return (image, sheet)
     }
 
-    /// The app-like window, shown and laid out at 1440×900.
-    @MainActor static func show(model: LauncherModel, dark: Bool, glass: Bool, audit: ShapeAudit? = nil) async -> NSWindow {
+    /// 1440×900, or the launcher's 1100×760 minimum with --minimum.
+    @MainActor static var windowSize = NSSize(width: 1440, height: 900)
+
+    /// The app-like window, shown and laid out at `windowSize`.
+    @MainActor static func show(model: LauncherModel, dark: Bool, glass: Bool, audit: ShapeAudit? = nil, accessibility: Accessibility = .init()) async -> NSWindow {
         let appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
         NSApp.appearance = appearance
-        let controller = NSHostingController(rootView: root(model, dark: dark, glass: glass, audit: audit))
+        let controller = NSHostingController(rootView: root(model, dark: dark, glass: glass, audit: audit, accessibility: accessibility))
         controller.sizingOptions = []
         if #available(macOS 14.0, *) { controller.sceneBridgingOptions = [.toolbars] }
-        let window = SnapshotWindow(contentRect: NSRect(x: 0, y: 0, width: 1440, height: 900),
+        let window = SnapshotWindow(contentRect: NSRect(origin: .zero, size: windowSize),
                                     styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView], backing: .buffered, defer: false)
         geometry(window, "init")
         window.appearance = appearance
@@ -159,13 +311,13 @@ final class SnapshotWindow: NSWindow {
         window.isReleasedWhenClosed = false
         window.contentViewController = controller
         geometry(window, "content-controller")
-        window.setFrame(NSRect(x: 40, y: 40, width: 1440, height: 900), display: true)
+        window.setFrame(NSRect(origin: NSPoint(x: 40, y: 40), size: windowSize), display: true)
         geometry(window, "first-set-frame")
         window.orderFrontRegardless()
         geometry(window, "order-front")
         try? await Task.sleep(for: .milliseconds(1400))
         geometry(window, "first-settled")
-        window.setFrame(NSRect(x: 40, y: 40, width: 1440, height: 900), display: true)
+        window.setFrame(NSRect(origin: NSPoint(x: 40, y: 40), size: windowSize), display: true)
         geometry(window, "second-set-frame")
         try? await Task.sleep(for: .milliseconds(400))
         geometry(window, "settled")
@@ -174,16 +326,20 @@ final class SnapshotWindow: NSWindow {
 
     /// 2× render of the same window with the material styling, toolbar included, for text, vector
     /// and shape checks. A bare hosting view has no window, so the split view wouldn't lay out.
-    @MainActor static func render2x(model: LauncherModel, dark: Bool) async -> CGImage? {
-        let window = await show(model: model, dark: dark, glass: false)
-        defer { window.orderOut(nil); window.close() }
-        guard let frame = window.contentView?.superview,
-              let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 2880, pixelsHigh: 1800, bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
-                                         isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
-        rep.size = frame.bounds.size
-        frame.cacheDisplay(in: frame.bounds, to: rep)
-        geometry(window, "render2x", image: rep.cgImage)
-        return rep.cgImage
+    @MainActor static func render2x(model: LauncherModel, dark: Bool, accessibility: Accessibility = .init()) async -> (window: CGImage?, sheet: CGImage?) {
+        let window = await show(model: model, dark: dark, glass: false, accessibility: accessibility)
+        defer { window.attachedSheet.map { window.endSheet($0) }; window.orderOut(nil); window.close() }
+        func render(_ view: NSView?) -> CGImage? {
+            guard let view, let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(view.bounds.width) * 2, pixelsHigh: Int(view.bounds.height) * 2,
+                                                       bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
+                                                       bytesPerRow: 0, bitsPerPixel: 0) else { return nil }
+            rep.size = view.bounds.size
+            view.cacheDisplay(in: view.bounds, to: rep)
+            return rep.cgImage
+        }
+        let image = render(window.contentView?.superview)
+        geometry(window, "render2x", image: image)
+        return (image, render(window.attachedSheet?.contentView?.superview))
     }
 
     /// Measures text contrast over the player's own loading screens without looking at, or writing,
@@ -337,8 +493,8 @@ final class SnapshotWindow: NSWindow {
     /// The captured window's pixels, addressed in window points.
     struct Pixels {
         var data: [UInt8], width: Int, height: Int, scale: CGFloat
-        init?(_ image: CGImage) {
-            width = image.width; height = image.height; scale = CGFloat(image.width) / 1440
+        @MainActor init?(_ image: CGImage) {
+            width = image.width; height = image.height; scale = CGFloat(image.width) / Snapshots.windowSize.width
             data = [UInt8](repeating: 0, count: width * height * 4)
             let (w, h) = (width, height)
             let drawn = data.withUnsafeMutableBytes { raw -> Bool in
@@ -363,6 +519,533 @@ final class SnapshotWindow: NSWindow {
             let corner = color(frame.minX + 2, frame.minY + 2)
             guard Self.distance(fill, outside) > 90 else { return nil }
             return Self.distance(corner, outside) < Self.distance(corner, fill) ? "capsule" : "rounded rectangle"
+        }
+    }
+}
+
+/// A fixed ABC keyboard and a mouse, so Binds renders the same everywhere and never
+/// shows the reviewer's own devices.
+@MainActor final class PreviewInputProvider: InputDeviceProvider {
+    func inputSource() -> InputSourceSnapshot {
+        var labels: [UInt16: String] = [:]
+        let keys: [(UInt16, String)] = [(0, "a"), (1, "s"), (2, "d"), (3, "f"), (4, "h"), (5, "g"), (6, "z"), (7, "x"), (8, "c"), (9, "v"), (11, "b"),
+            (12, "q"), (13, "w"), (14, "e"), (15, "r"), (16, "y"), (17, "t"), (31, "o"), (32, "u"), (34, "i"), (35, "p"), (37, "l"), (38, "j"),
+            (40, "k"), (45, "n"), (46, "m"), (18, "1"), (19, "2"), (20, "3"), (21, "4"), (23, "5"), (22, "6"), (26, "7"), (28, "8"), (25, "9"),
+            (29, "0"), (27, "-"), (24, "="), (33, "["), (30, "]"), (42, "\\"), (41, ";"), (39, "'"), (43, ","), (47, "."), (44, "/"), (50, "`")]
+        for (key, label) in keys { labels[key] = label }
+        return InputSourceSnapshot(id: "com.apple.keylayout.ABC", name: "ABC", shape: .ansi, labels: labels)
+    }
+    func devices() -> [InputDevice] {
+        [InputDevice(id: "1", name: "Magic Keyboard", vendorID: 0x05ac, kind: .keyboard, keyboardShape: .ansi),
+         InputDevice(id: "2", name: "USB Mouse", vendorID: nil, kind: .mouse, buttonCount: 5)]
+    }
+    func startObserving(_ changed: @escaping @MainActor () -> Void) {}
+    func stopObserving() {}
+}
+
+/// Synthetic loadouts for the Config Studio screens, written through the real store into a
+/// private temporary home. Test preview data only: generic loadout names, no real players.
+@MainActor enum ConfigsPreview {
+    static let dates = ["2026-09-28T19:40:00", "2026-10-02T20:02:00", "2026-10-02T20:03:00", "2026-10-04T21:20:00",
+                        "2026-10-05T22:31:00", "2026-10-06T17:55:00", "2026-10-06T18:42:00", "2026-10-06T18:44:00",
+                        "2026-10-06T18:50:00", "2026-10-06T18:52:00"]
+
+    /// A canonical game-written config: header, sorted binds, then sorted settings.
+    static func config(_ values: [String: String]) -> ConfigDocument {
+        var text = "// generated by Call of Duty, do not modify\nunbindall\nunbindall\n"
+        for (key, action) in [("TAB", "+scores"), ("SPACE", "+gostand"), ("4", "+smoke"), ("a", "+moveleft"), ("c", "togglecrouch"), ("d", "+moveright"),
+                              ("e", "+leanright"), ("q", "+leanleft"), ("r", "+reload"), ("s", "+back"), ("t", "chatmodepublic"), ("v", "+melee"),
+                              ("w", "+forward"), ("y", "chatmodeteam"), ("z", "mp_quickmessage"), ("CTRL", "toggleprone"), ("SHIFT", "+holdbreath"),
+                              ("MOUSE1", "+attack"), ("MOUSE2", "+toggleads_throw"), ("MWHEELDOWN", "weapprev"), ("MWHEELUP", "weapnext")] {
+            text += "bind \(key) \"\(action)\"\n"
+        }
+        for name in values.keys.sorted(by: { $0.lowercased() < $1.lowercased() }) { text += "seta \(name) \"\(values[name]!)\"\n" }
+        return ConfigDocument(data: Data(text.utf8), dialect: .cod2x)
+    }
+
+    @discardableResult
+    static func seed(_ model: LauncherModel, screen: String) throws -> URL {
+        let home = FileManager.default.temporaryDirectory.appendingPathComponent("cod2-configs-preview-\(screen)-\(UUID().uuidString.prefix(8))")
+        let store = try ConfigProfileStore(homeURL: home, dialect: .cod2x)
+        var values = ["cg_chatHeight": "8", "cg_drawFPS": "Simple", "cl_maxpackets": "30", "com_maxfps": "333", "in_rawmouse": "1",
+                      "name": "^3Sgt. ^7Morrow", "r_gamma": "1", "r_picmip": "1", "rate": "25000", "sensitivity": "2.8", "snaps": "30", "snd_volume": "0.8"]
+        var meta = ConfigStudioMetadata(displayName: "Main")
+        meta.origin = ConfigOrigin(kind: .migration, source: "main/config_mp.cfg"); meta.dpi = 800
+        var main = try store.create(id: "Main", displayName: "Main", document: config(values), metadata: meta)
+        try store.select(id: "Main", expectedActive: nil)
+        func change(_ edits: [String: String], _ summary: String, metadata: ConfigStudioMetadata? = nil) throws {
+            values.merge(edits) { $1 }
+            try store.update(id: "Main", document: config(values), expected: main.version, metadata: metadata, summary: summary)
+            main = try store.read(id: "Main")
+        }
+        try change(["r_gamma": "1.4"], "Changed Brightness")
+        meta.locks = ["r_gamma"]
+        try change([:], "Locked Brightness", metadata: meta)
+        try change(["cl_maxpackets": "100"], "Changed Updates you send")
+        try change(["r_picmip": "2"], "Changed Texture detail")
+        // The game saved a change while it ran.
+        let before = main.version
+        values["cg_chatHeight"] = "4"
+        try PrivateFile.write(config(values).serialized(), to: home.appendingPathComponent("main/players/Main/config_mp.cfg"))
+        try store.recordGameSession(id: "Main", before: before)
+        main = try store.read(id: "Main")
+        try change(["sensitivity": "2.6", "cg_drawFPS": "Off"], "Changed 2 settings")
+        meta.notes = ["sensitivity": "Matched to my old mouse pad. Leave it."]
+        try change([:], "Noted Mouse speed", metadata: meta)
+        var scrim = try store.duplicate(id: "Main", as: "Scrim", displayName: "Scrim", expected: main.version)
+        var scrimValues = values
+        scrimValues.merge(["sensitivity": "2.1", "com_maxfps": "250", "r_picmip": "3", "cg_drawFPS": "Simple", "snd_volume": "0.6"]) { $1 }
+        scrim = try store.read(id: "Scrim")
+        try store.update(id: "Scrim", document: config(scrimValues), expected: scrim.version, summary: "Changed 5 settings")
+        _ = try store.create(id: "Pub", displayName: "Pub", document: config(["sensitivity": "3", "com_maxfps": "125", "name": "^3Sgt. ^7Morrow"]))
+        if screen.hasPrefix("configs-binds") {
+            // Two advanced binds made through B2: a toggle and a cycle of messages.
+            main = try store.read(id: "Main")
+            let chains = [ConfigChain(id: "fps_counter", key: "m", behavior: .settingCycle(name: "cg_drawFPS", values: ["Off", "Simple"])),
+                          ConfigChain(id: "greetings", key: "n", behavior: .commandCycle(steps: [["say gl"], ["say hf"], ["say gg"]]))]
+            try ConfigChains.apply(try ConfigChains.prepare(chains: chains, read: main), to: store)
+        }
+        try spreadDates(home.appendingPathComponent("main/players/Main/history"))
+
+        let running = screen == "configs-running"
+        let session = try ConfigStudioSession(home: home, dialect: .cod2x, discoverGames: { running ? [4242] : [] })
+        try session.refresh()
+        model.studio.deviceProvider = { PreviewInputProvider() }
+        model.studio.attach(session)
+        model.studio.loadCatalogNow()
+        model.studio.checkup.load()
+        switch screen {
+        case "configs-expert": model.studio.compareID = "Scrim"
+        case "configs-text":
+            model.studio.toggleText()
+            model.studio.editText(model.studio.text + "seta r_gamma \"1.6\n")
+        case "configs-history":
+            model.studio.snapshotID = session.history.first { $0.summary == "Changed Texture detail" }?.id
+        case "configs-running": try session.reconcileGames([4242])
+        case "configs-binds-visual": model.studio.binds.layout = .visual; model.studio.binds.selectedKey = EngineKey(spelling: "w")
+        case "configs-binds-advanced": model.studio.binds.selectChain("greetings"); model.studio.binds.showLines = true
+        case "configs-checkup", "configs-guided-rules", "configs-expert-rules": model.studio.checkup.rulesetIDs = ["zpam-4.08"]
+        default: break
+        }
+        return home
+    }
+
+    /// Discover, import and ready-check states. Players come from the signed synthetic fixture
+    /// (placeholder names, preview only); “discover-unavailable” is the production directory.
+    static func prepare(_ model: LauncherModel, screen: String, home: URL) async throws {
+        let discover = model.discover
+        func fixture() async throws {
+            discover.use(try DirectoryFixture.directory(cacheURL: home.appendingPathComponent("directory/index.json")))
+            await discover.reload()
+        }
+        func waitReview() async {
+            for _ in 0..<200 {
+                guard let review = discover.review, case .loading = review.phase else { return }
+                try? await Task.sleep(for: .milliseconds(20))
+            }
+        }
+        switch screen {
+        case "discover-unavailable": await discover.reload()
+        case "discover-players": try await fixture()
+        case "discover-saved":
+            try await fixture()
+            discover.setSaved("player-2", true); discover.setSaved("player-4", true)
+        case "discover-player":
+            try await fixture()
+            discover.open(.player("player-1"))
+            for _ in 0..<200 {
+                guard case .loading? = discover.detail?.phase else { break }
+                try? await Task.sleep(for: .milliseconds(20))
+            }
+        case "configs-import", "configs-import-everything":
+            try await fixture()
+            guard let entry = discover.entry("player-1") else { return }
+            discover.tryEntry(entry)
+            await waitReview()
+            if screen == "configs-import" { discover.review?.setTarget("Main") } else { discover.review?.setMode(.everything) }
+        case "servers-ready", "servers-ready-fixed":
+            // A game-written config saves every archived setting; the rules also read these three.
+            let store = try ConfigProfileStore(homeURL: home, dialect: .cod2x)
+            let main = try store.read(id: "Main")
+            var document = main.document
+            for (name, value) in [("m_filter", "0"), ("cl_mouseAccel", "0"), ("r_picmip_manual", "0")] { try document.setSetting(named: name, value: value) }
+            try store.update(id: "Main", document: document, expected: main.version, summary: "Changed 3 settings")
+            try model.studio.session?.refresh()
+            let server = GameServer(address: "203.0.113.200:28960", fields: ["sv_hostname": "^3Desert ^7Fox ^1League", "mapname": "mp_matmata",
+                "g_gametype": "sd", "clients": "8", "sv_maxclients": "10", "protocol": "120", "shortversion": "1.4.6.8", "fs_game": "", "g_competitive": "1"],
+                ping: 42, players: (0..<8).map { ServerPlayer(id: $0, score: 30 - $0 * 3, ping: 20 + $0 * 6, name: ["Aurora", "North", "Moss", "Echo", "Scout", "River", "Harbor", "Quill"][$0]) },
+                observedAt: Date())
+            model.servers.insert(server, at: 0)
+            model.selectedServer = server.address
+            if screen == "servers-ready-fixed" { try model.fixForServerOnly(server.address) }
+        default: break
+        }
+    }
+
+    /// Spreads History rows over the board's dates, keeping their order.
+    static func spreadDates(_ folder: URL) throws {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate, .withTime, .withColonSeparatorInTime, .withDashSeparatorInDate]
+        formatter.timeZone = .current
+        let files = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil).filter { $0.pathExtension == "json" }
+        var rows = try files.map { url -> (URL, [String: Any]) in (url, try JSONSerialization.jsonObject(with: Data(contentsOf: url)) as! [String: Any]) }
+        rows.sort { ($0.1["date"] as! Double) < ($1.1["date"] as! Double) }
+        for (index, row) in rows.enumerated() {
+            var object = row.1
+            object["date"] = formatter.date(from: dates[min(index, dates.count - 1)])!.timeIntervalSinceReferenceDate
+            try PrivateFile.write(JSONSerialization.data(withJSONObject: object, options: [.sortedKeys]), to: row.0)
+        }
+    }
+
+    /// A real click: hit-testing, the control's own tracking and its action. The mouse-up is
+    /// queued first so a control's tracking loop finds it. `point` is in window base coordinates.
+    static func click(_ window: NSWindow, at point: NSPoint) {
+        func event(_ type: NSEvent.EventType) -> NSEvent? {
+            NSEvent.mouseEvent(with: type, location: point, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                               windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1)
+        }
+        guard let down = event(.leftMouseDown), let up = event(.leftMouseUp) else { return }
+        NSApp.postEvent(up, atStart: false)
+        window.sendEvent(down)
+    }
+    static func views<T: NSView>(_ type: T.Type, in view: NSView) -> [T] {
+        ((view as? T).map { [$0] } ?? []) + view.subviews.flatMap { views(type, in: $0) }
+    }
+
+    /// Real controls, real store: clicking the Show crosshair switch writes one exact edit, and
+    /// clicking History's Restore button restores a snapshot as a new transaction.
+    static func actions() async -> Bool {
+        let model = LauncherModel(snapshot: true)
+        model.preview("configs-guided")
+        model.studio.group = .hud
+        let home: URL
+        do { home = try seed(model, screen: "configs-actions") } catch { print("FAIL: preview home: \(error)"); return false }
+        defer { try? FileManager.default.removeItem(at: home) }
+        guard let session = model.studio.session else { return false }
+        let audit = ShapeAudit()
+        let window = await Snapshots.show(model: model, dark: true, glass: true, audit: audit)
+        defer { window.orderOut(nil); window.close() }
+        let file = home.appendingPathComponent("main/players/Main/config_mp.cfg")
+        // Guided HUD lists Show crosshair first; the sidebar and loadout column have no switches.
+        let switches = views(NSSwitch.self, in: window.contentView!).map { ($0, $0.convert($0.bounds, to: nil)) }
+            .filter { $0.1.minX > 700 }.sorted { $0.1.maxY > $1.1.maxY }
+        guard let before = try? Data(contentsOf: file), let toggle = switches.first else {
+            print("FAIL: the Show crosshair switch is not on screen"); return false
+        }
+        var expected = ConfigDocument(data: before, dialect: .cod2x)
+        do { try expected.setSetting(named: "cg_drawCrosshair", value: "0") } catch { return false }
+        click(window, at: NSPoint(x: toggle.1.midX, y: toggle.1.midY))
+        try? await Task.sleep(for: .milliseconds(600))
+        guard (try? Data(contentsOf: file)) == expected.serialized(), session.history.first?.summary == "Changed Show crosshair" else {
+            print("FAIL: clicking Show crosshair did not write exactly one edit (history: \(session.history.first?.summary ?? "none"))"); return false
+        }
+        print("PASS: clicking the Show crosshair switch wrote `seta cg_drawCrosshair \"0\"` in canonical order and one History row")
+
+        guard let target = session.history.first(where: { $0.summary == "Changed Texture detail" }) else { return false }
+        let count = session.history.count
+        model.studio.tab = .history
+        model.studio.snapshotID = target.id
+        try? await Task.sleep(for: .milliseconds(900))
+        // The History inspector's one prominent action is Restore This Snapshot.
+        guard let restore = audit.items.values.first(where: { $0.name == "prominent" && $0.frame.minX > 1000 })?.frame else {
+            print("FAIL: Restore button not on screen"); return false
+        }
+        click(window, at: NSPoint(x: restore.midX, y: window.frame.height - restore.midY))
+        try? await Task.sleep(for: .milliseconds(600))
+        guard (try? Data(contentsOf: file)) == target.data, session.history.count == count + 1, session.history.first?.source == .restore,
+              session.history.first?.beforeData == expected.serialized() else {
+            print("FAIL: Restore did not write the snapshot as a new transaction"); return false
+        }
+        print("PASS: clicking Restore This Snapshot wrote the snapshot's exact bytes as a new History transaction")
+
+        // Binds: find Throw frag grenade, click its primary key, then press G on the keyboard.
+        model.studio.tab = .binds
+        model.studio.binds.layout = .list
+        model.studio.binds.query = "frag"
+        try? await Task.sleep(for: .milliseconds(900))
+        guard let chip = audit.items.values.first(where: { $0.name == "bind key +frag primary" })?.frame else { print("FAIL: frag key chip not on screen"); return false }
+        let beforeBind = (try? Data(contentsOf: file)) ?? Data()
+        click(window, at: NSPoint(x: chip.midX, y: window.frame.height - chip.midY))
+        try? await Task.sleep(for: .milliseconds(300))
+        guard model.studio.binds.target == .slot(action: "+frag", slot: .primary) else {
+            print("FAIL: clicking the key chip at \(chip) did not start listening (window \(model.studio.binds.window != nil), "
+                  + "capture \(String(describing: model.studio.binds.capture?.state)), failure \(model.studio.failure?.title ?? "none"))")
+            return false
+        }
+        press(window, keyCode: 5, characters: "g")
+        try? await Task.sleep(for: .milliseconds(500))
+        var bound = ConfigDocument(data: beforeBind, dialect: .cod2x)
+        do { try bound.setBind(key: "g", binding: "+frag") } catch { return false }
+        guard (try? Data(contentsOf: file)) == bound.serialized(), session.history.first?.summary == "Changed Throw frag grenade binding",
+              model.studio.binds.capture?.isMonitoring == false else {
+            print("FAIL: pressing G did not save exactly one bind"); return false
+        }
+        print("PASS: clicking a key chip and pressing G saved `bind g \"+frag\"` as one History row and stopped listening")
+
+
+        // Check-up: Apply the top suggestion, then Undo it from its card.
+        model.studio.checkup.rulesetIDs = ["zpam-4.08"]
+        model.studio.tab = .checkup
+        try? await Task.sleep(for: .milliseconds(900))
+        guard let apply = audit.items.values.first(where: { $0.name == "checkup apply competitive-frame-cap" })?.frame else { print("FAIL: Apply not on screen"); return false }
+        let beforeApply = (try? Data(contentsOf: file)) ?? Data()
+        click(window, at: NSPoint(x: apply.midX, y: window.frame.height - apply.midY))
+        try? await Task.sleep(for: .milliseconds(600))
+        var capped = ConfigDocument(data: beforeApply, dialect: .cod2x)
+        do { try capped.setSetting(named: "com_maxfps", value: "250") } catch { return false }
+        guard (try? Data(contentsOf: file)) == capped.serialized(), session.history.first?.source == .checkup else {
+            print("FAIL: Apply did not write the suggested cap"); return false
+        }
+        guard let undoButton = audit.items.values.first(where: { $0.name == "checkup undo competitive-frame-cap" })?.frame else { print("FAIL: Undo not on screen"); return false }
+        click(window, at: NSPoint(x: undoButton.midX, y: window.frame.height - undoButton.midY))
+        try? await Task.sleep(for: .milliseconds(600))
+        guard (try? Data(contentsOf: file)) == beforeApply, session.history.first?.source == .restore else {
+            print("FAIL: Undo did not restore the exact bytes"); return false
+        }
+        print("PASS: clicking Apply wrote `seta com_maxfps \"250\"` as a Check-up transaction and clicking Undo restored the exact bytes")
+
+        // One window at a time from here, so the keyboard focus is unambiguous.
+        window.orderOut(nil)
+        do {
+            // Visual: clicking a key selects it and hands it the keyboard focus (read back the way
+            // VoiceOver reads focus). The arrow keys' move commands are not checked here: in this
+            // window they never reach SwiftUI, although the same structure moves in a minimal one.
+            guard let (visualModel, visual, visualHome) = await open("configs-binds-visual", dark: true) else { return false }
+            defer { visual.orderOut(nil); visual.close(); try? FileManager.default.removeItem(at: visualHome) }
+            guard let keyE = AccessibilityTree.elements(of: visual).first(where: { $0.role == "AXButton" && $0.label.hasPrefix("E, ") }) else {
+                print("FAIL: key E isn't in the accessibility tree"); return false
+            }
+            visual.makeKey()
+            click(visual, element: keyE)
+            try? await Task.sleep(for: .milliseconds(400))
+            let focus = AccessibilityTree.attribute(AccessibilityTree.application, kAXFocusedUIElementAttribute).map { $0 as! AXUIElement }
+            let focusLabel = focus.map { AccessibilityTree.text($0, kAXDescriptionAttribute) } ?? ""
+            guard visualModel.studio.binds.selectedVirtualKey == 14, focusLabel.hasPrefix("E, ") else {
+                print("FAIL: clicking E selected \(String(describing: visualModel.studio.binds.selectedVirtualKey)) with focus on “\(focusLabel)”"); return false
+            }
+            print("PASS: clicking E in Visual selected it and gave it the keyboard focus")
+        }
+        guard await importAction() else { return false }
+        return await readyAction()
+    }
+
+    /// A real click on the import review's Apply button (the sheet's bottom-trailing control) writes
+    /// exactly the reviewed lines into a new loadout as one Import transaction, leaving Main alone.
+    static func importAction() async -> Bool {
+        let model = LauncherModel(snapshot: true)
+        model.preview("configs-import")
+        let home: URL
+        do { home = try seed(model, screen: "configs-actions-import"); try await prepare(model, screen: "configs-import-everything", home: home) }
+        catch { print("FAIL: import preview: \(error)"); return false }
+        defer { try? FileManager.default.removeItem(at: home) }
+        guard let review = model.discover.review, review.session != nil else { print("FAIL: the import review did not load"); return false }
+        review.setMode(.review)
+        guard let expected = try? review.session?.preview().document.serialized() else { print("FAIL: no reviewed bytes"); return false }
+        let players = home.appendingPathComponent("main/players")
+        let main = try? Data(contentsOf: players.appendingPathComponent("Main/config_mp.cfg")), active = try? Data(contentsOf: players.appendingPathComponent("active.txt"))
+        let window = await Snapshots.show(model: model, dark: true, glass: true)
+        defer { window.orderOut(nil); window.close() }
+        guard let sheet = window.attachedSheet else { print("FAIL: the import review sheet is not attached"); return false }
+        sheet.makeKey()
+        click(sheet, at: NSPoint(x: sheet.frame.width - 22 - 28, y: 16 + 18))
+        try? await Task.sleep(for: .milliseconds(800))
+        let written = try? Data(contentsOf: players.appendingPathComponent("Player_1/config_mp.cfg"))
+        guard written == expected, (try? ConfigProfileStore(homeURL: home, dialect: .cod2x).history(id: "Player_1"))?.map(\.source) == [.import],
+              (try? Data(contentsOf: players.appendingPathComponent("Main/config_mp.cfg"))) == main,
+              (try? Data(contentsOf: players.appendingPathComponent("active.txt"))) == active, model.discover.review == nil else {
+            print("FAIL: clicking Apply did not import exactly the reviewed lines (\(review.applyError ?? "no error shown"))"); return false
+        }
+        print("PASS: clicking the review's Apply button imported exactly the ticked lines into a new loadout as one Import transaction; Main and the active loadout are unchanged")
+        return true
+    }
+
+    /// Real clicks on Fix for This Server Only, its confirmation and Undo stage and clear a
+    /// per-connection override without writing the loadout, its sidecar or the active selection.
+    static func readyAction() async -> Bool {
+        let model = LauncherModel(snapshot: true)
+        model.preview("servers-ready")
+        let home: URL
+        do { home = try seed(model, screen: "servers-actions"); try await prepare(model, screen: "servers-ready", home: home) }
+        catch { print("FAIL: ready-check preview: \(error)"); return false }
+        defer { try? FileManager.default.removeItem(at: home) }
+        let players = home.appendingPathComponent("main/players")
+        func disk() -> [Data?] { ["Main/config_mp.cfg", "Main/studio.json", "active.txt"].map { try? Data(contentsOf: players.appendingPathComponent($0)) } }
+        let before = disk()
+        let audit = ShapeAudit()
+        let window = await Snapshots.show(model: model, dark: true, glass: true, audit: audit)
+        defer { window.orderOut(nil); window.close() }
+        func cardButton() -> CGRect? {
+            guard let deploy = audit.items.values.first(where: { $0.name == "prominent" && $0.frame.minX > 1000 })?.frame else { return nil }
+            return audit.items.values.filter { $0.name == "glass button" && $0.form == .capsule && $0.frame.minX > 1000 && $0.frame.maxY < deploy.minY }
+                .map(\.frame).min { $0.minY < $1.minY }
+        }
+        guard let fix = cardButton() else { print("FAIL: Fix for This Server Only is not on screen"); return false }
+        click(window, at: NSPoint(x: fix.midX, y: window.frame.height - fix.midY))
+        try? await Task.sleep(for: .milliseconds(800))
+        guard let alert = window.attachedSheet, let content = alert.contentView,
+              let confirm = views(NSButton.self, in: content).first(where: { $0.title == "Fix for This Server Only" }) else {
+            print("FAIL: the fix confirmation did not appear"); return false
+        }
+        let frame = confirm.convert(confirm.bounds, to: nil)
+        alert.makeKey()
+        click(alert, at: NSPoint(x: frame.midX, y: frame.midY))
+        try? await Task.sleep(for: .milliseconds(800))
+        guard model.serverConnection.overrides == ["com_maxfps": "250"], disk() == before else {
+            print("FAIL: the fix was not staged for this connection only (\(model.serverConnection.overrides))"); return false
+        }
+        print("PASS: clicking Fix for This Server Only and confirming staged com_maxfps 250 for this connection; Main's config, sidecar and the active selection are unchanged")
+        // The confirmation closes asynchronously; the window takes clicks again once it has gone.
+        for _ in 0..<40 where window.attachedSheet != nil { try? await Task.sleep(for: .milliseconds(50)) }
+        try? await Task.sleep(for: .milliseconds(400))
+        window.makeKey()
+        guard let undo = cardButton() else { print("FAIL: Undo is not on screen"); return false }
+        // After the confirmation window had key focus, the first click can only bring this window forward.
+        for _ in 0..<2 where !model.serverConnection.overrides.isEmpty {
+            click(window, at: NSPoint(x: undo.midX, y: window.frame.height - undo.midY))
+            try? await Task.sleep(for: .milliseconds(600))
+        }
+        guard model.serverConnection.overrides.isEmpty, model.serverConnection.profileID == nil, disk() == before else {
+            print("FAIL: Undo did not clear the per-connection fix (clicked \(undo), sheet \(window.attachedSheet.map { "\($0)" } ?? "none"))"); return false
+        }
+        print("PASS: clicking Undo cleared the per-connection fix; nothing on disk changed")
+        return true
+    }
+    /// The window for one review screen, seeded like the snapshot run; nil if seeding failed.
+    static func open(_ screen: String, dark: Bool, setup: (LauncherModel) -> Void = { _ in }) async -> (LauncherModel, NSWindow, URL)? {
+        let model = LauncherModel(snapshot: true)
+        model.preview(screen)
+        guard let home = try? seed(model, screen: screen) else { print("FAIL: preview home for \(screen)"); return nil }
+        // Discover, import and ready-check screens load their fixtures the way the snapshot run does.
+        do { try await prepare(model, screen: screen, home: home) } catch { print("FAIL: preview for \(screen): \(error)"); return nil }
+        setup(model)
+        trace("open \(screen): seeded")
+        let window = await Snapshots.show(model: model, dark: dark, glass: true)
+        trace("open \(screen): shown")
+        AccessibilityTree.wake()
+        trace("open \(screen): woke")
+        try? await Task.sleep(for: .milliseconds(500))
+        trace("open \(screen): ready")
+        return (model, window, home)
+    }
+    static func trace(_ text: String) { if ProcessInfo.processInfo.environment["COD2_SNAPSHOT_TRACE"] == "1" { fputs(text + "\n", stderr) } }
+    /// Clicks the centre of an accessibility element (screen coordinates) in the window.
+    /// A real click when the control is on screen; otherwise VoiceOver's press, which
+    /// works for controls scrolled out of view.
+    static func activate(_ window: NSWindow, element: AccessibilityTree.Element) {
+        let primary = NSScreen.screens.first?.frame.maxY ?? 0
+        let visible = CGRect(x: window.frame.minX, y: primary - window.frame.maxY, width: window.frame.width, height: window.frame.height)
+        if visible.contains(CGPoint(x: element.frame.midX, y: element.frame.midY)) { click(window, element: element) }
+        else { _ = AXUIElementPerformAction(element.element, kAXPressAction as CFString) }
+    }
+    static func click(_ window: NSWindow, element: AccessibilityTree.Element) {
+        let primary = NSScreen.screens.first?.frame.maxY ?? 0
+        click(window, at: window.convertPoint(fromScreen: NSPoint(x: element.frame.midX, y: primary - element.frame.midY)))
+    }
+
+    /// Labels each screen must expose, so an empty or unbuilt tree can't pass.
+    static let expectedLabels: [String: [String]] = [
+        "configs-guided": ["Jump to Any Setting", "Frame rate cap"],
+        "configs-binds-list": ["Primary key for Throw frag grenade", "Find an action or key", "Advanced binds"],
+        "configs-binds-advanced": ["Key for this bind", "Save Bind", "Step 1"],
+        "configs-binds-visual": ["W, Move forward", "Find by Pressing", "Selected key"],
+        "configs-checkup": ["Movement: 333 FPS", "Apply", "Show Me", "Not Now", "Rules to check against"],
+        "configs-history": ["Restore This Snapshot"],
+    ]
+
+    /// Every Config Studio screen's accessibility tree in reading order, with unnamed controls as failures.
+    static func accessibility(output: URL, only: String?) async -> Bool {
+        let folder = output.appendingPathComponent("accessibility")
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        var ok = true
+        for screen in Snapshots.configScreens where only == nil || only == screen {
+            guard let (_, window, home) = await open(screen, dark: true) else { return false }
+            let elements = AccessibilityTree.elements(of: window)
+            trace("\(screen): \(elements.count) elements read")
+            window.orderOut(nil); window.close()
+            try? FileManager.default.removeItem(at: home)
+            try? (elements.map(\.line).joined(separator: "\n") + "\n").write(to: folder.appendingPathComponent(screen + ".txt"), atomically: true, encoding: .utf8)
+            let controls = elements.filter { AccessibilityTree.controls.contains($0.role) }
+            let unnamed = AccessibilityTree.unnamed(elements)
+            // Static text reads its words as its value.
+            let missing = (expectedLabels[screen] ?? []).filter { expected in !elements.contains { $0.label.hasPrefix(expected) || $0.value.hasPrefix(expected) } }
+            let roleless = AccessibilityTree.roleless(elements)
+            for element in unnamed { print("A11Y: \(screen): \(element.role) at \(NSStringFromRect(element.frame)) has no name") }
+            for element in roleless { print("A11Y: \(screen): “\(element.label)” has no role") }
+            for label in missing { print("A11Y: \(screen): no element named “\(label)…”") }
+            print("A11Y \(screen): \(elements.count) elements, \(controls.count) controls, \(unnamed.count) without a name, \(roleless.count) without a role")
+            ok = ok && unnamed.isEmpty && roleless.isEmpty && missing.isEmpty && controls.count > 5
+        }
+        print(ok ? "PASS: every Config Studio control has a name and every named element a role VoiceOver can read" : "FAIL: accessibility tree problems above")
+        return ok
+    }
+
+    struct Overlay {
+        let name: String, screen: String
+        var prepare: @MainActor (LauncherModel) -> Void = { _ in }
+        let target: @MainActor (AccessibilityTree.Element) -> Bool
+        var after: @MainActor (NSWindow) async -> Void = { _ in }
+    }
+    static let overlayCases: [Overlay] = [
+        Overlay(name: "configs-jump", screen: "configs-guided", target: { $0.role == "AXButton" && $0.label == "Jump to Any Setting" }, after: { window in
+            // Type “fps” the way VoiceOver would set a field's value.
+            if let field = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXTextField" && $0.label == "Setting name or console name" }) {
+                _ = AXUIElementSetAttributeValue(field.element, kAXValueAttribute as CFString, "fps" as CFString)
+                try? await Task.sleep(for: .milliseconds(500))
+            }
+        }),
+        Overlay(name: "configs-new-loadout", screen: "configs-guided", target: { $0.role == "AXButton" && $0.label == "New Loadout" }),
+        Overlay(name: "configs-expert-note", screen: "configs-expert", target: { $0.role == "AXButton" && $0.label == "Edit the note on Mouse speed" }),
+        Overlay(name: "configs-binds-keyboard", screen: "configs-binds-visual", target: { $0.role == "AXButton" && $0.label.hasPrefix("Magic Keyboard") }),
+        Overlay(name: "configs-binds-pointer", screen: "configs-binds-visual", target: { $0.role == "AXButton" && $0.label.hasPrefix("Mouse ·") }),
+        Overlay(name: "configs-binds-confirm", screen: "configs-binds-advanced",
+                prepare: { model in model.studio.binds.updateDraft { $0.steps[0].text = "good luck" } },
+                target: { $0.role == "AXButton" && $0.label == "Save Bind" }),
+    ]
+
+    /// Sheets, popovers and alerts opened by real clicks, captured over their window.
+    static func overlays(output: URL, only: String?) async -> Bool {
+        var ok = true, written = 0
+        for overlay in overlayCases where only == nil || only == overlay.name {
+            for dark in [true, false] {
+                guard let (_, window, home) = await open(overlay.screen, dark: dark, setup: overlay.prepare) else { return false }
+                defer { try? FileManager.default.removeItem(at: home) }
+                let name = "\(overlay.name)-\(dark ? "dark" : "light")"
+                guard let target = AccessibilityTree.elements(of: window).first(where: overlay.target) else {
+                    print("FAIL: \(name): the control that opens it isn't in the accessibility tree"); ok = false
+                    window.orderOut(nil); window.close(); continue
+                }
+                activate(window, element: target)
+                try? await Task.sleep(for: .milliseconds(900))
+                await overlay.after(window)
+                // Sheets, alerts and popovers are windows of their own; popovers aren't in orderedWindows.
+                let others = NSApp.windows.filter { $0 !== window && $0.isVisible && $0.frame.intersects(window.frame) }
+                    .sorted { ($0.attachedSheet == nil ? 0 : 1, $0.level.rawValue) > ($1.attachedSheet == nil ? 0 : 1, $1.level.rawValue) }
+                if others.isEmpty {
+                    print("FAIL: \(name): clicking “\(target.label)” opened nothing"); ok = false
+                } else if let image = WindowCapture.image(of: others + [window], in: window) {
+                    try? Snapshots.write(image, to: output.appendingPathComponent("overlay-" + name + ".png")); written += 1
+                    print("OVERLAY \(name): \(others.map { String(describing: type(of: $0)) }.joined(separator: ", ")) over the window")
+                } else {
+                    print("FAIL: \(name): capture failed"); ok = false
+                }
+                if let sheet = window.attachedSheet { window.endSheet(sheet) }
+                for other in others { other.orderOut(nil) }
+                window.orderOut(nil); window.close()
+                try? await Task.sleep(for: .milliseconds(200))
+            }
+        }
+        print(ok ? "PASS: \(written) sheet, popover and alert captures opened by real clicks" : "FAIL: overlay problems above")
+        return ok && written > 0
+    }
+
+    /// A key press delivered through the application, where Binds' local monitor listens.
+    static func press(_ window: NSWindow, keyCode: UInt16, characters: String) {
+        for type in [NSEvent.EventType.keyDown, .keyUp] {
+            if let event = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                            windowNumber: window.windowNumber, context: nil, characters: characters,
+                                            charactersIgnoringModifiers: characters, isARepeat: false, keyCode: keyCode) {
+                NSApp.sendEvent(event)
+            }
         }
     }
 }

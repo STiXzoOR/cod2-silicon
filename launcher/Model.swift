@@ -2,18 +2,18 @@ import AppKit
 import SwiftUI
 
 enum LauncherPage: String, CaseIterable, Identifiable, Hashable {
-    case deploy, servers, library, settings, about
+    case deploy, servers, library, configs, settings, about
     var id: String { rawValue }
     var title: String {
-        switch self { case .deploy: "Deploy"; case .servers: "Servers"; case .library: "Library"; case .settings: "Settings"; case .about: "About" }
+        switch self { case .deploy: "Deploy"; case .servers: "Servers"; case .library: "Library"; case .configs: "Configs"; case .settings: "Settings"; case .about: "About" }
     }
     var symbol: String {
         switch self {
         case .deploy: "play.fill"; case .servers: "dot.radiowaves.left.and.right"; case .library: "film"
-        case .settings: "slider.horizontal.3"; case .about: "info.circle"
+        case .configs: "square.stack"; case .settings: "slider.horizontal.3"; case .about: "info.circle"
         }
     }
-    static let navigation: [LauncherPage] = [.deploy, .servers, .library, .settings]
+    static let navigation: [LauncherPage] = [.deploy, .servers, .library, .configs, .settings]
 }
 
 enum ServerFilter: String, CaseIterable, Identifiable { case all = "All", stock = "Stock 1.3", codx = "CoD2x 1.4"; var id: String { rawValue } }
@@ -41,7 +41,9 @@ struct MediaEntry: Identifiable {
     @Published var settingsSaved = false
     @Published var library = LauncherLibrary()
     @Published var servers: [GameServer] = []
-    @Published var selectedServer: String?
+    @Published var selectedServer: String? {
+        didSet { do { try serverConnection.select(address: selectedServer) } catch { serverConnection.clear(); notice = error.localizedDescription } }
+    }
     @Published var refreshing = false
     @Published var queryProgress = ""
     @Published var search = ""
@@ -49,7 +51,13 @@ struct MediaEntry: Identifiable {
     @Published var sort: ServerSort = .ping
     @Published var hideEmpty = false
     @Published var hideFull = false
-    @Published var directAddress = ""
+    @Published var directAddress = "" {
+        didSet {
+            guard directAddress != oldValue else { return }
+            do { try serverConnection.select(address: directAddress.isEmpty ? nil : directAddress) }
+            catch { try? serverConnection.select(address: nil) }
+        }
+    }
     @Published var serverPassword = ""
     @Published var gameRunning = false
     @Published var notice = ""
@@ -65,17 +73,28 @@ struct MediaEntry: Identifiable {
     let home: URL
     let preferences: URL
     let snapshot: Bool
+    let configStudio: ConfigStudioSession?
+    let serverConnection = ConfigServerConnection()
+    private let readyChecker: ConfigReadyCheck? = {
+        guard let catalog = try? ConfigCatalog.load(), let rules = try? ConfigRules.load() else { return nil }
+        return ConfigReadyCheck(catalog: catalog, rules: rules)
+    }()
+    /// The Configs page's view store over the same session.
+    let studio: ConfigStudioModel
+    /// Discover and import. The player directory has no signed publication yet, so it reports itself unavailable.
+    let discover: ConfigDiscoverModel
     private var savedSettings = GameSettings()
     private var engine: Process?
-    private var attachedGame: NSRunningApplication?
+    private var attachedGames: [pid_t: NSRunningApplication] = [:]
     private var attachmentTask: Task<Void, Never>?
     private var connectionTask: Task<Void, Never>?
     private var handOffTask: Task<Void, Never>?
     private var gameStartedAt = Date()
+    private var lastExitCode: Int32?
     private var gameBundle: URL { Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app") }
     private var activeGamePID: pid_t? {
         if let engine, engine.isRunning { return engine.processIdentifier }
-        if let attachedGame, !attachedGame.isTerminated { return attachedGame.processIdentifier }
+        if let app = attachedGames.values.filter({ !$0.isTerminated }).sorted(by: { $0.processIdentifier < $1.processIdentifier }).first { return app.processIdentifier }
         return nil
     }
     private var browserTask: Task<Void, Never>?
@@ -91,6 +110,23 @@ struct MediaEntry: Identifiable {
         home = URL(fileURLWithPath: snapshot ? "/Preview/CoD2 Silicon" : LauncherHome())
         artwork = MapArtworkStore(home: home)
         preferences = URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(".cod2/preferences")
+        let expected = Bundle.main.bundleURL.appendingPathComponent("Contents/Helpers/CoD2 Game.app/Contents/MacOS/cod2_macos").resolvingSymlinksInPath()
+        let identifier = (Bundle.main.bundleIdentifier ?? "") + ".game"
+        var sessionError: String?
+        if snapshot { configStudio = nil }
+        else {
+            do {
+                configStudio = try ConfigStudioSession(home: home, dialect: .cod2x, discoverGames: {
+                    Set(NSRunningApplication.runningApplications(withBundleIdentifier: identifier).filter {
+                        !$0.isTerminated && $0.executableURL?.resolvingSymlinksInPath() == expected
+                    }.map(\.processIdentifier))
+                })
+            } catch { configStudio = nil; sessionError = error.localizedDescription }
+        }
+        studio = ConfigStudioModel(session: configStudio, dialect: .cod2x)
+        discover = ConfigDiscoverModel(studio: studio, directory: ConfigDirectory(cacheURL: home.appendingPathComponent("directory/index.json")))
+        discover.notify = { [weak self] in self?.notice = $0 }
+        if let sessionError { notice = sessionError }
         if snapshot { seedPreview(); return }
         if let resolution = Bundle.main.object(forInfoDictionaryKey: "CoD2DefaultResolution") as? String { settings.resolution = resolution }
         if let mode = Bundle.main.object(forInfoDictionaryKey: "CoD2DefaultFullscreen") as? String { settings.fullscreen = mode }
@@ -140,11 +176,17 @@ struct MediaEntry: Identifiable {
         guard !snapshot else { return }
         booted = true
         _ = attachExistingGame()
+        startGameMonitor()
         let args = CommandLine.arguments
         fastPlay = args.contains("--play")
         exitAfterGame = args.contains("--exit-after-game")
         if let separator = args.firstIndex(of: "--") { forwardedArguments = Array(args.dropFirst(separator + 1)) }
+        if !gameRunning {
+            do { try configStudio?.initialize(settings: settings, forwarded: forwardedArguments) }
+            catch { notice = error.localizedDescription }
+        }
         if let url = args.first(where: { $0.hasPrefix("cod2x://") }) { openLink(url) }
+        studio.loadCatalog()
         if ProcessInfo.processInfo.environment["COD2_SETUP_NONINTERACTIVE"] == "1" {
             setupTask = Task {
                 do {
@@ -268,7 +310,7 @@ struct MediaEntry: Identifiable {
     // MARK: Settings and library
     func saveSettings() {
         do {
-            let text = try settings.config()
+            let text = try settings.launchConfig(migrated: configStudio?.migrationCompleted == true)
             guard !snapshot else { settingsSaved = true; return }
             try PrivateFile.write(Data(text.utf8), to: home.appendingPathComponent("main/launcher.cfg"))
             try PrivateFile.write(JSONEncoder().encode(settings), to: home.appendingPathComponent("launcher-settings.json"))
@@ -317,24 +359,71 @@ struct MediaEntry: Identifiable {
         }
     }
     func cancelRefresh() { browserTask?.cancel() }
+    /// The session the ready check reads: Configs' own (the review harness attaches one to a preview).
+    private var readySession: ConfigStudioSession? { studio.session ?? configStudio }
+    /// A connection alternative does not change the active loadout in Studio.
+    func useLoadoutForServer(_ id: String, address: String) throws {
+        guard let configStudio = readySession, !configStudio.isReadOnly else { throw ConfigProfileError.gameRunning }
+        _ = try configStudio.readProfile(id)
+        try serverConnection.select(address: address)
+        try serverConnection.useProfile(id)
+        objectWillChange.send()
+    }
+    func readyCheck(for address: String) throws -> ConfigReadyReport? {
+        guard let readyChecker, let configStudio = readySession else { return nil }
+        let normalized = try LaunchLink.canonicalAddress(address)
+        let server = servers.first { (try? LaunchLink.canonicalAddress($0.address)) == normalized }
+        let chosenID = serverConnection.address == normalized ? serverConnection.profileID : nil
+        guard let profile = try chosenID.map(configStudio.readProfile) ?? configStudio.readActive() else { return nil }
+        return readyChecker.evaluate(server: server, profile: profile, mode: .cod2x,
+            advancedChain: try configStudio.readAdvancedChain(profileID: profile.profile.id))
+    }
+    func fixForServerOnly(_ address: String) throws {
+        guard let configStudio = readySession, !configStudio.isReadOnly else { throw ConfigProfileError.gameRunning }
+        try serverConnection.select(address: address)
+        guard let report = try readyCheck(for: address) else { throw ConfigReadyCheckError.noVerifiedFix }
+        try serverConnection.fix(report: report)
+        objectWillChange.send()
+    }
+    /// Query one endpoint, including direct-connect addresses absent from the
+    /// master list. Selection and staged choices remain the caller's decision.
+    func refreshReadyCheck(for address: String) async throws -> ConfigReadyReport? {
+        let normalized = try LaunchLink.canonicalAddress(address)
+        servers.removeAll { (try? LaunchLink.canonicalAddress($0.address)) == normalized }
+        if let server = await ServerQueries.server(normalized) {
+            servers.removeAll { (try? LaunchLink.canonicalAddress($0.address)) == normalized }
+            servers.append(server)
+        }
+        return try readyCheck(for: normalized)
+    }
     func connect(_ server: GameServer? = nil) {
         if server == nil && directAddress.trimmingCharacters(in: .whitespaces).isEmpty {
             notice = "Enter a server address, such as 203.0.113.24:28960."; return
         }
-        do { pendingLink = try LaunchLink.direct(server?.address ?? directAddress, password: serverPassword); serverPassword = ""; play() }
+        do {
+            let link = try LaunchLink.direct(server?.address ?? directAddress, password: serverPassword)
+            try serverConnection.select(address: link.address)
+            serverPassword = ""
+            if activeGamePID != nil { openLink(link.url) }
+            else { pendingLink = link; play() }
+        }
         catch { notice = error.localizedDescription }
     }
     /// Home's Deploy: rejoin the last server, or open the game's menu when there is none.
     func deploy() {
         guard !onboard else { return }
         if let address = library.recent.first, !snapshot {
-            do { pendingLink = try LaunchLink.direct(address); play() } catch { notice = error.localizedDescription }
+            do { try serverConnection.select(address: address); pendingLink = try LaunchLink.direct(address); play() } catch { notice = error.localizedDescription }
         } else { play() }
     }
     func openLink(_ url: String) {
         do {
             let link = try LaunchLink(url)
+            try serverConnection.select(address: link.address)
             if let pid = activeGamePID {
+                // Startup overrides cannot be applied to an already running
+                // game through the read-only launch API.
+                serverConnection.clear()
                 scheduleLink(link, pid: pid)
             } else {
                 // A cold link can arrive before launch finishes; boot() starts the game then, so the
@@ -368,20 +457,45 @@ struct MediaEntry: Identifiable {
     private func attachExistingGame() -> Bool {
         guard !snapshot, !gameRunning, let identifier = Bundle.main.bundleIdentifier else { return false }
         let expected = gameBundle.appendingPathComponent("Contents/MacOS/cod2_macos").resolvingSymlinksInPath()
-        guard let app = NSRunningApplication.runningApplications(withBundleIdentifier: identifier + ".game").first(where: {
+        let apps = NSRunningApplication.runningApplications(withBundleIdentifier: identifier + ".game").filter {
             !$0.isTerminated && $0.executableURL?.resolvingSymlinksInPath() == expected
-        }) else { return false }
-        attachedGame = app; gameRunning = true; gameStartedAt = Date()
+        }
+        guard let app = apps.first else { return false }
+        attachedGames = Dictionary(uniqueKeysWithValues: apps.map { ($0.processIdentifier, $0) })
+        gameRunning = true; gameStartedAt = Date()
+        do { try configStudio?.reconcileGames(Set(attachedGames.keys)) } catch { notice = error.localizedDescription }
         NSApp.setActivationPolicy(.accessory)
         NSApp.windows.forEach { $0.orderOut(nil) }
         print("CoD2 Silicon: reconnected to existing game (pid \(app.processIdentifier)).")
         fflush(stdout)
-        attachmentTask = Task { [weak self] in
-            while !app.isTerminated { try? await Task.sleep(for: .milliseconds(250)); if Task.isCancelled { return } }
-            self?.attachedGame = nil
-            self?.gameEnded(code: nil)
-        }
+        startGameMonitor()
         return true
+    }
+    private func startGameMonitor() {
+        guard attachmentTask == nil, !snapshot else { return }
+        attachmentTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(250))
+                guard let self, !Task.isCancelled else { return }
+                self.synchronizeGames()
+            }
+        }
+    }
+    private func synchronizeGames() {
+        if let engine, !engine.isRunning { lastExitCode = engine.terminationStatus; self.engine = nil }
+        let expected = gameBundle.appendingPathComponent("Contents/MacOS/cod2_macos").resolvingSymlinksInPath()
+        let identifier = (Bundle.main.bundleIdentifier ?? "") + ".game"
+        let apps = NSRunningApplication.runningApplications(withBundleIdentifier: identifier).filter {
+            !$0.isTerminated && $0.executableURL?.resolvingSymlinksInPath() == expected
+        }
+        attachedGames = Dictionary(uniqueKeysWithValues: apps.map { ($0.processIdentifier, $0) })
+        var pids = Set(attachedGames.keys)
+        if let engine, engine.isRunning { pids.insert(engine.processIdentifier) }
+        let wasRunning = gameRunning
+        if !pids.isEmpty && !wasRunning { gameStartedAt = Date() }
+        gameRunning = !pids.isEmpty
+        do { try configStudio?.reconcileGames(pids) } catch { notice = error.localizedDescription }
+        if wasRunning && !gameRunning { gameEnded(code: lastExitCode); lastExitCode = nil }
     }
     func play(demo: URL? = nil) {
         guard !snapshot, !gameRunning else { return }
@@ -395,8 +509,29 @@ struct MediaEntry: Identifiable {
             let bundle = gameBundle
             let executable = bundle.appendingPathComponent("Contents/MacOS/cod2_macos")
             guard FileManager.default.isExecutableFile(atPath: executable.path) else { throw LauncherError(message: "The game helper is missing. Rebuild or reinstall this app.") }
+            var connectionLaunch: ConfigConnectionLaunch?
+            var connectionProfileID: String?
+            var connectionExpectedVersion: ConfigProfileVersion?
+            var connectionChainBytes: Data?
+            if demo == nil, let link = pendingLink, serverConnection.address == (try LaunchLink.canonicalAddress(link.address)) {
+                connectionProfileID = serverConnection.profileID
+                if let configStudio {
+                    try configStudio.refresh()
+                    if let profile = try connectionProfileID.map(configStudio.readProfile) ?? configStudio.readActive(),
+                       let report = try readyCheck(for: link.address) {
+                        connectionLaunch = try serverConnection.launch(for: link, profile: profile, report: report)
+                        if connectionLaunch != nil {
+                            connectionProfileID = profile.profile.id; connectionExpectedVersion = profile.version
+                            connectionChainBytes = report.advancedChainBytes
+                        }
+                    } else if !serverConnection.overrides.isEmpty { throw ConfigReadyCheckError.staleReview }
+                }
+            }
+            let configLaunch = try configStudio?.prepareLaunch(settings: settings, forwarded: forwardedArguments,
+                connectionProfileID: connectionProfileID, connection: connectionLaunch,
+                connectionExpectedVersion: connectionExpectedVersion, connectionChainBytes: connectionChainBytes)
             let plan = try GameLaunchPlan(settings: settings, dataPath: dataPath, homePath: home.path, link: pendingLink,
-                demo: demo?.deletingPathExtension().lastPathComponent, forwarded: forwardedArguments)
+                demo: demo?.deletingPathExtension().lastPathComponent, forwarded: forwardedArguments, configStudio: configLaunch, connection: connectionLaunch)
             let process = Process(); process.executableURL = executable; process.arguments = plan.arguments
             process.currentDirectoryURL = home
             var environment = ProcessInfo.processInfo.environment
@@ -410,18 +545,28 @@ struct MediaEntry: Identifiable {
             process.standardOutput = FileHandle.standardOutput; process.standardError = FileHandle.standardError
             process.terminationHandler = { [weak self] process in
                 let code = process.terminationStatus
-                Task { @MainActor in self?.gameEnded(code: code) }
+                let pid = process.processIdentifier
+                Task { @MainActor in
+                    guard let self, self.engine?.processIdentifier == pid else { return }
+                    self.lastExitCode = code; self.engine = nil; self.synchronizeGames()
+                }
             }
-            try PrivateFile.write(Data(try settings.config().utf8), to: home.appendingPathComponent("main/launcher.cfg"))
+            try PrivateFile.write(Data(try settings.launchConfig(migrated: configLaunch != nil).utf8), to: home.appendingPathComponent("main/launcher.cfg"))
             try process.run(); engine = process; gameRunning = true; gameStartedAt = Date(); crashReport = nil; notice = ""
+            configStudio?.gameLaunched(pid: process.processIdentifier)
+            if let error = configStudio?.migrationError ?? configStudio?.error { notice = error }
+            startGameMonitor()
             // --play and cold links launch once: a later setup completion must not start a second game.
-            pendingLink = nil; fastPlay = false
+            pendingLink = nil; fastPlay = false; serverConnection.clear()
             if let link = plan.link { scheduleLink(link, pid: process.processIdentifier) }
             cancelRefresh()
             handOff(to: process.processIdentifier)
             print("CoD2 Silicon: game started (pid \(process.processIdentifier)).")
             fflush(stdout)
-        } catch { notice = error.localizedDescription }
+        } catch {
+            notice = error.localizedDescription
+            do { try configStudio?.cancelLaunch() } catch { notice += " " + error.localizedDescription }
+        }
     }
     /// Gives the game keyboard and mouse focus. Since macOS 14 an app can only take focus when
     /// the active app yields it, so the launcher stays active until the game has launched,
@@ -548,7 +693,7 @@ struct MediaEntry: Identifiable {
         library.favorites = [servers[0].address, servers[2].address]
         library.recent = [servers[0].address, servers[1].address, servers[5].address]
         library.cachedAt = Date()
-        settings.advanced = "cg_fov 80\nr_gamma 1.1"
+        settings.advanced = "com_hunkMegs 256"
         savedSettings = settings
         let calendar = Calendar(identifier: .gregorian)
         func date(_ day: Int, _ hour: Int, _ minute: Int) -> Date { calendar.date(from: DateComponents(year: 2026, month: 10, day: day, hour: hour, minute: minute)) ?? Date() }
@@ -576,6 +721,21 @@ struct MediaEntry: Identifiable {
             }
         case "about": page = .about
         case "home-first": library.recent = []
+        // The review harness attaches a session over a temporary home with synthetic loadouts.
+        case "configs-guided", "configs-guided-rules": page = .configs; studio.level = .guided; studio.group = .frame
+        case "configs-expert-rules": page = .configs; studio.level = .expert; studio.group = .net
+        case "configs-guided-aim", "configs-running": page = .configs; studio.level = .guided; studio.group = .aim
+        case "configs-expert": page = .configs; studio.level = .expert; studio.group = .aim
+        case "configs-text": page = .configs; studio.level = .expert; studio.group = .aim
+        case "configs-history": page = .configs; studio.tab = .history
+        // Discover and import: the harness supplies a signed fixture directory or a reviewed import.
+        case "discover-unavailable", "discover-players": page = .configs; discover.page = .players
+        case "discover-saved": page = .configs; discover.page = .saved
+        case "discover-player": page = .configs
+        case "configs-import", "configs-import-everything": page = .configs
+        case "servers-ready", "servers-ready-fixed": page = .servers
+        case "configs-binds-list", "configs-binds-visual", "configs-binds-advanced": page = .configs; studio.tab = .binds
+        case "configs-checkup": page = .configs; studio.tab = .checkup
         default: page = .deploy
         }
     }

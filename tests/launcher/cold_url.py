@@ -2,11 +2,13 @@
 """Exercise actual LaunchServices URL launch in a new scratch home."""
 import os, pathlib, re, subprocess, time
 root=pathlib.Path(__file__).resolve().parents[2]
-out=root/'output/ws25/lifecycle';app=out/'Lifecycle.app';fixture=out/'fixture'
+out=pathlib.Path(os.environ.get('COD2_LAUNCHER_TEST_OUTPUT',str(root/'output/ws25')))/'lifecycle.noindex';app=out/'Lifecycle.app';fixture=out/'fixture'
 home=out/'cold-home';home.mkdir(exist_ok=True)
 game=home/'Games/CoD2/main';game.mkdir(parents=True,exist_ok=True)
 for i in range(16):(game/f'iw_{i:02}.iwd').touch()
 apphome=home/'Library/Application Support/CoD2 Silicon'
+apphome.mkdir(parents=True,exist_ok=True)
+(apphome/'launcher-settings.json').write_text('{"advanced":"net_port 29973"}')
 exitfile=apphome/'exit-fixture';exitfile.unlink(missing_ok=True)
 log=out/'cold-console.log';log.write_text('')
 environment={'CFFIXED_USER_HOME':str(home),'HOME':str(home),'COD2_SETUP_NONINTERACTIVE':'1','COD2_SETUP_CD_KEY':'000000000000000086D3','WS25_FIXTURE_HOME':str(apphome)}

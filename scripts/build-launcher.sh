@@ -12,8 +12,18 @@ clang=(/usr/bin/xcrun clang -target arm64-apple-macos13 -isysroot "$sdk" -fobjc-
 "${clang[@]}" -c "$root/src/platform/cod2x_native_shaders.m" -o "$out/NativeShaders.o"
 /usr/bin/xcrun clang -target arm64-apple-macos13 -isysroot "$sdk" -DCOD2_X64=1 -DCOD2_CODX=1 -c "$root/src/PC/qcommon/cod2x_url.c" -o "$out/URL.o"
 sources=("$root/launcher/Core.swift" "$root/launcher/Presentation.swift")
-views=()
-for file in Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView LibraryView; do
+views=("$root/launcher/ConfigDocument.swift" "$root/launcher/ConfigProfiles.swift"
+    "$root/launcher/ConfigHistory.swift" "$root/launcher/ConfigStudioSession.swift"
+    "$root/launcher/ConfigCatalog.swift" "$root/launcher/ConfigRules.swift" "$root/launcher/ConfigReadyCheck.swift")
+# Every Config Studio model ships in the launcher, ready for its screens.
+for file in ConfigCheckup ConfigBindings InputDevices ConfigChains ConfigImport ConfigImportSafety WindowsProfiles \
+    ConfigImportSession ConfigImportCatalogAdapter ConfigDirectory; do
+    views+=("$root/launcher/$file.swift")
+done
+for file in Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView LibraryView \
+    ConfigStudioModel ConfigStudioBinds ConfigStudioCheckup ConfigStudioStyle ConfigsView ConfigSettingsView ConfigHistoryView \
+    ConfigDiscoverModel ConfigDiscoverView ConfigImportView ServerReadyCheck ServerReadyCheckView \
+    ConfigBindsView ConfigCheckupView; do
     views+=("$root/launcher/$file.swift")
 done
 name=CoD2Launcher
@@ -24,7 +34,7 @@ elif [[ ${2:-} == --snapshots ]]; then
     # Review harness: every launcher view with a test-only window that can capture real glass.
     # Like an app bundle, it names its accent colour in an embedded Info.plist and finds the
     # compiled Assets.car beside the executable.
-    sources+=("${views[@]}" "$root/tests/launcher/Snapshots.swift")
+    sources+=("${views[@]}" "$root/tests/launcher/Snapshots.swift" "$root/tests/launcher/DirectoryFixture.swift")
     name=LauncherSnapshots
     /usr/bin/plutil -create xml1 "$out/Info.plist"
     /usr/bin/plutil -insert CFBundleIdentifier -string io.github.stixzoor.cod2silicon.snapshots "$out/Info.plist"
@@ -41,10 +51,12 @@ elif [[ ${2:-} == --network-test ]]; then
 else
     sources+=("${views[@]}" "$root/launcher/Main.swift")
 fi
-/usr/bin/xcrun swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
+/usr/bin/xcrun swiftc -j 1 -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
     -target arm64-apple-macos13 -sdk "$sdk" -O -import-objc-header "$root/launcher/NativeSetup.h" \
     ${swift_flags[@]+"${swift_flags[@]}"} "${sources[@]}" "$out/NativeSetup.o" "$out/NativeShaders.o" "$out/URL.o" \
     -framework AppKit -framework SwiftUI -framework Network -lz -o "$out/$name"
-# Development builds find the bundled OFL fonts beside the executable; app bundles use Resources/Fonts.
+# Development builds find the bundled OFL fonts and Config Studio's data files beside the executable;
+# app bundles use Resources.
 mkdir -p "$out/Fonts"
 cp "$root"/launcher/Resources/Fonts/* "$out/Fonts/"
+cp "$root/launcher/Resources/ConfigCatalog.json" "$root/launcher/Resources/ConfigRulesets.json" "$root/launcher/Resources/ConfigOptimizer.json" "$out/"
