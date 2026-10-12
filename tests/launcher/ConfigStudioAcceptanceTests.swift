@@ -86,6 +86,38 @@ enum ConfigStudioAcceptanceTests {
                 "Undo puts back the companion it replaced")
         require(session.history.count == count + 2 && session.history.first?.source == .restore && session.history.contains { $0.id == row.id },
                 "Undo is another restore; earlier History stays")
+        // Command-Z must not replace an external edit observed after the restore.
+        let historyDirectory = home.appendingPathComponent("main/players/Main/history")
+        func disk() throws -> [Data?] {
+            [try Data(contentsOf: config), try Data(contentsOf: sidecar), try? Data(contentsOf: companion)]
+        }
+        func historyBytes() throws -> [String: Data] {
+            try Dictionary(uniqueKeysWithValues: FileManager.default.contentsOfDirectory(at: historyDirectory, includingPropertiesForKeys: nil)
+                .map { ($0.lastPathComponent, try Data(contentsOf: $0)) })
+        }
+        func rejectedUndo(_ entry: ConfigHistoryEntry, revision: ConfigSnapshotRevision, name: String, edit: () throws -> Void) throws {
+            let undo = UndoManager(); undo.groupsByEvent = false
+            undo.beginUndoGrouping(); model.restore(entry, revision: revision, undo: undo); undo.endUndoGrouping()
+            require(undo.canUndo && session.history.first?.source == .restore, "\(name): the restore registers Undo")
+            try edit()
+            try session.refresh()
+            let before = try disk(), historyBefore = try historyBytes(), rowsBefore = session.history
+            undo.undo()
+            require(try disk() == before, "\(name): refusing stale Undo preserves every profile byte")
+            require(try historyBytes() == historyBefore && session.history == rowsBefore, "\(name): refusing stale Undo leaves History byte-identical")
+            require(model.failure?.title == "Nothing to undo", "\(name): stale Undo explains that the loadout changed")
+        }
+        try rejectedUndo(row, revision: .before, name: "changed companion") {
+            try PrivateFile.write(firstChain + bytes("// edited after the restore\n"), to: companion)
+        }
+        try rejectedUndo(row, revision: .before, name: "changed metadata") {
+            var metadata = value(session.current).metadata
+            metadata.notes["sensitivity"] = "Keep this newer note"
+            try PrivateFile.write(try JSONEncoder().encode(metadata), to: sidecar)
+        }
+        try rejectedUndo(plain, revision: .after, name: "empty companion after an absent one") {
+            try PrivateFile.write(Data(), to: companion)
+        }
         try session.reconcileGames([4401])
         require(!model.canRestore(row, revision: .before), "nothing restores while the game runs")
         try session.reconcileGames([])

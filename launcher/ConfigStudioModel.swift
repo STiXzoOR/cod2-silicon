@@ -983,7 +983,7 @@ struct ConfigStudioFailure: Identifiable {
         } catch { fail("Couldn’t restore this snapshot", error) }
     }
     private func undoRestore(_ id: String) {
-        guard let session, let row = session.history.first(where: { $0.id == id }), current?.data == row.data else {
+        guard let session, let row = session.history.first(where: { $0.id == id }), current?.version == restoreTarget(row, revision: .after) else {
             failure = ConfigStudioFailure(title: "Nothing to undo", message: "This loadout changed after the restore. Pick a snapshot in History instead.", retry: nil)
             return
         }
