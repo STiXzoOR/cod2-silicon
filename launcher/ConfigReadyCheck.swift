@@ -98,7 +98,7 @@ struct ConfigReadyCheck: Sendable {
             if scripts.changedSettings.contains(name) {
                 unknown = true
                 details.append(.init(setting: name, value: value, status: .unknown,
-                                     reason: "An advanced bind changes this setting while you play; its runtime value is not assessed.",
+                                     reason: "A config or bind command can change this setting; its runtime value is not assessed.",
                                      serverOwned: result.serverOwned, sources: result.sources))
                 continue
             }

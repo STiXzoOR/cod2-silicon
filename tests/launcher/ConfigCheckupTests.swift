@@ -107,6 +107,7 @@ private final class GameGate: @unchecked Sendable {
         _ = try model.undo(receipt: stockReceipt, rulesetIDs: ["stock-1.3"], store: store, targetMode: .stock)
         require(try store.read(id: "target-mode").data == original, "Undo supports an explicit target while preserving parser dialect")
         try everyShippedSuggestion(model, store: store)
+        try runtimeCommandEffects(model, store: store)
         print("PASS: ConfigCheckup (typed review, every optimizer rule, guarded disk Apply/Undo)")
     }
     static func everyShippedSuggestion(_ model: ConfigCheckup, store: ConfigProfileStore) throws {
@@ -126,5 +127,65 @@ private final class GameGate: @unchecked Sendable {
             _ = try model.undo(receipt: receipt, rulesetIDs: [policy], store: store)
             require(try store.read(id: rule.id).data == document.serialized(), "each shipped rule has byte-exact Undo")
         }
+    }
+    static func runtimeCommandEffects(_ model: ConfigCheckup, store: ConfigProfileStore) throws {
+        let saved = "seta com_maxfps 250\nseta m_filter 1\nseta cl_mouseAccel 2\nseta rate 5000\nseta snaps 20\nseta cl_maxpackets 30\nseta cg_viewsize 100\n"
+        var failures: [String] = []
+        func check(_ condition: Bool, _ message: String) {
+            if !condition { failures.append(message) }
+        }
+        func read(_ command: String, owned: Bool, id: String) throws -> ConfigProfileRead {
+            let bytes = Data((saved + (owned ? "" : command + "\n")).utf8)
+            let profile = try store.create(id: id, displayName: id, document: .init(data: bytes, dialect: .cod2x))
+            if !owned { return profile }
+            let chain = ConfigChain(id: "effects", key: "F2", behavior: .commandCycle(steps: [[command], ["say next"]]))
+            _ = try ConfigChains.apply(ConfigChains.prepare(chains: [chain], read: profile), to: store)
+            return try store.read(id: id)
+        }
+        for (index, entry) in [("increase com_maxfps", "com_maxfps"), ("decrease com_maxfps", "com_maxfps"),
+                               ("dvar_bool m_filter 0", "m_filter"), ("dvar_int com_maxfps 125 0 1000", "com_maxfps"),
+                               ("dvar_float cl_mouseAccel 0 0 100", "cl_mouseAccel")].enumerated() {
+            for owned in [false, true] {
+                let profile = try read(entry.0, owned: owned, id: "target-\(index)-\(owned)")
+                let report = model.evaluate(profile: profile, rulesetIDs: ["public-cod2x"], tuneFor: .balanced)
+                check(report.policy.contains { $0.setting.lowercased() == entry.1.lowercased() && $0.status == .unknown }, "\(owned ? "owned chain" : "top-level") \(entry.0) target remains unknown")
+                check(!report.suggestions.flatMap(\.changes).contains { $0.setting.lowercased() == entry.1.lowercased() }, "\(entry.0) cannot receive static optimizer changes")
+                check(report.suggestions.contains { $0.area == .connection }, "\(entry.0) preserves unrelated connection advice")
+            }
+        }
+        let commands = ["unregistered_future_command", "setRecommended", "sizeup", "sizedown", "match login example",
+                        "cinematic example", "map mp_toujane", "devmap mp_toujane", "map_rotate", "disconnect",
+                        "vid_restart", "snd_restart", "cg_shellshock_load example", "cg_shellshock 2 example",
+                        "r_loadsun example", "cg_hudRadarCalibrate", "addip 192.0.2.1", "removeip 192.0.2.1"]
+        for (index, command) in commands.enumerated() {
+            for owned in [false, true] {
+                let profile = try read(command, owned: owned, id: "unmodeled-\(index)-\(owned)")
+                let report = model.evaluate(profile: profile, rulesetIDs: ["public-cod2x"], tuneFor: .balanced)
+                check(report.unresolvedScripts && report.suggestions.isEmpty, "\(owned ? "owned chain" : "top-level") \(command) has unresolved engine effects")
+                if command == "sizeup" || command == "sizedown" {
+                    let competitive = model.evaluate(profile: profile, rulesetIDs: ["zpam-4.08"], tuneFor: .competitive)
+                    check(competitive.policy.contains { $0.setting == "cg_viewsize" && $0.status == .unknown }, "size commands do not certify the saved view size")
+                }
+            }
+        }
+        for (index, command) in ["seta com_maxfps 250", "com_maxfps 250", "say hello", "wait 1", "weapnext", "cg_shellshock 2"].enumerated() {
+            let profile = try read(command, owned: false, id: "normal-\(index)")
+            let report = model.evaluate(profile: profile, rulesetIDs: ["public-cod2x"], tuneFor: .balanced)
+            check(!report.unresolvedScripts && report.policy.contains { $0.setting == "com_maxfps" && $0.status == .ok }, "normal command \(command) preserves direct cap judgment")
+        }
+        for (index, command) in ["say hello", "wait 1", "weapnext", "cg_shellshock 2"].enumerated() {
+            let profile = try read(command, owned: true, id: "normal-bound-\(index)")
+            let report = model.evaluate(profile: profile, rulesetIDs: ["public-cod2x"], tuneFor: .balanced)
+            check(!report.unresolvedScripts && report.policy.contains { $0.setting == "com_maxfps" && $0.status == .ok }, "owned normal action \(command) preserves direct cap judgment")
+        }
+        let normal = try read("set cg_drawFPS Simple", owned: true, id: "normal-hud")
+        let report = model.evaluate(profile: normal, rulesetIDs: ["public-cod2x"], tuneFor: .balanced)
+        check(!report.unresolvedScripts && report.suggestions.contains { $0.area == .connection }, "owned HUD cycle preserves unrelated advice")
+        let receipt = try model.apply(report: report, suggestionIDs: ["connection-rate"], store: store)
+        _ = try model.undo(receipt: receipt, rulesetIDs: ["public-cod2x"], store: store)
+        check(try store.read(id: normal.profile.id).version == normal.version, "owned HUD cycle keeps exact config/companion/metadata Undo")
+        for failure in failures { print("REVIEW RED: \(failure)") }
+        require(failures.isEmpty, "\(failures.count) runtime-command review regressions: \(failures.first ?? "")")
+        print("PASS: top-level and actual B2 command effects, unknown commands, targeted uncertainty, normal actions and HUD-cycle Undo")
     }
 }

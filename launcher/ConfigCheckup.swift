@@ -129,8 +129,7 @@ struct ConfigScriptReview {
     init(profile: ConfigProfileRead, catalog: ConfigCatalog) {
         self.catalog = catalog
         let document = profile.document
-        unresolved = !document.unresolvedCommands.isEmpty || !document.diagnostics.isEmpty
-        commands = document.commands.map { $0.tokens.map(\.value) }
+        review(document, managed: false, topLevel: true)
         var owned: ConfigChainEdit?
         if let definitions = profile.metadata.chainDefinitions {
             do {
@@ -159,22 +158,52 @@ struct ConfigScriptReview {
             }
         }
     }
-    private mutating func review(_ document: ConfigDocument, managed: Bool) {
+    private mutating func review(_ document: ConfigDocument, managed: Bool, topLevel: Bool = false) {
         if !document.diagnostics.isEmpty || document.unresolvedCommands.contains(where: {
             !managed || !["toggle", "togglep", "reset"].contains($0.tokens.first?.text.lowercased() ?? "")
         }) { unresolved = true }
         for command in document.commands {
             let argv = command.tokens.map(\.value)
             commands.append(argv)
-            if command.kind == .bind { unresolved = true }
-            if argv.count > 1, let name = argv.first.map(ConfigDocument.text), catalog.setting(named: name) != nil {
-                changedSettings.insert(name.lowercased())
+            guard let first = argv.first else { continue }
+            let name = ConfigDocument.text(first).lowercased()
+            if command.kind == .bind {
+                if !topLevel { unresolved = true }
+                continue
             }
-            if argv.count > 1, ["set", "seta", "sets", "setu", "toggle", "togglep", "reset", "setfromdvar"].contains(ConfigDocument.text(argv[0]).lowercased()) {
+            if ["set", "seta", "sets", "setu"].contains(name) {
+                if !topLevel && argv.count > 1 { changedSettings.insert(ConfigDocument.text(argv[1]).lowercased()) }
+                continue
+            }
+            if ["toggle", "togglep", "reset", "setfromdvar", "increase", "decrease", "dvar_bool", "dvar_int", "dvar_float"].contains(name) {
+                guard argv.count > 1 else { unresolved = true; continue }
                 changedSettings.insert(ConfigDocument.text(argv[1]).lowercased())
+                continue
+            }
+            if catalog.setting(named: name) != nil {
+                if !topLevel && argv.count > 1 { changedSettings.insert(name) }
+                continue
+            }
+            // These handlers read other files, restart subsystems, or change
+            // several settings. Registration alone cannot resolve their effects.
+            if Self.unmodeledCommands.contains(name) || (name == "cg_shellshock" && argv.count > 2) {
+                unresolved = true
+                changedSettings.formUnion(Self.knownTargets[name] ?? [])
+            } else if catalog.command(named: name) == nil {
+                unresolved = true
             }
         }
     }
+    private static let unmodeledCommands: Set<String> = [
+        "setrecommended", "sizeup", "sizedown", "match", "cinematic", "map", "devmap", "map_rotate", "maprotate",
+        "disconnect", "vid_restart", "snd_restart", "cg_shellshock_load", "r_loadsun", "cg_hudradarcalibrate", "addip", "removeip"
+    ]
+    private static let knownTargets: [String: [String]] = [
+        "sizeup": ["cg_viewsize"], "sizedown": ["cg_viewsize"], "match": ["match_login"],
+        "cinematic": ["nextmap", "com_introplayed"], "map": ["sv_cheats"], "devmap": ["sv_cheats"],
+        "map_rotate": ["sv_maprotationcurrent", "g_gametype"], "disconnect": ["fs_game"],
+        "addip": ["g_banips"], "removeip": ["g_banips"]
+    ]
     func uses(_ command: String) -> Bool { commands.contains { $0.first.map(ConfigDocument.text)?.lowercased() == command.lowercased() } }
 }
 
@@ -193,7 +222,7 @@ struct ConfigCheckup: Sendable {
         var limitations = ["Advice uses direct config values and cited code. Performance and compatibility beyond the listed rules are not assessed."]
         if !known { limitations.append("Unknown rules or a client-mode mismatch: compatibility is not assessed.") }
         if unresolved { limitations.append("Scripts, external configs or parser diagnostics prevent a complete static review. Resolve them before applying advice.") }
-        if !scripts.changedSettings.isEmpty { limitations.append("Advanced binds can change the listed settings while you play; their runtime values are not assessed.") }
+        if !scripts.changedSettings.isEmpty { limitations.append("Config commands or binds can change the listed settings; their runtime values are not assessed.") }
         if measurements.packetLossPercent == nil { limitations.append("Packet loss: Not measured.") }
         let locks = Set(profile.metadata.locks.map { $0.lowercased() })
         let suggestions = known && !unresolved ? optimizer.rules.compactMap { rule -> ConfigCheckupSuggestion? in
@@ -241,7 +270,7 @@ struct ConfigCheckup: Sendable {
             let evaluation = rules.evaluate(setting: name, value: value, rulesetIDs: rulesetIDs, mode: mode)
             if !disabled && scripts.changedSettings.contains(name) {
                 return ConfigRuleEvaluation(setting: name, value: value, status: .unknown,
-                                            reason: "An advanced bind changes this setting while you play; its runtime value is not assessed.",
+                                            reason: "A config or bind command can change this setting; its runtime value is not assessed.",
                                             serverOwned: evaluation.serverOwned, sources: evaluation.sources)
             }
             if unresolved && evaluation.status != .violation && evaluation.status != .conflict {
