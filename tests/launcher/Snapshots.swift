@@ -1366,7 +1366,11 @@ final class PreviewCatalogGate: Sendable {
         let elements = AccessibilityTree.elements(of: window)
         guard let rail = elements.firstIndex(where: { $0.label == "Setting groups" }) else { return nil }
         let inside = elements[(rail + 1)...].prefix { $0.depth > elements[rail].depth }
-        guard let index = inside.firstIndex(where: { $0.label.hasPrefix(title + ", ") }) else { return nil }
+        // Native static text carries its words as the value and leaves the label empty.
+        func text(_ element: AccessibilityTree.Element) -> String {
+            element.label.isEmpty && element.role == "AXStaticText" ? element.value : element.label
+        }
+        guard let index = inside.firstIndex(where: { text($0).hasPrefix(title + ", ") }) else { return nil }
         let element = elements[index]
         // The row, or the cell inside it, carries the native selected state: read the row's own ancestors.
         var ancestors: [AccessibilityTree.Element] = [], depth = element.depth

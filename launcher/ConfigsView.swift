@@ -494,6 +494,7 @@ struct StudioRailRow: View {
         .font(.system(size: 13, weight: .medium))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(count.map { "\(title), \($0) settings" } ?? title)
+        .accessibilityAddTraits(.isStaticText)
     }
 }
 
