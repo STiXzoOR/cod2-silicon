@@ -4894,6 +4894,20 @@
       "title": "Selected profile",
       "summary": "The profile selected in the profile menu.",
       "details": "The game treats this as read-only and sets it itself."
+    },
+    "cl_matchsummaries": {
+      "group": "other",
+      "title": "Local match summaries",
+      "summary": "Save frame timing and connection measurements on this Mac after each match.",
+      "details": "Change this in Settings › Privacy before starting the game. The launcher stores at most 200 summaries locally and never sends them anywhere. Turning it off prevents new summaries; earlier records remain. This choice belongs to this Mac, not to a loadout.",
+      "guided": false,
+      "control": {
+        "kind": "switch"
+      },
+      "effectSources": [
+        "src/PC/qcommon/match_summary.c: MatchSummary_Init",
+        "src/PC/qcommon/match_summary.c: MatchSummary_Finish"
+      ]
     }
   },
   "commands": {
