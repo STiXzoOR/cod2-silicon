@@ -244,7 +244,7 @@ enum KeyStore {
 }
 
 struct GameSettings: Codable, Sendable, Equatable {
-    static let machineDvarNames: Set<String> = ["r_mode", "r_fullscreen", "r_borderless", "r_swapinterval", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr", "com_introplayed", "logfile", "developer", "fs_basepath", "fs_homepath", "fs_game", "fs_cdpath", "fs_copyfiles", "fs_restrict", "loc_language", "dedicated", "com_hunkmegs", "net_port"]
+    static let machineDvarNames: Set<String> = ["r_mode", "r_fullscreen", "r_borderless", "r_swapinterval", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr", "com_introplayed", "logfile", "developer", "fs_basepath", "fs_homepath", "fs_game", "fs_cdpath", "fs_copyfiles", "fs_restrict", "loc_language", "dedicated", "com_hunkmegs", "net_port", "cl_matchsummaries"]
     var resolution = "1920x1080"
     var fullscreen = "borderless"
     /// com_maxfps: 0 (no cap) to 1000, the engine dvar's range.
@@ -256,6 +256,7 @@ struct GameSettings: Codable, Sendable, Equatable {
     var volume = 0.8
     var anisotropy = 8
     var advanced = ""
+    var matchSummariesEnabled = true
     static let resolutions = ["1280x720", "1920x1080", "2560x1440", "3008x1692", "3840x2160", "5120x2880", "6016x3384"]
     static let anisotropyLevels = [2, 4, 8, 16]
     var cm360: Double? { MouseMath.centimetresPer360(dpi: dpi, sensitivity: sensitivity) }
@@ -274,6 +275,7 @@ struct GameSettings: Codable, Sendable, Equatable {
         volume = try c.decodeIfPresent(Double.self, forKey: .volume) ?? d.volume
         anisotropy = try c.decodeIfPresent(Int.self, forKey: .anisotropy) ?? d.anisotropy
         advanced = try c.decodeIfPresent(String.self, forKey: .advanced) ?? d.advanced
+        matchSummariesEnabled = try c.decodeIfPresent(Bool.self, forKey: .matchSummariesEnabled) ?? d.matchSummariesEnabled
     }
     /// One advanced line as (name, value): `dvar value` as typed in the console, or `dvar=value`.
     static func advancedPair(_ line: String) -> (String, String)? {
@@ -298,12 +300,12 @@ struct GameSettings: Codable, Sendable, Equatable {
             ("r_borderless", fullscreen == "borderless" ? "1" : "0"), ("com_maxfps", String(fps)),
             ("r_swapInterval", vsync ? "1" : "0"), ("in_rawmouse", rawMouse ? "1" : "0"),
             ("sensitivity", String(sensitivity)), ("snd_volume", String(volume)), ("r_anisotropy", String(anisotropy)), ("m_filter", "0"), ("cl_mouseAccel", "0"),
-            ("logfile", "0"), ("developer", "0"), ("com_introPlayed", "1")]
+            ("logfile", "0"), ("developer", "0"), ("com_introPlayed", "1"), ("cl_matchSummaries", matchSummariesEnabled ? "1" : "0")]
         for line in advanced.components(separatedBy: "\n") where !line.trimmingCharacters(in: .whitespaces).isEmpty {
             let pair = Self.advancedPair(line)
             let name = pair?.0 ?? ""
             guard let pair, name.range(of: "^[A-Za-z_][A-Za-z0-9_]{0,63}$", options: .regularExpression) != nil,
-                  !["fs_basepath", "fs_homepath", "password", "cl_cdkey", "cdkey", "dpi", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr"].contains(name.lowercased()),
+                  !["fs_basepath", "fs_homepath", "password", "cl_cdkey", "cdkey", "dpi", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr", "cl_matchsummaries"].contains(name.lowercased()),
                   !name.lowercased().contains("password"), !name.lowercased().contains("codkey") else {
                 throw LauncherError(message: "Advanced options use one “dvar value” per line. Paths, credentials and upcoming renderer options are managed separately.")
             }

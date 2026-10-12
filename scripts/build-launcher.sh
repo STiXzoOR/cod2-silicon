@@ -12,7 +12,7 @@ clang=(/usr/bin/xcrun clang -target arm64-apple-macos13 -isysroot "$sdk" -fobjc-
 "${clang[@]}" -c "$root/src/platform/cod2x_native_shaders.m" -o "$out/NativeShaders.o"
 /usr/bin/xcrun clang -target arm64-apple-macos13 -isysroot "$sdk" -DCOD2_X64=1 -DCOD2_CODX=1 -c "$root/src/PC/qcommon/cod2x_url.c" -o "$out/URL.o"
 sources=("$root/launcher/Core.swift" "$root/launcher/Presentation.swift")
-views=("$root/launcher/ConfigDocument.swift" "$root/launcher/ConfigProfiles.swift"
+views=("$root/launcher/MatchSummaries.swift" "$root/launcher/ConfigDocument.swift" "$root/launcher/ConfigProfiles.swift"
     "$root/launcher/ConfigHistory.swift" "$root/launcher/ConfigStudioSession.swift"
     "$root/launcher/ConfigCatalog.swift" "$root/launcher/ConfigRules.swift" "$root/launcher/ConfigReadyCheck.swift")
 # Every Config Studio model ships in the launcher, ready for its screens.

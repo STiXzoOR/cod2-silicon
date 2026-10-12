@@ -1,5 +1,6 @@
 #if defined(COD2_X64)
 #include "PC/qcommon/port_debug.h"
+#include "../qcommon/match_summary.h"
 #endif
 #if defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x.h"
@@ -1130,6 +1131,9 @@ void CL_InitOnceForAllClients(void)
     srand(Sys_MillisecondsRaw());
     Con_Init();
     CL_InitInput();
+#if defined(COD2_X64)
+    MatchSummary_Init();
+#endif
 
 #if defined(COD2_X64) && COD2_X64
     cl_noprint = Dvar_RegisterBool_mac("cl_noprint", 0, 0x1000);
@@ -2489,6 +2493,9 @@ CL_PacketEvent_real(netadr_t from, msg_t *msg, int time)
 
     if (!Netchan_Process(&conn->netchan, msg))
         return 0;
+#if defined(COD2_X64)
+    MatchSummary_Packet(conn->netchan.dropped);
+#endif
 
     headerBytes = msg->readcount;
     savedServerMessageSequence = conn->serverMessageSequence;
@@ -2829,6 +2836,9 @@ void CL_Disconnect(void)
     if (!legacy->cl_running)
         return;
 
+#if defined(COD2_X64)
+    MatchSummary_Finish("disconnect");
+#endif
     if (conn->demorecording)
         CL_StopRecord_f();
 
@@ -2969,6 +2979,9 @@ void CL_MapLoading(const char *mapname)
     if (!legacy->cl_running)
         return;
 
+#if defined(COD2_X64)
+    MatchSummary_Finish("map");
+#endif
     g_waitingForServer = 0;
     Con_Close();
     active->keyCatchers = 0;

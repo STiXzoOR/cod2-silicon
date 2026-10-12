@@ -9,6 +9,7 @@ mkdir -p "$out"
 
 python3 "$root/tests/launcher/network.py"
 sh "$root/tests/launcher/artwork.sh"
+COD2_MATCH_TEST_OUTPUT="${COD2_MATCH_TEST_OUTPUT:-$out/matches.noindex}" sh "$root/tests/launcher/match_summaries.sh"
 sh "$root/tests/launcher/config_document.sh"
 sh "$root/tests/launcher/config_profiles.sh"
 sh "$root/tests/launcher/config_launch.sh"
@@ -39,7 +40,7 @@ echo "PASS: every button style comes from launcher/Theme.swift"
 # Every view must also compile for SDKs before macOS 26, where only the material styling exists.
 sdk=$(/usr/bin/xcrun --show-sdk-path)
 views=""
-for file in Core Presentation ConfigDocument ConfigProfiles ConfigHistory ConfigStudioSession ConfigCatalog ConfigRules ConfigReadyCheck \
+for file in Core Presentation MatchSummaries ConfigDocument ConfigProfiles ConfigHistory ConfigStudioSession ConfigCatalog ConfigRules ConfigReadyCheck \
     ConfigCheckup ConfigBindings InputDevices ConfigChains ConfigImport ConfigImportSafety WindowsProfiles ConfigImportSession \
     ConfigImportCatalogAdapter ConfigDirectory ConfigStudioModel ConfigStudioBinds ConfigStudioCheckup ConfigStudioStyle \
     Network Model MapArtwork Theme Artwork RootView HomeView ServersView SettingsView SetupView LibraryView ConfigsView ConfigSettingsView ConfigHistoryView \

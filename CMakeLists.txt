@@ -69,6 +69,7 @@ set(COD2_SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 # The common native trace state must not add an object to legacy builds.
 if(NOT COD2_X64)
   set_source_files_properties(src/PC/qcommon/port_debug.c PROPERTIES HEADER_FILE_ONLY TRUE)
+  set_source_files_properties(src/PC/qcommon/match_summary.c PROPERTIES HEADER_FILE_ONLY TRUE)
 endif()
 
 # Opt-in follows COD2_FEATURE_CFLAGS; keep gate-off object/debug inputs unchanged.

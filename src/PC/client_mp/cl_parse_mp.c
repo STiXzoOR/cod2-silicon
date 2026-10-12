@@ -1,4 +1,7 @@
 #include "PC/qcommon/port_debug.h"
+#if defined(COD2_X64)
+#include "../qcommon/match_summary.h"
+#endif
 #if defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x.h"
 #if defined(COD2_X64) && COD2_X64
@@ -224,6 +227,9 @@ void CL_ParseGamestate(msg_t *msg)
     int len;
     entityState_t nullstate;
 
+#if defined(COD2_X64)
+    MatchSummary_Finish("map");
+#endif
     Con_Close();
 
     clc = (clientConnection_t *)*clc_ptr;
@@ -653,6 +659,9 @@ void CL_ParseSnapshot(msg_t *msg)
     int oldEntityNum;
     byte *oldClientSlot;
     int oldClientNum;
+#if defined(COD2_X64)
+    int pingMeasured = 0;
+#endif
 
     LargeLocal_LargeLocal(&newSnap_large_local, sizeof(clSnapshot_t));
     newSnap = (clSnapshot_t *)LargeLocal_GetBuf(&newSnap_large_local);
@@ -1011,6 +1020,9 @@ void CL_ParseSnapshot(msg_t *msg)
             outPacket_t *slot = &cla->outPackets[idx];
             if (slot->p_serverTime >= snapTime) {
                 cla->snap.ping = *(int *)(*(byte **)cls_ptr + 0x118) - slot->p_realtime;
+#if defined(COD2_X64)
+                pingMeasured = 1;
+#endif
                 break;
             }
         }
@@ -1026,6 +1038,9 @@ void CL_ParseSnapshot(msg_t *msg)
 
     cla->newSnapshots = 1;
 
+#if defined(COD2_X64)
+    MatchSummary_Snapshot(cla->snap.ping, pingMeasured, cla->snap.ps.pm_type == 5);
+#endif
     ZN10LargeLocalD1Ev(&newSnap_large_local);
 }
 

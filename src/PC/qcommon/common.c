@@ -1,5 +1,8 @@
 #if defined(COD2_X64)
 #include "PC/qcommon/port_debug.h"
+#if !defined(DEDICATED)
+#include "match_summary.h"
+#endif
 #endif
 #if defined(COD2_CODX) && COD2_CODX
 #include "cod2x.h"
@@ -1776,6 +1779,12 @@ BM_NOINLINE void Com_Frame_Try_Block_Function(void)
 
     SetAnimCheck(com_animCheck->current.enabled);
 
+#if defined(COD2_X64) && !defined(DEDICATED)
+    int matchFrameCap = com_maxfps->current.integer;
+#if defined(COD2_CODX) && COD2_CODX
+    matchFrameCap = Cod2x_FrameFPS(matchFrameCap);
+#endif
+#endif
 #if defined(COD2_CODX) && COD2_CODX
     if (Cod2x_FrameFPS(com_maxfps->current.integer) > 0 && !com_dedicated->current.integer) {
         minMsec = 1000 / Cod2x_FrameFPS(com_maxfps->current.integer);
@@ -1811,6 +1820,9 @@ BM_NOINLINE void Com_Frame_Try_Block_Function(void)
 
 #if COD2_APPLE_SDK && !defined(DEDICATED)
     MacSystem_ObserveFrame(com_frameTime);
+#endif
+#if defined(COD2_X64) && !defined(DEDICATED)
+    MatchSummary_Frame(rawMsec, minMsec, matchFrameCap);
 #endif
     Cbuf_Execute();
     com_lastFrameTime = com_frameTime;
