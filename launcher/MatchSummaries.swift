@@ -37,14 +37,22 @@ struct MatchSummary: Codable, Equatable, Sendable {
     fileprivate var valid: Bool {
         let measured = [durationSeconds, frameTimeP50MS, frameTimeP99MS, frameTimeMaxMS,
                         frameTimeHistogramLimitMS, pingAverageMS, pingMaximumMS, packetLossPercent].compactMap { $0 }
+        // The producer converts UInt64 elapsed milliseconds to seconds and stores
+        // frame/ping samples in signed 32-bit integers. Keep their safe ranges
+        // while preserving fractional measurements accepted by this schema.
+        let maximumSampleMS = Double(Int32.max)
         guard schemaVersion == 1, measured.allSatisfy({ $0.isFinite && $0 >= 0 }),
+              durationSeconds <= Double(UInt64.max) / 1000,
               (0...1000).contains(capFPS), capSampleFrames <= frameCount,
               pingSamples <= snapshotsReceived else { return false }
+        if let limit = frameTimeHistogramLimitMS {
+            guard limit > 0, limit <= maximumSampleMS else { return false }
+        }
         if frameCount == 0 {
             guard frameTimeP50MS == nil, frameTimeP99MS == nil, frameTimeMaxMS == nil else { return false }
         } else {
             guard let p50 = frameTimeP50MS, let p99 = frameTimeP99MS, let max = frameTimeMaxMS,
-                  p50 <= p99, p99 <= max else { return false }
+                  p50 <= p99, p99 <= max, max <= maximumSampleMS else { return false }
         }
         if capSampleFrames == 0 {
             guard framesUnderCap == nil else { return false }
@@ -54,13 +62,15 @@ struct MatchSummary: Codable, Equatable, Sendable {
         if pingSamples == 0 {
             guard pingAverageMS == nil, pingMaximumMS == nil else { return false }
         } else {
-            guard let average = pingAverageMS, let max = pingMaximumMS, average <= max else { return false }
+            guard let average = pingAverageMS, let max = pingMaximumMS,
+                  average <= max, max <= maximumSampleMS else { return false }
         }
         if packetsReceived == 0 {
             return packetsLost == 0 && packetLossPercent == nil
         }
-        guard let loss = packetLossPercent, loss <= 100 else { return false }
-        let expected = 100 * Double(packetsLost) / (Double(packetsReceived) + Double(packetsLost))
+        let (packetTotal, overflow) = packetsReceived.addingReportingOverflow(packetsLost)
+        guard !overflow, let loss = packetLossPercent, loss <= 100 else { return false }
+        let expected = 100 * Double(packetsLost) / Double(packetTotal)
         return abs(loss - expected) <= 0.001
     }
 }
