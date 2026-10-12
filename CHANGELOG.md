@@ -10,8 +10,10 @@ All notable changes to CoD2 Silicon are documented here, following
 ### Added
 
 - Config Studio: named loadouts, guided and expert settings, keyboard and mouse
-  binds, multi-command and cycling binds, reviewed imports, change history and
-  explicit apply/undo. Settings for this Mac remain separate from each loadout.
+  binds, multi-command and cycling binds, reviewed imports and change history.
+  Ordinary edits save to the selected loadout; imports, suggested changes and
+  restores require an explicit action. Settings for this Mac remain separate
+  from each loadout.
 - Ruleset-aware Check-up and a server ready check before joining. Unknown rules
   remain unknown, and suggested changes require an explicit action.
 - Local match summaries for frame timing and connection measurements, with
@@ -19,6 +21,9 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ### Fixed
 
+- Server metadata stays readable at the minimum window size, with connection
+  actions kept visible. Config Studio uses native group selection and keyboard
+  focus, responsive Expert controls and system popover materials.
 - Native voice playback initialization, the original 8192 Hz playback rate,
   server relay packet handling and spectator routing. Microphone capture is
   still unavailable.

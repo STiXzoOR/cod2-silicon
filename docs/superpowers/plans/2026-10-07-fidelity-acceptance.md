@@ -4,12 +4,14 @@ The user explicitly reaffirmed whole-game fidelity and regression prevention on 
 
 ## Current scope override
 
-The latest user instruction is **do not start 0.3**. Complete current gameplay
-readiness, preserve intentional CoD2x fixes/improvements, and keep Config Studio
-and Metal implementation parked. Existing design/parser/profile branches are
-preserved separately. Current release integration retains the already-shipped
-CoD2x shared config path until profile migration is ready. No push, tag or
-release is part of these local checks.
+Current authorized delivery is **0.2.1**: composed gameplay readiness plus
+Config Studio foundation and remaining units, local match summaries and the
+server ready check. Metal and other 0.3 renderer work remain parked. The
+orchestrator owns commits, PR, merge, tagging and release publication. Player
+directory publication remains unavailable until permissions and production
+trust and hosting are established. Historical evidence below retains its named
+revision; final composed build, runtime, UI, CI and package acceptance require
+fresh receipts for the released source and archive.
 
 Current integration `codex/current-readiness` includes WS45 harness/diagnostics,
 WS47 registry/grammar/language/commands (trimmed profile storage scope), WS48
@@ -51,9 +53,13 @@ frozen `8f17eaf` binaries. It also preserves the incomplete third-person model
 failure. WS88 subsequently proved and repaired missing child bind translations:
 matched stock before/after and corrected CoD2x captures show complete local
 bodies. Independent code review and extended skeleton/CPU skinning sanitizer
-fixtures pass; identified remote/bot visual proof remains open. WS89 is checking
-voice against independent original and upstream codec output; its review is
-pending. WS90 is checking the actual positional audio/mixer path.
+fixtures pass; identified remote/bot visual proof remains open. WS89/WS91 retain
+bounded original-codec comparisons and remaining PCM differences. WS110 restores
+incoming playback without capture, WS112 restores the original 8192 Hz rate, and
+WS119 records bounded relay/playback and spectator-routing evidence. Final
+composed voice acceptance remains a separate current-release check; microphone
+capture and universal original PCM parity are not established. WS90 records
+its positional audio/mixer checks and their limits.
 Additional GSC/server management breadth remains separately recorded.
 Existing client checks do not certify server behavior. Host readiness remains
 zero until the composed contracts and their validation support advancement.
@@ -86,7 +92,7 @@ Structural score, a successful build, the existing stub baseline, and a menu smo
 | FA12 water/buffer lifetime | WS75 actual water data/mips/sampler/coordinate fixtures pass both builds | Live rendered water comparison; original GPU lifetime remains unproved by native CPU buffer fixtures |
 | FA13 script analysis | WS80/84 loop scope, booleans, parser stack and builtin operands restored; WS87 packed literals/local names pass byte oracles at all alignments | Final combined suite; other packed backpatch stores remain outside these bounded repairs |
 | FA14 script failures | WS59 required script/entrypoint failures now checked and covered | Final live script loading and ordinary map controls |
-| FA08 voice codec | WS89 original Mac function oracle and upstream 1.0.4 packets identify missing pitch and loss-concealment loops | Complete independent PCM comparisons, repair review and regression vectors; capture remains separate |
+| FA08 voice codec | WS89/WS91 retain original-codec comparisons and remaining PCM differences; WS110/112/119 record incoming playback, rate and relay repairs | Verify the composed voice contracts and retain the bounded historical runtime evidence; microphone capture and universal original PCM parity are not established |
 | Third-person models/legs | WS88 matched before/after and stock/CoD2x movement captures show complete local bodies; independent review and extended skeleton/skinning fixtures pass | Identified remote-player visual proof and final composed builds remain |
 | Footsteps | WS43 events and alias calls observed | Capture acoustic output/call-chain behavior across running/walking/surfaces; an emitted event alone does not prove audible sound |
 | Weapons/damage/hit registration | WS44 did not establish a specific new defect | Deterministic recoil/spread/damage/hit-location/trace result cases and gameplay capture; retain seeds and compare full relevant state rather than coarse hash only |
@@ -98,7 +104,7 @@ Structural score, a successful build, the existing stub baseline, and a menu smo
 2. Finish WS47 documented registry/grammar/profile corrections; do not mix them into WS45 baseline while it runs.
 3. Run independent confirmed-fix units in isolated worktrees: protocol tables; collision; weapon/level state; audio; HUD/view/UI/script. Shared source files have one owner, and live-game/benchmark use is serialized with the benchmark lock.
 4. Resolve plausible findings with characterization before implementation. Reconcile older reports against current source, including intentionally replaced platform behavior and active unmatched identities. Never turn all 1,386 unmatched names into implementation tasks without resolving identity and callers.
-5. Integrate tested current-release fidelity and CoD2x units. Keep Config Studio parked. Re-run behavior tests for changed subsystems and the complete merge gate on the composed commit. Review actual code separately from worker claims.
+5. Integrate tested current-release fidelity and CoD2x units. Include the authorized Config Studio units in 0.2.1; keep Metal parked. Re-run behavior tests for changed subsystems and the complete merge gate on the composed commit. Review actual code separately from worker claims.
 6. Keep Metal work parked. Finish the current renderer and gameplay acceptance. A failure is fixed or reported with exact evidence; it is never relabeled a pass to meet a version number.
 
 ## Regression contract

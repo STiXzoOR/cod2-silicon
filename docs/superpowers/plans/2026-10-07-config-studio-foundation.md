@@ -81,4 +81,4 @@ WS98 verification targets readiness integration `048ff5e`: both native modes hav
 
 ## Integration and completion
 
-The orchestrator reviews actual diffs, commits completed units with DCO and composes them after the 0.2.1 gate baseline. A fresh Sol review checks profile ownership, data preservation, launch ordering and coverage completeness; Astra checks visual fidelity. This plan is foundation only; Binds, Import/Directory and Check-up plans cover the remaining spec sections and remain in the user's authorized 0.3 scope.
+The orchestrator reviews actual diffs, commits completed units with DCO and composes them after the 0.2.1 gate baseline. A fresh Sol review checks profile ownership, data preservation, launch ordering and coverage completeness; Astra checks visual fidelity. This plan is foundation only; Binds, Import/Directory and Check-up plans cover the remaining spec sections and are included in the authorized 0.2.1 delivery; Metal remains separate.
