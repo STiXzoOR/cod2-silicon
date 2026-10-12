@@ -22,6 +22,8 @@ import SwiftUI
 // --accessibility reads each Config Studio window's accessibility tree, as VoiceOver would, writes
 // it in reading order to OUTPUT/accessibility, and fails on a control without a name.
 // --overlays opens sheets, popovers and alerts with real clicks and captures them over the window.
+// --navigation captures Expert's group rail in the active and an inactive window, with the window's
+// sidebar hidden and shown by its own toolbar button, and resized between 1440×900 and 1100×760.
 // Config Studio screens use synthetic loadouts in a private temporary home, removed afterwards.
 // COD2_SNAPSHOT_INTERACTIVE_EXPORT=1 waits up to 120 seconds for a real Save click in the
 // synthetic export panel. Use this when AppKit hosts the Save button in a remote service that
@@ -372,6 +374,10 @@ final class Watchdog: @unchecked Sendable {
             Task { @MainActor in exit(await ConfigsPreview.overlays(output: output, only: only) ? 0 : 1) }
             app.run()
         }
+        if arguments.contains("--navigation") {
+            Task { @MainActor in exit(await ConfigsPreview.navigation(output: output) ? 0 : 1) }
+            app.run()
+        }
         Task { @MainActor in
             var written = 0, checked = 0
             var findings: [String] = [], report: [[String: Any]] = []
@@ -598,20 +604,25 @@ final class Watchdog: @unchecked Sendable {
     static func findings(_ items: [Item], image: CGImage) -> [String] {
         var out: [String] = []
         let pixels = Pixels(image)
-        let containers = items.filter { $0.role == .container }
-        func area(_ item: Item) -> CGFloat { item.frame.width * item.frame.height }
+        let byID = Dictionary(uniqueKeysWithValues: items.map { ($0.id, $0) })
         func parent(of item: Item) -> Item? {
-            containers.filter { $0 != item && area($0) > area(item) && $0.frame.insetBy(dx: -0.5, dy: -0.5).contains(item.frame) }
-                .min { area($0) < area($1) }
+            item.parentID.flatMap { byID[$0] }
+        }
+        func visible(_ item: Item) -> Bool {
+            guard CGRect(origin: .zero, size: Snapshots.windowSize).contains(item.frame) else { return false }
+            // A scrolled-out child must not be measured against a different panel that happens
+            // to occupy its layout coordinates. Only its actual containing surface counts.
+            guard let container = parent(of: item) else { return true }
+            return container.frame.insetBy(dx: -0.5, dy: -0.5).contains(item.frame)
         }
         for item in items where item.role == .control {
             if case .rounded = item.form { out.append("\(describe(item)) is a rounded rectangle; buttons are capsules or circles") }
-            if item.name == "prominent", let seen = pixels?.shape(of: item.frame), seen != "capsule" {
+            if visible(item), item.name == "prominent", let seen = pixels?.shape(of: item.frame), seen != "capsule" {
                 out.append("\(describe(item)) draws as a \(seen), not a capsule")
             }
         }
         for item in items {
-            guard let container = parent(of: item) else { continue }
+            guard visible(item), let container = parent(of: item) else { continue }
             let f = item.frame, k = container.frame
             let top = f.minY - k.minY, bottom = k.maxY - f.maxY, leading = f.minX - k.minX, trailing = k.maxX - f.maxX
             let outer = radius(container), inner = radius(item)
@@ -632,7 +643,7 @@ final class Watchdog: @unchecked Sendable {
             }
         }
         // Side by side: controls and fields whose vertical ranges overlap, in the same container and close together.
-        let rowItems = items.filter { $0.role == .control || $0.role == .field }
+        let rowItems = items.filter { ($0.role == .control || $0.role == .field) && visible($0) }
         for (index, a) in rowItems.enumerated() {
             for b in rowItems[(index + 1)...] where parent(of: a) == parent(of: b) {
                 let gap = max(b.frame.minX - a.frame.maxX, a.frame.minX - b.frame.maxX)
@@ -1126,6 +1137,7 @@ final class PreviewCatalogGate: Sendable {
             print("PASS: the arrow keys moved selection and focus along the drawing (right, down, left, up) from E")
             guard await deviceSetupActions(model: visualModel, window: visual) else { return false }
         }
+        guard await groupRailAction() else { return false }
         guard await compareAction() else { return false }
         guard await loadoutMenuActions() else { return false }
         guard await importAction() else { return false }
@@ -1138,6 +1150,7 @@ final class PreviewCatalogGate: Sendable {
     /// above is what the matrix requires.
     static func action(_ name: String) async -> Bool {
         switch name {
+        case "group-rail": return await groupRailAction()
         case "compare": return await compareAction()
         case "loadout-menu": return await loadoutMenuActions()
         case "import": return await importAction()
@@ -1345,6 +1358,146 @@ final class PreviewCatalogGate: Sendable {
             print("FAIL: Return did not finish learning with only the left button (\(String(describing: binds.learning?.step)))"); return false
         }
         print("PASS: a click while learning was recorded as the left button without pressing Find by Pressing; Return finished")
+        return true
+    }
+
+    /// The group rail's row whose name starts the label, and whether the row reports itself selected.
+    static func railRow(_ title: String, in window: NSWindow) -> (element: AccessibilityTree.Element, selected: Bool)? {
+        let elements = AccessibilityTree.elements(of: window)
+        guard let rail = elements.firstIndex(where: { $0.label == "Setting groups" }) else { return nil }
+        let inside = elements[(rail + 1)...].prefix { $0.depth > elements[rail].depth }
+        guard let index = inside.firstIndex(where: { $0.label.hasPrefix(title + ", ") }) else { return nil }
+        let element = elements[index]
+        // The row, or the cell inside it, carries the native selected state: read the row's own ancestors.
+        var ancestors: [AccessibilityTree.Element] = [], depth = element.depth
+        for candidate in elements[(rail + 1)..<index].reversed() where candidate.depth < depth { ancestors.append(candidate); depth = candidate.depth }
+        return (element, element.selected || ancestors.contains { $0.selected && ["AXRow", "AXCell"].contains($0.role) })
+    }
+
+    /// Navigation states of a real window: active and inactive, the sidebar hidden and shown with its
+    /// own toolbar button, and the window resized to the minimum and back. The rail's selection and
+    /// the chosen group survive each; images are written for review. No setting of the Mac changes.
+    static func navigation(output: URL) async -> Bool {
+        try? FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        let large = NSSize(width: 1440, height: 900), small = NSSize(width: 1100, height: 760)
+        var written = 0
+        for dark in [true, false] {
+            let appearance = dark ? "dark" : "light"
+            guard let (model, window, home) = await open("configs-expert", dark: dark, setup: { $0.studio.group = .aim }) else { return false }
+            defer { window.orderOut(nil); window.close(); try? FileManager.default.removeItem(at: home) }
+            let aim = model.studio.catalogTitle(.aim)
+            func capture(_ step: String) -> Bool {
+                guard let image = WindowCapture.image(of: window) else { print("FAIL: navigation \(step)-\(appearance): capture failed"); return false }
+                do { try Snapshots.write(image, to: output.appendingPathComponent("navigation-\(step)-\(appearance).png")); written += 1 } catch { return false }
+                return true
+            }
+            /// At 1440 points the rail shows, with Aim selected; at the minimum a menu replaces it. With the
+            /// sidebar hidden at the minimum, either is right, depending on the room the editor gets.
+            func check(_ step: String, rail: Bool?) -> Bool {
+                guard model.page == .configs, model.studio.group == .aim, model.studio.filter == nil else {
+                    print("FAIL: navigation \(step)-\(appearance): the page or group changed (\(model.page), \(model.studio.group))"); return false
+                }
+                let row = railRow(aim, in: window)
+                if rail == true || (rail == nil && row != nil) {
+                    guard row?.selected == true else { print("FAIL: navigation \(step)-\(appearance): \(aim) is not the rail's selected row"); return false }
+                } else {
+                    guard AccessibilityTree.elements(of: window).contains(where: { $0.role == "AXPopUpButton" && $0.label == "Setting group" }) else {
+                        print("FAIL: navigation \(step)-\(appearance): the Setting group menu does not replace the rail"); return false
+                    }
+                }
+                return capture(step)
+            }
+            func resize(_ size: NSSize) async {
+                window.setFrame(NSRect(origin: window.frame.origin, size: size), display: true)
+                try? await Task.sleep(for: .milliseconds(900))
+            }
+            func toggleSidebar(_ step: String) async -> Bool {
+                let buttons = AccessibilityTree.elements(of: window).filter { $0.role == "AXButton" && $0.label.localizedCaseInsensitiveContains("sidebar") }
+                guard let toggle = buttons.first else { print("FAIL: navigation \(step)-\(appearance): the sidebar's toolbar button is not in the accessibility tree"); return false }
+                window.makeKey()
+                click(window, element: toggle)
+                try? await Task.sleep(for: .milliseconds(900))
+                return true
+            }
+            await resize(large)
+            guard window.frame.size == large, check("active", rail: true) else { return false }
+            // Another of our windows takes key: the rail's selection draws as in an inactive window.
+            let other = NSWindow(contentRect: NSRect(x: window.frame.minX + 40, y: window.frame.minY + 40, width: 260, height: 120),
+                                 styleMask: [.titled], backing: .buffered, defer: false)
+            other.isReleasedWhenClosed = false
+            other.makeKeyAndOrderFront(nil)
+            try? await Task.sleep(for: .milliseconds(700))
+            guard !window.isKeyWindow, other.isKeyWindow else { print("FAIL: navigation inactive-\(appearance): the window stayed key"); other.close(); return false }
+            let inactive = check("inactive", rail: true)
+            other.orderOut(nil); other.close()
+            window.makeKeyAndOrderFront(nil)
+            try? await Task.sleep(for: .milliseconds(600))
+            guard inactive, window.isKeyWindow else { return false }
+            guard await toggleSidebar("sidebar-hidden"), check("sidebar-hidden", rail: true),
+                  await toggleSidebar("sidebar-shown"), check("sidebar-shown", rail: true) else { return false }
+            await resize(small)
+            guard window.frame.size == small, check("minimum", rail: false) else { return false }
+            guard await toggleSidebar("minimum-sidebar-hidden"), check("minimum-sidebar-hidden", rail: nil),
+                  await toggleSidebar("minimum-sidebar-shown"), check("minimum-sidebar-shown", rail: false) else { return false }
+            await resize(large)
+            guard window.frame.size == large, check("resized-back", rail: true) else { return false }
+        }
+        print("PASS: navigation: \(written) captures; the rail kept \(ConfigPurposeGroup.aim) selected while inactive, with the sidebar hidden and shown, and across 1440x900 and 1100x760")
+        return written == 16
+    }
+
+    /// Expert's group rail is a native selection list: a real click selects a group, the down arrow
+    /// moves to the next group, a click on Changed selects that filter and a click on a group
+    /// clears it. The selected row reports itself selected; nothing is written.
+    static func groupRailAction() async -> Bool {
+        guard let (model, window, home) = await open("configs-expert", dark: true) else { return false }
+        defer { window.orderOut(nil); window.close(); try? FileManager.default.removeItem(at: home) }
+        let studio = model.studio
+        let file = home.appendingPathComponent("main/players/Main/config_mp.cfg")
+        let before = try? Data(contentsOf: file)
+        func row(_ title: String) -> (element: AccessibilityTree.Element, selected: Bool)? { railRow(title, in: window) }
+        let aim = studio.catalogTitle(.aim)
+        guard let aimRow = row(aim) else { print("FAIL: the \(aim) row is not in the Setting groups list"); return false }
+        window.makeKey()
+        appClick(window, element: aimRow.element)
+        try? await Task.sleep(for: .milliseconds(500))
+        guard studio.group == .aim, studio.filter == nil, row(aim)?.selected == true else {
+            print("FAIL: clicking \(aim) did not select it (group \(studio.group), selected \(String(describing: row(aim)?.selected)))"); return false
+        }
+        print("PASS: clicking \(aim) in the group rail selected it, and its row reports itself selected")
+        let groups = ConfigPurposeGroup.allCases
+        let next = groups[groups.firstIndex(of: .aim)! + 1]
+        pressArrow(window, keyCode: 125)
+        try? await Task.sleep(for: .milliseconds(500))
+        guard studio.group == next, row(studio.catalogTitle(next))?.selected == true else {
+            print("FAIL: the down arrow did not move the rail to \(studio.catalogTitle(next)) (group \(studio.group), first responder \(window.firstResponder.map { String(describing: type(of: $0)) } ?? "none"))"); return false
+        }
+        print("PASS: the down arrow moved the rail's selection to \(studio.catalogTitle(next))")
+        func changedToggle() -> AccessibilityTree.Element? {
+            AccessibilityTree.elements(of: window).first { $0.role == "AXCheckBox" && $0.label == ConfigExpertFilter.changed.title }
+        }
+        guard let changed = changedToggle() else { print("FAIL: the Changed checkbox is not in the rail"); return false }
+        appClick(window, element: changed)
+        try? await Task.sleep(for: .milliseconds(500))
+        guard studio.filter == .changed, changedToggle()?.value == "1", row(studio.catalogTitle(next))?.selected == false else {
+            print("FAIL: clicking Changed did not check the filter alone (filter \(String(describing: studio.filter)))"); return false
+        }
+        guard let checked = changedToggle() else { return false }
+        appClick(window, element: checked)
+        try? await Task.sleep(for: .milliseconds(500))
+        guard studio.filter == nil, changedToggle()?.value == "0" else {
+            print("FAIL: clicking Changed again did not clear the filter"); return false
+        }
+        guard let unchecked = changedToggle() else { return false }
+        appClick(window, element: unchecked)
+        try? await Task.sleep(for: .milliseconds(500))
+        guard let back = row(aim) else { return false }
+        appClick(window, element: back.element)
+        try? await Task.sleep(for: .milliseconds(500))
+        guard studio.group == .aim, studio.filter == nil, studio.search.isEmpty, (try? Data(contentsOf: file)) == before else {
+            print("FAIL: clicking \(aim) after Changed did not clear the filter, or the rail wrote to the loadout"); return false
+        }
+        print("PASS: Changed toggled on and off; clicking \(aim) cleared it; the loadout's bytes are unchanged")
         return true
     }
 

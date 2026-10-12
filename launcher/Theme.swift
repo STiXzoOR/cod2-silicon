@@ -68,12 +68,14 @@ struct Palette {
 private struct PaletteKey: EnvironmentKey { static let defaultValue = Palette.dark }
 private struct UsesGlassKey: EnvironmentKey { static let defaultValue = LiquidGlass.available }
 private struct ShapeAuditKey: EnvironmentKey { static let defaultValue: ShapeAudit? = nil }
+private struct ShapeAuditContainerKey: EnvironmentKey { static let defaultValue: UUID? = nil }
 extension EnvironmentValues {
     var palette: Palette { get { self[PaletteKey.self] } set { self[PaletteKey.self] = newValue } }
     /// Liquid Glass on macOS 26 SDK/runtime; the review harness can force the 13–25 material fallback.
     var usesGlass: Bool { get { self[UsesGlassKey.self] } set { self[UsesGlassKey.self] = newValue } }
     /// Set only by the review harness, which checks the shapes and insets reported into it.
     var shapeAudit: ShapeAudit? { get { self[ShapeAuditKey.self] } set { self[ShapeAuditKey.self] = newValue } }
+    fileprivate var shapeAuditContainer: UUID? { get { self[ShapeAuditContainerKey.self] } set { self[ShapeAuditContainerKey.self] = newValue } }
 }
 
 // MARK: - Shape system
@@ -112,6 +114,8 @@ enum ControlMetrics {
     struct Item: Equatable, Sendable {
         enum Role: String, Sendable { case container, control, field, inset }
         enum Form: Equatable, Sendable { case capsule, circle, rounded(CGFloat) }
+        var id: UUID
+        var parentID: UUID?
         var role: Role
         var form: Form
         var name: String
@@ -125,11 +129,13 @@ private struct ShapeAuditReporter: ViewModifier {
     var form: ShapeAudit.Item.Form
     var name: String
     @Environment(\.shapeAudit) private var audit
+    @Environment(\.shapeAuditContainer) private var parentID
     @State private var id = UUID()
     func body(content: Content) -> some View {
         if let audit {
             content
-                .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .global) }) { audit.items[id] = .init(role: role, form: form, name: name, frame: $0) }
+                .environment(\.shapeAuditContainer, role == .container ? id : parentID)
+                .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .global) }) { audit.items[id] = .init(id: id, parentID: parentID, role: role, form: form, name: name, frame: $0) }
                 .onDisappear { audit.items[id] = nil }
         } else {
             content
@@ -230,7 +236,24 @@ struct GlassSurface<S: InsettableShape>: ViewModifier {
             .shadow(color: .black.opacity(palette.dark ? 0.32 : 0.12), radius: 20, y: 12)
     }
 }
+
+/// A content card that floats over artwork (Setup's form, a server's details): a standard
+/// material, or the opaque panel with Reduce Transparency. Content, so never glass; its buttons are.
+struct ContentSurface<S: InsettableShape>: ViewModifier {
+    var shape: S
+    @Environment(\.palette) private var palette
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    func body(content: Content) -> some View {
+        content
+            .background {
+                if reduceTransparency { shape.fill(palette.panel) } else { shape.fill(.regularMaterial) }
+            }
+            .overlay(shape.strokeBorder(palette.panelStroke, lineWidth: 1))
+            .shapeAudit(.container, .init(shape), "panel")
+    }
+}
 extension View {
+    func contentSurface<S: InsettableShape>(_ shape: S) -> some View { modifier(ContentSurface(shape: shape)) }
     func glassSurface<S: InsettableShape>(_ shape: S, tint: Color? = nil, interactive: Bool = false) -> some View {
         modifier(GlassSurface(shape: shape, tint: tint, interactive: interactive))
     }

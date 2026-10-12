@@ -475,30 +475,25 @@ struct StudioEmptyState: View {
     }
 }
 
-/// A rail row: purpose groups and filters. Selected rows take the light glass highlight.
-struct StudioRailButton: View {
+/// A rail row's label: purpose groups and filters. The rail is a native selection List, so the
+/// system draws selection, focus and the selected state; the row only supplies its words.
+struct StudioRailRow: View {
     var title: String
     var symbol: String
     var count: Int? = nil
-    var selected: Bool
-    var action: () -> Void
-    @Environment(\.palette) private var palette
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 10) {
-                Image(systemName: symbol).font(.system(size: 13)).frame(width: 18)
-                    .foregroundStyle(selected ? (palette.dark ? palette.accent : palette.control) : palette.chipIcon).accessibilityHidden(true)
-                Text(title).font(.system(size: 13, weight: .medium)).foregroundStyle(selected ? palette.heading : palette.text).lineLimit(1)
+        Label {
+            HStack(spacing: 4) {
+                Text(title).lineLimit(1)
                 Spacer(minLength: 4)
-                if let count { Text("\(count)").font(.system(size: 11)).monospacedDigit().foregroundStyle(palette.tertiary) }
+                if let count { Text("\(count)").font(.system(size: 11)).monospacedDigit().foregroundStyle(.secondary) }
             }
-            .padding(.horizontal, 10).frame(height: 34)
-            .background(selected ? (palette.dark ? Color.white.opacity(0.12) : Color.white.opacity(0.7)) : .clear, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-            .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        } icon: {
+            Image(systemName: symbol)
         }
-        .buttonStyle(RowButtonStyle(radius: 10))
+        .font(.system(size: 13, weight: .medium))
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel(count.map { "\(title), \($0) settings" } ?? title)
-        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
 

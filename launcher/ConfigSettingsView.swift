@@ -14,6 +14,9 @@ struct ConfigSettingsView: View {
         GeometryReader { proxy in
             // Below 480 points for the editor, a menu replaces the group rail.
             let compact = proxy.size.width - GroupRail.width - 22 < 480
+            // Expert rows set their name above the controls when the 214-point name column, a slider
+            // with its field and presets, and the row's three actions don't fit side by side.
+            let stacked = proxy.size.width - (compact ? 0 : GroupRail.width + 22) < ExpertRow.sideBySideWidth
             VStack(alignment: .leading, spacing: StudioMetrics.sectionGap) {
                 if studio.level == .expert { ExpertTools(studio: studio, searchFocused: $searchFocused) }
                 HStack(alignment: .top, spacing: 22) {
@@ -26,7 +29,7 @@ struct ConfigSettingsView: View {
                         } else if studio.textMode {
                             TextEditorPane(studio: studio)
                         } else {
-                            ExpertEditor(studio: studio, compact: compact, openSettings: openSettings)
+                            ExpertEditor(studio: studio, compact: compact, stacked: stacked, openSettings: openSettings)
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -48,36 +51,65 @@ private struct GroupRail: View {
     static let width: CGFloat = 200
     @ObservedObject var studio: ConfigStudioModel
     var expert: Bool
-    @Environment(\.palette) private var palette
+    @FocusState private var focused: Bool
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            ForEach(ConfigPurposeGroup.allCases, id: \.self) { group in
-                StudioRailButton(title: studio.catalogTitle(group), symbol: group.symbol, count: expert ? studio.specs(in: group).count : nil,
-                                 selected: studio.group == group && (!expert || studio.filter == nil && studio.search.isEmpty)) {
-                    studio.group = group; studio.filter = nil; studio.search = ""; studio.highlighted = nil
+        // A system selection list: native highlight (active and inactive), focus ring, arrow keys
+        // and selected state. While Expert searches, no row is selected.
+        List(selection: selection) {
+            Section {
+                ForEach(ConfigPurposeGroup.allCases, id: \.self) { group in
+                    StudioRailRow(title: studio.catalogTitle(group), symbol: group.symbol, count: expert ? studio.specs(in: group).count : nil)
+                        .tag(group)
                 }
             }
             if expert {
-                Rectangle().fill(palette.separator).frame(height: 1).padding(.horizontal, 10).padding(.vertical, 8)
-                Text("FILTERS").font(.system(size: 11, weight: .semibold)).tracking(0.88).foregroundStyle(palette.tertiary)
-                    .padding(.horizontal, 10).padding(.bottom, 4).accessibilityAddTraits(.isHeader)
-                ForEach(ConfigExpertFilter.allCases) { filter in
-                    StudioRailButton(title: filter.title, symbol: filter == .changed ? "pencil" : "lock",
-                                     count: filter == .changed ? studio.changedCount : studio.lockedCount, selected: studio.filter == filter && studio.search.isEmpty) {
-                        studio.filter = studio.filter == filter ? nil : filter; studio.search = ""; studio.highlighted = nil
+                Section("Filters") {
+                    ForEach(ConfigExpertFilter.allCases) { filter in
+                        if #available(macOS 14.0, *) {
+                            filterToggle(filter).selectionDisabled()
+                        } else {
+                            filterToggle(filter)
+                        }
                     }
                 }
             }
         }
+        .listStyle(.sidebar)
+        .scrollContentBackground(.hidden)
         .focusable()
+        .focused($focused)
+        .simultaneousGesture(TapGesture().onEnded { focused = true })
         .onMoveCommand { direction in
+            guard direction == .up || direction == .down else { return }
             let groups = ConfigPurposeGroup.allCases
             guard let index = groups.firstIndex(of: studio.group) else { return }
-            let next = direction == .down ? min(groups.count - 1, index + 1) : direction == .up ? max(0, index - 1) : index
-            studio.group = groups[next]; studio.filter = nil; studio.search = ""
+            let next = min(groups.count - 1, max(0, index + (direction == .down ? 1 : -1)))
+            selection.wrappedValue = groups[next]
         }
-        .accessibilityElement(children: .contain)
         .accessibilityLabel("Setting groups")
+    }
+
+    private var selection: Binding<ConfigPurposeGroup?> {
+        Binding(get: {
+            guard expert else { return studio.group }
+            return studio.search.isEmpty && studio.filter == nil ? studio.group : nil
+        }, set: { group in
+            guard let group else { return }
+            studio.group = group; studio.filter = nil
+            studio.search = ""; studio.highlighted = nil
+        })
+    }
+
+    private func filterToggle(_ filter: ConfigExpertFilter) -> some View {
+        Toggle(isOn: Binding(get: { studio.filter == filter }, set: { enabled in
+            studio.filter = enabled ? filter : nil
+            studio.search = ""; studio.highlighted = nil
+        })) {
+            StudioRailRow(title: filter.title, symbol: filter == .changed ? "pencil" : "lock",
+                          count: filter == .changed ? studio.changedCount : studio.lockedCount)
+        }
+        .toggleStyle(.checkbox)
+        .accessibilityLabel(filter.title)
     }
 }
 
@@ -393,10 +425,16 @@ private struct ExpertTools: View {
     @Environment(\.palette) private var palette
 
     var body: some View {
-        // One row when it fits; otherwise the tools wrap into a second row, never squeezing labels.
+        // One row when it fits; otherwise the tools wrap into a second row, and at the narrowest
+        // the rules get a row of their own above search and Edit as Text, never squeezing labels.
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 10) { compare; Spacer(minLength: 8); tools }
             VStack(alignment: .leading, spacing: 10) { compare; tools }
+            VStack(alignment: .leading, spacing: 10) {
+                compare
+                ExpertRulesStatus(checkup: studio.checkup)
+                HStack(spacing: 10) { search; textToggle }
+            }
         }
         .controlSize(.regular)
     }
@@ -438,25 +476,33 @@ private struct ExpertTools: View {
     private var tools: some View {
         HStack(spacing: 10) {
             ExpertRulesStatus(checkup: studio.checkup)
-            HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass").foregroundStyle(palette.secondary).accessibilityHidden(true)
-                TextField("Find a setting", text: $studio.search).textFieldStyle(.plain).focused(searchFocused).frame(width: 150)
-                    .onExitCommand { studio.search = ""; searchFocused.wrappedValue = false }
-                if !studio.search.isEmpty {
-                    Button { studio.search = "" } label: { Image(systemName: "xmark.circle.fill") }.buttonStyle(.plain).foregroundStyle(palette.tertiary).accessibilityLabel("Clear search")
-                }
-            }
-            .padding(.horizontal, 12).frame(height: ControlMetrics.height(.large))
-            .background(palette.dark ? Color.white.opacity(0.07) : Color.white.opacity(0.6), in: Capsule())
-            .overlay(Capsule().stroke(palette.wellStroke, lineWidth: 1))
-            .help("Find a setting by name, description or console name (⌘F)")
-            Button { studio.toggleText() } label: {
-                if studio.textMode { Label("Show Controls", systemImage: "slider.horizontal.3") }
-                else { Label("Edit as Text", systemImage: "text.alignleft") }
-            }
-            .glassAction().fixedSize()
-            .help(studio.textMode ? "Back to the controls" : "Edit this loadout’s config as text")
+            search
+            textToggle
         }
+    }
+
+    private var search: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass").foregroundStyle(palette.secondary).accessibilityHidden(true)
+            TextField("Find a setting", text: $studio.search).textFieldStyle(.plain).focused(searchFocused).frame(width: 150)
+                .onExitCommand { studio.search = ""; searchFocused.wrappedValue = false }
+            if !studio.search.isEmpty {
+                Button { studio.search = "" } label: { Image(systemName: "xmark.circle.fill") }.buttonStyle(.plain).foregroundStyle(palette.tertiary).accessibilityLabel("Clear search")
+            }
+        }
+        .padding(.horizontal, 12).frame(height: ControlMetrics.height(.large))
+        .background(palette.dark ? Color.white.opacity(0.07) : Color.white.opacity(0.6), in: Capsule())
+        .overlay(Capsule().stroke(palette.wellStroke, lineWidth: 1))
+        .help("Find a setting by name, description or console name (⌘F)")
+    }
+
+    private var textToggle: some View {
+        Button { studio.toggleText() } label: {
+            if studio.textMode { Label("Show Controls", systemImage: "slider.horizontal.3") }
+            else { Label("Edit as Text", systemImage: "text.alignleft") }
+        }
+        .glassAction().fixedSize()
+        .help(studio.textMode ? "Back to the controls" : "Edit this loadout’s config as text")
     }
 }
 
@@ -478,6 +524,7 @@ private struct ExpertRulesStatus: View {
 private struct ExpertEditor: View {
     @ObservedObject var studio: ConfigStudioModel
     var compact: Bool
+    var stacked: Bool
     var openSettings: () -> Void
     @Environment(\.palette) private var palette
 
@@ -495,7 +542,7 @@ private struct ExpertEditor: View {
                         }
                         .padding(.horizontal, 4).padding(.top, 8).padding(.bottom, 8)
                         ForEach(Array(section.specs.enumerated()), id: \.element.id) { index, spec in
-                            ExpertRow(studio: studio, checkup: studio.checkup, spec: spec, openSettings: openSettings)
+                            ExpertRow(studio: studio, checkup: studio.checkup, spec: spec, stacked: stacked, openSettings: openSettings)
                                 .panelSegment(first: index == 0, last: index == section.specs.count - 1, highlighted: studio.highlighted == spec.name,
                                               bad: studio.checkup.evaluation(spec)?.status == .violation)
                                 .id(spec.name)
@@ -528,9 +575,13 @@ private struct ExpertEditor: View {
 }
 
 private struct ExpertRow: View {
+    /// The editor width below which a row's name sits above its controls: the 214-point name
+    /// column, a slider with its field and presets, the three actions and the row's insets.
+    static let sideBySideWidth: CGFloat = 640
     @ObservedObject var studio: ConfigStudioModel
     @ObservedObject var checkup: ConfigCheckupModel
     var spec: ConfigSettingSpec
+    var stacked = false
     var openSettings: () -> Void
     @Environment(\.undoManager) private var undo
     @Environment(\.palette) private var palette
@@ -540,55 +591,23 @@ private struct ExpertRow: View {
         let state = studio.state(spec)
         let theirs = studio.theirs(spec)
         VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .center, spacing: 14) {
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 6) {
-                        Text(spec.title).font(.system(size: 13, weight: .medium)).foregroundStyle(palette.dark ? Palette.hex(0xe6dfcf) : palette.text)
-                            .lineLimit(2).fixedSize(horizontal: false, vertical: true)
-                        if state.locked { Image(systemName: "lock.fill").font(.system(size: 10)).foregroundStyle(palette.accent).accessibilityLabel("Locked") }
-                        if state.changed && !spec.launcherOwned { Circle().fill(palette.accent).frame(width: 6, height: 6).accessibilityLabel("Changed from default").accessibilityAddTraits(.isStaticText) }
+            if stacked {
+                VStack(alignment: .leading, spacing: 8) {
+                    name(state)
+                    HStack(alignment: .center, spacing: 14) {
+                        control(state, theirs).frame(maxWidth: .infinity, alignment: .leading)
+                        actions(state)
                     }
-                    Text(spec.name).font(StudioTypography.consoleName).foregroundStyle(palette.address).lineLimit(1).textSelection(.enabled)
-                    if let badge = checkup.badge(spec) {
-                        Label(badge.text, systemImage: badge.tone.symbol).font(.system(size: 10.5, weight: .semibold))
-                            .foregroundStyle(badge.tone.color(in: palette)).labelStyle(.titleOnly)
-                            .padding(.horizontal, 7).frame(height: 18)
-                            .overlay(Capsule().strokeBorder(badge.tone.color(in: palette).opacity(0.55), lineWidth: 1))
-                            .accessibilityLabel("Rules: \(badge.text)")
-                    }
-                    if spec.setting.variant(for: studio.mode)?.serverControlled == true {
-                        Text("Servers can set this").font(.system(size: 10.5, weight: .semibold)).foregroundStyle(palette.chipText)
-                            .padding(.horizontal, 7).frame(height: 18).overlay(Capsule().strokeBorder(palette.dark ? Color.white.opacity(0.16) : palette.wellStroke, lineWidth: 1))
-                    }
+                    .frame(minHeight: 40)
                 }
-                .frame(width: 214, alignment: .leading)
-                Group {
-                    if spec.launcherOwned {
-                        HStack(spacing: 10) {
-                            Text(state.display).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text)
-                            Button("Change in Settings", action: openSettings).buttonStyle(.plain).font(.system(size: 12, weight: .semibold)).foregroundStyle(palette.link)
-                        }
-                    } else {
-                        ExpertControl(studio: studio, spec: spec, state: state, theirs: theirs)
-                    }
+            } else {
+                HStack(alignment: .center, spacing: 14) {
+                    name(state).frame(width: 214, alignment: .leading)
+                    control(state, theirs).frame(maxWidth: .infinity, alignment: .leading)
+                    actions(state)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                HStack(spacing: 0) {
-                    IconAction(symbol: "arrow.uturn.backward", label: "Reset \(spec.title) to default, \(ConfigValues.display(spec, spec.defaultText))") {
-                        studio.reset(spec, undo: undo)
-                    }
-                    .disabled(!state.changed || spec.launcherOwned || spec.defaultText == nil)
-                    IconAction(symbol: state.locked ? "lock.fill" : "lock.open", label: state.locked ? "Unlock \(spec.title)" : "Lock \(spec.title)", on: state.locked) {
-                        studio.setLock(spec, !state.locked, undo: undo)
-                    }
-                    .disabled(spec.launcherOwned)
-                    IconAction(symbol: state.note == nil ? "square.and.pencil" : "note.text", label: state.note == nil ? "Add a note to \(spec.title)" : "Edit the note on \(spec.title)", on: state.note != nil) {
-                        editingNote = true
-                    }
-                    .popover(isPresented: $editingNote, arrowEdge: .bottom) { NoteEditor(studio: studio, spec: spec, note: state.note ?? "").studioPopover() }
-                }
+                .frame(minHeight: 40)
             }
-            .frame(minHeight: 40)
             let evaluation = checkup.evaluation(spec)
             let issue = evaluation.flatMap { $0.status == .violation || $0.status == .conflict ? $0 : nil }
             if theirs != nil || state.note != nil || spec.launcherOwned || issue != nil {
@@ -614,7 +633,7 @@ private struct ExpertRow: View {
                         Text("Note: \(note)").font(StudioTypography.help).italic().foregroundStyle(palette.secondary).fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                .padding(.leading, 228)
+                .padding(.leading, stacked ? 0 : 228)
                 .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -622,6 +641,57 @@ private struct ExpertRow: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel(spec.title)
         .accessibilityHint("Console name \(spec.name). \(spec.setting.summary)")
+    }
+
+    private func name(_ state: ConfigSettingState) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 6) {
+                Text(spec.title).font(.system(size: 13, weight: .medium)).foregroundStyle(palette.dark ? Palette.hex(0xe6dfcf) : palette.text)
+                    .lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                if state.locked { Image(systemName: "lock.fill").font(.system(size: 10)).foregroundStyle(palette.accent).accessibilityLabel("Locked") }
+                if state.changed && !spec.launcherOwned { Circle().fill(palette.accent).frame(width: 6, height: 6).accessibilityLabel("Changed from default").accessibilityAddTraits(.isStaticText) }
+            }
+            Text(spec.name).font(StudioTypography.consoleName).foregroundStyle(palette.address).lineLimit(1).textSelection(.enabled)
+            if let badge = checkup.badge(spec) {
+                Label(badge.text, systemImage: badge.tone.symbol).font(.system(size: 10.5, weight: .semibold))
+                    .foregroundStyle(badge.tone.color(in: palette)).labelStyle(.titleOnly)
+                    .padding(.horizontal, 7).frame(height: 18)
+                    .overlay(Capsule().strokeBorder(badge.tone.color(in: palette).opacity(0.55), lineWidth: 1))
+                    .accessibilityLabel("Rules: \(badge.text)")
+            }
+            if spec.setting.variant(for: studio.mode)?.serverControlled == true {
+                Text("Servers can set this").font(.system(size: 10.5, weight: .semibold)).foregroundStyle(palette.chipText)
+                    .padding(.horizontal, 7).frame(height: 18).overlay(Capsule().strokeBorder(palette.dark ? Color.white.opacity(0.16) : palette.wellStroke, lineWidth: 1))
+            }
+        }
+    }
+
+    @ViewBuilder private func control(_ state: ConfigSettingState, _ theirs: ConfigSettingState?) -> some View {
+        if spec.launcherOwned {
+            HStack(spacing: 10) {
+                Text(state.display).font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text)
+                Button("Change in Settings", action: openSettings).buttonStyle(.plain).font(.system(size: 12, weight: .semibold)).foregroundStyle(palette.link)
+            }
+        } else {
+            ExpertControl(studio: studio, spec: spec, state: state, theirs: theirs)
+        }
+    }
+
+    private func actions(_ state: ConfigSettingState) -> some View {
+        HStack(spacing: 0) {
+            IconAction(symbol: "arrow.uturn.backward", label: "Reset \(spec.title) to default, \(ConfigValues.display(spec, spec.defaultText))") {
+                studio.reset(spec, undo: undo)
+            }
+            .disabled(!state.changed || spec.launcherOwned || spec.defaultText == nil)
+            IconAction(symbol: state.locked ? "lock.fill" : "lock.open", label: state.locked ? "Unlock \(spec.title)" : "Lock \(spec.title)", on: state.locked) {
+                studio.setLock(spec, !state.locked, undo: undo)
+            }
+            .disabled(spec.launcherOwned)
+            IconAction(symbol: state.note == nil ? "square.and.pencil" : "note.text", label: state.note == nil ? "Add a note to \(spec.title)" : "Edit the note on \(spec.title)", on: state.note != nil) {
+                editingNote = true
+            }
+            .popover(isPresented: $editingNote, arrowEdge: .bottom) { NoteEditor(studio: studio, spec: spec, note: state.note ?? "").studioPopover() }
+        }
     }
 }
 

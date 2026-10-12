@@ -112,11 +112,11 @@ for variant in ["increase-contrast", "reduce-transparency"]:
             if variant == "increase-contrast" or glass:
                 assert png.read_bytes() != (out / f"{screen}-{appearance}.png").read_bytes(), f"{png} matches the standard capture"
 
-# Config Studio at the launcher's 1100x760 minimum: actual window images, both appearances, with the
+# Every page at the launcher's 1100x760 minimum: actual window images, both appearances, with the
 # same shape audit (the harness fails on a finding).
 minimum = out / "minimum"
-run(minimum, "--group", "configs", "--minimum")
-for screen in configs:
+run(minimum, "--minimum")
+for screen in screens:
     shots = {}
     for appearance in ["dark", "light"]:
         png = minimum / f"{screen}-{appearance}.png"
@@ -154,9 +154,18 @@ for overlay in overlays:
         (width, height), length = size(out / "overlays" / f"overlay-{overlay}-{appearance}.png")
         assert width >= 1440 and height >= 900 and length > 60_000, (overlay, appearance, width, height, length)
 
+# Expert's group rail as navigation in a real window: active and inactive, with the window's sidebar
+# hidden and shown by its own toolbar button, and resized to the minimum and back.
+navigation = out / "navigation"
+run(navigation, "--navigation")
+for step in ["active", "inactive", "sidebar-hidden", "sidebar-shown", "minimum", "minimum-sidebar-hidden", "minimum-sidebar-shown", "resized-back"]:
+    for appearance in ["dark", "light"]:
+        (width, height), length = size(navigation / f"navigation-{step}-{appearance}.png")
+        assert (width, height) in (MINIMUM if step.startswith("minimum") else WINDOW) and length > 40_000, (step, appearance, width, height, length)
+
 # The harness exits non-zero on any shape-audit finding, so reaching here means none.
 print(f"PASS: {len(screens) * 2} launcher screens at 1440x900 points in dark and light, plus the material fallback, with bundled fonts"
       " and a clean shape audit (capsule buttons, concentric nesting, equal insets); Config Studio under Increase Contrast,"
-      f" Reduce Transparency and Reduce Motion, and {len(configs) * 2} captures at the 1100x760 minimum; Config Studio clicks"
+      f" Reduce Transparency and Reduce Motion, and {len(screens) * 2} captures at the 1100x760 minimum; Config Studio clicks"
       " write exact bytes; every Config Studio control is named for VoiceOver;"
       f" {len(overlays) * 2} sheet, popover and alert captures")
