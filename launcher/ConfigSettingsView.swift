@@ -891,7 +891,9 @@ private struct NumberEntry: View {
         HStack(spacing: 6) {
             CommitField(value: state.value ?? "", label: spec.title, width: 84, alignment: .trailing,
                         validate: { ConfigValues.number($0).map { ConfigValues.text(number: $0, spec: spec) } }, commit: commit)
-            if showUnit, let unit = spec.unit { Text(unit).font(.system(size: 11)).foregroundStyle(palette.tertiary).accessibilityHidden(true) }
+            if showUnit, let unit = spec.unit {
+                Text(unit).font(.system(size: 11)).foregroundStyle(palette.tertiary).lineLimit(1).fixedSize().accessibilityHidden(true)
+            }
         }
     }
 }
