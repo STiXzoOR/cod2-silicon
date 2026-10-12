@@ -19,6 +19,7 @@ enum ConfigStudioAcceptanceTests {
         let optimizer = try ConfigOptimizer(data: Data(contentsOf: resources.appendingPathComponent("ConfigOptimizer.json")))
         try history(scratch: scratch, catalog: catalog)
         try takeTheirs(scratch: scratch, catalog: catalog)
+        try takeTheirsRetries(scratch: scratch, catalog: catalog)
         try matches(scratch: scratch, catalog: catalog, rules: rules, optimizer: optimizer)
         standing()
     }
@@ -186,6 +187,91 @@ enum ConfigStudioAcceptanceTests {
         require(model.state(view).raw == "100" && session.history.first?.summary == "Took \(view.title) from Scrim")
         model.stopComparing()
         print("PASS: Take Theirs refuses server-owned (rules and catalog), locked, launcher-owned and read-only settings with a reason; markers stay")
+    }
+
+    /// A failed comparison keeps its value and source, but retries recheck current
+    /// ownership and stay tied to the session and loadout the person meant to change.
+    @MainActor static func takeTheirsRetries(scratch: URL, catalog: ConfigCatalog) throws {
+        for change in ["rules", "lock", "game", "loadout", "session", "comparison"] {
+            let (model, session, store) = try studio(scratch.appendingPathComponent("acceptance-compare-retry-" + change),
+                                                     config: "seta cg_viewsize \"80\"\n", catalog: catalog)
+            let home = session.home
+            for (id, size) in [("Scrim", "100"), ("Other", "70")] {
+                _ = try store.create(id: id, displayName: id, document: ConfigDocument(data: bytes("seta cg_viewsize \"\(size)\"\n"), dialect: .cod2x))
+            }
+            let companion = home.appendingPathComponent("main/" + (try ConfigStudioLaunch.chainBasename(profileID: "Main")))
+            try PrivateFile.write(bytes("// keep these companion bytes\n"), to: companion)
+            try session.refresh()
+            let checkup = model.checkup
+            checkup.load(); checkup.rulesetIDs = []
+            require(checkup.rules != nil)
+            model.compareID = "Scrim"
+            let view = value(model.spec(named: "cg_viewsize"))
+            require(model.takeTheirsBlock(view) == nil && model.theirs(view)?.value == "100")
+            let config = home.appendingPathComponent("main/players/Main/config_mp.cfg")
+            let sidecar = home.appendingPathComponent("main/players/Main/studio.json")
+            let latest = bytes("seta cg_viewsize \"80\"\nseta sensitivity \"4\"\n")
+            try PrivateFile.write(latest, to: config)
+            let count = session.history.count
+            model.takeTheirs(view)
+            require(model.failure?.retry != nil && session.draft != nil && model.state(view).raw == "100", "\(change): a stale comparison keeps its retry and draft")
+            require(try Data(contentsOf: config) == latest && session.history.count == count, "\(change): the conflict changes no disk bytes or History")
+
+            let reason: String
+            switch change {
+            case "rules":
+                checkup.rulesetIDs = ["zpam-4.08"]; reason = "server"
+                require(model.takeTheirsBlock(view)?.contains(reason) == true)
+            case "lock":
+                var metadata = value(session.current?.metadata)
+                metadata.locks.insert(view.name)
+                try PrivateFile.write(try JSONEncoder().encode(metadata), to: sidecar)
+                require(model.takeTheirsBlock(view) == nil, "the external lock is learned during retry refresh")
+                reason = "Locked"
+            case "game":
+                try session.reconcileGames([4410]); reason = "running"
+            case "loadout":
+                model.select("Other"); reason = "loadout"
+                require(model.current?.profile.id == "Other" && session.draft != nil)
+            case "session":
+                let replacement = try ConfigStudioSession(home: home, dialect: .cod2x)
+                try replacement.refresh(); model.attach(replacement); reason = "loadout"
+            default:
+                model.compare(with: ConfigPlayerComparison(entryID: "other-player", name: "[Other player]", provenance: "Players catalog", values: ["cg_viewsize": "90"]))
+                reason = ""
+            }
+            let ids = ["Main", "Scrim", "Other"]
+            let paths = try ids.flatMap { id in
+                ["main/players/\(id)/config_mp.cfg", "main/players/\(id)/studio.json", "main/" + (try ConfigStudioLaunch.chainBasename(profileID: id))]
+            }
+            func disk() -> [Data?] { paths.map { try? Data(contentsOf: home.appendingPathComponent($0)) } }
+            func historyBytes() throws -> [[String: Data]] {
+                try ids.map { id in
+                    let directory = home.appendingPathComponent("main/players/\(id)/history")
+                    let files = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
+                    return try Dictionary(uniqueKeysWithValues: files.map { ($0.lastPathComponent, try Data(contentsOf: $0)) })
+                }
+            }
+            let before = disk(), history = try ids.map { try store.history(id: $0).count }, savedHistory = try historyBytes()
+            model.retryFailure()
+            if change == "comparison" {
+                require(model.failure == nil && session.draft == nil && model.state(view).raw == "100", "retry keeps the original comparison value after selecting a different comparison")
+                require(session.history.count == count + 1 && session.history.first?.summary == "Took \(view.title) from Scrim", "retry records one transaction with the original comparison source")
+                require(try Data(contentsOf: config) == bytes("seta cg_viewsize \"100\"\nseta sensitivity \"4\"\n"), "allowed retry preserves the newer unrelated setting")
+                require(Array(disk().dropFirst()) == Array(before.dropFirst()), "allowed retry preserves metadata, companion and other loadouts")
+            } else {
+                let afterHistory = try ids.map { try store.history(id: $0).count }, afterHistoryBytes = try historyBytes()
+                require(disk() == before && afterHistory == history && afterHistoryBytes == savedHistory,
+                        "\(change): blocked retry preserves latest config, metadata, companion and every History filename/byte")
+                require(model.failure?.message.contains(reason) == true && model.failure?.retry == nil, "\(change): retry gives the current blocking reason")
+                require(model.session?.draft == nil, "\(change): no new failed draft is created by a blocked retry")
+                if change == "rules" || change == "lock" {
+                    model.set(view, to: "90")
+                    require(model.failure == nil && model.state(view).raw == "90", "\(change): ownership and locks still permit the person's own edit")
+                }
+            }
+        }
+        print("PASS: comparison retries recheck ownership and target identity, preserve original value/source and leave ordinary edits writable")
     }
 
     /// A different valid value for a setting, so a comparison marker shows.

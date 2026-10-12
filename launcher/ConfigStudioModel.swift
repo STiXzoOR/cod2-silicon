@@ -815,8 +815,32 @@ struct ConfigStudioFailure: Identifiable {
     }
     func takeTheirs(_ spec: ConfigSettingSpec, undo: UndoManager? = nil) {
         guard !isReadOnly else { fail("Quit the game to change this loadout", ConfigProfileError.gameRunning); return }
-        guard takeTheirsBlock(spec) == nil, let theirs = theirs(spec), let value = theirs.value, let source = comparisonName else { return }
-        set(spec, to: value, summary: "Took \(spec.title) from \(source)", undo: undo)
+        guard takeTheirsBlock(spec) == nil, let theirs = theirs(spec), let value = theirs.value, let source = comparisonName,
+              let session, let profileID = current?.profile.id else { return }
+        takeTheirs(spec, to: value, source: source, session: session, profileID: profileID, undo: undo)
+    }
+    /// Retry the reviewed comparison value, even if another comparison is selected, but
+    /// never carry it to a different loadout or bypass its current ownership guards.
+    private func takeTheirs(_ spec: ConfigSettingSpec, to value: String, source: String, session: ConfigStudioSession,
+                            profileID: String, undo: UndoManager?) {
+        guard self.session === session, current?.profile.id.caseInsensitiveCompare(profileID) == .orderedSame else {
+            failure = ConfigStudioFailure(title: "Couldn’t take \(spec.title) from \(source)",
+                                          message: "This loadout is no longer selected. Open it and take the value again.", retry: nil)
+            return
+        }
+        if let reason = takeTheirsBlock(spec) {
+            failure = ConfigStudioFailure(title: "Couldn’t take \(spec.title) from \(source)", message: reason, retry: nil)
+            return
+        }
+        let previous = document?.effectiveSetting(named: spec.name)
+        if let previous, ConfigValues.same(spec, previous, value), previous == value { return }
+        let summary = "Took \(spec.title) from \(source)"
+        commit(summary: summary, undo: undo, undoName: "Change \(spec.title)", retry: { [weak self] in
+            guard let self, self.failure == nil else { return }
+            self.takeTheirs(spec, to: value, source: source, session: session, profileID: profileID, undo: undo)
+        }, edit: { try $0.setSetting(named: spec.name, value: value) }, revert: { [weak self] in
+            self?.restoreRaw(spec, previous, undo: undo)
+        })
     }
     private func restoreRaw(_ spec: ConfigSettingSpec, _ raw: String?, undo: UndoManager?) {
         let current = document?.effectiveSetting(named: spec.name)
