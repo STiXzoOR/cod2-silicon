@@ -1,14 +1,14 @@
 # Config Studio catalog
 
-The committed resource describes **readiness integration `048ff5e`**, not the
-older engine on this foundation branch. This tool uses Python's standard library
+The committed resource describes **release integration `2feb769`**, including
+local match summaries. This tool uses Python's standard library
 and Clang's preprocessor. It reads source; it neither builds nor runs the game,
 and consumes no game data, player profiles, reference binary or private tools.
 
 ```sh
 python3 -m unittest discover -s tools/catalog -v
 python3 tools/catalog/catalog.py generate \
-  --source-root /path/to/source-export --source-revision 048ff5e \
+  --source-root /path/to/source-export --source-revision 2feb769 \
   --output launcher/Resources/ConfigCatalog.json
 python3 tools/catalog/catalog.py check \
   --source-root /path/to/source-export --catalog launcher/Resources/ConfigCatalog.json --mode stock
@@ -73,7 +73,9 @@ names absent from that source in a **scratch copy file** and pass `--copy`.
 `copy.json` owns original plain titles, explanations, menu-exposure hints and
 Guided choices. Registration evidence is generated independently. All actual
 menu-exposed settings identified in the supplied research have authored copy;
-remaining Expert references honestly say that their effect is not documented.
+all 235 registered commands have source-backed descriptions, including explicit
+unknown effects for commands forwarded to server or mod handlers. Remaining
+Expert settings honestly say when their effect is not documented.
 Menu labels are authored action labels, not bundled game menus or translations.
 Competitive explanations are checked against `cod2x_runtime.c` and upstream
 CoD2x 1.4.6.8 `mss32/competitive.cpp`; they are separate from registration defaults.

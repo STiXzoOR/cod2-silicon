@@ -5372,6 +5372,1395 @@
       "details": "The key-up counterpart of the held action.",
       "bindable": true,
       "menuLabel": null
+    },
+    "addip": {
+      "title": "Add an IP filter",
+      "summary": "Add an address to the hosted server's IP filter list.",
+      "details": "Accepts an IP address and updates g_banIPs. Whether matching addresses are blocked or allowed depends on g_filterBan.",
+      "effectSources": [
+        "src/PC/game_mp/g_svcmds_mp.c: ConsoleCommand",
+        "src/PC/game_mp/g_svcmds_mp.c: AddIP"
+      ]
+    },
+    "banclient": {
+      "title": "Ban a player by number",
+      "summary": "Ask the hosted server to ban a player identified by client number.",
+      "details": "Requires a running server and a valid client number. The ban routine also handles removal from the server; this is a server operator command.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_BanNum_f"
+      ]
+    },
+    "banuser": {
+      "title": "Ban a player by name",
+      "summary": "Ask the hosted server to ban a player identified by name.",
+      "details": "Requires a running server and a matching player name. This is a server operator command, separate from a brief kick ban.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_Ban_f"
+      ]
+    },
+    "bindlist": {
+      "title": "List key bindings",
+      "summary": "Print every nonempty key binding to the console.",
+      "details": "Lists the engine's key spelling and the commands currently assigned to it. It does not change bindings.",
+      "effectSources": [
+        "src/PC/client_mp/cl_keys_mp.c: Key_Bindlist_f"
+      ]
+    },
+    "callvote": {
+      "title": "Request a vote",
+      "summary": "Ask the server to start a vote.",
+      "details": "The server checks whether voting is enabled. Its voting mode chooses the built-in vote checks or the game script's vote handler.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: Cmd_CallVote_f"
+      ]
+    },
+    "centerview": {
+      "title": "Centre the view",
+      "summary": "Reset the vertical view angle to its neutral direction.",
+      "details": "Uses the player's current delta angle to centre pitch. It does not change horizontal aim.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_CenterView"
+      ]
+    },
+    "cg_hudradarcalibrate": {
+      "title": "Calibrate the radar image",
+      "summary": "Match two positions in the world to positions on the radar image.",
+      "details": "Requires a loaded snapshot, cheats or demo playback, radar display and a selected radar image. The final step saves calibration in maps/mp/<map>.radar under the game home.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_cod2x_radar.c: CG_Cod2xRadarCalibrate_f",
+        "src/PC/cgame_mp/cg_cod2x_radar.c: CG_Cod2xRadarSave"
+      ]
+    },
+    "cg_shellshock": {
+      "title": "Preview shell shock",
+      "summary": "Start a test shell-shock effect for the supplied duration.",
+      "details": "The duration is in seconds. An optional preset name loads its settings before the effect begins; this is an effect-development command.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_ShellShock_f"
+      ]
+    },
+    "cg_shellshock_load": {
+      "title": "Load a shell-shock preset",
+      "summary": "Read the named shell-shock preset into its settings.",
+      "details": "Accepts one preset name and calls the shell-shock loader. Loading a preset does not itself start the test effect.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_ShellShock_Load_f",
+        "src/PC/cgame_mp/cg_shellshock.c: CG_LoadShellShockDvars"
+      ]
+    },
+    "cg_shellshock_save": {
+      "title": "Save a shell-shock preset",
+      "summary": "Write the current shell-shock settings as a named preset.",
+      "details": "Accepts one preset name. This is an effect-development file write, separate from saving a player loadout.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_ShellShock_Save_f",
+        "src/PC/cgame_mp/cg_shellshock.c: CG_SaveShellShockDvars"
+      ]
+    },
+    "chatmodepublic": {
+      "title": "Open public chat",
+      "summary": "Toggle the chat-entry field for a message to everyone.",
+      "details": "Clears the chat draft and sets its destination to public chat. Typing and submitting the message are separate actions.",
+      "effectSources": [
+        "src/PC/client_mp/cl_console_mp.c: Con_ChatModePublic_f"
+      ]
+    },
+    "chatmodeteam": {
+      "title": "Open team chat",
+      "summary": "Toggle the chat-entry field for a message to your team.",
+      "details": "Clears the chat draft and sets its destination to team chat. Typing and submitting the message are separate actions.",
+      "effectSources": [
+        "src/PC/client_mp/cl_console_mp.c: Con_ChatModeTeam_f"
+      ]
+    },
+    "cinematic": {
+      "title": "Cinematic playback command",
+      "summary": "The native Mac handler skips cinematic playback.",
+      "details": "On the native Apple path it clears nextmap and marks the intro as played. The legacy path calls the video player; this native handler does not play the requested video.",
+      "effectSources": [
+        "src/PC/client_mp/cl_cin_mp.c: CL_PlayCinematic_f"
+      ]
+    },
+    "clear": {
+      "title": "Clear console text",
+      "summary": "Erase the console's text buffer.",
+      "details": "Resets displayed console text to blank characters. It does not clear a saved log file or player config.",
+      "effectSources": [
+        "src/PC/client_mp/cl_console_mp.c: Con_Clear_f"
+      ]
+    },
+    "clientinfo": {
+      "title": "Show client information",
+      "summary": "Print the connection state, server name and user-info settings.",
+      "details": "This is a console diagnostic of the current client. It does not change the connection.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_Clientinfo_f"
+      ]
+    },
+    "clientkick": {
+      "title": "Remove a player by number",
+      "summary": "Disconnect a player from the hosted server by client number.",
+      "details": "Uses the server's numbered-player lookup. The local host cannot be kicked through this routine; no brief GUID ban is added by this command.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_DropNum_f"
+      ]
+    },
+    "closemenu": {
+      "title": "Close a named menu",
+      "summary": "Close the UI menu with the supplied name.",
+      "details": "Passes the command's remaining text to the menu system. It changes UI state, not a saved loadout.",
+      "effectSources": [
+        "src/PC/ui_mp/ui_main_mp.c: UI_CloseMenu_f"
+      ]
+    },
+    "cmd": {
+      "title": "Send a server command",
+      "summary": "Forward the remaining command text to the connected server.",
+      "details": "Requires an active connection and does not run during demo playback. The server decides what the forwarded command does.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_ForwardToServer_f"
+      ]
+    },
+    "cmdlist": {
+      "title": "List console commands",
+      "summary": "Print registered command names and their total count.",
+      "details": "An optional wildcard filter limits the printed names. The list reports registration, not whether each command can run in the current game state.",
+      "effectSources": [
+        "src/PC/qcommon/cmd.c: Cmd_List_f"
+      ]
+    },
+    "condump": {
+      "title": "Save console text",
+      "summary": "Write the console's text to the supplied file name.",
+      "details": "Writes through the game's writable file system, omitting blank lines and trailing spaces. This is a text dump, not a config export.",
+      "effectSources": [
+        "src/PC/client_mp/cl_console_mp.c: Con_Dump_f"
+      ]
+    },
+    "configstrings": {
+      "title": "Show server config strings",
+      "summary": "Print the indexed configuration strings received from the server.",
+      "details": "Requires an active connection. These are server game-state strings, separate from local saved settings.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_Configstrings_f"
+      ]
+    },
+    "connect": {
+      "title": "Connect to a server",
+      "summary": "Start a connection to the supplied server address.",
+      "details": "Accepts one address, disconnects the previous client session and resolves the new endpoint. Connection, authentication and server acceptance happen afterward.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_pc_mp.c: CL_Connect_f"
+      ]
+    },
+    "crash": {
+      "title": "Deliberately crash the game",
+      "summary": "Trigger a crash by writing through a null pointer.",
+      "details": "This is an internal crash-test command. Running it terminates normal gameplay; it is not a recovery command.",
+      "effectSources": [
+        "src/PC/qcommon/common.c: Com_Crash_f"
+      ]
+    },
+    "cubemapshot": {
+      "title": "Capture a cubemap",
+      "summary": "Capture six views for a development cubemap.",
+      "details": "Requires a loaded map, a power-of-two size from 4 to 1024 and an output base name. Optional lighting or Fresnel arguments are development inputs, not ordinary screenshot options.",
+      "effectSources": [
+        "src/PC/client_mp/cl_scrn_mp.c: CL_CubemapShot_f"
+      ]
+    },
+    "decrease": {
+      "title": "Decrease a numeric setting",
+      "summary": "Subtract one from a named integer or float setting.",
+      "details": "CoD2x-only command. It uses the external setter, so normal cheat, read-only and delayed-application restrictions still apply.",
+      "effectSources": [
+        "src/PC/qcommon/cod2x_features.c: Cod2x_IncreaseDecrease_f"
+      ]
+    },
+    "demigod": {
+      "title": "Toggle demigod mode",
+      "summary": "Toggle the player's demigod flag on the server.",
+      "details": "Requires the server's cheat check. The command changes a gameplay flag; the handler alone does not establish every damage rule that uses it.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
+      ]
+    },
+    "demo": {
+      "title": "Play a recorded demo",
+      "summary": "Load a recorded multiplayer demo for playback.",
+      "details": "Reads demos/<name>.dm_1, disconnecting the current client session. Playback is refused while a local listen server is running.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_PlayDemo_f"
+      ]
+    },
+    "devmap": {
+      "title": "Load a map with cheats",
+      "summary": "Start the named map on the hosted server and enable cheats.",
+      "details": "Uses the same map loader as map, but enables sv_cheats for development. It starts a new server map rather than changing a graphics setting.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_Map_f"
+      ]
+    },
+    "dir": {
+      "title": "List game files in a folder",
+      "summary": "Print files found in a game directory, optionally filtered by extension.",
+      "details": "Accepts a directory and optional extension. The search uses the game's file system, which includes its configured search paths.",
+      "effectSources": [
+        "src/PC/qcommon/files.c: FS_Dir_f"
+      ]
+    },
+    "disconnect": {
+      "title": "Leave the server",
+      "summary": "Disconnect the current client session.",
+      "details": "Stops cinematic playback and leaves the connection. The native CoD2x path also clears fs_game and restarts the file system after leaving a connected server.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_Disconnect_f"
+      ]
+    },
+    "dumpuser": {
+      "title": "Show a player's user information",
+      "summary": "Print a named player's user-info fields on the hosted server.",
+      "details": "Requires a running server and a matching player. This is an operator diagnostic and does not edit the player's fields.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_DumpUser_f"
+      ]
+    },
+    "dvar_bool": {
+      "title": "Create a boolean setting",
+      "summary": "Register a named on/off setting with the supplied default.",
+      "details": "Accepts a name and default, interpreting zero as off and other integers as on. Existing incompatible setting types are rejected.",
+      "effectSources": [
+        "src/PC/qcommon/dvar_cmds.c: Dvar_RegisterBool_f"
+      ]
+    },
+    "dvar_float": {
+      "title": "Create a decimal setting",
+      "summary": "Register a named float setting with a default and range.",
+      "details": "Accepts a name, default, minimum and maximum. Rejects reversed bounds and existing incompatible setting types.",
+      "effectSources": [
+        "src/PC/qcommon/dvar_cmds.c: Dvar_RegisterFloat_f"
+      ]
+    },
+    "dvar_int": {
+      "title": "Create an integer setting",
+      "summary": "Register a named integer setting with a default and range.",
+      "details": "Accepts a name, default, minimum and maximum. Rejects reversed bounds and existing incompatible setting types.",
+      "effectSources": [
+        "src/PC/qcommon/dvar_cmds.c: Dvar_RegisterInt_f"
+      ]
+    },
+    "dvardump": {
+      "title": "Dump setting values to the log",
+      "summary": "Write current and pending setting values through the engine's log channel.",
+      "details": "Accepts an optional wildcard filter. The dump produces no output when logfile is disabled; it does not change settings.",
+      "effectSources": [
+        "src/PC/qcommon/dvar_cmds.c: Dvar_Dump_f"
+      ]
+    },
+    "dvarlist": {
+      "title": "List setting values",
+      "summary": "Print registered settings, their flags and current values.",
+      "details": "Accepts an optional wildcard filter. Flag markers describe restrictions and storage; printing a value does not change it.",
+      "effectSources": [
+        "src/PC/qcommon/dvar_cmds.c: Dvar_List_f"
+      ]
+    },
+    "entitycount": {
+      "title": "Show the entity count",
+      "summary": "Print how many entities the hosted game has allocated.",
+      "details": "The client command is handled by the server and only prints when g_cheats is enabled. It is a development diagnostic.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
+      ]
+    },
+    "entitylist": {
+      "title": "List active server entities",
+      "summary": "Print active entities with their type and class name.",
+      "details": "Runs through the hosted game's console dispatcher. This is a development listing, not a player or server-browser list.",
+      "effectSources": [
+        "src/PC/game_mp/g_svcmds_mp.c: Svcmd_EntityList_f"
+      ]
+    },
+    "error": {
+      "title": "Trigger an engine test error",
+      "summary": "Raise a fatal test error, or a drop error when an argument is supplied.",
+      "details": "This is an internal error-handler test. It interrupts the session and is not a command for diagnosing an existing error.",
+      "effectSources": [
+        "src/PC/qcommon/common.c: Com_Error_f"
+      ]
+    },
+    "fast_restart": {
+      "title": "Restart the current game quickly",
+      "summary": "Request a fast restart of the hosted server's game.",
+      "details": "Requires a running server. The restart code can fall back to loading the map again when a full restart is required.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_FastRestart_f"
+      ]
+    },
+    "fdir": {
+      "title": "Find game files by pattern",
+      "summary": "Print game files matching the supplied wildcard filter.",
+      "details": "Searches the game's configured file paths and prints a sorted list. It does not create a directory despite the command's name.",
+      "effectSources": [
+        "src/PC/qcommon/files.c: FS_NewDir_f"
+      ]
+    },
+    "follownext": {
+      "title": "Spectate the next player",
+      "summary": "Ask the server to cycle to the next eligible spectated player.",
+      "details": "The native handler requires spectator state and refuses a forced spectator target. Team-spectating permissions still apply.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: Cmd_FollowCycle_f"
+      ]
+    },
+    "followprev": {
+      "title": "Spectate the previous player",
+      "summary": "Ask the server to cycle to the previous eligible spectated player.",
+      "details": "The native handler requires spectator state and refuses a forced spectator target. Team-spectating permissions still apply.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: Cmd_FollowCycle_f"
+      ]
+    },
+    "freeze": {
+      "title": "Pause the game loop for a test",
+      "summary": "Hold the game loop for the supplied number of seconds.",
+      "details": "This development command queues incoming events while waiting. It is a deliberate timing interruption, not the game's pause control.",
+      "effectSources": [
+        "src/PC/qcommon/common.c: Com_Freeze_f"
+      ]
+    },
+    "fs_openedlist": {
+      "title": "List opened IWD archives",
+      "summary": "Print the names of IWD archives loaded by the game.",
+      "details": "An IWD is a game asset archive. This file-system diagnostic does not open a new archive or alter a loadout.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_OpenedIWDList_f"
+      ]
+    },
+    "fs_referencedlist": {
+      "title": "List referenced IWD archives",
+      "summary": "Print the IWD archive names recorded as referenced by the game.",
+      "details": "This reports file-system reference tracking. It does not change which archives a server accepts.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_ReferencedIWDList_f"
+      ]
+    },
+    "fullpath": {
+      "title": "Show all game search paths",
+      "summary": "Print the game's full file search path and open file handles.",
+      "details": "Includes paths that the current language filter would hide from path. It describes game file lookup, not the operating system's PATH variable.",
+      "effectSources": [
+        "src/PC/universal/com_files.c: FS_FullPath_f",
+        "src/PC/universal/com_files.c: FS_DisplayPath"
+      ]
+    },
+    "fxrestart": {
+      "title": "Restart the effects system",
+      "summary": "Free and reinitialise the client effects system.",
+      "details": "This development command allows effects edited on disk to be loaded again. It is separate from restarting the renderer or the game.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_view_mp.c: CG_FxRestart"
+      ]
+    },
+    "fxsettestposition": {
+      "title": "Place an effect test point",
+      "summary": "Set the effect-preview position in front of the current view.",
+      "details": "Places the point 100 game units along the view's forward direction. fxTest uses this position for its preview.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_view_mp.c: CG_FxSetTestPosition"
+      ]
+    },
+    "fxtest": {
+      "title": "Preview an effect",
+      "summary": "Load and play the named effect at the saved test position.",
+      "details": "Accepts an effect path and an optional repeat interval in seconds. This is an effect-development preview in the current game.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_view_mp.c: CG_FxTest"
+      ]
+    },
+    "gamecompletestatus": {
+      "title": "Send game-completion status",
+      "summary": "Ask the hosted server to send completion status to the master server.",
+      "details": "Calls the master-status routine. It is a server reporting command, not a player match-summary reader.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_GameCompleteStatus_f"
+      ]
+    },
+    "gc": {
+      "title": "Send a preset player message",
+      "summary": "Send a numbered preset message to a numbered player.",
+      "details": "The native server accepts player numbers 0–63 and message numbers 0–6. It sends the message to the target and echoes it to the sender.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: Cmd_GameCommand_f"
+      ]
+    },
+    "give": {
+      "title": "Give health, ammunition or items",
+      "summary": "Ask the server to grant the named resource to the player.",
+      "details": "Requires the server's cheat check. The handler supports named items and resource groups such as health, weapons and ammunition.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: Cmd_Give_f"
+      ]
+    },
+    "globalservers": {
+      "title": "Query master server lists",
+      "summary": "Request Internet server addresses from the master server.",
+      "details": "The native CoD2x path queries both protocols 118 and 120 from the configured masters. The stock path uses the supplied protocol and optional query keywords.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_pc_mp.c: CL_GlobalServers_f"
+      ]
+    },
+    "god": {
+      "title": "Toggle god mode",
+      "summary": "Toggle the player's god-mode flag on the server.",
+      "details": "Requires the server's cheat check and reports whether the flag is on or off. This changes gameplay rather than a local display preference.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
+      ]
+    },
+    "heartbeat": {
+      "title": "Request a server heartbeat",
+      "summary": "Make the hosted server's next master-server heartbeat due immediately.",
+      "details": "Updates the heartbeat timer. The actual network send happens in the server's heartbeat processing.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_Heartbeat_f"
+      ]
+    },
+    "imagelist": {
+      "title": "List loaded images",
+      "summary": "Print information about images loaded by the renderer.",
+      "details": "Lists image dimensions, formats and memory usage for development diagnostics. It does not change texture detail or load a new image.",
+      "effectSources": [
+        "src/PC/gfx_d3d/r_image.c: R_ImageList_f"
+      ]
+    },
+    "in_restart": {
+      "title": "Restart input devices",
+      "summary": "Shut down and reinitialise the game's input system.",
+      "details": "This is a device-system restart, separate from changing a mouse or keyboard setting. Current held input may be reset.",
+      "effectSources": [
+        "src/Mac/Main/mac_main.c: Sys_In_Restart_f"
+      ]
+    },
+    "increase": {
+      "title": "Increase a numeric setting",
+      "summary": "Add one to a named integer or float setting.",
+      "details": "CoD2x-only command. It uses the external setter, so normal cheat, read-only and delayed-application restrictions still apply.",
+      "effectSources": [
+        "src/PC/qcommon/cod2x_features.c: Cod2x_IncreaseDecrease_f"
+      ]
+    },
+    "kick": {
+      "title": "Kick a player with a brief ban",
+      "summary": "Disconnect a named player and briefly ban their GUID.",
+      "details": "Uses the same routine as tempBanUser. The local host is protected; the brief ban is distinct from the permanent ban commands.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_TempBan_f"
+      ]
+    },
+    "kill": {
+      "title": "End your current life",
+      "summary": "Ask the server to kill the player's current character.",
+      "details": "Only applies while the player is in the playing state. The handler clears god and demigod flags before applying the death.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
+      ]
+    },
+    "killserver": {
+      "title": "Stop the hosted server",
+      "summary": "Shut down the locally running game server.",
+      "details": "Calls the engine's server shutdown path. A client connected to another machine cannot stop that remote server with this local command.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_KillServer_f"
+      ]
+    },
+    "leaveads": {
+      "title": "Leave aim-down-sights mode",
+      "summary": "Clear the client's aim-down-sights input state.",
+      "details": "Sets the local ADS state to off. Weapon and game state still determine the resulting view transition.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_LeaveADS"
+      ]
+    },
+    "localizesoundaliasfiles": {
+      "title": "Export sound-subtitle translations",
+      "summary": "Collect sound-alias subtitle text into developer translation files.",
+      "details": "Requires subtitle.st in the developer source-data folder. Processes soundaliases/*.csv and copies the result back to the translation file; this is an asset-authoring file write.",
+      "effectSources": [
+        "src/PC/universal/com_sndalias_load_obj.c: Com_WriteLocalizedSoundAliasFiles"
+      ]
+    },
+    "localservers": {
+      "title": "Scan for LAN servers",
+      "summary": "Broadcast discovery requests on the local network.",
+      "details": "Clears the client's LAN list and queries the standard game ports. Replies populate that list; this does not connect to a server.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_LocalServers_f"
+      ]
+    },
+    "logo": {
+      "title": "Show a timed logo image",
+      "summary": "Display the named logo with fade-in, display and fade-out durations.",
+      "details": "Accepts an image name and three durations in seconds. It changes the disconnected client's logo display state and stops existing sounds.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_PlayLogo_f"
+      ]
+    },
+    "lowerstance": {
+      "title": "Lower the player's stance",
+      "summary": "Move the stance state from standing toward crouching or prone.",
+      "details": "Changes the client's stance state, with limits in the input handler. It is a single action rather than a held movement command.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_LowerStance"
+      ]
+    },
+    "map": {
+      "title": "Load a server map",
+      "summary": "Start the named multiplayer map on the hosted server.",
+      "details": "Checks that a player profile is selected and the map file exists, then starts a server map. Unlike devmap, this command disables cheats.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_Map_f"
+      ]
+    },
+    "map_restart": {
+      "title": "Restart the server map",
+      "summary": "Reload the current hosted-server map and game.",
+      "details": "Requires a running server. It requests a full restart rather than the fast_restart path.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_MapRestart_f"
+      ]
+    },
+    "map_rotate": {
+      "title": "Advance the configured map rotation",
+      "summary": "Consume the next map and game-type entries from the hosted server's rotation.",
+      "details": "Uses sv_mapRotation and sv_mapRotationCurrent. When no usable map entry remains it falls back to restarting the current game.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_MapRotate_f"
+      ]
+    },
+    "maprotate": {
+      "title": "Run the next-map script",
+      "summary": "Execute the commands stored in nextmap through the hosted game's console.",
+      "details": "This dispatch-only command queues vstr nextmap. Its effect depends on the saved nextmap text; it is distinct from map_rotate's rotation parser.",
+      "effectSources": [
+        "src/PC/game_mp/g_svcmds_mp.c: ConsoleCommand"
+      ]
+    },
+    "match": {
+      "title": "Set a match login token",
+      "summary": "Store the token supplied to match login in the match_login setting.",
+      "details": "CoD2x-only command. It accepts match login <hash>; storing the token does not itself verify a login with a server.",
+      "effectSources": [
+        "src/PC/qcommon/cod2x_features.c: Cod2x_Match_f"
+      ]
+    },
+    "meminfo": {
+      "title": "Show engine memory use",
+      "summary": "Print the game's hunk-memory totals and current use.",
+      "details": "Reports low and high permanent and temporary allocations. These are engine allocator figures, not total system memory or a frame-rate measurement.",
+      "effectSources": [
+        "src/PC/universal/com_memory.c: Com_Meminfo_f"
+      ]
+    },
+    "mr": {
+      "title": "Send a menu response",
+      "summary": "Pass a menu response from the client to the game script.",
+      "details": "The server validates the server ID, resolves a menu index and sends a menuresponse notification. This is an internal UI protocol command.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: Cmd_MenuResponse_f"
+      ]
+    },
+    "net_dumpprofile": {
+      "title": "Print network profiling data",
+      "summary": "Print collected client or server network-profile statistics.",
+      "details": "Requires net_profile to be enabled. It reports the selected network profile, not a new network benchmark.",
+      "effectSources": [
+        "src/PC/qcommon/net_chan_mp.c: Net_DumpProfile_f"
+      ]
+    },
+    "net_restart": {
+      "title": "Restart game networking",
+      "summary": "Run the game's network restart routine.",
+      "details": "Requests reconfiguration through NET_Config. Socket changes depend on the current network settings; this is separate from refreshing the launcher server browser.",
+      "effectSources": [
+        "src/Mac/Main/mac_main.c: Sys_Net_Restart_f",
+        "src/PC/win32/win_net.c: NET_Restart"
+      ]
+    },
+    "noclip": {
+      "title": "Toggle collision-free movement",
+      "summary": "Toggle the player's noclip state on the server.",
+      "details": "Requires the server's cheat check. This is a gameplay development command, not a movement-speed setting.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
+      ]
+    },
+    "notarget": {
+      "title": "Toggle the no-target flag",
+      "summary": "Toggle the player's no-target flag on the server.",
+      "details": "Requires the server's cheat check. The handler changes the flag; which game systems consult it depends on the game code.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
+      ]
+    },
+    "onlykick": {
+      "title": "Remove a player by name",
+      "summary": "Disconnect a named player from the hosted server without adding a brief ban.",
+      "details": "Uses the named-player kick routine and protects the local host. It differs from kick, which also applies a brief GUID ban.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_Drop_f"
+      ]
+    },
+    "openmenu": {
+      "title": "Open a named menu",
+      "summary": "Open the UI menu with the supplied name.",
+      "details": "Passes the command's remaining text to the menu system. The named menu must be loaded in the current UI.",
+      "effectSources": [
+        "src/PC/ui_mp/ui_main_mp.c: UI_OpenMenu_f"
+      ]
+    },
+    "openscriptmenu": {
+      "title": "Send a script-menu response",
+      "summary": "Send a response for a named parent menu to the server's game script.",
+      "details": "Requires an active UI and permission to send script-menu responses. It looks up the parent menu and forwards an mr response; it does not directly open a local menu.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_OpenScriptMenu_f"
+      ]
+    },
+    "path": {
+      "title": "Show active game search paths",
+      "summary": "Print the game search paths used by the current language selection.",
+      "details": "Also lists open game file handles. fullpath includes paths excluded by the language filter.",
+      "effectSources": [
+        "src/PC/universal/com_files.c: FS_Path_f",
+        "src/PC/universal/com_files.c: FS_DisplayPath"
+      ]
+    },
+    "ping": {
+      "title": "Query a server's reply time",
+      "summary": "Send a getinfo request to a supplied server address and track its reply.",
+      "details": "Stores the query in the client's ping list. This measures a server-query round trip, not in-game packet loss or frame timing.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_pc_mp.c: CL_Ping_f"
+      ]
+    },
+    "printentities": {
+      "title": "Print entity positions",
+      "summary": "Ask the native game server to print entity class names and positions.",
+      "details": "The server's entity diagnostic lists its entity slots. This is an internal development listing, not a gameplay overlay.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand",
+        "src/PC/game_mp/g_utils_mp.c: G_PrintEntities"
+      ]
+    },
+    "quit": {
+      "title": "Quit the game",
+      "summary": "Shut down the client, server and file systems, then exit the game process.",
+      "details": "The native CoD2x path can defer quit while its demo-recording shutdown is completed. This ends gameplay rather than closing the console.",
+      "effectSources": [
+        "src/PC/qcommon/common.c: Com_Quit_f"
+      ]
+    },
+    "r_applypicmip": {
+      "title": "Apply texture-detail changes",
+      "summary": "Update loaded materials for the current texture-detail settings.",
+      "details": "Calls the renderer's material picmip update. The command applies existing settings; it does not choose a new texture-detail value.",
+      "effectSources": [
+        "src/PC/gfx_d3d/r_cmds.c: R_Cmd_ApplyPicmip"
+      ]
+    },
+    "r_loadsun": {
+      "title": "Load a sun-light preset",
+      "summary": "Load the named sun preset into the current world's sun settings.",
+      "details": "Requires cheats and a loaded world. This is a lighting-development command, separate from ordinary brightness controls.",
+      "effectSources": [
+        "src/PC/gfx_d3d/r_cmds.c: R_RegisterCmds",
+        "src/PC/gfx_d3d/r_sky.c: R_Cmd_LoadSun"
+      ]
+    },
+    "r_savesun": {
+      "title": "Save a sun-light preset",
+      "summary": "Write the current sun settings to sun/<name>.sun.",
+      "details": "Saves the renderer's sun-setting list through the game's writable file system. This is a development preset, not a player config.",
+      "effectSources": [
+        "src/PC/gfx_d3d/r_cmds.c: R_RegisterCmds",
+        "src/PC/gfx_d3d/r_sky.c: R_Cmd_SaveSun"
+      ]
+    },
+    "r_smc_flush": {
+      "title": "Flush the static-model cache",
+      "summary": "Free cached static-model surfaces used by the renderer.",
+      "details": "This is a renderer-cache development command. It does not change a saved graphics preference.",
+      "effectSources": [
+        "src/PC/gfx_d3d/r_cmds.c: R_RegisterCmds",
+        "src/PC/gfx_d3d/r_staticmodelcache.c: R_StaticModelCacheFlush_f"
+      ]
+    },
+    "r_smc_stats": {
+      "title": "Show static-model cache use",
+      "summary": "Print the renderer's static-model cache allocation and use percentages.",
+      "details": "Reports cached vertex use. It does not measure frame rate or the memory used by the whole game.",
+      "effectSources": [
+        "src/PC/gfx_d3d/r_cmds.c: R_RegisterCmds",
+        "src/PC/gfx_d3d/r_staticmodelcache.c: R_StaticModelCacheStats_f"
+      ]
+    },
+    "raisestance": {
+      "title": "Raise the player's stance",
+      "summary": "Move the stance state from prone toward crouching or standing.",
+      "details": "Changes the client's stance state, with limits in the input handler. It is a single action rather than a held movement command.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_RaiseStance"
+      ]
+    },
+    "rcon": {
+      "title": "Send a remote server command",
+      "summary": "Send an operator command to a server after remote-console login.",
+      "details": "Supports login, logout and host selection. The server checks the supplied password; remote commands can change or shut down that server.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_pc_mp.c: CL_Rcon_f"
+      ]
+    },
+    "reconnect": {
+      "title": "Reconnect to the last server",
+      "summary": "Queue a connection to the client's last server name.",
+      "details": "Requires a previously known server name. This reconnects the client rather than refreshing a server list.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_Reconnect_f"
+      ]
+    },
+    "record": {
+      "title": "Record a multiplayer demo",
+      "summary": "Write the current session's demo stream to a file under demos/.",
+      "details": "Requires an active game and no recording already in progress. Accepts an optional name; without one it selects an unused demo number.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_Record_f"
+      ]
+    },
+    "reloadmaterialtextures": {
+      "title": "Reload a material's textures",
+      "summary": "Reload textures belonging to the named, already loaded material.",
+      "details": "This renderer development command looks up a material and refreshes its images. It does not reload every game texture or change texture-detail settings.",
+      "effectSources": [
+        "src/PC/gfx_d3d/r_cmds.c: R_RegisterCmds",
+        "src/PC/gfx_d3d/r_material.c: R_Cmd_ReloadMaterialTextures"
+      ]
+    },
+    "removeip": {
+      "title": "Remove an IP filter",
+      "summary": "Remove an address from the hosted server's IP filter list.",
+      "details": "Accepts an address, removes an exact matching filter and updates g_banIPs. It does not remove GUID-based player bans.",
+      "effectSources": [
+        "src/PC/game_mp/g_svcmds_mp.c: Svcmd_RemoveIP_f"
+      ]
+    },
+    "reset": {
+      "title": "Reset a setting",
+      "summary": "Restore a named setting's registered reset value.",
+      "details": "Uses the external setting source, so the engine's normal write restrictions apply. The reset value can differ from a player's saved value.",
+      "effectSources": [
+        "src/PC/qcommon/dvar_cmds.c: Dvar_Reset_f"
+      ]
+    },
+    "score": {
+      "title": "Request scoreboard data",
+      "summary": "Ask the server to send the player's scoreboard message.",
+      "details": "The server builds the deathmatch scoreboard response. This requests data; it does not itself display the local scoreboard.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand",
+        "src/PC/game_mp/g_cmds_mp.c: DeathmatchScoreboardMessage"
+      ]
+    },
+    "screenshot": {
+      "title": "Save a TGA screenshot",
+      "summary": "Capture the current rendered view as a TGA image.",
+      "details": "Uses the renderer's screenshot command and writable screenshot path. The handler also has development options such as levelshot.",
+      "effectSources": [
+        "src/PC/gfx_d3d/r_cmds.c: R_Cmd_Screenshot",
+        "src/PC/gfx_d3d/r_screenshot.c: R_ScreenshotCommand"
+      ]
+    },
+    "screenshotjpeg": {
+      "title": "Save a JPEG screenshot",
+      "summary": "Capture the current rendered view as a JPEG image.",
+      "details": "Uses the renderer's JPEG screenshot path. This captures pixels, not a demo recording or a config export.",
+      "effectSources": [
+        "src/PC/gfx_d3d/r_cmds.c: R_Cmd_ScreenshotJpeg",
+        "src/PC/gfx_d3d/r_screenshot.c: R_ScreenshotCommand"
+      ]
+    },
+    "scriptusage": {
+      "title": "Show script-thread use",
+      "summary": "Print the hosted server's script-thread diagnostics.",
+      "details": "Calls the script-thread dump routine. This is an internal server diagnostic, not a player match statistic.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_ScriptUsage_f",
+        "src/PC/script/scr_variable.c: Scr_DumpScriptThreads"
+      ]
+    },
+    "serverinfo": {
+      "title": "Show server information",
+      "summary": "Print the hosted server's server-info settings.",
+      "details": "Reports settings marked for server information, including script information. It does not query a different server address.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_Serverinfo_f"
+      ]
+    },
+    "serverstatus": {
+      "title": "Query detailed server status",
+      "summary": "Request and print a server's status information.",
+      "details": "Accepts an address or uses the current connected server. The reply is a server status query, not a measurement of match performance.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_pc_mp.c: CL_ServerStatus_f"
+      ]
+    },
+    "setenv": {
+      "title": "Read or set a process variable",
+      "summary": "Print a named environment variable, or assign it a supplied value.",
+      "details": "Works on the game process's environment. It is separate from dvar settings and can affect code that reads that variable later.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_Setenv_f"
+      ]
+    },
+    "setfromdvar": {
+      "title": "Copy a setting value",
+      "summary": "Assign a destination setting the current displayable value of another setting.",
+      "details": "Requires an existing source setting. The destination uses the normal external setter and retains its write restrictions.",
+      "effectSources": [
+        "src/PC/qcommon/dvar_cmds.c: Dvar_SetFromDvar_f"
+      ]
+    },
+    "setrecommended": {
+      "title": "Apply engine-recommended settings",
+      "summary": "Run the engine's automatic configuration routine.",
+      "details": "Reads configure_mp.csv and chooses settings from the detected hardware information. It can queue a renderer restart; this is not a measured performance recommendation.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_SetRecommended_f",
+        "src/PC/qcommon/common.c: Com_SetRecommended"
+      ]
+    },
+    "sets": {
+      "title": "Set a server-info value",
+      "summary": "Assign a setting and mark it for server information.",
+      "details": "Adds the server-info flag to the setting after assignment. That flag is distinct from saving the value in a player config.",
+      "effectSources": [
+        "src/PC/qcommon/dvar_cmds.c: Dvar_SetS_f"
+      ]
+    },
+    "setu": {
+      "title": "Set a user-info value",
+      "summary": "Assign a setting and mark it for client user information.",
+      "details": "Adds the user-info flag after assignment. These fields can be sent to the server; this is distinct from marking a value for config saving.",
+      "effectSources": [
+        "src/PC/qcommon/dvar_cmds.c: Dvar_SetU_f"
+      ]
+    },
+    "setviewpos": {
+      "title": "Move the player's view to coordinates",
+      "summary": "Ask the server to teleport the player's view to x, y, z and yaw.",
+      "details": "Requires cheats. The native handler also accepts optional pitch and offsets the supplied height by the player's current view height.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: Cmd_SetViewpos_f"
+      ]
+    },
+    "showip": {
+      "title": "Show local network addresses",
+      "summary": "Print the local network addresses known to the game.",
+      "details": "Calls the platform's address-list routine. It does not reveal a remote server's address or change networking settings.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_ShowIP_f"
+      ]
+    },
+    "sizedown": {
+      "title": "Shrink the game view",
+      "summary": "Decrease the view-size setting by ten.",
+      "details": "Sets cg_viewsize through the setting API. The setting's registered range limits the resulting view size.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_SizeDown_f"
+      ]
+    },
+    "sizeup": {
+      "title": "Enlarge the game view",
+      "summary": "Increase the view-size setting by ten.",
+      "details": "Sets cg_viewsize through the setting API. The setting's registered range limits the resulting view size.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_SizeUp_f"
+      ]
+    },
+    "snd_deactivateenvironmenteffects": {
+      "title": "Fade out environment sound effects",
+      "summary": "Deactivate environment effects at the supplied priority over a fade time.",
+      "details": "Accepts level or shellshock priority and a nonnegative fade time in milliseconds. This changes the selected environment layer, not the overall sound volume.",
+      "effectSources": [
+        "src/PC/snd.c: SND_DeactivateEnvironmentEffects_f"
+      ]
+    },
+    "snd_list": {
+      "title": "List loaded sound definitions",
+      "summary": "Print streamed and loaded menu and game sound lists.",
+      "details": "This is a sound-system diagnostic. It lists loaded sound aliases, not available recording devices or player voice messages.",
+      "effectSources": [
+        "src/PC/universal/com_sndalias.c: Com_SoundList_f"
+      ]
+    },
+    "snd_refreshvolumemodgroups": {
+      "title": "Reload sound-volume groups on demand",
+      "summary": "Mark sound-volume group definitions as needing reinitialisation.",
+      "details": "Clears the loader's initialised flag. The command does not directly change the player's master-volume setting.",
+      "effectSources": [
+        "src/PC/universal/com_sndalias_load_obj.c: Com_RefreshVolumeModGroups_f"
+      ]
+    },
+    "snd_restart": {
+      "title": "Restart the sound system",
+      "summary": "Save sound state, restart audio and restore the saved state.",
+      "details": "The handler also restarts the renderer and refuses to run on a listen server. This is a system restart, not a volume adjustment.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_Snd_Restart_f"
+      ]
+    },
+    "snd_setenvironmenteffects": {
+      "title": "Environment sound command is inactive",
+      "summary": "The native command handler does not apply environment effects.",
+      "details": "SND_SetEnvironmentEffects_f is an empty native stub. This registered command does not parse or apply effect arguments; engine APIs can still set environment effects separately.",
+      "effectSources": [
+        "src/stubs/link_stubs.c: SND_SetEnvironmentEffects_f"
+      ]
+    },
+    "startsingleplayer": {
+      "title": "Single-player launch is unavailable",
+      "summary": "The registered single-player command has no native launch implementation.",
+      "details": "Requests cod2sp_s.exe, but the platform hook only reports that process launching is unsupported. It does not start a single-player session.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_startSingleplayer_f",
+        "src/Mac/Main/mac_main.c: Sys_StartProcess"
+      ]
+    },
+    "status": {
+      "title": "Show hosted-server player status",
+      "summary": "Print the current map and connected-player status table.",
+      "details": "Requires a running server. Lists player numbers, scores, ping, GUIDs and connection information; this is separate from querying a remote server.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_Status_f"
+      ]
+    },
+    "stoprecord": {
+      "title": "Stop a demo recording",
+      "summary": "Close the active multiplayer demo recording.",
+      "details": "Does nothing when no demo is being recorded. Native CoD2x automatic recording can refuse this command while its automatic demo name is enabled.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_StopRecord_f"
+      ]
+    },
+    "stringusage": {
+      "title": "Show script memory diagnostics",
+      "summary": "Print the script memory tree used by the hosted server.",
+      "details": "Calls MT_DumpTree. This is an internal allocator diagnostic, not a count of translated UI strings.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_StringUsage_f",
+        "src/PC/script/scr_memorytree.c: MT_DumpTree"
+      ]
+    },
+    "systeminfo": {
+      "title": "Show game-system information",
+      "summary": "Print the hosted server's system-info settings.",
+      "details": "Reports settings carrying the system-info flag. These are game protocol settings, not a Mac hardware report.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_Systeminfo_f"
+      ]
+    },
+    "take": {
+      "title": "Remove health, ammunition or items",
+      "summary": "Ask the server to remove the named resource from the player.",
+      "details": "Requires the server's cheat check. Supports resource groups such as health, weapons and ammunition, along with quantities where the handler supports them.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: Cmd_Take_f"
+      ]
+    },
+    "tcmd": {
+      "title": "Send a preset message to the aimed player",
+      "summary": "Send a numbered game command to the player under the crosshair.",
+      "details": "Looks up the crosshair target and queues gc with that player number and the supplied command number. The server validates the numbers.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_TargetCommand_f"
+      ]
+    },
+    "tell": {
+      "title": "Send a private player message",
+      "summary": "Send chat text to a numbered player.",
+      "details": "The game-server path delivers the message to the target and echoes it to the sender. From the server console it sends a console-prefixed message to that player.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand",
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_ConTell_f"
+      ]
+    },
+    "tell_target": {
+      "title": "Message the aimed player",
+      "summary": "Send the supplied chat text to the player under the crosshair.",
+      "details": "Does nothing without a crosshair player target. Otherwise it forwards tell with the target's client number.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_TellTarget_f"
+      ]
+    },
+    "tempbanclient": {
+      "title": "Briefly ban a player by number",
+      "summary": "Disconnect a numbered player and add a brief GUID ban.",
+      "details": "Requires the hosted server's numbered-player lookup. The local host cannot be kicked through this routine.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_TempBanNum_f"
+      ]
+    },
+    "tempbanuser": {
+      "title": "Briefly ban a player by name",
+      "summary": "Disconnect a named player and add a brief GUID ban.",
+      "details": "Uses the same routine as kick. This brief ban is distinct from the persistent banUser and banClient commands.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_TempBan_f"
+      ]
+    },
+    "timedemo": {
+      "title": "Benchmark recorded demo playback",
+      "summary": "Play a recorded demo with the client's timedemo mode enabled.",
+      "details": "Uses the same demo loader as demo but marks playback for timing. The loader refuses playback while a listen server is running.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_PlayDemo_f"
+      ]
+    },
+    "toggleconsole": {
+      "title": "Open or close the console",
+      "summary": "Toggle the game's console and clear its command-entry field.",
+      "details": "Restricted-console settings can require the console access key. This changes console visibility, not whether console commands are registered.",
+      "effectSources": [
+        "src/PC/client_mp/cl_console_mp.c: Con_ToggleConsole_f"
+      ]
+    },
+    "togglemenu": {
+      "title": "Open the appropriate game menu",
+      "summary": "Select the game's menu state for the current connection.",
+      "details": "Chooses a menu state according to demo playback and server loading. Despite its name, the handler does not simply flip a menu-open boolean.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_ToggleMenu_f"
+      ]
+    },
+    "togglep": {
+      "title": "Cycle a setting and print it",
+      "summary": "Cycle a setting's value, then print the new value to the console.",
+      "details": "Uses the same value-cycle routine as toggle. No output is printed if the cycle routine refuses the change.",
+      "effectSources": [
+        "src/PC/qcommon/dvar_cmds.c: Dvar_TogglePrint_f"
+      ]
+    },
+    "touchfile": {
+      "title": "Check that a game file can open",
+      "summary": "Open and close the named file through the game's file system.",
+      "details": "Records file access when the file can be opened. It does not create a file or update an operating-system file timestamp.",
+      "effectSources": [
+        "src/PC/qcommon/files.c: FS_TouchFile_f",
+        "src/PC/universal/com_files.c: FS_TouchFile"
+      ]
+    },
+    "ufo": {
+      "title": "Toggle free-flight mode",
+      "summary": "Toggle the player's free-flight state on the server.",
+      "details": "Requires the server's cheat check. The handler changes the ufo state used by player movement; it is a development gameplay command.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
+      ]
+    },
+    "ui_sweep": {
+      "title": "Run UI development checks",
+      "summary": "List menus, run a menu script, close menus or select a map for a UI sweep.",
+      "details": "Native-only test command, active only when COD2_UI_SWEEP is set in the process environment. It can run menu scripts and is not an ordinary player preference.",
+      "effectSources": [
+        "src/PC/ui_mp/ui_main_mp.c: UI_Sweep_f"
+      ]
+    },
+    "unbanuser": {
+      "title": "Remove a player ban by name",
+      "summary": "Ask the hosted server's ban routine to remove the named player's ban.",
+      "details": "Accepts one name and calls SV_UnbanClient. This is distinct from removing an IP-address filter.",
+      "effectSources": [
+        "src/PC/server_mp/sv_ccmds_mp.c: SV_Unban_f"
+      ]
+    },
+    "unbindall": {
+      "title": "Clear every key binding",
+      "summary": "Erase the commands assigned to every engine key.",
+      "details": "Clears each binding and notifies the game that bindings changed. This changes the whole binding table, not just the last key pressed.",
+      "effectSources": [
+        "src/PC/client_mp/cl_keys_mp.c: Key_Unbindall_f"
+      ]
+    },
+    "updatehunkusage": {
+      "title": "Record the map's engine memory use",
+      "summary": "Update hunkusage.dat with the current map and hunk-memory use.",
+      "details": "This internal loading diagnostic reads and rewrites a game file. Its allocator figure is not total system memory or a frame-time measurement.",
+      "effectSources": [
+        "src/PC/client_mp/cl_cgame_mp.c: CL_UpdateLevelHunkUsage"
+      ]
+    },
+    "updatescreen": {
+      "title": "Redraw the current screen",
+      "summary": "Run the client's screen-update routine once.",
+      "details": "Draws the current loading, game or menu state. It is an internal redraw command rather than a display-setting reset.",
+      "effectSources": [
+        "src/PC/client_mp/cl_scrn_mp.c: SCR_UpdateScreen"
+      ]
+    },
+    "vid_restart": {
+      "title": "Restart the renderer",
+      "summary": "Reinitialise the renderer and related client systems.",
+      "details": "Refuses to run on a listen server. When possible it saves and restores client state around the restart; restart-required settings can then take effect.",
+      "effectSources": [
+        "src/PC/client_mp/cl_main_mp.c: CL_Vid_Restart_f"
+      ]
+    },
+    "viewpos": {
+      "title": "Show the view position",
+      "summary": "Print the current view coordinates and horizontal angle.",
+      "details": "Reads the local client view. It does not teleport the player or change the viewing direction.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_Viewpos_f"
+      ]
+    },
+    "voicechat": {
+      "title": "Send a voice-message command",
+      "summary": "Forward a named voice-message request to the server.",
+      "details": "Accepts one message name and queues cmd vsay after the client's state checks. It is a predefined message request, separate from live microphone transmission.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_VoiceChat_f"
+      ]
+    },
+    "voiceteamchat": {
+      "title": "Send a team voice-message command",
+      "summary": "Forward a named team voice-message request to the server.",
+      "details": "Accepts one message name and queues cmd vsay_team after the client's state checks. Server or mod support determines the resulting message.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_TeamVoiceChat_f"
+      ]
+    },
+    "vote": {
+      "title": "Cast a vote",
+      "summary": "Send the player's vote response to the server.",
+      "details": "The server processes the response under its current voting mode and game script. This command does not start a new vote.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: Cmd_Vote_f"
+      ]
+    },
+    "weaponslot": {
+      "title": "Select a weapon slot",
+      "summary": "Select the weapon in the supplied slot.",
+      "details": "Accepts a slot name or number and checks that slot 1 or 2 holds an owned weapon. The client's weapon-cycling checks still apply.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_weapons.c: CG_WeaponSlot_f"
+      ]
+    },
+    "where": {
+      "title": "Show the player's server position",
+      "summary": "Ask the server to print the player's current world coordinates.",
+      "details": "The native game dispatcher replies with the player's origin. It is distinct from viewpos, which prints local camera coordinates and yaw.",
+      "effectSources": [
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
+      ]
+    },
+    "writeconfig": {
+      "title": "Save the current game config",
+      "summary": "Write current bindings and saved settings to a named config file.",
+      "details": "Accepts a file name and adds .cfg when needed. This is the engine's config writer, separate from Config Studio's loadout transactions and History.",
+      "effectSources": [
+        "src/PC/qcommon/common.c: Com_WriteConfig_f",
+        "src/PC/qcommon/common.c: Com_WriteConfigToFile"
+      ]
+    },
+    "writedefaults": {
+      "title": "Write registered setting defaults",
+      "summary": "Write the engine's registered default settings to a named config file.",
+      "details": "Accepts a file name and adds .cfg when needed. The values come from registered defaults rather than the player's current choices.",
+      "effectSources": [
+        "src/PC/qcommon/common.c: Com_WriteDefaults_f"
+      ]
+    },
+    "+breath_binoculars": {
+      "title": "Hold breath and binoculars",
+      "summary": "Hold the breath and binocular input actions together.",
+      "details": "Sets both held inputs; the weapon and current game state determine which action can occur.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_BreathBinoculars_Down"
+      ]
+    },
+    "-breath_binoculars": {
+      "title": "Release breath and binoculars",
+      "summary": "Release the held breath and binocular inputs.",
+      "details": "Clears the held input set by +breath_binoculars. A normal key release sends this counterpart automatically.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_BreathBinoculars_Up"
+      ]
+    },
+    "+melee_breath": {
+      "title": "Hold melee and breath",
+      "summary": "Hold the melee and breath input actions together.",
+      "details": "Sets both held inputs; the weapon and current game state determine which action can occur.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_MeleeBreath_Down"
+      ]
+    },
+    "-melee_breath": {
+      "title": "Release melee and breath",
+      "summary": "Release the held melee and breath inputs.",
+      "details": "Clears the held input set by +melee_breath. A normal key release sends this counterpart automatically.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_MeleeBreath_Up"
+      ]
+    },
+    "+movedown": {
+      "title": "Hold a lower stance",
+      "summary": "Hold the downward input and temporary low stance.",
+      "details": "Sets the downward input and temporary stance state. Releasing the key clears that input and recalculates temporary stance.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_DownDown"
+      ]
+    },
+    "-movedown": {
+      "title": "Release lower stance",
+      "summary": "Release the downward input and recalculate temporary stance.",
+      "details": "Clears the held input set by +movedown. A normal key release sends this counterpart automatically.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_DownUp"
+      ]
+    },
+    "+moveup": {
+      "title": "Jump or raise stance",
+      "summary": "Raise the stance toward standing, or press jump when already standing.",
+      "details": "The input handler moves prone to crouched and crouched to standing before starting the jump input. Its release clears the up and jump inputs.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_UpDown"
+      ]
+    },
+    "-moveup": {
+      "title": "Release jump or raised stance",
+      "summary": "Clear the held up and jump inputs.",
+      "details": "Clears the held input set by +moveup. A normal key release sends this counterpart automatically.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_UpUp"
+      ]
+    },
+    "+prone": {
+      "title": "Hold prone input",
+      "summary": "Hold the prone input and temporary stance state.",
+      "details": "Sets the prone input while held. Releasing it clears that input and recalculates temporary stance.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_Prone_Down"
+      ]
+    },
+    "-prone": {
+      "title": "Release prone input",
+      "summary": "Clear the held prone input and recalculate temporary stance.",
+      "details": "Clears the held input set by +prone. A normal key release sends this counterpart automatically.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_Prone_Up"
+      ]
+    },
+    "+talk": {
+      "title": "Hold the talking state",
+      "summary": "Set the client input state used to indicate talking.",
+      "details": "Sets the held talk input checked by IsTalking. The voice system and its enabled settings determine microphone transmission.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_TalkDown"
+      ]
+    },
+    "-talk": {
+      "title": "Release the talking state",
+      "summary": "Clear the held talking input state.",
+      "details": "Clears the held input set by +talk. A normal key release sends this counterpart automatically.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_TalkUp"
+      ]
+    },
+    "+usereload": {
+      "title": "Hold use or reload",
+      "summary": "Hold the combined use/reload input action.",
+      "details": "Sets one combined input state. The game interprets use or reload according to the current context.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_UseReload_Down"
+      ]
+    },
+    "-usereload": {
+      "title": "Release use or reload",
+      "summary": "Clear the held combined use/reload input.",
+      "details": "Clears the held input set by +usereload. A normal key release sends this counterpart automatically.",
+      "effectSources": [
+        "src/PC/client_mp/cl_input.c: IN_UseReload_Up"
+      ]
+    },
+    "follow": {
+      "title": "Follow server command",
+      "summary": "Forward follow and its arguments to the connected server.",
+      "details": "The client registers this name without a local handler, and the native game dispatcher has no matching built-in branch. Its effect on another server or mod is unknown here.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_InitConsoleCommands",
+        "src/PC/client_mp/cl_cgame_mp.c: CL_AddCgameCommand",
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
+      ]
+    },
+    "jumptonode": {
+      "title": "Node-jump server command",
+      "summary": "Forward jumptonode and its arguments to the connected server.",
+      "details": "The client registers this name without a local handler, and the native game dispatcher has no matching built-in branch. Its effect on another server or mod is unknown here.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_InitConsoleCommands",
+        "src/PC/client_mp/cl_cgame_mp.c: CL_AddCgameCommand",
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
+      ]
+    },
+    "levelshot": {
+      "title": "Level-shot server command",
+      "summary": "Forward levelshot and its arguments to the connected server.",
+      "details": "The client registers this name without a local handler, and the native game dispatcher has no matching built-in branch. Its effect on another server or mod is unknown here.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_InitConsoleCommands",
+        "src/PC/client_mp/cl_cgame_mp.c: CL_AddCgameCommand",
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
+      ]
+    },
+    "muteplayer": {
+      "title": "Mute-player server command",
+      "summary": "Forward muteplayer and its arguments to the connected server.",
+      "details": "The client registers this name without a local handler, and the native game dispatcher has no matching built-in branch. Its effect on another server or mod is unknown here.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_InitConsoleCommands",
+        "src/PC/client_mp/cl_cgame_mp.c: CL_AddCgameCommand",
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
+      ]
+    },
+    "unmuteplayer": {
+      "title": "Unmute-player server command",
+      "summary": "Forward unmuteplayer and its arguments to the connected server.",
+      "details": "The client registers this name without a local handler, and the native game dispatcher has no matching built-in branch. Its effect on another server or mod is unknown here.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_InitConsoleCommands",
+        "src/PC/client_mp/cl_cgame_mp.c: CL_AddCgameCommand",
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
+      ]
+    },
+    "stats": {
+      "title": "Statistics server command",
+      "summary": "Forward stats and its arguments to the connected server.",
+      "details": "The client registers this name without a local handler, and the native game dispatcher has no matching built-in branch. Its effect on another server or mod is unknown here.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_InitConsoleCommands",
+        "src/PC/client_mp/cl_cgame_mp.c: CL_AddCgameCommand",
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
+      ]
+    },
+    "team": {
+      "title": "Team server command",
+      "summary": "Forward team and its arguments to the connected server.",
+      "details": "The client registers this name without a local handler, and the native game dispatcher has no matching built-in branch. Its effect on another server or mod is unknown here.",
+      "effectSources": [
+        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_InitConsoleCommands",
+        "src/PC/client_mp/cl_cgame_mp.c: CL_AddCgameCommand",
+        "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
+      ]
     }
   },
   "supplemental": {
