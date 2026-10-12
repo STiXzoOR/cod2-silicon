@@ -66,12 +66,12 @@ def function(path, name):
     raise ValueError('unterminated function')
 
 
-def run(name, generated, sources=(), cases=((),)):
+def run(name, generated, sources=(), cases=((),), fixture=None):
     if args.test and name not in args.test:
         return
     (out / f'{name}_source.h').write_text(generated)
     objects = []
-    for index, source in enumerate([*sources, f'tests/fixes13/{name}.c']):
+    for index, source in enumerate([*sources, fixture or f'tests/fixes13/{name}.c']):
         obj = out / f'{name}_{index}.o'
         with (out / f'{name}_{index}.log').open('w') as log:
             result = subprocess.run([*flags, '-c', str(ROOT / source), '-o', str(obj)],
@@ -155,9 +155,12 @@ if not args.test or 'timing' in args.test:
     codx_timing = ('-DCOD2_CODX=1' in flags)
     helpers = (function('src/PC/qcommon/cod2x_protocol.c', 'Cod2x_LimitedFPS') +
                function('src/PC/qcommon/cod2x_runtime.c', 'Cod2x_FrameFPS')) if codx_timing else ''
-    run('timing', helpers +
-        function('src/PC/qcommon/common.c', 'Com_Frame_Try_Block_Function') +
-        function('src/PC/client_mp/cl_input.c', 'CL_SendCmdInternal'))
+    frame = function('src/PC/qcommon/common.c', 'Com_Frame_Try_Block_Function')
+    # Keep the original fixture for historical callers that predate match summaries.
+    matches = not args.baseline or bool(re.search(r'\bMatchSummary_Frame\s*\(', frame))
+    run('timing', helpers + frame +
+        function('src/PC/client_mp/cl_input.c', 'CL_SendCmdInternal'),
+        fixture='tests/fixes13/timing_matches.c' if matches else None)
 if not args.test or 'renderer_options' in args.test:
     path = 'src/Mac/DirectX_9/CDirect3DDevice.c'
     assert 'getenv(' not in function(path, 'CDirect3DDevice_DrawIndexedPrimitive')
