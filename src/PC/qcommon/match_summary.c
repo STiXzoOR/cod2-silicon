@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/file.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
@@ -17,6 +18,7 @@ extern const dvar_t *fs_homepath;
 extern const dvar_t *com_maxfps;
 extern const clientConnection_t *clc;
 extern const dvar_t *Dvar_RegisterBool_mac(const char *name, int value, int flags);
+extern void Dvar_AddFlags(const dvar_t *dvar, int flags);
 extern const char *CL_GetConfigString(int index);
 extern char *Info_ValueForKey(const char *info, const char *key);
 extern char *NET_AdrToString(netadr_t address);
@@ -42,8 +44,9 @@ void MatchSummary_Init(void)
 {
     /* Startup +set is consumed before client initialization. Freeze the local
        privacy choice so neither a server nor an imported cfg can enable it. */
-    const dvar_t *privacy = Dvar_RegisterBool_mac("cl_matchSummaries", 1, 0x1040);
+    const dvar_t *privacy = Dvar_RegisterBool_mac("cl_matchSummaries", 1, 0x1000);
     matchEnabled = privacy->current.enabled;
+    Dvar_AddFlags(privacy, 0x40);
     memset(&match, 0, sizeof(match));
 }
 
@@ -196,7 +199,7 @@ void MatchSummary_Finish(const char *reason)
     FILE *input, *output;
     struct stat status;
     unsigned count = 0, i, keep;
-    int homeFD, mainFD, statsFD, fd, complete;
+    int homeFD, mainFD, statsFD, lockFD, fd, complete;
     if (!matchEnabled || !match.active)
         return;
     match.active = 0;
@@ -210,17 +213,29 @@ void MatchSummary_Finish(const char *reason)
     statsFD = openat(mainFD, "stats", O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
     close(mainFD);
     if (statsFD < 0) return;
+    /* This inode stays in place when the history is atomically replaced. Hold
+       its lock from the initial read through retention and publication. */
+    lockFD = openat(statsFD, ".matches.lock", O_RDWR | O_CREAT | O_NOFOLLOW | O_NONBLOCK, 0600);
+    if (lockFD < 0) {
+        close(statsFD);
+        return;
+    }
+    if (fstat(lockFD, &status) || !S_ISREG(status.st_mode) ||
+        fchmod(lockFD, 0600) || flock(lockFD, LOCK_EX)) {
+        close(lockFD); close(statsFD); return;
+    }
     lines = malloc(MATCH_RECORD_LIMIT * MATCH_LINE_LIMIT);
     if (!lines) {
+        close(lockFD);
         close(statsFD);
         return;
     }
     fd = openat(statsFD, "matches.jsonl", O_RDONLY | O_NOFOLLOW | O_NONBLOCK);
     if (fd < 0 && errno != ENOENT) {
-        free(lines); close(statsFD); return;
+        free(lines); close(lockFD); close(statsFD); return;
     }
     if (fd >= 0 && (fstat(fd, &status) || !S_ISREG(status.st_mode))) {
-        close(fd); free(lines); close(statsFD); return;
+        close(fd); free(lines); close(lockFD); close(statsFD); return;
     }
     input = fd < 0 ? NULL : fdopen(fd, "r");
     if (fd >= 0 && !input) close(fd);
@@ -251,6 +266,7 @@ void MatchSummary_Finish(const char *reason)
         close(fd);
     }
     if (fd >= 0) unlinkat(statsFD, temporary, 0);
+    close(lockFD);
     close(statsFD);
     free(lines);
 }

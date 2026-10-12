@@ -5,6 +5,11 @@
 #include <string.h>
 #include <time.h>
 #include "imports.h"
+#include <errno.h>
+#include <fcntl.h>
+#include <stdarg.h>
+#include <sys/file.h>
+#include <unistd.h>
 
 static dvar_t privacy, home, frameCap;
 const dvar_t *fs_homepath = &home;
@@ -40,12 +45,15 @@ static int summaryClock(clockid_t clock, struct timespec *time)
     }
     return 0;
 }
+#ifndef MATCH_REAL_DVARS
 const dvar_t *Dvar_RegisterBool_mac(const char *name, int value, int flags)
 {
     assert(!strcmp(name, "cl_matchSummaries") && value == 1);
     privacy.flags = flags;
     return &privacy;
 }
+void Dvar_AddFlags(const dvar_t *var, int flags) { ((dvar_t *)var)->flags |= flags; }
+#endif
 const char *CL_GetConfigString(int index)
 {
     return index == 0 ? "\\mapname\\mp_toujane\\g_gametype\\sd\\g_competitive\\1\\shortversion\\1.4\\mod\\zPAM \"test\"" : "\\sv_pure\\1";
@@ -78,11 +86,13 @@ void CL_ClearState(void) { memset(&active, 0, sizeof(active)); }
 void CL_ClearMutedList(void) {}
 void SND_DisconnectListener(void) {}
 int CL_AllLocalClientsDisconnected(void) { return 1; }
-void Dvar_SetBool(const dvar_t *var, int value) { (void)var; (void)value; }
 void Con_Close(void) {}
+#ifndef MATCH_REAL_DVARS
+void Dvar_SetBool(const dvar_t *var, int value) { (void)var; (void)value; }
 int I_stricmp(const char *a, const char *b) { return strcasecmp(a, b); }
 void Dvar_SetString(const dvar_t *var, const char *value) { (void)var; (void)value; }
 void I_strncpyz(char *dest, const char *source, int size) { snprintf(dest, size, "%s", source); }
+#endif
 void UI_CloseAll(void) {}
 int NET_StringToAdr(const char *text, netadr_t *address) { (void)text; memset(address, 0, sizeof(*address)); return 1; }
 void CL_CheckForResend(void) {}
@@ -91,10 +101,39 @@ void Cod2x_Disconnect(void) {}
 void Cod2x_DemoClientDisconnect(void) {}
 int Cod2x_FrameFPS(int requested) { return requested; }
 
+static const char *scenario;
+/* Coordinate at the real filesystem boundary without adding production hooks.
+   The first publication waits; the second reports either publication or actual
+   lock contention, so a serialized implementation cannot deadlock the test. */
+static int summaryRenameat(int fromFD, const char *from, int toFD, const char *to)
+{
+    if (scenario && !strncmp(scenario, "concurrent-", 11)) {
+        assert(write(STDOUT_FILENO, "R", 1) == 1);
+        if (!strcmp(scenario, "concurrent-first")) {
+            char release;
+            assert(read(STDIN_FILENO, &release, 1) == 1);
+        }
+    }
+    return renameat(fromFD, from, toFD, to);
+}
+static int summaryFlock(int fd, int operation)
+{
+    if (scenario && !strcmp(scenario, "concurrent-second") && operation == LOCK_EX) {
+        int result = flock(fd, operation | LOCK_NB);
+        if (!result || (errno != EWOULDBLOCK && errno != EAGAIN)) return result;
+        assert(write(STDOUT_FILENO, "L", 1) == 1);
+    }
+    return flock(fd, operation);
+}
+
 /* The no-op baseline drives the same caller sequence before the feature exists. */
 #if __has_include("../../src/PC/qcommon/match_summary.c")
 #define clock_gettime summaryClock
+#define renameat summaryRenameat
+#define flock summaryFlock
 #include "../../src/PC/qcommon/match_summary.c"
+#undef flock
+#undef renameat
 #undef clock_gettime
 #else
 static void MatchSummary_Init(void) {}
@@ -121,13 +160,17 @@ static void frame(int msec, int budget, int cap)
 int main(int argc, char **argv)
 {
     assert(argc == 3);
+    scenario = argv[1];
     home.current.string = argv[2];
     frameCap.current.integer = 333;
     legacy.cl_running = 1;
     privacy.current.enabled = strcmp(argv[1], "privacy") != 0;
     MatchSummary_Init();
     if (!strcmp(argv[1], "privacy")) privacy.current.enabled = 1;
-    if (!strcmp(argv[1], "retention")) {
+    if (!strncmp(argv[1], "concurrent-", 11)) {
+        begin(); frame(!strcmp(argv[1], "concurrent-first") ? 3 : 7, 3, 333);
+        CL_Disconnect();
+    } else if (!strcmp(argv[1], "retention")) {
         for (int i = 0; i < 205; ++i) {
             begin(); frame(3, 3, 333); CL_Disconnect();
         }
