@@ -1411,16 +1411,19 @@ final class PreviewCatalogGate: Sendable {
                 }
                 return capture(step)
             }
+            // The native sidebar and toolbar animate their Liquid Glass after a toggle or resize; a
+            // capture taken sooner can show a half-collapsed sidebar or the old toolbar outline.
+            let settle = Duration.seconds(2)
             func resize(_ size: NSSize) async {
                 window.setFrame(NSRect(origin: window.frame.origin, size: size), display: true)
-                try? await Task.sleep(for: .milliseconds(900))
+                try? await Task.sleep(for: settle)
             }
             func toggleSidebar(_ step: String) async -> Bool {
                 let buttons = AccessibilityTree.elements(of: window).filter { $0.role == "AXButton" && $0.label.localizedCaseInsensitiveContains("sidebar") }
                 guard let toggle = buttons.first else { print("FAIL: navigation \(step)-\(appearance): the sidebar's toolbar button is not in the accessibility tree"); return false }
                 window.makeKey()
                 click(window, element: toggle)
-                try? await Task.sleep(for: .milliseconds(900))
+                try? await Task.sleep(for: settle)
                 return true
             }
             await resize(large)
@@ -1715,6 +1718,8 @@ final class PreviewCatalogGate: Sendable {
         var after: @MainActor (NSWindow) async -> Void = { _ in }
         /// VoiceOver's press, for a control inside a sheet (a click would land on the window below).
         var press = false
+        /// The click opens an alert on the window's sheet; the sheet alone isn't the overlay.
+        var nested = false
     }
     static let overlayCases: [Overlay] = [
         Overlay(name: "configs-jump", screen: "configs-guided", target: { $0.role == "AXButton" && $0.label == "Jump to Any Setting" }, after: { window in
@@ -1733,7 +1738,7 @@ final class PreviewCatalogGate: Sendable {
                 target: { $0.role == "AXButton" && $0.label == "Save Bind" }),
         // Import Everything asks once more before writing; the button is in the review sheet.
         Overlay(name: "configs-import-confirm", screen: "configs-import-everything",
-                target: { $0.role == "AXButton" && $0.label.hasPrefix("Import All") }, press: true),
+                target: { $0.role == "AXButton" && $0.label.hasPrefix("Import All") }, press: true, nested: true),
     ]
 
     /// Sheets, popovers and alerts opened by real clicks, captured over their window.
@@ -1752,10 +1757,25 @@ final class PreviewCatalogGate: Sendable {
                 try? await Task.sleep(for: .milliseconds(900))
                 await overlay.after(window)
                 // Sheets, alerts and popovers are windows of their own; popovers aren't in orderedWindows.
+                // The capture takes them front to back, so a window nested deeper (an alert on a sheet)
+                // comes before the one it hangs from, then by level.
+                func depth(_ other: NSWindow) -> Int {
+                    var depth = 0, node = other
+                    while depth < 8, let next = node.sheetParent ?? node.parent { depth += 1; node = next }
+                    return depth
+                }
                 let others = NSApp.windows.filter { $0 !== window && $0.isVisible && $0.frame.intersects(window.frame) }
-                    .sorted { ($0.attachedSheet == nil ? 0 : 1, $0.level.rawValue) > ($1.attachedSheet == nil ? 0 : 1, $1.level.rawValue) }
+                    .sorted { (depth($0), $0.level.rawValue) > (depth($1), $1.level.rawValue) }
+                // The alert must be the real one on the sheet, in front of it: the sheet alone doesn't count.
+                var alertInFront = false
+                if let sheet = window.attachedSheet, let alert = sheet.attachedSheet as? NSPanel,
+                   let alertIndex = others.firstIndex(where: { $0 === alert }), let sheetIndex = others.firstIndex(where: { $0 === sheet }) {
+                    alertInFront = alertIndex < sheetIndex
+                }
                 if others.isEmpty {
                     print("FAIL: \(name): clicking “\(target.label)” opened nothing"); ok = false
+                } else if overlay.nested, !alertInFront {
+                    print("FAIL: \(name): clicking “\(target.label)” opened no alert in front of its sheet (\(others.map { String(describing: type(of: $0)) }.joined(separator: ", ")))"); ok = false
                 } else if let image = WindowCapture.image(of: others + [window], in: window) {
                     try? Snapshots.write(image, to: output.appendingPathComponent("overlay-" + name + ".png")); written += 1
                     print("OVERLAY \(name): \(others.map { String(describing: type(of: $0)) }.joined(separator: ", ")) over the window")
