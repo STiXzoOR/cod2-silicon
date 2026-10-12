@@ -23,11 +23,15 @@ import SwiftUI
 // it in reading order to OUTPUT/accessibility, and fails on a control without a name.
 // --overlays opens sheets, popovers and alerts with real clicks and captures them over the window.
 // Config Studio screens use synthetic loadouts in a private temporary home, removed afterwards.
+// COD2_SNAPSHOT_INTERACTIVE_EXPORT=1 waits up to 120 seconds for a real Save click in the
+// synthetic export panel. Use this when AppKit hosts the Save button in a remote service that
+// does not accept in-process key events. Exact destination, delegate validation, exported bytes
+// and Cancel assertions still run; the test fails if the operator does not complete Save.
 // COD2_SNAPSHOT_GEOMETRY=1 logs AppKit, view and WindowServer geometry at each sizing step;
 // COD2_SNAPSHOT_TRACE=1 logs each step of the window-driving modes to stderr.
 
-/// The review host can't become the active app while the login session is locked, so the
-/// window reports key and main appearance. Test-only: these overrides never ship.
+/// An ordinary native window with optional geometry logging. The caller must run unlocked;
+/// focus and appearance are read from AppKit, never forced by test overrides.
 final class SnapshotWindow: NSWindow {
     override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect {
         let result = super.constrainFrameRect(frameRect, to: screen)
@@ -36,13 +40,7 @@ final class SnapshotWindow: NSWindow {
         }
         return result
     }
-    override var isKeyWindow: Bool { true }
-    override var isMainWindow: Bool { true }
-    override var canBecomeKey: Bool { true }
-    @objc func _hasActiveAppearance() -> Bool { true }
-    @objc func _hasActiveAppearanceIgnoringKeyFocus() -> Bool { true }
-    @objc func _hasKeyAppearance() -> Bool { true }
-    @objc func _hasMainAppearance() -> Bool { true }
+
 }
 
 @MainActor enum WindowCapture {
@@ -78,68 +76,206 @@ final class SnapshotWindow: NSWindow {
     }
 }
 
-/// The window's accessibility tree as VoiceOver reads it, through the AX API. Asking our own
-/// process needs no permission and changes no setting, and it makes SwiftUI build its nodes.
-/// (Reading SwiftUI's nodes directly can raise inside a Menu; the AX API reports an error instead.)
+/// The window's accessibility tree as VoiceOver reads it: the actual accessibility objects AppKit
+/// and SwiftUI build for the window, its sheets and popovers, read in this process through the
+/// public NSAccessibility getters. Querying our own process through the AX C API returns only the
+/// application element on this Mac, so it isn't used; nothing here needs a permission or changes
+/// a setting. Getters are asked by role: a menu-backed node is never asked for its title or value
+/// (a SwiftUI Menu's title getter never returns), and a getter that stops answering fails the run
+/// with the node it was reading. Objects no getter can read, cycles and the depth limit are reported.
 @MainActor enum AccessibilityTree {
     struct Element {
         let role: String, subrole: String, label: String, value: String, help: String, selected: Bool
-        /// Screen rectangle, top-left origin (Quartz).
+        /// Screen rectangle, top-left origin (Quartz), converted once from AppKit's screen space.
         let frame: CGRect
         let depth: Int
-        let element: AXUIElement
+        let node: NSObject
+        /// Whether VoiceOver can set the value; nil when the object couldn't be asked.
+        let valueSettable: Bool?
         var line: String {
             String(repeating: "  ", count: depth) + role + (label.isEmpty ? "" : " “\(label)”") + (value.isEmpty ? "" : " = \(value)")
                 + (selected ? " [selected]" : "") + (help.isEmpty ? "" : " (\(help))")
         }
     }
+    struct Tree {
+        var elements: [Element] = []
+        /// Objects that couldn't be read, cycles and depth-limited branches, with where they were.
+        var problems: [String] = []
+        /// Proxies for elements another process draws (a title-bar button's system menu view):
+        /// only the AX server can follow them, so they are listed, not read.
+        var remote: [String] = []
+    }
     static let controls: Set<String> = ["AXButton", "AXCheckBox", "AXRadioButton", "AXSlider", "AXTextField", "AXTextArea", "AXPopUpButton",
                                         "AXMenuButton", "AXComboBox", "AXLink", "AXDisclosureTriangle", "AXIncrementor", "AXSearchField"]
-    static var application: AXUIElement { AXUIElementCreateApplication(getpid()) }
-    static func wake() { _ = attribute(application, kAXWindowsAttribute) }
-    static func attribute(_ element: AXUIElement, _ name: String) -> CFTypeRef? {
-        var value: CFTypeRef?
-        return AXUIElementCopyAttributeValue(element, name as CFString, &value) == .success ? value : nil
+    /// Roles whose title and value getters open or read a menu.
+    static let menuBacked: Set<String> = ["AXMenuButton", "AXPopUpButton", "AXMenu", "AXMenuBar", "AXMenuBarItem", "AXMenuItem"]
+    static let maximumDepth = 80
+
+    // MARK: Reading one object
+
+    /// A getter's answer, or a note that the object has no getter of that name.
+    enum Answer<T> { case value(T?), unsupported }
+
+    static func responds(_ node: NSObject, _ name: String) -> Bool { node.responds(to: NSSelectorFromString(name)) }
+    /// The pre-10.10 attribute getter, for objects (such as cell proxies) that only implement it.
+    static func legacy(_ node: NSObject, _ attribute: String) -> Answer<Any> {
+        let selector = NSSelectorFromString("accessibilityAttributeValue:")
+        guard node.responds(to: selector) else { return .unsupported }
+        return .value(node.perform(selector, with: attribute)?.takeUnretainedValue())
     }
-    static func text(_ element: AXUIElement, _ name: String) -> String { attribute(element, name) as? String ?? "" }
-    static func frame(_ element: AXUIElement) -> CGRect {
-        var point = CGPoint.zero, size = CGSize.zero
-        if let value = attribute(element, kAXPositionAttribute), CFGetTypeID(value) == AXValueGetTypeID() { AXValueGetValue(value as! AXValue, .cgPoint, &point) }
-        if let value = attribute(element, kAXSizeAttribute), CFGetTypeID(value) == AXValueGetTypeID() { AXValueGetValue(value as! AXValue, .cgSize, &size) }
-        return CGRect(origin: point, size: size)
+    static func ask<T>(_ node: NSObject, _ getter: String, _ attribute: String, _ what: String, _ modern: (AnyObject) -> T?) -> Answer<Any> {
+        Watchdog.shared.begin("\(what): \(getter)")
+        defer { Watchdog.shared.end() }
+        if responds(node, getter) { return .value(modern(node)) }
+        return legacy(node, attribute)
     }
-    /// The AX window that is this NSWindow (same frame), with its sheets and popovers as children or siblings.
-    static func windows(matching window: NSWindow?) -> [AXUIElement] {
-        let all = attribute(application, kAXWindowsAttribute) as? [AXUIElement] ?? []
-        guard let window, let primary = NSScreen.screens.first else { return all }
-        let target = CGRect(x: window.frame.minX, y: primary.frame.maxY - window.frame.maxY, width: window.frame.width, height: window.frame.height)
-        return all.filter { abs(frame($0).minX - target.minX) < 2 && abs(frame($0).minY - target.minY) < 2 && abs(frame($0).width - target.width) < 2 }
+    static func string(_ answer: Answer<Any>) -> String {
+        guard case .value(let raw?) = answer else { return "" }
+        if let text = raw as? String { return text }
+        if let text = raw as? NSAttributedString { return text.string }
+        if let number = raw as? NSNumber { return number.stringValue }
+        return ""
     }
-    static func elements(of window: NSWindow?) -> [Element] {
-        var result: [Element] = []
-        func walk(_ element: AXUIElement, depth: Int) {
-            guard depth < 80 else { return }
-            let role = text(element, kAXRoleAttribute)
-            let label = [text(element, kAXDescriptionAttribute), text(element, kAXTitleAttribute), text(element, kAXPlaceholderValueAttribute)].first { !$0.isEmpty } ?? ""
-            var value = ""
-            if let raw = attribute(element, kAXValueAttribute) {
-                if let string = raw as? String { value = string } else if let number = raw as? NSNumber { value = number.stringValue }
-            }
-            if value.count > 80 { value = String(value.prefix(80)) + "…" }
-            result.append(Element(role: role, subrole: text(element, kAXSubroleAttribute), label: label, value: value.replacingOccurrences(of: "\n", with: " "),
-                                  help: text(element, kAXHelpAttribute), selected: (attribute(element, kAXSelectedAttribute) as? Bool) == true,
-                                  frame: frame(element), depth: depth, element: element))
-            for child in attribute(element, kAXChildrenAttribute) as? [AXUIElement] ?? [] { walk(child, depth: depth + 1) }
+    static func role(_ node: NSObject) -> Answer<Any> {
+        ask(node, "accessibilityRole", "AXRole", String(describing: type(of: node))) { $0.accessibilityRole?()?.rawValue }
+    }
+    static func children(_ node: NSObject, _ what: String) -> Answer<Any> {
+        ask(node, "accessibilityChildren", "AXChildren", what) { $0.accessibilityChildren?() ?? nil }
+    }
+    /// Whether VoiceOver sees the object itself; an ignored object's children stand in its place.
+    static func isElement(_ node: NSObject) -> Bool {
+        if responds(node, "isAccessibilityElement") { return (node as AnyObject).isAccessibilityElement?() ?? true }
+        let selector = NSSelectorFromString("accessibilityIsIgnored")
+        guard node.responds(to: selector) else { return true }
+        typealias Ignored = @convention(c) (AnyObject, Selector) -> Bool
+        return !unsafeBitCast(node.method(for: selector), to: Ignored.self)(node, selector)
+    }
+    /// AXUIElementIsAttributeSettable's own question, asked of the object; nil if it can't be asked.
+    static func valueSettable(_ node: NSObject, _ what: String) -> Bool? {
+        Watchdog.shared.begin("\(what): value settable")
+        defer { Watchdog.shared.end() }
+        let selector = NSSelectorFromString("accessibilityIsAttributeSettable:")
+        if node.responds(to: selector) {
+            typealias Settable = @convention(c) (AnyObject, Selector, NSString) -> Bool
+            return unsafeBitCast(node.method(for: selector), to: Settable.self)(node, selector, "AXValue" as NSString)
         }
-        for root in windows(matching: window) { walk(root, depth: 0) }
+        guard responds(node, "isAccessibilitySelectorAllowed:") else { return nil }
+        return (node as AnyObject).isAccessibilitySelectorAllowed?(NSSelectorFromString("setAccessibilityValue:"))
+    }
+    /// AppKit screen coordinates (bottom-left origin) to Quartz (top-left), once, here.
+    static func quartz(_ rect: NSRect) -> CGRect {
+        let primary = NSScreen.screens.first?.frame.maxY ?? 0
+        return CGRect(x: rect.minX, y: primary - rect.maxY, width: rect.width, height: rect.height)
+    }
+
+    // MARK: Walking
+
+    /// The window, then its sheets, child windows (popovers) and any visible window whose sheet
+    /// parent it is: the windows VoiceOver reads with it.
+    static func related(_ window: NSWindow) -> [NSWindow] {
+        var result: [NSWindow] = [], queue = [window]
+        while let next = queue.first {
+            queue.removeFirst()
+            guard !result.contains(where: { $0 === next }) else { continue }
+            result.append(next)
+            queue += next.sheets + (next.childWindows ?? []) + NSApp.windows.filter { $0.isVisible && $0.sheetParent === next }
+        }
         return result
     }
+
+    static func read(_ window: NSWindow?) -> Tree {
+        var tree = Tree()
+        guard let window else { tree.problems.append("no window to read"); return tree }
+        var seen = Set<ObjectIdentifier>()
+        func walk(_ node: NSObject, depth: Int, ancestors: [ObjectIdentifier], path: String) {
+            let id = ObjectIdentifier(node)
+            if ancestors.contains(id) { tree.problems.append("cycle: \(type(of: node)) is its own ancestor at \(path)"); return }
+            // Reached again from another window or parent: read once.
+            guard seen.insert(id).inserted else { return }
+            guard depth < maximumDepth else { tree.problems.append("depth limit \(maximumDepth) reached at \(path) (\(type(of: node)))"); return }
+            let kind = String(describing: type(of: node))
+            if kind == "NSAccessibilityRemoteUIElement" { tree.remote.append("\(kind) at \(path)"); return }
+            guard case .value(let rawRole) = role(node) else { tree.problems.append("unhandled object \(kind) at \(path): it answers no accessibility getter"); return }
+            let role = (rawRole as? String) ?? ""
+            let what = "\(kind) \(role) at \(path)"
+            let shown = isElement(node)
+            var nextDepth = depth
+            if shown {
+                func text(_ getter: String, _ attribute: String, _ modern: (AnyObject) -> Any?) -> String { string(ask(node, getter, attribute, what, modern)) }
+                let menu = menuBacked.contains(role)
+                let label = [text("accessibilityLabel", "AXDescription") { $0.accessibilityLabel?() ?? nil },
+                             menu ? "" : text("accessibilityTitle", "AXTitle") { $0.accessibilityTitle?() ?? nil },
+                             text("accessibilityPlaceholderValue", "AXPlaceholderValue") { $0.accessibilityPlaceholderValue?() ?? nil }]
+                    .first { !$0.isEmpty } ?? ""
+                var value = menu ? "" : text("accessibilityValue", "AXValue") { $0.accessibilityValue?() ?? nil }
+                if value.count > 80 { value = String(value.prefix(80)) + "…" }
+                let selected = string(ask(node, "isAccessibilitySelected", "AXSelected", what) { $0.isAccessibilitySelected?() }) == "1"
+                var frame = CGRect.zero
+                Watchdog.shared.begin("\(what): frame")
+                if responds(node, "accessibilityFrame") { frame = quartz((node as AnyObject).accessibilityFrame?() ?? .zero) }
+                else if case .value(let position?) = legacy(node, "AXPosition"), case .value(let size?) = legacy(node, "AXSize"),
+                        let point = (position as? NSValue)?.pointValue, let extent = (size as? NSValue)?.sizeValue {
+                    frame = quartz(NSRect(origin: point, size: extent))
+                } else { tree.problems.append("no frame for \(what)") }
+                Watchdog.shared.end()
+                let controlText = ["AXTextArea", "AXTextField"].contains(role)
+                tree.elements.append(Element(role: role, subrole: text("accessibilitySubrole", "AXSubrole") { $0.accessibilitySubrole?()?.rawValue },
+                                             label: label, value: value.replacingOccurrences(of: "\n", with: " "),
+                                             help: text("accessibilityHelp", "AXHelp") { $0.accessibilityHelp?() ?? nil }, selected: selected,
+                                             frame: frame, depth: depth, node: node, valueSettable: controlText ? valueSettable(node, what) : nil))
+                nextDepth = depth + 1
+            }
+            switch children(node, what) {
+            case .unsupported: tree.problems.append("no children getter on \(what)")
+            case .value(let raw):
+                guard let raw else { return }
+                guard let list = raw as? [Any] else { tree.problems.append("children of \(what) aren't a list (\(type(of: raw)))"); return }
+                for (index, child) in list.enumerated() {
+                    guard let object = child as? NSObject else { tree.problems.append("unhandled child \(type(of: child)) of \(what)"); continue }
+                    walk(object, depth: nextDepth, ancestors: ancestors + [id], path: path + "/\(index)")
+                }
+            }
+        }
+        for (index, root) in related(window).enumerated() { walk(root, depth: 0, ancestors: [], path: "window\(index)") }
+        return tree
+    }
+    /// Asks for the whole tree once, so SwiftUI builds the nodes a later read finds.
+    static func wake(_ window: NSWindow) {
+        // An AX API request to our own process (no permission needed) is what tells AppKit an
+        // assistive client is asking; SwiftUI builds its nodes then. The answer itself isn't used.
+        var ignored: CFTypeRef?
+        _ = AXUIElementCopyAttributeValue(AXUIElementCreateApplication(getpid()), kAXWindowsAttribute as CFString, &ignored)
+        _ = read(window)
+    }
+    /// The elements for an action to find its control in; problems are logged for diagnosis.
+    static func elements(of window: NSWindow?) -> [Element] {
+        let tree = read(window)
+        for problem in tree.problems { fputs("A11Y problem: \(problem)\n", stderr) }
+        return tree.elements
+    }
+
+    /// The application's focused element, as VoiceOver asks the app for it, and its name.
+    static func focusedLabel() -> String {
+        guard let focus = NSApp.accessibilityApplicationFocusedUIElement() as? NSObject else { return "" }
+        return string(ask(focus, "accessibilityLabel", "AXDescription", "focus \(type(of: focus))") { $0.accessibilityLabel?() ?? nil })
+    }
+    /// VoiceOver's press.
+    @discardableResult static func press(_ element: Element) -> Bool {
+        Watchdog.shared.begin("press \(element.role) “\(element.label)”")
+        defer { Watchdog.shared.end() }
+        return (element.node as AnyObject).accessibilityPerformPress?() ?? false
+    }
+    /// VoiceOver setting a field's value.
+    static func setValue(_ element: Element, _ text: String) {
+        (element.node as AnyObject).setAccessibilityValue?(text)
+    }
+
     /// Named elements with no role, which VoiceOver reads without saying what they are.
     static func roleless(_ elements: [Element]) -> [Element] {
         elements.filter { ($0.role == "AXUnknown" || $0.role.isEmpty) && !$0.label.isEmpty }
     }
-    /// Controls VoiceOver would announce without a name.
-    static func unnamed(_ elements: [Element]) -> [Element] {
+    /// Controls VoiceOver would announce without a name, with why.
+    static func unnamed(_ elements: [Element]) -> [(Element, String)] {
         // The window's own buttons and scroll-bar parts are named by their subrole; selectable
         // read-only text is read by its value.
         let system: Set<String> = ["AXCloseButton", "AXMinimizeButton", "AXZoomButton", "AXFullScreenButton",
@@ -147,18 +283,42 @@ final class SnapshotWindow: NSWindow {
         return elements.indices.compactMap { index in
             let element = elements[index]
             guard controls.contains(element.role), !system.contains(element.subrole), element.label.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
-            if ["AXTextArea", "AXTextField"].contains(element.role), !settable(element.element) {
-                // Read-only text is read by its contents, its own value or the text inside it.
-                let inside = elements[(index + 1)...].prefix { $0.depth > element.depth }
-                if !element.value.isEmpty || inside.contains(where: { $0.role == "AXStaticText" && !$0.value.isEmpty }) { return nil }
+            if ["AXTextArea", "AXTextField"].contains(element.role) {
+                // An unanswered question is a failure, never a read-only field.
+                guard let settable = element.valueSettable else { return (element, "has no name, and whether its value can be set couldn't be read") }
+                if !settable {
+                    // Read-only text is read by its contents, its own value or the text inside it.
+                    let inside = elements[(index + 1)...].prefix { $0.depth > element.depth }
+                    if !element.value.isEmpty || inside.contains(where: { $0.role == "AXStaticText" && !$0.value.isEmpty }) { return nil }
+                }
             }
-            return element
+            return (element, "has no name")
         }
     }
-    static func settable(_ element: AXUIElement) -> Bool {
-        var settable: DarwinBoolean = false
-        return AXUIElementIsAttributeSettable(element, kAXValueAttribute as CFString, &settable) == .success && settable.boolValue
+}
+
+/// Fails the run, naming the getter, when an accessibility query on the main thread stops answering.
+final class Watchdog: @unchecked Sendable {
+    static let shared = Watchdog()
+    static let limit: TimeInterval = 20
+    private let lock = NSLock()
+    private var current: (what: String, since: Date)?
+    private var started = false
+    func begin(_ what: String) {
+        lock.lock(); defer { lock.unlock() }
+        current = (what, Date())
+        if !started {
+            started = true
+            Thread.detachNewThread { [self] in
+                while true {
+                    Thread.sleep(forTimeInterval: 1)
+                    lock.lock(); let stuck = current.flatMap { Date().timeIntervalSince($0.since) > Self.limit ? $0.what : nil }; lock.unlock()
+                    if let stuck { fputs("FAIL: accessibility query did not return within \(Int(Self.limit)) s: \(stuck)\n", stderr); exit(1) }
+                }
+            }
+        }
     }
+    func end() { lock.lock(); current = nil; lock.unlock() }
 }
 
 @main struct Snapshots {
@@ -172,7 +332,7 @@ final class SnapshotWindow: NSWindow {
                                 "configs-binds-verify", "configs-binds-learn", "configs-expert-player",
                                 "configs-checkup-measured", "configs-checkup-off", "configs-checkup-error",
                                 "configs-import-link", "configs-import-windows", "configs-import-loading",
-                                "discover-saved-removed", "configs-save-failure"]
+                                "discover-saved-removed", "configs-save-failure", "configs-import-windows-profiles", "configs-catalog-loading"]
 
     @MainActor static func main() {
         let arguments = CommandLine.arguments
@@ -186,7 +346,8 @@ final class SnapshotWindow: NSWindow {
         let accessibility = Accessibility(increaseContrast: arguments.contains("--increase-contrast"), reduceTransparency: arguments.contains("--reduce-transparency"),
                                           reduceMotion: arguments.contains("--reduce-motion"))
         let app = NSApplication.shared
-        app.setActivationPolicy(.accessory)
+        // Match the shipping app: accessory activation can leave a real window inactive.
+        app.setActivationPolicy(.regular)
         LauncherFonts.register()
         guard NSFont(name: LauncherFonts.stencilHeavy, size: 12) != nil, NSFont(name: LauncherFonts.typewriter, size: 12) != nil else {
             fputs("Bundled fonts did not register.\n", stderr); exit(1)
@@ -197,7 +358,10 @@ final class SnapshotWindow: NSWindow {
             exit(contrastReport(data: data, output: output) ? 0 : 1)
         }
         if arguments.contains("--actions") {
-            Task { @MainActor in exit(await ConfigsPreview.actions() ? 0 : 1) }
+            Task { @MainActor in
+                let passed = if let only { await ConfigsPreview.action(only) } else { await ConfigsPreview.actions() }
+                exit(passed ? 0 : 1)
+            }
             app.run()
         }
         if arguments.contains("--accessibility") {
@@ -213,7 +377,9 @@ final class SnapshotWindow: NSWindow {
             var findings: [String] = [], report: [[String: Any]] = []
             for dark in [true, false] {
                 for screen in screens where (only == nil || only == screen) && (!configsOnly || configScreens.contains(screen)) {
-                    let model = LauncherModel(snapshot: true)
+                    let gate = screen == "configs-catalog-loading" ? PreviewCatalogGate() : nil
+                    defer { gate?.release() }
+                    let model = LauncherModel(snapshot: true, catalog: { try gate?.load() ?? ConfigStudioModel.bundledCatalog() })
                     model.preview(screen)
                     var home: URL?
                     if configScreens.contains(screen) {
@@ -261,7 +427,6 @@ final class SnapshotWindow: NSWindow {
             .environment(\.shapeAudit, audit)
             .environment(\.usesGlass, glass && LiquidGlass.available)
             .environment(\.colorScheme, dark ? .dark : .light)
-            .environment(\.controlActiveState, .key)
             // Test-only overrides of the system settings, without changing them for the Mac.
             .environment(\._colorSchemeContrast, accessibility.increaseContrast ? .increased : .standard)
             .environment(\._accessibilityReduceTransparency, accessibility.reduceTransparency)
@@ -320,7 +485,8 @@ final class SnapshotWindow: NSWindow {
         geometry(window, "content-controller")
         window.setFrame(NSRect(origin: NSPoint(x: 40, y: 40), size: windowSize), display: true)
         geometry(window, "first-set-frame")
-        window.orderFrontRegardless()
+        if #available(macOS 14.0, *) { NSApp.activate() } else { NSApp.activate(ignoringOtherApps: true) }
+        window.makeKeyAndOrderFront(nil)
         geometry(window, "order-front")
         try? await Task.sleep(for: .milliseconds(1400))
         geometry(window, "first-settled")
@@ -328,6 +494,11 @@ final class SnapshotWindow: NSWindow {
         geometry(window, "second-set-frame")
         try? await Task.sleep(for: .milliseconds(400))
         geometry(window, "settled")
+        let keyTarget = window.attachedSheet ?? window
+        guard NSApp.isActive, NSApp.keyWindow === keyTarget, keyTarget.isKeyWindow else {
+            fputs("FAIL: the real snapshot window or its attached sheet did not become active and key; no focus or material proof is possible.\n", stderr)
+            exit(1)
+        }
         return window
     }
 
@@ -530,6 +701,21 @@ final class SnapshotWindow: NSWindow {
     }
 }
 
+/// Holds the existing injected catalog source, so the real asynchronous loading path
+/// stays visible for a capture. Every caller releases it in cleanup; the deadline also
+/// bounds a failed capture without adding any loading-state override to production.
+final class PreviewCatalogGate: Sendable {
+    private let semaphore = DispatchSemaphore(value: 0)
+    func load() throws -> ConfigCatalog {
+        guard semaphore.wait(timeout: .now() + 60) == .success else {
+            throw NSError(domain: "LauncherSnapshot", code: 2,
+                          userInfo: [NSLocalizedDescriptionKey: "The catalog capture did not release its loading fixture."])
+        }
+        return try ConfigStudioModel.bundledCatalog()
+    }
+    func release() { semaphore.signal() }
+}
+
 /// A fixed ABC keyboard and a mouse, so Binds renders the same everywhere and never
 /// shows the reviewer's own devices.
 @MainActor final class PreviewInputProvider: InputDeviceProvider {
@@ -572,7 +758,7 @@ final class SnapshotWindow: NSWindow {
         for (key, action) in [("TAB", "+scores"), ("SPACE", "+gostand"), ("4", "+smoke"), ("a", "+moveleft"), ("c", "togglecrouch"), ("d", "+moveright"),
                               ("e", "+leanright"), ("q", "+leanleft"), ("r", "+reload"), ("s", "+back"), ("t", "chatmodepublic"), ("v", "+melee"),
                               ("w", "+forward"), ("y", "chatmodeteam"), ("z", "mp_quickmessage"), ("CTRL", "toggleprone"), ("SHIFT", "+holdbreath"),
-                              ("MOUSE1", "+attack"), ("MOUSE2", "+toggleads_throw"), ("MWHEELDOWN", "weapprev"), ("MWHEELUP", "weapnext")] {
+                              ("MOUSE1", "+attack"), ("MOUSE2", "toggleads"), ("MWHEELDOWN", "weapprev"), ("MWHEELUP", "weapnext")] {
             text += "bind \(key) \"\(action)\"\n"
         }
         for name in values.keys.sorted(by: { $0.lowercased() < $1.lowercased() }) { text += "seta \(name) \"\(values[name]!)\"\n" }
@@ -630,7 +816,8 @@ final class SnapshotWindow: NSWindow {
         let setup = PreviewCaptureSource()
         if screen == "configs-binds-verify" || screen == "configs-binds-learn" { model.studio.captureSource = { _ in setup } }
         model.studio.attach(session)
-        model.studio.loadCatalogNow()
+        // The loading fixture supplies a bounded catalog source; onAppear starts the real load.
+        if screen != "configs-catalog-loading" { model.studio.loadCatalogNow() }
         model.studio.checkup.load()
         switch screen {
         case "configs-expert": model.studio.compareID = "Scrim"
@@ -659,7 +846,8 @@ final class SnapshotWindow: NSWindow {
             try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: folder.path)
             defer { try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: folder.path) }
             if let speed = model.studio.spec(named: "sensitivity") { model.studio.set(speed, to: "3.1") }
-        case "configs-import-link", "configs-import-windows", "configs-import-loading", "discover-saved-removed": model.page = .configs
+        case "configs-import-link", "configs-import-windows", "configs-import-loading", "discover-saved-removed", "configs-import-windows-profiles",
+             "configs-catalog-loading": model.page = .configs
         case "configs-binds-verify":
             // Second question, after a key that isn't the answer: the note shows beside it.
             model.page = .configs; model.studio.tab = .binds; model.studio.binds.layout = .visual
@@ -737,6 +925,18 @@ final class SnapshotWindow: NSWindow {
             try PrivateFile.write(config(["sensitivity": "2.2", "com_maxfps": "250", "cg_drawFPS": "Simple", "name": "Morrow"]).serialized(), to: file)
             discover.importWindows(WindowsProfileCandidate(profileName: "Morrow", configURL: file, playersURL: players, isActive: true, isBackup: false))
             await waitReview()
+        case "configs-import-windows-profiles":
+            // The Windows step's real picker over known synthetic candidates; no drive is scanned
+            // and no profile is read unless one is reviewed.
+            let players = home.appendingPathComponent("windows-preview/players")
+            func candidate(_ name: String, active: Bool = false, backup: Bool = false) -> WindowsProfileCandidate {
+                WindowsProfileCandidate(profileName: name, configURL: players.appendingPathComponent(name + "/config_mp.cfg"), playersURL: players,
+                                        isActive: active, isBackup: backup)
+            }
+            let found = WindowsProfileDiscovery(profiles: [candidate("Morrow", active: true), candidate("Scrim"), candidate("Morrow", backup: true)],
+                                                truncated: false, unreadableDirectories: 1)
+            discover.findWindowsProfiles = { _ in (found, searched: ["Windows (preview)"]) }
+            discover.step = .windows
         case "configs-import-loading":
             // Held at reading, so the progress state can be seen; nothing is read.
             discover.beginImport(displayName: "Pasted config", provenance: .init(source: "Pasted text", symbol: "doc.on.clipboard")) { _, _ in
@@ -902,20 +1102,21 @@ final class SnapshotWindow: NSWindow {
             visual.makeKey()
             click(visual, element: keyE)
             try? await Task.sleep(for: .milliseconds(400))
-            let focus = AccessibilityTree.attribute(AccessibilityTree.application, kAXFocusedUIElementAttribute).map { $0 as! AXUIElement }
-            let focusLabel = focus.map { AccessibilityTree.text($0, kAXDescriptionAttribute) } ?? ""
+            let focusLabel = AccessibilityTree.focusedLabel()
             guard visualModel.studio.binds.selectedVirtualKey == 14, focusLabel.hasPrefix("E, ") else {
                 print("FAIL: clicking E selected \(String(describing: visualModel.studio.binds.selectedVirtualKey)) with focus on “\(focusLabel)”"); return false
             }
             print("PASS: clicking E in Visual selected it and gave it the keyboard focus")
             // Arrow keys arrive as AppKit sends them (function-key characters), so move commands reach SwiftUI.
-            let drawn = ConfigKeyboardLayout.keys(shape: .ansi, size: .percent75)
+            // Independent ANSI fixture positions, not the production neighbor helper.
             var at: UInt16 = 14
-            for (code, direction) in [(124, ConfigKeyboardDirection.right), (125, .down), (123, .left), (126, .up)] as [(UInt16, ConfigKeyboardDirection)] {
-                guard let next = ConfigKeyboardLayout.neighbor(of: at, direction, in: drawn) else { return false }
+            for (code, direction, next) in [(124, ConfigKeyboardDirection.right, 15), (125, .down, 3), (123, .left, 2), (126, .up, 14)] as [(UInt16, ConfigKeyboardDirection, UInt16)] {
+                func scrolls() -> String { views(NSClipView.self, in: visual.contentView!).map { NSStringFromPoint($0.bounds.origin) }.joined(separator: " ") }
+                trace("arrow \(direction): before responder \(visual.firstResponder.map { String(describing: type(of: $0)) } ?? "none") scroll \(scrolls())")
                 pressArrow(visual, keyCode: code)
                 try? await Task.sleep(for: .milliseconds(400))
-                let focused = AccessibilityTree.attribute(AccessibilityTree.application, kAXFocusedUIElementAttribute).map { AccessibilityTree.text($0 as! AXUIElement, kAXDescriptionAttribute) } ?? ""
+                trace("arrow \(direction): after responder \(visual.firstResponder.map { String(describing: type(of: $0)) } ?? "none") scroll \(scrolls()) selected \(String(describing: visualModel.studio.binds.selectedVirtualKey))")
+                let focused = AccessibilityTree.focusedLabel()
                 let name = BindsLabel.drawnName(next)
                 guard visualModel.studio.binds.selectedVirtualKey == next, focused.hasPrefix(name + ", ") else {
                     print("FAIL: arrow \(direction) from \(at) selected \(String(describing: visualModel.studio.binds.selectedVirtualKey)) with focus on “\(focused)”, not \(next)"); return false
@@ -933,36 +1134,87 @@ final class SnapshotWindow: NSWindow {
         return await tabExitAction()
     }
 
+    /// One later check on its own (`--actions --only NAME`), for iterating on it; the full run
+    /// above is what the matrix requires.
+    static func action(_ name: String) async -> Bool {
+        switch name {
+        case "compare": return await compareAction()
+        case "loadout-menu": return await loadoutMenuActions()
+        case "import": return await importAction()
+        case "ready": return await readyAction()
+        case "tab-exit": return await tabExitAction()
+        case "device-setup":
+            guard let (model, window, home) = await open("configs-binds-visual", dark: true) else { return false }
+            defer { window.orderOut(nil); window.close(); try? FileManager.default.removeItem(at: home) }
+            return await deviceSetupActions(model: model, window: window)
+        default: print("FAIL: no action check named \(name)"); return false
+        }
+    }
+
     /// The drawing is one Tab stop: after a click on E, Tab leaves the keyboard instead of
     /// visiting each key. Read back the way VoiceOver reads focus.
     static func tabExitAction() async -> Bool {
         guard let (model, window, home) = await open("configs-binds-visual", dark: true) else { return false }
         defer { window.orderOut(nil); window.close(); try? FileManager.default.removeItem(at: home) }
-        let keys = AccessibilityTree.elements(of: window).filter { $0.role == "AXButton" && $0.label.contains(", ") && KeyLabels.drawn.contains(where: $0.label.hasPrefix) }
-        guard let keyE = keys.first(where: { $0.label.hasPrefix("E, ") }) else { print("FAIL: key E isn't in the accessibility tree"); return false }
+        func focusedPosition() -> (elements: [AccessibilityTree.Element], drawing: Range<Int>, focus: Int)? {
+            // Read synchronously on MainActor: compare actual provider objects, never guessed
+            // spoken-name/frame matches. A provider that cannot establish membership fails closed.
+            let tree = AccessibilityTree.read(window)
+            guard tree.problems.isEmpty,
+                  let group = tree.elements.firstIndex(where: { $0.label.hasSuffix("layout. Each key says what it does.") }),
+                  let focus = NSApp.accessibilityApplicationFocusedUIElement() as? NSObject else { return nil }
+            let index: Int
+            if let exact = tree.elements.firstIndex(where: { $0.node === focus }) { index = exact }
+            else {
+                let equal = tree.elements.indices.filter { tree.elements[$0].node.isEqual(focus) }
+                guard equal.count == 1 else { return nil }
+                index = equal[0]
+            }
+            let depth = tree.elements[group].depth
+            let end = tree.elements.indices.dropFirst(group + 1).first { tree.elements[$0].depth <= depth } ?? tree.elements.endIndex
+            return (tree.elements, group..<end, index)
+        }
+        let initial = AccessibilityTree.read(window)
+        guard initial.problems.isEmpty,
+              let group = initial.elements.firstIndex(where: { $0.label.hasSuffix("layout. Each key says what it does.") }) else {
+            print("FAIL: keyboard drawing is not identifiable in the native accessibility tree"); return false
+        }
+        let descendants = initial.elements.dropFirst(group + 1).prefix { $0.depth > initial.elements[group].depth }
+        guard let keyE = descendants.first(where: { $0.role == "AXButton" && $0.label.hasPrefix("E, ") }) else {
+            print("FAIL: key E is not in the keyboard drawing's accessibility subtree"); return false
+        }
         window.makeKey()
         click(window, element: keyE)
         try? await Task.sleep(for: .milliseconds(400))
-        guard model.studio.binds.selectedVirtualKey == 14 else { print("FAIL: clicking E did not select it"); return false }
+        guard model.studio.binds.selectedVirtualKey == 14, let before = focusedPosition(),
+              before.drawing.contains(before.focus), before.elements[before.focus].label.hasPrefix("E, ") else {
+            print("FAIL: clicking E did not select it and give its native accessibility element focus"); return false
+        }
         press(window, keyCode: 48, characters: "\t")
         try? await Task.sleep(for: .milliseconds(400))
-        let focus = AccessibilityTree.attribute(AccessibilityTree.application, kAXFocusedUIElementAttribute).map { $0 as! AXUIElement }
-        let label = focus.map { AccessibilityTree.text($0, kAXDescriptionAttribute) } ?? ""
-        guard !label.isEmpty, !keys.contains(where: { $0.label == label }) else {
-            print("FAIL: Tab from E left the focus on “\(label)”, still on the keyboard drawing"); return false
+        guard let after = focusedPosition() else {
+            print("FAIL: Tab focus could not be identified in the current native accessibility tree"); return false
         }
-        print("PASS: Tab from the keyboard drawing left it in one step (focus on “\(label)”)")
+        let focused = after.elements[after.focus]
+        guard !after.drawing.contains(after.focus) else {
+            print("FAIL: Tab did not leave the whole keyboard drawing (focus on “\(focused.label)”, \(focused.role))"); return false
+        }
+        // Native split-view pane proxies can own focus without being a named control.
+        // Require a real, identified outside element and a reverse traversal back to E.
+        press(window, keyCode: 48, characters: "\u{19}", modifiers: .shift)
+        try? await Task.sleep(for: .milliseconds(400))
+        guard let returned = focusedPosition(), returned.drawing.contains(returned.focus),
+              returned.elements[returned.focus].label.hasPrefix("E, "), model.studio.binds.selectedVirtualKey == 14 else {
+            print("FAIL: Shift-Tab did not return to the keyboard drawing's selected E key"); return false
+        }
+        print("PASS: Tab left the keyboard drawing in one step and Shift-Tab returned to its selected E key")
         return true
     }
 
-    /// Key names the ANSI drawing speaks first in each key's label (“E, Not bound”).
-    enum KeyLabels {
-        static let drawn: [String] = "QWERTYUIOPASDFGHJKLZXCVBNM1234567890".map { "\($0), " }
-            + ["Space, ", "Command, ", "Option, ", "Control, ", "Shift, ", "Right ", "tab, ", "caps, ", "return, ", "delete, ", "esc, ", "fn, ", "F"]
-    }
-
-    /// A click delivered through the application, where Binds' local monitor listens (a window's
-    /// own sendEvent would bypass it). The mouse-up is queued first for a control's tracking loop.
+    /// Queue a click through the application's normal event pump, where Binds' local monitor
+    /// listens. Dequeuing mouse-down also establishes NSApp.currentEvent for SwiftUI controls;
+    /// dispatching it inside a task leaves the previous event current and can lose the click.
+    /// Callers yield afterward; the following mouse-up is available to a control's tracking loop.
     static func appClick(_ window: NSWindow, element: AccessibilityTree.Element) {
         let primary = NSScreen.screens.first?.frame.maxY ?? 0
         let point = window.convertPoint(fromScreen: NSPoint(x: element.frame.midX, y: primary - element.frame.midY))
@@ -971,8 +1223,8 @@ final class SnapshotWindow: NSWindow {
                                windowNumber: window.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1)
         }
         guard let down = event(.leftMouseDown), let up = event(.leftMouseUp) else { return }
+        NSApp.postEvent(down, atStart: false)
         NSApp.postEvent(up, atStart: false)
-        NSApp.sendEvent(down)
     }
 
     /// Press keys to verify with real key presses through the window's monitor, and a real click
@@ -981,19 +1233,43 @@ final class SnapshotWindow: NSWindow {
     static func deviceSetupActions(model: LauncherModel, window: NSWindow) async -> Bool {
         let binds = model.studio.binds
         window.makeKey()
-        binds.beginVerification()
-        try? await Task.sleep(for: .milliseconds(300))
+        // Start through the visible device controls, as a person does. In particular, do not
+        // insert the setup panel by mutating the store while a keyboard cap owns focus.
+        guard let keyboardChip = AccessibilityTree.elements(of: window).first(where: {
+            $0.role == "AXButton" && $0.label.hasPrefix("Magic Keyboard ·")
+        }) else { print("FAIL: keyboard device control is not on screen"); return false }
+        appClick(window, element: keyboardChip)
+        try? await Task.sleep(for: .milliseconds(400))
+        guard let verify = AccessibilityTree.elements(of: window).first(where: {
+            $0.role == "AXButton" && $0.label == "Press Keys to Verify…"
+        }) else {
+            print("FAIL: keyboard popover did not offer Press Keys to Verify"); return false
+        }
+        guard let panel = AccessibilityTree.related(window).first(where: { candidate in
+            candidate !== window && candidate.frame.contains(NSPoint(x: verify.frame.midX,
+                y: (NSScreen.screens.first?.frame.maxY ?? 0) - verify.frame.midY))
+        }) else { print("FAIL: keyboard verification control has no visible popover window"); return false }
+        appClick(panel, element: verify)
+        try? await Task.sleep(for: .milliseconds(400))
         guard binds.verification?.step == .besideShift else { print("FAIL: Press keys to verify did not start (\(model.studio.failure?.title ?? "no failure"))"); return false }
         press(window, keyCode: 50, characters: "`")
         press(window, keyCode: 58, characters: "")
         try? await Task.sleep(for: .milliseconds(400))
-        for _ in 0..<2 {
+        for index in 0..<2 {
+            let expectedBefore: KeyboardVerification.Step = index == 0 ? .keypad : .navigation
+            guard binds.verification?.step == expectedBefore else {
+                print("FAIL: unexpected keyboard step before Skip: \(String(describing: binds.verification?.step))"); return false
+            }
             guard let skip = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXButton" && $0.label == "I Don’t Have This Key" }) else {
                 print("FAIL: I Don’t Have This Key is not on screen (step \(String(describing: binds.verification?.step)))"); return false
             }
             appClick(window, element: skip)
             try? await Task.sleep(for: .milliseconds(400))
-            if binds.verification?.step == .functionRow { press(window, keyCode: 122, characters: "") }
+            let expectedAfter: KeyboardVerification.Step = index == 0 ? .functionRow : .size([.percent75])
+            guard binds.verification?.step == expectedAfter else {
+                print("FAIL: Skip did not advance keyboard verification: \(String(describing: binds.verification?.step))"); return false
+            }
+            if index == 0 { press(window, keyCode: 122, characters: "") }
             try? await Task.sleep(for: .milliseconds(300))
         }
         // The keys only narrow the size; nothing is verified until the person chooses it.
@@ -1186,8 +1462,8 @@ final class SnapshotWindow: NSWindow {
         return true
     }
     /// The window for one review screen, seeded like the snapshot run; nil if seeding failed.
-    static func open(_ screen: String, dark: Bool, setup: (LauncherModel) -> Void = { _ in }) async -> (LauncherModel, NSWindow, URL)? {
-        let model = LauncherModel(snapshot: true)
+    static func open(_ screen: String, dark: Bool, catalogGate: PreviewCatalogGate? = nil, setup: (LauncherModel) -> Void = { _ in }) async -> (LauncherModel, NSWindow, URL)? {
+        let model = LauncherModel(snapshot: true, catalog: { try catalogGate?.load() ?? ConfigStudioModel.bundledCatalog() })
         model.preview(screen)
         guard let home = try? seed(model, screen: screen) else { print("FAIL: preview home for \(screen)"); return nil }
         // Discover, import and ready-check screens load their fixtures the way the snapshot run does.
@@ -1196,7 +1472,8 @@ final class SnapshotWindow: NSWindow {
         trace("open \(screen): seeded")
         let window = await Snapshots.show(model: model, dark: dark, glass: true)
         trace("open \(screen): shown")
-        AccessibilityTree.wake()
+        // SwiftUI builds its accessibility nodes once something asks for them.
+        AccessibilityTree.wake(window)
         trace("open \(screen): woke")
         try? await Task.sleep(for: .milliseconds(500))
         trace("open \(screen): ready")
@@ -1210,7 +1487,7 @@ final class SnapshotWindow: NSWindow {
         let primary = NSScreen.screens.first?.frame.maxY ?? 0
         let visible = CGRect(x: window.frame.minX, y: primary - window.frame.maxY, width: window.frame.width, height: window.frame.height)
         if visible.contains(CGPoint(x: element.frame.midX, y: element.frame.midY)) { click(window, element: element) }
-        else { _ = AXUIElementPerformAction(element.element, kAXPressAction as CFString) }
+        else { AccessibilityTree.press(element) }
     }
     static func click(_ window: NSWindow, element: AccessibilityTree.Element) {
         let primary = NSScreen.screens.first?.frame.maxY ?? 0
@@ -1237,6 +1514,8 @@ final class SnapshotWindow: NSWindow {
         "configs-import-loading": ["Reading and checking every line"],
         "discover-saved-removed": ["Remove this saved setup"],
         "configs-save-failure": ["Couldn’t save: Changed Mouse speed"],
+        "configs-import-windows-profiles": ["Bring in your Windows setup", "Morrow", "Scrim", "Choose Folder…"],
+        "configs-catalog-loading": ["Loading settings"],
     ]
 
     /// Every Config Studio screen's accessibility tree in reading order, with unnamed controls as failures.
@@ -1245,22 +1524,28 @@ final class SnapshotWindow: NSWindow {
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         var ok = true
         for screen in Snapshots.configScreens where only == nil || only == screen {
-            guard let (_, window, home) = await open(screen, dark: true) else { return false }
-            let elements = AccessibilityTree.elements(of: window)
+            let gate = screen == "configs-catalog-loading" ? PreviewCatalogGate() : nil
+            defer { gate?.release() }
+            guard let (_, window, home) = await open(screen, dark: true, catalogGate: gate) else { return false }
+            // Everything the checks use (settability included) is read while the window is open.
+            let tree = AccessibilityTree.read(window)
+            let elements = tree.elements
             trace("\(screen): \(elements.count) elements read")
-            window.orderOut(nil); window.close()
-            try? FileManager.default.removeItem(at: home)
-            try? (elements.map(\.line).joined(separator: "\n") + "\n").write(to: folder.appendingPathComponent(screen + ".txt"), atomically: true, encoding: .utf8)
             let controls = elements.filter { AccessibilityTree.controls.contains($0.role) }
             let unnamed = AccessibilityTree.unnamed(elements)
             // Static text reads its words as its value.
             let missing = (expectedLabels[screen] ?? []).filter { expected in !elements.contains { $0.label.hasPrefix(expected) || $0.value.hasPrefix(expected) } }
             let roleless = AccessibilityTree.roleless(elements)
-            for element in unnamed { print("A11Y: \(screen): \(element.role) at \(NSStringFromRect(element.frame)) has no name") }
+            window.orderOut(nil); window.close()
+            try? FileManager.default.removeItem(at: home)
+            try? (elements.map(\.line).joined(separator: "\n") + "\n").write(to: folder.appendingPathComponent(screen + ".txt"), atomically: true, encoding: .utf8)
+            for (element, why) in unnamed { print("A11Y: \(screen): \(element.role) (\(type(of: element.node))) at \(NSStringFromRect(element.frame)) \(why)") }
             for element in roleless { print("A11Y: \(screen): “\(element.label)” has no role") }
             for label in missing { print("A11Y: \(screen): no element named “\(label)…”") }
-            print("A11Y \(screen): \(elements.count) elements, \(controls.count) controls, \(unnamed.count) without a name, \(roleless.count) without a role")
-            ok = ok && unnamed.isEmpty && roleless.isEmpty && missing.isEmpty && controls.count > 5
+            for problem in tree.problems { print("A11Y: \(screen): \(problem)") }
+            for proxy in tree.remote { print("A11Y: \(screen): not read, drawn by another process: \(proxy)") }
+            print("A11Y \(screen): \(elements.count) elements, \(controls.count) controls, \(unnamed.count) without a name, \(roleless.count) without a role, \(tree.problems.count) unreadable")
+            ok = ok && unnamed.isEmpty && roleless.isEmpty && missing.isEmpty && tree.problems.isEmpty && controls.count > 5
         }
         print(ok ? "PASS: every Config Studio control has a name and every named element a role VoiceOver can read" : "FAIL: accessibility tree problems above")
         return ok
@@ -1278,7 +1563,7 @@ final class SnapshotWindow: NSWindow {
         Overlay(name: "configs-jump", screen: "configs-guided", target: { $0.role == "AXButton" && $0.label == "Jump to Any Setting" }, after: { window in
             // Type “fps” the way VoiceOver would set a field's value.
             if let field = AccessibilityTree.elements(of: window).first(where: { $0.role == "AXTextField" && $0.label == "Setting name or console name" }) {
-                _ = AXUIElementSetAttributeValue(field.element, kAXValueAttribute as CFString, "fps" as CFString)
+                AccessibilityTree.setValue(field, "fps")
                 try? await Task.sleep(for: .milliseconds(500))
             }
         }),
@@ -1306,7 +1591,7 @@ final class SnapshotWindow: NSWindow {
                     print("FAIL: \(name): the control that opens it isn't in the accessibility tree"); ok = false
                     window.orderOut(nil); window.close(); continue
                 }
-                if overlay.press { _ = AXUIElementPerformAction(target.element, kAXPressAction as CFString) } else { activate(window, element: target) }
+                if overlay.press { AccessibilityTree.press(target) } else { activate(window, element: target) }
                 try? await Task.sleep(for: .milliseconds(900))
                 await overlay.after(window)
                 // Sheets, alerts and popovers are windows of their own; popovers aren't in orderedWindows.
@@ -1333,6 +1618,9 @@ final class SnapshotWindow: NSWindow {
     /// An arrow key as the keyboard sends it: a function-key character on the numeric pad, which
     /// AppKit turns into a move command.
     static func pressArrow(_ window: NSWindow, keyCode: UInt16) {
+        guard NSApp.isActive, NSApp.keyWindow === window, window.isKeyWindow, window.firstResponder != nil else {
+            fputs("FAIL: key event target is not the actual active key window with a first responder.\n", stderr); exit(1)
+        }
         let scalar: UInt32 = [123: 0xF702, 124: 0xF703, 125: 0xF701, 126: 0xF700][keyCode] ?? 0xF703
         let characters = String(Character(UnicodeScalar(scalar)!))
         for type in [NSEvent.EventType.keyDown, .keyUp] {
@@ -1350,45 +1638,161 @@ final class SnapshotWindow: NSWindow {
         }
     }
 
-    /// Menu items anywhere in this app (an open menu is not inside the window's tree).
-    static func menuItems() -> [AccessibilityTree.Element] {
-        var result: [AccessibilityTree.Element] = []
-        func walk(_ element: AXUIElement, depth: Int) {
-            guard depth < 12 else { return }
-            let role = AccessibilityTree.text(element, kAXRoleAttribute)
-            if role == "AXMenuItem" {
-                result.append(.init(role: role, subrole: "", label: AccessibilityTree.text(element, kAXTitleAttribute), value: "", help: "", selected: false,
-                                    frame: AccessibilityTree.frame(element), depth: depth, element: element))
-            }
-            for child in AccessibilityTree.attribute(element, kAXChildrenAttribute) as? [AXUIElement] ?? [] { walk(child, depth: depth + 1) }
-        }
-        walk(AccessibilityTree.application, depth: 0)
-        return result
+    /// What the More Actions menu did while it tracked.
+    @MainActor final class MenuDriver {
+        var menu: NSMenu?, index: Int?, titles: [String] = [], ended = false, timedOut = false, actionCompleted = false
     }
-    /// Opens the loadout's More Actions menu with VoiceOver's press and chooses an item. The menu
-    /// runs its own loop, so the item is pressed from a task that runs inside it; `during` then
-    /// runs inside whatever the item opens (a save panel's modal loop).
-    static func chooseMoreAction(_ window: NSWindow, _ prefix: String, during: (@MainActor () async -> Void)? = nil) async -> Bool {
+    /// Services the real panel only after it accepts the exact synthetic destination. A delegate
+    /// rejects every other URL even if the panel's selection changes between the check and Save.
+    @MainActor final class SavePanelService: NSObject, NSOpenSavePanelDelegate {
+        let target: URL
+        let saving: Bool
+        private let acceptedTargets: Set<URL>
+        private(set) var seen = false, timedOut = false, destinationVerified = false, destinationValidated = false
+        private var ticks = 0, seenAt = 0, finished = false, timer: Timer?
+        private let interactive = ProcessInfo.processInfo.environment["COD2_SNAPSHOT_INTERACTIVE_EXPORT"] == "1"
+        private var deadline = 0.0
+        private var deadlineWork: DispatchWorkItem?
+        private weak var ownedPanel: NSSavePanel?
+        init(target: URL, saving: Bool = true) {
+            let original = target.standardizedFileURL
+            // Only this already-created, owned synthetic directory is resolved. Panel URLs
+            // are compared lexically; no candidate outside it is inspected on disk.
+            let resolved = original.deletingLastPathComponent().resolvingSymlinksInPath().appendingPathComponent(original.lastPathComponent)
+            self.target = resolved
+            self.acceptedTargets = [original, resolved]
+            self.saving = saving
+            super.init()
+        }
+        private func accepts(_ url: URL?) -> Bool {
+            url.map { acceptedTargets.contains($0.standardizedFileURL) } ?? false
+        }
+        private func acceptsDirectory(_ url: URL?) -> Bool {
+            guard let url else { return false }
+            return acceptedTargets.contains { $0.deletingLastPathComponent() == url.standardizedFileURL }
+        }
+        func makePanel() -> NSSavePanel {
+            let panel = NSSavePanel()
+            // AppKit permits these properties to be set only before presentation.
+            panel.directoryURL = target.deletingLastPathComponent()
+            panel.nameFieldStringValue = target.lastPathComponent
+            panel.delegate = self
+            ownedPanel = panel
+            return panel
+        }
+        func panel(_ sender: Any, validate url: URL) throws {
+            guard let panel = sender as? NSSavePanel, panel === ownedPanel, accepts(url) else {
+                throw NSError(domain: "LauncherSnapshot", code: 1,
+                              userInfo: [NSLocalizedDescriptionKey: "The export must stay in the synthetic test folder."])
+            }
+            destinationValidated = true
+        }
+        nonisolated private static func deadlineExpired() {
+            FileHandle.standardError.write(Data("FAIL: synthetic export panel exceeded its deadline.\n".utf8))
+            exit(1)
+        }
+        func start() {
+            let timeout: TimeInterval = interactive && saving ? 120 : 12
+            deadline = ProcessInfo.processInfo.systemUptime + timeout
+            // A native nested error panel can stop main-run-loop timers. Bound this test host
+            // independently; cancelling this work item prevents it from affecting later checks.
+            let work = DispatchWorkItem(block: Self.deadlineExpired)
+            deadlineWork = work
+            DispatchQueue.global().asyncAfter(deadline: .now() + timeout, execute: work)
+            let timer = Timer(timeInterval: 0.1, repeats: true) { [weak self] _ in MainActor.assumeIsolated { self?.tick() } }
+            RunLoop.main.add(timer, forMode: .common)
+            self.timer = timer
+        }
+        func stop() { timer?.invalidate(); timer = nil; deadlineWork?.cancel(); deadlineWork = nil }
+        private func tick() {
+            if ProcessInfo.processInfo.systemUptime >= deadline {
+                timedOut = true
+                ownedPanel?.cancel(nil)
+                stop()
+                // Exit only this synthetic host, even if an owned child modal intercepted
+                // Cancel. Never abort an unrelated application's modal interaction.
+                fputs("FAIL: synthetic export panel exceeded its deadline.\n", stderr)
+                exit(1)
+            }
+            ticks += 1
+            guard let panel = NSApp.modalWindow as? NSSavePanel else { return }
+            if !seen {
+                guard panel === ownedPanel else { return }
+                seen = true; seenAt = ticks
+            } else if panel === ownedPanel, !finished, ticks >= seenAt + 6,
+                      NSApp.isActive, NSApp.keyWindow === panel, panel.isKeyWindow,
+                      panel.delegate === self, acceptsDirectory(panel.directoryURL), accepts(panel.url) {
+                destinationVerified = true; finished = true
+                if saving && interactive {
+                    fputs("EXPORT READY: click Save in the real panel; exact synthetic destination verified.\n", stderr)
+                } else if saving {
+                    ConfigsPreview.press(panel, keyCode: 36, characters: "\r")
+                } else { panel.cancel(nil) }
+            }
+        }
+    }
+
+    /// Opens the loadout's More Actions menu with VoiceOver's press, finds the item in the actual
+    /// menu while it tracks and closes the menu; the item's action is then sent the way a chosen
+    /// item's is, once its menu has closed. Task jobs can't run inside a menu or modal loop entered
+    /// from a task, so the menu (and a save panel the item opens) are serviced from timers in the
+    /// common run-loop modes, each with a bound.
+    static func chooseMoreAction(_ window: NSWindow, _ prefix: String, panel: SavePanelService? = nil) async -> Bool {
         guard let more = AccessibilityTree.elements(of: window).first(where: { $0.label.hasPrefix("More Actions for This Loadout") }) else {
             print("FAIL: More Actions for This Loadout is not in the accessibility tree"); return false
         }
-        let chosen = Task { @MainActor () -> Bool in
-            for _ in 0..<40 {
-                try? await Task.sleep(for: .milliseconds(100))
-                if let item = menuItems().first(where: { $0.label.hasPrefix(prefix) }) {
-                    _ = AXUIElementPerformAction(item.element, kAXPressAction as CFString)
-                    return true
+        let driver = MenuDriver(), center = NotificationCenter.default
+        let began = center.addObserver(forName: NSMenu.didBeginTrackingNotification, object: nil, queue: nil) { note in
+            // Posted on the main thread, inside the menu's own tracking.
+            nonisolated(unsafe) let menu = note.object as? NSMenu
+            MainActor.assumeIsolated { if driver.menu == nil { driver.menu = menu } }
+        }
+        let ended = center.addObserver(forName: NSMenu.didEndTrackingNotification, object: nil, queue: nil) { note in
+            // Posted on the main thread, inside the menu's own tracking.
+            nonisolated(unsafe) let menu = note.object as? NSMenu
+            MainActor.assumeIsolated { if menu != nil, menu === driver.menu { driver.ended = true } }
+        }
+        defer { center.removeObserver(began); center.removeObserver(ended) }
+        let start = Date()
+        let timer = Timer(timeInterval: 0.1, repeats: true) { _ in
+            MainActor.assumeIsolated {
+                guard let menu = driver.menu, driver.index == nil, !driver.ended, !driver.timedOut else { return }
+                driver.titles = menu.items.map(\.title)
+                if let index = menu.items.firstIndex(where: { $0.title.hasPrefix(prefix) && $0.isEnabled }) {
+                    driver.index = index; menu.cancelTracking()
+                } else if Date().timeIntervalSince(start) > 8 {
+                    driver.timedOut = true; menu.cancelTracking()
                 }
             }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        defer { timer.invalidate() }
+        AccessibilityTree.press(more)
+        // The menu tracks inside the press or just after it.
+        for _ in 0..<100 where !driver.ended { try? await Task.sleep(for: .milliseconds(100)) }
+        timer.invalidate()
+        guard driver.menu != nil, let index = driver.index, driver.ended else {
+            print("FAIL: the More Actions menu \(driver.menu == nil ? "did not open" : driver.ended ? "has no enabled “\(prefix)…” item (\(driver.titles))" : "did not close")")
             return false
         }
-        let inside = Task { @MainActor in
-            guard await chosen.value else { return }
-            await during?()
+        // A synchronous modal panel entered from this Swift task cannot service all
+        // MainActor continuations. Enter the actual menu action from the native event
+        // loop, while this task yields, just as a user choosing the menu item would.
+        let actionTimer = Timer(timeInterval: 0.01, repeats: false) { _ in
+            MainActor.assumeIsolated {
+                panel?.start()
+                driver.menu?.performActionForItem(at: index)
+                panel?.stop()
+                driver.actionCompleted = true
+            }
         }
-        _ = AXUIElementPerformAction(more.element, kAXPressAction as CFString)
-        await inside.value
-        guard await chosen.value else { print("FAIL: the More Actions menu has no “\(prefix)…” item"); return false }
+        RunLoop.main.add(actionTimer, forMode: .common)
+        defer { actionTimer.invalidate() }
+        for _ in 0..<1300 where !driver.actionCompleted { try? await Task.sleep(for: .milliseconds(100)) }
+        guard driver.actionCompleted else { print("FAIL: the native menu action did not complete"); return false }
+        if let panel, !panel.seen || panel.timedOut || !panel.destinationVerified || (panel.saving && !panel.destinationValidated) {
+            print("FAIL: “\(prefix)…” \(panel.seen ? "left its save panel open" : "did not open a save panel")"); return false
+        }
         return true
     }
 
@@ -1414,9 +1818,9 @@ final class SnapshotWindow: NSWindow {
         guard window.attachedSheet != nil, let field = sheetElement("AXTextField", "Name"), let rename = sheetElement("AXButton", "Rename") else {
             print("FAIL: Rename “Main”… did not open the rename sheet"); return false
         }
-        _ = AXUIElementSetAttributeValue(field.element, kAXValueAttribute as CFString, "Scrim Night" as CFString)
+        AccessibilityTree.setValue(field, "Scrim Night")
         try? await Task.sleep(for: .milliseconds(400))
-        _ = AXUIElementPerformAction(rename.element, kAXPressAction as CFString)
+        AccessibilityTree.press(rename)
         try? await Task.sleep(for: .milliseconds(900))
         let renamed = disk()
         guard model.studio.metadata?.displayName == "Scrim Night", renamed[0] == before[0], renamed[2] == before[2], renamed[1] != before[1],
@@ -1427,9 +1831,9 @@ final class SnapshotWindow: NSWindow {
         guard await chooseMoreAction(window, "Rename “Scrim Night”") else { return false }
         try? await Task.sleep(for: .milliseconds(900))
         guard let again = sheetElement("AXTextField", "Name"), let cancel = sheetElement("AXButton", "Cancel") else { print("FAIL: the rename sheet did not reopen"); return false }
-        _ = AXUIElementSetAttributeValue(again.element, kAXValueAttribute as CFString, "Discarded" as CFString)
+        AccessibilityTree.setValue(again, "Discarded")
         try? await Task.sleep(for: .milliseconds(300))
-        _ = AXUIElementPerformAction(cancel.element, kAXPressAction as CFString)
+        AccessibilityTree.press(cancel)
         try? await Task.sleep(for: .milliseconds(900))
         guard disk() == renamed, session.history.count == count + 1, window.attachedSheet == nil else { print("FAIL: cancelling Rename wrote something"); return false }
         print("PASS: cancelling Rename closed the sheet and wrote nothing")
@@ -1438,33 +1842,25 @@ final class SnapshotWindow: NSWindow {
         do { try FileManager.default.createDirectory(at: exports, withIntermediateDirectories: true) } catch { return false }
         let target = exports.appendingPathComponent("config_mp.cfg")
         guard let current = session.current, let expected = try? ConfigChains.windowsExport(read: current) else { print("FAIL: no Windows export to compare"); return false }
-        var panelSeen = false
-        let exported = await chooseMoreAction(window, "Export for Windows") {
-            for _ in 0..<40 {
-                if let panel = NSApp.modalWindow as? NSSavePanel {
-                    panelSeen = true
-                    panel.directoryURL = exports; panel.nameFieldStringValue = "config_mp.cfg"
-                    try? await Task.sleep(for: .milliseconds(600))
-                    panel.ok(nil); return
-                }
-                try? await Task.sleep(for: .milliseconds(100))
-            }
-        }
+        let save = SavePanelService(target: target)
+        model.makeExportPanel = { save.makePanel() }
+        defer { model.makeExportPanel = { NSSavePanel() } }
+        let exported = await chooseMoreAction(window, "Export for Windows", panel: save)
         try? await Task.sleep(for: .milliseconds(600))
-        guard exported, panelSeen, (try? Data(contentsOf: target)) == expected, disk() == renamed, model.studio.failure == nil else {
-            print("FAIL: Export for Windows did not write the exact file (panel \(panelSeen), failure \(model.studio.failure?.message ?? "none"))"); return false
+        let targetExists = FileManager.default.fileExists(atPath: target.path)
+        let bytesMatch = (try? Data(contentsOf: target)) == expected
+        let gameUnchanged = disk() == renamed
+        guard exported, targetExists, bytesMatch, gameUnchanged, model.studio.failure == nil else {
+            print("FAIL: Export for Windows: panel=\(save.seen), destinationVerified=\(save.destinationVerified), actionCompleted=\(exported), targetExists=\(targetExists), bytesMatch=\(bytesMatch), gameUnchanged=\(gameUnchanged), modelFailure=\(model.studio.failure != nil)")
+            return false
         }
         print("PASS: More Actions › Export for Windows opened the save panel and wrote exactly the Windows config in a private folder")
         try? FileManager.default.removeItem(at: target)
-        var cancelSeen = false
-        _ = await chooseMoreAction(window, "Export for Windows") {
-            for _ in 0..<40 {
-                if let panel = NSApp.modalWindow as? NSSavePanel { cancelSeen = true; panel.directoryURL = exports; panel.cancel(nil); return }
-                try? await Task.sleep(for: .milliseconds(100))
-            }
-        }
+        let cancelExport = SavePanelService(target: target, saving: false)
+        model.makeExportPanel = { cancelExport.makePanel() }
+        let cancelled = await chooseMoreAction(window, "Export for Windows", panel: cancelExport)
         try? await Task.sleep(for: .milliseconds(600))
-        guard cancelSeen, !FileManager.default.fileExists(atPath: target.path), disk() == renamed, model.studio.failure == nil else {
+        guard cancelled, !FileManager.default.fileExists(atPath: target.path), disk() == renamed, model.studio.failure == nil else {
             print("FAIL: cancelling the export panel wrote something"); return false
         }
         print("PASS: cancelling the export save panel wrote nothing")
@@ -1472,11 +1868,14 @@ final class SnapshotWindow: NSWindow {
     }
 
     /// A key press delivered through the application, where Binds' local monitor listens.
-    static func press(_ window: NSWindow, keyCode: UInt16, characters: String) {
+    static func press(_ window: NSWindow, keyCode: UInt16, characters: String, modifiers: NSEvent.ModifierFlags = [], charactersIgnoringModifiers: String? = nil) {
+        guard NSApp.isActive, NSApp.keyWindow === window, window.isKeyWindow, window.firstResponder != nil else {
+            fputs("FAIL: key event target is not the actual active key window with a first responder.\n", stderr); exit(1)
+        }
         for type in [NSEvent.EventType.keyDown, .keyUp] {
-            if let event = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+            if let event = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: modifiers, timestamp: ProcessInfo.processInfo.systemUptime,
                                             windowNumber: window.windowNumber, context: nil, characters: characters,
-                                            charactersIgnoringModifiers: characters, isARepeat: false, keyCode: keyCode) {
+                                            charactersIgnoringModifiers: charactersIgnoringModifiers ?? characters, isARepeat: false, keyCode: keyCode) {
                 NSApp.sendEvent(event)
             }
         }

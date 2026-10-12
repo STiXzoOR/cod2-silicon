@@ -112,8 +112,10 @@ struct MediaEntry: Identifiable {
     private var setupTask: Task<Void, Never>?
     var forwardedArguments: [String] = []
     var exitAfterGame = false
+    /// Creates the native export dialog; callers configure it before presentation.
+    var makeExportPanel: @MainActor () -> NSSavePanel = { NSSavePanel() }
 
-    init(snapshot: Bool = false) {
+    init(snapshot: Bool = false, catalog: @escaping @Sendable () throws -> ConfigCatalog = { try ConfigStudioModel.bundledCatalog() }) {
         self.snapshot = snapshot
         home = URL(fileURLWithPath: snapshot ? "/Preview/CoD2 Silicon" : LauncherHome())
         artwork = MapArtworkStore(home: home)
@@ -131,7 +133,7 @@ struct MediaEntry: Identifiable {
                 })
             } catch { configStudio = nil; sessionError = error.localizedDescription }
         }
-        studio = ConfigStudioModel(session: configStudio, dialect: .cod2x)
+        studio = ConfigStudioModel(session: configStudio, dialect: .cod2x, catalog: catalog)
         discover = ConfigDiscoverModel(studio: studio, directory: ConfigDirectory(cacheURL: home.appendingPathComponent("directory/index.json")))
         discover.notify = { [weak self] in self?.notice = $0 }
         if let sessionError { notice = sessionError }

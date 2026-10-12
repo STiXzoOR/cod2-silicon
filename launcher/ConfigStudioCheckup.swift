@@ -87,6 +87,9 @@ struct ConfigCheckupStanding {
             empty = ("NO SUGGESTIONS", "Check-up couldn’t assess \(unknown) of \(total) setting\(total == 1 ? "" : "s") these rules cover, so it doesn’t claim they all match. Show Rules lists them.")
         } else if warnings > 0 {
             empty = ("NO SUGGESTIONS", "No change to suggest for \(tune) play, but the rules mark \(warnings == 1 ? "1 setting" : "\(warnings) settings") as advisory. Show Rules lists them.")
+        } else if total == 0 {
+            // Nothing was checked, so nothing can be said to match.
+            empty = ("NO SUGGESTIONS", "No change to suggest for \(tune) play. These rules don’t cover any setting Check-up can assess here, so it doesn’t claim this loadout matches them.")
         } else {
             empty = ("NOTHING TO SUGGEST", "These settings already match every suggestion for \(tune) play under these rules.")
         }
@@ -119,7 +122,7 @@ struct ConfigAppliedSuggestion: Identifiable {
 
     /// Local match summaries: read after a game exits or on Refresh, never on a timer.
     @Published private(set) var matchState: ConfigMatchState = .notRead
-    /// The saved Settings › Privacy choice. Turning it off applies from the next game and
+    /// The current Settings › Privacy choice. Turning it off applies from the next game and
     /// leaves summaries already on this Mac where they are.
     @Published var matchSummariesEnabled = true
     private var matchHome: URL?
@@ -235,7 +238,8 @@ struct ConfigAppliedSuggestion: Identifiable {
         return formatter.date(from: text)
     }
     static func duration(_ seconds: Double) -> String {
-        let total = Int(seconds.rounded())
+        // Whole seconds without trapping on any value: the reader allows up to UInt64.max milliseconds.
+        let total = seconds.isFinite && seconds > 0 ? UInt64(min(seconds.rounded(), 0x1p63)) : 0
         if total < 60 { return "\(total) s" }
         let minutes = total / 60
         return minutes < 60 ? "\(minutes) min" : "\(minutes / 60) h \(minutes % 60) min"
@@ -243,21 +247,25 @@ struct ConfigAppliedSuggestion: Identifiable {
     /// Milliseconds and percentages to one decimal place, as people read them.
     static func figure(_ value: Double) -> String { ConfigValues.format((value * 10).rounded() / 10) }
 
-    /// The movement dial from a match that recorded frames: p50, p99, maximum, the cap and frame
-    /// count. Quantiles at or past the exact range are said as bounds.
+    /// The movement dial from a match that recorded frames: p50, p99, maximum, frames within the
+    /// cap, the cap recorded at the end and the frame count. Quantiles at or past the exact range
+    /// are said as bounds. The cap can change during a match, so the capped-frame counts are never
+    /// attributed to the final cap.
     private func frameGauge(_ match: MatchSummary) -> ConfigCheckupGauge? {
         guard match.frameCount > 0, let p50 = match.frameTimeP50MS, let p99 = match.frameTimeP99MS, let max = match.frameTimeMaxMS else { return nil }
         let limit = match.frameTimeHistogramLimitMS
         func quantile(_ name: String, _ value: Double) -> String {
             guard let limit else { return "\(name) at most \(Self.figure(value)) ms" }
-            return value < limit ? "\(name) \(Self.figure(value)) ms" : "\(name) longer than \(Self.figure(limit)) ms (at most \(Self.figure(value)) ms)"
+            // A sample at the limit lands in the overflow bucket: at least the limit.
+            return value < limit ? "\(name) \(Self.figure(value)) ms" : "\(name) at least \(Self.figure(limit)) ms (at most \(Self.figure(value)) ms)"
         }
         var parts = [quantile("p50", p50), quantile("p99", p99), "max \(Self.figure(max)) ms"]
-        if let under = match.framesUnderCap, match.capSampleFrames > 0, match.capFPS > 0 {
-            parts.append("\(under) of \(match.capSampleFrames) frames (\(Self.figure(100 * Double(under) / Double(match.capSampleFrames)))%) within the \(match.capFPS) fps cap")
+        if let under = match.framesUnderCap, match.capSampleFrames > 0 {
+            parts.append("\(under) of \(match.capSampleFrames) capped frames (\(Self.figure(100 * Double(under) / Double(match.capSampleFrames)))%) within the cap in force")
         } else {
             parts.append("frames within the cap: Not measured")
         }
+        parts.append(match.capFPS > 0 ? "cap at the end of the match \(match.capFPS) fps" : "no cap at the end of the match")
         parts.append(match.frameCount == 1 ? "1 frame" : "\(match.frameCount) frames")
         let exact = match.frameQuantilesAreExact
         return .init(area: .movement, value: (exact ? "" : "≤ ") + Self.figure(p99) + " MS",
@@ -273,8 +281,9 @@ struct ConfigAppliedSuggestion: Identifiable {
             ping = "Ping: Not measured in your last match."
         }
         let missing: String
-        if match.packetsReceived > 0, let loss = match.packetLossPercent {
-            missing = "Missing server updates: \(Self.figure(loss))% (\(match.packetsLost) of \(match.packetsReceived + match.packetsLost)), inferred from gaps in the update sequence; not a precise packet-loss measurement."
+        let (expected, overflow) = match.packetsReceived.addingReportingOverflow(match.packetsLost)
+        if match.packetsReceived > 0, !overflow, let loss = match.packetLossPercent {
+            missing = "Missing server updates: \(Self.figure(loss))% (\(match.packetsLost) of \(expected)), inferred from gaps in the update sequence; not a precise packet-loss measurement."
         } else {
             missing = "Missing server updates: Not measured."
         }

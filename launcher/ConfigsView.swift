@@ -111,7 +111,7 @@ struct ConfigsShell: View {
 
     /// B2 writes an independent config that stock Windows CoD2 can load.
     private func exportWindows(_ name: String) {
-        let panel = NSSavePanel()
+        let panel = model.makeExportPanel()
         panel.nameFieldStringValue = "config_mp.cfg"
         panel.allowedContentTypes = [UTType(filenameExtension: "cfg") ?? .plainText]
         panel.message = "Save \(name) for Call of Duty 2 on Windows. Copy it into that player profile’s folder."
@@ -119,6 +119,7 @@ struct ConfigsShell: View {
         studio.binds.exportWindows(to: url)
     }
 
+    private static let moreIcon = NSImage(systemSymbolName: "ellipsis.circle", accessibilityDescription: "More Actions for This Loadout") ?? NSImage()
     private var moreMenu: some View {
         Menu {
             Button("New Loadout…") { newLoadout = NewLoadoutRequest(copy: false) }
@@ -134,8 +135,12 @@ struct ConfigsShell: View {
                 Button("Export for Windows…") { exportWindows(current.profile.displayName) }.disabled(studio.catalog == nil)
             }
         } label: {
-            Label("More Actions for This Loadout", systemImage: "ellipsis.circle")
+            Label { Text("More Actions for This Loadout") } icon: { Image(nsImage: Self.moreIcon) }.labelStyle(.iconOnly)
         }
+        // A borderless menu is an AppKit pop-up button, which VoiceOver names from its image's
+        // description (the symbol alone says “More”); the default toolbar menu's node exposes no name.
+        .menuStyle(.borderlessButton).menuIndicator(.hidden)
+        .accessibilityLabel("More Actions for This Loadout")
         .help("More actions for this loadout")
     }
 

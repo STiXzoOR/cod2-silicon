@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 /// A loadout's Check-up: what the latest recorded match measured (or that nothing was),
 /// how the loadout reads against the chosen rules, and A1's suggestions with their exact
@@ -131,6 +132,12 @@ extension RulesBar {
 struct RulesMenu: View {
     @ObservedObject var checkup: ConfigCheckupModel
     @Environment(\.palette) private var palette
+    private var rulesIcon: NSImage {
+        let name = "Rules to check against: \(checkup.selectionTitle)"
+        let image = NSImage(systemSymbolName: "checklist", accessibilityDescription: name) ?? NSImage()
+        image.accessibilityDescription = name
+        return image
+    }
     var body: some View {
         HStack(spacing: 8) {
             Text("Rules").font(.system(size: 12)).foregroundStyle(palette.secondary)
@@ -144,9 +151,14 @@ struct RulesMenu: View {
                 }
                 if !checkup.rulesetIDs.isEmpty { Divider(); Button("No Rules") { checkup.rulesetIDs = [] } }
             } label: {
-                Text(checkup.selectionTitle).lineLimit(1)
+                Label {
+                    Text(checkup.selectionTitle).lineLimit(1)
+                        .accessibilityLabel("Rules to check against: \(checkup.selectionTitle)")
+                } icon: {
+                    Image(nsImage: rulesIcon)
+                }
             }
-            .fixedSize()
+            .menuStyle(.borderlessButton).fixedSize()
             .accessibilityLabel("Rules to check against: \(checkup.selectionTitle)")
         }
     }

@@ -7,6 +7,8 @@ and fake documentation-range servers; no game data is read.
 """
 import json
 import pathlib
+import plistlib
+import shutil
 import struct
 import subprocess
 import sys
@@ -15,7 +17,24 @@ root = pathlib.Path(__file__).resolve().parents[2]
 out = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else root / "output/ws28/unit/snapshots"
 build = out.parent / "snapshot-harness"
 subprocess.run([str(root / "scripts/build-launcher.sh"), str(build), "--snapshots"], check=True)
-harness = build / "LauncherSnapshots"
+# A normal bundle gives the review host a stable application identity for native
+# window activation and external interaction with AppKit's remote Save panel.
+app = build / "LauncherSnapshots.app"
+macos = app / "Contents/MacOS"
+resources = app / "Contents/Resources"
+macos.mkdir(parents=True, exist_ok=True)
+resources.mkdir(parents=True, exist_ok=True)
+shutil.copy2(build / "LauncherSnapshots", macos / "LauncherSnapshots")
+for name in ["Fonts", "Assets.car", "ConfigCatalog.json", "ConfigRulesets.json", "ConfigOptimizer.json"]:
+    source = build / name
+    if source.is_dir():
+        shutil.copytree(source, resources / name, dirs_exist_ok=True)
+    elif source.exists():
+        shutil.copy2(source, resources / name)
+info = plistlib.loads((build / "Info.plist").read_bytes())
+info.update(CFBundleExecutable="LauncherSnapshots", CFBundleName="CoD2 Launcher Review", CFBundlePackageType="APPL")
+(app / "Contents/Info.plist").write_bytes(plistlib.dumps(info))
+harness = macos / "LauncherSnapshots"
 
 
 def run(target, *extra):
@@ -46,7 +65,10 @@ configs = ["configs-guided", "configs-guided-aim", "configs-expert", "configs-te
            "configs-checkup-measured", "configs-checkup-off", "configs-checkup-error",
            # Import from a link or a Windows profile, the review while it reads, a Saved bookmark the
            # signed index dropped, and a save that failed. Synthetic data in a private home only.
-           "configs-import-link", "configs-import-windows", "configs-import-loading", "discover-saved-removed", "configs-save-failure"]
+           "configs-import-link", "configs-import-windows", "configs-import-loading", "discover-saved-removed", "configs-save-failure",
+           # The Windows profile picker over synthetic candidates (no drive is scanned), and the
+           # Settings page held while its catalog loads.
+           "configs-import-windows-profiles", "configs-catalog-loading"]
 screens = ["home", "home-first", "servers", "servers-empty", "settings", "library-demos", "library-screenshots", "about",
            "setup-data", "setup-data-missing", "setup-key", "setup-shaders", "setup-ready"] + configs
 for screen in screens:
@@ -74,7 +96,8 @@ run(fallback, "--fallback", "--only", "configs-guided")
 audit = {entry["screen"]: entry["items"] for entry in json.loads((out / "shape-audit.json").read_text())}
 # Behind the import sheet the window shows no translucent surface of its own, and the sheet's
 # material belongs to the system, so Reduce Transparency can leave those captures unchanged.
-sheets = {"configs-import", "configs-import-everything", "configs-import-link", "configs-import-windows", "configs-import-loading"}
+sheets = {"configs-import", "configs-import-everything", "configs-import-link", "configs-import-windows", "configs-import-loading",
+          "configs-import-windows-profiles"}
 for variant in ["increase-contrast", "reduce-transparency"]:
     folder = out / variant
     run(folder, "--group", "configs", f"--{variant}")

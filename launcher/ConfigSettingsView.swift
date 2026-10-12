@@ -773,12 +773,24 @@ private struct LabelChoice: View {
 private struct LabelPresets: View {
     var spec: ConfigSettingSpec
     var commit: (String) -> Void
+    private var presetsIcon: NSImage {
+        let name = "Presets for \(spec.title)"
+        let image = NSImage(systemSymbolName: "slider.horizontal.3", accessibilityDescription: name) ?? NSImage()
+        image.accessibilityDescription = name
+        return image
+    }
     var body: some View {
         Menu {
             ForEach(spec.valueLabels, id: \.text) { label in
                 Button(ConfigValues.display(spec, label.text)) { commit(label.text) }
             }
-        } label: { Text("Presets") }
+        } label: {
+            Label {
+                Text("Presets").accessibilityLabel("Presets for \(spec.title)")
+            } icon: {
+                Image(nsImage: presetsIcon)
+            }
+        }
         .menuStyle(.borderlessButton).fixedSize()
         .accessibilityLabel("Presets for \(spec.title)")
         .help("Values the game’s own menus name")

@@ -149,21 +149,20 @@ private struct LinkStep: View {
     @Published private(set) var scanning = false
     private var folders: [URL] = []
 
+    private var find: @Sendable ([URL]) async -> (WindowsProfileDiscovery, searched: [String]) = ConfigDiscoverModel.searchWindowsProfiles
+
+    func scan(_ find: @escaping @Sendable ([URL]) async -> (WindowsProfileDiscovery, searched: [String])) {
+        self.find = find
+        scan()
+    }
     func scan() {
         scanning = true
-        let folders = self.folders
+        let folders = self.folders, find = self.find
         Task { [weak self] in
-            let result = await Task.detached(priority: .userInitiated) { () -> (WindowsProfileDiscovery, [String]) in
-                let volumes = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: [.volumeNameKey, .volumeIsBrowsableKey], options: []) ?? []
-                let names = volumes.compactMap { url -> String? in
-                    guard let values = try? url.resourceValues(forKeys: [.volumeNameKey, .volumeIsBrowsableKey]), values.volumeIsBrowsable != false else { return nil }
-                    return values.volumeName
-                }
-                return (WindowsProfiles().discover(mountedVolumes: volumes, selectedFolders: folders), names)
-            }.value
+            let result = await find(folders)
             guard let self else { return }
             self.discovery = result.0
-            self.searched = result.1 + folders.map(\.lastPathComponent)
+            self.searched = result.searched
             self.scanning = false
         }
     }
@@ -225,7 +224,7 @@ private struct WindowsStep: View {
             }
         }
         .padding(26).frame(width: 560)
-        .onAppear { finder.scan() }
+        .onAppear { finder.scan(discover.findWindowsProfiles) }
     }
 
     private func row(_ profile: WindowsProfileCandidate) -> some View {

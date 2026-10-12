@@ -328,7 +328,10 @@ enum ConfigStudioAcceptanceTests {
         require(measured.lines.contains("2 matches recorded on this Mac") && measured.lines.contains { $0.hasPrefix("Ended ") && $0.contains("21 min") })
         let gauges = checkup.gauges(report)
         require(gauges[0].value == "7 MS" && gauges[0].status == "Measured" && gauges[0].tone == .information)
-        require(gauges[0].detail.contains("p50 3 ms · p99 7 ms · max 20 ms") && gauges[0].detail.contains("98 of 100 frames (98%) within the 333 fps cap"), gauges[0].detail)
+        require(gauges[0].detail.contains("p50 3 ms · p99 7 ms · max 20 ms"), gauges[0].detail)
+        // The cap can change during a match: the counts aren't attributed to the cap recorded at the end.
+        require(gauges[0].detail.contains("98 of 100 capped frames (98%) within the cap in force") && gauges[0].detail.contains("cap at the end of the match 333 fps")
+                && !gauges[0].detail.contains("within the 333 fps cap"), gauges[0].detail)
         require(gauges[1].status == "Not measured" || gauges[1].status == "From settings", "mouse polling is never invented")
         require(!gauges[1].detail.contains("Hz") && gauges[1].detail.contains("Polling rate isn’t measured"))
         require(gauges[2].value == "40 MS" && gauges[2].detail.contains("average 40 ms, highest 50 ms over 3 samples"), gauges[2].detail)
@@ -342,7 +345,33 @@ enum ConfigStudioAcceptanceTests {
         checkup.refreshMatches()
         require(checkup.latestMatch?.frameQuantilesAreExact == false && checkup.report?.dials[0].value == nil, "an upper bound isn't passed on as a measured p99")
         let bound = checkup.gauges(value(checkup.report))[0]
-        require(bound.value == "≤ 300 MS" && bound.status == "Upper bound" && bound.detail.contains("longer than 250 ms") && !bound.detail.contains("p99 300 ms"), bound.detail)
+        require(bound.value == "≤ 300 MS" && bound.status == "Upper bound" && bound.detail.contains("p99 at least 250 ms (at most 300 ms)") && !bound.detail.contains("p99 300 ms"), bound.detail)
+        // A p99 sample at exactly the limit is in the overflow bucket: at least the limit, not longer than it.
+        let edge = row.replacingOccurrences(of: "\"frameTimeP99MS\":7,\"frameTimeMaxMS\":20,\"frameTimeHistogramLimitMS\":250",
+                                            with: "\"frameTimeP99MS\":250,\"frameTimeMaxMS\":250,\"frameTimeHistogramLimitMS\":250")
+        try (edge + "\n").write(to: file, atomically: true, encoding: .utf8)
+        checkup.refreshMatches()
+        let atLimit = checkup.gauges(value(checkup.report))[0]
+        require(checkup.latestMatch?.frameQuantilesAreExact == false && atLimit.value == "≤ 250 MS" && atLimit.detail.contains("p99 at least 250 ms")
+                && !atLimit.detail.contains("longer than"), atLimit.detail)
+        // A cap that ended the match off still keeps the frames counted under earlier caps.
+        let uncapped = row.replacingOccurrences(of: "\"capFPS\":333", with: "\"capFPS\":0")
+        try (uncapped + "\n").write(to: file, atomically: true, encoding: .utf8)
+        checkup.refreshMatches()
+        let capOff = checkup.gauges(value(checkup.report))[0].detail
+        require(capOff.contains("98 of 100 capped frames (98%) within the cap in force") && capOff.contains("no cap at the end of the match"), capOff)
+
+        // The largest values the reader accepts format without trapping: a duration of UInt64.max
+        // milliseconds and received plus lost updates summing to exactly UInt64.max.
+        let huge = row.replacingOccurrences(of: "\"durationSeconds\":1260", with: "\"durationSeconds\":18446744073709548")
+            .replacingOccurrences(of: "\"pingSamples\":3,\"packetsReceived\":3,\"packetsLost\":2,\"packetLossPercent\":40,\"snapshotsReceived\":4",
+                                  with: "\"pingSamples\":3,\"packetsReceived\":18446744073709551613,\"packetsLost\":2,\"packetLossPercent\":0,\"snapshotsReceived\":18446744073709551615")
+        try (huge + "\n").write(to: file, atomically: true, encoding: .utf8)
+        checkup.refreshMatches()
+        require(checkup.latestMatch?.packetsReceived == UInt64.max - 2, "the reader accepts the largest packet sum")
+        require(value(checkup.matchPresentation).lines.contains { $0.hasPrefix("Ended ") && $0.hasSuffix(" min") })
+        let largest = checkup.gauges(value(checkup.report))[2].detail
+        require(largest.contains("(2 of 18446744073709551615)"), largest)
 
         // Values a match didn't record stay Not measured.
         let quiet = row.replacingOccurrences(of: "\"pingAverageMS\":40,\"pingMaximumMS\":50,\"pingSamples\":3,\"packetsReceived\":3,\"packetsLost\":2,\"packetLossPercent\":40",
@@ -384,6 +413,9 @@ enum ConfigStudioAcceptanceTests {
         require(standing([.ok, .unknown, .conflict]).status?.title == "The chosen rules disagree" && standing([.conflict]).status?.tone == .caution)
         require(standing([.unknown]).status?.title == "Not assessed" && standing([]).status?.title == "Not assessed")
         require(standing([.ok], rules: []).status == nil && standing([], rules: []).empty.title == "NO RULES")
+        // Rules chosen but none of them covers a setting here: nothing was checked, so nothing “already matches”.
+        let uncovered = standing([])
+        require(uncovered.empty.title == "NO SUGGESTIONS" && !uncovered.empty.message.contains("already match"), "an empty policy isn't a match: \(uncovered.empty.message)")
         print("PASS: the rules summary keeps violations and conflicts first and never says Follows with rows unassessed")
     }
 }

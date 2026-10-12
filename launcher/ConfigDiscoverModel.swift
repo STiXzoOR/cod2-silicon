@@ -544,6 +544,11 @@ extension ConfigImportPresentation {
     @Published var step: ConfigImportStep?
     /// Messages outside a sheet (an empty clipboard, Saved failing) go to the launcher's notice.
     var notify: @MainActor (String) -> Void = { _ in }
+    /// How the Windows step finds profiles, given the folders the person chose: the bounded search
+    /// of mounted drives. The review harness supplies known candidates instead and never scans.
+    var findWindowsProfiles: @Sendable ([URL]) async -> (WindowsProfileDiscovery, searched: [String]) = { folders in
+        await Task.detached(priority: .userInitiated) { ConfigDiscoverModel.searchWindowsProfiles(folders) }.value
+    }
     private var detailTask: Task<Void, Never>?
 
     init(studio: ConfigStudioModel, directory: ConfigDirectory) {
@@ -707,6 +712,15 @@ extension ConfigImportPresentation {
                     origin: ConfigOrigin(kind: .imported, source: url.lastPathComponent)) { adapter, dialect in
             try await ConfigImportLoader(catalog: adapter).load(.file(url), dialect: dialect)
         }
+    }
+    /// The usual install folders on browsable mounted drives, and the chosen folders. Names what it looked on.
+    nonisolated static func searchWindowsProfiles(_ folders: [URL]) -> (WindowsProfileDiscovery, searched: [String]) {
+        let volumes = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: [.volumeNameKey, .volumeIsBrowsableKey], options: []) ?? []
+        let names = volumes.compactMap { url -> String? in
+            guard let values = try? url.resourceValues(forKeys: [.volumeNameKey, .volumeIsBrowsableKey]), values.volumeIsBrowsable != false else { return nil }
+            return values.volumeName
+        }
+        return (WindowsProfiles().discover(mountedVolumes: volumes, selectedFolders: folders), names + folders.map(\.lastPathComponent))
     }
     func importWindows(_ candidate: WindowsProfileCandidate) {
         let detail = candidate.profileName + "/" + candidate.configURL.lastPathComponent

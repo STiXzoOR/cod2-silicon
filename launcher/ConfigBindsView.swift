@@ -933,8 +933,8 @@ private struct KeyboardPanel: View {
     /// The width this panel may take; keys grow to fill it, within reason.
     var available: CGFloat
     @Environment(\.palette) private var palette
-    /// The key with keyboard focus; selection follows it.
-    @FocusState private var focusedKey: UInt16?
+    /// Native key controls share one roving Tab stop.
+    @StateObject private var keyFocus = KeyboardKeyFocus()
 
     var body: some View {
         let device = currentKeyboard(binds: binds, devices: devices)
@@ -957,19 +957,12 @@ private struct KeyboardPanel: View {
                 let entry = ConfigKeyboardLayout.entry(in: keys, selectedVirtualKey: binds.selectedVirtualKey, selectedKey: binds.selectedKey, source: devices.inputSource)
                 ZStack(alignment: .topLeading) {
                     ForEach(keys) { key in
-                        KeyButton(binds: binds, devices: devices, key: key, unit: unit, modifiers: modifiers, tabStop: key.virtualKey == entry) {
-                            Task { @MainActor in focusedKey = key.virtualKey }
-                        }
-                        .focused($focusedKey, equals: key.virtualKey)
-                        .onMoveCommand { direction in move(direction, from: key.virtualKey, keys: keys) }
+                        KeyButton(binds: binds, devices: devices, key: key, unit: unit, modifiers: modifiers,
+                                  tabStop: key.virtualKey == entry, focus: keyFocus,
+                                  move: { direction in move(direction, from: key.virtualKey, keys: keys) })
                     }
                 }
                 .frame(width: columns * unit, height: rows * unit, alignment: .topLeading)
-                .onChange(of: focusedKey) { key in
-                    guard let key, key != binds.selectedVirtualKey else { return }
-                    binds.selectedVirtualKey = key
-                    binds.selectedKey = devices.inputSource.mapping(virtualKey: key).engineKey
-                }
                 .frame(maxWidth: columns * unit, alignment: .leading)
                 .accessibilityElement(children: .contain)
                 .accessibilityLabel("\(device?.name ?? "Keyboard"), \(shape.rawValue.uppercased()) layout. Each key says what it does.")
@@ -983,9 +976,112 @@ private struct KeyboardPanel: View {
     private func move(_ direction: MoveCommandDirection, from virtualKey: UInt16, keys: [ConfigKeyboardKey]) {
         let mapped: ConfigKeyboardDirection? = direction == .up ? .up : direction == .down ? .down : direction == .left ? .left : direction == .right ? .right : nil
         guard let mapped, let next = ConfigKeyboardLayout.neighbor(of: virtualKey, mapped, in: keys) else { return }
-        binds.selectedKey = devices.inputSource.mapping(virtualKey: next).engineKey
-        binds.selectedVirtualKey = next
-        Task { @MainActor in focusedKey = next }
+        keyFocus.focus(next)
+    }
+}
+
+/// Keeps only weak references to this drawing's actual AppKit buttons.
+@MainActor private final class KeyboardKeyFocus: ObservableObject {
+    let buttons = NSMapTable<NSNumber, KeyboardKeyControl.KeyButton>.strongToWeakObjects()
+    func entered(_ button: KeyboardKeyControl.KeyButton) {
+        for candidate in buttons.objectEnumerator()?.allObjects as? [KeyboardKeyControl.KeyButton] ?? [] {
+            candidate.entry = candidate === button
+        }
+        button.window?.recalculateKeyViewLoop()
+    }
+    func focus(_ key: UInt16) {
+        guard let button = buttons.object(forKey: NSNumber(value: key)), let window = button.window else { return }
+        _ = window.makeFirstResponder(button)
+    }
+}
+
+/// The cap stays SwiftUI; its single accessible, focusable control uses AppKit's responder chain.
+private struct KeyboardKeyControl: NSViewRepresentable {
+    var virtualKey: UInt16
+    var entry: Bool
+    var selected: Bool
+    var label: String
+    var focus: KeyboardKeyFocus
+    var move: (MoveCommandDirection) -> Void
+    var select: () -> Void
+
+    func makeNSView(context: Context) -> KeyButton {
+        let button = KeyButton(frame: .zero)
+        button.virtualKey = virtualKey
+        button.focus = focus
+        focus.buttons.setObject(button, forKey: NSNumber(value: virtualKey))
+        return button
+    }
+    func updateNSView(_ button: KeyButton, context: Context) {
+        button.entry = entry
+        button.move = move
+        button.select = select
+        button.setAccessibilityLabel(label)
+        button.setAccessibilitySelected(selected)
+    }
+    static func dismantleNSView(_ button: KeyButton, coordinator: ()) {
+        let key = NSNumber(value: button.virtualKey)
+        if button.focus?.buttons.object(forKey: key) === button { button.focus?.buttons.removeObject(forKey: key) }
+    }
+
+    final class KeyButton: NSButton {
+        var virtualKey: UInt16 = 0
+        var entry = false
+        weak var focus: KeyboardKeyFocus?
+        var move: ((MoveCommandDirection) -> Void)?
+        var select: (() -> Void)?
+        override init(frame: NSRect) {
+            super.init(frame: frame)
+            title = ""
+            isTransparent = true
+            setButtonType(.momentaryPushIn)
+            focusRingType = .exterior
+            target = self
+            action = #selector(choose)
+        }
+        required init?(coder: NSCoder) { nil }
+        // Expose the actual control, rather than NSButton's unlabeled decorative cell.
+        override func isAccessibilityElement() -> Bool { true }
+        override func accessibilityRole() -> NSAccessibility.Role? { .button }
+        override func accessibilityChildren() -> [Any]? { [] }
+        override var accessibilityFocusedUIElement: Any? { self }
+        override func isAccessibilityFocused() -> Bool { window?.isKeyWindow == true && window?.firstResponder === self }
+        override func accessibilityHitTest(_ point: NSPoint) -> Any? { self }
+        override var acceptsFirstResponder: Bool { isEnabled }
+        override var canBecomeKeyView: Bool { entry && isEnabled && !isHiddenOrHasHiddenAncestor && window != nil }
+        override func becomeFirstResponder() -> Bool {
+            guard super.becomeFirstResponder() else { return false }
+            focus?.entered(self)
+            select?()
+            return true
+        }
+        @objc private func choose() {
+            guard let window, window.makeFirstResponder(self) else { return }
+            select?()
+        }
+        override func mouseDown(with event: NSEvent) {
+            guard let window, window.makeFirstResponder(self) else { return }
+            super.mouseDown(with: event)
+        }
+        override func accessibilityPerformPress() -> Bool {
+            guard let window, window.makeFirstResponder(self) else { return false }
+            performClick(nil)
+            return true
+        }
+        override func keyDown(with event: NSEvent) {
+            if event.modifierFlags.intersection([.command, .control, .option]).isEmpty {
+                let direction: MoveCommandDirection? = [123: .left, 124: .right, 125: .down, 126: .up][event.keyCode]
+                if let direction { move?(direction); return }
+                if event.keyCode == 48 {
+                    if event.modifierFlags.contains(.shift) { window?.selectPreviousKeyView(self) }
+                    else { window?.selectNextKeyView(self) }
+                    return
+                }
+            }
+            super.keyDown(with: event)
+        }
+        override var focusRingMaskBounds: NSRect { bounds }
+        override func drawFocusRingMask() { NSBezierPath(roundedRect: bounds, xRadius: 7, yRadius: 7).fill() }
     }
 }
 
@@ -997,7 +1093,8 @@ private struct KeyButton: View {
     var modifiers: KeyboardModifierStyle
     /// The drawing's one Tab stop; the other keys are reached with the arrow keys.
     var tabStop = false
-    var chosen: () -> Void = {}
+    var focus: KeyboardKeyFocus
+    var move: (MoveCommandDirection) -> Void
 
     var body: some View {
         let mapping = devices.inputSource.mapping(virtualKey: key.virtualKey)
@@ -1008,26 +1105,18 @@ private struct KeyButton: View {
         let caption = entry.map { binds.describe($0) }
         let width = key.width * unit - 4, height = key.height * unit - 4
         let selected = binds.selectedVirtualKey == key.virtualKey || (binds.selectedVirtualKey == nil && engine != nil && engine == binds.selectedKey)
-        let select = {
-            binds.selectedVirtualKey = key.virtualKey
-            binds.selectedKey = engine
-            chosen()
-        }
-        Button(action: select) {
+        ZStack {
             StudioKeyCap(key: label, action: width >= 76 || key.virtualKey == 49 ? caption : nil, role: role, selected: selected, width: width, height: height)
+                .allowsHitTesting(false).accessibilityHidden(true)
+            KeyboardKeyControl(virtualKey: key.virtualKey, entry: tabStop, selected: selected,
+                               label: "\(Self.spoken(label, key.virtualKey)), \(role == .unavailable ? mapping.explanation ?? StudioKeyRole.unavailable.rawValue : caption ?? "not bound")",
+                               focus: focus, move: move) {
+                binds.selectedVirtualKey = key.virtualKey
+                binds.selectedKey = engine
+            }
         }
-        .buttonStyle(.plain)
-        // Only the entry key is focusable, even with keyboard navigation off, so arrows work
-        // after a click and Tab passes the drawing as one stop.
-        .focusable(tabStop)
+        .frame(width: width, height: height)
         .offset(x: key.x * unit, y: key.y * unit)
-        // Keys that aren't the Tab stop are .focusable(false), which can take their button out of
-        // the accessibility tree; so every key states its element itself: one button with its
-        // name, selection and press, whichever key holds the Tab stop.
-        .accessibilityElement(children: .ignore)
-        .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
-        .accessibilityLabel("\(Self.spoken(label, key.virtualKey)), \(role == .unavailable ? mapping.explanation ?? StudioKeyRole.unavailable.rawValue : caption ?? "not bound")")
-        .accessibilityAction(.default, select)
     }
     static func label(_ virtualKey: UInt16, source: InputSourceSnapshot, modifiers: KeyboardModifierStyle) -> String {
         let mac = modifiers == .mac
