@@ -2,6 +2,7 @@
 import copy
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 import catalog
@@ -222,6 +223,141 @@ void Init(void) {
     def test_system_include_and_blank_lines_preserve_registration_line(self):
         (self.root / 'src/fixture.c').write_text('\n\n#include <stdio.h>\n\nvoid Init(void) { Dvar_RegisterBool("line", 0, 1); }\n')
         self.assertEqual(catalog.extract_source(self.root, 'stock')['settings']['line'][0]['line'], 5)
+
+    def privacy_source(self):
+        (self.root / 'src/fixture.c').write_text('')
+        path = self.root / 'src/PC/qcommon/match_summary.c'
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('''void MatchSummary_Init(void)
+{
+    const dvar_t *privacy = Dvar_RegisterBool_mac("cl_matchSummaries", 1, 0x1000);
+    matchEnabled = privacy->current.enabled;
+    Dvar_AddFlags(privacy, 0x40);
+    memset(&match, 0, sizeof(match));
+}
+''')
+        return path
+
+    def privacy_catalog(self):
+        copy_path = self.root / 'copy.json'
+        copy_path.write_text('{}')
+        return catalog.build_catalog(self.root, 'fixture', copy_path)
+
+    def test_startup_privacy_constructor_and_read_only_freeze_are_distinct(self):
+        self.privacy_source()
+        document = self.privacy_catalog()
+        for mode in catalog.MODES:
+            variant = document['settings'][0]['variants'][mode]
+            site = variant['sites'][0]
+            self.assertEqual(site['flags'], 0x1000)
+            self.assertEqual(site['flagAdditions'], [{'path': 'src/PC/qcommon/match_summary.c',
+                'line': 5, 'mechanism': 'Dvar_AddFlags', 'flags': 0x40}])
+            self.assertEqual(variant['flags'], 0x1040)
+            self.assertIn('readOnly', variant['flagNames'])
+            self.assertFalse(variant['editable'])
+            self.assertEqual(catalog.coverage_errors(document, catalog.extract_source(self.root, mode), mode), [])
+
+    def test_privacy_coverage_checks_freeze_evidence_but_ignores_line_shifts(self):
+        path = self.privacy_source()
+        document = self.privacy_catalog()
+        path.write_text('\n\n' + path.read_text())
+        facts = catalog.extract_source(self.root, 'stock')
+        self.assertEqual(catalog.coverage_errors(document, facts, 'stock'), [])
+        for additions in ([], [{'path': 'src/PC/qcommon/match_summary.c',
+                               'line': 5, 'mechanism': 'Dvar_AddFlags', 'flags': 0}]):
+            with self.subTest(additions=additions):
+                edited = copy.deepcopy(document)
+                edited['settings'][0]['variants']['stock']['sites'][0]['flagAdditions'] = additions
+                self.assertIn('flagAdditions mismatch cl_matchsummaries',
+                              catalog.coverage_errors(edited, facts, 'stock'))
+
+    def test_privacy_coverage_rejects_unprotected_effective_metadata(self):
+        self.privacy_source()
+        document = self.privacy_catalog()
+        facts = catalog.extract_source(self.root, 'stock')
+        for field, value in [('flags', 0x1000), ('editable', True), ('flagNames', ['engineOwned'])]:
+            with self.subTest(field=field):
+                edited = copy.deepcopy(document)
+                edited['settings'][0]['variants']['stock'][field] = value
+                self.assertIn(f'effective {field} mismatch cl_matchsummaries',
+                              catalog.coverage_errors(edited, facts, 'stock'))
+
+    def test_unreviewed_privacy_freeze_fails_closed(self):
+        path = self.privacy_source()
+        original = path.read_text()
+        changes = [
+            ('Dvar_AddFlags(privacy, 0x40);', ''),
+            ('Dvar_AddFlags(privacy, 0x40);', 'if (enabled) Dvar_AddFlags(privacy, 0x40);'),
+            ('Dvar_AddFlags(privacy, 0x40);', 'Dvar_AddFlags(privacy, unknownFlags);'),
+            ('Dvar_AddFlags(privacy, 0x40);', 'Dvar_AddFlags(privacy, 1);'),
+            ('Dvar_AddFlags(privacy, 0x40);', 'Dvar_AddFlags(privacy, (unsigned char)0x100 >> 2);'),
+            ('Dvar_AddFlags(privacy, 0x40);', 'Dvar_AddFlags(privacy, 32 + 32);'),
+            ('matchEnabled = privacy->current.enabled;', 'privacy = other; matchEnabled = privacy->current.enabled;'),
+            ('const dvar_t *privacy =', 'if (enabled) { const dvar_t *privacy ='),
+            ('MatchSummary_Init', 'Other_Init'),
+            ('1, 0x1000)', '1, 0x1001)'),
+            ('1, 0x1000)', '1, (unsigned char)0x1000)'),
+            ('1, 0x1000)', '1, 2048 + 2048)'),
+        ]
+        for old, new in changes:
+            with self.subTest(new=new):
+                path.write_text(original.replace(old, new))
+                with self.assertRaisesRegex(catalog.CatalogError, 'unreviewed startup privacy flag addition'):
+                    catalog.extract_source(self.root, 'stock')
+
+    def test_historical_privacy_constructor_flags_remain_constructor_evidence(self):
+        path = self.privacy_source()
+        path.write_text('void MatchSummary_Init(void) { Dvar_RegisterBool_mac("cl_matchSummaries", 1, 0x1040); }')
+        variant = self.privacy_catalog()['settings'][0]['variants']['stock']
+        self.assertEqual(variant['sites'][0]['flags'], 0x1040)
+        self.assertNotIn('flagAdditions', variant['sites'][0])
+        self.assertFalse(variant['editable'])
+
+    def test_privacy_freeze_accepts_only_reviewed_integer_literal_spellings(self):
+        path = self.privacy_source()
+        original = path.read_text()
+        for spelling in ['64', '0x40', '0X40']:
+            with self.subTest(spelling=spelling):
+                path.write_text(original.replace('Dvar_AddFlags(privacy, 0x40);',
+                                                f'Dvar_AddFlags(privacy, {spelling});'))
+                variant = self.privacy_catalog()['settings'][0]['variants']['stock']
+                self.assertEqual(variant['sites'][0]['flagAdditions'][0]['flags'], 64)
+                self.assertEqual(variant['flags'], 4160)
+                self.assertFalse(variant['editable'])
+
+    def test_two_stage_privacy_constructor_accepts_only_reviewed_integer_literal_spellings(self):
+        path = self.privacy_source()
+        original = path.read_text()
+        for spelling in ['4096', '0x1000', '0X1000']:
+            with self.subTest(spelling=spelling):
+                path.write_text(original.replace('1, 0x1000)', f'1, {spelling})'))
+                variant = self.privacy_catalog()['settings'][0]['variants']['stock']
+                self.assertEqual(variant['sites'][0]['flags'], 4096)
+                self.assertEqual(variant['flags'], 4160)
+                self.assertFalse(variant['editable'])
+
+    def test_privacy_modes_ignore_added_flag_source_line_differences(self):
+        path = self.privacy_source()
+        body = path.read_text()
+        path.write_text('#if defined(COD2_CODX) && COD2_CODX\n' + body + '\n#else\n' + body + '\n#endif\n')
+        entry = self.privacy_catalog()['settings'][0]
+        stock = entry['variants']['stock']['sites'][0]['flagAdditions'][0]
+        cod2x = entry['variants']['cod2x']['sites'][0]['flagAdditions'][0]
+        self.assertNotEqual(stock['line'], cod2x['line'])
+        self.assertEqual(entry['cod2x'], 'unchanged')
+        self.assertEqual(entry['origins'], ['stock'])
+
+    def test_privacy_mode_signatures_retain_added_flag_semantics(self):
+        self.privacy_source()
+        facts = {mode: catalog.extract_source(self.root, mode) for mode in catalog.MODES}
+        for field, value in [('flags', 0x80), ('path', 'src/other_privacy.c'), ('mechanism', 'Other_AddFlags')]:
+            with self.subTest(field=field):
+                changed = copy.deepcopy(facts)
+                changed['cod2x']['settings']['cl_matchsummaries'][0]['flagAdditions'][0][field] = value
+                with patch.object(catalog, 'extract_source', side_effect=lambda root, mode: changed[mode]):
+                    entry = self.privacy_catalog()['settings'][0]
+                self.assertEqual(entry['cod2x'], 'changed')
+                self.assertEqual(entry['origins'], ['stock', 'cod2x'])
 
 
 if __name__ == '__main__':

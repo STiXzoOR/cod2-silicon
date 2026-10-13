@@ -267,6 +267,50 @@ def function_at(text, offset):
     return matches[-1][1] if matches else ''
 
 
+def startup_privacy_flag_additions(text, start, end, numbers, path, owner, name, flags, flags_expression):
+    # Reviewed MatchSummary_Init sequence: consume startup privacy, then freeze
+    # the same dvar. Constructor inputs remain separate from the added flags.
+    # Historical snapshots register ROM directly and need no added-flag fact.
+    if name.lower() != 'cl_matchsummaries' or flags == 0x1040:
+        return []
+    # This reviewed sequence accepts literal flag words only. The general
+    # bounded evaluator strips casts and cannot establish narrowing semantics.
+    if flags != 0x1000 or not re.fullmatch(r'(?:4096|0[xX]1000)', flags_expression.strip()):
+        raise CatalogError('unreviewed startup privacy flag addition')
+    prefix = re.search(r'\bvoid\s+MatchSummary_Init\s*\(\s*void\s*\)\s*\{\s*'
+                       r'const\s+dvar_t\s*\*\s*privacy\s*=\s*$', text[:start])
+    suffix = re.match(r';\s*matchEnabled\s*=\s*privacy\s*->\s*current\s*\.\s*enabled\s*;\s*'
+                      r'(?P<addition>Dvar_AddFlags)\s*\(\s*privacy\s*,\s*(?P<flags>[^;]+?)\s*\)\s*;\s*'
+                      r'memset\s*\(\s*&match\s*,\s*0\s*,\s*sizeof\s*\(\s*match\s*\)\s*\)\s*;\s*}',
+                      text[end + 1:])
+    if (path != 'src/PC/qcommon/match_summary.c' or owner != 'MatchSummary_Init'
+            or not prefix or not suffix or not re.fullmatch(r'(?:64|0[xX]40)', suffix['flags'].strip())):
+        raise CatalogError('unreviewed startup privacy flag addition')
+    offset = end + 1 + suffix.start('addition')
+    addition_path, line = numbers[text.count('\n', 0, offset)]
+    return [{'path': addition_path, 'line': line, 'mechanism': 'Dvar_AddFlags', 'flags': 0x40}]
+
+
+def restriction_fields(sites):
+    flags = 0
+    for site in sites:
+        for candidate in site.get('flagCandidates', [site['flags']]):
+            flags |= candidate
+        for addition in site.get('flagAdditions', []):
+            flags |= addition['flags']
+    return {'flags': flags, 'flagNames': [v for k, v in FLAG_NAMES.items() if flags & k],
+            'flagsDynamic': any(s['flags'] is None for s in sites),
+            'serverControlled': bool(flags & (8 | 256)), 'editable': not bool(flags & (16 | 64 | 128))}
+
+
+def mode_site_signature(site):
+    signature = {k: v for k, v in site.items() if k not in ('path', 'line', 'name')}
+    if 'flagAdditions' in signature:
+        signature['flagAdditions'] = [{k: v for k, v in addition.items() if k != 'line'}
+                                      for addition in signature['flagAdditions']]
+    return signature
+
+
 # Generic runtime factories accept arbitrary names. The allowlist is by owner
 # AND function, not by argument spelling, so new named registrations cannot hide.
 FACTORIES = {
@@ -422,7 +466,12 @@ def extract_source(root, mode):
                 if typ in ('int', 'float'):
                     site['minimum'], site['maximum'] = fact(args[2], typ), fact(args[3], typ)
             for name in names:
-                settings[name.lower()].append(dict(site, name=name))
+                named_site = dict(site, name=name)
+                additions = startup_privacy_flag_additions(text, match.start(), end, numbers,
+                                                          rel, owner, name, flags, args[-1])
+                if additions:
+                    named_site['flagAdditions'] = additions
+                settings[name.lower()].append(named_site)
     if unresolved:
         raise CatalogError('\n'.join(unresolved))
     def unique(sites):
@@ -458,6 +507,15 @@ def coverage_errors(document, facts, mode):
                     b = sorted(json.dumps(s.get(field), sort_keys=True) for s in sites)
                     if a != b:
                         errors.append(f'{field} mismatch {name}')
+                addition_signature = lambda sites: sorted(json.dumps([
+                    {k: v for k, v in addition.items() if k != 'line'}
+                    for addition in s.get('flagAdditions', [])], sort_keys=True) for s in sites)
+                if addition_signature(actual[name]) != addition_signature(sites):
+                    errors.append(f'flagAdditions mismatch {name}')
+                if any(s.get('flagAdditions') for s in actual[name]):
+                    for field, value in restriction_fields(actual[name]).items():
+                        if claimed[name].get(field) != value:
+                            errors.append(f'effective {field} mismatch {name}')
         else:
             for name in sorted(actual.keys() & claimed.keys()):
                 signature = lambda sites: sorted(json.dumps({k: v for k, v in s.items() if k != 'line'}, sort_keys=True) for s in sites)
@@ -518,7 +576,7 @@ def build_catalog(root, revision, copy_path):
             variants = {mode: {'sites': mode_sites[mode][name]} for mode in MODES if name in mode_sites[mode]}
             sites = [s for v in variants.values() for s in v['sites']]
             display_name = sites[0]['name']
-            signatures = {m: [{k: v for k, v in s.items() if k not in ('path', 'line', 'name')} for s in v['sites']] for m, v in variants.items()}
+            signatures = {m: [mode_site_signature(s) for s in v['sites']] for m, v in variants.items()}
             entry = {'name': display_name, 'availability': 'dispatchOnly' if plural == 'commands' and all(s['mechanism'].endswith(':dispatch') for s in sites) else 'registered', 'variants': variants,
                      'cod2x': 'added' if 'stock' not in variants else ('changed' if 'cod2x' in variants and signatures['stock'] != signatures['cod2x'] else 'unchanged'),
                      'origins': ['cod2x'] if 'stock' not in variants else ['stock'],
@@ -538,12 +596,7 @@ def build_catalog(root, revision, copy_path):
                 kind = {'bool': 'switch', 'enum': 'menu', 'color': 'colour', 'int': 'number', 'float': 'number', 'vec2': 'vector', 'vec3': 'vector', 'vec4': 'vector', 'string': 'text'}
                 entry['control'] = {'kind': kind[next(iter(types))] if len(types) == 1 else 'text'}
                 for variant in variants.values():
-                    flags = 0
-                    for s in variant['sites']:
-                        for candidate in s.get('flagCandidates', [s['flags']]): flags |= candidate
-                    variant.update(flags=flags, flagNames=[v for k, v in FLAG_NAMES.items() if flags & k],
-                                   flagsDynamic=any(s['flags'] is None for s in variant['sites']),
-                                   serverControlled=bool(flags & (8 | 256)), editable=not bool(flags & (16 | 64 | 128)))
+                    variant.update(restriction_fields(variant['sites']))
             else:
                 entry.update(bindable=display_name.startswith(('+', '-')), menuLabel=None,
                              summary='An engine command. See Expert for where it is registered.',

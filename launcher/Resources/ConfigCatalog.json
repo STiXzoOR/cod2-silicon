@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceRevision": "2feb769",
+  "sourceRevision": "bb908124",
   "groups": [
     {
       "id": "frame",
@@ -15858,15 +15858,23 @@
           "sites": [
             {
               "path": "src/PC/qcommon/match_summary.c",
-              "line": 93,
+              "line": 95,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
-              "flags": 4160,
+              "flags": 4096,
               "default": {
                 "status": "literal",
                 "value": true
               },
-              "name": "cl_matchSummaries"
+              "name": "cl_matchSummaries",
+              "flagAdditions": [
+                {
+                  "path": "src/PC/qcommon/match_summary.c",
+                  "line": 97,
+                  "mechanism": "Dvar_AddFlags",
+                  "flags": 64
+                }
+              ]
             }
           ],
           "flags": 4160,
@@ -15882,15 +15890,23 @@
           "sites": [
             {
               "path": "src/PC/qcommon/match_summary.c",
-              "line": 45,
+              "line": 47,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
-              "flags": 4160,
+              "flags": 4096,
               "default": {
                 "status": "literal",
                 "value": true
               },
-              "name": "cl_matchSummaries"
+              "name": "cl_matchSummaries",
+              "flagAdditions": [
+                {
+                  "path": "src/PC/qcommon/match_summary.c",
+                  "line": 49,
+                  "mechanism": "Dvar_AddFlags",
+                  "flags": 64
+                }
+              ]
             }
           ],
           "flags": 4160,
@@ -15912,8 +15928,8 @@
       "summary": "Save frame timing and connection measurements on this Mac after each match.",
       "details": "Change this in Settings › Privacy before starting the game. The launcher stores at most 200 summaries locally and never sends them anywhere. Turning it off prevents new summaries; earlier records remain. This choice belongs to this Mac, not to a loadout.",
       "sources": [
-        "src/PC/qcommon/match_summary.c:45",
-        "src/PC/qcommon/match_summary.c:93"
+        "src/PC/qcommon/match_summary.c:47",
+        "src/PC/qcommon/match_summary.c:95"
       ],
       "guided": false,
       "control": {

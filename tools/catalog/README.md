@@ -1,14 +1,14 @@
 # Config Studio catalog
 
-The committed resource describes **release integration `2feb769`**, including
-local match summaries. This tool uses Python's standard library
+The committed resource describes **release integration `bb908124`**, including
+the startup privacy freeze for local match summaries. This tool uses Python's standard library
 and Clang's preprocessor. It reads source; it neither builds nor runs the game,
 and consumes no game data, player profiles, reference binary or private tools.
 
 ```sh
 python3 -m unittest discover -s tools/catalog -v
 python3 tools/catalog/catalog.py generate \
-  --source-root /path/to/source-export --source-revision 2feb769 \
+  --source-root /path/to/source-export --source-revision bb908124 \
   --output launcher/Resources/ConfigCatalog.json
 python3 tools/catalog/catalog.py check \
   --source-root /path/to/source-export --catalog launcher/Resources/ConfigCatalog.json --mode stock
@@ -51,6 +51,17 @@ names absent from that source in a **scratch copy file** and pass `--copy`.
   marked `flagsDynamic`. ROM (`0x40`), NOWRITE (`0x10`) and CHEAT (`0x80`) never
   become editable controls. Saved means ARCHIVE (`0x1`); the separate `0x200`
   flag is called `savedBit` without claiming a config-writing effect.
+- `flagAdditions` keeps separate source evidence for the reviewed
+  `MatchSummary_Init` sequence: register with `0x1000`, consume the startup
+  privacy choice, then add ROM (`0x40`) through the same local dvar. Each addition
+  retains its path, line, mechanism and flags. Constructor flags remain
+  `0x1000`; effective variant restrictions include the added flag and remain
+  `0x1040` and non-editable. Missing, conditional or otherwise changed sequences
+  fail closed. The two-stage constructor accepts only `4096`, `0x1000` or
+  `0X1000`; its added flag accepts only `64`, `0x40` or `0X40`. Casts and compound
+  flag expressions require review. This bounded rule does not interpret arbitrary runtime mutations.
+  Coverage checks addition evidence and effective restrictions; line shifts
+  alone do not fail coverage.
 - Explicit command registrations and game `ClientCommand`/`ConsoleCommand`
   dispatch sites are separate mechanisms. Commands available only by dispatch
   have `availability: dispatchOnly`. Coverage checks both sets. Generic runtime

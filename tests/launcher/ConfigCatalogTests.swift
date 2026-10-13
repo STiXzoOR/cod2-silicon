@@ -21,7 +21,7 @@ import Darwin
         let url = URL(fileURLWithPath: CommandLine.arguments[1])
         let bytes = try Data(contentsOf: url)
         let catalog = try ConfigCatalog(data: bytes)
-        require(catalog.sourceRevision == "2feb769", "catalog must describe the requested integration")
+        require(catalog.sourceRevision == "bb908124", "catalog must describe the requested integration")
         let speed = catalog.setting(named: "SENSITIVITY")!
         require(speed.name == "sensitivity" && speed.group == .aim, "case-insensitive setting lookup")
         require(catalog.settings(in: .aim).contains(speed), "group lookup")
@@ -43,6 +43,13 @@ import Darwin
         require(catalog.setting(named: "snaps")?.variant(for: .cod2x)?.defaultValue.value == .number(40), "port startup preference stays distinct from policy")
         require(catalog.setting(named: "g_competitive")?.variant(for: .cod2x)?.flagsDynamic == true, "run-time flag choice")
         require(catalog.setting(named: "g_competitive")?.isEditable(in: .cod2x) == false, "server policy is protected")
+        let privacy = catalog.setting(named: "cl_matchSummaries")!
+        for mode in ConfigCatalogMode.allCases {
+            let variant = privacy.variant(for: mode)!
+            require(variant.sites.count == 1 && variant.sites[0].flags == 0x1000, "privacy constructor consumes startup choice")
+            require(variant.flags == 0x1040, "privacy retains the post-registration read-only freeze")
+            require(!privacy.isEditable(in: mode), "startup privacy cannot become a loadout control")
+        }
         require(catalog.setting(named: "r_lodScale")?.isEditable(in: .stock) == false, "stock cheat protection")
         require(catalog.setting(named: "r_lodScale")?.isEditable(in: .cod2x) == true, "intentional CoD2x flag change")
         for setting in catalog.settings {
@@ -95,6 +102,21 @@ import Darwin
         }
         let unsafeCatalog = try ConfigCatalog(data: unsafe)
         require(unsafeCatalog.setting(named: "r_lodScale")?.isEditable(in: .stock) == false, "editable hint bypassed flags")
+        let unsafePrivacy = try changed(bytes) { object in
+            var entries = object["settings"] as! [[String: Any]]
+            let i = entries.firstIndex { ($0["name"] as! String).lowercased() == "cl_matchsummaries" }!
+            var variants = entries[i]["variants"] as! [String: Any]
+            for mode in ["stock", "cod2x"] {
+                var variant = variants[mode] as! [String: Any]; variant["editable"] = true
+                variants[mode] = variant
+            }
+            entries[i]["variants"] = variants; object["settings"] = entries
+        }
+        let unsafePrivacyCatalog = try ConfigCatalog(data: unsafePrivacy)
+        for mode in ConfigCatalogMode.allCases {
+            require(unsafePrivacyCatalog.setting(named: "cl_matchSummaries")?.isEditable(in: mode) == false,
+                    "editable hint bypassed the startup privacy freeze")
+        }
         let disputed = try changed(bytes) { object in
             var entries = object["settings"] as! [[String: Any]]
             let i = entries.firstIndex { $0["name"] as! String == "sensitivity" }!
