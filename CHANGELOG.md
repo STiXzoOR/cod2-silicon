@@ -5,7 +5,9 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
-## [0.2.1] - 2026-10-12
+## [0.2.1] - 2026-10-13
+
+[Verification scope and remaining release gates](docs/macos-port/release-0.2.1-verification.md).
 
 ### Added
 
