@@ -1162,10 +1162,12 @@ private struct Legend: View {
     }
     private var items: some View {
         ForEach(StudioKeyRole.allCases, id: \.self) { role in
-            HStack(spacing: 6) {
+            // Labels wrap inside a narrow grid cell rather than running past the card edge.
+            HStack(alignment: .top, spacing: 6) {
                 RoundedRectangle(cornerRadius: 4).fill(role.fill).frame(width: 14, height: 14)
                     .overlay(RoundedRectangle(cornerRadius: 4).strokeBorder(Color.white.opacity(0.18), lineWidth: 1))
-                Text(role.rawValue).font(.system(size: 12)).foregroundStyle(palette.dark ? Palette.hex(0xcfc6b1) : palette.secondary).fixedSize()
+                Text(role.rawValue).font(.system(size: 12)).foregroundStyle(palette.dark ? Palette.hex(0xcfc6b1) : palette.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

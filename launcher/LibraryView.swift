@@ -191,8 +191,11 @@ struct AboutView: View {
         }
         .scrollIndicators(.never)
         .background(alignment: .topLeading) {
-            // Composition shifted right so the village sits beside the wordmark, never behind it.
-            HeroBackdrop(map: "mp_carentan", image: nil, leading: origin.x - 220).frame(width: proxy.size.width, height: 560).heroExtension()
+            // Composition shifted right so the village sits beside the wordmark and copy, never behind them. The copy column
+            // ends at window x 978; at this height the steeple's left edge lands at (window + shift - 1300) / 2 + 809, so
+            // narrower windows shift further to keep it 24 pt clear.
+            HeroBackdrop(map: "mp_carentan", image: nil, leading: origin.x - max(220, 1686 - (proxy.size.width + origin.x)))
+                .frame(width: proxy.size.width, height: 560).heroExtension()
         }
         }
         .ignoresSafeArea(.container, edges: .top)
