@@ -41,13 +41,13 @@ static inline void FuzzDvarString(dvar_t *dvar, const char *name, const char *va
     dvar->reset.string = value;
 }
 
-/* The engine's bit masks (src/blobs/data.c). Index 13 is 16383 in the retail
- * table as well; usercmd keys only use small widths. */
+/* Native protocol masks: exactly the low N bits, including widths 13 and 32.
+ * The legacy src/blobs/data.c initializer is preserved for i386 round-trips. */
 #define FUZZ_KBITMASK                                                                   \
     unsigned int kbitmask[33] = { 0, 1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047, 4095,   \
-        16383, 32767, 65535, 131071, 262143, 524287, 1048575, 2097151, 4194303, 8388607, \
+        8191, 16383, 32767, 65535, 131071, 262143, 524287, 1048575, 2097151, 4194303, 8388607, \
         16777215, 33554431, 67108863, 134217727, 268435455, 536870911, 1073741823,       \
-        2147483647, 4294967295u, 0 }
+        2147483647, 4294967295u }
 
 /* Structured input reader. Reads past the end return zeros. */
 typedef struct {

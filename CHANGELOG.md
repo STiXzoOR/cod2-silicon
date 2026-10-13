@@ -5,6 +5,46 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-13
+
+[Verification scope and remaining release gates](docs/macos-port/release-0.2.1-verification.md).
+
+### Added
+
+- Config Studio: named loadouts, guided and expert settings, keyboard and mouse
+  binds, multi-command and cycling binds, reviewed imports and change history.
+  Ordinary edits save to the selected loadout; imports, suggested changes and
+  restores require an explicit action. Settings for this Mac remain separate
+  from each loadout.
+- Ruleset-aware Check-up and a server ready check before joining. Unknown rules
+  remain unknown, and suggested changes require an explicit action.
+- Local match summaries for frame timing and connection measurements, with
+  bounded storage and a privacy switch. These measurements stay on this Mac.
+
+### Fixed
+
+- Server metadata stays readable at the minimum window size, with connection
+  actions kept visible. Config Studio uses native group selection and keyboard
+  focus, responsive Expert controls and system popover materials.
+- Native voice playback initialization, the original 8192 Hz playback rate,
+  server relay packet handling and spectator routing. Microphone capture is
+  still unavailable.
+- CoD2x profile configuration paths and launcher profile startup ordering.
+- Command-chain validation now uses the native engine's actual value limits
+  and quoted-command behavior.
+- Native rendering, animation, audio and network layout errors found by the
+  composed fidelity checks. Evidence and remaining qualifications are recorded
+  in the workstream reports.
+
+### Known limitations
+
+- The player directory remains unavailable until redistribution permissions
+  and a signed publication are in place.
+- OpenGL remains the renderer. Metal and further frame-pacing work remain on
+  the roadmap.
+- Original 32-bit Linux binary comparison still requires a working multilib
+  host; native-off source preservation is a separate check.
+
 ## [0.2.0] - 2026-10-05
 
 ### Added
@@ -136,6 +176,7 @@ All notable changes to CoD2 Silicon are documented here, following
 Evidence and historical qualifications are preserved in the
 [workstream reports](docs/macos-port/README.md).
 
-[Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/STiXzoOR/cod2-silicon/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.1
 [0.2.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.2.0
 [0.1.0]: https://github.com/STiXzoOR/cod2-silicon/releases/tag/v0.1.0

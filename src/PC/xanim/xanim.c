@@ -2226,9 +2226,17 @@ void DObjCalcAnim(const DObj *obj, int *partBits)
                     mat->quat[1] = (float)quat[1] * 3.0518509447574615e-05f;
                     mat->quat[2] = (float)quat[2] * 3.0518509447574615e-05f;
                     mat->quat[3] = (float)quat[3] * 3.0518509447574615e-05f;
+#if defined(COD2_X64)
+                    /* DObjCalcSkel adds the model's bind translation once for
+                     * every child. An unanimated bone has no displacement. */
+                    mat->trans[0] = 0.0f;
+                    mat->trans[1] = 0.0f;
+                    mat->trans[2] = 0.0f;
+#else
                     mat->trans[0] = trans ? trans[0] : 0.0f;
                     mat->trans[1] = trans ? trans[1] : 0.0f;
                     mat->trans[2] = trans ? trans[2] : 0.0f;
+#endif
                 }
 
                 ++mat;

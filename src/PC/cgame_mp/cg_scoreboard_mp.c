@@ -771,7 +771,11 @@ qboolean CG_DrawScoreboard(void)
     float fontScale;
     float footerFontScale;
     struct Material *material;
+#if defined(COD2_X64)
+    sbpicinfo_t borderLines[6];
+#else
     sbpicinfo_t borderLines[4];
+#endif
     char mapBuffer[64];
     const char *map;
     const char *gameType;
@@ -845,11 +849,19 @@ qboolean CG_DrawScoreboard(void)
         numLines = CalcBorderLines(borderLines);
         if (numLines > 0) {
             int lineIdx;
+#if defined(COD2_X64)
+            /* Mac 1.3 reads x/y/w/h from each of the six 16-byte records. */
+            for (lineIdx = 0; lineIdx < numLines; lineIdx++) {
+                const sbpicinfo_t *line = &borderLines[lineIdx];
+                UI_DrawHandlePic(line->x, line->y, line->w, line->h, 0, 0, color, material);
+            }
+#else
             float *linePtr = (float *)borderLines + 4;
             for (lineIdx = 0; lineIdx < numLines; lineIdx++) {
                 UI_DrawHandlePic(linePtr[-3], linePtr[-2], linePtr[-1], linePtr[0], 0, 0, color, material);
                 linePtr += 4;
             }
+#endif
         }
     }
 

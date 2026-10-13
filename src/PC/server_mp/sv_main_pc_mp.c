@@ -1,5 +1,8 @@
 #include "common_types.h"
 #include "imports.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "cod2x_udp_operations.h"
+#endif
 #include <stddef.h>
 #include <string.h>
 /* dvar globals */
@@ -88,6 +91,10 @@ void SVC_RemoteCommand(struct netadr_t from, msg_t *msg)
     netadr_t addr;
     const dvar_t *rcon_dvar;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (!SV_Cod2xUdpAllow(from, COD2X_UDP_RCON))
+        return;
+#endif
     time = Com_Milliseconds();
 
     if (lasttime != 0 && (time - lasttime) <= 499) {

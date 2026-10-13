@@ -31,6 +31,7 @@ def build_icon(root, output):
 
 
 def main():
+    root = pathlib.Path(__file__).resolve().parents[2]
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("executable", type=pathlib.Path)
     parser.add_argument("app", type=pathlib.Path, help="new output path ending in .app")
@@ -39,7 +40,7 @@ def main():
     parser.add_argument("--game-dir", type=pathlib.Path, default=None,
                         help="optional developer override; omitted in release bundles")
     parser.add_argument("--frameworks", type=pathlib.Path, help="pinned SDL install prefix for a self-contained bundle")
-    parser.add_argument("--version", default="0.1.0")
+    parser.add_argument("--version", default=(root / "RELEASE_VERSION").read_text().strip())
     parser.add_argument("--resolution", default="1920x1080")
     fullscreen = parser.add_mutually_exclusive_group()
     fullscreen.add_argument("--borderless", dest="borderless", action="store_true", default=True,
@@ -50,6 +51,8 @@ def main():
     parser.add_argument("--bundle-id", default="io.github.stixzoor.cod2silicon")
     parser.add_argument("--replace", action="store_true", help="replace an existing bundle with the same ID after verification")
     args = parser.parse_args()
+    if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", args.version):
+        parser.error("version must be N.N.N")
     if not args.executable.is_file():
         parser.error("executable does not exist")
     if args.app.suffix != ".app":
@@ -73,7 +76,6 @@ def main():
     symbols = subprocess.check_output(["nm", "-g", str(args.executable)], text=True)
     if "_Cod2xNativeApp_Arguments" not in symbols:
         parser.error("client needs COD2_CODX=1 and bundle argument support; rebuild the native target")
-    root = pathlib.Path(__file__).resolve().parents[2]
     destination = args.app.expanduser().resolve()
     destination.parent.mkdir(parents=True, exist_ok=True)
     staging = tempfile.TemporaryDirectory(prefix=".cod2x-build-", dir=destination.parent)
@@ -206,6 +208,8 @@ def main():
         subprocess.run([str(root / "scripts/fetch-launcher-fonts.sh"), "--check"], check=True, stdout=subprocess.DEVNULL)
         shutil.copytree(fonts, resources / "Fonts", ignore=shutil.ignore_patterns(".*"))
         info["ATSApplicationFontsPath"] = "Fonts"
+        for policy in ["ConfigCatalog.json", "ConfigRulesets.json", "ConfigOptimizer.json"]:
+            shutil.copy2(root / "launcher/Resources" / policy, resources / policy)
         for name in ["LICENSE", "NOTICE.md", "CREDITS.md"]:
             shutil.copy2(root / name, resources / name)
     with (contents / "Info.plist").open("wb") as file:

@@ -1213,6 +1213,16 @@ void DObjCalcSkel(const DObj *obj, int *partBits)
                 }
 
                 parentBoneIndex = globalBoneIndex - parentDelta;
+#if defined(COD2_X64)
+                /* Animation translations are offsets from the model's local
+                 * bind translation. Add it before the parent transform, as
+                 * in Mac 1.3, including bones without translation tracks. */
+                if (parts->trans) {
+                    mat[globalBoneIndex].trans[0] += parts->trans[childIndex * 3];
+                    mat[globalBoneIndex].trans[1] += parts->trans[childIndex * 3 + 1];
+                    mat[globalBoneIndex].trans[2] += parts->trans[childIndex * 3 + 2];
+                }
+#endif
                 if (parentBoneIndex >= 0) {
                     DObjComposeAnimMatLocal(&mat[globalBoneIndex], &mat[parentBoneIndex]);
                 } else {

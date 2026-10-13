@@ -20,5 +20,5 @@ check_prerequisites
 mkdir -p "$prefix" "$build"
 prefix=$(cd "$prefix" && pwd -P)
 build=$(cd "$build" && pwd -P)
-build_app "$root" "$build" "$prefix/CoD2 Silicon.app" 0.1.0 "$mac_binary" "$stabs_binary"
+build_app "$root" "$build" "$prefix/CoD2 Silicon.app" "$(< "$root/RELEASE_VERSION")" "$mac_binary" "$stabs_binary"
 printf 'Installed %s/CoD2 Silicon.app. Open it to choose your game data and enter your CD key.\n' "$prefix"

@@ -9,8 +9,8 @@ Duty 2: no game content is included.
 
 ## Status
 
-The `0.2.0` release is playable on stock 1.3 and CoD2x 1.4 servers, with a
-native launcher and server browser. Movement, firing, grenades, mounted
+The `0.2.1` release is playable on stock 1.3 and CoD2x 1.4 servers, with a
+native launcher, server browser and Config Studio. Movement, firing, grenades, mounted
 turrets, HTTP mod downloads and round restarts have been tested, and every
 menu is opened by an automated sweep.
 Smoother frame pacing and active Game Mode remain goals. See the
@@ -35,7 +35,7 @@ for shader extraction. See [getting your game data](docs/macos-port/game-data.md
 ### Prebuilt app
 
 1. Open [GitHub Releases](https://github.com/STiXzoOR/cod2-silicon/releases).
-2. Download `CoD2-Silicon-0.1.0-macos-arm64.zip` and `SHA256SUMS` into the same
+2. Download `CoD2-Silicon-0.2.1-macos-arm64.zip` and `SHA256SUMS` into the same
    folder. Verify the archive, then unzip it:
 
    ```sh
@@ -67,13 +67,23 @@ Gatekeeper does not block it.
 ## First run and playing
 
 Open **CoD2 Silicon.app** to use the native SwiftUI launcher: Play, a server
-browser with favorites and recents, settings, demos/screenshots and update checks.
+browser with favorites and recents, Config Studio, settings, demos/screenshots and update checks.
 It finds the game folder automatically or asks you
 to choose the folder containing `main/`. If no CD key is stored, it asks for
 yours and saves it in `~/.cod2/preferences`. Never share that file or your key.
 It extracts the original shaders from your own Steam Mac copy when available,
 otherwise continues with approximate shaders. Configs, logs, demos, screenshots
 and the shader cache live in `~/Library/Application Support/CoD2 Silicon`.
+
+Use **Configs** to create and edit loadouts. Choose **Use for Next Game** to make a
+selected loadout active. Its **Settings** tab holds frame cap, mouse, audio and
+graphics controls; **Binds**, **Check-up** and **History** cover bindings, rule
+checks and earlier changes. **Settings** in the sidebar controls this Mac: game
+data, display, renderer, updates, privacy and advanced launch options.
+
+The **Players** directory is unavailable in 0.2.1. Shared setups need redistribution
+permission and a signed publication before they can appear. You can still bring
+in your own configs through import review.
 
 Use **Play** to enter the original multiplayer menus, or join from the launcher
 server browser. Quitting the game returns to the launcher; a game crash leaves
@@ -86,9 +96,9 @@ open -a "/Applications/CoD2 Silicon.app" 'cod2x://connect/127.0.0.1:28960'
 
 For a direct CLI launch, run the app executable with `--play`. Append
 `--exit-after-game` to close the launcher when the game quits, or pass trusted
-engine arguments after `--`. Settings include 1080p–6K, the frame cap, vsync,
-raw mouse, audio and native fullscreen Spaces. Metal options are marked as
-upcoming until the native renderer is integrated.
+engine arguments after `--`. Choose resolution, fullscreen mode and vsync in
+sidebar **Settings**. Change frame cap, mouse and audio in your **Configs**
+loadout. Metal options remain marked as upcoming.
 
 Replace the address with your server. For a source install, use the app under
 `~/Applications` instead. The default settings target 1080p fullscreen,
@@ -98,9 +108,10 @@ caps.
 
 ## Known limitations
 
-- No microphone/voice capture; no intro cinematics.
-- No standalone native dedicated-server binary yet. Use the client executable
-  with `+set dedicated 1 +map mp_toujane` and your normal data arguments.
+- Incoming voice playback and server relay are implemented; native microphone
+  capture and intro cinematics remain unavailable.
+- The native dedicated server is available from source; see the
+  [server guide](docs/server.md).
 - Frame-pacing hitches remain; active Game Mode and quiet-desktop display
   restoration still need acceptance testing.
 - Some rendering and mod edge cases remain. A server restart during an HTTP
@@ -111,8 +122,8 @@ caps.
 
 ## Verified results
 
-The `0.1.0` port is playable, with further stability and frame-pacing work ahead.
-Verified development results include:
+The following historical measurements retain their original scope; they are not
+new performance claims for every release. Verified development results include:
 
 - Online stock 1.3 (protocol 118) and CoD2x 1.4 (protocol 120) play: movement,
   firing, reloading, round restart and respawn; HTTP mod downloads also worked.

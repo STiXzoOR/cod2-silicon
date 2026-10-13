@@ -12,6 +12,30 @@
 #include "fuzz.h"
 
 #include <stdarg.h>
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "PC/server_mp/cod2x_udp_operations.h"
+/* Registration/LAN services stay synthetic; the production UDP state runs.
+ * Reset per input so prior bursts cannot mask parser paths. */
+static dvar_t limiterEnabled, limiterRequests, limiterIPs;
+const dvar_t *Dvar_RegisterBool(const char *name, unsigned char value, unsigned short flags)
+{
+    FuzzDvarBool(&limiterEnabled, name, value);
+    limiterEnabled.flags = flags;
+    return &limiterEnabled;
+}
+const dvar_t *Dvar_RegisterInt(const char *name, int value, int min, int max, unsigned short flags)
+{
+    dvar_t *var = strcmp(name, "sv_rateLimiterRequestCount") ? &limiterIPs : &limiterRequests;
+    FuzzDvarInt(var, name, value);
+    var->flags = flags;
+    var->domain.integer.min = min;
+    var->domain.integer.max = max;
+    return var;
+}
+void Dvar_SetInt(const dvar_t *var, int value) { ((dvar_t *)var)->current.integer = value; }
+int Cod2x_ServerGameVersion(void) { return 0; }
+qboolean Sys_IsLANAddress(netadr_t from) { return from.type == NA_LOOPBACK || from.type == NA_BOT; }
+#endif
 
 extern void SV_ConnectionlessPacket(netadr_t from, msg_t *msg);
 extern void MSG_Init(msg_t *buf, byte *data, int length);
@@ -190,6 +214,9 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
         return 0;
 
     svs.time = 1000;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    SV_Cod2xUdpInit();
+#endif
     /* Reset the client slots each run so state never carries between inputs. */
     memset(svs.clients, 0, FUZZ_MAXCLIENTS * sizeof(client_t));
     for (i = 0; i < FUZZ_MAXCLIENTS; ++i) {

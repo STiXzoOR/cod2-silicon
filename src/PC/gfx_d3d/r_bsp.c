@@ -280,6 +280,21 @@ void R_LoadWorld(const char *name, int *checksum)
 
     refimport = (refimport_t *)&ri;
 
+#if defined(COD2_X64)
+    /* Mac 1.3 reads fields relative to one sunParse base (0xe1d3c onward). */
+    const SunLightParseParams *sun = &((GfxWorld *)world)->sunParse;
+    refimport->Dvar_SetFloat(R_DvarFromImport(imp_r_lightTweakAmbient), sun->ambientScale);
+    refimport->Dvar_SetFloat(R_DvarFromImport(imp_r_lightTweakDiffuseFraction), sun->diffuseFraction);
+    refimport->Dvar_SetFloat(R_DvarFromImport(imp_r_lightTweakSunLight), sun->sunLight);
+    refimport->Dvar_SetColor(R_DvarFromImport(imp_r_lightTweakAmbientColor),
+                           sun->ambientColor[0], sun->ambientColor[1], sun->ambientColor[2], 1.0f);
+    refimport->Dvar_SetColor(R_DvarFromImport(imp_r_lightTweakSunColor),
+                           sun->sunColor[0], sun->sunColor[1], sun->sunColor[2], 1.0f);
+    refimport->Dvar_SetColor(R_DvarFromImport(imp_r_lightTweakSunDiffuseColor),
+                           sun->diffuseColor[0], sun->diffuseColor[1], sun->diffuseColor[2], 1.0f);
+    refimport->Dvar_SetVec3(R_DvarFromImport(imp_r_lightTweakSunDirection),
+                          sun->angles[0], sun->angles[1], sun->angles[2]);
+#else
     refimport->Dvar_SetFloat(R_DvarFromImport(imp_r_lightTweakAmbient), (*(float *)&((GfxWorld *)worldData)->sunParse.name[12]));
     refimport->Dvar_SetFloat(R_DvarFromImport(imp_r_lightTweakDiffuseFraction), (*(float *)&((GfxWorld *)worldData)->sunParse.name[28]));
     refimport->Dvar_SetFloat(R_DvarFromImport(imp_r_lightTweakSunLight), (*(float *)&((GfxWorld *)worldData)->sunParse.name[32]));
@@ -297,6 +312,7 @@ void R_LoadWorld(const char *name, int *checksum)
     refimport->Dvar_SetVec3(R_DvarFromImport(imp_r_lightTweakSunDirection),
                             ((GfxWorld *)worldData)->sunParse.ambientScale, ((GfxWorld *)worldData)->sunParse.ambientColor[0],
                             ((GfxWorld *)worldData)->sunParse.ambientColor[1]);
+#endif
 
     dvar = R_DvarFromImport(imp_r_lightTweakAmbient);
     refimport->Dvar_SetModified(dvar);

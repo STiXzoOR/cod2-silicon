@@ -1,5 +1,6 @@
 import Foundation
 import Darwin
+import CryptoKit
 
 struct LauncherError: LocalizedError, Sendable {
     var message: String
@@ -31,6 +32,8 @@ struct GameServer: Codable, Sendable, Identifiable {
     var fields: [String: String]
     var ping: Int
     var players: [ServerPlayer]
+    var observedAt: Date? = nil
+    var queryConflicts: [String]? = nil
     var id: String { address }
     var name: String { fields["sv_hostname"] ?? fields["hostname"] ?? address }
     var map: String { fields["mapname"] ?? "Unknown" }
@@ -41,6 +44,15 @@ struct GameServer: Codable, Sendable, Identifiable {
     var mod: String { fields["fs_game"] ?? "" }
     var password: Bool { fields["pswrd"] == "1" || fields["g_password"] == "1" }
     var fps: String { fields["sv_maxfps"] ?? fields["com_maxfps"] ?? fields["g_maxfps"] ?? "Server default" }
+    mutating func mergeInfo(_ info: GameServer) {
+        var conflicts = Set(queryConflicts ?? [])
+        for (key, value) in info.fields {
+            let name = key.lowercased()
+            if fields.contains(where: { $0.key.lowercased() == name && $0.value != value }) { conflicts.insert(name) }
+            fields[key] = value
+        }
+        queryConflicts = conflicts.isEmpty ? nil : conflicts.sorted()
+    }
 }
 
 enum WireParser {
@@ -74,6 +86,7 @@ enum WireParser {
         var fields: [String: String] = [:]
         for i in stride(from: 1, to: tokens.count - 1, by: 2) {
             guard tokens[i].count <= 128, tokens[i + 1].count <= 2048 else { throw LauncherError(message: "Oversized server field.") }
+            if let previous = fields[tokens[i]], previous != tokens[i + 1] { throw LauncherError(message: "Conflicting server info fields.") }
             fields[tokens[i]] = tokens[i + 1]
         }
         var players: [ServerPlayer] = []
@@ -83,7 +96,8 @@ enum WireParser {
             guard numbers.count == 2, let score = Int(numbers[0]), let ping = Int(numbers[1]) else { continue }
             players.append(ServerPlayer(id: players.count, score: score, ping: ping, name: String(line[line.index(after: quote)..<end].prefix(128))))
         }
-        return GameServer(address: address, fields: fields, ping: ping, players: players)
+        let statusObservation = lines[0].trimmingCharacters(in: .whitespacesAndNewlines) == "statusResponse"
+        return GameServer(address: address, fields: fields, ping: ping, players: players, observedAt: statusObservation ? Date() : nil)
     }
 }
 
@@ -101,6 +115,10 @@ struct LaunchLink: Sendable {
         guard let encoded = command.addingPercentEncoding(withAllowedCharacters: allowed) else { throw LauncherError(message: "Invalid address.") }
         return try LaunchLink("cod2x://" + encoded)
     }
+    static func canonicalAddress(_ address: String) throws -> String {
+        let parsed = try direct(address.trimmingCharacters(in: .whitespacesAndNewlines)).address.lowercased()
+        return parsed.contains(":") ? parsed : parsed + ":28960"
+    }
 }
 
 enum EngineCommandLine {
@@ -112,18 +130,73 @@ enum EngineCommandLine {
     }
 }
 
+struct ConfigStudioLaunch: Sendable {
+    let profileID: String
+    let chain: String?
+    var connectionIsolated = false
+    static func validateProfileID(_ id: String) throws {
+        guard id.range(of: "\\A[A-Za-z0-9][A-Za-z0-9_.-]{0,40}\\z", options: .regularExpression) != nil else {
+            throw LauncherError(message: "The loadout identifier is invalid.")
+        }
+    }
+    static func chainBasename(profileID: String) throws -> String {
+        try validateProfileID(profileID)
+        // A fixed ASCII basename fits MAX_QPATH even for a 41-byte profile ID.
+        // Hash every ID so punctuation substitution cannot alias another profile.
+        let digest = SHA256.hash(data: Data(profileID.lowercased().utf8)).prefix(20).map { String(format: "%02x", $0) }.joined()
+        return "cs_" + digest + ".cfg"
+    }
+}
+
+struct ConfigConnectionLaunch: Equatable, Sendable {
+    let address: String
+    let values: [String: String]
+    static let allowedSettings: Set<String> = ["com_maxfps", "rate", "snaps", "cl_maxpackets", "m_filter", "cl_mouseaccel", "r_picmip", "r_picmip_manual"]
+    func arguments(for link: LaunchLink?) throws -> [String] {
+        guard let link, try LaunchLink.canonicalAddress(link.address) == LaunchLink.canonicalAddress(address),
+              Set(values.keys.map { $0.lowercased() }).count == values.count else {
+            throw LauncherError(message: "Temporary settings belong to a different connection.")
+        }
+        return try values.sorted { $0.key < $1.key }.flatMap { name, value in
+            guard Self.allowedSettings.contains(name.lowercased()),
+                  value.range(of: "^[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)$", options: .regularExpression) != nil,
+                  Double(value)?.isFinite == true, GameSettings.safeValue(value) else {
+                throw LauncherError(message: "This temporary setting is not an editable, numeric client option.")
+            }
+            return ["+set", name.lowercased(), "\"\(value)\""]
+        }
+    }
+}
+
 struct GameLaunchPlan {
     var arguments: [String]
     var link: LaunchLink?
-    init(settings: GameSettings, dataPath: String, homePath: String, link: LaunchLink? = nil, demo: String? = nil, forwarded: [String] = []) throws {
+    init(settings: GameSettings, dataPath: String, homePath: String, link: LaunchLink? = nil, demo: String? = nil, forwarded: [String] = [], configStudio: ConfigStudioLaunch? = nil, connection: ConfigConnectionLaunch? = nil) throws {
         guard GameSettings.safeValue(dataPath), GameSettings.safeValue(homePath) else { throw LauncherError(message: "Game paths contain unsupported characters.") }
-        var args = try settings.arguments()
+        var args = try settings.launchDvars(migrated: configStudio != nil).flatMap { ["+set", $0.0, "\"\($0.1)\""] }
         args += ["+set", "fs_basepath", "\"\(dataPath)\"", "+set", "fs_homepath", "\"\(homePath)\""]
+        if let configStudio {
+            try ConfigStudioLaunch.validateProfileID(configStudio.profileID)
+            if let chain = configStudio.chain {
+                guard chain == (try ConfigStudioLaunch.chainBasename(profileID: configStudio.profileID)) else {
+                    throw LauncherError(message: "The loadout's advanced chain filename is invalid.")
+                }
+                let path = URL(fileURLWithPath: homePath).appendingPathComponent("main/" + chain)
+                let values = try? path.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey])
+                if values?.isRegularFile == true && values?.isSymbolicLink != true { args += ["+exec", chain] }
+            }
+        }
         if let demo {
             guard demo.range(of: "^[A-Za-z0-9_.-]+$", options: .regularExpression) != nil else { throw LauncherError(message: "Rename this demo using letters, numbers, dots, underscores or hyphens before playback.") }
             args += ["+demo", demo]
         }
-        arguments = try EngineCommandLine.validate(args + forwarded)
+        if connection != nil && (configStudio == nil || demo != nil) {
+            throw LauncherError(message: "Temporary server settings require a saved loadout and a server connection.")
+        }
+        if connection?.values.isEmpty == false && configStudio?.connectionIsolated != true {
+            throw LauncherError(message: "Temporary server settings require an isolated connection write owner.")
+        }
+        arguments = try EngineCommandLine.validate(args + forwarded + (try connection?.arguments(for: link) ?? []))
         // Links are delivered as Apple events after startup, never serialized into argv.
         self.link = link
     }
@@ -171,6 +244,7 @@ enum KeyStore {
 }
 
 struct GameSettings: Codable, Sendable, Equatable {
+    static let machineDvarNames: Set<String> = ["r_mode", "r_fullscreen", "r_borderless", "r_swapinterval", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr", "com_introplayed", "logfile", "developer", "fs_basepath", "fs_homepath", "fs_game", "fs_cdpath", "fs_copyfiles", "fs_restrict", "loc_language", "dedicated", "com_hunkmegs", "net_port", "cl_matchsummaries"]
     var resolution = "1920x1080"
     var fullscreen = "borderless"
     /// com_maxfps: 0 (no cap) to 1000, the engine dvar's range.
@@ -182,6 +256,7 @@ struct GameSettings: Codable, Sendable, Equatable {
     var volume = 0.8
     var anisotropy = 8
     var advanced = ""
+    var matchSummariesEnabled = true
     static let resolutions = ["1280x720", "1920x1080", "2560x1440", "3008x1692", "3840x2160", "5120x2880", "6016x3384"]
     static let anisotropyLevels = [2, 4, 8, 16]
     var cm360: Double? { MouseMath.centimetresPer360(dpi: dpi, sensitivity: sensitivity) }
@@ -200,6 +275,7 @@ struct GameSettings: Codable, Sendable, Equatable {
         volume = try c.decodeIfPresent(Double.self, forKey: .volume) ?? d.volume
         anisotropy = try c.decodeIfPresent(Int.self, forKey: .anisotropy) ?? d.anisotropy
         advanced = try c.decodeIfPresent(String.self, forKey: .advanced) ?? d.advanced
+        matchSummariesEnabled = try c.decodeIfPresent(Bool.self, forKey: .matchSummariesEnabled) ?? d.matchSummariesEnabled
     }
     /// One advanced line as (name, value): `dvar value` as typed in the console, or `dvar=value`.
     static func advancedPair(_ line: String) -> (String, String)? {
@@ -224,12 +300,12 @@ struct GameSettings: Codable, Sendable, Equatable {
             ("r_borderless", fullscreen == "borderless" ? "1" : "0"), ("com_maxfps", String(fps)),
             ("r_swapInterval", vsync ? "1" : "0"), ("in_rawmouse", rawMouse ? "1" : "0"),
             ("sensitivity", String(sensitivity)), ("snd_volume", String(volume)), ("r_anisotropy", String(anisotropy)), ("m_filter", "0"), ("cl_mouseAccel", "0"),
-            ("logfile", "0"), ("developer", "0"), ("com_introPlayed", "1")]
+            ("logfile", "0"), ("developer", "0"), ("com_introPlayed", "1"), ("cl_matchSummaries", matchSummariesEnabled ? "1" : "0")]
         for line in advanced.components(separatedBy: "\n") where !line.trimmingCharacters(in: .whitespaces).isEmpty {
             let pair = Self.advancedPair(line)
             let name = pair?.0 ?? ""
             guard let pair, name.range(of: "^[A-Za-z_][A-Za-z0-9_]{0,63}$", options: .regularExpression) != nil,
-                  !["fs_basepath", "fs_homepath", "password", "cl_cdkey", "cdkey", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr"].contains(name.lowercased()),
+                  !["fs_basepath", "fs_homepath", "password", "cl_cdkey", "cdkey", "dpi", "r_renderer", "r_renderscale", "r_metalfx", "r_hdr", "cl_matchsummaries"].contains(name.lowercased()),
                   !name.lowercased().contains("password"), !name.lowercased().contains("codkey") else {
                 throw LauncherError(message: "Advanced options use one “dvar value” per line. Paths, credentials and upcoming renderer options are managed separately.")
             }
@@ -242,6 +318,13 @@ struct GameSettings: Codable, Sendable, Equatable {
     }
     func config() throws -> String { try dvars().map { "seta \($0.0) \"\($0.1)\"" }.joined(separator: "\n") + "\n" }
     func arguments() throws -> [String] { try dvars().flatMap { ["+set", $0.0, "\"\($0.1)\""] } }
+    func launchDvars(migrated: Bool) throws -> [(String, String)] {
+        let values = try dvars()
+        return migrated ? values.filter { Self.machineDvarNames.contains($0.0.lowercased()) } : values
+    }
+    func launchConfig(migrated: Bool) throws -> String {
+        try launchDvars(migrated: migrated).map { "seta \($0.0) \"\($0.1)\"" }.joined(separator: "\n") + "\n"
+    }
 }
 
 struct LauncherLibrary: Codable {

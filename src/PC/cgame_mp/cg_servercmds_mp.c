@@ -3,6 +3,9 @@
 #include "imports.h"
 #include "bytematch.h"
 #include "headers/PC/cgame_mp/cg_local.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "../qcommon/cod2x.h"
+#endif
 
 #include <string.h>
 #include <stdlib.h>
@@ -475,6 +478,10 @@ void CG_MenuShowNotify(int menuToShow)
 
 static void __attribute_regparm__(2) CG_SetClientDvarFromServer(const char *dvarname, const char *value)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (Cod2x_SetClientDvar(dvarname, value))
+        return;
+#endif
     if (stricmp(dvarname, (const char *)"cg_objectiveText") == 0) {
         I_strncpyz(cg->objectiveText, value, sizeof(cg->objectiveText));
     } else if (stricmp(dvarname, (const char *)"cg_drawHud") == 0) {
@@ -1095,6 +1102,9 @@ void CG_ServerCommand(void)
     case 'v': {
         char dvarName[150];
         I_strncpyz(dvarName, CG_Argv(1), sizeof(dvarName));
+#if defined(COD2_X64)
+        if (COD2_NATIVE_TRACE_ENABLED())
+#endif
         if (strncmp(dvarName, "ui_allow_join", 13) == 0) {
             Com_Printf("client dvar command %s='%s'\n", dvarName, CG_Argv(2));
         }

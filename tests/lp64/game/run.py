@@ -52,6 +52,7 @@ def compile_source(source, name, baseline=False):
     return obj
 
 
+trace = compile_source('src/PC/qcommon/port_debug.c', 'port_debug')
 for name, sources in [('startup', ['src/PC/server_mp/sv_init_mp.c']),
                       ('script_api', ['src/PC/game_mp/g_scr_main_mp.c']),
                       ('snapshot', []),
@@ -67,6 +68,7 @@ for name, sources in [('startup', ['src/PC/server_mp/sv_init_mp.c']),
     if args.test and name not in args.test:
         continue
     objects = [compile_source(s, Path(s).stem, True) for s in sources]
+    objects.append(trace)
     objects.append(compile_source(f'tests/lp64/game/{name}.c', name))
     exe = output / name
     subprocess.run(['clang', '-arch', 'arm64', '-fsanitize=address', '-Wl,-dead_strip', *map(str, objects), '-o', str(exe)], check=True)

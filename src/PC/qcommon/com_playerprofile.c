@@ -32,6 +32,9 @@ extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern qboolean Sys_RemoveDirTree(const char *path);
 
 extern const dvar_t *fs_basepath;
+#if defined(COD2_X64) && COD2_X64
+extern const dvar_t *fs_homepath;
+#endif
 extern char fs_gamedir[256];
 
 extern void *imp_fs_basepath;
@@ -147,7 +150,11 @@ Bool Com_DeletePlayerProfile(const char *profileName)
 
     Com_BuildPlayerProfilePathForPlayer(profilePath, 64, profileName, "");
 
+#if defined(COD2_X64) && COD2_X64
+    FS_BuildOSPath(fs_homepath->current.string, fs_gamedir, profilePath, osPath);
+#else
     FS_BuildOSPath((fs_basepath)->current.string, (const char *)imp_fs_gamedir, profilePath, osPath);
+#endif
 
     if (!Sys_RemoveDirTree(osPath)) {
         return 0;
@@ -252,7 +259,11 @@ Bool Com_NewPlayerProfile(const char *profileName)
 
     Com_BuildPlayerProfilePathForPlayer(profilePath, 64, profileName, "");
 
+#if defined(COD2_X64) && COD2_X64
+    FS_BuildOSPath(fs_homepath->current.string, fs_gamedir, profilePath, osPath);
+#else
     FS_BuildOSPath((fs_basepath)->current.string, (const char *)imp_fs_gamedir, profilePath, osPath);
+#endif
 
     if (FS_CreatePath(osPath)) {
         Com_Printf("Unable to create new profile path: %s\n", osPath);

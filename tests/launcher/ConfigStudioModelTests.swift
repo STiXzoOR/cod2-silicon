@@ -1,0 +1,263 @@
+import Foundation
+
+// Drives the Configs page's intents (the same calls its controls make) against
+// private temporary homes and checks the exact bytes and History rows on disk.
+@main struct ConfigStudioModelTests {
+    static func require(_ condition: Bool, _ message: String = "config studio model", line: Int = #line) {
+        if !condition { fatalError("FAIL: \(message) (line \(line))") }
+    }
+    static func bytes(_ text: String) -> Data { Data(text.utf8) }
+
+    @MainActor static func main() throws {
+        let scratch = URL(fileURLWithPath: ProcessInfo.processInfo.environment["TMPDIR"]!)
+        let catalog = try ConfigCatalog(data: Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1])))
+
+        // Values the game reads and writes.
+        require(ConfigValues.format(2.6) == "2.6" && ConfigValues.format(250) == "250" && ConfigValues.format(0.022) == "0.022")
+        require(ConfigValues.format(-0.0000001) == "0" && ConfigValues.format(25000, integer: true) == "25000")
+        require(ConfigValues.number("2.03571383928398319032009213873") != nil && ConfigValues.number("12abc") == 12)
+        require(ConfigValues.bool("1") && !ConfigValues.bool("0") && !ConfigValues.bool("off"))
+        let fps = ConfigSettingSpec(setting: catalog.setting(named: "cg_drawFPS")!, mode: .cod2x)!
+        require(fps.choices == ["Off", "Simple", "Verbose", "Time"] && fps.defaultText == "Off")
+        require(ConfigValues.same(fps, "simple", "1") && ConfigValues.display(fps, "1") == "Simple")
+        require(ConfigSettingSpec(setting: catalog.setting(named: "cg_fov")!, mode: .cod2x) == nil, "protected FOV is never a control")
+        let volume = ConfigSettingSpec(setting: catalog.setting(named: "snd_volume")!, mode: .cod2x)!
+        require(ConfigValues.display(volume, "0.8") == "80%" && ConfigValues.text(number: 1.4, spec: volume) == "1")
+        require(ConfigStudioModel.identifier(for: "Café Pub!", existing: []) == "Cafe_Pub")
+        require(ConfigStudioModel.identifier(for: "main", existing: ["Main"]) == "main_2")
+        require(ConfigStudioModel.identifier(for: "  ", existing: []) == "Loadout")
+        require(ConfigStudioModel.identifier(for: "Night.Scrim - EU", existing: []) == "Night.Scrim_EU")
+        print("PASS: config text, plain display and profile folder names")
+
+        // Catalog value labels name values in the game's own words; practical ranges size the slider.
+        let picmip = ConfigSettingSpec(setting: catalog.setting(named: "r_picmip")!, mode: .cod2x)!
+        require(picmip.valueLabels.map(\.title) == ["Extra", "High", "Normal", "Low"] && picmip.labelsCoverRange, "every texture level has a name")
+        require(ConfigValues.display(picmip, "2") == "Normal" && ConfigValues.display(picmip, "2.0") == "Normal" && ConfigValues.display(picmip, "7") == "7")
+        let manual = ConfigSettingSpec(setting: catalog.setting(named: "r_picmip_manual")!, mode: .cod2x)!
+        require(ConfigValues.display(manual, "1") == "Manual" && ConfigValues.display(manual, "0") == "Automatic" && manual.labelsCoverRange, "a labelled switch reads its labels")
+        let khz = ConfigSettingSpec(setting: catalog.setting(named: "snd_khz")!, mode: .cod2x)!
+        require(ConfigValues.display(khz, "44") == "High (44 kHz)" && ConfigValues.display(khz, "30") == "30 kHz" && !khz.labelsCoverRange, "a label keeps its unit")
+        let rate = ConfigSettingSpec(setting: catalog.setting(named: "rate")!, mode: .cod2x)!
+        require(rate.valueLabels.map(\.text) == ["5000", "25000"] && !rate.labelsCoverRange, "partial labels are presets, sorted by value")
+        require(ConfigValues.display(rate, "25000") == "LAN, cable or DSL (25000 bytes/s)" && ConfigValues.display(rate, "20000") == "20000 bytes/s")
+        require(!ConfigValues.bool("0.5") && ConfigValues.bool("1e2"), "boolean controls use the engine's decimal integer prefix")
+        require(ConfigValues.display(rate, "125.9") == "125 bytes/s" && ConfigValues.display(rate, "1e100") == "1 bytes/s",
+                "integer displays use atoi rather than rounding or scientific conversion")
+        require(ConfigValues.same(rate, "125.9", "125") && !ConfigValues.same(rate, "1e2", "100"))
+        require(ConfigValues.display(manual, "0.5") == "Automatic" && ConfigValues.display(manual, "2147483648") == "2147483648",
+                "boolean labels follow atoi and preserve unsupported overflowing text")
+        require(ConfigValues.display(rate, "2147483648") == "2147483648" && ConfigValues.display(rate, "-2147483649") == "-2147483649",
+                "integer values outside Int32 remain readable raw text")
+        require(ConfigValues.display(rate, " \t-125.9suffix") == "-125 bytes/s")
+        require(Double(ConfigValues.format(1e100, integer: true)) == 1e100, "large finite numerals format without narrowing traps")
+        require(ConfigValues.display(volume, "3e38") == "3e38" && ConfigValues.display(volume, "1e100") == "1e100",
+                "overflowing volume percentages retain their raw value without a trap")
+        let fractionalRate = ConfigSettingState(spec: rate, raw: "125.9", locked: false, note: nil)
+        let overflowingRate = ConfigSettingState(spec: rate, raw: "2147483648", locked: false, note: nil)
+        require(fractionalRate.number == 125 && overflowingRate.number == nil,
+                "numeric control state shares the integer display's checked coercion")
+        let aa = ConfigSettingSpec(setting: catalog.setting(named: "r_aaSamples")!, mode: .cod2x)!
+        require(!aa.labelsCoverRange && ConfigValues.display(aa, "3") == "3", "an unnamed value inside the range stays a number")
+        let mouse = ConfigSettingSpec(setting: catalog.setting(named: "sensitivity")!, mode: .cod2x)!
+        require(mouse.practicalRange == 0.01...30 && mouse.slideRange == 0.01...30, "Mouse speed slides over the practical range")
+        require(ConfigValues.text(number: 45, spec: mouse) == "45", "values beyond the practical range stay valid")
+        require(picmip.practicalRange == nil && picmip.slideRange == 0...3 && rate.slideRange == 1000...25000, "without a practical range the registered range is used")
+        print("PASS: catalog value labels and practical ranges")
+
+        // Two loadouts in a private home; Main is active.
+        let home = scratch.appendingPathComponent("home")
+        let store = try ConfigProfileStore(homeURL: home, dialect: .cod2x)
+        let main = bytes("// generated by Call of Duty, do not modify\r\nunbindall\r\nunbindall\r\nbind W \"+forward\"\r\n" +
+                         "seta cg_drawFPS \"Off\"\r\nseta sensitivity \"2.8\"\r\nseta snd_volume \"0.8\"\r\n")
+        _ = try store.create(id: "Main", displayName: "Main", document: ConfigDocument(data: main, dialect: .cod2x))
+        _ = try store.create(id: "Scrim", displayName: "Scrim", document: ConfigDocument(data: bytes("seta sensitivity \"2.1\"\nseta cg_drawFPS \"Simple\"\n"), dialect: .cod2x))
+        try store.select(id: "Main", expectedActive: nil)
+        let activeFile = home.appendingPathComponent("main/players/active.txt")
+        let mainFile = home.appendingPathComponent("main/players/Main/config_mp.cfg")
+        let scrimFile = home.appendingPathComponent("main/players/Scrim/config_mp.cfg")
+        let session = try ConfigStudioSession(home: home, dialect: .cod2x)
+        try session.refresh()
+        let model = ConfigStudioModel(session: session, catalog: { catalog })
+        var spoken: [String] = []
+        model.announce = { spoken.append($0) }
+        model.loadCatalogNow()
+        require(model.catalog != nil && model.catalogError == nil)
+        let catalogFile = scratch.appendingPathComponent("shared-catalog.json")
+        try PrivateFile.write(Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1])), to: catalogFile)
+        let shared = ConfigStudioModel(session: session, catalog: { try ConfigCatalog(data: Data(contentsOf: catalogFile)) })
+        shared.loadCatalogNow()
+        try FileManager.default.removeItem(at: catalogFile)
+        shared.loadCatalogNow()
+        require(shared.catalog?.setting(named: "sensitivity") != nil && shared.catalogError == nil,
+                "a loaded catalog remains usable without rereading its source")
+
+        // Import and Discover need the synchronous path during startup too.
+        let loading = ConfigStudioModel(session: session, catalog: { catalog })
+        loading.loadCatalog()
+        loading.loadCatalogNow()
+        require(loading.catalog?.setting(named: "sensitivity") != nil && loading.catalogError == nil,
+                "synchronous catalog use succeeds while startup loading is pending")
+
+        // Guided comes from the catalog's guided entries; machine settings stay with Settings.
+        require(model.guidedSpecs(in: .frame).first?.name == "com_maxfps")
+        require(model.guidedSpecs(in: .aim).first?.name == "sensitivity")
+        require(ConfigPurposeGroup.allCases.allSatisfy { !model.guidedSpecs(in: $0).isEmpty })
+        require(model.specs.filter { $0.setting.guided }.count == 22)
+        require(model.spec(named: "r_swapInterval").map { $0.launcherOwned } ?? true)
+        require(model.specs.allSatisfy { !$0.name.lowercased().hasPrefix("cg_fov") })
+        require(model.protectedCount(in: .hud) > 0)
+        let speed = model.spec(named: "SENSITIVITY")!
+        require(model.state(speed).raw == "2.8" && model.state(speed).changed && model.state(speed).display == "2.8")
+        require(model.state(model.spec(named: "cg_drawCrosshair")!).raw == nil && !model.state(model.spec(named: "cg_drawCrosshair")!).changed)
+        print("PASS: catalog-driven Guided/Expert specs, launcher-owned rows and effective values")
+
+        // One control gesture is one transaction with exact bytes, and Command-Z undoes it.
+        let undo = UndoManager()
+        undo.groupsByEvent = false
+        undo.beginUndoGrouping(); model.set(speed, to: "2.6", undo: undo); undo.endUndoGrouping()
+        let edited = bytes(String(decoding: main, as: UTF8.self).replacingOccurrences(of: "sensitivity \"2.8\"", with: "sensitivity \"2.6\""))
+        require(try Data(contentsOf: mainFile) == edited, "set rewrites only the value bytes")
+        require(session.history.first?.summary == "Changed Mouse speed" && session.history.first?.source == .you)
+        require(session.history.first?.beforeData == main && spoken.last == "Saved. Changed Mouse speed.")
+        require(undo.undoActionName == "Change Mouse speed")
+        undo.undo()
+        require(try Data(contentsOf: mainFile) == main, "undo restores the exact bytes")
+        require(session.history.count == 3 && session.history.first?.summary == "Undid a change to Mouse speed")
+        undo.redo()
+        require(try Data(contentsOf: mainFile) == edited)
+        model.reset(speed)
+        require(model.state(speed).raw == "5" && !model.state(speed).changed && session.history.first?.summary == "Reset Mouse speed")
+        print("PASS: control edits save exact bytes as History transactions with undo and redo")
+
+        // Locks, notes and DPI are metadata transactions; Take theirs respects the lock.
+        model.setLock(speed, true)
+        model.setNote(speed, "  Matched to my old pad.  ")
+        model.setDPI(1600)
+        let meta = try store.read(id: "Main").metadata
+        require(meta.locks == ["sensitivity"] && meta.notes["sensitivity"] == "Matched to my old pad." && meta.dpi == 1600)
+        require(model.state(speed).locked && model.state(speed).note == "Matched to my old pad.")
+        require(session.history.prefix(3).map(\.summary) == ["Set mouse DPI", "Noted Mouse speed", "Locked Mouse speed"])
+        model.compareID = "Scrim"
+        require(model.comparison?.profile.id == "Scrim" && model.theirs(speed)?.raw == "2.1")
+        let beforeTake = try Data(contentsOf: mainFile)
+        model.takeTheirs(speed)
+        require(try Data(contentsOf: mainFile) == beforeTake, "a locked setting stays yours")
+        model.setLock(speed, false)
+        model.takeTheirs(speed)
+        require(model.state(speed).raw == "2.1" && session.history.first?.summary == "Took Mouse speed from Scrim")
+        require(model.theirs(speed) == nil)
+        model.rename("Everyday")
+        require(try store.read(id: "Main").metadata.displayName == "Everyday" && session.profiles.first { $0.id == "Main" }?.displayName == "Everyday")
+        print("PASS: locks, notes, DPI, rename and Take theirs from another loadout")
+
+        // Viewing another loadout never changes the next game's loadout until asked.
+        let activeBytes = try Data(contentsOf: activeFile)
+        model.select("Scrim")
+        require(try model.current?.profile.id == "Scrim" && model.compareID == nil && Data(contentsOf: activeFile) == activeBytes)
+        require(model.activeProfile?.id == "Main")
+        let drawFPS = model.spec(named: "cg_drawFPS")!
+        model.set(drawFPS, to: "Time")
+        require(try Data(contentsOf: scrimFile) == bytes("seta sensitivity \"2.1\"\nseta cg_drawFPS \"Time\"\n"))
+        require(try Data(contentsOf: activeFile) == activeBytes)
+        model.useForNextGame()
+        require(try Data(contentsOf: activeFile) == bytes("Scrim") && model.activeProfile?.id == "Scrim")
+        print("PASS: selecting views a loadout; Use for next game is the only active-profile change")
+
+        // While the game owns the config, every intent refuses before touching disk.
+        try session.reconcileGames([4242])
+        require(model.isReadOnly)
+        let locked = try Data(contentsOf: scrimFile)
+        model.set(drawFPS, to: "Off")
+        model.setLock(drawFPS, true)
+        require(try Data(contentsOf: scrimFile) == locked && model.failure != nil)
+        try session.reconcileGames([])
+        model.discardFailedChange()
+        require(!model.isReadOnly && model.failure == nil)
+        print("PASS: read-only while the game runs")
+
+        // A stale save keeps its draft visible and Try Again reapplies the intent to the new disk version.
+        try PrivateFile.write(bytes("seta sensitivity \"4\"\nseta cg_drawFPS \"Time\"\n"), to: scrimFile)
+        model.set(drawFPS, to: "Verbose")
+        require(model.failure?.retry != nil && session.draft != nil && model.state(drawFPS).raw == "Verbose")
+        require(try Data(contentsOf: scrimFile) == bytes("seta sensitivity \"4\"\nseta cg_drawFPS \"Time\"\n"), "conflict never overwrites")
+        model.retryFailure()
+        require(model.failure == nil && session.draft == nil)
+        require(try Data(contentsOf: scrimFile) == bytes("seta sensitivity \"4\"\nseta cg_drawFPS \"Verbose\"\n"))
+        print("PASS: failed saves keep the draft; Try Again reapplies to the latest version")
+
+        // Edit as text: invalid or non-Latin-1 text never reaches disk; valid text is one transaction.
+        model.toggleText()
+        let scrimText = ConfigDocument.text(try Data(contentsOf: scrimFile))
+        require(model.textMode && model.text == scrimText && !model.textEdited)
+        let valid = model.text + "seta r_gamma \"1.4\"\n// keep me\nseta my_mod_value \"1\"\n"
+        model.editText(model.text + "seta r_gamma \"1.4\n")
+        require(model.textBlocked && model.textIssues.contains { $0.blocking && $0.line == 3 })
+        let beforeText = try Data(contentsOf: scrimFile)
+        model.applyText()
+        require(try Data(contentsOf: scrimFile) == beforeText)
+        model.editText(valid + "seta name \"Δ\"\n")
+        require(model.textBlocked && model.textIssues.first { $0.blocking }?.line == 6)
+        model.editText(valid)
+        require(!model.textBlocked && model.textIssues.contains { !$0.blocking && $0.excerpt == "my_mod_value" })
+        model.toggleText()
+        require(model.textMode && model.textEdited && model.text == valid,
+                "Show Controls keeps an unapplied text draft until Apply or explicit Discard")
+        model.jump(to: drawFPS)
+        require(model.textMode && model.textEdited && model.textSelection?.location == (model.text as NSString).range(of: "seta cg_drawFPS").location,
+                "Jump to any setting keeps unapplied text and selects the line")
+        let textUndo = UndoManager()
+        textUndo.groupsByEvent = false
+        textUndo.beginUndoGrouping(); model.applyText(undo: textUndo); textUndo.endUndoGrouping()
+        require(try Data(contentsOf: scrimFile) == bytes(valid) && session.history.first?.summary == "Edited as text" && !model.textEdited)
+        textUndo.undo()
+        require(try Data(contentsOf: scrimFile) == beforeText)
+        model.editText(valid)
+        try PrivateFile.write(bytes("seta sensitivity \"9\"\n"), to: scrimFile)
+        try session.refresh()
+        require(model.textStale)
+        model.applyText()
+        require(try Data(contentsOf: scrimFile) == bytes("seta sensitivity \"9\"\n") && model.failure != nil, "stale text never overwrites")
+        model.discardFailedChange(); model.revertText()
+        require(!model.textEdited && model.text == "seta sensitivity \"9\"\n")
+        model.toggleText()
+        print("PASS: Edit as text validates, keeps untouched bytes, applies once and never overwrites a newer file")
+
+        // History: plain differences, and restore is a new transaction.
+        model.select("Main")
+        let speedRow = try require(session.history.first { $0.summary == "Changed Mouse speed" })
+        let changes = model.changes(in: speedRow)
+        require(changes == [ConfigChange(id: "sensitivity", label: "Mouse speed", consoleName: "sensitivity", then: "2.8", now: "2.6")])
+        require(ConfigDiff.sentence(changes) == "Mouse speed 2.8 → 2.6.")
+        let chainOnly = ConfigDiff.changes(from: edited, nil, to: edited, nil, chains: (nil, bytes("bind F1 \"vstr cs_a\"\n")),
+                                           specs: [:], catalog: catalog, dialect: .cod2x)
+        require(chainOnly.map(\.id) == ["chain"] && chainOnly.first?.now == "Added", "advanced-bind files count as a History change")
+        require(model.changesSince(speedRow).contains { $0.id == "sensitivity" && $0.then == "2.6" && $0.now == "2.1" })
+        let count = session.history.count
+        model.restore(speedRow)
+        require(try Data(contentsOf: mainFile) == edited && session.history.count == count + 1 && session.history.first?.source == .restore)
+        require(model.restoredSnapshotID == speedRow.id && model.changesSince(speedRow).filter { $0.id == "sensitivity" }.isEmpty)
+        model.historyFilter = .you
+        require(model.visibleHistory.allSatisfy { $0.source == .you || $0.source == .restore })
+        model.saveSnapshot()
+        require(session.history.first?.summary == "Saved a snapshot" && session.history.first?.beforeData == session.history.first?.data)
+        print("PASS: History differences in plain names and restore as a new transaction")
+
+        // New loadouts: a copy or the game's defaults, shown but not made active.
+        let active = try Data(contentsOf: activeFile)
+        require(model.createLoadout(named: "Night Scrim", copyingCurrent: true))
+        require(model.current?.profile.id == "Night_Scrim" && model.current?.data == edited && model.current?.metadata.origin.kind == .copied)
+        require(model.createLoadout(named: "Night Scrim", copyingCurrent: false))
+        require(model.current?.profile.id == "Night_Scrim_2" && model.current?.data.isEmpty == true)
+        require(try Data(contentsOf: activeFile) == active)
+        print("PASS: new loadouts from a copy or defaults never change the active loadout")
+
+        let resources = URL(fileURLWithPath: CommandLine.arguments[1]).deletingLastPathComponent()
+        try ConfigStudioTabsTests.run(scratch: scratch, catalog: catalog, resources: resources)
+        try ConfigStudioAcceptanceTests.run(scratch: scratch, catalog: catalog, resources: resources)
+    }
+
+    static func require<T>(_ value: T?, line: Int = #line) throws -> T {
+        guard let value else { fatalError("FAIL: missing value (line \(line))") }
+        return value
+    }
+}

@@ -66,12 +66,12 @@ def function(path, name):
     raise ValueError('unterminated function')
 
 
-def run(name, generated, sources=(), cases=((),)):
+def run(name, generated, sources=(), cases=((),), fixture=None):
     if args.test and name not in args.test:
         return
     (out / f'{name}_source.h').write_text(generated)
     objects = []
-    for index, source in enumerate([*sources, f'tests/fixes13/{name}.c']):
+    for index, source in enumerate([*sources, fixture or f'tests/fixes13/{name}.c']):
         obj = out / f'{name}_{index}.o'
         with (out / f'{name}_{index}.log').open('w') as log:
             result = subprocess.run([*flags, '-c', str(ROOT / source), '-o', str(obj)],
@@ -94,6 +94,8 @@ if not args.test or 'snapshot' in args.test:
     path = 'src/PC/server_mp/sv_snapshot_mp.c'
     run('snapshot', ''.join(function(path, n) for n in
         ['SV_WriteSnapshotToClientLocal', 'SV_WriteOverflowRecoveryCommandsLocal', 'SV_SendClientSnapshot']))
+if not args.test or 'items' in args.test:
+    run('items', function('src/PC/cgame_mp/cg_weapons.c', 'CG_RegisterItems'))
 if not args.test or 'abi' in args.test:
     for path in ABI_SOURCES:
         subprocess.run([*flags, '-include', 'stdlib.h', '-include', 'string.h',
@@ -153,13 +155,41 @@ if not args.test or 'timing' in args.test:
     codx_timing = ('-DCOD2_CODX=1' in flags)
     helpers = (function('src/PC/qcommon/cod2x_protocol.c', 'Cod2x_LimitedFPS') +
                function('src/PC/qcommon/cod2x_runtime.c', 'Cod2x_FrameFPS')) if codx_timing else ''
-    run('timing', helpers +
-        function('src/PC/qcommon/common.c', 'Com_Frame_Try_Block_Function') +
-        function('src/PC/client_mp/cl_input.c', 'CL_SendCmdInternal'))
+    frame = function('src/PC/qcommon/common.c', 'Com_Frame_Try_Block_Function')
+    # Keep the original fixture for historical callers that predate match summaries.
+    matches = not args.baseline or bool(re.search(r'\bMatchSummary_Frame\s*\(', frame))
+    run('timing', helpers + frame +
+        function('src/PC/client_mp/cl_input.c', 'CL_SendCmdInternal'),
+        fixture='tests/fixes13/timing_matches.c' if matches else None)
 if not args.test or 'renderer_options' in args.test:
     path = 'src/Mac/DirectX_9/CDirect3DDevice.c'
     assert 'getenv(' not in function(path, 'CDirect3DDevice_DrawIndexedPrimitive')
     run('renderer_options', function(path, 'CDirect3DDevice_UsePrograms'), cases=((), ('on',), ('off',)))
+if not args.test or 'level_state' in args.test:
+    path = 'src/PC/game_mp/g_main_mp.c'
+    source = subprocess.check_output(['git', 'show', f'{args.baseline}:{path}'], text=True, cwd=ROOT) if args.baseline else (ROOT / path).read_text()
+    start = source.index('    COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_spawn);)')
+    start = source.index('\n', start) + 1
+    end = source.index('    level.initializing = 0;', start)
+    generated = function('src/PC/game_mp/g_cmds_mp.c', 'G_setfog')
+    generated += function('src/PC/game_mp/g_scr_main_mp.c', 'G_ResetObjective')
+    generated += function('src/PC/game_mp/g_scr_main_mp.c', 'G_InitObjectives')
+    generated += 'static void initialize_spawned_level(void) {\n' + source[start:end] + '\n}\n'
+    run('level_state', generated)
+if not args.test or 'level_scripts' in args.test:
+    path = 'src/PC/game_mp/g_main_mp.c'
+    source = subprocess.check_output(['git', 'show', f'{args.baseline}:{path}'], text=True, cwd=ROOT) if args.baseline else (ROOT / path).read_text()
+    # The block begins at the final initializing assignment before script startup.
+    start = source.index('    level.initializing = 1;', source.index('    G_LoadStructs();'))
+    end = source.index('    if (restart && !savepersist)', start)
+    tail = source.index('    CalculateRanks();', end)
+    tail_end = source.index('    return;', tail)
+    generated = ''.join(function('src/PC/game_mp/g_scr_main_mp.c', name) for name in
+                        ['Scr_LoadLevel', 'Scr_LoadGameType', 'Scr_StartupGameType'])
+    generated += ''.join(function('src/PC/game_mp/g_items_mp.c', name) for name in
+                         ['SaveRegisteredWeapons', 'SaveRegisteredItems'])
+    generated += 'static void initialize_level_scripts(void) {\n' + source[start:end] + source[tail:tail_end] + '\n}\n'
+    run('level_scripts', generated)
 if args.test and 'debug_enabled' in args.test:
     checked = set()
     for entry in entries:
@@ -177,3 +207,64 @@ if args.test and 'debug_enabled' in args.test:
         checked.add(path)
     assert checked
     print(f'PASS debug opt-in: {len(checked)} native translation units')
+
+if not args.test or 'script_load' in args.test:
+    path = 'src/PC/game_mp/g_scr_main_mp.c'
+    run('script_load', function(path, 'GScr_LoadScriptFunction') + function(path, 'GScr_LoadScripts'))
+
+if not args.test or 'server_snaps' in args.test:
+    run('server_snaps', function('src/PC/server_mp/sv_client_mp.c', 'SV_UserinfoChanged'))
+
+if not args.test or 'browser_maps' in args.test:
+    run('browser_maps', function('src/PC/ui_mp/ui_main_mp.c', 'UI_GetMapDisplayName') +
+        ''.join(function('src/PC/client_mp/cl_ui_mp.c', name) for name in
+                ['LAN_CompareHostname', 'LAN_CompareServers']))
+
+if not args.test or 'locale_fonts' in args.test:
+    path = 'src/PC/ui/ui_shared_obj.c'
+    generated = ''
+    if 'UI_RegisterLocaleFont' in active(path):
+        generated += function(path, 'UI_RegisterLocaleFont')
+    generated += function(path, 'UI_ParseFontAsset') + function(path, 'UI_ParseAssetGlobalDef')
+    if 'const char *fontRole' in generated:
+        generated += '#define TEST_PARSE_FONT(role, alias) UI_ParseFontAsset(7, 11, alias, role)\n'
+    else:
+        generated += '#define TEST_PARSE_FONT(role, alias) UI_ParseFontAsset(7, 11, alias)\n'
+    run('locale_fonts', generated)
+
+if not args.test or 'console_hints' in args.test:
+    path = 'src/PC/universal/dvar.c'
+    generated = ''.join(function(path, name) for name in
+                        ['Dvar_DescribeIntDomain', 'Dvar_DescribeFloatDomain', 'Dvar_DescribeVectorDomain',
+                         'Dvar_DomainToString_Internal_impl', 'Dvar_DomainToString_InternalReg',
+                         'Dvar_DomainToString_GetLines'])
+    generated += function('src/PC/client_mp/cl_console_mp.c', 'ConDrawInput_DetailedDvarMatch')
+    run('console_hints', generated, cases=((), ('overflow',)))
+
+if not args.test or 'numeric_fields' in args.test:
+    run('numeric_fields', function('src/PC/qcommon/common.c', 'Com_LocalizedFloatToString') +
+        function('src/PC/ui_mp/ui_shared_mp.c', 'Item_TextField_Paint'))
+
+if not args.test or 'corpse_trees' in args.test:
+    path = 'src/PC/game_mp/g_main_mp.c'
+    source = function(path, 'G_InitGame')
+    start = source.index('if (!restart) {\n        BG_LoadAnim();')
+    end = source.index('GScr_LoadConsts();', start)
+    generated = 'static void initialize_trees(int restart) {\n' + source[start:end] + '\n}\n'
+    start = source.index('Scr_StartupGameType();') + len('Scr_StartupGameType();')
+    end = source.index('if (restart && !savepersist)', start)
+    generated += 'static void initialize_corpse_slots(void) {\n' + source[start:end] + '\n}\n'
+    source = function(path, 'G_ShutdownGame')
+    start = source.index('scr_data_t *scrData =')
+    end = source.index('Hunk_ClearToMarkLow(0);', start)
+    generated += 'static void release_corpse_trees(void) { int i; {\n' + source[start:end] + '\n}\n'
+    run('corpse_trees', generated)
+
+if not args.test or 'world_lighting' in args.test:
+    path = 'src/PC/gfx_d3d/r_bsp.c'
+    source = function(path, 'R_LoadWorld')
+    start = source.index('world = *(byte **)&rgp.world;')
+    end = source.index('dvar = R_DvarFromImport(imp_r_lightTweakAmbient);', start)
+    generated = function(path, 'R_DvarFromImport')
+    generated += 'static void initialize_world_lighting(void) { byte *world, *worldData; refimport_t *refimport;\n' + source[start:end] + '\n}\n'
+    run('world_lighting', generated)

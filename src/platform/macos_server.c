@@ -1,6 +1,9 @@
 #if defined(__APPLE__) && defined(COD2_X64) && defined(DEDICATED)
 #include "common_types.h"
 #include "macos_system.h"
+#if defined(COD2_CODX) && COD2_CODX
+#include "PC/qcommon/cod2x.h"
+#endif
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,7 +76,14 @@ static qboolean MacServer_MasterAddress(int index, netadr_t *address)
     if (!masters[index]) {
         char dvarName[16];
         snprintf(dvarName, sizeof(dvarName), "sv_master%d", index + 1);
+#if defined(COD2_CODX) && COD2_CODX
+        const char *defaultMaster = index ? "" : "cod2master.activision.com:20710";
+        if (index == 1 && Cod2x_ServerGameVersion() >= COD2X_REVISION)
+            defaultMaster = "master.cod2x.me:20710";
+        masters[index] = Dvar_RegisterString(dvarName, defaultMaster, 0);
+#else
         masters[index] = Dvar_RegisterString(dvarName, index ? "" : "cod2master.activision.com:20710", 0);
+#endif
     }
     name = masters[index]->current.string;
     if (!name[0] || strlen(name) >= sizeof(masterNames[index]))

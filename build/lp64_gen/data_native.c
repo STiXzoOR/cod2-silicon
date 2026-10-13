@@ -433,12 +433,17 @@ int dg_object_63 __asm__(DG_ASM("scriptCommandCount")) __attribute__((used, alig
 _Static_assert(sizeof(int) == 4, "i386 size: scriptCommandCount");
 static unsigned char dg_tail_63[28] __attribute__((used, aligned(DG_ALIGN), section(DG_DATA))) = {0};
 #endif
+#if __SIZEOF_POINTER__ == 4
 
 /* kbitmask: msg_mp.cpp */
 dg_type_84 dg_object_64 __asm__(DG_ASM("kbitmask")) __attribute__((used, aligned(DG_ALIGN), section(DG_DATA))) = {0,1,3,7,15,31,63,127,255,511,1023,2047,4095,16383,32767,65535,131071,262143,524287,1048575,2097151,4194303,8388607,16777215,33554431,67108863,134217727,268435455,536870911,1073741823,2147483647,4294967295,0};
 #if __SIZEOF_POINTER__ == 4
 _Static_assert(sizeof(dg_type_84) == 132, "i386 size: kbitmask");
 static unsigned char dg_tail_64[24] __attribute__((used, aligned(DG_ALIGN), section(DG_DATA))) = {0};
+#endif
+#else
+/* LP64: scalar values verified against the named Steam object. */
+dg_type_84 dg_object_64 __asm__(DG_ASM("kbitmask")) __attribute__((used, aligned(DG_ALIGN), section(DG_DATA))) = {0,1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535,131071,262143,524287,1048575,2097151,4194303,8388607,16777215,33554431,67108863,134217727,268435455,536870911,1073741823,2147483647,4294967295};
 #endif
 
 /* globalFilename: bg_animation_mp.cpp */

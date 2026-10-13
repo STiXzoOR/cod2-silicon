@@ -1,3 +1,9 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#if !defined(DEDICATED)
+#include "match_summary.h"
+#endif
+#endif
 #if defined(COD2_CODX) && COD2_CODX
 #include "cod2x.h"
 #endif
@@ -1773,6 +1779,12 @@ BM_NOINLINE void Com_Frame_Try_Block_Function(void)
 
     SetAnimCheck(com_animCheck->current.enabled);
 
+#if defined(COD2_X64) && !defined(DEDICATED)
+    int matchFrameCap = com_maxfps->current.integer;
+#if defined(COD2_CODX) && COD2_CODX
+    matchFrameCap = Cod2x_FrameFPS(matchFrameCap);
+#endif
+#endif
 #if defined(COD2_CODX) && COD2_CODX
     if (Cod2x_FrameFPS(com_maxfps->current.integer) > 0 && !com_dedicated->current.integer) {
         minMsec = 1000 / Cod2x_FrameFPS(com_maxfps->current.integer);
@@ -1808,6 +1820,9 @@ BM_NOINLINE void Com_Frame_Try_Block_Function(void)
 
 #if COD2_APPLE_SDK && !defined(DEDICATED)
     MacSystem_ObserveFrame(com_frameTime);
+#endif
+#if defined(COD2_X64) && !defined(DEDICATED)
+    MatchSummary_Frame(rawMsec, minMsec, matchFrameCap);
 #endif
     Cbuf_Execute();
     com_lastFrameTime = com_frameTime;
@@ -2503,6 +2518,9 @@ void Com_Init_Try_Block_Function(char *commandLine)
 
 void Com_Init(char *commandLine)
 {
+#if defined(COD2_X64)
+    COD2_InitNativeTracing();
+#endif
     jmp_buf *abortframe = (jmp_buf *)Sys_GetValue(2);
 
     if (!setjmp(*abortframe)) {
@@ -2510,7 +2528,13 @@ void Com_Init(char *commandLine)
         return;
     }
 
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     Com_Printf("[REALERROR] %s\n", com_errorMessage);
+#if defined(COD2_X64)
+    )
+#endif
     Sys_Error(va("Error during initialization:\n%s\n", com_errorMessage));
 }
 

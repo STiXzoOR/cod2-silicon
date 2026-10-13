@@ -93,6 +93,9 @@ static int count;
 static Bool recording;
 static Bool playing;
 static recordingSample_t *currentRecordingSample;
+#if defined(__APPLE__) && defined(COD2_X64)
+static Bool voice_recording_initialized;
+#endif
 
 static short unsigned int *(*s_clientSamples[128])[4];
 static int s_clientTalkTime[64];
@@ -124,13 +127,25 @@ Bool Voice_Init(void)
 #endif
     *freq = 0;
 
+#if defined(__APPLE__) && defined(COD2_X64)
+    /* Playback remains available when native microphone capture is absent. */
+    voice_recording_initialized = Record_Init(0, 0);
+    if (!voice_recording_initialized) {
+        if (!Sound_Init(0))
+            return 0;
+    } else
+#else
     if (!Record_Init(0, 0))
         return 0;
+#endif
 
     Sound_Init(0);
     Encode_Init(*freq);
     Decode_Init(*freq);
 
+#if defined(__APPLE__) && defined(COD2_X64)
+    if (voice_recording_initialized) {
+#endif
     mixerGetRecordSource(old_rec_source);
     mixerSetRecordSource("Mic");
     mic_old_reclevel = mixerGetRecordLevel("Mic");
@@ -142,6 +157,9 @@ Bool Voice_Init(void)
     mixerSetRecordLevel("Mic", level);
 
     mixerSetMicrophoneMute(winvoice_mic_mute->current.enabled);
+#if defined(__APPLE__) && defined(COD2_X64)
+    }
+#endif
 
     g_voice_initialized = 1;
 
@@ -162,6 +180,10 @@ float Voice_GetVoiceLevel(void)
 
     if (!g_voice_initialized)
         return 0.0f;
+#if defined(__APPLE__) && defined(COD2_X64)
+    if (!voice_recording_initialized)
+        return 0.0f;
+#endif
 
     idx = sampleCount % 6;
     result = voice_current_voicelevel / 32767.0f / 6.0f;
@@ -184,12 +206,18 @@ void Voice_Playback(void)
     if (!g_voice_initialized)
         return;
 
+#if defined(__APPLE__) && defined(COD2_X64)
+    if (voice_recording_initialized) {
+#endif
     level = (unsigned short)(int)winvoice_mic_reclevel->current.value;
     if (level != mic_current_reclevel) {
         mic_current_reclevel = level;
         level = (unsigned short)(int)winvoice_mic_reclevel->current.value;
         mixerSetRecordLevel("Mic", level);
     }
+#if defined(__APPLE__) && defined(COD2_X64)
+    }
+#endif
 
     for (i = 0; i < 64; i++) {
         Sound_SampleFrame((dsound_sample_t *)s_clientSamples[i]);
@@ -209,6 +237,10 @@ void Voice_IncomingVoiceData(int talker, unsigned char *data, int packetDataSize
     int decodedLen;
     FILE *fptr;
 
+#if defined(__APPLE__) && defined(COD2_X64)
+    if (!g_voice_initialized)
+        return;
+#endif
     if (!playing)
         playing = 1;
 
@@ -269,14 +301,24 @@ void Voice_Shutdown(void)
         recording = 0;
     }
 
+#if defined(__APPLE__) && defined(COD2_X64)
+    if (voice_recording_initialized)
+#endif
     Record_Shutdown();
     Encode_Shutdown();
     Decode_Shutdown();
     Sound_Shutdown();
 
+#if defined(__APPLE__) && defined(COD2_X64)
+    if (voice_recording_initialized) {
+#endif
     mixerSetMicrophoneMute(1);
     mixerSetRecordLevel("Mic", (unsigned short)mic_old_reclevel);
     mixerSetRecordSource(old_rec_source);
+#if defined(__APPLE__) && defined(COD2_X64)
+    }
+    voice_recording_initialized = 0;
+#endif
 
     g_voice_initialized = 0;
 }
@@ -287,6 +329,10 @@ int Voice_GetLocalVoiceData(ClientVoicePacket_t *voiceData)
 
     if (!g_voice_initialized)
         return 0;
+#if defined(__APPLE__) && defined(COD2_X64)
+    if (!voice_recording_initialized)
+        return 0;
+#endif
 
     if (!recording) {
         currentRecordingSample = Record_NewSample();

@@ -17,7 +17,8 @@ typedef struct {
     int allocated;
 } MacVoiceSample;
 
-int g_sound_recordFrequency = 11025;
+/* Mac 1.3 narrowband PCM rate, shared by recording and voice playback. */
+int g_sound_recordFrequency = 8192;
 int g_sound_recordVolume;
 int g_sound_channels = 1;
 char g_recording_initialized;
@@ -39,7 +40,7 @@ int DSound_Init(int channels, const unsigned char *handle)
 {
     (void)channels;
     (void)handle;
-    int rate = g_sound_recordFrequency > 0 ? g_sound_recordFrequency : 11025;
+    int rate = g_sound_recordFrequency > 0 ? g_sound_recordFrequency : 8192;
     voice_initialized = AIL_open_digital_driver(rate, 16, 2, 0) != NULL;
     return voice_initialized;
 }
@@ -57,7 +58,7 @@ void *DSound_NewSample(void)
         if (!voice->sample.mssSample)
             return NULL;
         voice->allocated = 1;
-        voice->sample.frequency = g_sound_recordFrequency > 0 ? g_sound_recordFrequency : 11025;
+        voice->sample.frequency = g_sound_recordFrequency > 0 ? g_sound_recordFrequency : 8192;
         voice->sample.channels = 1;
         voice->sample.volume = 255;
         voice->sample.pan = 128;

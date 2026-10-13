@@ -1371,8 +1371,14 @@ static void R_SkinXSurfaceSkinned(struct GfxModelSkinnedSurface *skinnedSurf,
     {
         static int n;
         if ((n++ % 200) == 0)
+#if defined(COD2_X64)
+            COD2_NATIVE_TRACE_ONLY(
+#endif
             fprintf(stderr, "[skin] call#%d xsurf=%p cachedOff=%d bone=%p\n",
                     n, (void *)xsurf, cachedOffset, (void *)boneMatrix);
+#if defined(COD2_X64)
+            )
+#endif
         fflush(stderr);
     }
 #endif

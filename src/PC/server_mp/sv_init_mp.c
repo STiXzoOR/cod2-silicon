@@ -8,6 +8,10 @@
 #include "imports.h"
 #include "bytematch.h"
 #include "cod2_feature_config.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "PC/qcommon/cod2x.h"
+#include "cod2x_udp_operations.h"
+#endif
 #include <string.h>
 #include <stdlib.h>
 /* dvar globals */
@@ -226,6 +230,9 @@ COD2_ASSERT_FIELD(server_t, checksumFeed,  0xc);
 COD2_ASSERT_FIELD(server_t, configstrings, 0x418);
 COD2_ASSERT_FIELD(server_t, num_entities,  0x5f424);
 COD2_ASSERT_FIELD(server_t, gametype,      0x5f4f4);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "cod2x_client_identity.h"
+#endif
 
 #if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 #    define SV_CONFIGSTRING_SLOT(svbase, index) (((server_t *)(svbase))->configstrings[(index)])
@@ -254,6 +261,9 @@ void SV_Shutdown(char *finalmsg);
 void SV_Startup(void);
 void SV_ChangeMaxClients(void);
 void SV_SpawnServer(const char *server);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "cod2x_stop_gametype.h"
+#endif
 
 static void SV_ClearServer(void);
 static void SV_FreeArchivedSnapshotBuffers(void);
@@ -413,15 +423,29 @@ void SV_InitArchivedSnapshot(void)
 void SV_InitDvar(void)
 {
     Dvar_ResetScriptInfo();
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Cod2x_ServerSpawn();
+#endif
 }
 
 void SV_Init(void)
 {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Cod2x_ServerInit(com_dedicated->current.integer != 0);
+    SV_Cod2xUdpInit();
+#endif
     SV_AddOperatorCommands();
 
     sv_gametype = Dvar_RegisterString("g_gametype", "dm", 0x1024);
     Dvar_RegisterString("sv_keywords", "", 0x1004);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        int protocol = COD2X_HOST_REVISION >= COD2X_REVISION ? COD2X_PROTOCOL : COD2X_CONNECT_PROTOCOL;
+        Dvar_RegisterInt("protocol", protocol, protocol, protocol, 0x1044);
+    }
+#else
     Dvar_RegisterInt("protocol", 0x76, 0x76, 0x76, 0x1044);
+#endif
     sv_mapname = Dvar_RegisterString("mapname", "", 0x1044);
     sv_privateClients = Dvar_RegisterInt("sv_privateClients", 0, 0, 0x40, 0x1004);
     sv_maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, 0x40, 0x1025);
@@ -579,7 +603,14 @@ void SV_Shutdown(char *finalmsg)
 
 #if defined(COD2_X64)
     if (!com_sv_running || !com_sv_running->current.enabled)
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        SV_Cod2xEndMapChange(1);
         return;
+    }
+#else
+        return;
+#endif
 #else
     {
         dvar_t *dvar = (dvar_t *)(com_sv_running);
@@ -593,6 +624,10 @@ void SV_Shutdown(char *finalmsg)
 
 #endif
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (!SV_Cod2xBeginMapChange(1, "shutdown"))
+        return;
+#endif
     Com_Printf("----- Server Shutdown -----\n");
 
     savedState = *(int *)(byte *)imp_sv;
@@ -685,6 +720,9 @@ void SV_Shutdown(char *finalmsg)
         svs->cachedSnapshotFrames = 0;
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    SV_Cod2xClearIdentities();
+#endif
     memset(svs, 0, sizeof(serverStatic_t));
 
     {
@@ -694,6 +732,10 @@ void SV_Shutdown(char *finalmsg)
     }
 
     Dvar_SetBool( (dvar_t *)(com_sv_running), 0);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Cod2x_ServerShutdown();
+    SV_Cod2xEndMapChange(1);
+#endif
     Com_Printf("---------------------------\n");
 
 #if !COD2_APPLE_SDK || !defined(DEDICATED)
@@ -862,6 +904,10 @@ void SV_SpawnServer(const char *server)
     byte *ent;
     netadr_t addr;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (!SV_Cod2xBeginMapChange(0, "map"))
+        return;
+#endif
     Scr_ParseGameTypeList();
     SV_SetGametype();
 
@@ -996,6 +1042,9 @@ void SV_SpawnServer(const char *server)
     }
 
     Dvar_ResetScriptInfo();
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Cod2x_ServerSpawn();
+#endif
 
     {
         serverStatic_t *svsPtr = (serverStatic_t *)imp_svs;
@@ -1187,4 +1236,7 @@ void SV_SpawnServer(const char *server)
     SV_Heartbeat_f();
 
     Com_Printf("-----------------------------------\n");
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    SV_Cod2xEndMapChange(0);
+#endif
 }

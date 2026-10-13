@@ -22,6 +22,18 @@ int Cod2x_CDKeyHash(const char *key, char hash[33]);
 int Cod2x_LimitedFPS(int requested, int limited);
 
 void Cod2x_Init(void);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+/* Host revision remains stock until shared gameplay and admission contracts
+   have been reviewed together. The remote-client revision above is independent. */
+#define COD2X_HOST_REVISION 0
+void Cod2x_ServerInit(int dedicated);
+void Cod2x_ServerSpawn(void);
+void Cod2x_ServerShutdown(void);
+int Cod2x_ServerActive(void);
+int Cod2x_ServerGameVersion(void);
+int Cod2x_SetClientDvar(const char *name, const char *value);
+void Cod2x_ResetClientAnimation(void);
+#endif
 void Cod2x_PrepareConnect(void);
 void Cod2x_Disconnect(void);
 void Cod2x_ResetAnimation(void);

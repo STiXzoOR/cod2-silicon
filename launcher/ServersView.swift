@@ -12,48 +12,52 @@ struct ServersView: View {
 
     var body: some View {
         let rows = model.visibleServers
-        HStack(alignment: .top, spacing: 22) {
-            VStack(alignment: .leading, spacing: 0) {
-                PageHeader(title: "Servers", subtitle: "Stock 1.3 and CoD2x 1.4 from the public master servers. Pings refresh when you ask.")
+        GeometryReader { geometry in
+            let listWidth = geometry.size.width - max(22, 264 - origin.x) - 18 - 352 - 22
+            let compact = listWidth < 720
+            HStack(alignment: .top, spacing: 22) {
+                VStack(alignment: .leading, spacing: 0) {
+                    PageHeader(title: "Servers", subtitle: "Stock 1.3 and CoD2x 1.4 from the public master servers. Pings refresh when you ask.")
                     .padding(.leading, 16).padding(.top, 92 - 52)
-                ColumnHeaders(sort: $model.sort).padding(.top, 18)
-                ScrollViewReader { reader in
-                    ScrollView {
-                        LazyVStack(spacing: 4) {
-                            ForEach(rows) { server in
-                                ServerRow(server: server, image: artwork.image(for: server.map), selected: server.address == model.selected?.address,
-                                          favorite: model.library.favorites.contains(server.address)) {
-                                    withAnimation(reduceMotion ? nil : .launcherSpring) { model.selectedServer = server.address }
-                                } toggleFavorite: { model.favorite(server.address) } deploy: { model.connect(server) }
-                                .id(server.address)
+                    ColumnHeaders(sort: $model.sort, compact: compact).padding(.top, 18)
+                    ScrollViewReader { reader in
+                        ScrollView {
+                            LazyVStack(spacing: 4) {
+                                ForEach(rows) { server in
+                                    ServerRow(server: server, image: artwork.image(for: server.map), selected: server.address == model.selected?.address,
+                                    favorite: model.library.favorites.contains(server.address), compact: compact) {
+                                        withAnimation(reduceMotion ? nil : .launcherSpring) { model.selectedServer = server.address }
+                                    } toggleFavorite: { model.favorite(server.address) } deploy: { model.connect(server) }
+                                    .id(server.address)
+                                }
+                                if rows.isEmpty { NoContact(refreshing: model.refreshing, hasServers: !model.servers.isEmpty) }
                             }
-                            if rows.isEmpty { NoContact(refreshing: model.refreshing, hasServers: !model.servers.isEmpty) }
+                            .padding(.bottom, 12)
                         }
-                        .padding(.bottom, 12)
+                        .scrollIndicators(.automatic)
+                        .bottomEdgeUnderBar()
+                        .focusable()
+                        .onMoveCommand { direction in
+                            guard let index = rows.firstIndex(where: { $0.address == model.selected?.address }) else { return }
+                            let next = direction == .down ? min(rows.count - 1, index + 1) : direction == .up ? max(0, index - 1) : index
+                            model.selectedServer = rows[next].address
+                            reader.scrollTo(rows[next].address)
+                        }
+                        // Return deploys only while the list has focus; a default button would also
+                        // swallow Return in the search and direct-connect fields.
+                        .onReturnKey { if let server = model.selected { model.connect(server) } }
+                        .accessibilityLabel("Servers")
                     }
-                    .scrollIndicators(.automatic)
-                    .bottomEdgeUnderBar()
-                    .focusable()
-                    .onMoveCommand { direction in
-                        guard let index = rows.firstIndex(where: { $0.address == model.selected?.address }) else { return }
-                        let next = direction == .down ? min(rows.count - 1, index + 1) : direction == .up ? max(0, index - 1) : index
-                        model.selectedServer = rows[next].address
-                        reader.scrollTo(rows[next].address)
-                    }
-                    // Return deploys only while the list has focus; a default button would also
-                    // swallow Return in the search and direct-connect fields.
-                    .onReturnKey { if let server = model.selected { model.connect(server) } }
-                    .accessibilityLabel("Servers")
                 }
-                .bottomBar { DirectConnectBar(model: model).padding(.bottom, 22).padding(.top, 10) }
-            }
-            .frame(maxWidth: 790)
-            ServerDetails(model: model, server: model.selected, image: model.selected.flatMap { artwork.image(for: $0.map) })
+                .frame(maxWidth: 790)
+                ServerDetails(model: model, server: model.selected, image: model.selected.flatMap { artwork.image(for: $0.map) })
                 .frame(width: 352)
                 .padding(.top, 88 - 52).padding(.bottom, 22)
+            }
+            .bottomBar { DirectConnectBar(model: model).padding(.bottom, 22).padding(.top, 10) }
+            .padding(.leading, max(22, 264 - origin.x)).padding(.trailing, 18).padding(.top, 52)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .padding(.leading, max(22, 264 - origin.x)).padding(.trailing, 18).padding(.top, 52)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background { ContourBackdrop().ignoresSafeArea() }
         .ignoresSafeArea(.container, edges: .top)
         .background(WindowOriginReader(origin: $origin))
@@ -106,14 +110,22 @@ private extension View {
 
 struct ColumnHeaders: View {
     @Binding var sort: ServerSort
+    var compact = false
     @Environment(\.palette) private var palette
     var body: some View {
         HStack(spacing: 16) {
-            Text("MAP").frame(width: 96, alignment: .leading)
-            header("SERVER", .name).frame(maxWidth: .infinity, alignment: .leading)
-            header("PLAYERS", .players).frame(width: 80, alignment: .trailing)
-            header("PING", .ping).frame(width: 84, alignment: .trailing)
-            Color.clear.frame(width: 22, height: 1)
+            if compact {
+                header("SERVER", .name)
+                Spacer(minLength: 12)
+                header("PLAYERS", .players)
+                header("PING", .ping)
+            } else {
+                Text("MAP").frame(width: 96, alignment: .leading)
+                header("SERVER", .name).frame(maxWidth: .infinity, alignment: .leading)
+                header("PLAYERS", .players).frame(width: 80, alignment: .trailing)
+                header("PING", .ping).frame(width: 84, alignment: .trailing)
+                Color.clear.frame(width: 22, height: 1)
+            }
         }
         .font(.stencil(12, heavy: false)).tracking(2.64).foregroundStyle(palette.tertiary)
         .padding(.leading, RowMetrics.inset).padding(.trailing, RowMetrics.trailing).padding(.bottom, 8)
@@ -136,6 +148,7 @@ struct ServerRow: View {
     var image: NSImage?
     var selected: Bool
     var favorite: Bool
+    var compact = false
     var select: () -> Void
     var toggleFavorite: () -> Void
     var deploy: () -> Void
@@ -143,39 +156,55 @@ struct ServerRow: View {
     @State private var hovering = false
     var body: some View {
         let facts = ServerFacts(server)
-        HStack(spacing: 16) {
-            MapArt(map: server.map, image: image).frame(width: 96, height: 60)
-                .clipShape(RoundedRectangle(cornerRadius: RowMetrics.artRadius, style: .continuous)).shapeAudit(.inset, .rounded(RowMetrics.artRadius), "row art")
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 8) {
-                    QuakeName(name: server.name).font(.system(size: 15, weight: .semibold)).lineLimit(1)
-                    if server.password { Image(systemName: "lock.fill").font(.system(size: 11)).foregroundStyle(palette.secondary).accessibilityLabel("Password protected") }
+        Group {
+            if compact {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        serverName
+                        Spacer(minLength: 8)
+                        favoriteButton
+                    }
+                    HStack(alignment: .bottom, spacing: 12) {
+                        MapArt(map: server.map, image: image).frame(width: 64, height: 52)
+                        .clipShape(RoundedRectangle(cornerRadius: RowMetrics.artRadius, style: .continuous))
+                        .shapeAudit(.inset, .rounded(RowMetrics.artRadius), "row art")
+                        VStack(alignment: .leading, spacing: 8) {
+                            mapAndMode(lines: 2)
+                            HStack(spacing: 12) {
+                                VersionBadge(facts: facts)
+                                Text("\(server.playerCount)/\(server.maxPlayers) players")
+                                .foregroundStyle(facts.occupancy == .full ? palette.negative : palette.text)
+                                .monospacedDigit().fixedSize()
+                                ping.fixedSize()
+                            }
+                        }
+                        .font(.system(size: 12))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
-                HStack(spacing: 8) {
-                    Text("\(MapCatalog.displayName(server.map)) · \(GameModes.short(server.gametype))").foregroundStyle(palette.secondary)
-                    VersionBadge(facts: facts)
+            } else {
+                HStack(spacing: 16) {
+                    MapArt(map: server.map, image: image).frame(width: 96, height: 60)
+                    .clipShape(RoundedRectangle(cornerRadius: RowMetrics.artRadius, style: .continuous)).shapeAudit(.inset, .rounded(RowMetrics.artRadius), "row art")
+                    VStack(alignment: .leading, spacing: 6) {
+                        serverName
+                        HStack(spacing: 8) {
+                            mapAndMode(lines: 1)
+                            VersionBadge(facts: facts)
+                        }
+                        .font(.system(size: 12))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    HStack(alignment: .firstTextBaseline, spacing: 0) {
+                        Text("\(server.playerCount)").font(.stencil(24))
+                        .foregroundStyle(facts.occupancy == .full ? palette.negative : facts.occupancy == .empty ? palette.tertiary : (palette.dark ? Palette.hex(0xefe7d3) : palette.numeral))
+                        Text("/\(server.maxPlayers)").font(.stencil(15)).foregroundStyle(palette.tertiary)
+                    }
+                    .frame(width: 80, alignment: .trailing)
+                    ping.frame(width: 84, alignment: .trailing)
+                    favoriteButton
                 }
-                .font(.system(size: 12))
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(alignment: .firstTextBaseline, spacing: 0) {
-                Text("\(server.playerCount)").font(.stencil(24))
-                    .foregroundStyle(facts.occupancy == .full ? palette.negative : facts.occupancy == .empty ? palette.tertiary : (palette.dark ? Palette.hex(0xefe7d3) : palette.numeral))
-                Text("/\(server.maxPlayers)").font(.stencil(15)).foregroundStyle(palette.tertiary)
-            }
-            .frame(width: 80, alignment: .trailing)
-            HStack(spacing: 8) {
-                PingBars(level: facts.pingLevel)
-                Text("\(server.ping) ms").font(.system(size: 12)).foregroundStyle(palette.dark ? Palette.hex(0xbdb5a1) : palette.secondary).monospacedDigit()
-            }
-            .frame(width: 84, alignment: .trailing)
-            Button(action: toggleFavorite) {
-                Image(systemName: favorite ? "star.fill" : "star").font(.system(size: 13))
-                    .foregroundStyle(favorite ? (palette.dark ? Palette.hex(0xc99a4c) : palette.link) : palette.secondary)
-                    .frame(width: 22, height: 22).contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(favorite ? "Remove \(QuakeColors.plain(server.name)) from favorites" : "Add \(QuakeColors.plain(server.name)) to favorites")
         }
         .padding(.vertical, RowMetrics.inset).padding(.leading, RowMetrics.inset).padding(.trailing, RowMetrics.trailing)
         .background(selected ? palette.selection : (palette.dark ? Color.white : Color.black).opacity(hovering ? 0.045 : 0), in: RoundedRectangle(cornerRadius: RowMetrics.radius, style: .continuous))
@@ -191,6 +220,40 @@ struct ServerRow: View {
         .accessibilityAction { select() }
         .accessibilityAction(named: "Deploy", deploy)
     }
+
+    private func mapAndMode(lines: Int) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 4) {
+            Text(MapCatalog.displayName(server.map)).lineLimit(lines)
+            Text("· \(GameModes.short(server.gametype))").fixedSize()
+        }
+        .foregroundStyle(palette.secondary)
+    }
+
+    private var serverName: some View {
+        HStack(spacing: 8) {
+            QuakeName(name: server.name).font(.system(size: 15, weight: .semibold)).lineLimit(1)
+            if server.password {
+                Image(systemName: "lock.fill").font(.system(size: 11)).foregroundStyle(palette.secondary)
+                    .accessibilityLabel("Password protected")
+            }
+        }
+    }
+    private var ping: some View {
+        HStack(spacing: 6) {
+            PingBars(level: ServerFacts(server).pingLevel)
+            Text("\(server.ping) ms").font(.system(size: 12))
+                .foregroundStyle(palette.dark ? Palette.hex(0xbdb5a1) : palette.secondary).monospacedDigit()
+        }
+    }
+    private var favoriteButton: some View {
+        Button(action: toggleFavorite) {
+            Image(systemName: favorite ? "star.fill" : "star").font(.system(size: 13))
+                .foregroundStyle(favorite ? (palette.dark ? Palette.hex(0xc99a4c) : palette.link) : palette.secondary)
+                .frame(width: 22, height: 22).contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(favorite ? "Remove \(QuakeColors.plain(server.name)) from favorites" : "Add \(QuakeColors.plain(server.name)) to favorites")
+    }
 }
 
 struct VersionBadge: View {
@@ -199,6 +262,7 @@ struct VersionBadge: View {
     var body: some View {
         Text(facts.versionLabel)
             .font(.system(size: 11, weight: .semibold))
+            .lineLimit(1).fixedSize()
             .foregroundStyle(facts.isCoD2x ? palette.accent : (palette.dark ? Palette.hex(0xbdb5a1) : palette.secondary))
             .padding(.vertical, 2).padding(.horizontal, 7)
             .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(facts.isCoD2x ? palette.selectionStroke : palette.track, lineWidth: 1))
@@ -228,37 +292,71 @@ struct ServerDetails: View {
     @Namespace private var glass
     private let radius: CGFloat = 26, inset: CGFloat = 14
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(spacing: 14) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    if let server {
+                        let facts = ServerFacts(server)
+                        ZStack {
+                            MapArt(map: server.map, image: image)
+                            LinearGradient(stops: [.init(color: .clear, location: 0.55), .init(color: .black.opacity(0.55), location: 1)], startPoint: .top, endPoint: .bottom)
+                        }
+                        .frame(height: 168)
+                        .clipShape(RoundedRectangle(cornerRadius: Concentric.radius(in: radius, inset: inset), style: .continuous))
+                        .shapeAudit(.inset, .rounded(Concentric.radius(in: radius, inset: inset)), "inspector art")
+                        VStack(alignment: .leading, spacing: 6) {
+                            Eyebrow(text: "\(MapCatalog.displayName(server.map)) · \(GameModes.long(server.gametype))", size: 12, tracking: 0.28)
+                            QuakeName(name: server.name).font(.system(size: 19, weight: .bold)).lineLimit(2)
+                            Text(server.address).font(.typewriter(13)).foregroundStyle(palette.address).textSelection(.enabled)
+                            .accessibilityLabel("Address \(server.address)")
+                        }
+                        .padding(.horizontal, 6)
+                        Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
+                            GridRow { fact("Version", facts.versionLabel.replacingOccurrences(of: "Stock ", with: "Stock ")); fact("Mod", server.mod.isEmpty ? "Classic" : server.mod) }
+                            GridRow { fact("Frame cap", facts.frameCap); fact("Access", facts.access) }
+                        }
+                        .padding(.horizontal, 6)
+                        ReadyCheckCard(model: model, studio: model.studio, connection: model.serverConnection, server: server)
+                        .padding(.horizontal, 6)
+                        if server.password {
+                            SecureField("Server password", text: $model.serverPassword).textFieldStyle(.plain)
+                            .padding(.horizontal, 14).frame(height: ControlMetrics.action).wellCapsule().padding(.horizontal, 6)
+                            .onSubmit { model.connect(server) }
+                        }
+                        Rectangle().fill(palette.dark ? Color.white.opacity(0.08) : Color.black.opacity(0.08)).frame(height: 1).padding(.horizontal, 6)
+                        HStack(alignment: .firstTextBaseline) {
+                            Eyebrow(text: "Roster", size: 12, tracking: 0.24, color: palette.tertiary)
+                            Spacer()
+                            Text("Score · Ping").font(.system(size: 11)).foregroundStyle(palette.tertiary)
+                        }
+                        .padding(.horizontal, 6)
+                        VStack(spacing: 2) {
+                            ForEach(server.players) { player in
+                                HStack(spacing: 10) {
+                                    QuakeName(name: player.name).font(.system(size: 13)).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
+                                    Text("\(player.score)").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text).frame(width: 34, alignment: .trailing)
+                                    Text("\(player.ping)").font(.system(size: 13)).foregroundStyle(palette.tertiary).frame(width: 34, alignment: .trailing)
+                                }
+                                .frame(height: 26)
+                                .accessibilityElement(children: .combine)
+                            }
+                            if server.players.isEmpty { Text("Nobody here yet.").font(.system(size: 13)).foregroundStyle(palette.tertiary).frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 8) }
+                        }
+                        .padding(.horizontal, 6)
+                    } else {
+                        Spacer()
+                        Text("Select a server to see who's playing.").font(.system(size: 13)).foregroundStyle(palette.secondary).frame(maxWidth: .infinity)
+                        Spacer()
+                    }
+                }
+            }
+            .scrollIndicators(.automatic)
+            .id(server?.address)
             if let server {
-                let facts = ServerFacts(server)
-                ZStack {
-                    MapArt(map: server.map, image: image)
-                    LinearGradient(stops: [.init(color: .clear, location: 0.55), .init(color: .black.opacity(0.55), location: 1)], startPoint: .top, endPoint: .bottom)
-                }
-                .frame(height: 168)
-                .clipShape(RoundedRectangle(cornerRadius: Concentric.radius(in: radius, inset: inset), style: .continuous))
-                .shapeAudit(.inset, .rounded(Concentric.radius(in: radius, inset: inset)), "inspector art")
-                VStack(alignment: .leading, spacing: 6) {
-                    Eyebrow(text: "\(MapCatalog.displayName(server.map)) · \(GameModes.long(server.gametype))", size: 12, tracking: 0.28)
-                    QuakeName(name: server.name).font(.system(size: 19, weight: .bold)).lineLimit(2)
-                    Text(server.address).font(.typewriter(13)).foregroundStyle(palette.address).textSelection(.enabled)
-                        .accessibilityLabel("Address \(server.address)")
-                }
-                .padding(.horizontal, 6)
-                Grid(alignment: .leading, horizontalSpacing: 8, verticalSpacing: 8) {
-                    GridRow { fact("Version", facts.versionLabel.replacingOccurrences(of: "Stock ", with: "Stock ")); fact("Mod", server.mod.isEmpty ? "Classic" : server.mod) }
-                    GridRow { fact("Frame cap", facts.frameCap); fact("Access", facts.access) }
-                }
-                .padding(.horizontal, 6)
-                if server.password {
-                    SecureField("Server password", text: $model.serverPassword).textFieldStyle(.plain)
-                        .padding(.horizontal, 14).frame(height: ControlMetrics.action).wellCapsule().padding(.horizontal, 6)
-                        .onSubmit { model.connect(server) }
-                }
                 GlassContainer(spacing: 8) {
                     HStack(spacing: 8) {
                         Button { model.connect(server) } label: {
-                            Label("Deploy", systemImage: "play.fill").frame(maxWidth: .infinity)
+                            Label(ReadyCheckCard.deployTitle(model, server), systemImage: "play.fill").frame(maxWidth: .infinity)
                         }
                         .prominentAction().actionControlSize()
                         .accessibilityLabel("Deploy to \(QuakeColors.plain(server.name))")
@@ -272,38 +370,12 @@ struct ServerDetails: View {
                     }
                 }
                 .padding(.horizontal, 6)
-                Rectangle().fill(palette.dark ? Color.white.opacity(0.08) : Color.black.opacity(0.08)).frame(height: 1).padding(.horizontal, 6)
-                HStack(alignment: .firstTextBaseline) {
-                    Eyebrow(text: "Roster", size: 12, tracking: 0.24, color: palette.tertiary)
-                    Spacer()
-                    Text("Score · Ping").font(.system(size: 11)).foregroundStyle(palette.tertiary)
-                }
-                .padding(.horizontal, 6)
-                ScrollView {
-                    VStack(spacing: 2) {
-                        ForEach(server.players) { player in
-                            HStack(spacing: 10) {
-                                QuakeName(name: player.name).font(.system(size: 13)).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading)
-                                Text("\(player.score)").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.text).frame(width: 34, alignment: .trailing)
-                                Text("\(player.ping)").font(.system(size: 13)).foregroundStyle(palette.tertiary).frame(width: 34, alignment: .trailing)
-                            }
-                            .frame(height: 26)
-                            .accessibilityElement(children: .combine)
-                        }
-                        if server.players.isEmpty { Text("Nobody here yet.").font(.system(size: 13)).foregroundStyle(palette.tertiary).frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 8) }
-                    }
-                    .padding(.horizontal, 6)
-                }
-                .scrollIndicators(.never)
-            } else {
-                Spacer()
-                Text("Select a server to see who's playing.").font(.system(size: 13)).foregroundStyle(palette.secondary).frame(maxWidth: .infinity)
-                Spacer()
+                .padding(.bottom, 12)
             }
         }
         .padding(inset)
         .frame(maxHeight: .infinity, alignment: .top)
-        .glassSurface(RoundedRectangle(cornerRadius: radius, style: .continuous))
+        .contentSurface(RoundedRectangle(cornerRadius: radius, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Server details")
     }
@@ -335,6 +407,12 @@ struct DirectConnectBar: View {
     @Environment(\.palette) private var palette
     private let inset: CGFloat = 11
     var body: some View {
+        // One container: the bar's glass and Connect's are drawn together, not glass sampling glass.
+        GlassContainer {
+            bar
+        }
+    }
+    private var bar: some View {
         HStack(spacing: 10) {
             Image(systemName: "mappin.and.ellipse").font(.system(size: 15, weight: .medium)).foregroundStyle(palette.dark ? palette.accent : palette.link).accessibilityHidden(true)
             Text("Direct connect").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.chipText).fixedSize()

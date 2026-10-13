@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 
@@ -161,7 +164,13 @@ char **Sys_ListFiles(const char *directory, const char *extension, const char *f
 
     fdir = opendir(directory);
 #ifdef W32_FSTRACE
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     fprintf(stderr, "[w32-ls] dir='%s' ext='%s' opendir=%p\n", directory, extension, (void *)fdir);
+#if defined(COD2_X64)
+    )
+#endif
     fflush(stderr);
 #endif
     if (!fdir) {

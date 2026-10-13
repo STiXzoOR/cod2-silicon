@@ -48,6 +48,10 @@ extern const dvar_t *cg_subtitlePosX;
 extern const dvar_t *cg_subtitlePosY;
 extern const dvar_t *cg_subtitles;
 extern const dvar_t *cg_synchronousClients;
+#if defined(COD2_X64) && COD2_X64
+extern const dvar_t *cg_descriptiveText;
+extern weaponInfo_t cg_weaponsArray[];
+#endif
 
 extern const dvar_t *hud_fade_ammodisplay;
 extern const dvar_t *hud_fade_compass;
@@ -1029,6 +1033,40 @@ void CG_DrawBoldGameMessages(void)
 
 void CG_DrawTurretCrossHair(void)
 {
+#if defined(COD2_X64) && COD2_X64
+    const WeaponDef *weaponDef;
+    MaterialHandle material;
+    int weaponIndex;
+    float size;
+    vec4_t color = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+    if (!cg_drawTurretCrosshair->current.enabled || cg_paused->current.integer)
+        return;
+
+    weaponIndex = cg_entities[cg->predictedPlayerState.viewlocked_entNum].nextState.weapon;
+    if (!weaponIndex)
+        return;
+
+    weaponDef = BG_GetWeaponDef(weaponIndex);
+    material = cg_weaponsArray[weaponIndex].hReticleCenter;
+    if (!material)
+        return;
+
+    color[3] = cg_crosshairAlpha->current.value;
+    if (color[3] < 0.01f)
+        return;
+
+    if (cg->predictedPlayerState.pm_flags & 0x100000) {
+        color[0] = 0.25f;
+        color[2] = 0.25f;
+    }
+
+    size = (float)weaponDef->iReticleCenterSize;
+    if (CL_IsRenderingSplitScreen())
+        size += size;
+    CL_DrawStretchPic(size * -0.5f, size * -0.5f, size, size, 2, 2,
+                      0.0f, 0.0f, 1.0f, 1.0f, color, material);
+#else
     const dvar_t *drawTurretCrosshair;
     vec4_t color = { 1.0f, 1.0f, 1.0f, 0.75f };
 
@@ -1040,10 +1078,60 @@ void CG_DrawTurretCrossHair(void)
         return;
 
     UI_DrawHandlePic(316.0f, 236.0f, 8.0f, 8.0f, 0, 0, color, cgs->media.whiteMaterial);
+#endif
 }
 
 static unsigned int CG_DrawSpectatorMessage(void)
 {
+#if defined(COD2_X64) && COD2_X64
+    const char *commands[3];
+    const char *messages[3];
+    char keys[256];
+    FontHandle font;
+    float height;
+    float y;
+    int flags;
+    int count = 0;
+    int i;
+
+    if (!cg_descriptiveText->current.enabled || (CL_GetKeyCatchers() & 8) || !cg->nextSnap)
+        return 0;
+
+    flags = cg->nextSnap->ps.pm_flags;
+    if (!(flags & 0x3000000))
+        return 0;
+
+    Controls_GetConfig();
+    font = UI_GetFontHandle(0, 5.0f / 24.0f);
+    height = (float)UI_TextHeight(font, 5.0f / 24.0f);
+    y = 436.0f - 2.0f * height;
+
+    if (flags & 0x1000000) {
+        commands[count] = "+attack";
+        messages[count++] = "PLATFORM_FOLLOWNEXTPLAYER";
+        commands[count] = "toggleads";
+        if (!GetKeyBindingLocalizedString("toggleads", keys) && GetKeyBindingLocalizedString("+speed", keys))
+            commands[count] = "+speed";
+        messages[count++] = "PLATFORM_FOLLOWPREVIOUSPLAYER";
+    }
+
+    if (flags & 0x2000000) {
+        commands[count] = "+melee";
+        if (!GetKeyBindingLocalizedString("+melee", keys) && GetKeyBindingLocalizedString("+melee_breath", keys))
+            commands[count] = "+melee_breath";
+        messages[count++] = "PLATFORM_FOLLOWSTOP";
+    }
+
+    for (i = 0; i < count; ++i) {
+        const char *text;
+        if (!GetKeyBindingLocalizedString(commands[i], keys))
+            I_strncpyz(keys, UI_SafeTranslateString("KEY_UNBOUND"), sizeof(keys));
+        text = UI_ReplaceConversionString(UI_SafeTranslateString(messages[i]), keys);
+        UI_DrawText(text, 0x7fffffff, font, 240.0f, y, 0, 0, 5.0f / 24.0f, colorWhite, 3);
+        y += height;
+    }
+    return 1;
+#else
     const char *text;
     FontHandle font;
     float scale;
@@ -1062,6 +1150,7 @@ static unsigned int CG_DrawSpectatorMessage(void)
     UI_DrawText(text, 0x7fffffff, font, (float)(-textWidth) * 0.5f, 40.0f, 7, 1, scale, colorWhite, 3);
 
     return 1;
+#endif
 }
 
 void CG_DrawPlayerSprites(void)

@@ -99,7 +99,12 @@ int Decode_Sample(char *buffer, int maxLength, short *out, int frame_size)
         return 0;
 
     count = frame_size * 2;
+#if defined(__APPLE__) && defined(COD2_X64)
+    /* count is PCM bytes; Speex writes frame_size float samples. */
+    for (i = 0; i < frame_size; i++) {
+#else
     for (i = 0; i < count; i++) {
+#endif
         out[i] = (short)(int)output[i];
     }
 

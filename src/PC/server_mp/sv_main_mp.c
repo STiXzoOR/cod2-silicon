@@ -1,8 +1,15 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 #include "cod2_feature_config.h"
 #include "pb_public.h"
 #include "PC/qcommon/net_hardening.h"
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "cod2x_host_protocol.h"
+#include "cod2x_udp_operations_impl.h"
+#endif
 #include <stdarg.h>
 /* dvar globals */
 extern int dvar_modifiedFlags;
@@ -418,11 +425,13 @@ void SVC_Status(netadr_t from)
     int i;
     int mod;
 
+#if !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
 #if COD2_FEATURE_NET_HARDENING
 
     if (NetHardening_SVC_RateLimitAddress(from, svs.time) ||
         NetHardening_SVC_RateLimit(svs.time))
         return;
+#endif
 #endif
 
     LargeLocal_LargeLocal(&status_large_local, MAX_MSGLEN);
@@ -430,6 +439,9 @@ void SVC_Status(netadr_t from)
 
     strcpy(infostring, Dvar_InfoString(0x404));
     Info_SetValueForKey(infostring, "challenge", SV_Cmd_Argv(1));
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Info_SetValueForKey(infostring, "protocol", va("%i", SV_Cod2xDiscoveryProtocol()));
+#endif
 
     if (Dvar_GetBool("fs_restrict")) {
         Com_sprintf(keywords, sizeof(keywords), "demo %s", Info_ValueForKey(infostring, "sv_keywords"));
@@ -516,6 +528,9 @@ void SVC_GameCompleteStatus(netadr_t from)
 
     strcpy(infostring, Dvar_InfoString(0x404));
     Info_SetValueForKey(infostring, "challenge", SV_Cmd_Argv(1));
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Info_SetValueForKey(infostring, "protocol", va("%i", SV_Cod2xDiscoveryProtocol()));
+#endif
 
     if (Dvar_GetBool("fs_restrict")) {
         Com_sprintf(keywords, sizeof(keywords), "demo %s", Info_ValueForKey(infostring, "sv_keywords"));
@@ -568,11 +583,13 @@ void SVC_Info(netadr_t from)
     int mod;
     int argc;
 
+#if !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
 #if COD2_FEATURE_NET_HARDENING
 
     if (NetHardening_SVC_RateLimitAddress(from, svs.time) ||
         NetHardening_SVC_RateLimit(svs.time))
         return;
+#endif
 #endif
 
     privateClients = sv_privateClients->current.integer;
@@ -593,7 +610,11 @@ void SVC_Info(netadr_t from)
 
     infostring[0] = '\0';
     Info_SetValueForKey(infostring, "challenge", SV_Cmd_Argv(1));
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    Info_SetValueForKey(infostring, "protocol", va("%i", SV_Cod2xDiscoveryProtocol()));
+#else
     Info_SetValueForKey(infostring, "protocol", va("%i", 0x76));
+#endif
     Info_SetValueForKey(infostring, "hostname", sv_hostname->current.string);
     Info_SetValueForKey(infostring, "mapname", sv_mapname->current.string);
 
@@ -682,7 +703,13 @@ void SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
     c = MSG_ReadStringLine(msg);
     SV_Cmd_TokenizeString(c);
     c = SV_Cmd_Argv(0);
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     Com_Printf("[cnx] SV_ConnectionlessPacket cmd='%s'\n", c);
+#if defined(COD2_X64)
+    )
+#endif
 
 #if COD2_IS_PATCH_13
 
@@ -701,16 +728,28 @@ void SV_ConnectionlessPacket(netadr_t from, msg_t *msg)
     }
 
     if (I_stricmp(c, "getstatus") == 0) {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        if (!SV_Cod2xUdpAllow(from, COD2X_UDP_QUERY))
+            return;
+#endif
         SVC_Status(from);
         return;
     }
 
     if (I_stricmp(c, "getinfo") == 0) {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        if (!SV_Cod2xUdpAllow(from, COD2X_UDP_QUERY))
+            return;
+#endif
         SVC_Info(from);
         return;
     }
 
     if (I_stricmp(c, "getchallenge") == 0) {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        if (!SV_Cod2xUdpAllow(from, COD2X_UDP_QUERY))
+            return;
+#endif
         SV_GetChallenge(from);
         return;
     }
@@ -763,6 +802,10 @@ void SV_PacketEvent(netadr_t from, msg_t *msg)
     }
 
     if (i >= sv_maxclients->current.integer) {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        if (!SV_Cod2xUdpAllow(from, COD2X_UDP_DISCONNECT))
+            return;
+#endif
         NET_OutOfBandPrint( (netsrc_t)(1), from, "disconnect");
         return;
     }
@@ -809,6 +852,9 @@ void SV_RunFrame(void)
 {
     SV_ResetSkeletonCache();
     G_RunFrame(*(int *)((char *)&svs + 4));
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    SV_Cod2xUdpStats();
+#endif
 }
 
 void SV_BotUserMove(client_t *cl)
@@ -1075,6 +1121,9 @@ void SV_Frame(int msec)
 #endif
         SV_ResetSkeletonCache();
         G_RunFrame(svs.time);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        SV_Cod2xUdpStats();
+#endif
         Scr_SetLoading(0);
 #if defined(COD2_X64) && COD2_X64
         /* Catch-up can run several simulation ticks in one Com_Frame. Record

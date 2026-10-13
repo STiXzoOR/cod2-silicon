@@ -33,6 +33,10 @@ extern void RB_SetSampler(int samplerIndex, int samplerState, GfxImage *image);
 extern void RB_SetSamplerConstantDx7(unsigned int color);
 extern void RB_SetViewMatrixForWDx7(float w);
 extern void RB_UpdateFogColor(FogColorSrcEnum fogColorSrc);
+#if defined(COD2_X64)
+extern void RB_ChangeGenTexCoords(int samplerIndex, int genTexCoords);
+extern void RB_UploadWaterTexture(GfxImage *image, water_t *water);
+#endif
 
 extern DxGlobals dx;
 
@@ -128,6 +132,10 @@ static int RB_MaterialNameContains(const Material *material, const char *needle)
 static void RB_X64TraceEndSurface(const char *stage, const Material *material,
                                   const MaterialTechnique *technique, const materialCommands_t *mc)
 {
+#if defined(COD2_X64)
+    if (!COD2_NATIVE_TRACE_ENABLED())
+        return;
+#endif
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     static int traceCount;
     FILE *f;
@@ -189,6 +197,10 @@ static void RB_X64TraceEndSurface(const char *stage, const Material *material,
 static void RB_X64TraceSampler(const char *stage, const Material *material, int argType, int dest,
                                const char *sourceName, int codeTexture, GfxImage *image, int samplerState)
 {
+#if defined(COD2_X64)
+    if (!COD2_NATIVE_TRACE_ENABLED())
+        return;
+#endif
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
     static int traceCount;
     FILE *f;
@@ -1216,6 +1228,25 @@ static const float *RB_GetCodeMatrix(int source, int firstRow)
 
 #endif
 
+#if defined(COD2_X64)
+static GfxImage *RB_PrepareMaterialTexture(const MaterialTextureDef *texture, byte *samplerState)
+{
+    GfxImage *image;
+
+    *samplerState = texture->samplerState;
+    if (texture->semantic == 5)
+        image = texture->u.water->map->image;
+    else
+        image = texture->u.image;
+
+    if (image && image->mapType == 3 && texture->semantic == 5) {
+        RB_UploadWaterTexture(image, texture->u.water->map);
+        *samplerState = 6;
+    }
+    return image;
+}
+
+#endif
 static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(MaterialTechniqueType techType, MaterialVertexDeclType vertDeclType, const GfxDrawPrimArgs *args, const GfxStateOverride *stateOverride)
 {
     char *tess = RB_TessBase();
@@ -1438,8 +1469,33 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
             {
                 int samplerIndex;
                 for (samplerIndex = 0; samplerIndex < 2; samplerIndex++) {
+#if defined(COD2_X64)
+                    const MaterialPassDx7 *dx7Pass = (const MaterialPassDx7 *)pass;
+                    const MaterialShaderArgument *sampler = &dx7Pass->samplers[samplerIndex];
+                    void *image = NULL;
+                    byte samplerState = 0;
+                    byte genTexCoords = dx7Pass->genTexCoords[samplerIndex];
+
+                    if (sampler->type == 3) {
+                        RB_GetTextureFromCode_impl(sampler->u.codeSampler, &image, &samplerState);
+                    } else {
+                        int textureIndex;
+                        const Material *tessMaterial = ((materialCommands_t *)RB_TessBase())->material;
+                        for (textureIndex = 0; textureIndex < tessMaterial->textureCount; textureIndex++) {
+                            const MaterialTextureDef *texture = &tessMaterial->textures[textureIndex];
+                            if (texture->name == sampler->u.name || strcmp(texture->name, sampler->u.name) == 0) {
+                                image = RB_PrepareMaterialTexture(texture, &samplerState);
+                                break;
+                            }
+                        }
+                    }
+                    RB_SetSampler(samplerIndex, samplerState, (GfxImage *)image);
+                    if (genTexCoords != dxState.genTexCoords[samplerIndex] || genTexCoords == 2)
+                        RB_ChangeGenTexCoords(samplerIndex, genTexCoords);
+#else
                     byte *samplerDef = (byte *)(((char *)pass + offsetof(MaterialPassDx9, pixelShader)) + samplerIndex * 8);
 
+#endif
                 }
             }
 
@@ -1837,6 +1893,9 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                                 MaterialTextureDef *texDef = &textures[ti];
                                 if (texDef->name == textureName || strcmp(texDef->name, textureName) == 0) {
 
+#if defined(COD2_X64)
+                                    image = RB_PrepareMaterialTexture(texDef, &samplerState);
+#else
                                     byte semantic = texDef->semantic;
                                     if (semantic == 5) {
 
@@ -1852,6 +1911,7 @@ static BM_NOINLINE void __attribute_regparm__(3) RB_DrawSingleTechnique(Material
                                         byte imgSemantic = ((GfxImage *)image)->semantic;
 
                                     }
+#endif
                                     break;
                                 }
                             }
@@ -2117,7 +2177,13 @@ void RB_EndSurface(void)
         if (!lockSlot) {
             static int lockslot_warn = 0;
             if (lockslot_warn++ < 5)
+#if defined(COD2_X64)
+                COD2_NATIVE_TRACE_ONLY(
+#endif
                 fprintf(stderr, "[EndSurf] lockSlot NULL at dx->dynamicVertexBuffer, skipping draw\n");
+#if defined(COD2_X64)
+                )
+#endif
             goto cleanup;
         }
         int needed = ((materialCommands_t *)tess)->vertexCount * vertexStride + lockSlot[0];

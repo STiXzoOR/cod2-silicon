@@ -330,6 +330,11 @@ void G_BroadcastVoice(gentity_t *talker, VoicePacket_t *voicePacket)
             continue;
 
         {
+#if defined(COD2_X64)
+            /* Mac 1.3 lets spectators hear players on either team. */
+            if (otherClient->sess.sessionState == SESS_STATE_SPECTATOR)
+                goto check_team;
+#endif
             if (voice_global->current.enabled)
                 goto check_team;
         }

@@ -127,7 +127,11 @@ static void CM_MESH_REGPARM3_ABI CM_PositionTestCapsuleInTriangle(const traceWor
         if (sideFlags == 0) {
             trace->startsolid = 1;
             trace->allsolid = 1;
+#if defined(COD2_X64)
+            trace->fraction = 0.0f;
+#else
             trace->fraction = s0 + t0;
+#endif
             return;
         }
 

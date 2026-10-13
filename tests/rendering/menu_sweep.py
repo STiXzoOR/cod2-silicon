@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Open every runtime-loaded menu in the front end and a local listen game.
 
-Uses stdin console commands and the opt-in COD2_UI_SWEEP diagnostics. No menu
+Uses stdin console commands and the opt-in COD2_NATIVE_TRACE diagnostics. No menu
 names or scripts are extracted into the repository. Captures/logs stay outside
 git. Refuses to launch while another cod2_macos is running; only terminates its
 own timeout process group. Not a benchmark.
@@ -73,7 +73,7 @@ def main():
                '+set', 'sv_pure', '0', '+set', 'sv_maxclients', '1',
                '+set', 'g_gametype', 'dm', '+set', 'ui_netSource', '0']
     with log.open('w') as stream:
-        game = subprocess.Popen(command, cwd=out, env=dict(os.environ, COD2_UI_SWEEP='1'),
+        game = subprocess.Popen(command, cwd=out, env=dict(os.environ, COD2_NATIVE_TRACE='1'),
                                 stdin=subprocess.PIPE, stdout=stream, stderr=stream,
                                 text=True, start_new_session=True)
 

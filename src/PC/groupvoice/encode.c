@@ -39,7 +39,12 @@ extern void *speex_quality_ptr;
 
 void Encode_SetOptions(int frequency, int quality)
 {
+#if defined(__APPLE__) && defined(COD2_X64)
+    /* The bundled Speex control API reads integer VAD/DTX options. */
+    int yes = 1;
+#else
     char yes = 1;
+#endif
 
     speex_encoder_ctl(g_encoder, 0x18, &frequency);
     speex_encoder_ctl(g_encoder, 4, &quality);

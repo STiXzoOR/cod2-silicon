@@ -1283,6 +1283,13 @@ static const char *__attribute_regparm__(3) Dvar_DomainToString_Internal_impl(
     int i;
     int len;
 
+#ifdef COD2_X64
+    if (outBufferLen <= 0) {
+        if (outLineCount)
+            *outLineCount = 0;
+        return outBuffer;
+    }
+#endif
     outBufferEnd = outBuffer + outBufferLen;
 
     if (outLineCount) {
@@ -1315,12 +1322,26 @@ static const char *__attribute_regparm__(3) Dvar_DomainToString_Internal_impl(
         if (len < 0) {
             break;
         }
+#ifdef COD2_X64
+        if (len >= outBufferLen) {
+            cursor = outBufferEnd - 1;
+            break;
+        }
+#endif
         cursor += len;
         for (i = 0; i < domain.enumeration.stringCount; ++i) {
             len = snprintf(cursor, (int)(outBufferEnd - cursor), "\n  %2i: %s", i, domain.enumeration.strings[i]);
             if (len < 0) {
                 break;
             }
+#ifdef COD2_X64
+            if (len >= (int)(outBufferEnd - cursor)) {
+                if (outLineCount && outBufferEnd - cursor > 1)
+                    ++*outLineCount;
+                cursor = outBufferEnd - 1;
+                break;
+            }
+#endif
             if (outLineCount) {
                 ++*outLineCount;
             }

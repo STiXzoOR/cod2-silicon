@@ -374,6 +374,9 @@ static int Cmd_TokenizeStringInternal(const char *text_in, int max_tokens, char 
                     break;
                 }
                 if (*text_in == '\\' && text_in[1] == '"') {
+#if defined(COD2_X64) && COD2_X64
+                    *textOut++ = '"';
+#endif
                     text_in += 2;
                 } else {
                     *textOut = *text_in;
@@ -394,7 +397,11 @@ static int Cmd_TokenizeStringInternal(const char *text_in, int max_tokens, char 
             }
             tokens++;
             if (argc == 512) {
+#if defined(COD2_X64) && COD2_X64
+                return 0;
+#else
                 argc = 0;
+#endif
             }
             continue;
         }
@@ -421,7 +428,11 @@ static int Cmd_TokenizeStringInternal(const char *text_in, int max_tokens, char 
         if (*text_in > ' ') {
             tokens++;
             if (argc == 512) {
+#if defined(COD2_X64) && COD2_X64
+                return 0;
+#else
                 argc = 0;
+#endif
             }
             continue;
         }
@@ -429,7 +440,11 @@ static int Cmd_TokenizeStringInternal(const char *text_in, int max_tokens, char 
 
         tokens++;
         if (argc == 512) {
+#if defined(COD2_X64) && COD2_X64
+            return 0;
+#else
             argc = 0;
+#endif
         }
     }
 

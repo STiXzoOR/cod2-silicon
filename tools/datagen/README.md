@@ -120,7 +120,12 @@ Conservative failures are explicit `DATAGEN_FALLBACK` definitions. They retain
 all source bytes and symbolic relocations on i386, but do not establish correct
 LP64 semantics. The thirteen known objects with relocations in debug-declared
 integer/byte fields have a corrected LP64 branch; their original i386 fallbacks
-remain intact for the round-trip. Upstream native literals still include
+remain intact for the round-trip. The native `kbitmask` table additionally
+uses verified low-N-bit protocol masks on LP64, repairing the omitted width-13
+entry while preserving the complete legacy i386 initializer. The compiled
+snapshot regression in `tools/fidelity/test_msg.py` needs no private binary;
+`spotcheck_msg.py` compares decoding against the private Mac reference.
+Upstream native literals still include
 hundreds of one-byte placeholders. Pointer
 pointees with unavailable C++ types remain opaque, and function pointers whose
 engine declaration cannot be reused use a generic storage-only prototype.

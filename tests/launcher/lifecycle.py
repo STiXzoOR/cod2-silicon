@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 """Real app/Apple-event/child-crash test, with synthetic game content only."""
-import os, pathlib, re, subprocess, time
+import base64, json, os, pathlib, re, subprocess, time
 root = pathlib.Path(__file__).resolve().parents[2]
-out = root/'output/ws25/lifecycle';out.mkdir(parents=True, exist_ok=True)
+out = pathlib.Path(os.environ.get('COD2_LAUNCHER_TEST_OUTPUT', str(root/'output/ws25'))) / 'lifecycle.noindex';out.mkdir(parents=True, exist_ok=True)
 fixture = out/'fixture'
 subprocess.run(['taskpolicy','-b','nice','-n','19','clang','-fobjc-arc','-mmacosx-version-min=13.0','-DCOD2_X64=1','-DCOD2_CODX=1',str(root/'tests/launcher/lifecycle.m'),str(root/'src/PC/qcommon/cod2x_url.c'),'-framework','AppKit','-o',str(fixture)],check=True)
 app = out/'Lifecycle.app'
-subprocess.run(['python3',str(root/'tools/cod2x/make_macos_app.py'),str(fixture),str(app),'--replace','--bundle-id','io.github.stixzoor.cod2silicon.ws25fixture','--launcher',str(root/'output/ws25/launcher/CoD2Launcher')],check=True)
+subprocess.run([str(root/'scripts/build-launcher.sh'), str(out/'launcher')], check=True)
+subprocess.run(['python3',str(root/'tools/cod2x/make_macos_app.py'),str(fixture),str(app),'--replace','--bundle-id','io.github.stixzoor.cod2silicon.ws25fixture','--launcher',str(out/'launcher/CoD2Launcher')],check=True)
 home = out/'home';home.mkdir(exist_ok=True)
 game = home/'Games/CoD2/main';game.mkdir(parents=True,exist_ok=True)
 for i in range(16):(game/f'iw_{i:02}.iwd').touch()
 apphome = home/'Library/Application Support/CoD2 Silicon'
+apphome.mkdir(parents=True, exist_ok=True)
+(apphome/'main').mkdir(exist_ok=True)
+(apphome/'main/config_mp.cfg').write_bytes(b'seta sensitivity "2"\r\n')
+(apphome/'launcher-settings.json').write_text(json.dumps({'advanced': 'net_port 29972'}))
 env = {**os.environ,'CFFIXED_USER_HOME':str(home),'HOME':str(home),'COD2_SETUP_NONINTERACTIVE':'1','COD2_SETUP_CD_KEY':'000000000000000086D3','WS25_FIXTURE_HOME':str(apphome)}
 exitfile = apphome/'exit-fixture'
 exitfile.unlink(missing_ok=True)
@@ -28,6 +33,14 @@ with log.open('w') as stream:
         wait(lambda: 'fixture ready' in log.read_text(errors='replace'))
         wait(lambda: 'fixture link localhost:28963' in log.read_text(errors='replace'))
         child=int(re.search(r'fixture ready (\d+)',log.read_text()).group(1))
+        wait(lambda: (apphome/'fixture-arguments.json').is_file())
+        arguments = json.loads((apphome/'fixture-arguments.json').read_text())
+        assert 'sensitivity' not in arguments and 'com_maxfps' not in arguments
+        assert 'r_mode' in arguments and 'net_port' in arguments
+        active = (apphome/'main/players/active.txt').read_text().strip()
+        assert active == 'Main'
+        assert 'seta sensitivity "5.0"' in (apphome/f'main/players/{active}/config_mp.cfg').read_text()
+        assert (apphome/'main/players/.studio-game-session.json').is_file()
         def policy(pid):return subprocess.check_output([str(fixture),'policy',str(pid)],text=True).strip()
         assert policy(launcher.pid)=='1' # accessory: the launcher has no Dock tile
         assert policy(child)=='0' # regular: the game owns the Dock
@@ -47,7 +60,14 @@ with log.open('w') as stream:
         wait(lambda:'returned to launcher (game exit unavailable)' in log.read_text(errors='replace'))
         assert launcher.poll() is None and policy(launcher.pid)=='0'
         assert (apphome/'cod2_crash_fixture.txt').is_file()
+        snapshots = [json.loads(path.read_text()) for path in (apphome/f'main/players/{active}/history').glob('*.json')]
+        sessions = [entry for entry in snapshots if entry['source'] == 'gameSession']
+        assert len(sessions) == 1
+        assert b'seta sensitivity "5.0"' in base64.b64decode(sessions[0]['beforeData'])
+        assert b'seta sensitivity "6"' in base64.b64decode(sessions[0]['data'])
+        assert not (apphome/'main/players/.studio-game-session.json').exists()
         print('PASS: launcher→nested child, Dock handoff, two live cod2x Apple events, no duplicate engine, launcher force-quit/reconnect, game crash→live launcher/Dock restoration/report')
+        print('PASS: real launch migration and machine argv, personal config ownership, persisted before-session archive and exactly one snapshot after reattachment/exit')
     finally:
         launcher.terminate()
         try:launcher.wait(timeout=5)

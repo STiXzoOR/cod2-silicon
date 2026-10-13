@@ -16,12 +16,18 @@ Source layout:
   glass surfaces and buttons with their macOS 13–25 material fallback.
 - `Artwork.swift`: original fallback art drawn from the design's vector data, icon G
   at sidebar scale and the dog tags.
-- `RootView.swift` plus one file per screen: Home, Servers, Settings, Setup,
-  Library and About.
+- `RootView.swift` and the screen files: Home, Servers, Library, Configs, Settings,
+  Setup and About. Config Studio's document, profile, history, import, rules,
+  binding, directory and match-summary models supply Configs through the shared
+  session and store.
 
-Unit tests: `sh tests/launcher/run.sh`. This runs the core and network tests, the
-artwork decoder tests, the font checksum check, a strict typecheck of the
-pre-macOS 26 material branch, and a render of every screen in both appearances.
+Launcher checks: `sh tests/launcher/run.sh`. This runs core, network, artwork,
+Config Studio, directory and match-summary tests, the font checksum check, a
+strict typecheck of the material branch under the current SDK, and real-window
+captures, accessibility checks and actions. Every page is captured in both
+appearances and at the minimum window size; Config Studio also covers accessibility
+display variants, inactive windows and sidebar resizing. The
+material-branch typecheck is compile evidence, not runtime testing on older macOS.
 Public wire fixtures were captured from both masters on 2026-10-04;
 `tests/launcher/fixtures/capture.json` records their provenance.
 `fixtures/releases.json` is a synthetic GitHub Releases response.
@@ -38,8 +44,10 @@ output/ws28/harness/LauncherSnapshots output/ws28/with-data --data ~/Games/CoD2
 It hosts the real views in a window configured like the app's, and captures it
 with `CGWindowListCreateImage`, so Liquid Glass and toolbars render for real.
 `with-data` images contain the player's licensed loading screens: keep them
-local. Snapshot mode uses fake servers in RFC 5737's documentation ranges,
-invented player names and an invented key, and performs no I/O.
+local. Snapshot mode uses authored synthetic servers, players, keys and directory
+signatures. Config Studio screens create synthetic loadouts in private temporary
+homes and inspect real transactions there. No production directory is fetched,
+and the harness is excluded from release builds.
 
 Typefaces: Big Shoulders Stencil Display and Courier Prime (SIL OFL 1.1) live in
 `Resources/Fonts` with their licences. `scripts/fetch-launcher-fonts.sh --check`
@@ -71,10 +79,15 @@ process arguments or cached. CD keys are validated
 by WS21's native CRC routine, written using mode-600 temporary files and rename,
 and removed from the child environment. The raw key is never printed.
 
-`launcher-settings.json`, `launcher-library.json`, `main/launcher.cfg` and
-`data-path.txt` live in the existing app home. The launcher never rewrites
-`config_mp.cfg`; it only reads the player's `name` from it for the sidebar tag.
-Startup dvars make settings apply before renderer initialization.
+App settings and library state live in the app home. Config Studio edits the
+selected loadout's `main/players/<profile>/config_mp.cfg` through the shared
+profile store, with history and disk-conflict checks. The selected loadout and
+the one used for the next game are separate. After migration succeeds,
+`main/launcher.cfg` and startup arguments retain machine settings; personal
+values come from the active profile. A failed migration keeps the previous
+working launch behavior. Advanced chains use the validated launcher-owned
+companion file after profile initialization. Startup dvars apply before renderer
+initialization, with migrated launch settings excluding loadout-owned values.
 Advanced values accept `dvar value` or `dvar=value`, reject command separators,
 and the complete startup is limited to the engine's 31 commands/3900 bytes;
 startup paths/credentials and upcoming renderer options are reserved. Native

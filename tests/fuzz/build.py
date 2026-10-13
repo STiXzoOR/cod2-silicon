@@ -29,6 +29,7 @@ TARGETS = {
             'src/PC/qcommon/net_chan_mp.c', 'src/PC/qcommon/msg_mp.c',
             'src/PC/qcommon/huffman.c', 'src/PC/qcommon/cmd.c',
             'src/PC/qcommon/net_hardening.c', 'src/PC/qcommon/common.c',
+            'src/PC/qcommon/port_debug.c',
             'src/PC/universal/q_shared.c', 'src/PC/universal/com_shared.c',
         ],
         'codx_sources': ['src/PC/qcommon/cod2x_policy.c'],

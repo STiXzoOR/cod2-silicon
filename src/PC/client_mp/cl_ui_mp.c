@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 #include "bytematch.h"
@@ -57,6 +60,9 @@ qboolean UI_checkKeyExec(int key);
 void UI_LoadSoundAliases(void);
 int LAN_CompareHostname(const char *hostName1, const char *hostName2);
 int LAN_CompareServers(int source, int sortKey, int sortDir, int s1, int s2);
+#ifdef COD2_X64
+const char *UI_GetMapDisplayName(const char *mapName);
+#endif
 
 void GetClientState(uiClientState_t *state)
 {
@@ -437,9 +443,21 @@ void CL_InitUI(void)
     extern int g_disableRendering;
     cls.uiStarted = 1;
     CL_SwitchToLocalClient(0);
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     Com_Printf("[disrend] CL_InitUI before UI_Init = %d\n", g_disableRendering);
+#if defined(COD2_X64)
+    )
+#endif
     UI_Init();
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     Com_Printf("[disrend] CL_InitUI after UI_Init = %d\n", g_disableRendering);
+#if defined(COD2_X64)
+    )
+#endif
     CL_SwitchToLocalClient(0);
     UI_Component_Init();
 }
@@ -556,7 +574,12 @@ int LAN_CompareServers(int source, int sortKey, int sortDir, int s1, int s2)
             goto compare_ping_nosortdir;
         break;
     case 3:
+#ifdef COD2_X64
+        diff = I_stricmp(UI_GetMapDisplayName(server1->mapName),
+                        UI_GetMapDisplayName(server2->mapName));
+#else
         diff = I_stricmp(server1->mapName, server2->mapName);
+#endif
         if (diff == 0)
             goto compare_ping_nosortdir;
         break;

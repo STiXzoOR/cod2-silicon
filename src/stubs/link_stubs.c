@@ -403,7 +403,7 @@ int SND_SetChannelInfo()
 }
 #endif
 #if defined(COD2_X64)
-void SND_SetEnvironmentEffects_f(void) {}
+/* SND_SetEnvironmentEffects_f is implemented in snd.c for native builds. */
 #else
 int SND_SetEnvironmentEffects_f()
 {

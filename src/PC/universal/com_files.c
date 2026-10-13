@@ -854,8 +854,6 @@ static __attribute_regparm__(3) void FS_BuildOSPath_Internal(const char *base, c
     useGame = (game && game[0]) ? game : fs_gamedir;
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     useGame = Cod2x_ConfigGame(useGame, qpath);
-    if (!I_stricmp(useGame, "main") && !strcmp(Cod2x_ConfigGame("", qpath), "main"))
-        qpath = "config_mp.cfg";
 #endif
     lenBase = strlen(base);
     lenGame = strlen(useGame);

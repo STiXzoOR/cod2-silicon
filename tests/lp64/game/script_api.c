@@ -1,3 +1,6 @@
+#if defined(COD2X_SCRIPT_IDENTITY_FIXTURE)
+#include "script_identity.c"
+#else
 #include "common_types.h"
 #include <assert.h>
 #include <stdarg.h>
@@ -65,3 +68,4 @@ int main(void)
     assert(addedString == modelName);
     puts("game script API: entity/type/model pointers pass");
 }
+#endif

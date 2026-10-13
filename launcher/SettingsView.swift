@@ -7,24 +7,45 @@ struct SettingsView: View {
     @State private var origin = CGPoint.zero
     @State private var customFPS = false
 
+    /// Personal settings (frame cap, mouse, sound, filtering) live in loadouts once CoD2 Silicon has
+    /// brought them over. Until then the launcher still applies them, so they stay here.
+    private var legacy: Bool { !model.snapshot && model.configStudio?.migrationCompleted != true }
+
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 26) {
-                PageHeader(eyebrow: "Field manual", title: "Settings").padding(.leading, 16)
+            VStack(alignment: .leading, spacing: 22) {
+                PageHeader(eyebrow: "Field manual", title: "Settings", subtitle: "This Mac and the app. How the game plays lives in your loadouts.")
+                    .padding(.leading, 16).padding(.bottom, 4)
+                if legacy {
+                    StudioBanner(title: "Your loadouts aren’t set up yet, so the mouse, sound and frame rate settings below still apply to every game.",
+                                 detail: model.configStudio?.migrationError, tone: .caution)
+                } else {
+                    ConfigsLink { model.page = .configs; model.studio.loadCatalog() }
+                }
                 HStack(alignment: .top, spacing: 22) {
                     VStack(alignment: .leading, spacing: 22) {
-                        SettingsSection("Frame rate") {
-                            FrameRateCrates(fps: $model.settings.fps, custom: $customFPS)
-                        } footer: {
-                            Text("Any cap from 0 to 1000, where 0 means no cap. Servers can enforce their own; CoD2x competitive servers keep it between 125 and 250.")
-                        }
+                        SettingsSection("Game data") { setupGroup }
                         SettingsSection("Display") { displayGroup }
-                        SettingsSection("Mouse and sound") { mouseGroup }
+                        SettingsSection("Renderer") { rendererGroup }
+                        if legacy {
+                            SettingsSection("Frame rate") {
+                                FrameRateCrates(fps: $model.settings.fps, custom: $customFPS)
+                            } footer: {
+                                Text("Any cap from 0 to 1000, where 0 means no cap. Servers can enforce their own; CoD2x competitive servers keep it between 125 and 250.")
+                            }
+                        }
                     }
                     VStack(alignment: .leading, spacing: 22) {
-                        SettingsSection("Graphics") { graphicsGroup }
-                        SettingsSection("Advanced") { advancedGroup }
-                        SettingsSection("Game data") { setupGroup }
+                        SettingsSection("Updates") { updatesGroup }
+                        SettingsSection("Privacy") { privacyGroup } footer: {
+                            Text("Turning this off applies from your next game. Summaries already on this Mac stay there; turning it off doesn’t delete them.")
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        SettingsSection("Advanced launch options") { advancedGroup }
+                        if legacy {
+                            SettingsSection("Mouse and sound") { mouseGroup }
+                            SettingsSection("Graphics") { filteringGroup }
+                        }
                     }
                 }
             }
@@ -91,25 +112,20 @@ struct SettingsView: View {
         }
     }
 
-    private var graphicsGroup: some View {
+    private var rendererGroup: some View {
         SettingsGroup {
-            SettingsRow("Renderer", detail: "Metal 4 arrives with the native renderer in 0.3. Classic OpenGL is the reference look.") {
+            SettingsRow("Renderer", detail: "Classic OpenGL is the reference look today. Metal 4 arrives in 0.3, with MetalFX upscaling and HDR on displays that support it.") {
                 Picker("Renderer", selection: .constant("gl")) {
-                    Text("Metal 4").tag("metal").selectionDisabled(); Text("Classic OpenGL").tag("gl")
+                    Text("Classic OpenGL").tag("gl"); Text("Metal 4").tag("metal").selectionDisabled()
                 }
                 .pickerStyle(.segmented).labelsHidden().fixedSize()
-                .accessibilityHint("Metal 4 is upcoming")
+                .accessibilityHint("Metal 4 is coming in version 0.3")
             }
-            SettingsRow("Render scale", fixedLabel: 150, upcoming: true) {
-                Slider(value: .constant(1), in: 0.5...2).accessibilityLabel("Render scale, upcoming in 0.3")
-                Text("100%").font(.system(size: 14, weight: .semibold)).frame(width: 48, alignment: .trailing)
-            }
-            SettingsRow("MetalFX upscaling", detail: "Renders below the target size and upscales on the GPU.", upcoming: true) {
-                Toggle("MetalFX upscaling, upcoming in 0.3", isOn: .constant(false)).toggleStyle(.switch).labelsHidden()
-            }
-            SettingsRow("HDR (extended range)", detail: "On displays that support EDR. Classic look stays the default.", upcoming: true) {
-                Toggle("HDR, upcoming in 0.3", isOn: .constant(false)).toggleStyle(.switch).labelsHidden()
-            }
+        }
+    }
+
+    private var filteringGroup: some View {
+        SettingsGroup {
             SettingsRow("Anisotropic filtering") {
                 Picker("Anisotropic filtering", selection: $model.settings.anisotropy) {
                     ForEach(GameSettings.anisotropyLevels, id: \.self) { Text("\($0)×").tag($0) }
@@ -119,9 +135,31 @@ struct SettingsView: View {
         }
     }
 
+    /// The game's local match summaries (`main/stats/matches.jsonl`), passed to it at launch.
+    private var privacyGroup: some View {
+        SettingsGroup {
+            SettingsRow("Local match summaries",
+                        detail: "On by default. After each match the game saves a short summary for Check-up: map, mode, frame times, ping and missed server updates. It stays on this Mac, which keeps the last \(MatchSummaries.recordLimit) matches, and is never sent anywhere.") {
+                Toggle("Local match summaries", isOn: $model.settings.matchSummariesEnabled).toggleStyle(.switch).labelsHidden()
+            }
+        }
+    }
+
+    private var updatesGroup: some View {
+        SettingsGroup {
+            SettingsRow("CoD2 Silicon \(model.version)", detail: model.updateMessage,
+                        minHeight: ControlMetrics.height(.regular) + 2 * SettingsMetrics.radius + 1) {
+                HStack(spacing: 10) {
+                    if let url = model.releaseURL { Link("View Release", destination: url).font(.system(size: 13)).foregroundStyle(palette.link) }
+                    Button(model.checkingUpdates ? "Checking…" : "Check Now", action: model.checkUpdates).glassAction().disabled(model.checkingUpdates)
+                }
+            }
+        }
+    }
+
     private var advancedGroup: some View {
         VStack(alignment: .leading, spacing: 10) {
-            (Text("Extra console variables, one ") + Text("dvar value").font(.typewriter(13)) + Text(" per line"))
+            Text("Extra options passed to the game when it starts, one per line. For experts.")
                 .font(.system(size: 13)).foregroundStyle(palette.dark ? Palette.hex(0xcfc6b1) : palette.text)
             TextEditor(text: $model.settings.advanced)
                 .font(.typewriter(13)).scrollContentBackgroundHidden()
@@ -130,8 +168,10 @@ struct SettingsView: View {
                 .background(palette.well, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(palette.wellStroke, lineWidth: 1))
                 .shapeAudit(.inset, .rounded(12), "dvar editor")
-                .accessibilityLabel("Extra console variables")
-            Text("Paths, passwords and your CD key are managed by the launcher and can't be set here.").font(.system(size: 12)).foregroundStyle(palette.tertiary)
+                .accessibilityLabel("Extra launch options")
+            Text(legacy ? "Paths, passwords and your CD key are managed by the launcher and can't be set here."
+                        : "Paths, passwords and your CD key are managed by the launcher and can't be set here. Settings that belong to a loadout are changed in Configs; the game ignores them here.")
+                .font(.system(size: 12)).foregroundStyle(palette.tertiary).fixedSize(horizontal: false, vertical: true)
         }
         .padding(.vertical, 14).padding(.horizontal, SettingsMetrics.radius)
         .background(palette.panel, in: RoundedRectangle(cornerRadius: SettingsMetrics.radius, style: .continuous))
@@ -145,7 +185,12 @@ struct SettingsView: View {
             // (plus the point the group hides under its first hairline).
             SettingsRow(model.dataPathDisplay.isEmpty ? "Not found" : model.dataPathDisplay, detail: model.approximate ? "Approximate shaders · add your Mac copy for the original look" : "Original shaders verified",
                         typewriter: true, minHeight: ControlMetrics.height(.regular) + 2 * SettingsMetrics.radius + 1) {
-                Button("Set Up Again…", action: model.restartSetup).glassAction()
+                HStack(spacing: 8) {
+                    Button { NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: model.dataPath)]) } label: { Image(systemName: "folder").frame(width: 16, height: 16) }
+                        .glassAction(circle: true).disabled(model.dataPath.isEmpty)
+                        .help("Show game data in Finder").accessibilityLabel("Show game data in Finder")
+                    Button("Set Up Again…", action: model.restartSetup).glassAction()
+                }
             }
         }
     }
@@ -161,6 +206,34 @@ struct SettingsView: View {
         case "windowed": "A regular window at the chosen size."
         default: "Exclusive fullscreen at the chosen resolution. Lowest latency."
         }
+    }
+}
+
+/// Where personal settings went: a calm link row into Configs.
+private struct ConfigsLink: View {
+    var open: () -> Void
+    @Environment(\.palette) private var palette
+    var body: some View {
+        Button(action: open) {
+            HStack(spacing: 16) {
+                Image(systemName: LauncherPage.configs.symbol).font(.system(size: 16)).foregroundStyle(palette.accent)
+                    .frame(width: 36, height: 36).background(palette.selection, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Looking for frame rate, mouse, brightness, network, HUD or sound?").font(.system(size: 14, weight: .semibold)).foregroundStyle(palette.heading)
+                    Text("They moved into your loadouts, so every loadout keeps its own.").font(.system(size: 12)).foregroundStyle(palette.secondary)
+                }
+                Spacer(minLength: 8)
+                Text("Open Configs ›").font(.system(size: 13, weight: .semibold)).foregroundStyle(palette.link)
+            }
+            .padding(.vertical, 14).padding(.horizontal, SettingsMetrics.radius)
+            .background(palette.panel, in: RoundedRectangle(cornerRadius: SettingsMetrics.radius, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: SettingsMetrics.radius, style: .continuous).stroke(palette.panelStroke, lineWidth: 1))
+            .contentShape(RoundedRectangle(cornerRadius: SettingsMetrics.radius, style: .continuous))
+            .shapeAudit(.container, .rounded(SettingsMetrics.radius), "configs link")
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Frame rate, mouse, brightness, network, HUD and sound moved into your loadouts. Open Configs.")
     }
 }
 

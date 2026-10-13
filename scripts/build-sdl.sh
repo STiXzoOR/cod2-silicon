@@ -35,7 +35,7 @@ run() {
         "$@"
     fi
 }
-jobs=$(/usr/sbin/sysctl -n hw.ncpu)
+jobs=${COD2_BUILD_JOBS:-$(/usr/sbin/sysctl -n hw.ncpu)}
 common=(-DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64
     -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 -DCMAKE_EXPORT_PACKAGE_REGISTRY=OFF "-DCMAKE_INSTALL_PREFIX=$prefix"
     "-DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew;/usr/local")

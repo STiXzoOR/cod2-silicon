@@ -33,6 +33,7 @@ def main():
     parser.add_argument('--timeout', type=float, default=180)
     parser.add_argument('--port', type=int, default=28960)
     parser.add_argument('--dedicated', action='store_true', help='use with cod2_lnxded on Linux')
+    parser.add_argument('--windowed', action='store_true', help='bounded 640x480 desktop QA using timeout -k')
     args = parser.parse_args()
     if args.frames < 1 or not 0 <= args.seed <= 2147483647 or args.timeout <= 0:
         parser.error('positive frames/timeout and a nonnegative int32 seed are required')
@@ -56,6 +57,10 @@ def main():
                '+set', 'net_port', str(args.port),
                '+set', 'sv_fps', '20', '+set', 'fixedtime', '50',
                '+set', 'g_gametype', 'dm', '+map', args.map]
+    if args.windowed:
+        command[1:1] = ['+set', 'r_fullscreen', '0', '+set', 'r_mode', '640x480',
+                        '+set', 'com_maxfps', '60']
+        command = ['timeout', '-k', '5', str(args.timeout), *command]
     env = dict(os.environ, SYSDIFF_SEED=str(args.seed), SYSDIFF_MAXFRAMES=str(args.frames),
                SYSDIFF_STATEHASH=str(out / 'statehash.txt'), SYSDIFF_DUMP=str(out / 'entities.txt'))
     metadata = dict(command=command, platform=platform.platform(), binary_sha256=sha256(binary),
@@ -66,7 +71,7 @@ def main():
         process = subprocess.Popen(command, env=env, cwd=out, stdout=log, stderr=subprocess.STDOUT,
                                    start_new_session=True)
         try:
-            code = process.wait(timeout=args.timeout)
+            code = process.wait(timeout=args.timeout + (6 if args.windowed else 0))
         except (subprocess.TimeoutExpired, KeyboardInterrupt):
             os.killpg(process.pid, signal.SIGKILL)
             process.wait()

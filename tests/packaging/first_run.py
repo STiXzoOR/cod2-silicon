@@ -7,7 +7,7 @@ import subprocess
 import tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-with tempfile.TemporaryDirectory(prefix="cod2-silicon-first-run-") as directory:
+with tempfile.TemporaryDirectory(prefix="cod2-silicon-first-run-", suffix=".noindex") as directory:
     scratch = pathlib.Path(directory)
     executable = scratch / "first-run"
     subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", "clang", "-fobjc-arc",
@@ -20,7 +20,7 @@ with tempfile.TemporaryDirectory(prefix="cod2-silicon-first-run-") as directory:
     info = plistlib.loads((app / "Contents/Info.plist").read_bytes())
     assert "CoD2GameDirectory" not in info
     assert info["CFBundleIdentifier"] == "io.github.stixzoor.cod2silicon"
-    assert info["CFBundleShortVersionString"] == "0.1.0"
+    assert info["CFBundleShortVersionString"] == (ROOT / "RELEASE_VERSION").read_text().strip()
     assert not (app / "Contents/Resources/tools").exists()
     home = scratch / "home"
     game = home / "Games/CoD2"

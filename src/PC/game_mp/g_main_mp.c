@@ -72,6 +72,15 @@ extern struct bgs_t level_bgs;
 extern struct bgs_t *bgs;
 extern struct level_locals_t level;
 extern gentity_t g_entities[];
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+extern serverStatic_t svs;
+static const dvar_t *sv_playerBroadcastLimit;
+const dvar_t *g_shotgun_spread_fix;
+#endif
+#if defined(COD2_X64)
+extern void G_setfog(const char *fogstring);
+extern void G_InitObjectives(void);
+#endif
 
 extern const dvar_t *g_gametype;
 extern const dvar_t *g_dedicated;
@@ -167,6 +176,7 @@ extern void SV_FreeClientScriptPers(void);
 extern void Z_FreeInternal(void *ptr);
 extern void Mantle_ShutdownAnims(void);
 #if defined(COD2_X64)
+extern void Mantle_CreateAnims(MantleAnimAlloc xanimAlloc);
 extern void GScr_FreeScripts(void);
 #else
 extern unsigned int GScr_FreeScripts(void);
@@ -190,6 +200,9 @@ static vec3_t vec3_zero = { 0.0f, 0.0f, 0.0f };
 enum {
     GMAIN_CS_VOTE_TIME = 15,
     GMAIN_ET_GENERAL = 0,
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    GMAIN_ET_PLAYER = 1,
+#endif
     GMAIN_ET_PLAYER_CORPSE = 2,
     GMAIN_ET_ITEM = 3,
     GMAIN_ET_MISSILE = 4,
@@ -502,7 +515,13 @@ void ExitLevel(void)
 {
     int i;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    extern qboolean GScr_Cod2xQueueExitLevel(void);
+    if (!GScr_Cod2xQueueExitLevel())
+        return;
+#else
     Cbuf_ExecuteText(2, "map_rotate\n");
+#endif
 
     level.teamScores[TEAM_AXIS] = 0;
     level.teamScores[TEAM_ALLIES] = 0;
@@ -735,6 +754,10 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
 #endif
     G_SpawnEntitiesFromString();
     COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_spawn);)
+#if defined(COD2_X64)
+    G_setfog("0");
+    G_InitObjectives();
+#endif
     level.initializing = 0;
 
     G_LogPrintf("gametype: %s\n", g_gametype->current.string);
@@ -751,6 +774,12 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     Scr_PostCompileScripts();
     Scr_EndLoadScripts();
     COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_endload);)
+#if defined(COD2_X64)
+
+    /* Mac 1.3 0x1adf5d initializes this tree on the server. A listen client
+       deliberately skips its own allocation while com_sv_running is true. */
+    Mantle_CreateAnims((MantleAnimAlloc)Hunk_AllocXAnimServer);
+#endif
 
     *(void **)imp_bgs = (void *)&level_bgs;
 #if defined(COD2_X64)
@@ -771,6 +800,12 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
         for (t = 0; t < 64; t++)
             level_bgs.clientinfo[t].pXAnimTree =
                 (XAnimTree_s *)XAnimCreateTree((XAnim *)animTree, (Alloc_t)Hunk_AllocXAnimServer);
+#if defined(COD2_X64)
+        /* Mac 1.3 0x1aeac3 also allocates the eight persistent clone trees. */
+        for (t = 0; t < 8; t++)
+            ((scr_data_t *)imp_g_scr_data)->playerCorpseInfo[t].tree =
+                (XAnimTree_s *)XAnimCreateTree((XAnim *)animTree, (Alloc_t)Hunk_AllocXAnimServer);
+#endif
     }
 
     GScr_LoadConsts();
@@ -794,12 +829,22 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_gls, G_VM_FRAME);)
 
     level.initializing = 1;
+#if defined(COD2_X64)
+    Scr_LoadGameType();
+#endif
     Scr_LoadLevel();
     COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_before, G_VM_FRAME);)
+#if !defined(COD2_X64)
     Scr_LoadGameType();
+#endif
     COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_after_load, G_VM_FRAME);)
     Scr_StartupGameType();
     COD2_DEBUG_ONLY(Com_Printf(str_dbg_ff_after_startup, G_VM_FRAME);)
+#if defined(COD2_X64)
+    /* Mac 1.3 0x1ae10f marks every corpse slot free on cold loads and restarts. */
+    for (int corpseIndex = 0; corpseIndex < 8; corpseIndex++)
+        ((scr_data_t *)imp_g_scr_data)->playerCorpseInfo[corpseIndex].entnum = -1;
+#endif
 
     if (restart && !savepersist) {
         RestoreBody();
@@ -826,6 +871,10 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     COD2_DEBUG_ONLY(Com_Printf("[ckpt] before CalculateRanks\n");)
     CalculateRanks();
     level.initializing = 0;
+#if defined(COD2_X64)
+    SaveRegisteredWeapons();
+    SaveRegisteredItems();
+#endif
     COD2_DEBUG_ONLY(Com_Printf("[ckpt] G_InitGame END\n");)
     COD2_DEBUG_ONLY(dbg_scan_ents("G_InitGame_end");)
 
@@ -930,6 +979,10 @@ static void G_RegisterDvars_impl(void)
     g_password = Dvar_RegisterString_mac("g_password", "", 0x1000);
     g_banIPs = Dvar_RegisterString_mac("g_banIPs", "", 0x1001);
     g_dedicated = Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1020);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    sv_playerBroadcastLimit = Dvar_RegisterInt("sv_playerBroadcastLimit", 15, 0, 64, 0x1000);
+    g_shotgun_spread_fix = Dvar_RegisterBool_mac("g_shotgun_spread_fix", 1, 0x1080);
+#endif
     if (g_dedicated->current.integer != 0) {
         Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1040);
     }
@@ -1303,7 +1356,12 @@ void G_ShutdownGame(qboolean freeScripts)
             scr_data_t *scrData = (scr_data_t *)imp_g_scr_data;
             for (i = 0; i < 8; i++) {
                 corpseInfo_t *corpse = &scrData->playerCorpseInfo[i];
+#if defined(COD2_X64)
+                /* Slots own trees even before a player has been cloned into ci. */
+                struct XAnimTree_s *tree = corpse->tree;
+#else
                 struct XAnimTree_s *tree = corpse->ci.pXAnimTree;
+#endif
                 if (tree && (((uintptr_t)tree & (sizeof(void *) - 1)) == 0)) {
                     XAnimFreeTree(tree, 0);
                 }
@@ -1408,6 +1466,34 @@ static void __attribute_regparm__(1) G_RunFrameForEntity(gentity_t *ent)
     G_RunThink_core(ent);
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static void G_RefreshPlayerBroadcast(void)
+{
+    int i;
+    int numPlayers = 0;
+    int limit = sv_playerBroadcastLimit->current.integer;
+
+    if (limit <= 0)
+        return;
+
+    for (i = 0; i < 0x400; ++i) {
+        gentity_t *ent = &g_entities[i];
+        if (ent->client && ent->r.inuse && ent->s.eType == GMAIN_ET_PLAYER)
+            ++numPlayers;
+    }
+    if (numPlayers > limit)
+        return;
+
+    /* Include dead players in the limit, but refresh only living players.
+       Snapshot expiry uses server milliseconds and includes the endpoint. */
+    for (i = 0; i < 0x400; ++i) {
+        gentity_t *ent = &g_entities[i];
+        if (ent->client && ent->r.inuse && ent->s.eType == GMAIN_ET_PLAYER && ent->health > 0)
+            ent->r.broadcastTime = svs.time + 1;
+    }
+}
+
+#endif
 int G_RunFrame(int levelTime)
 {
     int i, j;
@@ -1661,6 +1747,9 @@ int G_RunFrame(int levelTime)
     }
 
     *(void **)imp_bgs = NULL;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    G_RefreshPlayerBroadcast();
+#endif
     return (int)imp_bgs;
 }
 

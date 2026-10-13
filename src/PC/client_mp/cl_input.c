@@ -74,6 +74,9 @@ extern void UI_MouseEvent(int dx, int dy);
 extern void UI_MouseEventAbsolute(int x, int y);
 static kbutton_t playersKb[1][28];
 static kbutton_t *kb = playersKb[0];
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static const dvar_t *cl_sensitivityMG;
+#endif
 
 typedef struct
 {
@@ -1082,6 +1085,9 @@ void CL_InitInput(void)
 
     cl_analog_attack_threshold = Dvar_RegisterFloat("cl_analog_attack_threshold", 0.8f, 0.0001f, 1.0f, 0x1000);
     cl_stanceHoldTime = Dvar_RegisterInt("cl_stanceHoldTime", 300, 0, 1000, 0x1000);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    cl_sensitivityMG = Dvar_RegisterFloat("sensitivity_MG", 1.0f, 0.01f, 100.0f, 0x1001);
+#endif
     {
         const dvar_t *nodelta = Dvar_RegisterBool_mac("cl_nodelta", 0, 0x1000);
         cl_nodelta = nodelta;
@@ -1276,8 +1282,19 @@ void CL_MouseMove(usercmd_t *cmd)
     }
 
     if (cl->snap.ps.eFlags & 0x300) {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        /* CoD2x mouse.cpp: MG input uses its own additive sensitivity before
+           the stock axis factors, independently of cgame zoom/server revision. */
+        float mgSensitivity = rate * accel + CL_FiniteOrDefault(cl_sensitivityMG->current.value, 1.0f);
+        if (!isfinite(mgSensitivity)) {
+            return;
+        }
+        mx *= mgSensitivity * 2.5f;
+        my *= mgSensitivity * 2.0f;
+#else
         mx *= 2.5f;
         my *= 2.0f;
+#endif
     } else {
         mx *= sensitivity;
         my *= sensitivity;

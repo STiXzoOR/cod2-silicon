@@ -43,9 +43,17 @@ int main(int argc, char **argv)
         [NSAppleEventManager.sharedAppleEventManager setEventHandler:handler andSelector:@selector(openURL:reply:) forEventClass:kInternetEventClass andEventID:kAEGetURL];
         printf("fixture ready %d\n", getpid()); fflush(stdout);
         NSString *home = @(getenv("WS25_FIXTURE_HOME"));
+        NSMutableArray *arguments = [NSMutableArray array];
+        for (int i = 1; i < argc; ++i) [arguments addObject:@(argv[i])];
+        NSData *receipt = [NSJSONSerialization dataWithJSONObject:arguments options:0 error:nil];
+        [receipt writeToFile:[home stringByAppendingPathComponent:@"fixture-arguments.json"] atomically:YES];
         [@"Synthetic crash report\n" writeToFile:[home stringByAppendingPathComponent:@"cod2_crash_fixture.txt"] atomically:YES encoding:NSUTF8StringEncoding error:nil];
         for (;;) {
             if ([NSFileManager.defaultManager fileExistsAtPath:[home stringByAppendingPathComponent:@"exit-fixture"]]) {
+                NSString *active = [NSString stringWithContentsOfFile:[home stringByAppendingPathComponent:@"main/players/active.txt"] encoding:NSUTF8StringEncoding error:nil];
+                NSString *config = [home stringByAppendingPathComponent:[NSString stringWithFormat:@"main/players/%@/config_mp.cfg", active]];
+                NSString *text = [NSString stringWithContentsOfFile:config encoding:NSUTF8StringEncoding error:nil];
+                if (text) [[text stringByAppendingString:@"seta sensitivity \"6\"\n"] writeToFile:config atomically:YES encoding:NSUTF8StringEncoding error:nil];
                 [@"Synthetic crash report\n" writeToFile:[home stringByAppendingPathComponent:@"cod2_crash_fixture.txt"] atomically:YES encoding:NSUTF8StringEncoding error:nil]; return 37;
             }
             NSEvent *event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:[NSDate dateWithTimeIntervalSinceNow:.05] inMode:NSDefaultRunLoopMode dequeue:YES];

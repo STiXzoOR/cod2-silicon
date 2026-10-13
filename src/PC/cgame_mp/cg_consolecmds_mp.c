@@ -75,9 +75,16 @@ static const consoleCommand_t commandsList[] = {
     { "cg_shellshock_load", CG_ShellShock_Load_f },
     { "cg_shellshock_save", CG_ShellShock_Save_f },
     { "tell_target", CG_TellTarget_f },
+#if defined(COD2_X64) && COD2_X64
+    { "mp_QuickMessage", CG_QuickMessage_f },
+#else
     { "quickmessage", CG_QuickMessage_f },
+#endif
     { "VoiceChat", CG_VoiceChat_f },
     { "VoiceTeamChat", CG_TeamVoiceChat_f },
+#if defined(COD2_X64) && COD2_X64
+    { "mr", NULL },
+#endif
     { NULL, NULL }
 };
 

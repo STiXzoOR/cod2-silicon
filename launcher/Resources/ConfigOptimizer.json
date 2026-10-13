@@ -1,0 +1,301 @@
+{
+  "schemaVersion": 1,
+  "version": "2026-10-09.1",
+  "rules": [
+    {
+      "id": "competitive-frame-cap",
+      "area": "movement",
+      "when": "outsideCompetitiveBand",
+      "setting": "com_maxfps",
+      "suggest": {
+        "stock": "250",
+        "cod2x": "250"
+      },
+      "title": "Use a frame cap allowed by these rules",
+      "why": "These rules allow 125–250 frames per second. A cap of 250 is within that range.",
+      "notice": "Your frame cap becomes 250 fps. Your Mac’s actual frame rate may be lower.",
+      "evidence": "Based on the selected rules and your saved frame cap.",
+      "sources": [
+        {
+          "sourceURL": "https://github.com/callofduty2x/CoD2x/blob/d8c54695a5239ac99d1dfe96212b809b1a54bfee/src/mss32/competitive.cpp#L57-L61",
+          "sourceDate": "2026-04-07",
+          "quoteReference": "research/rulesets.json row 98; com_maxfps",
+          "quote": "com_maxFps->limits.integer.min = 125; com_maxFps->limits.integer.max = 250; if (com_maxFps->value.integer < 125 || com_maxFps->value.integer > 250) { Dvar_SetInt(com_maxFps, 250); // it will also set the latched value }",
+          "enforcedBy": "code",
+          "archiveTimestamp": null
+        },
+        {
+          "sourceURL": "git:048ff5e:src/PC/qcommon/cod2x_runtime.c",
+          "sourceDate": "2026-10-09",
+          "quoteReference": "048ff5e:src/PC/qcommon/cod2x_runtime.c Cod2x_Frame / Cod2x_Competitive",
+          "quote": "{ .name = \"com_maxfps\", .min = 125, .max = 250, .value = 250 },",
+          "enforcedBy": "code",
+          "archiveTimestamp": null
+        }
+      ],
+      "tuneFor": [
+        "competitive",
+        "balanced",
+        "bestLooking"
+      ]
+    },
+    {
+      "id": "unfiltered-aim",
+      "area": "aim",
+      "when": "different",
+      "setting": "m_filter",
+      "suggest": {
+        "stock": "0",
+        "cod2x": "0"
+      },
+      "title": "Turn off mouse smoothing",
+      "why": "Smoothing averages two mouse movements. Turning it off uses each movement as it arrives.",
+      "notice": "A more direct response to each mouse movement, with the same sensitivity.",
+      "evidence": "Based on how the game processes mouse movement.",
+      "sources": [
+        {
+          "sourceURL": "git:048ff5e:src/PC/client_mp/cl_input.c",
+          "sourceDate": "2026-10-09",
+          "quoteReference": "048ff5e:src/PC/client_mp/cl_input.c CL_MouseMove",
+          "quote": "mx = (float)(cl->mouseDx[0] + cl->mouseDx[1]) * 0.5f;",
+          "enforcedBy": "code",
+          "archiveTimestamp": null
+        }
+      ],
+      "tuneFor": [
+        "competitive",
+        "balanced",
+        "bestLooking"
+      ]
+    },
+    {
+      "id": "constant-aim-scale",
+      "area": "aim",
+      "when": "different",
+      "setting": "cl_mouseAccel",
+      "suggest": {
+        "stock": "0",
+        "cod2x": "0"
+      },
+      "title": "Keep mouse speed consistent",
+      "why": "With acceleration off, moving the mouse faster does not add extra sensitivity.",
+      "notice": "The same mouse distance produces the same turn, with the usual adjustments when aiming.",
+      "evidence": "Based on the game’s mouse sensitivity calculation.",
+      "sources": [
+        {
+          "sourceURL": "git:048ff5e:src/PC/client_mp/cl_input.c",
+          "sourceDate": "2026-10-09",
+          "quoteReference": "048ff5e:src/PC/client_mp/cl_input.c CL_MouseMove",
+          "quote": "sensitivity = (rate * accel + baseSensitivity) * cgameSensitivity;",
+          "enforcedBy": "code",
+          "archiveTimestamp": null
+        }
+      ],
+      "tuneFor": [
+        "competitive",
+        "balanced",
+        "bestLooking"
+      ]
+    },
+    {
+      "id": "connection-rate",
+      "area": "connection",
+      "when": "different",
+      "setting": "rate",
+      "suggest": {
+        "stock": "25000",
+        "cod2x": "25000"
+      },
+      "title": "Allow more game updates",
+      "why": "A connection limit of 25,000 bytes per second lets the game request its supported maximum. The server may send less.",
+      "notice": "Your download allowance for game updates becomes 25,000 bytes per second.",
+      "evidence": "Based on your saved connection limit and the game’s supported range.",
+      "sources": [
+        {
+          "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
+          "sourceDate": "2026-10-09",
+          "quoteReference": "048ff5e:src/PC/client_mp/cl_main_mp.c registration of rate",
+          "quote": "Dvar_RegisterInt(\"rate\", 5000, 1000, 25000, 0x1003);",
+          "enforcedBy": "code",
+          "archiveTimestamp": null
+        },
+        {
+          "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
+          "sourceDate": "2026-10-09",
+          "quoteReference": "048ff5e:src/PC/client_mp/cl_main_mp.c registration of rate",
+          "quote": "Dvar_RegisterInt(\"rate\", 5000, 1000, 25000, 0x1003);",
+          "enforcedBy": "code",
+          "archiveTimestamp": null
+        }
+      ],
+      "tuneFor": [
+        "competitive",
+        "balanced",
+        "bestLooking"
+      ]
+    },
+    {
+      "id": "connection-snapshots",
+      "area": "connection",
+      "when": "different",
+      "setting": "snaps",
+      "suggest": {
+        "stock": "30",
+        "cod2x": "40"
+      },
+      "title": "Request more server updates",
+      "why": "Stock 1.3 supports up to 30 server updates per second; CoD2x supports up to 40. This uses the value allowed by your selected rules.",
+      "notice": "You request more frequent updates. The server determines how many arrive.",
+      "evidence": "Based on your game version and selected rules.",
+      "sources": [
+        {
+          "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
+          "sourceDate": "2026-10-09",
+          "quoteReference": "048ff5e:src/PC/client_mp/cl_main_mp.c registration of snaps",
+          "quote": "Dvar_RegisterInt(\"snaps\", 20, 1, 30, 0x1003);",
+          "enforcedBy": "code",
+          "archiveTimestamp": null
+        },
+        {
+          "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
+          "sourceDate": "2026-10-09",
+          "quoteReference": "048ff5e:src/PC/client_mp/cl_main_mp.c registration of snaps",
+          "quote": "Dvar_RegisterInt(\"snaps\", 40, 1, 40, 0x1003);",
+          "enforcedBy": "code",
+          "archiveTimestamp": null
+        }
+      ],
+      "tuneFor": [
+        "competitive",
+        "balanced",
+        "bestLooking"
+      ]
+    },
+    {
+      "id": "connection-packets",
+      "area": "connection",
+      "when": "different",
+      "setting": "cl_maxpackets",
+      "suggest": {
+        "stock": "100",
+        "cod2x": "125"
+      },
+      "title": "Send more frequent updates",
+      "why": "Stock supports up to 100 outgoing updates per second; CoD2x supports up to 125. Your frame rate also affects how often they are sent.",
+      "notice": "The game can send your actions more frequently, up to the selected limit.",
+      "evidence": "Based on your game version and saved settings.",
+      "sources": [
+        {
+          "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
+          "sourceDate": "2026-10-09",
+          "quoteReference": "048ff5e:src/PC/client_mp/cl_main_mp.c registration of cl_maxpackets",
+          "quote": "Dvar_RegisterInt(\"cl_maxpackets\", 30, 15, 100, 0x1001);",
+          "enforcedBy": "code",
+          "archiveTimestamp": null
+        },
+        {
+          "sourceURL": "git:048ff5e:src/PC/client_mp/cl_main_mp.c",
+          "sourceDate": "2026-10-09",
+          "quoteReference": "048ff5e:src/PC/client_mp/cl_main_mp.c registration of cl_maxpackets",
+          "quote": "Dvar_RegisterInt(\"cl_maxpackets\", 125, 10, 125, 0x1001);",
+          "enforcedBy": "code",
+          "archiveTimestamp": null
+        }
+      ],
+      "tuneFor": [
+        "competitive",
+        "balanced",
+        "bestLooking"
+      ]
+    },
+    {
+      "id": "conservative-texture-detail",
+      "area": "visibility",
+      "when": "greaterThan",
+      "setting": "r_picmip",
+      "suggest": {
+        "stock": "2",
+        "cod2x": "2"
+      },
+      "title": "Use more detailed textures",
+      "why": "zPAM’s authors warn that the lowest texture detail can give an unfair advantage. This chooses a more detailed level and keeps your other texture choices.",
+      "notice": "Textures become more detailed after reloading. Manual texture quality is enabled.",
+      "evidence": "Advice from zPAM’s documented issue; league rules may differ.",
+      "sources": [
+        {
+          "sourceURL": "https://github.com/eyza-cod2/zpam3/blob/1cfd9fb873206c35054e880ccb1d9eedaf1ec52c/README.md",
+          "sourceDate": "2026-05-20",
+          "quoteReference": "README known bug 5.12; research/rulesets.json row 241",
+          "quote": "[5.12] r_picmip can be abused, find a way to make sure picmip 3 cant be used",
+          "enforcedBy": "paper",
+          "archiveTimestamp": null
+        },
+        {
+          "sourceURL": "git:048ff5e:src/PC/gfx_d3d/r_image.c",
+          "sourceDate": "2026-10-09",
+          "quoteReference": "048ff5e:src/PC/gfx_d3d/r_image.c R_SetPicmip",
+          "quote": "if ((r_picmip_manual)->current.enabled)",
+          "enforcedBy": "code",
+          "archiveTimestamp": null
+        }
+      ],
+      "tuneFor": [
+        "competitive",
+        "balanced"
+      ],
+      "additionalChanges": [
+        {
+          "setting": "r_picmip_manual",
+          "suggest": {
+            "stock": "1",
+            "cod2x": "1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "full-texture-detail",
+      "area": "visibility",
+      "when": "greaterThan",
+      "setting": "r_picmip",
+      "suggest": {
+        "stock": "0",
+        "cod2x": "0"
+      },
+      "title": "Use full texture detail",
+      "why": "Keep the highest-resolution textures available in your game data. This also enables manual texture quality and keeps your other texture choices.",
+      "notice": "Sharper textures after reloading, potentially using more graphics memory.",
+      "evidence": "Based on the game’s texture settings; the performance effect depends on your Mac.",
+      "sources": [
+        {
+          "sourceURL": "git:048ff5e:src/PC/gfx_d3d/r_image_load_obj.c",
+          "sourceDate": "2026-10-09",
+          "quoteReference": "048ff5e:src/PC/gfx_d3d/r_image_load_obj.c Image_LoadBitmap / Image_LoadDxtc",
+          "quote": "if (mipLevel < picmip)",
+          "enforcedBy": "code",
+          "archiveTimestamp": null
+        },
+        {
+          "sourceURL": "git:048ff5e:src/PC/gfx_d3d/r_image.c",
+          "sourceDate": "2026-10-09",
+          "quoteReference": "048ff5e:src/PC/gfx_d3d/r_image.c R_SetPicmip",
+          "quote": "if ((r_picmip_manual)->current.enabled)",
+          "enforcedBy": "code",
+          "archiveTimestamp": null
+        }
+      ],
+      "tuneFor": [
+        "bestLooking"
+      ],
+      "additionalChanges": [
+        {
+          "setting": "r_picmip_manual",
+          "suggest": {
+            "stock": "1",
+            "cod2x": "1"
+          }
+        }
+      ]
+    }
+  ]
+}

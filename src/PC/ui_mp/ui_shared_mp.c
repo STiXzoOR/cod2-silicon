@@ -61,6 +61,9 @@ extern float Dvar_GetFloat(const char *name);
 extern const char *Dvar_GetString(const char *name);
 extern void Dvar_SetFromStringByName(const char *dvarName, const char *string);
 extern struct dvar_s *Dvar_FindVar(const char *name);
+#ifdef COD2_X64
+extern void Com_LocalizedFloatToString(float value, char *buffer, unsigned int size, unsigned int decimals);
+#endif
 extern int UI_PlayLocalSoundAlias(snd_alias_list_t *aliasList);
 extern int UI_PlayLocalSoundAliasByName(const char *name);
 extern void UI_RunMenuScript(const char **args);
@@ -2737,6 +2740,36 @@ void Item_Text_Paint(displayContextDef_t *dc, itemDef_t *item)
 
 static void Item_List_Paint(displayContextDef_t *dc, itemDef_t *item, const char *text)
 {
+#if defined(COD2_X64)
+    float color[4];
+    if (!text)
+        return;
+    int flags = item->window.dynamicFlags[0];
+    if ((flags & 6) == 6) {
+        float t = sinf((float)(dc->realTime / UI_PULSE_DIVISOR)) * 0.5f + 0.5f;
+        for (int i = 0; i < 4; ++i) {
+            float hi = ((menuDef_t *)item->parent)->focusColor[i];
+            color[i] = hi + (hi * 0.8f - hi) * t;
+            if (color[i] < 0.0f)
+                color[i] = 0.0f;
+            else if (color[i] > 1.0f)
+                color[i] = 1.0f;
+        }
+    } else {
+        memcpy(color, item->window.foreColor, sizeof(color));
+    }
+    if (text[0] == '@')
+        text = UI_SafeTranslateString(text + 1);
+    float x = item->textRect[0].x;
+    if (item->text) {
+        Item_Text_Paint(dc, item);
+        x = item->textRect[0].x + item->textRect[0].w + 8.0f;
+    }
+    FontHandle font = UI_GetFontHandle(item->fontEnum, item->textscale);
+    UI_DrawText(text, 0x7fffffff, font, x, item->textRect[0].y,
+                item->window.rect[0].horzAlign, item->window.rect[0].vertAlign,
+                item->textscale, color, item->textStyle);
+#else
     byte *it = (byte *)item;
     float color[4];
     int width;
@@ -2771,6 +2804,7 @@ static void Item_List_Paint(displayContextDef_t *dc, itemDef_t *item, const char
                 (((itemDef_s*)(it))->textRect[0].x), (((itemDef_s*)(it))->textRect[0].y),
                 (((rectDef_t*)(it))->horzAlign), (((rectDef_t*)(it))->vertAlign),
                 ((itemDef_t *)it)->textscale, color, (((itemDef_s*)(it))->textStyle));
+#endif
 }
 
 void Item_TextField_Paint(displayContextDef_t *dc, itemDef_t *item)
@@ -2816,10 +2850,20 @@ void Item_TextField_Paint(displayContextDef_t *dc, itemDef_t *item)
 
     buff[0] = '\0';
     if (item->dvar) {
+#ifdef COD2_X64
+        if (item->type == 17) {
+            const dvar_t *numeric = Dvar_FindVar(item->dvar);
+            if (numeric && numeric->type == 1)
+                Com_LocalizedFloatToString(numeric->current.value, buff, sizeof(buff), 2);
+        } else {
+#endif
         value = Dvar_GetVariantString(item->dvar);
         if (value) {
             I_strncpyz(buff, value, sizeof(buff));
         }
+#ifdef COD2_X64
+        }
+#endif
     }
 
     Item_SetTextExtents(item, &width, &height, buff);
@@ -3578,7 +3622,11 @@ int Item_ListBox_OverLB(itemDef_t *item, float x, float y)
     int horzAlign = (((rectDef_t*)(it))->horzAlign);
     int vertAlign = (((rectDef_t*)(it))->vertAlign);
 
+#if defined(COD2_X64)
+    UI_FeederCount(item->special);
+#else
     UI_FeederCount((*(int *)&((itemDef_t *)it)->special));
+#endif
     if (!Item_GetListBoxDef(item))
         return 0;
 
@@ -3726,7 +3774,11 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
     if (!listPtr)
         return 0;
 
+#if defined(COD2_X64)
+    count = UI_FeederCount(item->special);
+#else
     count = UI_FeederCount((*(int *)&((itemDef_t *)it)->special));
+#endif
 
     {
         float compareX, compareY;
@@ -3897,7 +3949,11 @@ qboolean Item_ListBox_HandleKey(displayContextDef_t *dc, itemDef_t *item, int ke
 
             {
                 int oldCursorPos = (((listBoxDef_s*)(listPtr))->cursorPos[0]);
+#if defined(COD2_X64)
+                if (oldCursorPos < UI_FeederCount(item->special))
+#else
                 if (oldCursorPos < UI_FeederCount((*(int *)&((itemDef_t *)it)->special)))
+#endif
                     Item_SetCursorPos(item, (((listBoxDef_s*)(listPtr))->cursorPos[0]));
             }
             goto do_feeder_selection;
@@ -4216,22 +4272,37 @@ qboolean Item_Bind_HandleKey(displayContextDef_t *dc, itemDef_t *item, int key, 
         }
     }
 
-    if (bindIdx >= 0 && key != -1) {
 #if defined(COD2_X64)
-        if (g_bindings[bindIdx].bind1 == -1) {
-            g_bindings[bindIdx].bind1 = key;
+    if (bindIdx >= 0) {
+        bind_t *binding = &g_bindings[bindIdx];
+        if (key == -1) {
+            if (binding->bind1 != -1)
+                Key_SetBinding(binding->bind1, "");
+            if (binding->bind2 != -1)
+                Key_SetBinding(binding->bind2, "");
+            binding->bind1 = binding->bind2 = -1;
+        } else if (binding->bind1 == -1) {
+            binding->bind1 = key;
+        } else if (binding->bind1 != key && binding->bind2 == -1) {
+            binding->bind2 = key;
         } else {
-            g_bindings[bindIdx].bind2 = key;
+            Key_SetBinding(binding->bind1, "");
+            if (binding->bind2 != -1)
+                Key_SetBinding(binding->bind2, "");
+            binding->bind1 = key;
+            binding->bind2 = -1;
         }
+    }
 #else
+    if (bindIdx >= 0 && key != -1) {
         int offset = bindIdx * 0x14;
         if (*(int *)((byte *)g_bindings + offset + 12) == -1) {
             *(int *)((byte *)g_bindings + offset + 12) = key;
         } else {
             *(int *)((byte *)g_bindings + offset + 16) = key;
         }
-#endif
     }
+#endif
 
     Controls_SetConfig(0);
     g_waitingForKey = 0;
@@ -5748,7 +5819,11 @@ void Menus_HandleOOBClick(displayContextDef_t *dc, menuDef_t *menu, int key, qbo
                 continue;
 
             int itemType = (((itemDef_s*)(item))->type);
+#if defined(COD2_X64)
+            if (itemType == 0 && ((itemDef_t *)item)->text) {
+#else
             if (itemType != 0 && ((itemDef_t *)item)->text) {
+#endif
 
                 int textBuf[6];
                 memset(textBuf, 0, 24);
@@ -5799,7 +5874,12 @@ count_visible:;
             visCount++;
     }
 
+#if defined(COD2_X64)
+    {
+        if (visCount == 0)
+#else
     if (visCount > 0) {
+#endif
         UI_Pause(0);
 
         openCount = (((displayContextDef_s*)(d))->openMenuCount);
@@ -5831,8 +5911,10 @@ count_visible:;
                     CIN_StopCinematic(-((itemDef_t *)item)->window.ownerDraw);
             }
         }
+#if !defined(COD2_X64)
     } else {
         UI_Pause(0);
+#endif
     }
 }
 

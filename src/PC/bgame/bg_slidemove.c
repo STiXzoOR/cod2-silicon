@@ -49,6 +49,9 @@ static qboolean PM_SLIDEMOVE_ABI PM_SlideMove(pmove_t *pm, pml_t *pml, qboolean 
     float dots[MAX_CLIP_PLANES];
 
     ps = pm->ps;
+#if defined(COD2_X64)
+    vec3_t primalVelocity = {ps->velocity[0], ps->velocity[1], ps->velocity[2]};
+#endif
 
     endVelocity[0] = ps->velocity[0];
     endVelocity[1] = ps->velocity[1];
@@ -56,6 +59,9 @@ static qboolean PM_SLIDEMOVE_ABI PM_SlideMove(pmove_t *pm, pml_t *pml, qboolean 
 
     if (gravity) {
         endVelocity[2] -= (float)ps->gravity * pml->frametime;
+#if defined(COD2_X64)
+        primalVelocity[2] = endVelocity[2];
+#endif
         ps->velocity[2] = (endVelocity[2] + ps->velocity[2]) * 0.5f;
 
         if (pml->groundPlane) {
@@ -141,6 +147,9 @@ static qboolean PM_SLIDEMOVE_ABI PM_SlideMove(pmove_t *pm, pml_t *pml, qboolean 
                     trace.normal[1] * planes[i][1] +
                     trace.normal[2] * planes[i][2] >
                 0.999f) {
+#if defined(COD2_X64)
+                PM_ClipVelocity(ps->velocity, trace.normal, ps->velocity);
+#endif
                 ps->velocity[0] = trace.normal[0] + ps->velocity[0];
                 ps->velocity[1] = trace.normal[1] + ps->velocity[1];
                 ps->velocity[2] = trace.normal[2] + ps->velocity[2];
@@ -172,7 +181,11 @@ static qboolean PM_SLIDEMOVE_ABI PM_SlideMove(pmove_t *pm, pml_t *pml, qboolean 
                     int pos = k;
                     int prev = pos - 1;
 
+#if defined(COD2_X64)
+                    while (prev >= 0 && dot <= dots[permutation[prev]]) {
+#else
                     while (prev >= 0 && dot < dots[permutation[prev]]) {
+#endif
                         permutation[pos] = permutation[prev];
                         pos = prev;
                         prev--;
@@ -269,22 +282,37 @@ static qboolean PM_SLIDEMOVE_ABI PM_SlideMove(pmove_t *pm, pml_t *pml, qboolean 
     }
 
     if (ps->pm_time) {
+#if defined(COD2_X64)
+        ps->velocity[0] = primalVelocity[0];
+        ps->velocity[1] = primalVelocity[1];
+        ps->velocity[2] = primalVelocity[2];
+#else
         ps->velocity[0] = endVelocity[0];
         ps->velocity[1] = endVelocity[1];
         ps->velocity[2] = endVelocity[2];
+#endif
     }
 
     return (bumpcount != 0);
 }
 
+#if defined(COD2_X64)
+static void PM_ApplyStepEvent(pmove_t *pm, pml_t *pml, playerState_t *ps,
+                              const vec_t *start_o, const vec_t *down_o, float fStepSize)
+#else
 static void PM_ApplyStepEvent(pmove_t *pm, pml_t *pml, playerState_t *ps,
                               const vec_t *start_o, float fStepSize)
+#endif
 {
     float stepDelta;
     int rounded;
     int stepEvent;
 
+#if defined(COD2_X64)
+    stepDelta = ps->origin[2] - down_o[2];
+#else
     stepDelta = ps->origin[2] - start_o[2];
+#endif
 
     {
         float absDelta = stepDelta;
@@ -318,13 +346,20 @@ static void PM_ApplyStepEvent(pmove_t *pm, pml_t *pml, playerState_t *ps,
         if (frac < 0.0f)
             frac = -frac;
         frac = frac / fStepSize;
+#if defined(COD2_X64)
+        scale = (1.0f - frac) * 0.8f + 0.19999999f;
+#else
         scale = (1.0f - frac) * 0.8f + 0.2f;
+#endif
 
         ps->velocity[0] *= scale;
         ps->velocity[1] *= scale;
         ps->velocity[2] *= scale;
     }
 
+#if defined(COD2_X64)
+    stepEvent -= 128;
+#endif
     if (stepEvent < 0) {
         stepEvent = -stepEvent;
     }
@@ -363,15 +398,24 @@ static qboolean PM_StepCheckProne(pmove_t *pm, playerState_t *ps,
         if (!BG_CheckProne(
                 ps->clientNum,
                 ps->origin,
+#if defined(COD2_X64)
+                ps->maxs[0],
+                30.0f,
+#else
                 30.0f,
                 ps->maxs[2],
+#endif
                 ps->proneDirection,
                 &ps->fTorsoHeight,
                 &ps->fTorsoPitch,
                 &ps->fWaistPitch,
                 1,
                 1,
+#if defined(COD2_X64)
+                NULL,
+#else
                 ps->vLadderVec,
+#endif
                 pm->handler,
                 (proneCheckType_t)0,
                 66.0f)) {
@@ -496,7 +540,11 @@ do_step:
 
         stepSize = (1.0f + fStepSize) * trace.fraction - 1.0f;
 
+#if defined(COD2_X64)
+        if (stepSize < 1.0f) {
+#else
         if (stepSize <= 1.0f) {
+#endif
             stepSize = 0.0f;
         } else {
             z = stepSize + start_o[2];
@@ -529,7 +577,11 @@ do_step:
 
     PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs, down, ps->clientNum, pm->tracemask);
 
+#if defined(COD2_X64)
+    if (trace.entityNum < 64) {
+#else
     if (trace.entityNum > 0x3f) {
+#endif
 
         ps->origin[0] = down_o[0];
         ps->origin[1] = down_o[1];
@@ -638,5 +690,9 @@ check_landing:
         return;
     }
 
+#if defined(COD2_X64)
+    PM_ApplyStepEvent(pm, pml, ps, start_o, down_o, fStepSize);
+#else
     PM_ApplyStepEvent(pm, pml, ps, start_o, fStepSize);
+#endif
 }
