@@ -60,8 +60,8 @@ jobs:
 
   macos-arm64:
     name: Apple silicon Release clients and data-free fixtures
-    # macos-15 is a standard GitHub-hosted M1 runner, not an Intel label.
-    runs-on: macos-15
+    # macos-26 is the standard GitHub-hosted Apple silicon runner.
+    runs-on: macos-26
     timeout-minutes: 60
     env:
       PYTHONDONTWRITEBYTECODE: '1'

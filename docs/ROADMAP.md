@@ -32,7 +32,8 @@ renderer.
 
 - **Native Metal renderer.** Metal 4 on macOS 26 and later, implementing the
   existing D3D9-style renderer contracts so engine code is unchanged. OpenGL
-  remains the classic fallback on macOS 13–25 and the visual parity reference.
+  remains the classic fallback and visual parity reference on supported Macs
+  (macOS 26 and later).
   The original Mac shaders are translated to Metal locally from the player's
   own copy; they are never distributed.
 - **Modern options, with a faithful classic mode:**

@@ -72,7 +72,7 @@ upstream `410342a` does not compile with GCC 14 on Linux; see
 
 ## Native builds and merge gate
 
-Use Xcode Command Line Tools, CMake, Python 3.9+ and SDL2-compatible headers/
+Target Apple silicon on macOS 26 or later. Use Xcode 26 or later with the macOS 26+ SDK, CMake, Python 3.9+ and SDL2-compatible headers/
 libraries; development used SDL3 + sdl2-compat (`scripts/build-sdl.sh` builds
 the pinned release versions without Homebrew). A clean checkout needs no
 proprietary input: arm64 builds compile the committed typed-data snapshot in

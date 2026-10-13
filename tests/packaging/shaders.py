@@ -17,7 +17,7 @@ with tempfile.TemporaryDirectory(prefix="cod2-silicon-shaders-") as directory:
     scratch = pathlib.Path(directory)
     native = scratch / "extract"
     subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", "clang", "-fobjc-arc",
-                    "-mmacosx-version-min=13.0", "-Werror=unguarded-availability",
+                    "-mmacosx-version-min=26.0", "-Werror=unguarded-availability",
                     "-Werror=unguarded-availability-new", "-DCOD2_X64=1", "-DCOD2_CODX=1",
                     "-Isrc", "tests/packaging/native_shaders.m", "src/platform/cod2x_native_shaders.m",
                     "-framework", "Foundation", "-o", str(native)], cwd=ROOT, check=True)

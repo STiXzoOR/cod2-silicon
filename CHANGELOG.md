@@ -5,6 +5,14 @@ All notable changes to CoD2 Silicon are documented here, following
 
 ## [Unreleased]
 
+### Changed
+
+- Require macOS 26 or later on Apple silicon for new builds, with Xcode 26+
+  and the macOS 26+ SDK for source builds. Align the launcher, engine, bundled
+  SDL libraries, icons, bundle metadata and verification with that minimum.
+- Build and audit the complete release package on macOS 26 for pull requests,
+  including launcher core and isolated first-run checks before release tagging.
+
 ## [0.2.1] - 2026-10-13
 
 [Verification scope and remaining release gates](docs/macos-port/release-0.2.1-verification.md).

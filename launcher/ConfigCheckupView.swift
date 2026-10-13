@@ -282,7 +282,7 @@ private struct SuggestionCard: View {
                         .fixedSize(horizontal: false, vertical: true)
                     HStack(alignment: .firstTextBaseline, spacing: 8) {
                         Image(systemName: "lightbulb").foregroundStyle(palette.accent).accessibilityHidden(true)
-                        (Text("You’ll notice: ").fontWeight(.semibold) + Text(suggestion.notice)).font(.system(size: 13)).foregroundStyle(palette.text)
+                        Text("\(Text("You’ll notice: ").fontWeight(.semibold))\(Text(suggestion.notice))").font(.system(size: 13)).foregroundStyle(palette.text)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     HStack(spacing: 8) {
@@ -351,7 +351,7 @@ private struct AppliedCard: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "checkmark.circle").foregroundStyle(palette.positive).accessibilityHidden(true)
-            (Text("Applied: ").fontWeight(.semibold) + Text("\(item.suggestion.title). Saved to History.")).font(.system(size: 14)).foregroundStyle(palette.text)
+            Text("\(Text("Applied: ").fontWeight(.semibold))\(item.suggestion.title). Saved to History.").font(.system(size: 14)).foregroundStyle(palette.text)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 8)
             Button("Undo") { checkup.undoApplied(item.id) }.glassAction().controlSize(.small).disabled(studio.isReadOnly)

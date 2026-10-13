@@ -129,7 +129,7 @@ struct SetupView: View {
                     .onSubmit { if model.keyReady { model.nextSetup() } }
                     .accessibilityLabel("CD key, twenty characters")
                     .onAppear { keyFocused = !model.snapshot }
-                    .onChange(of: keyFocused) { SecureKeyEntry.set($0 && !model.snapshot) }
+                    .onChange(of: keyFocused) { _, focused in SecureKeyEntry.set(focused && !model.snapshot) }
                     .onDisappear { SecureKeyEntry.set(false) }
                 Text(keyHint(raw)).font(.system(size: 13)).foregroundStyle(raw.count == 20 ? (model.keyReady ? palette.positive : palette.negative) : palette.secondary)
                     .accessibilityAddTraits(.updatesFrequently)

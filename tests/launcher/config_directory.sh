@@ -5,7 +5,7 @@ scratch=$(mktemp -d "${TMPDIR:-/tmp}/cod2-directory.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT INT TERM
 taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc -j 1 \
     -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
-    -target arm64-apple-macos13 -sdk "$(/usr/bin/xcrun --show-sdk-path)" -O \
+    -target arm64-apple-macos26 -sdk "$(/usr/bin/xcrun --show-sdk-path)" -O \
     "$root/launcher/ConfigDocument.swift" "$root/launcher/ConfigImport.swift" \
     "$root/launcher/ConfigImportSafety.swift" "$root/launcher/ConfigDirectory.swift" \
     "$root/tests/launcher/ConfigDirectoryTests.swift" -o "$scratch/ConfigDirectoryTests"

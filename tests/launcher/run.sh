@@ -37,7 +37,7 @@ if grep -n -E '\.buttonStyle\(|\.buttonBorderShape\(' "$root"/launcher/*.swift |
 fi
 echo "PASS: every button style comes from launcher/Theme.swift"
 
-# Every view must also compile for SDKs before macOS 26, where only the material styling exists.
+# Keep the material rendering path typechecked for accessibility and explicit fallback captures.
 sdk=$(/usr/bin/xcrun --show-sdk-path)
 views=""
 for file in Core Presentation MatchSummaries ConfigDocument ConfigProfiles ConfigHistory ConfigStudioSession ConfigCatalog ConfigRules ConfigReadyCheck \
@@ -49,8 +49,8 @@ for file in Core Presentation MatchSummaries ConfigDocument ConfigProfiles Confi
 done
 # shellcheck disable=SC2086
 taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc -j 1 -typecheck -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
-    -target arm64-apple-macos13 -sdk "$sdk" -import-objc-header "$root/launcher/NativeSetup.h" $views
-echo "PASS: views typecheck without COD2_LIQUID_GLASS (macOS 13-25 material branch)"
+    -target arm64-apple-macos26 -sdk "$sdk" -import-objc-header "$root/launcher/NativeSetup.h" $views
+echo "PASS: views typecheck without COD2_LIQUID_GLASS (material rendering branch)"
 
 # Render every screen in both appearances through the review harness and check the images.
 python3 "$root/tests/launcher/snapshots.py" "${COD2_LAUNCHER_SNAPSHOT_OUTPUT:-$out/snapshots}"
