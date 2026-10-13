@@ -457,6 +457,16 @@ float last_pitch_gain)
       {
          int j;
          int pp=pitch+1-i;
+#if defined(COD2_X64)
+         /* Each tap reads past excitation, with one pitch-period repeat. */
+         for (j=0;j<nsf;j++)
+         {
+            int history=j-pp;
+            if (history>=0)
+               history-=pitch;
+            e[i][j]=history<0 ? exc[history] : 0;
+         }
+#endif
       }
       for (i=0;i<nsf;i++)
            exc[i]=VERY_SMALL+gain[0]*e[2][i]+gain[1]*e[1][i]+gain[2]*e[0][i];

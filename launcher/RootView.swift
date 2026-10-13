@@ -20,7 +20,9 @@ struct LauncherRoot: View {
         .capsuleControls()
         .background(palette.ground)
         .overlay(alignment: .bottom) { NoticeBanner(model: model).padding(.bottom, 24) }
-        .frame(minWidth: 1100, minHeight: 760)
+        // The minimum window is 1100×760 points in all. This view sits below the unified toolbar's
+        // 52 points of safe area, so asking it for 760 would hang 26 points off the window's bottom.
+        .frame(minWidth: 1100, minHeight: 760 - 52)
     }
 }
 
@@ -38,6 +40,7 @@ struct LauncherSplitView: View {
                 case .deploy: HomeView(model: model)
                 case .servers: ServersView(model: model)
                 case .library: LibraryView(model: model)
+                case .configs: ConfigsView(model: model)
                 case .settings: SettingsView(model: model)
                 case .about: AboutView(model: model)
                 }
@@ -65,6 +68,7 @@ struct Sidebar: View {
             guard let page else { return }
             withAnimation(.launcherSpring) { model.page = page }
             if page == .library { model.loadMedia() }
+            if page == .configs { model.studio.loadCatalog() }
         })) {
             Section {
                 // Icons take the app accent (brass/olive), or the accent the person chose in System Settings.
@@ -211,21 +215,25 @@ struct NoticeBanner: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var body: some View {
         if !model.notice.isEmpty {
-            HStack(spacing: 12) {
-                Image(systemName: model.crashReport == nil ? "info.circle" : "exclamationmark.triangle").foregroundStyle(palette.accent)
-                Text(model.notice).font(.system(size: 13)).foregroundStyle(palette.text).textSelection(.enabled).lineLimit(3)
-                if let report = model.crashReport {
-                    Button("Show Crash Report") { NSWorkspace.shared.activateFileViewerSelecting([report]) }.glassAction()
-                }
-                Button { withAnimation(reduceMotion ? nil : .launcherSpring) { model.notice = "" } } label: { Image(systemName: "xmark") }
-                    .buttonStyle(.plain).foregroundStyle(palette.secondary).accessibilityLabel("Dismiss message")
-            }
-            .padding(.vertical, 12).padding(.horizontal, 18)
-            .frame(maxWidth: 720)
-            .glassSurface(Capsule())
-            .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
-            .accessibilityElement(children: .contain)
+            // One container: the banner's glass and its button's are drawn together, not glass sampling glass.
+            GlassContainer { banner }
+                .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
         }
+    }
+    private var banner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: model.crashReport == nil ? "info.circle" : "exclamationmark.triangle").foregroundStyle(palette.accent)
+            Text(model.notice).font(.system(size: 13)).foregroundStyle(palette.text).textSelection(.enabled).lineLimit(3)
+            if let report = model.crashReport {
+                Button("Show Crash Report") { NSWorkspace.shared.activateFileViewerSelecting([report]) }.glassAction()
+            }
+            Button { withAnimation(reduceMotion ? nil : .launcherSpring) { model.notice = "" } } label: { Image(systemName: "xmark") }
+                .buttonStyle(.plain).foregroundStyle(palette.secondary).accessibilityLabel("Dismiss message")
+        }
+        .padding(.vertical, 12).padding(.horizontal, 18)
+        .frame(maxWidth: 720)
+        .glassSurface(Capsule())
+        .accessibilityElement(children: .contain)
     }
 }
 

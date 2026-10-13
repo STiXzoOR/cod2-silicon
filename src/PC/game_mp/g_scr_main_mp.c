@@ -4,6 +4,9 @@
 #include "bytematch.h"
 #include <stdlib.h>
 #include <string.h>
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#include "PC/server_mp/cod2x_stop_gametype.h"
+#endif
 /* dvar globals */
 extern const dvar_t *loc_warningsAsErrors;
 extern scr_const_t scr_const;
@@ -12,6 +15,27 @@ extern scr_const_t scr_const;
    always reach the global even inside functions that declare their own `scr_const`. */
 static scr_const_t * const scr_const_g = &scr_const;
 extern BuiltinMethod Player_GetMethod(const char **pName);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+extern BuiltinMethod Player_Cod2xGetMethod(const char **pName, int *type);
+extern void Scr_AddExecThread(scr_func_t handle, unsigned int paramcount);
+extern int Scr_IsSystemActive(int inst);
+extern scrVmPub_t scrVmPub;
+extern void RemoveRefToValue(int type, VariableUnion value);
+extern void SL_AddRefToString(unsigned int value);
+extern void SL_RemoveRefToString(unsigned int value);
+extern cmd_t *cmd_text;
+extern int Com_sprintf(char *dest, int size, const char *fmt, ...);
+static scr_func_t cod2xStopGameType;
+static qboolean cod2xStopActive;
+static const char *cod2xStopQueuedSource;
+static const char *cod2xStopQueuedCommand;
+static char cod2xStopQueuedTarget[4096];
+static char cod2xStopQueuedMarker[40];
+static unsigned long long cod2xStopSequence;
+static unsigned int cod2xStopMapString;
+static int cod2xStopQueuedFinished;
+static int cod2xStopQueuedPersist;
+#endif
 extern BuiltinMethod ScriptEnt_GetMethod(const char **pName);
 extern BuiltinMethod HudElem_GetMethod(const char **pName);
 extern void RegisterItem(int iItemIndex, qboolean bUpdateCS);
@@ -693,10 +717,131 @@ void Scr_LoadLevel(void)
     }
     return;
 }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+
+void GScr_Cod2xResetMapChange(void)
+{
+    cod2xStopActive = 0;
+    cod2xStopQueuedSource = NULL;
+    cod2xStopQueuedMarker[0] = 0;
+    if (cod2xStopMapString) {
+        SL_RemoveRefToString(cod2xStopMapString);
+        cod2xStopMapString = 0;
+    }
+}
+
+static qboolean GScr_Cod2xCallStopGameType(qboolean fromScript, qboolean complete, qboolean shutdown, const char *source)
+{
+    qboolean allow = 1;
+
+    /* Com_ErrorCleanup aborts the VM before shutdown after a longjmp. */
+    if (!Scr_IsSystemActive(1)) {
+        GScr_Cod2xResetMapChange();
+        return 1;
+    }
+    /* A callback cannot start another transition while its VM is executing. */
+    if (cod2xStopActive)
+        return 0;
+    if (!cod2xStopGameType)
+        return 1;
+
+    cod2xStopActive = 1;
+    Scr_AddString(source);
+    Scr_AddBool(shutdown);
+    Scr_AddBool(complete);
+    Scr_AddBool(fromScript);
+    Scr_AddExecThread(cod2xStopGameType, 4);
+    if (Scr_GetType(0) == 6 && Scr_GetInt(0) == 0)
+        allow = 0;
+
+    /* The reconstructed VM has no exported Scr_ClearOutParams entry point. */
+    while (scrVmPub.outparamcount) {
+        RemoveRefToValue(scrVmPub.top->type, scrVmPub.top->u);
+        --scrVmPub.top;
+        --scrVmPub.outparamcount;
+    }
+    cod2xStopActive = 0;
+    if (!allow && !shutdown)
+        Com_Printf("Map change is disabled (prevented by script)\n");
+    return allow || shutdown;
+}
+
+qboolean GScr_Cod2xBeforeMapChange(qboolean shutdown, const char *source)
+{
+    return GScr_Cod2xCallStopGameType(level.finished != 0, level.savepersist == 0, shutdown, source);
+}
+
+qboolean GScr_Cod2xConsumeMapChange(const char *source, const char *command, const char *target, const char *marker)
+{
+    qboolean approved;
+    if (!cod2xStopQueuedSource || strcmp(marker, cod2xStopQueuedMarker))
+        return 0;
+    approved = !strcmp(source, cod2xStopQueuedSource) &&
+        !strcmp(command, cod2xStopQueuedCommand) && !strcmp(target, cod2xStopQueuedTarget) &&
+        level.finished == cod2xStopQueuedFinished && level.savepersist == cod2xStopQueuedPersist;
+    /* Presenting the marker consumes it even when validation/form later fails. */
+    cod2xStopQueuedSource = NULL;
+    cod2xStopQueuedMarker[0] = 0;
+    return approved;
+}
+
+static qboolean GScr_Cod2xQueueMapChange(int finished, int persist, const char *source, const char *target)
+{
+    if (!GScr_Cod2xCallStopGameType(1, persist == 0, 0, source))
+        return 0;
+    cod2xStopQueuedSource = source;
+    cod2xStopQueuedCommand = finished == 1 ? "fast_restart" : finished == 2 ? "map" : "map_rotate";
+    I_strncpyz(cod2xStopQueuedTarget, target, sizeof(cod2xStopQueuedTarget));
+    if (!++cod2xStopSequence)
+        ++cod2xStopSequence;
+    Com_sprintf(cod2xStopQueuedMarker, sizeof(cod2xStopQueuedMarker), "__cod2x_stop_%llu", cod2xStopSequence);
+    cod2xStopQueuedFinished = finished;
+    cod2xStopQueuedPersist = persist;
+    return 1;
+}
+
+static qboolean GScr_Cod2xQueueCommand(void)
+{
+    int before = cmd_text->cmdsize;
+    int length;
+    const char *text;
+    if (cod2xStopQueuedTarget[0])
+        text = va("%s %s %s\n", cod2xStopQueuedCommand, cod2xStopQueuedTarget, cod2xStopQueuedMarker);
+    else
+        text = va("%s %s\n", cod2xStopQueuedCommand, cod2xStopQueuedMarker);
+    length = (int)strlen(text);
+    Cbuf_ExecuteText(2, text);
+    if (cmd_text->cmdsize != before + length) {
+        cod2xStopQueuedSource = NULL;
+        cod2xStopQueuedMarker[0] = 0;
+        return 0;
+    }
+    level.finished = cod2xStopQueuedFinished;
+    level.savepersist = cod2xStopQueuedPersist;
+    return 1;
+}
+
+qboolean GScr_Cod2xQueueExitLevel(void)
+{
+    if (cod2xStopQueuedSource && !strcmp(cod2xStopQueuedSource, "map_rotate")) {
+        if (!GScr_Cod2xQueueCommand())
+            return 0;
+        /* Script match-end effects require a successfully queued transition. */
+        SV_MatchEnd();
+    } else {
+        Cbuf_ExecuteText(2, "map_rotate\n");
+    }
+    return 1;
+}
+#endif
 
 void GScr_FreeScripts(void)
 {
     int classnum;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    cod2xStopGameType = 0;
+    GScr_Cod2xResetMapChange();
+#endif
     for (classnum = 0; classnum < 4; classnum++) {
         Scr_RemoveClassMap(classnum);
     }
@@ -2184,13 +2329,24 @@ void GScr_MapRestart(void)
 {
     level_locals_t *lvl = &level;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (cod2xStopActive)
+        return;
+#endif
     if (lvl->finished)
         Scr_Error(lvl->finished == 1 ? "map_restart already called" : "exitlevel already called");
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (!GScr_Cod2xQueueMapChange(1, Scr_GetNumParam() ? Scr_GetInt(0) : 0, "fast_restart", ""))
+        return;
+    GScr_Cod2xQueueCommand();
+    return;
+#else
     lvl->finished = 1;
     lvl->savepersist = 0;
     if (Scr_GetNumParam())
         lvl->savepersist = Scr_GetInt(0);
+#endif
     Cbuf_ExecuteText(2, "fast_restart\n");
 }
 
@@ -2199,6 +2355,10 @@ void GScr_LoadMap(void)
     const char *mapname;
     level_locals_t *lvl;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (cod2xStopActive)
+        return;
+#endif
     if (!Scr_GetNumParam())
         return;
 
@@ -2210,27 +2370,56 @@ void GScr_LoadMap(void)
     if (lvl->finished)
         Scr_Error(lvl->finished == 2 ? "map already called" : "exitlevel already called");
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    {
+        unsigned int mapString = Scr_GetConstString(0);
+        int persist = Scr_GetNumParam() > 1 ? Scr_GetInt(1) : 0;
+        qboolean allow;
+        /* Adding callback arguments releases the builtin's string argument. */
+        SL_AddRefToString(mapString);
+        cod2xStopMapString = mapString;
+        allow = GScr_Cod2xQueueMapChange(2, persist, "map", mapname);
+        if (allow)
+            GScr_Cod2xQueueCommand();
+        if (cod2xStopMapString)
+            SL_RemoveRefToString(cod2xStopMapString);
+        cod2xStopMapString = 0;
+        return;
+    }
+#else
     lvl->finished = 2;
     lvl->savepersist = 0;
     if (Scr_GetNumParam() > 1)
         lvl->savepersist = Scr_GetInt(1);
     Cbuf_ExecuteText(2, va("map %s\n", mapname));
     return;
+#endif
 }
 
 void GScr_ExitLevel(void)
 {
     level_locals_t *lvl = &level;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (cod2xStopActive)
+        return;
+#endif
     if (lvl->finished)
         Scr_Error(lvl->finished == 1 ? "map_restart already called" : "exitlevel already called");
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (!GScr_Cod2xQueueMapChange(3, Scr_GetNumParam() ? Scr_GetInt(0) : 0, "map_rotate", ""))
+        return;
+#else
     lvl->finished = 3;
     lvl->savepersist = 0;
     if (Scr_GetNumParam())
         lvl->savepersist = Scr_GetInt(0);
+#endif
 
+#if !(defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX)
     SV_MatchEnd();
+#endif
     ExitLevel();
 }
 
@@ -2662,7 +2851,11 @@ BuiltinMethod Scr_GetMethod(const char **pName, int *type)
         }
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    return Player_Cod2xGetMethod(pName, type);
+#else
     return (BuiltinMethod)0;
+#endif
 }
 
 void Scr_SetOrigin(gentity_t *ent, int offset)
@@ -4613,6 +4806,10 @@ void GScr_LoadGameTypeScript(void)
     g_scr_data.gametype.playerdisconnect = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_PlayerDisconnect", 1);
     g_scr_data.gametype.playerdamage = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_PlayerDamage", 1);
     g_scr_data.gametype.playerkilled = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_PlayerKilled", 1);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    cod2xStopGameType = GScr_LoadScriptFunction(callbackSetup, "CodeCallback_StopGameType", 0);
+    GScr_Cod2xResetMapChange();
+#endif
 }
 
 void GScr_LoadScripts(int inst)
@@ -4628,6 +4825,11 @@ void GScr_LoadScripts(int inst)
     int i;
     char s[64];
 
+#if defined(COD2_X64)
+    g_scr_data.delete_ = GScr_LoadScriptFunction("codescripts/delete", "main", 1);
+    g_scr_data.initstructs = GScr_LoadScriptFunction("codescripts/struct", "initstructs", 1);
+    g_scr_data.createstruct = GScr_LoadScriptFunction("codescripts/struct", "createstruct", 1);
+#else
     Scr_LoadScript("codescripts/delete");
     g_scr_data.delete_ = Scr_GetFunctionHandle("codescripts/delete", "main");
 
@@ -4636,6 +4838,7 @@ void GScr_LoadScripts(int inst)
 
     Scr_LoadScript("codescripts/struct");
     g_scr_data.createstruct = Scr_GetFunctionHandle("codescripts/struct", "createstruct");
+#endif
 
     GScr_LoadGameTypeScript();
 

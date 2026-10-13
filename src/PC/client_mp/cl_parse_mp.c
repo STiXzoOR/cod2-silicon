@@ -1,4 +1,7 @@
 #include "PC/qcommon/port_debug.h"
+#if defined(COD2_X64)
+#include "../qcommon/match_summary.h"
+#endif
 #if defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x.h"
 #if defined(COD2_X64) && COD2_X64
@@ -143,9 +146,15 @@ void CL_SystemInfoChanged(void)
     systemInfo = cla->gameState.stringData + cla->gameState.stringOffsets[1];
 #if defined(COD2_CODX) && COD2_CODX
     /* Clear previous server policy before applying a new systeminfo, including demos. */
+#if defined(COD2_X64) && COD2_X64
+    Cod2x_SetClientDvar("g_cod2x", Info_ValueForKey(systemInfo, "g_cod2x"));
+    Cod2x_SetClientDvar("g_competitive", Info_ValueForKey(systemInfo, "g_competitive"));
+    Cod2x_SetClientDvar("com_maxfps_limit", Info_ValueForKey(systemInfo, "com_maxfps_limit"));
+#else
     Dvar_SetFromStringByName("g_cod2x", Info_ValueForKey(systemInfo, "g_cod2x"));
     Dvar_SetFromStringByName("g_competitive", Info_ValueForKey(systemInfo, "g_competitive"));
     Dvar_SetFromStringByName("com_maxfps_limit", Info_ValueForKey(systemInfo, "com_maxfps_limit"));
+#endif
 #if defined(COD2_X64) && COD2_X64
     Cod2x_IwdSystemInfo(Info_ValueForKey(systemInfo, "sv_iwdNames"));
 #endif
@@ -194,6 +203,10 @@ void CL_SystemInfoChanged(void)
             }
 #endif
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            if (Cod2x_SetClientDvar(key, value))
+                continue;
+#endif
             Dvar_SetFromStringByName(key, value);
         }
     }
@@ -214,6 +227,9 @@ void CL_ParseGamestate(msg_t *msg)
     int len;
     entityState_t nullstate;
 
+#if defined(COD2_X64)
+    MatchSummary_Finish("map");
+#endif
     Con_Close();
 
     clc = (clientConnection_t *)*clc_ptr;
@@ -643,6 +659,9 @@ void CL_ParseSnapshot(msg_t *msg)
     int oldEntityNum;
     byte *oldClientSlot;
     int oldClientNum;
+#if defined(COD2_X64)
+    int pingMeasured = 0;
+#endif
 
     LargeLocal_LargeLocal(&newSnap_large_local, sizeof(clSnapshot_t));
     newSnap = (clSnapshot_t *)LargeLocal_GetBuf(&newSnap_large_local);
@@ -1001,6 +1020,9 @@ void CL_ParseSnapshot(msg_t *msg)
             outPacket_t *slot = &cla->outPackets[idx];
             if (slot->p_serverTime >= snapTime) {
                 cla->snap.ping = *(int *)(*(byte **)cls_ptr + 0x118) - slot->p_realtime;
+#if defined(COD2_X64)
+                pingMeasured = 1;
+#endif
                 break;
             }
         }
@@ -1016,6 +1038,9 @@ void CL_ParseSnapshot(msg_t *msg)
 
     cla->newSnapshots = 1;
 
+#if defined(COD2_X64)
+    MatchSummary_Snapshot(cla->snap.ping, pingMeasured, cla->snap.ps.pm_type == 5);
+#endif
     ZN10LargeLocalD1Ev(&newSnap_large_local);
 }
 
@@ -1047,7 +1072,11 @@ void CL_ParseServerMessage(msg_t *msg)
                                                  msg->cursize - msg->readcount);
 
 #if defined(COD2_X64) || defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(COD2_X64)
+    if (COD2_NATIVE_TRACE_ENABLED() && x64TraceCount < 16) {
+#else
     if (x64TraceCount < 16) {
+#endif
         FILE *f = fopen("x64_msg_trace.txt", x64TraceCount ? "a" : "w");
         if (f) {
             int i;

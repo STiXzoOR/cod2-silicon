@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -129,7 +132,14 @@ void Sys_DirectXFatalError(void)
         extern void Com_Printf(const char *, ...);
         if (g_gfxV60DllActive) {
             static int n;
+#if defined(COD2_X64)
+            ++n;
+            COD2_NATIVE_TRACE_ONLY(
+            Com_Printf("[v60] Sys_DirectXFatalError #%d (wined3d device-loss; continuing)\n", n);
+            )
+#else
             Com_Printf("[v60] Sys_DirectXFatalError #%d (wined3d device-loss; continuing)\n", ++n);
+#endif
             if (n < 1000)
                 return;
         }
@@ -298,7 +308,13 @@ static void Sys_WebFrame(void)
 static void cr_atexit_diag(void)
 {
     extern void Com_Printf(const char *, ...);
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     Com_Printf("[ATEXIT] process exiting via CRT exit()/return\n");
+#if defined(COD2_X64)
+    )
+#endif
 }
 
 #if !COD2_APPLE_SDK
@@ -324,7 +340,7 @@ static void __cdecl cr_inv_param(const void *e, const void *f, const void *fl, u
    heap-check corruption report dumps the ring + the report to cod2_heapdiag.txt.
    Match the corrupted block (#N in the report) to its allocator stack, symbolize
    via the .map (secoff = rip_rel - 0x1000; imagebase 0x140000000). Enabled only in
-   the x64 debug build; gated behind env COD2_HEAPDIAG so normal runs are unaffected. */
+   the x64 debug build; gated behind env COD2_NATIVE_TRACE so normal runs are unaffected. */
 #include <crtdbg.h>
 extern unsigned short __stdcall RtlCaptureStackBackTrace(unsigned long, unsigned long, void **, unsigned long *);
 #define HD_RING 16384
@@ -382,7 +398,7 @@ static void cr_heapdiag_init(void)
 {
     /* declare with the real prototype so the 8-byte HMODULE isn't truncated */
     extern void *__stdcall GetModuleHandleA(const char *);
-    if (!getenv("COD2_HEAPDIAG")) return;
+    if (!COD2_NATIVE_TRACE_ENABLED()) return;
     g_hdBase = (uintptr_t)GetModuleHandleA(NULL);
     g_hdLimit = g_hdBase + 0x800000; /* ~8MB exe span */
     g_hdFile = fopen("cod2_heapdiag.txt", "w");
@@ -399,6 +415,9 @@ static void cr_heapdiag_init(void)
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+#if defined(COD2_X64)
+    COD2_InitNativeTracing();
+#endif
     char cwd[256];
 
 #ifdef _WIN32

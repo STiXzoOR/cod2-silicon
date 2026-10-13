@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 #if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
@@ -160,10 +163,7 @@ static inline void LerpPosition(const vec_t *start, const vec_t *end, float frac
 
 static void G_MissileCombatTrace(const gentity_t *ent, const char *phase, const trace_t *trace)
 {
-    static int enabled = -1;
-    if (enabled < 0)
-        enabled = getenv("COD2_MAC_COMBAT_TRACE") != NULL;
-    if (!enabled)
+    if (!COD2_NATIVE_TRACE_ENABLED())
         return;
 
     const trajectory_t *pos = &ent->s.pos;

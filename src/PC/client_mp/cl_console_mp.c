@@ -630,7 +630,15 @@ static BM_NOINLINE void Con_DrawOuputWindow(void)
     innerY = y + 6.0f;
     innerHeight = height - 12.0f;
 
+#if defined(COD2_X64) && COD2_X64 && defined(__APPLE__) && (defined(__aarch64__) || defined(__arm64__))
+#if defined(COD2_CODX) && COD2_CODX
+    version = va("CoD2 Silicon %s · CoD2x 1.4.6.8 · macOS arm64", COD2_RELEASE_VERSION);
+#else
+    version = va("Build %s %s", getBuildNumber(), "macOS arm64");
+#endif
+#else
     version = va("Build %s %s", getBuildNumber(), "MacOSXS-i386");
+#endif
     SCR_DrawSmallStringExt((int)innerX, (int)(innerY + innerHeight - 16.0f), version, con_versionColor);
 
     scrollBarWidth = 10.0f;
@@ -1495,6 +1503,36 @@ static void ConDrawInput_DetailedDvarMatch(const char *str)
         return;
 
     hasLatchedValue = Dvar_HasLatchedValue(dvar);
+#ifdef COD2_X64
+    lineCount = hasLatchedValue ? 3 : 2;
+    ConDrawInput_DrawHintBox(lineCount, 0.0f);
+    ConDrawInput_DrawText(str, COD2X_CON_NAME_CHARS, con_inputDvarMatchColor);
+    conDrawInputGlob.x += COD2X_CON_VALUE_OFFSET;
+    ConDrawInput_DrawText(Dvar_DisplayableValue(dvar), 0x28, con_inputDvarValueColor);
+    ConDrawInput_NextLine();
+
+    if (hasLatchedValue) {
+        ConDrawInput_DrawText("  latched value", 0x7fffffff, con_inputDvarInactiveValueColor);
+        conDrawInputGlob.x += COD2X_CON_VALUE_OFFSET;
+        ConDrawInput_DrawText(Dvar_DisplayableLatchedValue(dvar), 0x28, con_inputDvarInactiveValueColor);
+        ConDrawInput_NextLine();
+    }
+    ConDrawInput_DrawText("  default", 0x7fffffff, con_inputDvarInactiveValueColor);
+    conDrawInputGlob.x += COD2X_CON_VALUE_OFFSET;
+    ConDrawInput_DrawText(Dvar_DisplayableResetValue(dvar), 0x28, con_inputDvarInactiveValueColor);
+    ConDrawInput_NextLine();
+    ConDrawInput_NextLine();
+
+    {
+        char domain[1024];
+        Dvar_DomainToString_GetLines(dvar->type, dvar->domain, domain, sizeof(domain), &lineCount);
+        ConDrawInput_DrawHintBox(lineCount + 1, 0.0f);
+        ConDrawInput_DrawText(domain, 0x7fffffff, con_inputDvarInfoColor);
+        ConDrawInput_NextLine();
+    }
+    if (dvar->type == 6 && Cmd_Argc() == 2)
+        ConDrawInput_AutoCompleteArg(dvar->domain.enumeration.strings, dvar->domain.enumeration.stringCount);
+#else
     lineCount = hasLatchedValue ? 4 : 3;
     ConDrawInput_DrawHintBox(lineCount, 0.0f);
 
@@ -1514,6 +1552,7 @@ static void ConDrawInput_DetailedDvarMatch(const char *str)
 
     if (Cmd_Argc() == 2)
         ConDrawInput_AutoCompleteArg(dvar->domain.enumeration.strings, dvar->domain.enumeration.stringCount);
+#endif
 }
 
 static void ConDrawInput_DetailedCmdMatch(const char *str)
@@ -1552,7 +1591,11 @@ static BM_NOINLINE void Con_DrawInput(void)
     if (!Sys_IsMainThread())
         return;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    prompt = va("%s: %s> ", "CoD2x MP", "1.4.6.8");
+#else
     prompt = va("%s: %s> ", "CoD2 MP", COD2_VERSION_SHORT);
+#endif
     font = cls.consoleFont;
     conDrawInputGlob.fontHeight = (float)re.TextHeight(font);
     if (conDrawInputGlob.fontHeight <= 0.0f)

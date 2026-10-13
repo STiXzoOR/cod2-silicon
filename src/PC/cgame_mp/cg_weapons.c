@@ -903,6 +903,11 @@ void CG_RegisterItems(void)
     int itemCount;
     int i;
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    if (strlen(CL_GetConfigString(8)) >= sizeof(items) - 1) {
+        Com_Error(ERR_DROP, "CG_RegisterItems: overflowed");
+    }
+#endif
     strcpy(items, CL_GetConfigString(8));
     itemCount = *(int *)imp_bg_numItems;
 

@@ -1,3 +1,7 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#include "../qcommon/match_summary.h"
+#endif
 #if defined(COD2_CODX) && COD2_CODX
 #include "../qcommon/cod2x.h"
 #endif
@@ -556,7 +560,9 @@ extern int Cmd_Argc(void);
 extern char *Cmd_Argv(int arg);
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 extern void I_strncat(char *dest, int maxlen, const char *src);
+#if !defined(COD2_X64)
 extern int putenv(const char *string);
+#endif
 extern char *getenv(const char *name);
 void CL_Setenv_f(void)
 {
@@ -1125,9 +1131,26 @@ void CL_InitOnceForAllClients(void)
     srand(Sys_MillisecondsRaw());
     Con_Init();
     CL_InitInput();
+#if defined(COD2_X64)
+    MatchSummary_Init();
+#endif
 
+#if defined(COD2_X64) && COD2_X64
+    cl_noprint = Dvar_RegisterBool_mac("cl_noprint", 0, 0x1000);
+#else
     cl_noprint = Dvar_RegisterBool_mac("cl_noprint", 0, 0);
+#endif
     cl_voice = Dvar_RegisterBool_mac("cl_voice", 1, 0x1003);
+#if defined(COD2_X64) && COD2_X64
+    cl_timeout = Dvar_RegisterFloat("cl_timeout", 200.0f, 0.0f, 3600.0f, 0x1000);
+    cl_connectTimeout = Dvar_RegisterFloat("cl_connectTimeout", 200.0f, 0.0f, 3600.0f, 0x1000);
+    cl_shownet = Dvar_RegisterInt("cl_shownet", 0, -2, 4, 0x1000);
+    cl_shownuments = Dvar_RegisterBool_mac("cl_shownuments", 0, 0x1000);
+    cl_showServerCommands = Dvar_RegisterBool_mac("cl_showServerCommands", 0, 0x1000);
+    cl_showSend = Dvar_RegisterBool_mac("cl_showSend", 0, 0x1000);
+    cl_showTimeDelta = Dvar_RegisterBool_mac("cl_showTimeDelta", 0, 0x1000);
+    cl_freezeDemo = Dvar_RegisterBool_mac("cl_freezeDemo", 0, 0x1000);
+#else
     cl_timeout = Dvar_RegisterFloat("cl_timeout", 200.0f, 0.0f, 3600.0f, 0);
     cl_connectTimeout = Dvar_RegisterFloat("cl_connectTimeout", 200.0f, 0.0f, 3600.0f, 0);
     cl_shownet = Dvar_RegisterInt("cl_shownet", 0, -2, 4, 0);
@@ -1136,14 +1159,21 @@ void CL_InitOnceForAllClients(void)
     cl_showSend = Dvar_RegisterBool_mac("cl_showSend", 0, 0);
     cl_showTimeDelta = Dvar_RegisterBool_mac("cl_showTimeDelta", 0, 0);
     cl_freezeDemo = Dvar_RegisterBool_mac("cl_freezeDemo", 0, 0);
+#endif
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     cod2x_demoName = Dvar_RegisterString_mac("cl_demoAutoRecordName", "", 0x1010);
     cod2x_demoURL = Dvar_RegisterString_mac("cl_demoAutoRecordUploadUrl", "", 0x1010);
     cod2x_demoTimeout = Dvar_RegisterInt("cl_demoAutoRecordUploadTimeout", 60, 10, 600, 0x1001);
 #endif
+#if defined(COD2_X64) && COD2_X64
+    cl_activeAction = Dvar_RegisterString_mac("activeAction", "", 0x1000);
+    cl_avidemo = Dvar_RegisterInt("cl_avidemo", 0, 0, 0x7fffffff, 0x1000);
+    cl_forceavidemo = Dvar_RegisterBool_mac("cl_forceavidemo", 0, 0x1000);
+#else
     cl_activeAction = Dvar_RegisterString_mac("activeAction", "", 0);
     cl_avidemo = Dvar_RegisterInt("cl_avidemo", 0, 0, 0x7fffffff, 0);
     cl_forceavidemo = Dvar_RegisterBool_mac("cl_forceavidemo", 0, 0);
+#endif
 
     {
         union {
@@ -1152,28 +1182,53 @@ void CL_InitOnceForAllClients(void)
         } flt_max = { 0x7f7fffff }, flt_nmax = { 0xff7fffff };
         cl_yawspeed = Dvar_RegisterFloat("cl_yawspeed", 140.0f, flt_nmax.f, flt_max.f, 0x1001);
         cl_pitchspeed = Dvar_RegisterFloat("cl_pitchspeed", 140.0f, flt_nmax.f, flt_max.f, 0x1001);
+#if defined(COD2_X64) && COD2_X64
+        cl_anglespeedkey = Dvar_RegisterFloat("cl_anglespeedkey", 1.5f, 0.0f, flt_max.f, 0x1000);
+#else
         cl_anglespeedkey = Dvar_RegisterFloat("cl_anglespeedkey", 1.5f, 0.0f, flt_max.f, 0);
+#endif
     }
 
 #if defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64) && COD2_X64
+    cl_maxpackets = Dvar_RegisterInt("cl_maxpackets", 125, 10, 125, 0x1001);
+#else
     cl_maxpackets = Dvar_RegisterInt("cl_maxpackets", 125, 15, 125, 0x1001);
+#endif
+#else
+#if defined(COD2_X64) && COD2_X64
+    cl_maxpackets = Dvar_RegisterInt("cl_maxpackets", 30, 10, 100, 0x1001);
 #else
     cl_maxpackets = Dvar_RegisterInt("cl_maxpackets", 30, 15, 100, 0x1001);
+#endif
 #endif
     cl_packetdup = Dvar_RegisterInt("cl_packetdup", 1, 0, 5, 0x1001);
     cl_sensitivity = Dvar_RegisterFloat("sensitivity", 5.0f, 0.01f, 100.0f, 0x1001);
     cl_mouseAccel = Dvar_RegisterFloat("cl_mouseAccel", 0.0f, 0.0f, 100.0f, 0x1001);
     cl_freelook = Dvar_RegisterBool_mac("cl_freelook", 1, 0x1001);
+#if defined(COD2_X64) && COD2_X64
+    cl_showMouseRate = Dvar_RegisterBool_mac("cl_showmouserate", 0, 0x1000);
+#else
     cl_showMouseRate = Dvar_RegisterBool_mac("cl_showmouserate", 0, 0);
+#endif
     cl_allowDownload = Dvar_RegisterBool_mac("cl_allowDownload", 1, 0x1001);
 #if COD2_IS_PATCH_13
     cl_wwwDownload = Dvar_RegisterBool("cl_wwwDownload", 1, 0x1003);
     cl_punkbuster = Dvar_RegisterBool("cl_punkbuster", 0, 0x1013);
 #endif
+#if defined(COD2_X64) && COD2_X64
+    cl_talking = Dvar_RegisterBool_mac("cl_talking", 0, 0x1000);
+#else
     cl_talking = Dvar_RegisterBool_mac("cl_talking", 0, 0);
+#endif
     cl_inGameVideo = Dvar_RegisterBool_mac("r_inGameVideo", 1, 0x1001);
+#if defined(COD2_X64) && COD2_X64
+    cl_serverStatusResendTime = Dvar_RegisterInt("cl_serverStatusResendTime", 750, 0, 3600, 0x1000);
+    cl_bypassMouseInput = Dvar_RegisterBool_mac("cl_bypassMouseInput", 0, 0x1000);
+#else
     cl_serverStatusResendTime = Dvar_RegisterInt("cl_serverStatusResendTime", 750, 0, 3600, 0);
     cl_bypassMouseInput = Dvar_RegisterBool_mac("cl_bypassMouseInput", 0, 0);
+#endif
 
     m_pitch = Dvar_RegisterFloat("m_pitch", 0.022f, -1.0f, 1.0f, 0x1001);
     m_yaw = Dvar_RegisterFloat("m_yaw", 0.022f, -1.0f, 1.0f, 0x1001);
@@ -1183,6 +1238,10 @@ void CL_InitOnceForAllClients(void)
     input_viewSensitivity = Dvar_RegisterFloat("input_viewSensitivity", 1.0f, 0.0001f, 5.0f, 0x1001);
     cg_drawCrosshair = Dvar_RegisterBool_mac("cg_drawCrosshair", 1, 0x1001);
     cl_motdString = Dvar_RegisterString_mac("cl_motdString", "", 0x1040);
+#if defined(COD2_X64) && COD2_X64
+    Dvar_RegisterString_mac("motd", "", 0x1000);
+    Dvar_RegisterInt("cl_profileTextHeight", 16, 1, 100, 0x1000);
+#endif
     cl_ingame = Dvar_RegisterBool_mac("cl_ingame", 0, 0x1040);
     Dvar_RegisterInt("cl_maxPing", 800, 20, 2000, 0x1001);
     name = Dvar_RegisterString_mac("name", "Unknown Soldier", 0x1003);
@@ -1197,15 +1256,24 @@ void CL_InitOnceForAllClients(void)
 
     fx_enable = Dvar_RegisterBool_mac("fx_enable", 1, 0x1080);
     fx_draw = Dvar_RegisterBool_mac("fx_draw", 1, 0x1080);
+#if defined(COD2_X64) && COD2_X64
+    fx_cull = Dvar_RegisterBool_mac("fx_cull", 1, 0x1000);
+    fx_sort = Dvar_RegisterBool_mac("fx_sort", 1, 0x1000);
+#else
     fx_cull = Dvar_RegisterBool_mac("fx_cull", 1, 0);
     fx_sort = Dvar_RegisterBool_mac("fx_sort", 1, 0);
+#endif
     fx_freeze = Dvar_RegisterBool_mac("fx_freeze", 0, 0x1080);
     fx_debug = Dvar_RegisterBool_mac("fx_debug", 0, 0x1080);
     fx_debugBolt = Dvar_RegisterFloat("fx_debugBolt", 0.0f, 0.0f, 100.0f, 0x1080);
     fx_count = Dvar_RegisterBool_mac("fx_count", 0, 0x1080);
     fx_visMinTraceDist = Dvar_RegisterFloat("fx_visMinTraceDist", 80.0f, 0.0f, 1000.0f, 0x1080);
     fx_profile = Dvar_RegisterBool_mac("fx_profile", 0, 0x1080);
+#if defined(COD2_X64) && COD2_X64
+    nextdemo = Dvar_RegisterString_mac("nextdemo", "", 0x1000);
+#else
     nextdemo = Dvar_RegisterString_mac("nextdemo", "", 0);
+#endif
     Dvar_RegisterBool_mac("hud_enable", 1, 0x1001);
     Dvar_RegisterBool_mac("cg_blood", 1, 0x1001);
 
@@ -1896,7 +1964,13 @@ void CL_CheckForResend(void)
 
     conn->connectTime = cls.realtime;
     conn->connectPacketCount++;
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     Com_Printf("[cnx] CL_CheckForResend state=%d count=%d realtime=%d\n", conn->state, conn->connectPacketCount, cls.realtime);
+#if defined(COD2_X64)
+    )
+#endif
 
     if (conn->state == CA_CONNECTING) {
         const dvar_t *lanAuthorize = net_lanauthorize;
@@ -2216,7 +2290,13 @@ Bool CL_ConnectionlessPacket(netadr_t from, msg_t *msg, int time)
 
     Cmd_TokenizeString(MSG_ReadStringLine(msg));
     cmd = Cmd_Argv(0);
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     Com_Printf("[cnx] CL_ConnectionlessPacket cmd='%s' state=%d\n", cmd, conn->state);
+#if defined(COD2_X64)
+    )
+#endif
 
 #if COD2_IS_PATCH_13
 
@@ -2413,6 +2493,9 @@ CL_PacketEvent_real(netadr_t from, msg_t *msg, int time)
 
     if (!Netchan_Process(&conn->netchan, msg))
         return 0;
+#if defined(COD2_X64)
+    MatchSummary_Packet(conn->netchan.dropped);
+#endif
 
     headerBytes = msg->readcount;
     savedServerMessageSequence = conn->serverMessageSequence;
@@ -2672,7 +2755,11 @@ void CL_Vid_Restart_f(void)
     CL_AddReliableCommand(va((const char *)"vdr"));
     Com_Restart();
 
+#if defined(COD2_X64) && COD2_X64
+    Dvar_RegisterInt((const char *)"loc_language", 0, 0, 14, 0x1021);
+#else
     Dvar_RegisterInt((const char *)"loc_language", 0, 0, 13, 0x1021);
+#endif
     Dvar_RegisterBool_mac((const char *)"loc_translate", 1, 0x1020);
     Dvar_RegisterBool_mac((const char *)"fs_ignoreLocalized", 0, 0x10a0);
 
@@ -2749,6 +2836,9 @@ void CL_Disconnect(void)
     if (!legacy->cl_running)
         return;
 
+#if defined(COD2_X64)
+    MatchSummary_Finish("disconnect");
+#endif
     if (conn->demorecording)
         CL_StopRecord_f();
 
@@ -2889,6 +2979,9 @@ void CL_MapLoading(const char *mapname)
     if (!legacy->cl_running)
         return;
 
+#if defined(COD2_X64)
+    MatchSummary_Finish("map");
+#endif
     g_waitingForServer = 0;
     Con_Close();
     active->keyCatchers = 0;

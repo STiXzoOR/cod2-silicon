@@ -21,6 +21,7 @@ int MacDisplay_WindowVisible(void) { return 1; }
 void MacDisplay_FocusChanged(int focus) { (void)focus; }
 void MacDisplay_PumpVisibility(void) {}
 int SDL_ShowCursor(int toggle) { (void)toggle; return 0; }
+int MacPlatform_GetRenderSize(int *width, int *height) { *width = 640; *height = 480; return 1; }
 #endif
 
 const dvar_t *Dvar_RegisterInt(const char *name, int value, int min, int max, unsigned short flags)

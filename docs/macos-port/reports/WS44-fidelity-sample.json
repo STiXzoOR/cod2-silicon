@@ -1,0 +1,431 @@
+{
+  "sample_seed": 44,
+  "engine_base": "664f1a12da05a9abada6b8a6ab4831f2377f502d",
+  "tool_commit": "02f760554d58abcf31f90226a3958c667d4030fe",
+  "reference_sha256": "15efec53aa25a3bc686745edbb32ad4b565b9e82606e1cc5349c61753a708f12",
+  "criterion": "Material reference behavior difference, including intentional absent facilities and explicit draw contracts; equivalent means inspected signals explained/no specific material difference found, not proof for every input. Unresolved callback/platform outcomes are not counted as positives.",
+  "flagged": [
+    {
+      "name": "GScr_LoadGameTypeScript",
+      "address": 1703980,
+      "file": "src/PC/game_mp/g_scr_main_mp.c",
+      "verdict": "equivalent",
+      "note": "Original 0x1a0065/0x1a0081 and repeated callback load/handle checks are preserved by GScr_LoadScriptFunction(...,errorIfMissing=1). Required labels and fatal missing-script/label handling remain. Extracted helper boundaries and diagnostic formatting explain the score."
+    },
+    {
+      "name": "PM_GroundTrace",
+      "address": 457704,
+      "file": "src/PC/bgame/bg_pmove.c",
+      "verdict": "unresolved",
+      "note": "Original inlines landing calculations and signed literals; native extracts PM_CrashLand/ground helpers. The four literal differences do not establish changed movement. Recheck after WS43 with trace inputs."
+    },
+    {
+      "name": "Scr_StopThread",
+      "address": 586660,
+      "file": "src/PC/script/scr_variable.c",
+      "verdict": "equivalent",
+      "note": "Missing MT_Free is reached through Scr_FreeObjectChildren, FreeChildValue_core, RemoveRefToValue_core and RemoveRefToVector_core beyond the four-edge bound. Child cleanup and thread-parent refcount transitions remain present."
+    },
+    {
+      "name": "LAN_CompareServers",
+      "address": 1580086,
+      "file": "src/PC/client_mp/cl_ui_mp.c",
+      "verdict": "difference",
+      "note": "Original map sort calls UI_GetMapDisplayName twice at 0x181e47/0x181e54, then LAN_CompareHostname. Native case 3 compares raw mapName with I_stricmp. Localized/display names sort differently."
+    },
+    {
+      "name": "XModelLoad",
+      "address": 767510,
+      "file": "src/PC/xanim/xmodel_load_obj.c",
+      "verdict": "equivalent",
+      "note": "Reported signal is diagnostic strings. Native still checks file/version, parses LOD/collision data and frees input; additional invalid collision-count checks explain wording differences. No material difference established by this signal."
+    },
+    {
+      "name": "Key_KeynumToString",
+      "address": 1308768,
+      "file": "src/PC/client_mp/cl_keys_mp.c",
+      "verdict": "equivalent",
+      "note": "Wrapper calls Key_KeynumToStringInternal, which retains invalid-key messages, French digit mapping, uppercase printable keys and hexadecimal fallback. Strings/branches are in the helper."
+    },
+    {
+      "name": "XAnimFillInSyncNodes_r",
+      "address": 261986,
+      "file": "src/PC/xanim/xanim.c",
+      "verdict": "equivalent",
+      "note": "Loop/default-animation replacement, incompatible sync errors, recursive children and sync flags remain. Missing strings are compiler-concatenated/formatted diagnostics; the reported signal does not establish changed animation."
+    },
+    {
+      "name": "PbClientProcessEvents",
+      "address": 2078814,
+      "file": "src/PC/punkbuster/pb_null_adapter.c",
+      "verdict": "difference",
+      "note": "Original calls stPbCl_AddPbEvent; active native function is empty. This is the intentional null PunkBuster boundary, counted as a reference difference rather than a new port regression."
+    },
+    {
+      "name": "DL_DownloadLoop",
+      "address": 2079658,
+      "file": "src/PC/qcommon/dl_main.c",
+      "verdict": "unresolved",
+      "note": "Original libwww pump/cancellation becomes curl_multi_perform/info_read and DL_Teardown. Replacement is intentional; HTTP failure, cancellation and progress equivalence needs request fixtures, not callee identity."
+    },
+    {
+      "name": "Com_SetRecommended",
+      "address": 192646,
+      "file": "src/PC/qcommon/common.c",
+      "verdict": "unresolved",
+      "note": "Native CSV parser uses Com_ParseOnLine/blank-line helpers in place of Com_Parse/UngetToken. CPU/GPU selection remains substantial code. Need CSV fixtures comparing selected dvars and malformed-input behavior."
+    },
+    {
+      "name": "CM_PointContentsLeafBrushNode_r",
+      "address": 427432,
+      "file": "src/PC/qcommon/cm_test.c",
+      "verdict": "equivalent",
+      "note": "Constant-return legacy shim is unused in the native path. CM_PointContents calls the substantial CM_PointContentsLeafBrushNode_r_impl with point/node arguments; do not restore an unused ABI spelling."
+    },
+    {
+      "name": "Scr_GetConstString",
+      "address": 554876,
+      "file": "src/PC/script/scr_vm.c",
+      "verdict": "equivalent",
+      "note": "Read all 438 reference bytes and Scr_GetConstStringValue/Scr_SetErrorMessageAndJump. Parameter bounds, string cast, error-index assignment, evaluate/loading/developer/terminal-error and longjmp/error paths move into helpers; valid string return is unchanged. Missing local strings/branches do not establish an omitted contract."
+    },
+    {
+      "name": "CL_WritePacket",
+      "address": 1605972,
+      "file": "src/PC/client_mp/cl_input.c",
+      "verdict": "equivalent",
+      "note": "Missing LargeLocal construction/GetBuf/destructor is replaced by local data/compressedBuf arrays. Message headers, keyed usercmd write and netchan transmit remain. This does not excuse the independent reader mask-table bug."
+    },
+    {
+      "name": "R_LoadAabbTrees",
+      "address": 933392,
+      "file": "src/PC/gfx_d3d/r_bsp_load_obj.c",
+      "verdict": "equivalent",
+      "note": "Wrapper delegates to R_LoadAabbTrees_impl; lump validation, typed allocation, child/surface initialization and R_FinishLoadingAabbTrees_r remain. Shape/string score is extraction/diagnostic noise."
+    },
+    {
+      "name": "CG_ProcessEntity",
+      "address": 1461204,
+      "file": "src/PC/cgame_mp/cg_ents_mp.c",
+      "verdict": "unresolved",
+      "note": "Entity dispatch/effects remain, with FX/turret work extracted into helpers. Large original inline cases and indirect renderer effects cannot be certified from call union; replay each entity type."
+    },
+    {
+      "name": "Scr_ExecEntThreadNum",
+      "address": 553290,
+      "file": "src/PC/script/scr_vm.c",
+      "verdict": "equivalent",
+      "note": "Original Sys_Milliseconds/rdtsc timeout reset is replaced by Scr_ResetTimeout_core using a monotonic native clock. Entity/thread refs, VM execution, result ref release and stack pop remain."
+    },
+    {
+      "name": "Item_TextField_Paint",
+      "address": 1481034,
+      "file": "src/PC/ui_mp/ui_shared_mp.c",
+      "verdict": "difference",
+      "note": "Original 0x169c8d/0x169cc4 finds a numeric dvar and calls Com_LocalizedFloatToString. Native always copies Dvar_GetVariantString and lacks this formatting path; cursor/focus color handling also needs WS42 cross-check."
+    },
+    {
+      "name": "CL_PacketEvent",
+      "address": 1363670,
+      "file": "src/PC/client_mp/cl_main_mp.c",
+      "verdict": "equivalent",
+      "note": "Wrapper delegates to CL_PacketEvent_real. Connectionless/sequenced handling, packet address/sequence checks and parser dispatch are in that helper; wrapper shape is not missing packet processing."
+    },
+    {
+      "name": "Scr_CalcLocalVarsStatement",
+      "address": 600330,
+      "file": "src/PC/script/scr_compiler.c",
+      "verdict": "unresolved",
+      "note": "Original has EvalPrimitiveExpression/EvalBinaryOperatorExpression, Scr_CastBool and release calls for constant control flow. Native statement switch lacks those paths. Need bytecode/local-scope harness to establish changed accepted scripts."
+    },
+    {
+      "name": "Key_Bindlist_f",
+      "address": 1315270,
+      "file": "src/PC/client_mp/cl_keys_mp.c",
+      "verdict": "equivalent",
+      "note": "Key_KeynumToStringInternal supplies strings and formatting. Loop still prints each nonempty binding from all 256 slots. Original diagnostics are in the extracted helper."
+    },
+    {
+      "name": "PM_StepSlideMove",
+      "address": 646300,
+      "file": "src/PC/bgame/bg_slidemove.c",
+      "verdict": "unresolved",
+      "note": "Step/jump/prone helpers account for some missing constants. Signed AST literals and original constant folding also differ. Defer movement verdict to WS43 trace-based calibration."
+    },
+    {
+      "name": "BG_RunLerpFrameRate",
+      "address": 1586322,
+      "file": "src/PC/bgame/bg_animation_mp.c",
+      "verdict": "equivalent",
+      "note": "Native contains the original -130.0 divisor at line 851; AST reports its positive FloatingLiteral below unary minus. Animation rate/goal-weight calls remain; remaining strings are helper diagnostics."
+    },
+    {
+      "name": "NET_OpenIP",
+      "address": 2001786,
+      "file": "src/PC/win32/win_net.c",
+      "verdict": "equivalent",
+      "note": "POSIX socket/bind/error and interface helpers replace platform wrappers; ten-port fallback and net_ip/net_port settings remain. Diagnostic wording cannot establish packet behavior differences."
+    },
+    {
+      "name": "ConDrawInput_DetailedDvarMatch",
+      "address": 1439302,
+      "file": "src/PC/client_mp/cl_console_mp.c",
+      "verdict": "difference",
+      "note": "Original 0x15f960 calls Dvar_DomainToString_GetLines and draws domain text plus default/latched labels. Native fixed three/four-line box prints values only; valid range/type hints and labels are missing."
+    },
+    {
+      "name": "Scr_AddFields",
+      "address": 560580,
+      "file": "src/PC/script/scr_variable.c",
+      "verdict": "equivalent",
+      "note": "File iteration, type/name parsing, canonical strings, duplicate detection and field storage remain. Missing diagnostic templates are formatted through va/helpers rather than literal strings in this body."
+    },
+    {
+      "name": "ClearObject",
+      "address": 587104,
+      "file": "src/PC/script/scr_variable.c",
+      "verdict": "equivalent",
+      "note": "MT_Free is reached by the deeper child-value/vector-release chain. AddRefToObject, child cleanup and RemoveRefToEmptyObject retain the original lifetime operations."
+    },
+    {
+      "name": "MT_Free",
+      "address": 281330,
+      "file": "src/PC/script/scr_memorytree.c",
+      "verdict": "equivalent",
+      "note": "Wrapper delegates buddy coalescing/accounting to MT_FreeIndex and MT_GetSize. Arena pointer encoding replaces raw x86 subtraction. Missing allocation diagnostics reside in MT_GetSize."
+    },
+    {
+      "name": "RemoveRefToObject",
+      "address": 576816,
+      "file": "src/PC/script/scr_variable.c",
+      "verdict": "equivalent",
+      "note": "Object refcount/entity transitions and child cleanup remain. Vector MT_Free lies beyond four helper edges, so this missing call is an expansion-bound false positive."
+    },
+    {
+      "name": "UI_ParseMenuInternal",
+      "address": 1755844,
+      "file": "src/PC/ui/ui_shared_obj.c",
+      "verdict": "difference",
+      "note": "Original calls RegisterFontHack at 0x1acc6c, 0x1acd2a and subsequent font branches. RegisterFontHack (0x1a8acc) selects language-specific fonts/ directories for languages 6..14. Native UI_ParseFontAsset directly registers the supplied name; CL_RegisterFont/R_RegisterFont/R_LoadFont do not perform that selection. Asset-block extraction explains other signals, but localized font selection is absent."
+    },
+    {
+      "name": "Scr_GetInt",
+      "address": 538412,
+      "file": "src/PC/script/scr_vm.c",
+      "verdict": "equivalent",
+      "note": "Scr_GetParamValue and Scr_ParamTypeError preserve missing-parameter/type rejection, error index and error jump. Main-body branch/string reduction is extraction, not unconditional integer acceptance."
+    }
+  ],
+  "unflagged": [
+    {
+      "name": "Item_Bind_Paint",
+      "address": 1483590,
+      "file": "src/PC/ui_mp/ui_shared_mp.c",
+      "verdict": "difference",
+      "note": "Original no-label draw branch passes literal FIXME at 0x16a6c9 to UI_DrawText (0x16a6d0). Native draws BindingFromName text, or localized EXE_KEYWAIT when waiting, via the common draw branch. This is a confirmed text-contract difference, potentially a deliberate improvement; do not blindly restore FIXME. Other max-character paths have a documented native repair."
+    },
+    {
+      "name": "SND_LoadSoundFile",
+      "address": 356532,
+      "file": "src/PC/win32/snd_driver.c",
+      "verdict": "unresolved",
+      "note": "File/WAV validation and AIL conversion remain; native PCM/ADPCM backend changes output headers, sizes and failure handling. Need original/native sample conversion comparison for sound-format fidelity."
+    },
+    {
+      "name": "SND_GetSoundOverlay",
+      "address": 306470,
+      "file": "src/PC/snd.c",
+      "verdict": "equivalent",
+      "note": "Original inlines channel collection; native delegates to the three overlay functions, retaining initialized check, CPU output and type dispatch. Missing zero literal comes from helper initialization."
+    },
+    {
+      "name": "Field_CharEvent",
+      "address": 1310724,
+      "file": "src/PC/client_mp/cl_keys_mp.c",
+      "verdict": "equivalent",
+      "note": "Read the full 399-byte reference: Ctrl-V clipboard recursion/free, Ctrl-C clear, backspace, home/end, control-char rejection, 255-char insert/overstrike bounds, termination and scroll adjustment match the native body/helpers."
+    },
+    {
+      "name": "Com_InitHunkMemory",
+      "address": 229158,
+      "file": "src/PC/universal/com_memory.c",
+      "verdict": "equivalent",
+      "note": "Stock hunk default/range and minimum 80 MB, allocation, counters, clear and meminfo registration match. Filename/error wording differs. CoD2x 512 MB policy is outside this stock sample verdict."
+    },
+    {
+      "name": "CL_SortGlobalServers",
+      "address": 1447194,
+      "file": "src/PC/client_mp/cl_main_pc_mp.c",
+      "verdict": "equivalent",
+      "note": "Full reference calls qsort at 0x161547 with CL_CompareAdrSigned, global-server count and 0x8c original stride. Native uses the same comparator/count and sizeof(serverInfo_t) for the native layout. The reference import-call recovery omitted qsort, not the sorting behavior."
+    },
+    {
+      "name": "MT_AllocIndex",
+      "address": 279990,
+      "file": "src/PC/script/scr_memorytree.c",
+      "verdict": "equivalent",
+      "note": "Buddy head search, splitting, accounting and out-of-memory errors remain in MT_GetSize/MT_RemoveHeadMemoryNode helpers; original inlines them. No changed allocation decision found."
+    },
+    {
+      "name": "EmitBreakStatement",
+      "address": 610950,
+      "file": "src/PC/script/scr_compiler.c",
+      "verdict": "equivalent",
+      "note": "Legal-break checks, child block tracking, public-local cleanup, abort level, opcode 0x62, aligned patch slot and break-list allocation match inspected reference paths."
+    },
+    {
+      "name": "FxHelper_SetIgnorePrecacheErrors",
+      "address": 700454,
+      "file": "src/PC/EffectsCore/FxSystem.c",
+      "verdict": "equivalent",
+      "note": "Both forward the unsigned-byte flag through the renderer interface. Original is an indirect tail jump; native is a field call."
+    },
+    {
+      "name": "SND_RestoreListeners",
+      "address": 301962,
+      "file": "src/PC/snd.c",
+      "verdict": "equivalent",
+      "note": "Original copies fourteen 32-bit words (one 56-byte listener); native copies listeners[0]. This is not a missing second-listener restore."
+    },
+    {
+      "name": "CG_CheckEvents",
+      "address": 1990986,
+      "file": "src/PC/cgame_mp/cg_event_mp.c",
+      "verdict": "equivalent",
+      "note": "Read all 301 reference bytes and native body. Event-entity one-shot guard, zero-sequence reset, wrap by 256, backlog clamp to four, modulo-four dispatch, saved eventParm restoration and final previous sequence agree."
+    },
+    {
+      "name": "SV_MapRestart",
+      "address": 1512944,
+      "file": "src/PC/server_mp/sv_ccmds_mp.c",
+      "verdict": "equivalent",
+      "note": "Read all 581 reference bytes. Native preserves running/fast-restart guards, gametype copy then comparison (same order in the original), save-persist handling, server-id nibble update, snapshot bit, three settling frames and client reconnect/drop/enter-world paths. Imported-dvar helpers account for new direct calls."
+    },
+    {
+      "name": "ItemParse_textstyle",
+      "address": 1754688,
+      "file": "src/PC/ui/ui_shared_obj.c",
+      "verdict": "equivalent",
+      "note": "Full reference parses numeric token, optional leading minus, stores the integer textStyle, returns false on missing/invalid token. Native UI_ParseIntToken implements those rules; diagnostic format/helper boundaries explain the two-point signal."
+    },
+    {
+      "name": "Particle_SetRandomVelocity2Weights",
+      "address": 655838,
+      "file": "src/PC/EffectsCore/FxPrimitives.c",
+      "verdict": "equivalent",
+      "note": "Both assign the three input floats to velocity2WeightX/Y/Z. Native typed fields replace original 0x138/0x13c/0x140 writes."
+    },
+    {
+      "name": "Com_WriteCDKey",
+      "address": 190550,
+      "file": "src/PC/qcommon/common.c",
+      "verdict": "equivalent",
+      "note": "Validation, invalid-key space clearing, 16+4 character assembly, termination and preference persistence match. Only synthetic/source paths inspected; no actual user key was read."
+    },
+    {
+      "name": "CM_LinkWorld",
+      "address": 724162,
+      "file": "src/PC/qcommon/cm_world.c",
+      "verdict": "unresolved",
+      "note": "World reset, root axis/plane, free-sector chain and static-model links are present. Full spatial-tree insertion needs bounds fixtures beyond the inspected call/control summary."
+    },
+    {
+      "name": "R_AddCmdSetMaterialColor",
+      "address": 821442,
+      "file": "src/PC/gfx_d3d/r_rendercmds.c",
+      "verdict": "equivalent",
+      "note": "Read all 141 reference bytes and R_AllocCriticalCmd. Original inlined command reservation writes id 4, size 0x14, four supplied color values or zeros. Native delegates allocation and retains the same payload. Exhausted-command-buffer behavior is not independently exercised."
+    },
+    {
+      "name": "XModelPartsFree",
+      "address": 284646,
+      "file": "src/PC/xanim/xmodel.c",
+      "verdict": "equivalent",
+      "note": "Both iterate numBones and release each unsigned-short hierarchy name through SL_RemoveRefToString."
+    },
+    {
+      "name": "XSurfaceGetNumVerts",
+      "address": 1022488,
+      "file": "src/PC/gfx_d3d/r_xsurface.c",
+      "verdict": "equivalent",
+      "note": "Entire 12-byte original sign-extends the vertCount short at offset 2. Native returns the same signed short field; the native type layout places that field at the same offset."
+    },
+    {
+      "name": "RB_SetVertexData",
+      "address": 1011230,
+      "file": "src/PC/gfx_d3d/rb_shade.c",
+      "verdict": "unresolved",
+      "note": "Read reference locking, stride jump table and conversion paths, plus RB_CopyVerticesWithColorConvert. Supported strides 0x14/18/20/24/40/44 agree. Original 0xf6e4d..0xf6e57 selects 0x2000 for zero offset and 0x1000 otherwise; native selects 0x2000 for zero offset or gpuSync==0 and zero otherwise. Native Lock ignores flags, while original Lock at 0x1eb66 has discard/fence behavior. Default unsupported-stride handling also differs. Active Metal buffer lifetime/valid stride outcomes need a draw-state harness before claiming a player regression."
+    },
+    {
+      "name": "CG_StartShakeCamera",
+      "address": 1900856,
+      "file": "src/PC/cgame_mp/cg_draw_mp.c",
+      "verdict": "equivalent",
+      "note": "Read full 488-byte reference and CG_UpdateCameraShakeStrength. Elapsed-time/radius/distance/rumble calculation, negative-distance ratio, expired-slot search and replacement of weakest among four slots agree for normal valid inputs. Literal differences come from extraction into the helper; invalid-duration states are not proven."
+    },
+    {
+      "name": "BG_AddPredictableEventToPlayerstate",
+      "address": 433532,
+      "file": "src/PC/bgame/bg_misc.c",
+      "verdict": "equivalent",
+      "note": "Both skip event zero, use sequence modulo four, narrow event/parameter to a byte, store in integer arrays and increment sequence. Full small-function inspection matches."
+    },
+    {
+      "name": "CM_BoxLeafnums_r",
+      "address": 427022,
+      "file": "src/PC/qcommon/cm_test.c",
+      "verdict": "equivalent",
+      "note": "Plane-side branch/tail traversal, recursive split, complemented leaf index, lastLeaf cluster check, overflow flag and append order match inspected reference."
+    },
+    {
+      "name": "Dvar_InfoString_Big",
+      "address": 330080,
+      "file": "src/PC/qcommon/dvar_cmds.c",
+      "verdict": "equivalent",
+      "note": "Both clear info2, traverse sortedDvars/next, select flags and append displayable names/values with Info_SetValueForKey_Big."
+    },
+    {
+      "name": "Scr_MakeValuePrimitive",
+      "address": 581826,
+      "file": "src/PC/script/scr_variable.c",
+      "verdict": "unresolved",
+      "note": "Array recursion and removal of nonpersistent types are present; mutations while traversing sibling chains need differential object fixtures, even though callee sets agree."
+    },
+    {
+      "name": "GScr_GetTeamPlayersAlive",
+      "address": 1679786,
+      "file": "src/PC/game_mp/g_scr_main_mp.c",
+      "verdict": "equivalent",
+      "note": "Entire reference selects allies/axis constants or errors, counts in-use client entities on that team with health>=1 up to g_maxclients and Scr_AddInt returns the count. Native preserves these predicates and the error contract with typed entity/client access."
+    },
+    {
+      "name": "Scr_RemoveThreadNotifyName",
+      "address": 559438,
+      "file": "src/PC/script/scr_variable.c",
+      "verdict": "equivalent",
+      "note": "Both read the notify string at arena entry offset 9, release it, and preserve upper status bits while setting low type to 0x0f."
+    },
+    {
+      "name": "GScr_SetBottomArc",
+      "address": 1700830,
+      "file": "src/PC/game_mp/g_scr_main_mp.c",
+      "verdict": "equivalent",
+      "note": "Full 137-byte reference validates entity/turret, reads argument zero, stores arcmax[0] and clamps negative values to zero; NaN remains unclamped. Native validation helpers and float comparison preserve these operations. Error strings reside in helpers."
+    },
+    {
+      "name": "FS_ResetFiles",
+      "address": 206718,
+      "file": "src/PC/universal/com_files.c",
+      "verdict": "equivalent",
+      "note": "Original and native set only fs_loadStack to zero. Zero-output stub syntax is a faithful tiny implementation here."
+    },
+    {
+      "name": "SEH_Shutdown_StringEd",
+      "address": 202290,
+      "file": "src/PC/stringed/stringed_hooks.c",
+      "verdict": "equivalent",
+      "note": "Both call SE_ShutDown; original emits a tail jump."
+    }
+  ]
+}

@@ -21,6 +21,36 @@ qboolean CM_TraceBox(const TraceExtents *extents, const vec_t *mins, const vec_t
     float tmin, tmax, t1, t2, invD;
     int i, pass;
 
+#if defined(COD2_X64)
+    /* Mac 0xbb415..0xbb4ca clips min/max planes with opposite signs.
+     * An exit before fraction still overlaps when entry precedes it. */
+    tmin = 0.0f;
+    tmax = fraction;
+    for (pass = 0; pass < 2; pass++) {
+        float sign = pass ? 1.0f : -1.0f;
+        bounds = pass ? maxs : mins;
+        for (i = 0; i < 3; i++) {
+            t1 = (extents->start[i] - bounds[i]) * sign;
+            t2 = (extents->end[i] - bounds[i]) * sign;
+            if (t1 > 0.0f) {
+                if (t2 > 0.0f)
+                    return 1;
+                invD = t1 * extents->invDelta[i] * sign;
+                if (invD >= tmax)
+                    return 1;
+                if (invD > tmin)
+                    tmin = invD;
+            } else if (t2 > 0.0f) {
+                invD = t1 * extents->invDelta[i] * sign;
+                if (tmin >= invD)
+                    return 1;
+                if (invD < tmax)
+                    tmax = invD;
+            }
+        }
+    }
+    return 0;
+#else
     tmin = 0.0f;
     tmax = fraction;
 
@@ -54,4 +84,5 @@ qboolean CM_TraceBox(const TraceExtents *extents, const vec_t *mins, const vec_t
     }
 
     return (tmax == 1.0f) ? 0 : 1;
+#endif
 }

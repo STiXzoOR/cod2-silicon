@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 #include <string.h>
@@ -489,8 +492,14 @@ void G_TouchTriggers(gentity_t *ent)
             continue;
 
         if (hit->s.eType == 3) {
+#if defined(COD2_X64)
+            COD2_NATIVE_TRACE_ONLY(
+#endif
             Com_Printf("[touch] num=%d i=%d touch[i]=%d hit#=%d eType=%d posTr=%d\n",
                        num, i, touch[i], hit->s.number, hit->s.eType, hit->s.pos.trType);
+#if defined(COD2_X64)
+            )
+#endif
         }
         if (hit->s.eType == 3 && !BG_PlayerTouchesItem(&client->ps, &hit->s, level.time))
             continue;
@@ -936,9 +945,15 @@ void ClientThink_real(gentity_t *ent, usercmd_t *ucmd)
     if (ent->s.number == 0 && (ucmd->buttons & 0x400)) {
         static int n;
         if (n++ < 40)
+#if defined(COD2_X64)
+            COD2_NATIVE_TRACE_ONLY(
+#endif
             fprintf(stderr, "[srv-jump] cmd.buttons=0x%x oldcmd.buttons=0x%x pm_type=%d pm_flags=0x%x jumpTime=%d srvTime=%d cmdTime=%d\n",
                     ucmd->buttons, client->sess.oldcmd.buttons, client->ps.pm_type, client->ps.pm_flags,
                     client->ps.jumpTime, ucmd->serverTime, client->ps.commandTime);
+#if defined(COD2_X64)
+            )
+#endif
         fflush(stderr);
     }
 #endif
@@ -1316,9 +1331,15 @@ void ClientEndFrame(gentity_t *ent)
         int now = level.time;
         if (ent->s.number == 0 && now - last >= 1000) {
             last = now;
+#if defined(COD2_X64)
+            COD2_NATIVE_TRACE_ONLY(
+#endif
             fprintf(stderr, "[state] cl=0 pm_type=%d sessState=%d health=%d noclip=%d ufo=%d tagInfo=%p count=%d eFlags=0x%x\n",
                     client->ps.pm_type, client->sess.sessionState, ent->health, client->noclip,
                     client->ufo, (void *)ent->tagInfo, ent->count, client->ps.eFlags);
+#if defined(COD2_X64)
+            )
+#endif
             fflush(stderr);
         }
     }

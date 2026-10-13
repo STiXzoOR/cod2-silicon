@@ -13,7 +13,8 @@ with tempfile.TemporaryDirectory(prefix='ws15-fx-events-') as tmp:
         '-DCOD2_X64=1', '-fsanitize=address,undefined', '-Wl,-dead_strip',
         '-Wno-typedef-redefinition', '-Wno-duplicate-decl-specifier', '-Wno-ignored-attributes',
         '-Isrc', '-Isrc/headers', 'tests/platform/macos_fx_events.c',
-        'src/PC/cgame_mp/cg_event_mp.c', 'src/PC/universal/com_math.c', '-o', binary
+        'src/PC/cgame_mp/cg_event_mp.c', 'src/PC/universal/com_math.c',
+        'src/PC/qcommon/port_debug.c', '-o', binary
     ], cwd=root, check=True)
     subprocess.run([binary], check=True, env={
         **os.environ, 'ASAN_OPTIONS': 'symbolize=0', 'UBSAN_OPTIONS': 'halt_on_error=1'

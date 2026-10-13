@@ -959,9 +959,18 @@ static void nb_decode_lost(DecState *st, float *out, char *stack)
          float innov_gain=0;
          for (i=0;i<st->frameSize;i++)
             innov_gain += st->innov[i]*st->innov[i];
+#if defined(COD2_X64)
+         /* Mac 1.3 compute_rms includes a small comfort-noise floor. */
+         innov_gain=sqrt(innov_gain/st->frameSize+.1);
+#else
          innov_gain=sqrt(innov_gain/st->frameSize);
+#endif
       for (i=0;i<st->subframeSize;i++)
       {
+#if defined(COD2_X64)
+         exc[i]=pitch_gain*(exc[i-st->last_pitch]+VERY_SMALL) +
+            fact*sqrt(1-pitch_gain)*speex_rand(innov_gain);
+#endif
       }
       }
       for (i=0;i<st->subframeSize;i++)
@@ -994,6 +1003,20 @@ static void nb_decode_lost(DecState *st, float *out, char *stack)
       st->pitch_gain_buf_idx = 0;
 }
 
+#if defined(COD2_X64)
+static void nb_clip_output(float *out, int count)
+{
+   int i;
+   for (i=0;i<count;i++)
+   {
+      if (out[i]>32767.f)
+         out[i]=32767.f;
+      else if (out[i]<-32767.f)
+         out[i]=-32767.f;
+   }
+}
+
+#endif
 int nb_decode(void *state, SpeexBits *bits, float *out)
 {
    DecState *st;
@@ -1024,11 +1047,18 @@ int nb_decode(void *state, SpeexBits *bits, float *out)
       if (!bits)
       {
          nb_decode_lost(st, out, stack);
+#if defined(COD2_X64)
+         nb_clip_output(out, st->frameSize);
+#endif
          return 0;
       }
 
       /* Search for next narrowband block (handle requests, skip wideband blocks) */
       do {
+#if defined(COD2_X64)
+         if (speex_bits_remaining(bits)<5)
+            return -1;
+#endif
          wideband = speex_bits_unpack_unsigned(bits, 1);
          if (wideband) /* Skip wideband block (for compatibility) */
          {
@@ -1043,6 +1073,10 @@ int nb_decode(void *state, SpeexBits *bits, float *out)
             } 
             advance -= (SB_SUBMODE_BITS+1);
             speex_bits_advance(bits, advance);
+#if defined(COD2_X64)
+            if (speex_bits_remaining(bits)<5)
+               return -1;
+#endif
             wideband = speex_bits_unpack_unsigned(bits, 1);
             if (wideband)
             {
@@ -1065,6 +1099,10 @@ int nb_decode(void *state, SpeexBits *bits, float *out)
             }
          }
 
+#if defined(COD2_X64)
+         if (speex_bits_remaining(bits)<4)
+            return -1;
+#endif
          /* FIXME: Check for overflow */
          m = speex_bits_unpack_unsigned(bits, 4);
          if (m==15) /* We found a terminator */
@@ -1129,6 +1167,9 @@ int nb_decode(void *state, SpeexBits *bits, float *out)
          out[i]=st->frame[i] + st->preemph*out[i-1];
       st->pre_mem=out[st->frameSize-1];
       st->count_lost=0;
+#if defined(COD2_X64)
+      nb_clip_output(out, st->frameSize);
+#endif
       return 0;
    }
 
@@ -1306,7 +1347,11 @@ int nb_decode(void *state, SpeexBits *bits, float *out)
          if (pitch_gain[2]>0)
             tmp += pitch_gain[2];
          else
+#if defined(COD2_X64)
+            tmp -= .5*pitch_gain[2];
+#else
             tmp -= .5*pitch_gain[0];
+#endif
 
 
          pitch_average += tmp;
@@ -1452,6 +1497,9 @@ int nb_decode(void *state, SpeexBits *bits, float *out)
 
    st->last_ol_gain = ol_gain;
 
+#if defined(COD2_X64)
+   nb_clip_output(out, st->frameSize);
+#endif
    return 0;
 }
 

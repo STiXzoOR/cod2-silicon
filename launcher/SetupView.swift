@@ -70,7 +70,7 @@ struct SetupView: View {
             .padding(.top, 26).padding([.horizontal, .bottom], footerInset)
         }
         .frame(width: 680)
-        .glassSurface(RoundedRectangle(cornerRadius: cardRadius, style: .continuous))
+        .contentSurface(RoundedRectangle(cornerRadius: cardRadius, style: .continuous))
         .animation(reduceMotion ? nil : .launcherSpring, value: model.step)
         .accessibilityElement(children: .contain)
     }

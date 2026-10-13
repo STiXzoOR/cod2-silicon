@@ -9,6 +9,7 @@ struct Palette {
     var text: Color, heading: Color, secondary: Color, tertiary: Color, body: Color
     var accent: Color, numeral: Color, link: Color, address: Color, hint: Color
     var prominentTop: Color, prominentBottom: Color, prominentText: Color, prominentTint: Color
+    var control: Color, caution: Color, compare: Color
     var positive: Color, negative: Color, separator: Color, selection: Color, selectionStroke: Color
     var chipText: Color, chipIcon: Color, glassStroke: Color, glassFill: Color, track: Color
     var dark: Bool
@@ -35,6 +36,7 @@ struct Palette {
         text: hex(0xece6d6), heading: hex(0xf3ecdc), secondary: hex(0xa9a28f), tertiary: hex(0x8f8877), body: hex(0xa9a28f),
         accent: hex(0xe2bd72), numeral: hex(0xe8e0cc), link: hex(0xe2bd72), address: hex(0xb9a982), hint: hex(0xa59e8b),
         prominentTop: hex(0xe8c478), prominentBottom: hex(0xc4984c), prominentText: hex(0x1c170c), prominentTint: hex(0xd6ad62),
+        control: hex(0xc99a4c), caution: hex(0xe2bd72), compare: hex(0x7fb0ff),
         positive: hex(0x9fc58d), negative: hex(0xff7a6b), separator: .white.opacity(0.055),
         selection: hex(0xe2bd72).opacity(0.10), selectionStroke: hex(0xe2bd72).opacity(0.45),
         chipText: hex(0xe2dbc9), chipIcon: hex(0xcfc6b1), glassStroke: .white.opacity(0.11), glassFill: hex(0x1a1c16).opacity(0.46),
@@ -45,6 +47,7 @@ struct Palette {
         text: hex(0x26251d), heading: hex(0x1f1e17), secondary: hex(0x615e51), tertiary: hex(0x6b6757), body: hex(0x5d5a4d),
         accent: hex(0x6b4a12), numeral: hex(0x2c2b22), link: hex(0x8a5a12), address: hex(0x7a5a1c), hint: hex(0x67645a),
         prominentTop: hex(0x5c6a33), prominentBottom: hex(0x46522a), prominentText: hex(0xfff8e8), prominentTint: hex(0x55622f),
+        control: hex(0x55622f), caution: hex(0x6b4a12), compare: hex(0x2a5db0),
         positive: hex(0x3a7236), negative: hex(0xb3261e), separator: hex(0x504628).opacity(0.10),
         selection: hex(0x5c6a33).opacity(0.10), selectionStroke: hex(0x5c6a33).opacity(0.45),
         chipText: hex(0x33312a), chipIcon: hex(0x55523f), glassStroke: .white.opacity(0.75), glassFill: hex(0xfcf8ee).opacity(0.56),
@@ -65,12 +68,14 @@ struct Palette {
 private struct PaletteKey: EnvironmentKey { static let defaultValue = Palette.dark }
 private struct UsesGlassKey: EnvironmentKey { static let defaultValue = LiquidGlass.available }
 private struct ShapeAuditKey: EnvironmentKey { static let defaultValue: ShapeAudit? = nil }
+private struct ShapeAuditContainerKey: EnvironmentKey { static let defaultValue: UUID? = nil }
 extension EnvironmentValues {
     var palette: Palette { get { self[PaletteKey.self] } set { self[PaletteKey.self] = newValue } }
     /// Liquid Glass on macOS 26 SDK/runtime; the review harness can force the 13–25 material fallback.
     var usesGlass: Bool { get { self[UsesGlassKey.self] } set { self[UsesGlassKey.self] = newValue } }
     /// Set only by the review harness, which checks the shapes and insets reported into it.
     var shapeAudit: ShapeAudit? { get { self[ShapeAuditKey.self] } set { self[ShapeAuditKey.self] = newValue } }
+    fileprivate var shapeAuditContainer: UUID? { get { self[ShapeAuditContainerKey.self] } set { self[ShapeAuditContainerKey.self] = newValue } }
 }
 
 // MARK: - Shape system
@@ -109,6 +114,8 @@ enum ControlMetrics {
     struct Item: Equatable, Sendable {
         enum Role: String, Sendable { case container, control, field, inset }
         enum Form: Equatable, Sendable { case capsule, circle, rounded(CGFloat) }
+        var id: UUID
+        var parentID: UUID?
         var role: Role
         var form: Form
         var name: String
@@ -122,11 +129,13 @@ private struct ShapeAuditReporter: ViewModifier {
     var form: ShapeAudit.Item.Form
     var name: String
     @Environment(\.shapeAudit) private var audit
+    @Environment(\.shapeAuditContainer) private var parentID
     @State private var id = UUID()
     func body(content: Content) -> some View {
         if let audit {
             content
-                .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .global) }) { audit.items[id] = .init(role: role, form: form, name: name, frame: $0) }
+                .environment(\.shapeAuditContainer, role == .container ? id : parentID)
+                .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .global) }) { audit.items[id] = .init(id: id, parentID: parentID, role: role, form: form, name: name, frame: $0) }
                 .onDisappear { audit.items[id] = nil }
         } else {
             content
@@ -206,8 +215,7 @@ struct GlassSurface<S: InsettableShape>: ViewModifier {
     }
     @ViewBuilder private func surface(_ content: Content) -> some View {
         #if COD2_LIQUID_GLASS
-        if usesGlass, #available(macOS 26.0, *) {
-            // The system adapts glass itself for Reduce Transparency and Increase Contrast.
+        if usesGlass, !reduceTransparency, #available(macOS 26.0, *) {
             content.glassEffect(Glass.regular.tint(tint).interactive(interactive), in: shape)
         } else { fallback(content) }
         #else
@@ -216,14 +224,36 @@ struct GlassSurface<S: InsettableShape>: ViewModifier {
     }
     private func fallback(_ content: Content) -> some View {
         content
-            .background(reduceTransparency ? palette.panel : palette.glassFill, in: shape)
-            .background(.ultraThinMaterial, in: shape)
+            .background {
+                if reduceTransparency {
+                    shape.fill(palette.panel)
+                } else {
+                    shape.fill(palette.glassFill).background(.ultraThinMaterial, in: shape)
+                }
+            }
             .overlay(shape.stroke(palette.glassStroke, lineWidth: 1))
             .overlay(shape.inset(by: 1).stroke(LinearGradient(colors: [.white.opacity(palette.dark ? 0.12 : 0.6), .clear], startPoint: .top, endPoint: .center), lineWidth: 1).allowsHitTesting(false))
             .shadow(color: .black.opacity(palette.dark ? 0.32 : 0.12), radius: 20, y: 12)
     }
 }
+
+/// A content card that floats over artwork (Setup's form, a server's details): a standard
+/// material, or the opaque panel with Reduce Transparency. Content, so never glass; its buttons are.
+struct ContentSurface<S: InsettableShape>: ViewModifier {
+    var shape: S
+    @Environment(\.palette) private var palette
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    func body(content: Content) -> some View {
+        content
+            .background {
+                if reduceTransparency { shape.fill(palette.panel) } else { shape.fill(.regularMaterial) }
+            }
+            .overlay(shape.strokeBorder(palette.panelStroke, lineWidth: 1))
+            .shapeAudit(.container, .init(shape), "panel")
+    }
+}
 extension View {
+    func contentSurface<S: InsettableShape>(_ shape: S) -> some View { modifier(ContentSurface(shape: shape)) }
     func glassSurface<S: InsettableShape>(_ shape: S, tint: Color? = nil, interactive: Bool = false) -> some View {
         modifier(GlassSurface(shape: shape, tint: tint, interactive: interactive))
     }
@@ -341,6 +371,7 @@ struct GlassFallbackStyle: ButtonStyle {
     var circle = false
     @Environment(\.isEnabled) private var isEnabled
     @Environment(\.controlSize) private var controlSize
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     func makeBody(configuration: Configuration) -> some View {
         let padding = ControlMetrics.padding(controlSize)
         configuration.label
@@ -348,9 +379,15 @@ struct GlassFallbackStyle: ButtonStyle {
             .foregroundStyle(palette.text)
             .padding(.vertical, padding.vertical).padding(.horizontal, circle ? padding.vertical : padding.horizontal)
             .frame(minHeight: ControlMetrics.height(controlSize))
-            .background(palette.dark ? Color.white.opacity(configuration.isPressed ? 0.16 : 0.10) : Color.white.opacity(configuration.isPressed ? 0.72 : 0.55), in: Capsule())
-            .background(.ultraThinMaterial, in: Capsule())
-            .overlay(Capsule().stroke(palette.dark ? Color.white.opacity(0.16) : Color.white.opacity(0.85), lineWidth: 1))
+            .background {
+                if reduceTransparency {
+                    Capsule().fill(palette.panel)
+                } else {
+                    Capsule().fill(palette.dark ? Color.white.opacity(configuration.isPressed ? 0.16 : 0.10) : Color.white.opacity(configuration.isPressed ? 0.72 : 0.55))
+                        .background(.ultraThinMaterial, in: Capsule())
+                }
+            }
+            .overlay(Capsule().stroke(palette.glassStroke, lineWidth: 1))
             .opacity(isEnabled ? 1 : 0.35)
             .contentShape(Capsule())
     }

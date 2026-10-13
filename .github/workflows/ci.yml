@@ -14,6 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 -m unittest discover -s tools/tests -v
+      - run: python3 tools/check_trace_guards.py
+      - run: python3 -m unittest discover -s tests/input -p 'test_*.py' -v
       - run: python3 -m unittest discover -s tools/datagen -p test_datagen.py -v
       - run: python3 tests/rendering/shader_setup.py
       - run: python3 -m unittest discover -s tests/lp64/renderer -p test_wine_draw_trace.py -v
@@ -77,10 +79,16 @@ jobs:
           command -v clang
           brew install sdl2-compat
           command -v sdl2-config
+      - name: Config Studio catalog coverage
+        run: |
+          python3 -m unittest discover -s tools/catalog -v
+          python3 tools/catalog/catalog.py check --source-root . --catalog launcher/Resources/ConfigCatalog.json --mode stock
+          python3 tools/catalog/catalog.py check --source-root . --catalog launcher/Resources/ConfigCatalog.json --mode cod2x
       - name: Synthetic ABI checker tests
         run: |
           python3 tools/abi/test_audit.py
           python3 tools/abi/test_imports.py
+          python3 tools/abi/test_bit_conversions.py
       - name: Full CoD2x fixtures
         timeout-minutes: 5
         if: ${{ !cancelled() }}
@@ -147,6 +155,7 @@ jobs:
             python3 tools/abi/callback_tables.py "$build/compile_commands.json" \
               --audit "$out/functions.json" --baseline tools/abi/callback-baseline.json \
               --output "$out/callbacks.json"
+            python3 tools/abi/astdump_strict.py "$build/compile_commands.json"
           done
           # imports.py / full check.sh require a proprietary binary: local gate only.
       - name: Keep assertions enabled in fixture compile commands
@@ -172,6 +181,12 @@ jobs:
           python3 tests/lp64/game/run.py --build build-macos
           python3 tests/lp64/script/run.py
           python3 tests/online/run.py build-macos/compile_commands.json
+          python3 tests/lp64/ui/run.py --build build-macos
+          python3 tests/lp64/ui/run.py --build build-macos-codx
+          python3 tests/input/run.py --self-test --compile-db build-macos/compile_commands.json \
+            --output "$HOME/Library/Application Support/CoD2-native-ws42/ci-input-stock"
+          python3 tests/input/run.py --self-test --compile-db build-macos-codx/compile_commands.json \
+            --output "$HOME/Library/Application Support/CoD2-native-ws42/ci-input-codx"
           # fixes13 timing cases live in CoD2x-only code; the stock database
           # preprocesses them away, so run it on the CoD2x build as the gate does.
           python3 tests/fixes13/run.py --build build-macos-codx

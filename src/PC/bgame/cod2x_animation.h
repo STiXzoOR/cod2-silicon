@@ -21,6 +21,14 @@ void Cod2x_ResetAnimation(void)
 {
     memset(cod2xAnimationState, 0, sizeof(cod2xAnimationState));
 }
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+
+void Cod2x_ResetClientAnimation(void)
+{
+    /* Native cgame owns animation user 0; the authoritative host owns user 1. */
+    memset(cod2xAnimationState[0], 0, sizeof(cod2xAnimationState[0]));
+}
+#endif
 
 static cod2xAnimationState_t *BG_Cod2xState(const clientInfo_t *ci)
 {
@@ -188,6 +196,21 @@ static void BG_Cod2xControllerGoals(const entityState_t *es, clientInfo_t *ci,
         movement |= up ? 16384U : 32768U;
     }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    /* CoD2x animation.cpp:479-491: release the authoritative legs timer when
+       the grenade throw animation no longer matches the player's stance. */
+    if (bgs->anim_user == 1 && ci->legs.animation) {
+        const char *name = ci->legs.animation->name;
+        int wrongStance = 0;
+        if (strcmp(name, "pb_stand_grenade_throw") == 0)
+            wrongStance = (es->eFlags & (4 | 8)) != 0;
+        else if (strcmp(name, "pb_crouch_grenade_throw") == 0)
+            wrongStance = (es->eFlags & 4) == 0;
+        if (wrongStance)
+            SV_GameClientNum(es->clientNum)->legsTimer = 0;
+    }
+
+#endif
     if (state->stanceDuration > 0) {
         float fraction = (float)(bgs->time - state->stanceStart) / (float)state->stanceDuration;
         if (fraction > 0.0f && fraction < 1.0f) {

@@ -3,7 +3,7 @@ set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd -P)
 # shellcheck source=scripts/macos-common.sh
 source "$root/scripts/macos-common.sh"
-version=0.1.0
+version=$(< "$root/RELEASE_VERSION")
 build="$root/build/package/release"
 mac_binary=${COD2_VALUES_BINARY:-}
 stabs_binary=${COD2_STABS_BINARY:-}
@@ -13,7 +13,7 @@ while [[ $# -gt 0 ]]; do
         --build-dir) build=${2:?missing directory}; shift 2 ;;
         --mac-binary) mac_binary=${2:?missing path}; shift 2 ;;
         --stabs-binary) stabs_binary=${2:?missing path}; shift 2 ;;
-        *) printf 'Usage: %s [--version 0.1.0] [--build-dir DIR] [--mac-binary FILE --stabs-binary FILE]\n(the two reference binaries are optional and only verify the committed typed-data snapshot)\n' "$0" >&2; exit 2 ;;
+        *) printf 'Usage: %s [--version N.N.N] [--build-dir DIR] [--mac-binary FILE --stabs-binary FILE]\n(version defaults to RELEASE_VERSION; the two reference binaries are optional and only verify the committed typed-data snapshot)\n' "$0" >&2; exit 2 ;;
     esac
 done
 if [[ ! $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then printf 'Version must be N.N.N.\n' >&2; exit 2; fi

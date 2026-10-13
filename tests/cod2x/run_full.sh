@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 cd "$(dirname "$0")/../.."
-work=$(mktemp -d /tmp/cod2x-full.XXXXXX)
+work=$(mktemp -d "${TMPDIR:-/tmp}/cod2x-full.XXXXXX")
 trap 'rm -rf "$work"' EXIT HUP INT TERM
 flags="-std=gnu11 -g -ffp-contract=off -DCOD2_X64=1 -DCOD2_CODX=1 -Isrc/headers -Isrc -I. -Isrc/PC/qcommon -Isrc/platform -Wno-duplicate-decl-specifier -Wno-implicit-function-declaration -Wno-int-conversion -Wno-incompatible-pointer-types -Wno-deprecated-non-prototype -Wno-pointer-to-int-cast"
 if [ "${COD2X_SANITIZERS:-0}" = 1 ]; then

@@ -539,7 +539,11 @@ void RB_ChangeGenTexCoords(int samplerIndex, int genTexCoords)
         break;
     case 2:
         MatrixIdentity44(transform.m);
+#if defined(COD2_X64)
+        transform._32 = -backEnd.texScrollAmountDx7;
+#else
         transform._32 = -backEnd.viewParms->depthHackNearClip;
+#endif
         RB_SetTextureStageStateDx7(samplerIndex, D3DTSS_TEXCOORDINDEX, samplerIndex);
         RB_SetTextureStageStateDx7(samplerIndex, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3);
         RB_SetTransformDx7( (D3DTRANSFORMSTATETYPE)(D3DTS_TEXTURE0 + samplerIndex), &transform);
@@ -1283,12 +1287,30 @@ void COD2_FORCE_ALIGN_ARG_POINTER RB_SetInitialState(void)
     D3DMATERIAL9 material;
     int stageIndex;
 
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     { extern void Com_Printf(const char *, ...); extern int g_disableRendering; Com_Printf("[dr] SIS entry=%d sizeof(dxState)=%d\n", g_disableRendering, (int)sizeof(dxState)); }
+#if defined(COD2_X64)
+    )
+#endif
     memset(&dxState, 0, sizeof(dxState));
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     { extern void Com_Printf(const char *, ...); extern int g_disableRendering; Com_Printf("[dr] SIS after memset=%d\n", g_disableRendering); }
+#if defined(COD2_X64)
+    )
+#endif
     RB_DecideDefaultSamplerState_core();
     RB_SetAnisotropy_core();
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     { extern void Com_Printf(const char *, ...); extern int g_disableRendering; Com_Printf("[dr] SIS after sampler=%d\n", g_disableRendering); }
+#if defined(COD2_X64)
+    )
+#endif
 
     vidConfig = (const vidConfig_t *)imp_vidConfig;
     dxState.refStateBits[0] = 0x18128812;
@@ -1311,7 +1333,13 @@ void COD2_FORCE_ALIGN_ARG_POINTER RB_SetInitialState(void)
 
     dxState.renderTargetId = R_RENDERTARGET_NONE;
     RB_SetRenderTarget(R_RENDERTARGET_FRAME_BUFFER);
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     { extern void Com_Printf(const char *, ...); extern int g_disableRendering; Com_Printf("[dr] SIS after setrendertarget=%d\n", g_disableRendering); }
+#if defined(COD2_X64)
+    )
+#endif
     dxState.viewportIsNull = 0;
 
     dxState.fog.end = 1.0f;

@@ -29,6 +29,7 @@ suites = [
     ('pure_iwds', 'src/PC/qcommon/files.c', ['FS_PureServerSetLoadedIwds']),
     ('timeout', 'src/PC/client_mp/cl_main_mp.c', ['CL_Frame']),
     ('map_loading', 'src/PC/client_mp/cl_main_mp.c', ['CL_ConnectionlessPacket']),
+    ('netchan_decode', 'src/PC/client_mp/cl_net_chan_mp.c', ['CL_Netchan_Decode']),
     ('scheduled_fx', 'src/PC/EffectsCore/FxScheduler.c',
      ['FxScheduler_GetDvar', 'FxScheduler_PlayEffect', 'FxScheduler_Clean']),
     ('server_commands', 'src/PC/client_mp/cl_cgame_mp.c', ['CL_GetServerCommand']),
@@ -50,8 +51,19 @@ if len(sys.argv) > 2:
     suites = [suite for suite in suites if suite[0] in sys.argv[2:]]
 with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
     out = Path(tmp)
+    # Link the production trace flag: ASan emits a strong reference even when
+    # an extracted function includes the weak-import diagnostic accessor.
+    trace_obj = out / 'port_debug.o'
+    subprocess.run([*flags, '-c', str(root / 'src/PC/qcommon/port_debug.c'),
+                    '-o', str(trace_obj)], check=True, cwd=root)
     for name, path, names in suites:
         source = (root / path).read_text()
+        if name == 'netchan_decode':
+            # Its legacy/native diagnostic branches have alternative opening
+            # braces. Resolve them with the real compile flags before extracting.
+            source = subprocess.check_output(
+                [*[flag for flag in flags if flag != '-c'], '-E', '-P', str(root / path)],
+                cwd=root, text=True)
         if name == 'mantle':
             source = source[:source.index('extern const dvar_t *Dvar_RegisterBool')]
         functions = [] if names else [source]
@@ -82,12 +94,12 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
                     if not depth:
                         functions.append(source[match.start():match.start() + token.end()])
                         break
-        (out / (name + '_source.h')).write_text('\n'.join(functions))
+        (out / (name + '_source.h')).write_text('#include "PC/qcommon/port_debug.h"\n' + '\n'.join(functions))
         obj = out / (name + '.o')
         subprocess.run([*flags, '-I' + tmp, '-c', str(root / ('tests/online/' + name + '.c')),
                         '-o', str(obj)], check=True, cwd=root)
         exe = out / name
-        subprocess.run(['clang', '-fsanitize=address,undefined', str(obj), '-o', str(exe)],
+        subprocess.run(['clang', '-fsanitize=address,undefined', str(obj), str(trace_obj), '-o', str(exe)],
                        check=True)
         subprocess.run([str(exe)], check=True, timeout=20,
                        env={**os.environ, 'ASAN_OPTIONS': 'symbolize=0'})

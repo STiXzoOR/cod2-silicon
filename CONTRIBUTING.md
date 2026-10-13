@@ -113,10 +113,19 @@ for build in ['build-macos', 'build-macos-codx']:
 PYTHON
 
 python3 -m unittest discover -s tools/tests -v
+python3 -m unittest discover -s tools/fidelity -v
+python3 tools/fidelity/audit.py --compile-commands build-macos/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/fidelity-stub-stock.json" \
+  --stub-gate tools/fidelity/stub-baseline.json
+python3 tools/fidelity/audit.py --compile-commands build-macos-codx/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/fidelity-stub-codx.json" \
+  --stub-gate tools/fidelity/stub-baseline.json
 python3 -m unittest discover -s tools/datagen -p test_datagen.py -v
 python3 tools/abi/test_audit.py
 python3 tools/abi/test_imports.py
 python3 tools/abi/test_raw_offsets.py
+python3 tools/abi/test_bit_conversions.py
+python3 tools/check_trace_guards.py
 python3 tests/rendering/shader_setup.py
 python3 -m unittest discover -s tests/lp64/renderer -p test_wine_draw_trace.py -v
 COD2X_SANITIZERS=1 sh tests/cod2x/run_full.sh
@@ -126,6 +135,79 @@ python3 tests/online/run.py build-macos/compile_commands.json
 python3 tests/online/run.py build-macos-codx/compile_commands.json
 python3 tests/fixes13/run.py --build build-macos
 python3 tests/fixes13/run.py --build build-macos-codx
+python3 tests/movement/run.py --build build-macos
+python3 tests/movement/run.py --build build-macos-codx
+python3 tests/movement/weapons.py --build build-macos
+python3 tests/movement/weapons.py --build build-macos-codx
+python3 tests/audio/run.py --build build-macos
+python3 tests/audio/run.py --build build-macos-codx
+python3 tests/fidelity/run.py --build build-macos
+python3 tests/fidelity/run.py --build build-macos-codx
+python3 tests/collision/run.py --build build-macos
+python3 tests/collision/run.py --build build-macos-codx
+python3 tests/cod2x/run_mouse_sensitivity.py \
+  --compile-db build-macos/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/mouse-stock"
+python3 tests/cod2x/run_mouse_sensitivity.py \
+  --compile-db build-macos-codx/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/mouse-codx"
+python3 tests/camera/run.py --compile-commands build-macos/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/camera-stock"
+python3 tests/camera/run.py --compile-commands build-macos-codx/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/camera-codx"
+for mode in stock codx; do
+  if [ "$mode" = stock ]; then build=build-macos; else build=build-macos-codx; fi
+  for fixture in animation_stance run_player_broadcast; do
+    python3 "tests/cod2x/$fixture.py" --compile-db "$build/compile_commands.engine.json" \
+      --output "$HOME/Library/Application Support/CoD2-native/$fixture-$mode"
+  done
+  for fixture in host_lifecycle run_host_protocol run_shotgun_spread; do
+    python3 "tests/cod2x/$fixture.py" --compile-db "$build/compile_commands.engine.json" \
+      --output "$HOME/Library/Application Support/CoD2-native/$fixture-$mode"
+  done
+  python3 tests/cod2x/host_lifecycle.py --dedicated \
+    --compile-db "$build/compile_commands.engine.json" \
+    --output "$HOME/Library/Application Support/CoD2-native/host-lifecycle-dedicated-$mode"
+  for fixture in stop_gametype udp_operations; do
+    python3 "tests/cod2x/$fixture.py" --compile-db "$build/compile_commands.engine.json" \
+      --output "$HOME/Library/Application Support/CoD2-native/$fixture-$mode"
+  done
+  python3 tests/cod2x/stop_gametype.py --dedicated \
+    --compile-db "$build/compile_commands.engine.json" \
+    --output "$HOME/Library/Application Support/CoD2-native/stop-gametype-dedicated-$mode"
+  for target in cod2_macos cod2_macos_ded; do
+    python3 tests/lp64/script/compiler_checks.py --target "$target" \
+      --compile-db "$build/compile_commands.engine.json" \
+      --output "$HOME/Library/Application Support/CoD2-native/compiler-$mode-$target"
+  done
+  python3 tests/lp64/script/identity_methods.py --parser-ubsan \
+    --compile-db "$build/compile_commands.engine.json" \
+    --output "$HOME/Library/Application Support/CoD2-native/identity-$mode"
+  python3 tests/hud/ownerdraw.py --compile-commands "$build/compile_commands.engine.json" \
+    --output "$HOME/Library/Application Support/CoD2-native/ownerdraw-$mode"
+  for fixture in run weapons; do
+    python3 "tests/movement/$fixture.py" --revision-matrix \
+      --compile-db "$build/compile_commands.engine.json" \
+      --output "$HOME/Library/Application Support/CoD2-native/matrix-$fixture-$mode"
+  done
+  python3 tests/cod2x/animation_stance.py --revision-matrix \
+    --compile-db "$build/compile_commands.engine.json" \
+    --output "$HOME/Library/Application Support/CoD2-native/matrix-animation-$mode"
+  python3 tests/hud/run.py --compile-commands "$build/compile_commands.engine.json" \
+    --output "$HOME/Library/Application Support/CoD2-native/hud-$mode"
+  python3 tests/lp64/renderer/run_player_skeleton.py \
+    --compile-db "$build/compile_commands.engine.json" \
+    --output "$HOME/Library/Application Support/CoD2-native/player-skeleton-$mode"
+  python3 tests/lp64/renderer/run_water.py \
+    --compile-commands "$build/compile_commands.engine.json"
+done
+# The callback VM fixture requires the CoD2x callback implementation.
+python3 tests/cod2x/stop_gametype_vm.py --ubsan \
+  --compile-db build-macos-codx/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/stop-vm-listen"
+python3 tests/cod2x/stop_gametype_vm.py --ubsan --dedicated \
+  --compile-db build-macos-codx/compile_commands.engine.json \
+  --output "$HOME/Library/Application Support/CoD2-native/stop-vm-dedicated"
 python3 tests/perf/run.py
 python3 tests/lp64/game/run.py --build build-macos
 python3 tests/lp64/script/run.py
@@ -195,9 +277,30 @@ changes. Neither fixture success nor frame-cap registration proves live
 stability or performance:
 
 ```sh
-python3 tools/parity/record.py --binary build-macos-codx/cod2_macos \
-  --data "$HOME/Games/CoD2" --output output/smoke-new --frames 100
+COD2_MAC_SHADER_CACHE="$HOME/Library/Application Support/CoD2 Silicon/shaders" \
+python3 tools/parity/record.py --binary build-macos-codx/cod2_macos --windowed \
+  --data "$HOME/Games/CoD2" --port 29945 --frames 100 \
+  --output "$HOME/Library/Application Support/CoD2-native-ws42/smoke-new"
 
+# Real SDL input: the --self-test fixture needs no data; live scenarios do.
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/input -p 'test_*.py' -v
+python3 tests/input/run.py --self-test \
+  --output "$HOME/Library/Application Support/CoD2-native-ws42/injector-new"
+python3 tests/input/run.py --self-test --compile-db build-macos-codx/compile_commands.json \
+  --output "$HOME/Library/Application Support/CoD2-native-ws42/injector-codx-new"
+# Run sequentially, with no other game using the display. Each output must be new.
+cmake --build build-macos --target cod2_macos_ded --parallel 3
+python3 tests/input/run.py build-macos/cod2_macos --scenario all \
+  --server-binary build-macos/cod2_macos_ded --server-port 29952 --port 29942 \
+  --output "$HOME/Library/Application Support/CoD2-native-ws42/input-stock-new"
+python3 tests/input/run.py build-macos-codx/cod2_macos --scenario all \
+  --compile-db build-macos-codx/compile_commands.json \
+  --server-binary build-macos/cod2_macos_ded --server-port 29953 --port 29943 \
+  --output "$HOME/Library/Application Support/CoD2-native-ws42/input-codx-new"
+python3 tests/input/run.py build-macos/cod2_macos --scenario browser --fullscreen \
+  --port 29944 \
+  --output "$HOME/Library/Application Support/CoD2-native-ws42/input-fullscreen-new"
+# Scenarios, assertions and fixture limits are documented in tests/input/README.md.
 # Menu acceptance: run sequentially when pgrep -fl cod2_macos is empty.
 # Output directories must be new and outside the repository.
 python3 tests/rendering/menu_sweep.py build-macos/cod2_macos \
@@ -205,6 +308,12 @@ python3 tests/rendering/menu_sweep.py build-macos/cod2_macos \
 python3 tests/rendering/menu_sweep.py build-macos-codx/cod2_macos \
   --output "$HOME/Library/Application Support/CoD2-native/menu-codx-new" --port 29939
 ```
+
+Reference-driven structural triage, dvar/scalar-table comparisons and the new-stub
+gate are documented in [tools/fidelity/README.md](tools/fidelity/README.md).
+Run both stock and CoD2x audits when changing gameplay; hand-check findings
+against Mac 1.3 and preserve intentional CoD2x changes. Existing self-comparison
+gates cannot establish fidelity to the original.
 
 ## Which checks need game data?
 
@@ -215,6 +324,8 @@ even when they use synthetic content.
 
 | Suite/check | Licensed input needed? | Other requirements |
 | --- | --- | --- |
+| `tools/fidelity` unit tests and new-stub gate | No | Clang; gate uses actual engine compile database |
+| Fidelity inventory, dvars and table comparisons | **Mac binary** | Clang, nm, otool; tables also need built arm64 objects |
 | `tools/tests`, `tools/datagen/test_datagen.py`, shader manifest tests, Wine trace parser tests | No | Python standard library; synthetic files only |
 | `tools/abi/test_audit.py`, `test_imports.py`, `test_raw_offsets.py` | No | Clang for synthetic independent translation units |
 | `tools/abi/raw_offsets.py` | No | Real native engine compile database; exact reviewed allowlist, both stock and CoD2x |
@@ -227,6 +338,7 @@ even when they use synthetic content.
 | `tests/lp64/script/run.py` | No | `build-macos` compile database and generated `bss_native.c.o`; includes compiler and VM suites |
 | `tests/lp64/ui/run.py` | No | Native compile database; production binding/multi-choice/enum/debug-table ASan/UBSan fixtures |
 | `tests/perf/run.py` | No | Clang; source fixtures, **not a benchmark** |
+| `tests/movement/run.py` | No | Native compile database; production movement ASan/UBSan fixtures with Mac 1.3 bob/scale/stance/lean/landing/ladder/mantle expectations and randomized prediction/server frames |
 | `tests/lp64/renderer/run.sh` | No | Clang + ASan/UBSan; synthetic buffers/materials/commands, no GL context |
 | Renderer `run_shader_raster.sh`, `run_texture_mips.sh`, `run_volume_upload.sh` | No | Synthetic content in private real CGL contexts; OpenGL-capable session |
 | `tests/platform` CTest, `run_dedicated_fx.sh`, `run_hud_matrices.py`, `run_impact_marks.py`, `run_fx_*.py` | No | Synthetic FX/HUD/network/audio; full CTest also exercises real window/fullscreen/audio APIs |
@@ -236,6 +348,7 @@ even when they use synthetic content.
 | `tools/macos-port/check_wavelets.py`, material/shader extraction validation | **IWDs and/or Mac binary** | External owned inputs; retain results outside git |
 | `tests/rendering/toujane_rgb.py`, parity recording, combat drivers, demos, live play and benchmarks | **Game data** | Built engine, private writable home; some checks also need owned shaders, CD key, server or demo |
 | `tests/rendering/menu_sweep.py` | **Game data** | Interactive session, `timeout`, no competing game; every loaded menu in front end/listen game plus safe UI scripts; captures outside git |
+| `tests/input/run.py`, `tests/input/test_driver.py` | Self-test: No; live: **Game data** | Test-only SDL event injector, installed SDL2/SDL3, runtime UI assertions, owned localhost server and private home; fullscreen browser pass is capped at 60 seconds |
 
 Diagnostic replay tools (`tests/lp64/game/replay.py`, renderer diagnostics,
 LP64 inventory) inspect compiler output; they are not live acceptance tests.

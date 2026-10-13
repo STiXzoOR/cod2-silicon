@@ -86,8 +86,8 @@ import Network
         var status = packets.compactMap { try? WireParser.status($0, address: address, ping: Int(elapsed.components.seconds * 1000 + elapsed.components.attoseconds / 1_000_000_000_000_000)) }.first
         let infoPackets = await UDPRequest(host: host, port: port).exchange("getinfo \(challenge)", seconds: 0.35)
         if let info = infoPackets.compactMap({ try? WireParser.status($0, address: address, ping: 0) }).first {
-            if status == nil { status = info }
-            else { status?.fields.merge(info.fields) { _, new in new } }
+            if status == nil { status = info; status?.observedAt = nil }
+            else { status?.mergeInfo(info) }
         }
         return status
     }

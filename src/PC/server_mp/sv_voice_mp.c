@@ -51,7 +51,12 @@ void SV_SendClientVoiceData(client_t *client)
     }
 
     MSG_Init(&msg, buf, 0x20000);
+#if defined(COD2_X64)
+    /* Mac 1.3 relays voice as "v", the only voice command clients dispatch. */
+    MSG_WriteString(&msg, "v");
+#else
     MSG_WriteString(&msg, "voicePacket");
+#endif
 
     MSG_WriteByte(&msg, client->voicePacketCount);
 

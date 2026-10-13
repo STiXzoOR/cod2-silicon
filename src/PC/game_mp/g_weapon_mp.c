@@ -92,6 +92,11 @@ COD2_ASSERT_FIELD(playerState_t, velocity,      0x0020);
 COD2_ASSERT_FIELD(playerState_t, viewangles,    0x00e8);
 COD2_ASSERT_FIELD(playerState_t, offHandIndex,  0x00d0);
 COD2_ASSERT_FIELD(trace_t, surfaceFlags,        0x0010);
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+
+extern const dvar_t *g_shotgun_spread_fix;
+extern float tanf(float x);
+#endif
 
 void SnapVectorTowards(vec_t *v, vec_t *to)
 {
@@ -534,6 +539,28 @@ void Bullet_Endpos(float spread, vec_t *end, const weaponParms *wp, float maxRan
     }
 }
 
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+static void Bullet_ShotgunEndpos(vec_t *end, const weaponParms *wp, int pellet, int variant, float sine, float cosine, float radius)
+{
+    /* CoD2x's two eight-pellet distributions, in tenths of the spread radius. */
+    static const signed char offsets[2][8][2] = {
+        {{0, -8}, {0, 0}, {0, 4}, {0, -4}, {-4, 0}, {4, 0}, {-6, 6}, {6, 6}},
+        {{-1, 0}, {1, 0}, {0, 5}, {0, -5}, {-8, 6}, {8, 6}, {-8, -6}, {8, -6}},
+    };
+    float x = (float)offsets[variant][pellet][0] / 10.0f;
+    float y = (float)offsets[variant][pellet][1] / 10.0f;
+    float right = (x * cosine - y * sine) * radius;
+    float up = (x * sine + y * cosine) * radius;
+    int axis;
+
+    for (axis = 0; axis < 3; ++axis) {
+        end[axis] = wp->muzzleTrace[axis] + wp->weapDef->fMinDamageRange * wp->forward[axis];
+        end[axis] += right * wp->right[axis];
+        end[axis] += up * wp->up[axis];
+    }
+}
+
+#endif
 void Bullet_Fire(gentity_s (*attacker)[16], float spread, weaponParms *wp, gentity_s (*weaponEnt)[16], int gametime)
 {
     vec3_t end;
@@ -586,12 +613,34 @@ void Bullet_Fire(gentity_s (*attacker)[16], float spread, weaponParms *wp, genti
 
     if (wp->weapDef->weapClass == WEAPCLASS_SPREAD) {
         int shotIndex;
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+        qboolean patterned = g_shotgun_spread_fix && g_shotgun_spread_fix->current.enabled && wp->weapDef->shotCount == 8;
+        float radius = 0.0f;
+        float sine = 0.0f;
+        float cosine = 0.0f;
+        int variant = 0;
+
+        if (patterned) {
+            float rotation;
+
+            radius = tanf((float)((double)spread * 0.0174532925199433)) * wp->weapDef->fMinDamageRange;
+            rotation = (float)((double)randomf() * 6.28318530717958647693);
+            variant = randomf() < 0.5f ? 0 : 1;
+            sine = sinf(rotation);
+            cosine = cosf(rotation);
+        }
+#endif
 
         start[0] = wp->muzzleTrace[0];
         start[1] = wp->muzzleTrace[1];
         start[2] = wp->muzzleTrace[2];
 
         for (shotIndex = 0; shotIndex < wp->weapDef->shotCount; shotIndex++) {
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+            if (patterned)
+                Bullet_ShotgunEndpos(end, wp, shotIndex, variant, sine, cosine, radius);
+            else
+#endif
             Bullet_Endpos(spread, end, wp, wp->weapDef->fMinDamageRange);
             Bullet_Fire_Extended((gentity_t *)weaponEnt, attacker, start, end,
                                  1.0f, 0, wp, (gentity_t *)weaponEnt,

@@ -1,3 +1,6 @@
+#if defined(COD2_X64)
+#include "PC/qcommon/port_debug.h"
+#endif
 #include "common_types.h"
 #include "imports.h"
 extern level_locals_t level;
@@ -369,10 +372,16 @@ void G_MoverTeam(gentity_t *ent)
 
     pushed_p = pushed;
 
+#if defined(COD2_X64)
+    COD2_NATIVE_TRACE_ONLY(
+#endif
     { extern const char *SL_ConvertToString(unsigned int); extern void Com_Printf(const char *, ...);
       Com_Printf("[mover] num=%d eType=%d posTr=%d aposTr=%d class=%s\n",
                  _ENT(ent)->s.number, _ENT(ent)->s.eType, _ENT(ent)->s.pos.trType, _ENT(ent)->s.apos.trType,
                  SL_ConvertToString((unsigned int)_ENT(ent)->classname)); }
+#if defined(COD2_X64)
+      )
+#endif
     BG_EvaluateTrajectory((&_ENT(ent)->s.pos), LEVEL_TIME, origin);
     BG_EvaluateTrajectory((&_ENT(ent)->s.apos), LEVEL_TIME, angles);
 
