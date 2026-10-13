@@ -35,7 +35,7 @@ int main(void) {
 flags = subprocess.check_output(["sdl2-config", "--cflags"], text=True).split()
 binary = scratch / "engine-keymap"
 subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", "xcrun", "clang",
-                "-target", "arm64-apple-macos13", "-Wall", "-Wextra", "-Werror",
+                "-target", "arm64-apple-macos26", "-Wall", "-Wextra", "-Werror",
                 *flags, str(fixture), "-o", str(binary)], check=True)
 with (scratch / "engine-keymap.tsv").open("w") as output:
     subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", str(binary)], stdout=output, check=True)

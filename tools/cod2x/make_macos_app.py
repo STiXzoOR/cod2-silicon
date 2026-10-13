@@ -133,8 +133,8 @@ def main():
                 if not dependency.startswith(("/System/", "/usr/lib/", "@rpath/", "@executable_path/")):
                     parser.error(f"non-portable dependency in {macho.name}: {dependency}")
             build = subprocess.check_output(["vtool", "-show-build", str(macho)], text=True)
-            if not re.search(r"minos 13\.0(?:\.0)?\s", build):
-                parser.error(f"{macho.name} must be built for macOS 13.0")
+            if not re.search(r"minos 26\.0(?:\.0)?\s", build):
+                parser.error(f"{macho.name} must be built for macOS 26.0")
         for dylib in machos[1:]:
             subprocess.run(["codesign", "--force", "--sign", "-", str(dylib)], check=True)
     icon_files, icon_keys = build_icon(root, pathlib.Path(staging.name) / "icon")
@@ -150,7 +150,7 @@ def main():
         "CFBundleShortVersionString": args.version,
         "CFBundleVersion": "1",
         **icon_keys,
-        "LSMinimumSystemVersion": "13.0",
+        "LSMinimumSystemVersion": "26.0",
         "NSHighResolutionCapable": not args.engine_only,
         "LSApplicationCategoryType": "public.app-category.action-games",
         "LSSupportsGameMode": not args.no_game_mode,
@@ -179,8 +179,8 @@ def main():
             parser.error("Swift launcher executable does not exist")
         subprocess.run(["lipo", str(launcher), "-verify_arch", "arm64"], check=True)
         launcher_build = subprocess.check_output(["vtool", "-show-build", str(launcher)], text=True)
-        if not re.search(r"minos 13\.0(?:\.0)?\s", launcher_build):
-            parser.error("launcher must be built for macOS 13.0")
+        if not re.search(r"minos 26\.0(?:\.0)?\s", launcher_build):
+            parser.error("launcher must be built for macOS 26.0")
         for line in subprocess.check_output(["otool", "-L", str(launcher)], text=True).splitlines()[1:]:
             dependency = line.strip().rsplit(" (", 1)[0]
             if not dependency.startswith(("/System/", "/usr/lib/")):

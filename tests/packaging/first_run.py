@@ -11,7 +11,7 @@ with tempfile.TemporaryDirectory(prefix="cod2-silicon-first-run-", suffix=".noin
     scratch = pathlib.Path(directory)
     executable = scratch / "first-run"
     subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", "clang", "-fobjc-arc",
-                    "-mmacosx-version-min=13.0", "-DCOD2_X64=1", "-DCOD2_CODX=1", "-Isrc",
+                    "-mmacosx-version-min=26.0", "-DCOD2_X64=1", "-DCOD2_CODX=1", "-Isrc",
                     "tests/packaging/first_run.m", "src/platform/cod2x_native_shaders.m",
                     "-framework", "AppKit", "-o", str(executable)], cwd=ROOT, check=True)
     app = scratch / "CoD2 Silicon.app"

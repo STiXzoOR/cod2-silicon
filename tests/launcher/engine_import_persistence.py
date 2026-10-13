@@ -136,7 +136,7 @@ fixture = scratch / "engine-import-persistence.c"
 fixture.write_text(preamble + "\n" + policy + "\n" + cmd + "\n" + dvar + "\n" + key + "\n" + main)
 binary = scratch / "engine-import-persistence"
 for mode, flags in [("stock", []), ("cod2x", ["-DCOD2_CODX=1"])]:
-    subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", "xcrun", "clang", "-target", "arm64-apple-macos13",
+    subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", "xcrun", "clang", "-target", "arm64-apple-macos26",
         "-DCOD2_X64=1", "-DCOD2_APPLE_SDK=0", *flags, "-Wall", "-Wextra", "-Werror", "-Wno-unused-function",
         "-fsanitize=address,undefined", str(fixture), "-o", str(binary)], check=True)
     subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", str(binary)], check=True)

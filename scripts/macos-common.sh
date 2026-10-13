@@ -2,13 +2,13 @@
 # Shared source-build prerequisites and the app build.
 check_prerequisites() {
     if [[ $(/usr/bin/uname -s) != Darwin || $(/usr/bin/uname -m) != arm64 ]]; then
-        printf 'CoD2 Silicon requires an Apple silicon Mac running macOS 13 or later.\n' >&2
+        printf 'CoD2 Silicon requires an Apple silicon Mac running macOS 26 or later.\n' >&2
         return 1
     fi
     local os_version
     os_version=$(/usr/bin/sw_vers -productVersion)
-    if [[ ${os_version%%.*} -lt 13 ]]; then
-        printf 'CoD2 Silicon requires macOS 13 or later; this Mac runs %s.\n' "$os_version" >&2
+    if [[ ${os_version%%.*} -lt 26 ]]; then
+        printf 'CoD2 Silicon requires macOS 26 or later; this Mac runs %s.\n' "$os_version" >&2
         return 1
     fi
     if ! /usr/bin/xcode-select -p >/dev/null 2>&1 || ! /usr/bin/xcrun --find clang >/dev/null 2>&1 || ! /usr/bin/xcrun --find swiftc >/dev/null 2>&1; then
@@ -22,7 +22,13 @@ check_prerequisites() {
     local swift_major
     swift_major=$(/usr/bin/xcrun swiftc --version | /usr/bin/sed -n 's/.*Swift version \([0-9][0-9]*\).*/\1/p' | /usr/bin/head -n 1)
     if [[ -z "$swift_major" || "$swift_major" -lt 6 ]]; then
-        printf 'Source builds need Swift 6 (Xcode 16 or later). The prebuilt app runs on macOS 13 or later. Update your developer tools.\n' >&2
+        printf 'Source builds need Swift 6 (Xcode 26 or later). The prebuilt app runs on macOS 26 or later. Update your developer tools.\n' >&2
+        return 1
+    fi
+    local sdk_version
+    sdk_version=$(/usr/bin/xcrun --sdk macosx --show-sdk-version)
+    if [[ ${sdk_version%%.*} -lt 26 ]]; then
+        printf 'Source builds need the macOS 26 SDK or later (Xcode 26+); the selected SDK is %s. Update your developer tools.\n' "$sdk_version" >&2
         return 1
     fi
     python=$(/usr/bin/xcrun --find python3)
@@ -63,7 +69,7 @@ build_app() {
     sdk=$(/usr/bin/xcrun --show-sdk-path)
     run_build cmake -S "$root" -B "$build/client" \
         -DCOD2_X64=ON -DCOD2_FEATURE_CFLAGS=-DCOD2_CODX=1 -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 "-DCMAKE_OSX_SYSROOT=$sdk" \
+        -DCMAKE_OSX_DEPLOYMENT_TARGET=26.0 "-DCMAKE_OSX_SYSROOT=$sdk" \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCOD2_MACOS_RELEASE=ON "-DCOD2_MACOS_SDL_PREFIX=$prefix" \
         "-DCOD2_RELEASE_VERSION=$version" \
         "-DCMAKE_PREFIX_PATH=$prefix" "-DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew;/usr/local" \

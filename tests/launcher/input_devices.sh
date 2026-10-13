@@ -6,7 +6,7 @@ trap 'rm -rf "$scratch"' EXIT INT TERM
 python3 "$root/tests/launcher/engine_keymap.py" "$scratch"
 taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc \
     -swift-version 6 -strict-concurrency=complete -warnings-as-errors -j 2 \
-    -target arm64-apple-macos13 -sdk "$(/usr/bin/xcrun --show-sdk-path)" -O \
+    -target arm64-apple-macos26 -sdk "$(/usr/bin/xcrun --show-sdk-path)" -O \
     "$root/launcher/ConfigDocument.swift" "$root/launcher/InputDevices.swift" \
     "$root/tests/launcher/InputDevicesTests.swift" "$root/tests/launcher/InputDevicesTestMain.swift" \
     -o "$scratch/InputDevicesTests"

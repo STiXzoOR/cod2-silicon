@@ -37,7 +37,7 @@ scripts/compile-launcher-icon.sh output/ws28/icon-build
 ```
 
 Xcode 27's `actool` compiles the package directly, with no Xcode project, for a
-macOS 13.0 minimum. It writes:
+macOS 26.0 minimum. It writes:
 
 - `Assets.car`, with layered `IconImageStack` and `IconGroup` renditions for
   Aqua, DarkAqua and tintable appearances, plus flattened renditions;
