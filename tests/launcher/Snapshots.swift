@@ -1156,12 +1156,276 @@ final class PreviewCatalogGate: Sendable {
         case "import": return await importAction()
         case "ready": return await readyAction()
         case "tab-exit": return await tabExitAction()
+        case "review-controls": return await reviewControlsAction()
         case "device-setup":
             guard let (model, window, home) = await open("configs-binds-visual", dark: true) else { return false }
             defer { window.orderOut(nil); window.close(); try? FileManager.default.removeItem(at: home) }
             return await deviceSetupActions(model: model, window: window)
         default: print("FAIL: no action check named \(name)"); return false
         }
+    }
+
+    /// A Mouse speed keyboard step or typed value belongs to the loadout shown when it began: choosing
+    /// Scrim (or a replacement session, Escape, or Main → Scrim → Main) first never writes it to Scrim or late to Main. Show Controls
+    /// with a text draft asks first. Each case has a positive save, so disabled controls can't pass.
+    static func reviewControlsAction() async -> Bool {
+        let mainConfig = "main/players/Main/config_mp.cfg", mainHistory = "main/players/Main/history/"
+        func files(_ home: URL) -> [String: Data] {
+            var all: [String: Data] = [:]
+            let root = home.standardizedFileURL.path + "/"
+            guard let walk = FileManager.default.enumerator(at: home, includingPropertiesForKeys: [.isRegularFileKey]) else { return all }
+            for case let url as URL in walk
+            where (try? url.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true {
+                all[String(url.standardizedFileURL.path.dropFirst(root.count))] = try? Data(contentsOf: url)
+            }
+            return all
+        }
+        func changed(_ before: [String: Data], _ after: [String: Data]) -> [String] { Set(before.keys).union(after.keys).filter { before[$0] != after[$0] }.sorted() }
+        func sensitivity(_ data: Data?) -> Double? {
+            guard let data, let text = String(data: data, encoding: .isoLatin1),
+                  let match = text.range(of: #"seta sensitivity "[^"]*""#, options: .regularExpression) else { return nil }
+            return Double(text[match].dropFirst("seta sensitivity \"".count).dropLast())
+        }
+        /// One edit to Main: its config and one new History row, and Mouse speed now `value`.
+        func oneMainEdit(_ what: String, _ before: [String: Data], _ after: [String: Data], value: Double) -> Bool {
+            let paths = changed(before, after)
+            let added = paths.filter { $0.hasPrefix(mainHistory) && before[$0] == nil }
+            guard paths.allSatisfy({ $0.hasPrefix("main/players/Main/") || $0 == "main/players/.studio.lock" }), paths.contains(mainConfig), added.count == 1,
+                  let saved = sensitivity(after[mainConfig]), abs(saved - value) < 0.0001 else {
+                print("FAIL: \(what) did not save exactly one Main edit of Mouse speed to \(value) (changed \(paths), saved \(String(describing: sensitivity(after[mainConfig]))))"); return false
+            }
+            return true
+        }
+        func element(_ window: NSWindow, _ role: String, _ label: String) -> AccessibilityTree.Element? {
+            AccessibilityTree.elements(of: window).first { $0.role == role && ($0.label == label || $0.label.hasPrefix(label + ",")) }
+        }
+        /// A real click on the Mouse speed knob, where the slider's own compare marker places it (it
+        /// doesn't move the value). True when that gave the slider the keyboard focus; without system
+        /// Full Keyboard Access a click doesn't, and the step comes from VoiceOver's increment instead.
+        func focusSlider(_ window: NSWindow, model: LauncherModel) -> Bool? {
+            guard let element = element(window, "AXSlider", "Mouse speed"), let shown = Double(element.value),
+                  let range = model.studio.specs.first(where: { $0.name == "sensitivity" })?.slideRange else { print("FAIL: the Mouse speed slider or its range isn't available"); return nil }
+            let primary = NSScreen.screens.first?.frame.maxY ?? 0
+            let fraction: Double = (shown - range.lowerBound) / (range.upperBound - range.lowerBound)
+            let x: CGFloat = element.frame.minX + 8 + (element.frame.width - 16) * CGFloat(fraction)
+            window.makeKey()
+            click(window, at: window.convertPoint(fromScreen: NSPoint(x: x, y: primary - element.frame.midY)))
+            return AccessibilityTree.focusedLabel() == "Mouse speed"
+        }
+        /// One keyboard step: the Right arrow to the focused slider, or VoiceOver's increment on its node.
+        /// Both reach the slider's own binding, never the model directly. Only the arrow reaches the pause
+        /// before saving; the increment ends its own edit and saves at once, so it doesn't cover the pause.
+        func step(_ window: NSWindow, focused: Bool) -> String {
+            if focused { pressArrow(window, keyCode: 124); return "Right arrow" }
+            guard let node = element(window, "AXSlider", "Mouse speed")?.node else { return "nothing" }
+            _ = (node as AnyObject).accessibilityPerformIncrement?()
+            return "VoiceOver increment"
+        }
+        func value(_ window: NSWindow, _ role: String) -> String { element(window, role, "Mouse speed")?.value ?? "" }
+
+        // Keyboard step, then Scrim before the 500 ms pause ends; then a replacement session; then the positive save.
+        // VoiceOver's increment ends its own edit and saves at once, so only a focused slider's arrow reaches the pause.
+        for variant in ["Scrim", "replacement session", "positive"] {
+            guard let (model, window, home) = await open("configs-expert", dark: true, setup: { $0.studio.group = .aim }) else { return false }
+            defer { window.orderOut(nil); window.close(); try? FileManager.default.removeItem(at: home) }
+            guard let scrim = element(window, "AXButton", "Scrim") else { print("FAIL: \(variant): the Scrim loadout isn't on screen"); return false }
+            guard let focused = focusSlider(window, model: model) else { return false }
+            try? await Task.sleep(for: .milliseconds(700))
+            let before = files(home), shown = Double(value(window, "AXSlider")) ?? .nan
+            let start = ContinuousClock.now
+            let route = step(window, focused: focused)
+            let afterStep = files(home)
+            guard let number = Double(value(window, "AXSlider")), abs(number - shown) > 0.001 else {
+                print("FAIL: \(variant): a \(route) did not change the shown Mouse speed (\(shown))"); return false
+            }
+            if focused {
+                guard afterStep == before else { print("FAIL: \(variant): a Right arrow saved before the pause (changed \(changed(before, afterStep)))"); return false }
+            } else {
+                guard oneMainEdit("a VoiceOver increment", before, afterStep, value: number) else { return false }
+            }
+            switch variant {
+            case "Scrim":
+                click(window, element: scrim)
+            case "replacement session":
+                do {
+                    let session = try ConfigStudioSession(home: home, dialect: .cod2x, discoverGames: { [] })
+                    try session.refresh()
+                    model.studio.attach(session)
+                } catch { print("FAIL: replacement session: \(error)"); return false }
+            default: break
+            }
+            let elapsed = ContinuousClock.now - start
+            try? await Task.sleep(for: .milliseconds(700))
+            let after = files(home)
+            let saved = focused ? "" : "; the increment itself saved to Main at once (the pause needs keyboard focus, which a click gives only with Full Keyboard Access)"
+            if variant == "positive" {
+                guard focused ? oneMainEdit("a Right arrow on Mouse speed", before, after, value: number) : after == afterStep else {
+                    print("FAIL: a \(route) on Mouse speed wrote again later (changed \(changed(afterStep, after)))"); return false
+                }
+                print("PASS: a \(route) on the Mouse speed slider saved \(ConfigValues.format(number)) to Main as one History row\(focused ? " after the pause" : saved)")
+                continue
+            }
+            let expected = variant == "Scrim" ? "Scrim" : "Main", shownNow = Double(value(window, "AXSlider")) ?? .nan
+            let expectedValue = variant == "Scrim" ? 2.1 : focused ? shown : number
+            // Only the arrow's pending save has a deadline; the increment already saved, so its switch may take longer.
+            guard !focused || elapsed < .milliseconds(500), after == afterStep, model.studio.current?.profile.id == expected, abs(shownNow - expectedValue) < 0.001 else {
+                print("FAIL: \(variant): a \(route) was written late or carried over (after \(elapsed), changed \(changed(afterStep, after)), "
+                      + "shown \(model.studio.current?.profile.id ?? "none") with Mouse speed \(shownNow))"); return false
+            }
+            print("PASS: a \(route) on Mouse speed, then the \(variant) \(elapsed) later: nothing more written to either loadout or History; \(expected) shows \(ConfigValues.format(shownNow))\(saved)")
+        }
+
+        // A typed Mouse speed belongs to the focus and loadout it began in. Without Return: Scrim, Escape,
+        // a replacement session, and Main → Scrim → Main save nothing late; a later fresh edit still saves.
+        // Then the positive saves: Return, and more typing in the same focus saved by leaving with Tab.
+        for variant in ["Scrim", "Escape", "replacement session", "Main, Scrim, Main", "Return"] {
+            guard let (model, window, home) = await open("configs-expert", dark: true, setup: { $0.studio.group = .aim }) else { return false }
+            defer { window.orderOut(nil); window.close(); try? FileManager.default.removeItem(at: home) }
+            guard let scrim = element(window, "AXButton", "Scrim"), let main = element(window, "AXButton", "Main") else {
+                print("FAIL: \(variant): the Main or Scrim loadout isn't on screen"); return false
+            }
+            /// Types `text` into Mouse speed as the field editor's own input; a fresh click first unless still editing.
+            func enter(_ text: String, fresh: Bool) async -> Bool {
+                if fresh {
+                    guard let field = element(window, "AXTextField", "Mouse speed") else { print("FAIL: \(variant): the Mouse speed field isn't on screen"); return false }
+                    window.makeKey()
+                    click(window, element: field)
+                    try? await Task.sleep(for: .milliseconds(300))
+                }
+                guard let editor = window.firstResponder as? NSTextView else { print("FAIL: \(variant): the Mouse speed field isn't editing"); return false }
+                let before = files(home)
+                editor.insertText(text, replacementRange: NSRange(location: 0, length: (editor.string as NSString).length))
+                try? await Task.sleep(for: .milliseconds(200))
+                guard value(window, "AXTextField") == text, files(home) == before else { print("FAIL: \(variant): typing \(text) didn't show as an unsaved draft"); return false }
+                return true
+            }
+            /// After a canceled draft, a fresh click, typing and Tab still save once to Main.
+            func freshEdit(_ what: String) async -> Bool {
+                let before = files(home)
+                guard await enter("5.3", fresh: true) else { return false }
+                press(window, keyCode: 48, characters: "\t")
+                try? await Task.sleep(for: .milliseconds(600))
+                return oneMainEdit("a fresh 5.3 and Tab after \(what)", before, files(home), value: 5.3)
+            }
+            let before = files(home)
+            guard await enter("4.7", fresh: true) else { return false }
+            switch variant {
+            case "Return":
+                press(window, keyCode: 36, characters: "\r")
+                try? await Task.sleep(for: .milliseconds(600))
+                let returned = files(home)
+                guard oneMainEdit("typing 4.7 and Return", before, returned, value: 4.7) else { return false }
+                guard await enter("4.9", fresh: false) else { return false }
+                press(window, keyCode: 48, characters: "\t")
+                try? await Task.sleep(for: .milliseconds(600))
+                guard oneMainEdit("typing 4.9 in the same focus and Tab", returned, files(home), value: 4.9) else { return false }
+                print("PASS: typing 4.7 in Mouse speed and pressing Return saved it to Main as one History row; typing 4.9 in the same focus and leaving with Tab saved one more")
+            case "Escape":
+                press(window, keyCode: 53, characters: "\u{1b}")
+                try? await Task.sleep(for: .milliseconds(700))
+                let paths = changed(before, files(home)), shown = value(window, "AXTextField")
+                guard paths.isEmpty, model.studio.current?.profile.id == "Main", shown == "2.6" else {
+                    print("FAIL: Escape after typing 4.7 saved or kept it (changed \(paths), shown \(model.studio.current?.profile.id ?? "none") with \(shown))"); return false
+                }
+                guard await freshEdit("Escape") else { return false }
+                print("PASS: typing 4.7 in Mouse speed, then Escape: nothing saved and Main shows 2.6; a fresh edit then saved once")
+            case "replacement session":
+                do {
+                    let session = try ConfigStudioSession(home: home, dialect: .cod2x, discoverGames: { [] })
+                    try session.refresh()
+                    model.studio.attach(session)
+                } catch { print("FAIL: replacement session: \(error)"); return false }
+                try? await Task.sleep(for: .milliseconds(700))
+                let paths = changed(before, files(home)), shown = value(window, "AXTextField")
+                guard paths.isEmpty, model.studio.current?.profile.id == "Main", shown == "2.6" else {
+                    print("FAIL: a typed Mouse speed was saved across a replacement session (changed \(paths), shown \(model.studio.current?.profile.id ?? "none") with \(shown))"); return false
+                }
+                guard await freshEdit("a replacement session") else { return false }
+                print("PASS: typing 4.7 in Mouse speed, then a replacement session for Main: nothing saved and Main shows 2.6; a fresh edit then saved once")
+            case "Main, Scrim, Main":
+                click(window, element: scrim)
+                try? await Task.sleep(for: .milliseconds(150))
+                guard model.studio.current?.profile.id == "Scrim" else { print("FAIL: Main, Scrim, Main: clicking Scrim didn't show Scrim"); return false }
+                click(window, element: main)
+                try? await Task.sleep(for: .milliseconds(700))
+                let after = files(home), paths = changed(before, after), shown = value(window, "AXTextField")
+                let mainOnly = paths.isEmpty || oneMainEdit("typing 4.7 before Main, Scrim, Main", before, after, value: 4.7)
+                guard mainOnly, model.studio.current?.profile.id == "Main", shown == (paths.isEmpty ? "2.6" : "4.7") else {
+                    print("FAIL: Main, Scrim, Main carried or saved a stale Mouse speed (changed \(paths), shown \(model.studio.current?.profile.id ?? "none") with \(shown))"); return false
+                }
+                guard await freshEdit("Main, Scrim, Main") else { return false }
+                print("PASS: typing 4.7 in Mouse speed, then Scrim and back to Main: Scrim and its History unchanged; Main \(paths.isEmpty ? "unchanged" : "saved the typed value first") and shows \(shown); a fresh edit then saved once")
+            default:
+                click(window, element: scrim)
+                try? await Task.sleep(for: .milliseconds(700))
+                let after = files(home), paths = changed(before, after), shown = value(window, "AXTextField")
+                let mainOnly = paths.isEmpty || oneMainEdit("typing 4.7 before choosing Scrim", before, after, value: 4.7)
+                guard mainOnly, model.studio.current?.profile.id == "Scrim", shown == "2.1" else {
+                    print("FAIL: a typed Mouse speed was carried to Scrim (changed \(paths), shown \(model.studio.current?.profile.id ?? "none") with \(shown))"); return false
+                }
+                print("PASS: typing 4.7 in Mouse speed, then clicking Scrim: Scrim and its History unchanged and showing 2.1; Main \(paths.isEmpty ? "unchanged" : "saved the typed value first")")
+            }
+        }
+
+        // Show Controls with a text draft: Keep Editing, Apply Edits, and Discard Edits.
+        guard let (model, window, home) = await open("configs-expert", dark: true) else { return false }
+        defer { window.orderOut(nil); window.close(); try? FileManager.default.removeItem(at: home) }
+        let studio = model.studio
+        func pressButton(_ label: String) async -> Bool {
+            guard let button = element(window, "AXButton", label) else { print("FAIL: \(label) isn't on screen"); return false }
+            window.makeKey()
+            click(window, element: button)
+            try? await Task.sleep(for: .milliseconds(700))
+            return true
+        }
+        func draft(_ line: String) async -> String? {
+            guard await pressButton("Edit as Text"), studio.textMode,
+                  let editor = views(NSTextView.self, in: window.contentView!).first(where: { $0.accessibilityLabel() == "Loadout as text" }) else {
+                print("FAIL: Edit as Text didn't show the loadout's text"); return nil
+            }
+            window.makeFirstResponder(editor)
+            editor.setSelectedRange(NSRange(location: 0, length: 0))
+            editor.insertText(line + "\n", replacementRange: NSRange(location: 0, length: 0))
+            try? await Task.sleep(for: .milliseconds(300))
+            guard studio.textEdited, studio.text.hasPrefix(line + "\n") else { print("FAIL: the text editor didn't take the draft line"); return nil }
+            return studio.text
+        }
+        func confirm(_ choice: String) async -> Bool {
+            guard await pressButton("Show Controls") else { return false }
+            guard let sheet = window.attachedSheet, let content = sheet.contentView,
+                  let button = views(NSButton.self, in: content).first(where: { $0.title == choice }),
+                  ["Apply Edits", "Discard Edits", "Keep Editing"].allSatisfy({ title in views(NSButton.self, in: content).contains { $0.title == title } }) else {
+                print("FAIL: Show Controls with a text draft didn't ask to Apply, Discard or Keep Editing"); return false
+            }
+            let frame = button.convert(button.bounds, to: nil)
+            sheet.makeKey()
+            click(sheet, at: NSPoint(x: frame.midX, y: frame.midY))
+            for _ in 0..<40 where window.attachedSheet != nil { try? await Task.sleep(for: .milliseconds(50)) }
+            try? await Task.sleep(for: .milliseconds(400))
+            return window.attachedSheet == nil
+        }
+        guard let kept = await draft("// keep this draft") else { return false }
+        let baseline = files(home)
+        guard await confirm("Keep Editing"), studio.textMode, studio.textEdited, studio.text == kept, files(home) == baseline else {
+            print("FAIL: Keep Editing didn't leave the exact draft open and unsaved"); return false
+        }
+        print("PASS: Show Controls with a text draft asked first; Keep Editing left the exact draft open and nothing saved")
+        guard await confirm("Apply Edits"), !studio.textMode else { print("FAIL: Apply Edits didn't show the controls"); return false }
+        let applied = files(home), paths = changed(baseline, applied)
+        guard applied[mainConfig] == kept.data(using: .isoLatin1), paths.filter({ $0.hasPrefix(mainHistory) && baseline[$0] == nil }).count == 1,
+              paths.allSatisfy({ $0.hasPrefix("main/players/Main/") || $0 == "main/players/.studio.lock" }) else {
+            print("FAIL: Apply Edits didn't save the draft's exact bytes as one History row (changed \(paths))"); return false
+        }
+        print("PASS: Apply Edits saved the draft's exact bytes to Main as one History row and showed the controls")
+        guard await draft("// discard this draft") != nil else { return false }
+        guard await confirm("Discard Edits"), !studio.textMode, files(home) == applied else {
+            print("FAIL: Discard Edits saved something or kept the text open"); return false
+        }
+        guard await pressButton("Edit as Text"), studio.textMode, !studio.textEdited, studio.text.data(using: .isoLatin1) == applied[mainConfig] else {
+            print("FAIL: after Discard Edits, Edit as Text didn't show the saved text"); return false
+        }
+        print("PASS: Discard Edits saved nothing and showed the controls; Edit as Text then showed the saved bytes")
+        return true
     }
 
     /// The drawing is one Tab stop: after a click on E, Tab leaves the keyboard instead of
@@ -1395,22 +1659,6 @@ final class PreviewCatalogGate: Sendable {
                 do { try Snapshots.write(image, to: output.appendingPathComponent("navigation-\(step)-\(appearance).png")); written += 1 } catch { return false }
                 return true
             }
-            /// At 1440 points the rail shows, with Aim selected; at the minimum a menu replaces it. With the
-            /// sidebar hidden at the minimum, either is right, depending on the room the editor gets.
-            func check(_ step: String, rail: Bool?) -> Bool {
-                guard model.page == .configs, model.studio.group == .aim, model.studio.filter == nil else {
-                    print("FAIL: navigation \(step)-\(appearance): the page or group changed (\(model.page), \(model.studio.group))"); return false
-                }
-                let row = railRow(aim, in: window)
-                if rail == true || (rail == nil && row != nil) {
-                    guard row?.selected == true else { print("FAIL: navigation \(step)-\(appearance): \(aim) is not the rail's selected row"); return false }
-                } else {
-                    guard AccessibilityTree.elements(of: window).contains(where: { $0.role == "AXPopUpButton" && $0.label == "Setting group" }) else {
-                        print("FAIL: navigation \(step)-\(appearance): the Setting group menu does not replace the rail"); return false
-                    }
-                }
-                return capture(step)
-            }
             // The native sidebar and toolbar animate their Liquid Glass after a toggle or resize; a
             // capture taken sooner can show a half-collapsed sidebar or the old toolbar outline.
             let settle = Duration.seconds(2)
@@ -1457,6 +1705,50 @@ final class PreviewCatalogGate: Sendable {
                     print("FAIL: navigation \(step)-\(appearance): the native sidebar is \(actual ? "hidden" : "shown"), expected \(hidden ? "hidden" : "shown")"); return false
                 }
                 return true
+            }
+            /// Measured in screen points from the accessibility frames and AppKit's own views: the loadout
+            /// column's content starts 32 points (20 of page margin, 12 of its own inset) past the sidebar's
+            /// visible edge, or the window's edge when hidden, so the editor takes the released width; and
+            /// the Configs title clears every titlebar control.
+            func layout(_ step: String) -> Bool {
+                let primary = NSScreen.screens.first?.frame.maxY ?? 0
+                func screen(_ view: NSView) -> CGRect { AccessibilityTree.quartz(window.convertToScreen(view.convert(view.bounds, to: nil))) }
+                let elements = AccessibilityTree.elements(of: window)
+                let win = CGRect(x: window.frame.minX, y: primary - window.frame.maxY, width: window.frame.width, height: window.frame.height)
+                guard let item = splitController()?.splitViewItems.first(where: { $0.behavior == .sidebar }),
+                      let column = elements.first(where: { $0.label == "Loadouts" && $0.frame.width > 200 })?.frame,
+                      let title = elements.first(where: { ($0.label == "Configs" || $0.value == "Configs") && column.contains(CGPoint(x: $0.frame.midX, y: $0.frame.midY)) })?.frame else {
+                    print("FAIL: navigation \(step)-\(appearance): the sidebar item, loadout column or Configs title could not be measured"); return false
+                }
+                let sidebar = item.viewController.view
+                let edge = item.isCollapsed || sidebar.isHiddenOrHasHiddenAncestor ? win.minX : screen(sidebar).intersection(win).maxX
+                let controls = [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton].compactMap { window.standardWindowButton($0) }
+                    .filter { !$0.isHiddenOrHasHiddenAncestor }.map(screen) + (toggleButton().map { [$0.frame] } ?? [])
+                let gap = column.minX - edge
+                print("navigation \(step)-\(appearance): loadout column x=\(Int(column.minX - win.minX)) gap=\(Int(gap)) editor width=\(Int(win.maxX - column.minX)) title=\(NSStringFromRect(title.offsetBy(dx: -win.minX, dy: -win.minY)))")
+                guard abs(gap - 32) <= 2, column.maxX <= win.maxX else {
+                    print("FAIL: navigation \(step)-\(appearance): the loadout column starts \(Int(gap)) points past the sidebar's edge, not 32"); return false
+                }
+                guard controls.count >= 4, !controls.contains(where: { $0.intersects(title) }) else {
+                    print("FAIL: navigation \(step)-\(appearance): the Configs title overlaps a titlebar control (\(controls.count) controls measured)"); return false
+                }
+                return true
+            }
+            /// At 1440 points the rail shows, with Aim selected; at the minimum a menu replaces it. With the
+            /// sidebar hidden at the minimum, either is right, depending on the room the editor gets.
+            func check(_ step: String, rail: Bool?) -> Bool {
+                guard model.page == .configs, model.studio.group == .aim, model.studio.filter == nil else {
+                    print("FAIL: navigation \(step)-\(appearance): the page or group changed (\(model.page), \(model.studio.group))"); return false
+                }
+                let row = railRow(aim, in: window)
+                if rail == true || (rail == nil && row != nil) {
+                    guard row?.selected == true else { print("FAIL: navigation \(step)-\(appearance): \(aim) is not the rail's selected row"); return false }
+                } else {
+                    guard AccessibilityTree.elements(of: window).contains(where: { $0.role == "AXPopUpButton" && $0.label == "Setting group" }) else {
+                        print("FAIL: navigation \(step)-\(appearance): the Setting group menu does not replace the rail"); return false
+                    }
+                }
+                return layout(step) && capture(step)
             }
             /// One real click on the sidebar's own toolbar button, through the normal event pump, then the
             /// settled native state must be the expected one. No retry: a lost click fails here.

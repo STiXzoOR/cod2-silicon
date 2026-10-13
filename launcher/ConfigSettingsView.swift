@@ -939,8 +939,19 @@ private struct VectorEntry: View {
 }
 
 /// A field that saves on Return or when focus leaves; Escape restores the saved value.
-/// `validate` returns the normalized text, or nil to refuse it.
+/// `validate` returns the normalized text, or nil to refuse it. Only typing during a focus saves, and
+/// only to the context that focus began in: Escape, a new loadout or session, or the saved value
+/// changing while unfocused cancels the edit before the draft resets or focus leaves.
 struct CommitField: View {
+    private struct Edit {
+        let origin: ConfigControlContext?
+        var pending = false
+    }
+    /// The saved value and its context, observed together so one callback sees both new halves.
+    private struct Source: Equatable {
+        let value: String
+        let context: ConfigControlContext?
+    }
     var value: String
     var label: String
     var width: CGFloat?
@@ -952,7 +963,10 @@ struct CommitField: View {
     var commit: (String) -> Void
     @State private var draft = ""
     @State private var invalid = false
-    @State private var draftContext: ConfigControlContext?
+    /// The focus that owns the draft; nil once Escape, a new context or blur ends it.
+    @State private var edit: Edit?
+    /// The last value and context the draft was synchronized with.
+    @State private var source: Source?
     @FocusState private var focused: Bool
     @Environment(\.palette) private var palette
     @Environment(\.configControlContext) private var controlContext
@@ -962,21 +976,30 @@ struct CommitField: View {
             .multilineTextAlignment(alignment)
             .focused($focused)
             .onSubmit(apply)
-            .onExitCommand { draft = value; invalid = false; focused = false }
-            .onChange(of: focused) { if $0 { draftContext = controlContext } else { apply() } }
-            .onChange(of: value) { if !focused { draft = $0; invalid = false; draftContext = controlContext } }
-            .onChange(of: controlContext) { context in draft = value; invalid = false; draftContext = context; focused = false }
-            .onAppear { draft = value; draftContext = controlContext }
+            .onExitCommand { edit = nil; draft = value; invalid = false; focused = false }
+            .onChange(of: focused) { gained in
+                if gained { edit = Edit(origin: controlContext, pending: invalid) } else { apply(); edit = nil }
+            }
+            .onChange(of: Source(value: value, context: controlContext)) { sync($0) }
+            .onAppear { draft = value; source = Source(value: value, context: controlContext) }
             .accessibilityLabel(label)
             .accessibilityValue(secure ? "" : draft)
     }
+    /// Only the user's typing changes the draft through this binding, so only it makes the edit pending.
+    private var text: Binding<String> {
+        Binding(get: { draft }, set: { newValue in
+            guard newValue != draft else { return }
+            draft = newValue
+            edit?.pending = true
+        })
+    }
     @ViewBuilder private var field: some View {
         if plain {
-            TextField(label, text: $draft, prompt: prompt.map { Text($0) }).textFieldStyle(.plain).labelsHidden()
+            TextField(label, text: text, prompt: prompt.map { Text($0) }).textFieldStyle(.plain).labelsHidden()
         } else {
             Group {
-                if secure { SecureField(label, text: $draft, prompt: prompt.map { Text($0) }) }
-                else { TextField(label, text: $draft, prompt: prompt.map { Text($0) }) }
+                if secure { SecureField(label, text: text, prompt: prompt.map { Text($0) }) }
+                else { TextField(label, text: text, prompt: prompt.map { Text($0) }) }
             }
             .textFieldStyle(.plain).labelsHidden()
             .font(.system(size: 13)).monospacedDigit()
@@ -985,11 +1008,23 @@ struct CommitField: View {
             .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).strokeBorder(invalid ? palette.negative : palette.wellStroke, lineWidth: 1))
         }
     }
+    /// Reads only the callback's snapshot, never this closure's captured `value` or context, which
+    /// can still be the previous loadout's. A new context ends the old edit before focus leaves, so the
+    /// blur's `apply` finds no edit; a pending draft survives only a value change in its own context.
+    private func sync(_ next: Source) {
+        let contextChanged = source.map { $0.context != next.context } ?? false
+        source = next
+        if contextChanged || !focused || edit.map({ $0.origin != next.context }) == true { edit = nil }
+        if edit?.pending != true { draft = next.value; invalid = false }
+        if contextChanged { focused = false }
+    }
     private func apply() {
-        guard draftContext == controlContext, draftContext?.isCurrent != false else { draft = value; invalid = false; return }
-        guard draft != value else { invalid = false; return }
+        guard let current = edit, current.pending else { return }
+        guard current.origin == controlContext, current.origin?.isCurrent != false else { edit = nil; draft = value; invalid = false; return }
+        guard draft != value else { edit?.pending = false; invalid = false; return }
         guard let normalized = validate(draft) else { invalid = true; NSSound.beep(); return }
         invalid = false
+        edit?.pending = false
         draft = normalized
         if normalized != value { commit(normalized) }
     }

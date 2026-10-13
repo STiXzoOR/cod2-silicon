@@ -46,18 +46,23 @@ struct ConfigsShell: View {
     @State private var renaming = false
     @State private var jumping = false
     @State private var pendingLeave: (@MainActor () -> Void)?
+    /// The traffic lights and the sidebar button span the titlebar's first 140 points.
+    private static let windowControls: CGFloat = 140
 
     var body: some View {
         HStack(spacing: 0) {
             LoadoutColumn(studio: studio, session: session, discover: discover, select: { id in leaveText { discover.page = nil; studio.select(id) } },
                           create: { newLoadout = NewLoadoutRequest(copy: false) }, open: { page in leaveText { discover.open(page) } })
                 .frame(width: StudioMetrics.loadoutColumn)
+                // The column's title shares the titlebar row with the app sidebar beside it; with that
+                // sidebar hidden, the row holds the window controls, so the column starts below the toolbar.
+                .ignoresSafeArea(.container, edges: origin.x < Self.windowControls ? [] : .top)
             Rectangle().fill(palette.separator).frame(width: 1).ignoresSafeArea()
-            if discover.page != nil { ConfigDiscoverView(model: model, discover: discover) } else { content }
+            Group { if discover.page != nil { ConfigDiscoverView(model: model, discover: discover) } else { content } }
+                .ignoresSafeArea(.container, edges: .top)
         }
-        .padding(.leading, max(0, 252 - origin.x))
+        .padding(.leading, 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .ignoresSafeArea(.container, edges: .top)
         .background(WindowOriginReader(origin: $origin))
         .environment(\.configControlContext, session.current.map { ConfigControlContext(studio: studio, session: session, profileID: $0.profile.id) })
         .onAppear { studio.refreshComparison(); studio.checkup.load() }

@@ -138,6 +138,9 @@ for screen in configs:
 # Real clicks on Config Studio controls (including a Binds key capture and Check-up Apply and
 # Undo) write exact bytes and History rows in a temporary home.
 subprocess.run([str(harness), str(out / "actions"), "--actions"], check=True, timeout=300)
+# A Mouse speed keyboard step or typed value never lands on the loadout chosen before it saved, and
+# Show Controls with a text draft asks to Apply, Discard or Keep Editing; each with a positive save.
+subprocess.run([str(harness), str(out / "actions"), "--actions", "--only", "review-controls"], check=True, timeout=300)
 
 # Every Config Studio control has a name in the accessibility tree VoiceOver reads; the trees
 # are written in reading order for review.
