@@ -263,7 +263,7 @@ struct WindowOriginReader: View {
     var body: some View {
         GeometryReader { proxy in
             Color.clear.onAppear { origin = proxy.frame(in: .global).origin }
-                .onChange(of: proxy.frame(in: .global).origin) { origin = $0 }
+                .onChange(of: proxy.frame(in: .global).origin) { _, value in origin = value }
         }
     }
 }

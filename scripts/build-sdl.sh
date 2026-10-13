@@ -18,7 +18,7 @@ fetch() {
 }
 fetch SDL3-3.4.10.tar.gz 12b34280415ec8418c864408b93d008a20a6530687ee613d60bfbd20411f2785
 fetch sdl2-compat-2.32.72.tar.gz a14d2f78dad8e83ef1039b6534ace4d14f11f5b11d023af989affd70ac1bb35e
-stamp='SDL3-3.4.10 sdl2-compat-2.32.72 arm64 macOS13 Release v1'
+stamp='SDL3-3.4.10 sdl2-compat-2.32.72 arm64 macOS26 Release v1'
 if [[ -f "$prefix/.complete" && $(cat "$prefix/.complete") == "$stamp" ]]; then
     exit 0
 fi
@@ -37,7 +37,7 @@ run() {
 }
 jobs=${COD2_BUILD_JOBS:-$(/usr/sbin/sysctl -n hw.ncpu)}
 common=(-DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64
-    -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0 -DCMAKE_EXPORT_PACKAGE_REGISTRY=OFF "-DCMAKE_INSTALL_PREFIX=$prefix"
+    -DCMAKE_OSX_DEPLOYMENT_TARGET=26.0 -DCMAKE_EXPORT_PACKAGE_REGISTRY=OFF "-DCMAKE_INSTALL_PREFIX=$prefix"
     "-DCMAKE_IGNORE_PREFIX_PATH=/opt/homebrew;/usr/local")
 run cmake -S "$cache/SDL3-3.4.10" -B "$cache/sdl3-build" "${common[@]}" \
     -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TESTS=OFF -DSDL_TEST_LIBRARY=OFF -DSDL_FRAMEWORK=OFF

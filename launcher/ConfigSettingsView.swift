@@ -587,7 +587,7 @@ private struct ExpertEditor: View {
             }
             .scrollIndicators(.automatic)
             .onAppear { scroll(reader) }
-            .onChange(of: studio.highlighted) { _ in scroll(reader) }
+            .onChange(of: studio.highlighted) { _, _ in scroll(reader) }
         }
     }
     private var emptyMessage: String {
@@ -977,10 +977,10 @@ struct CommitField: View {
             .focused($focused)
             .onSubmit(apply)
             .onExitCommand { edit = nil; draft = value; invalid = false; focused = false }
-            .onChange(of: focused) { gained in
+            .onChange(of: focused) { _, gained in
                 if gained { edit = Edit(origin: controlContext, pending: invalid) } else { apply(); edit = nil }
             }
-            .onChange(of: Source(value: value, context: controlContext)) { sync($0) }
+            .onChange(of: Source(value: value, context: controlContext)) { _, value in sync(value) }
             .onAppear { draft = value; source = Source(value: value, context: controlContext) }
             .accessibilityLabel(label)
             .accessibilityValue(secure ? "" : draft)
@@ -1064,7 +1064,7 @@ struct CommitSlider: View {
                     .frame(minWidth: 110, alignment: .trailing).accessibilityHidden(true)
             }
         }
-        .onChange(of: controlContext) { _ in cancel() }
+        .onChange(of: controlContext) { _, _ in cancel() }
         .onDisappear(perform: cancel)
     }
     private var slider: some View {
@@ -1387,7 +1387,7 @@ struct JumpPalette: View {
                         .accessibilityHint("Opens it in Expert")
                     }
                     .listStyle(.plain).scrollContentBackground(.hidden)
-                    .onChange(of: selection) { name in if let name { reader.scrollTo(name) } }
+                    .onChange(of: selection) { _, name in if let name { reader.scrollTo(name) } }
                 }
             }
             HStack(spacing: 14) {
@@ -1399,7 +1399,7 @@ struct JumpPalette: View {
         .padding(12)
         .frame(width: 600, height: 440)
         .onAppear { searching = true; selection = results.first?.name }
-        .onChange(of: query) { _ in selection = studio.jumpResults(query).first?.name }
+        .onChange(of: query) { _, _ in selection = studio.jumpResults(query).first?.name }
     }
     private func move(_ direction: MoveCommandDirection, in results: [ConfigSettingSpec]) {
         guard !results.isEmpty else { return }

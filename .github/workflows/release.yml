@@ -1,6 +1,7 @@
-name: Draft macOS arm64 release
+name: Package macOS arm64
 
 on:
+  pull_request:
   push:
     tags: ['v*']
   # Dry run: package on the hosted runner and keep the zip as a workflow
@@ -12,30 +13,53 @@ on:
         default: 0.0.0
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   package:
-    # GitHub's standard macos-15 runner is Apple silicon (M1).
-    runs-on: macos-15
+    # GitHub's macos-26 runner uses Apple silicon and the supported Xcode 26 toolchain.
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
+      - name: Verify supported build host
+        run: |
+          test "$(uname -m)" = arm64
+          sw_vers
+          xcodebuild -version
+          test "$(sw_vers -productVersion | cut -d. -f1)" -ge 26
+          test "$(xcrun --show-sdk-version | cut -d. -f1)" -ge 26
       - name: Build from the committed snapshot, audit and ad-hoc sign
         env:
           DRY_RUN_VERSION: ${{ inputs.version }}
         run: |
-          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then version=$DRY_RUN_VERSION; else version=${GITHUB_REF_NAME#v}; fi
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then version=$DRY_RUN_VERSION; elif [ "$GITHUB_EVENT_NAME" = push ]; then version=${GITHUB_REF_NAME#v}; else version=$(cat RELEASE_VERSION); fi
           ./scripts/package-release.sh --version "$version"
-      - name: Keep dry-run assets as a workflow artifact
-        if: github.event_name == 'workflow_dispatch'
+      - name: Verify bundle and run launcher core on macOS 26
+        run: |
+          python3 tests/packaging/launcher_bundle.py "build/package/release/CoD2 Silicon.app"
+          ./scripts/build-launcher.sh "$RUNNER_TEMP/launcher-core" --test
+          "$RUNNER_TEMP/launcher-core/LauncherTests" tests/launcher/fixtures
+          python3 tests/packaging/first_run.py
+      - name: Keep verified assets as a workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: cod2-silicon-dry-run
           path: dist/
+  publish:
+    if: github.event_name == 'push'
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: cod2-silicon-dry-run
+          path: dist
       - name: Upload assets to a draft release
-        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         shell: bash
         run: |
           set -euo pipefail
@@ -45,5 +69,5 @@ jobs:
           else
             gh release create "$GITHUB_REF_NAME" dist/*.zip dist/SHA256SUMS --draft \
               --title "CoD2 Silicon ${GITHUB_REF_NAME#v}" \
-              --notes 'Apple silicon, macOS 13+. Ad-hoc signed and not notarized. See the README for game data and Gatekeeper instructions.'
+              --notes 'Apple silicon, macOS 26+. Ad-hoc signed and not notarized. See the README for game data and Gatekeeper instructions.'
           fi

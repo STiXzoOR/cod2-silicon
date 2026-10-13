@@ -2,7 +2,7 @@
 
 Build: `scripts/build-launcher.sh output/ws28/launcher` (Xcode Swift 6, no
 packages). CMake's `cod2_launcher` and `cod2_macos_app` targets and both release
-scripts use the same builder. Deployment target: arm64 macOS 13, Swift language
+scripts use the same builder. Deployment target: arm64 macOS 26, Swift language
 mode 6, complete strict concurrency, warnings as errors.
 
 Source layout:
@@ -13,7 +13,7 @@ Source layout:
 - `Network.swift`, `Model.swift`, `MapArtwork.swift`: discovery, lifecycle, and the
   player's own loading screens decoded into a private cache.
 - `Theme.swift`: colour tokens for dark and light, the bundled typefaces, and the
-  glass surfaces and buttons with their macOS 13–25 material fallback.
+  glass surfaces and buttons with their accessibility material fallback.
 - `Artwork.swift`: original fallback art drawn from the design's vector data, icon G
   at sidebar scale and the dog tags.
 - `RootView.swift` and the screen files: Home, Servers, Library, Configs, Settings,

@@ -28,7 +28,7 @@ struct LibraryView: View {
         }
         .ignoresSafeArea(.container, edges: .top)
         .background(WindowOriginReader(origin: $origin))
-        .onChange(of: model.libraryTab) { _ in model.loadMedia() }
+        .onChange(of: model.libraryTab) { _, _ in model.loadMedia() }
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Picker("Library section", selection: $model.libraryTab) { ForEach(LibraryTab.allCases) { Text($0.rawValue).tag($0) } }

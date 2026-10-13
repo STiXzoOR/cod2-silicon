@@ -4,7 +4,7 @@ import base64, json, os, pathlib, re, subprocess, time
 root = pathlib.Path(__file__).resolve().parents[2]
 out = pathlib.Path(os.environ.get('COD2_LAUNCHER_TEST_OUTPUT', str(root/'output/ws25'))) / 'lifecycle.noindex';out.mkdir(parents=True, exist_ok=True)
 fixture = out/'fixture'
-subprocess.run(['taskpolicy','-b','nice','-n','19','clang','-fobjc-arc','-mmacosx-version-min=13.0','-DCOD2_X64=1','-DCOD2_CODX=1',str(root/'tests/launcher/lifecycle.m'),str(root/'src/PC/qcommon/cod2x_url.c'),'-framework','AppKit','-o',str(fixture)],check=True)
+subprocess.run(['taskpolicy','-b','nice','-n','19','clang','-fobjc-arc','-mmacosx-version-min=26.0','-DCOD2_X64=1','-DCOD2_CODX=1',str(root/'tests/launcher/lifecycle.m'),str(root/'src/PC/qcommon/cod2x_url.c'),'-framework','AppKit','-o',str(fixture)],check=True)
 app = out/'Lifecycle.app'
 subprocess.run([str(root/'scripts/build-launcher.sh'), str(out/'launcher')], check=True)
 subprocess.run(['python3',str(root/'tools/cod2x/make_macos_app.py'),str(fixture),str(app),'--replace','--bundle-id','io.github.stixzoor.cod2silicon.ws25fixture','--launcher',str(out/'launcher/CoD2Launcher')],check=True)

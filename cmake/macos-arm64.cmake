@@ -1,6 +1,6 @@
 # Native Apple platform. Typed engine data/import slots are supplied by WS2.
 set(CMAKE_OSX_ARCHITECTURES arm64)
-set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "Minimum native macOS version" FORCE)
+set(CMAKE_OSX_DEPLOYMENT_TARGET "26.0" CACHE STRING "Minimum native macOS version" FORCE)
 option(COD2_MACOS_RELEASE "Require a portable pinned-SDL release build" OFF)
 set(COD2_RELEASE_VERSION "" CACHE STRING "Release version override (empty uses RELEASE_VERSION)")
 if(NOT COD2_RELEASE_VERSION)
@@ -140,7 +140,7 @@ if(COD2_FEATURE_CFLAGS MATCHES "(^| )-DCOD2_CODX=1( |$)")
       "${CMAKE_SOURCE_DIR}/src/platform/cod2x_native_setup.h"
       "${CMAKE_SOURCE_DIR}/src/platform/cod2x_native_shaders.m"
       "${CMAKE_SOURCE_DIR}/src/PC/qcommon/cod2x_url.c"
-    COMMENT "Build Swift 6 native launcher (macOS 13)"
+    COMMENT "Build Swift 6 native launcher (macOS 26)"
     VERBATIM)
   add_custom_target(cod2_launcher DEPENDS "${CMAKE_BINARY_DIR}/launcher/CoD2Launcher")
   add_custom_target(cod2_macos_app

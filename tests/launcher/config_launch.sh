@@ -7,7 +7,7 @@ taskpolicy -b nice -n 19 bash "$root/scripts/build-launcher.sh" "$scratch/core" 
 sdk=$(/usr/bin/xcrun --show-sdk-path)
 taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc -j 1 \
     -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
-    -target arm64-apple-macos13 -sdk "$sdk" -O -import-objc-header "$root/launcher/NativeSetup.h" \
+    -target arm64-apple-macos26 -sdk "$sdk" -O -import-objc-header "$root/launcher/NativeSetup.h" \
     "$root/launcher/Core.swift" "$root/launcher/Presentation.swift" \
     "$root/launcher/ConfigDocument.swift" "$root/launcher/ConfigProfiles.swift" "$root/launcher/ConfigHistory.swift" \
     "$root/launcher/ConfigStudioSession.swift" "$root/tests/launcher/ConfigLaunchTests.swift" \

@@ -61,7 +61,7 @@ struct ServersView: View {
         .background { ContourBackdrop().ignoresSafeArea() }
         .ignoresSafeArea(.container, edges: .top)
         .background(WindowOriginReader(origin: $origin))
-        .onChange(of: model.visibleServers.count) { _ in model.loadArtwork() }
+        .onChange(of: model.visibleServers.count) { _, _ in model.loadArtwork() }
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 HStack(spacing: 8) {

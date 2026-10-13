@@ -47,7 +47,7 @@ for bundle in (test_app / 'Contents/Helpers/CoD2 Game.app', test_app):
     subprocess.run(['codesign', '--force', '--sign', '-', str(bundle)], check=True)
 app = test_app
 probe, state_tool = out / 'deploy-probe.dylib', out / 'window-state'
-subprocess.run(['taskpolicy', '-b', 'nice', '-n', '19', 'clang', '-dynamiclib', '-fobjc-arc', '-mmacosx-version-min=13.0',
+subprocess.run(['taskpolicy', '-b', 'nice', '-n', '19', 'clang', '-dynamiclib', '-fobjc-arc', '-mmacosx-version-min=26.0',
                 str(ROOT / 'tests/launcher/deploy_probe.m'), '-framework', 'AppKit', '-o', str(probe)], check=True)
 subprocess.run(['taskpolicy', '-b', 'nice', '-n', '19', 'swiftc', str(ROOT / 'tests/platform/window_state.swift'), '-o', str(state_tool)], check=True)
 unregister = '/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister'

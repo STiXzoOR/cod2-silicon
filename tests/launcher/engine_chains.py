@@ -249,7 +249,7 @@ PASS: production toggle value list
 PASS: production competitive wait gate
 """
 for mode, mode_flags in [("stock", []), ("codx", ["-DCOD2_CODX=1"])]:
-    subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", "xcrun", "clang", "-target", "arm64-apple-macos13",
+    subprocess.run(["taskpolicy", "-b", "nice", "-n", "19", "xcrun", "clang", "-target", "arm64-apple-macos26",
         "-DCOD2_X64=1", *mode_flags, "-DCOD2_APPLE_SDK=0", "-Wall", "-Wextra", "-Werror", "-Wno-unused-function",
         "-fsanitize=address,undefined", str(fixture), "-o", str(binary)], check=True)
     output = subprocess.check_output(["taskpolicy", "-b", "nice", "-n", "19", str(binary),

@@ -20,7 +20,7 @@ rendering comparisons, fullscreen limits and measured performance.
 ## Requirements and game data
 
 - An **Apple silicon Mac**; Intel Macs are not supported by this port.
-- **macOS 13 or later**.
+- **macOS 26 or later**.
 - Your own licensed Call of Duty 2 1.3 game data and CD key.
 - The original Steam Mac copy enables matching shaders; without it the app
   uses approximate shaders, with visibly different lighting.
@@ -58,7 +58,7 @@ xattr -dr com.apple.quarantine "/Applications/CoD2 Silicon.app"
 git clone https://github.com/STiXzoOR/cod2-silicon && cd cod2-silicon && ./scripts/install.sh
 ```
 
-The installer needs Swift 6 (Xcode 16 or later), the Xcode Command Line Tools and CMake and explains how to
+The installer needs Swift 6 (Xcode 26 or later), the Xcode Command Line Tools and CMake and explains how to
 get them. It downloads and builds the pinned SDL release itself (no Homebrew),
 compiles the client and installs `~/Applications/CoD2 Silicon.app`. No original
 game binary is needed to build. A locally built app is not quarantined, so

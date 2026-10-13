@@ -66,13 +66,13 @@ struct ConfigsShell: View {
         .background(WindowOriginReader(origin: $origin))
         .environment(\.configControlContext, session.current.map { ConfigControlContext(studio: studio, session: session, profileID: $0.profile.id) })
         .onAppear { studio.refreshComparison(); studio.checkup.load() }
-        .onChange(of: studio.gameRunning) { running in if running { studio.binds.gameStarted() } }
-        .onChange(of: session.current?.version) { _ in
+        .onChange(of: studio.gameRunning) { _, running in if running { studio.binds.gameStarted() } }
+        .onChange(of: session.current?.version) { _, _ in
             studio.refreshComparison()
             if studio.textMode && !studio.textEdited { studio.loadText() }
         }
         // A loadout made, imported or chosen elsewhere is shown in place of Discover.
-        .onChange(of: session.current?.profile.id) { _ in discover.page = nil }
+        .onChange(of: session.current?.profile.id) { _, _ in discover.page = nil }
         .configImportFlows(discover)
         .toolbar {
             if discover.page == nil { ToolbarItem(placement: .principal) {
