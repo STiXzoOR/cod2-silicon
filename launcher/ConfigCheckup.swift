@@ -239,8 +239,11 @@ struct ConfigCheckup: Sendable {
             case .different: break
             case .greaterThan: guard number > (ConfigRules.number(proposed) ?? number) else { return nil }
             case .outsideCompetitiveBand:
-                let band = rulesetIDs.flatMap { rules.resolvedRules(id: $0) }.first {
-                    $0.setting.lowercased() == rule.setting.lowercased() && $0.constraint.kind == .range && $0.constraint.maximum == 250
+                let selectedRules: [ConfigSettingRule] = rulesetIDs.flatMap { rules.resolvedRules(id: $0) }
+                let band: ConfigSettingRule? = selectedRules.first { candidate in
+                    guard candidate.setting.lowercased() == rule.setting.lowercased() else { return false }
+                    guard candidate.constraint.kind == .range else { return false }
+                    return candidate.constraint.maximum == 250
                 }
                 guard let band, let min = band.constraint.minimum, let max = band.constraint.maximum,
                       number < min || number > max || number.rounded() != number else { return nil }

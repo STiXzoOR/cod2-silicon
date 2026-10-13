@@ -12,11 +12,11 @@ for unit in NativeSetup NativeShaders URL; do
         NativeShaders) source="$root/src/platform/cod2x_native_shaders.m" ;;
         URL) source="$root/src/PC/qcommon/cod2x_url.c" ;;
     esac
-    taskpolicy -b nice -n 19 /usr/bin/xcrun clang -target arm64-apple-macos13 -isysroot "$sdk" -fobjc-arc -DCOD2_X64=1 -DCOD2_CODX=1 -c "$source" -o "$scratch/$unit.o"
+    taskpolicy -b nice -n 19 /usr/bin/xcrun clang -target arm64-apple-macos26 -isysroot "$sdk" -fobjc-arc -DCOD2_X64=1 -DCOD2_CODX=1 -c "$source" -o "$scratch/$unit.o"
 done
 taskpolicy -b nice -n 19 /usr/bin/xcrun swiftc -j 1 \
     -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
-    -target arm64-apple-macos13 -sdk "$sdk" "$optimization" -import-objc-header "$root/launcher/NativeSetup.h" \
+    -target arm64-apple-macos26 -sdk "$sdk" "$optimization" -import-objc-header "$root/launcher/NativeSetup.h" \
     "$root/launcher/Core.swift" "$root/launcher/Presentation.swift" \
     "$root/launcher/ConfigDocument.swift" "$root/launcher/ConfigProfiles.swift" "$root/launcher/ConfigHistory.swift" "$root/launcher/ConfigStudioSession.swift" \
     "$root/launcher/ConfigImport.swift" "$root/launcher/ConfigImportSafety.swift" \

@@ -15,6 +15,7 @@ assert engine['CoD2AutomaticShaderSetup'] is False
 assert 'CFBundleURLTypes' not in engine
 assert 'CoD2GameDirectory' not in info
 for contents, plist in [(app / 'Contents', info), (game / 'Contents', engine)]:
+    assert plist['LSMinimumSystemVersion'] == '26.0', plist['LSMinimumSystemVersion']
     assert plist['CFBundleIconFile'] == 'CoD2 Silicon', plist.get('CFBundleIconFile')
     assert (contents / 'Resources/CoD2 Silicon.icns').is_file()
     if 'CFBundleIconName' in plist:  # layered Icon Composer build (Xcode actool)
@@ -31,7 +32,7 @@ assert len(binaries) == 4
 for path in binaries:
     subprocess.run(['lipo', str(path), '-verify_arch', 'arm64'], check=True)
     build = subprocess.check_output(['vtool', '-show-build', str(path)], text=True)
-    assert re.search(r'minos 13\.0(?:\.0)?\s', build), (path, build)
+    assert re.search(r'minos 26\.0(?:\.0)?\s', build), (path, build)
     links = subprocess.check_output(['otool', '-L', str(path)], text=True).splitlines()[1:]
     for line in links:
         link = line.strip().rsplit(' (', 1)[0]
@@ -41,4 +42,4 @@ for path in app.rglob('*'):
     assert path.suffix not in {'.iwd', '.py', '.dm_1', '.dm_2'}, path
     assert path.name not in {'preferences', 'manifest.json', 'data-path.txt'}, path
 subprocess.run(['codesign', '--verify', '--deep', '--strict', str(app)], check=True)
-print('PASS: launcher + isolated Game Mode helper, one URL owner, four arm64/macOS13 Mach-Os, portable links, deep signature, no game content, icon G in both apps, OFL fonts with licences')
+print('PASS: launcher + isolated Game Mode helper, one URL owner, four arm64/macOS26 Mach-Os, portable links, deep signature, no game content, icon G in both apps, OFL fonts with licences')

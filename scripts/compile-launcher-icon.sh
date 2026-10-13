@@ -24,7 +24,7 @@ if [ "${sdk_version%%.*}" -lt 26 ]; then
 fi
 mkdir -p "$output"
 "$actool" "$source_icon" "$root/launcher/Resources/Accent.xcassets" --compile "$output" --platform macosx \
-    --minimum-deployment-target 13.0 --app-icon "$name" --accent-color AccentColor \
+    --minimum-deployment-target 26.0 --app-icon "$name" --accent-color AccentColor \
     --output-partial-info-plist "$output/icon-info.plist" \
     --output-format human-readable-text --warnings --errors
 # Consumers merge icon-info.plist into Info.plist and copy Assets.car plus ICNS.

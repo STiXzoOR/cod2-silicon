@@ -564,9 +564,9 @@ private struct ReviewRow: View {
     @ViewBuilder private var exact: some View {
         Group {
             if protected, let previous = item.previous {
-                Text(previous).foregroundColor(palette.address) + Text("  (theirs: \(item.exact))").foregroundColor(palette.secondary)
+                Text("\(Text(previous).foregroundColor(palette.address))\(Text("  (theirs: \(item.exact))").foregroundColor(palette.secondary))")
             } else if let previous = item.previous, !item.risky {
-                Text(previous).strikethrough().foregroundColor(palette.secondary) + Text("  ") + Text(item.exact).foregroundColor(palette.accent)
+                Text("\(Text(previous).strikethrough().foregroundColor(palette.secondary))  \(Text(item.exact).foregroundColor(palette.accent))")
             } else {
                 Text(item.exact).foregroundColor(palette.address)
             }

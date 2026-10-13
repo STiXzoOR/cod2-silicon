@@ -621,8 +621,9 @@ private struct PressPreview: View {
     private func line(lead: String, parts: [ConfigCommandWords], joiner: String) -> some View {
         var text = Text(lead + " ").font(.system(size: 12, weight: .semibold)).foregroundColor(palette.secondary)
         for (index, part) in parts.enumerated() {
-            if index > 0 { text = text + Text(" \(joiner) ").foregroundColor(palette.accent) }
-            text = text + (part.literal ? Text(part.text).font(.typewriter(12)) : Text(part.text).font(.system(size: 13, weight: .semibold))).foregroundColor(palette.text)
+            if index > 0 { text = Text("\(text)\(Text(" \(joiner) ").foregroundColor(palette.accent))") }
+            let word = (part.literal ? Text(part.text).font(.typewriter(12)) : Text(part.text).font(.system(size: 13, weight: .semibold))).foregroundColor(palette.text)
+            text = Text("\(text)\(word)")
         }
         return text.fixedSize(horizontal: false, vertical: true)
     }

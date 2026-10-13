@@ -335,14 +335,21 @@ struct FlowChips: View {
     var body: some View {
         ChipFlow(spacing: 5) {
             ForEach(tags, id: \.self) { tag in
-                Text(tag).font(.system(size: 11, weight: .semibold)).foregroundStyle(palette.chipText).lineLimit(1)
-                    .padding(.horizontal, 9).frame(height: 22)
-                    .background(palette.dark ? Color.white.opacity(0.06) : Color.white.opacity(0.55), in: Capsule())
-                    .overlay(Capsule().stroke(palette.dark ? Color.white.opacity(0.12) : palette.wellStroke, lineWidth: 1))
+                chip(tag)
             }
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Style: " + tags.joined(separator: ", "))
+    }
+
+    private func chip(_ tag: String) -> some View {
+        let fill: Color = palette.dark ? Color.white.opacity(0.06) : Color.white.opacity(0.55)
+        let stroke: Color = palette.dark ? Color.white.opacity(0.12) : palette.wellStroke
+        let label = Text(tag).font(.system(size: 11, weight: .semibold)).foregroundStyle(palette.chipText).lineLimit(1)
+            .padding(.horizontal, 9).frame(height: 22)
+        return label
+            .background(fill, in: Capsule())
+            .overlay(Capsule().stroke(stroke, lineWidth: 1))
     }
 }
 
