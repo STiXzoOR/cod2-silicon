@@ -30,6 +30,11 @@ renderer.
 
 ## 0.3 — Metal renderer
 
+The [0.3 readiness plan](plans/2026-10-13-03-metal-readiness-plan.md) defines
+the integration order and certification gates. It builds on the preserved
+Metal implementation and the [IW4L/Highball source study](research/2026-10-13-iw4l-highball.md).
+This is preparation; Metal is not yet available in the released application.
+
 - **Native Metal renderer.** Metal 4 on macOS 26 and later, implementing the
   existing D3D9-style renderer contracts so engine code is unchanged. OpenGL
   remains the classic fallback and visual parity reference on supported Macs
