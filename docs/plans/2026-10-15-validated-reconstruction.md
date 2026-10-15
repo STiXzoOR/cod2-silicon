@@ -11,8 +11,9 @@ controlled by the host and is not asserted by this document.
 
 The initial executable scope is the three hash-pinned owned Mac inputs in A0.
 The first completion target is native Mac multiplayer, following the existing
-source product. This is the working assumption pending the user’s scope reply;
-shared recovery retains the SP evidence without claiming a native SP product.
+source product. The user confirmed multiplayer first, then single-player on
+2026-10-15. Shared recovery retains SP evidence; the second completion target
+requires its own implementation and validation campaign.
 Do not silently count MP source correspondence as an SP implementation or
 substitute Windows execution evidence for Mac behavior without documenting the
 difference. Other owned variants require provenance review and their own ledger.
@@ -81,7 +82,10 @@ sanitized findings only.
 R1's measured type-recovery/baseline slice and R2's four-function scalar-math
 pilot are complete; see their dated reports. R2 continues for other subsystems.
 The user selected Highball or GameToMac for running their Steam copy. Highball
-0.10.15 has been checksum/signature verified and installed locally; runtime and
-Steam setup are in progress. Any Windows retail results will carry separate
+0.10.15 has been checksum/signature verified and installed locally. Its dedicated
+CoD2 Reference environment has Wine 10, DXVK and an updated Steam client. The
+user reports sign-in complete; retail CoD2 installation is pending. The initial
+private campaign will compare loopback Toujane DM startup before expanding to
+rendered clients and richer observations. Any Windows retail results will carry separate
 binary provenance and platform-qualified conclusions. They do not establish
 Mac i386 equivalence by themselves. Full reconstruction remains incomplete.
