@@ -2,7 +2,7 @@
 title: CoD2 owned-binary analysis with Rizin and REA
 date: 2026-10-15
 execution: knowledge-work
-status: executing — A0 and A1 complete; initial discovery and six-function export retained
+status: executing — A0–A2 complete with explicit discovery gaps; A3 export in progress
 ---
 
 # CoD2 owned-binary analysis with Rizin and REA
@@ -154,9 +154,11 @@ the earlier installation-pending state above.
 - [A1 toolchain and pilot](../macos-port/reports/2026-10-15-binary-analysis-A1.md):
   complete: pinned local tools, passing Ghidra readiness, and a verified
   lighting/water pilot within a six-function private export batch.
-- A2 discovery has started with private section/symbol and MP function inventories; complete
-  function/range reconciliation remains pending. A3 whole-program export and
-  A4–A6 reconstruction/validation are not complete.
+- [A2 discovery](../macos-port/reports/2026-10-15-binary-analysis-A2.md): complete
+  for the selected corpus, with reconciled function and byte denominators,
+  recovered candidate boundaries and explicit unknown regions.
+- A3 whole-program export is in progress against the final A2 inventory.
+  A4–A6 reconstruction/validation remain pending.
 
 The earlier “verified starting point” and “readiness and next action” sections
 are the U1 snapshot. The linked execution reports carry newer evidence.
