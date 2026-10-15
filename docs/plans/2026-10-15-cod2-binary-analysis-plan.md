@@ -2,7 +2,7 @@
 title: CoD2 owned-binary analysis with Rizin and REA
 date: 2026-10-15
 execution: knowledge-work
-status: A0–A3 complete for the selected Mac corpus with explicit gaps; A4–A6 pending
+status: A0–A4 catalogs delivered with explicit gaps; A5–A6 verification/audit in progress
 ---
 
 # CoD2 owned-binary analysis with Rizin and REA
@@ -161,8 +161,10 @@ the earlier installation-pending state above.
   against all 24,735 final inventory records: 22,777 decompiled bodies, two
   no-decoded-body records and 1,956 external imports. All Rizin candidates have
   explicit dispositions; unknown bytes and unproven behavior remain visible.
-- A4–A6 types, source correspondence, behavioral verification and comprehensive
-  reconstruction audit remain pending.
+- [A4 types and source correspondence](../macos-port/reports/2026-10-15-binary-analysis-A4.md):
+  catalog delivered for every record, with 13,523 unique source candidates and
+  explicit type/parser and mapping gaps. Symbol correspondence is not behavior proof.
+- A5 verification and A6 comprehensive disposition audit are in progress.
 
 The earlier “verified starting point” and “readiness and next action” sections
 are the U1 snapshot. The linked execution reports carry newer evidence.
