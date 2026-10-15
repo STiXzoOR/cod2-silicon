@@ -546,12 +546,25 @@ const float AngleMod(const float a)
 
 const float LerpAngle(const float from, const float to, const float frac)
 {
+#if defined(COD2_X64)
+    float adjustedTo = to;
+    float a = adjustedTo - from;
+    // Preserve the original endpoint rounding before subtracting the source.
+    if (a > 180.0f) {
+        adjustedTo -= 360.0f;
+        a = adjustedTo - from;
+    }
+    if (a < -180.0f)
+        a = (adjustedTo + 360.0f) - from;
+    return from + frac * a;
+#else
     float a = to - from;
     if (a > 180.0f)
         a -= 360.0f;
     if (a < -180.0f)
         a += 360.0f;
     return from + frac * a;
+#endif
 }
 
 static inline __attribute__((always_inline)) float AngleSubtract_core(const float a1, const float a2)
