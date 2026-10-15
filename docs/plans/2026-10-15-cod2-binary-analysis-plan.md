@@ -2,7 +2,7 @@
 title: CoD2 owned-binary analysis with Rizin and REA
 date: 2026-10-15
 execution: knowledge-work
-status: planned — providers not provisioned; whole-program analysis not executed
+status: executing — A0 and A1 complete; initial discovery and six-function export retained
 ---
 
 # CoD2 owned-binary analysis with Rizin and REA
@@ -111,7 +111,8 @@ bench wrapper, owned processes and private writable homes.
 Proposed external root:
 `~/Library/Application Support/CoD2-native-binary-analysis/20261015.noindex/`.
 Keep inputs, tools, provider projects, batch exports, receipts and coverage there.
-This location is planned, not provisioned by U1.
+This location was not provisioned by U1; the subsequent authorized execution
+created it with owner-only root permissions.
 
 Each function record should contain binary SHA-256, slice, address/size,
 symbol/aliases, discovery source, code hash, tool/version/options, analysis
@@ -139,3 +140,23 @@ global configuration during autonomous port work” and to record missing tools.
 A private, pinned installation proposal can be prepared without changing global
 settings. Confirm tool behavior on the two known contracts before scheduling
 large exports or estimating completion time.
+
+## Authorized execution update — 2026-10-15
+
+The user subsequently authorized local Rizin, REA and Ghidra installation,
+starting analysis of owned binaries, keeping all decompiled output private, and
+committing/pushing per phase. The requested model preference is Sol 6.1 at
+xhigh; verify that setting in the execution host. This authorization supersedes
+the earlier installation-pending state above.
+
+- [A0 inventory](../macos-port/reports/2026-10-15-binary-analysis-A0.md): complete
+  for three selected owned Mac i386 targets, including Steam single-player.
+- [A1 toolchain and pilot](../macos-port/reports/2026-10-15-binary-analysis-A1.md):
+  complete: pinned local tools, passing Ghidra readiness, and a verified
+  lighting/water pilot within a six-function private export batch.
+- A2 discovery has started with private section/symbol and MP function inventories; complete
+  function/range reconciliation remains pending. A3 whole-program export and
+  A4–A6 reconstruction/validation are not complete.
+
+The earlier “verified starting point” and “readiness and next action” sections
+are the U1 snapshot. The linked execution reports carry newer evidence.
