@@ -2,7 +2,7 @@
 title: CoD2 owned-binary analysis with Rizin and REA
 date: 2026-10-15
 execution: knowledge-work
-status: A0–A5 offline analysis delivered with explicit gaps; A6 audit in progress
+status: A0–A6 offline analysis and audit delivered; reconstruction and live validation gaps remain
 ---
 
 # CoD2 owned-binary analysis with Rizin and REA
@@ -166,7 +166,15 @@ the earlier installation-pending state above.
   explicit type/parser and mapping gaps. Symbol correspondence is not behavior proof.
 - [A5 bounded verification](../macos-port/reports/2026-10-15-binary-analysis-A5.md):
   offline reference/fixture checks and stock native build passed; live integration
-  and deployment certification remain pending. A6 disposition audit is in progress.
+  and deployment certification remain pending.
+- [A6 disposition audit](../macos-port/reports/2026-10-15-binary-analysis-A6.md):
+  every selected inventory record has a joined disposition; frozen export integrity
+  and input hashes pass. Unknown bytes, types and semantics remain explicit.
+
+The requested offline analysis pass is delivered. This does not close the live
+verification backlog or certify a complete validated reconstruction. Next
+implementation decision: U2a build/dependency boundary, then Metal dispatch and
+resource lifecycle using this private reference.
 
 The earlier “verified starting point” and “readiness and next action” sections
 are the U1 snapshot. The linked execution reports carry newer evidence.
