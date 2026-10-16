@@ -36,6 +36,8 @@ file(GLOB_RECURSE MACOS_MAC_C CONFIGURE_DEPENDS "${COD2_SRC_DIR}/Mac/*.c")
 file(GLOB_RECURSE MACOS_STUBS_C CONFIGURE_DEPENDS "${COD2_SRC_DIR}/stubs/*.c")
 file(GLOB MACOS_ROOT_C CONFIGURE_DEPENDS "${COD2_SRC_DIR}/*.c")
 set(MACOS_C ${MACOS_PC_C} ${MACOS_MAC_C} ${MACOS_STUBS_C} ${MACOS_ROOT_C})
+# Metal providers belong only to the native client, never the dedicated graph.
+list(FILTER MACOS_C EXCLUDE REGEX "/Mac/Metal/")
 # Use the SDK zlib, as in the native Linux build. No 32-bit data generators or ASM.
 list(FILTER MACOS_C EXCLUDE REGEX "/PC/zlib/(inflate|infblock|infcodes|inffast|inftrees|infutil|adler32|zutil)\\.c$")
 list(FILTER MACOS_C EXCLUDE REGEX "/(data|import_pointers|literals)\\.c$")
@@ -116,6 +118,13 @@ target_sources(cod2_macos PRIVATE src/unix/linux_input.c src/platform/macos_disp
   src/platform/macos_rawmouse.m src/platform/macos_audio.c src/platform/macos_voice.c
   src/platform/macos_jpeg.c)
 set_property(SOURCE src/platform/macos_rawmouse.m APPEND PROPERTY COMPILE_OPTIONS -fobjc-arc)
+# Transport is linked before the engine dispatch seams are integrated. Classic
+# remains the default and no provider creates a device during startup here.
+target_sources(cod2_macos PRIVATE src/Mac/Metal/metal_core.m
+  src/Mac/Metal/metal_dispatch.m src/Mac/Metal/metal_gpu.m)
+set_property(SOURCE src/Mac/Metal/metal_gpu.m APPEND PROPERTY COMPILE_OPTIONS
+  -fobjc-arc -Werror=unguarded-availability -Werror=unguarded-availability-new)
+target_link_libraries(cod2_macos PRIVATE "-framework Metal")
 # The renderer renders into the exact r_mode framebuffer; presentation scales it.
 set_source_files_properties(src/PC/gfx_d3d/rb_state.c src/PC/gfx_d3d/r_screenshot.c PROPERTIES
   COMPILE_DEFINITIONS "glDrawBuffer=MacGL_DrawBuffer;glReadBuffer=MacGL_ReadBuffer")

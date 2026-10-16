@@ -231,6 +231,13 @@
     "reason": "Allocates file/string bytes plus one nul terminator; count is characters, not pointer slots."
   },
   {
+    "file": "src/Mac/Metal/metal_dispatch.m",
+    "text": "if (object && constructor && !strncmp(method, constructor + 1, (size_t)(constructor - method)))",
+    "count": 1,
+    "classification": "safe",
+    "reason": "constructor is the non-null strchr result for the underscore in a NUL-terminated method name. Advancing one char selects the suffix; pointer subtraction measures the prefix in that same string. This parses a method identifier, not an engine object layout."
+  },
+  {
     "file": "src/Mac/Tools/MacWin32.c",
     "text": "strncpy(lpFindFileData->cFileName, slash ? slash + 1 : lpFileName, 259);",
     "count": 1,

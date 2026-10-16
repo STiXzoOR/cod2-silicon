@@ -1,0 +1,21 @@
+--- a/src/video/cocoa/SDL_cocoamodes.m
++++ b/src/video/cocoa/SDL_cocoamodes.m
+@@ -462,7 +462,17 @@
+                 if (link) {
+                     SDL_DisplayMode mode;
+                     if (GetDisplayMode(moderef, true, NULL, link, &mode)) {
+-                        SDL_SetDesktopDisplayMode(display, &mode);
++                        if (display->fullscreen_active) {
++                            // SDL_SetDesktopDisplayMode ignores temporary fullscreen changes.
++                            CFRelease(mode.internal->modes);
++                            SDL_free(mode.internal);
++                        } else {
++                            // The generic replacement frees internal, but not its CF ownership.
++                            if (display->desktop_mode.internal) {
++                                CFRelease(display->desktop_mode.internal->modes);
++                            }
++                            SDL_SetDesktopDisplayMode(display, &mode);
++                        }
+                     }
+                     CVDisplayLinkRelease(link);
+                 }
