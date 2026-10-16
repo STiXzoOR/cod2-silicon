@@ -67,7 +67,7 @@ Those counts are the starting point, not a validation score.
 
 An existing private Unicorn environment and codec oracle can execute bounded
 Mac i386 functions. It models selected imports and is not a Mach-O application
-runner. A usable original whole-game runtime is not yet established on this
+runner. A usable original Mac whole-game runtime is not yet established on this
 Apple-silicon host. Existing native parity hooks are absent from untouched retail
 binaries and hash only selected entity fields. Native self-comparison is useful
 repeatability evidence but cannot substitute for original/native comparison.
@@ -84,8 +84,16 @@ pilot are complete; see their dated reports. R2 continues for other subsystems.
 The user selected Highball or GameToMac for running their Steam copy. Highball
 0.10.15 has been checksum/signature verified and installed locally. Its dedicated
 CoD2 Reference environment has Wine 10, DXVK and an updated Steam client. The
-user reports sign-in complete; retail CoD2 installation is pending. The initial
+user completed sign-in and retail CoD2 installation. Retail MP graphics
+initialization still fails in the new environment. The initial
 private campaign will compare loopback Toujane DM startup before expanding to
 rendered clients and richer observations. Any Windows retail results will carry separate
 binary provenance and platform-qualified conclusions. They do not establish
 Mac i386 equivalence by themselves. Full reconstruction remains incomplete.
+
+On 2026-10-16, the earlier WS8/WS15 diagnostic Windows reference was recovered
+in a separate private environment. Its pinned Wine r19 and D9VK 1.10.3 setup
+renders Toujane and produces clean courtyard, rooftop and sky captures. This
+restores a usable Windows visual reference, but does not resolve the untouched
+Steam launch or establish Mac behavior equivalence. See the
+[reference recovery report](../macos-port/reports/2026-10-16-reference-recovery.md).
