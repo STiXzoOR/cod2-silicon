@@ -36,7 +36,9 @@ not a benchmark. Console commands selected the British team and Enfield, enabled
 noclip and hid the HUD and gun. Game-generated JPEGs at 1280x720 visibly contain
 world geometry, textured surfaces, lighting and sky:
 
-- `recovery-courtyard.jpg`: requested pose `2569 2274 181 180`.
+- `recovery-courtyard.jpg`: requested pose `2569 2274 181 180`, but subsequent
+  log review found the actual pose was the spawn position `1430 330 129`.
+  This image proves rendering only and is excluded from matched comparisons.
 - `recovery-rooftop-clean.jpg`: requested pose `3051 2178 220 180`.
 - `recovery-sky.jpg`: requested position `3051 2178 350 0`, then held/released
   lookup. Pitch has not been independently measured for comparison acceptance.
