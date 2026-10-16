@@ -97,3 +97,9 @@ renders Toujane and produces clean courtyard, rooftop and sky captures. This
 restores a usable Windows visual reference, but does not resolve the untouched
 Steam launch or establish Mac behavior equivalence. See the
 [reference recovery report](../macos-port/reports/2026-10-16-reference-recovery.md).
+
+The follow-up [Classic comparison](../macos-port/reports/2026-10-16-reference-comparison.md)
+records three native capture runs and diagnostic courtyard/rooftop/sky RGB
+distances. Spawn-position and eye-height mismatches are explicitly excluded.
+These still-image results do not advance Metal certification or close the
+remaining gameplay, exact camera-state and whole-process validation gates.
