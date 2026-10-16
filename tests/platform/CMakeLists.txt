@@ -157,3 +157,18 @@ add_test(NAME system_closed_stdin COMMAND macos_system_network_test --closed-std
 add_test(NAME system_no_home COMMAND "${CMAKE_COMMAND}" -E env --unset=HOME "$<TARGET_FILE:macos_system_network_test>")
 # Window focus and the default audio device are shared resources on the test Mac.
 set_tests_properties(smoke_windowed smoke_borderless smoke_fullscreen input audio voice PROPERTIES RUN_SERIAL TRUE)
+
+# Restore the transport independently of the display and game providers.
+add_executable(macos_metal_core_test "${PORT_ROOT}/tests/metal/core.c"
+  "${PORT_ROOT}/src/Mac/Metal/metal_core.m" "${PORT_ROOT}/src/Mac/Metal/metal_dispatch.m")
+target_include_directories(macos_metal_core_test PRIVATE "${PORT_ROOT}/src/Mac/Metal")
+add_test(NAME metal_core COMMAND macos_metal_core_test)
+add_executable(macos_metal_gpu_test "${PORT_ROOT}/tests/metal/gpu.m"
+  "${PORT_ROOT}/src/Mac/Metal/metal_gpu.m")
+set_source_files_properties("${PORT_ROOT}/tests/metal/gpu.m"
+  "${PORT_ROOT}/src/Mac/Metal/metal_gpu.m" PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+target_compile_options(macos_metal_gpu_test PRIVATE
+  -Werror=unguarded-availability -Werror=unguarded-availability-new)
+target_link_libraries(macos_metal_gpu_test PRIVATE "-framework Metal" "-framework Foundation")
+add_test(NAME metal_gpu COMMAND macos_metal_gpu_test)
+set_tests_properties(metal_gpu PROPERTIES SKIP_RETURN_CODE 77 RUN_SERIAL TRUE TIMEOUT 30)
