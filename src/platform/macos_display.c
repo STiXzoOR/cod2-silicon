@@ -400,6 +400,14 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
     MacContext *ctx = calloc(1, sizeof(*ctx));
     if (!ctx)
         return NULL;
+#if defined(COD2_X64)
+    /* Finish Cocoa window resizing before attaching the GL drawable. Apple's
+     * software renderer can retain a freed backing store across that resize. */
+    if (SetWindowMode() != 0) {
+        MacDisplay_ReleaseContext((void **)&ctx);
+        return NULL;
+    }
+#endif
     ctx->context = SDL_GL_CreateContext(sdl_gl_window);
     ctx->drawable = sdl_gl_window;
     ctx->doubleBuffered = 1;
@@ -407,7 +415,11 @@ void *MacDisplay_CreateScreenContext(int depth, int stencil, int samples,
     ctx->height = sdl_gl_height;
     ctx->depthBits = depth;
     ctx->stencil = stencil;
-    if (!ctx->context || SetWindowMode() != 0) {
+    if (!ctx->context
+#if !defined(COD2_X64)
+        || SetWindowMode() != 0
+#endif
+    ) {
         MacDisplay_ReleaseContext((void **)&ctx);
         return NULL;
     }
