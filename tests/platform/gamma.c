@@ -1,11 +1,22 @@
 #define SDL_GL_SwapWindow GammaTestSwap
+#define SDL_GL_CreateContext GammaTestCreateContext
 #include "../../src/platform/macos_display.c"
 #undef SDL_GL_SwapWindow
+#undef SDL_GL_CreateContext
 #include <assert.h>
 #include <math.h>
 
 void SDL_GL_SwapWindow(SDL_Window *window);
+SDL_GLContext SDL_GL_CreateContext(SDL_Window *window);
 static unsigned char presented[4];
+static int forceSoftware;
+
+SDL_GLContext GammaTestCreateContext(SDL_Window *window)
+{
+    if (forceSoftware)
+        assert(SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 0) == 0);
+    return SDL_GL_CreateContext(window);
+}
 
 void GammaTestSwap(SDL_Window *window)
 {
@@ -51,13 +62,16 @@ static void CheckState(void)
     assert(glIsEnabled(GL_COLOR_LOGIC_OP) && glIsEnabled(GL_CLIP_PLANE0));
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
     unsigned short ramp[768];
+    forceSoftware = argc == 2 && strcmp(argv[1], "--software") == 0;
     MacPlatform_ConfigureWindow(320, 240, MAC_WINDOWED, 60);
     void *context = MacDisplay_CreateScreenContext(24, 1, 0, 0, 0, NULL);
     assert(context);
     printf("GL_VERSION=%s\n", glGetString(GL_VERSION));
+    if (forceSoftware)
+        assert(strstr((const char *)glGetString(GL_RENDERER), "Software"));
     glClearColor(32.0f / 255, 128.0f / 255, 224.0f / 255, 1);
     glClear(GL_COLOR_BUFFER_BIT);
     SDL_GL_SwapWindowDirect();
@@ -112,11 +126,27 @@ int main(void)
     unsigned char scene[4];
     glReadPixels(160, 120, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, scene);
     assert(scene[0] == 32 && scene[1] == 128 && scene[2] == 224);
-    assert(MacDisplay_SetMode(400, 300, 32, 60) == 0);
-    glClearColor(32.0f / 255, 128.0f / 255, 224.0f / 255, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
-    SDL_GL_SwapWindowDirect();
-    CheckPixel((int)round(ramp[32] / 257.0), (int)round(ramp[128] / 257.0), (int)round(ramp[224] / 257.0));
+    SDL_GLContext originalContext = SDL_GL_GetCurrentContext();
+    const unsigned char texel[4] = { 17, 53, 91, 255 };
+    GLuint retainedTexture;
+    glGenTextures(1, &retainedTexture);
+    glBindTexture(GL_TEXTURE_2D, retainedTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, texel);
+    const int sizes[][2] = { { 400, 300 }, { 400, 300 }, { 320, 240 }, { 320, 240 } };
+    for (unsigned i = 0; i < sizeof sizes / sizeof sizes[0]; ++i) {
+        assert(MacDisplay_SetMode(sizes[i][0], sizes[i][1], 32, 60) == 0);
+        assert(SDL_GL_GetCurrentContext() == originalContext);
+        assert(glIsTexture(retainedTexture));
+        glBindTexture(GL_TEXTURE_2D, retainedTexture);
+        unsigned char retained[4];
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, retained);
+        assert(memcmp(retained, texel, sizeof texel) == 0);
+        glClearColor(32.0f / 255, 128.0f / 255, 224.0f / 255, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
+        SDL_GL_SwapWindowDirect();
+        CheckPixel((int)round(ramp[32] / 257.0), (int)round(ramp[128] / 257.0), (int)round(ramp[224] / 257.0));
+    }
+    glDeleteTextures(1, &retainedTexture);
 
     for (int i = 0; i < 256; ++i)
         ramp[i] = ramp[i + 256] = ramp[i + 512] = (unsigned short)(i * 257);
