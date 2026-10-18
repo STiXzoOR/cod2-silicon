@@ -1,3 +1,4 @@
+#include "Mac/Metal/shim_dispatch.h"
 #include "PC/qcommon/port_debug.h"
 #ifdef GFX_REAL_D3D9
 

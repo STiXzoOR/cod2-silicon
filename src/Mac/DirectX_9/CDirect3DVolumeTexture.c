@@ -1,3 +1,4 @@
+#include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
 #include <stdlib.h>
@@ -46,14 +47,35 @@ typedef struct {
 
 ULONG CDirect3DVolume_AddRef(const void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolume_AddRef", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return ++((CDirect3DVolumeClean *)_this)->refCount;
 }
 ULONG CDirect3DVolume_Release(const void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolume_Release", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return --((CDirect3DVolumeClean *)_this)->refCount;
 }
 HRESULT CDirect3DVolume_QueryInterface(const void *_this, const IID *iid, void **ppv)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &iid, &ppv };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolume_QueryInterface", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)iid;
     *ppv = (void *)_this;
     CDirect3DVolume_AddRef(_this);
@@ -61,15 +83,34 @@ HRESULT CDirect3DVolume_QueryInterface(const void *_this, const IID *iid, void *
 }
 void ZN15CDirect3DVolumeD1Ev(const void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN15CDirect3DVolumeD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 }
 void ZN15CDirect3DVolumeD0Ev(const void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN15CDirect3DVolumeD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     __ZdlPv((void *)_this);
 }
 
 HRESULT CDirect3DVolume_GetDesc(const void *_this, D3DVOLUME_DESC *pDesc)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pDesc };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolume_GetDesc", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVolumeClean *vol = (CDirect3DVolumeClean *)_this;
     pDesc->Format = vol->format;
     pDesc->Type = D3DRTYPE_VOLUME;
@@ -83,6 +124,13 @@ HRESULT CDirect3DVolume_GetDesc(const void *_this, D3DVOLUME_DESC *pDesc)
 
 HRESULT CDirect3DVolume_LockBox(const void *_this, D3DLOCKED_BOX *pLockedVolume, const D3DBOX *pBox, DWORD Flags)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pLockedVolume, &pBox, &Flags };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolume_LockBox", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVolumeClean *vol = (CDirect3DVolumeClean *)_this;
     UINT32 bpp;
     (void)pBox;
@@ -104,16 +152,36 @@ HRESULT CDirect3DVolume_LockBox(const void *_this, D3DLOCKED_BOX *pLockedVolume,
 
 HRESULT CDirect3DVolume_UnlockBox(const void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolume_UnlockBox", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 0;
 }
 bool CDirect3DVolume_IsDirty(const void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    bool macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolume_IsDirty", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return ((CDirect3DVolumeClean *)_this)->isDirty;
 }
 
 void CDirect3DVolume_CreateOpenGLSurfaceObject(const void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CDirect3DVolume_CreateOpenGLSurfaceObject", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DVolumeClean *vol = (CDirect3DVolumeClean *)_this;
     UINT32 w = vol->width ? vol->width : 1;
     UINT32 h = vol->height ? vol->height : 1;
@@ -135,6 +203,12 @@ void CDirect3DVolume_CreateOpenGLSurfaceObject(const void *_this)
 
 void CDirect3DVolume_UpdateOpenGLSurfaceObject(const void *_this, int bRecreate)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &bRecreate };
+    if (MacShim_Dispatch("CDirect3DVolume_UpdateOpenGLSurfaceObject", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DVolumeClean *vol = (CDirect3DVolumeClean *)_this;
     UINT32 w = vol->width ? vol->width : 1;
     UINT32 h = vol->height ? vol->height : 1;
@@ -158,12 +232,26 @@ void CDirect3DVolume_UpdateOpenGLSurfaceObject(const void *_this, int bRecreate)
 
 HRESULT CDirect3DVolume_GetDevice(const void *t, void *p)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &t, &p };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolume_GetDevice", t, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)t;
     (void)p;
     return 0;
 }
 HRESULT CDirect3DVolume_SetPrivateData(const void *t, const GUID *g, const void *d, DWORD s, DWORD f)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &t, &g, &d, &s, &f };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolume_SetPrivateData", t, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)t;
     (void)g;
     (void)d;
@@ -173,6 +261,13 @@ HRESULT CDirect3DVolume_SetPrivateData(const void *t, const GUID *g, const void 
 }
 HRESULT CDirect3DVolume_GetPrivateData(const void *t, const GUID *g, void *d, DWORD *s)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &t, &g, &d, &s };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolume_GetPrivateData", t, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)t;
     (void)g;
     (void)d;
@@ -181,12 +276,26 @@ HRESULT CDirect3DVolume_GetPrivateData(const void *t, const GUID *g, void *d, DW
 }
 HRESULT CDirect3DVolume_FreePrivateData(const void *t, const GUID *g)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &t, &g };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolume_FreePrivateData", t, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)t;
     (void)g;
     return 0;
 }
 HRESULT CDirect3DVolume_GetContainer(const void *t, const IID *r, void **p)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &t, &r, &p };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolume_GetContainer", t, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)t;
     (void)r;
     (void)p;
@@ -222,6 +331,13 @@ typedef struct {
 #if COD2_APPLE_SDK
 GLuint CDirect3DVolumeTexture_GetGLName(const void *texture)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &texture };
+    GLuint macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_GetGLName", texture, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return ((const CDirect3DVolumeTextureClean *)texture)->texIDStorage;
 }
 #endif
@@ -232,11 +348,25 @@ void ZN22CDirect3DVolumeTextureD1Ev(void *_this);
 
 ULONG CDirect3DVolumeTexture_AddRef(const CDirect3DVolumeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_AddRef", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return ++((CDirect3DVolumeTextureClean *)_this)->refCount;
 }
 
 HRESULT CDirect3DVolumeTexture_QueryInterface(const CDirect3DVolumeTexture *_this, const IID *iid, void **ppvObj)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &iid, &ppvObj };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_QueryInterface", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)iid;
     *ppvObj = (void *)_this;
     CDirect3DVolumeTexture_AddRef(_this);
@@ -245,6 +375,13 @@ HRESULT CDirect3DVolumeTexture_QueryInterface(const CDirect3DVolumeTexture *_thi
 
 ULONG CDirect3DVolumeTexture_Release(const CDirect3DVolumeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_Release", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVolumeTextureClean *tex = (CDirect3DVolumeTextureClean *)_this;
     ULONG rc = --tex->refCount;
     if (!rc)
@@ -254,6 +391,13 @@ ULONG CDirect3DVolumeTexture_Release(const CDirect3DVolumeTexture *_this)
 
 HRESULT CDirect3DVolumeTexture_GetLevelDesc(const CDirect3DVolumeTexture *_this, UINT Level, D3DVOLUME_DESC *pDesc)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Level, &pDesc };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_GetLevelDesc", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVolumeTextureClean *tex = (CDirect3DVolumeTextureClean *)_this;
     if (Level >= tex->levelCount)
         return -1;
@@ -262,6 +406,13 @@ HRESULT CDirect3DVolumeTexture_GetLevelDesc(const CDirect3DVolumeTexture *_this,
 
 HRESULT CDirect3DVolumeTexture_GetVolumeLevel(const CDirect3DVolumeTexture *_this, UINT Level, void **ppVolumeLevel)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Level, &ppVolumeLevel };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_GetVolumeLevel", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVolumeTextureClean *tex = (CDirect3DVolumeTextureClean *)_this;
     if (Level >= tex->levelCount)
         return -1;
@@ -272,6 +423,13 @@ HRESULT CDirect3DVolumeTexture_GetVolumeLevel(const CDirect3DVolumeTexture *_thi
 
 HRESULT CDirect3DVolumeTexture_LockBox(const CDirect3DVolumeTexture *_this, UINT Level, D3DLOCKED_BOX *pLockedVolume, const D3DBOX *pBox, DWORD Flags)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Level, &pLockedVolume, &pBox, &Flags };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_LockBox", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVolumeTextureClean *tex = (CDirect3DVolumeTextureClean *)_this;
     if (Level >= tex->levelCount)
         return -1;
@@ -280,6 +438,13 @@ HRESULT CDirect3DVolumeTexture_LockBox(const CDirect3DVolumeTexture *_this, UINT
 
 HRESULT CDirect3DVolumeTexture_UnlockBox(const CDirect3DVolumeTexture *_this, UINT Level)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Level };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_UnlockBox", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVolumeTextureClean *tex = (CDirect3DVolumeTextureClean *)_this;
     CDirect3DVolumeClean *vol;
     if (Level >= tex->levelCount)
@@ -298,48 +463,109 @@ HRESULT CDirect3DVolumeTexture_UnlockBox(const CDirect3DVolumeTexture *_this, UI
 
 HRESULT CDirect3DVolumeTexture_AddDirtyBox(const CDirect3DVolumeTexture *_this, const D3DBOX *pBox)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pBox };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_AddDirtyBox", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)pBox;
     return 0;
 }
 DWORD CDirect3DVolumeTexture_SetLOD(const CDirect3DVolumeTexture *_this, DWORD LODNew)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &LODNew };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_SetLOD", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)LODNew;
     return 0;
 }
 DWORD CDirect3DVolumeTexture_GetLOD(const CDirect3DVolumeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_GetLOD", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 0;
 }
 DWORD CDirect3DVolumeTexture_GetLevelCount(const CDirect3DVolumeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_GetLevelCount", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return ((CDirect3DVolumeTextureClean *)_this)->levelCount;
 }
 D3DRESOURCETYPE CDirect3DVolumeTexture_GetType(const CDirect3DVolumeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    D3DRESOURCETYPE macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_GetType", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return D3DRTYPE_VOLUMETEXTURE;
 }
 HRESULT CDirect3DVolumeTexture_SetAutoGenFilterType(const CDirect3DVolumeTexture *_this, D3DTEXTUREFILTERTYPE f)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &f };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_SetAutoGenFilterType", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)f;
     return 0;
 }
 D3DTEXTUREFILTERTYPE CDirect3DVolumeTexture_GetAutoGenFilterType(const CDirect3DVolumeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    D3DTEXTUREFILTERTYPE macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_GetAutoGenFilterType", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 0;
 }
 void CDirect3DVolumeTexture_GenerateMipSubLevels(const CDirect3DVolumeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_GenerateMipSubLevels", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 }
 
 void ZN22CDirect3DVolumeTextureD1Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN22CDirect3DVolumeTextureD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DVolumeTextureClean *tex = (CDirect3DVolumeTextureClean *)_this;
     UINT32 i;
     if (tex->volumes) {
@@ -359,16 +585,34 @@ void ZN22CDirect3DVolumeTextureD1Ev(void *_this)
 
 void ZN22CDirect3DVolumeTextureD0Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN22CDirect3DVolumeTextureD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN22CDirect3DVolumeTextureD1Ev(_this);
     free(_this);
 }
 void ZN22CDirect3DVolumeTextureD2Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN22CDirect3DVolumeTextureD2Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN22CDirect3DVolumeTextureD1Ev(_this);
 }
 
 void CDirect3DVolumeTexture_CDirect3DVolumeTexture(const CDirect3DVolumeTexture *_this, UINT32 Width, UINT32 Height, UINT32 Depth, UINT32 Levels, DWORD Usage, D3DFORMAT Format)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Width, &Height, &Depth, &Levels, &Usage, &Format };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_CDirect3DVolumeTexture", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DVolumeTextureClean *tex = (CDirect3DVolumeTextureClean *)_this;
     UINT32 i, w, h, d, totalSize, offset;
     bool createGL = 0;
@@ -461,6 +705,12 @@ void CDirect3DVolumeTexture_CDirect3DVolumeTexture(const CDirect3DVolumeTexture 
 
 void CDirect3DVolumeTexture_UpdateOpenGLSurfaces(const CDirect3DVolumeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_UpdateOpenGLSurfaces", _this, macArguments, NULL, 0))
+        return;
+#endif
+
 #if COD2_APPLE_SDK
     CDirect3DVolumeTextureClean *tex = (void *)_this;
     GLint previous;
@@ -479,12 +729,26 @@ void CDirect3DVolumeTexture_UpdateOpenGLSurfaces(const CDirect3DVolumeTexture *_
 
 HRESULT CDirect3DVolumeTexture_GetDevice(const CDirect3DVolumeTexture *t, void *p)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &t, &p };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_GetDevice", t, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)t;
     (void)p;
     return 0;
 }
 HRESULT CDirect3DVolumeTexture_SetPrivateData(const CDirect3DVolumeTexture *t, const GUID *g, const void *d, DWORD s, DWORD f)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &t, &g, &d, &s, &f };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_SetPrivateData", t, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)t;
     (void)g;
     (void)d;
@@ -494,6 +758,13 @@ HRESULT CDirect3DVolumeTexture_SetPrivateData(const CDirect3DVolumeTexture *t, c
 }
 HRESULT CDirect3DVolumeTexture_GetPrivateData(const CDirect3DVolumeTexture *t, const GUID *g, void *d, DWORD *s)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &t, &g, &d, &s };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_GetPrivateData", t, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)t;
     (void)g;
     (void)d;
@@ -502,23 +773,50 @@ HRESULT CDirect3DVolumeTexture_GetPrivateData(const CDirect3DVolumeTexture *t, c
 }
 HRESULT CDirect3DVolumeTexture_FreePrivateData(const CDirect3DVolumeTexture *t, const GUID *g)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &t, &g };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_FreePrivateData", t, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)t;
     (void)g;
     return 0;
 }
 DWORD CDirect3DVolumeTexture_SetPriority(const CDirect3DVolumeTexture *t, DWORD p)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &t, &p };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_SetPriority", t, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)t;
     (void)p;
     return 0;
 }
 DWORD CDirect3DVolumeTexture_GetPriority(const CDirect3DVolumeTexture *t)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &t };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_GetPriority", t, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)t;
     return 0;
 }
 void CDirect3DVolumeTexture_PreLoad(const CDirect3DVolumeTexture *t)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &t };
+    if (MacShim_Dispatch("CDirect3DVolumeTexture_PreLoad", t, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)t;
 }
 

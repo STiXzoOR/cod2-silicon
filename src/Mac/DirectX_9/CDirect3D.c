@@ -1,3 +1,4 @@
+#include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
 #include <stdlib.h>
@@ -63,6 +64,13 @@ static CDirect3DImpl sDirect3DInterface;
 
 HRESULT CDirect3D_QueryInterface(const void *_this, const IID *iid, void **ppvObj)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &iid, &ppvObj };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_QueryInterface", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)iid;
     *ppvObj = (void *)_this;
     return 0;
@@ -70,17 +78,38 @@ HRESULT CDirect3D_QueryInterface(const void *_this, const IID *iid, void **ppvOb
 
 ULONG CDirect3D_AddRef(const void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_AddRef", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return ++sDirect3DInterface.refCount;
 }
 ULONG CDirect3D_Release(const void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_Release", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return --sDirect3DInterface.refCount;
 }
 
 HRESULT CDirect3D_RegisterSoftwareDevice(const void *_this, void *pInitializeFunction)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pInitializeFunction };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_RegisterSoftwareDevice", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)pInitializeFunction;
     return 0;
@@ -88,12 +117,26 @@ HRESULT CDirect3D_RegisterSoftwareDevice(const void *_this, void *pInitializeFun
 
 UINT CDirect3D_GetAdapterCount(const void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    UINT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_GetAdapterCount", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 1;
 }
 
 HRESULT CDirect3D_GetAdapterIdentifier(const void *_this, UINT Adapter, DWORD Flags, void *pIdentifier)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Adapter, &Flags, &pIdentifier };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_GetAdapterIdentifier", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Adapter;
     (void)Flags;
@@ -107,6 +150,13 @@ HRESULT CDirect3D_GetAdapterIdentifier(const void *_this, UINT Adapter, DWORD Fl
 
 UINT CDirect3D_GetAdapterModeCount(const void *_this, UINT Adapter, D3DFORMAT Format)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Adapter, &Format };
+    UINT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_GetAdapterModeCount", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Adapter;
     (void)Format;
@@ -115,6 +165,13 @@ UINT CDirect3D_GetAdapterModeCount(const void *_this, UINT Adapter, D3DFORMAT Fo
 
 HRESULT CDirect3D_EnumAdapterModes(const void *_this, UINT Adapter, D3DFORMAT Format, UINT Mode, D3DDISPLAYMODE *pMode)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Adapter, &Format, &Mode, &pMode };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_EnumAdapterModes", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
 
     int *p = (int *)pMode;
     (void)_this;
@@ -130,6 +187,13 @@ HRESULT CDirect3D_EnumAdapterModes(const void *_this, UINT Adapter, D3DFORMAT Fo
 
 HRESULT CDirect3D_GetAdapterDisplayMode(const void *_this, UINT Adapter, D3DDISPLAYMODE *pMode)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Adapter, &pMode };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_GetAdapterDisplayMode", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     int *p = (int *)pMode;
     (void)_this;
     (void)Adapter;
@@ -142,6 +206,13 @@ HRESULT CDirect3D_GetAdapterDisplayMode(const void *_this, UINT Adapter, D3DDISP
 
 HRESULT CDirect3D_CheckDeviceType(const void *t, UINT a, int dt, D3DFORMAT ab, D3DFORMAT bb, BOOL w)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &t, &a, &dt, &ab, &bb, &w };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_CheckDeviceType", t, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)t;
     (void)a;
     (void)dt;
@@ -152,6 +223,13 @@ HRESULT CDirect3D_CheckDeviceType(const void *t, UINT a, int dt, D3DFORMAT ab, D
 }
 HRESULT CDirect3D_CheckDeviceFormat(const void *t, UINT a, int dt, D3DFORMAT af, DWORD u, int rt, D3DFORMAT cf)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &t, &a, &dt, &af, &u, &rt, &cf };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_CheckDeviceFormat", t, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)t;
     (void)a;
     (void)dt;
@@ -163,6 +241,13 @@ HRESULT CDirect3D_CheckDeviceFormat(const void *t, UINT a, int dt, D3DFORMAT af,
 }
 HRESULT CDirect3D_CheckDeviceMultiSampleType(const void *t, UINT a, int dt, D3DFORMAT sf, BOOL w, int ms, DWORD *q)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &t, &a, &dt, &sf, &w, &ms, &q };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_CheckDeviceMultiSampleType", t, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)t;
     (void)a;
     (void)dt;
@@ -174,6 +259,13 @@ HRESULT CDirect3D_CheckDeviceMultiSampleType(const void *t, UINT a, int dt, D3DF
 }
 HRESULT CDirect3D_CheckDepthStencilMatch(const void *t, UINT a, int dt, D3DFORMAT af, D3DFORMAT rt, D3DFORMAT ds)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &t, &a, &dt, &af, &rt, &ds };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_CheckDepthStencilMatch", t, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)t;
     (void)a;
     (void)dt;
@@ -184,6 +276,13 @@ HRESULT CDirect3D_CheckDepthStencilMatch(const void *t, UINT a, int dt, D3DFORMA
 }
 HRESULT CDirect3D_CheckDeviceFormatConversion(const void *t, UINT a, int dt, D3DFORMAT sf, D3DFORMAT tf)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &t, &a, &dt, &sf, &tf };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_CheckDeviceFormatConversion", t, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)t;
     (void)a;
     (void)dt;
@@ -194,6 +293,13 @@ HRESULT CDirect3D_CheckDeviceFormatConversion(const void *t, UINT a, int dt, D3D
 
 HRESULT CDirect3D_GetDeviceCaps(const void *_this, UINT Adapter, int DeviceType, void *pCaps)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Adapter, &DeviceType, &pCaps };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_GetDeviceCaps", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Adapter;
     (void)DeviceType;
@@ -204,6 +310,13 @@ HRESULT CDirect3D_GetDeviceCaps(const void *_this, UINT Adapter, int DeviceType,
 
 void *CDirect3D_GetAdapterMonitor(const void *_this, UINT Adapter)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Adapter };
+    void * macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_GetAdapterMonitor", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Adapter;
     return NULL;
@@ -211,6 +324,13 @@ void *CDirect3D_GetAdapterMonitor(const void *_this, UINT Adapter)
 
 HRESULT CDirect3D_CreateDevice(const void *_this, UINT Adapter, int DeviceType, void *hFocusWindow, DWORD BehaviorFlags, void *pPresentationParameters, void **ppReturnedDeviceInterface)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Adapter, &DeviceType, &hFocusWindow, &BehaviorFlags, &pPresentationParameters, &ppReturnedDeviceInterface };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3D_CreateDevice", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     static char deviceMem[4096];
     int *pp = (int *)pPresentationParameters;
     int width = 640, height = 480;
@@ -288,15 +408,34 @@ HRESULT CDirect3D_CreateDevice(const void *_this, UINT Adapter, int DeviceType, 
 
 void ZN9CDirect3DD1Ev(const void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN9CDirect3DD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 }
 void ZN9CDirect3DD0Ev(const void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN9CDirect3DD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 }
 
 void *Direct3DCreate9(int sdkVersion)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &sdkVersion };
+    void * macResult = { 0 };
+    if (MacShim_Dispatch("Direct3DCreate9", NULL, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)sdkVersion;
     sDirect3DInterface.vtable = vtbl_CDirect3D;
     sDirect3DInterface.refCount = 1;

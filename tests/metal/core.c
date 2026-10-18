@@ -58,6 +58,23 @@ int main(void)
     MacShim_ForgetObject(&object);
     assert(!MacShim_Invoke("method", &object, NULL, &result, sizeof(result)));
 #if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
+    /* Actual generated constructor/destructor names must pin Classic objects
+     * and release that identity before the same address belongs to Metal. */
+    assert(!MacShim_Dispatch("CDirect3DTexture_CDirect3DTexture", &object,
+                             NULL, NULL, 0));
+    MacShim_SelectRenderer(1);
+    assert(!MacShim_Dispatch("CDirect3DTexture_GetLevelCount", &object,
+                             NULL, &result, sizeof(result)));
+    assert(!MacShim_Dispatch("ZN16CDirect3DTextureD0Ev", &object, NULL, NULL, 0));
+    assert(MacShim_Dispatch("CDirect3DTexture_GetLevelCount", &object,
+                            NULL, &result, sizeof(result)) && result == 29);
+    MacShim_RecordObject(&object, 1);
+    MacShim_SelectRenderer(0);
+    assert(MacShim_Dispatch("CDirect3DTexture_GetLevelCount", &object,
+                            NULL, &result, sizeof(result)));
+    MacShim_ForgetObject(&object);
+#endif
+#if defined(COD2_X64) && defined(__APPLE__) && defined(__aarch64__)
     int many[2048];
     for (unsigned int i = 0; i < 2048; ++i) MacShim_RecordObject(&many[i], i & 1);
     for (unsigned int i = 0; i < 2048; ++i) {
