@@ -541,7 +541,7 @@ static int MetalInvoke(const char *method, const void *object, const void *const
         const int *pp = P(5);
         int width = pp && pp[PRESENT_WIDTH_WORD] ? pp[PRESENT_WIDTH_WORD] : 640;
         int height = pp && pp[PRESENT_HEIGHT_WORD] ? pp[PRESENT_HEIGHT_WORD] : 480;
-        const dvar_t *borderless = Dvar_RegisterBool("r_borderless", 0, 0x1001);
+        const dvar_t *borderless = Dvar_RegisterBool("r_borderless", 1, 0x1001);
         int fullscreen = r_fullscreen && r_fullscreen->current.enabled;
         MacPlatform_ConfigureWindow(width, height, fullscreen ? (borderless->current.enabled ? MAC_BORDERLESS : MAC_FULLSCREEN) : MAC_WINDOWED, pp ? pp[PRESENT_REFRESH_WORD] : 0);
         void *context = MacDisplay_CreateScreenContext(24, 1, 0, 0, 0, NULL);

@@ -35601,7 +35601,7 @@
           "sites": [
             {
               "path": "src/Mac/DirectX_9/CDirect3D.c",
-              "line": 241,
+              "line": 361,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -35613,7 +35613,19 @@
             },
             {
               "path": "src/Mac/DirectX_9/CDirect3DDevice.c",
-              "line": 2862,
+              "line": 3458,
+              "mechanism": "Dvar_RegisterBool",
+              "type": "bool",
+              "flags": 4097,
+              "default": {
+                "status": "literal",
+                "value": true
+              },
+              "name": "r_borderless"
+            },
+            {
+              "path": "src/Mac/Metal/metal_backend.m",
+              "line": 544,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -35637,7 +35649,7 @@
           "sites": [
             {
               "path": "src/Mac/DirectX_9/CDirect3D.c",
-              "line": 241,
+              "line": 361,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -35649,7 +35661,19 @@
             },
             {
               "path": "src/Mac/DirectX_9/CDirect3DDevice.c",
-              "line": 2862,
+              "line": 3458,
+              "mechanism": "Dvar_RegisterBool",
+              "type": "bool",
+              "flags": 4097,
+              "default": {
+                "status": "literal",
+                "value": true
+              },
+              "name": "r_borderless"
+            },
+            {
+              "path": "src/Mac/Metal/metal_backend.m",
+              "line": 544,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -35679,8 +35703,9 @@
       "summary": "Fills the screen with a borderless window instead of changing the display mode.",
       "details": "This setting comes from the macOS version of the game. The launcher's display settings cover it for most players.",
       "sources": [
-        "src/Mac/DirectX_9/CDirect3D.c:241",
-        "src/Mac/DirectX_9/CDirect3DDevice.c:2862"
+        "src/Mac/DirectX_9/CDirect3D.c:361",
+        "src/Mac/DirectX_9/CDirect3DDevice.c:3458",
+        "src/Mac/Metal/metal_backend.m:544"
       ],
       "guided": false,
       "control": {
