@@ -1,3 +1,4 @@
+#include "Mac/Metal/shim_dispatch.h"
 #if defined(COD2_X64)
 #include "PC/qcommon/port_debug.h"
 #endif
@@ -58,6 +59,13 @@ typedef struct {
 #if defined(COD2_X64)
 GLuint CDirect3DCubeTexture_GetGLName(const void *texture)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &texture };
+    GLuint macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_GetGLName", texture, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return ((const CDirect3DCubeTextureClean *)texture)->texIDStorage;
 }
 #endif
@@ -68,12 +76,26 @@ void ZN20CDirect3DCubeTextureD1Ev(void *_this);
 
 ULONG CDirect3DCubeTexture_AddRef(const CDirect3DCubeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_AddRef", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DCubeTextureClean *tex = (CDirect3DCubeTextureClean *)_this;
     return ++tex->refCount;
 }
 
 HRESULT CDirect3DCubeTexture_QueryInterface(const CDirect3DCubeTexture *_this, const IID *iid, void **ppvObj)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &iid, &ppvObj };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_QueryInterface", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)iid;
     *ppvObj = (void *)_this;
     CDirect3DCubeTexture_AddRef(_this);
@@ -82,6 +104,13 @@ HRESULT CDirect3DCubeTexture_QueryInterface(const CDirect3DCubeTexture *_this, c
 
 ULONG CDirect3DCubeTexture_Release(const CDirect3DCubeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_Release", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DCubeTextureClean *tex = (CDirect3DCubeTextureClean *)_this;
     ULONG rc = --tex->refCount;
     if (!rc)
@@ -91,6 +120,13 @@ ULONG CDirect3DCubeTexture_Release(const CDirect3DCubeTexture *_this)
 
 HRESULT CDirect3DCubeTexture_GetLevelDesc(const CDirect3DCubeTexture *_this, UINT Level, D3DSURFACE_DESC *pDesc)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Level, &pDesc };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_GetLevelDesc", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DCubeTextureClean *tex = (CDirect3DCubeTextureClean *)_this;
     HRESULT CDirect3DSurface_GetDesc(const CDirect3DSurface *_this, D3DSURFACE_DESC *pDesc);
     if (Level >= tex->levelCount)
@@ -100,6 +136,13 @@ HRESULT CDirect3DCubeTexture_GetLevelDesc(const CDirect3DCubeTexture *_this, UIN
 
 HRESULT CDirect3DCubeTexture_GetCubeMapSurface(const CDirect3DCubeTexture *_this, D3DCUBEMAP_FACES FaceType, UINT Level, IDirect3DSurface9 **ppCubeMapSurface)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &FaceType, &Level, &ppCubeMapSurface };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_GetCubeMapSurface", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DCubeTextureClean *tex = (CDirect3DCubeTextureClean *)_this;
     UINT32 idx;
     if (Level >= tex->levelCount || FaceType >= 6)
@@ -112,6 +155,13 @@ HRESULT CDirect3DCubeTexture_GetCubeMapSurface(const CDirect3DCubeTexture *_this
 
 HRESULT CDirect3DCubeTexture_LockRect(const CDirect3DCubeTexture *_this, D3DCUBEMAP_FACES FaceType, UINT Level, D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &FaceType, &Level, &pLockedRect, &pRect, &Flags };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_LockRect", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DCubeTextureClean *tex = (CDirect3DCubeTextureClean *)_this;
     HRESULT CDirect3DSurface_LockRect(const CDirect3DSurface *_this, D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags);
     UINT32 idx;
@@ -123,6 +173,13 @@ HRESULT CDirect3DCubeTexture_LockRect(const CDirect3DCubeTexture *_this, D3DCUBE
 
 HRESULT CDirect3DCubeTexture_UnlockRect(const CDirect3DCubeTexture *_this, D3DCUBEMAP_FACES FaceType, UINT Level)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &FaceType, &Level };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_UnlockRect", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DCubeTextureClean *tex = (CDirect3DCubeTextureClean *)_this;
     UINT32 idx;
     CDirect3DSurface *surface;
@@ -144,6 +201,13 @@ HRESULT CDirect3DCubeTexture_UnlockRect(const CDirect3DCubeTexture *_this, D3DCU
 
 HRESULT CDirect3DCubeTexture_AddDirtyRect(const CDirect3DCubeTexture *_this, D3DCUBEMAP_FACES FaceType, const RECT *pDirtyRect)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &FaceType, &pDirtyRect };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_AddDirtyRect", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)FaceType;
     (void)pDirtyRect;
@@ -152,42 +216,96 @@ HRESULT CDirect3DCubeTexture_AddDirtyRect(const CDirect3DCubeTexture *_this, D3D
 
 DWORD CDirect3DCubeTexture_SetLOD(const CDirect3DCubeTexture *_this, DWORD LODNew)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &LODNew };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_SetLOD", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)LODNew;
     return 0;
 }
 DWORD CDirect3DCubeTexture_GetLOD(const CDirect3DCubeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_GetLOD", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 0;
 }
 DWORD CDirect3DCubeTexture_GetLevelCount(const CDirect3DCubeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_GetLevelCount", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return ((CDirect3DCubeTextureClean *)_this)->levelCount;
 }
 D3DRESOURCETYPE CDirect3DCubeTexture_GetType(const CDirect3DCubeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    D3DRESOURCETYPE macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_GetType", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return D3DRTYPE_CUBETEXTURE;
 }
 HRESULT CDirect3DCubeTexture_SetAutoGenFilterType(const CDirect3DCubeTexture *_this, D3DTEXTUREFILTERTYPE f)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &f };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_SetAutoGenFilterType", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)f;
     return 0;
 }
 D3DTEXTUREFILTERTYPE CDirect3DCubeTexture_GetAutoGenFilterType(const CDirect3DCubeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    D3DTEXTUREFILTERTYPE macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_GetAutoGenFilterType", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 0;
 }
 void CDirect3DCubeTexture_GenerateMipSubLevels(const CDirect3DCubeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_GenerateMipSubLevels", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 }
 
 void COpenGLTexture_UpdateOpenGLSurfaces(const COpenGLTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("COpenGLTexture_UpdateOpenGLSurfaces", _this, macArguments, NULL, 0))
+        return;
+#endif
+
 
 #if defined(COD2_X64)
     byte *texBase = (byte *)_this - sizeof(void *);
@@ -213,6 +331,12 @@ void COpenGLTexture_UpdateOpenGLSurfaces(const COpenGLTexture *_this)
 
 void ZN20CDirect3DCubeTextureD1Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN20CDirect3DCubeTextureD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DCubeTextureClean *tex = (CDirect3DCubeTextureClean *)_this;
     UINT32 i, total;
 
@@ -238,17 +362,35 @@ void ZN20CDirect3DCubeTextureD1Ev(void *_this)
 
 void ZN20CDirect3DCubeTextureD0Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN20CDirect3DCubeTextureD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN20CDirect3DCubeTextureD1Ev(_this);
     free(_this);
 }
 
 void ZN20CDirect3DCubeTextureD2Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN20CDirect3DCubeTextureD2Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN20CDirect3DCubeTextureD1Ev(_this);
 }
 
 void CDirect3DCubeTexture_CDirect3DCubeTexture(const CDirect3DCubeTexture *_this, UINT32 EdgeLength, UINT32 Levels, DWORD Usage, D3DFORMAT Format)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &EdgeLength, &Levels, &Usage, &Format };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_CDirect3DCubeTexture", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DCubeTextureClean *tex = (CDirect3DCubeTextureClean *)_this;
     UINT32 i, face, w, totalSize, offset;
     bool createGL = 0;
@@ -324,17 +466,37 @@ void CDirect3DCubeTexture_CDirect3DCubeTexture(const CDirect3DCubeTexture *_this
 
 void CDirect3DCubeTexture_UpdateOpenGLSurfaces(const CDirect3DCubeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_UpdateOpenGLSurfaces", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 }
 
 HRESULT CDirect3DCubeTexture_GetDevice(const CDirect3DCubeTexture *_this, void (*ppDevice)())
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &ppDevice };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_GetDevice", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)ppDevice;
     return 0;
 }
 HRESULT CDirect3DCubeTexture_SetPrivateData(const CDirect3DCubeTexture *_this, const GUID *refguid, const void *pData, DWORD SizeOfData, DWORD Flags)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &refguid, &pData, &SizeOfData, &Flags };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_SetPrivateData", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)refguid;
     (void)pData;
@@ -344,6 +506,13 @@ HRESULT CDirect3DCubeTexture_SetPrivateData(const CDirect3DCubeTexture *_this, c
 }
 HRESULT CDirect3DCubeTexture_GetPrivateData(const CDirect3DCubeTexture *_this, const GUID *refguid, void *pData, DWORD *pSizeOfData)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &refguid, &pData, &pSizeOfData };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_GetPrivateData", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)refguid;
     (void)pData;
@@ -352,38 +521,113 @@ HRESULT CDirect3DCubeTexture_GetPrivateData(const CDirect3DCubeTexture *_this, c
 }
 HRESULT CDirect3DCubeTexture_FreePrivateData(const CDirect3DCubeTexture *_this, const GUID *refguid)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &refguid };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_FreePrivateData", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)refguid;
     return 0;
 }
 DWORD CDirect3DCubeTexture_SetPriority(const CDirect3DCubeTexture *_this, DWORD PriorityNew)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &PriorityNew };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_SetPriority", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)PriorityNew;
     return 0;
 }
 DWORD CDirect3DCubeTexture_GetPriority(const CDirect3DCubeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_GetPriority", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 0;
 }
 void CDirect3DCubeTexture_PreLoad(const CDirect3DCubeTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CDirect3DCubeTexture_PreLoad", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 }
 
 extern void ZN16CDirect3DTextureD0Ev(void *);
 extern void ZN16CDirect3DTextureD1Ev(void *);
 #if defined(COD2_X64)
-void ZThn4_N16CDirect3DTextureD0Ev(void *p) { ZN16CDirect3DTextureD0Ev((void **)p - 1); }
-void ZThn4_N16CDirect3DTextureD1Ev(void *p) { ZN16CDirect3DTextureD1Ev((void **)p - 1); }
-void ZThn4_N20CDirect3DCubeTextureD0Ev(void *p) { ZN20CDirect3DCubeTextureD0Ev((void **)p - 1); }
-void ZThn4_N20CDirect3DCubeTextureD1Ev(void *p) { ZN20CDirect3DCubeTextureD1Ev((void **)p - 1); }
+void ZThn4_N16CDirect3DTextureD0Ev(void *p) {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &p };
+    if (MacShim_Dispatch("ZThn4_N16CDirect3DTextureD0Ev", p, macArguments, NULL, 0))
+        return;
+#endif
+ ZN16CDirect3DTextureD0Ev((void **)p - 1); }
+void ZThn4_N16CDirect3DTextureD1Ev(void *p) {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &p };
+    if (MacShim_Dispatch("ZThn4_N16CDirect3DTextureD1Ev", p, macArguments, NULL, 0))
+        return;
+#endif
+ ZN16CDirect3DTextureD1Ev((void **)p - 1); }
+void ZThn4_N20CDirect3DCubeTextureD0Ev(void *p) {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &p };
+    if (MacShim_Dispatch("ZThn4_N20CDirect3DCubeTextureD0Ev", p, macArguments, NULL, 0))
+        return;
+#endif
+ ZN20CDirect3DCubeTextureD0Ev((void **)p - 1); }
+void ZThn4_N20CDirect3DCubeTextureD1Ev(void *p) {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &p };
+    if (MacShim_Dispatch("ZThn4_N20CDirect3DCubeTextureD1Ev", p, macArguments, NULL, 0))
+        return;
+#endif
+ ZN20CDirect3DCubeTextureD1Ev((void **)p - 1); }
 #else
-void ZThn4_N16CDirect3DTextureD0Ev(void *p) { ZN16CDirect3DTextureD0Ev((char *)p - 4); }
-void ZThn4_N16CDirect3DTextureD1Ev(void *p) { ZN16CDirect3DTextureD1Ev((char *)p - 4); }
-void ZThn4_N20CDirect3DCubeTextureD0Ev(void *p) { ZN20CDirect3DCubeTextureD0Ev((char *)p - 4); }
-void ZThn4_N20CDirect3DCubeTextureD1Ev(void *p) { ZN20CDirect3DCubeTextureD1Ev((char *)p - 4); }
+void ZThn4_N16CDirect3DTextureD0Ev(void *p) {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &p };
+    if (MacShim_Dispatch("ZThn4_N16CDirect3DTextureD0Ev", p, macArguments, NULL, 0))
+        return;
+#endif
+ ZN16CDirect3DTextureD0Ev((char *)p - 4); }
+void ZThn4_N16CDirect3DTextureD1Ev(void *p) {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &p };
+    if (MacShim_Dispatch("ZThn4_N16CDirect3DTextureD1Ev", p, macArguments, NULL, 0))
+        return;
+#endif
+ ZN16CDirect3DTextureD1Ev((char *)p - 4); }
+void ZThn4_N20CDirect3DCubeTextureD0Ev(void *p) {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &p };
+    if (MacShim_Dispatch("ZThn4_N20CDirect3DCubeTextureD0Ev", p, macArguments, NULL, 0))
+        return;
+#endif
+ ZN20CDirect3DCubeTextureD0Ev((char *)p - 4); }
+void ZThn4_N20CDirect3DCubeTextureD1Ev(void *p) {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &p };
+    if (MacShim_Dispatch("ZThn4_N20CDirect3DCubeTextureD1Ev", p, macArguments, NULL, 0))
+        return;
+#endif
+ ZN20CDirect3DCubeTextureD1Ev((char *)p - 4); }
 #endif
 fnptr_t vtbl_CDirect3DCubeTexture[] = { (fnptr_t)CDirect3DCubeTexture_QueryInterface, (fnptr_t)CDirect3DCubeTexture_AddRef, (fnptr_t)CDirect3DCubeTexture_Release, (fnptr_t)CDirect3DCubeTexture_GetDevice, (fnptr_t)CDirect3DCubeTexture_SetPrivateData, (fnptr_t)CDirect3DCubeTexture_GetPrivateData, (fnptr_t)CDirect3DCubeTexture_FreePrivateData, (fnptr_t)CDirect3DCubeTexture_SetPriority, (fnptr_t)CDirect3DCubeTexture_GetPriority, (fnptr_t)CDirect3DCubeTexture_PreLoad, (fnptr_t)CDirect3DCubeTexture_GetType, (fnptr_t)CDirect3DCubeTexture_SetLOD, (fnptr_t)CDirect3DCubeTexture_GetLOD, (fnptr_t)CDirect3DCubeTexture_GetLevelCount, (fnptr_t)CDirect3DCubeTexture_SetAutoGenFilterType, (fnptr_t)CDirect3DCubeTexture_GetAutoGenFilterType, (fnptr_t)CDirect3DCubeTexture_GenerateMipSubLevels, (fnptr_t)CDirect3DCubeTexture_GetLevelDesc, (fnptr_t)CDirect3DCubeTexture_GetCubeMapSurface, (fnptr_t)CDirect3DCubeTexture_LockRect, (fnptr_t)CDirect3DCubeTexture_UnlockRect, (fnptr_t)CDirect3DCubeTexture_AddDirtyRect, (fnptr_t)ZN20CDirect3DCubeTextureD1Ev, (fnptr_t)ZN20CDirect3DCubeTextureD0Ev };
 fnptr_t vtbl_CDirect3DCubeTexture_secondary[] = { (fnptr_t)ZThn4_N20CDirect3DCubeTextureD1Ev, (fnptr_t)ZThn4_N20CDirect3DCubeTextureD0Ev, (fnptr_t)COpenGLTexture_UpdateOpenGLSurfaces };

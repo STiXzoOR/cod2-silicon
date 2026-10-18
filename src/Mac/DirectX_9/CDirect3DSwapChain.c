@@ -1,3 +1,4 @@
+#include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
 #include <stdlib.h>
@@ -56,6 +57,13 @@ HRESULT CDirect3DSwapChain_GetPresentParameters(const CDirect3DSwapChain *_this,
 
 ULONG CDirect3DSwapChain_AddRef(const CDirect3DSwapChain *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSwapChain_AddRef", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DSwapChainImpl *swapChain;
 
     swapChain = (CDirect3DSwapChainImpl *)_this;
@@ -65,6 +73,13 @@ ULONG CDirect3DSwapChain_AddRef(const CDirect3DSwapChain *_this)
 
 HRESULT CDirect3DSwapChain_QueryInterface(const CDirect3DSwapChain *_this, const IID *iid, LPVOID *ppvObj)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &iid, &ppvObj };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSwapChain_QueryInterface", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)iid;
 
     *ppvObj = (LPVOID)_this;
@@ -74,6 +89,13 @@ HRESULT CDirect3DSwapChain_QueryInterface(const CDirect3DSwapChain *_this, const
 
 ULONG CDirect3DSwapChain_Release(const CDirect3DSwapChain *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSwapChain_Release", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DSwapChainImpl *swapChain;
     ULONG refCount;
 
@@ -88,17 +110,36 @@ ULONG CDirect3DSwapChain_Release(const CDirect3DSwapChain *_this)
 
 void ZN18CDirect3DSwapChainD1Ev(const CDirect3DSwapChain *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN18CDirect3DSwapChainD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DSwapChain_Destroy((CDirect3DSwapChainImpl *)_this);
 }
 
 void ZN18CDirect3DSwapChainD0Ev(const CDirect3DSwapChain *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN18CDirect3DSwapChainD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DSwapChain_Destroy((CDirect3DSwapChainImpl *)_this);
     free((void *)_this);
 }
 
 HRESULT CDirect3DSwapChain_GetBackBuffer(const CDirect3DSwapChain *_this, UINT BackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface9 **ppBackBuffer)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &BackBuffer, &Type, &ppBackBuffer };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSwapChain_GetBackBuffer", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DSwapChainImpl *swapChain;
 
     (void)BackBuffer;
@@ -112,6 +153,13 @@ HRESULT CDirect3DSwapChain_GetBackBuffer(const CDirect3DSwapChain *_this, UINT B
 
 int CDirect3DSwapChain_SetBackBuffer(const CDirect3DSwapChain *_this, const IDirect3DSurface9 *pBackBuffer)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pBackBuffer };
+    int macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSwapChain_SetBackBuffer", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DSwapChainImpl *swapChain;
 
     swapChain = (CDirect3DSwapChainImpl *)_this;
@@ -121,6 +169,13 @@ int CDirect3DSwapChain_SetBackBuffer(const CDirect3DSwapChain *_this, const IDir
 
 int CDirect3DSwapChain_CDirect3DSwapChain(const CDirect3DSwapChain *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    int macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSwapChain_CDirect3DSwapChain", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DSwapChainImpl *swapChain;
 
     swapChain = (CDirect3DSwapChainImpl *)_this;
@@ -132,6 +187,13 @@ int CDirect3DSwapChain_CDirect3DSwapChain(const CDirect3DSwapChain *_this)
 
 HRESULT CDirect3DSwapChain_Present(const CDirect3DSwapChain *_this, const RECT *pSourceRect, const RECT *pDestRect, HWND hDestWindowOverride, const RGNDATA *pDirtyRegion, DWORD dwFlags)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pSourceRect, &pDestRect, &hDestWindowOverride, &pDirtyRegion, &dwFlags };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSwapChain_Present", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)pSourceRect;
     (void)pDestRect;
@@ -143,6 +205,13 @@ HRESULT CDirect3DSwapChain_Present(const CDirect3DSwapChain *_this, const RECT *
 
 HRESULT CDirect3DSwapChain_GetFrontBufferData(const CDirect3DSwapChain *_this, IDirect3DSurface9 *pDestSurface)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pDestSurface };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSwapChain_GetFrontBufferData", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)pDestSurface;
     return 0;
@@ -150,6 +219,13 @@ HRESULT CDirect3DSwapChain_GetFrontBufferData(const CDirect3DSwapChain *_this, I
 
 HRESULT CDirect3DSwapChain_GetRasterStatus(const CDirect3DSwapChain *_this, D3DRASTER_STATUS *pRasterStatus)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pRasterStatus };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSwapChain_GetRasterStatus", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)pRasterStatus;
     return 0;
@@ -157,6 +233,13 @@ HRESULT CDirect3DSwapChain_GetRasterStatus(const CDirect3DSwapChain *_this, D3DR
 
 HRESULT CDirect3DSwapChain_GetDisplayMode(const CDirect3DSwapChain *_this, D3DDISPLAYMODE *pMode)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pMode };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSwapChain_GetDisplayMode", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)pMode;
     return 0;
@@ -164,6 +247,13 @@ HRESULT CDirect3DSwapChain_GetDisplayMode(const CDirect3DSwapChain *_this, D3DDI
 
 HRESULT CDirect3DSwapChain_GetDevice(const CDirect3DSwapChain *_this, D3DDEVICE_CREATION_PARAMETERS *(*ppDevice)())
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &ppDevice };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSwapChain_GetDevice", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)ppDevice;
     return 0;
@@ -171,6 +261,13 @@ HRESULT CDirect3DSwapChain_GetDevice(const CDirect3DSwapChain *_this, D3DDEVICE_
 
 HRESULT CDirect3DSwapChain_GetPresentParameters(const CDirect3DSwapChain *_this, D3DPRESENT_PARAMETERS *pPresentationParameters)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pPresentationParameters };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DSwapChain_GetPresentParameters", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)pPresentationParameters;
     return 0;

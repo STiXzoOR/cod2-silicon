@@ -1,3 +1,4 @@
+#include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
 #include <stdlib.h>
@@ -26,12 +27,26 @@ void ZN21CDirect3DVertexBufferD2Ev(void *_this);
 
 ULONG CDirect3DVertexBuffer_AddRef(const CDirect3DVertexBuffer *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexBuffer_AddRef", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVertexBufferClean *vb = (CDirect3DVertexBufferClean *)_this;
     return ++vb->refCount;
 }
 
 HRESULT CDirect3DVertexBuffer_QueryInterface(const CDirect3DVertexBuffer *_this, const IID *iid, void **ppvObj)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &iid, &ppvObj };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexBuffer_QueryInterface", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)iid;
     *ppvObj = (void *)_this;
     CDirect3DVertexBuffer_AddRef(_this);
@@ -40,6 +55,13 @@ HRESULT CDirect3DVertexBuffer_QueryInterface(const CDirect3DVertexBuffer *_this,
 
 ULONG CDirect3DVertexBuffer_Release(const CDirect3DVertexBuffer *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexBuffer_Release", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVertexBufferClean *vb = (CDirect3DVertexBufferClean *)_this;
     ULONG rc = --vb->refCount;
     if (!rc) {
@@ -51,6 +73,13 @@ ULONG CDirect3DVertexBuffer_Release(const CDirect3DVertexBuffer *_this)
 
 HRESULT CDirect3DVertexBuffer_Lock(const CDirect3DVertexBuffer *_this, UINT OffsetToLock, UINT SizeToLock, void **ppbData, DWORD Flags)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &OffsetToLock, &SizeToLock, &ppbData, &Flags };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexBuffer_Lock", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVertexBufferClean *vb = (CDirect3DVertexBufferClean *)_this;
     (void)SizeToLock;
     (void)Flags;
@@ -60,12 +89,26 @@ HRESULT CDirect3DVertexBuffer_Lock(const CDirect3DVertexBuffer *_this, UINT Offs
 
 HRESULT CDirect3DVertexBuffer_Unlock(const CDirect3DVertexBuffer *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexBuffer_Unlock", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 0;
 }
 
 HRESULT CDirect3DVertexBuffer_GetDesc(const CDirect3DVertexBuffer *_this, D3DVERTEXBUFFER_DESC *pDesc)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pDesc };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexBuffer_GetDesc", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVertexBufferClean *vb = (CDirect3DVertexBufferClean *)_this;
     pDesc->Format = 0;
     pDesc->Type = D3DRTYPE_VERTEXBUFFER;
@@ -78,6 +121,12 @@ HRESULT CDirect3DVertexBuffer_GetDesc(const CDirect3DVertexBuffer *_this, D3DVER
 
 void ZN21CDirect3DVertexBufferD1Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN21CDirect3DVertexBufferD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DVertexBufferClean *vb = (CDirect3DVertexBufferClean *)_this;
     vb->vtable = vtbl_CDirect3DVertexBuffer;
     free(vb->data);
@@ -86,17 +135,35 @@ void ZN21CDirect3DVertexBufferD1Ev(void *_this)
 
 void ZN21CDirect3DVertexBufferD0Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN21CDirect3DVertexBufferD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN21CDirect3DVertexBufferD1Ev(_this);
     free(_this);
 }
 
 void ZN21CDirect3DVertexBufferD2Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN21CDirect3DVertexBufferD2Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN21CDirect3DVertexBufferD1Ev(_this);
 }
 
 void CDirect3DVertexBuffer_CDirect3DVertexBuffer(const CDirect3DVertexBuffer *_this, UINT32 Length, DWORD Usage, D3DPOOL Pool)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Length, &Usage, &Pool };
+    if (MacShim_Dispatch("CDirect3DVertexBuffer_CDirect3DVertexBuffer", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DVertexBufferClean *vb = (CDirect3DVertexBufferClean *)_this;
     (void)Pool;
     vb->vtable = vtbl_CDirect3DVertexBuffer;
@@ -108,6 +175,13 @@ void CDirect3DVertexBuffer_CDirect3DVertexBuffer(const CDirect3DVertexBuffer *_t
 
 HRESULT CDirect3DVertexBuffer_GetDevice(const CDirect3DVertexBuffer *_this, IDirect3DDevice9 **ppDevice)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &ppDevice };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexBuffer_GetDevice", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)ppDevice;
     return 0;
@@ -115,6 +189,13 @@ HRESULT CDirect3DVertexBuffer_GetDevice(const CDirect3DVertexBuffer *_this, IDir
 
 HRESULT CDirect3DVertexBuffer_SetPrivateData(const CDirect3DVertexBuffer *_this, const GUID *refguid, const void *pData, DWORD SizeOfData, DWORD Flags)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &refguid, &pData, &SizeOfData, &Flags };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexBuffer_SetPrivateData", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)refguid;
     (void)pData;
@@ -125,6 +206,13 @@ HRESULT CDirect3DVertexBuffer_SetPrivateData(const CDirect3DVertexBuffer *_this,
 
 HRESULT CDirect3DVertexBuffer_GetPrivateData(const CDirect3DVertexBuffer *_this, const GUID *refguid, void *pData, DWORD *pSizeOfData)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &refguid, &pData, &pSizeOfData };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexBuffer_GetPrivateData", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)refguid;
     (void)pData;
@@ -134,6 +222,13 @@ HRESULT CDirect3DVertexBuffer_GetPrivateData(const CDirect3DVertexBuffer *_this,
 
 HRESULT CDirect3DVertexBuffer_FreePrivateData(const CDirect3DVertexBuffer *_this, const GUID *refguid)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &refguid };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexBuffer_FreePrivateData", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)refguid;
     return 0;
@@ -141,6 +236,13 @@ HRESULT CDirect3DVertexBuffer_FreePrivateData(const CDirect3DVertexBuffer *_this
 
 DWORD CDirect3DVertexBuffer_SetPriority(const CDirect3DVertexBuffer *_this, DWORD PriorityNew)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &PriorityNew };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexBuffer_SetPriority", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)PriorityNew;
     return 0;
@@ -148,23 +250,49 @@ DWORD CDirect3DVertexBuffer_SetPriority(const CDirect3DVertexBuffer *_this, DWOR
 
 DWORD CDirect3DVertexBuffer_GetPriority(const CDirect3DVertexBuffer *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexBuffer_GetPriority", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 0;
 }
 
 void CDirect3DVertexBuffer_PreLoad(const CDirect3DVertexBuffer *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CDirect3DVertexBuffer_PreLoad", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 }
 
 D3DRESOURCETYPE CDirect3DVertexBuffer_GetType(const CDirect3DVertexBuffer *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    D3DRESOURCETYPE macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexBuffer_GetType", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return D3DRTYPE_VERTEXBUFFER;
 }
 
 void CDirect3DVertexBuffer_WaitFence(const CDirect3DVertexBuffer *_this, const void *pStart, UINT32 SizeInBytes)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pStart, &SizeInBytes };
+    if (MacShim_Dispatch("CDirect3DVertexBuffer_WaitFence", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
     (void)pStart;
     (void)SizeInBytes;
@@ -172,6 +300,12 @@ void CDirect3DVertexBuffer_WaitFence(const CDirect3DVertexBuffer *_this, const v
 
 void CDirect3DVertexBuffer_SetFence(const CDirect3DVertexBuffer *_this, const void *pStart, UINT32 SizeInBytes, const CDirect3DVertexBuffer *_this_3)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pStart, &SizeInBytes, &_this_3 };
+    if (MacShim_Dispatch("CDirect3DVertexBuffer_SetFence", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
     (void)pStart;
     (void)SizeInBytes;

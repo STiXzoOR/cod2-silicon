@@ -1,3 +1,4 @@
+#include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
 #include <stdlib.h>
@@ -15,11 +16,25 @@ void *imp__ZN7COpenGL7sOpenGLE = &s_nativeOpenGL;
 
 unsigned char *COpenGL_TexUnitBase(const COpenGL *_this, UINT32 Unit)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Unit };
+    unsigned char * macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_TexUnitBase", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return (unsigned char *)&((COpenGLNative *)_this)->texUnits[Unit];
 }
 
 void *COpenGL_GetVAOBindingList(const COpenGL *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    void * macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_GetVAOBindingList", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     COpenGLBindingList *head = &((COpenGLNative *)_this)->vaoBindings;
     if (!head->next) {
         head->next = head;
@@ -39,6 +54,13 @@ static unsigned char COpenGL_texUnitState[COPENGL_MAX_TEXUNITS * COPENGL_TEXUNIT
 
 unsigned char *COpenGL_TexUnitBase(const COpenGL *_this, UINT32 Unit)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Unit };
+    unsigned char * macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_TexUnitBase", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     unsigned char *p = (unsigned char *)_this;
 
     if (*(void **)(p + 1628) == 0)
@@ -55,6 +77,13 @@ GLint g_VAOID = 0;
 
 unsigned int COpenGL_SetColorMaterialEnable(const COpenGL *_this, int Value)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Value };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_SetColorMaterialEnable", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Value;
     return 0;
@@ -62,6 +91,13 @@ unsigned int COpenGL_SetColorMaterialEnable(const COpenGL *_this, int Value)
 
 unsigned int COpenGL_SetActiveTexUnit(const COpenGL *_this, UINT32 Unit)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Unit };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_SetActiveTexUnit", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
 #if defined(COD2_X64)
     COpenGLNative *gl = (COpenGLNative *)_this;
     if (gl->activeTexUnit != Unit) {
@@ -80,6 +116,13 @@ unsigned int COpenGL_SetActiveTexUnit(const COpenGL *_this, UINT32 Unit)
 
 unsigned int COpenGL_SetDither(const COpenGL *_this, int Value)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Value };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_SetDither", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Value;
     return 0;
@@ -88,6 +131,13 @@ unsigned int COpenGL_SetDither(const COpenGL *_this, int Value)
 unsigned int COpenGL_SetBlendEXT(const COpenGL *_this, int ForceValidation,
                                  GLenum SrcFactorRGB, GLenum DstFactorRGB, GLenum SrcFactorAlpha, GLenum DstFactorAlpha)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &ForceValidation, &SrcFactorRGB, &DstFactorRGB, &SrcFactorAlpha, &DstFactorAlpha };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_SetBlendEXT", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
 #if defined(COD2_X64)
     COpenGLNative *gl = (COpenGLNative *)_this;
     if (ForceValidation == 0 &&
@@ -117,6 +167,13 @@ unsigned int COpenGL_SetBlendEXT(const COpenGL *_this, int ForceValidation,
 unsigned int COpenGL_SetBlend(const COpenGL *_this, int ForceValidation,
                               GLenum SrcFactorRGB, GLenum DstFactorRGB)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &ForceValidation, &SrcFactorRGB, &DstFactorRGB };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_SetBlend", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
 #if defined(COD2_X64)
     COpenGLNative *gl = (COpenGLNative *)_this;
     if (ForceValidation == 0 &&
@@ -139,6 +196,13 @@ unsigned int COpenGL_SetBlend(const COpenGL *_this, int ForceValidation,
 
 unsigned int COpenGL_SetVertexProgram(const COpenGL *_this, const COpenGLVertexProgram *pOGLVertexProgramInfo)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pOGLVertexProgramInfo };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_SetVertexProgram", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)pOGLVertexProgramInfo;
     return 0;
@@ -146,6 +210,13 @@ unsigned int COpenGL_SetVertexProgram(const COpenGL *_this, const COpenGLVertexP
 
 unsigned int COpenGL_SetVARInfo(const COpenGL *_this, const unsigned int *pVAStart, UINT32 Size)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pVAStart, &Size };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_SetVARInfo", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)pVAStart;
     (void)Size;
@@ -154,6 +225,13 @@ unsigned int COpenGL_SetVARInfo(const COpenGL *_this, const unsigned int *pVASta
 
 unsigned int COpenGL_DisableVertexProgramStream(const COpenGL *_this, UINT32 AttribArray)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &AttribArray };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_DisableVertexProgramStream", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)AttribArray;
     return 0;
@@ -161,6 +239,13 @@ unsigned int COpenGL_DisableVertexProgramStream(const COpenGL *_this, UINT32 Att
 
 unsigned int COpenGL_CTexUnit_SetTex(const CTexUnit *_this, GLenum Target, const COpenGLTexture *pOpenGLTexInfo)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Target, &pOpenGLTexInfo };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_CTexUnit_SetTex", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Target;
     (void)pOpenGLTexInfo;
@@ -169,6 +254,13 @@ unsigned int COpenGL_CTexUnit_SetTex(const CTexUnit *_this, GLenum Target, const
 
 unsigned int COpenGL_SetTex(const COpenGL *_this, UINT32 Unit, GLenum Target, const COpenGLTexture *pOpenGLTexInfo)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Unit, &Target, &pOpenGLTexInfo };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_SetTex", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Unit;
     (void)Target;
@@ -179,6 +271,13 @@ unsigned int COpenGL_SetTex(const COpenGL *_this, UINT32 Unit, GLenum Target, co
 unsigned int COpenGL_SetVertexProgramStreamInfo(const COpenGL *_this, UINT32 AttribArray,
                                                 GLint VSize, GLenum VType, int Normalized, GLsizei Stride, const unsigned int *pStream)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &AttribArray, &VSize, &VType, &Normalized, &Stride, &pStream };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_SetVertexProgramStreamInfo", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)AttribArray;
     (void)VSize;
@@ -192,6 +291,13 @@ unsigned int COpenGL_SetVertexProgramStreamInfo(const COpenGL *_this, UINT32 Att
 unsigned int COpenGL_CTexUnit_Reset(const CTexUnit *_this, int SupportsAnisotropicFiltering,
                                     int SupportsLODBias, int IsProgramableOnly)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &SupportsAnisotropicFiltering, &SupportsLODBias, &IsProgramableOnly };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_CTexUnit_Reset", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)SupportsAnisotropicFiltering;
     (void)SupportsLODBias;
@@ -202,6 +308,13 @@ unsigned int COpenGL_CTexUnit_Reset(const CTexUnit *_this, int SupportsAnisotrop
 unsigned int COpenGL_SetVAO(const COpenGL *_this, const COpenGLVAO *VAO,
                             int IsFixedFunction, int ForceValidation)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &VAO, &IsFixedFunction, &ForceValidation };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_SetVAO", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)VAO;
     (void)IsFixedFunction;
@@ -212,6 +325,13 @@ unsigned int COpenGL_SetVAO(const COpenGL *_this, const COpenGLVAO *VAO,
 unsigned int COpenGL_EnableColorArray(const COpenGL *_this, GLint Size, GLenum Type,
                                       GLsizei Stride, const unsigned int *Pointer)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Size, &Type, &Stride, &Pointer };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_EnableColorArray", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Size;
     (void)Type;
@@ -222,12 +342,26 @@ unsigned int COpenGL_EnableColorArray(const COpenGL *_this, GLint Size, GLenum T
 
 unsigned int COpenGL_DisableColorArray(const COpenGL *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_DisableColorArray", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 0;
 }
 
 unsigned int COpenGL_EnableNormalArray(const COpenGL *_this, GLenum Type, GLsizei Stride, const unsigned int *Pointer)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Type, &Stride, &Pointer };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_EnableNormalArray", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Type;
     (void)Stride;
@@ -237,6 +371,13 @@ unsigned int COpenGL_EnableNormalArray(const COpenGL *_this, GLenum Type, GLsize
 
 unsigned int COpenGL_DisableNormalArray(const COpenGL *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_DisableNormalArray", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 0;
 }
@@ -244,6 +385,13 @@ unsigned int COpenGL_DisableNormalArray(const COpenGL *_this)
 unsigned int COpenGL_EnableVertexArray(const COpenGL *_this, GLint Size, GLenum Type,
                                        GLsizei Stride, const unsigned int *Pointer)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Size, &Type, &Stride, &Pointer };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_EnableVertexArray", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Size;
     (void)Type;
@@ -254,6 +402,13 @@ unsigned int COpenGL_EnableVertexArray(const COpenGL *_this, GLint Size, GLenum 
 
 unsigned int COpenGL_SetLight(const COpenGL *_this, UINT32 Light, const LightInfoType *Src)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Light, &Src };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_SetLight", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Light;
     (void)Src;
@@ -263,6 +418,13 @@ unsigned int COpenGL_SetLight(const COpenGL *_this, UINT32 Light, const LightInf
 unsigned int COpenGL_EnableTexCoordArray(const COpenGL *_this, UINT32 Unit, GLint Size,
                                          GLenum Type, GLsizei Stride, const unsigned int *Pointer)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Unit, &Size, &Type, &Stride, &Pointer };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_EnableTexCoordArray", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Unit;
     (void)Size;
@@ -274,6 +436,13 @@ unsigned int COpenGL_EnableTexCoordArray(const COpenGL *_this, UINT32 Unit, GLin
 
 unsigned int COpenGL_DisableTexCoordArray(const COpenGL *_this, UINT32 Unit)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Unit };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_DisableTexCoordArray", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Unit;
     return 0;
@@ -281,6 +450,13 @@ unsigned int COpenGL_DisableTexCoordArray(const COpenGL *_this, UINT32 Unit)
 
 unsigned int COpenGL_SetTexMatrix(const COpenGL *_this, UINT32 Unit, const float *m)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Unit, &m };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_SetTexMatrix", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Unit;
     (void)m;
@@ -289,6 +465,13 @@ unsigned int COpenGL_SetTexMatrix(const COpenGL *_this, UINT32 Unit, const float
 
 unsigned int COpenGL_SetTexMatrixIdentity(const COpenGL *_this, UINT32 Unit)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Unit };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_SetTexMatrixIdentity", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Unit;
     return 0;
@@ -296,6 +479,13 @@ unsigned int COpenGL_SetTexMatrixIdentity(const COpenGL *_this, UINT32 Unit)
 
 unsigned int COpenGL_Shutdown(const COpenGL *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_Shutdown", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 0;
 }
@@ -303,6 +493,13 @@ unsigned int COpenGL_Shutdown(const COpenGL *_this)
 unsigned int COpenGL_SetTexGenEnable(const COpenGL *_this, UINT32 Unit,
                                      int Enable, int EnableReflection, int EnableNormalMap)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Unit, &Enable, &EnableReflection, &EnableNormalMap };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_SetTexGenEnable", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Unit;
     (void)Enable;
@@ -313,6 +510,13 @@ unsigned int COpenGL_SetTexGenEnable(const COpenGL *_this, UINT32 Unit,
 
 unsigned int COpenGL_DisableTexUnit(const COpenGL *_this, UINT32 Unit)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Unit };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_DisableTexUnit", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Unit;
     return 0;
@@ -320,6 +524,13 @@ unsigned int COpenGL_DisableTexUnit(const COpenGL *_this, UINT32 Unit)
 
 unsigned int COpenGL_ReleaseVAOBinding(const COpenGL *_this, const GLuint *TexID)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &TexID };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_ReleaseVAOBinding", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)TexID;
     return 0;
@@ -327,6 +538,13 @@ unsigned int COpenGL_ReleaseVAOBinding(const COpenGL *_this, const GLuint *TexID
 
 unsigned int COpenGL_ReleaseTextureBinding(const COpenGL *_this, const GLuint *TexID)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &TexID };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_ReleaseTextureBinding", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)TexID;
     return 0;
@@ -334,6 +552,13 @@ unsigned int COpenGL_ReleaseTextureBinding(const COpenGL *_this, const GLuint *T
 
 unsigned int COpenGL_Init(const COpenGL *_this, UINT32 Buffers, UINT32 MaxTextureUnits, UINT32 MaxTextureImageUnits)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Buffers, &MaxTextureUnits, &MaxTextureImageUnits };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_Init", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)Buffers;
     (void)MaxTextureUnits;
@@ -343,22 +568,47 @@ unsigned int COpenGL_Init(const COpenGL *_this, UINT32 Buffers, UINT32 MaxTextur
 
 unsigned int COpenGL_COpenGL(const COpenGL *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGL_COpenGL", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 0;
 }
 
 void ZN7COpenGLD1Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN7COpenGLD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 }
 
 void ZN7COpenGLD0Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN7COpenGLD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 }
 
 void ZN7COpenGLD2Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN7COpenGLD2Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 }
 
@@ -379,6 +629,13 @@ __attribute__((constructor)) void GLOBAL__I__ZN7COpenGL7sOpenGLE(void)
 
 unsigned int COpenGLVertexProgram_COpenGLVertexProgram(const COpenGLVertexProgram *_this, const char *pSrcData)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pSrcData };
+    unsigned int macResult = { 0 };
+    if (MacShim_Dispatch("COpenGLVertexProgram_COpenGLVertexProgram", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
 
     GLuint *progIdPtr = (GLuint *)_this;
 
@@ -410,16 +667,34 @@ unsigned int COpenGLVertexProgram_COpenGLVertexProgram(const COpenGLVertexProgra
 
 void ZN20COpenGLVertexProgramD1Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN20COpenGLVertexProgramD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 }
 
 void ZN20COpenGLVertexProgramD0Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN20COpenGLVertexProgramD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 }
 
 void ZN20COpenGLVertexProgramD2Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN20COpenGLVertexProgramD2Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 }
 

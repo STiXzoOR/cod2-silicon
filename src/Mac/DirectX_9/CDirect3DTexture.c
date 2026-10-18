@@ -1,3 +1,4 @@
+#include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
 #include <stdlib.h>
@@ -57,6 +58,13 @@ typedef struct {
 #if defined(COD2_X64)
 GLuint CDirect3DTexture_GetGLName(const void *texture)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &texture };
+    GLuint macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_GetGLName", texture, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return ((const CDirect3DTextureClean *)texture)->texIDStorage;
 }
 #endif
@@ -67,12 +75,26 @@ void ZN16CDirect3DTextureD1Ev(void *_this);
 
 ULONG CDirect3DTexture_AddRef(const CDirect3DTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_AddRef", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     return ++tex->refCount;
 }
 
 HRESULT CDirect3DTexture_QueryInterface(const CDirect3DTexture *_this, const IID *iid, void **ppvObj)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &iid, &ppvObj };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_QueryInterface", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)iid;
     *ppvObj = (void *)_this;
     CDirect3DTexture_AddRef(_this);
@@ -81,6 +103,13 @@ HRESULT CDirect3DTexture_QueryInterface(const CDirect3DTexture *_this, const IID
 
 ULONG CDirect3DTexture_Release(const CDirect3DTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_Release", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     ULONG rc = --tex->refCount;
     if (!rc) {
@@ -91,6 +120,13 @@ ULONG CDirect3DTexture_Release(const CDirect3DTexture *_this)
 
 HRESULT CDirect3DTexture_GetLevelDesc(const CDirect3DTexture *_this, UINT Level, D3DSURFACE_DESC *pDesc)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Level, &pDesc };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_GetLevelDesc", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     HRESULT CDirect3DSurface_GetDesc(const CDirect3DSurface *_this, D3DSURFACE_DESC *pDesc);
     if (Level >= tex->levelCount)
@@ -100,6 +136,13 @@ HRESULT CDirect3DTexture_GetLevelDesc(const CDirect3DTexture *_this, UINT Level,
 
 HRESULT CDirect3DTexture_GetSurfaceLevel(const CDirect3DTexture *_this, UINT Level, IDirect3DSurface9 **ppSurfaceLevel)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Level, &ppSurfaceLevel };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_GetSurfaceLevel", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     if (Level >= tex->levelCount)
         return -1;
@@ -111,6 +154,13 @@ HRESULT CDirect3DTexture_GetSurfaceLevel(const CDirect3DTexture *_this, UINT Lev
 
 HRESULT CDirect3DTexture_LockRect(const CDirect3DTexture *_this, UINT Level, D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Level, &pLockedRect, &pRect, &Flags };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_LockRect", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     HRESULT hr;
     HRESULT CDirect3DSurface_LockRect(const CDirect3DSurface *_this, D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags);
@@ -124,6 +174,13 @@ HRESULT CDirect3DTexture_LockRect(const CDirect3DTexture *_this, UINT Level, D3D
 
 HRESULT CDirect3DTexture_UnlockRect(const CDirect3DTexture *_this, UINT Level)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Level };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_UnlockRect", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     CDirect3DSurface *surface;
 
@@ -146,6 +203,13 @@ HRESULT CDirect3DTexture_UnlockRect(const CDirect3DTexture *_this, UINT Level)
 
 HRESULT CDirect3DTexture_AddDirtyRect(const CDirect3DTexture *_this, const RECT *pDirtyRect)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pDirtyRect };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_AddDirtyRect", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)pDirtyRect;
     return 0;
@@ -153,45 +217,99 @@ HRESULT CDirect3DTexture_AddDirtyRect(const CDirect3DTexture *_this, const RECT 
 
 DWORD CDirect3DTexture_SetLOD(const CDirect3DTexture *_this, DWORD LODNew)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &LODNew };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_SetLOD", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)LODNew;
     return 0;
 }
 DWORD CDirect3DTexture_GetLOD(const CDirect3DTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_GetLOD", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 0;
 }
 
 DWORD CDirect3DTexture_GetLevelCount(const CDirect3DTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_GetLevelCount", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     return tex->levelCount;
 }
 
 D3DRESOURCETYPE CDirect3DTexture_GetType(const CDirect3DTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    D3DRESOURCETYPE macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_GetType", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return D3DRTYPE_TEXTURE;
 }
 HRESULT CDirect3DTexture_SetAutoGenFilterType(const CDirect3DTexture *_this, D3DTEXTUREFILTERTYPE FilterType)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &FilterType };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_SetAutoGenFilterType", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)FilterType;
     return 0;
 }
 D3DTEXTUREFILTERTYPE CDirect3DTexture_GetAutoGenFilterType(const CDirect3DTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    D3DTEXTUREFILTERTYPE macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_GetAutoGenFilterType", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 0;
 }
 void CDirect3DTexture_GenerateMipSubLevels(const CDirect3DTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CDirect3DTexture_GenerateMipSubLevels", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 }
 
 void ZN16CDirect3DTextureD1Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN16CDirect3DTextureD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     UINT32 i;
 
@@ -218,17 +336,35 @@ void ZN16CDirect3DTextureD1Ev(void *_this)
 
 void ZN16CDirect3DTextureD0Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN16CDirect3DTextureD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN16CDirect3DTextureD1Ev(_this);
     free(_this);
 }
 
 void ZN16CDirect3DTextureD2Ev(void *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN16CDirect3DTextureD2Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN16CDirect3DTextureD1Ev(_this);
 }
 
 void CDirect3DTexture_CDirect3DTexture(const CDirect3DTexture *_this, UINT32 Width, UINT32 Height, UINT32 Levels, DWORD Usage, D3DFORMAT Format)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Width, &Height, &Levels, &Usage, &Format };
+    if (MacShim_Dispatch("CDirect3DTexture_CDirect3DTexture", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     UINT32 i, w, h, totalSize, offset;
     bool createGL = 0;
@@ -319,6 +455,12 @@ void CDirect3DTexture_CDirect3DTexture(const CDirect3DTexture *_this, UINT32 Wid
 
 void CDirect3DTexture_UpdateOpenGLSurfaces(const CDirect3DTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CDirect3DTexture_UpdateOpenGLSurfaces", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DTextureClean *tex = (CDirect3DTextureClean *)_this;
     UINT32 dirtyMask;
     unsigned int i;
@@ -346,12 +488,26 @@ void CDirect3DTexture_UpdateOpenGLSurfaces(const CDirect3DTexture *_this)
 
 HRESULT CDirect3DTexture_GetDevice(const CDirect3DTexture *_this, IDirect3DDevice9 **ppDevice)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &ppDevice };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_GetDevice", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)ppDevice;
     return 0;
 }
 HRESULT CDirect3DTexture_SetPrivateData(const CDirect3DTexture *_this, const GUID *refguid, const void *pData, DWORD SizeOfData, DWORD Flags)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &refguid, &pData, &SizeOfData, &Flags };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_SetPrivateData", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)refguid;
     (void)pData;
@@ -361,6 +517,13 @@ HRESULT CDirect3DTexture_SetPrivateData(const CDirect3DTexture *_this, const GUI
 }
 HRESULT CDirect3DTexture_GetPrivateData(const CDirect3DTexture *_this, const GUID *refguid, void *pData, DWORD *pSizeOfData)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &refguid, &pData, &pSizeOfData };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_GetPrivateData", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)refguid;
     (void)pData;
@@ -369,23 +532,50 @@ HRESULT CDirect3DTexture_GetPrivateData(const CDirect3DTexture *_this, const GUI
 }
 HRESULT CDirect3DTexture_FreePrivateData(const CDirect3DTexture *_this, const GUID *refguid)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &refguid };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_FreePrivateData", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)refguid;
     return 0;
 }
 DWORD CDirect3DTexture_SetPriority(const CDirect3DTexture *_this, DWORD PriorityNew)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &PriorityNew };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_SetPriority", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)PriorityNew;
     return 0;
 }
 DWORD CDirect3DTexture_GetPriority(const CDirect3DTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    DWORD macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DTexture_GetPriority", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 0;
 }
 void CDirect3DTexture_PreLoad(const CDirect3DTexture *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CDirect3DTexture_PreLoad", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 }
 

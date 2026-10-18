@@ -1,3 +1,4 @@
+#include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
 #include <stdlib.h>
@@ -24,6 +25,12 @@ GLuint *ZNSt6vectorImSaImEE5eraseEN9__gnu_cxx17__normal_iteratorIPmS1_EES5_(CFen
 
 void CFence_CFence(const CFence *_this, const void *Start, UINT32 SizeInBytes, UINT32 FrameCount)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &Start, &SizeInBytes, &FrameCount };
+    if (MacShim_Dispatch("CFence_CFence", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CFenceImpl *fence;
 
     fence = (CFenceImpl *)_this;
@@ -36,6 +43,12 @@ void CFence_CFence(const CFence *_this, const void *Start, UINT32 SizeInBytes, U
 
 void CFence_Shutdown(void)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { NULL };
+    if (MacShim_Dispatch("CFence_Shutdown", NULL, macArguments, NULL, 0))
+        return;
+#endif
+
 
     if (CFence_sUnusedFenceIDs.begin) {
         free(CFence_sUnusedFenceIDs.begin);

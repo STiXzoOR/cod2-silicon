@@ -172,3 +172,52 @@ target_compile_options(macos_metal_gpu_test PRIVATE
 target_link_libraries(macos_metal_gpu_test PRIVATE "-framework Metal" "-framework Foundation")
 add_test(NAME metal_gpu COMMAND macos_metal_gpu_test)
 set_tests_properties(metal_gpu PROPERTIES SKIP_RETURN_CODE 77 RUN_SERIAL TRUE TIMEOUT 30)
+
+# Standalone presentation fixtures use the real frame transport with game callbacks stubbed.
+add_library(macos_metal_present STATIC "${PORT_ROOT}/src/platform/macos_metal_present.m"
+  "${PORT_ROOT}/src/Mac/Metal/metal_core.m" "${PORT_ROOT}/src/Mac/Metal/metal_gpu.m"
+  "${PORT_ROOT}/src/Mac/Metal/metal_dispatch.m" "${PORT_ROOT}/src/Mac/Metal/metal_frame.m"
+  "${PORT_ROOT}/tests/metal/platform_stubs.c")
+set_source_files_properties("${PORT_ROOT}/src/platform/macos_metal_present.m"
+  "${PORT_ROOT}/src/Mac/Metal/metal_frame.m" PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+if(COD2_PLATFORM_SANITIZERS)
+  target_link_options(macos_metal_present INTERFACE -fsanitize=address,undefined)
+endif()
+target_compile_options(macos_metal_present PRIVATE
+  -Werror=unguarded-availability -Werror=unguarded-availability-new)
+target_link_libraries(macos_metal_present PUBLIC SDL2::SDL2 ${OPENGL_FRAMEWORK}
+  "-framework Foundation" "-framework AppKit" "-framework Metal" "-framework QuartzCore" "-framework IOSurface")
+foreach(target macos_platform_smoke macos_hardware_test macos_fullscreen_test macos_gamma_test)
+  target_link_libraries(${target} PRIVATE macos_metal_present)
+endforeach()
+add_executable(macos_metal_present_test metal_present.m "${PORT_ROOT}/src/platform/macos_system.c"
+  "${PORT_ROOT}/src/platform/macos_window.m")
+set_source_files_properties(metal_present.m PROPERTIES COMPILE_OPTIONS "-fobjc-arc;-Wno-deprecated-declarations")
+target_link_libraries(macos_metal_present_test PRIVATE macos_metal_present)
+add_test(NAME metal_present COMMAND macos_metal_present_test)
+add_test(NAME metal_fullscreen COMMAND macos_metal_present_test --fullscreen)
+add_test(NAME metal_spaces COMMAND macos_metal_present_test --fullscreen)
+set_tests_properties(metal_spaces PROPERTIES ENVIRONMENT "SDL_VIDEO_MAC_FULLSCREEN_SPACES=1")
+set_tests_properties(metal_fullscreen PROPERTIES ENVIRONMENT "SDL_VIDEO_MAC_FULLSCREEN_SPACES=0")
+set_tests_properties(metal_present metal_fullscreen metal_spaces PROPERTIES RUN_SERIAL TRUE TIMEOUT 30)
+add_executable(macos_metal_frame_test "${PORT_ROOT}/tests/metal/frame.m")
+set_source_files_properties("${PORT_ROOT}/tests/metal/frame.m" PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+target_link_libraries(macos_metal_frame_test PRIVATE macos_metal_present)
+add_test(NAME metal_frame COMMAND macos_metal_frame_test)
+set_tests_properties(metal_frame PROPERTIES SKIP_RETURN_CODE 77 RUN_SERIAL TRUE TIMEOUT 30)
+add_test(NAME metal_dispatch_generator COMMAND "${Python3_EXECUTABLE}"
+  "${PORT_ROOT}/tests/metal/test_dispatch_generator.py")
+if(DEFINED ENV{GITHUB_ACTIONS})
+  set_tests_properties(metal_present metal_fullscreen metal_spaces PROPERTIES DISABLED TRUE)
+endif()
+
+# CPU-only fixtures compile real backend/shim sources with test-local hooks.
+# Keep their objects private to this test build, including source-inclusion cases.
+add_test(NAME metal_retirement_failure COMMAND "${CMAKE_COMMAND}" -E env
+  "COD2_METAL_TEST_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}/metal-retirement"
+  sh "${PORT_ROOT}/tests/metal/run_retirement.sh" "${PORT_ROOT}")
+set_tests_properties(metal_retirement_failure PROPERTIES TIMEOUT 60)
+add_test(NAME metal_dispatch_entrypoints COMMAND "${CMAKE_COMMAND}" -E env
+  "COD2_METAL_TEST_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}/metal-dispatch"
+  sh "${PORT_ROOT}/tests/metal/run_dispatch_entrypoints.sh" "${PORT_ROOT}")
+set_tests_properties(metal_dispatch_entrypoints PROPERTIES TIMEOUT 60)

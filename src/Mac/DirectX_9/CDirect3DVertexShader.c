@@ -1,3 +1,4 @@
+#include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
 #include <stdlib.h>
@@ -33,12 +34,26 @@ extern void ZN20COpenGLVertexProgramD2Ev(void);
 #if defined(COD2_X64)
 GLuint CDirect3DVertexShader_GetProgramId(const CDirect3DVertexShader *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    GLuint macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexShader_GetProgramId", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return *(const GLuint *)((const CDirect3DVertexShaderImpl *)_this)->baseState;
 }
 #else
 #if COD2_APPLE_SDK
 GLuint CDirect3DVertexShader_GetProgramId(const CDirect3DVertexShader *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    GLuint macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexShader_GetProgramId", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return *(const GLuint *)((const CDirect3DVertexShaderImpl *)_this)->baseState;
 }
 #endif
@@ -46,6 +61,13 @@ GLuint CDirect3DVertexShader_GetProgramId(const CDirect3DVertexShader *_this)
 
 ULONG CDirect3DVertexShader_AddRef(const CDirect3DVertexShader *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexShader_AddRef", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVertexShaderImpl *shader;
 
     shader = (CDirect3DVertexShaderImpl *)_this;
@@ -55,6 +77,13 @@ ULONG CDirect3DVertexShader_AddRef(const CDirect3DVertexShader *_this)
 
 HRESULT CDirect3DVertexShader_QueryInterface(const CDirect3DVertexShader *_this, const IID *iid, unsigned char **ppvObj)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &iid, &ppvObj };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexShader_QueryInterface", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)iid;
 
     *ppvObj = (unsigned char *)_this;
@@ -64,6 +93,13 @@ HRESULT CDirect3DVertexShader_QueryInterface(const CDirect3DVertexShader *_this,
 
 ULONG CDirect3DVertexShader_Release(const CDirect3DVertexShader *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexShader_Release", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVertexShaderImpl *shader;
     ULONG refCount;
 
@@ -78,6 +114,12 @@ ULONG CDirect3DVertexShader_Release(const CDirect3DVertexShader *_this)
 
 void ZN21CDirect3DVertexShaderD1Ev(const CDirect3DVertexShader *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN21CDirect3DVertexShaderD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DVertexShaderImpl *shader;
 
     shader = (CDirect3DVertexShaderImpl *)_this;
@@ -88,12 +130,25 @@ void ZN21CDirect3DVertexShaderD1Ev(const CDirect3DVertexShader *_this)
 
 void ZN21CDirect3DVertexShaderD0Ev(const CDirect3DVertexShader *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN21CDirect3DVertexShaderD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN21CDirect3DVertexShaderD1Ev(_this);
     free((void *)_this);
 }
 
 unsigned char CDirect3DVertexShader_CDirect3DVertexShader(const CDirect3DVertexShader *_this, const char *pSrcData)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pSrcData };
+    unsigned char macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexShader_CDirect3DVertexShader", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVertexShaderImpl *shader;
 
     shader = (CDirect3DVertexShaderImpl *)_this;
@@ -110,6 +165,13 @@ unsigned char CDirect3DVertexShader_CDirect3DVertexShader(const CDirect3DVertexS
 
 HRESULT CDirect3DVertexShader_GetDevice(const CDirect3DVertexShader *_this, IDirect3DDevice9 **ppDevice)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &ppDevice };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexShader_GetDevice", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)ppDevice;
     return 0;
@@ -117,17 +179,48 @@ HRESULT CDirect3DVertexShader_GetDevice(const CDirect3DVertexShader *_this, IDir
 
 HRESULT CDirect3DVertexShader_GetFunction(const CDirect3DVertexShader *_this, UINT *pSizeOfData)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pSizeOfData };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexShader_GetFunction", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)pSizeOfData;
     return 0;
 }
 
 #if defined(COD2_X64)
-void ZThn4_N21CDirect3DVertexShaderD0Ev(void *p) { ZN21CDirect3DVertexShaderD0Ev((char *)p - offsetof(CDirect3DVertexShaderImpl, vtableSecondary)); }
-void ZThn4_N21CDirect3DVertexShaderD1Ev(void *p) { ZN21CDirect3DVertexShaderD1Ev((char *)p - offsetof(CDirect3DVertexShaderImpl, vtableSecondary)); }
+void ZThn4_N21CDirect3DVertexShaderD0Ev(void *p) {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &p };
+    if (MacShim_Dispatch("ZThn4_N21CDirect3DVertexShaderD0Ev", p, macArguments, NULL, 0))
+        return;
+#endif
+ ZN21CDirect3DVertexShaderD0Ev((char *)p - offsetof(CDirect3DVertexShaderImpl, vtableSecondary)); }
+void ZThn4_N21CDirect3DVertexShaderD1Ev(void *p) {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &p };
+    if (MacShim_Dispatch("ZThn4_N21CDirect3DVertexShaderD1Ev", p, macArguments, NULL, 0))
+        return;
+#endif
+ ZN21CDirect3DVertexShaderD1Ev((char *)p - offsetof(CDirect3DVertexShaderImpl, vtableSecondary)); }
 #else
-void ZThn4_N21CDirect3DVertexShaderD0Ev(void *p) { ZN21CDirect3DVertexShaderD0Ev((char *)p - 4); }
-void ZThn4_N21CDirect3DVertexShaderD1Ev(void *p) { ZN21CDirect3DVertexShaderD1Ev((char *)p - 4); }
+void ZThn4_N21CDirect3DVertexShaderD0Ev(void *p) {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &p };
+    if (MacShim_Dispatch("ZThn4_N21CDirect3DVertexShaderD0Ev", p, macArguments, NULL, 0))
+        return;
+#endif
+ ZN21CDirect3DVertexShaderD0Ev((char *)p - 4); }
+void ZThn4_N21CDirect3DVertexShaderD1Ev(void *p) {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &p };
+    if (MacShim_Dispatch("ZThn4_N21CDirect3DVertexShaderD1Ev", p, macArguments, NULL, 0))
+        return;
+#endif
+ ZN21CDirect3DVertexShaderD1Ev((char *)p - 4); }
 #endif
 fnptr_t vtbl_CDirect3DVertexShader[] = { (fnptr_t)CDirect3DVertexShader_QueryInterface, (fnptr_t)CDirect3DVertexShader_AddRef, (fnptr_t)CDirect3DVertexShader_Release, (fnptr_t)CDirect3DVertexShader_GetDevice, (fnptr_t)CDirect3DVertexShader_GetFunction, (fnptr_t)ZN21CDirect3DVertexShaderD1Ev, (fnptr_t)ZN21CDirect3DVertexShaderD0Ev };
 fnptr_t vtbl_CDirect3DVertexShader_secondary[] = { (fnptr_t)ZThn4_N21CDirect3DVertexShaderD1Ev, (fnptr_t)ZThn4_N21CDirect3DVertexShaderD0Ev };

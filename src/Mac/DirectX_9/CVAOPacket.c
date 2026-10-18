@@ -1,3 +1,4 @@
+#include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
 
@@ -167,6 +168,12 @@ void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE
 
 void CVAOPacket_CVAOPacket(const CVAOPacket *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("CVAOPacket_CVAOPacket", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CVAOPacketImpl *packet;
 
     packet = (CVAOPacketImpl *)_this;
@@ -176,6 +183,12 @@ void CVAOPacket_CVAOPacket(const CVAOPacket *_this)
 
 void ZN10CVAOPacketD2Ev(const CVAOPacket *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN10CVAOPacketD2Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CVAOPacketImpl *packet;
 
     packet = (CVAOPacketImpl *)_this;
@@ -185,17 +198,35 @@ void ZN10CVAOPacketD2Ev(const CVAOPacket *_this)
 
 void ZN10CVAOPacketD1Ev(const CVAOPacket *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN10CVAOPacketD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN10CVAOPacketD2Ev(_this);
 }
 
 void ZN10CVAOPacketD0Ev(const CVAOPacket *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN10CVAOPacketD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN10CVAOPacketD2Ev(_this);
     __ZdlPv((void *)_this);
 }
 
 void CVAOPacket_SetVAO(const CVAOPacket *_this, int bIsCached)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &bIsCached };
+    if (MacShim_Dispatch("CVAOPacket_SetVAO", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     bool isFixedFunction;
 
     CVAOPacket_sVAOStatus = bIsCached ? USING_CACHED_VAO : USING_VIRGIN_VAO;
@@ -208,6 +239,12 @@ void CVAOPacket_SetVAO(const CVAOPacket *_this, int bIsCached)
 
 void CVAOPacket_SetGenericVAO(int IsFixedFunction, int ForceValidation)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &IsFixedFunction, &ForceValidation };
+    if (MacShim_Dispatch("CVAOPacket_SetGenericVAO", NULL, macArguments, NULL, 0))
+        return;
+#endif
+
     CVAOPacket_sVAOStatus = USING_GENERIC_VAO;
     COpenGL_SetVAO((const COpenGL *)COpenGL_sOpenGLE,
                    (const COpenGLVAO *)CVAOPacket_GetGenericPacket(CVAOPacket_sCurrentPacket),
@@ -218,6 +255,12 @@ void CVAOPacket_SetGenericVAO(int IsFixedFunction, int ForceValidation)
 
 void CVAOPacket_InitializeGenericVAO(void)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { NULL };
+    if (MacShim_Dispatch("CVAOPacket_InitializeGenericVAO", NULL, macArguments, NULL, 0))
+        return;
+#endif
+
     CVAOPacketRbTree *allPackets;
     CVAOPacketImpl *genericPacket;
     int i;
@@ -289,6 +332,12 @@ static void CopyGenericArray(VertexProgramStreamState *dst, const VertexProgramS
 
 void CVAOPacket_ReleaseBuffer(const void *p, UINT32 Length)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &p, &Length };
+    if (MacShim_Dispatch("CVAOPacket_ReleaseBuffer", p, macArguments, NULL, 0))
+        return;
+#endif
+
     CVAOPacketRbTree *allPackets;
     CVAOPacketRbTreeNodeBase *header;
     CVAOPacketRbTreeNodeBase *iter;
@@ -375,6 +424,13 @@ void CVAOPacket_ReleaseBuffer(const void *p, UINT32 Length)
 
 bool CVAOPacket_IsCached(CVAOPacket *v)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &v };
+    bool macResult = { 0 };
+    if (MacShim_Dispatch("CVAOPacket_IsCached", v, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     UINT32 Code;
     CVAOPacketRbTree *allPackets;
     CVAOPacketRbTreeNodeBase *lower;
@@ -456,6 +512,12 @@ bool CVAOPacket_IsCached(CVAOPacket *v)
 
 void CVAOPacket_Cache(CVAOPacket *v)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &v };
+    if (MacShim_Dispatch("CVAOPacket_Cache", v, macArguments, NULL, 0))
+        return;
+#endif
+
 
     UINT32 Code;
 #if defined(COD2_X64)
@@ -511,6 +573,12 @@ void CVAOPacket_Cache(CVAOPacket *v)
 
 void CVAOPacket_Shutdown(void)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { NULL };
+    if (MacShim_Dispatch("CVAOPacket_Shutdown", NULL, macArguments, NULL, 0))
+        return;
+#endif
+
     CVAOPacketRbTree *allPackets;
     CVAOPacketRbTreeNodeBase *root;
     CVAOPacketRbTreeNodeBase *header;
@@ -593,6 +661,13 @@ void GLOBAL__I__ZN10CVAOPacket10sVAOStatusE(void)
 
 bool CVAOPacket_IsFixedFunction(const CVAOPacket *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    bool macResult = { 0 };
+    if (MacShim_Dispatch("CVAOPacket_IsFixedFunction", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     return 1;
 }
@@ -616,6 +691,13 @@ void ZN22CVAOPacketProgrammableD0Ev(void) {}
 
 CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_(const CVAOPacketRbTree *tree, const UINT32 *key)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &tree, &key };
+    CVAOPacketRbTreeNodeBase * macResult = { 0 };
+    if (MacShim_Dispatch("ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11lower_boundERS1_", tree, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CVAOPacketRbTreeNodeBase *x;
     CVAOPacketRbTreeNodeBase *y;
 
@@ -635,6 +717,13 @@ CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS
 
 CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11upper_boundERS1_(const CVAOPacketRbTree *tree, const UINT32 *key)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &tree, &key };
+    CVAOPacketRbTreeNodeBase * macResult = { 0 };
+    if (MacShim_Dispatch("ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE11upper_boundERS1_", tree, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CVAOPacketRbTreeNodeBase *x;
     CVAOPacketRbTreeNodeBase *y;
 
@@ -654,6 +743,12 @@ CVAOPacketRbTreeNodeBase *ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS
 
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_(void)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { NULL };
+    if (MacShim_Dispatch("ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE9_M_insertEPSt18_Rb_tree_node_baseSB_RKS3_", NULL, macArguments, NULL, 0))
+        return;
+#endif
+
 
     return;
 }
@@ -661,6 +756,13 @@ void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE
 #if defined(COD2_X64)
 CVAOPacketRbTreeIterator ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_(CVAOPacketRbTree *tree, const CVAOPacketKeyValue *kv)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &tree, &kv };
+    CVAOPacketRbTreeIterator macResult = { 0 };
+    if (MacShim_Dispatch("ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_", tree, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)tree;
     (void)kv;
     return (CVAOPacketRbTreeIterator){ NULL };
@@ -668,17 +770,35 @@ CVAOPacketRbTreeIterator ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3
 
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(CVAOPacketRbTree *tree, CVAOPacketRbTreeNode *node)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &tree, &node };
+    if (MacShim_Dispatch("ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E", tree, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)tree;
     (void)node;
 }
 #else
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_(void)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { NULL };
+    if (MacShim_Dispatch("ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE12insert_equalERKS3_", NULL, macArguments, NULL, 0))
+        return;
+#endif
+
 
     return;
 }
 void ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E(void)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { NULL };
+    if (MacShim_Dispatch("ZNSt8_Rb_treeIjSt4pairIKj10CVAOPacketESt10_Select1stIS3_ESt4lessIjESaIS3_EE8_M_eraseEPSt13_Rb_tree_nodeIS3_E", NULL, macArguments, NULL, 0))
+        return;
+#endif
+
 
     return;
 }

@@ -1,3 +1,4 @@
+#include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
 
@@ -109,16 +110,36 @@ static void **getVtblPtr(void *vtbl_ptr)
 
 UINT32 COpenGLVAO_GetCode(const COpenGLVAO *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    UINT32 macResult = { 0 };
+    if (MacShim_Dispatch("COpenGLVAO_GetCode", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return ((const COpenGLVAOImpl *)_this)->mCode;
 }
 
 bool ZNK10COpenGLVAOeqERKS_(const COpenGLVAO *_this, const COpenGLVAO *v)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &v };
+    bool macResult = { 0 };
+    if (MacShim_Dispatch("ZNK10COpenGLVAOeqERKS_", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     return COpenGLVAO_GetCode(_this) == COpenGLVAO_GetCode(v);
 }
 
 void COpenGLVAO_CreateNewBinding(const COpenGLVAO *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("COpenGLVAO_CreateNewBinding", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     COpenGLVAOImpl *vao;
     GLuint *vaoId;
     COpenGLVAOBindingNode *bindingNode;
@@ -208,6 +229,12 @@ Tuple ChooseAndRemoveBestTriangle(const UInt16Deque *FIFO, TriangleNode *Triangl
 
 void COpenGLVAO_COpenGLVAO(const COpenGLVAO *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("COpenGLVAO_COpenGLVAO", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     COpenGLVAOImpl *vao = (COpenGLVAOImpl *)_this;
     int i;
 
@@ -246,18 +273,36 @@ void COpenGLVAO_COpenGLVAO(const COpenGLVAO *_this)
 
 void ZN10COpenGLVAOD2Ev(const COpenGLVAO *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN10COpenGLVAOD2Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     (void)_this;
 
 }
 
 void ZN10COpenGLVAOD1Ev(const COpenGLVAO *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN10COpenGLVAOD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
 
     ZN10COpenGLVAOD2Ev(_this);
 }
 
 void ZN10COpenGLVAOD0Ev(const COpenGLVAO *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN10COpenGLVAOD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
 
     ZN10COpenGLVAOD2Ev(_this);
     __ZdlPv((void *)_this);

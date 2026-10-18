@@ -118,13 +118,16 @@ target_sources(cod2_macos PRIVATE src/unix/linux_input.c src/platform/macos_disp
   src/platform/macos_rawmouse.m src/platform/macos_audio.c src/platform/macos_voice.c
   src/platform/macos_jpeg.c)
 set_property(SOURCE src/platform/macos_rawmouse.m APPEND PROPERTY COMPILE_OPTIONS -fobjc-arc)
-# Transport is linked before the engine dispatch seams are integrated. Classic
-# remains the default and no provider creates a device during startup here.
+# Native object/resource/presentation providers; Classic remains the default.
 target_sources(cod2_macos PRIVATE src/Mac/Metal/metal_core.m
-  src/Mac/Metal/metal_dispatch.m src/Mac/Metal/metal_gpu.m)
-set_property(SOURCE src/Mac/Metal/metal_gpu.m APPEND PROPERTY COMPILE_OPTIONS
+  src/Mac/Metal/metal_dispatch.m src/Mac/Metal/metal_gpu.m
+  src/Mac/Metal/metal_backend.m src/Mac/Metal/metal_frame.m
+  src/Mac/Metal/metal_resources.m src/Mac/Metal/resource_formats.m
+  src/platform/macos_metal_present.m)
+set_property(SOURCE src/Mac/Metal/metal_gpu.m src/Mac/Metal/metal_frame.m
+  src/Mac/Metal/metal_resources.m src/platform/macos_metal_present.m APPEND PROPERTY COMPILE_OPTIONS
   -fobjc-arc -Werror=unguarded-availability -Werror=unguarded-availability-new)
-target_link_libraries(cod2_macos PRIVATE "-framework Metal")
+target_link_libraries(cod2_macos PRIVATE "-framework Metal" "-framework QuartzCore" "-framework IOSurface")
 # The renderer renders into the exact r_mode framebuffer; presentation scales it.
 set_source_files_properties(src/PC/gfx_d3d/rb_state.c src/PC/gfx_d3d/r_screenshot.c PROPERTIES
   COMPILE_DEFINITIONS "glDrawBuffer=MacGL_DrawBuffer;glReadBuffer=MacGL_ReadBuffer")

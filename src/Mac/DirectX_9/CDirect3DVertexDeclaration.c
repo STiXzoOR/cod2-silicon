@@ -1,3 +1,4 @@
+#include "Mac/Metal/shim_dispatch.h"
 #include "common_types.h"
 #include "imports.h"
 #include <stdlib.h>
@@ -82,6 +83,13 @@ HRESULT CDirect3DVertexDeclaration_GetDevice(const CDirect3DVertexDeclaration *_
 
 ULONG CDirect3DVertexDeclaration_AddRef(const CDirect3DVertexDeclaration *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexDeclaration_AddRef", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVertexDeclarationImpl *declaration;
 
     declaration = (CDirect3DVertexDeclarationImpl *)_this;
@@ -91,6 +99,13 @@ ULONG CDirect3DVertexDeclaration_AddRef(const CDirect3DVertexDeclaration *_this)
 
 HRESULT CDirect3DVertexDeclaration_QueryInterface(const CDirect3DVertexDeclaration *_this, const IID *iid, HRESULT (*ppvObj)())
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &iid, &ppvObj };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexDeclaration_QueryInterface", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)iid;
 
     *(void **)ppvObj = (void *)_this;
@@ -100,6 +115,13 @@ HRESULT CDirect3DVertexDeclaration_QueryInterface(const CDirect3DVertexDeclarati
 
 ULONG CDirect3DVertexDeclaration_Release(const CDirect3DVertexDeclaration *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    ULONG macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexDeclaration_Release", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVertexDeclarationImpl *declaration;
     ULONG refCount;
 
@@ -114,6 +136,12 @@ ULONG CDirect3DVertexDeclaration_Release(const CDirect3DVertexDeclaration *_this
 
 void ZN26CDirect3DVertexDeclarationD1Ev(const CDirect3DVertexDeclaration *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN26CDirect3DVertexDeclarationD1Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     CDirect3DVertexDeclarationImpl *declaration;
 
     declaration = (CDirect3DVertexDeclarationImpl *)_this;
@@ -125,12 +153,25 @@ void ZN26CDirect3DVertexDeclarationD1Ev(const CDirect3DVertexDeclaration *_this)
 
 void ZN26CDirect3DVertexDeclarationD0Ev(const CDirect3DVertexDeclaration *_this)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this };
+    if (MacShim_Dispatch("ZN26CDirect3DVertexDeclarationD0Ev", _this, macArguments, NULL, 0))
+        return;
+#endif
+
     ZN26CDirect3DVertexDeclarationD1Ev(_this);
     free((void *)_this);
 }
 
 HRESULT CDirect3DVertexDeclaration_GetDeclaration(const CDirect3DVertexDeclaration *_this, LONG (*pElement)(), UINT *pNumElements)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pElement, &pNumElements };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexDeclaration_GetDeclaration", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVertexDeclarationImpl *declaration;
 
     declaration = (CDirect3DVertexDeclarationImpl *)_this;
@@ -145,6 +186,13 @@ HRESULT CDirect3DVertexDeclaration_GetDeclaration(const CDirect3DVertexDeclarati
 
 int CDirect3DVertexDeclaration_GetShaderDeclaration(const CDirect3DVertexDeclaration *_this, const UINT32 *pTokenStream)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pTokenStream };
+    int macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexDeclaration_GetShaderDeclaration", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVertexDeclarationImpl *declaration;
     UINT32 *tokenStream;
     unsigned char isUsed[16];
@@ -216,6 +264,13 @@ int CDirect3DVertexDeclaration_GetShaderDeclaration(const CDirect3DVertexDeclara
 
 int CDirect3DVertexDeclaration_CDirect3DVertexDeclaration(const CDirect3DVertexDeclaration *_this, const D3DVERTEXELEMENT9 *pVertexElements)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &pVertexElements };
+    int macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexDeclaration_CDirect3DVertexDeclaration", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     CDirect3DVertexDeclarationImpl *declaration;
     UINT32 count;
 
@@ -245,6 +300,13 @@ int CDirect3DVertexDeclaration_CDirect3DVertexDeclaration(const CDirect3DVertexD
 
 HRESULT CDirect3DVertexDeclaration_GetDevice(const CDirect3DVertexDeclaration *_this, IDirect3DDevice9 **ppDevice)
 {
+#if MAC_METAL_NATIVE
+    const void *macArguments[] = { &_this, &ppDevice };
+    HRESULT macResult = { 0 };
+    if (MacShim_Dispatch("CDirect3DVertexDeclaration_GetDevice", _this, macArguments, &macResult, sizeof(macResult)))
+        return macResult;
+#endif
+
     (void)_this;
     (void)ppDevice;
     return 0;
