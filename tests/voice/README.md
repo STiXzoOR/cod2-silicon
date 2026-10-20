@@ -230,3 +230,39 @@ limits detect the diagnosed errors while allowing the import-model and scalar
 numerical differences already present in the enhancement-off control.
 Other enhanced modes retain differences, as recorded in
 [the WS91 report](../../docs/macos-port/reports/WS91-voice-original-fidelity.md).
+
+
+## Dormant recording queue
+
+`recording_queue.py` compiles the actual `Record_QueueAudioDataForEncoding`
+source with the selected engine flags and AddressSanitizer/UndefinedBehaviorSanitizer.
+It feeds synthetic mono 16-bit PCM through 90 cases covering frame boundaries,
+partial frames, gain, transmission gates, and modeled codec/network results.
+It does not enable microphone capture; this queue is excluded from the current
+macOS client build.
+
+```sh
+python3 tests/voice/recording_queue.py \
+  --compile-db /absolute/path/to/stock/compile_commands.json \
+  --exact --output /absolute/private/path/recording-stock
+```
+
+Repeat with the CoD2x compile database. Omit `--exact` to use larger input buffers
+and inspect incorrect sample values without an early allocation-boundary abort.
+Output directories must be new and outside the repository.
+
+Optional `--mac-binary /absolute/private/path/mac-mp-1.3-stabs.bin` executes the
+owned, hash-pinned Mac i386 function through the existing Unicorn reference
+harness and compares its observations with both the independent stream model
+and native output. This optional path requires the dependencies used by
+`mac_reference.py`; the default synthetic check does not need a game binary
+or Unicorn. Original-derived observations remain private.
+
+The finite domain uses a 160-sample frame and small PCM values that avoid
+16-bit conversion overflow. Gains within the caller's 0.5–1.5 clamp are
+covered; zero, negative, and 2.0 gains are additional direct-call stress cases.
+Codec, network and talk-state services are models. The comparison covers
+samples, partial buffers, volume, return values, offsets, encoded bytes and
+service order. It does not establish actual codec/network behavior, arbitrary
+inputs, unwinder behavior or whole-game fidelity. Floating-point controls are
+pinned for this fixture, not asserted to match every engine runtime state.
