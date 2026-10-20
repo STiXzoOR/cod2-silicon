@@ -148,7 +148,11 @@ int Record_QueueAudioDataForEncoding(audioSample_t *sample)
             if (samplesProcessed < numSamples) {
                 int remaining = numSamples - samplesProcessed;
                 memcpy(partial_audio_buffer + partial,
+#if defined(COD2_X64)
+                       (byte *)data + samplesProcessed * channels,
+#else
                        data + samplesProcessed * channels,
+#endif
                        remaining * channels);
                 samples_in_partial_audio_buffer += numSamples - sample->sampleOffset;
             }
@@ -172,7 +176,11 @@ int Record_QueueAudioDataForEncoding(audioSample_t *sample)
             int src_take = encode_frame_size - partial;
             samplesProcessed = sample->sampleOffset;
             memcpy((byte *)audio_buffer + partial * 2,
+#if defined(COD2_X64)
+                   (byte *)data + samplesProcessed * channels,
+#else
                    data + samplesProcessed * channels,
+#endif
                    src_take * channels);
             sample->sampleOffset += src_take;
         }
