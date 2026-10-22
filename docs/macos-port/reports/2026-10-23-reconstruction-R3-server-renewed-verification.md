@@ -45,8 +45,10 @@ and occurrence must match; raw evidence is never normalized or overwritten.
 
 Decompiler sites outside the stored function bodies fall from 202 to 25: the
 177 intended sites disappear, and all 25 remaining cleanup sites stay unresolved.
-The inferred return type change and omitted displayed call arguments also remain
-unresolved. Neither these counts nor successful export establish source closure.
+The inferred first parameter changes from `int` to `undefined4`; both C outputs
+retain a `void` return. That parameter chunk-type change and the omitted displayed
+call arguments remain unresolved. Neither these counts nor successful export
+establish source closure.
 
 A separately authored parent audit compared all complete C/status records and
 raw/derived bindings, streamed every instruction/reference record, checked the
