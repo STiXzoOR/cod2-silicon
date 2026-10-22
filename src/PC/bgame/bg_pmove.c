@@ -972,7 +972,13 @@ static void PM_ACCELERATE_ABI PM_Accelerate(playerState_t *ps, pml_t *pml, const
     if (addspeed <= 0.0f)
         return;
 
+#if defined(COD2_X64)
+    /* Original MAXSS selects wishspeed on equal operands, including signed zero. */
+    float speed = stopspeed->current.value > wishspeed ? stopspeed->current.value : wishspeed;
+    accelspeed = fminf(addspeed, speed * (accel * pml->frametime));
+#else
     accelspeed = fminf(addspeed, fmaxf(stopspeed->current.value, wishspeed) * (accel * pml->frametime));
+#endif
 
     if (ps->pm_type != 2 && inertiaMax->current.value < accelspeed
         && (ps->oldVelocity[0] * ps->oldVelocity[0] + ps->oldVelocity[1] * ps->oldVelocity[1]) >= 0.0001) {

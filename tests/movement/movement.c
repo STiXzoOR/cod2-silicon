@@ -95,6 +95,56 @@ static void init(playerState_t *ps, pmove_t *pm, pml_t *pml, int stance)
     animationCalls = 0; failAnimation = 0;
 }
 
+#if defined(COD2_X64)
+static void test_acceleration_zero(void)
+{
+    /* Literal original Mac 1.3 PM_Accelerate results: all signed-zero MAXSS
+       ties, crossed with acceleration and frame time +0/1. */
+    static const unsigned int cases[][5] = {
+        {0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u},
+        {0x00000000u, 0x00000000u, 0x00000000u, 0x3f800000u, 0x00000000u},
+        {0x00000000u, 0x00000000u, 0x3f800000u, 0x00000000u, 0x00000000u},
+        {0x00000000u, 0x00000000u, 0x3f800000u, 0x3f800000u, 0x00000000u},
+        {0x00000000u, 0x80000000u, 0x00000000u, 0x00000000u, 0x00000000u},
+        {0x00000000u, 0x80000000u, 0x00000000u, 0x3f800000u, 0x00000000u},
+        {0x00000000u, 0x80000000u, 0x3f800000u, 0x00000000u, 0x00000000u},
+        {0x00000000u, 0x80000000u, 0x3f800000u, 0x3f800000u, 0x00000000u},
+        {0x80000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x80000000u},
+        {0x80000000u, 0x00000000u, 0x00000000u, 0x3f800000u, 0x80000000u},
+        {0x80000000u, 0x00000000u, 0x3f800000u, 0x00000000u, 0x80000000u},
+        {0x80000000u, 0x00000000u, 0x3f800000u, 0x3f800000u, 0x80000000u},
+        {0x80000000u, 0x80000000u, 0x00000000u, 0x00000000u, 0x80000000u},
+        {0x80000000u, 0x80000000u, 0x00000000u, 0x3f800000u, 0x80000000u},
+        {0x80000000u, 0x80000000u, 0x3f800000u, 0x00000000u, 0x80000000u},
+        {0x80000000u, 0x80000000u, 0x3f800000u, 0x3f800000u, 0x80000000u},
+    };
+    int failures = 0;
+    for (unsigned int i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        playerState_t ps; pmove_t pm; pml_t pml;
+        vec3_t wishdir = {1.0f, 0.0f, 0.0f};
+        const unsigned int velocity[] = {0xbf800000u, 0x80000000u, 0x80000000u};
+        float wishspeed, accel;
+        unsigned int actual[3];
+        init(&ps, &pm, &pml, 60);
+        ps.pm_type = 2;
+        memcpy(ps.velocity, velocity, sizeof(velocity));
+        memcpy(&wishspeed, &cases[i][0], sizeof(wishspeed));
+        memcpy(&fixture_stopspeed.current.value, &cases[i][1], sizeof(float));
+        memcpy(&accel, &cases[i][2], sizeof(accel));
+        memcpy(&pml.frametime, &cases[i][3], sizeof(pml.frametime));
+        PM_Accelerate(&ps, &pml, wishdir, wishspeed, accel);
+        memcpy(actual, ps.velocity, sizeof(actual));
+        if (actual[0] != 0xbf800000u || actual[1] != cases[i][4] || actual[2] != cases[i][4]) {
+            fprintf(stderr, "acceleration zero case %u: expected bf800000 %08x %08x, got %08x %08x %08x\n",
+                    i, cases[i][4], cases[i][4], actual[0], actual[1], actual[2]);
+            ++failures;
+        }
+    }
+    assert(failures == 0);
+    puts("PASS acceleration: 16 original signed-zero MAXSS ties");
+}
+#endif
+
 static void test_bob(void)
 {
     const int heights[] = {60, 40, 11};
@@ -314,6 +364,10 @@ int main(int argc, char **argv)
     assert(argc == 2 || argc == 3);
 #ifdef GAMEPLAY_MATRIX
     Fixture_SetRevision(argc == 3 ? atoi(argv[2]) : 3);
+#endif
+#if defined(COD2_X64)
+    if (!strcmp(argv[1], "acceleration-zero")) test_acceleration_zero();
+    else
 #endif
     if (!strcmp(argv[1], "bob")) test_bob();
     else if (!strcmp(argv[1], "scale")) test_scale();
