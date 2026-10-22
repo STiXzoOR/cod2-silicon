@@ -1027,15 +1027,27 @@ static void PM_REGPARM2_ABI PM_Friction(playerState_t *ps, pml_t *pml)
     drop = 0.0f;
 
     if (pml->walking && !(pml->groundTrace.surfaceFlags & 2) &&
-        !(ps->pm_flags & 0x400) && ps->pm_type != 4) {
+        !(ps->pm_flags & 0x400)
+#if !defined(COD2_X64)
+        && ps->pm_type != 4) {
+#else
+        ) {
+#endif
         control = speed;
         if (PM_DvarFloat(stopspeed, 100.0f) > control)
             control = PM_DvarFloat(stopspeed, 100.0f);
 
+#if defined(COD2_X64)
+        if (ps->pm_flags & 0x200)
+            control *= 0.3f;
+        else if (ps->pm_flags & PMF_JUMPING)
+            control *= Jump_ReduceFriction(ps);
+#else
         if (ps->pm_flags & PMF_JUMPING)
             control *= Jump_ReduceFriction(ps);
         if (ps->pm_flags & 0x200)
             control *= 0.3f;
+#endif
 
         drop += control * PM_DvarFloat(friction, 5.5f) * pml->frametime;
     }
