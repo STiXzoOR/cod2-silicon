@@ -76,9 +76,12 @@ interpreting a cross-build mismatch. `run.json` records arguments, platform,
 binary SHA256 and every `main/*.iwd` SHA256; compare manifests and note commits
 and compiler versions. The wrapper fixes simulation steps to 50 ms at 20 Hz,
 uses a loopback LAN server, and fails on timeout, crash, empty-world output,
-missing dump or wrong record count. This minimal map smoke has no player input;
-for movement/combat coverage a future deterministic bot/usercmd fixture is
-needed. Dedicated-versus-listen differences must be ruled out on x86 first.
+missing dump or wrong record count. The default map smoke has no player input.
+The optional [server replay harness](../../tools/oracle/README.md) adds scripted
+test-client commands, recording/replay and raw player fields. Its Linux VM path
+remains blocked/unvalidated; the F0 report records native checks and the
+spectator-only coverage limit. Dedicated-versus-listen differences must be ruled
+out on x86 first.
 
 `compare.py` compares frame, simulation time, active count and normalized `q`.
 It exits 0 for equality and nonzero otherwise, reporting the first differing
