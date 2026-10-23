@@ -1255,6 +1255,13 @@ void SV_ExecuteClientCommand(client_t *cl, const char *s, qboolean clientOK)
 
 void SV_ClientThink(client_t *cl, usercmd_t *cmd)
 {
+#if defined(COD2_X64)
+    {
+        extern int Sys_DiffClientThink(int clientNum, const usercmd_t *cmd);
+        if (!Sys_DiffClientThink(SV_ClientNumForClient(cl), cmd))
+            return;
+    }
+#endif
     cl->lastUsercmd = *cmd;
 
     if (cl->state == 4) {

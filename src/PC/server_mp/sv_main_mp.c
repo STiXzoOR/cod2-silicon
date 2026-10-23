@@ -859,6 +859,13 @@ void SV_RunFrame(void)
 
 void SV_BotUserMove(client_t *cl)
 {
+#if defined(COD2_X64)
+    {
+        extern int Sys_DiffBotMove(void);
+        if (Sys_DiffBotMove())
+            return;
+    }
+#endif
     usercmd_t nullcmd;
     int clientNum;
 
@@ -1120,6 +1127,12 @@ void SV_Frame(int msec)
         CL_FlushDebugData(1);
 #endif
         SV_ResetSkeletonCache();
+#if defined(COD2_X64)
+        {
+            extern void Sys_DiffInputFrame(void);
+            Sys_DiffInputFrame();
+        }
+#endif
         G_RunFrame(svs.time);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
         SV_Cod2xUdpStats();
