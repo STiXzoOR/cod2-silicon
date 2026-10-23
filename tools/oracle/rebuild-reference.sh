@@ -10,6 +10,7 @@ source_root=$(realpath "$1")
 anchor=$(realpath "$2")
 mkdir -p "$3"
 evidence=$(realpath "$3")
+oracle_tools=$(dirname "$(realpath "$0")")
 expected=05e774a3ee9fb487d4ec8a3d7d8d8e667f8ae459653e3c9e60a1c55604d5a3a7
 actual=$(sha256sum "$anchor" | cut -d ' ' -f 1)
 printf 'Original SHA256 %s\n' "$actual" | tee "$evidence/original-sha256.txt"
@@ -19,6 +20,10 @@ if [ "$actual" != "$expected" ]; then
 fi
 export PATH="/opt/cod2-oracle/bin:$PATH"
 export ANCHOR="$anchor"
+# The classic builder mislabels the final FROM scratch stage on arm64.
+# BuildKit preserves the requested linux/386 platform without source changes.
+export DOCKER_BUILDKIT=1
+docker buildx version > "$evidence/buildx-version.txt"
 cd "$source_root/archive/lnxded-1.3"
 # nproc in the outer Makefile runs on the guest. Restrict affinity so its
 # hard-coded -j$(nproc) resolves to two, and restrict each build container too.
@@ -39,7 +44,11 @@ run_logged() {
 uname -a > "$evidence/guest-uname.txt"
 docker version > "$evidence/docker-version.txt"
 cat /proc/sys/fs/binfmt_misc/qemu-i386 > "$evidence/binfmt-i386.txt"
-run_logged toolchain make toolchain
+if [ -n "${ORACLE_BOOTSTRAP_IMAGE:-}" ]; then
+    run_logged toolchain bash "$oracle_tools/finish-toolchain.sh" "$ORACLE_BOOTSTRAP_IMAGE"
+else
+    run_logged toolchain make toolchain
+fi
 run_logged check make check "DOCKER=$docker_run"
 run_logged verify make verify "DOCKER=$docker_run"
 run_logged coverage python3 tools/tu_cov.py
