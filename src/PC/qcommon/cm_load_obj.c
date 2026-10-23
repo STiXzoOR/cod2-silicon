@@ -162,6 +162,9 @@ static cLeafBrushNode_t *CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, 
     const vec_t *curMaxs;
 
     node = (cLeafBrushNode_t *)TempMalloc(sizeof(cLeafBrushNode_t));
+#if defined(COD2_X64)
+    memset(node, 0, sizeof(*node));
+#endif
     node->axis = 0;
     node->contents = 0;
     node->data.children.range = 0;
@@ -203,7 +206,11 @@ static cLeafBrushNode_t *CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, 
                         splitMin = bmin;
                 } else {
                     float bmax = ((float *)&brush_j->maxs)[axisLoop];
+#if defined(COD2_X64)
+                    if (bmax <= pivot) {
+#else
                     if (bmax >= pivot) {
+#endif
                         countBelow++;
                         if (bmax > splitMax)
                             splitMax = bmax;
@@ -247,7 +254,11 @@ static cLeafBrushNode_t *CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, 
                         splitMin = bmin;
                 } else {
                     float bmax = ((float *)&brush_j->maxs)[axisLoop];
+#if defined(COD2_X64)
+                    if (bmax <= pivot) {
+#else
                     if (bmax >= pivot) {
+#endif
                         countBelow++;
                         if (bmax > splitMax)
                             splitMax = bmax;
@@ -279,7 +290,9 @@ static cLeafBrushNode_t *CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, 
         curMaxs++;
     }
 
+#if !defined(COD2_X64)
     bestAxis = -1;
+#endif
 
     if (bestAxis < 0) {
 
@@ -351,11 +364,19 @@ static cLeafBrushNode_t *CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, 
                         cbrush_t *b = brushesBase + brushIdx;
                         float bmin = ((float *)&b->mins)[bestAxis];
 
+#if defined(COD2_X64)
+                        if (bmin < bestDist) {
+#else
                         if (bmin >= bestDist) {
+#endif
                             continue;
                         }
                         {
+#if defined(COD2_X64)
+                            float diff = bmin - bestDist;
+#else
                             float diff = bestDist - bmin;
+#endif
                             float ddiff = diff - tolerance;
                             if (!(ddiff < 0.0f)) {
 
@@ -368,7 +389,9 @@ static cLeafBrushNode_t *CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, 
                     }
                 } else {
 
+#if !defined(COD2_X64)
                     tolerance = 3.4028234663852886e+38f;
+#endif
                     for (m = 0; m < numLeafBrushes; m++) {
                         unsigned short brushIdx = leafBrushesCopy[m];
                         cbrush_t *b = brushesBase + brushIdx;
@@ -376,11 +399,19 @@ static cLeafBrushNode_t *CMod_PartionLeafBrushes_r(unsigned short *leafBrushes, 
                         float bmax_val;
 
                         bmax_val = ((float *)&b->maxs)[bestAxis];
+#if defined(COD2_X64)
+                        if (bmax_val > bestDist) {
+#else
                         if (bmax_val <= bestDist) {
+#endif
                             continue;
                         }
                         {
+#if defined(COD2_X64)
+                            float diff = bestDist - bmax_val;
+#else
                             float diff = bval - bestDist;
+#endif
                             float test = diff - tolerance;
                             if (test >= 0.0f) {
 
@@ -834,7 +865,11 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
 
                 absMin = minVal < 0.0f ? -minVal : minVal;
                 absMax = maxVal < 0.0f ? -maxVal : maxVal;
+#if defined(COD2_X64)
+                extent[j] = (absMax - absMin) < 0.0f ? absMin : absMax;
+#else
                 extent[j] = (absMin - absMax) < 0.0f ? absMin : absMax;
+#endif
             }
 
             out[i].radius = sqrtf(extent[0] * extent[0] + extent[1] * extent[1] + extent[2] * extent[2]);
@@ -942,8 +977,10 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
             numBrushes = *(const int *)(submodelIn + i * 0x30 + 0x2C);
             firstBrush = *(const int *)(submodelIn + i * 0x30 + 0x28);
 
+#if !defined(COD2_X64)
             if (numBrushes <= 0)
                 continue;
+#endif
 
             indexes = (unsigned short *)CM_Hunk_Alloc(numBrushes * 2, "CMod_LoadSubmodelBrushNodes", 0x18);
 
@@ -1297,7 +1334,11 @@ void CM_LoadMapFromBsp(const char *name, int usePvs)
         }
         count = partLumpLen / 12;
 
+#if defined(COD2_X64)
+        out = (CollisionPartition *)CM_Hunk_Alloc(count * sizeof(*out), "CMod_LoadCollisionPartitions", 0x1a);
+#else
         out = (CollisionPartition *)CM_Hunk_Alloc(count * 12, "CMod_LoadCollisionPartitions", 0x1a);
+#endif
         cmLocal->partitions = out;
         cmLocal->partitionCount = count;
 

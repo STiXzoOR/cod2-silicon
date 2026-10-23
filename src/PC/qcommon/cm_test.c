@@ -291,6 +291,12 @@ int CM_PointContents(const vec_t *p, clipHandle_t model)
 
 check_leaf:
 
+#if defined(COD2_X64)
+    /* Mac 0x69223..0x69228: zero denotes an absent brush tree. */
+    if (!leaf->leafBrushNode)
+        return 0;
+
+#endif
     {
         int i;
         for (i = 0; i < 3; i++) {

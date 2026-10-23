@@ -239,8 +239,16 @@ static int __attribute_regparm__(3)
         float minDist = (dist2 < dist1) ? dist2 : dist1;
         int childIndex = 1 - (0.0f <= minDist);
 
+#if defined(COD2_X64)
+        {
+            int hit = CM_PointSightTraceToEntities_r(clip, node->tree.child[childIndex], p1, p2);
+            if (hit)
+                return hit;
+        }
+#else
         if (CM_PointSightTraceToEntities_r(clip, node->tree.child[childIndex], p1, p2))
             return 1;
+#endif
     } else {
         float frac = dist1 / (dist1 - dist2);
 
@@ -249,17 +257,41 @@ static int __attribute_regparm__(3)
         mid[2] = p1[2] + (p2[2] - p1[2]) * frac;
 
         side = (0.0f <= dist2);
+#if defined(COD2_X64)
+        {
+            int hit = CM_PointSightTraceToEntities_r(clip, node->tree.child[side], p1, mid);
+            if (hit)
+                return hit;
+        }
+#else
         if (CM_PointSightTraceToEntities_r(clip, node->tree.child[side], p1, mid))
             return 1;
+#endif
+#if defined(COD2_X64)
+        {
+            int hit = CM_PointSightTraceToEntities_r(clip, node->tree.child[1 - side], mid, p2);
+            if (hit)
+                return hit;
+        }
+#else
         if (CM_PointSightTraceToEntities_r(clip, node->tree.child[1 - side], mid, p2))
             return 1;
+#endif
     }
 
     for (entIndex = node->contents.entities; entIndex != 0;) {
         svEntity_t *check = &((server_t *)imp_sv)->svEntities[((unsigned int)entIndex) - 1];
 
+#if defined(COD2_X64)
+        {
+            int hit = SV_PointSightTraceToEntity(clip, check);
+            if (hit)
+                return hit;
+        }
+#else
         if (SV_PointSightTraceToEntity(clip, check))
             return 1;
+#endif
 
         entIndex = check->nextEntityInWorldSector;
     }
@@ -381,8 +413,16 @@ static int __attribute_regparm__(3)
         for (entIndex = node->contents.entities; entIndex != 0;) {
             svEntity_t *check = &((server_t *)imp_sv)->svEntities[((unsigned int)entIndex) - 1];
 
+#if defined(COD2_X64)
+            {
+                int hit = SV_ClipSightToEntity(clip, check);
+                if (hit)
+                    return hit;
+            }
+#else
             if (SV_ClipSightToEntity(clip, check))
                 return 1;
+#endif
 
             entIndex = check->nextEntityInWorldSector;
         }
@@ -412,8 +452,14 @@ static int __attribute_regparm__(3)
         } else {
             float absDelta = (delta < 0.0f) ? -delta : delta;
             float base = (delta >= 0.0f) ? -dist1 : dist1;
+#if defined(COD2_X64)
+            float inverse = 1.0f / absDelta;
+            float exitFrac = (base + offset) * inverse;
+            float enterFrac = (base - offset) * inverse;
+#else
             float exitFrac = (base + offset) / absDelta;
             float enterFrac = (base - offset) / absDelta;
+#endif
 
             firstSide = (delta >= 0.0f);
             firstFrac = (exitFrac <= 1.0f) ? exitFrac : 1.0f;
@@ -424,8 +470,16 @@ static int __attribute_regparm__(3)
         mid[1] = p[1] + (p2[1] - p[1]) * firstFrac;
         mid[2] = p[2] + (p2[2] - p[2]) * firstFrac;
 
+#if defined(COD2_X64)
+        {
+            int hit = CM_ClipSightTraceToEntities_r(clip, node->tree.child[firstSide], p, mid);
+            if (hit)
+                return hit;
+        }
+#else
         if (CM_ClipSightTraceToEntities_r(clip, node->tree.child[firstSide], p, mid))
             return 1;
+#endif
 
         p[0] = p[0] + (p2[0] - p[0]) * secondFrac;
         p[1] = p[1] + (p2[1] - p[1]) * secondFrac;
@@ -681,8 +735,14 @@ static void __attribute_regparm__(3)
         } else {
             float absDelta = (delta < 0.0f) ? -delta : delta;
             float base = (delta >= 0.0f) ? -dist1 : dist1;
+#if defined(COD2_X64)
+            float inverse = 1.0f / absDelta;
+            float exitFrac = (base + offset) * inverse;
+            float enterFrac = (base - offset) * inverse;
+#else
             float exitFrac = (base + offset) / absDelta;
             float enterFrac = (base - offset) / absDelta;
+#endif
 
             firstSide = (delta >= 0.0f);
             firstFrac = (exitFrac <= 1.0f) ? exitFrac : 1.0f;
@@ -859,7 +919,11 @@ static void __attribute_regparm__(3)
         }
 
         if (childSide >= 0) {
+#if defined(COD2_X64)
+            childIndex = CM_EnsureChildNode(nodeIndex, childSide, mins, maxs);
+#else
             childIndex = CM_EnsureChildNode(nodeIndex, childSide, childMins, childMaxs);
+#endif
         }
 
         if (childIndex != 0) {
@@ -906,7 +970,11 @@ static void __attribute_regparm__(3)
         }
 
         if (childSide >= 0) {
+#if defined(COD2_X64)
+            childIndex = CM_EnsureChildNode(nodeIndex, childSide, mins, maxs);
+#else
             childIndex = CM_EnsureChildNode(nodeIndex, childSide, childMins, childMaxs);
+#endif
         }
 
         if (childIndex != 0) {
