@@ -151,9 +151,15 @@ static void CM_MESH_REGPARM3_ABI CM_PositionTestCapsuleInTriangle(const traceWor
                         float ex = startX - edge->origin[0];
                         float ey = startY - edge->origin[1];
                         float ez = startZ - edge->origin[2];
+#if defined(COD2_X64)
+                        float edgeAxisX = edge->axis[2][0];
+                        float edgeAxisY = edge->axis[2][1];
+                        float edgeAxisZ = edge->axis[2][2];
+#else
                         float edgeAxisX = edge->axis[0][0];
                         float edgeAxisY = edge->axis[0][1];
                         float edgeAxisZ = edge->axis[0][2];
+#endif
 
                         float proj = ex * edgeAxisX + ey * edgeAxisY + ez * edgeAxisZ;
 
@@ -439,6 +445,13 @@ static void CM_MESH_REGPARM3_SSE_ABI CM_TraceCapsuleThroughTriangle(const traceW
                     if (s_adj + t_adj > 1.0f)
                         return;
                 }
+#if defined(COD2_X64)
+                trace->normal[0] = triangle->plane[0];
+                trace->normal[1] = triangle->plane[1];
+                trace->normal[2] = triangle->plane[2];
+                trace->fraction = 0.0f;
+                trace->startsolid = 1;
+#endif
             }
         }
     }
@@ -488,7 +501,11 @@ edge_trace_tests: {
                         trace->fraction = 0;
                         if (tw->radius * tw->radius > deltaLenSq)
                             trace->startsolid = 1;
+#if defined(COD2_X64)
+                        return;
+#else
                         continue;
+#endif
                     }
 
                     {
@@ -553,7 +570,12 @@ edge_trace_tests: {
                 float dirA = tw->delta[0] * edgeAx0 + tw->delta[1] * edgeAx1 + tw->delta[2] * edgeAx2;
                 float dirB = tw->delta[0] * edgeBx0 + tw->delta[1] * edgeBx1 + tw->delta[2] * edgeBx2;
 
+#if defined(COD2_X64)
+                /* Mac 0x66f0f..0x66f27: motion projected onto the separation. */
+                float cross = projA * dirA + projB * dirB;
+#else
                 float cross = projA * dirB - projB * dirA;
+#endif
                 if (cross >= 0.0f)
                     continue;
 
@@ -563,7 +585,11 @@ edge_trace_tests: {
 
                     if (0.0f >= perpDiscrim) {
 
+#if defined(COD2_X64)
+                        float edgeProj = ex * edge->axis[2][0] + ey * edge->axis[2][1] + ez * edge->axis[2][2];
+#else
                         float edgeProj = ex * edgeAx0 + ey * edgeAx1 + ez * edgeAx2;
+#endif
                         if (fabsf(edgeProj - 0.5f) > 0.5f)
                             continue;
 
@@ -582,7 +608,11 @@ edge_trace_tests: {
                         trace->fraction = 0;
                         if (tw->radius * tw->radius > perpDistSq)
                             trace->startsolid = 1;
+#if defined(COD2_X64)
+                        return;
+#else
                         continue;
+#endif
                     }
 
                     {
@@ -603,7 +633,11 @@ edge_trace_tests: {
                                 float hitEx = tw->delta[0] * t_hit + ex;
                                 float hitEy = tw->delta[1] * t_hit + ey;
                                 float hitEz = tw->delta[2] * t_hit + ez;
+#if defined(COD2_X64)
+                                float hitProj = hitEx * edge->axis[2][0] + hitEy * edge->axis[2][1] + hitEz * edge->axis[2][2];
+#else
                                 float hitProj = hitEx * edgeAx0 + hitEy * edgeAx1 + hitEz * edgeAx2;
+#endif
                                 hitProj -= 0.5f;
                                 if (fabsf(hitProj) > 0.5f)
                                     continue;
@@ -633,6 +667,67 @@ edge_trace_tests: {
 }
 }
 
+#if defined(COD2_X64)
+/* Inlined by Mac CM_TraceThroughAabbTree_r, 0x67824..0x67c9c. The
+ * quadratic at an endpoint uses full deltaLenSq, including vertical motion. */
+static void CM_TraceCapsuleThroughBorder(const traceWork_t *tw, const CollisionBorder *border, trace_t *trace)
+{
+    float projection = tw->delta[0] * border->distEq[0] + tw->delta[1] * border->distEq[1];
+    float radius, distance, fraction, lateral, hitX, hitY, hitZ;
+
+    if (projection >= 0.0f)
+        return;
+    radius = 0.125f + tw->radius;
+    distance = tw->extents.start[0] * border->distEq[0] + tw->extents.start[1] * border->distEq[1] - border->distEq[2];
+    fraction = (radius - distance) / projection;
+    if (fraction >= trace->fraction || fraction * tw->deltaLen < -radius)
+        return;
+    hitX = tw->extents.start[0] + tw->delta[0] * fraction;
+    hitY = tw->extents.start[1] + tw->delta[1] * fraction;
+    hitZ = tw->extents.start[2] + tw->delta[2] * fraction;
+    lateral = border->distEq[1] * hitX - border->distEq[0] * hitY - border->start;
+    if (lateral < 0.0f || lateral > border->length) {
+        float along = lateral < 0.0f ? 0.0f : border->length;
+        float corner = border->start + along;
+        float x = tw->extents.start[0] - (border->distEq[1] * corner + border->distEq[0] * border->distEq[2]);
+        float y = tw->extents.start[1] - (border->distEq[1] * border->distEq[2] - border->distEq[0] * corner);
+        float dot = tw->delta[0] * x + tw->delta[1] * y;
+        float lengthSq = x * x + y * y;
+        float c = lengthSq - radius * radius;
+
+        if (dot >= 0.0f)
+            return;
+        if (c < 0.0f) {
+            if (fabsf((border->zBase + border->zSlope * along) - tw->extents.start[2]) > tw->offsetZ)
+                return;
+            trace->fraction = 0.0f;
+            trace->normal[0] = border->distEq[0];
+            trace->normal[1] = border->distEq[1];
+            trace->normal[2] = 0.0f;
+            if (tw->radius * tw->radius > lengthSq)
+                trace->startsolid = 1;
+            return;
+        }
+        float discriminant = dot * dot - tw->deltaLenSq * c;
+        if (discriminant < 0.0f)
+            return;
+        fraction = (-sqrtf(discriminant) - dot) / tw->deltaLenSq;
+        if (fraction >= trace->fraction || fraction <= 0.0f)
+            return;
+        hitZ = tw->extents.start[2] + tw->delta[2] * fraction;
+        lateral = along;
+    } else if (fraction < 0.0f) {
+        fraction = 0.0f;
+    }
+    if (fabsf(hitZ - (border->zBase + lateral * border->zSlope)) > tw->offsetZ)
+        return;
+    trace->fraction = fraction;
+    trace->normal[0] = border->distEq[0];
+    trace->normal[1] = border->distEq[1];
+    trace->normal[2] = 0.0f;
+}
+
+#endif
 static void CM_MESH_REGPARM3_ABI CM_TraceThroughAabbTree_r(const traceWork_t *tw, const CollisionAabbTree *aabbTree, trace_t *trace)
 {
     int i;
@@ -719,6 +814,18 @@ static void CM_MESH_REGPARM3_ABI CM_TraceThroughAabbTree_r(const traceWork_t *tw
                 return;
             }
 
+#if defined(COD2_X64)
+            for (i = 0; i < partition->triCount; i++) {
+                const CollisionTriangle *tri = &partition->tris[i];
+                CM_TraceCapsuleThroughTriangle(tw, tri, trace, tw->offsetZ);
+                if (tri->plane[2] < 0.0f)
+                    CM_TraceCapsuleThroughTriangle(tw, tri, trace, -tw->offsetZ);
+            }
+            if ((tw->delta[0] != 0.0f || tw->delta[1] != 0.0f) && tw->offsetZ != 0.0f) {
+                for (i = 0; i < partition->borderCount; i++)
+                    CM_TraceCapsuleThroughBorder(tw, &partition->borders[i], trace);
+            }
+#else
             if (partition->triCount == 0) {
 
                 if (tw->delta[0] == 0.0f && tw->delta[1] == 0.0f) {
@@ -915,6 +1022,7 @@ static void CM_MESH_REGPARM3_ABI CM_TraceThroughAabbTree_r(const traceWork_t *tw
                     }
                 }
             }
+#endif
         }
     }
 }

@@ -6,7 +6,7 @@ from pathlib import Path
 import shlex
 import subprocess
 import tempfile
-from spotcheck_reverb import ROOT, extract_function
+from spotcheck_reverb import ROOT
 
 
 def reference_blocked(x, y):
@@ -30,7 +30,6 @@ def main():
     entry = next(e for e in entries if Path(e['file']) == source and 'cod2_macos.dir' in e['command'])
     command = shlex.split(entry['command'])
     flags = command[:command.index('-o')]
-    extents = extract_function((ROOT / 'src/PC/qcommon/cm_tracebox.c').read_text(), 'CM_CalcTraceEntents')
     driver = '''#include "src/PC/qcommon/cm_trace.c"
 #include <stdio.h>
 clipMap_t cm;
@@ -49,7 +48,6 @@ const vec_t Vec3NormalizeTo(const vec_t *v, vec_t *out) {
     return length;
 }
 '''
-    driver += extents
     driver += '''
 int main(void) {
     const float xy[][2] = {{9,9}, {-9,9}, {0,0}, {9,0}, {16,0}};
@@ -70,7 +68,7 @@ int main(void) {
     with tempfile.TemporaryDirectory(dir=args.output.parent) as tmp:
         c, exe = Path(tmp) / 'probe.c', Path(tmp) / 'probe'
         c.write_text(driver)
-        result = subprocess.run(flags + ['-Wl,-dead_strip', str(c), '-o', str(exe)], cwd=entry['directory'], capture_output=True, text=True)
+        result = subprocess.run(flags + ['-Wl,-dead_strip', str(c), str(ROOT / 'src/PC/qcommon/cm_tracebox.c'), '-o', str(exe)], cwd=entry['directory'], capture_output=True, text=True)
         if result.returncode:
             raise RuntimeError(result.stderr)
         output = subprocess.check_output([str(exe)], text=True)
