@@ -84,6 +84,11 @@ BuiltinMethod ScriptEnt_GetMethod(const char **n) { (void)n; return NULL; }
 BuiltinMethod HudElem_GetMethod(const char **n) { (void)n; return NULL; }
 void Scr_ObjectError(const char *s) { (void)s; ++objectErrors; assert(catchError); longjmp(errorJump, 1); }
 void Scr_Error(const char *s) { (void)s; ++argumentErrors; assert(catchError); longjmp(errorJump, 1); }
+#if defined(COD2_X64)
+static const char *identityTypeNames[24] = { [1] = "object", [6] = "int", [21] = "entity" };
+void *imp_var_typename = identityTypeNames;
+static void Scr_SetErrorMessageAndJump(const char *s) { Scr_Error(s); }
+#endif
 void Scr_AddBool(int);
 void Scr_AddString(const char *);
 void Scr_AddVector(const float *);

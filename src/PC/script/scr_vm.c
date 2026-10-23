@@ -306,6 +306,26 @@ extern unsigned int Scr_GetEntityIdRef(unsigned int entId);
 #define VM_TIME_ARRAY(pub) pub->pauseArrayId
 #endif
 
+#if defined(COD2_X64)
+static unsigned short VM_LoadU16(const void *address)
+{
+    unsigned short value;
+    memcpy(&value, address, sizeof(value));
+    return value;
+}
+
+static int VM_LoadI32(const void *address)
+{
+    int value;
+    memcpy(&value, address, sizeof(value));
+    return value;
+}
+
+static void VM_StoreI32(void *address, int value)
+{
+    memcpy(address, &value, sizeof(value));
+}
+#endif
 #define VM_STACKBUF_VALUE_SIZE 5
 #define VM_LOCAL_ARCHIVE_SLOTS 256u
 #define VM_LOCAL_ARCHIVE_MAX_LOCALS 64u
@@ -621,15 +641,23 @@ static VariableStackBuffer *__attribute_regparm__(3)
             scrVmPub.function_frame--;
 #if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
+#if defined(COD2_X64)
+            VM_StoreI32(record + 1, SCR_CODEPOS_ENC(scrVmPub.function_frame->fs.pos));
+#else
             *(unsigned int *)(record + 1) =
                 SCR_CODEPOS_ENC(scrVmPub.function_frame->fs.pos);
+#endif
 #else
             *(const char **)(record + 1) = scrVmPub.function_frame->fs.pos;
 #endif
             scrVmPub.localVars -= scrVmPub.function_frame->fs.localVarCount;
             localId = GetParentLocalId(localId);
         } else {
+#if defined(COD2_X64)
+            VM_StoreI32(record + 1, value->u.intValue);
+#else
             *(int *)(record + 1) = value->u.intValue;
+#endif
         }
     }
 
@@ -655,7 +683,11 @@ static void __attribute_regparm__(3)
         VariableUnion u;
         int type;
 
+#if defined(COD2_X64)
+        u.intValue = VM_LoadI32(buf - sizeof(int));
+#else
         u.intValue = *(int *)(buf - sizeof(int));
+#endif
         buf -= VM_STACKBUF_VALUE_SIZE;
         type = *buf;
 
@@ -712,7 +744,11 @@ static void __attribute_regparm__(3)
         VariableUnion u;
         int type;
 
+#if defined(COD2_X64)
+        u.intValue = VM_LoadI32(buf - sizeof(int));
+#else
         u.intValue = *(int *)(buf - sizeof(int));
+#endif
         buf -= VM_STACKBUF_VALUE_SIZE;
         type = *buf;
 
@@ -1219,7 +1255,11 @@ void Scr_TraverseScript(const char *pos)
             scan += 13;
             break;
         case 0x7d:
+#if defined(COD2_X64)
+            scan += 3 + 8 * VM_LoadU16(next);
+#else
             scan += 3 + 8 * *(const unsigned short *)next;
+#endif
             break;
         default:
             return;
@@ -1250,7 +1290,11 @@ const char *Scr_GetNextCodepos(VariableValue *top, const char *pos, int opcode, 
                 if (scrVmPub.function_count <= 31) {
                     *localId = 0;
 #if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(COD2_X64)
+                    return SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(next));
+#else
                     return SCR_CODEPOS_PTR(*(const unsigned int *)next);
+#endif
 #else
                     return *(const char *const *)next;
 #endif
@@ -1270,7 +1314,11 @@ const char *Scr_GetNextCodepos(VariableValue *top, const char *pos, int opcode, 
                 if (top->type == 1 && scrVmPub.function_count <= 31) {
                     *localId = 0;
 #if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(COD2_X64)
+                    return SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(next));
+#else
                     return SCR_CODEPOS_PTR(*(const unsigned int *)next);
+#endif
 #else
                     return *(const char *const *)next;
 #endif
@@ -1390,7 +1438,11 @@ const char *Scr_GetNextCodepos(VariableValue *top, const char *pos, int opcode, 
             Scr_CastBool(&value);
             if (varPub->error_message)
                 goto clear_error_and_return_next;
+#if defined(COD2_X64)
+            jumpOffset = VM_LoadU16(next);
+#else
             jumpOffset = *(const unsigned short *)next;
+#endif
             next = pos + 3;
             if (!value.u.intValue)
                 next += jumpOffset;
@@ -1403,23 +1455,43 @@ const char *Scr_GetNextCodepos(VariableValue *top, const char *pos, int opcode, 
             Scr_CastBool(&value);
             if (varPub->error_message)
                 goto clear_error_and_return_next;
+#if defined(COD2_X64)
+            jumpOffset = VM_LoadU16(next);
+#else
             jumpOffset = *(const unsigned short *)next;
+#endif
             next = pos + 3;
             if (value.u.intValue)
                 next += jumpOffset;
             return next;
 
         case 0x62:
+#if defined(COD2_X64)
+            jumpOffset = VM_LoadI32(next);
+#else
             jumpOffset = *(const int *)next;
+#endif
             return next + 4 + jumpOffset;
 
         case 0x63:
+#if defined(COD2_X64)
+            return next + 2 - VM_LoadU16(next);
+#else
             return next + 2 - *(const unsigned short *)next;
+#endif
 
         case 0x7c:
+#if defined(COD2_X64)
+            jumpOffset = VM_LoadI32(next);
+#else
             jumpOffset = *(const int *)next;
+#endif
             next = next + 4 + jumpOffset;
+#if defined(COD2_X64)
+            caseCount = VM_LoadU16(next);
+#else
             caseCount = *(const unsigned short *)next;
+#endif
             next += 2;
 
             if (top->type == 2) {
@@ -1433,9 +1505,17 @@ const char *Scr_GetNextCodepos(VariableValue *top, const char *pos, int opcode, 
             }
 
             for (i = 0; i < caseCount; ++i) {
+#if defined(COD2_X64)
+                unsigned int switchValue = (unsigned int)VM_LoadI32(next);
+#else
                 unsigned int switchValue = *(const unsigned int *)next;
+#endif
 #if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(COD2_X64)
+                const char *caseCodePos = SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(next + 4));
+#else
                 const char *caseCodePos = SCR_CODEPOS_PTR(*(const unsigned int *)(next + 4));
+#endif
 #else
                 const char *caseCodePos = *(const char *const *)(next + 4);
 #endif
@@ -1447,7 +1527,11 @@ const char *Scr_GetNextCodepos(VariableValue *top, const char *pos, int opcode, 
             return next;
 
         case 0x7d:
+#if defined(COD2_X64)
+            return next + 2 + 8 * VM_LoadU16(next);
+#else
             return next + 2 + 8 * *(const unsigned short *)next;
+#endif
 
         default:
             goto clear_error_and_return_next;
@@ -1591,7 +1675,11 @@ static int VM_NotifyWaittillMatches(VariableStackBuffer *stackValue, VariableVal
         if (savedValue.type == 8) {
             return 1;
         }
+#if defined(COD2_X64)
+        savedValue.u.intValue = VM_LoadI32(buf + 1);
+#else
         savedValue.u.intValue = *(int *)(buf + 1);
+#endif
         AddRefToValue(savedValue.type, savedValue.u);
 
         currentValue = *current;
@@ -1616,9 +1704,15 @@ static int VM_NotifyWaittillMatches(VariableStackBuffer *stackValue, VariableVal
         }
 
         --current;
+#if defined(COD2_X64)
+        if (current->type == 8) {
+            return 0;
+        }
+#else
         if (current->type == 8) {
             return 1;
         }
+#endif
 
         buf += VM_STACKBUF_VALUE_SIZE;
         ++matchIndex;
@@ -1668,7 +1762,11 @@ static void VM_NotifyAppendStackParams(VariableUnion *stackRef, VariableStackBuf
 
         AddRefToValue(value->type, value->u);
         dst[0] = (byte)value->type;
+#if defined(COD2_X64)
+        VM_StoreI32(dst + 1, value->u.intValue);
+#else
         *(int *)(dst + 1) = value->u.intValue;
+#endif
         dst += VM_STACKBUF_VALUE_SIZE;
     }
 }
@@ -2073,9 +2171,13 @@ void Scr_GetVector(unsigned int index, float *vectorValue)
     }
 
     from = SCR_VEC_PTR(value->u);
+#if defined(COD2_X64)
+    memcpy(vectorValue, (const byte *)from, 3 * sizeof(float));
+#else
     vectorValue[0] = from[0];
     vectorValue[1] = from[1];
     vectorValue[2] = from[2];
+#endif
 }
 
 const char *Scr_GetDebugString(unsigned int index)
@@ -6416,7 +6518,11 @@ static void VM_EvalBinaryAndPop(VariableValue **top, void (*eval)(VariableValue 
 static void VM_CandidateFieldObjectCheck(unsigned int objectId)
 {
     if (!IsFieldObject(objectId)) {
+#if defined(COD2_X64)
+        Scr_SetErrorMessageAndJump(va("%s is not an object", ((const char *const *)imp_var_typename)[GetVarType(objectId)]));
+#else
         Com_Error(1, "VM_Execute C candidate expected field object");
+#endif
     }
 }
 
@@ -6429,7 +6535,11 @@ static void VM_CandidatePushEntityObject(VariableValue **top, int classnum, int 
         AddRefToObject(out->u.pointerValue);
     } else {
         out->type = VAR_UNDEFINED;
+#if defined(COD2_X64)
+        Scr_SetErrorMessageAndJump("unknown object");
+#else
         Com_Error(1, "VM_Execute C candidate could not resolve entity object");
+#endif
     }
 }
 
@@ -6437,9 +6547,19 @@ static void VM_CandidateIncDecField(unsigned int fieldValueId, VariableValue **t
 {
     VM_PushPackedValue(top, Scr_EvalVariableField(fieldValueId));
     if ((*top)->type != VAR_INTEGER) {
+#if defined(COD2_X64)
+        Scr_SetErrorMessageAndJump(va("%s must be applied to an int (applied to %s)",
+                                     delta > 0 ? "++" : "--",
+                                     ((const char *const *)imp_var_typename)[(*top)->type]));
+#else
         Com_Error(1, "VM_Execute C candidate expected integer field for inc/dec");
+#endif
     }
+#if defined(COD2_X64)
+    (*top)->u.intValue = (int)((unsigned int)(*top)->u.intValue + (unsigned int)delta);
+#else
     (*top)->u.intValue += delta;
+#endif
     SetVariableFieldValue(fieldValueId, *top);
     --*top;
 }
@@ -6543,7 +6663,11 @@ static void VM_CandidateCallBuiltinMethod(const char **pos, VariableValue **top,
     if ((*top)->type != VAR_POINTER) {
         RemoveRefToValue((*top)->type, (*top)->u);
         ((struct scrVarPub_t *)imp_scrVarPub)->error_index = (unsigned int)-1;
+#if defined(COD2_X64)
+        Scr_SetErrorMessageAndJump(va("%s is not an entity", ((const char *const *)imp_var_typename)[(*top)->type]));
+#else
         Com_Error(1, "VM_Execute C candidate method target is not an entity");
+#endif
     }
 
     objectId = (*top)->u.pointerValue;
@@ -6551,7 +6675,11 @@ static void VM_CandidateCallBuiltinMethod(const char **pos, VariableValue **top,
         int objectType = GetVarType(objectId);
         RemoveRefToObject(objectId);
         ((struct scrVarPub_t *)imp_scrVarPub)->error_index = (unsigned int)-1;
+#if defined(COD2_X64)
+        Scr_SetErrorMessageAndJump(va("%s is not an entity", ((const char *const *)imp_var_typename)[objectType]));
+#else
         Com_Error(1, "VM_Execute C candidate method target type %d is not an entity", objectType);
+#endif
     }
 
     entRefValue = Scr_GetEntityIdRef(objectId);
@@ -6810,7 +6938,14 @@ static unsigned int VM_CandidateWaitTimeFromValue(VariableValue *value)
             return 0;
         }
 
+#if defined(COD2_X64)
+        float rounded = floorf(seconds * 20.0f + 0.5f);
+        /* cvttss2si in the Mac VM produces INT_MIN for NaN/overflow. */
+        ticks = rounded >= -2147483648.0f && rounded < 2147483648.0f
+                    ? (int)rounded : (int)0x80000000u;
+#else
         ticks = (int)floorf(seconds * 20.0f + 0.5f);
+#endif
         if (!ticks && seconds != 0.0f) {
             ticks = 1;
         }
@@ -6818,7 +6953,11 @@ static unsigned int VM_CandidateWaitTimeFromValue(VariableValue *value)
     }
 
     if (value->type == VAR_INTEGER) {
+#if defined(COD2_X64)
+        return (unsigned int)value->u.intValue * 20u;
+#else
         return (unsigned int)(value->u.intValue * 20);
+#endif
     }
 
     ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 2;
@@ -6841,7 +6980,11 @@ static int VM_CandidateHandleWait(const char **pos, unsigned int *localVarCount,
 
     if (waitTime > 0x00fffffeu) {
         ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 2;
+#if defined(COD2_X64)
+        Scr_SetErrorMessageAndJump((int)waitTime < 0 ? "negative wait is not allowed" : "wait is too long");
+#else
         Scr_SetErrorMessageAndJump("wait time too long");
+#endif
     }
 
     if (waitTime) {
@@ -6919,13 +7062,25 @@ static int VM_CandidateHandleWaitTill(const char **pos, unsigned int *localVarCo
     unsigned int selfVarId;
 
     if ((*top)->type != VAR_POINTER || !IsFieldObject((*top)->u.pointerValue)) {
+#if defined(COD2_X64)
+        varPub->error_index = 2;
+        Scr_SetErrorMessageAndJump(va("%s is not an object", ((const char *const *)imp_var_typename)[
+            (*top)->type == VAR_POINTER ? GetVarType((*top)->u.pointerValue) : (*top)->type]));
+#else
         Scr_SetErrorMessageAndJump("first waittill argument is not a field object");
+#endif
     }
     notifyListOwnerId = (*top)->u.pointerValue;
     --*top;
 
     if ((*top)->type != VAR_STRING) {
+#if defined(COD2_X64)
+        ++*top;
+        varPub->error_index = 3;
+        Scr_SetErrorMessageAndJump("first parameter of waittill must evaluate to a string");
+#else
         Scr_SetErrorMessageAndJump("second waittill argument is not a string");
+#endif
     }
     stringValue = (*top)->u.stringValue;
     --*top;
@@ -6976,24 +7131,46 @@ static int VM_CandidateHandleWaitTill(const char **pos, unsigned int *localVarCo
                                            startTop, resultLocalId, threadCount);
 }
 
+#if defined(COD2_X64)
+static void VM_CandidateHandleNotifyCall(const char **pos, VariableValue **top)
+#else
 static void VM_CandidateHandleNotifyCall(VariableValue **top)
+#endif
 {
     unsigned int notifyListOwnerId;
     unsigned int stringValue;
 
     if ((*top)->type != VAR_POINTER || !IsFieldObject((*top)->u.pointerValue)) {
+#if defined(COD2_X64)
+        ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 2;
+        Scr_SetErrorMessageAndJump(va("%s is not an object", ((const char *const *)imp_var_typename)[
+            (*top)->type == VAR_POINTER ? GetVarType((*top)->u.pointerValue) : (*top)->type]));
+#else
         Scr_SetErrorMessageAndJump("notify object is not a field object");
+#endif
     }
     notifyListOwnerId = (*top)->u.pointerValue;
     --*top;
 
     if ((*top)->type != VAR_STRING) {
+#if defined(COD2_X64)
+        ++*top;
+        ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 1;
+        Scr_SetErrorMessageAndJump("first parameter of notify must evaluate to a string");
+#else
         Scr_SetErrorMessageAndJump("notify name is not a string");
+#endif
     }
     stringValue = (*top)->u.stringValue;
     --*top;
 
+#if defined(COD2_X64)
+    scrVmPub.function_frame->fs.pos = *pos;
     VM_Notify(notifyListOwnerId, stringValue, *top);
+    *pos = scrVmPub.function_frame->fs.pos;
+#else
+    VM_Notify(notifyListOwnerId, stringValue, *top);
+#endif
     RemoveRefToObject(notifyListOwnerId);
     SL_RemoveRefToString(stringValue);
 
@@ -7018,12 +7195,22 @@ static void VM_CandidateHandleEndOnCallback(unsigned int localId, VariableValue 
     VariableValue tempValue;
 
     if ((*top)->type != VAR_POINTER || !IsFieldObject((*top)->u.pointerValue)) {
+#if defined(COD2_X64)
+        varPub->error_index = 1;
+        Scr_SetErrorMessageAndJump(va("%s is not an object", ((const char *const *)imp_var_typename)[
+            (*top)->type == VAR_POINTER ? GetVarType((*top)->u.pointerValue) : (*top)->type]));
+#else
         Scr_SetErrorMessageAndJump("endon object is not a field object");
+#endif
     }
     notifyListOwnerId = (*top)->u.pointerValue;
 
     if ((*top - 1)->type != VAR_STRING) {
+#if defined(COD2_X64)
+        Scr_SetErrorMessageAndJump("first parameter of endon must evaluate to a string");
+#else
         Scr_SetErrorMessageAndJump("endon notify name is not a string");
+#endif
     }
     stringValue = (*top - 1)->u.stringValue;
 
@@ -7049,7 +7236,11 @@ static void VM_CandidateHandleEndOnCallback(unsigned int localId, VariableValue 
 static void VM_CandidateHandleSwitch(const char **pos, VariableValue **top)
 {
     const char *opcodeStart = *pos - 1;
+#if defined(COD2_X64)
+    const char *tablePos = opcodeStart + 5 + VM_LoadI32(*pos);
+#else
     const char *tablePos = opcodeStart + 5 + *(const int *)*pos;
+#endif
     unsigned int caseCount;
     unsigned int caseValue;
     unsigned int i;
@@ -7063,7 +7254,11 @@ static void VM_CandidateHandleSwitch(const char **pos, VariableValue **top)
         SL_RemoveRefToString(caseValue);
     } else if ((*top)->type == VAR_INTEGER) {
         if (!IsValidArrayIndex((unsigned int)(*top)->u.intValue)) {
+#if defined(COD2_X64)
+            Scr_SetErrorMessageAndJump(va("switch index %d out of range", (*top)->u.intValue));
+#else
             Scr_SetErrorMessageAndJump("switch index out of range");
+#endif
         }
         caseValue = GetInternalVariableIndex((unsigned int)(*top)->u.intValue);
     } else {
@@ -7072,9 +7267,17 @@ static void VM_CandidateHandleSwitch(const char **pos, VariableValue **top)
     }
 
     for (i = 0; i < caseCount; i++) {
+#if defined(COD2_X64)
+        unsigned int currentCaseValue = (unsigned int)VM_LoadI32(*pos);
+#else
         unsigned int currentCaseValue = *(const unsigned int *)*pos;
+#endif
 #    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(COD2_X64)
+        const char *currentCodePos = SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(*pos + 4));
+#else
         const char *currentCodePos = SCR_CODEPOS_PTR(*(const unsigned int *)(*pos + 4));
+#endif
 #    else
         const char *currentCodePos = *(const char *const *)(*pos + 4);
 #    endif
@@ -7145,7 +7348,11 @@ static void VM_CandidateCheckFrameDepth(void)
 static const char *VM_CandidateReadScriptCallTarget(const char **pos)
 {
 #    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(COD2_X64)
+    const char *target = SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(*pos));
+#else
     const char *target = SCR_CODEPOS_PTR(*(const unsigned int *)*pos);
+#endif
 #    else
     const char *target = *(const char *const *)*pos;
 #    endif
@@ -7153,14 +7360,23 @@ static const char *VM_CandidateReadScriptCallTarget(const char **pos)
     return target;
 }
 
+#if defined(COD2_X64)
+static const char *VM_CandidatePopCodepos(VariableValue **top, int popBadValue)
+#else
 static const char *VM_CandidatePopCodepos(VariableValue **top)
+#endif
 {
     const char *target;
 
     if ((*top)->type != 9) {
         unsigned int badType = (*top)->type;
         RemoveRefToValue((*top)->type, (*top)->u);
+#if defined(COD2_X64)
+        if (popBadValue)
+            --*top;
+#else
         ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 1;
+#endif
         Scr_SetErrorMessageAndJump(va("%s is not a function pointer", ((const char *const *)imp_var_typename)[badType]));
     }
 
@@ -7175,7 +7391,9 @@ static unsigned int VM_CandidatePopObjectForCall(VariableValue **top, unsigned i
 
     if ((*top)->type != VAR_POINTER) {
         unsigned int badType = (*top)->type;
+#if !defined(COD2_X64)
         RemoveRefToValue((*top)->type, (*top)->u);
+#endif
         ((struct scrVarPub_t *)imp_scrVarPub)->error_index = errorIndex;
         Scr_SetErrorMessageAndJump(va("%s is not an object", ((const char *const *)imp_var_typename)[badType]));
     }
@@ -7260,7 +7478,11 @@ static void VM_CandidateEnterMethodThreadCall(const char **pos, unsigned int *lo
     VariableValue *callerStartTop = *startTop;
 
     VM_CandidateCheckFrameDepth();
+#if defined(COD2_X64)
+    objectId = VM_CandidatePopObjectForCall(top, 2);
+#else
     objectId = VM_CandidatePopObjectForCall(top, 1);
+#endif
     newLocalId = AllocThread(objectId);
     VM_CandidatePrepareThreadCallerFrame(returnPos, *localVarCount, *top,
                                          callerStartTop, paramCount);
@@ -7432,7 +7654,11 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             VariableValue *out = VM_PushValue(&top);
 #    if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
 
+#if defined(COD2_X64)
+            out->u.codePosValue = (unsigned int)VM_LoadI32(pos);
+#else
             out->u.codePosValue = *(const unsigned int *)pos;
+#endif
 #    else
             out->u.codePosValue = *(const char *const *)pos;
 #    endif
@@ -7608,7 +7834,11 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
 
         case VMOP_EndOn:
             if (top->type != 8) {
+#if defined(COD2_X64)
+                Scr_SetErrorMessageAndJump("function called with too many parameters");
+#else
                 Com_Error(1, "VM_Execute C candidate expected void codepos for EndOn");
+#endif
             }
             top->type = 7;
             break;
@@ -7693,7 +7923,11 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
 
         case VMOP_ScriptFunctionCallExpr: {
             const char *returnPos = pos;
+#if defined(COD2_X64)
+            const char *targetPos = VM_CandidatePopCodepos(&top, 0);
+#else
             const char *targetPos = VM_CandidatePopCodepos(&top);
+#endif
             VM_CandidateEnterFunctionCall(&pos, &localId, &localVarCount, &top, &startTop,
                                           targetPos, returnPos);
             break;
@@ -7708,7 +7942,11 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
 
         case VMOP_ScriptMethodCallExpr: {
             const char *returnPos = pos;
+#if defined(COD2_X64)
+            const char *targetPos = VM_CandidatePopCodepos(&top, 1);
+#else
             const char *targetPos = VM_CandidatePopCodepos(&top);
+#endif
             VM_CandidateEnterMethodCall(&pos, &localId, &localVarCount, &top, &startTop,
                                         targetPos, returnPos);
             break;
@@ -7724,7 +7962,11 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
         }
 
         case VMOP_ScriptThreadCallExpr: {
+#if defined(COD2_X64)
+            const char *targetPos = VM_CandidatePopCodepos(&top, 0);
+#else
             const char *targetPos = VM_CandidatePopCodepos(&top);
+#endif
             unsigned int paramCount = VM_ReadI32(&pos);
             VM_CandidateEnterFunctionThreadCall(&pos, &localId, &localVarCount, &top, &startTop,
                                                 targetPos, pos, paramCount);
@@ -7742,7 +7984,11 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
         }
 
         case VMOP_ScriptMethodThreadCallExpr: {
+#if defined(COD2_X64)
+            const char *targetPos = VM_CandidatePopCodepos(&top, 1);
+#else
             const char *targetPos = VM_CandidatePopCodepos(&top);
+#endif
             unsigned int paramCount = VM_ReadI32(&pos);
             VM_CandidateEnterMethodThreadCall(&pos, &localId, &localVarCount, &top, &startTop,
                                               targetPos, pos, paramCount);
@@ -7972,7 +8218,11 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             break;
 
         case VMOP_NotifyCall:
+#if defined(COD2_X64)
+            VM_CandidateHandleNotifyCall(&pos, &top);
+#else
             VM_CandidateHandleNotifyCall(&top);
+#endif
             break;
 
         case VMOP_EndOnCallback:
@@ -8012,7 +8262,11 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
         case VMOP_EvalAnimFieldVariableRef:
             fieldValueId = FindVariable(localId, VM_ReadU16(&pos));
             if (!fieldValueId) {
+#if defined(COD2_X64)
+                Scr_SetErrorMessageAndJump("cannot create a new local variable in the debugger");
+#else
                 Com_Error(1, "VM_Execute C candidate missing field variable ref");
+#endif
             }
             break;
 
@@ -8143,15 +8397,24 @@ static void VM_Resume(unsigned int timeId)
 
                 if (type == 7) {
 #if defined(__x86_64__) || defined(__aarch64__) || defined(_M_X64)
+#if defined(COD2_X64)
+                    scrVmPub.function_frame->fs.pos =
+                        SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(record + 1));
+#else
                     scrVmPub.function_frame->fs.pos =
                         SCR_CODEPOS_PTR(*(unsigned int *)(record + 1));
+#endif
 #else
                     scrVmPub.function_frame->fs.pos = *(const char **)(record + 1);
 #endif
                     scrVmPub.function_count++;
                     scrVmPub.function_frame++;
                 } else {
+#if defined(COD2_X64)
+                    top->u.intValue = VM_LoadI32(record + 1);
+#else
                     top->u.intValue = *(int *)(record + 1);
+#endif
                 }
 
                 record += VM_STACKBUF_VALUE_SIZE;
@@ -8302,6 +8565,9 @@ __attribute__((noinline)) unsigned int __attribute_regparm__(3)
     VariableValue *startTop;
     unsigned int oldInParamCount;
     unsigned int result;
+#if defined(COD2_X64)
+    int startTopType;
+#endif
 
     while (scrVmPub.outparamcount) {
         RemoveRefToValue(scrVmPub.top->type, scrVmPub.top->u);
@@ -8316,6 +8582,14 @@ __attribute__((noinline)) unsigned int __attribute_regparm__(3)
     if (scrVmPub.function_count > 29) {
         Scr_KillThread(threadId);
         scrVmPub.inparamcount = oldInParamCount + 1;
+#if defined(COD2_X64)
+        for (unsigned int i = 0; i < oldInParamCount; ++i) {
+            RemoveRefToValue(scrVmPub.top->type, scrVmPub.top->u);
+            --scrVmPub.top;
+        }
+        ++scrVmPub.top;
+        scrVmPub.top->type = VAR_UNDEFINED;
+#endif
         RuntimeError(pos, 0, "script stack overflow (too many embedded function calls)", NULL);
         return threadId;
     }
@@ -8331,6 +8605,9 @@ __attribute__((noinline)) unsigned int __attribute_regparm__(3)
     ++scrVmPub.function_frame;
     scrVmPub.function_frame->fs.localId = threadId;
 
+#if defined(COD2_X64)
+    startTopType = startTop->type;
+#endif
     startTop->type = 8;
     scrVmPub.inparamcount = 0;
 
@@ -8341,6 +8618,9 @@ __attribute__((noinline)) unsigned int __attribute_regparm__(3)
     fs.startTop = startTop;
 
     result = VM_Execute(fs);
+#if defined(COD2_X64)
+    startTop->type = startTopType;
+#endif
 
     scrVmPub.top = startTop + 1;
     scrVmPub.inparamcount = oldInParamCount + 1;

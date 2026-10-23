@@ -411,8 +411,16 @@ static int ThreadInfoCompare(const void *info1, const void *info2)
         return count1 - count2;
 
     for (i = 0; i < count1 && i < count2; i++) {
+#if defined(COD2_X64)
+        const ThreadDebugInfo *first = (const ThreadDebugInfo *)info1;
+        const ThreadDebugInfo *second = (const ThreadDebugInfo *)info2;
+
+        if (first->pos[i] != second->pos[i])
+            return (int)(SCR_CODEPOS_ENC(first->pos[i]) - SCR_CODEPOS_ENC(second->pos[i]));
+#else
         if (threadInfo1[i] != threadInfo2[i])
             return threadInfo1[i] - threadInfo2[i];
+#endif
     }
     return count1 - count2;
 }
@@ -535,7 +543,11 @@ void Scr_SetThreadNotifyName(unsigned int startLocalId, unsigned int stringValue
 
 short unsigned int Scr_GetThreadNotifyName(unsigned int startLocalId)
 {
+#if defined(COD2_X64)
+    return (unsigned short)(VG_STATUS(startLocalId) >> 8);
+#else
     return *(unsigned short *)((byte *)scrVarGlob + startLocalId * 16 + 9);
+#endif
 }
 
 void Scr_SetThreadWaitTime(unsigned int startLocalId, unsigned int waitTime)
@@ -714,7 +726,11 @@ unsigned int Scr_EvalVariableObject(unsigned int id)
             return objectId;
     }
 
+#if defined(COD2_X64)
+    Scr_Error(va("%s is not a field object", var_typename[type]));
+#else
     Com_Printf("^3%s is not a field object\n", var_typename[type]);
+#endif
     return 0;
 }
 
@@ -756,7 +772,11 @@ unsigned int Scr_GetEntityIdRef(unsigned int entId)
 {
     VariableValueInternal *entry = (VariableValueInternal *)((byte *)scrVarGlob + entId * 16);
     unsigned int entnum = entry->u.o.u.entnum;
+#if defined(COD2_X64)
+    unsigned int classnum = (unsigned short)(entry->w.status >> 8);
+#else
     unsigned int classnum = *(unsigned short *)((byte *)entry + 9);
+#endif
 
     return entnum | (classnum << 16);
 }
@@ -772,7 +792,14 @@ unsigned int Scr_FindField(const char *name, int *type)
 
         if (!stricmp(name, pos)) {
             pos = &pos[len];
+#if defined(COD2_X64)
+            unsigned short packedIndex;
+
+            memcpy(&packedIndex, pos, sizeof(packedIndex));
+            index = packedIndex;
+#else
             index = *(const unsigned short *)pos;
+#endif
             *type = (signed char)pos[2];
             return index;
         }
@@ -795,7 +822,11 @@ void Scr_RemoveThreadNotifyName(unsigned int startLocalId)
 {
     byte *entry = (byte *)scrVarGlob + startLocalId * 16;
     unsigned int notifyName;
+#if defined(COD2_X64)
+    notifyName = Scr_GetThreadNotifyName(startLocalId);
+#else
     notifyName = *(unsigned short *)((byte *)scrVarGlob + startLocalId * 16 + 9);
+#endif
 
     SL_RemoveRefToString(notifyName);
 
@@ -833,9 +864,13 @@ static inline __attribute__((always_inline)) const float *Scr_AllocVector_core(c
     float *vec = (float *)(mem + 4);
 
     *(int *)mem = 0;
+#if defined(COD2_X64)
+    memcpy(vec, (const byte *)v, 3 * sizeof(float));
+#else
     vec[0] = v[0];
     vec[1] = v[1];
     vec[2] = v[2];
+#endif
 
     return vec;
 }
@@ -968,7 +1003,14 @@ void Scr_AddFields(const char *path, const char *extension)
                 int existingLen = strlen(field) + 1;
 
                 if (!stricmp(fieldName, field)) {
+#if defined(COD2_X64)
+                    unsigned short packedIndex;
+
+                    memcpy(&packedIndex, field + existingLen, sizeof(packedIndex));
+                    if (packedIndex != 0) {
+#else
                     if (*(const unsigned short *)(field + existingLen) != 0) {
+#endif
                         Com_Error((errorParm_t)1, "\x15"
                                      "duplicate key '%s' in '%s'",
                                   fieldName, filename);
@@ -985,7 +1027,13 @@ void Scr_AddFields(const char *path, const char *extension)
 
                 strcpy(entry, fieldName);
                 meta = entry + lenWithNul;
+#if defined(COD2_X64)
+                unsigned short packedIndex = (unsigned short)index;
+
+                memcpy(meta, &packedIndex, sizeof(packedIndex));
+#else
                 *(unsigned short *)meta = (unsigned short)index;
+#endif
                 meta[2] = type;
                 meta[3] = '\0';
                 TempMemorySetPos(entry + entrySize);
@@ -1383,8 +1431,132 @@ static float __attribute_regparm__(1)
 
     return usage;
 }
+#if defined(COD2_X64)
+extern void *Z_TryMallocInternal(int size);
+extern void Z_FreeInternal(void *ptr);
+extern void Scr_PrintPrevCodePos(print_msg_type_t type, const char *codePos, unsigned int index);
+
+static float Scr_GetThreadEndonUsage(unsigned int localId)
+{
+    unsigned int pauseEntry = FindObjectVariable(scrVarPub.pauseArrayId, localId);
+
+    return pauseEntry ? Scr_GetObjectUsage(VG_U32(pauseEntry)) : 0.0f;
+}
+
+static float Scr_GetArchivedThreadUsage(const VariableStackBuffer *stack, float *endonUsage)
+{
+    unsigned int localId = stack->localId;
+    unsigned int size = stack->size;
+    const char *entry = stack->buf + size * 5;
+    float usage = Scr_GetObjectUsage(localId);
+
+    *endonUsage = Scr_GetThreadEndonUsage(localId);
+    while (size--) {
+        VariableUnion value;
+        int type;
+
+        entry -= 5;
+        type = (unsigned char)*entry;
+        memcpy(&value, entry + 1, sizeof(value));
+        if (type == 7) {
+            localId = GetParentLocalId(localId);
+            usage += Scr_GetObjectUsage(localId);
+            *endonUsage += Scr_GetThreadEndonUsage(localId);
+        } else if (type == SCRVL_VAR_POINTER &&
+                   (VG_STATUS(value.pointerValue) & SCRVL_VAR_MASK) == SCRVL_VAR_ARRAY) {
+            usage += Scr_GetObjectUsage(value.pointerValue) / ((float)VG_U16(value.pointerValue) + 1.0f);
+        }
+    }
+
+    return usage;
+}
+
+#endif
 void Scr_DumpScriptThreads(void)
 {
+#if defined(COD2_X64)
+    ThreadDebugInfo *threads = Z_TryMallocInternal((int)(sizeof(*threads) * 0xfffe));
+    unsigned int count = 0;
+    unsigned int id;
+    unsigned int i;
+
+    if (!threads) {
+        Com_Printf("Cannot dump script threads: out of memory\n");
+        return;
+    }
+
+    for (id = 1; id <= SCRVL_MAX_VARIABLES; id++) {
+        const VariableStackBuffer *stack;
+        const char *positions[32];
+        unsigned int posCount = 0;
+        unsigned int j;
+        ThreadDebugInfo *info;
+
+        if (!(VG_STATUS(id) & SCRVL_VAR_ALLOCATED) ||
+            (VG_STATUS(id) & SCRVL_VAR_MASK) != 10)
+            continue;
+
+        stack = SCR_STACK_PTR(*GetVariableValueAddress(id));
+        for (j = 0; j < stack->size; j++) {
+            const char *entry = stack->buf + j * 5;
+            VariableUnion value;
+
+            if ((unsigned char)*entry != 7)
+                continue;
+            memcpy(&value, entry + 1, sizeof(value));
+            positions[posCount++] = SCR_CODEPOS_GET(value);
+        }
+        positions[posCount++] = stack->pos;
+
+        info = &threads[count++];
+        info->posSize = (int)posCount;
+        info->varUsage = Scr_GetArchivedThreadUsage(stack, &info->endonUsage);
+        for (j = 0; j < posCount; j++)
+            info->pos[j] = positions[posCount - j - 1];
+    }
+
+    qsort(threads, count, sizeof(*threads), ThreadInfoCompare);
+    Com_Printf("********************************\n");
+    for (i = 0; i < count;) {
+        const ThreadDebugInfo *info = &threads[i];
+        unsigned int groupCount = 0;
+        float varUsage = 0.0f;
+        float endonUsage = 0.0f;
+        int j;
+
+        do {
+            varUsage += threads[i].varUsage;
+            endonUsage += threads[i].endonUsage;
+            groupCount++;
+            i++;
+        } while (i < count && !ThreadInfoCompare(info, &threads[i]));
+
+        Com_Printf("count: %d, var usage: %d, endon usage: %d\n", groupCount, (int)varUsage, (int)endonUsage);
+        Scr_PrintPrevCodePos((print_msg_type_t)0, info->pos[0], 0);
+        for (j = 1; j < info->posSize; j++) {
+            Com_Printf("called from:\n");
+            Scr_PrintPrevCodePos((print_msg_type_t)0, info->pos[j], 0);
+        }
+    }
+    Z_FreeInternal(threads);
+    Com_Printf("********************************\n");
+
+    for (i = 0; i < 4; i++) {
+        unsigned int entArrayId = g_classMap[i].entArrayId;
+        unsigned int entityCount = 0;
+        float usage = 0.0f;
+
+        if (!entArrayId)
+            continue;
+        for (id = FindNextSibling(entArrayId); id; id = FindNextSibling(id)) {
+            entityCount++;
+            if ((VG_STATUS(id) & SCRVL_VAR_MASK) == SCRVL_VAR_POINTER)
+                usage += Scr_GetObjectUsage(VG_U32(id));
+        }
+        Com_Printf("ent type '%s'... count: %d, var usage: %d\n", g_classMap[i].name, entityCount, (int)usage);
+    }
+    Com_Printf("********************************\n");
+#else
     unsigned int id;
     int count = 0;
 
@@ -1421,6 +1593,7 @@ void Scr_DumpScriptThreads(void)
     }
 
     Com_Printf("%d script threads\n", count);
+#endif
 }
 unsigned int Scr_GetEntityId(int entnum, int classnum)
 {
@@ -1733,7 +1906,11 @@ static void __attribute_regparm__(2)
             unsigned int entryNextSiblingIndex = entryValue->nextSibling;
             unsigned int swapPrevIndex = swapEntry->hash.u.prev;
             unsigned int swapNextSiblingIndex = swapValue->nextSibling;
+#if defined(COD2_X64)
+            unsigned int entryHash;
+#else
             unsigned int entryHash = *(unsigned int *)&entry->hash;
+#endif
 
             swapValue->w.status = (swapValue->w.status & ~SCRVL_VAR_ALLOCATED) | SCRVL_VAR_HASH;
 
@@ -1742,6 +1919,11 @@ static void __attribute_regparm__(2)
             VG_PREV(entryNextSiblingIndex) = (unsigned short)swapIndex;
             VG_NEXT_SIBLING(VG_ID(entryPrevIndex)) = (unsigned short)swapIndex;
 
+#if defined(COD2_X64)
+            /* Adjacent siblings can update entry->hash.prev above. Mac reads
+               the hash after those updates (MakeVariableExternal, 0x8cc5e). */
+            entryHash = *(unsigned int *)&entry->hash;
+#endif
             *(unsigned int *)&entry->hash = *(unsigned int *)&swapEntry->hash;
             *(unsigned int *)&swapEntry->hash = entryHash;
 
@@ -1851,7 +2033,11 @@ void Scr_EvalArray(VariableValue *value, VariableValue *index)
         }
 
         index->type = SCRVL_VAR_FLOAT;
+#if defined(COD2_X64)
+        memcpy(&index->u.floatValue, (const byte *)SCR_VEC_PTR(value->u) + offset * sizeof(float), sizeof(float));
+#else
         index->u.floatValue = SCR_VEC_PTR(value->u)[offset];
+#endif
         RemoveRefToVector(SCR_VEC_PTR(value->u));
         return;
     }
@@ -2274,8 +2460,80 @@ static unsigned int Scr_CopyArrayForWrite(unsigned int fieldId, unsigned int arr
     return newArrayId;
 }
 
+#if defined(COD2_X64)
+static Bool Scr_GetEntityArrayValue(VariableValue *value)
+{
+    unsigned int entId = scrVarPub.entId;
+    unsigned int classnum = VG_STATUS(entId) >> 8;
+    unsigned int fieldId = FindArrayVariable(g_classMap[classnum].id, scrVarPub.entFieldName);
+    unsigned long long result;
+
+    value->type = SCRVL_VAR_UNDEFINED;
+    if (!fieldId)
+        return 1;
+
+    result = GetEntityFieldValue(classnum, VG_SIBLING(entId), (int)VG_U32(fieldId));
+    value->type = (int)(result >> 32);
+    value->u.intValue = (unsigned int)result;
+
+    if (value->type == SCRVL_VAR_POINTER && !VG_U16(value->u.pointerValue)) {
+        RemoveRefToObject(value->u.pointerValue);
+        scrVarPub.error_index = 1;
+        Scr_Error("read-only array cannot be changed");
+        return 0;
+    }
+
+    RemoveRefToValue_core(value->type, value->u);
+    return 1;
+}
+#endif
 unsigned int Scr_EvalArrayRef(unsigned int parentId)
 {
+#if defined(COD2_X64)
+    VariableValue value;
+    unsigned int arrayId;
+
+    if (parentId == 0xfffe) {
+        if (!Scr_GetEntityArrayValue(&value))
+            return 0;
+
+        if (value.type == SCRVL_VAR_UNDEFINED) {
+            parentId = GetNewVariable(scrVarPub.entId, scrVarPub.entFieldName);
+        } else {
+            parentId = 0;
+        }
+    } else {
+        value.type = VG_STATUS(parentId) & SCRVL_VAR_MASK;
+        value.u.intValue = VG_U32(parentId);
+    }
+
+    if (value.type == SCRVL_VAR_UNDEFINED) {
+        VG_STATUS(parentId) |= SCRVL_VAR_POINTER;
+        arrayId = Scr_AllocArray_core();
+        VG_U32(parentId) = arrayId;
+        return arrayId;
+    }
+
+    if (value.type != SCRVL_VAR_POINTER) {
+        scrVarPub.error_index = 1;
+        if (value.type == SCRVL_VAR_STRING)
+            Scr_Error("string characters cannot be individually changed");
+        else if (value.type == SCRVL_VAR_VECTOR)
+            Scr_Error("vector components cannot be individually changed");
+        else
+            Scr_Error(va("%s is not an array", var_typename[value.type]));
+        return 0;
+    }
+
+    arrayId = value.u.pointerValue;
+    if ((VG_STATUS(arrayId) & SCRVL_VAR_MASK) != SCRVL_VAR_ARRAY) {
+        scrVarPub.error_index = 1;
+        Scr_Error(va("%s is not an array", var_typename[VG_STATUS(arrayId) & SCRVL_VAR_MASK]));
+        return 0;
+    }
+
+    return Scr_CopyArrayForWrite(parentId, arrayId);
+#else
     unsigned int type;
     unsigned int arrayId;
 
@@ -2358,6 +2616,7 @@ unsigned int Scr_EvalArrayRef(unsigned int parentId)
     }
 
     return Scr_CopyArrayForWrite(parentId, arrayId);
+#endif
 }
 
 void Scr_StopThread(unsigned int threadId)
@@ -2370,6 +2629,9 @@ void Scr_StopThread(unsigned int threadId)
 
 void ClearObjectInternal(unsigned int parentId)
 {
+#if defined(COD2_X64)
+    Scr_FreeObjectChildren(parentId);
+#else
     unsigned int guard = 0;
 
     for (;;) {
@@ -2387,6 +2649,7 @@ void ClearObjectInternal(unsigned int parentId)
             return;
         }
     }
+#endif
 }
 
 void ClearObject(unsigned int id)
@@ -2441,12 +2704,20 @@ unsigned int Scr_EvalFieldObject(unsigned int tempVariable, VariableValue *value
         }
 
         RemoveRefToObject(objectId);
+#if defined(COD2_X64)
+        Scr_Error(va("%s is not a field object", var_typename[objectType]));
+#else
         Com_Printf(va("%s is not a field object", var_typename[objectType]));
+#endif
         return 0;
     }
 
     RemoveRefToValue(type, value->u);
+#if defined(COD2_X64)
+    Scr_Error(va("%s is not a field object", var_typename[type]));
+#else
     Com_Printf(va("%s is not a field object", var_typename[type]));
+#endif
     return 0;
 }
 
@@ -2570,7 +2841,9 @@ void Scr_EvalDivide(VariableValue *value1, VariableValue *value2)
         value1->u.floatValue = (float)value1->u.intValue;
     } else if (value1->type != value2->type) {
         Scr_UnmatchingTypesError(value1, value2);
+#if !defined(COD2_X64)
         return;
+#endif
     }
 
     if (value1->type == SCRVL_VAR_FLOAT) {
@@ -2633,12 +2906,16 @@ void Scr_EvalPlus(VariableValue *value1, VariableValue *value2)
         if (value1->type == SCRVL_VAR_STRING) {
             if (!Scr_CastPlusOperandToString(value2)) {
                 Scr_UnmatchingTypesError(value1, value2);
+#if !defined(COD2_X64)
                 return;
+#endif
             }
         } else if (value2->type == SCRVL_VAR_STRING) {
             if (!Scr_CastPlusOperandToString(value1)) {
                 Scr_UnmatchingTypesError(value1, value2);
+#if !defined(COD2_X64)
                 return;
+#endif
             }
         } else if (value1->type == SCRVL_VAR_FLOAT && value2->type == SCRVL_VAR_INTEGER) {
             value2->type = SCRVL_VAR_FLOAT;
@@ -2648,7 +2925,9 @@ void Scr_EvalPlus(VariableValue *value1, VariableValue *value2)
             value1->u.floatValue = (float)value1->u.intValue;
         } else {
             Scr_UnmatchingTypesError(value1, value2);
+#if !defined(COD2_X64)
             return;
+#endif
         }
     }
 
@@ -2686,9 +2965,19 @@ void Scr_EvalPlus(VariableValue *value1, VariableValue *value2)
         const float *rhs = SCR_VEC_PTR(value2->u);
         const float *result;
 
+#if defined(COD2_X64)
+        float lhsComponents[3], rhsComponents[3];
+
+        memcpy(lhsComponents, (const byte *)lhs, sizeof(lhsComponents));
+        memcpy(rhsComponents, (const byte *)rhs, sizeof(rhsComponents));
+        tempVector[0] = lhsComponents[0] + rhsComponents[0];
+        tempVector[1] = lhsComponents[1] + rhsComponents[1];
+        tempVector[2] = lhsComponents[2] + rhsComponents[2];
+#else
         tempVector[0] = lhs[0] + rhs[0];
         tempVector[1] = lhs[1] + rhs[1];
         tempVector[2] = lhs[2] + rhs[2];
+#endif
 
         result = Scr_AllocVector(tempVector);
         RemoveRefToVector(lhs);
@@ -2776,7 +3065,12 @@ static inline __attribute__((always_inline)) qboolean Scr_CastNumericPair(Variab
     }
 
     Scr_UnmatchingTypesError(value1, value2);
+#if defined(COD2_X64)
+    /* Evaluation and script loading let Scr_Error return to the opcode. */
+    return 1;
+#else
     return 0;
+#endif
 }
 
 void Scr_EvalLessEqual(VariableValue *value1, VariableValue *value2)
@@ -2850,7 +3144,11 @@ void Scr_EvalEquality(VariableValue *value1, VariableValue *value2)
         int rhsIsArray = (VG_STATUS(rhs) & SCRVL_VAR_MASK) == SCRVL_VAR_ARRAY;
         int result;
 
+#if defined(COD2_X64)
+        if ((lhsIsArray || rhsIsArray) && !scrVarPub.evaluate) {
+#else
         if ((lhsIsArray || rhsIsArray) && !scrVarPub.developer) {
+#endif
             Scr_UnmatchingTypesError(value1, value2);
             return;
         }
@@ -2877,7 +3175,15 @@ void Scr_EvalEquality(VariableValue *value1, VariableValue *value2)
     case SCRVL_VAR_VECTOR: {
         const float *lhs = SCR_VEC_PTR(value1->u);
         const float *rhs = SCR_VEC_PTR(value2->u);
+#if defined(COD2_X64)
+        float lhsComponents[3], rhsComponents[3];
+
+        memcpy(lhsComponents, (const byte *)lhs, sizeof(lhsComponents));
+        memcpy(rhsComponents, (const byte *)rhs, sizeof(rhsComponents));
+        int result = lhsComponents[0] == rhsComponents[0] && lhsComponents[1] == rhsComponents[1] && lhsComponents[2] == rhsComponents[2];
+#else
         int result = lhs[0] == rhs[0] && lhs[1] == rhs[1] && lhs[2] == rhs[2];
+#endif
 
         value1->type = SCRVL_VAR_INTEGER;
         RemoveRefToVector(lhs);
@@ -2978,9 +3284,19 @@ void Scr_EvalMinus(VariableValue *value1, VariableValue *value2)
         const float *rhs = SCR_VEC_PTR(value2->u);
         const float *result;
 
+#if defined(COD2_X64)
+        float lhsComponents[3], rhsComponents[3];
+
+        memcpy(lhsComponents, (const byte *)lhs, sizeof(lhsComponents));
+        memcpy(rhsComponents, (const byte *)rhs, sizeof(rhsComponents));
+        tempVector[0] = lhsComponents[0] - rhsComponents[0];
+        tempVector[1] = lhsComponents[1] - rhsComponents[1];
+        tempVector[2] = lhsComponents[2] - rhsComponents[2];
+#else
         tempVector[0] = lhs[0] - rhs[0];
         tempVector[1] = lhs[1] - rhs[1];
         tempVector[2] = lhs[2] - rhs[2];
+#endif
 
         result = Scr_AllocVector(tempVector);
         RemoveRefToVector(lhs);
@@ -3217,6 +3533,34 @@ void ClearArray(unsigned int parentId, VariableValue *value)
     unsigned int name;
     unsigned int type;
 
+#if defined(COD2_X64)
+    VariableValue arrayValue;
+
+    if (parentId == 0xfffe) {
+        if (!Scr_GetEntityArrayValue(&arrayValue))
+            return;
+        parentId = 0;
+    } else {
+        arrayValue.type = VG_STATUS(parentId) & SCRVL_VAR_MASK;
+        arrayValue.u.intValue = VG_U32(parentId);
+    }
+
+    if (arrayValue.type != SCRVL_VAR_POINTER) {
+        scrVarPub.error_index = 1;
+        Scr_Error(va("%s is not an array", var_typename[arrayValue.type]));
+        return;
+    }
+
+    arrayId = arrayValue.u.pointerValue;
+    type = VG_STATUS(arrayId) & SCRVL_VAR_MASK;
+    if (type != SCRVL_VAR_ARRAY) {
+        scrVarPub.error_index = 1;
+        Scr_Error(va("%s is not an array", var_typename[type]));
+        return;
+    }
+
+    arrayId = Scr_CopyArrayForWrite(parentId, arrayId);
+#else
     if (parentId == 0xfffe) {
         arrayId = Scr_EvalArrayRef(parentId);
     } else {
@@ -3237,6 +3581,7 @@ void ClearArray(unsigned int parentId, VariableValue *value)
 
         arrayId = Scr_CopyArrayForWrite(parentId, arrayId);
     }
+#endif
 
     if (!arrayId)
         return;
@@ -3254,8 +3599,13 @@ void ClearArray(unsigned int parentId, VariableValue *value)
 
     if (value->type == SCRVL_VAR_STRING) {
         name = value->u.stringValue;
+#if defined(COD2_X64)
+        SL_RemoveRefToString(name);
+        SafeRemoveVariable_core(arrayId, name);
+#else
         RemoveVariable(arrayId, name);
         SL_RemoveRefToString(name);
+#endif
         return;
     }
 

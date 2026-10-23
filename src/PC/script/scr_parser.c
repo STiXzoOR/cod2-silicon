@@ -707,13 +707,20 @@ void RuntimeError(const char *codePos, unsigned int index, const char *msg, cons
             return;
     }
 
+#if defined(COD2_X64)
+    const char *dialogSeparator = dialogMessage ? "\n" : "";
+#endif
     if (!dialogMessage)
         dialogMessage = "";
 
     Com_Error(vmPub->terminal_error ? 5 : 4,
               "\x15script runtime error\n(see console for details)\n%s%s%s",
               msg,
+#if defined(COD2_X64)
+              dialogSeparator,
+#else
               dialogMessage[0] ? "\n" : "",
+#endif
               dialogMessage);
 }
 
