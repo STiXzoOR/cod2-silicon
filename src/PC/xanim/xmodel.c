@@ -22,7 +22,11 @@ void XModelPartsSetData(const char *name, XModelParts *modelParts, Alloc_t Alloc
 XModelSurfs *XModelSurfsFindData(const char *name);
 void XModelSurfsSetData(const char *name, XModelSurfs *modelSurfs, Alloc_t Alloc);
 XModel *XModelPrecache(const char *name, Alloc_t Alloc, Alloc_t AllocColl);
+#if defined(COD2_X64)
+unsigned short *XModelBoneNames(XModel *model);
+#else
 int XModelBoneNames(XModel *model);
+#endif
 int XModelGetBoneIndex(const XModel *model, unsigned int name);
 const char *XModelGetLodName(const XModel *model, int lod);
 int XModelGetContents(const XModel *model);
@@ -127,11 +131,18 @@ XModel *XModelPrecache(const char *name, Alloc_t Alloc, Alloc_t AllocColl)
     return model;
 }
 
+#if defined(COD2_X64)
+unsigned short *XModelBoneNames(XModel *model)
+{
+    return ((XModelParts *)model->parts)->hierarchy->names;
+}
+#else
 int XModelBoneNames(XModel *model)
 {
     XModelParts *parts = (XModelParts *)model->parts;
     return (int)parts->hierarchy->names;
 }
+#endif
 
 int XModelGetBoneIndex(const XModel *model, unsigned int name)
 {
@@ -175,7 +186,11 @@ int XModelGetMemUsage(const XModel *model)
 
 qboolean Com_ValidXModelName(const char *name)
 {
+#if defined(COD2_X64)
+    return strnicmp(name, "xmodel", 6) == 0 && name[6] == '/';
+#else
     return strnicmp(name, "xmodel", 6) == 0 && (name[6] == '/' || name[6] == '\\');
+#endif
 }
 
 void XModelGetBounds(const XModel *model, vec_t *mins, vec_t *maxs)
@@ -373,9 +388,15 @@ int XModelTraceLine(const XModel *model, trace_t *results, const DObjAnimMat *bo
             float n1 = results->normal[1];
             float n2 = results->normal[2];
 
+#if defined(COD2_X64)
+            results->normal[0] = (1.0f - (yy + zz)) * n0 + (xy - zw) * n1 + (xz + yw) * n2;
+            results->normal[1] = (xy + zw) * n0 + (1.0f - (xx + zz)) * n1 + (yz - xw) * n2;
+            results->normal[2] = (xz - yw) * n0 + (yz + xw) * n1 + (1.0f - (xx + yy)) * n2;
+#else
             results->normal[0] = (1.0f - yy - zz) * n0 + (xy - zw) * n1 + (xz + yw) * n2;
             results->normal[1] = (xy + zw) * n0 + (1.0f - xx - zz) * n1 + (yz - xw) * n2;
             results->normal[2] = (xz - yw) * n0 + (yz + xw) * n1 + (1.0f - xx - yy) * n2;
+#endif
         }
     }
 
