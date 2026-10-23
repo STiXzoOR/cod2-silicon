@@ -1169,7 +1169,11 @@ static void PM_REGPARM2_ABI PM_CheckDuck(pmove_t *pm, pml_t *pml)
         if (ps->pm_flags & 0x1) {
 
             pm->maxs[2] = 50.0f;
+#if defined(COD2_X64)
+            PM_trace(pm, &trace, ps->origin, pm->mins, pm->maxs,
+#else
             PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs,
+#endif
                            ps->origin, ps->clientNum, pm->tracemask & ~0x02000000);
             if (!trace.allsolid) {
                 /* CoD2x animation.cpp:1389-1393 uses controller stance transitions. */
@@ -1195,7 +1199,11 @@ static void PM_REGPARM2_ABI PM_CheckDuck(pmove_t *pm, pml_t *pml)
     if (ps->pm_flags & 0x1) {
 
         pm->maxs[2] = ps->maxs[2];
+#if defined(COD2_X64)
+        PM_trace(pm, &trace, ps->origin, pm->mins, pm->maxs,
+#else
         PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs,
+#endif
                        ps->origin, ps->clientNum, pm->tracemask & ~0x02000000);
         if (!trace.allsolid) {
             /* CoD2x animation.cpp:1389-1393 uses controller stance transitions. */
@@ -1206,7 +1214,11 @@ static void PM_REGPARM2_ABI PM_CheckDuck(pmove_t *pm, pml_t *pml)
             ps->pm_flags &= ~0x3;
         } else {
             pm->maxs[2] = 50.0f;
+#if defined(COD2_X64)
+            PM_trace(pm, &trace, ps->origin, pm->mins, pm->maxs,
+#else
             PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs,
+#endif
                            ps->origin, ps->clientNum, pm->tracemask & ~0x02000000);
             if (!trace.allsolid)
                 ps->pm_flags = (ps->pm_flags & ~0x1) | 0x2;
@@ -1219,7 +1231,11 @@ static void PM_REGPARM2_ABI PM_CheckDuck(pmove_t *pm, pml_t *pml)
     if (ps->pm_flags & 0x2) {
 
         pm->maxs[2] = ps->maxs[2];
+#if defined(COD2_X64)
+        PM_trace(pm, &trace, ps->origin, pm->mins, pm->maxs,
+#else
         PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs,
+#endif
                        ps->origin, ps->clientNum, pm->tracemask & ~0x02000000);
         if (!trace.allsolid) {
             /* CoD2x animation.cpp:1389-1393 uses controller stance transitions. */
@@ -1288,14 +1304,22 @@ compute_target:
     vEnd[1] = ps->origin[1];
     vEnd[2] = ps->origin[2] + 10.0f;
 
+#if defined(COD2_X64)
+    PM_trace(pm, &trace, ps->origin, pm->mins, pm->maxs, vEnd,
+#else
     PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs, vEnd,
+#endif
                    ps->clientNum, pm->tracemask & ~0x02000000);
     frac = trace.fraction;
     vEnd[0] = ps->origin[0] + (vEnd[0] - ps->origin[0]) * frac;
     vEnd[1] = ps->origin[1] + (vEnd[1] - ps->origin[1]) * frac;
     vEnd[2] = ps->origin[2] + (vEnd[2] - ps->origin[2]) * frac;
 
+#if defined(COD2_X64)
+    PM_trace(pm, &trace, vEnd, pm->mins, pm->maxs, ps->origin,
+#else
     PM_playerTrace(pm, &trace, vEnd, pm->mins, pm->maxs, ps->origin,
+#endif
                    ps->clientNum, pm->tracemask & ~0x02000000);
     frac = trace.fraction;
     ps->origin[0] = vEnd[0] + (ps->origin[0] - vEnd[0]) * frac;
@@ -1308,7 +1332,11 @@ compute_target:
     vPoint[1] = ps->origin[1];
     vPoint[2] = ps->origin[2] - 0.25f;
 
+#if defined(COD2_X64)
+    PM_trace(pm, &trace, ps->origin, pm->mins, pm->maxs, vPoint,
+#else
     PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs, vPoint,
+#endif
                    ps->clientNum, pm->tracemask & ~0x02000000);
 
     normal[0] = trace.normal[0];
@@ -1786,7 +1814,11 @@ static void PM_REGPARM2_ABI PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml)
     float fOffset;
     const viewLerpWaypoint_t *table;
 
+#if defined(COD2_X64)
+    if (target == 0 || current == 0.0f) {
+#else
     if (target == 0) {
+#endif
         if (ps->pm_type == 4)
             ps->viewHeightCurrent = 0.0f;
         else
@@ -1848,6 +1880,9 @@ static void PM_REGPARM2_ABI PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml)
 
             if (fabsf(ps->viewHeightLerpPosAdj - fOffset) > 0.05f) {
                 vec3_t vFlatForward;
+#if defined(COD2_X64)
+                float savedX = ps->velocity[0];
+#endif
                 float savedY = ps->velocity[1];
                 float savedZ = ps->velocity[2];
                 float diff = fOffset - ps->viewHeightLerpPosAdj;
@@ -1868,6 +1903,9 @@ static void PM_REGPARM2_ABI PM_ViewHeightAdjust(pmove_t *pm, pml_t *pml)
 
                 PM_StepSlideMove(pm, pml, 1);
 
+#if defined(COD2_X64)
+                ps->velocity[0] = savedX;
+#endif
                 ps->velocity[1] = savedY;
                 ps->velocity[2] = savedZ;
                 ps->viewHeightLerpPosAdj = fOffset;
@@ -2305,7 +2343,11 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
             point[1] = ps->origin[1];
             point[2] = ps->origin[2] - 1.0f;
 
+#if defined(COD2_X64)
+            PM_trace(pm, &trace, ps->origin, pm->mins, pm->maxs, point,
+#else
             PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs, point,
+#endif
                            ps->clientNum, pm->tracemask);
 
             pml->almostGroundPlane = (trace.fraction != 1.0f);
@@ -2314,7 +2356,11 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
             point[1] = ps->origin[1];
             point[2] = ps->origin[2] - 64.0f;
 
+#if defined(COD2_X64)
+            PM_trace(pm, &trace, ps->origin, pm->mins, pm->maxs, point,
+#else
             PM_playerTrace(pm, &trace, ps->origin, pm->mins, pm->maxs, point,
+#endif
                            ps->clientNum, pm->tracemask);
 
             if (trace.fraction == 1.0f) {
@@ -2758,7 +2804,7 @@ static void PmoveSingle(pmove_t *pm)
         PM_CheckDuck(pm, &pml);
         PM_DropTimers(ps, pml.msec);
         PM_Footsteps(pm, &pml);
-        if (ps->eFlags & 0x300)
+        if (ps->pm_type != 1 && ps->pm_type != 7 && (ps->eFlags & 0x300))
             PM_ResetWeaponState(ps);
         else
             PM_Weapon(pm, &pml);

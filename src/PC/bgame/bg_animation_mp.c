@@ -177,7 +177,9 @@ BG_PlayAnim_core(playerState_t *ps, int animNum, animBodyPart_t bodyPart, int fo
                     ps->torsoTimer = duration;
                 }
                 ps->torsoAnimDuration = duration;
+#if !defined(COD2_X64)
                 wasSet = 1;
+#endif
             }
         }
     }
@@ -223,7 +225,11 @@ static __attribute_regparm__(2) __attribute_sseregparm__
         } else {
             *swinging = 1;
         }
+#if defined(COD2_X64)
+    } else if (swing < 0.0f) {
+#else
     } else {
+#endif
         move = (float)bgs->frametime * scale * -speed;
         if (move <= swing) {
             move = swing;
@@ -233,6 +239,9 @@ static __attribute_regparm__(2) __attribute_sseregparm__
         }
     }
 
+#if defined(COD2_X64)
+    if (swing >= 0.0f || swing < 0.0f)
+#endif
     *angle = AngleMod(*angle + move);
 
     swing = AngleSubtract(destination, *angle);
@@ -265,6 +274,9 @@ void BG_UpdatePlayerDObj(struct DObj_s *pDObj, entityState_t *es, clientInfo_t *
             return;
     }
 
+#if defined(COD2_X64)
+    if (pDObj)
+#endif
     bgs->SafeDObjFree(es->number);
 
     dobjModels[0].model = bgs->GetXModel(ci->model);
@@ -353,7 +365,11 @@ void BG_AnimUpdatePlayerStateConditions(pmove_t *pmove)
     BG_UpdateConditionValue_core(client, 1, weaponDef->weapClass, 1);
     BG_UpdateConditionValue_core(client, 7, (ps->eFlags & 0x40000) != 0, 1);
     BG_UpdateConditionValue_core(client, 2, (ps->eFlags & 0x300) != 0, 1);
+#if defined(COD2_X64)
+    BG_UpdateConditionValue_core(client, 4, ps->viewangles[0] > 0.0f, 1);
+#else
     BG_UpdateConditionValue_core(client, 4, ps->fWeaponPosFrac > 0.0f, 1);
+#endif
     BG_UpdateConditionValue_core(client, 6, (pmove->cmd.buttons & 1) != 0, 1);
 }
 
@@ -490,12 +506,16 @@ void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es
             goals[0][2] = torsoAngles[2] * 0.30000001192092896f;
 
             if (es->fTorsoPitch != 0.0f || es->fWaistPitch != 0.0f) {
+#if defined(COD2_X64)
+                goals[0][0] += AngleSubtract(es->fTorsoPitch, es->fWaistPitch);
+#else
 #if defined(COD2_CODX) && COD2_CODX
                 if (Cod2x_GameVersion() >= 3)
                     goals[0][0] += AngleSubtract(es->fTorsoPitch, es->fWaistPitch);
                 else
 #endif
                 goals[0][0] += AngleSubtract(es->fWaistPitch, es->fTorsoPitch);
+#endif
             }
 
             goals[1][0] = 0.0f;
@@ -520,12 +540,16 @@ void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es
             goals[0][2] = torsoAngles[2] * 0.5f;
 
             if (es->fTorsoPitch != 0.0f || es->fWaistPitch != 0.0f) {
+#if defined(COD2_X64)
+                goals[0][0] += AngleSubtract(es->fTorsoPitch, es->fWaistPitch);
+#else
 #if defined(COD2_CODX) && COD2_CODX
                 if (Cod2x_GameVersion() >= 3)
                     goals[0][0] += AngleSubtract(es->fTorsoPitch, es->fWaistPitch);
                 else
 #endif
                 goals[0][0] += AngleSubtract(es->fWaistPitch, es->fTorsoPitch);
+#endif
             }
 
             goals[1][0] = torsoAngles[0] * 0.30000001192092896f;
@@ -575,8 +599,13 @@ void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es
             Cod2x_PoseOffsets(goals);
             Cod2x_PoseDiagnostics(es, ci, bgs->anim_user != 0, frametime);
 #endif
+#if defined(COD2_X64)
+            fraction = state->movementDuration > 0 ?
+                1.0f - (float)(state->movementStart + state->movementDuration - bgs->time) / (float)state->movementDuration : -1.0f;
+#else
             fraction = state->movementDuration > 0 ?
                 (float)(bgs->time - state->movementStart) / (float)state->movementDuration : -1.0f;
+#endif
             for (i = 0; i < 8; ++i) {
                 float *current = BG_Cod2xController(ci, i);
                 if (fraction >= 0.0f && fraction <= 1.0f) {
@@ -650,7 +679,11 @@ static void BG_CopyLerpFramePosition(lerpFrame_t *lf, const entityState_t *es)
 
 static float BG_Fabsf(float value)
 {
+#if defined(COD2_X64)
+    return __builtin_fabsf(value);
+#else
     return value < 0.0f ? -value : value;
+#endif
 }
 
 static void __attribute_regparm__(3) BG_RunLerpFrameRate(clientInfo_t *ci, lerpFrame_t *lf, int newAnimation, entityState_t *es)
@@ -672,7 +705,11 @@ static void __attribute_regparm__(3) BG_RunLerpFrameRate(clientInfo_t *ci, lerpF
     pAnimTree = ci->pXAnimTree;
     oldAnimationNumber = lf->animationNumber;
 
+#if defined(COD2_X64)
+    if (oldAnimationNumber == newAnimation && (oldAnimation != NULL || BG_AnimIndexNoToggle(newAnimation) == 0)) {
+#else
     if (oldAnimationNumber == newAnimation) {
+#endif
         if (oldAnimation != NULL) {
             animNum = BG_AnimIndexNoToggle(oldAnimationNumber);
         } else {
@@ -735,6 +772,15 @@ static void __attribute_regparm__(3) BG_RunLerpFrameRate(clientInfo_t *ci, lerpF
                 maxBlendMsec = -1;
             }
 
+#if defined(COD2_X64)
+            {
+                int remaining = ci->stanceTransitionTime - bgs->time;
+                if (remaining > maxBlendMsec)
+                    maxBlendMsec = remaining;
+                if (lf->animationTime < maxBlendMsec)
+                    lf->animationTime = maxBlendMsec;
+            }
+#else
             if (maxBlendMsec >= 0) {
                 int elapsed = bgs->time - ci->stanceTransitionTime;
                 if (elapsed > maxBlendMsec) {
@@ -744,6 +790,7 @@ static void __attribute_regparm__(3) BG_RunLerpFrameRate(clientInfo_t *ci, lerpF
                     lf->animationTime = elapsed;
                 }
             }
+#endif
         }
 
 #if defined(COD2_CODX) && COD2_CODX
@@ -755,7 +802,11 @@ static void __attribute_regparm__(3) BG_RunLerpFrameRate(clientInfo_t *ci, lerpF
         if (anim != NULL && anim->moveSpeed != 0.0f) {
             if (XAnimIsLooped(pXAnims, animNum)) {
                 oldAnimIndex = BG_AnimIndexNoToggle(oldAnimationNumber);
+#if defined(COD2_X64)
+                if (hadNoAnimation || oldAnimation == NULL || oldAnimation->moveSpeed == 0.0f || !XAnimIsLooped(pXAnims, oldAnimIndex)) {
+#else
                 if (hadNoAnimation || oldAnimation == NULL || oldAnimation->moveSpeed != 0.0f || !XAnimIsLooped(pXAnims, oldAnimIndex)) {
+#endif
                     if (XAnimIsPrimitive(pXAnims, oldAnimIndex)) {
                         int lengthMsec = XAnimGetLengthMsec(pXAnims, oldAnimIndex) + 200;
                         float length = (float)lengthMsec;
@@ -791,13 +842,25 @@ static void __attribute_regparm__(3) BG_RunLerpFrameRate(clientInfo_t *ci, lerpF
             ci->dobjDirty = 1;
         }
 
+#if defined(COD2_X64)
+        if ((anim->flags & 0x40) != 0) {
+#else
         if (bLegsAnim && (anim->flags & 0x40) != 0) {
+#endif
             if (XAnimIsLooped(pXAnims, animNum)) {
+#if defined(COD2_X64)
+                Com_Error(1, "death animation '%s' is looping", anim->name);
+#else
                 Com_Error(1, "\025death animation '%s' is looping", anim->name);
+#endif
             }
 
             if ((es->eFlags & 0x80000) != 0) {
+#if defined(COD2_X64)
+                XAnimSetCompleteGoalWeight(pAnimTree, animNum, 1.0f, BG_LerpAnimBlendSeconds(lf), 1.0f, 0, 0, 0);
+#else
                 XAnimSetCompleteGoalWeight(pAnimTree, animNum, 1.0f, BG_LerpAnimBlendSeconds(lf), 1.0f, 0, anim->noteType, 0);
+#endif
                 goto after_set_goal;
             }
 
@@ -813,12 +876,17 @@ static void __attribute_regparm__(3) BG_RunLerpFrameRate(clientInfo_t *ci, lerpF
             XAnimSetCompleteGoalWeight(pAnimTree, animNum, 1.0f, BG_LerpAnimBlendSeconds(lf), 1.0f, 0, anim->noteType, !bLegsAnim);
         }
 
+#if defined(COD2_X64)
+    after_set_goal:
+#endif
         if (!bLegsAnim) {
             XAnimSetCompleteGoalWeight(pAnimTree, bgs->animScriptData.torsoAnim, 1.0f, BG_LerpAnimBlendSeconds(lf), 1.0f, 0, anim->noteType, 0);
             XAnimSetCompleteGoalWeight(pAnimTree, bgs->animScriptData.legsAnim, 0.009999999776482582f, BG_LerpAnimBlendSeconds(lf), 1.0f, 0, anim->noteType, 0);
         }
 
+#if !defined(COD2_X64)
     after_set_goal:;
+#endif
     }
 
     if (animNum == 0) {
@@ -826,11 +894,19 @@ static void __attribute_regparm__(3) BG_RunLerpFrameRate(clientInfo_t *ci, lerpF
     }
 
     anim = lf->animation;
+#if defined(COD2_X64)
+    if (anim == NULL || anim->moveSpeed == 0.0f || lf->oldFrameSnapshotTime == 0) {
+#else
     if (anim == NULL || anim->moveSpeed == 0.0f || lf->oldFrameSnapshotTime == 0 || lf->oldFrameSnapshotTime == bgs->latestSnapshotTime) {
+#endif
         lf->animSpeedScale = 1.0f;
         lf->oldFrameSnapshotTime = bgs->latestSnapshotTime;
         BG_CopyLerpFramePosition(lf, es);
+#if defined(COD2_X64)
+    } else if (lf->oldFrameSnapshotTime != bgs->latestSnapshotTime) {
+#else
     } else {
+#endif
         int deltaMsec;
         float dist;
         float seconds;
@@ -901,6 +977,10 @@ static qboolean BG_ConditionValueIsActive(const clientInfo_t *ci, int condition)
         return ci->clientConditions[condition][0] != 0;
     }
 
+#if defined(COD2_X64)
+    if ((ci->clientConditions[condition][0] & 1) != 0)
+        return 0;
+#endif
     for (bit = 1; bit < 64; ++bit) {
         if ((ci->clientConditions[condition][bit >> 5] & (1 << (bit & 31))) != 0) {
             return 1;
@@ -991,13 +1071,25 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
         ci->torso.yawing = 1;
         ci->torso.pitching = 1;
         ci->legs.yawing = 1;
+#if defined(COD2_X64)
+    } else if ((eFlags & 0x4000) != 0) {
+#else
     } else if ((eFlags & 0x40) != 0) {
+#endif
         ci->torso.yawing = 1;
         ci->torso.pitching = 1;
         ci->legs.yawing = 1;
+#if defined(COD2_X64)
+    } else if ((ci->clientConditions[3][0] & 6) != 0) {
+        if (BG_ConditionValueIsActive(ci, 6)) {
+            ci->torso.yawing = 1;
+            ci->torso.pitching = 1;
+        }
+#else
     } else if ((ci->clientConditions[3][0] & 6) != 0 && BG_ConditionValueIsActive(ci, 6)) {
         ci->torso.yawing = 1;
         ci->torso.pitching = 1;
+#endif
     } else {
         ci->torso.yawing = 1;
         ci->torso.pitching = 1;
@@ -1027,7 +1119,11 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
         torsoYawClamp = 90.0f;
         legsYawDest = playerYaw;
         legsSwingTolerance = 0.0f;
+#if defined(COD2_X64)
+    } else if ((eFlags & 8) != 0 || ((eFlags & 0x40000) != 0 && (eFlags & 0x40) == 0)) {
+#else
     } else if ((eFlags & 8) != 0 || (eFlags & 0x40000) != 0) {
+#endif
         torsoYawDest = playerYaw;
         torsoYawClamp = 90.0f;
         legsYawDest = moveYaw;
@@ -1043,6 +1139,10 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
         legsYawDest = moveYaw;
         legsSwingTolerance = 40.0f;
     }
+#if defined(COD2_X64)
+    if ((eFlags & 0x20000) == 0)
+        legsSwingTolerance = ci->legs.yawing ? 0.0f : 40.0f;
+#endif
 
 #if defined(COD2_CODX) && COD2_CODX
     /* CoD2x src/shared/animation.cpp:950-955, 1005-1008. */
@@ -1090,6 +1190,9 @@ void BG_PlayerAnimation(const struct DObj_s *pDObj, entityState_t *es, clientInf
         ci->legs.yawAngle = playerYaw;
     }
 
+#if defined(COD2_X64)
+    else
+#endif
     if ((ci->clientConditions[3][0] & 0xc0000) != 0) {
         ci->torso.yawAngle = moveYaw;
         ci->legs.yawAngle = moveYaw;
@@ -1393,8 +1496,10 @@ static qboolean __attribute_regparm__(2)
 
                 conditionValue[0] = BG_IndexForString(valueToken, animConditionsTable[conditionIndex].values, 0);
             }
+#if !defined(COD2_X64)
         } else {
             BG_AnimParseError("BG_ParseConditions: expected condition value, found end of line");
+#endif
         }
 
         scriptItem->conditions[scriptItem->numConditions].index = conditionIndex;
@@ -1410,7 +1515,11 @@ void BG_ParseCommands(const char **input, animScriptItem_t *scriptItem, animScri
     int commandPart = 0;
 
     for (;;) {
+#if defined(COD2_X64)
+        const char *token = commandPart > 0 ? Com_ParseOnLine(input) : Com_Parse(input);
+#else
         const char *token = Com_Parse(input);
+#endif
 
         if (!token || !*token) {
             return;
@@ -1427,7 +1536,12 @@ void BG_ParseCommands(const char **input, animScriptItem_t *scriptItem, animScri
             }
 
             command = &scriptItem->commands[scriptItem->numCommands++];
+#if defined(COD2_X64)
+            command->bodyPart[0] = 0;
+            command->bodyPart[1] = 0;
+#else
             command->soundAlias = NULL;
+#endif
         }
 
         command->bodyPart[commandPart] = BG_IndexForString(token, animBodyPartsStr, 1);
@@ -1485,6 +1599,9 @@ void BG_ParseCommands(const char **input, animScriptItem_t *scriptItem, animScri
             for (;;) {
                 token = Com_ParseOnLine(input);
                 if (!token || !*token) {
+#if defined(COD2_X64)
+                    Com_UngetToken();
+#endif
                     break;
                 }
 
@@ -1527,6 +1644,10 @@ void BG_ParseCommands(const char **input, animScriptItem_t *scriptItem, animScri
             *input -= strlen(token);
         }
 
+#if defined(COD2_X64)
+        if (command->bodyPart[commandPart] > 0 && command->bodyPart[commandPart] != 3 && commandPart++ < 1)
+            continue;
+#else
         if (command->bodyPart[commandPart] != 3) {
             ++commandPart;
             if (commandPart <= 1) {
@@ -1541,6 +1662,7 @@ void BG_ParseCommands(const char **input, animScriptItem_t *scriptItem, animScri
                 continue;
             }
         }
+#endif
 
         for (;;) {
             token = Com_ParseOnLine(input);
@@ -1764,7 +1886,11 @@ static void __attribute_regparm__(3)
                 continue;
             }
 
+#if defined(COD2_X64)
+            if (indentLevel == 2 && indexes[2] < 0) {
+#else
             if (indentLevel == 2) {
+#endif
                 animScriptItem_t tempScriptItem;
                 const char *start = text_p - strlen(token);
 
@@ -2267,7 +2393,11 @@ int BG_AnimScriptAnimation(playerState_t *ps, aistateEnum_t state, scriptAnimMov
                 ci->clientConditions[3][0] = movetype;
             }
 
+#if defined(COD2_X64)
+            return BG_ExecuteCommand(ps, &scriptItem->commands[ps->clientNum % scriptItem->numCommands], 0, isContinue, 0) != -1;
+#else
             return BG_ExecuteCommand(ps, &scriptItem->commands[rand() % scriptItem->numCommands], 0, isContinue, 0) != -1;
+#endif
         }
 
         state = (aistateEnum_t)(state - 1);   /* VC7.1 C++: no -- on enum */

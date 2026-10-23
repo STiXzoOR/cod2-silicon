@@ -431,7 +431,11 @@ int DObjGetSurfaces(const DObj *obj, DSurface *surfaces, int *partBits, char *lo
         int targBoneIndex;
         int targWord;
         int targBit;
+#if defined(COD2_X64)
+        const unsigned int *surfPartBits;
+#else
         int *surfPartBits;
+#endif
 
         if (lod < 0) {
             continue;
@@ -470,7 +474,11 @@ int DObjGetSurfaces(const DObj *obj, DSurface *surfaces, int *partBits, char *lo
         targBoneIndex = obj->matOffset[modelIndex];
         targWord = targBoneIndex >> 5;
         targBit = targBoneIndex & 31;
+#if defined(COD2_X64)
+        surfPartBits = (const unsigned int *)surfs->partBits;
+#else
         surfPartBits = surfs->partBits;
+#endif
 
         if (targBit) {
             int invTargBit = 32 - targBit;
@@ -742,6 +750,15 @@ void DObjSetLocalTagInternal(const DObj *obj, const vec_t *trans, const vec_t *a
     rotTrans = &obj->skel->mat[boneIndex];
 
     if (angles) {
+#if defined(COD2_X64)
+        const double halfDegToRad = 0.008726646259971648;
+        float sy = sinf((float)((double)angles[1] * halfDegToRad));
+        float cy = cosf((float)((double)angles[1] * halfDegToRad));
+        float sp = sinf((float)((double)angles[0] * halfDegToRad));
+        float cp = cosf((float)((double)angles[0] * halfDegToRad));
+        float sr = sinf((float)((double)angles[2] * halfDegToRad));
+        float cr = cosf((float)((double)angles[2] * halfDegToRad));
+#else
         const float halfDegToRad = 0.008726646259971648f;
         float sy = sinf(angles[1] * halfDegToRad);
         float cy = cosf(angles[1] * halfDegToRad);
@@ -749,6 +766,7 @@ void DObjSetLocalTagInternal(const DObj *obj, const vec_t *trans, const vec_t *a
         float cp = cosf(angles[0] * halfDegToRad);
         float sr = sinf(angles[2] * halfDegToRad);
         float cr = cosf(angles[2] * halfDegToRad);
+#endif
         float negSpSy = -sp * sy;
         float spCy = sp * cy;
         float syCp = sy * cp;
@@ -1130,6 +1148,102 @@ static inline __attribute__((always_inline)) void DObjApplyDuplicatePartLocal(DO
     }
 }
 
+#if defined(COD2_X64)
+static void DObjCalcParentLocal(DObjAnimMat *mat, const DObjAnimMat *parent, int control)
+{
+    const DObjAnimMat local = *mat;
+    const float x = local.quat[0], y = local.quat[1], z = local.quat[2], w = local.quat[3];
+    const float px = parent->quat[0], py = parent->quat[1], pz = parent->quat[2], pw = parent->quat[3];
+    const float sx = parent->transWeight * px;
+    const float sy = parent->transWeight * py;
+    const float sz = parent->transWeight * pz;
+    const float xx = sx * px, xy = sx * py, xz = sx * pz, xw = sx * pw;
+    const float yy = sy * py, yz = sy * pz, yw = sy * pw;
+    const float zz = sz * pz, zw = sz * pw;
+
+    if (control) {
+        mat->quat[3] = ((w * pw - px * x) - y * py) - z * pz;
+        mat->quat[0] = (pz * y + pw * x + px * w) - z * py;
+        mat->quat[1] = z * px + pw * y + (w * py - x * pz);
+        mat->quat[2] = ((w * pz + py * x) - px * y) + pw * z;
+    } else {
+        mat->quat[3] = ((pw * w - x * px) - py * y) - z * pz;
+        mat->quat[0] = (z * py + w * px + x * pw) - y * pz;
+        mat->quat[1] = x * pz + w * py + (pw * y - z * px);
+        mat->quat[2] = pz * w + ((px * y + pw * z) - py * x);
+    }
+    DObjFinalizeQuatWeightLocal(mat);
+    mat->trans[0] = (1.0f - (yy + zz)) * local.trans[0] + (xy - zw) * local.trans[1] + (xz + yw) * local.trans[2] + parent->trans[0];
+    mat->trans[1] = (xy + zw) * local.trans[0] + (1.0f - (zz + xx)) * local.trans[1] + (yz - xw) * local.trans[2] + parent->trans[1];
+    mat->trans[2] = (xz - yw) * local.trans[0] + (xw + yz) * local.trans[1] + (1.0f - (xx + yy)) * local.trans[2] + parent->trans[2];
+}
+
+void DObjCalcSkel(const DObj *obj, int *partBits)
+{
+    DSkel *skel = obj->skel;
+    int ignored[4], calculate[4], transform[4];
+    int anyNeeded = 0;
+    const int *duplicateBits;
+    const unsigned char *duplicate;
+    int modelIndex, boneIndex = 0, i;
+
+    for (i = 0; i < 4; ++i) {
+        ignored[i] = ~partBits[i] | skel->skelPartBits[i];
+        anyNeeded |= ~ignored[i];
+    }
+    if (!anyNeeded) {
+        return;
+    }
+    if (!obj->duplicateParts) {
+        DObjCreateDuplicateParts(obj);
+    }
+    duplicateBits = (const int *)SL_ConvertToString(obj->duplicateParts);
+    duplicate = (const unsigned char *)(duplicateBits + 4);
+    for (i = 0; i < 4; ++i) {
+        skel->skelPartBits[i] |= partBits[i];
+        transform[i] = skel->controlPartBits[i] & ~ignored[i];
+        calculate[i] = ignored[i] | transform[i] | duplicateBits[i];
+        transform[i] |= ~calculate[i];
+    }
+
+    for (modelIndex = 0; modelIndex < obj->numModels; ++modelIndex) {
+        const XModelParts *parts = (const XModelParts *)obj->models[modelIndex]->parts;
+        const int rootCount = parts->numRootBones;
+
+        for (i = 0; i < parts->numBones; ++i, ++boneIndex) {
+            DObjAnimMat *mat = &skel->mat[boneIndex];
+            int parentIndex;
+
+            if (i < rootCount) {
+                parentIndex = obj->modelParents[modelIndex];
+                if (parentIndex == 255) {
+                    parentIndex = -1;
+                }
+            } else {
+                parentIndex = boneIndex - parts->hierarchy->parentList[i - rootCount];
+            }
+
+            if (DObjPartBitTestLocal(transform, boneIndex)) {
+                if (parentIndex >= 0) {
+                    if (i >= rootCount && parts->trans) {
+                        mat->trans[0] += parts->trans[(i - rootCount) * 3];
+                        mat->trans[1] += parts->trans[(i - rootCount) * 3 + 1];
+                        mat->trans[2] += parts->trans[(i - rootCount) * 3 + 2];
+                    }
+                    DObjCalcParentLocal(mat, &skel->mat[parentIndex], DObjPartBitTestLocal(calculate, boneIndex));
+                } else {
+                    DObjFinalizeQuatWeightLocal(mat);
+                }
+            } else if (boneIndex == (int)duplicate[0] - 1) {
+                if (!DObjPartBitTestLocal(ignored, boneIndex)) {
+                    DObjCopyAnimMatLocal(mat, &skel->mat[duplicate[1] - 1]);
+                }
+                duplicate += 2;
+            }
+        }
+    }
+}
+#else
 void DObjCalcSkel(const DObj *obj, int *partBits)
 {
     DSkel *skel;
@@ -1236,6 +1350,7 @@ void DObjCalcSkel(const DObj *obj, int *partBits)
         }
     }
 }
+#endif
 
 static void DObjTraceBuildAxesLocal(const DObjAnimMat *mat, float axis[3][3])
 {
@@ -1257,15 +1372,27 @@ static void DObjTraceBuildAxesLocal(const DObjAnimMat *mat, float axis[3][3])
     const float zz = sz * z;
     const float zw = sz * w;
 
+#if defined(COD2_X64)
+    axis[0][0] = 1.0f - (yy + zz);
+#else
     axis[0][0] = 1.0f - yy - zz;
+#endif
     axis[0][1] = xy + zw;
     axis[0][2] = xz - yw;
     axis[1][0] = xy - zw;
+#if defined(COD2_X64)
+    axis[1][1] = 1.0f - (xx + zz);
+#else
     axis[1][1] = 1.0f - xx - zz;
+#endif
     axis[1][2] = yz + xw;
     axis[2][0] = xz + yw;
     axis[2][1] = yz - xw;
+#if defined(COD2_X64)
+    axis[2][2] = 1.0f - (xx + yy);
+#else
     axis[2][2] = 1.0f - xx - yy;
+#endif
 }
 
 static void DObjTraceTransformPointLocal(const DObjAnimMat *mat, const vec3_t in, vec3_t out)
@@ -1288,9 +1415,15 @@ static void DObjTraceTransformPointLocal(const DObjAnimMat *mat, const vec3_t in
     const float zz = sz * z;
     const float zw = sz * w;
 
+#if defined(COD2_X64)
+    out[0] = (1.0f - (yy + zz)) * in[0] + (xy - zw) * in[1] + (xz + yw) * in[2] + mat->trans[0];
+    out[1] = (xy + zw) * in[0] + (1.0f - (xx + zz)) * in[1] + (yz - xw) * in[2] + mat->trans[1];
+    out[2] = (xz - yw) * in[0] + (yz + xw) * in[1] + (1.0f - (xx + yy)) * in[2] + mat->trans[2];
+#else
     out[0] = mat->trans[0] + (1.0f - yy - zz) * in[0] + (xy - zw) * in[1] + (xz + yw) * in[2];
     out[1] = mat->trans[1] + (xy + zw) * in[0] + (1.0f - xx - zz) * in[1] + (yz - xw) * in[2];
     out[2] = mat->trans[2] + (xz - yw) * in[0] + (yz + xw) * in[1] + (1.0f - xx - yy) * in[2];
+#endif
 }
 
 static void DObjTraceInversePointLocal(const DObjAnimMat *mat, const vec3_t in, vec3_t out)
@@ -1314,6 +1447,49 @@ static int DObjTraceLineAabbLocal(const vec3_t start, const vec3_t end,
                                   int *hitAxis, float *hitSign,
                                   int *startSolid, int *endSolid)
 {
+#if defined(COD2_X64)
+    float enter = 0.0f, leave = limit;
+    int bStartSolid = 1, bEndSolid = 1;
+    int side, axis;
+
+    for (side = 0; side < 2; ++side) {
+        const float *bounds = side ? maxs : mins;
+        const float sign = side ? 1.0f : -1.0f;
+        for (axis = 0; axis < 3; ++axis) {
+            float dist1 = (start[axis] - bounds[axis]) * sign;
+            float dist2 = (end[axis] - bounds[axis]) * sign;
+            if (dist1 > 0.0f) {
+                float dist;
+                if (dist2 > 0.0f) {
+                    return 0;
+                }
+                bStartSolid = 0;
+                dist = dist1 - dist2;
+                if (dist1 > enter * dist) {
+                    enter = dist1 / dist;
+                    if (enter >= leave) {
+                        return 0;
+                    }
+                    *hitAxis = axis;
+                    *hitSign = sign;
+                }
+            } else if (dist2 > 0.0f) {
+                float dist = dist1 - dist2;
+                bEndSolid = 0;
+                if (dist1 > leave * dist) {
+                    leave = dist1 / dist;
+                    if (enter >= leave) {
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+    *hitFrac = enter;
+    *startSolid = bStartSolid;
+    *endSolid = bEndSolid;
+    return 1;
+#else
     int axis;
     float enter = 0.0f;
     float leave = limit;
@@ -1384,6 +1560,7 @@ static int DObjTraceLineAabbLocal(const vec3_t start, const vec3_t end,
     *startSolid = bStartSolid;
     *endSolid = bEndSolid;
     return 1;
+#endif
 }
 
 static void DObjTraceSetStartSolidNormalLocal(const vec3_t start, const vec3_t delta, DObjTrace *trace)
@@ -1555,8 +1732,13 @@ void DObjTraceline(DObj *obj, vec_t *start, vec_t *end, unsigned char *priorityM
 
             DObjTraceInversePointLocal(boneMatrix, start, startLocal);
             DObjTraceInversePointLocal(boneMatrix, end, endLocal);
+#if defined(COD2_X64)
+            if (!DObjTraceLineAabbLocal(startLocal, endLocal, boneInfo->bounds[0], boneInfo->bounds[1],
+                                        traceLimit, &frac, &axis, &hitSign, &startSolid, &endSolid)) {
+#else
             if (!DObjTraceLineAabbLocal(startLocal, endLocal, boneInfo->bounds[0], boneInfo->bounds[1],
                                         traceLimit, &frac, &axis, &sign, &startSolid, &endSolid)) {
+#endif
                 continue;
             }
 
@@ -1586,7 +1768,9 @@ void DObjTraceline(DObj *obj, vec_t *start, vec_t *end, unsigned char *priorityM
             trace->partGroup = classification;
             lowestPriority = currentPriority;
             hitAxis = axis;
+#if !defined(COD2_X64)
             hitSign = sign;
+#endif
             hitBoneMatrix = boneMatrix;
         }
     }

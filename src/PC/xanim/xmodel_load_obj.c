@@ -467,6 +467,9 @@ XModel *XModelLoad(const char *name, Alloc_t Alloc, Alloc_t AllocColl)
                         }
 
                         memcpy(modelParts->partClassification, filePos, (int)(signed short)totalBones);
+#if defined(COD2_X64)
+                        FS_FreeFile(partsBuf);
+#endif
 
                         {
                             DObjAnimMat *matBase = (DObjAnimMat *)&((XModelParts *)modelParts)->skel.mat[0].quat[0];
@@ -686,7 +689,11 @@ XModel *XModelLoad(const char *name, Alloc_t Alloc, Alloc_t AllocColl)
 
                             if (modelNumSurfs != fileNumSurfs) {
                                 FS_FreeFile(buf);
+#if defined(COD2_X64)
+                                Com_Printf("^1ERROR: File conflict (between non-iwd and iwd file) on xmodelsurfs '%s' for xmodel '%s'.\n", lodName, modelName);
+#else
                                 Com_Printf("^1ERROR: File conflict (between non-iwd and iwd file) on xmo", lodName, modelName);
+#endif
                                 goto cannot_find_surfs;
                             }
 
