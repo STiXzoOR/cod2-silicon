@@ -12,6 +12,9 @@ const dvar_t *player_breath_gasp_time = &zero;
 const dvar_t *player_breath_hold_lerp = &zero;
 const dvar_t *player_breath_gasp_scale = &zero;
 const dvar_t *player_breath_gasp_lerp = &zero;
+#if defined(COD2_X64)
+const dvar_t *player_breath_fire_delay = &zero;
+#endif
 const dvar_t *player_toggleBinoculars = &zero;
 int bg_iNumWeapons = 1;
 static WeaponDef empty, rifle;
@@ -94,14 +97,23 @@ static void grenade_events(void)
                 assert(ps.events[(ps.eventSequence - 1) & 3] == 0x9e);
                 BG_PlayerStateToEntityState(&ps, &entity, 0, handler);
                 pm.cmd.buttons = button;
+#if defined(COD2_X64)
+                /* Mac 0x7cf79 checks offhand before finishing firing: all
+                   nine frames attempt the unavailable grenade. */
+#else
                 /* First frame finishes the firing state; the following eight
                    frames attempt the unavailable offhand while ready. */
+#endif
                 for (int frame = 0; frame < 9; ++frame) {
                     PM_Weapon(&pm, &pml);
                     BG_PlayerStateToEntityState(&ps, &entity, 0, handler);
                 }
                 assert(ps.ammoclip[1] == 9);
+#if defined(COD2_X64)
+                assert(ps.eventSequence == (suppressed ? 1 : 11));
+#else
                 assert(ps.eventSequence == (suppressed ? 1 : 10));
+#endif
                 centity_t receiver = {.nextState = entity};
                 receivedCount = 0; CG_CheckEvents(&receiver);
                 assert(receivedCount == (suppressed ? 1 : 4));
@@ -169,6 +181,10 @@ int main(int argc, char **argv)
     pml_t pml = { .msec = 10, .frametime = 0.01f };
     ps.weapon = pm.cmd.weapon = 1;
     ps.weapons[0] = 2;
+#if defined(COD2_X64)
+    rifle.weapSlot = 1;
+    ps.weaponslots[1] = 1;
+#endif
     ps.ammoclip[1] = 10;
     ps.pm_flags = 4;
     pm.cmd.buttons = 1;
@@ -203,6 +219,9 @@ int main(int argc, char **argv)
                 ps = (playerState_t){0};
                 ps.weapon = 1;
                 ps.weapons[0] = 2;
+#if defined(COD2_X64)
+                ps.weaponslots[1] = 1;
+#endif
                 ps.ammoclip[1] = 10;
                 ps.pm_flags = flag ? 4 : 0;
                 ps.mantleState.transIndex = transition;

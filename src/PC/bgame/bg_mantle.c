@@ -410,7 +410,11 @@ static Bool __attribute_regparm__(3) Mantle_CheckLedge(pmove_t *pm, pml_t *pml, 
     if (tr.startsolid || tr.fraction < 1.0f) {
 
         if (mantle_debug->current.enabled)
+#if defined(COD2_X64)
+            Com_Printf("%s\n", "Mantle Failed: Ledge is too far away");
+#else
             Com_Printf("%s\n", "Mantle Failed: Can't reach ledge from below");
+#endif
         return 0;
     }
 
@@ -430,7 +434,11 @@ static Bool __attribute_regparm__(3) Mantle_CheckLedge(pmove_t *pm, pml_t *pml, 
 
     if (tr.normal[2] < 0.7f) {
         if (mantle_debug->current.enabled)
+#if defined(COD2_X64)
+            Com_Printf("%s\n", "Mantle Failed: Ledge is too steep");
+#else
             Com_Printf("%s\n", "Mantle Failed: Surface too steep");
+#endif
         return 0;
     }
 
@@ -444,7 +452,11 @@ static Bool __attribute_regparm__(3) Mantle_CheckLedge(pmove_t *pm, pml_t *pml, 
         PM_trace(pm, &tr, mr->ledgePos, mins, maxs, mr->ledgePos, ps->clientNum, pm->tracemask);
         if (tr.startsolid) {
             if (mantle_debug->current.enabled)
+#if defined(COD2_X64)
+                Com_Printf("%s\n", "Mantle Failed: Player can't fit crouched on ledge");
+#else
                 Com_Printf("%s\n", "Mantle Failed: No room on ledge");
+#endif
             return 0;
         }
     }
@@ -453,7 +465,11 @@ static Bool __attribute_regparm__(3) Mantle_CheckLedge(pmove_t *pm, pml_t *pml, 
     mr->flags |= 8;
 
     if (mantle_debug->current.enabled)
+#if defined(COD2_X64)
+        Com_Printf("%s\n", "Mantle available!");
+#else
         Com_Printf("%s\n", "Mantle: Found ledge");
+#endif
 
     if (!(pm->cmd.buttons & 0x400))
         return 1;
@@ -602,11 +618,19 @@ void Mantle_Check(pmove_t *pm, pml_t *pml)
     MantleResults *results;
 
     if (mantle_debug->current.enabled)
+#if defined(COD2_X64)
+        Com_Printf("%s\n", "====== Mantle Debug ======");
+#else
         Com_Printf("%s\n", "Mantle_Check");
+#endif
 
     if (!mantle_enable->current.enabled) {
         if (mantle_debug->current.enabled)
+#if defined(COD2_X64)
+            Com_Printf("%s\n", "Mantle Failed: Not enabled");
+#else
             Com_Printf("%s\n", "Mantle disabled");
+#endif
         return;
     }
 
@@ -616,25 +640,41 @@ void Mantle_Check(pmove_t *pm, pml_t *pml)
 
     if (ps->pm_type > 5) {
         if (mantle_debug->current.enabled)
+#if defined(COD2_X64)
+            Com_Printf("%s\n", "Mantle Failed: Player is dead");
+#else
             Com_Printf("%s\n", "Mantle Failed: Bad movement type");
+#endif
         return;
     }
 
     if (ps->pm_flags & 4) {
         if (mantle_debug->current.enabled)
+#if defined(COD2_X64)
+            Com_Printf("%s\n", "Mantle Failed: Player already mantling");
+#else
             Com_Printf("%s\n", "Mantle Failed: Already mantling");
+#endif
         return;
     }
 
     if (ps->eFlags & 0xc) {
         if (mantle_debug->current.enabled)
+#if defined(COD2_X64)
+            Com_Printf("%s\n", "Mantle Failed: Player not standing");
+#else
             Com_Printf("%s\n", "Mantle Failed: Prone or going prone");
+#endif
         return;
     }
 
     if (ps->weaponstate >= 0x11 && ps->weaponstate <= 0x16) {
         if (mantle_debug->current.enabled)
+#if defined(COD2_X64)
+            Com_Printf("%s\n", "Mantle Failed: Player using binoculars");
+#else
             Com_Printf("%s\n", "Mantle Failed: Bad weapon state");
+#endif
         return;
     }
 
@@ -686,19 +726,31 @@ void Mantle_Check(pmove_t *pm, pml_t *pml)
     if (tr->allsolid == 0 && tr->startsolid == 0) {
 #endif
         if (mantle_debug->current.enabled)
+#if defined(COD2_X64)
+            Com_Printf("%s\n", "Mantle Failed: Mantle brush is too thick");
+#else
             Com_Printf("%s\n", "Mantle Failed: No wall found");
+#endif
         return;
     }
 
     if (tr->fraction == 1.0f) {
         if (mantle_debug->current.enabled)
+#if defined(COD2_X64)
+            Com_Printf("%s\n", "Mantle Failed: No mantle surface found");
+#else
             Com_Printf("%s\n", "Mantle Failed: Trace went full distance");
+#endif
         return;
     }
 
     if (!(tr->surfaceFlags & 0x6000000)) {
         if (mantle_debug->current.enabled)
+#if defined(COD2_X64)
+            Com_Printf("%s\n", "Mantle Failed: No mantle surface with MANTLE_ON or MANTLE_OVER found");
+#else
             Com_Printf("%s\n", "Mantle Failed: Surface not mantleable");
+#endif
         return;
     }
 
@@ -709,7 +761,11 @@ void Mantle_Check(pmove_t *pm, pml_t *pml)
     len = Vec3Normalize(mantleDir);
     if (len < 0.0001f) {
         if (mantle_debug->current.enabled)
+#if defined(COD2_X64)
+            Com_Printf("%s\n", "Mantle Failed: Mantle surface has vertical normal");
+#else
             Com_Printf("%s\n", "Mantle Failed: Bad wall normal");
+#endif
         return;
     }
 
@@ -718,7 +774,11 @@ void Mantle_Check(pmove_t *pm, pml_t *pml)
         double angle = acos((double)dot) * 57.29577951308232;
         if (angle > (double)mantle_check_angle->current.value) {
             if (mantle_debug->current.enabled)
+#if defined(COD2_X64)
+                Com_Printf("%s\n", "Mantle Failed: Player is not facing mantle surface");
+#else
                 Com_Printf("%s\n", "Mantle Failed: Bad approach angle");
+#endif
             return;
         }
     }

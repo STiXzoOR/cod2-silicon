@@ -155,17 +155,39 @@ static void BG_Cod2xControllerGoals(const entityState_t *es, clientInfo_t *ci,
         }
         BG_Cod2xRotate(goals[6][1], goals[0]);
     } else {
+#if defined(COD2_X64)
+        float scale = 1.0f;
+        if (ci->lerpLean < 0.0f)
+            scale = (0.25f + ci->lerpLean) / 0.25f;
+        else if (ci->lerpLean > 0.0f)
+            scale = (0.25f - ci->lerpLean) / 0.25f;
+#else
         float scale = 1.0f - (ci->lerpLean < 0.0f ? -ci->lerpLean : ci->lerpLean) / 0.25f;
         float flatten = ((forward || backward) && !(left || right) ? 40.0f : 30.0f) * scale;
+#endif
         const animation_t *torso = ci->torso.animation;
         int reload = torso && strstr(torso->name, "reload") != NULL;
         movement |= 1024U;
+#if defined(COD2_X64)
+        goals[0][0] += -30.0f * scale;
+        goals[1][0] += 30.0f * scale;
+        if ((forward || backward) && !(left || right)) {
+            goals[0][0] += -10.0f * scale;
+            goals[1][0] += 10.0f * scale;
+        }
+#else
         goals[0][0] -= flatten;
         goals[1][0] += flatten;
+#endif
         goals[5][0] += 3.0f;
         if (backward && scale != 0.0f) {
             goals[7][1] -= 8.0f;
+#if defined(COD2_X64)
+            goals[7][2] -= 3.0f;
+            goals[7][2] -= 3.0f;
+#else
             goals[7][2] -= 6.0f;
+#endif
             goals[0][0] -= 20.0f;
             goals[5][0] += 7.0f;
             if (torso) {
@@ -212,18 +234,35 @@ static void BG_Cod2xControllerGoals(const entityState_t *es, clientInfo_t *ci,
 
 #endif
     if (state->stanceDuration > 0) {
+#if defined(COD2_X64)
+        float fraction = 1.0f - (float)(state->stanceStart + state->stanceDuration - bgs->time) / (float)state->stanceDuration;
+#else
         float fraction = (float)(bgs->time - state->stanceStart) / (float)state->stanceDuration;
+#endif
         if (fraction > 0.0f && fraction < 1.0f) {
             if (state->stance == 2) {
+#if defined(COD2_X64)
+                float down = BG_Cod2xClamp((float)((double)fraction / 0.6), 0.0f, 1.0f);
+                float bounce = BG_Cod2xClamp((float)(((double)fraction - 0.4) / 0.6), 0.0f, 1.0f);
+                float curve = (float)(0.5 * (1.0 - __builtin_cos(6.283185307179586 * (double)bounce)));
+                float downCurve = (float)(0.5 * (1.0 - __builtin_cos(6.283185307179586 * (double)down)));
+                goals[7][0] += -5.0f * downCurve;
+#else
                 float down = BG_Cod2xClamp(fraction / 0.6f, 0.0f, 1.0f);
                 float bounce = BG_Cod2xClamp((fraction - 0.4f) / 0.6f, 0.0f, 1.0f);
                 float curve = 0.5f * (1.0f - cosf(6.283185307179586f * bounce));
                 goals[7][0] -= 2.5f * (1.0f - cosf(6.283185307179586f * down));
+#endif
                 goals[7][2] += 12.0f * curve;
                 goals[6][0] -= 10.0f * curve;
                 goals[0][0] += 10.0f * curve;
             } else if (state->stance == 3) {
+#if defined(COD2_X64)
+                float curve = (float)(0.5 * (1.0 - __builtin_cos(6.283185307179586 * (double)fraction)));
+                goals[7][0] += -5.0f * curve;
+#else
                 goals[7][0] -= 2.5f * (1.0f - cosf(6.283185307179586f * fraction));
+#endif
             }
         }
     }
