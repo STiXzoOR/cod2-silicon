@@ -134,6 +134,9 @@ if 'SYSDIFF_PLAYERS' in os.environ:
                 line = '// thread maps\\mp\\gametypes\\_teams::addTestClients();\n'
                 archive.writestr('maps/mp/gametypes/dm.gsc', 'synthetic() {\n' +
                                  line * (2 if duplicate_helper else 1) + '}\n')
+                archive.writestr('maps/mp/gametypes/_teams.gsc',
+                                 'setup() { ent[0] thread TestClient(team); }\nTestClient(team) {\n'
+                                 'self notify("menuresponse", game["menu_team"], team);\n}\n')
         return subprocess.run([sys.executable, str(RECORD), '--binary', str(binary), '--data', str(data),
                                '--output', str(self.path / 'run'), '--frames', '2', '--timeout', '3',
                                *extra], capture_output=True, text=True)
@@ -147,6 +150,9 @@ assert sys.argv[sys.argv.index('sv_pure') + 1] == '0'
 home = Path(sys.argv[sys.argv.index('fs_homepath') + 1].strip('"'))
 script = (home / 'main/maps/mp/gametypes/dm.gsc').read_text()
 assert '// thread' not in script and 'thread maps' in script
+teams = (home / 'main/maps/mp/gametypes/_teams.gsc').read_text()
+assert 'thread oracleTestClient(team);' in teams
+assert 'self [[level.weapon]]' in teams
 Path(os.environ['SYSDIFF_USERCMDS']).write_text('cod2-replay 1\\nprivate-command-data\\n')
 ''')
         self.assertEqual(result.returncode, 0, result.stderr)

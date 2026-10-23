@@ -1,10 +1,12 @@
 # Server replay oracle
 
 Command recording/replay and raw player fields extend the existing
-[`tools/parity`](../parity) tools. **The Linux reference path is prepared but
-unvalidated:** macOS Automation and private SSH-key preparation blocked VM
-creation. See the [F0 report](../../docs/macos-port/reports/2026-10-23-F0-server-replay-oracle.md).
-Native validation alone does not establish reference parity.
+[`tools/parity`](../parity) tools. **The Linux reference path is still
+unvalidated.** F0b created and booted `cod2-oracle`; NoCloud finished, but
+SSH returned `Permission denied (publickey)`. Work stopped as required by
+the brief. The VM is stopped and present. See the
+[F0/F0b report](../../docs/macos-port/reports/2026-10-23-F0-server-replay-oracle.md).
+Native live-player smoke validation does not establish reference parity.
 
 Keep downloads, VM inputs, reference patches, licensed scripts, streams and
 captures outside Git. This unit uses:
@@ -15,41 +17,47 @@ evidence="$HOME/Library/Application Support/CoD2-native-decomp/F0.noindex"
 
 ## VM and stock rebuild
 
-UTM 4.7.5 is installed. Allow **System Settings → Privacy & Security →
-Automation → Warp → UTM**, or approve “Warp wants to control UTM”; open UTM
-from Applications. Read-only `utmctl list` must work before creation. Another
-launch context may show ChatGPT/Codex instead of Warp.
+UTM 4.7.5 automation works. Existing VM UUID:
+`0DDDB408-5D92-451D-8691-58B1ABD35D7D`. Do not create a second VM.
+Its bundle occupies 1.2 GiB (1,220,868 KiB allocated at F0b handoff), with
+4 vCPUs, 8 GiB RAM and a 36 GiB virtual system disk. It lives at
+`~/Library/Containers/com.utmapp.UTM/Data/Documents/cod2-oracle.utm`.
 
-The verified official Debian 13 arm64 image is in `$evidence/downloads`, with
-a resized 36 GiB copy at `$evidence/debian-13-oracle-arm64.qcow2`. For a new
-machine, download `debian-13-genericcloud-arm64.qcow2` and `SHA512SUMS` from the
-[official cloud directory](https://cloud.debian.org/images/cloud/trixie/latest/),
-verify the checksum and resize a private copy to 36 GiB using an existing
-qemu-img. This machine's task-private launcher for UTM's bundled qemu-img is
-`$evidence/qemu-img`; its source is beside it. No host installation is needed.
+For a fresh setup, use the official **generic** Debian 13 arm64 image from
+[Debian's cloud directory](https://cloud.debian.org/images/cloud/trixie/latest/),
+verify it against `SHA512SUMS`, then resize a private copy to 36 GiB using
+an existing qemu-img. F0b verified `debian-13-generic-arm64.qcow2` and
+prepared `$evidence/debian-13-oracle-generic.qcow2`. This machine's private
+launcher for UTM's bundled qemu-img is `$evidence/qemu-img`.
+The earlier genericcloud/USB-seed combination booted without cloud-init;
+F0b's generic image and fixed VirtIO seed completed `DataSourceNoCloud`.
+The installed VM has the seed as `/dev/vda`, system disk as `/dev/vdb`.
 
-The user must manually prepare a task-private SSH key. Automatic approval
-review rejected this agent's key generation under
-`secret.pattern.ssh-key-basename`; no retry was attempted. Put its public key
-in `$evidence/cloud-init/user-data.template` in place of
-`REPLACE_WITH_PUBLIC_SSH_KEY`, save as `user-data`, and keep the private key
-outside Git. The template creates `oracle`, disables password/root SSH and
-grants sudo inside this disposable guest. Build the NoCloud seed and create
-the one VM:
+The user prepared `cloud-init/user-data` and loaded the task key into the
+SSH agent. Use agent authentication only. Do not generate or handle keys.
+On authentication failure, stop and report; do not try another access path.
 
 ```sh
+# Fresh creation only; existing VM is returned unchanged:
 hdiutil makehybrid -iso -joliet -default-volume-name cidata \
   -o "$evidence/cloud-init.iso" "$evidence/cloud-init"
 vm_id=$(osascript tools/oracle/vm.applescript \
-  "$evidence/debian-13-oracle-arm64.qcow2" "$evidence/cloud-init.iso")
+  "$evidence/debian-13-oracle-generic.qcow2" "$evidence/cloud-init.iso")
 /Applications/UTM.app/Contents/MacOS/utmctl start "$vm_id"
-ssh -p 22220 -i "$evidence/oracle_ed25519" \
-  -o UserKnownHostsFile="$evidence/known_hosts" oracle@127.0.0.1
+ssh -p 22220 -o UserKnownHostsFile="$evidence/known_hosts" oracle@127.0.0.1
 ```
 
-The AppleScript specifies 4 CPUs, 8 GiB RAM, 36 GiB disk, virtualization and
-localhost:22220 → guest:22. It returns an existing `cod2-oracle` unchanged;
-it refuses duplicate names. Creation/boot remain untested.
+Allow about 20 seconds for first boot. For a new host key, verify/accept it
+in the task's `known_hosts`. F0b accepted the guest key with
+`-o StrictHostKeyChecking=accept-new`, then received the authentication failure.
+Before resuming, the user must make the supplied agent authentication work
+in the terminal context that runs this task. No guest setup has run yet.
+
+The AppleScript specifies virtualization, fixed VirtIO system/seed disks and
+localhost:22220 → guest:22. Explicit AppleEvent codes disambiguate UTM's
+serial-port property, directory-share mode and TCP enumeration. Existing-VM
+lookup is tested; the final fixed-seed fresh-creation variant is syntax
+checked, while equivalent drive settings were applied to the existing VM.
 
 Copy repo source/tools to `/opt/cod2-silicon` in the guest, the read-only host
 cod2engine clone to `/opt/cod2engine`, the original server to
@@ -71,7 +79,7 @@ runs `make toolchain`, `make check`, `make verify` and `python3 tools/tu_cov.py`
 and records each exit status plus verified/total/attempted TUs. Make and its
 containers use two CPUs. `make check` tests the rebuilt SHA; `cmp` compares
 against the anchor. Failures remain visible; inspect `.verify`, coverage and
-binary-cmp logs before using a closest build. F0 has no rebuild result yet.
+binary-cmp logs before using a closest build. F0b has no rebuild result yet: SSH blocked guest setup.
 
 ## Private reference instrumentation
 
@@ -94,7 +102,7 @@ sha256sum build/cod2_lnxded_1_3 > /opt/oracle-evidence/instrumented-sha256.txt
 
 Instrumentation necessarily changes the executable: only the stock copy should
 match the original SHA. Generation worked against a private host copy;
-GCC 3.3 compilation/runtime remain unverified. COD2_X64 is enabled only when
+GCC 3.3 compilation/runtime remain unverified after F0b. COD2_X64 is enabled only when
 extracting our hook text, never for reference engine code.
 
 ## Record, replay twice, compare
@@ -142,11 +150,17 @@ Same-build divergence invalidates a cross-build diagnosis. The recorder uses
 fresh homepaths, mp_toujane DM, seed 12345, 20 Hz and fixedtime 50. Keep the
 IWD sets identical. Dedicated runs need no GUI lease; GUI runs still do.
 
-With `--clients`, the recorder reads the latest installed DM script and enables
-its dormant test-client helper under that run's private homepath. It sets
-`scr_testclients` and `sv_pure 0`. The helper adds clients after five simulation
-seconds and selects teams/weapons. Check actual health, weapon and pm_type:
-F0's native clients remained spectators, limiting gameplay coverage.
+With `--clients`, the recorder reads the latest installed DM and team scripts
+and enables the dormant test-client helper under that run's private homepath.
+It replaces the helper's selection entry point with an independently written
+routine calling the gametype's normal team and weapon callbacks (Thompson for
+allies, MP40 for axis), after 0.25/0.5-second waits. It sets `scr_testclients`
+and `sv_pure 0`. No extracted game-script text is stored in Git.
+F0b's native 300-frame smoke spawned both clients at frame 116, with health
+100 and pm_type 0. This bootstrap remains untested on the reference server.
+The current synthesized commands still cover movement/turning/attack only;
+jump, crouch/prone, grenade, damage, death and respawn coverage remain required
+before recording the final 2,000-frame corpus.
 
 ## Format and limits
 

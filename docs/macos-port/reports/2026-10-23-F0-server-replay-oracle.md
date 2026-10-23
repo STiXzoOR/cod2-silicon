@@ -1,7 +1,9 @@
 # F0 — server replay oracle (2026-10-23)
 
-**Status: blocked before VM creation; native recording/replay works.** F0's
-cross-server definition of done is not met. No engine discrepancy was fixed.
+**Current status (F0b): VM created/booted, blocked on SSH authentication;
+native clients now spawn.** Cross-server definition of done is not met. No
+engine discrepancy was fixed. The original F0 results below are historical;
+see the F0b continuation at the end for current state.
 Branch: `decomp/f0-oracle`; starting commit:
 `4f0ba1000cd6f8032d9ebd9b44e6e043181db1c7` (clean worktree).
 
@@ -191,3 +193,126 @@ Next: resolve the two host blockers, create the VM, run the stock rebuild,
 compile the private instrumentation, collect original repeatability and x87
 results, and investigate spectator-only coverage before interpreting gameplay
 parity. Do not fix engine differences inside this oracle unit.
+
+
+## F0b continuation — 2026-10-23
+
+**Blocked:** after NoCloud completed, the supplied agent-authenticated SSH
+command returned exit 255, `Permission denied (publickey)`. The brief says
+“If authentication fails, stop and report it; do not work around it.” No
+further SSH attempt or alternate access method followed that failure. No key
+was generated, copied, printed or moved. The VM was cleanly shut down through
+a power-down request and remains present and stopped.
+
+Started at `02094fd` on `decomp/f0-oracle`. The pre-existing untracked
+`build-f0-stock/` was reused for the requested stock rebuild and is excluded
+from the commit. Execution was inline Codex, no delegated workers, remote
+operations, engine changes or standalone shipping workflow.
+
+### What changed and what ran
+
+- Fixed UTM 4.7.5 AppleScript creation: `serial ports` resolved to the serial
+  element instead of the configuration property and caused error -1700.
+  Using property code `SrPt` permitted creation. Directory-share `none` and
+  TCP also use explicit enumeration codes. The installed UTM scripting
+  dictionary and [official scripting reference](https://docs.getutm.app/scripting/reference/)
+  provide these codes and types.
+- Built the NoCloud ISO from the user-prepared seed. The initial genericcloud
+  image with USB seed booted to `localhost`, without cloud-init, and SSH
+  timed out before its banner. Changed the same VM to fixed VirtIO seed and
+  the checksum-verified official `debian-13-generic-arm64.qcow2`, resized to
+  36 GiB. Both changes are recorded; their individual necessity was not
+  isolated. Final serial output reports cloud-init 25.1.4 finished after
+  13.75 seconds using `DataSourceNoCloud [seed=/dev/vda]`, and SSH started.
+  The generic image's SHA512 matched the previously downloaded official
+  SHA512SUMS. No authenticated guest shell was obtained.
+- The stock helper's menu notifications still produced spectators after a
+  trial 0.1-second delay. That failed approach was removed. The recorder now
+  derives the installed DM/team scripts at runtime and redirects the test
+  helper to an independently written selection routine calling the stock
+  gametype's team and weapon callbacks after 0.25/0.5-second waits. It selects
+  Thompson for allies and MP40 for axis. No extracted script is committed.
+  This uses the stock game script API, and changes no engine behavior.
+- The native 300-frame smoke recorded frames 4–303. Both clients first spawn
+  at frame 116: pm_type 0, health 100, weapons 11 and 18. Each has 188 live
+  records; client 0 has 164 distinct live origins and client 1 has 188.
+  Weaponstate 3 occurs in 50 records. All live records have health 100:
+  **no damage, death or respawn is claimed**, and the existing command
+  generator has not yet been extended for jump, crouch/prone or grenades.
+  The reference side of this bootstrap remains untested.
+
+### Exact verification and retained evidence
+
+From this worktree:
+
+```sh
+evidence="$HOME/Library/Application Support/CoD2-native-decomp/F0.noindex"
+taskpolicy -b nice -n 19 cmake --build build-f0-stock \
+  --target cod2_macos_ded --parallel 2
+# Original 300-frame native smoke; choose a new output directory when rerunning:
+taskpolicy -b nice -n 19 python3 tools/parity/record.py \
+  --binary build-f0-stock/cod2_macos_ded --data "$HOME/Games/CoD2" \
+  --output "$evidence/native-f0b-callback-smoke" --dedicated --players \
+  --clients 2 --commands-record --frames 300 --port 29226 --timeout 90
+python3 -m unittest discover -s tools/tests -v
+osacompile -o "$evidence/vm-f0b.scpt" tools/oracle/vm.applescript
+osascript tools/oracle/vm.applescript \
+  "$evidence/debian-13-oracle-generic.qcow2" "$evidence/cloud-init.iso"
+/Applications/UTM.app/Contents/MacOS/utmctl list
+du -sk "$HOME/Library/Containers/com.utmapp.UTM/Data/Documents/cod2-oracle.utm"
+git diff --check
+```
+
+Native dedicated build passed (`build-f0b-stock.log`). The existing bootstrap
+integration test was strengthened; it failed before implementation and the
+final full tools suite passed **47 tests** (`f0b-tools-tests.log`). This
+synthetic test checks script/bootstrap delivery, not real spawning; the
+native smoke supplies the real spawning observation. AppleScript compiled
+and existing-VM lookup returned the correct UUID without changing/starting
+it. The final fresh-creation fixed-seed variant is syntax checked, with
+matching drive settings applied to the existing VM, rather than tested by
+creating a second VM. `guest-generic-boot.log` retains serial boot output;
+`native-f0b-callback-smoke/` holds traces, stream, metadata and console log.
+
+The failing SSH invocation used agent authentication, with the new host key
+accepted into task-private known_hosts:
+
+```sh
+ssh -p 22220 -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new \
+  -o UserKnownHostsFile="$evidence/known_hosts" oracle@127.0.0.1 \
+  'uname -a; cloud-init status; df -h /'
+# exit 255: oracle@127.0.0.1: Permission denied (publickey).
+```
+
+**Not run:** guest-setup.sh; Docker linux/386 uname; make toolchain/check/verify;
+tu_cov.py; instrumented reference compilation/runtime; x87 probe; original
+recording and two replays; native replay of the original live corpus;
+repeatability and cross-server comparisons. Rebuilt SHA equality, TU coverage,
+and the first real diverging frame/field are **unknown**. There is no emulator,
+harness or engine-logic classification to make yet. The comparison command
+remains documented in tools/oracle/README.md, but has not run cross-server.
+No Mac/cod2engine disagreement is claimed resolved or absent.
+
+No engine file changed, so this continuation has no new OFF-source comparison
+target. The previous three-file unifdef/cmp results remain as recorded above.
+Only the focused tooling suite and native dedicated rebuild ran; the full
+merge matrix was not rerun. Known red gates remain: legacy-abi 10 differences,
+inactive CoD2x gates 436 differences; x86 Linux comparison unavailable.
+No GUI/performance run occurred and no benchmark lease was needed.
+
+### Handoff
+
+VM UUID `0DDDB408-5D92-451D-8691-58B1ABD35D7D`, named `cod2-oracle`, stopped.
+Bundle: `~/Library/Containers/com.utmapp.UTM/Data/Documents/cod2-oracle.utm`.
+Allocated disk use: **1,220,868 KiB** (`du -sk`), approximately 1.2 GiB;
+virtual system disk 36 GiB, seed about 900 KiB; 4 vCPUs / 8 GiB RAM. Seed is
+currently `/dev/vda` and system disk `/dev/vdb` (the creation script returns
+this VM unchanged). There are no scratch builds outside the worktree.
+
+The user must make the supplied SSH-agent authentication work in the task's
+terminal context. Resume with plain `ssh -p 22220 -o
+UserKnownHostsFile="$evidence/known_hosts" oracle@127.0.0.1` after starting
+this same VM. Then follow the README's guest setup/rebuild/instrumentation
+steps, extend the corpus to all required live actions, and run both pairs of
+replays before cross-server triage. Merge this as a **blocked F0b continuation**,
+not as a finished oracle. The orchestrator owns integrated merge verification.
