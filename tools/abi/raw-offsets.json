@@ -7565,5 +7565,19 @@
     "count": 1,
     "classification": "safe",
     "reason": "Transfer size uses sizeof the actual typed array element; numbered U/P macro arguments identify dispatch argument slots, not byte offsets. The palette copy uses one complete typed palette entry array."
+  },
+  {
+    "file": "src/PC/bgame/bg_weapons.c",
+    "text": "target = gaspFrac * (player_breath_gasp_scale->current.value - 1.0f) + 1.0f;",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Scalar float arithmetic on dvar_t.current.value; no byte offset or pointer arithmetic. Mac PM_Weapon hold-breath scaling at 0x7cd17-0x7cd57 preserves these separate rounding points."
+  },
+  {
+    "file": "src/PC/xanim/dobj.c",
+    "text": "duplicate = (const unsigned char *)(duplicateBits + 4);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "The duplicate-parts string begins with four 32-bit bone-mask words followed by byte bone-index pairs. Typed int-pointer addition skips its 16-byte pointer-free mask on both ABIs; DObjCalcSkel Mac 1.3 0x7561a and the synthetic duplicate-mask fixture confirm the format."
   }
 ]

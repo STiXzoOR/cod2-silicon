@@ -25,6 +25,9 @@ extern WeaponDef *BG_LoadDefaultWeaponDef(void);
 extern WeaponDef *BG_LoadWeaponDefInternal(const char *folder, const char *name);
 extern void BG_LoadPlayerAnimTypes(void);
 extern void BG_InitWeaponStrings(void);
+#if defined(COD2_X64) && COD2_X64
+extern void SetConfigString(char **dest, const char *value);
+#endif
 extern int I_stricmp(const char *, const char *);
 extern void Com_Error(int code, const char *fmt, ...);
 extern void Com_DPrintf(const char *fmt, ...);
@@ -363,6 +366,19 @@ static const char *BG_WeaponItemString(const char *string)
 
 static void BG_SetupWeaponItem(int weapIndex, WeaponDef *weapDef)
 {
+#if defined(COD2_X64) && COD2_X64
+    gitem_t *item = &((gitem_t *)imp_bg_itemlist)[weapIndex];
+    item->pickup_sound = weapDef->szPickupSound;
+    item->world_model[0] = weapDef->szWorldModel;
+    item->world_model[1] = NULL;
+    item->icon = weapDef->szHudIcon;
+    item->pickup_name = weapDef->szDisplayName;
+    item->quantity = weapDef->iStartAmmo;
+    item->giType = IT_WEAPON;
+    item->giTag = weapIndex;
+    item->giAmmoIndex = weapDef->iAmmoIndex;
+    item->giClipIndex = weapDef->iClipIndex;
+#else
     int *numItems = (int *)imp_bg_numItems;
     gitem_t *item = &((gitem_t *)imp_bg_itemlist)[weapIndex];
 
@@ -380,6 +396,7 @@ static void BG_SetupWeaponItem(int weapIndex, WeaponDef *weapDef)
 
     if (*numItems <= weapIndex)
         *numItems = weapIndex + 1;
+#endif
 }
 
 qboolean BG_IsAimDownSightWeapon(int iWeapon)
@@ -709,8 +726,15 @@ void PM_AdjustAimSpreadScale(pmove_t *pm, pml_t *pml)
                     increase += weapDef->fHipSpreadMoveAdd;
             }
 
+#if defined(COD2_X64) && COD2_X64
+            if (ps->groundEntityNum == 0x3ff && ps->pm_type != 1) {
+                increase += 1.2799999713897705f;
+                increase += 1.2799999713897705f;
+            }
+#else
             if (ps->groundEntityNum == 0x3ff && ps->pm_type != 1)
                 increase += 1.2799999713897705f + 1.2799999713897705f;
+#endif
 
             spreadChange = increase * pml->frametime - decrease;
         }
@@ -758,7 +782,11 @@ static qboolean BG_CalculateWeaponPosition_GunRecoil_SingleAngle(vec_t *offset, 
         newSpeed -= fGunKickStaticDecay * fTimeStep;
         if (newSpeed < 0.0f)
             newSpeed = 0.0f;
+#if defined(COD2_X64) && COD2_X64
+    } else {
+#else
     } else if (newSpeed < 0.0f) {
+#endif
         newSpeed += fGunKickStaticDecay * fTimeStep;
         if (newSpeed > 0.0f)
             newSpeed = 0.0f;
@@ -1117,7 +1145,9 @@ qboolean BG_TakePlayerWeapon(playerState_t *pPS, int iWeaponIndex)
         if (weapDef->bSlotStackable) {
             int replacement;
 
+#if !defined(COD2_X64) || !COD2_X64
             pPS->weaponslots[slot] = 0;
+#endif
             for (replacement = 1; replacement <= bg_iNumWeapons; replacement++) {
                 if ((pPS->weapons[replacement >> 5] & (1 << (replacement & 0x1f))) &&
                     !BG_IsPlayerWeaponInSlot_core(pPS, replacement, 1)) {
@@ -1125,6 +1155,10 @@ qboolean BG_TakePlayerWeapon(playerState_t *pPS, int iWeaponIndex)
                     break;
                 }
             }
+#if defined(COD2_X64) && COD2_X64
+            if (replacement > bg_iNumWeapons)
+                pPS->weaponslots[slot] = 0;
+#endif
         } else {
             pPS->weaponslots[slot] = 0;
         }
@@ -1613,8 +1647,13 @@ static void PM_UpdateHoldBreath(pmove_t *pm, pml_t *pml)
         if (totalTime > 0)
             gaspFrac = (float)ps->holdBreathTimer / (float)totalTime;
 
+#if defined(COD2_X64) && COD2_X64
+        target = gaspFrac * (player_breath_gasp_scale->current.value - 1.0f) + 1.0f;
+        target = (target - 1.0f) * ps->fWeaponPosFrac + 1.0f;
+#else
         target = 1.0f + ps->fWeaponPosFrac * gaspFrac *
                             (player_breath_gasp_scale->current.value - 1.0f);
+#endif
         rate = player_breath_gasp_lerp->current.value;
     }
 
@@ -1644,6 +1683,42 @@ static qboolean PM_UpdateOffhandCook(pmove_t *pm, pml_t *pml)
 
 static qboolean PM_UpdateWeaponTimers(pmove_t *pm, pml_t *pml)
 {
+#if defined(COD2_X64) && COD2_X64
+    playerState_t *ps = pm->ps;
+    WeaponDef *weapDef = bg_weaponDefs[ps->weapon];
+
+    if (ps->weaponRestrictKickTime > 0) {
+        ps->weaponRestrictKickTime -= pml->msec;
+        if (ps->weaponRestrictKickTime < 0)
+            ps->weaponRestrictKickTime = 0;
+    }
+    if (ps->weaponTime) {
+        ps->weaponTime -= pml->msec;
+        if (ps->weaponTime <= 0) {
+            if (!PM_WeaponStateIsOffhand(ps->weaponstate) && weapDef->bSemiAuto &&
+                (pm->cmd.buttons & PM_WEAPON_BUTTON_ATTACK) && pm->cmd.weapon == ps->weapon &&
+                ps->ammoclip[weapDef->iClipIndex]) {
+                ps->weaponTime = PM_WeaponStateIsReloading(ps->weaponstate) ? 0 : 1;
+                if (ps->weaponstate == WEAPON_FIRING || ps->weaponstate == WEAPON_RECHAMBERING ||
+                    ps->weaponstate == WEAPON_MELEE_INIT || ps->weaponstate == WEAPON_MELEE_FIRE) {
+                    if (ps->weapAnim & ~0x200)
+                        PM_WeaponClearAnim(ps);
+                    ps->weaponstate = WEAPON_READY;
+                }
+            } else {
+                ps->weaponTime = 0;
+            }
+        }
+    }
+    if (ps->weaponDelay) {
+        ps->weaponDelay -= pml->msec;
+        if (ps->weaponDelay <= 0) {
+            ps->weaponDelay = 0;
+            return 1;
+        }
+    }
+    return 0;
+#else
     playerState_t *ps = pm->ps;
     qboolean delayedAction = 0;
 
@@ -1678,6 +1753,7 @@ static qboolean PM_UpdateWeaponTimers(pmove_t *pm, pml_t *pml)
     }
 
     return delayedAction;
+#endif
 }
 
 static void PM_UpdateWeaponConditions(playerState_t *ps, WeaponDef *weapDef)
@@ -1688,6 +1764,45 @@ static void PM_UpdateWeaponConditions(playerState_t *ps, WeaponDef *weapDef)
 
 static void PM_FinishWeaponChange(pmove_t *pm)
 {
+#if defined(COD2_X64) && COD2_X64
+    playerState_t *ps = pm->ps;
+    int oldWeapon = ps->weapon;
+    int newWeapon = pm->cmd.weapon;
+    WeaponDef *weapDef;
+
+    if (Mantle_IsWeaponInactive(ps) || (ps->pm_flags & (0x20 | 0x4000000)) ||
+        newWeapon > bg_iNumWeapons || !(ps->weapons[newWeapon >> 5] & (1 << (newWeapon & 31))))
+        newWeapon = 0;
+    ps->weapon = (unsigned char)newWeapon;
+    if (oldWeapon == newWeapon) {
+        ps->weaponstate = WEAPON_READY;
+        PM_WeaponClearAnim(ps);
+        return;
+    }
+    weapDef = bg_weaponDefs[newWeapon];
+    ps->weaponstate = WEAPON_RAISING;
+    PM_SetProneMovementOverride(ps);
+    if (!oldWeapon) {
+        ps->weaponTime = weapDef->iRaiseTime;
+        ps->aimSpreadScale = 255.0f;
+        PM_WeaponSetAnim(ps, 0x0a);
+        return;
+    }
+    if (newWeapon && bg_weaponDefs[oldWeapon]->iAltWeaponIndex == newWeapon) {
+        ps->weaponTime = weapDef->iAltRaiseTime;
+        PM_UpdateWeaponConditions(ps, weapDef);
+        if (ps->aimSpreadScale < 128.0f)
+            ps->aimSpreadScale = 128.0f;
+        PM_WeaponSetAnim(ps, 0x10);
+    } else {
+        PM_AddEvent(ps, 0x9a);
+        ps->weaponTime = weapDef->iRaiseTime;
+        PM_UpdateWeaponConditions(ps, weapDef);
+        BG_AnimScriptEvent(ps, ANIM_ET_RAISEWEAPON, 0, 0);
+        ps->aimSpreadScale = 255.0f;
+        PM_WeaponSetAnim(ps, 0x0a);
+    }
+#else
     playerState_t *ps = pm->ps;
     int oldWeapon = ps->weapon;
     int newWeapon = pm->cmd.weapon;
@@ -1748,6 +1863,7 @@ static void PM_FinishWeaponChange(pmove_t *pm)
 #endif
     ps->aimSpreadScale = 255.0f;
     PM_WeaponSetAnim(ps, 0x0a);
+#endif
 }
 
 static qboolean PM_ShouldChangeWeapon(pmove_t *pm)
@@ -1771,6 +1887,27 @@ static qboolean PM_ShouldChangeWeapon(pmove_t *pm)
 
 static void PM_CheckWeaponChange(pmove_t *pm)
 {
+#if defined(COD2_X64) && COD2_X64
+    playerState_t *ps = pm->ps;
+    int state = ps->weaponstate;
+    if (PM_WeaponStateIsBinoculars(state) || PM_WeaponStateIsOffhand(state))
+        return;
+    if (ps->weaponTime && !PM_WeaponStateIsReloading(state) && state != WEAPON_RECHAMBERING &&
+        (state == WEAPON_FIRING || state == WEAPON_MELEE_INIT || state == WEAPON_MELEE_FIRE || ps->weaponDelay))
+        return;
+    if (Mantle_IsWeaponInactive(ps) || (ps->pm_flags & (0x20 | 0x4000000))) {
+        if (ps->weapon)
+            PM_BeginWeaponChange(ps, 0);
+        return;
+    }
+    if (ps->weapon != pm->cmd.weapon && (!(ps->pm_flags & 0x8000) || !ps->weapon) &&
+        (!pm->cmd.weapon || BG_IsWeaponValid(ps, pm->cmd.weapon))) {
+        PM_BeginWeaponChange(ps, pm->cmd.weapon);
+        return;
+    }
+    if (ps->weapon && !(ps->weapons[ps->weapon >> 5] & (1 << (ps->weapon & 31))))
+        PM_BeginWeaponChange(ps, 0);
+#else
     playerState_t *ps = pm->ps;
 
     if (ps->weaponstate == WEAPON_DROPPING)
@@ -1795,6 +1932,7 @@ static void PM_CheckWeaponChange(pmove_t *pm)
             PM_ResetWeaponState(ps);
         PM_BeginWeaponChange(ps, pm->cmd.weapon);
     }
+#endif
 }
 
 static int PM_OffhandClassForButtons(int buttons)
@@ -1821,6 +1959,47 @@ static void PM_StartOffhandPrepare(playerState_t *ps)
 
 static qboolean PM_TryStartOffhand(pmove_t *pm)
 {
+#if defined(COD2_X64) && COD2_X64
+    playerState_t *ps = pm->ps;
+    int offhandClass;
+    int offhandIndex;
+    WeaponDef *offhandDef;
+    if ((ps->eFlags & 0x300) || (ps->pm_flags & 0x4000000) ||
+        PM_WeaponStateIsBinoculars(ps->weaponstate) ||
+        (PM_WeaponStateIsOffhand(ps->weaponstate) && ps->weaponstate != WEAPON_OFFHAND_END))
+        return 0;
+    if (ps->weapons[pm->cmd.offHandIndex >> 5] & (1 << (pm->cmd.offHandIndex & 31)))
+        ps->offHandIndex = pm->cmd.offHandIndex;
+    offhandClass = PM_OffhandClassForButtons(pm->cmd.buttons);
+    if (!offhandClass)
+        return 0;
+    offhandIndex = BG_GetFirstAvailableOffhand(ps, offhandClass);
+    if (!offhandIndex) {
+#if defined(COD2_CODX) && COD2_CODX
+        if (!Cod2x_GameVersion())
+#endif
+        PM_AddEvent(ps, 0x94);
+        return 0;
+    }
+    BG_AddPredictableEventToPlayerstate(0xa7, offhandIndex, ps);
+    ps->offHandIndex = offhandIndex;
+    offhandDef = bg_weaponDefs[offhandIndex];
+    if (offhandDef->weapType != WEAPTYPE_GRENADE)
+        Com_Error(1, "[%s] Only grenades are currently supported for off hand use\n", offhandDef->szInternalName);
+    if (!offhandDef->offhandClass)
+        Com_Error(1, "[%s] No offhand class set\n", offhandDef->szInternalName);
+    if (ps->weapon && ps->weaponstate != WEAPON_OFFHAND_END) {
+        ps->weaponstate = WEAPON_OFFHAND_INIT;
+        ps->weaponTime = bg_weaponDefs[ps->weapon]->quickDropTime;
+        ps->weaponDelay = 0;
+        ps->pm_flags &= ~PM_WEAPON_FLAG_OFFHAND;
+        PM_ExitAimDownSight(ps);
+        PM_WeaponSetAnim(ps, 0x11);
+    } else {
+        PM_StartOffhandPrepare(ps);
+    }
+    return 1;
+#else
     playerState_t *ps = pm->ps;
     int offhandClass;
     int offhandIndex;
@@ -1869,6 +2048,7 @@ static qboolean PM_TryStartOffhand(pmove_t *pm)
 
     PM_StartOffhandPrepare(ps);
     return 1;
+#endif
 }
 
 static void PM_StartBinocularRaise(playerState_t *ps)
@@ -1902,8 +2082,95 @@ static void PM_StartBinocularDrop(playerState_t *ps)
     }
 }
 
+#if defined(COD2_X64) && COD2_X64
+static void PM_EndBinoculars(pmove_t *pm)
+{
+    playerState_t *ps = pm->ps;
+    ps->weaponstate = WEAPON_BINOCULARS_END;
+    ps->pm_flags &= ~PM_WEAPON_FLAG_BINOCULARS;
+    PM_AddEvent(ps, 0xa9);
+    if (pm->cmd.weapon) {
+        ps->weaponTime = bg_weaponDefs[ps->weapon]->quickRaiseTime;
+        ps->weaponDelay = 0;
+        PM_WeaponSetAnim(ps, 0x12);
+    } else {
+        ps->weaponTime = 0;
+        ps->weaponDelay = 1;
+    }
+}
+#endif
 static qboolean PM_TryToggleBinoculars(pmove_t *pm)
 {
+#if defined(COD2_X64) && COD2_X64
+    playerState_t *ps = pm->ps;
+    int state = ps->weaponstate;
+    int active = PM_WeaponStateIsBinoculars(state);
+    int weaponButtons = PM_WEAPON_BUTTON_ATTACK | PM_WEAPON_BUTTON_MELEE | PM_WEAPON_BUTTON_RELOAD |
+                        PM_WEAPON_BUTTON_FRAG | PM_WEAPON_BUTTON_SMOKE;
+    qboolean pressed;
+    qboolean drop;
+    if (!active && ((ps->fWeaponPosFrac > 0.0f && bg_weaponDefs[ps->weapon]->overlayReticle) ||
+                    (pm->cmd.buttons & weaponButtons)))
+        return 0;
+    if (PM_WeaponStateBlocksChange(state) || state == WEAPON_RAISING || state == WEAPON_DROPPING)
+        return 0;
+    if (active && (ps->damageCount || pm->oldcmd.weapon != pm->cmd.weapon ||
+                   pm->oldcmd.offHandIndex != pm->cmd.offHandIndex || (pm->cmd.buttons & weaponButtons))) {
+        PM_ResetWeaponState(ps);
+        if (pm->cmd.buttons & PM_WEAPON_BUTTON_ATTACK)
+            ps->weaponTime = 1;
+        return 1;
+    }
+    if (pm->cmd.buttons & PM_WEAPON_BUTTON_ATTACK)
+        return 0;
+    if (state == WEAPON_BINOCULARS_IDLE) {
+        if (!(pm->oldcmd.buttons & 0x28) && (pm->cmd.buttons & 0x28))
+            PM_AddEvent(ps, 0xaa);
+        else if ((pm->oldcmd.buttons & 0x28) && !(pm->cmd.buttons & 0x28))
+            PM_AddEvent(ps, 0xab);
+    }
+    if (player_toggleBinoculars->current.enabled) {
+        pressed = !(pm->oldcmd.buttons & PM_WEAPON_BUTTON_BINOCULARS) &&
+                  (pm->cmd.buttons & PM_WEAPON_BUTTON_BINOCULARS);
+        drop = pressed && state > WEAPON_BINOCULARS_INIT && state < WEAPON_BINOCULARS_DROP;
+    } else {
+        pressed = (pm->cmd.buttons & PM_WEAPON_BUTTON_BINOCULARS) != 0;
+        drop = !pressed && state > WEAPON_BINOCULARS_INIT && state < WEAPON_BINOCULARS_DROP;
+    }
+    if (pressed && !active) {
+        WeaponDef *weapDef = bg_weaponDefs[ps->weapon];
+        if (!PM_FindBinocularWeapon())
+            return 0;
+        if (!pm->cmd.weapon) {
+            PM_StartBinocularRaise(ps);
+        } else if (pm->cmd.buttons & PM_WEAPON_BUTTON_ADS) {
+            PM_ExitAimDownSight(ps);
+            ps->weaponstate = WEAPON_BINOCULARS_INIT;
+            ps->weaponTime = 0;
+            ps->weaponDelay = weapDef->iAdsTransOutTime + player_adsExitDelay->current.integer;
+        } else {
+            ps->weaponstate = WEAPON_BINOCULARS_RAISE;
+            ps->weaponTime = weapDef->quickDropTime;
+            ps->weaponDelay = 0;
+            PM_WeaponSetAnim(ps, 0x11);
+        }
+        return 1;
+    }
+    if (drop) {
+        if (state == WEAPON_BINOCULARS_RAISE) {
+            PM_EndBinoculars(pm);
+        } else {
+            WeaponDef *weapDef = bg_weaponDefs[PM_FindBinocularWeapon()];
+            ps->weaponstate = WEAPON_BINOCULARS_DROP;
+            ps->weaponTime = weapDef->iAdsTransOutTime + player_adsExitDelay->current.integer;
+            ps->weaponDelay = 0;
+            PM_AddEvent(ps, 0xac);
+            PM_WeaponClearAnim(ps);
+        }
+        return 1;
+    }
+    return 0;
+#else
     playerState_t *ps = pm->ps;
     qboolean togglePressed;
     qboolean isIdle;
@@ -1950,6 +2217,7 @@ static qboolean PM_TryToggleBinoculars(pmove_t *pm)
     }
 
     return 0;
+#endif
 }
 
 static qboolean PM_WeaponCanReloadNow(playerState_t *ps, qboolean reloadRequested)
@@ -1976,6 +2244,35 @@ static qboolean PM_WeaponCanReloadNow(playerState_t *ps, qboolean reloadRequeste
 
 static void PM_CheckReloadStart(pmove_t *pm, qboolean delayedAction)
 {
+#if defined(COD2_X64) && COD2_X64
+    playerState_t *ps = pm->ps;
+    WeaponDef *weapDef = bg_weaponDefs[ps->weapon];
+    qboolean requested;
+    (void)delayedAction;
+    if (PM_WeaponStateIsBinoculars(ps->weaponstate) || PM_WeaponStateIsOffhand(ps->weaponstate))
+        return;
+    requested = (pm->cmd.buttons & PM_WEAPON_BUTTON_RELOAD) != 0;
+    if (ps->pm_flags & PM_WEAPON_FLAG_RELOAD) {
+        ps->pm_flags &= ~PM_WEAPON_FLAG_RELOAD;
+        requested = 1;
+    }
+    if (weapDef->bSegmentedReload && (ps->weaponstate == WEAPON_RELOAD_START || ps->weaponstate == WEAPON_RELOADING) &&
+        (pm->cmd.buttons & PM_WEAPON_BUTTON_ATTACK) && !(pm->oldcmd.buttons & PM_WEAPON_BUTTON_ATTACK))
+        ps->weaponstate++;
+    if (ps->weaponstate == WEAPON_RAISING || ps->weaponstate == WEAPON_DROPPING ||
+        ps->weaponstate == WEAPON_MELEE_INIT || ps->weaponstate == WEAPON_MELEE_FIRE)
+        return;
+    if (PM_WeaponStateIsReloading(ps->weaponstate)) {
+        if (pm->proneChange && !weapDef->bClipOnly)
+            BG_AnimScriptEvent(ps, ANIM_ET_RELOAD, 0, 1);
+        return;
+    }
+    if ((requested && PM_Weapon_AllowReload(ps)) ||
+        (!ps->ammoclip[weapDef->iClipIndex] && ps->ammo[weapDef->iAmmoIndex] &&
+         ps->weaponstate != WEAPON_FIRING &&
+         (!(ps->pm_flags & 1) || (!pm->cmd.forwardmove && !pm->cmd.rightmove))))
+        PM_BeginWeaponReload(ps);
+#else
     playerState_t *ps = pm->ps;
     qboolean reloadRequested;
 
@@ -1994,6 +2291,7 @@ static void PM_CheckReloadStart(pmove_t *pm, qboolean delayedAction)
 
     if (PM_WeaponCanReloadNow(ps, reloadRequested))
         PM_BeginWeaponReload(ps);
+#endif
 }
 
 static qboolean PM_StartMelee(playerState_t *ps, WeaponDef *weapDef)
@@ -2024,8 +2322,42 @@ static qboolean PM_StartMelee(playerState_t *ps, WeaponDef *weapDef)
     return 1;
 }
 
+#if defined(COD2_X64) && COD2_X64
+static void PM_FinishMeleeDelay(playerState_t *ps);
+#endif
 static qboolean PM_CheckMeleeStart(pmove_t *pm, qboolean delayedAction)
 {
+#if defined(COD2_X64) && COD2_X64
+    playerState_t *ps = pm->ps;
+    WeaponDef *weapDef = bg_weaponDefs[ps->weapon];
+    if (PM_WeaponStateIsBinoculars(ps->weaponstate) || PM_WeaponStateIsOffhand(ps->weaponstate) ||
+        !weapDef->iMeleeDamage || delayedAction ||
+        (ps->weaponDelay && !PM_WeaponStateIsReloading(ps->weaponstate)))
+        return 0;
+    if (!(pm->cmd.buttons & PM_WEAPON_BUTTON_MELEE)) {
+        ps->pm_flags &= ~PM_WEAPON_FLAG_MELEE_HELD;
+        return 0;
+    }
+    if (ps->pm_flags & PM_WEAPON_FLAG_MELEE_HELD)
+        return 0;
+    ps->pm_flags |= PM_WEAPON_FLAG_MELEE_HELD;
+    if ((ps->fWeaponPosFrac > 0.0f && weapDef->overlayReticle) ||
+        ps->weaponstate == WEAPON_RAISING || ps->weaponstate == WEAPON_DROPPING ||
+        ps->weaponstate == WEAPON_MELEE_INIT || ps->weaponstate == WEAPON_MELEE_FIRE)
+        return 0;
+    BG_AnimScriptEvent(ps, ANIM_ET_MELEEATTACK, 0, 1);
+    PM_WeaponSetAnim(ps, 8);
+    PM_AddEvent(ps, 0xa3);
+    if (weapDef->iMeleeDelay) {
+        ps->weaponstate = WEAPON_MELEE_INIT;
+        ps->weaponTime = weapDef->iMeleeTime;
+        ps->weaponDelay = weapDef->iMeleeDelay;
+        PM_SetProneMovementOverride(ps);
+    } else {
+        PM_FinishMeleeDelay(ps);
+    }
+    return 1;
+#else
     playerState_t *ps = pm->ps;
     WeaponDef *weapDef;
 
@@ -2041,6 +2373,7 @@ static qboolean PM_CheckMeleeStart(pmove_t *pm, qboolean delayedAction)
 
     weapDef = bg_weaponDefs[ps->weapon];
     return PM_StartMelee(ps, weapDef);
+#endif
 }
 
 static void PM_FinishMeleeDelay(playerState_t *ps)
@@ -2111,6 +2444,37 @@ static void PM_TryTakeEmptyClipOnlyWeapon(playerState_t *ps, WeaponDef *weapDef)
 
 static qboolean PM_ConsumeFireAmmo(playerState_t *ps, WeaponDef *weapDef)
 {
+#if defined(COD2_X64) && COD2_X64
+    int clipIndex = weapDef->iClipIndex;
+    int fireAnim;
+    int viewWeapon;
+    int holdTime;
+    int fireDelay;
+    if (ps->ammoclip[clipIndex] != -1 && !(ps->eFlags & 0x300))
+        ps->ammoclip[clipIndex]--;
+    if (weapDef->weapType == WEAPTYPE_GRENADE)
+        ps->weaponTime = weapDef->iFireTime;
+    if (ps->fWeaponPosFrac > 0.75f)
+        fireAnim = ps->ammoclip[clipIndex] ? 5 : 6;
+    else
+        fireAnim = ps->ammoclip[clipIndex] ? 2 : 3;
+    PM_WeaponSetAnim(ps, fireAnim);
+    PM_AddEvent(ps, ps->ammoclip[clipIndex] ? 0x9e : 0xa0);
+    viewWeapon = BG_GetViewmodelWeaponIndex(ps);
+    if (ps->fWeaponPosFrac == 1.0f && bg_weaponDefs[viewWeapon]->overlayReticle && bg_weaponDefs[viewWeapon]->weapClass != 9) {
+        holdTime = (int)(player_breath_hold_time->current.value * 1000.0f);
+        if (ps->holdBreathTimer < holdTime) {
+            fireDelay = (int)(player_breath_fire_delay->current.value * 1000.0f);
+            ps->holdBreathTimer += fireDelay;
+            if (ps->holdBreathTimer > holdTime)
+                ps->holdBreathTimer = holdTime;
+        }
+        ps->pm_flags &= ~PM_WEAPON_FLAG_HOLDBREATH;
+    }
+    PM_AddFireSpread(ps, weapDef);
+    PM_TryTakeEmptyClipOnlyWeapon(ps, weapDef);
+    return 1;
+#else
     int clipIndex = weapDef->iClipIndex;
     int fireAnim;
 
@@ -2133,10 +2497,28 @@ static qboolean PM_ConsumeFireAmmo(playerState_t *ps, WeaponDef *weapDef)
     PM_AddFireSpread(ps, weapDef);
     PM_TryTakeEmptyClipOnlyWeapon(ps, weapDef);
     return 1;
+#endif
 }
 
 static void PM_StartFireTimers(playerState_t *ps, WeaponDef *weapDef)
 {
+#if defined(COD2_X64) && COD2_X64
+    ps->weaponDelay = weapDef->iFireDelay;
+    ps->weaponTime = weapDef->iFireTime;
+    if (weapDef->bADSFire)
+        ps->weaponDelay = (int)((1.0f - ps->fWeaponPosFrac) * (1.0f / weapDef->fOOPosAnimLength[0]));
+    BG_AnimScriptEvent(ps, ANIM_ET_FIREWEAPON, 0, 1);
+    if (weapDef->bBoltAction)
+        PM_SetWeaponRechamberBit(ps, ps->weapon);
+    if (ps->weaponstate != WEAPON_FIRING) {
+        if (ps->fWeaponPosFrac >= 1.0f)
+            ps->weaponRestrictKickTime = weapDef->iFireTime * weapDef->adsGunKickReducedKickBullets + weapDef->iFireDelay;
+        else
+            ps->weaponRestrictKickTime = weapDef->iFireTime * weapDef->hipGunKickReducedKickBullets + weapDef->iFireDelay;
+    }
+    ps->weaponstate = WEAPON_FIRING;
+    PM_SetProneMovementOverride(ps);
+#else
     ps->weaponDelay = weapDef->iFireDelay;
     ps->weaponTime = weapDef->iFireTime;
 
@@ -2158,10 +2540,25 @@ static void PM_StartFireTimers(playerState_t *ps, WeaponDef *weapDef)
 
     ps->weaponstate = WEAPON_FIRING;
     PM_SetProneMovementOverride(ps);
+#endif
 }
 
 static qboolean PM_TryStartGrenadeFire(playerState_t *ps, WeaponDef *weapDef, qboolean delayedAction)
 {
+#if defined(COD2_X64) && COD2_X64
+    if (!delayedAction) {
+        if (ps->ammoclip[weapDef->iClipIndex]) {
+            ps->grenadeTimeLeft = weapDef->iFuseTime;
+            PM_WeaponSetAnim(ps, 0x13);
+            PM_AddEvent(ps, 0x9d);
+        }
+        ps->weaponDelay = weapDef->iHoldFireTime;
+        ps->weaponTime = 0;
+    }
+    ps->weaponstate = WEAPON_FIRING;
+    PM_SetProneMovementOverride(ps);
+    return 1;
+#else
     int clipIndex = weapDef->iClipIndex;
 
     if (!ps->ammoclip[clipIndex])
@@ -2185,10 +2582,44 @@ static qboolean PM_TryStartGrenadeFire(playerState_t *ps, WeaponDef *weapDef, qb
         PM_ConsumeFireAmmo(ps, weapDef);
 
     return 1;
+#endif
 }
 
 static qboolean PM_TryFireWeapon(pmove_t *pm, qboolean delayedAction)
 {
+#if defined(COD2_X64) && COD2_X64
+    playerState_t *ps = pm->ps;
+    WeaponDef *weapDef;
+    if (!ps->weapon)
+        return 0;
+    if (!(pm->cmd.buttons & PM_WEAPON_BUTTON_ATTACK) && !delayedAction) {
+        if (ps->weaponstate == WEAPON_FIRING && (ps->weapAnim & ~0x200))
+            PM_WeaponClearAnim(ps);
+        ps->weaponstate = WEAPON_READY;
+        return 1;
+    }
+    weapDef = bg_weaponDefs[ps->weapon];
+    if (weapDef->weapType == WEAPTYPE_GRENADE)
+        PM_TryStartGrenadeFire(ps, weapDef, delayedAction);
+    else
+        PM_StartFireTimers(ps, weapDef);
+    if (ps->ammoclip[weapDef->iClipIndex] < 1) {
+        if (ps->ammo[weapDef->iAmmoIndex] > 0) {
+            PM_BeginWeaponReload(ps);
+        } else {
+            if (weapDef->weapType != WEAPTYPE_GRENADE)
+                PM_AddEvent(ps, 0x92);
+            PM_ClearWeaponRechamberBit(ps, ps->weapon);
+            if (ps->weapAnim & ~0x200)
+                PM_WeaponClearAnim(ps);
+            ps->weaponTime += 500;
+        }
+        return 1;
+    }
+    if (!ps->weaponDelay)
+        PM_ConsumeFireAmmo(ps, weapDef);
+    return 1;
+#else
     playerState_t *ps = pm->ps;
     WeaponDef *weapDef;
     int clipIndex;
@@ -2225,6 +2656,7 @@ static qboolean PM_TryFireWeapon(pmove_t *pm, qboolean delayedAction)
         PM_ConsumeFireAmmo(ps, weapDef);
 
     return 1;
+#endif
 }
 
 static void PM_FinishFire(playerState_t *ps)
@@ -2248,6 +2680,35 @@ static void PM_FinishFire(playerState_t *ps)
 
 static void PM_RunReloadState(playerState_t *ps, qboolean delayedAction)
 {
+#if defined(COD2_X64) && COD2_X64
+    WeaponDef *weapDef = bg_weaponDefs[ps->weapon];
+    qboolean starting = ps->weaponstate == WEAPON_RELOAD_START || ps->weaponstate == WEAPON_RELOAD_START_INTERUPT;
+    if (delayedAction)
+        PM_Weapon_ReloadDelayedAction(ps);
+    if (ps->weaponTime)
+        return;
+    if (starting) {
+        if ((ps->weaponstate != WEAPON_RELOAD_START_INTERUPT || !ps->ammoclip[weapDef->iClipIndex]) &&
+            PM_Weapon_AllowReload(ps)) {
+            PM_SetReloadingState(ps);
+            return;
+        }
+    } else if (weapDef->bSegmentedReload && ps->weaponstate != WEAPON_RELOADING_INTERUPT && PM_Weapon_AllowReload(ps)) {
+        PM_ClearWeaponRechamberBit(ps, ps->weapon);
+        PM_SetReloadingState(ps);
+        return;
+    }
+    PM_ClearWeaponRechamberBit(ps, ps->weapon);
+    if ((starting || weapDef->bSegmentedReload) && weapDef->iReloadEndTime) {
+        ps->weaponstate = WEAPON_RELOAD_END;
+        ps->weaponTime = weapDef->iReloadEndTime;
+        PM_WeaponSetAnim(ps, 0x0e);
+        PM_AddEvent(ps, 0x99);
+    } else {
+        ps->weaponstate = WEAPON_READY;
+        PM_WeaponClearAnim(ps);
+    }
+#else
     WeaponDef *weapDef;
 
     if (!ps->weapon)
@@ -2287,10 +2748,61 @@ static void PM_RunReloadState(playerState_t *ps, qboolean delayedAction)
     }
 
     PM_WeaponSetIdle(ps);
+#endif
 }
 
 static void PM_RunOffhandState(pmove_t *pm)
 {
+#if defined(COD2_X64) && COD2_X64
+    playerState_t *ps = pm->ps;
+    WeaponDef *weapDef = bg_weaponDefs[ps->offHandIndex];
+    switch (ps->weaponstate) {
+    case WEAPON_OFFHAND_INIT:
+        PM_StartOffhandPrepare(ps);
+        break;
+    case WEAPON_OFFHAND_PREPARE:
+        ps->weaponstate = WEAPON_OFFHAND_HOLD;
+        ps->weaponTime = 0;
+        ps->weaponDelay = 0;
+        ps->pm_flags |= PM_WEAPON_FLAG_OFFHAND;
+        ps->grenadeTimeLeft = weapDef->iFuseTime;
+        break;
+    case WEAPON_OFFHAND_HOLD:
+        if ((pm->oldcmd.buttons & (PM_WEAPON_BUTTON_FRAG | PM_WEAPON_BUTTON_SMOKE)) &&
+            (pm->cmd.buttons & (PM_WEAPON_BUTTON_FRAG | PM_WEAPON_BUTTON_SMOKE))) {
+            ps->weaponDelay = 1;
+            break;
+        }
+        ps->weaponstate = WEAPON_OFFHAND_FIRE;
+        ps->weaponTime = weapDef->iFireTime;
+        ps->weaponDelay = 0;
+        ps->pm_flags |= PM_WEAPON_FLAG_OFFHAND;
+        BG_AddPredictableEventToPlayerstate(0xa6, ps->offHandIndex, ps);
+        PM_WeaponSetAnim(ps, 2);
+        ps->ammoclip[weapDef->iClipIndex]--;
+        BG_AnimScriptEvent(ps, ANIM_ET_FIREWEAPON, 0, 1);
+        if (!BG_WeaponAmmo(ps, ps->offHandIndex))
+            PM_AddEvent(ps, 0x94);
+        break;
+    case WEAPON_OFFHAND_FIRE:
+        if (ps->weapon) {
+            ps->weaponTime = bg_weaponDefs[ps->weapon]->quickRaiseTime;
+            ps->weaponDelay = 0;
+            PM_WeaponSetAnim(ps, 0x12);
+        } else {
+            ps->weaponTime = 0;
+            ps->weaponDelay = 1;
+        }
+        ps->weaponstate = WEAPON_OFFHAND_END;
+        ps->pm_flags &= ~0x810;
+        break;
+    case WEAPON_OFFHAND_END:
+        PM_ResetWeaponState(ps);
+        break;
+    default:
+        break;
+    }
+#else
     playerState_t *ps = pm->ps;
     WeaponDef *weapDef;
 
@@ -2344,10 +2856,37 @@ static void PM_RunOffhandState(pmove_t *pm)
     default:
         break;
     }
+#endif
 }
 
 static void PM_RunBinocularState(playerState_t *ps)
 {
+#if defined(COD2_X64) && COD2_X64
+    switch (ps->weaponstate) {
+    case WEAPON_BINOCULARS_INIT:
+        ps->weaponstate = WEAPON_BINOCULARS_RAISE;
+        ps->weaponTime = bg_weaponDefs[ps->weapon]->quickDropTime;
+        ps->weaponDelay = 0;
+        PM_WeaponSetAnim(ps, 0x11);
+        break;
+    case WEAPON_BINOCULARS_RAISE:
+        PM_StartBinocularRaise(ps);
+        break;
+    case WEAPON_BINOCULARS_HOLD:
+        ps->weaponstate = WEAPON_BINOCULARS_IDLE;
+        ps->weaponTime = 0;
+        ps->weaponDelay = 0;
+        break;
+    case WEAPON_BINOCULARS_DROP:
+        PM_StartBinocularDrop(ps);
+        break;
+    case WEAPON_BINOCULARS_END:
+        PM_ResetWeaponState(ps);
+        break;
+    default:
+        break;
+    }
+#else
     switch (ps->weaponstate) {
     case WEAPON_BINOCULARS_INIT:
         if (!ps->weaponTime) {
@@ -2378,10 +2917,113 @@ static void PM_RunBinocularState(playerState_t *ps)
     default:
         break;
     }
+#endif
 }
 
+#if defined(COD2_X64) && COD2_X64
+static qboolean PM_CheckRechamber(playerState_t *ps, qboolean delayedAction)
+{
+    WeaponDef *weapDef = bg_weaponDefs[ps->weapon];
+    int state = ps->weaponstate;
+    if (PM_WeaponStateIsBinoculars(state) || PM_WeaponStateIsOffhand(state) ||
+        !weapDef->bBoltAction || !PM_HasWeaponRechamberBit(ps, ps->weapon))
+        return 0;
+    if (state == WEAPON_RECHAMBERING && delayedAction) {
+        PM_ClearWeaponRechamberBit(ps, ps->weapon);
+        PM_AddEvent(ps, 0xa2);
+        if (ps->weaponTime)
+            return 1;
+    }
+    if (!ps->weaponTime || (state != WEAPON_FIRING && state != WEAPON_RECHAMBERING &&
+        state != WEAPON_MELEE_INIT && state != WEAPON_MELEE_FIRE && !ps->weaponDelay)) {
+        if (state == WEAPON_RECHAMBERING) {
+            if (ps->weapAnim & ~0x200)
+                PM_WeaponClearAnim(ps);
+            ps->weaponstate = WEAPON_READY;
+        } else if (state == WEAPON_READY) {
+            PM_StartRechamber(ps, weapDef);
+            ps->weaponDelay = weapDef->iRechamberBoltTime && weapDef->iRechamberBoltTime < weapDef->iRechamberTime ?
+                              weapDef->iRechamberBoltTime : 1;
+        }
+    }
+    return 0;
+}
+#endif
 void PM_Weapon(pmove_t *pm, pml_t *pml)
 {
+#if defined(COD2_X64) && COD2_X64
+    playerState_t *ps = pm->ps;
+    qboolean delayedAction;
+    if (ps->pm_flags & 0x1000)
+        return;
+    if (ps->pm_type > 5) {
+        ps->weapon = 0;
+        return;
+    }
+    if (ps->eFlags & 0x300)
+        return;
+    PM_UpdateAimDownSightLerp(pm, pml);
+    PM_UpdateHoldBreath(pm, pml);
+    if (PM_UpdateOffhandCook(pm, pml))
+        return;
+    delayedAction = PM_UpdateWeaponTimers(pm, pml);
+    PM_TryToggleBinoculars(pm);
+    PM_TryStartOffhand(pm);
+    PM_CheckWeaponChange(pm);
+    PM_CheckReloadStart(pm, delayedAction);
+    PM_CheckMeleeStart(pm, delayedAction);
+    if (PM_CheckRechamber(ps, delayedAction))
+        return;
+    if (((ps->pm_flags & 1) && (pm->cmd.forwardmove || pm->cmd.rightmove)) ||
+        ps->weaponstate == WEAPON_MELEE_INIT || ps->weaponstate == WEAPON_MELEE_FIRE)
+        ps->aimSpreadScale = 255.0f;
+    if (!delayedAction && (ps->weaponTime || ps->weaponDelay))
+        return;
+    switch (ps->weaponstate) {
+    case WEAPON_RELOAD_START:
+    case WEAPON_RELOAD_START_INTERUPT:
+    case WEAPON_RELOADING:
+    case WEAPON_RELOADING_INTERUPT:
+        PM_RunReloadState(ps, delayedAction);
+        break;
+    case WEAPON_RAISING:
+    case WEAPON_RELOAD_END:
+        ps->weaponstate = WEAPON_READY;
+        PM_WeaponClearAnim(ps);
+        break;
+    case WEAPON_DROPPING:
+        PM_FinishWeaponChange(pm);
+        break;
+    case WEAPON_MELEE_INIT:
+        PM_FinishMeleeDelay(ps);
+        break;
+    case WEAPON_MELEE_FIRE:
+        if (ps->weapAnim & ~0x200)
+            PM_WeaponClearAnim(ps);
+        ps->weaponstate = WEAPON_READY;
+        break;
+    case WEAPON_OFFHAND_INIT:
+    case WEAPON_OFFHAND_PREPARE:
+    case WEAPON_OFFHAND_HOLD:
+    case WEAPON_OFFHAND_FIRE:
+    case WEAPON_OFFHAND_END:
+        PM_RunOffhandState(pm);
+        break;
+    case WEAPON_BINOCULARS_DROP:
+        PM_EndBinoculars(pm);
+        break;
+    case WEAPON_BINOCULARS_INIT:
+    case WEAPON_BINOCULARS_RAISE:
+    case WEAPON_BINOCULARS_HOLD:
+    case WEAPON_BINOCULARS_IDLE:
+    case WEAPON_BINOCULARS_END:
+        PM_RunBinocularState(ps);
+        break;
+    default:
+        PM_TryFireWeapon(pm, delayedAction);
+        break;
+    }
+#else
     playerState_t *ps = pm->ps;
     qboolean delayedAction;
 
@@ -2486,10 +3128,24 @@ void PM_Weapon(pmove_t *pm, pml_t *pml)
         PM_ResetWeaponState(ps);
         break;
     }
+#endif
 }
 
 WeaponDef *BG_LoadWeaponDef(const char *folder, const char *name)
 {
+#if defined(COD2_X64) && COD2_X64
+    WeaponDef *weapDef;
+    if (!name[0])
+        return NULL;
+    weapDef = BG_LoadWeaponDefInternal(folder, name);
+    if (!weapDef) {
+        weapDef = BG_LoadWeaponDefInternal(folder, "defaultweapon_mp");
+        if (!weapDef)
+            Com_Error(1, "\x15" "BG_LoadWeaponDef: Could not find default weapon");
+        SetConfigString((char **)&weapDef->szInternalName, name);
+    }
+    return weapDef;
+#else
     WeaponDef *weapDef = BG_LoadWeaponDefInternal(folder, name);
 
     if (weapDef)
@@ -2505,12 +3161,14 @@ WeaponDef *BG_LoadWeaponDef(const char *folder, const char *name)
                      "BG_LoadWeaponDef: Could not find default weapon");
 
     return weapDef;
+#endif
 }
 
 int BG_SetupWeaponDef(WeaponDef *weapDef, void (*regWeap)(int))
 {
     int weapIndex;
 
+#if !defined(COD2_X64) || !COD2_X64
     if (!weapDef)
         return 0;
 
@@ -2522,6 +3180,7 @@ int BG_SetupWeaponDef(WeaponDef *weapDef, void (*regWeap)(int))
         Com_Error(1, "\x15"
                      "Exceeded maximum weapon count");
 
+#endif
     weapIndex = ++bg_iNumWeapons;
     bg_weaponDefs[weapIndex] = weapDef;
 
@@ -2530,12 +3189,17 @@ int BG_SetupWeaponDef(WeaponDef *weapDef, void (*regWeap)(int))
     BG_SetupClipIndexes(weapIndex);
     BG_SetupWeaponItem(weapIndex, weapDef);
 
+#if !defined(COD2_X64) || !COD2_X64
     if (weapDef->offhandClass != OFFHAND_CLASS_NONE && weapDef->weapType != WEAPTYPE_GRENADE) {
         Com_Printf("[%s] Only grenades are currently supported for off hand use\n", weapDef->szInternalName);
     } else if (weapDef->weapType == WEAPTYPE_GRENADE && weapDef->offhandClass == OFFHAND_CLASS_NONE) {
         Com_Printf("[%s] No offhand class set\n", weapDef->szInternalName);
     }
 
+#endif
+#if defined(COD2_X64) && COD2_X64
+    weapDef->iAltWeaponIndex = 0;
+#endif
     if (weapDef->szAltWeaponName && weapDef->szAltWeaponName[0]) {
         int altWeaponIndex = BG_GetWeaponIndexForName(weapDef->szAltWeaponName, (BG_RegisterWeapon)regWeap);
         WeaponDef *altWeaponDef;
@@ -2585,7 +3249,11 @@ int BG_GetWeaponIndexForName(const char *name, BG_RegisterWeapon regWeap)
     if (weapDef)
         return BG_SetupWeaponDef(weapDef, (void (*)(int))regWeap);
 
+#if defined(COD2_X64) && COD2_X64
+    Com_DPrintf("Couldn't find weapon \"%s\"\n", name);
+#else
     Com_Printf("Couldn't find weapon \"%s\"\n", name);
+#endif
     return 0;
 }
 
@@ -2690,13 +3358,25 @@ static void BG_AddWeaponMovementAngles(weaponState_t *ws, vec_t *angles, const W
     int i;
 
     if (ps->eFlags & 8) {
+#if defined(COD2_X64) && COD2_X64
+        move = weapDef->vProneRot;
+#else
         move = weapDef->vProneMove;
+#endif
         minSpeed = weapDef->fProneRotMinSpeed;
     } else if (ps->eFlags & 4) {
+#if defined(COD2_X64) && COD2_X64
+        move = weapDef->vDuckedRot;
+#else
         move = weapDef->vDuckedMove;
+#endif
         minSpeed = weapDef->fDuckedRotMinSpeed;
     } else {
+#if defined(COD2_X64) && COD2_X64
+        move = weapDef->vStandRot;
+#else
         move = weapDef->vStandMove;
+#endif
         minSpeed = weapDef->fStandRotMinSpeed;
     }
 
@@ -2707,11 +3387,15 @@ static void BG_AddWeaponMovementAngles(weaponState_t *ws, vec_t *angles, const W
     } else {
         float topSpeed = (float)ps->speed - minSpeed;
 
+#if defined(COD2_X64) && COD2_X64
+        frac = (ws->xyspeed - minSpeed) / topSpeed;
+#else
         if (topSpeed == 0.0f)
             frac = 0.0f;
         else
             frac = (ws->xyspeed - minSpeed) / topSpeed;
 
+#endif
         if (frac < 0.0f)
             frac = 0.0f;
         if (frac > 1.0f)
@@ -2722,6 +3406,14 @@ static void BG_AddWeaponMovementAngles(weaponState_t *ws, vec_t *angles, const W
         target[2] = move[2] * frac;
     }
 
+#if defined(COD2_X64) && COD2_X64
+    if (ps->fWeaponPosFrac != 0.0f) {
+        float scale = 1.0f - ps->fWeaponPosFrac;
+        target[0] *= scale;
+        target[1] *= scale;
+        target[2] *= scale;
+    }
+#endif
     rate = (ps->viewHeightCurrent == 11.0f) ? weapDef->fPosProneRotRate : weapDef->fPosRotRate;
     for (i = 0; i < 3; i++)
         BG_TrackWeaponAngle(&ws->vLastMoveAng[i], target[i], rate, ws->frametime);
@@ -2782,6 +3474,9 @@ static void BG_AddWeaponIdleAngles(weaponState_t *ws, vec_t *angles, const Weapo
     else
         idleFactor = 1.0f;
 
+#if defined(COD2_X64) && COD2_X64
+    if (!weapDef->overlayReticle || f == 0.0f)
+#endif
     BG_TrackWeaponIdleFactor(ws, idleFactor);
 
     amount = idleAmount * ws->fLastIdleFactor;
@@ -2795,11 +3490,22 @@ static void BG_AddWeaponIdleAngles(weaponState_t *ws, vec_t *angles, const Weapo
     angles[0] += sinf((float)*ws->weapIdleTime * 0.0010000000474974513f) * amount * 0.009999999776482582f;
 }
 
+#if defined(COD2_X64) && COD2_X64
+static float BG_GetBobCycleSingle(const playerState_t *ps)
+{
+    float phase = ((float)(ps->bobCycle & 255) / 255.0f) * 3.1415927410125732f;
+    return phase + phase + 6.2831854820251465f;
+}
+#endif
 static void BG_AddWeaponBobAngles(weaponState_t *ws, vec_t *angles, const WeaponDef *weapDef)
 {
     playerState_t *ps = ws->ps;
     float f = ps->fWeaponPosFrac;
+#if defined(COD2_X64) && COD2_X64
+    float cycle = BG_GetBobCycleSingle(ps) + 0.7853981852531433f + 6.2831854820251465f;
+#else
     float cycle = BG_GetBobCycle(ps) + 0.7853981633974483f;
+#endif
     float speed = ws->xyspeed * 0.1599999964237213f;
     float pitch = -BG_GetVerticalBobFactor(ps, cycle, speed, 10.0f);
     float yaw = -BG_GetHorizontalBobFactor(ps, cycle, speed, 10.0f);
@@ -2842,11 +3548,17 @@ static void BG_AddWeaponDamageKick(weaponState_t *ws, vec_t *angles, const Weapo
     if (!ws->damageTime)
         return;
 
+#if defined(COD2_X64) && COD2_X64
+    attack = 100.0f * factor;
+    decay = 400.0f * factor;
+#endif
     if (f != 0.0f && weapDef->overlayReticle)
         factor *= 1.0f - f * 0.75f;
 
+#if !defined(COD2_X64) || !COD2_X64
     attack = 100.0f * factor;
     decay = 400.0f * factor;
+#endif
     elapsed = ws->time - ws->damageTime;
 
     if ((float)elapsed < attack) {
@@ -2876,7 +3588,11 @@ static void BG_AddWeaponGunKick(weaponState_t *ws, vec_t *angles, const WeaponDe
     float timeLeft;
 
     if (!weapDef->bADSPositionInfo)
+#if defined(COD2_X64) && COD2_X64
+        return;
+#else
         goto add_offset;
+#endif
 
     fGunKickAccel = weapDef->fHipGunKickAccel + (weapDef->fAdsGunKickAccel - weapDef->fHipGunKickAccel) * f;
     fGunKickSpeedMax = weapDef->fHipGunKickSpeedMax + (weapDef->fAdsGunKickSpeedMax - weapDef->fHipGunKickSpeedMax) * f;
@@ -2889,8 +3605,17 @@ static void BG_AddWeaponGunKick(weaponState_t *ws, vec_t *angles, const WeaponDe
         qboolean pitchDone;
         qboolean yawDone;
 
+#if defined(COD2_X64) && COD2_X64
+        if ((double)timeLeft > 0.005) {
+            timeLeft = (float)((double)timeLeft - 0.005);
+            step = 0.004999999888241291f;
+        } else {
+            timeLeft = 0.0f;
+        }
+#else
         if (step > 0.004999999888241291f)
             step = 0.004999999888241291f;
+#endif
 
         pitchDone = BG_CalculateWeaponPosition_GunRecoil_SingleAngle(&ws->vGunOffset[0], &ws->vGunSpeed[0],
                                                                      step, weapDef->fGunMaxPitch, fGunKickAccel, fGunKickSpeedMax, fGunKickSpeedDecay, fGunKickStaticDecay);
@@ -2900,7 +3625,9 @@ static void BG_AddWeaponGunKick(weaponState_t *ws, vec_t *angles, const WeaponDe
         if (pitchDone && yawDone)
             break;
 
+#if !defined(COD2_X64) || !COD2_X64
         timeLeft -= step;
+#endif
     }
 
 add_offset:
@@ -3019,7 +3746,11 @@ static void BG_AddViewIdle(viewState_t *vs, vec_t *angles, const WeaponDef *weap
         BG_TrackViewIdleFactor(vs, idleFactor);
 
     amount = idleAmount * vs->fLastIdleFactor * f * ps->holdBreathScale;
+#if defined(COD2_X64) && COD2_X64
+    *vs->weapIdleTime += (int)(idleSpeed * ps->holdBreathScale * vs->frametime * 1000.0f);
+#else
     *vs->weapIdleTime += (int)(idleSpeed * vs->frametime * 1000.0f * ps->holdBreathScale);
+#endif
 
     angles[1] += sinf((float)*vs->weapIdleTime * 0.000699999975040555f) * amount * 0.009999999776482582f;
     angles[0] += sinf((float)*vs->weapIdleTime * 0.0010000000474974513f) * amount * 0.009999999776482582f;
@@ -3038,7 +3769,11 @@ static void BG_AddScopedViewBob(viewState_t *vs, vec_t *angles, const WeaponDef 
     if (!weapDef->overlayReticle)
         return;
 
+#if defined(COD2_X64) && COD2_X64
+    cycle = BG_GetBobCycleSingle(ps) + 0.7853981852531433f + 6.2831854820251465f;
+#else
     cycle = BG_GetBobCycle(ps) + 0.7853981633974483f;
+#endif
     speed = vs->xyspeed * 0.1599999964237213f;
 
     pitch = -BG_GetVerticalBobFactor(ps, cycle, speed, 10.0f);
@@ -3073,7 +3808,19 @@ static void BG_AddAdsViewBob(viewState_t *vs, vec_t *angles, const WeaponDef *we
         return;
 
     scale = f * weapDef->fAdsViewBobMult;
+#if defined(COD2_X64) && COD2_X64
+    cycle = BG_GetBobCycleSingle(ps);
+    {
+        float amplitude = BG_GetBobAmplitude(ps, vs->xyspeed, 45.0f);
+        float bob = sinf(cycle + cycle);
+        bob += (float)sin((double)(cycle * 4.0f) + 1.5707963267948966) * 0.2f;
+        angles[0] -= amplitude * bob * 0.75f * f * weapDef->fAdsViewBobMult;
+        angles[1] -= amplitude * sinf(cycle) * f * weapDef->fAdsViewBobMult;
+    }
+    return;
+#else
     cycle = BG_GetBobCycle(ps);
+#endif
     angles[0] -= BG_GetVerticalBobFactor(ps, cycle, vs->xyspeed, 45.0f) * scale;
     angles[1] -= BG_GetHorizontalBobFactor(ps, cycle, vs->xyspeed, 45.0f) * scale;
 }

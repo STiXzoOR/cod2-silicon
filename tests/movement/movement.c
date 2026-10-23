@@ -359,6 +359,98 @@ static void test_dispatch(void)
     puts("PASS intermission/frozen frame paths and mantle dispatch");
 }
 
+#if defined(COD2_X64)
+static void test_view_adjust_zero(void)
+{
+    playerState_t ps; pmove_t pm; pml_t pml;
+    init(&ps, &pm, &pml, 60);
+    ps.viewHeightCurrent = 0.0f;
+    PM_ViewHeightAdjust(&pm, &pml);
+    assert(ps.viewHeightCurrent == 60.0f && ps.viewHeightLerpTime == 0);
+    ps.pm_type = 4;
+    ps.viewHeightCurrent = 0.0f;
+    PM_ViewHeightAdjust(&pm, &pml);
+    assert(ps.viewHeightCurrent == 0.0f);
+    puts("PASS view height: zero current height initializes immediately");
+}
+
+static void test_view_adjust_offset(void)
+{
+    playerState_t ps; pmove_t pm; pml_t pml;
+    init(&ps, &pm, &pml, 40);
+    ps.viewHeightCurrent = 56.0f;
+    ps.viewHeightLerpTime = 1000;
+    ps.viewHeightLerpTarget = 40;
+    ps.viewHeightLerpDown = 1;
+    pm.cmd.serverTime = 1100;
+    ps.velocity[0] = 17.0f; ps.velocity[1] = 23.0f; ps.velocity[2] = 31.0f;
+    /* Stock offsets are zero. Exercise the Mac adjustment branch with a
+       synthetic table offset; all three saved velocity words are restored. */
+    viewLerp_StandCrouch[3].iOffset = viewLerp_StandCrouch[4].iOffset = 2;
+    PM_ViewHeightAdjust(&pm, &pml);
+    viewLerp_StandCrouch[3].iOffset = viewLerp_StandCrouch[4].iOffset = 0;
+    assert(ps.velocity[0] == 17.0f && ps.velocity[1] == 23.0f && ps.velocity[2] == 31.0f);
+    assert(ps.viewHeightLerpPosAdj == 2.0f);
+    puts("PASS view height: position adjustment preserves the velocity vector");
+}
+
+static int routeTraces, routeGround;
+static void route_trace(trace_t *tr, const vec_t *start, const vec_t *end, const vec_t *maxs)
+{
+    (void)start; (void)end; (void)maxs;
+    memset(tr, 0, sizeof(*tr));
+    ++routeTraces;
+    tr->fraction = 1.0f;
+    tr->entityNum = 5;
+    if (!routeGround || routeTraces > 1) {
+        tr->startsolid = 1;
+        tr->contents = 0x2000001;
+    }
+}
+
+static void test_trace_routes(void)
+{
+    playerState_t ps; pmove_t pm; pml_t pml;
+    fixtureTrace = route_trace;
+    for (int handler = 0; handler < 2; ++handler) {
+        for (int grounded = 0; grounded < 2; ++grounded) {
+            init(&ps, &pm, &pml, 60);
+            pm.handler = handler;
+            pm.tracemask = 0x2000001;
+            ps.groundEntityNum = grounded ? 1022 : 1023;
+            routeGround = 1; routeTraces = 0;
+            PM_GroundTrace(&pm, &pml);
+            assert(routeTraces == 2 && pm.numtouch == 0 && pm.tracemask == 0x2000001);
+        }
+        init(&ps, &pm, &pml, 11);
+        pm.handler = handler;
+        pm.tracemask = 0x2000001;
+        ps.pm_flags = 1;
+        pm.cmd.buttons = 0x200;
+        routeGround = 0; routeTraces = 0;
+        PM_CheckDuck(&pm, &pml);
+        assert(routeTraces == 1 && pm.numtouch == 0 && pm.tracemask == 0x2000001);
+    }
+    fixtureTrace = NULL;
+    puts("PASS stance and missed-ground probes use the raw trace callback");
+}
+
+static void test_linked_weapon(void)
+{
+    playerState_t ps; pmove_t pm; pml_t pml;
+    for (int type = 1; type <= 7; type += 6) {
+        init(&ps, &pm, &pml, 60);
+        ps.pm_type = type;
+        ps.eFlags = 0x100;
+        pm.cmd.serverTime = 3;
+        weaponCalls = 0;
+        Pmove(&pm);
+        assert(weaponCalls == 1);
+    }
+    puts("PASS linked movement types retain their weapon update with turret flags");
+}
+
+#endif
 int main(int argc, char **argv)
 {
     assert(argc == 2 || argc == 3);
@@ -378,6 +470,12 @@ int main(int argc, char **argv)
     else if (!strcmp(argv[1], "direction")) test_direction();
     else if (!strcmp(argv[1], "stance")) test_stance_events();
     else if (!strcmp(argv[1], "view")) test_view();
+#if defined(COD2_X64)
+    else if (!strcmp(argv[1], "view-adjust-zero")) test_view_adjust_zero();
+    else if (!strcmp(argv[1], "view-adjust-offset")) test_view_adjust_offset();
+    else if (!strcmp(argv[1], "trace-routes")) test_trace_routes();
+    else if (!strcmp(argv[1], "linked-weapon")) test_linked_weapon();
+#endif
     else if (!strcmp(argv[1], "ladder")) test_ladder();
     else if (!strcmp(argv[1], "prone")) test_prone();
     else if (!strcmp(argv[1], "dispatch")) test_dispatch();

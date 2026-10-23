@@ -405,6 +405,28 @@ WeaponDef *BG_LoadWeaponDefInternal(const char *folder, const char *name)
         return weapDef;
     }
 
+#if defined(COD2_X64)
+    if (weapDef->iAdsTransInTime > 0) {
+        weapDef->fOOPosAnimLength[0] = 1.0f / (float)weapDef->iAdsTransInTime;
+    } else {
+        weapDef->fOOPosAnimLength[0] = BM_I2F(0x3b5a740e); /* was 0x1.b4e81cp-9f (C99 hex float) */
+    }
+
+    if (weapDef->iAdsTransOutTime > 0) {
+        weapDef->fOOPosAnimLength[1] = 1.0f / (float)weapDef->iAdsTransOutTime;
+    } else {
+        weapDef->fOOPosAnimLength[1] = BM_I2F(0x3b03126f); /* was 0x1.0624dep-9f (C99 hex float) */
+    }
+
+    if (weapDef->fMaxDamageRange <= 0.0f) {
+        weapDef->fMaxDamageRange = BM_I2F(0x497423f0); /* was 0x1.e847ep+19f (C99 hex float) */
+    }
+
+    if (weapDef->fMinDamageRange <= 0.0f) {
+        weapDef->fMinDamageRange = BM_I2F(0x497423f2); /* was 0x1.e847e4p+19f (C99 hex float) */
+    }
+
+#else
     if (weapDef->iFireTime > 0) {
         weapDef->fOOPosAnimLength[0] = 1.0f / (float)weapDef->iFireTime;
     } else {
@@ -425,6 +447,7 @@ WeaponDef *BG_LoadWeaponDefInternal(const char *folder, const char *name)
         weapDef->destabilizationTimeReductionRatio = BM_I2F(0x497423f2); /* was 0x1.e847e4p+19f (C99 hex float) */
     }
 
+#endif
     if (weapDef->enemyCrosshairRange > 15000.0f) {
         Com_Error(1, "Enemy crosshair ranges should be less than %f ", 15000.0);
     }

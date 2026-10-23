@@ -810,7 +810,11 @@ qboolean BG_CheckProneValid(int passEntityNum, const vec_t *vPos, const float fS
         vEnd[2] = vPos[2] + 10.0f;
 
         traceFunc(&trace, vStart, vMins, vMaxs, vEnd, passEntityNum, iTraceMask);
+#if defined(COD2_X64)
+        if (trace.allsolid) {
+#else
         if (trace.startsolid) {
+#endif
             return 0;
         }
     }
@@ -896,7 +900,11 @@ qboolean BG_CheckProneValid(int passEntityNum, const vec_t *vPos, const float fS
 
     traceFunc(&trace, vStart, vMins, vMaxs, vEnd, passEntityNum, iTraceMask);
 
+#if defined(COD2_X64)
+    if (trace.fraction == 1.0f) {
+#else
     if (trace.fraction >= 1.0f) {
+#endif
         goto prone_clear_or_air_success;
     }
     if (trace.normal[2] < 0.699999988079071f) {
@@ -915,6 +923,12 @@ qboolean BG_CheckProneValid(int passEntityNum, const vec_t *vPos, const float fS
         }
     }
 
+#if defined(COD2_X64)
+    secondHit[0] = firstHit[0];
+    secondHit[1] = firstHit[1];
+    secondHit[2] = firstHit[2];
+    if (bFirstTraceHit) {
+#endif
     vDelta[0] = firstHit[0] - waistPoint[0] + 6.0f * vForward[0];
     vDelta[1] = firstHit[1] - waistPoint[1] + 6.0f * vForward[1];
     vDelta[2] = firstHit[2] - waistPoint[2] + 6.0f * vForward[2] + 6.0f;
@@ -949,6 +963,9 @@ qboolean BG_CheckProneValid(int passEntityNum, const vec_t *vPos, const float fS
     secondHit[1] = vStart[1] + (vEnd[1] - vStart[1]) * frac;
     secondHit[2] = vStart[2] + (vEnd[2] - vStart[2]) * frac;
 
+#if defined(COD2_X64)
+    }
+#endif
     vStart[0] = secondHit[0];
     vStart[1] = secondHit[1];
     vStart[2] = secondHit[2];
@@ -957,7 +974,11 @@ qboolean BG_CheckProneValid(int passEntityNum, const vec_t *vPos, const float fS
     vEnd[2] = secondHit[2] - ((secondHit[2] - waistPoint[2]) * 2.0f + fSize);
 
     traceFunc(&trace, vStart, vMins, vMaxs, vEnd, passEntityNum, iTraceMask);
+#if defined(COD2_X64)
+    if (trace.fraction == 1.0f) {
+#else
     if (trace.fraction >= 1.0f) {
+#endif
         goto prone_clear_or_air_success;
     }
     if (trace.normal[2] < 0.699999988079071f) {
@@ -982,7 +1003,11 @@ qboolean BG_CheckProneValid(int passEntityNum, const vec_t *vPos, const float fS
         vDelta[1] = lowerPoint[1] - waistPoint[1];
         vDelta[2] = lowerPoint[2] - waistPoint[2];
         fPitchDiff = AngleSubtract(vectopitch(vDelta), fTorsoPitch);
+#if defined(COD2_X64)
+        success = !(fPitchDiff < -50.0f || fPitchDiff > 70.0f);
+#else
         success = (fPitchDiff >= -50.0f && fPitchDiff <= 70.0f);
+#endif
     }
 
     vMins[0] = -0.0f;

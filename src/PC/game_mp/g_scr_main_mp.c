@@ -170,7 +170,11 @@ extern void SV_GameSendServerCommand(int clientnum, svscmd_type type, const char
 extern void Scr_Notify(gentity_t *ent, unsigned short stringValue, unsigned int paramcount);
 extern struct XModel *SV_XModelGet(const char *name);
 extern int XModelNumBones(const struct XModel *model);
+#if defined(COD2_X64)
+extern unsigned short *XModelBoneNames(XModel *model);
+#else
 extern int XModelBoneNames(XModel *model);
+#endif
 extern void G_AddDebugString(const vec_t *xyz, const vec_t *color, float scale, const char *pszText);
 extern void CL_AddDebugLine(const vec_t *start, const vec_t *end, const vec_t *color, int depthTest, int duration, int fromServer);
 extern int G_ModelIndex(const char *name);
@@ -2286,8 +2290,7 @@ void GScr_GetPartName(void)
         Scr_ParamError(1, va("index out of range (0 - %d)", numBones - 1));
 
 #if defined(COD2_X64)
-    /* XModelBoneNames still returns int in xanim; read the typed hierarchy until that ABI is migrated. */
-    name = ((XModelParts *)model->parts)->hierarchy->names[index];
+    name = XModelBoneNames(model)[index];
 #else
     name = ((unsigned short *)XModelBoneNames( (XModel *)(model)))[index];
 #endif
