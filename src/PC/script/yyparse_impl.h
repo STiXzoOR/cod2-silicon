@@ -70,7 +70,11 @@ static int yyparse_rescan_matched(char *yytext_p, int count)
     char *yy_end = yytext_p + count;
 
     while (yy_cp < yy_end) {
+#if defined(COD2_X64)
+        unsigned char yy_c = *yy_cp ? YY_EC_VAL((unsigned char)*yy_cp) : 1;
+#else
         unsigned char yy_c = YY_EC_VAL((unsigned char)*yy_cp);
+#endif
         if (YY_ACCEPT_VAL(yy_current_state)) {
             yy_last_accepting_state = yy_current_state;
             yy_last_accepting_cpos = yy_cp;
@@ -96,6 +100,9 @@ static int yyparse_get_next_buffer(int offset)
     struct yy_buffer_state *b = (struct yy_buffer_state *)yy_current_buffer;
     int num_to_read;
     int n_kept;
+#if defined(COD2_X64)
+    int action = 1;
+#endif
 
     if (b->yy_buffer_status == 0) {
         yy_n_chars = b->yy_n_chars;
@@ -109,6 +116,11 @@ static int yyparse_get_next_buffer(int offset)
         exit(2);
     }
 
+#if defined(COD2_X64)
+    if (!b->yy_fill_buffer)
+        return yy_c_buf_p - yytext == 1 ? 0 : 2;
+
+#endif
     n_kept = (int)(yy_c_buf_p - yytext) - 1;
 
     if (n_kept > 0) {
@@ -119,7 +131,11 @@ static int yyparse_get_next_buffer(int offset)
             dest[i] = src2[i];
     }
 
+#if defined(COD2_X64)
+    num_to_read = b->yy_buf_size - n_kept - 1;
+#else
     num_to_read = b->yy_buf_size - n_kept;
+#endif
 
     while (num_to_read <= 0) {
         int buf_offset = (int)(yy_c_buf_p - b->yy_ch_buf);
@@ -138,7 +154,11 @@ static int yyparse_get_next_buffer(int offset)
             exit(2);
         }
         yy_c_buf_p = b->yy_ch_buf + buf_offset;
+#if defined(COD2_X64)
+        num_to_read = b->yy_buf_size - n_kept - 1;
+#else
         num_to_read = b->yy_buf_size - n_kept;
+#endif
     }
 
     if (num_to_read > 0x2000)
@@ -158,13 +178,20 @@ static int yyparse_get_next_buffer(int offset)
             return 0;
         }
         b->yy_buffer_status = 2;
+#if defined(COD2_X64)
+        action = 2;
+#endif
     }
 
     yy_n_chars += n_kept;
     b->yy_ch_buf[yy_n_chars] = '\0';
     b->yy_ch_buf[yy_n_chars + 1] = '\0';
     yytext = b->yy_ch_buf;
+#if defined(COD2_X64)
+    return action;
+#else
     return 1;
+#endif
 }
 
 static int yyparse_yylex(char *string_buf)
@@ -253,6 +280,9 @@ yy_find_action:
         *yy_cp = yy_hold_char;
         yy_cp = yy_last_accepting_cpos;
         yy_current_state = yy_last_accepting_state;
+#if defined(COD2_X64)
+        goto yy_find_action;
+#endif
         yy_act = YY_ACCEPT_VAL(yy_current_state);
 
         yytext = yy_bp;
@@ -472,7 +502,9 @@ yy_find_action:
         g_sourcePos = p;
         int slen = yyleng;
         g_out_pos = p + slen;
+#if !defined(COD2_X64)
         yylval.val.node = (intptr_t)SL_GetStringOfLen(yytext, 0, (unsigned int)(slen + 1), 0xd);
+#endif
         return 0x145;
     }
     case 73:
@@ -489,7 +521,11 @@ yy_find_action:
         yylval.pos = p;
         g_sourcePos = p;
         g_out_pos = p + yyleng;
+#if defined(COD2_X64)
+        static const int tmap[] = { 0x146, 0x147, 0x148, 0x149, 0x14a, 0x14b, 0x14c, 0x14d, 0x14e };
+#else
         static const int tmap[] = { 0x148, 0x147, 0x146, 0x149, 0x14a, 0x14b, 0x14c, 0x14d, 0x14e };
+#endif
         return tmap[yy_act - 73];
     }
     case 82:
@@ -562,6 +598,34 @@ yy_find_action:
 
         offset = (int)(yy_c_buf_p - yytext) - 1;
 
+#if defined(COD2_X64)
+        /* A NUL inside the input is a scanner character, not an end marker. */
+        if (yy_c_buf_p <= yy_current_buffer->yy_ch_buf + yy_n_chars) {
+            unsigned char yy_c = 1;
+            yy_c_buf_p = yytext + offset;
+            yy_current_state = yyparse_rescan_matched(yytext, offset);
+            if (YY_ACCEPT_VAL(yy_current_state)) {
+                yy_last_accepting_state = yy_current_state;
+                yy_last_accepting_cpos = yy_c_buf_p;
+            }
+            int idx = YY_BASE(yy_current_state) + yy_c;
+            while (YY_CHK(idx) != yy_current_state) {
+                yy_current_state = YY_DEF(yy_current_state);
+                if (yy_current_state > 0xff)
+                    yy_c = YY_META_VAL(yy_c);
+                idx = YY_BASE(yy_current_state) + yy_c;
+            }
+            yy_current_state = YY_NXT(idx);
+            yy_bp = yytext;
+            yy_cp = yy_c_buf_p;
+            if (yy_current_state != 0xff) {
+                yy_cp = ++yy_c_buf_p;
+                goto yy_match;
+            }
+            goto yy_find_action;
+        }
+
+#endif
         eob_act = yyparse_get_next_buffer(offset);
 
         if (eob_act == 0) {

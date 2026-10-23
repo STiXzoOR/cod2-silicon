@@ -350,7 +350,11 @@ unsigned int SL_FindStringOfLen(const char *str, unsigned int len)
 
     {
         byte *refEntry = base + stringValue * 8;
+#if defined(COD2_X64)
+        if ((unsigned char)refEntry[0] == (unsigned char)byteLen) {
+#else
         if ((unsigned char)refEntry[0] == (unsigned char)byteLen && stringValue != 0xFFFF) {
+#endif
 
             if (memcmp(str, refEntry + 4, len) == 0) {
 
@@ -382,7 +386,11 @@ unsigned int SL_FindStringOfLen(const char *str, unsigned int len)
                 sv2 = (unsigned int)newEntry_ptr[1];
                 e2 = base + sv2 * 8;
 
+#if defined(COD2_X64)
+                if ((unsigned char)e2[0] == (unsigned char)byteLen) {
+#else
                 if ((unsigned char)e2[0] == (unsigned char)byteLen && sv2 != 0xFFFF) {
+#endif
                     if (memcmp(str, e2 + 4, len) == 0) {
                         {
                             unsigned short pf = SG_W0(prev_idx) & 0xc000;
@@ -474,7 +482,11 @@ loop_top: {
                 unsigned int sv_head = sw1_val;
                 byte *refEntry = base + sv_head * 8;
 
+#if defined(COD2_X64)
+                if ((unsigned char)refEntry[0] == (unsigned char)byteLen) {
+#else
                 if ((unsigned char)refEntry[0] == (unsigned char)byteLen && sv_head != 0xFFFF) {
+#endif
 
                     if (memcmp(str, refEntry + 4, len) == 0) {
                         /* return the matched id (identity preserved) but never ref-add a
@@ -517,7 +529,11 @@ loop_top: {
                         node_sv = (unsigned int)cur_ptr[1];
                         node_entry = base + node_sv * 8;
 
+#if defined(COD2_X64)
+                        if ((unsigned char)node_entry[0] == (unsigned char)byteLen) {
+#else
                         if ((unsigned char)node_entry[0] == (unsigned char)byteLen && node_sv != 0xFFFF) {
+#endif
                             byte *cmp_ptr = node_entry + 4;
                             if (memcmp(str, cmp_ptr, len) == 0) {
 
@@ -957,7 +973,12 @@ void SL_Init(void)
                             SG_W0(0) = (unsigned short)hash3;
                         } else {
 
+#if defined(COD2_X64)
+                            /* The head inherits the successor's link before it is recycled. */
+                            unsigned short new_w03 = (unsigned short)((ecx3_hash[0] & 0x3fff) | 0x8000);
+#else
                             unsigned short new_w03 = (unsigned short)((esi3_chain & 0x3fff) | 0x8000);
+#endif
                             SG_W0(hash3) = new_w03;
                             edi3[1] = ecx3_hash[1];
                             SG_RESTART = (void *)edi3;
@@ -1128,7 +1149,14 @@ unsigned int SL_GetStringForVector(const float *v)
     char tempString[0x80];
     unsigned int len;
 
+#if defined(COD2_X64)
+    /* Literal vectors may begin at any bytecode offset, as on Mac i386. */
+    float value[3];
+    memcpy(value, (const byte *)v, sizeof(value));
+    sprintf(tempString, "(%g, %g, %g)", (double)value[0], (double)value[1], (double)value[2]);
+#else
     sprintf(tempString, "(%g, %g, %g)", (double)v[0], (double)v[1], (double)v[2]);
+#endif
     len = (unsigned int)strlen(tempString) + 1;
     return SL_GetStringOfLen(tempString, 0, len, 0xe);
 }

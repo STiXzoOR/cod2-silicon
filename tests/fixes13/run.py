@@ -107,7 +107,8 @@ if not args.test or 'switch' in args.test:
     source = function(path, 'EmitSwitchStatement')
     start = source.index('if (numCases > 1)')
     end = source.index('nextCodePos = TempMalloc(0);', start)
-    generated = function(path, 'CompareCaseInfo') + '''
+    packed_load = '#include <string.h>\n' + function(path, 'Scr_LoadPackedInt') if 'Scr_LoadPackedInt(' in source else ''
+    generated = packed_load + function(path, 'CompareCaseInfo') + '''
 static void check_cases(unsigned int (*caseTable)[2], int numCases)
 {
     int i;

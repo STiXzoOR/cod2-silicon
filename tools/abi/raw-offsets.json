@@ -7565,5 +7565,103 @@
     "count": 1,
     "classification": "safe",
     "reason": "Transfer size uses sizeof the actual typed array element; numbered U/P macro arguments identify dispatch argument slots, not byte offsets. The palette copy uses one complete typed palette entry array."
+  },
+  {
+    "file": "src/PC/script/scr_compiler.c",
+    "text": "if (value == (unsigned int)Scr_LoadPackedInt((byte *)caseTable + (i + 1) * 8)) {",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac EmitSwitch uses packed eight-byte rows: a 32-bit key followed by a 32-bit code-position handle. Byte offsets preserve that format; memcpy loads avoid alignment UB."
+  },
+  {
+    "file": "src/PC/script/scr_compiler.c",
+    "text": "unsigned int value = (unsigned int)Scr_LoadPackedInt((byte *)caseTable + i * 8);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac EmitSwitch uses packed eight-byte rows: a 32-bit key followed by a 32-bit code-position handle. Byte offsets preserve that format; memcpy loads avoid alignment UB."
+  },
+  {
+    "file": "src/PC/script/scr_variable.c",
+    "text": "memcpy(&value, entry + 1, sizeof(value));",
+    "count": 2,
+    "classification": "safe",
+    "reason": "Mac Scr_DumpScriptThreads reads the packed stack record as one type byte plus a 32-bit value. The native arena retains that five-byte format; memcpy avoids alignment UB."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(record + 1));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac script stack archives retain five-byte records (one type byte and a 32-bit value/code-position handle). Native byte offsets and memcpy preserve those widths without requiring alignment."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "VM_StoreI32(dst + 1, value->u.intValue);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac script stack archives retain five-byte records (one type byte and a 32-bit value/code-position handle). Native byte offsets and memcpy preserve those widths without requiring alignment."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "VM_StoreI32(record + 1, SCR_CODEPOS_ENC(scrVmPub.function_frame->fs.pos));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac script stack archives retain five-byte records (one type byte and a 32-bit value/code-position handle). Native byte offsets and memcpy preserve those widths without requiring alignment."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "VM_StoreI32(record + 1, value->u.intValue);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac script stack archives retain five-byte records (one type byte and a 32-bit value/code-position handle). Native byte offsets and memcpy preserve those widths without requiring alignment."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "const char *caseCodePos = SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(next + 4));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac bytecode uses packed 16-bit jumps/counts, 32-bit branch offsets and eight-byte switch rows. These are byte-stream offsets over the unchanged 32-bit handle format; memcpy removes alignment UB."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "const char *currentCodePos = SCR_CODEPOS_PTR((unsigned int)VM_LoadI32(*pos + 4));",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac bytecode uses packed 16-bit jumps/counts, 32-bit branch offsets and eight-byte switch rows. These are byte-stream offsets over the unchanged 32-bit handle format; memcpy removes alignment UB."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "const char *tablePos = opcodeStart + 5 + VM_LoadI32(*pos);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac bytecode uses packed 16-bit jumps/counts, 32-bit branch offsets and eight-byte switch rows. These are byte-stream offsets over the unchanged 32-bit handle format; memcpy removes alignment UB."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "return next + 2 + 8 * VM_LoadU16(next);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac bytecode uses packed 16-bit jumps/counts, 32-bit branch offsets and eight-byte switch rows. These are byte-stream offsets over the unchanged 32-bit handle format; memcpy removes alignment UB."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "return next + 2 - VM_LoadU16(next);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac bytecode uses packed 16-bit jumps/counts, 32-bit branch offsets and eight-byte switch rows. These are byte-stream offsets over the unchanged 32-bit handle format; memcpy removes alignment UB."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "savedValue.u.intValue = VM_LoadI32(buf + 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac script stack archives retain five-byte records (one type byte and a 32-bit value/code-position handle). Native byte offsets and memcpy preserve those widths without requiring alignment."
+  },
+  {
+    "file": "src/PC/script/scr_vm.c",
+    "text": "top->u.intValue = VM_LoadI32(record + 1);",
+    "count": 1,
+    "classification": "safe",
+    "reason": "Mac script stack archives retain five-byte records (one type byte and a 32-bit value/code-position handle). Native byte offsets and memcpy preserve those widths without requiring alignment."
   }
 ]

@@ -20,6 +20,9 @@ extern unsigned int Scr_CreateCanonicalFilename(const char *filename);
 extern byte *Scr_AddSourceBuffer(const char *filename, const char *extFilename, byte *oldFilename, int flag);
 extern int Scr_AllocArray(void);
 extern void Scr_LoadAnimTreeAtIndex(int index, Alloc_t Alloc, int user);
+#if defined(COD2_X64)
+extern void Scr_ResetAnimRefs(void);
+#endif
 extern void Scr_InitOpcodeLookup(void);
 extern void Scr_ShutdownOpcodeLookup(void);
 extern void Scr_ClearErrorMessage(void);
@@ -365,6 +368,9 @@ void Scr_EndLoadAnimTrees(void)
     if (scrAnimPub->animtree_node != 0)
         RemoveRefToObject(scrAnimPub->animtree_node);
 
+#if defined(COD2_X64)
+    Scr_ResetAnimRefs();
+#endif
     SL_ShutdownSystem(2);
 
     scrVarPub = (struct scrVarPub_t *)imp_scrVarPub;

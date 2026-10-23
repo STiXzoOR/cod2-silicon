@@ -14,6 +14,7 @@ p.add_argument('--output', type=Path, required=True)
 p.add_argument('--baseline', help='Read game callback/entry bodies from a local Git commit')
 p.add_argument('--ubsan', action='store_true', help='Also expose retained full compiler/parser/VM UBSan limitations')
 p.add_argument('--dedicated', action='store_true')
+p.add_argument('--vm-source', type=Path, help='Use an explicitly supplied private VM TU')
 p.add_argument('--compiler-source', type=Path, help='Use an explicitly supplied private compiler TU; other script sources remain local')
 args = p.parse_args()
 out = args.output.resolve()
@@ -26,7 +27,7 @@ argv = row.get('arguments') or shlex.split(row['command'])
 flags = [s.replace(old_root, str(ROOT)) for s in argv[:argv.index('-o')] if s != '-DNDEBUG']
 sanitizers = 'address,undefined' if args.ubsan else 'address'
 flags += ['-UNDEBUG', '-I' + str(out), '-fsanitize=' + sanitizers, '-fno-omit-frame-pointer',
-          '-ffunction-sections', '-fdata-sections']
+          '-ffunction-sections', '-fdata-sections', '-iquote', str(ROOT / 'src/PC/script')]
 if args.ubsan:
     flags += ['-fno-sanitize-recover=all']
 game_path = 'src/PC/game_mp/g_scr_main_mp.c'
@@ -79,6 +80,8 @@ for path in ['tests/cod2x/stop_gametype_vm.c', 'src/PC/script/scr_main.c',
     obj = out / (Path(path).stem + '.o')
     with (out / (Path(path).stem + '.compile.log')).open('w') as log:
         source = args.compiler_source.resolve() if path == 'src/PC/script/scr_compiler.c' and args.compiler_source else ROOT / path
+        if path == 'src/PC/script/scr_vm.c' and args.vm_source:
+            source = args.vm_source.resolve()
         subprocess.run([*flags, '-c', str(source), '-o', str(obj)], stdout=log, stderr=log, check=True)
     objects.append(str(obj))
 exe = out / 'stop_gametype_vm'

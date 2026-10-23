@@ -10,12 +10,14 @@ import sys
 
 root = Path(__file__).resolve().parents[3]
 build = root / 'build-macos'
-output = build / 'ws6-vm-semantics'
-output.mkdir(exist_ok=True)
 parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument('--compile-db', type=Path, default=build / 'compile_commands.json')
+parser.add_argument('--output', type=Path, default=build / 'ws6-vm-semantics')
 parser.add_argument('--source', type=Path, default=root / 'src/PC/script/scr_vm.c')
 parser.add_argument('cases', nargs='*')
 args = parser.parse_args()
+output = args.output
+output.mkdir(parents=True, exist_ok=True)
 source_path = args.source.resolve()
 source = source_path.read_text()
 cases = []
@@ -27,7 +29,7 @@ for opcode in ('Object', 'JumpBack'):
     cases.append(f'/* Extracted without rewriting from scr_vm.c. */\n'
                  f'        case VMOP_{opcode}: {{\n{match[1]}')
 (output / 'vm_semantics_cases.inc').write_text('\n'.join(cases))
-commands = json.loads((build / 'compile_commands.json').read_text())
+commands = json.loads(args.compile_db.read_text())
 entry = next(e for e in commands if e['file'].endswith('/scr_vm.c')
              and 'cod2_macos.dir' in e['command'])
 argv = shlex.split(entry['command'])

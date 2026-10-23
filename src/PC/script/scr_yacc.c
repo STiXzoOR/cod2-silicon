@@ -99,7 +99,11 @@ YY_BUFFER_STATE yy_create_buffer(FILE *file, int size)
     b = (YY_BUFFER_STATE)malloc(0x28);
 #endif
     if (!b) {
+#if defined(COD2_X64)
+        fprintf(stderr, "%s\n", "out of dynamic memory in yy_create_buffer()");
+#else
         fprintf(stderr, "%s\n", "fatal flex scanner internal error--no action found");
+#endif
         exit(2);
     }
 
@@ -108,7 +112,11 @@ YY_BUFFER_STATE yy_create_buffer(FILE *file, int size)
     buf = (char *)malloc(size + 2);
     b->yy_ch_buf = buf;
     if (!buf) {
+#if defined(COD2_X64)
+        fprintf(stderr, "%s\n", "out of dynamic memory in yy_create_buffer()");
+#else
         fprintf(stderr, "%s\n", "fatal flex scanner internal error--no action found");
+#endif
         exit(2);
     }
 

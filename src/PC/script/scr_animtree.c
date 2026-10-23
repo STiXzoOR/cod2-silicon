@@ -118,6 +118,13 @@ static void *Hunk_AllocXAnimTreePrecache(int size)
 #define ANIM_REF_TAG 0x80000000u
 static const char *g_animRefTable[16384];
 static unsigned int g_animRefCount = 1;   /* index 0 reserved = end-of-chain */
+#if defined(COD2_X64)
+void Scr_ResetAnimRefs(void)
+{
+    /* The animtree/name objects own every encoded link and are released first. */
+    g_animRefCount = 1;
+}
+#endif
 static unsigned int AnimRef_Enc(const char *pos)
 {
     const char *base = SCR_PROGBUF_BASE();
@@ -339,7 +346,11 @@ static void Scr_CheckAnimsDefined(unsigned int names, unsigned int filename)
 #endif
             continue;
         }
+#if defined(COD2_X64)
+        Com_Error(1, "\x15%s", msg);
+#else
         Com_Error(1, "%s", msg);
+#endif
     }
 }
 
