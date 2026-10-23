@@ -1,5 +1,8 @@
 # Validated CoD2 reconstruction
 
+> Superseded on 2026-10-23 by the [faithful decompilation plan](2026-10-23-faithful-decompilation.md).
+> The text below is kept as the record of the R1–R6 work.
+
 The user requested full validated reconstruction after the A0–A6 offline
 analysis pass. Export completion is not the completion criterion for this work.
 Continue in the isolated `codex/metal-u1-integration` checkout, commit and push
