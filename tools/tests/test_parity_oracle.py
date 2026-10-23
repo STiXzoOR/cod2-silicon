@@ -48,6 +48,33 @@ class OracleTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('2 frames match', result.stdout)
 
+    def test_live_coverage_rejects_requested_actions_without_observed_effects(self):
+        trace = self.path / 'players'
+        commands = self.path / 'commands'
+        trace.write_text(players(1) + players(2))
+        commands.write_text('cod2-replay 1\ncmd 1 0 50 66560 1 0 0 0 0 127 0\nend 2\n')
+        result = subprocess.run([sys.executable, str(ROOT / 'tools/oracle/live_coverage.py'),
+                                 str(trace), str(commands), '--require-all'],
+                                capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('missing observed actions', result.stderr)
+        self.assertIn('grenade', result.stderr)
+
+    def test_live_coverage_counts_death_and_respawn_after_being_alive(self):
+        trace = self.path / 'players'
+        commands = self.path / 'commands'
+        trace.write_text('frame 1 clients 1\n' + player(1, 0, health=0) +
+                         'frame 2 clients 1\n' + player(2, 0) +
+                         'frame 3 clients 1\n' + player(3, 0, health=0) +
+                         'frame 4 clients 1\n' + player(4, 0))
+        commands.write_text('cod2-replay 1\nend 4\n')
+        result = subprocess.run([sys.executable, str(ROOT / 'tools/oracle/live_coverage.py'),
+                                 str(trace), str(commands)], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report['death'], {'records': 1, 'first': [3, 0]})
+        self.assertEqual(report['respawn'], {'records': 1, 'first': [4, 0]})
+
     def test_malformed_reordered_and_truncated_players_cannot_pass(self):
         good = players(1)
         bad = ('', 'garbage\n', good.replace('pm_flags 00000000', 'pm_flags 0'),
