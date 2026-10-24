@@ -25,7 +25,7 @@ static struct {
     GfxRenderTargetId target;
     GfxImage *source;
     const Material *material;
-    float width, height, uv[4], taps[8][4];
+    float x, y, width, height, uv[4], taps[8][4];
 } draws[32];
 static int drawCount, endCount, targetCount;
 static GfxRenderTargetId target;
@@ -40,11 +40,13 @@ void RB_DrawStretchPic(const Material *material, float x, float y, float w, floa
                       float s0, float t0, float s1, float t1,
                       unsigned int color, GfxPrimStatsTarget stats)
 {
-    assert(drawCount < 32 && x == 0 && y == 0 && color == 0xffffffff && stats == 10);
+    assert(drawCount < 32 && color == 0xffffffff && stats == 10);
     assert(targetCount == drawCount + 1 && endCount == drawCount);
     draws[drawCount].target = target;
     draws[drawCount].source = BACKEND.currentFeedbackImage;
     draws[drawCount].material = material;
+    draws[drawCount].x = x;
+    draws[drawCount].y = y;
     draws[drawCount].width = w;
     draws[drawCount].height = h;
     float uv[] = { s0, t0, s1, t1 };
@@ -217,6 +219,7 @@ static void CheckNativeExtent(void)
     RB_GaussianFilterImage(2, R_RENDERTARGET_BLURRED_SCREEN);
     assert(drawCount >= 2);
     for (int i = 0; i < drawCount; ++i) {
+        assert(draws[i].x == -0.5f && draws[i].y == -0.5f);
         assert(draws[i].uv[0] == 0 && draws[i].uv[2] == 1);
         assert((draws[i].uv[1] == 0 && draws[i].uv[3] == 1) ||
                (draws[i].uv[1] == 1 && draws[i].uv[3] == 0));
