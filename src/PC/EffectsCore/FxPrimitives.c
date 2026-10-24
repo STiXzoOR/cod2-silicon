@@ -1473,7 +1473,11 @@ void Particle_IntegrateVelocity2(const Particle *_this, float normDuration, vec_
         vz = IntegrateChannel(self, FX_OFFSET(Particle, velocity2ZChannelInstance, 0x21c), 0, 0, FX_OFFSET(Particle, velocity2ZChannelInstance, 0x21c) + FX_SCALE_OFFSET, normDuration, 0);
     }
 
+#if defined(COD2_X64)
+    if (!(((Particle *)self)->base.mFlags & 0x400000)) {
+#else
     if (!(*(byte *)(self + FX_FLAG_OFFSET(2, 0xaa)) & 0x20)) {
+#endif
         AxisTransformVector((vec3_t *)((char *)self + offsetof(Particle, displayAxis[0][0])), vx, vy, vz, outVector);
     } else {
         outVector[0] = vx;
@@ -1688,6 +1692,19 @@ void Particle_CalcVelocityValue(const Particle *_this, float normTime, vec_t *ou
         vz = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocityZChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Particle, velocityZChannelInstance.curveIterator.master)) + FX_SCALE_OFFSET);
     }
 
+#if defined(COD2_X64)
+    vec3_t value = {vx, vy, vz};
+    if (((Particle *)self)->base.mFlags & 0x200000) {
+        if (or_)
+            OrientationDirFromWorldDir(or_, value, outVector);
+        else
+            memcpy(outVector, value, sizeof(value));
+    } else if (or_) {
+        memcpy(outVector, value, sizeof(value));
+    } else {
+        AxisTransformVector(((Particle *)self)->displayAxis, vx, vy, vz, outVector);
+    }
+#else
     if (!(*(byte *)(self + FX_FLAG_OFFSET(2, 0xaa)) & 0x20)) {
         AxisTransformVector((vec3_t *)((char *)self + offsetof(Particle, displayAxis[0][0])), vx, vy, vz, outVector);
     } else {
@@ -1695,6 +1712,7 @@ void Particle_CalcVelocityValue(const Particle *_this, float normTime, vec_t *ou
         outVector[1] = vy;
         outVector[2] = vz;
     }
+#endif
 }
 
 void Particle_CalcVelocity2Value(const Particle *_this, float normTime, vec_t *outVector, const orientation_t *or_)
@@ -1703,7 +1721,11 @@ void Particle_CalcVelocity2Value(const Particle *_this, float normTime, vec_t *o
     byte *self = (byte *)_this;
     float vx, vy, vz;
 
+#if defined(COD2_X64)
+    if (((Particle *)self)->base.mFlags & 0x100000) {
+#else
     if (*(byte *)(self + FX_FLAG_OFFSET(2, 0xaa)) & 8) {
+#endif
         float bfx = (((Particle *)(self))->velocity2WeightX);
         float v0x = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocity2XChannelInstance.curveIterator.master))), normTime);
         float v1x = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocity2XRandChannelInstance.curveIterator.master))), normTime);
@@ -1724,6 +1746,19 @@ void Particle_CalcVelocity2Value(const Particle *_this, float normTime, vec_t *o
         vz = EvalCurve1( (byte *)(((char *)self + offsetof(Particle, velocity2ZChannelInstance.curveIterator.master))), normTime) * *(float *)(((char *)self + offsetof(Particle, velocity2ZChannelInstance.curveIterator.master)) + FX_SCALE_OFFSET);
     }
 
+#if defined(COD2_X64)
+    vec3_t value = {vx, vy, vz};
+    if (((Particle *)self)->base.mFlags & 0x400000) {
+        if (or_)
+            OrientationDirFromWorldDir(or_, value, outVector);
+        else
+            memcpy(outVector, value, sizeof(value));
+    } else if (or_) {
+        memcpy(outVector, value, sizeof(value));
+    } else {
+        AxisTransformVector(((Particle *)self)->displayAxis, vx, vy, vz, outVector);
+    }
+#else
     if (!(*(byte *)(self + FX_FLAG_OFFSET(2, 0xaa)) & 0x20)) {
         AxisTransformVector((vec3_t *)((char *)self + offsetof(Particle, displayAxis[0][0])), vx, vy, vz, outVector);
     } else {
@@ -1731,6 +1766,7 @@ void Particle_CalcVelocity2Value(const Particle *_this, float normTime, vec_t *o
         outVector[1] = vy;
         outVector[2] = vz;
     }
+#endif
 }
 
 void Particle_GetTotalVelocity(const Particle *_this, float normTime, vec_t *outVector, const orientation_t *or_)
@@ -1917,6 +1953,13 @@ void Particle_ApplyImpact(const Particle *_this, const orientation_t *or_, float
 {
     byte *self = (byte *)_this;
 
+#if defined(COD2_X64)
+    float speedSq = velocity[0] * velocity[0] + velocity[1] * velocity[1] + velocity[2] * velocity[2];
+    if ((traceNormal[2] > 0.0f && speedSq < 16.0f) || traceFraction == 0.0f) {
+        ((Effect *)self)->mFlags = (((Effect *)self)->mFlags & ~0x820) | 0x1000000;
+        return;
+    }
+#else
     if (traceNormal[2] > 0.0f) {
         float vLenSq = velocity[0] * velocity[0] + velocity[1] * velocity[1] + velocity[2] * velocity[2];
         if (vLenSq >= 16.0f)
@@ -1933,6 +1976,7 @@ void Particle_ApplyImpact(const Particle *_this, const orientation_t *or_, float
     }
 
 do_reflect:;
+#endif
 
     vec3_t normal;
     if (or_) {
