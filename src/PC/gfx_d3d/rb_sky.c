@@ -1,3 +1,362 @@
+#if defined(COD2_X64)
+#    include "common_types.h"
+#    include "imports.h"
+
+extern dvar_t *r_rendererInUse;
+extern r_global_permanent_t rgp;
+extern SunFlareDynamic sunFlareArray[4];
+extern int alwaysfails;
+extern void RB_ClearScreen(int whichToClear, const vec_t *color, float depth, int stencil);
+extern void RB_DrawStretchPic(const Material *material, float x, float y, float w, float h, float s0, float t0, float s1, float t1, D3DCOLOR color, GfxPrimStatsTarget statsTarget);
+extern void RB_EndSurface(void);
+extern void RB_BeginSurface(const Material *material, MaterialTechniqueType techType, int lmapIndex);
+extern void RB_PushMatrixStack(void);
+extern void RB_PopMatrixStack(void);
+extern void RB_DrawFullScreenColoredQuad(const Material *material, float s0, float t0, float s1, float t1, D3DCOLOR color);
+extern void MatrixIdentity44(float (*out)[4]);
+extern void RB_SetProjectionMatrix(const D3DMATRIX *matrix);
+extern void RB_SetViewMatrix(const D3DMATRIX *matrix);
+extern void RB_Set3D(void);
+extern void Vec3Cross(const vec_t *v0, const vec_t *v1, vec_t *cross);
+extern const vec_t Vec3Normalize(vec_t *v);
+extern void RB_SetViewMatrixForWDx7(float w);
+extern void WinSleep(DWORD milliseconds);
+extern float floorf(float x);
+extern int CM_BoxSightTrace(int oldHitNum, const vec_t *start, const vec_t *end, const vec_t *mins, const vec_t *maxs, int model, int brushmask);
+
+typedef int(D3DVTCC *QueryIssueFn)(void *query, int flags);
+typedef int(D3DVTCC *QueryGetDataFn)(void *query, void *data, int size, int flags);
+typedef int(D3DVTCC *DeviceSceneFn)(void *device);
+
+static GfxColor bm_color_from_bits(unsigned int bits)
+{
+    GfxColor color;
+    color.packed = bits;
+    return color;
+}
+
+int RB_CalcSunSpriteSamples(void)
+{
+    IDirect3DQuery9 *query = sunFlareArray[0].sunQuery[0];
+    if (!query)
+        return 0;
+    void *device = (void *)((DxGlobals *)imp_dx)->device;
+    void **deviceTable = *(void ***)device;
+    void **queryTable = *(void ***)query;
+    do {
+        ((DeviceSceneFn)deviceTable[41])(device);
+    } while (alwaysfails);
+    RB_ClearScreen(2, (const vec_t *)imp_colorWhite, 1.0f, 0);
+    do {
+        ((QueryIssueFn)queryTable[6])(query, 2);
+    } while (alwaysfails);
+    RB_DrawStretchPic(rgp.whiteMaterial, 0.0f, 0.0f, 16.0f, 16.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0xffffffff, (GfxPrimStatsTarget)10);
+    RB_EndSurface();
+    do {
+        ((QueryIssueFn)queryTable[6])(query, 1);
+    } while (alwaysfails);
+    do {
+        ((DeviceSceneFn)deviceTable[42])(device);
+    } while (alwaysfails);
+    int samples, result;
+    do {
+        result = ((QueryGetDataFn)queryTable[7])(query, &samples, 4, 1);
+        if (result == 1)
+            WinSleep(0);
+    } while (result == 1);
+    return result ? 256 : samples;
+}
+
+static void RB_SetSunQuadIndices(materialCommands_t *tess)
+{
+    unsigned short base = (unsigned short)tess->vertexCount;
+    const unsigned short corners[6] = { 3, 0, 2, 2, 0, 1 };
+    for (int i = 0; i < 6; ++i)
+        tess->indices[tess->indexCount + i] = base + corners[i];
+    tess->vertexCount += 4;
+    tess->indexCount += 6;
+}
+
+static GfxVertex *RB_SetTessQuad(GfxColor color)
+{
+    materialCommands_t *tess = (materialCommands_t *)imp_tess;
+    GfxVertex *verts = &tess->verts.dx9.generic[(unsigned short)tess->vertexCount];
+    RB_SetSunQuadIndices(tess);
+    for (int i = 0; i < 4; ++i) {
+        verts[i].normal[0] = verts[i].normal[1] = 0.0f;
+        verts[i].normal[2] = 1.0f;
+        verts[i].texCoord[0] = (i == 1 || i == 2) ? 1.0f : 0.0f;
+        verts[i].texCoord[1] = i >= 2 ? 1.0f : 0.0f;
+        verts[i].color = color;
+        verts[i].tangent[0] = 1.0f;
+        verts[i].tangent[1] = verts[i].tangent[2] = 0.0f;
+        verts[i].binormal[0] = verts[i].binormal[2] = 0.0f;
+        verts[i].binormal[1] = 1.0f;
+    }
+    return verts;
+}
+
+static GfxVertexDx7 *RB_SetTessQuadDx7(GfxColor color)
+{
+    materialCommands_t *tess = (materialCommands_t *)imp_tess;
+    GfxVertexDx7 *verts = &tess->verts.dx7.generic[(unsigned short)tess->vertexCount];
+    RB_SetSunQuadIndices(tess);
+    for (int i = 0; i < 4; ++i) {
+        verts[i].normal[0] = verts[i].normal[1] = 0.0f;
+        verts[i].normal[2] = 1.0f;
+        verts[i].texCoord[0] = (i == 1 || i == 2) ? 1.0f : 0.0f;
+        verts[i].texCoord[1] = i >= 2 ? 1.0f : 0.0f;
+        verts[i].color = color;
+    }
+    return verts;
+}
+
+static float DotColumn(const float *direction, const D3DMATRIX *matrix, int column)
+{
+    return direction[0] * matrix->m[0][column] + direction[1] * matrix->m[1][column] + direction[2] * matrix->m[2][column];
+}
+
+static void RB_TessSunBillboard(float width, float height, GfxColor color)
+{
+    r_backEndGlobals_t *backend = (r_backEndGlobals_t *)imp_backEnd;
+    int dx7 = r_rendererInUse->current.integer == 2;
+    const D3DMATRIX *matrix = dx7 ? &backend->viewParms->viewProjectionMatrix : &backend->viewProjectionMatrix;
+    const float *direction = rgp.world->sun.sunFxPosition;
+    float x = DotColumn(direction, matrix, 0);
+    float y = DotColumn(direction, matrix, 1);
+    float z = DotColumn(direction, matrix, 2);
+    float w = DotColumn(direction, matrix, 3);
+    if (dx7) {
+        float scale = 1.0f / w;
+        x *= scale;
+        y *= scale;
+        z *= scale;
+    }
+    D3DMATRIX identity;
+    MatrixIdentity44(identity.m);
+    RB_SetProjectionMatrix(&identity);
+    RB_SetViewMatrix(&identity);
+    if (dx7) {
+        GfxVertexDx7 *verts = RB_SetTessQuadDx7(color);
+        for (int i = 0; i < 4; ++i) {
+            verts[i].xyz[0] = i < 2 ? x + width : x - width;
+            verts[i].xyz[1] = (i == 0 || i == 3) ? y + height : y - height;
+            verts[i].xyz[2] = z - 0.001f;
+        }
+    } else {
+        GfxVertex *verts = RB_SetTessQuad(color);
+        width *= w;
+        height *= w;
+        for (int i = 0; i < 4; ++i) {
+            verts[i].xyzw[0] = i < 2 ? x + width : x - width;
+            verts[i].xyzw[1] = (i == 0 || i == 3) ? y + height : y - height;
+            verts[i].xyzw[2] = z + w * -0.001f;
+            verts[i].xyzw[3] = w;
+        }
+    }
+}
+
+static float FadeToGoal(float goal, float current, int fadeInTime, int fadeOutTime, int frameTime)
+{
+    if (goal > current) {
+        if (fadeInTime <= 0)
+            return goal;
+        float value = current + (float)frameTime / (float)fadeInTime;
+        return value > goal ? goal : value;
+    }
+    if (goal < current) {
+        if (fadeOutTime <= 0)
+            return goal;
+        float value = current - (float)frameTime / (float)fadeOutTime;
+        return value < goal ? goal : value;
+    }
+    return current;
+}
+
+static void RB_BeginSunSurface(const Material *material, MaterialTechniqueType type)
+{
+    materialCommands_t *tess = (materialCommands_t *)imp_tess;
+    if (material != tess->material || type != tess->techType) {
+        if (tess->indexCount || tess->optimizedIndexCount)
+            RB_EndSurface();
+        RB_BeginSurface(material, type, 31);
+    }
+}
+
+static float RB_SunEffectFraction(float dot, float minDot, float maxDot)
+{
+    if (dot <= minDot)
+        return 0.0f;
+    return dot < maxDot ? (dot - minDot) / (maxDot - minDot) : 1.0f;
+}
+
+void RB_DrawSunPostEffects(int viewIndex)
+{
+    r_backEndGlobals_t *backend = (r_backEndGlobals_t *)imp_backEnd;
+    SunFlareDynamic *state = &sunFlareArray[viewIndex];
+    int time = backend->sceneDef.time;
+    int frameTime = !state->lastTime || time < state->lastTime ? 10 : time - state->lastTime;
+    state->lastTime = time;
+    if (!(*(dvar_t **)imp_r_drawSun)->current.enabled || !rgp.world->sun.hasValidData)
+        return;
+    const sunflare_t *sun = &rgp.world->sun;
+    if (sun->flareMaterial && sun->flareMinDot < state->lastDot) {
+        float fraction = RB_SunEffectFraction(state->lastDot, sun->flareMinDot, sun->flareMaxDot);
+        float alpha = fraction * sun->flareMaxAlpha;
+        float size = fraction * sun->flareMaxSize + sun->flareMinSize;
+        state->flareIntensity = FadeToGoal(state->lastVisibility, state->flareIntensity, sun->flareFadeInTime, sun->flareFadeOutTime, frameTime);
+        alpha = state->flareIntensity * alpha;
+        materialCommands_t *tess = (materialCommands_t *)imp_tess;
+        if (tess->indexCount || tess->optimizedIndexCount)
+            RB_EndSurface();
+        RB_BeginSunSurface(sun->flareMaterial, (MaterialTechniqueType)3);
+        RB_PushMatrixStack();
+        unsigned int intensity = (unsigned char)(int)floorf(alpha * 255.0f + 0.5f);
+        RB_TessSunBillboard(size / 640.0f, size / 480.0f, bm_color_from_bits(255 | intensity << 8 | intensity << 16 | intensity << 24));
+        RB_EndSurface();
+        RB_PopMatrixStack();
+    }
+    const float *axis = backend->viewParms->axis[0];
+    float dot = sun->sunFxPosition[0] * axis[0] + sun->sunFxPosition[1] * axis[1] + sun->sunFxPosition[2] * axis[2];
+    float blind = 0.0f, glare = 0.0f;
+    if (sun->blindMaxDarken > 0.0f) {
+        float goal = RB_SunEffectFraction(dot, sun->blindMinDot, sun->blindMaxDot) * state->lastVisibility;
+        state->currentBlind = FadeToGoal(goal, state->currentBlind, sun->blindFadeInTime, sun->blindFadeOutTime, frameTime);
+        blind = state->currentBlind * sun->blindMaxDarken * 255.0f;
+    }
+    if (sun->glareMaxLighten > 0.0f) {
+        float goal = RB_SunEffectFraction(dot, sun->glareMinDot, sun->glareMaxDot) * state->lastVisibility;
+        state->currentGlare = FadeToGoal(goal, state->currentGlare, sun->glareFadeInTime, sun->glareFadeOutTime, frameTime);
+        glare = state->currentGlare * sun->glareMaxLighten * 255.0f;
+    }
+    unsigned int dark = (unsigned char)(int)blind;
+    unsigned int light = (unsigned char)(int)glare;
+    RB_DrawFullScreenColoredQuad(rgp.glareBlindMaterial, 0.0f, 0.0f, 1.0f, 1.0f, dark | light << 8 | light << 16 | light << 24);
+    RB_EndSurface();
+}
+
+void RB_DrawSun(int viewIndex)
+{
+    if (!(*(dvar_t **)imp_r_drawSun)->current.enabled || !rgp.world->sun.hasValidData)
+        return;
+    r_backEndGlobals_t *backend = (r_backEndGlobals_t *)imp_backEnd;
+    if (backend->projection2D)
+        RB_Set3D();
+    SunFlareDynamic *state = &sunFlareArray[viewIndex];
+    const sunflare_t *sun = &rgp.world->sun;
+    const float *direction = sun->sunFxPosition;
+    int queryIndex = backend->tileIndex * 2 + backend->frameCount % 2;
+    IDirect3DQuery9 *query = state->sunQuery[queryIndex];
+    if (!query) {
+        const D3DMATRIX *matrix = &backend->viewParms->viewProjectionMatrix;
+        float w = DotColumn(direction, matrix, 3);
+        float visibility = 0.0f;
+        if (w > 0.0f) {
+            const vidConfig_t *video = (vidConfig_t *)imp_vidConfig;
+            float x = (DotColumn(direction, matrix, 0) / w + 1.0f) * (float)video->width;
+            float y = (DotColumn(direction, matrix, 1) / w + 1.0f) * (float)video->height;
+            int left = (int)floorf((x - 16.0f) * 0.5f + 0.5f);
+            int top = (int)floorf((y - 16.0f) * 0.5f + 0.5f);
+            int right = left + 16, bottom = top + 16;
+            if (left < 0)
+                left = 0;
+            if (top < 0)
+                top = 0;
+            if (right > video->width)
+                right = video->width;
+            if (bottom > video->height)
+                bottom = video->height;
+            if (left < right && top < bottom)
+                visibility = (float)((right - left) * (bottom - top)) * 0.00390625f;
+        }
+        state->lastVisibility = visibility;
+        if (visibility != 0.0f) {
+            const float *origin = backend->viewParms->origin;
+            vec3_t traceEnd;
+            static const vec3_t zero = { 0.0f, 0.0f, 0.0f };
+            for (int i = 0; i < 3; ++i)
+                traceEnd[i] = direction[i] * 262144.0f + origin[i];
+            state->hitNum = CM_BoxSightTrace(state->hitNum, origin, traceEnd, zero, zero, 0, 0x2003);
+            if (state->hitNum)
+                state->lastVisibility = 0.0f;
+        }
+    } else {
+        materialCommands_t *tess = (materialCommands_t *)imp_tess;
+        if (tess->indexCount || tess->optimizedIndexCount)
+            RB_EndSurface();
+        RB_BeginSunSurface(rgp.additiveMaterial, (MaterialTechniqueType)3);
+        RB_PushMatrixStack();
+        RB_TessSunBillboard(16.0f / (float)backend->width, 16.0f / (float)backend->height, bm_color_from_bits(0x000000ff));
+        float visibility = 0.0f;
+        void **table = *(void ***)query;
+        if (state->sunQueryIssued[queryIndex]) {
+            unsigned int samples = 0;
+            int result;
+            do {
+                result = ((QueryGetDataFn)table[7])(query, &samples, 4, 1);
+                if (result == 1)
+                    WinSleep(0);
+            } while (result == 1);
+            unsigned int maxSamples = ((DxGlobals *)imp_dx)->sunSpriteSamples;
+            if (result || samples > maxSamples)
+                state->error = 1;
+            visibility = (float)samples / (float)(int)maxSamples;
+        }
+        if (backend->tileIndex == 0)
+            state->cumulVisibility = 0.0f;
+        state->cumulVisibility += visibility;
+        if (backend->tileIndex == backend->tileCount - 1) {
+            if (state->cumulVisibility > 1.0f)
+                state->cumulVisibility = 1.0f;
+            if (!state->error)
+                state->lastVisibility = state->cumulVisibility;
+            state->error = 0;
+        }
+        ((QueryIssueFn)table[6])(query, 2);
+        RB_EndSurface();
+        ((QueryIssueFn)table[6])(query, 1);
+        state->sunQueryIssued[queryIndex] = 1;
+        RB_PopMatrixStack();
+    }
+    const float *axis = backend->viewParms->axis[0];
+    float dot = direction[0] * axis[0] + direction[1] * axis[1] + direction[2] * axis[2];
+    state->lastDot = dot;
+    if (dot <= 0.0f)
+        return;
+    RB_BeginSunSurface(sun->spriteMaterial, (MaterialTechniqueType)1);
+    int dx7 = r_rendererInUse->current.integer == 2;
+    GfxVertex *verts = NULL;
+    GfxVertexDx7 *vertsDx7 = NULL;
+    if (dx7)
+        vertsDx7 = RB_SetTessQuadDx7(bm_color_from_bits(0xffffffff));
+    else
+        verts = RB_SetTessQuad(bm_color_from_bits(0xffffffff));
+    vec3_t up, side, other;
+    up[0] = direction[2] * direction[2] > 0.99f ? 1.0f : direction[1];
+    up[1] = direction[2] * direction[2] > 0.99f ? 0.0f : -direction[0];
+    up[2] = 0.0f;
+    Vec3Cross(direction, up, side);
+    Vec3Normalize(side);
+    float halfSize = 0.0013110929867252707f * sun->spriteSize;
+    for (int i = 0; i < 3; ++i)
+        side[i] *= halfSize;
+    Vec3Cross(side, direction, other);
+    for (int i = 0; i < 4; ++i) {
+        float *position = dx7 ? vertsDx7[i].xyz : verts[i].xyzw;
+        for (int j = 0; j < 3; ++j) {
+            float offset = (i == 0 || i == 2) ? side[j] + other[j] : side[j] - other[j];
+            position[j] = i < 2 ? direction[j] + offset : direction[j] - offset;
+        }
+        if (!dx7)
+            position[3] = 0.0f;
+    }
+    if (dx7)
+        RB_SetViewMatrixForWDx7(0.0f);
+    RB_EndSurface();
+    if (dx7)
+        RB_SetViewMatrixForWDx7(1.0f);
+}
+#else
 #include "common_types.h"
 static GfxColor bm_color_from_bits(unsigned int b) { GfxColor c; *(unsigned int *)&c = b; return c; }
 extern dvar_t *r_rendererInUse;
@@ -1073,3 +1432,4 @@ after_sun_trace: {
 
     return;
 }
+#endif

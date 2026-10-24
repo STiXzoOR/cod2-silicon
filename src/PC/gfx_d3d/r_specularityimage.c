@@ -29,7 +29,11 @@ void Image_BuildSpecularityMap(float shift, byte *pic)
             else
                 logInput = -175.0;
 
+#if defined(COD2_X64)
+            exponent = log((double)0.1f) / log(cos((logInput + 180.0) * (M_PI / 720.0)));
+#else
             exponent = log(0.1) / log(cos((logInput + 180.0) * (M_PI / 720.0)));
+#endif
         }
 
         byte *dst = pic + power;

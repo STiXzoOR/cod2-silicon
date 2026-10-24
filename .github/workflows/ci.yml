@@ -178,6 +178,10 @@ jobs:
       - name: Source-based game, script, network and reconstruction fixtures
         if: ${{ !cancelled() && steps.stock.outcome == 'success' && steps.codx.outcome == 'success' }}
         run: |
+          python3 tests/lp64/renderer/run_sun.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-sun.noindex/ci-stock"
+          python3 tests/lp64/renderer/run_sun.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-sun.noindex/ci-codx"
           python3 tests/lp64/game/run.py --build build-macos
           python3 tests/lp64/script/run.py
           python3 tests/online/run.py build-macos/compile_commands.json
