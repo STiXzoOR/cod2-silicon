@@ -313,7 +313,11 @@ static __attribute_regparm__(3)
         unsigned short entry = (unsigned short)string[i];
         unsigned char value = (unsigned char)entry;
 
+#if defined(COD2_X64)
+        switch ((unsigned char)(entry >> 8)) {
+#else
         switch (value) {
+#endif
         case 0x0d:
             if (color) {
                 color[0] = (float)value * 0.003921568859368563f;

@@ -609,7 +609,11 @@ void R_UpdateXModelBounds(GfxSceneEntity *sceneEnt, GfxEntity *ent)
     void *obj;
     int boneCount, i;
     int partBits[4];
+#if defined(COD2_X64)
+    DSurface surfaces[64];
+#else
     short surfaces[67];
+#endif
     char lods[8];
     float bounds[6];
     /* DObjGetBoneInfo fills this with one XBoneInfo* per bone (8 bytes each on
@@ -620,11 +624,21 @@ void R_UpdateXModelBounds(GfxSceneEntity *sceneEnt, GfxEntity *ent)
      * dereference each entry below. */
     void *boneInfo[200];
 
+#if defined(COD2_X64)
+    if (sceneEnt->cullState > 1)
+        return;
+    if (InterlockedCompareExchange(&sceneEnt->cullState, 1, 0) != 0) {
+        while (sceneEnt->cullState <= 1) {
+        }
+        return;
+    }
+#else
     if (((GfxSceneEntity *)se)->cullState > 3)
         return;
 
     if (InterlockedCompareExchange(&((GfxSceneEntity *)se)->cullState, 0, 1) != 0) {
     }
+#endif
 
     if (((GfxEntity *)e)->reType != 0) {
 #if defined(COD2_X64)
@@ -901,8 +915,16 @@ void R_SkinSceneDObj(GfxSceneEntity *sceneEnt, GfxEntity *ent)
     if (((GfxSceneEntity *)se)->cullState > 3)
         return;
 
+#if defined(COD2_X64)
+    if (InterlockedCompareExchange(&sceneEnt->cullState, 3, 2) != 2) {
+        while (sceneEnt->cullState <= 3) {
+        }
+        return;
+    }
+#else
     if (InterlockedCompareExchange(&((GfxSceneEntity *)se)->cullState, 2, 3) != 2) {
     }
+#endif
 
     if (DObjBad( (const DObj *)(obj))) {
         if (developer->current.integer) {
@@ -1052,7 +1074,11 @@ static int R_PreSkinStaticSurface(GfxSceneEntity *sceneEnt, GfxEntity *ent, int 
         void *xsurfMat = (void *)xsurf;
         if (XSurfaceGetBoneOffset((const XSurface *)xsurfMat) != -1) { /* was (int)(intptr_t) -> truncated */
             int isDx7 = (r_rendererInUse->current.integer == 2);
+#if defined(COD2_X64)
+            if (isDx7) {
+#else
             if (!isDx7) {
+#endif
 
                 void *mat = (void *)((GfxSceneEntity *)sceneEnt)->materials[surfaceIndex];
                 void *techSet = (void *)((Material *)mat)->techniqueSet;
@@ -1214,8 +1240,16 @@ void R_SkinXModel(GfxSceneEntity *sceneEnt, GfxEntity *ent, int smodelIndex)
     if (((GfxSceneEntity *)se)->cullState > 3)
         return;
 
+#if defined(COD2_X64)
+    if (InterlockedCompareExchange(&sceneEnt->cullState, 3, 2) != 2) {
+        while (sceneEnt->cullState <= 3) {
+        }
+        return;
+    }
+#else
     if (InterlockedCompareExchange(&((GfxSceneEntity *)se)->cullState, 2, 3) != 2) {
     }
+#endif
 
 
 #if defined(COD2_X64)
@@ -1412,9 +1446,15 @@ static void R_SkinXSurfaceSkinned(struct GfxModelSkinnedSurface *skinnedSurf,
                 float pos[3], nrm[3];
                 int w;
 
+#if defined(COD2_X64)
+                pos[0] = v->offset[0] * mat->axis[0][0] + v->offset[1] * mat->axis[1][0] + v->offset[2] * mat->axis[2][0] + mat->origin[0];
+                pos[1] = v->offset[0] * mat->axis[0][1] + v->offset[1] * mat->axis[1][1] + v->offset[2] * mat->axis[2][1] + mat->origin[1];
+                pos[2] = v->offset[0] * mat->axis[0][2] + v->offset[1] * mat->axis[1][2] + v->offset[2] * mat->axis[2][2] + mat->origin[2];
+#else
                 pos[0] = (v->offset[0] * mat->axis[0][0] + v->offset[1] * mat->axis[1][0]) + (v->offset[2] * mat->axis[2][0] + mat->origin[0]);
                 pos[1] = (v->offset[0] * mat->axis[0][1] + v->offset[1] * mat->axis[1][1]) + (v->offset[2] * mat->axis[2][1] + mat->origin[1]);
                 pos[2] = (v->offset[0] * mat->axis[0][2] + v->offset[1] * mat->axis[1][2]) + (v->offset[2] * mat->axis[2][2] + mat->origin[2]);
+#endif
                 nrm[0] = v->normal[0] * mat->axis[0][0] + v->normal[1] * mat->axis[1][0] + v->normal[2] * mat->axis[2][0];
                 nrm[1] = v->normal[0] * mat->axis[0][1] + v->normal[1] * mat->axis[1][1] + v->normal[2] * mat->axis[2][1];
                 nrm[2] = v->normal[0] * mat->axis[0][2] + v->normal[1] * mat->axis[1][2] + v->normal[2] * mat->axis[2][2];
@@ -1493,12 +1533,19 @@ static void R_SkinXSurfaceSkinned(struct GfxModelSkinnedSurface *skinnedSurf,
             const XVertexInfo *v = (const XVertexInfo *)vp;
             const DObjSkelMat *mat =
                 (const DObjSkelMat *)((const char *)boneMatrix + (short)v->boneOffset);
+#if defined(COD2_X64)
+            float pos[4], nrm[3], bin[3], tan[3];
+#else
             float pos[3], nrm[3], bin[3], tan[3];
+#endif
             int w;
 
             pos[0] = (v->offset[0] * mat->axis[0][0] + v->offset[1] * mat->axis[1][0]) + (v->offset[2] * mat->axis[2][0] + mat->origin[0]);
             pos[1] = (v->offset[0] * mat->axis[0][1] + v->offset[1] * mat->axis[1][1]) + (v->offset[2] * mat->axis[2][1] + mat->origin[1]);
             pos[2] = (v->offset[0] * mat->axis[0][2] + v->offset[1] * mat->axis[1][2]) + (v->offset[2] * mat->axis[2][2] + mat->origin[2]);
+#if defined(COD2_X64)
+            pos[3] = (v->offset[0] * mat->axis[0][3] + v->offset[1] * mat->axis[1][3]) + (v->offset[2] * mat->axis[2][3] + mat->origin[3]);
+#endif
             nrm[0] = v->normal[0] * mat->axis[0][0] + v->normal[1] * mat->axis[1][0] + v->normal[2] * mat->axis[2][0];
             nrm[1] = v->normal[0] * mat->axis[0][1] + v->normal[1] * mat->axis[1][1] + v->normal[2] * mat->axis[2][1];
             nrm[2] = v->normal[0] * mat->axis[0][2] + v->normal[1] * mat->axis[1][2] + v->normal[2] * mat->axis[2][2];
@@ -1516,13 +1563,23 @@ static void R_SkinXSurfaceSkinned(struct GfxModelSkinnedSurface *skinnedSurf,
                 pos[0] *= scale;
                 pos[1] *= scale;
                 pos[2] *= scale;
+#if defined(COD2_X64)
+                pos[3] *= scale;
+#endif
                 for (j = 0; j < w; j++, b++) {
                     const DObjSkelMat *m2 =
                         (const DObjSkelMat *)((const char *)boneMatrix + (short)b->boneOffset);
                     float s = (float)b->boneWeight * 1.52587890625e-05f;
+#if defined(COD2_X64)
+                    pos[0] += ((b->offset[0] * m2->axis[0][0] + b->offset[1] * m2->axis[1][0]) + (b->offset[2] * m2->axis[2][0] + m2->origin[0])) * s;
+                    pos[1] += ((b->offset[0] * m2->axis[0][1] + b->offset[1] * m2->axis[1][1]) + (b->offset[2] * m2->axis[2][1] + m2->origin[1])) * s;
+                    pos[2] += ((b->offset[0] * m2->axis[0][2] + b->offset[1] * m2->axis[1][2]) + (b->offset[2] * m2->axis[2][2] + m2->origin[2])) * s;
+                    pos[3] += ((b->offset[0] * m2->axis[0][3] + b->offset[1] * m2->axis[1][3]) + (b->offset[2] * m2->axis[2][3] + m2->origin[3])) * s;
+#else
                     pos[0] += (b->offset[0] * m2->axis[0][0] + b->offset[1] * m2->axis[1][0] + b->offset[2] * m2->axis[2][0] + m2->origin[0]) * s;
                     pos[1] += (b->offset[0] * m2->axis[0][1] + b->offset[1] * m2->axis[1][1] + b->offset[2] * m2->axis[2][1] + m2->origin[1]) * s;
                     pos[2] += (b->offset[0] * m2->axis[0][2] + b->offset[1] * m2->axis[1][2] + b->offset[2] * m2->axis[2][2] + m2->origin[2]) * s;
+#endif
                 }
                 vp = (const char *)b;
             } else {
@@ -1532,7 +1589,11 @@ static void R_SkinXSurfaceSkinned(struct GfxModelSkinnedSurface *skinnedSurf,
             ((float *)out)[0] = pos[0];
             ((float *)out)[1] = pos[1];
             ((float *)out)[2] = pos[2];
+#if defined(COD2_X64)
+            ((float *)out)[3] = pos[3];
+#else
             ((float *)out)[3] = 1.0f;
+#endif
             ((float *)out)[4] = nrm[0];
             ((float *)out)[5] = nrm[1];
             ((float *)out)[6] = nrm[2];
@@ -1686,17 +1747,29 @@ void R_SkinRigidXModelCmd(SkinRigidXModelCmd *skinRigidCmd)
     float zz = sz * q[2], zw = sz * q[3];
 
     float mtx[16];
+#if defined(COD2_X64)
+    mtx[0] = 1.0f - (yy + zz);
+#else
     mtx[0] = 1.0f - yy - zz;
+#endif
     mtx[1] = xy + zw;
     mtx[2] = xz - yw;
     mtx[3] = 0.0f;
     mtx[4] = xy - zw;
+#if defined(COD2_X64)
+    mtx[5] = 1.0f - (xx + zz);
+#else
     mtx[5] = 1.0f - xx - zz;
+#endif
     mtx[6] = yz + xw;
     mtx[7] = 0.0f;
     mtx[8] = xz + yw;
     mtx[9] = yz - xw;
+#if defined(COD2_X64)
+    mtx[10] = 1.0f - (xx + yy);
+#else
     mtx[10] = 1.0f - xx - yy;
+#endif
     mtx[11] = 0.0f;
 
     mtx[12] = skinRigidCmd->mat.trans[0];

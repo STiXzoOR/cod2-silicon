@@ -178,6 +178,18 @@ jobs:
       - name: Source-based game, script, network and reconstruction fixtures
         if: ${{ !cancelled() && steps.stock.outcome == 'success' && steps.codx.outcome == 'success' }}
         run: |
+          python3 tests/lp64/renderer/run_font_icons.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/run_font_icons-stock"
+          python3 tests/lp64/renderer/run_font_icons.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/run_font_icons-codx"
+          python3 tests/lp64/renderer/run_model.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/run_model-stock"
+          python3 tests/lp64/renderer/run_model.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/run_model-codx"
+          python3 tests/lp64/renderer/run_player_skeleton.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/run_player_skeleton-stock"
+          python3 tests/lp64/renderer/run_player_skeleton.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/run_player_skeleton-codx"
           python3 tests/lp64/renderer/run_sun.py --compile-db build-macos/compile_commands.engine.json \
             --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-sun.noindex/ci-stock"
           python3 tests/lp64/renderer/run_sun.py --compile-db build-macos-codx/compile_commands.engine.json \

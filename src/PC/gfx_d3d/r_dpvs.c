@@ -937,6 +937,10 @@ static void R_DPVS_REGPARM3_ABI R_AddVisibleSurfacesInCell_impl(const GfxCell *c
             int entType = ent->reType;
 
             if (entType <= 1) {
+#if defined(COD2_X64)
+                if (!dpvsG.drawXmodels)
+                    goto next_modelref;
+#endif
 
                 if (dpvsG.drawXmodels) {
 
