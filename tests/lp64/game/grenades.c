@@ -29,6 +29,10 @@ static WeaponDef weapon;
 static gclient_t client;
 static int eventCounts[256], wallHits, floorHits, links;
 static int useWall, traceStartSolid;
+static trace_t scriptedTraces[2];
+static int scriptedTraceCount, scriptedTraceIndex;
+static int triggerCalls, triggerDamage;
+static vec3_t linkedBase, linkedOrigin2;
 static float wallX = 20.0f;
 static vec3_t explosionOrigin;
 static int splashCalls;
@@ -47,7 +51,14 @@ gentity_t *G_Spawn(void)
 void Scr_SetString(scr_string_t *to, unsigned int value) { *to = value; }
 void Com_Printf(const char *fmt, ...) {}
 void Com_Error(int code, const char *fmt, ...) { abort(); }
-void SV_LinkEntity(gentity_t *ent) { ++links; }
+void SV_LinkEntity(gentity_t *ent)
+{
+    if (!links) {
+        memcpy(linkedBase, ent->s.pos.trBase, sizeof(linkedBase));
+        memcpy(linkedOrigin2, ent->s.origin2, sizeof(linkedOrigin2));
+    }
+    ++links;
+}
 int SV_PointContents(const vec_t *p, int pass, int mask) { return 0; }
 void G_FreeEntity(gentity_t *ent) { ent->r.inuse = 0; }
 gentity_t *G_TempEntity(const vec_t *p, int event) { abort(); }
@@ -70,6 +81,11 @@ void G_LocationalTrace(trace_t *tr, const vec_t *start, const vec_t *end,
                       int skip, int mask, byte *priority)
 {
     assert(skip == 0 && (mask & 1));
+    if (scriptedTraceCount) {
+        assert(scriptedTraceIndex < scriptedTraceCount);
+        *tr = scriptedTraces[scriptedTraceIndex++];
+        return;
+    }
     memset(tr, 0, sizeof(*tr));
     tr->fraction = 1;
     tr->entityNum = 1023;
@@ -126,7 +142,12 @@ int LogAccuracyHit(gentity_t *target, gentity_t *attacker) { return 0; }
 void G_Damage(gentity_t *target, gentity_t *inflictor, gentity_t *attacker,
               vec_t *dir, vec_t *p, int damage, int flags, int mod, int hit, int loc) { abort(); }
 void G_CheckHitTriggerDamage(gentity_t *attacker, vec_t *start, vec_t *end, int damage, int mod) {}
-void G_GrenadeTouchTriggerDamage(gentity_t *ent, vec_t *old, vec_t *p, int radius, int mod) {}
+void G_GrenadeTouchTriggerDamage(gentity_t *ent, vec_t *old, vec_t *p, int damage, int mod)
+{
+    assert(mod == 3);
+    ++triggerCalls;
+    triggerDamage = damage;
+}
 void SnapVectorTowards(vec_t *v, vec_t *to) {}
 
 static gentity_t *throw_grenade(int smoke, int cooked)
@@ -137,6 +158,7 @@ static gentity_t *throw_grenade(int smoke, int cooked)
         weapon.perpendicularBounce[i] = .45f;
     }
     weapon.projExplosion = smoke ? 2 : 0;
+    weapon.offhandClass = smoke ? OFFHAND_CLASS_SMOKE_GRENADE : OFFHAND_CLASS_FRAG_GRENADE;
     memset(eventCounts, 0, sizeof(eventCounts));
     floorHits = wallHits = links = 0;
     splashCalls = 0;
@@ -215,4 +237,5 @@ int main(void)
     assert(ent->r.currentOrigin[2] >= 12 && ent->r.currentOrigin[2] <= 14);
     assert(ent->s.pos.trDelta[2] > 0); /* effective reverse normal, no pass-through */
     puts("grenades: production spawn, gravity, bounce/rest, frag/smoke/cooked fuse and grenade/projectile splash pass");
+    return 0;
 }

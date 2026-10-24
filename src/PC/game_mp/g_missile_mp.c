@@ -190,7 +190,11 @@ void G_ExplodeMissile(gentity_t *ent)
 
     weapDef = BG_GetWeaponDef((_ENT(ent)->s.weapon));
 
+#if defined(COD2_X64)
+    if (weapDef->offhandClass == OFFHAND_CLASS_SMOKE_GRENADE && ent->s.groundEntityNum == 0x3FF) {
+#else
     if (weapDef->projExplosion == 2 && (_ENT(ent)->s.groundEntityNum) == 0x3FF) {
+#endif
         (_ENT(ent)->nextthink) = 50;
         return;
     }
@@ -506,7 +510,11 @@ static qboolean G_BounceMissile(gentity_t *ent, trace_t *trace)
 
         speed = VectorLength(velocity);
 
+#if defined(COD2_X64)
+        if (speed > 0.0f && dot <= 0.0f) {
+#else
         if (speed > 0.0f && dot < 0.0f) {
+#endif
 
             float parallelBounce = weapDef->parallelBounce[surfType];
             float perpBounce = weapDef->perpendicularBounce[surfType];
@@ -617,9 +625,15 @@ void G_RunMissile(gentity_t *ent)
     VectorSubtract(origin, (_ENT(ent)->r.currentOrigin), dir);
 
     float dirLen = Vec3Normalize(dir);
+#if defined(COD2_X64)
+    if (dirLen < 0.001f) {
+        goto run_think;
+    }
+#else
     if (dirLen == 0.0f) {
         goto run_think_check;
     }
+#endif
 
     {
         float absVelZ = (&_ENT(ent)->s.pos)->trDelta[2];
@@ -718,7 +732,11 @@ after_trace:
     if ((_ENT(ent)->s.eFlags) & 0x10000) {
 #endif
 
+#if defined(COD2_X64)
+        if (fraction == 1.0f || (fraction < 1.0f && tr.normal[2] > 0.7f)) {
+#else
         if (fraction != 1.0f || (fraction == 1.0f && tr.normal[2] > 0.7f)) {
+#endif
 
             VectorCopy(endpos, origin);
             origin[0] = (_ENT(ent)->r.currentOrigin)[0];
@@ -743,7 +761,11 @@ after_trace:
 
                 LerpPosition((_ENT(ent)->r.currentOrigin), origin, fraction, endpos);
 
+#if defined(COD2_X64)
+                ent->s.pos.trBase[2] += endpos[2] + 1.5f - ent->r.currentOrigin[2];
+#else
                 ((ent)->s.origin2[0]) += endpos[2] + 1.5f - ((ent)->r.currentOrigin[2]);
+#endif
 
                 VectorCopy(endpos, (_ENT(ent)->r.currentOrigin));
 
@@ -758,7 +780,11 @@ after_trace:
 
     if (methodOfDeath == 3) {
         G_GrenadeTouchTriggerDamage(ent, vOldOrigin, (_ENT(ent)->r.currentOrigin),
+#if defined(COD2_X64)
+                                    weapDef->iExplosionInnerDamage, 3);
+#else
                                     weapDef->iExplosionRadius, 3);
+#endif
     }
 
     if (tr.fraction == 1.0f) {
@@ -770,10 +796,18 @@ after_trace:
 
         (_ENT(ent)->s.groundEntityNum) = 0x3FF;
 
+#if defined(COD2_X64)
+        if (weapDef->weapType == WEAPTYPE_PROJECTILE && !(ent->flags & GMISSILE_FL_TURRET)) {
+#else
         if (weapDef->weapClass == 2 && !((_ENT(ent)->flags) & GMISSILE_FL_TURRET)) {
+#endif
 
             int totalTime = (int)(_ENT(ent)->grenade.time) + (&_ENT(ent)->s.pos)->trTime;
+#if defined(COD2_X64)
+            if (totalTime >= LEVEL_TIME) {
+#else
             if (totalTime < LEVEL_TIME) {
+#endif
                 goto run_think;
             }
 
@@ -782,7 +816,11 @@ after_trace:
             VectorCopy((&_ENT(ent)->s.pos)->trDelta, dir);
             Vec3Normalize(dir);
 
+#if defined(COD2_X64)
+            float scale = tanf((float)((double)weaponDef->destabilizationAngleMax * 0.017453292519943295));
+#else
             float scale = tanf((float)weaponDef->fAdsAimPitch * 0.017453292519943295f);
+#endif
 
             vec3_t perturbation;
             int i;
@@ -968,10 +1006,12 @@ after_trace:
 done:
     return;
 
+#if !defined(COD2_X64)
 run_think_check:
     if (dirLen != 0.0f || (_ENT(ent)->s.eType) != 4) {
         goto done;
     }
+#endif
 
 run_think:
     G_RunThink(ent);
