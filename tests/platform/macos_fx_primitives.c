@@ -223,6 +223,90 @@ static void CheckSpawnFilters(void)
     frustumResult = 0;
 }
 
+extern void Particle_CreateChannelInstances(const Particle *, const PrimitiveTemplate *);
+extern void Particle_CalcVelocityValue(const Particle *, float, vec_t *, const orientation_t *);
+extern void Particle_CalcVelocity2Value(const Particle *, float, vec_t *, const orientation_t *);
+extern void Particle_IntegrateVelocity2(const Particle *, float, vec_t *);
+extern void Particle_ApplyImpact(const Particle *, const orientation_t *, float, const vec_t *, float, const vec_t *);
+
+static int physicsFailures;
+#define PHYSICS_CHECK(condition) do { if (!(condition)) { fprintf(stderr, "FAIL physics line %d: %s\n", __LINE__, #condition); ++physicsFailures; } } while (0)
+
+static void CheckParticlePhysics(void)
+{
+    static struct { int dimensions, keyCount; float keys[4]; } random = {1, 2, {0, 3, 1, 3}};
+    PrimitiveTemplate pt = {0};
+    Particle particle = {0};
+    orientation_t bolt = {.axis = {{0,1,0}, {-1,0,0}, {0,0,1}}};
+    for (int i = 0; i < 24; ++i) {
+        pt.mFxChannels[i].curve = (FxCurve *)&scalar;
+        pt.mFxChannels[i].scaleRange.mMin = pt.mFxChannels[i].scaleRange.mMax = 0;
+    }
+    for (int channel = 0; channel < 2; ++channel) {
+        for (int axis = 0; axis < 3; ++axis) {
+            int index = 12 + channel * 6 + axis;
+            pt.mFxChannels[index].scaleRange.mMin = pt.mFxChannels[index].scaleRange.mMax = 2 + channel * 3 + axis;
+            pt.mFxChannels[index + 3].curve = (FxCurve *)&random;
+        }
+    }
+    Particle_CreateChannelInstances(&particle, &pt);
+    memcpy(particle.displayAxis, bolt.axis, sizeof(particle.displayAxis));
+    particle.velocityWeightX = particle.velocity2WeightX = .25f;
+    particle.velocityWeightY = particle.velocity2WeightY = .5f;
+    particle.velocityWeightZ = particle.velocity2WeightZ = .75f;
+    particle.base.mTimeEnd = 2000;
+    for (int flags = 0; flags < 16; ++flags) {
+        particle.base.mFlags = flags << 19;
+        for (int bolted = 0; bolted < 2; ++bolted) {
+            for (int channel = 0; channel < 2; ++channel) {
+                vec3_t actual, value, expected;
+                int randomFlag = channel ? 0x100000 : 0x80000;
+                int worldFlag = channel ? 0x400000 : 0x200000;
+                for (int axis = 0; axis < 3; ++axis)
+                    value[axis] = (2 + channel * 3 + axis) *
+                        ((particle.base.mFlags & randomFlag) ? 1.5f + .5f * axis : 1.0f);
+                if ((particle.base.mFlags & worldFlag) && bolted) {
+                    expected[0] = value[1]; expected[1] = -value[0]; expected[2] = value[2];
+                } else if (!(particle.base.mFlags & worldFlag) && !bolted) {
+                    expected[0] = -value[1]; expected[1] = value[0]; expected[2] = value[2];
+                } else {
+                    memcpy(expected, value, sizeof(expected));
+                }
+                if (channel)
+                    Particle_CalcVelocity2Value(&particle, .5f, actual, bolted ? &bolt : NULL);
+                else
+                    Particle_CalcVelocityValue(&particle, .5f, actual, bolted ? &bolt : NULL);
+                for (int axis = 0; axis < 3; ++axis)
+                    PHYSICS_CHECK(actual[axis] == expected[axis]);
+            }
+        }
+        /* Mac integration intentionally uses the first random-velocity flag. */
+        vec3_t actual, value, expected;
+        for (int axis = 0; axis < 3; ++axis)
+            value[axis] = (5 + axis) * ((particle.base.mFlags & 0x80000) ? 1.5f + .5f * axis : 1.0f);
+        if (particle.base.mFlags & 0x400000) {
+            memcpy(expected, value, sizeof(expected));
+        } else {
+            expected[0] = -value[1]; expected[1] = value[0]; expected[2] = value[2];
+        }
+        Particle_IntegrateVelocity2(&particle, .5f, actual);
+        for (int axis = 0; axis < 3; ++axis)
+            PHYSICS_CHECK(fabsf(actual[axis] - expected[axis]) < .00001f);
+    }
+    const struct { float speed, normalZ, fraction; int stop; } impacts[] = {
+        {1, 1, .5f, 1}, {0, 1, .5f, 1}, {4, 1, .5f, 0},
+        {5, 1, 0, 1}, {1, 0, .5f, 0}, {1, -1, .5f, 0},
+        {5, 0, 0, 1}, {5, -1, .5f, 0}
+    };
+    for (unsigned i = 0; i < sizeof(impacts) / sizeof(impacts[0]); ++i) {
+        vec3_t velocity = {impacts[i].speed, 0, 0};
+        vec3_t normal = {0, 0, impacts[i].normalZ};
+        particle.base.mFlags = 0x820;
+        Particle_ApplyImpact(&particle, NULL, .5f, velocity, impacts[i].fraction, normal);
+        PHYSICS_CHECK(particle.base.mFlags == (impacts[i].stop ? 0x1000000 : 0x820));
+    }
+}
+
 int main(void)
 {
     PrimitiveTemplate pt = {0};
@@ -419,8 +503,9 @@ int main(void)
     FX_UpdateAllBolt();
     assert(!effectActiveCount && !effectClusterCount && !__ZN11FxBoltFrame12g_mFrameListE);
     CheckSpawnFilters();
-    if (spawnFailures)
+    CheckParticlePhysics();
+    if (spawnFailures || physicsFailures)
         return 1;
-    puts("native FX: nine primitive lifecycles, scheduler dispatch, bolting, impact axes and spawn filters passed");
+    puts("native FX: nine primitive lifecycles, scheduler dispatch, bolting, impact axes, spawn filters and particle physics passed");
     return 0;
 }
