@@ -419,7 +419,11 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
 
             distSq = Vec3DistanceSq(origin, helper->mCamera.vieworg);
             culldist = prim->mSpawnRange.mMin * helper->adsZoomFactor;
+#if defined(COD2_X64)
+            if (distSq < culldist * culldist) {
+#else
             if (distSq > culldist * culldist) {
+#endif
                 continue;
             }
             rangeCheck = 1;
@@ -437,7 +441,11 @@ void FxScheduler_PlayEffect(const FxScheduler *_this, const EffectTemplate *fx, 
             }
         }
 
+#if defined(COD2_X64)
+        if (prim->mSpawnFlags & 0x400) {
+#else
         if (prim->mSpawnFlags & 4) {
+#endif
             if (FxHelper_CullSpherePreviousFrame(helper, origin, prim->spawnFrustumCullRadius)) {
                 continue;
             }
