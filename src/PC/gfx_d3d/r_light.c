@@ -38,7 +38,11 @@ GfxLightDef *R_RegisterLightDef(const char *name)
 
         if (lightGlob.defCount == 64) {
 
+#if defined(COD2_X64)
+            ri.Printf(0, "Loaded light defs:\n");
+#else
             ri.Printf(0, "Exceeded %i light defs. Currently loaded light defs:\n");
+#endif
             if (lightGlob.defCount > 0) {
                 for (defIndex = 0; defIndex < lightGlob.defCount; defIndex++) {
                     ri.Printf(0, "  %s\n", lightGlob.defs[defIndex]->name);
@@ -55,10 +59,18 @@ GfxLightDef *R_RegisterLightDef(const char *name)
             return result;
         }
 
+#if defined(COD2_X64)
+        if (stricmp(name, "light_dynamic") == 0) {
+#else
         if (stricmp(name, "default") == 0) {
+#endif
             R_Error(1, "Can't load the default light def '%s'", name);
         }
+#if defined(COD2_X64)
+        name = "light_dynamic";
+#else
         name = "default";
+#endif
     }
 }
 
