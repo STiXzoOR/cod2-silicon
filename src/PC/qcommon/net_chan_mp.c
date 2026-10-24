@@ -762,7 +762,11 @@ Bool Netchan_Transmit(netchan_t *chan, int length, const byte *data)
     int res;
     int iSize;
 
+#if defined(COD2_X64)
+    if (length > MAX_MSGLEN) {
+#else
     if (length > 0x4000) {
+#endif
         Com_Error(1, "Netchan_Transmit: length = %i", length);
     }
 
