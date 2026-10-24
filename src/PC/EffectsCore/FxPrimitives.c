@@ -2416,7 +2416,11 @@ Bool Cylinder_Update(const Cylinder *_this)
     if (normTime > 1.0f)
         ((Effect *)self)->normTime = 1.0f;
     if (0.0f > ((Effect *)self)->normTime)
+#if defined(COD2_X64)
+        ((Effect *)self)->normTime = 0.0f;
+#else
         return 0;
+#endif
     normTime = ((Effect *)self)->normTime;
 
     byte *boltFrame = (*(byte **)&((Effect *)(self))->mBolt.value);
@@ -2440,7 +2444,40 @@ Bool Cylinder_Update(const Cylinder *_this)
 #if defined(COD2_X64)
     if (boltFrame && !orient)
         return 0;
-#endif
+
+    Tail *cylinder = (Tail *)_this;
+    Particle *particle = &cylinder->base;
+    Effect *effect = &particle->base;
+    int flags = effect->mFlags;
+    effect->mRefEnt.radius[0] = FxNative_SampleChannel(
+        &particle->sizeChannelInstance, &particle->sizeRandChannelInstance,
+        particle->blendWeight[2], normTime, (flags & 0x8000) != 0);
+    effect->mRefEnt.radius[1] = particle->nonUniformScale
+        ? FxNative_SampleChannel(&particle->size2ChannelInstance,
+              &particle->size2RandChannelInstance, particle->blendWeight[3],
+              normTime, (flags & 0x10000) != 0)
+        : effect->mRefEnt.radius[0];
+    cylinder->tailLength = FxNative_SampleChannel(
+        &cylinder->lengthChannelInstance, &cylinder->lengthRandChannelInstance,
+        cylinder->lengthBlendFactor, normTime, (flags & 0x20000) != 0);
+    Particle_UpdateRGB(particle);
+    Particle_UpdateAlpha(particle);
+
+    /* Cylinders extend along their render axis, independently of tail history. */
+    if (orient) {
+        vec3_t endpoint;
+        OrientationPosToWorldPos(orient, effect->origin, effect->mRefEnt.origin);
+        for (int i = 0; i < 3; ++i)
+            endpoint[i] = effect->origin[i] + cylinder->tailLength * effect->mRefEnt.axis[0][i];
+        OrientationPosToWorldPos(orient, endpoint, effect->mRefEnt.endpos);
+    } else {
+        for (int i = 0; i < 3; ++i)
+            effect->mRefEnt.origin[i] = effect->origin[i];
+        for (int i = 0; i < 3; ++i)
+            effect->mRefEnt.endpos[i] = effect->origin[i] + cylinder->tailLength * effect->mRefEnt.axis[0][i];
+    }
+    return 1;
+#else
     if (!Particle_UpdateOrigin((const Particle *)_this, (const orientation_t *)orient))
         return 0;
 
@@ -2496,6 +2533,7 @@ Bool Cylinder_Update(const Cylinder *_this)
     Particle_UpdateRGB((const Particle *)_this);
     Particle_UpdateAlpha((const Particle *)_this);
     return 1;
+#endif
 }
 
 Bool Tail_Update(const Tail *_this)
