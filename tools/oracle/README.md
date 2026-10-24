@@ -2,10 +2,13 @@
 
 Command recording/replay and raw player fields extend the existing
 [`tools/parity`](../parity) tools. **F0c validated the byte-identical Linux
-rebuild and a live 2,000-frame reference corpus. Full native replay is blocked
-by an engine crash.** Both reference replays match; both native HEAD attempts
-emit frames 4–373 then SIGSEGV in grenade death. The first cross-build
-difference is frame 4, active entities 168 versus 205, before any active client.
+rebuild and a live 2,000-frame reference corpus. Native parity remains open.**
+Both reference replays match. After F1a integration and the held-grenade death
+argument fix, two stock native replays complete 2,000 frames and match each
+other. The first cross-build difference remains frame 4, active entities
+168 versus 205, before any active client. Native combat outcomes also differ.
+See the [grenade-death follow-up](../../docs/macos-port/reports/2026-10-24-F1-grenade-death.md)
+for regression coverage and the limits of the completed native replays.
 See the [F0 report](../../docs/macos-port/reports/2026-10-23-F0-server-replay-oracle.md)
 for the entity triage and Mac-confirmed reversed grenade arguments.
 
@@ -295,7 +298,7 @@ The C fixture runs production hooks with ASan/UBSan in a synthetic world. It
 tests injection, player bits, relative command times and rejection of truncated
 streams/inactive targets. It exercises no engine gameplay.
 
-## F0c measured results
+## F0c measured results before F1a and the grenade-death fix
 
 | Check | Result |
 | --- | --- |
@@ -311,5 +314,6 @@ streams/inactive targets. It exercises no engine gameplay.
 The native crash resolves to the weapon-definition damage read in
 `fire_grenade`, called by `player_die` with grenade time and offhand index
 reversed. Mac 1.3 passes the offhand index fourth and fuse time fifth. Engine
-code is unchanged in this oracle continuation. Resolve that engine defect
-before expecting either native attempt to complete the full corpus.
+code was unchanged in that oracle continuation. The
+[engine follow-up](../../docs/macos-port/reports/2026-10-24-F1-grenade-death.md)
+corrects this call and records subsequent native replay results.

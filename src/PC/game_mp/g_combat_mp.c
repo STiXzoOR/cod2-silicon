@@ -682,8 +682,13 @@ void player_die(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int 
         launchspot[1] = self->r.currentOrigin[1];
         launchspot[2] = self->r.currentOrigin[2] + 40.0f;
 
+#if defined(COD2_X64)
+        fire_grenade(self, launchspot, launchvel,
+                     cl->ps.offHandIndex, cl->ps.grenadeTimeLeft);
+#else
         fire_grenade(self, launchspot, launchvel,
                      cl->ps.grenadeTimeLeft, cl->ps.offHandIndex);
+#endif
         cl = self->client;
     }
 
