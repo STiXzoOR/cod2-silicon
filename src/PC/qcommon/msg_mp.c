@@ -768,7 +768,11 @@ char *MSG_ReadString(msg_t *msg)
 
     while (1) {
 
+#if defined(COD2_X64)
+        int c = MSG_ReadByte_core(msg);
+#else
         int c = (signed char)MSG_ReadByte_core(msg);
+#endif
         if (__builtin_expect(c == -1, 0)) {
             c = 0;
         }
@@ -794,7 +798,11 @@ char *MSG_ReadBigString(msg_t *msg)
 
     while (1) {
 
+#if defined(COD2_X64)
+        int c = MSG_ReadByte_core(msg);
+#else
         int c = (signed char)MSG_ReadByte_core(msg);
+#endif
         if (c == '%') {
             c = '.';
         }
@@ -823,7 +831,11 @@ char *MSG_ReadStringLine(msg_t *msg)
 
     while (1) {
 
+#if defined(COD2_X64)
+        int c = MSG_ReadByte_core(msg);
+#else
         int c = (signed char)MSG_ReadByte_core(msg);
+#endif
         if (c == '%') {
             c = '.';
         }
@@ -1566,26 +1578,45 @@ void MSG_WriteDeltaUsercmdKey(msg_t *msg, int key, usercmd_t *from, usercmd_t *t
     int fromMoveBits;
     int toMoveBits;
     int fieldKey;
+#if defined(COD2_X64)
+    qboolean hasExtra;
+#endif
 
     serverTimeDelta = to->serverTime - from->serverTime;
 
     if ((unsigned int)serverTimeDelta <= 0xff) {
         MSG_WriteBit1_core(msg);
         MSG_WriteByte_core(msg, serverTimeDelta);
+#if !defined(COD2_X64)
         fieldKey = key ^ to->serverTime;
+#endif
     } else {
         MSG_WriteBit0_core(msg);
         MSG_WriteLong_core(msg, to->serverTime);
+#if !defined(COD2_X64)
         fieldKey = key;
+#endif
     }
 
+#if defined(COD2_X64)
+    hasExtra = (from->buttons >> 1) != (to->buttons >> 1) ||
+               from->weapon != to->weapon ||
+               from->offHandIndex != to->offHandIndex ||
+               from->angles[2] != to->angles[2];
+    fieldKey = hasExtra ? key : key ^ to->serverTime;
+
+#endif
     toMoveBits = MSG_UsercmdMoveBits(to->forwardmove, to->rightmove);
     fromMoveBits = MSG_UsercmdMoveBits(from->forwardmove, from->rightmove);
 
+#if defined(COD2_X64)
+    if (!hasExtra &&
+#else
     if ((from->buttons >> 1) == (to->buttons >> 1) &&
         from->weapon == to->weapon &&
         from->offHandIndex == to->offHandIndex &&
         from->angles[2] == to->angles[2] &&
+#endif
         from->angles[0] == to->angles[0] &&
         from->angles[1] == to->angles[1] &&
         ((from->buttons ^ to->buttons) & 1) == 0 &&
@@ -1596,7 +1627,11 @@ void MSG_WriteDeltaUsercmdKey(msg_t *msg, int key, usercmd_t *from, usercmd_t *t
 
     MSG_WriteBits_core(msg, key ^ 1, 1);
 
+#if defined(COD2_X64)
+    if (hasExtra) {
+#else
     if ((unsigned int)serverTimeDelta > 0xff) {
+#endif
         MSG_WriteBits_core(msg, key ^ 1, 1);
     } else {
         MSG_WriteBits_core(msg, key, 1);
@@ -1606,7 +1641,11 @@ void MSG_WriteDeltaUsercmdKey(msg_t *msg, int key, usercmd_t *from, usercmd_t *t
     MSG_WriteDeltaKeyShort(msg, fieldKey, from->angles[1], to->angles[1]);
     MSG_WriteDeltaKeyBits(msg, fieldKey, fromMoveBits, toMoveBits, 4);
 
+#if defined(COD2_X64)
+    if (hasExtra) {
+#else
     if ((unsigned int)serverTimeDelta > 0xff) {
+#endif
         int serverTimeKey = key ^ to->serverTime;
 
         MSG_WriteDeltaKeyShort(msg, serverTimeKey, from->angles[2], to->angles[2]);
