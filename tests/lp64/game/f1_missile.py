@@ -7,7 +7,7 @@ import shlex
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[3]
-CASES = ['smoke', 'tangent', 'threshold', 'downtrace', 'landing', 'trigger', 'deadline', 'type', 'angle']
+CASES = ['smoke', 'tangent', 'threshold', 'downtrace', 'landing', 'trigger', 'deadline', 'type', 'angle', 'impact-grenade', 'impact-rocket', 'impact-world', 'impact-inert']
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('--compile-db', type=Path, required=True)
 p.add_argument('--output', type=Path, required=True)

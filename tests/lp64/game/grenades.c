@@ -27,7 +27,8 @@ static vec3_t zero;
 byte *vec3_origin_ptr = (byte *)zero;
 static WeaponDef weapon;
 static gclient_t client;
-static int eventCounts[256], wallHits, floorHits, links;
+static int eventCounts[256], eventParms[256], wallHits, floorHits, links;
+static int allowDirectDamage, directDamageCalls, accuracyCalls;
 static int useWall, traceStartSolid;
 static trace_t scriptedTraces[2];
 static int scriptedTraceCount, scriptedTraceIndex;
@@ -66,6 +67,7 @@ void G_AddEvent(gentity_t *ent, int event, int parm)
 {
     assert(event >= 0 && event < 256);
     ++eventCounts[event];
+    eventParms[event] = parm;
     if (event == 188 || event == 191)
         memcpy(explosionOrigin, ent->r.currentOrigin, sizeof(explosionOrigin));
 }
@@ -138,9 +140,15 @@ qboolean G_RadiusDamage(const vec_t *p, gentity_t *inflictor, gentity_t *attacke
 void Server_SwitchToValidFxScheduler(void) { abort(); }
 EffectTemplate *FX_RegisterEffect(const char *name) { abort(); }
 float FX_GetEffectLength(EffectTemplate *fx) { abort(); }
-int LogAccuracyHit(gentity_t *target, gentity_t *attacker) { return 0; }
+int LogAccuracyHit(gentity_t *target, gentity_t *attacker) { ++accuracyCalls; return 0; }
 void G_Damage(gentity_t *target, gentity_t *inflictor, gentity_t *attacker,
-              vec_t *dir, vec_t *p, int damage, int flags, int mod, int hit, int loc) { abort(); }
+              vec_t *dir, vec_t *p, int damage, int flags, int mod, int hit, int loc)
+{
+    assert(allowDirectDamage);
+    assert(target == &g_entities[1] && attacker == &g_entities[0]);
+    assert(damage == 25 && dir[0] == 100);
+    ++directDamageCalls;
+}
 void G_CheckHitTriggerDamage(gentity_t *attacker, vec_t *start, vec_t *end, int damage, int mod) {}
 void G_GrenadeTouchTriggerDamage(gentity_t *ent, vec_t *old, vec_t *p, int damage, int mod)
 {
@@ -160,6 +168,8 @@ static gentity_t *throw_grenade(int smoke, int cooked)
     weapon.projExplosion = smoke ? 2 : 0;
     weapon.offhandClass = smoke ? OFFHAND_CLASS_SMOKE_GRENADE : OFFHAND_CLASS_FRAG_GRENADE;
     memset(eventCounts, 0, sizeof(eventCounts));
+    memset(eventParms, 0, sizeof(eventParms));
+    allowDirectDamage = directDamageCalls = accuracyCalls = 0;
     floorHits = wallHits = links = 0;
     splashCalls = 0;
     level.time = 1000;
