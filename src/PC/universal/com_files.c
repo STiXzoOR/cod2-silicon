@@ -753,7 +753,11 @@ int FS_Seek(fileHandle_t f, long int offset, int origin)
 
 #if COD2_APPLE_SDK
     byte scratch[4096];
+#if defined(COD2_X64)
+    if (skip <= 0)
+#else
     if (skip < 0)
+#endif
         return -1;
     while (skip > 0) {
         int chunk = skip > (int)sizeof(scratch) ? (int)sizeof(scratch) : skip;
@@ -943,7 +947,11 @@ const char *FS_ShortOSFilePath(const char *filename)
         }
 
         base = search->dir->gamedir;
+#if defined(COD2_X64)
+        FS_BuildOSPath_Internal(search->dir->path, base, filename, netpath, 0);
+#else
         FS_BuildOSPath_Internal(base, NULL, filename, netpath, 0);
+#endif
         handle = FS_FileOpen(netpath, "rb");
         if (handle) {
             FS_FileClose(handle);
