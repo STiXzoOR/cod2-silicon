@@ -32,6 +32,7 @@ flags += ['-UNDEBUG', '-I' + str(output), '-ffunction-sections', '-fdata-section
 exe = output / 'player_skeleton'
 with (output / 'compile.log').open('w') as log:
     subprocess.run([*flags, '-x', 'c', str(output / 'player_xanim_source.h'),
+                    str(ROOT / 'src/PC/xanim/xmodel.c'),
                     str(ROOT / 'tests/lp64/renderer/player_skeleton.c'),
                     '-o', str(exe)], cwd=ROOT, stdout=log, stderr=log, check=True)
 run = subprocess.run([str(exe)], capture_output=True, text=True, env={**os.environ,

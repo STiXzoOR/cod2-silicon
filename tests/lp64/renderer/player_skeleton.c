@@ -15,17 +15,33 @@ void *imp_g_skinBuffers = &skinBuffers;
 static dvar_t renderer;
 dvar_t *r_rendererInUse = &renderer;
 static unsigned char stringData[256];
+#if defined(COD2_X64)
+static unsigned char emptyData[17];
+#endif
 static unsigned char duplicateData[32];
 
 unsigned int SL_GetStringOfLen(const char *value, unsigned int user, unsigned int len, int type)
 {
     (void)user;
+#if defined(COD2_X64)
+    assert((type == 11 || type == 12) && len <= sizeof(stringData));
+    if (type == 12) {
+        assert(len == sizeof(emptyData));
+        memcpy(emptyData, value, len);
+        return 2;
+    }
+#else
     assert(type == 11 && len <= sizeof(stringData));
+#endif
     memcpy(stringData, value, len);
     return 1;
 }
 const char *SL_ConvertToString(unsigned int value)
 {
+#if defined(COD2_X64)
+    if (value == 2)
+        return (const char *)emptyData;
+#endif
     if (value == 200)
         return (const char *)duplicateData;
     assert(value == 1);
@@ -166,8 +182,14 @@ static void TestMultiRootMasks(void)
     DObjCalcAnim(&object,roots);
     RootTransform(&s->mat[0],10,20,30,1); RootTransform(&s->mat[1],100,200,300,0);
     s->mat[3].trans[0]=789;
+#if defined(COD2_X64)
+    DObjCalcAnim(&object,early);
+#endif
     DObjCalcSkel(&object,early);
     CheckVec(s->mat[2].trans,6,23,42); assert(s->skelPartBits[0]==5); assert(s->mat[3].trans[0]==789);
+#if defined(COD2_X64)
+    DObjCalcAnim(&object,full);
+#endif
     DObjCalcSkel(&object,full);
     CheckVec(s->mat[0].trans,10,20,30); CheckVec(s->mat[1].trans,100,200,300);
     CheckVec(s->mat[2].trans,6,23,42); CheckVec(s->mat[3].trans,4,26,41);
@@ -187,8 +209,14 @@ static void TestAttachmentDuplicates(void)
         models[i].parts=(void (*)())&parts[i]; object.models[i]=&models[i]; object.modelParents[i]=255;}
     object.modelParents[1]=1;
     memset(duplicateData,0,sizeof(duplicateData)); duplicateData[16]=5; duplicateData[17]=1;
+#if defined(COD2_X64)
+    duplicateData[0]=0x30;
+#endif
     duplicateData[18]=6; duplicateData[19]=2; object.duplicateParts=200;
     DObjCalcAnim(&object,roots); RootTransform(&s->mat[0],10,20,30,1);
+#if defined(COD2_X64)
+    DObjCalcAnim(&object,full);
+#endif
     DObjCalcSkel(&object,full);
     CheckVec(s->mat[1].trans,6,23,42); CheckVec(s->mat[2].trans,6,23,42); CheckVec(s->mat[3].trans,6,25,42);
     CheckVec(s->mat[4].trans,10,20,30); CheckVec(s->mat[5].trans,6,23,42);
@@ -208,11 +236,17 @@ static void TestLocalTagNullBind(void)
     DObjCalcSkel(&object,bits); CheckVec(s->mat[1].trans,4,24,45);
     memset(s,0,sizeof(*s)+sizeof(DObjAnimMat)); parts.trans=NULL;
     RootTransform(&s->mat[0],10,20,30,1); s->animPartBits[0]=1;
+#if defined(COD2_X64)
+    DObjCalcAnim(&object,bits);
+#endif
     DObjCalcSkel(&object,bits); CheckVec(s->mat[1].trans,10,20,30); free(s);
 }
 
 int main(void)
 {
+#if defined(COD2_X64)
+    DObjInit();
+#endif
     TestChildTranslation(1, 0);
     TestChildTranslation(1, 1);
     TestChildTranslation(0, 0);

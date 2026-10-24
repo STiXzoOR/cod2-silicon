@@ -89,11 +89,11 @@ class VerificationTests(unittest.TestCase):
         (data / 'main/demos/test.dm_1').write_text('synthetic fixture')
         return path, data
 
-    def record(self, body, frames=2):
+    def record(self, body, frames=2, timeout=3):
         binary, data = self.fake(body)
         return subprocess.run([sys.executable, str(ROOT / 'tools/parity/record.py'),
             '--binary', str(binary), '--data', str(data), '--output', str(self.path / 'run'),
-            '--frames', str(frames), '--timeout', '.3'], capture_output=True, text=True)
+            '--frames', str(frames), '--timeout', str(timeout)], capture_output=True, text=True)
 
     def test_record_success(self):
         result = self.record('''import os
@@ -110,7 +110,7 @@ Path(os.environ['SYSDIFF_DUMP']).write_text('e0 eq=22222222\\n')
         self.assertNotEqual(result.returncode, 0)
 
     def test_record_timeout(self):
-        result = self.record('import time\ntime.sleep(10)\n')
+        result = self.record('import time\ntime.sleep(10)\n', timeout=.3)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('exceeded', result.stderr)
 

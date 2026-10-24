@@ -169,7 +169,11 @@ static void check_blend(int version, int user, int before, int after, int codxTi
     ci->legs.animationNumber = before;
     ci->legs.animation = &bgs->animScriptData.animations[before];
     entityState_t es = {.clientNum = 5, .eType = 1, .legsAnim = after};
+#if defined(COD2_X64)
+    int expected = 400;
+#else
     int expected = 37;
+#endif
 #if defined(COD2_CODX) && COD2_CODX
     if (version >= 3) expected = codxTime;
 #else

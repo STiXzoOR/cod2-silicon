@@ -12,7 +12,19 @@ test -x "$binary"
 exec docker run --rm --platform linux/386 --cpuset-cpus=0,1 --network host \
     -u "$(id -u):$(id -g)" \
     -v "$(dirname "$binary"):/oracle-server:ro" \
-    -v "$data:$data:ro" -v "$run_root:$run_root" -w "$PWD" \
+    -v "$data:/oracle-data:ro" --tmpfs "$data:rw,size=1m" \
+    -v "$run_root:$run_root" -w "$PWD" \
     -e SYSDIFF_SEED -e SYSDIFF_MAXFRAMES -e SYSDIFF_STATEHASH -e SYSDIFF_DUMP \
     -e SYSDIFF_PLAYERS -e SYSDIFF_USERCMDS -e SYSDIFF_REPLAY \
-    "${ORACLE_IMAGE:-cod2engine-linux-breezy-1.3}" "/oracle-server/$(basename "$binary")" "$@"
+    "${ORACLE_IMAGE:-cod2engine-linux-breezy-1.3}" sh -ec '
+        # Legacy readdir narrows the 64-bit directory offsets returned by the
+        # arm64 kernel through QEMU. A tmpfs directory has small offsets; its
+        # symlinks still read the original, read-only IWDs without copying data.
+        data=$1
+        shift
+        mkdir "$data/main"
+        for file in /oracle-data/main/*.iwd; do
+            ln -s "$file" "$data/main/"
+        done
+        exec "$@"
+    ' oracle "$data" "/oracle-server/$(basename "$binary")" "$@"
