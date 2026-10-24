@@ -512,7 +512,11 @@ qboolean SV_EntityContact(const vec_t *mins, const vec_t *maxs, const gentity_t 
             center[1] = (mins[1] + maxs[1]) * 0.5f;
             radius = maxs[0] - center[0] + gEnt->r.maxs[0];
             distSq = Vec2DistanceSq((float *)gEnt->r.currentOrigin, center);
+#if defined(COD2_X64)
+            return distSq < radius * radius;
+#else
             return distSq > radius * radius;
+#endif
         }
         return 0;
     }
@@ -521,7 +525,11 @@ qboolean SV_EntityContact(const vec_t *mins, const vec_t *maxs, const gentity_t 
     center[1] = (mins[1] + maxs[1]) * 0.5f;
     radius = maxs[0] - center[0] + gEnt->r.maxs[0] - 64.0f;
     distSq = Vec2DistanceSq((float *)gEnt->r.currentOrigin, center);
+#if defined(COD2_X64)
+    return distSq >= radius * radius;
+#else
     return distSq <= radius * radius;
+#endif
 }
 
 gentity_t *SV_GEntityForSvEntity(svEntity_t *svEnt)
@@ -697,6 +705,9 @@ qboolean SV_inSnapshot(const vec_t *origin, int iEntityNum)
 
     for (i = 0; i < numClusters; i++) {
         int cl = svEnt->clusternums[i];
+#if defined(COD2_X64)
+        cluster = cl;
+#endif
         if ((clientpvs[cl >> 3] >> (cl & 7)) & 1)
             goto check_fog;
     }
@@ -705,7 +716,12 @@ qboolean SV_inSnapshot(const vec_t *origin, int iEntityNum)
     if (lastCluster == 0)
         return 0;
 
+#if defined(COD2_X64)
+    /* Mac continues at the last listed cluster and retains endpoint rejection. */
+    for (i = cluster; i <= lastCluster; i++) {
+#else
     for (i = 0; i < lastCluster; i++) {
+#endif
         if ((clientpvs[i >> 3] >> (i & 7)) & 1)
             break;
     }
