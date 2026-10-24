@@ -128,8 +128,10 @@ void Rand_Init(int seed);
 void FxHelper_SetIgnorePrecacheErrors(const FxHelper *h, int ignore)
 { (void)h; (void)ignore; abort(); }
 EffectTemplate *FX_RegisterEffect(const char *name) { (void)name; abort(); }
+static int frustumCalls;
+static Bool frustumResult;
 Bool FxHelper_CullSpherePreviousFrame(const FxHelper *h, const vec_t *p, float r)
-{ (void)h; (void)p; (void)r; return 0; }
+{ (void)h; (void)p; (void)r; ++frustumCalls; return frustumResult; }
 
 static int draws, lights;
 void FxHelper_AddLightToScene(const FxHelper *h, float *origin, float radius, float r, float g, float b)
@@ -155,6 +157,72 @@ extern const vec_t Vec3DistanceSq(const vec_t *, const vec_t *);
 static struct { int dimensions, keyCount; float keys[4]; } scalar = {1, 2, {0, 1, 1, 1}};
 static struct { int dimensions, keyCount; float keys[8]; } color = {3, 2, {0, .8f, .4f, .2f, 1, .8f, .4f, .2f}};
 static struct { int dimensions, keyCount; float keys[4]; } velocity = {1, 2, {0, 0, 1, 0}};
+static int spawnFailures;
+#define SPAWN_CHECK(condition) do { if (!(condition)) { fprintf(stderr, "FAIL spawn line %d: %s\n", __LINE__, #condition); ++spawnFailures; } } while (0)
+
+static void CheckSpawnCase(PrimitiveTemplate *pt, float distance, int delay,
+                           int accepted, int expectedCullCalls)
+{
+    EffectTemplate fx = {.mPrimitiveCount = 1};
+    vec3_t origin = {distance, 0, 0};
+    vec3_t axis[3] = {{1,0,0}, {0,1,0}, {0,0,1}};
+    fx.mPrimitives[0] = pt;
+    pt->mSpawnDelay.mMin = pt->mSpawnDelay.mMax = (float)delay;
+    globalScheduler = (FxScheduler){0};
+    cullEffectCountNonBolt = visibleEffectCountNonBolt = 0;
+    frustumCalls = 0;
+    theFxHelper->mTime += 1000;
+    int start = theFxHelper->mTime;
+    FxScheduler_PlayEffectUnderTest(&globalScheduler, &fx, origin,
+                                   (MediaHandles *(*)[4])axis, NULL);
+    SPAWN_CHECK(frustumCalls == expectedCullCalls);
+    SPAWN_CHECK(effectActiveCountNonBolt == (delay ? 0 : accepted));
+    SPAWN_CHECK(globalScheduler.mScheduledCount == (delay ? accepted : 0));
+    if (delay) {
+        theFxHelper->mTime = start + delay;
+        FX_AddScheduledEffects(NULL, NULL);
+        SPAWN_CHECK(effectActiveCountNonBolt == accepted);
+        SPAWN_CHECK(!globalScheduler.mScheduledCount && !globalScheduler.mScheduledHead);
+    }
+    theFxHelper->mTime = start + delay + 201;
+    FX_UpdateAllNonBolt();
+    assert(!effectActiveCount && !effectClusterCount);
+}
+
+static void CheckSpawnFilters(void)
+{
+    PrimitiveTemplate pt = {.mType = 1, .mAttributeFlags = 0x80,
+                           .mLife = {200, 200}, .mSpawnCount = {1, 1}};
+    for (int i = 0; i < 24; ++i) {
+        pt.mFxChannels[i].curve = (FxCurve *)(i < 2 ? (void *)&color : i >= 12 ? (void *)&velocity : (void *)&scalar);
+        pt.mFxChannels[i].scaleRange.mMin = pt.mFxChannels[i].scaleRange.mMax = i == 4 ? 12 : 1;
+    }
+    memset(theFxHelper->mCamera.vieworg, 0, sizeof(vec3_t));
+    const float distances[] = {5, 10, 15, 20, 25};
+    for (int delayed = 0; delayed < 2; ++delayed) {
+        pt.mSpawnRange.mMin = 10;
+        pt.mSpawnRange.mMax = 20;
+        pt.mSpawnFlags = 0;
+        for (int zoom = 1; zoom <= 2; ++zoom) {
+            theFxHelper->adsZoomFactor = (float)zoom;
+            for (int i = 0; i < 5; ++i)
+                CheckSpawnCase(&pt, distances[i] * zoom, delayed ? 50 : 0,
+                               i >= 1 && i <= 3, 0);
+        }
+        pt.mSpawnRange.mMin = pt.mSpawnRange.mMax = 0;
+        const int flags[] = {0, 4, 0x400};
+        for (int cull = 0; cull <= 1; ++cull) {
+            frustumResult = cull;
+            for (int i = 0; i < 3; ++i) {
+                pt.mSpawnFlags = flags[i];
+                CheckSpawnCase(&pt, 10, delayed ? 50 : 0,
+                               !(flags[i] == 0x400 && cull), flags[i] == 0x400);
+            }
+        }
+    }
+    frustumResult = 0;
+}
+
 int main(void)
 {
     PrimitiveTemplate pt = {0};
@@ -350,6 +418,9 @@ int main(void)
     theFxHelper->mTime = 7400;
     FX_UpdateAllBolt();
     assert(!effectActiveCount && !effectClusterCount && !__ZN11FxBoltFrame12g_mFrameListE);
-    puts("native FX: nine primitive lifecycles, scheduler dispatch, bolting and impact axes passed");
+    CheckSpawnFilters();
+    if (spawnFailures)
+        return 1;
+    puts("native FX: nine primitive lifecycles, scheduler dispatch, bolting, impact axes and spawn filters passed");
     return 0;
 }
