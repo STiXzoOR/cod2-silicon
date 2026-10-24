@@ -100,6 +100,13 @@ def instrument(source, destination, patch):
     own_code = re.sub(r'^extern (?:struct serverStatic_t|level_locals_t|gentity_t)[^\n]*\n',
                       '', own_code, flags=re.M)
     own_code = own_code.replace('_Exit(', '_exit(')
+    workload = (ROOT / 'tools/oracle/live_input.inc').read_text()
+    own_code, count = re.subn(
+        r'            cmd\.angles\[1\] = .*?            cmd\.buttons = [^;]*;',
+        lambda match: '\n'.join('            ' + line for line in workload.splitlines()),
+        own_code, flags=re.S)
+    if count != 1:
+        raise ValueError('Expected one recording workload in our hook')
     path = destination / 'src/oracle/sysdiff_statehash.cpp'
     path.parent.mkdir()
     path.write_text(own_code)
