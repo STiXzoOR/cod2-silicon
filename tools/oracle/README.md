@@ -135,6 +135,121 @@ workload in the generated copy; it changes no native engine source. It cycles
 movement/jump, crouch, prone, attack/reload, a frag held then released, and use/attack
 pulses for the stock DM respawn handler. Saved commands drive every replay.
 
+### Mac snapping diagnostic profile
+
+`instrument_reference.py` defaults to `--profile linux-stock`. The optional
+`--profile mac-snap-diagnostic` changes **only `Sys_SnapVector`'s body** beyond
+the normal instrumentation, in a fresh private reference copy. Mac 1.3
+`__Z14Sys_SnapVectorPf` at `0xaed28` converts float to int with truncation
+(`cvttss2si`) and back to float; Linux uses `rint`. This profile isolates that
+known difference. It is a modified Linux server, **not an original-server or
+Mac-runtime result**. It leaves compiler options, rounding control, spectator
+float comparisons and production native code unchanged.
+
+The independent replacement checks the int32 range before casting. NaNs,
+infinities and out-of-range values produce float `INT_MIN`, matching the
+Mac instruction's result with invalid exceptions masked. Signed zero becomes
+positive zero. Exception flags/traps are not reproduced; no diagnostic claim
+is made for unmasked exceptions. The seven synthetic tests, including a
+sanitized C++98 fixture, run without reference code or game data:
+
+```sh
+python3 -m unittest discover -s tools/tests -p test_oracle_profiles.py -v
+```
+
+In the existing guest, use new destination/evidence names; preserve the stock
+rebuild, instrumented stock binary and original command corpus:
+
+```sh
+cd /opt/cod2-silicon
+python3 tools/oracle/instrument_reference.py \
+  --profile mac-snap-diagnostic \
+  --source /opt/cod2engine/archive/lnxded-1.3 \
+  --destination /opt/cod2engine/archive/lnxded-1.3-oracle-mac-snap \
+  --patch /opt/oracle-evidence/reference-mac-snap.patch
+cd /opt/cod2engine/archive/lnxded-1.3-oracle-mac-snap
+sudo docker run --rm --platform linux/386 --cpuset-cpus=0,1 \
+  -u "$(id -u):$(id -g)" -v "$PWD:/work" -w /work \
+  cod2engine-linux-breezy-1.3 nice -n 19 make -j2 IN_IMAGE=1 build/cod2_lnxded_1_3
+```
+
+Generation writes `oracle-profile.json` with the profile, changed functions
+and `executable_sha256: null`: it identifies source generation, not a built
+executable. After the build, bind that metadata to the actual executable
+before collecting traces. The recorder's `binary_sha256` identifies the
+container adapter, so it cannot replace this identity:
+
+```sh
+python3 - "$PWD" /opt/oracle-evidence/mac-snap-binary.json <<'PY'
+import hashlib, json, pathlib, sys
+source = pathlib.Path(sys.argv[1])
+metadata = json.loads((source / 'oracle-profile.json').read_text())
+assert metadata['profile'] == 'mac-snap-diagnostic'
+binary = source / 'build/cod2_lnxded_1_3'
+metadata['executable_sha256'] = hashlib.sha256(binary.read_bytes()).hexdigest()
+metadata['executable'] = str(binary.resolve())
+with pathlib.Path(sys.argv[2]).open('x') as output:
+    json.dump(metadata, output, indent=2)
+    output.write('\n')
+PY
+```
+
+Replay the saved original commands with this separate guest sequence. It checks
+the selected executable against its diagnostic identity before and after each
+recording, then retains that identity with the trace. Keep the binary unchanged;
+if rebuilt, create a fresh identity and new outputs.
+
+```sh
+cd /opt/cod2-silicon
+export ORACLE_BINARY=/opt/cod2engine/archive/lnxded-1.3-oracle-mac-snap/build/cod2_lnxded_1_3
+export ORACLE_DATA=/opt/cod2-data ORACLE_RUN_ROOT=/opt/oracle-evidence
+check_mac_snap_identity() {
+  python3 - "$ORACLE_BINARY" "$ORACLE_RUN_ROOT/mac-snap-binary.json" <<'PYCODE'
+import hashlib, json, pathlib, sys
+binary = pathlib.Path(sys.argv[1]).resolve()
+identity = json.loads(pathlib.Path(sys.argv[2]).read_text())
+assert identity['profile'] == 'mac-snap-diagnostic'
+assert pathlib.Path(identity['executable']).resolve() == binary
+assert identity['executable_sha256'] == hashlib.sha256(binary.read_bytes()).hexdigest()
+PYCODE
+}
+for pair in a:29241 b:29242; do
+  check_mac_snap_identity || break
+  sudo --preserve-env=ORACLE_BINARY,ORACLE_DATA,ORACLE_RUN_ROOT \
+    nice -n 19 python3 tools/parity/record.py \
+    --binary tools/oracle/container_server.sh --data "$ORACLE_DATA" \
+    --dedicated --players --clients 2 --frames 2000 --timeout 360 \
+    --output "$ORACLE_RUN_ROOT/mac-snap-replay-${pair%:*}" --port "${pair#*:}" \
+    --replay "$ORACLE_RUN_ROOT/original-f0c-live-record/usercmds.txt" || break
+  check_mac_snap_identity || break
+  sudo cp "$ORACLE_RUN_ROOT/mac-snap-binary.json" \
+    "$ORACLE_RUN_ROOT/mac-snap-replay-${pair%:*}/reference.json" || break
+done
+```
+
+On the host, fetch the diagnostic traces and their executable identities:
+
+```sh
+evidence="$HOME/Library/Application Support/CoD2-native-decomp/F0.noindex"
+for run in mac-snap-replay-a mac-snap-replay-b; do
+  mkdir -p "$evidence/$run"
+  scp -P 22220 -o BatchMode=yes -o UserKnownHostsFile="$evidence/known_hosts" \
+    "oracle@127.0.0.1:/opt/oracle-evidence/$run/*.txt" \
+    "oracle@127.0.0.1:/opt/oracle-evidence/$run/run.json" \
+    "oracle@127.0.0.1:/opt/oracle-evidence/$run/reference.json" "$evidence/$run/"
+done
+```
+
+A run without the profile and actual executable SHA is incomplete diagnostic
+evidence. Check that both recordings contain all 2000 frames before comparison.
+
+First compare diagnostic A/B for repeatability, then diagnostic versus stock
+and native. Use the unchanged comparer both with raw player fields and with
+state traces alone; do not suppress earlier spectator differences to claim a
+pass. A longer matching diagnostic prefix can isolate the effect of snapping,
+but cannot establish original-server agreement. Guest compilation and replay
+of this profile remain separate runtime verification steps.
+
 ## Record, replay twice, compare
 
 Use fresh destination/output names when rerunning. Inside the guest, the
