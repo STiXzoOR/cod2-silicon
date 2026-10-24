@@ -378,7 +378,11 @@ void Activate_trigger_damage(gentity_t *pEnt, gentity_t *pOther, int iDamage, in
             return;
     }
     if (spawnflags & 8) {
+#if defined(COD2_X64)
+        if ((unsigned int)iMOD <= 14 && ((1u << iMOD) & 0x4078))
+#else
         if (iMOD <= 14 && ((1 << iMOD) & 0x4078))
+#endif
             return;
     }
     if (spawnflags & 0x10) {
@@ -390,7 +394,11 @@ void Activate_trigger_damage(gentity_t *pEnt, gentity_t *pOther, int iDamage, in
             return;
     }
     if (spawnflags & 0x100) {
+#if defined(COD2_X64)
+        if ((unsigned int)iMOD <= 13 && ((1u << iMOD) & 0x3e01))
+#else
         if (iMOD <= 13 && ((1 << iMOD) & 0x3e01))
+#endif
             return;
     }
 
