@@ -102,6 +102,13 @@ void FxArchive_ArchiveMaterial(const FxArchive *a, Material **p) { (void)a; (voi
 void FxArchive_ArchiveModel(const FxArchive *a, XModel **p) { (void)a; (void)p; abort(); }
 static int secondaryEffects, decals, shakes;
 static vec3_t secondaryOrigin;
+static int captureEmissions, emissionCount, pauseEmissionClock;
+static struct {
+    vec3_t origin;
+    vec3_t axis[3];
+    const FxBoltInfo *bolt;
+    int hasAxis;
+} emissions[256];
 void FxScheduler_PlayEffect(void *scheduler, void *effect, vec_t *origin, vec3_t *axis, void *bolt)
 {
     (void)scheduler; (void)origin; (void)bolt;
@@ -110,6 +117,18 @@ void FxScheduler_PlayEffect(void *scheduler, void *effect, vec_t *origin, vec3_t
     if (axis) for (int i = 0; i < 3; ++i) {
         float length = axis[i][0]*axis[i][0] + axis[i][1]*axis[i][1] + axis[i][2]*axis[i][2];
         assert(fabsf(length - 1.0f) < .00001f);
+    }
+    if (captureEmissions) {
+        assert(emissionCount < 256);
+        memcpy(emissions[emissionCount].origin, origin, sizeof(vec3_t));
+        emissions[emissionCount].hasAxis = axis != NULL;
+        if (axis)
+            memcpy(emissions[emissionCount].axis, axis, sizeof(vec3_t) * 3);
+        emissions[emissionCount].bolt = bolt;
+        ++emissionCount;
+        /* Observe one overflowing correction without repeating the original zero-progress loop. */
+        if (pauseEmissionClock)
+            theFxHelper->mTime = (-2147483647 - 1);
     }
     ++secondaryEffects;
 }
@@ -307,6 +326,197 @@ static void CheckParticlePhysics(void)
     }
 }
 
+extern void Emitter_UpdateEmitFx(const Emitter *, vec_t *, const orientation_t *);
+extern float crandom(void);
+static int emitterFailures;
+#define EMITTER_CHECK(condition) do { if (!(condition)) { fprintf(stderr, "FAIL emitter line %d: %s\n", __LINE__, #condition); ++emitterFailures; } } while (0)
+
+static void CheckEmitterMotion(void)
+{
+    PrimitiveTemplate pt = {0};
+    for (int i = 0; i < 24; ++i)
+        pt.mFxChannels[i].curve = (FxCurve *)&scalar;
+    const struct {
+        float speed, step, bindOffset;
+        int priorTime, now, bolted, count, finalTime;
+        float firstX, finalX;
+        int pauseClock;
+    } cases[] = {
+        {100, 1, 0, 1000, 1001, 0, 1, 1010, 4.2f, 4},
+        {0, 0, 0, 1012, 1013, 0, 1, 1024, 3, 3},
+        {100, 1, 0, 1000, 1001, 1, 1, 1010, 4.2f, 4},
+        {100, 10, 0, 1000, 1013, 0, 0, 1000, 0, 3},
+        {100, 1.1999998f, 0, 1000, 1001, 0, 1, 1012, 4.2f, 4.2f},
+        {100, 1, 0, 1000, 1030, 0, 3, 1030, 4.2f, 6},
+        {100, 1, 2, 1000, 1025, 0, 1, 1024, 6.6f, 5.4f},
+        {.01f, 10, 1200, 1000, 1001, 1, 1, 1000, 3.00012f, 3, 1}
+    };
+    for (unsigned test = 0; test < sizeof(cases) / sizeof(cases[0]); ++test) {
+        Emitter emitter = {0};
+        Particle *particle = &emitter.base;
+        Effect *effect = &particle->base;
+        FxBoltFrame bolt = {.mBolt = {7, 3}};
+        orientation_t orientation = {.origin = {10,20,30}, .axis = {{0,1,0},{-1,0,0},{0,0,1}}};
+        vec3_t bindVelocity = {0, 20, 0};
+        pt.mFxChannels[12].scaleRange.mMin = pt.mFxChannels[12].scaleRange.mMax = cases[test].speed;
+        Particle_CreateChannelInstances(particle, &pt);
+        for (int i = 0; i < 3; ++i)
+            particle->displayAxis[i][i] = 1;
+        memcpy(effect->mRefEnt.axis, orientation.axis, sizeof(orientation.axis));
+        effect->mFlags = 0x100;
+        effect->mTimeStart = 1000;
+        effect->mTimeEnd = 3000;
+        effect->mBolt.value = cases[test].bolted ? &bolt : NULL;
+        emitter.emitFx = &childEffect;
+        emitter.emitPos[0] = 3; emitter.emitPos[1] = 4; emitter.emitPos[2] = 5;
+        emitter.initialVel[0] = 9; emitter.initialVel[1] = 8; emitter.initialVel[2] = 7;
+        emitter.velocityDelta[0] = cases[test].bindOffset;
+        emitter.emitLastTime = cases[test].priorTime;
+        emitter.emitStep = cases[test].step;
+        /* Keep the repeated-spacing case deterministic; other cases test jitter. */
+        emitter.spawnVariance = test == 5 ? 1 : 10;
+        float variance = test == 5 ? 0 : .25f;
+        memcpy(emitter._tail, &variance, sizeof(variance));
+        srand(17);
+        float expectedStep = emitter.emitStep;
+        for (int i = 0; i < cases[test].count; ++i)
+            expectedStep = emitter.spawnVariance + crandom() * variance;
+        int expectedNextRandom = rand();
+        srand(17);
+        theFxHelper->mTime = cases[test].now;
+        theFxHelper->mFrameTime = 16;
+        emissionCount = 0;
+        captureEmissions = 1;
+        pauseEmissionClock = cases[test].pauseClock;
+        Emitter_UpdateEmitFx(&emitter, bindVelocity, cases[test].bolted ? &orientation : NULL);
+        pauseEmissionClock = 0;
+        captureEmissions = 0;
+        EMITTER_CHECK(emissionCount == cases[test].count);
+        EMITTER_CHECK(emitter.emitLastTime == cases[test].finalTime);
+        EMITTER_CHECK(fabsf(emitter.emitPos[0] - cases[test].finalX) < .00001f);
+        EMITTER_CHECK(emitter.emitPos[1] == 4 && emitter.emitPos[2] == 5);
+        EMITTER_CHECK(emitter.emitStep == expectedStep);
+        EMITTER_CHECK(rand() == expectedNextRandom);
+        EMITTER_CHECK(emitter.velocityDelta[0] == cases[test].bindOffset);
+        EMITTER_CHECK(fabsf(emitter.velocityDelta[1] - (cases[test].bolted && !cases[test].pauseClock ? .2f : 0)) < .00001f);
+        EMITTER_CHECK(emitter.velocityDelta[2] == 0);
+        if (!cases[test].count) {
+            EMITTER_CHECK(emitter.initialVel[0] == 9 && emitter.initialVel[1] == 8 && emitter.initialVel[2] == 7);
+            continue;
+        }
+        EMITTER_CHECK(emitter.initialVel[0] == cases[test].speed);
+        EMITTER_CHECK(emitter.initialVel[1] == 0 && emitter.initialVel[2] == 0);
+        if (cases[test].bolted) {
+            EMITTER_CHECK(emissions[0].bolt == &bolt.mBolt && !emissions[0].hasAxis);
+            EMITTER_CHECK(fabsf(emissions[0].origin[0] - 5.76f) < .00001f);
+            EMITTER_CHECK(fabsf(emissions[0].origin[1] - (20 + cases[test].firstX)) < .00001f);
+            EMITTER_CHECK(emissions[0].origin[2] == 35);
+        } else {
+            EMITTER_CHECK(!emissions[0].bolt && emissions[0].hasAxis);
+            EMITTER_CHECK(fabsf(emissions[0].origin[0] - cases[test].firstX) < .00001f);
+            EMITTER_CHECK(emissions[0].origin[1] == 4 && emissions[0].origin[2] == 5);
+            if (cases[test].speed) {
+                EMITTER_CHECK(emissions[0].axis[0][0] == 1 && emissions[0].axis[0][1] == 0 && emissions[0].axis[0][2] == 0);
+            } else {
+                EMITTER_CHECK(!memcmp(emissions[0].axis, orientation.axis, sizeof(orientation.axis)));
+            }
+        }
+        if (test == 5 && emissionCount == 3) {
+            EMITTER_CHECK(fabsf(emissions[1].origin[0] - 5.2f) < .00001f);
+            EMITTER_CHECK(fabsf(emissions[2].origin[0] - 6.2f) < .00001f);
+        }
+    }
+}
+
+static void CheckEmitterUpdate(void)
+{
+    PrimitiveTemplate pt = {.mType = 5};
+    EffectTemplate fx = {0};
+    FxScheduler scheduler = {0};
+    FxBoltInfo boltInfo = {1, -1};
+    vec3_t axes[3] = {{1,0,0}, {0,1,0}, {0,0,1}};
+    vec3_t origin = {3,4,5};
+    pt.mLife.mMin = pt.mLife.mMax = 1000;
+    for (int i = 0; i < 24; ++i) {
+        pt.mFxChannels[i].curve = (FxCurve *)(i < 2 ? (void *)&color : (void *)&scalar);
+        pt.mFxChannels[i].scaleRange.mMin = pt.mFxChannels[i].scaleRange.mMax = i < 12 ? 3 : 0;
+    }
+    pt.mAngle2.mMin = pt.mAngle2.mMax = 90;
+    for (int bolted = 0; bolted < 2; ++bolted) for (int model = 0; model < 2; ++model) {
+        theFxHelper->mTime = client.skelTimeStamp = 9000;
+        theFxHelper->mFrameTime = 100;
+        pt.mAttributeFlags = 0x80 | (bolted ? 2 : 0) | (model ? 0x10 : 0);
+        /* A zero-size model still updates its orientation without marking physics stopped. */
+        pt.mFxChannels[4].scaleRange.mMin = pt.mFxChannels[4].scaleRange.mMax = model ? 0 : 3;
+        FxScheduler_CreateEffect(&scheduler, &fx, &pt, bolted ? &boltInfo : NULL,
+                                 origin, (MediaHandles *(*)[4])axes, 0, 0);
+        Effect *effect = bolted ? boltList[0] : nonBoltList[0];
+        memset(effect->mRefEnt.materialRGBA, 23, 4);
+        if (bolted) FX_UpdateAllBolt(); else FX_UpdateAllNonBolt();
+        const float expected[3][3] = {
+            {bolted && model ? -1 : 0, bolted && model ? 0 : 1, 0},
+            {bolted && model ? 0 : -1, bolted && model ? -1 : 0, 0},
+            {0, 0, 1}
+        };
+        for (int i = 0; i < 3; ++i) for (int j = 0; j < 3; ++j)
+            EMITTER_CHECK(fabsf(effect->mRefEnt.axis[i][j] - expected[i][j]) < .00001f);
+        EMITTER_CHECK(!(effect->mFlags & 0x1000000));
+        for (int i = 0; i < 4; ++i) EMITTER_CHECK(effect->mRefEnt.materialRGBA[i] == 23);
+        if (model) {
+            EMITTER_CHECK(effect->mRefEnt.origin[0] == 3 && effect->mRefEnt.origin[1] == 4 && effect->mRefEnt.origin[2] == 5);
+            EMITTER_CHECK(effect->mRefEnt.scale == 0);
+        }
+        theFxHelper->mTime = 10001;
+        if (bolted) FX_UpdateAllBolt(); else FX_UpdateAllNonBolt();
+        assert(!effectActiveCount && !effectClusterCount);
+    }
+    pt.mAttributeFlags = 0x80;
+    pt.mAngle2.mMin = pt.mAngle2.mMax = 0;
+    pt.mAngle2Delta.mMin = pt.mAngle2Delta.mMax = 10;
+    for (int moving = 0; moving < 2; ++moving) {
+        pt.mFxChannels[12].scaleRange.mMin = pt.mFxChannels[12].scaleRange.mMax = moving ? 10 : 0;
+        theFxHelper->mTime = 11000;
+        theFxHelper->mFrameTime = 100;
+        FxScheduler_CreateEffect(&scheduler, &fx, &pt, NULL, origin, (MediaHandles *(*)[4])axes, 0, 0);
+        Emitter *emitter = (Emitter *)nonBoltList[0];
+        theFxHelper->mTime = 11100;
+        FX_UpdateAllNonBolt();
+        EMITTER_CHECK(fabsf(*(float *)&emitter->_gap3[0] - (moving ? 10 : 7)) < .00001f);
+        EMITTER_CHECK(fabsf(*(float *)&emitter->_gap2[0] - (moving ? 10 : 7)) < .00001f);
+        EMITTER_CHECK(fabsf(emitter->base.base.mRefEnt.axis[0][0] - (moving ? .98480775f : .99254615f)) < .00001f);
+        EMITTER_CHECK(fabsf(emitter->base.base.mRefEnt.axis[0][1] - (moving ? .17364818f : .12186934f)) < .00001f);
+        theFxHelper->mTime = 12001;
+        FX_UpdateAllNonBolt();
+        assert(!effectActiveCount && !effectClusterCount);
+    }
+    pt.mAngle2Delta.mMin = pt.mAngle2Delta.mMax = 0;
+    pt.mFxChannels[12].scaleRange.mMin = pt.mFxChannels[12].scaleRange.mMax = 0;
+    pt.mEmitterFxHandles.mMediaList.size = 1;
+    for (int model = 0; model < 2; ++model) {
+        pt.mAttributeFlags = 0x182 | (model ? 0x10 : 0);
+        theFxHelper->mTime = client.skelTimeStamp = 13000;
+        FxScheduler_CreateEffect(&scheduler, &fx, &pt, &boltInfo, origin, (MediaHandles *(*)[4])axes, 0, 0);
+        Emitter *emitter = (Emitter *)boltList[0];
+        /* A changed cached bone position represents motion since this emitter was created. */
+        emitter->base.base.mBolt.value->orientation.origin[0] += 1000;
+        theFxHelper->mTime = 13001;
+        captureEmissions = 1;
+        emissionCount = 0;
+        FX_UpdateAllBolt();
+        captureEmissions = 0;
+        EMITTER_CHECK(emissionCount == 1);
+        EMITTER_CHECK(!emissions[0].hasAxis && emissions[0].bolt == &emitter->base.base.mBolt.value->mBolt);
+        EMITTER_CHECK(fabsf(emissions[0].origin[0] - 1003) < .00001f);
+        EMITTER_CHECK(fabsf(emissions[0].origin[1] - (model ? 4.012f : 4)) < .00001f);
+        EMITTER_CHECK(fabsf(emissions[0].origin[2] - 5) < .00001f);
+        EMITTER_CHECK(fabsf(emitter->velocityDelta[0] - (model ? 10.012f : 10)) < .00001f);
+        theFxHelper->mTime = 14001;
+        FX_UpdateAllBolt();
+        assert(!effectActiveCount && !effectClusterCount);
+    }
+
+}
+
 int main(void)
 {
     PrimitiveTemplate pt = {0};
@@ -425,6 +635,8 @@ int main(void)
     FxScheduler_CreateEffect(&scheduler, &fx, &pt, NULL, origin, (MediaHandles *(*)[4])axes, 0, 0);
     assert(secondaryEffects == 2);
 
+    CheckEmitterUpdate();
+
     /* An emitter must submit its child effect at a world position. */
     pt.mType = 5;
     pt.mAttributeFlags = 0x80 | 0x100;
@@ -504,7 +716,8 @@ int main(void)
     assert(!effectActiveCount && !effectClusterCount && !__ZN11FxBoltFrame12g_mFrameListE);
     CheckSpawnFilters();
     CheckParticlePhysics();
-    if (spawnFailures || physicsFailures)
+    CheckEmitterMotion();
+    if (spawnFailures || physicsFailures || emitterFailures)
         return 1;
     puts("native FX: nine primitive lifecycles, scheduler dispatch, bolting, impact axes, spawn filters and particle physics passed");
     return 0;

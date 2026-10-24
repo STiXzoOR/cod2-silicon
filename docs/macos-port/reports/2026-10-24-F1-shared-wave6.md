@@ -44,3 +44,10 @@ different random weights for each channel was declined for this batch: those
 reads are unchanged, while the corrected independent flags and coordinate
 branches already have failing-before/passing-after coverage. No review code
 changes were required.
+
+Late-spawn follow-up resolved against Mac after review: FX_AddParticle calls
+IntegrateTotalVelocity without orientation at `0x5b14d` and adds the scaled
+result directly at `0x5b152–0x5b19c`. The integrator (`0xa25fc–0xa2706`) does
+not access the bolt; tail and oriented-particle callers use the same contract.
+This differs intentionally from sampled per-frame velocity. No code change
+is warranted, and this review question is closed.

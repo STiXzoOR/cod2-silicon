@@ -213,6 +213,9 @@ extern void *__Znam(int size);
 extern void OrientationDirFromWorldDir(const orientation_t *or_, const vec_t *dir, vec_t *out);
 #if defined(COD2_X64)
 extern void OrientationDirToWorldDir(const orientation_t *or_, const vec_t *dir, vec_t *out);
+static float FxNative_SampleChannel(FxChannelInstance *channel,
+                                  FxChannelInstance *random, float blend,
+                                  float normTime, Bool useRandom);
 #endif
 extern void OrientationPosToWorldPos(const orientation_t *or_, const vec_t *pos, vec_t *out);
 extern void AxisTransformVector(vec3_t *axes, const vec_t x, const vec_t y, const vec_t z, vec_t *out);
@@ -1804,6 +1807,103 @@ void Particle_GetTotalVelocity(const Particle *_this, float normTime, vec_t *out
 
 void Emitter_UpdateEmitFx(const Emitter *_this, vec_t *bindVelocity, const orientation_t *or_)
 {
+#if defined(COD2_X64)
+    extern void MakeNormalVectors(const vec_t *, vec_t *, vec_t *);
+    extern float crandom(void);
+    Emitter *emitter = (Emitter *)_this;
+    Effect *effect = &emitter->base.base;
+    FxHelper *helper = *(FxHelper **)imp_theFxHelper;
+    if (!(effect->mFlags & 0x100) || helper->mFrameTime == 0)
+        return;
+
+    float stepSq = emitter->emitStep * emitter->emitStep;
+    float age = (float)(helper->mTime - effect->mTimeStart) * 0.001f;
+    float lifetime = (float)(effect->mTimeEnd - effect->mTimeStart) * 0.001f;
+    float elapsed = 0.0f;
+    int sampleTime = emitter->emitLastTime;
+    int duration = 0;
+    while (sampleTime < helper->mTime) {
+        duration = (int)((unsigned int)duration + 12u);
+        float seconds = (float)duration * 0.001f;
+        vec3_t previous, position, velocity;
+        for (int i = 0; i < 3; ++i)
+            previous[i] = emitter->emitPos[i] + emitter->velocityDelta[i];
+        float sampleAge = elapsed + age;
+        float normTime = sampleAge / lifetime;
+        if (normTime > 1.0f)
+            normTime = 1.0f;
+        Particle_GetTotalVelocity(&emitter->base, normTime, velocity, or_);
+        for (int i = 0; i < 3; ++i) {
+            position[i] = emitter->emitPos[i] + velocity[i] * seconds;
+            if (or_)
+                position[i] += bindVelocity[i] * seconds;
+        }
+        if (Vec3DistanceSq(position, previous) < stepSq) {
+            sampleTime = (int)((unsigned int)sampleTime + 12u);
+            continue;
+        }
+
+        if (or_) {
+            vec3_t worldPosition;
+            OrientationPosToWorldPos(or_, position, worldPosition);
+            FxScheduler_PlayEffect(*(FxScheduler **)imp_theFxScheduler,
+                emitter->emitFx, worldPosition, NULL, &effect->mBolt.value->mBolt);
+        } else {
+            vec3_t axis[3];
+            float length = __builtin_sqrtf(velocity[0] * velocity[0] +
+                velocity[1] * velocity[1] + velocity[2] * velocity[2]);
+            if (length > 0.0f) {
+                float inverse = 1.0f / length;
+                for (int i = 0; i < 3; ++i)
+                    axis[0][i] = velocity[i] * inverse;
+                MakeNormalVectors(axis[0], axis[1], axis[2]);
+            } else {
+                memcpy(axis, effect->mRefEnt.axis, sizeof(axis));
+            }
+            FxScheduler_PlayEffect(*(FxScheduler **)imp_theFxScheduler,
+                emitter->emitFx, position, (MediaHandles *(*)[4])axis, NULL);
+        }
+
+        float speedSq = velocity[0] * velocity[0] + velocity[1] * velocity[1] + velocity[2] * velocity[2];
+        float secondsSq = seconds * seconds;
+        float denominator = (speedSq + speedSq) * seconds;
+        if (denominator != 0.0f) {
+            float correction = (speedSq * secondsSq - stepSq) / denominator;
+            float rounded = floorf(correction * 1000.0f + 0.5f);
+            /* Mac cvttss2si returns INT_MIN on overflow/NaN; its integer math wraps. */
+            int correctionTime = rounded >= -2147483648.0f && rounded < 2147483648.0f
+                ? (int)rounded : (int)0x80000000u;
+            duration = (int)((unsigned int)duration - (unsigned int)correctionTime);
+            int minimum = (int)((unsigned int)sampleTime - (unsigned int)emitter->emitLastTime);
+            if (duration < minimum)
+                duration = minimum;
+            seconds = (float)duration * 0.001f;
+            normTime = (sampleAge + seconds) / lifetime;
+            if (normTime > 1.0f)
+                normTime = 1.0f;
+            Particle_GetTotalVelocity(&emitter->base, normTime, velocity, or_);
+            for (int i = 0; i < 3; ++i)
+                position[i] = emitter->emitPos[i] + velocity[i] * seconds;
+        }
+        normTime = (sampleAge + seconds) / lifetime;
+        if (normTime > 1.0f)
+            normTime = 1.0f;
+        Particle_GetTotalVelocity(&emitter->base, normTime, emitter->initialVel, or_);
+        memcpy(emitter->emitPos, position, sizeof(position));
+        if (or_) {
+            for (int i = 0; i < 3; ++i)
+                emitter->velocityDelta[i] += (float)duration * 0.001f * bindVelocity[i];
+        }
+        emitter->emitLastTime = (int)((unsigned int)emitter->emitLastTime + (unsigned int)duration);
+        sampleTime = emitter->emitLastTime;
+        elapsed += seconds;
+        float variance;
+        memcpy(&variance, emitter->_tail, sizeof(variance));
+        emitter->emitStep = emitter->spawnVariance + crandom() * variance;
+        stepSq = emitter->emitStep * emitter->emitStep;
+        duration = 0;
+    }
+#else
     byte *self = (byte *)_this;
 
     if (!((*(byte *)&((Emitter *)self)->_base[FX_FLAG_OFFSET(1, 169)]) & 1))
@@ -1908,6 +2008,7 @@ void Emitter_UpdateEmitFx(const Emitter *_this, vec_t *bindVelocity, const orien
         t = startTime + dif;
         (((Emitter *)(self))->emitLastTime) = t;
     }
+#endif
 }
 
 extern void *imp_cl;
@@ -2112,6 +2213,72 @@ Bool Particle_UpdateOrigin(const Particle *_this, const orientation_t *or_)
 
 Bool Emitter_Update(const Emitter *_this)
 {
+#if defined(COD2_X64)
+    extern void AnglesToAxis(const vec_t *, vec3_t *);
+    Emitter *emitter = (Emitter *)_this;
+    Particle *particle = &emitter->base;
+    Effect *effect = &particle->base;
+    FxHelper *helper = *(FxHelper **)imp_theFxHelper;
+    if (!Effect_Update(effect))
+        return 0;
+    const orientation_t *orient = NULL;
+    if (effect->mBolt.value) {
+        orient = FxBoltFrame_GetOrientation(effect->mBolt.value);
+        if (!orient)
+            return 0;
+    }
+
+    vec3_t previousOrigin;
+    memcpy(previousOrigin, effect->origin, sizeof(previousOrigin));
+    if (!Particle_UpdateOrigin(particle, orient))
+        return 0;
+    vec3_t angles = {emitter->spawnSize,
+        *(float *)&emitter->_gap2[0], *(float *)&emitter->_gap2[4]};
+    vec3_t angleDelta = {emitter->spawnDensity,
+        *(float *)&emitter->_gap3[0], emitter->spawnStep};
+    if (previousOrigin[0] == effect->origin[0] &&
+        previousOrigin[1] == effect->origin[1] &&
+        previousOrigin[2] == effect->origin[2]) {
+        for (int i = 0; i < 3; ++i)
+            angleDelta[i] *= 0.7f;
+        emitter->spawnDensity = angleDelta[0];
+        *(float *)&emitter->_gap3[0] = angleDelta[1];
+        emitter->spawnStep = angleDelta[2];
+    }
+    float angleTime = (float)helper->mFrameTime * 0.01f;
+    for (int i = 0; i < 3; ++i)
+        angles[i] += angleDelta[i] * angleTime;
+    emitter->spawnSize = angles[0];
+    *(float *)&emitter->_gap2[0] = angles[1];
+    *(float *)&emitter->_gap2[4] = angles[2];
+    AnglesToAxis(angles, effect->mRefEnt.axis);
+
+    effect->mRefEnt.radius[0] = FxNative_SampleChannel(
+        &particle->sizeChannelInstance, &particle->sizeRandChannelInstance,
+        particle->blendWeight[2], effect->normTime, (effect->mFlags & 0x8000) != 0);
+
+    vec3_t bindVelocity = {0, 0, 0};
+    if (effect->mFlags & 0x10) {
+        if (orient) {
+            OrientationPosToWorldPos(orient, effect->origin, effect->mRefEnt.origin);
+            for (int i = 0; i < 3; ++i) {
+                vec3_t localAxis;
+                memcpy(localAxis, effect->mRefEnt.axis[i], sizeof(localAxis));
+                OrientationDirToWorldDir(orient, localAxis, effect->mRefEnt.axis[i]);
+            }
+            if (emitter->emitLastTime < helper->mTime) {
+                float elapsed = (float)(helper->mTime - emitter->emitLastTime) * 0.001f;
+                for (int i = 0; i < 3; ++i)
+                    bindVelocity[i] = (orient->origin[i] - emitter->velocityDelta[i]) * elapsed;
+            }
+        } else {
+            memcpy(effect->mRefEnt.origin, effect->origin, sizeof(vec3_t));
+        }
+        effect->mRefEnt.scale = effect->mRefEnt.radius[0];
+    }
+    Emitter_UpdateEmitFx(_this, bindVelocity, orient);
+    return 1;
+#else
     byte *self = (byte *)_this;
     int startTime = (((Effect *)(self))->mTimeStart);
     int curTime = FXH_TIME(*(FxHelper **)imp_theFxHelper);
@@ -2182,23 +2349,6 @@ Bool Emitter_Update(const Emitter *_this)
         radius = EvalCurve1( (byte *)(((char *)self + FX_OFFSET(Particle, sizeChannelInstance, offsetof(Emitter, _base[372])))), normTime) * *(float *)(((char *)self + FX_OFFSET(Particle, sizeChannelInstance, offsetof(Emitter, _base[372]))) + FX_SCALE_OFFSET);
     }
     (((Effect *)(self))->mRefEnt.radius[0]) = radius;
-#if defined(COD2_X64)
-    if (((Effect *)self)->mFlags & 0x10) {
-        extern void AnglesToAxis(const vec_t *, vec3_t *);
-        Emitter *emitter = (Emitter *)self;
-        float angles[3] = {emitter->spawnSize,
-            *(float *)&emitter->_gap2[0], *(float *)&emitter->_gap2[4]};
-        float angularVelocity[3] = {emitter->spawnDensity,
-            *(float *)&emitter->_gap3[0], emitter->spawnStep};
-        for (int i = 0; i < 3; ++i)
-            angles[i] += angularVelocity[i] * theFxHelper->mFrameTime * 0.01f;
-        emitter->spawnSize = angles[0];
-        *(float *)&emitter->_gap2[0] = angles[1];
-        *(float *)&emitter->_gap2[4] = angles[2];
-        AnglesToAxis(angles, ((Effect *)self)->mRefEnt.axis);
-        ((Effect *)self)->mRefEnt.scale = radius;
-    }
-#endif
 
     if (radius == 0.0f) {
         ((Effect *)self)->mFlags |= 0x01000000;
@@ -2209,6 +2359,7 @@ Bool Emitter_Update(const Emitter *_this)
     Particle_UpdateAlpha((const Particle *)_this);
 
     return 1;
+#endif
 }
 
 void Particle_UpdateAlpha(const Particle *_this)
