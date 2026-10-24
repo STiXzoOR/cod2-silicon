@@ -2437,6 +2437,10 @@ Bool Cylinder_Update(const Cylinder *_this)
         }
     }
 
+#if defined(COD2_X64)
+    if (boltFrame && !orient)
+        return 0;
+#endif
     if (!Particle_UpdateOrigin((const Particle *)_this, (const orientation_t *)orient))
         return 0;
 
@@ -2529,6 +2533,11 @@ Bool Tail_Update(const Tail *_this)
         }
     }
 
+#if defined(COD2_X64)
+    if (boltFrame && !orient)
+        return 0;
+    memcpy(((Tail *)self)->endpoint, ((Effect *)self)->origin, sizeof(vec3_t));
+#endif
     if (!Particle_UpdateOrigin((const Particle *)_this, (const orientation_t *)orient))
         return 0;
 
@@ -2553,8 +2562,10 @@ Bool Tail_Update(const Tail *_this)
 
     Tail_CalcNewEndpoint(_this, (const orientation_t *)orient);
 
+#if !defined(COD2_X64)
     if (orient)
         OrientationPosToWorldPos(orient, (vec_t *)&((Tail *)self)->base.base.mRefEnt.endpos[0], (vec_t *)&((Tail *)self)->base.base.mRefEnt.endpos[0]);
+#endif
 
     float radius;
     if ((*(short *)&((Effect *)self)->mFlags) < 0) {
@@ -2612,6 +2623,10 @@ Bool Line_Update(const Line *_this)
         }
     }
 
+#if defined(COD2_X64)
+    if (boltFrame && !orient)
+        return 0;
+#endif
     if (!Particle_UpdateOrigin((const Particle *)_this, (const orientation_t *)orient))
         return 0;
 
@@ -2688,6 +2703,10 @@ Bool Cloud_Update(const Cloud *_this)
         }
     }
 
+#if defined(COD2_X64)
+    if (boltFrame && !orient)
+        return 0;
+#endif
     if (!Particle_UpdateOrigin((const Particle *)_this, (const orientation_t *)orient))
         return 0;
 
@@ -2864,6 +2883,10 @@ Bool OrientedParticle_Update(const OrientedParticle *_this)
         }
     }
 
+#if defined(COD2_X64)
+    if (boltFrame && !orient)
+        return 0;
+#endif
     if (!Particle_UpdateOrigin((const Particle *)_this, (const orientation_t *)orient))
         return 0;
 
@@ -2976,6 +2999,10 @@ Bool Particle_Update(const Particle *_this, const Particle *_this_1, const Cloud
         }
     }
 
+#if defined(COD2_X64)
+    if (boltFrame && !orient)
+        return 0;
+#endif
     if (!Particle_UpdateOrigin(_this, (const orientation_t *)orient))
         return 0;
 
