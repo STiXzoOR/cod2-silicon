@@ -6,7 +6,7 @@ test "$(dpkg --print-architecture)" = arm64 || { echo 'Expected Debian arm64 gue
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y --no-install-recommends \
-    ca-certificates docker.io qemu-user qemu-user-binfmt binfmt-support \
+    ca-certificates docker.io docker-cli docker-buildx qemu-user qemu-user-binfmt binfmt-support \
     make python3 git rsync binutils-i686-linux-gnu qemu-guest-agent unifdef
 systemctl enable --now docker
 systemctl restart systemd-binfmt
