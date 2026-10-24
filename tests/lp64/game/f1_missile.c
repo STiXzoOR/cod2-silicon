@@ -176,6 +176,40 @@ static void rocket_angle(void)
     assert(ent->grenade.time == 100);
 }
 
+static void impact_target(int damageable, int directDamage)
+{
+    for (int hasClient = 0; hasClient <= 1; ++hasClient) {
+        for (int bounceFlag = 0; bounceFlag <= 1; ++bounceFlag) {
+            for (int hasSurface = 0; hasSurface <= 1; ++hasSurface) {
+                gentity_t *ent = missile();
+                gentity_t *target = &g_entities[1];
+                memset(target, 0, sizeof(*target));
+                target->takedamage = damageable;
+                target->client = hasClient ? &client : NULL;
+                ent->damage = directDamage;
+                ent->s.eFlags = bounceFlag ? 0x1000000 : 0;
+                allowDirectDamage = damageable && directDamage;
+                trace_result(0, .5f, 0);
+                scriptedTraces[0].normal[0] = -1;
+                scriptedTraces[0].entityNum = 1;
+                scriptedTraces[0].surfaceFlags = hasSurface ? 0x600000 : 0;
+                frame(ent);
+                const int bounced = damageable ? !directDamage : bounceFlag;
+                assert(ent->s.eType == (bounced ? 4 : 0));
+                assert(ent->freeAfterEvent == !bounced);
+                assert(directDamageCalls == (damageable && directDamage));
+                assert(accuracyCalls == directDamageCalls);
+                assert(eventCounts[0xBB] == bounced);
+                assert(eventCounts[0xBE] == !bounced);
+                if (bounced) {
+                    assert(ent->s.pos.trDelta[0] < 0);
+                    assert(eventParms[0xBB] == (hasSurface ? 6 : damageable && hasClient ? 7 : 0));
+                }
+            }
+        }
+    }
+}
+
 int main(int argc, char **argv)
 {
     if (argc != 2) return 2;
@@ -188,6 +222,10 @@ int main(int argc, char **argv)
     else if (!strcmp(argv[1], "deadline")) rocket_deadline();
     else if (!strcmp(argv[1], "type")) rocket_type();
     else if (!strcmp(argv[1], "angle")) rocket_angle();
+    else if (!strcmp(argv[1], "impact-grenade")) impact_target(1, 0);
+    else if (!strcmp(argv[1], "impact-rocket")) impact_target(1, 25);
+    else if (!strcmp(argv[1], "impact-world")) impact_target(0, 25);
+    else if (!strcmp(argv[1], "impact-inert")) impact_target(0, 0);
     else return 2;
     printf("F1 missile %s: pass\n", argv[1]);
     return 0;

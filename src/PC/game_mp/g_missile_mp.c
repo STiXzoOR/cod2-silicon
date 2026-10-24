@@ -872,13 +872,17 @@ after_trace:
 #endif
 
 #if defined(COD2_X64)
-            if (!other->takedamage && (ent->s.eFlags & GMISSILE_EF_BOUNCE)) {
+            if (other->takedamage ? !ent->damage : (ent->s.eFlags & GMISSILE_EF_BOUNCE)) {
 #else
             if (!(_ENT(other)->takedamage)) {
 #endif
 
                 gclient_t *otherClient = (_ENT(other)->client);
+#if defined(COD2_X64)
+                if (other->takedamage && otherClient) {
+#else
                 if (otherClient) {
+#endif
 
                     if (tr.surfaceFlags == 0) {
                         tr.surfaceFlags = 0x700000;
@@ -905,7 +909,11 @@ after_trace:
 
             hitClient = 0;
 
+#if defined(COD2_X64)
+            if (other->takedamage && ent->damage) {
+#else
             if ((_ENT(ent)->damage)) {
+#endif
 
                 gentity_t *attacker;
                 if ((_ENT(ent)->r.ownerNum) == 0x3FF) {
