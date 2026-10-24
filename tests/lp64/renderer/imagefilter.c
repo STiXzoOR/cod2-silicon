@@ -154,7 +154,12 @@ static void CheckGlowAspect(void)
     assert(BACKEND.glowCount == 1 && g_LastGlowFilter);
     assert(BACKEND.glowImage[0] == &images[R_RENDERTARGET_GLOW_0]);
     assert(draws[0].material == &materials[8]);
+    /* Native render-target storage is exactly 512x384, with no POT padding. */
+#if COD2_APPLE_SDK
+    assert(draws[0].uv[2] == 1 && draws[0].uv[3] == 1);
+#else
     assert(draws[0].uv[2] == 1 && draws[0].uv[3] == 0.75f);
+#endif
     CheckAspectPasses(1);
     for (int i = 0; i < 3; ++i) {
         assert(draws[i].width == 256 && draws[i].height == 256);
@@ -201,6 +206,23 @@ static void CheckUnorderedDownsample(void)
     assert(isfinite(passes[0].tapOffsetsAndWeights[0][3]));
 }
 
+static void CheckNativeExtent(void)
+{
+    VIDEO.width = 1280;
+    VIDEO.height = view.viewport.Height = 720;
+    for (int i = 0; i < R_RENDERTARGET_COUNT; ++i) {
+        TARGETS[i].width = 320;
+        TARGETS[i].height = 180;
+    }
+    RB_GaussianFilterImage(2, R_RENDERTARGET_BLURRED_SCREEN);
+    assert(drawCount >= 2);
+    for (int i = 0; i < drawCount; ++i) {
+        assert(draws[i].uv[0] == 0 && draws[i].uv[2] == 1);
+        assert((draws[i].uv[1] == 0 && draws[i].uv[3] == 1) ||
+               (draws[i].uv[1] == 1 && draws[i].uv[3] == 0));
+    }
+}
+
 int main(int argc, char **argv)
 {
     assert(argc == 2);
@@ -211,6 +233,7 @@ int main(int argc, char **argv)
     else if (!strcmp(argv[1], "reversed-radii")) CheckReversedRadii();
     else if (!strcmp(argv[1], "gaussian-height")) CheckUnsignedHeight(0);
     else if (!strcmp(argv[1], "glow-height")) CheckUnsignedHeight(1);
+    else if (!strcmp(argv[1], "native-extent")) CheckNativeExtent();
     else if (!strcmp(argv[1], "unordered-downsample")) CheckUnorderedDownsample();
     else assert(0);
     printf("production imagefilter %s: passed\n", argv[1]);
