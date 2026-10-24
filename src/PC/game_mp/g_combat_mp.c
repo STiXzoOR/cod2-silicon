@@ -429,7 +429,7 @@ void G_Damage(gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, const 
 #if defined(COD2_X64)
         fn_pain pain = ((entityHandler_t *)imp_entityHandlers)[targ->handler].pain;
         if (pain != NULL) {
-            pain(targ, attacker, damage, point, mod, dir, hitLoc);
+            pain(targ, attacker, damage, point, mod, localdir, hitLoc);
         }
 #else
         void (*pain)(gentity_t *, gentity_t *, int, const vec_t *, int, hitLocation_t) =
