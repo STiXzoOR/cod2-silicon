@@ -653,11 +653,105 @@ static void CheckTailAndBoltMotion(void)
             if (state == 1)
                 MOTION_CHECK(bolt.mBolt.boneIndex == -1 && bolt.cachedServerTime == 100);
         } else {
-            MOTION_CHECK(effect->origin[0] == 11 && effect->origin[1] == 20 && effect->origin[2] == 30);
-            MOTION_CHECK(effect->mRefEnt.origin[0] == 80 && effect->mRefEnt.origin[1] == 211 && effect->mRefEnt.origin[2] == 330);
+            MOTION_CHECK(effect->origin[0] == (kind == 2 ? 10 : 11) && effect->origin[1] == 20 && effect->origin[2] == 30);
+            MOTION_CHECK(effect->mRefEnt.origin[0] == 80 && effect->mRefEnt.origin[1] == (kind == 2 ? 210 : 211) && effect->mRefEnt.origin[2] == 330);
         }
     }
 
+}
+
+static int cylinderFailures;
+#define CYLINDER_CHECK(condition) do { if (!(condition)) { fprintf(stderr, "FAIL cylinder line %d: %s\n", __LINE__, #condition); ++cylinderFailures; } } while (0)
+static void CheckCylinderUpdate(void)
+{
+    PrimitiveTemplate pt = {0};
+    for (int i = 0; i < 24; ++i) {
+        pt.mFxChannels[i].curve = (FxCurve *)(i < 2 ? (void *)&color : (void *)&scalar);
+        pt.mFxChannels[i].scaleRange.mMin = pt.mFxChannels[i].scaleRange.mMax = 1;
+    }
+    /* All three forward components matter; the display axis and tail history differ. */
+    const vec3_t axes[3] = {{.36f,.48f,.8f}, {-.8f,.6f,0}, {-.48f,-.64f,.6f}};
+    const vec3_t expectedOrigin[2] = {{10,20,30}, {80,210,330}};
+    const vec3_t expectedEnd[2] = {{13.6f,24.8f,38}, {75.2f,213.6f,338}};
+    for (int bolted = 0; bolted < 2; ++bolted) {
+        Tail cylinder = {0};
+        Particle *particle = &cylinder.base;
+        Effect *effect = &particle->base;
+        FxBoltFrame bolt = {.mBolt = {1, -1}, .cachedServerTime = 100,
+            .orientation = {.origin = {100,200,300}, .axis = {{0,1,0},{-1,0,0},{0,0,1}}}};
+        Tail_CreateChannelInstances(&cylinder, &pt);
+        memcpy(effect->mRefEnt.axis, axes, sizeof(axes));
+        for (int i = 0; i < 3; ++i) {
+            particle->displayAxis[i][i] = 1;
+            effect->origin[i] = (i + 1) * 10;
+            cylinder.endpoint[i] = (i + 1) * 100;
+        }
+        effect->mFlags = 0x80;
+        effect->mTimeStart = 1000;
+        effect->mTimeEnd = 3000;
+        effect->mBolt.value = bolted ? &bolt : NULL;
+        effect->mRefEnt.rotation = 37;
+        particle->rotationDeltaChannelInstance.scale = 25;
+        particle->sizeChannelInstance.scale = 2;
+        particle->size2ChannelInstance.scale = 7;
+        cylinder.lengthChannelInstance.scale = 10;
+        client.skelTimeStamp = 100;
+        for (int step = 0; step < 3; ++step) {
+            /* Neither zero motion nor two perpendicular velocity changes move a cylinder. */
+            particle->velocityXChannelInstance.scale = step == 1 ? 10 : 0;
+            particle->velocityYChannelInstance.scale = step == 2 ? 10 : 0;
+            particle->velocityZChannelInstance.scale = 0;
+            theFxHelper->mTime = 1100 + 100 * step;
+            theFxHelper->mFrameTime = step ? 100 : 0;
+            CYLINDER_CHECK(Cylinder_Update((Cylinder *)&cylinder));
+            for (int i = 0; i < 3; ++i) {
+                CYLINDER_CHECK(effect->origin[i] == expectedOrigin[0][i]);
+                CYLINDER_CHECK(fabsf(effect->mRefEnt.origin[i] - expectedOrigin[bolted][i]) < .00002f);
+                CYLINDER_CHECK(fabsf(effect->mRefEnt.endpos[i] - expectedEnd[bolted][i]) < .00002f);
+                CYLINDER_CHECK(cylinder.endpoint[i] == (i + 1) * 100);
+            }
+            CYLINDER_CHECK(!memcmp(effect->mRefEnt.axis, axes, sizeof(axes)));
+            CYLINDER_CHECK(effect->mRefEnt.rotation == 37);
+            CYLINDER_CHECK(effect->mRefEnt.radius[0] == 2 && effect->mRefEnt.radius[1] == 2);
+        }
+        particle->nonUniformScale = 1;
+        CYLINDER_CHECK(Cylinder_Update((Cylinder *)&cylinder));
+        CYLINDER_CHECK(effect->mRefEnt.radius[0] == 2 && effect->mRefEnt.radius[1] == 7);
+        /* Radius2 randomness is bit 16, independent of the rotation bit 18. */
+        static struct { int dimensions, keyCount; float keys[4]; } random = {1, 2, {0, 3, 1, 3}};
+        particle->sizeRandChannelInstance.curveIterator.master = (FxCurve *)&random;
+        particle->size2RandChannelInstance.curveIterator.master = (FxCurve *)&random;
+        cylinder.lengthRandChannelInstance.curveIterator.master = (FxCurve *)&random;
+        particle->blendWeight[2] = .25f;
+        particle->blendWeight[3] = .5f;
+        cylinder.lengthBlendFactor = .25f;
+        effect->mFlags |= 0x38000;
+        CYLINDER_CHECK(Cylinder_Update((Cylinder *)&cylinder));
+        CYLINDER_CHECK(effect->mRefEnt.radius[0] == 3 && effect->mRefEnt.radius[1] == 14);
+        CYLINDER_CHECK(cylinder.tailLength == 15);
+        const vec3_t randomEnd[2] = {{15.4f,27.2f,42}, {72.8f,215.4f,342}};
+        for (int i = 0; i < 3; ++i)
+            CYLINDER_CHECK(fabsf(effect->mRefEnt.endpos[i] - randomEnd[bolted][i]) < .00002f);
+        effect->mFlags = 0x40080;
+        CYLINDER_CHECK(Cylinder_Update((Cylinder *)&cylinder));
+        CYLINDER_CHECK(effect->mRefEnt.radius[1] == 7 && effect->mRefEnt.rotation == 37);
+        particle->sizeChannelInstance.scale = particle->size2ChannelInstance.scale = 0;
+        memset(effect->mRefEnt.materialRGBA, 0, sizeof(effect->mRefEnt.materialRGBA));
+        CYLINDER_CHECK(Cylinder_Update((Cylinder *)&cylinder));
+        CYLINDER_CHECK(effect->mRefEnt.radius[0] == 0 && effect->mRefEnt.radius[1] == 0);
+        CYLINDER_CHECK(effect->mFlags == 0x40080);
+        CYLINDER_CHECK(effect->mRefEnt.materialRGBA[0] == 204 && effect->mRefEnt.materialRGBA[3] == 255);
+        /* Future starts return false; negative normalized time clamps to zero. */
+        theFxHelper->mTime = 999;
+        CYLINDER_CHECK(!Cylinder_Update((Cylinder *)&cylinder));
+        theFxHelper->mTime = 1100;
+        effect->mTimeEnd = 500;
+        CYLINDER_CHECK(Cylinder_Update((Cylinder *)&cylinder));
+        CYLINDER_CHECK(effect->normTime == 0);
+        effect->mTimeEnd = 1050;
+        CYLINDER_CHECK(Cylinder_Update((Cylinder *)&cylinder));
+        CYLINDER_CHECK(effect->normTime == 1);
+    }
 }
 
 int main(void)
@@ -861,7 +955,8 @@ int main(void)
     CheckParticlePhysics();
     CheckEmitterMotion();
     CheckTailAndBoltMotion();
-    if (spawnFailures || physicsFailures || emitterFailures || motionFailures)
+    CheckCylinderUpdate();
+    if (spawnFailures || physicsFailures || emitterFailures || motionFailures || cylinderFailures)
         return 1;
     puts("native FX: nine primitive lifecycles, scheduler dispatch, bolting, impact axes, spawn filters and particle physics passed");
     return 0;
