@@ -253,16 +253,23 @@ static inline __attribute__((always_inline)) unsigned int Dvar_GenerateHashValue
     return hash & 0xff;
 }
 
+#if !defined(COD2_X64)
 static Bool Dvar_IsFiniteFloat(float value)
 {
     return isfinite(value) != 0;
 }
+#endif
 
 static Bool Dvar_FloatInDomain(float value, float min, float max)
 {
+#if defined(COD2_X64)
+    return !(value < min || value > max);
+#else
     return Dvar_IsFiniteFloat(value) && min <= value && value <= max;
+#endif
 }
 
+#if !defined(COD2_X64)
 static float Dvar_FallbackFloatForDomain(float min, float max)
 {
     if (min <= 0.0f && max >= 0.0f) {
@@ -271,12 +278,17 @@ static float Dvar_FallbackFloatForDomain(float min, float max)
 
     return min;
 }
+#endif
 
 static float Dvar_ClampFloatToDomain(float value, float resetValue, float min, float max)
 {
+#if defined(COD2_X64)
+    (void)resetValue;
+#else
     if (!Dvar_IsFiniteFloat(value)) {
         value = Dvar_IsFiniteFloat(resetValue) ? resetValue : Dvar_FallbackFloatForDomain(min, max);
     }
+#endif
 
     if (value < min) {
         value = min;
@@ -291,12 +303,17 @@ static void Dvar_ClampVectorToDomainWithReset(vec_t *vector, const vec_t *reset,
 {
     int i;
 
+#if defined(COD2_X64)
+    (void)reset;
+#endif
     for (i = 0; i < components; ++i) {
+#if !defined(COD2_X64)
         float resetValue = reset ? reset[i] : Dvar_FallbackFloatForDomain(min, max);
 
         if (!Dvar_IsFiniteFloat(vector[i])) {
             vector[i] = Dvar_IsFiniteFloat(resetValue) ? resetValue : Dvar_FallbackFloatForDomain(min, max);
         }
+#endif
 
         if (vector[i] < min) {
             vector[i] = min;
@@ -480,8 +497,12 @@ static int Dvar_StringToEnumIndex(DvarLimits domain, const char *string)
         index = 0;
         for (i = 0; string[i]; ++i) {
             if (string[i] < '0' || string[i] > '9') {
+#if defined(COD2_X64)
+                return DVAR_INVALID_ENUM_INDEX;
+#else
                 index = DVAR_INVALID_ENUM_INDEX;
                 break;
+#endif
             }
 
             index = index * 10 + (string[i] - '0');
