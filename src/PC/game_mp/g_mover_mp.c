@@ -73,7 +73,11 @@ static void G_TraceCapsuleForEntity(trace_t *tr, gentity_t *check, vec_t *origin
     int passEntityNum;
 
     if ((_ENT(check)->clipmask) != 0) {
+#if defined(COD2_X64)
+        if (check->r.contents & GMOVER_CONTENTS_0X04000000) {
+#else
         if ((_ENT(check)->r.contents) & 0x4) {
+#endif
             tr->allsolid = 0;
             tr->startsolid = 0;
             return;
@@ -85,7 +89,12 @@ static void G_TraceCapsuleForEntity(trace_t *tr, gentity_t *check, vec_t *origin
     } else {
         passEntityNum = (_ENT(check)->s.number);
     }
+#if defined(COD2_X64)
+    G_TraceCapsule(tr, origin, mins, maxs, origin, passEntityNum,
+                   check->clipmask ? check->clipmask : 0x811);
+#else
     G_TraceCapsule(tr, origin, mins, maxs, origin, passEntityNum, 0x811);
+#endif
 }
 
 void use_trigger_use(gentity_t *ent, gentity_t *other, gentity_t *activator)
@@ -122,7 +131,11 @@ static void trigger_use_shared(gentity_t *ent)
 
     if (G_SpawnString("cursorhint", "", &cursorhint)) {
 
+#if defined(COD2_X64)
+        if (I_stricmp(cursorhint, "HINT_INHERIT") == 0) {
+#else
         if (I_stricmp(cursorhint, "HINT_NOICON") == 0) {
+#endif
 
             (_ENT(ent)->s.dmgFlags) = -1;
         } else {
