@@ -705,13 +705,26 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
         Com_Printf("Not logging to disk.\n");
     }
 
+#if !defined(COD2_X64)
     {
         int *p = (int *)Hunk_AllocLowInternal(0);
         *(void **)&scrVarPub = (void *)p;
         *(byte *)p = 0;
     }
+#endif
 
 #if defined(COD2_X64)
+    /* Mac 1.3 loads scripts at 0x1aea7d before spawning at 0x1ae0ac.
+       This registers Radiant keys and entity class maps before BSP fields
+       are assigned. Loading later silently discarded every dynamic key,
+       including the gametype tags used to remove unused map entities. */
+    Scr_BeginLoadScripts();
+    GScr_LoadScripts(1);
+    COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_load);)
+    Scr_PostCompileScripts();
+    Scr_EndLoadScripts();
+    COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_endload);)
+
     /* Mac 1.3 loads the constant strings before spawning (GScr_LoadConsts
        precedes the clears below). Spawning first gave G_InitGentity the
        previous level's scr_const IDs, which SL_ShutdownSystem(1) had already
@@ -768,12 +781,14 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     G_SpawnTriggerHurt(SV_GetBrushModelCount() + 1);
     GScr_PostResetTimeout();
     G_SetupWeaponDef();
+#if !defined(COD2_X64)
     Scr_BeginLoadScripts();
     GScr_LoadScripts(1);
     COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_load);)
     Scr_PostCompileScripts();
     Scr_EndLoadScripts();
     COD2_DEBUG_ONLY(DBG_PrintFreeVars(str_dbg_endload);)
+#endif
 #if defined(COD2_X64)
 
     /* Mac 1.3 0x1adf5d initializes this tree on the server. A listen client

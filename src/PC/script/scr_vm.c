@@ -6546,6 +6546,9 @@ static void VM_CandidatePushEntityObject(VariableValue **top, int classnum, int 
 static void VM_CandidateIncDecField(unsigned int fieldValueId, VariableValue **top, int delta)
 {
     VM_PushPackedValue(top, Scr_EvalVariableField(fieldValueId));
+#if defined(COD2_X64)
+    scrVmPub.top = *top;
+#endif
     if ((*top)->type != VAR_INTEGER) {
 #if defined(COD2_X64)
         Scr_SetErrorMessageAndJump(va("%s must be applied to an int (applied to %s)",
@@ -7508,6 +7511,18 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
     VariableValue *top = fs.top;
     VariableValue *startTop = fs.startTop;
     unsigned int resultLocalId = 0;
+#if defined(COD2_X64)
+    /* Calls and entity setters can longjmp after modifying interpreter locals.
+     * Volatile state survives recovery under the C setjmp rules. */
+    volatile struct {
+        function_stack_t frame;
+        unsigned int fieldValueId;
+        unsigned int objectId;
+        unsigned int thread_count;
+        Bool active;
+        Bool returnsValue;
+    } errorCheckpoint = {0};
+#endif
 
     (void)waitTime;
     (void)caseCount;
@@ -7518,11 +7533,52 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
 
     g_script_error_level++;
     if (setjmp(g_script_error[g_script_error_level])) {
+#if defined(COD2_X64)
+        if (errorCheckpoint.active) {
+            pos = errorCheckpoint.frame.pos;
+            localId = errorCheckpoint.frame.localId;
+            localVarCount = errorCheckpoint.frame.localVarCount;
+            top = errorCheckpoint.frame.top;
+            startTop = errorCheckpoint.frame.startTop;
+            fieldValueId = errorCheckpoint.fieldValueId;
+            objectId = errorCheckpoint.objectId;
+            thread_count = errorCheckpoint.thread_count;
+        }
+#endif
         RuntimeError(pos, varPub->error_index, varPub->error_message,
                      ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message);
         varPub->error_message = NULL;
         ((struct scrVmGlob_t *)scrVmGlob)->dialog_error_message = NULL;
         varPub->error_index = 0;
+#if defined(COD2_X64)
+        if (errorCheckpoint.active) {
+            /* Mac VM_Execute's builtin recovery block at 0x86994 releases
+             * unconsumed parameters and produces an undefined result. */
+            while (scrVmPub.outparamcount) {
+                RemoveRefToValue(scrVmPub.top->type, scrVmPub.top->u);
+                --scrVmPub.top;
+                --scrVmPub.outparamcount;
+            }
+            while (scrVmPub.inparamcount) {
+                RemoveRefToValue(scrVmPub.top->type, scrVmPub.top->u);
+                --scrVmPub.top;
+                --scrVmPub.inparamcount;
+            }
+            if (errorCheckpoint.returnsValue) {
+                top = scrVmPub.top;
+                VM_PushValue(&top)->type = VAR_UNDEFINED;
+            } else {
+                /* Field assignment consumes its value without a result. An
+                 * inc/dec may fail before the setter establishes parameters. */
+                while (scrVmPub.top > errorCheckpoint.frame.top) {
+                    RemoveRefToValue(scrVmPub.top->type, scrVmPub.top->u);
+                    --scrVmPub.top;
+                }
+                top = errorCheckpoint.frame.top;
+            }
+            errorCheckpoint.active = 0;
+        }
+#endif
     }
 
     for (;;) {
@@ -7548,6 +7604,34 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
         }
 #    endif
 
+#if defined(COD2_X64)
+        if ((opcode >= VMOP_CallBuiltin0 && opcode <= VMOP_CallBuiltinMethod) ||
+            opcode == VMOP_SetSelfFieldVariableField || opcode == VMOP_EvalLocalArrayRefCached0 ||
+            opcode == VMOP_Inc || opcode == VMOP_Dec) {
+            errorCheckpoint.active = 1;
+            errorCheckpoint.returnsValue = opcode >= VMOP_CallBuiltin0 && opcode <= VMOP_CallBuiltinMethod;
+            errorCheckpoint.frame.pos = pos;
+            if (errorCheckpoint.returnsValue)
+                errorCheckpoint.frame.pos += 2 +
+                    (opcode == VMOP_CallBuiltin || opcode == VMOP_CallBuiltinMethod);
+            else if (opcode == VMOP_SetSelfFieldVariableField)
+                errorCheckpoint.frame.pos += 2;
+            else if (opcode == VMOP_Inc || opcode == VMOP_Dec)
+                ++errorCheckpoint.frame.pos;
+            errorCheckpoint.frame.localId = localId;
+            errorCheckpoint.frame.localVarCount = localVarCount;
+            errorCheckpoint.frame.top = top;
+            if (!errorCheckpoint.returnsValue) {
+                scrVmPub.top = top;
+                if (opcode != VMOP_Inc && opcode != VMOP_Dec)
+                    --errorCheckpoint.frame.top;
+            }
+            errorCheckpoint.frame.startTop = startTop;
+            errorCheckpoint.fieldValueId = fieldValueId;
+            errorCheckpoint.objectId = objectId;
+            errorCheckpoint.thread_count = thread_count;
+        }
+#endif
         switch ((ScrVmOpcode)opcode) {
         case VMOP_End:
             if (VM_CandidateHandleEnd(&pos, &localId, &localVarCount, &top, &startTop, &resultLocalId, &thread_count)) {
@@ -7885,12 +7969,18 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             fieldValueId = Scr_GetVariableField(objectId, fieldName);
             SetVariableFieldValue(fieldValueId, top);
             top--;
+#if defined(COD2_X64)
+            errorCheckpoint.active = 0;
+#endif
             break;
         }
 
         case VMOP_EvalLocalArrayRefCached0:
             SetVariableFieldValue(fieldValueId, top);
             top--;
+#if defined(COD2_X64)
+            errorCheckpoint.active = 0;
+#endif
             break;
 
         case VMOP_SetLocalVariableFieldCached:
@@ -8031,11 +8121,17 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
         case VMOP_CallBuiltin4:
         case VMOP_CallBuiltin5:
             VM_CandidateCallBuiltin(&pos, &top, opcode - VMOP_CallBuiltin0);
+#if defined(COD2_X64)
+            errorCheckpoint.active = 0;
+#endif
             break;
 
         case VMOP_CallBuiltin: {
             unsigned int paramCount = *(const unsigned char *)pos++;
             VM_CandidateCallBuiltin(&pos, &top, paramCount);
+#if defined(COD2_X64)
+            errorCheckpoint.active = 0;
+#endif
             break;
         }
 
@@ -8046,11 +8142,17 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
         case VMOP_CallBuiltinMethod4:
         case VMOP_CallBuiltinMethod5:
             VM_CandidateCallBuiltinMethod(&pos, &top, opcode - VMOP_CallBuiltinMethod0);
+#if defined(COD2_X64)
+            errorCheckpoint.active = 0;
+#endif
             break;
 
         case VMOP_CallBuiltinMethod: {
             unsigned int paramCount = *(const unsigned char *)pos++;
             VM_CandidateCallBuiltinMethod(&pos, &top, paramCount);
+#if defined(COD2_X64)
+            errorCheckpoint.active = 0;
+#endif
             break;
         }
 
@@ -8136,11 +8238,17 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
         case VMOP_Inc:
             VM_CandidateIncDecField(fieldValueId, &top, 1);
             pos++;
+#if defined(COD2_X64)
+            errorCheckpoint.active = 0;
+#endif
             break;
 
         case VMOP_Dec:
             VM_CandidateIncDecField(fieldValueId, &top, -1);
             pos++;
+#if defined(COD2_X64)
+            errorCheckpoint.active = 0;
+#endif
             break;
 
         case VMOP_Bit_Or:
