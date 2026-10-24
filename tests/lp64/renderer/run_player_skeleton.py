@@ -35,8 +35,13 @@ with (output / 'compile.log').open('w') as log:
                     str(ROOT / 'src/PC/xanim/xmodel.c'),
                     str(ROOT / 'tests/lp64/renderer/player_skeleton.c'),
                     '-o', str(exe)], cwd=ROOT, stdout=log, stderr=log, check=True)
-run = subprocess.run([str(exe)], capture_output=True, text=True, env={**os.environ,
-                     'ASAN_OPTIONS': 'symbolize=0', 'UBSAN_OPTIONS': 'halt_on_error=1'})
-(output / 'run.log').write_text(run.stdout + run.stderr)
-print(run.stdout + run.stderr, end='')
-run.check_returncode()
+failed = []
+for case in ['existing', 'rigid', 'dx7', 'dx9', 'homogeneous']:
+    run = subprocess.run([str(exe), case], capture_output=True, text=True, env={**os.environ,
+                         'ASAN_OPTIONS': 'symbolize=0', 'UBSAN_OPTIONS': 'halt_on_error=1'})
+    (output / (case + '.log')).write_text(run.stdout + run.stderr)
+    print(f'{case}: {run.returncode}')
+    if run.returncode:
+        failed.append(case)
+if failed:
+    raise SystemExit('Failed: ' + ', '.join(failed))

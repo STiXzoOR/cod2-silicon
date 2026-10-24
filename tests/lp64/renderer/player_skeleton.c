@@ -242,11 +242,80 @@ static void TestLocalTagNullBind(void)
     DObjCalcSkel(&object,bits); CheckVec(s->mat[1].trans,10,20,30); free(s);
 }
 
-int main(void)
+static void TestRigidRotationRounding(void)
+{
+    XSurface surface = {0};
+    GfxModelRigidSurface rigid = {0};
+    GfxEntity entity = {0};
+    SkinRigidXModelCmd command = {0};
+    rigid.surf.surfType = (surfaceType_t)4;
+    rigid.surf.xsurf = &surface;
+    entity.scale = 1;
+    entity.axis[0][0] = entity.axis[1][1] = entity.axis[2][2] = 1;
+    command.surfs = (surfaceType_t *)&rigid;
+    command.surfCount = 1;
+    command.e = &entity;
+    command.mat.quat[0] = .3f;
+    command.mat.quat[1] = .4f;
+    command.mat.quat[2] = .5f;
+    command.mat.quat[3] = sqrtf(.5f);
+    command.mat.transWeight = 2;
+    R_SkinRigidXModelCmd(&command);
+    /* Mac adds the two squared quaternion terms before subtracting from one. */
+    assert(rigid.boneAxis[0][0] == 0x1.70a3dp-3f);
+    assert(rigid.boneAxis[1][1] == 0x1.47ae14p-2f);
+    assert(rigid.boneAxis[2][2] == 0x1p-1f);
+}
+
+static void TestSkinArithmetic(const char *mode)
+{
+    struct { XVertexInfo vertex; XBlendInfo blend; } input = {0};
+    DObjSkelMat bones[2] = {0};
+    XSurface surface = {0};
+    GfxModelSkinnedSurface skinned = {0};
+    float output[16] = {0};
+    int dx7 = !strcmp(mode, "dx7");
+    int homogeneous = !strcmp(mode, "homogeneous");
+    bones[1].axis[0][0] = bones[1].axis[2][0] = 0x1.6a09e6p-1f;
+    bones[1].axis[0][2] = -0x1.6a09e6p-1f;
+    bones[1].axis[1][1] = 1;
+    bones[1].axis[2][2] = 0x1.6a09e6p-1f;
+    bones[1].origin[0] = 10.0f;
+    bones[0].origin[3] = bones[1].origin[3] = 1;
+    input.vertex.numWeights = dx7 ? 0 : 1;
+    input.vertex.boneWeight = 128;
+    input.vertex.boneOffset = dx7 ? 64 : 0;
+    input.vertex.offset[0] = input.vertex.offset[2] = .1f;
+    input.blend.offset[0] = input.blend.offset[2] = .1f;
+    input.blend.boneOffset = 64;
+    input.blend.boneWeight = homogeneous ? 32767 : 32768;
+    surface.boneOffset = -1;
+    surface.vertCount = 1;
+    surface.verts = (XVertexBuffer *)&input;
+    skinned.surf.xsurf = &surface;
+    skinned.skinnedCachedOffset = -1;
+    skinned.skinnedVert.variant = output;
+    renderer.current.integer = dx7 ? 2 : 1;
+    R_SkinXSurfaceSkinned(&skinned, bones);
+    /* Single-precision results from the original scalar/SIMD operation order. */
+    if (dx7) assert(output[0] == 0x1.448686p+3f);
+    else if (homogeneous) assert(output[3] == 0x1.fffep-1f);
+    else assert(output[0] == 0x1.448688p+2f);
+}
+
+int main(int argc, char **argv)
 {
 #if defined(COD2_X64)
     DObjInit();
 #endif
+    if (argc > 1 && !strcmp(argv[1], "rigid")) {
+        TestRigidRotationRounding();
+        return 0;
+    }
+    if (argc > 1 && strcmp(argv[1], "existing")) {
+        TestSkinArithmetic(argv[1]);
+        return 0;
+    }
     TestChildTranslation(1, 0);
     TestChildTranslation(1, 1);
     TestChildTranslation(0, 0);
