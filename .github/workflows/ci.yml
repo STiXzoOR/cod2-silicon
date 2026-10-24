@@ -182,6 +182,10 @@ jobs:
             --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-sun.noindex/ci-stock"
           python3 tests/lp64/renderer/run_sun.py --compile-db build-macos-codx/compile_commands.engine.json \
             --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-sun.noindex/ci-codx"
+          python3 tests/lp64/renderer/run_imagefilter.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-filters.noindex/ci-stock"
+          python3 tests/lp64/renderer/run_imagefilter.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-filters.noindex/ci-codx"
           python3 tests/lp64/game/run.py --build build-macos
           python3 tests/lp64/script/run.py
           python3 tests/online/run.py build-macos/compile_commands.json

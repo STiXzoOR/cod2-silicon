@@ -213,7 +213,12 @@ static int RB_GenerateGaussianFilterChain(float radiusX, float radiusY, int srcW
         passCount = 0;
     } else {
 
+#if defined(COD2_X64)
+        /* The Mac SSE select keeps X when Y-X is unordered. */
+        minRadius = radiusY - radiusX < 0.0f ? radiusY : radiusX;
+#else
         minRadius = radiusX < radiusY ? radiusX : radiusY;
+#endif
 
         if (minRadius > GLOW_MAX_RADIUS) {
             minRadius = GLOW_MAX_RADIUS;
@@ -235,7 +240,12 @@ static int RB_GenerateGaussianFilterChain(float radiusX, float radiusY, int srcW
         float filterRadius;
         int dstRes;
 
+#if defined(COD2_X64)
+        /* UCOMISS/JB also stops an unordered residual radius. */
+        if (!(radiusX >= FILTER_MIN_RADIUS) && !(radiusY >= FILTER_MIN_RADIUS)) {
+#else
         if (radiusX < FILTER_MIN_RADIUS && radiusY < FILTER_MIN_RADIUS) {
+#endif
             break;
         }
 
@@ -372,19 +382,33 @@ static GfxRenderTargetId RB_ApplyGlowFilter(GfxRenderTargetId srcRenderTarget, G
     int startPass;
     int dstWidth, dstHeight;
     float scaledRadius;
+#if defined(COD2_X64)
+    float scaledRadiusY;
+#endif
 
     if (glowRadius == 0.0f) {
+#if defined(COD2_X64)
+        return srcRenderTarget;
+#else
         return dstRenderTarget;
+#endif
     }
 
     {
         const r_backEndGlobals_t *backend = (const r_backEndGlobals_t *)backEnd;
         const GfxViewParms *viewParms = backend->viewParms;
+#if defined(COD2_X64)
+        unsigned int viewportHeight = viewParms->viewport.Height;
+#else
         int viewportHeight = (int)viewParms->viewport.Height;
+#endif
         float heightScaled = (float)viewportHeight * glowRadius / 480.0f;
 
         const vidConfig_t *vcfg = (const vidConfig_t *)vidConfig;
         scaledRadius = heightScaled * vcfg->aspectRatioPixel;
+#if defined(COD2_X64)
+        scaledRadiusY = heightScaled;
+#endif
     }
 
     filter.pingPongTargets[0] = R_RENDERTARGET_PINGPONG_0;
@@ -413,7 +437,11 @@ static GfxRenderTargetId RB_ApplyGlowFilter(GfxRenderTargetId srcRenderTarget, G
 
     startPass = filter.passCount;
     chainPassCount = RB_GenerateGaussianFilterChain(
+#if defined(COD2_X64)
+        scaledRadius, scaledRadiusY,
+#else
         scaledRadius, scaledRadius,
+#endif
         dstWidth, dstHeight,
         dstWidth, dstHeight,
         16 - startPass,
@@ -422,7 +450,11 @@ static GfxRenderTargetId RB_ApplyGlowFilter(GfxRenderTargetId srcRenderTarget, G
     passCount = filter.passCount;
 
     if (passCount == 0) {
+#if defined(COD2_X64)
+        return srcRenderTarget;
+#else
         return dstRenderTarget;
+#endif
     }
 
     g_TotalFilterPasses += passCount;
@@ -510,16 +542,26 @@ void RB_GaussianFilterImage(float radius, GfxRenderTargetId renderTargetId)
     r_backEndGlobals_t *be;
     int width, height;
     float scaledRadius;
+#if defined(COD2_X64)
+    float scaledRadiusY;
+#endif
     int oddPassCount;
 
     be = (r_backEndGlobals_t *)backEnd;
     {
         const GfxViewParms *viewParms = be->viewParms;
+#if defined(COD2_X64)
+        unsigned int viewportHeight = viewParms->viewport.Height;
+#else
         int viewportHeight = (int)viewParms->viewport.Height;
+#endif
         float heightScaled = (float)viewportHeight * radius / 480.0f;
 
         const vidConfig_t *vcfg = (const vidConfig_t *)vidConfig;
         scaledRadius = heightScaled * vcfg->aspectRatioPixel;
+#if defined(COD2_X64)
+        scaledRadiusY = heightScaled;
+#endif
     }
 
     filter.pingPongTargets[0] = R_RENDERTARGET_PINGPONG_0;
@@ -536,7 +578,11 @@ void RB_GaussianFilterImage(float radius, GfxRenderTargetId renderTargetId)
         int vidHeight = vcfg2->height;
 
         passCount = RB_GenerateGaussianFilterChain(
+#if defined(COD2_X64)
+            scaledRadius, scaledRadiusY,
+#else
             scaledRadius, scaledRadius,
+#endif
             vidWidth, vidHeight,
             width, height,
             16,
