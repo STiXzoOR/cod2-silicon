@@ -403,7 +403,11 @@ void G_RunCorpseMove(gentity_t *ent)
 {
     corpseInfo_t *corpseInfo;
     trace_t tr;
+#if defined(COD2_X64)
+    vec3_t rot;
+#else
     vec_t rot[2];
+#endif
     vec3_t deltaChange;
     vec3_t origin;
     vec3_t endpos;
