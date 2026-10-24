@@ -517,6 +517,149 @@ static void CheckEmitterUpdate(void)
 
 }
 
+extern void Tail_CreateChannelInstances(const Tail *, const PrimitiveTemplate *);
+extern Bool Tail_Update(const Tail *);
+extern Bool Particle_Update(const Particle *);
+static int motionFailures;
+#define MOTION_CHECK(condition) do { if (!(condition)) { fprintf(stderr, "FAIL motion line %d: %s\n", __LINE__, #condition); ++motionFailures; } } while (0)
+
+extern Bool OrientedParticle_Update(const OrientedParticle *);
+extern Bool Line_Update(const Line *);
+extern Bool Cylinder_Update(const Cylinder *);
+extern Bool Cloud_Update(const Cloud *);
+extern void Cloud_CreateChannelInstances(const Cloud *, const PrimitiveTemplate *);
+static void CheckTailAndBoltMotion(void)
+{
+    PrimitiveTemplate pt = {0};
+    for (int i = 0; i < 24; ++i) {
+        pt.mFxChannels[i].curve = (FxCurve *)(i < 2 ? (void *)&color : (void *)&scalar);
+        pt.mFxChannels[i].scaleRange.mMin = pt.mFxChannels[i].scaleRange.mMax = i < 12 ? 1 : 0;
+    }
+    pt.mFxChannels[8].scaleRange.mMin = pt.mFxChannels[8].scaleRange.mMax = 4;
+    for (int bolted = 0; bolted < 2; ++bolted) {
+        Tail tail = {0};
+        Effect *effect = &tail.base.base;
+        FxBoltFrame bolt = {.mBolt = {1, -1}, .cachedServerTime = 100,
+            .orientation = {.origin = {100,200,300}, .axis = {{0,1,0},{-1,0,0},{0,0,1}}}};
+        Tail_CreateChannelInstances(&tail, &pt);
+        for (int i = 0; i < 3; ++i) {
+            tail.base.displayAxis[i][i] = 1;
+            effect->origin[i] = (i + 1) * 10;
+            tail.endpoint[i] = (i + 1) * 100;
+        }
+        effect->mFlags = 0x80;
+        effect->mTimeStart = 1000;
+        effect->mTimeEnd = 3000;
+        effect->mBolt.value = bolted ? &bolt : NULL;
+        tail.base.velocityXChannelInstance.scale = 10;
+        client.skelTimeStamp = 100;
+        theFxHelper->mTime = 1100;
+        theFxHelper->mFrameTime = 100;
+        MOTION_CHECK(Tail_Update(&tail));
+        MOTION_CHECK(effect->origin[0] == 11 && effect->origin[1] == 20 && effect->origin[2] == 30);
+        MOTION_CHECK(tail.endpoint[0] == 10 && tail.endpoint[1] == 20 && tail.endpoint[2] == 30);
+        const vec3_t firstOrigin[2] = {{11,20,30}, {80,211,330}};
+        const vec3_t firstEnd[2] = {{7,20,30}, {80,207,330}};
+        for (int i = 0; i < 3; ++i) {
+            MOTION_CHECK(fabsf(effect->mRefEnt.origin[i] - firstOrigin[bolted][i]) < .00001f);
+            MOTION_CHECK(fabsf(effect->mRefEnt.endpos[i] - firstEnd[bolted][i]) < .00001f);
+        }
+        /* A turn must use the preceding frame, not the original spawn endpoint. */
+        tail.base.velocityXChannelInstance.scale = 0;
+        tail.base.velocityYChannelInstance.scale = 10;
+        theFxHelper->mTime = 1200;
+        MOTION_CHECK(Tail_Update(&tail));
+        MOTION_CHECK(tail.endpoint[0] == 11 && tail.endpoint[1] == 20 && tail.endpoint[2] == 30);
+        const vec3_t secondOrigin[2] = {{11,21,30}, {79,211,330}};
+        const vec3_t secondEnd[2] = {{11,17,30}, {83,211,330}};
+        for (int i = 0; i < 3; ++i) {
+            MOTION_CHECK(fabsf(effect->mRefEnt.origin[i] - secondOrigin[bolted][i]) < .00001f);
+            MOTION_CHECK(fabsf(effect->mRefEnt.endpos[i] - secondEnd[bolted][i]) < .00001f);
+        }
+        vec3_t stationaryEnd;
+        memcpy(stationaryEnd, effect->mRefEnt.endpos, sizeof(stationaryEnd));
+        theFxHelper->mFrameTime = 0;
+        MOTION_CHECK(Tail_Update(&tail));
+        MOTION_CHECK(!memcmp(stationaryEnd, effect->mRefEnt.endpos, sizeof(stationaryEnd)));
+    }
+    for (int isTail = 0; isTail < 2; ++isTail) {
+        for (int state = 0; state < 3; ++state) {
+            Tail tail = {0};
+            Effect *effect = &tail.base.base;
+            FxBoltFrame bolt = {.mBolt = {state == 0 ? -1 : 1, state == 1 ? 1 : -1},
+                .cachedServerTime = state == 1 ? 99 : 100,
+                .orientation = {.origin = {100,200,300}, .axis = {{0,1,0},{-1,0,0},{0,0,1}}}};
+            Tail_CreateChannelInstances(&tail, &pt);
+            effect->mFlags = 0x80;
+            effect->mTimeStart = 1000;
+            effect->mTimeEnd = 3000;
+            effect->mBolt.value = &bolt;
+            effect->origin[0] = 10; effect->origin[1] = 20; effect->origin[2] = 30;
+            effect->mRefEnt.origin[0] = 7; effect->mRefEnt.origin[1] = 8; effect->mRefEnt.origin[2] = 9;
+            tail.endpoint[0] = 17; tail.endpoint[1] = 18; tail.endpoint[2] = 19;
+            Bool alive = isTail ? Tail_Update(&tail) : Particle_Update(&tail.base);
+            MOTION_CHECK(alive == (state == 2));
+            if (state < 2) {
+                MOTION_CHECK(effect->mRefEnt.origin[0] == 7 && effect->mRefEnt.origin[1] == 8 && effect->mRefEnt.origin[2] == 9);
+                MOTION_CHECK(tail.endpoint[0] == 17 && tail.endpoint[1] == 18 && tail.endpoint[2] == 19);
+                MOTION_CHECK(bolt.mBolt.dobjHandle == -1);
+                if (state == 1)
+                    MOTION_CHECK(bolt.mBolt.boneIndex == -1 && bolt.cachedServerTime == 100);
+            } else {
+                MOTION_CHECK(effect->mRefEnt.origin[0] == 80 && effect->mRefEnt.origin[1] == 210 && effect->mRefEnt.origin[2] == 330);
+            }
+        }
+    }
+    /* An attachment failure must stop each update before local motion or rendering. */
+    for (int kind = 0; kind < 4; ++kind) for (int state = 0; state < 3; ++state) {
+        union { OrientedParticle oriented; Line line; Cylinder cylinder; Cloud cloud; } storage = {0};
+        Particle *particle = (Particle *)&storage;
+        Effect *effect = &particle->base;
+        FxBoltFrame bolt = {.mBolt = {state == 0 ? -1 : 1, state == 1 ? 1 : -1},
+            .cachedServerTime = state == 1 ? 99 : 100,
+            .orientation = {.origin = {100,200,300}, .axis = {{0,1,0},{-1,0,0},{0,0,1}}}};
+        if (kind == 2)
+            Tail_CreateChannelInstances((Tail *)&storage.cylinder, &pt);
+        else if (kind == 3)
+            Cloud_CreateChannelInstances(&storage.cloud, &pt);
+        else
+            Particle_CreateChannelInstances(particle, &pt);
+        if (kind == 0) storage.oriented.normal[2] = 1;
+        if (kind == 3) storage.cloud.randomDirection[2] = 1;
+        for (int i = 0; i < 3; ++i) particle->displayAxis[i][i] = 1;
+        particle->velocityXChannelInstance.scale = 10;
+        effect->mFlags = 0x80;
+        effect->mTimeStart = 1000;
+        effect->mTimeEnd = 3000;
+        effect->mBolt.value = &bolt;
+        effect->origin[0] = 10; effect->origin[1] = 20; effect->origin[2] = 30;
+        effect->mRefEnt.origin[0] = 7; effect->mRefEnt.origin[1] = 8; effect->mRefEnt.origin[2] = 9;
+        FxGfxEntity before = effect->mRefEnt;
+        client.skelTimeStamp = 100;
+        theFxHelper->mTime = 1100;
+        theFxHelper->mFrameTime = 100;
+        Bool alive;
+        switch (kind) {
+            case 0: alive = OrientedParticle_Update(&storage.oriented); break;
+            case 1: alive = Line_Update(&storage.line); break;
+            case 2: alive = Cylinder_Update(&storage.cylinder); break;
+            default: alive = Cloud_Update(&storage.cloud); break;
+        }
+        MOTION_CHECK(alive == (state == 2));
+        if (state < 2) {
+            MOTION_CHECK(effect->origin[0] == 10 && effect->origin[1] == 20 && effect->origin[2] == 30);
+            MOTION_CHECK(!memcmp(&before, &effect->mRefEnt, sizeof(before)));
+            MOTION_CHECK(bolt.mBolt.dobjHandle == -1);
+            if (state == 1)
+                MOTION_CHECK(bolt.mBolt.boneIndex == -1 && bolt.cachedServerTime == 100);
+        } else {
+            MOTION_CHECK(effect->origin[0] == 11 && effect->origin[1] == 20 && effect->origin[2] == 30);
+            MOTION_CHECK(effect->mRefEnt.origin[0] == 80 && effect->mRefEnt.origin[1] == 211 && effect->mRefEnt.origin[2] == 330);
+        }
+    }
+
+}
+
 int main(void)
 {
     PrimitiveTemplate pt = {0};
@@ -717,7 +860,8 @@ int main(void)
     CheckSpawnFilters();
     CheckParticlePhysics();
     CheckEmitterMotion();
-    if (spawnFailures || physicsFailures || emitterFailures)
+    CheckTailAndBoltMotion();
+    if (spawnFailures || physicsFailures || emitterFailures || motionFailures)
         return 1;
     puts("native FX: nine primitive lifecycles, scheduler dispatch, bolting, impact axes, spawn filters and particle physics passed");
     return 0;
