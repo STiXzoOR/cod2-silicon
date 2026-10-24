@@ -102,7 +102,11 @@ qboolean R_PickMaterial(const vec_t *org, const vec_t *dir, char *name, char *su
         ((void (*)(void *, const vec_t *, float *, void *, void *, int, int))vtable[0x158 / 4])(trace, org, end, worldPtr, worldPtr, 0, 0x0f83fff7);
     }
 
+#if defined(COD2_X64)
+    if (((trace_t *)trace)->allsolid != 0 || ((trace_t *)trace)->startsolid != 0)
+#else
     if (((trace_t *)trace)->allsolid != 0)
+#endif
         return 0;
     if (((trace_t *)trace)->fraction == 1.0f)
         return 0;
@@ -122,7 +126,11 @@ qboolean R_PickMaterial(const vec_t *org, const vec_t *dir, char *name, char *su
     surfFlags = ((trace_t *)trace)->surfaceFlags;
     surfType = ((surfFlags & 0x1f00000) >> 20) - 1;
 
+#if defined(COD2_X64)
+    if ((unsigned int)surfType > 21) {
+#else
     if (surfType > 21) {
+#endif
         strncpy(surfaceFlags, "^1default^7", charLimit);
     } else {
         table = (byte *)imp_infoParms;
@@ -221,7 +229,11 @@ float FresnelTerm(float n0, float n1, float cosIncidentAngle)
     sinRefracted = (double)(n0 / n1) * sin(incidentAngle);
 
     if (sinRefracted > 1.0)
+#if defined(COD2_X64)
+        sinRefracted = 1.0;
+#else
         sinRefracted = sinRefracted;
+#endif
     else if (sinRefracted < -1.0)
         sinRefracted = -1.0;
 
