@@ -17,7 +17,7 @@ void Com_Error(int code, const char *fmt, ...) { (void)code; (void)fmt; abort();
 int GetVarType(unsigned int id) { (void)id; abort(); }
 static const char *typeNames[24];
 void *imp_var_typename = typeNames;
-const char *va(const char *fmt, ...) { (void)fmt; abort(); }
+char *va(const char *fmt, ...) { (void)fmt; abort(); }
 Bool IsFieldObject(unsigned int id) { assert(id == 77); return 1; }
 void AddRefToObject(unsigned int id) { assert(id == 13); }
 void RemoveRefToObject(unsigned int id) { assert(id == 17); }

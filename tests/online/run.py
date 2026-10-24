@@ -58,12 +58,6 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
                     '-o', str(trace_obj)], check=True, cwd=root)
     for name, path, names in suites:
         source = (root / path).read_text()
-        if name == 'netchan_decode':
-            # Its legacy/native diagnostic branches have alternative opening
-            # braces. Resolve them with the real compile flags before extracting.
-            source = subprocess.check_output(
-                [*[flag for flag in flags if flag != '-c'], '-E', '-P', str(root / path)],
-                cwd=root, text=True)
         if name == 'mantle':
             source = source[:source.index('extern const dvar_t *Dvar_RegisterBool')]
         functions = [] if names else [source]
@@ -81,6 +75,12 @@ with tempfile.TemporaryDirectory(prefix='ws14-online-') as tmp:
                 protocol = (root / 'src/PC/qcommon/cod2x_protocol.c').read_text()
                 functions.append(protocol[protocol.index('size_t Cod2x_EncodeConnect('):
                                           protocol.index('int Cod2x_HwidValid(')])
+        if name in ('netchan_decode', 'scheduled_fx'):
+            # These functions have alternative opening braces in native/legacy
+            # branches. Resolve them with the engine flags before extraction.
+            source = subprocess.check_output(
+                [*[flag for flag in flags if flag != '-c'], '-E', '-P', str(root / path)],
+                cwd=root, text=True)
         for function in names:
             match = re.search(r'^(?:static )?(?:const char \*|void |dvar_t \*|qboolean |Bool |int )' + function + r'\([^;]*?\)\n\{',
                               source, re.M)
