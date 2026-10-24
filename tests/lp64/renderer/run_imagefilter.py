@@ -15,6 +15,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--compile-db', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--raster', action='store_true', help='also check synthetic target edges in a real CGL context')
     parser.add_argument('--baseline', help='read production source from a local commit')
     options = parser.parse_args()
     output = options.output.resolve()
@@ -52,6 +53,21 @@ def main():
         print(case + ': ' + ('FAIL' if result.returncode else 'PASS'))
         if result.returncode:
             failures.append(case)
+    if options.raster:
+        raster = output / 'imagefilter_raster'
+        with (output / 'raster-compile.log').open('w') as log:
+            subprocess.run([*flags, '-UNDEBUG', '-I' + str(output),
+                            '-fsanitize=address,undefined', '-fno-omit-frame-pointer',
+                            '-Wl,-dead_strip', '-framework', 'OpenGL',
+                            str(ROOT / 'tests/lp64/renderer/imagefilter_raster.c'), '-o', str(raster)],
+                           cwd=ROOT, stdout=log, stderr=log, check=True)
+        result = subprocess.run([str(raster)], capture_output=True, text=True,
+                                env={**os.environ, 'ASAN_OPTIONS': 'symbolize=0',
+                                     'UBSAN_OPTIONS': 'halt_on_error=1'})
+        (output / 'raster.log').write_text(result.stdout + result.stderr)
+        print('raster: ' + ('FAIL' if result.returncode else 'PASS'))
+        if result.returncode:
+            failures.append('raster')
     if failures:
         raise SystemExit('Failed imagefilter fixtures: ' + ', '.join(failures))
 
