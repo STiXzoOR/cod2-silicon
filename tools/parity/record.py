@@ -25,20 +25,45 @@ def sha256(path):
 
 def testclients_bootstrap(iwds):
     """Enable the installed DM script's dormant helper without storing game script text here."""
+    def installed(member):
+        for path in reversed(iwds):
+            with zipfile.ZipFile(path) as archive:
+                if member in archive.namelist():
+                    return archive.read(member)
+        raise ValueError(f'Missing {member} for test-client helper bootstrap')
+
     member = 'maps/mp/gametypes/dm.gsc'
-    for path in reversed(iwds):
-        with zipfile.ZipFile(path) as archive:
-            if member in archive.namelist():
-                script = archive.read(member)
-                break
-    else:
-        raise ValueError('Missing DM script for test-client helper bootstrap')
+    script = installed(member)
     helper = re.compile(rb'(?m)^([ \t]*)//[ \t]*(thread[ \t]+maps\\mp\\gametypes\\_teams::'
                         rb'addTestClients\(\);[ \t]*\r?)$')
     script, count = helper.subn(rb'\1\2', script)
     if count != 1:
         raise ValueError(f'Expected exactly one commented test-client helper call; found {count}')
-    return member, script
+    teams_member = 'maps/mp/gametypes/_teams.gsc'
+    teams = installed(teams_member)
+    # Use the gametype's normal selection callbacks directly. The dormant
+    # helper relies on menu listeners that are not reliable for test clients.
+    teams, count = re.subn(rb'\bthread TestClient\(team\);',
+                           b'thread oracleTestClient(team);', teams)
+    if count != 1:
+        raise ValueError(f'Expected one test-client entry point; found {count}')
+    teams += b'''
+oracleTestClient(team)
+{
+    self endon("disconnect");
+    wait 0.25;
+    if(team == "allies")
+        self [[level.allies]]();
+    else
+        self [[level.axis]]();
+    wait 0.5;
+    if(team == "allies")
+        self [[level.weapon]]("thompson_mp");
+    else
+        self [[level.weapon]]("mp40_mp");
+}
+'''
+    return [(member, script), (teams_member, teams)]
 
 
 def main():
@@ -81,10 +106,10 @@ def main():
     home = out / 'home'
     home.mkdir()
     if bootstrap is not None:
-        member, script = bootstrap
-        target = home / 'main' / member
-        target.parent.mkdir(parents=True)
-        target.write_bytes(script)
+        for member, script in bootstrap:
+            target = home / 'main' / member
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(script)
     command = [str(binary), '+set', 'fs_basepath', f'"{data}"', '+set', 'fs_homepath', f'"{home}"',
                '+set', 'fs_game', '""', '+set', 'dedicated', '1' if args.dedicated else '0',
                '+set', 'logfile', '2', '+set', 'sv_punkbuster', '0',
@@ -118,7 +143,7 @@ def main():
         metadata['players'] = 'players.txt'
     if args.clients is not None:
         metadata['clients'] = args.clients
-        metadata['testclients_bootstrap'] = str(target.relative_to(out))
+        metadata['testclients_bootstrap'] = [str(Path('home/main') / member) for member, _ in bootstrap]
     if args.commands_record:
         metadata['commands_record'] = 'usercmds.txt'
     if replay is not None:
