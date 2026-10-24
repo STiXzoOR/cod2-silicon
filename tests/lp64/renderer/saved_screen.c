@@ -7,6 +7,7 @@
 
 #include "Mac/DirectX_9/CDirect3DDevice.c"
 
+CXX_BOOL g_InhibitCopy;
 static GLuint savedTexture;
 static int destinationSurface;
 
@@ -90,6 +91,42 @@ int main(void)
             assert(pixel[1] == 102 && pixel[2] == (y < 16 ? 153 : 51) && pixel[3] == 255);
         }
     }
+    /* Leaving an offscreen target resolves its pixels before the next pass
+     * samples that texture. This is the Gaussian ping-pong/feedback boundary. */
+    memset(pixels, 0, sizeof(pixels));
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 32, 32, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glBindTexture(GL_TEXTURE_2D, binding);
+    glActiveTextureARB(GL_TEXTURE1_ARB);
+    glViewport(7, 9, 128, 64);
+    device.renderTarget = (IDirect3DSurface9 *)&destinationSurface;
+    assert(!CDirect3DDevice_SetRenderTarget((CDirect3DDevice *)&device, 0, device.backBuffer));
+    assert(device.renderTarget == device.backBuffer);
+    GLint viewport[4];
+    glGetIntegerv(GL_VIEWPORT, viewport);
+    assert(viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 32 && viewport[3] == 32);
+    assert(device.viewportW == 32 && device.viewportH == 32);
+    glGetIntegerv(GL_ACTIVE_TEXTURE, &state);
+    assert(state == GL_TEXTURE1_ARB);
+    glActiveTextureARB(GL_TEXTURE0_ARB);
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &state);
+    assert(state == (GLint)binding);
+    glBindTexture(GL_TEXTURE_2D, savedTexture);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    for (int y = 0; y < 32; ++y) {
+        for (int x = 0; x < 32; ++x) {
+            byte *pixel = pixels + (y * 32 + x) * 4;
+            assert(pixel[0] == (y < 16 ? 51 : 153));
+            assert(pixel[1] == 102 && pixel[2] == (y < 16 ? 153 : 51) && pixel[3] == 255);
+        }
+    }
+    glClearColor(1, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+    g_InhibitCopy = 1;
+    device.renderTarget = (IDirect3DSurface9 *)&destinationSurface;
+    assert(!CDirect3DDevice_SetRenderTarget((CDirect3DDevice *)&device, 0, device.backBuffer));
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    assert(pixels[0] == 51 && pixels[1] == 102 && pixels[2] == 153);
+    g_InhibitCopy = 0;
     assert(glGetError() == GL_NO_ERROR);
     glDeleteFramebuffersEXT(1, &framebuffer);
     glDeleteTextures(1, &target); glDeleteTextures(1, &savedTexture); glDeleteTextures(1, &binding);

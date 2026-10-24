@@ -183,8 +183,13 @@ static int RB_GenerateGaussianFilter2D(float radius, int srcWidth, int srcHeight
     filterPass->material = RGP_SYM_FILTER_MAT(7);
     filterPass->tapHalfCount = 8;
 
+#if defined(COD2_X64) && COD2_APPLE_SDK
+    filterPass->srcWidth = 1.0f;
+    filterPass->srcHeight = 1.0f;
+#else
     filterPass->srcWidth = (float)srcWidth / nextPowerOfTwoF((unsigned int)srcWidth);
     filterPass->srcHeight = (float)srcHeight / nextPowerOfTwoF((unsigned int)srcHeight);
+#endif
 
     filterPass->dstWidth = dstWidth;
     filterPass->dstHeight = dstHeight;
@@ -301,8 +306,13 @@ static int RB_GenerateGaussianFilterChain(float radiusX, float radiusY, int srcW
             curPass->tapOffsetsAndWeights[i][3] = tapWeights[i];
         }
 
+#if defined(COD2_X64) && COD2_APPLE_SDK
+        curPass->srcWidth = 1.0f;
+        curPass->srcHeight = 1.0f;
+#else
         curPass->srcWidth = (float)curDstWidth / nextPowerOfTwoF((unsigned int)curDstWidth);
         curPass->srcHeight = (float)curDstHeight / nextPowerOfTwoF((unsigned int)curDstHeight);
+#endif
         curPass->dstWidth = curDstWidth;
         curPass->dstHeight = curDstHeight;
 
@@ -426,8 +436,13 @@ static GfxRenderTargetId RB_ApplyGlowFilter(GfxRenderTargetId srcRenderTarget, G
         int sceneWidth = DX_RT_WIDTH(R_RENDERTARGET_RESOLVED_SCENE);
         int sceneHeight = DX_RT_HEIGHT(R_RENDERTARGET_RESOLVED_SCENE);
 
+#if defined(COD2_X64) && COD2_APPLE_SDK
+        filter.passes[0].srcWidth = 1.0f;
+        filter.passes[0].srcHeight = 1.0f;
+#else
         filter.passes[0].srcWidth = (float)sceneWidth / nextPowerOfTwoF((unsigned int)sceneWidth);
         filter.passes[0].srcHeight = (float)sceneHeight / nextPowerOfTwoF((unsigned int)sceneHeight);
+#endif
         filter.passes[0].dstWidth = dstWidth;
         filter.passes[0].dstHeight = dstHeight;
         filter.passes[0].tapHalfCount = 0;

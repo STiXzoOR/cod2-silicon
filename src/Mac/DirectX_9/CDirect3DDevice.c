@@ -3340,7 +3340,36 @@ HRESULT CDirect3DDevice_SetRenderTarget(const CDirect3DDevice *_this, DWORD Rend
 
     DeviceImpl *dev = (DeviceImpl *)_this;
     (void)RenderTargetIndex;
+#if defined(COD2_X64)
+    /* Mac 1.3 resolves the previous auxiliary buffer before selecting the
+     * next target. Gaussian passes then sample the texture just written. */
+    if (pRenderTarget && dev->renderTarget && dev->renderTarget != dev->backBuffer && !g_InhibitCopy) {
+        extern int CDirect3DSurface_GetGLBlitInfo(const void *, unsigned int *, unsigned int *, unsigned int *);
+        unsigned int texture, width, height;
+        if (CDirect3DSurface_GetGLBlitInfo(dev->renderTarget, &texture, &width, &height)) {
+            GLint activeTexture, binding;
+            glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTexture);
+            glActiveTextureARB(GL_TEXTURE0_ARB);
+            glGetIntegerv(GL_TEXTURE_BINDING_2D, &binding);
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, width, height);
+            glBindTexture(GL_TEXTURE_2D, binding);
+            glActiveTextureARB(activeTexture);
+        }
+    }
+#endif
     dev->renderTarget = pRenderTarget;
+#if defined(COD2_X64)
+    /* The engine updates its viewport cache during this switch; the device
+     * must apply the new extent here, as the Mac setter does. */
+    if (pRenderTarget) {
+        D3DSURFACE_DESC desc;
+        void **methods = *(void ***)pRenderTarget;
+        ((HRESULT (*)(const void *, D3DSURFACE_DESC *))methods[12])(pRenderTarget, &desc);
+        D3DVIEWPORT9 viewport = { 0, 0, desc.Width, desc.Height, 0.0f, 1.0f };
+        CDirect3DDevice_SetViewport(_this, &viewport);
+    }
+#endif
     return 0;
 }
 

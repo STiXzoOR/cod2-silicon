@@ -44,7 +44,7 @@ def main():
                        cwd=ROOT, stdout=log, stderr=log, check=True)
     failures = []
     for case in ['no-pass', 'gaussian-aspect', 'glow-aspect', 'reversed-radii',
-                 'gaussian-height', 'glow-height', 'unordered-downsample']:
+                 'gaussian-height', 'glow-height', 'unordered-downsample', 'native-extent']:
         result = subprocess.run([str(binary), case], capture_output=True, text=True,
                                 env={**os.environ, 'ASAN_OPTIONS': 'symbolize=0',
                                      'UBSAN_OPTIONS': 'halt_on_error=1'})

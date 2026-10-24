@@ -3994,10 +3994,19 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
                 backEnd.currentFeedbackImage = backEnd.glowImage[glowIndex];
 
                 {
+#if defined(COD2_X64) && COD2_APPLE_SDK
+                    float pw = sw;
+                    float ph = sh;
+#else
                     float pw = (float)nextPow2((unsigned int)dxState.renderTargetWidth);
                     float ph = (float)nextPow2((unsigned int)dxState.renderTargetHeight);
+#endif
                     RB_DrawStretchPic(glowMaterial, 0, 0, sw, sh,
+#if defined(COD2_X64)
+                                      0, 0, sw / pw, sh / ph, 0xffffffff, (GfxPrimStatsTarget)10);
+#else
                                       0, sh / ph, sw / pw, 0, 0xffffffff, (GfxPrimStatsTarget)10);
+#endif
                     RB_EndSurface();
                 }
 
@@ -4025,10 +4034,18 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
                 float virtualWidth = GetVirtualWidthFromRealWidth(3.0f);
                 D3DCOLOR blurColor = 0xffffffff;
 
+#if defined(COD2_X64)
+                if (totalBlur < virtualWidth) {
+                    int alpha = (int)floorf(totalBlur / virtualWidth * 255.0f + 0.5f);
+                    blurColor = (blurColor & 0xffffff00) | (alpha & 0xff);
+                    totalBlur = virtualWidth;
+                }
+#else
                 if (totalBlur > virtualWidth) {
                     int alpha = (int)floorf(totalBlur / virtualWidth * 255.0f + 0.5f);
                     blurColor = (blurColor & 0xffffff00) | (alpha & 0xff);
                 }
+#endif
 
                 RB_GaussianFilterImage(totalBlur, R_RENDERTARGET_BLURRED_SCREEN);
                 {
@@ -4040,11 +4057,20 @@ static void RB_ApplyLatePostEffectsCmd(GfxRenderCommandExecState *execState)
                         const Material *blurMaterial = ((r_global_permanent_t *)rgp)->feedbackBlendMaterial;
                         float sw = (float)dxState.renderTargetWidth;
                         float sh = (float)dxState.renderTargetHeight;
+#if defined(COD2_X64) && COD2_APPLE_SDK
+                        float pw = sw;
+                        float ph = sh;
+#else
                         float pw = (float)nextPow2((unsigned int)dxState.renderTargetWidth);
                         float ph = (float)nextPow2((unsigned int)dxState.renderTargetHeight);
+#endif
 
                         RB_DrawStretchPic(blurMaterial, 0, 0, sw, sh,
+#if defined(COD2_X64)
+                                          0, 0, sw / pw, sh / ph, blurColor, (GfxPrimStatsTarget)10);
+#else
                                           0, sh / ph, sw / pw, 0, blurColor, (GfxPrimStatsTarget)10);
+#endif
                         RB_EndSurface();
                     }
                 }

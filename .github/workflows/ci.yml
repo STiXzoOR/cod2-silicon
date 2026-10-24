@@ -186,6 +186,22 @@ jobs:
             --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-filters.noindex/ci-stock"
           python3 tests/lp64/renderer/run_imagefilter.py --compile-db build-macos-codx/compile_commands.engine.json \
             --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-filters.noindex/ci-codx"
+          python3 tests/lp64/renderer/run_post_effects.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/post-effects-stock"
+          python3 tests/lp64/renderer/run_post_effects.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/post-effects-codx"
+          python3 tests/lp64/renderer/run_lights.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-lights.noindex/ci-stock"
+          python3 tests/lp64/renderer/run_lights.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-lights.noindex/ci-codx"
+          python3 tests/lp64/renderer/run_light_loader.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/light-loader-stock"
+          python3 tests/lp64/renderer/run_light_loader.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/light-loader-codx"
+          python3 tests/lp64/renderer/run_utils.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-utils.noindex/ci-stock"
+          python3 tests/lp64/renderer/run_utils.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-utils.noindex/ci-codx"
           python3 tests/lp64/game/run.py --build build-macos
           python3 tests/lp64/script/run.py
           python3 tests/online/run.py build-macos/compile_commands.json
