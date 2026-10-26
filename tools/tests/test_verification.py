@@ -8,6 +8,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import Mock, call, patch
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -178,6 +179,40 @@ time.sleep(30)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('No completion', result.stderr)
         self.assertFalse((self.path / 'bench/results.json').exists())
+
+    @unittest.skipUnless(
+        all(hasattr(os, name) for name in ("waitid", "P_PID", "WEXITED", "WNOWAIT")),
+        "unreaped-child observation requires waitid/WNOWAIT")
+    def test_stop_reaps_zombie_group_leader(self):
+        process = subprocess.Popen([sys.executable, '-c', 'pass'], start_new_session=True)
+        try:
+            # Observe exit without reaping: Darwin rejects signals to zombie-only groups.
+            os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOWAIT)
+            bench.stop(process)
+            self.assertEqual(process.returncode, 0)
+        finally:
+            process.wait()
+
+    def test_stop_reaps_exit_between_poll_and_group_probe(self):
+        process = Mock(pid=123)
+        process.poll.side_effect = [None, 0]
+        with patch.object(bench.os, 'killpg', side_effect=[
+                None, PermissionError('zombie group'), ProcessLookupError()]) as killpg:
+            bench.stop(process)
+        self.assertEqual(killpg.call_args_list,
+                         [call(123, signal.SIGTERM), call(123, 0), call(123, 0)])
+        process.wait.assert_called_once_with()
+
+    def test_stop_preserves_persistent_permission_failure(self):
+        for returncode in (None, 0):
+            with self.subTest(wrapper_returncode=returncode):
+                process = Mock(pid=123)
+                process.poll.return_value = returncode
+                with patch.object(bench.os, 'killpg', side_effect=PermissionError('denied')) as killpg:
+                    with self.assertRaises(PermissionError):
+                        bench.stop(process)
+                self.assertEqual(killpg.call_count, 1 if returncode is None else 2)
+                process.wait.assert_not_called()
 
     def test_stop_kills_descendant_after_wrapper_exits(self):
         body = '''import os, signal, time
