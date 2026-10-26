@@ -541,11 +541,19 @@ void ClientEvents(gentity_t *ent, int oldEventSequence)
             }
 
             if (eventParm > 99) {
+#if defined(COD2_X64)
+                G_Damage(ent, NULL, NULL, NULL, NULL, (int)(client->ps.stats[2] * 1.100000023841858f), 0, 11, 0, 0);
+#else
                 G_Damage(ent, NULL, NULL, NULL, NULL, (int)(client->ps.stats[0] * 1.100000023841858f), 0, 11, 0, 0);
+#endif
             } else {
                 float damageFrac = (float)eventParm * 0.009999999776482582f;
                 if (damageFrac != 0.0f) {
+#if defined(COD2_X64)
+                    G_Damage(ent, NULL, NULL, NULL, NULL, (int)(client->ps.stats[2] * damageFrac), 0, 11, 0, 0);
+#else
                     G_Damage(ent, NULL, NULL, NULL, NULL, (int)(client->ps.stats[0] * damageFrac), 0, 11, 0, 0);
+#endif
                 }
             }
             continue;
@@ -559,33 +567,65 @@ void ClientEvents(gentity_t *ent, int oldEventSequence)
         case 0:
         case 1:
         case 2:
+#if defined(COD2_X64)
+        case 17:
+#else
         case 3:
         case 18:
+#endif
             if (((const dvar_t *)*(void **)imp_g_antilag)->current.enabled) {
                 FireWeaponAntiLag(ent, client->lastServerTime);
             } else {
                 FireWeaponAntiLag(ent, level.time);
             }
             break;
+#if defined(COD2_X64)
+        case 6:
+#else
         case 7:
+#endif
             FireWeaponMelee(ent);
             break;
+#if defined(COD2_X64)
+        case 8:
+#else
         case 9:
+#endif
             G_UseOffHand(ent);
             break;
+#if defined(COD2_X64)
+        case 10:
+#else
         case 11:
+#endif
             Scr_Notify(ent, SCR_CONST()->binocular_enter, 0);
             break;
+#if defined(COD2_X64)
+        case 11:
+#else
         case 12:
+#endif
             Scr_Notify(ent, SCR_CONST()->binocular_exit, 0);
             break;
+#if defined(COD2_X64)
+        case 12:
+#else
         case 13:
+#endif
             Scr_Notify(ent, SCR_CONST()->binocular_fire, 0);
             break;
+#if defined(COD2_X64)
+        case 13:
+#else
         case 14:
+#endif
             Scr_Notify(ent, SCR_CONST()->binocular_release, 0);
             break;
+#if defined(COD2_X64)
+        case 14:
+#else
         case 15:
+#endif
             Scr_Notify(ent, SCR_CONST()->binocular_drop, 0);
             break;
         case 39:
