@@ -404,6 +404,9 @@ typedef struct {
     unsigned char _padBC0[8];
     DWORD bc8Val;
     unsigned char bccPad[0x100];
+#if defined(COD2_X64)
+    unsigned char depthStencilDetached;
+#endif
 } DeviceImpl;
 
 static DWORD g_currentFVF = 0;
@@ -1845,6 +1848,11 @@ HRESULT CDirect3DDevice_Clear(const CDirect3DDevice *_this, DWORD Count, const D
 
     DeviceImpl *dev = (DeviceImpl *)_this;
     GLbitfield glFlags = 0;
+#if defined(COD2_X64)
+    const DWORD requestedFlags = Flags;
+    if (dev->depthStencilDetached)
+        Flags &= ~6u;
+#endif
     (void)Count;
     (void)pRects;
 
@@ -1866,7 +1874,11 @@ HRESULT CDirect3DDevice_Clear(const CDirect3DDevice *_this, DWORD Count, const D
     }
     if (glFlags) {
 
+#if defined(COD2_X64)
+        if (requestedFlags == 1 && Color == 0x00000000) {
+#else
         if (Flags == 1 && Color == 0x00000000) {
+#endif
             return 0;
         }
         if (Flags & 1) {
@@ -2105,7 +2117,11 @@ HRESULT CDirect3DDevice_DrawIndexedPrimitive(const CDirect3DDevice *_this,
                 glBindProgramARB(0x8620, 0);
             }
         }
+#if defined(COD2_X64)
+        if (!is2D && dev->zEnable && !dev->depthStencilDetached) {
+#else
         if (!is2D && dev->zEnable) {
+#endif
             glEnable(0x0B71);
             glDepthFunc(CDirect3DDevice_MapCompareFunc(dev->zFunc));
             glDepthMask(dev->zWriteEnable ? 1 : 0);
@@ -2470,10 +2486,35 @@ HRESULT COD2_FORCE_ALIGN_ARG_POINTER CDirect3DDevice_SetRenderState(const CDirec
     switch (State) {
     case D3DRS_ZENABLE:
         dev->zEnable = Value;
+#if defined(COD2_X64)
+        if (Value && !dev->depthStencilDetached)
+            glEnable(GL_DEPTH_TEST);
+        else
+            glDisable(GL_DEPTH_TEST);
+#endif
         break;
     case D3DRS_ZWRITEENABLE:
         dev->zWriteEnable = Value;
+#if defined(COD2_X64)
+        glDepthMask(Value && !dev->depthStencilDetached);
+#endif
         break;
+#if defined(COD2_X64)
+    case D3DRS_STENCILENABLE:
+        if (dev->stencilEnable != Value) {
+            dev->stencilEnable = Value;
+            /* Mac SetRenderState applies this even without a depth surface. */
+            if (Value)
+                glEnable(GL_STENCIL_TEST);
+            else
+                glDisable(GL_STENCIL_TEST);
+        }
+        break;
+    case D3DRS_STENCILWRITEMASK:
+        dev->stencilWriteMask = Value & 0xff;
+        glStencilMask(dev->depthStencilDetached ? 0 : dev->stencilWriteMask);
+        break;
+#endif
     case D3DRS_ZFUNC:
         dev->zFunc = Value;
         break;
@@ -2570,6 +2611,14 @@ HRESULT CDirect3DDevice_GetRenderState(const CDirect3DDevice *_this, D3DRENDERST
     case D3DRS_ZFUNC:
         *pValue = dev->zFunc;
         break;
+#if defined(COD2_X64)
+    case D3DRS_STENCILENABLE:
+        *pValue = dev->stencilEnable;
+        break;
+    case D3DRS_STENCILWRITEMASK:
+        *pValue = dev->stencilWriteMask;
+        break;
+#endif
     case D3DRS_ALPHATESTENABLE:
         *pValue = g_alphaTestEnable;
         break;
@@ -3402,6 +3451,21 @@ HRESULT CDirect3DDevice_SetDepthStencilSurface(const CDirect3DDevice *_this, IDi
 #endif
 
     DeviceImpl *dev = (DeviceImpl *)_this;
+#if defined(COD2_X64)
+    if (dev->depthStencilDetached != (pNewZStencil == NULL)) {
+        dev->depthStencilDetached = pNewZStencil == NULL;
+        glDepthMask(pNewZStencil && dev->zWriteEnable);
+        if (pNewZStencil && dev->zEnable)
+            glEnable(GL_DEPTH_TEST);
+        else
+            glDisable(GL_DEPTH_TEST);
+        glStencilMask(pNewZStencil ? dev->stencilWriteMask & 0xff : 0);
+        if (pNewZStencil && dev->stencilEnable)
+            glEnable(GL_STENCIL_TEST);
+        else
+            glDisable(GL_STENCIL_TEST);
+    }
+#endif
     dev->depthStencil = pNewZStencil;
     return 0;
 }
@@ -4501,6 +4565,10 @@ void CDirect3DDevice_Init(void *device)
     glViewport(0, 0, 640, 480);
 #endif
     glDepthRange(0.0, 1.0);
+#if defined(COD2_X64)
+    dev->depthStencilDetached = 0;
+    dev->stencilWriteMask = 0xffffffffu;
+#endif
     dev->zEnable = 1;
     dev->zWriteEnable = 1;
     dev->cullMode = 1;
