@@ -1354,7 +1354,11 @@ void ClientEndFrame(gentity_t *ent)
     } else if (client->ufo) {
         client->ps.pm_type = 3;
     } else if (client->sess.sessionState == SESS_STATE_DEAD) {
+#if defined(COD2_X64)
+        client->ps.pm_type = ent->tagInfo ? 7 : 6;
+#else
         client->ps.pm_type = (ent->count == 1) ? 6 : 7;
+#endif
         ent->r.svFlags = (ent->r.svFlags | 1) & 0xfd;
 #if defined(COD2_X64)
         ent->takedamage = 0;
