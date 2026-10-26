@@ -858,12 +858,64 @@ qboolean CG_DrawActiveFrame(int serverTime, DemoType demoType,
         cg->renderingThirdPerson = 0;
     }
 
+#if defined(COD2_X64)
+    /* Mac 1.3 prepares snapshot animation and positions before recoil/input. */
+    for (int i = 0; i < cg->nextSnap->numEntities; ++i) {
+        int number = cg->nextSnap->entities[i].number;
+        struct DObj_s *obj = Com_GetClientDObj(number, 0);
+        if (obj != 0) {
+            CG_DObjUpdateInfo(obj);
+            CG_ProcessClientNoteTracks(number);
+        }
+        centity_t *cent = &cg_entities[number];
+        if (cent->nextState.eType <= 9)
+            CG_CalcEntityLerpPositions(cent);
+    }
+
+    if ((cg->nextSnap->ps.pm_flags & 0x800000) != 0) {
+        int weapon = BG_GetViewmodelWeaponIndex(&cg->predictedPlayerState);
+        WeaponDef *def = BG_GetWeaponDef(weapon);
+        for (int remaining = cg->frametime; remaining > 0; remaining -= 5) {
+            float step = (float)(remaining < 5 ? remaining : 5) * 0.001f;
+            for (int axis = 0; axis < 3; ++axis) {
+                float angle = cg->kickAngles[axis];
+                float speed = cg->kickAVel[axis];
+                if (speed == 0.0f && angle == 0.0f)
+                    continue;
+                if (angle != 0.0f) {
+                    float centerSpeed = weapon == 0 ? 2400.0f :
+                        (cg->predictedPlayerState.fWeaponPosFrac > 0.5f ?
+                         def->fAdsViewKickCenterSpeed : def->fHipViewKickCenterSpeed);
+                    speed += (angle > 0.0f ? -1.0f : 1.0f) * centerSpeed * step;
+                }
+                float move = step * speed;
+                if (move * angle < 0.0f)
+                    move *= 0.06f;
+                float nextAngle = angle + move;
+                if (!(angle * nextAngle >= 0.0f)) {
+                    nextAngle = 0.0f;
+                    speed = 0.0f;
+                } else if (nextAngle == 0.0f) {
+                    speed = 0.0f;
+                } else if (fabsf(nextAngle) > 10.0f) {
+                    nextAngle = nextAngle > 0.0f ? 10.0f : -10.0f;
+                    speed = 0.0f;
+                }
+                cg->kickAngles[axis] = nextAngle;
+                cg->kickAVel[axis] = speed;
+            }
+        }
+    } else {
+#endif
     cg->kickAVel[0] = 0;
     cg->kickAVel[1] = 0;
     cg->kickAVel[2] = 0;
     cg->kickAngles[0] = 0;
     cg->kickAngles[1] = 0;
     cg->kickAngles[2] = 0;
+#if defined(COD2_X64)
+    }
+#endif
 
     CL_ResetSkeletonCache(0);
     CG_AddPacketEntities();

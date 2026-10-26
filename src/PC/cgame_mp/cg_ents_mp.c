@@ -89,7 +89,11 @@ COD2_ASSERT_FIELD(cg_t, rumbleScale, 0x2c5a0);
 
 static clientInfo_t *CG_CorpseInfoForEntityNum(int entNum)
 {
+#if defined(COD2_X64)
+    return &cgs->corpseinfo[entNum - 64];
+#else
     return (clientInfo_t *)((byte *)cgs + CG_CORPSEINFO_BASE_ADJUST + entNum * sizeof(clientInfo_t));
+#endif
 }
 
 struct XAnim_s *CG_GetMG42Anims(centity_t *cent);
@@ -448,7 +452,11 @@ void CG_AdjustPositionForMover(const vec_t *in, int moverNum, int fromTime, int 
     }
 
     cent = &(*(centity_t **)imp_cg_entities)[moverNum];
+#if defined(COD2_X64)
+    if (cent->nextState.eType != 6) {
+#else
     if (cent->currentState.eType != 6) {
+#endif
         out[0] = in[0];
         out[1] = in[1];
         out[2] = in[2];
@@ -460,9 +468,15 @@ void CG_AdjustPositionForMover(const vec_t *in, int moverNum, int fromTime, int 
     BG_EvaluateTrajectory(&cent->currentState.pos, toTime, origin);
     BG_EvaluateTrajectory(&cent->currentState.apos, toTime, angles);
 
+#if defined(COD2_X64)
+    out[0] = (origin[0] - oldOrigin[0]) + in[0];
+    out[1] = (origin[1] - oldOrigin[1]) + in[1];
+    out[2] = (origin[2] - oldOrigin[2]) + in[2];
+#else
     out[0] = in[0] + origin[0] - oldOrigin[0];
     out[1] = in[1] + origin[1] - oldOrigin[1];
     out[2] = in[2] + origin[2] - oldOrigin[2];
+#endif
 
     if (outDeltaAngles) {
         outDeltaAngles[0] = angles[0] - oldAngles[0];

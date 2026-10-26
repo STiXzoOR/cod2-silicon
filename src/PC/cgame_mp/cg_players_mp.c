@@ -676,6 +676,7 @@ void CG_Player(centity_t *cent)
         byte *ci = (byte *)(((char *)cg + offsetof(cg_t, bgs.clientinfo[0].infoValid)) + iClientNum * CI_STRIDE);
 #endif
         BG_PlayerAnimation(obj, es, (clientInfo_t *)ci);
+#if !defined(COD2_X64)
         /* Advance the body DObj's anim time/weights toward their goals each frame.
          * BG_PlayerAnimation only SETS goal weights; the actual blend over time is
          * done by DObjUpdateClientInfo (as the viewmodel does in CG_UpdateViewWeaponAnim).
@@ -684,6 +685,7 @@ void CG_Player(centity_t *cent)
          * looping or blended movement animation stayed frozen -- the upper body
          * "disappeared/bugged" when moving. */
         DObjUpdateClientInfo(obj, (float)cg->frametime * 0.001f);
+#endif
     }
 
     if (es->eFlags & 0x300)
@@ -759,8 +761,10 @@ void CG_Corpse(centity_t *cent)
     ((GfxEntity *)body)->materialRGBA[3] = 0xFF;
 
     BG_PlayerAnimation(obj, es, (clientInfo_t *)ci);
+#if !defined(COD2_X64)
     /* advance the body's anim time/weights each frame (see note in CG_Player) */
     DObjUpdateClientInfo(obj, (float)cg->frametime * 0.001f);
+#endif
 
     AnglesToAxis(cent->lerpAngles, ((GfxEntity *)body)->axis);
 
