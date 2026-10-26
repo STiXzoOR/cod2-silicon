@@ -961,6 +961,12 @@ static void CG_ConfigStringModified(int index)
 static void CG_ReverbCmd(void)
 {
     int argc;
+#if defined(COD2_X64)
+    int priority;
+    float drylevel, wetlevel;
+    int fadeTime;
+    const char *room;
+#endif
 
     argc = Cmd_Argc();
     if (argc != 6) {
@@ -968,12 +974,22 @@ static void CG_ReverbCmd(void)
         return;
     }
 
+#if defined(COD2_X64)
+    priority = atoi(CG_Argv(1));
+    drylevel = (float)atof(CG_Argv(3));
+    wetlevel = (float)atof(CG_Argv(4));
+    fadeTime = CG_ParseFadeTimeArg(5);
+    /* CG_Argv reuses one buffer; retrieve the room after the numeric arguments. */
+    room = CG_Argv(2);
+    SND_SetEnvironmentEffects(priority, room, drylevel, wetlevel, fadeTime);
+#else
     SND_SetEnvironmentEffects(
         atoi(CG_Argv(1)),
         CG_Argv(2),
         (float)atof(CG_Argv(3)),
         (float)atof(CG_Argv(4)),
         CG_ParseFadeTimeArg(5));
+#endif
 }
 
 static void CG_LocalSoundCmd(void)
@@ -1000,6 +1016,9 @@ void CG_ServerCommand(void)
 {
     const char *cmd;
     int value;
+#if defined(COD2_X64)
+    WeaponDef *offhand;
+#endif
 
     cmd = CG_Argv(0);
     if (!cmd || !*cmd) {
@@ -1012,7 +1031,11 @@ void CG_ServerCommand(void)
         return;
     case 'C':
         value = atoi(CG_Argv(1));
+#if defined(COD2_X64)
+        if (!value || ((offhand = BG_GetWeaponDef(value)) && offhand->offhandClass)) {
+#else
         if (!value || BG_GetWeaponDef(value)) {
+#endif
             CG_SetEquippedOffHand(value);
         }
         return;
