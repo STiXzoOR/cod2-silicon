@@ -1,6 +1,7 @@
 """Separate true LP64 scalar values from spurious ILP32 blob relocations."""
 from dataclasses import replace
 import json
+import struct
 
 from layout import pointer_offsets, shape
 from stabs import Unsupported
@@ -11,6 +12,23 @@ SCALAR_RELOCATIONS = {
     's_XModelSurfaceSize', 'virtualKeyConvert', 'dlText',
     'g_encoder_samplerate', 'g_sound_recordFrequency', 'inflate_mask', 'fixed_td',
 }
+
+
+def recover_item_count(obj, db, byname, reference):
+    """Restore the fixed item bound omitted by the original literal placeholder."""
+    choices = {json.dumps(shape(db, variable.type), sort_keys=True)
+               for variable in byname.get(obj.name, [])}
+    expected = dict(kind='scalar', ctype='int', size=4, align=4)
+    if choices != {json.dumps(expected, sort_keys=True)}:
+        raise ValueError('bg_numItems: expected a unique four-byte int debug type')
+    if obj.name != 'bg_numItems' or obj.relocs or obj.data not in (bytes(1), bytes(4)):
+        raise ValueError('bg_numItems: unexpected source placeholder')
+    truth, record = reference.read_object(obj.name, 4)
+    if truth != struct.pack('<i', 131):
+        raise ValueError('bg_numItems: reference disagrees with the fixed item bound')
+    record.update(name=obj.name, false_relocations=[],
+                  correction='fixed item count and complete integer storage')
+    return replace(obj, data=truth, section='.data'), expected, record
 
 
 def recover_object(obj, db, byname, reference):

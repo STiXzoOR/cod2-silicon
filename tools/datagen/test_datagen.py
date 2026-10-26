@@ -356,6 +356,63 @@ def synthetic_macho(path, values, symbols):
 
 
 class RecoveryTests(unittest.TestCase):
+    def test_item_count_recovers_only_known_placeholder_and_debug_type(self):
+        from elf32 import Object
+        from macho32 import MachO32
+        from recover import recover_item_count
+        from stabs import Type
+        integer = Type('builtin', ('int', 4))
+        debug = {'bg_numItems': [SimpleNamespace(type=integer)]}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'fixture'
+            synthetic_macho(path, struct.pack('<i', 131), [('_bg_numItems', 0)])
+            reference = MachO32(path)
+            for size in (1, 4):
+                source = Object('bg_numItems', 0, bytes(size), {}, '.bss')
+                fixed, ty, report = recover_item_count(source, Database(), debug, reference)
+                self.assertEqual(fixed.data, struct.pack('<i', 131))
+                self.assertEqual(fixed.section, '.data')
+                self.assertEqual(ty, dict(kind='scalar', ctype='int', size=4, align=4))
+                self.assertEqual(report['value_bytes'], 4)
+                self.assertEqual(source.data, bytes(size))
+                self.assertEqual(source.section, '.bss')
+            for data, relocs in ((b'\x01', {}), (bytes(2), {}), (bytes(4), {0: ('bad', 0)})):
+                with self.subTest(data=data, relocs=relocs), self.assertRaisesRegex(ValueError, 'source placeholder'):
+                    recover_item_count(Object('bg_numItems', 0, data, relocs, '.data'),
+                                       Database(), debug, reference)
+            for types in ([], [Type('builtin', ('char', 1))],
+                          [integer, Type('builtin', ('unsigned int', 4))]):
+                with self.subTest(types=types), self.assertRaisesRegex(ValueError, 'debug type'):
+                    recover_item_count(source, Database(),
+                                       {'bg_numItems': [SimpleNamespace(type=t) for t in types]}, reference)
+            synthetic_macho(path, struct.pack('<i', 130), [('_bg_numItems', 0)])
+            with self.assertRaisesRegex(ValueError, 'fixed item bound'):
+                recover_item_count(source, Database(), debug, MachO32(path))
+            synthetic_macho(path, bytes(4), [('_bg_numItems', 0), ('_next', 1)])
+            with self.assertRaisesRegex(ValueError, 'exceeds next-symbol extent'):
+                recover_item_count(source, Database(), debug, MachO32(path))
+
+    def test_native_item_count_has_complete_fixed_storage(self):
+        from arm64_test import MachO64
+        root = Path(__file__).resolve().parents[2]
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / 'literals.o'
+            subprocess.run([os.environ.get('CLANG', 'clang'), '-target',
+                            'arm64-apple-macos', '-ffreestanding', '-std=c11',
+                            '-c', str(root / 'build/lp64_gen/literals_native.c'),
+                            '-o', str(output)], check=True, capture_output=True)
+            obj = MachO64(output)
+            index, address, _ = obj.symbols['_bg_numItems']
+            section = obj.sections[index - 1]
+            offset = section[4] + address - section[2]
+            self.assertEqual(struct.unpack_from('<i', obj.data, offset)[0], 131,
+                             'dropped item indices require the fixed Mac item count')
+            # Nonzero recovery must use initialized storage on ELF as well.
+            subprocess.run([os.environ.get('CLANG', 'clang'), '-target',
+                            'x86_64-unknown-linux-gnu', '-ffreestanding', '-std=c11',
+                            '-c', str(root / 'build/lp64_gen/literals_native.c'),
+                            '-o', str(output)], check=True, capture_output=True)
+
     def test_real_pointer_survives_and_scalar_relocation_is_removed(self):
         from elf32 import Object
         from macho32 import MachO32

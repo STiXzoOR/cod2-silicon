@@ -2712,11 +2712,16 @@ dg_type_129 dg_object_450 __asm__(DG_ASM("str_002157b8")) __attribute__((used, a
 #if __SIZEOF_POINTER__ == 4
 _Static_assert(sizeof(dg_type_129) == 1, "i386 size: str_002157b8");
 #endif
+#if __SIZEOF_POINTER__ == 4
 
 /* bg_numItems: DATAGEN_FALLBACK: type larger than blob */
 dg_type_129 dg_object_451 __asm__(DG_ASM("bg_numItems")) __attribute__((used, aligned(DG_ALIGN), section(DG_BSS))) = {.bytes_0={0}};
 #if __SIZEOF_POINTER__ == 4
 _Static_assert(sizeof(dg_type_129) == 1, "i386 size: bg_numItems");
+#endif
+#else
+/* LP64: scalar values verified against the named Steam object. */
+int dg_object_451 __asm__(DG_ASM("bg_numItems")) __attribute__((used, aligned(DG_ALIGN), section(DG_DATA))) = 131;
 #endif
 
 /* faceAxis: DATAGEN_FALLBACK: type larger than blob */

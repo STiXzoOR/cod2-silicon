@@ -125,6 +125,10 @@ uses verified low-N-bit protocol masks on LP64, repairing the omitted width-13
 entry while preserving the complete legacy i386 initializer. The compiled
 snapshot regression in `tools/fidelity/test_msg.py` needs no private binary;
 `spotcheck_msg.py` compares decoding against the private Mac reference.
+The fixed `bg_numItems` bound also has an LP64 correction: a verified four-byte
+integer replaces the native one-byte zero placeholder. Its original i386
+storage remains unchanged. `tests/camera/run_items.py` exercises dropped-item
+bounds with the generated count and import definitions.
 Upstream native literals still include
 hundreds of one-byte placeholders. Pointer
 pointees with unavailable C++ types remain opaque, and function pointers whose
