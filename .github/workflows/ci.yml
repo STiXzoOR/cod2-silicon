@@ -191,6 +191,10 @@ jobs:
             --output "$RUNNER_TEMP/scheduling-stock"
           python3 tests/input/run_scheduling.py --compile-db build-macos-codx/compile_commands.engine.json \
             --output "$RUNNER_TEMP/scheduling-codx"
+          python3 tests/online/run_client_time.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/client-time-stock"
+          python3 tests/online/run_client_time.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/client-time-codx"
           python3 tests/online/run_browser_packets.py --compile-db build-macos/compile_commands.engine.json \
             --output "$RUNNER_TEMP/browser-stock"
           python3 tests/online/run_browser_packets.py --compile-db build-macos-codx/compile_commands.engine.json \
