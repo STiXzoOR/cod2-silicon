@@ -93,6 +93,28 @@ Metal U2–U7 continue in parallel under the
 
 ## Working rules
 
+### Module completion workflow (user direction, 2026-10-26)
+
+- Stop cross-module audit sweeps. Maintain the union of functions from the Mac
+  export/STABS and cod2engine source, grouped by source module, in
+  `docs/fidelity/modules/`. Include unmatched and conditional candidates;
+  metadata pairing alone never establishes equivalent behavior.
+- Mark each function `equal`, `fixed`, `intentional` or `unchecked`, with
+  evidence. A bounded fix does not close the rest of its function. Preserve
+  earlier findings as evidence without turning partial checks into completion.
+- Work one module until no function remains unchecked. The first active
+  module is `game/g_active_mp`. Keep one report per module, updating it as work
+  proceeds rather than writing a report per fix.
+- Use one review per implementation batch. Do not run five-lens cleanup passes
+  or a separate Claude review for each fix.
+- Estimate remaining effort from unchecked functions and observed module
+  completion throughput. Separate indexing ambiguity and runtime verification
+  from completed function reconciliation; do not extrapolate small helpers as
+  though they represented large state machines.
+- Write the session handoff before weekly usage reaches 30% remaining.
+
+### Existing constraints
+
 - One worktree and branch per unit; one commit per reconciled batch; one short
   report per module, not per function.
 - Fix candidates come from source comparison and a fresh WS44 audit, not from

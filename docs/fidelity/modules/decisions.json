@@ -1,0 +1,98 @@
+{
+  "mac:0x001a47a8": {
+    "status": "unchecked",
+    "evidence": "Known partial fixes include takedamage and dead tagInfo state. New mismatch: native ps.damageCount assignment from sess.viewmodelIndex vs Mac0x1a4a78-7e writes ps.viewmodelIndex at0xe4. Full function remains open. Remaining: Repair wrong viewmodel field, complete all remaining blocks including embedded helpers, verify/report as module batch."
+  },
+  "mac:0x001a30ec": {
+    "status": "fixed",
+    "evidence": "Whole 136-instruction634-byte Mac function read, all40 jump-table entries decoded directly from binary0x33be00; all23 fall event IDs checked. Commit8cec375 repairs dispatch IDs and max-health field. Native matches ring clipping/dynamic event count, eType fall early exit, binary32 constants loaded from binary0x3262f0/0x3263c0 and truncation, antilag time choice, five script notices, forced-death guards/state/9arguments, default noops. Linux full body also compared; FireWeapon name maps native FireWeaponAntiLag. Existing both-mode fixture and2k replay receipts in F1-server-events report remain applicable; this agent did not rerun tests."
+  },
+  "mac:0x001a2556": {
+    "status": "equal",
+    "evidence": "All Mac blocks checked: capture ent touch before iteration, no touches early return, skip duplicate prior entity indices, script-active reciprocal touch notifications before resolving otherTouch, invoke otherTouch then captured entTouch with third argument1, reload numtouch each iteration. Native and Linux preserve full loop/call behavior."
+  },
+  "mac:0x001a26cc": {
+    "status": "equal",
+    "evidence": "All Mac blocks: disabled resets time+60000 and warning; packed forward/right or buttons0x401 reset inactivity seconds*1000; localClient bypass; strict greater expiry drops returns0; strict greater expiry-10000 emits one warning type0 command99 then true. Native and Linux match state/calls/conditions, assuming valid client array member and normal nonoverflow game clock."
+  },
+  "linux:game/g_active_mp.cpp:1055:ClientIntermission": {
+    "status": "unchecked",
+    "evidence": " Remaining: Linux-only named definition; prove complete inline Mac body and native counterpart mapping before closure."
+  },
+  "linux:game/g_active_mp.cpp:371:ClientIntermissionThink": {
+    "status": "unchecked",
+    "evidence": "Mac inline body0x1a437c\u20130x1a43b1 reads sess.cmd.buttons atclient+0x26cc; Linux same. Native ClientThink_real intermission block reads ucmd->buttons. Normal callers alias ucmd with sess.cmd, but semantic precondition must be established before equal. Remaining: Linux-only named definition; prove complete inline Mac body and native counterpart mapping before closure."
+  },
+  "mac:0x001a46c2": {
+    "status": "equal",
+    "evidence": "All Mac instructions: bgs assignment, 28-byte cmd-to-oldcmd copy, GetUsercmd, lastCmdTime level.time, conditional Think_real when nonsynchronous, bgs NULL. Native and Linux same operations/order with sizeof(usercmd_t)=28 and stable entity client across usercmd service."
+  },
+  "mac:0x001a3d00": {
+    "status": "unchecked",
+    "evidence": " Remaining: Whole-function semantic comparison pending."
+  },
+  "linux:game/g_active_mp.cpp:699:G_AddPlayerMantleBlockage": {
+    "status": "unchecked",
+    "evidence": " Remaining: Linux-only named definition; prove complete inline Mac body and native counterpart mapping before closure."
+  },
+  "mac:0x001a26b2": {
+    "status": "equal",
+    "evidence": "All 10 Mac instructions: load noSpectate+0x2740, arithmetic shift by team, XOR1 AND1; native boolean inverse bit test and Linux mask test equivalent for valid team enum values. No calls or mutations."
+  },
+  "mac:0x001a293e": {
+    "status": "equal",
+    "evidence": "All Mac instructions: clientInfo index from s.clientNum, set bgs=level_bgs, capture level.frametime before serverDObj lookup, call controllers(obj,entityState at entity offset0,partBits,ci,frametime). Native preserves order/arguments; Linux self pointer equivalent offset0. Native typed array stride preserves LP64 layout."
+  },
+  "mac:0x001a29aa": {
+    "status": "equal",
+    "evidence": "All Mac blocks: subtract0x9e unsigned bound0x11, select mask0x20007, call recoil with ps, vGunSpeed+0x288c, temporary3floats; other IDs no-op. Native exact arithmetic and selector; Linux four symbolic fire events correspond IDs0x9e,0x9f,0xa0,0xaf."
+  },
+  "mac:0x001a38b4": {
+    "status": "equal",
+    "evidence": "Whole Mac body1100bytes read: trajectory copies/type/time50ms; movementDir and flags; bounded entity event ring and old-event replay with byte truncation, recoil mask and single-event filtering; weapon/ground widths; player/invisible choice; six CVTTSS2SI snaps; animations/client/turret/dead/ADS flags; lean; prone lerp clamp/inversion and normalized torso/waist output. Native matches. Linux source SnapVector macro com_math.h60 also truncates; actual Linux oracle implementation behavior is a separate comparison. Valid finite vectors and nonoverflow event sequence preconditions."
+  },
+  "mac:0x001a45b6": {
+    "status": "equal",
+    "evidence": "All Mac blocks: synchronous command time and Think first; noclip early return; linked chooses session dead7 else1, fixedlink mode2, origin/angle, both trajectories1, link and copy origin; unlinked decrements types1/7. Native and Linux same valid-state behavior and call order. Referenced entity client remains stable through linking services."
+  },
+  "mac:0x001a288c": {
+    "status": "equal",
+    "evidence": "All Mac blocks: noclip+0x27ac then ufo+0x27b0 clear contents; sessionState+0x26a8==1 clears; otherwise contents+0x11c=0x02000000. Native and Linux match all branches."
+  },
+  "linux:game/g_active_mp.cpp:120:G_SetClientSound": {
+    "status": "unchecked",
+    "evidence": "Linux one-statement function maps Mac ClientEndFrame inline0x1a4b71 store entity+0x84=0 (s.loopSound). Native wrongly clears s.eventSequence at corresponding point. Need correct store before closing inline helper and containing function. Remaining: Repair/verify described discrepancy within active module batch."
+  },
+  "mac:0x001a2832": {
+    "status": "equal",
+    "evidence": "All Mac blocks: clientNum entity lookup, clamp level.time-lastServerTime>=1001 to time-1000, update if >= previous or >=level.time. Native and Linux conditions equivalent; field+0x289c asserted native."
+  },
+  "mac:0x001a2e3e": {
+    "status": "unchecked",
+    "evidence": "Whole686-byte Mac function read. Native adds SV_EntityContact after successful item pickup test. Mac eType3 successful BG_PlayerTouchesItem bypasses contact query at0x1a3069\u2192306d; only nonitem path0x1a303f\u21922fae tests SV_EntityContact. Linux else branch corroborates. Other branch/callback order matches; gated native debug trace intentional diagnostic only. Needs item-path fix and proof. Remaining: Repair/verify described discrepancy within active module batch."
+  },
+  "linux:game/g_active_mp.cpp:1392:G_UpdateClientInfo": {
+    "status": "unchecked",
+    "evidence": " Remaining: Linux-only named definition; prove complete inline Mac body and native counterpart mapping before closure."
+  },
+  "mac:0x001a28d2": {
+    "status": "equal",
+    "evidence": "All Mac blocks: PMF_PLAYER0x00800000 gate, false without copying; memcpy0x26a8 then memset0x7a8 length0xf80 and true. Native uses sizeof(playerState_t), established ABI0x26a8; Linux copies same ps and hud.current."
+  },
+  "mac:0x001a3366": {
+    "status": "unchecked",
+    "evidence": "Whole exported620-byte function and native/Linux bodies read. All branches/state/calls align except native angle*(256/360) folds Mac DIVSS angle/360 followed by MULSS256 (0x1a357d\u20133589 and0x1a359c\u201335a0). Binary32 model angle0x40e0ffff=7.031249523162842 gives Mac4/native5 after truncation;96 near-boundary samples found. Need preserve operation order and fixture, and establish vectoangles output reachability. No whole-function closure. Remaining: Repair/verify described discrepancy within active module batch."
+  },
+  "mac:0x001a2bc6": {
+    "status": "equal",
+    "evidence": "Whole Mac body read: initial spectator flags/damage/contents/model/gun reset; forced archive search clamp0 and50ms decrement with subtraction offset; fallback cycle and normal archive addition offset; teammask gates; archived memcpy0x26a8 with voted eFlag preserved across HUD update; all three forced/free/follow flag paths; StopFollowing fallback three team permissions. Native and full Linux source match. Normal finite/valid team input preconditions."
+  },
+  "mac:0x001a2a08": {
+    "status": "equal",
+    "evidence": "All Mac blocks checked: old/new/button latch, negative forced spectator plus allowed/team/current-follow/melee-change StopFollowing gate, reread buttons after StopFollowing, rising attack takes precedence over rising ADS, PMF_FOLLOW return, pm_type4 speed0/400, zero pmove with copied cmd/tracemask0x800811/handler1, Pmove then origin copy and unlink. Native and Linux match."
+  },
+  "mac:0x001a35d2": {
+    "status": "unchecked",
+    "evidence": "Separate Mac export0x1a35d2 discovered under STABS PC/universal/com_math.h, not inline. Whole738-byte function read. Native loop uses level.num_entities vs Mac level+0x1e4 maxclients; native ent->takedamage vs Mac entity+0xfc r.inuse; native sets both ps.eFlags0x200 vs Mac client+0xc pm_flags0x200. Linux corroborates all three. Remaining bounds/radius/RNG/normalization/speed/push blocks compared, subject to binary32 operations and valid engine inputs. Needs fixes plus regression fixture. Remaining: Repair/verify described discrepancy within active module batch."
+  }
+}
