@@ -1308,6 +1308,58 @@ void CL_SyncTimes(void)
     CL_FirstSnapshot();
 }
 
+#if defined(COD2_X64)
+static void CL_UpdateTimeDemo(void)
+{
+    clientConnection_t *clui = CLUI_STATE;
+    clientActive_t *cl = CL_LOCAL;
+
+    if (!clui->timeDemoLog) {
+
+        char *mapPath = cl->mapname;
+        char *base = mapPath;
+        char *dotPos = 0;
+        while (*mapPath) {
+            if (*mapPath == '/' || *mapPath == '\\') {
+                base = mapPath + 1;
+                dotPos = 0;
+            } else if (*mapPath == '.') {
+                dotPos = mapPath;
+            }
+            mapPath++;
+        }
+        {
+            const char *name;
+            if (dotPos) {
+                name = va("%s", base);
+                ((char *)name)[dotPos - base] = '\0';
+            } else {
+                name = base;
+            }
+            int mode = Dvar_GetInt("cl_timedemoMode");
+            clui->timeDemoLog = FS_FOpenFileWrite(va("demos/timedemo_%s_mode_%i.csv", name, mode));
+        }
+    }
+
+    {
+        int msec = Sys_Milliseconds();
+        clui = CLUI_STATE;
+        if (!clui->timeDemoStart) {
+            clui->timeDemoStart = msec;
+        } else if (clui->timeDemoLog) {
+            FS_Printf(clui->timeDemoLog, "%i,%i\n",
+                      clui->timeDemoFrames,
+                      msec - clui->timeDemoPrev);
+        }
+        clui->timeDemoPrev = msec;
+        int frameNum = clui->timeDemoFrames + 1;
+        clui->timeDemoFrames = frameNum;
+        cl = CL_LOCAL;
+        cl->serverTime = clui->timeDemoBaseTime + frameNum * 50;
+    }
+}
+
+#endif
 void CL_SetCGameTime(void)
 {
     clientConnection_t *clui;
@@ -1393,12 +1445,23 @@ void CL_SetCGameTime(void)
             cl->oldServerTime = cl->serverTime;
 
             int serverTime = cl->snap.serverTime;
+#if defined(COD2_X64)
+            if (timeDelta + realtime >= serverTime - 5) {
+#else
             if (timeDelta + realtime < serverTime - 5) {
+#endif
                 cl->extrapolatedSnapshot = 1;
                 if (CL_DvarCurrentBool(imp_cl_showTimeDelta)) {
+#if defined(COD2_X64)
+                    Com_Printf("Extrapolating snapshot!\n");
+#else
                     Com_Printf("%.6f extrapolating\n");
+#endif
                 }
             }
+#if defined(COD2_X64)
+        }
+#else
         } else {
 
             if (!clui->timeDemoLog) {
@@ -1445,6 +1508,7 @@ void CL_SetCGameTime(void)
                 cl->serverTime = clui->timeDemoBaseTime + frameNum * 50;
             }
         }
+#endif
     }
 
     cl = CL_LOCAL;
@@ -1457,11 +1521,17 @@ void CL_SetCGameTime(void)
     if (!clui->demoplaying)
         return;
 
+#if defined(COD2_X64)
+    if (clui->isTimeDemo)
+        CL_UpdateTimeDemo();
+    cl = CL_LOCAL;
+#else
     if (!clui->isTimeDemo) {
         cl = CL_LOCAL;
     } else {
         cl = CL_LOCAL;
     }
+#endif
 
     while (cl->serverTime >= cl->snap.serverTime) {
         CL_ReadDemoMessage();

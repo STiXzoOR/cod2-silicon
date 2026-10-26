@@ -97,11 +97,12 @@ steady 250 fps during live network play.
 `CL_DemoCompleted` prints `<frames> frames, <seconds> seconds: <fps> fps`.
 `CL_SetCGameTime` writes headerless `frame,milliseconds` rows to
 `home/main/demos/timedemo_<map>_mode_<cl_timedemoMode>.csv` (the actual home/game
-subdirectory may vary). **Current-source quirk:** the CSV and fixed 50 ms demo
-step are gated by `cl_freezeDemo`, whereas the completion message checks
-`isTimeDemo`. The wrapper explicitly sets `cl_freezeDemo 1`; upstream does not
-register `cl_timedemoMode` here, and its lookup only labels the CSV. This is a
-reconstruction behavior, not a claim about stock CoD2's benchmark internals.
+subdirectory may vary). The `timedemo` command advances 50 ms of demo time per
+rendered frame, independent of wall time; movement and animations therefore look
+faster at more than 20 FPS. Use `demo` for normal playback. `cl_freezeDemo 1`
+holds ordinary demo playback; timedemo still advances. The wrapper sets
+`cl_freezeDemo 0` and selects benchmark mode with `timedemo`. Upstream does not
+register `cl_timedemoMode` here; its lookup only labels the CSV.
 
 `bench.sh` waits for that completion message, allows the CSV to close, then
 stops the entire process group (including surviving engine children) because `nextdemo quit` is not implemented in

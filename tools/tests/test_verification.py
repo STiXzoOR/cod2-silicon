@@ -130,7 +130,8 @@ sys.exit(7)
 from pathlib import Path
 args = sys.argv
 home = Path(args[args.index('fs_homepath') + 1].strip('"'))
-assert args[args.index('cl_freezeDemo') + 1] == '1'
+assert args[args.index('cl_freezeDemo') + 1] == '0'
+assert args[args.index('+timedemo') + 1] == 'test'
 (home / 'main/demos').mkdir(parents=True)
 (home / 'main/demos/timedemo_test_mode_0.csv').write_text('1,2\\n2,4\\n3,10\\n')
 (home / 'main/qconsole_mp.log').write_text('4 frames, 0.1 seconds: 40.0 fps\\n')
