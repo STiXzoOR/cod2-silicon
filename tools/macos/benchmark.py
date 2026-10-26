@@ -53,8 +53,17 @@ def summarize(log, csv_path):
 
 def stop(process, grace=5):
     # A wrapper can exit before its engine child. Track the whole process group.
+    def signal_group(signum):
+        try:
+            os.killpg(process.pid, signum)
+        except PermissionError:
+            # Darwin can report EPERM for a group containing only an unreaped zombie.
+            if process.poll() is None:
+                raise
+            os.killpg(process.pid, signum)
+
     try:
-        os.killpg(process.pid, signal.SIGTERM)
+        signal_group(signal.SIGTERM)
     except ProcessLookupError:
         process.wait()
         return
@@ -62,13 +71,13 @@ def stop(process, grace=5):
     while time.monotonic() < deadline:
         process.poll()  # reap the group leader if it has exited
         try:
-            os.killpg(process.pid, 0)
+            signal_group(0)
         except ProcessLookupError:
             process.wait()
             return
         time.sleep(.05)
     try:
-        os.killpg(process.pid, signal.SIGKILL)
+        signal_group(signal.SIGKILL)
     except ProcessLookupError:
         pass
     process.wait()
