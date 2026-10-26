@@ -1207,7 +1207,11 @@ void CL_CmdButtons(usercmd_t *cmd)
         cmd->buttons |= 0x40000;
     }
 
+#if defined(COD2_X64)
+    if ((unsigned int)(*clp)->snap.ps.pm_type - 2u <= 2u && CL_ConsumeButtonPress(KB_AT(12))) {
+#else
     if ((int)((*clp)->snap.ps.pm_type - 2) <= 2 && CL_ConsumeButtonPress(KB_AT(12))) {
+#endif
         cmd->buttons |= 0x400;
     }
 
@@ -1408,6 +1412,23 @@ void CL_KeyMove(usercmd_t *cmd)
 
     cl = *(clientActive_t **)imp_cl;
 
+#if defined(COD2_X64)
+    if (KB_AT(25)->active) {
+        cmd->buttons = (cmd->buttons & ~0x200) | 0x2100;
+    } else if (KB_AT(11)->active) {
+        cmd->buttons = (cmd->buttons & ~0x100) | 0x2200;
+    } else {
+        if (cl->stanceHeld && com_frameTime - cl->stanceTime >= cl_stanceHoldTime->current.integer) {
+            legacyHacks->cl_stance = cl->stancePosition == 2 ? 0 : 2;
+            cl->stanceHeld = 0;
+        }
+        cmd->buttons &= ~0x2300;
+        if (legacyHacks->cl_stance == 1)
+            cmd->buttons |= 0x200;
+        else if (legacyHacks->cl_stance == 2)
+            cmd->buttons |= 0x100;
+    }
+#else
     (void)cl;
 
     {
@@ -1417,6 +1438,7 @@ void CL_KeyMove(usercmd_t *cmd)
         else if (clStance == 2)
             cmd->buttons |= 0x100;
     }
+#endif
 
     if (((KB_AT(9)->active != 0) == (cl->usingAds == 0)) || PM_IsBinocularsADS(&cl->snap.ps)) {
         cmd->buttons |= 0x1000;
