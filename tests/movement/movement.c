@@ -450,6 +450,7 @@ static void test_linked_weapon(void)
     puts("PASS linked movement types retain their weapon update with turret flags");
 }
 
+#include "spectator.c"
 #endif
 int main(int argc, char **argv)
 {
@@ -475,6 +476,8 @@ int main(int argc, char **argv)
     else if (!strcmp(argv[1], "view-adjust-offset")) test_view_adjust_offset();
     else if (!strcmp(argv[1], "trace-routes")) test_trace_routes();
     else if (!strcmp(argv[1], "linked-weapon")) test_linked_weapon();
+    else if (!strcmp(argv[1], "spectator-vertical")) test_spectator_vertical();
+    else if (!strcmp(argv[1], "spectator-horizontal")) test_spectator_horizontal();
 #endif
     else if (!strcmp(argv[1], "ladder")) test_ladder();
     else if (!strcmp(argv[1], "prone")) test_prone();
