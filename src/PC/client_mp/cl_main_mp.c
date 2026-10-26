@@ -2878,6 +2878,10 @@ void CL_Disconnect(void)
 
     memset(conn, 0, sizeof(*conn));
     conn->state = CA_DISCONNECTED;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (!cls.wwwDlDisconnected)
+        CL_ClearStaticDownload();
+#endif
     SND_DisconnectListener();
 
     if (oldState > CA_LOGO)
@@ -3227,7 +3231,13 @@ void CL_DownloadsComplete(void)
     if (clientConnections[0].downloadRestart) {
         clientConnections[0].downloadRestart = 0;
         FS_Restart(clc->checksumFeed);
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        if (!cls.wwwDlDisconnected)
+            CL_AddReliableCommand_core((const char *)"donedl");
+        CL_ClearStaticDownload();
+#else
         CL_AddReliableCommand_core((const char *)"donedl");
+#endif
         return;
     }
 
@@ -3299,7 +3309,7 @@ void CL_BeginDownload(const char *localName, const char *remoteName)
     conn = (clientConnection_t *)clc;
     I_strncpyz(conn->downloadName, localName, sizeof(conn->downloadName));
     Com_sprintf(conn->downloadTempName, sizeof(conn->downloadTempName), (const char *)"%s.tmp", localName);
-#if defined(COD2_X64) && COD2_FEATURE_WWW_DOWNLOAD
+#if defined(COD2_X64) && (COD2_IS_PATCH_13 || COD2_FEATURE_WWW_DOWNLOAD)
     /* Mac 1.3 keeps these names in cls (CL_BeginDownload 0x14d668), where an
        HTTP redirect (CL_ParseWWWDownload) reads them. */
     I_strncpyz(cls.downloadName, localName, sizeof(cls.downloadName));

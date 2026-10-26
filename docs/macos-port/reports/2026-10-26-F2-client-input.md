@@ -92,7 +92,7 @@ and matched zero SDK entries; it does not claim SDK preprocessing coverage.
 
 This is a bounded stance repair, not full client-input parity. A further
 comparison found `CL_SendCmdInternal` testing demo waiting where the original
-reads `cls.downloadName[0]` for its 50 ms download throttle (`0x18a072`,
+reads `cls.downloadTempName[0]` for its 50 ms download throttle (`0x18a072`,
 STABS offset `0x2b4838`). Its LAN test also uses `serverAddress` instead of the
 original `netchan.remoteAddress`. Those network-scheduling paths are unchanged
 and need their own producer/behavior tests. The inline key-time calculation

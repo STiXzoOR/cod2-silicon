@@ -1529,18 +1529,31 @@ void CL_SendCmdInternal(void)
         goto not_ready;
     }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    connectElapsed = cls.realtime - clc->lastPacketSentTime;
+    if (cls.downloadTempName[0]) {
+#else
     connectElapsed = cls.realtime - clc->connectTime;
     if (clc->demowaiting) {
+#endif
         if (connectElapsed <= 49) {
             goto not_ready;
         }
     } else if ((unsigned int)(clc->state - CA_PRIMED) > 1) {
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        if (connectElapsed <= 999)
+#else
         if (clc->serverAddress.type != NA_LOOPBACK && connectElapsed <= 999)
+#endif
             goto not_ready;
     }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (clc->netchan.remoteAddress.type == NA_LOOPBACK || Sys_IsLANAddress(clc->netchan.remoteAddress)) {
+#else
     if (clc->serverAddress.type == NA_LOOPBACK || Sys_IsLANAddress(clc->serverAddress)) {
+#endif
         CL_WritePacket();
         return;
     }
