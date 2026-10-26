@@ -199,6 +199,10 @@ jobs:
             --output "$RUNNER_TEMP/server-commands-stock"
           python3 tests/camera/run_server_commands.py --compile-db build-macos-codx/compile_commands.engine.json \
             --output "$RUNNER_TEMP/server-commands-codx"
+          python3 tests/lp64/renderer/run_screenshot.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/screenshot-stock"
+          python3 tests/lp64/renderer/run_screenshot.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/screenshot-codx"
           python3 tests/lp64/renderer/run_font_icons.py --compile-db build-macos/compile_commands.engine.json \
             --output "$RUNNER_TEMP/run_font_icons-stock"
           python3 tests/lp64/renderer/run_font_icons.py --compile-db build-macos-codx/compile_commands.engine.json \

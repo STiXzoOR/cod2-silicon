@@ -867,6 +867,14 @@ static void R_CaptureScreenshotNow(GfxScreenshotType type, const char *filename,
         buffer[17] = 32;
 
         if (R_GetFrontBufferData(width, height, 3, buffer + 18)) {
+#if defined(COD2_X64)
+            /* Native readback is RGB; TGA stores BGR pixels. */
+            for (int i = 18; i < fileSize; i += 3) {
+                byte red = buffer[i];
+                buffer[i] = buffer[i + 2];
+                buffer[i + 2] = red;
+            }
+#endif
             ri.FS_WriteFile(filename, buffer, fileSize);
         }
         ri.Z_FreeInternal(buffer);
