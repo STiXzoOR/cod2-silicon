@@ -324,21 +324,34 @@ static void R_UpsamplePixelData(int oldSize, int newSize, int stride, int bytesP
     int forwardWeight;
     float colorScale;
     int i;
+#if defined(COD2_X64)
+    int sourceIndex = oldSize - 1;
+#endif
 
     nextSample = stride * bytesPerPixel;
     currSrc = src + (oldSize - 1) * nextSample;
 
     dst = dst + (newSize - 1) * nextSample;
+#if defined(COD2_X64)
+    currSrc[nextSample] = currSrc[0];
+    currSrc[nextSample + 1] = currSrc[1];
+    currSrc[nextSample + 2] = currSrc[2];
+#else
     dst[nextSample] = currSrc[0];
     dst[nextSample + 1] = currSrc[1];
     dst[nextSample + 2] = currSrc[2];
+#endif
 
     forwardWeight = newSize - oldSize;
     backwardWeight = newSize + oldSize;
     colorScale = 0.5f / (float)newSize;
 
     for (i = 0; i < newSize; i++) {
+#if defined(COD2_X64)
+        if (sourceIndex >= 0) {
+#else
         if (currSrc >= src) {
+#endif
 
             int val0, val1, val2;
             val0 = (int)currSrc[0] * backwardWeight + (int)currSrc[nextSample] * forwardWeight;
@@ -357,6 +370,10 @@ static void R_UpsamplePixelData(int oldSize, int newSize, int stride, int bytesP
             dst[2] = (byte)(int)floorf((float)((int)src[2] * totalWeight) * colorScale + 0.5f);
         }
 
+#if defined(COD2_X64)
+        if (i + 1 == newSize)
+            break;
+#endif
         dst -= nextSample;
         backwardWeight += oldSize * 2;
         forwardWeight -= oldSize * 2;
@@ -364,7 +381,12 @@ static void R_UpsamplePixelData(int oldSize, int newSize, int stride, int bytesP
         if (forwardWeight < 0) {
             backwardWeight -= newSize * 2;
             forwardWeight += newSize * 2;
+#if defined(COD2_X64)
+            if (--sourceIndex >= 0)
+                currSrc -= nextSample;
+#else
             currSrc -= nextSample;
+#endif
         }
     }
 }
@@ -376,6 +398,9 @@ static void R_DownsamplePixelData(int oldSize, int newSize, int stride, int byte
     int residual;
     int column;
     int accR, accG, accB;
+#if defined(COD2_X64)
+    int sourceIndex = 0;
+#endif
 
     colorScale = 1.0f / (float)oldSize;
     nextSample = stride * bytesPerPixel;
@@ -385,7 +410,12 @@ static void R_DownsamplePixelData(int oldSize, int newSize, int stride, int byte
         accR = (int)src[0] * residual;
         accG = (int)src[1] * residual;
         accB = (int)src[2] * residual;
+#if defined(COD2_X64)
+        if (++sourceIndex < oldSize)
+            src += nextSample;
+#else
         src += nextSample;
+#endif
 
         residual = residual + newSize - oldSize;
 
@@ -393,15 +423,26 @@ static void R_DownsamplePixelData(int oldSize, int newSize, int stride, int byte
             accR += (int)src[0] * newSize;
             accG += (int)src[1] * newSize;
             accB += (int)src[2] * newSize;
+#if defined(COD2_X64)
+            if (++sourceIndex < oldSize)
+                src += nextSample;
+#else
             src += nextSample;
+#endif
             residual += newSize;
         }
 
         {
             int frac = newSize - residual;
+#if defined(COD2_X64)
+            if (frac) {
+#endif
             accG += (int)src[1] * frac;
             accB += (int)src[2] * frac;
             accR += (int)src[0] * frac;
+#if defined(COD2_X64)
+            }
+#endif
         }
 
         dst[0] = (byte)(int)floorf((float)accR * colorScale + 0.5f);
@@ -423,11 +464,19 @@ static byte *R_TakeResampledScreenshot(int width, int height, int bytesPerPixel,
     int maxWidth, maxHeight;
 
     maxWidth = vidConfig.width;
+#if defined(COD2_X64)
+    if (width > maxWidth) {
+#else
     if (width < maxWidth) {
+#endif
         maxWidth = width;
     }
     maxHeight = vidConfig.height;
+#if defined(COD2_X64)
+    if (height > maxHeight) {
+#else
     if (height < maxHeight) {
+#endif
         maxHeight = height;
     }
 
@@ -466,6 +515,10 @@ static byte *R_TakeResampledScreenshot(int width, int height, int bytesPerPixel,
         if (oldHeight > 0) {
             for (i = 0; i < oldHeight; i++) {
                 R_UpsamplePixelData(oldWidth, width, 1, bytesPerPixel, srcRow, dstRow);
+#if defined(COD2_X64)
+                if (i + 1 == oldHeight)
+                    break;
+#endif
                 srcRow -= srcRowStride;
                 dstRow -= dstRowStride;
             }
@@ -490,6 +543,10 @@ static byte *R_TakeResampledScreenshot(int width, int height, int bytesPerPixel,
             srcRow = dstRow;
             for (i = 0; i < width; i++) {
                 R_UpsamplePixelData(oldHeight, height, width, bytesPerPixel, srcRow, dstRow);
+#if defined(COD2_X64)
+                if (i + 1 == width)
+                    break;
+#endif
                 dstRow -= bytesPerPixel;
                 srcRow -= bytesPerPixel;
             }
@@ -523,6 +580,14 @@ void R_LevelShot(void)
         buffer[14] = 128;
         buffer[16] = 24;
 
+#if defined(COD2_X64)
+        /* Native readback is RGB; preserve the original levelshot's BGR data. */
+        for (int i = 18; i < 0xC012; i += 3) {
+            byte red = buffer[i];
+            buffer[i] = buffer[i + 2];
+            buffer[i + 2] = red;
+        }
+#endif
         ri.FS_WriteFile(checkname, buffer, 0xC012);
         ri.Z_FreeInternal(buffer);
         ri.Printf(0, "Wrote %s\n", checkname);
