@@ -193,7 +193,11 @@ void CG_PredictPlayerState(void)
     snapshot_t *nextSnap;
     int cmdNum, oldest;
     usercmd_t curCmd;
+#if defined(COD2_X64)
+    qboolean moved = 0;
+#else
     qboolean moved;
+#endif
     WeaponDef *weapDef;
     int cg_time;
 
@@ -286,8 +290,13 @@ void CG_PredictPlayerState(void)
             CG_AdjustPositionForMover(
                 ps->origin,
                 ps->groundEntityNum,
+#if defined(COD2_X64)
+                cg->physicsTime,
+                cg->oldTime,
+#else
                 cg->oldTime,
                 cg->physicsTime,
+#endif
                 oldOrigin, deltaAngles);
 
             ps->delta_angles[1] += (int)(deltaAngles[1] * (65536.0f / 360.0f)) & 0xffff;
@@ -464,6 +473,10 @@ cleanup:
                     *kickPitch = AngleNormalize360(*kickPitch + cosAngle * size);
                 }
             }
+#if defined(COD2_X64)
+        } else {
+            cg->adsViewErrorDone = 0;
+#endif
         }
     } else {
         cg->adsViewErrorDone = 0;

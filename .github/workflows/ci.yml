@@ -106,7 +106,8 @@ jobs:
           status=0
           run_fixture() { "$@" || status=1; }
           run_fixture sh tests/lp64/renderer/run.sh
-          # run_shader_raster.sh, run_texture_mips.sh and run_volume_upload.sh need
+          # run_shader_raster.sh, run_texture_mips.sh, run_volume_upload.sh and
+          # run_depth_surface.py need
           # an accelerated CGL pixel format, which hosted runners lack; local gate only.
           run_fixture python3 tests/perf/run.py
           run_fixture python3 tests/platform/run_hud_matrices.py
@@ -178,6 +179,18 @@ jobs:
       - name: Source-based game, script, network and reconstruction fixtures
         if: ${{ !cancelled() && steps.stock.outcome == 'success' && steps.codx.outcome == 'success' }}
         run: |
+          python3 tests/camera/run_snapshot.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/snapshot-stock"
+          python3 tests/camera/run_snapshot.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/snapshot-codx"
+          python3 tests/camera/run_prediction.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/prediction-stock"
+          python3 tests/camera/run_prediction.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/prediction-codx"
+          python3 tests/camera/run_events.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/events-stock"
+          python3 tests/camera/run_events.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/events-codx"
           python3 tests/lp64/renderer/run_font_icons.py --compile-db build-macos/compile_commands.engine.json \
             --output "$RUNNER_TEMP/run_font_icons-stock"
           python3 tests/lp64/renderer/run_font_icons.py --compile-db build-macos-codx/compile_commands.engine.json \
