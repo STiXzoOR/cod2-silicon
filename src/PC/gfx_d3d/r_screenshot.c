@@ -9,14 +9,31 @@
 extern void I_strncpyz(char *dest, const char *src, int destsize);
 
 static int lastNumber;
+#if defined(COD2_X64)
+static vec3_t cubemapShotAxis[7][3] = {
+    {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}},
+    {{0, 0, 1}, {1, 0, 0}, {0, 1, 0}},
+    {{0, 0, -1}, {-1, 0, 0}, {0, 1, 0}},
+    {{0, 1, 0}, {-1, 0, 0}, {0, 0, 1}},
+    {{0, -1, 0}, {1, 0, 0}, {0, 0, 1}},
+    {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}},
+    {{-1, 0, 0}, {0, -1, 0}, {0, 0, 1}}
+};
+static byte *cubeShotGlob[6];
+#else
 static vec3_t cubemapShotAxis[7][3];
 static int cubeShotGlob;
+#endif
 static int pendingScreenshotType = -1;
 static char pendingScreenshotFilename[256];
 static int pendingScreenshotSilent;
 static int pendingScreenshotDelayFrames;
 
+#if defined(COD2_X64)
+#define dx ((DxGlobals *)imp_dx)
+#else
 extern DxGlobals *dx;
+#endif
 extern int alwaysfails;
 extern refimport_t ri;
 extern vidConfig_t vidConfig;
@@ -285,13 +302,35 @@ void R_EndCubemapShot(const CubemapShot shotIndex)
     int *pixels;
     int gammaVal;
 
+#if defined(COD2_X64)
+    if (shotIndex < 1 || shotIndex > 6)
+        return;
+    if (cubeShotGlob[shotIndex - 1]) {
+        ri.Z_FreeInternal(cubeShotGlob[shotIndex - 1]);
+        cubeShotGlob[shotIndex - 1] = NULL;
+    }
+#endif
     res = dx->cubemapShotRes;
     bufferSizeInBytes = res * res * 4;
     buffer = (byte *)ri.Z_MallocInternal(bufferSizeInBytes);
 
+#if defined(COD2_X64)
+    if (!R_GetFrontBufferData(res, res, 4, buffer)) {
+        ri.Z_FreeInternal(buffer);
+        RB_SetRenderTarget(0);
+        return;
+    }
+    cubeShotGlob[shotIndex - 1] = buffer;
+    for (int i = 0; i < bufferSizeInBytes; i += 4) {
+        byte red = buffer[i];
+        buffer[i] = buffer[i + 2];
+        buffer[i + 2] = red;
+    }
+#else
     ((byte **)&cubeShotGlob)[shotIndex - 1] = buffer;
 
     R_GetFrontBufferData(dx->cubemapShotRes, dx->cubemapShotPixelBorder, 4, buffer);
+#endif
 
     pixels = (int *)buffer;
     for (rowIndex = 0; rowIndex < dx->cubemapShotRes / 2; rowIndex++) {
@@ -605,6 +644,10 @@ void R_SaveCubemapShot(const char *filename, const CubemapShot shotIndex, const 
     vec3_t dir;
     float scale;
 
+#if defined(COD2_X64)
+    if (shotIndex < 1 || shotIndex > 6 || !cubeShotGlob[shotIndex - 1])
+        return;
+#endif
     imgIndex = shotIndex - 1;
 
     res = dx->cubemapShotRes;
@@ -686,6 +729,9 @@ void R_SaveCubemapShot(const char *filename, const CubemapShot shotIndex, const 
     ri.FS_WriteFile(filename, targa, fileSize);
     ri.Z_FreeInternal(targa);
     ri.Z_FreeInternal(((byte **)&cubeShotGlob)[imgIndex]);
+#if defined(COD2_X64)
+    cubeShotGlob[imgIndex] = NULL;
+#endif
 }
 
 void R_LightingFromCubemapShots(const vec_t *baseColor)
@@ -706,6 +752,19 @@ void R_LightingFromCubemapShots(const vec_t *baseColor)
     byte *pixel;
     float heightF;
 
+#if defined(COD2_X64)
+    for (int face = 0; face < 6; ++face)
+        if (!cubeShotGlob[face]) {
+            for (int captured = 0; captured < 6; ++captured) {
+                if (cubeShotGlob[captured]) {
+                    ri.Z_FreeInternal(cubeShotGlob[captured]);
+                    cubeShotGlob[captured] = NULL;
+                }
+            }
+            ri.Printf(0, "Skipping cubemap lighting: incomplete face captures\n");
+            return;
+        }
+#endif
     pixelsPerFace = (int)dx->cubemapShotRes * (int)dx->cubemapShotRes;
     linearColors = (float *)ri.Z_MallocInternal(pixelsPerFace * 9 * 8);
 
@@ -733,9 +792,15 @@ void R_LightingFromCubemapShots(const vec_t *baseColor)
                 for (y = 0; y < height; y++) {
                     for (x = 0; x < height; x++) {
                         byte *srcPixel = cubeShotPtr[faceIdx - 1] + pixelIndex * 4;
+#if defined(COD2_X64)
+                        faceLinear[pixelIndex * 3 + 0] = (float)pow((double)((float)srcPixel[2] * (1.0f / 255.0f)), (double)2.2f);
+                        faceLinear[pixelIndex * 3 + 1] = (float)pow((double)((float)srcPixel[1] * (1.0f / 255.0f)), (double)2.2f);
+                        faceLinear[pixelIndex * 3 + 2] = (float)pow((double)((float)srcPixel[0] * (1.0f / 255.0f)), (double)2.2f);
+#else
                         faceLinear[pixelIndex * 3 + 0] = (float)pow((double)((float)srcPixel[2] * (1.0f / 255.0f)), 2.2);
                         faceLinear[pixelIndex * 3 + 1] = (float)pow((double)((float)srcPixel[1] * (1.0f / 255.0f)), 2.2);
                         faceLinear[pixelIndex * 3 + 2] = (float)pow((double)((float)srcPixel[0] * (1.0f / 255.0f)), 2.2);
+#endif
                         pixelIndex++;
                     }
                 }
@@ -825,9 +890,15 @@ void R_LightingFromCubemapShots(const vec_t *baseColor)
                 }
 
                 invSampleCount = 1.0f / (float)sampleCount;
+#if defined(COD2_X64)
+                ambientR = (float)pow((double)(sampleR * invSampleCount), (double)0.45454545f);
+                ambientG = (float)pow((double)(sampleG * invSampleCount), (double)0.45454545f);
+                ambientB = (float)pow((double)(sampleB * invSampleCount), (double)0.45454545f);
+#else
                 ambientR = (float)pow((double)(sampleR * invSampleCount), 0.454545);
                 ambientG = (float)pow((double)(sampleG * invSampleCount), 0.454545);
                 ambientB = (float)pow((double)(sampleB * invSampleCount), 0.454545);
+#endif
 
                 ambientR *= baseColor[0];
                 ambientG *= baseColor[1];
