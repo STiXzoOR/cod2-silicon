@@ -866,7 +866,15 @@ void CG_ProcessSnapshots(void)
             CG_SetFrameInterpolation();
         }
 
+#if defined(COD2_X64)
+    process_next_snapshot:
+        curSnap = (char *)cg->snap;
+        nextSnap = (char *)cg->nextSnap;
+        if (!cg->cubemapShot && nextSnap != NULL && nextSnap != curSnap) {
+        process_snapshot_time:
+#else
         if (nextSnap != NULL && nextSnap != curSnap) {
+#endif
             curSnap = (char *)cg->snap;
             nextSnap = (char *)cg->nextSnap;
             cgTime = cg->time;
@@ -874,7 +882,11 @@ void CG_ProcessSnapshots(void)
             if (cgTime < ((snapshot_t *)curSnap)->serverTime ||
                 cgTime >= ((snapshot_t *)nextSnap)->serverTime) {
                 CG_TransitionSnapshot_Inline();
+#if defined(COD2_X64)
+                goto process_next_snapshot;
+#else
                 continue;
+#endif
             }
 
             return;
@@ -890,22 +902,41 @@ void CG_ProcessSnapshots(void)
             return;
         }
 
+#if defined(COD2_X64)
+        nextSnap = (char *)cg->nextSnap;
+#else
         if (((snapshot_t *)snap)->snapFlags & 2) {
             continue;
         }
+#endif
 
+#if defined(COD2_X64)
+        if ((((snapshot_t *)snap)->snapFlags ^ ((snapshot_t *)nextSnap)->snapFlags) & 4) {
+#else
         if ((((snapshot_t *)snap)->snapFlags ^ ((snapshot_t *)curSnap)->snapFlags) & 4) {
+#endif
             CG_SetInitialSnapshot((snapshot_t *)snap);
             CG_SetNextSnap((snapshot_t *)snap);
             CG_TransitionSnapshot_Inline();
+#if defined(COD2_X64)
+            goto process_next_snapshot;
+#else
             continue;
+#endif
         }
 
+#if defined(COD2_X64)
+        if (((snapshot_t *)snap)->serverTime < ((snapshot_t *)nextSnap)->serverTime) {
+#else
         if (((snapshot_t *)snap)->serverTime < ((snapshot_t *)curSnap)->serverTime) {
+#endif
             Com_Error(1, (const char *)"\x15"
                                        "CG_ProcessSnapshots: Server time went backwards");
         }
 
         CG_SetNextSnap((snapshot_t *)snap);
+#if defined(COD2_X64)
+        goto process_snapshot_time;
+#endif
     }
 }

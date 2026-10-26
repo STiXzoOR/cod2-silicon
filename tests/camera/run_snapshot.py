@@ -42,7 +42,14 @@ subprocess.run([*flags, '-UNDEBUG', '-I' + str(a.output),
 failed = []
 for case in ['transition-high', 'transition-low', 'transition-ordinary', 'transition-demo',
              'transition-nopredict', 'transition-synchronous', 'transition-null-dvars',
-             'corpse-high', 'corpse-low', 'corpse-ordinary', 'corpse-empty', 'corpse-mismatch']:
+             'corpse-high', 'corpse-low', 'corpse-ordinary', 'corpse-empty', 'corpse-mismatch',
+             'process-normal-due', 'process-normal-future', 'process-normal-before',
+             'process-cubemap-due', 'process-cubemap-future', 'process-cubemap-before',
+             'process-cubemap-incoming-due', 'process-cubemap-incoming-future',
+             'process-normal-incoming-inactive', 'process-normal-incoming-backward',
+             'process-normal-incoming-restart',
+             'process-cubemap-incoming-replace-restart',
+             'process-cubemap-incoming-replace-backward']:
     result = subprocess.run([str(exe), case], capture_output=True, text=True,
                             env={**os.environ, 'ASAN_OPTIONS': 'symbolize=0', 'UBSAN_OPTIONS': 'halt_on_error=1'})
     (a.output / (case + '.log')).write_text(result.stdout + result.stderr)
