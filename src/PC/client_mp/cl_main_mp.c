@@ -2849,6 +2849,9 @@ void CL_Disconnect(void)
 
     conn->downloadName[0] = '\0';
     conn->downloadTempName[0] = '\0';
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (!cls.wwwDlDisconnected)
+#endif
     legacy->cl_downloadName[0] = 0;
 
     if (conn->demofile) {
@@ -3228,8 +3231,13 @@ void CL_DownloadsComplete(void)
     char cmd[1024];
     int i;
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (cls.downloadRestart) {
+        cls.downloadRestart = 0;
+#else
     if (clientConnections[0].downloadRestart) {
         clientConnections[0].downloadRestart = 0;
+#endif
         FS_Restart(clc->checksumFeed);
 #if defined(COD2_X64) && COD2_IS_PATCH_13
         if (!cls.wwwDlDisconnected)
@@ -3340,12 +3348,20 @@ void CL_NextDownload(void)
     char *localName;
     char *next;
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (!cls.downloadList[0]) {
+#else
     if (!clientConnections[0].downloadList[0]) {
+#endif
         CL_DownloadsComplete();
         return;
     }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    remoteName = cls.downloadList;
+#else
     remoteName = clientConnections[0].downloadList;
+#endif
     if (*remoteName == '@')
         ++remoteName;
 
@@ -3364,8 +3380,13 @@ void CL_NextDownload(void)
 
     CL_BeginDownload(localName, remoteName);
     conn = (clientConnection_t *)clc;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    cls.downloadRestart = 1;
+    memmove(cls.downloadList, next, strlen(next) + 1);
+#else
     conn->downloadRestart = 1;
     memmove(conn->downloadList, next, strlen(next) + 1);
+#endif
 }
 
 void CL_InitDownloads(void)
@@ -3376,11 +3397,17 @@ void CL_InitDownloads(void)
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
     if (((clientConnection_t *)clc)->demoplaying) {
+#if COD2_IS_PATCH_13
+        CL_ClearStaticDownload();
+#endif
         CL_DownloadsComplete();
         return;
     }
 #endif
     FS_ShiftStr((const char *)"ni]Zm^l", 7);
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    CL_ClearStaticDownload();
+#endif
 
     svRunning = com_sv_running;
     if (svRunning->current.enabled || !cl_allowDownload->current.enabled) {
@@ -3391,13 +3418,22 @@ void CL_InitDownloads(void)
     }
 
     conn = (clientConnection_t *)clc;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (!FS_CompareIwds(cls.downloadList, sizeof(cls.downloadList), 1)) {
+#else
     if (!FS_CompareIwds(conn->downloadList, sizeof(conn->downloadList), 1)) {
+#endif
         CL_DownloadsComplete();
         return;
     }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    Com_Printf((const char *)"Need iwds: %s\n", cls.downloadList);
+    if (!cls.downloadList[0]) {
+#else
     Com_Printf((const char *)"Need iwds: %s\n", conn->downloadList);
     if (!conn->downloadList[0]) {
+#endif
         CL_DownloadsComplete();
         return;
     }

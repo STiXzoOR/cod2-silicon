@@ -600,6 +600,10 @@ void CL_WWWDownload(void)
 
         cls.downloadTempName[0] = '\0';
         cls.downloadName[0] = '\0';
+#if defined(COD2_X64)
+        ((clientConnection_t *)*clc_ptr)->downloadName[0] = '\0';
+        ((clientConnection_t *)*clc_ptr)->downloadTempName[0] = '\0';
+#endif
         *(char *)((*download_ui_ptr) + 0x1c) = 0;
 
         if (cls.wwwDlDisconnected)

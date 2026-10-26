@@ -27,6 +27,7 @@ static const dvar_t *cl_maxpackets = &maxpackets, *cl_showSend = &zero;
 static const dvar_t *cl_packetdup = &zero, *cl_nodelta = &zero;
 static const dvar_t *com_developer = &zero, *com_sv_running = &one;
 static const dvar_t *cl_paused = &zero, *sv_disableClientConsole = &zero;
+static const dvar_t *cl_allowDownload = &one;
 static refexport_t re;
 static int sent, created, canceled, restarted, failed, groups;
 static int shortValues[2], shortIndex, longIndex, httpFlags, openFailure, nextRequests;
@@ -34,11 +35,15 @@ static int invalidName;
 static netadr_t lastLanAddress;
 static dlStatus_t downloadStatus;
 static char renamed[256];
+static const char *missingDownloads;
+static int reconnects, starts, startFailure, wwwDone;
+static int demoInitExpected, cgameInitializations;
 #define CHECK(x) do { if (!(x)) { fprintf(stderr, "%s:%d: %s\n", __func__, __LINE__, #x); ++failed; } } while (0)
 
 void CL_NextDownload(void);
 void CL_ParseWWWDownload(msg_t *msg);
-void CL_AddReliableCommand(const char *s) { if (!strncmp(s, "nextdl", 6)) ++nextRequests; }
+void CL_AddReliableCommand(const char *s)
+{ if (!strncmp(s, "nextdl", 6)) ++nextRequests; if (!strcmp(s, "wwwdl done")) ++wwwDone; }
 void Com_Printf(const char *fmt, ...) { (void)fmt; }
 void Com_DPrintf(const char *fmt, ...) { (void)fmt; }
 void Com_Error(int code, const char *fmt, ...) { (void)code; (void)fmt; abort(); }
@@ -80,6 +85,9 @@ void FS_SV_Rename(const char *from, const char *to) { CHECK(strstr(from, ".tmp")
 qboolean NetHardening_ValidDownloadName(const char *name, qboolean allow)
 { (void)name; (void)allow; return !invalidName; }
 qboolean NetHardening_ValidUrl(const char *url) { return !strncmp(url, "https://", 8); }
+char *FS_ShiftStr(const char *name, int shift) { (void)shift; return (char *)name; }
+int FS_CompareIwds(char *out, int size, int download)
+{ CHECK(download == 1); I_strncpyz(out, missingDownloads, size); return out[0] != 0; }
 void FS_Restart(int feed) { (void)feed; ++restarted; }
 #if COD2_FEATURE_WWW_DOWNLOAD
 void DL_CancelDownload(void) { ++canceled; }
@@ -89,31 +97,31 @@ void FS_BuildOSPath(const char *base, const char *game, const char *qpath, char 
 { snprintf(out, 256, "%s/%s/%s", base, game, qpath); }
 #if COD2_FEATURE_WWW_DOWNLOAD
 int DL_BeginDownload(const char *to, const char *url, int debug)
-{ (void)debug; CHECK(strstr(to, ".tmp") != NULL); CHECK(strstr(url, "https://") == url); downloadStatus = DL_STATUS_IN_PROGRESS; return 1; }
+{ (void)debug; CHECK(strstr(to, ".tmp") != NULL); CHECK(strstr(url, "https://") == url); ++starts; downloadStatus = startFailure ? DL_STATUS_IDLE : DL_STATUS_IN_PROGRESS; return !startFailure; }
 void DL_DownloadLoop(void) { }
 dlStatus_t DL_GetStatus(void) { return downloadStatus; }
 int DL_DLIsMotd(void) { return 0; }
 #endif
 void Sys_OpenURL(const char *url, int active) { (void)url; (void)active; abort(); }
-void Cbuf_ExecuteText(int when, const char *text) { (void)when; CHECK(!strcmp(text, "reconnect\n")); }
+void Cbuf_ExecuteText(int when, const char *text) { CHECK(when == 2 && !strcmp(text, "reconnect\n")); ++reconnects; }
 int FS_ReadFile(const char *path, void **buf) { (void)path; (void)buf; return -1; }
 void FS_FreeFile(void *buf) { (void)buf; }
 void Dvar_SetStringByName(const char *name, const char *value) { (void)name; (void)value; }
 int rename(const char *from, const char *to) { (void)from; snprintf(renamed, sizeof(renamed), "%s", to); return 0; }
 int remove(const char *path) { (void)path; abort(); }
 void FS_CopyFile(char *from, char *to) { (void)from; (void)to; abort(); }
-const char *CL_GetConfigString(int index) { (void)index; abort(); }
-const char *Info_ValueForKey(const char *s, const char *key) { (void)s; (void)key; abort(); }
-void UI_SetMap(const char *map, const char *game) { (void)map; (void)game; abort(); }
-void SCR_UpdateScreenInternal(void) { abort(); }
+const char *CL_GetConfigString(int index) { CHECK(demoInitExpected && index == 0); return "synthetic"; }
+const char *Info_ValueForKey(const char *s, const char *key) { (void)s; CHECK(demoInitExpected); return !strcmp(key, "mapname") ? "mp_toujane" : "dm"; }
+void UI_SetMap(const char *map, const char *game) { CHECK(demoInitExpected && !strcmp(map, "mp_toujane") && !strcmp(game, "dm")); }
+void SCR_UpdateScreenInternal(void) { CHECK(demoInitExpected); }
 void CL_ShutdownCGame(void) { abort(); }
 void CL_ShutdownUI(void) { abort(); }
-void Com_Restart(void) { abort(); }
-void CL_StartHunkUsers(void) { abort(); }
+void Com_Restart(void) { CHECK(demoInitExpected); }
+void CL_StartHunkUsers(void) { CHECK(demoInitExpected); }
 void Dvar_SetInt(const dvar_t *d, int value) { (void)d; (void)value; }
 void Dvar_SetBool(const dvar_t *d, unsigned char value) { (void)d; (void)value; }
-void CL_InitCGame(void) { abort(); }
-const char *FS_ReferencedIwdPureChecksums(void) { abort(); }
+void CL_InitCGame(void) { CHECK(demoInitExpected); ++cgameInitializations; }
+const char *FS_ReferencedIwdPureChecksums(void) { CHECK(demoInitExpected); return ""; }
 void Cod2x_Disconnect(void) { }
 void Cod2x_DemoClientDisconnect(void) { }
 void MatchSummary_Finish(const char *reason) { (void)reason; }
@@ -137,10 +145,14 @@ static void reset(connstate_t state)
     hacks.cl_running = 1; cls.realtime = 1000;
     sent = created = canceled = restarted = shortIndex = longIndex = openFailure = nextRequests = invalidName = httpFlags = 0;
     renamed[0] = 0; downloadStatus = DL_STATUS_IDLE;
+    reconnects = starts = startFailure = wwwDone = 0;
+    demoInitExpected = cgameInitializations = 0;
+    missingDownloads = "@main/map.iwd@main/map.iwd";
 }
 static void begin(void)
 {
-    strcpy(clc->downloadList, "@main/map.iwd@main/map.iwd");
+    strcpy(clc->downloadList, missingDownloads);
+    strcpy(cls.downloadList, missingDownloads);
     CL_NextDownload();
     CHECK(!strcmp(cls.downloadTempName, "main/map.iwd.tmp"));
 }
@@ -236,6 +248,7 @@ static void www_completion_and_disconnect(void)
     downloadStatus = DL_STATUS_DONE; CL_WWWDownload();
     CHECK(!cls.downloadTempName[0] && !cls.wwwDlInProgress && restarted == 1 && canceled == !!COD2_FEATURE_WWW_DOWNLOAD);
     CHECK(!strcmp(renamed, "/private/main/map.iwd"));
+    CHECK(!clc->downloadName[0] && !clc->downloadTempName[0]);
 #endif
     reset(CA_CONNECTED); begin(); CL_Disconnect();
     CHECK(!cls.downloadTempName[0] && !cls.downloadName[0] && canceled == !!COD2_FEATURE_WWW_DOWNLOAD);
@@ -247,10 +260,101 @@ static void www_completion_and_disconnect(void)
     CHECK(clc->reliableSequence == sequence && restarted == 1 && canceled == !!COD2_FEATURE_WWW_DOWNLOAD);
     CHECK(!cls.wwwDlDisconnected && !cls.downloadTempName[0]);
 }
+static void init_downloads(void)
+{
+    com_sv_running = &zero;
+    CL_InitDownloads();
+    com_sv_running = &one;
+}
+static void download_initialization(void)
+{
+    reset(CA_CONNECTED);
+    cls.wwwDlDisconnected = cls.wwwDlInProgress = cls.downloadRestart = 1;
+    strcpy(cls.downloadName, "stale"); strcpy(cls.originalDownloadName, "stale");
+    init_downloads();
+    CHECK(canceled == !!COD2_FEATURE_WWW_DOWNLOAD);
+    CHECK(!cls.wwwDlDisconnected && !cls.wwwDlInProgress && !cls.originalDownloadName[0]);
+    CHECK(!strcmp(cls.downloadName, "main/map.iwd") && cls.downloadRestart);
+    CHECK(!cls.downloadList[0]);
+    udp(0, 4); udp(1, 0);
+    CHECK(restarted == 1 && !cls.downloadRestart);
+}
+static void detached_download_chain(void)
+{
+#if COD2_FEATURE_WWW_DOWNLOAD
+    for (int remaining = 0; remaining <= 1; ++remaining) {
+        reset(CA_CONNECTED);
+        if (remaining)
+            missingDownloads = "@main/map.iwd@main/map.iwd@main/second.iwd@main/second.iwd";
+        init_downloads();
+        int cancelBefore = canceled;
+        httpFlags = 1; msg_t msg = {0}; CL_ParseWWWDownload(&msg);
+        CHECK(starts == 1 && cls.wwwDlInProgress && cls.wwwDlDisconnected);
+        CHECK(!strcmp(cls.originalDownloadName, "main/map.iwd"));
+        CL_Disconnect();
+        CHECK(cls.wwwDlInProgress && cls.wwwDlDisconnected && canceled == cancelBefore);
+        CHECK(!strcmp(hacks.cl_downloadName, "main/map.iwd"));
+        CHECK(clc->state == CA_DISCONNECTED && !clc->downloadRestart && !clc->downloadList[0]);
+        downloadStatus = DL_STATUS_DONE; CL_WWWDownload();
+        CHECK(!strcmp(renamed, "/private/main/map.iwd") && reconnects == 1 && !wwwDone);
+        CHECK(clc->state == CA_DISCONNECTED);
+        if (remaining) {
+            CHECK(!strcmp(cls.downloadTempName, "main/second.iwd.tmp") && cls.downloadRestart);
+            CHECK(!strcmp(clc->reliableCommands[clc->reliableSequence & 127], "download main/second.iwd"));
+            CHECK(!restarted && canceled == cancelBefore);
+            if (strcmp(cls.downloadTempName, "main/second.iwd.tmp"))
+                continue;
+            longIndex = 0; CL_ParseWWWDownload(&msg);
+            CHECK(starts == 2 && cls.wwwDlInProgress);
+            downloadStatus = DL_STATUS_DONE; CL_WWWDownload();
+            CHECK(!strcmp(renamed, "/private/main/second.iwd") && reconnects == 2);
+        }
+        CHECK(restarted == 1 && canceled == cancelBefore + 1);
+        CHECK(!cls.downloadRestart && !cls.downloadName[0] && !cls.downloadTempName[0]);
+        CHECK(!clc->downloadName[0] && !clc->downloadTempName[0]);
+        CHECK(!cls.wwwDlInProgress && !cls.wwwDlDisconnected && !hacks.cl_downloadName[0]);
+        CHECK(!clc->reliableSequence || strcmp(clc->reliableCommands[clc->reliableSequence & 127], "donedl"));
+    }
+#endif
+}
+static void detached_start_failure_control(void)
+{
+#if COD2_FEATURE_WWW_DOWNLOAD
+    reset(CA_CONNECTED); init_downloads();
+    int cancelBefore = canceled;
+    httpFlags = startFailure = 1; msg_t msg = {0}; CL_ParseWWWDownload(&msg);
+    CHECK(starts == 1 && cls.wwwDlDisconnected && !cls.wwwDlInProgress);
+    CHECK(!reconnects && canceled == cancelBefore + 1);
+#endif
+}
+static void demo_after_detached_download(void)
+{
+#if COD2_CODX && COD2_FEATURE_WWW_DOWNLOAD
+    for (int failedStart = 0; failedStart <= 1; ++failedStart) {
+        reset(CA_CONNECTED); init_downloads();
+        httpFlags = 1; startFailure = failedStart;
+        msg_t msg = {0}; CL_ParseWWWDownload(&msg);
+        CHECK(cls.wwwDlDisconnected && cls.downloadRestart);
+        CHECK(cls.wwwDlInProgress == !failedStart);
+        CL_Disconnect();
+        CHECK(cls.wwwDlDisconnected && cls.downloadRestart);
+        /* CL_PlayDemo_f establishes these after its real disconnect. */
+        clc->state = CA_CONNECTED; clc->demoplaying = 1;
+        demoInitExpected = 1; client.cgameInitialized = 0;
+        int cancelBefore = canceled;
+        init_downloads();
+        CHECK(!restarted && canceled == cancelBefore + 1);
+        CHECK(clc->state == CA_LOADING && cgameInitializations == 1);
+        CHECK(!cls.downloadRestart && !cls.wwwDlDisconnected && !cls.wwwDlInProgress);
+        CHECK(!cls.downloadName[0] && !cls.downloadTempName[0]);
+    }
+#endif
+}
 int main(void)
 {
 #define RUN(f) do { int before = failed; f(); ++groups; printf("%s: %s\n", #f, failed == before ? "PASS" : "FAIL"); } while (0)
     RUN(download_timing); RUN(connection_timing); RUN(local_gate_order); RUN(active_controls);
     RUN(ordinary_controls); RUN(channel_address); RUN(udp_completion); RUN(udp_failure_cleanup); RUN(www_completion_and_disconnect);
+    RUN(download_initialization); RUN(detached_download_chain); RUN(detached_start_failure_control); RUN(demo_after_detached_download);
     printf("%d groups, %d failed assertions\n", groups, failed); return failed != 0;
 }
