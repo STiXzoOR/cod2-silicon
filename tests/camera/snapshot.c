@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
+#include <setjmp.h>
 
 cg_t cgArray[1];
 _Alignas(cgs_t) unsigned char cgsArray[sizeof(cgs_t)];
@@ -18,6 +19,12 @@ const dvar_t *cg_hudDamageIconTime;
 void *imp_legacyHacks;
 static snapshot_t old_snapshot, new_snapshot;
 static int events, notifications, solid_lists, clones;
+static int snapshot_number, reads, interpolations;
+static snapshot_t incoming_snapshot;
+static jmp_buf process_error;
+static int expect_time_error, expect_initial, initializations, clears;
+static int legacy_hacks[3];
+static void *legacy_hacks_ptr = legacy_hacks;
 static unsigned source_tree = 1234, corpse_tree = 5678;
 
 void BG_EvaluateTrajectory(const trajectory_t *tr, int time, vec_t *out)
@@ -40,13 +47,13 @@ int I_stricmp(const char *a, const char *b) { return strcasecmp(a, b); }
 void I_strncpyz(char *dst, const char *src, int size)
 { assert(size > 0); snprintf(dst, (size_t)size, "%s", src); }
 void CL_ResetSkeletonCache(int value) { assert(value == 0); }
-void CG_SetFrameInterpolation(void) {}
+void CG_SetFrameInterpolation(void) { ++interpolations; }
 void CG_ExecuteNewServerCommands(int seq) { assert(seq == 42); }
 void CG_CheckOpenWaitingScriptMenu(void) {}
 void CG_BuildSolidList(void) { ++solid_lists; }
-void CG_ClearSolidList(void) { assert(0); }
-void CG_PlaySmokeGrenadesAtTime(int time) { (void)time; assert(0); }
-void CG_SetEquippedOffHand(int index) { (void)index; assert(0); }
+void CG_ClearSolidList(void) { assert(expect_initial); ++clears; }
+void CG_PlaySmokeGrenadesAtTime(int time) { assert(expect_initial && time == incoming_snapshot.serverTime); }
+void CG_SetEquippedOffHand(int index) { assert(expect_initial && index == 0); }
 void CG_CheckEvents(centity_t *cent) { (void)cent; assert(0); }
 void CG_UpdatePlayerDObj(centity_t *cent) { (void)cent; assert(0); }
 void CG_UpdateHandViewmodels(const char *value) { (void)value; assert(0); }
@@ -65,15 +72,99 @@ void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up)
 { (void)angles; (void)forward; (void)right; (void)up; assert(0); }
 const float AngleNormalize360(const float angle) { assert(0); return angle; }
 float randomf(void) { assert(0); return 0; }
-void CL_SetADS(int value) { (void)value; assert(0); }
-void CG_HoldBreathInit(void) { assert(0); }
-void CG_ResetLowHealthOverlay(void) { assert(0); }
+void CL_SetADS(int value) { assert(expect_initial && value == 0); }
+void CG_HoldBreathInit(void) { assert(expect_initial); }
+void CG_ResetLowHealthOverlay(void) { assert(expect_initial); }
 void CG_MenuShowNotify(int menu) { assert(menu == 0); ++notifications; }
 void CG_EntityEvent(centity_t *cent, int event)
 {
     assert(cent == &cg->predictedPlayerEntity);
     assert(event == 73 && cent->nextState.eventParm == 92);
     ++events;
+}
+
+void CL_GetCurrentSnapshotNumber(int *number, int *time)
+{ *number = snapshot_number; *time = 1200; }
+int CL_GetSnapshot(int number, snapshot_t *dest)
+{
+    assert(number == 2 && reads == 0);
+    ++reads;
+    *dest = incoming_snapshot;
+    return 1;
+}
+void CG_AddLagometerSnapshotInfo(snapshot_t *snap)
+{ assert(snap && snap->serverTime == incoming_snapshot.serverTime); }
+void CG_SafeDObjFree(int entnum) { (void)entnum; assert(0); }
+void CG_InitView(void) { assert(expect_initial); ++initializations; }
+void SND_SetListener(int entnum, const vec_t *origin, vec3_t *axis)
+{ (void)origin; (void)axis; assert(expect_initial && entnum == 0); }
+void SND_FadeAllSounds(float volume, int duration)
+{ assert(expect_initial && volume == 1.0f && duration == 0); }
+void AnglesToAxis(const vec_t *angles, vec3_t *axis)
+{ (void)angles; assert(expect_initial); memset(axis, 0, sizeof(vec3_t) * 3); }
+void Com_Error(int level, const char *format, ...)
+{
+    assert(expect_time_error && level == 1);
+    assert(strstr(format, "Server time went backwards"));
+    longjmp(process_error, 1);
+}
+void Com_Printf(const char *format, ...) { (void)format; assert(0); }
+
+static void process_case(const char *which)
+{
+    int cubemap = strstr(which, "cubemap") != NULL;
+    int incoming = strstr(which, "incoming") != NULL;
+    int future = strstr(which, "future") != NULL;
+    int before = strstr(which, "before") != NULL;
+    int replace = strstr(which, "replace") != NULL;
+    int backward = strstr(which, "backward") != NULL;
+    int inactive = strstr(which, "inactive") != NULL;
+    int restart = strstr(which, "restart") != NULL;
+    for (int face = cubemap ? CUBEMAPSHOT_UP : CUBEMAPSHOT_NONE;
+         face <= (cubemap ? CUBEMAPSHOT_BACK : CUBEMAPSHOT_NONE); ++face) {
+        memset(cg, 0, sizeof(*cg));
+        memset(cgs, 0, sizeof(*cgs));
+        memset(&old_snapshot, 0, sizeof(old_snapshot));
+        memset(&new_snapshot, 0, sizeof(new_snapshot));
+        memset(&incoming_snapshot, 0, sizeof(incoming_snapshot));
+        reads = interpolations = solid_lists = initializations = clears = 0;
+        expect_initial = restart && !replace;
+        imp_legacyHacks = &legacy_hacks_ptr;
+        old_snapshot.serverTime = 900;
+        new_snapshot.serverTime = future ? 1100 : 1000;
+        incoming_snapshot.serverTime = new_snapshot.serverTime;
+        incoming_snapshot.serverCommandSequence = 42;
+        if (backward) incoming_snapshot.serverTime = 850;
+        if (inactive) incoming_snapshot.snapFlags = 2;
+        if (restart) incoming_snapshot.snapFlags = 4;
+        cg->activeSnapshots[0] = old_snapshot;
+        cg->activeSnapshots[1] = new_snapshot;
+        cg->snap = &cg->activeSnapshots[0];
+        cg->nextSnap = incoming && !replace ? cg->snap : &cg->activeSnapshots[1];
+        cg->time = before ? 800 : 1000;
+        cg->bgs.time = cg->time;
+        cg->cubemapShot = (CubemapShot)face;
+        cg->latestSnapshotNum = cgs->processedSnapshotNum = 1;
+        snapshot_number = incoming ? 2 : 1;
+        expect_time_error = backward && !replace;
+        if (setjmp(process_error)) {
+            assert(expect_time_error && reads == 1 && solid_lists == 0);
+            continue;
+        }
+        CG_ProcessSnapshots();
+        assert(!expect_time_error);
+        int transition_expected = (!cubemap || incoming) && (!future || before);
+        snapshot_t *pending = &cg->activeSnapshots[1];
+        assert(cg->snap == (transition_expected ? pending : &cg->activeSnapshots[0]));
+        assert(cg->nextSnap == pending);
+        assert(reads == incoming && cgs->processedSnapshotNum == snapshot_number);
+        assert(solid_lists == incoming);
+        assert(initializations == expect_initial && clears == expect_initial);
+        assert(interpolations == 1 + incoming);
+        assert(cg->bgs.latestSnapshotTime == 1200);
+        int expected_time = before ? (transition_expected ? pending->serverTime : 900) : 1000;
+        assert(cg->time == expected_time && cg->bgs.time == expected_time);
+    }
 }
 
 static void transition(const char *which)
@@ -156,6 +247,7 @@ int main(int argc, char **argv)
 {
     assert(argc == 2);
     if (!strncmp(argv[1], "transition-", 11)) transition(argv[1]);
+    else if (!strncmp(argv[1], "process-", 8)) process_case(argv[1]);
     else corpse_case(argv[1]);
     puts("snapshot behavior passed");
     return 0;
