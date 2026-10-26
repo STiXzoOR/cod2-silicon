@@ -218,7 +218,11 @@ void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time)
     int i;
     ping_t *pinglist;
     ping_t *entry;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    char info[1025];
+#else
     char info[1024];
+#endif
     int len;
     clientStatic_t *cls;
 
@@ -275,7 +279,11 @@ void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time)
 
     cls = (clientStatic_t *)imp_cls;
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (cls->pingUpdateSource)
+#else
     if (cls->waitglobalserverresponse)
+#endif
         return;
 
     for (i = 0; i < 128; i++) {
@@ -303,13 +311,21 @@ void CL_ServerInfoPacket(netadr_t from, msg_t *msg, int time)
             server->requestCount = 0;
             server->netType = (byte)from.type;
             server->clients = 0;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+            server->maxClients = 0;
+            server->consoleDisabled = 0;
+#endif
 
             I_strncpyz(info, MSG_ReadString(msg), 0x400);
             if (!info[0])
                 return;
 
             len = strlen(info);
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+            if (info[len - 1] != '\n') {
+#else
             if (info[len - 2] != '\n') {
+#endif
                 info[len] = '\n';
                 info[len + 1] = '\0';
             }
@@ -498,10 +514,21 @@ found_status:
         while (*line) {
             for (infoField = 0; infoField < 2; infoField++) {
                 int j = 0;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+                if (!*line)
+                    break;
+#endif
                 if (*line == '\\')
                     line++;
                 while (*line && *line != '\\' && j < 0x3ff) {
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+                    info[j++] = *line;
+                    if (j == 0x3ff)
+                        break;
+                    line++;
+#else
                     info[j++] = *line++;
+#endif
                 }
                 info[j] = '\0';
 
