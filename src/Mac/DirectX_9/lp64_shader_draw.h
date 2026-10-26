@@ -166,13 +166,21 @@ static HRESULT MacShader_DrawIndexed(DeviceImpl *dev, INT baseVertex, UINT minVe
     ((void (*)(const void *))pixelVtable[7])(dev->pixelShader);
     MacShader_CheckGL("programs");
 
+#if defined(COD2_X64)
+    if (dev->zEnable && !dev->depthStencilDetached) {
+#else
     if (dev->zEnable) {
+#endif
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(CDirect3DDevice_MapCompareFunc(dev->zFunc));
     } else {
         glDisable(GL_DEPTH_TEST);
     }
+#if defined(COD2_X64)
+    glDepthMask(dev->zWriteEnable && !dev->depthStencilDetached);
+#else
     glDepthMask(dev->zWriteEnable != 0);
+#endif
     glColorMask((dev->colorWriteEnable & 1) != 0, (dev->colorWriteEnable & 2) != 0,
                 (dev->colorWriteEnable & 4) != 0, (dev->colorWriteEnable & 8) != 0);
     if (g_alphaTestEnable) {
