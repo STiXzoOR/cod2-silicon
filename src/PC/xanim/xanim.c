@@ -3400,7 +3400,11 @@ static __attribute_regparm__(3) __attribute_sseregparm__
         }
 
         if (childNotify) {
+#if defined(COD2_X64)
+            XAnimProcessServerNotify(tree, childInfo, childAnim, state->time);
+#else
             XAnimProcessServerNotify(tree, childInfo, childAnim, childState->time);
+#endif
         }
 
         childState->time = state->time;
