@@ -211,6 +211,10 @@ jobs:
             --output "$RUNNER_TEMP/screenshot-stock"
           python3 tests/lp64/renderer/run_screenshot.py --compile-db build-macos-codx/compile_commands.engine.json \
             --output "$RUNNER_TEMP/screenshot-codx"
+          python3 tests/lp64/renderer/run_cubemap.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/cubemap-stock"
+          python3 tests/lp64/renderer/run_cubemap.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/cubemap-codx"
           python3 tests/lp64/renderer/run_font_icons.py --compile-db build-macos/compile_commands.engine.json \
             --output "$RUNNER_TEMP/run_font_icons-stock"
           python3 tests/lp64/renderer/run_font_icons.py --compile-db build-macos-codx/compile_commands.engine.json \
