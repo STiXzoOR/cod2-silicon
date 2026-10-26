@@ -179,6 +179,10 @@ jobs:
       - name: Source-based game, script, network and reconstruction fixtures
         if: ${{ !cancelled() && steps.stock.outcome == 'success' && steps.codx.outcome == 'success' }}
         run: |
+          python3 tests/lp64/game/client_events.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/client-events-stock"
+          python3 tests/lp64/game/client_events.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/client-events-codx"
           python3 tests/movement/run.py --compile-db build-macos/compile_commands.engine.json \
             --output "$RUNNER_TEMP/spectator-stock" --test spectator-vertical --test spectator-horizontal
           python3 tests/movement/run.py --compile-db build-macos-codx/compile_commands.engine.json \
