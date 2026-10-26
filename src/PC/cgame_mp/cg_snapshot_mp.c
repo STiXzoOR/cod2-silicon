@@ -216,7 +216,11 @@ static void CG_ResetEntity(char *cent)
 
         pXAnimTree = ((clientInfo_t *)corpseInfo)->pXAnimTree;
 
+#if defined(COD2_X64)
+        if (((centity_t *)cent)->nextState.eFlags & 0x80000) {
+#else
         if (((centity_t *)cent)->nextState.eFlags & 8) {
+#endif
             int attachIndex;
 
             memcpy(corpseInfo, ci, CI_STRIDE);
@@ -702,7 +706,11 @@ void CG_SetNextSnap(snapshot_t *snap_param)
 
         if (!isDemo) {
             char *nextSnap = (char *)cg->nextSnap;
+#if defined(COD2_X64)
+            if (!(((snapshot_t *)nextSnap)->ps.pm_flags & 0x400000)) {
+#else
             if (!(((snapshot_t *)nextSnap)->ps.pm_flags & 0x40)) {
+#endif
 
                 const dvar_t *dv1 = cg_dvar1 ? (const dvar_t *)*cg_dvar1 : NULL;
                 if (!dv1 || dv1->current.enabled == 0) {

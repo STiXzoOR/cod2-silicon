@@ -53,6 +53,9 @@ extern void CG_CheckOpenWaitingScriptMenu(void);
 extern void ByteToDir(int dirByte, float *dir);
 extern void AngleVectors(const vec_t *angles, vec_t *forward, vec_t *right, vec_t *up);
 extern void FX_PlayEffect(EffectTemplate *effect, const vec_t *origin, const vec_t *forward);
+#if defined(COD2_X64) && COD2_APPLE_SDK
+extern void FX_PlayOrientedEffect(EffectTemplate *effect, const vec_t *origin, const vec_t *forward, const vec_t *up);
+#endif
 extern void FX_PlayEntityEffect(EffectTemplate *fx, const vec_t *org, vec3_t *axis, const FxBoltInfo *bolt);
 extern void FX_WarpTime(int time);
 extern int FX_GetBoneIndex(int modelIndex, unsigned int boneName);
@@ -256,15 +259,26 @@ static void CG_Obituary(centity_t *cent)
                 break;
             case 1:
                 iconWidth = f_1_4;
+#if defined(COD2_X64)
+                iconShader = (const char *)"killiconheadshot";
+#else
                 iconShader = (const char *)"killiconcrush";
+#endif
                 iconHorzFlip = 0;
                 break;
             case 2:
                 iconWidth = f_1_4;
+#if defined(COD2_X64)
+                iconShader = (const char *)"killiconcrush";
+#else
                 iconShader = (const char *)"killiconheadshot";
+#endif
                 iconHorzFlip = 0;
                 break;
             case 3:
+#if defined(COD2_X64)
+            case 5:
+#endif
                 iconWidth = f_1_4;
                 iconShader = (const char *)"killiconsuicide";
                 iconHorzFlip = 0;
@@ -406,7 +420,11 @@ static void CG_Obituary(centity_t *cent)
                     CG_PriorityCenterPrint(msg, 9.6f, 1);
                 }
             }
+#if defined(COD2_X64)
+        } else if (target == localClientNum && attackerCI != NULL) {
+#else
         } else if (target == localClientNum) {
+#endif
 
             if (attackerCI != (char *)0) {
 #if defined(COD2_X64)
@@ -915,7 +933,12 @@ void CG_EntityEvent(centity_t *cent, int event)
                     CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
                     return;
                 }
+#if defined(COD2_X64)
+            }
+            {
+#else
             } else {
+#endif
                 weapon = es->weapon;
                 int wepOff = weaponDataOffset(weapon);
                 char *wepDefs = CG_WeaponInfoBase();
@@ -955,7 +978,12 @@ void CG_EntityEvent(centity_t *cent, int event)
                     CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
                     return;
                 }
+#if defined(COD2_X64)
+            }
+            {
+#else
             } else {
+#endif
                 weapon = es->weapon;
                 int wepOff = weaponDataOffset(weapon);
                 char *wepDefs = CG_WeaponInfoBase();
@@ -1000,7 +1028,11 @@ void CG_EntityEvent(centity_t *cent, int event)
                 char *wepDefs = CG_WeaponInfoBase();
                 char *wepData = wepDefs + wepOff * 4;
 
+#if defined(COD2_X64)
+                CG_EVENT_POINTER alias = (*(CG_EVENT_POINTER *)&((weaponInfo_t *)wepData)->reloadStartSound) ;
+#else
                 CG_EVENT_POINTER alias = (*(CG_EVENT_POINTER *)&((weaponInfo_t *)wepData)->reloadEndSound) ;
+#endif
                 if (alias != 0) {
                     CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
                 }
@@ -1032,7 +1064,11 @@ void CG_EntityEvent(centity_t *cent, int event)
                 char *wepDefs = CG_WeaponInfoBase();
                 char *wepData = wepDefs + wepOff * 4;
 
+#if defined(COD2_X64)
+                CG_EVENT_POINTER alias = (*(CG_EVENT_POINTER *)&((weaponInfo_t *)wepData)->reloadEndSound) ;
+#else
                 CG_EVENT_POINTER alias = (*(CG_EVENT_POINTER *)&((weaponInfo_t *)wepData)->reloadStartSound) ;
+#endif
                 if (alias != 0) {
                     CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
                 }
@@ -1222,7 +1258,11 @@ void CG_EntityEvent(centity_t *cent, int event)
                 int wepOff = weaponDataOffset(weapon);
                 char *wepDefs = CG_WeaponInfoBase();
                 char *wepData = wepDefs + wepOff * 4;
+#if defined(COD2_X64)
+                CG_EVENT_POINTER alias = (*(CG_EVENT_POINTER *)&((weaponInfo_t *)wepData)->rechamberSound) ;
+#else
                 CG_EVENT_POINTER alias = (*(CG_EVENT_POINTER *)&((weaponInfo_t *)wepData)->meleeSwipeSound) ;
+#endif
                 if (alias != 0) {
 
                     CG_PlayEntitySoundAlias(es->number, (snd_alias_list_t *)(alias));
@@ -1253,6 +1293,10 @@ void CG_EntityEvent(centity_t *cent, int event)
         case 0xa5:
         {
 
+#if defined(COD2_X64)
+            if (!isFirstPerson)
+                return;
+#endif
             CG_PrepOffHand(es, 0xa5, es->eventParm);
             return;
         }
@@ -1260,6 +1304,10 @@ void CG_EntityEvent(centity_t *cent, int event)
         case 0xa6:
         {
 
+#if defined(COD2_X64)
+            if (!isFirstPerson)
+                return;
+#endif
             CG_UseOffHand(cent, 0xa6, es->eventParm);
             return;
         }
@@ -1600,10 +1648,18 @@ void CG_EntityEvent(centity_t *cent, int event)
 
         case 0xc4:
         {
+#if defined(COD2_X64)
+            float radius = es->angles2[1];
+#else
             int duration = es->angles2[1];
+#endif
             int esTime = es->time;
             float intensity = es->angles2[0];
+#if defined(COD2_X64)
+            CG_StartShakeCamera(intensity, esTime, (const vec_t *)position, radius);
+#else
             CG_StartShakeCamera(intensity, esTime, (const vec_t *)position, *(float *)&duration);
+#endif
             return;
         }
 
@@ -1632,7 +1688,11 @@ void CG_EntityEvent(centity_t *cent, int event)
 
             AngleVectors(angles, forward, 0, up);
 
+#if defined(COD2_X64) && COD2_APPLE_SDK
+            FX_PlayOrientedEffect(effect, position, forward, up);
+#else
             FX_PlayEffect(effect, position, forward);
+#endif
             return;
         }
 
