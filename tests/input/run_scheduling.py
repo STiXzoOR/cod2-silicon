@@ -73,7 +73,7 @@ def function(text, name):
 selections = {
     'src/PC/client_mp/cl_input.c': ['CL_WritePacketDbg', 'CL_WritePacket', 'CL_SendCmdInternal'],
     'src/PC/client_mp/cl_main_mp.c': ['CL_ClearStaticDownload', 'CL_AddReliableCommand_core',
-        'CL_BeginDownload', 'CL_DownloadsComplete', 'CL_NextDownload', 'CL_Disconnect'],
+        'CL_BeginDownload', 'CL_DownloadsComplete', 'CL_NextDownload', 'CL_InitDownloads', 'CL_Disconnect'],
     'src/PC/client_mp/cl_parse_mp.c': ['CL_ParseDownload', 'CL_ParseWWWDownload', 'CL_WWWDownload'],
 }
 generated = ''
