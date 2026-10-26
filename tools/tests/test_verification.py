@@ -204,15 +204,74 @@ time.sleep(30)
                          [call(123, signal.SIGTERM), call(123, 0), call(123, 0)])
         process.wait.assert_called_once_with()
 
+    def test_stop_waits_for_exiting_leader_before_retrying_group_probe(self):
+        process = Mock(pid=123)
+        process.poll.side_effect = [None, None]
+        process.wait.return_value = -signal.SIGTERM
+        with patch.object(bench.os, 'killpg', side_effect=[
+                None, PermissionError('exiting group'), ProcessLookupError()]) as killpg:
+            with patch.object(bench.time, 'monotonic', return_value=0):
+                with patch.object(bench.time, 'sleep'):
+                    bench.stop(process, grace=.2)
+        self.assertEqual(killpg.call_args_list,
+                         [call(123, signal.SIGTERM), call(123, 0), call(123, 0)])
+        process.wait.assert_called_once_with()
+
+    def test_stop_waits_for_group_exit_after_reaping_leader(self):
+        process = Mock(pid=123)
+        process.poll.return_value = 0
+        with patch.object(bench.os, 'killpg', side_effect=[
+                None, PermissionError('exiting descendant'),
+                PermissionError('exiting descendant'), ProcessLookupError()]) as killpg:
+            with patch.object(bench.time, 'monotonic', return_value=0):
+                with patch.object(bench.time, 'sleep'):
+                    bench.stop(process, grace=.2)
+        self.assertEqual(killpg.call_args_list,
+                         [call(123, signal.SIGTERM), call(123, 0), call(123, 0), call(123, 0)])
+        process.wait.assert_called_once_with()
+
+    def test_stop_retries_transient_permission_failure_at_escalation(self):
+        process = Mock(pid=123)
+        process.poll.return_value = 0
+        with patch.object(bench.os, 'killpg', side_effect=[
+                None, None, PermissionError('exiting group'), ProcessLookupError()]) as killpg:
+            with patch.object(bench.time, 'monotonic', side_effect=[0, 0, .3, .3]):
+                with patch.object(bench.time, 'sleep') as sleep:
+                    bench.stop(process, grace=.2)
+        self.assertEqual(killpg.call_args_list, [call(123, signal.SIGTERM), call(123, 0),
+                         call(123, signal.SIGKILL), call(123, signal.SIGKILL)])
+        sleep.assert_called_once_with(.05)
+        process.wait.assert_called_once_with()
+
+    def test_stop_preserves_persistent_permission_failure_at_escalation(self):
+        process = Mock(pid=123)
+        process.poll.return_value = 0
+        error = PermissionError('denied')
+        with patch.object(bench.os, 'killpg', side_effect=[None, None, error, error]) as killpg:
+            with patch.object(bench.time, 'monotonic', side_effect=[0, 0, .3, .3, .3]):
+                with patch.object(bench.time, 'sleep') as sleep:
+                    with self.assertRaises(PermissionError) as caught:
+                        bench.stop(process, grace=.2)
+        self.assertIs(caught.exception, error)
+        self.assertEqual(killpg.call_args_list, [call(123, signal.SIGTERM), call(123, 0),
+                         call(123, signal.SIGKILL), call(123, signal.SIGKILL)])
+        sleep.assert_called_once_with(.05)
+        process.wait.assert_not_called()
+
     def test_stop_preserves_persistent_permission_failure(self):
         for returncode in (None, 0):
             with self.subTest(wrapper_returncode=returncode):
                 process = Mock(pid=123)
                 process.poll.return_value = returncode
-                with patch.object(bench.os, 'killpg', side_effect=PermissionError('denied')) as killpg:
-                    with self.assertRaises(PermissionError):
-                        bench.stop(process)
-                self.assertEqual(killpg.call_count, 1 if returncode is None else 2)
+                error = PermissionError('denied')
+                with patch.object(bench.os, 'killpg', side_effect=error) as killpg:
+                    with patch.object(bench.time, 'monotonic', side_effect=[0, 0, .2]):
+                        with patch.object(bench.time, 'sleep') as sleep:
+                            with self.assertRaises(PermissionError) as caught:
+                                bench.stop(process, grace=.2)
+                self.assertIs(caught.exception, error)
+                self.assertEqual(killpg.call_count, 2)
+                sleep.assert_called_once_with(.05)
                 process.wait.assert_not_called()
 
     def test_stop_kills_descendant_after_wrapper_exits(self):
