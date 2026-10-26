@@ -2671,14 +2671,15 @@ static void PM_FlyMove(pmove_t *pm, pml_t *pml)
     for (int i = 0; i < 3; ++i)
         wishdir[i] = scale ? scale * pml->forward[i] * (float)pm->cmd.forwardmove + scale * pml->right[i] * (float)pm->cmd.rightmove : 0.0f;
     if (ps->speed) {
-        float vertical = (float)ps->speed;
+        /* Preserve the original scalar rounding in PM_MoveScale(0, 0, 127). */
+        float vertical = (float)ps->speed * 127.0f / 16129.0f;
         if ((ps->pm_flags & 0x100) || ps->leanf != 0.0f)
             vertical *= 0.4f;
         vertical *= player_spectateSpeedScale->current.value;
         if (pm->cmd.buttons & 0x40)
-            wishdir[2] -= vertical;
+            wishdir[2] += vertical * -127.0f;
         if (pm->cmd.buttons & 0x80)
-            wishdir[2] += vertical;
+            wishdir[2] += vertical * 127.0f;
     }
     float wishspeed = Vec3Normalize(wishdir);
     PM_Accelerate(ps, pml, wishdir, wishspeed, 8.0f);

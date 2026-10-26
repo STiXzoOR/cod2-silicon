@@ -94,7 +94,7 @@ for source in ['src/PC/universal/com_math.c', 'src/PC/universal/q_shared.c',
     objects.append(extra)
 exe = out / 'movement'
 subprocess.run(['clang', '-arch', 'arm64', '-fsanitize=address,undefined', '-Wl,-dead_strip', *map(str, objects), '-o', str(exe)], check=True)
-for name in a.test or ['acceleration-zero', 'bob', 'scale', 'snap', 'walk', 'lean', 'timers', 'direction', 'stance', 'view', 'view-adjust-zero', 'view-adjust-offset', 'trace-routes', 'linked-weapon', 'ladder', 'prone', 'dispatch']:
+for name in a.test or ['acceleration-zero', 'spectator-vertical', 'spectator-horizontal', 'bob', 'scale', 'snap', 'walk', 'lean', 'timers', 'direction', 'stance', 'view', 'view-adjust-zero', 'view-adjust-offset', 'trace-routes', 'linked-weapon', 'ladder', 'prone', 'dispatch']:
     if name in ('collision', 'events', 'sway'):
         continue
     for revision in ([0, 3, 4, 6, -1] if a.revision_matrix else [None]):
