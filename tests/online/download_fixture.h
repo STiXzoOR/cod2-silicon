@@ -9,6 +9,8 @@
 
 static clientConnection_t connection;
 static clientConnection_t *clc = &connection;
+static byte *connectionBytes = (byte *)&connection;
+static byte **clc_ptr = &connectionBytes;
 static clientStatic_t cls;
 static LegacyHacks hacks;
 static LegacyHacks *legacyHacks = &hacks;

@@ -5,6 +5,8 @@ int main(void)
     msg_t message = {0};
     strcpy(cls.downloadName, "main/map.iwd");
     strcpy(cls.downloadTempName, "main/map.iwd.tmp");
+    strcpy(connection.downloadName, "main/map.iwd");
+    strcpy(connection.downloadTempName, "main/map.iwd.tmp");
     CL_ParseWWWDownload(&message);
     assert(!strcmp(cls.originalDownloadName, "main/map.iwd"));
     assert(!strcmp(remote, "https://example.test/main/map.iwd"));
@@ -14,6 +16,8 @@ int main(void)
     CL_WWWDownload();
     assert(!strcmp(renamed, "/private/main/map.iwd"));
     assert(!cls.wwwDlInProgress && nextDownloads == 1);
+    assert(!cls.downloadName[0] && !cls.downloadTempName[0]);
+    assert(!connection.downloadName[0] && !connection.downloadTempName[0]);
     assert(!strcmp(commands, "wwwdl ack\nwwwdl done\n"));
     puts("online: HTTP redirect completion installs the IWD under its original local name");
     return 0;
