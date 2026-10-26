@@ -394,6 +394,10 @@ void CL_ParseDownload(msg_t *msg)
         CL_AddReliableCommand("stopdl");
         clc->downloadName[0] = 0;
         clc->downloadTempName[0] = 0;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        cls.downloadName[0] = 0;
+        cls.downloadTempName[0] = 0;
+#endif
         ZN10LargeLocalD1Ev(&data_large_local);
         return;
     }
@@ -404,6 +408,10 @@ void CL_ParseDownload(msg_t *msg)
         CL_AddReliableCommand("stopdl");
         clc->downloadName[0] = 0;
         clc->downloadTempName[0] = 0;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+        cls.downloadName[0] = 0;
+        cls.downloadTempName[0] = 0;
+#endif
         ZN10LargeLocalD1Ev(&data_large_local);
         return;
     }
@@ -460,6 +468,10 @@ void CL_ParseDownload(msg_t *msg)
 
     clc->downloadName[0] = 0;
     clc->downloadTempName[0] = 0;
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    cls.downloadName[0] = 0;
+    cls.downloadTempName[0] = 0;
+#endif
 
     *(byte *)((*download_ui_ptr) + 0x1c) = 0;
 

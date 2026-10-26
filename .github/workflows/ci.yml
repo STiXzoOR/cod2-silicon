@@ -187,6 +187,10 @@ jobs:
             --output "$RUNNER_TEMP/stance-stock"
           python3 tests/input/run_stance.py --compile-db build-macos-codx/compile_commands.engine.json \
             --output "$RUNNER_TEMP/stance-codx"
+          python3 tests/input/run_scheduling.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/scheduling-stock"
+          python3 tests/input/run_scheduling.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/scheduling-codx"
           python3 tests/camera/run_prediction.py --compile-db build-macos/compile_commands.engine.json \
             --output "$RUNNER_TEMP/prediction-stock"
           python3 tests/camera/run_prediction.py --compile-db build-macos-codx/compile_commands.engine.json \
