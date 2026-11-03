@@ -356,14 +356,28 @@ static qboolean turret_behind(gentity_t *self, gentity_t *other)
     Vec3Normalize(dir);
 
     dot = forward[0] * dir[0] + forward[1] * dir[1] + forward[2] * dir[2];
+#if defined(COD2_X64)
+    {
+        float originalDot = dot;
+        dot = originalDot - 1.0f < 0.0f ? originalDot : 1.0f;
+        dot = -1.0f - originalDot < 0.0f ? dot : -1.0f;
+    }
+#else
     if (dot < -1.0f) {
         dot = -1.0f;
     } else if (dot > 1.0f) {
         dot = 1.0f;
     }
+#endif
 
+#if defined(COD2_X64)
+    /* Retail rounds acos to float, then converts degrees with a double constant. */
+    angle = (float)((double)Q_acos(dot) * 57.29577951308232);
+    return !(angle > yawSpan);
+#else
     angle = Q_acos(dot) * 57.29577951308232f;
     return yawSpan >= angle;
+#endif
 }
 
 void turret_think(gentity_t *self)
@@ -668,7 +682,11 @@ void G_SpawnTurret(gentity_t *self, const char *weaponinfoname)
     }
 
     if (i == 32) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025G_SpawnTurret: max number of turrets (%d) exceeded", 32);
+#else
         Com_Error(1, "G_SpawnTurret: max number of turrets (%d) exceeded", 32);
+#endif
     }
 
     memset(info, 0, sizeof(*info));
@@ -677,7 +695,11 @@ void G_SpawnTurret(gentity_t *self, const char *weaponinfoname)
 
     self->s.weapon = G_GetWeaponIndexForName(weaponinfoname);
     if (!self->s.weapon) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025bad weaponinfo '%s' specified for turret", weaponinfoname);
+#else
         Com_Error(1, "bad weaponinfo '%s' specified for turret", weaponinfoname);
+#endif
     }
 
     weapDef = BG_GetWeaponDef(self->s.weapon);
@@ -829,7 +851,11 @@ static void Turret_FillWeaponParms(gentity_t *ent, gentity_t *activator, weaponP
     float flashTag[4][3];
 
     if (!G_DObjGetWorldTagMatrix(ent, SCR_CONST()->tag_flash, (vec3_t *)flashTag)) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025Couldn't find %s on turret (entity %d, classname '%s').\n",
+#else
         Com_Error(1, "Couldn't find %s on turret (entity %d, classname '%s').\n",
+#endif
                   "tag_flash", ent->s.number, SL_ConvertToString(ent->classname));
     }
 
@@ -909,7 +935,11 @@ static void G_PlayerTurretPositionAndBlend(gentity_t *ent, gentity_t *pTurretEnt
 
     numVertChildren = XAnimGetNumChildren(pXAnims, baseAnim);
     if (!numVertChildren) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025Player anim '%s' has no children", XAnimGetAnimDebugName(pXAnims, baseAnim));
+#else
         Com_Error(1, "Player anim '%s' has no children", XAnimGetAnimDebugName(pXAnims, baseAnim));
+#endif
     }
 
     fPrevTransZ = 0.0f;
@@ -924,7 +954,11 @@ static void G_PlayerTurretPositionAndBlend(gentity_t *ent, gentity_t *pTurretEnt
 
         numHorChildren = XAnimGetNumChildren(pXAnims, heightAnim);
         if (!numHorChildren) {
+#if defined(COD2_X64)
+            Com_Error(1, "\025Player anim '%s' has no children", XAnimGetAnimDebugName(pXAnims, heightAnim));
+#else
             Com_Error(1, "Player anim '%s' has no children", XAnimGetAnimDebugName(pXAnims, heightAnim));
+#endif
         }
 
         fBlend = (float)numHorChildren * 0.5f - localYaw / weapDef->fAnimHorRotateInc;
