@@ -88,11 +88,18 @@ static void Check(unsigned int tag, int count, int dead, int noclip, int ufo, in
     ent->count = count;
     ent->r.svFlags = 0xa7;
     ent->takedamage = 9;
+    ent->s.loopSound = 99;
+    ent->s.eventSequence = 17;
+    ent->s.angles2[1] = -37.5f;
+    ent->s.eventParm = 91;
     client.sess.connected = CON_CONNECTED;
     client.sess.sessionState = dead ? SESS_STATE_DEAD : SESS_STATE_PLAYING;
     client.noclip = noclip;
     client.ufo = ufo;
     client.ps.pm_type = 123;
+    client.sess.viewmodelIndex = 37;
+    client.ps.viewmodelIndex = 11;
+    client.ps.damageCount = 13;
     client.buttonsSinceLastFrame = 42;
     gravity.current.value = 800.0f;
     speed.current.integer = 190;
@@ -115,6 +122,18 @@ int main(int argc, char **argv)
     else if (!strcmp(argv[1], "ufo")) Check(1, 1, 1, 0, 1, 3);
     else if (!strcmp(argv[1], "alive-null")) Check(0, 0, 0, 0, 0, 0);
     else if (!strcmp(argv[1], "alive-linked")) Check(1, 1, 0, 0, 0, 1);
+    else if (!strcmp(argv[1], "viewmodel")) {
+        Check(0, 0, 1, 0, 0, 6);
+        assert(client.ps.viewmodelIndex == 37);
+        assert(client.ps.damageCount == 13);
+    } else if (!strcmp(argv[1], "loop-sound")) {
+        Check(0, 0, 1, 0, 0, 6);
+        assert(g_entities[0].s.loopSound == 0);
+        assert(g_entities[0].s.eventSequence == 17);
+    } else if (!strcmp(argv[1], "animation-direction")) {
+        Check(0, 0, 1, 0, 0, 6);
+        assert(level_bgs.clientinfo[0].lerpMoveDir == -37.5f);
+    }
     else abort();
     puts("client end-frame contract passed");
     return 0;

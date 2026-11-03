@@ -48,26 +48,27 @@ Private extraction inputs and scripts are in the machine-local
 `CoD2-native-decomp/F-inventory.noindex` evidence directory.
 
 An ETA must state the unchecked count, the measured completion rate and its
-coverage limits. No full module has yet completed under this workflow, so the
-first throughput estimate is provisional; timings for a few small helpers do
-not establish a reliable whole-project completion date.
+coverage limits. The first module reuses previously untimed work, so the
+throughput estimate remains provisional; timings for a few small helpers do not establish a
+reliable whole-project completion date.
 
 ## Current workload and estimate
 
-After the first module checkpoint, the ledger has 8,083 unchecked entries:
-7,306 assigned engine entries and 777 unassigned entries. Another 1,360 entries
-are intentional bundled-library exclusions. There are 13 equal functions and
-one fixed function; the active module has 10 of its 24 functions unchecked.
-These counts deliberately retain uncertain pairings and prior partial checks.
+After the first module reconciliation, the ledger has 8,073 unchecked entries:
+7,296 assigned engine entries and 777 unassigned entries. Another 1,360 entries
+are intentional bundled-library exclusions. There are 18 equal functions and
+six fixed functions. All 24 entries in `game/g_active_mp` are reconciled;
+its integrated acceptance results are recorded in its single report.
 
-The timed sample closed five additional, mostly small functions in 380 seconds
-(about 47 per hour), with substantial earlier evidence reused. Large functions
-and their repairs remain open. Using a lower planning assumption of 20–40
-entries per active hour gives approximately **200–400 active hours**, before
-final cross-module runtime acceptance. This is a low-confidence workload range,
-not a calendar promise or a measured end-to-end rate. Recalculate after the
-first complete module and revise the count as duplicate identities and actual
-compiler/runtime exclusions are resolved.
+The original planning assumption of 20–40 entries per active hour still gives
+approximately **200–400 active hours**, before final cross-module runtime
+acceptance. This remains low confidence, not a calendar promise. The first
+module reused substantial previously untimed comparison work, and its latest
+batch also needed a local SDK configuration repair, so it does not establish a
+clean whole-module throughput measurement. The earlier five-helper sample
+(380 seconds) must not be extrapolated to larger state machines. Update this
+range as additional complete modules supply meaningful timings and uncertain
+identities are resolved.
 
 One local inventory-batch review found two classification defects: botlib had
 been excluded despite the plan, and SDK-header provenance incorrectly excluded
