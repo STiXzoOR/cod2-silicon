@@ -190,5 +190,25 @@
   "mac:0x001c4a7c": {
     "status": "equal",
     "evidence": "All 1079 Mac bytes 0x1c4a7c-0x1c4eb2 compared. DObj/movement gates,bgs pointer,turret owner/weapon attribution,death notice,ordered grenade RNG/constants/weapon-fuse arguments,dead movement and animation,killed callback ten arguments,spectator score selection,death orientation,viewangles,loopSound,unlink/bounds/relink,health and handler match. Existing native repairs remain correct. Cached maxclients is stable across scoreboard calls; entity/client slot lifetimes are stable across script callbacks."
+  },
+  "linux:game/g_debug_mp.cpp:96:G_DebugArc": {
+    "status": "intentional",
+    "evidence": "Complete Linux body adjusts wrapped angle range, computes sixteen local XY vertices and emits fifteen segments solely to empty G_DebugLine. No external source caller, native reference or Mac named identity found. Intentionally omit this unreachable Linux drawing helper."
+  },
+  "linux:game/g_debug_mp.cpp:12:G_DebugBox": {
+    "status": "intentional",
+    "evidence": "Complete Linux body computes eight rotated/translated local vertices and sends twelve edges solely to the empty G_DebugLine. No caller outside g_debug_mp.cpp, native reference, or Mac named identity found. Intentionally omit this unreachable Linux debug helper; no game-state output is removed."
+  },
+  "linux:game/g_debug_mp.cpp:46:G_DebugCircle": {
+    "status": "intentional",
+    "evidence": "Complete Linux body selects an upward normal or computes one from the first client view origin, then calls G_DebugCircleEx. No external source caller, native reference or Mac named identity found. Intentionally omit this unreachable Linux debug helper; do not claim an arbitrary callable implementation is equivalent."
+  },
+  "linux:game/g_debug_mp.cpp:64:G_DebugCircleEx": {
+    "status": "intentional",
+    "evidence": "Complete Linux body normalizes a local direction, computes perpendicular/cross vectors and sixteen local vertices, then sends a closed loop solely to empty G_DebugLine. No caller outside the isolated debug module and no native reference/Mac named identity found. Intentionally omit the unreachable Linux drawing helper."
+  },
+  "linux:game/g_debug_mp.cpp:8:G_DebugLine": {
+    "status": "intentional",
+    "evidence": "Complete Linux body is empty. All source references are internal to g_debug_mp.cpp; no native reference or Mac named export/defined symbol exists. Intentionally omit this Linux-only drawing sink, retaining the ledger row."
   }
 }

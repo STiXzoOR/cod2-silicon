@@ -2,7 +2,7 @@
 
 `functions.json` contains a function list for every indexed source module.
 `modules.csv` gives its four status counts. The active module is
-`game/g_debug_mp`; complete that module before moving to another.
+`game/g_hudelem_mp`; complete that module before moving to another.
 `game/g_active_mp`, `game/g_client_mp` and `game/g_combat_mp` are fully reconciled;
 their reports preserve the outstanding
 whole-project replay differences.
@@ -57,9 +57,9 @@ reliable whole-project completion date.
 
 ## Current workload and estimate
 
-After three module reconciliations, the ledger has 8,049 unchecked entries:
-7,272 assigned engine entries and 777 unassigned entries. Another 1,360 entries
-are intentional bundled-library exclusions. There is also one intentional Linux-only empty-helper omission.
+After four module reconciliations, the ledger has 8,044 unchecked entries:
+7,267 assigned engine entries and 777 unassigned entries. Another 1,360 entries
+are intentional bundled-library exclusions. There are also six intentional Linux-only helper omissions.
 There are 33 equal functions and 14 fixed functions. All 24 entries in `game/g_active_mp` and all 11 in
 `game/g_client_mp`, plus all 13 in `game/g_combat_mp`, are reconciled, with
 integrated results in their reports.
@@ -92,3 +92,7 @@ The combat module completed 13 entries in 0.13 elapsed hours
 (101.0 entries per elapsed hour), with two corrections and full
 batch acceptance. This extends the small-module sample but does not establish
 throughput for the remaining large state machines or unresolved identities.
+
+All five `game/g_debug_mp` entries are intentional isolated Linux debug-helper
+omissions. This classification-only batch is excluded from semantic correction
+throughput estimates; unchanged engine acceptance was reused.
