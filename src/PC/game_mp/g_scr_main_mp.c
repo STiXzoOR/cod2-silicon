@@ -4854,6 +4854,13 @@ void GScr_LoadScripts(int inst)
         }
     }
 
+#if defined(COD2_X64)
+    /* Finish compilation before publishing the script class field maps. */
+    {
+        extern void Scr_PostCompileScripts(void);
+        Scr_PostCompileScripts();
+    }
+#endif
     for (i = 0; i <= 3; i++)
         Scr_SetClassMap(i);
     GScr_AddFieldsForEntity();
