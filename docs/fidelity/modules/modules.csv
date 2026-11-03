@@ -128,7 +128,7 @@ client/cl_ui_mp,28,0,0,0,28
 client/cl_ui_pc_mp,5,0,0,0,5
 client/screen_placement_mp,9,0,0,0,9
 client/snd_null,33,0,0,0,33
-game/g_active_mp,24,13,1,0,10
+game/g_active_mp,24,18,6,0,0
 game/g_client_fields_mp,21,0,0,0,21
 game/g_client_mp,11,0,0,0,11
 game/g_client_script_cmd_mp,62,0,0,0,62

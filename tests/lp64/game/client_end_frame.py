@@ -8,7 +8,8 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[3]
 CASES = ['dead-null-count0', 'dead-null-count1', 'dead-linked-count0',
-         'dead-linked-count1', 'dead-high-bit', 'noclip', 'ufo', 'alive-null', 'alive-linked']
+         'dead-linked-count1', 'dead-high-bit', 'noclip', 'ufo', 'alive-null', 'alive-linked',
+         'viewmodel', 'loop-sound', 'animation-direction']
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('--compile-db', type=Path, required=True)
 p.add_argument('--output', type=Path, required=True)
