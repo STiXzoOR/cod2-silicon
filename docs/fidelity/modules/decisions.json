@@ -94,5 +94,49 @@
   "mac:0x001a35d2": {
     "status": "fixed",
     "evidence": "The complete 738-byte Mac export is reconciled. Native now bounds candidates by level.maxclients (0x1a3617), checks r.inuse (0x1a3631), and sets pm_flags 0x200 for both players (0x1a3851 and 0x1a3892), preserving eFlags. Other eligibility, all bounds, radius, two random samples, normalization, speed selection, horizontal push and 300 ms timers match for valid connected-client inputs. Production-TU tests reproduce all three old defects and cover moving/stationary/zero-eject fallback, contents variants, rejection gates, radius equality and unchanged vertical velocity in stock and CoD2x. Real production math is linked; only external rand is controlled."
+  },
+  "mac:0x001928ae": {
+    "status": "equal",
+    "evidence": "Complete 110-byte body compared: connected state 2, movement type 4, CalculateRanks then begin notification with zero arguments. Optional native DBGSPAM output is diagnostic instrumentation."
+  },
+  "linux:game/g_client_mp.cpp:143:ClientCleanName": {
+    "status": "equal",
+    "evidence": "Both complete Mac inline loops at 0x193738-0x1938d2 and 0x1938fa-0x193a58 match the native reachable loops: leading-space removal, atomic color escapes, black suppression, trailing caret, three-space limit, 31-byte output limit and UnnamedPlayer fallback. Both callers use 32-byte names. The unused native static CleanName is not claimed as a general arbitrary-outSize implementation."
+  },
+  "mac:0x00193a5e": {
+    "status": "fixed",
+    "evidence": "Whole 0x193a5e-0x193c47 body compared. Restores case-insensitive none password sentinel from Mac literal 0x243764 and branch 0x193c15; ordinary passwords still compare case-sensitively. Client/clientInfo clearing with preserved XAnimTree, validity, narrowed script ID, spectator state, entity setup, userinfo/local bypass, rejection cleanup and success callback/ranks ordering match. Native null-dvar fallback is outside initialized-server inputs. Both-mode fixtures reject wrong ordinary passwords and accept exact passwords/none/NoNe."
+  },
+  "mac:0x0019291c": {
+    "status": "fixed",
+    "evidence": "Complete body matches after restoring second menuresponse argument -1 from Mac string 0x2dbd9c at 0x192a4c. Script-active gates, spectator follower loop, HUD/script cleanup, entity free, connected reset, entire client-state clear and rank update match. Production-TU fixture checks both notice strings and resulting cleanup state; old string assertion fails on baseline."
+  },
+  "mac:0x001930a6": {
+    "status": "equal",
+    "evidence": "Whole 0x1930a6-0x193461 body compared: turret/player predicates, unlink sequence, classname/clipmask/server/damage/contents/handler/flags, entity bounds, complete session save/restore around client clearing, spawn count/max health, eFlags mask/toggle, client indices/usercmd, movement bounds, view height/lerp, origin/respawn flag/view angles, inactivity/buttons/times, spawning flag around end-frame/think and final entity-state conversion. Mac level.gentities and native g_entities alias by game initialization. Typed sizes preserve native layouts."
+  },
+  "mac:0x00193654": {
+    "status": "fixed",
+    "evidence": "Whole 0x193654-0x193a5c body compared. Restores cg_predictItems key (Mac literal 0x2d3934, lookup at 0x1936c9) instead of handicap. Common scoreboard copy now explicitly reads sess.cs.name, including the manual-name branch that jumped past a different local initializer. Userinfo validation/fallback, local-client flag, boolean prediction, connected/manual branch, both name-cleaning loops, staged/current names, client number and team updates match. Conflicting prediction keys and actual current/staged/scoreboard-name assertions fail before the fix and pass in both modes."
+  },
+  "mac:0x00192d0c": {
+    "status": "fixed",
+    "evidence": "Complete function compared. Mac 0x192d71 checks INTERMISSION (3), not SPECTATOR (2), for the recipient team bypass. At 0x192d3a-0x192d4c unequal states proceed only when one is DEAD and deadChat permits it; unequal nondead states skip. Native now matches both. Timestamp, 64-client scan, validity, global/team/free-team rule, local echo, mute, subscription and queue arguments match. Expanded production relay covers all 16 state pairs with deadChat off/on, team bypass/denial, codec playback and existing gates in stock/CoD2x. This corrects the earlier WS119 spectator interpretation; it is not an intentional CoD2x policy."
+  },
+  "mac:0x00192a7e": {
+    "status": "fixed",
+    "evidence": "Whole function compared. Mac 0x192c9a scales Y only for scaleX<scaleY, and 0x192cf2 scales X only for scaleY<scaleX; native now leaves equal scales untouched. Candidate1 at (-1042.5,-1042.5), viewer zero and yaw zero must encode 0x00000001, not old 0x00008001. Yaw packing now uses unsigned 32-bit shifting, matching SHL24 at 0x192c3f and avoiding UBSan failure at ordinary 180-degree yaw. Remaining team/validity/circular scan/snapshot gates, rounding/clamps, bit fields and binary float constants match. Previous-entity inputs are 0..63 or1023 as established by ClientEndFrame; negative-modulo normalization is outside that domain."
+  },
+  "mac:0x00192894": {
+    "status": "equal",
+    "evidence": "Complete 26-byte function loads the entity client and passes its viewangles to AngleVectors with all three output pointers unchanged."
+  },
+  "mac:0x00193462": {
+    "status": "fixed",
+    "evidence": "Complete function compared. Restores AddLeanToPosition view-roll16/lean-distance20 arguments from Mac 0x1935ea/0x1935f2, plus original turret tag failure text at 0x193637. Turret selection/tag lookup, eye-height sum, bob calls and arguments, right-vector displacement and eight-unit minimum height match. Regression links actual production AddLeanToPosition and AngleVectors and checks final lean displacement, with normal/minimum-height/turret/error controls."
+  },
+  "mac:0x00192e52": {
+    "status": "equal",
+    "evidence": "Entire 596-byte function compared. Existing native prone-bit and no-turret predicate matches; yaw +/-45 and pitch -15/+45 delta bounds, overflow normalization, short-angle conversion and command subtraction, and copies to entity/current player angles all match."
   }
 }
