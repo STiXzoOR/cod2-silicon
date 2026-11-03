@@ -210,5 +210,225 @@
   "linux:game/g_debug_mp.cpp:8:G_DebugLine": {
     "status": "intentional",
     "evidence": "Complete Linux body is empty. All source references are internal to g_debug_mp.cpp; no native reference or Mac named export/defined symbol exists. Intentionally omit this Linux-only drawing sink, retaining the ledger row."
+  },
+  "mac:0x001b3040": {
+    "status": "equal",
+    "evidence": "Complete 99-byte Mac body0x1b3040-0x1b30a2: iterate15 field names to sentinel, register class1 and narrowed index. Independently evaluated every original stride28/divide4/inverse7 arithmetic result for indices0..14; native direct index equals each. All descriptor names/types/offsets/masks/shifts/callback identities independently decoded from0x36e080 match native."
+  },
+  "mac:0x001b4892": {
+    "status": "fixed",
+    "evidence": "All401 Mac bytes0x1b4892-0x1b4a22 compared. Scr_GetEntity(0), client-pointer guard and not-a-client parameter0 error, ascending allocation, clientNum=entity.s.number,team0 and add-hud call match. Direct error literal0x2e0db0 matches. Only default block differs by clearing retained movement timestamps. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Native defaults preserve moveStartTime/moveTime across clearing; reset and all three allocation entry points are exercised."
+  },
+  "mac:0x001b4736": {
+    "status": "fixed",
+    "evidence": "All348 Mac bytes0x1b4736-0x1b4891 compared. Ascending free-slot scan of1024, defaults, clientNum1023,team0 and Scr_AddHudElem match. Exhaustion string directly verified at0x2e0da0. Only default block differs by clearing retained movement timestamps. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Native defaults preserve moveStartTime/moveTime across clearing; reset and all three allocation entry points are exercised."
+  },
+  "mac:0x001b4a24": {
+    "status": "fixed",
+    "evidence": "All478 Mac bytes0x1b4a24-0x1b4c01 compared. Low16-bit const-string comparison with allies/axis/spectator, team2/1/3, exact error format0x2e0dc0 with Scr_GetString(0), ascending allocation,clientNum1023 and add-hud call match. Only default block differs by clearing retained movement timestamps. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Native defaults preserve moveStartTime/moveTime across clearing; reset and all three allocation entry points are exercised."
+  },
+  "mac:0x001b3718": {
+    "status": "equal",
+    "evidence": "All97 Mac bytes0x1b3718-0x1b3778 compared: HECmd_GetHudElem class/index/error path then Scr_FreeHudElem then type0. Native only adds unreachable-on-normal-error null return. Other slot fields remain unchanged."
+  },
+  "mac:0x001b4274": {
+    "status": "equal",
+    "evidence": "All298 bytes0x1b4274-0x1b439d compared. Class/Float0, ordered<=0 and>60 error predicates and exact formatted diagnostics, current level.time to fadeStartTime, separate binary32*1000 plus0.5 and floorf/trunc conversion, then current packed color to fromColor match. NaN bypasses both comparisons in Mac and C; out-of-range float-to-int conversions are outside equality domain."
+  },
+  "linux:game/g_hudelem_mp.cpp:647:HECmd_GetHudElem": {
+    "status": "equal",
+    "evidence": "Complete helper maps to the class check/index/error preambles of all18 Mac HECmd methods. Classnum==1 returns g_hudelems[unsigned16 entnum]; invalid class uses exact not-a-hud-element error literal0x2e09f8. Native extra post-error null returns do not change normal executing-script behavior, where the error longjmps/fatals. Bounds are provided by valid VM entity references, as in Mac release code."
+  },
+  "mac:0x001b44f2": {
+    "status": "equal",
+    "evidence": "All319 bytes0x1b44f2-0x1b4630 compared. Class/Float0, ordered lower/upper time checks and exact diagnostics, level.time to moveStartTime, separate binary32*1000+0.5/floorf/trunc, then x/y/alignOrg/alignScreen snapshots match. Like original, there is no explicit argument-count check."
+  },
+  "mac:0x001b4632": {
+    "status": "fixed",
+    "evidence": "All260 Mac bytes0x1b4632-0x1b4735 compared. Class1 check, low16bit entnum indexing and not-a-hud-element object error match. Full default block differs only through native shared ResetDefaults clearing the two movement timing fields. ClientNum/team retained by both. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Native defaults preserve moveStartTime/moveTime across clearing; reset and all three allocation entry points are exercised."
+  },
+  "mac:0x001b439e": {
+    "status": "equal",
+    "evidence": "All339 bytes0x1b439e-0x1b44f0 compared. Class resolution, exact three-parameter usage, Float0 validation<=0/>60, then Int1 and Int2 with no dimension validation. Level.time, separate binary32*1000+0.5/floorf/trunc, old width/height capture then new width/height writes match. Errors are nonreturning; native factored sequential checks preserve that contract."
+  },
+  "mac:0x001b4128": {
+    "status": "equal",
+    "evidence": "Complete22-byte wrapper0x1b4128-0x1b413d matches forwarding original entref, type11, and exact command-name literal setClock to HECmd_SetClock_Internal. Native enum numeric value and binary literal verified. The required shared-callee value-clear correction is tracked on the internal function; wrapper body needs no change."
+  },
+  "mac:0x001b4112": {
+    "status": "equal",
+    "evidence": "Complete22-byte wrapper0x1b4112-0x1b4127 matches forwarding original entref, type12, and exact command-name literal setClockUp to HECmd_SetClock_Internal. Native enum numeric value and binary literal verified. The required shared-callee value-clear correction is tracked on the internal function; wrapper body needs no change."
+  },
+  "mac:0x001b3e86": {
+    "status": "fixed",
+    "evidence": "All651 bytes0x1b3e86-0x1b4110 compared. Count3/5 usage, binary32*1000/ceilf/trunc for time and duration, time exception only CLOCK_UP12, mandatory positive duration, correct parameter-index errors, shader parameter2, optional width3/height4 nonnegative checks and default0 match. Reset and selected type/time/duration/material/dimensions stores match except Mac clears value at0x1b3feb. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Native type reset now clears value while preserving movement and fade timing."
+  },
+  "mac:0x001b3a50": {
+    "status": "equal",
+    "evidence": "All291 bytes0x1b3a50-0x1b3b72 compared. Class resolution, String(0), null diagnostic, game-type validity call and interpolated invalid diagnostic match. Set configstring20, clear type settings, store GAMETYPE5 and float20.0 (immediate0x41a00000). This body overwrites value directly, so no required correction here."
+  },
+  "mac:0x001b393a": {
+    "status": "fixed",
+    "evidence": "All278 bytes0x1b393a-0x1b3a4f compared. Class resolution, String(0), null/map-exists checks and exact print messages match. Configstring19 is updated before type clear and MAPNAME4 store. Mac clears value at0x1b39fb; native retains it. All other clear stores and ordering match. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Native type reset now clears value while preserving movement and fade timing."
+  },
+  "mac:0x001b383e": {
+    "status": "equal",
+    "evidence": "All252 bytes0x1b383e-0x1b3939 compared. Entity-class resolution then Scr_GetEntity(0); null entity/nonclient print exact distinct messages and return. Valid client clears type settings, stores PLAYERNAME3 and binary32 integer entity number in value. Final value overwrite makes shared missing preliminary zero unobservable here; there is no intervening callback."
+  },
+  "mac:0x001b3b74": {
+    "status": "fixed",
+    "evidence": "All357 bytes0x1b3b74-0x1b3cd8 compared. Class check, count1/3 validation and exact usage, String0/ShaderIndex, absent dimensions0, signed negative width/height validation at parameters1/2, type-specific reset and MATERIAL6/index/dimension stores match. Mac clears value at0x1b3c46; native leaves stale value. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Native type reset now clears value while preserving movement and fade timing."
+  },
+  "mac:0x001b3e44": {
+    "status": "equal",
+    "evidence": "Complete22-byte wrapper0x1b3e44-0x1b3e59 matches forwarding original entref, type9, and exact command-name literal setTenthsTimer to HECmd_SetTimer_Internal. Native enum numeric value and binary literal verified. The required shared-callee value-clear correction is tracked on the internal function; wrapper body needs no change."
+  },
+  "mac:0x001b3e2e": {
+    "status": "equal",
+    "evidence": "Complete22-byte wrapper0x1b3e2e-0x1b3e43 matches forwarding original entref, type10, and exact command-name literal setTenthsTimerUp to HECmd_SetTimer_Internal. Native enum numeric value and binary literal verified. The required shared-callee value-clear correction is tracked on the internal function; wrapper body needs no change."
+  },
+  "mac:0x001b377a": {
+    "status": "fixed",
+    "evidence": "All 196 Mac bytes 0x1b377a-0x1b383d compared. Entity-class check and index, IString(0), type-specific clear stores, TEXT1 assignment, localized-string indexing and final text store match except missing native value clear. Mac explicitly clears offset0x70 at0x1b3802 before G_LocalizedStringIndex. Existing null-hud return is unreachable after fatal Scr_ObjectError. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Native type reset now clears value while preserving movement and fade timing."
+  },
+  "mac:0x001b3e70": {
+    "status": "equal",
+    "evidence": "Complete22-byte wrapper0x1b3e70-0x1b3e85 matches forwarding original entref, type7, and exact command-name literal setTimer to HECmd_SetTimer_Internal. Native enum numeric value and binary literal verified. The required shared-callee value-clear correction is tracked on the internal function; wrapper body needs no change."
+  },
+  "mac:0x001b3e5a": {
+    "status": "equal",
+    "evidence": "Complete22-byte wrapper0x1b3e5a-0x1b3e6f matches forwarding original entref, type8, and exact command-name literal setTimerUp to HECmd_SetTimer_Internal. Native enum numeric value and binary literal verified. The required shared-callee value-clear correction is tracked on the internal function; wrapper body needs no change."
+  },
+  "mac:0x001b3cda": {
+    "status": "fixed",
+    "evidence": "All340 bytes0x1b3cda-0x1b3e2d compared. Class check, exactly one parameter, formatted usage, binary32 seconds*1000 then ceilf then truncating integer conversion match. Nonpositive milliseconds allowed only for TIMER_UP8, including the original rejection for TENTHS_TIMER_UP10. Error converts integer back through float*0.001 then double for formatting. Type reset, selected type and level.time+milliseconds match except Mac value-zero at0x1b3db1. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Native type reset now clears value while preserving movement and fade timing."
+  },
+  "mac:0x001b413e": {
+    "status": "equal",
+    "evidence": "All185 bytes0x1b413e-0x1b41f6 compared. Class resolution then Float(0), matching type-specific clear fields, VALUE2 and returned binary32 value. The Mac optimized body omits a preliminary value-zero because the final assignment overwrites it; native behavior matches."
+  },
+  "mac:0x001b41f8": {
+    "status": "equal",
+    "evidence": "All123 bytes0x1b41f8-0x1b4272 compared. Class resolution and Int0, WAYPOINT13 store, signed integer-to-binary32 value store. Neither implementation clears other type/timing fields, so preserving them is intentional original behavior."
+  },
+  "linux:game/g_hudelem_mp.cpp:255:HudElem_AddString": {
+    "status": "equal",
+    "evidence": "Linux-only helper fully inlined in five61-byte Mac font/alignment getters0x1b356a,0x1b35a8,0x1b35e6,0x1b3624,0x1b2ee8. Native HudElem_GetEnumFieldValue plus corresponding Scr_AddString implements complete offset/load/arithmetic-shift/mask/table lookup behavior. nameCount is unused in reference and has no missing release check."
+  },
+  "linux:game/g_hudelem_mp.cpp:137:HudElem_Alloc": {
+    "status": "fixed",
+    "evidence": "Complete Linux helper is inlined in the three Mac GScr_New functions. Mac and native scan1024 slots in ascending order for type0 and initialize the first free slot, then assign clientNum/team. Native folds caller out-of-hudelems error into its GScr_AllocHudElem; all native callers have this same error contract. Default block must preserve stale moveStartTime/moveTime on slot reuse. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Native defaults preserve moveStartTime/moveTime across clearing; reset and all three allocation entry points are exercised."
+  },
+  "linux:game/g_hudelem_mp.cpp:84:HudElem_ClearTypeSettings": {
+    "status": "fixed",
+    "evidence": "Complete Linux helper maps to repeated Mac type-changing inline blocks, e.g. SetText ends with value0x70 zero at0x1b3802 and text0x74 zero; Map0x1b39fb and Shader0x1b3c46 similarly reset value. Native HECmd_ClearTimingFieldsForValue clears all other width/height/material/from/scale/time/duration/text fields but omits value. It correctly retains moveStartTime/moveTime and appearance fields. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Native type reset now clears value while preserving movement and fade timing."
+  },
+  "mac:0x001b3664": {
+    "status": "equal",
+    "evidence": "All83 Mac bytes0x1b3664-0x1b36b6 compared. Iterate1024 slots by140-byte layout; skip type0; match clientNum to ent.s.number; call Scr_FreeHudElem then settype0; preserve other fields. Native matches loop order and reads."
+  },
+  "mac:0x001b36b8": {
+    "status": "equal",
+    "evidence": "All96 Mac bytes0x1b36b8-0x1b3717 compared. Iterate1024 slots, free only nonzero types then clear each type, finally memset entire140*1024 array. Native preserves call/store order and complete final clearing."
+  },
+  "linux:game/g_hudelem_mp.cpp:160:HudElem_Free": {
+    "status": "equal",
+    "evidence": "Complete helper maps to Mac Disconnect0x1b3694-0x1b369c, DestroyAll0x1b36da-0x1b36e2 and Destroy0x1b3765-0x1b376d. Scr_FreeHudElem receives the actual slot before elem.type is set0; no other field reset. Linux debug assertions are absent from release Mac, as from native."
+  },
+  "mac:0x001b35a8": {
+    "status": "equal",
+    "evidence": "Complete61-byte body at0x1b35a8: indexed descriptor gives offset,arithmetic shift,mask; extract field bits, index g_he_alignx, and pass string to Scr_AddString. Native shared extraction and table match for valid field/enum inputs; all five tables decoded directly from Mac."
+  },
+  "mac:0x001b35e6": {
+    "status": "equal",
+    "evidence": "Complete61-byte body at0x1b35e6: indexed descriptor gives offset,arithmetic shift,mask; extract field bits, index g_he_aligny, and pass string to Scr_AddString. Native shared extraction and table match for valid field/enum inputs; all five tables decoded directly from Mac."
+  },
+  "mac:0x001b2d84": {
+    "status": "equal",
+    "evidence": "Complete33-byte body0x1b2d84-0x1b2da4: zero-extend byte0x23 and multiply by binary32 reciprocal0x3b808081, then Scr_AddFloat. Native matches."
+  },
+  "mac:0x001b2d32": {
+    "status": "equal",
+    "evidence": "Complete81-byte body0x1b2d32-0x1b2d82: zero-extend RGB bytes at0x20..22, convert each to float, multiply by binary32 reciprocal0x3b808081 at0x326184, then Scr_AddVector. Native order/constants/bytes match; alpha unchanged."
+  },
+  "mac:0x001b356a": {
+    "status": "equal",
+    "evidence": "Complete61-byte body at0x1b356a: indexed descriptor gives offset,arithmetic shift,mask; extract field bits, index g_he_font, and pass string to Scr_AddString. Native shared extraction and table match for valid field/enum inputs; all five tables decoded directly from Mac."
+  },
+  "mac:0x001b3624": {
+    "status": "equal",
+    "evidence": "Complete61-byte body at0x1b3624: indexed descriptor gives offset,arithmetic shift,mask; extract field bits, index g_he_horzalign, and pass string to Scr_AddString. Native shared extraction and table match for valid field/enum inputs; all five tables decoded directly from Mac."
+  },
+  "mac:0x001b30a4": {
+    "status": "fixed",
+    "evidence": "Complete100-byte Mac body0x1b30a4-0x1b3107 compared. Lookup scans18 methods in table order, canonicalizes pName on success, returns callback orNULL. All18 triples decoded from0x36dfa0 match native. Difference: CALL at0x1b30ce targets stub0x1acc7f8, resolved via Mach-O section/indirect-symbol/nlist/string tables to _strcmp; native uses I_stricmp. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Native lookup now uses strcmp; exact and mixed-case lookups are covered."
+  },
+  "mac:0x001b2ee8": {
+    "status": "equal",
+    "evidence": "Complete61-byte body at0x1b2ee8: indexed descriptor gives offset,arithmetic shift,mask; extract field bits, index g_he_vertalign, and pass string to Scr_AddString. Native shared extraction and table match for valid field/enum inputs; all five tables decoded directly from Mac."
+  },
+  "mac:0x001b2e30": {
+    "status": "equal",
+    "evidence": "Complete45-byte wrapper at0x1b2e30: computes indexed field descriptor and forwards hud,descriptor,g_he_alignx,count3 to shared enum setter. Native wrapper and independently decoded table match. Shared enum-helper UB correction is tracked separately under HudElem_SetEnumString."
+  },
+  "mac:0x001b2e5e": {
+    "status": "equal",
+    "evidence": "Complete45-byte wrapper at0x1b2e5e: computes indexed field descriptor and forwards hud,descriptor,g_he_aligny,count3 to shared enum setter. Native wrapper and independently decoded table match. Shared enum-helper UB correction is tracked separately under HudElem_SetEnumString."
+  },
+  "mac:0x001b34cc": {
+    "status": "equal",
+    "evidence": "Complete157-byte body0x1b34cc-0x1b3568: Scr_GetFloat0, same clamp/floorf255 scaling as color, store only alpha byte. Native matches all comparison branches includingNaN->255; RGB unchanged."
+  },
+  "mac:0x001b2cfe": {
+    "status": "equal",
+    "evidence": "Complete52-byte body0x1b2cfe-0x1b2d31: Scr_GetInt(0) stored unchanged at descriptor offset; no truth-value normalization. Native matches, including arbitrary integer values."
+  },
+  "mac:0x001b3334": {
+    "status": "equal",
+    "evidence": "Complete408-byte body0x1b3334-0x1b34cb: Scr_GetVector0, each RGB independently clamps by ordered SSE comparisons to[0,1], computes floorf(value*255+0.5), truncates to byte, preserving alpha. Constants1,255,0.5,-1 decoded directly; stub0x1acc875 resolved to floorf. Native helper matches finite values, infinities,signed zero and NaN (unordered upper branch clampsNaN to255). No contraction in build flags."
+  },
+  "linux:game/g_hudelem_mp.cpp:108:HudElem_SetDefaults": {
+    "status": "fixed",
+    "evidence": "Complete Linux helper maps to all four Mac inline default blocks: Reset0x1b4658-0x1b4712, New0x1b4763-0x1b4821, NewClient0x1b48de-0x1b499c, NewTeam0x1b4ab0-0x1b4b6e. Exhaustive writes cover offsets0x00..0x5c and0x68..0x7c plusarchived0x88; no0x60/0x64 writes. Native pointer-free hudelem has exact matching fields. Native HudElem_ResetDefaults currently memsets all 128 elem bytes. Mac explicit stores leave moveStartTime at0x60 and moveTime at0x64 unchanged, while clearing every other zero-default field and setting type1,fontScale1,color0xffffffff,archived1. Preserve these two fields across native reset; clientNum/team are already outside elem and retained. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Native defaults preserve moveStartTime/moveTime across clearing; reset and all three allocation entry points are exercised."
+  },
+  "mac:0x001b2bca": {
+    "status": "fixed",
+    "evidence": "Complete246-byte body0x1b2bca-0x1b2cbf compared. Gets argument0 string, searches names case-insensitively with I_stricmp, replaces masked shifted bits preserving others, or constructs identical invalid-value/list diagnostic then Scr_Error. Literal0x2e0990 and list format0x2d74f0 decoded; sprintf/strncat imports verified. Native signed mask<<shift is UB for font mask -1 even shift0, unlike wrapping32-bit Mac SHL at0x1b2c9e. The native correction is now implemented under COD2_X64 and validated through the complete production TU in stock and CoD2x; regression fails on a890e30. Uses unsigned 32-bit masking and shifts while preserving surrounding bits."
+  },
+  "mac:0x001b2e02": {
+    "status": "equal",
+    "evidence": "Complete45-byte wrapper at0x1b2e02: computes indexed field descriptor and forwards hud,descriptor,g_he_font,count3 to shared enum setter. Native wrapper and independently decoded table match. Shared enum-helper UB correction is tracked separately under HudElem_SetEnumString."
+  },
+  "mac:0x001b2da6": {
+    "status": "equal",
+    "evidence": "Complete92-byte body0x1b2da6-0x1b2e01: get float0; ordered <=0 errors using exact font-scale literal at0x2e09d4 with promoted double; NaN bypasses error via parity branch; then stores fontScale. Native <=0 and message/store match, includingNaN behavior."
+  },
+  "mac:0x001b2e8c": {
+    "status": "equal",
+    "evidence": "Complete45-byte wrapper at0x1b2e8c: computes indexed field descriptor and forwards hud,descriptor,g_he_horzalign,count8 to shared enum setter. Native wrapper and independently decoded table match. Shared enum-helper UB correction is tracked separately under HudElem_SetEnumString."
+  },
+  "mac:0x001b2cc0": {
+    "status": "equal",
+    "evidence": "Complete61-byte body0x1b2cc0-0x1b2cfc: Scr_GetIString(0), indexed descriptor field offset, G_LocalizedStringIndex, store returned int at hud+offset. Native matches calls and state write."
+  },
+  "mac:0x001b2eba": {
+    "status": "equal",
+    "evidence": "Complete45-byte wrapper at0x1b2eba: computes indexed field descriptor and forwards hud,descriptor,g_he_vertalign,count8 to shared enum setter. Native wrapper and independently decoded table match. Shared enum-helper UB correction is tracked separately under HudElem_SetEnumString."
+  },
+  "mac:0x001b3108": {
+    "status": "equal",
+    "evidence": "All556 Mac bytes0x1b3108-0x1b3333 compared. Bit1 clears archival31*128bytes; bit2 clears current31*128. Ascending1024-slot scan rejects free slots, nonzero mismatched team and non1023 mismatched clientNum. Nonzero archived selects archival, otherwisecurrent; only requested category copied. Independent counts increment before >31 rejection, first31 retained in source order. Native copies exactly128-byte elem and uses correct client sess.cs.team. Native immediate return for which&3==0 replaces only Mac empty loop with no observable work."
+  },
+  "mac:0x001b2fee": {
+    "status": "equal",
+    "evidence": "Complete81-byte body0x1b2fee-0x1b303e: walk field descriptors to null-name sentinel, for type3(F_STRING) call Scr_SetString(hud+offset,0). Native matches; currently none of15 table entries are type3, so no callback occurs for this table."
+  },
+  "mac:0x001b2f26": {
+    "status": "equal",
+    "evidence": "Complete100-byte body at0x1b2f26: compute hud slot by140-byte Mac stride and field descriptor by28-byte Mac stride; if getter exists call with hud and unchanged field index, else generic field operation with hud,type,offset. Native typed strides preserve layout semantics and correct args. All descriptors verified; valid registered index0..14 and hud slot0..1023 domain."
+  },
+  "mac:0x001b2f8a": {
+    "status": "equal",
+    "evidence": "Complete100-byte body at0x1b2f8a: compute hud slot by140-byte Mac stride and field descriptor by28-byte Mac stride; if setter exists call with hud and unchanged field index, else generic field operation with hud,type,offset. Native typed strides preserve layout semantics and correct args. All descriptors verified; valid registered index0..14 and hud slot0..1023 domain."
   }
 }

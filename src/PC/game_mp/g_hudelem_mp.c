@@ -197,8 +197,15 @@ static void HudElem_SetEnumString_impl(game_hudelem_t *hud_base, const game_hude
 
             mask = f->mask;
             shift = f->shift;
+#if defined(COD2_X64)
+            unsigned int bits = (unsigned int)*value;
+            bits &= ~((unsigned int)mask << shift);
+            bits |= (unsigned int)nameIndex << shift;
+            *value = (int)bits;
+#else
             *value = *value & ~(mask << shift);
             *value = *value | (nameIndex << shift);
+#endif
             return;
         }
     }
@@ -352,7 +359,11 @@ BuiltinMethod HudElem_GetMethod(const char **pName)
 {
     int i;
     for (i = 0; i < (int)ARRAY_COUNT(methods); i++) {
+#if defined(COD2_X64)
+        if (strcmp(*pName, methods[i].actionString) == 0) {
+#else
         if (I_stricmp(*pName, methods[i].actionString) == 0) {
+#endif
             *pName = methods[i].actionString;
             return methods[i].actionFunc;
         }
@@ -664,7 +675,16 @@ static game_hudelem_t *HECmd_GetHudElem(scr_entref_t entref)
 
 static void HudElem_ResetDefaults(game_hudelem_t *hud)
 {
+#if defined(COD2_X64)
+    /* Mac leaves movement timing intact when resetting or reusing an element. */
+    int moveStartTime = hud->elem.moveStartTime;
+    int moveTime = hud->elem.moveTime;
+#endif
     memset(&hud->elem, 0, sizeof(hud->elem));
+#if defined(COD2_X64)
+    hud->elem.moveStartTime = moveStartTime;
+    hud->elem.moveTime = moveTime;
+#endif
     hud->elem.type = HE_TYPE_TEXT;
     hud->elem.fontScale = 1.0f;
     hud->elem.color.rgba = -1;
@@ -686,6 +706,9 @@ static void HECmd_ClearTimingFieldsForValue(hudelem_t *elem)
     elem->fromAlignScreen = 0;
     elem->time = 0;
     elem->duration = 0;
+#if defined(COD2_X64)
+    elem->value = 0.0f;
+#endif
     elem->text = 0;
 }
 
