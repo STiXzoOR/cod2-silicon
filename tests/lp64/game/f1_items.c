@@ -7,8 +7,11 @@
 #include <string.h>
 
 extern void G_RunCorpseMove(gentity_t *ent);
+extern void G_RunItem(gentity_t *ent);
 scr_data_t g_scr_data;
 level_locals_t level;
+static gitem_t fixtureItems[1];
+void *imp_bg_itemlist = fixtureItems;
 static gentity_t fixtureCorpse;
 static vec3_t rootDelta;
 static vec3_t tracedEnd;
@@ -16,6 +19,7 @@ static int traces, links, thinks, anglesSet;
 static float traceFraction = 1;
 static vec3_t traceNormal, landingAngles;
 static int failures;
+static int itemMode, thinkFrees, originsSet;
 #define CHECK(condition) do { if (!(condition)) { fprintf(stderr, "FAIL line %d: %s\n", __LINE__, #condition); ++failures; } } while (0)
 
 int G_GetPlayerCorpseIndex(gentity_t *ent) { assert(ent == &fixtureCorpse); return 0; }
@@ -28,7 +32,7 @@ void XAnimCalcDelta(XAnimTree *tree, unsigned int index, vec_t *rotation,
 }
 void BG_EvaluateTrajectory(const trajectory_t *tr, int time, vec_t *out)
 {
-    assert(tr == &fixtureCorpse.s.pos && time == level.time);
+    assert(tr == &fixtureCorpse.s.pos && time == level.time + (itemMode ? 50 : 0));
     memcpy(out, tr->trBase, sizeof(vec3_t));
 }
 void G_TraceCapsule(trace_t *trace, const vec_t *start, const vec_t *mins,
@@ -43,7 +47,12 @@ void G_TraceCapsule(trace_t *trace, const vec_t *start, const vec_t *mins,
     ++traces;
 }
 void SV_LinkEntity(gentity_t *ent) { assert(ent == &fixtureCorpse); ++links; }
-int G_RunThink(gentity_t *ent) { assert(ent == &fixtureCorpse); ++thinks; return 1; }
+int G_RunThink(gentity_t *ent)
+{
+    assert(ent == &fixtureCorpse); ++thinks;
+    if (thinkFrees) ent->r.inuse = 0;
+    return 1;
+}
 qboolean G_TraceCapsuleComplete(const vec_t *start, const vec_t *mins,
                                const vec_t *maxs, const vec_t *end, int owner, int mask)
 { assert(owner == 23 && mask == 0x491); return 0; }
@@ -51,6 +60,8 @@ int SV_PointContents(const vec_t *point, int pass, int mask) { return 0; }
 void G_FreeEntity(gentity_t *ent) { abort(); }
 void G_SetAngle(gentity_t *ent, const vec_t *angle)
 { assert(ent == &fixtureCorpse); memcpy(landingAngles, angle, sizeof(vec3_t)); ++anglesSet; }
+void G_SetOrigin(gentity_t *ent, const vec_t *origin)
+{ assert(ent == &fixtureCorpse); memcpy(ent->r.currentOrigin, origin, sizeof(vec3_t)); ++originsSet; }
 
 static void Reset(void)
 {
@@ -61,6 +72,8 @@ static void Reset(void)
     fixtureCorpse.r.ownerNum = 23;
     fixtureCorpse.clipmask = 0x491;
     fixtureCorpse.active = 1;
+    fixtureCorpse.r.inuse = 1;
+    itemMode = thinkFrees = originsSet = 0;
     traces = links = thinks = anglesSet = 0;
     traceFraction = 1;
     memset(traceNormal, 0, sizeof(traceNormal));
@@ -71,7 +84,7 @@ static void CheckVector(const vec_t *actual, const vec_t *expected)
     for (int i = 0; i < 3; ++i)
         CHECK(fabsf(actual[i] - expected[i]) < 0.00001f);
 }
-int main(void)
+static void Controls(void)
 {
     const vec3_t angles[] = {{0,0,0}, {0,90,0}, {30,0,0}};
     const vec3_t expected[] = {{14,23,30}, {7,24,30}, {13.4641016f,23,28}};
@@ -114,7 +127,38 @@ int main(void)
         CHECK(!g_scr_data.playerCorpseInfo[0].falling);
         CHECK(fixtureCorpse.s.groundEntityNum == 77);
     }
-    if (!failures)
-        puts("F1 items: corpse landing angles and movement controls pass");
+}
+static void InUseGate(int isItem, int freeDuringThink)
+{
+    Reset();
+    itemMode = isItem;
+    thinkFrees = freeDuringThink;
+    fixtureCorpse.active = freeDuringThink;
+    fixtureCorpse.s.pos.trType = (trType_t)5;
+    fixtureCorpse.s.groundEntityNum = 1023;
+    memcpy(fixtureCorpse.s.pos.trBase, (vec3_t){14,24,26}, sizeof(vec3_t));
+    g_scr_data.playerCorpseInfo[0].falling = 1;
+    traceFraction = isItem ? 0.005f : 0.5f;
+    traceNormal[2] = 1;
+    if (isItem) G_RunItem(&fixtureCorpse); else G_RunCorpseMove(&fixtureCorpse);
+    CHECK(traces == 1 && thinks == 1);
+    CHECK(anglesSet == !freeDuringThink);
+    CHECK(links == (freeDuringThink ? 1 : 2));
+    if (!freeDuringThink) CHECK(fixtureCorpse.s.groundEntityNum == 77);
+    else CHECK(fixtureCorpse.s.groundEntityNum == 1023);
+    if (isItem) CHECK(originsSet == !freeDuringThink);
+    else CHECK(g_scr_data.playerCorpseInfo[0].falling == freeDuringThink);
+}
+int main(int argc, char **argv)
+{
+    const char *name = argc == 1 ? "controls" : argv[1];
+    assert(argc <= 2);
+    if (!strcmp(name, "controls")) Controls();
+    else if (!strcmp(name, "corpse-live")) InUseGate(0, 0);
+    else if (!strcmp(name, "corpse-freed")) InUseGate(0, 1);
+    else if (!strcmp(name, "item-live")) InUseGate(1, 0);
+    else if (!strcmp(name, "item-freed")) InUseGate(1, 1);
+    else abort();
+    if (!failures) printf("F1 items %s: pass\n", name);
     return failures != 0;
 }
