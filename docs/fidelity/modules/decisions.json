@@ -702,5 +702,117 @@
   "linux:game/g_main_mp.cpp:630:SendScoreboardMessageToAllIntermissionClients": {
     "status": "fixed",
     "evidence": "Linux-only row inlined in Mac G_RunFrame 1ae284: flag/maxclient gate 0x1af733..0x1af74a; loop 0x1af82b..0x1af870 checks connected==2 and pm_type==5, calls scoreboard for matching g_entities slot. Loop completion at 0x1af84b jumps unconditionally to flag clear 0x1af74a. Native foundAny condition wrongly retains flag when any message is sent. Parent/main_frame independently confirmed and owns fixture. Root applied COD2_X64 unconditional clear after loop; reread exact patched block and confirmed authority match. Full-frame case execution owned by main_frame; parent must attach that result. Frame worker reports baseline scoreboard failure and current success in stock/CODX client and dedicated: frame-red-stock2/frame-red-codx and frame-green-stock/frame-green-codx. Covers one-shot, next-frame, zero-client and no-eligible-client behavior."
+  },
+  "mac:0x001bbc80": {
+    "status": "equal",
+    "evidence": "Complete9-byte Mac0x1bbc80 tailcalls G_FreeEntity with unchanged argument. Native same."
+  },
+  "mac:0x001bbc8a": {
+    "status": "equal",
+    "evidence": "Complete29-byte Mac0x1bbc8a calls G_SetOrigin(self,self+0x138 currentOrigin); native typed field matches."
+  },
+  "mac:0x001bbca8": {
+    "status": "equal",
+    "evidence": "Complete9-byte Mac0x1bbca8 tailcalls G_FreeEntity; native identical argument/effect."
+  },
+  "mac:0x001bbcb2": {
+    "status": "equal",
+    "evidence": "Complete9-byte Mac0x1bbcb2 tailcalls G_FreeEntity; native matches."
+  },
+  "mac:0x001bbcbe": {
+    "status": "equal",
+    "evidence": "Complete9-byte Mac0x1bbcbe tailcalls G_FreeEntity; native matches. No live corona toggle handler registered."
+  },
+  "linux:game/g_misc_mp.cpp:89:use_corona": {
+    "status": "intentional",
+    "evidence": "Unreferenced Linux-only toggle helper omitted. Complete Linux body toggles link and resets active on relink; only its definition appears in source. Mac SP_corona frees immediately and no handler references corona. Mac has only undefined zero-address use_corona.eh nlist marker (type18,section0,value0), not an executable function identity. Native omission preserves authoritative spawn behavior; no live Mac toggle body claim."
+  },
+  "mac:0x001bbcc8": {
+    "status": "equal",
+    "evidence": "Complete26-byte Mac0x1bbcc8 clears inuse at32 slots with68-byte stride and leaves remaining fields untouched. Native typed32slot loop matches. Fixture seeds allbytes and verifies only inuse fields clear."
+  },
+  "mac:0x001bbf9e": {
+    "status": "equal",
+    "evidence": "Complete210-byte Mac0x1bbf9e preserves linked byte before unlink, copies origin sequentially then adds1 to Z, toggles eFlags bit2, sets supplied view angle, converts playerstate with snap1/handler1, copies currentOrigin and relinks only if originally linked. Native pointer reloads/call and copy order match. Both link-state controls cover intermediate effects and final origin."
+  },
+  "mac:0x001bc84a": {
+    "status": "fixed",
+    "evidence": "Complete1361-byte Mac0x1bc84a checked including all out-of-line branches and literals. Firstfree32slot search,68-byte logical reset,weapon/class/precache errors,stance/sound setup,optional spawn-key fallbacks/clamps,healthdefault100,damage/playerSpread,flags/contentstype,bounds,origin/angles,handler13,nextthink+50,trajectory3 andlink match. Restored missing0x15 prefix on exhausted-pool and invalid-weapon errors at literals0x2e14ac/0x2e14e0. Both baseline modes fail those exacttext cases; all ten focused spawn/teleport/helper groups pass current modes. Clock validity follows bounded server lifecycle."
+  },
+  "mac:0x001bcd9c": {
+    "status": "equal",
+    "evidence": "Complete77-byte Mac0x1bcd9c asks weaponinfo with emptydefault, fatal missingkey literal0x2e15c0 already includes0x15, then passes obtainedpointer to G_SpawnTurret. Native matches. Missingkey diagnostic fixture passes baseline/current."
+  },
+  "linux:game/g_misc_mp.cpp:599:turret_UpdateTargetAngles": {
+    "status": "equal",
+    "evidence": "Equal on the Mac instantiated unmanned path: complete inline region 0x1bbd8a\u20130x1bbec6 in turret_think. Save old pitch, add residual pitch, start both speeds at200, raise vertical speed to360 iff flags0x200 and0x100, multiply each by exact binary float0x3d4ccccd, AngleSubtract and signed clamp, save target pitch, apply pitchCap under0x200/0x400 and clear0x100 on reaching threshold, second pitch clamp, store pitch plus residual. Operation order and flag writes match. No native caller supplies bManned1 or observes completion result; the retained manned branch and completion bookkeeping match the complete Linux helper, without inventing a standalone Mac body."
+  },
+  "linux:game/g_misc_mp.cpp:500:turret_UpdateSound": {
+    "status": "equal",
+    "evidence": "Complete Mac inline blocks 0x1bbd41\u20130x1bbd79 and0x1bbec8\u20130x1bbef2 match: clear loopSound, return when delay<=0, load unsigned byte fireSnd, subtract50, stop iff new delay<=0 and byte stopSnd nonzero, clear loopSound then G_PlaySoundAlias. Retail STABS confirms delay offset40 and sound bytes64/66. Sound callback can replace pTurretInfo; native caller reloads it through ReturnToDefaultPos just as Mac reloads EDI after the call."
+  },
+  "linux:game/g_misc_mp.cpp:698:turret_ReturnToDefaultPos": {
+    "status": "equal",
+    "evidence": "Complete instantiated Mac preparation at0x1bbd7d\u20130x1bbd83 chooses dropPitch and zero yaw before the full angle update. Native unmanned call matches. Only native call passes0; retained manned zero-pitch branch and return forwarding match complete Linux helper. No standalone Mac symbol is claimed."
+  },
+  "mac:0x001bbce2": {
+    "status": "equal",
+    "evidence": "All533 Mac bytes0x1bbce2\u20130x1bbef6 compared: nextthink=level.time+50, optional G_GeneralLink for nonzero tagInfo, owner client test using typed native entity stride, immediate return for client owner, otherwise sound update, clear firing bit0x40, then return-to-drop-pitch update. Inline helpers reconciled separately; field/callback ordering matches. Initialized entity/owner/turret domain and normal server clock bounds assumed."
+  },
+  "mac:0x001bbef8": {
+    "status": "equal",
+    "evidence": "All166 Mac bytes0x1bbef8\u20130x1bbf9d compared: construct pitch/yaw/zero angles, get server DObj once, pass same obj/partBits/local buffer to tag_aim then tag_aim_animated, replace pitch with angles2[2] and yaw0, pass tag_flash. Retail STABS maps tags158/160/140 (16-bit) exactly. No null-DObj guard exists in either body; callee contract retained."
+  },
+  "mac:0x001bc070": {
+    "status": "equal",
+    "evidence": "All296 Mac bytes0x1bc070\u20131bc197 compared: owner lookup, sound reset, prevStance -1 skip or2/1/default events142/141/140 then-1, TeleportPlayer(userOrigin,currentAngles), ps eFlags clear0x300/viewlock0/entity1023, owner active0/otherEntity0, turret active0/owner1023/flags clear0x800. Native side-effect order and typed field accesses match. Stance/control fixtures cover all event paths and retained unrelated state. Both-mode nine-group fixture passes (18 outcomes total); see use.md for service-seam and finite-domain limits."
+  },
+  "mac:0x001bc198": {
+    "status": "equal",
+    "evidence": "All90 Mac bytes0x1bc198\u20131bc1f1 compared. Resolve owner; call stop iff owner.client exists; then active0, current pTurretInfo inuse0 and pointerNULL. Native rereads current info after subordinate call asMac. Owned/unowned fixtures cover complete branches. Both-mode nine-group fixture passes (18 outcomes total); see use.md for service-seam and finite-domain limits."
+  },
+  "mac:0x001bc42a": {
+    "status": "fixed",
+    "evidence": "All396 Mac bytes0x1bc42a\u20131bc5b5 compared, including inline turret_behind. Active ormissinginfo rejects before geometry; behind result then grenadeTimeLeft nonzero and groundEntityNum1023 reject. Native angle computation corrected to roundedfloat Q_acos -> double multiply -> float, and rejection predicate matches Mac JA. Finite boundary regression failsbaseline inbothmodes; remaining eligibility controls pass. Both-mode nine-group fixture passes (18 outcomes total); see use.md for service-seam and finite-domain limits."
+  },
+  "linux:game/g_misc_mp.cpp:839:turret_behind": {
+    "status": "fixed",
+    "evidence": "Whole Linux helper maps to Mac inline0x1bc454\u20131bc587 inG_IsTurretUsable. Arc halfspan, center yaw, normalized forward and horizontal turret-minus-owner direction, dot andclamp compared. Mac storesQ_acosfloat at0x1bc56f, CVTSS2SD/MULSD(double57.29577951308232 from0x340c20)/CVTSD2SS at0x1bc572\u201357f; native priorfloatliteral rounded upward atfinite arc boundary. Restored pipeline and final !(angle>yawSpan). Native subtraction/select clamp now also preserves Mac unordered result -1, using originalDot in both comparisons. A separate nonfinite arithmetic edge case fails baseline Q_acos input assertion and passes current bothmodes; it also checks unordered halfspan acceptance. This does not claim nonfinite geometry arises in normal gameplay. Both-mode nine-group fixture passes (18 outcomes total); see use.md for service-seam and finite-domain limits."
+  },
+  "mac:0x001bc5b6": {
+    "status": "equal",
+    "evidence": "All660 Mac bytes0x1bc5b6\u20131bc849 compared: active/owner/viewlock, flag0x800, userOrigin copy, reciprocalotherEntity, prone-beforeduck previousstance, stanceeflags, subtraction-based ordered pitch/yaw clamping, zero roll, halfarc viewranges and normalizedbases. Native matches allbranches and floatoperation order. Nine stance combinations plus lowpitch/highyaw limits verified. Both-mode nine-group fixture passes (18 outcomes total); see use.md for service-seam and finite-domain limits."
+  },
+  "mac:0x001bc1f2": {
+    "status": "equal",
+    "evidence": "All567 Mac bytes0x1bc1f2\u20131bc428 compared: handler14 andnextthink=time+50 before missingtag returns, aim thenbutt tags, baseworldmatrix, butt-minusaim displacement, 31 angles0..-90 in-3 increments, tag-relative transforms, trace mask0x811/callerentity/bulletpriority, firstfraction<1 storesdropPitch. Otherwise retainpriorpitch. Missingtag and hitat0/7/30/nohit fixtures cover loop endpoints. Finite geometry, validlevelclock and fatalcallback contracts assumed. Both-mode nine-group fixture passes (18 outcomes total); see use.md for service-seam and finite-domain limits."
+  },
+  "linux:game/g_misc_mp.cpp:190:G_PlayerTurretPositionAndBlend": {
+    "status": "fixed",
+    "evidence": "Complete inline Mac positioning region in turret_think_client reviewed: animation guards0x1bcf6b\u20131bcfb2, body0x1bd052\u20131bdb99 and branch islands through0x1be084. Two no-children errors now include0x15 literal0x2e1638. Tree selection, quaternion conversion, ordered dot/height/yaw blending, goal-time arithmetic, both vertical/horizontal interpolation branches, transform/trace correction and state/link order match. Three error groups and five control groups pass both stock/CoD2x client/dedicated; baseline both no-children branches fail. Finite initialized animation domain and fatal Com_Error contract assumed."
+  },
+  "linux:game/g_misc_mp.cpp:130:Turret_FillWeaponParms": {
+    "status": "fixed",
+    "evidence": "Complete inline Mac region0x1bd594\u20131bd6a3 and fatal island0x1be089\u20131be0be compared. Restores0x15 tag_flash error prefix from literal0x2e1668. Tag lookup, player origin/direction, gunForward copy, normalize distance and muzzleTrace multiply/add order match. Missing-tag baseline fails exact diagnostic; final both-mode client/dedicated passes. Bullet/rocket controls verify resulting parms."
+  },
+  "linux:game/g_misc_mp.cpp:159:Fire_Lead": {
+    "status": "equal",
+    "evidence": "Complete inline dispatch0x1bd57e\u20131bd70d plus rocket0x1be02d/worldfallback0x1be0c3 compared: NONE pointer remaps to WORLD, populate parms, get weapon, type0 bullet with spread/level.time otherwise rocket spread0, event0xaf with chosen attacker number. Native helper-call boundary unchanged; corrected nested diagnostic is recorded on Turret_FillWeaponParms and full Mac export. Firing fixture covers bullets, rockets, fallback and event arguments; Linux third unused argument is absent from Mac inline semantics."
+  },
+  "linux:game/g_misc_mp.cpp:404:turret_clientaim": {
+    "status": "equal",
+    "evidence": "Complete inline0x1bce40\u20131bcf6a: set full viewlock/entity, subtract player/turret pitch and yaw, clamp each to turret arcs, zero roll, consume flag0x800 and xor teleport bit2. All native fields/flags match. Finite ordered-angle/arc domain (no arbitrary NaN equality claim); clamp/toggle/in-range fixture passes all four native variants."
+  },
+  "linux:game/g_misc_mp.cpp:444:turret_shoot_internal": {
+    "status": "equal",
+    "evidence": "Complete inline0x1bd550\u20131bd578 plus post-fire0x1bd712\u20131bd718: reload weapon firetime, store3*firetime sound delay, fire only for client owner, then set weapon-jitter viewlock2. Native source boundary matches; nested diagnostic correction attributed to its owner/export. Fixture covers client and nonclient invocation. Valid weapon timings avoid signed-overflow domain."
+  },
+  "linux:game/g_misc_mp.cpp:463:turret_track": {
+    "status": "equal",
+    "evidence": "Complete enclosing inline track sequence: cache turretinfo, aim/position, reload weapon, set viewlock1, clear firingbit0x40, subtract50, retain positive delay, otherwise clamp0 and fire only attackbit1; set weapon delay before shoot and firingbit after. Mac0x1bcfb8\u20131bcfed and0x1bd52d\u20131bd726 match. Fixture checks cooldown, ready shot, release/no-shot and viewlock transitions. Corrected subordinate positioning diagnostics recorded separately and on export."
+  },
+  "mac:0x001bcdea": {
+    "status": "fixed",
+    "evidence": "All932 Mac instructions/4836bytes0x1bcdea\u20131be0cd compared, including seven inline helpers and sound tail. Owner index uses typed entity stride; active must exactly1 and sessionState0 else stop/return. Track then update sound matches. Full export includes three corrected0x15 diagnostic sites in positioning/weapon-parms helpers.32 focused outcomes pass ASan/UBSan across stock/CoD2x client/dedicated; twelve baseline error outcomes fail and20 controls pass."
   }
 }
