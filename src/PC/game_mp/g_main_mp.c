@@ -220,7 +220,11 @@ int G_GetClientArchiveTime(int clientNum);
 void G_SetClientArchiveTime(int clientNum, int time);
 clientState_t *G_GetClientState(int clientNum);
 static int G_CreateDObj(DObjModel_s *dobjModels, int numModels, struct XAnimTree_s *tree, int handle, clientInfo_t *ci);
+#if defined(COD2_X64)
+void *Hunk_AllocXAnimServer(int size);
+#else
 int *Hunk_AllocXAnimServer(int size);
+#endif
 #if defined(COD2_X64)
 static int SortRanks(const void *a, const void *b);
 #else
@@ -400,10 +404,17 @@ static void G_CreateDObjCallback(void *dobjModels, unsigned short numModels, voi
 }
 #endif
 
+#if defined(COD2_X64)
+void *Hunk_AllocXAnimServer(int size)
+{
+    return Hunk_AllocLowInternal(size);
+}
+#else
 int *Hunk_AllocXAnimServer(int size)
 {
     return (int *)Hunk_AllocLowInternal(size);
 }
+#endif
 
 #if defined(COD2_X64)
 static int SortRanks(const void *va, const void *vb)
@@ -641,6 +652,114 @@ extern int G_AnimScriptSound(int client, snd_alias_list_t *aliasList);
 extern XAnimTree *XAnimCreateTree(XAnim *anims, Alloc_t Alloc);
 
 #ifndef __EMSCRIPTEN__
+#if defined(COD2_X64)
+void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepersist)
+{
+    char info[1024];
+    const char *logFile;
+    int i;
+    extern int Sys_DiffSeed(int fallback);
+    extern void SV_GetConfigstring(int index, char *buffer, int size);
+    extern void Info_SetValueForKey(char *info, const char *key, const char *value);
+
+    Com_Printf("------- Game Initialization -------\n");
+#if !(defined(COD2_CODX) && COD2_CODX)
+    Com_Printf("gamename: %s\n", "Call of Duty 2");
+    Com_Printf("gamedate: %s\n", "Aug 30 2006");
+#endif
+    Swap_Init();
+    memset(&level, 0, sizeof(level));
+    level.initializing = 1;
+    level.time = levelTime;
+    level.startTime = levelTime;
+    level.currentEntityThink = -1;
+
+    randomSeed = Sys_DiffSeed(randomSeed);
+    srand(randomSeed);
+    Rand_Init(randomSeed);
+    G_SetupWeaponDef();
+    if (!restart || !savepersist) {
+        G_RegisterDvars_impl();
+        BG_RegisterDvars();
+    }
+    G_ProcessIPBans();
+    level_bgs.GetXModel = (XModel *(*)(const char *))imp_SV_XModelGet;
+    level_bgs.CreateDObj = G_CreateDObjCallback;
+    level_bgs.SafeDObjFree = (void (*)(int))imp_Com_SafeServerDObjFree;
+    level_bgs.AllocXAnim = Hunk_AllocXAnimServer;
+    level_bgs.anim_user = 1;
+
+    logFile = g_log->current.string;
+    if (*logFile) {
+        FS_FOpenFileByMode(logFile, &level.logFile, g_logSync->current.enabled ? 3 : 2);
+        if (level.logFile) {
+            SV_GetServerinfo(info, sizeof(info));
+            G_LogPrintf("------------------------------------------------------------\n");
+            G_LogPrintf("InitGame: %s\n", info);
+        } else {
+            Com_Printf("WARNING: Couldn't open logfile: %s\n", g_log->current.string);
+        }
+    } else {
+        Com_Printf("Not logging to disk.\n");
+    }
+    level.openScriptIOFileHandles[0] = -1;
+    Mantle_CreateAnims(Hunk_AllocXAnimServer);
+    *(void **)imp_bgs = &level_bgs;
+
+    /* Restart preserves compiled scripts and the existing animation trees. */
+    if (!restart) {
+        memset(&level_bgs.animScriptData, 0, sizeof(level_bgs.animScriptData));
+        level_bgs.animScriptData.soundAlias = Com_FindSoundAlias;
+        level_bgs.animScriptData.playSoundAlias = G_AnimScriptSound;
+        Scr_BeginLoadScripts();
+        GScr_LoadScripts(1);
+        Scr_EndLoadScripts();
+        BG_LoadAnim();
+        for (i = 0; i < 64; i++)
+            level_bgs.clientinfo[i].pXAnimTree =
+                XAnimCreateTree(level_bgs.generic_human.tree.anims, Hunk_AllocXAnimServer);
+        for (i = 0; i < 8; i++)
+            ((scr_data_t *)imp_g_scr_data)->playerCorpseInfo[i].tree =
+                XAnimCreateTree(level_bgs.generic_human.tree.anims, Hunk_AllocXAnimServer);
+    }
+    GScr_LoadConsts();
+    SV_GetConfigstring(22, info, sizeof(info));
+    Info_SetValueForKey(info, "winner", "0");
+    SV_SetConfigstring(22, info);
+
+    memset(g_entities, 0, 1024 * sizeof(gentity_t));
+    level.gentities = g_entities;
+    level.maxclients = g_maxclients->current.integer;
+    memset(g_clients, 0, 64 * sizeof(gclient_t));
+    level.clients = g_clients;
+    for (i = 0; i < level.maxclients; i++)
+        g_entities[i].client = &level.clients[i];
+    level.num_entities = 72;
+    level.firstFreeEnt = NULL;
+    level.lastFreeEnt = NULL;
+    SV_LocateGameData(g_entities, 72, sizeof(gentity_t), (playerState_t *)g_clients, sizeof(gclient_t));
+    G_ParseHitLocDmgTable();
+    G_InitTurrets();
+    G_SpawnEntitiesFromString();
+    G_setfog("0");
+    G_InitObjectives();
+    Scr_FreeEntityList();
+    Com_Printf("-----------------------------------\n");
+    Scr_InitSystem(1);
+    Scr_SetLoading(1);
+    Scr_AllocGameVariable();
+    G_LoadStructs();
+    Scr_LoadGameType();
+    Scr_LoadLevel();
+    Scr_StartupGameType();
+    for (i = 0; i < 8; i++)
+        ((scr_data_t *)imp_g_scr_data)->playerCorpseInfo[i].entnum = -1;
+    *(void **)imp_bgs = NULL;
+    level.initializing = 0;
+    SaveRegisteredWeapons();
+    SaveRegisteredItems();
+}
+#else
 void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepersist)
 {
     char info[0x800];
@@ -896,6 +1015,7 @@ void G_InitGame(int levelTime, int randomSeed, qboolean restart, qboolean savepe
     return;
 }
 #endif
+#endif
 extern const dvar_t *Dvar_RegisterString_mac(const char *name, const char *def, int flags);
 extern const dvar_t *Dvar_RegisterInt(const char *name, int def, int min, int max, int flags);
 extern const dvar_t *Dvar_RegisterBool_mac(const char *name, int def, int flags);
@@ -984,7 +1104,11 @@ static void G_RegisterDvars_impl(void)
 
     g_cheats = Dvar_RegisterBool_mac("sv_cheats", 0, 0x1000);
     Dvar_RegisterString_mac("gamename", "Call of Duty 2", 0x1044);
+#if defined(COD2_X64)
+    Dvar_RegisterString_mac("gamedate", "Aug 30 2006", 0x1040);
+#else
     Dvar_RegisterString_mac("gamedate", "Apr 13 2006", 0x1040);
+#endif
     Dvar_RegisterString_mac("sv_mapname", "", 0x1044);
     g_gametype = Dvar_RegisterString_mac("g_gametype", "dm", 0x1024);
     g_maxclients = Dvar_RegisterInt("sv_maxclients", 20, 1, 0x40, 0x1025);
@@ -1232,13 +1356,22 @@ void CheckVote(void)
         return;
     }
 
+#if defined(COD2_X64)
+    /* Retail tests the sign of the wrapping 32-bit clock difference. */
+    if (((unsigned int)level.time - (unsigned int)level.voteTime) & 0x80000000u) {
+#else
     if (level.time < level.voteTime) {
+#endif
         int passCount;
 
         passCount = level.numVotingClients / 2 + 1;
         if (level.voteYes >= passCount) {
             SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEPASSED\"", 101));
+#if defined(COD2_X64)
+            level.voteExecuteTime = (int)((unsigned int)level.time + 3000u);
+#else
             level.voteExecuteTime = level.time + 3000;
+#endif
         } else if (level.voteNo > level.numVotingClients - passCount) {
             SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEFAILED\"", 101));
         } else {
@@ -1246,7 +1379,11 @@ void CheckVote(void)
         }
     } else if (level.voteYes > (int)((double)level.voteNo + ceilf((float)(level.numVotingClients - (level.voteYes + level.voteNo)) * g_voteAbstainWeight->current.value))) {
         SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEPASSED\"", 101));
+#if defined(COD2_X64)
+        level.voteExecuteTime = (int)((unsigned int)level.time + 3000u);
+#else
         level.voteExecuteTime = level.time + 3000;
+#endif
     } else {
         SV_GameSendServerCommand(-1, SV_CMD_CAN_IGNORE, va("%c \"GAME_VOTEFAILED\"", 101));
     }
@@ -1258,7 +1395,11 @@ void CheckVote(void)
 static inline __attribute__((always_inline)) int G_RunThink_core(gentity_t *ent)
 {
     int thinktime;
+#if defined(COD2_X64)
+    void (*think)(gentity_t *);
+#else
     fn_think think;
+#endif
 
     thinktime = ent->nextthink;
     if (thinktime <= 0) {
@@ -1269,11 +1410,20 @@ static inline __attribute__((always_inline)) int G_RunThink_core(gentity_t *ent)
     }
 
     ent->nextthink = 0;
+#if defined(COD2_X64)
+    think = (void (*)(gentity_t *))entityHandlers[ent->handler].think;
+#else
     think = entityHandlers[ent->handler].think;
+#endif
     if (!think) {
         Com_Error(1, "\x15NULL ent->think");
     }
+#if defined(COD2_X64)
+    think(ent);
+    return 0;
+#else
     return ((int (*)(gentity_t *))think)(ent);
+#endif
 }
 
 int G_RunThink(gentity_t *ent)
@@ -1361,7 +1511,11 @@ void G_ShutdownGame(qboolean freeScripts)
 
         for (i = 0; i < 64; i++) {
             struct XAnimTree_s *tree = level_bgs.clientinfo[i].pXAnimTree;
+#if defined(COD2_X64)
+            if (tree) {
+#else
             if (tree && (((uintptr_t)tree & (sizeof(void *) - 1)) == 0)) {
+#endif
                 XAnimFreeTree(tree, 0);
             }
             level_bgs.clientinfo[i].pXAnimTree = NULL;
@@ -1377,10 +1531,16 @@ void G_ShutdownGame(qboolean freeScripts)
 #else
                 struct XAnimTree_s *tree = corpse->ci.pXAnimTree;
 #endif
+#if defined(COD2_X64)
+                if (tree) {
+#else
                 if (tree && (((uintptr_t)tree & (sizeof(void *) - 1)) == 0)) {
+#endif
                     XAnimFreeTree(tree, 0);
                 }
+#if !defined(COD2_X64)
                 corpse->ci.pXAnimTree = NULL;
+#endif
                 corpse->tree = NULL;
             }
         }
@@ -1679,6 +1839,14 @@ int G_RunFrame(int levelTime)
                 objective_t *srcObj = &level.objectives[j];
                 objective_t *dstObj = &cli->ps.objective[j];
 
+#if defined(COD2_X64)
+                if (srcObj->state != 0 &&
+                    (srcObj->teamNum == 0 || srcObj->teamNum == lastObjId)) {
+                    *dstObj = *srcObj;
+                } else {
+                    dstObj->state = (objectiveState_t)0;
+                }
+#else
                 if (srcObj->state == 0 || srcObj->teamNum == 0) {
                     if (srcObj->state != 0 && srcObj->teamNum == lastObjId) {
                         *dstObj = *srcObj;
@@ -1688,6 +1856,7 @@ int G_RunFrame(int levelTime)
                 } else {
                     *dstObj = *srcObj;
                 }
+#endif
             }
         }
     }
@@ -1715,7 +1884,11 @@ int G_RunFrame(int levelTime)
 
     CheckTeamStatus();
 
+#if defined(COD2_X64)
+    if (g_oldVoting->current.enabled) {
+#else
     if (g_oldVoting->current.integer) {
+#endif
         CheckVote();
     }
 
@@ -1731,12 +1904,20 @@ int G_RunFrame(int levelTime)
             DeathmatchScoreboardMessage(&g_entities[i]);
             foundAny = 1;
         }
+#if defined(COD2_X64)
+        level.bUpdateScoresForIntermission = 0;
+#else
         if (!foundAny || numClients <= 0) {
             level.bUpdateScoresForIntermission = 0;
         }
+#endif
     }
 
+#if defined(COD2_X64)
+    if (g_listEntity->current.enabled) {
+#else
     if (g_listEntity->current.integer) {
+#endif
         for (i = 0; i < 0x400; i++) {
             entPtr = &g_entities[i];
             Com_Printf("%4i: %s\n", i,
@@ -1753,7 +1934,11 @@ int G_RunFrame(int levelTime)
     }
 
     if (g_dumpAnims->current.integer >= 0) {
+#if defined(COD2_X64)
+        Com_Printf("server:\n");
+#else
         Com_Printf("---------- Animtree dump ----------\n");
+#endif
         {
             int animIdx = g_dumpAnims->current.integer;
             entPtr = &level.gentities[animIdx];

@@ -566,5 +566,141 @@
   "mac:0x001cc314": {
     "status": "equal",
     "evidence": "All95 Mac bytes0x1cc314-0x1cc372 compared. Select current oneofeight32byte buffers, advanceindex modulo8, truncate three floatcomponents towardzero, format exact (%i %i %i) with size32,returnbuffer. Native matches finite int-representable vectors; control verifies truncation,8 retainedoutputs andwrap reuse."
+  },
+  "mac:0x001aee86": {
+    "status": "intentional",
+    "evidence": "Complete 48-byte Mac client body at0x1aee86 forwards xyz,color,scale,text and fromServer1 to CL_AddDebugString, matching native client. Native Apple dedicated deliberately omits function and its GScr_print3d call; Linux dedicated helper is empty. Rendering-only omission is a platform deviation, not a client-body difference."
+  },
+  "mac:0x001ada16": {
+    "status": "equal",
+    "evidence": "Complete 34-byte Mac body at 0x1ada16 uses client stride10404 and archiveTime offset0x26b4, confirmed STABS sess9896+12; native typed load matches."
+  },
+  "mac:0x001ad9f4": {
+    "status": "equal",
+    "evidence": "Complete 34-byte Mac body at 0x1ad9f4 uses 10404-byte client stride and score offset0x26b8. Retail STABS confirms sess offset9896 plus score16; native typed indexing matches valid client indices."
+  },
+  "mac:0x001ada5e": {
+    "status": "equal",
+    "evidence": "Complete 34-byte Mac body at 0x1ada5e returns client+0x2748, confirmed STABS sess9896+cs160; native address expression preserves LP64 adaptation."
+  },
+  "mac:0x001ad9e8": {
+    "status": "equal",
+    "evidence": "Complete 11-byte Mac body at 0x1ad9e8 returns the float field at level+0x1ddc; native typed float access matches."
+  },
+  "mac:0x001ad9d0": {
+    "status": "equal",
+    "evidence": "Complete 10-byte Mac body at 0x1ad9d0 loads level.savepersist; native typed access matches."
+  },
+  "mac:0x001aeda0": {
+    "status": "equal",
+    "evidence": "Complete 83-byte Mac body at0x1aeda0 forwards results/start/zero/zero/end/pass/mask,locational1,caller priority,staticmodels1 to SV_Trace. Native zero-vector values and argument identity match."
+  },
+  "mac:0x001aedf4": {
+    "status": "equal",
+    "evidence": "Complete 77-byte Mac body at0x1aedf4 forwards start/zero/zero/end/pass,owner1023,mask,locational1,staticmodels1 to SV_TracePassed and propagates result."
+  },
+  "mac:0x001adbee": {
+    "status": "equal",
+    "evidence": "Complete 251-byte Mac body at 0x1adbee: logfile-zero early return, vsnprintf size1024, signed millisecond/second/minute decomposition, Com_sprintf size1024, strlen then FS_Write. Binary literal at0x2e00b4 is %3i:%i%i %s. Native matches; valid format/varargs and terminated library output assumed."
+  },
+  "mac:0x001ada38": {
+    "status": "equal",
+    "evidence": "Complete 37-byte Mac body at 0x1ada38 uses same client stride and archiveTime field, stores supplied time unchanged; native typed store matches."
+  },
+  "mac:0x001ad9da": {
+    "status": "equal",
+    "evidence": "Complete 13-byte Mac body at 0x1ad9da stores its integer argument to level.savepersist; no boolean normalization in either body."
+  },
+  "mac:0x001aee42": {
+    "status": "equal",
+    "evidence": "Complete 68-byte Mac body at0x1aee42 forwards hitNum/start/zero/zero/end/pass/owner1023/mask to SV_SightTrace. Native preserves callee return; Linux wrapper is void and callers only require hitNum side effect, so no invented Mac meaningful return contract."
+  },
+  "mac:0x001aecfc": {
+    "status": "equal",
+    "evidence": "Complete 85-byte Mac body at0x1aecfc forwards caller results/start/mins/maxs/end/pass/mask to SV_Trace with locational0,priorityNULL,staticmodels0; native matches."
+  },
+  "mac:0x001aed52": {
+    "status": "equal",
+    "evidence": "Complete 78-byte Mac body at0x1aed52 forwards start/mins/maxs/end/pass plus owner1023,mask,locational0,staticmodels0 to SV_TracePassed and propagates result."
+  },
+  "mac:0x001addca": {
+    "status": "fixed",
+    "evidence": "Full Mac CFG compared again with new native body: required sequence restored, script PostCompile moved into dependency before classmap; 7 ASan/UBSan cases pass stock and CoD2x (init-green-stock2/codx2). Explicit scoped differences: Sys_DiffSeed opt-in harness, CoD2x banner suppression, typed native data/callbacks. No unmatched init behavior retained."
+  },
+  "linux:game/g_main_mp.cpp:125:G_RegisterDvars": {
+    "status": "fixed",
+    "evidence": "All 57 Mac call sites (56 base + conditional dedicated) compared; Aug30 2006 literal restored. 2 registration cases pass stock and CoD2x; previous revision fails date. Intentional CoD2x2 extra dvars documented WS65/66."
+  },
+  "linux:game/g_main_mp.cpp:338:G_LoadAnimTreeInstances": {
+    "status": "equal",
+    "evidence": "Mac0x1aea87\u20131aeae3 alloc64clienttrees then8corpseownertrees;native typedloops match; BG_LoadAnim assigns both native treealiases."
+  },
+  "linux:game/g_main_mp.cpp:362:G_FreeAnimTreeInstances": {
+    "status": "fixed",
+    "evidence": "Native now frees every nonNULL client and corpse owner, clears only owners; exact complete Mac region. Null-owner/stale-ci view fixture validates both groups, 4 freeScripts cases green in each mode (baseline red)."
+  },
+  "linux:game/g_main_mp.cpp:298:G_FreeEntities": {
+    "status": "equal",
+    "evidence": "Complete0x1aeee3\u20131aef54:dynamicnum_entities loop,inuse,world1022,clearcount/head/tail;typedstrides agree."
+  },
+  "mac:0x001aeeb6": {
+    "status": "fixed",
+    "evidence": "Complete Mac outer CFG and tree-free dependency now match; 10 ASan/UBSan cases pass per mode including freeScripts/savepersist/active matrix, null owners, stale corpse ci view, world entity, logfile and scriptIO handle0/buffer. CoD2x banner suppression intentional."
+  },
+  "mac:0x001ada80": {
+    "status": "equal",
+    "evidence": "Whole0x1ada80\u20131ada8f:uint16numModels,tailforward fourarguments,ignoreci;nativevoidcallback adapter documented WS12."
+  },
+  "mac:0x001ada90": {
+    "status": "fixed",
+    "evidence": "Complete Mac9-byte forwarder calls Hunk_AllocLowInternal(size) and returns its pointer. Native void* return now matches Alloc_t callback signature; prior int* return was called through incompatible void* callback casts. Production compile-time type assertion fails baseline, both modes pass actual callback size/pointer/null-return checks. Legacy declaration/definition retained under OFF."
+  },
+  "mac:0x001af284": {
+    "status": "fixed",
+    "evidence": "Complete Mac 1ae284 body reviewed; clocks, triggers, animations, dispatch, HUD and ordered tail match on native initialized domain. Objective predicate, one-shot intermission flag and dump string diverge; intentional gated CoD2x broadcast and debug-only instrumentation are retained. See frame.md. Root native-only production patch inspected; frame-green-stock and frame-green-codx each pass all 7 cases for client and dedicated (28 outcomes total). Baseline objective/scoreboard/banner cases fail in both modes and targets; callback typing correction is static proof, not sanitizer-red evidence."
+  },
+  "mac:0x001af0ba": {
+    "status": "fixed",
+    "evidence": "Complete Mac 1ae0ba body reviewed; processedFrame, masks, expiry endpoints and dispatch precedence match. Inlined G_RunThink_core shares invalid callback function typing. Root native-only production patch inspected; frame-green-stock and frame-green-codx each pass all 7 cases for client and dedicated (28 outcomes total). Baseline objective/scoreboard/banner cases fail in both modes and targets; callback typing correction is static proof, not sanitizer-red evidence."
+  },
+  "mac:0x001aec94": {
+    "status": "fixed",
+    "evidence": "Complete Mac 1adc94 body reviewed; exact due-time/error/callback contract matches. Registered callback bodies return void; native int callback cast is undefined C behavior and all call sites discard returns. Root native-only production patch inspected; frame-green-stock and frame-green-codx each pass all 7 cases for client and dedicated (28 outcomes total). Baseline objective/scoreboard/banner cases fail in both modes and targets; callback typing correction is static proof, not sanitizer-red evidence."
+  },
+  "linux:game/g_main_mp.cpp:1017:G_XAnimUpdateEnt": {
+    "status": "equal",
+    "evidence": "Linux helper mapped to complete Mac G_RunFrame 0x1af48b..0x1af50e: inuse and 0x2000 gates, notify=1, continuation scripts, recheck predicates. Native same on complete inline region."
+  },
+  "linux:game/g_main_mp.cpp:946:G_UpdateHudElemsToClients": {
+    "status": "equal",
+    "evidence": "Linux helper mapped to complete Mac G_RunFrame 0x1af67a..0x1af6d9: inuse level.gentities, ent.client, ent.s.number, update=3. Native same for stable initialized maxclients; no helper writes maxclients."
+  },
+  "linux:game/g_main_mp.cpp:907:G_UpdateObjectiveToClients": {
+    "status": "fixed",
+    "evidence": "Linux helper mapped to full Mac G_RunFrame 0x1af578..0x1af67a. Active global or matching-team entries fully copy; empty/opposing entries clear only state. Native predicate inverted. Root native-only production patch inspected; frame-green-stock and frame-green-codx each pass all 7 cases for client and dedicated (28 outcomes total). Baseline objective/scoreboard/banner cases fail in both modes and targets; callback typing correction is static proof, not sanitizer-red evidence."
+  },
+  "linux:game/g_main_mp.cpp:1003:DebugDumpAnims": {
+    "status": "fixed",
+    "evidence": "Linux helper mapped to complete Mac G_RunFrame 0x1af77f..0x1af7bc; original literal at image 0x2e0580 is server newline. Gate/index/call match, banner does not. Root native-only production patch inspected; frame-green-stock and frame-green-codx each pass all 7 cases for client and dedicated (28 outcomes total). Baseline objective/scoreboard/banner cases fail in both modes and targets; callback typing correction is static proof, not sanitizer-red evidence."
+  },
+  "mac:0x001ada9a": {
+    "status": "equal",
+    "evidence": "Complete Mac 1aca9a, 0x1ada9a..0x1adb40 (167 bytes), all branches compared. Connecting clients precede all team/score decisions (including both connecting -> 1). Two spectators sort by client-address order; one spectator follows a player. Descending signed score then ascending signed deaths, exact ties 0. Native typed stride is the LP64 adaptation. rank-comparator fixture exercises all branches and direct comparator self comparison."
+  },
+  "mac:0x001adb42": {
+    "status": "equal",
+    "evidence": "Complete Mac 1acb42, 0x1adb42 (171 bytes). Clears both counters, scans level.maxclients, appends non-disconnected indices, counts only connected non-spectators as voting, then qsort(base,count,4,SortRanks), then sets update flag 1. rank-counts verifies indices/counters/qsort args and zero-client behavior."
+  },
+  "mac:0x001aeb2a": {
+    "status": "fixed",
+    "evidence": "Complete Mac 1adb2a, 0x1aeb2a..0x1aec93 (362 bytes). Execute-time strict signed JL matches. Deadline CMP at 0x1aeb53 / JS at 0x1aeb59 tests wrapped subtraction sign, unlike native relational <. Passed schedule ADD 0xbb8 at 0x1aec52 wraps, while both native time+3000 expressions incur signed UB with actual Darwin flags. Both build modes baseline d827e02 fail four dedicated rollover cases; remaining vote tests pass. All majority/abstention thresholds, float ceilf pipeline, command/config IDs/literals and callback/store ordering match. Root applied all three COD2_X64 guarded corrections; complete patched body reread and votes-green-stock/votes-green-codx pass all 11 case groups each with ASan/UBSan, including four baseline-red rollover groups."
+  },
+  "mac:0x001adcea": {
+    "status": "intentional",
+    "evidence": "Complete Mac 1accea, 0x1adcea (223 bytes), stock body equal: append map_rotate, clear axis/allies scores, zero connected-client scores up to g_maxclients, second pass sets connected -> connecting, then exact log literal. Native COD2_CODX hook intentionally delegates queueing and returns before mutations on rejection, documented in WS81-cod2x-stop-gametype.md and WS100-transition-rollback.md; actual GScr_Cod2xQueueExitLevel confirms success-conditioned queue and match-end. exit-level/exitrejected fixture covers boundary contract in both modes (real queue implementation covered by existing cod2x stop_gametype suite; not re-executed here)."
+  },
+  "linux:game/g_main_mp.cpp:630:SendScoreboardMessageToAllIntermissionClients": {
+    "status": "fixed",
+    "evidence": "Linux-only row inlined in Mac G_RunFrame 1ae284: flag/maxclient gate 0x1af733..0x1af74a; loop 0x1af82b..0x1af870 checks connected==2 and pm_type==5, calls scoreboard for matching g_entities slot. Loop completion at 0x1af84b jumps unconditionally to flag clear 0x1af74a. Native foundAny condition wrongly retains flag when any message is sent. Parent/main_frame independently confirmed and owns fixture. Root applied COD2_X64 unconditional clear after loop; reread exact patched block and confirmed authority match. Full-frame case execution owned by main_frame; parent must attach that result. Frame worker reports baseline scoreboard failure and current success in stock/CODX client and dedicated: frame-red-stock2/frame-red-codx and frame-green-stock/frame-green-codx. Covers one-shot, next-frame, zero-client and no-eligible-client behavior."
   }
 }

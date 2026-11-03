@@ -2,7 +2,7 @@
 
 `functions.json` contains a function list for every indexed source module.
 `modules.csv` gives its four status counts. The active module is
-`game/g_main_mp`; complete that module before moving to another.
+`game/g_misc_mp`; complete that module before moving to another.
 `game/g_active_mp`, `game/g_client_mp` and `game/g_combat_mp` are fully reconciled;
 their reports preserve the outstanding
 whole-project replay differences.
@@ -57,10 +57,11 @@ reliable whole-project completion date.
 
 ## Current workload and estimate
 
-After seven module reconciliations, the ledger has 7,955 unchecked entries:
-7,178 assigned engine entries and 777 unassigned entries. Another 1,360 entries
+After eight module reconciliations, the ledger has 7,921 unchecked entries:
+7,144 assigned engine entries and 777 unassigned entries. Another 1,360 entries
 are intentional bundled-library exclusions. There are also six intentional Linux-only helper omissions.
-There are 98 equal functions and 38 fixed functions. All 24 entries in `game/g_active_mp` and all 11 in
+Two more intentional differences cover native dedicated debug rendering and CoD2x level-exit behavior.
+There are 118 equal functions and 50 fixed functions. All 24 entries in `game/g_active_mp` and all 11 in
 `game/g_client_mp`, plus all 13 in `game/g_combat_mp`, are reconciled, with
 integrated results in their reports.
 
@@ -116,3 +117,11 @@ All five `game/g_load_utils` entries are reconciled: three equal and two fixed.
 Only fatal-error diagnostics changed; both-mode fixtures/builds/ABI/legacy checks
 and one review pass. The preceding item replay remains the explicitly historical
 runtime baseline, with no duplicate replay for unchanged successful behavior.
+
+All 34 `game/g_main_mp` entries are reconciled: 20 equal, 12 fixed and two
+intentional differences. Lifecycle, objective, voting, callback and metadata
+corrections pass 106 focused outcomes and 15 live transition cases. Both 2,000-frame
+replays match the prior native trace; original parity differences remain.
+This module took 0.27 elapsed hours (125.8 entries/hour), including parallel
+comparison and one review. Its large initializer and frame bodies provide a
+broader sample, but the overall planning range remains provisional.
