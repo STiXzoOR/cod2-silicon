@@ -135,7 +135,7 @@ game/g_client_script_cmd_mp,62,0,0,0,62
 game/g_cmds_mp,30,0,0,0,30
 game/g_combat_mp,13,10,2,1,0
 game/g_debug_mp,5,0,0,5,0
-game/g_hudelem_mp,55,0,0,0,55
+game/g_hudelem_mp,55,41,14,0,0
 game/g_items_mp,29,0,0,0,29
 game/g_load_utils,5,0,0,0,5
 game/g_main_mp,34,0,0,0,34
