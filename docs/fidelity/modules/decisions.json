@@ -138,5 +138,57 @@
   "mac:0x00192e52": {
     "status": "equal",
     "evidence": "Entire 596-byte function compared. Existing native prone-bit and no-turret predicate matches; yaw +/-45 and pitch -15/+45 delta bounds, overflow normalization, short-angle conversion and command subtraction, and copies to entity/current player angles all match."
+  },
+  "mac:0x001c3f18": {
+    "status": "equal",
+    "evidence": "All 856 Mac bytes compared. Client midpoint/half-height/right-vector construction and five ordered origin-to-target traces match, as do boolean hit count and scalar DIVSS by exact3.0 at0x1c4101. Nonclient bounds midpoint/XY corners use reversed trace direction and first-hit early return. Mask0x802891, target number and every binary32 constant/operation match. Trace-return equivalence relies on actual boolean SV_TracePassed contract."
+  },
+  "mac:0x001c4272": {
+    "status": "fixed",
+    "evidence": "All 838 Mac bytes at 0x1c4272-0x1c45b7 compared. Restores explicit health reload after damage notification (0x1c4407), before alive/dead selection and lower clamp. Three production callback-contract regressions fail baseline and pass fixed stock/CoD2x; normal controls pass. Immediate live script mutation during VM_Notify is not established. Damage gates, world fallbacks, normalization, flags, minimum/demigod adjustment, debug output, subtraction, notifications and seven-argument pain/nine-argument die dispatch otherwise match."
+  },
+  "linux:game/g_combat_mp.cpp:338:G_DamageClient": {
+    "status": "equal",
+    "evidence": "Complete inline client path 0x1c427e-0x1c4341 and selection tails compared: takedamage/noclip/ufo/connected gates, inflictor then attacker weapon precedence, binary32 multiplication and integer truncation, nonpositive rejection and all eleven script arguments match. Maps native client branch and G_IsPlayerDamageable."
+  },
+  "mac:0x001c3ef0": {
+    "status": "equal",
+    "evidence": "Complete 37-byte function 0x1c3ef0-0x1c3f14 compared: compare low 16 bits of argument against 19 entries in order, return first match or zero. Native cast reproduces original unsigned-short argument narrowing. Names from Mac pointer table 0x34d1e0 match all 19 native names."
+  },
+  "mac:0x001c3ee0": {
+    "status": "equal",
+    "evidence": "Complete 16-byte function 0x1c3ee0-0x1c3eef compared: index into 19-entry script-string table and zero-extend 16-bit result. Valid hit-location enum domain matches callers."
+  },
+  "linux:game/g_combat_mp.cpp:312:G_GetWeaponHitLocationMultiplier": {
+    "status": "equal",
+    "evidence": "Complete inline path 0x1c42d8-0x1c42ec,0x1c446f-0x1c4492,0x1c4595-0x1c45a1 maps native G_GetHitLocDamageMult: zero weapon, null definition or nonbullet type uses global table; bullet type0 uses weapon location multipliers. Existing corrected predicate matches."
+  },
+  "mac:0x001c3c64": {
+    "status": "equal",
+    "evidence": "Complete 26-byte body 0x1c3c64-0x1c3c7d forwards destination/source to strcpy. Reachable callback buffers and lengths retain parser contract."
+  },
+  "mac:0x001c3e92": {
+    "status": "equal",
+    "evidence": "Complete 77-byte function 0x1c3e92-0x1c3ede compared: scan 15 names in exact binary table order, case-insensitive comparison, first index, then identical unknown-name diagnostic and zero. Direct Mac pointer-table extraction at 0x34d160 verified all 15 literals."
+  },
+  "linux:game/g_combat_mp.cpp:126:G_NullStub": {
+    "status": "intentional",
+    "evidence": "Linux-only unknown-original-name empty helper is explicitly unreferenced; its entire source tree contains only the definition. No corresponding Mac export/STABS or native reference was found. Intentionally omit this no-observable-behavior Linux artifact while retaining its ledger row. This is not a claim of Mac equality or exhaustive identification of anonymous code."
+  },
+  "mac:0x001c3c7e": {
+    "status": "fixed",
+    "evidence": "Complete 529-byte body 0x1c3c7e-0x1c3e8e compared. Native correction restores leading control byte 0x15 on all five fatal error strings verified directly at Mac 0x2e2308,0x2e233c,0x2e2370,0x2e23a8,0x2e23d4. All 19 initial float defaults, field offsets/types, script-name allocations, gun-zero override, file path/mode, signed length gates, 11-byte header including NUL, reads/termination/close, validation and parser callback/arguments match. Native descriptor pointer stride adapts LP64 while float offsets remain four bytes. File validity and fatal nonreturning error contract assumed, as on Mac; no unrelated malformed-file policy change."
+  },
+  "mac:0x001c45b8": {
+    "status": "equal",
+    "evidence": "All 1220 Mac bytes compared. Null attacker/radius clamp, sqrt2 query bounds,1024 entity list, ignore/damageability gates, brush AABB/nonbrush distance, strict radius/global client-ignore tests and interpolation order match. Visible and occluded trace/fraction/strict0.2-radius paths, accuracy accumulation, directions+24Z, scales, truncation and all damage arguments match. Constants decoded directly from Mach-O; actual native flags disable contraction and strict aliasing."
+  },
+  "linux:game/g_combat_mp.cpp:135:LookAtKiller": {
+    "status": "equal",
+    "evidence": "Complete inline Mac blocks0x1c4c60-0x1c4ce4,0x1c4e33-0x1c4e8e,0x1c4e97-0x1c4eae match: nonself attacker takes precedence over nonself inflictor; origin difference,vectoyaw,truncation to stats1,otherwise current yaw. Redundant pure vectoyaw call retained; no separate native function is missing."
+  },
+  "mac:0x001c4a7c": {
+    "status": "equal",
+    "evidence": "All 1079 Mac bytes 0x1c4a7c-0x1c4eb2 compared. DObj/movement gates,bgs pointer,turret owner/weapon attribution,death notice,ordered grenade RNG/constants/weapon-fuse arguments,dead movement and animation,killed callback ten arguments,spectator score selection,death orientation,viewangles,loopSound,unlink/bounds/relink,health and handler match. Existing native repairs remain correct. Cached maxclients is stable across scoreboard calls; entity/client slot lifetimes are stable across script callbacks."
   }
 }
