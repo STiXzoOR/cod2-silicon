@@ -2,8 +2,9 @@
 
 `functions.json` contains a function list for every indexed source module.
 `modules.csv` gives its four status counts. The active module is
-`game/g_combat_mp`; complete that module before moving to another.
-`game/g_active_mp` and `game/g_client_mp` are fully reconciled; their reports preserve the outstanding
+`game/g_debug_mp`; complete that module before moving to another.
+`game/g_active_mp`, `game/g_client_mp` and `game/g_combat_mp` are fully reconciled;
+their reports preserve the outstanding
 whole-project replay differences.
 
 Each row retains the Mac address/symbol and Linux source/line when available.
@@ -56,11 +57,12 @@ reliable whole-project completion date.
 
 ## Current workload and estimate
 
-After two module reconciliations, the ledger has 8,062 unchecked entries:
-7,285 assigned engine entries and 777 unassigned entries. Another 1,360 entries
-are intentional bundled-library exclusions. There are 23 equal functions and
-12 fixed functions. All 24 entries in `game/g_active_mp` and all 11 in
-`game/g_client_mp` are reconciled, with integrated results in their reports.
+After three module reconciliations, the ledger has 8,049 unchecked entries:
+7,272 assigned engine entries and 777 unassigned entries. Another 1,360 entries
+are intentional bundled-library exclusions. There is also one intentional Linux-only empty-helper omission.
+There are 33 equal functions and 14 fixed functions. All 24 entries in `game/g_active_mp` and all 11 in
+`game/g_client_mp`, plus all 13 in `game/g_combat_mp`, are reconciled, with
+integrated results in their reports.
 
 The original planning assumption of 20–40 entries per active hour still gives
 approximately **200–400 active hours**, before final cross-module runtime
@@ -85,3 +87,8 @@ The client module completed 11 entries in 0.23 elapsed hours
 fixtures, builds, review and replay. This single small module is not a
 representative sample of the remaining engine; the planning range above remains
 provisional, and elapsed throughput must not be confused with total agent hours.
+
+The combat module completed 13 entries in 0.13 elapsed hours
+(101.0 entries per elapsed hour), with two corrections and full
+batch acceptance. This extends the small-module sample but does not establish
+throughput for the remaining large state machines or unresolved identities.

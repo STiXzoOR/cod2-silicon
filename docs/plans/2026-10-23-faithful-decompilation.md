@@ -111,7 +111,9 @@ Metal U2–U7 continue in parallel under the
   completion throughput. Separate indexing ambiguity and runtime verification
   from completed function reconciliation; do not extrapolate small helpers as
   though they represented large state machines.
-- Write the session handoff before weekly usage reaches 30% remaining.
+- Continue the full reconciliation without the earlier 30%-remaining handoff
+  cutoff (user direction, 2026-11-03). Completing a small batch is not the end of
+  the requested work.
 
 ### Existing constraints
 

@@ -21,6 +21,7 @@ void *imp_level = &fixture_level;
 static dvar_t debugDamage;
 const dvar_t *g_debugDamage = &debugDamage;
 static int painCount, deathCount, damageNotifies, deathNotifies, freed, lastDamage;
+static int notifyChangesHealth, notifiedHealth;
 static const vec_t *expectedPoint;
 static gentity_t *expectedAttacker, *expectedInflictor;
 
@@ -34,7 +35,10 @@ void Scr_AddInt(int value) { lastDamage = value; }
 void Scr_Notify(gentity_t *ent, unsigned short name, unsigned int count)
 {
     assert(ent == &g_entities[0]);
-    if (name == scr_const.damage) { assert(count == 2); ++damageNotifies; }
+    if (name == scr_const.damage) {
+        assert(count == 2); ++damageNotifies;
+        if (notifyChangesHealth) ent->health = notifiedHealth;
+    }
     else if (name == scr_const.death) { assert(count == 1); ++deathNotifies; }
     else abort();
 }
@@ -82,9 +86,11 @@ static void Damage(int lethal)
     G_Damage(target, expectedInflictor, expectedAttacker, direction, point,
              10, 0, 4, (hitLocation_t)2, 9);
     assert(direction[0] == 3 && direction[1] == 4 && direction[2] == 0);
-    assert(target->health == (lethal ? -5 : 40));
-    assert(damageNotifies == 1 && deathNotifies == lethal && lastDamage == 10);
-    assert(painCount == !lethal && deathCount == lethal);
+    int finalHealth = notifyChangesHealth ? notifiedHealth : (lethal ? -5 : 40);
+    int dies = finalHealth <= 0;
+    assert(target->health == (finalHealth < -999 ? -999 : finalHealth));
+    assert(damageNotifies == 1 && deathNotifies == dies && lastDamage == 10);
+    assert(painCount == !dies && deathCount == dies);
 }
 static void ResetTrigger(int flags)
 {
@@ -153,6 +159,15 @@ int main(int argc, char **argv)
     assert(argc == 2);
     if (!strcmp(argv[1], "pain")) Damage(0);
     else if (!strcmp(argv[1], "death")) Damage(1);
+    else if (!strcmp(argv[1], "notify-kills")) {
+        notifyChangesHealth = 1; notifiedHealth = 0; Damage(0);
+    }
+    else if (!strcmp(argv[1], "notify-revives")) {
+        notifyChangesHealth = 1; notifiedHealth = 50; Damage(1);
+    }
+    else if (!strcmp(argv[1], "notify-clamps")) {
+        notifyChangesHealth = 1; notifiedHealth = -2000; Damage(0);
+    }
     else if (!strcmp(argv[1], "use8")) Use(8);
     else if (!strcmp(argv[1], "use256")) Use(256);
     else if (!strcmp(argv[1], "filters")) Filters();
