@@ -2,7 +2,9 @@
 
 `functions.json` contains a function list for every indexed source module.
 `modules.csv` gives its four status counts. The active module is
-`game/g_active_mp`; complete that module before moving to another.
+`game/g_combat_mp`; complete that module before moving to another.
+`game/g_active_mp` and `game/g_client_mp` are fully reconciled; their reports preserve the outstanding
+whole-project replay differences.
 
 Each row retains the Mac address/symbol and Linux source/line when available.
 Only unique names are paired automatically. Cross-module name pairs are
@@ -54,11 +56,11 @@ reliable whole-project completion date.
 
 ## Current workload and estimate
 
-After the first module reconciliation, the ledger has 8,073 unchecked entries:
-7,296 assigned engine entries and 777 unassigned entries. Another 1,360 entries
-are intentional bundled-library exclusions. There are 18 equal functions and
-six fixed functions. All 24 entries in `game/g_active_mp` are reconciled;
-its integrated acceptance results are recorded in its single report.
+After two module reconciliations, the ledger has 8,062 unchecked entries:
+7,285 assigned engine entries and 777 unassigned entries. Another 1,360 entries
+are intentional bundled-library exclusions. There are 23 equal functions and
+12 fixed functions. All 24 entries in `game/g_active_mp` and all 11 in
+`game/g_client_mp` are reconciled, with integrated results in their reports.
 
 The original planning assumption of 20–40 entries per active hour still gives
 approximately **200–400 active hours**, before final cross-module runtime
@@ -77,3 +79,9 @@ header candidates remain unchecked until their symbol identity is established.
 The review confirmed source-record accounting and matching CSV/JSON counts,
 not parser completeness or all function semantics. No external peer or
 five-lens cleanup was run.
+
+The client module completed 11 entries in 0.23 elapsed hours
+(47.7 entries per elapsed hour), including parallel comparison,
+fixtures, builds, review and replay. This single small module is not a
+representative sample of the remaining engine; the planning range above remains
+provisional, and elapsed throughput must not be confused with total agent hours.

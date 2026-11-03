@@ -103,13 +103,18 @@ taskpolicy -b nice -n 19 python3 tests/voice/playback_init.py --relay-contract \
 ```
 
 Repeat with the CoD2x database and a fresh output directory. `--baseline
-5fc9812` reproduces the missing spectator team bypass. The fixture follows
+596c1ef` reproduces the incorrect spectator team bypass. The fixture follows
 production `Client_SendVoiceData`, `CL_WriteVoicePacket`, `SV_VoicePacket`,
 `SV_UserVoice`, `G_BroadcastVoice`, server queue/send, `CL_VoicePacket`, Speex,
 native playback queues and `Render`. It checks byte-preserving cross-client
 relay, original local echo with the sender's entity number, ten-frame and
-199/200 ms transmit boundaries, the 299/300 ms talk timeout, spectator team
-bypass, and global/dead chat, server mute and `sendVoice` gates. ASan/UBSan
+199/200 ms transmit boundaries, the 299/300 ms talk timeout, the spectator
+team filter, intermission team bypass, free-team talkers, every session-state
+pair with dead chat off/on, and global chat, server mute and `sendVoice` gates.
+Mac 1.3 checks intermission state 3 before the team filter; unequal session
+states require one participant to be dead and dead chat to be enabled.
+The previous spectator bypass expectation was a mistaken interpretation of
+that state check. ASan/UBSan
 remain enabled. Networking, game entities, dvars and device creation are
 controlled fixture boundaries; this opens no UDP socket or game window and
 does not prove microphone capture or hardware playback.
