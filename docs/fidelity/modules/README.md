@@ -2,7 +2,7 @@
 
 `functions.json` contains a function list for every indexed source module.
 `modules.csv` gives its four status counts. The active module is
-`game/g_load_utils`; complete that module before moving to another.
+`game/g_main_mp`; complete that module before moving to another.
 `game/g_active_mp`, `game/g_client_mp` and `game/g_combat_mp` are fully reconciled;
 their reports preserve the outstanding
 whole-project replay differences.
@@ -57,10 +57,10 @@ reliable whole-project completion date.
 
 ## Current workload and estimate
 
-After six module reconciliations, the ledger has 7,960 unchecked entries:
-7,183 assigned engine entries and 777 unassigned entries. Another 1,360 entries
+After seven module reconciliations, the ledger has 7,955 unchecked entries:
+7,178 assigned engine entries and 777 unassigned entries. Another 1,360 entries
 are intentional bundled-library exclusions. There are also six intentional Linux-only helper omissions.
-There are 95 equal functions and 36 fixed functions. All 24 entries in `game/g_active_mp` and all 11 in
+There are 98 equal functions and 38 fixed functions. All 24 entries in `game/g_active_mp` and all 11 in
 `game/g_client_mp`, plus all 13 in `game/g_combat_mp`, are reconciled, with
 integrated results in their reports.
 
@@ -111,3 +111,8 @@ frame 499, documented with final entity evidence in the module report. Original
 parity differences remain. The growing sample still mixes small helpers and
 large inlined functions; indexing ambiguity and final runtime acceptance remain
 outside a reliable calendar estimate.
+
+All five `game/g_load_utils` entries are reconciled: three equal and two fixed.
+Only fatal-error diagnostics changed; both-mode fixtures/builds/ABI/legacy checks
+and one review pass. The preceding item replay remains the explicitly historical
+runtime baseline, with no duplicate replay for unchanged successful behavior.
