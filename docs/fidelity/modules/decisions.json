@@ -546,5 +546,25 @@
   "mac:0x001b2944": {
     "status": "equal",
     "evidence": "Complete22-byte Mac wrapper0x1b2944-0x1b2959 writes ent.active byte1 then tailcalls Touch_Item with all three original arguments. Native matches; callee corrections tracked separately."
+  },
+  "linux:game/g_load_utils.cpp:9:G_AddSpawnVarToken": {
+    "status": "fixed",
+    "evidence": "Complete Linux helper maps to both inline key/value blocks in Mac G_ParseSpawnVars0x1cc44e-0x1cc4bd and0x1cc4ca-0x1cc526. Length+NUL, signed2048 capacity check, append copy, increment and pointer store match; native diagnostic now matches binary0x2e2bcc: leading0x15 and G_AddSpawnVarToken: MAX_SPAWN_VARS. Separate key/value overflow regressions fail baseline and pass bothmodes."
+  },
+  "mac:0x001cc26a": {
+    "status": "equal",
+    "evidence": "All170 Mac bytes0x1cc26a-0x1cc313 compared. strlen+1, unsigned16384 limit and exact0x15 error, byte loop includingNUL, backslash-n conversion and other escape consumption, thenSL_GetString(user0) match. Original trailing unpaired backslash can suppress terminator; no equality claim for resulting undefined read. Normal terminated transformed strings and bounded lengths are covered."
+  },
+  "mac:0x001cc374": {
+    "status": "fixed",
+    "evidence": "All691 Mac bytes0x1cc374-0x1cc626 compared. Initial valid/count/char reset, empty-token return, opening-firstchar check,1024-byte key/value token reads, brace/EOF/64-pair guards, keythenvalue append/count and validflag success match. Restores exact five diagnostic literals at0x2e2b18/48/78/a8/cc, including0x15, EOF without closing brace and MAX_SPAWN_VARS text. Seven error regressions fail baseline/pass bothmodes; successful parse/lookup controls pass. FatalCom_Error contract and validbounded token provider assumed."
+  },
+  "mac:0x001cc20c": {
+    "status": "equal",
+    "evidence": "All94 Mac bytes0x1cc20c-0x1cc269 compared. Ascending key/value pair scan uses case-sensitive strcmp, firstmatch sets output/returns1; no match writes default/returns0. Native typed pointer stride adapts LP64. Count stable across purestrcmp; valid parser-owned pairs. Mac release omits Linux debug assertion, asnative."
+  },
+  "mac:0x001cc314": {
+    "status": "equal",
+    "evidence": "All95 Mac bytes0x1cc314-0x1cc372 compared. Select current oneofeight32byte buffers, advanceindex modulo8, truncate three floatcomponents towardzero, format exact (%i %i %i) with size32,returnbuffer. Native matches finite int-representable vectors; control verifies truncation,8 retainedoutputs andwrap reuse."
   }
 }

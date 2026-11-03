@@ -88,35 +88,59 @@ qboolean G_ParseSpawnVars(SpawnVar *spawnVar)
         return 0;
 
     if (com_token[0] != '{') {
+#if defined(COD2_X64)
+        Com_Error(1, "\x15" "G_ParseSpawnVars: found %s when expecting {", com_token);
+#else
         Com_Error(1, "G_ParseSpawnVars: found %s when expecting {", com_token);
+#endif
     }
 
     for (;;) {
 
         if (!SV_GetEntityToken(keyname, 0x400)) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15" "G_ParseSpawnVars: EOF without closing brace");
+#else
             Com_Error(1, "G_GetEntityToken: unexpected end of entity string");
+#endif
         }
 
         if (keyname[0] == '}')
             break;
 
         if (!SV_GetEntityToken(com_token, 0x400)) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15" "G_ParseSpawnVars: EOF without closing brace");
+#else
             Com_Error(1, "G_GetEntityToken: unexpected end of entity string");
+#endif
         }
 
         if (com_token[0] == '}') {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15" "G_ParseSpawnVars: closing brace without data");
+#else
             Com_Error(1, "G_ParseSpawnVars: closing brace without data");
+#endif
         }
 
         if (spawnVar->numSpawnVars == 64) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15" "G_ParseSpawnVars: MAX_SPAWN_VARS");
+#else
             Com_Error(1, "G_ParseSpawnVars: MAX_SPAWN_VARS");
+#endif
         }
 
         idx = spawnVar->numSpawnVars;
 
         l = strlen(keyname);
         if (spawnVar->numSpawnVarChars + l + 1 > 2048) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15" "G_AddSpawnVarToken: MAX_SPAWN_VARS");
+#else
             Com_Error(1, "G_AddSpawnVarToken: spawn vars too long");
+#endif
         }
         dest = spawnVar->spawnVarChars + spawnVar->numSpawnVarChars;
         memcpy(dest, keyname, l + 1);
@@ -125,7 +149,11 @@ qboolean G_ParseSpawnVars(SpawnVar *spawnVar)
 
         l = strlen(com_token);
         if (spawnVar->numSpawnVarChars + l + 1 > 2048) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15" "G_AddSpawnVarToken: MAX_SPAWN_VARS");
+#else
             Com_Error(1, "G_AddSpawnVarToken: spawn vars too long");
+#endif
         }
         dest = spawnVar->spawnVarChars + spawnVar->numSpawnVarChars;
         memcpy(dest, com_token, l + 1);
