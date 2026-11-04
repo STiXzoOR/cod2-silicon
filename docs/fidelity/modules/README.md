@@ -57,12 +57,12 @@ reliable whole-project completion date.
 
 ## Current workload and estimate
 
-All of `game/` is now reconciled. After twenty-seven module reconciliations the ledger has 7,291 unchecked entries:
-6,514 assigned engine entries and 777 unassigned entries. Another 1,360 entries
+All of `game/` is now reconciled. After thirty-one module reconciliations the ledger has 7,231 unchecked entries:
+6,454 assigned engine entries and 777 unassigned entries. Another 1,360 entries
 are intentional bundled-library exclusions. There are also twenty-four intentional Linux-only helper omissions.
 Nine more intentional differences cover native dedicated debug rendering, CoD2x level-exit behavior,
 five script error or load paths and two further native choices recorded in their reports.
-There are 656 equal functions and 117 fixed functions. All 24 entries in `game/g_active_mp` and all 11 in
+There are 712 equal functions and 121 fixed functions. All 24 entries in `game/g_active_mp` and all 11 in
 `game/g_client_mp`, plus all 13 in `game/g_combat_mp`, are reconciled, with
 integrated results in their reports.
 
@@ -164,3 +164,6 @@ Reconciling a module does not make it verified at run time: most fixes in this b
 `bgame/bg_slidemove` and `bgame/bg_jump` are reconciled: 16 equal and two fixed. In `bgame/bg_pmove`, `PM_ClipVelocity`,
 `PM_Accelerate`, `PM_Friction` and the walking path in `Pmove` have been compared and match; the rest of that module
 is still unchecked. Both 2,000-frame replays match the trace from the previous commit, so that recording reaches neither correction. Original parity is unchanged: 3,781 `origin` and 1,257 `velocity` differences, first at frame 102.
+
+`qcommon/cm_mesh`, `qcommon/cm_test`, `qcommon/cm_tracebox` and `qcommon/cm_trace` are reconciled: 56 equal and four
+fixed. Both 2,000-frame replays match the trace from the previous commit, so that recording reaches none of these corrections. Against the `original` recording, the counts stay at 3,781 `origin` and 1,257 `velocity` differences, first at frame 102. That recording was made by the Linux dedicated server in the oracle container, not by the Mac binary, and its first differences are platform differences rather than defects. A model of frame 102 using x87 80-bit arithmetic reproduces the recording bit for bit on both clients, and a model using the SSE steps in the Mac code reproduces the native trace bit for bit. At frame 116, Linux `Sys_SnapVector` uses `rint` where Mac 0xaed28 truncates. Native follows Mac, and the velocity differs by exactly 1.0 on those axes.
