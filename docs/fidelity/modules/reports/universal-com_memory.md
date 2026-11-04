@@ -2,7 +2,7 @@
 
 Updated 2026-11-04.
 
-**57/64 reconciled: 36 equal, 11 fixed, 10 intentional, 7 unchecked.** Mac 1.3 is the authority. Linux was read only for helper names and intent. All changes are native-only; removing `COD2_X64` with `unifdef` produces byte-for-byte identical source before and after this change.
+**57/64 reconciled: 36 equal, 11 fixed, 10 intentional, 7 unchecked.** Mac 1.3 is the authority. Linux was read only for helper names and intent. Behavior changes are native-only. Legacy preprocessed tokens, including all seven actual OOM line-number arguments, are identical in five OFF configurations.
 
 ## Storage and lifetime
 
@@ -25,6 +25,8 @@ The optional guard allocator returned directly from `Z_MallocInternal` and `Z_Ma
 The arm64 Release `cod2_macos_ded` target builds with two low-priority jobs. The unchanged macOS diagnostics fixture passes for zeroed guarded allocation, guarded/ordinary freeing, stack capture and hunk-canary repair. The unchanged patch-1.3 storage fixture passes for the complete large-local buffer and position rollback. Triage, constants checks and `git diff --check` ran. No new tests, full CI or replays were run.
 
 Allocation-failure handling and the message-marker corrections are compiled and reviewed, not exercised. Diagnostics exercises successful guarded allocation, not guard-allocation failure.
+
+Independent review found that adding conditional source lines shifted the legacy `__LINE__` diagnostics even though the selected legacy statements were unchanged. Three OFF-only line-map resets preserve the seven original arguments (213, 225, 236, 249, 263, 294 and 368). The follow-up preprocessing comparison leaves `__LINE__` active; the ordinary guard checker substitutes that macro and cannot establish this detail. Native dedicated rebuilding also passed after the correction.
 
 Seven Linux-only rows remain unchecked: `Hunk_Shutdown`, `Hunk_GetLowPermanent`, `Hunk_HideTempMemoryHigh`, `Hunk_ShowTempMemoryHigh`, `Z_FreeRaw`, `Z_VirtualCommit` and `Z_VirtualDecommit`. No code body or specific inline Mac caller was established for them. The high mark names have only absolute-zero `.eh` symbols. The three raw/virtual helpers are explicitly anonymous, unreferenced claims in Linux; in particular, Linux's one-argument calloc commit and memset decommit cannot be equated with the Mac existing-pointer commit and no-op decommit exports. No native bodies were invented from those claims.
 
