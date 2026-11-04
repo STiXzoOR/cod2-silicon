@@ -78,6 +78,10 @@ extern void CL_LookupColor(int colorIndex, float *color);
 extern void SCR_DrawSmallStringExt(int x, int y, const char *str, const float *color);
 extern void SCR_DrawConsoleString(int x, int y, const short int *text, int len, const float *color);
 extern int SEH_PrintStrlen(const char *str);
+#if defined(COD2_X64)
+extern qboolean Language_IsAsian(void);
+extern unsigned int SEH_ReadCharFromString(const char **text, qboolean *trailingPunctuation);
+#endif
 extern const char *getBuildNumber(void);
 extern int Sys_IsMainThread(void);
 extern int Sys_Milliseconds(void);
@@ -282,6 +286,67 @@ void Con_Bottom(void)
     con.display = con.currentLine;
 }
 
+#if defined(COD2_X64)
+static void Con_Dump_f(void)
+{
+    int f;
+    char buffer[0x400];
+    int lineIndex, linewidth, i, trimLen;
+    int haveOutput = 0;
+    short *linePtr;
+
+    if (Cmd_Argc() != 2) {
+        Com_Printf("usage: condump <filename>\n");
+        return;
+    }
+
+    Com_Printf("Dumped console text to %s.\n", Cmd_Argv(1));
+
+    f = FS_FOpenFileWrite(Cmd_Argv(1));
+    if (!f) {
+        Com_Printf("ERROR: couldn't open.\n");
+        return;
+    }
+
+    linewidth = con.linewidth;
+    for (lineIndex = con.currentLine - con.totallines + 1; lineIndex <= con.currentLine; lineIndex++) {
+
+        linePtr = &con.textBuffer[(lineIndex % con.totallines) * linewidth];
+
+        if (!haveOutput) {
+            if (linewidth <= 0) {
+                if (linewidth == 0)
+                    continue;
+            } else {
+                int allSpaces = 1;
+                for (i = 0; i < linewidth; i++) {
+                    if ((linePtr[i] & 0xFF) != 0x20) {
+                        allSpaces = 0;
+                        break;
+                    }
+                }
+                if (allSpaces)
+                    continue;
+            }
+            haveOutput = 1;
+        }
+
+        for (i = 0; i < linewidth; i++) {
+            buffer[i] = (char)(linePtr[i] & 0xFF);
+        }
+
+        trimLen = linewidth - 1;
+        while (trimLen >= 0 && buffer[trimLen] == ' ')
+            trimLen--;
+        buffer[trimLen + 1] = '\0';
+
+        I_strncat(buffer, 0x400, "\n");
+        FS_Write(buffer, strlen(buffer), f);
+    }
+
+    FS_FCloseFile(f);
+}
+#else
 static void Con_Dump_f(void)
 {
     int f;
@@ -337,6 +402,7 @@ static void Con_Dump_f(void)
 
     FS_FCloseFile(f);
 }
+#endif
 
 void Con_Shutdown(void)
 {
@@ -597,6 +663,90 @@ void Con_ToggleConsoleOutput(void)
     con.outputVisible = (con.outputVisible == 0) ? 1 : 0;
 }
 
+#if defined(COD2_X64)
+static BM_NOINLINE void Con_DrawOuputWindow(void)
+{
+    float x;
+    float y;
+    float width;
+    float height;
+    float innerX;
+    float innerY;
+    float innerHeight;
+    float scrollBarX;
+    float scrollBarWidth;
+    float textHeight;
+    float textY;
+    float sliderY;
+    float sliderRange;
+    float sliderFrac;
+    int rowCount;
+    int row;
+    int rowIndex;
+    vec4_t textColor;
+    const char *version;
+
+    x = con.screenMin[0];
+    y = con.screenMin[1] + 32.0f;
+    width = con.screenMax[0] - x;
+    height = con.screenMax[1] - con.screenMin[1] - 32.0f;
+
+    ConDraw_Box(x, y, width, height, con_outputWindowColor->current.vector);
+
+    innerX = x + 6.0f;
+    innerY = y + 6.0f;
+    innerHeight = height - 12.0f;
+
+#if defined(COD2_X64) && COD2_X64 && defined(__APPLE__) && (defined(__aarch64__) || defined(__arm64__))
+#if defined(COD2_CODX) && COD2_CODX
+    version = va("CoD2 Silicon %s · CoD2x 1.4.6.8 · macOS arm64", COD2_RELEASE_VERSION);
+#else
+    version = va("Build %s %s", getBuildNumber(), "macOS arm64");
+#endif
+#else
+    version = va("Build %s %s", getBuildNumber(), "MacOSXS-i386");
+#endif
+    SCR_DrawSmallStringExt((int)innerX, (int)(innerY + (innerHeight - 16.0f)), version, con_versionColor);
+
+    scrollBarWidth = 10.0f;
+    scrollBarX = (width - 12.0f) + innerX - scrollBarWidth;
+    ConDraw_Box(scrollBarX, innerY, scrollBarWidth, innerHeight, con_outputBarColor->current.vector);
+
+    sliderFrac = 1.0f - ((float)(con.currentLine - con.display) / (float)(con.totallines - 1));
+
+    sliderRange = ((innerY + innerHeight) - scrollBarWidth) - innerY;
+    sliderY = innerY + sliderRange * sliderFrac;
+    ConDraw_Box(scrollBarX, sliderY, scrollBarWidth, scrollBarWidth, con_outputSliderColor->current.vector);
+
+    textHeight = innerHeight - 28.0f;
+    rowCount = (int)(textHeight * 0.0625f);
+    row = con.display;
+    if (con.lineOffset < 1)
+        row--;
+
+    CL_LookupColor('7', textColor);
+    textY = innerY + textHeight;
+
+    for (rowIndex = 0; rowIndex < rowCount && rowIndex != row + 1; rowIndex++) {
+        int textRow = row - rowIndex;
+        int wrappedRow;
+        const short *line;
+
+        if (textRow < 0)
+            break;
+        if (con.currentLine - textRow >= con.totallines)
+            continue;
+
+        textY -= 16.0f;
+        wrappedRow = textRow % con.totallines;
+        if (wrappedRow < 0)
+            wrappedRow += con.totallines;
+
+        line = &con.textBuffer[wrappedRow * con.linewidth];
+        SCR_DrawConsoleString((int)innerX, (int)textY, line, con.linewidth, textColor);
+    }
+}
+#else
 static BM_NOINLINE void Con_DrawOuputWindow(void)
 {
     float x;
@@ -685,6 +835,7 @@ static BM_NOINLINE void Con_DrawOuputWindow(void)
         SCR_DrawConsoleString((int)innerX, (int)textY, line, con.linewidth, textColor);
     }
 }
+#endif
 
 void Con_PageUp(void)
 {
@@ -910,6 +1061,133 @@ static void Con_DrawMessageWindowBottomUp(MessageWindow *msgwnd, int x, int y, i
     }
 }
 
+#if defined(COD2_X64)
+static void Con_DrawMessageWindow(MessageWindow *msgwnd, int x, int y, int charHeight, int horzAlign, int vertAlign, float alpha, float msgwndScale, msgwnd_mode_t mode)
+{
+    clientActive_t *cl = *(clientActive_t **)imp_cl;
+    int lineIndex;
+    int groupRemaining = 0;
+    int groupY = 0;
+    int v;
+
+    if (!Con_MessageWindowVisible())
+        return;
+    if (mode != MWM_TOPDOWN && mode != MWM_TOPDOWN_REVERSED &&
+        mode != MWM_BOTTOMUP && mode != MWM_BOTTOMUP_CENTERED)
+        return;
+
+    if (mode == MWM_BOTTOMUP || mode == MWM_BOTTOMUP_CENTERED) {
+        qboolean centered = mode == MWM_BOTTOMUP_CENTERED;
+        charHeight += centered ? 4 : 0;
+        for (lineIndex = msgwnd->current_line;
+             lineIndex < msgwnd->current_line + msgwnd->count; lineIndex++) {
+            MessageLine *line = &msgwnd->lines[lineIndex % msgwnd->count];
+            int elapsed;
+            if (!line->startTime)
+                continue;
+            if (line->startTime > cl->serverTime) {
+                line->startTime = 0;
+                continue;
+            }
+            elapsed = cl->serverTime - line->startTime;
+            if (elapsed < msgwnd->scrolltime) {
+                float fraction = 1.0f - (float)elapsed / (float)msgwnd->scrolltime;
+                y += (int)floorf(fraction * (float)charHeight + 0.5f);
+            }
+        }
+        for (lineIndex = msgwnd->current_line + msgwnd->count - 1;
+             lineIndex >= msgwnd->current_line; lineIndex--) {
+            MessageLine *line = &msgwnd->lines[lineIndex % msgwnd->count];
+            int elapsed;
+            int remaining;
+            float drawAlpha;
+            if (!line->startTime)
+                continue;
+            if (cl->serverTime >= line->endTime) {
+                line->startTime = 0;
+                continue;
+            }
+            elapsed = cl->serverTime - line->startTime;
+            remaining = line->endTime - cl->serverTime;
+            if (elapsed < msgwnd->fadein)
+                drawAlpha = ((float)elapsed * alpha) / (float)msgwnd->fadein;
+            else if (remaining < msgwnd->fadeout)
+                drawAlpha = ((float)remaining * alpha) / (float)msgwnd->fadeout;
+            else
+                drawAlpha = alpha;
+            y -= charHeight;
+            Con_DrawStringOnHUD(x, y, charHeight, horzAlign, vertAlign,
+                                line->textBuffer, 78, drawAlpha, msgwndScale, centered);
+        }
+        return;
+    }
+
+    v = mode == MWM_TOPDOWN_REVERSED ? y - charHeight : y;
+    for (lineIndex = msgwnd->current_line;
+         lineIndex < msgwnd->current_line + msgwnd->count;) {
+        MessageLine *line = &msgwnd->lines[lineIndex % msgwnd->count];
+        int serverTime;
+        int elapsed;
+        int remaining;
+        float drawAlpha;
+        if (!line->startTime) {
+            lineIndex++;
+            continue;
+        }
+        serverTime = cl->serverTime;
+        if (line->startTime > serverTime) {
+            line->startTime = 0;
+            lineIndex++;
+            continue;
+        }
+        if (serverTime > line->endTime) {
+            remaining = msgwnd->scrolltime - (serverTime - line->endTime);
+            if (remaining > 0) {
+                int offset = (int)floorf(((float)remaining / (float)msgwnd->scrolltime) * (float)charHeight + 0.5f);
+                v += mode == MWM_TOPDOWN_REVERSED ? -offset : offset;
+            }
+            lineIndex++;
+            continue;
+        }
+        elapsed = serverTime - line->startTime;
+        remaining = line->endTime - serverTime;
+        if (elapsed < msgwnd->fadein)
+            drawAlpha = ((float)elapsed / (float)msgwnd->fadein) * alpha;
+        else if (remaining < msgwnd->fadeout)
+            drawAlpha = ((float)remaining / (float)msgwnd->fadeout) * alpha;
+        else
+            drawAlpha = alpha;
+
+        lineIndex++;
+        if (mode == MWM_TOPDOWN_REVERSED) {
+            if (groupRemaining) {
+                v += 2 * charHeight;
+            } else {
+                int endLine = msgwnd->current_line + msgwnd->count;
+                if (lineIndex < endLine &&
+                    msgwnd->lines[lineIndex % msgwnd->count].startTime == line->startTime) {
+                    do {
+                        groupRemaining++;
+                    } while (groupRemaining != endLine - lineIndex &&
+                             msgwnd->lines[(lineIndex + groupRemaining) % msgwnd->count].startTime == line->startTime);
+                    v -= charHeight * groupRemaining;
+                    groupRemaining++;
+                    groupY = v;
+                }
+            }
+        }
+        Con_DrawStringOnHUD(x, v, charHeight, horzAlign, vertAlign,
+                            line->textBuffer, 78, drawAlpha, msgwndScale, 0);
+        if (mode == MWM_TOPDOWN_REVERSED) {
+            if (groupRemaining && !--groupRemaining)
+                v = groupY;
+            v -= charHeight;
+        } else {
+            v += charHeight;
+        }
+    }
+}
+#else
 static void Con_DrawMessageWindow(MessageWindow *msgwnd, int x, int y, int charHeight, int horzAlign, int vertAlign, float alpha, float msgwndScale, msgwnd_mode_t mode)
 {
     if (!Con_MessageWindowVisible())
@@ -932,6 +1210,7 @@ static void Con_DrawMessageWindow(MessageWindow *msgwnd, int x, int y, int charH
         break;
     }
 }
+#endif
 
 void Con_DrawSubtitles(int xPos, int yPos, int charHeight, float alpha, msgwnd_mode_t mode)
 {
@@ -1203,6 +1482,140 @@ static void Con_OneTimeInit(void)
     con.initialized = 1;
 }
 
+#if defined(COD2_X64)
+static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int duration, int linewidth, int color)
+{
+    const char *buf = txt;
+    int clamp = (type == PMSG_CONSOLE || type == PMSG_LOGFILE || con.linewidth < 78) ? con.linewidth : 78;
+    int targetLineWidth;
+    int lineBroken = 0;
+
+    if (linewidth <= 0 || clamp < linewidth)
+        linewidth = clamp;
+    if (con.prevType != type && con.lineOffset > 0)
+        Con_Linefeed(con.prevType, duration);
+
+    if (Language_IsAsian() && (type == PMSG_GAME || type == PMSG_BOLDGAME || type == PMSG_SUBTITLE)) {
+        float fontScale = type == PMSG_SUBTITLE ? (float)(*(dvar_t **)imp_cg_subtitleCharHeight)->current.integer / 48.0f : 0.25f;
+        FontHandle font = UI_GetFontHandle(type == PMSG_BOLDGAME ? 4 : 0, fontScale);
+        float normalizedScale = re.NormalizedTextScale(font, fontScale);
+        float maxWidth = (float)linewidth * 6.5f;
+        int pixelWidth = 0;
+        while (*buf) {
+            const char *word = buf;
+            unsigned int ch = SEH_ReadCharFromString(&word, NULL);
+            int charWidth;
+            if (ch == '^' && word && *word != '^' && (signed char)*word > '/' && (signed char)*word <= '9') {
+                color = (unsigned char)ColorIndex((unsigned char)*word);
+                buf = word + 1;
+                continue;
+            }
+            word = buf;
+            {
+                int wordChars = con.lineOffset;
+                int wordWidth = pixelWidth;
+                do {
+                    int width = re.TextWidth(word, 1, font);
+                    ch = SEH_ReadCharFromString(&word, NULL);
+                    if ((int)ch <= ' ')
+                        break;
+                    wordChars++;
+                    wordWidth += width;
+                    if (wordChars > con.linewidth || (float)wordWidth * normalizedScale > maxWidth) {
+                        Con_Linefeed(type, duration);
+                        lineBroken = 1;
+                        pixelWidth = 0;
+                        break;
+                    }
+                } while (!Language_IsAsian());
+            }
+            charWidth = re.TextWidth(buf, 1, font);
+            ch = SEH_ReadCharFromString(&buf, NULL);
+            if (ch == '\n') {
+                Con_Linefeed(type, duration);
+                pixelWidth = 0;
+                continue;
+            }
+            if (ch == '\r') {
+                con.lineOffset = 0;
+                pixelWidth = 0;
+                continue;
+            }
+            if (!con.lineOffset && ch == ' ' && lineBroken)
+                continue;
+            if (ch > 255) {
+                if (con.lineOffset + 1 >= con.linewidth) {
+                    Con_Linefeed(type, duration);
+                    lineBroken = 1;
+                    pixelWidth = 0;
+                }
+                Con_WriteChar(color, ch >> 8);
+                ch &= 255;
+            }
+            Con_WriteChar(color, ch);
+            pixelWidth += charWidth;
+            if (con.lineOffset >= con.linewidth) {
+                Con_Linefeed(type, duration);
+                lineBroken = 1;
+                pixelWidth = 0;
+            }
+        }
+    } else {
+        targetLineWidth = linewidth;
+        if (type == PMSG_GAME || type == PMSG_BOLDGAME) {
+            int printLen = SEH_PrintStrlen(txt);
+            if (printLen > linewidth) {
+                int lines = (int)ceilf((float)printLen / (float)linewidth);
+                targetLineWidth = (int)((float)printLen / (float)lines);
+            }
+        }
+        while (*buf) {
+            unsigned char c = (unsigned char)*buf;
+            int wordLen = 0;
+            if (c == '^' && buf[1] && buf[1] != '^' && (unsigned char)buf[1] > '/' && (unsigned char)buf[1] <= '9') {
+                color = (unsigned char)ColorIndex((unsigned char)buf[1]);
+                buf += 2;
+                continue;
+            }
+            if (linewidth > 0 && c > ' ') {
+                do {
+                    wordLen++;
+                    if (wordLen == linewidth)
+                        break;
+                } while ((unsigned char)buf[wordLen] > ' ');
+            }
+            if (linewidth != 0 && wordLen != linewidth && con.lineOffset + wordLen > linewidth) {
+                Con_Linefeed(type, duration);
+                lineBroken = 1;
+            }
+            buf++;
+            if (c == '\n') {
+                Con_Linefeed(type, duration);
+                continue;
+            }
+            if (c == '\r') {
+                con.lineOffset = 0;
+                continue;
+            }
+            if (!con.lineOffset && c == ' ' && lineBroken)
+                continue;
+            Con_WriteChar(color, c);
+            if (con.lineOffset >= linewidth || (con.lineOffset >= targetLineWidth && c == ' ')) {
+                Con_Linefeed(type, duration);
+                lineBroken = 1;
+            }
+        }
+    }
+    if (con.lineOffset > 0) {
+        if (type != PMSG_CONSOLE)
+            Con_Linefeed(type, duration);
+        else if (con.currentLine >= 0)
+            Con_UpdateMessageWindowLine(&con.messageBuffer->minicon, 0, duration);
+    }
+    con.prevType = type;
+    return color;
+}
+#else
 static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int duration, int linewidth, int color)
 {
     const char *buf;
@@ -1305,6 +1718,7 @@ static int CL_ConsolePrint_AddLine(print_msg_type_t type, const char *txt, int d
     con.prevType = type;
     return color;
 }
+#endif
 
 void CL_ConsolePrint(print_msg_type_t type, const char *txt, int duration, int linewidth)
 {
@@ -1403,6 +1817,20 @@ static inline __attribute__((always_inline)) void ConDrawInput_NextLine(void)
     conDrawInputGlob.x = conDrawInputGlob.leftX;
 }
 
+#if defined(COD2_X64)
+static void ConDrawInput_DrawHintBox(int lineCount, float width)
+{
+    float x = conDrawInputGlob.x - 6.0f;
+    float y = conDrawInputGlob.y - 6.0f;
+    float w = (con.screenMax[0] - con.screenMin[0]) - (x - con.screenMin[0]);
+    float h = (float)lineCount * conDrawInputGlob.fontHeight + 12.0f;
+
+    if (width > 0.0f && width + 12.0f < w)
+        w = width + 12.0f;
+
+    ConDraw_Box(x, y, w, h, con_inputHintBoxColor->current.vector);
+}
+#else
 static void ConDrawInput_DrawHintBox(int lineCount, float width)
 {
     float x = conDrawInputGlob.x - 6.0f;
@@ -1415,7 +1843,88 @@ static void ConDrawInput_DrawHintBox(int lineCount, float width)
 
     ConDraw_Box(x, y, w, h, con_inputHintBoxColor->current.vector);
 }
+#endif
 
+#if defined(COD2_X64)
+static void ConDrawInput_AutoCompleteArg(const char **strings, int stringCount)
+{
+    FontHandle font = cls.consoleFont;
+    const char *prefix = Cmd_Argv(1);
+    char matchBuffer[1024];
+    const char *matches[16];
+    int matchCount = 0;
+    int bufferUsed = 0;
+    int matchLenMax = 0;
+    int prefixLen;
+    int stringIndex;
+    const char *input;
+    const char *argument;
+    float boxX;
+    float boxY;
+
+    if (!strings || stringCount <= 0 || !prefix)
+        return;
+
+    prefixLen = strlen(prefix);
+
+    for (stringIndex = 0; stringIndex < stringCount; stringIndex++) {
+        const char *candidate = strings[stringIndex];
+        char *match;
+        int matchLen;
+        int width;
+
+        if (!candidate || I_strnicmp(prefix, candidate, prefixLen) != 0)
+            continue;
+        if (matchCount == 16)
+            return;
+
+        if ((size_t)bufferUsed + strlen(candidate) > sizeof(matchBuffer) - 1)
+            return;
+
+        match = &matchBuffer[bufferUsed];
+        Com_StripExtension(candidate, match);
+        matchLen = strlen(match) + 1;
+        if (bufferUsed + matchLen > (int)sizeof(matchBuffer))
+            return;
+
+        matches[matchCount++] = match;
+        bufferUsed += matchLen;
+
+        width = re.TextWidth(match, 0, font);
+        if (width > matchLenMax)
+            matchLenMax = width;
+    }
+
+    if (!matchCount)
+        return;
+
+    qsort(matches, matchCount, sizeof(matches[0]), ConDrawInput_CompareStrings);
+
+    input = ((field_t *)imp_g_consoleField)->buffer;
+    argument = input;
+    while (isPunctChar((signed char)*argument))
+        argument++;
+    /* Cmd_Argc()==2 guarantees the separator scanned here exists. */
+    while (!isPunctChar((signed char)*argument))
+        argument++;
+    while (isPunctChar((signed char)*argument))
+        argument++;
+
+    boxX = conDrawInputGlob.leftX + (float)re.TextWidth(input, (int)(argument - input), font) - 6.0f;
+    boxY = con.screenMin[1] + conDrawInputGlob.fontHeight + 6.0f;
+    ConDraw_Box(boxX, boxY, (float)matchLenMax + 12.0f,
+                conDrawInputGlob.fontHeight * (float)matchCount + 12.0f,
+                con_inputHintBoxColor->current.vector);
+    conDrawInputGlob.x = boxX + 6.0f;
+    conDrawInputGlob.y = boxY + 6.0f;
+    conDrawInputGlob.leftX = conDrawInputGlob.x;
+
+    for (stringIndex = 0; stringIndex < matchCount; stringIndex++) {
+        ConDrawInput_DrawText(matches[stringIndex], 0x7fffffff, con_inputDvarInfoColor);
+        ConDrawInput_NextLine();
+    }
+}
+#else
 static void ConDrawInput_AutoCompleteArg(const char **strings, int stringCount)
 {
     FontHandle font = cls.consoleFont;
@@ -1477,6 +1986,7 @@ static void ConDrawInput_AutoCompleteArg(const char **strings, int stringCount)
 
     conDrawInputGlob.leftX = savedX;
 }
+#endif
 
 static void ConDrawInput_CmdMatch(const char *str)
 {
@@ -1576,6 +2086,87 @@ static void ConDrawInput_DetailedCmdMatch(const char *str)
     }
 }
 
+#if defined(COD2_X64)
+static BM_NOINLINE void Con_DrawInput(void)
+{
+    clientActive_t *cl = *(clientActive_t **)imp_cl;
+    field_t *consoleField = (field_t *)imp_g_consoleField;
+    FontHandle font;
+    const char *prompt;
+    const char *cmd;
+    int promptWidth;
+    int matchCount;
+
+    if (!(cl->keyCatchers & 1))
+        return;
+    if (!Sys_IsMainThread())
+        return;
+
+#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+    prompt = va("%s: %s> ", "CoD2x MP", "1.4.6.8");
+#else
+    prompt = va("%s: %s> ", "CoD2 MP", COD2_VERSION_SHORT);
+#endif
+    font = cls.consoleFont;
+    conDrawInputGlob.fontHeight = (float)re.TextHeight(font);
+    if (conDrawInputGlob.fontHeight <= 0.0f)
+        conDrawInputGlob.fontHeight = 16.0f;
+
+    conDrawInputGlob.x = con.screenMin[0] + 6.0f;
+    conDrawInputGlob.y = con.screenMin[1] + 6.0f;
+    conDrawInputGlob.leftX = conDrawInputGlob.x;
+
+    ConDraw_Box(con.screenMin[0], con.screenMin[1],
+                con.screenMax[0] - con.screenMin[0], conDrawInputGlob.fontHeight + 12.0f,
+                con_inputBoxColor->current.vector);
+
+    ConDrawInput_DrawText(prompt, 0x7fffffff, con_versionColor);
+
+    promptWidth = re.TextWidth(prompt, 0, font);
+    conDrawInputGlob.x += (float)promptWidth;
+    conDrawInputGlob.leftX = conDrawInputGlob.x;
+
+    consoleField->widthInPixels = (int)(con.screenMax[0] - 6.0f - conDrawInputGlob.x);
+    Field_Draw(consoleField, (int)conDrawInputGlob.x, (int)conDrawInputGlob.y, 5, 5, 1);
+
+    ConDrawInput_NextLine();
+
+    cmd = Con_TokenizeInput();
+    if (!cmd || !*cmd)
+        return;
+
+    conDrawInputGlob.inputText = cmd;
+    conDrawInputGlob.inputTextLen = strlen(cmd);
+    conDrawInputGlob.hasExactMatch = 0;
+    conDrawInputGlob.matchCount = 0;
+
+    Dvar_ForEach(ConDrawInput_IncrMatchCounter);
+    Cmd_ForEach(ConDrawInput_IncrMatchCounter);
+
+    matchCount = conDrawInputGlob.matchCount;
+    if (!matchCount)
+        return;
+
+    ConDrawInput_NextLine();
+
+    if (matchCount > COD2X_CON_MATCHES) {
+        const char *tooMany = va("%i matches (too many to show)", matchCount);
+        ConDrawInput_DrawHintBox(1, 0.0f);
+        ConDrawInput_DrawText(tooMany, 0x7fffffff, con_inputDvarMatchColor);
+        return;
+    }
+
+    if (matchCount == 1 || (conDrawInputGlob.hasExactMatch && Con_AnySpaceAfterCommand())) {
+        Dvar_ForEach(ConDrawInput_DetailedDvarMatch);
+        Cmd_ForEach(ConDrawInput_DetailedCmdMatch);
+        return;
+    }
+
+    ConDrawInput_DrawHintBox(matchCount, 0.0f);
+    Dvar_ForEach(ConDrawInput_DvarMatch);
+    Cmd_ForEach(ConDrawInput_CmdMatch);
+}
+#else
 static BM_NOINLINE void Con_DrawInput(void)
 {
     clientActive_t *cl = *(clientActive_t **)imp_cl;
@@ -1653,6 +2244,7 @@ static BM_NOINLINE void Con_DrawInput(void)
     Dvar_ForEach(ConDrawInput_DvarMatch);
     Cmd_ForEach(ConDrawInput_CmdMatch);
 }
+#endif
 
 void Con_DrawConsole(void)
 {
@@ -1709,12 +2301,22 @@ static void CL_WriteConsoleEncodedByte(int info, int value)
     if (con.linewidth <= 0 || con.totallines <= 0)
         return;
 
+#if !defined(COD2_X64)
     if (con.lineOffset >= con.linewidth)
         return;
+#endif
 
     row = con.currentLine % con.totallines;
     textIndex = row * con.linewidth + con.lineOffset;
+#if defined(COD2_X64)
+    /* Mac icon metadata can cross a logical row, but never invent storage
+     * beyond the actual native ring allocation. */
+    if ((unsigned int)textIndex >= sizeof(con.textBuffer) / sizeof(con.textBuffer[0]))
+        return;
+    con.textBuffer[textIndex] = (short)((info << 8) | value);
+#else
     con.textBuffer[textIndex] = (short)((info << 8) | (value & 0xff));
+#endif
     con.lineOffset++;
 }
 
@@ -1780,6 +2382,17 @@ static void CL_WriteDeathMessageText(const char *text, int color)
 #endif
 }
 
+#if defined(COD2_X64)
+static void CL_WriteDeathMessageIcon(const char *iconShader, float iconWidth, float iconHeight, int horzFlipIcon)
+{
+    int iconMaterialIndex = CL_FindHudMsgIconMaterialIndex(iconShader);
+    int widthCode = (unsigned char)horzFlipIcon ? 0x13 : 0x10;
+
+    CL_WriteConsoleEncodedByte(widthCode, (int)(iconWidth * 32.0f));
+    CL_WriteConsoleEncodedByte(0x11, (int)(iconHeight * 32.0f));
+    CL_WriteConsoleEncodedByte(0x12, iconMaterialIndex);
+}
+#else
 static void CL_WriteDeathMessageIcon(const char *iconShader, float iconWidth, float iconHeight, int horzFlipIcon)
 {
     int iconMaterialIndex = CL_FindHudMsgIconMaterialIndex(iconShader);
@@ -1789,7 +2402,53 @@ static void CL_WriteDeathMessageIcon(const char *iconShader, float iconWidth, fl
     CL_WriteConsoleEncodedByte(0x11, (int)(iconHeight * 32.0f));
     CL_WriteConsoleEncodedByte(0x12, iconMaterialIndex);
 }
+#endif
 
+#if defined(COD2_X64)
+void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, const char *victimName, const vec_t *victimColor, const char *iconShader, float iconWidth, float iconHeight, const vec_t *iconColor, int horzFlipIcon)
+{
+    const dvar_t *noPrint;
+    int duration;
+    int defaultColor;
+    int initialLinewidth = con.linewidth;
+
+    noPrint = cl_noprint;
+    if (noPrint && noPrint->current.enabled)
+        return;
+
+    if (!con.initialized)
+        Con_OneTimeInit();
+
+    duration = (int)floorf(con_gamemessagetime->current.value * 1000.0f + 0.5f);
+    if (duration < 0)
+        duration = 0;
+
+    if (con.lineOffset > 0)
+        Con_Linefeed(con.prevType, duration);
+
+    defaultColor = ColorIndex('7');
+
+    if (attackerName && attackerName[0]) {
+        CL_AddConsoleInfoColor(0x0a, attackerColor);
+        CL_WriteDeathMessageText(attackerName, defaultColor);
+        CL_WriteDeathMessageText(" ", defaultColor);
+    }
+
+    CL_AddConsoleInfoColor(0x0d, iconColor);
+    CL_WriteDeathMessageIcon(iconShader, iconWidth, iconHeight, horzFlipIcon);
+    CL_WriteDeathMessageText(" ", defaultColor);
+
+    CL_AddConsoleInfoColor(0x0a, victimColor);
+    if (victimName && con.lineOffset + (int)strlen(victimName) + 3 >= initialLinewidth) {
+        Con_Linefeed(PMSG_GAME, duration);
+        CL_AddConsoleInfoColor(0x0a, victimColor);
+    }
+
+    CL_WriteDeathMessageText(victimName, defaultColor);
+    Con_Linefeed(PMSG_GAME, duration);
+    con.prevType = PMSG_GAME;
+}
+#else
 void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, const char *victimName, const vec_t *victimColor, const char *iconShader, float iconWidth, float iconHeight, const vec_t *iconColor, int horzFlipIcon)
 {
     const dvar_t *noPrint;
@@ -1832,6 +2491,7 @@ void CL_DeathMessagePrint(const char *attackerName, const vec_t *attackerColor, 
     Con_Linefeed(PMSG_GAME, duration);
     con.prevType = PMSG_GAME;
 }
+#endif
 #else
 static short Con_FillChar(void)
 {
