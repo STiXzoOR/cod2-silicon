@@ -1187,6 +1187,13 @@ const char *Dvar_GetString(const char *dvarName)
         return "";
     }
 
+#if defined(COD2_X64)
+    if (var->type == DVAR_TYPE_STRING) {
+        return var->current.string;
+    }
+    /* Keep defined conversion for wrong-type calls instead of interpreting
+       scalar bits as an LP64 pointer. Mac 0x51cd6 returns the raw string slot. */
+#endif
     return Dvar_ValueToString_impl(var, var->current);
 }
 
@@ -1203,6 +1210,11 @@ float Dvar_GetFloat(const char *dvarName)
         return var->current.value;
     }
 
+#if defined(COD2_X64)
+    if (var->type == DVAR_TYPE_STRING) {
+        return (float)atof(var->current.string);
+    }
+#endif
     return (float)atof(Dvar_ValueToString_impl(var, var->current));
 }
 
@@ -1219,6 +1231,11 @@ int Dvar_GetInt(const char *dvarName)
         return var->current.integer;
     }
 
+#if defined(COD2_X64)
+    if (var->type == DVAR_TYPE_STRING) {
+        return atoi(var->current.string);
+    }
+#endif
     return atoi(Dvar_ValueToString_impl(var, var->current));
 }
 
@@ -1235,6 +1252,11 @@ Bool Dvar_GetBool(const char *dvarName)
         return var->current.enabled;
     }
 
+#if defined(COD2_X64)
+    if (var->type == DVAR_TYPE_STRING) {
+        return atoi(var->current.string) != 0;
+    }
+#endif
     return atoi(Dvar_ValueToString_impl(var, var->current)) != 0;
 }
 
@@ -1693,9 +1715,24 @@ void Dvar_SetString(const dvar_t *dvar, const char *value)
 void Dvar_SetColorFromSource(const dvar_t *dvar, float r, float g, float b, float a, DvarSetSource source)
 {
     DvarValue newValue;
+#if !defined(COD2_X64)
     DvarLimits domain;
+#endif
     char string[128];
 
+#if defined(COD2_X64)
+    if (dvar->type == DVAR_TYPE_COLOR) {
+        newValue.color[0] = Dvar_FloatToColorComponent(r);
+        newValue.color[1] = Dvar_FloatToColorComponent(g);
+        newValue.color[2] = Dvar_FloatToColorComponent(b);
+        newValue.color[3] = Dvar_FloatToColorComponent(a);
+    } else {
+        Com_sprintf(string, sizeof(string), "%g %g %g %g", r, g, b, a);
+        /* Mac 0x53a66 passes this string slot directly. Preserve the native
+           defined fallback for a non-string, non-color destination. */
+        newValue = Dvar_StringToValueReg(dvar->type, dvar->domain, string);
+    }
+#else
     Com_sprintf(string, sizeof(string), "%g %g %g %g", r, g, b, a);
 
     if (dvar->type == DVAR_TYPE_COLOR) {
@@ -1704,6 +1741,7 @@ void Dvar_SetColorFromSource(const dvar_t *dvar, float r, float g, float b, floa
     } else {
         newValue = Dvar_StringToValueReg(dvar->type, dvar->domain, string);
     }
+#endif
 
     Dvar_SetVariantReg(dvar, newValue, source);
 }
@@ -2081,6 +2119,9 @@ qboolean Com_LoadDvarsFromBuffer(const char **dvarnames, int numDvars, const cha
             wasRead[i] = 1;
             ++numRead;
         }
+#if defined(COD2_X64)
+        Com_SkipRestOfLine(&buffer);
+#endif
     }
 
     Com_EndParseSession();
@@ -2089,7 +2130,11 @@ qboolean Com_LoadDvarsFromBuffer(const char **dvarnames, int numDvars, const cha
         return 1;
     }
 
+#if defined(COD2_X64)
+    Com_Printf("^1ERROR: the following dvars were not specified in file '%s'\n", filename);
+#else
     Com_Printf("^1ERROR: the following dvars were not specified in file '%s'", filename);
+#endif
     for (i = 0; i < numDvars; ++i) {
         if (!wasRead[i]) {
             Com_Printf("^1  %s\n", dvarnames[i]);
