@@ -114,6 +114,20 @@ void CG_MapRestart(qboolean savepersist);
 void CG_ServerCommand(void);
 void CG_ExecuteNewServerCommands(int latestSequence);
 
+#if defined(COD2_X64)
+static int CG_SoundFadeTime(float seconds)
+{
+    float rounded = floorf(seconds * 1000.0f + 0.5f);
+
+    /* Mac's cvttss2si yields INT_MIN for invalid conversions, then clamps to 0.
+     * Integral floats in this range survive its int/float/int round trip. */
+    if (!(rounded > 0.0f && rounded < 2147483648.0f)) {
+        return 0;
+    }
+    return (int)(float)(int)rounded;
+}
+#endif
+
 void CG_ParseServerinfo(void)
 {
     const char *info;
@@ -547,8 +561,12 @@ static void CG_DeactivateChannelVolCmd(void)
     }
 
     prio = atoi(CG_Argv(1));
+#if defined(COD2_X64)
+    fadeTime = CG_SoundFadeTime((float)atof(CG_Argv(2)));
+#else
     fval = (float)(int)floorf((float)atof(CG_Argv(2)) * 1000.0f + 0.5f);
     fadeTime = (fval > 0.0f) ? (int)fval : 0;
+#endif
 
     SND_DeactivateChannelVolumes(prio, fadeTime);
 }
@@ -569,8 +587,12 @@ static void CG_SetChannelVolCmd(void)
 
     prio = atoi(CG_Argv(1));
     shockIndex = atoi(CG_Argv(2));
+#if defined(COD2_X64)
+    fadeTime = CG_SoundFadeTime((float)atof(CG_Argv(3)));
+#else
     fval = (float)(int)floorf((float)atof(CG_Argv(3)) * 1000.0f + 0.5f);
     fadeTime = (fval > 0.0f) ? (int)fval : 0;
+#endif
 
     SND_SetChannelVolumes(prio, cgs->shellshockParms[shockIndex].sound.channelvolume, fadeTime);
 }
@@ -589,8 +611,12 @@ static void CG_DeactivateReverbCmd(void)
     }
 
     prio = atoi(CG_Argv(1));
+#if defined(COD2_X64)
+    fadeTime = CG_SoundFadeTime((float)atof(CG_Argv(2)));
+#else
     fval = (float)(int)floorf((float)atof(CG_Argv(2)) * 1000.0f + 0.5f);
     fadeTime = (fval > 0.0f) ? (int)fval : 0;
+#endif
 
     SND_DeactivateEnvironmentEffects(prio, fadeTime);
 }
@@ -696,10 +722,14 @@ void CG_MapRestart(qboolean savepersist)
 
 static int CG_ParseFadeTimeArg(int argIndex)
 {
+#if defined(COD2_X64)
+    return CG_SoundFadeTime((float)atof(CG_Argv(argIndex)));
+#else
     int fadeTime;
 
     fadeTime = (int)floorf((float)atof(CG_Argv(argIndex)) * 1000.0f + 0.5f);
     return fadeTime > 0 ? fadeTime : 0;
+#endif
 }
 
 static void CG_PrintUnknownServerCommand(const char *cmd)
@@ -779,11 +809,15 @@ static void CG_ParseScores(void)
     if (scoreCount > 64) {
         scoreCount = 64;
     }
+#if defined(COD2_X64)
+    cg->numScores = scoreCount;
+#else
     if (scoreCount < 0) {
         scoreCount = 0;
     }
 
     cg->numScores = scoreCount;
+#endif
     memset(cg->teamScores, 0, sizeof(cg->teamScores));
     memset(cg->teamPings, 0, sizeof(cg->teamPings));
     memset(cg->teamPlayers, 0, sizeof(cg->teamPlayers));
@@ -802,11 +836,15 @@ static void CG_ParseScores(void)
         argBase = 4 + i * 5;
         score = &cg->scores[i];
         client = atoi(CG_Argv(argBase));
+#if defined(COD2_X64)
+        score->client = client;
+#else
         if (client < 0 || client > 63) {
             client = 0;
         }
 
         score->client = client;
+#endif
         score->score = atoi(CG_Argv(argBase + 1));
         score->ping = atoi(CG_Argv(argBase + 2));
         score->deaths = atoi(CG_Argv(argBase + 3));
@@ -816,8 +854,17 @@ static void CG_ParseScores(void)
             score->hStatusIcon = CL_RegisterMaterialNoMip(CL_GetConfigString(iconIndex + 0x16), 7);
         }
 
+#if defined(COD2_X64)
+        if ((unsigned int)client > 63) {
+            client = 0;
+            score->client = 0;
+        }
+        cg->bgs.clientinfo[client].score = score->score;
+        if (cg->bgs.clientinfo[client].infoValid) {
+#else
         if (cg->bgs.clientinfo[client].infoValid) {
             cg->bgs.clientinfo[client].score = score->score;
+#endif
             team = cg->bgs.clientinfo[client].team;
         } else {
             team = 0;
@@ -848,6 +895,29 @@ static void CG_SetVoteStringFromConfigString(const char *configString)
     inPos = 0;
     outPos = 0;
 
+#if defined(COD2_X64)
+    /* Mac limits consumed input, including a map name with an empty display name.
+     * Keep the native output bound instead of reproducing its stack overflow. */
+    while (configString && inPos <= 255 && outPos < (int)sizeof(converted) - 1) {
+        int mapLoadNameLen = 0;
+        const char *displayName = UI_GetMapDisplayNameFromPartialLoadNameMatch(configString + inPos, &mapLoadNameLen);
+
+        if (displayName) {
+            while (*displayName && outPos < (int)sizeof(converted) - 1) {
+                converted[outPos++] = *displayName++;
+            }
+            inPos += mapLoadNameLen;
+        }
+
+        if (outPos == (int)sizeof(converted) - 1) {
+            break;
+        }
+        converted[outPos++] = configString[inPos];
+        if (!configString[inPos++]) {
+            break;
+        }
+    }
+#else
     while (configString && configString[inPos] && outPos < (int)sizeof(converted) - 1) {
         int mapLoadNameLen;
         const char *displayName;
@@ -864,6 +934,7 @@ static void CG_SetVoteStringFromConfigString(const char *configString)
 
         converted[outPos++] = configString[inPos++];
     }
+#endif
 
     converted[outPos] = '\0';
     I_strncpyz(cgs->voteString, SEH_LocalizeTextMessage(converted, "vote string", 0), sizeof(cgs->voteString));
@@ -1105,7 +1176,13 @@ void CG_ServerCommand(void)
         return;
     case 'q':
         if (CG_PlaySoundOnFirstClient()) {
+#if defined(COD2_X64)
+            int fadeTime = atoi(CG_Argv(2));
+            float volume = (float)atof(CG_Argv(1));
+            SND_FadeAllSounds(volume, fadeTime);
+#else
             SND_FadeAllSounds((float)atof(CG_Argv(1)), atoi(CG_Argv(2)));
+#endif
         }
         return;
     case 'r':

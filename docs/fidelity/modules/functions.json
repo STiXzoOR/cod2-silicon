@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 4301,
-      "intentional": 1592,
-      "equal": 3013,
-      "fixed": 551
+      "unchecked": 4281,
+      "intentional": 1596,
+      "equal": 3024,
+      "fixed": 556
     },
     "scopes": {
       "unassigned": 777,
@@ -69654,8 +69654,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read the complete Mac 0x001e1f70 body against the native routine: disabled-chat reset, 90-character wrap threshold, last-space rewind, color handling, timestamps and retained-row limit match. Native typed chat storage preserves the 271-byte rows."
       },
       {
         "id": "mac:0x001e2314",
@@ -69676,8 +69676,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Complete Mac 0x001e2314 popup and success/failure state paths match. Native retains gated MTRACE diagnostics and their counter. Clang arm64 layouts confirm LegacyHacks fields remain at 0x2e4, 0x3e8, 0x3e4, 0x4e8 and 0x4ec, so the existing raw accesses address actual native storage."
       },
       {
         "id": "mac:0x001e23ce",
@@ -69698,8 +69698,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read the complete Mac 0x001e23ce body: both popup closes, three menu-name clears, three index resets and waiting no-mouse reset match the native typed LegacyHacks fields."
       },
       {
         "id": "mac:0x001e3c0e",
@@ -69720,8 +69720,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read the complete Mac 0x001e3c0e loop: preincrement, skipped unavailable commands, command dispatch and final sequence bound match. Existing sequence sanitizer case passed."
       },
       {
         "id": "mac:0x001e2c92",
@@ -69742,8 +69742,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read the complete Mac 0x001e2c92 body, including all reset fields, sound/FX ordering, 96-byte damage clear, weapon fractions, ADS, save-persist branch, both inlined menu closes and final synchronization. Native typed storage and helper calls preserve those effects."
       },
       {
         "id": "mac:0x001e243c",
@@ -69764,8 +69764,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read the complete Mac 0x001e243c body and decoded all six table entries at 0x33c6e0. Fade fields, menu names for single/multiple clients, case-1 offhand notification, time gates and dynamic flag 4 match."
       },
       {
         "id": "mac:0x001e216c",
@@ -69786,8 +69786,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read the complete Mac 0x001e216c body: unsigned index bound 31, empty configstring rejection, bad/noop replies, no-mouse selection, popup outcome and deferred-menu replacement match. Existing gated MTRACE diagnostics are retained; LegacyHacks arm64 layout preserves all accessed offsets."
       },
       {
         "id": "mac:0x001e1f10",
@@ -69808,8 +69808,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read the complete Mac 0x001e1f10 body: local-server early return, key range [0x8e,0xee), first-empty stop and value offset 0x60 match."
       },
       {
         "id": "mac:0x001e273c",
@@ -69830,8 +69830,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read the complete Mac 0x001e273c body: seven tokens, empty second-token fog switch, density argument, RGB conversions and transition arguments match. Binary float constants are 255.0 and 0.5; native preserves single-precision multiply/add order and byte truncation."
       },
       {
         "id": "mac:0x001e1e20",
@@ -69852,8 +69852,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read the complete Mac 0x001e1e20 body: configstring 0, hostname/gametype keys and bounded-copy sizes, local-server dvar gate, maxclients, map key and maps/mp/%s.%s formatting match."
       },
       {
         "id": "mac:0x001e2ea4",
@@ -69874,8 +69874,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read the complete Mac 0x001e2ea4 body and decoded every entry of command table 0x33c6f8, including all inlined helper paths. Restored negative score counts at 0x1e3218, unconditional client-info score writes at 0x1e37e3, map-name consumption and input limit at 0x1e3a5f-0x1e3ab5, and ordered music-fade argument reads at 0x1e3524. Reverb now implements invalid cvttss2si/clamp behavior at 0x1e38f5-0x1e39c8 with defined C conversions. Existing native output/team bounds, null guards and gated tracing remain; vote output stays bounded rather than reproducing Mac stack overflow. Compiled and reviewed; seven existing server-command sanitizer cases pass, but score/vote and invalid fade endpoints were not exercised."
       },
       {
         "id": "mac:0x001e2676",
@@ -69896,8 +69896,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read the complete Mac 0x001e2676 body: objectiveText copy 1024, drawHud atoi, scriptMainMenu copy 256 and ordinary dvar fallback match. The established COD2_CODX-gated Cod2x_SetClientDvar interception remains before this vanilla path; this is the native extension protocol boundary."
       },
       {
         "id": "mac:0x001e2b32",
@@ -69918,8 +69918,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read the complete Mac 0x001e2b32 body: score/start-time configstrings, initial fog switch, script menus [0x4de,0x4fe), error path, material ranges [0x17,0x1f), [0x1f,0x2e), [0x61f,0x69e) and registration flag 7 match."
       },
       {
         "id": "mac:0x001e2900",
@@ -69940,8 +69940,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_servercmds_mp.c (cgame_mp/cg_servercmds_mp); whole CG_DeactivateChannelVolCmd was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to cgame/cg_servercmds_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_servercmds_mp.c:536; assigned universal header has no body. Mac symbol __Z26CG_DeactivateChannelVolCmdv at 0x001e2900. Whole caller not audited by universal-math."
+        "status": "fixed",
+        "evidence": "Read the whole routed Mac 0x001e2900 body, not only its math expression. Arity 3, diagnostic, argument order and sound call match. Native now guards rounded float conversions so NaN/infinite/out-of-int-range input yields 0 as Mac cvttss2si plus positive clamp does at 0x1e2976-0x1e29a3. Compiled and reviewed; this routed caller was not exercised."
       },
       {
         "id": "mac:0x001e2a88",
@@ -69962,8 +69962,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_servercmds_mp.c (cgame_mp/cg_servercmds_mp); whole CG_DeactivateReverbCmd was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to cgame/cg_servercmds_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_servercmds_mp.c:578; assigned universal header has no body. Mac symbol __Z22CG_DeactivateReverbCmdv at 0x001e2a88. Whole caller not audited by universal-math."
+        "status": "fixed",
+        "evidence": "Read the whole routed Mac 0x001e2a88 body. Arity 3, diagnostic, priority/fade argument order and environment-deactivation call match. Native now guards rounded float conversion to reproduce Mac invalid-conversion-to-INT_MIN then positive-clamp-to-0 at 0x1e2afe-0x1e2b2b without undefined C casts. Compiled and reviewed; this routed caller was not exercised."
       },
       {
         "id": "mac:0x001e29aa",
@@ -69984,8 +69984,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_servercmds_mp.c (cgame_mp/cg_servercmds_mp); whole CG_SetChannelVolCmd was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to cgame/cg_servercmds_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_servercmds_mp.c:556; assigned universal header has no body. Mac symbol __Z19CG_SetChannelVolCmdv at 0x001e29aa. Whole caller not audited by universal-math."
+        "status": "fixed",
+        "evidence": "Read the whole routed Mac 0x001e29aa body. Arity 4, diagnostic, priority/shellshock/fade argument order, channel-volume member and call match. Native now guards rounded float conversions to reproduce Mac invalid cvttss2si and clamp at 0x1e2a38-0x1e2a81 without undefined C casts. Compiled and reviewed; this routed caller was not exercised."
       }
     ],
     "cgame/cg_shellshock": [
@@ -70142,8 +70142,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read the complete Mac 0x001df762 body including all inlined read/transition paths. Restored wrapped 32-bit subtraction sign checks used by js/jns at 0x1dfb02, 0x1dfb0a, 0x1dfada and 0x1dfc9f, using defined unsigned arithmetic. Initial inactive filtering, cubemap aliasing, restart tests, pending-snapshot comparisons, client invalidation and entity copies match; existing defensive null pending-snapshot gates remain. Compiled and reviewed; all 25 existing snapshot sanitizer cases passed, but wrap endpoints were not exercised."
       },
       {
         "id": "mac:0x001deb10",
@@ -70164,8 +70164,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read the complete Mac 0x001deb10 body: entity-state copy, flags, trajectories, event sequences, player interpolation fields, corpse-copy branches, 0x80000 clone flag, six attachment filters, preserved animation-tree ownership and dirty flag match. Native typed client/corpse indexing preserves widened storage. Existing corpse sanitizer cases passed."
       },
       {
         "id": "mac:0x001df69e",
@@ -70186,8 +70186,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read the complete Mac 0x001df69e body: pending-snapshot clear, snap assignments, three time writes, origin plus view height, listener axis, sound fade, respawn, smoke initialization, view initialization and final nextSnap clear match."
       },
       {
         "id": "mac:0x001dee08",
@@ -70208,8 +70208,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_snapshot_mp.c (cgame_mp/cg_snapshot_mp); whole CG_SetNextSnap was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to cgame/cg_snapshot_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_snapshot_mp.c:370; assigned universal header has no body. Mac symbol __Z14CG_SetNextSnapP10snapshot_t at 0x001dee08. Whole caller not audited by universal-math."
+        "status": "intentional",
+        "evidence": "Read the whole routed Mac 0x001dee08 body: previous-entity validity, skeleton/interpolation/command ordering, client names/models/six attachments, respawns, teleport reset, killcam transitions, corpse animation completion and event ordering match. Retain native null-import checks for cg_dvar1/cg_dvar2 where Mac assumes initialized imports. Record-layout inspection confirms snapshot/client offsets and typed access to widened client-info, corpse and centity storage. Existing transition, null-dvar and corpse sanitizer cases passed."
       }
     ],
     "cgame/cg_view_mp": [
