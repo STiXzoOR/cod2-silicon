@@ -332,9 +332,11 @@ static void SCR_UpdateFrame(void)
 
     UI_UpdateTime((((clientStatic_t *)(cls))->realtime));
 
+#if !defined(COD2_X64)
     if (connstate >= 3 && connstate <= 8 && UI_GetActiveMenu() == 1) {
         UI_SetActiveMenu(0);
     }
+#endif
 
     s_prevConnstate = connstate;
 
@@ -344,7 +346,11 @@ static void SCR_UpdateFrame(void)
         connstate = clc->state;
 
         if (connstate < 0) {
+#if defined(COD2_X64)
+            Com_Error(0, "\x15SCR_DrawScreenField: bad clc->state");
+#else
             Com_Error(0, "SCR_DrawScreenField: bad clc->state");
+#endif
         } else if (connstate <= 7) {
             goto check_ui;
         } else if (connstate == 8) {
@@ -360,7 +366,11 @@ static void SCR_UpdateFrame(void)
             }
             goto check_ui;
         } else {
+#if defined(COD2_X64)
+            Com_Error(0, "\x15SCR_DrawScreenField: bad clc->state");
+#else
             Com_Error(0, "SCR_DrawScreenField: bad clc->state");
+#endif
         }
     } else {
 
@@ -368,13 +378,23 @@ static void SCR_UpdateFrame(void)
         connstate = clc->state;
 
         if ((unsigned int)connstate > 8) {
+#if defined(COD2_X64)
+            Com_Error(0, "\x15SCR_DrawScreenField: bad clc->state");
+#else
             Com_Error(0, "SCR_DrawScreenField: bad clc->state");
+#endif
         }
 
         switch (connstate) {
         case 0:
             SND_StopSounds((snd_stopsounds_arg_t)0);
             if (Sys_IsMainThread()) {
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+                if (((clientStatic_t *)cls)->wwwDlDisconnected) {
+                    UI_Refresh();
+                    UI_DrawConnectScreen();
+                } else
+#endif
                 UI_SetActiveMenu(1);
             } else if (CL_AnyLocalClientChallenging()) {
                 UI_Refresh();
@@ -409,13 +429,22 @@ static void SCR_UpdateFrame(void)
             clientActive_t *dv = *(clientActive_t **)dvar_ptr_195ee78;
             int serverTime = dv->serverTime;
 
+#if defined(COD2_X64)
+            if (!CG_DrawActiveFrame(serverTime, needRender, 0, 0, 1))
+                CL_SendCmdInternal();
+#else
             CG_DrawActiveFrame(serverTime, needRender, 0, 0, 1);
+#endif
             endViewBeforeUi = 1;
 
             clc = *(clientConnection_t **)clc_ptr_195ee8c;
             if (clc->demorecording) {
                 int pos = FS_FTell(clc->demofile);
+#if defined(COD2_X64)
+                int posKB = pos / 1024;
+#else
                 int posKB = (pos + 0x3ff) >> 10;
+#endif
                 char buf[1024];
                 float color[4];
                 sprintf(buf, "RECORDING %s: %ik", clc->demoName, posKB);
@@ -429,6 +458,8 @@ static void SCR_UpdateFrame(void)
                 FontHandle font = (((clientStatic_t *)(cls))->consoleFont);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
                 float fontH = RE_FUNC(re, 0x110, re_font_height_func)(font, 0.2f);
+#elif defined(COD2_X64)
+                float fontH = RE_FUNC(re, 0x110, re_font_height_func)(font, 1.0f / 3.0f);
 #else
                 float fontH = RE_FUNC(re, 0x110, re_font_height_func)(font, 0.333333f);
 #endif
@@ -446,12 +477,14 @@ static void SCR_UpdateFrame(void)
     }
 
 check_ui:
+#if !defined(COD2_X64)
     if (endViewBeforeUi) {
         RE_FUNC(re_ptr_195eca8, 0xb8, re_int_func)(0);
         viewEndedBeforeUi = 1;
         RE_FUNC(re_ptr_195eca8, 0xbc, re_void_func)();
         viewsIssuedBeforeUi = 1;
     }
+#endif
 
     {
         clientActive_t *dv = *(clientActive_t **)dvar_ptr_195ee78;
@@ -482,7 +515,12 @@ check_ui:
             ++uiTraceCount;
         }
 
+#if defined(COD2_X64)
+        if ((dv->keyCatchers & 8) &&
+            (*(clientConnection_t **)clc_ptr_195ee8c)->state != 1)
+#else
         if (dv->keyCatchers & 8)
+#endif
             UI_Refresh();
     }
 
