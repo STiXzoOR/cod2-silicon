@@ -3150,5 +3150,77 @@
   "mac:0x001a686c": {
     "status": "equal",
     "evidence": "All 596 Mac bytes 0x1a686c-0x1a6abf compared against the live native body and its helpers. No correction required."
+  },
+  "linux:bgame/bg_slidemove.cpp:50:PM_PermuteRestrictiveClipPlanes": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in the Mac caller. No correction required."
+  },
+  "mac:0x0009d318": {
+    "status": "fixed",
+    "evidence": "All 2,436 Mac bytes 0x9d318-0x9dc9b compared against the live native body and its helpers. Fixed the three-plane loop: Mac 0x9daf9 jumps to 0x9d918 and goes on to the next plane, as Linux does. Native broke out of the loop. Compiled and reviewed; the replay does not reach this path."
+  },
+  "mac:0x0009dc9c": {
+    "status": "fixed",
+    "evidence": "All 2,428 Mac bytes 0x9dc9c-0x9e617 compared against the live native body and its helpers. Fixed the step trace height order: Mac 0x9df07-0x9df1d and Linux add (step + 1) to the start height. Native added them left to right, which can round the last bit differently. Compiled and reviewed; the replay does not reach this path."
+  },
+  "linux:bgame/bg_slidemove.cpp:19:PM_VerifyPronePosition": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in the Mac caller. No correction required."
+  },
+  "mac:0x0009ce6e": {
+    "status": "equal",
+    "evidence": "All 30 Mac bytes 0x9ce6e-0x9ce8b compared against the live native body and its helpers. No correction required."
+  },
+  "linux:bgame/bg_jump.cpp:322:Jump_AddSurfaceEvent": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in the Mac caller. No correction required."
+  },
+  "mac:0x0009ce8c": {
+    "status": "equal",
+    "evidence": "All 166 Mac bytes 0x9ce8c-0x9cf31 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x0009cfb2": {
+    "status": "equal",
+    "evidence": "All 768 Mac bytes 0x9cfb2-0x9d2b1 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x0009d2b2": {
+    "status": "equal",
+    "evidence": "All 102 Mac bytes 0x9d2b2-0x9d317 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x0009cdd2": {
+    "status": "equal",
+    "evidence": "All 22 Mac bytes 0x9cdd2-0x9cde7 compared against the live native body and its helpers. No correction required."
+  },
+  "linux:bgame/bg_jump.cpp:224:Jump_GetLandFactor": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in the Mac caller. No correction required."
+  },
+  "linux:bgame/bg_jump.cpp:142:Jump_GetSlowdownFriction": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in the Mac caller. No correction required."
+  },
+  "mac:0x0009cde8": {
+    "status": "equal",
+    "evidence": "All 98 Mac bytes 0x9cde8-0x9ce49 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x0009ce4a": {
+    "status": "equal",
+    "evidence": "All 36 Mac bytes 0x9ce4a-0x9ce6d compared against the live native body and its helpers. No correction required."
+  },
+  "linux:bgame/bg_jump.cpp:286:Jump_PushOffLadder": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in the Mac caller. No correction required."
+  },
+  "mac:0x0009cf32": {
+    "status": "equal",
+    "evidence": "All 128 Mac bytes 0x9cf32-0x9cfb1 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x0009ccf0": {
+    "status": "equal",
+    "evidence": "All 226 Mac bytes 0x9ccf0-0x9cdd1 compared against the live native body and its helpers. No correction required."
+  },
+  "linux:bgame/bg_jump.cpp:247:Jump_Start": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in the Mac caller. No correction required."
   }
 }

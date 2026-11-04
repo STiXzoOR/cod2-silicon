@@ -264,7 +264,9 @@ static qboolean PM_SLIDEMOVE_ABI PM_SlideMove(pmove_t *pm, pml_t *pml, qboolean 
                     return 1;
                 }
             }
+#if !defined(COD2_X64)
             break;
+#endif
         }
 
         ps->velocity[0] = clipVelocity[0];
@@ -534,7 +536,11 @@ do_step:
 
         up[0] = start_o[0];
         up[1] = start_o[1];
+#if defined(COD2_X64)
+        up[2] = (1.0f + fStepSize) + start_o[2];
+#else
         up[2] = start_o[2] + 1.0f + fStepSize;
+#endif
 
         PM_playerTrace(pm, &trace, start_o, pm->mins, pm->maxs, up, ps->clientNum, pm->tracemask);
 

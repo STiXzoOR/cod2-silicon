@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 7309,
+      "unchecked": 7291,
       "intentional": 1393,
-      "equal": 640,
-      "fixed": 115
+      "equal": 656,
+      "fixed": 117
     },
     "scopes": {
       "unassigned": 777,
@@ -56049,8 +56049,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 30 Mac bytes 0x9ce6e-0x9ce8b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:bgame/bg_jump.cpp:322:Jump_AddSurfaceEvent",
@@ -56068,8 +56068,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined in the Mac caller. No correction required."
       },
       {
         "id": "mac:0x0009ce8c",
@@ -56099,8 +56099,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 166 Mac bytes 0x9ce8c-0x9cf31 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0009cfb2",
@@ -56130,8 +56130,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 768 Mac bytes 0x9cfb2-0x9d2b1 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0009d2b2",
@@ -56161,8 +56161,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 102 Mac bytes 0x9d2b2-0x9d317 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0009cdd2",
@@ -56192,8 +56192,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 22 Mac bytes 0x9cdd2-0x9cde7 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:bgame/bg_jump.cpp:224:Jump_GetLandFactor",
@@ -56211,8 +56211,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined in the Mac caller. No correction required."
       },
       {
         "id": "linux:bgame/bg_jump.cpp:142:Jump_GetSlowdownFriction",
@@ -56230,8 +56230,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined in the Mac caller. No correction required."
       },
       {
         "id": "mac:0x0009cde8",
@@ -56261,8 +56261,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 98 Mac bytes 0x9cde8-0x9ce49 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0009ce4a",
@@ -56292,8 +56292,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 36 Mac bytes 0x9ce4a-0x9ce6d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:bgame/bg_jump.cpp:286:Jump_PushOffLadder",
@@ -56311,8 +56311,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined in the Mac caller. No correction required."
       },
       {
         "id": "mac:0x0009cf32",
@@ -56342,8 +56342,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 128 Mac bytes 0x9cf32-0x9cfb1 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0009ccf0",
@@ -56373,8 +56373,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 226 Mac bytes 0x9ccf0-0x9cdd1 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:bgame/bg_jump.cpp:247:Jump_Start",
@@ -56392,8 +56392,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined in the Mac caller. No correction required."
       }
     ],
     "bgame/bg_mantle": [
@@ -58648,8 +58648,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined in the Mac caller. No correction required."
       },
       {
         "id": "mac:0x0009d318",
@@ -58679,8 +58679,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 2,436 Mac bytes 0x9d318-0x9dc9b compared against the live native body and its helpers. Fixed the three-plane loop: Mac 0x9daf9 jumps to 0x9d918 and goes on to the next plane, as Linux does. Native broke out of the loop. Compiled and reviewed; the replay does not reach this path."
       },
       {
         "id": "mac:0x0009dc9c",
@@ -58710,8 +58710,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 2,428 Mac bytes 0x9dc9c-0x9e617 compared against the live native body and its helpers. Fixed the step trace height order: Mac 0x9df07-0x9df1d and Linux add (step + 1) to the start height. Native added them left to right, which can round the last bit differently. Compiled and reviewed; the replay does not reach this path."
       },
       {
         "id": "linux:bgame/bg_slidemove.cpp:19:PM_VerifyPronePosition",
@@ -58729,8 +58729,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined in the Mac caller. No correction required."
       }
     ],
     "bgame/bg_weapons": [
