@@ -887,11 +887,15 @@ static __attribute_regparm__(3) void FS_BuildOSPath_Internal(const char *base, c
     while (*src) {
         char c = *src++;
 
+#if defined(COD2_X64)
+        if (c == '\\' || c == '/') {
+#else
         if (c == '\\' || c == '/'
 #    ifndef _WIN32
             || c == ':'
 #    endif
         ) {
+#endif
             if (sawSlash) {
                 continue;
             }
@@ -1023,7 +1027,13 @@ void FS_DisplayPath(qboolean bLanguageCull)
                     break;
                 }
             }
+#if defined(COD2_X64)
+            if (fs_numServerIwds) {
+                Com_Printf(onPureList ? "    on the pure list\n" : "    not on the pure list\n");
+            }
+#else
             Com_Printf(onPureList ? "    on the pure list\n" : "    not on the pure list\n");
+#endif
         } else if (s->dir) {
             Com_Printf("%s/%s\n", s->dir->path, s->dir->gamedir);
             if (s->bLocalized) {
@@ -1034,7 +1044,11 @@ void FS_DisplayPath(qboolean bLanguageCull)
 
     Com_Printf("\nFile Handles:\n");
     for (i = 1; i < 74; i++) {
+#if defined(COD2_X64)
+        if (fsh[i].handleFiles.file.o) {
+#else
         if (*(int *)&fsh[i].handleFiles) {
+#endif
             Com_Printf("handle %i: %s\n", i, fsh[i].name);
         }
     }
@@ -1559,7 +1573,11 @@ static void FS_PrintSupportedLanguagesOnce(void)
     }
 
     Com_Printf("Supported languages are:\n");
+#if defined(COD2_X64)
+    for (iSuppLang = 0; iSuppLang < 15; iSuppLang++) {
+#else
     for (iSuppLang = 0; iSuppLang < 14; iSuppLang++) {
+#endif
         Com_Printf("    %s\n", SEH_GetLanguageName(iSuppLang));
     }
     bLanguagesListed = 1;
@@ -1609,9 +1627,16 @@ static pack_t *FS_LoadIwd(const char *iwdfile, const char *basename, const char 
 
     len = 0;
     for (i = 0; i < gi.number_entry; i++) {
+#if defined(COD2_X64)
+        if (unzGetCurrentFileInfo(uf, &file_info, filename_inzip, sizeof(filename_inzip), 0, 0, 0, 0)) {
+            break;
+        }
+        len += strlen(filename_inzip) + 1;
+#else
         if (!unzGetCurrentFileInfo(uf, &file_info, filename_inzip, sizeof(filename_inzip), 0, 0, 0, 0)) {
             len += strlen(filename_inzip) + 1;
         }
+#endif
         unzGoToNextFile(uf);
     }
 
@@ -2409,12 +2434,23 @@ int FS_FOpenFileByMode(const char *qpath, fileHandle_t *f, fsMode_t mode)
         break;
     }
 
+#if defined(COD2_X64)
+    if (f) {
+        fileHandleData_t *entry = &fsh[*f];
+        if (*f) {
+            entry->fileSize = len;
+            entry->streamed = 0;
+        }
+        entry->handleSync = sync;
+    }
+#else
     if (f && *f) {
         fileHandleData_t *entry = &fsh[*f];
         entry->fileSize = len;
         entry->streamed = 0;
         entry->handleSync = sync;
     }
+#endif
 
     return len;
 }
