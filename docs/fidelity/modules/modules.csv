@@ -114,7 +114,7 @@ cgame/cg_snapshot_mp,4,0,0,0,4
 cgame/cg_view_mp,9,0,0,0,9
 cgame/cg_weapons,28,0,0,0,28
 cgame/offhandweapons_mp,9,0,0,0,9
-client/cl_cgame_mp,71,0,0,0,71
+client/cl_cgame_mp,71,62,8,1,0
 client/cl_cin_mp,12,8,3,1,0
 client/cl_console_mp,48,0,0,0,48
 client/cl_input,85,78,3,4,0
