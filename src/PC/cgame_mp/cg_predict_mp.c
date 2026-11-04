@@ -245,7 +245,11 @@ void CG_PredictPlayerState(void)
         usercmd_t oldestCmd;
         if (!CL_GetUserCmd(oldest, &oldestCmd)) {
             if (dvar_get_int_safe(dvar_developer) != 0)
+#if defined(COD2_X64)
+                Com_Printf("exceeded PACKET_BACKUP on commands\n");
+#else
                 Com_Printf("CG_PredictPlayerState: CMD_BACKUP exceeded\n");
+#endif
             goto cleanup;
         }
     }
@@ -308,7 +312,11 @@ void CG_PredictPlayerState(void)
                            oldOrig[1] == oldOrigin[1] &&
                            oldOrig[2] == oldOrigin[2]);
                 if (!isMatch) {
+#if defined(COD2_X64)
+                    Com_Printf("prediction error\n");
+#else
                     Com_Printf("CG_PredictPlayerState: prediction not matched\n");
+#endif
                 }
             }
 
@@ -337,7 +345,11 @@ void CG_PredictPlayerState(void)
                     int cg_time_val = cg->time;
                     int errorTime = cg->predictedErrorTime;
 
+#if defined(COD2_X64)
+                    t = (errorDecayVal - (float)(cg_time_val - errorTime)) / errorDecayVal;
+#else
                     t = 1.0f - (float)(cg_time_val - errorTime) / errorDecayVal;
+#endif
                     if (t < 0.0f)
                         t = 0.0f;
 
@@ -365,7 +377,11 @@ void CG_PredictPlayerState(void)
 
             if (pm_type <= 5) {
                 int inDeadState = (pm_type == 4);
+#if defined(COD2_X64)
+                if ((unsigned int)pm_type <= 1 || inDeadState) {
+#else
                 if (pm_type <= 1 || inDeadState) {
+#endif
                     int j;
                     for (j = 0; j < cg_numTriggerEntities; j++) {
                         centity_t *cent = cg_triggerEntities[j];
@@ -426,7 +442,11 @@ postPredict:
     } else {
 
         if (dvar_get_int_safe(dvar_developer) != 0)
+#if defined(COD2_X64)
+            Com_Printf("no prediction run\n");
+#else
             Com_Printf("not moved\n");
+#endif
     }
 
     CG_TransitionPlayerState(ps, (playerState_t *)oldPlayerState);
@@ -464,7 +484,11 @@ cleanup:
                     cg->adsViewErrorDone = 1;
 
                     size = flrand(weapDef->adsViewErrorMin, weapDef->adsViewErrorMax);
+#if defined(COD2_X64)
+                    angle = (float)((double)(randomf() * 2.0f) * 3.14159265358979323846);
+#else
                     angle = randomf() * 2.0f * 3.14159265358979323846f;
+#endif
 
                     cosAngle = cosf(angle);
                     sinAngle = sinf(angle);
@@ -501,6 +525,15 @@ static void Trace_CalcBounds(const vec_t *start, const vec_t *mins, const vec_t 
     hit1 = start[1] + (end[1] - start[1]) * fraction;
     hit2 = start[2] + (end[2] - start[2]) * fraction;
 
+#if defined(COD2_X64)
+    bounds[0][0] = (hit0 - start[0] < 0.0f ? hit0 : start[0]) + mins[0];
+    bounds[0][1] = (hit1 - start[1] < 0.0f ? hit1 : start[1]) + mins[1];
+    bounds[0][2] = (hit2 - start[2] < 0.0f ? hit2 : start[2]) + mins[2];
+
+    bounds[1][0] = (start[0] - hit0 < 0.0f ? hit0 : start[0]) + maxs[0];
+    bounds[1][1] = (start[1] - hit1 < 0.0f ? hit1 : start[1]) + maxs[1];
+    bounds[1][2] = (start[2] - hit2 < 0.0f ? hit2 : start[2]) + maxs[2];
+#else
     bounds[0][0] = (start[0] < hit0 ? start[0] : hit0) + mins[0];
     bounds[0][1] = (start[1] < hit1 ? start[1] : hit1) + mins[1];
     bounds[0][2] = (start[2] < hit2 ? start[2] : hit2) + mins[2];
@@ -508,6 +541,7 @@ static void Trace_CalcBounds(const vec_t *start, const vec_t *mins, const vec_t 
     bounds[1][0] = (start[0] > hit0 ? start[0] : hit0) + maxs[0];
     bounds[1][1] = (start[1] > hit1 ? start[1] : hit1) + maxs[1];
     bounds[1][2] = (start[2] > hit2 ? start[2] : hit2) + maxs[2];
+#endif
 }
 
 void CG_ClipMoveToEntities(const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int skipNumber, int mask, int capsule, trace_t *tr)
@@ -589,7 +623,11 @@ void CG_ClipMoveToEntities(const vec_t *start, const vec_t *mins, const vec_t *m
             if (cent->lerpOrigin[2] + bmaxs[2] <= bounds[0][2])
                 continue;
 
+#if defined(COD2_X64)
+            cmodel = CM_TempBoxModel(bmins, bmaxs, contentFlags);
+#else
             cmodel = CM_TempBoxModel(bmins, bmaxs, capsule);
+#endif
 
             angles[0] = 0.0f;
             angles[1] = 0.0f;
