@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 5577,
-      "intentional": 1492,
-      "equal": 2009,
-      "fixed": 379
+      "unchecked": 5520,
+      "intentional": 1499,
+      "equal": 2053,
+      "fixed": 385
     },
     "scopes": {
       "unassigned": 777,
@@ -221243,8 +221243,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xba168-0xba204 with ConsumeQuat_C and QuatSqrt: three signed shorts, integer square sum and 0x3fff0001 remainder, positive-only SSE sqrt then +0.5f/floorf, and four output stores. Compared valid compressed unit-quaternion arithmetic; no last-bit x87 comparison."
       },
       {
         "id": "linux:xanim/xanim_load.cpp:29:ConsumeQuat2",
@@ -221262,8 +221262,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared the complete inline two-component reader in XAnimLoadFile at 0xbb061-0xbb08c and 0xbb255-0xbb280: cursor +2, signed input square, 0x3fff0001 remainder, positive-only sqrt/+0.5f/floorf, and zero fallback match ConsumeQuat2/QuatSqrt."
       },
       {
         "id": "mac:0x000ba204",
@@ -221293,8 +221293,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xba204-0xbb3b0 hand-compared: delta frame-count comparisons at 0xba4af and 0xbadd1 are unsigned, but native used signed shorts; corrected under COD2_X64. Indexed-channel allocations at 0xba4cc/0xbb176/0xba7de/0xbac13 and 0xbadee/0xbb13b/0xba96a/0xbaaf8 reserve sizeof(channel)+2*(count-1), including tail space omitted natively; restored using native sizeof. Compared version/flags/frequency, bone names/bitsets, every quaternion/translation path, sign continuity, notifications and cleanup. Pointer-aligned frame-zero/header allocations remain native adaptations. Alloc callbacks in native hunk paths zero their blocks; no indeterminate storage was introduced. Compiled and reviewed, not exercised; corrupt high-bit bone counts and overflowing notification counts are outside the valid asset/allocation contract."
       },
       {
         "id": "linux:xanim/xanim_load.cpp:45:XAnimLoadNotifyInfo",
@@ -221312,8 +221312,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared inline XAnimLoadFile notification blocks 0xba3bf-0xba427 and 0xba5c0-0xba64f with the final native block: byte count plus end entry, 8-byte allocations, string user/type 0/3, cursor through NUL and ushort frame, zero-frame time, end string and 1.0f sentinel match. The existing 8-bit count wrap for corrupt 255-track input is unchanged."
       }
     ],
     "xanim/xanim_public": [
@@ -221537,8 +221537,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Inline XModelPrecache 0x45930-0x45a24: allocation, bad flag and complete default initialization match the native fallback; allocation grows with sizeof(XModel) on LP64."
       },
       {
         "id": "mac:0x0002bc62",
@@ -221568,8 +221568,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0x2bc62-0x2bce8 hand-compared with live universal/com_math.c:633, outside this module source: all three column products and left-associated additions match. No shared source edited."
       },
       {
         "id": "linux:xanim/xmodel.cpp:13:AxisTransposeTransformVector",
@@ -221587,8 +221587,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Linux helper is inlined in Mac XModelTraceLine 0x45dc6-0x45ea9. Hand-compared both transformed endpoints with native bonePos products and left-associated sums after the same quaternion matrix construction."
       },
       {
         "id": "mac:0x00045ae0",
@@ -221618,8 +221618,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x45ae0-0x45b1c accepts only slash after the case-insensitive six-byte xmodel prefix. Windows predicate 0x490950-0x490977 explicitly compares slash at 0x490967 and backslash at 0x49096b. Restored both separators under COD2_X64 to follow the requested Windows player-visible path convention; compiled and reviewed, not exercised. Legacy text unchanged."
       },
       {
         "id": "linux:xanim/xmodel.cpp:121:SetDefaultModel",
@@ -221637,8 +221637,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Inline XModelPrecache 0x4593c-0x45a24 hand-compared: bad flag, parts, all four LOD records, default surface/name, one LOD/collision LOD and +/-16 bone bounds match native fallback."
       },
       {
         "id": "linux:xanim/xmodel.cpp:82:SetDefaultModelPart",
@@ -221656,8 +221656,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Inline XModelPrecache 0x45943-0x45997 hand-compared: hierarchy/name pointers, null quaternion/translation pointers, one bone/root, classification pointer and zero strings/classification match native fallback."
       },
       {
         "id": "linux:xanim/xmodel.cpp:111:SetDefaultSurface",
@@ -221675,8 +221675,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Inline XModelPrecache 0x459d5-0x459df hand-compared: clears default surface pointer and installs default surface storage in LOD zero, matching native fallback."
       },
       {
         "id": "mac:0x000457d4",
@@ -221706,8 +221706,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Restarted exact Mac symbol at 0x457d4 after full-binary disassembly misalignment; movzbl of bad byte at 0x8d matches native field return."
       },
       {
         "id": "mac:0x00045a4c",
@@ -221737,8 +221737,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0x45a4c-0x45a5c hand-compared: model parts -> hierarchy -> names pointer. Native X64 returns a full-width unsigned-short pointer instead of truncating it through int."
       },
       {
         "id": "linux:xanim/xmodel.cpp:191:XModelFindData",
@@ -221756,8 +221756,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Inline XModelPrecache 0x458b8-0x458cf hand-compared: Hunk_FindDataForFile type 4 and original name, followed by non-null early return, match native cache lookup."
       },
       {
         "id": "mac:0x00045b56",
@@ -221787,8 +221787,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0x45b56-0x45bc4 hand-compared: bad-model early return, exactly four LODs, null-name skip, signed surface-count loop, remove each string ref and clear each non-null name array match."
       },
       {
         "id": "mac:0x00045a5c",
@@ -221818,8 +221818,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0x45a5c-0x45aa4 hand-compared: signed bone count minus one, reverse unsigned-short name comparison and -1 failure match the native loop."
       },
       {
         "id": "mac:0x00045b1c",
@@ -221849,8 +221849,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0x45b1c-0x45b56 hand-compared: three mins then three maxs raw field copies match native sequence."
       },
       {
         "id": "linux:xanim/xmodel.cpp:294:XModelGetCollLod",
@@ -221869,7 +221869,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read the Linux-only ledger definition and searched native src: no native body or caller, and no Mac symbol/unique complete inline identity established. Linux collLod getter is insufficient authority to claim equality or invent implementation. No code added."
       },
       {
         "id": "mac:0x00045ab8",
@@ -221899,8 +221899,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0x45ab8-0x45ac4 field getter compared with native contents return."
       },
       {
         "id": "mac:0x00045aa4",
@@ -221930,8 +221930,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0x45aa4-0x45ab8 indexed LOD filename getter compared with native layout-aware field return."
       },
       {
         "id": "mac:0x00045ad2",
@@ -221961,8 +221961,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0x45ad2-0x45ae0 integer field getter compared with native memUsage return."
       },
       {
         "id": "mac:0x00045ac4",
@@ -221992,8 +221992,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0x45ac4-0x45ad2 pointer field getter compared with native xskins return."
       },
       {
         "id": "linux:xanim/xmodel.cpp:448:XModelIgnoreChar",
@@ -222012,7 +222012,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read the Linux-only ledger definition and searched native src: no native body or caller, and no Mac symbol/unique complete inline identity established. Linux unreferenced dead helper is insufficient authority to claim equality or invent implementation. No code added."
       },
       {
         "id": "linux:xanim/xmodel.cpp:196:XModelLoadDefaultModel",
@@ -222030,8 +222030,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Inline XModelPrecache 0x45930-0x45a46 hand-compared: default allocation/initialization then type-4 Hunk_SetDataForFile with caller name/model/allocator, matching fallback."
       },
       {
         "id": "mac:0x00045824",
@@ -222061,8 +222061,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0x45824-0x45840 hand-compared: Hunk_FindDataForFile type 3 and original name match."
       },
       {
         "id": "mac:0x000457e6",
@@ -222092,8 +222092,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0x457e6-0x45824 hand-compared: hierarchy names, signed numBones count, non-positive skip and forward SL_RemoveRefToString loop match."
       },
       {
         "id": "mac:0x00045840",
@@ -222123,8 +222123,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0x45840-0x4586a hand-compared: Hunk_SetDataForFile arguments type 3/name/parts/allocator match."
       },
       {
         "id": "mac:0x000458b0",
@@ -222154,8 +222154,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0x458b0-0x45a4c hand-compared through cache hit, successful load/name interning, error print, complete default fallback initialization and final type-4 cache insertion. Native sizeof allocations/pointer fields preserve LP64 storage."
       },
       {
         "id": "linux:xanim/xmodel.cpp:206:XModelReplace",
@@ -222174,7 +222174,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read the Linux-only ledger definition and searched native src: no native body or caller, and no Mac symbol/unique complete inline identity established. Linux replacement/refcount API is insufficient authority to claim equality or invent implementation. No code added."
       },
       {
         "id": "linux:xanim/xmodel.cpp:442:XModelReturnZero",
@@ -222193,7 +222193,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read the Linux-only ledger definition and searched native src: no native body or caller, and no Mac symbol/unique complete inline identity established. Linux unreferenced dead helper is insufficient authority to claim equality or invent implementation. No code added."
       },
       {
         "id": "linux:xanim/xmodel.cpp:42:XModelSetUnusedValue",
@@ -222212,7 +222212,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read the Linux-only ledger definition and searched native src: no native body or caller, and no Mac symbol/unique complete inline identity established. Linux unreferenced dead helper is insufficient authority to claim equality or invent implementation. No code added."
       },
       {
         "id": "mac:0x0004586a",
@@ -222242,8 +222242,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0x4586a-0x45886 hand-compared: Hunk_FindDataForFile type 2 and original name match."
       },
       {
         "id": "mac:0x00045886",
@@ -222273,8 +222273,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0x45886-0x458b0 hand-compared: Hunk_SetDataForFile arguments type 2/name/surfs/allocator match."
       },
       {
         "id": "mac:0x00045bc4",
@@ -222304,8 +222304,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0x45bc4-0x46304 hand-compared end to end: content gate, bone translation/quaternion matrix, endpoint transform, broadphase, signed triangle loops, plane-side gates, 0.125 bias and zero clamp, -0.001/1.001 barycentric limits, hit stores and final normal rotation match. Existing native (1-(yy+zz)) grouping matches SSE sums. TraceExtents union provides the complete reciprocal-delta storage expected by CM_CalcTraceEntents; no new code."
       }
     ],
     "xanim/xmodel_load": [
@@ -222325,8 +222325,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared inline XModelLoad 0xbc365-0xbc449 and 0xbc623-0xbc8b8: root identity/zero/weight 2, signed-short scale 3.0518509447574615e-05, parent-relative QuatMultiply, left-associated squared length and zero quaternion fallback, weight 2/length, parent matrix/translation products, and both four-word part-bit masks match native base-pose blocks."
       },
       {
         "id": "linux:xanim/xmodel_load.cpp:464:XModelCollSupported",
@@ -222344,8 +222344,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only unreferenced false stub is not a Mac collision capability API. Mac XModelLoad 0xbb840/0xbbb9a loads collision before checking renderer capability at 0xbbae0. Native preserves that CPU collision path unconditionally, including dedicated builds; no Linux false-stub behavior substituted."
       },
       {
         "id": "linux:xanim/xmodel_load.cpp:6:XModelConsumeQuat",
@@ -222363,8 +222363,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete inline XModelLoad reader at 0xbc5ca-0xbc61e with positive path 0xbc543-0xbc56b: three signed shorts and cursor +6, square sum/0x3fff0001 remainder, positive sqrt/+0.5f/floorf, zero fallback and four stored shorts match native loader."
       },
       {
         "id": "mac:0x000bb4d2",
@@ -222394,8 +222394,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xbb4d2-0xbb616 hand-compared: zero collision-surface return, +/-FLT_MAX initialization, negative-count return 1, every corner selection across eight corners, MatrixTransformVector arguments and three component min/max comparisons match."
       },
       {
         "id": "mac:0x000bb616",
@@ -222425,8 +222425,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xbb616-0xbc8bc hand-compared with complete native loader. Corrected version diagnostic newlines at Mac call sites 0xbb69d, 0xbc0b3 and 0xbc033; Independent review corrected the surface-conflict diagnostic at0xbc11a: Mac string0x24b4c8 and Windows0x5b0d58 contain a newline and the repair-hint line; both are preserved. The native collision count check wrongly used pointer-bearing XModelCollSurf sizeof against file bytes; Mac 0xbbc55-0xbbc75 establishes the 36-byte disk tail plus four-byte triangle count, so native now checks 40-byte minimum records while retaining allocation overflow validation. Review found a short-record acceptance regression from that relaxation; native now checks each40-byte minimum before count read and reserves36 metadata bytes after48-byte triangle records. Defined malformed-input rejection remains an adaptation. Configuration, collision masks/epsilon, LOD/string loops, parts/base pose/bounds, cache/error/free paths and renderer paths hand-compared. Dedicated intentionally skips renderer surfaces/skins, LP64 storage/memUsage grows with structs, and corrupt count validation remains native. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:xanim/xmodel_load.cpp:251:XModelLoadCollData",
@@ -222444,8 +222444,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Hand-compared inline XModelLoad 0xbb82c-0xbb84b and 0xbbb9a-0xbbd9d: surface/triangle counts and allocations, 12-float triangles, +/-0.001 bounds, bone index, contents mask 0xdffffffb, flags and OR accumulation match. Fixed native file-size check to use minimum serialized 40-byte surfaces established by Mac 0xbbc55-0xbbc75 rather than native sizeof; existing corrupt-count/overflow rejection is a deliberate native adaptation. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:xanim/xmodel_load.cpp:216:XModelLoadConfigFile",
@@ -222463,8 +222463,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Hand-compared inline XModelLoad 0xbb673-0xbb7ae: version 20, flags, six raw bounds floats, all four distance/NUL-filename pairs and collision LOD match. Restored newline on version diagnostic corresponding to Mac 0xbb69d; compiled and reviewed, not exercised."
       },
       {
         "id": "linux:xanim/xmodel_load.cpp:322:XModelLoadFile",
@@ -222482,8 +222482,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Linux split body is in Mac XModelLoad 0xbb616-0xbc8bc. Hand-compared configuration, model/name allocation and memUsage, collision records, all four LOD material lists, parts loading/failure cleanup, per-bone center/radius bounds and final fields. Fixed serialized surface check (Mac 0xbbc55-0xbbc75) and model diagnostic newline (0xbb69d); native allocation sizes grow for pointer fields and invalid-count checks remain intentional. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:xanim/xmodel_load.cpp:483:XModelLoadSurface",
@@ -222501,8 +222501,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux wrapper maps to Mac XModelLoad renderer blocks 0xbbb29-0xbbb46, 0xbbe9b-0xbbf16, 0xbbff4-0xbc038 and 0xbc0e5-0xbc25d. Cache/load/version/count/read/cache-insert/error paths hand-compared with native non-dedicated branch. COD2_APPLE_SDK dedicated builds intentionally skip GPU surface loading after CPU bones/collision/bounds; same boundary excludes these wrappers, while non-dedicated caller retains them."
       },
       {
         "id": "linux:xanim/xmodel_load.cpp:504:XModelLoadSurfaces",
@@ -222520,8 +222520,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand-compared Mac XModelLoad 0xbbaed-0xbbb89 all-four-LOD loop, empty-filename stop, failed-surface cleanup and R_LoadXSkins with native renderer branch. Native Apple dedicated builds intentionally stop before GPU surface/skin work, retaining CPU model bones/collision/bounds. This is a renderer boundary, not an omitted CPU loader."
       },
       {
         "id": "linux:xanim/xmodel_load.cpp:301:XModelPartsLoad",
@@ -222539,8 +222539,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared inline XModelLoad cache lookup at 0xbb9fa-0xbba29, fallback diagnostics 0xbbf40-0xbbfd2 and final type-3 cache insertion 0xbc435-0xbc454 with native parts block; cache hit, load failure and successful insertion behavior match."
       },
       {
         "id": "linux:xanim/xmodel_load.cpp:82:XModelPartsLoadFile",
@@ -222558,8 +222558,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Hand-compared complete inline XModelLoad parts blocks 0xbbf40-0xbbfd2, 0xbc077-0xbc0b8 and 0xbc14e-0xbc8b8: file/version, signed bone counts and 127 limit, LP64-adjusted allocations, parent delta/translation/quaternions, names/classifications, FS_FreeFile, base pose and bit masks match for valid assets. Restored version-diagnostic newline at Mac 0xbc0b3; compiled and reviewed, not exercised. Native checks the 127 limit before allocating names, preserving early rejection rather than consuming hunk storage on invalid input."
       },
       {
         "id": "mac:0x000c7318",
@@ -222589,8 +222589,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Restarted exact Mac symbol at 0xc7318 to verify misaligned prologue, then hand-compared full 0xc7318-0xc773c with gfx_d3d/r_xsurface_load_obj.c outside assigned files: signed rigid/skinned counts, bone-offset shifts/part bits, all fixed vertex fields and variable blend records, index allocation/copy and odd-triangle duplication match. Native sizeof(XSurface)/memUsage accounts for wider pointers; no shared source edit. Not executed by dedicated surface-skipping path."
       },
       {
         "id": "linux:xanim/xmodel_load.cpp:458:XModelSkinsSupported",
@@ -222608,8 +222608,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only unreferenced false stub has no Mac function identity. Verified native replacement boundary in XModelLoad: CPU model work always completes; Apple dedicated builds skip renderer surfaces and R_LoadXSkins, while other builds retain Mac R_LoadXSkins call at 0xbbb78 behind the surface-read capability. No false stub introduced."
       },
       {
         "id": "linux:xanim/xmodel_load.cpp:469:XModelSurfsSupported",
@@ -222627,8 +222627,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only false stub is replaced by the actual Mac XModelLoad renderer capability check at 0xbbae0. Native non-dedicated loader checks re.XModelAllowReadSurface; Apple dedicated build skips surfaces/skins while retaining CPU collision/parts/bounds. Hand-compared that exact boundary; no guessed Mac helper identity claimed."
       }
     ],
     "xanim/xmodel_utils": [
@@ -222660,8 +222660,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0xb6820-0xb682e returns address of inline parts skel.mat at +0x44; native array-to-pointer field return accounts for LP64 header growth."
       },
       {
         "id": "mac:0x000b682e",
@@ -222682,8 +222682,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0xb682e-0xb6842 returns base pose plus logical unsigned offset >>1, matching native byte-address calculation."
       },
       {
         "id": "linux:xanim/xmodel_utils.cpp:62:XModelGetBasePoseOffset",
@@ -222701,8 +222701,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Linux-only name maps completely to Mac XModelGetBasePoseBone 0xb682e-0xb6842: inline skel.mat address plus logical unsigned offset >>1. Native uses that exported Mac name with the same unsigned shift."
       },
       {
         "id": "mac:0x000b6796",
@@ -222732,8 +222732,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0xb6796-0xb67a6 zero-extends flags byte, matching native unsigned-char getter."
       },
       {
         "id": "mac:0x000b6890",
@@ -222763,8 +222763,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0xb6890-0xb68e7 hand-compared: signed LOD count, per-slot override flag/distance, ordered zero equality or strict distance-greater return and -1 exhaustion match, including NaN comparisons."
       },
       {
         "id": "mac:0x000b6866",
@@ -222794,8 +222794,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0xb6866-0xb6890 last signed LOD index and override flag/distance selection match native fields."
       },
       {
         "id": "mac:0x000b6788",
@@ -222825,8 +222825,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Restarted exact Mac 0xb6788 symbol after disassembly misalignment; pointer load from model name field +0x88 matches native field getter."
       },
       {
         "id": "mac:0x000b6806",
@@ -222856,8 +222856,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0xb6806-0xb6812 sign-extends numLods short, matching native return."
       },
       {
         "id": "mac:0x000b67a6",
@@ -222887,8 +222887,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0xb67a6-0xb67d8 indexed unsigned-short material name, zero DEFAULT string and SL_ConvertToString tail call match native getter."
       },
       {
         "id": "mac:0x000b67d8",
@@ -222918,8 +222918,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xb67d8-0xb6806 assumes lodInfo.surfs is non-null, returns its surface-pointer array, partBits at pointer-width offset and signed numsurfs. Native preserves those values with sizeof(void*) offset but retains an existing null-surfs shutdown safeguard that returns zero and null outputs for partially/unloaded dedicated models. Hand-compared normal path; no code change."
       },
       {
         "id": "mac:0x000b6812",
@@ -222949,8 +222949,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0xb6812-0xb6820 loads model parts and sign-extends numBones, matching native getter."
       },
       {
         "id": "linux:xanim/xmodel_utils.cpp:101:XModelSetLodOverride",
@@ -222968,8 +222968,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Linux-only name maps completely to Mac XModelSetTestLods 0xb6842-0xb6866: indexed distance store and ordered dist>=0 enabled-byte store; native exposes the Mac name with same behavior."
       },
       {
         "id": "mac:0x000b6842",
@@ -222990,8 +222990,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared: Mac 0xb6842-0xb6866 stores distance then enabled byte via ordered comparison >=0; native matches including disabled NaN and enabled negative zero."
       }
     ],
     "zlib/adler32": [
