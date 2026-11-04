@@ -10624,8 +10624,8 @@
     "evidence": "Compared Mac inline coefficient construction at 0x2c0f7\u20130x2c166 and coefficient use through 0x2c210 with native universal/com_math.c: scale first, nine quaternion products, 1-(yy+zz), paired sums/differences and matrix orientation."
   },
   "linux:xanim/xanim_public.h:690:DObjCalcTransWeight": {
-    "status": "unchecked",
-    "evidence": "Cross-file defect confirmed by dobj worker: Mac 0x75958\u20130x759ab computes length and 2/length; zero branch 0x75d15\u20130x75d2c writes only w=1 and transWeight=2. Native DObjFinalizeQuatWeightLocal additionally zeroes xyz, losing signed-zero/subnormal values. Dobj worker owns the fix; acceptance/commit remains external to this worktree."
+    "status": "fixed",
+    "evidence": "Mac0x75958\u20130x759ab computes component-ordered squared length and2/length; zero branch0x75d15\u20130x75d2c writes only w=1 andtransWeight=2. Native additional xyz clears were corrected by integrated fcd775c. Parent spot check and independent review-xanim-dobj confirm the complete helper and valid storage contract. Compiled and reviewed; signed-zero/subnormal edge not individually exercised."
   },
   "mac:0x0002c0e8": {
     "status": "equal",
@@ -10636,28 +10636,28 @@
     "evidence": "Compared Mac DObjCalcSkel inline transform at 0x759be\u20130x75af0 with native DObjCalcParentLocal: captures original translation before writes, scaled quaternion coefficients, three left-associated dot products and parent translation additions. Public header no longer contains a standalone helper."
   },
   "linux:xanim/xanim_public.h:736:QuatMultiplyEquals": {
-    "status": "unchecked",
-    "evidence": "Cross-file arithmetic-order defect confirmed by dobj worker: Mac 0x75850\u20130x758a6 qx is ((x*pw+w*px)+z*py)-y*pz and qy 0x758ba\u20130x75913 is ((pw*y-z*px)+w*py)+x*pz. Native DObjCalcParentLocal sums in a different order. Dobj worker owns correction; no complete equality claimed pending its commit."
+    "status": "fixed",
+    "evidence": "Mac0x75850\u20130x75953 establishes the complete ordinary quaternion multiply, including qx/qy accumulation order. Native DObjCalcParentLocal reordered those additions; integrated fcd775c corrects them. Independent DObj review confirms every component, input snapshot/lifetime and OFF preservation. Compiled and reviewed; arithmetic edge corpus not exercised."
   },
   "linux:xanim/xanim_public.h:722:QuatMultiplyReverseEquals": {
-    "status": "unchecked",
-    "evidence": "Cross-file arithmetic-order defect confirmed by dobj worker: Mac control path qx 0x75bf0\u20130x75c49 is ((px*w+pw*x)+pz*y)-z*py, and qy 0x75c5d\u20130x75cbe is ((w*py-x*pz)+pw*y)+z*px. Native DObjCalcParentLocal differs. Dobj worker owns correction; no complete equality claimed pending its commit."
+    "status": "fixed",
+    "evidence": "Mac0x75bf0\u20130x75cce establishes the complete control-parent quaternion multiply. Native DObjCalcParentLocal qx/qy accumulation order differed; integrated fcd775c restores it. Independent DObj review confirms complete component arithmetic and input snapshot/lifetime. Compiled and reviewed; arithmetic edge corpus not exercised."
   },
   "linux:xanim/xanim_public.h:670:XModelDataReadFloat": {
-    "status": "unchecked",
-    "evidence": "Header no longer defines this Linux inline reader. Candidate native loader direct reads/ConsumeShort/ConsumeUShort/ConsumeInt and Mac symbol inventory inspected, but no unique complete Mac inline identity was proved for this named helper. Not inferred equal from a similar primitive load."
+    "status": "equal",
+    "evidence": "Parent read complete Linux helper for identity only (4-byte value copy then cursor+4) and native XModelLoad float memcpy/cursor reads. Exact Mac XModelLoad0xbbbde\u20130xbbc50 loads six consecutive4-byte float payloads at offsets0..0x14;0xbbc72 commits total cursor+0x24 after the following three integer fields. Complete fixed-width reader operation is inlined, including raw bits and cursor advancement. Native float read/storage agrees; surrounding arithmetic remains caller responsibility."
   },
   "linux:xanim/xanim_public.h:680:XModelDataReadInt": {
-    "status": "unchecked",
-    "evidence": "Header no longer defines this Linux inline reader. Candidate native loader direct reads/ConsumeShort/ConsumeUShort/ConsumeInt and Mac symbol inventory inspected, but no unique complete Mac inline identity was proved for this named helper. Not inferred equal from a similar primitive load."
+    "status": "equal",
+    "evidence": "Parent read complete Linux helper for identity only (4-byte integer copy then cursor+4) and native XModelLoad boneIdx/contents/surfFlags memcpy/cursor sequence. Exact Mac0xbbc55\u20130xbbc7b loads offsets0x18/0x1c/0x20 and commits cursor+0x24 following six floats; native signed integer payload and4-byte advance agree. This establishes the whole inline primitive, not an unrelated symbol-name match."
   },
   "linux:xanim/xanim_public.h:650:XModelDataReadShort": {
-    "status": "unchecked",
-    "evidence": "Header no longer defines this Linux inline reader. Candidate native loader direct reads/ConsumeShort/ConsumeUShort/ConsumeInt and Mac symbol inventory inspected, but no unique complete Mac inline identity was proved for this named helper. Not inferred equal from a similar primitive load."
+    "status": "equal",
+    "evidence": "Parent read complete Linux helper for identity only (2-byte signed short copy then cursor+2). Native XModelLoad LOD numsurfs memcpy into short andcur+=2 matches exact Mac0xbb947 movswl followed0xbb94e cursor+2 and0xbb951 store. Complete return signedness/width/cursor behavior is identified in its loader caller."
   },
   "linux:xanim/xanim_public.h:660:XModelDataReadUnsignedShort": {
-    "status": "unchecked",
-    "evidence": "Header no longer defines this Linux inline reader. Candidate native loader direct reads/ConsumeShort/ConsumeUShort/ConsumeInt and Mac symbol inventory inspected, but no unique complete Mac inline identity was proved for this named helper. Not inferred equal from a similar primitive load."
+    "status": "equal",
+    "evidence": "Parent read complete Linux helper for identity only (2-byte unsigned short copy then cursor+2) and native ConsumeUShort plus loader callers. Exact Mac XAnimLoadFile0xba790\u20130xba79d and0xba8fc\u20130xba909 use movzwl, advance cursor2, store updated cursor and consume the zero-extended result. Complete inline primitive agrees for valid serialized input on the supported little-endian native targets."
   },
   "mac:0x000ba168": {
     "status": "equal",
