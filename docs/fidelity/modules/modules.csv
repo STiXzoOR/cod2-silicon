@@ -344,12 +344,12 @@ qcommon/cm_trace,38,37,1,0,0
 qcommon/cm_tracebox,2,2,0,0,0
 qcommon/cm_world,24,24,0,0,0
 qcommon/cmd,36,25,0,7,4
-qcommon/com_bsp_load_obj,6,0,0,0,6
+qcommon/com_bsp_load_obj,6,5,1,0,0
 qcommon/com_playerprofile,7,0,0,0,7
-qcommon/com_profilemapload,1,0,0,0,1
+qcommon/com_profilemapload,1,1,0,0,0
 qcommon/common,76,40,18,7,11
 qcommon/dl_main,11,2,1,7,1
-qcommon/dobj_management,14,0,0,0,14
+qcommon/dobj_management,14,11,3,0,0
 qcommon/dvar_cmds,10,5,5,0,0
 qcommon/files,4,0,0,0,4
 qcommon/huffman,19,12,1,0,6
