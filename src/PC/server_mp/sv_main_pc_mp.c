@@ -25,6 +25,11 @@ extern int Com_AddToString(const char *add, char *msg, int len, int maxlen, qboo
 extern const char *va(const char *fmt, ...);
 extern void SVC_Status(netadr_t from);
 extern void SVC_GameCompleteStatus(netadr_t from);
+#if defined(COD2_X64)
+extern void LargeLocal_LargeLocal(const LargeLocal *self, int size);
+extern void *LargeLocal_GetBuf(const LargeLocal *self);
+extern void ZN10LargeLocalD1Ev(LargeLocal *self);
+#endif
 
 extern byte svs_ptr[];
 extern const dvar_t *sv_dedicated_dvar;
@@ -80,7 +85,12 @@ void SV_FlushRedirect(char *outputbuf)
 
 void SVC_RemoteCommand(struct netadr_t from, msg_t *msg)
 {
+#if defined(COD2_X64)
+    LargeLocal output_large_local;
+    char *sv_outputbuf;
+#else
     char sv_outputbuf[0x3ff0];
+#endif
     char remaining[0x400];
     char *password;
     char *cmd;
@@ -95,9 +105,16 @@ void SVC_RemoteCommand(struct netadr_t from, msg_t *msg)
     if (!SV_Cod2xUdpAllow(from, COD2X_UDP_RCON))
         return;
 #endif
+#if defined(COD2_X64)
+    LargeLocal_LargeLocal(&output_large_local, 0x1fff0);
+    sv_outputbuf = (char *)LargeLocal_GetBuf(&output_large_local);
+#endif
     time = Com_Milliseconds();
 
     if (lasttime != 0 && (time - lasttime) <= 499) {
+#if defined(COD2_X64)
+        ZN10LargeLocalD1Ev(&output_large_local);
+#endif
         return;
     }
 
@@ -120,13 +137,20 @@ void SVC_RemoteCommand(struct netadr_t from, msg_t *msg)
 
     *(netadr_t *)((byte *)&svs + SVS_REDIRECTADDR_OFF) = from;
 
+#if defined(COD2_X64)
+    Com_BeginRedirect(sv_outputbuf, 0x1fff0, SV_FlushRedirect);
+#else
     Com_BeginRedirect(sv_outputbuf, 0x3ff0, SV_FlushRedirect);
+#endif
 
     rcon_dvar = rcon_password;
     if (rcon_dvar->current.string[0] == '\0') {
 
         Com_Printf("The server must set 'rcon_password' for clients to use 'rcon'.\n");
         Com_EndRedirect();
+#if defined(COD2_X64)
+        ZN10LargeLocalD1Ev(&output_large_local);
+#endif
         return;
     }
 
@@ -137,6 +161,9 @@ void SVC_RemoteCommand(struct netadr_t from, msg_t *msg)
             Com_Printf("You must log in with 'rcon login <password>' before using 'rcon'.\n");
         }
         Com_EndRedirect();
+#if defined(COD2_X64)
+        ZN10LargeLocalD1Ev(&output_large_local);
+#endif
         return;
     }
 
@@ -148,6 +175,9 @@ void SVC_RemoteCommand(struct netadr_t from, msg_t *msg)
 
     if (len > 0x3ff) {
         Com_EndRedirect();
+#if defined(COD2_X64)
+        ZN10LargeLocalD1Ev(&output_large_local);
+#endif
         return;
     }
 
@@ -155,6 +185,9 @@ void SVC_RemoteCommand(struct netadr_t from, msg_t *msg)
     SV_Cmd_ExecuteString(remaining);
 
     Com_EndRedirect();
+#if defined(COD2_X64)
+    ZN10LargeLocalD1Ev(&output_large_local);
+#endif
 }
 
 void SV_MatchEnd(void)
@@ -201,7 +234,11 @@ void SV_MasterGameCompleteStatus(void)
         return;
     }
 
+#if defined(COD2_X64)
+    Com_Printf("Sending gameCompleteStatus to cod2master.activision.com\n");
+#else
     Com_Printf("Sending gameCompleteStatus to master server\n");
+#endif
 
     addr = *master;
     SVC_GameCompleteStatus(addr);
@@ -222,14 +259,22 @@ void SV_MasterHeartbeat(const char *hbname)
 
     svs = (byte *)imp_svs;
 
+#if defined(COD2_X64)
+    dedicated = com_dedicated;
+#else
     dedicated = sv_dedicated_dvar;
+#endif
     if (!dedicated || dedicated->current.integer != 2) {
         return;
     }
 
     time = *(int *)(svs + SVS_TIME_OFF);
 
+#if defined(COD2_X64)
+    if (time >= *(int *)(svs + SVS_NEXTHEARTBEATTIME_OFF)) {
+#else
     if (time < *(int *)(svs + SVS_NEXTHEARTBEATTIME_OFF)) {
+#endif
 
         *(int *)(svs + SVS_NEXTHEARTBEATTIME_OFF) = time + 180000;
 
@@ -238,7 +283,11 @@ void SV_MasterHeartbeat(const char *hbname)
 
             time = *(int *)(svs + SVS_TIME_OFF);
         } else {
+#if defined(COD2_X64)
+            Com_Printf("Sending heartbeat to cod2master.activision.com\n");
+#else
             Com_Printf("Sending heartbeat to master server\n");
+#endif
             addr = *master;
             NET_OutOfBandPrint(NS_SERVER, addr, va("heartbeat %s\n", hbname));
             time = *(int *)(svs + SVS_TIME_OFF);
