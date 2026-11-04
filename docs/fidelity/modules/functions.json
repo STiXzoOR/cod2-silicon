@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 7893,
+      "unchecked": 7881,
       "intentional": 1369,
-      "equal": 139,
-      "fixed": 56
+      "equal": 145,
+      "fixed": 62
     },
     "scopes": {
       "unassigned": 777,
@@ -89829,8 +89829,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 819 Mac bytes 0x1c9db0-0x1ca0e2 compared. Water contents, surface index, hit-time velocity, reflection by exact -2.0, double 0.7 ground test, bounce scaling at 0x3a0/0x3fc, 20.0 rest test, 0.1 nudge with downward-only Z, base/time stores, landing angles and water return match. Fixed the final speed test: Mac returns no impact event for an unordered comparison at 0x1c9fca-0x1c9fd1, while native returned one. The October tangent-impact correction stays validated. Regression bounce-nan fails baseline and passes both builds."
       },
       {
         "id": "mac:0x001c94f4",
@@ -89860,8 +89860,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 674 Mac bytes 0x1c94f4-0x1c9795 compared. Smoke wait, truncated origin snap, entity state, 16.0 downward trace with mask 0x811, event choice, water surface, effect timing in float (0x1c977b-0x1c978c, unlike the double in Linux), free-after-event and radius arguments match. Fixed the splash gate: Mac tests inner damage for nonzero at 0x1c966c, native tested for positive. Regression inner-sign fails baseline and passes both builds."
       },
       {
         "id": "linux:game/g_missile_mp.cpp:168:G_MissileImpact",
@@ -89879,8 +89879,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Linux helper is inlined in Mac G_RunMissile 0x1ca3f2-0x1ca583 and its cold blocks. Fixed three differences: the explosion event was inverted (0xBE for a client or part hit, otherwise 0xBD, 0x1ca4c5-0x1ca4f4), the splash ignore argument was the missile rather than the entity hit (%ebx at 0x1cacee), and the splash gate tested positive rather than nonzero (0x1ca56f). Also fixed LogAccuracyHit receiving NULL for an ownerless missile: Mac indexes the owner unconditionally (0x1cadec-0x1cae0e) and only G_Damage maps none to NULL. Bounce routing, surface default 0x700000, damage arguments, trigger attacker fallback to world, state stores and SnapVectorTowards order match. Regressions impact-event, impact-splash, impact-owner and inner-sign fail baseline and pass both builds."
       },
       {
         "id": "mac:0x001c9b80",
@@ -89910,8 +89910,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 559 Mac bytes 0x1c9b80-0x1c9dae compared. Hit time, 0.1 normal gate, surface pitch and delta, trDelta scale with 0.3/0.85 and sign by the 80.0 test, 45.0 and 90.0 alignment, 180.0 flip, 0.25 partial alignment, the rand 0x7f minus 0x3f airborne branch and all unordered paths match. No correction required."
       },
       {
         "id": "linux:game/g_missile_mp.cpp:357:G_MissileTrace",
@@ -89929,8 +89929,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined at each Mac G_RunMissile trace site. Priority map, owner skip, clip mask, startsolid zero fraction and normal from start minus end match at all call sites. Native writes the temporary direction into the outer dir, which is overwritten before every later read. No correction required."
       },
       {
         "id": "linux:game/g_missile_mp.cpp:377:G_MissileTrace_IgnoreEntity",
@@ -89948,8 +89948,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined at Mac 0x1cab79-0x1cabd9 with the startsolid block at 0x1cad3d. Contents save, zero, retrace and restore match. The entry test belongs to G_RunMissile and is recorded there. No correction required."
       },
       {
         "id": "mac:0x001ca0e4",
@@ -89979,8 +89979,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 3,735 Mac bytes 0x1ca0e4-0x1caf7a compared, including cold blocks. Fixed the grenade pass-through test: Mac compares the low 16 flag bits as signed at 0x1cab6b (bit 15, set by the script helper), while native tested bit 31 and never matched, so grenades stopped at those entities. Stationary probe, 0.001 threshold, 30.0 water trace, splash retrace, lerp, 0.7 ground probe, base Z correction, trigger damage, no-impact free and think order match, with the October corrections retained. Regression grenade-pass fails baseline and passes both builds."
       },
       {
         "id": "linux:game/g_missile_mp.cpp:458:G_RunMissile_CreateWaterSplash",
@@ -89998,8 +89998,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined at Mac 0x1ca81e-0x1ca891. Normalized delta, absolute Z, event 0xB6 and stores at 0xa0, 0xd8, 0x88 and 0x74 match; compile-time offset assertions tie those stores to native s.eventParm, s.scale, s.surfType and s.otherEntityNum. No correction required."
       },
       {
         "id": "linux:game/g_missile_mp.cpp:405:G_RunMissile_Destabilize",
@@ -90017,8 +90017,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Linux helper is inlined at Mac 0x1ca988-0x1caf76. Deadline, normalized direction, three flrand draws, scale, renormalize, speed, base, angles, time, reduction ratio at 0x5a4, base time at 0x5a0 by exact 1000.0 and flag store match. The October deadline and angle corrections are the required fixes and remain covered by the deadline and angle regressions."
       },
       {
         "id": "linux:game/g_missile_mp.cpp:391:G_RunMissile_GetPerturbation",
@@ -90036,8 +90036,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Linux helper is inlined at Mac 0x1ca9de-0x1ca9f7: float to double, double degree constant from 0x340c28, narrow to float, tanf. The October correction from the ADS pitch field to destabilizationAngleMax is the required fix and remains covered by the angle regression."
       },
       {
         "id": "mac:0x001c9796",
@@ -90067,8 +90067,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 553 Mac bytes 0x1c9796-0x1c99be compared. Cooked timer, handler 7, state, owner, classname, damage, flags, mask 0x2802891, 50 ms prestep, gravity trajectory, truncated delta, angle trajectory with 120.0, two flrand draws with 720.0 and 360.0, and origin and angle copies match. No correction required."
       },
       {
         "id": "mac:0x001c99c0",
@@ -90098,8 +90098,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 447 Mac bytes 0x1c99c0-0x1c9b7e compared. Normalize, spawn, classname, 30000 ms think, handler 8, flag 0x400, state, owner, damage, mask, prestep, linear trajectory, truncated delta, angles, destabilize distance over speed times 1000.0 and inherited 0x20000 flag match. No correction required."
       }
     ],
     "game/g_mover_mp": [

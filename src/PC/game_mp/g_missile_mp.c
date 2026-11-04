@@ -39,6 +39,7 @@ enum {
     GMISSILE_FL_TURRET = 0x20000,
 #if defined(COD2_X64)
     GMISSILE_EF_BOUNCE = 0x1000000,
+    GMISSILE_FL_GRENADE_PASS = 0x8000,
 #endif
 };
 
@@ -254,7 +255,7 @@ void G_ExplodeMissile(gentity_t *ent)
     }
 
 #if defined(COD2_X64)
-    if (weapDef->iExplosionInnerDamage > 0) {
+    if (weapDef->iExplosionInnerDamage) {
 #else
     if (weapDef->iExplosionRadius > 0) {
 #endif
@@ -569,10 +570,14 @@ static qboolean G_BounceMissile(gentity_t *ent, trace_t *trace)
         vec3_t velChange;
         VectorSubtract((&_ENT(ent)->s.pos)->trDelta, velocity, velChange);
         float changeSpeed = VectorLength(velChange);
+#if defined(COD2_X64)
+        return changeSpeed > 100.0f;
+#else
         if (changeSpeed <= 100.0f) {
             return 0;
         }
         return 1;
+#endif
     }
 }
 
@@ -704,7 +709,11 @@ after_trace:
 
         gentity_t *other = G_ENTITY(tr.entityNum);
 
+#if defined(COD2_X64)
+        if (other->flags & GMISSILE_FL_GRENADE_PASS) {
+#else
         if (((other)->flags) < 0) {
+#endif
 
             int savedHealth = ((other)->r.contents);
             ((other)->r.contents) = 0;
@@ -916,11 +925,15 @@ after_trace:
 #endif
 
                 gentity_t *attacker;
+#if defined(COD2_X64)
+                attacker = G_ENTITY(ent->r.ownerNum);
+#else
                 if ((_ENT(ent)->r.ownerNum) == 0x3FF) {
                     attacker = NULL;
                 } else {
                     attacker = G_ENTITY((_ENT(ent)->r.ownerNum));
                 }
+#endif
 
                 hitClient = LogAccuracyHit(other, attacker) ? 1 : 0;
 
@@ -965,7 +978,11 @@ after_trace:
                     didHitClient = 1;
                 }
 
+#if defined(COD2_X64)
+                int impactEvent = didHitClient ? 0xBE : 0xBD;
+#else
                 int impactEvent = didHitClient ? 0xBD : 0xBE;
+#endif
                 G_AddEvent(ent, impactEvent, DirToByte(tr.normal));
             }
 
@@ -983,7 +1000,7 @@ after_trace:
             G_SetOrigin(ent, endpos);
 
 #if defined(COD2_X64)
-            if (hitWeapDef->iExplosionInnerDamage > 0) {
+            if (hitWeapDef->iExplosionInnerDamage) {
 #else
             if (hitWeapDef->iExplosionRadius > 0) {
 #endif
@@ -993,7 +1010,7 @@ after_trace:
                                (float)hitWeapDef->iExplosionInnerDamage,
                                (float)hitWeapDef->iExplosionOuterDamage,
                                (float)hitWeapDef->iExplosionRadius,
-                               ent, splashMod);
+                               other, splashMod);
 #else
                 G_RadiusDamage(endpos, ent, COD2_GEntityFromHandle(_ENT(ent)->parent),
                                (float)hitWeapDef->iExplosionRadius,
