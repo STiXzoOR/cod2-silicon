@@ -40,7 +40,8 @@ void BG_UpdatePlayerDObj(DObj *obj, entityState_t *es, clientInfo_t *ci, int fla
 { assert(obj == &object && ci == expected_ci && flag == 0); Call('D'); }
 void CG_AddCEntityToScene(const GfxEntity *body, const DObj *obj, const centity_t *cent)
 { assert(obj == &object); ++scenes; Call('S'); }
-void CG_AddPlayerWeapon(GfxEntity *body, playerState_t *ps, centity_t *cent, qboolean flag) { assert(0); }
+void CG_AddPlayerWeapon(GfxEntity *body, playerState_t *ps, centity_t *cent, qboolean flag)
+{ assert(body && !ps && cent == &entities[2] && flag == 1); Call('W'); }
 void BG_EvaluateTrajectory(const trajectory_t *tr, int time, vec_t *out)
 { for (int i = 0; i < 3; ++i) out[i] = tr->trBase[i] + (tr->trType == TR_LINEAR ? tr->trDelta[i] * (float)time : 0.0f); }
 int stricmp(const char *a, const char *b) { return strcasecmp(a, b); }
@@ -67,7 +68,7 @@ static void TestBody(int corpse)
     cent->nextState.number = corpse ? 64 : 2;
     cent->nextState.clientNum = 2;
     cent->nextState.eType = corpse ? 2 : 1;
-    cent->nextState.eFlags = 2; /* Render the body but not the separate weapon. */
+    cent->nextState.eFlags = 2; /* Mac's weapon gate tests 0x20000, not this bit. */
     expected_ci = corpse ? &cgs->corpseinfo[0] : &cg->bgs.clientinfo[2];
     /* The active-frame fixture owns snapshot-loop wiring. This fixture executes
      * its real preparation and rendering consumers to catch duplicate updates. */
@@ -76,7 +77,7 @@ static void TestBody(int corpse)
     if (corpse) CG_Corpse(cent); else CG_Player(cent);
     assert(updates == 1 && goals == 1 && scenes == 1);
     assert(fabsf(elapsed - 0.02f) < 0.000001f);
-    assert(strcmp(calls, corpse ? "UDGS" : "UNGS") == 0);
+    assert(strcmp(calls, corpse ? "UDGS" : "UNGSW") == 0);
     if (!corpse) assert(expected_ci->leftHandGun == 1 && expected_ci->dobjDirty == 1);
 }
 
