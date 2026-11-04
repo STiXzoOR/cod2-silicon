@@ -10,10 +10,11 @@ identifies that base. Existing third-party copyright and license notices
 continue to apply; see [CREDITS.md](CREDITS.md).
 
 CoD2 Silicon independently reimplemented behavior after studying CoD2x,
-cod2engine, CoD2rev_Server, KisakCOD and xtnded/cod2. These projects were
-behavior and type references, read rather than copied. The resulting port
-changes are original work. Format research also consulted the projects
-listed in the credits; their code was not incorporated into the port.
+cod2engine, CoD2rev_Server, KisakCOD, xtnded/cod2, janost/vcod and
+tonga54/cod2-wasm. These projects were behavior and type references, read
+rather than copied. The resulting port changes are original work. Format
+research also consulted the projects listed in the credits; their code was
+not incorporated into the port.
 
 No game assets, Activision binaries, original game shaders, extracted shader
 payloads or decompiler dumps are included. Players supply their own licensed

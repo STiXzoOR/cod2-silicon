@@ -469,6 +469,23 @@ void Player_UpdateCursorHints(gentity_t *ent)
                 hintType = 0;
                 hintString = -1;
             } else {
+#if defined(COD2_X64)
+                /* Linux 1.3 player_use_mp.cpp: usable by its own team or with no
+                   team, then the single-user filter. The hint comes from
+                   s.hintType (dmgFlags) and s.hintString (scale), the fields
+                   setCursorHint and setHintString write. */
+                team = traceEnt->team;
+                if (team != 0 && team != ent->client->sess.cs.team)
+                    continue;
+                if (traceEnt->trigger.singleUserEntIndex != 0x3FF &&
+                    traceEnt->trigger.singleUserEntIndex != ent->client->ps.clientNum)
+                    continue;
+
+                hintType = traceEnt->s.dmgFlags;
+                hintString = -1;
+                if (hintType != 0 && traceEnt->s.scale != 0xFF)
+                    hintString = traceEnt->s.scale;
+#else
 
                 if ((((gentity_t *)(traceEnt))->team) == 0) {
 
@@ -509,6 +526,7 @@ void Player_UpdateCursorHints(gentity_t *ent)
                         continue;
                     }
                 }
+#endif
             }
         } else {
             continue;

@@ -17,8 +17,20 @@ extern DxGlobals dx;
 
 extern struct DxState dxState;
 extern r_backEndGlobals_t backEnd;
+#if defined(COD2_X64)
+/* Mac 1.3 .data (file 0x329d5c/0x329d6c): alpha then color stage states, as
+   {op, arg1, arg2, arg0}. Left zero-initialized, every DX7 stage change set
+   texture stage state 0. */
+static const DxTextureStageEnums texStageEnums = {
+    D3DTSS_ALPHAOP, { D3DTSS_ALPHAARG1, D3DTSS_ALPHAARG2, D3DTSS_ALPHAARG0 }
+};
+static const DxTextureStageEnums texStageEnums_002f24ac = {
+    D3DTSS_COLOROP, { D3DTSS_COLORARG1, D3DTSS_COLORARG2, D3DTSS_COLORARG0 }
+};
+#else
 static const DxTextureStageEnums texStageEnums;
 static const DxTextureStageEnums texStageEnums_002f24ac;
+#endif
 extern const byte defaultSamplerStateTable[];
 extern const DWORD s_blendTable[];
 extern const DWORD s_blendOpTable[];

@@ -707,11 +707,17 @@ Bool Netchan_TransmitNextFragment(netchan_t *chan)
             fragmentLength = 0x514;
         }
 
+#if defined(COD2_X64)
+        /* Protocol 118 sends fragmentStart as a long from both sides (Mac
+           0x158e21); a short from the client misparses on a retail server. */
+        MSG_WriteLong(&send, fragStart);
+#else
         if (chan->sock == 1) {
             MSG_WriteLong(&send, fragStart);
         } else {
             MSG_WriteShort(&send, fragStart);
         }
+#endif
         MSG_WriteShort(&send, fragmentLength);
         MSG_WriteData(&send, chan->unsentBuffer + fragStart, fragmentLength);
     }
@@ -853,11 +859,16 @@ qboolean Netchan_Process(netchan_t *chan, msg_t *msg)
 
     if (fragmented) {
 
+#if defined(COD2_X64)
+        /* Mac 0x15963a: fragmentStart is always a long in protocol 118. */
+        fragmentStart = MSG_ReadLong(msg);
+#else
         if (chan->sock == 0) {
             fragmentStart = MSG_ReadLong(msg);
         } else {
             fragmentStart = MSG_ReadShort(msg);
         }
+#endif
         fragmentLength = MSG_ReadShort(msg);
     } else {
         fragmentStart = 0;

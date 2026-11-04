@@ -8,10 +8,17 @@ void *imp_sv = &sv;
 void *imp_svs = &svs;
 static dvar_t maxclients;
 static dvar_t fps;
+static dvar_t maxRate;
+static dvar_t padPackets;
 const dvar_t *sv_maxclients = &maxclients;
 byte *sv_maxclients_dvar = (byte *)&sv_maxclients;
 const dvar_t *sv_fps = &fps;
-const dvar_t *sv_maxRate = &fps;
+byte *sv_fps_dvar = (byte *)&sv_fps;
+/* sv_maxRate keeps its retail default of 0, distinct from sv_fps. */
+const dvar_t *sv_maxRate = &maxRate;
+byte *sv_maxRate_dvar = (byte *)&sv_maxRate;
+const dvar_t *sv_padPackets = &padPackets;
+byte *sv_padPackets_dvar = (byte *)&sv_padPackets;
 static clientState_t states[3];
 static byte buffer[0x20000];
 static byte archive[0x2000000];
@@ -32,6 +39,7 @@ void MSG_Init(msg_t *msg, byte *data, int len)
     msg->data = data;
     msg->maxsize = len;
 }
+void MSG_WriteByte(msg_t *msg, int value) { msg->data[msg->cursize++] = (byte)value; }
 void MSG_WriteBit0(msg_t *msg) { msg->data[msg->cursize++] = 0; }
 void MSG_WriteBit1(msg_t *msg) { msg->data[msg->cursize++] = 1; }
 void MSG_WriteLong(msg_t *msg, int value)
@@ -43,6 +51,15 @@ void MSG_WriteBits(msg_t *msg, int value, int bits) { MSG_WriteLong(msg, value);
 void MSG_WriteDeltaClient(msg_t *msg, byte *from, byte *to, int force) {}
 void MSG_WriteDeltaPlayerstate(msg_t *msg, byte *from, byte *to) {}
 void MSG_WriteDeltaArchivedEntity(msg_t *msg, byte *from, byte *to, int force) {}
+void MSG_WriteDeltaEntity(msg_t *msg, byte *from, byte *to, int force) {}
+/* Archive decoding is never reached: every lookup below hits a cached frame. */
+int MSG_ReadBit(msg_t *msg) { abort(); }
+int MSG_ReadBits(msg_t *msg, int bits) { abort(); }
+int MSG_ReadLong(msg_t *msg) { abort(); }
+qboolean MSG_ReadDeltaArchivedEntity(msg_t *msg, archivedEntity_t *from, archivedEntity_t *to, int number) { abort(); }
+qboolean MSG_ReadDeltaClient(msg_t *msg, clientState_t *from, clientState_t *to, int number) { abort(); }
+void MSG_ReadDeltaPlayerstate(msg_t *msg, byte *from, byte *to) { abort(); }
+int G_GetClientArchiveTime(int clientNum) { return 1000; }
 byte *SV_GentityNum(int index) { abort(); }
 byte *SV_SvEntityForGentity(byte *ent) { abort(); }
 
@@ -78,6 +95,73 @@ int main(void)
     assert(partsOfArchive[0].size > 2);
     assert(archive[sizeof(archive) - 2] == buffer[0]);
     assert(archive[0] == buffer[2]);
+
+    /* Mac 0x195107: every archived snapshot advances the shared buffer
+       cursor, so the next one is stored after it rather than over it. */
+    int firstStart = partsOfArchive[0].start;
+    int firstSize = partsOfArchive[0].size;
+    assert(svs.nextArchivedSnapshotBuffer == firstStart + firstSize);
+    SV_ArchiveSnapshot();
+    assert(svs.nextArchivedSnapshotFrames == 2);
+    assert(partsOfArchive[1].start == firstStart + firstSize);
+    assert(svs.nextArchivedSnapshotBuffer == partsOfArchive[1].start + partsOfArchive[1].size);
+
+    /* Mac 0x194e2b/0x194e5e: a cached frame is a delta base only when it is
+       no older than sv_fps archived frames; sv_maxRate plays no part. */
+    svs.nextArchivedSnapshotFrames = 100;
+    svs.nextArchivedSnapshotBuffer = 0;
+    svs.nextCachedSnapshotFrames = 1;
+    svs.nextCachedSnapshotEntities = 0;
+    svs.nextCachedSnapshotClients = 0;
+    memset(frames, 0, sizeof(frames));
+    frames[0].archivedFrame = 100 - 30;
+    SV_ArchiveSnapshot();
+    assert(buffer[0] == 1);
+    frames[0].archivedFrame = 100 - 5;
+    svs.nextCachedSnapshotFrames = 1;
+    SV_ArchiveSnapshot();
+    assert(buffer[0] == 0);
+    int base;
+    memcpy(&base, buffer + 1, 4);
+    assert(base == 100 - 5);
+
+    /* Mac SV_GetArchivedClientInfo (0x195a06) converts the archive time with
+       sv_fps; with sv_maxRate's default of 0 the anti-lag lookup found nothing. */
+    svs.nextArchivedSnapshotFrames = 100;
+    svs.nextCachedSnapshotFrames = 1;
+    memset(frames, 0, sizeof(frames));
+    frames[0].archivedFrame = 100 - 20;
+    memset(partsOfArchive, 0, sizeof(partsOfArchive));
+    int archiveTime = 1000;
+    int ps[0x26a8 / 16][4];
+    byte cs[0x100];
+    assert(!SV_GetArchivedClientInfo(0, &archiveTime, ps, cs));
+    assert(archiveTime == 1000);
+    int found = 0;
+    assert(SV_FindArchivedSnapshotForClientLocal(0, &found) == &frames[0]);
+    assert(found == 1000);
+
+    /* Mac SV_SendClientSnapshot (0x1960e8, 0x196144): delta from any positive
+       deltaMessage while active; snapFlags bit 0 is rateDelayed. */
+    svs.clients[0].state = 4;
+    svs.clients[0].netchan.outgoingSequence = 12;
+    svs.clients[0].deltaMessage = 5;
+    svs.clients[0].gamestateMessageNum = 10;
+    svs.clients[0].rateDelayed = 1;
+    svs.clients[0].pureAuthentic = 0;
+    svs.nextSnapshotEntities = 0;
+    svs.numSnapshotEntities = 0;
+    byte out_buf[256];
+    msg_t outMsg;
+    MSG_Init(&outMsg, out_buf, sizeof(out_buf));
+    SV_WriteSnapshotToClientLocal(&svs.clients[0], &outMsg);
+    assert(out_buf[0] == 6 && out_buf[5] == 7);
+    assert((out_buf[6] & 1) == 1);
+    svs.clients[0].rateDelayed = 0;
+    svs.clients[0].pureAuthentic = 1;
+    MSG_Init(&outMsg, out_buf, sizeof(out_buf));
+    SV_WriteSnapshotToClientLocal(&svs.clients[0], &outMsg);
+    assert((out_buf[6] & 1) == 0);
     free(svs.clients);
-    puts("snapshots: client indexing/copy and archive wrap pass");
+    puts("snapshots: client indexing/copy, archive wrap, archive history, anti-lag lookup and snapshot header pass");
 }
