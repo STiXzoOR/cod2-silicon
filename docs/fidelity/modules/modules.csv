@@ -98,12 +98,12 @@ cgame/cg_drawtools_mp,13,11,1,1,0
 cgame/cg_effects_load_obj,3,1,2,0,0
 cgame/cg_ents_mp,27,23,4,0,0
 cgame/cg_event_mp,2,1,0,1,0
-cgame/cg_hudelem_mp,8,0,0,0,8
+cgame/cg_hudelem_mp,8,4,4,0,0
 cgame/cg_info_mp,2,1,1,0,0
 cgame/cg_localents_mp,6,3,3,0,0
 cgame/cg_main_mp,29,23,5,1,0
 cgame/cg_marks_mp,3,2,1,0,0
-cgame/cg_newDraw_mp,24,0,0,0,24
+cgame/cg_newDraw_mp,24,19,5,0,0
 cgame/cg_players_mp,6,4,2,0,0
 cgame/cg_playerstate_mp,3,2,0,1,0
 cgame/cg_predict_mp,9,5,3,1,0

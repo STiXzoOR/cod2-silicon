@@ -31,9 +31,17 @@ extern const dvar_t *hud_health_startpulse_critical;
 extern const dvar_t *hud_health_pulserate_injured;
 extern const dvar_t *hud_health_pulserate_critical;
 extern const dvar_t *hud_deathQuoteFadeTime;
+#if defined(COD2_X64)
+static vec4_t color = { 1.0f, 1.0f, 1.0f, 1.0f };
+#else
 static vec4_t color;
+#endif
 static char szErrorString[1024];
+#if defined(COD2_X64)
+static const float pulseMags[4] = { 1.0f, 0.8f, 0.6f, 0.3f };
+#else
 static const float pulseMags[4];
+#endif
 static vec4_t color_00302d80;   /* duplicate decl removed (C++ redefinition -> C2086) */
 static const dvar_t *hud_fadeout_speed;
 static const dvar_t *hud_enable;
@@ -112,8 +120,13 @@ enum {
     CG_GAME_TYPE = 39,
     CG_KILLER = 50,
     CG_SPECTATORS = 60,
+#if defined(COD2_X64)
+    CG_CAPFRAGLIMIT = 67,
+    CG_1STPLACE = 68,
+#else
     CG_CAPFRAGLIMIT = 66,
     CG_1STPLACE = 67,
+#endif
     CG_PLAYER_AMMOCLIP_VALUE = 70,
     CG_HOLD_BREATH_HINT = 71,
     CG_CURSORHINT = 72,
@@ -185,12 +198,16 @@ extern MaterialHandle CL_RegisterMaterialNoMip(const char *name, int imageTrack)
 
 static qboolean CG_DrawHealthEnabled(void)
 {
+#if defined(COD2_X64)
+    return cg_drawHealth->current.enabled;
+#else
     const dvar_t *drawHealth = Dvar_FindVar("cg_drawHealth");
 
     if (drawHealth)
         cg_drawHealth = drawHealth;
 
     return drawHealth && drawHealth->current.enabled;
+#endif
 }
 
 void CG_AntiBurnInHUD_RegisterDvars(void)
@@ -699,7 +716,11 @@ void CG_PulseLowHealthOverlay(float healthRatio)
     cg->healthOverlayPulseTime = cg->time;
     cg->healthOverlayFromAlpha = cg->healthOverlayToAlpha;
     pulseIndex = cg->healthOverlayPulseIndex;
+#if defined(COD2_X64)
+    if ((unsigned int)pulseIndex > 3) {
+#else
     if (pulseIndex > 3) {
+#endif
         cg->healthOverlayHurt = 0;
         cg->healthOverlayToAlpha = hud_healthOverlay_phaseEnd_toAlpha->current.value;
         cg->healthOverlayPulseDuration = hud_healthOverlay_phaseEnd_pulseDuration->current.integer;
@@ -1056,7 +1077,12 @@ static inline __attribute__((always_inline)) void CG_DrawHudPic(const rectDef_t 
         return;
     }
 
+#if defined(COD2_X64)
+    CL_DrawStretchPic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign,
+                      0.0f, 0.0f, 1.0f, 1.0f, color, material);
+#else
     UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, material);
+#endif
 }
 
 static inline __attribute__((always_inline)) int CG_RoundStanceFadeDuration(float value)
@@ -1277,6 +1303,103 @@ static void CG_DrawPlayerStance(const rectDef_t *rect, vec_t *color, struct Font
     CG_DrawStanceIcon(rect, drawColor, x, y, fadeAlpha);
 }
 
+#if defined(COD2_X64)
+static void CG_DrawPlayerAmmoValue(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, MaterialHandle material, int textStyle, int type)
+{
+    const playerState_t *ps = &cg->predictedPlayerState;
+    vec4_t reserveColor;
+    vec4_t flashColor = { 0.89f, 0.18f, 0.01f, 0.0f };
+    char ammoString[32];
+    char clipString[32];
+    int weaponIndex;
+    int reserveAmmo;
+    int clipAmmo = -1;
+    qboolean drawReserve;
+    qboolean drawClip;
+    qboolean lowAmmo = 0;
+    qboolean lowClip = 0;
+    float clipX;
+    float alpha;
+
+    (void)material;
+    (void)type;
+    if (!ps->weapon)
+        return;
+
+    alpha = CG_HudFadeAlpha(hud_fade_ammodisplay, cg->ammoFadeTime);
+    color[3] = alpha;
+    if (alpha == 0.0f)
+        return;
+
+    weaponIndex = cg_entities[cg->nextSnap->ps.clientNum].nextState.weapon;
+    if ((cg->nextSnap->ps.eFlags & 0x800000) && cg->weaponSelect >= 0 && cg->weaponSelect < BG_GetNumWeapons())
+        weaponIndex = cg->weaponSelect;
+    if (!weaponIndex)
+        return;
+
+    reserveAmmo = BG_GetTotalAmmoReserve(ps, weaponIndex);
+    if (!BG_WeaponIsClipOnly(weaponIndex))
+        clipAmmo = ps->ammoclip[BG_ClipForWeapon(weaponIndex)];
+    drawClip = clipAmmo >= 0;
+    drawReserve = reserveAmmo >= 0;
+    if (drawClip) {
+        if (clipAmmo > 999)
+            clipAmmo = 999;
+        Com_sprintf(clipString, sizeof(clipString), "%2i", clipAmmo);
+        lowClip = CG_CheckPlayerForLowClip();
+    }
+    if (drawReserve) {
+        if (reserveAmmo > 999)
+            reserveAmmo = 999;
+        Com_sprintf(ammoString, sizeof(ammoString), "%3i", reserveAmmo);
+        lowAmmo = CG_CheckPlayerForLowAmmo();
+    }
+
+    if (lowClip) {
+        if (cg->lastClipFlashTime > cg->time || cg->lastClipFlashTime + 800 < cg->time)
+            cg->lastClipFlashTime = cg->time;
+        flashColor[3] = (float)(cg->lastClipFlashTime - cg->time + 800) / 800.0f;
+        if (flashColor[3] > alpha)
+            flashColor[3] = alpha;
+    }
+    if (lowAmmo) {
+        reserveColor[0] = 0.89f;
+        reserveColor[1] = 0.18f;
+        reserveColor[2] = 0.01f;
+    } else {
+        reserveColor[0] = color[0];
+        reserveColor[1] = color[1];
+        reserveColor[2] = color[2];
+    }
+    reserveColor[3] = alpha;
+
+    if (drawClip) {
+        clipX = rect->x;
+        if (!drawReserve)
+            clipX += (rect->w - (float)UI_TextWidth(clipString, 0, font, scale)) * 0.5f;
+        UI_DrawText(clipString, 0x7fffffff, font, clipX, rect->y, rect->horzAlign, rect->vertAlign,
+                    scale, color, textStyle);
+        if (lowClip)
+            UI_DrawText(clipString, 0x7fffffff, font, clipX, rect->y, rect->horzAlign, rect->vertAlign,
+                        scale, flashColor, textStyle);
+    }
+    if (drawReserve) {
+        float ammoX;
+        if (drawClip) {
+            ammoX = (rect->x + rect->w) - (float)UI_TextWidth(ammoString, 0, font, scale);
+        } else {
+            ammoX = rect->x + (rect->w - (float)UI_TextWidth(ammoString, 0, font, scale)) * 0.5f;
+        }
+        UI_DrawText(ammoString, 0x7fffffff, font, ammoX, rect->y, rect->horzAlign, rect->vertAlign,
+                    scale, reserveColor, textStyle);
+        if (drawClip) {
+            float pipeX = rect->x + (rect->w - (float)UI_TextWidth("|", 0, font, scale)) * 0.5f - 5.0f;
+            UI_DrawText("|", 0x7fffffff, font, pipeX, rect->y, rect->horzAlign, rect->vertAlign,
+                        scale, reserveColor, textStyle);
+        }
+    }
+}
+#else
 static void CG_DrawPlayerAmmoValue(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, MaterialHandle material, int textStyle, int type)
 {
     playerState_t *ps;
@@ -1364,7 +1487,35 @@ static void CG_DrawPlayerAmmoValue(const rectDef_t *rect, struct Font_s *font, f
         CG_DrawCenteredTextInRect(ammoString, rect, font, scale, lowAmmo ? lowColor : drawColor, textStyle);
     }
 }
+#endif
 
+#if defined(COD2_X64)
+static void CG_DrawPlayerAmmoBackdrop(const rectDef_t *rect, MaterialHandle material, vec_t *color)
+{
+    vec_t drawColor[4];
+    float alpha;
+
+    if (!cg || !cg->predictedPlayerState.weapon) {
+        return;
+    }
+
+    alpha = CG_HudFadeAlpha(hud_fade_ammodisplay, cg->ammoFadeTime);
+    if (alpha <= 0.0f) {
+        return;
+    }
+
+    drawColor[0] = color ? color[0] : 1.0f;
+    drawColor[1] = color ? color[1] : 1.0f;
+    drawColor[2] = color ? color[2] : 1.0f;
+    drawColor[3] = alpha;
+    if (CG_CheckPlayerForLowAmmo()) {
+        drawColor[0] = 0.89f;
+        drawColor[1] = 0.18f;
+        drawColor[2] = 0.01f;
+    }
+    UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, drawColor, material);
+}
+#else
 static void CG_DrawPlayerAmmoBackdrop(const rectDef_t *rect, MaterialHandle material, vec_t *color)
 {
     vec_t drawColor[4];
@@ -1382,6 +1533,7 @@ static void CG_DrawPlayerAmmoBackdrop(const rectDef_t *rect, MaterialHandle mate
     CG_CopyColor(drawColor, color, alpha);
     CG_DrawHudPic(rect, material, drawColor);
 }
+#endif
 
 static inline __attribute__((always_inline)) const char *CG_GetWeaponDisplayText(int weaponIndex)
 {
@@ -1400,6 +1552,13 @@ static inline __attribute__((always_inline)) const char *CG_GetWeaponDisplayText
     return weapInfo->pszTranslatedDisplayName;
 }
 
+#if defined(COD2_X64)
+static inline __attribute__((always_inline)) float CG_WeaponSelectFadeAlpha(const cg_t *cg)
+{
+    float *fadeColor = CG_FadeColor(cg->weaponSelectTime, 1800, 700);
+    return fadeColor ? fadeColor[3] : 0.0f;
+}
+#else
 static inline __attribute__((always_inline)) float CG_WeaponSelectFadeAlpha(const cg_t *cg)
 {
     float *fadeColor;
@@ -1414,7 +1573,44 @@ static inline __attribute__((always_inline)) float CG_WeaponSelectFadeAlpha(cons
     }
     return fadeColor[3];
 }
+#endif
 
+#if defined(COD2_X64)
+static void CG_DrawPlayerWeaponName(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle)
+{
+    vec_t drawColor[4];
+    const char *text;
+    int weaponIndex;
+    float alpha;
+
+    if (!rect || !font) {
+        return;
+    }
+
+    if (!cg) {
+        return;
+    }
+
+    weaponIndex = CG_GetDrawWeaponIndex();
+    text = CG_GetWeaponDisplayText(weaponIndex);
+    if (!text || !*text) {
+        return;
+    }
+
+    alpha = CG_WeaponSelectFadeAlpha(cg);
+    if (alpha <= 0.0f) {
+        return;
+    }
+
+    drawColor[0] = color ? color[0] : 1.0f;
+    drawColor[1] = color ? color[1] : 1.0f;
+    drawColor[2] = color ? color[2] : 1.0f;
+    drawColor[3] = alpha;
+    UI_DrawText(text, 0x7fffffff, font,
+                (rect->x + rect->w) - (float)UI_TextWidth(text, 0, font, scale) - 28.0f,
+                rect->y, rect->horzAlign, rect->vertAlign, scale, drawColor, textStyle);
+}
+#else
 static void CG_DrawPlayerWeaponName(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, int textStyle)
 {
     vec_t drawColor[4];
@@ -1444,7 +1640,49 @@ static void CG_DrawPlayerWeaponName(const rectDef_t *rect, struct Font_s *font, 
     CG_CopyColor(drawColor, color, alpha);
     CG_DrawTextRightAligned(text, rect, font, scale, drawColor, textStyle);
 }
+#endif
 
+#if defined(COD2_X64)
+static void CG_DrawPlayerWeaponNameBack(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, MaterialHandle material)
+{
+    vec_t drawColor[4];
+    rectDef_t backRect;
+    const char *text;
+    int weaponIndex;
+    int textWidth;
+    float alpha;
+
+    if (!rect || !font || !material) {
+        return;
+    }
+
+    if (!cg) {
+        return;
+    }
+
+    weaponIndex = CG_GetDrawWeaponIndex();
+    text = CG_GetWeaponDisplayText(weaponIndex);
+    if (!text || !*text) {
+        return;
+    }
+
+    alpha = CG_FadeHudMenu_inl(hud_fade_ammodisplay, cg->weaponSelectTime, 1800);
+    if (alpha <= 0.0f) {
+        return;
+    }
+
+    textWidth = UI_TextWidth(text, 0, font, scale);
+    backRect = *rect;
+    backRect.w = ((float)textWidth + 28.0f) + 8.0f;
+    backRect.x = rect->x + rect->w - backRect.w;
+
+    drawColor[0] = color ? color[0] : 1.0f;
+    drawColor[1] = color ? color[1] : 1.0f;
+    drawColor[2] = color ? color[2] : 1.0f;
+    drawColor[3] = alpha;
+    UI_DrawHandlePic(backRect.x, backRect.y, backRect.w, backRect.h, backRect.horzAlign, backRect.vertAlign, drawColor, material);
+}
+#else
 static void CG_DrawPlayerWeaponNameBack(const rectDef_t *rect, struct Font_s *font, float scale, vec_t *color, MaterialHandle material)
 {
     vec_t drawColor[4];
@@ -1481,7 +1719,35 @@ static void CG_DrawPlayerWeaponNameBack(const rectDef_t *rect, struct Font_s *fo
     CG_CopyColor(drawColor, color, alpha);
     CG_DrawHudPic(&backRect, material, drawColor);
 }
+#endif
 
+#if defined(COD2_X64)
+static void CG_DrawPlayerWeaponModeIcon(const rectDef_t *rect, MaterialHandle fallbackMaterial, vec_t *color)
+{
+    weaponInfo_t *weapInfo;
+    int weaponIndex;
+    float alpha;
+    MaterialHandle material;
+
+    if (!cg) {
+        return;
+    }
+
+    alpha = CG_FadeHudMenu_inl(hud_fade_ammodisplay, cg->weaponSelectTime, 1800);
+    color[3] = alpha;
+    if (alpha == 0.0f) {
+        return;
+    }
+
+    weaponIndex = CG_GetDrawWeaponIndex();
+    weapInfo = CG_GetDrawWeaponInfo(weaponIndex);
+    (void)fallbackMaterial;
+    material = weapInfo ? weapInfo->hModeIcon : 0;
+    if (!material)
+        return;
+    UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, material);
+}
+#else
 static void CG_DrawPlayerWeaponModeIcon(const rectDef_t *rect, MaterialHandle fallbackMaterial, vec_t *color)
 {
     weaponInfo_t *weapInfo;
@@ -1505,7 +1771,57 @@ static void CG_DrawPlayerWeaponModeIcon(const rectDef_t *rect, MaterialHandle fa
     CG_CopyColor(drawColor, color, alpha);
     CG_DrawHudPic(rect, material, drawColor);
 }
+#endif
 
+#if defined(COD2_X64)
+static void CG_DrawPlayerHealthBar(const rectDef_t *rect, MaterialHandle material, vec_t *color)
+{
+    float health;
+    float alpha;
+    const playerState_t *ps;
+    if (!CG_DrawHealthEnabled())
+        return;
+    health = CG_CalcPlayerHealth();
+    alpha = CG_HudFadeAlpha(hud_fade_healthbar, cg->healthFadeTime);
+    color[3] = alpha;
+    if (alpha == 0.0f)
+        return;
+    ps = &cg->nextSnap->ps;
+    if (health > 0.0f) {
+        if (health > 0.5f) {
+            float factor = (1.0f - health) * 2.0f;
+            color[0] *= factor;
+            color[2] *= factor;
+        } else {
+            color[1] = (health + 0.2f) * color[1] + 0.3f;
+        }
+        CL_DrawStretchPic(rect->x, rect->y, health * rect->w, rect->h, rect->horzAlign, rect->vertAlign,
+                          0.0f, 0.0f, health, 1.0f, color, material);
+    }
+    if (cg->lastHealthClient != ps->clientNum) {
+        cg->lastHealthClient = ps->clientNum;
+        cg->lastHealth = health;
+        cg->lastHealthLerpDelay = 1;
+    } else if (cg->lastHealth <= health) {
+        cg->lastHealth = health;
+    } else if (cg->lastHealthLerpDelay) {
+        cg->lastHealthLerpDelay -= cg->frametime;
+        if (cg->lastHealthLerpDelay < 0)
+            cg->lastHealthLerpDelay = 0;
+    } else {
+        cg->lastHealth -= (float)cg->frametime * 0.0012f;
+        if (cg->lastHealth <= health)
+            cg->lastHealth = health;
+    }
+    if (cg->lastHealth > health) {
+        color[0] = 1.0f;
+        color[1] = 0.0f;
+        color[2] = 0.0f;
+        CL_DrawStretchPic(rect->x + health * rect->w, rect->y, rect->w * (cg->lastHealth - health), rect->h,
+                          rect->horzAlign, rect->vertAlign, health, 0.0f, cg->lastHealth, 1.0f, color, material);
+    }
+}
+#else
 static void CG_DrawPlayerHealthBar(const rectDef_t *rect, MaterialHandle material, vec_t *color)
 {
     rectDef_t barRect;
@@ -1536,7 +1852,47 @@ static void CG_DrawPlayerHealthBar(const rectDef_t *rect, MaterialHandle materia
     CG_CopyColor(drawColor, color, alpha);
     CG_DrawHudPic(&barRect, material, drawColor);
 }
+#endif
 
+#if defined(COD2_X64)
+static void CG_DrawPlayerHealthBack(const rectDef_t *rect, MaterialHandle material, vec_t *color)
+{
+    float alpha;
+    float health;
+    int duration;
+    const dvar_t *pulseRate;
+    if (!CG_DrawHealthEnabled())
+        return;
+    alpha = CG_HudFadeAlpha(hud_fade_healthbar, cg->healthFadeTime);
+    if (alpha == 0.0f)
+        return;
+    color[3] = alpha;
+    CL_DrawStretchPic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign,
+                      0.0f, 0.0f, 1.0f, 1.0f, color, material);
+    health = CG_CalcPlayerHealth();
+    if (health == 0.0f)
+        return;
+    if (health < hud_health_startpulse_critical->current.value)
+        pulseRate = hud_health_pulserate_critical;
+    else if (health < hud_health_startpulse_injured->current.value)
+        pulseRate = hud_health_pulserate_injured;
+    else
+        return;
+    duration = (int)floorf(1000.0f * pulseRate->current.value + 0.5f);
+    if (!duration)
+        return;
+    if (cg->lastHealthPulseTime > cg->time || cg->lastHealthPulseTime + duration < cg->time)
+        cg->lastHealthPulseTime = cg->time;
+    color[0] = 0.89f;
+    color[1] = 0.18f;
+    color[2] = 0.01f;
+    color[3] = (float)(duration + cg->lastHealthPulseTime - cg->time) / (float)duration;
+    if (alpha < color[3])
+        color[3] = alpha;
+    CL_DrawStretchPic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign,
+                      0.0f, 0.0f, 1.0f, 1.0f, color, material);
+}
+#else
 static void CG_DrawPlayerHealthBack(const rectDef_t *rect, MaterialHandle material, vec_t *color)
 {
     vec_t drawColor[4];
@@ -1558,7 +1914,32 @@ static void CG_DrawPlayerHealthBack(const rectDef_t *rect, MaterialHandle materi
     CG_CopyColor(drawColor, color, alpha);
     CG_DrawHudPic(rect, material, drawColor);
 }
+#endif
 
+#if defined(COD2_X64)
+static inline __attribute__((always_inline)) void CG_DrawLowHealthOverlay(const rectDef_t *rect, MaterialHandle material, vec_t *color)
+{
+    float health = CG_CalcPlayerHealth();
+    float alpha;
+    int elapsed;
+    if (health == 0.0f)
+        return;
+    CG_PulseLowHealthOverlay(health);
+    alpha = cg->healthOverlayToAlpha;
+    elapsed = cg->time - cg->healthOverlayPulseTime;
+    if (elapsed < 0)
+        elapsed = 0;
+    if (cg->healthOverlayPulseDuration > 0 && elapsed < cg->healthOverlayPulseDuration) {
+        float frac = (float)elapsed / (float)cg->healthOverlayPulseDuration;
+        alpha = cg->healthOverlayFromAlpha + (cg->healthOverlayToAlpha - cg->healthOverlayFromAlpha) * frac;
+    }
+    color[3] = alpha;
+    if (alpha == 0.0f)
+        return;
+    CL_DrawStretchPic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign,
+                      0.0f, 0.0f, 1.0f, 1.0f, color, material);
+}
+#else
 static inline __attribute__((always_inline)) void CG_DrawLowHealthOverlay(const rectDef_t *rect, MaterialHandle material, vec_t *color)
 {
     vec_t drawColor[4];
@@ -1596,7 +1977,36 @@ static inline __attribute__((always_inline)) void CG_DrawLowHealthOverlay(const 
     CG_CopyColor(drawColor, color, alpha);
     CG_DrawHudPic(rect, material, drawColor);
 }
+#endif
 
+#if defined(COD2_X64)
+static inline __attribute__((always_inline)) void CG_DrawPlayerCompass(const rectDef_t *rect, MaterialHandle material, vec_t *color)
+{
+    rectDef_t compassRect;
+    float scale;
+    float alpha;
+
+    if (!cg) {
+        return;
+    }
+
+    alpha = CG_HudFadeAlpha(hud_fade_compass, cg->compassFadeTime);
+    color[3] = alpha;
+    if (alpha <= 0.0f) {
+        return;
+    }
+
+    scale = cg_hudCompassSize->current.value;
+    compassRect = *rect;
+    compassRect.y -= rect->h * (scale - 1.0f);
+    compassRect.w *= scale;
+    compassRect.h *= scale;
+
+    CG_UpdateCompassOrientation();
+    CG_DrawRotatedPic(compassRect.x, compassRect.y, compassRect.w, compassRect.h,
+                      compassRect.horzAlign, compassRect.vertAlign, cg->compassYaw, color, material);
+}
+#else
 static inline __attribute__((always_inline)) void CG_DrawPlayerCompass(const rectDef_t *rect, MaterialHandle material, vec_t *color)
 {
     rectDef_t compassRect;
@@ -1624,7 +2034,14 @@ static inline __attribute__((always_inline)) void CG_DrawPlayerCompass(const rec
     CG_DrawRotatedPic(compassRect.x, compassRect.y, compassRect.w, compassRect.h,
                       compassRect.horzAlign, compassRect.vertAlign, cg->compassYaw, drawColor, material);
 }
+#endif
 
+#if defined(COD2_X64)
+static inline __attribute__((always_inline)) void CG_DrawPlayerCompassFriendliesOwnerdraw(rectDef_t *rect, MaterialHandle material, vec_t *color)
+{
+    CG_DrawCompassFriendlies(rect, material, color);
+}
+#else
 static inline __attribute__((always_inline)) void CG_DrawPlayerCompassFriendliesOwnerdraw(rectDef_t *rect, MaterialHandle material, vec_t *color)
 {
     vec_t drawColor[4];
@@ -1642,6 +2059,7 @@ static inline __attribute__((always_inline)) void CG_DrawPlayerCompassFriendlies
     CG_CopyColor(drawColor, color, alpha);
     CG_DrawCompassFriendlies(rect, material, drawColor);
 }
+#endif
 
 #if defined(COD2_X64) && COD2_X64
 static void CG_DrawPlayerCompassPointers(const rectDef_t *rect, const vec_t *color)
@@ -1756,8 +2174,15 @@ void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
     (void)align;
     (void)special;
 
+#if defined(COD2_X64)
+    (void)text_x;
+    (void)text_y;
+    rect.x = x;
+    rect.y = y;
+#else
     rect.x = x + text_x;
     rect.y = y + text_y;
+#endif
     rect.w = w;
     rect.h = h;
     rect.horzAlign = horzAlign;
@@ -1903,8 +2328,16 @@ void CG_OwnerDraw(float x, float y, float w, float h, int horzAlign, int vertAli
         CG_DrawLowHealthOverlay(&rect, material, color);
         break;
     case CG_TEAM_COLOR:
+#if defined(COD2_X64)
+        if (cg->nextSnap && (unsigned int)cg->nextSnap->ps.clientNum < 64) {
+            const clientInfo_t *clientInfo = &cg->bgs.clientinfo[cg->nextSnap->ps.clientNum];
+            if (clientInfo->infoValid)
+                CG_DrawTeamBackground(rect.x, rect.y, rect.w, rect.h, color[3], clientInfo->team);
+        }
+#else
         CG_CopyColor(drawColor, color, color ? color[3] : 1.0f);
         CG_DrawTeamBackground(rect.x, rect.y, rect.w, rect.h, drawColor[3], 0);
+#endif
         break;
     default:
         break;
