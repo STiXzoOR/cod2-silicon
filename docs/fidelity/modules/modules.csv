@@ -352,10 +352,10 @@ qcommon/dl_main,11,0,0,0,11
 qcommon/dobj_management,14,0,0,0,14
 qcommon/dvar_cmds,10,5,5,0,0
 qcommon/files,4,0,0,0,4
-qcommon/huffman,19,0,0,0,19
+qcommon/huffman,19,12,1,0,6
 qcommon/legacyhacks,2,0,0,0,2
 qcommon/md4,8,0,0,0,8
-qcommon/msg_mp,61,0,0,0,61
+qcommon/msg_mp,61,46,6,3,6
 qcommon/net_chan_mp,30,0,0,0,30
 qcommon/statmonitor,3,0,0,0,3
 script/scr_animtree,21,0,0,0,21
