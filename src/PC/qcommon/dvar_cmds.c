@@ -728,10 +728,19 @@ void Com_DvarDump(print_msg_type_t type)
         }
 
         if (Dvar_HasLatchedValue(var)) {
+#if defined(COD2_X64)
+            const char *latched = Dvar_DisplayableLatchedValue(var);
+            const char *current = Dvar_DisplayableValue(var);
+#endif
             Com_sprintf(message, 0x2000, "      %s \"%s\" -- latched \"%s\"\n",
                         var->name,
+#if defined(COD2_X64)
+                        current,
+                        latched);
+#else
                         Dvar_DisplayableValue(var),
                         Dvar_DisplayableLatchedValue(var));
+#endif
         } else {
             Com_sprintf(message, 0x2000, "      %s \"%s\"\n",
                         var->name,
@@ -745,7 +754,11 @@ void Com_DvarDump(print_msg_type_t type)
 
 print_summary:
     Com_sprintf(message, 0x2000, "\n%i total dvars\n%i dvar indexes\n",
+#if defined(COD2_X64)
+                i, dvarCount);
+#else
                 dvarCount, i);
+#endif
     Com_PrintMessage(type, message);
     Com_PrintMessage(type, "=============================== END DVAR DUMP =====================================\n");
 }
