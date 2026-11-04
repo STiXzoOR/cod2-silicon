@@ -420,7 +420,11 @@ void PlayerCmd_SetViewmodel(scr_entref_t entref)
 
     modelName = Scr_GetString(0);
     if (!modelName || !modelName[0])
+#if defined(COD2_X64)
+        Scr_ParamError(0, "usage: setviewmodel(<model name>)");
+#else
         Scr_ParamError(0, "model name string is empty");
+#endif
 
     pSelf->client->sess.viewmodelIndex = G_ModelIndex(modelName);
 }
@@ -513,7 +517,11 @@ unsigned int PlayerCmd_OpenMenu(scr_entref_t entref)
     static int traceCount;
 
     pSelf = PlayerCmd_GetPlayerEntity(entref);
+#if defined(COD2_X64)
+    menuName = pSelf->client->sess.connected == CON_CONNECTED ? Scr_GetString(0) : "";
+#else
     menuName = Scr_GetString(0);
+#endif
     if (pSelf->client->sess.connected != CON_CONNECTED) {
         if (traceCount++ < 16) {
             if (COD2_DEBUG_ENV("MTRACE"))
@@ -549,7 +557,11 @@ unsigned int PlayerCmd_OpenMenuNoMouse(scr_entref_t entref)
     static int traceCount;
 
     pSelf = PlayerCmd_GetPlayerEntity(entref);
+#if defined(COD2_X64)
+    menuName = pSelf->client->sess.connected == CON_CONNECTED ? Scr_GetString(0) : "";
+#else
     menuName = Scr_GetString(0);
+#endif
     if (pSelf->client->sess.connected != CON_CONNECTED) {
         if (traceCount++ < 16) {
             if (COD2_DEBUG_ENV("MTRACE"))
@@ -606,7 +618,11 @@ void PlayerCmd_SetWeaponSlotWeapon(scr_entref_t entref)
     slot = PlayerCmd_GetWeaponSlotParam(0);
     weaponName = Scr_GetString(1);
 
+#if defined(COD2_X64)
+    if (I_stricmp(weaponName, "none")) {
+#else
     if (weaponName[0]) {
+#endif
         weaponIndex = G_GetWeaponIndexForName(weaponName);
         if (!weaponIndex)
             Scr_ParamError(1, va("Unknown weapon %s.", weaponName));
@@ -1382,7 +1398,11 @@ void PlayerCmd_finishPlayerDamage(scr_entref_t entref)
             tent = G_TempEntity(impactPoint, secondEvent);
             tent->s.surfType = 7;
             tent->s.otherEntityNum = attacker->s.number;
+#if defined(COD2_X64)
+            tent->s.clientNum = clientNum;
+#else
             tent->s.attackerEntityNum = clientNum;
+#endif
             tent->r.clientMask[0] = -1;
             tent->r.clientMask[1] = -1;
             tent->r.clientMask[clientMaskIndex] &= ~clientMaskBit;

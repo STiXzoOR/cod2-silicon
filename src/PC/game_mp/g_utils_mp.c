@@ -219,7 +219,11 @@ int G_LocalizedStringIndex(const char *string)
     if (!*string) {
         return 0;
     }
+#if defined(COD2_X64)
+    return G_FindConfigstringIndex(string, 0x51e, 0x100, LEVEL_INITIALIZING, "localized string");
+#else
     return G_FindConfigstringIndex(string, 0x51e, 0x100, LEVEL_INITIALIZING, "localizedstring");
+#endif
 }
 
 int G_ShaderIndex(const char *name)
@@ -1210,7 +1214,11 @@ gentity_t *G_Spawn(void)
     if (LEVEL_NUMENTS == 0x3FE) {
 
         G_PrintEntities();
+#if defined(COD2_X64)
+        Com_Error(1, "\x15G_Spawn: no free entities");
+#else
         Com_Error(1, "G_Spawn: no free entities");
+#endif
     }
 
     {

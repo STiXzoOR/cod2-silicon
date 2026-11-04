@@ -14,7 +14,7 @@ int SV_Cmd_Argc(void) { return argc; }
 void SV_Cmd_ArgvBuffer(int index, char *buffer, int size) { snprintf(buffer, size, "%s", args[index]); }
 const char *va(const char *format, ...) { return format; }
 void SV_GameSendServerCommand(int index, int type, const char *text)
-{ assert(index == 0 && type == SV_CMD_RELIABLE && text); ++messages; }
+{ assert(index == 0 && type == SV_CMD_CAN_IGNORE && text); ++messages; }
 void TeleportPlayer(gentity_t *ent, vec_t *origin, vec_t *angles)
 {
     assert(ent == g_entities);

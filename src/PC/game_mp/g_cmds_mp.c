@@ -254,6 +254,32 @@ char *ConcatArgs(int start)
 
 void G_setfog(const char *fogstring)
 {
+#if defined(COD2_X64)
+    level_locals_t *lvl = &level;
+    int time;
+    float r;
+    float g;
+    float b;
+    float fDensity;
+    float fFar;
+    float fNear;
+
+    SV_SetConfigstring(12, fogstring);
+
+    lvl->fFogOpaqueDist = 3.402823466e+38f;
+    lvl->fFogOpaqueDistSqrd = 3.402823466e+38f;
+
+    if (sscanf(fogstring, "%f %f %f %f %f %f %d", &fNear, &fFar, &fDensity, &r, &g, &b, &time) != 7) {
+        return;
+    }
+
+    if (!(fDensity >= 1.0f)) {
+        return;
+    }
+
+    lvl->fFogOpaqueDist = (fFar - fNear) + fNear;
+    lvl->fFogOpaqueDistSqrd = lvl->fFogOpaqueDist * lvl->fFogOpaqueDist;
+#else
     level_locals_t *lvl = &level;
     float fTime;
     float r;
@@ -278,6 +304,7 @@ void G_setfog(const char *fogstring)
 
     lvl->fFogOpaqueDist = fFar;
     lvl->fFogOpaqueDistSqrd = fFar * fFar;
+#endif
 }
 
 qboolean Cmd_FollowCycle_f(gentity_t *ent, int dir)
@@ -461,8 +488,13 @@ void Cmd_CallVote_f(gentity_t *ent)
         Com_sprintf(lvl->voteDisplayString, sizeof(lvl->voteDisplayString),
                     "GAME_VOTE_GAMETYPE\x14%s", Scr_GetGameTypeNameForScript(arg2));
     } else if (!I_stricmp(arg1, "map_restart")) {
+#if defined(COD2_X64)
+        Com_sprintf(lvl->voteString, sizeof(lvl->voteString), "fast_restart");
+        Com_sprintf(lvl->voteDisplayString, sizeof(lvl->voteDisplayString), "GAME_VOTE_MAPRESTART");
+#else
         Com_sprintf(lvl->voteString, sizeof(lvl->voteString), "%s", arg1);
         Com_sprintf(lvl->voteDisplayString, sizeof(lvl->voteDisplayString), "GAME_VOTE_MAPRESTART");
+#endif
     } else if (!I_stricmp(arg1, "map_rotate")) {
         Com_sprintf(lvl->voteString, sizeof(lvl->voteString), "%s", arg1);
         Com_sprintf(lvl->voteDisplayString, sizeof(lvl->voteDisplayString), "GAME_VOTE_NEXTMAP");
@@ -593,7 +625,11 @@ void Cmd_SetViewpos_f(gentity_t *ent)
     int i;
 
     if (!(g_cheats)->current.enabled) {
+#if defined(COD2_X64)
+        SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_CHEATSNOTENABLED\"", 101));
+#else
         SV_GameSendServerCommand(ent - g_entities, SV_CMD_RELIABLE, va("%c \"GAME_CHEATSNOTENABLED\"", 101));
+#endif
         return;
     }
 
@@ -604,7 +640,7 @@ void Cmd_SetViewpos_f(gentity_t *ent)
 #endif
     {
 #if defined(COD2_X64)
-        SV_GameSendServerCommand(ent - g_entities, SV_CMD_RELIABLE, va("%c \"GAME_USAGE\x15: setviewpos x y z yaw [pitch]\"", 101));
+        SV_GameSendServerCommand(ent - g_entities, SV_CMD_CAN_IGNORE, va("%c \"GAME_USAGE\x15: setviewpos x y z yaw [pitch]\"", 101));
 #else
         SV_GameSendServerCommand(ent - g_entities, SV_CMD_RELIABLE, va("%c \"GAME_USAGE\x15: setviewpos x y z yaw\"", 101));
 #endif
@@ -754,8 +790,13 @@ void G_Say(gentity_t *ent, gentity_t *target, int mode, const char *chatText)
     if ((g_dedicated)->current.integer)
         Com_Printf("%s%s\n", name, text);
 
+#if defined(COD2_X64)
+    for (j = 0; j < level.maxclients; ++j)
+        G_SayTo(ent, &g_entities[j], mode, color, name, text);
+#else
     for (j = 0; j < level.numConnectedClients; ++j)
         G_SayTo(ent, &g_entities[j], mode, color, name, text);
+#endif
 }
 
 void Cmd_GameCommand_f(gentity_t *ent)
@@ -899,7 +940,11 @@ void Cmd_Give_f(gentity_t *ent)
         if (amount) {
             ent->health += amount;
         } else {
+#if defined(COD2_X64)
+            ent->health = ent->client->ps.stats[2];
+#else
             ent->health = ent->client->ps.stats[0];
+#endif
         }
 
         if (!give_all)
@@ -915,7 +960,11 @@ void Cmd_Give_f(gentity_t *ent)
         BG_TakePlayerWeapon(ps, (signed char)ps->weaponslots[2]);
 
         for (i = 1; i <= BG_GetNumWeapons(); ++i) {
+#if defined(COD2_X64)
+            if (!BG_DoesWeaponRequireSlot(i) || (i > maxCurrentWeapon && BG_IsAnyEmptyPrimaryWeaponSlot(ps))) {
+#else
             if (!BG_DoesWeaponRequireSlot(i) || i <= maxCurrentWeapon || BG_IsAnyEmptyPrimaryWeaponSlot(ps)) {
+#endif
                 G_GivePlayerWeapon(ps, i);
             }
         }
@@ -1077,6 +1126,7 @@ void ClientCommand(int clientNum)
         return;
     }
 
+#if !defined(COD2_X64)
     if (!I_stricmp(cmd, "tell")) {
         if (SV_Cmd_Argc() <= 1)
             return;
@@ -1107,6 +1157,7 @@ void ClientCommand(int clientNum)
         G_Say(ent, ent, 2, line);
         return;
     }
+#endif
 
     if (!I_stricmp(cmd, "score")) {
         DeathmatchScoreboardMessage(ent);
@@ -1230,10 +1281,12 @@ void ClientCommand(int clientNum)
         return;
     }
 
+#if !defined(COD2_X64)
     if (!I_stricmp(cmd, "gc")) {
         Cmd_GameCommand_f(ent);
         return;
     }
+#endif
 
     if (!I_stricmp(cmd, "setviewpos")) {
         Cmd_SetViewpos_f(ent);

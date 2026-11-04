@@ -329,7 +329,12 @@ static void ClientScr_SetHeadIconTeam(gclient_t *pSelf, const client_fields_s *p
     } else if (str == sc->axis) {
         ((ent)->s.iHeadIconTeam) = 1;
     } else if (str == sc->spectator) {
+#if defined(COD2_X64)
+        Scr_Error(va("'%s' is an illegal head icon team string. Must be none, allies, axis, or spectator.",
+                     SL_ConvertToString((unsigned short)str)));
+#else
         Scr_Error(va("'%s' is an illegal head icon team string.", SL_ConvertToString((unsigned short)str)));
+#endif
     } else {
         ((ent)->s.iHeadIconTeam) = 3;
     }

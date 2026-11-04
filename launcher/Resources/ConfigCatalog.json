@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceRevision": "bb908124",
+  "sourceRevision": "01c5fb6d",
   "groups": [
     {
       "id": "frame",
@@ -19796,7 +19796,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 981,
+              "line": 1120,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4128,
@@ -19816,7 +19816,7 @@
             },
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 987,
+              "line": 1126,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -19929,7 +19929,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 981,
+              "line": 1120,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4128,
@@ -19949,7 +19949,7 @@
             },
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 987,
+              "line": 1126,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4160,
@@ -20068,8 +20068,8 @@
       "summary": "Whether this copy of the game runs as a dedicated server.",
       "details": "The game treats this as read-only and sets it itself. The separate dedicated-server program is a different launch path. It is latched.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:981",
-        "src/PC/game_mp/g_main_mp.c:987",
+        "src/PC/game_mp/g_main_mp.c:1120",
+        "src/PC/game_mp/g_main_mp.c:1126",
         "src/PC/qcommon/common.c:1877",
         "src/PC/qcommon/common.c:1879",
         "src/PC/qcommon/common.c:2295",
@@ -22057,7 +22057,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1006,
+              "line": 1145,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -22093,7 +22093,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1006,
+              "line": 1145,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -22135,7 +22135,7 @@
       "summary": "Lets players call votes on a server you host.",
       "details": "The game's Create Server menu has an Allow Voting switch for this. The game scripts decide which votes exist.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1006",
+        "src/PC/game_mp/g_main_mp.c:1145",
         "src/PC/ui_mp/ui_main_mp.c:1338"
       ],
       "guided": false,
@@ -22152,7 +22152,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1019,
+              "line": 1158,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4101,
@@ -22177,7 +22177,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1019,
+              "line": 1158,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4101,
@@ -22208,7 +22208,7 @@
       "summary": "Rewinds players when you fire so hits land where you saw them, on a server you host.",
       "details": "On by default. Rule sets differ: FPSChallenge's EU text and zPAM's EU rules want it off, and zPAM's NA rules want it on. It only matters on a server you host.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1019"
+        "src/PC/game_mp/g_main_mp.c:1158"
       ],
       "guided": false,
       "control": {
@@ -22223,7 +22223,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 980,
+              "line": 1119,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4097,
@@ -22247,7 +22247,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 980,
+              "line": 1119,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4097,
@@ -22277,7 +22277,7 @@
       "summary": "The list of banned addresses for a server you host.",
       "details": "Saved with your config. It only matters on a server you host.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:980"
+        "src/PC/game_mp/g_main_mp.c:1119"
       ],
       "guided": false,
       "control": {
@@ -22292,7 +22292,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1002,
+              "line": 1141,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -22324,7 +22324,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1002,
+              "line": 1141,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -22362,7 +22362,7 @@
       "summary": "A limit on how fast a dead player's body is pushed.",
       "details": "The default is 80. It only matters on a server you host. Its role is inferred from its name.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1002"
+        "src/PC/game_mp/g_main_mp.c:1141"
       ],
       "guided": false,
       "control": {
@@ -22485,7 +22485,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1008,
+              "line": 1147,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -22509,7 +22509,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1008,
+              "line": 1147,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -22539,7 +22539,7 @@
       "summary": "Lets dead players chat with the living on a server you host.",
       "details": "Off by default. zPAM registers its own default of on.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1008"
+        "src/PC/game_mp/g_main_mp.c:1147"
       ],
       "guided": false,
       "control": {
@@ -22554,7 +22554,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 996,
+              "line": 1135,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4224,
@@ -22586,7 +22586,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 996,
+              "line": 1135,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4224,
@@ -22624,7 +22624,7 @@
       "summary": "A developer switch for bullet debugging.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. It runs from -3 to 6.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:996"
+        "src/PC/game_mp/g_main_mp.c:1135"
       ],
       "guided": false,
       "control": {
@@ -22639,7 +22639,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 995,
+              "line": 1134,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -22663,7 +22663,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 995,
+              "line": 1134,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -22693,7 +22693,7 @@
       "summary": "A developer switch for damage debugging.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:995"
+        "src/PC/game_mp/g_main_mp.c:1134"
       ],
       "guided": false,
       "control": {
@@ -22708,7 +22708,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1023,
+              "line": 1162,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -22732,7 +22732,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1023,
+              "line": 1162,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -22762,7 +22762,7 @@
       "summary": "A developer switch for hit-location damage debugging.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1023"
+        "src/PC/game_mp/g_main_mp.c:1162"
       ],
       "guided": false,
       "control": {
@@ -22777,7 +22777,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 999,
+              "line": 1138,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -22809,7 +22809,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 999,
+              "line": 1138,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -22847,7 +22847,7 @@
       "summary": "A tuning value for how dropped weapons fly out.",
       "details": "The default is 10. It only matters on a server you host. Its role is inferred from its name.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:999"
+        "src/PC/game_mp/g_main_mp.c:1138"
       ],
       "guided": false,
       "control": {
@@ -22862,7 +22862,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1000,
+              "line": 1139,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -22894,7 +22894,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1000,
+              "line": 1139,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -22932,7 +22932,7 @@
       "summary": "A tuning value for how dropped weapons fly out.",
       "details": "The default is 10. It only matters on a server you host. Its role is inferred from its name.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1000"
+        "src/PC/game_mp/g_main_mp.c:1139"
       ],
       "guided": false,
       "control": {
@@ -22947,7 +22947,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1001,
+              "line": 1140,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -22979,7 +22979,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1001,
+              "line": 1140,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -23017,7 +23017,7 @@
       "summary": "A tuning value for how dropped weapons fly out.",
       "details": "The default is 5. It only matters on a server you host. Its role is inferred from its name.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1001"
+        "src/PC/game_mp/g_main_mp.c:1140"
       ],
       "guided": false,
       "control": {
@@ -23032,7 +23032,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1029,
+              "line": 1168,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4224,
@@ -23064,7 +23064,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1029,
+              "line": 1168,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4224,
@@ -23102,7 +23102,7 @@
       "summary": "A developer switch that dumps an entity's animations.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1029"
+        "src/PC/game_mp/g_main_mp.c:1168"
       ],
       "guided": false,
       "control": {
@@ -23117,7 +23117,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1024,
+              "line": 1163,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -23149,7 +23149,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1024,
+              "line": 1163,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -23187,7 +23187,7 @@
       "summary": "A distance used for friendly-fire handling.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 256.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1024"
+        "src/PC/game_mp/g_main_mp.c:1163"
       ],
       "guided": false,
       "control": {
@@ -23202,7 +23202,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1025,
+              "line": 1164,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -23234,7 +23234,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1025,
+              "line": 1164,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -23272,7 +23272,7 @@
       "summary": "How far away a friendly player's name shows.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 15,000.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1025"
+        "src/PC/game_mp/g_main_mp.c:1164"
       ],
       "guided": false,
       "control": {
@@ -23287,7 +23287,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 974,
+              "line": 1113,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4132,
@@ -23336,7 +23336,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 974,
+              "line": 1113,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4132,
@@ -23391,7 +23391,7 @@
       "summary": "Which game type a server you host runs.",
       "details": "Stock choices are ctf, dm, hq, sd and tdm, and zPAM adds htf, re and strat. A change applies from the next map because it is latched. It only matters on a server you host.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:974",
+        "src/PC/game_mp/g_main_mp.c:1113",
         "src/PC/server_mp/sv_game_mp.c:387",
         "src/PC/server_mp/sv_init_mp.c:439",
         "src/PC/server_mp/sv_init_mp.c:540"
@@ -23409,7 +23409,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 990,
+              "line": 1129,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4096,
@@ -23440,7 +23440,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 990,
+              "line": 1129,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4096,
@@ -23477,7 +23477,7 @@
       "summary": "How strongly gravity pulls on a server you host.",
       "details": "The default is 800 game units per second squared. It only matters on a server you host.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:990"
+        "src/PC/game_mp/g_main_mp.c:1129"
       ],
       "guided": false,
       "control": {
@@ -23492,7 +23492,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 994,
+              "line": 1133,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -23523,7 +23523,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 994,
+              "line": 1133,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -23560,7 +23560,7 @@
       "summary": "Drops players who are idle this many seconds on a server you host; 0 is off.",
       "details": "The server warns them 10 seconds before. The local player is exempt.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:994"
+        "src/PC/game_mp/g_main_mp.c:1133"
       ],
       "guided": false,
       "control": {
@@ -23575,7 +23575,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 991,
+              "line": 1130,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4096,
@@ -23606,7 +23606,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 991,
+              "line": 1130,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4096,
@@ -23643,7 +23643,7 @@
       "summary": "How hard hits push players back on a server you host.",
       "details": "The default is 1,000, and zPAM sets it to 0. It only matters on a server you host.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:991"
+        "src/PC/game_mp/g_main_mp.c:1130"
       ],
       "guided": false,
       "control": {
@@ -23658,7 +23658,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1007,
+              "line": 1146,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -23681,7 +23681,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1007,
+              "line": 1146,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -23710,7 +23710,7 @@
       "summary": "A developer switch that lists the server's entities.",
       "details": "A developer aid; its effect is not documented here.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1007"
+        "src/PC/game_mp/g_main_mp.c:1146"
       ],
       "guided": false,
       "control": {
@@ -23725,7 +23725,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 977,
+              "line": 1116,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4097,
@@ -23749,7 +23749,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 977,
+              "line": 1116,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4097,
@@ -23779,7 +23779,7 @@
       "summary": "The file a server you host writes its game log to.",
       "details": "The default is the standard game log name. It only matters on a server you host.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:977"
+        "src/PC/game_mp/g_main_mp.c:1116"
       ],
       "guided": false,
       "control": {
@@ -23794,7 +23794,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 978,
+              "line": 1117,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -23818,7 +23818,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 978,
+              "line": 1117,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -23848,7 +23848,7 @@
       "summary": "Writes the game log straight to disk instead of buffering it.",
       "details": "Off by default. It only matters on a server you host.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:978"
+        "src/PC/game_mp/g_main_mp.c:1117"
       ],
       "guided": false,
       "control": {
@@ -23863,7 +23863,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1032,
+              "line": 1171,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4224,
@@ -23895,7 +23895,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1032,
+              "line": 1171,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4224,
@@ -23933,7 +23933,7 @@
       "summary": "A server mantle block timer.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 500 milliseconds.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1032"
+        "src/PC/game_mp/g_main_mp.c:1171"
       ],
       "guided": false,
       "control": {
@@ -23948,7 +23948,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 993,
+              "line": 1132,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -23979,7 +23979,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 993,
+              "line": 1132,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -24016,7 +24016,7 @@
       "summary": "The most dropped weapons left lying around on a server you host.",
       "details": "From 1 to 32, and 16 by default.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:993"
+        "src/PC/game_mp/g_main_mp.c:1132"
       ],
       "guided": false,
       "control": {
@@ -24031,7 +24031,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 997,
+              "line": 1136,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4096,
@@ -24054,7 +24054,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 997,
+              "line": 1136,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4096,
@@ -24083,7 +24083,7 @@
       "summary": "A message of the day for a server you host.",
       "details": "It only matters on a server you host. The default is empty.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:997"
+        "src/PC/game_mp/g_main_mp.c:1136"
       ],
       "guided": false,
       "control": {
@@ -24098,7 +24098,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1022,
+              "line": 1161,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -24121,7 +24121,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1022,
+              "line": 1161,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -24150,7 +24150,7 @@
       "summary": "A switch the game registers to limit script message spam.",
       "details": "Off by default. It only matters on a server you host. Its role is inferred from its name.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1022"
+        "src/PC/game_mp/g_main_mp.c:1161"
       ],
       "guided": false,
       "control": {
@@ -24165,7 +24165,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1020,
+              "line": 1159,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -24189,7 +24189,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1020,
+              "line": 1159,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -24219,7 +24219,7 @@
       "summary": "Uses the older voting system on a server you host.",
       "details": "On by default. zPAM's comment says it must stay on or voting does not work.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1020"
+        "src/PC/game_mp/g_main_mp.c:1159"
       ],
       "guided": false,
       "control": {
@@ -24234,7 +24234,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 979,
+              "line": 1118,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4096,
@@ -24257,7 +24257,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 979,
+              "line": 1118,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4096,
@@ -24286,7 +24286,7 @@
       "summary": "The password players need to join a server you host.",
       "details": "It appears as Password in the game's Create Server menu, which takes up to 12 characters.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:979"
+        "src/PC/game_mp/g_main_mp.c:1118"
       ],
       "guided": false,
       "control": {
@@ -24302,7 +24302,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 998,
+              "line": 1137,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -24334,7 +24334,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 998,
+              "line": 1137,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -24372,7 +24372,7 @@
       "summary": "How fast overlapping players are pushed apart.",
       "details": "From 0 to 32,000, and 25 by default. It only matters on a server you host.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:998"
+        "src/PC/game_mp/g_main_mp.c:1137"
       ],
       "guided": false,
       "control": {
@@ -24387,7 +24387,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1010,
+              "line": 1149,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4352,
@@ -24411,7 +24411,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1010,
+              "line": 1149,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4352,
@@ -24441,7 +24441,7 @@
       "summary": "The scoreboard banner image for the Allies.",
       "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1010"
+        "src/PC/game_mp/g_main_mp.c:1149"
       ],
       "guided": false,
       "control": {
@@ -24456,7 +24456,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1011,
+              "line": 1150,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4352,
@@ -24480,7 +24480,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1011,
+              "line": 1150,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4352,
@@ -24510,7 +24510,7 @@
       "summary": "The scoreboard banner image for the Axis.",
       "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1011"
+        "src/PC/game_mp/g_main_mp.c:1150"
       ],
       "guided": false,
       "control": {
@@ -24525,7 +24525,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1012,
+              "line": 1151,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4352,
@@ -24549,7 +24549,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1012,
+              "line": 1151,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4352,
@@ -24579,7 +24579,7 @@
       "summary": "The scoreboard banner image for no team.",
       "details": "The server sets this and shares it with every player.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1012"
+        "src/PC/game_mp/g_main_mp.c:1151"
       ],
       "guided": false,
       "control": {
@@ -24594,7 +24594,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1013,
+              "line": 1152,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4352,
@@ -24618,7 +24618,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1013,
+              "line": 1152,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4352,
@@ -24648,7 +24648,7 @@
       "summary": "The scoreboard banner image for spectators.",
       "details": "The server sets this and shares it with every player.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1013"
+        "src/PC/game_mp/g_main_mp.c:1152"
       ],
       "guided": false,
       "control": {
@@ -24663,7 +24663,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 984,
+              "line": 1123,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4224,
@@ -24693,7 +24693,7 @@
       "summary": "Uses a fixed eight-pellet pattern for shotguns instead of random spread.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. CoD2x only. The server picks one of two fixed patterns for each shot.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:984"
+        "src/PC/game_mp/g_main_mp.c:1123"
       ],
       "guided": false,
       "control": {
@@ -24708,7 +24708,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1018,
+              "line": 1157,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -24731,7 +24731,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1018,
+              "line": 1157,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -24760,7 +24760,7 @@
       "summary": "Smooths other players' movement on a server you host.",
       "details": "On by default. The server extrapolates players' positions before it sends updates.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1018"
+        "src/PC/game_mp/g_main_mp.c:1157"
       ],
       "guided": false,
       "control": {
@@ -24775,7 +24775,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 989,
+              "line": 1128,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -24806,7 +24806,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 989,
+              "line": 1128,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -24843,7 +24843,7 @@
       "summary": "How fast players run on a server you host.",
       "details": "The default is 190 game units per second. It only matters on a server you host.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:989"
+        "src/PC/game_mp/g_main_mp.c:1128"
       ],
       "guided": false,
       "control": {
@@ -24870,7 +24870,7 @@
             },
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 976,
+              "line": 1115,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4104,
@@ -24906,7 +24906,7 @@
             },
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 976,
+              "line": 1115,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4104,
@@ -24937,7 +24937,7 @@
       "details": "Off by default. The server shares it with every player.",
       "sources": [
         "src/PC/cgame_mp/cg_main_mp.c:1111",
-        "src/PC/game_mp/g_main_mp.c:976"
+        "src/PC/game_mp/g_main_mp.c:1115"
       ],
       "guided": false,
       "control": {
@@ -24952,7 +24952,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1016,
+              "line": 1155,
               "mechanism": "Dvar_RegisterColor",
               "type": "color",
               "flags": 4352,
@@ -24981,7 +24981,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1016,
+              "line": 1155,
               "mechanism": "Dvar_RegisterColor",
               "type": "color",
               "flags": 4352,
@@ -25016,7 +25016,7 @@
       "summary": "The colour used for the Allies.",
       "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1016"
+        "src/PC/game_mp/g_main_mp.c:1155"
       ],
       "guided": false,
       "control": {
@@ -25031,7 +25031,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1017,
+              "line": 1156,
               "mechanism": "Dvar_RegisterColor",
               "type": "color",
               "flags": 4352,
@@ -25060,7 +25060,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1017,
+              "line": 1156,
               "mechanism": "Dvar_RegisterColor",
               "type": "color",
               "flags": 4352,
@@ -25095,7 +25095,7 @@
       "summary": "The colour used for the Axis.",
       "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1017"
+        "src/PC/game_mp/g_main_mp.c:1156"
       ],
       "guided": false,
       "control": {
@@ -25110,7 +25110,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1014,
+              "line": 1153,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4352,
@@ -25134,7 +25134,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1014,
+              "line": 1153,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4352,
@@ -25164,7 +25164,7 @@
       "summary": "The name shown for the Allies.",
       "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1014"
+        "src/PC/game_mp/g_main_mp.c:1153"
       ],
       "guided": false,
       "control": {
@@ -25179,7 +25179,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1015,
+              "line": 1154,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4352,
@@ -25203,7 +25203,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1015,
+              "line": 1154,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4352,
@@ -25233,7 +25233,7 @@
       "summary": "The name shown for the Axis.",
       "details": "The server sets this and shares it with every player. Game scripts write it, so a saved value may be replaced.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1015"
+        "src/PC/game_mp/g_main_mp.c:1154"
       ],
       "guided": false,
       "control": {
@@ -25248,7 +25248,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1031,
+              "line": 1170,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4225,
@@ -25281,7 +25281,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1031,
+              "line": 1170,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4225,
@@ -25320,7 +25320,7 @@
       "summary": "A server delay, in seconds, before players can use things after spawning.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 1.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1031"
+        "src/PC/game_mp/g_main_mp.c:1170"
       ],
       "guided": false,
       "control": {
@@ -25335,7 +25335,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1030,
+              "line": 1169,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -25366,7 +25366,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1030,
+              "line": 1169,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -25403,7 +25403,7 @@
       "summary": "How long a player must hold the use key.",
       "details": "The default is 0. It only matters on a server you host. Its role is inferred from its name.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1030"
+        "src/PC/game_mp/g_main_mp.c:1169"
       ],
       "guided": false,
       "control": {
@@ -25418,7 +25418,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1009,
+              "line": 1148,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -25450,7 +25450,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1009,
+              "line": 1148,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4097,
@@ -25488,7 +25488,7 @@
       "summary": "How long a player is shown as talking after they speak.",
       "details": "From 0 to 10,000, and 500 by default. Its role is inferred from its name.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1009"
+        "src/PC/game_mp/g_main_mp.c:1148"
       ],
       "guided": false,
       "control": {
@@ -25503,7 +25503,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1021,
+              "line": 1160,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -25535,7 +25535,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1021,
+              "line": 1160,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4097,
@@ -25573,7 +25573,7 @@
       "summary": "How much a player who does not vote counts toward a vote.",
       "details": "From 0 to 1, and 0.5 by default. Its role is inferred from its name.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1021"
+        "src/PC/game_mp/g_main_mp.c:1160"
       ],
       "guided": false,
       "control": {
@@ -25588,7 +25588,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 992,
+              "line": 1131,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -25611,7 +25611,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 992,
+              "line": 1131,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -25640,7 +25640,7 @@
       "summary": "A switch the game registers for sharing weapon ammo.",
       "details": "Off by default. It only matters on a server you host. Its role is inferred from its name.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:992"
+        "src/PC/game_mp/g_main_mp.c:1131"
       ],
       "guided": false,
       "control": {
@@ -25655,7 +25655,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 972,
+              "line": 1108,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4160,
@@ -25679,7 +25679,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 972,
+              "line": 1108,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4160,
@@ -25709,7 +25709,7 @@
       "summary": "The date the game was built.",
       "details": "The game treats this as read-only and sets it itself.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:972"
+        "src/PC/game_mp/g_main_mp.c:1108"
       ],
       "guided": false,
       "control": {
@@ -25724,7 +25724,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 971,
+              "line": 1106,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4164,
@@ -25749,7 +25749,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 971,
+              "line": 1106,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4164,
@@ -25780,7 +25780,7 @@
       "summary": "The name of the game.",
       "details": "The game treats this as read-only and sets it itself. The server shares it with players.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:971"
+        "src/PC/game_mp/g_main_mp.c:1106"
       ],
       "guided": false,
       "control": {
@@ -30419,7 +30419,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 430,
+              "line": 457,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4164,
@@ -30456,7 +30456,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 430,
+              "line": 457,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4164,
@@ -30499,7 +30499,7 @@
       "summary": "The name of the map being played.",
       "details": "The game treats this as read-only and sets it itself. The server shares it with players.",
       "sources": [
-        "src/PC/game_mp/g_cmds_mp.c:430",
+        "src/PC/game_mp/g_cmds_mp.c:457",
         "src/PC/server_mp/sv_init_mp.c:449",
         "src/PC/server_mp/sv_init_mp.c:550"
       ],
@@ -33544,7 +33544,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1028,
+              "line": 1167,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -33576,7 +33576,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1028,
+              "line": 1167,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -33614,7 +33614,7 @@
       "summary": "A tuning value for the height of a melee strike.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 10.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1028"
+        "src/PC/game_mp/g_main_mp.c:1167"
       ],
       "guided": false,
       "control": {
@@ -33629,7 +33629,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1026,
+              "line": 1165,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -33661,7 +33661,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1026,
+              "line": 1165,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -33699,7 +33699,7 @@
       "summary": "How far a melee strike reaches.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 64.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1026"
+        "src/PC/game_mp/g_main_mp.c:1165"
       ],
       "guided": false,
       "control": {
@@ -33714,7 +33714,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1027,
+              "line": 1166,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -33746,7 +33746,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1027,
+              "line": 1166,
               "mechanism": "Dvar_RegisterFloat",
               "type": "float",
               "flags": 4224,
@@ -33784,7 +33784,7 @@
       "summary": "A tuning value for the width of a melee strike.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 10.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1027"
+        "src/PC/game_mp/g_main_mp.c:1166"
       ],
       "guided": false,
       "control": {
@@ -35613,7 +35613,7 @@
             },
             {
               "path": "src/Mac/DirectX_9/CDirect3DDevice.c",
-              "line": 3458,
+              "line": 3551,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -35661,7 +35661,7 @@
             },
             {
               "path": "src/Mac/DirectX_9/CDirect3DDevice.c",
-              "line": 3458,
+              "line": 3551,
               "mechanism": "Dvar_RegisterBool",
               "type": "bool",
               "flags": 4097,
@@ -35704,7 +35704,7 @@
       "details": "This setting comes from the macOS version of the game. The launcher's display settings cover it for most players.",
       "sources": [
         "src/Mac/DirectX_9/CDirect3D.c:361",
-        "src/Mac/DirectX_9/CDirect3DDevice.c:3458",
+        "src/Mac/DirectX_9/CDirect3DDevice.c:3551",
         "src/Mac/Metal/metal_backend.m:544"
       ],
       "guided": false,
@@ -42037,7 +42037,7 @@
           "sites": [
             {
               "path": "src/Mac/DirectX_9/CDirect3DDevice.c",
-              "line": 1720,
+              "line": 1936,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 1,
@@ -42068,7 +42068,7 @@
           "sites": [
             {
               "path": "src/Mac/DirectX_9/CDirect3DDevice.c",
-              "line": 1720,
+              "line": 1936,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 1,
@@ -42105,7 +42105,7 @@
       "summary": "Chooses whether the game skips showing a frame while the last one is still being drawn.",
       "details": "0 shows every frame. 1 waits for the graphics card to finish the previous frame and, if it has not, skips showing this one so the screen never shows an older picture. It comes from the macOS version of the game and is saved with your config.",
       "sources": [
-        "src/Mac/DirectX_9/CDirect3DDevice.c:1720"
+        "src/Mac/DirectX_9/CDirect3DDevice.c:1936"
       ],
       "guided": false,
       "control": {
@@ -50768,7 +50768,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 970,
+              "line": 1105,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -50804,7 +50804,7 @@
             },
             {
               "path": "src/PC/universal/dvar.c",
-              "line": 2008,
+              "line": 2029,
               "mechanism": "Dvar_RegisterVariantReg",
               "type": "bool",
               "flags": 4120,
@@ -50831,7 +50831,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 970,
+              "line": 1105,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4096,
@@ -50867,7 +50867,7 @@
             },
             {
               "path": "src/PC/universal/dvar.c",
-              "line": 2008,
+              "line": 2029,
               "mechanism": "Dvar_RegisterVariantReg",
               "type": "bool",
               "flags": 4120,
@@ -50900,11 +50900,11 @@
       "summary": "Whether cheats are on for the current game.",
       "details": "Protected: the game sets it itself and it can't be changed from here. While it is off, settings marked cheat-protected refuse changes. Match servers keep it off.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:970",
+        "src/PC/game_mp/g_main_mp.c:1105",
         "src/PC/gfx_d3d/r_dvars.c:541",
         "src/PC/server_mp/sv_init_mp.c:465",
         "src/PC/server_mp/sv_init_mp.c:566",
-        "src/PC/universal/dvar.c:2008"
+        "src/PC/universal/dvar.c:2029"
       ],
       "guided": false,
       "control": {
@@ -51678,7 +51678,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 973,
+              "line": 1112,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4164,
@@ -51703,7 +51703,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 973,
+              "line": 1112,
               "mechanism": "Dvar_RegisterString_mac",
               "type": "string",
               "flags": 4164,
@@ -51734,7 +51734,7 @@
       "summary": "The name of the map the server is running.",
       "details": "The game fills this in itself and treats it as read-only.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:973"
+        "src/PC/game_mp/g_main_mp.c:1112"
       ],
       "guided": false,
       "control": {
@@ -51885,7 +51885,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 975,
+              "line": 1114,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4133,
@@ -51979,7 +51979,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 975,
+              "line": 1114,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4133,
@@ -52079,7 +52079,7 @@
       "summary": "The most players your hosted server lets in.",
       "details": "From 1 to 64, with 20 as the default. It is latched and applies after the map restarts. It only affects a server you host.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:975",
+        "src/PC/game_mp/g_main_mp.c:1114",
         "src/PC/server_mp/sv_init_mp.c:451",
         "src/PC/server_mp/sv_init_mp.c:552",
         "src/PC/server_mp/sv_init_mp.c:768",
@@ -52605,7 +52605,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 983,
+              "line": 1122,
               "mechanism": "Dvar_RegisterInt",
               "type": "int",
               "flags": 4096,
@@ -52642,7 +52642,7 @@
       "summary": "While a server has this many players or fewer, it sends every player to every player, even out of sight.",
       "details": "From 0 to 64, 15 by default, and 0 turns it off. It fixes missing sounds from players outside your view. CoD2x servers only.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:983"
+        "src/PC/game_mp/g_main_mp.c:1122"
       ],
       "guided": false,
       "control": {
@@ -57185,7 +57185,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1005,
+              "line": 1144,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -57209,7 +57209,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1005,
+              "line": 1144,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -57239,7 +57239,7 @@
       "summary": "Lets you hear the voice chat of dead players.",
       "details": "Off by default.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1005"
+        "src/PC/game_mp/g_main_mp.c:1144"
       ],
       "guided": false,
       "control": {
@@ -57254,7 +57254,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1003,
+              "line": 1142,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -57278,7 +57278,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1003,
+              "line": 1142,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -57308,7 +57308,7 @@
       "summary": "Makes voice chat audible to everyone.",
       "details": "Off by default.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1003"
+        "src/PC/game_mp/g_main_mp.c:1142"
       ],
       "guided": false,
       "control": {
@@ -57323,7 +57323,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1004,
+              "line": 1143,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -57347,7 +57347,7 @@
           "sites": [
             {
               "path": "src/PC/game_mp/g_main_mp.c",
-              "line": 1004,
+              "line": 1143,
               "mechanism": "Dvar_RegisterBool_mac",
               "type": "bool",
               "flags": 4097,
@@ -57377,7 +57377,7 @@
       "summary": "Plays your own voice back to you.",
       "details": "Off by default.",
       "sources": [
-        "src/PC/game_mp/g_main_mp.c:1004"
+        "src/PC/game_mp/g_main_mp.c:1143"
       ],
       "guided": false,
       "control": {
@@ -60164,7 +60164,7 @@
             {
               "name": "addip",
               "path": "src/PC/game_mp/g_svcmds_mp.c",
-              "line": 280,
+              "line": 314,
               "mechanism": "ConsoleCommand:dispatch"
             }
           ]
@@ -60174,7 +60174,7 @@
             {
               "name": "addip",
               "path": "src/PC/game_mp/g_svcmds_mp.c",
-              "line": 280,
+              "line": 314,
               "mechanism": "ConsoleCommand:dispatch"
             }
           ]
@@ -60189,7 +60189,7 @@
       "summary": "Add an address to the hosted server's IP filter list.",
       "details": "Accepts an IP address and updates g_banIPs. Whether matching addresses are blocked or allowed depends on g_filterBan.",
       "sources": [
-        "src/PC/game_mp/g_svcmds_mp.c:280"
+        "src/PC/game_mp/g_svcmds_mp.c:314"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -60380,7 +60380,7 @@
             {
               "name": "callvote",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1217,
+              "line": 1274,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -60396,7 +60396,7 @@
             {
               "name": "callvote",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1217,
+              "line": 1274,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -60412,7 +60412,7 @@
       "details": "The server checks whether voting is enabled. Its voting mode chooses the built-in vote checks or the game script's vote handler.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:373",
-        "src/PC/game_mp/g_cmds_mp.c:1217"
+        "src/PC/game_mp/g_cmds_mp.c:1274"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -61266,7 +61266,7 @@
             {
               "name": "demigod",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1138,
+              "line": 1195,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -61282,7 +61282,7 @@
             {
               "name": "demigod",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1138,
+              "line": 1195,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -61298,7 +61298,7 @@
       "details": "Requires the server's cheat check. The command changes a gameplay flag; the handler alone does not establish every damage rule that uses it.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:360",
-        "src/PC/game_mp/g_cmds_mp.c:1138"
+        "src/PC/game_mp/g_cmds_mp.c:1195"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -61740,7 +61740,7 @@
             {
               "name": "entitycount",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1237,
+              "line": 1296,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -61750,7 +61750,7 @@
             {
               "name": "entitycount",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1237,
+              "line": 1296,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -61765,7 +61765,7 @@
       "summary": "Print how many entities the hosted game has allocated.",
       "details": "The client command is handled by the server and only prints when g_cheats is enabled. It is a development diagnostic.",
       "sources": [
-        "src/PC/game_mp/g_cmds_mp.c:1237"
+        "src/PC/game_mp/g_cmds_mp.c:1296"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -61782,7 +61782,7 @@
             {
               "name": "entitylist",
               "path": "src/PC/game_mp/g_svcmds_mp.c",
-              "line": 275,
+              "line": 309,
               "mechanism": "ConsoleCommand:dispatch"
             }
           ]
@@ -61792,7 +61792,7 @@
             {
               "name": "entitylist",
               "path": "src/PC/game_mp/g_svcmds_mp.c",
-              "line": 275,
+              "line": 309,
               "mechanism": "ConsoleCommand:dispatch"
             }
           ]
@@ -61807,7 +61807,7 @@
       "summary": "Print active entities with their type and class name.",
       "details": "Runs through the hosted game's console dispatcher. This is a development listing, not a player or server-browser list.",
       "sources": [
-        "src/PC/game_mp/g_svcmds_mp.c:275"
+        "src/PC/game_mp/g_svcmds_mp.c:309"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -62041,7 +62041,7 @@
             {
               "name": "follownext",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1201,
+              "line": 1258,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -62057,7 +62057,7 @@
             {
               "name": "follownext",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1201,
+              "line": 1258,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -62073,7 +62073,7 @@
       "details": "The native handler requires spectator state and refuses a forced spectator target. Team-spectating permissions still apply.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:375",
-        "src/PC/game_mp/g_cmds_mp.c:1201"
+        "src/PC/game_mp/g_cmds_mp.c:1258"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -62096,7 +62096,7 @@
             {
               "name": "followprev",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1206,
+              "line": 1263,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -62112,7 +62112,7 @@
             {
               "name": "followprev",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1206,
+              "line": 1263,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -62128,7 +62128,7 @@
       "details": "The native handler requires spectator state and refuses a forced spectator target. Team-spectating permissions still apply.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:376",
-        "src/PC/game_mp/g_cmds_mp.c:1206"
+        "src/PC/game_mp/g_cmds_mp.c:1263"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -62478,48 +62478,6 @@
       ]
     },
     {
-      "name": "gc",
-      "availability": "dispatchOnly",
-      "variants": {
-        "stock": {
-          "sites": [
-            {
-              "name": "gc",
-              "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1227,
-              "mechanism": "ClientCommand:dispatch"
-            }
-          ]
-        },
-        "cod2x": {
-          "sites": [
-            {
-              "name": "gc",
-              "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1227,
-              "mechanism": "ClientCommand:dispatch"
-            }
-          ]
-        }
-      },
-      "cod2x": "unchanged",
-      "origins": [
-        "stock"
-      ],
-      "group": "other",
-      "title": "Send a preset player message",
-      "summary": "Send a numbered preset message to a numbered player.",
-      "details": "The native server accepts player numbers 0–63 and message numbers 0–6. It sends the message to the target and echoes it to the sender.",
-      "sources": [
-        "src/PC/game_mp/g_cmds_mp.c:1227"
-      ],
-      "bindable": false,
-      "menuLabel": null,
-      "effectSources": [
-        "src/PC/game_mp/g_cmds_mp.c: Cmd_GameCommand_f"
-      ]
-    },
-    {
       "name": "give",
       "availability": "registered",
       "variants": {
@@ -62534,7 +62492,7 @@
             {
               "name": "give",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1118,
+              "line": 1175,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -62550,7 +62508,7 @@
             {
               "name": "give",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1118,
+              "line": 1175,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -62566,7 +62524,7 @@
       "details": "Requires the server's cheat check. The handler supports named items and resource groups such as health, weapons and ammunition.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:357",
-        "src/PC/game_mp/g_cmds_mp.c:1118"
+        "src/PC/game_mp/g_cmds_mp.c:1175"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -62671,7 +62629,7 @@
             {
               "name": "god",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1128,
+              "line": 1185,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -62687,7 +62645,7 @@
             {
               "name": "god",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1128,
+              "line": 1185,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -62703,7 +62661,7 @@
       "details": "Requires the server's cheat check and reports whether the flag is on or off. This changes gameplay rather than a local display preference.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:359",
-        "src/PC/game_mp/g_cmds_mp.c:1128"
+        "src/PC/game_mp/g_cmds_mp.c:1185"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -63012,7 +62970,7 @@
             {
               "name": "kill",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1190,
+              "line": 1247,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -63028,7 +62986,7 @@
             {
               "name": "kill",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1190,
+              "line": 1247,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -63044,7 +63002,7 @@
       "details": "Only applies while the player is in the playing state. The handler clears god and demigod flags before applying the death.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:356",
-        "src/PC/game_mp/g_cmds_mp.c:1190"
+        "src/PC/game_mp/g_cmds_mp.c:1247"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -63179,6 +63137,48 @@
         "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_InitConsoleCommands",
         "src/PC/client_mp/cl_cgame_mp.c: CL_AddCgameCommand",
         "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
+      ]
+    },
+    {
+      "name": "listip",
+      "availability": "dispatchOnly",
+      "variants": {
+        "stock": {
+          "sites": [
+            {
+              "name": "listip",
+              "path": "src/PC/game_mp/g_svcmds_mp.c",
+              "line": 334,
+              "mechanism": "ConsoleCommand:dispatch"
+            }
+          ]
+        },
+        "cod2x": {
+          "sites": [
+            {
+              "name": "listip",
+              "path": "src/PC/game_mp/g_svcmds_mp.c",
+              "line": 334,
+              "mechanism": "ConsoleCommand:dispatch"
+            }
+          ]
+        }
+      },
+      "cod2x": "unchanged",
+      "origins": [
+        "stock"
+      ],
+      "group": "other",
+      "title": "Show the IP filter list",
+      "summary": "Show the hosted server's IP filter list in the console.",
+      "details": "This dispatch-only command runs g_banIPs through the console, which prints the saved filter list.",
+      "sources": [
+        "src/PC/game_mp/g_svcmds_mp.c:334"
+      ],
+      "bindable": false,
+      "menuLabel": null,
+      "effectSources": [
+        "src/PC/game_mp/g_svcmds_mp.c: ConsoleCommand"
       ]
     },
     {
@@ -63482,48 +63482,6 @@
       ]
     },
     {
-      "name": "maprotate",
-      "availability": "dispatchOnly",
-      "variants": {
-        "stock": {
-          "sites": [
-            {
-              "name": "maprotate",
-              "path": "src/PC/game_mp/g_svcmds_mp.c",
-              "line": 295,
-              "mechanism": "ConsoleCommand:dispatch"
-            }
-          ]
-        },
-        "cod2x": {
-          "sites": [
-            {
-              "name": "maprotate",
-              "path": "src/PC/game_mp/g_svcmds_mp.c",
-              "line": 295,
-              "mechanism": "ConsoleCommand:dispatch"
-            }
-          ]
-        }
-      },
-      "cod2x": "unchanged",
-      "origins": [
-        "stock"
-      ],
-      "group": "other",
-      "title": "Run the next-map script",
-      "summary": "Execute the commands stored in nextmap through the hosted game's console.",
-      "details": "This dispatch-only command queues vstr nextmap. Its effect depends on the saved nextmap text; it is distinct from map_rotate's rotation parser.",
-      "sources": [
-        "src/PC/game_mp/g_svcmds_mp.c:295"
-      ],
-      "bindable": false,
-      "menuLabel": null,
-      "effectSources": [
-        "src/PC/game_mp/g_svcmds_mp.c: ConsoleCommand"
-      ]
-    },
-    {
       "name": "match",
       "availability": "registered",
       "variants": {
@@ -63651,7 +63609,7 @@
             {
               "name": "mr",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1113,
+              "line": 1170,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -63667,7 +63625,7 @@
             {
               "name": "mr",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1113,
+              "line": 1170,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -63683,7 +63641,7 @@
       "details": "The server validates the server ID, resolves a menu index and sends a menuresponse notification. This is an internal UI protocol command.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:347",
-        "src/PC/game_mp/g_cmds_mp.c:1113"
+        "src/PC/game_mp/g_cmds_mp.c:1170"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -63836,7 +63794,7 @@
             {
               "name": "noclip",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1158,
+              "line": 1215,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -63852,7 +63810,7 @@
             {
               "name": "noclip",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1158,
+              "line": 1215,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -63868,7 +63826,7 @@
       "details": "Requires the server's cheat check. This is a gameplay development command, not a movement-speed setting.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:362",
-        "src/PC/game_mp/g_cmds_mp.c:1158"
+        "src/PC/game_mp/g_cmds_mp.c:1215"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -63891,7 +63849,7 @@
             {
               "name": "notarget",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1148,
+              "line": 1205,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -63907,7 +63865,7 @@
             {
               "name": "notarget",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1148,
+              "line": 1205,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -63923,7 +63881,7 @@
       "details": "Requires the server's cheat check. The handler changes the flag; which game systems consult it depends on the game code.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:361",
-        "src/PC/game_mp/g_cmds_mp.c:1148"
+        "src/PC/game_mp/g_cmds_mp.c:1205"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -64162,7 +64120,7 @@
             {
               "name": "printentities",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1243,
+              "line": 1302,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -64178,7 +64136,7 @@
             {
               "name": "printentities",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1243,
+              "line": 1302,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -64194,7 +64152,7 @@
       "details": "The server's entity diagnostic lists its entity slots. This is an internal development listing, not a gameplay overlay.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:377",
-        "src/PC/game_mp/g_cmds_mp.c:1243"
+        "src/PC/game_mp/g_cmds_mp.c:1302"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -64682,7 +64640,7 @@
             {
               "name": "removeip",
               "path": "src/PC/game_mp/g_svcmds_mp.c",
-              "line": 290,
+              "line": 328,
               "mechanism": "ConsoleCommand:dispatch"
             }
           ]
@@ -64692,7 +64650,7 @@
             {
               "name": "removeip",
               "path": "src/PC/game_mp/g_svcmds_mp.c",
-              "line": 290,
+              "line": 328,
               "mechanism": "ConsoleCommand:dispatch"
             }
           ]
@@ -64707,7 +64665,7 @@
       "summary": "Remove an address from the hosted server's IP filter list.",
       "details": "Accepts an address, removes an exact matching filter and updates g_banIPs. It does not remove GUID-based player bans.",
       "sources": [
-        "src/PC/game_mp/g_svcmds_mp.c:290"
+        "src/PC/game_mp/g_svcmds_mp.c:328"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -64784,13 +64742,13 @@
             {
               "name": "say",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1058,
+              "line": 1113,
               "mechanism": "ClientCommand:dispatch"
             },
             {
               "name": "say",
               "path": "src/PC/game_mp/g_svcmds_mp.c",
-              "line": 303,
+              "line": 342,
               "mechanism": "ConsoleCommand:dispatch"
             }
           ]
@@ -64818,13 +64776,13 @@
             {
               "name": "say",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1058,
+              "line": 1113,
               "mechanism": "ClientCommand:dispatch"
             },
             {
               "name": "say",
               "path": "src/PC/game_mp/g_svcmds_mp.c",
-              "line": 303,
+              "line": 342,
               "mechanism": "ConsoleCommand:dispatch"
             }
           ]
@@ -64840,8 +64798,8 @@
       "details": "See the config grammar and source registration for limits and dispatch behaviour.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:368",
-        "src/PC/game_mp/g_cmds_mp.c:1058",
-        "src/PC/game_mp/g_svcmds_mp.c:303",
+        "src/PC/game_mp/g_cmds_mp.c:1113",
+        "src/PC/game_mp/g_svcmds_mp.c:342",
         "src/PC/server_mp/sv_ccmds_mp.c:623",
         "src/PC/server_mp/sv_ccmds_mp.c:638",
         "src/PC/server_mp/sv_ccmds_mp.c:733",
@@ -64865,7 +64823,7 @@
             {
               "name": "say_team",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1066,
+              "line": 1121,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -64881,7 +64839,7 @@
             {
               "name": "say_team",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1066,
+              "line": 1121,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -64897,7 +64855,7 @@
       "details": "See the config grammar and source registration for limits and dispatch behaviour.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:369",
-        "src/PC/game_mp/g_cmds_mp.c:1066"
+        "src/PC/game_mp/g_cmds_mp.c:1121"
       ],
       "bindable": true,
       "menuLabel": null
@@ -64911,7 +64869,7 @@
             {
               "name": "score",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1105,
+              "line": 1162,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -64921,7 +64879,7 @@
             {
               "name": "score",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1105,
+              "line": 1162,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -64936,7 +64894,7 @@
       "summary": "Ask the server to send the player's scoreboard message.",
       "details": "The server builds the deathmatch scoreboard response. This requests data; it does not itself display the local scoreboard.",
       "sources": [
-        "src/PC/game_mp/g_cmds_mp.c:1105"
+        "src/PC/game_mp/g_cmds_mp.c:1162"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -65467,7 +65425,7 @@
             {
               "name": "setviewpos",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1232,
+              "line": 1291,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -65483,7 +65441,7 @@
             {
               "name": "setviewpos",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1232,
+              "line": 1291,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -65499,7 +65457,7 @@
       "details": "Requires cheats. The native handler also accepts optional pitch and offsets the supplied height by the player's current view height.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:365",
-        "src/PC/game_mp/g_cmds_mp.c:1232"
+        "src/PC/game_mp/g_cmds_mp.c:1291"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -66121,7 +66079,7 @@
             {
               "name": "take",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1123,
+              "line": 1180,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -66137,7 +66095,7 @@
             {
               "name": "take",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1123,
+              "line": 1180,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -66153,7 +66111,7 @@
       "details": "Requires the server's cheat check. Supports resource groups such as health, weapons and ammunition, along with quantities where the handler supports them.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:358",
-        "src/PC/game_mp/g_cmds_mp.c:1123"
+        "src/PC/game_mp/g_cmds_mp.c:1180"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -66270,12 +66228,6 @@
               "line": 749,
               "mechanism": "Cmd_AddCommand",
               "name": "tell"
-            },
-            {
-              "name": "tell",
-              "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1074,
-              "mechanism": "ClientCommand:dispatch"
             }
           ]
         },
@@ -66298,12 +66250,6 @@
               "line": 734,
               "mechanism": "Cmd_AddCommand",
               "name": "tell"
-            },
-            {
-              "name": "tell",
-              "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1074,
-              "mechanism": "ClientCommand:dispatch"
             }
           ]
         }
@@ -66315,10 +66261,9 @@
       "group": "other",
       "title": "Send a private player message",
       "summary": "Send chat text to a numbered player.",
-      "details": "The game-server path delivers the message to the target and echoes it to the sender. From the server console it sends a console-prefixed message to that player.",
+      "details": "This server console command sends a console-prefixed message to that player.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:370",
-        "src/PC/game_mp/g_cmds_mp.c:1074",
         "src/PC/server_mp/sv_ccmds_mp.c:624",
         "src/PC/server_mp/sv_ccmds_mp.c:639",
         "src/PC/server_mp/sv_ccmds_mp.c:734",
@@ -66327,7 +66272,6 @@
       "bindable": false,
       "menuLabel": null,
       "effectSources": [
-        "src/PC/game_mp/g_cmds_mp.c: ClientCommand",
         "src/PC/server_mp/sv_ccmds_mp.c: SV_ConTell_f"
       ]
     },
@@ -66844,7 +66788,7 @@
             {
               "name": "ufo",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1174,
+              "line": 1231,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -66860,7 +66804,7 @@
             {
               "name": "ufo",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1174,
+              "line": 1231,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -66876,7 +66820,7 @@
       "details": "Requires the server's cheat check. The handler changes the ufo state used by player movement; it is a development gameplay command.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:363",
-        "src/PC/game_mp/g_cmds_mp.c:1174"
+        "src/PC/game_mp/g_cmds_mp.c:1231"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -67364,7 +67308,7 @@
             {
               "name": "vote",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1222,
+              "line": 1279,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -67380,7 +67324,7 @@
             {
               "name": "vote",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1222,
+              "line": 1279,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -67396,7 +67340,7 @@
       "details": "The server processes the response under its current voting mode and game script. This command does not start a new vote.",
       "sources": [
         "src/PC/cgame_mp/cg_consolecmds_mp.c:374",
-        "src/PC/game_mp/g_cmds_mp.c:1222"
+        "src/PC/game_mp/g_cmds_mp.c:1279"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -67611,7 +67555,7 @@
             {
               "name": "where",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1211,
+              "line": 1268,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -67621,7 +67565,7 @@
             {
               "name": "where",
               "path": "src/PC/game_mp/g_cmds_mp.c",
-              "line": 1211,
+              "line": 1268,
               "mechanism": "ClientCommand:dispatch"
             }
           ]
@@ -67636,7 +67580,7 @@
       "summary": "Ask the server to print the player's current world coordinates.",
       "details": "The native game dispatcher replies with the player's origin. It is distinct from viewpos, which prints local camera coordinates and yaw.",
       "sources": [
-        "src/PC/game_mp/g_cmds_mp.c:1211"
+        "src/PC/game_mp/g_cmds_mp.c:1268"
       ],
       "bindable": false,
       "menuLabel": null,
@@ -67741,7 +67685,7 @@
       },
       {
         "path": "src/PC/game_mp/g_scr_main_mp.c",
-        "line": 3699,
+        "line": 3738,
         "mechanism": "Dvar_RegisterString_mac",
         "function": "GScr_MakeDvarServerInfo",
         "nameExpression": "dvarName"
@@ -67769,70 +67713,70 @@
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2189,
+        "line": 2210,
         "mechanism": "Dvar_RegisterVariantReg",
         "function": "Dvar_RegisterString_inl",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2313,
+        "line": 2334,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetBoolByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2328,
+        "line": 2349,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetIntByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2341,
+        "line": 2362,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetFloatByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2354,
+        "line": 2375,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetVec2ByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2367,
+        "line": 2388,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetVec3ByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2380,
+        "line": 2401,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetVec4ByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2393,
+        "line": 2414,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetStringByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2415,
+        "line": 2436,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetColorByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2432,
+        "line": 2453,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetFromStringByNameFromSource",
         "nameExpression": "dvarName"
@@ -67848,7 +67792,7 @@
       },
       {
         "path": "src/PC/game_mp/g_scr_main_mp.c",
-        "line": 3684,
+        "line": 3723,
         "mechanism": "Dvar_RegisterString_mac",
         "function": "GScr_MakeDvarServerInfo",
         "nameExpression": "dvarName"
@@ -67876,70 +67820,70 @@
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2189,
+        "line": 2210,
         "mechanism": "Dvar_RegisterVariantReg",
         "function": "Dvar_RegisterString_inl",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2313,
+        "line": 2334,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetBoolByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2328,
+        "line": 2349,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetIntByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2341,
+        "line": 2362,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetFloatByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2354,
+        "line": 2375,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetVec2ByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2367,
+        "line": 2388,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetVec3ByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2380,
+        "line": 2401,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetVec4ByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2393,
+        "line": 2414,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetStringByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2415,
+        "line": 2436,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetColorByName",
         "nameExpression": "dvarName"
       },
       {
         "path": "src/PC/universal/dvar.c",
-        "line": 2432,
+        "line": 2453,
         "mechanism": "Dvar_RegisterString_inl",
         "function": "Dvar_SetFromStringByNameFromSource",
         "nameExpression": "dvarName"

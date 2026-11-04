@@ -5072,6 +5072,14 @@
       "bindable": true,
       "menuLabel": "Show scoreboard"
     },
+    "listip": {
+      "title": "Show the IP filter list",
+      "summary": "Show the hosted server's IP filter list in the console.",
+      "details": "This dispatch-only command runs g_banIPs through the console, which prints the saved filter list.",
+      "effectSources": [
+        "src/PC/game_mp/g_svcmds_mp.c: ConsoleCommand"
+      ]
+    },
     "weapnext": {
       "title": "Next weapon",
       "summary": "Next weapon.",
@@ -5786,14 +5794,6 @@
         "src/PC/server_mp/sv_ccmds_mp.c: SV_GameCompleteStatus_f"
       ]
     },
-    "gc": {
-      "title": "Send a preset player message",
-      "summary": "Send a numbered preset message to a numbered player.",
-      "details": "The native server accepts player numbers 0–63 and message numbers 0–6. It sends the message to the target and echoes it to the sender.",
-      "effectSources": [
-        "src/PC/game_mp/g_cmds_mp.c: Cmd_GameCommand_f"
-      ]
-    },
     "give": {
       "title": "Give health, ammunition or items",
       "summary": "Ask the server to grant the named resource to the player.",
@@ -5936,14 +5936,6 @@
       "details": "Uses sv_mapRotation and sv_mapRotationCurrent. When no usable map entry remains it falls back to restarting the current game.",
       "effectSources": [
         "src/PC/server_mp/sv_ccmds_mp.c: SV_MapRotate_f"
-      ]
-    },
-    "maprotate": {
-      "title": "Run the next-map script",
-      "summary": "Execute the commands stored in nextmap through the hosted game's console.",
-      "details": "This dispatch-only command queues vstr nextmap. Its effect depends on the saved nextmap text; it is distinct from map_rotate's rotation parser.",
-      "effectSources": [
-        "src/PC/game_mp/g_svcmds_mp.c: ConsoleCommand"
       ]
     },
     "match": {
@@ -6388,9 +6380,8 @@
     "tell": {
       "title": "Send a private player message",
       "summary": "Send chat text to a numbered player.",
-      "details": "The game-server path delivers the message to the target and echoes it to the sender. From the server console it sends a console-prefixed message to that player.",
+      "details": "This server console command sends a console-prefixed message to that player.",
       "effectSources": [
-        "src/PC/game_mp/g_cmds_mp.c: ClientCommand",
         "src/PC/server_mp/sv_ccmds_mp.c: SV_ConTell_f"
       ]
     },
