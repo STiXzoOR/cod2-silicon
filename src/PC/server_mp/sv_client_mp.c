@@ -385,6 +385,14 @@ static void SV_Cod2xStoreClientIdentity(client_t *client, const char *hwid)
 }
 #endif
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+void SV_UpdateLastTimeMasterServerCommunicated(netadr_t from)
+{
+    if (NET_CompareBaseAdr(from, *SV_MasterAddress()))
+        svs.sv_lastTimeMasterServerCommunicated = svs.time;
+}
+#endif
+
 #if COD2_IS_PATCH_13
 void SV_AuthorizeRequest(struct netadr_t from, int challenge, const char *clientPBGuid)
 #else
