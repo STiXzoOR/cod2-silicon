@@ -2438,8 +2438,13 @@ static void PM_TryTakeEmptyClipOnlyWeapon(playerState_t *ps, WeaponDef *weapDef)
         return;
 
     weapon = ps->weapon;
+#if defined(COD2_X64)
+    BG_TakePlayerWeapon(ps, weapon);
+    PM_AddEvent(ps, 0x92);
+#else
     if (BG_TakePlayerWeapon(ps, weapon))
         PM_AddEvent(ps, 0x92);
+#endif
 }
 
 static qboolean PM_ConsumeFireAmmo(playerState_t *ps, WeaponDef *weapDef)
@@ -3483,33 +3488,34 @@ static void BG_AddWeaponIdleAngles(weaponState_t *ws, vec_t *angles, const Weapo
     if (weapDef->overlayReticle)
         amount *= 1.0f - f;
 
+#if defined(COD2_X64)
+    *ws->weapIdleTime += (int)((ws->frametime * 1000.0f) * idleSpeed);
+#else
     *ws->weapIdleTime += (int)(idleSpeed * ws->frametime * 1000.0f);
+#endif
 
     angles[2] += sinf((float)*ws->weapIdleTime * 0.0005000000237487257f) * amount * 0.009999999776482582f;
     angles[1] += sinf((float)*ws->weapIdleTime * 0.000699999975040555f) * amount * 0.009999999776482582f;
     angles[0] += sinf((float)*ws->weapIdleTime * 0.0010000000474974513f) * amount * 0.009999999776482582f;
 }
 
-#if defined(COD2_X64) && COD2_X64
-static float BG_GetBobCycleSingle(const playerState_t *ps)
-{
-    float phase = ((float)(ps->bobCycle & 255) / 255.0f) * 3.1415927410125732f;
-    return phase + phase + 6.2831854820251465f;
-}
-#endif
 static void BG_AddWeaponBobAngles(weaponState_t *ws, vec_t *angles, const WeaponDef *weapDef)
 {
     playerState_t *ps = ws->ps;
     float f = ps->fWeaponPosFrac;
 #if defined(COD2_X64) && COD2_X64
-    float cycle = BG_GetBobCycleSingle(ps) + 0.7853981852531433f + 6.2831854820251465f;
+    float cycle = (float)((double)BG_GetBobCycle(ps) + 0.7853981633974483 + 6.283185307179586);
 #else
     float cycle = BG_GetBobCycle(ps) + 0.7853981633974483f;
 #endif
     float speed = ws->xyspeed * 0.1599999964237213f;
     float pitch = -BG_GetVerticalBobFactor(ps, cycle, speed, 10.0f);
     float yaw = -BG_GetHorizontalBobFactor(ps, cycle, speed, 10.0f);
+#if defined(COD2_X64)
+    float roll = BG_GetHorizontalBobFactor(ps, (float)((double)cycle - 0.4712389167638204), speed * 1.5f, 10.0f);
+#else
     float roll = BG_GetHorizontalBobFactor(ps, cycle - 0.4712389167638204f, speed * 1.5f, 10.0f);
+#endif
 
     if (roll > 0.0f)
         roll = 0.0f;
@@ -3747,7 +3753,7 @@ static void BG_AddViewIdle(viewState_t *vs, vec_t *angles, const WeaponDef *weap
 
     amount = idleAmount * vs->fLastIdleFactor * f * ps->holdBreathScale;
 #if defined(COD2_X64) && COD2_X64
-    *vs->weapIdleTime += (int)(idleSpeed * ps->holdBreathScale * vs->frametime * 1000.0f);
+    *vs->weapIdleTime += (int)(((ps->holdBreathScale * vs->frametime) * 1000.0f) * idleSpeed);
 #else
     *vs->weapIdleTime += (int)(idleSpeed * vs->frametime * 1000.0f * ps->holdBreathScale);
 #endif
@@ -3770,7 +3776,7 @@ static void BG_AddScopedViewBob(viewState_t *vs, vec_t *angles, const WeaponDef 
         return;
 
 #if defined(COD2_X64) && COD2_X64
-    cycle = BG_GetBobCycleSingle(ps) + 0.7853981852531433f + 6.2831854820251465f;
+    cycle = (float)((double)BG_GetBobCycle(ps) + 0.7853981633974483 + 6.283185307179586);
 #else
     cycle = BG_GetBobCycle(ps) + 0.7853981633974483f;
 #endif
@@ -3778,7 +3784,11 @@ static void BG_AddScopedViewBob(viewState_t *vs, vec_t *angles, const WeaponDef 
 
     pitch = -BG_GetVerticalBobFactor(ps, cycle, speed, 10.0f);
     yaw = -BG_GetHorizontalBobFactor(ps, cycle, speed, 10.0f);
+#if defined(COD2_X64)
+    roll = BG_GetHorizontalBobFactor(ps, (float)((double)cycle - 0.4712389167638204), speed * 1.5f, 10.0f);
+#else
     roll = BG_GetHorizontalBobFactor(ps, cycle - 0.4712389167638204f, speed * 1.5f, 10.0f);
+#endif
     if (roll > 0.0f)
         roll = 0.0f;
 
@@ -3808,19 +3818,7 @@ static void BG_AddAdsViewBob(viewState_t *vs, vec_t *angles, const WeaponDef *we
         return;
 
     scale = f * weapDef->fAdsViewBobMult;
-#if defined(COD2_X64) && COD2_X64
-    cycle = BG_GetBobCycleSingle(ps);
-    {
-        float amplitude = BG_GetBobAmplitude(ps, vs->xyspeed, 45.0f);
-        float bob = sinf(cycle + cycle);
-        bob += (float)sin((double)(cycle * 4.0f) + 1.5707963267948966) * 0.2f;
-        angles[0] -= amplitude * bob * 0.75f * f * weapDef->fAdsViewBobMult;
-        angles[1] -= amplitude * sinf(cycle) * f * weapDef->fAdsViewBobMult;
-    }
-    return;
-#else
     cycle = BG_GetBobCycle(ps);
-#endif
     angles[0] -= BG_GetVerticalBobFactor(ps, cycle, vs->xyspeed, 45.0f) * scale;
     angles[1] -= BG_GetHorizontalBobFactor(ps, cycle, vs->xyspeed, 45.0f) * scale;
 }
