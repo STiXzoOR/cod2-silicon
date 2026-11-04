@@ -6870,5 +6870,149 @@
   "mac:0x001940e0": {
     "status": "equal",
     "evidence": "Read exact-symbol Mac 0x1940e0 empty prologue/return; native is empty as well."
+  },
+  "linux:server/sv_snapshot_mp.cpp:378:SV_AddArchivedEntToSnapshot": {
+    "status": "equal",
+    "evidence": "Compared inlined 1024-entry append/cap block at Mac 0x19682f\u20130x196857 with SV_AddSnapshotEntityNumberLocal as called by the cached visibility path."
+  },
+  "linux:server/sv_snapshot_mp.cpp:538:SV_AddCachedEntitiesVisibleFromPoint": {
+    "status": "equal",
+    "evidence": "Compared Mac SV_SendClientSnapshot inline blocks 0x196750\u20130x196896, 0x196eef\u20130x196f85 and 0x1972de\u20130x197353 with cached PVS, client-mask, self-entity, broadcast, leaf and fog filtering helpers."
+  },
+  "linux:server/sv_snapshot_mp.cpp:361:SV_AddEntToSnapshot": {
+    "status": "equal",
+    "evidence": "Compared inlined 1024-entry append/cap blocks at Mac 0x19700c\u20130x197034 and 0x197184\u20130x1971b0 with SV_AddSnapshotEntityNumberLocal."
+  },
+  "linux:server/sv_snapshot_mp.cpp:395:SV_AddEntitiesVisibleFromPoint": {
+    "status": "fixed",
+    "evidence": "Mac 0x19706f uses the enumerated entity index for the self exclusion; 0x19736d clears expired broadcastTime then enters flag/PVS checks; 0x197251 starts the overflow scan from the last tested cluster and preserves its endpoint bug. Native used state.number, always included expired broadcasts, capped the cluster loop and started overflow at firstCluster+1; compiled and reviewed, not exercised."
+  },
+  "mac:0x00194da8": {
+    "status": "fixed",
+    "evidence": "Compared complete Mac 0x194da8\u20130x195788 archive writer. At 0x194e62\u20130x194e74 the base search skips delta frames instead of terminating; 0x195209 and 0x195655 exclude svFlags&1 entities absent broadcastTime; native admitted them. Native signed frame-slot remainder now follows 0x1950d4\u20130x1950f4. Retained prior sv_fps/base-age and buffer-cursor fixes; compiled and reviewed, not exercised."
+  },
+  "linux:server/sv_snapshot_mp.cpp:1255:SV_BuildClientSnapshot": {
+    "status": "fixed",
+    "evidence": "Compared Mac inline builder in SV_SendClientSnapshot, 0x196500\u20130x196896 plus 0x196ba7\u20130x19724c. Mac 0x196533\u20130x19656a leaves first_entity/first_client untouched when gentity is absent or client is zombie; native initialized them earlier. Mac 0x1966b6 uses an unsigned clientNum bound. Archive-time output also now follows 0x196584\u20130x196656; compiled and reviewed, not exercised."
+  },
+  "linux:server/sv_snapshot_mp.cpp:121:SV_EmitPacketClients": {
+    "status": "fixed",
+    "evidence": "Compared Mac inline sorted-client merge at 0x19637c\u20130x1964d4. Empty-side sentinel is 9999 at 0x1963f1/0x19643e, not native 99999; other equal/insert/remove writes and terminating bit match. Compiled and reviewed, not exercised."
+  },
+  "linux:server/sv_snapshot_mp.cpp:48:SV_EmitPacketEntities": {
+    "status": "equal",
+    "evidence": "Compared complete inline sorted-entity merge at Mac 0x1961a9\u20130x196377: ring indices, 9999 sentinel, baseline insertion, delta/removal flags and 1023/10-bit terminator match SV_WritePacketEntitiesLocal."
+  },
+  "mac:0x00195a06": {
+    "status": "fixed",
+    "evidence": "Compared Mac 0x195a06\u20130x195d6a including current fallback, frame clipping/search, client/player-state copies and HUD rebasing. Mac 0x195c2a\u20130x195cac adjusts commandTime, pm_time, foliageSoundTime, jumpTime, viewHeightLerpTime and shellshockTime only; native also shifted legsTimer and adsDelayTime. Removed those two native adjustments. Retained sv_fps conversion; compiled and reviewed, not exercised."
+  },
+  "linux:server/sv_snapshot_mp.cpp:966:SV_GetCachedSnapshot": {
+    "status": "fixed",
+    "evidence": "Identified Linux helper in Mac SV_SendClientSnapshot inline archive lookup: 0x196584\u20130x196656, 0x196b85\u20130x196ba2, 0x196c98 and 0x196fa1. Native now calls G_GetClientArchiveTime before the archive gate, preserves disabled/nonpositive requests, zeroes failed lookups, and follows Mac sv_fps arithmetic without an extra fps<=0 branch; compiled and reviewed, not exercised."
+  },
+  "mac:0x001943dc": {
+    "status": "fixed",
+    "evidence": "Compared complete exact-symbol Mac 0x1943dc\u20130x194da8 with the attributed native body: buffer validity/copy wrapping, cached search, recursive delta base, client/player-state decoding, entity baselines and ring counters match. Restored Mac end-of-message and wrapped-counter diagnostic strings used at 0x1946c1/0x194758/0x194771/0x194869 and delta counterparts; compiled and reviewed, not exercised."
+  },
+  "mac:0x00195d6a": {
+    "status": "equal",
+    "evidence": "Compared complete exact-symbol Mac 0x195d6a\u20130x195f84: integer frame alignment, two ten-attempt archive searches, single-side fallback vectors, SSE interpolation division/subtraction and multiply/add order match native."
+  },
+  "linux:server/sv_snapshot_mp.cpp:1022:SV_GetCurrentClientInfo": {
+    "status": "equal",
+    "evidence": "Compared current-client fallback in Mac SV_GetArchivedClientInfo 0x195a8c\u20130x195af5: active-state gate, GetFollowPlayerState failure, client-state copy and success return match native."
+  },
+  "linux:server/sv_snapshot_mp.cpp:1430:SV_RateMsec": {
+    "status": "equal",
+    "evidence": "Compared inlined Mac rate calculation at 0x1958cd\u20130x195928 and 0x195991\u20130x1959eb, also fragment counterpart 0x19740c\u20130x197482. The sv_minPingRate_dvar alias resolves to sv_maxRate; 1500-byte cap, minimum 1000 dvar clamp, (size*1000+48000)/rate and debug arguments match."
+  },
+  "mac:0x00197382": {
+    "status": "fixed",
+    "evidence": "Compared complete Mac 0x197382\u20130x1976f4 send/fragment scheduler and 20-frame BPS averaging SSE operation order. Restored missing acr(%2.2f) and newline from Mac format at 0x197665 (data 0x2dc32c); native already calculated/passed the average but omitted its conversion. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00195f84": {
+    "status": "fixed",
+    "evidence": "Compared complete exact-symbol Mac 0x195f84\u20130x197382 with native orchestration and all inline builder/writer/recovery helpers. Corrections to visibility, archive-time handling, frame gates and client sentinel restore those inline paths; unacknowledged-command diagnostics now cover reliableSequence and use the Mac separator (0x19699d\u20130x1969bc/0x196a35\u20130x196a78). Prior deltaMessage/rateDelayed/download fixes retained. Compiled and reviewed, not exercised."
+  },
+  "mac:0x00195788": {
+    "status": "equal",
+    "evidence": "Compared complete exact-symbol Mac 0x195788\u20130x195a06: compression with four-byte header, deferred drop, frame stats, transmit, LAN early return, rate scheduling, inactive-client minimum and compressed-byte accounting match. Native optional compression trace is diagnostic instrumentation."
+  },
+  "linux:server/sv_snapshot_mp.cpp:341:SV_ShowClientUnAckCommands": {
+    "status": "fixed",
+    "evidence": "Compared inlined Mac overflow diagnostics at 0x19696e\u20130x1969c1 and 0x196a35\u20130x196a78. Native printed through reliableSent rather than reliableSequence and printed a different separator; now follows Mac. Compiled and reviewed, not exercised."
+  },
+  "mac:0x001942ec": {
+    "status": "equal",
+    "evidence": "Compared complete exact-symbol Mac 0x1942ec\u20130x1943dc: debug header gate, reliableAcknowledge+1 through reliableSequence, opcode/sequence/string writes, 127 mask and reliableSent assignment match."
+  },
+  "linux:server/sv_snapshot_mp.cpp:313:SV_UpdateServerCommandsToClient_PreventOverflow": {
+    "status": "equal",
+    "evidence": "Compared inline Mac recovery serializer 0x1969c1\u20130x196a30, 0x196a7d\u20130x196af9 and 0x196f99: writes through reliableSequence while cursize+strlen+6 fits 0x1ffff, raises reliableSent only and appends EOF in caller, matching native."
+  },
+  "linux:server/sv_snapshot_mp.cpp:188:SV_WriteSnapshotToClient": {
+    "status": "equal",
+    "evidence": "Compared inline Mac 0x1960bb\u20130x1964f9, 0x19690e\u20130x196969 and 0x196b06\u20130x196b80: positive deltaMessage/active gate, 28-frame age/ring validity, snapshot flags, player-state delta, entity/client emit order, padding and caller download gate match native."
+  },
+  "mac:0x00190922": {
+    "status": "equal",
+    "evidence": "Compared exact-symbol Mac 0x190922\u20130x190970: net_profile gate, preparation of svs.pOOBProf and send-stream packet length/nonfragment record match typed native code. Native null guard is redundant after successful profiling allocation."
+  },
+  "mac:0x001907cc": {
+    "status": "equal",
+    "evidence": "Compared exact-symbol Mac 0x1907cc\u20130x19085c, restarting at the symbol after full-binary otool misdecoded the prologue. Reliable command mask 127, serverId/challenge/messageAcknowledge byte key, empty-string restart, alternating shift and rolling XOR match."
+  },
+  "linux:server/sv_net_chan_mp.cpp:14:SV_Netchan_Encode": {
+    "status": "equal",
+    "evidence": "Compared inlined encoding in exact-symbol Mac SV_Netchan_Transmit 0x190872\u20130x190922: skips four header bytes, challenge/outgoingSequence key, lastClientCommandString restart and alternating-shift rolling XOR match native."
+  },
+  "mac:0x00190970": {
+    "status": "fixed",
+    "evidence": "Compared complete exact-symbol Mac 0x190970\u20130x191608. Restored drop%/ak columns, 32-frame loss/pending calculation (0x19104e\u20130x1910f9/0x191328), totals fragment percentages, original formatting and cl_profileTextHeight. Explicit integer words preserve the Mac double-to-%i argument mismatch at 0x190d59\u20130x190dd4 and counterparts; Windows 0x45cee9\u20130x45cf1e and 0x45d2c3\u20130x45d30f confirm the same layout, with native ABI UB avoided. Headless dedicated console routing is retained. Compiled and reviewed, not exercised."
+  },
+  "linux:server/sv_net_chan_mp.cpp:116:SV_Netchan_SendOOBPacket": {
+    "status": "unchecked",
+    "evidence": "Linux-only helper has no Mac symbol or native body. Inspected Mac NET_SendPacket 0x15852a and NET_OutOfBandData 0x1588f6 callers and symbol/string inventory; did not establish an inline block equivalent to its unconditional preparation, non-OOB diagnostic and profiling send wrapper. Missing identity is not equality."
+  },
+  "mac:0x00190872": {
+    "status": "equal",
+    "evidence": "Compared complete exact-symbol Mac 0x190872\u20130x190922 including inlined encoder and Netchan_Transmit argument order. Native optional packet trace is diagnostic instrumentation."
+  },
+  "mac:0x0019085c": {
+    "status": "equal",
+    "evidence": "Compared exact-symbol Mac 0x19085c\u20130x190872 direct Netchan_TransmitNextFragment forwarding and boolean return with native wrapper."
+  },
+  "linux:server/sv_net_chan_mp.cpp:131:SV_Netchan_UpdateProfileStats": {
+    "status": "equal",
+    "evidence": "Compared inline Mac SV_Netchan_PrintProfileStats 0x19097c\u20130x190a05: null clients return, optional OOB send/receive updates and nonfree profiled-client updates through sv_maxclients match native."
+  },
+  "mac:0x001bb93c": {
+    "status": "equal",
+    "evidence": "Compared exact-symbol Mac 0x1bb93c\u20130x1bb974 listener client index and unsigned muteList[talker] byte load with native typed indexing."
+  },
+  "mac:0x001bb908": {
+    "status": "equal",
+    "evidence": "Compared exact-symbol Mac 0x1bb908\u20130x1bb93c client index and unsigned sendVoice byte load with native typed indexing."
+  },
+  "mac:0x001bbada": {
+    "status": "equal",
+    "evidence": "Compared complete exact-symbol Mac 0x1bbada\u20130x1bbc80: sv_voice gate, byte packet count, short size and unsigned 1..256 validation, 64-recipient loop, self/state/mute/sendVoice filters, 40-packet cap, copied bytes and talker byte match."
+  },
+  "mac:0x001bb974": {
+    "status": "equal",
+    "evidence": "Compared complete exact-symbol Mac 0x1bb974\u20130x1bba24: recipient indexing, signed count>39 rejection, size/data copy, talker byte and count increment match native."
+  },
+  "mac:0x001bb770": {
+    "status": "equal",
+    "evidence": "Compared complete exact-symbol Mac 0x1bb770\u20130x1bb908: 0x20000 LargeLocal, active/nonempty gate, v command (data 0x2d4d2c), packet writer, overflow return, server OOB voice send and success-only queue reset match native."
+  },
+  "mac:0x001bba24": {
+    "status": "equal",
+    "evidence": "Compared complete exact-symbol Mac 0x1bba24\u20130x1bbada: sv_voice gate, byte packet count/size, unsigned 1..256 validation, MSG_ReadData and G_BroadcastVoice(gentity, packet) arguments match native."
+  },
+  "linux:server/sv_voice_mp.cpp:11:SV_WriteClientVoiceData": {
+    "status": "equal",
+    "evidence": "Compared inline Mac SV_SendClientVoiceData 0x1bb7e6\u20130x1bb803 and 0x1bb882\u20130x1bb8ed: count, per-packet talker/size byte writes and data write length match the native inline loop."
   }
 }

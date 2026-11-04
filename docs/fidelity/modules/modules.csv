@@ -374,9 +374,9 @@ server/sv_game_mp,54,40,7,0,7
 server/sv_init_mp,26,15,8,2,1
 server/sv_main_mp,24,8,10,6,0
 server/sv_main_pc_mp,7,4,2,1,0
-server/sv_net_chan_mp,8,0,0,0,8
-server/sv_snapshot_mp,21,0,0,0,21
-server/sv_voice_mp,7,0,0,0,7
+server/sv_net_chan_mp,8,6,1,0,1
+server/sv_snapshot_mp,21,11,10,0,0
+server/sv_voice_mp,7,7,0,0,0
 server/sv_world_mp,14,10,3,0,1
 snd,46,0,0,0,46
 speex/bits,10,0,0,10,0
