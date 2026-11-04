@@ -166,3 +166,5 @@ follows Windows, by the project owner's decision, because most players are there
 Mac is not the authority: when Mac behaviour looks platform-specific and players would notice, check the Windows binary.
 
 The first orchestrated batch reconciled 193 further entries across weapon loading, animation and weapons. Six animation identities remain unchecked. Integrated source `e92ca5f` passed both dedicated builds, local macOS CI steps 02–13, the scoped legacy guard check and independent review. Both 2,000-frame replays are unchanged from the fresh `d873794` baseline; no logic-field regressions were observed. The module reports distinguish static review from exercised behavior.
+
+The second orchestrated batch closed 302 further entries across collision loading/world, commands, startup, messages and networking. Source `12d554b` passed both dedicated builds, local macOS CI 02–13, scoped legacy checks and independent reviews. Both replays exactly match the fresh baseline. Hosted ILP32 byte comparison remains unavailable because its unchanged `410342a` reference fails to compile; see the workflow's existing non-blocking exception.
