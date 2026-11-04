@@ -16,7 +16,7 @@ The operator tables at 0x329d40 and 0x329d70 and debug-string table at 0x329d00 
 
 ## Defined native adaptations
 
-**Concatenation preserves Mac's left-length check.** At 0x9042d Mac compares the left length in EDI with 0x2000, although it already computed the combined length. Native had checked combined length instead. Native now uses the original acceptance check, with automatic storage sized for the combined string. Length addition uses `size_t`; valid interned strings fit MT's 0xffff-byte allocation limit, so their sum fits the unsigned length passed to string interning. The temporary has no heap lifetime. This intentionally avoids the Mac fixed-buffer overrun; results depending on that corruption cannot be equivalent.
+**Concatenation preserves Mac's left-length check.** At 0x9042d Mac compares the left length in EDI with 0x2000, although it already computed the combined length. Native had checked combined length instead. Native now uses the original acceptance check, with stack storage sized for the combined string through `__builtin_alloca`; the existing MSVC compatibility shim maps it to `_alloca`. Length addition uses `size_t`. `SL_GetStringOfLen` allocates its NUL-inclusive length plus a four-byte header, and `MT_GetSize` rejects allocations above 0xffff, so valid strings contain at most 0xfffa non-NUL bytes. Together with the accepted left length, this bounds temporary storage at 0x11ffb (73,723) bytes. Allocation happens only for accepted string operands, and normal return or a script-error `longjmp` releases its stack frame without heap cleanup. This intentionally avoids the Mac fixed-buffer overrun; results depending on that corruption cannot be equivalent.
 
 **Entity array copies avoid an invalid destination write.** Mac `Scr_EvalArrayRef` sets its destination pointer to zero at 0x8f1b7 and writes through offset 4 at 0x8f32e if a second copy is needed. `ClearArray` does the same at 0x919b2/0x91bdb. Native's existing `fieldId` guard returns or clears the detached copy without that invalid write. Both ledger rows are intentional. Lookup, read-only checks, type errors, reference handling and ordinary copy-on-write paths were compared.
 
@@ -31,6 +31,8 @@ These Linux-only rows have no established Mac implementation or caller identity:
 ## Verification and limits
 
 The arm64 Release `cod2_macos_ded` target compiled with `taskpolicy -b nice -n 19` and two jobs. The existing 28-case variable fixture suite passed under AddressSanitizer and UndefinedBehaviorSanitizer, including collision churn, packed fields, reference cleanup, copy-on-write, absent-key clearing, unaligned vectors and thread dumps. No new tests, full CI or replays were run.
+
+The complete native translation unit also compiled with `-Werror=vla`. Windows stack allocation follows the existing MSVC compatibility mapping; `cl.exe` itself was not available on this Mac.
 
 The field-file parser changes, preservation of stale free-slot sibling words, full high-status-word clearing, dormant index wrappers and extended concatenation acceptance were compiled and reviewed but not independently exercised. Runtime integration remains with the orchestrator.
 
