@@ -1504,7 +1504,10 @@ static void CG_DrawPlayerAmmoBackdrop(const rectDef_t *rect, MaterialHandle mate
         return;
     }
 
-    CG_CopyColor(drawColor, color, alpha);
+    drawColor[0] = color ? color[0] : 1.0f;
+    drawColor[1] = color ? color[1] : 1.0f;
+    drawColor[2] = color ? color[2] : 1.0f;
+    drawColor[3] = alpha;
     if (CG_CheckPlayerForLowAmmo()) {
         drawColor[0] = 0.89f;
         drawColor[1] = 0.18f;
@@ -1599,7 +1602,10 @@ static void CG_DrawPlayerWeaponName(const rectDef_t *rect, struct Font_s *font, 
         return;
     }
 
-    CG_CopyColor(drawColor, color, alpha);
+    drawColor[0] = color ? color[0] : 1.0f;
+    drawColor[1] = color ? color[1] : 1.0f;
+    drawColor[2] = color ? color[2] : 1.0f;
+    drawColor[3] = alpha;
     UI_DrawText(text, 0x7fffffff, font,
                 (rect->x + rect->w) - (float)UI_TextWidth(text, 0, font, scale) - 28.0f,
                 rect->y, rect->horzAlign, rect->vertAlign, scale, drawColor, textStyle);
@@ -1670,7 +1676,10 @@ static void CG_DrawPlayerWeaponNameBack(const rectDef_t *rect, struct Font_s *fo
     backRect.w = ((float)textWidth + 28.0f) + 8.0f;
     backRect.x = rect->x + rect->w - backRect.w;
 
-    CG_CopyColor(drawColor, color, alpha);
+    drawColor[0] = color ? color[0] : 1.0f;
+    drawColor[1] = color ? color[1] : 1.0f;
+    drawColor[2] = color ? color[2] : 1.0f;
+    drawColor[3] = alpha;
     UI_DrawHandlePic(backRect.x, backRect.y, backRect.w, backRect.h, backRect.horzAlign, backRect.vertAlign, drawColor, material);
 }
 #else
@@ -1716,7 +1725,6 @@ static void CG_DrawPlayerWeaponNameBack(const rectDef_t *rect, struct Font_s *fo
 static void CG_DrawPlayerWeaponModeIcon(const rectDef_t *rect, MaterialHandle fallbackMaterial, vec_t *color)
 {
     weaponInfo_t *weapInfo;
-    vec_t drawColor[4];
     int weaponIndex;
     float alpha;
     MaterialHandle material;
@@ -1737,8 +1745,7 @@ static void CG_DrawPlayerWeaponModeIcon(const rectDef_t *rect, MaterialHandle fa
     material = weapInfo ? weapInfo->hModeIcon : 0;
     if (!material)
         return;
-    CG_CopyColor(drawColor, color, alpha);
-    UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, drawColor, material);
+    UI_DrawHandlePic(rect->x, rect->y, rect->w, rect->h, rect->horzAlign, rect->vertAlign, color, material);
 }
 #else
 static void CG_DrawPlayerWeaponModeIcon(const rectDef_t *rect, MaterialHandle fallbackMaterial, vec_t *color)
@@ -1976,7 +1983,6 @@ static inline __attribute__((always_inline)) void CG_DrawLowHealthOverlay(const 
 static inline __attribute__((always_inline)) void CG_DrawPlayerCompass(const rectDef_t *rect, MaterialHandle material, vec_t *color)
 {
     rectDef_t compassRect;
-    vec_t drawColor[4];
     float scale;
     float alpha;
 
@@ -1997,9 +2003,8 @@ static inline __attribute__((always_inline)) void CG_DrawPlayerCompass(const rec
     compassRect.h *= scale;
 
     CG_UpdateCompassOrientation();
-    CG_CopyColor(drawColor, color, alpha);
     CG_DrawRotatedPic(compassRect.x, compassRect.y, compassRect.w, compassRect.h,
-                      compassRect.horzAlign, compassRect.vertAlign, cg->compassYaw, drawColor, material);
+                      compassRect.horzAlign, compassRect.vertAlign, cg->compassYaw, color, material);
 }
 #else
 static inline __attribute__((always_inline)) void CG_DrawPlayerCompass(const rectDef_t *rect, MaterialHandle material, vec_t *color)
