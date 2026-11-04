@@ -434,6 +434,19 @@ static void __attribute_regparm__(3)
     const int frameIndex = animTime->frameIndex;
     int index = (int)(animTime->time * (float)tableSize);
 
+#if defined(COD2_X64)
+    int low = 0;
+    int high = tableSize;
+
+    while (frameIndex < (int)frames[index] || frameIndex >= (int)frames[index + 1]) {
+        if (frameIndex < (int)frames[index]) {
+            high = index;
+        } else {
+            low = index + 1;
+        }
+        index = (low + high) / 2;
+    }
+#else
     /* x64: bound the search so a bad time/tableSize can't index the array OOB */
     if (index < 0) index = 0;
     if (index >= tableSize) index = tableSize - 1;
@@ -444,6 +457,7 @@ static void __attribute_regparm__(3)
     while (index < tableSize - 1 && frameIndex >= (int)frames[index + 1]) {
         ++index;
     }
+#endif
 
     *keyFrameLerpFrac = (animTime->frameFrac - (float)frames[index]) / (float)((int)frames[index + 1] - (int)frames[index]);
     *keyFrameIndex = index;
@@ -455,6 +469,19 @@ static void __attribute_regparm__(3)
     const int frameIndex = animTime->frameIndex;
     int index = (int)(animTime->time * (float)tableSize);
 
+#if defined(COD2_X64)
+    int low = 0;
+    int high = tableSize;
+
+    while (frameIndex < (int)indices[index] || frameIndex >= (int)indices[index + 1]) {
+        if (frameIndex < (int)indices[index]) {
+            high = index;
+        } else {
+            low = index + 1;
+        }
+        index = (low + high) / 2;
+    }
+#else
     /* x64: bound the search so a bad time/tableSize can't index the array OOB */
     if (index < 0) index = 0;
     if (index >= tableSize) index = tableSize - 1;
@@ -465,6 +492,7 @@ static void __attribute_regparm__(3)
     while (index < tableSize - 1 && frameIndex >= (int)indices[index + 1]) {
         ++index;
     }
+#endif
 
     *keyFrameLerpFrac = (animTime->frameFrac - (float)indices[index]) / (float)((int)indices[index + 1] - (int)indices[index]);
     *keyFrameIndex = index;
@@ -604,7 +632,11 @@ static unsigned int __attribute_regparm__(2) XAnimGetDescendantWithGreatestWeigh
         float testWeight = g_xAnimInfo[infoIndex].s.weight;
 #endif
 
+#if defined(COD2_X64)
+        if (!(bestWeight >= testWeight)) {
+#else
         if (bestWeight < testWeight) {
+#endif
             unsigned int test = XAnimGetDescendantWithGreatestWeight(tree, childIndex);
             if (test) {
                 bestWeight = testWeight;
@@ -785,8 +817,13 @@ void XAnimGetAbsDelta(const XAnim *anims, unsigned int animIndex, vec_t *rot, ve
     XAnim_CalcDeltaForTime(anim->u.parts, rotDelta, posDelta, time);
 
     const float rotScale = 3.0518509447574615e-05f;
+#if defined(COD2_X64)
+    const float rot0 = rotDelta[0] * rotScale + 0.0f;
+    const float rot1 = rotDelta[1] * rotScale + 0.0f;
+#else
     const float rot0 = rotDelta[0] * rotScale;
     const float rot1 = rotDelta[1] * rotScale;
+#endif
 
     if (rot0 == 0.0f && rot1 == 0.0f) {
         rot[0] = 0.0f;
@@ -796,9 +833,15 @@ void XAnimGetAbsDelta(const XAnim *anims, unsigned int animIndex, vec_t *rot, ve
         rot[1] = rot1;
     }
 
+#if defined(COD2_X64)
+    trans[0] = posDelta[0] + 0.0f;
+    trans[1] = posDelta[1] + 0.0f;
+    trans[2] = posDelta[2] + 0.0f;
+#else
     trans[0] = posDelta[0];
     trans[1] = posDelta[1];
     trans[2] = posDelta[2];
+#endif
 }
 
 void XAnimGetRelDelta(const XAnim *anims, unsigned int animIndex, vec_t *rot, vec_t *trans, float time1, float time2)
@@ -1416,7 +1459,11 @@ static int __attribute_regparm__(3) __attribute_sseregparm__
     }
 
     if (goalWeight != 0.0f) {
+#if defined(COD2_X64)
+        if (!(goalWeight >= state->weight)) {
+#else
         if (goalWeight < state->weight) {
+#endif
 #if defined(COD2_X64)
             state->goalTime = (goalTime * (state->weight - goalWeight)) / state->weight;
 #else
@@ -1454,7 +1501,11 @@ static int __attribute_regparm__(3) __attribute_sseregparm__
                 unsigned int childInfoIndex = tree_s->infoArray[childIndex];
                 float childGoalWeight = g_xAnimInfo[childInfoIndex].s.goalWeight;
 
+#if defined(COD2_X64)
+                if (!(bestWeight >= childGoalWeight)) {
+#else
                 if (bestWeight < childGoalWeight) {
+#endif
                     unsigned int descendant = XAnimGetDescendantWithGreatestWeight(tree, childIndex);
                     if (descendant) {
                         bestWeight = childGoalWeight;
@@ -2488,7 +2539,11 @@ static void __attribute_regparm__(3) __attribute_sseregparm__
 
         notifyInfo = &parts->notify[info->notifyIndex];
         notifyIndex = info->notifyIndex;
+#if defined(COD2_X64)
+        if (!(oldTime > notifyInfo->time)) {
+#else
         if (oldTime <= notifyInfo->time) {
+#endif
             while (notifyIndex < parts->notifyCount) {
                 Scr_AddConstString(notifyInfo->name);
                 Scr_NotifyNum(tree_s->entnum - 1, 0, info->notifyName, 1);
@@ -2510,7 +2565,11 @@ static void __attribute_regparm__(3) __attribute_sseregparm__
     }
 
     if (time == 1.0f) {
+#if defined(COD2_X64)
+        if (!(oldTime > notifyInfo->time)) {
+#else
         if (oldTime <= notifyInfo->time) {
+#endif
             while (notifyIndex < parts->notifyCount) {
                 Scr_AddConstString(notifyInfo->name);
                 Scr_NotifyNum(tree_s->entnum - 1, 0, info->notifyName, 1);
@@ -3007,7 +3066,12 @@ static void XAnimInsertClientNotify(unsigned int notetrackName, unsigned int not
 {
     int insertIndex = g_notifyListSize - 1;
 
+#if defined(COD2_X64)
+    /* Mac's jb also moves an entry when either fraction is unordered. */
+    while (insertIndex >= 0 && !(timeFrac >= g_notifyList[insertIndex].timeFrac)) {
+#else
     while (insertIndex >= 0 && timeFrac < g_notifyList[insertIndex].timeFrac) {
+#endif
         g_notifyList[insertIndex + 1] = g_notifyList[insertIndex];
         --insertIndex;
     }
@@ -3092,7 +3156,7 @@ static void __attribute_regparm__(2) __attribute_sseregparm__
                 for (i = first; i < notifyCount && state->time > notify[i].time; ++i) {
                     XAnimInsertClientNotify(notify[i].name, notifyType, XAnimClientNotifyFrac(state, notify[i].time, dtime));
                 }
-            } else if (state->oldTime <= next->time) {
+            } else if (!(state->oldTime > next->time)) {
                 for (i = first; i < notifyCount; ++i) {
                     XAnimInsertClientNotify(notify[i].name, notifyType, XAnimClientNotifyFrac(state, notify[i].time, dtime));
                 }
@@ -3101,7 +3165,7 @@ static void __attribute_regparm__(2) __attribute_sseregparm__
                     XAnimInsertClientNotify(notify[i].name, notifyType, XAnimClientNotifyFrac(state, notify[i].time, dtime));
                 }
             }
-        } else if (state->oldTime <= next->time) {
+        } else if (!(state->oldTime > next->time)) {
             for (i = first; i < notifyCount && (state->time == 1.0f || state->time > notify[i].time); ++i) {
                 XAnimInsertClientNotify(notify[i].name, notifyType, XAnimClientNotifyFrac(state, notify[i].time, dtime));
             }
@@ -3482,7 +3546,11 @@ static inline __attribute__((always_inline)) const XAnimNotifyInfo *XAnimGetNext
         const XAnimNotifyInfo *notifyInfo = &parts->notify[notifyInfoIndex];
         float notifyTime = notifyInfo->time;
 
+#if defined(COD2_X64)
+        if (!(time > notifyTime) && bestTime > notifyTime) {
+#else
         if (time <= notifyTime && bestTime > notifyTime) {
+#endif
             bestNotifyInfo = notifyInfo;
             bestTime = notifyTime;
         }
@@ -3679,7 +3747,11 @@ static float XAnimFindServerNoteTrackInternal(const XAnimTree *tree, unsigned in
             nextTime = 1.0f;
         }
 
+#if defined(COD2_X64)
+        if (state->time - nextTime > (float)((int)(short)nextTimeCount - (int)state->timeCount)) {
+#else
         if (state->time - nextTime > (float)((int)nextTimeCount - (int)state->timeCount)) {
+#endif
             return 1.0f;
         }
 
@@ -3710,7 +3782,11 @@ static float XAnimFindServerNoteTrackInternal(const XAnimTree *tree, unsigned in
             }
         }
 
+#if defined(COD2_X64)
+        if (state->time - nextTime > (float)((int)(short)nextTimeCount - (int)state->timeCount)) {
+#else
         if (state->time - nextTime > (float)((int)nextTimeCount - (int)state->timeCount)) {
+#endif
             return 1.0f;
         }
 
