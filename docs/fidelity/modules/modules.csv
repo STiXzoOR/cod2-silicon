@@ -333,8 +333,8 @@ punkbuster/pbcl,17,0,0,17,0
 punkbuster/pbmd5,4,0,0,4,0
 punkbuster/pbsv,38,0,0,37,1
 qcommon/buildnumber,1,0,0,0,1
-qcommon/cm_load,17,0,0,0,17
-qcommon/cm_load_obj,31,0,0,0,31
+qcommon/cm_load,17,15,2,0,0
+qcommon/cm_load_obj,31,10,19,2,0
 qcommon/cm_mesh,11,8,3,0,0
 qcommon/cm_polylib,6,0,0,0,6
 qcommon/cm_staticmodel,5,0,0,0,5
