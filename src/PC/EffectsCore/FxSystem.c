@@ -216,7 +216,11 @@ int FxHelper_GetSeed(const FxHelper *_this)
 {
     FxHelper *self = (FxHelper *)_this;
     int seed = self->mSeed;
+#if defined(COD2_X64)
+    self->mSeed = (int)((unsigned int)seed * 0x369d035u);
+#else
     self->mSeed = seed * 0x369d035;
+#endif
     return seed;
 }
 
@@ -260,9 +264,18 @@ Bool FxHelper_CullCylinder(const FxHelper *_this, const vec_t *worldPos0, const 
 
     for (i = 0; i < planeCount; i++) {
         float dot0 = worldPos0[0] * helper->mCamera.frustum[i][0] + worldPos0[1] * helper->mCamera.frustum[i][1] + worldPos0[2] * helper->mCamera.frustum[i][2] - helper->mCamera.frustum[i][3];
+#if defined(COD2_X64)
+        /* Mac's jbe also enters this branch for an unordered comparison. */
+        if (!(dot0 > negRadius0)) {
+#else
         if (dot0 <= negRadius0) {
+#endif
             float dot1 = worldPos1[0] * helper->mCamera.frustum[i][0] + worldPos1[1] * helper->mCamera.frustum[i][1] + worldPos1[2] * helper->mCamera.frustum[i][2] - helper->mCamera.frustum[i][3];
+#if defined(COD2_X64)
+            if (!(dot1 > negRadius1)) {
+#else
             if (dot1 <= negRadius1) {
+#endif
                 return 1;
             }
         }
@@ -284,6 +297,16 @@ void FxHelper_CalcFrustumPlanes(const FxHelper *_this, refdef_t *refdef, float z
     s = sinf(fAngle);
     c = cosf(fAngle);
 
+#if defined(COD2_X64)
+    self->mCamera.frustum[1][0] = c * refdef->viewaxis[1][0] + s * refdef->viewaxis[0][0];
+    self->mCamera.frustum[1][1] = c * refdef->viewaxis[1][1] + s * refdef->viewaxis[0][1];
+    self->mCamera.frustum[1][2] = c * refdef->viewaxis[1][2] + s * refdef->viewaxis[0][2];
+
+    c = -c;
+    self->mCamera.frustum[2][0] = c * refdef->viewaxis[1][0] + s * refdef->viewaxis[0][0];
+    self->mCamera.frustum[2][1] = c * refdef->viewaxis[1][1] + s * refdef->viewaxis[0][1];
+    self->mCamera.frustum[2][2] = c * refdef->viewaxis[1][2] + s * refdef->viewaxis[0][2];
+#else
     self->mCamera.frustum[1][0] = s * refdef->viewaxis[0][0] + c * refdef->viewaxis[1][0];
     self->mCamera.frustum[1][1] = s * refdef->viewaxis[0][1] + c * refdef->viewaxis[1][1];
     self->mCamera.frustum[1][2] = s * refdef->viewaxis[0][2] + c * refdef->viewaxis[1][2];
@@ -291,11 +314,22 @@ void FxHelper_CalcFrustumPlanes(const FxHelper *_this, refdef_t *refdef, float z
     self->mCamera.frustum[2][0] = s * refdef->viewaxis[0][0] - c * refdef->viewaxis[1][0];
     self->mCamera.frustum[2][1] = s * refdef->viewaxis[0][1] - c * refdef->viewaxis[1][1];
     self->mCamera.frustum[2][2] = s * refdef->viewaxis[0][2] - c * refdef->viewaxis[1][2];
+#endif
 
     fAngle = (float)((double)refdef->fov_y * 0.008726646259971648);
     s = sinf(fAngle);
     c = cosf(fAngle);
 
+#if defined(COD2_X64)
+    self->mCamera.frustum[3][0] = c * refdef->viewaxis[2][0] + s * refdef->viewaxis[0][0];
+    self->mCamera.frustum[3][1] = c * refdef->viewaxis[2][1] + s * refdef->viewaxis[0][1];
+    self->mCamera.frustum[3][2] = c * refdef->viewaxis[2][2] + s * refdef->viewaxis[0][2];
+
+    c = -c;
+    self->mCamera.frustum[4][0] = c * refdef->viewaxis[2][0] + s * refdef->viewaxis[0][0];
+    self->mCamera.frustum[4][1] = c * refdef->viewaxis[2][1] + s * refdef->viewaxis[0][1];
+    self->mCamera.frustum[4][2] = c * refdef->viewaxis[2][2] + s * refdef->viewaxis[0][2];
+#else
     self->mCamera.frustum[3][0] = s * refdef->viewaxis[0][0] + c * refdef->viewaxis[2][0];
     self->mCamera.frustum[3][1] = s * refdef->viewaxis[0][1] + c * refdef->viewaxis[2][1];
     self->mCamera.frustum[3][2] = s * refdef->viewaxis[0][2] + c * refdef->viewaxis[2][2];
@@ -303,6 +337,7 @@ void FxHelper_CalcFrustumPlanes(const FxHelper *_this, refdef_t *refdef, float z
     self->mCamera.frustum[4][0] = s * refdef->viewaxis[0][0] - c * refdef->viewaxis[2][0];
     self->mCamera.frustum[4][1] = s * refdef->viewaxis[0][1] - c * refdef->viewaxis[2][1];
     self->mCamera.frustum[4][2] = s * refdef->viewaxis[0][2] - c * refdef->viewaxis[2][2];
+#endif
 
     self->mCamera.numPlanes = 5;
 
@@ -336,7 +371,11 @@ void FxHelper_AdjustCamera(const FxHelper *_this, refdef_t *refdef, float zfar)
         self->adsZoomFactor = 1.0f;
     } else {
         double tanRef = tan(40.0 * 0.017453292519943295);
+#if defined(COD2_X64)
+        double tanCur = tan((double)(refdef->fov_x * 0.5f) * 0.017453292519943295);
+#else
         double tanCur = tan((double)refdef->fov_x * 0.5 * 0.017453292519943295);
+#endif
         self->adsZoomFactor = (float)(tanRef / tanCur);
     }
 }
@@ -345,9 +384,15 @@ void FxHelper_Archive(const FxHelper *_this, FxArchive *arch)
 {
     FxHelper *self = (FxHelper *)_this;
     int i;
+#if !defined(COD2_X64)
     unsigned char *archFlags = (unsigned char *)arch;
+#endif
 
+#if defined(COD2_X64)
+    if (arch->isReading) {
+#else
     if (archFlags[4]) {
+#endif
         FxArchive_ReadData(arch, &i, 4);
         self->mTime = i;
     } else {
@@ -355,7 +400,11 @@ void FxHelper_Archive(const FxHelper *_this, FxArchive *arch)
         FxArchive_WriteData(arch, &i, 4);
     }
 
+#if defined(COD2_X64)
+    if (arch->isReading) {
+#else
     if (archFlags[4]) {
+#endif
         FxArchive_ReadData(arch, &i, 4);
         self->mOldTime = i;
     } else {
@@ -363,7 +412,11 @@ void FxHelper_Archive(const FxHelper *_this, FxArchive *arch)
         FxArchive_WriteData(arch, &i, 4);
     }
 
+#if defined(COD2_X64)
+    if (arch->isReading) {
+#else
     if (archFlags[4]) {
+#endif
         FxArchive_ReadData(arch, &i, 4);
         self->mFrameTime = i;
     } else {
@@ -371,7 +424,11 @@ void FxHelper_Archive(const FxHelper *_this, FxArchive *arch)
         FxArchive_WriteData(arch, &i, 4);
     }
 
+#if defined(COD2_X64)
+    if (arch->isReading) {
+#else
     if (archFlags[4]) {
+#endif
         FxArchive_ReadData(arch, &i, 4);
         self->mTimeFrozen = i;
     } else {
@@ -379,7 +436,11 @@ void FxHelper_Archive(const FxHelper *_this, FxArchive *arch)
         FxArchive_WriteData(arch, &i, 4);
     }
 
+#if defined(COD2_X64)
+    if (arch->isReading) {
+#else
     if (archFlags[4]) {
+#endif
         self->time = 0;
     }
 }
