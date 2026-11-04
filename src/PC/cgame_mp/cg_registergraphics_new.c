@@ -108,7 +108,12 @@ void __attribute_regparm__(1) CG_RegisterGraphics(const char *mapname)
             CL_ModelBounds(model, mins, maxs);
 
             for (j = 0; j < 3; j++) {
+#if defined(COD2_X64)
+                float span = maxs[j] - mins[j];
+                float mid = (float)((double)mins[j] + (double)span * 0.5);
+#else
                 float mid = (mins[j] + maxs[j]) * 0.5f;
+#endif
                 cgs->inlineModelMidpoints[i][j] = mid;
             }
         }
@@ -118,15 +123,26 @@ void __attribute_regparm__(1) CG_RegisterGraphics(const char *mapname)
     for (i = 1; i < 256; i++) {
         str = CL_GetConfigString(0x14e + i);
         if (str[0] == '\0')
+#if defined(COD2_X64)
+            break;
+#else
             continue;
+#endif
 
+#if defined(COD2_X64)
+        SCR_UpdateScreen();
+#endif
         cgs->gameModels[i] = CL_RegisterModel(str);
     }
 
     for (i = 1; i < 64; i++) {
         str = CL_GetConfigString(0x34e + i);
         if (str[0] == '\0')
+#if defined(COD2_X64)
+            break;
+#else
             continue;
+#endif
         cgs->fxs[i] = (EffectTemplate *)(FX_RegisterEffect(str));
     }
 
