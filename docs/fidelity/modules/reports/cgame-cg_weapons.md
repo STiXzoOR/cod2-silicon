@@ -16,7 +16,7 @@ Updated 2026-11-05.
 
 `CG_CycleWeap` now validates ownership after its final fallback selection. Mac's slot fallback at 0x1dbf8c and non-slot fallback at 0x1dbf6f reach the ownership check at 0x1dbd64; native returned early.
 
-`CG_Weapons_SetToDefault` restores the full fallback warning at 0x1d7d44, including the switching-to-default phrase and both newlines.
+`CG_Weapons_SetToDefault` restores the full fallback warning at 0x1d7d44, including the switching-to-default phrase and the single trailing newline. Independent review corrected an extra newline introduced in the first reconciliation commit; parent read the NUL-terminated Mac bytes at 0x2e3724 to confirm it.
 
 ## Preserved native behavior
 
