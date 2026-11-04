@@ -1,0 +1,27 @@
+# xanim/dobj module reconciliation
+
+Updated 2026-11-04.
+
+**55/58 reconciled: 54 equal, 1 fixed, 3 unchecked.** Mac 1.3 i386 is the authority. All 40 Mac-backed functions were read, including skeleton composition, hierarchy traversal, duplicate parts, surface masks and both trace paths. The remaining rows were checked against their renamed or inlined Mac counterparts where an identity could be established. Linux supplied names only.
+
+## Corrections
+
+**Parent quaternion additions had a different order.** `DObjCalcParentLocal` accumulated the x and y components in a different sequence in both the ordinary and control branches. Native now follows the SSE additions/subtractions at Mac 0x75850–0x75913 and 0x75bf0–0x75cbe, also repeated in the child-bone paths at 0x75e6f–0x75f46 and 0x764a2–0x76579. The z expression was written in the same operand order for clarity.
+
+**Zero squared quaternion length cleared extra components.** The Mac fallback at 0x75d15–0x75d2c, 0x765b0–0x765ce and 0x765e4–0x765f2 sets only the scalar component to one and the translation weight to two. Native also cleared the vector components. It now retains their signed zeros and tiny values whose squares underflow. Both corrections are confined to `COD2_X64` behavior.
+
+## Comparison details
+
+The comparison included the tree generation rollover and widened native tree header, the 127-bone limit, duplicate-pair encoding and string lengths, hierarchy mask propagation, signed LOD filtering and unsigned surface-mask carries. `DObjTraceline` was compared for valid loaded models and finite coordinates, including priority inheritance, sphere rejection, six-plane clipping, start-solid normals and the scratch sign retained across later rejected candidates. Existing native guards for absent model data and invalid parent indices were preserved; no indeterminate storage was introduced.
+
+Examples of Linux names resolved against Mac code are `DObjGetModelSurface` to `DObjGetSurface` at 0x740ba, `DObjGetSurfaceList` to `DObjGetSurfaces` at 0x743f2, `DObjSetTree` within `DObjCreate`, and `InvMatrixTransformVectorQuatTrans` within `DObjTraceline` at 0x76bcf–0x76f31. The full-binary disassembly misaligned `DObjInit`; restarting at its exact symbol confirmed the five zero words and string registration at 0x73db0.
+
+`DObjClone`, `DObjGetCreateParms` and `DObjSkelIsValid` remain unchecked. They have neither a native definition nor an established Mac text symbol/caller identity. In particular, the Linux `DObjSkelIsValid` does not clear the skeleton on a timestamp mismatch, so the mutating Mac `DObjSkelExists` is not an equivalent identity.
+
+## Verification and limits
+
+Configured arm64 Release with `COD2_X64=ON` and built `cod2_macos_ded` successfully using `taskpolicy -b nice -n 19` and two jobs. Clang preprocessing with `COD2_X64` omitted produced byte-identical output to the starting source, confirming unchanged legacy behavior.
+
+No tests were added or changed. Existing skeleton fixtures were inspected; their simple quaternion values do not distinguish these corrections. The changes are compiled and reviewed but not exercised. CI and replays are left to the orchestrator.
+
+Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-xanim-dobj.noindex/`.
