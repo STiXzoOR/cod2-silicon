@@ -25,12 +25,13 @@ void Com_Error(int level, const char *fmt, ...)
 void Com_Memcpy(void *to, const void *from, int n) { memcpy(to, from, n); }
 int Com_sprintf(char *dest, int size, const char *fmt, ...) { *dest = 0; return 0; }
 int Sys_Milliseconds(void) { return 1; }
-void Sys_SendPacket(int n, const void *data, netadr_t adr)
+Bool Sys_SendPacket(int n, const void *data, netadr_t adr)
 {
     assert(n <= sizeof(wire));
     memcpy(wire, data, n);
     wireLength = n;
     sent++;
+    return 1;
 }
 void MSG_Init(msg_t *msg, byte *data, int n)
 {

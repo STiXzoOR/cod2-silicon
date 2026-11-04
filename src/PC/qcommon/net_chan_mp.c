@@ -48,7 +48,7 @@ extern void CL_Netchan_PrintProfileStats(int bDumpRecvStats);
 extern qboolean Sys_GetPacket(netadr_t *net_from, msg_t *net_message);
 extern qboolean Sys_StringToAdr(const char *s, netadr_t *a);
 #if defined(COD2_X64)
-extern void Sys_SendPacket(int, const void *, netadr_t);
+extern Bool Sys_SendPacket(int, const void *, netadr_t);
 #else
 extern Bool Sys_SendPacket(int length, const void *data, netadr_t to);
 #endif
@@ -519,8 +519,7 @@ Bool NET_SendPacket(netsrc_t sock, int length, const void *data, netadr_t to)
     } else {
 
 #if defined(COD2_X64)
-        Sys_SendPacket(length, data, to);
-        return 1;
+        return Sys_SendPacket(length, data, to);
 #else
         return Sys_SendPacket(length, data, to);
 #endif
