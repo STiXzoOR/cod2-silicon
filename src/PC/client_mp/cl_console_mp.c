@@ -1902,13 +1902,17 @@ static void ConDrawInput_AutoCompleteArg(const char **strings, int stringCount)
 
     input = ((field_t *)imp_g_consoleField)->buffer;
     argument = input;
-    while (isPunctChar((signed char)*argument))
+    const char *inputEnd = input + sizeof(((field_t *)imp_g_consoleField)->buffer);
+    while (argument < inputEnd && *argument && isPunctChar((signed char)*argument))
         argument++;
-    /* Cmd_Argc()==2 guarantees the separator scanned here exists. */
-    while (!isPunctChar((signed char)*argument))
+    /* Quoted arguments can follow the command without a space. Keep the
+     * native field bound when no separator exists for the retail scan. */
+    while (argument < inputEnd && *argument && !isPunctChar((signed char)*argument))
         argument++;
-    while (isPunctChar((signed char)*argument))
+    while (argument < inputEnd && *argument && isPunctChar((signed char)*argument))
         argument++;
+    if (argument == inputEnd || !*argument)
+        return;
 
     boxX = conDrawInputGlob.leftX + (float)re.TextWidth(input, (int)(argument - input), font) - 6.0f;
     boxY = con.screenMin[1] + conDrawInputGlob.fontHeight + 6.0f;
