@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 7869,
-      "intentional": 1369,
-      "equal": 155,
-      "fixed": 64
+      "unchecked": 7627,
+      "intentional": 1375,
+      "equal": 380,
+      "fixed": 75
     },
     "scopes": {
       "unassigned": 777,
@@ -90433,8 +90433,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined in Mac Scr_GetMethod at 0x19b1e5-0x19b244; 59 method rows match the Mac table. No correction required."
       },
       {
         "id": "linux:game/g_scr_main_mp.cpp:1991:ClearObjective",
@@ -90452,8 +90452,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined at Mac 0x19be68-0x19be8a and 0x19bee9-0x19bf15 as native G_ResetObjective. No correction required."
       },
       {
         "id": "linux:game/g_scr_main_mp.cpp:1969:ClearObjective_OnEntity",
@@ -90471,8 +90471,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined at Mac 0x19bbd6-0x19bbfe and its sibling sites as native GScr_ClearObjectiveEntity. No correction required."
       },
       {
         "id": "mac:0x0019b30a",
@@ -90502,8 +90502,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 22 Mac bytes 0x19b30a-0x19b31f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019a5e2",
@@ -90533,8 +90533,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 26 Mac bytes 0x19a5e2-0x19a5fb compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:game/g_scr_main_mp.cpp:5927:GScr_AddVector",
@@ -90552,8 +90552,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined at Mac 0x19d36c-0x19d38c as native GScr_AddOptionalVector. No correction required."
       },
       {
         "id": "mac:0x0019a5fc",
@@ -90583,8 +90583,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 80 Mac bytes 0x19a5fc-0x19a64b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001976f4",
@@ -90614,8 +90614,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 28 Mac bytes 0x1976f4-0x19770f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00197b3e",
@@ -90645,8 +90645,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 102 Mac bytes 0x197b3e-0x197ba3 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019cf1a",
@@ -90676,8 +90676,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 118 Mac bytes 0x19cf1a-0x19cf8f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019a8be",
@@ -90707,8 +90707,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 64 Mac bytes 0x19a8be-0x19a8fd compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00198c0c",
@@ -90738,8 +90738,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 162 Mac bytes 0x198c0c-0x198cad compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019ce96",
@@ -90769,8 +90769,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 132 Mac bytes 0x19ce96-0x19cf19 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019f8fc",
@@ -90800,8 +90800,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 270 Mac bytes 0x19f8fc-0x19fa09 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019a8fe",
@@ -90831,8 +90831,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 108 Mac bytes 0x19a8fe-0x19a969 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019fa0a",
@@ -90862,8 +90862,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 238 Mac bytes 0x19fa0a-0x19faf7 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019aba2",
@@ -90893,8 +90893,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 210 Mac bytes 0x19aba2-0x19ac73 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019d908",
@@ -90924,8 +90924,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 94 Mac bytes 0x19d908-0x19d965 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019d858",
@@ -90955,8 +90955,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 82 Mac bytes 0x19d858-0x19d8a9 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019d79c",
@@ -90986,8 +90986,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 106 Mac bytes 0x19d79c-0x19d805 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019a32a",
@@ -91017,8 +91017,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 256 Mac bytes 0x19a32a-0x19a429 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019d8aa",
@@ -91048,8 +91048,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 94 Mac bytes 0x19d8aa-0x19d907 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019d806",
@@ -91079,8 +91079,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 82 Mac bytes 0x19d806-0x19d857 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019d732",
@@ -91110,8 +91110,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 106 Mac bytes 0x19d732-0x19d79b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b08a",
@@ -91141,8 +91141,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 6 Mac bytes 0x19b08a-0x19b08f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019a574",
@@ -91172,8 +91172,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 110 Mac bytes 0x19a574-0x19a5e1 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019aef0",
@@ -91203,8 +91203,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 326 Mac bytes 0x19aef0-0x19b035 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019ac74",
@@ -91234,8 +91234,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 306 Mac bytes 0x19ac74-0x19ada5 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019ada6",
@@ -91265,8 +91265,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 330 Mac bytes 0x19ada6-0x19aeef compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019773e",
@@ -91296,8 +91296,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 32 Mac bytes 0x19773e-0x19775d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019f120",
@@ -91327,8 +91327,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 90 Mac bytes 0x19f120-0x19f179 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019966c",
@@ -91358,8 +91358,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 302 Mac bytes 0x19966c-0x199799 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00197ad0",
@@ -91389,8 +91389,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 110 Mac bytes 0x197ad0-0x197b3d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019bd8c",
@@ -91420,8 +91420,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 124 Mac bytes 0x19bd8c-0x19be07 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00197968",
@@ -91451,8 +91451,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 36 Mac bytes 0x197968-0x19798b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001979b8",
@@ -91482,8 +91482,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 54 Mac bytes 0x1979b8-0x1979ed compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019798c",
@@ -91513,8 +91513,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 44 Mac bytes 0x19798c-0x1979b7 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019f468",
@@ -91544,8 +91544,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 80 Mac bytes 0x19f468-0x19f4b7 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00198592",
@@ -91575,8 +91575,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 128 Mac bytes 0x198592-0x198611 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019954a",
@@ -91606,8 +91606,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 290 Mac bytes 0x19954a-0x19966b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019979a",
@@ -91637,8 +91637,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 66 Mac bytes 0x19979a-0x1997db compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019a26a",
@@ -91668,8 +91668,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 44 Mac bytes 0x19a26a-0x19a295 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019a296",
@@ -91699,8 +91699,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 148 Mac bytes 0x19a296-0x19a329 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001982ca",
@@ -91730,8 +91730,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 128 Mac bytes 0x1982ca-0x198349 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019842e",
@@ -91761,8 +91761,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 128 Mac bytes 0x19842e-0x1984ad compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019a1aa",
@@ -91792,8 +91792,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 192 Mac bytes 0x19a1aa-0x19a269 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00199f30",
@@ -91823,8 +91823,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 134 Mac bytes 0x199f30-0x199fb5 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001979ee",
@@ -91854,8 +91854,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 28 Mac bytes 0x1979ee-0x197a09 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019790e",
@@ -91885,8 +91885,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 90 Mac bytes 0x19790e-0x197967 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019788e",
@@ -91916,8 +91916,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 90 Mac bytes 0x19788e-0x1978e7 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00199d08",
@@ -91947,8 +91947,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 90 Mac bytes 0x199d08-0x199d61 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00199d62",
@@ -91978,8 +91978,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 52 Mac bytes 0x199d62-0x199d95 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001978e8",
@@ -92009,8 +92009,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 38 Mac bytes 0x1978e8-0x19790d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019d174",
@@ -92040,8 +92040,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 146 Mac bytes 0x19d174-0x19d205 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019a87e",
@@ -92071,8 +92071,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 64 Mac bytes 0x19a87e-0x19a8bd compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001a002c",
@@ -92102,8 +92102,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 800 Mac bytes 0x1a002c-0x1a034b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:game/g_scr_main_mp.cpp:133:GScr_LoadLevelScript",
@@ -92121,8 +92121,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined at Mac 0x1a0405-0x1a045b; the retained empty-name difference is recorded on GScr_LoadScripts."
       },
       {
         "id": "mac:0x0019a4a2",
@@ -92152,8 +92152,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 210 Mac bytes 0x19a4a2-0x19a573 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:game/g_scr_main_mp.cpp:91:GScr_LoadScriptAndLabel",
@@ -92171,8 +92171,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined at each Mac load site as native GScr_LoadScriptFunction, with both 0x15 diagnostics. No correction required."
       },
       {
         "id": "mac:0x001a034c",
@@ -92202,8 +92202,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "All 664 Mac bytes 0x1a034c-0x1a05e3 compared against the live native body and its helpers. Load order, labels, diagnostics, class maps and field registration match. Retained differences: Scr_BeginLoadScripts and Scr_EndLoadScripts are called by the native callers with the same net order, and an empty mapname skips the level script, which cannot occur with a loaded map."
       },
       {
         "id": "mac:0x0019f17a",
@@ -92233,8 +92233,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 202 Mac bytes 0x19f17a-0x19f243 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00198016",
@@ -92264,8 +92264,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 162 Mac bytes 0x198016-0x1980b7 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019cd7c",
@@ -92295,8 +92295,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 282 Mac bytes 0x19cd7c-0x19ce95 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019a64c",
@@ -92326,8 +92326,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 70 Mac bytes 0x19a64c-0x19a691 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019a42a",
@@ -92357,8 +92357,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 120 Mac bytes 0x19a42a-0x19a4a1 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b078",
@@ -92388,8 +92388,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 6 Mac bytes 0x19b078-0x19b07d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001980cc",
@@ -92419,8 +92419,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 224 Mac bytes 0x1980cc-0x1981ab compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00197f3c",
@@ -92450,8 +92450,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 218 Mac bytes 0x197f3c-0x198015 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019a96a",
@@ -92481,8 +92481,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 568 Mac bytes 0x19a96a-0x19aba1 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019f4b8",
@@ -92512,8 +92512,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 576 Mac bytes 0x19f4b8-0x19f6f7 compared against the live native body and its helpers. Fixed the in-solid warning: Mac 0x19f695 tests trace offset 0x22, allsolid, where native tested startsolid; Linux agrees. Traces at 128.0 and 262144.0, mask 0x2810011, ground store and origin order match. Regression spawn fails baseline and passes both builds."
       },
       {
         "id": "linux:game/g_scr_main_mp.cpp:147:GScr_PostLoadScripts",
@@ -92531,8 +92531,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined at Mac 0x1a0465-0x1a0481: four class maps and three field registrations. No correction required."
       },
       {
         "id": "mac:0x001984ae",
@@ -92562,8 +92562,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 228 Mac bytes 0x1984ae-0x198591 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001981c8",
@@ -92593,8 +92593,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 258 Mac bytes 0x1981c8-0x1982c9 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019834a",
@@ -92624,8 +92624,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 228 Mac bytes 0x19834a-0x19842d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00197ba4",
@@ -92655,8 +92655,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 52 Mac bytes 0x197ba4-0x197bd7 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019947a",
@@ -92686,8 +92686,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 176 Mac bytes 0x19947a-0x199529 compared against the live native body and its helpers. Fixed swapped arguments: Mac 0x1994d1-0x199514 passes a NULL inflictor and the world entity as attacker, as Linux does; native passed them reversed. G_RadiusDamage returns at once on a NULL attacker (0x1c45ca), so the script builtin did nothing. Regression radius fails baseline and passes both builds."
       },
       {
         "id": "mac:0x0019b090",
@@ -92717,8 +92717,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 162 Mac bytes 0x19b090-0x19b131 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b084",
@@ -92748,8 +92748,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 6 Mac bytes 0x19b084-0x19b089 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b036",
@@ -92779,8 +92779,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 28 Mac bytes 0x19b036-0x19b051 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019f3de",
@@ -92810,8 +92810,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 138 Mac bytes 0x19f3de-0x19f467 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019a082",
@@ -92841,8 +92841,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 84 Mac bytes 0x19a082-0x19a0d5 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019e9f6",
@@ -92872,8 +92872,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 388 Mac bytes 0x19e9f6-0x19eb79 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019cf90",
@@ -92903,8 +92903,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "All 368 Mac bytes 0x19cf90-0x19d0ff compared against the live native body and its helpers. Name validation, unmodified value passed to Dvar_SetFromStringByName and the 0x400 flag path match. Retained difference: Mac cleans up to 0x2000 characters into a 0x400 buffer whose result is discarded; native bounds the loop to the buffer."
       },
       {
         "id": "mac:0x0019eb7a",
@@ -92934,8 +92934,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 428 Mac bytes 0x19eb7a-0x19ed25 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019f2cc",
@@ -92965,8 +92965,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 138 Mac bytes 0x19f2cc-0x19f355 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019952a",
@@ -92996,8 +92996,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 32 Mac bytes 0x19952a-0x199549 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b07e",
@@ -93027,8 +93027,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 6 Mac bytes 0x19b07e-0x19b083 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019f244",
@@ -93058,8 +93058,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 136 Mac bytes 0x19f244-0x19f2cb compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019f7bc",
@@ -93089,8 +93089,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 320 Mac bytes 0x19f7bc-0x19f8fb compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00199fb6",
@@ -93120,8 +93120,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 204 Mac bytes 0x199fb6-0x19a081 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019f356",
@@ -93151,8 +93151,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 136 Mac bytes 0x19f356-0x19f3dd compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019a83e",
@@ -93182,8 +93182,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 64 Mac bytes 0x19a83e-0x19a87d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019a692",
@@ -93213,8 +93213,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 174 Mac bytes 0x19a692-0x19a73f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019a740",
@@ -93244,8 +93244,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 148 Mac bytes 0x19a740-0x19a7d3 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019a7d4",
@@ -93275,8 +93275,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 106 Mac bytes 0x19a7d4-0x19a83d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00199d96",
@@ -93306,8 +93306,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 154 Mac bytes 0x199d96-0x199e2f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00199e30",
@@ -93337,8 +93337,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 256 Mac bytes 0x199e30-0x199f2f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019ef6a",
@@ -93368,8 +93368,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 438 Mac bytes 0x19ef6a-0x19f11f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b926",
@@ -93399,8 +93399,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 206 Mac bytes 0x19b926-0x19b9f3 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b9f4",
@@ -93430,8 +93430,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 140 Mac bytes 0x19b9f4-0x19ba7f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019ef0e",
@@ -93461,8 +93461,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 92 Mac bytes 0x19ef0e-0x19ef69 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:game/g_scr_main_mp.cpp:6241:GScr_Stub",
@@ -93480,8 +93480,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only placeholder with no Mac counterpart: Mac binds its table rows to distinct empty functions, compared individually."
       },
       {
         "id": "mac:0x0019a0d6",
@@ -93511,8 +93511,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 212 Mac bytes 0x19a0d6-0x19a1a9 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019f6f8",
@@ -93542,8 +93542,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 196 Mac bytes 0x19f6f8-0x19f7bb compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019ee14",
@@ -93573,8 +93573,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 250 Mac bytes 0x19ee14-0x19ef0d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001980b8",
@@ -93604,8 +93604,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 20 Mac bytes 0x1980b8-0x1980cb compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00198b56",
@@ -93635,8 +93635,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 124 Mac bytes 0x198b56-0x198bd1 compared against the live native body and its helpers. Mac 0x198bb5 multiplies the acosf result in double by 57.29577951308232 from 0x340c20 and narrows; native multiplied two floats. Range test and unordered path match. Regression trig fails baseline and passes both builds."
       },
       {
         "id": "mac:0x00198ada",
@@ -93666,8 +93666,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 124 Mac bytes 0x198ada-0x198b55 compared against the live native body and its helpers. Mac 0x198b39 multiplies the asinf result in double by 57.29577951308232 from 0x340c20 and narrows; native multiplied two floats. Range test and unordered path match. Regression trig fails baseline and passes both builds."
       },
       {
         "id": "mac:0x00198bd2",
@@ -93697,8 +93697,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 58 Mac bytes 0x198bd2-0x198c0b compared against the live native body and its helpers. Mac 0x198bef multiplies the atanf result in double by 57.29577951308232 from 0x340c20 and narrows; native multiplied two floats. Regression trig fails baseline and passes both builds."
       },
       {
         "id": "mac:0x00198a08",
@@ -93728,8 +93728,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 64 Mac bytes 0x198a08-0x198a47 compared against the live native body and its helpers. Mac 0x198a1d multiplies in double by 0.017453292519943295 from 0x340c28 before cos and narrows the result; native multiplied two floats. Regression trig fails baseline and passes both builds."
       },
       {
         "id": "mac:0x001981ac",
@@ -93759,8 +93759,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 28 Mac bytes 0x1981ac-0x1981c7 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b846",
@@ -93790,8 +93790,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 224 Mac bytes 0x19b846-0x19b925 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019bc7e",
@@ -93821,8 +93821,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 270 Mac bytes 0x19bc7e-0x19bd8b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b772",
@@ -93852,8 +93852,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 212 Mac bytes 0x19b772-0x19b845 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001989c8",
@@ -93883,8 +93883,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 64 Mac bytes 0x1989c8-0x198a07 compared against the live native body and its helpers. Mac 0x1989dd multiplies in double by 0.017453292519943295 from 0x340c28 before sin and narrows the result; native multiplied two floats. Regression trig fails baseline and passes both builds."
       },
       {
         "id": "mac:0x00198a48",
@@ -93914,8 +93914,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 146 Mac bytes 0x198a48-0x198ad9 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00197c16",
@@ -93945,8 +93945,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 166 Mac bytes 0x197c16-0x197cbb compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019bece",
@@ -93976,8 +93976,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 92 Mac bytes 0x19bece-0x19bf29 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:game/g_scr_main_mp.cpp:199:GetEntity",
@@ -93995,8 +93995,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined at each Mac entref site as native GScr_EntityFromEntRef, with the not-an-entity error at 0x2dde30. No correction required."
       },
       {
         "id": "mac:0x0019ed26",
@@ -94026,8 +94026,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 238 Mac bytes 0x19ed26-0x19ee13 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:game/g_scr_main_mp.cpp:1941:ObjectiveStateIndexFromString",
@@ -94045,8 +94045,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined at Mac 0x19c204-0x19c225 and 0x19c36c-0x19c38d. States 0, 2 and 4 match; compile-time assertions pin the constant offsets. No correction required."
       },
       {
         "id": "mac:0x0019e6de",
@@ -94076,8 +94076,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 154 Mac bytes 0x19e6de-0x19e777 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019e0e2",
@@ -94107,8 +94107,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 162 Mac bytes 0x19e0e2-0x19e183 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019dd8a",
@@ -94138,8 +94138,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 138 Mac bytes 0x19dd8a-0x19de13 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019dc7a",
@@ -94169,8 +94169,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 140 Mac bytes 0x19dc7a-0x19dd05 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019dc1e",
@@ -94200,8 +94200,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 92 Mac bytes 0x19dc1e-0x19dc79 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019dd06",
@@ -94231,8 +94231,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 132 Mac bytes 0x19dd06-0x19dd89 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019778e",
@@ -94262,8 +94262,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 16 Mac bytes 0x19778e-0x19779d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019775e",
@@ -94293,8 +94293,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 16 Mac bytes 0x19775e-0x19776d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019777e",
@@ -94324,8 +94324,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 16 Mac bytes 0x19777e-0x19778d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019776e",
@@ -94355,8 +94355,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 16 Mac bytes 0x19776e-0x19777d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019779e",
@@ -94386,8 +94386,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 16 Mac bytes 0x19779e-0x1977ad compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019e20e",
@@ -94417,8 +94417,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 112 Mac bytes 0x19e20e-0x19e27d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019e7e2",
@@ -94448,8 +94448,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 138 Mac bytes 0x19e7e2-0x19e86b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019e184",
@@ -94479,8 +94479,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 138 Mac bytes 0x19e184-0x19e20d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019d622",
@@ -94510,8 +94510,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 122 Mac bytes 0x19d622-0x19d69b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019e3a0",
@@ -94541,8 +94541,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 338 Mac bytes 0x19e3a0-0x19e4f1 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019de14",
@@ -94572,8 +94572,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 642 Mac bytes 0x19de14-0x19e095 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00197c0a",
@@ -94603,8 +94603,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 6 Mac bytes 0x197c0a-0x197c0f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019e5f6",
@@ -94634,8 +94634,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 106 Mac bytes 0x19e5f6-0x19e65f compared against the live native body and its helpers. Mac 0x19e631-0x19e643 resolves the alias before storing broadcastTime and loopSound; native stored broadcastTime first, which differs if the lookup raises a script error. Regression loopsound fails baseline and passes both builds."
       },
       {
         "id": "mac:0x00197c04",
@@ -94665,8 +94665,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 6 Mac bytes 0x197c04-0x197c09 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019e4f2",
@@ -94696,8 +94696,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 130 Mac bytes 0x19e4f2-0x19e573 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019e574",
@@ -94727,8 +94727,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 130 Mac bytes 0x19e574-0x19e5f5 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019e988",
@@ -94758,8 +94758,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 110 Mac bytes 0x19e988-0x19e9f5 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019e778",
@@ -94789,8 +94789,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 106 Mac bytes 0x19e778-0x19e7e1 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019e86c",
@@ -94820,8 +94820,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 284 Mac bytes 0x19e86c-0x19e987 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019d5a8",
@@ -94851,8 +94851,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 122 Mac bytes 0x19d5a8-0x19d621 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019d69c",
@@ -94882,8 +94882,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 150 Mac bytes 0x19d69c-0x19d731 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00197bd8",
@@ -94913,8 +94913,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 44 Mac bytes 0x197bd8-0x197c03 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019e660",
@@ -94944,8 +94944,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 126 Mac bytes 0x19e660-0x19e6dd compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00197c10",
@@ -94975,8 +94975,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 6 Mac bytes 0x197c10-0x197c15 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019e096",
@@ -95006,8 +95006,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 76 Mac bytes 0x19e096-0x19e0e1 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019e27e",
@@ -95037,8 +95037,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 158 Mac bytes 0x19e27e-0x19e31b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019d966",
@@ -95068,8 +95068,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 292 Mac bytes 0x19d966-0x19da89 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019da8a",
@@ -95099,8 +95099,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 328 Mac bytes 0x19da8a-0x19dbd1 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019dbd2",
@@ -95130,8 +95130,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 76 Mac bytes 0x19dbd2-0x19dc1d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019c512",
@@ -95161,8 +95161,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 264 Mac bytes 0x19c512-0x19c619 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019c61a",
@@ -95192,8 +95192,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 182 Mac bytes 0x19c61a-0x19c6cf compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00198f34",
@@ -95223,8 +95223,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 74 Mac bytes 0x198f34-0x198f7d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00198eea",
@@ -95254,8 +95254,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 74 Mac bytes 0x198eea-0x198f33 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00198ea0",
@@ -95285,8 +95285,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 74 Mac bytes 0x198ea0-0x198ee9 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019bf2a",
@@ -95316,8 +95316,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 602 Mac bytes 0x19bf2a-0x19c183 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00198612",
@@ -95347,8 +95347,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 168 Mac bytes 0x198612-0x1986b9 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00198d8a",
@@ -95378,8 +95378,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 126 Mac bytes 0x198d8a-0x198e07 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019ca08",
@@ -95409,8 +95409,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 884 Mac bytes 0x19ca08-0x19cd7b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00198cae",
@@ -95440,8 +95440,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 74 Mac bytes 0x198cae-0x198cf7 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00198cf8",
@@ -95471,8 +95471,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 74 Mac bytes 0x198cf8-0x198d41 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:game/g_scr_main_mp.cpp:3757:Scr_FxParamError",
@@ -95490,8 +95490,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined at the Mac Scr_PlayFX error sites as native GScr_EffectName plus the shared format. No correction required."
       },
       {
         "id": "mac:0x00197a0a",
@@ -95521,8 +95521,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 68 Mac bytes 0x197a0a-0x197a4d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b132",
@@ -95552,8 +95552,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 114 Mac bytes 0x19b132-0x19b1a3 compared against the live native body and its helpers. Restored the case-sensitive strcmp at 0x19b16d and removed the native fallback stub. Table row 127 was mislabelled: Mac has endparty bound to GScr_EndXboxLiveLobby, native had a second issplitscreen row bound to it, and the fallback hid that. All 145 names, handlers and types now match the Mac table at _functions. Regression table fails baseline and passes both builds."
       },
       {
         "id": "mac:0x0019b5e8",
@@ -95583,8 +95583,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 88 Mac bytes 0x19b5e8-0x19b63f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b1a4",
@@ -95614,8 +95614,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 166 Mac bytes 0x19b1a4-0x19b249 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00198fc2",
@@ -95645,8 +95645,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 170 Mac bytes 0x198fc2-0x19906b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00197a4e",
@@ -95676,8 +95676,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 130 Mac bytes 0x197a4e-0x197acf compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019bac8",
@@ -95707,8 +95707,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 218 Mac bytes 0x19bac8-0x19bba1 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b064",
@@ -95738,8 +95738,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 20 Mac bytes 0x19b064-0x19b077 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00198f7e",
@@ -95769,8 +95769,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 68 Mac bytes 0x198f7e-0x198fc1 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019d206",
@@ -95800,8 +95800,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 98 Mac bytes 0x19d206-0x19d267 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019d268",
@@ -95831,8 +95831,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 76 Mac bytes 0x19d268-0x19d2b3 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00198d42",
@@ -95862,8 +95862,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 72 Mac bytes 0x198d42-0x198d89 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001997dc",
@@ -95893,8 +95893,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 86 Mac bytes 0x1997dc-0x199831 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b640",
@@ -95924,8 +95924,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 40 Mac bytes 0x19b640-0x19b667 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00197710",
@@ -95955,8 +95955,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 46 Mac bytes 0x197710-0x19773d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:game/g_scr_main_mp.cpp:330:Scr_LocalizationError",
@@ -95974,8 +95974,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined at Mac 0x19cb0f-0x19cd2f inside Scr_ConstructMessageString. No correction required."
       },
       {
         "id": "mac:0x0019d100",
@@ -96005,8 +96005,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 116 Mac bytes 0x19d100-0x19d173 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001991f8",
@@ -96036,8 +96036,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 68 Mac bytes 0x1991f8-0x19923b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019c458",
@@ -96067,8 +96067,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 186 Mac bytes 0x19c458-0x19c511 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019c184",
@@ -96098,8 +96098,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 424 Mac bytes 0x19c184-0x19c32b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00197e84",
@@ -96129,8 +96129,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 184 Mac bytes 0x197e84-0x197f3b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019be08",
@@ -96160,8 +96160,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 198 Mac bytes 0x19be08-0x19becd compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00197d68",
@@ -96191,8 +96191,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 104 Mac bytes 0x197d68-0x197dcf compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00197dd0",
@@ -96222,8 +96222,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 180 Mac bytes 0x197dd0-0x197e83 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019bba2",
@@ -96253,8 +96253,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 220 Mac bytes 0x19bba2-0x19bc7d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019c32c",
@@ -96284,8 +96284,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 300 Mac bytes 0x19c32c-0x19c457 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b320",
@@ -96315,8 +96315,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "All 712 Mac bytes 0x19b320-0x19b5e7 compared against the live native body and its helpers. Listing, 32-entry limit, 0x3ff size limit, name and team parsing and warnings match. Retained differences: native terminates the description buffer, which Mac leaves unterminated at 0x19b528, and guards names shorter than four characters."
       },
       {
         "id": "mac:0x001987a2",
@@ -96346,8 +96346,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 198 Mac bytes 0x1987a2-0x198867 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019faf8",
@@ -96377,8 +96377,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 1,056 Mac bytes 0x19faf8-0x19ff17 compared against the live native body and its helpers. Fixed the up-direction path: Mac 0x19fd41-0x19fe2e rescales the cross product and rebuilds up only when its length is below 0.999 (literal at 0x326248), while native always normalized it. Parameter count, event 0xC2, forward and up handling and error text match. Regression playfx fails baseline and passes both builds."
       },
       {
         "id": "mac:0x00199832",
@@ -96408,8 +96408,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "All 410 Mac bytes 0x199832-0x1999cb compared against the live native body and its helpers. Control flow, event 0xC3, configstring range 0x38e and all successful behavior match. Retained difference: the missing-tag error at 0x1999a7 passes the numeric tag id to %s on Mac, which would fault; native passes the tag text."
       },
       {
         "id": "mac:0x0019b058",
@@ -96439,8 +96439,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 6 Mac bytes 0x19b058-0x19b05d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019c6d0",
@@ -96470,8 +96470,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "All 824 Mac bytes 0x19c6d0-0x19ca07 compared against the live native body and its helpers. Control flow, entity fields, 0x34e effect names and successful behavior match. Retained difference: the repeat error at 0x19c9a4 passes an int to %f on Mac; native passes a double so the text is defined on arm64."
       },
       {
         "id": "mac:0x0019b052",
@@ -96501,8 +96501,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 6 Mac bytes 0x19b052-0x19b057 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b690",
@@ -96532,8 +96532,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 46 Mac bytes 0x19b690-0x19b6bd compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019d312",
@@ -96563,8 +96563,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 356 Mac bytes 0x19d312-0x19d475 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b6be",
@@ -96594,8 +96594,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 46 Mac bytes 0x19b6be-0x19b6eb compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019d476",
@@ -96625,8 +96625,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 306 Mac bytes 0x19d476-0x19d5a7 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b73c",
@@ -96656,8 +96656,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 54 Mac bytes 0x19b73c-0x19b771 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00199324",
@@ -96687,8 +96687,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 188 Mac bytes 0x199324-0x1993df compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001992bc",
@@ -96718,8 +96718,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 52 Mac bytes 0x1992bc-0x1992ef compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00199474",
@@ -96749,8 +96749,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 6 Mac bytes 0x199474-0x199479 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001993e0",
@@ -96780,8 +96780,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 86 Mac bytes 0x1993e0-0x199435 compared against the live native body and its helpers. Restored the parameter error text at 0x2dd4b4. Initialization gate, empty test and G_ShaderIndex order match. Regression shader fails baseline and passes both builds."
       },
       {
         "id": "mac:0x001992f0",
@@ -96811,8 +96811,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 52 Mac bytes 0x1992f0-0x199323 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00199436",
@@ -96842,8 +96842,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 62 Mac bytes 0x199436-0x199473 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001988b6",
@@ -96873,8 +96873,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 44 Mac bytes 0x1988b6-0x1988e1 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00198946",
@@ -96904,8 +96904,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 130 Mac bytes 0x198946-0x1989c7 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00198868",
@@ -96935,8 +96935,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 78 Mac bytes 0x198868-0x1988b5 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001988e2",
@@ -96966,8 +96966,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 100 Mac bytes 0x1988e2-0x198945 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b28c",
@@ -96997,8 +96997,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 48 Mac bytes 0x19b28c-0x19b2bb compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00199c3a",
@@ -97028,8 +97028,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 206 Mac bytes 0x199c3a-0x199d07 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001999cc",
@@ -97059,8 +97059,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 446 Mac bytes 0x1999cc-0x199b89 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b2bc",
@@ -97090,8 +97090,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 78 Mac bytes 0x19b2bc-0x19b309 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00199b8a",
@@ -97121,8 +97121,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 176 Mac bytes 0x199b8a-0x199c39 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b24a",
@@ -97152,8 +97152,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 66 Mac bytes 0x19b24a-0x19b28b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019e31c",
@@ -97183,8 +97183,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 132 Mac bytes 0x19e31c-0x19e39f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001986ba",
@@ -97214,8 +97214,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 232 Mac bytes 0x1986ba-0x1987a1 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019923c",
@@ -97245,8 +97245,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 128 Mac bytes 0x19923c-0x1992bb compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b668",
@@ -97276,8 +97276,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 40 Mac bytes 0x19b668-0x19b68f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b05e",
@@ -97307,8 +97307,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 6 Mac bytes 0x19b05e-0x19b063 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001990d6",
@@ -97338,8 +97338,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 290 Mac bytes 0x1990d6-0x1991f7 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019906c",
@@ -97369,8 +97369,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 106 Mac bytes 0x19906c-0x1990d5 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:game/g_scr_main_mp.cpp:340:Scr_ValidateLocalizedStringRef",
@@ -97388,8 +97388,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined at Mac 0x19cc66-0x19cca8 inside Scr_ConstructMessageString. No correction required."
       },
       {
         "id": "mac:0x00198e08",
@@ -97419,8 +97419,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 94 Mac bytes 0x198e08-0x198e65 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019ba80",
@@ -97450,8 +97450,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 72 Mac bytes 0x19ba80-0x19bac7 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00198e66",
@@ -97481,8 +97481,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 58 Mac bytes 0x198e66-0x198e9f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019b6ec",
@@ -97512,8 +97512,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 80 Mac bytes 0x19b6ec-0x19b73b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00197cbc",
@@ -97543,8 +97543,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 172 Mac bytes 0x197cbc-0x197d67 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001977fe",
@@ -97574,8 +97574,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 38 Mac bytes 0x1977fe-0x197823 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00197824",
@@ -97605,8 +97605,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 62 Mac bytes 0x197824-0x197861 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00197862",
@@ -97636,8 +97636,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 44 Mac bytes 0x197862-0x19788d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019ff18",
@@ -97667,8 +97667,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 138 Mac bytes 0x19ff18-0x19ffa1 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019ffa2",
@@ -97698,8 +97698,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 138 Mac bytes 0x19ffa2-0x1a002b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x001977ae",
@@ -97729,8 +97729,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 80 Mac bytes 0x1977ae-0x1977fd compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0019d2b4",
@@ -97760,8 +97760,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 94 Mac bytes 0x19d2b4-0x19d311 compared against the live native body and its helpers. No correction required."
       }
     ],
     "game/g_scr_mover_mp": [
