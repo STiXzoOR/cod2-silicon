@@ -4954,5 +4954,189 @@
   "mac:0x000af49c": {
     "status": "equal",
     "evidence": "Read full Mac 0xaf49c-0xaf624 and native: early unlinked return, one-based head/interior removal, empty-sector free list, child clearing, entity plus child content recomputation and parent walk match."
+  },
+  "mac:0x0004e7fe": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4e7fe: strlen, signed size comparison rejecting an exactly full buffer, memcpy at the current end, and size increment match Cbuf_AddTextInternal."
+  },
+  "mac:0x0004efc0": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4efc0: tail-call to Cbuf_ExecuteInternal matches the native wrapper."
+  },
+  "mac:0x0004eeae": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4eeae-0x4efc0: wait decrement/return, quote counting, semicolon outside quotes, unconditional CR/LF splitting, 4095-byte clamp, queue removal before command dispatch, and drain loop match."
+  },
+  "mac:0x0004f150": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4f150-0x4f296: mode 0 immediate versus drain behavior, mode 1 insertion, mode 2 append, overflow comparisons, and invalid-mode Com_Error arguments match."
+  },
+  "mac:0x0004e7da": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4e7da: data pointer, 0x10000 maximum, and zero command size match the sole native buffer initialization."
+  },
+  "linux:qcommon/cmd.cpp:111:Cbuf_InsertText": {
+    "status": "equal",
+    "evidence": "Read the Mac inline block in Cbuf_ExecuteText at 0x4f1a4-0x4f227: strlen plus one, strict overflow check, backward byte move, text copy, appended newline, and size increment match the native inline helper."
+  },
+  "mac:0x0004f012": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4f012: case-sensitive duplicate search, duplicate warning only for a nonnull handler, allocation/name copy, function assignment and prepend match. Native link width follows LP64."
+  },
+  "mac:0x0004e7b2": {
+    "status": "equal",
+    "evidence": "Read symbol-aligned otool output at Mac 0x4e7b2: returns cmd_argc, matching native. Full-image disassembly began this trivial body off an instruction boundary."
+  },
+  "mac:0x0004e888": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4e888: clears the shared string, starts at the supplied index, appends each argument with capacity 0x400, inserts spaces except after the last argument, and returns the buffer; matches native for valid indices."
+  },
+  "linux:qcommon/cmd.cpp:432:Cmd_ArgsBuffer": {
+    "status": "unchecked",
+    "evidence": "No unique Mac symbol or established inline counterpart found. Native joins arguments starting at one then copies to the caller buffer; the join operation was compared with Cmd_Args, but that does not establish this Linux-only wrapper identity."
+  },
+  "mac:0x0004e7bc": {
+    "status": "intentional",
+    "evidence": "Mac 0x4e7c2 uses a signed upper-bound check and permits negative indexing. Retained the existing native unsigned check rejecting negative indices, documented in 2026-10-24-F1-commands.md; valid argument selection and empty-string fallback were read."
+  },
+  "mac:0x0004ebb2": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x4ebb2: upper-bound selection then I_strncpyz matches for valid indices. Native deliberately inherits Cmd_Argv unsigned rejection of negative indices, retained from the documented F1 command boundary."
+  },
+  "linux:qcommon/cmd.cpp:330:Cmd_Echo_f": {
+    "status": "unchecked",
+    "evidence": "Linux-only name has no native body and no unique Mac symbol or established inline counterpart. Mac Cmd_Init 0x4f508 registers no echo command, but absence of a registration does not identify the Linux echo implementation."
+  },
+  "linux:qcommon/cmd.cpp:42:Cmd_EmptyStub": {
+    "status": "unchecked",
+    "evidence": "Linux marks this an unreferenced empty function with unknown original name. No native body or unique Mac identity was established; no semantic equality claimed."
+  },
+  "linux:qcommon/cmd.cpp:250:Cmd_ExecFromDisk": {
+    "status": "equal",
+    "evidence": "Read the Mac inlined disk-execution block in Cmd_Exec_f at 0x4f410-0x4f4c7: FS_ReadFile, null-result branch, resolved-filename log, insertion with overflow handling, and FS_FreeFile match the native combined caller. There is no separate native helper export."
+  },
+  "mac:0x0004f3b6": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4f3b6: argc equals two, 64-byte filename copy/default cfg extension, read-result handling, resolved filename log, insertion and release match native, including the original insertion overflow path."
+  },
+  "mac:0x0004ed1c": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x4ed1c: move-to-front case-insensitive command lookup, null-handler fallthrough, dvar/client/server precedence and forwarding match the identified native paths. Retained documented unsupported PunkBuster omission and native dedicated omission of client dispatch plus unknown-command output."
+  },
+  "linux:qcommon/cmd.cpp:614:Cmd_FindCommand": {
+    "status": "equal",
+    "evidence": "Read the repeated Mac inline case-sensitive search at Cmd_AddCommand 0x4f021-0x4f044 and Cmd_SetAutoComplete 0x4f09b-0x4f0c0. Native performs those same linked-list searches directly in its callers rather than exporting this Linux helper."
+  },
+  "mac:0x0004eb88": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4eb88: traverse the command links and invoke the supplied callback with each name; native matches."
+  },
+  "mac:0x0004f0d4": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4f0d4: zero file count, case-sensitive command search, metadata null tests, and FS_ListFiles(dir, ext, 0, count, allocTrackType) match. The original missing-command null dereference is preserved."
+  },
+  "mac:0x0004f508": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4f508-0x4f76c: the four inlined Cmd_AddCommand operations register cmdlist, exec, vstr and wait in order, with the same duplicate checks and handlers as native."
+  },
+  "mac:0x0004ec20": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4ec20: optional argv[1] filter, Com_Filter with case sensitivity zero, each matching name and newline, matching count, and final commands total match."
+  },
+  "mac:0x0004eaec": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4eaec: case-sensitive linked-list search, backlink replacement, conditional name free, node free and immediate return match native."
+  },
+  "mac:0x0004f090": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4f090: case-sensitive linked-list lookup followed by direct directory/extension assignment matches native, including the original missing-command null dereference."
+  },
+  "mac:0x0004eb4c": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4eb4c: remove the head before freeing its copied name and node, repeat until no head remains; native matches."
+  },
+  "mac:0x0004efca": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4efca: passes text, limit zero, cmd_argv and cmd_tokenized to the tokenizer then stores the count; native wrapper matches. The CoD2x tokenizer policy is separately intentional."
+  },
+  "mac:0x0004eac6": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4eac6: forwards the supplied token limit and shared token buffers then stores the returned count; native wrapper matches."
+  },
+  "mac:0x0004e914": {
+    "status": "intentional",
+    "evidence": "Hand-read Mac 0x4e914-0x4eac6 against the stock branch: signed-byte whitespace, quoted bytes/escaped quotes, line and block comments, adjacent tokens, final unparsed limited argument, and 512-token termination match. Retained the documented CoD2x bounded policy tokenizer including URL handling; it is not stock equality."
+  },
+  "mac:0x0004f296": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4f296: two-argument check, named dvar lookup, only types six/seven, current string with newline through va, and inline insertion behavior match native."
+  },
+  "mac:0x0004ebf0": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x4ebf0: atoi(argv[1]) when argc is two, otherwise wait one, matches the stock branch. Retained the documented CoD2x competitive-server wait restriction."
+  },
+  "mac:0x0004e860": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4e860: returns shared cmd_argc, matching native."
+  },
+  "mac:0x0004e86a": {
+    "status": "intentional",
+    "evidence": "Mac 0x4e870 uses a signed upper-bound check; retained the documented native unsigned check rejecting negative indices. Valid-index access and empty fallback were compared."
+  },
+  "mac:0x0004ecde": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x4ecde: upper-bound selection and I_strncpyz match for valid indices. Native deliberately inherits the documented unsigned rejection of negative indices from SV_Cmd_Argv."
+  },
+  "mac:0x0004eea4": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4eea4: direct tail-call to Cmd_ExecuteString matches the native wrapper. The target command-dispatch platform boundaries are recorded separately."
+  },
+  "mac:0x0004efee": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4efee: passes text, zero limit and the shared token buffers, then stores cmd_argc; native wrapper matches. The CoD2x tokenizer policy is separately intentional."
+  },
+  "linux:qcommon/cmd.cpp:593:SV_Cmd_TokenizeStringWithLimit": {
+    "status": "unchecked",
+    "evidence": "Linux-only named wrapper has no native body and no unique Mac identity accepting an arbitrary server token limit was established. Mac SV_Cmd_TokenizeString 0x4efee passes zero; shared tokenizer semantics were checked separately."
+  },
+  "mac:0x00050768": {
+    "status": "equal",
+    "evidence": "Read Mac 0x50768: calls Com_DvarDump with message type zero; native wrapper matches."
+  },
+  "mac:0x0004f798": {
+    "status": "fixed",
+    "evidence": "Mac 0x4f7d1 starts strlen at Cmd_Argv(i) plus one; 0x4f7e3 accumulates that length before the 0xffd cutoff. The live native Dvar_GetCombinedString_impl counted the whole argument; restored the second-byte scan under COD2_X64. Buffer clearing, 4096 capacity and spaces were compared. Compiled and reviewed; existing ordinary joining fixture passed but does not isolate this changed cutoff."
+  },
+  "mac:0x0005032e": {
+    "status": "equal",
+    "evidence": "Read Mac 0x5032e-0x50506: optional name filter, sorted traversal, flags 0x404/2/0x40/0x10/1/0x20/0x80 and their S/U/R/I/A/L/C columns, displayed value, and total dvar count match."
+  },
+  "mac:0x0004fd98": {
+    "status": "fixed",
+    "evidence": "Mac 0x4fe0d immediately returns for an existing boolean, whereas native re-registered it. Restored that return under COD2_X64; compared argc/atoi, incompatible-type diagnostic, external string flag 0x4000 and registration arguments. Compiled and reviewed; existing declaration fixture passed but does not exercise this early return."
+  },
+  "mac:0x0004ff56": {
+    "status": "fixed",
+    "evidence": "Mac 0x5001d immediately returns for an existing float, whereas native re-registered it. Restored that return under COD2_X64; compared atof-to-float order, min/max rejection, external string flag 0x4000, original integer-worded diagnostic, and registration arguments. Compiled and reviewed; existing declaration fixture passed but does not exercise this early return."
+  },
+  "mac:0x0004fe4c": {
+    "status": "fixed",
+    "evidence": "Mac 0x4fef2 immediately returns for an existing integer or enum, whereas native re-registered it. Restored that return under COD2_X64; compared argc, atoi order, domain rejection, external string flag 0x4000, incompatible-type diagnostic and registration arguments. Compiled and reviewed; existing declaration fixture passed but does not exercise this early return."
+  },
+  "mac:0x0005020e": {
+    "status": "equal",
+    "evidence": "Read Mac 0x5020e: argc equals two, lookup argv[1], reset only a found dvar with source one; native matches, including the usage message."
+  },
+  "mac:0x0005018c": {
+    "status": "equal",
+    "evidence": "Read Mac 0x5018c: three-argument check, source argv[2] lookup and missing diagnostic, displayable source value, destination argv[1] set command; native matches."
+  },
+  "mac:0x0004f92e": {
+    "status": "fixed",
+    "evidence": "Decoded Mac jump table 0x328aa0 and read 0x4f92e-0x4fca8. Restored float endpoint selection for positive minimum, maximum below one or unordered bounds at 0x4facb/0x4fad9, integer min/max switching outside the zero/one domain at 0x4fb15/0x4fb20/0x4fc27, and direct next sequence argument at 0x4f9e0. Native had a different float conjunction, integer increment/remainder paths, and extra next-enum conversion. Bool, enum remainder, unsupported types and sequence fallback were compared. Compiled and reviewed; these corrected branches were not exercised."
+  },
+  "mac:0x0004fca8": {
+    "status": "equal",
+    "evidence": "Read Mac 0x4fca8: invokes Dvar_ToggleInternal and returns, matching native."
   }
 }

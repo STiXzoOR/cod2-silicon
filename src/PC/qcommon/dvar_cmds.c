@@ -110,7 +110,12 @@ static void Dvar_GetCombinedString_impl(char *combined, int first)
     for (i = first; i < argc; i++) {
         arg = Cmd_Argv(i);
 
+#if defined(COD2_X64) && COD2_X64
+        /* Mac counts from the second byte before applying the whole-argument cutoff. */
+        arglen = (int)strlen(arg + 1) + 1;
+#else
         arglen = (int)strlen(arg) + 1;
+#endif
         l += arglen - 1;
         if (l > 0xffd)
             return;
@@ -192,7 +197,11 @@ static Bool Dvar_ToggleInternal(void)
             return 1;
 
         case 1:
+#if defined(COD2_X64) && COD2_X64
+            if (!(dvar->domain.value.min <= 0.0f) || !(dvar->domain.value.max >= 1.0f)) {
+#else
             if (dvar->domain.value.min >= 0.0f && dvar->domain.value.max < 1.0f) {
+#endif
 
                 goto toggle_float_clamp_min;
             }
@@ -212,6 +221,16 @@ static Bool Dvar_ToggleInternal(void)
             return 1;
 
         case 5:
+#if defined(COD2_X64) && COD2_X64
+            if (dvar->domain.integer.min > 0 || dvar->domain.integer.max <= 0) {
+                int value = dvar->current.integer == dvar->domain.integer.min
+                    ? dvar->domain.integer.max : dvar->domain.integer.min;
+                Dvar_SetIntFromSource(dvar, value, DVAR_SOURCE_EXTERNAL);
+            } else {
+                Dvar_SetIntFromSource(dvar, dvar->current.integer == 0, DVAR_SOURCE_EXTERNAL);
+            }
+            return 1;
+#else
             if (dvar->domain.integer.min > 0) {
                 goto toggle_int_pos_domain;
             }
@@ -245,6 +264,7 @@ static Bool Dvar_ToggleInternal(void)
                 Dvar_SetIntFromSource(dvar, (dvar->current.integer + 1) % count, DVAR_SOURCE_EXTERNAL);
             }
             return 1;
+#endif
 
         case 6:
             if (dvar->domain.enumeration.stringCount == 0) {
@@ -291,11 +311,13 @@ static Bool Dvar_ToggleInternal(void)
         if (stricmp(string, argString) == 0) {
 
             const char *nextArg = Cmd_Argv(nextIdx);
+#if !defined(COD2_X64) || !COD2_X64
             if (dvar->type == 6) {
                 enumStr = Dvar_IndexStringToEnumString(dvar, nextArg);
                 if (enumStr[0] != '\0')
                     nextArg = enumStr;
             }
+#endif
             Dvar_SetCommand(dvarName, nextArg);
             return 1;
         }
@@ -350,6 +372,16 @@ static void Dvar_RegisterBool_f(void)
     value = (atoi(Cmd_Argv(2)) != 0) ? 1 : 0;
 
     existing = (dvar_t *)Dvar_FindVar(dvarName);
+#if defined(COD2_X64) && COD2_X64
+    if (existing) {
+        if (existing->type == 0)
+            return;
+        if (existing->type != 7 || !(existing->flags & DVAR_COMMAND_EXTERNAL_FLAG)) {
+            Com_Printf("dvar '%s' is not a boolean dvar\n", existing->name);
+            return;
+        }
+    }
+#else
     if (existing) {
         if (existing->type == 7) {
 #if defined(COD2_X64) && COD2_X64
@@ -374,12 +406,15 @@ static void Dvar_RegisterBool_f(void)
                 goto print_not_bool;
         }
     }
+#endif
 
     Dvar_RegisterBool(dvarName, value, 0x4000);
     return;
 
+#if !defined(COD2_X64) || !COD2_X64
 print_not_bool:
     Com_Printf("dvar '%s' is not a boolean dvar\n", existing->name);
+#endif
 }
 
 static void Dvar_RegisterInt_f(void)
@@ -419,6 +454,9 @@ static void Dvar_RegisterInt_f(void)
             if (t > 1) {
                 goto print_not_int;
             }
+#if defined(COD2_X64) && COD2_X64
+            return;
+#endif
 
         }
         goto do_register_int;
@@ -464,6 +502,10 @@ static void Dvar_RegisterFloat_f(void)
                 goto print_not_float;
         } else if (existing->type - 1 != 0) {
             goto print_not_float;
+#if defined(COD2_X64) && COD2_X64
+        } else {
+            return;
+#endif
         }
 
         goto do_register_float;
