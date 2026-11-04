@@ -90,7 +90,7 @@ bgame/bg_weapons_load_obj,15,13,1,1,0
 botlib/l_memory,3,0,0,0,3
 botlib/l_precomp,77,0,0,0,77
 botlib/l_script,37,0,0,0,37
-cgame/cg_animtree_mp,6,0,0,0,6
+cgame/cg_animtree_mp,6,6,0,0,0
 cgame/cg_compassfriendlies_mp,3,0,0,0,3
 cgame/cg_consolecmds_mp,13,0,0,0,13
 cgame/cg_draw_mp,27,0,0,0,27
@@ -104,9 +104,9 @@ cgame/cg_localents_mp,6,0,0,0,6
 cgame/cg_main_mp,29,0,0,0,29
 cgame/cg_marks_mp,3,0,0,0,3
 cgame/cg_newDraw_mp,24,0,0,0,24
-cgame/cg_players_mp,6,0,0,0,6
-cgame/cg_playerstate_mp,3,0,0,0,3
-cgame/cg_predict_mp,9,0,0,0,9
+cgame/cg_players_mp,6,4,2,0,0
+cgame/cg_playerstate_mp,3,2,0,1,0
+cgame/cg_predict_mp,9,5,3,1,0
 cgame/cg_scoreboard_mp,10,0,0,0,10
 cgame/cg_servercmds_mp,16,0,0,0,16
 cgame/cg_shellshock,6,0,0,0,6
