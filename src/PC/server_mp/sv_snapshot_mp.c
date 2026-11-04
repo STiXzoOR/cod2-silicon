@@ -536,7 +536,13 @@ void SV_ArchiveSnapshot(void)
         if (oldindex < 0)
             oldindex = 0;
 
+#if defined(COD2_X64)
+        /* Mac 0x194e2b: the oldest usable delta base is one second (sv_fps
+           archived frames) back; older cached frames are skipped. */
+        newnum = svs.nextArchivedSnapshotFrames - sv_fps->current.integer;
+#else
         newnum = svs.nextArchivedSnapshotFrames - sv_maxRate->current.integer;
+#endif
 
         {
             int idx = archivedFrameNum - 1;
@@ -546,7 +552,11 @@ void SV_ArchiveSnapshot(void)
                 int cfSlot = signedMod512(idx);
                 byte *cf = cachedFrames + cfSlot * 28;
 
+#if defined(COD2_X64)
+                if (*(int *)cf >= newnum) {
+#else
                 if (*(int *)cf <= newnum) {
+#endif
 
                     if (((cachedSnapshot_t *)cf)->usesDelta == 0) {
 
@@ -942,6 +952,15 @@ write_frame:
         bufSize = 0x2000000;
         remaining = signedMod33554432(bufOffset);
 
+#if defined(COD2_X64)
+        /* Mac 0x195107: advance the cursor, or every snapshot overwrites the
+           last and anti-lag/killcam history reads the current frame. */
+        svs.nextArchivedSnapshotBuffer = bufOffset + msgDataLen;
+        if (svs.nextArchivedSnapshotBuffer > 0x7ffffffd) {
+            Com_Error(0, "\x15svs.nextArchivedSnapshotBuffer wrapped");
+        }
+#endif
+
         if (remaining + msgDataLen <= bufSize) {
 
             byte *archBuf = svs.archivedSnapshotBuffer;
@@ -1135,7 +1154,12 @@ qboolean SV_GetArchivedClientInfo(int clientNum, int *pArchiveTime, int (*ps)[4]
 
     if (svs.archiveEnabled != 0 && *pArchiveTime > 0) {
         int archivedSnapshotCount = svs.nextArchivedSnapshotFrames;
+#if defined(COD2_X64)
+        /* Mac 0x195a06 converts milliseconds to archived frames with sv_fps. */
+        int rate = sv_fps->current.integer;
+#else
         int rate = sv_maxRate->current.integer;
+#endif
         int minFrame;
 
         archivedFrame = archivedSnapshotCount - (*pArchiveTime * rate / 1000);
@@ -1625,7 +1649,12 @@ static cachedSnapshot_t *SV_FindArchivedSnapshotForClientLocal(int clientNum, in
         return NULL;
     }
 
+#if defined(COD2_X64)
+    /* Archive time is converted with sv_fps, as in SV_GetArchivedClientInfo. */
+    fps = SV_DvarIntLocal((byte *)sv_fps_dvar);
+#else
     fps = SV_DvarIntLocal((byte *)sv_maxRate_dvar);
+#endif
     if (fps <= 0) {
         return NULL;
     }
@@ -1858,10 +1887,19 @@ static void SV_WriteSnapshotToClientLocal(client_t *client, msg_t *msg)
     int lastframe = 0;
     int snapFlags;
 
+#if defined(COD2_X64)
+    /* Mac 0x1960e8: any positive deltaMessage from an active client. */
+    if (client->deltaMessage > 0 && client->state == 4) {
+#else
     if (client->deltaMessage > client->gamestateMessageNum && client->state == 4) {
+#endif
         lastframe = client->netchan.outgoingSequence - client->deltaMessage;
         if (lastframe > 28) {
+#if defined(COD2_X64)
+            Com_DPrintf("%s: (writing snapshot) Snapshot delta request from out of date packet.\n", client->name);
+#else
             Com_DPrintf("%s: Delta request from out of date packet.\n", client->name);
+#endif
             lastframe = 0;
         } else {
             oldframe = SV_ClientFrameLocal(client, client->deltaMessage);
@@ -1878,7 +1916,13 @@ static void SV_WriteSnapshotToClientLocal(client_t *client, msg_t *msg)
     MSG_WriteByte(msg, lastframe);
 
     snapFlags = svs->snapFlagServerBit;
+#if defined(COD2_X64)
+    /* Mac 0x196144: SNAPFLAG_RATE_DELAYED comes from client+0x20e2c,
+       rateDelayed; pure authentication is unrelated. */
+    if (client->rateDelayed) {
+#else
     if (client->pureAuthentic) {
+#endif
         snapFlags |= 1;
     }
     if (client->state == 4) {

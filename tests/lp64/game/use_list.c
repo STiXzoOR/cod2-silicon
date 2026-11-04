@@ -31,6 +31,10 @@ qboolean SV_EntityContact(const vec_t *mins, const vec_t *maxs, const gentity_t 
 qboolean BG_CanItemBeGrabbed(const entityState_t *ent, const playerState_t *ps, qboolean touched) { return 1; }
 int G_DObjGetWorldTagPos(gentity_t *ent, unsigned int tag, vec_t *pos) { ++tagQueries; return 1; }
 int G_TraceCapsuleComplete(const vec_t *start, const vec_t *mins, const vec_t *maxs, const vec_t *end, int pass, int mask) { return 1; }
+/* The hint cases below only reach the trigger_use branch. */
+qboolean G_IsTurretUsable(gentity_t *turret, gentity_t *player) { assert(0); return 0; }
+WeaponDef *BG_GetWeaponDef(int iWeapon) { assert(0); return NULL; }
+byte *bg_itemlist_ptr;
 
 int main(void)
 {
@@ -48,5 +52,35 @@ int main(void)
     assert(Player_GetUseList(&entities[0], list) == 0);
     entities[1].s.eType = 3;
     assert(Player_GetUseList(&entities[0], list) == 1);
-    puts("production use list: turret content bit, unrelated svFlags and item eligibility passed");
+
+    /* Linux 1.3 player_use_mp.cpp: a trigger_use hint shows for its own team
+       (or no team), from s.hintType (dmgFlags) and s.hintString (scale), the
+       fields setCursorHint and setHintString write. */
+    ((scr_const_t *)scr_const_ptr)->trigger_use = 77;
+    entities[0].health = 100;
+    client.sess.cs.team = 2;
+    entities[1].s.eType = 0;
+    entities[1].s.number = 1;
+    entities[1].classname = 77;
+    entities[1].r.contents = 0x200000;
+    entities[1].r.svFlags = 0;
+    entities[1].trigger.singleUserEntIndex = 0x3FF;
+    entities[1].s.dmgFlags = 5;
+    entities[1].s.scale = 3;
+    entities[1].s.animMovetype = 0;
+    for (int team = 0; team <= 2; ++team) {
+        entities[1].team = team;
+        Player_UpdateCursorHints(&entities[0]);
+        if (team == 1) {
+            assert(client.ps.cursorHint == 0 && client.ps.cursorHintEntIndex == 0x3FF);
+        } else {
+            assert(client.ps.cursorHint == 5 && client.ps.cursorHintString == 3);
+            assert(client.ps.cursorHintEntIndex == 1);
+        }
+    }
+    entities[1].team = 0;
+    entities[1].s.scale = 0xFF;
+    Player_UpdateCursorHints(&entities[0]);
+    assert(client.ps.cursorHint == 5 && client.ps.cursorHintString == -1);
+    puts("production use list: turret content bit, unrelated svFlags, item eligibility and trigger_use hints passed");
 }

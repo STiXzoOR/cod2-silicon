@@ -553,7 +553,11 @@ void SV_PointTraceToEntity(const pointtrace_t *clip, svEntity_t *check, trace_t 
             vec3_t origin;
             vec3_t absmin;
             vec3_t absmax;
+#if defined(COD2_X64)
+            float entAxis[4][3];
+#else
             float entAxis[3][3];
+#endif
             vec3_t localStart;
             vec3_t localEnd;
             DObjTrace objTrace;
@@ -593,6 +597,13 @@ void SV_PointTraceToEntity(const pointtrace_t *clip, svEntity_t *check, trace_t 
 
             G_DObjCalcPose(touch);
             AnglesToAxis(touch->r.currentAngles, entAxis);
+#if defined(COD2_X64)
+            /* The 4x3 transform reads the translation from row 3; Linux 1.3
+               sv_world_mp.cpp stores currentOrigin there before it. */
+            entAxis[3][0] = origin[0];
+            entAxis[3][1] = origin[1];
+            entAxis[3][2] = origin[2];
+#endif
             MatrixTransposeTransformVector43(clip->extents.start, (const float *)entAxis, localStart);
             MatrixTransposeTransformVector43(clip->extents.end, (const float *)entAxis, localEnd);
 
@@ -724,7 +735,11 @@ int SV_PointSightTraceToEntity(const sightpointtrace_t *clip, svEntity_t *check)
             vec3_t absmin;
             vec3_t absmax;
             TraceExtents extents;
+#if defined(COD2_X64)
+            float entAxis[4][3];
+#else
             float entAxis[3][3];
+#endif
             vec3_t localStart;
             vec3_t localEnd;
             DObjTrace objTrace;
@@ -753,6 +768,13 @@ int SV_PointSightTraceToEntity(const sightpointtrace_t *clip, svEntity_t *check)
 
             G_DObjCalcPose(touch);
             AnglesToAxis(touch->r.currentAngles, entAxis);
+#if defined(COD2_X64)
+            /* The 4x3 transform reads the translation from row 3; Linux 1.3
+               sv_world_mp.cpp stores currentOrigin there before it. */
+            entAxis[3][0] = origin[0];
+            entAxis[3][1] = origin[1];
+            entAxis[3][2] = origin[2];
+#endif
             MatrixTransposeTransformVector43(extents.start, (const float *)entAxis, localStart);
             MatrixTransposeTransformVector43(extents.end, (const float *)entAxis, localEnd);
 

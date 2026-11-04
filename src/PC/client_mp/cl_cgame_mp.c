@@ -1086,7 +1086,13 @@ void CL_InitCGame(void)
         clientConnection_t *clui = CLUI_STATE;
         clui->state = (connstate_t)(6);
         cl->cgameInitCalled = 1;
+#if defined(COD2_X64)
+        /* Mac 0x17b4d2: CG_Init(serverMessageNum, serverCommandSequence, clientNum).
+           The reversed order put a message sequence into cg.clientNum. */
+        CG_Init(clui->serverMessageSequence, clui->lastExecutedServerCommand, clui->clientNum);
+#else
         CG_Init(clui->clientNum, clui->lastExecutedServerCommand, clui->serverMessageSequence);
+#endif
         cl->cgameInitialized = 1;
         clui->state = (connstate_t)(7);
     }

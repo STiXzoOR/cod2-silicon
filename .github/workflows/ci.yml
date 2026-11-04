@@ -284,6 +284,14 @@ jobs:
           python3 tests/lp64/renderer/run_utils.py --compile-db build-macos-codx/compile_commands.engine.json \
             --output "$HOME/Library/Application Support/CoD2-native-decomp/F2-utils.noindex/ci-codx"
           python3 tests/lp64/game/run.py --build build-macos
+          python3 tests/lp64/network/f1_transport.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/transport-stock"
+          python3 tests/lp64/network/f1_transport.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/transport-codx"
+          python3 tests/lp64/server/point_trace.py --compile-db build-macos/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/point-trace-stock"
+          python3 tests/lp64/server/point_trace.py --compile-db build-macos-codx/compile_commands.engine.json \
+            --output "$RUNNER_TEMP/point-trace-codx"
           python3 tests/lp64/script/run.py
           python3 tests/online/run.py build-macos/compile_commands.json
           python3 tests/lp64/ui/run.py --build build-macos

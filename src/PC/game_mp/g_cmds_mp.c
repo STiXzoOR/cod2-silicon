@@ -524,7 +524,13 @@ void Cmd_CallVote_f(gentity_t *ent)
     lvl->voteYes = 1;
     lvl->voteNo = 0;
 
+#if defined(COD2_X64)
+    /* Mac 0x1a5a0c bounds the EF_VOTED clear by level.maxclients; a stale flag
+       on a slot past numConnectedClients would block that client's vote. */
+    for (i = 0; i < lvl->maxclients; ++i)
+#else
     for (i = 0; i < lvl->numConnectedClients; ++i)
+#endif
         lvl->clients[i].ps.eFlags &= ~0x100000;
 
     ent->client->ps.eFlags |= 0x100000;
