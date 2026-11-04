@@ -8558,5 +8558,453 @@
   "mac:0x0008e65a": {
     "status": "equal",
     "evidence": "Mac 0x0008e65a: Compared recursive array filtering (pointer and types 7..11), restart-after-removal traversal, complete versus primitive game cleanup and game-ID reset."
+  },
+  "linux:script/scr_vm.cpp:381:GetDummyFieldValue": {
+    "status": "unchecked",
+    "evidence": "Read Mac VM_Execute recovery block 0x866fd-0x86717 (ClearVariableValue(tempVariable), then use tempVariable). Native generic error recovery has no equivalent dummy-lvalue restoration. The actual Mac longjmp entry zeroes opcode before dispatch; its comparison with native uncheckpointed C state remains unresolved. No equality inferred from Linux helper name."
+  },
+  "linux:script/scr_vm.cpp:370:GetDummyObject": {
+    "status": "unchecked",
+    "evidence": "Read Mac VM_Execute recovery blocks 0x86695-0x866b7 / 0x86a3d-0x86a5c (clear tempVariable then GetObjectA). Native generic recovery has no matching dummy-object restoration. Reachable error-state semantics remain unresolved because actual Mac longjmp resets opcode and native non-checkpointed C locals are indeterminate."
+  },
+  "mac:0x00081844": {
+    "status": "equal",
+    "evidence": "Mac 0x81844: read eval-stack sentinel setup, type reset, object-field call, inparam reset and packed value/type return."
+  },
+  "linux:script/scr_vm.cpp:3139:IncInParam": {
+    "status": "equal",
+    "evidence": "Mac inlines this helper in Scr_AddBool 0x87df6-0x87e1c, Scr_AddObject 0x880d0-0x880f6 and other adders: read parameter-release loop, max-stack error and increments."
+  },
+  "mac:0x00080f34": {
+    "status": "equal",
+    "evidence": "Mac 0x80f34: read timeArrayId and bInited clears."
+  },
+  "linux:script/scr_vm.cpp:4169:Scr_AddAnim": {
+    "status": "unchecked",
+    "evidence": "Linux-only row: no Mac text symbol or established inline caller, and no native body by this name. Read Linux signature/body for identity only; cannot reconstruct or claim parity without an authoritative Mac call path."
+  },
+  "mac:0x000817b0": {
+    "status": "equal",
+    "evidence": "Mac 0x817b0: read value pop/count decrement, GetArraySize/GetNewArrayVariable argument order, and moved-value pointer."
+  },
+  "mac:0x00081800": {
+    "status": "equal",
+    "evidence": "Mac 0x81800: read eight-byte value pop, count decrement, parent/string-key argument order, and moved-value pointer."
+  },
+  "mac:0x00087df0": {
+    "status": "equal",
+    "evidence": "Mac 0x87df0: read inlined parameter cleanup/overflow and raw integer payload; Mac does not normalize to 0/1."
+  },
+  "mac:0x00088224": {
+    "status": "equal",
+    "evidence": "Mac 0x88224: read inlined parameter cleanup/overflow, string type/ID store and added string reference."
+  },
+  "mac:0x00087d36": {
+    "status": "equal",
+    "evidence": "Mac 0x87d36: read entity lookup, inlined parameter cleanup/overflow, pointer value/type and added object reference."
+  },
+  "linux:script/scr_vm.cpp:3338:Scr_AddExecEntThreadNum": {
+    "status": "unchecked",
+    "evidence": "Linux-only row: no Mac text symbol or established inline identity; no corresponding native body. Scr_ExecEntThreadNum is a distinct result-discarding API, so its checked Mac body does not establish this add-result API."
+  },
+  "mac:0x000870d6": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x870d6: level ref/thread allocation, external execute, result release and parameter counters match. The no-active-frame timeout reset uses the documented monotonic native service instead of rdtsc/Sys_Milliseconds (WS44 sample and WS1/WS6 reports)."
+  },
+  "mac:0x00087f64": {
+    "status": "equal",
+    "evidence": "Mac 0x87f64: read inlined parameter cleanup/overflow and float type/raw single payload store."
+  },
+  "linux:script/scr_vm.cpp:4252:Scr_AddIString": {
+    "status": "unchecked",
+    "evidence": "Linux-only row: no Mac text symbol or established inline caller, and no native body by this name. Scr_AddString has a different type tag; its checked Mac body is not sufficient identity evidence."
+  },
+  "mac:0x00087eaa": {
+    "status": "equal",
+    "evidence": "Mac 0x87eaa: read inlined parameter cleanup/overflow and integer type/raw payload store."
+  },
+  "linux:script/scr_vm.cpp:2204:Scr_AddLocalVars": {
+    "status": "intentional",
+    "evidence": "Mac inlines this in VM_Resume 0x86cd5-0x86cf9 and 0x86d6e-0x86d92. Read native VM_RestoreLocalVarsFromSibling backward sibling/cache loop. Native retains documented invalid-ID and cache-bound guards (2026-10-23-F1-script); valid local object traversal matches."
+  },
+  "mac:0x000880c6": {
+    "status": "equal",
+    "evidence": "Mac 0x880c6: read inlined parameter cleanup/overflow, pointer type/payload and added object reference."
+  },
+  "mac:0x00088170": {
+    "status": "equal",
+    "evidence": "Mac 0x88170: read inlined parameter cleanup/overflow, string type and SL_GetString(value,0)."
+  },
+  "mac:0x00087c80": {
+    "status": "equal",
+    "evidence": "Mac 0x87c80: read object allocation, inlined IncInParam, pointer type, added reference and balanced original allocation release."
+  },
+  "mac:0x0008801e": {
+    "status": "equal",
+    "evidence": "Mac 0x8801e: read inlined parameter cleanup/overflow and type-only undefined store."
+  },
+  "mac:0x000882ce": {
+    "status": "equal",
+    "evidence": "Mac 0x882ce-0x88378: read inlined parameter cleanup/overflow, vector type and allocated-vector store with native LP64 encoding."
+  },
+  "mac:0x000814b8": {
+    "status": "equal",
+    "evidence": "Mac 0x814b8: read retry loop, archived-stack trim branch, endon-thread cleanup and 0x1ffff lookup."
+  },
+  "mac:0x0008142a": {
+    "status": "equal",
+    "evidence": "Mac 0x8142a: read self/pause/owner lookup chain, cancellation and conditional empty self-name-array removal."
+  },
+  "mac:0x00080e98": {
+    "status": "equal",
+    "evidence": "Mac 0x80e98: read the three error-message/dialog/index clears against the native typed fields."
+  },
+  "linux:script/scr_vm.cpp:354:Scr_ClearOutParams": {
+    "status": "equal",
+    "evidence": "Mac inlines the cleanup in Scr_NotifyNum 0x82686-0x826bd and VM_Execute external wrapper 0x87063-0x8709a. Read matching native release/top-decrement/count-decrement loops."
+  },
+  "linux:script/scr_vm.cpp:4533:Scr_DecTime": {
+    "status": "unchecked",
+    "evidence": "Only zero-valued exception metadata found in Mac nm, no text symbol/established inline instance. No standalone native body; do not infer decrement behavior from checked Scr_IncTime."
+  },
+  "mac:0x00087bd0": {
+    "status": "equal",
+    "evidence": "Mac 0x87bd0: read first-message preservation, evaluate/script-loading/terminal branches, developer-loading terminal flag, longjmp and drop behavior."
+  },
+  "linux:script/scr_vm.cpp:310:Scr_ErrorInternal": {
+    "status": "equal",
+    "evidence": "Mac inlines this in Scr_Error 0x87be7-0x87c72 and other error APIs. Read native Scr_SetErrorMessageAndJump evaluation/loading/terminal/longjmp/drop branches against those blocks."
+  },
+  "linux:script/scr_vm.cpp:4363:Scr_ErrorWithDialogMessage": {
+    "status": "unchecked",
+    "evidence": "Linux-only row with no Mac text symbol or established inline instance; native shared error helper preserves dialog state but no standalone setter by this name was found. Mac identity and dialog-setting call path remain unproved."
+  },
+  "linux:script/scr_vm.cpp:3379:Scr_ExecCode": {
+    "status": "unchecked",
+    "evidence": "Native body is an optional debugger stub in scr_debugger_eval.c outside owned files. No Mac text symbol/established inline identity found. Linux VM-execution body alone is insufficient reconstruction authority."
+  },
+  "mac:0x0008714a": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x8714a: entity lookup/ref/thread allocation, external execute, result release/type clear/pop, count decrement and 16-bit handle match. Timeout reset uses the documented native monotonic service (WS1/WS6/F1 reports)."
+  },
+  "mac:0x000871ec": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x871ec: opcode-memory call, level ref/thread allocation, execution, result release/type clear/pop, count decrement and 16-bit handle match. Timeout reset uses documented native monotonic service (WS1/WS6/F1 reports)."
+  },
+  "linux:script/scr_vm.cpp:3493:Scr_FindAllThreads": {
+    "status": "unchecked",
+    "evidence": "Native optional debugger implementation is in scr_debugger_eval.c outside owned files. No Mac text symbol/established inline identity found. Linux source was read for identity only; Mac behavior remains unproved."
+  },
+  "linux:script/scr_vm.cpp:3455:Scr_FindAllThreadsInternal": {
+    "status": "unchecked",
+    "evidence": "Native optional debugger implementation is in scr_debugger_eval.c outside owned files. No Mac text symbol/established inline identity found; its archived-stack interpretation cannot be certified from Linux alone."
+  },
+  "mac:0x000815c0": {
+    "status": "equal",
+    "evidence": "Mac 0x815c0: unsigned-short handle truncation and RemoveRefToObject tail call match."
+  },
+  "mac:0x000874a4": {
+    "status": "equal",
+    "evidence": "Mac 0x874a4: read animation type/error value release, packed index/tree extraction, optional tree identity check and mismatch message/zero result."
+  },
+  "linux:script/scr_vm.cpp:3707:Scr_GetAnimTree": {
+    "status": "unchecked",
+    "evidence": "Linux-only row: no Mac text symbol/established inline identity, and no native body by this name found. The distinct checked Scr_GetAnim API does not prove the anim-tree getter contract."
+  },
+  "linux:script/scr_vm.cpp:3912:Scr_GetConstIString": {
+    "status": "unchecked",
+    "evidence": "Linux-only row: no Mac text symbol/established inline identity, and no native body by this name found. Mac Scr_GetIString converts a localized-string ID to text; that is not this API result."
+  },
+  "mac:0x0008797e": {
+    "status": "equal",
+    "evidence": "Mac 0x8797e: read cast/error paths, signed-byte tolower loop including NUL, replacement string creation and old string release."
+  },
+  "mac:0x0008777c": {
+    "status": "equal",
+    "evidence": "Mac 0x8777c: read bounds/cast handling, index+1 cast error, first-message behavior and string-ID/zero results."
+  },
+  "mac:0x00087934": {
+    "status": "equal",
+    "evidence": "Mac 0x87934: read undefined short-circuit and otherwise delegated bounds/cast behavior."
+  },
+  "mac:0x0008346a": {
+    "status": "equal",
+    "evidence": "Mac 0x8346a: read bounds check, debug-string cast, string conversion and NULL error result."
+  },
+  "mac:0x00082f48": {
+    "status": "equal",
+    "evidence": "Mac 0x82f48: read bounds/pointer/entity-type checks, type-name errors and packed 16-bit entnum/classnum extraction."
+  },
+  "mac:0x0008355e": {
+    "status": "equal",
+    "evidence": "Mac 0x8355e: read float return, signed integer-to-single conversion, type/bounds error handling and zero failure result."
+  },
+  "linux:script/scr_vm.cpp:3974:Scr_GetFunc": {
+    "status": "unchecked",
+    "evidence": "Linux-only row: no Mac text symbol/established inline identity, and no native body by this name found. Interpreter function-pointer consumption does not establish the external parameter getter contract."
+  },
+  "mac:0x0008728a": {
+    "status": "equal",
+    "evidence": "Mac 0x8728a: read localized-string-only type handling, missing/type error results and SL_ConvertToString of value or zero."
+  },
+  "mac:0x0008372c": {
+    "status": "equal",
+    "evidence": "Mac 0x8372c: read integer-only type check, index+1 type error, bounds error and zero failure result."
+  },
+  "linux:script/scr_vm.cpp:29:Scr_GetLocalVar": {
+    "status": "equal",
+    "evidence": "Mac inlines byte-indexed local cache reads in VM_Execute 0x8563d-0x8564d and 0x847c9-0x847d7; read corresponding native VM_LocalVarCacheId and immediate-byte operations."
+  },
+  "linux:script/scr_vm.cpp:19:Scr_GetLocalVarAtIndex": {
+    "status": "equal",
+    "evidence": "Mac inlines this in VM_Execute cached-variable blocks, including 0x8563d-0x8564d and 0x85425-0x85442. Native VM_LocalVarCacheId indexes backward from localVars with the same unsigned-byte slots."
+  },
+  "mac:0x00081a30": {
+    "status": "fixed",
+    "evidence": "Mac 0x81b30-0x81b41 and 0x81bdb-0x81bec: native checked cast errors before advancing the boolean jump operand; now advances to pos+3 before clearing errors. Read complete function and decoded tables 0x32957c/0x329798; compiled and reviewed, not exercised."
+  },
+  "mac:0x000817a6": {
+    "status": "equal",
+    "evidence": "Mac 0x817a6: outparamcount load matches."
+  },
+  "mac:0x00080f58": {
+    "status": "equal",
+    "evidence": "Mac 0x80f58: constant-zero body matches."
+  },
+  "mac:0x00082d3a": {
+    "status": "equal",
+    "evidence": "Mac 0x82d3a: read bounds/pointer checks, index+1 type-error assignment, preserved error state and zero/object-payload results."
+  },
+  "mac:0x00082992": {
+    "status": "equal",
+    "evidence": "Mac 0x82992: read bounds/type checks, first-error preservation, zero failure result and GetVarType of pointer payload."
+  },
+  "linux:script/scr_vm.cpp:1799:Scr_GetReturnPos": {
+    "status": "equal",
+    "evidence": "Mac inlines this in Scr_GetNextCodepos 0x81c3a-0x81c70. Read depth guard, previous-frame position, g_EndPos suppression and previous localId output against native cases 0/1."
+  },
+  "mac:0x00087964": {
+    "status": "equal",
+    "evidence": "Mac 0x87964: read const-string lookup then SL_ConvertToString."
+  },
+  "linux:script/scr_vm.cpp:3882:Scr_GetStringIncludeNull": {
+    "status": "equal",
+    "evidence": "Linux-only name identifies const-string lookup followed by SL_ConvertToString (despite its misleading name). Read corresponding native Scr_GetString against exact Mac __Z13Scr_GetStringj 0x87964-0x87979; the dedicated null-aware API is a separate row."
+  },
+  "mac:0x00082c44": {
+    "status": "equal",
+    "evidence": "Mac 0x82c44: read bounds check, type load and zero error result with shared error-helper branches."
+  },
+  "mac:0x00082b5e": {
+    "status": "equal",
+    "evidence": "Mac 0x82b5e: read bounds check, type-name lookup and NULL error result with shared error-helper branches."
+  },
+  "mac:0x00083248": {
+    "status": "equal",
+    "evidence": "Mac 0x83248: read bounds/vector-type checks, error outcomes and three raw component copies; LP64 pointer decode preserves the vector representation."
+  },
+  "linux:script/scr_vm.cpp:2602:Scr_GetWaittillThreadStackId": {
+    "status": "equal",
+    "evidence": "Mac inlines the notify-name/pause/owner/name-list/stack-ID lookup in VM_Notify 0x8202b-0x820c8, with the zero-name 0x1ffff branch at 0x823bc-0x823ca. Read native VM_NotifyRemoveStackFromWait lookup chains and matching stack IDs."
+  },
+  "mac:0x00086e42": {
+    "status": "equal",
+    "evidence": "Mac 0x86e42: read scheduler-before-FreeEntityList order and increment masked with 0xffffff."
+  },
+  "mac:0x000818ce": {
+    "status": "equal",
+    "evidence": "Mac 0x818ce: read initialization guard, stack/frame/local cache setup, every VM/compiler/animation reset, temporary allocation and initialized flag. Native local-cache sentinel is relocated with LP64 fields."
+  },
+  "mac:0x000815d0": {
+    "status": "equal",
+    "evidence": "Mac 0x815d0: read time/pause/level/anim allocations, zero time and error-level reset; sys is unused."
+  },
+  "linux:script/scr_vm.cpp:2631:Scr_IsEndonThread": {
+    "status": "unchecked",
+    "evidence": "Native optional debugger implementation is in scr_debugger_eval.c outside owned files. No Mac text symbol/established inline identity found. The checked terminate-thread type dispatch does not establish this query."
+  },
+  "mac:0x00081790": {
+    "status": "equal",
+    "evidence": "Mac 0x81790: nonzero timeArrayId result matches; sys unused."
+  },
+  "mac:0x0008255e": {
+    "status": "equal",
+    "evidence": "Mac 0x8255e: read inlined parameter cleanup/overflow handling, pointer type and array allocation/store."
+  },
+  "mac:0x00082606": {
+    "status": "equal",
+    "evidence": "Mac 0x82606: read outparam cleanup, start-top/count arithmetic, optional entity notify with saved sentinel type, parameter releases and restored inparamcount."
+  },
+  "mac:0x0008276c": {
+    "status": "equal",
+    "evidence": "Mac 0x8276c: read error_index=-1, first-message preservation, evaluate/loading/terminal branches and longjmp/drop behavior via shared native helper."
+  },
+  "mac:0x00082822": {
+    "status": "equal",
+    "evidence": "Mac 0x82822: read index+1 store, first-message preservation and complete shared error-helper behavior."
+  },
+  "linux:script/scr_vm.cpp:124:Scr_ReadCodePos": {
+    "status": "equal",
+    "evidence": "Mac inlines four-byte code-position reads at VM_Execute 0x85364-0x8536c and script-call target loads. Read native VM_CandidateReadScriptCallTarget and SCR_CODEPOS handle decoding/+4 advance."
+  },
+  "linux:script/scr_vm.cpp:111:Scr_ReadFloat": {
+    "status": "equal",
+    "evidence": "Mac inlines a raw four-byte float payload read at VM_Execute 0x85519-0x85527. Read native VM_ReadF32 raw memcpy and +4 advance."
+  },
+  "linux:script/scr_vm.cpp:52:Scr_ReadInt": {
+    "status": "equal",
+    "evidence": "Mac inlines four-byte loads and operand advance, e.g. VM_Execute 0x85364-0x8536c and 0x85519-0x85521. Read native VM_ReadI32 memcpy/load and +4 increment."
+  },
+  "linux:script/scr_vm.cpp:78:Scr_ReadIntArray": {
+    "status": "equal",
+    "evidence": "Mac inlines switch-record skipping at VM_Execute 0x84ffd-0x85007 and Scr_GetNextCodepos 0x81c20-0x81c27. Read native EndSwitch byte advance of two 32-bit fields per case."
+  },
+  "linux:script/scr_vm.cpp:39:Scr_ReadShort": {
+    "status": "equal",
+    "evidence": "This Linux helper is used only by Scr_ReadUnsignedShort in that source. Read Mac inline two-byte loads (e.g. 0x854b0-0x854b9) and native VM_ReadU16: both preserve the same 16 bits and the caller zero-extends them. No independently callable signed-short reader is claimed."
+  },
+  "linux:script/scr_vm.cpp:5:Scr_ReadTsc": {
+    "status": "intentional",
+    "evidence": "Mac inline rdtsc/shift timer at Scr_ResetTimeout 0x80f66-0x80f76 is replaced by the documented monotonic native timeout service (WS1/WS6 and 2026-10-23-F1-script reports). No raw CPU-cycle timing survives on arm64."
+  },
+  "linux:script/scr_vm.cpp:101:Scr_ReadUnsigned": {
+    "status": "equal",
+    "evidence": "Mac inlines unsigned four-byte switch-key reads at VM_Execute 0x84fbe-0x84fc9. Read native VM_LoadI32-to-unsigned conversion and +8 case-record advance."
+  },
+  "linux:script/scr_vm.cpp:91:Scr_ReadUnsignedShort": {
+    "status": "equal",
+    "evidence": "Mac inlines zero-extended two-byte reads at VM_Execute 0x854b0-0x854b9 and Scr_GetNextCodepos 0x81c20. Read native VM_ReadU16/VM_LoadU16 and two-byte advance."
+  },
+  "linux:script/scr_vm.cpp:65:Scr_ReadVector": {
+    "status": "equal",
+    "evidence": "Mac inlines the vector-address result and +12 byte advance at VM_Execute 0x8525a-0x85266. Read native GetVector case; native encodes the program-buffer pointer for LP64."
+  },
+  "mac:0x00080f60": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x80f60: rdtsc low-word >>16 at +24 and Sys_Milliseconds at +28. Native typed monotonic milliseconds replace the architecture-specific two-stage timing service, as documented in WS1/WS6 and 2026-10-23-F1-script reports."
+  },
+  "mac:0x00086df0": {
+    "status": "equal",
+    "evidence": "Mac 0x86df0: read inactive/missing-time-bucket exits, resume lookup/call, and safe bucket removal in native shared scheduler."
+  },
+  "mac:0x00082512": {
+    "status": "equal",
+    "evidence": "Mac 0x82512: read entity/field lookup, zero inparamcount before assignment and value pop."
+  },
+  "mac:0x00080f4a": {
+    "status": "equal",
+    "evidence": "Mac 0x80f4a: read full integer loading store."
+  },
+  "mac:0x0008188e": {
+    "status": "equal",
+    "evidence": "Mac 0x8188e: read field lookup, inparam reset, assignment and eight-byte value pop."
+  },
+  "mac:0x00080eba": {
+    "status": "equal",
+    "evidence": "Mac 0x80eba: read normalization of all three integer settings into byte booleans."
+  },
+  "mac:0x00080ee2": {
+    "status": "equal",
+    "evidence": "Mac 0x80ee2: read initialization guard, flag clear, conditional temporary-value release, Var_Shutdown and SL_Shutdown order."
+  },
+  "mac:0x00081614": {
+    "status": "equal",
+    "evidence": "Mac 0x81614: read full time-bucket and pause-list draining loops, object clear/release order and zeroed fields."
+  },
+  "linux:script/scr_vm.cpp:4573:Scr_StackClear": {
+    "status": "unchecked",
+    "evidence": "Mac nm contains only zero-valued exception metadata, no text symbol or established inline caller. Native top=stack assignments exist in init/resume but their distinct contexts do not establish this standalone Linux helper identity."
+  },
+  "mac:0x000828da": {
+    "status": "equal",
+    "evidence": "Mac 0x828da: read both dump calls, terminal flag, first-message preservation and complete shared error-helper behavior."
+  },
+  "linux:script/scr_vm.cpp:2461:Scr_TerminateRunningThread": {
+    "status": "equal",
+    "evidence": "Mac inlines this in VM_Notify 0x8231d-0x82391 and 0x82466-0x82487. Read native VM_NotifyEndLocalThreads frame scan, root-boundary selection and g_EndPos marking loop."
+  },
+  "linux:script/scr_vm.cpp:2658:Scr_TerminateThread": {
+    "status": "equal",
+    "evidence": "Mac inlines this in VM_Notify 0x81def-0x81e20. Read start-local lookup and type dispatch 0x10 waittill / 0x11 timed / 0xf running against native helper selection."
+  },
+  "linux:script/scr_vm.cpp:2497:Scr_TerminateWaitThread": {
+    "status": "equal",
+    "evidence": "Mac inlines this in VM_Notify 0x82283-0x82318. Read native VM_NotifyTerminatePausedStack time/bucket lookup, clear/removal, non-current empty bucket removal and VM_TerminateStack arguments."
+  },
+  "linux:script/scr_vm.cpp:2551:Scr_TerminateWaittillThread": {
+    "status": "equal",
+    "evidence": "Mac inlines this in VM_Notify 0x8202b-0x82121 and 0x823bc-0x823ef. Read native VM_NotifyRemoveStackFromWait / VM_NotifyTerminateWaitStack notify-name and 0x1ffff branches, reference cleanup and termination arguments."
+  },
+  "mac:0x000819e8": {
+    "status": "equal",
+    "evidence": "Mac 0x819e8: decoded all 135 entries of table 0x329360 and read dispatch blocks; opcode lengths, switch-table stride and terminating cases match."
+  },
+  "linux:script/scr_vm.cpp:170:Scr_VM_Init": {
+    "status": "equal",
+    "evidence": "Mac inlines this in Scr_Init 0x818ef-0x8199b. Read all stack/frame/cache/value/error/public-state resets and temporary allocation against the native block."
+  },
+  "mac:0x000826ec": {
+    "status": "equal",
+    "evidence": "Mac 0x826ec: read one-outparam setup, failed-set zero return, optional consumed-value release and successful result."
+  },
+  "mac:0x0008105e": {
+    "status": "equal",
+    "evidence": "Mac 0x8105e: read five-byte record loop, code-position/frame unwinding, local-cache decrements and final object ownership. Native uses encoded positions and an enlarged pointer-sized header for LP64."
+  },
+  "mac:0x00080ffa": {
+    "status": "equal",
+    "evidence": "Mac 0x80ffa: read owner/name lookup chain and unsigned-short notify-name narrowing before the internal call."
+  },
+  "mac:0x00080f84": {
+    "status": "equal",
+    "evidence": "Mac 0x80f84: read notify-name removal, two empty-array branches, and 0x1fffe owner-key cleanup."
+  },
+  "linux:script/scr_vm.cpp:3156:VM_Execute": {
+    "status": "equal",
+    "evidence": "The Linux row identifies the external overload. Read native VM_ExecuteExtCall against exact Mac symbol __Z10VM_ExecutejPKcj at 0x86ec6, including sentinel restoration and overflow cleanup."
+  },
+  "mac:0x0008393a": {
+    "status": "unchecked",
+    "evidence": "Read complete exact Mac interpreter 0x8393a-0x86aff, native active helper graph, all 135 dispatch entries at 0x3297bc and error tables 0x3299d8/0x329b70. Fixed final-record-only switch default (0x84fe9-0x84ff8), pre-operand script-call overflow/type checking and error-index order (0x83e0a, 0x83e66-0x83e76, 0x83f3f-0x83f53, 0x8407d, 0x840e0, 0x841b9-0x841cd, 0x84767-0x8478f, 0x84e74-0x84e9c), and retained invalid non-method function-pointer values (0x83ed5, 0x8414f). Compiled and reviewed, not exercised. Still unchecked: generic non-checkpointed longjmp C state remains unproved against Mac scratch resets at 0x8622f-0x86262; malformed unknown-opcode continuation differs (Mac 0x839e1/0x84227 versus native fatal diagnostic). The documented builtin/setter checkpoint and monotonic timer adaptations are retained, not treated as blanket coverage."
+  },
+  "mac:0x00086ec6": {
+    "status": "equal",
+    "evidence": "Mac 0x86ec6: read complete external-call wrapper: outparam cleanup, 29-frame limit/overflow releases, optional dummy frame, startTop sentinel save/restore, VM call, result/count setup and temporary cleanup."
+  },
+  "linux:script/scr_vm.cpp:392:VM_ExecuteInternal": {
+    "status": "unchecked",
+    "evidence": "Read complete exact Mac interpreter 0x8393a-0x86aff, native active helper graph, all 135 dispatch entries at 0x3297bc and error tables 0x3299d8/0x329b70. Fixed final-record-only switch default (0x84fe9-0x84ff8), pre-operand script-call overflow/type checking and error-index order (0x83e0a, 0x83e66-0x83e76, 0x83f3f-0x83f53, 0x8407d, 0x840e0, 0x841b9-0x841cd, 0x84767-0x8478f, 0x84e74-0x84e9c), and retained invalid non-method function-pointer values (0x83ed5, 0x8414f). Compiled and reviewed, not exercised. Still unchecked: generic non-checkpointed longjmp C state remains unproved against Mac scratch resets at 0x8622f-0x86262; malformed unknown-opcode continuation differs (Mac 0x839e1/0x84227 versus native fatal diagnostic). The documented builtin/setter checkpoint and monotonic timer adaptations are retained, not treated as blanket coverage."
+  },
+  "mac:0x00081cce": {
+    "status": "unchecked",
+    "evidence": "Read complete exact Mac 0x81cce-0x82511 and native helper graph. Notify lookup, cancellation, wait-match, queue/parameter-copy and termination paths compared. Unresolved: reallocation at 0x82407-0x82422 leaves new stack time byte uncopied; native deterministically copies old time. Mac MT_Alloc does not clear reused arena payload, so byte/time-reset behavior depends on allocation history. Retained native initialization per orchestrator; no equality claimed."
+  },
+  "mac:0x00086b00": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x86b00-0x86def: archived five-byte record reconstruction, caller/deepest localId and cache loops, low-byte time comparison, frees and result cleanup match for valid thread IDs. Native retains documented invalid-ID/cache-bound guards and replaces rdtsc/Sys_Milliseconds with the documented monotonic timer (WS6/F1 reports)."
+  },
+  "linux:script/scr_vm.cpp:3428:VM_SetTime": {
+    "status": "equal",
+    "evidence": "Mac inlines this in Scr_RunCurrentThreads 0x86df7-0x86e37 and Scr_IncTime. Read native Scr_RunPendingThreads inactive/missing-bucket exits, lookup/resume and safe removal."
+  },
+  "linux:script/scr_vm.cpp:210:VM_Shutdown": {
+    "status": "equal",
+    "evidence": "Mac inlines this in Scr_Shutdown 0x80ef9-0x80f1e. Read conditional temporary-value free and clear against native shutdown block."
+  },
+  "mac:0x00081182": {
+    "status": "equal",
+    "evidence": "Mac 0x81182: read reverse record traversal, endLocalId rescheduling branch, retained sentinel size, parent-thread release and final free."
+  },
+  "linux:script/scr_vm.cpp:3053:VM_TerminateTime": {
+    "status": "equal",
+    "evidence": "Mac inlines this in Scr_ShutdownSystem 0x81738-0x8178d. Read complete bucket ref/release loop, key/stack lookup, removal, wait clear and matching start/end termination IDs."
+  },
+  "mac:0x000812c6": {
+    "status": "equal",
+    "evidence": "Mac 0x812c6: read reverse record traversal, pause-array stop branch, fromEndon cleanup, 0x1ffff stack key and final free."
+  },
+  "linux:script/scr_vm.cpp:2225:VM_UnarchiveStack": {
+    "status": "intentional",
+    "evidence": "Mac inlines this in VM_Resume 0x86c1e-0x86dbd and 0x86b33-0x86b84. Read record decoding, frame IDs/local caches, low-byte time/reset and buffer free. Native LP64 pointer codecs, existing invalid-ID/cache-bound guards and monotonic timer are documented adaptations (WS6/F1 reports)."
   }
 }
