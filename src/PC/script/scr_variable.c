@@ -112,6 +112,9 @@ void FreeVariable(unsigned int id);
 static inline __attribute__((always_inline)) unsigned int FindVariableIndexInternal(unsigned int parentId, unsigned int name);
 static unsigned int GetVariableIndexInternal(unsigned int parentId, unsigned int name);
 static unsigned int GetNewVariableIndexInternal(unsigned int parentId, unsigned int name);
+#if defined(COD2_X64)
+static inline __attribute__((always_inline)) unsigned int Scr_LinkVariableToParent(unsigned int parentId, unsigned int newIndex);
+#endif
 static int ThreadInfoCompare(const void *info1, const void *info2);
 static inline __attribute__((always_inline)) VariableValueInternal *ScrVarEntry(unsigned int id);
 static inline __attribute__((always_inline)) unsigned int ScrVarEntryIndex(const VariableValueInternal *entry);
@@ -277,7 +280,9 @@ static inline __attribute__((always_inline)) void Var_ResetAll(void)
         VG_NEXT(id) = (unsigned short)id;
         VG_U16(prev) = (unsigned short)id;
         VG_PREV(id) = (unsigned short)prev;
+#if !defined(COD2_X64)
         VG_NEXT_SIBLING(id) = 0;
+#endif
         prev = id;
     }
     VG_STATUS(0) = 0;
@@ -349,7 +354,11 @@ void FreeVariable(unsigned int id)
     previousSiblingId = VG_ID(VG_PREV(nextSiblingIndex));
     VG_NEXT_SIBLING(previousSiblingId) = (unsigned short)nextSiblingIndex;
 
+#if defined(COD2_X64)
+    VG_STATUS(id) = 0;
+#else
     ((byte *)scrVarGlob)[id * 16 + 8] = 0;
+#endif
     freeHead = VG_U16(0);
     VG_U16(id) = (unsigned short)freeHead;
     VG_PREV(index) = 0;
@@ -382,7 +391,13 @@ static inline __attribute__((always_inline)) unsigned int FindVariableIndexInter
 static unsigned int GetNewVariableIndexInternal(unsigned int parentId, unsigned int name)
 {
     unsigned int index = Scr_VariableHash(parentId, name);
+#if defined(COD2_X64)
+    index = GetNewVariableIndexInternal3(parentId, name, index);
+    Scr_LinkVariableToParent(parentId, index);
+    return index;
+#else
     return GetNewVariableIndexInternal3(parentId, name, index);
+#endif
 }
 
 static unsigned int GetVariableIndexInternal(unsigned int parentId, unsigned int name)
@@ -933,9 +948,11 @@ void Scr_AddFields(const char *path, const char *extension)
     numFiles = 0;
     files = FS_ListFiles(path, extension, 0, &numFiles, 10);
 
+#if !defined(COD2_X64)
     if (((struct scrCompilePub_t *)imp_scrCompilePub)->script_loading) {
         Hunk_ConvertTempToPermLowInternal();
     }
+#endif
 
     TempMemoryReset();
     scrVarPub.fieldBuffer = (const char *)Hunk_AllocLowInternal(0);
@@ -991,7 +1008,11 @@ void Scr_AddFields(const char *path, const char *extension)
                 Com_Error( (errorParm_t)(1), va("\x15missing field name in '%s'", filename));
             }
 
+#if defined(COD2_X64)
+            nameLen = strlen(fieldName) + 1;
+#else
             nameLen = strlen(fieldName);
+#endif
             while (nameLen > 0) {
                 nameLen--;
                 fieldName[nameLen] = (char)___tolower((signed char)fieldName[nameLen]);
@@ -1022,7 +1043,11 @@ void Scr_AddFields(const char *path, const char *extension)
             {
                 int lenWithNul = nameLen + 1;
                 int entrySize = lenWithNul + 3;
+#if defined(COD2_X64)
+                char *entry = TempMalloc(entrySize);
+#else
                 char *entry = TempMalloc(entrySize + 1);
+#endif
                 char *meta;
 
                 strcpy(entry, fieldName);
@@ -1036,7 +1061,9 @@ void Scr_AddFields(const char *path, const char *extension)
 #endif
                 meta[2] = type;
                 meta[3] = '\0';
+#if !defined(COD2_X64)
                 TempMemorySetPos(entry + entrySize);
+#endif
             }
         }
 
@@ -2235,11 +2262,16 @@ void RemoveVariable(unsigned int parentId, unsigned int unsignedValue)
     unsigned int index = FindVariableIndexInternal(parentId, unsignedValue);
     unsigned int id;
 
+#if defined(COD2_X64)
+    /* Mac 0x8df4f assumes the key exists and otherwise unlinks sentinel zero.
+       The native port keeps missing-key removal defined as a no-op. */
+#else
     /* Removing a key that isn't present (e.g. GSC `arr[key] = undefined` on an
      * unset key) is a legal no-op. When the lookup misses, index is 0 and
      * VG_ID(0) is the free-list anchor id 0; freeing it (FreeChildValue_core)
      * would zero the free-list head and corrupt the whole variable pool,
      * eventually surfacing as "exceeded maximum number of script variables". */
+#endif
     if (index == 0)
         return;
 
@@ -2939,10 +2971,18 @@ void Scr_EvalPlus(VariableValue *value1, VariableValue *value2)
         const char *rhs = SL_ConvertToString(rhsString);
         int lhsLen = SL_GetStringLen(lhsString);
         int rhsLen = SL_GetStringLen(rhsString);
+#if defined(COD2_X64)
+        size_t totalLen = (size_t)(unsigned int)lhsLen + (size_t)(unsigned int)rhsLen + 1;
+
+        /* Mac 0x9042d checks only the left length. Preserve that acceptance
+           rule without depending on its fixed temporary buffer overflowing. */
+        if (lhsLen > 0x2000) {
+#else
         int totalLen = lhsLen + rhsLen + 1;
         char tempString[0x2001];
 
         if (totalLen > 0x2000) {
+#endif
             SL_RemoveRefToString(lhsString);
             SL_RemoveRefToString(rhsString);
             value1->type = SCRVL_VAR_UNDEFINED;
@@ -2951,6 +2991,11 @@ void Scr_EvalPlus(VariableValue *value1, VariableValue *value2)
             return;
         }
 
+#if defined(COD2_X64)
+        /* Each interned string fits MT's 0xffff-byte allocation limit; the
+           combined length fits SL_GetStringOfLen's unsigned-int argument. */
+        char tempString[totalLen];
+#endif
         strcpy(tempString, lhs);
         strcpy(&tempString[lhsLen], rhs);
 
@@ -3593,7 +3638,11 @@ void ClearArray(unsigned int parentId, VariableValue *value)
         }
 
         name = GetInternalVariableIndex_core((unsigned int)value->u.intValue);
+#if defined(COD2_X64)
+        SafeRemoveVariable_core(arrayId, name);
+#else
         RemoveVariable(arrayId, name);
+#endif
         return;
     }
 
