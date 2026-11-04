@@ -14874,5 +14874,53 @@
   "mac:0x001630bc": {
     "status": "fixed",
     "evidence": "Mac 0x001630bc: Restored cin_skippable byte gate at 0x1630bf-0x1630cb: return when zero, otherwise ROQ_StopCinematic. Compiled and reviewed; not exercised. Independent review also confirmed initialized Mac cin_skippable byte01 at0x34b220 (file0x34a220); native now starts at1. Corrected client object compiled; no runtime exercise."
+  },
+  "mac:0x00190002": {
+    "status": "equal",
+    "evidence": "Hand-compared complete Mac 0x190002-0x190052: net_profile nonzero gate, lazy pOOBProf preparation, send-stream selection, packet length and false fragment flag. Native typed dvar/profile/connection fields and NetProf caller contracts match the relocated layouts; constant and call/string triage checked."
+  },
+  "mac:0x0018fea4": {
+    "status": "intentional",
+    "evidence": "Hand-compared exact-symbol Mac 0x18fea4-0x18ff2c (full-binary prologue was misaligned): reliable command slot mask 127, challenge/message-sequence low-byte XOR, alternating character shifts and restart index all match, including zero listen challenge. Native retains opt-in COD2_NATIVE_TRACE_ENABLED packet logging; it does not alter wire bytes. CL_PacketEvent supplies the post-ack byte span and current connection state."
+  },
+  "mac:0x00190148": {
+    "status": "fixed",
+    "evidence": "Mac 0x19046b and other draw sites read cl_profileTextHeight; native hardcoded 10. Mac 0x1903f0-0x19041d draws the receive row once before the total; native drew it twice and displaced the total. Restored configured height and complete console/overlay formatting, both absent-profile branches and stream totals. Registration and Dvar_GetInt contracts checked; compiled and reviewed, not exercised."
+  },
+  "mac:0x00190052": {
+    "status": "equal",
+    "evidence": "Hand-compared complete Mac 0x190052-0x190148: warning for non-OOB header, profiling preparation before send, NS_CLIENT1=0, by-value netadr_t copy, packet arguments, then net_profile gate, second preparation and send-stream accounting. Typed native netchan/profile fields preserve storage and call contracts; constant/string/call checks agree."
+  },
+  "mac:0x0018ff40": {
+    "status": "equal",
+    "evidence": "Hand-compared exact-symbol Mac 0x18ff40-0x190002: nine-byte unencoded prefix, server command ring mask 127, serverId/challenge/serverMessageSequence key, unsigned character recurrence/restart and Netchan_Transmit(chan,length,data). CL_WritePacket builds the same prefix/compressed suffix and transmits this span; typed native layout checked."
+  },
+  "mac:0x0018ff2c": {
+    "status": "equal",
+    "evidence": "Complete nine-instruction Mac 0x18ff2c-0x18ff40 forwards the same netchan_t pointer to Netchan_TransmitNextFragment and discards its result. Native wrapper and CL_WritePacket fragment-drain caller agree; call and constant checks clean apart from stack allocation."
+  },
+  "mac:0x001d59c8": {
+    "status": "fixed",
+    "evidence": "Mac 0x1d5b27 increments LegacyHacks.cl_downloadCount before nextdl; native overwrote progress from its private connection counter after queuing. Corrected the UI accumulator and operation order; compiled and reviewed, not exercised. Complete Mac 0x1d59c8-0x1d5cb2 retry, -1 redirect, first-block error, unsolicited/open-failure and EOF paths compared. Intentional native UDP clc ownership matches CL_BeginDownload/CL_Disconnect, HTTP uses cls; path hardening, safe error formatting and metadata mirrors preserved."
+  },
+  "mac:0x001d5534": {
+    "status": "fixed",
+    "evidence": "Mac 0x1d56ee/0x1d5679 uses unsigned above checks for configstring/baseline indices; native signed checks admitted negatives. Mac 0x1d55a3 uses the complete bad-command diagnostic; native truncated it. Restored checks and diagnostic. Complete 0x1d5534-0x1d57c8 body compared through typed gamestate/baseline storage, checksum/restart, LAN authorization and download/pause tail. Match-summary hook retained; compiled and reviewed, not exercised."
+  },
+  "mac:0x001d69fa": {
+    "status": "fixed",
+    "evidence": "Mac 0x1d6aa1 diagnoses truncated MSG_ReadByte=-1 via a zero word preceding svc_strings; native indexed before its relocated array. Added explicit negative-command handling, retaining BAD CMD then Com_Error. Complete body and decoded 0x33c180 switch table compared; all 256 Mac service-name slots checked. Native bounded Huffman output/MAX_MSG_DECOMPRESS_BYTES and optional trace retained (WS27); compiled and reviewed, not exercised."
+  },
+  "mac:0x001d5cb2": {
+    "status": "fixed",
+    "evidence": "Mac 0x1d67e1-0x1d67e7 skips outgoing slots newer than the snapshot command time; native selected the opposite inequality. Restored p_serverTime <= commandTime. Mac 0x1d5e29 prints packet entities; native printed packet clients. Complete 0x1d5cb2-0x1d69fa body compared: delta validity, both merge loops, remove returns, ring masks/expiry, snapshot installation, 32-slot ping search and cleanup. Typed scratch/rings and MatchSummary pingMeasured hook retained; compiled and reviewed, not exercised."
+  },
+  "mac:0x001d57c8": {
+    "status": "fixed",
+    "evidence": "Mac 0x1d5853-0x1d58a1 returns for external-URL flag 2 before changing legacy UI download size; native changed size first. Moved native UI write to the internal-download path; compiled and reviewed, not exercised. Complete 0x1d57c8-0x1d59c8 compared: original name/URL lengths, flags, quit/ack/bbl8r/fail order, path construction and begin failure. Existing URL/path hardening, safe empty-tail guard and native download backend preserved."
+  },
+  "mac:0x001d535a": {
+    "status": "intentional",
+    "evidence": "Hand-compared complete Mac 0x1d535a-0x1d5534: two 8192-byte LargeLocals, serverId before demo return, cheat reset, loaded/referenced IWD pairs, dedicated gate, dvar iteration, pure flag and reverse-order frees. Native retains documented protected-cvar filtering and CoD2x policy/IWD-systeminfo updates (including demo policy reset); stock protocol/storage flow otherwise matches."
   }
 }
