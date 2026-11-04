@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 6950,
-      "intentional": 1403,
-      "equal": 961,
-      "fixed": 143
+      "unchecked": 6902,
+      "intentional": 1405,
+      "equal": 986,
+      "fixed": 164
     },
     "scopes": {
       "unassigned": 777,
@@ -142061,8 +142061,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x73a6c: returns cm.entityString; native returns the corresponding pointer."
       },
       {
         "id": "mac:0x00073a8e",
@@ -142092,8 +142092,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x73a8e: forwards size unchanged to Hunk_AllocInternal; name and type are unused."
       },
       {
         "id": "mac:0x00073aa4",
@@ -142123,8 +142123,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x73aa4: forwards size unchanged to Hunk_AllocateTempMemoryHighInternal; name is unused."
       },
       {
         "id": "mac:0x00073a98",
@@ -142154,8 +142154,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x73a98: empty return, matching the native empty body."
       },
       {
         "id": "mac:0x00073a9e",
@@ -142185,8 +142185,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x73a9e: empty return, matching the native empty body."
       },
       {
         "id": "mac:0x00073aae",
@@ -142216,8 +142216,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x73aae: direct Hunk_ClearTempMemory forwarding, matching native."
       },
       {
         "id": "mac:0x00073ab8",
@@ -142247,8 +142247,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x73ab8: direct Hunk_ClearTempMemoryHigh forwarding, matching native."
       },
       {
         "id": "linux:qcommon/cm_load.cpp:54:CM_InitAllThreadData",
@@ -142266,8 +142266,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac inlines the thread initialization once in CM_LoadMap 0x7394d-0x73a13. Native likewise initializes the single Mac trace-thread record; Linux has an additional database-thread initialization that is absent from Mac."
       },
       {
         "id": "linux:qcommon/cm_load.cpp:30:CM_InitThreadData",
@@ -142285,8 +142285,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read inlined Mac CM_LoadMap 0x7394d-0x73a13: zero checkcount, partition/edge/vertex array sizes, brush/model allocations and copies all match native with pointer-size-adjusted brush storage."
       },
       {
         "id": "mac:0x00073a76",
@@ -142316,8 +142316,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x73a76: indexes the leaf array and sign-extends its 16-bit cluster; native accesses the same signed field."
       },
       {
         "id": "mac:0x00073900",
@@ -142347,8 +142347,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x73a24 supplies the leading 0x15 localization byte to the null-name error; native omitted it. Cache bypass, BSP/static-model load order, thread allocations and checksum return were also read against 0x73900-0x73a3e. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:qcommon/cm_load.cpp:65:CM_LoadMapData",
@@ -142366,8 +142366,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read inlined Mac CM_LoadMap 0x73938-0x7394d: CM_LoadMapFromBsp(name, 1), then CM_LoadStaticModels; native performs the identical calls in that order."
       },
       {
         "id": "mac:0x00073ac2",
@@ -142397,8 +142397,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x73ac2-0x73b06: resolves the clip handle, then copies the three min and three max components in order; native matches."
       },
       {
         "id": "mac:0x00073a62",
@@ -142428,8 +142428,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x73a62: returns cm.numSubModels, matching native."
       },
       {
         "id": "mac:0x00073b06",
@@ -142459,8 +142459,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x73d65 uses EXE_ERR_COULDNT_LOAD followed by 0x15 before %s; restored that byte. Mac 0x73bb6 and 0x73da4 return after invalid-version and write-open errors; native continued. Read the 39-lump offset/padding/write/checksum paths against 0x73b06-0x73db0. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x00073a3e",
@@ -142490,8 +142490,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x73a3e: clears the full 0x110-byte 32-bit clipMap. Native clears sizeof(cm), accounting for expanded native pointers."
       },
       {
         "id": "linux:qcommon/cm_load.cpp:103:CM_SwapHeader",
@@ -142509,8 +142509,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read inlined Mac CM_SaveLump loops at 0x73bc1, 0x73c56 and 0x73c7a: little-endian swaps reduce to loops with no memory writes. Native uses the little-endian header directly, with identical observable bytes."
       }
     ],
     "qcommon/cm_load_obj": [
@@ -142542,8 +142542,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x77d9c: clears only the BSP base pointer; native clears cml.base."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:1540:CM_FreeLumpData",
@@ -142561,8 +142561,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only unused temporary-lump release utility. Mac symbol inventory has no CM_FreeLumpData or CM_LoadLumpFromFile entry, and the complete Mac cm_load/cm_load_obj bodies contain no such helper call. Native has no callers or utility state; BSP loading uses Com_GetBsp and saving owns its file buffer."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:1489:CM_GetPlane",
@@ -142580,8 +142580,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper name corresponds to exported Mac CM_GetPlaneNum at 0x77dac. Read its plane-array lookup and 20-byte stride; native CM_GetPlaneNum returns the corresponding native cplane_t element."
       },
       {
         "id": "mac:0x00077dac",
@@ -142602,8 +142602,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x77dac: returns cml.planes plus planeNum times the 20-byte plane size; native pointer arithmetic matches."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:1443:CM_InitBoxHull",
@@ -142621,8 +142621,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read inlined Mac 0x790ef-0x79229: spare brush, zero side count/pointer, -1 contents/brush mask, zero terrain mask, extreme leaf bounds, -1 axial materials, one-brush node and spare leaf index match the existing native path."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:1501:CM_LoadLumpFromFile",
@@ -142640,8 +142640,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only ancillary disk-lump reader, absent from the Mac symbol inventory and complete Mac cm_load/cm_load_obj bodies. Native has no callers; CM_LoadMapFromBsp uses Com_GetBsp and CM_SaveLump performs its own file I/O. No unsupported Linux-only reader was introduced."
       },
       {
         "id": "mac:0x00078638",
@@ -142671,8 +142671,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read full Mac 0x78638-0x79f18 against every native lump block. Corrected unsigned lump-size arithmetic, brush-side count/allocation at 0x787e3-0x78807, extra plane validations absent at 0x789a3/0x79332, model-limit check order at 0x78d37-0x78d5a, radius selection at 0x78f23-0x78f45, duplicate TempMalloc(0) absent at 0x78d78, and exact error messages. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:95:CMod_AllocLeafBrushNode",
@@ -142690,8 +142690,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read inlined Mac recursive allocation 0x77f1f-0x77f51 and box-node allocation 0x791b6-0x791dd: allocates one node, clears fields, sets data dist to -FLT_MAX. Native uses sizeof(node) and clears the expanded pointer storage before the equivalent initialization."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:502:CMod_GetLeafTerrainContents",
@@ -142709,8 +142709,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read inlined Mac 0x78e78-0x78ea6 and 0x79960-0x7998e: OR material contentFlags over collAabbCount trees starting at firstCollAabbIndex, with zero for empty ranges. Native leaf and submodel loops match."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:201:CMod_GetPartitionScore",
@@ -142728,8 +142728,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read inlined Mac 0x77f8e-0x78153: candidate min/max pivots, above/below counts starting at -1, ordered extrema, minimum count, midpoint, subtraction-based range choice and multiply/strict score update match the existing native score loops."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:1355:CMod_LoadBrushRelated",
@@ -142747,8 +142747,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read inlined Mac orchestration 0x7878f-0x792a4, including temporary node base, leaf/submodel node construction, box hull, permanent node count/copy and temp clear. Removed the extra TempMalloc(0) call before the single Mac base query at 0x78d78. Constituent loader fixes are separately recorded. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:629:CMod_LoadBrushes",
@@ -142766,8 +142766,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x787e3-0x78807 subtracts six axial sides per brush before allocation and publishing numBrushSides; native retained the axial sides. Matched unsigned sizes, removed the extra native plane-index check absent at 0x789a3, and restored Mac errors. Read all axial/general side, material and 0xdffffffb contents-mask logic. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:1272:CMod_LoadCollisionAabbTrees",
@@ -142785,8 +142785,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac 0x78b69-0x78c25: 32-byte disk/native records, origins, half sizes and unsigned 16-bit material/child fields match. Restored logical unsigned size shift and localized funny-lump message (0x79ed1). Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:1175:CMod_LoadCollisionBorders",
@@ -142804,8 +142804,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac 0x79709-0x797e1: all seven floats copied in order with 28-byte stride. Restored unsigned size arithmetic and exact localized error at 0x79cc7. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:1058:CMod_LoadCollisionEdges",
@@ -142823,8 +142823,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac 0x7947f-0x795cb: skips the disk prefix, copies 12 floats, computes 1.0/last disk float and scales the final axis components in order. Restored unsigned size arithmetic and localized error at 0x79c64. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:1223:CMod_LoadCollisionPartitions",
@@ -142842,8 +142842,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac 0x797e1-0x798ac: two count bytes and triangle/border indices match; native allocation expands pointer fields via sizeof. Restored unsigned size arithmetic and localized error at 0x79d53. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:1112:CMod_LoadCollisionTriangles",
@@ -142861,8 +142861,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac 0x795cb-0x79709: copies 12 floats and three corresponding vertex/edge indices with 72-byte stride. Restored unsigned size arithmetic and localized error at 0x79ce6. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:1016:CMod_LoadCollisionVerts",
@@ -142880,8 +142880,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac 0x793f8-0x7947f: skips the disk prefix and copies XYZ with disk stride 16/native stride 12. Restored unsigned size shift and localized error at 0x79c83. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:1314:CMod_LoadEntityString",
@@ -142899,8 +142899,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read inlined Mac 0x79a02-0x79a5d: records lump length, allocates that exact length and copies the entity bytes, then clears BSP base. Native matches, with no added terminator."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:845:CMod_LoadLeafBrushNodes",
@@ -142918,8 +142918,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read inlined Mac 0x78d96-0x78eab: disk first/count at +16/+20, brush content aggregation, terrain content aggregation, leaf partition call and disk/native strides match the native block."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:944:CMod_LoadLeafBrushes",
@@ -142937,8 +142937,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac 0x78ad7-0x78b69: allocates count+1 unsigned short indices, copies each disk int and checks unsigned-short round trip. Restored unsigned size shift and errors at 0x78b44/0x79ef0. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:984:CMod_LoadLeafSurfaces",
@@ -142956,8 +142956,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac 0x7938f-0x793f8: copies 32-bit indices at four-byte stride. Restored unsigned count shift and localized error at 0x79ca8. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:772:CMod_LoadLeafs",
@@ -142975,8 +142975,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac 0x78c25-0x78cc6 plus 0x79a8b-0x79ba1: 36-byte disk records, signed cluster, unsigned tree range, PVS-disabled branch and maximum cluster tracking match. Restored unsigned size arithmetic and exact localized errors. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:52:CMod_LoadMaterials",
@@ -142994,8 +142994,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac 0x786ec-0x7876e: allocates count+1 records, advances one 72-byte record, copies count records. Restored unsigned size arithmetic and exact localized errors at 0x79d72/0x79d9a. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:578:CMod_LoadNodes",
@@ -143013,8 +143013,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac 0x792a4-0x7938f: plane-array indexing and signed-short child checks match. Removed a plane-index validation absent at 0x79332; restored unsigned size arithmetic and exact errors at 0x79359/0x79ddb/0x79e0d. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x00077dc2",
@@ -143044,8 +143044,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read full Mac 0x77dc2-0x77f0a: normal/dist copies, negative sign bits and ordered axial type selection match. Restored logical unsigned size shift plus exact errors at 0x77ec9/0x77eed. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:519:CMod_LoadSubmodelBrushNodes",
@@ -143063,8 +143063,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac 0x79002-0x790ef plus 0x79960-0x799e4: skips world model, allocates brush indices even for zero count, ORs brush/terrain masks and partitions each model. Restored exact localized unsigned-short overflow message at 0x799ad. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:123:CMod_LoadSubmodels",
@@ -143082,8 +143082,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac 0x78cc6-0x78d6e and 0x78eab-0x79002: bound expansion, radius operation order and nonworld AABB ranges match after restoring fabs and subtraction/select semantics at 0x78f23-0x78f45. Moved model-limit rejection after allocation/publication as at 0x78d37-0x78d5a; restored unsigned size arithmetic and exact errors. Compiled and reviewed; not exercised."
       },
       {
         "id": "linux:qcommon/cm_load_obj.cpp:1327:CMod_LoadVisibility",
@@ -143101,8 +143101,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read Mac 0x798ac-0x79960, 0x799e4 and 0x79ba1-0x79c47: default 32-rounded byte mask, explicit vis header/data and PVS-disabled rejection branches match. Restored the single-player rejection text at 0x79c14. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x000784dc",
@@ -143132,8 +143132,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x784dc-0x78638: empty early return, brush extrema, leaf-only 0.125 expansion, recursion with original bounds, node index and high-temp lifetime all match existing native code."
       },
       {
         "id": "mac:0x00077f0a",
@@ -143163,8 +143163,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read full Mac 0x77f0a-0x784dc: node initialization, candidate scores, straddler/front/back collection, shared tolerance, recursive bounds, content aggregation and short offsets. Restored unordered straddler acceptance at 0x78390-0x783a0 and ordered back-tolerance update at 0x78344-0x78369, plus exact overflow errors. Compiled and reviewed; not exercised."
       }
     ],
     "qcommon/cm_mesh": [
