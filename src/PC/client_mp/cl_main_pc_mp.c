@@ -144,10 +144,10 @@ void CL_SetServerInfo(serverInfo_t *server, const char *info, int ping)
         server->killcam = (char)atoi(Info_ValueForKey(info, "kc"));
         server->hardware = (byte)atoi(Info_ValueForKey(info, "hw"));
         server->mod = (byte)atoi(Info_ValueForKey(info, "mod"));
-        server->voice = (byte)atoi(Info_ValueForKey(info, "voice"));
 #if defined(COD2_X64) && COD2_IS_PATCH_13
-        server->punkbuster = (byte)atoi(Info_ValueForKey(info, "sv_punkbuster"));
+        server->punkbuster = (byte)atoi(Info_ValueForKey(info, "pb"));
 #endif
+        server->voice = (byte)atoi(Info_ValueForKey(info, "voice"));
     }
 
     server->ping = (short)ping;
@@ -478,7 +478,11 @@ void CL_Rcon_f(void)
     }
 
     {
+#if defined(COD2_X64)
+        int msgLen = strlen(message) + 1;
+#else
         int msgLen = strlen(message);
+#endif
         CL_Netchan_SendOOBPacket(msgLen, message, sendAdr);
     }
 }
@@ -744,12 +748,19 @@ void CL_ServersResponsePacket(netadr_t from, msg_t *msg)
 #if defined(COD2_X64)
     while (buffptr < buffend && *buffptr != '\\')
         buffptr++;
-    while (buffend - buffptr >= 7 && numservers < 256) {
-        if (*buffptr != '\\' || memcmp(buffptr + 1, "EOT", 3) == 0)
-            break;
+    while (buffend - buffptr >= 8 && numservers < 256) {
         memcpy(servers[numservers], buffptr + 1, 6);
-        numservers++;
         buffptr += 7;
+        if (*buffptr != '\\')
+            break;
+        Com_DPrintf((const char *)"server: %d ip: %d.%d.%d.%d:%d\n", numservers,
+                    servers[numservers][0], servers[numservers][1],
+                    servers[numservers][2], servers[numservers][3],
+                    (int)((unsigned short)servers[numservers][4] |
+                          (unsigned short)servers[numservers][5] << 8));
+        numservers++;
+        if (buffend - buffptr >= 4 && memcmp(buffptr + 1, "EOT", 3) == 0)
+            break;
     }
 #else
     while ((unsigned int)(buffptr + 1) < (unsigned int)buffend) {
