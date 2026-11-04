@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 7086,
-      "intentional": 1395,
-      "equal": 843,
-      "fixed": 133
+      "unchecked": 6950,
+      "intentional": 1403,
+      "equal": 961,
+      "fixed": 143
     },
     "scopes": {
       "unassigned": 777,
@@ -58762,8 +58762,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a8a6: weapon-definition ammo-index lookup."
       },
       {
         "id": "mac:0x0008033a",
@@ -58793,8 +58793,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x80558-0x8057e, 0x806df-0x8071f, 0x80874-0x80885, 0x80a67-0x80a93 and 0x80b55-0x80b6b: corrected idle-time product order, double bob phases and ADS bob product grouping; compiled and reviewed, not exercised. Hand compared Mac 0x0008033a: damage kick, idle, scoped bob and ADS velocity-bob ordering; see inline rows for corrected SSE evaluation order."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:4910:BG_CalculateView_BobAngles",
@@ -58812,8 +58812,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x806df-0x8071f and 0x80874-0x80885: replaced premature float bob-cycle/phase arithmetic with Mac double evaluation and float conversion points; compiled and reviewed, not exercised. Hand compared Mac 0x806df-0x809a1: BG_AddScopedViewBob: overlay gate, cycle/roll phases, stance amplitudes, ADS factor and axis accumulation."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:4799:BG_CalculateView_DamageKick",
@@ -58831,8 +58831,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x80370-0x80475 and 0x80d80-0x80dcc: BG_AddViewDamageKick: damage-time gate, ADS/reticle factor, 100/400 attack/fade and pitch/roll accumulation."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:4842:BG_CalculateView_IdleAngles",
@@ -58850,8 +58850,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x80558-0x8057e: holdBreathScale times frametime times 1000 is computed before idleSpeed and integer conversion; compiled and reviewed, not exercised. Hand compared Mac 0x8047a-0x80611 and 0x80c18-0x80d40: BG_AddViewIdle: overlay/ADS interpolation, idle-factor tracking, hold-breath scale, idle-time conversion and sine axes."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:4951:BG_CalculateView_Velocity",
@@ -58869,8 +58869,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x80a67-0x80a93 and 0x80b55-0x80b6b: restored double cycle arithmetic and bob times separately combined ADS fraction/multiplier; compiled and reviewed, not exercised. Hand compared Mac 0x809aa-0x80c0d: BG_AddAdsViewBob: eFlags/ADS/multiplier gates, 45-unit bob cap and separately combined ADS multiplier."
       },
       {
         "id": "mac:0x0007f226",
@@ -58900,8 +58900,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x7f83e-0x7f84e, 0x7f97d-0x7f9bd and 0x7fb12-0x7fb1f: corrected idle-time product order and double bob/roll phases; compiled and reviewed, not exercised. Hand compared Mac 0x0007f226: lean, ADS pitch, movement, idle, bob, damage and recoil sequence, followed by sway subtraction; see inline rows for corrected SSE evaluation order."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:4442:BG_CalculateWeaponPosition_BaseAngles",
@@ -58919,8 +58919,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7f278-0x7f5dc: ADS pitch then BG_AddWeaponMovementAngles, with stance rotation vectors, minimum speeds, tracking and ADS fade."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:4319:BG_CalculateWeaponPosition_BasePosition_angles",
@@ -58938,8 +58938,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7f2cc-0x7f5dc and 0x801b8-0x801e5: BG_AddWeaponMovementAngles: stance rotation vectors, normalized speed clamp, prone rate, minimum tracking step and ADS fade."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:4529:BG_CalculateWeaponPosition_BobOffset",
@@ -58957,8 +58957,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x7f97d-0x7f9bd and 0x7fb12-0x7fb1f: restored double pi/phase and roll-phase subtraction with Mac float conversion points; compiled and reviewed, not exercised. Hand compared Mac 0x7f97d-0x7fc66: BG_AddWeaponBobAngles: cycle/roll phase, stance bob limits, ADS bob factor and reticle attenuation."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:4569:BG_CalculateWeaponPosition_DamageKick",
@@ -58976,8 +58976,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7fc66-0x7fdb4 and 0x80278-0x802f7: BG_AddWeaponDamageKick: pre-reticle attack/fade durations, ADS scale, lean curve and pitch/yaw/roll signs."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:4703:BG_CalculateWeaponPosition_GunRecoil",
@@ -58995,8 +58995,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7fdb4-0x7ffc1: BG_AddWeaponGunKick: ADS gate, interpolated coefficients, double 0.005 time comparison/subtraction, two-axis step and final offsets."
       },
       {
         "id": "mac:0x0007af8c",
@@ -59026,8 +59026,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007af8c: settling thresholds, offset cap, restoring acceleration, speed/static decay and speed limits in operation order."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:4461:BG_CalculateWeaponPosition_IdleAngles",
@@ -59045,8 +59045,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x7f83e-0x7f84e: frametime times 1000 is computed before idleSpeed and integer conversion; compiled and reviewed, not exercised. Hand compared Mac 0x7f5dc-0x7f910: BG_AddWeaponIdleAngles: ADS amount/speed, stance factor tracking, scoped attenuation, idle timer and three sine axes."
       },
       {
         "id": "mac:0x0007b5fe",
@@ -59076,8 +59076,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007b5fe: ADS interpolation and scoped early return, 60 Hz normalization, clamps, horizontal/vertical tracking and saved view angles."
       },
       {
         "id": "mac:0x00079f38",
@@ -59107,8 +59107,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x00079f38: default definition, ammo/clip/shared-cap initialization, 128 item resets, animation/string initialization."
       },
       {
         "id": "mac:0x0007a890",
@@ -59138,8 +59138,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a890: weapon-definition clip-index lookup."
       },
       {
         "id": "mac:0x0007a662",
@@ -59169,8 +59169,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a662: weapon class 9 and offhand exclusions."
       },
       {
         "id": "mac:0x0007a640",
@@ -59200,8 +59200,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a640: unsigned primary-slot range check."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:401:BG_FillInAllWeaponItems",
@@ -59219,8 +59219,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only unused bulk rebuilding helper: no Mac symbol and no call site in the Linux tree; native registration already fills each item through BG_SetupWeaponDef. No Mac body is being stubbed."
       },
       {
         "id": "mac:0x0007f05a",
@@ -59250,8 +59250,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007f05a: 129-based ammo-item traversal, first-space truncation, success return and default-weapon fallback."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:50:BG_FillInWeaponItems",
@@ -59269,8 +59269,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7ee6c-0x7eecc: BG_SetupWeaponItem: pickup sound, models including null secondary, icon, name, quantity, type/tag and ammo/clip fields."
       },
       {
         "id": "mac:0x00079fd4",
@@ -59300,8 +59300,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x00079fd4: one-based inclusive weapon loop and case-insensitive internal-name comparison."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:598:BG_GetAmmoClipForName",
@@ -59319,8 +59319,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only unused name lookup: no Mac symbol, no callers in the Linux tree and its diagnostic string is absent from the Mac binary; native has no stub."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:567:BG_GetAmmoClipName",
@@ -59338,8 +59338,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only unused name getter: no Mac symbol and no callers in the Linux tree; native has no stub and uses the registered clip data directly."
       },
       {
         "id": "mac:0x00079fbc",
@@ -59369,8 +59369,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x00079fbc: registered clip-definition size lookup."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:577:BG_GetAmmoTypeForName",
@@ -59388,8 +59388,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only unused name lookup: no Mac symbol, no callers in the Linux tree and its diagnostic string is absent from the Mac binary; native has no stub."
       },
       {
         "id": "mac:0x00079fa4",
@@ -59419,8 +59419,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x00079fa4: registered ammo-definition maximum lookup."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:557:BG_GetAmmoTypeName",
@@ -59438,8 +59438,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only unused name getter: no Mac symbol and no callers in the Linux tree; native has no stub and uses registered ammo data directly."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:682:BG_GetBinocularWeaponIndex",
@@ -59457,8 +59457,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7b238-0x7b26f: BG_GetViewmodelWeaponIndex_core and PM_FindBinocularWeapon: one-based inclusive type-3 search with byte result."
       },
       {
         "id": "mac:0x0007a088",
@@ -59488,8 +59488,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a088: byte bobCycle conversion, float division by 255, double pi arithmetic and final float conversion."
       },
       {
         "id": "mac:0x0007a68a",
@@ -59519,8 +59519,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a68a: primary-slot eligibility and slot 1 then 2 selection."
       },
       {
         "id": "mac:0x0007b9f4",
@@ -59550,8 +59550,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007b9f4: class/inventory matching and combined reserve-plus-clip availability."
       },
       {
         "id": "mac:0x0007acd4",
@@ -59581,8 +59581,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007acd4: one-based inclusive class/inventory selection without ammo test."
       },
       {
         "id": "mac:0x0007a1b2",
@@ -59612,8 +59612,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a1b2: prone/crouch/standing amplitude selection, maximum and sine product."
       },
       {
         "id": "mac:0x0007ba84",
@@ -59643,8 +59643,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007ba84: unshared reserve/clip maxima and shared-cap subtraction with separately deduplicated ammo and clip indexes."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:517:BG_GetNumAmmoClips",
@@ -59662,8 +59662,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only unused count getter: no Mac symbol and no callers in the Linux tree; native keeps the private registration count in the setup loop."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:497:BG_GetNumAmmoTypes",
@@ -59681,8 +59681,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only unused count getter: no Mac symbol and no callers in the Linux tree; native keeps the private registration count in the setup loop."
       },
       {
         "id": "mac:0x00079f9a",
@@ -59712,8 +59712,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x00079f9a: weapon-count load."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:547:BG_GetSharedAmmoCapName",
@@ -59731,8 +59731,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only unused name getter: no Mac symbol and no callers in the Linux tree; native has no stub and uses registered cap data directly."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:537:BG_GetSharedAmmoCapSize",
@@ -59750,8 +59750,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7baf0-0x7bafd: shared-cap definition size load in BG_GetMaxPickupableAmmo."
       },
       {
         "id": "mac:0x0007a7c2",
@@ -59781,8 +59781,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a7c2: 40/20 and 11/29 stance interpolation with matching spread fields and float order."
       },
       {
         "id": "mac:0x0007a6cc",
@@ -59812,8 +59812,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a6cc: stackable/primary checks, preferred slot eligibility and slot 1 then 2 fallback."
       },
       {
         "id": "mac:0x0007a9d0",
@@ -59843,8 +59843,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a9d0: unshared clip-only/reserve paths and shared-cap accumulation with separately deduplicated indexes."
       },
       {
         "id": "mac:0x0007a0c8",
@@ -59874,8 +59874,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a0c8: stance amplitude, doubled-cycle sinf, float quadrupling before double phase/sin, then 0.2/0.75 products."
       },
       {
         "id": "mac:0x0007b226",
@@ -59905,8 +59905,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007b226: binocular search precedence, unsigned-byte result, offhand flag and normal weapon fallback."
       },
       {
         "id": "mac:0x00079f28",
@@ -59936,8 +59936,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x00079f28: indexed definition-pointer load."
       },
       {
         "id": "mac:0x0007ede0",
@@ -59967,8 +59967,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007ede0: empty/none, case-insensitive existing lookup, load/default rename, index setup, item fields, alt validation and callback sequence."
       },
       {
         "id": "mac:0x0007a62a",
@@ -59998,8 +59998,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a62a: ADS-position-info field load."
       },
       {
         "id": "mac:0x0007a026",
@@ -60029,8 +60029,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a026: slot 1 or slot 2 empty test."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:1138:BG_IsInAltWeaponChain",
@@ -60048,8 +60048,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7a780-0x7a7c2: same routine is named BG_IsPlayerWeaponAnAlt in Mac/native; chain match, origin-cycle stop and null termination compared."
       },
       {
         "id": "mac:0x0007a780",
@@ -60070,8 +60070,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a780: alt-chain traversal, match-before-cycle-stop and null termination."
       },
       {
         "id": "mac:0x0007a924",
@@ -60101,8 +60101,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a924: inventory bit test, primary slot restriction and optional alt-chain traversal in native core helper."
       },
       {
         "id": "mac:0x0007be4c",
@@ -60132,8 +60132,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007be4c: range/inventory result and offhand, selected-slot or self-alt acceptance; same Mac range-result behavior."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:5083:BG_LoadWeaponDef",
@@ -60151,8 +60151,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7ee1e-0x7ee41 and 0x7ef03-0x7ef35: BG_LoadWeaponDef: empty-name return, internal load/default fallback, fatal default failure and SetConfigString rename."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:971:BG_SetPlayerWeaponForSlot",
@@ -60170,8 +60170,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7c363-0x7c3c9: inline PM_BeginWeaponChange slot assignment: owned/primary gates, slot range, current-weapon clear and selected-slot write."
       },
       {
         "id": "mac:0x0007a4e4",
@@ -60201,8 +60201,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a4e4: case-sensitive index sharing, case-insensitive mismatch scan, error arguments and inclusive registration counts."
       },
       {
         "id": "mac:0x0007a22a",
@@ -60232,8 +60232,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a22a: case-sensitive clip sharing, mismatch scan, Mac ammo-name error argument and registration counts."
       },
       {
         "id": "mac:0x0007a370",
@@ -60263,8 +60263,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a370: negative default index, empty-name return, case-insensitive sharing and cap-mismatch reporting."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:302:BG_SetupWeaponAlts",
@@ -60282,8 +60282,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7eecf-0x7eee8 and 0x7ef91-0x7f03c: BG_SetupWeaponDef: alt reset/name gate, recursive registration, missing-alt error and slot/stackability agreement."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:376:BG_SetupWeaponDef",
@@ -60301,8 +60301,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7ee41-0x7eef9: BG_SetupWeaponDef: increment/store, ammo/shared/clip/item setup, alternate setup and optional callback."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:363:BG_SetupWeaponIndex",
@@ -60320,8 +60320,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7ee57-0x7eecc: BG_SetupWeaponDef calls ammo/shared/clip setup then BG_SetupWeaponItem in Mac order."
       },
       {
         "id": "mac:0x00079f18",
@@ -60351,8 +60351,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x00079f18: zero store to bg_iNumWeapons; raw 16-byte function inspected because linear otool output misaligns its mov encoding."
       },
       {
         "id": "mac:0x0007bec4",
@@ -60382,8 +60382,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007bec4: inventory gate, stack replacement before removal, alt-chain bit clearing and current-weapon reset."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:805:BG_ValidateWeaponNumber",
@@ -60401,8 +60401,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7be57-0x7be65 and 0x7bebd-0x7bec4: inline range-result initialization in BG_IsWeaponValid."
       },
       {
         "id": "mac:0x0007a8f4",
@@ -60432,8 +60432,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a8f4: reserve plus clip indexed sum."
       },
       {
         "id": "mac:0x0007b298",
@@ -60463,8 +60463,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007b298: four random draws, ADS/hip selection thresholds, reduced-kick scale, camera signs and accumulated gun-speed products."
       },
       {
         "id": "mac:0x0007a8bc",
@@ -60494,8 +60494,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a8bc: clip-only field load."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3092:BG_WeaponShotCount",
@@ -60513,8 +60513,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7dbb6-0x7dbbf and 0x7dbdc-0x7dbdf: constant one is folded into firing-ammo availability and the single-round decrement."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3813:Binocular_State_Drop",
@@ -60532,8 +60532,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7e914-0x7e96d: PM_TryToggleBinoculars drop: binocular ADS-out time plus exit-delay dvar, state 21, event 0xac and idle animation."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3836:Binocular_State_End",
@@ -60551,8 +60551,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d7f4-0x7d835 and 0x7e586-0x7e5c4: PM_EndBinoculars: state 22, binocular flag/event, cmd.weapon-selected quick raise versus one-tick delay."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3799:Binocular_State_Exit_ADS",
@@ -60570,8 +60570,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d7d7-0x7d7ef: PM_RunBinocularState HOLD case becomes state 20 with both timers cleared."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3776:Binocular_State_Hold",
@@ -60589,8 +60589,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d74b-0x7d7d2: PM_StartBinocularRaise: binocular definition search, state 19, ADS-in timer, flag/event and idle animation."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3738:Binocular_State_Init",
@@ -60608,8 +60608,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7e994-0x7e9d9: PM_TryToggleBinoculars ADS exit: event/flag clear, zero weaponTime, ADS-out plus dvar weaponDelay and state 17."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3757:Binocular_State_Raise",
@@ -60627,8 +60627,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d5de-0x7d626: PM_RunBinocularState INIT case becomes state 18 with quick-drop timer, cleared delay and animation 17."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:672:CG_GetWeaponIndexForName",
@@ -60646,8 +60646,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7f1a7-0x7f1b6: folded into CG_SetWeaponDefToDefaultWeapon as BG_GetWeaponIndexForName(defaultweapon_mp, NULL)."
       },
       {
         "id": "mac:0x0007f19c",
@@ -60677,8 +60677,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007f19c: default lookup/error and gun/hand models plus exactly 23 animation-pointer copies."
       },
       {
         "id": "mac:0x0007ad44",
@@ -60708,8 +60708,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007ad44: stance/air decay, two turn components, movement threshold, two separate air additions and 0..255 clamp."
       },
       {
         "id": "mac:0x0007c110",
@@ -60739,8 +60739,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007c110: inventory/state gates, grenade reset, alt/normal events, animation toggle, timers and inline slot reassignment."
       },
       {
         "id": "mac:0x0007c5a2",
@@ -60770,8 +60770,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007c5a2: allowed states, weapon validation, reload animation/event, segmented start and inline delay setup."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:434:PM_ContinueWeaponAnim",
@@ -60789,8 +60789,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d675-0x7d696 and 0x7e30a-0x7e335: idle continuation skips a matching animation and otherwise flips the toggle bit under pm_type <= 5."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:1588:PM_EndHoldBreath",
@@ -60808,8 +60808,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7cca2-0x7cca8: inline PM_UpdateHoldBreath clears flag 0x4000."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3699:PM_EnterBinoculars",
@@ -60827,8 +60827,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d7af-0x7d7c3: PM_StartBinocularRaise sets flag 0x20000 then emits event 0xa8."
       },
       {
         "id": "mac:0x0007a064",
@@ -60858,8 +60858,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a064: event 0x95 then ADS flag clear."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3711:PM_ExitBinoculars",
@@ -60877,8 +60877,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d7f9-0x7d815: PM_EndBinoculars clears flag 0x20000 then emits event 0xa9."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3723:PM_ExitBinocularsQuick",
@@ -60896,8 +60896,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7cf00-0x7cf2c: PM_ResetWeaponState inlined: zero ADS fraction, exit ADS and binocular flag/event sequence."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:1599:PM_HoldBreathFire",
@@ -60915,8 +60915,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7dcc1-0x7dd35: PM_ConsumeFireAmmo: full scoped ADS/class-9 gate, clamped fire-delay timer addition and breath-flag clear."
       },
       {
         "id": "mac:0x0007cade",
@@ -60946,8 +60946,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007cade: allowed/blocked state sets, offhand/ADS override clears, binocular exit events and idle reset."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:1345:PM_IsAdsAllowed",
@@ -60965,8 +60965,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7bc7e-0x7bc8d and 0x7bcef-0x7bd5d: inline PM_UpdateAimDownSightFlag pm_type/ground/definition/state eligibility."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:1335:PM_IsBinocularADSAllowed",
@@ -60984,8 +60984,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7be28-0x7be39: inline PM_UpdateAimDownSightFlag permits binocular states 19 and 20."
       },
       {
         "id": "mac:0x0007a04a",
@@ -61015,8 +61015,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a04a: unsigned states 19..20 test."
       },
       {
         "id": "mac:0x0007aba4",
@@ -61046,8 +61046,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007aba4: reload-start gate, reserve/clip-space minimum, per-segment addition caps and transfer."
       },
       {
         "id": "mac:0x0007ca54",
@@ -61077,8 +61077,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007ca54: offhand/ADS override clears, binocular exit event pair, timers/state reset and animation toggle."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3551:PM_SendEmtpyOffhandEvent",
@@ -61096,8 +61096,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d062-0x7d06d: PM_TryStartOffhand no-available-weapon path emits 0x94; COD2_CODX is off for this native Mac build."
       },
       {
         "id": "mac:0x0007c3d6",
@@ -61127,8 +61127,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007c3d6: empty/nonempty animation/time/event paths, interrupted-state preservation and inline reload-delay calculation."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:1994:PM_SetWeaponReloadAddAmmoDelay",
@@ -61146,8 +61146,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7c442-0x7c4a4 and 0x7c4de-0x7c59d: PM_SetReloadDelay: reload start/normal limits, empty type handling, bolt time minimum and nonzero delay fallback."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:1577:PM_StartHoldBreath",
@@ -61165,8 +61165,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7df7a-0x7df91: inline PM_UpdateHoldBreath sets flag 0x4000 only when the breath timer is zero."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:417:PM_StartWeaponAnim",
@@ -61184,8 +61184,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7c2dd-0x7c2f8 and dispatcher animation sites: PM_WeaponSetAnim and direct sites preserve pm_type <= 5, toggle bit 0x200 and requested animation."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:2699:PM_SwitchIfEmpty",
@@ -61203,8 +61203,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x7ddc2-0x7ddd1: event 0x92 follows BG_TakePlayerWeapon unconditionally instead of being gated on its return; compiled and reviewed, not exercised. Hand compared Mac 0x7dd7c-0x7ddd1: PM_TryTakeEmptyClipOnlyWeapon: clip-only and both-ammo-zero gates, take weapon and unconditional event 0x92."
       },
       {
         "id": "mac:0x0007bc60",
@@ -61234,8 +61234,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007bc60: pm_type and ground restriction, ADS state exclusions, prone command gating and condition 7 update."
       },
       {
         "id": "mac:0x0007c762",
@@ -61265,8 +61265,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007c762: scope damage exit, reload/rechamber exclusions, ADS-fire override, exit delay and clamped msec interpolation."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3652:PM_UpdateGrenadeThrow",
@@ -61284,8 +61284,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7cd6b-0x7cd88 and 0x7de65-0x7deb4: PM_UpdateOffhandCook: offhand/grenade/cook/positive-fuse gates, msec countdown, clip decrement and event 0xc5."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:1640:PM_UpdateHoldBreath",
@@ -61303,8 +61303,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7cc0d-0x7cd65 and 0x7da6c-0x7dabf: PM_UpdateHoldBreath: hold/gasp dvar conversion, scoped/full-ADS/class-9/button gates, timer clamp, exhaustion and DiffTrack target arithmetic."
       },
       {
         "id": "mac:0x0007cbb2",
@@ -61334,8 +61334,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x7ddc2-0x7ddd1: corrected the inlined empty clip-only removal event to be unconditional after taking the weapon; compiled and reviewed, not exercised. Hand compared Mac 0x0007cbb2: complete dispatcher control flow and decoded 23-case table at 0x3292d0; ADS, breath, cooking, timers, binoculars, offhand, change, reload, melee, rechamber, spread and state actions."
       },
       {
         "id": "mac:0x0007a8d2",
@@ -61365,8 +61365,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007a8d2: current weapon clip-index lookup and ammo load."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:1895:PM_WeaponClipEmpty",
@@ -61384,8 +61384,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7dc05-0x7dc1e and 0x7dc3d-0x7dc53: current-weapon clip load/zero test folded into fire animation and event selection."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:1865:PM_WeaponUseAmmo",
@@ -61403,8 +61403,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7dbd0-0x7dbdf: PM_ConsumeFireAmmo: eFlags 0x300 suppresses one-round clip decrement; caller has already required positive ammo."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3183:PM_Weapon_AddFiringAimSpreadScale",
@@ -61422,8 +61422,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7dd35-0x7dd7c: PM_AddFireSpread: skip exactly full ADS, fire-add times 255, upper clamp."
       },
       {
         "id": "mac:0x0007ac60",
@@ -61453,8 +61453,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007ac60: reserve presence, clip capacity and no-partial-reload segment-space checks."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3102:PM_Weapon_CheckFiringAmmo",
@@ -61472,8 +61472,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7dba3-0x7dbbf and 0x7e0d9-0x7e109 and 0x7e388-0x7e3d0: PM_TryFireWeapon: one-round threshold, positive reserve reload, non-grenade no-ammo event, rechamber clear, idle continuation and 500ms penalty."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3867:PM_Weapon_CheckForBinoculars",
@@ -61491,8 +61491,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7cdee-0x7cf79 and 0x7e442-0x7e538 and 0x7e8c5-0x7e96d and 0x7e994-0x7e9ff: PM_TryToggleBinoculars: scoped/action/state exclusions, damage/selection reset, aim event edges, toggle/hold dvar, enter/drop timing."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:2915:PM_Weapon_CheckForChangeWeapon",
@@ -61510,8 +61510,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d07d-0x7d0ee and 0x7dec9-0x7dffd and 0x7e132-0x7e1e0: PM_CheckWeaponChange: state/time gates, mantle/flags, requested selection validity, lock flag and removed-inventory fallback."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3289:PM_Weapon_CheckForMelee",
@@ -61529,8 +61529,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d1b1-0x7d21d and 0x7e002-0x7e016 and 0x7e1f3-0x7e2dd: PM_CheckMeleeStart: state/damage/delay gates, button latch, scoped exclusions, script/event/animation and delayed/immediate fire."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3562:PM_Weapon_CheckForOffHand",
@@ -61548,8 +61548,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7cf79-0x7d077 and 0x7eaa3-0x7eb7e and 0x7ed03-0x7ed7b: PM_TryStartOffhand: flag/state gates, command index, frag-before-smoke class, available inventory, errors and quick-drop/prepare path."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:1924:PM_Weapon_CheckForRechamber",
@@ -61567,8 +61567,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d21d-0x7d348 and 0x7e33a-0x7e376 and 0x7e412-0x7e43d: PM_CheckRechamber: bolt/bit gates, delayed bolt event, timer/state handling, ADS animation threshold and bolt-delay fallback."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:2583:PM_Weapon_CheckForReload",
@@ -61586,8 +61586,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d0ee-0x7d1b1 and 0x7dde5-0x7de63 and 0x7df96-0x7dfcb: PM_CheckReloadStart: reload request flag clear, segmented attack-edge interruption, state exclusions, prone reanimation and automatic empty reload gate."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3007:PM_Weapon_FinishFiring",
@@ -61605,8 +61605,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d48f-0x7d4a8 and 0x7e30a-0x7e335: PM_TryFireWeapon released-button path: conditional idle animation continuation and state reset."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3277:PM_Weapon_FinishMelee",
@@ -61624,8 +61624,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d675-0x7d6a0: MELEE_FIRE dispatcher case: conditional idle animation continuation and state reset."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:1912:PM_Weapon_FinishRechamber",
@@ -61643,8 +61643,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7e412-0x7e43d: PM_CheckRechamber finishes with idle animation continuation and ready state."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:2507:PM_Weapon_FinishReload",
@@ -61662,8 +61662,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d8fe-0x7d99d and 0x7e65c-0x7e674: PM_RunReloadState normal path: delayed action, weaponTime return, rechamber clear, segmented repetition and optional end animation/time/event."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:2569:PM_Weapon_FinishReloadEnd",
@@ -61681,8 +61681,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d429-0x7d451: RELOAD_END dispatcher case clears state and starts idle animation."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:2459:PM_Weapon_FinishReloadStart",
@@ -61700,8 +61700,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d9ac-0x7da31 and 0x7e650-0x7e657: PM_RunReloadState starting path: delayed action, timer gate, interrupted/nonempty handling, allow reload, rechamber clear and optional end phase."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:2220:PM_Weapon_FinishWeaponChange",
@@ -61719,8 +61719,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d83a-0x7d8f9 and 0x7e75e-0x7e860 and 0x7ec28-0x7ec77: PM_FinishWeaponChange: requested-weapon validity, byte write, equal reset, initial raise, alternate raise/128 spread and normal event/conditions/raise."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:2322:PM_Weapon_FinishWeaponRaise",
@@ -61738,8 +61738,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d429-0x7d451: RAISING dispatcher case clears state and starts idle animation."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3254:PM_Weapon_FireMelee",
@@ -61757,8 +61757,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d62b-0x7d670: PM_FinishMeleeDelay: minimum remaining melee time, event 0xa4, state 11 and prone override."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3208:PM_Weapon_FireWeapon",
@@ -61776,8 +61776,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x7ddc2-0x7ddd1: corrected the delegated empty clip-only removal event to be unconditional after taking the weapon; compiled and reviewed, not exercised. Hand compared Mac 0x7d469-0x7d4a8 and 0x7dac4-0x7ddd1: PM_TryFireWeapon/PM_ConsumeFireAmmo: attack/delayed gates, timers/grenade path, ammo checks, animation/event, breath, spread and empty clip-only removal."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3387:PM_Weapon_Idle",
@@ -61795,8 +61795,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d429-0x7d451: shared idle state/reset animation block; PM_WeaponSetIdle helpers retain equivalent timer handling in callers."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3480:PM_Weapon_OffHand",
@@ -61814,8 +61814,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d4ad-0x7d5a5: PM_RunOffhandState HOLD case: both old/new grenade-button hold gate, state/time/flag, throw event/animation, clip decrement and empty event."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3522:PM_Weapon_OffHandEnd",
@@ -61833,8 +61833,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d403-0x7d451: OFFHAND_END dispatcher case: same PM_ResetWeaponState clears and idle reset."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3459:PM_Weapon_OffHandHold",
@@ -61852,8 +61852,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d712-0x7d746: PM_RunOffhandState PREPARE case: hold state, cleared timers, offhand flag and fuse initialization."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3410:PM_Weapon_OffHandInit",
@@ -61871,8 +61871,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7ed03-0x7ed7b: PM_TryStartOffhand: state 12, normal-weapon quick-drop timer, cleared delay/offhand/ADS and animation 17."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3434:PM_Weapon_OffHandPrepare",
@@ -61890,8 +61890,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7d6a5-0x7d70d: PM_StartOffhandPrepare: state 13, hold-fire timer, cleared delay, flag, parameterized event 0xa5, animation 19 and prone override."
       },
       {
         "id": "mac:0x0007b114",
@@ -61921,8 +61921,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x0007b114: bolt/rechamber bit/event handling, start versus normal timing, bolt subtraction and reload/remaining-delay paths."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3156:PM_Weapon_SetFPSFireAnim",
@@ -61940,8 +61940,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7dbf0-0x7dc3d and 0x7e0b8-0x7e0d4: PM_ConsumeFireAmmo: ADS threshold 0.75, empty/nonempty clip animation 6/5 or 3/2 and toggle-bit application."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:3035:PM_Weapon_StartFiring",
@@ -61959,8 +61959,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7dac4-0x7dba3 and 0x7e01b-0x7e07d: PM_StartFireTimers/PM_TryStartGrenadeFire: fire or hold timers, ADS reciprocal product, script event, bolt bit, kick restriction only on entering firing and prone override."
       },
       {
         "id": "linux:bgame/bg_weapons.cpp:2821:PM_Weapon_WeaponTimeAdjust",
@@ -61978,8 +61978,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x7cd88-0x7cde9 and 0x7df21-0x7df68 and 0x7e6c3-0x7e759: PM_UpdateWeaponTimers: restricted-kick decay, semi-auto held attack timing and state reset, reload exceptions and delayed-action boolean."
       }
     ],
     "bgame/bg_weapons_load_obj": [
