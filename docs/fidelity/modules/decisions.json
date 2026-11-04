@@ -6642,5 +6642,233 @@
   "linux:server/sv_ccmds_mp.cpp:293:UI_GetMapRotationToken": {
     "status": "fixed",
     "evidence": "Mac inlines helper at 0x1725d3-0x1725fc,0x17261c-0x17264d and0x1727c6-0x1727f3: native SV_ConsumeMapRotationToken incorrectly returned empty token when Com_Parse nulled parse pointer; now stores empty current rotation and returns NULL. Compiled and reviewed, exhaustion not exercised directly."
+  },
+  "mac:0x00050ec4": {
+    "status": "equal",
+    "evidence": "Read Mac 0x50ec4 against src/PC/universal/dvar.c: walk dvarPool through next and clear only flag 0x400; module assignment points to the existing external body."
+  },
+  "linux:server/sv_init_mp.cpp:351:SV_BoundMaxClients": {
+    "status": "equal",
+    "evidence": "Read the inlined registration/clamp in Mac SV_Startup 0x142abe-0x142b07 and SV_ChangeMaxClients 0x142c16-0x142c69: default 20, range 1..64, flags 0x1025, modified clear, and minimum-client clamp match."
+  },
+  "mac:0x00142bf4": {
+    "status": "fixed",
+    "evidence": "Mac 0x142e86 prefixes the allocation error with byte 0x15; restored that native diagnostic. Read active-client minimum, temporary preservation, allocation/zero/copy-back, and dedicated/listen snapshot sizing against 0x142bf4. Compiled and reviewed; not exercised."
+  },
+  "linux:server/sv_init_mp.cpp:550:SV_ClearServer": {
+    "status": "equal",
+    "evidence": "Read inlined Mac SV_Shutdown 0x142941-0x142984 and SV_SpawnServer 0x142f32-0x142f7b: free each nonnull one of 2048 configstrings then zero server state; native uses the corresponding LP64 server_t size."
+  },
+  "linux:server/sv_init_mp.cpp:319:SV_CreateBaseline": {
+    "status": "equal",
+    "evidence": "Read inline Mac SV_SpawnServer 0x143547-0x143673: skip unlinked entities, set entity number, copy entity state, svFlags byte, both client masks, absmin and absmax. The native typed baseline loop matches these fields and bounds."
+  },
+  "linux:server/sv_init_mp.cpp:1023:SV_DropAllClients": {
+    "status": "equal",
+    "evidence": "Read inline Mac SV_Shutdown 0x1428ff-0x142941: iterate maxclients and drop state >1 with EXE_DISCONNECTED; matches the native shutdown loop for allocated clients."
+  },
+  "mac:0x00141c7a": {
+    "status": "equal",
+    "evidence": "Read Mac 0x141c7a: write enable state, return when disabled or already allocated, and allocate caches/buffers in order with sizes 0x450000, 0x2708000, 0x2580, 0x2000000 and 0x3800; native matches."
+  },
+  "linux:server/sv_init_mp.cpp:992:SV_FinalMessage": {
+    "status": "equal",
+    "evidence": "Read inline Mac SV_Shutdown 0x142832-0x1428f0: two client passes, state >1, exclude loopback only from e/w commands, set nextSnapshotTime=-1 and send each snapshot. Native matches."
+  },
+  "linux:server/sv_init_mp.cpp:610:SV_FreeArchivedSnapshot": {
+    "status": "equal",
+    "evidence": "Read inline Mac SV_Shutdown 0x142996-0x142a04: free and null entity/client caches, archive frame table, archive buffer and cached frame table in that order. Native matches."
+  },
+  "linux:server/sv_init_mp.cpp:220:SV_GetConfigValueForKey": {
+    "status": "unchecked",
+    "evidence": "Linux-only unused helper: no native body, Mac symbol, or identified Mac caller was found. Linux has no callers of this helper; that absence does not establish Mac semantics or equality."
+  },
+  "mac:0x001419a0": {
+    "status": "equal",
+    "evidence": "Read exact-entry Mac 0x1419a0: reject nonpositive buffer size and unsigned index >2047 with matching errors, return empty for null slot, otherwise bounded copy. Native matches."
+  },
+  "mac:0x00141a22": {
+    "status": "equal",
+    "evidence": "Read Mac 0x141a22: unchecked indexed slot lookup with empty-string fallback only for null slot; native typed slot access matches."
+  },
+  "mac:0x00141afe": {
+    "status": "equal",
+    "evidence": "Read Mac 0x141afe: buffer-size validation, signed client bounds, 0x15-prefixed diagnostics and I_strncpyz of userinfo match the typed native body."
+  },
+  "mac:0x00141d62": {
+    "status": "fixed",
+    "evidence": "Mac 0x14240f-0x1424d6 registers nextmap and com_expectedHunkUsage before the three WWW dvars; restored native registration order. A script matched all 46 retail registrations by type/name/default/domain/flags/order after the fix, and the registration/control flow was read by hand. Existing optional CoD2x initialization/protocol selection remains intentional. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00141cf0": {
+    "status": "equal",
+    "evidence": "Read Mac 0x141cf0: clear archiveEnabled and the five archive/cache sequence counters, without clearing allocated pointers. Native matches."
+  },
+  "mac:0x00141d24": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x141d24 tailcall to Dvar_ResetScriptInfo; native performs that reset and additionally invokes Cod2x_ServerSpawn only in the optional CoD2x build. The extension hook is retained."
+  },
+  "mac:0x0014198c": {
+    "status": "equal",
+    "evidence": "Exact-symbol disassembly at Mac 0x14198c confirms state==2 converted to Bool, matching native; the full-binary view misdecoded the entry."
+  },
+  "linux:server/sv_init_mp.cpp:659:SV_SaveSystemInfo": {
+    "status": "equal",
+    "evidence": "Read inline Mac SV_SpawnServer 0x14334b-0x1433ce: copy big system info to 8192-byte local, clear flags 8 before setting configstring 1, set server info 0 then clear 0x404, set script config range 0x8e/0x60 and clear 0x100. Native matches."
+  },
+  "mac:0x00142722": {
+    "status": "fixed",
+    "evidence": "Mac 0x142791 uses a 0x15-prefixed overflow error; restored the prefix. Read empty-key insertion, case-insensitive existing-key match, overflow and value configstring indexing against 0x142722. Compiled and reviewed; not exercised."
+  },
+  "mac:0x001424d6": {
+    "status": "fixed",
+    "evidence": "Mac 0x1424e2 rejects unsigned indices >2047; native accepted negative indices. Mac 0x14259f-0x1425a9 subtracts decimal index length including NUL from 0x3fd; native chunks were one byte too long. Restored both and the 0x15 diagnostic prefix; read changed-value gate, state/restart gate, clients and x/y/z chunk sequence. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00141b94": {
+    "status": "equal",
+    "evidence": "Read Mac 0x141b94: failed-open return, len+1 zero allocation, read/close, token scan, matching map numeric parse/set and free on each completed path match native."
+  },
+  "mac:0x00141a40": {
+    "status": "fixed",
+    "evidence": "Mac 0x141a40 uses a 0x15-prefixed bad-index error; restored it. Read signed bounds, null-string fallback, 1024-byte userinfo copy and 32-byte extracted-name copy. Compiled and reviewed; not exercised."
+  },
+  "mac:0x001427fa": {
+    "status": "fixed",
+    "evidence": "Mac 0x142a7b-0x142a80 clears bgs after abort cleanup; native incorrectly cleared com_errorEntered. Verified nonlazy pointer 0x1acce1d resolves to _bgs and restored the native pointer clear. Read two-pass final messages, client drop, config/cache frees, static reset, FX/running/client cleanup and loading-state abort; optional CoD2x lifecycle hooks and dedicated client omissions remain. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00142ea0": {
+    "status": "fixed",
+    "evidence": "Mac 0x143065 loads ingame menus immediately after CL_StartLoading; restored that call in native client builds. Read restart/map/client loading, checksum seed, configstrings, snapshot allocation, three warmup frames, baseline, client reconnect and info finalization. Dedicated client exclusions, native material/debug hooks and optional CoD2x lifecycle hooks remain intentional; unsupported PB enable/disable remains at the documented null backend. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00142aa6": {
+    "status": "fixed",
+    "evidence": "Mac 0x142b5f-0x142b67 initializes sv_lastTimeMasterServerCommunicated from svs.time; native omitted it. Restored the typed 1.3 field initialization and the 0x15-prefixed errors. Read clamp, allocation and dedicated/listen snapshot capacities. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00141d2e": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x141d2e: compare argument with \"0\" and set sv_punkbuster bool by name. Callback remains absent with the explicitly unsupported PB backend (pb_null_adapter.c; WS44 audit); no active native PB registration consumes it."
+  },
+  "mac:0x0015b590": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x15b590: clear 104-byte PB record, validate active client and copy name/GUID/address. The PB callback remains absent at the documented unsupported null-backend boundary (pb_null_adapter.c; WS44 audit)."
+  },
+  "mac:0x0015b582": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x15b582 returning sv_maxclients current integer; callback remains absent at the documented unsupported PB null-backend boundary (pb_null_adapter.c; WS44 audit)."
+  },
+  "mac:0x0015b67c": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x15b67c: clear output, validate active client, format ping and conditional game score. Callback remains absent at the documented unsupported PB null-backend boundary (pb_null_adapter.c; WS44 audit)."
+  },
+  "mac:0x0015a3aa": {
+    "status": "fixed",
+    "evidence": "Mac 0x15a530 accepts the accumulated player list through 0x1ffff; native stopped at 0x3fff. Restored the 1.3 limit; read challenge/demo keywords, state >1 client score/ping/name list and gameCompleteStatus packet formatting. Optional CoD2x protocol override remains. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0015a67e": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x15a67e client counts, query keys, pure/mod detection and packet assembly. Stock fields match except omitted PB advertising at the unsupported null backend; optional native query rate limits and CoD2x discovery protocol remain. Checked player-visible hw: Windows 0x45b215/0x45b229 uses the same dedicated=2/listen=5 values as Mac, so no platform change is needed."
+  },
+  "mac:0x00159f98": {
+    "status": "fixed",
+    "evidence": "Mac 0x15a178 uses G_GetClientScore return, 0x15a1d2 enters pure/base-game IWD inspection for empty fs_game, and 0x15a0df permits list length 0x1ffff. Native discarded score, inverted that mod gate and used 0x3fff. Restored all three; read remaining query, password, keyword, list and packet paths. Optional native rate limits/CoD2x protocol remain. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00159a2e": {
+    "status": "fixed",
+    "evidence": "Read exact-symbol Mac 0x159a2e and decoded table 0x33b080. Restored compaction for inactive clients, dropping ignorable additions after compaction, complete equal-command replacement, table classes C/D/a/b/o/p/q/r/t and d/v token matching, and increment-before-overflow handling at 0x159b89-0x159ba4. Native omitted/changed those rules. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0015bb7c": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x15bb7c: zero usercmd, weapon/archive gate, random call order, button/movement probabilities, truncating crandom()*360 angles, delta and think match normal native behavior. Native Sys_DiffBotMove suppression remains as the established replay/input instrumentation hook."
+  },
+  "linux:server/sv_main_mp.cpp:947:SV_CalcPings": {
+    "status": "fixed",
+    "evidence": "Read inline Mac SV_Frame 0x15c238-0x15c2fc: active/entity gates, 32 acknowledged frames, signed average and 999 cap match. Restored missing no-entity/no-count/over-999 diagnostics from 0x15c578, 0x15c49e and 0x15c2dc. Compiled and reviewed; not exercised."
+  },
+  "linux:server/sv_main_mp.cpp:1079:SV_CheckPaused": {
+    "status": "equal",
+    "evidence": "Read inline Mac SV_Frame 0x15bf92-0x15bff0 and 0x15c12b: only cl_paused enters the count of clients state>=2; <=1 pauses and returns, otherwise clears sv_paused. Native matches."
+  },
+  "linux:server/sv_main_mp.cpp:1026:SV_CheckTimeouts": {
+    "status": "equal",
+    "evidence": "Read inline Mac SV_Frame 0x15c340-0x15c402: time thresholds, future lastPacketTime clamp, test-client skip, zombie release, sixth consecutive connected timeout drop and timeoutCount reset match native."
+  },
+  "mac:0x0015ac8c": {
+    "status": "fixed",
+    "evidence": "Mac 0x15b00e/0x15b197/0x15b267/0x15b42d updates master liveness before getstatus/getchallenge/getinfo/ipAuthorize; native omitted all four. Restored native 1.3 calls to the helper reconstructed by server_client in sv_client_mp (Mac helper 0x17c464). Read remaining ordinary dispatch; optional CoD2x/rate-limit policies and unsupported PB null backend remain intentional. Compiled and reviewed; not exercised."
+  },
+  "linux:server/sv_main_mp.cpp:130:SV_CopyReliableCommands": {
+    "status": "fixed",
+    "evidence": "Read inline Mac SV_AddServerCommand 0x159a6a-0x159aeb: keep only nonzero command types from reliableSent+1, preserve order and set sequence=destination-1. The copy loop matched but its native caller omitted inactive-client compaction and reused the stale pre-compaction sequence; corrected within SV_AddServerCommand. Compiled and reviewed; not exercised."
+  },
+  "linux:server/sv_main_mp.cpp:22:SV_ExpandNewlines": {
+    "status": "equal",
+    "evidence": "Read inline Mac SV_SendServerCommand 0x15bec2-0x15bf0d: bound output through index 0x3fc, expand newline to backslash+n, omit bytes 0x14/0x15, NUL terminate. Native loop matches."
+  },
+  "mac:0x0015bf3c": {
+    "status": "fixed",
+    "evidence": "Mac 0x15bf55/0x15c11a supplies EXE_SERVERKILLED when the kill reason is empty; native passed empty text. Restored fallback and missing ping diagnostics. Read pause, residual timing, all eight wrap guards, dvar config flags, bot/ping loops, frame/archive order and timeouts. Native dedicated client exclusions and replay/hash/CoD2x hooks remain intentional. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0015bb3a": {
+    "status": "equal",
+    "evidence": "Read Mac 0x15bb3a: free the unsigned scriptId then zero it; native matches."
+  },
+  "linux:server/sv_main_mp.cpp:76:SV_GetReliableSequence": {
+    "status": "fixed",
+    "evidence": "Read inline Mac SV_AddServerCommand 0x159af8-0x159b87 and table 0x33b080: identical suffixes replace before opcode rules, x/y/z never replace, C/D/a/b/o/p/q/r/t replace directly, d/v compare first token. Restored the native selection and shift/write sequence. Compiled and reviewed; not exercised."
+  },
+  "linux:server/sv_main_mp.cpp:57:SV_IsFirstTokenEqual": {
+    "status": "equal",
+    "evidence": "Read inline Mac 0x159d56-0x159dd1 and 0x159cbf-0x159cd7: compare from command+2 until either NUL/space, and require both sides to end on NUL/space. The native token comparison in the restored reliable-selection branch matches."
+  },
+  "mac:0x0015b836": {
+    "status": "fixed",
+    "evidence": "Mac 0x15bae6 and 0x15bb15 print out-of-range and invalid acknowledge diagnostics; native silently returned. Restored the same arguments, including the existing reliableAcknowledge field on negative messageAcknowledge. Read OOB routing, client match, port repair, netchan/read/decode gates and bgs clear. Verified 0x1acce1d is _bgs, matching the unchanged native clear. Optional CoD2x disconnect limiting remains. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0015bb62": {
+    "status": "equal",
+    "evidence": "Read Mac 0x15bb62: reset skeleton cache then run game at svs.time; native matches, retaining its optional CoD2x statistics hook."
+  },
+  "mac:0x0015b722": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x15b722: initialized gate, broadcast or indexed state>1 client selection and NET_OutOfBandPbPacket send. Callback remains absent at the documented unsupported PB null-backend boundary (pb_null_adapter.c; WS44 audit)."
+  },
+  "mac:0x0015bda6": {
+    "status": "fixed",
+    "evidence": "Mac 0x15bde4 formats into the full 0x20000 LargeLocal buffer for 1.3; native vsnprintf was capped at 0x4000. Restored MAX_MSGLEN capacity, retaining 1.0 configuration size; read direct send, print-broadcast expansion, active-client loop and LargeLocal cleanup. Compiled and reviewed; not exercised."
+  },
+  "linux:server/sv_main_mp.cpp:1193:SV_UpdateBots": {
+    "status": "equal",
+    "evidence": "Read inline Mac SV_Frame 0x15c0ca-0x15c238: reset skeleton cache and call bot movement for every nonfree client with NA_BOT address; native bounds and gates match."
+  },
+  "mac:0x00159e36": {
+    "status": "equal",
+    "evidence": "Read Mac 0x159e36: signed short qport, all nonfree matching clients, translated-port repair, zombie skip, lastPacketTime update, and pregame vs active voice dispatch match native."
+  },
+  "mac:0x00193d8c": {
+    "status": "fixed",
+    "evidence": "Mac 0x193dc6 and 0x193eec use a 0x1fff0 LargeLocal redirect buffer; native used a 0x3ff0 stack buffer. Restored size/lifetime on every normal return; read 499ms gate, password paths, redirects, bounded argument join and execute. Mac pb_sv_ force processing stays omitted at the documented PB null backend; optional native RCON limiting remains. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00193c48": {
+    "status": "equal",
+    "evidence": "Read Mac 0x193c48: split at 0x50e bytes, temporarily NUL each chunk, format print into 0x514 bytes, send to redirectAddress, restore split byte and send final remainder. Native matches."
+  },
+  "mac:0x001940e6": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1940e6: lazy lookup only when address type is zero, resolve cod2master.activision.com, set network-order port 20710, print result, cache and return address. Existing retail native helper matches; configured macOS dedicated masters use a separate backend."
+  },
+  "mac:0x0019418c": {
+    "status": "intentional",
+    "evidence": "Read Mac 0x19418c dedicated==2/address-valid gate and status send. Native macOS dedicated intentionally routes to MacServer_MasterGameCompleteStatus for five configurable master slots; retained that backend. Restored exact retail diagnostic in the native fallback branch."
+  },
+  "mac:0x001941ea": {
+    "status": "fixed",
+    "evidence": "Mac 0x194218 sends when time>=nextHeartbeatTime; native fallback inverted the deadline and used the old dvar alias. Restored comparison, com_dedicated and exact retail diagnostic; read 180000ms heartbeat and 600000ms status deadlines/address-failure paths. Native macOS dedicated retains MacServer_MasterHeartbeat configurable-master backend. Compiled and reviewed; fallback not exercised."
+  },
+  "mac:0x001942ca": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1942ca: set nextHeartbeatTime to INT_MIN then invoke heartbeat with flatline; native matches."
+  },
+  "mac:0x001940e0": {
+    "status": "equal",
+    "evidence": "Read exact-symbol Mac 0x1940e0 empty prologue/return; native is empty as well."
   }
 }
