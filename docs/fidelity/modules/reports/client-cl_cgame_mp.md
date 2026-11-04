@@ -2,7 +2,7 @@
 
 Updated 2026-11-04.
 
-**71/71 reconciled: 62 equal, 8 fixed, 1 intentional.** This includes the complete `CL_LookupColor` body at Mac 0x17b7c6, whose ownership is being moved from `universal/com_vector` by the parent. Global ledgers were not edited. Mac 1.3 i386 is the authority; no Windows-specific behavior decision was needed. Legacy production and fixture bodies remain unchanged when the native guard is off.
+**71/71 reconciled: 62 equal, 8 fixed, 1 intentional.** This includes the complete `CL_LookupColor` body at Mac 0x17b7c6, whose ownership is being moved from `universal/com_vector` by the parent. Global ledgers were not edited. Mac 1.3 i386 is the authority; Windows popup routing was checked against the native UI and updater boundary. Legacy production and fixture bodies remain unchanged when the native guard is off.
 
 ## Corrections
 
@@ -17,6 +17,8 @@ Updated 2026-11-04.
 `CL_SetCGameTime` now uses `r_mode` for timedemo filenames, as 0x17be3c does, and restores both error texts. `CL_GetSnapshot` restores the warning asset `gfx/2d/warning@snapshotents.jpg` at 0x17a123 and its error text. `CL_GetUserCmd` restores the control-prefixed diagnostic at 0x179fdf.
 
 ## Preserved native behavior
+
+Windows `CL_Popup` at 0x4024f2 also routes `UIMENU_WM_AUTOUPDATE` through menu 9; its handler at 0x5386c9 opens `autoupdate`. Native has no such enum, handler or caller: its 9/10 script menu types normalize to 9. The existing platform plan excludes auto-updater work (`docs/macos-port/PLAN.md` and `cod2x-compat.md`); no downloaded-binary updater or disconnected menu is reconstructed here. This is an explicit platform boundary, not a claim that the Windows popup body is identical.
 
 `CL_AdjustTimeDelta` was compared in full. Mac 0x17b5d6–0x17b5de wraps the 32-bit sum before shifting it right. Native keeps the wide average introduced by 9514a8c: a measured CoD2x server epoch near 1.56 billion milliseconds otherwise repeatedly reset client time. The existing positive/negative epoch fixture remains unchanged. The two Mac debug prefixes were restored.
 
