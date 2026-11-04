@@ -369,7 +369,7 @@ void FS_NewDir_f(void)
         void *searchpaths = *(void **)imp_fs_searchpaths;
 
 #if defined(COD2_X64)
-        dirnames = (char **)FS_ListFilteredFiles(searchpaths, "", "", filter, FS_LIST_ALL, &ndirs, 10);
+        dirnames = (char **)FS_ListFilteredFiles(searchpaths, "", "", filter, FS_LIST_PURE_ONLY, &ndirs, 10);
 #else
         dirnames = FS_ListFilteredFiles(searchpaths, "", "", filter, &ndirs, 10);
 #endif
@@ -813,7 +813,11 @@ void FS_PureServerSetReferencedIwds(const char *iwdSums, const char *iwdNames)
     if (iwdNames == NULL || iwdNames[0] == '\0') {
 
         if (c != 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "iwd sum/name mismatch");
+#else
             Com_Error(1, "FS_PureServerSetReferencedIwds: count mismatch");
+#endif
         }
 
         *(int *)imp_fs_numServerReferencedIwds = c;
@@ -827,7 +831,11 @@ void FS_PureServerSetReferencedIwds(const char *iwdSums, const char *iwdNames)
     }
 
     if (c != d) {
+#if defined(COD2_X64)
+        Com_Error(1, "iwd sum/name mismatch");
+#else
         Com_Error(1, "FS_PureServerSetReferencedIwds: count mismatch");
+#endif
     }
 
     if (d > 0) {
