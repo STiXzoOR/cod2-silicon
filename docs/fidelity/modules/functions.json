@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 4593,
-      "intentional": 1580,
-      "equal": 2787,
-      "fixed": 497
+      "unchecked": 4522,
+      "intentional": 1581,
+      "equal": 2849,
+      "fixed": 505
     },
     "scopes": {
       "unassigned": 777,
@@ -71250,8 +71250,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17a2a4 body: Cmd_AddCommand(cmdName, NULL)."
       },
       {
         "id": "mac:0x0017ad50",
@@ -71272,8 +71272,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ad50 forwarding body and native callback layout: AddLightToScene slot 0x54/native 168, unchanged origin/radius/RGB arguments."
       },
       {
         "id": "mac:0x0017ad34",
@@ -71294,8 +71294,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x17ad34: zero-extend both unsigned-short lmapIndex/vertCount and forward material/counts/vertices through AddPolyToScene slot 0x50/native 160."
       },
       {
         "id": "mac:0x0017b544",
@@ -71316,8 +71316,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Full Mac 0x17b544-0x17b71c comparison covers demo/new-snapshot gates, unsigned frameTime<=500 adjustment, reset/fast thresholds 500/100, timescale1, extrapolation-2 and +/-1 smoothing, and debug ordering. Restored Mac <RESET>/<FAST> strings at 0x17b664/0x17b6b3. Mac 0x17b5d6-0x17b5de wraps a 32-bit sum before arithmetic shift; retain native int64 average from 9514a8c because a measured live CoD2x ~1.56-billion-ms epoch otherwise repeatedly resets client time. Existing positive/negative1.5-billion-epoch ASan/UBSan fixture passes unchanged; strings compiled and reviewed."
       },
       {
         "id": "mac:0x0017b790",
@@ -71338,8 +71338,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17b790 body: CG_ArchiveState first, then renderer ArchiveFogState slot 0x6c/native 216 with same memFile."
       },
       {
         "id": "mac:0x0017ad9e",
@@ -71360,8 +71360,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ad9e return-valued callback forwarding through BeginDelayedDrawing slot 0x80/native 256."
       },
       {
         "id": "mac:0x0017adf8",
@@ -71382,8 +71382,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17adf8 callback forwarding through BlendSavedScreen slot 0xc4/native 392 with fadeMsec unchanged."
       },
       {
         "id": "mac:0x0017a9ca",
@@ -71404,8 +71404,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x17a9ca-0x17aa04: Com_LoadBsp then CM_LoadMap with checksum output; CM_LinkWorld only when com_sv_running is false."
       },
       {
         "id": "mac:0x0017b078",
@@ -71426,8 +71426,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17b078 stores to cgameMaxPitchSpeed/cgameMaxYawSpeed; native layout names resolve both fields and preserve argument order."
       },
       {
         "id": "mac:0x0017ad18",
@@ -71448,8 +71448,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ad18 forwarding through ClearScene slot 0x48/native 144."
       },
       {
         "id": "mac:0x0017afe0",
@@ -71470,8 +71470,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x17afe0 body: fullscreen early return and exactly three UI_KeyEvent(27,1) calls."
       },
       {
         "id": "mac:0x0017afbe",
@@ -71492,8 +71492,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x17afbe body: reject fullscreen, require activeMenu2, then UI_CloseFocusedMenu."
       },
       {
         "id": "mac:0x0017af5e",
@@ -71514,8 +71514,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x17af5e-0x17afbe accepts UIMENU_SCRIPT_POPUP_NO_MOUSE or UIMENU_SCRIPT_POPUP only when active menu is9, then closes focused menu. Native used SUBMENU, accepted menu 10, and UI_SetActiveMenu(0) closed all menus. Restored exact names/gates/focused close; compiled and reviewed, popup interaction not exercised."
       },
       {
         "id": "mac:0x0017a2c0",
@@ -71536,8 +71536,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x17a2c0 allocates old gamestate with LargeLocal size 0x22004;0x17a407 permits 0x20000 string bytes. Native stack copy enforced stale 0x3e80 limit. Restored native LargeLocal allocation/release, MAX_GAMESTATE_CHARS (compiled1.3=131072), and Mac index/overflow diagnostics; compared rebuild loop, terminator-inclusive sizes and system-info callback. Generated native sizeof(gameState_t)=139268 and large-local pool1MiB verified. Compiled and reviewed, changed configstring path not exercised."
       },
       {
         "id": "mac:0x0017aa38",
@@ -71558,8 +71558,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x17aa38-0x17aad6: timestamp, existing bone freshness return, allocation/create/false, and allocation-failure warning once per timestamp then true."
       },
       {
         "id": "mac:0x0017aad6",
@@ -71580,8 +71580,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x17aad6-0x17ab76: timestamp, existing part-bits freshness return, allocation/create/false, and its separate once-per-timestamp warning then true."
       },
       {
         "id": "mac:0x0017ad26",
@@ -71602,8 +71602,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ad26 callback forwarding through DefaultVertexFrames slot 0x4c/native 152 with count/vertices unchanged."
       },
       {
         "id": "mac:0x0017ae1c",
@@ -71624,8 +71624,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ae1c callback and actual native GetRefAPI binding: slot 0xa0 selects R_AddCmdDrawQuadPic; native direct adapter calls that same builder with identical vertex pointer/color/material. GFX_DLL retains callback forwarding."
       },
       {
         "id": "mac:0x0017ae2e",
@@ -71646,8 +71646,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ae2e forwarding through DrawSprite slot 0xa4/native 328 with material/RGBA/position/radii/render flags unchanged."
       },
       {
         "id": "mac:0x0017b962",
@@ -71668,8 +71668,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x17b962-0x17b9e8: CalcScreenPlacement updates x/y/w/h first, then all 10 renderer arguments. Native direct builder matches actual GetRefAPI DrawStretchPic binding slot 0x94/native 296; DLL uses callback."
       },
       {
         "id": "mac:0x0017ae0a",
@@ -71690,8 +71690,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ae0a callback and native GetRefAPI slot 0x94/native 296 binding: native direct R_AddCmdDrawStretchPic receives unchanged physical coordinates, UVs, color and material; DLL retains callback."
       },
       {
         "id": "mac:0x0017b72e",
@@ -71712,8 +71712,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x17b72e: cgameInitialized gate; signed int-to-float x/y/height conversions; CG_DrawStringExt(string,NULL,forceColor 0,shadow,height,adjust 1)."
       },
       {
         "id": "mac:0x0017ad06",
@@ -71734,8 +71734,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ad06 forwarding through DuplicateFont slot 0x140/native 640, preserving font and name; wrapper discards native renderer return as Mac does."
       },
       {
         "id": "mac:0x0017adb0",
@@ -71756,8 +71756,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17adb0 forwarding marker to EndDelayedDrawing slot 0x84/native 264."
       },
       {
         "id": "mac:0x0017b058",
@@ -71778,8 +71778,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17b058: obtain renderer far plane slot 0x40/native 128, store as float, call FX_AdjustCamera(refdef,zfar) in that order."
       },
       {
         "id": "mac:0x0017ac98",
@@ -71800,8 +71800,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ac98 forwarding through FinishLoadingModels slot 0x24/native 72."
       },
       {
         "id": "mac:0x0017b044",
@@ -71822,8 +71822,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17b044 body: Com_FreeWeaponInfoMemory(2)."
       },
       {
         "id": "mac:0x0017b52a",
@@ -71844,8 +71844,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17b52a body: return false until cgameInitialized, otherwise return CG_ConsoleCommand result."
       },
       {
         "id": "mac:0x0017ac52",
@@ -71866,8 +71866,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ac52 offset lookup and stringData addition. Native uses clients[0]; actual cl pointer is initialized to clients in src/stubs/link_stubs.c and is never reassigned by the single-client lifecycle. Generated clients allocation is typed clientActive_t[1]."
       },
       {
         "id": "mac:0x00179ffe",
@@ -71888,8 +71888,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x179ffe body and generated native clientActive_t layout: return current client cmdNumber."
       },
       {
         "id": "mac:0x0017a010",
@@ -71910,8 +71910,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17a010 body: output snap.messageNum followed by snap.serverTime."
       },
       {
         "id": "mac:0x00179f2c",
@@ -71932,8 +71932,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete exact-entry otool Mac 0x179f2c-0x179f58 (full-section view misaligned prologue): output vidConfig width,height,aspectRatioWindow. Verified actual compiled native clientStatic_t/vidConfig field layout."
       },
       {
         "id": "mac:0x0017a4c4",
@@ -71954,8 +71954,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Decoded all 57 jump-table entries at 0x33b880; full Mac 0x17a4c4-0x17a8d6 comparison. Added missing w/PB branch 0x17a635-0x17a6a3 (untranslated reason and control-prefixed formatted error), stock disconnect/default and reliable-sequence/BCS diagnostics. Checked B/n reset, d configstring, x/y/z multipart retokenization and distinct overflow bounds. Existing ordinary server-command fixture passes ASan/UBSan; PB/overflow/lost-command branches compiled and reviewed but not exercised. Engine-side PB disconnect formatting remains active independently of the documented null PB backend."
       },
       {
         "id": "mac:0x0017a02c",
@@ -71976,8 +71976,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared full Mac 0x17a02c-0x17a264 rings/validity/parse-age gates and snapshot scalar/player/entity/client copies with 256/64 caps. Mac 0x17a123 passes gfx/2d/warning@snapshotents.jpg to StatMon_Warning(4,3000,...), native passed prose; restored asset and Mac control-prefixed future-snapshot diagnostic. Typed native playerState/entityState/clientState copies match Mac sizes 0x26a8/0xf0/0x5c. Compiled and reviewed; changed warning/error paths not exercised."
       },
       {
         "id": "mac:0x00179f58",
@@ -71998,8 +71998,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared full Mac 0x179f58-0x179ffe future-command check,128-entry age test, mask127 and28-byte usercmd copy. Restored control-prefix 0x15 on error format at 0x179fdf. Compiled and reviewed; changed diagnostic not exercised."
       },
       {
         "id": "mac:0x0017b412",
@@ -72020,8 +72020,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Partial fix (not a full reconciliation): CG_Init receives serverMessageSequence, lastExecutedServerCommand, clientNum (Mac 0x17b4d2); tests/online/cgame_init.c. See docs/macos-port/reports/2026-11-04-outside-reference-fixes.md"
+        "status": "equal",
+        "evidence": "Compared full exact Mac 0x17b412-0x17b529: timing/console/mapname construction, nonlocal DObj+hunk usage, state 6/init-called before CG_Init, args(message sequence,last executed command,clientNum), initialized/state 7 afterward, elapsed seconds and renderer registration/memory/notification/subtitle/hunk tail. No cl_paused reset in this body. Existing 862d548 argument-order fix retained; cgame_init fixture passes ASan/UBSan."
       },
       {
         "id": "mac:0x0017adc2",
@@ -72042,8 +72042,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17adc2 forwarding marker through IssueDelayedDrawing slot 0x88/native 272."
       },
       {
         "id": "mac:0x0017ae88",
@@ -72064,8 +72064,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ae88 body: Com_LoadSoundAliases(loadspec,all_mp,1); native sound backend replacement does not alter this engine dispatch."
       },
       {
         "id": "mac:0x0017ae52",
@@ -72086,8 +72086,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ae52 forwarding through MarkFragments slot 0xd0/native 416 with all 9 arguments unchanged."
       },
       {
         "id": "mac:0x0017acf4",
@@ -72108,8 +72108,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17acf4 return-valued forwarding through Material_Duplicate slot 0x13c/native 632 with material/name unchanged."
       },
       {
         "id": "mac:0x0017ae40",
@@ -72130,8 +72130,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ae40 forwarding through ModelBounds slot 0xd4/native 424 with model/mins/maxs unchanged."
       },
       {
         "id": "mac:0x0017ae76",
@@ -72152,8 +72152,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ae76 return-valued forwarding through PickMaterial slot 0xdc/native 440, preserving origin,direction,three output strings and character limit."
       },
       {
         "id": "mac:0x0017ac70",
@@ -72174,8 +72174,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ac70 tail call to Com_PickSoundAlias(aliasname), return preserved."
       },
       {
         "id": "mac:0x0017aeac",
@@ -72196,8 +72196,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Full Mac 0x17aeac-0x17af5e uses UIMENU_WM_QUICKMESSAGE=>menu 8, UIMENU_SCRIPT_POPUP_NO_MOUSE=>menu 10 and other19-character script-popup prefix=>menu 9. Native used INGAME/SUBMENU names and queried UI before state/demo gates. Restored names, callback result and exact state 8/non-demo/non-fullscreen gate order; compiled and reviewed, popup interaction not exercised. Windows4024f2 also routes UIMENU_WM_AUTOUPDATE to its absent native updater/menu; retained platform boundary per docs/macos-port/PLAN.md and cod2x-compat.md, no native enum/handler/caller. Windows script enum10/11 maps native9/10 normalized9."
       },
       {
         "id": "mac:0x0017ac8a",
@@ -72218,8 +72218,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ac8a return-valued forwarding through RegisterInlineModel slot 0xc/native 24 with modelIndex unchanged."
       },
       {
         "id": "mac:0x0017aca8",
@@ -72240,8 +72240,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17aca8 body and native binding: RegisterMaterial(name,3,imageTrack), return preserved, slot 0x10/native 32."
       },
       {
         "id": "mac:0x0017acce",
@@ -72262,8 +72262,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17acce body: RegisterMaterial(name,0x30,imageTrack), return preserved, slot 0x10/native 32."
       },
       {
         "id": "mac:0x0017ac7c",
@@ -72284,8 +72284,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ac7c return-valued forwarding through RegisterModel slot 0x8/native 16 with name unchanged."
       },
       {
         "id": "mac:0x0017ad90",
@@ -72306,8 +72306,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ad90 forwarding refdef through RenderScene slot 0x7c/native 248."
       },
       {
         "id": "mac:0x0017ade6",
@@ -72328,8 +72328,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ade6 forwarding through SaveScreen slot 0xc0/native 384."
       },
       {
         "id": "mac:0x0017b71c",
@@ -72350,8 +72350,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17b71c low-byte store into usingAds; native unsigned-char conversion preserves it."
       },
       {
         "id": "mac:0x0017ba76",
@@ -72372,8 +72372,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared full Mac 0x17ba76-0x17beec including inline first-snapshot/action blocks 0x17baea/0x17bd65, primed/demo skip, validity/pause/restart gates, monotonic real clock, extrapolation threshold and AdjustTimeDelta-before-timedemo/read-loop order. Timedemo helper covers Mac 0x17bbdb-0x17bc48,0x17bdd8-0x17be0c,0x17be3c-0x17bec4. Restored r_mode lookup at 0x17be3c (native cl_timedemoMode was wrong), and both control-prefixed error texts. Existing client-clock13-case ASan/UBSan fixture passes with only selector expectation corrected; no new cases."
       },
       {
         "id": "mac:0x0017a8d6",
@@ -72394,8 +72394,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x17a8d6-0x17a9ca: missing-file default0, len+1 zeroed allocation, read/close, token scan (only parse usage after matching map), set parsed usage/free/return, or free/default0."
       },
       {
         "id": "mac:0x0017ad5e",
@@ -72416,8 +72416,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ad5e RGB zero-extension and SetFog slot 0x64/native 200 forwarding; native unsigned-char casts preserve low8-bit colors and other arguments."
       },
       {
         "id": "mac:0x0017b8ec",
@@ -72438,8 +72438,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x17b8ec-0x17b962: SetViewport(0,0,width,height) before SetScreenScaling(1,1,0,0,width,height), reading dimensions after callback as source does."
       },
       {
         "id": "mac:0x0017b7b4",
@@ -72460,8 +72460,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17b7b4 forwarding and actual renderer bindings. Mac API 60 slot 0x158 holds R_SetLodOrigin; native API 59 has separate SyncGpu/GpuWaited tail slots so SetLodOrigin is byte 696 (RE348*2), not blindly2*0x158. Actual compiled refexport_t layout and native GetRefAPI initializer agree and native forwards same refdef to R_SetLodOrigin."
       },
       {
         "id": "mac:0x0017b85e",
@@ -72482,8 +72482,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17b85e sequential three-component copy into current client cgameKickAngles; native field layout and copy order agree."
       },
       {
         "id": "mac:0x0017a28c",
@@ -72504,8 +72504,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17a28c store to current client cgameInShellshock; full qboolean value preserved."
       },
       {
         "id": "mac:0x0017a264",
@@ -72526,8 +72526,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17a264 sequential stores of userCmdValue,holdableValue,sensitivityScale to matching current-client fields."
       },
       {
         "id": "mac:0x0017add4",
@@ -72548,8 +72548,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17add4 forwarding x,y,width,height through SetViewport slot 0xcc/native 408."
       },
       {
         "id": "mac:0x0017b030",
@@ -72570,8 +72570,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17b030 body: Com_SetWeaponInfoMemory(2)."
       },
       {
         "id": "mac:0x0017aa04",
@@ -72592,8 +72592,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x17aa04-0x17aa38: unload sound aliases system 1 unconditionally; if cgameInitCalled then CG_Shutdown and clear initCalled/initialized byte flags, otherwise preserve flags."
       },
       {
         "id": "mac:0x0017b3f0",
@@ -72614,8 +72614,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x17b3f0-0x17b412: legacyHacks.cl_running at byte 4 gates CL_StartHunkUsers then SCR_UpdateScreenInternal; map/gametype unused. Actual generated native legacyHacks points to legacyHacksArray and byte 4 remains cl_running."
       },
       {
         "id": "mac:0x0017ab76",
@@ -72636,8 +72636,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x17ab76-0x17ac52: translated subtitle/channel 3 return, raw fallback when localization warnings off, ERR_LOCALIZATION versus warning print, and UNLOCALIZED wrapper with original duration/line width."
       },
       {
         "id": "mac:0x0017ad82",
@@ -72658,8 +72658,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ad82 forwarding fogvar,startTime,transitionTime through SwitchFog slot 0x68/native 208."
       },
       {
         "id": "mac:0x0017b9e8",
@@ -72680,8 +72680,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x17b9e8-0x17ba76 including native CL_FirstSnapshot inline identity: require state 8 and snapFlags&2 clear; state 8,delta=serverTime-realtime,oldServerTime/timeDemoBaseTime assignments; activeAction text,newline,then clear dvar."
       },
       {
         "id": "mac:0x0017ae64",
@@ -72702,8 +72702,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17ae64 forwarding statistics pointer through TrackStatistics slot 0xd8/native 432."
       },
       {
         "id": "mac:0x0017b88a",
@@ -72724,8 +72724,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared full Mac 0x17b88a: fetch g_TeamColor_Allies then force alpha 1, fetch g_TeamColor_Axis then force alpha 1, pass both fields to UpdateColor slot 0x10c/native 536."
       },
       {
         "id": "mac:0x0017b0b8",
@@ -72746,8 +72746,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Full Mac 0x17b0b8-0x17b3f0 comparison: at 0x17b1bf-0x17b1d5 same stored/current usage frees buffers and returns; native jumped to append and duplicated entry. Restored return, EXE_ERR_HUNGUSAGE_CORRUPT and EXE_ERR_HUNKUSAGE_CANT_WRITE, retaining read/filter/rewrite/append/reopen ordering and write checks. Compiled and reviewed; filesystem path not exercised."
       },
       {
         "id": "mac:0x0017b096",
@@ -72768,8 +72768,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17b096: renderer LoadWorld(mapname,NULL) before Com_UnloadBsp; callback slot 0x1c/native 56 and argument order agree."
       },
       {
         "id": "mac:0x0017b7c6",
@@ -72790,8 +72790,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/client_mp/cl_cgame_mp.c (client_mp/cl_cgame_mp); whole CL_LookupColor was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to client/cl_cgame_mp; original Mac source-module provenance retained. Native function definition at src/PC/client_mp/cl_cgame_mp.c:1234; assigned universal header has no body. Mac symbol __Z14CL_LookupColorhPf at 0x0017b7c6. Whole caller not audited by universal-math."
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x17b7c6-0x17b85e, not only vector copy: truncate input to byte, ColorIndex return byte and <= 7 branch, then raw chars8/9 select current-client ally/axis vectors, else write four1.0 values; copy four components sequentially. Decoded all 32 floats of Mac g_color_table first 8 rows at 0x33b800 and verified native entries exactly; generated client field mappings agree."
       }
     ],
     "client/cl_cin_mp": [

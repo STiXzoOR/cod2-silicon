@@ -35,7 +35,11 @@ static int expect_error;
 
 int I_stricmp(const char *a, const char *b) { return strcasecmp(a, b); }
 int Sys_Milliseconds(void) { return milliseconds; }
+#if defined(COD2_X64)
+int Dvar_GetInt(const char *name) { assert(!strcmp(name, "r_mode")); return 3; }
+#else
 int Dvar_GetInt(const char *name) { assert(!strcmp(name, "cl_timedemoMode")); return 3; }
+#endif
 const char *va(const char *format, ...)
 {
     static char buffers[4][256];
