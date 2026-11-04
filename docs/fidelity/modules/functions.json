@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 6387,
+      "unchecked": 6376,
       "intentional": 1463,
-      "equal": 1336,
-      "fixed": 271
+      "equal": 1346,
+      "fixed": 272
     },
     "scopes": {
       "unassigned": 777,
@@ -150433,7 +150433,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "No native definition/reference and no Mac symbol under this placeholder name. Linux reconstruction says its empty stubs/table are not in Mac and their names/meaning are unknown. No original address or caller identity exists in the assigned ledger, so behavior equality cannot be established."
       },
       {
         "id": "linux:qcommon/legacyhacks.cpp:9:UnusedStubB",
@@ -150452,7 +150452,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "No native definition/reference and no Mac symbol under this placeholder name. Linux reconstruction says its empty stubs/table are not in Mac and their names/meaning are unknown. No original address or caller identity exists in the assigned ledger, so behavior equality cannot be established."
       }
     ],
     "qcommon/md4": [
@@ -150484,8 +150484,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact-symbol Mac Com_BlockChecksum at 0xb6716: zero count, four MD4 seeds, message update, finalization and XOR of four little-endian digest words match the native wrapper. Initialization also identifies the inlined MD4Init behavior."
       },
       {
         "id": "mac:0x000b668e",
@@ -150515,8 +150515,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact-symbol Mac Com_BlockChecksumKey at 0xb668e: zero count and MD4 seeds, four bytes from the key address before the message, finalization and four-word XOR match native."
       },
       {
         "id": "linux:qcommon/md4.cpp:276:Decode",
@@ -150534,8 +150534,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac inline Decode in MD4Transform at 0xb5fe7-0xb6021: sixteen four-byte words assembled little-endian using shifts 8,16,24 match native Decode(x, block, 64). Constant checker used the same inline range."
       },
       {
         "id": "linux:qcommon/md4.cpp:263:Encode",
@@ -150553,8 +150553,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read both Mac inline Encode loops in MD4Final at 0xb65b2-0xb65e7 and 0xb6630-0xb6662: two count words and four digest words emitted least-significant byte first match native calls of length 8 and 16. No standalone Mac Encode identity is claimed."
       },
       {
         "id": "mac:0x000b659e",
@@ -150584,8 +150584,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact-symbol Mac MD4Final at 0xb659e: serialize count before padding, index mask 0x3f, 56/120 padding sizes, two MD4Update calls, little-endian digest write and 0x58-byte context clear match native. PADDING at 0x348720 checked from binary: 0x80 then 63 zeros."
       },
       {
         "id": "linux:qcommon/md4.cpp:124:MD4Init",
@@ -150603,8 +150603,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac initialization in both checksum wrappers at 0xb6698-0xb66c2 and 0xb6720-0xb674a: count words zero and seeds 0x67452301,0xefcdab89,0x98badcfe,0x10325476 match the native inline initialization. Neither port requires a standalone MD4Init body."
       },
       {
         "id": "mac:0x000b5f9e",
@@ -150634,8 +150634,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact-symbol Mac MD4Transform at 0xb5f9e: input decode, F/G/H Boolean operations, all rounds including 0x5a827999 and 0x6ed9eba1 constants, state accumulation and 64-byte scratch clear match native. Script additionally matched all 48 ordered message-word indices and rotation counts."
       },
       {
         "id": "mac:0x000b6462",
@@ -150665,8 +150665,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact-symbol Mac MD4Update at 0xb6462: inputLen<<3 low-count addition and carry, high-count inputLen>>29, initial partial block, unsigned i+63 block-loop condition and remainder copy match native. Triage extra Mac Com_Memcpy sites are duplicated/tail-call control flow, not missing copies."
       }
     ],
     "qcommon/msg_mp": [
@@ -153160,8 +153160,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact-symbol Mac StatMon_GetStatsArray at 0xaecb2: writes the static stats-array address and current statCount to the two output arguments, matching native."
       },
       {
         "id": "mac:0x000aeccc",
@@ -153191,8 +153191,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read exact-symbol Mac StatMon_Reset at 0xaeccc: clears fourteen dwords (seven i386 entries) then statCount. Native memset clears all seven native pointer-sized entries then statCount, matching the data represented."
       },
       {
         "id": "mac:0x000aebfc",
@@ -153222,8 +153222,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac StatMon_Warning at 0xaebfc: restored leading 0x15 in the error string loaded at 0xaec4c from 0x249e30; changed native renderer slot-four callback return from int to MaterialHandle so the pointer stored by Mac at 0xaecac is not truncated on 64-bit. Enabled/range gates, expiration, lazy registration arguments and count growth were read and match. Both corrections are compiled and reviewed; not exercised."
       }
     ],
     "script/scr_animtree": [
