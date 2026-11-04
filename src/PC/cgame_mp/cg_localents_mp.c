@@ -29,7 +29,11 @@ static void CG_FreeLocalEntity(localEntity_t *le)
     localEntity_t *next_ent = le->next;
 
     if (!prev_ent) {
+#if defined(COD2_X64)
+        Com_Error(1, "\x15" "CG_FreeLocalEntity: not active");
+#else
         Com_Error(1, "CG_FreeLocalEntity: not active");
+#endif
     }
 
     next_ent->prev = prev_ent;
@@ -73,9 +77,13 @@ void CG_AddMovingTracer(localEntity_t *le)
     dist = le->tracerClipDist - dot;
     {
         float tracerLen = (cg_tracerLength)->current.value;
+#if defined(COD2_X64)
+        dist = dist < tracerLen ? dist : tracerLen;
+#else
         if (dist > tracerLen) {
             dist = tracerLen;
         }
+#endif
     }
 
     end[0] = start[0] + dist * dir[0];
