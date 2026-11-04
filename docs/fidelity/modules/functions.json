@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 7128,
+      "unchecked": 7086,
       "intentional": 1395,
-      "equal": 806,
-      "fixed": 128
+      "equal": 843,
+      "fixed": 133
     },
     "scopes": {
       "unassigned": 777,
@@ -54871,8 +54871,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x185e95/0x185ee1 clears currentScript when closing movement/event scopes; native retained it. Mac 0x185cdd, 0x186400, 0x186495 and 0x1864c4 distinguish null from empty tokens; native selected earlier end-of-line errors. Corrected native-only branches, compiled and reviewed. Hand-read file loading, defines, all five parse modes and item limits; decoded dispatch table 0x33ba00."
       },
       {
         "id": "mac:0x00181f34",
@@ -54902,8 +54902,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x181f34-0x181fc8 against native: 1024-byte vsnprintf, optional filename/line+1 formatting and ERR_DROP arguments match."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:2654:BG_AnimPlayerConditions",
@@ -54921,8 +54921,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac inlines this in BG_PlayerAnimation. At 0x1843d3 the movetype comparison reads the supplied ci record; native read bgs->clientinfo[es->clientNum]. Corrected BG_UpdateEntityPlayerAnimConditions, compiled and reviewed. Also compared weapon, flag, underhand and strafing updates at 0x1840b4-0x18447c."
       },
       {
         "id": "mac:0x001873d2",
@@ -54952,8 +54952,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x1873d2-0x1875de against native: pm_type gate, descending state fallback, condition matching, movetype conversion, clientNum modulo command selection and boolean return match."
       },
       {
         "id": "mac:0x0018729a",
@@ -54983,8 +54983,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x18729a-0x1873d2 against native: death exception, pm_type gate, first matching item, random command modulo and ExecuteCommand arguments match."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:1745:BG_AnimScriptStateChange",
@@ -55003,7 +55003,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity: BG_AnimScriptStateChange has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone."
       },
       {
         "id": "mac:0x00182666",
@@ -55033,8 +55033,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x182666-0x182b82 against native/core: viewmodel weapon fields, weapon-position 0x40000, mounted 0x300, pitch > 0 underhand test and attack-button firing updates match."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:358:BG_AnimationForString",
@@ -55053,7 +55053,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity: BG_AnimationForString has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone."
       },
       {
         "id": "mac:0x00184cd6",
@@ -55083,8 +55083,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x184cd6-0x184e9a: signed-byte lowercase hash, loaded-name and finalized-name searches, Scr_FindAnim append path and unknown-name error match native."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:417:BG_CopyStringIntoBuffer",
@@ -55102,8 +55102,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac inline 0x185c2c-0x185c6d against the define-name copy in BG_AnimParseAnimScript: reject offset+strlen+1 > 9999, strcpy, and increment by strlen+1 match."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:1478:BG_EvaluateConditions",
@@ -55121,8 +55121,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac inline conditions at 0x187339-0x187364 and 0x1873bb-0x1873ce, also 0x18748d-0x1874cc: native BG_AnimScriptItemMatches and animation loop match two-word bit intersections, value equality and unknown-type fallthrough."
       },
       {
         "id": "mac:0x00186baa",
@@ -55152,8 +55152,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x186baa-0x18729a against native and BG_PlayAnim_core. Preserves both body slots, the Mac use of animDuration[0] for slot 1, first-body-part-dependent legs return and sound callback; inline timer/toggle/continue branches match."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:540:BG_FinalizePlayerAnims",
@@ -55171,8 +55171,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac inline in BG_LoadAnim at 0x1867d9-0x1868fd, 0x1869cf-0x186b74: root/unused/composite flags, load-index search, primitive name/hash, initialLerp, float duration truncation, delta length/speed, 500ms floor, loop flags and second script parse match native."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:3109:BG_FindAnimTree",
@@ -55190,8 +55190,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read enforced multiplayer specialization in Mac BG_LoadAnim at 0x186764-0x186780 and failure block 0x186b74-0x186b90. Native lookup, null-tree error and stored pointer match; no standalone API is required by native callers."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:3131:BG_FindAnimTrees",
@@ -55209,8 +55209,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac inline BG_LoadAnim 0x186764-0x1867d4 against native: tree lookup and generic/script tree plus torso/legs/turning index assignments match."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:3096:BG_FindAnims",
@@ -55228,8 +55228,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac inline BG_LoadAnim 0x186688-0x186738: multiplayer root, torso, legs and turning lookup order, destinations and anim_user match native."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:1516:BG_FirstValidItem",
@@ -55247,8 +55247,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac inline item traversal in BG_AnimScriptEvent 0x1872da-0x187376 and BG_AnimScriptAnimation 0x18743a-0x1874ed against BG_FirstValidAnimScriptItem/native loop: ordered first match and no-match behavior match."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:1904:BG_GetAnimScriptEvent",
@@ -55267,7 +55267,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity: BG_GetAnimScriptEvent has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:1822:BG_GetAnimString",
@@ -55286,7 +55286,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity: BG_GetAnimString has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:1944:BG_GetAnimationForIndex",
@@ -55304,8 +55304,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac inline bounds checks/addressing in BG_RunLerpFrameRate at 0x1837cc-0x183884 and error blocks 0x183c64-0x183ce1 against BG_GetAnimationForIndexChecked: unsigned index check, error and animation stride match."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:1867:BG_GetConditionValue",
@@ -55323,8 +55323,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac raw condition reads and converted firing query in BG_PlayerAnimation 0x184c3e-0x184ca8 against native direct accesses/BG_ConditionValueIsActive. The stock-use specialization preserves bit 0 => false, first active bit 1..63 => true and no bits => false; value conditions use word 0."
       },
       {
         "id": "mac:0x00184e9a",
@@ -55354,8 +55354,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x184e9a-0x184fea: token hash, lazy -1 table hashes, case-insensitive search, null sentinel and allowFail/error behavior match native."
       },
       {
         "id": "mac:0x001865f8",
@@ -55385,8 +55385,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x1865f8-0x186658: string assignment, signed-byte lowercase weighted hash with multiplier i+119, -1 folding and indexed hash storage match native typed fields."
       },
       {
         "id": "mac:0x00181fc8",
@@ -55416,8 +55416,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x181fc8-0x181ff0: clear 128 string/hash records then BG_LoadWeaponStrings. Native uses sizeof for the pointer-width-adjusted records."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:1997:BG_IsCrouchingAnim",
@@ -55435,8 +55435,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac inline BG_RunLerpFrameRate 0x1837e1-0x18383a: toggle-bit removal and low movetype mask 0xc4/high mask 0x180 match BG_AnimationHasMoveClass and caller."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:2040:BG_IsMantleAnim",
@@ -55455,7 +55455,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity: BG_IsMantleAnim has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:2019:BG_IsProneAnim",
@@ -55473,8 +55473,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac inline BG_RunLerpFrameRate 0x18384c-0x183887: toggle-bit removal and 64-bit movetype mask 0x308 match BG_AnimationHasTurnClass and caller."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:2918:BG_LerpAngles",
@@ -55492,8 +55492,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac inline BG_Player_DoControllers 0x182eda-0x182f1b/0x18332f-0x18334f and tag-origin 0x182f79-0x182fc8/0x183354-0x18336c against BG_SmoothControllerAngles: three-axis subtraction and positive/negative clamping order match."
       },
       {
         "id": "mac:0x001824ee",
@@ -55523,8 +55523,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x1824ee-0x1825d4 against native: left-associated squared length, zero return, 0x5f3759df inverse-square-root step, multiplication order, scale<1 update and goal snap match."
       },
       {
         "id": "mac:0x00186658",
@@ -55554,8 +55554,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x186658-0x186baa against native: 0x9000 LargeLocal lifetime, animation/tree registration, two script passes, root/primitive/composite/unused finalization and server reload-note assignment match. Inlined helper rows carry their detailed evidence."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:468:BG_LoadAnimForAnimIndex",
@@ -55573,8 +55573,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac inline BG_LoadAnim 0x18683b-0x186893 plus 0x1869fa range error and 0x1869cf no-match handling: unsigned index check and ordered load-record index search match native."
       },
       {
         "id": "mac:0x0018548e",
@@ -55604,8 +55604,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x18548e-0x1859dc against active native branches: 8-command limit, zero body slots, line/token rewind and unget behavior, durations, blendtime, turret constraint, movement/strafe/event flags, two-part commands and sound aliases match."
       },
       {
         "id": "mac:0x00184fea",
@@ -55635,8 +55635,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x184fea-0x185306 against source (regparm body defeats view extraction): none/none-comma, NOT/MINUS, AND, comma termination, define/all lookup, two-word OR/subtract and retained temporary bit accumulation match. Mac also clears only result[0]."
       },
       {
         "id": "mac:0x00185306",
@@ -55666,8 +55666,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x185306-0x18548e against source (regparm body): default/end handling, value/bitflag dispatch, comma trimming, implicit boolean value, retained value words and condition append match."
       },
       {
         "id": "mac:0x00181ff0",
@@ -55697,8 +55697,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x181ff0-0x182170 against BG_PlayAnim_core: duration fallback +50, <=49 timer gates, force/continue, 0x200 toggles, loop timer refresh, BOTH clears torso index and only legs changes determine return."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:1622:BG_PlayAnimName",
@@ -55717,7 +55717,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only ledger identity: BG_PlayAnimName has no Mac text symbol (BG_GetAnimScriptEvent has only an absolute .eh name), no native body or caller, and no caller in the private Linux reconstruction. No corresponding Mac inline path was positively identified; do not infer equality or an intentional omission from absence alone."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:2487:BG_PlayerAngles",
@@ -55735,8 +55735,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac inline BG_PlayerAnimation 0x183ef2-0x1840b4 and out-of-line branch blocks through 0x184cd0 against native angle portion: mounted/climb flags, firing conversion, yaw destinations/clamps, leg swing/turn handling, mounted precedence and pitch destination/speed match."
       },
       {
         "id": "mac:0x00183ef2",
@@ -55766,8 +55766,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1843d3 compares movement classification against the supplied ci; native helper used the indexed global client. Corrected native-only helper, compiled and reviewed. Hand-read full 0x183ef2-0x184cd6 including angles, condition updates, finished-frame clearing, left-hand reset and legs/torso lerp calls."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:2370:BG_PlayerAnimation_VerifyAnim",
@@ -55785,8 +55785,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac inline BG_PlayerAnimation 0x184678-0x18470a against BG_ClearFinishedLerpFrame: nonzero animation number, toggle-stripped weight==0, then clear number/pointer and set 150ms blend match."
       },
       {
         "id": "mac:0x00182b82",
@@ -55816,8 +55816,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1830cd-0x1830de converts yaw float to double, multiplies by double pi/180 then rounds to float for sinf/cosf; native multiplied two floats. Corrected under COD2_X64, compiled and reviewed; arm64 object has fcvt d0,s12 / fmul d0,d0,d1 / fcvt s0,d0. Hand-read full 0x182b82-0x183492 goal construction, smoothing and tag calls."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:2715:BG_Player_DoControllersInternal",
@@ -55835,8 +55835,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac inlines this in BG_Player_DoControllers. Corrected double yaw-to-radians multiply at 0x1830cd-0x1830de in the shared native controller body, compiled and reviewed. Compared mounted zeroing, prone/crouch/standing lean, torso/waist subtraction, all 8 goals and coefficient/order choices through 0x183492."
       },
       {
         "id": "mac:0x00183492",
@@ -55866,8 +55866,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x183492-0x183ef2 against active native code: null/same-animation handling, initial blend and stance timing, loop phase, goal clear/set/death paths, torso/legs weighting, snapshot position/speed calculation and min/max rate clamps match."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:2064:BG_SetNewAnimation",
@@ -55885,8 +55885,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac inline BG_RunLerpFrameRate 0x1834d5-0x183686 and continuation blocks 0x1837b2-0x1838d7/0x18393e-0x183d90 against native change-animation branch: bounds, stance classes, blend maxima, phase reuse, death and goal weights match."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:494:BG_SetupAnimNoteTypes",
@@ -55904,8 +55904,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac inline BG_LoadAnim 0x18690b-0x1869bc against native: clear every noteType, skip client anim_user, visit reload event 10 and mark each nonzero-body command slot noteType 1."
       },
       {
         "id": "linux:bgame/bg_animation_mp.cpp:249:BG_StringHashValue",
@@ -55923,8 +55923,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac inline hash loops at 0x184daa-0x184ddc, 0x184f58-0x184f8e and 0x18662b-0x186656 against BG_StringHash: signed-byte lowercase input/output, i+119 weighting, int accumulation and -1 to 0 folding match."
       },
       {
         "id": "mac:0x00182170",
@@ -55954,8 +55954,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x182170-0x182312 against regparm source: angle-subtract argument order, tolerance gate, abs(swing)*0.05 with 0.5 floor, (float frametime*scale)*signed speed, NaN branch skips movement, angle wrapping and final clamps match."
       },
       {
         "id": "mac:0x001825d4",
@@ -55985,8 +55985,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x1825d4-0x182666 against BG_UpdateConditionValue_core: checkConversion/type gate, clear both bit words then set value>>5/value&31 bit, otherwise update only word 0."
       },
       {
         "id": "mac:0x00182312",
@@ -56016,8 +56016,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-read Mac 0x182312-0x1824ee: mounted weapon suppression, invalid-info/model free, dirty/weapon early return, free only existing DObj, six attachments/ignore-collision bits, create arguments and dirty clear match native."
       }
     ],
     "bgame/bg_jump": [
