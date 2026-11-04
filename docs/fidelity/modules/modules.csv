@@ -109,7 +109,7 @@ cgame/cg_playerstate_mp,3,2,0,1,0
 cgame/cg_predict_mp,9,5,3,1,0
 cgame/cg_scoreboard_mp,10,5,4,1,0
 cgame/cg_servercmds_mp,16,9,4,3,0
-cgame/cg_shellshock,6,0,0,0,6
+cgame/cg_shellshock,6,1,5,0,0
 cgame/cg_snapshot_mp,4,2,1,1,0
 cgame/cg_view_mp,9,7,2,0,0
 cgame/cg_weapons,28,16,6,6,0
