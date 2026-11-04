@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 5055,
-      "intentional": 1543,
-      "equal": 2416,
-      "fixed": 443
+      "unchecked": 4962,
+      "intentional": 1548,
+      "equal": 2496,
+      "fixed": 451
     },
     "scopes": {
       "unassigned": 777,
@@ -208589,8 +208589,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xadc30 / overflow diagnostic at 0xadcf8: restored the 0x15 prefix. Complete overflow session list, fatal error, slot increment, all initialization fields and 64-byte filename copy compared. Compiled and reviewed; existing parser fixture exercises ordinary begin/end, not overflow."
       },
       {
         "id": "mac:0x000adb3c",
@@ -208620,8 +208620,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000adb3c: complete CR/LF preservation, both comment kinds, embedded block-comment LF copying, output count and termination; exact-symbol disassembly restarted at __Z12Com_CompressPc after full-image prologue misalignment."
       },
       {
         "id": "mac:0x000add40",
@@ -208651,8 +208651,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000add40: underflow fatal error and decrement."
       },
       {
         "id": "mac:0x000ae87c",
@@ -208682,8 +208682,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000ae87c: all mark fields, on-line parse/unget loop, count and complete restoration."
       },
       {
         "id": "mac:0x000adde6",
@@ -208713,8 +208713,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000adde6: current parse slot line lookup."
       },
       {
         "id": "mac:0x000ae04c",
@@ -208744,8 +208744,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000ae04c: current token position, including the native semantic field remapping already present."
       },
       {
         "id": "linux:universal/q_parse.cpp:13:Com_GetParseThreadInfo",
@@ -208763,8 +208763,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete zero-work helper is inlined throughout Mac parser: direct singleton _g_parse base plus current-slot arithmetic at 0xae064-0xae076. Native uses the same singleton g_parse[0]; no missing thread-local lookup is required."
       },
       {
         "id": "linux:universal/q_parse.cpp:18:Com_InitParseInfo",
@@ -208782,8 +208782,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete initialization helper is inlined in Mac Com_BeginParseSession 0xadc69-0xadcb4: lines=1, unget=0, space=1, quote/csv/negative=0, two empty prefixes and zero backup line/text. Native sets every corresponding field identically."
       },
       {
         "id": "mac:0x000ae708",
@@ -208813,8 +208813,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000ae708: complete parse/unget path, strcmp, warning-versus-error dispatch and boolean result."
       },
       {
         "id": "mac:0x000ae624",
@@ -208844,8 +208844,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000ae624: complete unget clearing, backup cursor/line restore and allow-linebreak parse dispatch."
       },
       {
         "id": "linux:universal/q_parse.cpp:975:Com_Parse1DMatrix",
@@ -208864,7 +208864,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read full Linux delimiter/parse/atof loop. Native has no named body/callsite and no complete Mac parenthesized matrix loop was identified; standalone scalar parsing is insufficient."
       },
       {
         "id": "linux:universal/q_parse.cpp:991:Com_Parse2DMatrix",
@@ -208883,7 +208883,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read full Linux outer delimiters, row loop and x-stride offsets. Native has no body/callsite and complete Mac nested matrix identity remains missing."
       },
       {
         "id": "linux:universal/q_parse.cpp:1005:Com_Parse3DMatrix",
@@ -208902,7 +208902,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read full Linux outer delimiters, depth loop and x*y-stride offsets. Native has no body/callsite and complete Mac nested matrix identity remains missing."
       },
       {
         "id": "linux:universal/q_parse.cpp:359:Com_ParseCSV",
@@ -208920,8 +208920,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete helper is inlined in Mac Com_ParseExt 0xae157-0xae25e plus shared returns 0xae275-0xae281: CR/LF start rules, token positions, comma/LF handling, CR suppression, doubled quotes, all 1023-byte write caps and EOF cursor. Entire native csv branch compared, not inferred from a partial quote loop."
       },
       {
         "id": "mac:0x000ae056",
@@ -208951,8 +208951,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xae056, especially 0xae4fb-0xae500: recognized escaped quote/backslash skips the following-character newline check; native previously incremented lines there. Added the matching escape gate. Compared the complete CSV, whitespace/comment, quoted, space-delimited, numeric/exponent, identifier and punctuation paths; table 0x3486c0 checked. Preserved defined native long-token/closing-quote bounds and terminal-exponent NUL guard rather than Mac out-of-buffer effects. Compiled and reviewed; existing sanitizer parser cases passed, changed escape-followed-by-LF path not exercised."
       },
       {
         "id": "mac:0x000ae7ba",
@@ -208982,8 +208982,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000ae7ba: complete parse/unget sequence, atof and double-to-float result rounding."
       },
       {
         "id": "linux:universal/q_parse.cpp:951:Com_ParseFloatOnLine",
@@ -209002,7 +209002,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read Linux Com_ParseOnLine-to-atof wrapper. Mac Float_Parse/native UI utility adds nonempty-token failure handling; that is not a complete identity for empty-token conversion. No unconditional matching float wrapper/callsite identified."
       },
       {
         "id": "mac:0x000ae824",
@@ -209032,8 +209032,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000ae824: complete parse/unget sequence and atoi result."
       },
       {
         "id": "linux:universal/q_parse.cpp:967:Com_ParseIntOnLine",
@@ -209051,8 +209051,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete helper is inlined in Mac Com_SetRecommended 0x2f1fe-0x2f211: Com_ParseOnLine followed directly by atoi and result capture. Native common.c uses atoi(Com_ParseOnLine(&text)) at the same semantic site; only this complete helper, not Com_SetRecommended, is certified."
       },
       {
         "id": "mac:0x000ae672",
@@ -209082,8 +209082,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000ae672: complete special non-space-delimited unget return and ordinary backup restore, then allowLineBreaks=0."
       },
       {
         "id": "linux:universal/q_parse.cpp:913:Com_ParseRestOfLine",
@@ -209102,7 +209102,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read full Linux on-line token loop, spaced concatenation and shared line-buffer result. Native has no body/callsite implementing that complete operation and no full Mac identity identified."
       },
       {
         "id": "mac:0x000adffe",
@@ -209132,8 +209132,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000adffe: all five restored fields and boolean normalization."
       },
       {
         "id": "mac:0x000adfb4",
@@ -209163,8 +209163,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000adfb4: all five captured fields in order."
       },
       {
         "id": "mac:0x000add6e",
@@ -209194,8 +209194,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000add6e: parseInfoNum reset only."
       },
       {
         "id": "mac:0x000ade22",
@@ -209225,8 +209225,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand-compared complete Mac 0xade22 slot lookup, formatting inputs, active-session filename/line/prefix output and no-session output. Native keeps bounded vsnprintf into the existing 4096-byte stack buffer where Mac uses unbounded vsprintf; this defined native formatting boundary is preserved."
       },
       {
         "id": "mac:0x000adece",
@@ -209256,8 +209256,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand-compared complete Mac 0xadece slot lookup, formatting inputs, active-session filename/line/prefix output and no-session output. Native keeps bounded vsnprintf into the existing 4096-byte stack buffer where Mac uses unbounded vsprintf; this defined native formatting boundary is preserved."
       },
       {
         "id": "mac:0x000addc2",
@@ -209287,8 +209287,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000addc2: current-slot boolean normalization and CSV field store."
       },
       {
         "id": "mac:0x000adda0",
@@ -209318,8 +209318,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000adda0: current-slot boolean normalization and quote flag store."
       },
       {
         "id": "linux:universal/q_parse.cpp:111:Com_SetParseNegativeNumbers",
@@ -209338,7 +209338,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Mac has only a zero-address .eh label. Native reads/initializes negativeNumbers but no native setting callsite or complete matching Mac nonzero-normalizing setter was identified."
       },
       {
         "id": "linux:universal/q_parse.cpp:131:Com_SetScriptErrorPrefix",
@@ -209357,7 +209357,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Mac has only a zero-address .eh label. Native reads/initializes errorPrefix but no native setting callsite or complete matching Mac setter was identified."
       },
       {
         "id": "mac:0x000ade04",
@@ -209387,8 +209387,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000ade04: current-slot warning prefix pointer store."
       },
       {
         "id": "mac:0x000add7e",
@@ -209418,8 +209418,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000add7e: current-slot boolean normalization and space flag store."
       },
       {
         "id": "linux:universal/q_parse.cpp:824:Com_SkipBracedSection",
@@ -209438,7 +209438,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read full Linux maximum-nesting/exceeded predicate and token loop. Native has no named body/callsite and no complete Mac maximum-nesting helper identity was identified."
       },
       {
         "id": "mac:0x000ae6ca",
@@ -209468,8 +209468,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000ae6ca: null cursor return, LF accounting, consumption through LF and cursor update."
       },
       {
         "id": "mac:0x000adf6a",
@@ -209499,8 +209499,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000adf6a: double-unget error, unget flag, and previous-to-current token position restoration already present natively."
       },
       {
         "id": "linux:universal/q_parse.cpp:248:SkipWhitespace",
@@ -209518,8 +209518,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete helper is inlined in Mac Com_ParseExt 0xae0b5-0xae100 and EOF return 0xae260: signed-byte <=32 loop, NUL result, LF line count/newline flag and first nonspace pointer. Native skip_whitespace block matches all operations."
       }
     ],
     "universal/q_shared": [
@@ -209551,8 +209551,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x0002923c: zero/NaN branch, (2-abs(frac))*frac, roll multiplication, AngleVectors arguments, scale and three sequential position updates."
       },
       {
         "id": "linux:universal/q_shared.cpp:164:BigLong",
@@ -209571,7 +209571,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux dispatches through _BigLong, but native/Mac Swap_Init retain only five Little* pointers; no native BigLong body, callers, or corresponding Mac Big* dispatch table was identified."
       },
       {
         "id": "linux:universal/q_shared.cpp:159:BigShort",
@@ -209590,7 +209590,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux dispatches through _BigShort, but native/Mac Swap_Init retain only five Little* pointers; no native BigShort body, callers, or corresponding Mac Big* dispatch table was identified."
       },
       {
         "id": "mac:0x001d3722",
@@ -209612,7 +209612,7 @@
         ],
         "linux": [],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Misfiled row: actual native source is cgame_mp/cg_view_mp.c, function CG_OffsetThirdPersonView. Read Mac 0x1d3722 and native function; COD2_CODX orbit mode is a separate native boundary. Candidate precision mismatch at Mac 0x1d39dd-0x1d39f7 (atan2 rounds to float before degree multiplication) belongs with cgame owner. Private routing entry supplied; caller not certified."
       },
       {
         "id": "linux:universal/q_shared.cpp:614:CanKeepStringPointer",
@@ -209631,7 +209631,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read the full Linux stack-range and TLS va-buffer ownership predicate. No native body/callsite implementing both range tests or corresponding Mac text identity was identified; va buffer selection alone does not establish this predicate."
       },
       {
         "id": "mac:0x00028314",
@@ -209661,8 +209661,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00028314: unsigned-byte subtraction, 0..9 range, and fallback 7."
       },
       {
         "id": "linux:universal/q_shared.cpp:52:Com_AssembleFilepath",
@@ -209681,7 +209681,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read full Linux length-sum check plus three copies. Native has no named body/callsite or matching filepath diagnostic; no complete Mac three-part assembly identity was identified."
       },
       {
         "id": "linux:universal/q_shared.h:522:Com_BitCheck",
@@ -209699,8 +209699,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete inlined helper compared in Mac DObjGetHierarchyBits 0x74ba4-0x74bc6: arithmetic index>>5, index&31, word load, right shift and low-bit test. Native DObjPartBitIsSet is the complete matching predicate. This does not certify the DObj caller."
       },
       {
         "id": "linux:universal/q_shared.h:532:Com_BitClear",
@@ -209718,8 +209718,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete inlined helper compared in Mac BG_TakePlayerWeapon 0x7bed6-0x7bee9 and 0x7bf54-0x7bf5f: word/bit selection, rotated 0xfffffffe mask, AND store. Native weapons[word] &= ~(1<<bit) is identical for the bit selection; surrounding caller is not certified."
       },
       {
         "id": "linux:universal/q_shared.h:527:Com_BitSet",
@@ -209737,8 +209737,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete inlined helper compared in Mac DObjGetHierarchyBits 0x74ba4-0x74bbb: arithmetic index>>5, index&31, 1<<bit and OR into the selected word. Native DObjSetPartBit is the complete matching helper. This does not certify the DObj caller."
       },
       {
         "id": "mac:0x00029666",
@@ -209768,8 +209768,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00029666: backward slash/dot scan excluding path[0], 63-byte copy and termination, then bounded formatting."
       },
       {
         "id": "mac:0x00028364",
@@ -209799,8 +209799,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00028364: last-dot tracking, both separator resets, and end-pointer result."
       },
       {
         "id": "linux:universal/q_shared.cpp:33:Com_GetFilenameSubString",
@@ -209818,8 +209818,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux naming alias, not a missing Mac implementation: hand-compared the full helper semantics with native Com_SkipPath and Mac 0x2832e: complete slash-only basename scan."
       },
       {
         "id": "mac:0x000287dc",
@@ -209849,8 +209849,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000287dc: TLS keys 1/2/3 and typed va/error/trace array indexing; host ABI supplies each native element stride."
       },
       {
         "id": "mac:0x0002832e",
@@ -209871,8 +209871,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x0002832e: slash-only last-component scan and empty input result."
       },
       {
         "id": "mac:0x000293c4",
@@ -209902,8 +209902,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000293c4: complete last-dot/separator scan and copy through the extension boundary."
       },
       {
         "id": "linux:universal/q_shared.cpp:116:Com_StripFilename",
@@ -209922,7 +209922,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Mac retains only a zero-address .eh label. Native has no body/callsite for basename-offset copy and NUL; Com_SkipPath establishes only the basename subhelper, not this full copy operation."
       },
       {
         "id": "linux:universal/q_shared.cpp:670:Com_WideToNarrow",
@@ -209941,7 +209941,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read Linux odd-byte UTF-16 narrowing and final len-1 NUL. Native has no named body/callsite and no complete matching Mac narrowing loop was identified."
       },
       {
         "id": "mac:0x00028718",
@@ -209971,8 +209971,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00028718: vsnprintf arguments, returned length and forced final NUL."
       },
       {
         "id": "linux:universal/q_shared.h:379:FloatFromBits",
@@ -209990,8 +209990,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux naming alias, not a missing Mac implementation: hand-compared the full helper semantics with native FloatReadNoSwap and Mac 0x2854e: complete raw int-bits-to-float identity."
       },
       {
         "id": "linux:universal/q_shared.cpp:266:FloatNoSwap",
@@ -210010,7 +210010,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux float-to-float identity has no native callable body/callsite identified. Mac FloatReadNoSwap is an int-bits-to-float API, which alone does not establish the float-input interface."
       },
       {
         "id": "linux:universal/q_shared.cpp:289:FloatNoSwapAsInt",
@@ -210028,8 +210028,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux naming alias, not a missing Mac implementation: hand-compared the full helper semantics with native FloatWriteNoSwap and Mac 0x28590: complete float-bits-as-int identity."
       },
       {
         "id": "mac:0x0002854e",
@@ -210050,8 +210050,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x0002854e: raw int-bits-to-float load, without numeric conversion."
       },
       {
         "id": "mac:0x00028516",
@@ -210072,8 +210072,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00028516: all four byte lanes and bit reinterpretation, without numeric conversion."
       },
       {
         "id": "linux:universal/q_shared.cpp:249:FloatSwap",
@@ -210092,7 +210092,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux float-to-float byte reversal has no native body/callsite identified. Mac FloatReadSwap and FloatWriteSwap establish permutations but differ in typed input/output contracts; a complete float-to-float caller identity remains missing."
       },
       {
         "id": "linux:universal/q_shared.cpp:271:FloatSwapAsInt",
@@ -210110,8 +210110,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux naming alias, not a missing Mac implementation: hand-compared the full helper semantics with native FloatWriteSwap and Mac 0x28560: complete four-lane float-bit byte reversal."
       },
       {
         "id": "mac:0x00028590",
@@ -210132,8 +210132,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00028590: raw float bits returned as int."
       },
       {
         "id": "mac:0x00028560",
@@ -210154,8 +210154,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00028560: all four float-bit byte lanes returned as swapped int bits."
       },
       {
         "id": "mac:0x00028ec4",
@@ -210185,8 +210185,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00028ec4: SSE abs-mask, subtraction from 2.0 and final multiply."
       },
       {
         "id": "mac:0x00028700",
@@ -210216,8 +210216,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00028700: 0x92-to-apostrophe substitution and signed-byte return."
       },
       {
         "id": "mac:0x00028692",
@@ -210247,8 +210247,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00028692: complete color-escape recognition, printable range, in-place copy and NUL termination."
       },
       {
         "id": "mac:0x0002864a",
@@ -210278,8 +210278,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x0002864a: complete digit-color skip and visible-character counting loop."
       },
       {
         "id": "linux:universal/q_shared.cpp:355:I_isalnum",
@@ -210297,8 +210297,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete helper is inlined in Mac I_isforfilename 0x29432-0x29458: both alphabetic ranges followed by the digit range and merged boolean. Native I_isforfilename contains the same complete predicate."
       },
       {
         "id": "linux:universal/q_shared.cpp:345:I_isalpha",
@@ -210316,8 +210316,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete helper is inlined in Mac I_isforfilename 0x29432-0x29447: both unsigned ASCII alphabetic range tests and boolean merge. Native I_isforfilename contains the same complete predicate; no claim is made about another caller."
       },
       {
         "id": "mac:0x000285c2",
@@ -210347,8 +210347,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000285c2: unsigned c-minus-48 range through 9."
       },
       {
         "id": "mac:0x0002942c",
@@ -210378,8 +210378,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x0002942c: both ASCII alphabetic ranges, digits, underscore and hyphen branches."
       },
       {
         "id": "mac:0x00028598",
@@ -210409,8 +210409,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00028598: unsigned c-minus-97 range through 25."
       },
       {
         "id": "linux:universal/q_shared.cpp:330:I_isprint",
@@ -210428,8 +210428,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete printable-character predicate is inlined in Mac I_CleanStr 0x286ab-0x286b0, checking unsigned byte c-32 <=94. Native I_CleanStr retains exactly ASCII 32..126 at that callsite."
       },
       {
         "id": "mac:0x000285ac",
@@ -210459,8 +210459,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000285ac: unsigned c-minus-65 range through 25."
       },
       {
         "id": "mac:0x0002937c",
@@ -210490,8 +210490,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x0002937c: signed-byte ordering, 0x7fffffff countdown and normalized result."
       },
       {
         "id": "mac:0x000295ee",
@@ -210521,8 +210521,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000295ee: complete inlined signed-byte compare, ASCII uppercasing, count and normalized result."
       },
       {
         "id": "linux:universal/q_shared.cpp:445:I_stricmpwild",
@@ -210541,7 +210541,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read complete Linux recursive star/question-mark matcher; native has no named body/callsite and a complete corresponding Mac recursive wildcard comparison was not identified."
       },
       {
         "id": "mac:0x0002920c",
@@ -210571,8 +210571,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x0002920c: signed-byte ASCII uppercase test, conversion and original-pointer return."
       },
       {
         "id": "mac:0x000296fe",
@@ -210602,8 +210602,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x296fe / diagnostic at 0x29720: restored the 0x15 error prefix. Complete length/overflow and capacity-minus-length strncpy/NUL sequence compared; compiled and reviewed, diagnostic path not exercised."
       },
       {
         "id": "mac:0x00028606",
@@ -210633,8 +210633,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00028606: byte loads before count equality check, signed-byte ordering, NUL and normalized result."
       },
       {
         "id": "mac:0x000285d6",
@@ -210664,8 +210664,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000285d6: strncpy of capacity-minus-one followed by final NUL."
       },
       {
         "id": "mac:0x00029160",
@@ -210695,8 +210695,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00029160: complete core: count check, signed bytes, ASCII uppercasing, NUL termination and normalized result."
       },
       {
         "id": "linux:universal/q_shared.h:407:I_strnicmpInline",
@@ -210715,7 +210715,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux header labels this helper original-name-unknown and uses tolower rather than I_strnicmp ASCII uppercasing. No complete matching native/Mac lowercasing caller was established; ASCII core similarity is insufficient for the full byte/locale contract."
       },
       {
         "id": "mac:0x000291da",
@@ -210745,8 +210745,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000291da: signed-byte lowercase range, conversion and original-pointer return."
       },
       {
         "id": "mac:0x0002883c",
@@ -210776,8 +210776,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand-compared complete Mac 0x2883c scans, optional leading separator, early key termination and final cursor. The existing optional COD2_FEATURE_NET_HARDENING variant bounds key/value stores at 8191 bytes while continuing the input scan; this deliberate bounded native network boundary is preserved. Stock scans match Mac."
       },
       {
         "id": "mac:0x000288ba",
@@ -210807,8 +210807,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand-compared complete Mac 0x288ba: length limit, forbidden key separator, key/value scans, case-sensitive match, first-match removal and exits. Native deliberately uses memmove for the overlapping tail where Mac strcpy relies on historical libc behavior; retained defined overlap-safe behavior."
       },
       {
         "id": "mac:0x000289c2",
@@ -210838,8 +210838,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand-compared complete Mac 0x289c2: length limit, forbidden key separator, key/value scans, case-sensitive match, first-match removal and exits. Native deliberately uses memmove for the overlapping tail where Mac strcpy relies on historical libc behavior; retained defined overlap-safe behavior."
       },
       {
         "id": "mac:0x00028b08",
@@ -210869,8 +210869,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x28b08: restored all six exact diagnostic strings, including 0x15 prefixes and newline layout. Complete sanitization limits, invalid-key exits, remove-before-empty-value behavior, formatting and append branches compared. Native COD2_NET_BOUNDS retains >=1024 rejection so the appended NUL fits; optional net-hardening bounds are preserved. Compiled and reviewed; existing CoD2x info fixture exercises large values, bounds and replacement, not each diagnostic."
       },
       {
         "id": "mac:0x00028ce6",
@@ -210900,8 +210900,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x28ce6: restored all six exact diagnostic strings, including 0x15 prefixes and newline layout. Complete sanitization limits, invalid-key exits, remove-before-empty-value behavior, formatting and append branches compared. Preserved COD2_CODX >=8192 capacity adaptation; stock retains Mac's unusual >1024 combined-length limit even for the Big API. Compiled and reviewed; existing CoD2x info fixture exercises large values, bounds and replacement, not each diagnostic."
       },
       {
         "id": "mac:0x00028aca",
@@ -210931,8 +210931,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00028aca: quote and semicolon rejection, then boolean success."
       },
       {
         "id": "mac:0x00029478",
@@ -210962,8 +210962,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x29478 / diagnostic at 0x29508: restored the 0x15 oversize prefix. Complete null handling, 8192 limit, alternating result buffers, key/value scans and inlined case-insensitive comparison compared; compiled and reviewed, oversize diagnostic not exercised."
       },
       {
         "id": "linux:universal/q_shared.cpp:185:LittleFloat",
@@ -210982,7 +210982,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read Linux runtime dispatch wrapper. Mac/native Swap_Init target bindings were compared, but native exposes no callable LittleFloat body or consumer of its local pointer. A complete matching indirect-call site was not identified; binding alone is insufficient."
       },
       {
         "id": "linux:universal/q_shared.cpp:190:LittleFloatAsInt",
@@ -211001,7 +211001,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read Linux runtime dispatch wrapper. Mac/native Swap_Init target bindings were compared, but native exposes no callable LittleFloatAsInt body or consumer of its local pointer. A complete matching indirect-call site was not identified; binding alone is insufficient."
       },
       {
         "id": "linux:universal/q_shared.h:373:LittleLong",
@@ -211020,7 +211020,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read Linux header little-endian identity helper. Native has no same-name callable/inline definition or proven caller identity; the separate LongNoSwap routine proves the target arithmetic but not this header helper placement."
       },
       {
         "id": "linux:universal/q_shared.cpp:169:LittleLong64",
@@ -211039,7 +211039,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read Linux runtime dispatch wrapper. Mac/native Swap_Init target bindings were compared, but native exposes no callable LittleLong64 body or consumer of its local pointer. A complete matching indirect-call site was not identified; binding alone is insufficient."
       },
       {
         "id": "linux:universal/q_shared.cpp:180:LittleLongRuntime",
@@ -211058,7 +211058,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read Linux runtime dispatch wrapper. Mac/native Swap_Init target bindings were compared, but native exposes no callable LittleLongRuntime body or consumer of its local pointer. A complete matching indirect-call site was not identified; binding alone is insufficient."
       },
       {
         "id": "linux:universal/q_shared.h:368:LittleShort",
@@ -211077,7 +211077,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read Linux header little-endian identity helper. Native has no same-name callable/inline definition or proven caller identity; the separate ShortNoSwap routine proves the target arithmetic but not this header helper placement."
       },
       {
         "id": "linux:universal/q_shared.cpp:175:LittleShortRuntime",
@@ -211096,7 +211096,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read Linux runtime dispatch wrapper. Mac/native Swap_Init target bindings were compared, but native exposes no callable LittleShortRuntime body or consumer of its local pointer. A complete matching indirect-call site was not identified; binding alone is insufficient."
       },
       {
         "id": "mac:0x0002850a",
@@ -211126,8 +211126,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x0002850a: unchanged low and high 32-bit halves of the 64-bit input."
       },
       {
         "id": "mac:0x000283f6",
@@ -211157,8 +211157,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000283f6: all eight input byte lanes and their reversed output positions."
       },
       {
         "id": "mac:0x000283ee",
@@ -211188,8 +211188,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000283ee: unchanged 32-bit input return."
       },
       {
         "id": "mac:0x000283c6",
@@ -211219,8 +211219,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000283c6: four byte extraction/shift/add lanes."
       },
       {
         "id": "linux:universal/q_shared.cpp:1250:OrientationConcatenate",
@@ -211239,7 +211239,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read Linux four-transform composition. Mac has only a zero-address .eh label and native has no body/callsite; the four scalar transform aliases do not establish a complete concatenate operation."
       },
       {
         "id": "mac:0x000290d2",
@@ -211260,8 +211260,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000290d2: three row dot products with sequential output stores and exact SSE addition order."
       },
       {
         "id": "linux:universal/q_shared.cpp:1243:OrientationDirToLocal",
@@ -211279,8 +211279,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux naming alias, not a missing Mac implementation: hand-compared the full helper semantics with native OrientationDirFromWorldDir and Mac 0x290d2: all three ordered row dot products."
       },
       {
         "id": "linux:universal/q_shared.cpp:1217:OrientationDirToWorld",
@@ -211298,8 +211298,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux naming alias, not a missing Mac implementation: hand-compared the full helper semantics with native OrientationDirToWorldDir and Mac 0x28fb6: all three ordered column dot products."
       },
       {
         "id": "mac:0x00028fb6",
@@ -211320,8 +211320,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00028fb6: three column dot products with sequential output stores and exact SSE addition order."
       },
       {
         "id": "linux:universal/q_shared.cpp:1258:OrientationPlaneToLocal",
@@ -211340,7 +211340,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read Linux direction transform plus plane distance subtraction. Native has no body/callsite and no complete Mac plane-distance block was identified; the direction helper alone is insufficient."
       },
       {
         "id": "linux:universal/q_shared.cpp:1224:OrientationPlaneToWorld",
@@ -211359,7 +211359,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read Linux direction transform plus plane distance addition. Native has no body/callsite and no complete Mac plane-distance block was identified; the direction helper alone is insufficient."
       },
       {
         "id": "mac:0x00029042",
@@ -211380,8 +211380,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00029042: all three origin subtractions before output stores, then three ordered row dot products."
       },
       {
         "id": "linux:universal/q_shared.cpp:1230:OrientationPosToLocal",
@@ -211399,8 +211399,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux naming alias, not a missing Mac implementation: hand-compared the full helper semantics with native OrientationPosFromWorldPos and Mac 0x29042: three subtractions and all three ordered row dot products."
       },
       {
         "id": "linux:universal/q_shared.cpp:1210:OrientationPosToWorld",
@@ -211418,8 +211418,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux naming alias, not a missing Mac implementation: hand-compared the full helper semantics with native OrientationPosToWorldPos and Mac 0x28f1c: all three transforms and origin-addition order."
       },
       {
         "id": "mac:0x00028f1c",
@@ -211440,8 +211440,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00028f1c: three ordered column transforms, origin added before the second and third terms, and sequential output stores."
       },
       {
         "id": "mac:0x0002975c",
@@ -211471,8 +211471,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x2975c / diagnostic at 0x29787: restored the 0x15 bad-field prefix. Decoded all eight jump-table targets at 0x328380; compared field-count branches, absent/negative types, callbacks, three string capacities, integer/bool/float conversion and float-before-1000 multiplication. Compiled and reviewed, diagnostic path not exercised."
       },
       {
         "id": "linux:universal/q_shared.cpp:1293:ScaledOrientationPlaneToLocal",
@@ -211491,7 +211491,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read full Linux direction transform and scaled distance division; native has no named body/callsite and complete Mac plane/scale identity remains missing."
       },
       {
         "id": "linux:universal/q_shared.cpp:1271:ScaledOrientationPlaneToWorld",
@@ -211510,7 +211510,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read full Linux direction transform and scaled distance addition; native has no named body/callsite and complete Mac plane/scale identity remains missing."
       },
       {
         "id": "linux:universal/q_shared.cpp:1277:ScaledOrientationPosToLocal",
@@ -211529,7 +211529,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read full Linux origin deltas, reciprocal scale and three ordered dot products; native has no body/callsite and complete Mac scaled-position identity remains missing."
       },
       {
         "id": "linux:universal/q_shared.cpp:1264:ScaledOrientationPosToWorld",
@@ -211548,7 +211548,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read full Linux scale-after-dot then origin additions; native has no body/callsite and complete Mac scaled-position identity remains missing."
       },
       {
         "id": "mac:0x000283bc",
@@ -211578,8 +211578,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000283bc: signed 16-bit narrowing of the input."
       },
       {
         "id": "mac:0x000283ae",
@@ -211609,8 +211609,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000283ae: 16-bit byte rotation and sign extension."
       },
       {
         "id": "mac:0x000292fe",
@@ -211640,8 +211640,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x000292fe: endianness probe, all five little-endian function-pointer bindings and all five swapped bindings."
       },
       {
         "id": "linux:universal/q_shared.cpp:305:Swap_InitBigEndian",
@@ -211660,7 +211660,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Mac/native Swap_Init swapped branch was compared, but Linux helper additionally binds two Big* pointers and uses a float-input wrapper. No complete identity for those additional dispatch contracts was identified."
       },
       {
         "id": "linux:universal/q_shared.cpp:294:Swap_InitLittleEndian",
@@ -211679,7 +211679,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Mac/native Swap_Init no-swap branch was compared, but Linux helper additionally binds two Big* pointers and uses a float-input wrapper. No complete identity for those additional dispatch contracts was identified."
       },
       {
         "id": "mac:0x00028ef4",
@@ -211709,8 +211709,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete native function/core with Mac 0x00028ef4: 1.0 subtraction, scalar square root and final 1.0 subtraction."
       },
       {
         "id": "mac:0x00028750",
@@ -211740,8 +211740,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x28750, especially 0x287b5: restored the 0x15-prefixed overrun diagnostic. Complete TLS-buffer selection, signed modulo-two rotation, vsnprintf, forced NUL and unsigned length rejection match. Compiled and reviewed; existing stock/CoD2x engine-chains fixture exercises the corrected overflow diagnostic."
       }
     ],
     "universal/surfaceflags": [
@@ -211773,8 +211773,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete Mac 0xbcad0: case-insensitive default check, exactly 22 searched names, masked surfaceFlags>>20 result and -1 miss. Script also compared all 54 native infoParms names and all four integer fields with Mac data at 0x348820, including both zero terminators; all match."
       },
       {
         "id": "mac:0x000bcb46",
@@ -211804,8 +211804,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete Mac 0xbcb46: unsigned index-minus-one range 0..21, indexed name return and default fallback. Script also compared all 54 native infoParms names and all four integer fields with Mac data at 0x348820, including both zero terminators; all match."
       }
     ],
     "unix/unix_dir": [

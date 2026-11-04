@@ -120,7 +120,7 @@ static jmp_buf formatter_error;
 static int expecting_formatter_error;
 static void *Sys_GetValue(int key) { assert(key == 1); return &formatter; }
 static void Com_Error(int code, const char *message, ...) {
-    assert(expecting_formatter_error && code == 1 && !strcmp(message, "va string too long"));
+    assert(expecting_formatter_error && code == 1 && !strcmp(message, "\025Attempted to overrun string in call to va()"));
     longjmp(formatter_error, 1);
 }
 static struct { const char *binding; } keys[256];

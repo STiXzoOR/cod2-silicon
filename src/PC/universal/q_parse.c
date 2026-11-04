@@ -131,7 +131,11 @@ void Com_BeginParseSession(const char *filename)
                 Com_Printf("%i. %s\n", i, g_parse[0].parseInfo[i].parseFile);
             }
         }
+#if defined(COD2_X64)
+        Com_Error(0, "\025Com_BeginParseSession: session overflow trying to parse %s\n", filename);
+#else
         Com_Error(0, "Com_BeginParseSession: session overflow trying to parse %s\n", filename);
+#endif
     }
 
     g_parse[0].parseInfoNum++;
@@ -448,6 +452,9 @@ skip_whitespace:
 
         text++;
         while (1) {
+#if defined(COD2_X64)
+            int escaped = 0;
+#endif
             c = *text;
             text++;
 
@@ -456,6 +463,9 @@ skip_whitespace:
                 if (next == '"' || next == '\\') {
                     c = next;
                     text++;
+#if defined(COD2_X64)
+                    escaped = 1;
+#endif
                 }
             } else if (c == '"' || !c) {
                 if (pi->keepStringQuotes) {
@@ -467,7 +477,11 @@ skip_whitespace:
                 return pi->token;
             }
 
+#if defined(COD2_X64)
+            if (!escaped && *text == '\n')
+#else
             if (*text == '\n')
+#endif
                 pi->lines++;
 
             if (len <= 1022)
