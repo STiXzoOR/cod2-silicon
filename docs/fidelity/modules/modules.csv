@@ -117,8 +117,8 @@ cgame/offhandweapons_mp,8,0,0,0,8
 client/cl_cgame_mp,70,0,0,0,70
 client/cl_cin_mp,12,0,0,0,12
 client/cl_console_mp,46,0,0,0,46
-client/cl_input,85,0,0,0,85
-client/cl_keys_mp,25,0,0,0,25
+client/cl_input,85,78,3,4,0
+client/cl_keys_mp,25,20,3,2,0
 client/cl_main_mp,96,0,0,0,96
 client/cl_main_pc_mp,20,0,0,0,20
 client/cl_net_chan_mp,6,0,0,0,6

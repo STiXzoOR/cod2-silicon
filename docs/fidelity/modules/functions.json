@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 4897,
-      "intentional": 1550,
-      "equal": 2549,
-      "fixed": 461
+      "unchecked": 4787,
+      "intentional": 1556,
+      "equal": 2647,
+      "fixed": 467
     },
     "scopes": {
       "unassigned": 777,
@@ -73742,8 +73742,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x189894/0x1898f3/0x189902 and the other inlined CL_KeyState blocks replace accumulated msec with com_frameTime when an active key has zero downtime; native added it. Corrected shared helper. Compared speed scaling, strafe gate, right/left and up/down order, fraction clamps and SSE multiply order. Compiled and reviewed; existing stance command_controls group passed, zero-downtime accumulation case not independently exercised."
       },
       {
         "id": "mac:0x00188ee2",
@@ -73764,8 +73764,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x188ee2-0x18908e button slots 14-26 and10, all fourteen command bits, active/wasPressed consumption, UI catch bit0x40000, unsigned pm_type range2..4 and shellshock bit0x800. Inline CL_ConsumeButtonPress checked with the pm_type caller. Existing stance fixture flying_jump_range and released_stance_press passed."
       },
       {
         "id": "mac:0x00189f0e",
@@ -73786,8 +73786,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x189f0e-0x18a032 call order, zeroed 28-byte command fields, old-pitch +/-90 clamp, weapon/offhand byte truncation, signed server-time cap at5001, and all three ((viewangle+kick)*182.04444885253906f) truncation/mask stores. Existing stance command_controls passed."
       },
       {
         "id": "mac:0x001885ac",
@@ -73808,8 +73808,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1885ac-0x188b9e: scripted all69 ordered command-name/handler pairs match; hand-compared cl_analog_attack_threshold 0.8/0.0001/1 flags0x1000, cl_stanceHoldTime300/0/1000 flags0x1000 and cl_nodelta false flags0x1000. Native additionally initializes optional gamepad and optional CoD2x sensitivity_MG; retained feature boundary."
       },
       {
         "id": "mac:0x0018a1ce",
@@ -73830,8 +73830,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x18a1ce-0x18a1ee active-state8 gate, CL_SyncGpu call before CL_SendCmdInternal, and inactive return."
       },
       {
         "id": "mac:0x0018996e",
@@ -73852,8 +73852,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x189a2e/0x189a7e/0x189ad2/0x189b22 and remaining inlined CL_KeyState blocks overwrite msec for active zero-downtime keys; corrected helper. Compared held stance priority, 0x2000 override bit, stance hold timeout, ADS/binocular walk toggle, ordered side/forward fractions and ClampChar. Native optional gamepad addition retained. Compiled and reviewed; existing nine-group stance fixture passed; zero-downtime accumulated case not exercised."
       },
       {
         "id": "mac:0x00187f66",
@@ -73874,8 +73874,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x187f66-0x187fac UI catcher8 and bypass dvar branches, selected mouse accumulator additions and relative UI_MouseEvent arguments. Native absolute-coordinate companion is an added platform event boundary and is not a Mac ledger row."
       },
       {
         "id": "mac:0x0018908e",
@@ -73896,8 +73896,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x18922d-0x189267 and 0x1892f3-0x18932d clamp each axis to the upper bound and then the lower bound. Native returned after upper clamp, differing for negative maximum speeds. Corrected helper to apply both bounds in order. Compared mouse filter/index reset, rate and acceleration arithmetic, pm_flags/eFlags gates, 2.5/2.0 mounted factors, strafe and pitch routing. Existing defined finite-value fallbacks, optional CoD2x sensitivity_MG and gamepad ownership notification retained. Compiled and reviewed; negative maximum-speed case not exercised."
       },
       {
         "id": "mac:0x0018a1ee",
@@ -73918,8 +73918,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x18a1ee-0x18a20c signed state<=4 return, active-state8 return and remaining CL_SendCmdInternal tail call."
       },
       {
         "id": "mac:0x0018a032",
@@ -73940,8 +73940,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x18a032-0x18a1ce command generation for state>6, 128-entry ring, demo/logo/cinematic exits, patch1.3 downloadTempName gate50ms, otherwise1000ms for nonprimed/nonactive, lastPacketSentTime source, netchan.remoteAddress loopback/LAN bypass, previous32-entry packet slot and 1000/cl_maxpackets pacing, and showSend diagnostic. Native active patch1.3 branch matches; older patch branch retained."
       },
       {
         "id": "mac:0x00188b9e",
@@ -73962,8 +73962,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x188b9e-0x188ee2: scripted all69 ordered command removals match initialization. Native additionally shuts down optional gamepad input; retained native feature boundary."
       },
       {
         "id": "mac:0x00188154",
@@ -73984,8 +73984,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Compared Mac 0x188154-0x1885ac complete packet path: state/demo gates, default usercmd, nine-byte header, all reliable commands, 32-command cap, delta validity gates, checksum/hash key, 128-entry usercmd loop, footer, compression and all outPacket stores/fragment drain. Native two MAX_MSGLEN stack buffers replace Mac LargeLocal RAII buffers; no-op CL_WritePacketDbg retained. No binary LargeLocal backend reconstructed. Compiled, not runtime exercised in this unit."
       },
       {
         "id": "mac:0x00187fac",
@@ -74006,8 +74006,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Compared Mac 0x187fac-0x188154 demo/state8-or6 gates, v/qport/count header, packet size/data loop, showSend print and netchan socket/serverAddress send arguments. Native MAX_MSGLEN stack storage replaces Mac LargeLocal allocation/unwind machinery; native voice backend remains the existing replacement. Compiled, not runtime exercised in this unit."
       },
       {
         "id": "mac:0x00187b90",
@@ -74028,8 +74028,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187b90 ordered IN_KeyDown(kb20) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187baa",
@@ -74050,8 +74050,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187baa ordered IN_KeyUp(kb20) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x001879a8",
@@ -74072,8 +74072,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x001879a8 ordered IN_KeyDown(kb14) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x001879c2",
@@ -74094,8 +74094,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x001879c2 ordered IN_KeyUp(kb14) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x0018784c",
@@ -74116,8 +74116,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x0018784c ordered IN_KeyDown(kb3) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187864",
@@ -74138,8 +74138,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187864 ordered IN_KeyUp(kb3) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187ad0",
@@ -74160,8 +74160,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187ad0 ordered IN_KeyDown(kb18) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187aea",
@@ -74182,8 +74182,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187aea ordered IN_KeyUp(kb18) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187b04",
@@ -74204,8 +74204,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187b04 ordered IN_KeyDown(kb15), then IN_KeyDown(kb18) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187b30",
@@ -74226,8 +74226,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187b30 ordered IN_KeyUp(kb15), then IN_KeyUp(kb18) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x001879dc",
@@ -74248,8 +74248,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x001879dc ordered IN_KeyDown(kb15) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x001879f6",
@@ -74270,8 +74270,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x001879f6 ordered IN_KeyUp(kb15) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x001875f0",
@@ -74292,8 +74292,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1875f0-0x187614 signed delta_angles[0] conversion followed by multiplication by binary32 -0.0054931640625 into viewangles[0]."
       },
       {
         "id": "mac:0x0018943e",
@@ -74314,8 +74314,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac handler down/up call for kb11 before cl_stanceTemp=(kb25.active||kb11.active), including both boolean stores. Existing held_stance and stance_handlers passed."
       },
       {
         "id": "mac:0x0018948e",
@@ -74336,8 +74336,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac handler down/up call for kb11 before cl_stanceTemp=(kb25.active||kb11.active), including both boolean stores. Existing held_stance and stance_handlers passed."
       },
       {
         "id": "mac:0x0018781c",
@@ -74358,8 +74358,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x0018781c ordered IN_KeyDown(kb2) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187834",
@@ -74380,8 +74380,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187834 ordered IN_KeyUp(kb2) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187a68",
@@ -74402,8 +74402,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187a68 ordered IN_KeyDown(kb16) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187a82",
@@ -74424,8 +74424,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187a82 ordered IN_KeyUp(kb16) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187e6e",
@@ -74446,8 +74446,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x187e6e-0x187e98 held override gate and exact stance1 store."
       },
       {
         "id": "mac:0x00187e44",
@@ -74468,8 +74468,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x187e44-0x187e6e held override gate and exact stance2 store."
       },
       {
         "id": "mac:0x00187e98",
@@ -74490,8 +74490,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x187e98-0x187ef4 kb12 down, stance0 calls kb10 jump even before override gate; nonzero stance clears only without kb25/kb11 override. Existing stance_handlers passed."
       },
       {
         "id": "mac:0x00187ef4",
@@ -74512,8 +74512,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187ef4 ordered IN_KeyUp(kb12), then IN_KeyUp(kb10) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187614",
@@ -74534,8 +74534,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x187614-0x187696 empty-argument key=-1, duplicate two-key suppression, first free down slot, three-keys diagnostic, already-active return, parsed downtime and active/wasPressed byte stores."
       },
       {
         "id": "mac:0x00187696",
@@ -74556,8 +74556,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x187696-0x187732 empty-argument manual unstick, matched-slot clearing, other-key-held return, active clear, parsed uptime accumulation and unsigned frame_msec/2 fallback. Existing stance handlers exercise ordinary edges."
       },
       {
         "id": "mac:0x00187c2c",
@@ -74578,8 +74578,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187c2c ordered IN_KeyDown(kb23) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187c46",
@@ -74600,8 +74600,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187c46 ordered IN_KeyUp(kb23) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187c60",
@@ -74622,8 +74622,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187c60 ordered IN_KeyDown(kb24) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187c7a",
@@ -74644,8 +74644,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187c7a ordered IN_KeyUp(kb24) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187d54",
@@ -74666,8 +74666,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x187d54-0x187d64 usingAds byte clear."
       },
       {
         "id": "mac:0x001877c0",
@@ -74688,8 +74688,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x001877c0 ordered IN_KeyDown(kb0) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x001877d6",
@@ -74710,8 +74710,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x001877d6 ordered IN_KeyUp(kb0) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x001878ac",
@@ -74732,8 +74732,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x001878ac ordered IN_KeyDown(kb5) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x001878c4",
@@ -74754,8 +74754,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x001878c4 ordered IN_KeyUp(kb5) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x0018787c",
@@ -74776,8 +74776,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x0018787c ordered IN_KeyDown(kb4) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187894",
@@ -74798,8 +74798,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187894 ordered IN_KeyUp(kb4) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187d64",
@@ -74820,8 +74820,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x187d64-0x187da6 kb25/kb11 override gate, signed stance<=0 becomes1, stance1 becomes2 and all others unchanged."
       },
       {
         "id": "mac:0x001875de",
@@ -74842,8 +74842,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x1875de-0x1875f0 kb13 active byte set1."
       },
       {
         "id": "mac:0x0018957e",
@@ -74864,8 +74864,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x18957e-0x1895bc kb13 active clear and freelook-disabled delta-angle centering using -0.0054931640625f."
       },
       {
         "id": "mac:0x00187a10",
@@ -74886,8 +74886,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187a10 ordered IN_KeyDown(kb19), then IN_KeyDown(kb15) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187a3c",
@@ -74908,8 +74908,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187a3c ordered IN_KeyUp(kb19), then IN_KeyUp(kb15) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187b5c",
@@ -74930,8 +74930,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187b5c ordered IN_KeyDown(kb19) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187b76",
@@ -74952,8 +74952,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187b76 ordered IN_KeyUp(kb19) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x001878dc",
@@ -74974,8 +74974,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x001878dc ordered IN_KeyDown(kb6) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x001878f4",
@@ -74996,8 +74996,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x001878f4 ordered IN_KeyUp(kb6) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x0018790c",
@@ -75018,8 +75018,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x0018790c ordered IN_KeyDown(kb7) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187926",
@@ -75040,8 +75040,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187926 ordered IN_KeyUp(kb7) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x001894de",
@@ -75062,8 +75062,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac handler down/up call for kb25 before cl_stanceTemp=(kb25.active||kb11.active), including both boolean stores. Existing held_stance and stance_handlers passed."
       },
       {
         "id": "mac:0x0018952e",
@@ -75084,8 +75084,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac handler down/up call for kb25 before cl_stanceTemp=(kb25.active||kb11.active), including both boolean stores. Existing held_stance and stance_handlers passed."
       },
       {
         "id": "mac:0x00187da6",
@@ -75106,8 +75106,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x187da6-0x187de2 held override gate, signed stance>1 becomes1, stance1 becomes0, remaining stance unchanged."
       },
       {
         "id": "mac:0x00187bc4",
@@ -75128,8 +75128,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187bc4 ordered IN_KeyDown(kb21) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187bde",
@@ -75150,8 +75150,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187bde ordered IN_KeyUp(kb21) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x001877ec",
@@ -75172,8 +75172,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x001877ec ordered IN_KeyDown(kb1) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187804",
@@ -75194,8 +75194,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187804 ordered IN_KeyUp(kb1) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187a9c",
@@ -75216,8 +75216,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187a9c ordered IN_KeyDown(kb17) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187ab6",
@@ -75238,8 +75238,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187ab6 ordered IN_KeyUp(kb17) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187940",
@@ -75260,8 +75260,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187940 ordered IN_KeyDown(kb9) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x0018795a",
@@ -75282,8 +75282,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x0018795a ordered IN_KeyUp(kb9) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187c94",
@@ -75304,8 +75304,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x187c94-0x187cee held override gate, stanceHeld byte, saved stancePosition, com_frameTime snapshot and temporary crouch unless already crouched. Existing stance_taps and stance_hold_timer passed."
       },
       {
         "id": "mac:0x00187cee",
@@ -75326,8 +75326,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x187cee-0x187d40 override gate, held prior-crouch returns stance0 and unconditional stanceHeld clear after gate. Existing stance_taps and timer_during_held_override passed."
       },
       {
         "id": "mac:0x00187974",
@@ -75348,8 +75348,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187974 ordered IN_KeyDown(kb8) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x0018798e",
@@ -75370,8 +75370,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x0018798e ordered IN_KeyUp(kb8) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187f20",
@@ -75392,8 +75392,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187f20 ordered IN_KeyDown(kb27) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187f3a",
@@ -75414,8 +75414,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187f3a ordered IN_KeyUp(kb27) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187d40",
@@ -75436,8 +75436,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x187d40-0x187d54 usingAds byte inverse-of-zero store."
       },
       {
         "id": "mac:0x00187de2",
@@ -75458,8 +75458,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x187de2-0x187e12 held override gate and stance=(stance!=1)."
       },
       {
         "id": "mac:0x00187e12",
@@ -75480,8 +75480,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x187e12-0x187e44 held override gate and stance=(stance!=2)*2."
       },
       {
         "id": "mac:0x00187732",
@@ -75502,8 +75502,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x187732-0x187794 kb12 down first, kb25/kb11 override gate, stance>1 to1, stance1 to0 and otherwise kb10 jump down. Existing raise_without_jumping and stance_handlers passed."
       },
       {
         "id": "mac:0x00187794",
@@ -75524,8 +75524,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187794 ordered IN_KeyUp(kb12), then IN_KeyUp(kb10) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187bf8",
@@ -75546,8 +75546,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187bf8 ordered IN_KeyDown(kb22) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187c12",
@@ -75568,8 +75568,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x00187c12 ordered IN_KeyUp(kb22) calls; Mac byte offsets equal button index*20. Native typed kbutton_t slot and down/up dispatch match."
       },
       {
         "id": "mac:0x00187f54",
@@ -75590,8 +75590,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x187f54-0x187f66 zero-extended kb27 active byte return."
       }
     ],
     "client/cl_keys_mp": [
@@ -75614,8 +75614,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x140194-0x140208 grave/tilde exclusion; console, UI(key|0x400,1), chat priority; disconnected console fallback and otherwise return."
       },
       {
         "id": "mac:0x0013f9e6",
@@ -75636,8 +75636,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x13f9e6-0x13fa3e ordered bind/unbind/unbindall/bindlist command registrations and function targets."
       },
       {
         "id": "mac:0x001412e2",
@@ -75658,8 +75658,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1412e2-0x1418fc: restored devgui first-press dispatch0x141480, UI repeat mask0x603 and toggle/Escape repeat suppression0x14135e, cinematic/demo cancellation and nextdemo clear0x141653, CG interception for keyup0x1415d7, connecting disconnect+sv_killserver0x14175e, server-load menu selection0x141729 and WWW download cancellation0x14184a. Fixed Shift state versus grave binding0x1414f1, output toggle versus console toggle0x14150c, and empty bindings versus NULL0x141583. Escape jump table0x33ade0 decoded. Preserves bounded native256-key storage, stable pointed anykeydown counter, gamepad notification and existing bypass-gated UI query. Mac _anykeydown at0x34acbc initializes to playerKeys+288 but update instructions mutate that pointer by4; reproducing drift would corrupt native control/key storage, so native stable counter is deliberate. Compiled and reviewed; existing UI key-route fixture passed, new dispatcher branches not runtime exercised. devgui is queued through live Cbuf_AddText; no native GUI command registration exists."
       },
       {
         "id": "mac:0x0013f2d6",
@@ -75680,8 +75680,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x13f4a2 compares zero against lineWidth when cursor width difference is negative at scroll0; native compared cursorWidth and then always fell through. Restored zero comparison and retry for nonpositive width. Compared complete0x13f2d6-0x13f572 font/scale path, full-width fit, backward scroll contraction, cursor visibility loop and drawWidth expansion. Compiled and reviewed; nonpositive-width retry case not exercised."
       },
       {
         "id": "mac:0x00140004",
@@ -75702,8 +75702,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x140004-0x140194 complete character path: clipboard recursive signed-byte events/free, Ctrl+C clear, backspace memmove including terminator, Ctrl+A and Ctrl+E cursor behavior, control-character rejection, overwrite/insert 255 limit, append terminator and scroll adjustment. Inline Field_PasteClipboard checked in both callers."
       },
       {
         "id": "mac:0x0013fa86",
@@ -75724,8 +75724,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x13fa86-0x13fcd8 visible text copy limit256-scroll, cursor offset, fixed font/unit scale/style0 versus proportional font/normalized scale/style3, vertAlign5 real-width/height conversions, underscore/bar selection, text-height baseline and zero drawWidth fallback256. showCursor is unused in Mac as in native."
       },
       {
         "id": "mac:0x00140208",
@@ -75746,8 +75746,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1403ee-0x140468 Ctrl+Left decrements once then consumes preceding alphanumerics only, stopping at punctuation; native also consumed punctuation. Removed that second loop natively. Compared full0x140208-0x1404fc Shift+Insert clipboard, delete, Ctrl+Right two loops, left scroll clamp, Home/Ctrl+A, End/Ctrl+E, insert-mode inversion and UI-started scroll gate, including inline helpers. Compiled and reviewed, cursor-navigation change not runtime exercised."
       },
       {
         "id": "mac:0x0013f582",
@@ -75768,8 +75768,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x13f582-0x13f66c case-insensitive prefix filter, first-match copy/exact marker, empty-string handling, common-prefix lowercase scan and exact-match preservation. Inline Mac ctype calls correspond to native tolower."
       },
       {
         "id": "mac:0x0013fda6",
@@ -75790,8 +75790,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x13fda6-0x140004 usage and key error paths, lowercase key normalization, argc2 query, single argument raw preservation versus multiargument quoting of space-containing args,1024-byte bounded concatenation and typed binding replacement/modified flags."
       },
       {
         "id": "mac:0x001411c6",
@@ -75812,8 +75812,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x1411c6-0x1412e2 all256 slots, skips NULL/empty binding, untranslated key-name conversion including semicolon and hex fallback, and exact name/quoted-binding output."
       },
       {
         "id": "mac:0x001418fc",
@@ -75834,8 +75834,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac0x1418fc-0x14198c and native both clear pointed anykeydown initially then release every down key through CL_KeyEvent and clear all256 down/repeat slots. Native keeps anykeydown fixed at playerKeys+288 and saturates its pointed count during releases. Mac CL_KeyEvent0x141474/0x1415ad instead moves pointer itself by4; exact-entry disassembly and initializer0x34acbc=0x130e0a0 establish that unsafe original layout quirk. Native defined storage retained. Actual generated native client/dedicated aliases derive PlayerKeyState.keys at296 in aligned4392-byte storage; raw fallback292 is not the active Mac graph. No shared-data edit needed."
       },
       {
         "id": "mac:0x0013f9ba",
@@ -75856,8 +75856,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x13f9ba-0x13f9da inline native helper: -1 empty-string sentinel and otherwise typed key binding pointer return."
       },
       {
         "id": "mac:0x0013f2ca",
@@ -75878,8 +75878,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x13f2ca-0x13f2d6 pointed mode integer return."
       },
       {
         "id": "mac:0x0013f860",
@@ -75900,8 +75900,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x13f860-0x13f986 with inline native body: -1 and unsigned range sentinels, French language1 digit map, printable uppercase except quote, untranslated semicolon table selection, localized/unlocalized table lookup and lowercase hexadecimal fallback. Scripted all98 ordinary+98 localized name/key pairs and10 French digit mappings match binary bytes."
       },
       {
         "id": "mac:0x0013f986",
@@ -75922,8 +75922,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x13f986-0x13f9ba inline native helper: -1 early exit, ReplaceStringInternal on typed key binding slot, then dvar_modifiedFlags|=1."
       },
       {
         "id": "mac:0x0013f572",
@@ -75944,8 +75944,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x13f572-0x13f582 pointed mode integer store from argument."
       },
       {
         "id": "mac:0x0013fa3e",
@@ -75966,8 +75966,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x13fa3e-0x13fa86 local client0 selection and all256 key slots: non-NULL binding freed then cleared, NULL skipped. Typed native stride replaces12-byte ILP32 stride."
       },
       {
         "id": "mac:0x0013f78a",
@@ -75988,8 +75988,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x13f78a-0x13f860 including register-argument body read directly in source: NULL/empty=-1, signed single-byte result, exact lowercase0x plus length4, digits/lowercasea-f nibble conversion with invalid nibble0, and case-insensitive keynames lookup. Inline Key_HexCharValue checked against both Mac nibble blocks; all98 keynames table pairs scripted against binary."
       },
       {
         "id": "mac:0x0013fcd8",
@@ -76010,8 +76010,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x13fcd8-0x13fd52 argc2 check/usage, parser call, invalid-key print and inline binding replacement/modified flags with empty string."
       },
       {
         "id": "mac:0x0013fd52",
@@ -76032,8 +76032,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x13fd52-0x13fda6 all256 slots, skip NULL bindings and replace remaining strings with empty string while ORing modifiedFlags1."
       },
       {
         "id": "mac:0x0014101a",
@@ -76054,8 +76054,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x14101a-0x1411c6 unbindall header, all256 slots, NULL/empty skip, untranslated key names, bind prefix and quoted suffix, literal quote escaping and signed-character FS_Printf path. Inlined key-name conversion and data tables checked."
       },
       {
         "id": "mac:0x001404fc",
@@ -76076,8 +76076,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x1404fc-0x1405ce Escape close, Return/keypad Return paths, active-state8/nonempty send gate, say_team versus say quoting with byte0x15 prefix, reliable command, catcher0x10 clear and Field_Clear; other keys route to field editing."
       },
       {
         "id": "mac:0x0013f9da",
@@ -76098,8 +76098,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac0x13f9da-0x13f9e6 returns256. Native has no PbMaxKeys symbol or callers; PunkBuster client backend is replaced by src/PC/punkbuster/pb_null_adapter.c. This PB-only key-count callback is not needed by live engine input and is intentionally absent; active key storage/loops remain256. No PB backend reconstruction."
       },
       {
         "id": "mac:0x0013f66c",
@@ -76120,8 +76120,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x13f66c-0x13f6ba shortestMatch case-insensitive prefix length and four-space name/newline output."
       },
       {
         "id": "mac:0x0013f6ba",
@@ -76142,8 +76142,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac0x13f6ba-0x13f78a argument1..argc-1, leading spaces, 256-byte concatenation bounds, quote insertion iff argument contains a space, and closing quote order. Native caches Cmd_Argv result across pure concatenation."
       }
     ],
     "client/cl_main_mp": [

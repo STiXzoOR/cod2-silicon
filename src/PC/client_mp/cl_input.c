@@ -263,7 +263,11 @@ static inline __attribute__((always_inline)) float CL_KeyState(kbutton_t *key)
         if (key->downtime) {
             msec += com_frameTime - key->downtime;
         } else {
+#if defined(COD2_X64)
+            msec = com_frameTime;
+#else
             msec += com_frameTime;
+#endif
         }
 
         key->downtime = com_frameTime;
@@ -298,6 +302,12 @@ static float CL_ClampMouseAxisDelta(float delta, float maxSpeed)
     }
 
     maxDelta = (float)frame_msec * maxSpeed * 0.0010000000474974513f;
+#if defined(COD2_X64)
+    if (delta > maxDelta)
+        delta = maxDelta;
+    if (delta < -maxDelta)
+        delta = -maxDelta;
+#else
     if (delta > maxDelta) {
         return maxDelta;
     }
@@ -305,6 +315,7 @@ static float CL_ClampMouseAxisDelta(float delta, float maxSpeed)
     if (delta < -maxDelta) {
         return -maxDelta;
     }
+#endif
 
     return delta;
 }
