@@ -639,10 +639,18 @@ static void FX_CalcOriginAndAxis_impl(byte *prim, vec_t *orgOut, vec3_t *ax)
 
     if (flags & 1) {
 
+#if defined(COD2_X64)
+        float phi = (float)((double)flrand(0.0f, 360.0f) * 0.017453292519943295);
+#else
         float phi = flrand(0.0f, 360.0f) * 0.017453292f;
+#endif
         float sinPhi = sinf(phi);
         float cosPhi = cosf(phi);
+#if defined(COD2_X64)
+        float theta = (float)((double)flrand(0.0f, 180.0f) * 0.017453292519943295);
+#else
         float theta = flrand(0.0f, 180.0f) * 0.017453292f;
+#endif
         float sinTheta = sinf(theta);
         float cosTheta = cosf(theta);
         float width = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mRadius))));
@@ -679,9 +687,16 @@ static void FX_CalcOriginAndAxis_impl(byte *prim, vec_t *orgOut, vec3_t *ax)
 
         vec3_t pt;
         float *axf = (float *)ax;
+#if defined(COD2_X64)
+        float axialOffset = rndHeight * height;
+        pt[0] = axf[3] * width + axf[0] * axialOffset;
+        pt[1] = axf[4] * width + axf[1] * axialOffset;
+        pt[2] = axf[5] * width + axf[2] * axialOffset;
+#else
         pt[0] = axf[3] * width + axf[0] * rndHeight * height;
         pt[1] = axf[4] * width + axf[1] * rndHeight * height;
         pt[2] = axf[5] * width + axf[2] * rndHeight * height;
+#endif
 
         float angle = flrand(0.0f, 360.0f);
         vec3_t rotated;
@@ -710,7 +725,11 @@ static void FX_CalcOriginAndAxis_impl(byte *prim, vec_t *orgOut, vec3_t *ax)
                     up[2] = 0;
                 }
                 float *axf2 = (float *)ax;
+#if defined(COD2_X64)
+                Vec3Cross(up, (vec_t *)ax, (vec_t *)(axf2 + 3));
+#else
                 Vec3Cross((vec_t *)ax, up, (vec_t *)(axf2 + 3));
+#endif
                 Vec3Normalize((vec_t *)(axf2 + 3));
                 Vec3Cross((vec_t *)ax, (vec_t *)(axf2 + 3), (vec_t *)(axf2 + 6));
             }
@@ -759,10 +778,24 @@ static void FX_InitParticle_impl(byte *prim, Effect *particle, vec_t *newOrigin,
     if (flags & 0x40000)
         (((Particle *)(particle))->blendWeight[4]) = flrand(0.0f, 1.0f);
     if (flags & 0x80000) {
+#if defined(COD2_X64)
+        float z = flrand(0, 1);
+        float y = flrand(0, 1);
+        float x = flrand(0, 1);
+        Particle_SetRandomVelocityWeights((const Particle *)particle, x, y, z);
+#else
         Particle_SetRandomVelocityWeights((const Particle *)(particle), flrand(0, 1), flrand(0, 1), flrand(0, 1));
+#endif
     }
     if (flags & 0x100000) {
+#if defined(COD2_X64)
+        float z = flrand(0, 1);
+        float y = flrand(0, 1);
+        float x = flrand(0, 1);
+        Particle_SetRandomVelocity2Weights((const Particle *)particle, x, y, z);
+#else
         Particle_SetRandomVelocity2Weights((const Particle *)(particle), flrand(0, 1), flrand(0, 1), flrand(0, 1));
+#endif
     }
 
     (((Particle *)(particle))->gravity) = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mGravity))));
@@ -793,7 +826,11 @@ void FX_AddCameraShake(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, c
     float duration = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mLife))));
     float fadeTime = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mRadius))));
     float intensity = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mElasticity))));
+#if defined(COD2_X64)
+    FxHelper_CameraShake(theFxHelper, newOrigin, intensity, (int)fadeTime, (int)duration);
+#else
     FxHelper_CameraShake(theFxHelper, newOrigin, intensity, (int)duration, (int)fadeTime);
+#endif
 }
 
 extern EffectTemplate *MediaHandles_GetEffect(const MediaHandles *mediaHandles);
@@ -882,7 +919,11 @@ void FX_DrawAll(void)
     }
 
     g_effectVisArrayCount = 0;
+#if defined(COD2_X64)
+    if (effectBlockSightCount != 0) {
+#else
     if (effectBlockSightCount > 0) {
+#endif
         for (i = 0; i < effectActiveCountNonBolt; i++) {
             Effect *eff = effectListNonBolt[i];
             if (eff->mFlags & 0x1000)
@@ -1022,7 +1063,17 @@ static Bool FX_AddPrimitive_impl(byte *prim, Effect *particle, const vec_t *orig
     int clusterId = FX_GetCluster_core(origin);
 
     if (!dstSlot)
+#if defined(COD2_X64)
+    {
+        extern const dvar_t *com_statmon;
+        extern void StatMon_Warning(int type, int duration, const char *materialName);
+        if (com_statmon->current.enabled)
+            StatMon_Warning(3, 3000, "gfx/2d/warning@maxeffects.jpg");
         return 0;
+    }
+#else
+        return 0;
+#endif
 
     if (((PrimitiveTemplate *)primTemp)->mAttributeFlags & 0x1000)
         effectBlockSightCount++;
@@ -1429,17 +1480,29 @@ void FX_AddEmitter(EffectPrimitive *prim, vec3_t *ax, const vec_t *origin, const
         newOrigin[2] += velSum[2] * dt;
     }
 
+#if defined(COD2_X64)
+    float ang2 = FxRange_GetVal(&prim->primTemp->mAngle3);
+    float ang1 = FxRange_GetVal(&prim->primTemp->mAngle2);
+    float ang0 = FxRange_GetVal(&prim->primTemp->mAngle1);
+#else
     float ang0 = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle1))));
     float ang1 = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle2))));
     float ang2 = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle3))));
+#endif
     vectoangles((const vec_t *)ax, vecAng);
     ang0 += vecAng[0];
     ang1 += vecAng[1];
     ang2 += vecAng[2];
 
+#if defined(COD2_X64)
+    float pos2 = FxRange_GetVal(&prim->primTemp->mAngle3Delta);
+    float pos1 = FxRange_GetVal(&prim->primTemp->mAngle2Delta);
+    float pos0 = FxRange_GetVal(&prim->primTemp->mAngle1Delta);
+#else
     float pos0 = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle1Delta))));
     float pos1 = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle2Delta))));
     float pos2 = FxRange_GetVal((const FxRange *)(((char *)primTemp + offsetof(PrimitiveTemplate, mAngle3Delta))));
+#endif
 
     void *material = MediaHandles_GetHandle( (const MediaHandles *)(((char *)primTemp + offsetof(PrimitiveTemplate, mMediaHandles))));
     void *effect = MediaHandles_GetEffect((const MediaHandles *)(((char *)primTemp + offsetof(PrimitiveTemplate, mEmitterFxHandles))));
@@ -1839,6 +1902,9 @@ void FX_Rewind(int time)
         effectListNonBolt[i] = effectListNonBolt[effectActiveCountNonBolt];
         effectActiveCount--;
     }
+#if defined(COD2_X64)
+    FxScheduler_Clean(*(FxScheduler **)imp_theFxScheduler, 0, NULL);
+#endif
 }
 
 void FX_UpdateAllNonBolt(void)
@@ -1894,6 +1960,24 @@ void FX_UpdateAllNonBolt(void)
     }
 }
 
+#if defined(COD2_X64)
+static void FX_FreeNewlyRemovedEffects(Effect **list, int *activeCount,
+                                      int first, const int *initialCount)
+{
+    typedef void (*DestroyFn)(void *);
+    for (int i = first; i < *initialCount; i++) {
+        Effect *eff = list[i];
+        int clusterId = eff->mClusterId;
+        if (--effectClusters[clusterId].refCount <= 0)
+            FX_RemoveCluster(clusterId);
+        ((DestroyFn)(*(void ***)eff)[1])(eff);
+        --*activeCount;
+        list[i] = list[*activeCount];
+        --effectActiveCount;
+    }
+}
+
+#endif
 void FX_DrawScheduledEffects(void)
 {
     typedef void (*VtFn)(void *);
@@ -1933,10 +2017,15 @@ void FX_DrawScheduledEffects(void)
 
     FX_AddScheduledEffects(NULL, NULL);
 
+#if defined(COD2_X64)
+    i = privateEffectActiveCountNonBolt;
+#endif
     count = effectActiveCountNonBolt;
     privateEffectActiveCountNonBolt = count;
     initialEffectActiveCountNonBolt = count;
+#if !defined(COD2_X64)
     i = 0;
+#endif
     while (i < count) {
         Effect *eff = effectListNonBolt[i];
         int curTime = theFxHelper->mTime;
@@ -1965,10 +2054,17 @@ void FX_DrawScheduledEffects(void)
         }
     }
 
+#if defined(COD2_X64)
+    FX_FreeNewlyRemovedEffects(effectListNonBolt, &effectActiveCountNonBolt,
+                              privateEffectActiveCountNonBolt, &initialEffectActiveCountNonBolt);
+    i = privateEffectActiveCountBolt;
+#endif
     count = effectActiveCountBolt;
     privateEffectActiveCountBolt = count;
     initialEffectActiveCountBolt = count;
+#if !defined(COD2_X64)
     i = 0;
+#endif
     while (i < count) {
         Effect *eff = effectListBolt[i];
         int curTime = theFxHelper->mTime;
@@ -1997,6 +2093,8 @@ void FX_DrawScheduledEffects(void)
         }
     }
 #if COD2_X64
+    FX_FreeNewlyRemovedEffects(effectListBolt, &effectActiveCountBolt,
+                              privateEffectActiveCountBolt, &initialEffectActiveCountBolt);
     FX_DrawAll();
 #endif
 }
@@ -2015,7 +2113,12 @@ int FX_Restore(MemoryFile *memFile)
     typedef void (*ArchFn)(void *, void *);
     typedef void (*FixupFn)(void *, void *);
     int i;
+#if defined(COD2_X64)
+    FxArchive archive;
+    FxArchive *arch = &archive;
+#else
     byte arch[16];
+#endif
 
     FxArchive_FxArchive((const FxArchive *)arch);
 
@@ -2055,11 +2158,20 @@ int FX_Restore(MemoryFile *memFile)
         if (effectType > 12)
             continue;
 
+#if defined(COD2_X64)
+        static const size_t sizes[] = {
+            0, sizeof(Particle), sizeof(Line), sizeof(Tail), sizeof(Cylinder),
+            sizeof(Emitter), 0, sizeof(OrientedParticle), 0, sizeof(Light),
+            0, sizeof(Flash), sizeof(Cloud)
+        };
+        size_t allocSize = sizes[effectType];
+#else
         static const int sizes[] = { 0, 0x24c, 0xfc, 0x258, 0x278, 0x278, 0x27c, 0x258, 0x278, 0x29c, 0x258, 0x278, 0xfc };
         static const char *ctors[] = { NULL, "Particle", "Light", "Line", "Tail", "Cylinder", "Cloud", "OrientedParticle", "Tail", "Emitter", "Line", "Cylinder", "Flash" };
         (void)ctors;
 
         int allocSize = (effectType <= 12) ? sizes[effectType] : 0;
+#endif
         if (allocSize == 0)
             continue;
 
@@ -2067,6 +2179,38 @@ int FX_Restore(MemoryFile *memFile)
         if (eff)
             memset(eff, 0, allocSize);
 
+#if defined(COD2_X64)
+        switch (effectType) {
+        case 1:
+            Particle_Particle((const Particle *)eff);
+            break;
+        case 2:
+            Line_Line((const Line *)eff);
+            break;
+        case 3:
+            Tail_Tail((const Tail *)eff);
+            break;
+        case 4:
+            Cylinder_Cylinder((const Cylinder *)eff);
+            break;
+        case 5:
+            Emitter_Emitter((const Emitter *)eff);
+            break;
+        case 7:
+            OrientedParticle_OrientedParticle((const OrientedParticle *)eff);
+            break;
+        case 9:
+            Light_Light((const Light *)eff);
+            break;
+        case 11:
+            Light_Light((const Light *)eff);
+            *(void **)eff = __ZTV5Flash + 2;
+            break;
+        case 12:
+            Cloud_Cloud(eff);
+            break;
+        }
+#else
         switch (effectType) {
         case 1:
             Particle_Particle((const Particle *)(eff));
@@ -2097,6 +2241,7 @@ int FX_Restore(MemoryFile *memFile)
             Emitter_Emitter( (const Emitter *)(eff));
             break;
         }
+#endif
 
         ((ArchFn)(*(void ***)eff)[10])(eff, arch);
 
@@ -2107,7 +2252,14 @@ int FX_Restore(MemoryFile *memFile)
             primTemp = (byte *)fxTemplate->mPrimitives[primIdx];
 
         if (!primTemp)
+#if defined(COD2_X64)
+        {
+            ((VtFn)(*(void ***)eff)[1])(eff);
             continue;
+        }
+#else
+            continue;
+#endif
 
         ((FixupFn)(*(void ***)eff)[11])(eff, primTemp);
 
@@ -2124,7 +2276,11 @@ int FX_Restore(MemoryFile *memFile)
         effectActiveCount++;
     }
 
+#if defined(COD2_X64)
+    int bytesRead = arch->memFile->bytesUsed;
+#else
     int bytesRead = *(int *)&((FxArchive *)arch)->memFile;
+#endif
     return bytesRead;
 }
 
