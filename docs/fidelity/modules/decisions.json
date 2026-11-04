@@ -12696,8 +12696,8 @@
     "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/offhandweapons_mp.c (cgame_mp/offhandweapons_mp); whole CG_DrawOffHandAmmo was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to cgame/offhandweapons_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/offhandweapons_mp.c:324; assigned universal header has no body. Mac symbol __Z18CG_DrawOffHandAmmoP9rectDef_sP6Font_sfPfii at 0x001b5332. Whole caller not audited by universal-math."
   },
   "mac:0x001cf59c": {
-    "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_draw_mp.c (cgame_mp/cg_draw_mp); whole CG_DrawTurretCrossHair was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to cgame/cg_draw_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_draw_mp.c:1034; assigned universal header has no body. Mac symbol __Z22CG_DrawTurretCrossHairv at 0x001cf59c. Whole caller not audited by universal-math."
+    "status": "equal",
+    "evidence": "Whole routed caller audited at Mac 0x1cf59c-0x1cf6f6, not just math helpers: draw/pause/weapon/material/alpha gates, next entity-state weapon, friendly pm_flags color, integer center size, split-screen doubling and centered quad/UVs match existing native restoration. Existing stock/CoD2x HUD ASan/UBSan groups pass."
   },
   "mac:0x001dee08": {
     "status": "unchecked",
@@ -13396,8 +13396,8 @@
     "evidence": "Linux dispatches through _BigShort, but native/Mac Swap_Init retain only five Little* pointers; no native BigShort body, callers, or corresponding Mac Big* dispatch table was identified."
   },
   "mac:0x001d3722": {
-    "status": "unchecked",
-    "evidence": "Misfiled row: actual native source is cgame_mp/cg_view_mp.c, function CG_OffsetThirdPersonView. Read Mac 0x1d3722 and native function; COD2_CODX orbit mode is a separate native boundary. Candidate precision mismatch at Mac 0x1d39dd-0x1d39f7 (atan2 rounds to float before degree multiplication) belongs with cgame owner. Private routing entry supplied; caller not certified. Ownership corrected from universal/q_shared to cgame/cg_view_mp; original Mac source-module provenance retained. Misfiled row: actual native source is cgame_mp/cg_view_mp.c, function CG_OffsetThirdPersonView. Read Mac 0x1d3722 and native function; COD2_CODX orbit mode is a separate native boundary. Candidate precision mismatch at Mac 0x1d39dd-0x1d39f7 (atan2 rounds to float before degree multiplication) belongs with cgame owner. Private routing entry supplied; caller not certified."
+    "status": "fixed",
+    "evidence": "Whole routed caller audited at Mac 0x1d3722-0x1d3b28. Fixed atan2 double result rounded to float before double degrees multiplication (0x1d39dd-0x1d39f7) and unordered-preserving focus-pitch cap (0x1d379b-0x1d37af). Third-person height/focus/dead yaw, +/-4 trace hull, collision lift/retrace, distance clamp and final pitch compared. Existing CoD2x orbit adaptation preserved after history review. Compiled and reviewed; ordinary camera fixtures pass but these rounding branches not exercised."
   },
   "linux:universal/q_shared.cpp:614:CanKeepStringPointer": {
     "status": "unchecked",
@@ -16502,5 +16502,153 @@
   "mac:0x0017beec": {
     "status": "equal",
     "evidence": "Mac 0x17beec exact-symbol body: compared dvar-sized clear, sentinel links and limit-1 free links, including zero-limit behavior. cg_local.h binds cg to cgArray[0], so its explicit native sentinel is the same; generated bss owns 1024 correctly sized native MarkPoly objects."
+  },
+  "mac:0x001cd7c0": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1cd7c0-0x1cd7f2 and native body: 128-entry frame ring, current-minus-latest snapshot sample, and increment match."
+  },
+  "mac:0x001cd7f2": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1cd7f2-0x1cd848 and native body: null drop sample -1, ping/flags placement, 128-entry masks, and exactly one count increment match."
+  },
+  "mac:0x001cf3f2": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1cf3f2-0x1cf59c and attributed native body directly (fidelity_view could not extract the regparm declaration): gun direction, ordered dot products, nonpositive projection gates, double half-angle tan converted to float before denominator multiply, and -320/-240 factors match."
+  },
+  "mac:0x001cd76e": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1cd76e-0x1cd7c0 and native body: millisecond delta, signed modulo 32 (including negative remainder), previous time, and frame counter match."
+  },
+  "mac:0x001ce0ae": {
+    "status": "fixed",
+    "evidence": "Mac 0x1ce1cb-0x1ce208/0x1ce653 skips the second weapon-notify branch after attack notification; native could notify twice. Mac 0x1ce263/0x1ce60d refreshes health on threshold > health and skips health fading; native inverted the test and could hide it. Remaining input, fade/menu, stance and scoreboard paths read in full; corrected under COD2_X64, compiled and reviewed, not exercised."
+  },
+  "mac:0x001d114a": {
+    "status": "fixed",
+    "evidence": "Read whole Mac 0x1d114a-0x1d2d0c, including its inline damage/grenade callers. Restored damage flash/quads (0x1d12d1-0x1d15fd), grenade pointer/icon filtering, pulse and geometry (0x1d22de-0x1d2a33), 48 distinct lagometer columns with bounded heights and delayed-snapshot color, 32x32 two-column stat icons (0x1d190a), vote scale 0x3e555555 and voted flag 0x100000 (0x1d1af0), snapshot/FPS vertical stacking, center-print null-fade clearing (0x1d20b3), and notify fade gate. Typed native stats/material storage and existing CoD2x radar retained. Existing helpers and renderer import contracts inspected; compiled and reviewed, these HUD paths not exercised."
+  },
+  "mac:0x001cefca": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1cefca-0x1cf0d0 and native body: refdef time/index, optional shock sensitivity, kick+offset aim values, selected weapons, scene/shock/tile ordering match. Existing typed parms/start/duration call fixes the native ABI and is preserved."
+  },
+  "mac:0x001cfe56": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1cfe56-0x1cfeba and native body: scoreboard fade and null return, otherwise alpha 1, Con_DrawBoldMessages(0,-60,alpha,3) match."
+  },
+  "mac:0x001cf0d0": {
+    "status": "fixed",
+    "evidence": "Mac 0x1cf14b/0x1cf236/0x1cf2eb uses float bits 0x3e555555 (5/24); native used 1/3 for font, text width and rendering. Corrected native scale; full ring expiration, color prefix, fade and placement body compared; compiled and reviewed, not exercised."
+  },
+  "mac:0x001d0784": {
+    "status": "fixed",
+    "evidence": "Read whole Mac 0x1d0784-0x1d114a. Restored CG_DrawWeapReticle return value as center/side opacity (0x1d0810/0x1d0a53), replacing weapon-position/transition scale misuse; removed unsupported enemy-red arm (Mac 0x1d0f30 and Windows 0x4c8d50-0x4c8d9e both use friendly green or white); restored ADS pitch offset used when dynamic aiming is disabled (0x1d100d-0x1d1024). Weapon gates, center/cook-off size, ADS transition, spread projection and all four side draws compared. Compiled and reviewed, not exercised."
+  },
+  "mac:0x001cddb4": {
+    "status": "fixed",
+    "evidence": "Whole Mac0x1cddb4-0x1ce0ae body compared. Fixed trace skip/local-client team selection to nextSnap, matching cg+0x24 at0x1cde55/0x1cdecc rather than native snap. Both reads date to initial63de35a, and sole production caller CG_Draw2D already requires nextSnap; no current-only native adaptation documented. Trace/fade/name/health color otherwise match. Existing negative-client rejection remains a defined-storage boundary. Compiled and reviewed, not exercised."
+  },
+  "mac:0x001cd848": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1cd848-0x1cd9a6 and native body: old usercmd, next snapshot commandTime, future-command rejection, translated centered notice and 512ms blink/material match. Existing opt-in native cnxdiag print is retained and does not change drawing."
+  },
+  "mac:0x001cf6f6": {
+    "status": "fixed",
+    "evidence": "Read whole Mac 0x1cf6f6-0x1cfe56 and native body, including renderer statistics consumer. Restored faded palette values from Mac 0x33c0e0/0x33c0f0/0x33c100 (native static arrays were zero), and removed stale ogl/use-d3d gate absent from Mac. Native refexport TrackStatistics contract remains in use. Integer min/max, mean absolute deviation, FPS rounding, statistics fields/labels and memory thresholds compared. Compiled and reviewed, not exercised."
+  },
+  "mac:0x001ced8a": {
+    "status": "fixed",
+    "evidence": "Mac 0x1ced9a/0x1cedb5 reads nextSnap for follow flags/client, native read snap. Changed guarded native reads; retained CoD2x spectated-name policy. History shows snap reads originated in initial 63de35a, not a native single-snapshot adaptation; sole production caller CG_Draw2D already dereferences nextSnap and CG_DrawActiveFrame gates null nextSnap. Updated existing follow-policy fixture setup to nextSnap; stock/CoD2x HUD ASan/UBSan fixtures pass. Full two-line localized text/scale/killcam body compared."
+  },
+  "mac:0x001cdbf2": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1cdbf2-0x1cddb4: left/right/top/bottom bounds, physical rectangle dimensions, texcoord edge selection and draw ordering match native typed framebuffer dimensions."
+  },
+  "mac:0x001ce996": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1ce996-0x1cea88 and native body: view origin/forward axis, 4096 surface/content limit, three output buffers, success gate, and three stacked debug lines match. Renderer PickMaterial implementation is a separate imported boundary; its behavior is not certified here."
+  },
+  "mac:0x001cef3e": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1cef3e-0x1cefca: next-snapshot entity traversal, number-to-native centity lookup, ET_PLAYER gate and sprite dispatch match."
+  },
+  "mac:0x001cd672": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1cd672-0x1cd76e: three usage queries, format strings, x=480/y=80,96,112, char height16 and style flags match."
+  },
+  "mac:0x001ce7b8": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1ce7b8-0x1ce996 and native typed implementation: max64 overlay query, CPU/provider/output dvars, stereo channel count, optional sample row formatting and y=82/92+10 layout match. Existing native sound backend/typed pointer-size adaptation retained; Miles backend itself is outside scope."
+  },
+  "mac:0x001cfeba": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1cfeba-0x1d0138 and restored native body: nextSnap flags, descriptive-text/catcher gates, font bits0x3e555555, primary/fallback commands, unbound localization, x240/y436-2h layout match. Existing native null-nextSnap gate and full-int return are preserved. Existing stock/CoD2x HUD ASan/UBSan groups pass."
+  },
+  "mac:0x001cd5dc": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1cd5dc-0x1cd672: team1 red/team2 blue, supplied alpha, other-team no-op and teamStatusBar draw parameters match."
+  },
+  "mac:0x001d0320": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1d0320-0x1d0784 and native body: overlay gates, ADS fraction/threshold/cap, float return 1-zoom, both size regimes, four mirrored quadrant texture coordinates, screen placement and frame overlay edges match. Native typed weaponInfo material storage retained."
+  },
+  "mac:0x001cdb06": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1cdb06-0x1cdbf2: initializes output zero, overlay/weapon position gates, ADS-in/out fractions, positive normalization, 0.01 threshold and upper cap match; existing qboolean full-int native return ABI retained."
+  },
+  "mac:0x001cd9a6": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1cd9a6-0x1cdb06: priority guard, translated 256-byte copy, 75-character word wrap, time+2000, truncated char width and newline/escaped-newline counting match native single-local-client storage."
+  },
+  "mac:0x001cea88": {
+    "status": "fixed",
+    "evidence": "Mac 0x1cec24-0x1ced35 computes each phase from float time/600 promoted to double, double frequency and promoted phase; native rounded the entire argument in float. Mac 0x1ced5c-0x1ced6d likewise multiplies crandom by double pi before float storage. Restored these operations; whole selection, radius/rumble strength, min cap and three angle updates compared. Compiled and reviewed, not exercised."
+  },
+  "mac:0x001d0138": {
+    "status": "intentional",
+    "evidence": "Read whole Mac 0x1d0138-0x1d0320 and native helper/array: duration conversion, radius/rumble arithmetic, first-expired slot and weakest-size replacement match. Mac leaves scratch size/rumble indeterminate when duration/strength is rejected (0x1d0197/0x1d0313) yet copies those bytes. Native now initializes the temporary record to zero, preserving defined storage for those invalid events rather than importing indeterminate bytes. Compiled and reviewed, not exercised."
+  },
+  "mac:0x001d351e": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1d351e-0x1d3680: double degree/half-angle tan rounded to float before 0.75 multiplication, aspect/atanf conversions, underwater phase/wave, and sensitivity division match native order/constants."
+  },
+  "mac:0x001d3b28": {
+    "status": "fixed",
+    "evidence": "Read whole Mac 0x1d3b28-0x1d49ba; decoded seven-entry cubemap dispatch at0x33c150 (all six axes match). Fixed double cubemap FOV factor114.59155902616465 with int-to-float-to-double operands (0x1d41e7-0x1d421d), viewState damage/time deltaTime subtraction (0x1d3db0-0x1d3de0), right-vector horizontal bob (0x1d3f3f-0x1d3fae), and negative landing-time repair (0x1d49a2). Historical tag_player/jitter/tag_camera attachment restorations12f78f3, float bob maximum and native tracing retained. Existing camera7 and active-frame5 ASan/UBSan groups pass; corrected arithmetic branches only compiled and reviewed."
+  },
+  "mac:0x001d4a50": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1d4a50-0x1d535a and native body, including entity prepass and five-ms recoil from historical27b983a. Snapshot/frame/LOD/shock gates and ordering, signed entity type test, ADS/hip centering, zero-crossing/damping/clamp, weapon fallback quirk, predicted/viewlocked entity processing and delayed HUD/render ordering match native typed fields. Existing optional native rumble boundary retained. Active-frame5 ASan/UBSan groups pass."
+  },
+  "mac:0x001d32c4": {
+    "status": "equal",
+    "evidence": "Restarted exact-symbol disassembly at Mac __Z12CG_FxRestartv/0x1d32c4 because full-binary otool misaligned its prologue. Print string, FX_FreeSystem and FX_InitSystem(1) match native complete body."
+  },
+  "mac:0x001d3680": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1d3680-0x1d3722: position=origin+100*view-forward with float operations and double-promoted diagnostic coordinates match."
+  },
+  "mac:0x001d32ea": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1d32ea-0x1d33ca: missing-name print intentionally continues, 64-byte FX name copy/register/play, current test time, argc==3 double atof*1000 truncation, otherwise zero respawn match; native EffectTemplate pointer replaces 32-bit effect handle storage."
+  },
+  "mac:0x001d33ca": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1d33ca-0x1d351e: spectator90, ADS in/out transition, mounted55 override, scale, and subtraction-based minimum selection match native arithmetic and fields."
+  },
+  "mac:0x001d49ba": {
+    "status": "equal",
+    "evidence": "Read whole Mac 0x1d49ba-0x1d4a50: time/near initialization, third-person/spectator gate, prediction/cache/weapon animation/view calculation/effect camera and time sequence match."
+  },
+  "mac:0x0018f034": {
+    "status": "equal",
+    "evidence": "Exact-symbol restart at Mac0x18f034 confirms full body (full-binary otool misaligned entry): promote compass size to double, multiply43.75, multiply promoted radius scale, round/store float matches native."
+  },
+  "mac:0x0018f060": {
+    "status": "equal",
+    "evidence": "Read whole Mac0x18f060-0x18f13e: nextState type/number (Mac centity+0xf4/+0xf0), local/self/spectator team gates, begin-fade time, enemy flag and enemy-only XY update match native typed actor/client arrays."
+  },
+  "mac:0x0018f13e": {
+    "status": "fixed",
+    "evidence": "Read whole Mac0x18f13e-0x18fea4. Restored float size*rect extent before half multiplication (0x18f206-0x18f24a), team0 enemy-only path (0x18f28e-0x18f29c), max/min radius branch ordering, firing-fade end inclusivity and elapsed direction (0x18fb97-0x18fd98), and computed alpha passed through fadedColor for normal/directional friend icons. Directional path alpha is initialized from clamp saturation as Mac0x18fda7-0x18fe28, eliminating uninitialized native local. Whole packed friend decode, actor update/ping, range/radius, geometry/material/flash and enemy fade loops compared. Compiled and reviewed, not exercised. Also fixed all actor/entity/packed-friend/local-client snapshot reads to nextSnap as the Mac cg+0x24 accesses at0x18f1b9/0x18f589/0x18f6f4/0x18f8a1 require; these current-snapshot reads originated in initial63de35a. Normal HUD painting follows CG_Draw2D next-snapshot gate."
   }
 }

@@ -51,6 +51,7 @@ extern const dvar_t *cg_synchronousClients;
 #if defined(COD2_X64) && COD2_X64
 extern const dvar_t *cg_descriptiveText;
 extern weaponInfo_t cg_weaponsArray[];
+extern void Com_Printf(const char *, ...);
 #endif
 
 extern const dvar_t *hud_fade_ammodisplay;
@@ -79,9 +80,15 @@ static int previous;
 static struct trStatistics_t rendererStats;
 static int fps_previousTimes[32];
 static int fps_index;
+#if defined(COD2_X64)
+static vec4_t colorWhiteFaded = { 1.0f, 1.0f, 1.0f, 0.75f };
+static vec4_t colorGreenFaded = { 0.0f, 1.0f, 0.0f, 0.75f };
+static vec4_t colorRedFaded = { 0.75f, 0.25f, 0.0f, 0.75f };
+#else
 static vec4_t colorWhiteFaded;
 static vec4_t colorGreenFaded;
 static vec4_t colorRedFaded;
+#endif
 
 extern const vec_t colorWhite[4];
 extern void UI_DrawHandlePic(float x, float y, float w, float h, int horzAlign, int vertAlign, const vec_t *color, MaterialHandle material);
@@ -233,7 +240,11 @@ static inline __attribute__((always_inline)) qboolean CG_UpdateCameraShakeStreng
 
 void CG_StartShakeCamera(float scale, int duration, const vec_t *src, float radius)
 {
+#if defined(COD2_X64)
+    cameraShake_t temp = { 0 };
+#else
     cameraShake_t temp;
+#endif
     cameraShake_t *shake;
     int serverTime;
     int bestIndex;
@@ -534,7 +545,11 @@ unsigned int CG_DrawCrosshairNames(void)
     end[0] = start[0] + cg->refdef.viewaxis[0][0] * 8192.0f;
     end[1] = start[1] + cg->refdef.viewaxis[0][1] * 8192.0f;
     end[2] = start[2] + cg->refdef.viewaxis[0][2] * 8192.0f;
+#if defined(COD2_X64)
+    CG_TraceCapsule(&trace, start, traceMins, traceMaxs, end, cg->nextSnap->ps.clientNum, 0x2000001);
+#else
     CG_TraceCapsule(&trace, start, traceMins, traceMaxs, end, cg->snap->ps.clientNum, 0x2000001);
+#endif
 
     if (trace.entityNum <= 63) {
         cg->crosshairClientNum = trace.entityNum;
@@ -551,7 +566,11 @@ unsigned int CG_DrawCrosshairNames(void)
         return 0;
     }
 
+#if defined(COD2_X64)
+    localClientInfo = &cg->bgs.clientinfo[cg->nextSnap->ps.clientNum];
+#else
     localClientInfo = &cg->bgs.clientinfo[cg->snap->ps.clientNum];
+#endif
     if (!localClientInfo->infoValid || !localClientInfo->team) {
         return 0;
     }
@@ -655,11 +674,20 @@ unsigned int CG_CheckTimedMenus(void)
 
             CG_MenuShowNotify(1);
             hasChange = 1;
+#if defined(COD2_X64)
+            buttonBits = curCmd.buttons;
+            goto after_weapon_buttons;
+        }
+    }
+
+    if (buttonBits & 0x30) {
+#else
             buttonBits = curCmd.buttons;
         }
     }
 
     if (buttonBits & 0x30) {
+#endif
         if (!((byte)(cg->predictedPlayerState.pm_flags) & 0x4)) {
             snapshot_t *snap = cg->snap;
             if (!(snap->ps.cursorHint & 0x2)) {
@@ -673,7 +701,12 @@ unsigned int CG_CheckTimedMenus(void)
         }
     }
 
+#if defined(COD2_X64)
+after_weapon_buttons:
     if (buttonBits & 0x30000) {
+#else
+    if (buttonBits & 0x30000) {
+#endif
 
         CG_MenuShowNotify(4);
         hasChange = 1;
@@ -705,10 +738,17 @@ after_buttons:
     health = CG_CalcPlayerHealth();
     {
         float threshold = hud_health_startpulse_injured->current.value;
+#if defined(COD2_X64)
+        if (threshold > health) {
+            CG_MenuShowNotify(0);
+            goto after_health_fade;
+        }
+#else
         if (threshold <= health) {
 
             CG_MenuShowNotify(0);
         }
+#endif
     }
 
     fadeVal = hud_fade_healthbar->current.value;
@@ -732,7 +772,12 @@ after_buttons:
         }
     }
 
+#if defined(COD2_X64)
+after_health_fade:
     if (CG_CheckPlayerForLowAmmo() || CG_CheckPlayerForLowClip()) {
+#else
+    if (CG_CheckPlayerForLowAmmo() || CG_CheckPlayerForLowClip()) {
+#endif
 
         CG_MenuShowNotify(1);
     }
@@ -958,7 +1003,11 @@ unsigned int CG_ShakeCamera(void)
     }
 
     if (bestSize <= 0.0f) {
+#if defined(COD2_X64)
+        cg->cameraShakePhase = (float)((double)crandom() * 3.141592653589793);
+#else
         cg->cameraShakePhase = crandom() * 3.14159265358979323846f;
+#endif
         return 0;
     }
 
@@ -967,9 +1016,21 @@ unsigned int CG_ShakeCamera(void)
     }
 
     phase = cg->cameraShakePhase;
+#if defined(COD2_X64)
+    cg->refdefViewAngles[0] += (float)sin((double)sx * 25.132741228718345 + (double)phase) * bestRumble * 18.0f * bestSize;
+#else
     cg->refdefViewAngles[0] += (float)sin((double)(sx * 25.132741228718345f + phase)) * bestRumble * 18.0f * bestSize;
+#endif
+#if defined(COD2_X64)
+    cg->refdefViewAngles[1] += (float)sin((double)sx * 47.12388980384689 + (double)phase) * bestRumble * 16.0f * bestSize;
+#else
     cg->refdefViewAngles[1] += (float)sin((double)(sx * 47.12388980384689f + phase)) * bestRumble * 16.0f * bestSize;
+#endif
+#if defined(COD2_X64)
+    cg->refdefViewAngles[2] += (float)sin((double)sx * 37.69911184307752 + (double)phase) * bestRumble * 10.0f * bestSize;
+#else
     cg->refdefViewAngles[2] += (float)sin((double)(sx * 37.69911184307752f + phase)) * bestRumble * 10.0f * bestSize;
+#endif
     return 0;
 }
 
@@ -986,7 +1047,11 @@ qboolean CG_DrawFollow(void)
     float scale;
     int textWidth;
 
+#if defined(COD2_X64)
+    if (!(cg->nextSnap->ps.pm_flags & 0x400000)) {
+#else
     if (!(cg->snap->ps.pm_flags & 0x400000)) {
+#endif
         return 0;
     }
 
@@ -994,7 +1059,11 @@ qboolean CG_DrawFollow(void)
         return 0;
     }
 
+#if defined(COD2_X64)
+    clientInfo = &cg->bgs.clientinfo[cg->nextSnap->ps.clientNum];
+#else
     clientInfo = &((clientInfo_t *)&((cg_t *)cg)->bgs.clientinfo[0].infoValid)[cg->snap->ps.clientNum];
+#endif
     if (clientInfo->infoValid) {
         clientName = clientInfo->name;
     } else {
@@ -1212,6 +1281,86 @@ void CG_DrawActive(void)
     CG_TileClear();
 }
 
+#if defined(COD2_X64)
+unsigned int CG_DrawChatMessages(void)
+{
+    FontHandle font;
+    const char *msg;
+    vec4_t color;
+    float alphaPercent;
+    float backgroundAlpha;
+    float y;
+    float timeRemaining;
+    int chatHeight;
+    int hudChatX;
+    int hudChatY;
+    int chatTime;
+    int index;
+    int i;
+    int textWidth;
+
+    chatHeight = cg_chatHeight->current.integer;
+    if (!chatHeight) {
+        return 0;
+    }
+
+    hudChatX = (int)cg_hudChatPosition->current.vector[0];
+    hudChatY = (int)cg_hudChatPosition->current.vector[1];
+    if (cgs->teamLastChatPos == cgs->teamChatPos) {
+        return 0;
+    }
+
+    index = cgs->teamLastChatPos % chatHeight;
+    chatTime = cg_chatTime->current.integer;
+    if (cg->time - cgs->teamChatMsgTimes[index] > chatTime) {
+        ++cgs->teamLastChatPos;
+    }
+
+    font = UI_GetFontHandle(0, 5.0f / 24.0f);
+    for (i = cgs->teamChatPos - 1; i >= cgs->teamLastChatPos; --i) {
+        index = i % chatHeight;
+        timeRemaining = (float)chatTime - (float)(cg->time - cgs->teamChatMsgTimes[index]);
+        if (timeRemaining > 200.0f) {
+            alphaPercent = 1.0f;
+            backgroundAlpha = 0.60000002f;
+        } else {
+            alphaPercent = timeRemaining / 200.0f;
+            if (alphaPercent <= 0.0f) {
+                continue;
+            }
+
+            backgroundAlpha = alphaPercent * 0.60000002f;
+        }
+
+        msg = cgs->teamChatMsgs[index];
+        if (msg[0] == '^' && msg[1] && msg[1] != '^' && msg[1] >= '0' && msg[1] <= '9') {
+            CL_LookupColor((unsigned char)msg[1], color);
+        } else {
+            color[0] = 1.0f;
+            color[1] = 1.0f;
+            color[2] = 1.0f;
+        }
+
+        color[0] *= 0.25f;
+        color[1] *= 0.25f;
+        color[2] *= 0.25f;
+        color[3] = backgroundAlpha;
+
+        y = (float)(hudChatY - (cgs->teamChatPos - i) * 10);
+        textWidth = UI_TextWidth(msg, 0, font, 5.0f / 24.0f);
+        UI_DrawHandlePic(0.0f, y, (float)(textWidth + 24), 10.0f, 1, 1, color, cgs->media.whiteMaterial);
+
+        color[0] = 1.0f;
+        color[1] = 1.0f;
+        color[2] = 1.0f;
+        color[3] = alphaPercent;
+        UI_DrawText(msg, 0x7fffffff, font, (float)hudChatX, y + 9.0f, 1, 1, 5.0f / 24.0f, color, 3);
+    }
+
+    return 0;
+}
+
+#else
 unsigned int CG_DrawChatMessages(void)
 {
     FontHandle font;
@@ -1289,6 +1438,8 @@ unsigned int CG_DrawChatMessages(void)
 
     return 0;
 }
+
+#endif
 
 static void __attribute_regparm__(2) CG_CalcCrosshairPosition(float *x, float *y)
 {
@@ -1396,10 +1547,14 @@ static float CG_DrawFPS(float y)
     if (cg_drawFPS->current.integer <= 1)
         return y;
 
+#if defined(COD2_X64)
+    /* The native renderer exports TrackStatistics through the refexport table. */
+#else
     if (!stricmp(Dvar_GetString("gfx_driver"), "ogl")) {
         y += (float)CG_DrawSmallDevStringColor(620.0f, y, "use d3d for stats", colorWhiteFaded, 6);
         return y;
     }
+#endif
 
     CL_TrackStatistics(&rendererStats);
     y += (float)CG_DrawSmallDevStringColor(620.0f, y, "scene", colorGreenFaded, 6);
@@ -1545,7 +1700,12 @@ unsigned int CG_DrawCrosshair(void)
     vec4_t color;
     vec4_t reticleColor;
     float posLerp;
+#if defined(COD2_X64)
     float transScale;
+    float adsVerticalOffset = 0.0f;
+#else
+    float transScale;
+#endif
     float centerX;
     float centerY;
     int pmFlags;
@@ -1568,9 +1728,15 @@ unsigned int CG_DrawCrosshair(void)
         return 0;
 
     weapDef = (WeaponDef *)BG_GetWeaponDef(weapIndex);
+#if defined(COD2_X64)
+    float overlayAlpha = CG_DrawWeapReticle();
+
+    if (!drawHudMenus)
+#else
     CG_DrawWeapReticle();
 
     if (!drawHudMenus)
+#endif
         return 0;
 
     pmFlags = ps->pm_flags;
@@ -1578,6 +1744,7 @@ unsigned int CG_DrawCrosshair(void)
         color[0] = 0.25f;
         color[1] = 1.0f;
         color[2] = 0.25f;
+#if !defined(COD2_X64)
     } else if (pmFlags & 0x200000) {
         if (!cg_crosshairEnemyColor->current.enabled) {
             color[0] = 1.0f;
@@ -1588,13 +1755,19 @@ unsigned int CG_DrawCrosshair(void)
             color[1] = 0.25f;
             color[2] = 0.25f;
         }
+
+#endif
     } else {
         color[0] = 1.0f;
         color[1] = 1.0f;
         color[2] = 1.0f;
     }
 
+#if defined(COD2_X64)
+    color[3] = overlayAlpha * cg_crosshairAlpha->current.value;
+#else
     color[3] = posLerp * cg_crosshairAlpha->current.value;
+#endif
     if (color[3] < 0.01f)
         return 0;
 
@@ -1624,8 +1797,15 @@ unsigned int CG_DrawCrosshair(void)
             scaled = zoomFrac / adsFrac;
             if (scaled <= 0.0f)
                 transScale = 1.0f;
+#if defined(COD2_X64)
+            else {
+                transScale = scaled * -0.5f + 1.0f;
+                adsVerticalOffset = (480.0f / cg->refdef.fov_y) * scaled * weapDef->fAdsAimPitch;
+            }
+#else
             else
                 transScale = scaled * -0.5f + 1.0f;
+#endif
         }
 
         if (!cg_drawGun->current.enabled && transScale < 1.0f) {
@@ -1645,7 +1825,11 @@ unsigned int CG_DrawCrosshair(void)
 
     if (!cg_crosshairDynamic->current.enabled) {
         centerX = 0.0f;
+#if defined(COD2_X64)
+        centerY = adsVerticalOffset;
+#else
         centerY = 0.0f;
+#endif
     }
 
     weapons = &(*(weaponInfo_t **)imp_cg_weapons)[weapIndex];
@@ -1672,12 +1856,21 @@ unsigned int CG_DrawCrosshair(void)
     if (!material)
         return 0;
 
+#if defined(COD2_X64)
+    overlayAlpha = CG_DrawWeapReticle();
+    reticleColor[0] = color[0];
+#else
     CG_DrawWeapReticle();
     reticleColor[0] = color[0];
+#endif
     reticleColor[1] = color[1];
     reticleColor[2] = color[2];
     {
+#if defined(COD2_X64)
+        float alpha = overlayAlpha * cg_crosshairAlpha->current.value *
+#else
         float alpha = transScale * cg_crosshairAlpha->current.value *
+#endif
                       (ps->aimSpreadScale / -255.0f + 1.0f);
         float alphaMin = (cg_crosshairAlphaMin)->current.value;
         reticleColor[3] = alpha >= alphaMin ? alpha : alphaMin;
@@ -1732,6 +1925,157 @@ unsigned int CG_DrawCrosshair(void)
 
     return 0;
 }
+
+#if defined(COD2_X64)
+extern const dvar_t *cg_hudDamageIconWidth, *cg_hudDamageIconHeight, *cg_hudDamageIconOffset;
+extern const dvar_t *cg_hudDamageIconInScope, *cg_hudGrenadeIconInScope;
+extern const dvar_t *cg_hudGrenadeIconMaxRange, *cg_hudGrenadeIconMaxHeight;
+extern const dvar_t *cg_hudGrenadeIconOffset, *cg_hudGrenadeIconHeight, *cg_hudGrenadeIconWidth;
+extern const dvar_t *cg_hudGrenadePointerHeight, *cg_hudGrenadePointerWidth, *cg_hudGrenadePointerPivot;
+extern const dvar_t *cg_hudGrenadePointerPulseFreq, *cg_hudGrenadePointerPulseMax, *cg_hudGrenadePointerPulseMin;
+extern void CalcScreenX(float *x, int horzAlign);
+extern void CalcScreenY(float *y, int vertAlign);
+
+static void CG_DrawDamageWarnings(void)
+{
+    float x = 320.0f, y = 240.0f;
+    float zoom;
+    vec2_t verts[4];
+    vec4_t color;
+    int i;
+
+    if (!cg->nextSnap)
+        return;
+
+    if (cg->v_dmg_time > cg->time) {
+        float alpha = fabsf((float)(cg->v_dmg_time - cg->time) * cg->v_dmg_pitch / 500.0f);
+        alpha = alpha > 5.0f ? 1.0f : alpha / 5.0f;
+        vec4_t flash = { 0.2f, 0.0f, 0.0f, alpha * 0.7f };
+        UI_FillRectPhysical(-10.0f, -10.0f, (float)cls.vidConfig.width + 10.0f,
+                            (float)cls.vidConfig.height + 10.0f, flash);
+    }
+
+    if (CG_GetWeapReticleZoom(&zoom)) {
+        if (!cg_hudDamageIconInScope->current.enabled)
+            return;
+        CG_CalcCrosshairPosition(&x, &y);
+        x += 320.0f;
+        y += 240.0f;
+    }
+
+    {
+        float halfWidth = cg_hudDamageIconWidth->current.value * 0.5f;
+        float offset = cg_hudDamageIconOffset->current.value;
+        float outer = offset + cg_hudDamageIconHeight->current.value;
+        verts[0][0] = halfWidth;  verts[0][1] = outer;
+        verts[1][0] = -halfWidth; verts[1][1] = outer;
+        verts[2][0] = -halfWidth; verts[2][1] = offset;
+        verts[3][0] = halfWidth;  verts[3][1] = offset;
+    }
+    CalcScreenX(&x, 0);
+    CalcScreenY(&y, 0);
+    for (i = 0; i < 4; ++i)
+        color[i] = colorWhite[i];
+
+    for (i = 0; i < 8; ++i) {
+        const viewDamage_t *damage = &cg->viewDamage[i];
+        int elapsed = cg->time - damage->time;
+        if (elapsed <= 0 || elapsed >= damage->duration)
+            continue;
+        float yaw = vectoyaw(cg->refdef.viewaxis[0]) - damage->yaw;
+        float alpha = (float)elapsed * -2.0f / (float)damage->duration + 2.0f;
+        color[3] = alpha - 1.0f < 0.0f ? alpha : 1.0f;
+        CG_DrawRotatedQuadPic(x, y, verts, yaw, color, cgs->media.damageMaterial);
+    }
+}
+
+static void CG_DrawGrenadeWarnings(void)
+{
+    float x = 0.0f, y = 0.0f, zoom;
+    int i;
+
+    if (!cg->nextSnap || cg->predictedPlayerState.pm_type == 4 ||
+        (cg->predictedPlayerState.pm_flags & 0x400000))
+        return;
+    if (CG_GetWeapReticleZoom(&zoom)) {
+        if (!cg_hudGrenadeIconInScope->current.enabled)
+            return;
+        CG_CalcCrosshairPosition(&x, &y);
+    }
+    CalcScreenX(&x, 2);
+    CalcScreenY(&y, 2);
+
+    for (i = 0; i < cg->nextSnap->numEntities; ++i) {
+        const entityState_t *ent = &cg->nextSnap->entities[i];
+        vec3_t delta;
+        vec4_t color;
+        vec2_t verts[4];
+        float speedSquared, distSquared, alpha, halfPulse, angle, radians;
+        float width, height, offset, pivotX, pivotY, px, py;
+        int j;
+
+        if (ent->eType != 4)
+            continue;
+        speedSquared = (ent->pos.trDelta[0] * ent->pos.trDelta[0] +
+                        ent->pos.trDelta[1] * ent->pos.trDelta[1]) +
+                        ent->pos.trDelta[2] * ent->pos.trDelta[2];
+        if (speedSquared > 1.0f || BG_GetWeaponDef(ent->weapon)->projExplosion != 0)
+            continue;
+        for (j = 0; j < 3; ++j)
+            delta[j] = ent->pos.trBase[j] - cg->predictedPlayerState.origin[j];
+        if (delta[2] < 0.0f) {
+            if (-cg_hudGrenadeIconMaxHeight->current.value > delta[2])
+                continue;
+        } else if (delta[2] > cg_hudGrenadeIconMaxHeight->current.value +
+                                cg->predictedPlayerState.viewHeightCurrent) {
+            continue;
+        }
+        distSquared = (delta[0] * delta[0] + delta[1] * delta[1]) + delta[2] * delta[2];
+        float maxRange = cg_hudGrenadeIconMaxRange->current.value;
+        if (distSquared > maxRange * maxRange)
+            continue;
+
+        for (j = 0; j < 4; ++j)
+            color[j] = colorWhite[j];
+        halfPulse = (cg_hudGrenadePointerPulseMax->current.value -
+                     cg_hudGrenadePointerPulseMin->current.value) * 0.5f;
+        alpha = sinf((float)((double)cg->time * 0.006283185307179587 *
+                            (double)cg_hudGrenadePointerPulseFreq->current.value)) * halfPulse +
+                (cg_hudGrenadePointerPulseMin->current.value + halfPulse);
+        color[3] = 0.0f - alpha < 0.0f ? (alpha - 1.0f >= 0.0f ? 1.0f : alpha) : 0.0f;
+
+        width = GetRealWidthFromVirtualWidth(cg_hudGrenadePointerWidth->current.value);
+        height = GetRealHeightFromVirtualHeight(cg_hudGrenadePointerHeight->current.value);
+        offset = GetRealHeightFromVirtualHeight(cg_hudGrenadeIconOffset->current.value);
+        pivotX = GetRealWidthFromVirtualWidth(cg_hudGrenadePointerPivot->current.vector[0]);
+        pivotY = GetRealHeightFromVirtualHeight(cg_hudGrenadePointerPivot->current.vector[1]);
+        angle = AngleNormalize360(vectoyaw(delta) - cg->predictedPlayerState.viewangles[1]);
+        radians = (float)((double)angle * 0.017453292519943295);
+        px = x - sinf(radians) * offset;
+        py = y - offset * cosf(radians);
+        verts[0][0] = -pivotX;         verts[0][1] = -pivotY;
+        verts[1][0] = width - pivotX;  verts[1][1] = -pivotY;
+        verts[2][0] = width - pivotX;  verts[2][1] = height - pivotY;
+        verts[3][0] = -pivotX;         verts[3][1] = height - pivotY;
+        CG_DrawRotatedQuadPic(px, py, verts, -angle, color, cgs->media.grenadePointer);
+
+        width = GetRealWidthFromVirtualWidth(cg_hudGrenadeIconWidth->current.value);
+        height = GetRealHeightFromVirtualHeight(cg_hudGrenadeIconHeight->current.value);
+        offset = GetRealHeightFromVirtualHeight(cg_hudGrenadeIconOffset->current.value);
+        angle = AngleNormalize360(vectoyaw(delta) - cg->predictedPlayerState.viewangles[1]);
+        radians = (float)((double)angle * 0.017453292519943295);
+        float c = cosf(radians), sn = sinf(radians);
+        verts[0][0] = width * -0.5f + x - sn * offset;
+        verts[1][0] = width * 0.5f + x - sn * offset;
+        verts[2][0] = verts[1][0]; verts[3][0] = verts[0][0];
+        verts[0][1] = height * -0.5f + y - offset * c;
+        verts[1][1] = verts[0][1];
+        verts[2][1] = height * 0.5f + y - offset * c;
+        verts[3][1] = verts[2][1];
+        CL_DrawQuadPic(verts, color, cgs->media.grenadeIcon);
+    }
+}
+#endif
 
 static void CG_Draw2D_DrawBottomOverlays(cg_t *cg)
 {
@@ -1837,11 +2181,60 @@ unsigned int CG_Draw2D(void)
     if (!drawHudMenus)
         return 0;
 
+#if defined(COD2_X64)
+    CG_DrawDamageWarnings();
+    CG_DrawGrenadeWarnings();
+
     if (!drewScoreboard) {
         CG_DrawSpectatorMessage();
+#else
+    if (!drewScoreboard) {
+        CG_DrawSpectatorMessage();
+#endif
         CG_DrawFollow();
     }
 
+#if defined(COD2_X64)
+    if (cgs->voteTime != 0) {
+        char yesKey[256];
+        char noKey[256];
+        char keys[256];
+        FontHandle font = UI_GetFontHandle(0, 5.0f / 24.0f);
+        int secs;
+
+        if (!GetKeyBindingLocalizedString("vote yes", keys))
+            I_strncpyz(yesKey, "vote yes", 0x100);
+        else
+            I_strncpyz(yesKey, keys, 0x100);
+
+        if (!GetKeyBindingLocalizedString("vote no", keys))
+            I_strncpyz(noKey, "vote no", 0x100);
+        else
+            I_strncpyz(noKey, keys, 0x100);
+
+        secs = (cgs->voteTime - cg->time) / 1000;
+        if (secs < 0)
+            secs = 0;
+
+        UI_DrawText(va("%s(%i):%s", UI_SafeTranslateString("CGAME_VOTE"), secs, cgs->voteString),
+                    0x7fffffff, font, 8.0f, 200.0f, 0, 0, 5.0f / 24.0f, colorYellow, 3);
+
+#if defined(COD2_X64)
+        if (cg->nextSnap->ps.eFlags & 0x100000) {
+#else
+        if (cg->nextSnap->ps.eFlags & 0x10) {
+#endif
+            UI_DrawText(va("%s:%i, %s:%i", UI_SafeTranslateString("CGAME_YES"), cgs->voteYes,
+                           UI_SafeTranslateString("CGAME_NO"), cgs->voteNo),
+                        0x7fffffff, font, 8.0f, 210.0f, 0, 0, 5.0f / 24.0f, colorYellow, 3);
+        } else {
+            UI_DrawText(va("%s(%s):%i, %s(%s):%i", UI_SafeTranslateString("CGAME_YES"), yesKey,
+                           cgs->voteYes, UI_SafeTranslateString("CGAME_NO"), noKey, cgs->voteNo),
+                        0x7fffffff, font, 8.0f, 210.0f, 0, 0, 5.0f / 24.0f, colorYellow, 3);
+        }
+    }
+
+#else
     if (cgs->voteTime != 0) {
         char yesKey[256];
         char noKey[256];
@@ -1866,7 +2259,11 @@ unsigned int CG_Draw2D(void)
         UI_DrawText(va("%s(%i):%s", UI_SafeTranslateString("CGAME_VOTE"), secs, cgs->voteString),
                     0x7fffffff, font, 8.0f, 200.0f, 0, 0, 0.5f, colorYellow, 3);
 
+#if defined(COD2_X64)
+        if (cg->nextSnap->ps.eFlags & 0x100000) {
+#else
         if (cg->nextSnap->ps.eFlags & 0x10) {
+#endif
             UI_DrawText(va("%s:%i, %s:%i", UI_SafeTranslateString("CGAME_YES"), cgs->voteYes,
                            UI_SafeTranslateString("CGAME_NO"), cgs->voteNo),
                         0x7fffffff, font, 8.0f, 210.0f, 0, 0, 0.5f, colorYellow, 3);
@@ -1877,6 +2274,74 @@ unsigned int CG_Draw2D(void)
         }
     }
 
+#endif
+
+#if defined(COD2_X64)
+    if (cg_drawLagometer->current.enabled && !cgs->localServer) {
+        float prev;
+        int i;
+
+        UI_DrawHandlePic(-55.0f, -140.0f, 48.0f, 48.0f, 3, 3, 0, cgs->media.lagometerMaterial);
+
+        prev = 0.0f;
+        for (i = 0; i < 48; ++i) {
+            int idx = (~i + lagometer.frameCount) & 0x7f;
+            float v = (float)lagometer.frameSamples[idx] * 0.0533333346f;
+            float y;
+            float h;
+            const vec_t *col;
+            if (v > prev) {
+                if (v <= 16.0f) {
+                    y = -124.0f - v;
+                    h = v;
+                } else {
+                    y = -140.0f;
+                    h = 16.0f;
+                }
+                col = colorYellow;
+                CL_DrawStretchPic(-7.0f - (float)i, y, 1.0f, h, 3, 3, 0, 0, 0, 0, col, cgs->media.whiteMaterial);
+                prev = 0.0f;
+            } else if (v < 0.0f) {
+                float n = -v;
+                if (n > 16.0f)
+                    n = 16.0f;
+                CL_DrawStretchPic(-7.0f - (float)i, -124.0f, 1.0f, n, 3, 3, 0, 0, 0, 0, colorBlue,
+                                  cgs->media.whiteMaterial);
+                prev = 0.0f;
+            } else {
+                prev = 0.0f;
+            }
+        }
+
+        prev = 0.0f;
+        for (i = 0; i < 48; ++i) {
+            int idx = (~i + lagometer.snapshotCount) & 0x7f;
+            float v = (float)lagometer.snapshotSamples[idx];
+            if (v > prev) {
+                float h = v * 0.0266666673f;
+                float y;
+                if (lagometer.snapshotFlags[idx] & 0x1)
+                    y = h <= 24.0f ? -92.0f - h : -116.0f;
+                else
+                    y = h > 24.0f ? -116.0f : -92.0f - h;
+                if (h > 24.0f)
+                    h = 24.0f;
+                CL_DrawStretchPic(-7.0f - (float)i, y, 1.0f, h, 3, 3, 0, 0, 0, 0,
+                                  (lagometer.snapshotFlags[idx] & 1) ? colorYellow : colorGreen,
+                                  cgs->media.whiteMaterial);
+            } else if (v < 0.0f) {
+                CL_DrawStretchPic(-7.0f - (float)i, -116.0f, 1.0f, 24.0f, 3, 3, 0, 0, 0, 0, colorRed,
+                                  cgs->media.whiteMaterial);
+            }
+            prev = 0.0f;
+        }
+
+        if (cg_nopredict->current.enabled ||
+            cg_synchronousClients->current.enabled)
+            CG_DrawBigDevString(-55.0f, -140.0f, "snc", 1.0f, 9);
+    }
+
+#else
     if (cg_drawLagometer->current.enabled && !cgs->localServer) {
         float prev;
         int i;
@@ -1938,8 +2403,28 @@ unsigned int CG_Draw2D(void)
             CG_DrawBigDevString(-55.0f, -140.0f, "snc", 1.0f, 9);
     }
 
+#endif
+
     CG_DrawDisconnect();
 
+#if defined(COD2_X64)
+    {
+        int now = Sys_Milliseconds();
+        const statmonitor_t *statsArray;
+        int statsCount;
+        float x = 2.0f, y = 200.0f;
+        StatMon_GetStatsArray(&statsArray, &statsCount);
+        for (int i = 0; i < statsCount; ++i) {
+            if (now <= statsArray[i].endtime)
+                UI_DrawHandlePic(x, y, 32.0f, 32.0f, 1, 0, NULL, statsArray[i].material);
+            x += 34.0f;
+            if (x + 32.0f > 68.0f) {
+                x = 2.0f;
+                y += 34.0f;
+            }
+        }
+    }
+#else
     {
         int now = Sys_Milliseconds();
         const void *statsArray;
@@ -1963,6 +2448,8 @@ unsigned int CG_Draw2D(void)
         }
     }
 
+#endif
+
     if (cg_drawSoundOverlay->current.integer)
         CG_DrawSoundOverlay();
     else if (cg_drawScriptUsage->current.enabled)
@@ -1972,8 +2459,13 @@ unsigned int CG_Draw2D(void)
 
     CL_TrackStatistics(0);
 
+#if defined(COD2_X64)
+    if (cg_drawSnapshot->current.enabled)
+        debugY += (float)CG_DrawBigDevStringColor(620.0f, 0.0f,
+#else
     if (cg_drawSnapshot->current.enabled)
         CG_DrawBigDevStringColor(620.0f, 0.0f,
+#endif
                                  va("time:%i snap:%i cmd:%i", cg->nextSnap->serverTime, cg->latestSnapshotNum,
                                     cgs->serverCommandSequence),
                                  colorWhite, 6);
@@ -1985,6 +2477,57 @@ unsigned int CG_Draw2D(void)
     if (drewScoreboard)
         return 0;
 
+#if defined(COD2_X64)
+    if (cg->centerPrintTime != 0) {
+        int totalMsec = (int)(1000.0f * cg_centertime->current.value);
+        const float *fade = CG_FadeColor(cg->centerPrintTime, totalMsec, 100);
+        if (!fade) {
+            cg->centerPrintTime = 0;
+            cg->centerPrintPriority = 0;
+        } else {
+            float scale = (float)cg->centerPrintCharWidth * 0.03125f;
+            FontHandle font;
+            int lineHeight;
+            float y;
+            float lineStep;
+            const char *start;
+
+            if (CL_IsRenderingSplitScreen())
+                scale *= 1.25f;
+
+            font = UI_GetFontHandle(0, scale);
+            lineHeight = UI_TextHeight(font, scale);
+            y = (float)lineHeight * -1.20000005f * (float)cg->centerPrintLines + cg_centerPrintY->current.value;
+            lineStep = (float)lineHeight * 1.20000005f;
+
+            start = cg->centerPrint;
+            while (1) {
+                char line[256];
+                int n = 0;
+                const char *p = start;
+                FontHandle lineFont;
+                int width;
+
+                while (*p && *p != '\n' && n < 75)
+                    line[n++] = *p++;
+                line[n] = '\0';
+
+                lineFont = UI_GetFontHandle(0, scale);
+                width = UI_TextWidth(line, 0, lineFont, scale);
+                UI_DrawText(line, 0x7fffffff, lineFont, (float)width * -0.5f, y, 7, 3, scale,
+                            fade, 3);
+                y += lineStep;
+
+                while (*start && *start != '\n')
+                    start++;
+                if (*start == '\0')
+                    break;
+                start++;
+            }
+        }
+    }
+
+#else
     if (cg->centerPrintTime != 0) {
         int totalMsec = (int)(1000.0f * cg_centertime->current.value);
         CG_FadeColor(cg->centerPrintTime, totalMsec, 100);
@@ -2034,6 +2577,8 @@ unsigned int CG_Draw2D(void)
         }
     }
 
+#endif
+
     if (!cg_drawGameMessages->current.enabled) {
         CG_Draw2D_DrawBottomOverlays(cg);
         return 0;
@@ -2045,7 +2590,11 @@ unsigned int CG_Draw2D(void)
             alpha = 1.0f;
         } else {
             float *fade = CG_FadeColor(cg->scoreFadeTime, 100, 100);
+#if defined(COD2_X64)
+            if (fade == 0) {
+#else
             if (cg->scoreFadeTime == 0 || fade == 0) {
+#endif
                 CG_Draw2D_DrawBottomOverlays(cg);
                 return 0;
             }
