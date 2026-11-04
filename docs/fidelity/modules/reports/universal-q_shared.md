@@ -33,3 +33,7 @@ Configured arm64 Release and built `cod2_macos_ded` successfully with `taskpolic
 Five inactive native-port preprocessing configurations preserve the original legacy tokens. Neither changed C file uses `__LINE__`. Full CI and replays are left to integration.
 
 Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-universal-text.noindex/`.
+
+## Ownership correction
+
+1 unchecked whole-caller rows were moved to their actual engine modules after integration. Original Mac attribution, IDs and unchecked verdicts are preserved. The preceding audit totals describe the original assignment. This module now holds 89 rows: 54 equal, 6 fixed, 3 intentional, 26 unchecked. The destination owners must audit each complete caller; matching a shared inline helper does not certify it.

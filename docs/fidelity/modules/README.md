@@ -56,7 +56,7 @@ reliable whole-project completion date.
 
 ## Current workload and estimate
 
-All of `game/` is reconciled. The ledger currently has 4,787 unchecked entries: 4,010 assigned engine entries and 777 unassigned entries. There are 2,647 equal, 467 fixed and 1,556 intentional entries. Intentional entries include the 1,360 bundled-library exclusions and documented platform or native choices. Module reports describe the evidence and runtime limits.
+All of `game/` is reconciled. The ledger currently has 4,782 unchecked entries: 4,005 assigned engine entries and 777 unassigned entries. There are 2,652 equal, 467 fixed and 1,556 intentional entries. Intentional entries include the 1,360 bundled-library exclusions and documented platform or native choices. Module reports describe the evidence and runtime limits.
 
 The original planning assumption of 20–40 entries per active hour still gives
 approximately **200–400 active hours**, before final cross-module runtime
@@ -174,3 +174,7 @@ The third orchestrated batch closed 261 further entries across map support, prof
 The fourth orchestrated batch closed 563 entries across utilities and core script modules. Source `dd6a421` passed both dedicated builds, all local macOS CI 02–13, native-only source guards and independent reviews. Both replays exactly match the fresh baseline. The review-discovered MSVC temporary-allocation issue was corrected before integration; generic VM recovery and other unresolved identities remain unchecked. Hosted ILP32 byte comparison remains unavailable because its unchanged reference does not compile.
 
 The fifth orchestrated batch closed 494 entries across parser/lexer, DObj, animation, model loading, filesystem and memory/helpers. Source `8f74202` with evidence `03ebea4` passed both dedicated builds, all local macOS CI 02–13, native-only source guards and independent reviews. Both replays exactly match the fresh baseline. Model diagnostic/truncated-record findings and legacy allocator line-number drift were corrected and re-reviewed before integration; actual OFF line expansions were checked separately. The initial source-fixture run failed on a missing download-fixture dependency; fixture-only67e46a9 was reviewed and the complete source suite passed on rerun. Hosted ILP32 byte comparison remains unavailable because its unchanged reference does not compile.
+
+Thirty-two whole-caller rows previously attributed to universal headers were routed to their actual engine modules. IDs, original Mac source-module provenance and unchecked verdicts are preserved; global status counts are unchanged. Shared-helper comparison does not certify these larger callers.
+
+Five routed Mac rows were subsequently resolved as exact identities of complete functions already audited under their Linux-indexed rows: four collision-tree traversals and Dvar_StringToColor. Both IDs are retained. This closes five work items without claiming five newly audited implementations.

@@ -21,3 +21,7 @@ Integrated source through `12d554b` passed both dedicated builds and all local m
 Both 2,000-frame stock and CoD2x replays exactly match the fresh `d873794` baseline in players, state hashes and entities, and match each other. Against the original Linux recording, all six logic fields agree; maximum origin drift remains 0.11792 and maximum velocity drift 2.0. Unchanged traces do not establish coverage of each correction. Branches not reached by the recording remain compiled and reviewed.
 
 The hosted ILP32 byte-comparison job cannot compare binaries: its unchanged `410342a` reference fails to compile GCC `__stdcall`/`__cdecl` declarations. The workflow already records that limitation and marks the job non-blocking; preprocessing equality is not binary-byte parity.
+
+## Routed identities
+
+Separately indexed Mac rows moved from universal headers were resolved only where the exact symbol/address and existing complete-body audit established identity with an already reconciled Linux-indexed row. The source matches that audited implementation. Both IDs and original provenance remain; these are duplicate work items, not new implementations. Current module counts: 28 equal, 0 fixed, 0 intentional, 0 unchecked.
