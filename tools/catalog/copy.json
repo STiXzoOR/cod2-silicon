@@ -6752,6 +6752,15 @@
         "src/PC/client_mp/cl_cgame_mp.c: CL_AddCgameCommand",
         "src/PC/game_mp/g_cmds_mp.c: ClientCommand"
       ]
+    },
+    "unskippablecinematic": {
+      "title": "Unskippable cinematic command",
+      "summary": "The native Mac handler skips cinematic playback.",
+      "details": "Sets the cinematic skip flag to false. On the native Apple path it clears nextmap and marks the intro as played without playing the requested video. The legacy video-player path starts playback with skipping disabled.",
+      "effectSources": [
+        "src/PC/client_mp/cl_cin_mp.c: CL_PlayUnskippableCinematic_f",
+        "src/PC/client_mp/cl_cin_mp.c: SCR_StopCinematic"
+      ]
     }
   },
   "supplemental": {
