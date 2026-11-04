@@ -30,7 +30,7 @@ int main(void)
  for(int locale=0;locale<15;++locale) {
   language.current.integer=locale;draw_calls=cursor_calls=variant_calls=0;
   Item_TextField_Paint(&dc,&item);
-  const char *expected=(locale>=1&&locale<=4)||locale==6||locale==7?"12,38":"12.38";
+  const char *expected=(locale>=1&&locale<=4)||locale==6||locale==7||locale==14?"12,38":"12.38";
   if(strcmp(drawn,expected)||strcmp(extent,expected)||variant_calls||draw_calls!=1) ++failures;
  }
  found=0;Item_TextField_Paint(&dc,&item);if(*drawn) ++failures;
