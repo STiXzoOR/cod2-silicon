@@ -89,7 +89,11 @@ static void nat_admit(netadr_t from, int qport, const char *id, const char *hash
     assert(slot >= 0);
     int challenge = svs.challenges[slot].challenge;
     if (reason) nat_reply(svs.authorizeAddress, challenge, reason);
-    else { svs.time += 6000; SV_GetChallenge(from); } /* actual timeout admission */
+    else {
+        svs.time += 7001;
+        svs.sv_lastTimeMasterServerCommunicated = svs.time - 1200001;
+        SV_GetChallenge(from);
+    } /* Both retail authorization grace periods have expired. */
     char info[512];
     snprintf(info, sizeof(info), "\\protocol\\118\\protocol_cod2x\\6\\cl_hwid2\\%s\\challenge\\%d\\qport\\%d\\name\\nat-fixture", id, challenge, qport);
     argc = 2; argv[0] = "connect"; argv[1] = info;

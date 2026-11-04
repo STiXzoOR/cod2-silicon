@@ -54,6 +54,9 @@ extern void *imp_com_dedicated;
 extern int strnicmp(const char *s1, const char *s2, size_t n);
 extern qboolean FS_WriteFile(const char *qpath, const void *buffer, int size);
 extern const char *FS_LoadedIwdPureChecksums(void);
+#if defined(COD2_X64)
+extern const char *SEH_StringEd_GetString(const char *key);
+#endif
 
 extern float FX_GetServerVisibility(const vec_t *start, const vec_t *end);
 extern void Com_DPrintf(const char *fmt, ...);
@@ -392,7 +395,6 @@ void SV_UpdateLastTimeMasterServerCommunicated(netadr_t from)
         svs.sv_lastTimeMasterServerCommunicated = svs.time;
 }
 #endif
-
 #if COD2_IS_PATCH_13
 void SV_AuthorizeRequest(struct netadr_t from, int challenge, const char *clientPBGuid)
 #else
@@ -911,14 +913,7 @@ void SV_WriteDownloadToClient(client_t *cl, msg_t *msg)
         cl->downloadingWWW = 0;
 #endif
         clientNum = SV_ClientNumForClient(cl);
-        Com_Printf("clientDownload: %d : begining \"%s\"\n", clientNum, cl->downloadName);
-
-        if (FS_iwIwd(cl->downloadName, (char *)"main")) {
-            Com_Printf("clientDownload: %d : \"%s\" cannot download iwd files\n", clientNum, cl->downloadName);
-            Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_CANTAUTODLGAMEIWD\x15%s", cl->downloadName);
-            goto send_error;
-        }
-
+#if defined(COD2_X64)
         if (!(*(const dvar_t **)imp_sv_allowDownload)->current.enabled) {
             Com_Printf("clientDownload: %d : \"%s\" download disabled", clientNum, cl->downloadName);
             if ((*(const dvar_t **)imp_sv_pure)->current.enabled)
@@ -927,6 +922,33 @@ void SV_WriteDownloadToClient(client_t *cl, msg_t *msg)
                 Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_AUTODL_SERVERDISABLED\x15%s", cl->downloadName);
             goto send_error;
         }
+#else
+        Com_Printf("clientDownload: %d : begining \"%s\"\n", clientNum, cl->downloadName);
+#endif
+
+        if (FS_iwIwd(cl->downloadName, (char *)"main")) {
+#if defined(COD2_X64)
+            Com_Printf("clientDownload: %d : \"%s\" cannot download IW iwd files\n", clientNum, cl->downloadName);
+            Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_CANTAUTODLGAMEPAK\x15%s", cl->downloadName);
+#else
+            Com_Printf("clientDownload: %d : \"%s\" cannot download iwd files\n", clientNum, cl->downloadName);
+            Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_CANTAUTODLGAMEIWD\x15%s", cl->downloadName);
+#endif
+            goto send_error;
+        }
+
+#if defined(COD2_X64)
+        Com_Printf("clientDownload: %d : beginning \"%s\"\n", clientNum, cl->downloadName);
+#else
+        if (!(*(const dvar_t **)imp_sv_allowDownload)->current.enabled) {
+            Com_Printf("clientDownload: %d : \"%s\" download disabled", clientNum, cl->downloadName);
+            if ((*(const dvar_t **)imp_sv_pure)->current.enabled)
+                Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_AUTODL_SERVERDISABLED_PURE\x15%s", cl->downloadName);
+            else
+                Com_sprintf(errorMessage, sizeof(errorMessage), "EXE_AUTODL_SERVERDISABLED\x15%s", cl->downloadName);
+            goto send_error;
+        }
+#endif
 
         cl->downloadSize = FS_SV_FOpenFileRead(cl->downloadName, &cl->download);
         if (cl->downloadSize <= 0) {
@@ -971,6 +993,14 @@ void SV_WriteDownloadToClient(client_t *cl, msg_t *msg)
         cl->downloadCurrentBlock++;
     }
 
+#if defined(COD2_X64)
+    if (cl->downloadCount == cl->downloadSize && !cl->downloadEOF &&
+        cl->downloadCurrentBlock - cl->downloadClientBlock <= 7) {
+        cl->downloadBlockSize[cl->downloadCurrentBlock % 8] = 0;
+        ++cl->downloadCurrentBlock;
+        cl->downloadEOF = 1;
+    }
+#endif
     if (cl->downloadClientBlock == cl->downloadCurrentBlock)
         return;
 
@@ -1337,7 +1367,7 @@ challenge_found:
             return;
         }
 
-#if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
+#if defined(COD2_X64)
         svsLocal->authorizeAddress.port = (unsigned short)((20700 >> 8) | (20700 << 8));
         Com_Printf("%s resolved to %i.%i.%i.%i:%i\n", "cod2master.activision.com",
                    svsLocal->authorizeAddress.ip[0], svsLocal->authorizeAddress.ip[1],
@@ -1350,7 +1380,12 @@ challenge_found:
 #endif
     }
 
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+    if (svsLocal->time - svsLocal->sv_lastTimeMasterServerCommunicated <= 1200000 ||
+        svsLocal->time - challenge->firstTime <= 7000 || NET_CompareAdr(from, *SV_MasterAddress())) {
+#else
     if (svsLocal->time - challenge->firstTime <= 5000 || NET_CompareAdr(from, *SV_MasterAddress())) {
+#endif
 #if COD2_IS_PATCH_13
 
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
@@ -1386,6 +1421,58 @@ void SV_FreeClient(client_t *cl)
 
 void SV_DropClient(client_t *drop, const char *reason)
 {
+#if defined(COD2_X64)
+    serverStatic_t *svsPtr = (serverStatic_t *)imp_svs;
+    int clientNum;
+    int i;
+    int maxClients;
+    char playerName[sizeof(drop->name)];
+    qboolean localized;
+
+    if (drop->state == 1)
+        return;
+
+    drop->dropReason = NULL;
+    strcpy(playerName, drop->name);
+    SV_FreeClient(drop);
+
+    Com_DPrintf("Going to CS_ZOMBIE for %s\n", playerName);
+    drop->state = 1;
+
+    if (!drop->gentity) {
+        for (i = 0; i < 1024; ++i) {
+            if (NET_CompareAdr(svsPtr->challenges[i].adr, drop->netchan.remoteAddress)) {
+                svsPtr->challenges[i].connected = 0;
+                break;
+            }
+        }
+    }
+
+    clientNum = SV_ClientNumForClient(drop);
+
+    localized = SEH_StringEd_GetString(reason) != NULL;
+    if (I_stricmp(reason, "EXE_DISCONNECTED") != 0) {
+        SV_SendServerCommand(NULL, SV_CMD_CAN_IGNORE, "%c \"\x15%s^7 %s%s\"", 0x65, playerName, localized ? "\x14" : "", reason);
+    }
+
+    Com_Printf("%i:%s %s\n", clientNum, playerName, reason);
+    SV_SendServerCommand(NULL, SV_CMD_RELIABLE, "%c %d", 0x4a, clientNum);
+    if (localized)
+        SV_SendServerCommand(drop, SV_CMD_RELIABLE, "%c \"%s\"", 0x77, reason);
+    else
+        SV_SendServerCommand(drop, SV_CMD_RELIABLE, "%c \"%s^7 %s\" PB", 0x77, playerName, reason);
+
+    maxClients = (sv_maxclients)->current.integer;
+    if (maxClients > 0) {
+        for (i = 0; i < maxClients; ++i) {
+            if (svsPtr->clients[i].state > 1)
+                return;
+        }
+        SV_Heartbeat_f();
+    } else if (maxClients == 0) {
+        SV_Heartbeat_f();
+    }
+#else
     serverStatic_t *svsPtr = (serverStatic_t *)imp_svs;
     int clientNum;
     int i;
@@ -1429,6 +1516,7 @@ void SV_DropClient(client_t *drop, const char *reason)
     } else if (maxClients == 0) {
         SV_Heartbeat_f();
     }
+#endif
 }
 
 void SV_Disconnect_f(client_t *cl)
@@ -1557,11 +1645,19 @@ void SV_DirectConnect(netadr_t from)
         }
 
         guid = challengeEntry->guid;
+#if defined(COD2_X64)
+        ping = challengeEntry->firstPing;
+        if (!ping) {
+            ping = svs->time - challengeEntry->pingTime;
+            challengeEntry->firstPing = ping;
+        }
+#else
         ping = challengeEntry->pingTime;
         if (!ping) {
             ping = svs->time - challengeEntry->time;
             challengeEntry->pingTime = ping;
         }
+#endif
 
         Com_Printf("Client %i connecting with %i challenge ping from %s\n", challengeIndex, ping, NET_AdrToString(from));
         challengeEntry->connected = 1;
@@ -1652,6 +1748,10 @@ setup_client:
     cl->gentity = (unsigned char *(*)[16])SV_GentityNum(clientNum);
     cl->scriptId = (unsigned short)Scr_AllocArray();
     cl->challenge = challenge;
+#if defined(COD2_X64)
+    if (!guid)
+        Com_Printf("Connecting player #%i has a zero GUID\n", clientNum);
+#endif
     cl->guid = guid;
 
     Netchan_Setup((netsrc_t)1, &cl->netchan, from, qport);
@@ -1683,12 +1783,21 @@ setup_client:
 
     SV_UserinfoChanged(cl);
 
+#if defined(COD2_X64)
+    /* Mac 0x17f417 indexes this reset by the admitted client slot. */
+    svs->challenges[clientNum].firstPing = 0;
+#else
     if (challengeIndex >= 0) {
         svs->challenges[challengeIndex].connected = 0;
     }
+#endif
 
     NET_OutOfBandPrint((netsrc_t)1, from, "connectResponse");
+#if defined(COD2_X64)
+    cl->gamestateMessageNum = -1;
+#else
     cl->deltaMessage = -1;
+#endif
 
     connectedClients = 0;
     for (clientNum = 0, cl = svs->clients; clientNum < maxClients; ++clientNum, ++cl) {
@@ -1785,7 +1894,11 @@ void SV_UserMove(client_t *cl, msg_t *msg, qboolean delta)
     usercmd_t *cmd;
     int newestServerTime;
 
+#if defined(COD2_X64)
+    if (delta) {
+#else
     if (delta && cl->messageAcknowledge > cl->gamestateMessageNum) {
+#endif
         cl->deltaMessage = cl->messageAcknowledge;
     } else {
         cl->deltaMessage = -1;
@@ -1922,13 +2035,16 @@ void SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
         if (cl->messageAcknowledge <= cl->gamestateMessageNum) {
             return;
         }
+#if !defined(COD2_X64)
         if (cl->netchan.unsentFragments || cl->state == 3) {
             return;
         }
+#endif
 
         Com_DPrintf("%s : dropped gamestate, resending\n", cl->name);
         SV_SendClientGameState(cl);
 
+#if !defined(COD2_X64)
         if (!(*(const dvar_t **)imp_net_lanauthorize)->current.enabled &&
             Sys_IsLANAddress(cl->netchan.remoteAddress)) {
             return;
@@ -1944,6 +2060,7 @@ void SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
 #else
         SV_AuthorizeRequest(cl->netchan.remoteAddress, cl->challenge);
 #endif
+#endif
         return;
     }
 
@@ -1951,9 +2068,11 @@ void SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
         int c = MSG_ReadBits(&msgCompressed, 3);
         SV_ExecDbg("", c, cl->state, 0);
 
+#if !defined(COD2_X64)
         if (c == 3) {
             return;
         }
+#endif
 
         if (c == 2) {
             int seq = MSG_ReadLong(&msgCompressed);
@@ -1976,6 +2095,21 @@ void SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
                            I_strncmp(s, "score ", 6) &&
                            I_strncmp(s, "mr ", 3);
 
+#if defined(COD2_X64)
+                {
+                    int floodable = clientOK;
+                    clientOK = 1;
+                    if (!(*(const dvar_t **)imp_legacyHacks)->current.integer &&
+                        cl->state > 3 &&
+                        (*(const dvar_t **)imp_sv_floodProtect)->current.enabled &&
+                        svs.time < cl->nextReliableTime && floodable) {
+                        Com_DPrintf("client text ignored for %s: %s\n", cl->name, SV_Cmd_Argv(0));
+                        clientOK = 0;
+                    }
+                    if (floodable)
+                        cl->nextReliableTime = svs.time + 800;
+                }
+#else
                 if (!(*(const dvar_t **)imp_legacyHacks)->current.integer &&
                     cl->state > 3 &&
                     (*(const dvar_t **)imp_sv_floodProtect)->current.enabled &&
@@ -1990,6 +2124,7 @@ void SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
                 } else if (!clientOK) {
                     clientOK = 1;
                 }
+#endif
 
                 SV_ExecuteClientCommand(cl, s, clientOK);
                 cl->lastClientCommand = seq;
@@ -2020,6 +2155,10 @@ void SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
             return;
         }
 
+#if defined(COD2_X64)
+        if (c == 3)
+            return;
+#endif
         Com_Printf("WARNING: bad command byte %i for client %i\n", c, SV_ClientNumForClient(cl));
         return;
     }
