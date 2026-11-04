@@ -2,7 +2,7 @@
 
 `functions.json` contains a function list for every indexed source module.
 `modules.csv` gives its four status counts. The active module is
-`bgame/bg_misc`; complete that module before moving to another.
+`bgame/bg_pmove`; complete that module before moving to another.
 `game/g_active_mp`, `game/g_client_mp` and `game/g_combat_mp` are fully reconciled;
 their reports preserve the outstanding
 whole-project replay differences.
@@ -57,12 +57,12 @@ reliable whole-project completion date.
 
 ## Current workload and estimate
 
-All of `game/` is now reconciled, in twenty-five module reconciliations. The ledger has 7,309 unchecked entries:
-6,532 assigned engine entries and 777 unassigned entries. Another 1,360 entries
+All of `game/` is now reconciled. After twenty-seven module reconciliations the ledger has 7,291 unchecked entries:
+6,514 assigned engine entries and 777 unassigned entries. Another 1,360 entries
 are intentional bundled-library exclusions. There are also twenty-four intentional Linux-only helper omissions.
 Nine more intentional differences cover native dedicated debug rendering, CoD2x level-exit behavior,
 five script error or load paths and two further native choices recorded in their reports.
-There are 640 equal functions and 115 fixed functions. All 24 entries in `game/g_active_mp` and all 11 in
+There are 656 equal functions and 117 fixed functions. All 24 entries in `game/g_active_mp` and all 11 in
 `game/g_client_mp`, plus all 13 in `game/g_combat_mp`, are reconciled, with
 integrated results in their reports.
 
@@ -160,3 +160,7 @@ The last six `game/` modules were reconciled in one batch: `game/g_client_fields
 `game/g_weapon_mp`, `game/g_cmds_mp`, `game/g_utils_mp` and `game/g_client_script_cmd_mp`.
 Both 2,000-frame replays match the trace from the previous commit, and stock matches CoD2x, so that recording reaches none of the corrected paths. Original parity is unchanged: 3,781 `origin` and 1,257 `velocity` differences, with the first player difference at frame 102 and the first state difference at frame 116.
 Reconciling a module does not make it verified at run time: most fixes in this batch were only compiled and reviewed.
+
+`bgame/bg_slidemove` and `bgame/bg_jump` are reconciled: 16 equal and two fixed. In `bgame/bg_pmove`, `PM_ClipVelocity`,
+`PM_Accelerate`, `PM_Friction` and the walking path in `Pmove` have been compared and match; the rest of that module
+is still unchecked. Both 2,000-frame replays match the trace from the previous commit, so that recording reaches neither correction. Original parity is unchanged: 3,781 `origin` and 1,257 `velocity` differences, first at frame 102.
