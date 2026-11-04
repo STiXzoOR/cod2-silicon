@@ -279,7 +279,12 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
     case 0:
         arrayIndex = FindNameIndex(pValue, szWeapTypeNames, 4);
         if (arrayIndex < 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15"
+                         "Unknown weapon type \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#else
             Com_Error(1, "Unknown weapon type \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#endif
         }
         wd->weapType = (weapType_t)(arrayIndex);
         return 1;
@@ -287,7 +292,12 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
     case 1:
         arrayIndex = FindNameIndex(pValue, szWeapClassNames, 10);
         if (arrayIndex < 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15"
+                         "Unknown weapon class \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#else
             Com_Error(1, "Unknown weapon class \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#endif
         }
         wd->weapClass = (weapClass_t)(arrayIndex);
         return 1;
@@ -295,7 +305,12 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
     case 2:
         arrayIndex = FindNameIndex(pValue, szWeapOverlayReticleNames, 5);
         if (arrayIndex < 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15"
+                         "Unknown weapon overlay reticle \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#else
             Com_Error(1, "Unknown weapon overlay reticle \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#endif
         }
         wd->overlayReticle = (weapOverlayReticle_t)(arrayIndex);
         return 1;
@@ -303,7 +318,12 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
     case 3:
         arrayIndex = FindNameIndex(pValue, szWeapSlotNames, 3);
         if (arrayIndex < 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15"
+                         "Unknown weapon slot \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#else
             Com_Error(1, "Unknown weapon slot \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#endif
         }
         wd->weapSlot = (weapSlot_t)(arrayIndex);
         return 1;
@@ -311,7 +331,12 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
     case 4:
         arrayIndex = FindNameIndex(pValue, szWeapStanceNames, 3);
         if (arrayIndex < 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15"
+                         "Unknown weapon stance \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#else
             Com_Error(1, "Unknown weapon stance \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#endif
         }
         wd->stance = (weapStance_t)(arrayIndex);
         return 1;
@@ -319,7 +344,12 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
     case 5:
         arrayIndex = FindNameIndex(pValue, szProjectileExplosionNames, 3);
         if (arrayIndex < 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15"
+                         "Unknown projectile explosion \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#else
             Com_Error(1, "Unknown projectile explosion \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#endif
         }
         wd->projExplosion = (weapProjExposion_t)(arrayIndex);
         return 1;
@@ -327,7 +357,12 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
     case 6:
         arrayIndex = FindNameIndex(pValue, offhandClassNames, 3);
         if (arrayIndex < 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15"
+                         "Unknown offhand class \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#else
             Com_Error(1, "Unknown offhand class \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#endif
         }
         wd->offhandClass = (OffhandClass)(arrayIndex);
         return 1;
@@ -336,13 +371,23 @@ static qboolean BG_ParseWeaponDefSpecificFieldType(byte *pStruct, const char *pV
         arraySize = g_playerAnimTypeNamesCount;
         arrayIndex = FindNameIndex(pValue, g_playerAnimTypeNames, arraySize);
         if (arrayIndex < 0) {
+#if defined(COD2_X64)
+            Com_Error(1, "\x15"
+                         "Unknown playerAnimType \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#else
             Com_Error(1, "Unknown playerAnimType \"%s\" in \"%s\"\n", pValue, wd->szInternalName);
+#endif
         }
         wd->playerAnimType = arrayIndex;
         return 1;
 
     default:
+#if defined(COD2_X64)
+        Com_Error(1, "\x15"
+                     "Bad field type %i in %s\n", iFieldType, wd->szInternalName);
+#else
         Com_Error(1, "Bad field type %i in %s\n", iFieldType, wd->szInternalName);
+#endif
         return 0;
     }
 }

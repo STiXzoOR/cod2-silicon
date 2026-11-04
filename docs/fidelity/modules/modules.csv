@@ -86,7 +86,7 @@ bgame/bg_misc,13,13,0,0,0
 bgame/bg_pmove,55,49,6,0,0
 bgame/bg_slidemove,4,2,2,0,0
 bgame/bg_weapons,136,0,0,0,136
-bgame/bg_weapons_load_obj,15,0,0,0,15
+bgame/bg_weapons_load_obj,15,13,1,1,0
 botlib/l_memory,3,0,0,0,3
 botlib/l_precomp,77,0,0,0,77
 botlib/l_script,37,0,0,0,37
