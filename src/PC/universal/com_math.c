@@ -272,6 +272,23 @@ void MatrixSet44(float (*out)[4], const vec_t *origin, vec3_t *axis, vec_t scale
     out[3][3] = 1.0f;
 }
 
+#if defined(COD2_X64)
+void MatrixMultiply43(const float (*in1)[3], const float (*in2)[3], float (*out)[3])
+{
+    out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] + in1[0][2] * in2[2][0];
+    out[1][0] = in1[1][0] * in2[0][0] + in1[1][1] * in2[1][0] + in1[1][2] * in2[2][0];
+    out[2][0] = in1[2][0] * in2[0][0] + in1[2][1] * in2[1][0] + in1[2][2] * in2[2][0];
+    out[0][1] = in1[0][0] * in2[0][1] + in1[0][1] * in2[1][1] + in1[0][2] * in2[2][1];
+    out[1][1] = in1[1][0] * in2[0][1] + in1[1][1] * in2[1][1] + in1[1][2] * in2[2][1];
+    out[2][1] = in1[2][0] * in2[0][1] + in1[2][1] * in2[1][1] + in1[2][2] * in2[2][1];
+    out[0][2] = in1[0][0] * in2[0][2] + in1[0][1] * in2[1][2] + in1[0][2] * in2[2][2];
+    out[1][2] = in1[1][0] * in2[0][2] + in1[1][1] * in2[1][2] + in1[1][2] * in2[2][2];
+    out[2][2] = in1[2][0] * in2[0][2] + in1[2][1] * in2[1][2] + in1[2][2] * in2[2][2];
+    out[3][0] = in1[3][0] * in2[0][0] + in1[3][1] * in2[1][0] + in1[3][2] * in2[2][0] + in2[3][0];
+    out[3][1] = in1[3][0] * in2[0][1] + in1[3][1] * in2[1][1] + in1[3][2] * in2[2][1] + in2[3][1];
+    out[3][2] = in1[3][0] * in2[0][2] + in1[3][1] * in2[1][2] + in1[3][2] * in2[2][2] + in2[3][2];
+}
+#else
 void MatrixMultiply43(const float (*in1)[3], const float (*in2)[3], float (*out)[3])
 {
     out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] + in1[0][2] * in2[2][0];
@@ -287,6 +304,7 @@ void MatrixMultiply43(const float (*in1)[3], const float (*in2)[3], float (*out)
     out[3][1] = in1[3][0] * in2[0][1] + in1[3][1] * in2[1][1] + in1[3][2] * in2[2][1] + in2[3][1];
     out[3][2] = in1[3][0] * in2[0][2] + in1[3][1] * in2[1][2] + in1[3][2] * in2[2][2] + in2[3][2];
 }
+#endif
 
 void MatrixMultiply44(const float (*in1)[4], const float (*in2)[4], float (*out)[4])
 {
@@ -382,6 +400,16 @@ void MatrixInverse44(const float *mat, float *dst)
     tmp[10] = src[8] * src[13];
     tmp[11] = src[9] * src[12];
 
+#if defined(COD2_X64)
+    dst[0] = tmp[0] * src[5] + tmp[3] * src[6] + tmp[4] * src[7] - (tmp[1] * src[5] + tmp[2] * src[6] + tmp[5] * src[7]);
+    dst[1] = tmp[1] * src[4] + tmp[6] * src[6] + tmp[9] * src[7] - (tmp[0] * src[4] + tmp[7] * src[6] + tmp[8] * src[7]);
+    dst[2] = tmp[2] * src[4] + tmp[7] * src[5] + tmp[10] * src[7] - (tmp[3] * src[4] + tmp[6] * src[5] + tmp[11] * src[7]);
+    dst[3] = tmp[5] * src[4] + tmp[8] * src[5] + tmp[11] * src[6] - (tmp[4] * src[4] + tmp[9] * src[5] + tmp[10] * src[6]);
+    dst[4] = tmp[1] * src[1] + tmp[2] * src[2] + tmp[5] * src[3] - (tmp[0] * src[1] + tmp[3] * src[2] + tmp[4] * src[3]);
+    dst[5] = tmp[0] * src[0] + tmp[7] * src[2] + tmp[8] * src[3] - (tmp[1] * src[0] + tmp[6] * src[2] + tmp[9] * src[3]);
+    dst[6] = tmp[3] * src[0] + tmp[6] * src[1] + tmp[11] * src[3] - (tmp[2] * src[0] + tmp[7] * src[1] + tmp[10] * src[3]);
+    dst[7] = tmp[4] * src[0] + tmp[9] * src[1] + tmp[10] * src[2] - (tmp[5] * src[0] + tmp[8] * src[1] + tmp[11] * src[2]);
+#else
     dst[0] = tmp[0] * src[5] + tmp[3] * src[6] + tmp[4] * src[7] - tmp[1] * src[5] - tmp[2] * src[6] - tmp[5] * src[7];
     dst[1] = tmp[1] * src[4] + tmp[6] * src[6] + tmp[9] * src[7] - tmp[0] * src[4] - tmp[7] * src[6] - tmp[8] * src[7];
     dst[2] = tmp[2] * src[4] + tmp[7] * src[5] + tmp[10] * src[7] - tmp[3] * src[4] - tmp[6] * src[5] - tmp[11] * src[7];
@@ -390,6 +418,7 @@ void MatrixInverse44(const float *mat, float *dst)
     dst[5] = tmp[0] * src[0] + tmp[7] * src[2] + tmp[8] * src[3] - tmp[1] * src[0] - tmp[6] * src[2] - tmp[9] * src[3];
     dst[6] = tmp[3] * src[0] + tmp[6] * src[1] + tmp[11] * src[3] - tmp[2] * src[0] - tmp[7] * src[1] - tmp[10] * src[3];
     dst[7] = tmp[4] * src[0] + tmp[9] * src[1] + tmp[10] * src[2] - tmp[5] * src[0] - tmp[8] * src[1] - tmp[11] * src[2];
+#endif
 
     tmp[0] = src[2] * src[7];
     tmp[1] = src[3] * src[6];
@@ -404,6 +433,16 @@ void MatrixInverse44(const float *mat, float *dst)
     tmp[10] = src[0] * src[5];
     tmp[11] = src[1] * src[4];
 
+#if defined(COD2_X64)
+    dst[8] = tmp[0] * src[13] + tmp[3] * src[14] + tmp[4] * src[15] - (tmp[1] * src[13] + tmp[2] * src[14] + tmp[5] * src[15]);
+    dst[9] = tmp[1] * src[12] + tmp[6] * src[14] + tmp[9] * src[15] - (tmp[0] * src[12] + tmp[7] * src[14] + tmp[8] * src[15]);
+    dst[10] = tmp[2] * src[12] + tmp[7] * src[13] + tmp[10] * src[15] - (tmp[3] * src[12] + tmp[6] * src[13] + tmp[11] * src[15]);
+    dst[11] = tmp[5] * src[12] + tmp[8] * src[13] + tmp[11] * src[14] - (tmp[4] * src[12] + tmp[9] * src[13] + tmp[10] * src[14]);
+    dst[12] = tmp[2] * src[10] + tmp[5] * src[11] + tmp[1] * src[9] - (tmp[4] * src[11] + tmp[0] * src[9] + tmp[3] * src[10]);
+    dst[13] = tmp[8] * src[11] + tmp[0] * src[8] + tmp[7] * src[10] - (tmp[6] * src[10] + tmp[9] * src[11] + tmp[1] * src[8]);
+    dst[14] = tmp[6] * src[9] + tmp[11] * src[11] + tmp[3] * src[8] - (tmp[10] * src[11] + tmp[2] * src[8] + tmp[7] * src[9]);
+    dst[15] = tmp[10] * src[10] + tmp[4] * src[8] + tmp[9] * src[9] - (tmp[8] * src[9] + tmp[11] * src[10] + tmp[5] * src[8]);
+#else
     dst[8] = tmp[0] * src[13] + tmp[3] * src[14] + tmp[4] * src[15] - tmp[1] * src[13] - tmp[2] * src[14] - tmp[5] * src[15];
     dst[9] = tmp[1] * src[12] + tmp[6] * src[14] + tmp[9] * src[15] - tmp[0] * src[12] - tmp[7] * src[14] - tmp[8] * src[15];
     dst[10] = tmp[2] * src[12] + tmp[7] * src[13] + tmp[10] * src[15] - tmp[3] * src[12] - tmp[6] * src[13] - tmp[11] * src[15];
@@ -412,6 +451,7 @@ void MatrixInverse44(const float *mat, float *dst)
     dst[13] = tmp[8] * src[11] + tmp[0] * src[8] + tmp[7] * src[10] - tmp[6] * src[10] - tmp[9] * src[11] - tmp[1] * src[8];
     dst[14] = tmp[6] * src[9] + tmp[11] * src[11] + tmp[3] * src[8] - tmp[10] * src[11] - tmp[2] * src[8] - tmp[7] * src[9];
     dst[15] = tmp[10] * src[10] + tmp[4] * src[8] + tmp[9] * src[9] - tmp[8] * src[9] - tmp[11] * src[10] - tmp[5] * src[8];
+#endif
 
     det = src[0] * dst[0] + src[1] * dst[1] + src[2] * dst[2] + src[3] * dst[3];
     det = 1.0f / det;
@@ -524,7 +564,11 @@ void MatrixForViewer(float (*mtx)[4], const vec_t *origin, vec3_t *axis)
     mtx[0][0] = -axis[1][0];
     mtx[1][0] = -axis[1][1];
     mtx[2][0] = -axis[1][2];
+#if defined(COD2_X64)
+    mtx[3][0] = -(origin[0] * mtx[0][0] + origin[1] * mtx[1][0] + origin[2] * mtx[2][0]);
+#else
     mtx[3][0] = origin[0] * axis[1][0] + origin[1] * axis[1][1] + origin[2] * axis[1][2];
+#endif
     mtx[0][1] = axis[2][0];
     mtx[1][1] = axis[2][1];
     mtx[2][1] = axis[2][2];
@@ -539,10 +583,26 @@ void MatrixForViewer(float (*mtx)[4], const vec_t *origin, vec3_t *axis)
     mtx[3][3] = 1.0f;
 }
 
+#if defined(COD2_X64)
+static inline float AngleNormalize360Native(float angle)
+{
+    // Mac CVTTSS2SI masks its integer-indefinite result to zero.
+    float scaled = angle * 182.04444885253906f;
+    if (!(scaled >= -2147483648.0f && scaled < 2147483648.0f))
+        return 0.0f;
+    return (float)((uint32_t)(int32_t)scaled & 0xffffu) * 0.0054931640625f;
+}
+
+const float AngleMod(const float a)
+{
+    return AngleNormalize360Native(a);
+}
+#else
 const float AngleMod(const float a)
 {
     return (float)((int)(a * 182.04444885253906f) & 0xffff) * 0.0054931640625f;
 }
+#endif
 
 const float LerpAngle(const float from, const float to, const float frac)
 {
@@ -582,8 +642,12 @@ const float AngleSubtract(const float a1, const float a2)
     return AngleSubtract_core(a1, a2);
 }
 
+#if defined(COD2_X64)
+#define ANGLE_NORMALIZE_360(a) AngleNormalize360Native(a)
+#else
 #define ANGLE_NORMALIZE_360(a) \
     ((float)((int)((a) * 182.04444885253906f) & 0xffff) * 0.0054931640625f)
+#endif
 
 const float AngleNormalize360(const float angle)
 {
@@ -719,7 +783,12 @@ float flrand(float min, float max)
 int irand(int min, int max)
 {
     holdrand = holdrand * 214013 + 2531011;
+#if defined(COD2_X64)
+    uint32_t product = (holdrand >> 17) * ((uint32_t)max - (uint32_t)min);
+    return (int32_t)((uint32_t)min + (uint32_t)((int32_t)product >> 15));
+#else
     return min + ((int)((holdrand >> 17) * (unsigned int)(max - min)) >> 15);
+#endif
 }
 
 void MatrixTransformVectorQuatTrans(const vec_t *in, const DObjAnimMat *mat, vec_t *out)
@@ -748,8 +817,13 @@ float DiffTrack(float tgt, float cur, float rate, float deltaTime)
 {
     float diff = tgt - cur;
     float step = diff * rate * deltaTime;
+#if defined(COD2_X64)
+    if (!(__builtin_fabsf(diff) > 0.001f))
+        return tgt;
+#else
     if (__builtin_fabsf(diff) <= 0.001f)
         return tgt;
+#endif
     if (__builtin_fabsf(step) > __builtin_fabsf(diff))
         return tgt;
     return cur + step;
@@ -816,7 +890,11 @@ void ExpandBoundsToWidth(vec_t *mins, vec_t *maxs)
     float dx = maxs[0] - mins[0];
     float dy = maxs[1] - mins[1];
     float dz = maxs[2] - mins[2];
+#if defined(COD2_X64)
+    float width = !(dx - dy < 0.0f) ? dx : dy;
+#else
     float width = (dx >= dy) ? dx : dy;
+#endif
     if (width > dz) {
         float half = (width - dz) * 0.5f;
         mins[2] -= half;
@@ -848,10 +926,18 @@ qboolean BoxDistSqrdExceeds(const vec_t *absmin, const vec_t *absmax, const vec_
     for (i = 0; i < 3; i++) {
         float lo = absmin[i] - org[i];
         float hi = absmax[i] - org[i];
+#if defined(COD2_X64)
+        if (!(lo * hi <= 0.0f)) {
+#else
         if (lo * hi > 0.0f) {
+#endif
             float a = lo * lo;
             float b = hi * hi;
+#if defined(COD2_X64)
+            distSq += (b < a) ? b : a;
+#else
             distSq += (a < b) ? a : b;
+#endif
         }
     }
     return distSq > fogOpaqueDistSqrd;
@@ -885,7 +971,13 @@ void GetRotatedBounds(vec3_t *baseBounds, const vec_t *origin, vec3_t *axis, vec
         rotatedBounds[1][i] = origin[i];
         for (j = 0; j < 3; j++) {
             float e = axis[j][i];
+#if defined(COD2_X64)
+            uint32_t axisBits;
+            memcpy(&axisBits, &e, sizeof(axisBits));
+            if (!(axisBits & 0x80000000u)) {
+#else
             if (e >= 0.0f) {
+#endif
                 rotatedBounds[0][i] += baseBounds[0][j] * e;
                 rotatedBounds[1][i] += baseBounds[1][j] * e;
             } else {
@@ -1138,7 +1230,11 @@ qboolean WindingContainsCoplanarPoint(vec3_t *verts, int vertCount, const vec_t 
             ax = 1;
             ay = 0;
         }
+#if defined(COD2_X64)
+    } else if (ny2 >= nx2 && ny2 >= nz2) {
+#else
     } else if (ny2 >= nx2) {
+#endif
         if (normal[1] > 0.0f) {
             ax = 2;
             ay = 0;
@@ -1238,8 +1334,13 @@ void YawToAxis(float yaw, vec3_t *axis)
     axis[0][0] = cy;
     axis[0][1] = sy;
     axis[0][2] = 0.0f;
+#if defined(COD2_X64)
+    axis[1][0] = 0.0f - sy;
+    axis[1][1] = 0.0f + cy;
+#else
     axis[1][0] = -sy;
     axis[1][1] = cy;
+#endif
     axis[1][2] = 0.0f;
     axis[2][0] = 0.0f;
     axis[2][1] = 0.0f;
@@ -1267,9 +1368,15 @@ void RotatePointAroundVector(vec_t *dst, const vec_t *dir, const vec_t *point, c
     vr[minAxis] += 1.0f;
     Vec3Normalize_core(vr);
 
+#if defined(COD2_X64)
+    vup[0] = dir[2] * vr[1] - dir[1] * vr[2];
+    vup[1] = dir[0] * vr[2] - dir[2] * vr[0];
+    vup[2] = dir[1] * vr[0] - dir[0] * vr[1];
+#else
     vup[0] = dir[1] * vr[2] - dir[2] * vr[1];
     vup[1] = dir[2] * vr[0] - dir[0] * vr[2];
     vup[2] = dir[0] * vr[1] - dir[1] * vr[0];
+#endif
 
     m[0][0] = vr[0];
     m[0][1] = vup[0];
@@ -1429,7 +1536,11 @@ void AxisToAngles(vec3_t *axis, vec_t *angles)
         roll = (float)(atan2((double)up_comp, (double)fwd) * -180.0 / 3.141592653589793);
     }
 
+#if defined(COD2_X64)
+    if (!(temp2 < 0.0f)) {
+#else
     if (temp2 >= 0.0f) {
+#endif
         angles[2] = -roll;
     } else {
         if (roll < 0.0f)
