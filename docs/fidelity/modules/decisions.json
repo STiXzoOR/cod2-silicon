@@ -7066,5 +7066,805 @@
   "mac:0x000aebfc": {
     "status": "fixed",
     "evidence": "Mac StatMon_Warning at 0xaebfc: restored leading 0x15 in the error string loaded at 0xaec4c from 0x249e30; changed native renderer slot-four callback return from int to MaterialHandle so the pointer stored by Mac at 0xaecac is not truncated on 64-bit. Enabled/range gates, expiration, lazy registration arguments and count growth were read and match. Both corrections are compiled and reviewed; not exercised."
+  },
+  "linux:script/scr_compiler.cpp:1757:AddExpressionListOpcodePos": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x95782-0x95845 and 0x96648-0x96731: compared complete argument traversal, constant emission, parameter count, developer-only source traversal and zero source flags; native helpers are EmitCallArgs and EmitDeveloperParamOpcodePos."
+  },
+  "linux:script/scr_compiler.cpp:1775:AddFilePrecache": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9a12d-0x9a1e0 and 0x953e4-0x9547c: compared canonical filename/ref transfers, include flag, source position, precache pointer advance and script table object creation; native widened entry preserves field meaning."
+  },
+  "linux:script/scr_compiler.cpp:1957:AddFunction": {
+    "status": "intentional",
+    "evidence": "Mac inlined at 0x959e7-0x95a26/0x95aa3-0x95b89 and 0x96897-0x968d6: read linear pointer deduplication and 1024-entry failure; native EmitFunctionTableIndex keeps full-width host pointers and also backs the indexed builtin variable cache."
+  },
+  "linux:script/scr_compiler.cpp:5875:AddRefToValue": {
+    "status": "unchecked",
+    "evidence": "Offsource overload: Linux row names AddRefToValue(VariableValue *), while this source imports the separate two-argument value module function. Mac caller field loads at 0x92860-0x9287f were checked, but no standalone overload identity was established."
+  },
+  "mac:0x0009215e": {
+    "status": "equal",
+    "evidence": "Mac 0x9215e-0x9217c: compared unsigned descending key comparison, -1/0/1 results; native packed loads preserve the eight-byte switch record."
+  },
+  "linux:script/scr_compiler.cpp:91:CompileTransferRefToString": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x94965-0x9498f/0x94a78-0x94a9a, 0x9549c-0x954c1 and 0x956dc-0x95725: compared ignored developer state, const-ref add/remove suppression, transfer user values and operation order across compiler sites."
+  },
+  "linux:script/scr_compiler.cpp:3366:ConnectBreakStatements": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9893f-0x98965/0x989db-0x98a01 and 0x99120-0x99146/0x992c2-0x992e8: compared TempMalloc(0) before traversal, next-linked record iteration and packed signed four-byte current-position minus nextCodePos patches."
+  },
+  "linux:script/scr_compiler.cpp:3382:ConnectContinueStatements": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9893f-0x98965/0x989db-0x98a01 and 0x99120-0x99146/0x992c2-0x992e8: compared TempMalloc(0) before traversal, next-linked record iteration and packed signed four-byte current-position minus nextCodePos patches."
+  },
+  "linux:script/scr_compiler.cpp:1309:EmitAnim": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x95c5e-0x95cbd and 0x95dcc-0x95ddb: compared corresponding opcodes 0x0f/0x10/0x11/0x12/0x25, stack +1, call zero and source flag 1."
+  },
+  "linux:script/scr_compiler.cpp:1342:EmitAnimObject": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96b1a-0x96bb3 and 0x96c2b-0x96c4f: compared object opcodes 0x26/0x0d/0x0e with zero stack change, and conversion opcode 0x59 stack -1/source flag zero."
+  },
+  "linux:script/scr_compiler.cpp:597:EmitAnimTree": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x95e58-0x95eac: corrected lookup from animtrees array object to animTreeIndex at Mac +0x414, including required-using-tree error and emitted integer; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:1469:EmitAnimation": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x95de0-0x95e51: compared opcode 0x13/source flag 1, allocated four-byte -1 animation operand passed to Scr_EmitAnimation and conditional string release."
+  },
+  "linux:script/scr_compiler.cpp:3269:EmitArrayPrimitiveExpressionRef": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96c96-0x96d02 and 0x97008-0x9708c/0x97188-0x971dc: compared index-before-array evaluation/reference, variable versus game lvalue, opcodes 0x14/0x20/0x23, stack -1 and index/object source flag order."
+  },
+  "linux:script/scr_compiler.cpp:1615:EmitArrayVariable": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96c96-0x96d02 and 0x97008-0x9708c/0x97188-0x971dc: compared index-before-array evaluation/reference, variable versus game lvalue, opcodes 0x14/0x20/0x23, stack -1 and index/object source flag order."
+  },
+  "linux:script/scr_compiler.cpp:1627:EmitArrayVariableRef": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96c96-0x96d02 and 0x97008-0x9708c/0x97188-0x971dc: compared index-before-array evaluation/reference, variable versus game lvalue, opcodes 0x14/0x20/0x23, stack -1 and index/object source flag order."
+  },
+  "linux:script/scr_compiler.cpp:3451:EmitAssignmentStatement": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97201-0x97325 and 0x97cc2-0x97dec: compared primitive/undefined node tests, local fallback versus array/field clear, lvalue errors, clear opcodes 0x24/0x2f, canonical operand and assignment opcode 0x39/source order."
+  },
+  "linux:script/scr_compiler.cpp:3110:EmitBinaryEqualsOperatorExpression": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97571-0x976c2 and 0x97c37-0x97c3e: compared forceNotCreate set/reset, const-ref protection during lhs read, rhs emission, signed binary opcode, 0x64/0x65 increments and final assignment."
+  },
+  "linux:script/scr_compiler.cpp:3000:EmitBoolAndExpression": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x96169-0x96229 and 0x96230-0x962f5: restored codePos at short-circuit placeholder allocation; compared lhs/rhs order, jump-on-false/true opcodes 0x60/0x61, cast-bool suffix and 16-bit forward delta; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:1253:EmitBoolComplement": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x961f4-0x96210/0x962be-0x962da and 0x96036-0x960c7: compared opcodes 0x5b/0x5c/0x5d, zero stack delta, call type zero and source flags zero."
+  },
+  "linux:script/scr_compiler.cpp:1242:EmitBoolNot": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x961f4-0x96210/0x962be-0x962da and 0x96036-0x960c7: compared opcodes 0x5b/0x5c/0x5d, zero stack delta, call type zero and source flags zero."
+  },
+  "linux:script/scr_compiler.cpp:2971:EmitBoolOrExpression": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x96169-0x96229 and 0x96230-0x962f5: restored codePos at short-circuit placeholder allocation; compared lhs/rhs order, jump-on-false/true opcodes 0x60/0x61, cast-bool suffix and 16-bit forward delta; compiled and reviewed, not exercised."
+  },
+  "mac:0x00095286": {
+    "status": "equal",
+    "evidence": "Mac 0x95152-0x953c0: read capability/abort checks, child registration limit 1024, local removal before abort level, opcode 0x62, packed four-byte placeholder and linked patch record order."
+  },
+  "linux:script/scr_compiler.cpp:5079:EmitBreakpointStatement": {
+    "status": "equal",
+    "evidence": "Mac decoded case 0x4b at 0x32a300 -> 0x972ba: breakpoint node is a no-op in the Mac statement dispatch and native default return; Linux helper name only identifies this already-decoded case."
+  },
+  "linux:script/scr_compiler.cpp:441:EmitByte": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x94e44-0x94e55/0x94eb5-0x94eca/0x94ef0-0x94f03/0x94f2b-0x94f42 and 0x961b4-0x961ca: restored codePos for packed 1/2/4-byte operands; compared widths, negative byte/short negation, allocator choices and jump16 placeholder stores; compiled and reviewed, not exercised."
+  },
+  "mac:0x0009575c": {
+    "status": "intentional",
+    "evidence": "Mac 0x9575c-0x95bc8 and 0x96618-0x96ad2: read builtin eligibility/cache types, developer begin/end, argument order, parameter limits/opcode selection, source positions and ordinary-call fallback; native preserves full host function pointers through indexed cache slots rather than Mac four-byte raw pointers."
+  },
+  "linux:script/scr_compiler.cpp:2270:EmitCallBuiltinMethodOpcode": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x959ae-0x959e7/0x95ad4/0x95b90 and 0x9685d-0x96897/0x96a4d-0x96a6a: compared 0..5 specialized and generic opcode ranges 0x3e..0x44/0x45..0x4b, stack deltas, call type 1, source flag 1 and generic byte count."
+  },
+  "linux:script/scr_compiler.cpp:2244:EmitCallBuiltinOpcode": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x959ae-0x959e7/0x95ad4/0x95b90 and 0x9685d-0x96897/0x96a4d-0x96a6a: compared 0..5 specialized and generic opcode ranges 0x3e..0x44/0x45..0x4b, stack deltas, call type 1, source flag 1 and generic byte count."
+  },
+  "linux:script/scr_compiler.cpp:2646:EmitCallExpression": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x95c43-0x95c5a/0x95e81-0x95ea5/0x95ede-0x95ef2, 0x97327-0x9735f/0x97ca5-0x97cbd and 0x96bb8-0x96c4f: compared call versus method dispatch, statement flag and field-object conversion/source position."
+  },
+  "linux:script/scr_compiler.cpp:2665:EmitCallExpressionFieldObject": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x95c43-0x95c5a/0x95e81-0x95ea5/0x95ede-0x95ef2, 0x97327-0x9735f/0x97ca5-0x97cbd and 0x96bb8-0x96c4f: compared call versus method dispatch, statement flag and field-object conversion/source position."
+  },
+  "linux:script/scr_compiler.cpp:3481:EmitCallExpressionStatement": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x95c43-0x95c5a/0x95e81-0x95ea5/0x95ede-0x95ef2, 0x97327-0x9735f/0x97ca5-0x97cbd and 0x96bb8-0x96c4f: compared call versus method dispatch, statement flag and field-object conversion/source position."
+  },
+  "linux:script/scr_compiler.cpp:52:EmitCanonicalString": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96d07-0x96d7b/0x96dfd-0x96ea1, 0x97091-0x97126 and 0x94ff1-0x9505b: compared object-before-field opcodes 0x2a/0x2e, packed canonical operand, developer-ignore string handling, const-ref add and temporary const-ref save/restore."
+  },
+  "linux:script/scr_compiler.cpp:77:EmitCanonicalStringConst": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96d07-0x96d7b/0x96dfd-0x96ea1, 0x97091-0x97126 and 0x94ff1-0x9505b: compared object-before-field opcodes 0x2a/0x2e, packed canonical operand, developer-ignore string handling, const-ref add and temporary const-ref save/restore."
+  },
+  "linux:script/scr_compiler.cpp:4638:EmitCaseStatement": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x996ff-0x99a04 and 0x99b99-0x99eaa: compared case/default blocks, valid integer index conversion and string references, record insertion, missing-case error, abort reset, default child merge and nested break state."
+  },
+  "linux:script/scr_compiler.cpp:4987:EmitCaseStatementInfo": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x996ff-0x99a04 and 0x99b99-0x99eaa: compared case/default blocks, valid integer index conversion and string references, record insertion, missing-case error, abort reset, default child merge and nested break state."
+  },
+  "linux:script/scr_compiler.cpp:1231:EmitCastBool": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x961f4-0x96210/0x962be-0x962da and 0x96036-0x960c7: compared opcodes 0x5b/0x5c/0x5d, zero stack delta, call type zero and source flags zero."
+  },
+  "linux:script/scr_compiler.cpp:1604:EmitCastFieldObject": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96b1a-0x96bb3 and 0x96c2b-0x96c4f: compared object opcodes 0x26/0x0d/0x0e with zero stack change, and conversion opcode 0x59 stack -1/source flag zero."
+  },
+  "linux:script/scr_compiler.cpp:1446:EmitClearArray": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97201-0x97325 and 0x97cc2-0x97dec: compared primitive/undefined node tests, local fallback versus array/field clear, lvalue errors, clear opcodes 0x24/0x2f, canonical operand and assignment opcode 0x39/source order."
+  },
+  "linux:script/scr_compiler.cpp:1649:EmitClearArrayVariable": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97201-0x97325 and 0x97cc2-0x97dec: compared primitive/undefined node tests, local fallback versus array/field clear, lvalue errors, clear opcodes 0x24/0x2f, canonical operand and assignment opcode 0x39/source order."
+  },
+  "linux:script/scr_compiler.cpp:1509:EmitClearFieldVariable": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97201-0x97325 and 0x97cc2-0x97dec: compared primitive/undefined node tests, local fallback versus array/field clear, lvalue errors, clear opcodes 0x24/0x2f, canonical operand and assignment opcode 0x39/source order."
+  },
+  "linux:script/scr_compiler.cpp:3418:EmitClearVariableExpression": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97201-0x97325 and 0x97cc2-0x97dec: compared primitive/undefined node tests, local fallback versus array/field clear, lvalue errors, clear opcodes 0x24/0x2f, canonical operand and assignment opcode 0x39/source order."
+  },
+  "linux:script/scr_compiler.cpp:469:EmitCodepos": {
+    "status": "intentional",
+    "evidence": "Mac inlined at 0x954ed-0x954fe, 0x956c4-0x956d5 and 0x99a94-0x99aa8: native preserves four-byte packed bytecode operands but encodes program-buffer offsets; Mac stores i386 pointers. LinkThread and VM decode the offset representation."
+  },
+  "mac:0x00095152": {
+    "status": "equal",
+    "evidence": "Mac 0x95152-0x953c0: read capability/abort checks, child registration limit 1024, local removal before abort level, opcode 0x62, packed four-byte placeholder and linked patch record order."
+  },
+  "linux:script/scr_compiler.cpp:699:EmitCreateLocalVars": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x987af-0x987d5/0x98b56-0x98c24, 0x951a2-0x951db/0x952d6-0x95315 and 0x97fa4-0x98034: compared create-to-public canonical-name loop, remove count, abort guard, post-remove create count, final end versus cleanup and saved checksum plus one."
+  },
+  "linux:script/scr_compiler.cpp:4368:EmitDecStatement": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97571-0x976c2 and 0x97c37-0x97c3e: compared forceNotCreate set/reset, const-ref protection during lhs read, rhs emission, signed binary opcode, 0x64/0x65 increments and final assignment."
+  },
+  "linux:script/scr_compiler.cpp:1594:EmitDecTop": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9585b-0x9586c/0x9674a-0x9675b and 0x957e0-0x957f2/0x966cc-0x966de: compared pre-call opcode 0x4e stack +1 only for script calls and statement result discard opcode 0x58 stack -1."
+  },
+  "linux:script/scr_compiler.cpp:4672:EmitDefaultStatement": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x996ff-0x99a04 and 0x99b99-0x99eaa: compared case/default blocks, valid integer index conversion and string references, record insertion, missing-case error, abort reset, default child merge and nested break state."
+  },
+  "mac:0x0009ab08": {
+    "status": "equal",
+    "evidence": "Mac 0x9ab08-0x9ad4e: read recursion error, child transfer, enabled local cleanup, ignored-bytecode rollback and checksum/developer-state restoration."
+  },
+  "linux:script/scr_compiler.cpp:5574:EmitDeveloperThread": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9a253-0x9a63c, 0x9a69d-0x9a783 and 0x9a978-0x9aade: read both thread passes, all reset fields and first-thread markers, active/ignored developer paths with checksum rollback, using-tree restriction, thread position storage and EmitThreadInternal arguments; native synchronous block lifetime and codepos offsets accounted for."
+  },
+  "linux:script/scr_compiler.cpp:1458:EmitEmptyArray": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x95c5e-0x95cbd and 0x95dcc-0x95ddb: compared corresponding opcodes 0x0f/0x10/0x11/0x12/0x25, stack +1, call zero and source flag 1."
+  },
+  "linux:script/scr_compiler.cpp:388:EmitEnd": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97364-0x973bb, 0x974f3-0x97520 and 0x9a03b-0x9a068: compared first-abort level 3, return expression before opcode 1 stack -1, end opcode zero and respective source flags."
+  },
+  "linux:script/scr_compiler.cpp:4574:EmitEndOnStatement": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97445-0x974b5, 0x97941-0x979e9/0x97ad1-0x97b32 and 0x9772e-0x977a6: compared evaluation order, opcodes 0x4c/0x4d/0x7b/0x79/0x7a, notify argument count/last-node position and repeated source-position registrations."
+  },
+  "linux:script/scr_compiler.cpp:3509:EmitEndStatement": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97364-0x973bb, 0x974f3-0x97520 and 0x9a03b-0x9a068: compared first-abort level 3, return expression before opcode 1 stack -1, end opcode zero and respective source flags."
+  },
+  "linux:script/scr_compiler.cpp:1422:EmitEvalArray": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96c96-0x96d02 and 0x97008-0x9708c/0x97188-0x971dc: compared index-before-array evaluation/reference, variable versus game lvalue, opcodes 0x14/0x20/0x23, stack -1 and index/object source flag order."
+  },
+  "linux:script/scr_compiler.cpp:1434:EmitEvalArrayRef": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96c96-0x96d02 and 0x97008-0x9708c/0x97188-0x971dc: compared index-before-array evaluation/reference, variable versus game lvalue, opcodes 0x14/0x20/0x23, stack -1 and index/object source flag order."
+  },
+  "linux:script/scr_compiler.cpp:3200:EmitExpression": {
+    "status": "equal",
+    "evidence": "Mac inlined across 0x96016-0x963e6/0x971e2-0x97df2 and 0x96c96-0x96cce: compared EmitOrEval result test followed by EmitValue only for constants, including expression-index before primitive-object evaluation."
+  },
+  "linux:script/scr_compiler.cpp:3347:EmitExpressionFieldObject": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96aee-0x96b12 and 0x96bf7-0x96c14: compared empty/multiple list rejection, primitive-only single item forwarding, source positions and not-an-object fallback."
+  },
+  "linux:script/scr_compiler.cpp:1714:EmitExpressionList": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x95782-0x95845 and 0x96648-0x96731: compared complete argument traversal, constant emission, parameter count, developer-only source traversal and zero source flags; native helpers are EmitCallArgs and EmitDeveloperParamOpcodePos."
+  },
+  "linux:script/scr_compiler.cpp:2821:EmitExpressionListFieldObject": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96aee-0x96b12 and 0x96bf7-0x96c14: compared empty/multiple list rejection, primitive-only single item forwarding, source positions and not-an-object fallback."
+  },
+  "linux:script/scr_compiler.cpp:1484:EmitFieldVariable": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96d07-0x96d7b/0x96dfd-0x96ea1, 0x97091-0x97126 and 0x94ff1-0x9505b: compared object-before-field opcodes 0x2a/0x2e, packed canonical operand, developer-ignore string handling, const-ref add and temporary const-ref save/restore."
+  },
+  "linux:script/scr_compiler.cpp:1497:EmitFieldVariableRef": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96d07-0x96d7b/0x96dfd-0x96ea1, 0x97091-0x97126 and 0x94ff1-0x9505b: compared object-before-field opcodes 0x2a/0x2e, packed canonical operand, developer-ignore string handling, const-ref add and temporary const-ref save/restore."
+  },
+  "linux:script/scr_compiler.cpp:452:EmitFloat": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x949d0-0x94a5d: restored codePos on four-byte float allocations; compared float/vector opcodes 9/12, source flags, vector component order and final vector release; compiled and reviewed, not exercised."
+  },
+  "mac:0x00098c7a": {
+    "status": "equal",
+    "evidence": "Mac 0x98c7a-0x99626: read initializer/body/post order, two block transfers, constant-condition gate, continue-child initialization intersection before post, patch lists, backward jump and all saved loop state restoration."
+  },
+  "linux:script/scr_compiler.cpp:5404:EmitFormalParameterList": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x99f29-0x99fcc: restored codePos for explicit cached-local index bytes; compared leading sentinel skip, opcodes 0x31/0x32, parameter sources and final opcode 0x35; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:4387:EmitFormalParameterListInternal": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x99f29-0x99fcc: restored codePos for explicit cached-local index bytes; compared leading sentinel skip, opcodes 0x31/0x32, parameter sources and final opcode 0x35; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:4427:EmitFormalWaittillParameterListRefInternal": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x977dd-0x978e8: restored codePos for each opcode-0x33 cached-local index byte; compared event/object evaluation, opcode 0x78/source positions, parameter loop and opcode 0x34 cleanup; compiled and reviewed, not exercised."
+  },
+  "mac:0x000953c0": {
+    "status": "intentional",
+    "evidence": "Mac 0x953c0-0x9575c: read local/far precache resolution, type 13 exclusion, developer restrictions, unresolved patch-list registration and reference transfers; native intentionally stores program-buffer offsets in four-byte operands/variables instead of truncated host code pointers."
+  },
+  "linux:script/scr_compiler.cpp:1298:EmitGame": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x95c5e-0x95cbd and 0x95dcc-0x95ddb: compared corresponding opcodes 0x0f/0x10/0x11/0x12/0x25, stack +1, call zero and source flag 1."
+  },
+  "linux:script/scr_compiler.cpp:1411:EmitGameRef": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96c96-0x96d02 and 0x97008-0x9708c/0x97188-0x971dc: compared index-before-array evaluation/reference, variable versus game lvalue, opcodes 0x14/0x20/0x23, stack -1 and index/object source flag order."
+  },
+  "linux:script/scr_compiler.cpp:585:EmitGetFloat": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x949d0-0x94a5d: restored codePos on four-byte float allocations; compared float/vector opcodes 9/12, source flags, vector component order and final vector release; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:1945:EmitGetFunction": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x95c08-0x95c41: compared opcode 0x15, stack +1, source flags 3 and forwarded function/source arguments; encoded position implementation documented by EmitFunction."
+  },
+  "linux:script/scr_compiler.cpp:1134:EmitGetIString": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x9492b-0x9498f/0x94a62-0x94a9a: restored codePos at packed two-byte string operand allocation; compared string/istring opcodes 0x0a/0x0b, source flag 1 and reference transfer cases; compiled and reviewed, not exercised."
+  },
+  "mac:0x00094dfa": {
+    "status": "fixed",
+    "evidence": "Mac 0x94dfa-0x94f84: restored codePos after byte/short/int operands; read zero, positive and negative boundary cases, opcodes 3..8 and strict -256/-65536 comparisons; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:1108:EmitGetString": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x9492b-0x9498f/0x94a62-0x94a9a: restored codePos at packed two-byte string operand allocation; compared string/istring opcodes 0x0a/0x0b, source flag 1 and reference transfer cases; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:492:EmitGetUndefined": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x94997-0x949bb: compared opcode 2, stack +1, call zero and source flag 1."
+  },
+  "linux:script/scr_compiler.cpp:1147:EmitGetVector": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x949d0-0x94a5d: restored codePos on four-byte float allocations; compared float/vector opcodes 9/12, source flags, vector component order and final vector release; compiled and reviewed, not exercised."
+  },
+  "mac:0x00098042": {
+    "status": "equal",
+    "evidence": "Mac 0x98042-0x9861c: read both complete block-transfer paths, branch cleanup, return padding, jump16/jump32 patches, checksum adjustments and minimum public-count/intersected initialization merge."
+  },
+  "mac:0x00097df2": {
+    "status": "equal",
+    "evidence": "Mac 0x97df2-0x98042: read condition/jump16 patching, complete child transfer and init-bit propagation, last-statement end versus local cleanup, and saved-checksum-plus-one normalization."
+  },
+  "linux:script/scr_compiler.cpp:4339:EmitIncStatement": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97571-0x976c2 and 0x97c37-0x97c3e: compared forceNotCreate set/reset, const-ref protection during lhs read, rhs emission, signed binary opcode, 0x64/0x65 increments and final assignment."
+  },
+  "linux:script/scr_compiler.cpp:5686:EmitInclude": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9a12d-0x9a1e0 and 0x953e4-0x9547c: compared canonical filename/ref transfers, include flag, source position, precache pointer advance and script table object creation; native widened entry preserves field meaning."
+  },
+  "linux:script/scr_compiler.cpp:5701:EmitIncludeList": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9a12d-0x9a1e0 and 0x953e4-0x9547c: compared canonical filename/ref transfers, include flag, source position, precache pointer advance and script table object creation; native widened entry preserves field meaning."
+  },
+  "linux:script/scr_compiler.cpp:408:EmitInteger": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x94e44-0x94e55/0x94eb5-0x94eca/0x94ef0-0x94f03/0x94f2b-0x94f42 and 0x961b4-0x961ca: restored codePos for packed 1/2/4-byte operands; compared widths, negative byte/short negation, allocator choices and jump16 placeholder stores; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:1287:EmitLevel": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x95c5e-0x95cbd and 0x95dcc-0x95ddb: compared corresponding opcodes 0x0f/0x10/0x11/0x12/0x25, stack +1, call zero and source flag 1."
+  },
+  "linux:script/scr_compiler.cpp:1331:EmitLevelObject": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96b1a-0x96bb3 and 0x96c2b-0x96c4f: compared object opcodes 0x26/0x0d/0x0e with zero stack change, and conversion opcode 0x59 stack -1/source flag zero."
+  },
+  "linux:script/scr_compiler.cpp:1353:EmitLocalVariable": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96e38-0x96eef and 0x97128-0x971c1: compared local index resolution, specialized versus explicit-index opcodes, byte operand, reference create flag and source flag 1."
+  },
+  "linux:script/scr_compiler.cpp:1382:EmitLocalVariableRef": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96e38-0x96eef and 0x97128-0x971c1: compared local index resolution, specialized versus explicit-index opcodes, byte operand, reference create flag and source flag 1."
+  },
+  "mac:0x00096618": {
+    "status": "intentional",
+    "evidence": "Mac 0x9575c-0x95bc8 and 0x96618-0x96ad2: read builtin eligibility/cache types, developer begin/end, argument order, parameter limits/opcode selection, source positions and ordinary-call fallback; native preserves full host function pointers through indexed cache slots rather than Mac four-byte raw pointers."
+  },
+  "linux:script/scr_compiler.cpp:750:EmitNOP2": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x987af-0x987d5/0x98b56-0x98c24, 0x951a2-0x951db/0x952d6-0x95315 and 0x97fa4-0x98034: compared create-to-public canonical-name loop, remove count, abort guard, post-remove create count, final end versus cleanup and saved checksum plus one."
+  },
+  "linux:script/scr_compiler.cpp:5557:EmitNormalThread": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9a253-0x9a63c, 0x9a69d-0x9a783 and 0x9a978-0x9aade: read both thread passes, all reset fields and first-thread markers, active/ignored developer paths with checksum rollback, using-tree restriction, thread position storage and EmitThreadInternal arguments; native synchronous block lifetime and codepos offsets accounted for."
+  },
+  "linux:script/scr_compiler.cpp:4541:EmitNotifyStatement": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97445-0x974b5, 0x97941-0x979e9/0x97ad1-0x97b32 and 0x9772e-0x977a6: compared evaluation order, opcodes 0x4c/0x4d/0x7b/0x79/0x7a, notify argument count/last-node position and repeated source-position registrations."
+  },
+  "linux:script/scr_compiler.cpp:1522:EmitObject": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x96d86-0x96fc0: restored codePos at debugger operands; compared loading prohibition, signed class character, atoi checks, unsigned ID range, free/type mask gate and opcodes 0x81/0x82; compiled and reviewed, not exercised."
+  },
+  "mac:0x00094aa0": {
+    "status": "equal",
+    "evidence": "Mac 0x94aa0-0x94dfa: read pending-value flush, breakpoint rules, stack maxima, checksum multiply-by-31 and every peephole rewrite including two-op call fold; decoded all 63 entries at 0x329fec."
+  },
+  "linux:script/scr_compiler.cpp:3066:EmitOrEvalBinaryOperatorExpression": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x960c9-0x96164 and 0x962fa-0x963e0: compared constant lhs stack push, rhs evaluation, pop/evaluate result path, signed opcode extraction, error source and runtime emission fallback."
+  },
+  "mac:0x00096016": {
+    "status": "fixed",
+    "evidence": "Mac 0x96016-0x963e6: restored codePos on both short-circuit jump16 operands; read left/right constant stack handling, binary evaluation/error result, bool operations and all dispatch targets at 0x32a1d0; compiled and reviewed, not exercised."
+  },
+  "mac:0x00095bc8": {
+    "status": "fixed",
+    "evidence": "Mac 0x95bc8-0x96016, especially 0x95e58-0x95eac: percent-animtree now checks and emits animTreeIndex (+0x414), replacing animtrees (array object ID); read full decoded dispatch, calls, vectors, value-stack transitions, animation emission and reference handling; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:2760:EmitOrEvalPrimitiveExpressionList": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x95cbf-0x95d85 and 0x95ef7-0x96011: compared one/three-element paths, pending constant stack, mixed constant/runtime emission, reversed float conversion, vector opcode 0x7e and developer positions."
+  },
+  "mac:0x000963e6": {
+    "status": "equal",
+    "evidence": "Mac 0x963e6-0x96618: read direct/pointer function and thread branches, method stack deltas, call types, source-position flags and trailing four-byte parameter counts."
+  },
+  "linux:script/scr_compiler.cpp:1987:EmitPostScriptFunction": {
+    "status": "equal",
+    "evidence": "Mac inlined throughout 0x963e6-0x96618: compared node 0x1a/0x1e and direct/pointer dispatch, opcodes 0x50..0x57, function/thread call types 3/2, exact method stack offsets, source flags and thread parameter operand."
+  },
+  "linux:script/scr_compiler.cpp:2056:EmitPostScriptFunctionCall": {
+    "status": "equal",
+    "evidence": "Mac inlined throughout 0x963e6-0x96618: compared node 0x1a/0x1e and direct/pointer dispatch, opcodes 0x50..0x57, function/thread call types 3/2, exact method stack offsets, source flags and thread parameter operand."
+  },
+  "linux:script/scr_compiler.cpp:2003:EmitPostScriptFunctionPointer": {
+    "status": "equal",
+    "evidence": "Mac inlined throughout 0x963e6-0x96618: compared node 0x1a/0x1e and direct/pointer dispatch, opcodes 0x50..0x57, function/thread call types 3/2, exact method stack offsets, source flags and thread parameter operand."
+  },
+  "linux:script/scr_compiler.cpp:2021:EmitPostScriptThread": {
+    "status": "equal",
+    "evidence": "Mac inlined throughout 0x963e6-0x96618: compared node 0x1a/0x1e and direct/pointer dispatch, opcodes 0x50..0x57, function/thread call types 3/2, exact method stack offsets, source flags and thread parameter operand."
+  },
+  "linux:script/scr_compiler.cpp:2075:EmitPostScriptThreadCall": {
+    "status": "equal",
+    "evidence": "Mac inlined throughout 0x963e6-0x96618: compared node 0x1a/0x1e and direct/pointer dispatch, opcodes 0x50..0x57, function/thread call types 3/2, exact method stack offsets, source flags and thread parameter operand."
+  },
+  "linux:script/scr_compiler.cpp:2038:EmitPostScriptThreadPointer": {
+    "status": "equal",
+    "evidence": "Mac inlined throughout 0x963e6-0x96618: compared node 0x1a/0x1e and direct/pointer dispatch, opcodes 0x50..0x57, function/thread call types 3/2, exact method stack offsets, source flags and thread parameter operand."
+  },
+  "linux:script/scr_compiler.cpp:2096:EmitPreFunctionCall": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9585b-0x9586c/0x9674a-0x9675b and 0x957e0-0x957f2/0x966cc-0x966de: compared pre-call opcode 0x4e stack +1 only for script calls and statement result discard opcode 0x58 stack -1."
+  },
+  "linux:script/scr_compiler.cpp:2953:EmitPrimitiveExpression": {
+    "status": "equal",
+    "evidence": "Mac inlined across 0x96016-0x963e6/0x971e2-0x97df2 and 0x96c96-0x96cce: compared EmitOrEval result test followed by EmitValue only for constants, including expression-index before primitive-object evaluation."
+  },
+  "mac:0x00096ad2": {
+    "status": "equal",
+    "evidence": "Mac 0x96ad2-0x96c54: read variable and call-to-field conversion, self/level/anim object opcodes, single-parenthesis recursion and not-an-object errors; decoded table 0x32a288."
+  },
+  "linux:script/scr_compiler.cpp:5106:EmitProfBeginStatement": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x97a0f-0x97a78, 0x97bfa-0x97c10 and 0x97cce-0x97ce3: restored codePos after zero byte operand; compared developer-script gate, const-ref conditional string release and profile opcodes 0x85/0x86; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:5116:EmitProfEndStatement": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x97a0f-0x97a78, 0x97bfa-0x97c10 and 0x97cce-0x97ce3: restored codePos after zero byte operand; compared developer-script gate, const-ref conditional string release and profile opcodes 0x85/0x86; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:5088:EmitProfStatement": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x97a0f-0x97a78, 0x97bfa-0x97c10 and 0x97cce-0x97ce3: restored codePos after zero byte operand; compared developer-script gate, const-ref conditional string release and profile opcodes 0x85/0x86; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:722:EmitRemoveLocalVars": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x987af-0x987d5/0x98b56-0x98c24, 0x951a2-0x951db/0x952d6-0x95315 and 0x97fa4-0x98034: compared create-to-public canonical-name loop, remove count, abort guard, post-remove create count, final end versus cleanup and saved checksum plus one."
+  },
+  "linux:script/scr_compiler.cpp:398:EmitReturn": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97364-0x973bb, 0x974f3-0x97520 and 0x9a03b-0x9a068: compared first-abort level 3, return expression before opcode 1 stack -1, end opcode zero and respective source flags."
+  },
+  "linux:script/scr_compiler.cpp:3491:EmitReturnStatement": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97364-0x973bb, 0x974f3-0x97520 and 0x9a03b-0x9a068: compared first-abort level 3, return expression before opcode 1 stack -1, end opcode zero and respective source flags."
+  },
+  "linux:script/scr_compiler.cpp:1057:EmitSafeSetVariableField": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x99f29-0x99fcc: restored codePos for explicit cached-local index bytes; compared leading sentinel skip, opcodes 0x31/0x32, parameter sources and final opcode 0x35; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:1081:EmitSafeSetWaittillVariableField": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x977dd-0x978e8: restored codePos for each opcode-0x33 cached-local index byte; compared event/object evaluation, opcode 0x78/source positions, parameter loop and opcode 0x34 cleanup; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:1276:EmitSelf": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x95c5e-0x95cbd and 0x95dcc-0x95ddb: compared corresponding opcodes 0x0f/0x10/0x11/0x12/0x25, stack +1, call zero and source flag 1."
+  },
+  "linux:script/scr_compiler.cpp:1320:EmitSelfObject": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96b1a-0x96bb3 and 0x96c2b-0x96c4f: compared object opcodes 0x26/0x0d/0x0e with zero stack change, and conversion opcode 0x59 stack -1/source flag zero."
+  },
+  "linux:script/scr_compiler.cpp:613:EmitSetVariableField": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97201-0x97325 and 0x97cc2-0x97dec: compared primitive/undefined node tests, local fallback versus array/field clear, lvalue errors, clear opcodes 0x24/0x2f, canonical operand and assignment opcode 0x39/source order."
+  },
+  "linux:script/scr_compiler.cpp:419:EmitShort": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x94e44-0x94e55/0x94eb5-0x94eca/0x94ef0-0x94f03/0x94f2b-0x94f42 and 0x961b4-0x961ca: restored codePos for packed 1/2/4-byte operands; compared widths, negative byte/short negation, allocator choices and jump16 placeholder stores; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:1264:EmitSize": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x95d87-0x95dc7: compared primitive constant emission followed by opcode 0x76, zero stack delta and source flag zero."
+  },
+  "mac:0x000971e2": {
+    "status": "fixed",
+    "evidence": "Mac 0x971e2-0x97df2: restored codePos for waittill cached-local byte and profiler zero-byte operands; read complete 78-entry dispatch, assignment clear optimization, all call/wait/notify/endon/debug cases and source-position ordering; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:5325:EmitStatementList": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x976c7-0x9772c/0x97aca and 0x99fcc-0x9a03b: compared leading sentinel skip, next-node traversal and last-statement recognition after only ignored developer lists."
+  },
+  "linux:script/scr_compiler.cpp:463:EmitString": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x9492b-0x9498f/0x94a62-0x94a9a: restored codePos at packed two-byte string operand allocation; compared string/istring opcodes 0x0a/0x0b, source flag 1 and reference transfer cases; compiled and reviewed, not exercised."
+  },
+  "mac:0x00099626": {
+    "status": "fixed",
+    "evidence": "Mac 0x99626-0x99eb0: restored codePos for each key and encoded position allocation; read full case/default handling, block transfer, child initialization merge, packed eight-byte sorted records, duplicates and break patch restoration; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:4683:EmitSwitchStatementList": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x996ff-0x99a04 and 0x99b99-0x99eaa: compared case/default blocks, valid integer index conversion and string references, record insertion, missing-case error, abort reset, default child merge and nested break state."
+  },
+  "linux:script/scr_compiler.cpp:5614:EmitThread": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9a253-0x9a63c, 0x9a69d-0x9a783 and 0x9a978-0x9aade: read both thread passes, all reset fields and first-thread markers, active/ignored developer paths with checksum rollback, using-tree restriction, thread position storage and EmitThreadInternal arguments; native synchronous block lifetime and codepos offsets accounted for."
+  },
+  "mac:0x00099eb0": {
+    "status": "fixed",
+    "evidence": "Mac 0x99eb0-0x9a0ca: restored codePos for formal cached-local byte operands; read parameter/body sentinel skips, last-statement scan, final end markers, stack use (maxCallOffset<<5)+maxOffset and 0x7ff limit; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:5652:EmitThreadList": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9a253-0x9a63c, 0x9a69d-0x9a783 and 0x9a978-0x9aade: read both thread passes, all reset fields and first-thread markers, active/ignored developer paths with checksum rollback, using-tree restriction, thread position storage and EmitThreadInternal arguments; native synchronous block lifetime and codepos offsets accounted for."
+  },
+  "linux:script/scr_compiler.cpp:430:EmitUnsignedShort": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x94e44-0x94e55/0x94eb5-0x94eca/0x94ef0-0x94f03/0x94f2b-0x94f42 and 0x961b4-0x961ca: restored codePos for packed 1/2/4-byte operands; compared widths, negative byte/short negation, allocator choices and jump16 placeholder stores; compiled and reviewed, not exercised."
+  },
+  "mac:0x00094910": {
+    "status": "fixed",
+    "evidence": "Mac 0x94910-0x94aa0: restored codePos after string/istring, float and all three vector operand allocations; read every value type, source flag, string reference transfer and vector release; decoded seven-entry table 0x329fd0; compiled and reviewed, not exercised."
+  },
+  "mac:0x00096c54": {
+    "status": "fixed",
+    "evidence": "Mac 0x96c54-0x96fc6: restored codePos after debugger thread/object short/int operands; read complete local/array/field/debugger dispatch, signed class byte, object ID bounds and type mask 0x878000; compiled and reviewed, not exercised."
+  },
+  "mac:0x00096fc6": {
+    "status": "equal",
+    "evidence": "Mac 0x96fc6-0x971e2: read local cached references, array index-before-reference order, game lvalue, canonical field operand reference handling and debugger errors."
+  },
+  "linux:script/scr_compiler.cpp:3525:EmitWaitStatement": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97445-0x974b5, 0x97941-0x979e9/0x97ad1-0x97b32 and 0x9772e-0x977a6: compared evaluation order, opcodes 0x4c/0x4d/0x7b/0x79/0x7a, notify argument count/last-node position and repeated source-position registrations."
+  },
+  "linux:script/scr_compiler.cpp:3540:EmitWaittillFrameEnd": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97445-0x974b5, 0x97941-0x979e9/0x97ad1-0x97b32 and 0x9772e-0x977a6: compared evaluation order, opcodes 0x4c/0x4d/0x7b/0x79/0x7a, notify argument count/last-node position and repeated source-position registrations."
+  },
+  "linux:script/scr_compiler.cpp:4447:EmitWaittillStatement": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x977dd-0x978e8: restored codePos for each opcode-0x33 cached-local index byte; compared event/object evaluation, opcode 0x78/source positions, parameter loop and opcode 0x34 cleanup; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:4484:EmitWaittillmatchStatement": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x978ed-0x9793f and 0x97b37-0x97bee: compared extra-match-expression evaluation before event/object, opcode 0x77 stack -2-count, all source positions, count byte and clearparams opcode."
+  },
+  "mac:0x0009861c": {
+    "status": "equal",
+    "evidence": "Mac 0x9861c-0x98c7a: read block transfer/local creation, constant numeric condition handling, false-condition error, nested break/continue state, both patch lists, backward jump16 length and break initialization intersection."
+  },
+  "mac:0x000927e6": {
+    "status": "equal",
+    "evidence": "Mac 0x927e6-0x9290a: read left then right recursive evaluation, both AddRefToValue calls before binary evaluation, error-message branch and result/source copy."
+  },
+  "linux:script/scr_compiler.cpp:3143:EvalExpression": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x927f4-0x9285e and 0x9264f-0x926c4: compared primitive/binary node tests, argument/source forwarding, recursive result and false fallback."
+  },
+  "linux:script/scr_compiler.cpp:572:EvalFloat": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x92576-0x9262b and 0x9266d-0x926a2: compared literal union payload, value type and source-position stores in EvalPrimitiveExpression; integer/float/negated/string/istring/undefined/boolean cases match decoded dispatch."
+  },
+  "linux:script/scr_compiler.cpp:1121:EvalIString": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x92576-0x9262b and 0x9266d-0x926a2: compared literal union payload, value type and source-position stores in EvalPrimitiveExpression; integer/float/negated/string/istring/undefined/boolean cases match decoded dispatch."
+  },
+  "linux:script/scr_compiler.cpp:503:EvalInteger": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x92576-0x9262b and 0x9266d-0x926a2: compared literal union payload, value type and source-position stores in EvalPrimitiveExpression; integer/float/negated/string/istring/undefined/boolean cases match decoded dispatch."
+  },
+  "mac:0x00092550": {
+    "status": "equal",
+    "evidence": "Mac 0x92550-0x927e6: read literal kinds, integer negate wrapping, float sign flip, undefined/boolean cases, one/three-element lists, recursive evaluation and reversed vector component conversion; decoded table 0x329dc0."
+  },
+  "linux:script/scr_compiler.cpp:2720:EvalPrimitiveExpressionList": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x92630-0x927e4 and 0x95cbf-0x95ce9: compared list walk, exact one/three lengths, recursive evaluation and vector result/source handling."
+  },
+  "linux:script/scr_compiler.cpp:1095:EvalString": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x92576-0x9262b and 0x9266d-0x926a2: compared literal union payload, value type and source-position stores in EvalPrimitiveExpression; integer/float/negated/string/istring/undefined/boolean cases match decoded dispatch."
+  },
+  "linux:script/scr_compiler.cpp:480:EvalUndefined": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x92576-0x9262b and 0x9266d-0x926a2: compared literal union payload, value type and source-position stores in EvalPrimitiveExpression; integer/float/negated/string/istring/undefined/boolean cases match decoded dispatch."
+  },
+  "linux:script/scr_compiler.cpp:1696:GetExpressionCount": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x92630-0x927e4 and 0x95cbf-0x95ce9: compared list walk, exact one/three lengths, recursive evaluation and vector result/source handling."
+  },
+  "linux:script/scr_compiler.cpp:1733:GetSingleParameter": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x96aee-0x96b12 and 0x96bf7-0x96c14: compared empty/multiple list rejection, primitive-only single item forwarding, source positions and not-an-object fallback."
+  },
+  "linux:script/scr_compiler.cpp:5527:InitThread": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9a253-0x9a63c, 0x9a69d-0x9a783 and 0x9a978-0x9aade: read both thread passes, all reset fields and first-thread markers, active/ignored developer paths with checksum rollback, using-tree restriction, thread position storage and EmitThreadInternal arguments; native synchronous block lifetime and codepos offsets accounted for."
+  },
+  "linux:script/scr_compiler.cpp:3407:IsUndefinedExpression": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97201-0x97325 and 0x97cc2-0x97dec: compared primitive/undefined node tests, local fallback versus array/field clear, lvalue errors, clear opcodes 0x24/0x2f, canonical operand and assignment opcode 0x39/source order."
+  },
+  "linux:script/scr_compiler.cpp:3397:IsUndefinedPrimitiveExpression": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97201-0x97325 and 0x97cc2-0x97dec: compared primitive/undefined node tests, local fallback versus array/field clear, lvalue errors, clear opcodes 0x24/0x2f, canonical operand and assignment opcode 0x39/source order."
+  },
+  "linux:script/scr_compiler.cpp:2554:LinkFile": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9a3b7-0x9a45c and 0x9a7aa-0x9a7b9: compared sibling iteration, FindObject/position lookup, empty fallback, include-position removal and LinkThread allowFarCall=1."
+  },
+  "mac:0x00091f62": {
+    "status": "fixed",
+    "evidence": "Mac 0x91f62-0x92092, especially 0x92014/0x92054-0x92064: accepted developer-code references now also pass the no-far-call sentinel check; error paths return after CompileError2 as at 0x9200b/0x92078/0x9208d instead of continuing to further patches; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:5885:RemoveRefToValue": {
+    "status": "unchecked",
+    "evidence": "Offsource overload: Linux row names RemoveRefToValue(VariableValue *), while this source imports the separate two-argument value module function. Mac analysis calls at 0x9400b-0x94015/0x94825-0x9482f were checked, but no standalone overload identity was established."
+  },
+  "linux:script/scr_compiler.cpp:3724:Scr_AddBreakBlock": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x935f8-0x936b2 and 0x946a4-0x94749: compared child append only before abort and when list exists, 1024-child error threshold and count increment; emitted break/continue sites also compared."
+  },
+  "linux:script/scr_compiler.cpp:3747:Scr_AddContinueBlock": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x935f8-0x936b2 and 0x946a4-0x94749: compared child append only before abort and when list exists, 1024-child error threshold and count increment; emitted break/continue sites also compared."
+  },
+  "linux:script/scr_compiler.cpp:912:Scr_AppendChildBlocks": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x93060-0x930f3, 0x93294-0x93321 and 0x94031-0x94130: native now appends common names directly without its extra 64-name error, matching Mac union/intersection sites; compared parent abort guard, child abort reset, duplicate lookup and all-child intersection; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:2162:Scr_BeginDevScript": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x95af0-0x95bc5/0x95a70-0x95a9e and 0x969d7-0x96acf/0x96933-0x96961: compared nested developer handling, type reset, enabled state 1, ignored state 2, saved allocation position and bytecode rollback."
+  },
+  "linux:script/scr_compiler.cpp:3292:Scr_CalcLocalVarsArrayPrimitiveExpressionRef": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x92ab4-0x92add and 0x93323-0x933c4 plus 0x9220c-0x92330: compared assignment/inc/binary-equals reference forwarding and recursion through array primitive node type 17 to local registration."
+  },
+  "linux:script/scr_compiler.cpp:1639:Scr_CalcLocalVarsArrayVariableRef": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x92ab4-0x92add and 0x93323-0x933c4 plus 0x9220c-0x92330: compared assignment/inc/binary-equals reference forwarding and recursion through array primitive node type 17 to local registration."
+  },
+  "linux:script/scr_compiler.cpp:3471:Scr_CalcLocalVarsAssignmentStatement": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x92ab4-0x92add and 0x93323-0x933c4 plus 0x9220c-0x92330: compared assignment/inc/binary-equals reference forwarding and recursion through array primitive node type 17 to local registration."
+  },
+  "linux:script/scr_compiler.cpp:3133:Scr_CalcLocalVarsBinaryEqualsOperatorExpression": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x92ab4-0x92add and 0x93323-0x933c4 plus 0x9220c-0x92330: compared assignment/inc/binary-equals reference forwarding and recursion through array primitive node type 17 to local registration."
+  },
+  "linux:script/scr_compiler.cpp:5355:Scr_CalcLocalVarsDeveloperStatementList": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x92af3-0x93321/0x93457-0x935f3 and 0x936ce-0x948fd: complete child-copy, abort propagation, branch/common-name and loop continue/break paths read; native normalization now skips aborted parents, and common-name append preserves Mac unchecked behavior; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:4235:Scr_CalcLocalVarsForStatement": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x92af3-0x93321/0x93457-0x935f3 and 0x936ce-0x948fd: complete child-copy, abort propagation, branch/common-name and loop continue/break paths read; native normalization now skips aborted parents, and common-name append preserves Mac unchecked behavior; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:5417:Scr_CalcLocalVarsFormalParameterList": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9a4d0-0x9a52b and 0x933f2-0x93455: compared formal list sentinel skip, waittill event skip, per-name registration and complete next-node loops."
+  },
+  "linux:script/scr_compiler.cpp:4407:Scr_CalcLocalVarsFormalParameterListInternal": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9a4d0-0x9a52b and 0x933f2-0x93455: compared formal list sentinel skip, waittill event skip, per-name registration and complete next-node loops."
+  },
+  "linux:script/scr_compiler.cpp:3673:Scr_CalcLocalVarsIfElseStatement": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x92af3-0x93321/0x93457-0x935f3 and 0x936ce-0x948fd: complete child-copy, abort propagation, branch/common-name and loop continue/break paths read; native normalization now skips aborted parents, and common-name append preserves Mac unchecked behavior; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:3581:Scr_CalcLocalVarsIfStatement": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x92af3-0x93321/0x93457-0x935f3 and 0x936ce-0x948fd: complete child-copy, abort propagation, branch/common-name and loop continue/break paths read; native normalization now skips aborted parents, and common-name append preserves Mac unchecked behavior; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:4358:Scr_CalcLocalVarsIncStatement": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x92ab4-0x92add and 0x93323-0x933c4 plus 0x9220c-0x92330: compared assignment/inc/binary-equals reference forwarding and recursion through array primitive node type 17 to local registration."
+  },
+  "linux:script/scr_compiler.cpp:1401:Scr_CalcLocalVarsLocalVariableRef": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x921c7-0x92204/0x92376-0x9238d and 0x9a4dc-0x9a52b/0x9a666: compared parent abort guard, duplicate lookup, 64-name error threshold, name append and count increment."
+  },
+  "linux:script/scr_compiler.cpp:1071:Scr_CalcLocalVarsSafeSetVariableField": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x921c7-0x92204/0x92376-0x9238d and 0x9a4dc-0x9a52b/0x9a666: compared parent abort guard, duplicate lookup, 64-name error threshold, name append and count increment."
+  },
+  "mac:0x0009290a": {
+    "status": "fixed",
+    "evidence": "Mac 0x9290a-0x94910: read complete dispatch and child/branch/loop/switch analysis, decoded 65-entry table 0x329ecc; restored parent-abort normalization guard, immediate switch-abort handling and unchecked union append behavior; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:5342:Scr_CalcLocalVarsStatementList": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x933c9-0x933ed and 0x93498-0x934af: compared leading sentinel skip and recursive statement walk for normal/developer blocks."
+  },
+  "linux:script/scr_compiler.cpp:4785:Scr_CalcLocalVarsSwitchStatement": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x92930-0x92aa9, 0x93d84-0x93dc8 and 0x93e1b-0x93e4b: native now accounts for aborting statements immediately, clears break abort level 2, records the case, updates minimum abort level and drops current case before later statements; read all default/no-default merge paths; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:5505:Scr_CalcLocalVarsThread": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9a46a-0x9a54c: compared forceNotCreate reset, complete block counter/init-bit zeroing, formal-name registration and body analysis. Native block is stack-owned for the synchronous thread compile; Mac allocates 0x118 temporary bytes."
+  },
+  "mac:0x000921a8": {
+    "status": "equal",
+    "evidence": "Mac 0x921a8-0x92550: read local-name deduplication, abort guard, 64-name limit and array-variable recursion through node types 13/17; Mac unrolls several recursion levels."
+  },
+  "linux:script/scr_compiler.cpp:4471:Scr_CalcLocalVarsWaittillStatement": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9a4d0-0x9a52b and 0x933f2-0x93455: compared formal list sentinel skip, waittill event skip, per-name registration and complete next-node loops."
+  },
+  "linux:script/scr_compiler.cpp:3951:Scr_CalcLocalVarsWhileStatement": {
+    "status": "fixed",
+    "evidence": "Mac inlined at 0x92af3-0x93321/0x93457-0x935f3 and 0x936ce-0x948fd: complete child-copy, abort propagation, branch/common-name and loop continue/break paths read; native normalization now skips aborted parents, and common-name append preserves Mac unchecked behavior; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:787:Scr_CheckLocalVarsCount": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x921c7-0x92204/0x92376-0x9238d and 0x9a4dc-0x9a52b/0x9a666: compared parent abort guard, duplicate lookup, 64-name error threshold, name append and count increment."
+  },
+  "linux:script/scr_compiler.cpp:772:Scr_CheckMaxSwitchCases": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x935f8-0x936b2 and 0x946a4-0x94749: compared child append only before abort and when list exists, 1024-child error threshold and count increment; emitted break/continue sites also compared."
+  },
+  "linux:script/scr_compiler.cpp:35:Scr_CompileRemoveRefToString": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x94965-0x9498f/0x94a78-0x94a9a, 0x9549c-0x954c1 and 0x956dc-0x95725: compared ignored developer state, const-ref add/remove suppression, transfer user values and operation order across compiler sites."
+  },
+  "mac:0x0009217c": {
+    "status": "equal",
+    "evidence": "Mac 0x9217c-0x921a8: read head-to-next unlink before Z_FreeInternal loop; native uses the widened PrecacheEntry next member."
+  },
+  "linux:script/scr_compiler.cpp:5847:Scr_CompileStatement": {
+    "status": "unchecked",
+    "evidence": "No Mac symbol or proven inlined debugger statement-compilation entry was identified, and no native body exists in the assigned source. Did not infer equality from Linux text or create an unproven body."
+  },
+  "linux:script/scr_compiler.cpp:830:Scr_CopyBlock": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x92af3-0x92b2d, 0x92c89-0x92d28 and 0x9474e-0x947f5: read allocate-if-empty, whole block copy and localVarsPublicCount reset; widened native sizeof replaces Mac block size 0x118."
+  },
+  "linux:script/scr_compiler.cpp:2686:Scr_CreateVector": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x92732-0x927e4 and 0x95f13-0x96011: compared float/int conversion, vec[2-i] write order, type-name error and vector allocation after three elements."
+  },
+  "linux:script/scr_compiler.cpp:2189:Scr_EndDevScript": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x95af0-0x95bc5/0x95a70-0x95a9e and 0x969d7-0x96acf/0x96933-0x96961: compared nested developer handling, type reset, enabled state 1, ignored state 2, saved allocation position and bytecode rollback."
+  },
+  "linux:script/scr_compiler.cpp:624:Scr_FindLocalVar": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x921d0-0x921f3 and 0x92bb0-0x92bf7: read bounded name lookup, start-index use for normalization/transfer and -1 missing result; current helper local-index lookup plus transfer loop implement these sites."
+  },
+  "mac:0x00094f84": {
+    "status": "equal",
+    "evidence": "Mac 0x94f84-0x95152: read lazy local creation, constant canonical-name reference save/restore, initialized-bit calculation, forceNotCreate gate, cached index and both error paths."
+  },
+  "linux:script/scr_compiler.cpp:2128:Scr_GetBuiltin": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x95847-0x95896 and 0x96736-0x96788: compared script-call/function/local-function node chain and file-local shadow check before builtin name use."
+  },
+  "linux:script/scr_compiler.cpp:2210:Scr_GetCacheType": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x958cf-0x958de/0x95962-0x95974 and 0x967c8-0x967d7/0x96996-0x969a8: compared codepos/developer-codepos type mapping (7/12), cached type !=7 test and developer-only classification."
+  },
+  "linux:script/scr_compiler.cpp:2227:Scr_GetUncacheType": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x958cf-0x958de/0x95962-0x95974 and 0x967c8-0x967d7/0x96996-0x969a8: compared codepos/developer-codepos type mapping (7/12), cached type !=7 test and developer-only classification."
+  },
+  "linux:script/scr_compiler.cpp:846:Scr_InitFromChildBlocks": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x98430-0x984cf/0x9857d, 0x98a55-0x98afa/0x98bef and 0x99c50-0x99d01/0x99df8: compared minimum child localVarsPublicCount, parent create count assignment and bit intersection across all reachable children; native Scr_MergeBranchChildBlocks already uses public counts."
+  },
+  "linux:script/scr_compiler.cpp:4608:Scr_IsLastStatement": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x976c7-0x9772c/0x97aca and 0x99fcc-0x9a03b: compared leading sentinel skip, next-node traversal and last-statement recognition after only ignored developer lists."
+  },
+  "linux:script/scr_compiler.cpp:960:Scr_MergeChildBlocks": {
+    "status": "fixed",
+    "evidence": "Mac inlined analysis at 0x92b32-0x92c84, 0x934b1-0x935f3, 0x937c4-0x939d3 and 0x942af-0x94424: restored parent abort guard before child public-count normalization; compared parent-name ordering, insertions and name shifts. This Linux ledger identity corresponds to native Scr_CalcLocalVarsNormalizeChildBlock(s), not native emission helper of the same old name; compiled and reviewed, not exercised."
+  },
+  "linux:script/scr_compiler.cpp:1220:Scr_PopValue": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x960ee-0x96125, 0x962fa-0x9630d and 0x9637d: compared 32-value bound, payload/type/source stores, count increment and decrement before constant binary evaluation."
+  },
+  "linux:script/scr_compiler.cpp:1203:Scr_PushValue": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x960ee-0x96125, 0x962fa-0x9630d and 0x9637d: compared 32-value bound, payload/type/source stores, count increment and decrement before constant binary evaluation."
+  },
+  "linux:script/scr_compiler.cpp:802:Scr_RegisterLocalVar": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x921c7-0x92204/0x92376-0x9238d and 0x9a4dc-0x9a52b/0x9a666: compared parent abort guard, duplicate lookup, 64-name error threshold, name append and count increment."
+  },
+  "linux:script/scr_compiler.cpp:1009:Scr_TransferBlock": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x97e6b-0x97f85, 0x980c8-0x981e5 and corresponding loop/developer transfers: read name search starting at destination index, insertion/public-count update, backward shifts, initialized bits and final create count/abort reset; native emission helper is named Scr_MergeChildBlocks."
+  },
+  "mac:0x0009a0ca": {
+    "status": "unchecked",
+    "evidence": "Read complete Mac 0x9a0ca-0x9ab08 including includes, thread passes and linking; exact-entry disassembly confirms final 0x9a3d6 sets value.type=6 but the payload at -0x20(%ebp) has no defining store. Native writes deterministic integer 1. Left unchecked rather than claiming equality or attempting to reproduce uninitialized stack data."
+  },
+  "linux:script/scr_compiler.cpp:2633:SetThreadPosition": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9a253-0x9a63c, 0x9a69d-0x9a783 and 0x9a978-0x9aade: read both thread passes, all reset fields and first-thread markers, active/ignored developer paths with checksum rollback, using-tree restriction, thread position storage and EmitThreadInternal arguments; native synchronous block lifetime and codepos offsets accounted for."
+  },
+  "linux:script/scr_compiler.cpp:5427:SpecifyThread": {
+    "status": "equal",
+    "evidence": "Mac inlined at 0x9a1e0-0x9a350/0x9a64b-0x9a698/0x9a788-0x9a7eb: compared developer begin/end errors, saved source, ignored developer definitions and name/source/type arguments to SpecifyThreadPosition."
+  },
+  "mac:0x00092092": {
+    "status": "equal",
+    "evidence": "Mac 0x92092-0x9215e: read duplicate-definition branches, source-buffer filename lookup, undefined position initialization and SetNewVariableValue order."
   }
 }
