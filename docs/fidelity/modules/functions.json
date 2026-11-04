@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 6688,
-      "intentional": 1428,
-      "equal": 1145,
-      "fixed": 196
+      "unchecked": 6648,
+      "intentional": 1439,
+      "equal": 1160,
+      "fixed": 210
     },
     "scopes": {
       "unassigned": 777,
@@ -149093,7 +149093,7 @@
         ],
         "linux": [],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Read complete Mac 0x1fbc42-0x1fc0a0. Native SDK curl backend is intentional. Corrected confirmed omissions: no URL-substring MOTD classification (Mac only reads flag at 0x1fbc39), write 64-byte display URL with authority credentials redacted per 0x1fbffc-0x1fc009 and reset native byte accumulator. Compiled and reviewed, not exercised. Exact libwww HTParse normalization/escaping of unusual credential-bearing, relative or malformed URLs remains unestablished; native bounded parser covers ordinary absolute URLs. Mac no-credentials branch also passes URL as a format string while native copies text. No full semantic-equivalence verdict."
       },
       {
         "id": "mac:0x001fba80",
@@ -149114,8 +149114,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x1fba80-0x1fbad8: stop/unregister running event loop, reset timeout/running, kill/delete any request. Native curl DL_Teardown removes/cleans the easy handle and closes the file, clears running, and exposes CANCELLED through the replacement status API. Backend-specific lifecycle replacement retained; no transfer-level equivalence claim."
       },
       {
         "id": "mac:0x001fbc36",
@@ -149136,8 +149136,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x1fbc36-0x1fbc42 byte flag getter and inspected all Mac text references: no writers to dl_isMotd. Native getter returns its boolean-valued flag; after removal of filename inference it remains zero just as in the Mac module. No runtime transfer performed."
       },
       {
         "id": "mac:0x001fbbaa",
@@ -149158,8 +149158,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x1fbbaa-0x1fbc24: event pump returns 0 while active, otherwise unregister/reset timeout, kill/delete, clear running and return 1 for nonnegative terminate status or print/return 2 for negative. Native deliberately uses curl_multi_perform/info_read, DL_STATUS and DL_Teardown with curl/HTTP error reporting. The caller uses the replacement status API; cancellation/error timing not exercised."
       },
       {
         "id": "mac:0x001fbc24",
@@ -149180,8 +149180,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x1fbc24-0x1fbc36: signed dl_running >0 converted to boolean. Native expression matches; triage and constant checks clean."
       },
       {
         "id": "mac:0x001fbad8",
@@ -149202,8 +149202,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x1fbad8-0x1fbbaa: once-only libwww no-cache client profile, print/trace/termination/progress/confirm/prompt callback installation and initialized diagnostic. Native instead creates the SDK curl multi handle once and retains the diagnostic; library initialization/callback replacement is intentional."
       },
       {
         "id": "mac:0x001fb920",
@@ -149224,8 +149224,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x1fb920-0x1fb976: format through a 1024-byte vsnprintf buffer, print as text and return formatted-buffer length. This is a libwww print/trace callback, intentionally absent after the SDK curl replacement; native emits its own transfer diagnostics. No claim that backend trace text matches."
       },
       {
         "id": "mac:0x001fba24",
@@ -149246,8 +149246,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x1fba24-0x1fba5e: message 9 prints redirect diagnostic and accepts, other confirms print error, stop the libwww loop and reject. Native CURLOPT_FOLLOWLOCATION accepts redirects and curl errors/status handle unsupported confirmation; no libwww callback remains. Diagnostics/timing are not asserted equal."
       },
       {
         "id": "mac:0x001fb98e",
@@ -149268,8 +149268,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1fb9c1 stores HTTP bytes read to LegacyHacks+0x14, and 0x1fb9f3 stores FTP data bytes after enabling raw counting. Native curl writer omitted UI progress entirely. DL_WriteCb now accumulates successfully written body bytes, stores cl_downloadCount and returns byte count; native begin resets accumulator. Compiled and reviewed, not exercised. Backend error/short-write timing and libwww FTP control/data event details remain intentional replacement limits."
       },
       {
         "id": "mac:0x001fba5e",
@@ -149290,8 +149290,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x1fba5e-0x1fba80: print prompt identifier, stop loop and return false. Native curl runs without interactive prompt callbacks and reports failed authentication through its status API. Legacy libwww prompt callback is intentionally absent; text and event timing not asserted equal."
       },
       {
         "id": "mac:0x001fb976",
@@ -149312,8 +149312,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x1fb976-0x1fb98e: save completion status, stop libwww event loop, return 0. Native curl completion messages and DL_STATUS/DL_Teardown replace this callback and event loop. Backend replacement is intentional; numeric status/error timing equivalence not claimed."
       }
     ],
     "qcommon/dobj_management": [
@@ -152330,8 +152330,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x15837e-0x158430: loopback text, unsigned IP bytes, signed byte-swapped port and stale buffer for unsupported types match stock native. Existing CoD2x branch intentionally prints the port unsigned for its extended address display; no Windows-equivalence claim."
       },
       {
         "id": "mac:0x00158bac",
@@ -152361,8 +152361,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x158bdf-0x158bf8 prints NET_CompareAdrSigned and returns true for matching unsupported types. Native returned false with a different diagnostic; corrected under COD2_X64. Whole body compared, including type, loopback, port and IP equality; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001582bc",
@@ -152392,8 +152392,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x1582bc-0x158358 against native: type subtraction, loopback zero, unsupported-type diagnostic/zero, unsigned port difference and four-byte IP comparison have matching order and results."
       },
       {
         "id": "mac:0x00158c54",
@@ -152423,8 +152423,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x158c8b uses NET_CompareBaseAdrSigned in the bad-type diagnostic; corrected native diagnostic. Whole body compared: unequal types, bot/loopback port equality, IP-only comparison and unsupported-type true result match. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:qcommon/net_chan_mp.cpp:695:NET_CompareBaseAdrSigned",
@@ -152442,8 +152442,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Linux-only helper is inlined in Mac NET_CompareBaseAdr 0x158c5d-0x158cde. Native inline behavior matches type/port/IP differences and zero for unsupported types; corrected its diagnostic to Mac 0x158c8b. No separate Mac export or native helper is required. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00158ce0",
@@ -152473,8 +152473,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x158ce0-0x158d9e: clip queue lag to 16, empty signed comparison, advance masked receive slot, copy payload/size and return loopback address/source port. Native matches with a typed object clear for its extended address layout."
       },
       {
         "id": "linux:qcommon/net_chan_mp.cpp:812:NET_GetLoopPacket_Real",
@@ -152492,8 +152492,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only helper is the full inlined Mac NET_GetLoopPacket body 0x158ce0-0x158d9e. Compared backlog clipping, slot/counter updates, copy and loopback address/port output with native NET_GetLoopPacket; the LP64 whole-address clear replaces the retail padded stores."
       },
       {
         "id": "mac:0x00158372",
@@ -152523,8 +152523,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read the Mac 0x158372-0x15837e tail jump to Sys_GetPacket with unchanged address/message arguments; native is the same forwarding wrapper. Triage and constants checks are clean."
       },
       {
         "id": "mac:0x00158358",
@@ -152554,8 +152554,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x158358-0x158372: true only for address types 2 and 0, otherwise false; native matches. Triage and constants checks are clean."
       },
       {
         "id": "mac:0x001588f6",
@@ -152585,8 +152585,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x1588f6-0x158a2a: allocate MAX_MSGLEN LargeLocal, write four 0xff bytes, signed byte-copy loop, send len+4, profile by source, release and return send result >0. Native matches; dedicated builds intentionally omit client-only OOB profiling."
       },
       {
         "id": "mac:0x001587bc",
@@ -152607,8 +152607,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1587bc-0x1588f6 had no native body. Independently implemented 0x20004 LargeLocal allocation, signed len>0x20000 rejection at 0x15880e with its own diagnostic, four-byte OOB header, copy/send, source profiling and cleanup. Compiled and reviewed, not exercised; dedicated client profiling remains excluded."
       },
       {
         "id": "mac:0x00158a2a",
@@ -152638,8 +152638,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x158aba bounds strlen+1 by 0x1fffc; native used 0x3ffc. Corrected to MAX_MSGLEN-4 with unsigned comparison. Whole body compared: optional diagnostic, copy including terminator, send length excluding terminator, profiling, cleanup and positive-result boolean. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00158682",
@@ -152669,8 +152669,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1586b7 allocates 0x20004 through LargeLocal and 0x1586d4 rejects len>0x20000. Native had an unbounded 0x8004 stack buffer. Restored allocation/bound, Voice diagnostic and cleanup; compared header/copy/send/source profiling. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:qcommon/net_chan_mp.cpp:1031:NET_OutOfBandVoiceData2",
@@ -152688,8 +152688,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Linux function has an explicitly unknown original name; its Voice diagnostic and body identify Mac NET_OutOfBandVoiceData 0x158682-0x1587bc, not the Pb twin. Reconciled in the native named Voice body: LargeLocal/128 KiB bound at 0x1586b7/0x1586d4, copy/send/profiling and cleanup. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:qcommon/net_chan_mp.cpp:855:NET_SendLoopPacket",
@@ -152707,8 +152707,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Linux-only helper is inlined at Mac NET_SendPacket 0x1585d4-0x15867d. Corrected native reply queue to destination port, reply source port to zero and client source port to its source index; compared counter/mask/copy/length updates. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0015852a",
@@ -152738,8 +152738,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x158561 shows only OOB packets whose first word is -1; native reversed that test. Mac 0x15866d selects reply queue from destination port and 0x158676 retains client source index; native always chose queue zero for replies. Corrected both; whole body compared. Existing void native Sys_SendPacket intentionally reports dispatch success rather than the Mac boolean. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00158430",
@@ -152769,8 +152769,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac string at 0x2d3ff0 and compare 0x15843f trap only localhost; removed the extra native loopback alias. Mac 0x1584e3 rotates the low 16 bits after atoi; narrowed before swapping so higher port bits cannot leak. Whole body compared: 1024-byte copy, colon split, resolution/broadcast failure type and default 0x2071 port. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00157e28",
@@ -152800,8 +152800,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x157e28-0x157e84 against native inline core: signed (index+1)%60, store index before Sys_Milliseconds, then time/size/fragment stores. The multiply/shift sequence is signed remainder by 60."
       },
       {
         "id": "linux:qcommon/net_chan_mp.cpp:164:NetProf_NewRecievePacket",
@@ -152819,8 +152819,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only helper matches Mac inline block 0x159590-0x15962f in Netchan_Process: profiling gate, receive stream offset 0x2f0, 60-slot ring write, size/fragment fields and net_showprofile bit 2 diagnostic. Compared native receive inline block and NetProf_AddPacket_core."
       },
       {
         "id": "linux:qcommon/net_chan_mp.cpp:144:NetProf_NewSendPacket",
@@ -152838,8 +152838,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-only helper matches Mac inline blocks 0x158f75-0x15900a and 0x159233-0x1592c8: profiling gate, send-stream ring write, timestamp/size/fragment stores and net_showprofile bit 2 diagnostic. Native transmit and fragment blocks match."
       },
       {
         "id": "mac:0x00157d30",
@@ -152869,8 +152869,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x157d89 tests the server-running byte, 0x157dec compares net_profile value 2 and 0x157d9e indexes source names using state-1. Native read integer server state, tested the still-zero profiling state and passed g_qport to %s. Corrected all three; whole allocation/free/transition body compared. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00157e84",
@@ -152900,8 +152900,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x157e84-0x15809c: 60 samples, zero/older-than-1000 ms rejection, oldest/min/max/fragment counts, zero-sample reset, integer percentage, strict >100 ms BPS refresh, oldest exclusion, zero-rate paths and timestamp timing match native. Verified binary32 0.001 at 0x326210 (0x3a83126f) and SSE convert/multiply/divide/truncate order."
       },
       {
         "id": "mac:0x001580da",
@@ -152922,8 +152922,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x1580da-0x15810a: disabled return, client state 1 calls CL stats with 0, other enabled state calls SV stats with 0. Native matches except dedicated builds intentionally print that client profiling is unavailable because client code is excluded."
       },
       {
         "id": "mac:0x0015809c",
@@ -152953,8 +152953,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Read Mac 0x15809c-0x1580da: disabled warning, client state 1 calls CL stats with 1, other enabled state calls SV stats with 1. Native matches except dedicated builds intentionally print that client profiling is unavailable because client code is excluded."
       },
       {
         "id": "linux:qcommon/net_chan_mp.cpp:47:Net_LocalClientNum",
@@ -152972,8 +152972,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only helper always returns zero and has no Mac export. Mac instead embeds literal 0 for NET_SendPacket/fragment-send diagnostics (0x158654/0x158f5c) and literal 1 in normal transmit/receive diagnostics (0x1591c7/0x159393); native retains those Mac literals rather than introducing the Linux-only helper."
       },
       {
         "id": "mac:0x0015810a",
@@ -153003,8 +153003,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x15810a-0x158216 and checked registrations: three debug bool defaults 0/flags 0x1000, unsigned-short qport, net_profile 0 range 0..2, net_showprofile 0 range 0..3, net_lanauthorize false, all flags 0x1000, then net_dumpprofile callback. Native matches all names, arguments and order."
       },
       {
         "id": "mac:0x001592e2",
@@ -153034,8 +153034,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": "Partial fix (not a full reconciliation): fragmentStart always read as a long (Mac 0x15963a); tests/lp64/network/f1_transport.c. See docs/macos-port/reports/2026-11-04-outside-reference-fixes.md"
+        "status": "fixed",
+        "evidence": "Mac 0x1596b3-0x1596be uses an unsigned accumulated-fragment bound; native used signed > and could accept a negative accumulated offset. Corrected with unsigned addition/comparison. Whole body compared: long fragment offset at 0x15963a, qport, profiling, sequence/drop handling, fragmentation reset/continuity/length checks, 1300-byte wait, final capacity check/copies and message-reader reset match. Compiled and reviewed, not exercised; existing long-offset fix retained."
       },
       {
         "id": "mac:0x00158216",
@@ -153065,8 +153065,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Mac 0x158216-0x1582bc: clear whole channel, set source/address/qport, clear sequence state, outgoing sequence 1, then prep profiling. Native sizeof/typed fields account for larger native address and pointer layout; the redundant zero store follows the whole-object clear."
       },
       {
         "id": "mac:0x00159024",
@@ -153096,8 +153096,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x159189 points to an error string beginning with byte 0x15; native omitted that prefix. Restored it and read the whole 0x159024-0x1592e2 body: 128 KiB limit, >1299 fragmentation, buffer/state copy, first-fragment dispatch, short qport, sequence increment, payload/debug/profiling and return paths match. Compiled and reviewed, not exercised; existing size-limit correction retained."
       },
       {
         "id": "mac:0x00158d9e",
@@ -153127,8 +153127,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": "Partial fix (not a full reconciliation): fragmentStart is always a long in protocol 118 (Mac 0x158e21); tests/lp64/network/f1_transport.c. See docs/macos-port/reports/2026-11-04-outside-reference-fixes.md"
+        "status": "equal",
+        "evidence": "Read Mac 0x158d9e-0x159024: prep profile, 1400-byte message, fragment flag/sequence, client qport, min(1300,remaining), long offset/short size, payload/send/profile/debug, advance start and retain sequence for an exact-1300 terminator. Native matches the entire state machine; existing long-offset correction retained."
       }
     ],
     "qcommon/statmonitor": [
