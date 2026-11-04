@@ -221,11 +221,15 @@ void Com_InitPlayerProfiles(void)
 
     if (FS_ReadFile("players/active.txt", &buf) < 0) {
 
+#if defined(COD2_X64)
+        Com_ExecStartupConfigs(0);
+#else
         extern void Dvar_SetInt(const dvar_t *dvar, int value);
         Com_NewPlayerProfile("default");
         FS_WriteFile("players/active.txt", "default", 7);
         Com_SetPlayerProfileAndExec("default");
         Dvar_SetInt(ui_playerProfileAlreadyChosen, 1);
+#endif
         return;
     }
 
