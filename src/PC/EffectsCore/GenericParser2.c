@@ -629,7 +629,11 @@ Bool GenericParser2_Parse(const GenericParser2 *_this, char **dataPtr, int clean
     GenericParser2 *gp = (GenericParser2 *)_this;
     TextPool *topPool;
 
+#if defined(COD2_X64)
+    if ((byte)cleanFirst) {
+#else
     if (cleanFirst) {
+#endif
 
         GPGroup_Clean((const GPGroup *)_this);
 
