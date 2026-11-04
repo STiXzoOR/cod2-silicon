@@ -200,7 +200,9 @@ static void impact_target(int damageable, int directDamage)
                 assert(directDamageCalls == (damageable && directDamage));
                 assert(accuracyCalls == directDamageCalls);
                 assert(eventCounts[0xBB] == bounced);
-                assert(eventCounts[0xBE] == !bounced);
+                assert(eventCounts[0xBD] == !bounced);
+                assert(!eventCounts[0xBE]);
+                if (damageable && directDamage) assert(damageAttacker == &g_entities[0]);
                 if (bounced) {
                     assert(ent->s.pos.trDelta[0] < 0);
                     assert(eventParms[0xBB] == (hasSurface ? 6 : damageable && hasClient ? 7 : 0));
@@ -208,6 +210,118 @@ static void impact_target(int damageable, int directDamage)
             }
         }
     }
+}
+
+/* Mac G_RunMissile_CreateWaterSplash stores at these entity offsets (0x1ca864-0x1ca891). */
+_Static_assert(__builtin_offsetof(gentity_t, s.eventParm) == 0xa0, "splash eventParm");
+_Static_assert(__builtin_offsetof(gentity_t, s.scale) == 0xd8, "splash reflection byte");
+_Static_assert(__builtin_offsetof(gentity_t, s.surfType) == 0x88, "splash surface");
+_Static_assert(__builtin_offsetof(gentity_t, s.otherEntityNum) == 0x74, "splash source");
+
+static gentity_t *direct_hit(gentity_t *ent, gentity_t *target)
+{
+    memset(target, 0, sizeof(*target));
+    target->takedamage = 1;
+    ent->damage = 25;
+    ent->s.eFlags = 0;
+    allowDirectDamage = 1;
+    trace_result(0, .5f, 0);
+    scriptedTraces[0].normal[0] = -1;
+    scriptedTraces[0].entityNum = 1;
+    return ent;
+}
+
+/* Mac 0x1ca4c5-0x1ca4f4: marks are suppressed only for a client or body-part hit. */
+static void impact_event(void)
+{
+    for (int part = 0; part <= 1; ++part) {
+        for (int hit = 0; hit <= 1; ++hit) {
+            gentity_t *ent = direct_hit(missile(), &g_entities[1]);
+            accuracyResult = hit;
+            scriptedTraces[0].partName = part;
+            frame(ent);
+            assert(eventCounts[0xBE] == (hit || part));
+            assert(eventCounts[0xBD] == !(hit || part));
+        }
+    }
+    accuracyResult = 0;
+}
+
+/* Mac 0x1cacd4-0x1cad2c: the entity directly hit is excluded from impact splash. */
+static void impact_splash(void)
+{
+    gentity_t *target = &g_entities[1];
+    gentity_t *ent = direct_hit(missile(), target);
+    weapon.iExplosionInnerDamage = 200;
+    weapon.iExplosionOuterDamage = 50;
+    weapon.iExplosionRadius = 300;
+    frame(ent);
+    assert(splashCalls == 1 && splashIgnore == target);
+    assert(splashInner == 200 && splashOuter == 50 && splashRadius == 300);
+}
+
+/* Mac 0x1c966c and 0x1ca56f test inner damage for nonzero rather than positive. */
+static void inner_sign(void)
+{
+    gentity_t *ent = missile();
+    weapon.iExplosionInnerDamage = -5;
+    G_ExplodeMissile(ent);
+    assert(splashCalls == 1 && splashInner == -5 && splashIgnore == ent);
+
+    ent = direct_hit(missile(), &g_entities[1]);
+    weapon.iExplosionInnerDamage = -5;
+    frame(ent);
+    assert(splashCalls == 1 && splashInner == -5);
+}
+
+/* Mac 0x1cadec-0x1cae0e indexes the owner unconditionally; only G_Damage maps none to NULL. */
+static void impact_owner(void)
+{
+    gentity_t *ent = direct_hit(missile(), &g_entities[1]);
+    ent->r.ownerNum = 1023;
+    expectedSkip = 1023;
+    accuracyAttacker = damageAttacker = hitTriggerAttacker = NULL;
+    frame(ent);
+    expectedSkip = 0;
+    assert(accuracyAttacker == &g_entities[1023]);
+    assert(directDamageCalls == 1 && damageAttacker == NULL);
+    assert(hitTriggerAttacker == &g_entities[1022]);
+}
+
+/* Mac 0x1cab6b tests flag bit 15 with a signed 16-bit compare. */
+static void grenade_pass(void)
+{
+    const int flags[] = {0, 0x8000, (int)0x80000000u};
+    for (int i = 0; i < 3; ++i) {
+        gentity_t *target = &g_entities[1];
+        gentity_t *ent = missile();
+        memset(target, 0, sizeof(*target));
+        target->flags = flags[i];
+        target->r.contents = 0x1234;
+        ent->s.eFlags = 0;
+        trace_result(0, .5f, 0);
+        scriptedTraces[0].normal[0] = -1;
+        scriptedTraces[0].entityNum = 1;
+        trace_result(1, 1, 0);
+        frame(ent);
+        const int passed = flags[i] == 0x8000;
+        assert(scriptedTraceIndex == (passed ? 2 : 1));
+        assert(scriptedTargetContents[0] == 0x1234);
+        if (passed) assert(scriptedTargetContents[1] == 0);
+        assert(target->r.contents == 0x1234);
+        assert(ent->s.eType == (passed ? 4 : 0));
+    }
+}
+
+/* Mac 0x1c9fca-0x1c9fd1 takes the no-event return for an unordered comparison. */
+static void bounce_nan(void)
+{
+    gentity_t *ent = missile();
+    ent->s.pos.trDelta[0] = NAN;
+    trace_result(0, .5f, 0);
+    scriptedTraces[0].normal[0] = -1;
+    frame(ent);
+    assert(ent->s.eType == 4 && !eventCounts[0xBB]);
 }
 
 int main(int argc, char **argv)
@@ -226,6 +340,12 @@ int main(int argc, char **argv)
     else if (!strcmp(argv[1], "impact-rocket")) impact_target(1, 25);
     else if (!strcmp(argv[1], "impact-world")) impact_target(0, 25);
     else if (!strcmp(argv[1], "impact-inert")) impact_target(0, 0);
+    else if (!strcmp(argv[1], "impact-event")) impact_event();
+    else if (!strcmp(argv[1], "impact-splash")) impact_splash();
+    else if (!strcmp(argv[1], "inner-sign")) inner_sign();
+    else if (!strcmp(argv[1], "impact-owner")) impact_owner();
+    else if (!strcmp(argv[1], "grenade-pass")) grenade_pass();
+    else if (!strcmp(argv[1], "bounce-nan")) bounce_nan();
     else return 2;
     printf("F1 missile %s: pass\n", argv[1]);
     return 0;

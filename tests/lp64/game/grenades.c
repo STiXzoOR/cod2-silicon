@@ -38,6 +38,8 @@ static float wallX = 20.0f;
 static vec3_t explosionOrigin;
 static int splashCalls;
 static float splashInner, splashOuter, splashRadius;
+static gentity_t *splashIgnore, *accuracyAttacker, *damageAttacker, *hitTriggerAttacker;
+static int accuracyResult, expectedSkip, scriptedTargetContents[2];
 
 WeaponDef *BG_GetWeaponDef(int index) { assert(index == 1); return &weapon; }
 gentity_t *G_Spawn(void)
@@ -82,9 +84,10 @@ int G_RunThink(gentity_t *ent)
 void G_LocationalTrace(trace_t *tr, const vec_t *start, const vec_t *end,
                       int skip, int mask, byte *priority)
 {
-    assert(skip == 0 && (mask & 1));
+    assert(skip == expectedSkip && (mask & 1));
     if (scriptedTraceCount) {
         assert(scriptedTraceIndex < scriptedTraceCount);
+        scriptedTargetContents[scriptedTraceIndex] = g_entities[1].r.contents;
         *tr = scriptedTraces[scriptedTraceIndex++];
         return;
     }
@@ -130,7 +133,8 @@ void G_TraceCapsule(trace_t *tr, const vec_t *start, const vec_t *mins,
 qboolean G_RadiusDamage(const vec_t *p, gentity_t *inflictor, gentity_t *attacker,
                         float inner, float outer, float radius, gentity_t *ignore, int mod)
 {
-    assert(attacker == &g_entities[0] && ignore == inflictor);
+    assert(attacker == &g_entities[0]);
+    splashIgnore = ignore;
     ++splashCalls;
     splashInner = inner;
     splashOuter = outer;
@@ -140,16 +144,25 @@ qboolean G_RadiusDamage(const vec_t *p, gentity_t *inflictor, gentity_t *attacke
 void Server_SwitchToValidFxScheduler(void) { abort(); }
 EffectTemplate *FX_RegisterEffect(const char *name) { abort(); }
 float FX_GetEffectLength(EffectTemplate *fx) { abort(); }
-int LogAccuracyHit(gentity_t *target, gentity_t *attacker) { ++accuracyCalls; return 0; }
+int LogAccuracyHit(gentity_t *target, gentity_t *attacker)
+{
+    ++accuracyCalls;
+    accuracyAttacker = attacker;
+    return accuracyResult;
+}
 void G_Damage(gentity_t *target, gentity_t *inflictor, gentity_t *attacker,
               vec_t *dir, vec_t *p, int damage, int flags, int mod, int hit, int loc)
 {
     assert(allowDirectDamage);
-    assert(target == &g_entities[1] && attacker == &g_entities[0]);
+    assert(target == &g_entities[1]);
     assert(damage == 25 && dir[0] == 100);
+    damageAttacker = attacker;
     ++directDamageCalls;
 }
-void G_CheckHitTriggerDamage(gentity_t *attacker, vec_t *start, vec_t *end, int damage, int mod) {}
+void G_CheckHitTriggerDamage(gentity_t *attacker, vec_t *start, vec_t *end, int damage, int mod)
+{
+    hitTriggerAttacker = attacker;
+}
 void G_GrenadeTouchTriggerDamage(gentity_t *ent, vec_t *old, vec_t *p, int damage, int mod)
 {
     assert(mod == 3);
@@ -227,6 +240,7 @@ int main(void)
     weapon.iExplosionRadius = 100;
     G_ExplodeMissile(ent);
     assert(splashCalls == 1 && splashInner == 250 && splashOuter == 15 && splashRadius == 100);
+    assert(splashIgnore == ent);
     ent = throw_grenade(0, 0);
     weapon.iExplosionRadius = 100;
     G_ExplodeMissile(ent);
@@ -238,8 +252,9 @@ int main(void)
     weapon.iExplosionRadius = 100;
     for (int i = 0; i < 10 && ent->s.eType == 4; ++i)
         frame(ent);
-    assert(ent->s.eType == 0 && eventCounts[190] == 1 && eventCounts[187] == 0);
+    assert(ent->s.eType == 0 && eventCounts[189] == 1 && !eventCounts[190] && eventCounts[187] == 0);
     assert(splashCalls == 1 && splashInner == 250 && splashOuter == 15 && splashRadius == 100);
+    assert(splashIgnore == &g_entities[1022]);
     ent = throw_grenade(0, 0);
     traceStartSolid = 1;
     frame(ent);

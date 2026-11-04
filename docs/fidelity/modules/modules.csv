@@ -140,7 +140,7 @@ game/g_items_mp,29,21,8,0,0
 game/g_load_utils,5,3,2,0,0
 game/g_main_mp,34,20,12,2,0
 game/g_misc_mp,28,21,6,1,0
-game/g_missile_mp,12,0,0,0,12
+game/g_missile_mp,12,6,6,0,0
 game/g_mover_mp,12,0,0,0,12
 game/g_scr_main_mp,242,0,0,0,242
 game/g_scr_mover_mp,29,0,0,0,29
