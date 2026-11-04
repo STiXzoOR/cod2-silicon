@@ -37,7 +37,11 @@ void Com_LoadBsp(const char *filename)
 
     comBspFileSize = FS_FOpenFileRead(filename, &h, 0);
     if (!h) {
+#if defined(COD2_X64)
+        Com_Error(1, va("EXE_ERR_COULDNT_LOAD\x15%s", filename));
+#else
         Com_Error(1, va("EXE_ERR_COULDNT_LOAD%s", filename));
+#endif
     }
 
     comBspGlob = (dheader_t *)Z_MallocGarbageInternal(comBspFileSize);
@@ -46,14 +50,22 @@ void Com_LoadBsp(const char *filename)
 
     if (bytesRead != comBspFileSize || (unsigned int)bytesRead <= 0x13f) {
         Z_FreeInternal(comBspGlob);
+#if defined(COD2_X64)
+        Com_Error(1, va("EXE_ERR_COULDNT_LOAD\x15%s", filename));
+#else
         Com_Error(1, va("EXE_ERR_COULDNT_LOAD%s", filename));
+#endif
     }
 
     comBspChecksum = Com_BlockChecksum(comBspGlob, comBspFileSize);
 
     if (comBspGlob->ident != 0x50534249 || comBspGlob->version != 4) {
         Z_FreeInternal(comBspGlob);
+#if defined(COD2_X64)
+        Com_Error(1, va("EXE_ERR_WRONG_MAP_VERSION_NUM\x15%s", filename));
+#else
         Com_Error(1, va("EXE_ERR_WRONG_MAP_VERSION_NUM%s", filename));
+#endif
     }
 
     for (i = 0; i < 39; i++) {
