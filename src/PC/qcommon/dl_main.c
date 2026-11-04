@@ -5,6 +5,11 @@
 
 #    include <string.h>
 #    include <stdio.h>
+#if defined(COD2_X64)
+#    include "common_types.h"
+extern void *imp_legacyHacks;
+int Com_sprintf(char *dest, int size, const char *fmt, ...);
+#endif
 
 void Com_Printf(const char *fmt, ...);
 void Com_DPrintf(const char *fmt, ...);
@@ -72,9 +77,42 @@ static dlStatus_t dl_status = DL_STATUS_IDLE;
 static int dl_debug = 0;
 static char dl_localName[1024];
 
+#if defined(COD2_X64)
+static unsigned int dl_bytesRead;
+
+static void DL_SetDisplayName(const char *remoteName)
+{
+    LegacyHacks *ui = *(LegacyHacks **)imp_legacyHacks;
+    const char *schemeEnd = strchr(remoteName, ':');
+    const char *authority = NULL;
+    if (schemeEnd && schemeEnd[1] == '/' && schemeEnd[2] == '/')
+        authority = schemeEnd + 3;
+
+    if (authority) {
+        const char *authorityEnd = authority + strcspn(authority, "/?#");
+        const char *at = memchr(authority, '@', authorityEnd - authority);
+        if (at) {
+            const char *end = authorityEnd + strcspn(authorityEnd, "#");
+            Com_sprintf(ui->cl_downloadName, sizeof(ui->cl_downloadName),
+                        "%.*s://*:*%.*s%.*s", (int)(schemeEnd - remoteName), remoteName,
+                        (int)(authorityEnd - at), at, (int)(end - authorityEnd), authorityEnd);
+            return;
+        }
+    }
+    Com_sprintf(ui->cl_downloadName, sizeof(ui->cl_downloadName), "%s", remoteName);
+}
+
+#endif
 static size_t DL_WriteCb(void *ptr, size_t size, size_t nmemb, void *stream)
 {
+#if defined(COD2_X64)
+    size_t written = fwrite(ptr, size, nmemb, (FILE *)stream) * size;
+    dl_bytesRead += (unsigned int)written;
+    (*(LegacyHacks **)imp_legacyHacks)->cl_downloadCount = (int)dl_bytesRead;
+    return written;
+#else
     return fwrite(ptr, size, nmemb, (FILE *)stream);
+#endif
 }
 
 static void DL_Teardown(void)
@@ -119,7 +157,11 @@ int DL_BeginDownload(const char *localName, const char *remoteName, int debug)
     if (!dl_multi)
         return 0;
 
+#if defined(COD2_X64)
+    /* The retail MOTD flag is not inferred from the download URL. */
+#else
     dl_isMotd = (strstr(remoteName, "motd.txt") != 0);
+#endif
 
     FS_CreatePath(localName);
     {
@@ -159,8 +201,16 @@ int DL_BeginDownload(const char *localName, const char *remoteName, int debug)
         return 0;
     }
 
+#if defined(COD2_X64)
+    DL_SetDisplayName(remoteName);
+    dl_bytesRead = 0;
+    if (dl_debug)
+        Com_DPrintf("DL_BeginDownload: %s -> %s\n",
+                    (*(LegacyHacks **)imp_legacyHacks)->cl_downloadName, localName);
+#else
     if (dl_debug)
         Com_DPrintf("DL_BeginDownload: %s -> %s\n", remoteName, localName);
+#endif
 
     dl_running = 1;
     dl_status = DL_STATUS_IN_PROGRESS;
