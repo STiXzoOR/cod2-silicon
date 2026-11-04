@@ -422,9 +422,9 @@ ui/ui_shared_obj,112,0,0,0,112
 ui/ui_utils,30,0,0,0,30
 universal/assertive,2,0,0,0,2
 universal/com_convexhull,2,0,0,0,2
-universal/com_file_wrapper,5,0,0,0,5
-universal/com_files,92,0,0,0,92
-universal/com_files_mp,27,0,0,0,27
+universal/com_file_wrapper,5,5,0,0,0
+universal/com_files,92,68,6,10,8
+universal/com_files_mp,27,19,6,2,0
 universal/com_math,245,0,0,0,245
 universal/com_memory,64,0,0,0,64
 universal/com_memory_high,1,0,0,0,1

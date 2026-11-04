@@ -10906,5 +10906,501 @@
   "mac:0x000b6842": {
     "status": "equal",
     "evidence": "Hand-compared: Mac 0xb6842-0xb6866 stores distance then enabled byte via ordered comparison >=0; native matches including disabled NaN and enabled negative zero."
+  },
+  "linux:universal/com_files.cpp:1719:FS_AddFileToList": {
+    "status": "equal",
+    "evidence": "Hand-compared inline Mac FS_ListFilteredFiles 0x33a33-0x33a89, 0x33dae-0x33df4 and 0x33f46-0x33f97: cap at 4095, case-insensitive deduplication, CopyStringInternal and increment match native FS_ListFilteredFilesAdd/AddOrCap."
+  },
+  "mac:0x00034ffe": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x34ffe-0x3522d: language-folder formatting, duplicate path/game checks and warnings, localized directory-content gate, fs_gamedir update, typed directory/search allocation, nonlocalized-first insertion and IWD addition match."
+  },
+  "linux:universal/com_files.cpp:2411:FS_AddGameDirectoryInternal": {
+    "status": "equal",
+    "evidence": "Linux name resolves to the audited Mac FS_AddGameDirectory body 0x34ffe-0x3522d. Hand-compared native language formatting, deduplication/content checks, allocation and search insertion; no separate native/internal wrapper is required."
+  },
+  "mac:0x0003470c": {
+    "status": "fixed",
+    "evidence": "Hand-compared Mac 0x3470c-0x34ffd including inlined IWD loading: restored break on first metadata failure at 0x34e9e and all 15 supported-language lines at 0x34fcd. File cap, localized prefix sorting/restoration, language validation, CRC lists, hash chains, checksum feed and search insertion were reviewed. Existing optional CoD2x selection policy is retained. Compiled and reviewed; not exercised."
+  },
+  "linux:universal/com_files.cpp:2303:FS_AddSearchPath": {
+    "status": "equal",
+    "evidence": "Hand-compared inline Mac 0x34b18-0x34b77 and 0x351a6-0x3520c: nonlocalized prepends; localized insertion follows all nonlocalized entries, preserving next link. Native FS_AddSearchPathIwd and directory insertion match with pointer-width links."
+  },
+  "mac:0x0003331a": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x3331a-0x3333b: forwards base/game/qpath/output to FS_BuildOSPath_Internal with main-thread flag zero; arguments match."
+  },
+  "mac:0x000331f2": {
+    "status": "fixed",
+    "evidence": "Mac 0x332e8-0x33317 collapses only slash/backslash; native also converted colons. Restored that separator set under COD2_X64. Windows 0x421bf0-0x421c28 independently preserves colons, using its host backslash; native Mac retains slash. Length limit, fallback fs_gamedir, stream overflow result and copy order were hand-compared against 0x331f2-0x33319. Optional CoD2x config routing is retained. Compiled and reviewed; not exercised."
+  },
+  "mac:0x000323ee": {
+    "status": "equal",
+    "evidence": "Exact-symbol disassembly at Mac 0x323ee confirms an empty function returning at 0x323f2. Trailing addb decoding is padding, not a null write. Native is empty."
+  },
+  "mac:0x000329e2": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x329e2-0x32a03: visits every searchpath and clears only non-NULL pack referenced byte; native uses the typed native-width layout."
+  },
+  "mac:0x00037266": {
+    "status": "intentional",
+    "evidence": "Hand-compared Mac 0x37266-0x372b3: running-server gate, game-modified/feed comparison, restart argument and result match. Existing COD2_X64 CoD2x builds additionally restart when Cod2x_IwdDirty reports a policy change, paired with FS_Startup/Cod2x_IwdDirty(1); retained native extension."
+  },
+  "mac:0x0003278e": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x3278e-0x327c1: walks through NUL and converts backslash or colon to slash; native matches."
+  },
+  "mac:0x0003522e": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x3522e-0x353a9: missing-source return, seek/end/rewind, allocation/read count and fatal error, source close, relative-path refusal/mkdir through equivalent FS_CreatePath, optional destination write/close and final free match."
+  },
+  "mac:0x000325da": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x325da-0x3265b: rejects .. or :: with the same warning and creates each slash-delimited prefix starting at path+1, restoring the separator. Native Mac path matches; existing non-Mac host-separator branch is retained."
+  },
+  "linux:universal/com_files.cpp:1169:FS_Delete": {
+    "status": "equal",
+    "evidence": "Hand-compared the inlined deletion effect in Mac FS_WriteFile 0x36387-0x363c9: nonempty qpath, home/game path then remove on incomplete write match native. The helper return value is unused in this caller, so no separate boolean-return identity is claimed."
+  },
+  "mac:0x00033502": {
+    "status": "fixed",
+    "evidence": "Hand-compared Mac 0x33502-0x336ed. Mac 0x335af skips pure-list diagnostics when fs_numServerIwds is zero; native always printed not-on-list. Restored the gate. Mac 0x33614 tests a whole FILE pointer; native handle listing now tests the full native pointer instead of its low int. Language cull, localized annotations, checksum search, directory formatting and handles 1..73 match. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00032b06": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x32b06-0x32be7: end streamed file, close current ZIP member, close uniquely owned archive only, otherwise close nonzero stdio handle, then zero the complete typed native handle entry."
+  },
+  "mac:0x00036622": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x36622-0x367cf: main-handle search, zip flag/name initialization before path building, debug/refusal/mkdir branches, at mode, sync clear, and failed-open zero result match."
+  },
+  "mac:0x000367d0": {
+    "status": "fixed",
+    "evidence": "Hand-compared Mac 0x367d0-0x3691d: mode dispatch, read preference/fallback, append sync and result calculations match. Mac 0x3681c-0x3684e writes handleSync even to defined reserved fsh[0] after failed open, while fileSize/streamed are conditional on a nonzero handle; native skipped all three. Restored the distinct guards under COD2_X64. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00035f1e": {
+    "status": "intentional",
+    "evidence": "Hand-compared Mac 0x35f1e-0x35f9b: access flag, pure-ignored-extension disk-first attempt and -1/-2 fallback match. Existing native $font/$role to fonts/* routing is retained: UI_RegisterAssets in ui_main_mp.c registers those aliases, CL_RegisterFont/R_RegisterFont pass them to R_LoadFont, and R_LoadFont calls FS_FOpenFileRead with the unchanged name. Retail has no filesystem alias branch."
+  },
+  "mac:0x00035f9c": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x35f9c-0x35fbb: forwards filename, output handle and uniqueness with streamThread=1 and fsOnly=0; native matches."
+  },
+  "mac:0x000353aa": {
+    "status": "intentional",
+    "evidence": "Hand-compared Mac 0x353aa-0x35f1d: sanitize/probe mode, language and pure checks, hash/name lookup, reference exemptions, unique reopen failure, directory restrictions, skipped=-2, fake checksum, copy-from-CD and errors match. Native retains defined suffix bounds rather than retail reads before short names at 0x35c35. At 0x35827-0x35869 retail mutates the master ZIP metadata then copies its 128-byte layout over the selected stream while preserving FILE*. Native selects metadata on its typed stream with unzSetCurrentFileInfoPosition, preserving independent ownership; excluded unzip layout bytes and incidental master cursor mutation are not reproduced. Existing CoD2x config routing is retained."
+  },
+  "mac:0x00036170": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x36170-0x3631b: home/game OS path, debug, relative-path refusal and mkdir, wb open, main handle allocation, typed ZIP flag/FILE/name/sync writes and failure return match."
+  },
+  "mac:0x0003646a": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x3646a-0x36621: handle allocation precedes path creation, ZIP flag clears, debug/refusal/mkdir, wt open, name and sync writes even on failure, and zero/success handle return match."
+  },
+  "mac:0x000330d4": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x330d4-0x3310d: ZIP handle uses unztell; stdio handle uses ftell; native uses typed table entries with the same selection."
+  },
+  "linux:universal/com_files.cpp:620:FS_FileCompare": {
+    "status": "unchecked",
+    "evidence": "Read the assigned Linux definition and searched native sources and Mac symbols. No native body/caller and no settled emitted or inline Mac identity for FS_FileCompare were established. Linux text alone is not binary authority; left unchecked rather than claiming an absent function equal."
+  },
+  "mac:0x0003333c": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x3333c-0x33397: build home/game path, open rb, return zero on failure or close and return one; native matches."
+  },
+  "mac:0x000325c2": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x325c2-0x325d9: returns the FILE member of the indexed handle. Native uses full-width typed storage in place of the retail 284-byte stride."
+  },
+  "mac:0x00032670": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x32670-0x326f7: signed-byte reads, I_islower uppercase folding, backslash/colon normalization, -1 on mismatch and zero at equal NUL match."
+  },
+  "linux:universal/com_files.cpp:793:FS_FilesAreLoadedGlobally": {
+    "status": "intentional",
+    "evidence": "Hand-compared inline Mac FS_FOpenFileRead_Internal 0x35b44-0x35c54: exemption table and suffix folding match native hlsl/txt/cfg/levelshots/menu/arena/str checks. Native retains nameLen>=extLen to avoid retail reads before the sanitized name for short inputs; no indeterminate stack bytes are reproduced."
+  },
+  "linux:universal/com_files.cpp:1143:FS_FindOSPathDir": {
+    "status": "equal",
+    "evidence": "Linux helper name maps to Mac FS_ShortOSFilePath 0x33398-0x33451. Hand-compared native base/game arguments, language eligibility, loose-file rb probe/close and game/name result; matches the existing COD2_X64 path."
+  },
+  "mac:0x0003310e": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x3310e-0x3312f: passes the indexed FILE to fflush; native accesses the corresponding full-width table member."
+  },
+  "mac:0x00032a3c": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x32a3c-0x32a4b: decrements fs_loadStack then calls Hunk_FreeTempMemory with the buffer; native matches."
+  },
+  "mac:0x00032a4c": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x32a4c-0x32a89: NULL guard, free every NUL-terminated element then the list; allocation-track argument is unused in both."
+  },
+  "mac:0x00033702": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x33702-0x33715: calls FS_DisplayPath(0); native matches."
+  },
+  "mac:0x00033fde": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x33fde-0x3410b: initializes output, routes $modlist, list behavior/allocation arguments, cumulative NUL-inclusive lengths, >= buffer cap, count truncation, copy order and freeing match."
+  },
+  "mac:0x00033452": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x33452-0x33501: sanitize, cull localized paths, skip packs, build directory path, rb probe/close and zero or -1 result match. Native retains a defensive NULL-dir guard for typed native searchpaths."
+  },
+  "linux:universal/com_files.cpp:461:FS_GetHandleAndOpenFile": {
+    "status": "equal",
+    "evidence": "Hand-compared inline Mac FS_FOpenFileWrite 0x36249-0x362c5: successful stdio open precedes handle allocation; failed open returns zero; ZIP/FILE/name/sync initialization matches native. Helper has no separate emitted Mac symbol."
+  },
+  "linux:universal/com_files.cpp:1542:FS_GetOSPath": {
+    "status": "equal",
+    "evidence": "Linux name maps to audited Mac FS_GetFileOsPath 0x33452-0x33501. Hand-compared sanitize, search/language filtering, loose-file build/probe/close and zero/-1 returns against native."
+  },
+  "mac:0x000324ec": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x324ec-0x325c1: stream slots 61..73 and main slots 1..60, first free pointer, all-handle diagnostic loop and error fallback match."
+  },
+  "mac:0x00032468": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x32468-0x324eb: signed-byte tolower, stop at dot, backslash to slash, weights starting 119, arithmetic shifts by 10/20, XOR order and hashSize-1 mask match."
+  },
+  "mac:0x000372b4": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x372b4-0x373d7: startup-variable order, language/startup/StringEd/restrictions, preferred default_localize_mp.cfg and default_mp.cfg fallback, selected default pointer and saved paths match. The already-integrated qcommon/common fs_defaultConfigName correction is retained unchanged; Windows 0x425868/0x4258b5 also select these defaults (existing common report)."
+  },
+  "mac:0x000323dc": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x323dc-0x323ed: returns whether fs_searchpaths is non-NULL; native matches."
+  },
+  "linux:universal/com_files.cpp:736:FS_IsBackupSubStr": {
+    "status": "equal",
+    "evidence": "Hand-compared inline Mac FS_SanitizeFilename 0x33175-0x33185 and 0x331cf-0x331dd: exactly adjacent .. or :: rejects input. Native conditions match."
+  },
+  "linux:universal/com_files.cpp:1948:FS_IsBaseGameDirOfType": {
+    "status": "unchecked",
+    "evidence": "Read the assigned Linux definition and searched native sources and Mac symbols. No native body/caller and no settled emitted or inline Mac identity for FS_IsBaseGameDirOfType were established. Linux text alone is not binary authority; left unchecked rather than claiming an absent function equal."
+  },
+  "linux:universal/com_files.cpp:747:FS_IsPathSepChar": {
+    "status": "equal",
+    "evidence": "Hand-compared inline Mac FS_SanitizeFilename 0x33140-0x33151 and 0x331b7-0x331cb: slash and backslash only; native separator checks match."
+  },
+  "linux:universal/com_files.cpp:72:FS_IwdIsPure": {
+    "status": "equal",
+    "evidence": "Hand-compared inline Mac FS_ListFilteredFiles 0x339a1-0x339de and FS_FOpenFileRead_Internal 0x3573f-0x35784: zero server count allows all; otherwise a checksum must match. Native loops match for the nonnegative server-list count contract."
+  },
+  "mac:0x0003243c": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x3243c-0x32467: localized flag plus exact language match anywhere in the linked searchpaths returns one; otherwise zero; native matches."
+  },
+  "mac:0x00033f9e": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x33f9e-0x33fdd: forwards fs_searchpaths, path, extension, NULL filter, behavior, count and allocation-track argument in order; native matches."
+  },
+  "linux:universal/com_files.cpp:1937:FS_ListFilesOfDirType": {
+    "status": "unchecked",
+    "evidence": "Read the assigned Linux definition and searched native sources and Mac symbols. No native body/caller and no settled emitted or inline Mac identity for FS_ListFilesOfDirType were established. Linux text alone is not binary authority; left unchecked rather than claiming an absent function equal."
+  },
+  "mac:0x00033800": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x33800-0x33f9d including inline helpers: NULL/sanitize handling, slash-directory mode, path/depth and extension filters, language/pure checks, raw-directory behavior, deduplication and 4095 cap, allocation and NULL terminator match for the nonnegative server-list count contract."
+  },
+  "linux:universal/com_files.cpp:1973:FS_ListFilteredFilesOfDirType": {
+    "status": "unchecked",
+    "evidence": "Read the assigned Linux definition and searched native sources and Mac symbols. No native body/caller and no settled emitted or inline Mac identity for FS_ListFilteredFilesOfDirType were established. Linux text alone is not binary authority; left unchecked rather than claiming an absent function equal."
+  },
+  "mac:0x000323f6": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x323f6-0x323ff: returns fs_loadStack; native matches."
+  },
+  "linux:universal/com_files.cpp:1581:FS_LoadZipFile": {
+    "status": "fixed",
+    "evidence": "Linux loader name maps to native FS_LoadIwd and Mac inline loader inside FS_AddIwdFilesForGameDirectory 0x3483f-0x34ae3/0x34c1b-0x34ecd. Restored first metadata-error break at 0x34e9e. Hand-compared name sizing, typed allocation, 2048 hash cap, CRC collection, hash chaining and both checksums; excluded unzip implementation is unchanged. Compiled and reviewed; not exercised."
+  },
+  "linux:universal/com_files.cpp:1576:FS_OpenFileForWrite": {
+    "status": "unchecked",
+    "evidence": "Read the assigned Linux definition and searched native sources and Mac symbols. No native body/caller and no settled emitted or inline Mac identity for FS_OpenFileForWrite were established. Linux text alone is not binary authority; left unchecked rather than claiming an absent function equal."
+  },
+  "mac:0x000342a2": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x342a2-0x34411: resolve loose-file OS path/error, debug, clear read-only attribute bit when needed, wb open, allocate main handle and set ZIP/FILE/name/sync fields match."
+  },
+  "linux:universal/com_files.cpp:2095:FS_PathCmp": {
+    "status": "equal",
+    "evidence": "Hand-compared inline Mac FS_SortFileList 0x3419f-0x3420a and iwdsort 0x34476-0x344ee: signed-byte reads, I_islower folding, slash/colon equivalence and signed lexical order match native FS_SortFileCompare."
+  },
+  "mac:0x000336ee": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x336ee-0x33701: calls FS_DisplayPath(1); native matches."
+  },
+  "mac:0x00033716": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x33716-0x337ff: 4096-byte vsnprintf formatting, nonzero handle gate, byte write loop with one zero-return retry, -1 failure and sync flush match."
+  },
+  "linux:universal/com_files.cpp:719:FS_PureIgnoreFiles": {
+    "status": "equal",
+    "evidence": "Linux helper name maps to Mac FS_PureIgnoresExtension 0x326f8-0x3277d. Native follows the decoded Mac extension table (including str and roq), rather than the shorter Linux reconstruction table."
+  },
+  "mac:0x000326f8": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x326f8-0x3277d with decoded literals: strips one leading dot and compares cfg/menu/str/roq/.dm_NETWORK_PROTOCOL_VERSION; native stricmp is the native case-insensitive counterpart of retail strcasecmp for cfg."
+  },
+  "mac:0x00032ce4": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x32ce4-0x32dd3: zero handle, ZIP forward, stdio loop and one zero-result retry, short-read count, -1 stream-slot exception and fatal nonstream error match."
+  },
+  "mac:0x0003603e": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x3603e-0x3616f: empty-name error, access flag and disk-first pure-extension fallback, missing-handle output NULL, load-stack/temp allocation/read/NUL/close and length result match."
+  },
+  "mac:0x0003285a": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x3285a-0x329e1 and decoded registration literals: early registered return; debug 0..2 flags 0x1000; copy/CD/base/basegame/home/restrict flags 0x1010; fs_game 0x101c; old-assets 0x1000; ignore-localized 0x10a0; defaults and home fallback match native Dvar_*_mac adapters."
+  },
+  "mac:0x0003265c": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x3265c-0x3266f: forwards OS path to remove and ignores result; native matches."
+  },
+  "linux:universal/com_files.cpp:406:FS_Rename": {
+    "status": "unchecked",
+    "evidence": "Read the assigned Linux definition and searched native sources and Mac symbols. No native body/caller and no settled emitted or inline Mac identity for FS_Rename were established. Linux text alone is not binary authority; left unchecked rather than claiming an absent function equal."
+  },
+  "linux:universal/com_files.cpp:223:FS_ReplaceSeparators": {
+    "status": "fixed",
+    "evidence": "Hand-compared inline Mac FS_BuildOSPath_Internal 0x332d9-0x33317 and Windows 0x421bf0-0x421c28: restored only slash/backslash collapse under COD2_X64, preserving colons; Mac host output remains slash. Compiled and reviewed; not exercised."
+  },
+  "mac:0x0003277e": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x3277e-0x3278d: sets fs_loadStack to zero; native matches."
+  },
+  "mac:0x000370be": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x370be-0x37265: shutdown/feed/reference reset, main/StringEd/language/restriction startup, selected default validation, saved-directory recovery and recursive restart/error, safe-mode config execution and last-valid path copies match. The previously integrated fs_defaultConfigName correction is retained unchanged."
+  },
+  "linux:universal/com_files.cpp:1691:FS_ReturnPath": {
+    "status": "equal",
+    "evidence": "Hand-compared inline Mac FS_ListFilteredFiles 0x33c0a-0x33c4e and 0x33c5e-0x33cac: separator count, last-separator offset and trailing-separator depth decrement match native depth helpers. Native omits the temporary path copy whose contents are unused by the caller."
+  },
+  "mac:0x00033130": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x33130-0x331f1 directly against the attributed native body: strips leading separators, refuses .. and ::, removes single-dot segments, collapses slash/backslash, NUL-terminates and returns the same boolean. Size argument is unused in retail and native."
+  },
+  "mac:0x00032e8e": {
+    "status": "intentional",
+    "evidence": "Hand-compared Mac 0x32e8e-0x330d3: streamed state toggle, origin mapping, ZIP reset/relative/end/absolute selection and stdio forwarding match. Retained native Apple scratch-buffer discard with nonpositive-skip rejection and full-consumption/error checking. Retail 0x32f63 passes NULL to unzReadCurrentFile; 0x27037 assigns that output and stored-member 0x2708d-0x27097 writes through it, so no valid discard-storage contract exists. Native bounded 4096-byte calls replace that invalid write; one-call cursor effects and retail nonzero partial/error truthiness are not claimed equivalent. Excluded unzip backend was read only to establish this boundary, not reconstructed."
+  },
+  "linux:universal/com_files.cpp:1345:FS_SeekInternal": {
+    "status": "intentional",
+    "evidence": "Linux implementation name maps to audited Mac FS_Seek 0x32e8e-0x330d3 and native FS_Seek. Origin/reset arithmetic and stdio mapping were hand-compared. Retains the defined native scratch-buffer/full-consumption/nonpositive-skip contract in place of retail NULL discard output; retail 0x27097 can write through NULL, so no byte/cursor equivalence is claimed for that backend boundary."
+  },
+  "linux:universal/com_files.cpp:1192:FS_SetWritable": {
+    "status": "unchecked",
+    "evidence": "Read the assigned Linux definition and searched native sources and Mac symbols. No native body/caller and no settled emitted or inline Mac identity for FS_SetWritable were established. Linux text alone is not binary authority; left unchecked rather than claiming an absent function equal."
+  },
+  "linux:universal/com_files.cpp:707:FS_ShiftedStrStr": {
+    "status": "unchecked",
+    "evidence": "Read the assigned Linux definition and searched native sources and Mac symbols. No native body/caller and no settled emitted or inline Mac identity for FS_ShiftedStrStr were established. Linux text alone is not binary authority; left unchecked rather than claiming an absent function equal."
+  },
+  "mac:0x00033398": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x33398-0x33451: language cull, loose directories, base path in eax/game directory in edx, rb probe/close, game/filename result and NULL fallback match the existing COD2_X64 branch."
+  },
+  "mac:0x00032be8": {
+    "status": "intentional",
+    "evidence": "Hand-compared Mac 0x32be8-0x32ce3: StringEd shutdown, fileSize-gated close of handles 1..73, pack/archive/build-buffer/directory/search frees, global clear and five command removals match. Native dedicated builds omit SND_StopSounds because the dedicated target has no sound backend; client retains retail flag 8. Typed allocations replace retail offsets."
+  },
+  "linux:universal/com_files.cpp:2496:FS_ShutdownSearchPaths": {
+    "status": "equal",
+    "evidence": "Hand-compared inline Mac FS_Shutdown 0x32c3b-0x32c97: preserve next link, close/free archive build-buffer/pack, optional directory, then search node. Native typed loop has the same order."
+  },
+  "mac:0x000327c2": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x327c2-0x3280d: free each present server name, clear each pointer and reset count; native matches."
+  },
+  "mac:0x0003280e": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x3280e-0x32859: free each present referenced name, clear each pointer and reset count; native matches."
+  },
+  "mac:0x0003410c": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x3410c-0x342a1 including inline path comparator: typed temporary pointer array, stable insertion order for equal paths, signed-byte case/slash/colon comparisons, shifts, pointer-width copy and free match."
+  },
+  "mac:0x0003691e": {
+    "status": "intentional",
+    "evidence": "Hand-compared Mac 0x3691e-0x370bd: old-assets/raw directory order, all language IDs 14..0 then nonlocalized, game/basegame/mod conditions, command/display/dvar/report tail match. Existing native writable-home mount is retained even when basepath is empty, and dedicated builds omit CD-key/sound dependencies. Existing optional CoD2x IWD selection, movie directory and dirty-policy hooks are retained as the native extension; these are not retail-equivalence claims."
+  },
+  "mac:0x00035fbc": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x35fbc-0x3603d: access flag, pure-extension disk-first attempt, -1/-2 fallback, nonzero-handle close and boolean result match."
+  },
+  "mac:0x00032400": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x32400-0x3243b: nonlocalized paths always allowed, ignored localized paths rejected, otherwise exact current-language equality; native matches."
+  },
+  "mac:0x00032dd4": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x32dd4-0x32e8d: zero handle/failure returns zero, write loop allows one zero return then fails, -1 failure, byte progression, sync flush and original successful length match."
+  },
+  "mac:0x0003631c": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x3631c-0x36469: open failure print, inline write/retry/failure result, close, exact size comparison and removal of incomplete nonempty qpath match. Open establishes handleSync=0; native therefore has the same reachable flush behavior."
+  },
+  "mac:0x00032a8a": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x32a8a-0x32b05: ZIP current uncompressed size and stdio ftell/end/ftell/restore order match. Native reads the typed unzip field rather than retail offset 0x44."
+  },
+  "linux:universal/com_files.h:154:FileWrapper_GetFileSize": {
+    "status": "equal",
+    "evidence": "Hand-compared inlined Mac FS_filelength 0x32abc-0x32b04: save ftell, seek end, get size, restore original position, return size. Native stdio sequence matches."
+  },
+  "linux:universal/com_files.h:115:FileWrapper_Open": {
+    "status": "intentional",
+    "evidence": "Linux-only inline abstraction is replaced by engine FS_FileOpen at Mac 0x373ec and native com_fileaccess.c, both direct fopen forwarding. Native stdio uses NULL failure; the Linux reconstruction sentinel-(FILE*)-1 check has no emitted Mac identity and is not imported. Engine wrapper itself is audited separately; upstream stdio is outside scope."
+  },
+  "linux:universal/com_files.h:134:FileWrapper_Seek": {
+    "status": "intentional",
+    "evidence": "Linux-only inline switch is replaced by engine FS_FileSeek at Mac 0x37400 and native com_fileaccess.c, both direct fseek forwarding; FS_Seek separately maps engine origins to stdio constants. Valid native stdio modes are preserved; the Linux wrapper default-invalid-origin return is not an asserted Mac behavior."
+  },
+  "mac:0x00032a04": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x32a04-0x32a3b with decoded gfx_driver, %sbsp and d3dbsp literals: nonempty driver formats the driver prefix, otherwise returns the default extension via va. Native matches."
+  },
+  "linux:universal/com_files.cpp:2242:IwdFileLanguage": {
+    "status": "equal",
+    "evidence": "Hand-compared inlined Mac iwdsort 0x344f6-0x3470b and IWD addition 0x348db-0x34926/0x34b7c-0x34c16: alternating 64-byte slots, short-name empty result, zero fill, offset 10 and 54-letter cap match native language extraction for supported ASCII language names. Both call sites and english priority were inspected."
+  },
+  "mac:0x00034412": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x34412-0x3470b: only two space-prefixed localized names trigger alternating language extraction and english-first ordering; other/tied names use the same signed case-folded slash/colon comparator. Native matches supported ASCII language names."
+  },
+  "mac:0x00046b3a": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x46b3a-0x46ba7: path/fullpath imported callbacks and dir/fdir/touchFile local callbacks are registered under the same five names and order."
+  },
+  "mac:0x00047b14": {
+    "status": "fixed",
+    "evidence": "Hand-compared Mac 0x47b14-0x47e77: restored case-insensitive _svr_ exclusion at 0x47bae-0x47be8 and human-readable wrong-checksum suffix/newline at 0x47cda/0x47cf4. Native uses a folded scan instead of introducing retail unbounded strcpy storage. Stock exclusion, checksum search, empty-name gate, existing .iwd download pairs and checksum-qualified collision naming match. Compiled and reviewed; not exercised."
+  },
+  "linux:universal/com_files_mp.cpp:442:FS_Dir_f": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac symbol 0x46820-0x4690b (owned by qcommon/files ledger): argc 2/3 gate, optional empty extension, heading strings, list behavior 0/allocation 10, print order and free match the native body. Assigned Linux alias is now tied to that emitted identity."
+  },
+  "mac:0x000473bc": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x473bc-0x4746f: case-insensitive maps/mp/ prefix, trailing bsp test and seven-character extension removal, memcpy/NUL and percent-to-underscore loop match for the caller map-name contract; no added short-name/storage behavior is claimed."
+  },
+  "mac:0x00047470": {
+    "status": "fixed",
+    "evidence": "Hand-compared Mac 0x47470-0x47b13: home/base/CD list merge, dedup and dot filtering, IWD presence searches, description read/close and cap/free order match. Restored NUL-inclusive name and description lengths at 0x47785/0x47861, and decoded inline fallback Call of Duty 2 Multiplayer at 0x47803-0x47848. Native previously overwrote both string separators and had a truncated title. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00046c46": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x46c46-0x46cb3: clears 8192-byte result, skips nonpack/localized nodes, appends signed checksum plus space, returns static buffer; native matches."
+  },
+  "mac:0x00046cb4": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x46cb4-0x46d35: clears result, skips nonpack/localized nodes, conditionally inserts spaces and appends basename with 8192-byte bound; native matches."
+  },
+  "mac:0x00046d36": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x46d36-0x46da3: same nonlocalized-pack filtering as loaded checksums, pure_checksum field, signed number plus space and 8192-byte append bound match."
+  },
+  "linux:universal/com_files_mp.cpp:480:FS_NewDir_f": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac symbol 0x4690c-0x46a0d (qcommon/files ledger): argc gate/usage, filter and searchpath arguments, behavior FS_LIST_PURE_ONLY=0, sort, converted names, count and freeing match. The prior ABI/behavior correction in this existing native body is retained unchanged."
+  },
+  "mac:0x0004706a": {
+    "status": "fixed",
+    "evidence": "Hand-compared Mac 0x4706a-0x472b1: clamp both lists to 1024, allocate names, order-insensitive checksum/name comparison, free unchanged names, replace globals and reset fake checksum match with pointer-width name copies. Restored exact iwd sum/name mismatch at 0x4710f and Connected to a pure server newline at 0x47181. Existing dedicated sound-backend omission is retained. Compiled and reviewed; not exercised."
+  },
+  "linux:universal/com_files_mp.cpp:197:FS_Read2": {
+    "status": "intentional",
+    "evidence": "Assigned Linux-only streamed-read wrapper has no emitted Mac/native function or current native caller. Native Mac platform replaces stream thread operations with synchronous Sys_StreamedRead -> FS_Read and no-op begin/end in src/Mac/Main/mac_common.c; retained that concrete platform boundary, without claiming an absent Mac body equal."
+  },
+  "mac:0x00046da4": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x46da4-0x46e2f: includes referenced packs or packs whose game directory does not start main, appends signed checksum plus space with 8192-byte bound; native matches."
+  },
+  "mac:0x00046e30": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x46e30-0x46f23: same reference/main-prefix filter, optional space separator, game/name composition with slash and 8192-byte bound match."
+  },
+  "mac:0x00046f24": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x46f24-0x47069: constructs @-space prefix, starts XOR with checksum feed, includes only nonlocalized referenced packs, XORs/counts them, appends optional fake checksum and count XOR result. Native explicit prefix initialization safely matches the retail static-buffer writes."
+  },
+  "linux:universal/com_files_mp.cpp:657:FS_RemoveCommands": {
+    "status": "equal",
+    "evidence": "Hand-compared inline Mac FS_Shutdown 0x32ca1-0x32ce3: removes path, fullpath, dir, fdir and touchFile in order; native FS_Shutdown matches. No independent remove-commands body is needed; Mac includes fullpath beyond the Linux reconstruction list."
+  },
+  "mac:0x00046426": {
+    "status": "fixed",
+    "evidence": "Exact-symbol disassembly of Mac 0x46426-0x466bf confirms the failed distinct-basepath attempt zeroes handle at 0x46685, then recomputes the table slot at 0x4655e before CD fallback. Restored that deterministic behavior using defined reserved fsh[0], including zero result even if CD open succeeds after that branch. Home/base/CD order, path stripping, logs, FILE/sync writes and length return were compared. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00046304": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x46304-0x46425: build home/filename path and strip trailing separator, handle allocation/ZIP clear, debug and path creation, wb open, name/sync writes and zero/success result match native full-width entries."
+  },
+  "linux:universal/com_files_mp.cpp:21:FS_SV_FileExists": {
+    "status": "equal",
+    "evidence": "Hand-compared the inline Mac home/filename/rb probe in FS_CompareIwds 0x47c64-0x47cda and 0x47d79-0x47def: build path, strip final separator, open/close and existence branch match native. No standalone emitted symbol is asserted."
+  },
+  "mac:0x000466c0": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x466c0-0x467b9: home-based from/to path construction, stripping both separators, debug, rename success and copy/remove fallback match."
+  },
+  "linux:universal/com_files_mp.cpp:958:FS_ServerSetReferencedIwds": {
+    "status": "equal",
+    "evidence": "Linux name maps to audited Mac FS_PureServerSetReferencedIwds 0x472b2-0x473bb. Hand-compared tokenize/clamp, clear old names, checksum/name loops, NULL/empty-name mismatch handling and count assignment. Existing native pointer-width storage and exact iwd sum/name mismatch correction are retained unchanged."
+  },
+  "mac:0x00046ba8": {
+    "status": "fixed",
+    "evidence": "Hand-compared Mac 0x46ba8-0x46c45: enabled gate, set true, shutdown, active-path checksum validation and 0xb1f595f5 constant match. Restored demo-mode diagnostic at 0x46bd2 and FS_Startup(demomain) at 0x46bea; native had restarted main with a different pure-client message. Compiled and reviewed; not exercised."
+  },
+  "mac:0x000467ba": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x467ba-0x4681f: strlen, empty result, low-byte modular shift per character, NUL and static buffer result match."
+  },
+  "linux:universal/com_files_mp.cpp:512:FS_TouchFile_f": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac symbol 0x46a0e-0x46a41 (qcommon/files ledger): exactly two arguments, exact Usage diagnostic otherwise, and touch Cmd_Argv(1) on success match the native body."
+  },
+  "mac:0x00046a42": {
+    "status": "intentional",
+    "evidence": "Hand-compared stock branch with Mac 0x46a42-0x46b39: iw_00..24 comparison, localized_ prefix path, language suffix lowercase and _iw00..24 search match. Existing CoD2x builds delegate to Cod2x_IwdStock/COD2X_REVISION, whose version policy intentionally expands stock archive recognition; retained native extension."
+  },
+  "linux:universal/com_files_mp.cpp:560:FS_svrIwd": {
+    "status": "fixed",
+    "evidence": "Hand-compared inline Mac FS_CompareIwds 0x47bae-0x47be8: lowercase name then search _svr_. Restored this missing exclusion in native with a case-folded scan, avoiding a newly introduced unbounded temporary copy while matching substring semantics. Compiled and reviewed; not exercised."
+  },
+  "linux:universal/com_files_mp.cpp:243:Sys_ConcatenateFileLists": {
+    "status": "equal",
+    "evidence": "Hand-compared inline Mac FS_GetModList 0x474fe-0x47601: counts/allocates combined NULL-terminated pointer storage, copies home/base/CD lists in order, retains strings and frees only old arrays. Native uses sizeof(pointer), matching native-width ownership."
+  },
+  "linux:universal/com_files_mp.cpp:228:Sys_CountFileList": {
+    "status": "equal",
+    "evidence": "Hand-compared inline Mac FS_GetModList 0x47506-0x47560 and 0x4760f-0x47631: NULL/empty result zero, count pointers until terminator. Native counting loops match."
+  },
+  "mac:0x000373f6": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x373f6 engine wrapper tail forwarding to fclose against src/PC/qcommon/com_fileaccess.c: arguments and return are forwarded directly using native stdio types. Engine wrapper is in scope; upstream stdio implementation is outside scope. FS_FileRead entry was re-disassembled by exact symbol after full-binary prologue misalignment."
+  },
+  "mac:0x000373ec": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x373ec engine wrapper tail forwarding to fopen against src/PC/qcommon/com_fileaccess.c: arguments and return are forwarded directly using native stdio types. Engine wrapper is in scope; upstream stdio implementation is outside scope. FS_FileRead entry was re-disassembled by exact symbol after full-binary prologue misalignment."
+  },
+  "mac:0x000373d8": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x373d8 engine wrapper tail forwarding to fread against src/PC/qcommon/com_fileaccess.c: arguments and return are forwarded directly using native stdio types. Engine wrapper is in scope; upstream stdio implementation is outside scope. FS_FileRead entry was re-disassembled by exact symbol after full-binary prologue misalignment."
+  },
+  "mac:0x00037400": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x37400 engine wrapper tail forwarding to fseek against src/PC/qcommon/com_fileaccess.c: arguments and return are forwarded directly using native stdio types. Engine wrapper is in scope; upstream stdio implementation is outside scope. FS_FileRead entry was re-disassembled by exact symbol after full-binary prologue misalignment."
+  },
+  "mac:0x000373e2": {
+    "status": "equal",
+    "evidence": "Compared Mac 0x373e2 engine wrapper tail forwarding to fwrite against src/PC/qcommon/com_fileaccess.c: arguments and return are forwarded directly using native stdio types. Engine wrapper is in scope; upstream stdio implementation is outside scope. FS_FileRead entry was re-disassembled by exact symbol after full-binary prologue misalignment."
   }
 }
