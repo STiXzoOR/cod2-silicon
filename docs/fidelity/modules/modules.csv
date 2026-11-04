@@ -120,7 +120,7 @@ client/cl_console_mp,48,0,0,0,48
 client/cl_input,85,78,3,4,0
 client/cl_keys_mp,25,20,3,2,0
 client/cl_main_mp,96,0,0,0,96
-client/cl_main_pc_mp,20,0,0,0,20
+client/cl_main_pc_mp,20,14,3,3,0
 client/cl_net_chan_mp,6,4,1,1,0
 client/cl_parse_mp,6,0,5,1,0
 client/cl_scrn_mp,9,7,1,1,0
