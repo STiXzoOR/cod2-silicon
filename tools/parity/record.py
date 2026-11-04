@@ -105,6 +105,10 @@ def main():
     out.mkdir(parents=True, exist_ok=False)
     home = out / 'home'
     home.mkdir()
+    # Map commands require a selected profile, including in dedicated mode.
+    profile = home / 'main' / 'players' / 'default'
+    profile.mkdir(parents=True)
+    (profile.parent / 'active.txt').write_text('default\n')
     if bootstrap is not None:
         for member, script in bootstrap:
             target = home / 'main' / member
