@@ -338,7 +338,7 @@ void CG_Weapons_SetToDefault(int weaponNum, DObjModel_s *dobjModels)
     CG_SetWeaponDefToDefaultWeapon(weaponNum);
     weapDef = (WeaponDef *)BG_GetWeaponDef(weaponNum);
 #if defined(COD2_X64)
-    Com_Printf("WARNING: gun and/or hand model file for weapon [%s] could not be found, switching to default weapon.\n\n",
+    Com_Printf("WARNING: gun and/or hand model file for weapon [%s] could not be found, switching to default weapon.\n",
                weapDef->szDisplayName);
 #else
     Com_Printf("WARNING: gun and/or hand model file for weapon [%s] could not be found\n",
