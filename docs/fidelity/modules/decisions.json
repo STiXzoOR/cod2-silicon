@@ -11402,5 +11402,301 @@
   "mac:0x000373e2": {
     "status": "equal",
     "evidence": "Compared Mac 0x373e2 engine wrapper tail forwarding to fwrite against src/PC/qcommon/com_fileaccess.c: arguments and return are forwarded directly using native stdio types. Engine wrapper is in scope; upstream stdio implementation is outside scope. FS_FileRead entry was re-disassembled by exact symbol after full-binary prologue misalignment."
+  },
+  "mac:0x00037f26": {
+    "status": "fixed",
+    "evidence": "Mac 0x37f26, especially 0x37fee: restored the missing 0x15 initialization-error marker; compared load-stack guard, 160/1/512 registration with 0x1021 flags, 80 MB minimum, calloc-backed hunk initialization and meminfo registration. Existing COD2_CODX fixed 512 MB policy and native OOM source location retained intentionally. Compiled and reviewed; failure not exercised."
+  },
+  "mac:0x00037506": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x37506-0x375d2: total/permanent/temp print order, conditional temporary lines, permanent sum and literal strings match; triage and constant checker also run."
+  },
+  "mac:0x000375d2": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x375d2-0x37658: 64-int stride, low permanent/4 end, the original high loop bounds ((total-high permanent)/4 through high permanent/4), sum and elapsed-time print match. Preserved the unusual high bound."
+  },
+  "mac:0x00038056": {
+    "status": "intentional",
+    "evidence": "Mac 0x38056-0x380d4 allocates strlen+1, clears exactly that storage and strcpy-copies, as native does; native reports its own file/line on OOM instead of the historical build path and line 220. It remains an ordinary malloc block, including when guard-heap Z allocations are enabled; the existing diagnostics fixture exercised CopyString/free."
+  },
+  "mac:0x000377d2": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x377d2-0x37828: only type 1 enumerates; visits all 1024 buckets (0x477f20 through 0x478f20), follows next links, calls callback only for file-data type 4 with data and inData; includeOverride is unused."
+  },
+  "linux:universal/com_memory.cpp:364:DB_EnumXAssetsFor": {
+    "status": "equal",
+    "evidence": "Linux-only helper identity is the inline chain loop at Mac 0x377f3-0x3781e in DB_EnumXAssets: type 4 test and callback(data,inData), then next link. Compared with the native inline bucket loop; no standalone Mac body claimed."
+  },
+  "mac:0x0003774a": {
+    "status": "intentional",
+    "evidence": "Mac 0x3774a-0x37776 requests 9 bytes and writes data/next/type at offsets 0/4/8. Native requests offsetof(fileData_t,name)=17 and uses native pointer-width data/next fields at 0/8 with type at 16; same prepend order. This existing LP64 storage adaptation is required and retained."
+  },
+  "mac:0x00037844": {
+    "status": "fixed",
+    "evidence": "Mac 0x37844: restored the missing 0x15 allocation-error marker. Hand-compared high permanent aligned after adding size using alignment-1; high temp reset to permanent; low-temp capacity test; zero exactly requested bytes, including signed MB diagnostic division. Compiled and reviewed; overflow-error branch not exercised."
+  },
+  "mac:0x00038358": {
+    "status": "fixed",
+    "evidence": "Mac 0x38358: restored the missing 0x15 allocation-error marker. Hand-compared 32-byte relative high alignment, permanent/temp update, low-temp capacity test and zero exactly requested bytes; optional native hunk-canary mode intentionally reserves extra storage, including signed MB diagnostic division. Compiled and reviewed; overflow-error branch not exercised. Existing macOS diagnostics exercised the native canary allocation and repair."
+  },
+  "mac:0x00037a70": {
+    "status": "fixed",
+    "evidence": "Mac 0x37a70: restored the missing 0x15 allocation-error marker. Hand-compared align low permanent before adding size using alignment-1; permanent/temp update, high-temp capacity test and zero requested bytes, including signed MB diagnostic division. Compiled and reviewed; overflow-error branch not exercised."
+  },
+  "mac:0x000382a2": {
+    "status": "fixed",
+    "evidence": "Mac 0x382a2: restored the missing 0x15 allocation-error marker. Hand-compared 32-byte relative low alignment before adding size, permanent/temp update, high-temp capacity test and zero requested bytes, including signed MB diagnostic division. Compiled and reviewed; overflow-error branch not exercised."
+  },
+  "mac:0x00037904": {
+    "status": "fixed",
+    "evidence": "Mac 0x37904: restored the missing 0x15 allocation-error marker. Hand-compared 32-byte relative high alignment, permanent/temp update and low-temp capacity test, without a payload clear, including signed MB diagnostic division. Compiled and reviewed; overflow-error branch not exercised."
+  },
+  "mac:0x000379a8": {
+    "status": "fixed",
+    "evidence": "Mac 0x379a8: restored the missing 0x15 allocation-error marker. Hand-compared 16-byte relative high-temp alignment, low-temp capacity test and downward return address, without clearing the payload, including signed MB diagnostic division. Compiled and reviewed; overflow-error branch not exercised."
+  },
+  "mac:0x00038192": {
+    "status": "fixed",
+    "evidence": "Mac 0x38192-0x382a2: restored missing 0x15 error marker. Hand-compared pre-hunk zeroed malloc fallback, 16-byte header/alignment, magic 0x89537892 and rollback size including alignment padding; only the first 8 header bytes are written. Backing is calloc-zeroed on first hunk allocation and recycled storage is preserved; no uninitialized native storage introduced. Compiled and reviewed; overflow error not exercised."
+  },
+  "mac:0x00037ec8": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x37ec8-0x37efa: clears both permanent/temp pairs then invokes Hunk_ClearData, without clearing payload backing."
+  },
+  "mac:0x00037da0": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x37da0-0x37ec8 with native Hunk_ClearData/Hunk_ClearFileData: free gap is [base+low permanent,base+total-high permanent); visits 1024 hash chains and com_hunkData, unlinks records inside the gap before type 3/4/5/6 cleanup; preserves records outside it."
+  },
+  "linux:universal/com_memory.cpp:308:Hunk_ClearDataFor": {
+    "status": "equal",
+    "evidence": "Linux helper appears inline twice in Mac Hunk_ClearData 0x37dd5-0x37e0a and 0x37e1c-0x37e4d, with cleanup branches at 0x37e62-0x37ec3. Compared native Hunk_ClearFileData half-open record-address range, unlink-before-callback sequence and type 3/4/5/6 dispatch."
+  },
+  "linux:universal/com_memory.cpp:412:Hunk_ClearHigh": {
+    "status": "equal",
+    "evidence": "Linux helper has the same contract as Mac Hunk_ClearToMark 0x37f10-0x37f26 and native Hunk_ClearToMark: assign high temp then high permanent from mark and clear freed registration records. No distinct Mac symbol claimed."
+  },
+  "linux:universal/com_memory.cpp:423:Hunk_ClearLow": {
+    "status": "equal",
+    "evidence": "Linux helper has the same contract as Mac Hunk_ClearToMarkLow 0x37efa-0x37f10 and native Hunk_ClearToMarkLow: assign low temp then low permanent from mark and clear freed registration records. No distinct Mac symbol claimed."
+  },
+  "mac:0x00037bda": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x37bda-0x37bf2: when backing exists, copy low permanent into low temp; otherwise no operation."
+  },
+  "linux:universal/com_memory.cpp:497:Hunk_ClearTempMemoryHighInternal": {
+    "status": "equal",
+    "evidence": "Linux helper is Mac Hunk_ClearTempMemoryHigh 0x37a60-0x37a70 under a different name: unconditional high temp=high permanent; compared native body in com_memory.c."
+  },
+  "linux:universal/com_memory.cpp:615:Hunk_ClearTempMemoryInternal": {
+    "status": "equal",
+    "evidence": "Linux helper is the low-temp reset exported by Mac as Hunk_ClearTempMemory 0x37bda-0x37bf2; compared backing-null guard and low temp=low permanent in native."
+  },
+  "mac:0x00037f10": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x37f10-0x37f26: high temp and permanent set to mark, then Hunk_ClearData tail call."
+  },
+  "mac:0x00037efa": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x37efa-0x37f10: low temp and permanent set to mark, then Hunk_ClearData tail call."
+  },
+  "mac:0x00037b2e": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x37b2e-0x37b3e: copies low temp to low permanent without clearing storage."
+  },
+  "mac:0x000376b8": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x376b8-0x376dc: half-open address range [s_hunkData,s_hunkData+s_hunkTotal); native uses pointer-width addresses."
+  },
+  "mac:0x00037658": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x37658-0x376b8: FS_HashFileName(name,1024), follow one bucket, compare zero-extended type against int argument and case-insensitive name via stricmp, return data for first match or NULL."
+  },
+  "linux:universal/com_memory.cpp:225:Hunk_FindDataForFileInternal": {
+    "status": "equal",
+    "evidence": "Linux helper is the inline search at Mac 0x37677-0x376b7 in Hunk_FindDataForFile. Compared native Hunk_FindFileData type test, stricmp, next link and first-data/NULL return; no standalone Mac body claimed."
+  },
+  "mac:0x00037c9c": {
+    "status": "intentional",
+    "evidence": "Mac 0x37c9c-0x37cf8 frees a pre-hunk malloc block, otherwise checks header at buf-16, writes 0x89537893 and subtracts stored rollback size without a top-block check. Native keeps that hunk behavior and routes pre-hunk freeing through Z_FreeInternal so optional mmap guard blocks are released by the matching backend; ordinary blocks still use free."
+  },
+  "linux:universal/com_memory.cpp:418:Hunk_GetLowPermanent": {
+    "status": "unchecked",
+    "evidence": "Linux-only getter has no verified Mac body or inline caller; Mac contains only an absolute zero .eh name for Hunk_SetMarkLow, which is not code identity. Native has no independent getter under this name."
+  },
+  "mac:0x00037bf2": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x37bf2-0x37c08: returns old low permanent and replaces it with low temp."
+  },
+  "linux:universal/com_memory.cpp:636:Hunk_HideTempMemoryHigh": {
+    "status": "unchecked",
+    "evidence": "Mac has only an absolute-zero .eh symbol, no code body; no verified inline caller tying high permanent/temp save-and-replace to this Linux helper. Native has no corresponding named body."
+  },
+  "mac:0x00037776": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x37776-0x377d2: hash size 1024, zero-extended type and stricmp checks, replace first matched data pointer, leave chain intact."
+  },
+  "mac:0x00037b3e": {
+    "status": "fixed",
+    "evidence": "Mac 0x37b3e: restored the missing 0x15 allocation-error marker. Hand-compared 32-byte relative low-permanent alignment, replacement low-temp end and high-temp capacity test, without clearing the payload, including signed MB diagnostic division. Compiled and reviewed; overflow-error branch not exercised."
+  },
+  "mac:0x000376dc": {
+    "status": "intentional",
+    "evidence": "Mac 0x376dc-0x3774a requests strlen(name)+1+9 and writes data/next/type/name at 0/4/8/9; compared hash=1024, strcpy and prepend order. Native retains pointer-width header offsets 0/8/16/17 and allocates strlen+1+offsetof(name), avoiding an 8-byte LP64 underallocation."
+  },
+  "mac:0x00037828": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x37828-0x37834: returns high permanent unchanged."
+  },
+  "mac:0x00037c08": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x37c08-0x37c16: restores only low permanent from mark."
+  },
+  "linux:universal/com_memory.cpp:646:Hunk_ShowTempMemoryHigh": {
+    "status": "unchecked",
+    "evidence": "Mac has only an absolute-zero .eh symbol, no code body; no verified inline caller tying high permanent restoration to this Linux helper. Native has no corresponding named body."
+  },
+  "linux:universal/com_memory.cpp:215:Hunk_Shutdown": {
+    "status": "unchecked",
+    "evidence": "Linux-only body has no Mac code symbol and no verified Mac inline caller, and native has no implementation under that name. Cannot infer whether freeing s_origHunkData and resetting all state is part of the Mac runtime contract."
+  },
+  "mac:0x00037834": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x37834-0x37844: returns low permanent plus high permanent, excluding temporary use."
+  },
+  "mac:0x00037c26": {
+    "status": "equal",
+    "evidence": "Ledger name resolves to Mac destructor __ZN10LargeLocalD1Ev at 0x37c26-0x37c36, not the constructor. Compared native ZN10LargeLocalD1Ev restoring g_largeLocalPos from the object marker."
+  },
+  "linux:universal/com_memory.cpp:651:LargeLocalBegin": {
+    "status": "equal",
+    "evidence": "Linux helper appears inline in Mac constructor 0x37c39-0x37c54: save current position, advance by (size+3)&~3 and store saved marker. Compared native LargeLocal_LargeLocal."
+  },
+  "linux:universal/com_memory.cpp:662:LargeLocalEnd": {
+    "status": "equal",
+    "evidence": "Linux helper appears inline in Mac destructor 0x37c29-0x37c33: restore global position from saved marker. Compared native ZN10LargeLocalD1Ev."
+  },
+  "linux:universal/com_memory.cpp:667:LargeLocalGetBuf": {
+    "status": "equal",
+    "evidence": "Linux helper appears inline in Mac GetBuf 0x37c8f-0x37c99: buffer base plus saved position. Compared native LargeLocal_GetBuf; Mac BSS spans 0x377f00-0x477f00, matching native patch-1.3 1 MiB buffer."
+  },
+  "mac:0x00037c16": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x37c16-0x37c26: sets global large-local position to zero; payload is untouched."
+  },
+  "mac:0x00037c8c": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac __ZN10LargeLocal6GetBufEv 0x37c8c-0x37c9c: returns g_largeLocalBuf+object marker. Native patch-1.3 buffer is 1 MiB, matching Mac BSS 0x377f00-0x477f00; existing storage fixture exercised full capacity."
+  },
+  "mac:0x00037c36": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac __ZN10LargeLocalC1Ei 0x37c36-0x37c56: saves old position into object and increments by size rounded to four bytes; no payload clear or capacity check. Native matches."
+  },
+  "mac:0x000380d4": {
+    "status": "intentional",
+    "evidence": "Hand-compared Mac 0x380d4-0x38192: reuse when existing strlen>=new strlen, otherwise free then allocate strlen+1, zero, publish and strcpy. Native preserves current file/line OOM diagnostic rather than historical build path and line 220; ordinary malloc/free lifetime retained."
+  },
+  "mac:0x0003740c": {
+    "status": "intentional",
+    "evidence": "Mac 0x3740c-0x37416 is a direct free wrapper. Native default is identical; optional COD2_GUARDHEAP recognizes native mmap/VirtualAlloc guard blocks and releases their recorded base/length, while ordinary malloc blocks still use free. Existing macOS diagnostics exercised both allocation classes."
+  },
+  "linux:universal/com_memory.cpp:31:Z_FreeRaw": {
+    "status": "unchecked",
+    "evidence": "Linux explicitly labels this unreferenced helper and its name unknown. A malloc/free primitive is insufficient to prove a distinct Mac identity; no native body or verified Mac caller for this row."
+  },
+  "linux:universal/com_memory.cpp:36:Z_MallocFailed": {
+    "status": "intentional",
+    "evidence": "Linux helper is inlined OOM reporting in Mac Z_MallocGarbageInternal 0x3747c-0x37490 and Z_MallocInternal 0x37d82-0x37d96. Native reports its own source location rather than historical path and line 220; required failure calls remain, including corrected guard-heap branches."
+  },
+  "mac:0x0003745c": {
+    "status": "fixed",
+    "evidence": "Mac 0x3745c-0x37498 returns uninitialized malloc storage or calls Sys_OutOfMemErrorInternal on NULL. Normal native path already matched; optional guard-heap branch previously returned NULL directly and now reaches the same required OOM check. Native diagnostic location intentionally retained. Compiled and reviewed; failure not exercised."
+  },
+  "mac:0x00037d4c": {
+    "status": "fixed",
+    "evidence": "Mac 0x37d4c-0x37da0 clears allocated size on success and calls Sys_OutOfMemErrorInternal on NULL. Optional native guard-heap branch previously bypassed OOM reporting; it now reaches the same required failure check. Native diagnostic location retained. Compiled and reviewed; existing diagnostics exercised zeroed guarded success and freeing, not allocation failure."
+  },
+  "linux:universal/com_memory.cpp:41:Z_MallocRaw": {
+    "status": "equal",
+    "evidence": "Linux raw helper appears inline as malloc(size) in Mac 0x37463-0x37470, 0x37c5e-0x37c6b and 0x37d54-0x37d61. Compared native normal malloc path in the corresponding three exported wrappers; optional guard allocator is separately recorded on those exported rows."
+  },
+  "mac:0x00037c56": {
+    "status": "intentional",
+    "evidence": "Hand-compared Mac 0x37c56-0x37c8c: malloc(size), clear only a successful allocation, return NULL without fatal error. Native default matches; optional guard allocator changes backing/alignment to enable overrun diagnosis while preserving zeroed-success/NULL-return contract."
+  },
+  "mac:0x00037cf8": {
+    "status": "intentional",
+    "evidence": "Mac 0x37cf8-0x37d4c calls VirtualAlloc(NULL,size,0x1000,4) and reports NULL at historical source line 524. Compared Mac VirtualAlloc 0xb120-0xb13a: non-NULL address is returned; NULL address uses calloc(1,size), as native MacWin32.c does. Native own file/line diagnostic retained."
+  },
+  "linux:universal/com_memory.cpp:96:Z_VirtualCommit": {
+    "status": "unchecked",
+    "evidence": "Linux explicitly labels this unreferenced one-argument calloc helper and its name unknown. Mac Z_VirtualCommitInternal has a different two-argument existing-pointer contract, so it cannot safely serve as this row identity."
+  },
+  "mac:0x000374c4": {
+    "status": "intentional",
+    "evidence": "Mac 0x374c4-0x37506 calls VirtualAlloc(ptr,size,0x1000,4), reporting NULL at historical source line 549. Native matches the reserve/commit shim contract (Mac 0xb120 returns existing non-NULL ptr without touching storage); native own file/line failure diagnostic retained."
+  },
+  "linux:universal/com_memory.cpp:102:Z_VirtualDecommit": {
+    "status": "unchecked",
+    "evidence": "Linux explicitly labels this unreferenced memset helper and its name unknown. Mac Z_VirtualDecommitInternal calls a no-op decommit shim, so the named Linux helper cannot be assumed equivalent without a caller identity."
+  },
+  "mac:0x0003743a": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x3743a-0x3745c: VirtualFree(ptr,size,0x4000). Compared Mac VirtualFree 0xb13a-0xb166 and native MacWin32.c: only release flag 0x8000 frees, so decommit leaves contents and lifetime unchanged."
+  },
+  "mac:0x00037416": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x37416-0x3743a: VirtualFree(ptr,0,0x8000). Compared Mac VirtualFree 0xb13a-0xb166 and native MacWin32.c: NULL succeeds; release frees allocation; returns success."
+  },
+  "linux:universal/com_memory.cpp:79:Z_VirtualReserve": {
+    "status": "equal",
+    "evidence": "Linux helper calloc(1,size) is represented by Mac Z_VirtualReserveInternal 0x37498-0x374c4 calling VirtualAlloc(NULL,size,0x2000,4); inspected Mac shim 0xb120-0xb13a calloc implementation and native matching shim. No distinct helper symbol claimed."
+  },
+  "mac:0x00037498": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x37498-0x374c4: calls VirtualAlloc(NULL,size,0x2000,4), returns result without fatal check. Mac shim at 0xb120 and native MacWin32.c both calloc fresh backing; reserve already initializes storage."
+  },
+  "linux:universal/com_memory.cpp:677:~LargeLocal": {
+    "status": "equal",
+    "evidence": "Linux destructor identity verified against Mac __ZN10LargeLocalD1Ev 0x37c26-0x37c36; native ZN10LargeLocalD1Ev copies object marker back to global position. No separate extra destructor body claimed."
+  },
+  "mac:0x00037a60": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x37a60-0x37a70: unconditional hunk_high.temp=hunk_high.permanent. Native implementation lives in com_memory.c; this cross-module identity is verified by the exact Mac export."
+  },
+  "mac:0x00047f84": {
+    "status": "fixed",
+    "evidence": "Mac 0x47f84-0x4828a: restored full-suffix I_strcmp/I_stricmp after star (data pointers 0x1accd75/0x1accd79 decode to 0x2937c/0x295ee), corrected unmatched ] decision at 0x48144, single advance after a successful bracket at 0x48107-0x48117, and escaped-] range endpoint at 0x481e4. Compared every wildcard/bracket/case branch. Compiled and reviewed, not exercised."
+  },
+  "mac:0x0004828a": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x4828a-0x4832a: both paths truncate at 63 bytes, map backslash/colon to slash, terminate, then call Com_Filter with unchanged case flag."
+  },
+  "mac:0x00047e78": {
+    "status": "equal",
+    "evidence": "Restarted exact-symbol disassembly at Mac 0x47e78 (full-binary view misdecodes prologue). Hand-compared signed byte*(index+119) accumulation, maxlen/terminator limits and arithmetic shifts 10/20 XOR mix."
+  },
+  "mac:0x00047f40": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x47f40-0x47f62: memcpy(dest,src,count), unchanged argument order. Compiler inlines/builtin substitution explain triage call difference."
+  },
+  "mac:0x00047f62": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x47f62-0x47f84: memset(dest,value,count), unchanged argument order. Compiler inlines/builtin substitution explain triage call difference."
+  },
+  "mac:0x00047ed4": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x47ed4-0x47f40: time(NULL), optional localtime, leave qtime unchanged on NULL localtime, copy all nine tm fields on success and return timestamp narrowed to int; native time_t tracks host ABI."
+  },
+  "linux:universal/com_shared.cpp:17:Com_StringContains": {
+    "status": "fixed",
+    "evidence": "Linux helper is inlined in Mac Com_Filter 0x47ffa-0x4804d and 0x48254-0x4827b: scan strlen(name)-strlen(buf)+1 suffixes using the supplied full-string comparator, then advance by strlen(buf). Native prefix comparison was replaced with I_strcmp/I_stricmp. Compiled and reviewed, not exercised."
+  },
+  "mac:0x000776d0": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x776d0-0x77724: inactive dvar system retains cached value; otherwise QuitOnError bool short-circuits r_vc_compile==2, stores boolean and returns cache. Native inline refresh matches."
+  },
+  "mac:0x0007768c": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x7768c-0x776d0 and native inline helper: inactive system does not change cache; active value is QuitOnError || r_vc_compile==2, including short-circuit call order."
   }
 }
