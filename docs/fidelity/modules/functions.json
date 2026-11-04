@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 5924,
+      "unchecked": 5860,
       "intentional": 1480,
-      "equal": 1725,
-      "fixed": 328
+      "equal": 1764,
+      "fixed": 353
     },
     "scopes": {
       "unassigned": 777,
@@ -158522,8 +158522,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x43f8a-0x4418c: compared score calculation, digital-tree descent and promotion. Restored full eight-byte bucket copies, including the terminal node-0 copy at 0x44141-0x44163; native copied links only. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000448ea",
@@ -158553,8 +158553,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x448ea-0x4490e: forwards size/type to MT_AllocIndex, zero-extends its 16-bit index, returns arena + index * 8. Allocator helper corrections are recorded separately."
       },
       {
         "id": "mac:0x000445b6",
@@ -158584,8 +158584,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared all Mac branches at 0x445b6-0x448ea: size rounding/error path, head search, score-ordered root removal, splitting and counters. Restored full eight-byte root propagation (0x446dc-0x4470e) and the unclamped inline size lookup (0x445d1-0x445e9). Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000444ba",
@@ -158615,8 +158615,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x444ba-0x445b6: recursive subtree counts for size classes 0..16, separators, allocated/free totals and all five print literals. Literal bytes checked against the binary."
       },
       {
         "id": "linux:script/scr_memorytree.cpp:419:MT_Error",
@@ -158634,8 +158634,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux-named helper is inlined in Mac 0x44864-0x4488d and the other size-error blocks: MT_DumpTree, printf(function name, requested bytes), then Scr_TerminalError. Compared the equivalent MT_GetSize and MT_AllocIndex error paths and binary literal bytes."
       },
       {
         "id": "mac:0x00045162",
@@ -158665,8 +158665,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared complete Mac 0x45162-0x457ae: bitmap traversal 1..65535 and virtual free, including both inlined safe-free loops. Restored covering-node remove/reinsert at 0x45298-0x4549a and full bucket propagation. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0004490e",
@@ -158696,8 +158696,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared complete Mac 0x4490e-0x449d8: inline size rounding, allocation counters and each bitmap bit. Shared MT_GetSize now preserves the unclamped lookup at 0x44925-0x4493d. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00044af2",
@@ -158727,8 +158727,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared complete Mac 0x44af2-0x44e30: arena-offset-to-index conversion, size lookup, counters, buddy search/removal and final insertion. Restored full bucket propagation at 0x44cc0-0x44cf2 and unclamped size lookup; pointer conversion retains the native arena encoding. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00044e30",
@@ -158758,8 +158758,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared complete Mac 0x44e30-0x45162: size lookup, counters, digital-tree search, score-ordered removal and successive buddy merging. Restored full eight-byte propagation at 0x44ff4-0x45026 and unclamped lookup. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:script/scr_memorytree.cpp:108:MT_GetScore",
@@ -158777,8 +158777,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared inlined Mac 0x43fbc-0x44003 and both-child removal score blocks: 65536-node minus two byte popcounts, plus one shifted by low-byte trailing zeros and high-byte trailing zeros when low is zero. All three generated byte tables were checked exhaustively."
       },
       {
         "id": "linux:script/scr_memorytree.cpp:431:MT_GetSize",
@@ -158796,8 +158796,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared inline Mac 0x445c5-0x445f3, 0x4462f-0x44643 and 0x44864-0x448e9, plus other callers. Removed the native lower-bound clamp and byte-index wrap: zero bytes reads logBits[-1], the contiguous numBits[255] value 8. Mac uses signed division by 8 and no payload initialization. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0004429e",
@@ -158827,8 +158827,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x4429e-0x444ba, including compiler-unrolled recursion: zero node returns zero; every nonzero node contributes one plus both 16-bit child subtree counts."
       },
       {
         "id": "mac:0x0004418c",
@@ -158858,8 +158858,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x4418c-0x4429e: arena pointer, three generated tables, 17 zero heads, node-0 links, 16 power-of-two free roots and zero allocation counters. Native-only mt_size cache reset mirrors that tree state; neither implementation clears arena payload."
       },
       {
         "id": "linux:script/scr_memorytree.cpp:71:MT_InitBits",
@@ -158877,8 +158877,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared inline Mac 0x4419b-0x4423d with native three-table loops. Exhaustive scripted evaluation confirms all 256 popcount, 256 trailing-zero and 256 bit-length bytes, including the zero-input trailing-zero value 8."
       },
       {
         "id": "mac:0x00043f62",
@@ -158908,8 +158908,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x43f62-0x43f8a: resets allocation count/bucket count then returns Z_VirtualAllocInternal(0x2000). Zero-filled bitmap contract established through Mac Z_VirtualAllocInternal 0x37cf8-0x37d4c and VirtualAlloc 0xb120-0xb13a, which calls calloc(1,size) for NULL addresses; native MacWin32 shim does the same."
       },
       {
         "id": "mac:0x000449d8",
@@ -158939,8 +158939,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared complete Mac 0x449d8-0x44af2: evaluates old size before new size and returns signed oldClass >= newClass, preserving both terminal-error paths. Shared size helper now matches unclamped inline reads at 0x449f2-0x44a0a and 0x44a19-0x44a31. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:script/scr_memorytree.cpp:320:MT_RemoveHeadMemoryNode",
@@ -158958,8 +158958,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared helper inlined through Mac MT_AllocIndex 0x44662-0x44814: selects higher-scored child (left on equality), rewrites the parent link, propagates full eight-byte records down the selected branch and terminates on zero. Native propagated links only. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:script/scr_memorytree.cpp:223:MT_RemoveMemoryNode",
@@ -158977,8 +158977,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared inlined Mac MT_FreeIndex 0x44e94-0x4512f and safe-free caller: digital-tree index search, absent-node stop and higher-score child promotion. Restored complete eight-byte records and the Mac left-on-score-tie branch; native mt_size remains a matching side cache. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:script/scr_memorytree.cpp:529:MT_SafeFreeIndex",
@@ -158996,8 +158996,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared both inline loops in Mac MT_FinishForceAlloc 0x4519b-0x457a7. Native returned immediately for any covering free block; Mac removes that aligned covering block and reinserts it before returning, including bucket payload propagation. Otherwise it merges free buddies from size zero. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00043f58",
@@ -159027,8 +159027,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared exact-symbol-start otool disassembly at Mac 0x43f58-0x43f62: returns totalAllocBuckets at 0x5319a8. Full-binary otool decoded this small entry incorrectly; exact-start output confirms the load at 0x43f5b."
       }
     ],
     "script/scr_parser": [
@@ -160279,8 +160279,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared signed-byte multiply-by-31 hashing in Mac 0x42db7-0x42df5, the len>=256 path 0x42df7-0x42e1a and zero-length path 0x42e55-0x42e57. Native compute_hash_slot preserves unsigned 32-bit wrap and modulo 16383 plus one; corresponding GetString/free/restart inline copies also compared."
       },
       {
         "id": "linux:script/scr_stringlist.cpp:17:GetRefString",
@@ -160298,8 +160298,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux unsigned-id overload identified in Mac SL_ConvertToString 0x42b58-0x42b5f and reference-count functions: native uses arena base + zero-extended id * 8, with the string bytes four bytes after the record."
       },
       {
         "id": "linux:script/scr_stringlist.cpp:27:GetRefString",
@@ -160317,8 +160317,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux character-pointer overload identified in Mac SL_ConvertFromString 0x42b23-0x42b26: subtracts four bytes to recover the reference-record address; native performs the same subtraction."
       },
       {
         "id": "linux:script/scr_stringlist.cpp:1012:I_strlen",
@@ -160336,8 +160336,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared strlen operations in Mac SL_FindString 0x43030-0x4303a, SL_GetString_ 0x43563-0x4356f and formatting wrappers: repne scasb yields strlen+1 at the call sites, matching native strlen followed by +1."
       },
       {
         "id": "mac:0x00042b9a",
@@ -160367,8 +160367,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared Mac 0x42b9a-0x42bb0: locates arena + id * 8 and increments the 16-bit count at offset 2, without user-bit changes."
       },
       {
         "id": "linux:script/scr_stringlist.cpp:320:SL_AddUser",
@@ -160386,8 +160386,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Linux helper identified in Mac SL_GetStringOfLen match paths 0x4336a-0x43388 and 0x43488-0x434a9. Native now follows Mac user-bit test, byte OR and 16-bit refcount increment without the speculative free-node suppression. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:script/scr_stringlist.cpp:304:SL_AddUserInternal",
@@ -160405,8 +160405,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared inline Mac 0x4336a-0x43388 and 0x43488-0x4349a: any existing user-bit intersection suppresses the increment; otherwise OR the user byte and increment the 16-bit count. Removed native-only free-node suppression in COD2_X64. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:script/scr_stringlist.cpp:890:SL_Clear",
@@ -160424,8 +160424,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Linux helper identified in complete Mac SL_Init restart branch 0x4399c-0x43c63: clear non-user-4 strings, retry moved hash heads, mark surviving user-4 allocations and finish the allocator bitmap. Removed native-only chain bailout from the inline unlink at 0x43a93-0x43aac. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:script/scr_stringlist.cpp:93:SL_ConvertFromRefString",
@@ -160443,8 +160443,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared helper inlined in Mac SL_ConvertFromString 0x42b29-0x42b3c: subtracts arena base and performs signed division by eight with truncation toward zero. Native pointer difference and int division match valid arena records."
       },
       {
         "id": "mac:0x00042b20",
@@ -160474,8 +160474,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x42b20-0x42b42: subtract string-header width four, subtract arena base, signed divide by eight. Native preserves this order and valid-arena result."
       },
       {
         "id": "mac:0x00043840",
@@ -160505,8 +160505,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared complete Mac 0x43840-0x43914: byte-length recovery by 256-byte probes, 8192 limit, signed-byte lowercase conversion, allocation and old-reference removal. Removed native null-id guard that skipped Mac reads and forwarded an uninitialized stack buffer. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00042b4e",
@@ -160536,8 +160536,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x42b4e-0x42b6a: id zero returns NULL; nonzero id returns arena + id * 8 + 4."
       },
       {
         "id": "linux:script/scr_stringlist.cpp:947:SL_CreateCanonicalFilename",
@@ -160555,8 +160555,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Linux helper identified inline in Mac Scr_CreateCanonicalFilename 0x43e80-0x43f55. Restored signed-byte input to tolower at 0x43e97/0x43f25 and the advanced source cursor passed to the overflow error at 0x43f3d; separators/control-byte skipping and 1024-byte limit compared. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00042fb0",
@@ -160586,8 +160586,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x42fb0-0x43024: signed strlen+1 length check against 8192, signed-byte lowercase loop including NUL, then SL_FindStringOfLen; oversize returns zero."
       },
       {
         "id": "mac:0x00043024",
@@ -160617,8 +160617,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x43024-0x4304e: passes original string and strlen+1 to SL_FindStringOfLen."
       },
       {
         "id": "mac:0x00042d9a",
@@ -160648,8 +160648,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared complete Mac 0x42d9a-0x42fb0: both hash paths, head status, low-byte length, exact byte comparison, circular chain termination and move-to-head rewiring. Removed native-only iteration-limit return absent from Mac 0x42ec4-0x42f20. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:script/scr_stringlist.cpp:608:SL_FreeString",
@@ -160667,8 +160667,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Linux helper identified inline in Mac SL_RemoveRefToStringOfLen 0x42bda-0x42d5c and SL_RemoveRefToString. Compared hashing before MT_FreeIndex, head promotion, predecessor links, restart marker and free-list insertion. Removed native-only bounded-search recycle fallback absent from 0x42c6a-0x42c83. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:script/scr_stringlist.cpp:535:SL_GetLowercaseString",
@@ -160687,7 +160687,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only two-argument wrapper has no Mac symbol or native definition/call under this name. The three-argument underscore implementation is verified, but no concrete Mac inline caller was identified for this distinct wrapper; do not infer identity from the Linux body."
       },
       {
         "id": "linux:script/scr_stringlist.cpp:501:SL_GetLowercaseStringOfLen",
@@ -160705,8 +160705,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper identified inline within Mac SL_GetLowercaseString_ 0x434d7-0x43548 after strlen+1: unsigned 8192-byte limit and error literal, signed-byte lowercase loop, original user/type forwarding and zero return on oversize. Compared native underscore body and binary literal."
       },
       {
         "id": "mac:0x000434b8",
@@ -160736,8 +160736,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x434b8-0x43556: strlen+1, unsigned 8192 bound, exact error text, signed-byte lowercase loop including NUL and size/user/type forwarding."
       },
       {
         "id": "linux:script/scr_stringlist.cpp:54:SL_GetRefStringLen",
@@ -160755,8 +160755,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared helper inlined in Mac SL_GetStringLen 0x42d6c-0x42d96 and remove/lowercase paths: starts at (byteLen-1)&255, probes string bytes at increments of 256 until NUL, returns length without the terminator."
       },
       {
         "id": "mac:0x00043d06",
@@ -160786,8 +160786,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x43d06-0x43d40: original user, strlen+1 and allocation type 6 forwarded to SL_GetStringOfLen."
       },
       {
         "id": "mac:0x00043d40",
@@ -160817,8 +160817,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x43d40-0x43da0: promotes the input float to double, formats with binary-verified %g in a 128-byte buffer, then interns strlen+1 with user 0/type 14."
       },
       {
         "id": "mac:0x00043da0",
@@ -160848,8 +160848,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x43da0-0x43dfc: formats signed int with binary-verified %i in a 128-byte buffer, then interns strlen+1 with user 0/type 14."
       },
       {
         "id": "mac:0x00043dfc",
@@ -160879,8 +160879,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x43dfc-0x43e74: three unaligned float loads promoted individually to double, binary-verified (%g, %g, %g) format, then user 0/type 14. Existing native memcpy preserves unaligned-load behavior without changing component values."
       },
       {
         "id": "mac:0x00042d5c",
@@ -160910,8 +160910,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x42d5c-0x42d9a: locates record, recovers length from byteLen-1 modulo 256 and successive 256-byte NUL probes, returns length excluding NUL."
       },
       {
         "id": "mac:0x0004304e",
@@ -160941,8 +160941,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared complete Mac 0x4304e-0x434b8: hash/lookup, user ownership, move-to-head, all three allocation placements, overflow errors and record initialization. Removed native dead-node ref-add suppression, bounded-chain exits and an extra empty-slot free-head check absent from Mac 0x43217-0x43264. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00043556",
@@ -160972,8 +160972,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x43556-0x43590: original string, user and type with strlen+1 forwarded to SL_GetStringOfLen."
       },
       {
         "id": "mac:0x00043986",
@@ -161003,8 +161003,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared complete Mac 0x43986-0x43ccc: fresh 16383-entry doubly linked free list and initialized flag; restart retains user-4 strings, removes other entries with head retry, then reconstructs arena bitmap. Removed native bounded-chain bailout absent from 0x43a93-0x43aac. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:script/scr_stringlist.cpp:686:SL_RemoveAllRefToString",
@@ -161022,8 +161022,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Linux helper identified in Mac SL_Init 0x439d8-0x43aed: user-4 records become refcount 1/user 4; other records become count/user zero, recover length, then free/unlink. Removed native-only search bailout in that inline path at 0x43a93-0x43aac. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00043590",
@@ -161053,8 +161053,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared complete Mac 0x43590-0x43784: recovers full length before count decrement, then inlines the same free/unlink logic as SL_RemoveRefToStringOfLen. Native shared helper now follows the Mac unbounded predecessor search at 0x43668-0x43681. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00042bb0",
@@ -161084,8 +161084,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared complete Mac 0x42bb0-0x42d5c: wrapping 16-bit decrement, early return when nonzero, signed-byte hash, allocator free, head promotion or predecessor patch, restart marker and free-list insertion. Removed native search-limit recycle fallback absent from 0x42c6a-0x42c83. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:script/scr_stringlist.cpp:177:SL_Restart",
@@ -161103,8 +161103,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Linux helper identified in Mac SL_Init 0x4398f-0x4399c and 0x43c63: initialized flag chooses inline clear/rebuild versus fresh initialization. Removed native bounded-search bailout in the clear branch (0x43a93-0x43aac); all other branch behavior compared. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00042b42",
@@ -161134,8 +161134,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x42b42-0x42b4e: stores zero to initialized byte; native matches, including unconditional write."
       },
       {
         "id": "mac:0x00043784",
@@ -161165,8 +161165,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x43784-0x43804: iterates slots 1..16383, skips free/no-user entries, clears matching user byte, resets restart marker, removes reference and retries same slot after head movement."
       },
       {
         "id": "mac:0x00042b6a",
@@ -161196,8 +161196,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x42b6a-0x42b9a: existing user-bit intersection decrements 16-bit refcount; otherwise ORs the user byte without incrementing the count."
       },
       {
         "id": "linux:script/scr_stringlist.cpp:858:SL_TransferSystem",
@@ -161216,7 +161216,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only from/to user-bit transfer loop has no Mac symbol or native definition/call under this name. No concrete Mac inline caller has been established; the Linux reconstruction alone cannot establish Mac identity or omission."
       },
       {
         "id": "mac:0x00043ccc",
@@ -161246,8 +161246,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x43ccc-0x43d06: ignores second argument, interns original string with user 1/type 6 and strlen+1."
       },
       {
         "id": "mac:0x00043e74",
@@ -161277,8 +161277,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Compared complete Mac 0x43e74-0x43f58: slash/backslash/control normalization, lowercase bytes, 1024-byte limit and user 0/type 7 interning. Restored signed input to tolower at 0x43e97/0x43f25 and advanced source cursor in overflow error at 0x43f3d. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00043804",
@@ -161308,8 +161308,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x43804-0x43840: adds new nonzero reference before removing old nonzero reference, then stores low 16 bits of new id; self-assignment order preserved."
       },
       {
         "id": "linux:script/scr_stringlist.cpp:747:Scr_SetStringFromCharString",
@@ -161328,7 +161328,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux-only pointer/string setter has no Mac symbol or native definition/call under this name. No concrete Mac inline caller has been identified, so its distinct remove-old/intern-new semantics remain unverified."
       },
       {
         "id": "mac:0x00043914",
@@ -161358,8 +161358,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0x43914-0x43986: same slot/user removal traversal as shutdown-system specialized to user bit 1, clears that bit, resets restart marker and retries after hash-head movement."
       }
     ],
     "script/scr_tempmemory": [
@@ -161391,8 +161391,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0xba0b4-0xba0de: computes currentPos+len, calls Hunk_ReallocateTempMemoryInternal with new size, returns base+currentPos, then stores new position. No alignment or clearing is performed."
       },
       {
         "id": "mac:0x000ba0de",
@@ -161422,8 +161422,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0xba0de-0xba108: despite its name, uses the identical unaligned currentPos+len/reallocate/base+oldPos sequence as TempMalloc; native matches."
       },
       {
         "id": "mac:0x000ba108",
@@ -161453,8 +161453,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0xba108-0xba132: despite its name, uses the identical unaligned currentPos+len/reallocate/base+oldPos sequence as TempMalloc; native matches."
       },
       {
         "id": "mac:0x000ba0a4",
@@ -161484,8 +161484,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared exact-start Mac 0xba0a4-0xba0b4: writes zero to currentPos and returns; native matches."
       },
       {
         "id": "mac:0x000ba132",
@@ -161515,8 +161515,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared complete Mac 0xba132-0xba168: gets temp base at current size, forms base+currentPos, subtracts position delta from currentPos, then reallocates to that result. Native preserves both calls and pointer-delta order."
       }
     ],
     "script/scr_variable": [
