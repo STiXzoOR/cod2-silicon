@@ -302,11 +302,16 @@ static void CG_OffsetThirdPersonView(void)
         }
     }
 
+#if defined(COD2_X64)
+    if (focusAngles[0] > 45.0f)
+        focusAngles[0] = 45.0f;
+#else
     if (focusAngles[0] < 45.0f) {
 
     } else {
         focusAngles[0] = 45.0f;
     }
+#endif
 
     AngleVectors(focusAngles, forward, (vec_t *)0, (vec_t *)0);
 
@@ -381,7 +386,11 @@ static void CG_OffsetThirdPersonView(void)
             dist2d = 1.0;
         }
 
+#if defined(COD2_X64)
+        angle = (double)(float)atan2((double)dz, (double)dist2d);
+#else
         angle = atan2((double)dz, (double)dist2d);
+#endif
         ((cg_t *)cg)->refdefViewAngles[0] = (float)(angle * -57.29577951308232);
     }
 }
@@ -408,7 +417,12 @@ static void CG_CalcViewValues(void)
         cg->refdef.y = 0;
         cg->refdef.width = size + 2;
         cg->refdef.height = cg->refdef.width;
+#if defined(COD2_X64)
+        cg->refdef.fov_x = (float)(atan2((double)(float)cg->refdef.width,
+                                               (double)(float)size) * 114.59155902616465);
+#else
         cg->refdef.fov_x = (float)(atan2((double)cg->refdef.width, (double)size) * 114.591559f);
+#endif
         cg->refdef.fov_y = cg->refdef.fov_x;
 
         cg->refdef.vieworg[0] = cg->predictedPlayerState.origin[0];
@@ -597,8 +611,13 @@ static void CG_CalcViewValues(void)
 #endif
 
         viewState.ps = ps;
+#if defined(COD2_X64)
+        viewState.damageTime = cg->v_dmg_time ? cg->v_dmg_time - ps->deltaTime : 0;
+        viewState.time = cg->time - ps->deltaTime;
+#else
         viewState.damageTime = cg->v_dmg_time;
         viewState.time = cg->time;
+#endif
         viewState.v_dmg_pitch = cg->v_dmg_pitch;
         viewState.v_dmg_roll = cg->v_dmg_roll;
         viewState.xyspeed = speed;
@@ -627,14 +646,27 @@ static void CG_CalcViewValues(void)
         {
             float hbob = BG_GetHorizontalBobFactor(ps, bobCycle, speed, bobMax);
             float forward[3], right[3], up[3];
+#if defined(COD2_X64)
+            AngleVectors(cg->refdefViewAngles, NULL, right, NULL);
+            cg->refdef.vieworg[0] += hbob * right[0];
+            cg->refdef.vieworg[1] += hbob * right[1];
+            cg->refdef.vieworg[2] += hbob * right[2];
+#else
             AngleVectors(cg->refdefViewAngles, forward, right, up);
             cg->refdef.vieworg[0] += hbob * forward[0];
             cg->refdef.vieworg[1] += hbob * forward[1];
             cg->refdef.vieworg[2] += hbob * forward[2];
+#endif
         }
 
         {
+#if defined(COD2_X64)
+            float delta = (float)(cg->time - cg->landTime);
+            if (delta < 0.0f)
+                cg->landTime = cg->time - 450;
+#else
             int delta = cg->time - cg->landTime;
+#endif
             if (delta < 150) {
                 cg->refdef.vieworg[2] += (float)delta / 150.0f * cg->landChange;
             } else if (delta < 450) {
