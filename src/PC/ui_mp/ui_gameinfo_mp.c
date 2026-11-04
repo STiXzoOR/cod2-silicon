@@ -187,7 +187,11 @@ void UI_LoadArenas(void)
             sharedUiInfo.mapList[arenaIdx].levelShot = mat;
         }
 
+#if defined(COD2_X64)
+        gametypes = Info_ValueForKey(ui_arenaInfos[n], "gametype");
+#else
         gametypes = Info_ValueForKey(ui_arenaInfos[n], "type");
+#endif
         if (gametypes == NULL || *gametypes == '\0') {
 
             arenaIdx = sharedUiInfo.mapCount;
@@ -220,9 +224,17 @@ void UI_LoadArenas(void)
                             arenaIdx = sharedUiInfo.mapCount;
                             {
                                 int off = arenaIdx * 41;
+#if defined(COD2_X64)
+                                sharedUiInfo.mapList[off / 41].typeBits |= (1u << j);
+#else
                                 sharedUiInfo.mapList[off / 41].typeBits |= (1 << j);
+#endif
                             }
+#if defined(COD2_X64)
+                            /* Mac keeps scanning for other matching entries. */
+#else
                             break;
+#endif
                         }
                     }
                 }
