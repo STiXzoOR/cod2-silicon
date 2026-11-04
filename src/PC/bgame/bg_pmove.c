@@ -408,6 +408,7 @@ static float PM_CmdScale(const playerState_t *ps, const usercmd_t *cmd)
 #endif
 }
 #if defined(COD2_X64)
+extern void Com_DPrintf(const char *fmt, ...);
 extern bgs_t *bgs;
 extern WeaponDef *BG_GetWeaponDef(int weaponIndex);
 extern int BG_AnimScriptAnimation(playerState_t *ps, aistateEnum_t state, scriptAnimMoveTypes_t move, qboolean isContinue);
@@ -790,6 +791,9 @@ prone_check:
             }
         }
 
+#if defined(COD2_X64)
+        float lastProneDelta;
+#endif
         {
             float proneDelta2 = AngleDelta(ps->proneDirection, ps->viewangles[1]);
             if (proneDelta2 != 0.0f) {
@@ -839,10 +843,18 @@ prone_check:
                     proneBlocked = 1;
                 }
             }
+#if defined(COD2_X64)
+            lastProneDelta = proneDelta2;
+#endif
         }
 
         {
+#if defined(COD2_X64)
+            /* Mac 0x6c77d keeps the last delta, even after proneDirection moved. */
+            float proneDelta3 = lastProneDelta;
+#else
             float proneDelta3 = AngleDelta(ps->proneDirection, ps->viewangles[1]);
+#endif
             float yawcap = bg_prone_yawcap->current.value;
             float x;
             if (proneDelta3 > yawcap)
@@ -1296,7 +1308,11 @@ compute_target:
         return;
 
     if (pm->cmd.forwardmove != 0 || pm->cmd.rightmove != 0) {
+#if defined(COD2_X64)
+        ps->pm_flags &= ~0x800;
+#else
         ps->pm_flags &= ~0x8;
+#endif
         PM_ExitAimDownSight(ps);
     }
 
@@ -2138,6 +2154,8 @@ static void PM_REGPARM2_ABI PM_Footsteps(pmove_t *pm, pml_t *pml)
             ps->bobCycle = 0;
         scriptAnimMoveTypes_t turn = ANIM_MT_UNUSED;
         if (ci && player_turnAnims->current.enabled) {
+            if (ci->turnAnimType && ci->turnAnimEndTime)
+                Com_DPrintf("turn anim end time is %i, time is %i\n", ci->turnAnimEndTime, bgs->time);
             if (ci->legs.yawing) {
                 turn = ci->legs.yawAngle > ci->torso.yawAngle ? ANIM_MT_TURNRIGHT : ANIM_MT_TURNLEFT;
                 ci->legs.yawAngle = ci->torso.yawAngle;
@@ -2277,6 +2295,12 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
 
     pml->groundTrace = trace;
 
+#if defined(COD2_X64)
+    /* Mac keeps the first trace end at -0x30 for the start-solid retry at 0x702fb. */
+    vec3_t firstEnd;
+    PM_VectorCopy(point, firstEnd);
+#endif
+
     if (trace.allsolid) {
 
         for (i = 0; i < 26; i++) {
@@ -2323,7 +2347,11 @@ static void PM_REGPARM2_ABI PM_GroundTrace(pmove_t *pm, pml_t *pml)
 
         start[2] = ps->origin[2] - 0.001f;
 
+#if defined(COD2_X64)
+        PM_playerTrace(pm, &trace, start, pm->mins, pm->maxs, firstEnd,
+#else
         PM_playerTrace(pm, &trace, start, pm->mins, pm->maxs, point,
+#endif
                        ps->clientNum, pm->tracemask);
 
         if (trace.startsolid) {
@@ -2708,7 +2736,7 @@ static void PM_FoliageSounds(pmove_t *pm)
         maxs[2] = pm->maxs[2] * 0.9f;
         PM_playerTrace(pm, &trace, ps->origin, mins, maxs, ps->origin, ps->clientNum, 2);
         if (trace.startsolid) {
-            PM_AddEvent(ps, 0x8e);
+            PM_AddEvent(ps, 0x8b);
             ps->foliageSoundTime = pm->cmd.serverTime;
         }
     }

@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 7231,
+      "unchecked": 7144,
       "intentional": 1393,
-      "equal": 712,
-      "fixed": 121
+      "equal": 793,
+      "fixed": 127
     },
     "scopes": {
       "unassigned": 777,
@@ -56425,8 +56425,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 28 Mac bytes 0x9e71c-0x9e737 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:bgame/bg_mantle.cpp:240:Mantle_CalcEndPos",
@@ -56444,8 +56444,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "mac:0x0009e758",
@@ -56475,8 +56475,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 188 Mac bytes 0x9e758-0x9e813 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0009f6c6",
@@ -56506,8 +56506,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 1,234 Mac bytes 0x9f6c6-0x9fb97 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0009ef56",
@@ -56537,8 +56537,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 1,904 Mac bytes 0x9ef56-0x9f6c5 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0009e748",
@@ -56568,8 +56568,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 16 Mac bytes 0x9e748-0x9e757 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0009e84c",
@@ -56599,8 +56599,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 796 Mac bytes 0x9e84c-0x9eb67 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:bgame/bg_mantle.cpp:91:Mantle_DebugPrint",
@@ -56618,8 +56618,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_mantle.cpp:497:Mantle_FindMantleSurface",
@@ -56637,8 +56637,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_mantle.cpp:207:Mantle_FindTransition",
@@ -56656,8 +56656,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_mantle.cpp:149:Mantle_GetAnim",
@@ -56675,8 +56675,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "mac:0x0009eb68",
@@ -56706,8 +56706,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 372 Mac bytes 0x9eb68-0x9ecdb compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:bgame/bg_mantle.cpp:124:Mantle_GetOverLength",
@@ -56725,8 +56725,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_mantle.cpp:108:Mantle_GetUpLength",
@@ -56744,8 +56744,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "mac:0x0009e814",
@@ -56775,8 +56775,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 56 Mac bytes 0x9e814-0x9e84b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0009ecdc",
@@ -56806,8 +56806,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 634 Mac bytes 0x9ecdc-0x9ef55 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0009e618",
@@ -56837,8 +56837,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 260 Mac bytes 0x9e618-0x9e71b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0009e738",
@@ -56868,8 +56868,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 16 Mac bytes 0x9e738-0x9e747 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:bgame/bg_mantle.cpp:287:Mantle_Start",
@@ -56887,8 +56887,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       }
     ],
     "bgame/bg_misc": [
@@ -56920,8 +56920,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 60 Mac bytes 0x69d7c-0x69db7 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006a3ca",
@@ -56951,8 +56951,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 362 Mac bytes 0x6a3ca-0x6a533 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006b252",
@@ -56982,8 +56982,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 16 Mac bytes 0x6b252-0x6b261 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006a534",
@@ -57013,8 +57013,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 3,358 Mac bytes 0x6a534-0x6b251 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006b262",
@@ -57044,8 +57044,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 786 Mac bytes 0x6b262-0x6b573 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006a286",
@@ -57075,8 +57075,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 324 Mac bytes 0x6a286-0x6a3c9 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00069cd2",
@@ -57106,8 +57106,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 24 Mac bytes 0x69cd2-0x69ce9 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:bgame/bg_misc.cpp:612:BG_GetMarkDir",
@@ -57125,8 +57125,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol and no call path in the compared Mac code. Nothing to restore."
       },
       {
         "id": "linux:bgame/bg_misc.cpp:1163:BG_LerpHudColors",
@@ -57144,8 +57144,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol and no call path in the compared Mac code. Nothing to restore."
       },
       {
         "id": "mac:0x00069db8",
@@ -57175,8 +57175,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 1,230 Mac bytes 0x69db8-0x6a285 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006b574",
@@ -57206,8 +57206,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 148 Mac bytes 0x6b574-0x6b607 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x000694d4",
@@ -57237,8 +57237,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 2,046 Mac bytes 0x694d4-0x69cd1 compared against the live native body and its helpers. All 44 names, defaults, ranges and flags compared with the binary by script. No correction required."
       },
       {
         "id": "mac:0x00069cea",
@@ -57268,8 +57268,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 146 Mac bytes 0x69cea-0x69d7b compared against the live native body and its helpers. No correction required."
       }
     ],
     "bgame/bg_pmove": [
@@ -57301,8 +57301,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 274 Mac bytes 0x6b790-0x6b8a1 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006b746",
@@ -57332,8 +57332,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 74 Mac bytes 0x6b746-0x6b78f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006b970",
@@ -57363,8 +57363,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 754 Mac bytes 0x6b970-0x6bc61 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006b6ac",
@@ -57394,8 +57394,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 34 Mac bytes 0x6b6ac-0x6b6cd compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006b65e",
@@ -57425,8 +57425,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 78 Mac bytes 0x6b65e-0x6b6ab compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006d060",
@@ -57456,8 +57456,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 596 Mac bytes 0x6d060-0x6d2b3 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006e08e",
@@ -57487,8 +57487,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 2,596 Mac bytes 0x6e08e-0x6eab1 compared against the live native body and its helpers. Fixed the flag cleared when going prone while moving: Mac 0x6e65b clears 0x800 (Linux PMF_ADS_OVERRIDE). Native cleared 0x8. Compiled and reviewed; the replay does not reach this path."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:3631:PM_CheckLadderMove",
@@ -57506,8 +57506,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:3614:PM_ClearLadderFlag",
@@ -57525,8 +57525,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "mac:0x0006b8ec",
@@ -57556,8 +57556,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 132 Mac bytes 0x6b8ec-0x6b96f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:468:PM_CmdScale",
@@ -57575,8 +57575,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:510:PM_CmdScale_Walk",
@@ -57594,8 +57594,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:1470:PM_CorrectAllSolid",
@@ -57613,8 +57613,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:1370:PM_CrashLand",
@@ -57632,8 +57632,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:1341:PM_DamageLandingForSurface",
@@ -57651,8 +57651,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:602:PM_DamageScale_Walk",
@@ -57670,8 +57670,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:1015:PM_DeadMove",
@@ -57689,8 +57689,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:309:PM_DoPlayerInertia",
@@ -57708,8 +57708,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:2992:PM_DropTimers",
@@ -57727,8 +57727,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:758:PM_FlyMove",
@@ -57746,8 +57746,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:2938:PM_FoliageSounds",
@@ -57765,8 +57765,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "No Mac symbol; inlined in Mac Pmove. Fixed the foliage event: Mac 0x7263b sends 0x8b (Linux EV_FOLIAGE_SOUND, client case 0x8b). Native sent 0x8e, a stance event. Compiled and reviewed; the replay does not reach this path."
       },
       {
         "id": "mac:0x0006eab2",
@@ -57796,8 +57796,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 682 Mac bytes 0x6eab2-0x6ed5b compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:1217:PM_FootstepForSurface",
@@ -57815,8 +57815,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "mac:0x0006ed5c",
@@ -57846,8 +57846,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 3,724 Mac bytes 0x6ed5c-0x6fbe7 compared against the live native body and its helpers. Restored the developer print at Mac 0x6f918 for an active turn animation. The rest matches Mac."
       },
       {
         "id": "mac:0x0006bc62",
@@ -57877,8 +57877,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 364 Mac bytes 0x6bc62-0x6bdcd compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006b6ce",
@@ -57908,8 +57908,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 32 Mac bytes 0x6b6ce-0x6b6ed compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:2434:PM_GetFlinchAnim",
@@ -57927,8 +57927,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:1760:PM_GetViewHeightLerp",
@@ -57946,8 +57946,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "mac:0x0006b70a",
@@ -57977,8 +57977,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 38 Mac bytes 0x6b70a-0x6b72f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006b6ee",
@@ -58008,8 +58008,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 28 Mac bytes 0x6b6ee-0x6b709 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006fbe8",
@@ -58039,8 +58039,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 4,246 Mac bytes 0x6fbe8-0x70c7d compared against the live native body and its helpers. Fixed the start-solid retry after all-solid recovery: Mac 0x702fb traces to the first end held at -0x30. Native had overwritten that point. Compiled and reviewed; the replay does not reach this path."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:1517:PM_GroundTraceMissed",
@@ -58058,8 +58058,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:1314:PM_HardLandingForSurface",
@@ -58077,8 +58077,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "mac:0x0006d2b4",
@@ -58108,8 +58108,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 1,270 Mac bytes 0x6d2b4-0x6d7a9 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:1286:PM_LightLandingForSurface",
@@ -58127,8 +58127,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:1258:PM_MediumLandingForSurface",
@@ -58146,8 +58146,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:424:PM_MoveScale",
@@ -58165,8 +58165,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:1044:PM_NoclipMove",
@@ -58184,8 +58184,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:342:PM_PlayerInertia",
@@ -58203,8 +58203,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:3604:PM_SetLadderFlag",
@@ -58222,8 +58222,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "mac:0x0006ceb8",
@@ -58253,8 +58253,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 424 Mac bytes 0x6ceb8-0x6d05f compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006b730",
@@ -58284,8 +58284,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 22 Mac bytes 0x6b730-0x6b745 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006b8a2",
@@ -58315,8 +58315,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 74 Mac bytes 0x6b8a2-0x6b8eb compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:1124:PM_UFOMove",
@@ -58334,8 +58334,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "mac:0x0006bdce",
@@ -58365,8 +58365,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 692 Mac bytes 0x6bdce-0x6c081 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:3558:PM_UpdatePlayerWalkingFlag",
@@ -58384,8 +58384,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "mac:0x0006cafe",
@@ -58415,8 +58415,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 664 Mac bytes 0x6cafe-0x6cd95 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006c082",
@@ -58446,8 +58446,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 2,684 Mac bytes 0x6c082-0x6cafd compared against the live native body and its helpers. Fixed the prone yaw cap: Mac 0x6c77d uses the last delta in xmm1, even after 0x6c775 moved proneDirection. Native recomputed the delta against the new direction. Compiled and reviewed; the replay does not reach this path."
       },
       {
         "id": "mac:0x0006d7aa",
@@ -58477,8 +58477,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 2,276 Mac bytes 0x6d7aa-0x6e08d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:1711:PM_ViewHeightTableLerp",
@@ -58496,8 +58496,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:880:PM_WalkMove",
@@ -58515,8 +58515,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       },
       {
         "id": "mac:0x0006cd96",
@@ -58546,8 +58546,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 290 Mac bytes 0x6cd96-0x6ceb7 compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x0006b608",
@@ -58577,8 +58577,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 86 Mac bytes 0x6b608-0x6b65d compared against the live native body and its helpers. No correction required."
       },
       {
         "id": "mac:0x00070c7e",
@@ -58608,8 +58608,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 10,398 Mac bytes 0x70c7e-0x7351b compared against the live native body and its helpers. Mac inlines PmoveSingle, the move types, the ladder check and foliage sounds here. All match Mac apart from the foliage event recorded on PM_FoliageSounds."
       },
       {
         "id": "linux:bgame/bg_pmove.cpp:3925:PmoveSingle",
@@ -58627,8 +58627,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
       }
     ],
     "bgame/bg_slidemove": [

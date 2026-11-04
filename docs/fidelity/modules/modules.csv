@@ -81,9 +81,9 @@ Mac/Tools/i5stdlib,4,0,0,0,4
 __unmatched__,657,0,0,0,657
 bgame/bg_animation_mp,48,0,0,0,48
 bgame/bg_jump,14,14,0,0,0
-bgame/bg_mantle,19,0,0,0,19
-bgame/bg_misc,13,0,0,0,13
-bgame/bg_pmove,55,0,0,0,55
+bgame/bg_mantle,19,19,0,0,0
+bgame/bg_misc,13,13,0,0,0
+bgame/bg_pmove,55,49,6,0,0
 bgame/bg_slidemove,4,2,2,0,0
 bgame/bg_weapons,136,0,0,0,136
 bgame/bg_weapons_load_obj,15,0,0,0,15
