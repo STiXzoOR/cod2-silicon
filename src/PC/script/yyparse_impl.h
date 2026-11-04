@@ -132,6 +132,8 @@ static int yyparse_get_next_buffer(int offset)
     }
 
 #if defined(COD2_X64)
+    if (b->yy_buffer_status == 2)
+        goto yy_buffer_eof_pending;
     num_to_read = b->yy_buf_size - n_kept - 1;
 #else
     num_to_read = b->yy_buf_size - n_kept;
@@ -164,6 +166,9 @@ static int yyparse_get_next_buffer(int offset)
     if (num_to_read > 0x2000)
         num_to_read = 0x2000;
 
+#if defined(COD2_X64)
+yy_buffer_eof_pending:
+#endif
     if (b->yy_buffer_status == 2) {
         yy_n_chars = 0;
         b->yy_n_chars = 0;
@@ -174,6 +179,24 @@ static int yyparse_get_next_buffer(int offset)
 
     if (yy_n_chars == 0) {
         if (n_kept == 0) {
+#if defined(COD2_X64)
+            FILE *input = yyin;
+
+            b->yy_n_chars = 0;
+            b->yy_ch_buf[0] = '\0';
+            b->yy_ch_buf[1] = '\0';
+            b->yy_buf_pos = b->yy_ch_buf;
+            b->yy_at_bol = 1;
+            b->yy_buffer_status = 0;
+            b->yy_input_file = input;
+            b->yy_fill_buffer = 1;
+            b->yy_is_interactive = input && isatty(fileno(input)) > 0;
+            yy_n_chars = b->yy_n_chars;
+            yy_c_buf_p = b->yy_buf_pos;
+            yytext = yy_c_buf_p;
+            yyin = b->yy_input_file;
+            yy_hold_char = *yy_c_buf_p;
+#endif
             yy_did_buffer_switch_on_eof = 0;
             return 0;
         }
@@ -566,7 +589,11 @@ yy_find_action:
         int slen = yyleng;
         g_out_pos = p + slen;
         yylval.val.node = (intptr_t)SL_GetStringOfLen(yytext, 0, (unsigned int)(slen + 1), 0xd);
+#if defined(COD2_X64)
+        return 0x144;
+#else
         return 0x102;
+#endif
     }
     case 92:
     {
@@ -588,9 +615,12 @@ yy_find_action:
         goto restart_scan;
     }
     case 94:
+#if !defined(COD2_X64)
     case 95:
     case 96:
-    case 97: {
+    case 97:
+#endif
+    {
         int offset;
         int eob_act;
 
@@ -618,7 +648,7 @@ yy_find_action:
             yy_current_state = YY_NXT(idx);
             yy_bp = yytext;
             yy_cp = yy_c_buf_p;
-            if (yy_current_state != 0xff) {
+            if (yy_current_state != 0xff && yy_current_state != 0) {
                 yy_cp = ++yy_c_buf_p;
                 goto yy_match;
             }
@@ -631,11 +661,13 @@ yy_find_action:
         if (eob_act == 0) {
 
             yy_c_buf_p = yytext;
+#if !defined(COD2_X64)
             {
                 unsigned int p = g_out_pos;
                 yylval.pos = p;
                 g_sourcePos = p;
             }
+#endif
             return 0;
         }
 
@@ -652,6 +684,12 @@ yy_find_action:
 
         goto yy_match;
     }
+#if defined(COD2_X64)
+    case 95:
+    case 96:
+    case 97:
+        return 0;
+#endif
     default:
 
         return 0;
@@ -1242,8 +1280,14 @@ yyreduce:
         break;
     }
     case 111: {
+#if defined(COD2_X64)
+        uintptr_t list = node0(0);
+        uintptr_t n = node2_(yyvsp[0].val.node, node_pos(yyvsp[0].pos));
+        yyval.val.node = (intptr_t)prepend_node(n, list);
+#else
         uintptr_t n = node2_(yyvsp[0].val.node, node_pos(yyvsp[0].pos));
         yyval.val.node = (intptr_t)prepend_node(n, node0(0));
+#endif
         break;
     }
     case 112:
@@ -1256,7 +1300,12 @@ yyreduce:
     }
     case 114: {
         yyvsp[0].val.node = (intptr_t)SL_ConvertToLowercase(yyvsp[0].val.node, (unsigned int)(unsigned char)g_parse_user, 0xd);
+#if defined(COD2_X64)
+        uintptr_t n = node2_(yyvsp[0].val.node, node_pos(yyvsp[0].pos));
+        yyval.val.node = (intptr_t)append_node(linked_list_end(node0(0)), n);
+#else
         yyval.val.node = (intptr_t)append_node(linked_list_end(node0(0)), node2_(yyvsp[0].val.node, node_pos(yyvsp[0].pos)));
+#endif
         break;
     }
     case 115:
@@ -1288,8 +1337,14 @@ yyreduce:
         break;
     }
     case 121: {
+#if defined(COD2_X64)
+        uintptr_t list = node0(0);
+        uintptr_t n = node2_(yyvsp[0].val.node, node_pos(yyvsp[0].pos));
+        yyval.val.node = (intptr_t)prepend_node(n, list);
+#else
         uintptr_t n = node2_(yyvsp[0].val.node, node_pos(yyvsp[0].pos));
         yyval.val.node = (intptr_t)prepend_node(n, node0(0));
+#endif
         break;
     }
     case 122: {
