@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 4249,
-      "intentional": 1596,
-      "equal": 3047,
-      "fixed": 565
+      "unchecked": 4212,
+      "intentional": 1602,
+      "equal": 3068,
+      "fixed": 575
     },
     "scopes": {
       "unassigned": 777,
@@ -70432,8 +70432,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1d9c8e: hand/world muzzle-flash gates, entity construction, brass-tag transform, hold-breath timing/channel interpolation and all effect arguments compared by hand. Native keeps the pre-existing viewModelDObj null guard (63de35a) and opt-in diagnostics compiled out by 83fd4e7; it skips brass lookup without a DObj instead of passing NULL. Typed native entities/effect pointers remain intact."
       },
       {
         "id": "mac:0x001d9b78",
@@ -70454,8 +70454,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1d9b78: event-specific sound selection, tracer gate, unsigned rand-to-float conversion, 2^31 probability scale, local-player exclusion and whiz-by call compared by hand. Retains gated CoD2x bullet diagnostics from a046b8a; original non-diagnostic behavior matches."
       },
       {
         "id": "mac:0x001db1f4",
@@ -70476,8 +70476,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1db1f4: all three impact-table blocks, sound/effect ordering, no-blood flesh substitution, tracer probability/local-player gates and whiz-by call compared by hand. Keeps native-width impact-pointer indexing from dac9522, defensive unavailable-table handling and gated CoD2x bullet diagnostics from a046b8a. Pointer indices 0/23/46/69/92/115 correspond to Mac byte offsets 0/0x5c/0xb8/0x114/0x170/0x1cc."
       },
       {
         "id": "mac:0x001d7f72",
@@ -70498,8 +70498,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1d7f72 compared by hand with attributed native body: nextSnap local-view mask, view-origin copy, DObj lookup and world tag call, entity trajectory-base fallback, player cutoff and 11/40/60-unit stance heights match. Constant checker also ran."
       },
       {
         "id": "mac:0x001dbac4",
@@ -70520,8 +70520,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1dbac4, especially 0x1dbf8c and 0x1dbf6f returning to ownership validation at 0x1dbd64: native returned early after the final slot/non-slot fallback. It now performs that final selected-weapon ownership check. Both direction paths, signed slot values, wraparound, alternate/stack/slot exclusions, ammo gates and ADS-retention helpers compared by hand; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001db3a4",
@@ -70542,8 +70542,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1db3a4 compared by hand including inlined native distance-scaling helper: projected right-vector construction, normalization, min-distance/range scaling and clamp order, endpoint widths, all four vertex positions/colors/UV/lightmap coordinates, default frames and polygon arguments match. Constant checker ran."
       },
       {
         "id": "mac:0x001d80ba",
@@ -70564,8 +70564,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1d80ba compared by hand with native body: brass/entity/weapon gates, last-shot versus ordinary effect choice, nextSnap local-view DObj handle, brass-tag bone lookup and effect/bolt arguments match. Constant checker ran."
       },
       {
         "id": "mac:0x001d823c",
@@ -70586,8 +70586,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1d823c compared by hand through the inlined local-entity, turret-flash and sound-origin helpers: recoil, muzzle flag, local-turret effect selection, normal/last-shot/player sound fallback, trajectory/tag origins, compass duration and bolt-action brass suppression match. Retains gated CoD2x radar-fire notification introduced by a046b8a."
       },
       {
         "id": "mac:0x001d7ddc",
@@ -70608,8 +70608,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1d7ddc compared by hand: holdBreathTime=-1, holdBreathInTime=0, holdBreathDelay=0 and holdBreathFrac=0 match."
       },
       {
         "id": "mac:0x001dc352",
@@ -70630,8 +70630,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1dc352 compared by hand including native CG_CanCycleWeapon: scoreboard-up behavior, nextSnap presence, signed low-word flag gate, active-player mask, cycle-delay comparison, selection timestamp and CG_CycleWeap(1,0) match."
       },
       {
         "id": "mac:0x001dc0c2",
@@ -70652,8 +70652,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1dc0c2 preference table at 0x33c5e0 contains {1,2}; native declared a static const array without an initializer, so both preferred slots were zero. Restored native initializer. Full nextSnap gate, stackable same-slot owned/ammo search, signed preferred-slot selection, ADS retention and final CG_CycleWeap(1,1) compared by hand; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001d7bc0",
@@ -70674,8 +70674,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1d7bc0 compared by hand with attributed CG_PlayADSAnim wrapper and CG_PlayADSAnim_impl: both animation-21/22 goal-weight/notify branches, 0.5-second blend, zero rate and complementary predicted ADS times match."
       },
       {
         "id": "mac:0x001dc2d8",
@@ -70696,8 +70696,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1dc2d8 compared by hand including native CG_CanCycleWeapon: scoreboard-down behavior, snapshot/flag/delay gates, selection timestamp and CG_CycleWeap(0,0) match."
       },
       {
         "id": "mac:0x001d9580",
@@ -70718,8 +70718,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1d9580 compared by hand: registered guard, both optional models with screen updates, icon track 7, pickup/ammo sound reuse, weapon registration recursion and final registered flag match."
       },
       {
         "id": "mac:0x001d9652",
@@ -70740,8 +70740,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1d9652 compared by hand: configstring 8, signed character nibble decode using 0x30/0x57, item range starting at 1 and registration decisions match. Retains the native CoD2x oversized-configstring rejection from 380bf2b rather than restoring Mac unbounded-stack-copy behavior."
       },
       {
         "id": "mac:0x001d85cc",
@@ -70762,8 +70762,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1d85cc-0x1d9580 compared by hand: registration/recursion flags, two-model fallback, 23-animation tree setup, all 12 duration/rate pairs, ADS loop checks, DObj setup, model/material/effect/sound registrations, fallback sounds, projectile/light/icon handling and all three localization-warning branches match. Native typed layouts replace 32-bit byte sizes/offsets. Constant/call/string triage ran; rate helpers and fallback helpers were read in their callers."
       },
       {
         "id": "mac:0x001db97c",
@@ -70784,8 +70784,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1db97c compared by hand: forward/reverse endpoints, owned/slot/stack/needs-slot and optional-ammo exclusions, selection timestamp, HUD notification and old-alternate ADS preservation match."
       },
       {
         "id": "mac:0x001d7ef6",
@@ -70806,8 +70806,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1d7ef6 compared by hand with native inlined core: timestamp update even on unchanged selection, nonzero alternate-weapon ADS retention, selection write, menu notification and CL_SetADS(0) match."
       },
       {
         "id": "mac:0x001d7e10",
@@ -70828,8 +70828,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1d7e10 compared by hand: configstring 7, 0x2000 text buffer and 127-pointer array, zeroing, repeated-space tokenization, sequential weapon-index validation and mismatch diagnostic match; native sizeof correctly scales the pointer array."
       },
       {
         "id": "mac:0x001d9886",
@@ -70850,8 +70850,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1d9886 compared by hand: normalized segment, local-entity fields, optional half-frame rand remainder delay, (distance*1000)/speed truncation, linear trajectory and speed-times-direction components match."
       },
       {
         "id": "mac:0x001d96e8",
@@ -70872,8 +70872,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1d96e8 compared by hand: inclusive weapon iteration, model-change guards, tree preservation/free, hand/gun model assembly and fallback, DObj recreation, 64-byte name copy and 0.05-second update match."
       },
       {
         "id": "mac:0x001dd3fe",
@@ -70894,8 +70894,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1dd3fe, especially 0x1dd70a-0x1dd7e5: native reset the notetrack alias on every iteration; Mac initializes it once and repeats the preceding alias for an unrecognized subsequent notification. Restored that deterministic quirk. Full inactive-tree reset, viewmodel registration/animation update, skeleton cache/calculation and four notetrack-name branches compared by hand; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001d7d0e",
@@ -70916,8 +70916,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1d7d0e compared by hand: returns weaponNum+0x400."
       },
       {
         "id": "mac:0x001dc3cc",
@@ -70938,8 +70938,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1dc3cc: restored reload ADS-out override at 0x1dc57c when weaponstate==5 and weaponTime exceeds iPositionReloadTransTime; native omitted it. Also restored unsigned animation bounds at 0x1dc45f so negative animation values select/report unknown animation instead of indexing before the table. Decoded all 20 jump-table targets at 0x33c5e8 and checked each active animation plus all 1..20 goal weights, idle completion/clip choice, toggle mask and iPrevAnim updates; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001db878",
@@ -70960,8 +70960,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1db878 compared by hand: active snapshot/flag/delay gates, slot-name/numeric fallback, signed slot weapon index, ownership check, selection/menu update and alternate ADS preservation match. Retains the verified no-argument native command callback signature from 87393ca; unused legacy parameters remain in its OFF branch."
       },
       {
         "id": "mac:0x001d7d1c",
@@ -70982,8 +70982,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1d7d1c warning at 0x1d7d44: native omitted the switching-to-default phrase. Restored complete binary string; fallback reset, gun/hand-name validation, xmodel prefixes and both model registrations also compared by hand; compiled and reviewed, not exercised. Independent review corrected the extra newline; parent confirmed one trailing newline in Mac string0x2e3724."
       },
       {
         "id": "mac:0x001d99ca",
@@ -71004,8 +71004,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1d99ca compared by hand: normalized segment projection, 64-unit endpoint margins, nearest point, 140-unit radius, -16-unit directional shift and entity 0x3fe sound arguments match in SSE arithmetic order."
       },
       {
         "id": "mac:0x001da2f8",
@@ -71026,8 +71026,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_weapons.c (cgame_mp/cg_weapons); whole CG_AddViewWeapon was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to cgame/cg_weapons; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_weapons.c:1267; assigned universal header has no body. Mac symbol __Z16CG_AddViewWeaponP13playerState_s at 0x001da2f8. Whole caller not audited by universal-math."
+        "status": "fixed",
+        "evidence": "Mac 0x1da2f8-0x1db1f4 whole caller compared by hand (routed from universal/com_vector): restored testGun gate, predicted-state shellshock sway scaling, ADS transition bookkeeping, lean/stance/movement smoothing with 0.1 minimum step, ADS position fade, previous-viewmodel-frame positioning, landing interpolation, gun dvars, overlay-aware normalized ADS angles, deltaTime-adjusted time/damageTime and weapon-angle/recoil state writeback. Native had a reduced body with the wrong shellshock screen gate and refdef/commandTime inputs. STABS verified snapshot/testGun/playerEntity/sway/stance/deltaTime and WeaponDef field identities; imported gun dvar pointers were decoded; scoped native body retains existing opt-in diagnostics and the exact legacy body. Compiled and reviewed, not exercised."
       }
     ],
     "cgame/offhandweapons_mp": [
@@ -71050,8 +71050,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1b50ea compared by hand: active-player/available-or-equipped gates, equipped offhand class, fade timing, inclusive owned-weapon clip sum, empty-ammo RGB, fade alpha and ((cos(time*2pi/period)*0.5)+0.5)*fade flash pulse match. Constant checker ran."
       },
       {
         "id": "mac:0x001b4f62",
@@ -71072,8 +71072,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1b4f62 alpha store at 0x1b4fec: native passed an uninitialized fourth color component; now assigns CG_FadeHudMenu result to drawColor[3]. Full available/equipped-class selection, fallback lookup and icon draw arguments compared by hand; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001b4c6c",
@@ -71094,8 +71094,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1b4c6c alpha store at 0x1b4cf4: native passed an uninitialized fourth color component; now assigns the fade to drawColor[3]. Player/weapon gates, rounded fade duration, translation and text arguments compared by hand. offhandStrings binary table matches all three native strings; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001b4c04",
@@ -71116,8 +71116,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1b4c04 compared by hand and constant checker: hud_flash_time_offhand=2 and hud_flash_period_offhand=0.5, both ranges 0..30 and flags 0x1001, with matching destination variables."
       },
       {
         "id": "mac:0x001b4d9c",
@@ -71138,8 +71138,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1b4d9c compared by hand: eventParam indexes weapon info, optional pullback alias plays on ent->number. Keeps the full-width typed alias pointer repair from acccfb7; no 32-bit pointer truncation was reintroduced."
       },
       {
         "id": "mac:0x001b4ee8",
@@ -71160,8 +71160,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1b4ee8 compared by hand: sets equippedOffHand from argument and notifies menu 4."
       },
       {
         "id": "mac:0x001b4f08",
@@ -71182,8 +71182,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1b4f08 compared by hand: zero-equipped guard, current weapon offhand class, first available offhand lookup, zero-result guard, equipped update and menu-4 notification match."
       },
       {
         "id": "mac:0x001b4dd4",
@@ -71204,8 +71204,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1b4dd4 snapshot load at 0x1b4e0e reads nextSnap (cg+0x24); native read snap (cg+0x20). Corrected local-player viewmodel/world sound-origin selection. Full optional alias/tag/DObj branches, trajectory fallback and sound arguments compared by hand. Preserves full-width sound pointers from acccfb7; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001b5332",
@@ -71226,8 +71226,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/offhandweapons_mp.c (cgame_mp/offhandweapons_mp); whole CG_DrawOffHandAmmo was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to cgame/offhandweapons_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/offhandweapons_mp.c:324; assigned universal header has no body. Mac symbol __Z18CG_DrawOffHandAmmoP9rectDef_sP6Font_sfPfii at 0x001b5332. Whole caller not audited by universal-math."
+        "status": "fixed",
+        "evidence": "Mac 0x1b5332 alpha store at 0x1b53bc: native omitted fade alpha, leaving drawColor[3] uninitialized. Restored it. Whole caller routed from universal/com_vector compared by hand: active/availability gates, fade duration, inclusive owned offhand clip sum, empty RGB, integer formatting and text arguments match; compiled and reviewed, not exercised."
       }
     ],
     "client/cl_cgame_mp": [

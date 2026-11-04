@@ -85,6 +85,9 @@ void CG_DrawOffHandName(rectDef_s *rect, struct Font_s *font, float scale, vec_t
 
     time = (int)floorf(hud->current.value * 1000.0f + 0.5f);
     fade = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
+#if defined(COD2_X64)
+    drawColor[3] = fade;
+#endif
 
     if (fade == 0.0f)
         return;
@@ -132,7 +135,11 @@ void CG_UseOffHand(centity_t *cent, int event, int eventParam)
 
     clientNum = cent->nextState.number;
 
+#if defined(COD2_X64)
+    if (clientNum == cg->nextSnap->ps.clientNum) {
+#else
     if (clientNum == cg->snap->ps.clientNum) {
+#endif
 
         struct DObj_s *viewModel = (struct DObj_s *)wi->viewModelDObj;
         if (viewModel != NULL) {
@@ -207,6 +214,9 @@ void CG_DrawOffHandIcon(rectDef_s *rect, float scale, vec_t *color, MaterialHand
 
     time = (int)floorf(hud->current.value * 1000.0f + 0.5f);
     fade = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
+#if defined(COD2_X64)
+    drawColor[3] = fade;
+#endif
 
     if (fade == 0.0f)
         return;
@@ -349,6 +359,9 @@ void CG_DrawOffHandAmmo(rectDef_s *rect, struct Font_s *font, float scale, vec_t
 
     time = (int)floorf(hud->current.value * 1000.0f + 0.5f);
     fade = CG_FadeHudMenu( (const dvar_t *)((void *)hud), cg->offhandFadeTime, time);
+#if defined(COD2_X64)
+    drawColor[3] = fade;
+#endif
 
     if (fade == 0.0f)
         return;
