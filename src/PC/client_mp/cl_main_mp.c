@@ -134,6 +134,9 @@ extern void SCR_StopCinematic(void);
 extern void Con_Init(void);
 extern void Con_Close(void);
 extern void CL_PlayCinematic_f(void);
+#if defined(COD2_X64)
+extern void CL_PlayUnskippableCinematic_f(void);
+#endif
 extern void CL_Connect_f(void);
 extern void CL_GlobalServers_f(void);
 extern void CL_Rcon_f(void);
@@ -1290,6 +1293,9 @@ void CL_InitOnceForAllClients(void)
     Cmd_SetAutoComplete("demo", "demos", "dm_1");
     Cmd_SetAutoComplete("timedemo", "demos", "dm_1");
     Cmd_AddCommand("cinematic", CL_PlayCinematic_f);
+#if defined(COD2_X64)
+    Cmd_AddCommand("unskippablecinematic", CL_PlayUnskippableCinematic_f);
+#endif
     Cmd_SetAutoComplete("cinematic", "video", "roq");
     Cmd_AddCommand("logo", CL_PlayLogo_f);
     Cmd_AddCommand("connect", CL_Connect_f);
