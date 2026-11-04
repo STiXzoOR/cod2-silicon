@@ -1878,5 +1878,461 @@
   "mac:0x0019d2b4": {
     "status": "equal",
     "evidence": "All 94 Mac bytes 0x19d2b4-0x19d311 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b8666": {
+    "status": "equal",
+    "evidence": "All 394 Mac bytes 0x1b8666-0x1b87ef compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b90b0": {
+    "status": "equal",
+    "evidence": "All 502 Mac bytes 0x1b90b0-0x1b92a5 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b886e": {
+    "status": "equal",
+    "evidence": "All 50 Mac bytes 0x1b886e-0x1b889f compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b8836": {
+    "status": "equal",
+    "evidence": "All 56 Mac bytes 0x1b8836-0x1b886d compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b87f0": {
+    "status": "equal",
+    "evidence": "All 70 Mac bytes 0x1b87f0-0x1b8835 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b8334": {
+    "status": "fixed",
+    "evidence": "All 286 Mac bytes 0x1b8334-0x1b8451 compared against the live native body and its helpers. Fixed the total time test: Mac 0x1b8364-0x1b83f7 reports any ordered value at or below zero, native reported only exact zero, so a negative time was accepted. Accel, decel and sum checks match. Compiled and reviewed; no test covers this path."
+  },
+  "mac:0x001b88a0": {
+    "status": "equal",
+    "evidence": "All 292 Mac bytes 0x1b88a0-0x1b89c3 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b9b66": {
+    "status": "equal",
+    "evidence": "All 274 Mac bytes 0x1b9b66-0x1b9c77 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b99e8": {
+    "status": "equal",
+    "evidence": "All 28 Mac bytes 0x1b99e8-0x1b9a03 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b99cc": {
+    "status": "equal",
+    "evidence": "All 28 Mac bytes 0x1b99cc-0x1b99e7 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b99b0": {
+    "status": "equal",
+    "evidence": "All 28 Mac bytes 0x1b99b0-0x1b99cb compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b8536": {
+    "status": "equal",
+    "evidence": "All 204 Mac bytes 0x1b8536-0x1b8601 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b985e": {
+    "status": "equal",
+    "evidence": "All 28 Mac bytes 0x1b985e-0x1b9879 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b9826": {
+    "status": "equal",
+    "evidence": "All 28 Mac bytes 0x1b9826-0x1b9841 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b9a04": {
+    "status": "equal",
+    "evidence": "All 354 Mac bytes 0x1b9a04-0x1b9b65 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b89c4": {
+    "status": "equal",
+    "evidence": "All 1,274 Mac bytes 0x1b89c4-0x1b8ebd compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b9842": {
+    "status": "equal",
+    "evidence": "All 28 Mac bytes 0x1b9842-0x1b985d compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b8452": {
+    "status": "equal",
+    "evidence": "All 228 Mac bytes 0x1b8452-0x1b8535 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b8602": {
+    "status": "equal",
+    "evidence": "All 100 Mac bytes 0x1b8602-0x1b8665 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b987a": {
+    "status": "equal",
+    "evidence": "All 310 Mac bytes 0x1b987a-0x1b99af compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b96f0": {
+    "status": "equal",
+    "evidence": "All 310 Mac bytes 0x1b96f0-0x1b9825 compared against the live native body and its helpers. No correction required."
+  },
+  "linux:game/g_scr_mover_mp.cpp:360:ScriptMover_GravityMove": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in Mac ScriptEntCmd_GravityMove at 0x1b892b-0x1b89a4. No correction required."
+  },
+  "linux:game/g_scr_mover_mp.cpp:340:ScriptMover_Move": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined at Mac ScriptEntCmd_MoveTo and ScriptEnt_MoveAxis call sites. No correction required."
+  },
+  "linux:game/g_scr_mover_mp.cpp:382:ScriptMover_Rotate": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined at Mac ScriptEntCmd_RotateTo and ScriptEnt_RotateAxis call sites. No correction required."
+  },
+  "linux:game/g_scr_mover_mp.cpp:406:ScriptMover_RotateSpeed": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in Mac ScriptEntCmd_RotateVelocity with the setup at 0x1b8a5c-0x1b8c50. No correction required."
+  },
+  "mac:0x001b92a6": {
+    "status": "fixed",
+    "evidence": "All 1,098 Mac bytes 0x1b92a6-0x1b96ef compared against the live native body and its helpers. Fixed two differences, both matching Linux. Mac takes the move delta once before re-evaluating at 0x1b963b; native recomputed it from the evaluated position, changing a move issued while already moving. Mac stores the peak speed vector directly as trDelta while accelerating at 0x1b96ad; native rescaled it through the truncated duration. Regressions moving and accel fail baseline and pass both builds."
+  },
+  "linux:game/g_scr_mover_mp.cpp:241:ScriptMover_SetupMoveSpeed": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in Mac ScriptEntCmd_RotateVelocity at 0x1b8aaf-0x1b8eb8. No correction required."
+  },
+  "linux:game/g_scr_mover_mp.cpp:28:ScriptMover_UpdateMove": {
+    "status": "fixed",
+    "evidence": "Linux spelling of Mac ScriptMover_Updatemove at 0x1b8ebe; the gravity correction is recorded on that row."
+  },
+  "mac:0x001b8ebe": {
+    "status": "fixed",
+    "evidence": "All 498 Mac bytes 0x1b8ebe-0x1b90af compared against the live native body and its helpers. Fixed the end of a gravity move: Mac 0x1b908d-0x1b90ab keeps the evaluated position and skips the copy at 0x1b8efa, as Linux does; native then overwrote trBase with the stale vPos3, so a moveGravity entity snapped elsewhere when it finished. Regression gravity fails baseline and passes both builds."
+  },
+  "mac:0x001a090a": {
+    "status": "equal",
+    "evidence": "All 76 Mac bytes 0x1a090a-0x1a0955 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a0956": {
+    "status": "equal",
+    "evidence": "All 28 Mac bytes 0x1a0956-0x1a0971 compared against the live native body and its helpers. No correction required."
+  },
+  "linux:game/g_spawn_mp.cpp:1036:GScr_SetDynamicEntityField": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in Mac G_ParseEntityField at 0x1a0aea-0x1a0afe. No correction required."
+  },
+  "mac:0x001a1686": {
+    "status": "equal",
+    "evidence": "All 518 Mac bytes 0x1a1686-0x1a188b compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a084c": {
+    "status": "equal",
+    "evidence": "All 190 Mac bytes 0x1a084c-0x1a0909 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a06e4": {
+    "status": "equal",
+    "evidence": "All 190 Mac bytes 0x1a06e4-0x1a07a1 compared against the live native body and its helpers. No correction required."
+  },
+  "linux:game/g_spawn_mp.cpp:336:G_DuplicateScriptFields": {
+    "status": "intentional",
+    "evidence": "Linux helper with no Mac symbol, no Mac call to Scr_CopyEntityNum and no native caller. Omitted."
+  },
+  "mac:0x001a07a2": {
+    "status": "equal",
+    "evidence": "All 170 Mac bytes 0x1a07a2-0x1a084b compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a1276": {
+    "status": "equal",
+    "evidence": "All 290 Mac bytes 0x1a1276-0x1a1397 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a0a9e": {
+    "status": "fixed",
+    "evidence": "All 362 Mac bytes 0x1a0a9e-0x1a0c07 compared against the live native body and its helpers. Fixed the brush model field: for \"*N\" Mac 0x1a0bd3-0x1a0c03 stores the 16-bit index in s.index at 0x8c, where SV_SetBrushModel reads it at 0x14e1fe, and leaves ent->model zero. Native stored it in ent->model at 0x164, so brush triggers took the bounds and clip of model 0, and movers also built a DObj from an unrelated cached model. Regression brush fails baseline and passes both builds."
+  },
+  "linux:game/g_spawn_mp.cpp:251:G_ParseEntityFields": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in Mac G_CallSpawn at all four parse sites. No correction required."
+  },
+  "linux:game/g_spawn_mp.cpp:177:G_SetEntityScriptVariable": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in Mac G_ParseEntityField at 0x1a0ad5-0x1a0afe. No correction required."
+  },
+  "mac:0x001a0624": {
+    "status": "equal",
+    "evidence": "All 192 Mac bytes 0x1a0624-0x1a06e3 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a188c": {
+    "status": "equal",
+    "evidence": "All 96 Mac bytes 0x1a188c-0x1a18eb compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a0f12": {
+    "status": "equal",
+    "evidence": "All 82 Mac bytes 0x1a0f12-0x1a0f63 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a0f64": {
+    "status": "equal",
+    "evidence": "All 72 Mac bytes 0x1a0f64-0x1a0fab compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a05e4": {
+    "status": "equal",
+    "evidence": "All 48 Mac bytes 0x1a05e4-0x1a0613 compared against the live native body and its helpers. No correction required."
+  },
+  "linux:game/g_spawn_mp.cpp:269:G_SpawnStruct": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in Mac G_LoadStructs at 0x1a1312-0x1a1389. No correction required."
+  },
+  "mac:0x001a0fac": {
+    "status": "equal",
+    "evidence": "All 108 Mac bytes 0x1a0fac-0x1a1017 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a1018": {
+    "status": "equal",
+    "evidence": "All 606 Mac bytes 0x1a1018-0x1a1275 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a0972": {
+    "status": "equal",
+    "evidence": "All 30 Mac bytes 0x1a0972-0x1a098f compared against the live native body and its helpers. No correction required."
+  },
+  "linux:game/g_spawn_mp.cpp:872:Scr_AddExecEntThread": {
+    "status": "intentional",
+    "evidence": "Linux helper with no Mac symbol, no Mac call to Scr_AddExecEntThreadNum and no native caller. Omitted."
+  },
+  "mac:0x001a0a18": {
+    "status": "equal",
+    "evidence": "All 44 Mac bytes 0x1a0a18-0x1a0a43 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a0a44": {
+    "status": "equal",
+    "evidence": "All 46 Mac bytes 0x1a0a44-0x1a0a71 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a15ee": {
+    "status": "equal",
+    "evidence": "All 152 Mac bytes 0x1a15ee-0x1a1685 compared against the live native body and its helpers. No correction required."
+  },
+  "linux:game/g_spawn_mp.cpp:742:Scr_FreeEntityConstStrings": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in Mac Scr_FreeEntity at 0x1a15f7-0x1a1666. No correction required."
+  },
+  "mac:0x001a09e0": {
+    "status": "equal",
+    "evidence": "All 56 Mac bytes 0x1a09e0-0x1a0a17 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a0d10": {
+    "status": "equal",
+    "evidence": "All 204 Mac bytes 0x1a0d10-0x1a0ddb compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a0ddc": {
+    "status": "equal",
+    "evidence": "All 310 Mac bytes 0x1a0ddc-0x1a0f11 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a0990": {
+    "status": "equal",
+    "evidence": "All 80 Mac bytes 0x1a0990-0x1a09df compared against the live native body and its helpers. No correction required."
+  },
+  "linux:game/g_spawn_mp.cpp:626:Scr_GetEntityField": {
+    "status": "fixed",
+    "evidence": "Linux helper is inlined in Mac Scr_GetObjectField; the correction is recorded on that row."
+  },
+  "mac:0x001a0c08": {
+    "status": "equal",
+    "evidence": "All 264 Mac bytes 0x1a0c08-0x1a0d0f compared against the live native body and its helpers. No correction required."
+  },
+  "linux:game/g_spawn_mp.cpp:839:Scr_GetHudElem": {
+    "status": "intentional",
+    "evidence": "Linux helper with no Mac symbol and no native caller. Omitted."
+  },
+  "mac:0x001a156c": {
+    "status": "fixed",
+    "evidence": "All 130 Mac bytes 0x1a156c-0x1a15ed compared against the live native body and its helpers. Fixed client fields on a clientless entity: Mac 0x1a15c7-0x1a15cf pushes nothing, native pushed undefined. Removed the same native range guard. Regression clientfields fails baseline and passes both builds."
+  },
+  "mac:0x001a0a72": {
+    "status": "equal",
+    "evidence": "All 44 Mac bytes 0x1a0a72-0x1a0a9d compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a0614": {
+    "status": "equal",
+    "evidence": "All 16 Mac bytes 0x1a0614-0x1a0623 compared against the live native body and its helpers. No correction required."
+  },
+  "linux:game/g_spawn_mp.cpp:518:Scr_SetEntityField": {
+    "status": "fixed",
+    "evidence": "Linux helper is inlined in Mac Scr_SetObjectField; the correction is recorded on that row."
+  },
+  "mac:0x001a1398": {
+    "status": "equal",
+    "evidence": "All 276 Mac bytes 0x1a1398-0x1a14ab compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001a14ac": {
+    "status": "fixed",
+    "evidence": "All 192 Mac bytes 0x1a14ac-0x1a156b compared against the live native body and its helpers. Removed a native range guard that Mac 0x1a14d0-0x1a154b does not have; no registered field offset reaches it. Client fields on a clientless entity already returned zero. Compiled and reviewed."
+  },
+  "mac:0x001b7de8": {
+    "status": "equal",
+    "evidence": "All 464 Mac bytes 0x1b7de8-0x1b7fb7 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b827e": {
+    "status": "equal",
+    "evidence": "All 66 Mac bytes 0x1b827e-0x1b82bf compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b811c": {
+    "status": "equal",
+    "evidence": "All 354 Mac bytes 0x1b811c-0x1b827d compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b7fb8": {
+    "status": "equal",
+    "evidence": "All 356 Mac bytes 0x1b7fb8-0x1b811b compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b746c": {
+    "status": "equal",
+    "evidence": "All 152 Mac bytes 0x1b746c-0x1b7503 compared against the live native body and its helpers. No correction required."
+  },
+  "linux:game/g_trigger_mp.cpp:72:InitSentientTrigger": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined at the Mac trigger spawners. No correction required."
+  },
+  "linux:game/g_trigger_mp.cpp:43:InitTrigger": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined at the Mac trigger spawners. No correction required."
+  },
+  "linux:game/g_trigger_mp.cpp:53:InitTriggerWait": {
+    "status": "fixed",
+    "evidence": "Linux helper is inlined at the Mac trigger spawners; the NaN correction is recorded on those rows."
+  },
+  "mac:0x001b82c0": {
+    "status": "equal",
+    "evidence": "All 66 Mac bytes 0x1b82c0-0x1b8301 compared against the live native body and its helpers. No correction required."
+  },
+  "linux:game/g_trigger_mp.cpp:350:Respond_trigger_damage": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in Mac Activate_trigger_damage at 0x1b7e0f-0x1b7f78. No correction required."
+  },
+  "mac:0x001b75ce": {
+    "status": "fixed",
+    "evidence": "All 204 Mac bytes 0x1b75ce-0x1b7699 compared against the live native body and its helpers. Fixed the wait test for NaN: Mac 0x1b7688-0x1b768c skips the flag when unordered, as Linux wait <= 0 does. Regression wait fails baseline and passes both builds."
+  },
+  "mac:0x001b79d6": {
+    "status": "fixed",
+    "evidence": "All 388 Mac bytes 0x1b79d6-0x1b7b59 compared against the live native body and its helpers. Fixed the wait test for NaN at Mac 0x1b7b37-0x1b7b3f. Regression wait fails baseline and passes both builds."
+  },
+  "mac:0x001b7554": {
+    "status": "equal",
+    "evidence": "All 122 Mac bytes 0x1b7554-0x1b75cd compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b7520": {
+    "status": "fixed",
+    "evidence": "All 52 Mac bytes 0x1b7520-0x1b7553 compared against the live native body and its helpers. Fixed contents: Mac 0x1b7532 stores 0x20000000, Linux CONTENTS_TRANSLUCENT; native stored the generic trigger mask 0x405c0008, so lookat traces could not hit it as intended. Regression lookat fails baseline and passes both builds."
+  },
+  "mac:0x001b769a": {
+    "status": "fixed",
+    "evidence": "All 198 Mac bytes 0x1b769a-0x1b775f compared against the live native body and its helpers. Fixed the wait test for NaN at Mac 0x1b7745-0x1b774d. Regression wait fails baseline and passes both builds."
+  },
+  "mac:0x001b7b5a": {
+    "status": "equal",
+    "evidence": "All 128 Mac bytes 0x1b7b5a-0x1b7bd9 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b7760": {
+    "status": "fixed",
+    "evidence": "All 630 Mac bytes 0x1b7760-0x1b79d5 compared against the live native body and its helpers. Fixed the wait test for NaN at Mac 0x1b78d1-0x1b78d9. Regression wait fails baseline and passes both builds."
+  },
+  "mac:0x001b7bda": {
+    "status": "equal",
+    "evidence": "All 174 Mac bytes 0x1b7bda-0x1b7c87 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b8302": {
+    "status": "equal",
+    "evidence": "All 50 Mac bytes 0x1b8302-0x1b8333 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b7c88": {
+    "status": "equal",
+    "evidence": "All 352 Mac bytes 0x1b7c88-0x1b7de7 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001b7504": {
+    "status": "equal",
+    "evidence": "All 28 Mac bytes 0x1b7504-0x1b751f compared against the live native body and its helpers. No correction required."
+  },
+  "linux:game/g_trigger_mp.cpp:98:multi_trigger": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in Mac Touch_Multi at 0x1b7c40-0x1b7c5b. No correction required."
+  },
+  "mac:0x001cb286": {
+    "status": "equal",
+    "evidence": "All 516 Mac bytes 0x1cb286-0x1cb489 compared against the live native body and its helpers. No correction required."
+  },
+  "linux:game/g_svcmds_mp.cpp:275:ClientForString": {
+    "status": "intentional",
+    "evidence": "Linux helper with no Mac symbol and no native caller. Omitted."
+  },
+  "mac:0x001cb512": {
+    "status": "fixed",
+    "evidence": "All 386 Mac bytes 0x1cb512-0x1cb693 compared against the live native body and its helpers. Fixed three differences. Mac 0x2e27ac is listip, which runs g_banIPs through the command buffer; native had maprotate. Mac 0x1cb5a1 tests g_dedicated; native tested g_cheats. Mac 0x2e27c0 tags say text as GAME_SERVER. Regressions listip and say fail baseline and pass both builds."
+  },
+  "mac:0x001cb48a": {
+    "status": "equal",
+    "evidence": "All 136 Mac bytes 0x1cb48a-0x1cb511 compared against the live native body and its helpers. No correction required."
+  },
+  "linux:game/g_svcmds_mp.cpp:23:StringToFilter": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in Mac Svcmd_RemoveIP_f and AddIP. No correction required."
+  },
+  "linux:game/g_svcmds_mp.cpp:168:Svcmd_AddIP_f": {
+    "status": "fixed",
+    "evidence": "Linux helper is inlined in Mac ConsoleCommand at 0x1cb5b3-0x1cb60f; the usage text now matches 0x2e2770. Regression usage fails baseline and passes both builds."
+  },
+  "mac:0x001cb16e": {
+    "status": "fixed",
+    "evidence": "All 280 Mac bytes 0x1cb16e-0x1cb285 compared against the live native body and its helpers. Fixed the column text to Mac 0x2e26b0-0x2e2740 and removed a corpse row that Mac table 0x33c0a0 does not have; type 2 prints its number. Regression entitylist fails baseline and passes both builds."
+  },
+  "mac:0x001caf7c": {
+    "status": "fixed",
+    "evidence": "All 498 Mac bytes 0x1caf7c-0x1cb16d compared against the live native body and its helpers. Fixed the usage text to Mac 0x2e2640. Regression usage fails baseline and passes both builds."
+  },
+  "linux:game/g_svcmds_mp.cpp:74:UpdateIPBans": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in Mac Svcmd_RemoveIP_f and AddIP. No correction required."
+  },
+  "mac:0x001cc16e": {
+    "status": "equal",
+    "evidence": "All 158 Mac bytes 0x1cc16e-0x1cc20b compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001cbf0c": {
+    "status": "equal",
+    "evidence": "All 58 Mac bytes 0x1cbf0c-0x1cbf45 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001cbf46": {
+    "status": "equal",
+    "evidence": "All 552 Mac bytes 0x1cbf46-0x1cc16d compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001cb694": {
+    "status": "equal",
+    "evidence": "All 1,628 Mac bytes 0x1cb694-0x1cbcef compared against the live native body and its helpers. No correction required."
+  },
+  "linux:game/player_use_mp.cpp:48:Player_ActivateCmd": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in Mac Player_UpdateActivate at 0x1cc79d-0x1cc8c4. No correction required."
+  },
+  "linux:game/player_use_mp.cpp:88:Player_ActivateHoldCmd": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in Mac Player_UpdateActivate at 0x1cc687-0x1cc7f1. No correction required."
+  },
+  "linux:game/player_use_mp.cpp:353:Player_GetItemCursorHint": {
+    "status": "fixed",
+    "evidence": "Linux helper is inlined in Mac Player_UpdateCursorHints at 0x1cd068-0x1cd0da; the item table correction is recorded on that row."
+  },
+  "mac:0x001cc8fc": {
+    "status": "fixed",
+    "evidence": "All 1,474 Mac bytes 0x1cc8fc-0x1ccebd compared against the live native body and its helpers. Fixed the first sort: Mac 0x1ccb67-0x1cca81 and Linux sort every collected entry; native left out the full items, so a full item could stay ahead of a grabbable one and take the use hint. use_list fails baseline and passes both builds."
+  },
+  "linux:game/player_use_mp.cpp:383:Player_SetTurretDropHint": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in Mac Player_UpdateCursorHints at 0x1ccf2d-0x1ccfa2. No correction required."
+  },
+  "mac:0x001cc628": {
+    "status": "equal",
+    "evidence": "All 698 Mac bytes 0x1cc628-0x1cc8e1 compared against the live native body and its helpers. No correction required."
+  },
+  "mac:0x001ccebe": {
+    "status": "fixed",
+    "evidence": "All 790 Mac bytes 0x1ccebe-0x1cd1d3 compared against the live native body and its helpers. Fixed a 64-bit item table error: Mac 0x1cd081-0x1cd08e scales the index by the i386 item size of 44; native kept 44 although gitem_t is 72 bytes on arm64, so weapon pickup hints read the wrong entry. Found by the batch review. Compiled and reviewed; no test covers this path."
+  },
+  "mac:0x001cd1d4": {
+    "status": "fixed",
+    "evidence": "All 1,032 Mac bytes 0x1cd1d4-0x1cd5db compared against the live native body and its helpers. Fixed the first visibility test for NaN to match Mac 0x1cd39e-0x1cd3a7. Compiled and reviewed; no test covers this path."
+  },
+  "linux:game/player_use_mp.cpp:508:Player_UpdateLookAtEntityTrace": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in Mac Player_UpdateLookAtEntity. No correction required."
+  },
+  "linux:game/player_use_mp.cpp:9:Player_UseEntity": {
+    "status": "equal",
+    "evidence": "Linux helper is inlined in Mac Player_UpdateActivate at 0x1cc709-0x1cc785. No correction required."
+  },
+  "mac:0x001cc8e2": {
+    "status": "equal",
+    "evidence": "All 26 Mac bytes 0x1cc8e2-0x1cc8fb compared against the live native body and its helpers. No correction required."
   }
 }

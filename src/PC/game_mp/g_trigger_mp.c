@@ -98,7 +98,11 @@ void hurt_use(gentity_t *self, gentity_t *other, gentity_t *activator)
 void SP_trigger_lookat(gentity_t *self)
 {
     SV_SetBrushModel(self);
+#if defined(COD2_X64)
+    self->r.contents = 0x20000000;
+#else
     self->r.contents = 0x405c0008;
+#endif
     self->r.svFlags = 1;
     self->s.eFlags |= 1;
     SV_LinkEntity(self);
@@ -143,8 +147,13 @@ void SP_trigger_damage(gentity_t *pSelf)
 
     level = LEVEL;
     if (level->spawnVar.spawnVarsValid != 0) {
+#if defined(COD2_X64)
+        if (G_SpawnFloat("wait", "", &wait) && wait <= 0.0f)
+            pSelf->spawnflags |= 0x200;
+#else
         if (G_SpawnFloat("wait", "", &wait) && !(0.0f < wait))
             pSelf->spawnflags |= 0x200;
+#endif
     }
 
     SV_SetBrushModel(pSelf);
@@ -164,8 +173,13 @@ void SP_trigger_multiple(gentity_t *ent)
 
     level = LEVEL;
     if (level->spawnVar.spawnVarsValid != 0) {
+#if defined(COD2_X64)
+        if (G_SpawnFloat("wait", "", &wait) && wait <= 0.0f)
+            ent->spawnflags |= 0x10;
+#else
         if (G_SpawnFloat("wait", "", &wait) && !(0.0f < wait))
             ent->spawnflags |= 0x10;
+#endif
     }
 
     SV_SetBrushModel(ent);
@@ -225,9 +239,15 @@ void SP_trigger_radius(gentity_t *ent)
     ent->r.svFlags = 0x21;
 
     if (LEVEL->spawnVar.spawnVarsValid != 0) {
+#if defined(COD2_X64)
+        if (G_SpawnFloat("wait", "", &wait) && wait <= 0.0f) {
+            ent->spawnflags |= 0x10;
+        }
+#else
         if (G_SpawnFloat("wait", "", &wait) && !(0.0f < wait)) {
             ent->spawnflags |= 0x10;
         }
+#endif
     }
 
     spawnflags = ent->spawnflags;
@@ -270,9 +290,15 @@ void SP_trigger_disk(gentity_t *ent)
 
     level = LEVEL;
     if (level->spawnVar.spawnVarsValid != 0) {
+#if defined(COD2_X64)
+        if (G_SpawnFloat("wait", "", &wait) && wait <= 0.0f) {
+            ent->spawnflags |= 0x10;
+        }
+#else
         if (G_SpawnFloat("wait", "", &wait) && !(0.0f < wait)) {
             ent->spawnflags |= 0x10;
         }
+#endif
     }
 
     spawnflags = ent->spawnflags;

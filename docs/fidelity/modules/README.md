@@ -2,7 +2,7 @@
 
 `functions.json` contains a function list for every indexed source module.
 `modules.csv` gives its four status counts. The active module is
-`game/g_scr_mover_mp`; complete that module before moving to another.
+`game/g_client_fields_mp`; complete that module before moving to another.
 `game/g_active_mp`, `game/g_client_mp` and `game/g_combat_mp` are fully reconciled;
 their reports preserve the outstanding
 whole-project replay differences.
@@ -57,12 +57,12 @@ reliable whole-project completion date.
 
 ## Current workload and estimate
 
-After twelve module reconciliations, the ledger has 7,627 unchecked entries:
-6,850 assigned engine entries and 777 unassigned entries. Another 1,360 entries
-are intentional bundled-library exclusions. There are also eight intentional Linux-only helper omissions.
+After nineteen module reconciliations, the ledger has 7,513 unchecked entries:
+6,736 assigned engine entries and 777 unassigned entries. Another 1,360 entries
+are intentional bundled-library exclusions. There are also twelve intentional Linux-only helper omissions.
 Seven more intentional differences cover native dedicated debug rendering, CoD2x level-exit behavior
 and five script error or load paths.
-There are 380 equal functions and 75 fixed functions. All 24 entries in `game/g_active_mp` and all 11 in
+There are 467 equal functions and 98 fixed functions. All 24 entries in `game/g_active_mp` and all 11 in
 `game/g_client_mp`, plus all 13 in `game/g_combat_mp`, are reconciled, with
 integrated results in their reports.
 
@@ -146,3 +146,12 @@ All 242 `game/g_scr_main_mp` entries are reconciled: 225 equal, eleven fixed and
 intentional. Seven regression groups fail the baseline and pass both builds.
 Both 2,000-frame replays match the previous trace, so that recording reaches none of the corrected
 paths. Time on this batch overlapped other modules, so it gives no throughput figure.
+
+Seven further modules were reconciled in one batch: `game/g_scr_mover_mp`, `game/g_spawn_mp`,
+`game/g_trigger_mp`, `game/g_svcmds_mp`, `game/g_team_mp`, `game/scr_const_mp` and `game/player_use_mp`.
+Both 2,000-frame replays agree with each other and move closer to the original Mac recording. Against the original, the differences in `viewangles`, `pm_flags` and `pm_time` fell from 1,228, 80 and 104 to zero, `velocity` fell from 1,313 to 1,257, and `origin` fell from 3,786 to 3,781. The first player difference stays at frame 102, a last-bit float in `velocity[1]`, and the first state difference stays at frame 116. The trace first differs from the previous commit at frame 648. Which fix moved these counts was not isolated.
+The batch's time overlapped other modules, so it gives no throughput figure.
+
+From this batch on, new per-fix regression tests are no longer written. Each batch is compared with the
+binary, built, run through the existing fixtures and the replay, and reviewed once. A fix on a path the
+replay does not reach is then only compiled and reviewed, and its report says so.

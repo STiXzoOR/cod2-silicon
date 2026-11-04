@@ -245,8 +245,10 @@ static qboolean Scr_SetEntityField(int entnum, int offset)
         return 1;
     }
 
+#if !defined(COD2_X64)
     if (offset < 0 || offset >= 10 || !fields[offset].name)
         return 1;
+#endif
 
     field = &fields[offset];
     if (field->callback) {
@@ -265,16 +267,20 @@ static void Scr_GetEntityField(int entnum, int offset)
     if ((offset & 0xC000) == 0xC000) {
         if (ent && ent->client) {
             Scr_GetClientField(ent->client, offset & 0x3FFF);
+#if !defined(COD2_X64)
         } else {
             Scr_AddUndefined();
+#endif
         }
         return;
     }
 
+#if !defined(COD2_X64)
     if (offset < 0 || offset >= 10 || !fields[offset].name) {
         Scr_AddUndefined();
         return;
     }
+#endif
 
     Scr_GetGenericField((byte *)ent, fields[offset].type, fields[offset].ofs);
 }
@@ -548,7 +554,11 @@ static void __attribute_regparm__(3) G_ParseEntityField(const char *key, const c
             }
             case F_MODEL:
                 if (*value == '*') {
+#if defined(COD2_X64)
+                    ent->s.index.brushmodel = (unsigned short)atoi(value + 1);
+#else
                     ent->model = (byte)(unsigned short)atoi(value + 1);
+#endif
                 } else {
                     G_SetModel(ent, value);
                 }
