@@ -147431,7 +147431,7 @@
         ],
         "pairing": "unique module and name; semantics unchecked",
         "status": "equal",
-        "evidence": "Compared all branches of Mac 0x2ee14-0x2eee8 with the inline block in native Com_Frame_Try_Block_Function: ROM/current-latched gates, registrations 0x1020/0x1040, modified clear, client shutdown and dedicated commands."
+        "evidence": "Compared all branches of Mac 0x2ee14-0x2eee8 with native Com_DedicatedModified: ROM/current-latched gates, registrations 0x1020/0x1040, modified clear, client shutdown and dedicated commands. The previously inlined frame body is now shared with the restored SV_Map_f caller; independent server-client review confirmed the extraction."
       },
       {
         "id": "mac:0x0002defa",
