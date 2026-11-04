@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 4782,
-      "intentional": 1556,
-      "equal": 2652,
-      "fixed": 467
+      "unchecked": 4719,
+      "intentional": 1561,
+      "equal": 2701,
+      "fixed": 476
     },
     "scopes": {
       "unassigned": 777,
@@ -72814,8 +72814,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001630da: Compared sole ROQ_CloseAllVideos tail forwarding."
       },
       {
         "id": "mac:0x0016307e",
@@ -72836,8 +72836,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0016307e: Compared sole handle-preserving ROQ_DrawCinematicFromHandle tail forwarding."
       },
       {
         "id": "mac:0x00163068",
@@ -72858,8 +72858,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x00163068: Read sole Mac ROQ_PlayCinematic tail forwarding. Native Apple intentionally returns -1 because QuickTime/RoQ playback is unsupported; preserve the immediate-finish backend boundary documented in WS11-bringup.md. Non-Apple forwarding remains."
       },
       {
         "id": "mac:0x0016305e",
@@ -72880,8 +72880,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0016305e: Compared sole handle-preserving ROQ_RunCinematicFromHandle forwarding and status return."
       },
       {
         "id": "mac:0x00163072",
@@ -72902,8 +72902,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00163072: Compared sole ROQ_SetExtentsFromHandle forwarding of all five integer arguments."
       },
       {
         "id": "mac:0x00163054",
@@ -72924,8 +72924,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00163054: Restarted exact-symbol entry and compared sole handle-preserving ROQ_StopCinematicFromHandle forwarding and status return."
       },
       {
         "id": "mac:0x001630d0",
@@ -72946,8 +72946,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001630d0: Compared sole handle-preserving ROQ_UploadCinematicFromHandle forwarding."
       },
       {
         "id": "mac:0x00163088",
@@ -72968,8 +72968,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00163088: Restored cin_skippable=1 byte store at 0x16308b. Existing Apple nextmap-clear/introPlayed immediate-finish replacement remains intentional per WS11; other native platforms forward ROQ_PlayCinematic_f. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x00163098",
@@ -72990,8 +72990,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00163098: Reconstructed missing cin_skippable=0 command wrapper at 0x16309b with same documented Apple immediate-finish replacement as skippable command. Narrow dependent registration follows Mac 0x148fb1-0x148fe9: cinematic then unskippablecinematic, autocomplete only cinematic; Mac shutdown leaves unskippablecinematic registered and that quirk is retained. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x001630a8",
@@ -73012,8 +73012,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001630a8: Compared sole ROQ_DrawCinematic tail forwarding."
       },
       {
         "id": "mac:0x001630b2",
@@ -73034,8 +73034,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001630b2: Compared sole ROQ_RunCinematic tail forwarding."
       },
       {
         "id": "mac:0x001630bc",
@@ -73056,8 +73056,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x001630bc: Restored cin_skippable byte gate at 0x1630bf-0x1630cb: return when zero, otherwise ROQ_StopCinematic. Compiled and reviewed; not exercised. Independent review also confirmed initialized Mac cin_skippable byte01 at0x34b220 (file0x34a220); native now starts at1. Corrected client object compiled; no runtime exercise."
       }
     ],
     "client/cl_console_mp": [
@@ -79386,8 +79386,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001729a6: Read all ten print calls and compared usage strings, filename length 40 and ordering."
       },
       {
         "id": "mac:0x00172a2e",
@@ -79408,8 +79408,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00172a2e: Read complete argument validation, lighting/fresnel conversions, 1.333f constant, six capture iterations, color callback, suffix table at 0x34b7c4 and save callback arguments."
       },
       {
         "id": "mac:0x00172970",
@@ -79430,8 +79430,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00172970: Compared keycatcher bit 8, uiStarted and cinematic-state gates, zero return and UI blur forwarding."
       },
       {
         "id": "mac:0x001728dc",
@@ -79452,8 +79452,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001728dc: Compared console font height call and all draw-console arguments, baseline addition and unit scales; native pointer-sized font ABI remains."
       },
       {
         "id": "mac:0x0017285a",
@@ -79474,8 +79474,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0017285a: Restarted exact symbol disassembly to avoid bad full-binary prologue; compared font height, integer-to-float baseline, maxChars and all draw-text arguments."
       },
       {
         "id": "mac:0x0017295e",
@@ -79496,8 +79496,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0017295e: Compared the sole scr_initialized=1 store."
       },
       {
         "id": "mac:0x00172d88",
@@ -79518,8 +79518,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00172d88: Read complete state dispatch and decoded table at 0x33b3c0. Restored disconnected WWW download UI (0x172fac), zero-result command send (0x17302c/0x173152), cinematic UI exclusion (0x172e5c), UI-before-EndView/DoneRenderingViews order (0x172e78-0x172e90), signed demo size /1024 (0x173057-0x173063), exact stock 1/3 scale (0x1730b1), and diagnostic control prefix. Removed main-menu auto-close absent before 0x172e0c. Existing native renderer-availability/loading guards, opt-in diagnostics and CoD2x overlay remain. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x001731a8",
@@ -79540,8 +79540,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x001731a8: Read complete Mac recursion, keep-alive, initialized and error gates. Native additionally stops while g_cginit_loading to avoid rendering during the native asset-loading service; existing guard is preserved."
       },
       {
         "id": "mac:0x0017315c",
@@ -79562,8 +79562,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0017315c: Compared full recursion guard, state-6 loading keep-alive, initialization/error gates and updateScreenCalled set/call/clear sequence."
       }
     ],
     "client/cl_ui_mp": [
@@ -79586,8 +79586,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001818ce: Compared fs_game registration (empty default, flags 0x101c), fixed 16/4-byte copies and terminators; length parameters are likewise ignored."
       },
       {
         "id": "mac:0x0018192c",
@@ -79608,8 +79608,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0018192c: Compared fixed 16/4-byte copies, terminators and Com_WriteCDKey forwarding."
       },
       {
         "id": "mac:0x00181808",
@@ -79630,8 +79630,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x00181808: Restored the engine status wrapper and compared nonzero EnablePbCl/zero DisablePbCl dispatch. These targets intentionally remain the documented pb_public.h/pb_null_adapter.c unsupported PunkBuster null adapter (WS44); no bundled backend is reconstructed. Compiled and reviewed."
       },
       {
         "id": "mac:0x00181ac8",
@@ -79652,8 +79652,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x00181ac8: Compared uiStarted store, local-client switches, UI_Init and UI_Component_Init order. Existing COD2_NATIVE_TRACE_ONLY before/after diagnostic calls remain opt-in native instrumentation."
       },
       {
         "id": "mac:0x00181a5c",
@@ -79674,8 +79674,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00181a5c: Compared started return gate, unload channel 0, UI keycatcher/HUD clearing, local-client switch/shutdown order and return values."
       },
       {
         "id": "mac:0x0018101c",
@@ -79696,8 +79696,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0018101c: Compared connection counters/state, both 1024-byte string-copy arguments and snapshot player clientNum."
       },
       {
         "id": "mac:0x0018196a",
@@ -79718,8 +79718,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0018196a: Compared valid snapshot/count gate, 2048-slot ring mask, client-index scan, strncpy size and return values. Native type-layout probe confirms 0x26e0/0x26e8 still identify snap.numClients/snap.parseClientsNum."
       },
       {
         "id": "mac:0x00181854",
@@ -79740,8 +79740,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00181854: Compared binding lookup, nonnull bounded-copy forwarding and null binding empty-string store; key implementation is a read-only dependency."
       },
       {
         "id": "mac:0x00181890",
@@ -79762,8 +79762,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00181890: Compared sole current local-client keyCatchers read."
       },
       {
         "id": "mac:0x0018181e",
@@ -79784,8 +79784,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0018181e: Compared key translation argument 1 and bounded-copy forwarding; key implementation is a read-only dependency."
       },
       {
         "id": "mac:0x001818a0",
@@ -79806,8 +79806,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001818a0: Compared preservation of console catcher bit 1, catcher assignment, local-client pointer reload and HUD clear when UI catcher bit 8 is absent."
       },
       {
         "id": "mac:0x00181b40",
@@ -79828,8 +79828,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x00181b40: Read complete alphabetic-byte filtering and case-insensitive clean/original fallback. Mac uses two 32-byte scratch arrays; existing native 40-byte scratch arrays remain rather than introducing smaller overflowing storage. Declared server hostName[32] callers are bounded by I_strncpyz; output matches for these valid names."
       },
       {
         "id": "mac:0x00181c36",
@@ -79850,8 +79850,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x00181c36: Decoded 11-way sort table at 0x33b980 and read complete source/index selection, all comparisons and tie-breaks. Restored PB column 9 and ping column 10 (0x181ec2/0x181d2f), unknown-source return 0, and second-map-name-before-first callback order (0x181e41-0x181e59). Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x001810ee",
@@ -79872,8 +79872,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001810ee: Compared source 0/1/2 count selection and unknown-source zero."
       },
       {
         "id": "mac:0x00181148",
@@ -79894,8 +79894,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00181148: Read complete source/index/null-buffer gates and all 21 key/value fields, string pointers, unsigned/signed byte and short widening, address formatting and final bounded copy. Native patch-1.3 pb field matches Mac metadata."
       },
       {
         "id": "mac:0x00181542",
@@ -79916,8 +79916,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00181542: Compared source/index bounds, invalid -1 and signed-short ping read."
       },
       {
         "id": "mac:0x001815ce",
@@ -79938,8 +79938,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x001815ce: Reconstructed missing engine metadata accessor: source/index bounds match LAN_GetServerPing and valid records return unsigned PB byte at Mac 0x181606. This reads advertised metadata independently of the unsupported PB execution backend. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x001817fe",
@@ -79960,8 +79960,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001817fe: Compared sole CL_ServerStatus forwarding with all three arguments and result."
       },
       {
         "id": "mac:0x0018165a",
@@ -79982,8 +79982,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0018165a: Read message-pump call, all-slots -1 branch, source-specific loop bounds and indexed unsigned-byte dirty stores."
       },
       {
         "id": "mac:0x0018108c",
@@ -80004,8 +80004,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0018108c: Compared source dispatch, fixed 128-entry local/favorite loops, global count gate and -1 signed-short stores."
       },
       {
         "id": "mac:0x0018176a",
@@ -80026,8 +80026,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0018176a: Compared source/index bounds, invalid zero and unsigned-byte dirty read."
       },
       {
         "id": "mac:0x001817f4",
@@ -80048,8 +80048,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001817f4: Compared sole CL_UpdateDirtyPings_f forwarding and result."
       },
       {
         "id": "mac:0x0018112e",
@@ -80070,8 +80070,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0018112e: Compared source-1 gate, waitglobalserverresponse read and other-source zero."
       },
       {
         "id": "mac:0x00181a46",
@@ -80092,8 +80092,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00181a46: Compared connection state equality with active state 8 and boolean result."
       },
       {
         "id": "mac:0x00181b1c",
@@ -80114,8 +80114,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00181b1c: Compared menu/all_mp strings and alias-system argument 0; sound loader is a read-only dependency."
       },
       {
         "id": "mac:0x00181a0e",
@@ -80136,8 +80136,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00181a0e: Compared alias-list forwarding, alias-system argument 0 and result; sound implementation is a read-only dependency."
       },
       {
         "id": "mac:0x00181a2a",
@@ -80158,8 +80158,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00181a2a: Compared alias-name forwarding, alias-system argument 0 and result; sound implementation is a read-only dependency."
       },
       {
         "id": "mac:0x00181b00",
@@ -80180,8 +80180,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x00181b00: Compared uiStarted gate, zero result when stopped and UI_CheckExecKey forwarding when started."
       }
     ],
     "client/cl_ui_pc_mp": [
@@ -80204,8 +80204,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001c76d8: Read source-2/count/address-parse gates, address duplicate scan, name copy length 32, dirty byte, count increment and -2/-1/0/1 results; typed address/storage offsets adapt native layout."
       },
       {
         "id": "mac:0x001c796a",
@@ -80226,8 +80226,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001c796a: Read source/index selection, NET_AdrToString then I_strncpyz forwarding, and invalid empty-string store; typed native address layout remains."
       },
       {
         "id": "mac:0x001c7a62",
@@ -80248,8 +80248,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x001c7a62: Read complete version/count/short-read failure flow, close/reset and success sort. Mac 0x1c7b57-0x1c7ba8 checks combined 140-byte-record arrays. Native still used stale 136-byte payload lengths despite 148-byte patch-1.3 records. Read lengths and combined marker now derive from actual arrays (2960000+18944 bytes); version 1 remains and mismatched raw layouts are rejected. Native IPX/address layout is intentional; no cross-platform cache converter. Compiled and reviewed; not exercised."
       },
       {
         "id": "mac:0x001c784c",
@@ -80270,8 +80270,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001c784c: Read source gate, address search, forward adjacent-record copies, count decrement and early exits; copy length uses native sizeof(serverInfo_t)."
       },
       {
         "id": "mac:0x001c7bb8",
@@ -80292,8 +80292,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x001c7bb8: Read complete reverse requestCount>2/adjacent-duplicate pruning, swap-from-end, sort and write sequence. Mac 0x1c7cfe-0x1c7d54 writes combined payload size then both full arrays. Native wrote a global-only marker and stale 136-byte extents; all lengths/marker now derive from native arrays (2960000+18944 bytes). Existing native raw-address layout and version 1 retained. Compiled and reviewed; not exercised."
       }
     ],
     "client/screen_placement_mp": [
@@ -80316,8 +80316,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0018ed96: Decoded horizontal/vertical tables at 0x33bc80/0x33bca0. Read all alignments 0-7/default, offset/scaling choices and float addition/multiplication order for position and dimensions."
       },
       {
         "id": "mac:0x0018e970",
@@ -80338,8 +80338,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0018e970: Decoded table at 0x33bc40 and compared all alignments 0-7/default, virtual/real/full scales, offsets, centers and operation order."
       },
       {
         "id": "mac:0x0018ea5c",
@@ -80360,8 +80360,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0018ea5c: Decoded table at 0x33bc60 and compared all alignments 0-7/default, virtual/real/full scales, offsets, centers and operation order."
       },
       {
         "id": "mac:0x0018eb30",
@@ -80382,8 +80382,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0018eb30: Exact-symbol Mac body is an empty return, matching native empty function."
       },
       {
         "id": "mac:0x0018e916",
@@ -80404,8 +80404,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0018e916: Exact-symbol body multiplies input float by scaleVirtualToReal[1] once and returns the rounded float."
       },
       {
         "id": "mac:0x0018e8f8",
@@ -80426,8 +80426,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0018e8f8: Restarted exact-symbol body to avoid full-binary misaligned entry; one multiply by scaleVirtualToReal[0] matches."
       },
       {
         "id": "mac:0x0018e952",
@@ -80448,8 +80448,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0018e952: Exact-symbol body multiplies input float by scaleRealToVirtual[1] once and returns the rounded float."
       },
       {
         "id": "mac:0x0018e934",
@@ -80470,8 +80470,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0018e934: Exact-symbol body multiplies input float by scaleRealToVirtual[0] once and returns the rounded float."
       },
       {
         "id": "mac:0x0018eb38",
@@ -80492,8 +80492,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x0018eb38: Read complete viewport/aspect/safe-area calculations and SSE operation order. At 0x18ebfa/0x18ec19/0x18ec3b/0x18ec5d Mac cmpnltss selects viewport bounds on unordered differences; native >=0 chose the opposite NaN branch. Native now uses !(difference<0), preserving Mac unordered selection; all finite arithmetic/order matches. Compiled and reviewed; not exercised."
       }
     ],
     "client/snd_null": [

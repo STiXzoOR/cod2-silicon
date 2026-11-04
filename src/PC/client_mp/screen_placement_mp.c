@@ -124,10 +124,17 @@ void SetScreenScaling(float safeAreaRatioHorizontal, float safeAreaRatioVertical
     float safeRight = displayWidth - unsafeHorz;
     float safeBottom = displayHeight - unsafeVert;
 
+#if defined(COD2_X64)
+    float safeLeft = !(fViewportX - unsafeHorz < 0.0f) ? fViewportX : unsafeHorz;
+    float safeTop = !(fViewportY - unsafeVert < 0.0f) ? fViewportY : unsafeVert;
+    float clampedRight = !(safeRight - (fViewportX + fViewportWidth) < 0.0f) ? (fViewportX + fViewportWidth) : safeRight;
+    float clampedBottom = !(safeBottom - (fViewportY + fViewportHeight) < 0.0f) ? (fViewportY + fViewportHeight) : safeBottom;
+#else
     float safeLeft = (fViewportX - unsafeHorz >= 0) ? fViewportX : unsafeHorz;
     float safeTop = (fViewportY - unsafeVert >= 0) ? fViewportY : unsafeVert;
     float clampedRight = (safeRight - (fViewportX + fViewportWidth) >= 0) ? (fViewportX + fViewportWidth) : safeRight;
     float clampedBottom = (safeBottom - (fViewportY + fViewportHeight) >= 0) ? (fViewportY + fViewportHeight) : safeBottom;
+#endif
 
     SP->realViewableMin[0] = safeLeft - fViewportX;
     SP->realViewableMin[1] = safeTop - fViewportY;
