@@ -18,7 +18,7 @@ Updated 2026-11-05.
 
 **Menu scripts.** Restored the PB start/join gates and `setPbClStatus` dispatch (0x154938, 0x155e2f, 0x1564cd). These call the existing engine functions; the documented `pb_null_adapter.c` backend remains a no-op. Profile lists use allocation/free type 3 (0x155215, 0x155251); creating a profile resets feeder selection before selecting the new profile (0x155840). Deletion reloads profile state after the callback. The movie-list scratch buffer is 4096 bytes, matching the request at 0x155a16, rather than 2048.
 
-**Connection and download screens.** Restored detached WWW download display (0x157719), map display-name assignment (0x157d0f), and the missing server-message wrap/draw loop at y=299 with 22-pixel rows (0x15795e-0x157cc8). Download text uses its supplied center, puts the initial copied line at yStart+340 (0x157052), and translates paired time units in Mac order (0x157176, 0x15762a).
+**Connection and download screens.** Restored detached WWW download display (0x157719), map display-name assignment (0x157d0f), and the missing server-message wrap/draw loop at y=299 with 22-pixel rows (0x15795e-0x157cc8). Download text uses its supplied center, puts the initial copied line at yStart+340 (0x157052), and translates paired time units in Mac order (0x157176, 0x15762a). Independent review also found that before a transfer starts, zero total size still uses the four-field copied/of/total text at 0x156fb2–0x156fec. The native condition now retains that text; the two-field unknown-size form remains restricted to started transfers, as at 0x1575c9–0x1575ee.
 
 ## Adaptations and unresolved storage
 

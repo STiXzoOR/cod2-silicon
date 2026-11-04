@@ -4943,7 +4943,11 @@ static void UI_DisplayDownloadInfo(const char *downloadName, float centerPoint, 
             UI_DrawCenteredText(text, font, scale, yEta, ltGrey, 6);
 #endif
 
+#if defined(COD2_X64)
+            if (!transferStarted || downloadSize != 0) {
+#else
             if (downloadSize != 0) {
+#endif
 
                 const char *copiedStr = UI_SafeTranslateString("EXE_COPIED");
                 const char *ofStr = UI_SafeTranslateString("EXE_OF");
