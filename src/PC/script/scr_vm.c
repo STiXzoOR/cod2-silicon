@@ -1436,14 +1436,16 @@ const char *Scr_GetNextCodepos(VariableValue *top, const char *pos, int opcode, 
             value = *top;
             AddRefToValue(value.type, value.u);
             Scr_CastBool(&value);
-            if (varPub->error_message)
-                goto clear_error_and_return_next;
 #if defined(COD2_X64)
             jumpOffset = VM_LoadU16(next);
-#else
-            jumpOffset = *(const unsigned short *)next;
-#endif
             next = pos + 3;
+#endif
+            if (varPub->error_message)
+                goto clear_error_and_return_next;
+#if !defined(COD2_X64)
+            jumpOffset = *(const unsigned short *)next;
+            next = pos + 3;
+#endif
             if (!value.u.intValue)
                 next += jumpOffset;
             return next;
@@ -1453,14 +1455,16 @@ const char *Scr_GetNextCodepos(VariableValue *top, const char *pos, int opcode, 
             value = *top;
             AddRefToValue(value.type, value.u);
             Scr_CastBool(&value);
-            if (varPub->error_message)
-                goto clear_error_and_return_next;
 #if defined(COD2_X64)
             jumpOffset = VM_LoadU16(next);
-#else
-            jumpOffset = *(const unsigned short *)next;
-#endif
             next = pos + 3;
+#endif
+            if (varPub->error_message)
+                goto clear_error_and_return_next;
+#if !defined(COD2_X64)
+            jumpOffset = *(const unsigned short *)next;
+            next = pos + 3;
+#endif
             if (value.u.intValue)
                 next += jumpOffset;
             return next;
@@ -7291,7 +7295,11 @@ static void VM_CandidateHandleSwitch(const char **pos, VariableValue **top)
             --*top;
             return;
         }
+#if defined(COD2_X64)
+        if (!currentCaseValue && i + 1 == caseCount) {
+#else
         if (!currentCaseValue) {
+#endif
             defaultPos = currentCodePos;
         }
     }
@@ -7347,6 +7355,65 @@ static void VM_CandidateCheckFrameDepth(void)
         Scr_SetErrorMessageAndJump("script stack overflow (too many embedded function calls)");
     }
 }
+#if defined(COD2_X64)
+static void VM_CandidateCheckScriptCall(unsigned int opcode, VariableValue **top)
+{
+    int setDepthErrorIndex = 1;
+    int popFunctionOnOverflow = 0;
+
+    /* Mac checks these errors before consuming the immediate call operands. */
+    switch (opcode) {
+    case VMOP_ScriptFunctionCallPointer:
+    case VMOP_ScriptFunctionCall:
+        setDepthErrorIndex = 0;
+        break;
+    case VMOP_ScriptFunctionCallExpr:
+    case VMOP_ScriptThreadCallExpr:
+        if ((*top)->type != 9)
+            return;
+        break;
+    case VMOP_ScriptMethodCall:
+    case VMOP_ScriptMethodThreadCall:
+        if ((*top)->type != VAR_POINTER) {
+            ((struct scrVarPub_t *)imp_scrVarPub)->error_index =
+                opcode == VMOP_ScriptMethodCall ? 1 : 2;
+            Scr_SetErrorMessageAndJump(va("%s is not an object",
+                ((const char *const *)imp_var_typename)[(*top)->type]));
+            return;
+        }
+        setDepthErrorIndex = opcode != VMOP_ScriptMethodCall;
+        break;
+    case VMOP_ScriptMethodCallExpr:
+    case VMOP_ScriptMethodThreadCallExpr:
+        if ((*top)->type != 9)
+            return;
+        if ((*top - 1)->type != VAR_POINTER) {
+            --*top;
+            ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 2;
+            Scr_SetErrorMessageAndJump(va("%s is not an object",
+                ((const char *const *)imp_var_typename)[(*top)->type]));
+            return;
+        }
+        popFunctionOnOverflow = 1;
+        break;
+    case VMOP_ScriptThreadCall:
+        break;
+    default:
+        return;
+    }
+
+    if (scrVmPub.function_count <= 30)
+        return;
+
+    if (opcode == VMOP_ScriptFunctionCallPointer)
+        VM_PushValue(top)->type = 8;
+    if (popFunctionOnOverflow)
+        --*top;
+    if (setDepthErrorIndex)
+        ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 1;
+    Scr_SetErrorMessageAndJump("script stack overflow (too many embedded function calls)");
+}
+#endif
 
 static const char *VM_CandidateReadScriptCallTarget(const char **pos)
 {
@@ -7373,11 +7440,13 @@ static const char *VM_CandidatePopCodepos(VariableValue **top)
 
     if ((*top)->type != 9) {
         unsigned int badType = (*top)->type;
-        RemoveRefToValue((*top)->type, (*top)->u);
 #if defined(COD2_X64)
-        if (popBadValue)
+        if (popBadValue) {
+            RemoveRefToValue((*top)->type, (*top)->u);
             --*top;
+        }
 #else
+        RemoveRefToValue((*top)->type, (*top)->u);
         ((struct scrVarPub_t *)imp_scrVarPub)->error_index = 1;
 #endif
         Scr_SetErrorMessageAndJump(va("%s is not a function pointer", ((const char *const *)imp_var_typename)[badType]));
@@ -7631,6 +7700,8 @@ static unsigned int VM_Execute_CXX_Candidate_Pass66(struct function_stack_t fs)
             errorCheckpoint.objectId = objectId;
             errorCheckpoint.thread_count = thread_count;
         }
+        if (opcode >= VMOP_ScriptFunctionCallPointer && opcode <= VMOP_ScriptMethodThreadCallExpr)
+            VM_CandidateCheckScriptCall(opcode, &top);
 #endif
         switch ((ScrVmOpcode)opcode) {
         case VMOP_End:
