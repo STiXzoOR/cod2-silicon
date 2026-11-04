@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 6616,
+      "unchecked": 6556,
       "intentional": 1441,
-      "equal": 1183,
-      "fixed": 217
+      "equal": 1233,
+      "fixed": 227
     },
     "scopes": {
       "unassigned": 777,
@@ -172424,8 +172424,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Read allocator inlined into Mac SV_DObjCreateSkelForBone 0x14eaed-0x14ebb2 and SV_DObjCreateSkelForBones 0x14ec3b-0x14ed00. Native copies used signed rather than unsigned cache/size bounds and undefined signed additions; restored Mac unsigned comparisons and 32-bit wrapping arithmetic in both callers. No standalone symbol claimed; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0014dbd2",
@@ -172455,8 +172455,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014dbd2: Read the tail jump forwarding size unchanged to Hunk_AllocInternal."
       },
       {
         "id": "mac:0x0014dbdc",
@@ -172486,8 +172486,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014dbdc: Read the tail jump forwarding size unchanged to Hunk_AllocInternal."
       },
       {
         "id": "mac:0x0014dd4c",
@@ -172517,8 +172517,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014dd4c: Read entity-number lookup and DObjCalcAnim argument forwarding without an added null check."
       },
       {
         "id": "mac:0x0014dd74",
@@ -172548,8 +172548,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014dd74: Read entity-number lookup and DObjCalcSkel argument forwarding without an added null check."
       },
       {
         "id": "mac:0x0014ea92",
@@ -172579,8 +172579,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x14eb0a/0x14eb1d compare cache position/aligned size unsigned; native compared signed. Restored unsigned comparisons and 32-bit wrapping alignment, position/timestamp additions. Read cached-bone return, rollover warning/reset loop and create call from exact symbol; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0014ebe0",
@@ -172610,8 +172610,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x14ec58/0x14ec6b compare cache position/aligned size unsigned; native compared signed. Restored unsigned comparisons and 32-bit wrapping alignment, position/timestamp additions. Read cached-partbits return, rollover warning/reset loop and create call from exact symbol; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0014ddee",
@@ -172641,8 +172641,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014ddee: Read server-DObj lookup, null-object early return, and DObjDisplayAnim call."
       },
       {
         "id": "mac:0x0014dc36",
@@ -172672,8 +172672,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014dc36: Read developer gating, DObj lookup, dump call, and the no-model diagnostic."
       },
       {
         "id": "mac:0x0014de96",
@@ -172703,8 +172703,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014de96: Read server-DObj lookup and non-null boolean conversion."
       },
       {
         "id": "mac:0x0014dd9c",
@@ -172734,8 +172734,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014dd9c: Read server-DObj lookup, null result -1, and bone-name forwarding."
       },
       {
         "id": "mac:0x0014dd1c",
@@ -172765,8 +172765,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014dd1c: Read entity lookup and the ordered object, bone-index, part-bit arguments."
       },
       {
         "id": "mac:0x0014ddd2",
@@ -172796,8 +172796,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014ddd2: Read server-DObj lookup and direct DObjGetRotTransArray return."
       },
       {
         "id": "linux:server/sv_game_mp.cpp:687:SV_DObjGetRotTransArray",
@@ -172815,8 +172815,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Matched the alternate Linux wrapper name to Mac/native SV_DObjGetMatrixArray at 0x14ddd2-0x14ddee: entity-number server-DObj lookup followed by direct DObjGetRotTransArray return. No separate Mac symbol for the Linux name is claimed."
       },
       {
         "id": "mac:0x0014de10",
@@ -172846,8 +172846,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014de10: Read null-object return and DObjGetTree tail call."
       },
       {
         "id": "mac:0x0014dcea",
@@ -172877,8 +172877,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014dcea: Read DObj lookup, null gating, and unmodified float-time forwarding."
       },
       {
         "id": "linux:server/sv_game_mp.cpp:620:SV_DObjNumBones",
@@ -172896,8 +172896,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read the identified inline sequence in Mac SV_XModelDebugBoxes 0x14e464-0x14e47a: entity-number server-DObj lookup then DObjNumBones; native caller contains the same sequence. Comparison is of that inlined use, whose return is unused, not a claimed standalone symbol."
       },
       {
         "id": "linux:server/sv_game_mp.cpp:713:SV_DObjSetControlRotTransIndex",
@@ -172916,7 +172916,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux wrapper read; native name/body/caller and a Mac code symbol or identified inline use were not found. Mac behavior could not be established for this row."
       },
       {
         "id": "linux:server/sv_game_mp.cpp:700:SV_DObjSetRotTransIndex",
@@ -172935,7 +172935,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux wrapper read; native name/body/caller and a Mac code symbol or identified inline use were not found. Mac behavior could not be established for this row."
       },
       {
         "id": "mac:0x0014dcae",
@@ -172965,8 +172965,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014dcae: Read null result 0 and ordered object, float-time, notification arguments."
       },
       {
         "id": "mac:0x0014e262",
@@ -172996,8 +172996,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014e262: Read brush tracing, cylinder vertical rejection, center/radius operation order, and strict cylinder/inclusive disk distance predicates. Existing COD2_X64 predicates agree."
       },
       {
         "id": "linux:server/sv_game_mp.cpp:799:SV_FreeWeaponInfoMemory",
@@ -173015,8 +173015,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read Com_FreeWeaponInfoMemory(1) inlined into Mac SV_ShutdownGameProgs at 0x14e8b4-0x14e8bb and the matching native shutdown body. No standalone Mac symbol claimed."
       },
       {
         "id": "mac:0x0014e40c",
@@ -173046,8 +173046,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014e40c: Read server-entity index derivation and game-entity stride/base mapping; native pointer subtraction replaces the Mac 372-byte stride calculation."
       },
       {
         "id": "mac:0x0014d974",
@@ -173077,8 +173077,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014d974: Read game-client base plus index times registered stride."
       },
       {
         "id": "mac:0x0014e1ce",
@@ -173108,8 +173108,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014e1ce: Read server-state == 2 gate and ConsoleCommand tail call."
       },
       {
         "id": "mac:0x0014da68",
@@ -173139,8 +173139,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014da68: Read negative/max-client bounds, client stride mapping, and reason forwarding."
       },
       {
         "id": "mac:0x0014d9de",
@@ -173170,8 +173170,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014d9de: Read -1 broadcast, other negative rejection, max-client bound, command type, and percent-s text forwarding."
       },
       {
         "id": "mac:0x0014d958",
@@ -173201,8 +173201,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014d958: Read game-entity base plus index times registered stride."
       },
       {
         "id": "mac:0x0014df64",
@@ -173232,8 +173232,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014df64: Read the selected client ping load with no added bounds check."
       },
       {
         "id": "mac:0x0014dec8",
@@ -173263,8 +173263,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014dec8: Read parse-point address, bounded token copy, and parse-point-or-nonempty-token return."
       },
       {
         "id": "mac:0x0014df1c",
@@ -173294,8 +173294,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014df1c: Read negative/max-client rejection and selected client guid load."
       },
       {
         "id": "mac:0x0014dab0",
@@ -173325,8 +173325,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014dab0: Read buffer-size error path, 0x404 info-string flags, and bounded copy; duplicated Mac calls are control-flow lowering."
       },
       {
         "id": "mac:0x0014db58",
@@ -173356,8 +173356,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014db58: Read all seven 32-bit copies from lastUsercmd into the output struct."
       },
       {
         "id": "linux:server/sv_game_mp.cpp:320:SV_Hunk_AllocAlignInternal",
@@ -173376,7 +173376,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux loading-state guard and aligned-allocator wrapper read; no native wrapper/caller or Mac code symbol/inline identity found. Mac state restriction could not be established."
       },
       {
         "id": "linux:server/sv_game_mp.cpp:307:SV_Hunk_AllocInternal",
@@ -173395,7 +173395,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux loading-state guard and allocator wrapper read; no native wrapper/caller or Mac code symbol/inline identity found. Mac state restriction could not be established."
       },
       {
         "id": "linux:server/sv_game_mp.cpp:333:SV_Hunk_AllocateTempMemoryInternal",
@@ -173414,7 +173414,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux forwarding wrapper read; native has no wrapper/caller and Mac has only zero-valued exception metadata. No executable or inline Mac identity located."
       },
       {
         "id": "linux:server/sv_game_mp.cpp:343:SV_Hunk_FreeTempMemoryInternal",
@@ -173433,7 +173433,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux forwarding wrapper read; native has no wrapper/caller and Mac has only zero-valued exception metadata. No executable or inline Mac identity located."
       },
       {
         "id": "mac:0x0014e1b6",
@@ -173463,8 +173463,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014e1b6: Read gameInitialized=1 and SV_InitGameVM(0, savepersist)."
       },
       {
         "id": "mac:0x0014e0e4",
@@ -173494,8 +173494,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014e0e4: Read FX/parse setup, loading keep-alives, G_InitGame argument order, client-entity clearing loop, and dedicated dvar-dump channel 4."
       },
       {
         "id": "mac:0x0014df98",
@@ -173525,8 +173525,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014df98: Read selected client netchan address copy and NET_IsLocalAddress forwarding."
       },
       {
         "id": "mac:0x0014db20",
@@ -173556,8 +173556,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014db20: Read all five game-entity/client registration stores and their argument order."
       },
       {
         "id": "mac:0x0014de34",
@@ -173587,8 +173587,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014de34: Read basename/extension construction, maps/mp path, FS_ReadFile null-buffer call, and nonnegative result."
       },
       {
         "id": "linux:server/sv_game_mp.cpp:25:SV_NumForGentity",
@@ -173607,7 +173607,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux wrapper read, but native has no body/caller and Mac has only a zero-valued exception-metadata symbol, not a located code symbol. No Mac implementation or inline range identified; not treated as equal."
       },
       {
         "id": "mac:0x0014de7c",
@@ -173637,8 +173637,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014de7c: Read CM_EntityString result store into the server parse point; native preserves pointer width."
       },
       {
         "id": "mac:0x0014dc74",
@@ -173668,8 +173668,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x14dc88 wraps the 32-bit timestamp increment before skipping zero; native signed addition had undefined overflow. Made wrapping explicit and read 16-byte base alignment/position reset; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0014e184",
@@ -173699,8 +173699,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014e184: Read shutdown(0), fixed-console-position clear, and restart(1, savepersist) forwarding."
       },
       {
         "id": "mac:0x0014e1e6",
@@ -173730,8 +173730,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014e1e6: Read model bounds copy, bmodel=1, contents=-1, and relink call."
       },
       {
         "id": "mac:0x0014dffc",
@@ -173761,8 +173761,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014dffc: Read 0x1024 string registration, persistence selection, 64-byte copy, signed-byte tolower loop, validation/default dm, and dvar update."
       },
       {
         "id": "mac:0x0014deb4",
@@ -173792,8 +173792,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014deb4: Read Com_SetWeaponInfoMemory(1) call."
       },
       {
         "id": "mac:0x0014e880",
@@ -173823,8 +173823,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014e880: Read state clear, sound unload type 2, initialization gate, shutdown/free flags 1, and initialized clear."
       },
       {
         "id": "mac:0x0014d990",
@@ -173854,8 +173854,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x14d9ab uses diagnostic data at 0x2d5084 with leading 0x15; native omitted that prefix. Restored text after reading validation and LP64 entity mapping; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0014e458",
@@ -173885,8 +173885,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x0014e458: Read object/bone/model iteration, quaternion-to-matrix operation order, box-edge traversal, world transform, colors and debug-line flags; boxVerts data also compared. Dedicated build excludes this unchanged debug helper."
       },
       {
         "id": "mac:0x0014dbe6",
@@ -173916,8 +173916,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x14dbfc-0x14dc0f reports invalid model names with Com_Error(1, control-prefixed diagnostic, name); native silently returned NULL. Restored error path; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0014e8cc",
@@ -173947,8 +173947,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac inline entity lookup 0x14e92e uses the 0x15-prefixed diagnostic at 0x2d5084; restored prefix. Read linked/broadcast/visibility gates, cluster scan including inclusive overflow and endpoint rejection, fog sentinel and box test; compiled and reviewed, not exercised."
       }
     ],
     "server/sv_init_mp": [
@@ -176468,8 +176468,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001be0d0: Read bmodel brush handle and non-brush CM_TempBoxModel(mins,maxs,contents), including the native inline core."
       },
       {
         "id": "mac:0x001bef26",
@@ -176499,8 +176499,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001bef26: Read contents and pass-owner filters, expanded bounds, broad-phase fraction, brush/temp model selection, angles, transformed box trace and entityNum update."
       },
       {
         "id": "mac:0x001bf516",
@@ -176530,8 +176530,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001bf516: Read both pass-entity/owner filters, model/angle selection, transformed box sight arguments and 0/-1 return."
       },
       {
         "id": "mac:0x001be8c0",
@@ -176561,8 +176561,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001be8c0: Read solid encoding clamps, inlined angle snapping, rotated/ordinary bounds, unit expansion, leaf-cluster overflow, linked/content gates and 2D model bounds. CM_LinkEntity consumes XY only, so extra native Z initialization has no effect."
       },
       {
         "id": "linux:server/sv_world_mp.cpp:966:SV_LocationalTraceToEntity",
@@ -176581,7 +176581,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Linux wrapper read; native has no body/caller and Mac has no code symbol or identified full inline wrapper. Trace initialization/pass fields could not be established from a Mac implementation; not treated as equal."
       },
       {
         "id": "mac:0x001bfb02",
@@ -176611,8 +176611,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001bfb02: Read world contents, 1024-entry area query, pass-entity skip, model selection, transformed contents OR and final contentmask."
       },
       {
         "id": "mac:0x001bf634",
@@ -176642,8 +176642,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": "Partial fix (not a full reconciliation): 4x3 entAxis carries currentOrigin in row 3 (Linux 1.3 sv_world_mp.cpp); tests/lp64/server/point_trace.c. See docs/macos-port/reports/2026-11-04-outside-reference-fixes.md"
+        "status": "equal",
+        "evidence": "Mac 0x001bf634: Read contents/pass-owner gates, DObj contents/bounds, broad phase, geometry pose and local-space rays, fraction rejection and brush fallback. Mac origin at stack -0x90 is row 3 of matrix -0xb4, matching existing native 4x3 translation."
       },
       {
         "id": "mac:0x001bf0e8",
@@ -176673,8 +176673,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": "Partial fix (not a full reconciliation): 4x3 entAxis carries currentOrigin in row 3 (Linux 1.3 sv_world_mp.cpp); tests/lp64/server/point_trace.c. See docs/macos-port/reports/2026-11-04-outside-reference-fixes.md"
+        "status": "equal",
+        "evidence": "Mac 0x001bf0e8: Read contents/pass-owner/linkcontents filters, actor/geometry bounds, pose/local-space trace, priority-map fallback, hit metadata and normal transform. Mac origin at stack -0x6c is row 3 of matrix -0x90, matching existing native 4x3 translation."
       },
       {
         "id": "mac:0x001be134",
@@ -176704,8 +176704,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1be1f5 clears point-sight locational; native left it uninitialized. Mac 0x1be19b-0x1be1ae also alternates extent add/subtract rather than grouping axis differences. Corrected both; read world hit short circuit, point/box construction and arguments from exact symbol; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001bf94e",
@@ -176735,8 +176735,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001bf94e: Read sweep-bound operation order and comparisons, model/angle selection, transformed sight arguments and 0/-1 return."
       },
       {
         "id": "mac:0x001be342",
@@ -176766,8 +176766,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1be3ed-0x1be400 alternates extent add/subtract; native grouped axis differences, potentially changing point/box dispatch. Corrected order; read world/static-model fraction gates, entity numbers, owner mapping, centered box fields and trace arguments from exact symbol; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001be67e",
@@ -176797,8 +176797,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1be6ea-0x1be6fd alternates extent add/subtract; native grouped axis differences, potentially changing point/box dispatch. Corrected order; read world/static-model rejection and point/box sight construction and results from exact symbol; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001be10e",
@@ -176828,8 +176828,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x001be10e: Read server-entity lookup, linked-byte clear and CM_UnlinkEntity forwarding."
       },
       {
         "id": "linux:server/sv_world_mp.cpp:46:SnapAngles",
@@ -176847,8 +176847,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Read angle snapping inlined in Mac SV_LinkEntity 0x1be917-0x1be967: floorf(angle+0.5), truncate/convert, delta square, strict 1.0000001111620804e-6 threshold and conditional write; native inline loop matches."
       }
     ],
     "snd": [

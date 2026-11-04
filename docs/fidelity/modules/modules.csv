@@ -370,14 +370,14 @@ script/scr_vm,112,0,0,0,112
 script/scr_yacc,45,0,0,0,45
 server/sv_ccmds_mp,35,0,0,0,35
 server/sv_client_mp,43,0,0,0,43
-server/sv_game_mp,54,0,0,0,54
+server/sv_game_mp,54,40,7,0,7
 server/sv_init_mp,26,0,0,0,26
 server/sv_main_mp,24,0,0,0,24
 server/sv_main_pc_mp,7,0,0,0,7
 server/sv_net_chan_mp,8,0,0,0,8
 server/sv_snapshot_mp,21,0,0,0,21
 server/sv_voice_mp,7,0,0,0,7
-server/sv_world_mp,14,0,0,0,14
+server/sv_world_mp,14,10,3,0,1
 snd,46,0,0,0,46
 speex/bits,10,0,0,10,0
 speex/cb_search,4,0,0,4,0
