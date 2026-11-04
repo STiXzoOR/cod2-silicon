@@ -71,6 +71,9 @@ extern const char *ClientConnect(int clientNum, int scriptPersId);
 extern void SV_ClientEnterWorld(client_t *client, const dvar_t *(*cmd)[4]);
 extern void SV_BanGuidBriefly(int guid);
 extern int atoi(const char *s);
+#if defined(COD2_X64)
+extern void Com_DedicatedModified(void);
+#endif
 
 static dvar_t *SV_ImportedDvar(void *importedDvar)
 {
@@ -112,7 +115,11 @@ static const char *SV_ConsumeMapRotationToken(void)
     const char *token = Com_Parse(&parse);
 
     Dvar_SetString(rotationCurrent, parse ? parse : "");
+#if defined(COD2_X64)
+    return parse ? token : NULL;
+#else
     return token;
+#endif
 }
 
 static inline __attribute__((always_inline)) qboolean SV_IsHostClient(client_t *cl)
@@ -587,7 +594,11 @@ static void SV_DumpUser_f(void)
         return;
     }
     if (SV_Cmd_Argc() != 2) {
+#if defined(COD2_X64)
+        Com_Printf("Usage: info <userid>\n");
+#else
         Com_Printf("Usage: dumpuser <player name>\n");
+#endif
         return;
     }
     cl = (byte *)SV_GetPlayerByName();
@@ -626,6 +637,7 @@ void SV_AddDedicatedCommands(void)
 
 void SV_RemoveOperatorCommands(void)
 {
+#if !defined(COD2_X64)
     if (!initialized)
         return;
 
@@ -654,6 +666,7 @@ void SV_RemoveOperatorCommands(void)
     Cmd_RemoveCommand("tell");
     Cmd_RemoveCommand("scriptUsage");
     Cmd_RemoveCommand("stringUsage");
+#endif
 }
 
 static void SV_Map_f(void)
@@ -675,6 +688,9 @@ static void SV_Map_f(void)
         return;
     }
 
+#if defined(COD2_X64)
+    Com_DedicatedModified();
+#endif
     I_strncpyz(mapname, FS_GetMapBaseName(map), sizeof(mapname));
     I_strlwr(mapname);
 
@@ -795,6 +811,9 @@ static void SV_Drop_f(void)
 static void SV_MapRotate_f(void)
 {
     const char *token;
+#if defined(COD2_X64)
+    qboolean firstToken = 1;
+#endif
     dvar_t *mapRotation = SV_ImportedDvar(imp_sv_mapRotation);
     dvar_t *mapRotationCurrent = SV_ImportedDvar(imp_sv_mapRotationCurrent);
 #if defined(COD2_X64) && COD2_X64 && defined(COD2_CODX) && COD2_CODX
@@ -817,9 +836,27 @@ static void SV_MapRotate_f(void)
     for (;;) {
         token = SV_ConsumeMapRotationToken();
         if (!token) {
+#if defined(COD2_X64)
+            if (firstToken) {
+                Dvar_SetString(mapRotationCurrent, mapRotation->current.string);
+                token = SV_ConsumeMapRotationToken();
+            }
+            if (!token) {
+                Com_Printf("No map specified in sv_mapRotation - forcing map_restart.\n");
+                SV_MapRestart(1);
+#if defined(COD2_CODX) && COD2_CODX
+                SV_Cod2xEndMapChange(0);
+#endif
+                return;
+            }
+#else
             Dvar_SetString(mapRotationCurrent, mapRotation->current.string);
             continue;
+#endif
         }
+#if defined(COD2_X64)
+        firstToken = 0;
+#endif
 
         if (!I_stricmp(token, "gametype")) {
             token = SV_ConsumeMapRotationToken();
@@ -860,6 +897,7 @@ static void SV_MapRotate_f(void)
             return;
         }
 
+#if !defined(COD2_X64)
         if (!*token) {
             Com_Printf("No map specified in sv_mapRotation - forcing map_restart.\n");
             SV_MapRestart(1);
@@ -868,6 +906,7 @@ static void SV_MapRotate_f(void)
 #endif
             return;
         }
+#endif
 
         Com_Printf("Unknown keyword '%s' in sv_mapRotation.\n", token);
     }

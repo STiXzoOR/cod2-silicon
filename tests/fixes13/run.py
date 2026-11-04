@@ -157,6 +157,8 @@ if not args.test or 'timing' in args.test:
     helpers = (function('src/PC/qcommon/cod2x_protocol.c', 'Cod2x_LimitedFPS') +
                function('src/PC/qcommon/cod2x_runtime.c', 'Cod2x_FrameFPS')) if codx_timing else ''
     frame = function('src/PC/qcommon/common.c', 'Com_Frame_Try_Block_Function')
+    if re.search(r'\bCom_DedicatedModified\s*\(', frame):
+        helpers += function('src/PC/qcommon/common.c', 'Com_DedicatedModified')
     # Keep the original fixture for historical callers that predate match summaries.
     matches = not args.baseline or bool(re.search(r'\bMatchSummary_Frame\s*\(', frame))
     run('timing', helpers + frame +

@@ -6330,5 +6330,317 @@
   "mac:0x0014e8cc": {
     "status": "fixed",
     "evidence": "Mac inline entity lookup 0x14e92e uses the 0x15-prefixed diagnostic at 0x2d5084; restored prefix. Read linked/broadcast/visibility gates, cluster scan including inclusive overflow and endpoint rejection, fog sentinel and box test; compiled and reviewed, not exercised."
+  },
+  "mac:0x0017e4f2": {
+    "status": "intentional",
+    "evidence": "Mac 0x17e4f2 indexes client and forwards SV_DropClient. This is the bundled PB callback boundary: native pb_null_adapter.c/pb_public.h deliberately consume it without action per WS44 PB replacement; ordinary engine SV_DropClient was separately audited/fixed."
+  },
+  "mac:0x0018072a": {
+    "status": "intentional",
+    "evidence": "Mac 0x18072a-0x180a0c: compared slot search,botport,address/direct connect,activation and ClientBegin path. Native omits only bundled cl_punkbuster=0 userinfo metadata and adds the existing CoD2x version notification through SV_Cod2xClientBegin; PB backend is null per WS44."
+  },
+  "mac:0x0017c97c": {
+    "status": "intentional",
+    "evidence": "Mac 0x17c97c-0x17cfc4: compared sender/challenge lookup,status/deny mapping,GUID bans,temp-ban arithmetic,reply and clear paths. Native omits PB GUID argument5 storage because bundled PB is null and preserves existing CoD2x correlated authorization/host GUID policy."
+  },
+  "mac:0x0017c500": {
+    "status": "equal",
+    "evidence": "Mac 0x17c500-0x17c704: compared bad-address guard, fs_game flags 0x101c/copy, anonymous flag, IP byte order, quoted 1.3 getIpAuthorize formats and optional PB token argument; native matches."
+  },
+  "mac:0x0017e528": {
+    "status": "equal",
+    "evidence": "Mac 0x17e528-0x17e644: compared host immunity, zero/already-banned GUID paths, append mode2, cleaned name/CRLF record, drop and last-packet update."
+  },
+  "mac:0x0017c77e": {
+    "status": "equal",
+    "evidence": "Mac 0x17c77e-0x17c7e0: compared empty-slot preference, oldest-time replacement across 16 slots, GUID and server-time stores."
+  },
+  "mac:0x0017f808": {
+    "status": "intentional",
+    "evidence": "Mac 0x17f808-0x17f892: close/free and64-byte filename copy match. Existing COD2_FEATURE_NET_HARDENING rejects malicious download paths before copy; retained feature boundary is implemented by NetHardening_ValidDownloadName."
+  },
+  "linux:server/sv_client_mp.cpp:1966:SV_ClientCommand": {
+    "status": "fixed",
+    "evidence": "Mac inlines helper in SV_ExecuteClientMessage at 0x180355-0x180566 and0x180683-0x1806ab: corrected floodable-command deadline updates while retaining team/score/mr exemptions; compared sequence handling,dispatch,command-string copy and zombie return. Compiled and reviewed, not exercised directly."
+  },
+  "mac:0x0017d4ce": {
+    "status": "intentional",
+    "evidence": "Mac 0x17d4ce-0x17d58e: state,entity,delta/snapshot,whole command copy and ClientBegin order match. Existing CoD2x mode additionally sends reliable g_cod2x version notification through SV_Cod2xClientBegin."
+  },
+  "mac:0x0017da1a": {
+    "status": "intentional",
+    "evidence": "Mac 0x17da1a-0x17daae: whole command copy,active guard,G_SetLastServerTime and ClientThink match. Existing native Sys_DiffClientThink gate supports differential capture/replay and returns through the stock path when inactive."
+  },
+  "linux:server/sv_client_mp.cpp:1141:SV_CloseDownload": {
+    "status": "equal",
+    "evidence": "Mac inlines helper at 0x17df68-0x17dfb2,0x17f64e-0x17f692 and0x17f814-0x17f85a: compared file close, zero handle/name and all 8 block free/null operations."
+  },
+  "mac:0x0017d1e8": {
+    "status": "equal",
+    "evidence": "Mac 0x17d1e8-0x17d204: compared zombie and existing-reason guards and delayed-reason pointer store."
+  },
+  "mac:0x0017e644": {
+    "status": "fixed",
+    "evidence": "Mac 0x17ebe2-0x17ebfb,0x17f357,0x17f403-0x17f481: corrected firstPing caching from svs.time-pingTime,zero-GUID diagnostic,retail client-slot-indexed firstPing reset and gamestateMessageNum=-1. Rest of admission/reconnect/private slots read by hand; bundled PB auth/storage remain excluded and CoD2x identity admission is retained. Compiled and reviewed; existing NAT fixtures exercise admission, not every corrected branch."
+  },
+  "mac:0x0017e2cc": {
+    "status": "equal",
+    "evidence": "Mac 0x17e2cc-0x17e2e8: compared drop call and EXE_DISCONNECTED reason."
+  },
+  "mac:0x0017d58e": {
+    "status": "equal",
+    "evidence": "Mac 0x17d58e-0x17d5bc: compared completion debug message and gamestate resend."
+  },
+  "mac:0x0017e01a": {
+    "status": "fixed",
+    "evidence": "Mac 0x17e032-0x17e069,0x17e085-0x17e20f: save player name before FreeClient clears it; restore localization lookup,conditional translation marker and literal name/reason PB-suffixed disconnect format for engine callers. Bundled PB backend remains null. Compiled and reviewed, not exercised directly."
+  },
+  "mac:0x0017d976": {
+    "status": "equal",
+    "evidence": "Mac 0x17d976-0x17da1a: compared tokenizer, case-sensitive command dispatch, handled-command break and clientOK/SV_Loaded fallback. Decoded all 13 ucmd table pairs at 0x34b880; native names/callback order including wwwdl match."
+  },
+  "mac:0x001802ac": {
+    "status": "fixed",
+    "evidence": "Mac 0x18043f-0x18047e,0x1803bd-0x18051f,0x180622-0x180673: removed non-retail gamestate resend gates/auth resend,corrected floodable command deadline handling and pure-client validation before EOF. Compared decompression,server ID/reliable sequencing,world entry and movement dispatch. Compiled and reviewed, not exercised directly."
+  },
+  "mac:0x0017d96c": {
+    "status": "equal",
+    "evidence": "Mac 0x17d96c-0x17d976: compared direct FX_GetServerVisibility forwarding and float return."
+  },
+  "linux:server/sv_client_mp.cpp:266:SV_FindFreeTempBanSlot": {
+    "status": "equal",
+    "evidence": "Mac inlines helper in SV_BanGuidBriefly at 0x17c784-0x17c798 and0x17c7b1-0x17c7e0: compared first empty slot and oldest timestamp selection against native loop."
+  },
+  "mac:0x0017df5c": {
+    "status": "intentional",
+    "evidence": "Mac 0x17df5c-0x17e01a: download cleanup,conditional game disconnect,userinfo reset and script ID free match. Existing CoD2x mode also clears native sidecar client identity."
+  },
+  "mac:0x0017d190": {
+    "status": "equal",
+    "evidence": "Mac 0x17d190-0x17d1e8: compared client iteration, state>1 filter, script ID release and16-bit allocated-array assignment."
+  },
+  "mac:0x0017f5ca": {
+    "status": "intentional",
+    "evidence": "Mac 0x17f5ca-0x17f63a: state>1 free loop and virtual client-storage release match. Existing CoD2x mode additionally clears identity sidecars."
+  },
+  "mac:0x0017daae": {
+    "status": "fixed",
+    "evidence": "Mac 0x17dc0e,0x17dc5f-0x17dc80: corrected stock authorization port20700 and restored1,200,000 ms master-liveness /7,000 ms challenge grace. Windows agrees at 0x452fbd,0x45301e and0x45302d. Compared full slot reuse/random generation/LAN/timeout flow; bundled PB token storage remains excluded and CoD2x digest policy retained. Compiled and reviewed; existing NAT fixture exercises timeout admission."
+  },
+  "mac:0x0017c704": {
+    "status": "equal",
+    "evidence": "Mac 0x17c704-0x17c77e: compared zero GUID/read-failure returns, ban.txt token/line traversal, atoi equality and file release."
+  },
+  "linux:server/sv_client_mp.cpp:193:SV_IsTempBannedGuid": {
+    "status": "equal",
+    "evidence": "Mac inlines helper at 0x17cd30-0x17cdfb in SV_AuthorizeIpPacket: compared GUID gate,16 slot scan and elapsed-time versus sv_kickBanTime*1000.0f rejection for registered finite dvar values."
+  },
+  "mac:0x0017d8f0": {
+    "status": "equal",
+    "evidence": "Mac 0x17d8f0-0x17d92e: compared atoi argument, unsigned > 64 rejection, diagnostic and byte store. Retail slot 64 acceptance is preserved."
+  },
+  "mac:0x0017f6e0": {
+    "status": "equal",
+    "evidence": "Mac 0x17f6e0-0x17f808: compared wrong-block drop, debug messages, signed block%8 indexing, zero-length completion/close and send-time/client-block update."
+  },
+  "mac:0x0017d88a": {
+    "status": "equal",
+    "evidence": "Mac 0x17d88a-0x17d89c: compared pureAuthentic zero store."
+  },
+  "mac:0x0017d5bc": {
+    "status": "equal",
+    "evidence": "Mac 0x17d5bc-0x17d5ee: compared parsed block equality with downloadClientBlock and conditional downloadXmitBlock store."
+  },
+  "mac:0x0017d204": {
+    "status": "equal",
+    "evidence": "Mac 0x17d204-0x17d4ce: compared fragment draining, state/pure/message setup,2048 configstrings,1024 baselines, message opcode/field order and final transmit. Native LargeLocal wrappers replace the C++ lifetime calls without payload changes."
+  },
+  "mac:0x0017f63a": {
+    "status": "equal",
+    "evidence": "Mac 0x17f63a-0x17f6e0: compared conditional abort diagnostic and inlined download close/free behavior."
+  },
+  "mac:0x0017c7e0": {
+    "status": "equal",
+    "evidence": "Mac 0x17c7e0-0x17c97c: compared cleaned-name matching through CR/LF, line skip, memmove tail+terminator, file-size update, rewrite/free and result diagnostics; native strnicmp replaces strncasecmp."
+  },
+  "mac:0x0017d92e": {
+    "status": "equal",
+    "evidence": "Mac 0x17d92e-0x17d96c: compared atoi argument, unsigned > 64 rejection, diagnostic and byte clear. Retail slot 64 acceptance is preserved."
+  },
+  "mac:0x0017c464": {
+    "status": "fixed",
+    "evidence": "Mac 0x17c464-0x17c500: native body was missing; restored master base-address comparison and svs.time timestamp store. Uses existing native 1.3 field; server_main worker restores startup/caller sites. Compiled and reviewed, not exercised directly."
+  },
+  "mac:0x0017d89c": {
+    "status": "equal",
+    "evidence": "Mac 0x17d89c-0x17d8f0: compared 1024-byte userinfo copy, rate/name refresh and game notification by client index."
+  },
+  "mac:0x0017fed2": {
+    "status": "fixed",
+    "evidence": "Mac 0x17fede-0x17ff20: delta flag alone selects messageAcknowledge; removed native gamestateMessageNum gate. Compared usercmd count/key/delta chain,weapon validation,ACK timestamp,world entry,pure checks and think loop. Existing opt-in movediag remains. Compiled and reviewed, not exercised directly."
+  },
+  "mac:0x0017cfc4": {
+    "status": "intentional",
+    "evidence": "Mac 0x17cfc4-0x17d190: compared name,LAN/rate limits,snaps,voice rate gate and www capability. Stock max 30 / 33 ms matches; existing CoD2x mode deliberately accepts 40 snapshots/25ms."
+  },
+  "mac:0x0017d714": {
+    "status": "intentional",
+    "evidence": "Mac 0x17d714-0x17d88a: valid token/duplicate/server-membership/XOR checksum paths match. Retained native nClientIwds<0 rejection from initial 63de35a: bare @ leaves count = -1 and Mac 0x17d7fd reads clientChkSum[-1] (uninitialized adjacent stack slot). Native returns pureAuthentic 2 instead of reproducing undefined stack dependence; no earlier explicit hardening report was found."
+  },
+  "mac:0x0017e2e8": {
+    "status": "equal",
+    "evidence": "Mac 0x17e2e8-0x17e4f2: compared unexpected/ack/bbl8r/done/fail/chkfail branches, duplicate diagnostic, flag clears/fallback and gamestate resend. Native Cmd_Argv/SV_Cmd_Argv share the same token vector."
+  },
+  "mac:0x0017d5ee": {
+    "status": "equal",
+    "evidence": "Mac 0x17d5ee-0x17d714: compared file-size nonzero test, close, URL construction/copy, flags, byte 5/short -1/string/long size/disconnect order and error path."
+  },
+  "linux:server/sv_client_mp.cpp:1383:SV_WriteDownloadErrorToClient": {
+    "status": "equal",
+    "evidence": "Mac inlines helper at 0x17f97d-0x17f9cc: compared byte 5,short 0,long -1,error string and downloadName clear with native send_error block."
+  },
+  "mac:0x0017f892": {
+    "status": "fixed",
+    "evidence": "Mac 0x17f903-0x17fa1f,0x17fe95-0x17fea1 and0x17fd7a-0x17fdca: restore disabled-download precedence,IW archive diagnostic,GAMEPAK localization key,beginning diagnostic placement and same-call EOF block after FS_Read failure. Windows contains the same IW/GAMEPAK strings. Compared window/rate/retransmit/opcode payload paths. Compiled and reviewed, not exercised directly."
+  },
+  "mac:0x0015f586": {
+    "status": "intentional",
+    "evidence": "Mac 0x15f586-0x15f646 is the PB screen/console callback (retail source cl_console_mp,despite server ledger grouping). No native caller remains after the documented WS44 PB null adapter; bundled backend reconstruction is excluded. Ordinary console say/tell/info commands were audited separately."
+  },
+  "mac:0x00172002": {
+    "status": "equal",
+    "evidence": "Mac 0x172002-0x172032: compared say/tell names and callback registration order."
+  },
+  "mac:0x00172136": {
+    "status": "equal",
+    "evidence": "Mac 0x172136-0x17237c: compared initialized guard, all 24 command registrations/callbacks, both maps/mp d3dbsp autocomplete entries and dedicated say/tell condition."
+  },
+  "mac:0x00171990": {
+    "status": "equal",
+    "evidence": "Mac 0x171990-0x1719dc: compared running/argc guards, usage text, numeric lookup and conditional ban call."
+  },
+  "mac:0x00171944": {
+    "status": "equal",
+    "evidence": "Mac 0x171944-0x171990: compared running/argc guards, usage text, name lookup and conditional ban call."
+  },
+  "mac:0x00171d16": {
+    "status": "equal",
+    "evidence": "Mac 0x171d16-0x171de2: compared running/argc guards, console prefix, quote trimming, bounded concat and broadcast opcode0x68 with literal-text marker0x15."
+  },
+  "mac:0x00171de2": {
+    "status": "equal",
+    "evidence": "Mac 0x171de2-0x171ef8: compared running/argc/slot/active-state guards, console prefix, quote trimming and targeted opcode0x68 command."
+  },
+  "mac:0x00171a10": {
+    "status": "equal",
+    "evidence": "Mac 0x171a10-0x171a22: compared numeric kick helper with NULL name and zero capacity."
+  },
+  "mac:0x00172568": {
+    "status": "equal",
+    "evidence": "Mac 0x172568-0x17257a: compared name kick helper with NULL name and zero capacity."
+  },
+  "mac:0x00171f5a": {
+    "status": "fixed",
+    "evidence": "Mac 0x171f8a: corrected usage string to Usage: info <userid>; compared guards,name lookup and userinfo printing. Compiled and reviewed, not exercised directly."
+  },
+  "mac:0x00171842": {
+    "status": "equal",
+    "evidence": "Mac 0x171842-0x171850: compared SV_MapRestart argument 1."
+  },
+  "mac:0x00171fe4": {
+    "status": "equal",
+    "evidence": "Mac 0x171fe4-0x171fee: compared SV_MasterGameCompleteStatus forwarding."
+  },
+  "mac:0x001715e6": {
+    "status": "equal",
+    "evidence": "Mac 0x1715e6-0x1715f0: compared FS_GetMapBaseName forwarding."
+  },
+  "mac:0x001713d8": {
+    "status": "equal",
+    "evidence": "Mac 0x1713d8-0x1714f6: compared running/missing-name guards, active-client scan, raw then cleaned case-insensitive name matching and missing-player diagnostic."
+  },
+  "mac:0x001714f6": {
+    "status": "equal",
+    "evidence": "Mac 0x1714f6-0x1715e6: compared running/missing-slot guards, digit scan,atoi/range/state validation and slot pointer result."
+  },
+  "mac:0x00171ef8": {
+    "status": "equal",
+    "evidence": "Mac 0x171ef8-0x171f0a: compared nextHeartbeatTime store0x80000000."
+  },
+  "linux:server/sv_ccmds_mp.cpp:394:SV_KickClient": {
+    "status": "equal",
+    "evidence": "Mac inlines helper at 0x1718bf-0x17193c and0x1723f3-0x172470: compared loopback immunity, optional cleaned-name copy, saved GUID,drop reason and lastPacketTime store with native SV_KickClientInternal."
+  },
+  "mac:0x00171850": {
+    "status": "equal",
+    "evidence": "Mac 0x171850-0x171944: read attributed native body directly; compared running/argc checks,numeric lookup and complete inlined kick helper."
+  },
+  "mac:0x0017237c": {
+    "status": "equal",
+    "evidence": "Mac 0x17237c-0x172528: read attributed native body directly; compared running/argc checks,name lookup,all-player scan,host exemption and complete kick helper."
+  },
+  "mac:0x00171fd0": {
+    "status": "equal",
+    "evidence": "Mac 0x171fd0-0x171fe4: compared Com_Shutdown reason EXE_SERVERKILLED."
+  },
+  "mac:0x001715f0": {
+    "status": "intentional",
+    "evidence": "Mac 0x1715f0-0x171836: compared running/gametype/savepersist/full-vs-fast decision,server-ID masks,three 100 ms frames,client reconnect/drop/world-entry and state restoration. Existing CoD2x stop-gametype consent/depth hooks surround the matching retail body."
+  },
+  "mac:0x00171836": {
+    "status": "equal",
+    "evidence": "Mac 0x171836-0x171842: compared SV_MapRestart argument 0."
+  },
+  "mac:0x0017257a": {
+    "status": "fixed",
+    "evidence": "Mac 0x1725d3-0x17275b,0x172799-0x172854: restored parse-pointer failure signal,one initial rotation refill and end-of-rotation/missing-value handling; empty quoted token remains an unknown keyword. Compared gametype/savepersist and map command branches. CoD2x stop callback retained. Compiled and reviewed; existing stop-gametype fixture exercises populated rotation,not every exhaustion case."
+  },
+  "mac:0x00172038": {
+    "status": "fixed",
+    "evidence": "Mac 0x172076: restored Com_DedicatedModified before map normalization/read. Extracted native helper from existing Com_Frame_Try_Block_Function into qcommon/common.c under COD2_X64 and kept frame caller; compared helper with Mac 0x2ee14-0x2eee8. Map/profile/file/devmap/spawn flow compared; CoD2x stop callback retained. Compiled and reviewed; existing stop-gametype fixture exercises map flow using dedicated-switch stub."
+  },
+  "linux:server/sv_ccmds_mp.cpp:971:SV_RemoveDedicatedCommands": {
+    "status": "intentional",
+    "evidence": "Linux-only helper has no Mac symbol/call in compared dedicated-mode switch0x2ee14-0x2eee8; Mac removal entry0x172032 is empty. Native retains say/tell for retail command lifetime rather than adding Linux-only deletion. No live native caller of a dedicated-removal helper exists."
+  },
+  "mac:0x00172032": {
+    "status": "fixed",
+    "evidence": "Mac 0x172032-0x172038 is empty; removed native command deletion and initialized reset for COD2_X64. Command registration now retains retail lifetime. Compiled and reviewed, not exercised directly."
+  },
+  "mac:0x00171fee": {
+    "status": "equal",
+    "evidence": "Mac 0x171fee-0x171ff8: compared Scr_DumpScriptThreads forwarding."
+  },
+  "mac:0x00171f0a": {
+    "status": "equal",
+    "evidence": "Mac 0x171f0a-0x171f32: compared heading,Dvar_InfoString flags 0x404 and Info_Print."
+  },
+  "mac:0x00171a62": {
+    "status": "equal",
+    "evidence": "Mac 0x171a62-0x171d16: compared active scan,score/ping/guid/name/time/address/qport/rate output,9999 ping cap,16-column cleaned name and22-column address padding."
+  },
+  "mac:0x00171ff8": {
+    "status": "equal",
+    "evidence": "Mac 0x171ff8-0x172002: compared MT_DumpTree forwarding."
+  },
+  "mac:0x00171f32": {
+    "status": "equal",
+    "evidence": "Mac 0x171f32-0x171f5a: compared heading,Dvar_InfoString flag 8 and Info_Print."
+  },
+  "mac:0x00171a22": {
+    "status": "equal",
+    "evidence": "Mac 0x171a22-0x171a62: compared 64-byte kick-name buffer,nonzero GUID diagnostic and temporary-ban call."
+  },
+  "mac:0x00172528": {
+    "status": "equal",
+    "evidence": "Mac 0x172528-0x172568: compared 64-byte name-kick buffer,nonzero GUID diagnostic and temporary-ban call."
+  },
+  "mac:0x001719dc": {
+    "status": "equal",
+    "evidence": "Mac 0x1719dc-0x171a10: compared argc 2 guard,usage string and argument 1 unban forwarding."
+  },
+  "linux:server/sv_ccmds_mp.cpp:293:UI_GetMapRotationToken": {
+    "status": "fixed",
+    "evidence": "Mac inlines helper at 0x1725d3-0x1725fc,0x17261c-0x17264d and0x1727c6-0x1727f3: native SV_ConsumeMapRotationToken incorrectly returned empty token when Com_Parse nulled parse pointer; now stores empty current rotation and returns NULL. Compiled and reviewed, exhaustion not exercised directly."
   }
 }
