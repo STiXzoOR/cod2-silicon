@@ -2,7 +2,7 @@
 
 Updated 2026-11-04.
 
-**10/10 reconciled: 6 equal, 3 fixed, 1 intentional.** Every assigned Mac body was read, including all objective-wrapping, team-list and scrollbar blocks in `CG_DrawScoreboard_ScoresList`. `CG_ScoreboardDisplayed` was restarted at its exact entry after full-binary disassembly lost alignment. The legacy source is unchanged.
+**10/10 reconciled: 5 equal, 4 fixed, 1 intentional.** Every assigned Mac body was read, including all objective-wrapping, team-list and scrollbar blocks in `CG_DrawScoreboard_ScoresList`. `CG_ScoreboardDisplayed` was restarted at its exact entry after full-binary disassembly lost alignment. The legacy source is unchanged.
 
 The six column records at Mac 0x36e6e0 are voice/status/name/score/deaths/ping, with width fractions .05/.05/.47/.13/.13/.17. Native put the name first and used different fractions. All record types, ordering, float bits, headings and alignments now match. The row shrink loop at 0x1c5436 continues until text fits; native stopped at scale .02. The team-banner ping at 0x1c5a0a belongs in column type 4 (ping), rather than the deaths column.
 
@@ -15,3 +15,7 @@ The team colors preserve incoming alpha, materials and border rectangles agree, 
 Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-cgame-interface.noindex/`.
 
 The parent rebuilt the final scoreboard translation unit in stock and CoD2x modes after the Windows-precedence correction. No new runtime fixture was added.
+
+A protocol-review follow-up found a reachable integer boundary in the scroll consumers. The score parser retains signed negative counts, including INT_MIN. Snapshot processing can update that count while `CG_DrawActiveFrame` returns before drawing, retaining `scoresOffBottom`. Mac 0x1c4f2c wraps `numScores-1` to INT_MAX for INT_MIN; the previous native signed subtraction had undefined overflow. The native down-scroll path now performs that subtraction and its top increment (Mac 0x1c4f1d) in unsigned 32-bit arithmetic, then converts the wrapped bits to a defined signed value. A count of INT_MIN+1 can clamp `scoresTop` to INT_MIN; the scrollbar's visible-line subtraction at Mac 0x1c6432 now uses the same conversion. The signed comparisons and clamps are unchanged. The up-scroll subtraction was audited: its positive-top gate and registered step range 1..8 prevent overflow, so it remains unchanged. The list's total-line clamp uses a bounded nonnegative count and also needs no change.
+
+For this follow-up, the actual scoreboard client translation unit compiles without warnings in both stock and CoD2x arm64 Release configurations. The existing scoreboard-border fixture and all eight existing HUD groups pass in both modes with ASan/UBSan. These fixtures cover borders and turret/spectator HUD behavior; they do not exercise the malformed-count scroll path. Ten OFF configurations have zero source mismatches against 31e83f0, and `git diff --check` passes. No new tests, full CI or replays were run. The overflow correction is compiled and reviewed, not exercised with malformed protocol input. The parent's Windows fallback-label correction remains intact.
