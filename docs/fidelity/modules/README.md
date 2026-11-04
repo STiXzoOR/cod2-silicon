@@ -164,3 +164,5 @@ Both 2,000-frame replays match the trace from the previous commit, so that recor
 `Sys_SnapVector` deliberately differs from Mac. Mac truncates velocity, while Windows and Linux round to nearest. Native
 follows Windows, by the project owner's decision, because most players are there. This is the one place so far where
 Mac is not the authority: when Mac behaviour looks platform-specific and players would notice, check the Windows binary.
+
+The first orchestrated batch reconciled 193 further entries across weapon loading, animation and weapons. Six animation identities remain unchecked. Integrated source `e92ca5f` passed both dedicated builds, local macOS CI steps 02–13, the scoped legacy guard check and independent review. Both 2,000-frame replays are unchanged from the fresh `d873794` baseline; no logic-field regressions were observed. The module reports distinguish static review from exercised behavior.

@@ -25,3 +25,9 @@ The constant checker and call/string triage were run. A binary-data check matche
 Six Linux-only ledger identities remain unchecked: `BG_AnimScriptStateChange`, `BG_AnimationForString`, `BG_GetAnimScriptEvent`, `BG_GetAnimString`, `BG_IsMantleAnim` and `BG_PlayAnimName`. They have no native body or caller, no caller in the private Linux reconstruction, and no Mac text symbol; `BG_GetAnimScriptEvent` has only an absolute exception-metadata symbol. No matching Mac inline path was positively identified, so absence was not treated as equality or an intentional omission.
 
 Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-bg-animation.noindex/`.
+
+## Integrated batch verification
+
+Integrated source through `e92ca5f` passed both dedicated builds and all local macOS CI steps 02–13, including both Release client builds, ABI audits and existing source fixtures. The legacy guard check differs only for the three intended `linux-x86_64-port-on` source paths. An independent reviewer checked the changed source, nearby callers and Mac binary evidence and found no actionable defects; this was not a second whole-module audit.
+
+Both 2,000-frame stock and CoD2x replays are byte-identical to the fresh `d873794` baseline for player, entity and state records. Against the Linux original, all 3,806 player records agree on the six logic fields; maximum origin drift remains 0.11792 units and velocity drift 2.0. The recording does not demonstrate the corrected branches, so those corrections remain compiled and reviewed rather than individually runtime-verified. No new per-fix tests were added.
