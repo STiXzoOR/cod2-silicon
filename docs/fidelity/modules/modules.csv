@@ -449,7 +449,7 @@ win32/snd_driver,54,0,0,0,54
 win32/win_localize,3,0,0,0,3
 win32/win_net,3,0,0,0,3
 win32/win_voice,7,0,0,0,7
-xanim/dobj,58,0,0,0,58
+xanim/dobj,58,54,1,0,3
 xanim/xanim,147,0,0,0,147
 xanim/xanim_load,4,0,0,0,4
 xanim/xanim_public,10,0,0,0,10

@@ -1079,9 +1079,11 @@ static inline __attribute__((always_inline)) void DObjFinalizeQuatWeightLocal(DO
     float lenSq = mat->quat[0] * mat->quat[0] + mat->quat[1] * mat->quat[1] + mat->quat[2] * mat->quat[2] + mat->quat[3] * mat->quat[3];
 
     if (lenSq == 0.0f) {
+#if !defined(COD2_X64)
         mat->quat[0] = 0.0f;
         mat->quat[1] = 0.0f;
         mat->quat[2] = 0.0f;
+#endif
         mat->quat[3] = 1.0f;
         mat->transWeight = 2.0f;
     } else {
@@ -1163,14 +1165,14 @@ static void DObjCalcParentLocal(DObjAnimMat *mat, const DObjAnimMat *parent, int
 
     if (control) {
         mat->quat[3] = ((w * pw - px * x) - y * py) - z * pz;
-        mat->quat[0] = (pz * y + pw * x + px * w) - z * py;
-        mat->quat[1] = z * px + pw * y + (w * py - x * pz);
+        mat->quat[0] = (px * w + pw * x + pz * y) - z * py;
+        mat->quat[1] = ((w * py - x * pz) + pw * y) + z * px;
         mat->quat[2] = ((w * pz + py * x) - px * y) + pw * z;
     } else {
         mat->quat[3] = ((pw * w - x * px) - py * y) - z * pz;
-        mat->quat[0] = (z * py + w * px + x * pw) - y * pz;
-        mat->quat[1] = x * pz + w * py + (pw * y - z * px);
-        mat->quat[2] = pz * w + ((px * y + pw * z) - py * x);
+        mat->quat[0] = (x * pw + w * px + z * py) - y * pz;
+        mat->quat[1] = ((pw * y - z * px) + w * py) + x * pz;
+        mat->quat[2] = ((pw * z + px * y) - py * x) + pz * w;
     }
     DObjFinalizeQuatWeightLocal(mat);
     mat->trans[0] = (1.0f - (yy + zz)) * local.trans[0] + (xy - zw) * local.trans[1] + (xz + yw) * local.trans[2] + parent->trans[0];
