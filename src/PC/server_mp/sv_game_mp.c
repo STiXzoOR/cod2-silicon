@@ -144,7 +144,11 @@ byte *SV_SvEntityForGentity(const gentity_t *gEnt)
     int number;
 
     if (gEnt == NULL || gEnt->s.number < 0 || gEnt->s.number >= 1024) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025SV_SvEntityForGentity: bad gEnt");
+#else
         Com_Error(1, "SV_SvEntityForGentity: bad gEnt");
+#endif
     }
     number = gEnt->s.number;
 
@@ -215,8 +219,13 @@ static long unsigned int *SV_AllocXModelPrecacheColl(int size)
 
 struct XModel *SV_XModelGet(const char *name)
 {
+#if defined(COD2_X64)
+    if (!Com_ValidXModelName(name))
+        Com_Error(1, "\025bad model name '%s'", name);
+#else
     if (!Com_ValidXModelName(name))
         return NULL;
+#endif
     return XModelPrecache(name + 7, SV_AllocXModelPrecache, SV_AllocXModelPrecacheColl);
 }
 
@@ -236,7 +245,11 @@ void SV_DObjDumpInfo(gentity_t *ent)
 void SV_ResetSkeletonCache(void)
 {
     int idx = 1;
+#if defined(COD2_X64)
+    int incd = (int)((unsigned int)sv.skelTimeStamp + 1u);
+#else
     int incd = sv.skelTimeStamp + 1;
+#endif
     if (incd != 0)
         idx = incd;
     sv.skelTimeStamp = idx;
@@ -683,7 +696,11 @@ qboolean SV_inSnapshot(const vec_t *origin, int iEntityNum)
     {
         int number = ent->s.number;
         if (ent == 0 || number < 0 || number >= 1024) {
+#if defined(COD2_X64)
+            Com_Error(1, "\025SV_SvEntityForGentity: bad gEnt");
+#else
             Com_Error(1, "SV_SvEntityForGentity: bad gEnt");
+#endif
             number = ent->s.number;
         }
         svEnt = &sv.svEntities[number];
@@ -753,13 +770,25 @@ qboolean SV_DObjCreateSkelForBone(gentity_t *ent, int boneIndex)
     }
 
     allocSize = DObjGetAllocSkelSize(obj);
+#if defined(COD2_X64)
+    alignedSize = (int)(((unsigned int)allocSize + 15u) & ~15u);
+#else
     alignedSize = (allocSize + 15) & ~15;
+#endif
     COD2_DEBUG_ONLY(Com_Printf("[ckpt] skel obj=%p allocSize=%d aligned=%d numBones~=%d memPos=%d\n",
                obj, allocSize, alignedSize, (allocSize - 0x30) >> 5, sv->skelMemPos);)
     buf = g_sv_skel_memory_start + sv->skelMemPos;
+#if defined(COD2_X64)
+    sv->skelMemPos = (int)((unsigned int)sv->skelMemPos + (unsigned int)alignedSize);
+#else
     sv->skelMemPos += alignedSize;
+#endif
 
+#if defined(COD2_X64)
+    if ((unsigned int)sv->skelMemPos > 0x3fff0u) {
+#else
     if (sv->skelMemPos > 0x3fff0) {
+#endif
         buf = (char *)(((uintptr_t)g_sv_skel_memory + 15) & ~(uintptr_t)15);
 
         do {
@@ -768,13 +797,21 @@ qboolean SV_DObjCreateSkelForBone(gentity_t *ent, int boneIndex)
                 warnCount = timestamp;
                 Com_Printf("^3WARNING: SV_SKEL_MEMORY_SIZE exceeded\n");
             }
+#if defined(COD2_X64)
+            timestamp = (int)((unsigned int)sv->skelTimeStamp + 1u);
+#else
             timestamp = sv->skelTimeStamp + 1;
+#endif
             if (timestamp == 0)
                 timestamp = 1;
             sv->skelTimeStamp = timestamp;
             g_sv_skel_memory_start = buf;
             sv->skelMemPos = alignedSize;
+#if defined(COD2_X64)
+        } while ((unsigned int)alignedSize > 0x3fff0u);
+#else
         } while (alignedSize > 0x3fff0);
+#endif
     }
 
     sv = (server_t *)imp_sv;
@@ -799,11 +836,23 @@ qboolean SV_DObjCreateSkelForBones(gentity_t *ent, int *partBits)
     }
 
     allocSize = DObjGetAllocSkelSize(obj);
+#if defined(COD2_X64)
+    alignedSize = (int)(((unsigned int)allocSize + 15u) & ~15u);
+#else
     alignedSize = (allocSize + 15) & ~15;
+#endif
     buf = g_sv_skel_memory_start + sv->skelMemPos;
+#if defined(COD2_X64)
+    sv->skelMemPos = (int)((unsigned int)sv->skelMemPos + (unsigned int)alignedSize);
+#else
     sv->skelMemPos += alignedSize;
+#endif
 
+#if defined(COD2_X64)
+    if ((unsigned int)sv->skelMemPos > 0x3fff0u) {
+#else
     if (sv->skelMemPos > 0x3fff0) {
+#endif
         buf = (char *)(((uintptr_t)g_sv_skel_memory + 15) & ~(uintptr_t)15);
 
         do {
@@ -812,13 +861,21 @@ qboolean SV_DObjCreateSkelForBones(gentity_t *ent, int *partBits)
                 warnCount = timestamp;
                 Com_Printf("^3WARNING: SV_SKEL_MEMORY_SIZE exceeded\n");
             }
+#if defined(COD2_X64)
+            timestamp = (int)((unsigned int)sv->skelTimeStamp + 1u);
+#else
             timestamp = sv->skelTimeStamp + 1;
+#endif
             if (timestamp == 0)
                 timestamp = 1;
             sv->skelTimeStamp = timestamp;
             g_sv_skel_memory_start = buf;
             sv->skelMemPos = alignedSize;
+#if defined(COD2_X64)
+        } while ((unsigned int)alignedSize > 0x3fff0u);
+#else
         } while (alignedSize > 0x3fff0);
+#endif
     }
 
     sv = (server_t *)imp_sv;
