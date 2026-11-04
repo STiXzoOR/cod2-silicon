@@ -359,7 +359,7 @@ qcommon/msg_mp,61,46,6,3,6
 qcommon/net_chan_mp,30,13,13,4,0
 qcommon/statmonitor,3,2,1,0,0
 script/scr_animtree,21,0,0,0,21
-script/scr_compiler,200,0,0,0,200
+script/scr_compiler,200,150,41,5,4
 script/scr_main,18,0,0,0,18
 script/scr_memorytree,20,0,0,0,20
 script/scr_parser,47,0,0,0,47
