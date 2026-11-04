@@ -139,6 +139,31 @@ static void PC_UnreadEvalMinusToken(source_t *source)
     PC_UnreadSourceToken(source, &token);
 }
 
+#if defined(COD2_X64)
+static void PC_UnreadEvalIntToken(source_t *source, int value, qboolean setNumeric)
+{
+    token_t token;
+    int magnitude = value;
+
+    if (value < 0) {
+        magnitude = (int)(0u - (unsigned int)value);
+    }
+
+    PC_InitSyntheticToken(source, &token);
+    sprintf(token.string, "%d", magnitude);
+    token.type = 3;
+    token.subtype = 0x3008;
+    if (setNumeric) {
+        token.intvalue = (uint32_t)value;
+        token.floatvalue = (long double)value;
+    }
+    PC_UnreadSourceToken(source, &token);
+
+    if (value < 0) {
+        PC_UnreadEvalMinusToken(source);
+    }
+}
+#else
 static void PC_UnreadEvalIntToken(source_t *source, int value, qboolean setNumeric)
 {
     token_t token;
@@ -162,7 +187,29 @@ static void PC_UnreadEvalIntToken(source_t *source, int value, qboolean setNumer
         PC_UnreadEvalMinusToken(source);
     }
 }
+#endif
 
+#if defined(COD2_X64)
+static void PC_UnreadEvalFloatToken(source_t *source, double value, qboolean setNumeric)
+{
+    token_t token;
+    float magnitude = __builtin_fabsf((float)value);
+
+    PC_InitSyntheticToken(source, &token);
+    sprintf(token.string, "%1.2f", (float)magnitude);
+    token.type = 3;
+    token.subtype = 0x2808;
+    if (setNumeric) {
+        token.intvalue = (value >= -0x1p63 && value < 0x1p63) ? (uint32_t)(int64_t)value : 0;
+        token.floatvalue = (long double)value;
+    }
+    PC_UnreadSourceToken(source, &token);
+
+    if (value < 0.0) {
+        PC_UnreadEvalMinusToken(source);
+    }
+}
+#else
 static void PC_UnreadEvalFloatToken(source_t *source, double value, qboolean setNumeric)
 {
     token_t token;
@@ -186,6 +233,7 @@ static void PC_UnreadEvalFloatToken(source_t *source, double value, qboolean set
         PC_UnreadEvalMinusToken(source);
     }
 }
+#endif
 
 static unsigned int PC_DefineHash(const char *name)
 {
@@ -447,6 +495,32 @@ void SourceWarning(source_t *source, char *str, ...) {
     }
 }
 
+#if defined(COD2_X64)
+int PC_StringizeTokens(token_t *tokens, token_t *token) {
+    token_t *t;
+    int len;
+
+    token->type = 1;
+    token->whitespace_p = NULL;
+    token->endwhitespace_p = NULL;
+    token->string[0] = '\0';
+
+    len = strlen(token->string);
+    token->string[len] = '"';
+    token->string[len + 1] = '\0';
+
+    for (t = tokens; t; t = *(token_t **)&t->next) {
+        len = strlen((char *)token);
+        /* Keep the terminator inside the native token string. */
+        strncat((char *)token, (char *)t, sizeof(token->string) - 1 - len);
+    }
+
+    len = strlen((char *)token);
+    strncat((char *)token, (const char *)"\"", sizeof(token->string) - 1 - len);
+
+    return 1;
+}
+#else
 int PC_StringizeTokens(token_t *tokens, token_t *token) {
     token_t *t;
     int len;
@@ -470,6 +544,7 @@ int PC_StringizeTokens(token_t *tokens, token_t *token) {
 
     return 1;
 }
+#endif
 
 int PC_OperatorPriority(int op) {
     static const int priorities[] = {
@@ -509,6 +584,57 @@ int PC_SourceFileAndLine(int handle, char *filename, int *line) {
     return 1;
 }
 
+#if defined(COD2_X64)
+int PC_ReadSourceToken(source_t *source, token_t *token) {
+    token_t *tok;
+    script_t *script;
+    indent_t *indent;
+
+    for (;;) {
+
+        tok = source->tokens;
+        if (tok) {
+            memcpy(token, tok, sizeof(token_t));
+            source->tokens = *(token_t **)&tok->next;
+            FreeMemory(tok);
+            numtokens--;
+            return 1;
+        }
+
+        if (!source->scriptstack)
+            return 0;
+        if (PS_ReadToken(source->scriptstack, token))
+            return 1;
+
+        if (EndOfScript(source->scriptstack)) {
+
+            indent = source->indentstack;
+            if (indent && indent->script == source->scriptstack) {
+                SourceWarning(source, "missing #endif");
+
+                while ((indent = source->indentstack) != NULL) {
+                    if (indent->script != source->scriptstack)
+                        break;
+                    source->indentstack = *(indent_t **)&indent->next;
+                    source->skip -= indent->skip;
+                    FreeMemory(indent);
+                }
+            }
+        }
+
+        script = source->scriptstack;
+        if (!script)
+            return 0;
+        {
+            script_t *nextScript = *(script_t **)&script->next;
+            if (!nextScript)
+                return 0;
+            source->scriptstack = nextScript;
+            FreeScript(script);
+        }
+    }
+}
+#else
 int PC_ReadSourceToken(source_t *source, token_t *token) {
     token_t *tok;
     script_t *script;
@@ -558,6 +684,7 @@ int PC_ReadSourceToken(source_t *source, token_t *token) {
         }
     }
 }
+#endif
 
 int PC_Directive_error(source_t *source)
 {
@@ -632,6 +759,295 @@ int PC_Directive_endif(source_t *source)
     return 1;
 }
 
+#if defined(COD2_X64)
+int PC_EvaluateTokens(source_t *source, token_t *tokens, long int *intvalue, double *floatvalue, int integer)
+{
+    struct eval_value {
+        int32_t integer;
+        double real;
+        int parentheses;
+        struct eval_value *prev, *next;
+    } values[64], *firstValue = NULL, *lastValue = NULL, *value;
+    struct eval_operator {
+        int op, priority, parentheses;
+        struct eval_operator *prev, *next;
+    } operators[64], *firstOperator = NULL, *lastOperator = NULL, *op;
+    int numValues = 0, numOperators = 0, parentheses = 0;
+    int lastWasValue = 0, negative = 0, haveQuestion = 0;
+    int32_t questionInteger = 0;
+    double questionReal = 0.0;
+    token_t *token;
+
+    if (intvalue) *intvalue = 0;
+    if (floatvalue) *floatvalue = 0.0;
+
+    for (token = tokens; token; token = token->next) {
+        if (token->type == 4 || token->type == 3) {
+            int32_t number;
+            double real;
+            int definedParens = 0;
+
+            if (lastWasValue || (token->type == 4 && negative)) {
+                SourceError(source, "syntax error in #if/#elif");
+                return 0;
+            }
+            if (token->type == 4) {
+                if (strcmp(token->string, "defined")) {
+                    SourceError(source, "undefined name %s in #if/#elif", token->string);
+                    return 0;
+                }
+                token = token->next;
+                /* A missing name is rejected before touching its token storage. */
+                if (token && !strcmp(token->string, "(")) {
+                    definedParens = 1;
+                    token = token->next;
+                }
+                if (!token || token->type != 4) {
+                    SourceError(source, "defined without name in #if/#elif");
+                    return 0;
+                }
+                number = PC_FindDefineInSource(source, token->string) != NULL;
+                real = (double)number;
+            } else {
+                number = (int32_t)(uint32_t)token->intvalue;
+                real = (double)token->floatvalue;
+                if (negative) {
+                    number = (int32_t)(0u - (uint32_t)number);
+                    real = -real;
+                }
+            }
+            if (numValues >= 64) {
+                SourceError(source, "out of value space\n");
+                return 0;
+            }
+            value = &values[numValues++];
+            value->integer = number;
+            value->real = real;
+            value->parentheses = parentheses;
+            value->prev = lastValue;
+            value->next = NULL;
+            if (lastValue) lastValue->next = value;
+            else firstValue = value;
+            lastValue = value;
+            if (definedParens) {
+                token = token->next;
+                if (!token || strcmp(token->string, ")")) {
+                    SourceError(source, "defined without ) in #if/#elif");
+                    return 0;
+                }
+            }
+            lastWasValue = 1;
+            negative = 0;
+            continue;
+        }
+        if (token->type != 5) {
+            SourceError(source, "unknown %s in #if/#elif", token->string);
+            return 0;
+        }
+        if (negative) {
+            SourceError(source, "misplaced minus sign in #if/#elif");
+            return 0;
+        }
+        if (token->subtype == 44) {
+            ++parentheses;
+            continue;
+        }
+        if (token->subtype == 45) {
+            if (--parentheses < 0) {
+                SourceError(source, "too many ) in #if/#elsif");
+                return 0;
+            }
+            continue;
+        }
+        if (!integer && (token->subtype == 35 || token->subtype == 28 ||
+                         token->subtype == 21 || token->subtype == 22 ||
+                         token->subtype == 32 || token->subtype == 33 || token->subtype == 34)) {
+            SourceError(source, "illigal operator %s on floating point operands\n", token->string);
+            return 0;
+        }
+        switch (token->subtype) {
+        case 16: case 17:
+            SourceError(source, "++ or -- used in #if/#elif");
+            break;
+        case 35: case 36:
+            if (lastWasValue) {
+                SourceError(source, "! or ~ after value in #if/#elif");
+                return 0;
+            }
+            break;
+        case 30:
+            if (!lastWasValue) {
+                negative = 1;
+                continue;
+            }
+            break;
+        case 5: case 6: case 7: case 8: case 9: case 10:
+        case 21: case 22: case 26: case 27: case 28: case 29:
+        case 32: case 33: case 34: case 37: case 38: case 42: case 43:
+            if (!lastWasValue) {
+                SourceError(source, "operator %s after operator in #if/#elif", token->string);
+                return 0;
+            }
+            break;
+        default:
+            SourceError(source, "invalid operator %s in #if/#elif", token->string);
+            return 0;
+        }
+        if (numOperators >= 64) {
+            SourceError(source, "out of operator space\n");
+            return 0;
+        }
+        op = &operators[numOperators++];
+        op->op = token->subtype;
+        op->priority = PC_OperatorPriority(op->op);
+        op->parentheses = parentheses;
+        op->prev = lastOperator;
+        op->next = NULL;
+        if (lastOperator) lastOperator->next = op;
+        else firstOperator = op;
+        lastOperator = op;
+        lastWasValue = 0;
+    }
+    if (!lastWasValue) {
+        SourceError(source, "trailing operator in #if/#elif");
+        return 0;
+    }
+    if (parentheses) {
+        SourceError(source, "too many ( in #if/#elif");
+        return 0;
+    }
+
+    while (firstOperator) {
+        struct eval_value *right, *removed;
+        op = firstOperator;
+        value = firstValue;
+        while (op->next &&
+               (op->parentheses < op->next->parentheses ||
+                (op->parentheses == op->next->parentheses && op->priority < op->next->priority))) {
+            if (op->op != 35 && op->op != 36) value = value ? value->next : NULL;
+            if (!value) {
+                SourceError(source, "mising values in #if/#elif");
+                return 0;
+            }
+            op = op->next;
+        }
+        right = value ? value->next : NULL;
+        /* Mac dereferences missing operands; keep malformed input defined here. */
+        if (!value || (!right && op->op != 35 && op->op != 36)) {
+            SourceError(source, "mising values in #if/#elif");
+            return 0;
+        }
+        switch (op->op) {
+        case 5:
+            value->integer = value->integer && right->integer;
+            value->real = value->real != 0.0 && right->real != 0.0;
+            break;
+        case 6:
+            value->integer = value->integer || right->integer;
+            value->real = value->real != 0.0 || right->real != 0.0;
+            break;
+        case 7:
+            value->integer = value->integer >= right->integer;
+            value->real = value->real >= right->real;
+            break;
+        case 8:
+            value->integer = value->integer <= right->integer;
+            value->real = value->real <= right->real;
+            break;
+        case 9:
+            value->integer = value->integer == right->integer;
+            value->real = value->real == right->real;
+            break;
+        case 10:
+            value->integer = value->integer != right->integer;
+            value->real = value->real != right->real;
+            break;
+        case 21: value->integer >>= (uint32_t)right->integer & 31; break;
+        case 22: value->integer = (int32_t)((uint32_t)value->integer << ((uint32_t)right->integer & 31)); break;
+        case 26:
+            value->integer = (int32_t)((uint32_t)value->integer * (uint32_t)right->integer);
+            value->real *= right->real;
+            break;
+        case 27:
+            if (!right->integer || right->real == 0.0) {
+                SourceError(source, "divide by zero in #if/#elif\n");
+                return 0;
+            }
+            value->integer = (int32_t)((int64_t)value->integer / right->integer);
+            value->real /= right->real;
+            break;
+        case 28:
+            if (!right->integer) {
+                SourceError(source, "divide by zero in #if/#elif\n");
+                return 0;
+            }
+            value->integer = (int32_t)((int64_t)value->integer % right->integer);
+            break;
+        case 29:
+            value->integer = (int32_t)((uint32_t)value->integer + (uint32_t)right->integer);
+            value->real += right->real;
+            break;
+        case 30:
+            value->integer = (int32_t)((uint32_t)value->integer - (uint32_t)right->integer);
+            value->real -= right->real;
+            break;
+        case 32: value->integer &= right->integer; break;
+        case 33: value->integer |= right->integer; break;
+        case 34: value->integer ^= right->integer; break;
+        case 35: value->integer = ~value->integer; break;
+        case 36:
+            value->integer = !value->integer;
+            value->real = value->real == 0.0;
+            break;
+        case 37:
+            value->integer = value->integer > right->integer;
+            value->real = value->real > right->real;
+            break;
+        case 38:
+            value->integer = value->integer < right->integer;
+            value->real = value->real < right->real;
+            break;
+        case 43:
+            if (haveQuestion) {
+                SourceError(source, "? after ? in #if/#elif");
+                return 0;
+            }
+            questionInteger = value->integer;
+            questionReal = value->real;
+            haveQuestion = 1;
+            break;
+        case 42:
+            if (!haveQuestion) {
+                SourceError(source, ": without ? in #if/#elif");
+                return 0;
+            }
+            if (integer) {
+                if (!questionInteger) value->integer = right->integer;
+            } else {
+                if (questionReal == 0.0) value->real = right->real;
+            }
+            haveQuestion = 0;
+            break;
+        default:
+            break;
+        }
+        if (op->op != 35 && op->op != 36) {
+            removed = op->op == 43 ? value : right;
+            if (removed->prev) removed->prev->next = removed->next;
+            else firstValue = removed->next;
+            if (removed->next) removed->next->prev = removed->prev;
+        }
+        if (op->prev) op->prev->next = op->next;
+        else firstOperator = op->next;
+        if (op->next) op->next->prev = op->prev;
+    }
+    if (firstValue) {
+        if (intvalue) *intvalue = firstValue->integer;
+        if (floatvalue) *floatvalue = firstValue->real;
+    }
+    return 1;
+}
+#else
 static int PC_EvalIsUnaryToken(int op)
 {
     return op == 9 || op == 16 || op == 25;
@@ -1003,6 +1419,8 @@ fail:
     return 0;
 }
 
+#endif
+
 void FreeSource(source_t *source)
 {
     script_t *script;
@@ -1071,6 +1489,41 @@ int PC_FreeSourceHandle(int handle)
     return 1;
 }
 
+#if defined(COD2_X64)
+int PC_ReadDollarDirective(source_t *source)
+{
+    token_t token;
+    directive_t *directive;
+    int i;
+
+    if (!PC_ReadSourceToken(source, &token)) {
+        SourceError(source, "found $ without name");
+        return 0;
+    }
+
+    if (token.linescrossed > 0) {
+        PC_UnreadSourceToken(source, &token);
+        SourceError(source, "found $ at end of line");
+        return 0;
+    }
+
+    if (token.type != 4) {
+        PC_UnreadSourceToken(source, &token);
+        SourceError(source, "unknown precompiler directive %s", token.string);
+        return 0;
+    }
+
+    for (i = 0, directive = dollardirectives; directive->name; ++i, ++directive) {
+        if (!strcmp(directive->name, token.string)) {
+            return dollardirectives[i].func(source);
+        }
+    }
+
+    PC_UnreadSourceToken(source, &token);
+    SourceError(source, "unknown precompiler directive %s", token.string);
+    return 0;
+}
+#else
 int PC_ReadDollarDirective(source_t *source)
 {
     token_t token;
@@ -1104,7 +1557,41 @@ int PC_ReadDollarDirective(source_t *source)
     SourceError(source, "unknown precompiler directive %s", token.string);
     return 0;
 }
+#endif
 
+#if defined(COD2_X64)
+int PC_ReadDirective(source_t *source)
+{
+    token_t token;
+    directive_t *directive;
+    int i;
+
+    if (!PC_ReadSourceToken(source, &token)) {
+        SourceError(source, "found # without name");
+        return 0;
+    }
+
+    if (token.linescrossed > 0) {
+        PC_UnreadSourceToken(source, &token);
+        SourceError(source, "found # at end of line");
+        return 0;
+    }
+
+    if (token.type != 4) {
+        SourceError(source, "unknown precompiler directive %s", token.string);
+        return 0;
+    }
+
+    for (i = 0, directive = directives; directive->name; ++i, ++directive) {
+        if (!strcmp(directive->name, token.string)) {
+            return directives[i].func(source);
+        }
+    }
+
+    SourceError(source, "unknown precompiler directive %s", token.string);
+    return 0;
+}
+#else
 int PC_ReadDirective(source_t *source)
 {
     token_t token;
@@ -1136,6 +1623,7 @@ int PC_ReadDirective(source_t *source)
     SourceError(source, "unknown precompiler directive %s", token.string);
     return 0;
 }
+#endif
 
 int PC_Directive_include(source_t *source)
 {
@@ -1321,6 +1809,82 @@ int PC_ReadDefineParms(source_t *source, define_t *define, token_t * *parms, int
     }
 }
 
+#if defined(COD2_X64)
+int PC_ExpandBuiltinDefine(source_t *source, token_t *deftoken, define_t *define, token_t * *firsttoken, token_t * *lasttoken)
+{
+    token_t *token = PC_AllocTokenCopy(deftoken);
+
+    switch (define->builtin) {
+    case 1:
+        sprintf(token->string, "%d", deftoken->line);
+        token->intvalue = (uint32_t)deftoken->line;
+        token->floatvalue = (long double)deftoken->line;
+        token->type = 3;
+        token->subtype = 0x1008;
+        *firsttoken = token;
+        *lasttoken = token;
+        break;
+
+    case 2:
+        strcpy(token->string, source->scriptstack->filename);
+        token->type = 4;
+        token->subtype = strlen(token->string);
+        *firsttoken = token;
+        *lasttoken = token;
+        break;
+
+    case 3: {
+        time_t t;
+        char *curtime;
+        size_t len;
+
+        t = time(NULL);
+        curtime = ctime(&t);
+        token->string[0] = '"';
+        token->string[1] = '\0';
+        strncat(token->string, curtime + 4, 7);
+        strncat(token->string + 7, curtime + 20, 4);
+        len = strlen(token->string);
+        token->string[len] = '"';
+        token->string[len + 1] = '\0';
+        /* ctime returns libc-owned static storage on the native platform. */
+        token->type = 4;
+        token->subtype = strlen(token->string);
+        *firsttoken = token;
+        *lasttoken = token;
+        break;
+    }
+
+    case 4: {
+        time_t t;
+        char *curtime;
+        size_t len;
+
+        t = time(NULL);
+        curtime = ctime(&t);
+        token->string[0] = '"';
+        token->string[1] = '\0';
+        strncat(token->string, curtime + 11, 8);
+        len = strlen(token->string);
+        token->string[len] = '"';
+        token->string[len + 1] = '\0';
+        /* ctime returns libc-owned static storage on the native platform. */
+        token->type = 4;
+        token->subtype = strlen(token->string);
+        *firsttoken = token;
+        *lasttoken = token;
+        break;
+    }
+
+    default:
+        *firsttoken = NULL;
+        *lasttoken = NULL;
+        break;
+    }
+
+    return 1;
+}
+#else
 int PC_ExpandBuiltinDefine(source_t *source, token_t *deftoken, define_t *define, token_t * *firsttoken, token_t * *lasttoken)
 {
     token_t *token = PC_AllocTokenCopy(deftoken);
@@ -1395,7 +1959,89 @@ int PC_ExpandBuiltinDefine(source_t *source, token_t *deftoken, define_t *define
 
     return 1;
 }
+#endif
 
+#if defined(COD2_X64)
+int PC_ExpandDefine(source_t *source, token_t *deftoken, define_t *define, token_t * *firsttoken, token_t * *lasttoken)
+{
+    token_t *parms[128];
+    token_t *first;
+    token_t *last;
+    token_t *token;
+    int i;
+
+    if (define->builtin) {
+        return PC_ExpandBuiltinDefine(source, deftoken, define, firsttoken, lasttoken);
+    }
+
+    if (define->numparms > 0) {
+        if (!PC_ReadDefineParms(source, define, parms, 128)) {
+            return 0;
+        }
+    }
+
+    first = NULL;
+    last = NULL;
+
+    for (token = define->tokens; token; token = token->next) {
+        int parmnum = -1;
+
+        if (token->type == 4) {
+            parmnum = PC_FindDefineParmIndex(define, token->string);
+        }
+
+        if (parmnum >= 0) {
+            if (parms[parmnum]) {
+                PC_AppendTokenListCopy(&first, &last, parms[parmnum]);
+            }
+            continue;
+        }
+
+        if (token->string[0] == '#' && token->string[1] == '\0') {
+            token_t *next = token->next;
+
+            if (next) {
+                parmnum = PC_FindDefineParmIndex(define, next->string);
+                if (parmnum >= 0) {
+                    token_t stringized;
+                    token_t *copy;
+
+                    PC_InitSyntheticToken(source, &stringized);
+                    if (!PC_StringizeTokens(parms[parmnum], &stringized)) {
+                        SourceError(source, "can't stringize tokens");
+                        return 0;
+                    }
+
+                    copy = PC_AllocTokenCopy(&stringized);
+                    PC_AppendTokenNode(&first, &last, copy);
+                    token = next;
+                    continue;
+                }
+            }
+
+            SourceWarning(source, "stringizing operator without define parameter");
+            continue;
+        }
+
+        PC_AppendTokenCopy(&first, &last, token);
+    }
+
+    if (!PC_MergeTokenPaste(source, &first, &last)) {
+        return 0;
+    }
+
+    *firsttoken = first;
+    *lasttoken = last;
+
+    if (define->numparms > 0) {
+        for (i = 0; i < define->numparms; ++i) {
+            PC_FreeTokenList(parms[i]);
+        }
+    }
+
+    return 1;
+}
+#else
 int PC_ExpandDefine(source_t *source, token_t *deftoken, define_t *define, token_t * *firsttoken, token_t * *lasttoken)
 {
     token_t *parms[128];
@@ -1473,6 +2119,7 @@ int PC_ExpandDefine(source_t *source, token_t *deftoken, define_t *define, token
 
     return 1;
 }
+#endif
 
 int PC_ReadLine(source_t *source, token_t *token)
 {
@@ -1525,6 +2172,30 @@ int PC_ReadLine(source_t *source, token_t *token)
     }
 }
 
+#if defined(COD2_X64)
+int PC_ReadLineHandle(int handle, pc_token_t *pc_token)
+{
+    token_t token = {0};
+    int ret;
+
+    if ((unsigned int)handle - 1u > 0x3e || !sourceFiles[handle]) {
+        return 0;
+    }
+
+    ret = PC_ReadLine(sourceFiles[handle], &token);
+    strcpy(pc_token->string, token.string);
+    pc_token->type = token.type;
+    pc_token->subtype = token.subtype;
+    pc_token->intvalue = (int)token.intvalue;
+    pc_token->floatvalue = (float)token.floatvalue;
+
+    if (pc_token->type == 1) {
+        StripDoubleQuotes(pc_token->string);
+    }
+
+    return ret;
+}
+#else
 int PC_ReadLineHandle(int handle, pc_token_t *pc_token)
 {
     token_t token;
@@ -1547,6 +2218,7 @@ int PC_ReadLineHandle(int handle, pc_token_t *pc_token)
 
     return ret;
 }
+#endif
 
 int PC_Directive_pragma(source_t *source)
 {
@@ -1559,6 +2231,39 @@ int PC_Directive_pragma(source_t *source)
     return 1;
 }
 
+#if defined(COD2_X64)
+int PC_Directive_if_def(source_t *source, int type)
+{
+    token_t token;
+    define_t *define;
+    indent_t *indent;
+    int skip;
+
+    if (!PC_ReadLine(source, &token)) {
+        SourceError(source, "#ifdef without name");
+        return 0;
+    }
+
+    if (token.type != 4) {
+        PC_UnreadSourceToken(source, &token);
+        SourceError(source, "expected name after #ifdef, found %s", token.string);
+        return 0;
+    }
+
+    define = PC_FindDefineInSource(source, token.string);
+    skip = ((type != 8) ^ (define == NULL)) != 0;
+
+    indent = (indent_t *)GetMemory(sizeof(*indent));
+    indent->type = type;
+    indent->skip = skip;
+    indent->script = source->scriptstack;
+    source->skip += skip;
+    indent->next = (intptr_t)source->indentstack;
+    source->indentstack = indent;
+
+    return 1;
+}
+#else
 int PC_Directive_if_def(source_t *source, int type)
 {
     token_t token;
@@ -1590,6 +2295,7 @@ int PC_Directive_if_def(source_t *source, int type)
 
     return 1;
 }
+#endif
 
 int PC_Directive_ifndef(source_t *source)
 {
@@ -1601,6 +2307,65 @@ int PC_Directive_ifdef(source_t *source)
     return PC_Directive_if_def(source, 8);
 }
 
+#if defined(COD2_X64)
+int PC_Directive_undef(source_t *source)
+{
+    token_t token;
+    unsigned int hash;
+    define_t *define;
+    define_t *lastdefine;
+
+    if (source->skip > 0) {
+        return 1;
+    }
+
+    if (!PC_ReadLine(source, &token)) {
+        SourceError(source, "undef without name");
+        return 0;
+    }
+
+    if (token.type != 4) {
+        PC_UnreadSourceToken(source, &token);
+        SourceError(source, "expected name, found %s", token.string);
+        return 0;
+    }
+
+    if (!source->definehash) {
+        return 1;
+    }
+
+    hash = PC_DefineHash(token.string);
+    lastdefine = NULL;
+    define = source->definehash[hash];
+    while (define) {
+        if (!strcmp(define->name, token.string)) {
+            break;
+        }
+        lastdefine = define;
+        define = (define_t *)(uintptr_t)define->hashnext;
+    }
+
+    if (!define) {
+        return 1;
+    }
+
+    if (define->flags & 1) {
+        SourceWarning(source, "can't undef %s", token.string);
+        return 1;
+    }
+
+    if (lastdefine) {
+        lastdefine->hashnext = define->hashnext;
+    } else {
+        source->definehash[hash] = (define_t *)(uintptr_t)define->hashnext;
+    }
+
+    PC_FreeTokenList(define->parms);
+    PC_FreeTokenList(define->tokens);
+    FreeMemory(define);
+    return 1;
+}
+#else
 int PC_Directive_undef(source_t *source)
 {
     token_t token;
@@ -1658,6 +2423,7 @@ int PC_Directive_undef(source_t *source)
     FreeMemory(define);
     return 1;
 }
+#endif
 
 int PC_ReadToken(source_t *source, token_t *token)
 {
@@ -1734,6 +2500,33 @@ int PC_ReadToken(source_t *source, token_t *token)
     }
 }
 
+#if defined(COD2_X64)
+int PC_ReadTokenHandle(int handle, pc_token_t *pc_token)
+{
+    token_t token;
+    int ret;
+
+    if ((unsigned int)handle - 1u > 0x3e || !sourceFiles[handle]) {
+        return 0;
+    }
+
+    ret = PC_ReadToken(sourceFiles[handle], &token);
+    /* The Mac wrapper copies indeterminate stack data on a failed read. */
+    if (!ret) {
+        return 0;
+    }
+
+    strcpy(pc_token->string, token.string);
+    pc_token->type = token.type;
+    pc_token->subtype = token.subtype;
+    pc_token->intvalue = (int32_t)(uint32_t)token.intvalue;
+    pc_token->floatvalue = (float)token.floatvalue;
+    if (pc_token->type == 1) {
+        StripDoubleQuotes(pc_token->string);
+    }
+    return ret;
+}
+#else
 int PC_ReadTokenHandle(int handle, pc_token_t *pc_token)
 {
     source_t *source;
@@ -1788,6 +2581,7 @@ int PC_ReadTokenHandle(int handle, pc_token_t *pc_token)
         ++script->script_p;
     }
 }
+#endif
 
 int PC_Directive_define(source_t *source)
 {
