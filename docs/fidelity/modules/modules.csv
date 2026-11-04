@@ -435,7 +435,7 @@ universal/com_vector,15,0,0,0,15
 universal/dvar,129,95,7,18,9
 universal/dvar_cmds,28,23,1,4,0
 universal/fft,2,2,0,0,0
-universal/memfile,12,0,0,0,12
+universal/memfile,12,8,0,0,4
 universal/q_parse,36,24,2,2,8
 universal/q_shared,90,54,6,3,27
 universal/surfaceflags,2,2,0,0,0
