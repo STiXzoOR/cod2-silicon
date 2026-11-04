@@ -25661,7 +25661,7 @@
               "flags": 4160,
               "default": {
                 "status": "literal",
-                "value": "Apr 13 2006"
+                "value": "Aug 30 2006"
               },
               "name": "gamedate"
             }
@@ -25685,7 +25685,7 @@
               "flags": 4160,
               "default": {
                 "status": "literal",
-                "value": "Apr 13 2006"
+                "value": "Aug 30 2006"
               },
               "name": "gamedate"
             }
