@@ -187,7 +187,9 @@ int XModelGetMemUsage(const XModel *model)
 qboolean Com_ValidXModelName(const char *name)
 {
 #if defined(COD2_X64)
-    return strnicmp(name, "xmodel", 6) == 0 && name[6] == '/';
+    /* Windows 1.3 accepts both separators (0x490950); preserve asset-name
+     * compatibility instead of the Mac-only slash restriction. */
+    return strnicmp(name, "xmodel", 6) == 0 && (name[6] == '/' || name[6] == '\\');
 #else
     return strnicmp(name, "xmodel", 6) == 0 && (name[6] == '/' || name[6] == '\\');
 #endif
