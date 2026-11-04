@@ -2014,6 +2014,38 @@ qboolean Debug_EventLoop(void)
     }
 }
 
+#if defined(COD2_X64)
+void Com_DedicatedModified(void)
+{
+    if (!(com_dedicated->flags & 0x40)) {
+        if (com_dedicated->latched.integer != com_dedicated->current.integer) {
+            com_dedicated = (dvar_t *)(Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1020));
+            if (com_dedicated->current.integer) {
+                com_dedicated = (dvar_t *)(Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1040));
+            }
+            Dvar_ClearModified(com_dedicated);
+#if !(COD2_APPLE_SDK && defined(DEDICATED))
+            CL_SwitchToLocalClient(0);
+#else
+            ;
+#endif
+#if !(COD2_APPLE_SDK && defined(DEDICATED))
+            CL_Shutdown();
+#else
+            ;
+#endif
+#if !(COD2_APPLE_SDK && defined(DEDICATED))
+            CL_SwitchToLocalClient(0);
+#else
+            ;
+#endif
+            Sys_ShowConsole(1, 1);
+            Sys_NormalExit();
+            SV_AddDedicatedCommands();
+        }
+    }
+}
+#endif
 BM_NOINLINE void Com_Frame_Try_Block_Function(void)
 {
     int msec, rawMsec, minMsec, maxMsec;
@@ -2130,6 +2162,9 @@ BM_NOINLINE void Com_Frame_Try_Block_Function(void)
 #endif
     SV_Frame(maxMsec);
 
+#if defined(COD2_X64)
+    Com_DedicatedModified();
+#else
     if (!(com_dedicated->flags & 0x40)) {
         if (com_dedicated->latched.integer != com_dedicated->current.integer) {
             com_dedicated = (dvar_t *)(Dvar_RegisterInt("dedicated", 0, 0, 2, 0x1020));
@@ -2157,6 +2192,7 @@ BM_NOINLINE void Com_Frame_Try_Block_Function(void)
             SV_AddDedicatedCommands();
         }
     }
+#endif
 
 #ifdef DEDICATED
     return;
