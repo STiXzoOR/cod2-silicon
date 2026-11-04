@@ -49,6 +49,9 @@ int *clusterSort;
 byte *__ZN11FxBoltFrame12g_mFrameListE;
 FxBoltFrame *FxBoltFrame_g_mFrameList;
 static dvar_t enabled, disabled;
+const dvar_t *com_statmon = &disabled;
+void StatMon_Warning(int type, int duration, const char *materialName)
+{ (void)type; (void)duration; (void)materialName; }
 static dvar_t *enabledPtr = &enabled, *disabledPtr = &disabled;
 static int cameraValid = 1;
 void *imp_theFxHelper = &theFxHelper;
@@ -653,8 +656,8 @@ static void CheckTailAndBoltMotion(void)
             if (state == 1)
                 MOTION_CHECK(bolt.mBolt.boneIndex == -1 && bolt.cachedServerTime == 100);
         } else {
-            MOTION_CHECK(effect->origin[0] == (kind == 2 ? 10 : 11) && effect->origin[1] == 20 && effect->origin[2] == 30);
-            MOTION_CHECK(effect->mRefEnt.origin[0] == 80 && effect->mRefEnt.origin[1] == (kind == 2 ? 210 : 211) && effect->mRefEnt.origin[2] == 330);
+            MOTION_CHECK(effect->origin[0] == (kind == 1 || kind == 2 ? 10 : 11) && effect->origin[1] == 20 && effect->origin[2] == 30);
+            MOTION_CHECK(effect->mRefEnt.origin[0] == 80 && effect->mRefEnt.origin[1] == (kind == 1 || kind == 2 ? 210 : 211) && effect->mRefEnt.origin[2] == 330);
         }
     }
 
