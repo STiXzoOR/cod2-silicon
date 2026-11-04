@@ -156,7 +156,11 @@ Bool G_ParseWeaponAccurayGraphs(WeaponDef *weaponDef)
 
         fileLength -= 14;
         if (fileLength > 0x1fff) {
+#if defined(COD2_X64)
+            Com_Printf("^3WARNING: \"%s\" Is too long of an ai weapon accuracy file to parse\n", fileName);
+#else
             Com_Printf("^3WARNING: \"%s\" Is too long of an ai weapon accuracy file to read\n", fileName);
+#endif
             FS_FCloseFile(fileHandle);
             return 0;
         }
