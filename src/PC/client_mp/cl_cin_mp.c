@@ -14,7 +14,7 @@ extern void ROQ_UploadCinematicFromHandle(int handle);
 extern void ROQ_CloseAllVideos(void);
 
 #if defined(COD2_X64)
-static Bool cin_skippable;
+static Bool cin_skippable = 1;
 #endif
 
 e_status CIN_StopCinematic(int handle)
