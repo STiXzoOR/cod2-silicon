@@ -7,6 +7,9 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#if defined(COD2_X64)
+#include "pb_public.h"
+#endif
 extern clientStatic_t cls;
 
 extern int I_stricmp(const char *s1, const char *s2);
@@ -220,6 +223,47 @@ int LAN_GetServerPing(int source, int n)
         return -1;
     return server->ping;
 }
+
+#if defined(COD2_X64)
+int LAN_GetServerPunkBuster(int source, int n)
+{
+    serverInfo_t *server;
+
+    switch (source) {
+    case 0:
+        if ((unsigned)n > 0x7f)
+            return -1;
+        server = &cls.localServers[n];
+        break;
+    case 1:
+        if (n < 0 || n >= cls.numglobalservers)
+            return -1;
+        server = &cls.globalServers[n];
+        break;
+    case 2:
+        if ((unsigned)n > 0x7f)
+            return -1;
+        server = &cls.favoriteServers[n];
+        break;
+    default:
+        return -1;
+    }
+
+#if COD2_IS_PATCH_13
+    return server->punkbuster;
+#else
+    return 0;
+#endif
+}
+
+void CLUI_SetPbClStatus(int status)
+{
+    if (status)
+        EnablePbCl();
+    else
+        DisablePbCl();
+}
+#endif
 
 void LAN_MarkServerDirty(int source, int n, qboolean dirty)
 {
@@ -516,6 +560,11 @@ int LAN_CompareServers(int source, int sortKey, int sortDir, int s1, int s2)
     serverInfo_t *server2 = (serverInfo_t *)0;
     int diff;
 
+#if defined(COD2_X64)
+    if ((unsigned)source > 2)
+        return 0;
+#endif
+
     if (source == 1) {
 
         if (s1 >= 0 && s1 < cls_ptr->numglobalservers)
@@ -575,8 +624,11 @@ int LAN_CompareServers(int source, int sortKey, int sortDir, int s1, int s2)
         break;
     case 3:
 #ifdef COD2_X64
-        diff = I_stricmp(UI_GetMapDisplayName(server1->mapName),
-                        UI_GetMapDisplayName(server2->mapName));
+    {
+        const char *mapName2 = UI_GetMapDisplayName(server2->mapName);
+        const char *mapName1 = UI_GetMapDisplayName(server1->mapName);
+        diff = I_stricmp(mapName1, mapName2);
+    }
 #else
         diff = I_stricmp(server1->mapName, server2->mapName);
 #endif
@@ -611,6 +663,15 @@ int LAN_CompareServers(int source, int sortKey, int sortDir, int s1, int s2)
         }
         break;
     case 9:
+#if defined(COD2_X64)
+#if COD2_IS_PATCH_13
+        diff = (int)server1->punkbuster - (int)server2->punkbuster;
+        if (diff != 0)
+            break;
+#endif
+        goto compare_ping_nosortdir;
+    case 10:
+#endif
         goto compare_ping;
     default:
         diff = 0;
