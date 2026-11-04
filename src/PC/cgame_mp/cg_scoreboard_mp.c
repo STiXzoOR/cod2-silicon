@@ -66,6 +66,14 @@ static float CG_DrawScoreboard_ListBanner(vec_t *color, float y, float listWidth
 float CG_DrawScoreboard_ScoresList(float alpha);
 qboolean CG_DrawScoreboard(void);
 
+#if defined(COD2_X64)
+static int CG_ScoreboardSigned32(uint32_t bits)
+{
+    /* Keep the signed result defined even when the wrapped sign bit is set. */
+    return bits <= INT32_MAX ? (int)bits : -1 - (int)(UINT32_MAX - bits);
+}
+#endif
+
 qboolean CG_ScoreboardDisplayed(void)
 {
     return cg->showScores;
@@ -88,11 +96,13 @@ void CG_ScrollScoreboardDown(void)
 {
     if (cg->scoresOffBottom != 0) {
 #if defined(COD2_X64)
-        cg->scoresTop += (*(const dvar_t **)imp_cg_scoreboardScrollStep)->current.integer;
+        cg->scoresTop = CG_ScoreboardSigned32((uint32_t)cg->scoresTop +
+            (uint32_t)(*(const dvar_t **)imp_cg_scoreboardScrollStep)->current.integer);
+        int maxScroll = CG_ScoreboardSigned32((uint32_t)cg->numScores - 1u);
 #else
         cg->scoresTop += *(int *)(*(int *)imp_cg_scoreboardScrollStep + 8);
-#endif
         int maxScroll = cg->numScores - 1;
+#endif
         if (cg->scoresTop > maxScroll)
             cg->scoresTop = maxScroll;
     }
@@ -664,7 +674,11 @@ static void CG_Scoreboard_DrawScrollBar(float y, int drawLine, int totalLines, f
 #endif
         thumbY += ((float)cg->scoresTop / (float)totalLines) * thumbHeight;
 
+#if defined(COD2_X64)
+    visibleLines = CG_ScoreboardSigned32((uint32_t)drawLine - (uint32_t)cg->scoresTop);
+#else
     visibleLines = drawLine - cg->scoresTop;
+#endif
     if (visibleLines > 1 && totalLines > 1)
         thumbHeight *= (float)visibleLines / (float)totalLines;
 
