@@ -51,7 +51,9 @@ int main(void)
     assert((uintptr_t)second > UINT32_MAX && !SFX_NEXT(second));
     assert(first->mFx == &effect && second->mFx == &effect);
     assert(first->mStartTime == 1100 && first->mOrigin[2] == 30);
-    assert(first->mAxis[0][0] == 1 && first->mAxis[2][2] == 1);
+    assert(first->mAxis[0][0] == 0 && first->mAxis[0][1] == 0 && first->mAxis[0][2] == 1);
+    assert(first->mAxis[1][0] == 1 && first->mAxis[1][1] == 0 && first->mAxis[1][2] == 0);
+    assert(first->mAxis[2][0] == 0 && first->mAxis[2][1] == 1 && first->mAxis[2][2] == 0);
     assert(first->mIndexInBatch == 1 && second->mIndexInBatch == 0);
     FxScheduler_Clean(&scheduler, 0, NULL);
     assert(freed == 2 && !scheduler.mScheduledHead && scheduler.mScheduledCount == 0);
