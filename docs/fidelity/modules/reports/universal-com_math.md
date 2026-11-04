@@ -10,7 +10,7 @@ Updated 2026-11-04.
 
 `MatrixInverse44` at 0x2a9da now subtracts a complete three-term sum from another three-term sum for every cofactor. The former sequential subtraction changed float rounding. `MatrixMultiply43` at 0x2a02c now writes rotation columns in Mac order before translation, preserving the original behavior when storage overlaps. `MatrixForViewer` at 0x2b87e computes the first translation from the already-negated axis, including its signed-zero behavior.
 
-`GetRotatedBounds` at 0x2c674 now selects endpoints by the axis sign bit, including negative zero. `YawToAxis` at 0x2d5ba retains subtraction from positive zero and addition to positive zero for its second axis.
+`GetRotatedBounds` at 0x2c674 now selects endpoints by the axis sign bit, including negative zero. Independent review caught an unsupported GCC sign-bit builtin on MSVC; the final implementation copies the float representation into `uint32_t` and masks bit 31. The corrected arm64 dedicated target rebuilt successfully; no MSVC build was run. `YawToAxis` at 0x2d5ba retains subtraction from positive zero and addition to positive zero for its second axis.
 
 The unordered comparison paths now match Mac in `DiffTrack` (0x2c220), `BoxDistSqrdExceeds` (0x2c540), `ExpandBoundsToWidth` (0x2c452), `WindingContainsCoplanarPoint` (0x2d0ee), and `AxisToAngles` (0x2dcc2). In particular the width selection uses a rounded subtraction, and the box-distance minimum retains the same unordered/tie operand.
 

@@ -972,7 +972,9 @@ void GetRotatedBounds(vec3_t *baseBounds, const vec_t *origin, vec3_t *axis, vec
         for (j = 0; j < 3; j++) {
             float e = axis[j][i];
 #if defined(COD2_X64)
-            if (!__builtin_signbit(e)) {
+            uint32_t axisBits;
+            memcpy(&axisBits, &e, sizeof(axisBits));
+            if (!(axisBits & 0x80000000u)) {
 #else
             if (e >= 0.0f) {
 #endif
