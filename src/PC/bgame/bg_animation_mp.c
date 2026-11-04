@@ -491,7 +491,12 @@ void BG_Player_DoControllers(const struct DObj_s *pDObj, const entityState_t *es
             }
 
             tagOriginAngles[0] += es->fTorsoPitch;
+#if defined(COD2_X64)
+            /* Mac 1.3 0x1830cd multiplies in double, then rounds for sinf/cosf. */
+            radians = (float)((double)torsoAngles[1] * 0.017453292519943295);
+#else
             radians = torsoAngles[1] * 0.017453292519943295f;
+#endif
             sinYaw = sinf(radians);
             oneMinusCos = 1.0f - cosf(radians);
 
@@ -1010,7 +1015,11 @@ static void BG_UpdateEntityPlayerAnimConditions(const entityState_t *es, const c
 
     legsAnim = BG_AnimIndexNoToggle(es->legsAnim);
     movetype = bgs->animScriptData.animations[legsAnim].movetype;
+#if defined(COD2_X64)
+    if (movetype != 0 && movetype != (long long)(int)ci->clientConditions[3][0]) {
+#else
     if (movetype != 0 && movetype != (long long)(int)bgs->clientinfo[client].clientConditions[3][0]) {
+#endif
         bgs->clientinfo[client].clientConditions[3][0] = (int)movetype;
     }
 
@@ -1810,7 +1819,11 @@ static void __attribute_regparm__(3)
             defineStr[defineType][defineIndex].hash = BG_StringHash(defineName);
 
             token = Com_ParseOnLine(&text_p);
+#if defined(COD2_X64)
+            if (!token) {
+#else
             if (!token || !*token) {
+#endif
                 BG_AnimParseError("BG_AnimParseAnimScript: expected '=', found end of line");
             }
             if (I_stricmp(token, "=")) {
@@ -1841,6 +1854,10 @@ static void __attribute_regparm__(3)
                     BG_AnimParseError("BG_AnimParseAnimScript: unexpected '%s'", token);
                     indentLevel = 0;
                 }
+#if defined(COD2_X64)
+                if (indentLevel == 1)
+                    currentScript = NULL;
+#endif
                 indexes[indentLevel] = -1;
                 continue;
             }
@@ -1856,7 +1873,11 @@ static void __attribute_regparm__(3)
                 }
 
                 token = Com_ParseOnLine(&text_p);
+#if defined(COD2_X64)
+                if (!token) {
+#else
                 if (!token || !*token) {
+#endif
                     BG_AnimParseError("BG_AnimParseAnimScript: expected state type");
                 }
 
@@ -1948,6 +1969,10 @@ static void __attribute_regparm__(3)
                     BG_AnimParseError("BG_AnimParseAnimScript: unexpected '%s'", token);
                     indentLevel = 0;
                 }
+#if defined(COD2_X64)
+                if (indentLevel == 0)
+                    currentScript = NULL;
+#endif
                 indexes[indentLevel] = -1;
                 continue;
             }
@@ -1967,13 +1992,21 @@ static void __attribute_regparm__(3)
                     }
 
                     token = Com_ParseOnLine(&text_p);
+#if defined(COD2_X64)
+                    if (!token) {
+#else
                     if (!token || !*token) {
+#endif
                         BG_AnimParseError("BG_AnimParseAnimScript: expected <state type>");
                     }
                     fromState = BG_IndexForString(token, animStateStr, 0);
 
                     token = Com_ParseOnLine(&text_p);
+#if defined(COD2_X64)
+                    if (!token) {
+#else
                     if (!token || !*token) {
+#endif
                         BG_AnimParseError("BG_AnimParseAnimScript: expected <state type>");
                     }
                     toState = BG_IndexForString(token, animStateStr, 0);
