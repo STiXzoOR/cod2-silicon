@@ -132,7 +132,11 @@ XModel *XModelLoad(const char *name, Alloc_t Alloc, Alloc_t AllocColl)
     bufEnd = pos + i;
     u.s = *(short *)pos;
     if (u.s != 0x14) {
+#if defined(COD2_X64)
+        Com_Printf("^1ERROR: xmodel '%s' out of date (version %d, expecting %d).\n", name, (int)(signed short)u.s, 0x14);
+#else
         Com_Printf("^1ERROR: xmodel '%s' out of date (version %d, expecting %d).", name, (int)(signed short)u.s, 0x14);
+#endif
     version_error:
         FS_FreeFile(buf);
         model = NULL;
@@ -176,9 +180,17 @@ XModel *XModelLoad(const char *name, Alloc_t Alloc, Alloc_t AllocColl)
             memcpy(&numCS, cur, 4);
             cur += 4;
 
+#if defined(COD2_X64)
+            /* Disk records have a triangle count followed by 36 bytes of
+             * bounds, bone index, contents and flags; no native pointer. */
+            if (numCS < 0 ||
+                (size_t)numCS > (size_t)0x7fffffff / sizeof(XModelCollSurf) ||
+                cur > bufEnd || (size_t)numCS > (size_t)(bufEnd - cur) / 40) {
+#else
             if (numCS < 0 ||
                 (size_t)numCS > (size_t)0x7fffffff / sizeof(XModelCollSurf) ||
                 (cur + (long long)numCS * (long long)sizeof(XModelCollSurf)) > bufEnd) {
+#endif
                 Com_Printf("^1ERROR: xmodel '%s' has invalid numCollSurfs %d\n", name, numCS);
                 FS_FreeFile(buf);
                 model = NULL;
@@ -355,7 +367,11 @@ XModel *XModelLoad(const char *name, Alloc_t Alloc, Alloc_t AllocColl)
                     memcpy(&ver, partsPos, 2);
                     if (ver != 0x14) {
                         FS_FreeFile(partsBuf);
+#if defined(COD2_X64)
+                        Com_Printf("^1ERROR: xmodelparts '%s' out of date (version %d, expecting %d).\n", partsName, (int)ver, 0x14);
+#else
                         Com_Printf("^1ERROR: xmodelparts '%s' out of date (version %d, expecting %d).", partsName, (int)ver, 0x14);
+#endif
                         goto cannot_find_parts;
                     }
 
@@ -678,7 +694,11 @@ XModel *XModelLoad(const char *name, Alloc_t Alloc, Alloc_t AllocColl)
 
                         if (surfsVer != 0x14) {
                             FS_FreeFile(buf);
+#if defined(COD2_X64)
+                            Com_Printf("^1ERROR: xmodelsurfs '%s' out of date (version %d, expecting %d).\n", lodName, (int)(signed short)surfsVer, 0x14);
+#else
                             Com_Printf("^1ERROR: xmodelsurfs '%s' out of date (version %d, expecting %d).", lodName, (int)(signed short)surfsVer, 0x14);
+#endif
                             goto cannot_find_surfs;
                         }
 
@@ -690,7 +710,7 @@ XModel *XModelLoad(const char *name, Alloc_t Alloc, Alloc_t AllocColl)
                             if (modelNumSurfs != fileNumSurfs) {
                                 FS_FreeFile(buf);
 #if defined(COD2_X64)
-                                Com_Printf("^1ERROR: File conflict (between non-iwd and iwd file) on xmodelsurfs '%s' for xmodel '%s'.\n", lodName, modelName);
+                                Com_Printf("^1ERROR: File conflict (between non-iwd and iwd file) on xmodelsurfs '%s' for xmodel '%s'.", lodName, modelName);
 #else
                                 Com_Printf("^1ERROR: File conflict (between non-iwd and iwd file) on xmo", lodName, modelName);
 #endif
