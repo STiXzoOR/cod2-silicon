@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 4687,
-      "intentional": 1566,
-      "equal": 2719,
-      "fixed": 485
+      "unchecked": 4593,
+      "intentional": 1580,
+      "equal": 2787,
+      "fixed": 497
     },
     "scopes": {
       "unassigned": 777,
@@ -76562,8 +76562,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x149f2e-0x14a046: renderer gate, 4096-line allocation, 44-byte line fields, byte origin flag, duration and increment match native typed storage."
       },
       {
         "id": "mac:0x0014a046",
@@ -76584,8 +76584,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14a046-0x14a138: renderer gate, 256 strings, 128-byte records, xyz/rgba/scale, 95-byte strncpy plus terminator and origin flag match."
       },
       {
         "id": "mac:0x001471ec",
@@ -76606,8 +76606,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1471ec-0x14724e with native CL_AddReliableCommand_core: signed >128 overflow guard, preincrement, low-seven-bit slot and 1024-byte reliable write match."
       },
       {
         "id": "mac:0x0014717a",
@@ -76628,8 +76628,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14717a-0x1471b4: non-main thread/fullscreen/inactive client/state<=2 each returns true; connected foreground client returns false."
       },
       {
         "id": "mac:0x001473d4",
@@ -76650,8 +76650,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1473d4-0x147432: indexed client, old-position result, 16-byte rounded increment stored before signed >=0x3fff1 null cutoff. Native pointer arithmetic uses the LP64 skeleton buffer."
       },
       {
         "id": "mac:0x001471b4",
@@ -76672,8 +76672,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1471b4-0x1471d4: active byte and exact state 4 produce true; other paths return false."
       },
       {
         "id": "mac:0x0014d668",
@@ -76694,8 +76694,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand compared Mac 0x14d668-0x14d784 and actual native CL_ParseDownload/Disconnect chain. Native deliberately retains coherent UDP handle/names/block/count in clc while mirroring names to cls for HTTP redirects; Mac UDP uses cls. UI bookkeeping and reliable command behavior match; storage relocation retained."
       },
       {
         "id": "mac:0x0014a90a",
@@ -76716,8 +76716,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand compared Mac 0x14a90a-0x14ab04 filtering first min(strlen,32) alphanumerics, uppercase and seeded MD5 output. Native Apple Com_CDKeyHashBytes uses CommonCrypto with the same 0xb684a3 state seed multipliers 11/71/37/97 and lowercase hex; backend replacement retained, optional COD2_CODX hash branch outside stock comparison."
       },
       {
         "id": "mac:0x0014ad5a",
@@ -76738,8 +76738,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand compared Mac 0x14ad5a-0x14b032: Apple 1.3 2000 ms gate, connection counters, authorization/hash challenge, userinfo/protocol/challenge/qport/connect payload and modified-flag clear match. PbClientConnecting backend events intentionally omitted by the documented null adapter; COD2_CODX encoding remains optional."
       },
       {
         "id": "mac:0x001474d8",
@@ -76760,8 +76760,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1474d8-0x147550: preserve active/key catchers/HUD/CGame flags, zero complete client then restore flags and clear DObj skeletons. Inspected live generated BSS and native typed sizeof allocation."
       },
       {
         "id": "mac:0x00147492",
@@ -76782,8 +76782,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x147492-0x1474d8: restart/names/original name/WWW flags reset followed by DL_CancelDownload. Native extra return value is unused by callers."
       },
       {
         "id": "mac:0x0014777c",
@@ -76804,8 +76804,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14777c-0x1477e8: headings, current connection state, server name and userinfo flag 2 match. Native clc is initialized to the single clientConnections storage by link_stubs.c."
       },
       {
         "id": "mac:0x0014771a",
@@ -76826,8 +76826,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14771a-0x14777c: exact active-state gate and all 2048 nonzero configstring offsets with the same format match."
       },
       {
         "id": "mac:0x0014c4c4",
@@ -76848,8 +76848,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x14ca53-0x14ca70 skips disconnect error during detached WWW download and then disconnects; native lacked that branch. Mac 0x14cc05 formats print text to 0x20000; native used 0x4000. Restored both, compared full command dispatch. PB events remain the documented null-adapter boundary; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0014c096",
@@ -76870,8 +76870,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x14c096-0x14c132 disconnects then calls CL_NextDemo. Replaced native extra cinematic/disconnect-error tail with that chain, retaining timedemo arithmetic/log close; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0014b8ea",
@@ -76892,8 +76892,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand compared Mac 0x14b8ea-0x14bbb4: recording/demo/cinematic/reliable disconnect, state/client reset, detached WWW preservation and global clear gates. UDP cleanup deliberately closes native clc.download, consistent with CL_ParseDownload, rather than Mac cls.download; native MatchSummary/COD2_CODX hooks retained."
       },
       {
         "id": "mac:0x0014be9c",
@@ -76914,8 +76914,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14be9c-0x14bf00: stop cinematic, save prior state, disconnect, <=2 return and foreground/fullscreen/client-state disconnect error predicate match stock native. Optional COD2_CODX cleanup retained outside stock comparison."
       },
       {
         "id": "mac:0x0014d368",
@@ -76936,8 +76936,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x14d3aa-0x14d3c6 sets cl_paused=1 then initializes CGame and sends pure checksums without unpausing. Removed native extra reset after coordinated CL_InitCGame/CG_Init/pause-registration trace; full restart/static clear/UI/hunk/pure command/three-packet paths compared; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00149d32",
@@ -76958,8 +76958,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x149d9e-0x149dad converts height to float before adding it to itself and dividing by three. Native doubled the integer first; restored SSE operation order and compared fade/clamp/draw/disconnect paths; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00149672",
@@ -76980,8 +76980,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x149672-0x149700: split-screen y offset, placement transform on x/y/xScale/yScale, then renderer draw with identical arguments."
       },
       {
         "id": "mac:0x00149666",
@@ -77002,8 +77002,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x149666-0x149672 renderer tail dispatch and argument contract to native re.DrawText."
       },
       {
         "id": "mac:0x00149700",
@@ -77024,8 +77024,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x149700-0x149714: signed-byte cursor promotion before renderer dispatch matches."
       },
       {
         "id": "mac:0x00149714",
@@ -77046,8 +77046,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x149714-0x1497b2: signed-byte cursor, y offset/placement and ordered renderer arguments match."
       },
       {
         "id": "mac:0x0014941c",
@@ -77068,8 +77068,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14941c-0x1495e6: origin-filtered swap removal without skipping swapped records, line-duration decrement/removal and renderer string/line location counts match."
       },
       {
         "id": "mac:0x0014d192",
@@ -77090,8 +77090,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x14d192-0x14d2b6 forwards eligible commands without a CG_IsConsoleCommandName suppression. Removed that native-only gate, preserving minus/plus/demo/state/argc/overflow branches; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0014d2b6",
@@ -77112,8 +77112,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14d2b6-0x14d368: active/not-demo/argument gates and Cmd_Args(1), overflow check, sequence/slot and reliable write match."
       },
       {
         "id": "mac:0x0014b182",
@@ -77134,8 +77134,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x14b1a1-0x14b1b5 passes the current voice queue slot, not client base. Mac 0x14b265-0x14b2b9 reauthorizes active non-LAN/authorized-LAN sessions after >300000 ms; native omitted this tail. Restored both and compared userinfo/timeout/download/ingame/send paths; optional COD2_CODX hooks retained; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001497bc",
@@ -77156,8 +77156,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1497bc-0x1497c8 byte load with native typed HUD flag accessor."
       },
       {
         "id": "mac:0x001497b2",
@@ -77178,8 +77178,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1497b2-0x1497bc with native first-client key-catcher integer load."
       },
       {
         "id": "mac:0x00147164",
@@ -77200,8 +77200,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x147164-0x14716e: unconditional true, including ignored client index."
       },
       {
         "id": "mac:0x0014716e",
@@ -77222,8 +77222,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14716e-0x14717a: unconditional one local client."
       },
       {
         "id": "mac:0x0014927c",
@@ -77244,8 +77244,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14927c-0x149380: empty slot output, address copy, unresolved elapsed/max(100,cl_maxPing) behavior, server-info update using original ping time, and returned time match."
       },
       {
         "id": "mac:0x0014938a",
@@ -77266,8 +77266,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14938a-0x14941c: clear 128-byte buffer through challenging state, IPv4 format and signed 16-bit host-order port conversion match."
       },
       {
         "id": "mac:0x001473a4",
@@ -77288,8 +77288,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1473a4-0x1473d4 indexed client stride and skeleton timestamp field with native typed client indexing."
       },
       {
         "id": "mac:0x001471de",
@@ -77310,8 +77310,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1471de-0x1471ec: ignored controller index and current name string match."
       },
       {
         "id": "mac:0x0014b032",
@@ -77332,8 +77332,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14b032-0x14b116: saved client flags across zeroing, DObj/mute/voice reset, disconnected state/realtime/active, load UI flags, Cbuf execution/running/ADS and prints match."
       },
       {
         "id": "mac:0x0014d84c",
@@ -77354,8 +77354,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14d84c-0x14d958: shifted string, static download clear/cancel, listen/download-enabled decision, missing-IWD warning, list generation and connected/next-download transitions match stock native. Optional COD2_CODX demo bypass retained."
       },
       {
         "id": "mac:0x00149cce",
@@ -77376,8 +77376,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x149cce-0x149d32: running gate, expected usage zero, UI map and exact state>=5 ? 5 : 0 transition before screen refresh match."
       },
       {
         "id": "mac:0x001485e2",
@@ -77398,8 +77398,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x148fbd-0x148fcd registers unskippablecinematic immediately after cinematic; added the identical reviewed guarded client-screen extern/registration. Hand compared full body and scripted all 58 stock dvar types/defaults/domains/flags with no differences. Retained MatchSummary/COD2_CODX additions and native renderer ABI; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00147ebc",
@@ -77420,8 +77420,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand compared Mac 0x147ebc-0x148462 and decoded all assigned import slots through local GOT pointers. Native renderer deliberately implements API59 (GetRefAPI enforces59), omits Mac API60 Dvar_FindVar slot and appends CM_GetPlaneNum. Five unassigned import slots are also unassigned in Mac. Preserved established ABI59 and typed sizeof copy rather than changing only version number."
       },
       {
         "id": "mac:0x00147c66",
@@ -77442,8 +77442,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x147cf0 dispatches languages 6-12 using jump table 0x33ae20. Restored all seven console-font paths, decoded each table target and compared remaining registration/scaling/console-field stores; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001479dc",
@@ -77464,8 +77464,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1479dc-0x1479f2: forwards client index to Voice_IsClientTalking and returns its byte result."
       },
       {
         "id": "mac:0x001471d4",
@@ -77486,8 +77486,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1471d4-0x1471de: unconditional false."
       },
       {
         "id": "mac:0x0014a138",
@@ -77508,8 +77508,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14a138-0x14a236: reset counters and 128 records while preserving dirty byte, zero address, two broadcasts to ports 28960-28963 and exact 15-byte OOB payload match."
       },
       {
         "id": "mac:0x0014bf00",
@@ -77530,8 +77530,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x14bf76-0x14bf90 sets localhost before disconnect and initializes connectTime=-2000; native used opposite order and -3000. Restored both and compared local-map clear/reuse, qport/address/resend/load UI and sound paths. MatchSummary hook retained; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001472ea",
@@ -77552,8 +77552,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1472ea-0x147366 had no native body. Added bounded nextdemo copy/log, empty guard, dvar clear before queueing command/newline and immediate Cbuf_Execute; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0014d784",
@@ -77574,8 +77574,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14d784-0x14d84c: empty/malformed list completion, optional leading @, remote/local token splitting, begin-download order, static restart and overlap-safe remainder move match native 1.3."
       },
       {
         "id": "mac:0x0014965a",
@@ -77596,8 +77596,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14965a-0x149666 tail dispatch with native renderer scale wrapper and argument order."
       },
       {
         "id": "mac:0x001484fe",
@@ -77618,8 +77618,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1484fe-0x1485e2: usage/permission/UI gates, arguments, 32 configstrings at 0x4de, -1 default and exec-mode-2 menu response command match."
       },
       {
         "id": "mac:0x001476de",
@@ -77640,8 +77640,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1476de-0x1476fc: FS_LoadedIwdNames and print format match."
       },
       {
         "id": "mac:0x0014ced6",
@@ -77662,8 +77662,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand compared Mac 0x14ced6-0x14d192 with native always_inline CL_PacketEvent_real: OOB/runt/address/last-packet/netchan/ack/decode/overflow rollback/demo branches match. Native MatchSummary_Packet hook intentionally records opt-in local match metrics after accepted netchan packets."
       },
       {
         "id": "mac:0x0014c288",
@@ -77684,8 +77684,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand compared Mac 0x14c288-0x14c4c4: usage/listen gates, file selection/open/demo setup and connected/loading read loop match. Preserved native argLen>=extLen guard: Mac computes a pointer before the argument for short names. No undefined pre-string read introduced; optional COD2_CODX playback hook retained."
       },
       {
         "id": "mac:0x0014a236",
@@ -77706,8 +77706,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14a236-0x14a436: argc/state/cinematic gates, menu and sound setup, float atof->milliseconds->floor rounding, total duration, two material registrations and +100 start delay match."
       },
       {
         "id": "mac:0x0014c132",
@@ -77728,8 +77728,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand compared Mac 0x14c132-0x14c288: file/sequence/length/-1/max/truncation/time/ack/message parsing branches match. Native defined automatic MAX_MSGLEN buffer replaces Mac LargeLocal scratch allocation/destructor, preserving message capacity and early returns."
       },
       {
         "id": "mac:0x00147670",
@@ -77750,8 +77750,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x147670-0x1476de: empty server and 10-byte localhost gate plus connect command formatting match."
       },
       {
         "id": "mac:0x00149856",
@@ -77772,8 +77772,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand compared Mac 0x149856-0x149c88: naming/retry/file flags, 2048 configstrings, 1024 baselines, terminators, compression and writes match. Native automatic MAX_MSGLEN scratch arrays replace two Mac LargeLocal allocations/destructors; optional COD2_CODX auto-record naming retained."
       },
       {
         "id": "mac:0x00147b6e",
@@ -77794,8 +77794,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x147b6e-0x147c20: 4096-byte vsnprintf scratch and print levels 0/1/2/3, channels and color prefixes match."
       },
       {
         "id": "mac:0x001476fc",
@@ -77816,8 +77816,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1476fc-0x14771a: referenced IWD query and print format match."
       },
       {
         "id": "mac:0x001497c8",
@@ -77838,8 +77838,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1497c8-0x1497d4 renderer font tail dispatch with native wrapper."
       },
       {
         "id": "mac:0x0014ab04",
@@ -77860,8 +77860,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14ab04-0x14ad5a: last-auth time, key validation, resolver/port/type gates, demo or first-32 alphanumeric token, anonymous dvar flags 0x101b and PB-hash OOB format match. Hash replacement is recorded separately."
       },
       {
         "id": "mac:0x00147432",
@@ -77882,8 +77882,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x147464-0x147470 increments the 32-bit timestamp with wrapping and replaces zero by one. Made native addition unsigned before increment to define that wrap; retained 16-byte memory alignment and position reset; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0014a764",
@@ -77905,7 +77905,7 @@
         ],
         "linux": [],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Hand compared Mac 0x14a764-0x14a868 avidemo/screenshot timestep, FPS, realtime/frame timing and unsigned 200 ms clamp. Whole row remains unchecked: fullscreen branch at 0x14a842 invokes unresolved CL_SyncGpu, while native invokes only void re.SyncGpu. See private renderer-dependency.json; no unsupported return-value cast or invented timer contract."
       },
       {
         "id": "mac:0x00147eb2",
@@ -77926,8 +77926,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x147eb2-0x147ebc: returns client-static realtime."
       },
       {
         "id": "mac:0x00147862",
@@ -77948,8 +77948,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand read Mac 0x147862-0x1478b0 server-address NET_OutOfBandPbPacket wrapper. This callback is absent because the native PunkBuster backend is replaced by src/PC/punkbuster/pb_null_adapter.c (WS44); searched native callers and found none. No discarded backend reconstructed."
       },
       {
         "id": "mac:0x00147b5a",
@@ -77970,8 +77970,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x147b5a-0x147b6e: Com_SetRecommended(1)."
       },
       {
         "id": "mac:0x00147550",
@@ -77992,8 +77992,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x147550-0x147670: argc gates, 1024-byte key=value assembly including trailing spaces, putenv/getenv and defined/undefined output match. Original stack-backed environment argument retained."
       },
       {
         "id": "mac:0x001479f2",
@@ -78014,8 +78014,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1479f2-0x147a9e: map/gametype copies, loading flag, non-listen usage/waiting state, UI map and screen refresh match."
       },
       {
         "id": "mac:0x00149380",
@@ -78036,8 +78036,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x149380-0x14938a tail call to Sys_ShowIP."
       },
       {
         "id": "mac:0x0014bbb4",
@@ -78058,8 +78058,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14bbb4-0x14be9c: recursion guard, disconnect/last-client gates, debug/CGame/UI/sound/ref/input teardown, all 35 removal strings and complete typed cls zeroing match. Preserved Mac omissions such as timedemo and unskippablecinematic removal."
       },
       {
         "id": "mac:0x0014b116",
@@ -78080,8 +78080,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14b116-0x14b182: optional render sync, conditional CGame/UI/material/hunk teardown, renderer Shutdown(0) and rendererStarted reset match."
       },
       {
         "id": "mac:0x001491c8",
@@ -78102,8 +78102,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1491c8-0x14927c: five guarded frees, debug structure reset and optional renderer ShutdownDebug dispatch match."
       },
       {
         "id": "mac:0x00147366",
@@ -78124,8 +78124,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x147366-0x1473a4: optional demo file close and file/play/record flag clear match stock native. Optional COD2_CODX playback hook retained."
       },
       {
         "id": "mac:0x00149c88",
@@ -78146,8 +78146,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x149c88-0x149cce: started gate, CGame then UI shutdown, three renderer handles and hunk-started clear match."
       },
       {
         "id": "mac:0x00147c20",
@@ -78168,8 +78168,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x147c20-0x147c66: optional render sync, conditional renderer Shutdown(1), complete native table clear and StatMon_Reset match."
       },
       {
         "id": "mac:0x0014b812",
@@ -78190,8 +78190,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14b812-0x14b8ea: listen-server gate, 10 MiB memory-file sound snapshot/copy/free, listener save/shutdown/init/restore, video restart then sound snapshot restore/free match."
       },
       {
         "id": "mac:0x00147e22",
@@ -78212,8 +78212,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x147e22-0x147eb2: running gate, sound/render/UI initialization order, keepalive after each and final hunk-started flag match."
       },
       {
         "id": "mac:0x001484b2",
@@ -78234,8 +78234,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1484b2-0x1484c2: disconnected state store."
       },
       {
         "id": "mac:0x00149eda",
@@ -78256,8 +78256,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x149eda-0x149f2e: stop cinematic only for cinematic state or clear state otherwise, stop sounds and choose menu by resulting state match."
       },
       {
         "id": "mac:0x0014724e",
@@ -78278,8 +78278,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14724e-0x1472ea: not-recording print, two -1 demo terminators, file close and recording/file flag reset match stock native. Optional COD2_CODX auto-record policy retained."
       },
       {
         "id": "mac:0x0014a726",
@@ -78301,7 +78301,7 @@
         ],
         "linux": [],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Unresolved cross-module contract: Mac 0x14a726-0x14a764 obtains an integer cycle budget from re+0x154 then polls re+0x150 with low-TSC elapsed/rollover limits and WinSleep(1). Native refexport_t.SyncGpu and RB_AdaptiveGpuSyncWait return void, and renderer rdtsc_lo returns zero. Retained defined native call; renderer/header/timer audit belongs to later renderer owner. Private renderer-dependency.json lists exact paths and offsets."
       },
       {
         "id": "mac:0x0014964e",
@@ -78322,8 +78322,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14964e-0x14965a renderer text-height dispatch."
       },
       {
         "id": "mac:0x00149642",
@@ -78344,8 +78344,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x149642-0x14964e renderer text-width dispatch and argument order."
       },
       {
         "id": "mac:0x001484c2",
@@ -78366,8 +78366,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1484c2-0x1484fe: demo playback or server-load waiting selects menu 1, otherwise menu 2."
       },
       {
         "id": "mac:0x001495e6",
@@ -78388,8 +78388,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1495e6-0x149642: renderer gate and guarded current string/line buffer-count-capacity dispatches match."
       },
       {
         "id": "mac:0x0014a436",
@@ -78410,8 +78410,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14a436-0x14a726: disconnected/source gates, 16-slot counts, list selection, dirty/unresolved filtering, duplicate address checks, first free slot request and completed-slot clearing/status match."
       },
       {
         "id": "mac:0x0014b466",
@@ -78432,8 +78432,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14b466-0x14b812: listen gate, archived client snapshot, sound/hunk/ref teardown, vdr reliable command, language dvars, FS/language/ref/hunk restart, loading-active CGame/pure checksums and snapshot restoration match for the defined connection states 0-8."
       },
       {
         "id": "mac:0x001478f2",
@@ -78454,8 +78454,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x147932 stores the talker as a byte before unsigned >63 validation. Native retained MSG_ReadByte failure -1 as a negative index; now truncates to byte. Compared packet/length/mute/voice gates and input calls; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00147a9e",
@@ -78476,8 +78476,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x147a9e-0x147ae8: positive queue gate, >199 ms or >9 packets sends then clears queue and updates server-time stamp."
       },
       {
         "id": "mac:0x001497d4",
@@ -78498,8 +78498,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x1497d4-0x149856: server sequence, payload length minus header, and payload writes use the same order and demo handle."
       },
       {
         "id": "mac:0x00148462",
@@ -78520,8 +78520,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x148462-0x14847e: same executable string and Sys_StartProcess exit flag 1."
       },
       {
         "id": "mac:0x0014a868",
@@ -78542,8 +78542,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x14a868-0x14a90a: positive length copy to current queue slot, size/count updates, >199 ms or >9 flush and returned byte count match under the single-client binding."
       },
       {
         "id": "mac:0x001478c0",
@@ -78564,8 +78564,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand read Mac 0x1478c0-0x1478f2 current-server address formatter. Callback belongs solely to removed PunkBuster backend; no native callers exist. Native null adapter owns that boundary (WS44)."
       },
       {
         "id": "mac:0x001478b0",
@@ -78586,8 +78586,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand read Mac 0x1478b0-0x1478c0 serverinfo-configstring accessor. Callback belongs solely to removed PunkBuster backend; no native callers exist. Native null adapter owns that boundary (WS44)."
       },
       {
         "id": "mac:0x001477e8",
@@ -78608,8 +78608,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand read Mac 0x1477e8-0x147862 first-32 alphanumeric key sanitizer. Callback belongs solely to removed PunkBuster backend; no native callers exist. Engine-side authorization/hash functions remain independently checked; native null adapter owns backend boundary (WS44)."
       },
       {
         "id": "mac:0x00147ae8",
@@ -78630,8 +78630,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac 0x147ae8-0x147b5a: server/client voice, rate>4999, active state, explicit talking, capture talking and queued-packet checks match."
       },
       {
         "id": "mac:0x0014847e",
@@ -78652,8 +78652,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Hand read Mac 0x14847e-0x1484b2 text-to-cl_punkbuster setter. Only removed PunkBuster initialization used this callback; no native callers exist. Native dvar registration remains in CL_InitOnceForAllClients, null adapter owns backend lifecycle (WS44)."
       }
     ],
     "client/cl_main_pc_mp": [
