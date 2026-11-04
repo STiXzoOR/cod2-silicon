@@ -451,11 +451,11 @@ win32/win_net,3,0,0,0,3
 win32/win_voice,7,0,0,0,7
 xanim/dobj,58,54,1,0,3
 xanim/xanim,147,118,11,4,14
-xanim/xanim_load,4,0,0,0,4
+xanim/xanim_load,4,3,1,0,0
 xanim/xanim_public,10,3,0,0,7
-xanim/xmodel,30,0,0,0,30
-xanim/xmodel_load,15,0,0,0,15
-xanim/xmodel_utils,13,0,0,0,13
+xanim/xmodel,30,24,0,1,5
+xanim/xmodel_load,15,5,5,5,0
+xanim/xmodel_utils,13,12,0,1,0
 zlib/adler32,1,0,0,1,0
 zlib/compress,2,0,0,2,0
 zlib/deflate,18,0,0,18,0
