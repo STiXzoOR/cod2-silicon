@@ -238,7 +238,11 @@ void Com_PrintMessage(print_msg_type_t type, const char *msg)
     if (rd_buffer) {
         if (type == 4)
             return;
+#if defined(COD2_X64)
+        if (strlen(msg) + strlen(rd_buffer) > (unsigned)(rd_buffersize - 1)) {
+#else
         if (strlen(msg) + strlen(rd_buffer) - 1 > (unsigned)(rd_buffersize - 1)) {
+#endif
             rd_flush(rd_buffer);
             *rd_buffer = '\0';
         }
@@ -246,7 +250,11 @@ void Com_PrintMessage(print_msg_type_t type, const char *msg)
         return;
     }
 
+#if defined(COD2_X64)
+    if (type != 4 && com_dedicated && !com_dedicated->current.integer) {
+#else
     if (type != 4 && (!com_dedicated || !com_dedicated->current.integer)) {
+#endif
 #if !(COD2_APPLE_SDK && defined(DEDICATED))
         CL_ConsolePrint(type, msg, 0, 0);
 #else
@@ -271,9 +279,18 @@ void Com_PrintMessage(print_msg_type_t type, const char *msg)
         opening_qconsole = 1;
         {
             time_t aclock;
+#if defined(COD2_X64)
+            struct tm *newtime;
+#endif
             time(&aclock);
+#if defined(COD2_X64)
+            newtime = localtime(&aclock);
+            logfile = FS_FOpenTextFileWrite("console_mp.log");
+            Com_Printf("logfile opened on %s\n", asctime(newtime));
+#else
             logfile = FS_FOpenTextFileWrite("qconsole_mp.log");
             Com_Printf("logfile opened on %s\n", asctime(localtime(&aclock)));
+#endif
         }
         opening_qconsole = 0;
         if (!logfile)
@@ -409,7 +426,11 @@ void Com_Error(errorParm_t code, const char *fmt, ...)
     ;
 #endif
         code = (errorParm_t)(1);
+#if defined(COD2_X64)
+    } else if (code != 1) {
+#else
     } else {
+#endif
         com_fixedConsolePosition = 0;
     }
 
@@ -544,15 +565,26 @@ void Com_ShutdownEvents(void)
 
 static void Com_Error_f(void)
 {
+#if defined(COD2_X64)
+    if (Cmd_Argc() > 1)
+        Com_Error((errorParm_t)1, "\x15" "Testing drop error");
+    else
+        Com_Error((errorParm_t)0, "\x15" "Testing fatal error");
+#else
     if (Cmd_Argc() > 1)
         Com_Error( (errorParm_t)(1), "Testing drop error");
     else
         Com_Error( (errorParm_t)(0), "Testing fatal error");
+#endif
 }
 
 static void Com_Crash_f(void)
 {
+#if defined(COD2_X64)
+    *(volatile int *)0 = 0x12345678;
+#else
     *(int *)0 = 0x12345678;
+#endif
 }
 
 #if !(COD2_APPLE_SDK && defined(DEDICATED))
@@ -650,6 +682,30 @@ static int Com_GetConfigureDvarNames(const char **text, char *dvarNames)
     }
 }
 
+#if defined(COD2_X64)
+static void Com_GetConfigureDvarValues(int dvarCount, const char **text, char *dvarValues)
+{
+    extern const char *Com_ParseOnLine(const char **text);
+    extern void I_strncpyz(char *dest, const char *src, int destsize);
+    int index;
+    const char *token;
+
+    for (index = 0; index < dvarCount; index++) {
+        token = Com_ParseOnLine(text);
+        if (!*text)
+            Com_Error((errorParm_t)0, "\x15" "configure_mp.csv: unexpected end-of-file");
+        if (!*token)
+            Com_Error((errorParm_t)0, "\x15" "configure_mp.csv: missing entry in dvar value column %i\n", index);
+        if (strlen(token) > 31)
+            Com_Error((errorParm_t)0, "\x15" "configure_mp.csv: entry '%s' in dvar value column %i is longer than %i\n", token, index, 31);
+        if (dvarValues)
+            I_strncpyz(dvarValues + index * 32, token, 32);
+    }
+    token = Com_ParseOnLine(text);
+    if (*token)
+        Com_Error((errorParm_t)0, "\x15" "configure_mp.csv: extra dvar value column(s): value = %s\n", token);
+}
+#else
 static void Com_GetConfigureDvarValues(int dvarCount, const char **text, char *dvarValues)
 {
     extern const char *Com_ParseOnLine(const char **text);
@@ -711,6 +767,8 @@ static void Com_GetConfigureDvarValues(int dvarCount, const char **text, char *d
     }
 }
 
+#endif
+
 static void Com_SetConfigureDvars(int dvarCount, const char *dvarNames, const char *dvarValues)
 {
     extern const dvar_t *Dvar_SetFromStringByNameFromSource(const char *name, const char *value, int source);
@@ -724,9 +782,11 @@ static void Com_SetConfigureDvars(int dvarCount, const char *dvarNames, const ch
     for (dvarIndex = 0; dvarIndex < dvarCount; dvarIndex++) {
         const char *name = dvarNames + dvarIndex * 0x20;
         const char *value = dvarValues + dvarIndex * 0x20;
+#if !defined(COD2_X64)
         if (strncmp(name, "r_aaSamples", 12) == 0)
             Dvar_SetFromStringByNameFromSource(name, "1", 1);
         else
+#endif
             Dvar_SetFromStringByNameFromSource(name, value, 1);
         {
             const dvar_t *dvar = Dvar_FindVar(name);
@@ -841,7 +901,11 @@ int Com_AddToString(const char *add, char *msg, int len, int maxlen, qboolean ma
 
     if (mayAddQuotes) {
         if (*add) {
+#if defined(COD2_X64)
+            if ((signed char)*add > ' ') {
+#else
             if ((unsigned char)*add > ' ') {
+#endif
 
                 int remaining = maxlen - len;
                 if (remaining > 0) {
@@ -851,7 +915,11 @@ int Com_AddToString(const char *add, char *msg, int len, int maxlen, qboolean ma
                         if (!*p) {
                             break;
                         }
+#if defined(COD2_X64)
+                        if ((signed char)*p <= ' ') {
+#else
                         if ((unsigned char)*p <= ' ') {
+#endif
                             needsQuote = 1;
                             break;
                         }
@@ -889,7 +957,11 @@ int Com_AddToString(const char *add, char *msg, int len, int maxlen, qboolean ma
     if (len < maxlen) {
         int i;
         int room = maxlen - len;
+#if defined(COD2_X64)
+        for (i = 0; i < room && add[i]; i++) {
+#else
         for (i = 0; add[i] && i < room; i++) {
+#endif
             msg[len + i] = add[i];
         }
         len += i;
@@ -908,11 +980,158 @@ int Com_AddToString(const char *add, char *msg, int len, int maxlen, qboolean ma
 char Com_GetDecimalDelimiter(void)
 {
     int lang = (loc_language)->current.integer;
+#if defined(COD2_X64)
+    if ((unsigned int)(lang - 1) <= 3 || lang == 6 || lang == 7 || lang == 14)
+#else
     if ((unsigned int)(lang - 1) <= 3 || lang == 6 || lang == 7)
+#endif
         return ',';
     return '.';
 }
 
+#if defined(COD2_X64)
+void Com_SetRecommended(qboolean restart)
+{
+    extern void Sys_GetInfo(void *info);
+    extern int FS_ReadFile(const char *path, void **buffer);
+    extern void FS_FreeFile(void *buffer);
+    extern void Com_BeginParseSession(const char *name);
+    extern void Com_SetCSV(int csv);
+    extern const char *Com_Parse(const char **text);
+    extern const char *Com_ParseOnLine(const char **text);
+    extern void Com_UngetToken(void);
+    extern void Com_SkipRestOfLine(const char **text);
+    extern void Com_EndParseSession(void);
+    extern void Sys_ArchiveInfo(int checksum);
+    extern void Cbuf_AddText(const char *text);
+    extern qboolean Dvar_AnyLatchedValues(void);
+    SysInfo info;
+    void *csv;
+    const char *text;
+    const char *token;
+    int filesize, count = 0, bestMB = 0;
+    double bestGHz = -1.0;
+    qboolean foundCpu = 0, foundGpu = 0;
+    char names[64 * 32], cpuValues[64 * 32], gpuValues[64 * 32];
+    unsigned int checksum = 0;
+    int i;
+
+    Com_Printf("========= autoconfigure\n");
+    Sys_GetInfo(&info);
+    info.cpuGHz = 1.02 * info.cpuGHz;
+    if (info.sysMB < 128)
+        info.sysMB = 128;
+    else
+        info.sysMB += 8;
+
+    filesize = FS_ReadFile("configure_mp.csv", &csv);
+    if (filesize < 0)
+        Com_Error((errorParm_t)0, "EXE_ERR_NOT_FOUND\x15" "configure_mp.csv");
+    text = (const char *)csv;
+    Com_BeginParseSession("configure_mp.csv");
+    Com_SetCSV(1);
+
+    for (;;) {
+        double rowGHz;
+        int rowMB;
+        token = Com_Parse(&text);
+        if (!*token || *token == '#') {
+            Com_SkipRestOfLine(&text);
+            continue;
+        }
+        if (!stricmp(token, "gpu")) {
+            Com_UngetToken();
+            break;
+        }
+        if (!count) {
+            if (stricmp(token, "cpu ghz"))
+                Com_Error((errorParm_t)0, "\x15" "configure_mp.csv: \"cpu ghz\" should be the first column\n");
+            token = Com_ParseOnLine(&text);
+            if (stricmp(token, "sys mb"))
+                Com_Error((errorParm_t)0, "\x15" "configure_mp.csv: \"sys mb\" should be the second column\n");
+            count = Com_GetConfigureDvarNames(&text, names);
+            continue;
+        }
+        rowGHz = atof(token);
+        if (rowGHz < 0.0)
+            Com_Error((errorParm_t)0, "\x15" "configure_mp.csv: cpu ghz %g not allowed to be less than 0\n", rowGHz);
+        rowMB = atoi(Com_ParseOnLine(&text));
+        if (rowMB < 128)
+            Com_Error((errorParm_t)0, "\x15" "configure_mp.csv: sys mb %i not allowed to be less than 128\n", rowMB);
+        if (info.cpuGHz >= rowGHz && info.sysMB >= rowMB &&
+            (rowGHz > bestGHz || (rowGHz == bestGHz && rowMB > bestMB))) {
+            bestGHz = rowGHz;
+            bestMB = rowMB;
+            foundCpu = 1;
+            Com_GetConfigureDvarValues(count, &text, cpuValues);
+        } else {
+            Com_GetConfigureDvarValues(count, &text, NULL);
+        }
+    }
+    if (!foundCpu) {
+        Sys_GetInfo(&info);
+        Com_Error((errorParm_t)0, "\x15" "configure_mp.csv: \x14" "EXE_ERR_COULDNT_CONFIGURE\x15 %.0f GHz %i MB\n", info.cpuGHz, info.sysMB);
+    }
+    Com_Printf("configure_mp.csv: using CPU configuration %.0f GHz %i MB\n", bestGHz, bestMB);
+    Cbuf_AddText("exec configure_mp.cfg");
+    Cbuf_Execute();
+    Com_SetConfigureDvars(count, names, cpuValues);
+
+    token = Com_Parse(&text);
+    if (!stricmp(token, "gpu")) {
+        count = Com_GetConfigureDvarNames(&text, names);
+        for (;;) {
+            token = Com_Parse(&text);
+            if (!text)
+                break;
+            if (!*token || *token == '#') {
+                Com_SkipRestOfLine(&text);
+                continue;
+            }
+            if (!foundGpu) {
+                char pattern[1024];
+                const char *scan = token;
+                int length = 1;
+                pattern[0] = '*';
+                while (*scan) {
+                    unsigned char c = (unsigned char)*scan++;
+                    if (!isspace(c)) {
+                        pattern[length++] = (char)c;
+                    } else if (pattern[length - 1] != ' ') {
+                        pattern[length++] = ' ';
+                    }
+                    if (length == 1023)
+                        Com_Error((errorParm_t)0, "\x15" "configure_mp.csv: \"find\" string is too long\n");
+                }
+                if (pattern[length - 1] != '*')
+                    pattern[length++] = '*';
+                pattern[length] = '\0';
+                if (!Com_GpuStringCompare(pattern, info.gpuDescription)) {
+                    Com_Printf("configure_mp.csv: using GPU configuration \"%s\"\n", token);
+                    Com_GetConfigureDvarValues(count, &text, gpuValues);
+                    Com_SetConfigureDvars(count, names, gpuValues);
+                    foundGpu = 1;
+                    continue;
+                }
+            }
+            Com_GetConfigureDvarValues(count, &text, NULL);
+        }
+    } else {
+        Com_UngetToken();
+    }
+    if (!foundGpu)
+        Com_Error((errorParm_t)0, "\x15" "configure_mp.csv: \x14" "EXE_ERR_COULDNT_CONFIGURE\x15 \"%s\"\n", info.gpuDescription);
+    Com_EndParseSession();
+
+    for (i = 0; i < filesize; i++)
+        checksum = checksum * 31337u + (unsigned int)(int)((signed char *)csv)[i];
+    checksum &= 0x0fffffffu;
+    FS_FreeFile(csv);
+    Sys_ArchiveInfo((int)checksum + 1);
+    if (restart && Dvar_AnyLatchedValues())
+        Cbuf_AddText("snd_restart\n");
+}
+#else
 void Com_SetRecommended(qboolean restart)
 {
     extern void Com_Printf(const char *fmt, ...);
@@ -1153,6 +1372,8 @@ void Com_SetRecommended(qboolean restart)
         Cbuf_AddText("snd_restart\n");
 }
 
+#endif
+
 void Com_CheckSetRecommended(void)
 {
     extern int FS_ReadFile(const char *path, void **buffer);
@@ -1174,7 +1395,12 @@ void Com_CheckSetRecommended(void)
             if (filesize > 0) {
                 int i;
                 for (i = 0; i < filesize; i++) {
+#if defined(COD2_X64)
+                    checksum = (int)((unsigned int)(int)((signed char *)csv)[i] +
+                                     (unsigned int)checksum * 31337u);
+#else
                     checksum = (int)((char *)csv)[i] + checksum * 1000000007;
+#endif
                 }
                 checksum &= 0xfffffff;
             }
@@ -1228,7 +1454,11 @@ void Com_LocalizedFloatToString(float f, char *buffer, unsigned int maxlen, unsi
     buffer[maxlen - 1] = '\0';
 
     lang = (loc_language)->current.integer;
+#if defined(COD2_X64)
+    if ((unsigned int)(lang - 1) > 3 && lang != 6 && lang != 7 && lang != 14)
+#else
     if ((unsigned int)(lang - 1) > 3 && lang != 6 && lang != 7)
+#endif
         return;
 
     for (i = 0; i < maxlen; i++) {
@@ -1492,7 +1722,11 @@ static BM_NOINLINE void Com_ErrorCleanup(void)
     updateScreenCalled = 0;
 
     if (errorcode == 2) {
+#if defined(COD2_X64)
+        Com_ShutdownInternal("EXE_DISCONNECTEDFROMOWNLISTENSERVER");
+#else
         Com_ShutdownInternal("Server fatal crashed: %s\n");
+#endif
         com_fixedConsolePosition = 0;
         com_errorEntered = 0;
         return;
@@ -1524,7 +1758,12 @@ void Com_ExecStartupConfigs(const char *configFile)
     extern void Cbuf_AddText(const char *text);
     extern void Dvar_SetInAutoExec(int enabled);
 
+#if defined(COD2_X64)
+    extern const char *fs_defaultConfigName;
+    Cbuf_AddText(va("exec %s\n", fs_defaultConfigName));
+#else
     Cbuf_AddText("exec default_mp.cfg\n");
+#endif
     Cbuf_AddText("exec language.cfg\n");
     if (configFile)
         Cbuf_AddText(va("exec %s\n", configFile));
@@ -1585,8 +1824,13 @@ int Com_EventLoop(void)
             evPtr = ev.evPtr;
         }
 
+#if defined(COD2_X64)
+        if ((unsigned int)evType > 5) {
+            Com_Error((errorParm_t)0, "\x15" "Com_EventLoop: bad event type %i", evType);
+#else
         if (evType > 5) {
             Com_Error( (errorParm_t)(0), "Com_EventLoop: bad event type %i", evType);
+#endif
             continue;
         }
 
@@ -1610,6 +1854,7 @@ int Com_EventLoop(void)
 #endif
                 if (com_sv_running->current.enabled) {
                     SV_PacketEvent(evFrom, &buf);
+#if !defined(COD2_X64)
                 } else {
 #if !(COD2_APPLE_SDK && defined(DEDICATED))
                     CL_PacketEvent(evFrom, &buf, evTime);
@@ -1617,14 +1862,19 @@ int Com_EventLoop(void)
     ;
 #endif
                 }
+#else
+                }
+#endif
             }
             ZN10LargeLocalD1Ev(&bufData_ll);
             return evTime;
         case 1:
+#if !defined(COD2_X64)
             if (evValue < 0 || evValue > 255) {
                 Com_Printf("BAD KEY: evValue=%d evValue2=%d\n", evValue, evValue2);
                 break;
             }
+#endif
 #if !(COD2_APPLE_SDK && defined(DEDICATED))
             CL_KeyEvent(evValue, evValue2, evTime);
 #else
@@ -1658,7 +1908,11 @@ int Com_EventLoop(void)
 #else
             int dataLen = evPtrLength - 12;
 #endif
+#if defined(COD2_X64)
+            if ((unsigned int)dataLen > (unsigned int)buf.maxsize) {
+#else
             if (dataLen > buf.maxsize) {
+#endif
                 Z_FreeInternal(evPtr);
                 Com_Printf("Com_EventLoop: oversize packet\n");
                 break;
@@ -1749,7 +2003,11 @@ qboolean Debug_EventLoop(void)
             Z_FreeInternal(evPtr);
             break;
         default:
+#if defined(COD2_X64)
+            Com_Error((errorParm_t)0, "\x15" "Com_EventLoop: bad event type %i", evType);
+#else
             Com_Error( (errorParm_t)(0), "Com_EventLoop: bad event type %i", evType);
+#endif
             break;
         }
         newEvent = 1;
@@ -2005,7 +2263,11 @@ static BM_NOINLINE void Com_StartHunkUsers(void)
     jmp_buf *abortframe = (jmp_buf *)Sys_GetValue(2);
 
     if (setjmp(*abortframe)) {
+#if defined(COD2_X64)
+        Sys_Error("Error during initialization");
+#else
         Sys_Error("Error during initialization of hunk users");
+#endif
         return;
     }
 
@@ -2154,7 +2416,11 @@ static void Com_Freeze_f(void)
     int startTime;
 
     if (Cmd_Argc() != 2) {
+#if defined(COD2_X64)
+        Com_Printf("freeze <seconds>\n");
+#else
         Com_Printf("Usage: freeze <seconds>\n");
+#endif
         return;
     }
     s = (float)atof(Cmd_Argv(1));
@@ -2186,7 +2452,11 @@ static void Com_Freeze_f(void)
     for (;;) {
         ev = Sys_GetEvent();
         if (!ev.evType) {
+#if defined(COD2_X64)
+            if ((ev.evTime - startTime) * 0.001 > (double)s)
+#else
             if ((ev.evTime - startTime) * 0.001 >= (double)s)
+#endif
                 return;
             continue;
         }
@@ -2345,7 +2615,9 @@ void Com_Init_Try_Block_Function(char *commandLine)
     com_recommendedSet = Dvar_RegisterBool("com_recommendedSet", 0, 0x1001);
     Com_CheckSetRecommended();
     Com_StartupVariable(NULL);
+#if !defined(COD2_X64)
     SEH_InitLanguage();
+#endif
     SEH_UpdateLanguageInfo();
 
     {
@@ -2490,11 +2762,18 @@ void Com_Init_Try_Block_Function(char *commandLine)
         dedicated_val = 2;
 #endif
         if (!dedicated_val) {
+#if defined(COD2_X64)
+            Cbuf_AddText("unskippablecinematic legal\n");
+            if (!com_introPlayed->current.enabled)
+                Dvar_SetString(nextmap, "cinematic atvi; set nextmap \"cinematic IW_logo; set nextmap cinematic cod_intro\"");
+            Dvar_SetBool(com_introPlayed, 1);
+#else
             if (!com_introPlayed->current.enabled && !Com_HasStartupCommandsOtherThanSet()) {
                 Cbuf_AddText("cinematic atvi\n");
                 Dvar_SetString(nextmap, "cinematic IW_logo; set nextmap cinematic cod_intro");
                 Dvar_SetBool(com_introPlayed, 1);
             }
+#endif
         }
     }
 

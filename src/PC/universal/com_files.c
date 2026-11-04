@@ -22,6 +22,9 @@ extern long int unztell(unzFile file);
 
 int fs_numServerIwds = 0x0;
 int fs_packFiles = 0x0;
+#if defined(COD2_X64)
+const char *fs_defaultConfigName = "default_mp.cfg";
+#endif
 
 extern char fs_gamedir[256];
 extern const dvar_t *fs_debug;
@@ -2554,7 +2557,11 @@ void FS_Restart(int checksumFeed)
     SEH_UpdateLanguageInfo();
     FS_SetRestrictions();
 
+#if defined(COD2_X64)
+    if (FS_ReadFile(fs_defaultConfigName, NULL) <= 0) {
+#else
     if (FS_ReadFile("default_mp.cfg", NULL) <= 0) {
+#endif
         if (lastValidBase[0]) {
             FS_PureServerSetLoadedIwds("", "");
             Dvar_SetString(fs_basepath, lastValidBase);
@@ -2566,7 +2573,11 @@ void FS_Restart(int checksumFeed)
             Com_Error(1, "Invalid game folder\n");
         }
 
+#if defined(COD2_X64)
+        Com_Error(0, "Couldn't load %s.  Make sure Call of Duty is run from the correct folder.", fs_defaultConfigName);
+#else
         Com_Error(0, "Couldn't load %s.  Make sure Call of Duty is run from the correct folder.", "default_mp.cfg");
+#endif
     }
 
     if (I_stricmp(fs_gameDirVar->current.string, lastValidGame) && !Com_SafeMode()) {
@@ -2615,9 +2626,18 @@ void FS_InitFilesystem(void)
     SEH_UpdateLanguageInfo();
     FS_SetRestrictions();
 
+#if defined(COD2_X64)
+    if (FS_ReadFile("default_localize_mp.cfg", NULL) > 0)
+        fs_defaultConfigName = "default_localize_mp.cfg";
+    else if (FS_ReadFile("default_mp.cfg", NULL) > 0)
+        fs_defaultConfigName = "default_mp.cfg";
+    else
+        Com_Error(0, "Couldn't load %s.  Make sure Call of Duty is run from the correct folder.", "default_localize_mp.cfg");
+#else
     if (FS_ReadFile("default_mp.cfg", NULL) <= 0) {
         Com_Error(0, "Couldn't load %s.  Make sure Call of Duty is run from the correct folder.", "default_mp.cfg");
     }
+#endif
 
     I_strncpyz(lastValidBase, fs_basepath->current.string, sizeof(lastValidBase));
     I_strncpyz(lastValidGame, fs_gameDirVar->current.string, sizeof(lastValidGame));
