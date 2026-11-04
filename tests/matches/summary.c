@@ -84,6 +84,9 @@ void MSG_WriteReliableCommandToBuffer(const char *command, char *buffer, int siz
 void CL_WritePacket(void) {}
 void CL_ClearState(void) { memset(&active, 0, sizeof(active)); }
 void CL_ClearMutedList(void) {}
+#if defined(COD2_X64) && COD2_IS_PATCH_13
+int CL_ClearStaticDownload(void) { return 0; }
+#endif
 void SND_DisconnectListener(void) {}
 int CL_AllLocalClientsDisconnected(void) { return 1; }
 void Con_Close(void) {}
