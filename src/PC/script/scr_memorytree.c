@@ -52,11 +52,18 @@ static int MT_GetSize(int numBytes)
         return 0;
     }
     numBuckets = (numBytes + 7) / 8 - 1;
+#if defined(COD2_X64)
+    /* Mac indexes the contiguous tables directly, even for a zero-size request. */
+    if (numBuckets > 255)
+        return LOG_BITS((unsigned)numBuckets >> 8) + 8;
+    return (unsigned char)scrMemTreeGlob[0x80200 + numBuckets];
+#else
     if (numBuckets < 0)
         numBuckets = 0;
     if (numBuckets > 255)
         return LOG_BITS((unsigned)numBuckets >> 8) + 8;
     return LOG_BITS(numBuckets);
+#endif
 }
 
 static void MT_InitBits(void)
@@ -131,17 +138,30 @@ static void MT_AddMemoryNode(int newNode, int size)
     while (*link) {
         int node = *link;
         if (MT_GetScore(newNode) > MT_GetScore(node)) {
-            *link = (unsigned short)newNode;
-            NODE_PREV(newNode) = NODE_PREV(node);
-            NODE_NEXT(newNode) = NODE_NEXT(node);
-            newNode = node;
+            /* Promotion shifts full buckets, including their reused payload. */
+            while (1) {
+                *link = (unsigned short)newNode;
+                MEMTREE_GLOB->nodes[newNode] = MEMTREE_GLOB->nodes[node];
+                if (!node)
+                    return;
+                step >>= 1;
+                if (node < cursor) {
+                    link = &NODE_PREV(newNode);
+                    cursor -= step;
+                } else {
+                    link = &NODE_NEXT(newNode);
+                    cursor += step;
+                }
+                newNode = node;
+                node = *link;
+            }
         }
         step >>= 1;
         if (newNode < cursor) {
-            link = &NODE_PREV(*link);
+            link = &NODE_PREV(node);
             cursor -= step;
         } else {
-            link = &NODE_NEXT(*link);
+            link = &NODE_NEXT(node);
             cursor += step;
         }
     }
@@ -152,21 +172,18 @@ static void MT_AddMemoryNode(int newNode, int size)
 
 static void MT_RemoveTreeRoot(unsigned short *link)
 {
-    unsigned short left = NODE_PREV(*link);
-    unsigned short right = NODE_NEXT(*link);
+    MemoryNode value = MEMTREE_GLOB->nodes[*link];
 
-    while (left || right) {
-        int useLeft = left && (!right || MT_GetScore(left) > MT_GetScore(right));
-        unsigned short node = useLeft ? left : right;
-        unsigned short nextLeft = NODE_PREV(node);
-        unsigned short nextRight = NODE_NEXT(node);
+    while (value.prev || value.next) {
+        int useLeft = value.prev &&
+            (!value.next || MT_GetScore(value.prev) >= MT_GetScore(value.next));
+        unsigned short node = useLeft ? value.prev : value.next;
+        MemoryNode nextValue = MEMTREE_GLOB->nodes[node];
 
         *link = node;
-        NODE_PREV(node) = left;
-        NODE_NEXT(node) = right;
+        MEMTREE_GLOB->nodes[node] = value;
         link = useLeft ? &NODE_PREV(node) : &NODE_NEXT(node);
-        left = nextLeft;
-        right = nextRight;
+        value = nextValue;
     }
     *link = 0;
 }
@@ -420,8 +437,21 @@ static void MT_SafeFreeIndex(unsigned int nodeNum)
     int size = 0, lowBit;
 
 #if defined(COD2_X64)
-    if (MT_IsNodeCovered((int)nodeNum))
-        return;
+    unsigned int oldNode = nodeNum;
+
+    /* Mac removes and reinserts a covering free node before returning. */
+    while (1) {
+        lowBit = 1 << size;
+        if (MT_RemoveMemoryNode((int)oldNode, size)) {
+            MT_AddMemoryNode((int)oldNode, size);
+            return;
+        }
+        if (size == MEMORY_NODE_BITS)
+            break;
+        oldNode &= ~(unsigned)lowBit;
+        size++;
+    }
+    size = 0;
 #endif
     while (1) {
         lowBit = 1 << size;
