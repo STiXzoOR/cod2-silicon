@@ -4091,12 +4091,6 @@
       "summary": "How many seconds the shell shock screen tint builds.",
       "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 0.4 seconds."
     },
-    "cg_shock_viewkickfadetime": {
-      "group": "other",
-      "title": "Shock view kick fade",
-      "summary": "How many seconds the shell shock view kick takes to fade.",
-      "details": "The game protects this setting: it only changes with cheats on, so it is not a player setting. The default is 3 seconds."
-    },
     "cg_shock_viewkickperiod": {
       "group": "other",
       "title": "Shock view kick period",
@@ -6369,28 +6363,12 @@
         "src/PC/game_mp/g_cmds_mp.c: Cmd_Take_f"
       ]
     },
-    "tcmd": {
-      "title": "Send a preset message to the aimed player",
-      "summary": "Send a numbered game command to the player under the crosshair.",
-      "details": "Looks up the crosshair target and queues gc with that player number and the supplied command number. The server validates the numbers.",
-      "effectSources": [
-        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_TargetCommand_f"
-      ]
-    },
     "tell": {
       "title": "Send a private player message",
       "summary": "Send chat text to a numbered player.",
       "details": "This server console command sends a console-prefixed message to that player.",
       "effectSources": [
         "src/PC/server_mp/sv_ccmds_mp.c: SV_ConTell_f"
-      ]
-    },
-    "tell_target": {
-      "title": "Message the aimed player",
-      "summary": "Send the supplied chat text to the player under the crosshair.",
-      "details": "Does nothing without a crosshair player target. Otherwise it forwards tell with the target's client number.",
-      "effectSources": [
-        "src/PC/cgame_mp/cg_consolecmds_mp.c: CG_TellTarget_f"
       ]
     },
     "tempbanclient": {

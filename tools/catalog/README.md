@@ -1,6 +1,6 @@
 # Config Studio catalog
 
-The committed resource describes **reconciliation integration `3ee60be`**, including
+The committed resource describes **reconciliation integration `a90c5b7`**, including
 the startup privacy freeze for local match summaries. This tool uses Python's standard library
 and Clang's preprocessor. It reads source; it neither builds nor runs the game,
 and consumes no game data, player profiles, reference binary or private tools.
@@ -8,7 +8,7 @@ and consumes no game data, player profiles, reference binary or private tools.
 ```sh
 python3 -m unittest discover -s tools/catalog -v
 python3 tools/catalog/catalog.py generate \
-  --source-root /path/to/source-export --source-revision 3ee60bebb249f421c92727f004a114fa77d0f6c6 \
+  --source-root /path/to/source-export --source-revision a90c5b7378228a23767ee0231f1e82a7a733f319 \
   --output launcher/Resources/ConfigCatalog.json
 python3 tools/catalog/catalog.py check \
   --source-root /path/to/source-export --catalog launcher/Resources/ConfigCatalog.json --mode stock
@@ -84,7 +84,7 @@ names absent from that source in a **scratch copy file** and pass `--copy`.
 `copy.json` owns original plain titles, explanations, menu-exposure hints and
 Guided choices. Registration evidence is generated independently. All actual
 menu-exposed settings identified in the supplied research have authored copy;
-all 235 registered commands have source-backed descriptions, including explicit
+all 233 registered commands have source-backed descriptions, including explicit
 unknown effects for commands forwarded to server or mod handlers. Remaining
 Expert settings honestly say when their effect is not documented.
 Menu labels are authored action labels, not bundled game menus or translations.
