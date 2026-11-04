@@ -342,7 +342,11 @@ char *va(const char *format, ...)
     buf[1023] = '\0';
 
     if ((unsigned)len > 1023) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025Attempted to overrun string in call to va()");
+#else
         Com_Error(1, "va string too long");
+#endif
     }
 
     return buf;
@@ -531,7 +535,11 @@ void Info_SetValueForKey(char *s, const char *key, const char *value)
     int len;
 
     if (strlen(s) >= 1024) {
+#if defined(COD2_X64)
+        Com_Printf("\025Info_SetValueForKey: oversize infostring");
+#else
         Com_Printf("Info string length exceeded\n");
+#endif
         return;
     }
 
@@ -543,15 +551,27 @@ void Info_SetValueForKey(char *s, const char *key, const char *value)
     cleanValue[j] = '\0';
 
     if (strchr(key, '\\')) {
+#if defined(COD2_X64)
+        Com_Printf("\025Can't use keys with a \\\nkey: '%s'\nvalue: '%s'", key, value);
+#else
         Com_Printf("Can't use keys with a \\\nkey: '%s'\nvalue: '%s'\n", key, value);
+#endif
         return;
     }
     if (strchr(key, ';')) {
+#if defined(COD2_X64)
+        Com_Printf("\025Can't use keys with a semicolon\nkey: '%s'\nvalue: '%s'", key, value);
+#else
         Com_Printf("Can't use keys with a semicolon\nkey: '%s'\nvalue: '%s'\n", key, value);
+#endif
         return;
     }
     if (strchr(key, '\"')) {
+#if defined(COD2_X64)
+        Com_Printf("\025Can't use keys with a \"\nkey: '%s'\nvalue: '%s'", key, value);
+#else
         Com_Printf("Can't use keys with a \"\nkey: '%s'\nvalue: '%s'\n", key, value);
+#endif
         return;
     }
 
@@ -562,7 +582,11 @@ void Info_SetValueForKey(char *s, const char *key, const char *value)
 
     len = Com_sprintf(newi, 1024, "\\%s\\%s", key, cleanValue);
     if (len <= 0) {
+#if defined(COD2_X64)
+        Com_Printf("\025Info buffer length exceeded, not including key/value pair in response\n");
+#else
         Com_Printf("Info_SetValueForKey: Com_sprintf failed\n");
+#endif
         return;
     }
 
@@ -575,7 +599,11 @@ void Info_SetValueForKey(char *s, const char *key, const char *value)
 #else
     if (strlen(newi) + strlen(s) > 1024) {
 #endif
+#if defined(COD2_X64)
+        Com_Printf("\025Info string length exceeded\nkey: '%s'\nvalue: '%s'\nInfo string:\n%s\n", key, value, s);
+#else
         Com_Printf("Info string length exceeded\nkey: '%s'\nvalue: '%s'\nInfo string: '%s'\n", key, value, s);
+#endif
         return;
     }
 
@@ -590,7 +618,11 @@ void Info_SetValueForKey_Big(char *s, const char *key, const char *value)
     int len;
 
     if (strlen(s) >= 8192) {
+#if defined(COD2_X64)
+        Com_Printf("\025Info_SetValueForKey: oversize infostring");
+#else
         Com_Printf("Info string length exceeded\n");
+#endif
         return;
     }
 
@@ -602,15 +634,27 @@ void Info_SetValueForKey_Big(char *s, const char *key, const char *value)
     cleanValue[j] = '\0';
 
     if (strchr(key, '\\')) {
+#if defined(COD2_X64)
+        Com_Printf("\025Can't use keys with a \\\nkey: '%s'\nvalue: '%s'", key, value);
+#else
         Com_Printf("Can't use keys with a \\\nkey: '%s'\nvalue: '%s'\n", key, value);
+#endif
         return;
     }
     if (strchr(key, ';')) {
+#if defined(COD2_X64)
+        Com_Printf("\025Can't use keys with a semicolon\nkey: '%s'\nvalue: '%s'", key, value);
+#else
         Com_Printf("Can't use keys with a semicolon\nkey: '%s'\nvalue: '%s'\n", key, value);
+#endif
         return;
     }
     if (strchr(key, '\"')) {
+#if defined(COD2_X64)
+        Com_Printf("\025Can't use keys with a \"\nkey: '%s'\nvalue: '%s'", key, value);
+#else
         Com_Printf("Can't use keys with a \"\nkey: '%s'\nvalue: '%s'\n", key, value);
+#endif
         return;
     }
 
@@ -621,7 +665,11 @@ void Info_SetValueForKey_Big(char *s, const char *key, const char *value)
 
     len = Com_sprintf(newi, 8192, "\\%s\\%s", key, cleanValue);
     if (len <= 0) {
+#if defined(COD2_X64)
+        Com_Printf("\025Info buffer length exceeded, not including key/value pair in response\n");
+#else
         Com_Printf("Info_SetValueForKey: Com_sprintf failed\n");
+#endif
         return;
     }
 
@@ -630,7 +678,11 @@ void Info_SetValueForKey_Big(char *s, const char *key, const char *value)
 #else
     if (strlen(newi) + strlen(s) > 1024) {
 #endif
+#if defined(COD2_X64)
+        Com_Printf("\025Info string length exceeded\nkey: '%s'\nvalue: '%s'\nInfo string:\n%s\n", key, value, s);
+#else
         Com_Printf("Info string length exceeded\nkey: '%s'\nvalue: '%s'\nInfo string: '%s'\n", key, value, s);
+#endif
         return;
     }
 
@@ -837,7 +889,11 @@ char *Info_ValueForKey(const char *s, const char *key)
         return "";
 
     if (strlen(s) >= 8192) {
+#if defined(COD2_X64)
+        Com_Error(1, "\025Info_ValueForKey: oversize infostring");
+#else
         Com_Error(1, "Info_ValueForKey: oversize infostring");
+#endif
     }
 
     valueindex ^= 1;
@@ -907,7 +963,11 @@ void I_strncat(char *dest, int size, const char *src)
 
     destLen = strlen(dest);
     if (destLen >= size) {
+#if defined(COD2_X64)
+        Com_Error(0, "\025I_strncat: already overflowed");
+#else
         Com_Error(0, "I_strncat: already overflowed");
+#endif
     }
 
     I_strncpyz_core(dest + destLen, src, size - destLen);
@@ -941,7 +1001,11 @@ qboolean ParseConfigStringToStruct(byte *pStruct, const cspField_t *pFieldList, 
                 if (!parseSpecialFieldType(pStruct, val, fieldType))
                     return qfalse;
             } else {
+#if defined(COD2_X64)
+                Com_Error(1, "\025Bad field type %i\n", fieldType);
+#else
                 Com_Error(1, "Bad field type %i\n", fieldType);
+#endif
             }
             continue;
         }
