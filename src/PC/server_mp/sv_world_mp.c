@@ -91,7 +91,11 @@ int SV_SightTrace(int *hitNum, const vec_t *start, const vec_t *mins, const vec_
         return *hitNum;
 
     {
+#if defined(COD2_X64)
+        float extentSum = maxs[0] - mins[0] + maxs[1] - mins[1] + maxs[2] - mins[2];
+#else
         float extentSum = (maxs[0] - mins[0]) + (maxs[1] - mins[1]) + (maxs[2] - mins[2]);
+#endif
         if (extentSum == 0.0f) {
 
             sightpointtrace_t clip;
@@ -104,6 +108,9 @@ int SV_SightTrace(int *hitNum, const vec_t *start, const vec_t *mins, const vec_
             clip.passEntityNum[0] = passEntityNum0;
             clip.passEntityNum[1] = passEntityNum1;
             clip.contentmask = contentmask;
+#if defined(COD2_X64)
+            clip.locational = 0;
+#endif
             *hitNum = CM_PointSightTraceToEntities(&clip);
         } else {
 
@@ -164,7 +171,11 @@ void SV_Trace(trace_t *results, const vec_t *start, const vec_t *mins, const vec
     }
 
     {
+#if defined(COD2_X64)
+        float extentSum = maxs[0] - mins[0] + maxs[1] - mins[1] + maxs[2] - mins[2];
+#else
         float extentSum = (maxs[0] - mins[0]) + (maxs[1] - mins[1]) + (maxs[2] - mins[2]);
+#endif
 
         if (extentSum == 0.0f) {
 
@@ -266,7 +277,11 @@ qboolean SV_TracePassed(const vec_t *start, const vec_t *mins, const vec_t *maxs
         return 0;
     }
 
+#if defined(COD2_X64)
+    if (maxs[0] - mins[0] + maxs[1] - mins[1] + maxs[2] - mins[2] == 0.0f) {
+#else
     if ((maxs[0] - mins[0]) + (maxs[1] - mins[1]) + (maxs[2] - mins[2]) == 0.0f) {
+#endif
         sightpointtrace_t clip;
 
         clip.start[0] = start[0];
