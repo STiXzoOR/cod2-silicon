@@ -820,6 +820,14 @@ static inline __attribute__((always_inline)) char *CG_ReadNextSnapshot(void)
     return NULL;
 }
 
+#if defined(COD2_X64)
+static int CG_SnapshotTimeBefore(int time, int referenceTime)
+{
+    /* Mac branches on the sign of the wrapped subtraction (js/jns). */
+    return (((unsigned int)time - (unsigned int)referenceTime) & 0x80000000u) != 0;
+}
+#endif
+
 void CG_ProcessSnapshots(void)
 {
     int n;
@@ -879,8 +887,13 @@ void CG_ProcessSnapshots(void)
             nextSnap = (char *)cg->nextSnap;
             cgTime = cg->time;
 
+#if defined(COD2_X64)
+            if (CG_SnapshotTimeBefore(cgTime, ((snapshot_t *)curSnap)->serverTime) ||
+                !CG_SnapshotTimeBefore(cgTime, ((snapshot_t *)nextSnap)->serverTime)) {
+#else
             if (cgTime < ((snapshot_t *)curSnap)->serverTime ||
                 cgTime >= ((snapshot_t *)nextSnap)->serverTime) {
+#endif
                 CG_TransitionSnapshot_Inline();
 #if defined(COD2_X64)
                 goto process_next_snapshot;
@@ -895,7 +908,11 @@ void CG_ProcessSnapshots(void)
         snap = CG_ReadNextSnapshot();
         if (!snap) {
             snapTime = ((snapshot_t *)curSnap)->serverTime;
+#if defined(COD2_X64)
+            if (CG_SnapshotTimeBefore(cg->time, snapTime)) {
+#else
             if (cg->time < snapTime) {
+#endif
                 cg->time = snapTime;
                 cg->bgs.time = snapTime;
             }
@@ -926,7 +943,7 @@ void CG_ProcessSnapshots(void)
         }
 
 #if defined(COD2_X64)
-        if (((snapshot_t *)snap)->serverTime < ((snapshot_t *)nextSnap)->serverTime) {
+        if (CG_SnapshotTimeBefore(((snapshot_t *)snap)->serverTime, ((snapshot_t *)nextSnap)->serverTime)) {
 #else
         if (((snapshot_t *)snap)->serverTime < ((snapshot_t *)curSnap)->serverTime) {
 #endif
