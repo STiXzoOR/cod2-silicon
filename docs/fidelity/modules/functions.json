@@ -8,9 +8,9 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 4962,
+      "unchecked": 4954,
       "intentional": 1548,
-      "equal": 2496,
+      "equal": 2504,
       "fixed": 451
     },
     "scopes": {
@@ -208263,8 +208263,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared the five common field stores in both native initializers against the inlined Mac sequences at 0x9fb98-0x9fbbb and 0x9fd34-0x9fd54: borrowed buffer, capacity, zero cursor, error byte and cleared overflow byte. No standalone Mac or native helper is required."
       },
       {
         "id": "mac:0x0009fd34",
@@ -208294,8 +208294,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete exact-entry Mac 0x9fd34-0x9fd5d: buffer and capacity, cleared cursor/overflow, enabled error byte and MemFile_ReadData callback. Native typed field access and full-width callback store preserve the LP64 layout."
       },
       {
         "id": "mac:0x0009fb98",
@@ -208325,8 +208325,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete exact-entry Mac 0x9fb98-0x9fbc4: buffer and capacity, cleared cursor/overflow, low-byte error flag and MemFile_WriteDataForArchive callback. Restarted disassembly at the exact symbol because full-binary otool misaligns this entry."
       },
       {
         "id": "linux:universal/memfile.cpp:48:MemFile_IsReading",
@@ -208345,7 +208345,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "No Mac text symbol or identified inline body: only the address-zero __Z17MemFile_IsReadingP10MemoryFile.eh symbol remains. All 92 named memory-file references were scanned; none compares the read callback. Native and Linux caller scans find no calls; native has no helper body. Linux pointer-comparison source alone cannot establish Mac identity."
       },
       {
         "id": "linux:universal/memfile.cpp:53:MemFile_IsWriting",
@@ -208364,7 +208364,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "No Mac text symbol or identified inline body: only the address-zero __Z17MemFile_IsWritingP10MemoryFile.eh symbol remains. All 92 named memory-file references were scanned; none compares the write callback. Native and Linux caller scans find no calls; native has no helper body. Linux pointer-comparison source alone cannot establish Mac identity."
       },
       {
         "id": "mac:0x0009fcc8",
@@ -208394,8 +208394,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete exact-entry Mac 0x9fcc8-0x9fd34: sticky-overflow empty result, initial byte read, per-byte cursor store, exact-end check, error arguments, overflow flag, terminator consumption and borrowed pointer return. Native already has the same unchecked initial read; invalid empty/exhausted buffers were not exercised and no unsafe storage change was added."
       },
       {
         "id": "mac:0x0009fbc6",
@@ -208425,8 +208425,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete exact-entry Mac 0x9fbc6-0x9fc45: zero/sticky-overflow exits, signed capacity comparison, ERR_DROP format and arguments, overflow flag on return, source/destination order and post-copy cursor addition. Borrowed buffer contract and native field layout checked."
       },
       {
         "id": "linux:universal/memfile.cpp:43:MemFile_Shutdown",
@@ -208445,7 +208445,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "No Mac text symbol or identified inline body: only the address-zero __Z16MemFile_ShutdownP10MemoryFile.eh symbol remains. No native definition or callers, and no Linux callers. Linux clears sizeof(pointer), but the Mac store extent is unverified; no pointer-sized or indeterminate native storage behavior was introduced."
       },
       {
         "id": "linux:universal/memfile.cpp:91:MemFile_SkipData",
@@ -208464,7 +208464,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "No Mac symbol or identified inline body; its unique skip-overflow diagnostic is absent from Mac strings. No native definition or callers and no Linux callers. The Linux-only cursor advance cannot be assigned a Mac identity, so it was not reconstructed or marked equal."
       },
       {
         "id": "mac:0x0009fdde",
@@ -208494,8 +208494,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete exact-entry Mac 0x9fdde-0x9fe6a with native strlen-plus-one followed by MemFile_WriteData: terminator-inclusive count, sticky overflow, capacity and error path, copy and cursor addition match the Mac inlined writer. Triage call/string differences are inlining."
       },
       {
         "id": "mac:0x0009fc46",
@@ -208525,8 +208525,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete exact-entry Mac 0x9fc46-0x9fcc5: zero/sticky-overflow exits, signed capacity comparison, ERR_DROP format and arguments, overflow flag on return, destination/source order and post-copy cursor addition. Borrowed buffer contract and native field layout checked."
       },
       {
         "id": "mac:0x0009fd5e",
@@ -208556,8 +208556,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared complete exact-entry Mac 0x9fd5e-0x9fddd: all early returns, capacity and error handling, copy direction and cursor updates match the native archive writer and ordinary writer."
       }
     ],
     "universal/q_parse": [
