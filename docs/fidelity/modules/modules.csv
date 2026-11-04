@@ -442,7 +442,7 @@ universal/surfaceflags,2,0,0,0,2
 unix/unix_dir,1,0,0,0,1
 unix/unix_main,52,0,0,0,52
 unix/unix_net,17,0,0,0,17
-unix/unix_shared,26,0,0,0,26
+unix/unix_shared,26,0,0,1,25
 unix/unix_threads,5,0,0,0,5
 win32/cinematics,15,0,0,0,15
 win32/snd_driver,54,0,0,0,54

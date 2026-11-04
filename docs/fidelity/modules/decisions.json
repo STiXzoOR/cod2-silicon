@@ -3810,5 +3810,9 @@
   "linux:bgame/bg_mantle.cpp:287:Mantle_Start": {
     "status": "equal",
     "evidence": "No Mac symbol; this Linux helper is inlined in its Mac caller, compared there. No correction required."
+  },
+  "mac:0x000aed28": {
+    "status": "intentional",
+    "evidence": "Intentional difference from Mac, chosen by the project owner. Mac 0xaed28 truncates with cvttss2si. Windows CoD2MP_s.exe 0x467f80 uses fistp and Linux uses rint, so both round to nearest. Native rounds to nearest so movement and client prediction match Windows, where most players are."
   }
 }

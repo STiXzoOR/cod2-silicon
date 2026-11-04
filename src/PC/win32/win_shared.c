@@ -65,9 +65,20 @@ void Sys_WaitUntilMilliseconds(unsigned int target)
 }
 #endif
 
+#if defined(COD2_X64)
+#include <math.h>
+#endif
 void Sys_SnapVector(float *v)
 {
+#if defined(COD2_X64)
+    /* Windows 0x467f80 (fistp) and Linux (rint) round to nearest; Mac 0xaed28 truncates.
+     * Follow Windows so movement and prediction match what most players run. */
+    v[0] = (float)rint(v[0]);
+    v[1] = (float)rint(v[1]);
+    v[2] = (float)rint(v[2]);
+#else
     v[0] = (float)(int)v[0];
     v[1] = (float)(int)v[1];
     v[2] = (float)(int)v[2];
+#endif
 }
