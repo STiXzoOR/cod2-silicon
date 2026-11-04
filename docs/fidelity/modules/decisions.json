@@ -6014,5 +6014,49 @@
   "mac:0x000737d2": {
     "status": "equal",
     "evidence": "Hand compared Mac Com_ShutdownDObj 0x737d2: unconditional initialized-flag clear matches native."
+  },
+  "mac:0x001116ca": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x1116ca-0x11177b and the inlined Com_BuildPlayerProfilePathInternal helper: unset-profile fatal diagnostic, players/%s/ prefix, negative/full prefix return, remaining-size vsnprintf, negative/full suffix termination and returned length match. Literal strings were decoded directly from the binary; no float operations."
+  },
+  "mac:0x0011177c": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x11177c-0x111801 against the variadic wrapper and Com_BuildPlayerProfilePathInternal: explicit player-name prefix, signed length gates, suffix capacity, truncation terminator and return value match. Native va_list plumbing adapts the target ABI."
+  },
+  "mac:0x00111936": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x111936-0x111aa5 including the inlined existence and set/execute helpers: case-insensitive unchanged-profile early return, 64-byte cached name, players directory lookup/allocation type 3, active-file write without NUL, disconnect, reset mask 0xffffffff/source 1, selected profile/config execution, recommendations and latched snd_restart ordering match. Exact literals checked in the binary."
+  },
+  "mac:0x00111802": {
+    "status": "intentional",
+    "evidence": "Hand-compared Mac 0x111802-0x111935, including empty-name handling, players lookup/free, 64-byte profile path, 256-byte OS path, tree removal result and active-profile clearing. Mac 0x1118a7 loads fs_basepath through import slot 0x1accd31 -> 0x10d63fc; native deliberately uses writable fs_homepath and current fs_gamedir under the documented WS47/WS102 read-only-base/writable-home contract. Remaining logic matches."
+  },
+  "mac:0x001116b4": {
+    "status": "equal",
+    "evidence": "Hand-compared exact-symbol disassembly at Mac 0x1116b4-0x1116c9: load com_playerProfile.current.string, compare its first byte with zero and return normalized boolean. Restarted otool with the exact symbol because full-binary output misdecoded this entry."
+  },
+  "mac:0x00111aa6": {
+    "status": "fixed",
+    "evidence": "Hand-compared Mac 0x111aa6-0x111c07: both dvar registrations/reset value, active-file first-token parse/free, profile directory lookup and selected config execution match. Mac 0x111b26 jumps to Com_ExecStartupConfigs(NULL) at 0x111b4b when the active file is missing; native incorrectly created/wrote/selected default and forced the chosen flag. Restored unprofiled startup under COD2_X64, preserving legacy source. Windows 0x42d1da-0x42d1e9 returns false on the missing active file, and 0x42d2f6-0x42d34f executes the unprofiled startup sequence, confirming this observable behavior. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00111c08": {
+    "status": "intentional",
+    "evidence": "Hand-compared Mac 0x111c08-0x111d2a: empty-name fallthrough, players lookup/free, duplicate diagnostic, 64-byte profile path, create-path failure diagnostic and boolean result match. Mac 0x111c52 loads fs_basepath through import slot 0x1accd31 -> 0x10d63fc; native deliberately creates profiles under writable fs_homepath/current fs_gamedir per the documented WS47/WS102 storage contract. Exact-symbol disassembly checked the true entry and return paths."
+  },
+  "mac:0x00046820": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x46820-0x4690b: argc 2/3 gate, optional empty extension, directory headings, FS_ListFiles behavior 0/allocation type 10, ascending print loop and free match. Native caches Cmd_Argc rather than reading the unchanged command context three times. All diagnostic literals decoded directly from the binary."
+  },
+  "mac:0x0004690c": {
+    "status": "fixed",
+    "evidence": "Hand-compared Mac 0x4690c-0x46a0d: usage/heading, searchpath/filter arguments, sort, converted-path print loop, count and free match. Mac 0x4694c supplies the fifth FS_ListFilteredFiles argument as 0 (FS_LIST_PURE_ONLY); native supplied FS_LIST_ALL=1 after its ABI signature repair. Restored FS_LIST_PURE_ONLY in the existing COD2_X64 branch. Compiled and reviewed; not exercised."
+  },
+  "mac:0x000472b2": {
+    "status": "fixed",
+    "evidence": "Hand-compared Mac 0x472b2-0x473bb: tokenize/clamp both lists to 1024, release old references, checksum/name loops, NULL/empty-name handling and final count match with native pointer-sized name storage. Mac 0x47305 and 0x4736e use literal 0x24347c, iwd sum/name mismatch; restored that diagnostic at both native error sites under COD2_X64. Compiled and reviewed; not exercised."
+  },
+  "mac:0x00046a0e": {
+    "status": "equal",
+    "evidence": "Hand-compared Mac 0x46a0e-0x46a41: argc exactly two, exact Usage: touchFile <file> newline diagnostic otherwise, and FS_TouchFile(Cmd_Argv(1)) on success match."
   }
 }
