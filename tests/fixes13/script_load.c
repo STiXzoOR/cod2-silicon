@@ -36,6 +36,8 @@ int Com_sprintf(char *dest, int size, const char *fmt, ...)
     va_list args; va_start(args, fmt); int n = vsnprintf(dest, size, fmt, args); va_end(args); return n;
 }
 void GScr_LoadGameTypeScript(void) { assert(step == 6); ++gametypeCalls; }
+/* Native load finishes compilation after every script and before class maps. */
+void Scr_PostCompileScripts(void) { assert(step == 8 && classCalls == 0); }
 void Scr_SetClassMap(int n) { assert(step == 8 && n == classCalls++); }
 void GScr_AddFieldsForEntity(void) { assert(classCalls == 4); ++fieldCalls; }
 void GScr_AddFieldsForHudElems(void) { assert(fieldCalls == 1); ++fieldCalls; }
