@@ -19,7 +19,11 @@ static vec2_t sign[4] = {
 };
 
 extern char **compPointerConfig;
+#if defined(COD2_X64)
+extern const vec_t colorWhite[4];
+#else
 extern const vec_t *colorWhite;
+#endif
 
 extern FontHandle UI_GetFontHandle(int type, float scale);
 extern void UI_DrawText(const char *text, int maxChars, FontHandle font, float x, float y, int horzAlign, int vertAlign, float fontScale, const vec_t *color, int style);
@@ -59,7 +63,11 @@ void CG_DrawStringExt(float x, float y, const char *string, const vec_t *setColo
     }
 
     FontHandle font = UI_GetFontHandle(5, fontScale);
+#if defined(COD2_X64)
+    int style = ((unsigned int)shadow >= 1) ? 3 : 0;
+#else
     int style = (shadow >= 1) ? 3 : 0;
+#endif
 
     UI_DrawText(string, 0x7fffffff, font, x, baselineY, 1, 1, fontScale, setColor, style);
 }
