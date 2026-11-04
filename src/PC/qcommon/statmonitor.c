@@ -17,13 +17,22 @@ void StatMon_Warning(int type, int duration, const char *materialName)
     if (!com_statmon->current.enabled)
         return;
 
+#if defined(COD2_X64)
+    if ((unsigned int)type > 6)
+        Com_Error(1, "\x15StatMon_UpdateEntry: invalid entry '%i'\n", type);
+#else
     if ((unsigned int)type > 6)
         Com_Error(1, "StatMon_UpdateEntry: invalid entry '%i'\n", type);
+#endif
 
     stats[type].endtime = Sys_Milliseconds() + duration;
     if (!stats[type].material) {
         if (((clientStatic_t *)sm_mtl_init)->rendererStarted) {
+#if defined(COD2_X64)
+            stats[type].material = ((MaterialHandle (*)(const char *, int, int))((void **)sm_mtl_vtable)[4])(materialName, 0x30, 1);
+#else
             stats[type].material = (MaterialHandle)((int (*)(const char *, int, int))((void **)sm_mtl_vtable)[4])(materialName, 0x30, 1);
+#endif
         }
     }
     if (type >= statCount)
