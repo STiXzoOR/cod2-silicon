@@ -954,12 +954,15 @@ qboolean CG_DrawScoreboard(void)
             }
 
 #if defined(COD2_X64)
-            if (mapLen >= 4 && I_strnicmp(mapBuffer + mapLen - 3, (const char *)"bsp", 3) == 0) {
+            /* Windows 0x4d9149 removes seven bytes on this fallback path.
+             * Preserve its label while keeping short native names in bounds. */
+            if (mapLen >= 7 && I_strnicmp(mapBuffer + mapLen - 3, (const char *)"bsp", 3) == 0)
+                mapBuffer[mapLen - 7] = '\0';
 #else
             if (mapLen >= 4 && I_strnicmp(mapBuffer + mapLen - 4, (const char *)"bsp", 3) == 0) {
-#endif
                 mapBuffer[mapLen - 4] = '\0';
             }
+#endif
         }
 
         map = mapBuffer;
