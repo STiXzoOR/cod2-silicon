@@ -104,8 +104,11 @@ math_path = 'src/PC/universal/com_math.c'
 math_source = subprocess.run([*compile_flags(math_path), '-E', '-P', '-x', 'c', '-'],
                              input=source(math_path), cwd=ROOT, capture_output=True,
                              text=True, check=True).stdout
-dependencies = ''.join(function(math_source, name) for name in
-                       ['vectoyaw', 'AngleNormalize360', 'AngleNormalize180', 'AngleSubtract_core', 'AngleSubtract'])
+dependencies = ''
+if re.search(r'\bAngleNormalize360Native\([^;{]*\)\s*\{', math_source):
+    dependencies += function(math_source, 'AngleNormalize360Native')
+dependencies += ''.join(function(math_source, name) for name in
+                        ['vectoyaw', 'AngleNormalize360', 'AngleNormalize180', 'AngleSubtract_core', 'AngleSubtract'])
 dependencies += function(drawtools, 'CG_FadeColor')
 dependencies += function(drawtools, 'CG_UpdateCompPointerOrientation')
 dependencies += function(compass, 'dvar_value')

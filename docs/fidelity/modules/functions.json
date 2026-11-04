@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 4281,
+      "unchecked": 4249,
       "intentional": 1596,
-      "equal": 3024,
-      "fixed": 556
+      "equal": 3047,
+      "fixed": 565
     },
     "scopes": {
       "unassigned": 777,
@@ -67392,8 +67392,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x1e0178: horizontal alignment extraction, center multiply by -0.5 and right subtraction match; literal/call checks agree."
       },
       {
         "id": "mac:0x001e01c2",
@@ -67414,8 +67414,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x1e01c2: vertical alignment extraction and all three return paths match; literal/call checks agree."
       },
       {
         "id": "mac:0x001e013c",
@@ -67436,8 +67436,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared exact-symbol disassembly at Mac 0x1e013c after full-binary entry misalignment: drawHud, catcher bit 8 and display-with-UI gates match."
       },
       {
         "id": "mac:0x001e11b8",
@@ -67458,8 +67458,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1e11c4 uses nextSnap and archival-first collection; 0x1e14a8 passes horizontal alignment first; 0x1e15cd appends needle; 0x1e18c8 uses raw clock-down time; 0x1e195c/0x1e1a0f preserve from-minus-to baseline interpolation. Restored these, unsigned type bound and reciprocal scale order; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001e0242",
@@ -67480,8 +67480,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1e02e2/0x1e0332 passes horizontal alignment before vertical; 0x1e03fb computes (fromY-toY)*fraction+fromY. Fixed arguments, preserved that arithmetic quirk and reset placement scratch coordinates; compiled and reviewed, not exercised. Existing defined null/font guards retained."
       },
       {
         "id": "mac:0x001e020a",
@@ -67502,8 +67502,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x1e020a: subtract sort keys, return -1/1 for ordered comparisons and zero for equal/unordered values."
       },
       {
         "id": "mac:0x001e1afc",
@@ -67524,8 +67524,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_hudelem_mp.c (cgame_mp/cg_hudelem_mp); whole CG_Draw3dHudElems was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to cgame/cg_hudelem_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_hudelem_mp.c:836; assigned universal header has no body. Mac symbol __Z17CG_Draw3dHudElemsv at 0x001e1afc. Whole caller not audited by universal-math."
+        "status": "fixed",
+        "evidence": "Mac 0x1e1b2a uses nextSnap and 0x1e1b42 collects archival before current; 0x1e1c90-0x1e1c9c uses reciprocal-then-multiply scaling. Corrected shared native helpers/collection; hand-compared sprite alpha, fallback size and flags; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x001e047c",
@@ -67546,8 +67546,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_hudelem_mp.c (cgame_mp/cg_hudelem_mp); whole CG_GetHudElemInfo was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to cgame/cg_hudelem_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_hudelem_mp.c:320; assigned universal header has no body. Mac symbol __Z17CG_GetHudElemInfoPK9hudelem_sP12cg_hudelem_tPc at 0x001e047c. Whole caller not audited by universal-math."
+        "status": "fixed",
+        "evidence": "Mac 0x1e0624 clears absent label width, 0x1e0d0c uses rounded 1/3, 0x1e0d8e preserves waypoint width, 0x1e08c6 maximizes font/element height, and 0x1e07eb fades old toward new color. Decoded timer tables 0x33c650/0x33c67c/0x33c694; fixed text/tenths bias, alignment and settled-only pixel rounding. Compiled and reviewed, not exercised. Existing defined invalid-font/missing-font fallback retained instead of Mac uninitialized font storage."
       }
     ],
     "cgame/cg_info_mp": [
@@ -68458,8 +68458,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18a20c-0x18a5a8; scripted all 21 registrations by type, name, float/int default, min/max and flags. Bool_mac is the native registration adapter."
       },
       {
         "id": "mac:0x0018a6fa",
@@ -68480,8 +68480,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18a6fa: empty function, matching the native no-op."
       },
       {
         "id": "mac:0x0018b568",
@@ -68502,8 +68502,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18b568: health/ammo/stance/compass/offhand fade times, drawHud, 0x400 objective text and 0x100 script menu archive calls match in order and size using the widened native callback."
       },
       {
         "id": "mac:0x0018a5a8",
@@ -68524,8 +68524,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18a5a8 with native inlined helper: catcher bit 8, display-with-UI exemption and drawHud gates match."
       },
       {
         "id": "mac:0x0018a5e4",
@@ -68546,8 +68546,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18a5e4: cg+0x24 is nextSnap; health/max-health zero and pm_type 6 gates, float divide and 0..1 clamp match."
       },
       {
         "id": "mac:0x0018b852",
@@ -68568,8 +68568,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18b852: range/ownership selected-weapon fallback, reserve/max cap at 999, negative maximum handling and inclusive 0.2 warning threshold match."
       },
       {
         "id": "mac:0x0018b932",
@@ -68590,8 +68590,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18b932: selected-weapon fallback, clip-only exclusion, negative clip handling, 999 caps, positive clip-size requirement and 0.33 threshold match. Reusing the pure clip index accounts for one fewer call."
       },
       {
         "id": "mac:0x0018a7a6",
@@ -68612,8 +68612,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared all Mac 0x18a7a6-0x18ae44 branches: nextSnap updates, fade, pulse modes, weapon pickup/swap slot rules, binding/localization choices and text/icon geometry match; repeated native conversion calls share Mac tail blocks."
       },
       {
         "id": "mac:0x0018b642",
@@ -68634,8 +68634,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac hint color at 0x33ba60 is white; native tentative declaration was zero. Initialized native color; hand-compared 0x18b642 flag/weapon/ADS gates, binding fallback and text centering. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0018ae44",
@@ -68656,8 +68656,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac hint color at 0x33ba40 is white; native tentative declaration was zero. Initialized native color; hand-compared 0x18ae44 mantle gate, binding fallback, localization and text/icon geometry. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0018c440",
@@ -68678,8 +68678,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x18c520-0x18c559 selects nextSnap entity weapon with 0x800000 override; 0x18c591 suppresses negative reserve; 0x18c5d8-0x18c666 flashes low clip; 0x18c903-0x18cc26 draws combined or centered layouts. Restored those paths, alpha mutation and overlay/reserve colors for both ownerdraw IDs; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0018ba26",
@@ -68700,8 +68700,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18ba26 with fade helper: rounded fade duration, supplied-alpha mutation, hidden/menu gates and compass-size y/width/height geometry match."
       },
       {
         "id": "mac:0x0018bbbc",
@@ -68722,8 +68722,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18bbbc-0x18c440: fade, stance updates, prone-block blink, hint command searches, 2000/3000ms timings, line positioning, icon choice and flash alpha match. Scripted 54 command pointers against tables at 0x36ddc0/0x36de20/0x36de80."
       },
       {
         "id": "mac:0x0018b11c",
@@ -68744,8 +68744,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18b11c and attributed native body directly: team score, -9999 dash, 16-byte formatting, right alignment and y+height baseline match."
       },
       {
         "id": "mac:0x0018b7d4",
@@ -68766,8 +68766,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18b7d4 with native inlined helper: HUD/menu gates, hud_enable, zero-dvar full opacity, CG_FadeColor(start,duration,700), null and alpha returns match."
       },
       {
         "id": "mac:0x0018b244",
@@ -68788,8 +68788,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18b244: returns the cgs gametype field."
       },
       {
         "id": "mac:0x0018b210",
@@ -68810,8 +68810,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18b210: empty killer name returns empty string, otherwise formats Fragged by %s."
       },
       {
         "id": "mac:0x0018affc",
@@ -68832,8 +68832,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18affc: config index+0x2e, unknown fallback lookup, localization error/warning and decorated/unadorned 1024-byte fallbacks match; existing stock/CoD2x fixture location groups pass."
       },
       {
         "id": "mac:0x0018a700",
@@ -68854,8 +68854,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18a700: cursor string+0x4fe, null/empty return, activate binding with translated KEY_USE fallback, localization context and substitution match."
       },
       {
         "id": "mac:0x0018b258",
@@ -68876,8 +68876,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18b258: key-down and displayed-scoreboard gates, ce/a4 up, cd/a3 down and consumed-key result match."
       },
       {
         "id": "mac:0x0018b2ae",
@@ -68898,8 +68898,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac pulse table at 0x33ba50 is {1,.8,.6,.3}; native tentative declaration was all zero. Restored table and unsigned pulse-index bound at 0x18b343. Hand-compared three phases, old-health trigger and regen threshold; compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0018a650",
@@ -68920,8 +68920,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18a650: clears hurt/duration/phase/index, takes phase-end alpha and resets old health to 1.0."
       },
       {
         "id": "mac:0x0018a69a",
@@ -68942,8 +68942,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0x18a69a: unsigned 1..127 index bound, config index+0x61e, nonempty name, unsigned length bound and copy/result match; existing fixture material groups pass in both modes."
       },
       {
         "id": "mac:0x0018cc30",
@@ -68964,8 +68964,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_newDraw_mp.c (cgame_mp/cg_newDraw_mp); whole CG_OwnerDraw was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to cgame/cg_newDraw_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_newDraw_mp.c:1749; assigned universal header has no body. Mac symbol __Z12CG_OwnerDrawffffiiffiiifP6Font_sfPfP8Materiali at 0x0018cc30. Whole caller not audited by universal-math."
+        "status": "fixed",
+        "evidence": "Decoded 105 targets at Mac 0x33ba90 and hand-compared 0x18cc30-0x18e8f8 including inline helpers. Restored raw rectangle origin (0x18cc3f), score IDs67/68, valid local team (0x18e07a), shader draw, health bar tint/lag (0x18cc76), pulse background (0x18d793), independent low-health overlay (0x18db6a), ammo tint, weapon-name/fade geometry and compass caller contracts. Compiled and reviewed; ten existing objective/location groups pass with ASan/UBSan in each stock/CoD2x mode. Other restored draw paths not exercised. Existing defined invalid-reference guards and CoD2x controls retained; see report. Independent review follow-up corrected five fade paths: compass/mode use the alpha-mutated caller color directly (0x18d205-0x18d2d7, 0x18d0f4-0x18d177); backdrop/name/background copy RGB and assign local fade alpha independently of input alpha (0x18cffb, 0x18ddae-0x18ddc5, 0x18df3d-0x18df5e). Actual cgame client TUs compile in both modes; five fade paths compiled and reviewed against exact-symbol disassembly, not exercised by existing fixtures."
       }
     ],
     "cgame/cg_players_mp": [
