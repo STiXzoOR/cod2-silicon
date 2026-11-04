@@ -13942,5 +13942,245 @@
   "mac:0x0009fd5e": {
     "status": "equal",
     "evidence": "Hand-compared complete exact-entry Mac 0x9fd5e-0x9fddd: all early returns, capacity and error handling, copy direction and cursor updates match the native archive writer and ordinary writer."
+  },
+  "mac:0x000ad61e": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xad61e-0xad6c5: case-insensitive 31337 hash, 1024 buckets, duplicate rejection, and head insertion match with pointer-width links."
+  },
+  "mac:0x000ad050": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xad050-0xad059: forwards the size to Hunk_AllocInternal; name/type are unused on both paths."
+  },
+  "mac:0x000ad046": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xad046-0xad04f: forwards the size to Hunk_AllocateTempMemoryInternal; name is unused."
+  },
+  "mac:0x000ad6c6": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xad6c6-0xad7e5: hash lookup, existing-list overwrite while preserving its name, and new list/name allocation and hash insertion match. The existing overwrite also copies the incoming link, as Mac does."
+  },
+  "mac:0x000ad596": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xad596-0xad61d: NULL name, unsigned wrapping hash of signed characters passed to __tolower, bucket traversal, and I_stricmp match."
+  },
+  "mac:0x000ad03c": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xad03c-0xad045: returns g_sa.volumeFalloffCurves[0]."
+  },
+  "linux:universal/com_sndalias.cpp:238:Com_GetSoundAliasName": {
+    "status": "unchecked",
+    "evidence": "Linux-only identity read: wraps Com_FindSoundAlias and returns aliasName or NULL. No native body/caller or Mac symbol was found; no specific Mac inline caller has been established, so equality is not claimed."
+  },
+  "linux:universal/com_sndalias.cpp:250:Com_GetSoundAliasRandomSeed": {
+    "status": "unchecked",
+    "evidence": "Linux-only getter read; no native body/caller. Mac has an absolute .eh symbol named Com_GetSoundAliasSeed but no identified executable getter body or inline site. Seed-read identity remains unresolved."
+  },
+  "mac:0x000acc12": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xacc12-0xacc1f: alias->soundFile->fileMem pointer load matches."
+  },
+  "mac:0x000acc04": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xacc04-0xacc11: alias->soundFile->soundName pointer load matches."
+  },
+  "mac:0x000acbe0": {
+    "status": "equal",
+    "evidence": "Restarted otool at the exact symbol to correct a full-disassembly misalignment. Mac 0xacbe0-0xacc03 passes knotCount, knots, and fraction to GraphGetValueFromFraction in the same order."
+  },
+  "linux:universal/com_sndalias.cpp:148:Com_InitVolumeFalloffCurves": {
+    "status": "fixed",
+    "evidence": "Identified inline in Mac Com_LoadSoundAliases 0xace71-0xacf73. Restored complete maximum-count and load-failure diagnostics, including the 0x15 marker. Native keeps its 63-character curve-name bound: g_sa stores 16 names of 64 bytes, whereas Mac derives an unchecked size from strlen(filename)-7. Other initialization, file iteration, and count 15 match; compiled and reviewed, not exercised."
+  },
+  "mac:0x000acc20": {
+    "status": "fixed",
+    "evidence": "Compared Mac 0xacc20-0xacfc5, including inline curve initialization and all SASYS branches. Removed initial-import UI/hash resets absent at 0xacc7c and 0xacdd6; restored diagnostics at 0xacf36/0xacfa0 and the va-generated Com_Error format at 0xacd59. Caller review found explicit UI/CGame unloads and no documented native reset contract. Native retains bounded curve-name copies and dedicated omission of client sample loading/command registration. Engine CSV loading, permanence, sharing, and initialization remain active; compiled and reviewed, not exercised."
+  },
+  "mac:0x000ad29c": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xad29c-0xad3e9: initialized/count guards, loaded-only filtering, prior-name pointer deduplication, missing-data text, and SSE float KiB/MiB conversions match."
+  },
+  "mac:0x000ad97e": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xad97e-0xadb38: inlined lookup and both probability-selection passes match native core, including strict greater-than, 32768.0f scale, sequence avoidance only above two entries, RNG consumption, and final sequence increment."
+  },
+  "mac:0x000ad450": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xad450-0xad595 for non-NULL lists with their established positive count: cumulative SSE additions, RNG recurrence and scaling, strict greater-than selection, maximum sequence, repeat avoidance, and selected sequence update match; NULL returns NULL."
+  },
+  "mac:0x000acfc6": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xacfc6-0xad03b: scans all 16 initialized filenames with strcasecmp, returns the matching curve, or reports the source/filename with ERR_DROP and returns NULL."
+  },
+  "linux:universal/com_sndalias.cpp:255:Com_SetSoundAliasRandomSeed": {
+    "status": "unchecked",
+    "evidence": "Linux-only setter read; no native body/caller. Mac has an absolute .eh symbol named Com_SetSoundAliasSeed but no identified executable setter body or inline site. Seed-write identity remains unresolved."
+  },
+  "linux:universal/com_sndalias.cpp:13:Com_SoundAliasHash": {
+    "status": "equal",
+    "evidence": "Identified inline at Mac 0xad5e1-0xad61b and in Add/Duplicate/Offset/Pick callers. LEA chain computes hash*31337 plus __tolower((signed char)byte), modulo 32 bits, then masks 0x3ff; native unsigned helper matches."
+  },
+  "linux:universal/com_sndalias.cpp:7:Com_SoundAliasRandom": {
+    "status": "equal",
+    "evidence": "Identified inline at Mac 0xad4a0-0xad4ca and 0xad532-0xad55c, repeated in PickSoundAlias. Recurrence is seed*214013+2531011 modulo 32 bits, followed by bits 16..30; source arithmetic and native compiler recurrence match the masked result."
+  },
+  "mac:0x000ad3ea": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xad3ea-0xad44f: all headings and UI/CGame streamed then loaded listing calls, followed by final newline, match."
+  },
+  "mac:0x000ad1ba": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xad1ba-0xad29b: initialized/count guards, streamed-only filtering, prior-name pointer deduplication, and found/missing output match."
+  },
+  "mac:0x000ad05a": {
+    "status": "fixed",
+    "evidence": "Compared Mac 0xad05a-0xad12b. Mac 0xad098/0xad0bb clears loaded type 1 and primed type 3; native skipped primed. Restored both types and matching prior-type comparison. Native dedicated still omits SND_StopSounds at its existing client-backend boundary; alias memory clearing remains active. Compiled and reviewed, not exercised."
+  },
+  "mac:0x000ad12c": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xad12c-0xad1b9: initialized guard, sound unload except SASYS_GAME, non-NULL head/count/hash clearing, initialization reset, and removing snd_list only after both UI/CGame unload match."
+  },
+  "mac:0x000ad7e8": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xad7e8-0xad899 including inlined lookup: pointer scan and zero fallback for first/not-found/nonpositive count match; no new missing-list guard was introduced."
+  },
+  "mac:0x000ad89a": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xad89a-0xad97b including inlined lookup: zero/default alias behavior, out-of-range wrap to head, negative-count behavior, and zero-count diagnostic match."
+  },
+  "mac:0x000b690e": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xb690e-0xb6923: tail-calls I_stricmp on the two alias-name fields."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:495:Com_AddBuildSoundAlias": {
+    "status": "equal",
+    "evidence": "Identified inline at Mac 0xb9c8e-0xb9cd6: allocates a temporary build record, copies it, prepends to tempAliases, and increments tempAliasCount. Native uses the widened record size and pointer-width link."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:863:Com_AddSoundAlias": {
+    "status": "fixed",
+    "evidence": "Identified inline at Mac 0xb6e25-0xb6f41 and secondary-name branch 0xb7099-0xb70d8. Restored iSequence=0 at 0xb6e50 instead of copying the CSV sorting sequence. All names, subtitle/file references, numeric fields, channel/type masks and five flag bits match; compiled and reviewed, not exercised."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:1666:Com_CopyFinalStringEdFile": {
+    "status": "equal",
+    "evidence": "Identified inline in Mac Com_WriteLocalizedSoundAliasFiles 0xb9521-0xb9638: input open/seek/length/read, short-read error, output open/write/error/close, free, local-file removal and done message match native helper."
+  },
+  "mac:0x000b7680": {
+    "status": "fixed",
+    "evidence": "Compared Mac 0xb7680-0xb77fd. At 0xb776a an unequal English subtitle exits the inner scan and resumes the outer reference loop; native continued within the first reference until a later match or syntax error. Restored the exit; exact marker comparisons, static reference copy, session and file cleanup match. Compiled and reviewed, not exercised."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:65:Com_GetVolumeModValue": {
+    "status": "equal",
+    "evidence": "Identified inline in Mac Com_LoadSoundAliasField 0xb7ee8-0xb7f27 and failure 0xb8126-0xb814d: 32-name case-insensitive lookup, group value, and source/token error arguments match."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:82:Com_InitBuildSoundAlias": {
+    "status": "intentional",
+    "evidence": "Identified inline at Mac 0xb99e1-0xb9b05 and localization 0xb8991-0xb8a87. All initialized strings, defaults, pointers, flags and loadspec-derived keep match. Native localization helper zeroes the whole widened record; native file loading also initializes permSoundFile/pSameSoundFile and next deterministically, retaining defined native storage rather than copying Mac unused indeterminate bytes."
+  },
+  "mac:0x000b7658": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xb7658-0xb767f: empty filename, knotCount 2, and (0,1)/(1,0) endpoints match."
+  },
+  "mac:0x000b68e8": {
+    "status": "equal",
+    "evidence": "Restarted otool at exact symbol because full-binary output misaligned its prologue. Mac 0xb68e8-0xb6901 resets tempAliases and tempAliasCount only, matching native."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:856:Com_InitSoundFile": {
+    "status": "equal",
+    "evidence": "Identified inline at Mac 0xb7142-0xb7154: stores name, NULL file memory and type. Hunk_AllocInternal zeroes new storage, so native and Mac do not require indeterminate isStreamFound bytes."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:114:Com_IsValidAliasName": {
+    "status": "fixed",
+    "evidence": "Identified inline in Mac Com_LoadSoundAliasField 0xb795c-0xb79a0 and 0xb7b11-0xb7b55, plus continuation blocks 0xb8302-0xb84c8. Restored rejection of the empty first character and whole-name error reporting instead of a suffix from the offending character; signed character/control, alphanumeric and underscore rules match. Compiled and reviewed, not exercised."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:132:Com_LoadSoundAliasChannel": {
+    "status": "equal",
+    "evidence": "Identified inline in Mac Com_LoadSoundAliasField 0xb7cca-0xb7d52, 0xb7ff5-0xb8031 and 0xb8152. All 11 channel names match binary table 0x3487e0; case-insensitive lookup, comma/or list and error flag match."
+  },
+  "mac:0x000b78fa": {
+    "status": "fixed",
+    "evidence": "Compared complete Mac 0xb78fa-0xb8583 and decoded all 24 jump-table entries at 0x32a620. Restored whole invalid-name diagnostics, empty identifier rejection, and LFE subtraction/ordered-selection clamp at 0xb7a2b-0xb7a62 (NaN and signed zero become +0). Remaining field conversions, range checks, defaults, duplicate bits, errors, stream/primed mapping, ignored speaker map and loadspec helper match. Both 24-key and 11-channel string tables match binary; compiled and reviewed, not exercised."
+  },
+  "mac:0x000b969a": {
+    "status": "equal",
+    "evidence": "Compared complete Mac 0xb969a-0xb9fc5, including inline volume groups, build defaults, CSV header/row parsing, validation and temporary list insertion. Session/error paths, 24 keys/256 columns, required name/file, keep/error gates, SSE swaps/scaling/clamps, and group refresh registration match with widened typed records. Extra explicit initialization of unused storage is documented in Com_InitBuildSoundAlias."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:188:Com_LoadSoundAliasLooping": {
+    "status": "equal",
+    "evidence": "Identified inline in Mac Com_LoadSoundAliasField 0xb7c4a-0xb7c6f and 0xb82d8-0xb82fd/0xb84cd-0xb84f1: looping/nonlooping booleans, error text and error flag match."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:244:Com_LoadSoundAliasMasterSlave": {
+    "status": "equal",
+    "evidence": "Identified inline in Mac Com_LoadSoundAliasField 0xb7b80-0xb7bac and 0xb823f-0xb82d3: master comparison, mutually exclusive flags, float percentage storage and 0..1 validation match."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:264:Com_LoadSoundAliasReverb": {
+    "status": "equal",
+    "evidence": "Identified inline in Mac Com_LoadSoundAliasField 0xb7a6f-0xb7ab5: independent case-sensitive fulldrylevel/nowetlevel substring tests set the same two flags without clearing existing values."
+  },
+  "mac:0x000b7590": {
+    "status": "intentional",
+    "evidence": "Compared complete Mac 0xb7590-0xb7657: client engine-side iteration, type-1 SND_LoadSoundFile call, loaded missing count, dvar-gated streamed FS_TouchFile and diagnostics match. Native dedicated omits this client loader; native client retains it and calls the documented macos_audio.c Miles replacement (WS3), whose backend is excluded, rather than excluding alias loading."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:167:Com_LoadSoundAliasType": {
+    "status": "equal",
+    "evidence": "Identified inline in Mac Com_LoadSoundAliasField 0xb7c9d-0xb7cc5, 0xb8212-0xb823a and 0xb84f6-0xb857e. Streamed and primed both map to 2, loaded to 1; invalid type diagnostic/error flag match, preserving the Mac primed quirk."
+  },
+  "mac:0x000b718a": {
+    "status": "equal",
+    "evidence": "Compared complete Mac 0xb718a-0xb758f: path/open/empty checks, eight-byte SNDCURVE header, 8191-byte payload bound, read/close/session order, knot parser and endpoint repair match. Parser identity is recorded separately; no backend exclusion applies."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:512:Com_LoadVolumeModGroups": {
+    "status": "equal",
+    "evidence": "Identified inline in Mac Com_LoadSoundAliasFile 0xb96e2-0xb9844 and 0xb9d18/0xb9deb-0xb9fb1. One-time refresh command, 15-byte header read, 8191-byte payload cap, 32 group records, name/value parsing, errors and initialized flag match."
+  },
+  "mac:0x000b6b18": {
+    "status": "fixed",
+    "evidence": "Compared complete Mac 0xb6b18-0xb7189 including three sorts, deduplication/type warning, string accounting, zeroed hunk allocations and nested alias/file construction. Restored playback sequence reset at 0xb6e50; the CSV sequence remains a sorting key. All field masks/copies and alias/list counts match with LP64 sizes. Compiled and reviewed, not exercised."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:1079:Com_ParseVolumeFalloffCurve": {
+    "status": "equal",
+    "evidence": "Identified inline in Mac Com_LoadVolumeFalloffCurve 0xb728c-0xb758b: knot count 2..8, eight-knot bound, token termination, SSE float range checks, matching parsed count, forced endpoints and warning match, including the shared x-coord diagnostic for invalid y."
+  },
+  "mac:0x000b8584": {
+    "status": "fixed",
+    "evidence": "Compared complete Mac 0xb8584-0xb93af including subtitle existence and StringEd writing. Restored direct parsing after newline (0xb882d), unset-field handling (0xb8bbc), existing-text reference reuse without rewrite/count (0xb8ecd-0xb8f36), subtitle-column conversion/file-operation order (0xb8eb7), and new-reference writer EOF/skip control (0xb9104/0xb9233). CSV quoting, generated references and file/session operations otherwise match. Compiled and reviewed, not exercised."
+  },
+  "mac:0x000b6902": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xb6902-0xb690d: clears only volumeModGroupsInitialized."
+  },
+  "mac:0x000b6924": {
+    "status": "equal",
+    "evidence": "Compared complete Mac 0xb6924-0xb6b17 against native wrapper and recursive implementation for established positive counts. Split sizes, stable merge, alias/sequence duplicate keys, source-file precedence, dropping both same-source duplicates with diagnostic, links and count repair match."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:206:Com_SoundAliasLoadspecKeep": {
+    "status": "equal",
+    "evidence": "Identified inline in Mac Com_LoadSoundAliasField 0xb7bb1-0xb7c1c, 0xb8079-0xb8121, 0xb83fc-0xb8423 and 0xb851f-0xb854e. 16384-byte token copy/overflow sentinel, lowercase, menu/exclusion polarity, signed byte boundaries and current-game comparison from the advancing search pointer match."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:1210:Com_SubtitleReferenceExists": {
+    "status": "equal",
+    "evidence": "Identified inline in Mac Com_ProcessSoundAliasFileLocalization 0xb8d77-0xb8e46 and 0xb9081/0xb909a. Prefix check, subtitle.st read, REFERENCE marker scan, suffix+9 case-insensitive lookup, skip/session/free and failed-read warning match native helper."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:428:Com_ValidateSoundAlias": {
+    "status": "equal",
+    "evidence": "Identified inline in Mac Com_LoadSoundAliasFile 0xb9b9c-0xb9c8e and diagnostic/swap continuations through 0xb9fc1. Pitch/volume swaps and strict thresholds, distMax default distMin*5, distance errors, and separate float volume-mod multiplications/clamps match SSE order."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:819:Com_WarnSoundFileTypeMismatch": {
+    "status": "equal",
+    "evidence": "Identified inline in Mac Com_MakeSoundAliasesPermanent 0xb6fc1-0xb7048 plus 0xb7165/0xb716f. Same-name/different-type detection and the current/previous aliases and loaded/streamed/primed label arguments match."
+  },
+  "mac:0x000b93b0": {
+    "status": "equal",
+    "evidence": "Compared complete Mac 0xb93b0-0xb9699, including inline final-copy helper: external/local paths, trailing slash removal, writeability and local existence guards, list/loop/temp-memory order, all_mp loadspec and final copy/removal match."
+  },
+  "mac:0x000b77fe": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xb77fe-0xb78a3: all five writes, fixed literal lengths 20/23/5, reference/subtitle lengths and handle arguments match."
+  },
+  "linux:universal/com_sndalias_load_obj.cpp:1316:Com_WriteSubtitleToStringEd": {
+    "status": "fixed",
+    "evidence": "Identified inline in Mac Com_ProcessSoundAliasFileLocalization 0xb904b-0xb9364 and 0xb939e-0xb93aa. Native helper now retains the append-on-EOF path at 0xb9104 and skips the line after ungetting the next marker at 0xb9233. Writer is called/counted only for new subtitle text, preserving existing-reference behavior. Compiled and reviewed, not exercised."
+  },
+  "mac:0x000b78a4": {
+    "status": "equal",
+    "evidence": "Compared Mac 0xb78a4-0xb78f9: case-insensitive sound filename, numeric type difference, then case-insensitive alias name ordering match."
   }
 }

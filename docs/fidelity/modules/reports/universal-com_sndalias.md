@@ -1,0 +1,27 @@
+# universal/com_sndalias module reconciliation
+
+Updated 2026-11-04.
+
+**23/26 reconciled: 20 equal, 3 fixed; 3 unchecked.** Mac 1.3 i386 is the authority. Linux was used for helper identities, not implementation authority. Changes are under COD2_X64; the legacy preprocessed source is unchanged.
+
+## Corrections
+
+`Com_LoadSoundAliases` at 0xacc20 retained UI aliases and the shared hash while loading; native added two clearing branches. Both originated in the initial source import, with no native-port rationale found. Native UI/CGame shutdown already calls `Com_UnloadSoundAliases`, and hunk allocation still zeroes storage. The extra clears are disabled on the native path. Complete curve initialization diagnostics, their 0x15 marker, and the missing-sound `va` format passed to `Com_Error` now match Mac.
+
+`Com_UnloadSoundAliasSounds` at 0xad05a clears both loaded and primed aliases. Native skipped primed aliases; it now handles types 1 and 3 and compares previous aliases against the current type.
+
+The inline curve-initialization row records the same diagnostic correction. The rest of the module was compared by hand, including hashing, list updates, listing/deduplication, offset lookup, and both weighted-selection passes. SSE additions and multiplications, strict selection comparisons, random consumption and sequence avoidance match Mac. The compiled arm64 random recurrence uses 32-bit multiply-add and extracts bits 16 through 30.
+
+## Native boundaries and unresolved identities
+
+Curve names occupy `volumeFalloffCurveNames[16][64]`. Native retains its 63-character copy bound; Mac derives an unchecked copy size from the filename length. This preserves defined native storage for oversized filenames. Dedicated builds continue to omit client sound stopping/loading and sound-list registration, while retaining engine alias metadata loading and selection.
+
+`Com_GetSoundAliasName`, `Com_GetSoundAliasRandomSeed`, and `Com_SetSoundAliasRandomSeed` remain unchecked. Their Linux bodies were read, but no native body/caller or specific executable Mac identity was established. Mac has absolute `.eh` seed symbols under shorter names; those are not executable evidence.
+
+## Verification and limits
+
+The arm64 Release `cod2_macos_ded` build passed with two low-priority jobs. Both affected files also compiled with client flags. All five COD2_X64=OFF preprocessing configurations match the baseline, and neither file uses `__LINE__`. Triage and constant checks were used as leads, followed by complete hand comparison of the Mac bodies. The misaligned full-disassembly entry for `Com_GetVolumeFalloffCurveValue` was restarted at its exact symbol.
+
+No new tests, full CI or replays were run. Corrections are compiled and reviewed, not exercised. Runtime validation belongs to integration.
+
+Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-universal-sound.noindex/`.
