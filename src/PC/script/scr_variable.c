@@ -2992,9 +2992,11 @@ void Scr_EvalPlus(VariableValue *value1, VariableValue *value2)
         }
 
 #if defined(COD2_X64)
-        /* Each interned string fits MT's 0xffff-byte allocation limit; the
-           combined length fits SL_GetStringOfLen's unsigned-int argument. */
-        char tempString[totalLen];
+        /* SL stores the NUL and four-byte header inside MT's 0xffff-byte
+           allocation limit. With lhsLen <= 0x2000, totalLen <= 0x11ffb.
+           The MSVC compatibility shim maps this builtin to _alloca; stack
+           storage also needs no cleanup when Scr_Error longjmps. */
+        char *tempString = (char *)__builtin_alloca(totalLen);
 #endif
         strcpy(tempString, lhs);
         strcpy(&tempString[lhsLen], rhs);
