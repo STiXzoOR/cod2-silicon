@@ -70,3 +70,11 @@ finite inputs. Real capture, arbitrary descriptor values, overflowing gain
 conversion, actual outgoing codec/network behavior and physical audio remain
 unexercised. No recording feature was enabled. Private evidence is in
 `~/Library/Application Support/CoD2-native-decomp/recon-groupvoice.noindex/`.
+
+Independent review confirmed the active native boundary and identified a retained
+legacy-only mismatch: the two non-COD2_X64 source copies multiply a short-pointer
+offset by bytes per sample, whereas Mac 0x1ea863/0x1ea903 uses byte offsets.
+The dormant native branches already use byte pointers. The inactive legacy
+samplerate/quality import alias also lacks a resolved executable contract.
+These pre-existing OFF paths are preserved as required; no equality claim here
+certifies the legacy executable or its recording storage.
