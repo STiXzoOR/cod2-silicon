@@ -7866,5 +7866,697 @@
   "mac:0x00092092": {
     "status": "equal",
     "evidence": "Mac 0x92092-0x9215e: read duplicate-definition branches, source-buffer filename lookup, undefined position initialization and SetNewVariableValue order."
+  },
+  "mac:0x00088508": {
+    "status": "equal",
+    "evidence": "Mac 0x00088508: Compared field offsets, unsigned load widths, shifts, masks and return values; native encoded storage preserves the Mac 16-byte entry layout."
+  },
+  "mac:0x00088982": {
+    "status": "equal",
+    "evidence": "Mac 0x00088982: Compared all object/string/localized-string/vector reference cases, vector ownership byte, 16-bit counter behavior and MT_Free size 0x10; native vector offsets are decoded before access."
+  },
+  "linux:script/scr_variable.cpp:1516:AddRefToVector": {
+    "status": "equal",
+    "evidence": "Inlined in Mac AddRefToValue 0x889a5-0x889ab: ownership-byte test and 16-bit increment match native AddRefToValue_core vector branch; encoded native vectors are decoded first."
+  },
+  "mac:0x0008c9da": {
+    "status": "equal",
+    "evidence": "Mac 0x0008c9da: Compared complete inlined free-list allocation paths and result initialization: external 0x60, object 0x73, array 0x76, thread 0x6f, child thread 0x72 plus parent-name/self fields; terminal exhaustion error retained. Opt-in native trace instrumentation is excluded from gameplay equivalence."
+  },
+  "linux:script/scr_variable.cpp:1275:AllocEntity": {
+    "status": "equal",
+    "evidence": "Inlined in Mac Scr_GetEntityId 0x8b4cf-0x8b590: free-list allocation, class/status 0x75, refcount zero and 16-bit entnum match the complete native allocation block."
+  },
+  "mac:0x0008c73a": {
+    "status": "equal",
+    "evidence": "Mac 0x0008c73a: Compared complete inlined free-list allocation paths and result initialization: external 0x60, object 0x73, array 0x76, thread 0x6f, child thread 0x72 plus parent-name/self fields; terminal exhaustion error retained. Opt-in native trace instrumentation is excluded from gameplay equivalence."
+  },
+  "mac:0x0008c8f8": {
+    "status": "equal",
+    "evidence": "Mac 0x0008c8f8: Compared complete inlined free-list allocation paths and result initialization: external 0x60, object 0x73, array 0x76, thread 0x6f, child thread 0x72 plus parent-name/self fields; terminal exhaustion error retained. Opt-in native trace instrumentation is excluded from gameplay equivalence."
+  },
+  "mac:0x0008c66c": {
+    "status": "equal",
+    "evidence": "Mac 0x0008c66c: Compared complete inlined free-list allocation paths and result initialization: external 0x60, object 0x73, array 0x76, thread 0x6f, child thread 0x72 plus parent-name/self fields; terminal exhaustion error retained. Opt-in native trace instrumentation is excluded from gameplay equivalence."
+  },
+  "linux:script/scr_variable.cpp:1155:AllocVariable": {
+    "status": "equal",
+    "evidence": "Inlined in Mac AllocValue 0x8c675-0x8c709 and the other allocation entry points: compared free-head extraction, free/hash alias relocation, next/previous/index/sibling updates and returned value ID with native AllocVariable. Native opt-in allocation tracing is retained."
+  },
+  "mac:0x00091892": {
+    "status": "intentional",
+    "evidence": "Read complete exact-symbol Mac 0x91892 body. Entity COW clears its destination at 0x919b2 then writes through +4 at 0x91bdb. Native avoids that invalid write with the existing fieldId guard. Integer missing-key removal now explicitly uses SafeRemoveVariable_core, matching 0x91c4e/0x91e9e; all other error and release paths compared."
+  },
+  "mac:0x0008f560": {
+    "status": "fixed",
+    "evidence": "Mac 0x8f735 clears the complete status word on its empty-object free path; corrected the shared native FreeVariable helper. Read full child/refcount cleanup; compiled and reviewed."
+  },
+  "linux:script/scr_variable.cpp:836:ClearObjectInternal": {
+    "status": "equal",
+    "evidence": "Inlined in Mac ClearObject 0x8f57f-0x8f6c6 and stop/kill/free paths: complete first-pass MakeVariableExternal traversal then child value release/unlink matches native Scr_FreeObjectChildren used by ClearObjectInternal."
+  },
+  "mac:0x0008e41a": {
+    "status": "equal",
+    "evidence": "Mac 0x0008e41a: Compared complete lookup/queue traversal, entity state updates, notification cancellation, MakeVariableExternal and value-release/free-list ordering; field clear writes undefined to value + 1."
+  },
+  "mac:0x00091808": {
+    "status": "equal",
+    "evidence": "Mac 0x00091808: Compared all old-value reference-release cases and the complete sibling unlink/free-list return or status-mask/value replacement sequence."
+  },
+  "mac:0x0008bf46": {
+    "status": "equal",
+    "evidence": "Mac 0x0008bf46: Read complete recursive copy: sibling sentinel, name lookup/insertion, value type transfer, nested arrays copied deeply and other object/string/vector references incremented."
+  },
+  "linux:script/scr_variable.cpp:4290:CopyEntity": {
+    "status": "unchecked",
+    "evidence": "Inspected assigned Linux row for CopyEntity, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+  },
+  "mac:0x00088bcc": {
+    "status": "equal",
+    "evidence": "Mac 0x00088bcc: Compared complete hash lookup and collision traversal, status 0x40 gate, key encoding, sentinel return and final value-ID/value extraction."
+  },
+  "linux:script/scr_variable.cpp:1625:FindArrayVariableIndex": {
+    "status": "equal",
+    "evidence": "Inlined in Mac FindArrayVariable 0x88bd2-0x88c2e: biased 24-bit key, modulo-0xfffd hash and collision-chain lookup match native FindVariableIndexInternal before the public value-ID conversion."
+  },
+  "mac:0x00088aee": {
+    "status": "equal",
+    "evidence": "Mac 0x00088aee: Compared complete hash lookup and collision traversal, status 0x40 gate, key encoding, sentinel return and final value-ID/value extraction."
+  },
+  "mac:0x00088404": {
+    "status": "equal",
+    "evidence": "Mac 0x00088404: Compared index-to-value indirection, parent sentinel handling, previous-link traversal and the type-0x0f object boundary."
+  },
+  "mac:0x0008864e": {
+    "status": "equal",
+    "evidence": "Mac 0x0008864e: Compared field offsets, unsigned load widths, shifts, masks and return values; native encoded storage preserves the Mac 16-byte entry layout."
+  },
+  "mac:0x00088d1c": {
+    "status": "equal",
+    "evidence": "Mac 0x00088d1c: Compared complete hash lookup and collision traversal, status 0x40 gate, key encoding, sentinel return and final value-ID/value extraction."
+  },
+  "mac:0x0008880a": {
+    "status": "equal",
+    "evidence": "Mac 0x0008880a: Compared index-to-value indirection, parent sentinel handling, previous-link traversal and the type-0x0f object boundary."
+  },
+  "mac:0x00088c7a": {
+    "status": "equal",
+    "evidence": "Mac 0x00088c7a: Compared complete hash lookup and collision traversal, status 0x40 gate, key encoding, sentinel return and final value-ID/value extraction."
+  },
+  "linux:script/scr_variable.cpp:430:FindVariableIndexHash": {
+    "status": "equal",
+    "evidence": "Inlined in Mac FindVariable 0x88c80-0x88cd0: unsigned (parentId+name)%0xfffd+1 followed by status-0x40/key/collision lookup matches native Scr_VariableHash plus FindVariableIndexInternal."
+  },
+  "linux:script/scr_variable.cpp:388:FindVariableIndexInternal": {
+    "status": "equal",
+    "evidence": "Inlined lookup in Mac FindVariable 0x88ca3-0x88d19: read head status/name, follow v.index until the original index, return matching index or zero. Native FindVariableIndexInternal combines this with hash selection; its parameter convention is parent/name rather than Linux name/index."
+  },
+  "mac:0x00091676": {
+    "status": "equal",
+    "evidence": "Mac 0x00091676: Compared all old-value reference-release cases and the complete sibling unlink/free-list return or status-mask/value replacement sequence."
+  },
+  "linux:script/scr_variable.cpp:1204:FreeVariable": {
+    "status": "fixed",
+    "evidence": "Inlined in Mac RemoveRefToEmptyObject 0x88697-0x886f9: sibling unlink and free-list reinsertion compared; native cleared only the low status byte, Mac 0x886d0 zeros all four bytes. Corrected native full-word clear; compiled and reviewed."
+  },
+  "mac:0x0008c446": {
+    "status": "equal",
+    "evidence": "Mac 0x0008c446: Compared complete inlined free-list allocation paths and result initialization: external 0x60, object 0x73, array 0x76, thread 0x6f, child thread 0x72 plus parent-name/self fields; terminal exhaustion error retained. Opt-in native trace instrumentation is excluded from gameplay equivalence."
+  },
+  "mac:0x000887f8": {
+    "status": "equal",
+    "evidence": "Mac 0x000887f8: Compared field offsets, unsigned load widths, shifts, masks and return values; native encoded storage preserves the Mac 16-byte entry layout."
+  },
+  "mac:0x0008bb6c": {
+    "status": "equal",
+    "evidence": "Mac 0x0008bb6c: Compared all lookup/new-child branches, type tests, field sentinel 0xfffe, string-reference release and invalid-index/type errors; native helpers preserve original hash and sibling operations."
+  },
+  "linux:script/scr_variable.cpp:1666:GetArrayVariableIndex": {
+    "status": "fixed",
+    "evidence": "Inlined in Mac GetArrayVariable 0x8bb7b-0x8bc13: encode key, find or allocate index and link it into the parent. Native dormant GetVariableIndexInternal missed linking on its new-index path; corrected through GetNewVariableIndexInternal. Public wrapper was already correct; compiled and reviewed."
+  },
+  "mac:0x00088768": {
+    "status": "equal",
+    "evidence": "Mac 0x00088768: Compared unsigned range check (index + 0x7e0002 <= 0xfe0001) and 24-bit biased array-name encoding."
+  },
+  "mac:0x00089a9a": {
+    "status": "equal",
+    "evidence": "Mac 0x00089a9a: Compared hash/index allocation and complete sibling insertion order, including reverse tail insertion and final index-to-value return conversion."
+  },
+  "linux:script/scr_variable.cpp:1677:GetNewArrayVariableIndex": {
+    "status": "fixed",
+    "evidence": "Inlined in Mac GetNewArrayVariable 0x89aa9-0x89b16: encode/hash/allocate index and insert sibling. Corrected the corresponding dormant native GetNewVariableIndexInternal to perform insertion before returning the index. Public GetNewArrayVariable already matched; compiled and reviewed."
+  },
+  "mac:0x0008971e": {
+    "status": "equal",
+    "evidence": "Mac 0x0008971e: Compared hash/index allocation and complete sibling insertion order, including reverse tail insertion and final index-to-value return conversion."
+  },
+  "mac:0x00089660": {
+    "status": "equal",
+    "evidence": "Mac 0x00089660: Compared hash/index allocation and complete sibling insertion order, including reverse tail insertion and final index-to-value return conversion."
+  },
+  "mac:0x00089b24": {
+    "status": "equal",
+    "evidence": "Mac 0x00089b24: Compared hash/index allocation and complete sibling insertion order, including reverse tail insertion and final index-to-value return conversion."
+  },
+  "linux:script/scr_variable.cpp:694:GetNewVariableIndexInternal": {
+    "status": "fixed",
+    "evidence": "Inlined in Mac GetNewVariable 0x89b33-0x89b94: hash, call Internal3 and insert child into parent. Native same-named dormant wrapper returned Internal3 directly without sibling insertion; restored that insertion under COD2_X64. Compiled and reviewed; wrapper not independently exercised."
+  },
+  "linux:script/scr_variable.cpp:636:GetNewVariableIndexInternal2": {
+    "status": "fixed",
+    "evidence": "Inlined in Mac GetNewVariable 0x89b55-0x89b94: allocation then four sibling/parent updates. Native Scr_LinkVariableToParent already matches those updates; fixed dormant GetNewVariableIndexInternal to invoke it. Compiled and reviewed."
+  },
+  "mac:0x00089214": {
+    "status": "equal",
+    "evidence": "Mac 0x00089214: Read all four allocation-status paths, free-list extraction, hash/value swaps, moved collision-chain repair and array-key reference increments; matched 0xffff/0x1fffd key boundaries and 0x60/0x40/0x20 masks."
+  },
+  "linux:script/scr_variable.cpp:708:GetNewVariableIndexReverseInternal": {
+    "status": "equal",
+    "evidence": "Inlined in Mac GetNewObjectVariableReverse 0x8966f-0x8970f: object-name bias, modulo hash, Internal3 call and reverse insertion match the complete native wrapper before value-ID return."
+  },
+  "linux:script/scr_variable.cpp:662:GetNewVariableIndexReverseInternal2": {
+    "status": "equal",
+    "evidence": "Inlined in Mac GetNewObjectVariableReverse 0x89697-0x8970f: compared reverse insertion through parent previous-sibling indices and original parent index; native wrapper matches."
+  },
+  "mac:0x0008c55e": {
+    "status": "equal",
+    "evidence": "Mac 0x0008c55e: Compared complete inlined free-list allocation paths and result initialization: external 0x60, object 0x73, array 0x76, thread 0x6f, child thread 0x72 plus parent-name/self fields; terminal exhaustion error retained. Opt-in native trace instrumentation is excluded from gameplay equivalence."
+  },
+  "linux:script/scr_variable.cpp:3610:GetObjectType": {
+    "status": "equal",
+    "evidence": "Inlined object-type extraction in Mac Scr_EvalVariableObject 0x887e5-0x887ee is status & 0x1f; same extraction appears in native object validation/GetVarType."
+  },
+  "mac:0x0008bdf8": {
+    "status": "equal",
+    "evidence": "Mac 0x0008bdf8: Compared all lookup/new-child branches, type tests, field sentinel 0xfffe, string-reference release and invalid-index/type errors; native helpers preserve original hash and sibling operations."
+  },
+  "mac:0x000885b8": {
+    "status": "equal",
+    "evidence": "Mac 0x000885b8: Compared field offsets, unsigned load widths, shifts, masks and return values; native encoded storage preserves the Mac 16-byte entry layout."
+  },
+  "mac:0x000885cc": {
+    "status": "equal",
+    "evidence": "Mac 0x000885cc: Compared child-thread type 0x12, parent-name extraction, chain termination and non-child results."
+  },
+  "mac:0x000885f0": {
+    "status": "equal",
+    "evidence": "Mac 0x000885f0: Compared child-thread type 0x12, parent-name extraction, chain termination and non-child results."
+  },
+  "mac:0x0008837c": {
+    "status": "equal",
+    "evidence": "Mac 0x0008837c: Compared field offsets, unsigned load widths, shifts, masks and return values; native encoded storage preserves the Mac 16-byte entry layout."
+  },
+  "mac:0x0008bcb6": {
+    "status": "equal",
+    "evidence": "Mac 0x0008bcb6: Compared all lookup/new-child branches, type tests, field sentinel 0xfffe, string-reference release and invalid-index/type errors; native helpers preserve original hash and sibling operations."
+  },
+  "linux:script/scr_variable.cpp:722:GetVariableIndexInternal": {
+    "status": "fixed",
+    "evidence": "Inlined in Mac GetVariable 0x8bcc5-0x8bd52: return existing index, otherwise allocate and insert sibling. Corrected the dormant native delegated new-index path, which omitted insertion. Compiled and reviewed; dormant wrapper not independently exercised."
+  },
+  "mac:0x000884ee": {
+    "status": "equal",
+    "evidence": "Mac 0x000884ee: Compared field offsets, unsigned load widths, shifts, masks and return values; native encoded storage preserves the Mac 16-byte entry layout."
+  },
+  "mac:0x00088854": {
+    "status": "equal",
+    "evidence": "Mac 0x00088854: Compared field offsets, unsigned load widths, shifts, masks and return values; native encoded storage preserves the Mac 16-byte entry layout."
+  },
+  "mac:0x00088660": {
+    "status": "equal",
+    "evidence": "Mac 0x00088660: Compared field offsets, unsigned load widths, shifts, masks and return values; native encoded storage preserves the Mac 16-byte entry layout."
+  },
+  "linux:script/scr_variable.cpp:297:InitVariables": {
+    "status": "fixed",
+    "evidence": "Inlined in Mac Var_Init 0x8844d-0x884be: read every initialization store, loop bound 0xfffe and free-list anchor. Native Var_ResetAll additionally zeroed nextSibling; removed that store for COD2_X64. Compiled and reviewed."
+  },
+  "mac:0x00088868": {
+    "status": "equal",
+    "evidence": "Mac 0x00088868: Compared field offsets, unsigned load widths, shifts, masks and return values; native encoded storage preserves the Mac 16-byte entry layout."
+  },
+  "linux:script/scr_variable.cpp:3600:IsObjectFree": {
+    "status": "equal",
+    "evidence": "Mac IsVarFree 0x88886-0x8889e implements the complete status & 0x60 == 0 predicate. Native IsVarFree and allocation free-slot checks use the same predicate; no standalone Mac IsObjectFree symbol."
+  },
+  "linux:script/scr_variable.cpp:96:IsObjectId": {
+    "status": "equal",
+    "evidence": "Inlined in Mac FindNextSibling 0x88429-0x88435: status type greater than 0x0e identifies an object. Complete predicate matches native sibling type gate; no standalone helper symbol."
+  },
+  "linux:script/scr_variable.cpp:85:IsObjectValue": {
+    "status": "equal",
+    "evidence": "Inlined object predicate in Mac sibling traversal (0x88429-0x88435 and 0x8883d-0x88849) tests entry status & 0x1f >= 0x0f; native traversal uses the same boundary."
+  },
+  "mac:0x00088750": {
+    "status": "equal",
+    "evidence": "Mac 0x00088750: Compared unsigned range check (index + 0x7e0002 <= 0xfe0001) and 24-bit biased array-name encoding."
+  },
+  "mac:0x00088886": {
+    "status": "equal",
+    "evidence": "Mac 0x00088886: Compared field offsets, unsigned load widths, shifts, masks and return values; native encoded storage preserves the Mac 16-byte entry layout."
+  },
+  "mac:0x0008cacc": {
+    "status": "equal",
+    "evidence": "Mac 0x0008cacc: Read complete array-name reference release, hash-head promotion, collision unlink and external-status conversion. Verified the hash word is read after adjacent-sibling link updates at 0x8cc5e."
+  },
+  "linux:script/scr_variable.cpp:2055:RemoveArrayVariable": {
+    "status": "equal",
+    "evidence": "Inlined Mac RemoveRefToObject 0x8d00b-0x8d030 encodes entnum as (index+0x800000)&0xffffff and calls RemoveVariable. Native corresponding entity cleanup performs the same transform and call."
+  },
+  "mac:0x0008ddd4": {
+    "status": "equal",
+    "evidence": "Mac 0x0008ddd4: Compared complete lookup/queue traversal, entity state updates, notification cancellation, MakeVariableExternal and value-release/free-list ordering; field clear writes undefined to value + 1."
+  },
+  "mac:0x0008e40a": {
+    "status": "equal",
+    "evidence": "Mac 0x0008e40a: Compared complete wrapper/control flow, reference-release arguments and order, class-map zeroing, +0x10000 object-key bias and dead-thread type 0x17 as applicable."
+  },
+  "mac:0x00088670": {
+    "status": "fixed",
+    "evidence": "Mac 0x886d0 clears the full status word when freeing an empty object. Native FreeVariable cleared only its low byte; corrected the shared helper. Complete body compared; compiled and reviewed."
+  },
+  "mac:0x0008cd30": {
+    "status": "fixed",
+    "evidence": "Mac 0x8cf25/0x8cfb1 clears the full freed-object status word; corrected native FreeVariable, which previously cleared only the low byte. Read all reference/entity/child cleanup paths; compiled and reviewed."
+  },
+  "mac:0x0008d9c0": {
+    "status": "equal",
+    "evidence": "Mac 0x0008d9c0: Compared all object/string/localized-string/vector reference cases, vector ownership byte, 16-bit counter behavior and MT_Free size 0x10; native vector offsets are decoded before access."
+  },
+  "mac:0x0008871a": {
+    "status": "equal",
+    "evidence": "Mac 0x0008871a: Compared all object/string/localized-string/vector reference cases, vector ownership byte, 16-bit counter behavior and MT_Free size 0x10; native vector offsets are decoded before access."
+  },
+  "mac:0x0008def0": {
+    "status": "intentional",
+    "evidence": "Exact-symbol Mac 0x8def0: a missing lookup sets index zero at 0x8df4f then passes the sentinel to MakeVariableExternal at 0x8df6a. Native deliberately keeps its missing-key no-op guard to avoid corrupting the variable pool; present-key behavior and all cleanup paths were compared."
+  },
+  "linux:script/scr_variable.cpp:2044:SafeRemoveArrayVariable": {
+    "status": "equal",
+    "evidence": "Inlined Mac ClearArray 0x91be3-0x91c54/0x91e33-0x91ebf validates integer range, encodes its name and only removes a found child. Native ClearArray now explicitly uses SafeRemoveVariable_core, matching the original absent-key no-op."
+  },
+  "mac:0x0008dc12": {
+    "status": "equal",
+    "evidence": "Mac 0x0008dc12: Compared complete lookup/queue traversal, entity state updates, notification cancellation, MakeVariableExternal and value-release/free-list ordering; field clear writes undefined to value + 1."
+  },
+  "mac:0x00089946": {
+    "status": "equal",
+    "evidence": "Mac 0x00089946: Compared class-map lookup, canonical/interned key encodings, 16-bit field offsets, entity setter arguments, local-field fallback and new-child value stores."
+  },
+  "mac:0x00088dc4": {
+    "status": "fixed",
+    "evidence": "Mac 0x88dfc resets temporary storage immediately, 0x88f84 lowercases through the NUL, and 0x88fc5 allocates strlen(name)+4 with no rewind. Removed native pre-reset hunk promotion and extra allocation/rewind; restored the inclusive lowercase loop. Full parser compared; compiled and reviewed."
+  },
+  "linux:script/scr_variable.cpp:4541:Scr_AddFieldsForFile": {
+    "status": "fixed",
+    "evidence": "Inlined in Mac Scr_AddFields 0x88e83-0x89186: read full file/parser/type/name/duplicate/cleanup flow. Native per-file block requested one extra byte then rewound; now uses exact strlen(name)+4 at Mac 0x88fc5 and lowercases NUL as Mac 0x88f84. Compiled and reviewed."
+  },
+  "linux:script/scr_variable.cpp:4834:Scr_AddStringSet": {
+    "status": "unchecked",
+    "evidence": "Inspected assigned Linux row for Scr_AddStringSet, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+  },
+  "mac:0x0008c816": {
+    "status": "equal",
+    "evidence": "Mac 0x0008c816: Compared complete inlined free-list allocation paths and result initialization: external 0x60, object 0x73, array 0x76, thread 0x6f, child thread 0x72 plus parent-name/self fields; terminal exhaustion error retained. Opt-in native trace instrumentation is excluded from gameplay equivalence."
+  },
+  "mac:0x0008eb8e": {
+    "status": "equal",
+    "evidence": "Mac 0x0008eb8e: Compared complete entity sentinel dispatch, old-value reference release before replacement, game array allocation, field-object type validation and all error paths."
+  },
+  "mac:0x000889c4": {
+    "status": "equal",
+    "evidence": "Mac 0x000889c4: Compared MT_Alloc(0x10, 2), zeroed four-byte header and three bit-preserving float copies; native memcpy handles packed vector storage."
+  },
+  "linux:script/scr_variable.cpp:1484:Scr_AllocVectorInternal": {
+    "status": "equal",
+    "evidence": "Inlined in Mac Scr_AllocVector 0x889ce-0x889e7: MT_Alloc(16,2), return allocation+4 and zero header match native Scr_AllocVector_core; its subsequent three component copies also match."
+  },
+  "mac:0x0009127c": {
+    "status": "equal",
+    "evidence": "Mac 0x0009127c: Compared complete integer/float/vector/object/string branches, NaN boolean behavior, error reference cleanup and error_index; vector construction reads three operands in reverse stack order."
+  },
+  "mac:0x0008fe64": {
+    "status": "equal",
+    "evidence": "Mac 0x0008fe64: Compared full conversions and error paths, vector release, localized strings, object/animation debug names, original type preservation and two-value cleanup before Scr_Error. Decoded debug-string dispatch table 0x329d00."
+  },
+  "mac:0x0008fd0c": {
+    "status": "equal",
+    "evidence": "Mac 0x0008fd0c: Compared full conversions and error paths, vector release, localized strings, object/animation debug names, original type preservation and two-value cleanup before Scr_Error. Decoded debug-string dispatch table 0x329d00."
+  },
+  "mac:0x0009153e": {
+    "status": "equal",
+    "evidence": "Mac 0x0009153e: Compared complete integer/float/vector/object/string branches, NaN boolean behavior, error reference cleanup and error_index; vector construction reads three operands in reverse stack order."
+  },
+  "linux:script/scr_variable.cpp:2923:Scr_CastWeakerPair": {
+    "status": "equal",
+    "evidence": "Inlined in Mac Scr_EvalDivide 0x9013a-0x9018c/0x901ae-0x901c5 and other numeric operators: identical type pair passes, int/float coercion changes the weaker operand and mismatches call the error then continue. Native Scr_CastNumericPair preserves that flow."
+  },
+  "linux:script/scr_variable.cpp:2957:Scr_CastWeakerStringPair": {
+    "status": "equal",
+    "evidence": "Inlined across Mac Scr_EvalPlus 0x90213-0x90298/0x90359-0x903d1/0x904ea-0x905dd: full string/vector/float/int weaker-operand conversions and mismatch fallthrough match native Scr_EvalPlus plus Scr_CastPlusOperandToString."
+  },
+  "linux:script/scr_variable.cpp:903:Scr_ClearThread": {
+    "status": "equal",
+    "evidence": "Inlined in Mac Scr_StopThread 0x8f3bb-0x8f50a and Scr_KillThread 0x8f799-0x8f8ec: detach/free all children then release self. Native corresponding complete prefixes match before stop/kill-specific work."
+  },
+  "linux:script/scr_variable.cpp:2798:Scr_ClearVector": {
+    "status": "equal",
+    "evidence": "Inlined in Mac Scr_CastVector 0x915dd-0x91607: release three values from value+2 downward, then set first type undefined. Complete native error cleanup loop matches, with encoded vectors decoded before release."
+  },
+  "mac:0x00088586": {
+    "status": "equal",
+    "evidence": "Mac 0x00088586: Compared full status-mask updates, packed notify/wait fields and string-reference release order."
+  },
+  "linux:script/scr_variable.cpp:4352:Scr_CopyEntityNum": {
+    "status": "unchecked",
+    "evidence": "Inspected assigned Linux row for Scr_CopyEntityNum, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+  },
+  "mac:0x0008a454": {
+    "status": "equal",
+    "evidence": "Mac 0x0008a454: Read the complete 0x8a454-0x8b3e6 body: scans IDs 1..0xfffd, decodes five-byte archived entries, reverses code positions, computes local/endon/shared-array usage, groups sorted call stacks and prints all four entity classes. Native pointer-bearing debug records use sizeof rather than Mac 0x8c."
+  },
+  "mac:0x00088442": {
+    "status": "equal",
+    "evidence": "Mac 0x00088442: Compared complete no-op/constant-zero Mac body and native body."
+  },
+  "linux:script/scr_variable.cpp:287:Scr_DumpScriptVariablesDefault": {
+    "status": "unchecked",
+    "evidence": "Inspected assigned Linux row for Scr_DumpScriptVariablesDefault, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+  },
+  "mac:0x00090632": {
+    "status": "equal",
+    "evidence": "Mac 0x00090632: Compared integer-only type gates, mismatch cleanup dispatch and exact arithmetic-right/left shift or bitwise operation."
+  },
+  "mac:0x0008d05c": {
+    "status": "equal",
+    "evidence": "Mac 0x0008d05c: Read every string/vector/array branch, bounds/type errors, error_index writes, borrowed-index release, missing-key evaluation and parent reference balancing, including Scr_Error-return paths."
+  },
+  "mac:0x0008b654": {
+    "status": "equal",
+    "evidence": "Mac 0x0008b654: Compared all lookup/new-child branches, type tests, field sentinel 0xfffe, string-reference release and invalid-index/type errors; native helpers preserve original hash and sibling operations."
+  },
+  "mac:0x0008ee00": {
+    "status": "intentional",
+    "evidence": "Read complete exact-symbol Mac 0x8ee00 body. Entity COW clears its destination pointer at 0x8f1b7 and writes through +4 at 0x8f32e when a copy is needed. Native Scr_CopyArrayForWrite keeps fieldId==0 defined: returns the copy without the invalid write. Other lookup/type/read-only/error/refcount branches match."
+  },
+  "mac:0x00090d4c": {
+    "status": "equal",
+    "evidence": "Mac 0x00090d4c: Decoded all 16 jump-table entries at 0x329d70: opcodes 0x66..0x75 map to OR/XOR/AND/equality/inequality/comparisons/shifts/plus/minus/multiply/divide/modulo exactly. Read the complete inlined operator blocks and default no-op."
+  },
+  "mac:0x00091358": {
+    "status": "equal",
+    "evidence": "Mac 0x00091358: Compared complete integer/float/vector/object/string branches, NaN boolean behavior, error reference cleanup and error_index; vector construction reads three operands in reverse stack order."
+  },
+  "mac:0x0008e9e8": {
+    "status": "equal",
+    "evidence": "Mac 0x0008e9e8: Compared complete integer/float/vector/object/string branches, NaN boolean behavior, error reference cleanup and error_index; vector construction reads three operands in reverse stack order."
+  },
+  "mac:0x0009012c": {
+    "status": "equal",
+    "evidence": "Mac 0x0009012c: Compared numeric pair coercion and error-return continuation, signed integer operations, SSE single-precision operations, divide-by-zero state and ordered/inverted comparisons including unordered float cases."
+  },
+  "mac:0x0009084a": {
+    "status": "equal",
+    "evidence": "Mac 0x0009084a: Read every type case and reference release. Decoded table 0x329d40 (0..11), absolute-value mask 0x329d30 and epsilon 0x3263a0 = 9.999999974752427e-07f; array equality uses evaluate, vectors compare all components, inequality inverts equality."
+  },
+  "mac:0x0009065c": {
+    "status": "equal",
+    "evidence": "Mac 0x0009065c: Compared integer-only type gates, mismatch cleanup dispatch and exact arithmetic-right/left shift or bitwise operation."
+  },
+  "mac:0x0008fbac": {
+    "status": "equal",
+    "evidence": "Mac 0x0008fbac: Compared complete entity sentinel dispatch, old-value reference release before replacement, game array allocation, field-object type validation and all error paths."
+  },
+  "mac:0x00090b42": {
+    "status": "equal",
+    "evidence": "Mac 0x00090b42: Compared numeric pair coercion and error-return continuation, signed integer operations, SSE single-precision operations, divide-by-zero state and ordered/inverted comparisons including unordered float cases."
+  },
+  "mac:0x00090782": {
+    "status": "equal",
+    "evidence": "Mac 0x00090782: Compared numeric pair coercion and error-return continuation, signed integer operations, SSE single-precision operations, divide-by-zero state and ordered/inverted comparisons including unordered float cases."
+  },
+  "mac:0x00090a70": {
+    "status": "equal",
+    "evidence": "Mac 0x00090a70: Read every type case and reference release. Decoded table 0x329d40 (0..11), absolute-value mask 0x329d30 and epsilon 0x3263a0 = 9.999999974752427e-07f; array equality uses evaluate, vectors compare all components, inequality inverts equality."
+  },
+  "mac:0x00090a9a": {
+    "status": "equal",
+    "evidence": "Mac 0x00090a9a: Compared numeric pair coercion and error-return continuation, signed integer operations, SSE single-precision operations, divide-by-zero state and ordered/inverted comparisons including unordered float cases."
+  },
+  "mac:0x000906b0": {
+    "status": "equal",
+    "evidence": "Mac 0x000906b0: Compared numeric pair coercion and error-return continuation, signed integer operations, SSE single-precision operations, divide-by-zero state and ordered/inverted comparisons including unordered float cases."
+  },
+  "mac:0x00090bec": {
+    "status": "equal",
+    "evidence": "Mac 0x00090bec: Compared all numeric coercion/error paths, scalar subtraction and three SSE vector subtractions followed by allocation and reference release; native packed vector storage is decoded before access."
+  },
+  "mac:0x000900e2": {
+    "status": "equal",
+    "evidence": "Mac 0x000900e2: Compared numeric pair coercion and error-return continuation, signed integer operations, SSE single-precision operations, divide-by-zero state and ordered/inverted comparisons including unordered float cases."
+  },
+  "mac:0x000911e0": {
+    "status": "equal",
+    "evidence": "Mac 0x000911e0: Compared numeric pair coercion and error-return continuation, signed integer operations, SSE single-precision operations, divide-by-zero state and ordered/inverted comparisons including unordered float cases."
+  },
+  "mac:0x00090686": {
+    "status": "equal",
+    "evidence": "Mac 0x00090686: Compared integer-only type gates, mismatch cleanup dispatch and exact arithmetic-right/left shift or bitwise operation."
+  },
+  "mac:0x00090204": {
+    "status": "intentional",
+    "evidence": "Exact-symbol Mac 0x9042d compares lhsLen (EDI), not totalLen, with 0x2000. Native now preserves that acceptance rule and uses size_t combined length plus adequately sized automatic storage, avoiding the original fixed-buffer overrun. Interned strings obey MT allocation limit 0xffff. All numeric/string/vector branches compared; compiled and reviewed, extended concatenation not separately exercised."
+  },
+  "mac:0x0009060a": {
+    "status": "equal",
+    "evidence": "Mac 0x0009060a: Compared integer-only type gates, mismatch cleanup dispatch and exact arithmetic-right/left shift or bitwise operation."
+  },
+  "mac:0x000905e2": {
+    "status": "equal",
+    "evidence": "Mac 0x000905e2: Compared integer-only type gates, mismatch cleanup dispatch and exact arithmetic-right/left shift or bitwise operation."
+  },
+  "mac:0x000913f6": {
+    "status": "equal",
+    "evidence": "Mac 0x000913f6: Compared complete integer/float/vector/object/string branches, NaN boolean behavior, error reference cleanup and error_index; vector construction reads three operands in reverse stack order."
+  },
+  "mac:0x0008918c": {
+    "status": "equal",
+    "evidence": "Mac 0x0008918c: Compared type/value packing, conditional add-reference cases, missing-variable result and sentinel 0xfffe entity-field dispatch."
+  },
+  "mac:0x0008d53e": {
+    "status": "equal",
+    "evidence": "Mac 0x0008d53e: Compared class-field lookup, engine getter arguments, array type/reference tests, reference release, allocation and recursive CopyArray order; undefined payload is semantically unused."
+  },
+  "mac:0x0008d784": {
+    "status": "equal",
+    "evidence": "Mac 0x0008d784: Compared type/value packing, conditional add-reference cases, missing-variable result and sentinel 0xfffe entity-field dispatch."
+  },
+  "linux:script/scr_variable.cpp:2393:Scr_EvalVariableFieldInternal": {
+    "status": "equal",
+    "evidence": "Mac Scr_EvalVariableField 0x8d78d-0x8d7fc contains the complete 0xfffe sentinel dispatch or normal evaluated-variable add-reference path; native same public function matches the inlined Linux helper semantics."
+  },
+  "mac:0x0008879c": {
+    "status": "equal",
+    "evidence": "Mac 0x0008879c: Compared complete pointer validation, object type <=0x15, type-specific field-object error and zero result after Scr_Error returns."
+  },
+  "linux:script/scr_variable.cpp:1763:Scr_FindAllVariableField": {
+    "status": "unchecked",
+    "evidence": "Inspected assigned Linux row for Scr_FindAllVariableField, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity. A same-named native implementation exists in scr_debugger_eval.c outside this unit, but its primary-reference identity remains unresolved."
+  },
+  "linux:script/scr_variable.cpp:3899:Scr_FindArrayIndex": {
+    "status": "equal",
+    "evidence": "Inlined in Mac Scr_EvalArray 0x8d1fe-0x8d236/0x8d28d-0x8d345/0x8d3d3-0x8d4e2: read integer/string lookup, out-of-range/type errors, string release and compensating parent AddRef when Scr_Error returns; native array branch matches."
+  },
+  "mac:0x000888c4": {
+    "status": "equal",
+    "evidence": "Mac 0x000888c4: Compared packed field-buffer traversal, case-insensitive name comparison, 16-bit canonical index and signed 8-bit type loads."
+  },
+  "mac:0x0008d820": {
+    "status": "equal",
+    "evidence": "Mac 0x0008d820: Compared type/value packing, conditional add-reference cases, missing-variable result and sentinel 0xfffe entity-field dispatch."
+  },
+  "mac:0x0008da4e": {
+    "status": "equal",
+    "evidence": "Mac 0x0008da4e: Compared complete lookup/queue traversal, entity state updates, notification cancellation, MakeVariableExternal and value-release/free-list ordering; field clear writes undefined to value + 1."
+  },
+  "mac:0x0008e2d2": {
+    "status": "equal",
+    "evidence": "Mac 0x0008e2d2: Compared complete lookup/queue traversal, entity state updates, notification cancellation, MakeVariableExternal and value-release/free-list ordering; field clear writes undefined to value + 1."
+  },
+  "mac:0x0008e1a4": {
+    "status": "equal",
+    "evidence": "Mac 0x0008e1a4: Compared recursive array filtering (pointer and types 7..11), restart-after-removal traversal, complete versus primitive game cleanup and game-ID reset."
+  },
+  "mac:0x0008e76a": {
+    "status": "fixed",
+    "evidence": "Mac 0x8e99e clears the complete status word when the final temporary reference is gone; corrected shared native FreeVariable. Read the full ID/type scan and cleanup; compiled and reviewed."
+  },
+  "mac:0x0008d052": {
+    "status": "equal",
+    "evidence": "Mac 0x0008d052: Compared complete wrapper/control flow, reference-release arguments and order, class-map zeroing, +0x10000 object-key bias and dead-thread type 0x17 as applicable."
+  },
+  "linux:script/scr_variable.cpp:1841:Scr_GetArrayIndexValue": {
+    "status": "equal",
+    "evidence": "Array-name decoding inlined in Mac Internal3 0x894ee-0x8957f and MakeVariableExternal 0x8cb7d-0x8cce6 uses <=0xffff string, <=0x1fffd object offset, otherwise integer offset -0x800000. Native Scr_AddRefToArrayNameValue/Scr_RemoveRefToArrayNameValue implement the complete value/type decoding. Separate debugger function with this spelling has no established Mac identity and is not vouched for here."
+  },
+  "linux:script/scr_variable.cpp:4792:Scr_GetChecksum": {
+    "status": "unchecked",
+    "evidence": "Inspected assigned Linux row for Scr_GetChecksum, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+  },
+  "mac:0x00088926": {
+    "status": "equal",
+    "evidence": "Mac 0x00088926: Compared packed entity number/class extraction and the four-entry character-ID search; decoded all five class-map records from the binary."
+  },
+  "linux:script/scr_variable.cpp:4408:Scr_GetEndonUsage": {
+    "status": "equal",
+    "evidence": "Inlined Mac Scr_DumpScriptThreads 0x8a6a8-0x8a85c and 0x8ad94-0x8af51: look up pauseArray object key, return nested object usage or zero. Native Scr_GetThreadEndonUsage matches both paths."
+  },
+  "linux:script/scr_variable.cpp:2776:Scr_GetEntClassId": {
+    "status": "unchecked",
+    "evidence": "Inspected assigned Linux row for Scr_GetEntClassId, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+  },
+  "linux:script/scr_variable.cpp:2787:Scr_GetEntNum": {
+    "status": "unchecked",
+    "evidence": "Inspected assigned Linux row for Scr_GetEntNum, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+  },
+  "mac:0x0008b3e6": {
+    "status": "equal",
+    "evidence": "Mac 0x0008b3e6: Compared existing-entry lookup, entity allocation, class/status 0x75 packing, zero refcount, 16-bit entnum and parent pointer assignment."
+  },
+  "mac:0x0008889e": {
+    "status": "equal",
+    "evidence": "Mac 0x0008889e: Compared packed entity number/class extraction and the four-entry character-ID search; decoded all five class-map records from the binary."
+  },
+  "linux:script/scr_variable.cpp:4374:Scr_GetEntryUsage": {
+    "status": "equal",
+    "evidence": "Inlined Mac Scr_DumpScriptThreads 0x8aad6-0x8ac35: pointer-to-array values contribute object usage/(float(refCount)+1.0f), all other types contribute zero. Native Scr_GetArchivedThreadUsage has the same complete case."
+  },
+  "linux:script/scr_variable.cpp:4398:Scr_GetEntryUsage": {
+    "status": "equal",
+    "evidence": "Inlined Mac Scr_GetObjectUsage 0x89bfa-0x89c19/0x89ee9-0x89f00: each child contributes 1.0f plus any shared-array usage quotient. Native Scr_GetVariableUsage implements the full entry-pointer overload, including SSE operation order."
+  },
+  "mac:0x000884e6": {
+    "status": "equal",
+    "evidence": "Mac 0x000884e6: Compared complete no-op/constant-zero Mac body and native body."
+  },
+  "mac:0x00089ba2": {
+    "status": "equal",
+    "evidence": "Mac 0x00089ba2: Read the complete 0x89ba2-0x8a454 recursive/inlined body: starts at 1.0f, visits each non-object child and adds 1.0f + nested-array usage / (float(refCount) + 1.0f), in SSE order."
+  },
+  "mac:0x00088a06": {
+    "status": "equal",
+    "evidence": "Mac 0x00088a06: Compared complete hash lookup and collision traversal, status 0x40 gate, key encoding, sentinel return and final value-ID/value extraction."
+  },
+  "linux:script/scr_variable.cpp:1467:Scr_GetRefCountToObject": {
+    "status": "equal",
+    "evidence": "Inlined 16-bit refcount getter at Mac Scr_GetObjectUsage 0x89ee9 and subsequent nested-array blocks reads object+4 without sign extension. Native VG_U16 reads the same field before float conversion/reference tests."
+  },
+  "mac:0x00088706": {
+    "status": "equal",
+    "evidence": "Mac 0x00088706: Compared field offsets, unsigned load widths, shifts, masks and return values; native encoded storage preserves the Mac 16-byte entry layout."
+  },
+  "mac:0x00088544": {
+    "status": "equal",
+    "evidence": "Mac 0x00088544: Compared field offsets, unsigned load widths, shifts, masks and return values; native encoded storage preserves the Mac 16-byte entry layout."
+  },
+  "linux:script/scr_variable.cpp:4457:Scr_GetThreadUsage": {
+    "status": "equal",
+    "evidence": "Inlined Mac Scr_DumpScriptThreads 0x8a559-0x8a8ee/0x8aad6-0x8afba: read complete reverse five-byte archived-stack traversal, parent-local transitions, shared-array division and endon accumulation. Native Scr_GetArchivedThreadUsage preserves those operations and order."
+  },
+  "mac:0x000885a4": {
+    "status": "equal",
+    "evidence": "Mac 0x000885a4: Compared field offsets, unsigned load widths, shifts, masks and return values; native encoded storage preserves the Mac 16-byte entry layout."
+  },
+  "mac:0x0008b912": {
+    "status": "equal",
+    "evidence": "Mac 0x0008b912: Compared all lookup/new-child branches, type tests, field sentinel 0xfffe, string-reference release and invalid-index/type errors; native helpers preserve original hash and sibling operations."
+  },
+  "linux:script/scr_variable.cpp:4823:Scr_InitStringSet": {
+    "status": "unchecked",
+    "evidence": "Inspected assigned Linux row for Scr_InitStringSet, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+  },
+  "linux:script/scr_variable.cpp:2593:Scr_IsThreadAlive": {
+    "status": "unchecked",
+    "evidence": "Inspected assigned Linux row for Scr_IsThreadAlive, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+  },
+  "mac:0x0008da1c": {
+    "status": "equal",
+    "evidence": "Mac 0x0008da1c: Compared complete wrapper/control flow, reference-release arguments and order, class-map zeroing, +0x10000 object-key bias and dead-thread type 0x17 as applicable."
+  },
+  "mac:0x0008f782": {
+    "status": "equal",
+    "evidence": "Mac 0x0008f782: Read complete child detachment/freeing, self release, level rebinding or pause/notify-list cancellation, endon thread state updates and parent dead-thread type 0x17."
+  },
+  "mac:0x0008e0c2": {
+    "status": "equal",
+    "evidence": "Mac 0x0008e0c2: Compared recursive array filtering (pointer and types 7..11), restart-after-removal traversal, complete versus primitive game cleanup and game-ID reset."
+  },
+  "mac:0x0008d4ee": {
+    "status": "equal",
+    "evidence": "Mac 0x0008d4ee: Compared complete wrapper/control flow, reference-release arguments and order, class-map zeroing, +0x10000 object-key bias and dead-thread type 0x17 as applicable."
+  },
+  "linux:script/scr_variable.cpp:965:Scr_RemoveThreadEmptyNotifyName": {
+    "status": "equal",
+    "evidence": "Inlined Mac Scr_RemoveThreadNotifyName 0x88970-0x88979 changes only low five type bits to 0x0f after notify-name release. Native identical status expression implements that helper step; no separate helper symbol."
+  },
+  "mac:0x0008894e": {
+    "status": "equal",
+    "evidence": "Mac 0x0008894e: Compared full status-mask updates, packed notify/wait fields and string-reference release order."
+  },
+  "mac:0x0008c274": {
+    "status": "equal",
+    "evidence": "Mac 0x0008c274: Compared complete inlined free-list allocation paths and result initialization: external 0x60, object 0x73, array 0x76, thread 0x6f, child thread 0x72 plus parent-name/self fields; terminal exhaustion error retained. Opt-in native trace instrumentation is excluded from gameplay equivalence."
+  },
+  "mac:0x0008851c": {
+    "status": "equal",
+    "evidence": "Mac 0x0008851c: Compared full status-mask updates, packed notify/wait fields and string-reference release order."
+  },
+  "mac:0x00088558": {
+    "status": "equal",
+    "evidence": "Mac 0x00088558: Compared full status-mask updates, packed notify/wait fields and string-reference release order."
+  },
+  "linux:script/scr_variable.cpp:4867:Scr_ShutdownStringSet": {
+    "status": "unchecked",
+    "evidence": "Inspected assigned Linux row for Scr_ShutdownStringSet, searched native sources and Mac symbol inventory. No defensible Mac implementation/caller identity was established; Linux alone cannot establish fidelity."
+  },
+  "mac:0x0008f3a4": {
+    "status": "equal",
+    "evidence": "Mac 0x0008f3a4: Read complete child detachment/freeing, self release, level rebinding or pause/notify-list cancellation, endon thread state updates and parent dead-thread type 0x17."
+  },
+  "mac:0x0008ff6e": {
+    "status": "equal",
+    "evidence": "Mac 0x0008ff6e: Compared full conversions and error paths, vector release, localized strings, object/animation debug names, original type preservation and two-value cleanup before Scr_Error. Decoded debug-string dispatch table 0x329d00."
+  },
+  "linux:script/scr_variable.cpp:4254:SetEmptyArray": {
+    "status": "equal",
+    "evidence": "Inlined Mac Scr_AllocGameVariable 0x8ec40-0x8ed02/0x8ed40-0x8edfb allocates array 0x76 then assigns pointer type/value while releasing the old value. Native tempValue plus Scr_AllocArray/SetVariableValue sequence matches the complete operation."
+  },
+  "mac:0x0008877a": {
+    "status": "equal",
+    "evidence": "Mac 0x0008877a: Compared status OR and four-byte value assignment in their original order."
+  },
+  "mac:0x000897a2": {
+    "status": "equal",
+    "evidence": "Mac 0x000897a2: Compared class-map lookup, canonical/interned key encodings, 16-bit field offsets, entity setter arguments, local-field fallback and new-child value stores."
+  },
+  "mac:0x0008eaca": {
+    "status": "equal",
+    "evidence": "Mac 0x0008eaca: Compared complete entity sentinel dispatch, old-value reference release before replacement, game array allocation, field-object type validation and all error paths."
+  },
+  "mac:0x0009176e": {
+    "status": "equal",
+    "evidence": "Mac 0x0009176e: Compared all old-value reference-release cases and the complete sibling unlink/free-list return or status-mask/value replacement sequence."
+  },
+  "mac:0x00088390": {
+    "status": "equal",
+    "evidence": "Mac 0x00088390: Compared complete position-count and lexicographic position ordering, then count difference. Native code positions are encoded before 32-bit subtraction; native ThreadDebugInfo offsets follow pointer width."
+  },
+  "mac:0x00088448": {
+    "status": "fixed",
+    "evidence": "Mac 0x88448-0x884be initializes free-list and hash/status fields without clearing nextSibling; native cleared those words. Removed that extra native store; compiled and reviewed."
+  },
+  "mac:0x0008e65a": {
+    "status": "equal",
+    "evidence": "Mac 0x0008e65a: Compared recursive array filtering (pointer and types 7..11), restart-after-removal traversal, complete versus primitive game cleanup and game-ID reset."
   }
 }
