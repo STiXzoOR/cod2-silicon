@@ -1,5 +1,8 @@
 #include "common_types.h"
 #include "imports.h"
+#if defined(COD2_X64)
+#include <stdlib.h>
+#endif
 
 extern void Com_Printf(const char *fmt, ...);
 extern int MT_SearchTreeAny(int nodeNum);
@@ -110,18 +113,33 @@ static void *Hunk_AllocXAnimTreePrecache(int size)
 }
 
 #if defined(_M_X64) || defined(__x86_64__) || defined(__aarch64__)
+#if defined(COD2_X64)
+/* The four-byte chain stores program-buffer offsets or tagged indices into a
+   growable table of external pointers. Scr_EndLoadAnimTrees releases the
+   variable objects before resetting this table; patched animations remain in
+   scrAnimPub.xanim_lookup and their caller-owned scr_anim_t fields. */
+#else
 /* x64: anim refs may live in the program buffer (script %anim, encodable as a 4-byte offset)
    OR in arbitrary C memory (Scr_FindAnim hands in scr_anim_t fields inside static bg_state
    structs at module addresses like 0x7ff6...). The 4-byte chain slot cannot hold a full 8-byte
    C pointer, so out-of-buffer positions are kept in a side table of full pointers, referenced
    by a bit-31-tagged index. (Not reset between levels; 16384 slots covers many map loads.) */
+#endif
 #define ANIM_REF_TAG 0x80000000u
+#if defined(COD2_X64)
+static const char **g_animRefTable;
+static unsigned int g_animRefCapacity;
+#else
 static const char *g_animRefTable[16384];
+#endif
 static unsigned int g_animRefCount = 1;   /* index 0 reserved = end-of-chain */
 #if defined(COD2_X64)
 void Scr_ResetAnimRefs(void)
 {
     /* The animtree/name objects own every encoded link and are released first. */
+    free(g_animRefTable);
+    g_animRefTable = NULL;
+    g_animRefCapacity = 0;
     g_animRefCount = 1;
 }
 #endif
@@ -135,12 +153,47 @@ static unsigned int AnimRef_Enc(const char *pos)
 #endif
     if (base && off < 0x4000000u)
         return (unsigned int)off;             /* inside the program buffer -> offset */
+#if defined(COD2_X64)
+    /* Mac stores every external link directly. Grow the LP64 pointer table
+       rather than silently discarding a link after 16383 external refs. */
+    if (g_animRefCount >= ANIM_REF_TAG) {
+        Com_Error(1, "exceeded animation reference limit");
+        return 0;
+    }
+    if (g_animRefCount >= g_animRefCapacity) {
+        unsigned int capacity;
+        const char **table;
+
+        if (g_animRefCapacity >= ANIM_REF_TAG / 2u)
+            capacity = ANIM_REF_TAG;
+        else
+            capacity = g_animRefCapacity ? g_animRefCapacity * 2u : 1024u;
+
+        if ((size_t)capacity > SIZE_MAX / sizeof(*table)) {
+            Com_Error(1, "out of memory for animation references");
+            return 0;
+        }
+        table = realloc(g_animRefTable, (size_t)capacity * sizeof(*table));
+        if (!table) {
+            Com_Error(1, "out of memory for animation references");
+            return 0;
+        }
+        g_animRefTable = table;
+        g_animRefCapacity = capacity;
+    }
+    {
+        unsigned int i = g_animRefCount++;
+        g_animRefTable[i] = pos;
+        return ANIM_REF_TAG | i;
+    }
+#else
     if (g_animRefCount < 16384) {
         unsigned int i = g_animRefCount++;
         g_animRefTable[i] = pos;
         return ANIM_REF_TAG | i;
     }
     return 0;
+#endif
 }
 static const char *AnimRef_Dec(unsigned int enc)
 {

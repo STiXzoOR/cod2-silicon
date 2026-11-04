@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 5860,
-      "intentional": 1480,
-      "equal": 1764,
-      "fixed": 353
+      "unchecked": 5824,
+      "intentional": 1487,
+      "equal": 1788,
+      "fixed": 358
     },
     "scopes": {
       "unassigned": 777,
@@ -153243,8 +153243,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac inlines this helper throughout AnimTreeParseInternal (for example 0x9c4c6-0x9c4eb): compared last-token capture, parse-session end, start-relative source offset and CompileError(offset,\"%s\",msg)."
       },
       {
         "id": "mac:0x0009c30a",
@@ -153274,8 +153274,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x9c30a-0x9c928: manually compared complete parser body: ignored-name deletion, duplicate/alias/property/token failures, complete/loopsync recursion, metadata array slot 0, empty-child removal, EOF/close returns and void/void_loop insertion. Decoded propertyNames at 0x343c00; names and flag bits 1,2,8 match."
       },
       {
         "id": "mac:0x0009bd36",
@@ -153305,8 +153305,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x9bd36-0x9bdca: compared missing-name return, duplicate error and string argument order, complete link traversal, index at byte 0/tree at byte 2, then head clear. Native decodes each four-byte tagged/offset link before patching because LP64 cannot place a raw pointer in scr_anim_t."
       },
       {
         "id": "linux:script/scr_animtree.cpp:42:GetAnimTreeParseProperties",
@@ -153324,8 +153324,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac inline range 0x9c484-0x9c503 with branches 0x9c70e-0x9c72c,0x9c7ed and 0x9c825: compared on-line token loop, three-entry case-insensitive property table, flag OR values 1/2/8 and unknown-property error. Binary property strings match loopsync/nonloopsync/complete."
       },
       {
         "id": "mac:0x0009bc9a",
@@ -153355,8 +153355,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x9bc9a-0x9bcb6: compared Hunk_AllocAlignInternal(size,4) and returned pointer."
       },
       {
         "id": "linux:script/scr_animtree.cpp:309:Scr_AnimTreeParse",
@@ -153374,8 +153374,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac inlines this Linux helper in Scr_LoadAnimTreeAtIndex at 0x9ca35-0x9ca78 and 0x9ccbf-0x9cce9. Native Scr_LoadAnimTreeInternal implements the same session name, start/pos state, parser arguments (include=1,loop=0,complete=0), unexpected-close error and parse-session end."
       },
       {
         "id": "linux:script/scr_animtree.cpp:537:Scr_CheckAnimsDefined",
@@ -153393,8 +153393,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac inline 0x9cb51-0x9cb66 and 0x9cbe9-0x9cc87: compared every sibling, nonzero head test, diagnostic strings, opcode-memory CompileError2 versus external-reference Com_Error(1,\"\\x15%s\",msg). Native decodes the LP64 head before pointer classification and CompileError2."
       },
       {
         "id": "mac:0x0009bdda",
@@ -153424,8 +153424,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x9bdda-0x9bfae: compared string-name child count, optional array-slot-zero unsigned-short flags, ordered checksum*31 updates, XAnimBlend arguments, parent/child index progression, full recursion and primitive checksum/XAnimCreate paths."
       },
       {
         "id": "mac:0x0009c27e",
@@ -153455,8 +153455,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x9c27e-0x9c30a: full missing-using-tree error and existing/new name-chain paths match. Its native inline encoder could silently return zero after 16383 external references; the COD2_X64 table now grows, preserves its old allocation on failure, and checks tag/size limits. Mac stores each raw link without that cap at 0x9c2c8-0x9c2cc. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:script/scr_animtree.cpp:93:Scr_EmitAnimationInternal",
@@ -153474,8 +153474,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac inline bodies at 0x9c2ad-0x9c303 and 0x9c215-0x9c24b/0x9c260-0x9c26c: compared new-name CODEPOS type 7/zero terminator and existing-name head chaining. Fixed the LP64 encoder's silent 16383-external-reference cap with checked table growth; direct Mac pointer linkage has no such table limit. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0009c1dc",
@@ -153505,8 +153505,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x9c1dc-0x9c27e: compared lowercase string flags/user, tree/user lookup, complete inline chain paths and string-ref release in both branches. The shared LP64 encoder no longer silently loses external scr_anim_t heads after 16383 references (Mac stores them at 0x9c231-0x9c24b and 0x9c268-0x9c26c). Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0009c170",
@@ -153536,8 +153536,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x9c170-0x9c1dc canonical filename/ref release, absent-tree/absent-XANIM returns and stored-value retrieval match. Native decodes the external XAnim pointer from the same LP64 tagged table used by Scr_LoadAnimTreeAtIndex; Mac returns the raw CODEPOS pointer."
       },
       {
         "id": "mac:0x0009bcb6",
@@ -153567,8 +153567,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x9bcb6-0x9bd36: compared empty result, complete sibling iteration, string-name bound <0x10000, pointer recursion versus primitive count and one extra blend node only when the accumulated size is nonzero."
       },
       {
         "id": "mac:0x0009bdca",
@@ -153598,8 +153598,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x9bdca-0x9bdda reads scrAnimPub.xanim_lookup[1][index], matching the COD2_X64 typed pointer lookup with native pointer width."
       },
       {
         "id": "linux:script/scr_animtree.cpp:413:Scr_GetAnimsIndex",
@@ -153618,7 +153618,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Mac nm exposes only a zero-address absolute .eh symbol; no executable text symbol or attributable inline caller was found. Native has no body or callers. The Linux reverse pointer search was read for identity only and cannot establish Mac equality."
       },
       {
         "id": "mac:0x0009c928",
@@ -153648,8 +153648,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x9c928-0x9ccf0: compared full load/cache guards, source parsing/restoration, root lookup, precache/build/check ordering, variable-object releases, type-7 XAnim store, sync setup and selected-user lookup publication. Its LP64 XAnim pointer store at the equivalent of 0x9cb97-0x9cbba used the same silently capped encoder; checked dynamic storage now retains every representable external reference. Compiled and reviewed, not exercised."
       },
       {
         "id": "linux:script/scr_animtree.cpp:663:Scr_LoadAnimTreeInternal",
@@ -153667,8 +153667,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac inline 0x9c9c7-0x9ca99,0x9ccbf-0x9cce9: compared animtrees/%s.atr source request, old source/filename restoration, parser session and arguments, unexpected-close error, temp-memory clear and nonempty-tree result. AddSourceBuffer does not alter scriptfilename, so saving that field before its call is equivalent."
       },
       {
         "id": "mac:0x0009bfae",
@@ -153698,8 +153698,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x9bfae-0x9c020: compared complete sibling traversal, string-name filter <0x10000, nested pointer recursion and primitive XAnimPrecache with the size/alignment-4 allocator."
       },
       {
         "id": "mac:0x0009c124",
@@ -153729,8 +153729,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x9c124-0x9c170: compared identifier validation/error source position, server user 1, animTreeIndex output pointer and animTreeNames publication."
       },
       {
         "id": "mac:0x0009c020",
@@ -153760,8 +153760,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x9c020-0x9c124 lookup/create, existing selected-user search, GetObjectA/GetArray responsibilities and filename-ref release match for valid indices 1..127. Existing native error/clamp at 128 is retained: Mac writes at 0x9c088 beyond using_xanim_lookup[2][128]; user0 index128 aliases user1[0], user1 index128 aliases bAnimCheck (+0x208 Mac,+0x210 native). Later xanim publication would similarly alias user1[0] or xanim_num[0]. Parent-directed defined bounds behavior, not reference-memory-corruption emulation."
       },
       {
         "id": "mac:0x0009bc8c",
@@ -153791,8 +153791,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x9bc8c-0x9bc9a stores the supplied int in scrAnimGlob.bAnimCheck, matching native."
       }
     ],
     "script/scr_compiler": [
@@ -158010,8 +158010,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xaf40a-0xaf499: compared the initial string lookup, canonical table fast path, SL_GetString_ flags 0xf/user 0, transfer to user 2, and unsigned-short canonical counter increment/store."
       },
       {
         "id": "mac:0x000aedf0",
@@ -158041,8 +158041,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xaedf0-0xaee40: compared transfer to user 2, canonical table lookup, cached return, and 16-bit increment/wrap/store of canonicalStrCount."
       },
       {
         "id": "mac:0x000aee40",
@@ -158072,8 +158072,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xaee40-0xaee8e: compared loading flag, selected-user count/index-zero reset, Scr_AllocArray ownership, animtree_node clear and developer_statement clear; native wrapper inlines the same body."
       },
       {
         "id": "mac:0x000af33a",
@@ -158103,8 +158103,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xaf33a-0xaf40a: compared all four array allocations and fields, opcode lookup initialization, program-buffer/length/end resets, canonical allocation/mark/count, error/value/function-table resets, inline server animtree initialization and TempMemoryReset tail call."
       },
       {
         "id": "linux:script/scr_main.cpp:230:Scr_BeginLoadScriptsRemote",
@@ -158123,7 +158123,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "No Mac text symbol or attributable caller body was found for this Linux-only row, and native has no implementation or callers. The prefix of Scr_BeginLoadScripts at 0xaf342-0xaf356 is insufficient to establish the separate remote entry identity."
       },
       {
         "id": "mac:0x000af1ba",
@@ -158153,8 +158153,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xaf1ba-0xaf21e cleanup order, optional animtree_node release, user-2 string shutdown, endScriptBuffer mark and loading reset match. Native additionally resets/frees the LP64 external animation-reference table after the owning variable objects are released; Mac stores direct pointers and needs no such table."
       },
       {
         "id": "linux:script/scr_main.cpp:133:Scr_EndLoadEvaluate",
@@ -158172,8 +158172,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac inlines this Linux helper into Scr_EndLoadScripts at 0xaf0c7-0xaf0de: native clears canonicalStrings then Hunk_ClearToMark(scrVarPub.mark), before user-2 string shutdown. No separate function is required."
       },
       {
         "id": "mac:0x000af0ba",
@@ -158203,8 +158203,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xaf0ba-0xaf168: compared canonical cleanup and mark release, user-2 string shutdown, script_loading clear, then ClearObject/RemoveRefToObject/zero for loadedscripts, scripts, builtinFunc and builtinMeth in order."
       },
       {
         "id": "mac:0x000af21e",
@@ -158234,8 +158234,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xaf21e-0xaf28e: compared conditional script/animtree shutdown, unconditional SL_ShutdownSystem(1) and opcode lookup shutdown, then programBuffer/programLen/endScriptBuffer/checksum clears. Existing COD2_X64 behavior ignores sys as the Mac body does."
       },
       {
         "id": "mac:0x000af28e",
@@ -158265,8 +158265,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xaf28e-0xaf33a lookup, missing-name/type rejection and unsigned program-length bound match. Mac subtracts programBuffer from a raw code pointer at 0xaf32f; native variable CODEPOS storage already contains the 32-bit offset, so it correctly omits that subtraction."
       },
       {
         "id": "linux:script/scr_main.cpp:121:Scr_InitEvaluate",
@@ -158284,8 +158284,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac inlines this Linux helper into Scr_BeginLoadScripts at 0xaf394-0xaf3ab: compared Hunk_SetMark, 0x20000-byte canonical table allocation and unsigned-short canonicalStrCount reset in the native caller."
       },
       {
         "id": "mac:0x000aed78",
@@ -158315,8 +158315,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xaed78-0xaedf0: compared every byte loop, signed-char non-ASCII fallback to maskrune(0x500), ASCII rune-table 0x500 mask, underscore exception, and empty-string acceptance."
       },
       {
         "id": "mac:0x000aed58",
@@ -158346,8 +158346,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0xaed58-0xaed78 uses unsigned pointer-distance < unsigned programLen. Native retains the same lower/upper-bound behavior with a full uintptr_t distance so an unrelated 64-bit address cannot alias the program buffer through 32-bit truncation."
       },
       {
         "id": "linux:script/scr_main.cpp:23:Scr_IsInScriptMemory",
@@ -158366,7 +158366,7 @@
           }
         ],
         "status": "unchecked",
-        "evidence": ""
+        "evidence": "Mac nm exposes only a zero-address absolute .eh symbol for this name, no executable body. Native contains neither the function nor callers. No specific Mac inline range was established for the Linux-only endScriptBuffer predicate; equality is not claimed."
       },
       {
         "id": "mac:0x000aef34",
@@ -158396,8 +158396,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xaf066 calls GetObjectA for GetVariable(scripts,fileId); native called GetArray, creating an array parent (0x16) rather than an object parent (0x13). Restored GetObjectA under COD2_X64. Compared full cache-hit/miss, source/parser state, compile arguments and restore paths; retained existing native NULL-filename rejection as an invalid-input boundary. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x000af0b0",
@@ -158427,8 +158427,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xaf0b0-0xaf0ba is a tail call to Hunk_ConvertTempToPermLowInternal, matching the native wrapper."
       },
       {
         "id": "mac:0x000af168",
@@ -158458,8 +158458,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xaf168-0xaf1ba: compared positive-count guard and inclusive index 1 through the current selected-user xanim_num, forwarding Alloc and user unchanged."
       },
       {
         "id": "mac:0x000aee8e",
@@ -158489,8 +158489,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0xaee8e-0xaef34: compared max_size<=0, first-character/newline handling, per-byte input advancement, exact-size stop, NUL fallback to parseBuf and final NUL rewind, including returned byte counts."
       }
     ],
     "script/scr_memorytree": [
