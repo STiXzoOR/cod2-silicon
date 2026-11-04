@@ -147,7 +147,11 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
     if (compassFadeOutAlpha == 0.0f)
         return;
 
+#if defined(COD2_X64)
+    snapshot_t *snapPtr = cg->nextSnap;
+#else
     snapshot_t *snapPtr = cg->snap;
+#endif
     int ourClientNum = snapPtr->ps.clientNum;
     clientInfo_t *ourCI = &cg->bgs.clientinfo[ourClientNum];
     int infoValid = ourCI->infoValid;
@@ -186,11 +190,19 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
     if (team != 0) {
 #endif
 
+#if defined(COD2_X64)
+        snapshot_t *snapPtr2 = cg->nextSnap;
+#else
         snapshot_t *snapPtr2 = cg->snap;
+#endif
         int numClients = snapPtr2->numEntities;
 
         for (i = 0; i < numClients; i++) {
+#if defined(COD2_X64)
+            snapshot_t *snap = cg->nextSnap;
+#else
             snapshot_t *snap = cg->snap;
+#endif
 
             int clientIdx = snap->entities[i].number;
 
@@ -231,7 +243,11 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
             }
         }
 
+#if defined(COD2_X64)
+        snapPtr2 = cg->nextSnap;
+#else
         snapPtr2 = cg->snap;
+#endif
 
         int compassPacked = snapPtr2->ps.iCompassFriendInfo;
         if (compassPacked == 0)
@@ -242,7 +258,11 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
         compassactor_t *packedActor = &cg->compassActors[packedClientNum];
         packedActor->iLastUpdate = cg->time;
 
+#if defined(COD2_X64)
+        snapPtr2 = cg->nextSnap;
+#else
         snapPtr2 = cg->snap;
+#endif
         compassPacked = snapPtr2->ps.iCompassFriendInfo;
         int packedX = ((compassPacked & 0x7fc0) >> 4) - 0x3fc;
         int packedY = ((compassPacked & 0xff8000) >> 13) - 0x3fc;
@@ -269,12 +289,20 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
             packedActor->vLastPos[1] = playerY + deltaY;
         }
 
+#if defined(COD2_X64)
+        snapPtr2 = cg->nextSnap;
+#else
         snapPtr2 = cg->snap;
+#endif
         signed char packedYaw = (signed char)(snapPtr2->ps.iCompassFriendInfo >> 24);
         cg->compassActors[packedClientNum].fLastYaw =
             (float)packedYaw * 1.40625f;
 
+#if defined(COD2_X64)
+        snapPtr2 = cg->nextSnap;
+#else
         snapPtr2 = cg->snap;
+#endif
         if (((snapPtr2->ps.eFlags >> 16) & 0x80)) {
 
             int cgTime2 = cg->time;
@@ -313,7 +341,11 @@ draw_friendlies:
         if (actor->iLastUpdate < cgTime - 0x320)
             continue;
 
+#if defined(COD2_X64)
+        snapshot_t *snap2 = cg->nextSnap;
+#else
         snapshot_t *snap2 = cg->snap;
+#endif
         if (i == snap2->ps.clientNum)
             continue;
 

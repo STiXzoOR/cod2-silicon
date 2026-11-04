@@ -545,7 +545,11 @@ unsigned int CG_DrawCrosshairNames(void)
     end[0] = start[0] + cg->refdef.viewaxis[0][0] * 8192.0f;
     end[1] = start[1] + cg->refdef.viewaxis[0][1] * 8192.0f;
     end[2] = start[2] + cg->refdef.viewaxis[0][2] * 8192.0f;
+#if defined(COD2_X64)
+    CG_TraceCapsule(&trace, start, traceMins, traceMaxs, end, cg->nextSnap->ps.clientNum, 0x2000001);
+#else
     CG_TraceCapsule(&trace, start, traceMins, traceMaxs, end, cg->snap->ps.clientNum, 0x2000001);
+#endif
 
     if (trace.entityNum <= 63) {
         cg->crosshairClientNum = trace.entityNum;
@@ -562,7 +566,11 @@ unsigned int CG_DrawCrosshairNames(void)
         return 0;
     }
 
+#if defined(COD2_X64)
+    localClientInfo = &cg->bgs.clientinfo[cg->nextSnap->ps.clientNum];
+#else
     localClientInfo = &cg->bgs.clientinfo[cg->snap->ps.clientNum];
+#endif
     if (!localClientInfo->infoValid || !localClientInfo->team) {
         return 0;
     }
