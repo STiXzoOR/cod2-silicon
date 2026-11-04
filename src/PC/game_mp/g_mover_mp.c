@@ -173,7 +173,11 @@ static void trigger_use_shared(gentity_t *ent)
             }
         }
 
+#if defined(COD2_X64)
+        Com_Error(1, "\x15" "Too many different hintstring key values on trigger_use entities. Max allowed is %i", 32);
+#else
         Com_Error(1, "Too many different hintstring key values on trigger_use ent", 32);
+#endif
     }
 }
 

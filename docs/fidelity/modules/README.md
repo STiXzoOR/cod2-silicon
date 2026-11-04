@@ -2,7 +2,7 @@
 
 `functions.json` contains a function list for every indexed source module.
 `modules.csv` gives its four status counts. The active module is
-`game/g_mover_mp`; complete that module before moving to another.
+`game/g_scr_main_mp`; complete that module before moving to another.
 `game/g_active_mp`, `game/g_client_mp` and `game/g_combat_mp` are fully reconciled;
 their reports preserve the outstanding
 whole-project replay differences.
@@ -57,11 +57,11 @@ reliable whole-project completion date.
 
 ## Current workload and estimate
 
-After ten module reconciliations, the ledger has 7,881 unchecked entries:
-7,104 assigned engine entries and 777 unassigned entries. Another 1,360 entries
+After eleven module reconciliations, the ledger has 7,869 unchecked entries:
+7,092 assigned engine entries and 777 unassigned entries. Another 1,360 entries
 are intentional bundled-library exclusions. There are also seven intentional Linux-only helper omissions.
 Two more intentional differences cover native dedicated debug rendering and CoD2x level-exit behavior.
-There are 145 equal functions and 62 fixed functions. All 24 entries in `game/g_active_mp` and all 11 in
+There are 155 equal functions and 64 fixed functions. All 24 entries in `game/g_active_mp` and all 11 in
 `game/g_client_mp`, plus all 13 in `game/g_combat_mp`, are reconciled, with
 integrated results in their reports.
 
@@ -137,3 +137,6 @@ regressions fail the baseline and pass both builds; both 2,000-frame replays mat
 fresh baseline trace, but that recording exercises none of the corrected impact paths.
 The batch took 0.55 elapsed hours (21.8 entries/hour), including the local CI run and
 replays. The planning estimate stays provisional.
+
+All 12 `game/g_mover_mp` entries are reconciled: ten equal and two fixed. The only new
+source change is one fatal diagnostic, so no replay was rerun.

@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 7881,
+      "unchecked": 7869,
       "intentional": 1369,
-      "equal": 145,
-      "fixed": 62
+      "equal": 155,
+      "fixed": 64
     },
     "scopes": {
       "unassigned": 777,
@@ -90119,8 +90119,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined in Mac G_TryPushingEntity at 0x1ba689-0x1ba6d3: AngleVectors of amove, then right negated by sign mask. No correction required."
       },
       {
         "id": "linux:game/g_mover_mp.cpp:221:G_MoverPush",
@@ -90138,8 +90138,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined in Mac G_MoverTeam at 0x1baecf-0x1bb2be. Radius and absolute bounds, unordered angle tests, signed move expansion, unlink, CM_AreaEntities limit 0x400 and mask 0x2000180, pusher move and link, eType and physicsObject filter, ground rider shortcut, bounds rejection, position test, unlink all, item relink, TR_SINE crush with 99999 and MOD 9, obstacle store and final relink match. No correction required."
       },
       {
         "id": "mac:0x001badb2",
@@ -90169,8 +90169,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 2,418 Mac bytes 0x1badb2-0x1bb723 compared. Trajectory evaluation, reverse rollback with delta_angles restore, level time shift, re-evaluation, relink, blocked and reached handlers at offsets 8 and 4 and both trDuration tests match. Native trace output is opt-in diagnostics only. No correction required."
       },
       {
         "id": "linux:game/g_mover_mp.cpp:103:G_RotatePoint",
@@ -90188,8 +90188,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined in Mac G_TryPushingEntity at 0x1ba72f-0x1ba7ae with the same sum order. No correction required."
       },
       {
         "id": "mac:0x001bb724",
@@ -90219,8 +90219,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 76 Mac bytes 0x1bb724-0x1bb76f compared. tagInfo link path, either stationary test, G_MoverTeam and the think call match. No correction required."
       },
       {
         "id": "linux:game/g_mover_mp.cpp:32:G_TestEntityPosition",
@@ -90238,8 +90238,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Linux helper is inlined at each Mac position test, for example 0x1ba7dd-0x1ba832 and 0x1bb4b0-0x1bb529. The required fixes landed in 2026-10-24-F1-mover: the corpse test at contents byte 3 bit 2 (0x04000000) applies only with a nonzero clipmask, and a nonzero clipmask is retained with 0x811 as the zero default. Missile owner exclusion and the combined allsolid and startsolid test match. Covered by the push regressions."
       },
       {
         "id": "linux:game/g_mover_mp.cpp:86:G_TransposeMatrix",
@@ -90257,8 +90257,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux helper is inlined in Mac G_TryPushingEntity at 0x1ba6d8-0x1ba701, storing rows of forward, right and up components. No correction required."
       },
       {
         "id": "mac:0x001ba63c",
@@ -90288,8 +90288,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 1,909 Mac bytes 0x1ba63c-0x1badb0 compared, with half width in double, exact 0.5, 4.0 and 0.0 limits, the 4.0 float step, Z 0 running once, then -Z and +Z over -X/+X and -Y/+Y, success bookkeeping, 0x20-stride pushed increment, yaw constant 182.04444885253906 and the old-position fallback. A new control pins the search order through nine outcomes. No correction required in this body."
       },
       {
         "id": "mac:0x001ba624",
@@ -90319,8 +90319,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 12 Mac bytes 0x1ba624-0x1ba62f compared: register argument and tail jump to trigger_use_shared. No correction required."
       },
       {
         "id": "mac:0x001ba444",
@@ -90350,8 +90350,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "All 479 Mac bytes 0x1ba444-0x1ba622 compared. Brush model, link, field stores, HINT_INHERIT from 2026-10-24-F1-mover, hint table walk through index 5, 0xff default, slot reuse and allocation at 0x4fe for 32 entries match. Fixed the overflow diagnostic: native used truncated text, Mac uses the leading 0x15 string at 0x2e13f8 with the limit argument. Mac has no guard for the NULL table entry, so an unknown cursorhint faults on both; this original behavior is retained. Regression hint_strings fails baseline and passes both builds."
       },
       {
         "id": "mac:0x001ba630",
@@ -90381,8 +90381,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 12 Mac bytes 0x1ba630-0x1ba63b compared: register argument and tail jump to trigger_use_shared. No correction required."
       },
       {
         "id": "mac:0x001ba43e",
@@ -90412,8 +90412,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "All 5 Mac bytes 0x1ba43e-0x1ba442 compared: an empty function. No correction required."
       }
     ],
     "game/g_scr_main_mp": [
