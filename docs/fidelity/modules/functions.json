@@ -8,8 +8,8 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 7144,
-      "intentional": 1393,
+      "unchecked": 7143,
+      "intentional": 1394,
       "equal": 793,
       "fixed": 127
     },
@@ -214090,8 +214090,8 @@
           }
         ],
         "pairing": "unique name across source modules; identity and semantics require review",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Intentional difference from Mac, chosen by the project owner. Mac 0xaed28 truncates with cvttss2si. Windows CoD2MP_s.exe 0x467f80 uses fistp and Linux uses rint, so both round to nearest. Native rounds to nearest so movement and client prediction match Windows, where most players are."
       },
       {
         "id": "linux:unix/unix_shared.cpp:80:fastftol",

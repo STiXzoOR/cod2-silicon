@@ -57,8 +57,8 @@ reliable whole-project completion date.
 
 ## Current workload and estimate
 
-All of `game/` is now reconciled. After thirty-four module reconciliations the ledger has 7,144 unchecked entries:
-6,367 assigned engine entries and 777 unassigned entries. Another 1,360 entries
+All of `game/` is now reconciled. After thirty-four module reconciliations the ledger has 7,143 unchecked entries:
+6,366 assigned engine entries and 777 unassigned entries. Another 1,360 entries
 are intentional bundled-library exclusions. There are also twenty-four intentional Linux-only helper omissions.
 Nine more intentional differences cover native dedicated debug rendering, CoD2x level-exit behavior,
 five script error or load paths and two further native choices recorded in their reports.
@@ -168,3 +168,7 @@ reconciled: 81 equal and six fixed. Both 2,000-frame replays match the trace fro
 fixed. Both 2,000-frame replays match the trace from the previous commit, so that recording reaches none of these corrections. Against the `original` recording, the counts stay at 3,781 `origin` and 1,257 `velocity` differences, first at frame 102. That recording was made by the Linux dedicated server in the oracle container, not by the Mac binary, and its first differences are platform differences rather than defects. A model of frame 102 using x87 80-bit arithmetic reproduces the recording bit for bit on both clients, and a model using the SSE steps in the Mac code reproduces the native trace bit for bit. At frame 116, Linux `Sys_SnapVector` uses `rint` where Mac 0xaed28 truncates. Native follows Mac, and the velocity differs by exactly 1.0 on those axes.
 
 Both 2,000-frame replays match the trace from the previous commit, so that recording reaches none of these corrections. Against the Linux `original` recording, no logic field differs in any of the 3,806 player records: `pm_type`, `pm_flags`, `pm_time`, `weapon`, `weaponstate` and `health` are all identical, and so are the view angles. As a temporary experiment, not committed, `Sys_SnapVector` was switched to the Linux `rint`. The largest origin difference fell from 14.5 to 0.118 units and the largest velocity difference from 153 to 2, with 3,738 of the 3,806 records within 0.001 units. That shows nearly all the drift comes from that one platform difference. Native keeps the Mac truncation.
+
+`Sys_SnapVector` deliberately differs from Mac. Mac truncates velocity, while Windows and Linux round to nearest. Native
+follows Windows, by the project owner's decision, because most players are there. This is the one place so far where
+Mac is not the authority: when Mac behaviour looks platform-specific and players would notice, check the Windows binary.

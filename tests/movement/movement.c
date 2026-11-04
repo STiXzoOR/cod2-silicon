@@ -195,7 +195,7 @@ static void test_snap(void)
 {
     const float values[] = {-2.9f, -2.5f, -2.1f, -1.5f, -0.9f, -0.5f, -0.1f, 0.0f,
                             0.1f, 0.5f, 0.9f, 1.5f, 2.1f, 2.5f, 2.9f};
-    const int expected[] = {-2, -2, -2, -1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2};
+    const int expected[] = {-3, -2, -2, -2, -1, 0, 0, 0, 0, 0, 1, 2, 2, 2, 3};
     for (int i = 0; i < (int)(sizeof(values) / sizeof(values[0])); ++i) {
         vec3_t velocity = {values[i], -values[i], values[i]};
         Sys_SnapVector(velocity);
@@ -203,7 +203,7 @@ static void test_snap(void)
         close_float(velocity[1], (float)-expected[i]);
         close_float(velocity[2], (float)expected[i]);
     }
-    puts("PASS production velocity snapping truncates toward zero");
+    puts("PASS production velocity snapping rounds to nearest, as Windows does");
 }
 
 static void test_walk(void)
