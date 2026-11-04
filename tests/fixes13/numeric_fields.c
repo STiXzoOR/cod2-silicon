@@ -1,5 +1,8 @@
 #include "common_types.h"
 #include <assert.h>
+#if defined(COD2_X64)
+#include <math.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 static dvar_t language, variable;
@@ -25,7 +28,12 @@ void UI_DrawTextWithCursor(const char *text,int max,FontHandle handle,float x,fl
 #include "numeric_fields_source.h"
 int main(void)
 {
+#if defined(COD2_X64)
+ itemDef_t item={0};menuDef_t menu={0};displayContextDef_t dc={0};int failures=0;
+ item.parent=&menu;
+#else
  itemDef_t item={0};displayContextDef_t dc={0};int failures=0;
+#endif
  item.type=17;item.dvar="number";item.textscale=1;edit.maxPaintChars=100;variable.type=1;variable.current.value=12.375f;
  for(int locale=0;locale<15;++locale) {
   language.current.integer=locale;draw_calls=cursor_calls=variant_calls=0;
@@ -37,7 +45,11 @@ int main(void)
  found=1;variable.type=5;Item_TextField_Paint(&dc,&item);if(*drawn) ++failures;
  variable.type=1;item.type=4;variant_calls=0;Item_TextField_Paint(&dc,&item);
  assert(!strcmp(drawn,"raw-value")&&variant_calls==1);
+#if defined(COD2_X64)
+ item.type=17;language.current.integer=1;g_editingField=1;item.window.dynamicFlags[0]=6;item.cursorPos[0]=2;
+#else
  item.type=17;language.current.integer=1;g_editingField=1;item.window.staticFlags=6;item.cursorPos[0]=2;
+#endif
  cursor_calls=0;Item_TextField_Paint(&dc,&item);if(strcmp(drawn,"12,38")||cursor_calls!=1) ++failures;
  edit.paintOffset=3;Item_TextField_Paint(&dc,&item);if(strcmp(drawn,"38")) ++failures;
  printf("numeric field localization: %d failures\n",failures);return failures!=0;
