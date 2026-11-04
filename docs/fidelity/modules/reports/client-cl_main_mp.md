@@ -31,3 +31,9 @@ The changed client object compiles in stock and CoD2x arm64 Release configuratio
 `CL_SyncGpu` and `CL_RunOncePerClientFrame` remain unchecked. Mac 0x14a726 obtains an integer cycle budget, polls a GPU fence with elapsed-tick limits and sleeps between polls. Native `refexport_t.SyncGpu` and `RB_AdaptiveGpuSyncWait` return void, and the renderer's `rdtsc_lo` is a zero-returning stub. Restoring that behavior requires the renderer/header/timer owner; no return-value cast or invented timing contract was introduced. The rest of the frame-timing caller was compared.
 
 The complete 96-entry private ledger is `client-main.ledger.json` in the reconciliation unit directory. Private evidence and the renderer dependency manifest are under `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-client-main.noindex/`.
+
+## Existing fixture preflight
+
+Before integration, the existing timeout and map-loading fixtures failed to compile because the restored authorization/disconnect paths referenced services their isolated harnesses did not supply. The fixtures now provide those adapters without changing their cases or assertions. Stock and CoD2x ASan/UBSan runs pass. The existing stock scheduling suite also passes all13 groups.
+
+The match-summary lifecycle fixture had a separate missing `CL_ClearStaticDownload` adapter. Running it against the original03ebea4 lifecycle functions reproduced the same link failure. That adapter was added to the existing fixture; stock and CoD2x lifecycle cases now pass. These checks cover their established scenarios, not all restored authorization or detached-download branches. No new tests were added, and production source is unchanged by these fixture repairs.
