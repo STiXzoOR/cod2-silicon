@@ -142,7 +142,7 @@ game/g_main_mp,34,20,12,2,0
 game/g_misc_mp,28,21,6,1,0
 game/g_missile_mp,12,6,6,0,0
 game/g_mover_mp,12,10,2,0,0
-game/g_scr_main_mp,242,0,0,0,242
+game/g_scr_main_mp,242,225,11,6,0
 game/g_scr_mover_mp,29,0,0,0,29
 game/g_spawn_mp,39,0,0,0,39
 game/g_svcmds_mp,9,0,0,0,9
