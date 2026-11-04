@@ -203,7 +203,11 @@ void CG_ImpactMark(MaterialHandle markMaterial, const vec_t *origin, const vec_t
             }
 
             if (oldest->prevMark == NULL) {
+#if defined(COD2_X64)
+                Com_Error(ERR_DROP, "\x15" "CG_FreeLocalEntity: not active");
+#else
                 Com_Error(ERR_DROP, "CG_FreeLocalEntity: not active");
+#endif
 
             }
 

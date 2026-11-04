@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 4381,
-      "intentional": 1590,
-      "equal": 2956,
-      "fixed": 530
+      "unchecked": 4340,
+      "intentional": 1591,
+      "equal": 2986,
+      "fixed": 540
     },
     "scopes": {
       "unassigned": 777,
@@ -66682,8 +66682,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1e7ded allocates one shared 65536-byte low-temp list buffer; native used directory stack buffers. Restored that lifetime, empty table name at 0x1e7f4e, exact missing-entry diagnostic, and missing-entry return before Hunk_ClearTempMemory at 0x1e7f9f. Compared all 11x23 entries, registration branches and native LP64 pointer storage; compiled and reviewed."
       },
       {
         "id": "mac:0x001e7a9e",
@@ -66704,8 +66704,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1e7a9e complete body compared: file cap/sort/open/read, CSV comments/types/surfaces/length errors and temporary arenas. Mac 0x1e7c9d returns after a parse error; native continued later files. Restored directory exit and caller-owned list buffer; all eleven type strings match the Mac table at 0x36e7e0; compiled and reviewed."
       },
       {
         "id": "mac:0x001e7a84",
@@ -66726,8 +66726,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1e7a84 exact-symbol body dereferences both file-name pointer slots and tail-calls stricmp in the same order. Native comparator and qsort width use full LP64 pointers."
       }
     ],
     "cgame/cg_ents_mp": [
@@ -66750,8 +66750,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x16366e: compared renderer submission, null result, cullIn 1/2 reset and delayed bounds/skinning calls; native GfxModel union retains the existing renderer interface."
       },
       {
         "id": "mac:0x00164fcc",
@@ -66772,8 +66772,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x164fcc: compared complete time masks, 360 scaling, SSE division/multiplication order, three axis updates, viewlocked exclusion and next-snapshot entity iteration."
       },
       {
         "id": "mac:0x00163622",
@@ -66794,8 +66794,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x163622 exact-symbol entry: size is forwarded to MT_Alloc with allocation type 5; compared native allocator callback use in CG_PreProcess_GetDObj."
       },
       {
         "id": "mac:0x0016365a",
@@ -66816,8 +66816,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x16365a exact-symbol entry: null centity guard and cullIn=2 store match."
       },
       {
         "id": "mac:0x00164154",
@@ -66838,8 +66838,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x164154: compared skeleton cache fast return, hierarchy bits, animation/controllers/skel sequence, local client number and valid player/MG42 controller dispatch."
       },
       {
         "id": "mac:0x001639d2",
@@ -66860,8 +66860,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1639d2: compared client DObj lookup, local-client-zero skeleton cache, hierarchy/animation sequence, signed handle<=1023 controller gate and final skeleton calculation."
       },
       {
         "id": "mac:0x0016403c",
@@ -66882,8 +66882,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x16403c: compared four-word part-bit copy, completed hierarchy, cache return, animation/controller/skeleton sequence and player validity gate."
       },
       {
         "id": "mac:0x0016425a",
@@ -66904,8 +66904,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x16425a: compared negative bone rejection, bone calculation, null matrix rejection and 32-byte DObjAnimMat indexing."
       },
       {
         "id": "mac:0x001638ea",
@@ -66926,8 +66926,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1638ea: compared bone lookup/cache calculation, hierarchy bits, animation and skeleton order, null matrix return, view-model axis/origin and transformed translation."
       },
       {
         "id": "mac:0x001642ae",
@@ -66948,8 +66948,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1642ae: compared the inlined local-tag lookup/calculation, null returns, entity angle axis/origin and transformed bone translation."
       },
       {
         "id": "mac:0x001634ea",
@@ -66970,8 +66970,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1634ea: compared integer frametime conversion, multiplication by 0.001f and DObjUpdateClientInfo arguments."
       },
       {
         "id": "mac:0x00163dd0",
@@ -66992,8 +66992,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x163de5 tests nextState.solid for the brush sentinel, not constantLight. Mac 0x163e43-0x163e65 passes low/middle/high color bytes as red/green/blue; native reversed red/blue. Corrected both while preserving midpoint sound origin and native light/audio providers; compiled and reviewed."
       },
       {
         "id": "mac:0x00164354",
@@ -67014,8 +67014,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x164354: compared invisible/model gates, complete zeroed GfxEntity setup, origin/axis, fixed-lighting-origin capture/reset, render flags and inlined scene/cull dispatch."
       },
       {
         "id": "mac:0x001630e4",
@@ -67036,8 +67036,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1630e4 exact-symbol body: compared weapon animation slots 1/3, MG42/root strings, three-entry blend, precache/create sequence and existing native hunk callbacks."
       },
       {
         "id": "mac:0x001636d2",
@@ -67058,8 +67058,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1636d2: compared both snapshot-time trajectory evaluations, per-component interpolation operation order, LerpAngle calls, player movement/lean interpolation and pitch/roll reset."
       },
       {
         "id": "mac:0x00164550",
@@ -67080,8 +67080,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x164550: compared item bounds error, visibility/registration/model gates, DObj lookup, entity setup and inlined cull/scene calls; native typed item storage preserves LP64 strides."
       },
       {
         "id": "mac:0x001646da",
@@ -67102,8 +67102,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1648b9 loads scr_const+0xa2 (tag_origin), while native requested tag_flash for the projectile trail bolt. Corrected the tag; compared complete visibility/time/weapon gates, sound/model/trail/light/entity and cull paths; compiled and reviewed."
       },
       {
         "id": "mac:0x00163f12",
@@ -67124,8 +67124,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x163f12: compared lookup/match/free decisions, null-model return, MG42 animation tree creation and type-5 allocator callback, centity tree store, model descriptor and native DObj registration calls."
       },
       {
         "id": "mac:0x0016341c",
@@ -67146,8 +67146,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x16341c: compared unsigned client<64 gate, notify-list/type iteration, case-insensitive left/right strings and leftHandGun/dobjDirty writes using native notify/client strides."
       },
       {
         "id": "mac:0x00164bd4",
@@ -67168,8 +67168,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x164bd4: decoded ten-entry table at 0x33b2f0 and compared every dispatch, including complete inlined looped-FX timing/cull/orientation and turret entity construction; established native oriented-FX/renderer providers retained."
       },
       {
         "id": "mac:0x00164972",
@@ -67190,8 +67190,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x164a14 tests nextState.solid==0xffffff to select a brush model; native tested constantLight. Corrected the discriminator and compared complete hidden/model, fixed-lighting and scene/cull branches; compiled and reviewed."
       },
       {
         "id": "mac:0x001633be",
@@ -67212,8 +67212,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1633be: compared snapshot-time subtraction, zero interval case, SSE float division and lower-only interpolation clamp."
       },
       {
         "id": "mac:0x0016351c",
@@ -67234,8 +67234,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x16351c: compared both eventParm/configstring/alias gates, current-local-client sound gate, lean interpolation operation order and blended sound arguments; established native audio backend retained."
       },
       {
         "id": "mac:0x0016363e",
@@ -67256,8 +67256,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x16363e exact-symbol entry: null and zero-cull checks match the cullIn=1 store."
       },
       {
         "id": "mac:0x001631ac",
@@ -67278,8 +67278,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x16335d-0x16336c passes animIndex then rootIndex=0 to XAnimSetCompleteGoalWeightKnobAll; native reversed them. Corrected arguments and native XAnimTree pointer type; checked actual callee contract and full aim/flash/controller/animation selection body; compiled and reviewed."
       },
       {
         "id": "mac:0x00163b00",
@@ -67300,8 +67300,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_ents_mp.c (cgame_mp/cg_ents_mp); whole CG_AdjustPositionForMover was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to cgame/cg_ents_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_ents_mp.c:433; assigned universal header has no body. Mac symbol __Z25CG_AdjustPositionForMoverPKfiiiPfS1_ at 0x00163b00. Whole caller not audited by universal-math."
+        "status": "equal",
+        "evidence": "Mac 0x163b00 full routed caller: compared mover range, nextState type-6 gate, all four current-state trajectory calls, (new-old)+input SSE order, optional angle delta and copy-through cases."
       },
       {
         "id": "mac:0x00163c40",
@@ -67322,8 +67322,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_ents_mp.c (cgame_mp/cg_ents_mp); whole CG_CalcEntityLerpPositions was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to cgame/cg_ents_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_ents_mp.c:488; assigned universal header has no body. Mac symbol __Z26CG_CalcEntityLerpPositionsP9centity_s at 0x00163c40. Whole caller not audited by universal-math."
+        "status": "equal",
+        "evidence": "Mac 0x163c40 full routed caller: compared interpolate/linear-stop gates, complete trajectory evaluation, player and corpse orientation stores, predicted-player exclusion and mover arguments. Decoded corpse displacement 0x15590 at 0x163da3; it resolves to cgs corpseinfo[ent-64] with the original 1208-byte stride."
       }
     ],
     "cgame/cg_event_mp": [
@@ -67346,8 +67346,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1e614a: compared event-only entities, zero/reset sequence, 256 wrap adjustment, four-event cap, lerp evaluation, ring event/parm dispatch and restoration of the low-byte prior parm."
       },
       {
         "id": "mac:0x001e4650",
@@ -67368,8 +67368,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Mac 0x1e4650 complete body compared, including decoded 60-entry table 0x33c900 and obituary table 0x33c9f0, all sound fallbacks, camera arithmetic, weapon/impact/FX cases and obituary/name/team paths. Existing opt-in Apple arm64 combat-event tracing is retained through COD2_NATIVE_TRACE_ENABLED; gameplay dispatch and established native renderer/audio/oriented-FX boundaries match."
       }
     ],
     "cgame/cg_hudelem_mp": [
@@ -67616,8 +67616,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1e00b4: complete reverse traversal and endTime/trTime expiration match. Restored the 0x15 prefix to the inlined free-list error at 0x1e0123 via CG_FreeLocalEntity; native typed pool/sentinel contracts checked; compiled and reviewed."
       },
       {
         "id": "mac:0x001dfef8",
@@ -67638,8 +67638,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1dfef8: compared trajectory evaluation, normalized delta, ordered dot product and endpoint construction. Mac MINSS at 0x1dff98 selects tracerLength for equal or unordered operands; native greater-than clamp retained the first operand. Corrected selection; compiled and reviewed."
       },
       {
         "id": "mac:0x001e0010",
@@ -67660,8 +67660,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x1e0010: complete exhaustion eviction, zeroing and active/free linking match. Restored 0x15 error prefix at 0x1e009d via CG_FreeLocalEntity; native 128-entry typed pool and resized object memset checked; compiled and reviewed."
       },
       {
         "id": "mac:0x001dfe94",
@@ -67682,8 +67682,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1dfe94 exact-symbol body: compared 128-object clear, sentinel links, initial free head and 127 forward links. Actual generated data relocations bind pool/sentinel; regenerated bss supplies 128 native 208-byte objects, rather than relying on unused raw data.c."
       },
       {
         "id": "mac:0x001dfffc",
@@ -67704,8 +67704,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1dfffc: compared initializer=1/priority=0xffff dispatch to the local initializer at 0x1dffde. Native helper matches; C static zero initialization supplies the same initially-null free slot without C++ constructor registration."
       },
       {
         "id": "mac:0x001dffde",
@@ -67726,8 +67726,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x1dffde-0x1dfffc checked by address-bounded llvm-objdump because the mangled local name repeats. Priority 0xffff/initialize 1 guards and first per-client free-pointer copy match; actual generated array is one pointer initialized to zero."
       }
     ],
     "cgame/cg_main_mp": [
@@ -68390,8 +68390,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x17bf74: compared mark-dvar/empty-list gates, complete next traversal, existing native CullSphere provider and camera-plane count, drawn-frame update and material/lightmap/vertex submission."
       },
       {
         "id": "mac:0x0017c022",
@@ -68412,8 +68412,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x17c022 complete body compared: mark gates, axes/corners, fragment caps, four color conversions/byte order, oldest-frame eviction, links and fragment copy. Restored 0x15 diagnostic prefix at 0x17c44b. Existing native 1024-vertex storage, contiguous axis array and typed LP64 mark pool preserve allocator/renderer contracts; compiled and reviewed."
       },
       {
         "id": "mac:0x0017beec",
@@ -68434,8 +68434,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Mac 0x17beec exact-symbol body: compared dvar-sized clear, sentinel links and limit-1 free links, including zero-limit behavior. cg_local.h binds cg to cgArray[0], so its explicit native sentinel is the same; generated bss owns 1024 correctly sized native MarkPoly objects."
       }
     ],
     "cgame/cg_newDraw_mp": [
