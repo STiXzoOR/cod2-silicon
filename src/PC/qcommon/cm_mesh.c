@@ -747,7 +747,13 @@ static void CM_MESH_REGPARM3_ABI CM_TraceThroughAabbTree_r(const traceWork_t *tw
         int partIdx = aabbTree->u.partitionIndex;
         short unsigned int *partCheck = &tw->threadInfo.checkcount.partitions[partIdx];
 
+#if defined(COD2_X64)
+        /* Mac compares the zero-extended check with the sign-extended counter, so a
+         * partition is retested while bit 15 of the counter is set. */
+        if ((int)*partCheck == (int)(short)tw->threadInfo.checkcount.global)
+#else
         if (*partCheck == (short unsigned int)tw->threadInfo.checkcount.global)
+#endif
             return;
         *partCheck = (short unsigned int)tw->threadInfo.checkcount.global;
 
@@ -1086,7 +1092,11 @@ static void CM_MESH_REGPARM3_ABI CM_PositionTestInAabbTree_r(const traceWork_t *
         int partIdx = aabbTree->u.partitionIndex;
         short unsigned int *partCheck = &tw->threadInfo.checkcount.partitions[partIdx];
 
+#if defined(COD2_X64)
+        if ((int)*partCheck == (int)(short)tw->threadInfo.checkcount.global)
+#else
         if (*partCheck == (short unsigned int)tw->threadInfo.checkcount.global)
+#endif
             return;
         *partCheck = (short unsigned int)tw->threadInfo.checkcount.global;
 
@@ -1133,7 +1143,11 @@ short int CM_MeshTestInLeaf(const traceWork_t *tw, cLeaf_t *leaf, trace_t *trace
             int partIdx = tree->u.partitionIndex;
             short unsigned int *partCheck = &tw->threadInfo.checkcount.partitions[partIdx];
 
+#if defined(COD2_X64)
+            if ((int)*partCheck == (int)(short)tw->threadInfo.checkcount.global)
+#else
             if (*partCheck == (short unsigned int)tw->threadInfo.checkcount.global)
+#endif
                 goto check_allsolid;
             *partCheck = (short unsigned int)tw->threadInfo.checkcount.global;
 

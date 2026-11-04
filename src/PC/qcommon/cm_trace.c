@@ -793,19 +793,31 @@ static void CM_TempCapsuleGeometry(const cmodel_t *model, vec3_t center, float *
 static void CM_TestTempCapsulePosition(const traceWork_t *tw, const cmodel_t *model, trace_t *trace)
 {
     vec3_t center;
-    float radius, offsetZ, x, y, z;
+    float radius, offsetZ, radiusSq, flatSq, top, bottom, startTop, startBottom, gap;
 
     if (!(CM_BoxBrush()->contents & tw->contents))
         return;
     CM_TempCapsuleGeometry(model, center, &radius, &offsetZ);
-    radius += tw->radius;
-    offsetZ += tw->offsetZ;
-    x = tw->extents.start[0] - center[0];
-    y = tw->extents.start[1] - center[1];
-    z = CM_AbsFloat(tw->extents.start[2] - center[2]) - offsetZ;
-    if (z < 0.0f)
-        z = 0.0f;
-    if (x * x + y * y + z * z < radius * radius) {
+    radiusSq = (radius + tw->radius) * (radius + tw->radius);
+    flatSq = (center[0] - tw->extents.start[0]) * (center[0] - tw->extents.start[0]) +
+             (center[1] - tw->extents.start[1]) * (center[1] - tw->extents.start[1]);
+    top = center[2] + offsetZ;
+    bottom = center[2] - offsetZ;
+    startTop = tw->extents.start[2] + tw->offsetZ;
+    startBottom = tw->extents.start[2] - tw->offsetZ;
+    /* Mac 0x64cd6..0x64e21 tests the four end sphere pairs, then the shared cylinder. */
+    if (radiusSq > (top - startTop) * (top - startTop) + flatSq ||
+        radiusSq > (top - startBottom) * (top - startBottom) + flatSq ||
+        radiusSq > (bottom - startTop) * (bottom - startTop) + flatSq ||
+        radiusSq > (bottom - startBottom) * (bottom - startBottom) + flatSq) {
+        trace->startsolid = 1;
+        trace->allsolid = 1;
+        trace->fraction = 0.0f;
+    }
+    gap = offsetZ + tw->size[2] - tw->radius;
+    if (gap < CM_AbsFloat(tw->extents.start[2] - center[2]))
+        return;
+    if (radiusSq > flatSq) {
         trace->startsolid = 1;
         trace->allsolid = 1;
         trace->fraction = 0.0f;
@@ -914,7 +926,7 @@ static void CM_TraceTempCapsule(const traceWork_t *tw, const cmodel_t *model, tr
                 root = (-projection - sqrtf(discriminant)) / lengthSq;
                 epsilon = length * 0.125f / projection;
                 fraction = root + epsilon;
-                if (fraction < trace->fraction && CM_AbsFloat(tw->extents.start[2] + root * tw->delta[2] - center[2]) <= totalOffset) {
+                if (fraction < trace->fraction && CM_AbsFloat(tw->extents.start[2] + (fraction - epsilon) * tw->delta[2] - center[2]) <= totalOffset) {
                     trace->fraction = fraction < 0.0f ? 0.0f : fraction;
                     CM_CopyVec3(normal, trace->normal);
                     trace->contents = CM_BoxBrush()->contents;
