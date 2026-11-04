@@ -92,14 +92,14 @@ botlib/l_precomp,77,0,0,0,77
 botlib/l_script,37,0,0,0,37
 cgame/cg_animtree_mp,6,6,0,0,0
 cgame/cg_compassfriendlies_mp,3,0,0,0,3
-cgame/cg_consolecmds_mp,13,0,0,0,13
+cgame/cg_consolecmds_mp,13,11,1,1,0
 cgame/cg_draw_mp,27,0,0,0,27
-cgame/cg_drawtools_mp,13,0,0,0,13
+cgame/cg_drawtools_mp,13,11,1,1,0
 cgame/cg_effects_load_obj,3,0,0,0,3
 cgame/cg_ents_mp,27,0,0,0,27
 cgame/cg_event_mp,2,0,0,0,2
 cgame/cg_hudelem_mp,8,0,0,0,8
-cgame/cg_info_mp,2,0,0,0,2
+cgame/cg_info_mp,2,1,1,0,0
 cgame/cg_localents_mp,6,0,0,0,6
 cgame/cg_main_mp,29,0,0,0,29
 cgame/cg_marks_mp,3,0,0,0,3
@@ -107,7 +107,7 @@ cgame/cg_newDraw_mp,24,0,0,0,24
 cgame/cg_players_mp,6,4,2,0,0
 cgame/cg_playerstate_mp,3,2,0,1,0
 cgame/cg_predict_mp,9,5,3,1,0
-cgame/cg_scoreboard_mp,10,0,0,0,10
+cgame/cg_scoreboard_mp,10,5,4,1,0
 cgame/cg_servercmds_mp,16,0,0,0,16
 cgame/cg_shellshock,6,0,0,0,6
 cgame/cg_snapshot_mp,4,0,0,0,4

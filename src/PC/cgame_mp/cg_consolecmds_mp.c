@@ -54,6 +54,29 @@ qboolean CG_ConsoleCommand(void);
 qboolean CG_IsConsoleCommandName(const char *cmd);
 void CG_InitConsoleCommands(void);
 
+#if defined(COD2_X64)
+static const consoleCommand_t commandsList[] = {
+    { "viewpos", CG_Viewpos_f },
+    { "+scores", CG_ScoresDown_f },
+    { "-scores", CG_ScoresUp_f },
+    { "sizeup", CG_SizeUp_f },
+    { "sizedown", CG_SizeDown_f },
+    { "weapnext", CG_NextWeapon_f },
+    { "weapprev", CG_PrevWeapon_f },
+    { "weaponslot", CG_WeaponSlot_f },
+    { "fxSetTestPosition", CG_FxSetTestPosition },
+    { "fxTest", CG_FxTest },
+    { "fxRestart", CG_FxRestart },
+    { "cg_shellshock", CG_ShellShock_f },
+    { "cg_shellshock_load", CG_ShellShock_Load_f },
+    { "cg_shellshock_save", CG_ShellShock_Save_f },
+    { "mp_QuickMessage", CG_QuickMessage_f },
+    { "VoiceChat", CG_VoiceChat_f },
+    { "VoiceTeamChat", CG_TeamVoiceChat_f },
+    { "mr", NULL },
+    { NULL, NULL }
+};
+#else
 static const consoleCommand_t commandsList[] = {
     { "tcmd", CG_TargetCommand_f },
     { "sizeup", CG_SizeUp_f },
@@ -87,6 +110,7 @@ static const consoleCommand_t commandsList[] = {
 #endif
     { NULL, NULL }
 };
+#endif
 
 void CG_TargetCommand_f(void)
 {
@@ -367,7 +391,9 @@ void CG_InitConsoleCommands(void)
     CL_AddCgameCommand("stats");
     CL_AddCgameCommand("say");
     CL_AddCgameCommand("say_team");
+#if !defined(COD2_X64)
     CL_AddCgameCommand("tell");
+#endif
     CL_AddCgameCommand("team");
     CL_AddCgameCommand("follow");
     CL_AddCgameCommand("callvote");

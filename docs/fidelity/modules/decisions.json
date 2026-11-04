@@ -16078,5 +16078,157 @@
   "mac:0x001de480": {
     "status": "fixed",
     "evidence": "Compared Mac 0x1de480-0x1de5b8 by hand with exact-symbol entry disassembly. Native direct min/max comparisons selected the interpolated endpoint on ties/unordered values; Mac subtraction masks select start. Native now preserves subtraction-then-less-than-zero predicates for all six bounds after start+(end-start)*fraction. Compiled and reviewed; not exercised."
+  },
+  "mac:0x001d3106": {
+    "status": "intentional",
+    "evidence": "Read complete Mac 0x1d3106 dispatch and decoded all 18 names/handlers at 0x36e740. Native retains the established current-snapshot allowance from 09b492a for local-server ticks without nextSnap, and pointer-size table strides. The native command table was reconciled with Mac; unsupported tcmd/tell_target entries are absent."
+  },
+  "mac:0x001d3180": {
+    "status": "fixed",
+    "evidence": "Mac 0x1d3180 walks the 18-entry table at 0x36e740 then registers 23 additional commands. Restored table order and removed initial-reconstruction tcmd/tell_target entries plus extra tell completion. No native/CoD2x consumers use the first two names; server/game tell registration remains. All table names/handlers and completion strings checked; compiled and reviewed, not exercised."
+  },
+  "mac:0x001d2fcc": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1d2fcc: absent-nextSnap return, pm_flags 0x800000 gate and UIMENU_WM_QUICKMESSAGE popup agree."
+  },
+  "mac:0x001d2dca": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1d2dca: strict scoresRequestTime+2000 comparison, reliable score request, scoreboard-dependent numScores/scoresTop reset and showScores paths agree."
+  },
+  "mac:0x001d2d9c": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1d2d9c: displayed-scoreboard gate, showScores clear and current-time fade timestamp agree."
+  },
+  "mac:0x001d2f34": {
+    "status": "equal",
+    "evidence": "Read complete Mac 0x1d2f34: argc==2, usage string, argument index 1/capacity 64 and shellshock load call agree."
+  },
+  "mac:0x001d2f80": {
+    "status": "equal",
+    "evidence": "Read complete Mac 0x1d2f80: argc==2, usage string, argument index 1/capacity 64 and shellshock save call agree."
+  },
+  "mac:0x001d2e3c": {
+    "status": "equal",
+    "evidence": "Read complete Mac 0x1d2e3c: argc dispatch, optional parameter-load failure return, 256-byte argument, atof narrowing, shellshock parameter destination and floorf(duration*1000+0.5) operation order agree."
+  },
+  "mac:0x001d2d2e": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1d2d2e and checked constants: cg_viewsize integer minus 10 passed to Dvar_SetInt agrees."
+  },
+  "mac:0x001d2d0c": {
+    "status": "equal",
+    "evidence": "Restarted otool at exact __Z11CG_SizeUp_fv to avoid full-binary prologue misalignment. Mac 0x1d2d0c reads cg_viewsize integer and passes value+10 to Dvar_SetInt, as native does."
+  },
+  "mac:0x001d307e": {
+    "status": "equal",
+    "evidence": "Read complete Mac 0x1d307e: argc==2, optional nextSnap, pm_type 5/pm_flags 0x800000 voice eligibility, translated rejection and 64-byte cmd vsay_team argument agree."
+  },
+  "mac:0x001d2d50": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1d2d50: truncating integer conversions of three view-origin coordinates and view yaw, print argument order and format string agree."
+  },
+  "mac:0x001d2ff6": {
+    "status": "equal",
+    "evidence": "Read complete Mac 0x1d2ff6: argc==2, optional nextSnap, pm_type 5/pm_flags 0x800000 voice eligibility, translated rejection and 64-byte cmd vsay argument agree."
+  },
+  "mac:0x001a22d2": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1a22d2: stack white RGB/input alpha, big developer font, alignment forwarding and style 0 agree."
+  },
+  "mac:0x001a1a7e": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1a1a7e: big developer font, original coordinates/text/color/alignment and style 0 forwarded to CG_DrawDevString agree."
+  },
+  "mac:0x001a1996": {
+    "status": "equal",
+    "evidence": "Read complete Mac 0x1a1996: horizontal premeasurement, vertical alignment/half-height, repeated width query, right-screen alignment with negative text width, style and returned text height agree. Mac itself ignores input x."
+  },
+  "mac:0x001a242e": {
+    "status": "equal",
+    "evidence": "Read complete Mac 0x1a242e: screen placement mutates all four rectangle fields before forwarding angle/color/material to the physical helper; argument order agrees."
+  },
+  "mac:0x001a232e": {
+    "status": "equal",
+    "evidence": "Read complete Mac 0x1a232e and checked sign table: double degree conversion then float sin/cos, half-extents/center and all four vertex operations agree, including Mac width-based x-sine term and height-based y-sine term."
+  },
+  "mac:0x001a249a": {
+    "status": "equal",
+    "evidence": "Read complete Mac 0x1a249a: double degree conversion then float sin/cos, four two-component rotations, center addition/subtraction order and quad submission agree."
+  },
+  "mac:0x001a1ac6": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1a1ac6: small developer font and original coordinates/text/color/alignment forwarded with style 0 agree."
+  },
+  "mac:0x001a18ec": {
+    "status": "fixed",
+    "evidence": "Restarted exact Mac 0x1a18ec entry. At 0x1a191a null color receives the array address; native declared colorWhite as a pointer and loaded float bits instead. Corrected native array declaration against active vec4_t storage/import wrappers. Restored unsigned nonzero shadow test at 0x1a1938. Baseline/font scale and draw arguments match; compiled and reviewed, not exercised."
+  },
+  "mac:0x001a1b0e": {
+    "status": "equal",
+    "evidence": "Read complete Mac 0x1a1b0e: zero start/expired returns, strict fade-interval comparison, integer-to-float division and white RGB/alpha writes agree."
+  },
+  "mac:0x001a1b80": {
+    "status": "equal",
+    "evidence": "Read Mac 0x1a1b80: configstring 11, atof double-to-float conversion and compassNorthYaw destination agree."
+  },
+  "mac:0x001a224a": {
+    "status": "equal",
+    "evidence": "Read complete Mac 0x1a224a: all four viewport equality checks, full-screen reset and refdef viewport argument order agree."
+  },
+  "mac:0x001a1ee0": {
+    "status": "intentional",
+    "evidence": "Read full Mac 0x1a1ee0 spring-pointer routine, including disabled/equal-time/reset cases, +/-10 clamp, five-ms steps, convergence thresholds, acceleration/damping/friction and +/-2000 speed clamp. Registered-dvar behavior agrees. Retained established native null import-slot/null dvar fallback before initialization, where Mac assumes a registered dvar."
+  },
+  "mac:0x001a1bbc": {
+    "status": "equal",
+    "evidence": "Read complete Mac 0x1a1bbc: target normalization, time rewind/>500 reset, five-ms integration, .25/1 convergence, +/-1000 acceleration, damping/friction, +/-30000 clamp and final normalized sum agree in SSE operation order."
+  },
+  "mac:0x001e4388": {
+    "status": "fixed",
+    "evidence": "Read full Mac 0x1e4388. Restored waiting text y=439 from 0x1e4597 (also Windows 0x4d3645), replacing 452, and unlimited UI_TextWidth argument 0 at 0x1e4547. Menu/sound loading flags, map fallback/lowercase, hunk return, dots and subtract-then-half centering agree; native backend owners preserved. Compiled and reviewed, not exercised."
+  },
+  "mac:0x001e4328": {
+    "status": "equal",
+    "evidence": "Restarted exact Mac 0x1e4328 after full-binary prologue misalignment. Compared 1024-byte infoScreenText copy, null/empty diagnostic gate, LOADING format/va call and unconditional screen update; agree."
+  },
+  "mac:0x001c51b2": {
+    "status": "fixed",
+    "evidence": "Read full Mac 0x1c51b2. Reconciled all six column records at 0x36e6e0 (order, width bits, types, headings and alignment) and removed native .02 shrink floor; Mac 0x1c5436 retries until text fits. Row clipping/counts, highlights, status/voice icons, spectator omissions and numeric columns agree. Typed native client-info/bounds checks retained; compiled and reviewed, not exercised."
+  },
+  "mac:0x001c6e30": {
+    "status": "intentional",
+    "evidence": "Read complete Mac0x1c6e30. Windows precedence: fallback .bsp comparison uses length-3 and NUL at length-7 (Windows0x4d912f..0x4d9149, comparator0x44a670 preservesESI), while Mac0x1c763c truncatesfourbytes. Follow Windows player-visible label with native length>=7 guard to avoid short-name underflow. Also restored Mac expired-fade return0 at0x1c76cb (native returned1). Compared pause/request paths, sixborderrecords, header/footer scale loops anddrawgeometry; native six-recordcapacity retained. Compiled and reviewed, not exercised."
+  },
+  "mac:0x001c514c": {
+    "status": "equal",
+    "evidence": "Read complete Mac 0x1c514c: Axis/Allies dvar selection, white default RGB and restoration of the incoming alpha agree."
+  },
+  "mac:0x001c5728": {
+    "status": "fixed",
+    "evidence": "Read full Mac 0x1c5728: restored team ping to column type 4 at 0x1c5a0a, replacing native deaths-column selection. Shared column records now match 0x36e6e0. Clipping, localized player/team labels, banner material, alpha preservation, .32 scale/.84 baseline and return height agree; native pre-registration banner fallback retained. Compiled and reviewed, not exercised."
+  },
+  "mac:0x001c5b76": {
+    "status": "fixed",
+    "evidence": "Read all Mac 0x1c5b76-0x1c6e30 blocks. Restored column records, exact header baseline bits at 0x1c5d76, repeated 12-height additions at 0x1c5c67 and scrollbar gates at 0x1c6391/0x1c6424. Objective wrapping, team order/ties, row filtering/counts, arrows and clamps compared. Retained bounded native oversized-token fallback: Mac 0x1c69ed subtracts a stack-buffer address from a null whitespace marker to form maxChars, dependent on ILP32 storage. Native ignored float return convention retained. Compiled and reviewed, not exercised. Protocol-review follow-up: a count INT_MIN+1 can clamp scoresTop to INT_MIN; restored defined 32-bit wrap for drawLine-scoresTop at Mac 0x1c6432. Actual stock/CoD2x client TU compiled and existing border/HUD fixtures pass; malformed-count scroll input was not exercised."
+  },
+  "mac:0x001c4f40": {
+    "status": "equal",
+    "evidence": "Read complete Mac 0x1c4f40: all 16 material registrations, duplicate white/black requests, imageTrack 7, four team-banner dvar names and voice material names/order agree."
+  },
+  "mac:0x001c4eb4": {
+    "status": "equal",
+    "evidence": "Restarted exact __Z22CG_ScoreboardDisplayedv after full-binary prologue misalignment. Mac 0x1c4eb4 returns cg.showScores, matching native typed access."
+  },
+  "mac:0x001c4efc": {
+    "status": "fixed",
+    "evidence": "Read exact Mac 0x1c4efc. At 0x1c4f2c numScores-1 wraps INT_MIN to INT_MAX; signed native subtraction overflowed after the faithful signed score parser accepted INT_MIN. Retained scoresOffBottom is reachable when snapshot processing precedes an early !renderScreen return. Restored defined 32-bit wrap for that count subtraction and scoresTop addition at 0x1c4f1d, preserving the signed upper clamp and typed dvar access. Actual stock/CoD2x client TU compiled; existing border/HUD fixtures pass but do not exercise malformed-count scrolling. Compiled and reviewed, not exercised on that input."
+  },
+  "mac:0x001c4ec6": {
+    "status": "equal",
+    "evidence": "Read complete Mac 0x1c4ec6: positive scoresTop gate, registered scroll-step subtraction and zero lower clamp agree; native uses typed pointer-width dvar access."
+  },
+  "mac:0x001c50a8": {
+    "status": "equal",
+    "evidence": "Read complete Mac 0x1c50a8 and decoded every immediate float: all six x/y/w/h border records and return count 6 agree."
   }
 }
