@@ -436,13 +436,19 @@ static void __attribute_regparm__(3)
 
 #if defined(COD2_X64)
     int low = 0;
-    int high = tableSize;
+    int high = tableSize - 1;
 
-    while (frameIndex < (int)frames[index] || frameIndex >= (int)frames[index + 1]) {
-        if (frameIndex < (int)frames[index]) {
-            high = index;
-        } else {
+    /* Endpoint callers sample their final frame directly. Keep native's
+     * clamped extrapolation for times outside that caller contract. */
+    if (index < 0) index = 0;
+    if (index >= tableSize) index = tableSize - 1;
+    while (1) {
+        if (index > 0 && frameIndex < (int)frames[index]) {
+            high = index - 1;
+        } else if (index < tableSize - 1 && frameIndex >= (int)frames[index + 1]) {
             low = index + 1;
+        } else {
+            break;
         }
         index = (low + high) / 2;
     }
@@ -471,13 +477,17 @@ static void __attribute_regparm__(3)
 
 #if defined(COD2_X64)
     int low = 0;
-    int high = tableSize;
+    int high = tableSize - 1;
 
-    while (frameIndex < (int)indices[index] || frameIndex >= (int)indices[index + 1]) {
-        if (frameIndex < (int)indices[index]) {
-            high = index;
-        } else {
+    if (index < 0) index = 0;
+    if (index >= tableSize) index = tableSize - 1;
+    while (1) {
+        if (index > 0 && frameIndex < (int)indices[index]) {
+            high = index - 1;
+        } else if (index < tableSize - 1 && frameIndex >= (int)indices[index + 1]) {
             low = index + 1;
+        } else {
+            break;
         }
         index = (low + high) / 2;
     }
