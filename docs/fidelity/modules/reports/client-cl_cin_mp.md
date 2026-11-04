@@ -6,7 +6,7 @@ Updated 2026-11-04.
 
 ## Corrections
 
-The skippable command now sets the cinematic skip byte, as Mac 0x16308b does. The missing unskippable command now clears it, matching 0x16309b. `SCR_StopCinematic` now returns while that byte is zero and forwards stop only when it is set (0x1630bf–0x1630cb).
+The native skip byte starts at one, matching Mac initialized data at 0x34b220. Independent review caught an initial zero default; the initializer was corrected and the client object rebuilt before integration. The skippable command now sets the cinematic skip byte, as Mac 0x16308b does. The missing unskippable command now clears it, matching 0x16309b. `SCR_StopCinematic` now returns while that byte is zero and forwards stop only when it is set (0x1630bf–0x1630cb).
 
 The orchestrator authorized narrow dependency edits to `src/PC/client_mp/cl_main_mp.c` and `src/headers/PC/client_mp/cl_funcs.h`. These add guarded declarations and register `unskippablecinematic` immediately after `cinematic`, matching Mac 0x148fb1–0x148fcd. Mac 0x148fd2–0x148fe9 gives autocomplete only to `cinematic`; shutdown 0x14bcb3–0x14bcc6 removes `cinematic` then `logo` and leaves `unskippablecinematic` registered. Both quirks are preserved. This is not a full `cl_main_mp` reconciliation.
 
