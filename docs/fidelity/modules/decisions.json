@@ -16990,5 +16990,77 @@
   "mac:0x001d7528": {
     "status": "fixed",
     "evidence": "Compared CG_UpdateShellShock by hand with Mac 0x1d7528\u20130x1d7bc0: initial/disabled resets, channel/environment envelope, loop timing/end events, mouse fade/turn caps, smoothstep amplitude, phase/index and cubic interpolation. Corrected reversed sound-envelope selection at 0x1d7574\u20130x1d759e; restored abort alias shellshock_end_abort (0x2e36d4) and silent loop shellshock_loop_silent (0x2e36fc); restored nonzero engine perturbation table at 0x33c1a0, formerly zero-filled. Script verified all 262 float values and three wrap pairs; compiled object preserves those bytes. Retained zero-loop-fade reuse of prior envelope (0x1d7abd), actual native SND providers and documented pointer-width/imp_vec3_origin adaptation. Compiled and reviewed, audio/camera behavior not exercised."
+  },
+  "linux:EffectsCore/FxChannel.cpp:53:FxChannel_Copy": {
+    "status": "unchecked",
+    "evidence": "No executable Mac identity found in nm -a/-n; the native tree has neither a definition nor a caller. Linux labels this an unused copy helper. Without a Mac body or identified inlined copy site, its pointer-reference and range-copy behavior is unresolved."
+  },
+  "mac:0x000ac458": {
+    "status": "equal",
+    "evidence": "Hand-compared direct Mac entry 0xac458\u20130xac4e1: two key times 0/1, per-dimension endpoint values, two-key allocation, then unit scale range. Native pointer-sized curve and scaleRange field accesses preserve the native FxChannel layout."
+  },
+  "linux:EffectsCore/FxChannel.cpp:77:FxChannel_CreateDelayed": {
+    "status": "equal",
+    "evidence": "Hand-compared the inlined delayed branch in Mac FxChannel_CreateViaMigration, 0xac89d\u20130xac918: times 0/delay/1, repeated start values followed by end values, then three-key allocation. This is the matching branch in native CreateViaMigration; no separate helper body is required."
+  },
+  "linux:EffectsCore/FxChannel.cpp:60:FxChannel_CreateLinear": {
+    "status": "equal",
+    "evidence": "Hand-compared the inlined linear branch in Mac FxChannel_CreateViaMigration, 0xac91a\u20130xac991: times 0/1, start/end dimension values, then two-key allocation. This is the matching branch in native CreateViaMigration."
+  },
+  "linux:EffectsCore/FxChannel.cpp:96:FxChannel_CreateSampled": {
+    "status": "equal",
+    "evidence": "Hand-compared inlined sampling in Mac FxChannel_CreateViaMigration, 0xac667\u20130xac884 and 0xaca3c\u20130xacbd6: 16 keys, 1/15 increments and clamp, four flag modes, optional half-envelope blend, cosf, dimension interpolation, lower clamp, the lerp>1 clamp quirk, and flrand call order. Native arithmetic and dispatch match; checked caller dimensions are 1 or 3."
+  },
+  "mac:0x000ac4e4": {
+    "status": "fixed",
+    "evidence": "Mac 0xaca12\u20130xaca37 retains max(midStart,midEnd)*1.3333333730697632 as the scale-range center while storing its reciprocal separately for key values; 0xac50d\u20130xac541 uses that non-inverted center plus/minus the start half-range. Native had centered scaleRange on the reciprocal. COD2_X64 now keeps a separate rangeScale, including the unit/minimum-scale branches. Full direct entry 0xac4e4\u20130xacbd6 hand-compared; compiled and reviewed, not exercised."
+  },
+  "mac:0x000b9fc8": {
+    "status": "equal",
+    "evidence": "Hand-compared direct Mac 0xb9fc8\u20130xb9fdb: assign master and zero currentKeyIndex. Native typed fields retain the widened pointer and corresponding native index offset."
+  },
+  "linux:EffectsCore/FxCurve.cpp:23:FxCurveIterator_Release": {
+    "status": "unchecked",
+    "evidence": "No executable Mac identity found: nm -a has only an absolute zero .eh marker for FxCurveIterator_Release, no text address. Native has no definition or caller. The Linux-only null-master body cannot establish the Mac behavior."
+  },
+  "mac:0x000b9fde": {
+    "status": "equal",
+    "evidence": "Hand-compared direct Mac 0xb9fde\u20130xba0a2: dimension+1 stride from the 8-byte pointer-free curve header; strict next-time comparison; accumulated trapezoids; then interpolation using the selected key's four scalar words and a final partial trapezoid. Native retains the same float operation grouping and unused keyCount behavior."
+  },
+  "linux:EffectsCore/FxCurve.cpp:28:FxCurve_IntegrateSegment": {
+    "status": "equal",
+    "evidence": "Hand-compared the inlined trapezoids in Mac FxCurve_Integrate at 0xba078\u20130xba08e and 0xba042\u20130xba04e: add endpoint values, multiply by 0.5, multiply by time delta, and add to result. Native contains both operations inline."
+  },
+  "linux:EffectsCore/FxCurve.cpp:58:FxCurve_Interpolate1d": {
+    "status": "equal",
+    "evidence": "Hand-compared inline Mac FxCurve_Integrate 0xba018\u20130xba03e: selected key words at offsets 0/4/8/12, value delta times duration delta, divided by key-time delta, then add starting value. Native contains this expression inline with the same grouping."
+  },
+  "mac:0x000ac320": {
+    "status": "equal",
+    "evidence": "Hand-compared direct Mac 0xac320\u20130xac454: endpoint comparisons include unordered floats, 8+4*(dimensions+1)*totalKeys allocation at alignment 4, optional first key, bulk key copy, and optional final key copying the FIRST source key values. Mac stores original keyCount, not totalKeys; native preserves that quirk. FxCurve is pointer-free with keys at offset 8 on native too."
+  },
+  "linux:EffectsCore/FxCurve_load_obj.cpp:51:FxCurve_Reference": {
+    "status": "unchecked",
+    "evidence": "No executable Mac identity or native definition/caller found for Linux FxCurve_Reference. Mac has an absolute zero .eh marker named FxCurve_AddRef but no text body; that does not establish an identity or pointer-return contract. Linux's no-op reference body was not assumed equal."
+  },
+  "linux:EffectsCore/FxMemMgr.cpp:28:FxMem_AllocBlock": {
+    "status": "unchecked",
+    "evidence": "No Mac text symbol or identified inline implementation for the Linux-named block allocator; native has no definition, caller, FxMemBlock layout, or fx_memBlocks arena. Mac FxMem_Init at 0xacbd8 is a no-op and native effects use existing __Znam/__ZdaPv allocation paths. No Linux 32KB arena or 32-bit free-list writes were introduced without a Mac allocator/layout contract."
+  },
+  "linux:EffectsCore/FxMemMgr.cpp:65:FxMem_FreeBlock": {
+    "status": "unchecked",
+    "evidence": "No Mac text symbol or identified inline implementation for the Linux-named block free helper; native has no definition/caller or shared FxMemBlock arena contract. The Linux unlink-and-freeCount=-1 behavior cannot be assigned to a Mac body."
+  },
+  "linux:EffectsCore/FxMemMgr.cpp:72:FxMem_FreeItem": {
+    "status": "unchecked",
+    "evidence": "No Mac text symbol or identified inline implementation for the Linux-named item free helper; native has no definition/caller or shared FxMemBlock arena contract. The Linux 0x7fff pointer mask and embedded free-list write were not transplanted into native pointer-sized allocations without Mac identity/layout evidence."
+  },
+  "mac:0x000acbd8": {
+    "status": "equal",
+    "evidence": "Hand-compared exact-symbol Mac entry 0xacbd8\u20130xacbdc: prologue, epilogue, return and no arena initialization. Native is the same no-op. The Linux fixed-block initialization is not present in this Mac body."
+  },
+  "linux:EffectsCore/FxMemMgr.cpp:55:FxMem_UnlinkBlock": {
+    "status": "unchecked",
+    "evidence": "No Mac text symbol or identified inline implementation for the Linux-named unlink helper; native has no definition/caller or shared FxMemBlock layout. The Linux doubly linked block mutations cannot establish Mac behavior."
   }
 }

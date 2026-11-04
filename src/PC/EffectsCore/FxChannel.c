@@ -35,6 +35,9 @@ void FxChannel_CreateViaMigration(const FxChannelBackwardCompatible *source, int
     float startVals[3];
     float endVals[3];
     float scaleFactor;
+#if defined(COD2_X64)
+    float rangeScale = 1.0f;
+#endif
     float delayFraction;
     float waveParm;
     int flags;
@@ -69,13 +72,22 @@ void FxChannel_CreateViaMigration(const FxChannelBackwardCompatible *source, int
             scaleFactor = 1.0f;
         } else {
             scaleFactor = 1.0f / maxVal;
+#if defined(COD2_X64)
+            rangeScale = maxVal;
+#endif
         }
     }
 
     {
         float halfRange = (source->start[0].mMax - source->start[0].mMin) * 0.5f;
+#if defined(COD2_X64)
+        /* Mac keeps the range scale separate from the inverse used by keys. */
+        float rangeMax = rangeScale + halfRange;
+        float rangeMin = rangeScale - halfRange;
+#else
         float rangeMax = scaleFactor + halfRange;
         float rangeMin = scaleFactor - halfRange;
+#endif
         FxRange_SetRange(&target->scaleRange, rangeMin, rangeMax);
     }
 
