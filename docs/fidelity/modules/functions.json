@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 4522,
-      "intentional": 1581,
-      "equal": 2849,
-      "fixed": 505
+      "unchecked": 4474,
+      "intentional": 1584,
+      "equal": 2887,
+      "fixed": 512
     },
     "scopes": {
       "unassigned": 777,
@@ -73080,8 +73080,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15f54c-0x15f586 and active native body read by hand. Compared the complete newline print with type/duration/width zero, then display=currentLine-1."
       },
       {
         "id": "mac:0x0015ed28",
@@ -73102,8 +73102,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Complete Mac 0x15ed28-0x15f344 and active native body read by hand. Mac 0x15ed81 flushes the pending old print type; native flushed the new type. Restored the whole Asian GAME/BOLDGAME/SUBTITLE path at 0x15ed8c and 0x15efe3-0x15f343: selected font/scale, glyph-width lookahead, SEH decoding, paired-byte storage, pixel and ring width wraps, CR/LF/color handling. Also matched the ASCII negative-width branch and ceil-to-int balancing order. Read the complete common minicon/final-line and prevType tail. Live UI/font/SEH APIs support this path; native font aliases remain. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0016058c",
@@ -73124,8 +73124,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Complete Mac 0x16058c-0x160a8c and active native body read by hand. Mac 0x160610 flushes con.prevType, not GAME; 0x16078b-0x160799 compares entry linewidth against offset+strlen(victim)+3, not current linewidth against +2. Restored both, low-byte flip handling and unmasked icon metadata OR encoding, including writes across a logical row within the actual 65536-short ring. Compared the complete noPrint/init/duration, attacker/icon/victim colors and text, registry search, wrap and final GAME linefeed. Retained defined null-name handling and a native bound at the actual ring allocation rather than writing past it; CoD2x double-color parsing remains an explicit extension. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0015c5fa",
@@ -73146,8 +73146,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15c5fa-0x15c60c and active native body read by hand. Compared the complete unsigned-byte index and pointer-table lookup; symbol-start otool confirms the entry. Full-width native pointer lookup preserves the 256-slot registry contract."
       },
       {
         "id": "mac:0x0015c5a0",
@@ -73168,8 +73168,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15c5a0-0x15c5fa and active native body read by hand. Compared the complete case-sensitive duplicate scan, CopyStringInternal insertion and count increment, including the inlined native core. Restarted otool at the exact symbol because cached full-image decoding misread its prologue."
       },
       {
         "id": "mac:0x0015e836",
@@ -73190,8 +73190,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Complete Mac 0x15e836-0x15ec72 and active native body read by hand. Mac 0x15e8db-0x15e913 checks source length plus used bytes against 1023 before Com_StripExtension; native checked after writing. Restored the pre-copy bound. Restored 0x15e9bb-0x15ebce scanning the field command/argument separator, TextWidth prefix anchoring, box origin/size and persistent leftX update; native drew at the current hint row and restored the old leftX. Compared all filtering, 16-match cap, extension stripping, full-width qsort, maximum width and draw loops. Compiled and reviewed, not exercised. Review correction: bound retail argument-position scan by NUL and native256-byte field; adjacent quotedargs acceptedbytokenizer may have no separator. Skip hint for that case rather than introduce retail out-of-boundsread. Compiled/reviewed, not exercised."
       },
       {
         "id": "mac:0x0015ec72",
@@ -73212,8 +73212,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15ec72-0x15ed28 and active native body read by hand. Compared the complete I_strnicmp gate, unlimited command-color draw, font-height y advance and leftX reset through the native inline helpers."
       },
       {
         "id": "mac:0x0015cec6",
@@ -73234,8 +73234,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15cec6-0x15cee0 and active native body read by hand. Compared the complete two string-pointer dereferences and I_stricmp tail call. Native qsort elements are sizeof(pointer), preserving the LP64 contract."
       },
       {
         "id": "mac:0x0015fb8a",
@@ -73256,8 +73256,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15fb8a-0x15fcf8 and active native body read by hand. Compared the complete prefix/exact-match filters, single-row hint box, draw/advance, argc==2 file enumeration and alloc-track-10 free. Read Cmd_GetAutoCompleteFileList -> FS_ListFiles -> FS_ListFilteredFiles: zero results return NULL, positive counts own the list; native conditional cleanup is equivalent on that live contract. Shared hint-box arithmetic now follows the Mac subtraction order."
       },
       {
         "id": "mac:0x0015f646",
@@ -73278,8 +73278,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Complete Mac 0x15f646-0x15fb8a and active native body read by hand. Compared the complete prefix/exact filters, two/three-row current/latched/default display, exact labels from Mac 0x2d70e8/0x2d70f8, domain/type/range box, blank-line spacing, and type-6 argc==2 argument list. Native DvarLimits and font pointers preserve the live ABI. Existing COD2_CODX macros deliberately widen names from 24 to 40 characters and value columns from 200 to 340 pixels; stock layout matches. Native null-dvar rejection remains defensive outside valid Dvar_ForEach callbacks."
       },
       {
         "id": "mac:0x0015ddfc",
@@ -73300,8 +73300,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Complete Mac 0x15ddfc-0x15df2e and active native body read by hand. Compared the complete prefix gate, name/value colors, variant lookup, 40-character value limit, font-height advance and leftX reset. Existing COD2_CODX name limit 40 and column 340 intentionally replace stock/Mac 24 and 200; stock branch matches."
       },
       {
         "id": "mac:0x0015dcec",
@@ -73322,8 +73322,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15dcec-0x15dd40 and active native body read by hand. Compared the complete case-insensitive prefix test, count increment and sticky hasExactMatch byte update."
       },
       {
         "id": "mac:0x0015ccb8",
@@ -73344,8 +73344,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15ccb8-0x15cec6 and active native body read by hand. Compared all five DrawStretchPic calls, zero UVs, whiteMaterial, RGB*0.5 with preserved alpha, and the four 2-pixel borders in the same order. Live typed refexport_t callbacks and material handles preserve native pointer widths."
       },
       {
         "id": "mac:0x0015dfae",
@@ -73366,8 +73366,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15dfae-0x15e070 and active native body read by hand. Compared both complete signed-character scans: skip leading mask-0x4000 whitespace, then find whitespace before NUL. The native macos_compat 32-bit rune table has the same 0x34 header and whitespace bits; field.buffer remains offset 0x18."
       },
       {
         "id": "mac:0x0015cc04",
@@ -73388,8 +73388,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15cc04-0x15ccb8 and active native body read by hand. Compared complete prefix filtering, first-copy sizing and case-sensitive common-suffix truncation. Read live strnicmp in Mac/Tools/i5stdlib.c: it delegates to strncasecmp, the exact Mac import used here."
       },
       {
         "id": "mac:0x0015c720",
@@ -73410,8 +73410,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15c720-0x15c730 and active native body read by hand. Compared the complete display=currentLine store."
       },
       {
         "id": "mac:0x0015c680",
@@ -73432,8 +73432,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15c680-0x15c6d0 and active native body read by hand. Compared the complete team=0 store, Field_Clear, width 588, charHeight 10, fixedSize=0 and keyCatchers xor 0x10. Generated chatField/chat_team imports address typed PlayerKeyState fields; native field_t is still 280 bytes."
       },
       {
         "id": "mac:0x0015c6d0",
@@ -73454,8 +73454,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15c6d0-0x15c720 and active native body read by hand. Compared the complete team=1 store, Field_Clear, width 543, charHeight 10, fixedSize=0 and keyCatchers xor 0x10 against active typed field/input storage."
       },
       {
         "id": "mac:0x0015e070",
@@ -73476,8 +73476,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15e070-0x15e3d6 and active native body read by hand. Compared complete LargeLocal 0x20000 allocation/release paths, four aligned/floored bounds, width threshold 639, /8 minus 2, fallback 78/840, 65536-short fill, row/column copy minima and ring indexing, all four message-window clears and final current/display reset. Typed native window/console fields replace i386 member offsets; no layout repair is needed."
       },
       {
         "id": "mac:0x0015dd40",
@@ -73498,8 +73498,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15dd40-0x15ddb6 and active native body read by hand. Compared complete GAME and BOLDGAME count*164 byte clears and current_line resets. Native MessageLine remains exactly 164 bytes; window pointer/member access is typed."
       },
       {
         "id": "mac:0x0015ddb6",
@@ -73520,8 +73520,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15ddb6-0x15ddfc and active native body read by hand. Compared complete subtitle count*164 clear and current_line=0 store against typed native MessageWindow storage."
       },
       {
         "id": "mac:0x0015d52e",
@@ -73542,8 +73542,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15d52e-0x15d56c and active native body read by hand. Compared the complete 65536-short ColorIndex(55)/space fill and display=currentLine tail; ColorIndex is called in each non-web iteration as in Mac."
       },
       {
         "id": "mac:0x0015e726",
@@ -73564,8 +73564,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15e726-0x15e836 and active native body read by hand. Compared complete legacyHacks[1] gate, field clear, four count*164 message clears/resets and clients[0].keyCatchers bit-0 clear. Generated clients is a typed one-element allocation, so the native direct symbol preserves the Mac import target."
       },
       {
         "id": "mac:0x0015dc7a",
@@ -73586,8 +73586,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15dc7a-0x15dcb6 and active native body read by hand. Compared the complete BOLDGAME selection and forwarded x/y/alpha/mode, height 12, alignments 7/7 and scale 1. Shared drawing correction is recorded on Con_DrawMessageWindow."
       },
       {
         "id": "mac:0x0016020e",
@@ -73608,8 +73608,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x16020e-0x160242 and active native body read by hand. Compared the complete resize-before-keycatcher check, optional output-window draw and final input draw. Native helper inlining does not omit those calls."
       },
       {
         "id": "mac:0x0015fcf8",
@@ -73630,8 +73630,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Complete Mac 0x15fcf8-0x16020e and active native body read by hand. Mac 0x15ff90 advances one extra font row before hints; native omitted it. Mac 0x15ffb7-0x1601ee enters detail for one match or an exact match followed by whitespace; native entered detail for every exact prefix. Restored both and compared the complete key/main-thread gates, prompt/font/bounds, field draw, tokenizer, counters, too-many/list/detail dispatch and colors. Retained native 16-pixel invalid-font-height fallback, version macro, and COD2_CODX prompt/60-match cap as existing extensions. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0015d6f0",
@@ -73652,8 +73652,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Complete Mac 0x15d6f0-0x15dbd4 and active native body read by hand. Compared all 1252 Mac bytes, including visibility/pm_type gate and all four modes. Restored same-start-time reversed groups at 0x15da0c/0x15db6a, bottom-up pre-scroll pass at 0x15d865-0x15d927, expiry clearing at equality (0x15d970), and bottom-up (elapsed*alpha)/fade versus top-down (elapsed/fade)*alpha SSE order. Matched top-down expired-line scroll and centered height+4/font selection; native simplified helpers omitted these branches. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0015dc18",
@@ -73674,8 +73674,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15dc18-0x15dc7a and active native body read by hand. Compared the complete current con_miniconlines count update, MINICON pointer, height 12, alignments 1/1, scale 1 and TOPDOWN mode forwarding against typed storage."
       },
       {
         "id": "mac:0x0015dcb6",
@@ -73696,8 +73696,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15dcb6-0x15dcec and active native body read by hand. Compared complete GAME pointer, height 12, alignments 1/3, scale 1 and mode/position/alpha forwarding."
       },
       {
         "id": "mac:0x0015d1fa",
@@ -73718,8 +73718,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Complete Mac 0x15d1fa-0x15d49a and active native body read by hand. Compared the complete 672-byte output panel, build label, scrollbar, ring history and text loop. Restored Mac scrollbar arithmetic at 0x15d2f9-0x15d39a, including the uncapped slider fraction and original subtraction/addition order; native clamped the fraction and simplified the range. Also preserved the version baseline subtraction order at 0x15d2d7. Existing macOS arm64/CoD2x build labels intentionally replace MacOSXS-i386. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x0015d074",
@@ -73740,8 +73740,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15d074-0x15d1e6 and active native body read by hand. Compared the complete chat keycatcher gate, font0 scale10/48, translated team/public label, formatting, cg_hudSayPosition x truncation, normalized font baseline, text-width offset and Field_Draw arguments. Live native font handles/callbacks are pointer-width correct."
       },
       {
         "id": "mac:0x0015cee0",
@@ -73762,8 +73762,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15cee0-0x15d074 and active native body read by hand. Compared the complete font0/font4 selection, charHeight/48, normalized scale, centered pre-msgwndScale half-width truncation, text-height baseline truncation, placement transform, white/alpha color and style-3 console draw. Typed FontHandle/refexport callbacks preserve the native rendering ABI."
       },
       {
         "id": "mac:0x0015dbd4",
@@ -73784,8 +73784,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15dbd4-0x15dc18 and active native body read by hand. Compared complete SUBTITLE pointer, caller height/position/alpha/mode, alignments 1/1 and scale1 forwarding."
       },
       {
         "id": "mac:0x0015c730",
@@ -73806,8 +73806,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Complete Mac 0x15c730-0x15c930 and active native body read by hand. Read the entire 512-byte Mac body and all output strings. Mac 0x15c79b-0x15c7e3 skips only leading blank rows; after the first nonblank row, 0x15c885 writes every row. Native skipped all blank rows. Restored leading-only suppression while matching low-byte extraction, trailing-space trim, newline/write, open-error and close paths. Compiled and reviewed, not exercised."
       },
       {
         "id": "mac:0x00160242",
@@ -73828,8 +73828,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x160242-0x16058c and active native body read by hand. Compared the complete 842-byte body: restricted bool flags/default, field/history32 widths/heights/fixed state, five command registrations, registry reset and six icon strings/order decoded directly at 0x2d2b20-0x2d3efc. Native typed history stride remains Mac 280; duplicate-check core accounts for Mac inlining."
       },
       {
         "id": "mac:0x0015d518",
@@ -73850,8 +73850,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15d518-0x15d52e and active native body read by hand. Compared complete active-client keyCatchers offset4 load and bit0 result. Layout dump confirms that offset is unchanged in native clientActive_t."
       },
       {
         "id": "mac:0x0015cae2",
@@ -73872,8 +73872,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15cae2-0x15cc04 and active native body read by hand. Compared complete type dispatch to all four windows, negative-current gate, offset reset, display-follow increment, current increment and per-character default-color/space fill. Typed window selection preserves widened pointer layouts."
       },
       {
         "id": "mac:0x0015e3d6",
@@ -73894,8 +73894,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15e3d6-0x15e726 and active native body read by hand. Compared the entire body: all nine dvar names/defaults/min/max/flags, the four window line-array pointers/count/padding/scroll/fade fields, white color, linewidth=-1, resize and initialized=1. All 8/8/8/100 line arrays and native pointer-bearing MessageWindow layouts were inspected; no raw i386 stride remains."
       },
       {
         "id": "mac:0x0015d4cc",
@@ -73916,8 +73916,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15d4cc-0x15d4f4 and active native body read by hand. Compared complete display+2 and clamp-to-current selection."
       },
       {
         "id": "mac:0x0015d49a",
@@ -73938,8 +73938,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15d49a-0x15d4cc and active native body read by hand. Compared complete display-2 and oldest-retained-line clamp current-totallines+1."
       },
       {
         "id": "mac:0x0015c930",
@@ -73960,8 +73960,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15c930-0x15c984 and active native body read by hand. Compared the complete reverse registry free loop and count updates; Mac unrolls pairs but preserves the same free order and zero-count result."
       },
       {
         "id": "mac:0x0015d1e6",
@@ -73982,8 +73982,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15d1e6-0x15d1fa and active native body read by hand. Compared complete zero/nonzero inversion of outputVisible, a Bool byte in both layouts."
       },
       {
         "id": "mac:0x0015c60c",
@@ -74004,8 +74004,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Complete Mac 0x15c60c-0x15c680 and active native body read by hand. Compared the complete restriction/modifier/current-console gates, field reset/settings, output-hidden store and clients keycatcher xor1. Preserved documented WS38 typed keys[0xa0].down: native qkey_t stride16 replaces Mac stride12/offset0x780. Generated keys is the address of PlayerKeyState.keys; the exact symbol-start disassembly confirms Mac key index160."
       },
       {
         "id": "mac:0x0015df2e",
@@ -74026,8 +74026,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15df2e-0x15dfae and active native body read by hand. Compared complete field.buffer tokenization, argument0 lookup, optional single slash/backslash skip and signed-character whitespace scan. Active field.buffer is still offset0x18; native maskrune/table shim supplies the inspected Mac mask0x4000 contract."
       },
       {
         "id": "mac:0x0015d4f4",
@@ -74048,8 +74048,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15d4f4-0x15d518 and active native body read by hand. Compared complete initial display=totallines and conditional oldest-line current-totallines+1 adjustment."
       },
       {
         "id": "mac:0x0015c984",
@@ -74070,8 +74070,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Complete Mac 0x15c984-0x15cae2 and active native body read by hand. Compared complete 350-byte Mac body with active native impl: start/end times, min(linewidth,78) ring copy, default-space tail fill, linefeed/count gate, modulo advance and padding-window lifetime shortening. Native MessageLine offsets156/160 and size164 are unchanged; named MessageWindow members account for the widened pointer."
       },
       {
         "id": "mac:0x0015d56c",
@@ -74092,8 +74092,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/client_mp/cl_console_mp.c (client_mp/cl_console_mp); whole CL_AddConsoleInfoColor was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to client/cl_console_mp; original Mac source-module provenance retained. Native function definition at src/PC/client_mp/cl_console_mp.c:735 uses __attribute_regparm__, which bypasses the simple body-search expression. Mac symbol __Z22CL_AddConsoleInfoColoriPKf at 0x0015d56c. Whole caller not audited by universal-math."
+        "status": "equal",
+        "evidence": "Complete Mac 0x15d56c-0x15d6f0 and active native body read by hand. Compared complete 388-byte caller, not just color helpers: three float*255/truncate/clamp operations, firstInfo/firstInfo+1/firstInfo+2 metadata, current-line ring base, sequential short stores and offset updates. Matches for normalized finite engine color inputs; no uninitialized storage was introduced. Native pointer widths do not change the short-ring contract."
       },
       {
         "id": "mac:0x0015f344",
@@ -74114,8 +74114,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": "Misattributed header caller: native definition is src/PC/client_mp/cl_console_mp.c (client_mp/cl_console_mp); whole CL_ConsolePrint was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to client/cl_console_mp; original Mac source-module provenance retained. Native function definition at src/PC/client_mp/cl_console_mp.c:1309; assigned universal header has no body. Mac symbol __Z15CL_ConsolePrint16print_msg_type_tPKcii at 0x0015f344. Whole caller not audited by universal-math."
+        "status": "equal",
+        "evidence": "Complete Mac 0x15f344-0x15f54c and active native body read by hand. Compared the complete 520-byte caller, including noPrint/null/logfile gates, lazy init, all default-duration branches and rounding/clamp, default ColorIndex, GAME/BOLDGAME newline splitting, 4095-byte capped copies and skipped remainder through next newline, color carry and final tail print. Shared AddLine corrections are recorded separately; native whole caller already matches."
       }
     ],
     "client/cl_input": [
