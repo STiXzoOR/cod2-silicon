@@ -115,7 +115,7 @@ cgame/cg_view_mp,9,0,0,0,9
 cgame/cg_weapons,28,0,0,0,28
 cgame/offhandweapons_mp,9,0,0,0,9
 client/cl_cgame_mp,71,0,0,0,71
-client/cl_cin_mp,12,0,0,0,12
+client/cl_cin_mp,12,8,3,1,0
 client/cl_console_mp,48,0,0,0,48
 client/cl_input,85,78,3,4,0
 client/cl_keys_mp,25,20,3,2,0
@@ -123,10 +123,10 @@ client/cl_main_mp,96,0,0,0,96
 client/cl_main_pc_mp,20,0,0,0,20
 client/cl_net_chan_mp,6,0,0,0,6
 client/cl_parse_mp,6,0,0,0,6
-client/cl_scrn_mp,9,0,0,0,9
-client/cl_ui_mp,28,0,0,0,28
-client/cl_ui_pc_mp,5,0,0,0,5
-client/screen_placement_mp,9,0,0,0,9
+client/cl_scrn_mp,9,7,1,1,0
+client/cl_ui_mp,28,23,2,3,0
+client/cl_ui_pc_mp,5,3,2,0,0
+client/screen_placement_mp,9,8,1,0,0
 client/snd_null,33,0,0,0,33
 game/g_active_mp,24,18,6,0,0
 game/g_client_fields_mp,21,20,1,0,0
