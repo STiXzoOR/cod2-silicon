@@ -1046,7 +1046,11 @@ void SND_Init(void)
 {
     int i;
 
+#if defined(COD2_X64)
+    Com_Printf("\n------- sound system initialization -------\n");
+#else
     Com_Printf("------- Sound Initialization -------\n");
+#endif
 
     snd_errorOnMissing = Dvar_RegisterBool("snd_errorOnMissing", 0, 0x1001);
     snd_khz = Dvar_RegisterInt("snd_khz", 44, 11, 44, 0x1021);
@@ -1107,7 +1111,11 @@ void SND_Init(void)
     Cmd_AddCommand("snd_setEnvironmentEffects", SND_SetEnvironmentEffects_f);
     Cmd_AddCommand("snd_deactivateEnvironmentEffects", SND_DeactivateEnvironmentEffects_f);
 
+#if defined(COD2_X64)
+    Com_Printf("------- sound system successfully initialized -------\n");
+#else
     Com_Printf("------- Sound Initialized -------\n");
+#endif
 
     Voice_Init();
 }
