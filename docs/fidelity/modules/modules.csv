@@ -421,11 +421,11 @@ ui/ui_shared_mp,103,0,0,0,103
 ui/ui_shared_obj,112,0,0,0,112
 ui/ui_utils,30,0,0,0,30
 universal/assertive,2,2,0,0,0
-universal/com_convexhull,2,0,0,0,2
+universal/com_convexhull,2,2,0,0,0
 universal/com_file_wrapper,5,5,0,0,0
 universal/com_files,92,68,6,10,8
 universal/com_files_mp,27,19,6,2,0
-universal/com_math,245,0,0,0,245
+universal/com_math,245,101,22,0,122
 universal/com_memory,64,36,11,10,7
 universal/com_memory_high,1,1,0,0,0
 universal/com_shared,7,5,2,0,0
@@ -434,7 +434,7 @@ universal/com_sndalias_load_obj,34,0,0,0,34
 universal/com_vector,15,0,0,0,15
 universal/dvar,129,0,0,0,129
 universal/dvar_cmds,28,0,0,0,28
-universal/fft,2,0,0,0,2
+universal/fft,2,2,0,0,0
 universal/memfile,12,0,0,0,12
 universal/q_parse,36,0,0,0,36
 universal/q_shared,90,0,0,0,90
