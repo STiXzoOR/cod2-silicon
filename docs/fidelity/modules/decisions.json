@@ -11829,47 +11829,47 @@
   },
   "mac:0x001e2900": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_servercmds_mp.c (cgame_mp/cg_servercmds_mp); whole CG_DeactivateChannelVolCmd was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_servercmds_mp.c (cgame_mp/cg_servercmds_mp); whole CG_DeactivateChannelVolCmd was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to cgame/cg_servercmds_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_servercmds_mp.c:536; assigned universal header has no body. Mac symbol __Z26CG_DeactivateChannelVolCmdv at 0x001e2900. Whole caller not audited by universal-math."
   },
   "mac:0x001e2a88": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_servercmds_mp.c (cgame_mp/cg_servercmds_mp); whole CG_DeactivateReverbCmd was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_servercmds_mp.c (cgame_mp/cg_servercmds_mp); whole CG_DeactivateReverbCmd was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to cgame/cg_servercmds_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_servercmds_mp.c:578; assigned universal header has no body. Mac symbol __Z22CG_DeactivateReverbCmdv at 0x001e2a88. Whole caller not audited by universal-math."
   },
   "mac:0x001e1afc": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_hudelem_mp.c (cgame_mp/cg_hudelem_mp); whole CG_Draw3dHudElems was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_hudelem_mp.c (cgame_mp/cg_hudelem_mp); whole CG_Draw3dHudElems was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to cgame/cg_hudelem_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_hudelem_mp.c:836; assigned universal header has no body. Mac symbol __Z17CG_Draw3dHudElemsv at 0x001e1afc. Whole caller not audited by universal-math."
   },
   "mac:0x001e047c": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_hudelem_mp.c (cgame_mp/cg_hudelem_mp); whole CG_GetHudElemInfo was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_hudelem_mp.c (cgame_mp/cg_hudelem_mp); whole CG_GetHudElemInfo was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to cgame/cg_hudelem_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_hudelem_mp.c:320; assigned universal header has no body. Mac symbol __Z17CG_GetHudElemInfoPK9hudelem_sP12cg_hudelem_tPc at 0x001e047c. Whole caller not audited by universal-math."
   },
   "mac:0x0018cc30": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_newDraw_mp.c (cgame_mp/cg_newDraw_mp); whole CG_OwnerDraw was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_newDraw_mp.c (cgame_mp/cg_newDraw_mp); whole CG_OwnerDraw was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to cgame/cg_newDraw_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_newDraw_mp.c:1749; assigned universal header has no body. Mac symbol __Z12CG_OwnerDrawffffiiffiiifP6Font_sfPfP8Materiali at 0x0018cc30. Whole caller not audited by universal-math."
   },
   "mac:0x001e29aa": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_servercmds_mp.c (cgame_mp/cg_servercmds_mp); whole CG_SetChannelVolCmd was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_servercmds_mp.c (cgame_mp/cg_servercmds_mp); whole CG_SetChannelVolCmd was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to cgame/cg_servercmds_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_servercmds_mp.c:556; assigned universal header has no body. Mac symbol __Z19CG_SetChannelVolCmdv at 0x001e29aa. Whole caller not audited by universal-math."
   },
   "mac:0x001d6f2a": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_shellshock.c (cgame_mp/cg_shellshock); whole CG_SetShellShockParmsFromDvars was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_shellshock.c (cgame_mp/cg_shellshock); whole CG_SetShellShockParmsFromDvars was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to cgame/cg_shellshock; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_shellshock.c:302; assigned universal header has no body. Mac symbol __Z30CG_SetShellShockParmsFromDvarsP18shellshock_parms_t at 0x001d6f2a. Whole caller not audited by universal-math."
   },
   "mac:0x0015d56c": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/client_mp/cl_console_mp.c (client_mp/cl_console_mp); whole CL_AddConsoleInfoColor was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/client_mp/cl_console_mp.c (client_mp/cl_console_mp); whole CL_AddConsoleInfoColor was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to client/cl_console_mp; original Mac source-module provenance retained. Native function definition at src/PC/client_mp/cl_console_mp.c:735 uses __attribute_regparm__, which bypasses the simple body-search expression. Mac symbol __Z22CL_AddConsoleInfoColoriPKf at 0x0015d56c. Whole caller not audited by universal-math."
   },
   "mac:0x0015f344": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/client_mp/cl_console_mp.c (client_mp/cl_console_mp); whole CL_ConsolePrint was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/client_mp/cl_console_mp.c (client_mp/cl_console_mp); whole CL_ConsolePrint was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to client/cl_console_mp; original Mac source-module provenance retained. Native function definition at src/PC/client_mp/cl_console_mp.c:1309; assigned universal header has no body. Mac symbol __Z15CL_ConsolePrint16print_msg_type_tPKcii at 0x0015f344. Whole caller not audited by universal-math."
   },
   "mac:0x000b03a0": {
-    "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/qcommon/cm_world.c (qcommon/cm_world); whole CM_ClipMoveToEntities_r was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "status": "equal",
+    "evidence": "Separately indexed Mac row for the same complete native function already audited under linux:qcommon/cm_world.cpp:919:CM_ClipMoveToEntities_r. Exact symbol/address and full-body evidence establish identity; original provenance and both IDs remain. Read full Mac 0xb03a0-0xb06a8 and attribute-decorated native body: contents/linkcontents filters, entity calls, side-only paths, split fraction pruning, reciprocal times offsets, clamp and four-component interpolation match."
   },
   "mac:0x000afbf8": {
-    "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/qcommon/cm_world.c (qcommon/cm_world); whole CM_ClipSightTraceToEntities_r was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "status": "equal",
+    "evidence": "Separately indexed Mac row for the same complete native function already audited under linux:qcommon/cm_world.cpp:1060:CM_ClipSightTraceToEntities_r. Exact symbol/address and full-body evidence establish identity; original provenance and both IDs remain. Read full Mac 0xafbf8-0xafe92 and attribute-decorated native body: contents filter, full hit-result returns, side-only descent, zero delta, reciprocal-then-multiply clipping fractions and recursive-first/tail-second interpolation match."
   },
   "mac:0x00029a5a": {
     "status": "equal",
@@ -11932,8 +11932,8 @@
     "evidence": "Hand-read complete inline/alias identity. Complete four-component dot operation in Mac MatrixTransformVector44 0x2b2e6-0x2b314 matches the four products and left-associated sum in native out[0]; remaining columns use the same index pattern."
   },
   "mac:0x00051074": {
-    "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/universal/dvar.c (universal/dvar); whole Dvar_StringToColor was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "status": "equal",
+    "evidence": "Separately indexed Mac row for the same complete native function already audited under linux:universal/dvar.cpp:343:Dvar_StringToColor. Exact symbol/address and full-body evidence establish identity; original provenance and both IDs remain. Recovered real Mac symbol at 0x51074 despite Linux-only ledger identity. Read all four zero-initialized sscanf components, upper/lower clamp and ordered multiply 255/add 0.5/floor conversions; native helper matches, including NaN selecting one."
   },
   "mac:0x0002bbe6": {
     "status": "equal",
@@ -12049,7 +12049,7 @@
   },
   "mac:0x000fc8d4": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/r_image_load_obj.c (gfx_d3d/r_image_load_obj); whole Image_GetLightGridWeightsForVector was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/r_image_load_obj.c (gfx_d3d/r_image_load_obj); whole Image_GetLightGridWeightsForVector was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to gfx_d3d/r_image_load_obj; original Mac source-module provenance retained. Native function definition at src/PC/gfx_d3d/r_image_load_obj.c:457; assigned universal header has no body. Mac symbol __Z34Image_GetLightGridWeightsForVectorPKfiPh at 0x000fc8d4. Whole caller not audited by universal-math."
   },
   "mac:0x0002b7a6": {
     "status": "equal",
@@ -12293,11 +12293,11 @@
   },
   "mac:0x000d497a": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_backend.c (gfx_d3d/rb_backend); whole RB_ClearScreen was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_backend.c (gfx_d3d/rb_backend); whole RB_ClearScreen was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to gfx_d3d/rb_backend; original Mac source-module provenance retained. Native function definition at src/PC/gfx_d3d/rb_backend.c:1056; assigned universal header has no body. Mac symbol __Z14RB_ClearScreenhPKffh at 0x000d497a. Whole caller not audited by universal-math."
   },
   "mac:0x000b25e8": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/win32/cinematics.c (win32/cinematics); whole ROQ_DrawCinematicFromHandle was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/win32/cinematics.c (win32/cinematics); whole ROQ_DrawCinematicFromHandle was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to win32/cinematics; original Mac source-module provenance retained. Native function definition at src/PC/win32/cinematics.c:726; assigned universal header has no body. Mac symbol __Z27ROQ_DrawCinematicFromHandlei at 0x000b25e8. Whole caller not audited by universal-math."
   },
   "mac:0x0002cb1c": {
     "status": "equal",
@@ -12325,7 +12325,7 @@
   },
   "mac:0x00057806": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/win32/snd_driver.c (win32/snd_driver); whole SND_StartAlias3DSample was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/win32/snd_driver.c (win32/snd_driver); whole SND_StartAlias3DSample was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_math to win32/snd_driver; original Mac source-module provenance retained. Native function definition at src/PC/win32/snd_driver.c:1290; assigned universal header has no body. Mac symbol __Z22SND_StartAlias3DSamplePK11snd_alias_tS1_fiPKfffifihPi18snd_alias_system_t at 0x00057806. Whole caller not audited by universal-math."
   },
   "linux:universal/com_math.cpp:3391:SetPlaneSignbits": {
     "status": "unchecked",
@@ -12681,63 +12681,63 @@
   },
   "mac:0x001da2f8": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_weapons.c (cgame_mp/cg_weapons); whole CG_AddViewWeapon was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_weapons.c (cgame_mp/cg_weapons); whole CG_AddViewWeapon was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to cgame/cg_weapons; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_weapons.c:1267; assigned universal header has no body. Mac symbol __Z16CG_AddViewWeaponP13playerState_s at 0x001da2f8. Whole caller not audited by universal-math."
   },
   "mac:0x00163b00": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_ents_mp.c (cgame_mp/cg_ents_mp); whole CG_AdjustPositionForMover was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_ents_mp.c (cgame_mp/cg_ents_mp); whole CG_AdjustPositionForMover was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to cgame/cg_ents_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_ents_mp.c:433; assigned universal header has no body. Mac symbol __Z25CG_AdjustPositionForMoverPKfiiiPfS1_ at 0x00163b00. Whole caller not audited by universal-math."
   },
   "mac:0x00163c40": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_ents_mp.c (cgame_mp/cg_ents_mp); whole CG_CalcEntityLerpPositions was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_ents_mp.c (cgame_mp/cg_ents_mp); whole CG_CalcEntityLerpPositions was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to cgame/cg_ents_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_ents_mp.c:488; assigned universal header has no body. Mac symbol __Z26CG_CalcEntityLerpPositionsP9centity_s at 0x00163c40. Whole caller not audited by universal-math."
   },
   "mac:0x001b5332": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/offhandweapons_mp.c (cgame_mp/offhandweapons_mp); whole CG_DrawOffHandAmmo was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/offhandweapons_mp.c (cgame_mp/offhandweapons_mp); whole CG_DrawOffHandAmmo was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to cgame/offhandweapons_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/offhandweapons_mp.c:324; assigned universal header has no body. Mac symbol __Z18CG_DrawOffHandAmmoP9rectDef_sP6Font_sfPfii at 0x001b5332. Whole caller not audited by universal-math."
   },
   "mac:0x001cf59c": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_draw_mp.c (cgame_mp/cg_draw_mp); whole CG_DrawTurretCrossHair was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_draw_mp.c (cgame_mp/cg_draw_mp); whole CG_DrawTurretCrossHair was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to cgame/cg_draw_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_draw_mp.c:1034; assigned universal header has no body. Mac symbol __Z22CG_DrawTurretCrossHairv at 0x001cf59c. Whole caller not audited by universal-math."
   },
   "mac:0x001dee08": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_snapshot_mp.c (cgame_mp/cg_snapshot_mp); whole CG_SetNextSnap was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/cgame_mp/cg_snapshot_mp.c (cgame_mp/cg_snapshot_mp); whole CG_SetNextSnap was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to cgame/cg_snapshot_mp; original Mac source-module provenance retained. Native function definition at src/PC/cgame_mp/cg_snapshot_mp.c:370; assigned universal header has no body. Mac symbol __Z14CG_SetNextSnapP10snapshot_t at 0x001dee08. Whole caller not audited by universal-math."
   },
   "mac:0x0017b7c6": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/client_mp/cl_cgame_mp.c (client_mp/cl_cgame_mp); whole CL_LookupColor was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/client_mp/cl_cgame_mp.c (client_mp/cl_cgame_mp); whole CL_LookupColor was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to client/cl_cgame_mp; original Mac source-module provenance retained. Native function definition at src/PC/client_mp/cl_cgame_mp.c:1234; assigned universal header has no body. Mac symbol __Z14CL_LookupColorhPf at 0x0017b7c6. Whole caller not audited by universal-math."
   },
   "mac:0x000afeac": {
-    "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/qcommon/cm_world.c (qcommon/cm_world); whole CM_PointTraceStaticModels_r was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "status": "equal",
+    "evidence": "Separately indexed Mac row for the same complete native function already audited under linux:qcommon/cm_world.cpp:702:CM_PointTraceStaticModels_r. Exact symbol/address and full-body evidence establish identity; original provenance and both IDs remain. Read full Mac 0xafeac-0xb00e2 and native attribute-decorated body: contents/model chain, trace-box/current-fraction calls, model trace arguments, side-only descent, split pruning and four-component interpolation match."
   },
   "mac:0x000b017a": {
-    "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/qcommon/cm_world.c (qcommon/cm_world); whole CM_PointTraceToEntities_r was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "status": "equal",
+    "evidence": "Separately indexed Mac row for the same complete native function already audited under linux:qcommon/cm_world.cpp:1189:CM_PointTraceToEntities_r. Exact symbol/address and full-body evidence establish identity; original provenance and both IDs remain. Read full Mac 0xb017a-0xb0344 and native attribute-decorated body: content/entity loop, point trace arguments, side selection, split-only fraction pruning, midpoint and tail traversal match."
   },
   "mac:0x00061322": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/EffectsCore/FxScheduler.c (EffectsCore/FxScheduler); whole FxScheduler_PlayEffect was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/EffectsCore/FxScheduler.c (EffectsCore/FxScheduler); whole FxScheduler_PlayEffect was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to EffectsCore/FxScheduler; original Mac source-module provenance retained. Native function definition at src/PC/EffectsCore/FxScheduler.c:322; assigned universal header has no body. Mac symbol __ZN11FxScheduler10PlayEffectEPK14EffectTemplatePKfPA3_S3_PK10FxBoltInfo at 0x00061322. Whole caller not audited by universal-math."
   },
   "mac:0x000db81c": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_backend.c (gfx_d3d/rb_backend); whole RB_DrawQuadPicCmd was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_backend.c (gfx_d3d/rb_backend); whole RB_DrawQuadPicCmd was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to gfx_d3d/rb_backend; original Mac source-module provenance retained. Native function definition at src/PC/gfx_d3d/rb_backend.c:4263; assigned universal header has no body. Mac symbol __Z17RB_DrawQuadPicCmdP25GfxRenderCommandExecState at 0x000db81c. Whole caller not audited by universal-math."
   },
   "mac:0x000d8148": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_backend.c (gfx_d3d/rb_backend); whole RB_DrawStretchPic was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_backend.c (gfx_d3d/rb_backend); whole RB_DrawStretchPic was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to gfx_d3d/rb_backend; original Mac source-module provenance retained. Native function definition at src/PC/gfx_d3d/rb_backend.c:2851; assigned universal header has no body. Mac symbol __Z17RB_DrawStretchPicPK8Materialffffffffm18GfxPrimStatsTarget at 0x000d8148. Whole caller not audited by universal-math."
   },
   "mac:0x000db13c": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_backend.c (gfx_d3d/rb_backend); whole RB_StretchPicRotateCmd was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_backend.c (gfx_d3d/rb_backend); whole RB_StretchPicRotateCmd was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to gfx_d3d/rb_backend; original Mac source-module provenance retained. Native function definition at src/PC/gfx_d3d/rb_backend.c:4200; assigned universal header has no body. Mac symbol __Z22RB_StretchPicRotateCmdP25GfxRenderCommandExecState at 0x000db13c. Whole caller not audited by universal-math."
   },
   "mac:0x000fdb0a": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_tess.c (gfx_d3d/rb_tess); whole RB_TessParticleCloud was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_tess.c (gfx_d3d/rb_tess); whole RB_TessParticleCloud was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to gfx_d3d/rb_tess; original Mac source-module provenance retained. Native function definition at src/PC/gfx_d3d/rb_tess.c:83; assigned universal header has no body. Mac symbol __Z20RB_TessParticleCloudPK9GfxEntity at 0x000fdb0a. Whole caller not audited by universal-math."
   },
   "mac:0x000d7a32": {
     "status": "unchecked",
-    "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_backend.c (gfx_d3d/rb_backend); whole RB_TestFillPass3D was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence."
+    "evidence": "Misattributed header caller: native definition is src/PC/gfx_d3d/rb_backend.c (gfx_d3d/rb_backend); whole RB_TestFillPass3D was not audited by this math unit. See universal-math.routing.json for exact source and Mac-symbol routing evidence. Ownership corrected from universal/com_vector to gfx_d3d/rb_backend; original Mac source-module provenance retained. Native function definition at src/PC/gfx_d3d/rb_backend.c:2846; assigned universal header has no body. Mac symbol __Z17RB_TestFillPass3DPK8Material21MaterialTechniqueType at 0x000d7a32. Whole caller not audited by universal-math."
   },
   "mac:0x000fb1ee": {
     "status": "equal",
@@ -13397,7 +13397,7 @@
   },
   "mac:0x001d3722": {
     "status": "unchecked",
-    "evidence": "Misfiled row: actual native source is cgame_mp/cg_view_mp.c, function CG_OffsetThirdPersonView. Read Mac 0x1d3722 and native function; COD2_CODX orbit mode is a separate native boundary. Candidate precision mismatch at Mac 0x1d39dd-0x1d39f7 (atan2 rounds to float before degree multiplication) belongs with cgame owner. Private routing entry supplied; caller not certified."
+    "evidence": "Misfiled row: actual native source is cgame_mp/cg_view_mp.c, function CG_OffsetThirdPersonView. Read Mac 0x1d3722 and native function; COD2_CODX orbit mode is a separate native boundary. Candidate precision mismatch at Mac 0x1d39dd-0x1d39f7 (atan2 rounds to float before degree multiplication) belongs with cgame owner. Private routing entry supplied; caller not certified. Ownership corrected from universal/q_shared to cgame/cg_view_mp; original Mac source-module provenance retained. Misfiled row: actual native source is cgame_mp/cg_view_mp.c, function CG_OffsetThirdPersonView. Read Mac 0x1d3722 and native function; COD2_CODX orbit mode is a separate native boundary. Candidate precision mismatch at Mac 0x1d39dd-0x1d39f7 (atan2 rounds to float before degree multiplication) belongs with cgame owner. Private routing entry supplied; caller not certified."
   },
   "linux:universal/q_shared.cpp:614:CanKeepStringPointer": {
     "status": "unchecked",

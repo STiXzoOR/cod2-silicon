@@ -30,3 +30,7 @@ The arm64 Release `cod2_macos_ded` target compiled with `taskpolicy -b nice -n 1
 The corrected color, getter and load paths were compiled and reviewed but not exercised. The legacy OFF preprocessed bodies match the assigned base in all five OFF configurations; neither changed source uses `__LINE__`. No platform-specific behavior requiring a Windows decision was found.
 
 Private evidence: `/Users/stix/Library/Application Support/CoD2-native-decomp/recon-universal-dvar.noindex/`.
+
+## Routed identities
+
+Separately indexed Mac rows moved from universal headers were resolved only where the exact symbol/address and existing complete-body audit established identity with an already reconciled Linux-indexed row. The source matches that audited implementation. Both IDs and original provenance remain; these are duplicate work items, not new implementations. Current module counts: 96 equal, 7 fixed, 18 intentional, 9 unchecked.
