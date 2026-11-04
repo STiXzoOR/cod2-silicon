@@ -17062,5 +17062,229 @@
   "linux:EffectsCore/FxMemMgr.cpp:55:FxMem_UnlinkBlock": {
     "status": "unchecked",
     "evidence": "No Mac text symbol or identified inline implementation for the Linux-named unlink helper; native has no definition/caller or shared FxMemBlock layout. The Linux doubly linked block mutations cannot establish Mac behavior."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:619:AddGroup": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: Mac AddGroup 0xabd86-0xabe3d is the name/text-pool overload, directly implemented as GPGroup_AddGroup. Optional string ownership and group initialization/sorting were hand-compared."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:633:AddGroup": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: The existing-node AddGroup operation is inline in Mac 0xabe12-0xabe2e: subgroup list/sorted/tail addresses passed to SortObject. Native GPGroup_AddGroup uses the same member-based call; no standalone overload is needed by native callers."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:596:AddPair": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: Mac AddPair 0xabee0-0xabfbf is the name/value/text-pool overload, directly implemented as GPGroup_AddPair. Pool string ownership, null initial value and sorting were hand-compared."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:614:AddPair": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: The existing-node AddPair operation is inline in Mac 0xabf76-0xabf9e: pair list/sorted/tail addresses passed to SortObject. Native GPGroup_AddPair uses the same member-based call."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:790:Clean": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GenericParser2 Clean operation is inline in Mac Parse 0xac2cb-0xac308 and destructors 0xabfcf-0xabff8/0xac02f-0xac058. Native cleanup frees group nodes, pool data/pool nodes, then clears pool head in the same order; token-input boundary is separate."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:268:CleanTextPool": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: CleanTextPool is inline in Mac D2 0xabfd4-0xabff8, D1 0xac034-0xac058 and Parse 0xac2d3-0xac301: save next, free pool data, free pool, continue. Native matching loops preserve pool/string ownership."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:318:Duplicate": {
+    "status": "unchecked",
+    "evidence": "GPValue Duplicate has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:518:Duplicate": {
+    "status": "unchecked",
+    "evidence": "GPGroup Duplicate has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:740:FindPair": {
+    "status": "unchecked",
+    "evidence": "FindPair has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:755:FindPairValue": {
+    "status": "unchecked",
+    "evidence": "FindPairValue has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:638:FindSubGroup": {
+    "status": "unchecked",
+    "evidence": "FindSubGroup has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:444:GPGroup": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GPGroup constructor null-parent use is inline in Mac AddGroup 0xabdc6-0xabe0e and top-level constructor 0xabc40-0xabc8c. Native initializes the same name, four base fields, pair/subgroup list triples, null parent and zero flag with pointer-sized members. No standalone nonnull-parent constructor path was identified or claimed."
+  },
+  "mac:0x000abd86": {
+    "status": "equal",
+    "evidence": "Hand-compared exact Mac 0xabd86-0xabe3d with GPGroup_AddGroup: optional pool copy, zeroed pointer-sized group fields including null parent, then subgroup SortObject. Native sizeof(GPGroup) preserves LP64 storage."
+  },
+  "mac:0x000abee0": {
+    "status": "equal",
+    "evidence": "Hand-compared exact Mac 0xabee0-0xabfbf with GPGroup_AddPair: optional name/value pool copies, GPValue initialization, optional AddValue without recopy, and pair SortObject. Native sizeof(GPValue) preserves LP64 storage; C++ exception-unwind scaffolding has no native C counterpart."
+  },
+  "mac:0x000abb66": {
+    "status": "equal",
+    "evidence": "Hand-compared exact Mac 0xabb66-0xabc39 with GPGroup_Clean: save next before freeing each value/pair, recursively clean/free each subgroup, reset pair/subgroup lists, parent and writeable flag; name/base links remain untouched."
+  },
+  "mac:0x000ac080": {
+    "status": "equal",
+    "evidence": "Hand-compared exact Mac 0xac080-0xac243 with GPGroup_Parse: brace dispatch, 0x400 name copy, list allocation/closing bracket/empty failure, writeable inheritance and parent-dependent EOF return. Equality is scoped to token reads within allocated input; unresolved GetToken EOF boundary is tracked at mac:0x000ab80c."
+  },
+  "mac:0x000abad2": {
+    "status": "equal",
+    "evidence": "Hand-compared exact Mac 0xabad2-0xabb65 with GPGroup_SortObject: append unsorted next first, stable case-insensitive insertion, predecessor/successor links, empty sorted-list case and lastObject updates. No float arithmetic."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:280:GPObject": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GPObject constructor is inline in Mac AddGroup 0xabdc6-0xabdd6, AddPair 0xabf40-0xabf50 and AddValue 0xabe82-0xabe92: name then zero next/sorted links. Native matching initializations and zeroing allocator contract were hand-compared."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:300:GPValue": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GPValue constructor is inline in Mac AddPair 0xabf40-0xabf71: base object fields, null valueList, optional AddValue with null pool. Native GPGroup_AddPair matches, using full LP64 GPValue storage."
+  },
+  "mac:0x000abe3e": {
+    "status": "intentional",
+    "evidence": "Hand-compared exact Mac 0xabe3e-0xabedf with GPValue_AddValue: optional pool copy and first-node sortedNext-as-tail/appended-next links match. Mac allocates 0x10-byte GPObject value nodes; existing native uses sizeof(GPValue), 40 bytes on LP64 rather than 32-byte GPObject, keeping defined full typed storage. Only the common name/next/sortedNext/sortedPrev fields are consumed. Preserve the larger native allocation; Z_MallocInternal zeroing verified at Mac 0x37d4c and native com_memory.c."
+  },
+  "mac:0x000aba9e": {
+    "status": "equal",
+    "evidence": "Hand-compared exact Mac 0xaba9e-0xabaaf with GPValue_GetTopValue: return first list node name, or null for an empty value list; pointer-sized native members preserve the access."
+  },
+  "mac:0x000abab0": {
+    "status": "equal",
+    "evidence": "Hand-compared exact Mac 0xabab0-0xabad1 with GPValue_IsList: return one exactly when both valueList and its next pointer are nonnull; otherwise zero."
+  },
+  "mac:0x000abfc0": {
+    "status": "equal",
+    "evidence": "Hand-compared exact Mac D2 0xabfc0-0xac01f with GenericParser2_Destroy/ZN14GenericParser2D2Ev: group Clean, save pool next, free data then pool, clear head, second group Clean. Strings belong to pools, never individual node frees. C++ unwind-only blocks have no native C counterpart."
+  },
+  "mac:0x000ac020": {
+    "status": "equal",
+    "evidence": "Hand-compared exact Mac D1 0xac020-0xac07f with GenericParser2_Destroy/ZN14GenericParser2D1Ev: same group/pool/group cleanup sequence as D2, including next saved before frees and null pool head. C++ unwind-only blocks have no native C counterpart."
+  },
+  "mac:0x000abc3a": {
+    "status": "equal",
+    "evidence": "Hand-compared exact Mac constructor 0xabc3a-0xabc9d: Top Level string at 0x2499cc, all group links/lists/parent null, group flag zero, pool head null, parser flag zero. Native pointer-sized members initialize the same semantic fields."
+  },
+  "mac:0x000ac244": {
+    "status": "fixed",
+    "evidence": "Mac 0xac257 tests only the cleanFirst argument low byte; native tested the whole int. COD2_X64 now casts to byte before the branch. Hand-compared remaining exact 0xac244-0xac31f pool cleanup/allocation (0x2800), byte flag stores and parse result; compiled and reviewed. arm64 Release output has tst w2,#0xff at 0x1000c28e4. Existing ASan FX fixture passed with ordinary 0/1 arguments; upper-byte-only cleanFirst was not exercised. Token EOF boundary remains tracked separately."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:33:GetInOrderNext": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GPObject GetInOrderNext is inline at Mac SortObject 0xabb14 (offset 8); native test->sortedNext uses the corresponding pointer-sized member. Hand-compared traversal and insertion callers."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:30:GetName": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GPObject GetName is inline in Mac SortObject 0xabb00-0xabb08 and FX_ParseEffect 0x5d392; native object->name/test->name and group name reads match. Hand-compared member accesses."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:11:GetNext": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: TextPool GetNext is inline in Mac D2 0xabfdf, D1 0xac03f and Parse cleanup 0xac2e8; native saves pool->next before either free. Hand-compared loops."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:31:GetNext": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GPObject GetNext is inline in Mac Clean value-node loop 0xabb94 and subgroup loop 0xabbe1; native matching GPObject next member reads use pointer width."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:54:GetNext": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GPValue GetNext is inline in Mac Clean pair advance 0xabb7b and list-node cleanup 0xabb94; native pair/value next reads match the base-object next member."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:72:GetNext": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GPGroup GetNext is inline in Mac Clean subgroup advance 0xabbe1 and FX_ParseEffect 0x5d381; native nextUnsorted/GPObject next member reads match."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:479:GetNumPairs": {
+    "status": "unchecked",
+    "evidence": "GetNumPairs has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:462:GetNumSubGroups": {
+    "status": "unchecked",
+    "evidence": "GetNumSubGroups has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+  },
+  "mac:0x000ab80c": {
+    "status": "unchecked",
+    "evidence": "Exact-symbol Mac 0xab80c-0xaba9d and native GetToken_impl were hand-compared for whitespace/comments, signed-char comparisons, quoting, 0x3ff accumulation/0x400 empty-token limit, EOL trimming and quote removal. Full-domain equality is unresolved: readUntilEOL advances through NUL at Mac 0xab95f-0xab999, and unterminated quoted reads advance the cursor past NUL at 0xaba0f-0xaba1f. Actual Mac FX_ParseEffect loader (inlined 0x5d25f-0x5d2b3) and native FX_ParseEffectFile allocate fileLength+1 and append only one NUL, with no newline guarantee. Mac temp allocator 0x38192 reserves a 16-byte header before the requested extent, not a guaranteed readable suffix; malloc fallback requests exact size. Native bounds are unchanged. No padding or out-of-storage equivalence is claimed; malformed EOF paths were not exercised."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:377:Parse": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GPValue Parse list operation is inline in Mac GPGroup_Parse 0xac18b-0xac1e8: reject empty token, accept closing bracket, pool-copy value once, AddValue with null pool. Native list branch follows the same calls and order for defined token input; unresolved EOF scanning is tracked at mac:0x000ab80c."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:34:SetInOrderNext": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GPObject SetInOrderNext is inline in Mac SortObject 0xabb1d/0xabb58 and AddValue 0xabed4/0xabeab. Native sortedNext writes preserve sorted-chain and value-list tail roles."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:35:SetInOrderPrevious": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GPObject SetInOrderPrevious is inline in Mac SortObject 0xabb20/0xabb55. Native sortedPrev writes match predecessor/successor insertion cases."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:12:SetNext": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: TextPool SetNext is inline in Mac AllocText 0xabd43; native prev->next=newPool then poolPtr=next preserves the chain. Hand-compared extension path."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:32:SetNext": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GPObject SetNext is inline in Mac SortObject 0xabaec and AddValue 0xabe9f; native next assignments preserve insertion-order chain and value append behavior."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:111:SetWriteable": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GenericParser2 SetWriteable byte store is inline in Mac Parse 0xac264-0xac268. Native gp->writeable=(byte)writeable preserves the low byte; no standalone setter is called."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:79:SetWriteable": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GPGroup SetWriteable byte store is inline in Mac Parse 0xac26b and subgroup inheritance 0xac11f-0xac123. Native cleanFlag stores match; no recursive propagation beyond parsed children was added."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:236:TextPool": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: TextPool constructor is inline in Mac Parse 0xac2a3-0xac2c4 and AllocText 0xabd20-0xabd3c: null next, capacity, used=0, allocation of capacity bytes. Native sizeof(TextPool) preserves pointer-sized layout and 0x2800 initial pool capacity."
+  },
+  "mac:0x000abc9e": {
+    "status": "equal",
+    "evidence": "Hand-compared exact Mac 0xabc9e-0xabd85 with TextPool_AllocText: length strlen+normalized addNULL, capacity check used+length+1, strcpy plus sentinel, same-capacity chained pool and one retry without poolPtr, null when full without extension. Pool owns copied strings; null textPool callers retain supplied pointer ownership. Native sizeof(TextPool) is 24 LP64 bytes (Mac 16), with integer capacity/used retained. Valid parser-sized strings only; arithmetic-overflow/allocator-failure inputs were not exercised."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:398:Write": {
+    "status": "unchecked",
+    "evidence": "GPValue Write has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:700:Write": {
+    "status": "unchecked",
+    "evidence": "GPGroup Write has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:798:Write": {
+    "status": "unchecked",
+    "evidence": "GenericParser2 Write has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:284:WriteText": {
+    "status": "unchecked",
+    "evidence": "WriteText has only a Linux ledger identity. Mac nm/disassembly inspection found no callable body or identified inlined caller for this API; native GenericParser2.c exposes no standalone implementation. Missing identity is not equality. No Linux implementation was copied; writer/duplicate/search/count behavior remains unresolved."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:14:operator delete": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: TextPool operator delete is inline in Mac D2 0xabfef, D1 0xac04f and Parse cleanup 0xac2f8 as Z_FreeInternal(pool). Native matching calls free data separately before the pool node."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:37:operator delete": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GPObject operator delete is inline in Mac Clean at 0xabb9a (value), 0xabba9 (pair), 0xabbd0 (subgroup) as Z_FreeInternal. Native matching frees do not free pooled name pointers."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:13:operator new": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: TextPool operator new is inline in Mac AllocText 0xabd12-0xabd19 and Parse 0xac295-0xac29c as Z_MallocInternal(0x10). Native sizeof(TextPool) supplies 24 LP64 bytes. Zeroing allocator verified in exact Mac 0x37d4c and native com_memory.c."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:36:operator new": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GPObject operator new is inline in Mac AddGroup 0xabdb8-0xabdbf, AddPair 0xabf32-0xabf39 and AddValue 0xabe76-0xabe7d. Native sizeof allocations supply pointer-sized typed storage; deliberate larger value-node allocation is tracked at mac:0x000abe3e."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:457:~GPGroup": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GPGroup destructor is inline in Mac Clean 0xabbc5-0xabbd0 (recursive Clean then free) and second group Clean in parser destructors. Native recursively cleans before freeing subgroup; no individual name/string frees."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:306:~GPValue": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GPValue destructor is inline in Mac Clean 0xabb89-0xabba9: iterate valueList, save next, free node/update head, then free pair. Native GPGroup_Clean uses the same sequence; value strings remain pool-owned."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:769:~GenericParser2": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: GenericParser2 destructor is represented by exact Mac D1 0xac020 and D2 0xabfc0. Native wrappers share GenericParser2_Destroy, with matching group Clean, pool data/node frees, head reset, final group Clean."
+  },
+  "linux:EffectsCore/GenericParser2.cpp:241:~TextPool": {
+    "status": "equal",
+    "evidence": "Hand-compared inline operation: TextPool destructor is inline in Mac D2 0xabfe2-0xabfef, D1 0xac042-0xac04f and Parse 0xac2eb-0xac2f8: free data then node. Native loops match; no string pointer is freed separately."
   }
 }
