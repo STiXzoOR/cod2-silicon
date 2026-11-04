@@ -298,7 +298,12 @@ unsigned int Scr_LoadScript(const char *filename)
 
     ScriptParse(&parseData, 0);
 
+#if defined(COD2_X64)
+    /* Mac 0xaf066 creates an object, not an array, for a script's thread table. */
+    compiledObj = GetObjectA(GetVariable(scrCompPub->scripts, fileId));
+#else
     compiledObj = GetArray(GetVariable(scrCompPub->scripts, fileId));
+#endif
     DumpCompiledObject(extFilename, compiledObj);
     ScriptCompile(parseData, compiledObj, scriptId);
     DumpCompiledObject(extFilename, compiledObj);
