@@ -935,7 +935,7 @@ static int FxNative_FloatToInt(float value)
         ? (int)value : (int)0x80000000u;
 }
 
-static int FxNative_ColorByte(int value)
+static int FxNative_FlashColorByte(int value)
 {
     if ((int)((unsigned int)value - 255u) >= 0)
         return 255;
@@ -945,7 +945,10 @@ static int FxNative_ColorByte(int value)
 static inline __attribute__((always_inline)) int FloatToByte(float f)
 {
 #if defined(COD2_X64)
-    return FxNative_ColorByte(FxNative_FloatToInt(f * 255.0f));
+    int value = FxNative_FloatToInt(f * 255.0f);
+    int upper = (int)((unsigned int)value - 255u) < 0 ? value : 255;
+    /* RGB applies its lower clamp even after the wrapped upper selection. */
+    return (int)(0u - (unsigned int)value) < 0 ? upper : 0;
 #else
     int v = (int)(f * 255.0f);
     if (v >= 255)
@@ -959,7 +962,7 @@ static inline __attribute__((always_inline)) int FloatToByte(float f)
 static inline __attribute__((always_inline)) int FlashColorByte(float f)
 {
 #if defined(COD2_X64)
-    return FxNative_ColorByte(FxNative_FloatToInt(floorf(f * 255.0f + 0.5f)));
+    return FxNative_FlashColorByte(FxNative_FloatToInt(floorf(f * 255.0f + 0.5f)));
 #else
     int v = (int)floorf(f * 255.0f + 0.5f);
     if (v >= 255)

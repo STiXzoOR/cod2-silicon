@@ -45,8 +45,15 @@ passes radius 1 before radius 0. Native previously reversed them.
 **Numeric branches retain SSE behavior.** Subimage updates preserve negative
 frames until the signed frame-count boundary, retain negative loop counts and
 use defined cvttss2si/int32 wrapping behavior (0xa80dd–0xa819c). Color conversion
-uses the same conversion plus wrapping subtract/negate clamp as Mac
-0xa1e62–0xa1e89 and 0xa0e98–0xa0eb1. Gravity sampling defines the Mac overflow/NaN
+retains the distinct RGB and Flash wrapping subtract/negate sequences at
+0xa1e62–0xa1e89 and 0xa0e98–0xa0eb1. RGB always applies its lower clamp to the
+original converted value after selecting the upper-clamped candidate; Flash
+can return 255 early. The first reconciliation incorrectly shared Flash's
+early exit with RGB. Independent review identified the difference: RGB
+`-8421504.0f` converts to -2147483520 after scaling and must produce zero,
+even though its upper-clamp subtraction wraps positive. The follow-up keeps
+that final RGB lower clamp and leaves Flash's sequence intact.
+Gravity sampling defines the Mac overflow/NaN
 conversion at 0xa3ec1. Alpha selects zero for unordered input like
 0xa5293–0xa52cc. Cloud extent selection, particle visibility and tail endpoint
 length retain their original unordered comparison branches at 0xa08b5,
@@ -84,6 +91,8 @@ The arm64 Release `cod2_macos_ded` target builds with two low-priority jobs.
 That target excludes client FX. FxPrimitives.c also compiles separately with
 the exact configured stock `cod2_macos` production command, including NDEBUG,
 with its output object redirected into private evidence. No client was linked.
+After the RGB review correction, that production compile and both existing
+stock/CoD2x sanitizer fixture runs passed again; no tests or cases were added.
 `unifdef -UCOD2_X64` output for FxPrimitives.c is byte-identical to the base,
 and the file contains no `__LINE__` expansions. This is disabled-source
 preservation, not an original i386 object comparison.
