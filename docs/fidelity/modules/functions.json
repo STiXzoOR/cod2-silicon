@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 6648,
+      "unchecked": 6627,
       "intentional": 1439,
-      "equal": 1160,
-      "fixed": 210
+      "equal": 1177,
+      "fixed": 214
     },
     "scopes": {
       "unassigned": 777,
@@ -146792,8 +146792,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac Com_CleanupBsp 0x11168e: tests the BSP header pointer, frees only when non-null, then clears it. Native matches."
       },
       {
         "id": "mac:0x00111508",
@@ -146814,8 +146814,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared exact-symbol disassembly at Mac 0x111508 after full-binary entry misalignment: optional size then checksum writes and BSP pointer return match native."
       },
       {
         "id": "linux:qcommon/com_bsp_load_obj.cpp:34:Com_GetBspHeader",
@@ -146833,8 +146833,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux name has the same getter operation as Mac Com_GetBsp at 0x111508; hand compared its optional size/checksum writes and pointer return against native Com_GetBsp. No separate Mac body is claimed."
       },
       {
         "id": "linux:qcommon/com_bsp_load_obj.cpp:29:Com_IsBspLoaded",
@@ -146852,8 +146852,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Compared inline BSP-loaded test in Mac Com_CleanupBsp 0x111694-0x11169b: load header pointer and test for zero, matching native cleanup guard. No separate Mac body is claimed."
       },
       {
         "id": "mac:0x0011154e",
@@ -146883,8 +146883,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0x11154e uses byte 0x15 before the filename in load and version errors (strings 0x24745c/0x2542c8); native omitted it. Restored in COD2_X64. Hand compared file I/O, short-read/minimum-size checks, checksum timing, header checks and 39-iteration no-op lump loop. Compiled and reviewed; error paths not exercised."
       },
       {
         "id": "mac:0x0011152e",
@@ -146914,8 +146914,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac Com_UnloadBsp 0x11152e: unconditional Z_FreeInternal of BSP header, then clear pointer. Native matches."
       }
     ],
     "qcommon/com_playerprofile": [
@@ -147094,8 +147094,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand read exact-symbol Mac Com_IsMapProfilerActive 0x38410: clears eax and returns zero, matching native. String/call triage and constant check also clean."
       }
     ],
     "qcommon/common": [
@@ -149345,8 +149345,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac Com_AbortDObj 0x737e2: unconditional initialized-flag clear matches native."
       },
       {
         "id": "mac:0x00073574",
@@ -149367,8 +149367,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac Com_ClientDObjClearAllSkel 0x73574: walks two-byte client map entries through 0x571d00, exactly 1152 entries from 0x571400; skips zero and sign-extends nonzero indices before DObjSkelClear. Native matches with native object stride."
       },
       {
         "id": "linux:qcommon/dobj_management.cpp:92:Com_ClientDObjClearAllSkelLocal",
@@ -149386,8 +149386,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux Local name corresponds to Mac Com_ClientDObjClearAllSkel at 0x73574. Hand compared its 1152-entry loop, zero skip, signed-short index and DObjSkelClear call against native; no separate Mac body is claimed."
       },
       {
         "id": "mac:0x000737f2",
@@ -149408,8 +149408,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac Com_ClientDObjCreate 0x737f2 reports byte-0x15-prefixed No free DObjs (0x247434); native used different text. Restored in COD2_X64. Hand compared inline allocator, map store, 16-bit model-count conversion, entity zero and post-create exhaustion check. Compiled and reviewed; exhaustion not exercised."
       },
       {
         "id": "linux:qcommon/dobj_management.cpp:79:Com_ClientDObjCreateLocal",
@@ -149427,8 +149427,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Linux Local name corresponds to Mac Com_ClientDObjCreate 0x737f2 and native client creation; hand compared that body. Shares correction from different native exhaustion text to Mac byte-0x15-prefixed No free DObjs at 0x247434. Compiled and reviewed; exhaustion not exercised."
       },
       {
         "id": "mac:0x0007351c",
@@ -149449,8 +149449,8 @@
           }
         ],
         "linux": [],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac Com_GetClientDObj 0x7351c: 1152*localClientNum+handle lookup, null on zero, signed-short index into object pool. Native matches with native object stride."
       },
       {
         "id": "linux:qcommon/dobj_management.cpp:20:Com_GetClientDObjLocal",
@@ -149468,8 +149468,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Linux Local name corresponds to Mac Com_GetClientDObj 0x7351c; hand compared 1152-slot client offset, zero result and signed map index against native. No separate Mac body is claimed."
       },
       {
         "id": "linux:qcommon/dobj_management.cpp:49:Com_GetFreeDObjIndex",
@@ -149487,8 +149487,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared native Com_AllocDObj against inlined allocator in Mac creation bodies 0x735d9-0x7360b/0x7365a-0x736a3/0x736c2 and 0x7380d-0x7383f/0x7388d-0x738d6/0x738f5: forward scan through 2047, wrap from 1 through previous index, mark allocation/decrement count, return zero if full. No separate Mac symbol is claimed."
       },
       {
         "id": "mac:0x0007354c",
@@ -149518,8 +149518,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac Com_GetServerDObj 0x7354c: zero map value returns null; nonzero short is sign-extended into object pool index. Native matches with native object stride."
       },
       {
         "id": "mac:0x00073758",
@@ -149549,8 +149549,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac Com_InitDObj 0x73758: memset allocation/client/server maps by 0x800/0x900/0x800 bytes, free count 2047, last index 1, initialized flag 1 in the same order. Native matches."
       },
       {
         "id": "mac:0x000736cc",
@@ -149580,8 +149580,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac Com_SafeClientDObjFree 0x736cc: signed-short lookup, return on zero, clear map/allocation flag, increment free count before DObjFree. Native matches with native object stride."
       },
       {
         "id": "mac:0x00073712",
@@ -149611,8 +149611,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac Com_SafeServerDObjFree 0x73712: signed-short lookup, return on zero, clear map/allocation flag, increment free count before DObjFree. Native matches with native object stride."
       },
       {
         "id": "mac:0x000735be",
@@ -149642,8 +149642,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac Com_ServerDObjCreate 0x735be reports byte-0x15-prefixed No free DObjs (0x247434); native used different text. Restored in COD2_X64. Hand compared inline allocator, server map store, 16-bit model-count and handle+1 conversions, DObjCreate arguments and post-create exhaustion check. Compiled and reviewed; exhaustion not exercised."
       },
       {
         "id": "mac:0x000737d2",
@@ -149673,8 +149673,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand compared Mac Com_ShutdownDObj 0x737d2: unconditional initialized-flag clear matches native."
       }
     ],
     "qcommon/dvar_cmds": [

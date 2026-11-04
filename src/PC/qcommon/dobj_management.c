@@ -90,7 +90,11 @@ void Com_ServerDObjCreate(DObjModel_s *dobjModels, int numModels, struct XAnimTr
     DObjCreate(dobjModels, nm, tree, (char *)&objBuf[idx], (unsigned short)(handle + 1));
 
     if (objFreeCount == 0)
+#if defined(COD2_X64)
+        Com_Error(ERR_DROP, "\x15No free DObjs");
+#else
         Com_Error(ERR_DROP, "exceeded maximum number of DObjs");
+#endif
 }
 
 void Com_SafeClientDObjFree(int handle)
@@ -148,5 +152,9 @@ void Com_ClientDObjCreate(DObjModel_s *dobjModels, int numModels, struct XAnimTr
     DObjCreate(dobjModels, nm, tree, (char *)&objBuf[idx], 0);
 
     if (objFreeCount == 0)
+#if defined(COD2_X64)
+        Com_Error(ERR_DROP, "\x15No free DObjs");
+#else
         Com_Error(ERR_DROP, "exceeded maximum number of DObjs");
+#endif
 }
