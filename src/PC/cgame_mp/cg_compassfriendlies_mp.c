@@ -163,8 +163,13 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
     CG_UpdateCompPointerOrientation();
 
     float compassSize = dvar_value(dvar_compassSize);
+#if defined(COD2_X64)
+    centerX = rect->x + (compassSize * rect->w) * 0.5f;
+    centerY = rect->y + rect->h + (compassSize * rect->h) * -0.5f;
+#else
     centerX = rect->x + 0.5f * compassSize * rect->w;
     centerY = rect->y + rect->h + (-0.5f) * compassSize * rect->h;
+#endif
 
     vec4_t fadedColor;
     fadedColor[0] = color[0];
@@ -172,7 +177,14 @@ void CG_DrawCompassFriendlies(rectDef_t *rect, MaterialHandle material, vec_t *c
     fadedColor[2] = color[2];
     fadedColor[3] = color[3];
 
+#if defined(COD2_X64)
+    if (team == 0)
+        goto draw_enemies;
+
     if (team != 0) {
+#else
+    if (team != 0) {
+#endif
 
         snapshot_t *snapPtr2 = cg->snap;
         int numClients = snapPtr2->numEntities;
@@ -365,11 +377,21 @@ draw_friendlies:
             float pingFadeTime = dvar_value(dvar_compassPingFadeTime);
             float fadeEnd = (float)beginFade + pingFadeTime * 1000.0f;
             MaterialHandle friendMat = NULL;
+#if defined(COD2_X64)
+            float iconAlpha = iconAlpha2;
+#else
             float iconAlpha;
+#endif
 
+#if defined(COD2_X64)
+            if ((float)cgTime <= fadeEnd) {
+
+                if (cgTime <= beginFade) {
+#else
             if ((float)cgTime < fadeEnd) {
 
                 if (cgTime >= beginFade) {
+#endif
                     iconAlpha = 1.0f;
                 } else {
 
@@ -388,7 +410,12 @@ draw_friendlies:
 
             actorColor[3] = color[3] < compassFadeOutAlpha ? color[3] : compassFadeOutAlpha;
 
+#if defined(COD2_X64)
             iconAlpha = compassFadeOutAlpha < iconAlpha ? compassFadeOutAlpha : iconAlpha;
+            fadedColor[3] = iconAlpha;
+#else
+            iconAlpha = compassFadeOutAlpha < iconAlpha ? compassFadeOutAlpha : iconAlpha;
+#endif
 
             if (pingFlash == 1) {
 
@@ -443,8 +470,13 @@ draw_friendlies:
             float radiusDist = dist;
             if (radiusDist > maxRangeVal)
                 radiusDist = maxRangeVal;
+#if defined(COD2_X64)
+            else if (radiusDist < minRangeVal)
+                radiusDist = minRangeVal;
+#else
             if (radiusDist < minRangeVal)
                 radiusDist = minRangeVal;
+#endif
             float rangeFrac = (radiusDist - minRangeVal) / (maxRangeVal - minRangeVal);
             float saturation = minSatVal + rangeFrac * (1.0f - minSatVal);
             radius = (float)((double)compassSzVal * 43.75 * (double)saturation);
@@ -483,8 +515,13 @@ draw_friendlies:
         float fadeEnd2 = (float)beginFade2 + pingFadeTime2 * 1000.0f;
         MaterialHandle friendMat2 = NULL;
 
+#if defined(COD2_X64)
+        if ((float)cgTime <= fadeEnd2) {
+            if (cgTime <= beginFade2) {
+#else
         if ((float)cgTime < fadeEnd2) {
             if (cgTime >= beginFade2) {
+#endif
                 iconAlpha2 = 1.0f;
             } else {
                 iconAlpha2 = 1.0f + (float)(cgTime - beginFade2) / (pingFadeTime2 * -1000.0f);
@@ -498,7 +535,12 @@ draw_friendlies:
         actorColor2[2] = color[2];
         actorColor2[3] = color[3] < compassFadeOutAlpha ? color[3] : compassFadeOutAlpha;
 
+#if defined(COD2_X64)
         iconAlpha2 = compassFadeOutAlpha < iconAlpha2 ? compassFadeOutAlpha : iconAlpha2;
+        fadedColor[3] = iconAlpha2;
+#else
+        iconAlpha2 = compassFadeOutAlpha < iconAlpha2 ? compassFadeOutAlpha : iconAlpha2;
+#endif
 
         if (pingFlash2 == 1) {
             MaterialHandle dotMat2 = cgs->media.friendMaterials[1];
@@ -515,8 +557,14 @@ draw_friendlies:
 
     }
 
+#if defined(COD2_X64)
+draw_enemies:
     {
         for (i = 0; i < COMPASS_ACTOR_COUNT; i++) {
+#else
+    {
+        for (i = 0; i < COMPASS_ACTOR_COUNT; i++) {
+#endif
             compassactor_t *actor2 = &cg->compassActors[i];
 
             if (actor2->enemy == 0)
