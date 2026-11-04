@@ -13,6 +13,10 @@ extern void ROQ_StopCinematic(void);
 extern void ROQ_UploadCinematicFromHandle(int handle);
 extern void ROQ_CloseAllVideos(void);
 
+#if defined(COD2_X64)
+static Bool cin_skippable;
+#endif
+
 e_status CIN_StopCinematic(int handle)
 {
     return ROQ_StopCinematicFromHandle(handle);
@@ -44,6 +48,9 @@ void CIN_DrawCinematic(int handle)
 
 void CL_PlayCinematic_f(void)
 {
+#if defined(COD2_X64)
+    cin_skippable = 1;
+#endif
 #if COD2_APPLE_SDK
     extern const dvar_t *nextmap, *com_introPlayed;
     extern void Dvar_SetString(const dvar_t *, const char *);
@@ -54,6 +61,22 @@ void CL_PlayCinematic_f(void)
     ROQ_PlayCinematic_f();
 #endif
 }
+
+#if defined(COD2_X64)
+void CL_PlayUnskippableCinematic_f(void)
+{
+    cin_skippable = 0;
+#if COD2_APPLE_SDK
+    extern const dvar_t *nextmap, *com_introPlayed;
+    extern void Dvar_SetString(const dvar_t *, const char *);
+    extern void Dvar_SetBool(const dvar_t *, qboolean);
+    Dvar_SetString(nextmap, "");
+    Dvar_SetBool(com_introPlayed, 1);
+#else
+    ROQ_PlayCinematic_f();
+#endif
+}
+#endif
 
 void SCR_DrawCinematic(void)
 {
@@ -67,6 +90,10 @@ void SCR_RunCinematic(void)
 
 void SCR_StopCinematic(void)
 {
+#if defined(COD2_X64)
+    if (!cin_skippable)
+        return;
+#endif
     ROQ_StopCinematic();
 }
 
