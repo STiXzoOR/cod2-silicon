@@ -1,8 +1,7 @@
 # Function reconciliation ledger
 
 `functions.json` contains a function list for every indexed source module.
-`modules.csv` gives its four status counts. The active module is
-`bgame/bg_weapons`; complete that module before moving to another.
+`modules.csv` gives its four status counts. Independent modules are reconciled in isolated worker worktrees and integrated serially.
 `game/g_active_mp`, `game/g_client_mp` and `game/g_combat_mp` are fully reconciled;
 their reports preserve the outstanding
 whole-project replay differences.
@@ -57,14 +56,7 @@ reliable whole-project completion date.
 
 ## Current workload and estimate
 
-All of `game/` is now reconciled. After thirty-four module reconciliations the ledger has 7,143 unchecked entries:
-6,366 assigned engine entries and 777 unassigned entries. Another 1,360 entries
-are intentional bundled-library exclusions. There are also twenty-four intentional Linux-only helper omissions.
-Nine more intentional differences cover native dedicated debug rendering, CoD2x level-exit behavior,
-five script error or load paths and two further native choices recorded in their reports.
-There are 793 equal functions and 127 fixed functions. All 24 entries in `game/g_active_mp` and all 11 in
-`game/g_client_mp`, plus all 13 in `game/g_combat_mp`, are reconciled, with
-integrated results in their reports.
+All of `game/` is reconciled. The ledger currently has 7,128 unchecked entries: 6,351 assigned engine entries and 777 unassigned entries. There are 806 equal, 128 fixed and 1,395 intentional entries. Intentional entries include the 1,360 bundled-library exclusions and documented platform or native choices. Module reports describe the evidence and runtime limits.
 
 The original planning assumption of 20–40 entries per active hour still gives
 approximately **200–400 active hours**, before final cross-module runtime

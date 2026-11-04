@@ -8,10 +8,10 @@
     "ledger_rows": 9457,
     "matched_pairs": 2473,
     "statuses": {
-      "unchecked": 7143,
-      "intentional": 1394,
-      "equal": 793,
-      "fixed": 127
+      "unchecked": 7128,
+      "intentional": 1395,
+      "equal": 806,
+      "fixed": 128
     },
     "scopes": {
       "unassigned": 777,
@@ -61999,8 +61999,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared the inline block in BG_LoadWeaponDefInternal, Mac 0xbd60b-0xbd6dd: projectile speed int-to-float comparison, angle [0,45) checks, positive base-time/reduction checks, display-name error arguments and continuation branches match."
       },
       {
         "id": "linux:bgame/bg_weapons_load_obj.cpp:686:BG_CheckWeaponDamageRanges",
@@ -62018,8 +62018,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared the inline block in BG_LoadWeaponDefInternal at Mac 0xbd508-0xbd536 and 0xbd6e2-0xbd6fb: max/min range <=0 branches and exact defaults 0x497423f0/0x497423f2 match native fMaxDamageRange/fMinDamageRange, including unordered comparisons."
       },
       {
         "id": "mac:0x000bcb68",
@@ -62049,8 +62049,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xbcb68-0xbcba6: case-insensitive search over three slot names, first match index, fallback zero. Script also compared all three slot-name strings with the Mac data table."
       },
       {
         "id": "mac:0x000bcba6",
@@ -62080,8 +62080,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xbcba6-0xbcbb6: direct indexed slot-name pointer return with no bounds branch; the three table strings match by script."
       },
       {
         "id": "linux:bgame/bg_weapons_load_obj.cpp:451:BG_GetWeaponTypeName",
@@ -62099,8 +62099,8 @@
             "static": false
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "intentional",
+        "evidence": "Linux-only unused accessor is absent from the Mac code-symbol table and has no native declaration/caller. The Mac type-name table at 0x349e08 has only one code reference, the parser lookup at 0xbce5d; native performs that lookup directly. No Mac runtime body is missing. Four type-name strings match by script."
       },
       {
         "id": "mac:0x000bcdac",
@@ -62130,8 +62130,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xbcdac-0xbce12: initialize string fields, set internal name none and both noweapon.accu graph names, call graph parser ignoring its return, return the static definition. Script matched all 366 field names/ILP32 target members/types against the Mac table; native offsetof handles LP64 layout."
       },
       {
         "id": "mac:0x000bcbf8",
@@ -62161,8 +62161,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xbcbf8-0xbcd50: reset count, file-open/max-4095 errors, read/NUL/close order, parse-session name, token loop, 64-name limit, allocation/copy/count increment, end session. Triage and literal checks support matching strings/constants."
       },
       {
         "id": "mac:0x000bd248",
@@ -62192,8 +62192,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xbd248-0xbd715: native-sized allocation/string initialization, formatted path, header/length/validation failures with close/return order, internal-name copy, 366-field parser call with max type 16 and callbacks, ADS reciprocals/defaults, damage/crosshair/projectile checks, graph failure and ammo/clip lowercasing. Exact float constants and seven enum-name tables also checked by script."
       },
       {
         "id": "mac:0x000bcbb6",
@@ -62223,8 +62223,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xbcbb6-0xbcbf8: skip nonpositive count, call BG_InitWeaponString(index,name) in ascending order, recheck global count each iteration."
       },
       {
         "id": "mac:0x000bce12",
@@ -62254,8 +62254,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "fixed",
+        "evidence": "Mac 0xbce12-0xbd1ec references nine error strings at 0x24d198-0x24d2d8 with leading 0x15; native omitted that byte. Added COD2_X64-only prefixes, preserving the legacy text. Hand-compared all lookup limits, destination members, error arguments and return paths after decoding switch table 0x32a680. Compiled and reviewed; error paths not exercised."
       },
       {
         "id": "linux:bgame/bg_weapons_load_obj.cpp:665:BG_SetupTransitionTimes",
@@ -62273,8 +62273,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared inline Mac 0xbd4b6-0xbd508, 0xbd5cd-0xbd5dd and 0xbd700-0xbd710: positive ADS in/out times convert int to float then divide 1.0f, otherwise store exact 0x3b5a740e/0x3b03126f defaults into fOOPosAnimLength[0/1]."
       },
       {
         "id": "linux:bgame/bg_weapons_load_obj.cpp:753:InitWeaponDef",
@@ -62292,8 +62292,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared native BG_InitWeaponDefStrings with inline Mac 0xbd266-0xbd293 and 0xbcdb2-0xbcde0: clear internal-name pointer then every type-zero string member, with no other reset. Script matched all 366 field tuples and verified the 0x604 ILP32 WeaponDef layout; native offsetof accounts for pointer widening."
       },
       {
         "id": "mac:0x000bcd50",
@@ -62323,8 +62323,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xbcd50-0xbcdac with SetConfigString_core: empty input stores shared empty string, nonempty input allocates strlen+1 with alignment one, copies then stores allocated pointer."
       },
       {
         "id": "mac:0x000bd1ec",
@@ -62354,8 +62354,8 @@
           }
         ],
         "pairing": "unique module and name; semantics unchecked",
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared Mac 0xbd1ec-0xbd248: empty input stores shared empty string; nonempty input allocates strlen+1 aligned one, copies then stores through the byte-member address cast to a string pointer."
       },
       {
         "id": "linux:bgame/bg_weapons_load_obj.cpp:563:Weapon_GetStringArrayIndex",
@@ -62373,8 +62373,8 @@
             "static": true
           }
         ],
-        "status": "unchecked",
-        "evidence": ""
+        "status": "equal",
+        "evidence": "Hand-compared native FindNameIndex with all eight inlined lookup loops in Mac BG_ParseWeaponDefSpecificFieldType (0xbce5b-0xbd1e7): case-insensitive first matching index, -1 on exhaustion, and no iterations for nonpositive animation-name count. Decoded switch destinations and scripted enum-name comparisons support each caller."
       }
     ],
     "botlib/l_memory": [
