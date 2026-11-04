@@ -331,7 +331,11 @@ static int BM_REGPARM(0) Player_GetUseList(gentity_t *ent, useList_t *useList)
 
 sort_and_validate:
 
+#if defined(COD2_X64)
+    qsort(useList, useCount, sizeof(useList_t), compare_use);
+#else
     qsort(useList, useCount - ignoredFullItems, sizeof(useList_t), compare_use);
+#endif
 
     if (useCount - ignoredFullItems > 0) {
         invalidUseCount = 0;
@@ -429,7 +433,11 @@ void Player_UpdateCursorHints(gentity_t *ent)
 
             weaponIndex = (((gentity_t *)(traceEnt))->item.index);
 
+#if defined(COD2_X64)
+            itemEntry = &((gitem_t *)bg_itemlist_ptr)[weaponIndex];
+#else
             itemEntry = (gitem_t *)(bg_itemlist_ptr + weaponIndex * 44);
+#endif
 
             if (itemEntry->giType != 1)
                 continue;
@@ -597,7 +605,11 @@ void Player_UpdateLookAtEntity(gentity_t *ent)
     contactEnd[2] = start[2] + forward[2] * scale;
 
     vis = SV_FX_GetVisibility(start, contactEnd);
+#if defined(COD2_X64)
+    if (vis < 0.2f)
+#else
     if (!(vis >= 0.2f))
+#endif
         return;
 
     traceEntNum = trace.entityNum;
