@@ -311,22 +311,28 @@ int DisposeNibReference()
 {
     return 0;
 }
+#if !defined(__APPLE__) || !defined(COD2_X64)
 int FSCloseIterator()
 {
     return 0;
 }
+#endif
+#if !defined(__APPLE__) || !defined(COD2_X64)
 int FSDeleteObject()
 {
     return 0;
 }
+#endif
 int FSGetCatalogInfo()
 {
     return 0;
 }
+#if !defined(__APPLE__) || !defined(COD2_X64)
 int FSGetCatalogInfoBulk()
 {
     return 0;
 }
+#endif
 int FSGetVolumeInfo()
 {
     return 0;
@@ -335,14 +341,18 @@ int FSMakeFSSpec()
 {
     return 0;
 }
+#if !defined(__APPLE__) || !defined(COD2_X64)
 int FSOpenIterator()
 {
     return 0;
 }
+#endif
+#if !defined(__APPLE__) || !defined(COD2_X64)
 int FSPathMakeRef()
 {
     return 0;
 }
+#endif
 int FSpMakeFSRef()
 {
     return 0;
@@ -354,10 +364,12 @@ int FSRefMakePath(void *ref, unsigned char *path, unsigned int maxPathSize)
         path[0] = '\0';
     return 0;
 }
+#if !defined(__APPLE__) || !defined(COD2_X64)
 int FSSetCatalogInfo()
 {
     return 0;
 }
+#endif
 int GetControlBounds()
 {
     return 0;

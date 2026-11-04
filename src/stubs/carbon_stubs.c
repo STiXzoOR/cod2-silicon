@@ -138,6 +138,7 @@ int CFStringGetCString(CFStringRef str, char *buffer, int bufferSize, CFStringEn
 
 #endif
 
+#if !defined(__APPLE__) || !defined(COD2_X64)
 CFBundleRef CFBundleGetMainBundle(void)
 {
     return (CFBundleRef)0;
@@ -147,6 +148,8 @@ CFURLRef CFBundleCopyBundleURL(CFBundleRef bundle)
 {
     return (CFURLRef)0;
 }
+
+#endif
 
 int CFURLGetFileSystemRepresentation(CFURLRef url, int resolveAgainstBase, unsigned char *buffer, int maxBufLen)
 {
