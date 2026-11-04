@@ -542,7 +542,11 @@ void Com_MakeSoundAliasesPermanent(snd_alias_list_t *aliasInfo, SoundFileInfo *s
 
             permAlias->soundFile = currentSound;
             permAlias->pszSubtitle = subtitle;
+#if defined(COD2_X64)
+            permAlias->iSequence = 0; /* Mac 0xb6e50 starts playback history afresh. */
+#else
             permAlias->iSequence = SA_SEQUENCE(alias);
+#endif
             permAlias->fVolMin = SA_VOL_MIN(alias);
             permAlias->fVolMax = SA_VOL_MAX(alias);
             permAlias->fPitchMin = SA_PITCH_MIN(alias);
@@ -843,6 +847,9 @@ static const char *Com_GetSubtitleStringEdReference(const char *pszSubtitle)
                         FS_FreeFile(file);
                         return szReference;
                     }
+#if defined(COD2_X64)
+                    break; /* Mac 0xb776a resumes at the next reference after a mismatch. */
+#endif
                 }
             }
         }
@@ -897,10 +904,19 @@ static const char *Com_SoundAliasFindInvalidIdentifierChar(const char *text)
 {
     const char *scan;
 
+#if defined(COD2_X64)
+    if (!*text)
+        return text;
     for (scan = text; *scan; ++scan) {
         if (!Com_SoundAliasCharIsIdent((unsigned char)*scan))
             return scan;
     }
+#else
+    for (scan = text; *scan; ++scan) {
+        if (!Com_SoundAliasCharIsIdent((unsigned char)*scan))
+            return scan;
+    }
+#endif
 
     return NULL;
 }
@@ -976,7 +992,11 @@ static void COM_REGPARM3 Com_LoadSoundAliasField(const char *loadspec, const cha
 
         badChar = Com_SoundAliasFindInvalidIdentifierChar(token);
         if (badChar) {
+#if defined(COD2_X64)
+            Com_Printf("^1ERROR: Sound alias file %s: Alias name '%s' is invalid\n", sourceFile, token);
+#else
             Com_Printf("^1ERROR: Sound alias file %s: Alias name '%s' is invalid\n", sourceFile, badChar);
+#endif
             alias->error = 1;
             return;
         }
@@ -1163,7 +1183,11 @@ static void COM_REGPARM3 Com_LoadSoundAliasField(const char *loadspec, const cha
 
         badChar = Com_SoundAliasFindInvalidIdentifierChar(token);
         if (badChar) {
+#if defined(COD2_X64)
+            Com_Printf("^1ERROR: Sound alias file %s: Secondary Alias name '%s' is invalid\n", sourceFile, token);
+#else
             Com_Printf("^1ERROR: Sound alias file %s: Secondary Alias name '%s' is invalid\n", sourceFile, badChar);
+#endif
             alias->error = 1;
             return;
         }
@@ -1191,11 +1215,20 @@ static void COM_REGPARM3 Com_LoadSoundAliasField(const char *loadspec, const cha
 
     case SA_LFEPERCENTAGE:
         value = (float)atof(token);
+#if defined(COD2_X64)
+        /* Mac 0xb7a2b-0xb7a62 uses these subtractions and ordered selections. */
+        {
+            float aboveMax = value - 1.0f;
+            float capped = !(aboveMax < 0.0f) ? 1.0f : value;
+            alias->fLfePercentage = (0.0f - value) < 0.0f ? capped : 0.0f;
+        }
+#else
         if (value > 1.0f)
             value = 1.0f;
         if (value < 0.0f)
             value = 0.0f;
         alias->fLfePercentage = value;
+#endif
         return;
 
     default:
@@ -1323,9 +1356,13 @@ static void Com_SoundAliasWriteStringEdFile(const char *subtitle, const char *re
     while (ptr) {
         token = Com_Parse(&ptr);
         if (!ptr) {
+#if defined(COD2_X64)
+            break;
+#else
             referenceAdded = 1;
             start = NULL;
             break;
+#endif
         }
 
         if (!strncmp(token, "ENDMARKER", 10)) {
@@ -1366,9 +1403,16 @@ static void Com_SoundAliasWriteStringEdFile(const char *subtitle, const char *re
             }
         }
 
+#if defined(COD2_X64)
+        if (referenceAdded) {
+            Com_SkipRestOfLine(&ptr);
+            continue;
+        }
+#else
         if (referenceAdded) {
             continue;
         }
+#endif
     }
 
     if (!referenceAdded) {
@@ -1453,7 +1497,11 @@ void Com_ProcessSoundAliasFileLocalization(const char *sourceFile, const char *l
         if (*ptr == '\n') {
             ptr++;
             FS_Write("\r\n", 2, hAliasOutFile);
+#if defined(COD2_X64)
+            lineStart = ptr; /* Mac 0xb882d parses directly after this newline. */
+#else
             continue;
+#endif
         }
 
         token = Com_Parse(&ptr);
@@ -1547,6 +1595,9 @@ void Com_ProcessSoundAliasFileLocalization(const char *sourceFile, const char *l
             continue;
         }
 
+#if defined(COD2_X64)
+        /* Convert references at the subtitle column, as Mac 0xb8eb7 does. */
+#else
         {
             const char *stringEdReference = Com_GetSubtitleStringEdReference(szAliasTokens[SA_SUBTITLE]);
 
@@ -1565,18 +1616,46 @@ void Com_ProcessSoundAliasFileLocalization(const char *sourceFile, const char *l
         Com_SoundAliasWriteStringEdFile(szAliasTokens[SA_SUBTITLE], szNewReference);
         ++iNumSubtitlesLocalized;
 
+#endif
+
         for (col = 0; col < iColCount; ++col) {
             snd_alias_members_t field = columnFields[col];
             qboolean lastColumn = (col == iColCount - 1);
 
+#if defined(COD2_X64)
+            if (!field || !bFieldSet[field]) {
+                if (!lastColumn) {
+#else
             if (!field) {
                 if (!lastColumn) {
+#endif
                     FS_Write(",", 1, hAliasOutFile);
                 }
                 continue;
             }
 
             if (field == SA_SUBTITLE) {
+#if defined(COD2_X64)
+                {
+                    const char *stringEdReference = Com_GetSubtitleStringEdReference(szAliasTokens[SA_SUBTITLE]);
+
+                    if (stringEdReference) {
+                        Com_sprintf(szNewReference, sizeof(szNewReference), "%s%s", "SUBTITLE_", stringEdReference);
+                    } else if (bFieldSet[SA_SEQUENCE]) {
+                        Com_sprintf(szNewReference, sizeof(szNewReference), "%s%s_%s",
+                                    "SUBTITLE_", szAliasTokens[SA_NAME], szAliasTokens[SA_SEQUENCE]);
+                    } else {
+                        Com_sprintf(szNewReference, sizeof(szNewReference), "%s%s",
+                                    "SUBTITLE_", szAliasTokens[SA_NAME]);
+                    }
+
+                    I_strupr(szNewReference);
+                    if (!stringEdReference) {
+                        Com_SoundAliasWriteStringEdFile(szAliasTokens[SA_SUBTITLE], szNewReference);
+                        ++iNumSubtitlesLocalized;
+                    }
+                }
+#endif
                 FS_Write(szNewReference, strlen(szNewReference), hAliasOutFile);
             } else {
                 Com_SoundAliasWriteCsvToken(hAliasOutFile, szAliasTokens[field], lastColumn);
